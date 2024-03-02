@@ -18,7 +18,7 @@ public abstract class SqlColumnTypeDefinitionProvider : ISqlColumnTypeDefinition
     protected SqlColumnTypeDefinitionProvider(SqlColumnTypeDefinitionProviderBuilder builder)
     {
         Dialect = builder.Dialect;
-        _definitionsByType = builder.Definitions;
+        _definitionsByType = new Dictionary<Type, SqlColumnTypeDefinition>( builder.Definitions );
         IsLocked = false;
     }
 
@@ -103,6 +103,12 @@ public abstract class SqlColumnTypeDefinitionProvider : ISqlColumnTypeDefinition
 
     [Pure]
     public abstract SqlColumnTypeDefinition GetByDataType(ISqlDataType type);
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    protected bool TryAddDefinition(SqlColumnTypeDefinition definition)
+    {
+        return _definitionsByType.TryAdd( definition.RuntimeType, definition );
+    }
 
     [Pure]
     IReadOnlyCollection<ISqlColumnTypeDefinition> ISqlColumnTypeDefinitionProvider.GetTypeDefinitions()

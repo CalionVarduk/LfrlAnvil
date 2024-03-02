@@ -64,7 +64,7 @@ public abstract class SqlSchemaBuilderCollection : SqlBuilderApi, ISqlSchemaBuil
 
     public SqlSchemaBuilder Create(string name)
     {
-        Database.ThrowIfNameIsInvalid( name );
+        Database.ThrowIfNameIsInvalid( SqlObjectType.Schema, name );
 
         ref var schema = ref CollectionsMarshal.GetValueRefOrAddDefault( _map, name, out var exists )!;
         if ( exists )
@@ -77,7 +77,7 @@ public abstract class SqlSchemaBuilderCollection : SqlBuilderApi, ISqlSchemaBuil
 
     public SqlSchemaBuilder GetOrCreate(string name)
     {
-        Database.ThrowIfNameIsInvalid( name );
+        Database.ThrowIfNameIsInvalid( SqlObjectType.Schema, name );
 
         ref var schema = ref CollectionsMarshal.GetValueRefOrAddDefault( _map, name, out var exists )!;
         if ( exists )
@@ -133,7 +133,7 @@ public abstract class SqlSchemaBuilderCollection : SqlBuilderApi, ISqlSchemaBuil
     internal void ChangeName(SqlSchemaBuilder schema, string newName)
     {
         Assume.Equals( schema, _map.GetValueOrDefault( schema.Name ) );
-        Database.ThrowIfNameIsInvalid( newName );
+        Database.ThrowIfNameIsInvalid( schema.Type, newName );
 
         ref var schemaRef = ref CollectionsMarshal.GetValueRefOrAddDefault( _map, newName, out var exists )!;
         if ( exists )

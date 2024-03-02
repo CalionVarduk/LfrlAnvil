@@ -14,7 +14,6 @@ using ExceptionResources = LfrlAnvil.Sql.Exceptions.ExceptionResources;
 namespace LfrlAnvil.Sql.Objects.Builders;
 
 // TODO:
-// THEN, update sqlite to work fully with new core
 // THEN, update mysql to work fully with new core
 // THEN, create db version object that works with core classes rather than interfaces
 //  ^ requires sqlite & mysql brought up to speed
@@ -90,15 +89,15 @@ public abstract class SqlDatabaseBuilder : SqlBuilderApi, ISqlDatabaseBuilder
     }
 
     [Pure]
-    public virtual bool IsValidName(string name)
+    public virtual bool IsValidName(SqlObjectType objectType, string name)
     {
-        return ! string.IsNullOrWhiteSpace( name ) && ! name.Contains( '\'' );
+        return ! string.IsNullOrWhiteSpace( name ) && ! name.Contains( SqlHelpers.TextDelimiter );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public void ThrowIfNameIsInvalid(string name)
+    public void ThrowIfNameIsInvalid(SqlObjectType objectType, string name)
     {
-        if ( ! IsValidName( name ) )
+        if ( ! IsValidName( objectType, name ) )
             ExceptionThrower.Throw( SqlHelpers.CreateObjectBuilderException( this, ExceptionResources.InvalidName( name ) ) );
     }
 

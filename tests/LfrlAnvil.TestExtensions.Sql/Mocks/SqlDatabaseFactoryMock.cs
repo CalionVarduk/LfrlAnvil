@@ -58,6 +58,7 @@ public sealed class SqlDatabaseFactoryMock : SqlDatabaseFactory<SqlDatabaseMock>
         SqlDatabaseBuilder builder,
         DbConnectionStringBuilder connectionString,
         DbConnection connection,
+        ReadOnlyArray<Action<SqlDatabaseConnectionChangeEvent>> connectionChangeCallbacks,
         SqlQueryReaderExecutor<SqlDatabaseVersionRecord> versionHistoryRecordsQuery,
         Version version)
     {

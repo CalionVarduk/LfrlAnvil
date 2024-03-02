@@ -1,4 +1,5 @@
-﻿using LfrlAnvil.Sql.Internal;
+﻿using System.Globalization;
+using LfrlAnvil.Sql.Internal;
 using LfrlAnvil.Sql.Objects.Builders;
 using LfrlAnvil.Sql.Tests.Helpers;
 using LfrlAnvil.TestExtensions.FluentAssertions;
@@ -55,6 +56,126 @@ public partial class SqlDatabaseBuilderTests : TestsBase
         ISqlDatabaseBuilder sut = SqlDatabaseBuilderMockFactory.Create();
         var result = sut.AddConnectionChangeCallback( _ => { } );
         result.Should().BeSameAs( sut );
+    }
+
+    [Theory]
+    [InlineData( true, "1" )]
+    [InlineData( false, "0" )]
+    public void SqlHelpers_GetDbLiteral_ShouldReturnCorrectResult_ForBool(bool value, string expected)
+    {
+        var result = SqlHelpers.GetDbLiteral( value );
+        result.Should().Be( expected );
+    }
+
+    [Theory]
+    [InlineData( 1234567, "1234567" )]
+    [InlineData( 0, "0" )]
+    [InlineData( -1234567, "-1234567" )]
+    public void SqlHelpers_GetDbLiteral_ShouldReturnCorrectResult_ForInt64(long value, string expected)
+    {
+        var result = SqlHelpers.GetDbLiteral( value );
+        result.Should().Be( expected );
+    }
+
+    [Theory]
+    [InlineData( 1234567, "1234567" )]
+    [InlineData( 0, "0" )]
+    public void SqlHelpers_GetDbLiteral_ShouldReturnCorrectResult_ForUInt64(ulong value, string expected)
+    {
+        var result = SqlHelpers.GetDbLiteral( value );
+        result.Should().Be( expected );
+    }
+
+    [Theory]
+    [InlineData( 123.625, "123.625" )]
+    [InlineData( 123, "123.0" )]
+    [InlineData( 0, "0.0" )]
+    [InlineData( -123.625, "-123.625" )]
+    [InlineData( -123, "-123.0" )]
+    [InlineData( double.Epsilon, "4.9406564584124654E-324" )]
+    [InlineData( 1234567890987654321, "1.2345678909876544E+18" )]
+    public void SqlHelpers_GetDbLiteral_ShouldReturnCorrectResult_ForDouble(double value, string expected)
+    {
+        var result = SqlHelpers.GetDbLiteral( value );
+        result.Should().Be( expected );
+    }
+
+    [Theory]
+    [InlineData( 123.625, "123.625" )]
+    [InlineData( 123, "123.0" )]
+    [InlineData( 0, "0.0" )]
+    [InlineData( -123.625, "-123.625" )]
+    [InlineData( -123, "-123.0" )]
+    [InlineData( float.Epsilon, "1.40129846E-45" )]
+    public void SqlHelpers_GetDbLiteral_ShouldReturnCorrectResult_ForFloat(float value, string expected)
+    {
+        var result = SqlHelpers.GetDbLiteral( value );
+        result.Should().Be( expected );
+    }
+
+    [Theory]
+    [InlineData( "123.625" )]
+    [InlineData( "123.0" )]
+    [InlineData( "0.0" )]
+    [InlineData( "-123.625" )]
+    [InlineData( "-123.0" )]
+    [InlineData( "1.2345678901234567890123456789" )]
+    [InlineData( "-1.2345678901234567890123456789" )]
+    public void SqlHelpers_GetDbLiteral_ShouldReturnCorrectResult_ForDecimal(string text)
+    {
+        var value = decimal.Parse( text, CultureInfo.InvariantCulture );
+        var result = SqlHelpers.GetDbLiteral( value );
+        result.Should().Be( text );
+    }
+
+    [Theory]
+    [InlineData( "foo", "'foo'" )]
+    [InlineData( "", "''" )]
+    [InlineData( "FOOBAR", "'FOOBAR'" )]
+    [InlineData( "'", "''''" )]
+    [InlineData( "f'oo'bar'", "'f''oo''bar'''" )]
+    [InlineData( "'FOO'BAR", "'''FOO''BAR'" )]
+    public void SqlHelpers_GetDbLiteral_ShouldReturnCorrectResult_ForString(string value, string expected)
+    {
+        var result = SqlHelpers.GetDbLiteral( value );
+        result.Should().Be( expected );
+    }
+
+    [Fact]
+    public void SqlHelpers_GetDbLiteral_ShouldReturnCorrectResult_ForEmptyBinary()
+    {
+        var result = SqlHelpers.GetDbLiteral( Array.Empty<byte>() );
+        result.Should().Be( "X''" );
+    }
+
+    [Fact]
+    public void SqlHelpers_GetDbLiteral_ShouldReturnCorrectResult_ForNonEmptyBinary()
+    {
+        var value = new byte[] { 0, 10, 21, 31, 42, 58, 73, 89, 104, 129, 155, 181, 206, 233, 255 };
+        var result = SqlHelpers.GetDbLiteral( value );
+        result.Should().Be( "X'000A151F2A3A495968819BB5CEE9FF'" );
+    }
+
+    [Theory]
+    [InlineData( "foo", "bar", "foo.bar" )]
+    [InlineData( "", "bar", "bar" )]
+    public void SqlHelpers_GetFullName_ShouldReturnCorrectResult_ForSchemaObject(string schemaName, string name, string expected)
+    {
+        var result = SqlHelpers.GetFullName( schemaName, name );
+        result.Should().Be( expected );
+    }
+
+    [Theory]
+    [InlineData( "foo", "bar", "qux", "foo.bar.qux" )]
+    [InlineData( "", "bar", "qux", "bar.qux" )]
+    public void SqlHelpers_GetFullName_ShouldReturnCorrectResult_ForRecordSetObject(
+        string schemaName,
+        string recordSetName,
+        string name,
+        string expected)
+    {
+        var result = SqlHelpers.GetFullName( schemaName, recordSetName, name );
+        result.Should().Be( expected );
     }
 
     [Fact]

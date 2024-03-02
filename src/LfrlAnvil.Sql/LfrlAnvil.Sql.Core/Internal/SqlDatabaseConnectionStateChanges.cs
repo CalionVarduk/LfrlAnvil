@@ -1,6 +1,8 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
+using System.Diagnostics.Contracts;
 using LfrlAnvil.Sql.Objects.Builders;
 
 namespace LfrlAnvil.Sql.Internal;
@@ -16,6 +18,12 @@ internal sealed class SqlDatabaseConnectionStateChanges
         _events = new List<SqlDatabaseConnectionChangeEvent>();
         _invokedCallbackCount = 0;
         _builder = null;
+    }
+
+    [Pure]
+    internal Action<SqlDatabaseConnectionChangeEvent>[] GetCallbacks()
+    {
+        return _builder?.ConnectionChangeCallbacks.ToArray() ?? Array.Empty<Action<SqlDatabaseConnectionChangeEvent>>();
     }
 
     internal void Add(object? sender, StateChangeEventArgs change)

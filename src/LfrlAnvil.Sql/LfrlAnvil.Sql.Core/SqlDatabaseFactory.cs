@@ -101,7 +101,13 @@ public abstract class SqlDatabaseFactory<TDatabase> : ISqlDatabaseFactory
 
                     var newDbVersion = appliedVersionCount > 0 ? versions.Uncommitted[appliedVersionCount - 1].Value : versions.Current;
                     return new SqlCreateDatabaseResult<TDatabase>(
-                        database: CreateDatabase( builder, connectionStringBuilder, connection, versionHistoryRecordsQuery, newDbVersion ),
+                        database: CreateDatabase(
+                            builder,
+                            connectionStringBuilder,
+                            connection,
+                            stateChanges.GetCallbacks(),
+                            versionHistoryRecordsQuery,
+                            newDbVersion ),
                         exception: exception,
                         versions: versions,
                         appliedVersionCount: appliedVersionCount );
@@ -120,6 +126,7 @@ public abstract class SqlDatabaseFactory<TDatabase> : ISqlDatabaseFactory
                             builder,
                             connectionStringBuilder,
                             connection,
+                            stateChanges.GetCallbacks(),
                             versionHistoryRecordsQuery,
                             versions.Current ),
                         exception: null,
@@ -139,6 +146,7 @@ public abstract class SqlDatabaseFactory<TDatabase> : ISqlDatabaseFactory
                             builder,
                             connectionStringBuilder,
                             connection,
+                            stateChanges.GetCallbacks(),
                             versionHistoryRecordsQuery,
                             versions.Current ),
                         exception: null,
@@ -174,6 +182,7 @@ public abstract class SqlDatabaseFactory<TDatabase> : ISqlDatabaseFactory
         SqlDatabaseBuilder builder,
         DbConnectionStringBuilder connectionString,
         DbConnection connection,
+        ReadOnlyArray<Action<SqlDatabaseConnectionChangeEvent>> connectionChangeCallbacks,
         SqlQueryReaderExecutor<SqlDatabaseVersionRecord> versionHistoryRecordsQuery,
         Version version);
 

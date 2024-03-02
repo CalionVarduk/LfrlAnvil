@@ -127,7 +127,7 @@ public abstract class SqlObjectBuilderCollection : SqlBuilderApi, ISqlObjectBuil
     public SqlTableBuilder CreateTable(string name)
     {
         Schema.ThrowIfRemoved();
-        Schema.Database.ThrowIfNameIsInvalid( name );
+        Schema.Database.ThrowIfNameIsInvalid( SqlObjectType.Table, name );
 
         ref var obj = ref CollectionsMarshal.GetValueRefOrAddDefault( _map, name, out var exists )!;
         if ( exists )
@@ -146,7 +146,7 @@ public abstract class SqlObjectBuilderCollection : SqlBuilderApi, ISqlObjectBuil
         // move name validation to configurable db builder interface (low priority, later)
         // maybe include this in the interface responsible for default names
         Schema.ThrowIfRemoved();
-        Schema.Database.ThrowIfNameIsInvalid( name );
+        Schema.Database.ThrowIfNameIsInvalid( SqlObjectType.Table, name );
 
         ref var obj = ref CollectionsMarshal.GetValueRefOrAddDefault( _map, name, out var exists )!;
         if ( exists )
@@ -167,7 +167,7 @@ public abstract class SqlObjectBuilderCollection : SqlBuilderApi, ISqlObjectBuil
     public SqlViewBuilder CreateView(string name, SqlQueryExpressionNode source)
     {
         Schema.ThrowIfRemoved();
-        Schema.Database.ThrowIfNameIsInvalid( name );
+        Schema.Database.ThrowIfNameIsInvalid( SqlObjectType.View, name );
 
         var visitor = SqlViewBuilder.AssertSourceNode( Schema, source );
 
@@ -278,7 +278,7 @@ public abstract class SqlObjectBuilderCollection : SqlBuilderApi, ISqlObjectBuil
         ReadOnlyArray<SqlIndexColumnBuilder<ISqlColumnBuilder>> columns,
         bool isUnique)
     {
-        Schema.Database.ThrowIfNameIsInvalid( name );
+        Schema.Database.ThrowIfNameIsInvalid( SqlObjectType.Index, name );
         ThrowIfIndexColumnsAreInvalid( table, columns );
 
         ref var obj = ref CollectionsMarshal.GetValueRefOrAddDefault( _map, name, out var exists )!;
@@ -297,7 +297,7 @@ public abstract class SqlObjectBuilderCollection : SqlBuilderApi, ISqlObjectBuil
         SqlIndexBuilder index,
         SqlPrimaryKeyBuilder? oldPrimaryKey)
     {
-        table.Database.ThrowIfNameIsInvalid( name );
+        table.Database.ThrowIfNameIsInvalid( SqlObjectType.PrimaryKey, name );
         ThrowIfPrimaryKeyIsInvalid( table, index );
 
         if ( _map.TryGetValue( name, out var obj ) && ! CanReplaceWithPrimaryKey( obj, oldPrimaryKey ) )
@@ -316,7 +316,7 @@ public abstract class SqlObjectBuilderCollection : SqlBuilderApi, ISqlObjectBuil
         SqlIndexBuilder originIndex,
         SqlIndexBuilder referencedIndex)
     {
-        table.Database.ThrowIfNameIsInvalid( name );
+        table.Database.ThrowIfNameIsInvalid( SqlObjectType.ForeignKey, name );
         ThrowIfForeignKeyIsInvalid( table, originIndex, referencedIndex );
 
         ref var obj = ref CollectionsMarshal.GetValueRefOrAddDefault( _map, name, out var exists )!;
@@ -330,7 +330,7 @@ public abstract class SqlObjectBuilderCollection : SqlBuilderApi, ISqlObjectBuil
 
     internal SqlCheckBuilder CreateCheck(SqlTableBuilder table, string name, SqlConditionNode condition)
     {
-        table.Database.ThrowIfNameIsInvalid( name );
+        table.Database.ThrowIfNameIsInvalid( SqlObjectType.Check, name );
         var visitor = SqlCheckBuilder.AssertConditionNode( table, condition );
 
         ref var obj = ref CollectionsMarshal.GetValueRefOrAddDefault( _map, name, out var exists )!;
@@ -345,7 +345,7 @@ public abstract class SqlObjectBuilderCollection : SqlBuilderApi, ISqlObjectBuil
     internal void ChangeName(SqlObjectBuilder obj, string newName)
     {
         Assume.Equals( obj, _map.GetValueOrDefault( obj.Name ) );
-        Schema.Database.ThrowIfNameIsInvalid( newName );
+        Schema.Database.ThrowIfNameIsInvalid( obj.Type, newName );
 
         ref var objRef = ref CollectionsMarshal.GetValueRefOrAddDefault( _map, newName, out var exists )!;
         if ( exists )

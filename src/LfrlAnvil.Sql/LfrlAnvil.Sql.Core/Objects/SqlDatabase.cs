@@ -67,6 +67,36 @@ public abstract class SqlDatabase : ISqlDatabase
         return result.IsEmpty ? Array.Empty<SqlDatabaseVersionRecord>() : result.Rows.ToArray();
     }
 
+    protected static void InitializeConnectionEventHandlers(
+        DbConnection connection,
+        ReadOnlyArray<Action<SqlDatabaseConnectionChangeEvent>> callbacks)
+    {
+        if ( callbacks.Count == 0 )
+            return;
+
+        StateChangeEventHandler stateChangeHandler = (o, e) =>
+        {
+            if ( o is DbConnection conn )
+            {
+                foreach ( var callback in callbacks )
+                    callback( new SqlDatabaseConnectionChangeEvent( conn, e ) );
+            }
+        };
+
+        var disposedHandler = new Ref<EventHandler?>( null );
+        disposedHandler.Value = (o, _) =>
+        {
+            if ( o is DbConnection conn )
+            {
+                conn.StateChange -= stateChangeHandler;
+                conn.Disposed -= disposedHandler.Value;
+            }
+        };
+
+        connection.StateChange += stateChangeHandler;
+        connection.Disposed += disposedHandler.Value;
+    }
+
     [Pure]
     IDbConnection ISqlDatabase.Connect()
     {

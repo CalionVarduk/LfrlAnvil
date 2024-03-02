@@ -66,7 +66,7 @@ public abstract class SqlColumnBuilderCollection : SqlBuilderApi, ISqlColumnBuil
     public SqlColumnBuilder Create(string name)
     {
         Table.ThrowIfRemoved();
-        Table.Database.ThrowIfNameIsInvalid( name );
+        Table.Database.ThrowIfNameIsInvalid( SqlObjectType.Column, name );
 
         ref var column = ref CollectionsMarshal.GetValueRefOrAddDefault( _map, name, out var exists )!;
         if ( exists )
@@ -80,7 +80,7 @@ public abstract class SqlColumnBuilderCollection : SqlBuilderApi, ISqlColumnBuil
     public SqlColumnBuilder GetOrCreate(string name)
     {
         Table.ThrowIfRemoved();
-        Table.Database.ThrowIfNameIsInvalid( name );
+        Table.Database.ThrowIfNameIsInvalid( SqlObjectType.Column, name );
 
         ref var column = ref CollectionsMarshal.GetValueRefOrAddDefault( _map, name, out var exists )!;
         if ( exists )
@@ -127,7 +127,7 @@ public abstract class SqlColumnBuilderCollection : SqlBuilderApi, ISqlColumnBuil
     internal void ChangeName(SqlColumnBuilder column, string newName)
     {
         Assume.Equals( column, _map.GetValueOrDefault( column.Name ) );
-        Table.Database.ThrowIfNameIsInvalid( newName );
+        Table.Database.ThrowIfNameIsInvalid( column.Type, newName );
 
         ref var columnRef = ref CollectionsMarshal.GetValueRefOrAddDefault( _map, newName, out var exists )!;
         if ( exists )
