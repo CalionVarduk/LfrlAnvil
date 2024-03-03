@@ -4,7 +4,6 @@ using LfrlAnvil.Sql.Exceptions;
 using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Extensions;
 using LfrlAnvil.Sql.Objects.Builders;
-using LfrlAnvil.Sql.Tests.Helpers;
 using LfrlAnvil.TestExtensions.FluentAssertions;
 using LfrlAnvil.TestExtensions.Sql.Mocks;
 
@@ -15,7 +14,7 @@ public class SqlCheckBuilderTests : TestsBase
     [Fact]
     public void ToString_ShouldReturnCorrectResult()
     {
-        var schema = SqlDatabaseBuilderMockFactory.Create().Schemas.Create( "foo" );
+        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         var column = table.Columns.Create( "C" );
         var sut = table.Constraints.CreateCheck( column.Node > SqlNode.Literal( 0 ) );
@@ -28,7 +27,7 @@ public class SqlCheckBuilderTests : TestsBase
     [Fact]
     public void Creation_ShouldMarkTableForAlteration()
     {
-        var schema = SqlDatabaseBuilderMockFactory.Create().Schemas.Create( "foo" );
+        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         var column = table.Columns.Create( "C" );
         var pk = table.Constraints.SetPrimaryKey( column.Asc() );
@@ -62,7 +61,7 @@ public class SqlCheckBuilderTests : TestsBase
     [Fact]
     public void Creation_FollowedByRemoval_ShouldDoNothing()
     {
-        var schema = SqlDatabaseBuilderMockFactory.Create().Schemas.Create( "foo" );
+        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C" ).Asc() );
 
@@ -77,7 +76,7 @@ public class SqlCheckBuilderTests : TestsBase
     [Fact]
     public void SetName_ShouldDoNothing_WhenNewNameEqualsOldName()
     {
-        var schema = SqlDatabaseBuilderMockFactory.Create().Schemas.Create( "foo" );
+        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C" ).Asc() );
         var sut = table.Constraints.CreateCheck( SqlNode.True() );
@@ -96,7 +95,7 @@ public class SqlCheckBuilderTests : TestsBase
     [Fact]
     public void SetName_ShouldDoNothing_WhenNameChangeIsFollowedByChangeToOriginal()
     {
-        var schema = SqlDatabaseBuilderMockFactory.Create().Schemas.Create( "foo" );
+        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C" ).Asc() );
         var sut = table.Constraints.CreateCheck( SqlNode.True() );
@@ -117,7 +116,7 @@ public class SqlCheckBuilderTests : TestsBase
     [Fact]
     public void SetName_ShouldUpdateName_WhenNewNameIsDifferentFromOldName()
     {
-        var schema = SqlDatabaseBuilderMockFactory.Create().Schemas.Create( "foo" );
+        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C" ).Asc() );
         var sut = table.Constraints.CreateCheck( SqlNode.True() );
@@ -152,7 +151,7 @@ public class SqlCheckBuilderTests : TestsBase
     [InlineData( "f\'oo" )]
     public void SetName_ShouldThrowSqlObjectBuilderException_WhenNameIsInvalid(string name)
     {
-        var schema = SqlDatabaseBuilderMockFactory.Create().Schemas.Create( "foo" );
+        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C" ).Asc() );
         var sut = table.Constraints.CreateCheck( SqlNode.True() );
@@ -167,7 +166,7 @@ public class SqlCheckBuilderTests : TestsBase
     [Fact]
     public void SetName_ShouldThrowSqlObjectBuilderException_WhenCheckIsRemoved()
     {
-        var schema = SqlDatabaseBuilderMockFactory.Create().Schemas.Create( "foo" );
+        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C" ).Asc() );
         var sut = table.Constraints.CreateCheck( SqlNode.True() );
@@ -183,7 +182,7 @@ public class SqlCheckBuilderTests : TestsBase
     [Fact]
     public void SetName_ShouldThrowSqlObjectBuilderException_WhenNewNameAlreadyExistsInSchemaObjects()
     {
-        var schema = SqlDatabaseBuilderMockFactory.Create().Schemas.Create( "foo" );
+        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C" ).Asc() );
         var other = table.Constraints.CreateCheck( SqlNode.True() );
@@ -199,7 +198,7 @@ public class SqlCheckBuilderTests : TestsBase
     [Fact]
     public void SetDefaultName_ShouldUpdateName_WhenNewNameIsDifferentFromOldName()
     {
-        var schema = SqlDatabaseBuilderMockFactory.Create().Schemas.Create( "foo" );
+        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Constraints.CreateCheck( SqlNode.True() ).SetName( "bar" );
@@ -230,7 +229,7 @@ public class SqlCheckBuilderTests : TestsBase
     [Fact]
     public void SetDefaultName_ShouldThrowSqlObjectBuilderException_WhenCheckIsRemoved()
     {
-        var schema = SqlDatabaseBuilderMockFactory.Create().Schemas.Create( "foo" );
+        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Constraints.CreateCheck( SqlNode.True() ).SetName( "bar" );
@@ -246,7 +245,7 @@ public class SqlCheckBuilderTests : TestsBase
     [Fact]
     public void Remove_ShouldRemoveCheckAndClearReferencedColumns()
     {
-        var schema = SqlDatabaseBuilderMockFactory.Create().Schemas.Create( "foo" );
+        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         var column = table.Columns.Create( "C" );
         var pk = table.Constraints.SetPrimaryKey( column.Asc() );
@@ -279,7 +278,7 @@ public class SqlCheckBuilderTests : TestsBase
     [Fact]
     public void Remove_ShouldDoNothing_WhenCheckIsRemoved()
     {
-        var schema = SqlDatabaseBuilderMockFactory.Create().Schemas.Create( "foo" );
+        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C" ).Asc() );
         var sut = table.Constraints.CreateCheck( SqlNode.True() );
@@ -297,7 +296,7 @@ public class SqlCheckBuilderTests : TestsBase
     [Fact]
     public void Remove_ShouldThrowSqlObjectBuilderException_WhenCheckIsReferenced()
     {
-        var schema = SqlDatabaseBuilderMockFactory.Create().Schemas.Create( "foo" );
+        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C" ).Asc() );
         var sut = table.Constraints.CreateCheck( SqlNode.True() );
@@ -314,7 +313,7 @@ public class SqlCheckBuilderTests : TestsBase
     [Fact]
     public void QuickRemove_ShouldClearReferencingObjectsAndReferencedColumns()
     {
-        var schema = SqlDatabaseBuilderMockFactory.Create().Schemas.Create( "foo" );
+        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         var column = table.Columns.Create( "C" );
         var pk = table.Constraints.SetPrimaryKey( column.Asc() );
@@ -346,7 +345,7 @@ public class SqlCheckBuilderTests : TestsBase
     [Fact]
     public void QuickRemove_ShouldDoNothing_WhenCheckIsRemoved()
     {
-        var schema = SqlDatabaseBuilderMockFactory.Create().Schemas.Create( "foo" );
+        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C" ).Asc() );
         var sut = table.Constraints.CreateCheck( SqlNode.True() );
@@ -364,7 +363,7 @@ public class SqlCheckBuilderTests : TestsBase
     [Fact]
     public void ISqlCheckBuilder_SetName_ShouldBeEquivalentToSetName()
     {
-        var schema = SqlDatabaseBuilderMockFactory.Create().Schemas.Create( "foo" );
+        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C" ).Asc() );
         var sut = table.Constraints.CreateCheck( SqlNode.True() );
@@ -395,7 +394,7 @@ public class SqlCheckBuilderTests : TestsBase
     [Fact]
     public void ISqlConstraintBuilder_SetName_ShouldBeEquivalentToSetName()
     {
-        var schema = SqlDatabaseBuilderMockFactory.Create().Schemas.Create( "foo" );
+        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C" ).Asc() );
         var sut = table.Constraints.CreateCheck( SqlNode.True() );
@@ -426,7 +425,7 @@ public class SqlCheckBuilderTests : TestsBase
     [Fact]
     public void ISqlObjectBuilder_SetName_ShouldBeEquivalentToSetName()
     {
-        var schema = SqlDatabaseBuilderMockFactory.Create().Schemas.Create( "foo" );
+        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C" ).Asc() );
         var sut = table.Constraints.CreateCheck( SqlNode.True() );
@@ -457,7 +456,7 @@ public class SqlCheckBuilderTests : TestsBase
     [Fact]
     public void ISqlCheckBuilder_SetDefaultName_ShouldBeEquivalentToSetDefaultName()
     {
-        var schema = SqlDatabaseBuilderMockFactory.Create().Schemas.Create( "foo" );
+        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Constraints.CreateCheck( SqlNode.True() ).SetName( "bar" );
@@ -487,7 +486,7 @@ public class SqlCheckBuilderTests : TestsBase
     [Fact]
     public void ISqlConstraintBuilder_SetDefaultName_ShouldBeEquivalentToSetDefaultName()
     {
-        var schema = SqlDatabaseBuilderMockFactory.Create().Schemas.Create( "foo" );
+        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Constraints.CreateCheck( SqlNode.True() ).SetName( "bar" );

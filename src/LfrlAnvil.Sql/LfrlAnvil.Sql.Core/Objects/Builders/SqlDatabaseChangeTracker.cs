@@ -498,7 +498,7 @@ public abstract class SqlDatabaseChangeTracker : ISqlDatabaseChangeTracker
         _database = database;
     }
 
-    internal void SetModeAndAttach(SqlDatabaseCreateMode mode)
+    protected internal void SetModeAndAttach(SqlDatabaseCreateMode mode)
     {
         Assume.IsDefined( mode );
         Assume.IsNull( ActiveObject );

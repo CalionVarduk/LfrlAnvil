@@ -7,7 +7,6 @@ using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Extensions;
 using LfrlAnvil.Sql.Internal;
 using LfrlAnvil.Sql.Objects.Builders;
-using LfrlAnvil.Sql.Tests.Helpers;
 using LfrlAnvil.TestExtensions.FluentAssertions;
 using LfrlAnvil.TestExtensions.Sql.Mocks;
 
@@ -20,7 +19,7 @@ public partial class SqlDatabaseBuilderTests
         [Fact]
         public void CompletePendingChanges_ShouldMaterializePendingCreateChange()
         {
-            var sut = SqlDatabaseBuilderMockFactory.Create().Changes;
+            var sut = SqlDatabaseBuilderMock.Create().Changes;
 
             var actionCount = sut.Database.GetPendingActionCount();
             sut.Database.Schemas.Default.Objects.CreateTable( "T" );
@@ -42,7 +41,7 @@ public partial class SqlDatabaseBuilderTests
         [Fact]
         public void CompletePendingChanges_ShouldMaterializePendingRemoveChange()
         {
-            var sut = SqlDatabaseBuilderMockFactory.Create().Changes;
+            var sut = SqlDatabaseBuilderMock.Create().Changes;
 
             var table = sut.Database.Schemas.Default.Objects.CreateTable( "T" );
             sut.CompletePendingChanges();
@@ -67,7 +66,7 @@ public partial class SqlDatabaseBuilderTests
         [Fact]
         public void CompletePendingChanges_ShouldMaterializePendingAlterChange()
         {
-            var sut = SqlDatabaseBuilderMockFactory.Create().Changes;
+            var sut = SqlDatabaseBuilderMock.Create().Changes;
 
             var table = sut.Database.Schemas.Default.Objects.CreateTable( "T" );
             sut.CompletePendingChanges();
@@ -96,7 +95,7 @@ public partial class SqlDatabaseBuilderTests
         [Fact]
         public void CompletePendingChanges_ShouldDoNothing_WhenThereAreNoPendingChanges()
         {
-            var sut = SqlDatabaseBuilderMockFactory.Create().Changes;
+            var sut = SqlDatabaseBuilderMock.Create().Changes;
 
             var actionCount = sut.Database.GetPendingActionCount();
             var result = sut.CompletePendingChanges();
@@ -114,7 +113,7 @@ public partial class SqlDatabaseBuilderTests
         [Fact]
         public void GetPendingActions_ShouldMaterializePendingCreateChange()
         {
-            var sut = SqlDatabaseBuilderMockFactory.Create().Changes;
+            var sut = SqlDatabaseBuilderMock.Create().Changes;
 
             var previous = sut.GetPendingActions().ToArray();
             sut.Database.Schemas.Default.Objects.CreateTable( "T" );
@@ -132,7 +131,7 @@ public partial class SqlDatabaseBuilderTests
         [Fact]
         public void GetPendingActions_ShouldReturnPreviousChanges_WhenThereAreNoPendingChanges()
         {
-            var sut = SqlDatabaseBuilderMockFactory.Create().Changes;
+            var sut = SqlDatabaseBuilderMock.Create().Changes;
             var expected = sut.GetPendingActions().ToArray();
 
             var result = sut.GetPendingActions().ToArray();
@@ -148,7 +147,7 @@ public partial class SqlDatabaseBuilderTests
             var timeout = Fixture.Create<TimeSpan>();
             var actionCallback = Substitute.For<Action<IDbCommand>>();
             var setupCallback = Substitute.For<Action<IDbCommand>>();
-            var sut = SqlDatabaseBuilderMockFactory.Create().Changes;
+            var sut = SqlDatabaseBuilderMock.Create().Changes;
             sut.CompletePendingChanges().SetActionTimeout( timeout ).SetModeAndAttach( mode );
 
             var actionCount = sut.Database.GetPendingActionCount();
@@ -173,7 +172,7 @@ public partial class SqlDatabaseBuilderTests
             var timeout = Fixture.Create<TimeSpan>();
             var actionCallback = Substitute.For<Action<IDbCommand>>();
             var setupCallback = Substitute.For<Action<IDbCommand>>();
-            var sut = SqlDatabaseBuilderMockFactory.Create().Changes.SetActionTimeout( timeout );
+            var sut = SqlDatabaseBuilderMock.Create().Changes.SetActionTimeout( timeout );
 
             var actionCount = sut.Database.GetPendingActionCount();
             sut.Database.Schemas.Default.Objects.CreateTable( "T" );
@@ -197,7 +196,7 @@ public partial class SqlDatabaseBuilderTests
         public void AddAction_ShouldDoNothing_WhenBuilderIsDetached()
         {
             var callback = Substitute.For<Action<IDbCommand>>();
-            var sut = SqlDatabaseBuilderMockFactory.Create().Changes;
+            var sut = SqlDatabaseBuilderMock.Create().Changes;
             sut.Attach( false );
 
             var actionCount = sut.Database.GetPendingActionCount();
@@ -211,7 +210,7 @@ public partial class SqlDatabaseBuilderTests
         public void AddAction_ShouldDoNothing_WhenBuilderIsInNoChangesMode()
         {
             var callback = Substitute.For<Action<IDbCommand>>();
-            var sut = SqlDatabaseBuilderMockFactory.Create().Changes;
+            var sut = SqlDatabaseBuilderMock.Create().Changes;
             sut.CompletePendingChanges().SetModeAndAttach( SqlDatabaseCreateMode.NoChanges );
 
             var actionCount = sut.Database.GetPendingActionCount();
@@ -228,7 +227,7 @@ public partial class SqlDatabaseBuilderTests
         {
             var timeout = Fixture.Create<TimeSpan>();
             var statement = Fixture.Create<string>();
-            var sut = SqlDatabaseBuilderMockFactory.Create().Changes;
+            var sut = SqlDatabaseBuilderMock.Create().Changes;
             sut.CompletePendingChanges().SetActionTimeout( timeout ).SetModeAndAttach( mode );
 
             var actionCount = sut.Database.GetPendingActionCount();
@@ -251,7 +250,7 @@ public partial class SqlDatabaseBuilderTests
         {
             var timeout = Fixture.Create<TimeSpan>();
             var statement = Fixture.Create<string>();
-            var sut = SqlDatabaseBuilderMockFactory.Create().Changes.SetActionTimeout( timeout );
+            var sut = SqlDatabaseBuilderMock.Create().Changes.SetActionTimeout( timeout );
 
             var actionCount = sut.Database.GetPendingActionCount();
             sut.Database.Schemas.Default.Objects.CreateTable( "T" );
@@ -274,7 +273,7 @@ public partial class SqlDatabaseBuilderTests
         public void AddStatement_ShouldDoNothing_WhenBuilderIsDetached()
         {
             var statement = Fixture.Create<string>();
-            var sut = SqlDatabaseBuilderMockFactory.Create().Changes;
+            var sut = SqlDatabaseBuilderMock.Create().Changes;
             sut.Attach( false );
 
             var actionCount = sut.Database.GetPendingActionCount();
@@ -288,7 +287,7 @@ public partial class SqlDatabaseBuilderTests
         public void AddStatement_ShouldDoNothing_WhenBuilderIsInNoChangesMode()
         {
             var statement = Fixture.Create<string>();
-            var sut = SqlDatabaseBuilderMockFactory.Create().Changes;
+            var sut = SqlDatabaseBuilderMock.Create().Changes;
             sut.CompletePendingChanges().SetModeAndAttach( SqlDatabaseCreateMode.NoChanges );
 
             var actionCount = sut.Database.GetPendingActionCount();
@@ -301,7 +300,7 @@ public partial class SqlDatabaseBuilderTests
         [Fact]
         public void AddStatement_ShouldThrowSqlObjectBuilderException_WhenStatementContainsParameters()
         {
-            var sut = SqlDatabaseBuilderMockFactory.Create().Changes;
+            var sut = SqlDatabaseBuilderMock.Create().Changes;
             var action = Lambda.Of(
                 () => sut.AddStatement( SqlNode.RawStatement( Fixture.Create<string>(), SqlNode.Parameter( "a" ) ) ) );
 
@@ -317,7 +316,7 @@ public partial class SqlDatabaseBuilderTests
         {
             var timeout = Fixture.Create<TimeSpan>();
             var statement = Fixture.Create<string>();
-            var sut = SqlDatabaseBuilderMockFactory.Create().Changes;
+            var sut = SqlDatabaseBuilderMock.Create().Changes;
             sut.CompletePendingChanges().SetActionTimeout( timeout ).SetModeAndAttach( mode );
 
             var actionCount = sut.Database.GetPendingActionCount();
@@ -344,7 +343,7 @@ public partial class SqlDatabaseBuilderTests
         {
             var timeout = Fixture.Create<TimeSpan>();
             var statement = Fixture.Create<string>();
-            var sut = SqlDatabaseBuilderMockFactory.Create().Changes.SetActionTimeout( timeout );
+            var sut = SqlDatabaseBuilderMock.Create().Changes.SetActionTimeout( timeout );
 
             var actionCount = sut.Database.GetPendingActionCount();
             sut.Database.Schemas.Default.Objects.CreateTable( "T" );
@@ -371,7 +370,7 @@ public partial class SqlDatabaseBuilderTests
         public void AddParameterizedStatement_TypeErased_ShouldDoNothing_WhenBuilderIsDetached()
         {
             var statement = Fixture.Create<string>();
-            var sut = SqlDatabaseBuilderMockFactory.Create().Changes;
+            var sut = SqlDatabaseBuilderMock.Create().Changes;
             sut.Attach( false );
 
             var actionCount = sut.Database.GetPendingActionCount();
@@ -388,7 +387,7 @@ public partial class SqlDatabaseBuilderTests
         public void AddParameterizedStatement_TypeErased_ShouldDoNothing_WhenBuilderIsInNoChangesMode()
         {
             var statement = Fixture.Create<string>();
-            var sut = SqlDatabaseBuilderMockFactory.Create().Changes;
+            var sut = SqlDatabaseBuilderMock.Create().Changes;
             sut.CompletePendingChanges().SetModeAndAttach( SqlDatabaseCreateMode.NoChanges );
 
             var actionCount = sut.Database.GetPendingActionCount();
@@ -408,7 +407,7 @@ public partial class SqlDatabaseBuilderTests
         {
             var timeout = Fixture.Create<TimeSpan>();
             var statement = Fixture.Create<string>();
-            var sut = SqlDatabaseBuilderMockFactory.Create().Changes;
+            var sut = SqlDatabaseBuilderMock.Create().Changes;
             sut.CompletePendingChanges().SetActionTimeout( timeout ).SetModeAndAttach( mode );
 
             var actionCount = sut.Database.GetPendingActionCount();
@@ -435,7 +434,7 @@ public partial class SqlDatabaseBuilderTests
         {
             var timeout = Fixture.Create<TimeSpan>();
             var statement = Fixture.Create<string>();
-            var sut = SqlDatabaseBuilderMockFactory.Create().Changes;
+            var sut = SqlDatabaseBuilderMock.Create().Changes;
             sut.CompletePendingChanges().SetActionTimeout( timeout ).SetModeAndAttach( SqlDatabaseCreateMode.Commit );
 
             var actionCount = sut.Database.GetPendingActionCount();
@@ -463,7 +462,7 @@ public partial class SqlDatabaseBuilderTests
         public void AddParameterizedStatement_Generic_ShouldDoNothing_WhenBuilderIsDetached()
         {
             var statement = Fixture.Create<string>();
-            var sut = SqlDatabaseBuilderMockFactory.Create().Changes;
+            var sut = SqlDatabaseBuilderMock.Create().Changes;
             sut.Attach( false );
 
             var actionCount = sut.Database.GetPendingActionCount();
@@ -477,7 +476,7 @@ public partial class SqlDatabaseBuilderTests
         public void AddParameterizedStatement_Generic_ShouldDoNothing_WhenBuilderIsInNoChangesMode()
         {
             var statement = Fixture.Create<string>();
-            var sut = SqlDatabaseBuilderMockFactory.Create().Changes;
+            var sut = SqlDatabaseBuilderMock.Create().Changes;
             sut.CompletePendingChanges().SetModeAndAttach( SqlDatabaseCreateMode.NoChanges );
 
             var actionCount = sut.Database.GetPendingActionCount();
@@ -490,7 +489,7 @@ public partial class SqlDatabaseBuilderTests
         [Fact]
         public void AddParameterizedStatement_ShouldThrowSqlCompilerException_WhenParametersAreInvalid()
         {
-            var sut = SqlDatabaseBuilderMockFactory.Create().Changes;
+            var sut = SqlDatabaseBuilderMock.Create().Changes;
 
             var action = Lambda.Of(
                 () => sut.AddParameterizedStatement(
@@ -503,7 +502,7 @@ public partial class SqlDatabaseBuilderTests
         [Fact]
         public void GetExistenceState_ShouldReturnUnchanged_ForCreatedActiveObject()
         {
-            var sut = SqlDatabaseBuilderMockFactory.Create().Changes;
+            var sut = SqlDatabaseBuilderMock.Create().Changes;
 
             var target = sut.Database.Schemas.Default.Objects.CreateTable( "T" );
             var result = ((ISqlDatabaseChangeTracker)sut).GetExistenceState( target );
@@ -514,7 +513,7 @@ public partial class SqlDatabaseBuilderTests
         [Fact]
         public void GetExistenceState_ShouldReturnUnchanged_ForRemovedActiveObject()
         {
-            var sut = SqlDatabaseBuilderMockFactory.Create().Changes;
+            var sut = SqlDatabaseBuilderMock.Create().Changes;
             var target = sut.Database.Schemas.Default.Objects.CreateTable( "T" );
 
             sut.CompletePendingChanges();
@@ -527,7 +526,7 @@ public partial class SqlDatabaseBuilderTests
         [Fact]
         public void GetExistenceState_ShouldReturnUnchanged_ForAlteredActiveObject()
         {
-            var sut = SqlDatabaseBuilderMockFactory.Create().Changes;
+            var sut = SqlDatabaseBuilderMock.Create().Changes;
             var target = sut.Database.Schemas.Default.Objects.CreateTable( "T" );
 
             sut.CompletePendingChanges();
@@ -540,7 +539,7 @@ public partial class SqlDatabaseBuilderTests
         [Fact]
         public void GetExistenceState_ShouldReturnCreated_ForCreatedObject()
         {
-            var sut = SqlDatabaseBuilderMockFactory.Create().Changes;
+            var sut = SqlDatabaseBuilderMock.Create().Changes;
             var table = sut.Database.Schemas.Default.Objects.CreateTable( "T" );
 
             sut.CompletePendingChanges();
@@ -553,7 +552,7 @@ public partial class SqlDatabaseBuilderTests
         [Fact]
         public void GetExistenceState_ShouldReturnRemoved_ForRemovedObject()
         {
-            var sut = SqlDatabaseBuilderMockFactory.Create().Changes;
+            var sut = SqlDatabaseBuilderMock.Create().Changes;
             var target = sut.Database.Schemas.Default.Objects.CreateTable( "T" ).Columns.Create( "C" );
 
             sut.CompletePendingChanges();
@@ -566,7 +565,7 @@ public partial class SqlDatabaseBuilderTests
         [Fact]
         public void GetExistenceState_ShouldReturnUnchanged_ForAlteredObject()
         {
-            var sut = SqlDatabaseBuilderMockFactory.Create().Changes;
+            var sut = SqlDatabaseBuilderMock.Create().Changes;
             var target = sut.Database.Schemas.Default.Objects.CreateTable( "T" ).Columns.Create( "C" );
 
             sut.CompletePendingChanges();
@@ -579,7 +578,7 @@ public partial class SqlDatabaseBuilderTests
         [Fact]
         public void GetExistenceState_ShouldReturnUnchanged_ForRemovedCreatedObject()
         {
-            var sut = SqlDatabaseBuilderMockFactory.Create().Changes;
+            var sut = SqlDatabaseBuilderMock.Create().Changes;
 
             sut.CompletePendingChanges();
             var target = sut.Database.Schemas.Default.Objects.CreateTable( "T" ).Columns.Create( "C" );
@@ -592,7 +591,7 @@ public partial class SqlDatabaseBuilderTests
         [Fact]
         public void ContainsChange_ShouldReturnFalse_ForActiveObjectIsRemovedExistingChange()
         {
-            var sut = SqlDatabaseBuilderMockFactory.Create().Changes;
+            var sut = SqlDatabaseBuilderMock.Create().Changes;
             var target = sut.Database.Schemas.Default.Objects.CreateTable( "T" );
 
             var result = ((ISqlDatabaseChangeTracker)sut).ContainsChange( target, SqlObjectChangeDescriptor.IsRemoved );
@@ -603,7 +602,7 @@ public partial class SqlDatabaseBuilderTests
         [Fact]
         public void ContainsChange_ShouldReturnTrue_ForActiveObjectExistingChangeOtherThanIsRemoved()
         {
-            var sut = SqlDatabaseBuilderMockFactory.Create().Changes;
+            var sut = SqlDatabaseBuilderMock.Create().Changes;
             var target = sut.Database.Schemas.Default.Objects.CreateTable( "T" );
             sut.CompletePendingChanges();
             target.SetName( "U" );
@@ -616,7 +615,7 @@ public partial class SqlDatabaseBuilderTests
         [Fact]
         public void ContainsChange_ShouldReturnTrue_ForObjectIsRemovedExistingChange()
         {
-            var sut = SqlDatabaseBuilderMockFactory.Create().Changes;
+            var sut = SqlDatabaseBuilderMock.Create().Changes;
             var table = sut.Database.Schemas.Default.Objects.CreateTable( "T" );
             sut.CompletePendingChanges();
             var target = table.Columns.Create( "C" );
@@ -629,7 +628,7 @@ public partial class SqlDatabaseBuilderTests
         [Fact]
         public void ContainsChange_ShouldReturnTrue_ForObjectExistingChangeOtherThanIsRemoved()
         {
-            var sut = SqlDatabaseBuilderMockFactory.Create().Changes;
+            var sut = SqlDatabaseBuilderMock.Create().Changes;
             var target = sut.Database.Schemas.Default.Objects.CreateTable( "T" ).Columns.Create( "C" );
             sut.CompletePendingChanges();
             target.MarkAsNullable();
@@ -642,7 +641,7 @@ public partial class SqlDatabaseBuilderTests
         [Fact]
         public void ContainsChange_ShouldReturnFalse_ForObjectNonExistingChange()
         {
-            var sut = SqlDatabaseBuilderMockFactory.Create().Changes;
+            var sut = SqlDatabaseBuilderMock.Create().Changes;
             var target = sut.Database.Schemas.Default.Objects.CreateTable( "T" ).Columns.Create( "C" );
             sut.CompletePendingChanges();
             target.MarkAsNullable();
@@ -655,7 +654,7 @@ public partial class SqlDatabaseBuilderTests
         [Fact]
         public void GetOriginalValue_ShouldReturnEmpty_ForActiveObjectIsRemovedExistingChange()
         {
-            var sut = SqlDatabaseBuilderMockFactory.Create().Changes;
+            var sut = SqlDatabaseBuilderMock.Create().Changes;
             var target = sut.Database.Schemas.Default.Objects.CreateTable( "T" );
 
             var result = sut.GetOriginalValue( target, SqlObjectChangeDescriptor.IsRemoved );
@@ -666,7 +665,7 @@ public partial class SqlDatabaseBuilderTests
         [Fact]
         public void ContainsChange_ShouldReturnCorrectResult_ForActiveObjectExistingChangeOtherThanIsRemoved()
         {
-            var sut = SqlDatabaseBuilderMockFactory.Create().Changes;
+            var sut = SqlDatabaseBuilderMock.Create().Changes;
             var target = sut.Database.Schemas.Default.Objects.CreateTable( "T" );
             sut.CompletePendingChanges();
             target.SetName( "U" );
@@ -679,7 +678,7 @@ public partial class SqlDatabaseBuilderTests
         [Fact]
         public void GetOriginalValue_ShouldReturnCorrectResult_ForObjectIsRemovedExistingChange()
         {
-            var sut = SqlDatabaseBuilderMockFactory.Create().Changes;
+            var sut = SqlDatabaseBuilderMock.Create().Changes;
             var table = sut.Database.Schemas.Default.Objects.CreateTable( "T" );
             sut.CompletePendingChanges();
             var target = table.Columns.Create( "C" );
@@ -692,7 +691,7 @@ public partial class SqlDatabaseBuilderTests
         [Fact]
         public void GetOriginalValue_ShouldReturnCorrectResult_ForObjectExistingChangeOtherThanIsRemoved()
         {
-            var sut = SqlDatabaseBuilderMockFactory.Create().Changes;
+            var sut = SqlDatabaseBuilderMock.Create().Changes;
             var target = sut.Database.Schemas.Default.Objects.CreateTable( "T" ).Columns.Create( "C" );
             sut.CompletePendingChanges();
             target.MarkAsNullable();
@@ -705,7 +704,7 @@ public partial class SqlDatabaseBuilderTests
         [Fact]
         public void GetOriginalValue_ShouldReturnEmpty_ForObjectNonExistingChange()
         {
-            var sut = SqlDatabaseBuilderMockFactory.Create().Changes;
+            var sut = SqlDatabaseBuilderMock.Create().Changes;
             var target = sut.Database.Schemas.Default.Objects.CreateTable( "T" ).Columns.Create( "C" );
             sut.CompletePendingChanges();
             target.MarkAsNullable();
@@ -718,7 +717,7 @@ public partial class SqlDatabaseBuilderTests
         [Fact]
         public void RemovalOfCreatedActiveObject_ShouldResetActiveObjectWithoutAnyChanges()
         {
-            var sut = SqlDatabaseBuilderMockFactory.Create().Changes;
+            var sut = SqlDatabaseBuilderMock.Create().Changes;
 
             var actionCount = sut.Database.GetPendingActionCount();
             var target = sut.Database.Schemas.Default.Objects.CreateTable( "T" );
@@ -738,7 +737,7 @@ public partial class SqlDatabaseBuilderTests
         [InlineData( false )]
         public void Attach_ShouldUpdateIsAttached(bool enabled)
         {
-            var sut = SqlDatabaseBuilderMockFactory.Create().Changes;
+            var sut = SqlDatabaseBuilderMock.Create().Changes;
             sut.Attach( ! enabled );
 
             var result = ((ISqlDatabaseChangeTracker)sut).Attach( enabled );
@@ -753,7 +752,7 @@ public partial class SqlDatabaseBuilderTests
         [Fact]
         public void Attach_ShouldDoNothing_WhenBuilderIsAlreadyAttached()
         {
-            var sut = SqlDatabaseBuilderMockFactory.Create().Changes;
+            var sut = SqlDatabaseBuilderMock.Create().Changes;
 
             var result = ((ISqlDatabaseChangeTracker)sut).Attach();
 
@@ -767,7 +766,7 @@ public partial class SqlDatabaseBuilderTests
         [Fact]
         public void Attach_WithFalse_ShouldCompletePendingChanges()
         {
-            var sut = SqlDatabaseBuilderMockFactory.Create().Changes;
+            var sut = SqlDatabaseBuilderMock.Create().Changes;
 
             var actionCount = sut.Database.GetPendingActionCount();
             sut.Database.Schemas.Default.Objects.CreateTable( "T" );
@@ -791,7 +790,7 @@ public partial class SqlDatabaseBuilderTests
         [InlineData( false )]
         public void Detach_ShouldInvokeAttachWithNegatedValue(bool enabled)
         {
-            var sut = SqlDatabaseBuilderMockFactory.Create().Changes;
+            var sut = SqlDatabaseBuilderMock.Create().Changes;
 
             var result = sut.Detach( enabled );
 
@@ -808,7 +807,7 @@ public partial class SqlDatabaseBuilderTests
         public void SetActionTimeout_ShouldUpdateActionTimeout(long? seconds)
         {
             var timeout = seconds is null ? (TimeSpan?)null : TimeSpan.FromSeconds( seconds.Value );
-            ISqlDatabaseChangeTracker sut = SqlDatabaseBuilderMockFactory.Create().Changes;
+            ISqlDatabaseChangeTracker sut = SqlDatabaseBuilderMock.Create().Changes;
 
             var result = sut.SetActionTimeout( timeout );
 

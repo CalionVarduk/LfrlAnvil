@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics.Contracts;
 using System.Linq;
+using LfrlAnvil.Sql;
 using LfrlAnvil.Sql.Internal;
 using LfrlAnvil.Sql.Objects.Builders;
 
@@ -28,5 +29,10 @@ public sealed class SqlDatabaseChangeTrackerMock : SqlDatabaseChangeTracker
     protected override SqlDatabaseChangeAggregatorMock CreateAlterObjectChangeAggregator()
     {
         return new SqlDatabaseChangeAggregatorMock( this );
+    }
+
+    internal new void SetModeAndAttach(SqlDatabaseCreateMode mode)
+    {
+        base.SetModeAndAttach( mode );
     }
 }

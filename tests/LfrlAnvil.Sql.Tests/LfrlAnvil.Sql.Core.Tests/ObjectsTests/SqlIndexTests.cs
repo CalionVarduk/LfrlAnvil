@@ -1,7 +1,6 @@
 ﻿using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Extensions;
 using LfrlAnvil.Sql.Objects;
-using LfrlAnvil.Sql.Tests.Helpers;
 using LfrlAnvil.TestExtensions.FluentAssertions;
 using LfrlAnvil.TestExtensions.Sql.Mocks;
 
@@ -14,7 +13,7 @@ public class SqlIndexTests : TestsBase
     [InlineData( false )]
     public void Properties_ShouldBeCorrectlyCopiedFromBuilder(bool isUnique)
     {
-        var schemaBuilder = SqlDatabaseBuilderMockFactory.Create().Schemas.Create( "foo" );
+        var schemaBuilder = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var tableBuilder = schemaBuilder.Objects.CreateTable( "T" );
         var c1Builder = tableBuilder.Columns.Create( "C1" );
         var c2Builder = tableBuilder.Columns.Create( "C2" );
@@ -46,7 +45,7 @@ public class SqlIndexTests : TestsBase
     [Fact]
     public void Properties_ShouldBeCorrectlyCopiedFromBuilder_ForPartialIndex()
     {
-        var schemaBuilder = SqlDatabaseBuilderMockFactory.Create().Schemas.Create( "foo" );
+        var schemaBuilder = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var tableBuilder = schemaBuilder.Objects.CreateTable( "T" );
         var c1Builder = tableBuilder.Columns.Create( "C1" );
         tableBuilder.Constraints.CreateIndex( c1Builder.Asc() ).SetName( "IX_TEST" ).SetFilter( SqlNode.True() );

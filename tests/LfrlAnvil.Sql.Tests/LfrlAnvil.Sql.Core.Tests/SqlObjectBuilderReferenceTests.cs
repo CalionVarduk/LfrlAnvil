@@ -1,5 +1,5 @@
 ﻿using LfrlAnvil.Sql.Objects.Builders;
-using LfrlAnvil.Sql.Tests.Helpers;
+using LfrlAnvil.TestExtensions.Sql.Mocks;
 
 namespace LfrlAnvil.Sql.Tests;
 
@@ -8,7 +8,7 @@ public class SqlObjectBuilderReferenceTests : TestsBase
     [Fact]
     public void Create_ShouldReturnCorrectReference()
     {
-        var table = SqlDatabaseBuilderMockFactory.Create().Schemas.Default.Objects.CreateTable( "T" );
+        var table = SqlDatabaseBuilderMock.Create().Schemas.Default.Objects.CreateTable( "T" );
         var column = table.Columns.Create( "C" );
 
         var result = SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( table ), column );
@@ -23,7 +23,7 @@ public class SqlObjectBuilderReferenceTests : TestsBase
     [Fact]
     public void ToString_ShouldReturnCorrectResult()
     {
-        var table = SqlDatabaseBuilderMockFactory.Create().Schemas.Default.Objects.CreateTable( "T" );
+        var table = SqlDatabaseBuilderMock.Create().Schemas.Default.Objects.CreateTable( "T" );
         var column = table.Columns.Create( "C" );
         var sut = SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( table ), column );
 
@@ -35,7 +35,7 @@ public class SqlObjectBuilderReferenceTests : TestsBase
     [Fact]
     public void UnsafeReinterpretAs_ShouldReturnCorrectReference()
     {
-        var table = SqlDatabaseBuilderMockFactory.Create().Schemas.Default.Objects.CreateTable( "T" );
+        var table = SqlDatabaseBuilderMock.Create().Schemas.Default.Objects.CreateTable( "T" );
         var column = table.Columns.Create( "C" );
         var sut = SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( table ), column );
 
@@ -51,7 +51,7 @@ public class SqlObjectBuilderReferenceTests : TestsBase
     [Fact]
     public void SqlObjectBuilderReferenceConversionOperator_ShouldReturnCorrectReference()
     {
-        var table = SqlDatabaseBuilderMockFactory.Create().Schemas.Default.Objects.CreateTable( "T" );
+        var table = SqlDatabaseBuilderMock.Create().Schemas.Default.Objects.CreateTable( "T" );
         var column = table.Columns.Create( "C" );
         var sut = SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( table ), column );
 

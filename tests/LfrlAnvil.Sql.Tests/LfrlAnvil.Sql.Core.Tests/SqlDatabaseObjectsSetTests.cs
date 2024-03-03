@@ -1,7 +1,7 @@
 ﻿using LfrlAnvil.Sql.Internal;
 using LfrlAnvil.Sql.Objects.Builders;
-using LfrlAnvil.Sql.Tests.Helpers;
 using LfrlAnvil.TestExtensions.FluentAssertions;
+using LfrlAnvil.TestExtensions.Sql.Mocks;
 
 namespace LfrlAnvil.Sql.Tests;
 
@@ -22,7 +22,7 @@ public class SqlDatabaseObjectsSetTests : TestsBase
     [Fact]
     public void Add_ShouldAddNewObject()
     {
-        var obj = SqlDatabaseBuilderMockFactory.Create().Schemas.Default;
+        var obj = SqlDatabaseBuilderMock.Create().Schemas.Default;
         var sut = SqlDatabaseObjectsSet<SqlObjectBuilder>.Create();
 
         var result = sut.Add( obj );
@@ -38,7 +38,7 @@ public class SqlDatabaseObjectsSetTests : TestsBase
     [Fact]
     public void Add_ShouldReturnFalse_WhenObjectAlreadyExists()
     {
-        var obj = SqlDatabaseBuilderMockFactory.Create().Schemas.Default;
+        var obj = SqlDatabaseBuilderMock.Create().Schemas.Default;
         var sut = SqlDatabaseObjectsSet<SqlObjectBuilder>.Create();
         sut.Add( obj );
 
@@ -55,7 +55,7 @@ public class SqlDatabaseObjectsSetTests : TestsBase
     [Fact]
     public void Remove_ShouldRemoveExistingObject()
     {
-        var obj = SqlDatabaseBuilderMockFactory.Create().Schemas.Default;
+        var obj = SqlDatabaseBuilderMock.Create().Schemas.Default;
         var sut = SqlDatabaseObjectsSet<SqlObjectBuilder>.Create();
         sut.Add( obj );
 
@@ -72,7 +72,7 @@ public class SqlDatabaseObjectsSetTests : TestsBase
     [Fact]
     public void Remove_ShouldReturnFalse_WhenObjectDoesNotExist()
     {
-        var obj = SqlDatabaseBuilderMockFactory.Create().Schemas.Default;
+        var obj = SqlDatabaseBuilderMock.Create().Schemas.Default;
         var sut = SqlDatabaseObjectsSet<SqlObjectBuilder>.Create();
 
         var result = sut.Remove( obj );
@@ -88,7 +88,7 @@ public class SqlDatabaseObjectsSetTests : TestsBase
     [Fact]
     public void Contains_ShouldReturnTrue_WhenObjectExists()
     {
-        var obj = SqlDatabaseBuilderMockFactory.Create().Schemas.Default;
+        var obj = SqlDatabaseBuilderMock.Create().Schemas.Default;
         var sut = SqlDatabaseObjectsSet<SqlObjectBuilder>.Create();
         sut.Add( obj );
 
@@ -100,7 +100,7 @@ public class SqlDatabaseObjectsSetTests : TestsBase
     [Fact]
     public void Contains_ShouldReturnFalse_WhenObjectDoesNotExist()
     {
-        var obj = SqlDatabaseBuilderMockFactory.Create().Schemas.Default;
+        var obj = SqlDatabaseBuilderMock.Create().Schemas.Default;
         var sut = SqlDatabaseObjectsSet<SqlObjectBuilder>.Create();
 
         var result = sut.Contains( obj );
@@ -111,7 +111,7 @@ public class SqlDatabaseObjectsSetTests : TestsBase
     [Fact]
     public void Clear_ShouldRemoveAllObjects()
     {
-        var obj = SqlDatabaseBuilderMockFactory.Create().Schemas.Default;
+        var obj = SqlDatabaseBuilderMock.Create().Schemas.Default;
         var sut = SqlDatabaseObjectsSet<SqlObjectBuilder>.Create();
         sut.Add( obj );
 

@@ -1,6 +1,5 @@
 ﻿using LfrlAnvil.Sql.Extensions;
 using LfrlAnvil.Sql.Objects;
-using LfrlAnvil.Sql.Tests.Helpers;
 using LfrlAnvil.TestExtensions.FluentAssertions;
 using LfrlAnvil.TestExtensions.Sql.Mocks;
 
@@ -11,7 +10,7 @@ public class SqlIndexColumnArrayTests : TestsBase
     [Fact]
     public void From_ShouldCreateCorrectArray()
     {
-        var dbBuilder = SqlDatabaseBuilderMockFactory.Create();
+        var dbBuilder = SqlDatabaseBuilderMock.Create();
         var tableBuilder = dbBuilder.Schemas.Default.Objects.CreateTable( "T" );
         tableBuilder.Constraints.SetPrimaryKey( tableBuilder.Columns.Create( "C1" ).Asc() );
         tableBuilder.Columns.Create( "C2" );
@@ -37,7 +36,7 @@ public class SqlIndexColumnArrayTests : TestsBase
     [Fact]
     public void UnsafeReinterpretAs_ShouldCreateCorrectArray()
     {
-        var dbBuilder = SqlDatabaseBuilderMockFactory.Create();
+        var dbBuilder = SqlDatabaseBuilderMock.Create();
         var tableBuilder = dbBuilder.Schemas.Default.Objects.CreateTable( "T" );
         tableBuilder.Constraints.SetPrimaryKey( tableBuilder.Columns.Create( "C1" ).Asc() );
         tableBuilder.Columns.Create( "C2" );

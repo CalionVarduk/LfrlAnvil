@@ -3,7 +3,6 @@ using System.Linq;
 using LfrlAnvil.Functional;
 using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Objects;
-using LfrlAnvil.Sql.Tests.Helpers;
 using LfrlAnvil.TestExtensions.FluentAssertions;
 using LfrlAnvil.TestExtensions.Sql.Mocks;
 
@@ -14,7 +13,7 @@ public class SqlViewTests : TestsBase
     [Fact]
     public void Properties_ShouldBeCorrectlyCopiedFromBuilder()
     {
-        var schemaBuilder = SqlDatabaseBuilderMockFactory.Create().Schemas.Create( "foo" );
+        var schemaBuilder = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var viewBuilder = schemaBuilder.Objects.CreateView(
             "V",
             SqlNode.RawRecordSet( "bar" )
@@ -55,7 +54,7 @@ public class SqlViewTests : TestsBase
     [InlineData( "F3", false )]
     public void DataFields_Contains_ShouldReturnTrue_WhenFieldExists(string name, bool expected)
     {
-        var schemaBuilder = SqlDatabaseBuilderMockFactory.Create().Schemas.Default;
+        var schemaBuilder = SqlDatabaseBuilderMock.Create().Schemas.Default;
         schemaBuilder.Objects.CreateView(
             "V",
             SqlNode.RawRecordSet( "foo" ).ToDataSource().Select( s => new[] { s.From["F1"].AsSelf(), s.From["F2"].AsSelf() } ) );
@@ -71,7 +70,7 @@ public class SqlViewTests : TestsBase
     [Fact]
     public void DataFields_Get_ShouldReturnCorrectField()
     {
-        var schemaBuilder = SqlDatabaseBuilderMockFactory.Create().Schemas.Default;
+        var schemaBuilder = SqlDatabaseBuilderMock.Create().Schemas.Default;
         schemaBuilder.Objects.CreateView(
             "V",
             SqlNode.RawRecordSet( "foo" ).ToDataSource().Select( s => new[] { s.From["F1"].AsSelf(), s.From["F2"].AsSelf() } ) );
@@ -87,7 +86,7 @@ public class SqlViewTests : TestsBase
     [Fact]
     public void DataFields_Get_ShouldThrowKeyNotFoundException_WhenFieldDoesNotExist()
     {
-        var schemaBuilder = SqlDatabaseBuilderMockFactory.Create().Schemas.Default;
+        var schemaBuilder = SqlDatabaseBuilderMock.Create().Schemas.Default;
         schemaBuilder.Objects.CreateView(
             "V",
             SqlNode.RawRecordSet( "foo" ).ToDataSource().Select( s => new[] { s.From["F1"].AsSelf() } ) );
@@ -103,7 +102,7 @@ public class SqlViewTests : TestsBase
     [Fact]
     public void DataFields_TryGet_ShouldReturnCorrectField()
     {
-        var schemaBuilder = SqlDatabaseBuilderMockFactory.Create().Schemas.Default;
+        var schemaBuilder = SqlDatabaseBuilderMock.Create().Schemas.Default;
         schemaBuilder.Objects.CreateView(
             "V",
             SqlNode.RawRecordSet( "foo" ).ToDataSource().Select( s => new[] { s.From["F1"].AsSelf(), s.From["F2"].AsSelf() } ) );
@@ -119,7 +118,7 @@ public class SqlViewTests : TestsBase
     [Fact]
     public void DataFields_TryGet_ShouldReturnNull_WhenFieldDoesNotExist()
     {
-        var schemaBuilder = SqlDatabaseBuilderMockFactory.Create().Schemas.Default;
+        var schemaBuilder = SqlDatabaseBuilderMock.Create().Schemas.Default;
         schemaBuilder.Objects.CreateView(
             "V",
             SqlNode.RawRecordSet( "foo" ).ToDataSource().Select( s => new[] { s.From["F1"].AsSelf() } ) );

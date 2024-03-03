@@ -1,5 +1,5 @@
 ﻿using LfrlAnvil.Sql.Objects.Builders;
-using LfrlAnvil.Sql.Tests.Helpers;
+using LfrlAnvil.TestExtensions.Sql.Mocks;
 
 namespace LfrlAnvil.Sql.Tests;
 
@@ -10,7 +10,7 @@ public class SqlObjectBuilderReferenceSourceTests : TestsBase
     [InlineData( null )]
     public void Create_ShouldReturnCorrectReferenceSource(string? property)
     {
-        var table = SqlDatabaseBuilderMockFactory.Create().Schemas.Default.Objects.CreateTable( "T" );
+        var table = SqlDatabaseBuilderMock.Create().Schemas.Default.Objects.CreateTable( "T" );
         var result = SqlObjectBuilderReferenceSource.Create( table, property );
 
         using ( new AssertionScope() )
@@ -23,7 +23,7 @@ public class SqlObjectBuilderReferenceSourceTests : TestsBase
     [Fact]
     public void ToString_ShouldReturnCorrectResult_WithoutProperty()
     {
-        var table = SqlDatabaseBuilderMockFactory.Create().Schemas.Default.Objects.CreateTable( "T" );
+        var table = SqlDatabaseBuilderMock.Create().Schemas.Default.Objects.CreateTable( "T" );
         var sut = SqlObjectBuilderReferenceSource.Create( table );
 
         var result = sut.ToString();
@@ -34,7 +34,7 @@ public class SqlObjectBuilderReferenceSourceTests : TestsBase
     [Fact]
     public void ToString_ShouldReturnCorrectResult_WithProperty()
     {
-        var table = SqlDatabaseBuilderMockFactory.Create().Schemas.Default.Objects.CreateTable( "T" );
+        var table = SqlDatabaseBuilderMock.Create().Schemas.Default.Objects.CreateTable( "T" );
         var sut = SqlObjectBuilderReferenceSource.Create( table, "foo" );
 
         var result = sut.ToString();
@@ -45,7 +45,7 @@ public class SqlObjectBuilderReferenceSourceTests : TestsBase
     [Fact]
     public void GetHashCode_ShouldReturnCorrectResult()
     {
-        var table = SqlDatabaseBuilderMockFactory.Create().Schemas.Default.Objects.CreateTable( "T" );
+        var table = SqlDatabaseBuilderMock.Create().Schemas.Default.Objects.CreateTable( "T" );
         var sut = SqlObjectBuilderReferenceSource.Create( table, "foo" );
         var expected = HashCode.Combine( table.Id, "foo" );
 
@@ -57,7 +57,7 @@ public class SqlObjectBuilderReferenceSourceTests : TestsBase
     [Fact]
     public void WithProperty_ShouldReturnReferenceSourceWithNewProperty()
     {
-        var table = SqlDatabaseBuilderMockFactory.Create().Schemas.Default.Objects.CreateTable( "T" );
+        var table = SqlDatabaseBuilderMock.Create().Schemas.Default.Objects.CreateTable( "T" );
         var sut = SqlObjectBuilderReferenceSource.Create( table, "foo" );
 
         var result = sut.WithProperty( "bar" );
@@ -74,7 +74,7 @@ public class SqlObjectBuilderReferenceSourceTests : TestsBase
     [InlineData( null )]
     public void UnsafeReinterpretAs_ShouldReturnCorrectReferenceSource(string? property)
     {
-        var table = SqlDatabaseBuilderMockFactory.Create().Schemas.Default.Objects.CreateTable( "T" );
+        var table = SqlDatabaseBuilderMock.Create().Schemas.Default.Objects.CreateTable( "T" );
         var sut = SqlObjectBuilderReferenceSource.Create( table, property );
 
         var result = sut.UnsafeReinterpretAs<ISqlObjectBuilder>();
@@ -91,7 +91,7 @@ public class SqlObjectBuilderReferenceSourceTests : TestsBase
     [InlineData( null )]
     public void SqlObjectBuilderReferenceConversionOperator_ShouldReturnCorrectReferenceSource(string? property)
     {
-        var table = SqlDatabaseBuilderMockFactory.Create().Schemas.Default.Objects.CreateTable( "T" );
+        var table = SqlDatabaseBuilderMock.Create().Schemas.Default.Objects.CreateTable( "T" );
         var sut = SqlObjectBuilderReferenceSource.Create( table, property );
 
         SqlObjectBuilderReferenceSource<ISqlObjectBuilder> result = sut;
@@ -106,7 +106,7 @@ public class SqlObjectBuilderReferenceSourceTests : TestsBase
     [Fact]
     public void EqualityOperator_ShouldReturnTrue_WhenObjectAndPropertyAreTheSame()
     {
-        var table = SqlDatabaseBuilderMockFactory.Create().Schemas.Default.Objects.CreateTable( "T" );
+        var table = SqlDatabaseBuilderMock.Create().Schemas.Default.Objects.CreateTable( "T" );
         var a = SqlObjectBuilderReferenceSource.Create( table, "foo" );
         var b = SqlObjectBuilderReferenceSource.Create( table, "foo" );
 
@@ -118,7 +118,7 @@ public class SqlObjectBuilderReferenceSourceTests : TestsBase
     [Fact]
     public void EqualityOperator_ShouldReturnFalse_WhenObjectIsDifferent()
     {
-        var table = SqlDatabaseBuilderMockFactory.Create().Schemas.Default.Objects.CreateTable( "T" );
+        var table = SqlDatabaseBuilderMock.Create().Schemas.Default.Objects.CreateTable( "T" );
         var other = table.Database.Schemas.Default;
         var a = SqlObjectBuilderReferenceSource.Create( table, "foo" );
         var b = SqlObjectBuilderReferenceSource.Create( other, "foo" );
@@ -131,7 +131,7 @@ public class SqlObjectBuilderReferenceSourceTests : TestsBase
     [Fact]
     public void EqualityOperator_ShouldReturnFalse_WhenPropertyIsDifferent()
     {
-        var table = SqlDatabaseBuilderMockFactory.Create().Schemas.Default.Objects.CreateTable( "T" );
+        var table = SqlDatabaseBuilderMock.Create().Schemas.Default.Objects.CreateTable( "T" );
         var a = SqlObjectBuilderReferenceSource.Create( table, "foo" );
         var b = SqlObjectBuilderReferenceSource.Create( table, "bar" );
 
@@ -143,7 +143,7 @@ public class SqlObjectBuilderReferenceSourceTests : TestsBase
     [Fact]
     public void InequalityOperator_ShouldReturnFalse_WhenObjectAndPropertyAreTheSame()
     {
-        var table = SqlDatabaseBuilderMockFactory.Create().Schemas.Default.Objects.CreateTable( "T" );
+        var table = SqlDatabaseBuilderMock.Create().Schemas.Default.Objects.CreateTable( "T" );
         var a = SqlObjectBuilderReferenceSource.Create( table, "foo" );
         var b = SqlObjectBuilderReferenceSource.Create( table, "foo" );
 
@@ -155,7 +155,7 @@ public class SqlObjectBuilderReferenceSourceTests : TestsBase
     [Fact]
     public void InequalityOperator_ShouldReturnTrue_WhenObjectIsDifferent()
     {
-        var table = SqlDatabaseBuilderMockFactory.Create().Schemas.Default.Objects.CreateTable( "T" );
+        var table = SqlDatabaseBuilderMock.Create().Schemas.Default.Objects.CreateTable( "T" );
         var other = table.Database.Schemas.Default;
         var a = SqlObjectBuilderReferenceSource.Create( table, "foo" );
         var b = SqlObjectBuilderReferenceSource.Create( other, "foo" );
@@ -168,7 +168,7 @@ public class SqlObjectBuilderReferenceSourceTests : TestsBase
     [Fact]
     public void InequalityOperator_ShouldReturnTrue_WhenPropertyIsDifferent()
     {
-        var table = SqlDatabaseBuilderMockFactory.Create().Schemas.Default.Objects.CreateTable( "T" );
+        var table = SqlDatabaseBuilderMock.Create().Schemas.Default.Objects.CreateTable( "T" );
         var a = SqlObjectBuilderReferenceSource.Create( table, "foo" );
         var b = SqlObjectBuilderReferenceSource.Create( table, "bar" );
 

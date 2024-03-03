@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics.Contracts;
+using LfrlAnvil.Sql;
 using LfrlAnvil.Sql.Internal;
 using LfrlAnvil.Sql.Objects.Builders;
 
@@ -17,7 +18,10 @@ public sealed class SqlDatabaseBuilderMock : SqlDatabaseBuilder
             new SqlQueryReaderFactoryMock( typeDefinitions ),
             new SqlParameterBinderFactoryMock( typeDefinitions ),
             new SqlSchemaBuilderCollectionMock(),
-            new SqlDatabaseChangeTrackerMock() ) { }
+            new SqlDatabaseChangeTrackerMock() )
+    {
+        Changes.SetModeAndAttach( SqlDatabaseCreateMode.DryRun );
+    }
 
     public new SqlSchemaBuilderCollectionMock Schemas => ReinterpretCast.To<SqlSchemaBuilderCollectionMock>( base.Schemas );
     public new SqlDataTypeProviderMock DataTypes => ReinterpretCast.To<SqlDataTypeProviderMock>( base.DataTypes );

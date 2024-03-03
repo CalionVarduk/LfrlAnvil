@@ -4,7 +4,6 @@ using LfrlAnvil.Sql.Exceptions;
 using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Extensions;
 using LfrlAnvil.Sql.Objects.Builders;
-using LfrlAnvil.Sql.Tests.Helpers;
 using LfrlAnvil.TestExtensions.FluentAssertions;
 using LfrlAnvil.TestExtensions.Sql.Mocks;
 
@@ -17,7 +16,7 @@ public partial class SqlTableBuilderTests
         [Fact]
         public void Create_ShouldCreateNewColumn()
         {
-            var schema = SqlDatabaseBuilderMockFactory.Create().Schemas.Create( "foo" );
+            var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
             var sut = table.Columns;
 
@@ -50,7 +49,7 @@ public partial class SqlTableBuilderTests
         [Fact]
         public void Create_ShouldThrowSqlObjectBuilderException_WhenColumnNameAlreadyExists()
         {
-            var schema = SqlDatabaseBuilderMockFactory.Create().Schemas.Create( "foo" );
+            var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
             var sut = table.Columns;
             sut.Create( "C" );
@@ -65,7 +64,7 @@ public partial class SqlTableBuilderTests
         [Fact]
         public void Create_ShouldThrowSqlObjectBuilderException_WhenTableIsRemoved()
         {
-            var schema = SqlDatabaseBuilderMockFactory.Create().Schemas.Create( "foo" );
+            var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
             var sut = table.Columns;
             table.Remove();
@@ -84,7 +83,7 @@ public partial class SqlTableBuilderTests
         [InlineData( "f\'oo" )]
         public void Create_ShouldThrowSqlObjectBuilderException_WhenNameIsInvalid(string name)
         {
-            var schema = SqlDatabaseBuilderMockFactory.Create().Schemas.Create( "foo" );
+            var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
             var sut = table.Columns;
 
@@ -98,7 +97,7 @@ public partial class SqlTableBuilderTests
         [Fact]
         public void GetOrCreate_ShouldCreateNewColumn_WhenColumnDoesNotExist()
         {
-            var schema = SqlDatabaseBuilderMockFactory.Create().Schemas.Create( "foo" );
+            var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
             var sut = table.Columns;
 
@@ -131,7 +130,7 @@ public partial class SqlTableBuilderTests
         [Fact]
         public void GetOrCreate_ShouldReturnExistingColumn_WhenColumnNameAlreadyExists()
         {
-            var schema = SqlDatabaseBuilderMockFactory.Create().Schemas.Create( "foo" );
+            var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
             var sut = table.Columns;
             var expected = sut.Create( "C" );
@@ -148,7 +147,7 @@ public partial class SqlTableBuilderTests
         [Fact]
         public void GetOrCreate_ShouldThrowSqlObjectBuilderException_WhenTableIsRemoved()
         {
-            var schema = SqlDatabaseBuilderMockFactory.Create().Schemas.Create( "foo" );
+            var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
             var sut = table.Columns;
             table.Remove();
@@ -167,7 +166,7 @@ public partial class SqlTableBuilderTests
         [InlineData( "f\'oo" )]
         public void GetOrCreate_ShouldThrowSqlObjectBuilderException_WhenNameIsInvalid(string name)
         {
-            var schema = SqlDatabaseBuilderMockFactory.Create().Schemas.Create( "foo" );
+            var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
             var sut = table.Columns;
 
@@ -183,7 +182,7 @@ public partial class SqlTableBuilderTests
         [InlineData( "D", false )]
         public void Contains_ShouldReturnTrue_WhenColumnExists(string name, bool expected)
         {
-            var schema = SqlDatabaseBuilderMockFactory.Create().Schemas.Create( "foo" );
+            var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
             var sut = table.Columns;
             sut.Create( "C" );
@@ -196,7 +195,7 @@ public partial class SqlTableBuilderTests
         [Fact]
         public void Get_ShouldReturnExistingColumn()
         {
-            var schema = SqlDatabaseBuilderMockFactory.Create().Schemas.Create( "foo" );
+            var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
             var sut = table.Columns;
             var expected = sut.Create( "C" );
@@ -209,7 +208,7 @@ public partial class SqlTableBuilderTests
         [Fact]
         public void Get_ShouldThrowKeyNotFoundException_WhenColumnDoesNotExist()
         {
-            var schema = SqlDatabaseBuilderMockFactory.Create().Schemas.Create( "foo" );
+            var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
             var sut = table.Columns;
             sut.Create( "C" );
@@ -222,7 +221,7 @@ public partial class SqlTableBuilderTests
         [Fact]
         public void TryGet_ShouldReturnExistingColumn()
         {
-            var schema = SqlDatabaseBuilderMockFactory.Create().Schemas.Create( "foo" );
+            var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
             var sut = table.Columns;
             var expected = sut.Create( "C" );
@@ -235,7 +234,7 @@ public partial class SqlTableBuilderTests
         [Fact]
         public void TryGet_ShouldReturnNull_WhenColumnDoesNotExist()
         {
-            var schema = SqlDatabaseBuilderMockFactory.Create().Schemas.Create( "foo" );
+            var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
             var sut = table.Columns;
             sut.Create( "C" );
@@ -248,7 +247,7 @@ public partial class SqlTableBuilderTests
         [Fact]
         public void Remove_ShouldRemoveExistingColumn()
         {
-            var schema = SqlDatabaseBuilderMockFactory.Create().Schemas.Create( "foo" );
+            var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
             var sut = table.Columns;
             var column = sut.Create( "C" );
@@ -266,7 +265,7 @@ public partial class SqlTableBuilderTests
         [Fact]
         public void Remove_ShouldReturnFalse_WhenColumnDoesNotExist()
         {
-            var schema = SqlDatabaseBuilderMockFactory.Create().Schemas.Create( "foo" );
+            var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
             var sut = table.Columns;
 
@@ -278,7 +277,7 @@ public partial class SqlTableBuilderTests
         [Fact]
         public void Remove_ShouldReturnFalse_WhenColumnExistsButIsReferencedByIndex()
         {
-            var schema = SqlDatabaseBuilderMockFactory.Create().Schemas.Create( "foo" );
+            var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
             var sut = table.Columns;
             table.Constraints.SetPrimaryKey( sut.Create( "C1" ).Asc() );
@@ -298,7 +297,7 @@ public partial class SqlTableBuilderTests
         [Fact]
         public void Remove_ShouldReturnFalse_WhenColumnExistsButIsReferencedByIndexFilter()
         {
-            var schema = SqlDatabaseBuilderMockFactory.Create().Schemas.Create( "foo" );
+            var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
             var sut = table.Columns;
             table.Constraints.SetPrimaryKey( sut.Create( "C1" ).Asc() );
@@ -318,7 +317,7 @@ public partial class SqlTableBuilderTests
         [Fact]
         public void Remove_ShouldReturnFalse_WhenColumnExistsButIsReferencedByView()
         {
-            var schema = SqlDatabaseBuilderMockFactory.Create().Schemas.Create( "foo" );
+            var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
             var sut = table.Columns;
             table.Constraints.SetPrimaryKey( sut.Create( "C1" ).Asc() );
@@ -338,7 +337,7 @@ public partial class SqlTableBuilderTests
         [Fact]
         public void Remove_ShouldReturnFalse_WhenColumnExistsButIsReferencedByCheck()
         {
-            var schema = SqlDatabaseBuilderMockFactory.Create().Schemas.Create( "foo" );
+            var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
             var sut = table.Columns;
             table.Constraints.SetPrimaryKey( sut.Create( "C1" ).Asc() );
@@ -358,7 +357,7 @@ public partial class SqlTableBuilderTests
         [Fact]
         public void SetDefaultTypeDefinition_ShouldUpdateDefaultTypeDefinition()
         {
-            var schema = SqlDatabaseBuilderMockFactory.Create().Schemas.Create( "foo" );
+            var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
             var sut = table.Columns;
             var definition = schema.Database.TypeDefinitions.GetByType<string>();
@@ -375,10 +374,10 @@ public partial class SqlTableBuilderTests
         [Fact]
         public void SetDefaultTypeDefinition_ShouldThrowSqlObjectBuilderException_WhenDefinitionDoesNotBelongToTheDatabase()
         {
-            var schema = SqlDatabaseBuilderMockFactory.Create().Schemas.Create( "foo" );
+            var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
             var sut = table.Columns;
-            var definition = SqlDatabaseBuilderMockFactory.Create().TypeDefinitions.GetByType<string>();
+            var definition = SqlDatabaseBuilderMock.Create().TypeDefinitions.GetByType<string>();
 
             var action = Lambda.Of( () => ((ISqlColumnBuilderCollection)sut).SetDefaultTypeDefinition( definition ) );
 
@@ -390,7 +389,7 @@ public partial class SqlTableBuilderTests
         [Fact]
         public void SetDefaultTypeDefinition_ShouldThrowSqlObjectCastException_WhenDefinitionIsOfInvalidType()
         {
-            var schema = SqlDatabaseBuilderMockFactory.Create().Schemas.Create( "foo" );
+            var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
             var sut = table.Columns;
             var definition = Substitute.For<ISqlColumnTypeDefinition>();
@@ -405,7 +404,7 @@ public partial class SqlTableBuilderTests
         [Fact]
         public void ISqlColumnBuilderCollection_Create_ShouldBeEquivalentToCreate()
         {
-            var schema = SqlDatabaseBuilderMockFactory.Create().Schemas.Create( "foo" );
+            var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
             var sut = table.Columns;
 
@@ -431,7 +430,7 @@ public partial class SqlTableBuilderTests
         [Fact]
         public void ISqlColumnBuilderCollection_GetOrCreate_ShouldBeEquivalentToGetOrCreate()
         {
-            var schema = SqlDatabaseBuilderMockFactory.Create().Schemas.Create( "foo" );
+            var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
             var sut = table.Columns;
             var expected = sut.Create( "C" );

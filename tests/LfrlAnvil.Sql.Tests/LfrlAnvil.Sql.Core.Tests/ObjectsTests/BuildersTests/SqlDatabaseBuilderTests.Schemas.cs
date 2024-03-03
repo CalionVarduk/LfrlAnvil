@@ -4,7 +4,6 @@ using LfrlAnvil.Sql.Exceptions;
 using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Extensions;
 using LfrlAnvil.Sql.Objects.Builders;
-using LfrlAnvil.Sql.Tests.Helpers;
 using LfrlAnvil.TestExtensions.FluentAssertions;
 using LfrlAnvil.TestExtensions.Sql.Mocks;
 
@@ -17,7 +16,7 @@ public partial class SqlDatabaseBuilderTests
         [Fact]
         public void Create_ShouldCreateNewSchema()
         {
-            var sut = SqlDatabaseBuilderMockFactory.Create().Schemas;
+            var sut = SqlDatabaseBuilderMock.Create().Schemas;
 
             var result = sut.Create( "foo" );
 
@@ -45,7 +44,7 @@ public partial class SqlDatabaseBuilderTests
         [Fact]
         public void Create_ShouldThrowSqlObjectBuilderException_WhenSchemaNameAlreadyExists()
         {
-            var sut = SqlDatabaseBuilderMockFactory.Create().Schemas;
+            var sut = SqlDatabaseBuilderMock.Create().Schemas;
 
             var action = Lambda.Of( () => sut.Create( sut.Database.Schemas.Default.Name ) );
 
@@ -61,7 +60,7 @@ public partial class SqlDatabaseBuilderTests
         [InlineData( "f\'oo" )]
         public void Create_ShouldThrowSqlObjectBuilderException_WhenNameIsInvalid(string name)
         {
-            var sut = SqlDatabaseBuilderMockFactory.Create().Schemas;
+            var sut = SqlDatabaseBuilderMock.Create().Schemas;
 
             var action = Lambda.Of( () => sut.Create( name ) );
 
@@ -73,7 +72,7 @@ public partial class SqlDatabaseBuilderTests
         [Fact]
         public void GetOrCreate_ShouldCreateNewSchema_WhenSchemaDoesNotExist()
         {
-            var sut = SqlDatabaseBuilderMockFactory.Create().Schemas;
+            var sut = SqlDatabaseBuilderMock.Create().Schemas;
 
             var result = sut.GetOrCreate( "foo" );
 
@@ -101,7 +100,7 @@ public partial class SqlDatabaseBuilderTests
         [Fact]
         public void GetOrCreate_ShouldReturnExistingSchema_WhenSchemaNameAlreadyExists()
         {
-            var sut = SqlDatabaseBuilderMockFactory.Create().Schemas;
+            var sut = SqlDatabaseBuilderMock.Create().Schemas;
             var expected = sut.Default;
 
             var result = sut.GetOrCreate( expected.Name );
@@ -120,7 +119,7 @@ public partial class SqlDatabaseBuilderTests
         [InlineData( "f\'oo" )]
         public void GetOrCreate_ShouldThrowSqlObjectBuilderException_WhenNameIsInvalid(string name)
         {
-            var sut = SqlDatabaseBuilderMockFactory.Create().Schemas;
+            var sut = SqlDatabaseBuilderMock.Create().Schemas;
 
             var action = Lambda.Of( () => sut.GetOrCreate( name ) );
 
@@ -135,7 +134,7 @@ public partial class SqlDatabaseBuilderTests
         [InlineData( "bar", false )]
         public void Contains_ShouldReturnTrue_WhenSchemaExists(string name, bool expected)
         {
-            var sut = SqlDatabaseBuilderMockFactory.Create().Schemas;
+            var sut = SqlDatabaseBuilderMock.Create().Schemas;
             sut.Create( "foo" );
 
             var result = sut.Contains( name );
@@ -146,7 +145,7 @@ public partial class SqlDatabaseBuilderTests
         [Fact]
         public void Get_ShouldReturnExistingSchema()
         {
-            var sut = SqlDatabaseBuilderMockFactory.Create().Schemas;
+            var sut = SqlDatabaseBuilderMock.Create().Schemas;
             var expected = sut.Create( "foo" );
 
             var result = ((ISqlSchemaBuilderCollection)sut).Get( "foo" );
@@ -157,7 +156,7 @@ public partial class SqlDatabaseBuilderTests
         [Fact]
         public void Get_ShouldThrowKeyNotFoundException_WhenSchemaDoesNotExist()
         {
-            var sut = SqlDatabaseBuilderMockFactory.Create().Schemas;
+            var sut = SqlDatabaseBuilderMock.Create().Schemas;
             var action = Lambda.Of( () => ((ISqlSchemaBuilderCollection)sut).Get( "foo" ) );
             action.Should().ThrowExactly<KeyNotFoundException>();
         }
@@ -165,7 +164,7 @@ public partial class SqlDatabaseBuilderTests
         [Fact]
         public void TryGet_ShouldReturnExistingSchema()
         {
-            var sut = SqlDatabaseBuilderMockFactory.Create().Schemas;
+            var sut = SqlDatabaseBuilderMock.Create().Schemas;
             var expected = sut.Create( "foo" );
 
             var result = ((ISqlSchemaBuilderCollection)sut).TryGet( "foo" );
@@ -176,7 +175,7 @@ public partial class SqlDatabaseBuilderTests
         [Fact]
         public void TryGet_ShouldReturnNull_WhenSchemaDoesNotExist()
         {
-            var sut = SqlDatabaseBuilderMockFactory.Create().Schemas;
+            var sut = SqlDatabaseBuilderMock.Create().Schemas;
             var result = ((ISqlSchemaBuilderCollection)sut).TryGet( "foo" );
             result.Should().BeNull();
         }
@@ -184,7 +183,7 @@ public partial class SqlDatabaseBuilderTests
         [Fact]
         public void Remove_ShouldRemoveExistingSchema()
         {
-            var sut = SqlDatabaseBuilderMockFactory.Create().Schemas;
+            var sut = SqlDatabaseBuilderMock.Create().Schemas;
             var schema = sut.Create( "foo" );
             var otherTable = schema.Objects.CreateTable( "U" );
             var otherPk = otherTable.Constraints.SetPrimaryKey( otherTable.Columns.Create( "D1" ).Asc() );
@@ -241,7 +240,7 @@ public partial class SqlDatabaseBuilderTests
         [Fact]
         public void Remove_ShouldReturnFalse_WhenSchemaDoesNotExist()
         {
-            var sut = SqlDatabaseBuilderMockFactory.Create().Schemas;
+            var sut = SqlDatabaseBuilderMock.Create().Schemas;
             var result = sut.Remove( "foo" );
             result.Should().BeFalse();
         }
@@ -249,7 +248,7 @@ public partial class SqlDatabaseBuilderTests
         [Fact]
         public void Remove_ShouldReturnFalse_WhenSchemaIsDefault()
         {
-            var sut = SqlDatabaseBuilderMockFactory.Create().Schemas;
+            var sut = SqlDatabaseBuilderMock.Create().Schemas;
 
             var result = sut.Remove( sut.Database.Schemas.Default.Name );
 
@@ -265,7 +264,7 @@ public partial class SqlDatabaseBuilderTests
         [Fact]
         public void Remove_ShouldReturnFalse_WhenSchemaIsReferencedByForeignKeyFromAnotherSchema()
         {
-            var sut = SqlDatabaseBuilderMockFactory.Create().Schemas;
+            var sut = SqlDatabaseBuilderMock.Create().Schemas;
             var schema = sut.Create( "foo" );
             var table = schema.Objects.CreateTable( "T1" );
             var pk = table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
@@ -288,7 +287,7 @@ public partial class SqlDatabaseBuilderTests
         [Fact]
         public void Remove_ShouldReturnFalse_WhenSchemaIsReferencedByViewFromAnotherSchema()
         {
-            var sut = SqlDatabaseBuilderMockFactory.Create().Schemas;
+            var sut = SqlDatabaseBuilderMock.Create().Schemas;
             var schema = sut.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
             table.Constraints.SetPrimaryKey( table.Columns.Create( "C" ).Asc() );
@@ -309,7 +308,7 @@ public partial class SqlDatabaseBuilderTests
         [Fact]
         public void GetEnumerator_ShouldReturnCorrectResult()
         {
-            var sut = SqlDatabaseBuilderMockFactory.Create().Schemas;
+            var sut = SqlDatabaseBuilderMock.Create().Schemas;
             var schema = sut.Create( "foo" );
 
             var result = new List<SqlSchemaBuilderMock>();
@@ -326,7 +325,7 @@ public partial class SqlDatabaseBuilderTests
         [Fact]
         public void ISqlSchemaBuilderCollection_Create_ShouldBeEquivalentToCreate()
         {
-            var sut = SqlDatabaseBuilderMockFactory.Create().Schemas;
+            var sut = SqlDatabaseBuilderMock.Create().Schemas;
 
             var result = ((ISqlSchemaBuilderCollection)sut).Create( "foo" );
 
@@ -348,7 +347,7 @@ public partial class SqlDatabaseBuilderTests
         [Fact]
         public void ISqlSchemaBuilderCollection_GetOrCreate_ShouldBeEquivalentToGetOrCreate()
         {
-            var sut = SqlDatabaseBuilderMockFactory.Create().Schemas;
+            var sut = SqlDatabaseBuilderMock.Create().Schemas;
             var expected = sut.Default;
 
             var result = ((ISqlSchemaBuilderCollection)sut).GetOrCreate( expected.Name );
