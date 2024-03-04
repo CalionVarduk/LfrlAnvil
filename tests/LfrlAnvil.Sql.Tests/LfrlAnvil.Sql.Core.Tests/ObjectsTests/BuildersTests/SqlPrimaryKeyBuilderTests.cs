@@ -33,7 +33,7 @@ public class SqlPrimaryKeyBuilderTests : TestsBase
 
         var actionCount = schema.Database.GetPendingActionCount();
         var sut = table.Constraints.SetPrimaryKey( c2.Asc() );
-        var statements = schema.Database.GetLastPendingActions( actionCount );
+        var actions = schema.Database.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )
         {
@@ -41,8 +41,8 @@ public class SqlPrimaryKeyBuilderTests : TestsBase
             schema.Objects.TryGet( sut.Name ).Should().BeSameAs( sut );
             sut.Name.Should().Be( "PK_T" );
 
-            statements.Should().HaveCount( 1 );
-            statements.ElementAtOrDefault( 0 )
+            actions.Should().HaveCount( 1 );
+            actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .Be(
                     @"ALTER [Table] foo.T
@@ -62,12 +62,12 @@ public class SqlPrimaryKeyBuilderTests : TestsBase
 
         var actionCount = schema.Database.GetPendingActionCount();
         var result = sut.SetName( sut.Name );
-        var statements = schema.Database.GetLastPendingActions( actionCount );
+        var actions = schema.Database.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )
         {
             result.Should().BeSameAs( sut );
-            statements.Should().BeEmpty();
+            actions.Should().BeEmpty();
         }
     }
 
@@ -82,12 +82,12 @@ public class SqlPrimaryKeyBuilderTests : TestsBase
         var actionCount = schema.Database.GetPendingActionCount();
         sut.SetName( "bar" );
         var result = sut.SetName( oldName );
-        var statements = schema.Database.GetLastPendingActions( actionCount );
+        var actions = schema.Database.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )
         {
             result.Should().BeSameAs( sut );
-            statements.Should().BeEmpty();
+            actions.Should().BeEmpty();
         }
     }
 
@@ -101,7 +101,7 @@ public class SqlPrimaryKeyBuilderTests : TestsBase
 
         var actionCount = schema.Database.GetPendingActionCount();
         var result = sut.SetName( "bar" );
-        var statements = schema.Database.GetLastPendingActions( actionCount );
+        var actions = schema.Database.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )
         {
@@ -112,8 +112,8 @@ public class SqlPrimaryKeyBuilderTests : TestsBase
             schema.Objects.TryGet( "bar" ).Should().BeSameAs( sut );
             schema.Objects.TryGet( oldName ).Should().BeNull();
 
-            statements.Should().HaveCount( 1 );
-            statements.ElementAtOrDefault( 0 )
+            actions.Should().HaveCount( 1 );
+            actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .Be(
                     @"ALTER [Table] foo.T
@@ -417,7 +417,7 @@ public class SqlPrimaryKeyBuilderTests : TestsBase
 
         var actionCount = schema.Database.GetPendingActionCount();
         var result = ((ISqlPrimaryKeyBuilder)sut).SetName( "bar" );
-        var statements = schema.Database.GetLastPendingActions( actionCount );
+        var actions = schema.Database.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )
         {
@@ -428,8 +428,8 @@ public class SqlPrimaryKeyBuilderTests : TestsBase
             schema.Objects.TryGet( "bar" ).Should().BeSameAs( sut );
             schema.Objects.TryGet( oldName ).Should().BeNull();
 
-            statements.Should().HaveCount( 1 );
-            statements.ElementAtOrDefault( 0 )
+            actions.Should().HaveCount( 1 );
+            actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .Be(
                     @"ALTER [Table] foo.T
@@ -447,7 +447,7 @@ public class SqlPrimaryKeyBuilderTests : TestsBase
 
         var actionCount = schema.Database.GetPendingActionCount();
         var result = ((ISqlConstraintBuilder)sut).SetName( "bar" );
-        var statements = schema.Database.GetLastPendingActions( actionCount );
+        var actions = schema.Database.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )
         {
@@ -458,8 +458,8 @@ public class SqlPrimaryKeyBuilderTests : TestsBase
             schema.Objects.TryGet( "bar" ).Should().BeSameAs( sut );
             schema.Objects.TryGet( oldName ).Should().BeNull();
 
-            statements.Should().HaveCount( 1 );
-            statements.ElementAtOrDefault( 0 )
+            actions.Should().HaveCount( 1 );
+            actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .Be(
                     @"ALTER [Table] foo.T
@@ -477,7 +477,7 @@ public class SqlPrimaryKeyBuilderTests : TestsBase
 
         var actionCount = schema.Database.GetPendingActionCount();
         var result = ((ISqlObjectBuilder)sut).SetName( "bar" );
-        var statements = schema.Database.GetLastPendingActions( actionCount );
+        var actions = schema.Database.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )
         {
@@ -488,8 +488,8 @@ public class SqlPrimaryKeyBuilderTests : TestsBase
             schema.Objects.TryGet( "bar" ).Should().BeSameAs( sut );
             schema.Objects.TryGet( oldName ).Should().BeNull();
 
-            statements.Should().HaveCount( 1 );
-            statements.ElementAtOrDefault( 0 )
+            actions.Should().HaveCount( 1 );
+            actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .Be(
                     @"ALTER [Table] foo.T

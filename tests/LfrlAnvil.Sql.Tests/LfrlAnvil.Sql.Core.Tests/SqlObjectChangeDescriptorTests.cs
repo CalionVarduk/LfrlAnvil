@@ -16,7 +16,6 @@ public class SqlObjectChangeDescriptorTests : TestsBase
     [InlineData( 7 )]
     [InlineData( 8 )]
     [InlineData( 9 )]
-    [InlineData( 10 )]
     public void Create_ShouldThrowArgumentOutOfRangeException_WhenKeyIsReserved(int key)
     {
         var action = Lambda.Of( () => SqlObjectChangeDescriptor<string>.Create( "foo", key ) );
@@ -25,7 +24,7 @@ public class SqlObjectChangeDescriptorTests : TestsBase
 
     [Theory]
     [InlineData( -1 )]
-    [InlineData( 11 )]
+    [InlineData( 10 )]
     public void Create_ShouldReturnCorrectChangeDescriptor(int key)
     {
         var result = SqlObjectChangeDescriptor<string>.Create( "foo", key );
@@ -43,7 +42,7 @@ public class SqlObjectChangeDescriptorTests : TestsBase
     {
         var sut = SqlObjectChangeDescriptor.IsNullable;
         var result = sut.ToString();
-        result.Should().Be( "[3] : 'IsNullable' (System.Boolean)" );
+        result.Should().Be( "[2] : 'IsNullable' (System.Boolean)" );
     }
 
     [Fact]

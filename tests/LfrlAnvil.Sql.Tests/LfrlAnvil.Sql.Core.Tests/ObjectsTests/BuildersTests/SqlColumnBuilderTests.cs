@@ -311,8 +311,8 @@ public class SqlColumnBuilderTests : TestsBase
                 .Sql.Should()
                 .Be(
                     @"ALTER [Table] foo.T
-  ALTER [Column] foo.T.C2 ([4] : 'DataType' (LfrlAnvil.Sql.ISqlDataType) FROM OBJECT)
-  ALTER [Column] foo.T.C2 ([5] : 'DefaultValue' (LfrlAnvil.Sql.Expressions.SqlExpressionNode) FROM ""123"" : System.Int32);" );
+  ALTER [Column] foo.T.C2 ([3] : 'DataType' (LfrlAnvil.Sql.ISqlDataType) FROM OBJECT)
+  ALTER [Column] foo.T.C2 ([4] : 'DefaultValue' (LfrlAnvil.Sql.Expressions.SqlExpressionNode) FROM ""123"" : System.Int32);" );
         }
     }
 
@@ -481,7 +481,7 @@ public class SqlColumnBuilderTests : TestsBase
                 .Sql.Should()
                 .Be(
                     @"ALTER [Table] foo.T
-  ALTER [Column] foo.T.C2 ([3] : 'IsNullable' (System.Boolean) FROM False);" );
+  ALTER [Column] foo.T.C2 ([2] : 'IsNullable' (System.Boolean) FROM False);" );
         }
     }
 
@@ -507,7 +507,7 @@ public class SqlColumnBuilderTests : TestsBase
                 .Sql.Should()
                 .Be(
                     @"ALTER [Table] foo.T
-  ALTER [Column] foo.T.C2 ([3] : 'IsNullable' (System.Boolean) FROM True);" );
+  ALTER [Column] foo.T.C2 ([2] : 'IsNullable' (System.Boolean) FROM True);" );
         }
     }
 
@@ -627,7 +627,7 @@ public class SqlColumnBuilderTests : TestsBase
                 .Sql.Should()
                 .Be(
                     @"ALTER [Table] foo.T
-  ALTER [Column] foo.T.C2 ([5] : 'DefaultValue' (LfrlAnvil.Sql.Expressions.SqlExpressionNode) FROM ""123"" : System.Int32);" );
+  ALTER [Column] foo.T.C2 ([4] : 'DefaultValue' (LfrlAnvil.Sql.Expressions.SqlExpressionNode) FROM ""123"" : System.Int32);" );
         }
     }
 
@@ -653,7 +653,7 @@ public class SqlColumnBuilderTests : TestsBase
                 .Sql.Should()
                 .Be(
                     @"ALTER [Table] foo.T
-  ALTER [Column] foo.T.C2 ([5] : 'DefaultValue' (LfrlAnvil.Sql.Expressions.SqlExpressionNode) FROM ""123"" : System.Int32);" );
+  ALTER [Column] foo.T.C2 ([4] : 'DefaultValue' (LfrlAnvil.Sql.Expressions.SqlExpressionNode) FROM ""123"" : System.Int32);" );
         }
     }
 
@@ -680,7 +680,7 @@ public class SqlColumnBuilderTests : TestsBase
                 .Sql.Should()
                 .Be(
                     @"ALTER [Table] foo.T
-  ALTER [Column] foo.T.C2 ([5] : 'DefaultValue' (LfrlAnvil.Sql.Expressions.SqlExpressionNode) FROM <null>);" );
+  ALTER [Column] foo.T.C2 ([4] : 'DefaultValue' (LfrlAnvil.Sql.Expressions.SqlExpressionNode) FROM <null>);" );
         }
     }
 
@@ -707,7 +707,7 @@ public class SqlColumnBuilderTests : TestsBase
                 .Sql.Should()
                 .Be(
                     @"ALTER [Table] foo.T
-  ALTER [Column] foo.T.C2 ([5] : 'DefaultValue' (LfrlAnvil.Sql.Expressions.SqlExpressionNode) FROM <null>);" );
+  ALTER [Column] foo.T.C2 ([4] : 'DefaultValue' (LfrlAnvil.Sql.Expressions.SqlExpressionNode) FROM <null>);" );
         }
     }
 
@@ -734,7 +734,7 @@ public class SqlColumnBuilderTests : TestsBase
                 .Sql.Should()
                 .Be(
                     @"ALTER [Table] foo.T
-  ALTER [Column] foo.T.C2 ([5] : 'DefaultValue' (LfrlAnvil.Sql.Expressions.SqlExpressionNode) FROM <null>);" );
+  ALTER [Column] foo.T.C2 ([4] : 'DefaultValue' (LfrlAnvil.Sql.Expressions.SqlExpressionNode) FROM <null>);" );
         }
     }
 
@@ -1037,7 +1037,7 @@ public class SqlColumnBuilderTests : TestsBase
                 .Sql.Should()
                 .Be(
                     @"ALTER [Table] foo.T
-  ALTER [Column] foo.T.C2 ([4] : 'DataType' (LfrlAnvil.Sql.ISqlDataType) FROM OBJECT);" );
+  ALTER [Column] foo.T.C2 ([3] : 'DataType' (LfrlAnvil.Sql.ISqlDataType) FROM OBJECT);" );
         }
     }
 
@@ -1063,7 +1063,7 @@ public class SqlColumnBuilderTests : TestsBase
                 .Sql.Should()
                 .Be(
                     @"ALTER [Table] foo.T
-  ALTER [Column] foo.T.C2 ([3] : 'IsNullable' (System.Boolean) FROM False);" );
+  ALTER [Column] foo.T.C2 ([2] : 'IsNullable' (System.Boolean) FROM False);" );
         }
     }
 
@@ -1089,7 +1089,7 @@ public class SqlColumnBuilderTests : TestsBase
                 .Sql.Should()
                 .Be(
                     @"ALTER [Table] foo.T
-  ALTER [Column] foo.T.C2 ([5] : 'DefaultValue' (LfrlAnvil.Sql.Expressions.SqlExpressionNode) FROM <null>);" );
+  ALTER [Column] foo.T.C2 ([4] : 'DefaultValue' (LfrlAnvil.Sql.Expressions.SqlExpressionNode) FROM <null>);" );
         }
     }
 

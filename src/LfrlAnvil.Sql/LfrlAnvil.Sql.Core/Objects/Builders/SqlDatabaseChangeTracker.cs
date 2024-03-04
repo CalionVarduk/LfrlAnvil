@@ -250,15 +250,6 @@ public abstract class SqlDatabaseChangeTracker : ISqlDatabaseChangeTracker
         AddChange( activeObject, target, SqlObjectChangeDescriptor.Name, originalValue, target.Name );
     }
 
-    protected virtual void AddSchemaNameChange(
-        SqlObjectBuilder activeObject,
-        SqlObjectBuilder target,
-        SqlSchemaBuilder schema,
-        string originalValue)
-    {
-        AddChange( activeObject, target, SqlObjectChangeDescriptor.SchemaName, originalValue, schema.Name );
-    }
-
     protected virtual void AddIsNullableChange(SqlColumnBuilder target)
     {
         AddChange( target.Table, target, SqlObjectChangeDescriptor.IsNullable, ! target.IsNullable, target.IsNullable );
@@ -407,20 +398,6 @@ public abstract class SqlDatabaseChangeTracker : ISqlDatabaseChangeTracker
         Assume.NotEquals( target.Name, originalValue );
         if ( IsActive )
             AddNameChange( activeObject, target, originalValue );
-    }
-
-    internal void SchemaNameChanged(SqlTableBuilder target, string originalValue)
-    {
-        Assume.NotEquals( target.Schema.Name, originalValue );
-        if ( IsActive )
-            AddSchemaNameChange( target, target, target.Schema, originalValue );
-    }
-
-    internal void SchemaNameChanged(SqlViewBuilder target, string originalValue)
-    {
-        Assume.NotEquals( target.Schema.Name, originalValue );
-        if ( IsActive )
-            AddSchemaNameChange( target, target, target.Schema, originalValue );
     }
 
     internal void IsNullableChanged(SqlColumnBuilder target, bool originalValue)

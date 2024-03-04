@@ -427,7 +427,7 @@ public class SqlForeignKeyBuilderTests : TestsBase
                 .Sql.Should()
                 .Be(
                     @"ALTER [Table] foo.T
-  ALTER [ForeignKey] foo.FK_T_C2_REF_T ([9] : 'OnDeleteBehavior' (LfrlAnvil.Sql.ReferenceBehavior) FROM 'RESTRICT' (Restrict));" );
+  ALTER [ForeignKey] foo.FK_T_C2_REF_T ([8] : 'OnDeleteBehavior' (LfrlAnvil.Sql.ReferenceBehavior) FROM 'RESTRICT' (Restrict));" );
         }
     }
 
@@ -512,7 +512,7 @@ public class SqlForeignKeyBuilderTests : TestsBase
                 .Sql.Should()
                 .Be(
                     @"ALTER [Table] foo.T
-  ALTER [ForeignKey] foo.FK_T_C2_REF_T ([10] : 'OnUpdateBehavior' (LfrlAnvil.Sql.ReferenceBehavior) FROM 'RESTRICT' (Restrict));" );
+  ALTER [ForeignKey] foo.FK_T_C2_REF_T ([9] : 'OnUpdateBehavior' (LfrlAnvil.Sql.ReferenceBehavior) FROM 'RESTRICT' (Restrict));" );
         }
     }
 
@@ -975,7 +975,7 @@ public class SqlForeignKeyBuilderTests : TestsBase
                 .Sql.Should()
                 .Be(
                     @"ALTER [Table] foo.T
-  ALTER [ForeignKey] foo.FK_T_C2_REF_T ([9] : 'OnDeleteBehavior' (LfrlAnvil.Sql.ReferenceBehavior) FROM 'RESTRICT' (Restrict));" );
+  ALTER [ForeignKey] foo.FK_T_C2_REF_T ([8] : 'OnDeleteBehavior' (LfrlAnvil.Sql.ReferenceBehavior) FROM 'RESTRICT' (Restrict));" );
         }
     }
 
@@ -1002,7 +1002,7 @@ public class SqlForeignKeyBuilderTests : TestsBase
                 .Sql.Should()
                 .Be(
                     @"ALTER [Table] foo.T
-  ALTER [ForeignKey] foo.FK_T_C2_REF_T ([10] : 'OnUpdateBehavior' (LfrlAnvil.Sql.ReferenceBehavior) FROM 'RESTRICT' (Restrict));" );
+  ALTER [ForeignKey] foo.FK_T_C2_REF_T ([9] : 'OnUpdateBehavior' (LfrlAnvil.Sql.ReferenceBehavior) FROM 'RESTRICT' (Restrict));" );
         }
     }
 }

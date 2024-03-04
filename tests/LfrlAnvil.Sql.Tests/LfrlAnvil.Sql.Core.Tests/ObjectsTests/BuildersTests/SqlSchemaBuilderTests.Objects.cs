@@ -1374,7 +1374,7 @@ public partial class SqlSchemaBuilderTests
         }
 
         [Fact]
-        public void Remove_ShouldReturnFalse_WhenConstraintDoesNotExist()
+        public void Remove_ShouldReturnFalse_WhenObjectDoesNotExist()
         {
             var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var sut = schema.Objects;

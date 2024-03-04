@@ -386,7 +386,7 @@ public class SqlIndexBuilderTests : TestsBase
                 .Sql.Should()
                 .Be(
                     @"ALTER [Table] foo.T
-  ALTER [Index] foo.IX_T_C2A ([6] : 'IsUnique' (System.Boolean) FROM False);" );
+  ALTER [Index] foo.IX_T_C2A ([5] : 'IsUnique' (System.Boolean) FROM False);" );
         }
     }
 
@@ -412,7 +412,7 @@ public class SqlIndexBuilderTests : TestsBase
                 .Sql.Should()
                 .Be(
                     @"ALTER [Table] foo.T
-  ALTER [Index] foo.IX_T_C2A ([6] : 'IsUnique' (System.Boolean) FROM True);" );
+  ALTER [Index] foo.IX_T_C2A ([5] : 'IsUnique' (System.Boolean) FROM True);" );
         }
     }
 
@@ -531,7 +531,7 @@ public class SqlIndexBuilderTests : TestsBase
                 .Sql.Should()
                 .Be(
                     @"ALTER [Table] foo.T
-  ALTER [Index] foo.IX_T_C2A ([7] : 'Filter' (LfrlAnvil.Sql.Expressions.Logical.SqlConditionNode) FROM <null>);" );
+  ALTER [Index] foo.IX_T_C2A ([6] : 'Filter' (LfrlAnvil.Sql.Expressions.Logical.SqlConditionNode) FROM <null>);" );
         }
     }
 
@@ -563,7 +563,7 @@ public class SqlIndexBuilderTests : TestsBase
                 .Sql.Should()
                 .Be(
                     @"ALTER [Table] foo.T
-  ALTER [Index] foo.IX_T_C2A ([7] : 'Filter' (LfrlAnvil.Sql.Expressions.Logical.SqlConditionNode) FROM ([foo].[T].[C2] : System.Object) <> (NULL));" );
+  ALTER [Index] foo.IX_T_C2A ([6] : 'Filter' (LfrlAnvil.Sql.Expressions.Logical.SqlConditionNode) FROM ([foo].[T].[C2] : System.Object) <> (NULL));" );
         }
     }
 
@@ -1003,7 +1003,7 @@ public class SqlIndexBuilderTests : TestsBase
                 .Sql.Should()
                 .Be(
                     @"ALTER [Table] foo.T
-  ALTER [Index] foo.IX_T_C2A ([6] : 'IsUnique' (System.Boolean) FROM False);" );
+  ALTER [Index] foo.IX_T_C2A ([5] : 'IsUnique' (System.Boolean) FROM False);" );
         }
     }
 
@@ -1037,7 +1037,7 @@ public class SqlIndexBuilderTests : TestsBase
                 .Sql.Should()
                 .Be(
                     @"ALTER [Table] foo.T
-  ALTER [Index] foo.IX_T_C2A ([7] : 'Filter' (LfrlAnvil.Sql.Expressions.Logical.SqlConditionNode) FROM <null>);" );
+  ALTER [Index] foo.IX_T_C2A ([6] : 'Filter' (LfrlAnvil.Sql.Expressions.Logical.SqlConditionNode) FROM <null>);" );
         }
     }
 }

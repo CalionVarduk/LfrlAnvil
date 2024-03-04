@@ -145,18 +145,6 @@ public abstract class SqlBuilderApi
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    protected static void AddSchemaNameChange(SqlTableBuilder target, string originalValue)
-    {
-        target.Database.Changes.SchemaNameChanged( target, originalValue );
-    }
-
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    protected static void AddSchemaNameChange(SqlViewBuilder target, string originalValue)
-    {
-        target.Database.Changes.SchemaNameChanged( target, originalValue );
-    }
-
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     protected static void AddIsNullableChange(SqlColumnBuilder target, bool originalValue)
     {
         target.Database.Changes.IsNullableChanged( target, originalValue );
