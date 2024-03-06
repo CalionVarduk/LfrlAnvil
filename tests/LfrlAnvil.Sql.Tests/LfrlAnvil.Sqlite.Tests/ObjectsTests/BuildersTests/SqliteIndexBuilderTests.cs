@@ -1,13 +1,14 @@
 ﻿using System.Linq;
 using LfrlAnvil.Functional;
+using LfrlAnvil.Sql.Exceptions;
 using LfrlAnvil.Sql.Expressions;
-using LfrlAnvil.Sql.Extensions;
 using LfrlAnvil.Sql.Objects.Builders;
-using LfrlAnvil.Sqlite.Exceptions;
 using LfrlAnvil.Sqlite.Extensions;
 using LfrlAnvil.Sqlite.Objects.Builders;
 using LfrlAnvil.Sqlite.Tests.Helpers;
 using LfrlAnvil.TestExtensions.FluentAssertions;
+using LfrlAnvil.TestExtensions.Sql;
+using LfrlAnvil.TestExtensions.Sql.FluentAssertions;
 
 namespace LfrlAnvil.Sqlite.Tests.ObjectsTests.BuildersTests;
 
@@ -33,15 +34,19 @@ public class SqliteIndexBuilderTests : TestsBase
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var c2 = table.Columns.Create( "C2" );
 
-        var startStatementsCount = schema.Database.Changes.GetPendingActions().Length;
-
-        table.Constraints.CreateIndex( c2.Asc() );
-        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementsCount ).ToArray();
+        var actionCount = schema.Database.GetPendingActionCount();
+        var sut = table.Constraints.CreateIndex( c2.Asc() );
+        var actions = schema.Database.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )
         {
-            statements.Should().HaveCount( 1 );
-            statements.ElementAtOrDefault( 0 ).Sql.Should().SatisfySql( "CREATE INDEX \"foo_IX_T_C2A\" ON \"foo_T\" (\"C2\" ASC);" );
+            table.Constraints.TryGet( sut.Name ).Should().BeSameAs( sut );
+            schema.Objects.TryGet( sut.Name ).Should().BeSameAs( sut );
+            sut.Name.Should().MatchRegex( "IX_T_C2A" );
+            sut.Columns.Should().BeSequentiallyEqualTo( c2.Asc() );
+
+            actions.Should().HaveCount( 1 );
+            actions.ElementAtOrDefault( 0 ).Sql.Should().SatisfySql( "CREATE INDEX \"foo_IX_T_C2A\" ON \"foo_T\" (\"C2\" ASC);" );
         }
     }
 
@@ -53,13 +58,12 @@ public class SqliteIndexBuilderTests : TestsBase
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var c2 = table.Columns.Create( "C2" );
 
-        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
-
+        var actionCount = schema.Database.GetPendingActionCount();
         var sut = table.Constraints.CreateIndex( c2.Asc() );
         sut.Remove();
-        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
+        var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        statements.Should().BeEmpty();
+        actions.Should().BeEmpty();
     }
 
     [Fact]
@@ -70,18 +74,21 @@ public class SqliteIndexBuilderTests : TestsBase
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var c2 = table.Columns.Create( "C2" );
 
-        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
-
+        var actionCount = schema.Database.GetPendingActionCount();
         var sut = table.Constraints.CreateUniqueIndex( c2.Asc() );
         table.Constraints.SetPrimaryKey( sut );
-        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
+        var actions = schema.Database.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )
         {
-            statements.Should().HaveCount( 1 );
-            statements.ElementAtOrDefault( 0 )
-                .Sql
-                .Should()
+            table.Constraints.TryGet( sut.Name ).Should().BeSameAs( sut );
+            schema.Objects.TryGet( sut.Name ).Should().BeSameAs( sut );
+            sut.Name.Should().MatchRegex( "UIX_T_C2A" );
+            sut.Columns.Should().BeSequentiallyEqualTo( c2.Asc() );
+
+            actions.Should().HaveCount( 1 );
+            actions.ElementAtOrDefault( 0 )
+                .Sql.Should()
                 .SatisfySql(
                     @"CREATE TABLE ""__foo_T__{GUID}__"" (
                       ""C1"" ANY NOT NULL,
@@ -107,15 +114,14 @@ public class SqliteIndexBuilderTests : TestsBase
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() );
 
-        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
-
-        var result = ((ISqlIndexBuilder)sut).SetName( sut.Name );
-        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
+        var actionCount = schema.Database.GetPendingActionCount();
+        var result = sut.SetName( sut.Name );
+        var actions = schema.Database.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )
         {
             result.Should().BeSameAs( sut );
-            statements.Should().BeEmpty();
+            actions.Should().BeEmpty();
         }
     }
 
@@ -128,17 +134,15 @@ public class SqliteIndexBuilderTests : TestsBase
         var sut = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() );
         var oldName = sut.Name;
 
-        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
-
+        var actionCount = schema.Database.GetPendingActionCount();
         sut.SetName( "bar" );
-        var result = ((ISqlConstraintBuilder)sut).SetName( oldName );
-
-        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
+        var result = sut.SetName( oldName );
+        var actions = schema.Database.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )
         {
             result.Should().BeSameAs( sut );
-            statements.Should().BeEmpty();
+            actions.Should().BeEmpty();
         }
     }
 
@@ -150,19 +154,19 @@ public class SqliteIndexBuilderTests : TestsBase
         var sut = table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() ).Index;
         var oldName = sut.Name;
 
-        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
-
-        var result = ((ISqlIndexBuilder)sut).SetName( "bar" );
-        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
+        var actionCount = schema.Database.GetPendingActionCount();
+        var result = sut.SetName( "bar" );
+        var actions = schema.Database.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )
         {
             result.Should().BeSameAs( sut );
-            table.Constraints.Get( "bar" ).Should().BeSameAs( sut );
-            table.Constraints.Contains( oldName ).Should().BeFalse();
-            schema.Objects.Get( "bar" ).Should().BeSameAs( sut );
-            schema.Objects.Contains( oldName ).Should().BeFalse();
-            statements.Should().BeEmpty();
+            sut.Name.Should().Be( "bar" );
+            table.Constraints.TryGet( "bar" ).Should().BeSameAs( sut );
+            table.Constraints.TryGet( oldName ).Should().BeNull();
+            schema.Objects.TryGet( "bar" ).Should().BeSameAs( sut );
+            schema.Objects.TryGet( oldName ).Should().BeNull();
+            actions.Should().BeEmpty();
         }
     }
 
@@ -175,24 +179,22 @@ public class SqliteIndexBuilderTests : TestsBase
         var sut = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() );
         var oldName = sut.Name;
 
-        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
-
-        var result = ((ISqlIndexBuilder)sut).SetName( "bar" );
-        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
+        var actionCount = schema.Database.GetPendingActionCount();
+        var result = sut.SetName( "bar" );
+        var actions = schema.Database.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )
         {
             result.Should().BeSameAs( sut );
             sut.Name.Should().Be( "bar" );
-            table.Constraints.Get( "bar" ).Should().BeSameAs( sut );
-            table.Constraints.Contains( oldName ).Should().BeFalse();
-            schema.Objects.Get( "bar" ).Should().BeSameAs( sut );
-            schema.Objects.Contains( oldName ).Should().BeFalse();
+            table.Constraints.TryGet( "bar" ).Should().BeSameAs( sut );
+            table.Constraints.TryGet( oldName ).Should().BeNull();
+            schema.Objects.TryGet( "bar" ).Should().BeSameAs( sut );
+            schema.Objects.TryGet( oldName ).Should().BeNull();
 
-            statements.Should().HaveCount( 1 );
-            statements.ElementAtOrDefault( 0 )
-                .Sql
-                .Should()
+            actions.Should().HaveCount( 1 );
+            actions.ElementAtOrDefault( 0 )
+                .Sql.Should()
                 .SatisfySql(
                     "DROP INDEX \"foo_IX_T_C2A\";",
                     "CREATE INDEX \"foo_bar\" ON \"foo_T\" (\"C2\" ASC);" );
@@ -207,16 +209,23 @@ public class SqliteIndexBuilderTests : TestsBase
         var pk = table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() );
         table.Constraints.CreateForeignKey( sut, pk.Index );
+        var oldName = sut.Name;
 
-        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
-
-        sut.SetName( "bar" );
-        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
+        var actionCount = schema.Database.GetPendingActionCount();
+        var result = sut.SetName( "bar" );
+        var actions = schema.Database.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )
         {
-            statements.Should().HaveCount( 1 );
-            statements.ElementAtOrDefault( 0 )
+            result.Should().BeSameAs( sut );
+            sut.Name.Should().Be( "bar" );
+            table.Constraints.TryGet( "bar" ).Should().BeSameAs( sut );
+            table.Constraints.TryGet( oldName ).Should().BeNull();
+            schema.Objects.TryGet( "bar" ).Should().BeSameAs( sut );
+            schema.Objects.TryGet( oldName ).Should().BeNull();
+
+            actions.Should().HaveCount( 1 );
+            actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
                     "DROP INDEX \"foo_IX_T_C2A\";",
@@ -230,22 +239,22 @@ public class SqliteIndexBuilderTests : TestsBase
     [InlineData( "\"" )]
     [InlineData( "'" )]
     [InlineData( "f\"oo" )]
-    public void SetName_ShouldThrowSqliteObjectBuilderException_WhenNameIsInvalid(string name)
+    public void SetName_ShouldThrowSqlObjectBuilderException_WhenNameIsInvalid(string name)
     {
         var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() );
 
-        var action = Lambda.Of( () => ((ISqlIndexBuilder)sut).SetName( name ) );
+        var action = Lambda.Of( () => sut.SetName( name ) );
 
         action.Should()
-            .ThrowExactly<SqliteObjectBuilderException>()
+            .ThrowExactly<SqlObjectBuilderException>()
             .AndMatch( e => e.Dialect == SqliteDialect.Instance && e.Errors.Count == 1 );
     }
 
     [Fact]
-    public void SetName_ShouldThrowSqliteObjectBuilderException_WhenIndexIsRemoved()
+    public void SetName_ShouldThrowSqlObjectBuilderException_WhenIndexIsRemoved()
     {
         var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
@@ -253,25 +262,25 @@ public class SqliteIndexBuilderTests : TestsBase
         var sut = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() );
         sut.Remove();
 
-        var action = Lambda.Of( () => ((ISqlIndexBuilder)sut).SetName( "bar" ) );
+        var action = Lambda.Of( () => sut.SetName( "bar" ) );
 
         action.Should()
-            .ThrowExactly<SqliteObjectBuilderException>()
+            .ThrowExactly<SqlObjectBuilderException>()
             .AndMatch( e => e.Dialect == SqliteDialect.Instance && e.Errors.Count == 1 );
     }
 
     [Fact]
-    public void SetName_ShouldThrowSqliteObjectBuilderException_WhenNewNameAlreadyExistsInSchema()
+    public void SetName_ShouldThrowSqlObjectBuilderException_WhenNewNameAlreadyExistsInSchemaObjects()
     {
         var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() );
 
-        var action = Lambda.Of( () => ((ISqlIndexBuilder)sut).SetName( "T" ) );
+        var action = Lambda.Of( () => sut.SetName( "T" ) );
 
         action.Should()
-            .ThrowExactly<SqliteObjectBuilderException>()
+            .ThrowExactly<SqlObjectBuilderException>()
             .AndMatch( e => e.Dialect == SqliteDialect.Instance && e.Errors.Count == 1 );
     }
 
@@ -283,15 +292,14 @@ public class SqliteIndexBuilderTests : TestsBase
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() );
 
-        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
-
-        var result = ((ISqlIndexBuilder)sut).SetDefaultName();
-        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
+        var actionCount = schema.Database.GetPendingActionCount();
+        var result = sut.SetDefaultName();
+        var actions = schema.Database.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )
         {
             result.Should().BeSameAs( sut );
-            statements.Should().BeEmpty();
+            actions.Should().BeEmpty();
         }
     }
 
@@ -303,17 +311,15 @@ public class SqliteIndexBuilderTests : TestsBase
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() );
 
-        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
-
+        var actionCount = schema.Database.GetPendingActionCount();
         sut.SetName( "bar" );
-        var result = ((ISqlConstraintBuilder)sut).SetDefaultName();
-
-        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
+        var result = sut.SetDefaultName();
+        var actions = schema.Database.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )
         {
             result.Should().BeSameAs( sut );
-            statements.Should().BeEmpty();
+            actions.Should().BeEmpty();
         }
     }
 
@@ -323,21 +329,20 @@ public class SqliteIndexBuilderTests : TestsBase
         var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         var sut = table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() ).Index.SetName( "bar" );
-        var oldName = sut.Name;
 
-        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
-
-        var result = ((ISqlIndexBuilder)sut).SetDefaultName();
-        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
+        var actionCount = schema.Database.GetPendingActionCount();
+        var result = sut.SetDefaultName();
+        var actions = schema.Database.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )
         {
             result.Should().BeSameAs( sut );
-            table.Constraints.Get( "UIX_T_C1A" ).Should().BeSameAs( sut );
-            table.Constraints.Contains( oldName ).Should().BeFalse();
-            schema.Objects.Get( "UIX_T_C1A" ).Should().BeSameAs( sut );
-            schema.Objects.Contains( oldName ).Should().BeFalse();
-            statements.Should().BeEmpty();
+            sut.Name.Should().Be( "UIX_T_C1A" );
+            table.Constraints.TryGet( "UIX_T_C1A" ).Should().BeSameAs( sut );
+            table.Constraints.TryGet( "bar" ).Should().BeNull();
+            schema.Objects.TryGet( "UIX_T_C1A" ).Should().BeSameAs( sut );
+            schema.Objects.TryGet( "bar" ).Should().BeNull();
+            actions.Should().BeEmpty();
         }
     }
 
@@ -348,26 +353,23 @@ public class SqliteIndexBuilderTests : TestsBase
         var table = schema.Objects.CreateTable( "T" );
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() ).SetName( "bar" );
-        var oldName = sut.Name;
 
-        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
-
-        var result = ((ISqlIndexBuilder)sut).SetDefaultName();
-        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
+        var actionCount = schema.Database.GetPendingActionCount();
+        var result = sut.SetDefaultName();
+        var actions = schema.Database.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )
         {
             result.Should().BeSameAs( sut );
             sut.Name.Should().Be( "IX_T_C2A" );
-            table.Constraints.Get( "IX_T_C2A" ).Should().BeSameAs( sut );
-            table.Constraints.Contains( oldName ).Should().BeFalse();
-            schema.Objects.Get( "IX_T_C2A" ).Should().BeSameAs( sut );
-            schema.Objects.Contains( oldName ).Should().BeFalse();
+            table.Constraints.TryGet( "IX_T_C2A" ).Should().BeSameAs( sut );
+            table.Constraints.TryGet( "bar" ).Should().BeNull();
+            schema.Objects.TryGet( "IX_T_C2A" ).Should().BeSameAs( sut );
+            schema.Objects.TryGet( "bar" ).Should().BeNull();
 
-            statements.Should().HaveCount( 1 );
-            statements.ElementAtOrDefault( 0 )
-                .Sql
-                .Should()
+            actions.Should().HaveCount( 1 );
+            actions.ElementAtOrDefault( 0 )
+                .Sql.Should()
                 .SatisfySql(
                     "DROP INDEX \"foo_bar\";",
                     "CREATE INDEX \"foo_IX_T_C2A\" ON \"foo_T\" (\"C2\" ASC);" );
@@ -381,26 +383,23 @@ public class SqliteIndexBuilderTests : TestsBase
         var table = schema.Objects.CreateTable( "T" );
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() ).SetName( "bar" ).MarkAsUnique();
-        var oldName = sut.Name;
 
-        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
-
-        var result = ((ISqlIndexBuilder)sut).SetDefaultName();
-        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
+        var actionCount = schema.Database.GetPendingActionCount();
+        var result = sut.SetDefaultName();
+        var actions = schema.Database.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )
         {
             result.Should().BeSameAs( sut );
             sut.Name.Should().Be( "UIX_T_C2A" );
-            table.Constraints.Get( "UIX_T_C2A" ).Should().BeSameAs( sut );
-            table.Constraints.Contains( oldName ).Should().BeFalse();
-            schema.Objects.Get( "UIX_T_C2A" ).Should().BeSameAs( sut );
-            schema.Objects.Contains( oldName ).Should().BeFalse();
+            table.Constraints.TryGet( "UIX_T_C2A" ).Should().BeSameAs( sut );
+            table.Constraints.TryGet( "bar" ).Should().BeNull();
+            schema.Objects.TryGet( "UIX_T_C2A" ).Should().BeSameAs( sut );
+            schema.Objects.TryGet( "bar" ).Should().BeNull();
 
-            statements.Should().HaveCount( 1 );
-            statements.ElementAtOrDefault( 0 )
-                .Sql
-                .Should()
+            actions.Should().HaveCount( 1 );
+            actions.ElementAtOrDefault( 0 )
+                .Sql.Should()
                 .SatisfySql(
                     "DROP INDEX \"foo_bar\";",
                     "CREATE UNIQUE INDEX \"foo_UIX_T_C2A\" ON \"foo_T\" (\"C2\" ASC);" );
@@ -408,7 +407,7 @@ public class SqliteIndexBuilderTests : TestsBase
     }
 
     [Fact]
-    public void SetDefaultName_ShouldThrowSqliteObjectBuilderException_WhenIndexIsRemoved()
+    public void SetDefaultName_ShouldThrowSqlObjectBuilderException_WhenIndexIsRemoved()
     {
         var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
@@ -416,15 +415,15 @@ public class SqliteIndexBuilderTests : TestsBase
         var sut = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() ).SetName( "bar" );
         sut.Remove();
 
-        var action = Lambda.Of( () => ((ISqlIndexBuilder)sut).SetDefaultName() );
+        var action = Lambda.Of( () => sut.SetDefaultName() );
 
         action.Should()
-            .ThrowExactly<SqliteObjectBuilderException>()
+            .ThrowExactly<SqlObjectBuilderException>()
             .AndMatch( e => e.Dialect == SqliteDialect.Instance && e.Errors.Count == 1 );
     }
 
     [Fact]
-    public void SetDefaultName_ShouldThrowSqliteObjectBuilderException_WhenNewNameAlreadyExistsInSchema()
+    public void SetDefaultName_ShouldThrowSqlObjectBuilderException_WhenNewNameAlreadyExistsInSchemaObjects()
     {
         var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
@@ -432,10 +431,10 @@ public class SqliteIndexBuilderTests : TestsBase
         var sut = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() ).SetName( "bar" );
         pk.SetName( "IX_T_C2A" );
 
-        var action = Lambda.Of( () => ((ISqlIndexBuilder)sut).SetDefaultName() );
+        var action = Lambda.Of( () => sut.SetDefaultName() );
 
         action.Should()
-            .ThrowExactly<SqliteObjectBuilderException>()
+            .ThrowExactly<SqlObjectBuilderException>()
             .AndMatch( e => e.Dialect == SqliteDialect.Instance && e.Errors.Count == 1 );
     }
 
@@ -449,15 +448,14 @@ public class SqliteIndexBuilderTests : TestsBase
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() ).MarkAsUnique( value );
 
-        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
-
-        var result = ((ISqlIndexBuilder)sut).MarkAsUnique( value );
-        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
+        var actionCount = schema.Database.GetPendingActionCount();
+        var result = sut.MarkAsUnique( value );
+        var actions = schema.Database.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )
         {
             result.Should().BeSameAs( sut );
-            statements.Should().HaveCount( 0 );
+            actions.Should().BeEmpty();
         }
     }
 
@@ -469,15 +467,15 @@ public class SqliteIndexBuilderTests : TestsBase
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() );
 
-        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
-
-        var result = ((ISqlIndexBuilder)sut).MarkAsUnique().MarkAsUnique( false );
-        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
+        var actionCount = schema.Database.GetPendingActionCount();
+        sut.MarkAsUnique();
+        var result = sut.MarkAsUnique( false );
+        var actions = schema.Database.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )
         {
             result.Should().BeSameAs( sut );
-            statements.Should().HaveCount( 0 );
+            actions.Should().BeEmpty();
         }
     }
 
@@ -489,18 +487,18 @@ public class SqliteIndexBuilderTests : TestsBase
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() );
 
-        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
-
-        var result = ((ISqlIndexBuilder)sut).MarkAsUnique();
-        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
+        var actionCount = schema.Database.GetPendingActionCount();
+        var result = sut.MarkAsUnique();
+        var actions = schema.Database.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )
         {
             result.Should().BeSameAs( sut );
-            statements.Should().HaveCount( 1 );
-            statements.ElementAtOrDefault( 0 )
-                .Sql
-                .Should()
+            sut.IsUnique.Should().BeTrue();
+
+            actions.Should().HaveCount( 1 );
+            actions.ElementAtOrDefault( 0 )
+                .Sql.Should()
                 .SatisfySql(
                     "DROP INDEX \"foo_IX_T_C2A\";",
                     "CREATE UNIQUE INDEX \"foo_IX_T_C2A\" ON \"foo_T\" (\"C2\" ASC);" );
@@ -515,18 +513,18 @@ public class SqliteIndexBuilderTests : TestsBase
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() ).MarkAsUnique();
 
-        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
-
-        var result = ((ISqlIndexBuilder)sut).MarkAsUnique( false );
-        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
+        var actionCount = schema.Database.GetPendingActionCount();
+        var result = sut.MarkAsUnique( false );
+        var actions = schema.Database.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )
         {
             result.Should().BeSameAs( sut );
-            statements.Should().HaveCount( 1 );
-            statements.ElementAtOrDefault( 0 )
-                .Sql
-                .Should()
+            sut.IsUnique.Should().BeFalse();
+
+            actions.Should().HaveCount( 1 );
+            actions.ElementAtOrDefault( 0 )
+                .Sql.Should()
                 .SatisfySql(
                     "DROP INDEX \"foo_IX_T_C2A\";",
                     "CREATE INDEX \"foo_IX_T_C2A\" ON \"foo_T\" (\"C2\" ASC);" );
@@ -542,15 +540,17 @@ public class SqliteIndexBuilderTests : TestsBase
         var sut = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() );
         table.Constraints.CreateForeignKey( sut, pk.Index );
 
-        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
-
-        sut.MarkAsUnique();
-        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
+        var actionCount = schema.Database.GetPendingActionCount();
+        var result = sut.MarkAsUnique();
+        var actions = schema.Database.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )
         {
-            statements.Should().HaveCount( 1 );
-            statements.ElementAtOrDefault( 0 )
+            result.Should().BeSameAs( sut );
+            sut.IsUnique.Should().BeTrue();
+
+            actions.Should().HaveCount( 1 );
+            actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
                     "DROP INDEX \"foo_IX_T_C2A\";",
@@ -559,19 +559,19 @@ public class SqliteIndexBuilderTests : TestsBase
     }
 
     [Fact]
-    public void MarkAsUnique_ShouldThrowSqliteObjectBuilderException_WhenPrimaryKeyIndexUniquenessChangesToFalse()
+    public void MarkAsUnique_ShouldThrowSqlObjectBuilderException_WhenPrimaryKeyIndexUniquenessChangesToFalse()
     {
         var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         var sut = table.Constraints.SetPrimaryKey( table.Columns.Create( "C" ).Asc() ).Index;
 
-        var action = Lambda.Of( () => ((ISqlIndexBuilder)sut).MarkAsUnique( false ) );
+        var action = Lambda.Of( () => sut.MarkAsUnique( false ) );
 
-        action.Should().ThrowExactly<SqliteObjectBuilderException>();
+        action.Should().ThrowExactly<SqlObjectBuilderException>();
     }
 
     [Fact]
-    public void MarkAsUnique_ShouldThrowSqliteObjectBuilderException_WhenUniquenessChangesToFalseAndIndexIsReferencedByForeignKey()
+    public void MarkAsUnique_ShouldThrowSqlObjectBuilderException_WhenUniquenessChangesToFalseAndIndexIsReferencedByForeignKey()
     {
         var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
@@ -579,13 +579,13 @@ public class SqliteIndexBuilderTests : TestsBase
         var sut = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() ).MarkAsUnique();
         table.Constraints.CreateForeignKey( table.Constraints.CreateIndex( table.Columns.Create( "C3" ).Asc() ), sut );
 
-        var action = Lambda.Of( () => ((ISqlIndexBuilder)sut).MarkAsUnique( false ) );
+        var action = Lambda.Of( () => sut.MarkAsUnique( false ) );
 
-        action.Should().ThrowExactly<SqliteObjectBuilderException>();
+        action.Should().ThrowExactly<SqlObjectBuilderException>();
     }
 
     [Fact]
-    public void MarkAsUnique_ShouldThrowSqliteObjectBuilderException_WhenIndexIsRemoved()
+    public void MarkAsUnique_ShouldThrowSqlObjectBuilderException_WhenIndexIsRemoved()
     {
         var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
@@ -593,10 +593,10 @@ public class SqliteIndexBuilderTests : TestsBase
         var sut = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() );
         sut.Remove();
 
-        var action = Lambda.Of( () => ((ISqlIndexBuilder)sut).MarkAsUnique() );
+        var action = Lambda.Of( () => sut.MarkAsUnique() );
 
         action.Should()
-            .ThrowExactly<SqliteObjectBuilderException>()
+            .ThrowExactly<SqlObjectBuilderException>()
             .AndMatch( e => e.Dialect == SqliteDialect.Instance && e.Errors.Count == 1 );
     }
 
@@ -607,19 +607,25 @@ public class SqliteIndexBuilderTests : TestsBase
         var table = schema.Objects.CreateTable( "T" );
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() );
+        var oldName = sut.Name;
 
-        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
-
-        var result = ((ISqlIndexBuilder)sut).MarkAsUnique().SetName( "bar" );
-        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
+        var actionCount = schema.Database.GetPendingActionCount();
+        var result = sut.MarkAsUnique().SetName( "bar" );
+        var actions = schema.Database.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )
         {
             result.Should().BeSameAs( sut );
-            statements.Should().HaveCount( 1 );
-            statements.ElementAtOrDefault( 0 )
-                .Sql
-                .Should()
+            sut.IsUnique.Should().BeTrue();
+            sut.Name.Should().Be( "bar" );
+            table.Constraints.TryGet( "bar" ).Should().BeSameAs( sut );
+            table.Constraints.TryGet( oldName ).Should().BeNull();
+            schema.Objects.TryGet( "bar" ).Should().BeSameAs( sut );
+            schema.Objects.TryGet( oldName ).Should().BeNull();
+
+            actions.Should().HaveCount( 1 );
+            actions.ElementAtOrDefault( 0 )
+                .Sql.Should()
                 .SatisfySql(
                     "DROP INDEX \"foo_IX_T_C2A\";",
                     "CREATE UNIQUE INDEX \"foo_bar\" ON \"foo_T\" (\"C2\" ASC);" );
@@ -634,15 +640,14 @@ public class SqliteIndexBuilderTests : TestsBase
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() ).SetFilter( SqlNode.True() );
 
-        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
-
-        var result = ((ISqlIndexBuilder)sut).SetFilter( SqlNode.True() );
-        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
+        var actionCount = schema.Database.GetPendingActionCount();
+        var result = sut.SetFilter( SqlNode.True() );
+        var actions = schema.Database.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )
         {
             result.Should().BeSameAs( sut );
-            statements.Should().HaveCount( 0 );
+            actions.Should().BeEmpty();
         }
     }
 
@@ -654,15 +659,15 @@ public class SqliteIndexBuilderTests : TestsBase
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() );
 
-        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
-
-        var result = ((ISqlIndexBuilder)sut).SetFilter( SqlNode.True() ).SetFilter( null );
-        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
+        var actionCount = schema.Database.GetPendingActionCount();
+        sut.SetFilter( SqlNode.True() );
+        var result = sut.SetFilter( null );
+        var actions = schema.Database.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )
         {
             result.Should().BeSameAs( sut );
-            statements.Should().HaveCount( 0 );
+            actions.Should().BeEmpty();
         }
     }
 
@@ -675,21 +680,25 @@ public class SqliteIndexBuilderTests : TestsBase
         var column = table.Columns.Create( "C2" );
         var sut = table.Constraints.CreateIndex( column.Asc() );
 
-        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
-
+        var actionCount = schema.Database.GetPendingActionCount();
         var result = sut.SetFilter( t => t["C2"] != null );
-        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
+        var actions = schema.Database.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )
         {
             result.Should().BeSameAs( sut );
             result.Filter.Should().BeEquivalentTo( table.ToRecordSet().GetField( "C2" ) != null );
             result.ReferencedFilterColumns.Should().BeSequentiallyEqualTo( column );
-            column.ReferencingIndexFilters.Should().BeSequentiallyEqualTo( sut );
-            statements.Should().HaveCount( 1 );
-            statements.ElementAtOrDefault( 0 )
-                .Sql
-                .Should()
+
+            column.ReferencingObjects.Should().HaveCount( 2 );
+            column.ReferencingObjects.Should()
+                .BeEquivalentTo(
+                    SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), column ),
+                    SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut, property: "Filter" ), column ) );
+
+            actions.Should().HaveCount( 1 );
+            actions.ElementAtOrDefault( 0 )
+                .Sql.Should()
                 .SatisfySql(
                     "DROP INDEX \"foo_IX_T_C2A\";",
                     "CREATE INDEX \"foo_IX_T_C2A\" ON \"foo_T\" (\"C2\" ASC) WHERE (\"C2\" IS NOT NULL);" );
@@ -705,21 +714,23 @@ public class SqliteIndexBuilderTests : TestsBase
         var column = table.Columns.Create( "C2" );
         var sut = table.Constraints.CreateIndex( column.Asc() ).SetFilter( t => t["C2"] != null );
 
-        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
-
-        var result = ((ISqlIndexBuilder)sut).SetFilter( null );
-        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
+        var actionCount = schema.Database.GetPendingActionCount();
+        var result = sut.SetFilter( null );
+        var actions = schema.Database.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )
         {
             result.Should().BeSameAs( sut );
             result.Filter.Should().BeNull();
             result.ReferencedFilterColumns.Should().BeEmpty();
-            column.ReferencingIndexFilters.Should().BeEmpty();
-            statements.Should().HaveCount( 1 );
-            statements.ElementAtOrDefault( 0 )
-                .Sql
-                .Should()
+
+            column.ReferencingObjects.Should()
+                .BeSequentiallyEqualTo(
+                    SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), column ) );
+
+            actions.Should().HaveCount( 1 );
+            actions.ElementAtOrDefault( 0 )
+                .Sql.Should()
                 .SatisfySql(
                     "DROP INDEX \"foo_IX_T_C2A\";",
                     "CREATE INDEX \"foo_IX_T_C2A\" ON \"foo_T\" (\"C2\" ASC);" );
@@ -727,32 +738,31 @@ public class SqliteIndexBuilderTests : TestsBase
     }
 
     [Fact]
-    public void SetFilter_ShouldThrowSqliteObjectBuilderException_WhenFilterIsInvalid()
+    public void SetFilter_ShouldThrowSqlObjectBuilderException_WhenFilterIsInvalid()
     {
         var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         var sut = table.Constraints.CreateIndex( table.Columns.Create( "C" ).Asc() );
 
-        var action = Lambda.Of(
-            () => ((ISqlIndexBuilder)sut).SetFilter( _ => SqlNode.Functions.RecordsAffected() == SqlNode.Literal( 0 ) ) );
+        var action = Lambda.Of( () => sut.SetFilter( _ => SqlNode.Functions.RecordsAffected() == SqlNode.Literal( 0 ) ) );
 
-        action.Should().ThrowExactly<SqliteObjectBuilderException>();
+        action.Should().ThrowExactly<SqlObjectBuilderException>();
     }
 
     [Fact]
-    public void SetFilter_ShouldThrowSqliteObjectBuilderException_WhenPrimaryKeyIndexFilterChangesToNonNull()
+    public void SetFilter_ShouldThrowSqlObjectBuilderException_WhenPrimaryKeyIndexFilterChangesToNonNull()
     {
         var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         var sut = table.Constraints.SetPrimaryKey( table.Columns.Create( "C" ).Asc() ).Index;
 
-        var action = Lambda.Of( () => ((ISqlIndexBuilder)sut).SetFilter( SqlNode.True() ) );
+        var action = Lambda.Of( () => sut.SetFilter( SqlNode.True() ) );
 
-        action.Should().ThrowExactly<SqliteObjectBuilderException>();
+        action.Should().ThrowExactly<SqlObjectBuilderException>();
     }
 
     [Fact]
-    public void SetFilter_ShouldThrowSqliteObjectBuilderException_WhenReferencedIndexFilterChangesToNonNull()
+    public void SetFilter_ShouldThrowSqlObjectBuilderException_WhenReferencedIndexFilterChangesToNonNull()
     {
         var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
@@ -760,13 +770,13 @@ public class SqliteIndexBuilderTests : TestsBase
         var sut = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() ).MarkAsUnique();
         table.Constraints.CreateForeignKey( ix, sut );
 
-        var action = Lambda.Of( () => ((ISqlIndexBuilder)sut).SetFilter( SqlNode.True() ) );
+        var action = Lambda.Of( () => sut.SetFilter( SqlNode.True() ) );
 
-        action.Should().ThrowExactly<SqliteObjectBuilderException>();
+        action.Should().ThrowExactly<SqlObjectBuilderException>();
     }
 
     [Fact]
-    public void SetFilter_ShouldThrowSqliteObjectBuilderException_WhenIndexIsRemoved()
+    public void SetFilter_ShouldThrowSqlObjectBuilderException_WhenIndexIsRemoved()
     {
         var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
@@ -774,10 +784,10 @@ public class SqliteIndexBuilderTests : TestsBase
         var sut = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() );
         sut.Remove();
 
-        var action = Lambda.Of( () => ((ISqlIndexBuilder)sut).SetFilter( null ) );
+        var action = Lambda.Of( () => sut.SetFilter( null ) );
 
         action.Should()
-            .ThrowExactly<SqliteObjectBuilderException>()
+            .ThrowExactly<SqlObjectBuilderException>()
             .AndMatch( e => e.Dialect == SqliteDialect.Instance && e.Errors.Count == 1 );
     }
 
@@ -790,15 +800,17 @@ public class SqliteIndexBuilderTests : TestsBase
         var sut = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() );
         table.Constraints.CreateForeignKey( sut, pk.Index );
 
-        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
-
-        sut.SetFilter( SqlNode.True() );
-        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
+        var actionCount = schema.Database.GetPendingActionCount();
+        var result = sut.SetFilter( SqlNode.True() );
+        var actions = schema.Database.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )
         {
-            statements.Should().HaveCount( 1 );
-            statements.ElementAtOrDefault( 0 )
+            result.Should().BeSameAs( sut );
+            result.Filter.Should().BeSameAs( SqlNode.True() );
+
+            actions.Should().HaveCount( 1 );
+            actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
                     "DROP INDEX \"foo_IX_T_C2A\";",
@@ -813,19 +825,26 @@ public class SqliteIndexBuilderTests : TestsBase
         var table = schema.Objects.CreateTable( "T" );
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() );
+        var oldName = sut.Name;
 
-        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
-
-        var result = ((ISqlIndexBuilder)sut).MarkAsUnique().SetFilter( t => t["C2"] != null ).SetName( "bar" );
-        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
+        var actionCount = schema.Database.GetPendingActionCount();
+        var result = sut.MarkAsUnique().SetFilter( t => t["C2"] != null ).SetName( "bar" );
+        var actions = schema.Database.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )
         {
             result.Should().BeSameAs( sut );
-            statements.Should().HaveCount( 1 );
-            statements.ElementAtOrDefault( 0 )
-                .Sql
-                .Should()
+            sut.IsUnique.Should().BeTrue();
+            sut.Filter.Should().BeEquivalentTo( table.ToRecordSet().GetField( "C2" ) != null );
+            sut.Name.Should().Be( "bar" );
+            table.Constraints.TryGet( "bar" ).Should().BeSameAs( sut );
+            table.Constraints.TryGet( oldName ).Should().BeNull();
+            schema.Objects.TryGet( "bar" ).Should().BeSameAs( sut );
+            schema.Objects.TryGet( oldName ).Should().BeNull();
+
+            actions.Should().HaveCount( 1 );
+            actions.ElementAtOrDefault( 0 )
+                .Sql.Should()
                 .SatisfySql(
                     "DROP INDEX \"foo_IX_T_C2A\";",
                     "CREATE UNIQUE INDEX \"foo_bar\" ON \"foo_T\" (\"C2\" ASC) WHERE (\"C2\" IS NOT NULL);" );
@@ -842,15 +861,14 @@ public class SqliteIndexBuilderTests : TestsBase
         var sut = table.Constraints.CreateIndex( table.Columns.Create( "C3" ).SetType<int>().Asc() ).MarkAsUnique();
         table.Constraints.CreateForeignKey( sut, ix );
 
-        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
-
+        var actionCount = schema.Database.GetPendingActionCount();
         table.Constraints.SetPrimaryKey( sut );
-        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
+        var actions = schema.Database.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )
         {
-            statements.Should().HaveCount( 1 );
-            statements.ElementAtOrDefault( 0 )
+            actions.Should().HaveCount( 1 );
+            actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
                     "DROP INDEX \"foo_IX_T_C3A\";",
@@ -882,18 +900,16 @@ public class SqliteIndexBuilderTests : TestsBase
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Constraints.CreateUniqueIndex( table.Columns.Create( "C2" ).Asc() );
 
-        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
-
+        var actionCount = schema.Database.GetPendingActionCount();
         sut.SetName( "bar" );
         table.Constraints.SetPrimaryKey( sut );
-        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
+        var actions = schema.Database.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )
         {
-            statements.Should().HaveCount( 1 );
-            statements.ElementAtOrDefault( 0 )
-                .Sql
-                .Should()
+            actions.Should().HaveCount( 1 );
+            actions.ElementAtOrDefault( 0 )
+                .Sql.Should()
                 .SatisfySql(
                     "DROP INDEX \"foo_UIX_T_C2A\";",
                     @"CREATE TABLE ""__foo_T__{GUID}__"" (
@@ -913,54 +929,30 @@ public class SqliteIndexBuilderTests : TestsBase
     }
 
     [Fact]
-    public void Remove_ShouldRemoveIndexAndSelfReferencingForeignKeys()
+    public void Remove_ShouldRemoveIndexAndClearReferencedColumnsAndReferencedFilterColumns()
     {
         var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        var pk = table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var c2 = table.Columns.Create( "C2" );
-        var sut = table.Constraints.CreateIndex( c2.Asc() ).MarkAsUnique();
-        var fk1 = table.Constraints.CreateForeignKey( table.Constraints.CreateIndex( table.Columns.Create( "C3" ).Asc() ), sut );
-        var fk2 = table.Constraints.CreateForeignKey( sut, pk.Index );
+        var sut = table.Constraints.CreateIndex( c2.Asc() ).SetFilter( t => t["C2"] != null );
 
-        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
-
-        sut.SetName( "bar" ).Remove();
-        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
+        var actionCount = schema.Database.GetPendingActionCount();
+        sut.Remove();
+        var actions = schema.Database.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )
         {
-            table.Constraints.Contains( sut.Name ).Should().BeFalse();
-            schema.Objects.Contains( sut.Name ).Should().BeFalse();
+            table.Constraints.TryGet( sut.Name ).Should().BeNull();
+            schema.Objects.TryGet( sut.Name ).Should().BeNull();
             sut.IsRemoved.Should().BeTrue();
-            sut.OriginatingForeignKeys.Should().BeEmpty();
-            sut.ReferencingForeignKeys.Should().BeEmpty();
-            fk1.IsRemoved.Should().BeTrue();
-            fk2.IsRemoved.Should().BeTrue();
-            c2.ReferencingIndexes.Should().BeEmpty();
+            sut.Columns.Should().BeEmpty();
+            sut.ReferencedFilterColumns.Should().BeEmpty();
+            sut.Filter.Should().BeNull();
+            c2.ReferencingObjects.Should().BeEmpty();
 
-            statements.Should().HaveCount( 1 );
-            statements.ElementAtOrDefault( 0 )
-                .Sql
-                .Should()
-                .SatisfySql(
-                    "DROP INDEX \"foo_IX_T_C2A\";",
-                    "DROP INDEX \"foo_IX_T_C3A\";",
-                    @"CREATE TABLE ""__foo_T__{GUID}__"" (
-                      ""C1"" ANY NOT NULL,
-                      ""C2"" ANY NOT NULL,
-                      ""C3"" ANY NOT NULL,
-                      CONSTRAINT ""foo_PK_T"" PRIMARY KEY (""C1"" ASC)
-                    ) WITHOUT ROWID;",
-                    @"INSERT INTO ""__foo_T__{GUID}__"" (""C1"", ""C2"", ""C3"")
-                    SELECT
-                      ""foo_T"".""C1"",
-                      ""foo_T"".""C2"",
-                      ""foo_T"".""C3""
-                    FROM ""foo_T"";",
-                    "DROP TABLE \"foo_T\";",
-                    "ALTER TABLE \"__foo_T__{GUID}__\" RENAME TO \"foo_T\";",
-                    "CREATE INDEX \"foo_IX_T_C3A\" ON \"foo_T\" (\"C3\" ASC);" );
+            actions.Should().HaveCount( 1 );
+            actions.ElementAtOrDefault( 0 ).Sql.Should().SatisfySql( "DROP INDEX \"foo_IX_T_C2A\";" );
         }
     }
 
@@ -977,39 +969,16 @@ public class SqliteIndexBuilderTests : TestsBase
 
         using ( new AssertionScope() )
         {
-            table.Constraints.Contains( sut.Name ).Should().BeFalse();
-            table.Constraints.Contains( pk.Name ).Should().BeFalse();
-            schema.Objects.Contains( sut.Name ).Should().BeFalse();
-            schema.Objects.Contains( pk.Name ).Should().BeFalse();
-            sut.IsRemoved.Should().BeTrue();
-            sut.OriginatingForeignKeys.Should().BeEmpty();
-            sut.ReferencingForeignKeys.Should().BeEmpty();
-            column.ReferencingIndexes.Should().BeEmpty();
-            pk.IsRemoved.Should().BeTrue();
             table.Constraints.TryGetPrimaryKey().Should().BeNull();
-        }
-    }
-
-    [Fact]
-    public void Remove_ShouldRemoveIndexAndClearAssignedFilterColumns()
-    {
-        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
-        var table = schema.Objects.CreateTable( "T" );
-        var column = table.Columns.Create( "C" );
-        var sut = table.Constraints.CreateIndex( column.Asc() ).SetFilter( t => t["C"] != null );
-
-        sut.Remove();
-
-        using ( new AssertionScope() )
-        {
-            table.Constraints.Contains( sut.Name ).Should().BeFalse();
-            schema.Objects.Contains( sut.Name ).Should().BeFalse();
+            table.Constraints.TryGet( sut.Name ).Should().BeNull();
+            table.Constraints.TryGet( pk.Name ).Should().BeNull();
+            schema.Objects.TryGet( sut.Name ).Should().BeNull();
+            schema.Objects.TryGet( pk.Name ).Should().BeNull();
             sut.IsRemoved.Should().BeTrue();
-            sut.OriginatingForeignKeys.Should().BeEmpty();
-            sut.ReferencingForeignKeys.Should().BeEmpty();
-            sut.ReferencedFilterColumns.Should().BeEmpty();
-            column.ReferencingIndexes.Should().BeEmpty();
-            column.ReferencingIndexFilters.Should().BeEmpty();
+            sut.PrimaryKey.Should().BeNull();
+            sut.Columns.Should().BeEmpty();
+            pk.IsRemoved.Should().BeTrue();
+            column.ReferencingObjects.Should().BeEmpty();
         }
     }
 
@@ -1021,30 +990,46 @@ public class SqliteIndexBuilderTests : TestsBase
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() );
 
-        _ = schema.Database.Changes.GetPendingActions();
+        schema.Database.Changes.CompletePendingChanges();
         sut.Remove();
-        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
 
+        var actionCount = schema.Database.GetPendingActionCount();
         sut.Remove();
-        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
+        var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        statements.Should().BeEmpty();
+        actions.Should().BeEmpty();
     }
 
     [Fact]
-    public void Remove_ShouldThrowSqliteObjectBuilderException_WhenIndexHasExternalReferences()
+    public void Remove_ShouldThrowSqlObjectBuilderException_WhenIndexHasOriginatingForeignKey()
     {
         var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
-        var t1 = schema.Objects.CreateTable( "T1" );
-        t1.Constraints.SetPrimaryKey( t1.Columns.Create( "C1" ).Asc() );
-        var sut = t1.Constraints.CreateIndex( t1.Columns.Create( "C2" ).Asc() ).MarkAsUnique();
-        var t2 = schema.Objects.CreateTable( "T2" );
-        var ix = t2.Constraints.SetPrimaryKey( t2.Columns.Create( "C3" ).Asc() ).Index;
-        t2.Constraints.CreateForeignKey( ix, sut );
+        var table = schema.Objects.CreateTable( "T" );
+        var ix = table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() ).Index;
+        var sut = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() );
+        table.Constraints.CreateForeignKey( sut, ix );
 
         var action = Lambda.Of( () => sut.Remove() );
 
-        action.Should().ThrowExactly<SqliteObjectBuilderException>();
+        action.Should()
+            .ThrowExactly<SqlObjectBuilderException>()
+            .AndMatch( e => e.Dialect == SqliteDialect.Instance && e.Errors.Count == 1 );
+    }
+
+    [Fact]
+    public void Remove_ShouldThrowSqlObjectBuilderException_WhenIndexHasReferencingForeignKey()
+    {
+        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var table = schema.Objects.CreateTable( "T" );
+        var sut = table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() ).Index;
+        var ix = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() );
+        table.Constraints.CreateForeignKey( ix, sut );
+
+        var action = Lambda.Of( () => sut.Remove() );
+
+        action.Should()
+            .ThrowExactly<SqlObjectBuilderException>()
+            .AndMatch( e => e.Dialect == SqliteDialect.Instance && e.Errors.Count == 1 );
     }
 
     [Fact]

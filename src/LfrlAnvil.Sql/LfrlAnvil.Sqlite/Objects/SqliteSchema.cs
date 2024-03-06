@@ -3,17 +3,11 @@ using LfrlAnvil.Sqlite.Objects.Builders;
 
 namespace LfrlAnvil.Sqlite.Objects;
 
-public sealed class SqliteSchema : SqliteObject, ISqlSchema
+public sealed class SqliteSchema : SqlSchema
 {
     internal SqliteSchema(SqliteDatabase database, SqliteSchemaBuilder builder)
-        : base( builder )
-    {
-        Database = database;
-        Objects = new SqliteObjectCollection( this, builder.Objects.Count );
-    }
+        : base( database, builder, new SqliteObjectCollection( builder.Objects ) ) { }
 
-    public SqliteObjectCollection Objects { get; }
-    public override SqliteDatabase Database { get; }
-
-    ISqlObjectCollection ISqlSchema.Objects => Objects;
+    public new SqliteObjectCollection Objects => ReinterpretCast.To<SqliteObjectCollection>( base.Objects );
+    public new SqliteDatabase Database => ReinterpretCast.To<SqliteDatabase>( base.Database );
 }

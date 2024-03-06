@@ -1,33 +1,22 @@
-﻿using System.Collections.Generic;
+﻿using System.Diagnostics.Contracts;
 using LfrlAnvil.Sql.Objects;
+using LfrlAnvil.Sqlite.Internal;
 using LfrlAnvil.Sqlite.Objects.Builders;
 
 namespace LfrlAnvil.Sqlite.Objects;
 
-public sealed class SqliteIndex : SqliteConstraint, ISqlIndex
+public sealed class SqliteIndex : SqlIndex
 {
-    private readonly SqlIndexColumn<ISqlColumn>[] _columns;
-
     internal SqliteIndex(SqliteTable table, SqliteIndexBuilder builder)
-        : base( table, builder )
+        : base( table, builder ) { }
+
+    public new SqlIndexColumnArray<SqliteColumn> Columns => base.Columns.UnsafeReinterpretAs<SqliteColumn>();
+    public new SqliteTable Table => ReinterpretCast.To<SqliteTable>( base.Table );
+    public new SqliteDatabase Database => ReinterpretCast.To<SqliteDatabase>( base.Database );
+
+    [Pure]
+    public override string ToString()
     {
-        IsUnique = builder.IsUnique;
-        IsPartial = builder.Filter is not null;
-
-        var i = 0;
-        var builderColumns = builder.Columns;
-        _columns = new SqlIndexColumn<ISqlColumn>[builderColumns.Count];
-        foreach ( var c in builderColumns )
-        {
-            var column = table.Columns.Get( c.Column.Name );
-            _columns[i++] = SqlIndexColumn.Create( column, c.Ordering );
-        }
+        return $"[{Type}] {SqliteHelpers.GetFullName( Table.Schema.Name, Name )}";
     }
-
-    public bool IsUnique { get; }
-    public bool IsPartial { get; }
-    public ReadOnlyArray<SqlIndexColumn<ISqlColumn>> Columns => _columns;
-    public override SqliteDatabase Database => Table.Database;
-
-    IReadOnlyList<SqlIndexColumn<ISqlColumn>> ISqlIndex.Columns => _columns;
 }

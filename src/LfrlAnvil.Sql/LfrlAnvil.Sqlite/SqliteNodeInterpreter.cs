@@ -301,7 +301,7 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
         VisitChild( node.Value );
         Context.Sql.AppendSpace().Append( "AS" ).AppendSpace();
 
-        var typeDefinition = ColumnTypeDefinitions.GetByType( node.TargetType );
+        var typeDefinition = node.TargetTypeDefinition ?? ColumnTypeDefinitions.GetByType( node.TargetType );
         Context.Sql.Append( typeDefinition.DataType.Name ).Append( ')' );
     }
 

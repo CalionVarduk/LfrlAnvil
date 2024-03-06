@@ -16,13 +16,14 @@ using LfrlAnvil.Sqlite.Objects;
 using LfrlAnvil.Sqlite.Objects.Builders;
 using LfrlAnvil.Sqlite.Tests.Helpers;
 using LfrlAnvil.TestExtensions.FluentAssertions;
+using LfrlAnvil.TestExtensions.Sql.FluentAssertions;
 
 namespace LfrlAnvil.Sqlite.Tests;
 
 public class SqliteNodeInterpreterTests : TestsBase
 {
     private readonly SqliteNodeInterpreter _sut = new SqliteNodeInterpreter(
-        new SqliteColumnTypeDefinitionProvider(),
+        new SqliteColumnTypeDefinitionProvider( new SqliteColumnTypeDefinitionProviderBuilder() ),
         SqlNodeInterpreterContext.Create() );
 
     [Fact]

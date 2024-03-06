@@ -1,5 +1,4 @@
 ﻿using LfrlAnvil.Sql;
-using LfrlAnvil.Sql.Objects;
 using LfrlAnvil.Sqlite.Extensions;
 using LfrlAnvil.Sqlite.Tests.Helpers;
 
@@ -17,7 +16,7 @@ public class SqlitePrimaryKeyTests : TestsBase
         var db = new SqliteDatabaseMock( schemaBuilder.Database );
         var schema = db.Schemas.Get( "foo" );
 
-        ISqlPrimaryKey sut = schema.Objects.GetTable( "T" ).Constraints.PrimaryKey;
+        var sut = schema.Objects.GetTable( "T" ).Constraints.PrimaryKey;
         var index = schema.Objects.GetIndex( "UIX_T_C1A" );
 
         using ( new AssertionScope() )

@@ -1,12 +1,9 @@
 ﻿using System.Collections.Generic;
-using System.Linq;
 using LfrlAnvil.Functional;
 using LfrlAnvil.Sql;
 using LfrlAnvil.Sql.Exceptions;
 using LfrlAnvil.Sql.Expressions;
-using LfrlAnvil.Sql.Extensions;
 using LfrlAnvil.Sql.Objects.Builders;
-using LfrlAnvil.Sqlite.Exceptions;
 using LfrlAnvil.Sqlite.Extensions;
 using LfrlAnvil.Sqlite.Objects.Builders;
 using LfrlAnvil.Sqlite.Tests.Helpers;
@@ -25,7 +22,7 @@ public partial class SqliteTableBuilderTests
         {
             var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
-            ISqlConstraintBuilderCollection sut = table.Constraints;
+            var sut = table.Constraints;
             var c1 = table.Columns.Create( "C1" ).Asc();
             var c2 = table.Columns.Create( "C2" ).Desc();
 
@@ -33,22 +30,28 @@ public partial class SqliteTableBuilderTests
 
             using ( new AssertionScope() )
             {
-                result.Columns.ToArray().Should().BeSequentiallyEqualTo( c1, c2 );
-                result.Name.Should().Be( expectedName );
                 result.Table.Should().BeSameAs( table );
                 result.Database.Should().BeSameAs( table.Database );
                 result.Type.Should().Be( SqlObjectType.Index );
+                result.Name.Should().Be( expectedName );
+                result.Columns.Should().BeSequentiallyEqualTo( c1, c2 );
                 result.ReferencedFilterColumns.Should().BeEmpty();
                 result.PrimaryKey.Should().BeNull();
                 result.IsUnique.Should().Be( isUnique );
                 result.Filter.Should().BeNull();
-                schema.Objects.Contains( result.Name ).Should().BeTrue();
-                sut.Count.Should().Be( 1 );
-                sut.Should().BeEquivalentTo( result );
-                sut.Contains( result.Name ).Should().BeTrue();
+                result.ReferencingObjects.Should().BeEmpty();
 
-                c1.Column.ReferencingIndexes.Should().BeSequentiallyEqualTo( (SqliteIndexBuilder)result );
-                c2.Column.ReferencingIndexes.Should().BeSequentiallyEqualTo( (SqliteIndexBuilder)result );
+                sut.Count.Should().Be( 1 );
+                sut.Should().BeSequentiallyEqualTo( result );
+                schema.Objects.TryGet( result.Name ).Should().BeSameAs( result );
+
+                c1.Column.ReferencingObjects.Should()
+                    .BeSequentiallyEqualTo(
+                        SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), c1.Column ) );
+
+                c2.Column.ReferencingObjects.Should()
+                    .BeSequentiallyEqualTo(
+                        SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), c2.Column ) );
             }
         }
 
@@ -59,7 +62,7 @@ public partial class SqliteTableBuilderTests
         {
             var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
-            ISqlConstraintBuilderCollection sut = table.Constraints;
+            var sut = table.Constraints;
             var c1 = table.Columns.Create( "C1" ).Asc();
             var c2 = table.Columns.Create( "C2" ).Desc();
 
@@ -67,89 +70,78 @@ public partial class SqliteTableBuilderTests
 
             using ( new AssertionScope() )
             {
-                result.Columns.ToArray().Should().BeSequentiallyEqualTo( c1, c2 );
-                result.Name.Should().Be( "IX_T" );
                 result.Table.Should().BeSameAs( table );
                 result.Database.Should().BeSameAs( table.Database );
                 result.Type.Should().Be( SqlObjectType.Index );
+                result.Name.Should().Be( "IX_T" );
+                result.Columns.Should().BeSequentiallyEqualTo( c1, c2 );
                 result.ReferencedFilterColumns.Should().BeEmpty();
                 result.PrimaryKey.Should().BeNull();
                 result.IsUnique.Should().Be( isUnique );
                 result.Filter.Should().BeNull();
-                schema.Objects.Contains( result.Name ).Should().BeTrue();
+                result.ReferencingObjects.Should().BeEmpty();
+
                 sut.Count.Should().Be( 1 );
-                sut.Should().BeEquivalentTo( result );
-                sut.Contains( result.Name ).Should().BeTrue();
+                sut.Should().BeSequentiallyEqualTo( result );
+                schema.Objects.TryGet( result.Name ).Should().BeSameAs( result );
+
+                c1.Column.ReferencingObjects.Should()
+                    .BeSequentiallyEqualTo(
+                        SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), c1.Column ) );
+
+                c2.Column.ReferencingObjects.Should()
+                    .BeSequentiallyEqualTo(
+                        SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), c2.Column ) );
             }
         }
 
         [Fact]
-        public void CreateIndex_ShouldThrowSqliteObjectBuilderException_WhenTableIsRemoved()
+        public void CreateIndex_ShouldThrowSqlObjectBuilderException_WhenTableIsRemoved()
         {
             var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
-            ISqlConstraintBuilderCollection sut = table.Constraints;
+            var sut = table.Constraints;
             var column = table.Columns.Create( "C" ).Asc();
             table.Remove();
 
             var action = Lambda.Of( () => sut.CreateIndex( column ) );
 
             action.Should()
-                .ThrowExactly<SqliteObjectBuilderException>()
+                .ThrowExactly<SqlObjectBuilderException>()
                 .AndMatch( e => e.Dialect == SqliteDialect.Instance && e.Errors.Count == 1 );
         }
 
         [Fact]
-        public void CreateIndex_ShouldThrowSqliteObjectBuilderException_WhenConstraintAlreadyExists()
+        public void CreateIndex_ShouldThrowSqlObjectBuilderException_WhenSchemaObjectNameAlreadyExists()
         {
             var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
-            ISqlConstraintBuilderCollection sut = table.Constraints;
-            var c1 = table.Columns.Create( "C1" ).Asc();
-            var c2 = table.Columns.Create( "C2" ).Desc();
-            var other = sut.CreateCheck( SqlNode.True() );
+            var sut = table.Constraints;
+            var column = table.Columns.Create( "C" ).Asc();
 
-            var action = Lambda.Of( () => sut.CreateIndex( other.Name, c1, c2 ) );
+            var action = Lambda.Of( () => sut.CreateIndex( "T", column ) );
 
             action.Should()
-                .ThrowExactly<SqliteObjectBuilderException>()
+                .ThrowExactly<SqlObjectBuilderException>()
                 .AndMatch( e => e.Dialect == SqliteDialect.Instance && e.Errors.Count == 1 );
         }
 
         [Fact]
-        public void CreateIndex_ShouldThrowSqliteObjectBuilderException_WhenConstraintAlreadyExistsInAnotherTable()
-        {
-            var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
-            var otherTable = schema.Objects.CreateTable( "T2" );
-            var other = otherTable.Constraints.CreateIndex( otherTable.Columns.Create( "C1" ).Asc() );
-            otherTable.Constraints.SetPrimaryKey( otherTable.Columns.Create( "C2" ).Asc() );
-            var table = schema.Objects.CreateTable( "T" );
-            ISqlConstraintBuilderCollection sut = table.Constraints;
-            var c = table.Columns.Create( "C" ).Asc();
-
-            var action = Lambda.Of( () => sut.CreateIndex( other.Name, c ) );
-
-            action.Should()
-                .ThrowExactly<SqliteObjectBuilderException>()
-                .AndMatch( e => e.Dialect == SqliteDialect.Instance && e.Errors.Count == 1 );
-        }
-
-        [Fact]
-        public void CreateIndex_ShouldThrowSqliteObjectBuilderException_WhenColumnsAreEmpty()
+        public void CreateIndex_ShouldThrowSqlObjectBuilderException_WhenColumnsAreEmpty()
         {
             var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
-            ISqlConstraintBuilderCollection sut = table.Constraints;
+            var sut = table.Constraints;
 
             var action = Lambda.Of( () => sut.CreateIndex() );
 
             action.Should()
-                .ThrowExactly<SqliteObjectBuilderException>()
+                .ThrowExactly<SqlObjectBuilderException>()
                 .AndMatch( e => e.Dialect == SqliteDialect.Instance && e.Errors.Count == 1 );
         }
 
         [Fact]
-        public void CreateIndex_ShouldThrowSqliteObjectBuilderException_WhenAtLeastOneColumnBelongsToAnotherTable()
+        public void CreateIndex_ShouldThrowSqlObjectBuilderException_WhenAtLeastOneColumnBelongsToAnotherTable()
         {
             var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var t1 = schema.Objects.CreateTable( "T1" );
@@ -157,43 +149,43 @@ public partial class SqliteTableBuilderTests
             t1.Constraints.SetPrimaryKey( c1.Asc() );
 
             var t2 = schema.Objects.CreateTable( "T2" );
-            ISqlConstraintBuilderCollection sut = t2.Constraints;
+            var sut = t2.Constraints;
 
             var action = Lambda.Of( () => sut.CreateIndex( c1.Asc() ) );
 
             action.Should()
-                .ThrowExactly<SqliteObjectBuilderException>()
+                .ThrowExactly<SqlObjectBuilderException>()
                 .AndMatch( e => e.Dialect == SqliteDialect.Instance && e.Errors.Count == 1 );
         }
 
         [Fact]
-        public void CreateIndex_ShouldThrowSqliteObjectBuilderException_WhenAtLeastOneColumnIsRemoved()
+        public void CreateIndex_ShouldThrowSqlObjectBuilderException_WhenAtLeastOneColumnIsRemoved()
         {
             var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
             var column = table.Columns.Create( "C" );
-            ISqlConstraintBuilderCollection sut = table.Constraints;
+            var sut = table.Constraints;
             column.Remove();
 
             var action = Lambda.Of( () => sut.CreateIndex( column.Asc() ) );
 
             action.Should()
-                .ThrowExactly<SqliteObjectBuilderException>()
+                .ThrowExactly<SqlObjectBuilderException>()
                 .AndMatch( e => e.Dialect == SqliteDialect.Instance && e.Errors.Count == 1 );
         }
 
         [Fact]
-        public void CreateIndex_ShouldThrowSqliteObjectBuilderException_WhenAtLeastOneColumnIsDuplicated()
+        public void CreateIndex_ShouldThrowSqlObjectBuilderException_WhenAtLeastOneColumnIsDuplicated()
         {
             var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
             var column = table.Columns.Create( "C" );
-            ISqlConstraintBuilderCollection sut = table.Constraints;
+            var sut = table.Constraints;
 
             var action = Lambda.Of( () => sut.CreateIndex( column.Asc(), column.Desc() ) );
 
             action.Should()
-                .ThrowExactly<SqliteObjectBuilderException>()
+                .ThrowExactly<SqlObjectBuilderException>()
                 .AndMatch( e => e.Dialect == SqliteDialect.Instance && e.Errors.Count == 1 );
         }
 
@@ -203,13 +195,13 @@ public partial class SqliteTableBuilderTests
             var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
             var column = Substitute.For<ISqlColumnBuilder>();
-            ISqlConstraintBuilderCollection sut = table.Constraints;
+            var sut = table.Constraints;
 
             var action = Lambda.Of( () => sut.CreateIndex( SqlIndexColumnBuilder.CreateAsc( column ) ) );
 
             action.Should()
                 .ThrowExactly<SqlObjectCastException>()
-                .AndMatch( e => e.Dialect == SqliteDialect.Instance && e.Expected == typeof( SqliteColumnBuilder ) );
+                .AndMatch( e => e.Dialect == SqliteDialect.Instance && e.Expected == typeof( SqlColumnBuilder ) );
         }
 
         [Theory]
@@ -218,17 +210,17 @@ public partial class SqliteTableBuilderTests
         [InlineData( "\"" )]
         [InlineData( "'" )]
         [InlineData( "f\"oo" )]
-        public void CreateIndex_ShouldThrowSqliteObjectBuilderException_WhenNameIsInvalid(string name)
+        public void CreateIndex_ShouldThrowSqlObjectBuilderException_WhenNameIsInvalid(string name)
         {
             var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
-            ISqlConstraintBuilderCollection sut = table.Constraints;
+            var sut = table.Constraints;
             var c = table.Columns.Create( "C" ).Asc();
 
             var action = Lambda.Of( () => sut.CreateIndex( name, c ) );
 
             action.Should()
-                .ThrowExactly<SqliteObjectBuilderException>()
+                .ThrowExactly<SqlObjectBuilderException>()
                 .AndMatch( e => e.Dialect == SqliteDialect.Instance && e.Errors.Count == 1 );
         }
 
@@ -237,30 +229,37 @@ public partial class SqliteTableBuilderTests
         {
             var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
-            ISqlConstraintBuilderCollection sut = table.Constraints;
+            var sut = table.Constraints;
             var column = table.Columns.Create( "C" );
 
             var result = sut.SetPrimaryKey( column.Asc() );
 
             using ( new AssertionScope() )
             {
-                result.Should().BeSameAs( table.Constraints.TryGetPrimaryKey() );
-                result.Name.Should().Be( "PK_T" );
+                result.Table.Should().BeSameAs( table );
+                result.Database.Should().BeSameAs( table.Database );
                 result.Type.Should().Be( SqlObjectType.PrimaryKey );
-                result.Database.Should().BeSameAs( schema.Database );
+                result.Name.Should().Be( "PK_T" );
                 result.Index.Table.Should().BeSameAs( table );
-                result.Index.IsUnique.Should().BeTrue();
-                result.Index.Name.Should().Be( "UIX_T_CA" );
-                result.Index.Columns.ToArray().Should().BeSequentiallyEqualTo( column.Asc() );
-                result.Index.PrimaryKey.Should().BeSameAs( result );
-                result.Index.Type.Should().Be( SqlObjectType.Index );
                 result.Index.Database.Should().BeSameAs( schema.Database );
+                result.Index.Type.Should().Be( SqlObjectType.Index );
+                result.Index.Name.Should().Be( "UIX_T_CA" );
+                result.Index.Columns.Should().BeSequentiallyEqualTo( column.Asc() );
+                result.Index.ReferencedFilterColumns.Should().BeEmpty();
+                result.Index.PrimaryKey.Should().BeSameAs( result );
+                result.Index.IsUnique.Should().BeTrue();
+                result.Index.Filter.Should().BeNull();
+                result.ReferencingObjects.Should().BeEmpty();
+
                 sut.Count.Should().Be( 2 );
                 sut.Should().BeEquivalentTo( result, result.Index );
-                sut.Contains( result.Name ).Should().BeTrue();
-                sut.Contains( result.Index.Name ).Should().BeTrue();
-                schema.Objects.Contains( result.Name ).Should().BeTrue();
-                schema.Objects.Contains( result.Index.Name ).Should().BeTrue();
+                sut.TryGetPrimaryKey().Should().BeSameAs( result );
+                schema.Objects.TryGet( result.Name ).Should().BeSameAs( result );
+                schema.Objects.TryGet( result.Index.Name ).Should().BeSameAs( result.Index );
+
+                column.ReferencingObjects.Should()
+                    .BeSequentiallyEqualTo(
+                        SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result.Index ), column ) );
             }
         }
 
@@ -269,7 +268,7 @@ public partial class SqliteTableBuilderTests
         {
             var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
-            ISqlConstraintBuilderCollection sut = table.Constraints;
+            var sut = table.Constraints;
             var c1 = table.Columns.Create( "C1" );
             var c2 = table.Columns.Create( "C2" );
             var c3 = table.Columns.Create( "C3" );
@@ -289,7 +288,7 @@ public partial class SqliteTableBuilderTests
         {
             var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
-            ISqlConstraintBuilderCollection sut = table.Constraints;
+            var sut = table.Constraints;
             var c1 = table.Columns.Create( "C1" );
             var c2 = table.Columns.Create( "C2" );
             var oldPk = sut.SetPrimaryKey( c1.Asc(), c2.Asc() );
@@ -309,7 +308,7 @@ public partial class SqliteTableBuilderTests
         {
             var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
-            ISqlConstraintBuilderCollection sut = table.Constraints;
+            var sut = table.Constraints;
             var c1 = table.Columns.Create( "C1" );
             var c2 = table.Columns.Create( "C2" );
             var oldPk = sut.SetPrimaryKey( c1.Asc() );
@@ -318,26 +317,30 @@ public partial class SqliteTableBuilderTests
 
             using ( new AssertionScope() )
             {
-                result.Should().BeSameAs( table.Constraints.TryGetPrimaryKey() );
-                result.Name.Should().Be( "PK_T" );
+                result.Table.Should().BeSameAs( table );
+                result.Database.Should().BeSameAs( table.Database );
                 result.Type.Should().Be( SqlObjectType.PrimaryKey );
-                result.Database.Should().BeSameAs( schema.Database );
+                result.Name.Should().Be( "PK_T" );
                 result.Index.Table.Should().BeSameAs( table );
-                result.Index.IsUnique.Should().BeTrue();
-                result.Index.Name.Should().Be( "UIX_T_C2A" );
-                result.Index.Columns.ToArray().Should().BeSequentiallyEqualTo( c2.Asc() );
-                result.Index.PrimaryKey.Should().BeSameAs( result );
-                result.Index.Type.Should().Be( SqlObjectType.Index );
                 result.Index.Database.Should().BeSameAs( schema.Database );
+                result.Index.Type.Should().Be( SqlObjectType.Index );
+                result.Index.Name.Should().Be( "UIX_T_C2A" );
+                result.Index.Columns.Should().BeSequentiallyEqualTo( c2.Asc() );
+                result.Index.ReferencedFilterColumns.Should().BeEmpty();
+                result.Index.PrimaryKey.Should().BeSameAs( result );
+                result.Index.IsUnique.Should().BeTrue();
+                result.Index.Filter.Should().BeNull();
+                result.ReferencingObjects.Should().BeEmpty();
+
                 sut.Count.Should().Be( 2 );
                 sut.Should().BeEquivalentTo( result, result.Index );
-                sut.Contains( result.Name ).Should().BeTrue();
-                sut.Contains( result.Index.Name ).Should().BeTrue();
-                schema.Objects.Contains( result.Name ).Should().BeTrue();
-                schema.Objects.Contains( result.Index.Name ).Should().BeTrue();
+                sut.TryGetPrimaryKey().Should().BeSameAs( result );
+                schema.Objects.TryGet( result.Name ).Should().BeSameAs( result );
+                schema.Objects.TryGet( result.Index.Name ).Should().BeSameAs( result.Index );
+                schema.Objects.TryGet( oldPk.Index.Name ).Should().BeNull();
+
                 oldPk.IsRemoved.Should().BeTrue();
                 oldPk.Index.IsRemoved.Should().BeTrue();
-                oldPk.Index.PrimaryKey.Should().BeNull();
             }
         }
 
@@ -346,7 +349,7 @@ public partial class SqliteTableBuilderTests
         {
             var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
-            ISqlConstraintBuilderCollection sut = table.Constraints;
+            var sut = table.Constraints;
             var c1 = table.Columns.Create( "C1" );
             var c2 = table.Columns.Create( "C2" );
             var oldPk = sut.SetPrimaryKey( c1.Asc() );
@@ -355,26 +358,31 @@ public partial class SqliteTableBuilderTests
 
             using ( new AssertionScope() )
             {
-                result.Should().BeSameAs( table.Constraints.TryGetPrimaryKey() );
-                result.Name.Should().Be( "PK_NEW" );
+                result.Table.Should().BeSameAs( table );
+                result.Database.Should().BeSameAs( table.Database );
                 result.Type.Should().Be( SqlObjectType.PrimaryKey );
-                result.Database.Should().BeSameAs( schema.Database );
+                result.Name.Should().Be( "PK_NEW" );
                 result.Index.Table.Should().BeSameAs( table );
-                result.Index.IsUnique.Should().BeTrue();
-                result.Index.Name.Should().Be( "UIX_T_C2A" );
-                result.Index.Columns.ToArray().Should().BeSequentiallyEqualTo( c2.Asc() );
-                result.Index.PrimaryKey.Should().BeSameAs( result );
-                result.Index.Type.Should().Be( SqlObjectType.Index );
                 result.Index.Database.Should().BeSameAs( schema.Database );
+                result.Index.Type.Should().Be( SqlObjectType.Index );
+                result.Index.Name.Should().Be( "UIX_T_C2A" );
+                result.Index.Columns.Should().BeSequentiallyEqualTo( c2.Asc() );
+                result.Index.ReferencedFilterColumns.Should().BeEmpty();
+                result.Index.PrimaryKey.Should().BeSameAs( result );
+                result.Index.IsUnique.Should().BeTrue();
+                result.Index.Filter.Should().BeNull();
+                result.ReferencingObjects.Should().BeEmpty();
+
                 sut.Count.Should().Be( 2 );
                 sut.Should().BeEquivalentTo( result, result.Index );
-                sut.Contains( result.Name ).Should().BeTrue();
-                sut.Contains( result.Index.Name ).Should().BeTrue();
-                schema.Objects.Contains( result.Name ).Should().BeTrue();
-                schema.Objects.Contains( result.Index.Name ).Should().BeTrue();
+                sut.TryGetPrimaryKey().Should().BeSameAs( result );
+                schema.Objects.TryGet( result.Name ).Should().BeSameAs( result );
+                schema.Objects.TryGet( result.Index.Name ).Should().BeSameAs( result.Index );
+                schema.Objects.TryGet( oldPk.Name ).Should().BeNull();
+                schema.Objects.TryGet( oldPk.Index.Name ).Should().BeNull();
+
                 oldPk.IsRemoved.Should().BeTrue();
                 oldPk.Index.IsRemoved.Should().BeTrue();
-                oldPk.Index.PrimaryKey.Should().BeNull();
             }
         }
 
@@ -384,7 +392,7 @@ public partial class SqliteTableBuilderTests
         {
             var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
-            ISqlConstraintBuilderCollection sut = table.Constraints;
+            var sut = table.Constraints;
             var c1 = table.Columns.Create( "C1" );
             var c2 = table.Columns.Create( "C2" );
             var oldPk = sut.SetPrimaryKey( c1.Asc() );
@@ -393,83 +401,87 @@ public partial class SqliteTableBuilderTests
 
             using ( new AssertionScope() )
             {
-                result.Should().BeSameAs( table.Constraints.TryGetPrimaryKey() );
-                result.Name.Should().Be( "UIX_T_C1A" );
+                result.Table.Should().BeSameAs( table );
+                result.Database.Should().BeSameAs( table.Database );
                 result.Type.Should().Be( SqlObjectType.PrimaryKey );
-                result.Database.Should().BeSameAs( schema.Database );
+                result.Name.Should().Be( "UIX_T_C1A" );
                 result.Index.Table.Should().BeSameAs( table );
-                result.Index.IsUnique.Should().BeTrue();
-                result.Index.Name.Should().Be( "UIX_T_C2A" );
-                result.Index.Columns.ToArray().Should().BeSequentiallyEqualTo( c2.Asc() );
-                result.Index.PrimaryKey.Should().BeSameAs( result );
-                result.Index.Type.Should().Be( SqlObjectType.Index );
                 result.Index.Database.Should().BeSameAs( schema.Database );
+                result.Index.Type.Should().Be( SqlObjectType.Index );
+                result.Index.Name.Should().Be( "UIX_T_C2A" );
+                result.Index.Columns.Should().BeSequentiallyEqualTo( c2.Asc() );
+                result.Index.ReferencedFilterColumns.Should().BeEmpty();
+                result.Index.PrimaryKey.Should().BeSameAs( result );
+                result.Index.IsUnique.Should().BeTrue();
+                result.Index.Filter.Should().BeNull();
+                result.ReferencingObjects.Should().BeEmpty();
+
                 sut.Count.Should().Be( 2 );
                 sut.Should().BeEquivalentTo( result, result.Index );
-                sut.Contains( result.Name ).Should().BeTrue();
-                sut.Contains( result.Index.Name ).Should().BeTrue();
-                schema.Objects.Contains( result.Name ).Should().BeTrue();
-                schema.Objects.Contains( result.Index.Name ).Should().BeTrue();
+                sut.TryGetPrimaryKey().Should().BeSameAs( result );
+                schema.Objects.TryGet( result.Name ).Should().BeSameAs( result );
+                schema.Objects.TryGet( result.Index.Name ).Should().BeSameAs( result.Index );
+                schema.Objects.TryGet( oldPk.Name ).Should().BeNull();
+
                 oldPk.IsRemoved.Should().BeTrue();
                 oldPk.Index.IsRemoved.Should().BeTrue();
-                oldPk.Index.PrimaryKey.Should().BeNull();
             }
         }
 
         [Fact]
-        public void SetPrimaryKey_ShouldThrowSqliteObjectBuilderException_WhenCurrentPrimaryKeyIndexHasExternalReferences()
+        public void SetPrimaryKey_ShouldThrowSqlObjectBuilderException_WhenCurrentPrimaryKeyIndexCannotBeRemoved()
         {
             var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
+            var sut = table.Constraints;
             var c1 = table.Columns.Create( "C1" );
             var c2 = table.Columns.Create( "C2" );
-            var oldPk = table.Constraints.SetPrimaryKey( c1.Asc() );
+            var oldPk = sut.SetPrimaryKey( c1.Asc() );
+            sut.CreateForeignKey( sut.CreateIndex( table.Columns.Create( "C3" ).Asc() ), oldPk.Index );
 
-            var t2 = schema.Objects.CreateTable( "T2" );
-            var pk2 = t2.Constraints.SetPrimaryKey( t2.Columns.Create( "C3" ).Asc() );
-            t2.Constraints.CreateForeignKey( pk2.Index, oldPk.Index );
-
-            var action = Lambda.Of( () => table.Constraints.SetPrimaryKey( c2.Asc() ) );
+            var action = Lambda.Of( () => sut.SetPrimaryKey( c2.Asc() ) );
 
             action.Should()
-                .ThrowExactly<SqliteObjectBuilderException>()
+                .ThrowExactly<SqlObjectBuilderException>()
                 .AndMatch( e => e.Dialect == SqliteDialect.Instance && e.Errors.Count == 1 );
         }
 
         [Fact]
-        public void SetPrimaryKey_ShouldThrowSqliteObjectBuilderException_WhenPrimaryKeyNameExistsDuringCreation()
+        public void SetPrimaryKey_ShouldThrowSqlObjectBuilderException_WhenPrimaryKeyNameExistsDuringCreationInSchemaObjects()
         {
-            var schema = SqliteDatabaseBuilderMock.Create().Schemas.Default;
-            var table = schema.Objects.CreateTable( "foo" );
+            var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+            var table = schema.Objects.CreateTable( "T" );
+            var sut = table.Constraints;
             var c1 = table.Columns.Create( "C1" );
-            var index = table.Constraints.CreateUniqueIndex( c1.Asc() );
+            var index = sut.CreateUniqueIndex( c1.Asc() );
 
-            var action = Lambda.Of( () => table.Constraints.SetPrimaryKey( index.Name, index ) );
+            var action = Lambda.Of( () => sut.SetPrimaryKey( index.Name, index ) );
 
             action.Should()
-                .ThrowExactly<SqliteObjectBuilderException>()
+                .ThrowExactly<SqlObjectBuilderException>()
                 .AndMatch( e => e.Dialect == SqliteDialect.Instance && e.Errors.Count == 1 );
         }
 
         [Fact]
-        public void SetPrimaryKey_ShouldThrowSqliteObjectBuilderException_WhenPrimaryKeyNameExistsDuringUpdate()
+        public void SetPrimaryKey_ShouldThrowSqlObjectBuilderException_WhenPrimaryKeyNameExistsDuringUpdateInSchemaObjects()
         {
-            var schema = SqliteDatabaseBuilderMock.Create().Schemas.Default;
-            var table = schema.Objects.CreateTable( "foo" );
+            var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+            var table = schema.Objects.CreateTable( "T" );
+            var sut = table.Constraints;
             var c1 = table.Columns.Create( "C1" );
             var c2 = table.Columns.Create( "C2" );
-            var index = table.Constraints.CreateUniqueIndex( c1.Asc() );
-            table.Constraints.SetPrimaryKey( c2.Asc() );
+            var index = sut.CreateUniqueIndex( c1.Asc() );
+            sut.SetPrimaryKey( c2.Asc() );
 
-            var action = Lambda.Of( () => table.Constraints.SetPrimaryKey( index.Name, index ) );
+            var action = Lambda.Of( () => sut.SetPrimaryKey( index.Name, index ) );
 
             action.Should()
-                .ThrowExactly<SqliteObjectBuilderException>()
+                .ThrowExactly<SqlObjectBuilderException>()
                 .AndMatch( e => e.Dialect == SqliteDialect.Instance && e.Errors.Count == 1 );
         }
 
         [Fact]
-        public void SetPrimaryKey_ShouldThrowSqliteObjectBuilderException_WhenIndexIsRemoved()
+        public void SetPrimaryKey_ShouldThrowSqlObjectBuilderException_WhenIndexIsRemoved()
         {
             var schema = SqliteDatabaseBuilderMock.Create().Schemas.Default;
             var table = schema.Objects.CreateTable( Fixture.Create<string>() );
@@ -480,12 +492,12 @@ public partial class SqliteTableBuilderTests
             var action = Lambda.Of( () => table.Constraints.SetPrimaryKey( index ) );
 
             action.Should()
-                .ThrowExactly<SqliteObjectBuilderException>()
+                .ThrowExactly<SqlObjectBuilderException>()
                 .AndMatch( e => e.Dialect == SqliteDialect.Instance && e.Errors.Count == 1 );
         }
 
         [Fact]
-        public void SetPrimaryKey_ShouldThrowSqliteObjectBuilderException_WhenIndexIsNotUnique()
+        public void SetPrimaryKey_ShouldThrowSqlObjectBuilderException_WhenIndexIsNotUnique()
         {
             var schema = SqliteDatabaseBuilderMock.Create().Schemas.Default;
             var table = schema.Objects.CreateTable( Fixture.Create<string>() );
@@ -495,12 +507,12 @@ public partial class SqliteTableBuilderTests
             var action = Lambda.Of( () => table.Constraints.SetPrimaryKey( index ) );
 
             action.Should()
-                .ThrowExactly<SqliteObjectBuilderException>()
+                .ThrowExactly<SqlObjectBuilderException>()
                 .AndMatch( e => e.Dialect == SqliteDialect.Instance && e.Errors.Count == 1 );
         }
 
         [Fact]
-        public void SetPrimaryKey_ShouldThrowSqliteObjectBuilderException_WhenIndexIsPartial()
+        public void SetPrimaryKey_ShouldThrowSqlObjectBuilderException_WhenIndexIsPartial()
         {
             var schema = SqliteDatabaseBuilderMock.Create().Schemas.Default;
             var table = schema.Objects.CreateTable( Fixture.Create<string>() );
@@ -510,12 +522,12 @@ public partial class SqliteTableBuilderTests
             var action = Lambda.Of( () => table.Constraints.SetPrimaryKey( index ) );
 
             action.Should()
-                .ThrowExactly<SqliteObjectBuilderException>()
+                .ThrowExactly<SqlObjectBuilderException>()
                 .AndMatch( e => e.Dialect == SqliteDialect.Instance && e.Errors.Count == 1 );
         }
 
         [Fact]
-        public void SetPrimaryKey_ShouldThrowSqliteObjectBuilderException_WhenIndexBelongsToAnotherTable()
+        public void SetPrimaryKey_ShouldThrowSqlObjectBuilderException_WhenIndexBelongsToAnotherTable()
         {
             var schema = SqliteDatabaseBuilderMock.Create().Schemas.Default;
             var otherTable = schema.Objects.CreateTable( "T" );
@@ -525,12 +537,12 @@ public partial class SqliteTableBuilderTests
             var action = Lambda.Of( () => table.Constraints.SetPrimaryKey( index ) );
 
             action.Should()
-                .ThrowExactly<SqliteObjectBuilderException>()
+                .ThrowExactly<SqlObjectBuilderException>()
                 .AndMatch( e => e.Dialect == SqliteDialect.Instance && e.Errors.Count == 1 );
         }
 
         [Fact]
-        public void SetPrimaryKey_ShouldThrowSqliteObjectBuilderException_WhenAtLeastOneColumnIsNullable()
+        public void SetPrimaryKey_ShouldThrowSqlObjectBuilderException_WhenAtLeastOneColumnIsNullable()
         {
             var schema = SqliteDatabaseBuilderMock.Create().Schemas.Default;
             var table = schema.Objects.CreateTable( Fixture.Create<string>() );
@@ -541,12 +553,12 @@ public partial class SqliteTableBuilderTests
             var action = Lambda.Of( () => table.Constraints.SetPrimaryKey( index ) );
 
             action.Should()
-                .ThrowExactly<SqliteObjectBuilderException>()
+                .ThrowExactly<SqlObjectBuilderException>()
                 .AndMatch( e => e.Dialect == SqliteDialect.Instance && e.Errors.Count == 1 );
         }
 
         [Fact]
-        public void SetPrimaryKey_ShouldThrowSqliteObjectBuilderException_WhenTableHasBeenRemoved()
+        public void SetPrimaryKey_ShouldThrowSqlObjectBuilderException_WhenTableHasBeenRemoved()
         {
             var schema = SqliteDatabaseBuilderMock.Create().Schemas.Default;
             var table = schema.Objects.CreateTable( Fixture.Create<string>() );
@@ -557,7 +569,7 @@ public partial class SqliteTableBuilderTests
             var action = Lambda.Of( () => table.Constraints.SetPrimaryKey( index ) );
 
             action.Should()
-                .ThrowExactly<SqliteObjectBuilderException>()
+                .ThrowExactly<SqlObjectBuilderException>()
                 .AndMatch( e => e.Dialect == SqliteDialect.Instance && e.Errors.Count == 1 );
         }
 
@@ -567,7 +579,7 @@ public partial class SqliteTableBuilderTests
         [InlineData( "\"" )]
         [InlineData( "'" )]
         [InlineData( "f\"oo" )]
-        public void SetPrimaryKey_ShouldThrowSqliteObjectBuilderException_WhenNameIsInvalid(string name)
+        public void SetPrimaryKey_ShouldThrowSqlObjectBuilderException_WhenNameIsInvalid(string name)
         {
             var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
@@ -576,7 +588,7 @@ public partial class SqliteTableBuilderTests
             var action = Lambda.Of( () => table.Constraints.SetPrimaryKey( name, index ) );
 
             action.Should()
-                .ThrowExactly<SqliteObjectBuilderException>()
+                .ThrowExactly<SqlObjectBuilderException>()
                 .AndMatch( e => e.Dialect == SqliteDialect.Instance && e.Errors.Count == 1 );
         }
 
@@ -585,7 +597,7 @@ public partial class SqliteTableBuilderTests
         {
             var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
-            ISqlConstraintBuilderCollection sut = table.Constraints;
+            var sut = table.Constraints;
             var ix1 = sut.CreateIndex( "IX_T_C1", table.Columns.Create( "C1" ).Asc() );
             var ix2 = sut.CreateUniqueIndex( "UIX_T_C2", table.Columns.Create( "C2" ).Asc() );
 
@@ -593,23 +605,30 @@ public partial class SqliteTableBuilderTests
 
             using ( new AssertionScope() )
             {
-                result.OriginIndex.Should().BeSameAs( ix1 );
-                result.ReferencedIndex.Should().BeSameAs( ix2 );
-                result.Name.Should().Be( "FK_T_C1_REF_T" );
+                result.Table.Should().BeSameAs( table );
                 result.Database.Should().BeSameAs( table.Database );
                 result.Type.Should().Be( SqlObjectType.ForeignKey );
+                result.Name.Should().Be( "FK_T_C1_REF_T" );
+                result.OriginIndex.Should().BeSameAs( ix1 );
+                result.ReferencedIndex.Should().BeSameAs( ix2 );
                 result.OnUpdateBehavior.Should().Be( ReferenceBehavior.Restrict );
                 result.OnDeleteBehavior.Should().Be( ReferenceBehavior.Restrict );
-                schema.Objects.Contains( result.Name ).Should().BeTrue();
+                result.ReferencingObjects.Should().BeEmpty();
+
                 sut.Count.Should().Be( 3 );
                 sut.Should().BeEquivalentTo( ix1, ix2, result );
-                sut.Contains( result.Name ).Should().BeTrue();
+                schema.Objects.TryGet( result.Name ).Should().BeSameAs( result );
 
-                // ix1.OriginatingForeignKeys.Should().BeSequentiallyEqualTo( result );
-                // ix1.ReferencingForeignKeys.Should().BeEmpty();
-                //
-                // ix2.OriginatingForeignKeys.Should().BeEmpty();
-                // ix2.ReferencingForeignKeys.Should().BeSequentiallyEqualTo( result );
+                ix1.ReferencingObjects.Should()
+                    .BeSequentiallyEqualTo(
+                        SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), ix1 ) );
+
+                ix2.ReferencingObjects.Should()
+                    .BeSequentiallyEqualTo(
+                        SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), ix2 ) );
+
+                table.ReferencingObjects.Should().BeEmpty();
+                schema.ReferencingObjects.Should().BeEmpty();
             }
         }
 
@@ -620,30 +639,40 @@ public partial class SqliteTableBuilderTests
             var t1 = schema.Objects.CreateTable( "T1" );
             var ix2 = t1.Constraints.SetPrimaryKey( t1.Columns.Create( "C1" ).Asc() ).Index;
             var t2 = schema.Objects.CreateTable( "T2" );
-            ISqlConstraintBuilderCollection sut = t2.Constraints;
+            var sut = t2.Constraints;
             var ix1 = t2.Constraints.CreateIndex( t2.Columns.Create( "C2" ).Asc() );
 
             var result = sut.CreateForeignKey( ix1, ix2 );
 
             using ( new AssertionScope() )
             {
+                result.Table.Should().BeSameAs( t2 );
+                result.Database.Should().BeSameAs( t2.Database );
+                result.Type.Should().Be( SqlObjectType.ForeignKey );
+                result.Name.Should().Be( "FK_T2_C2_REF_T1" );
                 result.OriginIndex.Should().BeSameAs( ix1 );
                 result.ReferencedIndex.Should().BeSameAs( ix2 );
-                result.Name.Should().Be( "FK_T2_C2_REF_T1" );
-                result.Database.Should().BeSameAs( t1.Database );
-                result.Type.Should().Be( SqlObjectType.ForeignKey );
                 result.OnUpdateBehavior.Should().Be( ReferenceBehavior.Restrict );
                 result.OnDeleteBehavior.Should().Be( ReferenceBehavior.Restrict );
-                schema.Objects.Contains( result.Name ).Should().BeTrue();
+                result.ReferencingObjects.Should().BeEmpty();
+
                 sut.Count.Should().Be( 2 );
                 sut.Should().BeEquivalentTo( ix1, result );
-                sut.Contains( result.Name ).Should().BeTrue();
+                schema.Objects.TryGet( result.Name ).Should().BeSameAs( result );
 
-                ix1.OriginatingForeignKeys.Should().BeSequentiallyEqualTo( (SqliteForeignKeyBuilder)result );
-                ix1.ReferencingForeignKeys.Should().BeEmpty();
+                ix1.ReferencingObjects.Should()
+                    .BeSequentiallyEqualTo(
+                        SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), ix1 ) );
 
-                ix2.OriginatingForeignKeys.Should().BeEmpty();
-                ix2.ReferencingForeignKeys.Should().BeSequentiallyEqualTo( (SqliteForeignKeyBuilder)result );
+                ix2.ReferencingObjects.Should()
+                    .BeSequentiallyEqualTo(
+                        SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), ix2 ) );
+
+                t1.ReferencingObjects.Should()
+                    .BeSequentiallyEqualTo(
+                        SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), ix2 ) );
+
+                schema.ReferencingObjects.Should().BeEmpty();
             }
         }
 
@@ -656,30 +685,42 @@ public partial class SqliteTableBuilderTests
             var t1 = schema1.Objects.CreateTable( "T1" );
             var ix2 = t1.Constraints.SetPrimaryKey( t1.Columns.Create( "C1" ).Asc() ).Index;
             var t2 = schema2.Objects.CreateTable( "T2" );
-            ISqlConstraintBuilderCollection sut = t2.Constraints;
+            var sut = t2.Constraints;
             var ix1 = t2.Constraints.CreateIndex( t2.Columns.Create( "C2" ).Asc() );
 
             var result = sut.CreateForeignKey( ix1, ix2 );
 
             using ( new AssertionScope() )
             {
+                result.Table.Should().BeSameAs( t2 );
+                result.Database.Should().BeSameAs( t2.Database );
+                result.Type.Should().Be( SqlObjectType.ForeignKey );
+                result.Name.Should().Be( "FK_T2_C2_REF_foo_T1" );
                 result.OriginIndex.Should().BeSameAs( ix1 );
                 result.ReferencedIndex.Should().BeSameAs( ix2 );
-                result.Name.Should().Be( "FK_T2_C2_REF_foo_T1" );
-                result.Database.Should().BeSameAs( t1.Database );
-                result.Type.Should().Be( SqlObjectType.ForeignKey );
                 result.OnUpdateBehavior.Should().Be( ReferenceBehavior.Restrict );
                 result.OnDeleteBehavior.Should().Be( ReferenceBehavior.Restrict );
-                schema2.Objects.Contains( result.Name ).Should().BeTrue();
+                result.ReferencingObjects.Should().BeEmpty();
+
                 sut.Count.Should().Be( 2 );
                 sut.Should().BeEquivalentTo( ix1, result );
-                sut.Contains( result.Name ).Should().BeTrue();
+                schema2.Objects.TryGet( result.Name ).Should().BeSameAs( result );
 
-                ix1.OriginatingForeignKeys.Should().BeSequentiallyEqualTo( (SqliteForeignKeyBuilder)result );
-                ix1.ReferencingForeignKeys.Should().BeEmpty();
+                ix1.ReferencingObjects.Should()
+                    .BeSequentiallyEqualTo(
+                        SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), ix1 ) );
 
-                ix2.OriginatingForeignKeys.Should().BeEmpty();
-                ix2.ReferencingForeignKeys.Should().BeSequentiallyEqualTo( (SqliteForeignKeyBuilder)result );
+                ix2.ReferencingObjects.Should()
+                    .BeSequentiallyEqualTo(
+                        SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), ix2 ) );
+
+                t1.ReferencingObjects.Should()
+                    .BeSequentiallyEqualTo(
+                        SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), ix2 ) );
+
+                schema1.ReferencingObjects.Should()
+                    .BeSequentiallyEqualTo(
+                        SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), ix2 ) );
             }
         }
 
@@ -688,7 +729,7 @@ public partial class SqliteTableBuilderTests
         {
             var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
-            ISqlConstraintBuilderCollection sut = table.Constraints;
+            var sut = table.Constraints;
             var ix1 = sut.CreateIndex( table.Columns.Create( "C1" ).Asc() );
             var ix2 = sut.CreateUniqueIndex( "UIX_T", table.Columns.Create( "C2" ).Asc() );
 
@@ -696,32 +737,39 @@ public partial class SqliteTableBuilderTests
 
             using ( new AssertionScope() )
             {
-                result.OriginIndex.Should().BeSameAs( ix1 );
-                result.ReferencedIndex.Should().BeSameAs( ix2 );
-                result.Name.Should().Be( "FK_T" );
+                result.Table.Should().BeSameAs( table );
                 result.Database.Should().BeSameAs( table.Database );
                 result.Type.Should().Be( SqlObjectType.ForeignKey );
+                result.Name.Should().Be( "FK_T" );
+                result.OriginIndex.Should().BeSameAs( ix1 );
+                result.ReferencedIndex.Should().BeSameAs( ix2 );
                 result.OnUpdateBehavior.Should().Be( ReferenceBehavior.Restrict );
                 result.OnDeleteBehavior.Should().Be( ReferenceBehavior.Restrict );
-                schema.Objects.Contains( result.Name ).Should().BeTrue();
+                result.ReferencingObjects.Should().BeEmpty();
+
                 sut.Count.Should().Be( 3 );
                 sut.Should().BeEquivalentTo( ix1, ix2, result );
-                sut.Contains( result.Name ).Should().BeTrue();
+                schema.Objects.TryGet( result.Name ).Should().BeSameAs( result );
 
-                // ix1.OriginatingForeignKeys.Should().BeSequentiallyEqualTo( result );
-                // ix1.ReferencingForeignKeys.Should().BeEmpty();
-                //
-                // ix2.OriginatingForeignKeys.Should().BeEmpty();
-                // ix2.ReferencingForeignKeys.Should().BeSequentiallyEqualTo( result );
+                ix1.ReferencingObjects.Should()
+                    .BeSequentiallyEqualTo(
+                        SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), ix1 ) );
+
+                ix2.ReferencingObjects.Should()
+                    .BeSequentiallyEqualTo(
+                        SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), ix2 ) );
+
+                table.ReferencingObjects.Should().BeEmpty();
+                schema.ReferencingObjects.Should().BeEmpty();
             }
         }
 
         [Fact]
-        public void CreateForeignKey_ShouldThrowSqliteObjectBuilderException_WhenTableIsRemoved()
+        public void CreateForeignKey_ShouldThrowSqlObjectBuilderException_WhenTableIsRemoved()
         {
             var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
-            ISqlConstraintBuilderCollection sut = table.Constraints;
+            var sut = table.Constraints;
             var ix1 = sut.CreateIndex( table.Columns.Create( "C1" ).Asc() );
             var ix2 = sut.CreateUniqueIndex( table.Columns.Create( "C2" ).Asc() );
             table.Remove();
@@ -729,97 +777,79 @@ public partial class SqliteTableBuilderTests
             var action = Lambda.Of( () => sut.CreateForeignKey( ix1, ix2 ) );
 
             action.Should()
-                .ThrowExactly<SqliteObjectBuilderException>()
+                .ThrowExactly<SqlObjectBuilderException>()
                 .AndMatch( e => e.Dialect == SqliteDialect.Instance && e.Errors.Count == 1 );
         }
 
         [Fact]
-        public void CreateForeignKey_ShouldThrowSqliteObjectBuilderException_WhenConstraintAlreadyExists()
+        public void CreateForeignKey_ShouldThrowSqlObjectBuilderException_WhenSchemaObjectNameAlreadyExists()
         {
             var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
-            ISqlConstraintBuilderCollection sut = table.Constraints;
+            var sut = table.Constraints;
             var ix1 = sut.CreateIndex( table.Columns.Create( "C1" ).Asc() );
             var ix2 = sut.CreateUniqueIndex( table.Columns.Create( "C2" ).Asc() );
-            var other = sut.CreateCheck( SqlNode.True() );
 
-            var action = Lambda.Of( () => sut.CreateForeignKey( other.Name, ix1, ix2 ) );
+            var action = Lambda.Of( () => sut.CreateForeignKey( "T", ix1, ix2 ) );
 
             action.Should()
-                .ThrowExactly<SqliteObjectBuilderException>()
+                .ThrowExactly<SqlObjectBuilderException>()
                 .AndMatch( e => e.Dialect == SqliteDialect.Instance && e.Errors.Count == 1 );
         }
 
         [Fact]
-        public void CreateForeignKey_ShouldThrowSqliteObjectBuilderException_WhenConstraintAlreadyExistsInAnotherTable()
+        public void CreateForeignKey_ShouldThrowSqlObjectBuilderException_WhenOriginIndexAndReferencedIndexAreTheSame()
         {
             var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
-            ISqlConstraintBuilderCollection sut = table.Constraints;
-            var ix1 = sut.SetPrimaryKey( table.Columns.Create( "C" ).Asc() ).Index;
-            var otherTable = schema.Objects.CreateTable( "T1" );
-            var ix2 = otherTable.Constraints.SetPrimaryKey( otherTable.Columns.Create( "C" ).Asc() ).Index;
-
-            var action = Lambda.Of( () => sut.CreateForeignKey( ix2.Name, ix1, ix2 ) );
-
-            action.Should()
-                .ThrowExactly<SqliteObjectBuilderException>()
-                .AndMatch( e => e.Dialect == SqliteDialect.Instance && e.Errors.Count == 1 );
-        }
-
-        [Fact]
-        public void CreateForeignKey_ShouldThrowSqliteObjectBuilderException_WhenOriginIndexAndReferencedIndexAreTheSame()
-        {
-            var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
-            var table = schema.Objects.CreateTable( "T" );
-            ISqlConstraintBuilderCollection sut = table.Constraints;
+            var sut = table.Constraints;
             var ix1 = sut.CreateUniqueIndex( table.Columns.Create( "C1" ).Asc() );
 
             var action = Lambda.Of( () => sut.CreateForeignKey( ix1, ix1 ) );
 
             action.Should()
-                .ThrowExactly<SqliteObjectBuilderException>()
+                .ThrowExactly<SqlObjectBuilderException>()
                 .AndMatch( e => e.Dialect == SqliteDialect.Instance && e.Errors.Count == 1 );
         }
 
         [Fact]
-        public void CreateForeignKey_ShouldThrowSqliteObjectBuilderException_WhenReferencedIndexIsNotUnique()
+        public void CreateForeignKey_ShouldThrowSqlObjectBuilderException_WhenReferencedIndexIsNotUnique()
         {
             var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
-            ISqlConstraintBuilderCollection sut = table.Constraints;
+            var sut = table.Constraints;
             var ix1 = sut.CreateIndex( table.Columns.Create( "C1" ).Asc() );
             var ix2 = sut.CreateIndex( table.Columns.Create( "C2" ).Asc() );
 
             var action = Lambda.Of( () => sut.CreateForeignKey( ix1, ix2 ) );
 
             action.Should()
-                .ThrowExactly<SqliteObjectBuilderException>()
+                .ThrowExactly<SqlObjectBuilderException>()
                 .AndMatch( e => e.Dialect == SqliteDialect.Instance && e.Errors.Count == 1 );
         }
 
         [Fact]
-        public void CreateForeignKey_ShouldThrowSqliteObjectBuilderException_WhenReferencedIndexHasFilter()
+        public void CreateForeignKey_ShouldThrowSqlObjectBuilderException_WhenReferencedIndexHasFilter()
         {
             var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
-            ISqlConstraintBuilderCollection sut = table.Constraints;
+            var sut = table.Constraints;
             var ix1 = sut.CreateIndex( table.Columns.Create( "C1" ).Asc() );
             var ix2 = sut.CreateUniqueIndex( table.Columns.Create( "C2" ).Asc() ).SetFilter( SqlNode.True() );
 
             var action = Lambda.Of( () => sut.CreateForeignKey( ix1, ix2 ) );
 
             action.Should()
-                .ThrowExactly<SqliteObjectBuilderException>()
+                .ThrowExactly<SqlObjectBuilderException>()
                 .AndMatch( e => e.Dialect == SqliteDialect.Instance && e.Errors.Count == 1 );
         }
 
         [Fact]
-        public void CreateForeignKey_ShouldThrowSqliteObjectBuilderException_WhenOriginIndexBelongsToAnotherTable()
+        public void CreateForeignKey_ShouldThrowSqlObjectBuilderException_WhenOriginIndexBelongsToAnotherTable()
         {
             var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var t1 = schema.Objects.CreateTable( "T1" );
-            ISqlConstraintBuilderCollection sut = t1.Constraints;
+            var sut = t1.Constraints;
             var ix1 = t1.Constraints.SetPrimaryKey( t1.Columns.Create( "C1" ).Asc() ).Index;
             var t2 = schema.Objects.CreateTable( "T2" );
             var ix2 = t2.Constraints.CreateIndex( t2.Columns.Create( "C2" ).Asc() );
@@ -827,17 +857,17 @@ public partial class SqliteTableBuilderTests
             var action = Lambda.Of( () => sut.CreateForeignKey( ix2, ix1 ) );
 
             action.Should()
-                .ThrowExactly<SqliteObjectBuilderException>()
+                .ThrowExactly<SqlObjectBuilderException>()
                 .AndMatch( e => e.Dialect == SqliteDialect.Instance && e.Errors.Count == 1 );
         }
 
         [Fact]
-        public void CreateForeignKey_ShouldThrowSqliteObjectBuilderException_WhenReferencedIndexBelongsToAnotherDatabase()
+        public void CreateForeignKey_ShouldThrowSqlObjectBuilderException_WhenReferencedIndexBelongsToAnotherDatabase()
         {
             var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var otherSchema = SqliteDatabaseBuilderMock.Create().Schemas.Default;
             var t1 = schema.Objects.CreateTable( "T1" );
-            ISqlConstraintBuilderCollection sut = t1.Constraints;
+            var sut = t1.Constraints;
             var ix1 = t1.Constraints.SetPrimaryKey( t1.Columns.Create( "C1" ).Asc() ).Index;
             var t2 = otherSchema.Objects.CreateTable( "T2" );
             var ix2 = t2.Constraints.CreateUniqueIndex( t2.Columns.Create( "C2" ).Asc() );
@@ -845,16 +875,16 @@ public partial class SqliteTableBuilderTests
             var action = Lambda.Of( () => sut.CreateForeignKey( ix1, ix2 ) );
 
             action.Should()
-                .ThrowExactly<SqliteObjectBuilderException>()
+                .ThrowExactly<SqlObjectBuilderException>()
                 .AndMatch( e => e.Dialect == SqliteDialect.Instance && e.Errors.Count == 1 );
         }
 
         [Fact]
-        public void CreateForeignKey_ShouldThrowSqliteObjectBuilderException_WhenOriginIndexIsRemoved()
+        public void CreateForeignKey_ShouldThrowSqlObjectBuilderException_WhenOriginIndexIsRemoved()
         {
             var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
-            ISqlConstraintBuilderCollection sut = table.Constraints;
+            var sut = table.Constraints;
             var ix1 = sut.CreateIndex( table.Columns.Create( "C1" ).Asc() );
             var ix2 = sut.CreateUniqueIndex( table.Columns.Create( "C2" ).Asc() );
             ix1.Remove();
@@ -862,16 +892,16 @@ public partial class SqliteTableBuilderTests
             var action = Lambda.Of( () => sut.CreateForeignKey( ix1, ix2 ) );
 
             action.Should()
-                .ThrowExactly<SqliteObjectBuilderException>()
+                .ThrowExactly<SqlObjectBuilderException>()
                 .AndMatch( e => e.Dialect == SqliteDialect.Instance && e.Errors.Count == 2 );
         }
 
         [Fact]
-        public void CreateForeignKey_ShouldThrowSqliteObjectBuilderException_WhenReferencedIndexIsRemoved()
+        public void CreateForeignKey_ShouldThrowSqlObjectBuilderException_WhenReferencedIndexIsRemoved()
         {
             var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
-            ISqlConstraintBuilderCollection sut = table.Constraints;
+            var sut = table.Constraints;
             var ix1 = sut.CreateIndex( table.Columns.Create( "C1" ).Asc() );
             var ix2 = sut.CreateUniqueIndex( table.Columns.Create( "C2" ).Asc() );
             ix2.Remove();
@@ -879,49 +909,49 @@ public partial class SqliteTableBuilderTests
             var action = Lambda.Of( () => sut.CreateForeignKey( ix1, ix2 ) );
 
             action.Should()
-                .ThrowExactly<SqliteObjectBuilderException>()
+                .ThrowExactly<SqlObjectBuilderException>()
                 .AndMatch( e => e.Dialect == SqliteDialect.Instance && e.Errors.Count == 2 );
         }
 
         [Fact]
-        public void CreateForeignKey_ShouldThrowSqliteObjectBuilderException_WhenReferencedIndexContainsNullableColumn()
+        public void CreateForeignKey_ShouldThrowSqlObjectBuilderException_WhenReferencedIndexContainsNullableColumn()
         {
             var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
-            ISqlConstraintBuilderCollection sut = table.Constraints;
+            var sut = table.Constraints;
             var ix1 = sut.CreateIndex( table.Columns.Create( "C1" ).Asc(), table.Columns.Create( "C2" ).Asc() );
             var ix2 = sut.CreateUniqueIndex( table.Columns.Create( "C3" ).Asc(), table.Columns.Create( "C4" ).MarkAsNullable().Asc() );
 
             var action = Lambda.Of( () => sut.CreateForeignKey( ix1, ix2 ) );
 
             action.Should()
-                .ThrowExactly<SqliteObjectBuilderException>()
+                .ThrowExactly<SqlObjectBuilderException>()
                 .AndMatch( e => e.Dialect == SqliteDialect.Instance && e.Errors.Count == 1 );
         }
 
         [Fact]
-        public void CreateForeignKey_ShouldThrowSqliteObjectBuilderException_WhenOriginIndexAndReferencedIndexHaveDifferentAmountOfColumns()
+        public void CreateForeignKey_ShouldThrowSqlObjectBuilderException_WhenOriginIndexAndReferencedIndexHaveDifferentAmountOfColumns()
         {
             var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
-            ISqlConstraintBuilderCollection sut = table.Constraints;
+            var sut = table.Constraints;
             var ix1 = sut.CreateIndex( table.Columns.Create( "C1" ).Asc(), table.Columns.Create( "C2" ).Asc() );
             var ix2 = sut.CreateUniqueIndex( table.Columns.Create( "C3" ).Asc() );
 
             var action = Lambda.Of( () => sut.CreateForeignKey( ix1, ix2 ) );
 
             action.Should()
-                .ThrowExactly<SqliteObjectBuilderException>()
+                .ThrowExactly<SqlObjectBuilderException>()
                 .AndMatch( e => e.Dialect == SqliteDialect.Instance && e.Errors.Count == 1 );
         }
 
         [Fact]
         public void
-            CreateForeignKey_ShouldThrowSqliteObjectBuilderException_WhenAtLeastOneOriginIndexAndReferencedIndexColumnPairHasIncompatibleTypes()
+            CreateForeignKey_ShouldThrowSqlObjectBuilderException_WhenAtLeastOneOriginIndexAndReferencedIndexColumnPairHasIncompatibleRuntimeTypes()
         {
             var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
-            ISqlConstraintBuilderCollection sut = table.Constraints;
+            var sut = table.Constraints;
             var ix1 = sut.CreateIndex(
                 table.Columns.Create( "C1" ).SetType<int>().Asc(),
                 table.Columns.Create( "C2" ).SetType<string>().Asc() );
@@ -933,7 +963,7 @@ public partial class SqliteTableBuilderTests
             var action = Lambda.Of( () => sut.CreateForeignKey( ix1, ix2 ) );
 
             action.Should()
-                .ThrowExactly<SqliteObjectBuilderException>()
+                .ThrowExactly<SqlObjectBuilderException>()
                 .AndMatch( e => e.Dialect == SqliteDialect.Instance && e.Errors.Count == 1 );
         }
 
@@ -942,15 +972,15 @@ public partial class SqliteTableBuilderTests
         {
             var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
-            ISqlConstraintBuilderCollection sut = table.Constraints;
+            var sut = table.Constraints;
             var ix1 = Substitute.For<ISqlIndexBuilder>();
             var ix2 = sut.CreateUniqueIndex( table.Columns.Create( "C2" ).Asc() );
 
-            var action = Lambda.Of( () => sut.CreateForeignKey( ix1, ix2 ) );
+            var action = Lambda.Of( () => ((ISqlConstraintBuilderCollection)sut).CreateForeignKey( ix1, ix2 ) );
 
             action.Should()
                 .ThrowExactly<SqlObjectCastException>()
-                .AndMatch( e => e.Dialect == SqliteDialect.Instance && e.Expected == typeof( SqliteIndexBuilder ) );
+                .AndMatch( e => e.Dialect == SqliteDialect.Instance && e.Expected == typeof( SqlIndexBuilder ) );
         }
 
         [Fact]
@@ -958,15 +988,15 @@ public partial class SqliteTableBuilderTests
         {
             var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
-            ISqlConstraintBuilderCollection sut = table.Constraints;
+            var sut = table.Constraints;
             var ix1 = sut.CreateIndex( table.Columns.Create( "C1" ).Asc() );
             var ix2 = Substitute.For<ISqlIndexBuilder>();
 
-            var action = Lambda.Of( () => sut.CreateForeignKey( ix1, ix2 ) );
+            var action = Lambda.Of( () => ((ISqlConstraintBuilderCollection)sut).CreateForeignKey( ix1, ix2 ) );
 
             action.Should()
                 .ThrowExactly<SqlObjectCastException>()
-                .AndMatch( e => e.Dialect == SqliteDialect.Instance && e.Expected == typeof( SqliteIndexBuilder ) );
+                .AndMatch( e => e.Dialect == SqliteDialect.Instance && e.Expected == typeof( SqlIndexBuilder ) );
         }
 
         [Theory]
@@ -975,18 +1005,18 @@ public partial class SqliteTableBuilderTests
         [InlineData( "\"" )]
         [InlineData( "'" )]
         [InlineData( "f\"oo" )]
-        public void CreateForeignKey_ShouldThrowSqliteObjectBuilderException_WhenNameIsInvalid(string name)
+        public void CreateForeignKey_ShouldThrowSqlObjectBuilderException_WhenNameIsInvalid(string name)
         {
             var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
-            ISqlConstraintBuilderCollection sut = table.Constraints;
+            var sut = table.Constraints;
             var ix1 = sut.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() ).Index;
             var ix2 = sut.CreateIndex( table.Columns.Create( "C2" ).Asc() );
 
             var action = Lambda.Of( () => sut.CreateForeignKey( name, ix2, ix1 ) );
 
             action.Should()
-                .ThrowExactly<SqliteObjectBuilderException>()
+                .ThrowExactly<SqlObjectBuilderException>()
                 .AndMatch( e => e.Dialect == SqliteDialect.Instance && e.Errors.Count == 1 );
         }
 
@@ -995,7 +1025,7 @@ public partial class SqliteTableBuilderTests
         {
             var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
-            ISqlConstraintBuilderCollection sut = table.Constraints;
+            var sut = table.Constraints;
             var c = table.Columns.Create( "C" );
             var condition = c.Node > SqlNode.Literal( 0 );
 
@@ -1003,18 +1033,20 @@ public partial class SqliteTableBuilderTests
 
             using ( new AssertionScope() )
             {
-                result.Name.Should().MatchRegex( "CHK_T_[0-9a-fA-F]{32}" );
                 result.Table.Should().BeSameAs( table );
                 result.Database.Should().BeSameAs( table.Database );
                 result.Type.Should().Be( SqlObjectType.Check );
-                result.ReferencedColumns.Should().BeSequentiallyEqualTo( c );
+                result.Name.Should().MatchRegex( "CHK_T_[0-9a-fA-F]{32}" );
                 result.Condition.Should().BeSameAs( condition );
-                schema.Objects.Contains( result.Name ).Should().BeTrue();
+                result.ReferencedColumns.Should().BeSequentiallyEqualTo( c );
+
                 sut.Count.Should().Be( 1 );
                 sut.Should().BeEquivalentTo( result );
-                sut.Contains( result.Name ).Should().BeTrue();
+                schema.Objects.TryGet( result.Name ).Should().BeSameAs( result );
 
-                c.ReferencingChecks.Should().BeSequentiallyEqualTo( (SqliteCheckBuilder)result );
+                c.ReferencingObjects.Should()
+                    .BeSequentiallyEqualTo(
+                        SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), c ) );
             }
         }
 
@@ -1023,7 +1055,7 @@ public partial class SqliteTableBuilderTests
         {
             var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
-            ISqlConstraintBuilderCollection sut = table.Constraints;
+            var sut = table.Constraints;
             var c = table.Columns.Create( "C" );
             var condition = c.Node > SqlNode.Literal( 0 );
 
@@ -1031,78 +1063,63 @@ public partial class SqliteTableBuilderTests
 
             using ( new AssertionScope() )
             {
-                result.Name.Should().Be( "CHK" );
                 result.Table.Should().BeSameAs( table );
                 result.Database.Should().BeSameAs( table.Database );
                 result.Type.Should().Be( SqlObjectType.Check );
-                result.ReferencedColumns.Should().BeSequentiallyEqualTo( c );
+                result.Name.Should().MatchRegex( "CHK" );
                 result.Condition.Should().BeSameAs( condition );
-                schema.Objects.Contains( result.Name ).Should().BeTrue();
+                result.ReferencedColumns.Should().BeSequentiallyEqualTo( c );
+
                 sut.Count.Should().Be( 1 );
                 sut.Should().BeEquivalentTo( result );
-                sut.Contains( result.Name ).Should().BeTrue();
+                schema.Objects.TryGet( result.Name ).Should().BeSameAs( result );
 
-                c.ReferencingChecks.Should().BeSequentiallyEqualTo( (SqliteCheckBuilder)result );
+                c.ReferencingObjects.Should()
+                    .BeSequentiallyEqualTo(
+                        SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), c ) );
             }
         }
 
         [Fact]
-        public void CreateCheck_ShouldThrowSqliteObjectBuilderException_WhenTableIsRemoved()
+        public void CreateCheck_ShouldThrowSqlObjectBuilderException_WhenTableIsRemoved()
         {
             var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
-            ISqlConstraintBuilderCollection sut = table.Constraints;
+            var sut = table.Constraints;
             table.Remove();
 
             var action = Lambda.Of( () => sut.CreateCheck( SqlNode.True() ) );
 
             action.Should()
-                .ThrowExactly<SqliteObjectBuilderException>()
+                .ThrowExactly<SqlObjectBuilderException>()
                 .AndMatch( e => e.Dialect == SqliteDialect.Instance && e.Errors.Count == 1 );
         }
 
         [Fact]
-        public void CreateCheck_ShouldThrowSqliteObjectBuilderException_WhenConstraintAlreadyExists()
+        public void CreateCheck_ShouldThrowSqlObjectBuilderException_WhenSchemaObjectNameAlreadyExists()
         {
             var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
-            ISqlConstraintBuilderCollection sut = table.Constraints;
-            var other = sut.CreateIndex( table.Columns.Create( "C" ).Asc() );
+            var sut = table.Constraints;
 
-            var action = Lambda.Of( () => sut.CreateCheck( other.Name, SqlNode.True() ) );
+            var action = Lambda.Of( () => sut.CreateCheck( "T", SqlNode.True() ) );
 
             action.Should()
-                .ThrowExactly<SqliteObjectBuilderException>()
+                .ThrowExactly<SqlObjectBuilderException>()
                 .AndMatch( e => e.Dialect == SqliteDialect.Instance && e.Errors.Count == 1 );
         }
 
         [Fact]
-        public void CreateCheck_ShouldThrowSqliteObjectBuilderException_WhenConstraintAlreadyExistsInAnotherTable()
-        {
-            var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
-            var otherTable = schema.Objects.CreateTable( "T2" );
-            var other = otherTable.Constraints.SetPrimaryKey( otherTable.Columns.Create( "D" ).Asc() );
-            var table = schema.Objects.CreateTable( "T" );
-            ISqlConstraintBuilderCollection sut = table.Constraints;
-
-            var action = Lambda.Of( () => sut.CreateCheck( other.Name, SqlNode.True() ) );
-
-            action.Should()
-                .ThrowExactly<SqliteObjectBuilderException>()
-                .AndMatch( e => e.Dialect == SqliteDialect.Instance && e.Errors.Count == 1 );
-        }
-
-        [Fact]
-        public void CreateCheck_ShouldThrowSqliteObjectBuilderException_WhenConditionIsInvalid()
+        public void CreateCheck_ShouldThrowSqlObjectBuilderException_WhenConditionIsInvalid()
         {
             var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
-            ISqlConstraintBuilderCollection sut = table.Constraints;
+            var sut = table.Constraints;
 
             var action = Lambda.Of( () => sut.CreateCheck( SqlNode.Functions.RecordsAffected() == SqlNode.Literal( 0 ) ) );
 
             action.Should()
-                .ThrowExactly<SqliteObjectBuilderException>()
+                .ThrowExactly<SqlObjectBuilderException>()
                 .AndMatch( e => e.Dialect == SqliteDialect.Instance && e.Errors.Count == 1 );
         }
 
@@ -1112,16 +1129,16 @@ public partial class SqliteTableBuilderTests
         [InlineData( "\"" )]
         [InlineData( "'" )]
         [InlineData( "f\"oo" )]
-        public void CreateCheck_ShouldThrowSqliteObjectBuilderException_WhenNameIsInvalid(string name)
+        public void CreateCheck_ShouldThrowSqlObjectBuilderException_WhenNameIsInvalid(string name)
         {
             var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
-            ISqlConstraintBuilderCollection sut = table.Constraints;
+            var sut = table.Constraints;
 
             var action = Lambda.Of( () => sut.CreateCheck( name, SqlNode.True() ) );
 
             action.Should()
-                .ThrowExactly<SqliteObjectBuilderException>()
+                .ThrowExactly<SqlObjectBuilderException>()
                 .AndMatch( e => e.Dialect == SqliteDialect.Instance && e.Errors.Count == 1 );
         }
 
@@ -1134,7 +1151,7 @@ public partial class SqliteTableBuilderTests
         {
             var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
-            ISqlConstraintBuilderCollection sut = table.Constraints;
+            var sut = table.Constraints;
             sut.SetPrimaryKey( table.Columns.Create( "C" ).Asc() );
             sut.CreateCheck( "CHK", SqlNode.True() );
 
@@ -1144,11 +1161,11 @@ public partial class SqliteTableBuilderTests
         }
 
         [Fact]
-        public void GetConstraint_ShouldReturnExistingConstraint()
+        public void Get_ShouldReturnExistingConstraint()
         {
             var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
-            ISqlConstraintBuilderCollection sut = table.Constraints;
+            var sut = table.Constraints;
             var expected = sut.SetPrimaryKey( table.Columns.Create( "C" ).Asc() );
 
             var result = sut.Get( expected.Name );
@@ -1157,11 +1174,11 @@ public partial class SqliteTableBuilderTests
         }
 
         [Fact]
-        public void GetConstraint_ShouldThrowKeyNotFoundException_WhenConstraintDoesNotExist()
+        public void Get_ShouldThrowKeyNotFoundException_WhenConstraintDoesNotExist()
         {
             var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
-            ISqlConstraintBuilderCollection sut = table.Constraints;
+            var sut = table.Constraints;
             sut.SetPrimaryKey( table.Columns.Create( "C" ).Asc() );
 
             var action = Lambda.Of( () => sut.Get( "T" ) );
@@ -1170,11 +1187,11 @@ public partial class SqliteTableBuilderTests
         }
 
         [Fact]
-        public void TryGetConstraint_ShouldReturnExistingConstraint()
+        public void TryGet_ShouldReturnExistingConstraint()
         {
             var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
-            ISqlConstraintBuilderCollection sut = table.Constraints;
+            var sut = table.Constraints;
             var expected = sut.SetPrimaryKey( table.Columns.Create( "C" ).Asc() );
 
             var result = sut.TryGet( expected.Name );
@@ -1183,11 +1200,11 @@ public partial class SqliteTableBuilderTests
         }
 
         [Fact]
-        public void TryGetConstraint_ShouldReturnNull_WhenConstraintDoesNotExist()
+        public void TryGet_ShouldReturnNull_WhenConstraintDoesNotExist()
         {
             var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
-            ISqlConstraintBuilderCollection sut = table.Constraints;
+            var sut = table.Constraints;
             sut.SetPrimaryKey( table.Columns.Create( "C" ).Asc() );
 
             var result = sut.TryGet( "T" );
@@ -1200,7 +1217,7 @@ public partial class SqliteTableBuilderTests
         {
             var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
-            ISqlConstraintBuilderCollection sut = table.Constraints;
+            var sut = table.Constraints;
             var index = sut.SetPrimaryKey( table.Columns.Create( "C" ).Asc() ).Index;
 
             var result = sut.GetIndex( index.Name );
@@ -1213,7 +1230,7 @@ public partial class SqliteTableBuilderTests
         {
             var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
-            ISqlConstraintBuilderCollection sut = table.Constraints;
+            var sut = table.Constraints;
 
             var action = Lambda.Of( () => sut.GetIndex( "T" ) );
 
@@ -1225,7 +1242,7 @@ public partial class SqliteTableBuilderTests
         {
             var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
-            ISqlConstraintBuilderCollection sut = table.Constraints;
+            var sut = table.Constraints;
             sut.CreateCheck( "CHK", SqlNode.True() );
 
             var action = Lambda.Of( () => sut.GetIndex( "CHK" ) );
@@ -1234,7 +1251,7 @@ public partial class SqliteTableBuilderTests
                 .ThrowExactly<SqlObjectCastException>()
                 .AndMatch(
                     e => e.Dialect == SqliteDialect.Instance &&
-                        e.Expected == typeof( SqliteIndexBuilder ) &&
+                        e.Expected == typeof( SqlIndexBuilder ) &&
                         e.Actual == typeof( SqliteCheckBuilder ) );
         }
 
@@ -1243,7 +1260,7 @@ public partial class SqliteTableBuilderTests
         {
             var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
-            ISqlConstraintBuilderCollection sut = table.Constraints;
+            var sut = table.Constraints;
             var index = sut.SetPrimaryKey( table.Columns.Create( "C" ).Asc() ).Index;
 
             var result = sut.TryGetIndex( index.Name );
@@ -1256,7 +1273,7 @@ public partial class SqliteTableBuilderTests
         {
             var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
-            ISqlConstraintBuilderCollection sut = table.Constraints;
+            var sut = table.Constraints;
 
             var result = sut.TryGetIndex( "T" );
 
@@ -1268,7 +1285,7 @@ public partial class SqliteTableBuilderTests
         {
             var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
-            ISqlConstraintBuilderCollection sut = table.Constraints;
+            var sut = table.Constraints;
             sut.CreateCheck( "CHK", SqlNode.True() );
 
             var result = sut.TryGetIndex( "CHK" );
@@ -1281,7 +1298,7 @@ public partial class SqliteTableBuilderTests
         {
             var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
-            ISqlConstraintBuilderCollection sut = table.Constraints;
+            var sut = table.Constraints;
             var ix1 = table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() ).Index;
             var ix2 = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() );
             var foreignKey = sut.CreateForeignKey( ix2, ix1 );
@@ -1296,7 +1313,7 @@ public partial class SqliteTableBuilderTests
         {
             var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
-            ISqlConstraintBuilderCollection sut = table.Constraints;
+            var sut = table.Constraints;
 
             var action = Lambda.Of( () => sut.GetForeignKey( "T" ) );
 
@@ -1308,7 +1325,7 @@ public partial class SqliteTableBuilderTests
         {
             var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
-            ISqlConstraintBuilderCollection sut = table.Constraints;
+            var sut = table.Constraints;
             var index = sut.SetPrimaryKey( table.Columns.Create( "C" ).Asc() ).Index;
 
             var action = Lambda.Of( () => sut.GetForeignKey( index.Name ) );
@@ -1317,7 +1334,7 @@ public partial class SqliteTableBuilderTests
                 .ThrowExactly<SqlObjectCastException>()
                 .AndMatch(
                     e => e.Dialect == SqliteDialect.Instance &&
-                        e.Expected == typeof( SqliteForeignKeyBuilder ) &&
+                        e.Expected == typeof( SqlForeignKeyBuilder ) &&
                         e.Actual == typeof( SqliteIndexBuilder ) );
         }
 
@@ -1326,7 +1343,7 @@ public partial class SqliteTableBuilderTests
         {
             var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
-            ISqlConstraintBuilderCollection sut = table.Constraints;
+            var sut = table.Constraints;
             var ix1 = table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() ).Index;
             var ix2 = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() );
             var foreignKey = sut.CreateForeignKey( ix2, ix1 );
@@ -1341,7 +1358,7 @@ public partial class SqliteTableBuilderTests
         {
             var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
-            ISqlConstraintBuilderCollection sut = table.Constraints;
+            var sut = table.Constraints;
 
             var result = sut.TryGetForeignKey( "T" );
 
@@ -1353,7 +1370,7 @@ public partial class SqliteTableBuilderTests
         {
             var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
-            ISqlConstraintBuilderCollection sut = table.Constraints;
+            var sut = table.Constraints;
             var index = sut.SetPrimaryKey( table.Columns.Create( "C" ).Asc() ).Index;
 
             var result = sut.TryGetForeignKey( index.Name );
@@ -1366,7 +1383,7 @@ public partial class SqliteTableBuilderTests
         {
             var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
-            ISqlConstraintBuilderCollection sut = table.Constraints;
+            var sut = table.Constraints;
             var check = sut.CreateCheck( SqlNode.True() );
 
             var result = sut.GetCheck( check.Name );
@@ -1379,7 +1396,7 @@ public partial class SqliteTableBuilderTests
         {
             var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
-            ISqlConstraintBuilderCollection sut = table.Constraints;
+            var sut = table.Constraints;
 
             var action = Lambda.Of( () => sut.GetCheck( "T" ) );
 
@@ -1391,7 +1408,7 @@ public partial class SqliteTableBuilderTests
         {
             var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
-            ISqlConstraintBuilderCollection sut = table.Constraints;
+            var sut = table.Constraints;
             var index = sut.SetPrimaryKey( table.Columns.Create( "C" ).Asc() ).Index;
 
             var action = Lambda.Of( () => sut.GetCheck( index.Name ) );
@@ -1400,7 +1417,7 @@ public partial class SqliteTableBuilderTests
                 .ThrowExactly<SqlObjectCastException>()
                 .AndMatch(
                     e => e.Dialect == SqliteDialect.Instance &&
-                        e.Expected == typeof( SqliteCheckBuilder ) &&
+                        e.Expected == typeof( SqlCheckBuilder ) &&
                         e.Actual == typeof( SqliteIndexBuilder ) );
         }
 
@@ -1409,7 +1426,7 @@ public partial class SqliteTableBuilderTests
         {
             var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
-            ISqlConstraintBuilderCollection sut = table.Constraints;
+            var sut = table.Constraints;
             var check = sut.CreateCheck( SqlNode.True() );
 
             var result = sut.TryGetCheck( check.Name );
@@ -1422,7 +1439,7 @@ public partial class SqliteTableBuilderTests
         {
             var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
-            ISqlConstraintBuilderCollection sut = table.Constraints;
+            var sut = table.Constraints;
 
             var result = sut.TryGetCheck( "T" );
 
@@ -1434,7 +1451,7 @@ public partial class SqliteTableBuilderTests
         {
             var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
-            ISqlConstraintBuilderCollection sut = table.Constraints;
+            var sut = table.Constraints;
             var index = sut.SetPrimaryKey( table.Columns.Create( "C" ).Asc() ).Index;
 
             var result = sut.TryGetCheck( index.Name );
@@ -1447,7 +1464,7 @@ public partial class SqliteTableBuilderTests
         {
             var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
-            ISqlConstraintBuilderCollection sut = table.Constraints;
+            var sut = table.Constraints;
             var expected = sut.SetPrimaryKey( table.Columns.Create( "C" ).Asc() );
 
             var result = sut.GetPrimaryKey();
@@ -1460,11 +1477,11 @@ public partial class SqliteTableBuilderTests
         {
             var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
-            ISqlConstraintBuilderCollection sut = table.Constraints;
+            var sut = table.Constraints;
 
             var action = Lambda.Of( () => sut.GetPrimaryKey() );
 
-            action.Should().ThrowExactly<SqliteObjectBuilderException>();
+            action.Should().ThrowExactly<SqlObjectBuilderException>();
         }
 
         [Fact]
@@ -1472,7 +1489,7 @@ public partial class SqliteTableBuilderTests
         {
             var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
-            ISqlConstraintBuilderCollection sut = table.Constraints;
+            var sut = table.Constraints;
             var expected = sut.SetPrimaryKey( table.Columns.Create( "C" ).Asc() );
 
             var result = sut.TryGetPrimaryKey();
@@ -1485,7 +1502,7 @@ public partial class SqliteTableBuilderTests
         {
             var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
-            ISqlConstraintBuilderCollection sut = table.Constraints;
+            var sut = table.Constraints;
 
             var result = sut.TryGetPrimaryKey();
 
@@ -1497,7 +1514,7 @@ public partial class SqliteTableBuilderTests
         {
             var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
-            ISqlConstraintBuilderCollection sut = table.Constraints;
+            var sut = table.Constraints;
             var c1 = table.Columns.Create( "C1" ).Asc();
             var c2 = table.Columns.Create( "C2" ).Desc();
             var index = sut.CreateIndex( c1, c2 );
@@ -1507,33 +1524,51 @@ public partial class SqliteTableBuilderTests
             using ( new AssertionScope() )
             {
                 result.Should().BeTrue();
+                sut.TryGet( index.Name ).Should().BeNull();
                 index.IsRemoved.Should().BeTrue();
-                c1.Column.ReferencingIndexes.Should().BeEmpty();
-                c2.Column.ReferencingIndexes.Should().BeEmpty();
-                schema.Objects.Contains( index.Name ).Should().BeFalse();
-                sut.Count.Should().Be( 0 );
-                sut.Contains( index.Name ).Should().BeFalse();
+                schema.Objects.TryGet( index.Name ).Should().BeNull();
+                c1.Column.ReferencingObjects.Should().BeEmpty();
+                c2.Column.ReferencingObjects.Should().BeEmpty();
             }
         }
 
         [Fact]
-        public void Remove_ShouldReturnFalse_WhenIndexContainsReferencingForeignKeys()
+        public void Remove_ShouldReturnFalse_WhenIndexHasOriginatingForeignKey()
         {
             var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
-            var t1 = schema.Objects.CreateTable( "T1" );
-            var c1 = t1.Columns.Create( "C1" ).Asc();
-            ISqlConstraintBuilderCollection sut = t1.Constraints;
-            var index = t1.Constraints.SetPrimaryKey( c1 ).Index;
-            var t2 = schema.Objects.CreateTable( "T2" );
-            t2.Constraints.CreateForeignKey( t2.Constraints.SetPrimaryKey( t2.Columns.Create( "C2" ).Desc() ).Index, index );
+            var table = schema.Objects.CreateTable( "T" );
+            var sut = table.Constraints;
+            var pk = sut.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+            var index = sut.CreateIndex( table.Columns.Create( "C2" ).Asc() );
+            table.Constraints.CreateForeignKey( index, pk.Index );
 
             var result = sut.Remove( index.Name );
 
             using ( new AssertionScope() )
             {
                 result.Should().BeFalse();
-                sut.Count.Should().Be( 2 );
                 index.IsRemoved.Should().BeFalse();
+                sut.Count.Should().Be( 4 );
+            }
+        }
+
+        [Fact]
+        public void Remove_ShouldReturnFalse_WhenIndexHasReferencingForeignKey()
+        {
+            var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+            var table = schema.Objects.CreateTable( "T" );
+            var sut = table.Constraints;
+            var pk = table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+            var index = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() );
+            table.Constraints.CreateForeignKey( index, pk.Index );
+
+            var result = sut.Remove( pk.Index.Name );
+
+            using ( new AssertionScope() )
+            {
+                result.Should().BeFalse();
+                pk.Index.IsRemoved.Should().BeFalse();
+                sut.Count.Should().Be( 4 );
             }
         }
 
@@ -1542,7 +1577,7 @@ public partial class SqliteTableBuilderTests
         {
             var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
-            ISqlConstraintBuilderCollection sut = table.Constraints;
+            var sut = table.Constraints;
             var column = table.Columns.Create( "C" );
             var pk = table.Constraints.SetPrimaryKey( column.Asc() );
 
@@ -1551,39 +1586,56 @@ public partial class SqliteTableBuilderTests
             using ( new AssertionScope() )
             {
                 result.Should().BeTrue();
-                sut.Count.Should().Be( 0 );
+                sut.TryGet( pk.Name ).Should().BeNull();
+                sut.TryGet( pk.Index.Name ).Should().BeNull();
                 sut.TryGetPrimaryKey().Should().BeNull();
-                sut.Contains( pk.Name ).Should().BeFalse();
-                sut.Contains( pk.Index.Name ).Should().BeFalse();
-                schema.Objects.Contains( pk.Name ).Should().BeFalse();
-                schema.Objects.Contains( pk.Index.Name ).Should().BeFalse();
                 pk.IsRemoved.Should().BeTrue();
                 pk.Index.IsRemoved.Should().BeTrue();
+                schema.Objects.TryGet( pk.Name ).Should().BeNull();
+                schema.Objects.TryGet( pk.Index.Name ).Should().BeNull();
+                column.ReferencingObjects.Should().BeEmpty();
             }
         }
 
         [Fact]
-        public void Remove_ShouldReturnFalse_WhenPrimaryKeyToRemoveHasExternalReferences()
+        public void Remove_ShouldReturnFalse_WhenPrimaryKeyUnderlyingIndexHasOriginatingForeignKey()
         {
             var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
-            ISqlConstraintBuilderCollection sut = table.Constraints;
-            var column = table.Columns.Create( "C" );
-            var pk = table.Constraints.SetPrimaryKey( column.Asc() );
-
-            var otherTable = schema.Objects.CreateTable( "U" );
-            var otherColumn = otherTable.Columns.Create( "D" );
-            var otherPk = otherTable.Constraints.SetPrimaryKey( otherColumn.Asc() );
-            otherTable.Constraints.CreateForeignKey( otherPk.Index, pk.Index );
+            var sut = table.Constraints;
+            var pk = sut.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+            var index = sut.CreateUniqueIndex( table.Columns.Create( "C2" ).Asc() );
+            table.Constraints.CreateForeignKey( pk.Index, index );
 
             var result = sut.Remove( pk.Name );
 
             using ( new AssertionScope() )
             {
                 result.Should().BeFalse();
-                sut.Count.Should().Be( 2 );
-                pk.IsRemoved.Should().BeFalse();
+                index.IsRemoved.Should().BeFalse();
+                sut.Count.Should().Be( 4 );
+                sut.TryGetPrimaryKey().Should().BeSameAs( pk );
+            }
+        }
+
+        [Fact]
+        public void Remove_ShouldReturnFalse_WhenPrimaryKeyUnderlyingIndexHasReferencingForeignKey()
+        {
+            var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+            var table = schema.Objects.CreateTable( "T" );
+            var sut = table.Constraints;
+            var pk = table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+            var index = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() );
+            table.Constraints.CreateForeignKey( index, pk.Index );
+
+            var result = sut.Remove( pk.Name );
+
+            using ( new AssertionScope() )
+            {
+                result.Should().BeFalse();
                 pk.Index.IsRemoved.Should().BeFalse();
+                sut.Count.Should().Be( 4 );
+                sut.TryGetPrimaryKey().Should().BeSameAs( pk );
             }
         }
 
@@ -1592,7 +1644,7 @@ public partial class SqliteTableBuilderTests
         {
             var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
-            ISqlConstraintBuilderCollection sut = table.Constraints;
+            var sut = table.Constraints;
             var ix1 = sut.CreateIndex( table.Columns.Create( "C1" ).Asc() );
             var ix2 = sut.CreateUniqueIndex( table.Columns.Create( "C2" ).Asc() );
             var fk = sut.CreateForeignKey( ix1, ix2 );
@@ -1602,10 +1654,12 @@ public partial class SqliteTableBuilderTests
             using ( new AssertionScope() )
             {
                 result.Should().BeTrue();
-                fk.IsRemoved.Should().BeTrue();
                 sut.Count.Should().Be( 2 );
-                sut.Contains( fk.Name ).Should().BeFalse();
-                schema.Objects.Contains( fk.Name ).Should().BeFalse();
+                sut.TryGet( fk.Name ).Should().BeNull();
+                fk.IsRemoved.Should().BeTrue();
+                schema.Objects.TryGet( fk.Name ).Should().BeNull();
+                ix1.ReferencingObjects.Should().BeEmpty();
+                ix2.ReferencingObjects.Should().BeEmpty();
             }
         }
 
@@ -1614,7 +1668,7 @@ public partial class SqliteTableBuilderTests
         {
             var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
-            ISqlConstraintBuilderCollection sut = table.Constraints;
+            var sut = table.Constraints;
             var c = table.Columns.Create( "C" );
             var check = sut.CreateCheck( c.Node > SqlNode.Literal( 0 ) );
 
@@ -1623,11 +1677,11 @@ public partial class SqliteTableBuilderTests
             using ( new AssertionScope() )
             {
                 result.Should().BeTrue();
-                check.IsRemoved.Should().BeTrue();
-                c.ReferencingChecks.Should().BeEmpty();
                 sut.Count.Should().Be( 0 );
-                sut.Contains( check.Name ).Should().BeFalse();
-                schema.Objects.Contains( check.Name ).Should().BeFalse();
+                sut.TryGet( check.Name ).Should().BeNull();
+                check.IsRemoved.Should().BeTrue();
+                schema.Objects.TryGet( check.Name ).Should().BeNull();
+                c.ReferencingObjects.Should().BeEmpty();
             }
         }
 
@@ -1636,9 +1690,9 @@ public partial class SqliteTableBuilderTests
         {
             var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var table = schema.Objects.CreateTable( "T" );
-            ISqlConstraintBuilderCollection sut = table.Constraints;
+            var sut = table.Constraints;
 
-            var result = sut.Remove( Fixture.Create<string>() );
+            var result = sut.Remove( "PK" );
 
             result.Should().BeFalse();
         }

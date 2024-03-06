@@ -1,6 +1,5 @@
 ﻿using LfrlAnvil.Sql;
 using LfrlAnvil.Sql.Expressions;
-using LfrlAnvil.Sql.Objects;
 using LfrlAnvil.Sqlite.Tests.Helpers;
 
 namespace LfrlAnvil.Sqlite.Tests.ObjectsTests;
@@ -17,7 +16,7 @@ public class SqliteViewDataFieldTests : TestsBase
         var schema = db.Schemas.Get( "foo" );
         var view = schema.Objects.GetView( "V" );
 
-        ISqlViewDataField sut = view.DataFields.Get( "a" );
+        var sut = view.DataFields.Get( "a" );
 
         using ( new AssertionScope() )
         {

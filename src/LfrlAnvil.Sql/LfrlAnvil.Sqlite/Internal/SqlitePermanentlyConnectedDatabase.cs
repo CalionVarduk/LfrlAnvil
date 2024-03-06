@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Diagnostics.Contracts;
-using System.Threading;
-using System.Threading.Tasks;
+using LfrlAnvil.Sql.Objects.Builders;
 using LfrlAnvil.Sql.Statements;
 using LfrlAnvil.Sql.Versioning;
 using LfrlAnvil.Sqlite.Objects.Builders;
+using Microsoft.Data.Sqlite;
 
 namespace LfrlAnvil.Sqlite.Internal;
 
@@ -14,12 +14,15 @@ internal sealed class SqlitePermanentlyConnectedDatabase : SqliteDatabase
 
     internal SqlitePermanentlyConnectedDatabase(
         SqlitePermanentConnection connection,
+        SqliteConnectionStringBuilder connectionStringBuilder,
         SqliteDatabaseBuilder builder,
+        Version version,
         SqlQueryReaderExecutor<SqlDatabaseVersionRecord> versionRecordsQuery,
-        Version version)
-        : base( builder, versionRecordsQuery, version )
+        ReadOnlyArray<Action<SqlDatabaseConnectionChangeEvent>> connectionChangeCallbacks)
+        : base( connectionStringBuilder, builder, version, versionRecordsQuery )
     {
         _connection = connection;
+        InitializeConnectionEventHandlers( connection, connectionChangeCallbacks );
     }
 
     public override void Dispose()
@@ -29,14 +32,8 @@ internal sealed class SqlitePermanentlyConnectedDatabase : SqliteDatabase
     }
 
     [Pure]
-    public override Microsoft.Data.Sqlite.SqliteConnection Connect()
+    protected override SqliteConnection CreateConnection()
     {
         return _connection;
-    }
-
-    [Pure]
-    public override ValueTask<Microsoft.Data.Sqlite.SqliteConnection> ConnectAsync(CancellationToken cancellationToken = default)
-    {
-        return ValueTask.FromResult<Microsoft.Data.Sqlite.SqliteConnection>( _connection );
     }
 }

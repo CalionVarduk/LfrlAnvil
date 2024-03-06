@@ -8,7 +8,8 @@ namespace LfrlAnvil.Sqlite.Tests.SqliteColumnTypeDefinitionTests;
 
 public class SqliteColumnTypeDefinitionObjectTests : TestsBase
 {
-    private readonly ISqlColumnTypeDefinitionProvider _provider = new SqliteColumnTypeDefinitionProvider();
+    private readonly ISqlColumnTypeDefinitionProvider _provider =
+        new SqliteColumnTypeDefinitionProvider( new SqliteColumnTypeDefinitionProviderBuilder() );
 
     [Fact]
     public void TryToDbLiteral_ShouldReturnCorrectResult_WhenValueIsInteger()

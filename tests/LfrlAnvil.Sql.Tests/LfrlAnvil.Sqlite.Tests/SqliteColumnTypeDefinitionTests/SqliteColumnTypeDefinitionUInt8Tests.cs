@@ -7,7 +7,8 @@ namespace LfrlAnvil.Sqlite.Tests.SqliteColumnTypeDefinitionTests;
 
 public class SqliteColumnTypeDefinitionUInt8Tests : TestsBase
 {
-    private readonly ISqlColumnTypeDefinitionProvider _provider = new SqliteColumnTypeDefinitionProvider();
+    private readonly ISqlColumnTypeDefinitionProvider _provider =
+        new SqliteColumnTypeDefinitionProvider( new SqliteColumnTypeDefinitionProviderBuilder() );
 
     [Theory]
     [InlineData( 123, "123" )]

@@ -1,27 +1,16 @@
 ﻿using System.Diagnostics.Contracts;
-using LfrlAnvil.Sql;
-using LfrlAnvil.Sql.Expressions.Objects;
 using LfrlAnvil.Sql.Objects;
 using LfrlAnvil.Sqlite.Internal;
 
 namespace LfrlAnvil.Sqlite.Objects;
 
-public sealed class SqliteViewDataField : SqliteObject, ISqlViewDataField
+public sealed class SqliteViewDataField : SqlViewDataField
 {
-    private SqlViewDataFieldNode? _node;
-
     internal SqliteViewDataField(SqliteView view, string name)
-        : base( name, SqlObjectType.ViewDataField )
-    {
-        View = view;
-        _node = null;
-    }
+        : base( view, name ) { }
 
-    public SqliteView View { get; }
-    public override SqliteDatabase Database => View.Database;
-    public SqlViewDataFieldNode Node => _node ??= View.Node[Name];
-
-    ISqlView ISqlViewDataField.View => View;
+    public new SqliteView View => ReinterpretCast.To<SqliteView>( base.View );
+    public new SqliteDatabase Database => ReinterpretCast.To<SqliteDatabase>( base.Database );
 
     [Pure]
     public override string ToString()

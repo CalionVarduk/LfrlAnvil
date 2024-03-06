@@ -1,6 +1,4 @@
-﻿using System.Threading;
-using System.Threading.Tasks;
-using LfrlAnvil.Sql;
+﻿using LfrlAnvil.Sql;
 using LfrlAnvil.Sql.Statements;
 using LfrlAnvil.Sql.Versioning;
 using LfrlAnvil.Sqlite.Objects.Builders;
@@ -12,16 +10,12 @@ public sealed class SqliteDatabaseMock : SqliteDatabase
 {
     public SqliteDatabaseMock(SqliteDatabaseBuilder builder)
         : base(
+            new SqliteConnectionStringBuilder( "DataSource=:memory:" ),
             builder,
-            new SqlQueryReader<SqlDatabaseVersionRecord>( new SqlDialect( "foo" ), (_, _) => default ).Bind( string.Empty ),
-            new Version() ) { }
+            new Version(),
+            new SqlQueryReader<SqlDatabaseVersionRecord>( new SqlDialect( "foo" ), (_, _) => default ).Bind( string.Empty ) ) { }
 
-    public override SqliteConnection Connect()
-    {
-        throw new NotSupportedException();
-    }
-
-    public override ValueTask<SqliteConnection> ConnectAsync(CancellationToken cancellationToken = default)
+    protected override SqliteConnection CreateConnection()
     {
         throw new NotSupportedException();
     }

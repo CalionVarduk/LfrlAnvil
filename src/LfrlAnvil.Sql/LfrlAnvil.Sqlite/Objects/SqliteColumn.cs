@@ -1,32 +1,17 @@
 ﻿using System.Diagnostics.Contracts;
-using LfrlAnvil.Sql;
-using LfrlAnvil.Sql.Expressions.Objects;
 using LfrlAnvil.Sql.Objects;
 using LfrlAnvil.Sqlite.Internal;
 using LfrlAnvil.Sqlite.Objects.Builders;
 
 namespace LfrlAnvil.Sqlite.Objects;
 
-public sealed class SqliteColumn : SqliteObject, ISqlColumn
+public sealed class SqliteColumn : SqlColumn
 {
-    private SqlColumnNode? _node;
-
     internal SqliteColumn(SqliteTable table, SqliteColumnBuilder builder)
-        : base( builder )
-    {
-        Table = table;
-        TypeDefinition = builder.TypeDefinition;
-        IsNullable = builder.IsNullable;
-        HasDefaultValue = builder.DefaultValue is not null;
-        _node = null;
-    }
+        : base( table, builder ) { }
 
-    public SqliteTable Table { get; }
-    public SqliteColumnTypeDefinition TypeDefinition { get; }
-    public bool IsNullable { get; }
-    public bool HasDefaultValue { get; }
-    public SqlColumnNode Node => _node ??= Table.Node[Name];
-    public override SqliteDatabase Database => Table.Schema.Database;
+    public new SqliteTable Table => ReinterpretCast.To<SqliteTable>( base.Table );
+    public new SqliteDatabase Database => ReinterpretCast.To<SqliteDatabase>( base.Database );
 
     [Pure]
     public override string ToString()
@@ -35,29 +20,14 @@ public sealed class SqliteColumn : SqliteObject, ISqlColumn
     }
 
     [Pure]
-    public SqlIndexColumn<SqliteColumn> Asc()
+    public new SqlIndexColumn<SqliteColumn> Asc()
     {
         return SqlIndexColumn.CreateAsc( this );
     }
 
     [Pure]
-    public SqlIndexColumn<SqliteColumn> Desc()
+    public new SqlIndexColumn<SqliteColumn> Desc()
     {
         return SqlIndexColumn.CreateDesc( this );
-    }
-
-    ISqlTable ISqlColumn.Table => Table;
-    ISqlColumnTypeDefinition ISqlColumn.TypeDefinition => TypeDefinition;
-
-    [Pure]
-    SqlIndexColumn<ISqlColumn> ISqlColumn.Asc()
-    {
-        return Asc();
-    }
-
-    [Pure]
-    SqlIndexColumn<ISqlColumn> ISqlColumn.Desc()
-    {
-        return Desc();
     }
 }

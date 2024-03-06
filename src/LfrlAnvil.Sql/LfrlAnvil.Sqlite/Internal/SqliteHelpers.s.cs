@@ -1,331 +1,89 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Globalization;
 using System.Runtime.CompilerServices;
-using System.Text;
-using LfrlAnvil.Exceptions;
+using LfrlAnvil.Extensions;
 using LfrlAnvil.Sql;
-using LfrlAnvil.Sql.Exceptions;
-using LfrlAnvil.Sql.Objects.Builders;
-using LfrlAnvil.Sqlite.Exceptions;
-using LfrlAnvil.Sqlite.Objects.Builders;
-using ExceptionResources = LfrlAnvil.Sql.Exceptions.ExceptionResources;
+using LfrlAnvil.Sql.Internal;
 
 namespace LfrlAnvil.Sqlite.Internal;
 
 public static class SqliteHelpers
 {
-    public static readonly SqlSchemaObjectName DefaultVersionHistoryName = SqlSchemaObjectName.Create( "__VersionHistory" );
-    private const int StackallocThreshold = 64;
-    private const char TextDelimiter = '\'';
-    private const char BlobMarker = 'X';
-    private static readonly string EmptyTextLiteral = $"{TextDelimiter}{TextDelimiter}";
-    private static readonly string EmptyBlobLiteral = $"{BlobMarker}{EmptyTextLiteral}";
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static T CastOrThrow<T>(object obj)
-    {
-        if ( obj is T t )
-            return t;
-
-        ExceptionThrower.Throw( new SqlObjectCastException( SqliteDialect.Instance, typeof( T ), obj.GetType() ) );
-        return default!;
-    }
+    public const string MemoryDataSource = ":memory:";
+    public static readonly SqlSchemaObjectName DefaultVersionHistoryName = SqlSchemaObjectName.Create( SqlHelpers.VersionHistoryName );
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static string GetFullName(string schemaName, string name)
     {
-        return schemaName.Length > 0 ? $"{schemaName}_{name}" : name;
+        return SqlHelpers.GetFullName( schemaName, name, separator: '_' );
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static string GetFullName(string schemaName, string recordSetName, string name)
     {
-        return schemaName.Length > 0 ? $"{schemaName}_{recordSetName}.{name}" : $"{recordSetName}.{name}";
+        return SqlHelpers.GetFullName( schemaName, recordSetName, name, firstSeparator: '_' );
     }
 
     [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static string GetDefaultPrimaryKeyName(SqliteTableBuilder table)
+    public static string DbGetCurrentDate()
     {
-        return $"PK_{table.Name}";
+        return DateTime.Now.ToString( "yyyy-MM-dd", CultureInfo.InvariantCulture );
     }
 
     [Pure]
-    public static string GetDefaultForeignKeyName(SqliteIndexBuilder originIndex, SqliteIndexBuilder referencedIndex)
+    public static string DbGetCurrentTime()
     {
-        var builder = new StringBuilder( 32 );
-        builder.Append( "FK_" ).Append( originIndex.Table.Name );
-
-        foreach ( var c in originIndex.Columns )
-            builder.Append( '_' ).Append( c.Column.Name );
-
-        builder
-            .Append( "_REF_" )
-            .Append(
-                ReferenceEquals( originIndex.Table.Schema, referencedIndex.Table.Schema )
-                    ? referencedIndex.Table.Name
-                    : GetFullName( referencedIndex.Table.Schema.Name, referencedIndex.Table.Name ) );
-
-        return builder.ToString();
+        return DateTime.Now.ToString( "HH:mm:ss.fffffff", CultureInfo.InvariantCulture );
     }
 
     [Pure]
-    public static string GetDefaultCheckName(SqliteTableBuilder table)
+    public static string DbGetCurrentDateTime()
     {
-        return $"CHK_{table.Name}_{Guid.NewGuid():N}";
+        return DateTime.Now.ToString( "yyyy-MM-dd HH:mm:ss.fffffff", CultureInfo.InvariantCulture );
     }
 
     [Pure]
-    public static string GetDefaultIndexName(
-        SqliteTableBuilder table,
-        ReadOnlyArray<SqlIndexColumnBuilder<ISqlColumnBuilder>> columns,
-        bool isUnique)
+    public static long DbGetCurrentTimestamp()
     {
-        var builder = new StringBuilder( 32 );
-        if ( isUnique )
-            builder.Append( 'U' );
-
-        builder.Append( "IX_" ).Append( table.Name );
-
-        foreach ( var c in columns )
-            builder.Append( '_' ).Append( c.Column.Name ).Append( c.Ordering == OrderBy.Asc ? 'A' : 'D' );
-
-        return builder.ToString();
-    }
-
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static void AssertName(string name)
-    {
-        if ( string.IsNullOrWhiteSpace( name ) || name.Contains( '"' ) || name.Contains( '\'' ) )
-            ExceptionThrower.Throw( new SqliteObjectBuilderException( ExceptionResources.InvalidName( name ) ) );
+        return DateTime.UtcNow.Ticks;
     }
 
     [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static string GetDbLiteral(bool value)
+    public static byte[] DbNewGuid()
     {
-        return value ? "1" : "0";
+        return Guid.NewGuid().ToByteArray();
     }
 
     [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static string GetDbLiteral(long value)
+    public static string? DbToLower(string? s)
     {
-        return value.ToString( CultureInfo.InvariantCulture );
+        return s?.ToLowerInvariant();
     }
 
     [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static string GetDbLiteral(double value)
+    public static string? DbToUpper(string? s)
     {
-        var result = value.ToString( "G17", CultureInfo.InvariantCulture );
-        return IsFloatingPoint( result ) ? result : $"{result}.0";
-
-        [Pure]
-        static bool IsFloatingPoint(string value)
-        {
-            foreach ( var c in value )
-            {
-                if ( c == '.' || char.ToLower( c ) == 'e' )
-                    return true;
-            }
-
-            return false;
-        }
+        return s?.ToUpperInvariant();
     }
 
     [Pure]
-    public static string GetDbLiteral(string value)
+    public static long? DbInstrLast(string? s, string? v)
     {
-        var delimiterIndex = value.IndexOf( TextDelimiter );
-        if ( delimiterIndex == -1 )
-            return value.Length == 0 ? EmptyTextLiteral : $"{TextDelimiter}{value}{TextDelimiter}";
-
-        var delimiterCount = GetDelimiterCount( value.AsSpan( delimiterIndex + 1 ) ) + 1;
-
-        var length = checked( value.Length + delimiterCount + 2 );
-        var data = length <= StackallocThreshold ? stackalloc char[length] : new char[length];
-        data[0] = TextDelimiter;
-
-        var startIndex = 0;
-        var buffer = data.Slice( 1, data.Length - 2 );
-
-        do
-        {
-            var segment = value.AsSpan( startIndex, delimiterIndex - startIndex );
-            segment.CopyTo( buffer );
-            buffer[segment.Length] = TextDelimiter;
-            buffer[segment.Length + 1] = TextDelimiter;
-            buffer = buffer.Slice( segment.Length + 2 );
-
-            startIndex = delimiterIndex + 1;
-            delimiterIndex = value.IndexOf( TextDelimiter, startIndex );
-        }
-        while ( delimiterIndex != -1 );
-
-        value.AsSpan( startIndex ).CopyTo( buffer );
-        data[^1] = TextDelimiter;
-        return new string( data );
-
-        [Pure]
-        static int GetDelimiterCount(ReadOnlySpan<char> text)
-        {
-            var count = 0;
-            for ( var i = 0; i < text.Length; ++i )
-            {
-                if ( text[i] == TextDelimiter )
-                    ++count;
-            }
-
-            return count;
-        }
+        return s is not null && v is not null ? s.LastIndexOf( v, StringComparison.Ordinal ) + 1 : null;
     }
 
     [Pure]
-    public static string GetDbLiteral(ReadOnlySpan<byte> value)
+    public static string? DbReverse(string? s)
     {
-        if ( value.Length == 0 )
-            return EmptyBlobLiteral;
-
-        var length = checked( (value.Length << 1) + 3 );
-        var data = length <= StackallocThreshold ? stackalloc char[length] : new char[length];
-        data[0] = BlobMarker;
-        data[1] = TextDelimiter;
-        var index = 2;
-
-        for ( var i = 0; i < value.Length; ++i )
-        {
-            var b = value[i];
-            data[index++] = ToHexChar( b >> 4 );
-            data[index++] = ToHexChar( b & 0xF );
-        }
-
-        data[^1] = TextDelimiter;
-        return new string( data );
-
-        [Pure]
-        [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        static char ToHexChar(int value)
-        {
-            Assume.IsInRange( value, 0, 15 );
-            return (char)(value < 10 ? '0' + value : 'A' + value - 10);
-        }
+        return s?.Reverse();
     }
 
     [Pure]
-    internal static SqlIndexColumnBuilder<ISqlColumnBuilder>[] CreateIndexColumns(
-        SqliteTableBuilder table,
-        ReadOnlyArray<SqlIndexColumnBuilder<ISqlColumnBuilder>> columns)
+    public static double? DbTrunc2(double? d, int? p)
     {
-        if ( columns.Count == 0 )
-            throw new SqliteObjectBuilderException( ExceptionResources.IndexMustHaveAtLeastOneColumn );
-
-        var errors = Chain<string>.Empty;
-        var uniqueColumnIds = new HashSet<ulong>();
-
-        var result = new SqlIndexColumnBuilder<ISqlColumnBuilder>[columns.Count];
-        for ( var i = 0; i < columns.Count; ++i )
-        {
-            var column = CastOrThrow<SqliteColumnBuilder>( columns[i].Column );
-            result[i] = columns[i];
-
-            if ( ! uniqueColumnIds.Add( column.Id ) )
-            {
-                errors = errors.Extend( ExceptionResources.ColumnIsDuplicated( column ) );
-                continue;
-            }
-
-            if ( ! ReferenceEquals( column.Table, table ) )
-                errors = errors.Extend( ExceptionResources.ObjectDoesNotBelongToTable( column, table ) );
-
-            if ( column.IsRemoved )
-                errors = errors.Extend( ExceptionResources.ObjectHasBeenRemoved( column ) );
-        }
-
-        if ( errors.Count > 0 )
-            throw new SqliteObjectBuilderException( errors );
-
-        return result;
-    }
-
-    internal static void AssertPrimaryKey(SqliteTableBuilder table, SqliteIndexBuilder index)
-    {
-        var errors = Chain<string>.Empty;
-        if ( index.IsRemoved )
-            errors = errors.Extend( ExceptionResources.ObjectHasBeenRemoved( index ) );
-
-        if ( ! index.IsUnique )
-            errors = errors.Extend( ExceptionResources.IndexIsNotMarkedAsUnique( index ) );
-
-        if ( index.Filter is not null )
-            errors = errors.Extend( ExceptionResources.IndexIsPartial( index ) );
-
-        if ( ! ReferenceEquals( index.Table, table ) )
-            errors = errors.Extend( ExceptionResources.ObjectDoesNotBelongToTable( index, table ) );
-
-        foreach ( var c in index.Columns )
-        {
-            if ( c.Column.IsNullable )
-                errors = errors.Extend( ExceptionResources.ColumnIsNullable( c.Column ) );
-        }
-
-        if ( errors.Count > 0 )
-            throw new SqliteObjectBuilderException( errors );
-    }
-
-    internal static void AssertForeignKey(SqliteTableBuilder table, SqliteIndexBuilder originIndex, SqliteIndexBuilder referencedIndex)
-    {
-        var errors = Chain<string>.Empty;
-
-        if ( ReferenceEquals( originIndex, referencedIndex ) )
-            errors = errors.Extend( ExceptionResources.ForeignKeyOriginIndexAndReferencedIndexAreTheSame );
-
-        if ( ! ReferenceEquals( table, originIndex.Table ) )
-            errors = errors.Extend( ExceptionResources.ObjectDoesNotBelongToTable( originIndex, table ) );
-
-        if ( ! ReferenceEquals( originIndex.Database, referencedIndex.Database ) )
-            errors = errors.Extend( ExceptionResources.ObjectBelongsToAnotherDatabase( referencedIndex ) );
-
-        if ( originIndex.IsRemoved )
-            errors = errors.Extend( ExceptionResources.ObjectHasBeenRemoved( originIndex ) );
-
-        if ( referencedIndex.IsRemoved )
-            errors = errors.Extend( ExceptionResources.ObjectHasBeenRemoved( referencedIndex ) );
-
-        if ( ! referencedIndex.IsUnique )
-            errors = errors.Extend( ExceptionResources.IndexIsNotMarkedAsUnique( referencedIndex ) );
-
-        if ( referencedIndex.Filter is not null )
-            errors = errors.Extend( ExceptionResources.IndexIsPartial( referencedIndex ) );
-
-        var indexColumns = originIndex.Columns;
-        var referencedIndexColumns = referencedIndex.Columns;
-
-        foreach ( var c in referencedIndexColumns )
-        {
-            if ( c.Column.IsNullable )
-                errors = errors.Extend( ExceptionResources.ColumnIsNullable( c.Column ) );
-        }
-
-        if ( indexColumns.Count != referencedIndexColumns.Count )
-            errors = errors.Extend( ExceptionResources.ForeignKeyOriginIndexAndReferencedIndexMustHaveTheSameAmountOfColumns );
-        else
-        {
-            for ( var i = 0; i < indexColumns.Count; ++i )
-            {
-                var column = indexColumns[i].Column;
-                var refColumn = referencedIndexColumns[i].Column;
-                if ( column.TypeDefinition.RuntimeType != refColumn.TypeDefinition.RuntimeType )
-                    errors = errors.Extend( ExceptionResources.ColumnTypesAreIncompatible( column, refColumn ) );
-            }
-        }
-
-        if ( errors.Count > 0 )
-            throw new SqliteObjectBuilderException( errors );
+        return d is not null ? Math.Round( d.Value, p ?? 0, MidpointRounding.ToZero ) : null;
     }
 }

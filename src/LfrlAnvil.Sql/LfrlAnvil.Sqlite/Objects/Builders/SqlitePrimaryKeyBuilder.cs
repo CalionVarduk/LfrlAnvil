@@ -1,24 +1,23 @@
 ﻿using System.Diagnostics.Contracts;
-using LfrlAnvil.Sql;
 using LfrlAnvil.Sql.Objects.Builders;
 using LfrlAnvil.Sqlite.Internal;
 
 namespace LfrlAnvil.Sqlite.Objects.Builders;
 
-public sealed class SqlitePrimaryKeyBuilder : SqliteConstraintBuilder, ISqlPrimaryKeyBuilder
+public sealed class SqlitePrimaryKeyBuilder : SqlPrimaryKeyBuilder
 {
     internal SqlitePrimaryKeyBuilder(SqliteIndexBuilder index, string name)
-        : base( index.Table, name, SqlObjectType.PrimaryKey )
+        : base( index, name ) { }
+
+    public new SqliteDatabaseBuilder Database => ReinterpretCast.To<SqliteDatabaseBuilder>( base.Database );
+    public new SqliteTableBuilder Table => ReinterpretCast.To<SqliteTableBuilder>( base.Table );
+    public new SqliteIndexBuilder Index => ReinterpretCast.To<SqliteIndexBuilder>( base.Index );
+
+    [Pure]
+    public override string ToString()
     {
-        Index = index;
+        return $"[{Type}] {SqliteHelpers.GetFullName( Table.Schema.Name, Name )}";
     }
-
-    public SqliteIndexBuilder Index { get; }
-    public override SqliteDatabaseBuilder Database => Index.Database;
-    public override bool CanRemove => Index.CanRemove;
-
-    ISqlIndexBuilder ISqlPrimaryKeyBuilder.Index => Index;
-    ISqlDatabaseBuilder ISqlObjectBuilder.Database => Database;
 
     public new SqlitePrimaryKeyBuilder SetName(string name)
     {
@@ -30,42 +29,5 @@ public sealed class SqlitePrimaryKeyBuilder : SqliteConstraintBuilder, ISqlPrima
     {
         base.SetDefaultName();
         return this;
-    }
-
-    [Pure]
-    protected override string GetDefaultName()
-    {
-        return SqliteHelpers.GetDefaultPrimaryKeyName( Table );
-    }
-
-    protected override void RemoveCore()
-    {
-        Index.Remove();
-        Index.Table.Schema.Objects.Remove( Name );
-        Index.Table.Constraints.Remove( Name );
-        Database.Changes.ObjectRemoved( Index.Table, this );
-    }
-
-    protected override void SetNameCore(string name)
-    {
-        if ( Name == name )
-            return;
-
-        SqliteHelpers.AssertName( name );
-        Index.Table.Schema.Objects.ChangeName( this, name );
-
-        var oldName = Name;
-        Name = name;
-        Database.Changes.NameUpdated( Index.Table, this, oldName );
-    }
-
-    ISqlPrimaryKeyBuilder ISqlPrimaryKeyBuilder.SetName(string name)
-    {
-        return SetName( name );
-    }
-
-    ISqlPrimaryKeyBuilder ISqlPrimaryKeyBuilder.SetDefaultName()
-    {
-        return SetDefaultName();
     }
 }

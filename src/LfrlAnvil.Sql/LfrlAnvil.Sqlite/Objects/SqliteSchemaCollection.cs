@@ -1,138 +1,39 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Diagnostics.Contracts;
-using System.Runtime.CompilerServices;
-using LfrlAnvil.Sql;
+﻿using System.Diagnostics.Contracts;
+using LfrlAnvil.Sql.Internal;
 using LfrlAnvil.Sql.Objects;
+using LfrlAnvil.Sql.Objects.Builders;
 using LfrlAnvil.Sqlite.Objects.Builders;
 
 namespace LfrlAnvil.Sqlite.Objects;
 
-public sealed class SqliteSchemaCollection : ISqlSchemaCollection
+public sealed class SqliteSchemaCollection : SqlSchemaCollection
 {
-    private readonly Dictionary<string, SqliteSchema> _map;
+    internal SqliteSchemaCollection(SqliteSchemaBuilderCollection source)
+        : base( source ) { }
 
-    internal SqliteSchemaCollection(SqliteDatabase database, SqliteSchemaBuilderCollection builders)
-    {
-        Database = database;
-
-        using var foreignKeys = builders.Database.ObjectPool.GreedyRent();
-
-        _map = new Dictionary<string, SqliteSchema>( capacity: builders.Count, comparer: StringComparer.OrdinalIgnoreCase );
-        foreach ( var b in builders )
-        {
-            var schema = new SqliteSchema( Database, b );
-            schema.Objects.AddConstraintsWithoutForeignKeys( b.Objects, foreignKeys );
-            _map.Add( schema.Name, schema );
-        }
-
-        Default = _map[builders.Default.Name];
-        foreignKeys.Refresh();
-
-        SqliteSchemaBuilder? tableSchemaBuilder = null;
-        SqliteSchema? tableSchema = null;
-
-        foreach ( var builder in foreignKeys )
-        {
-            var fk = ReinterpretCast.To<SqliteForeignKeyBuilder>( builder );
-            if ( ! ReferenceEquals( tableSchemaBuilder, fk.OriginIndex.Table.Schema ) )
-            {
-                tableSchemaBuilder = fk.OriginIndex.Table.Schema;
-                tableSchema = _map[tableSchemaBuilder.Name];
-            }
-
-            Assume.IsNotNull( tableSchema );
-            var referencedSchema = ReferenceEquals( tableSchemaBuilder, fk.ReferencedIndex.Table.Schema )
-                ? tableSchema
-                : _map[fk.ReferencedIndex.Table.Schema.Name];
-
-            tableSchema.Objects.AddForeignKey( fk, referencedSchema );
-        }
-    }
-
-    public SqliteDatabase Database { get; }
-    public SqliteSchema Default { get; }
-    public int Count => _map.Count;
-
-    ISqlSchema ISqlSchemaCollection.Default => Default;
-    ISqlDatabase ISqlSchemaCollection.Database => Database;
+    public new SqliteSchema Default => ReinterpretCast.To<SqliteSchema>( base.Default );
+    public new SqliteDatabase Database => ReinterpretCast.To<SqliteDatabase>( base.Database );
 
     [Pure]
-    public bool Contains(string name)
+    public new SqliteSchema Get(string name)
     {
-        return _map.ContainsKey( name );
+        return ReinterpretCast.To<SqliteSchema>( base.Get( name ) );
     }
 
     [Pure]
-    public SqliteSchema Get(string name)
+    public new SqliteSchema? TryGet(string name)
     {
-        return _map[name];
+        return ReinterpretCast.To<SqliteSchema>( base.TryGet( name ) );
     }
 
     [Pure]
-    public SqliteSchema? TryGet(string name)
+    public new SqlObjectEnumerator<SqlSchema, SqliteSchema> GetEnumerator()
     {
-        return _map.GetValueOrDefault( name );
+        return base.GetEnumerator().UnsafeReinterpretAs<SqliteSchema>();
     }
 
-    [Pure]
-    public Enumerator GetEnumerator()
+    protected override SqliteSchema CreateSchema(SqlSchemaBuilder builder)
     {
-        return new Enumerator( _map );
-    }
-
-    public struct Enumerator : IEnumerator<SqliteSchema>
-    {
-        private Dictionary<string, SqliteSchema>.ValueCollection.Enumerator _enumerator;
-
-        internal Enumerator(Dictionary<string, SqliteSchema> source)
-        {
-            _enumerator = source.Values.GetEnumerator();
-        }
-
-        public SqliteSchema Current => _enumerator.Current;
-        object IEnumerator.Current => Current;
-
-        [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        public void Dispose()
-        {
-            _enumerator.Dispose();
-        }
-
-        [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        public bool MoveNext()
-        {
-            return _enumerator.MoveNext();
-        }
-
-        void IEnumerator.Reset()
-        {
-            ((IEnumerator)_enumerator).Reset();
-        }
-    }
-
-    [Pure]
-    ISqlSchema ISqlSchemaCollection.Get(string name)
-    {
-        return Get( name );
-    }
-
-    [Pure]
-    ISqlSchema? ISqlSchemaCollection.TryGet(string name)
-    {
-        return TryGet( name );
-    }
-
-    [Pure]
-    IEnumerator<ISqlSchema> IEnumerable<ISqlSchema>.GetEnumerator()
-    {
-        return GetEnumerator();
-    }
-
-    [Pure]
-    IEnumerator IEnumerable.GetEnumerator()
-    {
-        return GetEnumerator();
+        return new SqliteSchema( Database, ReinterpretCast.To<SqliteSchemaBuilder>( builder ) );
     }
 }

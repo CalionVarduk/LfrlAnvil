@@ -5,11 +5,12 @@ using LfrlAnvil.Sql.Exceptions;
 using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Extensions;
 using LfrlAnvil.Sql.Objects.Builders;
-using LfrlAnvil.Sqlite.Exceptions;
 using LfrlAnvil.Sqlite.Extensions;
 using LfrlAnvil.Sqlite.Objects.Builders;
 using LfrlAnvil.Sqlite.Tests.Helpers;
 using LfrlAnvil.TestExtensions.FluentAssertions;
+using LfrlAnvil.TestExtensions.Sql;
+using LfrlAnvil.TestExtensions.Sql.FluentAssertions;
 
 namespace LfrlAnvil.Sqlite.Tests.ObjectsTests.BuildersTests;
 
@@ -34,7 +35,7 @@ public class SqliteColumnBuilderTests : TestsBase
         var table = schema.Objects.CreateTable( "T" );
         var sut = table.Columns.Create( "C" );
 
-        var result = ((ISqlColumnBuilder)sut).Asc();
+        var result = sut.Asc();
 
         using ( new AssertionScope() )
         {
@@ -51,7 +52,7 @@ public class SqliteColumnBuilderTests : TestsBase
         var table = schema.Objects.CreateTable( "T" );
         var sut = table.Columns.Create( "C" );
 
-        var result = ((ISqlColumnBuilder)sut).Desc();
+        var result = sut.Desc();
 
         using ( new AssertionScope() )
         {
@@ -68,21 +69,19 @@ public class SqliteColumnBuilderTests : TestsBase
         var table = schema.Objects.CreateTable( "T" );
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
 
-        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
-
+        var actionCount = schema.Database.GetPendingActionCount();
         var sut = table.Columns.Create( "C2" );
-        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
+        var actions = schema.Database.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )
         {
             table.Columns.Get( sut.Name ).Should().BeSameAs( sut );
             sut.Name.Should().Be( "C2" );
-            sut.DefaultValue.Should().BeEquivalentTo( SqlNode.Literal<object>( Array.Empty<byte>() ) );
+            sut.DefaultValue.Should().BeSameAs( sut.TypeDefinition.DefaultValue );
 
-            statements.Should().HaveCount( 1 );
-            statements.ElementAtOrDefault( 0 )
-                .Sql
-                .Should()
+            actions.Should().HaveCount( 1 );
+            actions.ElementAtOrDefault( 0 )
+                .Sql.Should()
                 .SatisfySql(
                     @"CREATE TABLE ""__foo_T__{GUID}__"" (
                       ""C1"" ANY NOT NULL,
@@ -106,10 +105,9 @@ public class SqliteColumnBuilderTests : TestsBase
         var table = schema.Objects.CreateTable( "T" );
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
 
-        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
-
+        var actionCount = schema.Database.GetPendingActionCount();
         var sut = table.Columns.Create( "C2" ).MarkAsNullable();
-        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
+        var actions = schema.Database.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )
         {
@@ -117,10 +115,9 @@ public class SqliteColumnBuilderTests : TestsBase
             sut.Name.Should().Be( "C2" );
             sut.DefaultValue.Should().BeNull();
 
-            statements.Should().HaveCount( 1 );
-            statements.ElementAtOrDefault( 0 )
-                .Sql
-                .Should()
+            actions.Should().HaveCount( 1 );
+            actions.ElementAtOrDefault( 0 )
+                .Sql.Should()
                 .SatisfySql(
                     @"CREATE TABLE ""__foo_T__{GUID}__"" (
                       ""C1"" ANY NOT NULL,
@@ -144,20 +141,18 @@ public class SqliteColumnBuilderTests : TestsBase
         var table = schema.Objects.CreateTable( "T" );
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
 
-        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
-
+        var actionCount = schema.Database.GetPendingActionCount();
         var sut = table.Columns.Create( "C2" ).SetDefaultValue( new byte[] { 1, 2, 3 } );
-        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
+        var actions = schema.Database.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )
         {
             table.Columns.Get( sut.Name ).Should().BeSameAs( sut );
             sut.Name.Should().Be( "C2" );
 
-            statements.Should().HaveCount( 1 );
-            statements.ElementAtOrDefault( 0 )
-                .Sql
-                .Should()
+            actions.Should().HaveCount( 1 );
+            actions.ElementAtOrDefault( 0 )
+                .Sql.Should()
                 .SatisfySql(
                     @"CREATE TABLE ""__foo_T__{GUID}__"" (
                       ""C1"" ANY NOT NULL,
@@ -182,11 +177,11 @@ public class SqliteColumnBuilderTests : TestsBase
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var removed = table.Columns.Create( "C2" );
 
-        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
-
+        var actionCount = schema.Database.GetPendingActionCount();
         removed.SetName( "C3" ).Remove();
+        table.Columns.Create( "C3" ).MarkAsNullable();
         var sut = table.Columns.Create( "C2" ).SetType<string>();
-        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
+        var actions = schema.Database.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )
         {
@@ -195,20 +190,21 @@ public class SqliteColumnBuilderTests : TestsBase
             sut.DefaultValue.Should().BeNull();
             removed.IsRemoved.Should().BeTrue();
 
-            statements.Should().HaveCount( 1 );
-            statements.ElementAtOrDefault( 0 )
-                .Sql
-                .Should()
+            actions.Should().HaveCount( 1 );
+            actions.ElementAtOrDefault( 0 )
+                .Sql.Should()
                 .SatisfySql(
                     @"CREATE TABLE ""__foo_T__{GUID}__"" (
                       ""C1"" ANY NOT NULL,
                       ""C2"" TEXT NOT NULL,
+                      ""C3"" ANY,
                       CONSTRAINT ""foo_PK_T"" PRIMARY KEY (""C1"" ASC)
                     ) WITHOUT ROWID;",
-                    @"INSERT INTO ""__foo_T__{GUID}__"" (""C1"", ""C2"")
+                    @"INSERT INTO ""__foo_T__{GUID}__"" (""C1"", ""C2"", ""C3"")
                     SELECT
                       ""foo_T"".""C1"",
-                      CAST(""foo_T"".""C2"" AS TEXT) AS ""C2""
+                      CAST(""foo_T"".""C2"" AS TEXT) AS ""C2"",
+                      NULL AS ""C3""
                     FROM ""foo_T"";",
                     "DROP TABLE \"foo_T\";",
                     "ALTER TABLE \"__foo_T__{GUID}__\" RENAME TO \"foo_T\";" );
@@ -216,19 +212,96 @@ public class SqliteColumnBuilderTests : TestsBase
     }
 
     [Fact]
-    public void Creation_FollowedByRemoval_ShouldDoNothing()
+    public void Creation_WithReusedRemovedColumnName_ShouldTreatTheColumnAsModified_WithOriginalIsNullableChange()
+    {
+        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var table = schema.Objects.CreateTable( "T" );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        var removed = table.Columns.Create( "C2" ).MarkAsNullable();
+
+        var actionCount = schema.Database.GetPendingActionCount();
+        removed.SetName( "C3" ).MarkAsNullable( false ).Remove();
+        var sut = table.Columns.Create( "C2" );
+        var actions = schema.Database.GetLastPendingActions( actionCount );
+
+        using ( new AssertionScope() )
+        {
+            table.Columns.Get( sut.Name ).Should().BeSameAs( sut );
+            sut.Name.Should().Be( "C2" );
+            sut.DefaultValue.Should().BeNull();
+            removed.IsRemoved.Should().BeTrue();
+
+            actions.Should().HaveCount( 1 );
+            actions.ElementAtOrDefault( 0 )
+                .Sql.Should()
+                .SatisfySql(
+                    @"CREATE TABLE ""__foo_T__{GUID}__"" (
+                      ""C1"" ANY NOT NULL,
+                      ""C2"" ANY NOT NULL,
+                      CONSTRAINT ""foo_PK_T"" PRIMARY KEY (""C1"" ASC)
+                    ) WITHOUT ROWID;",
+                    @"INSERT INTO ""__foo_T__{GUID}__"" (""C1"", ""C2"")
+                    SELECT
+                      ""foo_T"".""C1"",
+                      COALESCE(""foo_T"".""C2"", X'') AS ""C2""
+                    FROM ""foo_T"";",
+                    "DROP TABLE \"foo_T\";",
+                    "ALTER TABLE \"__foo_T__{GUID}__\" RENAME TO \"foo_T\";" );
+        }
+    }
+
+    [Fact]
+    public void Creation_WithReusedRemovedColumnName_ShouldTreatTheColumnAsModified_WithOriginalTypeDefinitionChange()
+    {
+        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var table = schema.Objects.CreateTable( "T" );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        var removed = table.Columns.Create( "C2" );
+
+        var actionCount = schema.Database.GetPendingActionCount();
+        removed.SetName( "C3" ).SetType<string>().Remove();
+        var sut = table.Columns.Create( "C2" );
+        var actions = schema.Database.GetLastPendingActions( actionCount );
+
+        using ( new AssertionScope() )
+        {
+            table.Columns.Get( sut.Name ).Should().BeSameAs( sut );
+            sut.Name.Should().Be( "C2" );
+            sut.DefaultValue.Should().BeNull();
+            removed.IsRemoved.Should().BeTrue();
+
+            actions.Should().HaveCount( 1 );
+            actions.ElementAtOrDefault( 0 )
+                .Sql.Should()
+                .SatisfySql(
+                    @"CREATE TABLE ""__foo_T__{GUID}__"" (
+                      ""C1"" ANY NOT NULL,
+                      ""C2"" ANY NOT NULL,
+                      CONSTRAINT ""foo_PK_T"" PRIMARY KEY (""C1"" ASC)
+                    ) WITHOUT ROWID;",
+                    @"INSERT INTO ""__foo_T__{GUID}__"" (""C1"", ""C2"")
+                    SELECT
+                      ""foo_T"".""C1"",
+                      ""foo_T"".""C2"" AS ""C2""
+                    FROM ""foo_T"";",
+                    "DROP TABLE \"foo_T\";",
+                    "ALTER TABLE \"__foo_T__{GUID}__\" RENAME TO \"foo_T\";" );
+        }
+    }
+
+    [Fact]
+    public void Creation_FollowedByRemove_ShouldDoNothing()
     {
         var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
 
-        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
-
+        var actionCount = schema.Database.GetPendingActionCount();
         var sut = table.Columns.Create( "C2" );
         sut.Remove();
-        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
+        var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        statements.Should().BeEmpty();
+        actions.Should().BeEmpty();
     }
 
     [Fact]
@@ -239,15 +312,14 @@ public class SqliteColumnBuilderTests : TestsBase
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Columns.Create( "C2" );
 
-        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
-
-        var result = ((ISqlColumnBuilder)sut).SetName( sut.Name );
-        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
+        var actionCount = schema.Database.GetPendingActionCount();
+        var result = sut.SetName( sut.Name );
+        var actions = schema.Database.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )
         {
             result.Should().BeSameAs( sut );
-            statements.Should().BeEmpty();
+            actions.Should().BeEmpty();
         }
     }
 
@@ -260,17 +332,15 @@ public class SqliteColumnBuilderTests : TestsBase
         var sut = table.Columns.Create( "C2" );
         var oldName = sut.Name;
 
-        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
-
+        var actionCount = schema.Database.GetPendingActionCount();
         sut.SetName( "bar" );
-        var result = ((ISqlColumnBuilder)sut).SetName( oldName );
-
-        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
+        var result = sut.SetName( oldName );
+        var actions = schema.Database.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )
         {
             result.Should().BeSameAs( sut );
-            statements.Should().BeEmpty();
+            actions.Should().BeEmpty();
         }
     }
 
@@ -281,24 +351,22 @@ public class SqliteColumnBuilderTests : TestsBase
         var table = schema.Objects.CreateTable( "T" );
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Columns.Create( "C2" );
-        var oldName = sut.Name;
         var node = sut.Node;
 
-        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
-
-        var result = ((ISqlColumnBuilder)sut).SetName( "bar" );
-        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
+        var actionCount = schema.Database.GetPendingActionCount();
+        var result = sut.SetName( "bar" );
+        var actions = schema.Database.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )
         {
             result.Should().BeSameAs( sut );
             sut.Name.Should().Be( "bar" );
-            table.Columns.Get( "bar" ).Should().BeSameAs( sut );
-            table.Columns.Contains( oldName ).Should().BeFalse();
+            table.Columns.TryGet( "bar" ).Should().BeSameAs( sut );
+            table.Columns.TryGet( "C2" ).Should().BeNull();
             node.Name.Should().Be( "bar" );
 
-            statements.Should().HaveCount( 1 );
-            statements.ElementAtOrDefault( 0 ).Sql.Should().SatisfySql( "ALTER TABLE \"foo_T\" RENAME COLUMN \"C2\" TO \"bar\";" );
+            actions.Should().HaveCount( 1 );
+            actions.ElementAtOrDefault( 0 ).Sql.Should().SatisfySql( "ALTER TABLE \"foo_T\" RENAME COLUMN \"C2\" TO \"bar\";" );
         }
     }
 
@@ -308,22 +376,22 @@ public class SqliteColumnBuilderTests : TestsBase
     [InlineData( "\"" )]
     [InlineData( "'" )]
     [InlineData( "f\"oo" )]
-    public void SetName_ShouldThrowSqliteObjectBuilderException_WhenNameIsInvalid(string name)
+    public void SetName_ShouldThrowSqlObjectBuilderException_WhenNameIsInvalid(string name)
     {
         var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Columns.Create( "C2" );
 
-        var action = Lambda.Of( () => ((ISqlColumnBuilder)sut).SetName( name ) );
+        var action = Lambda.Of( () => sut.SetName( name ) );
 
         action.Should()
-            .ThrowExactly<SqliteObjectBuilderException>()
+            .ThrowExactly<SqlObjectBuilderException>()
             .AndMatch( e => e.Dialect == SqliteDialect.Instance && e.Errors.Count == 1 );
     }
 
     [Fact]
-    public void SetName_ShouldThrowSqliteObjectBuilderException_WhenColumnIsRemoved()
+    public void SetName_ShouldThrowSqlObjectBuilderException_WhenColumnIsRemoved()
     {
         var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
@@ -331,30 +399,30 @@ public class SqliteColumnBuilderTests : TestsBase
         var sut = table.Columns.Create( "C2" );
         sut.Remove();
 
-        var action = Lambda.Of( () => ((ISqlColumnBuilder)sut).SetName( "bar" ) );
+        var action = Lambda.Of( () => sut.SetName( "bar" ) );
 
         action.Should()
-            .ThrowExactly<SqliteObjectBuilderException>()
+            .ThrowExactly<SqlObjectBuilderException>()
             .AndMatch( e => e.Dialect == SqliteDialect.Instance && e.Errors.Count == 1 );
     }
 
     [Fact]
-    public void SetName_ShouldThrowSqliteObjectBuilderException_WhenNewNameAlreadyExistsInTableColumns()
+    public void SetName_ShouldThrowSqlObjectBuilderException_WhenNewNameAlreadyExistsInTableColumns()
     {
         var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Columns.Create( "C2" );
 
-        var action = Lambda.Of( () => ((ISqlColumnBuilder)sut).SetName( "C1" ) );
+        var action = Lambda.Of( () => sut.SetName( "C1" ) );
 
         action.Should()
-            .ThrowExactly<SqliteObjectBuilderException>()
+            .ThrowExactly<SqlObjectBuilderException>()
             .AndMatch( e => e.Dialect == SqliteDialect.Instance && e.Errors.Count == 1 );
     }
 
     [Fact]
-    public void SetName_ShouldThrowSqliteObjectBuilderException_WhenColumnIsUsedInIndex()
+    public void SetName_ShouldThrowSqlObjectBuilderException_WhenColumnIsUsedInIndex()
     {
         var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
@@ -362,15 +430,15 @@ public class SqliteColumnBuilderTests : TestsBase
         var sut = table.Columns.Create( "C2" );
         table.Constraints.CreateIndex( sut.Asc() );
 
-        var action = Lambda.Of( () => ((ISqlColumnBuilder)sut).SetName( "C3" ) );
+        var action = Lambda.Of( () => sut.SetName( "C3" ) );
 
         action.Should()
-            .ThrowExactly<SqliteObjectBuilderException>()
+            .ThrowExactly<SqlObjectBuilderException>()
             .AndMatch( e => e.Dialect == SqliteDialect.Instance && e.Errors.Count == 1 );
     }
 
     [Fact]
-    public void SetName_ShouldThrowSqliteObjectBuilderException_WhenColumnIsUsedInView()
+    public void SetName_ShouldThrowSqlObjectBuilderException_WhenColumnIsUsedInView()
     {
         var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
@@ -378,10 +446,10 @@ public class SqliteColumnBuilderTests : TestsBase
         var sut = table.Columns.Create( "C2" );
         schema.Objects.CreateView( "V", table.ToRecordSet().ToDataSource().Select( s => new[] { s.From["C2"].AsSelf() } ) );
 
-        var action = Lambda.Of( () => ((ISqlColumnBuilder)sut).SetName( "C3" ) );
+        var action = Lambda.Of( () => sut.SetName( "C3" ) );
 
         action.Should()
-            .ThrowExactly<SqliteObjectBuilderException>()
+            .ThrowExactly<SqlObjectBuilderException>()
             .AndMatch( e => e.Dialect == SqliteDialect.Instance && e.Errors.Count == 1 );
     }
 
@@ -393,15 +461,14 @@ public class SqliteColumnBuilderTests : TestsBase
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Columns.Create( "C2" );
 
-        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
-
-        var result = ((ISqlColumnBuilder)sut).SetType( SqliteDataType.Any );
-        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
+        var actionCount = schema.Database.GetPendingActionCount();
+        var result = sut.SetType( SqliteDataType.Any );
+        var actions = schema.Database.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )
         {
             result.Should().BeSameAs( sut );
-            statements.Should().BeEmpty();
+            actions.Should().BeEmpty();
         }
     }
 
@@ -413,17 +480,15 @@ public class SqliteColumnBuilderTests : TestsBase
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Columns.Create( "C2" );
 
-        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
-
-        sut.SetType<int>();
-        var result = ((ISqlColumnBuilder)sut).SetType( SqliteDataType.Any );
-
-        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
+        var actionCount = schema.Database.GetPendingActionCount();
+        sut.SetType( SqliteDataType.Integer );
+        var result = sut.SetType( schema.Database.TypeDefinitions.GetByType<object>() );
+        var actions = schema.Database.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )
         {
             result.Should().BeSameAs( sut );
-            statements.Should().BeEmpty();
+            actions.Should().BeEmpty();
         }
     }
 
@@ -435,10 +500,9 @@ public class SqliteColumnBuilderTests : TestsBase
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Columns.Create( "C2" ).SetDefaultValue( 123 );
 
-        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
-
-        var result = ((ISqlColumnBuilder)sut).SetType<int>();
-        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
+        var actionCount = schema.Database.GetPendingActionCount();
+        var result = sut.SetType<int>();
+        var actions = schema.Database.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )
         {
@@ -446,10 +510,9 @@ public class SqliteColumnBuilderTests : TestsBase
             sut.TypeDefinition.Should().BeSameAs( schema.Database.TypeDefinitions.GetByType<int>() );
             sut.DefaultValue.Should().BeNull();
 
-            statements.Should().HaveCount( 1 );
-            statements.ElementAtOrDefault( 0 )
-                .Sql
-                .Should()
+            actions.Should().HaveCount( 1 );
+            actions.ElementAtOrDefault( 0 )
+                .Sql.Should()
                 .SatisfySql(
                     @"CREATE TABLE ""__foo_T__{GUID}__"" (
                       ""C1"" ANY NOT NULL,
@@ -474,21 +537,20 @@ public class SqliteColumnBuilderTests : TestsBase
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Columns.Create( "C2" ).SetType<bool>();
 
-        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
-
-        var result = ((ISqlColumnBuilder)sut).SetType<int>();
-        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
+        var actionCount = schema.Database.GetPendingActionCount();
+        var result = sut.SetType<int>();
+        var actions = schema.Database.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )
         {
             result.Should().BeSameAs( sut );
             sut.TypeDefinition.Should().BeSameAs( schema.Database.TypeDefinitions.GetByType<int>() );
-            statements.Should().BeEmpty();
+            actions.Should().BeEmpty();
         }
     }
 
     [Fact]
-    public void SetType_ShouldThrowSqliteObjectBuilderException_WhenColumnIsRemoved()
+    public void SetType_ShouldThrowSqlObjectBuilderException_WhenColumnIsRemoved()
     {
         var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
@@ -496,15 +558,15 @@ public class SqliteColumnBuilderTests : TestsBase
         var sut = table.Columns.Create( "C2" );
         sut.Remove();
 
-        var action = Lambda.Of( () => ((ISqlColumnBuilder)sut).SetType<int>() );
+        var action = Lambda.Of( () => sut.SetType<int>() );
 
         action.Should()
-            .ThrowExactly<SqliteObjectBuilderException>()
+            .ThrowExactly<SqlObjectBuilderException>()
             .AndMatch( e => e.Dialect == SqliteDialect.Instance && e.Errors.Count == 1 );
     }
 
     [Fact]
-    public void SetType_ShouldThrowSqliteObjectBuilderException_WhenColumnIsUsedInIndex()
+    public void SetType_ShouldThrowSqlObjectBuilderException_WhenColumnIsUsedInIndex()
     {
         var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
@@ -512,15 +574,15 @@ public class SqliteColumnBuilderTests : TestsBase
         var sut = table.Columns.Create( "C2" );
         table.Constraints.CreateIndex( sut.Asc() );
 
-        var action = Lambda.Of( () => ((ISqlColumnBuilder)sut).SetType<int>() );
+        var action = Lambda.Of( () => sut.SetType<int>() );
 
         action.Should()
-            .ThrowExactly<SqliteObjectBuilderException>()
+            .ThrowExactly<SqlObjectBuilderException>()
             .AndMatch( e => e.Dialect == SqliteDialect.Instance && e.Errors.Count == 1 );
     }
 
     [Fact]
-    public void SetType_ShouldThrowSqliteObjectBuilderException_WhenColumnIsUsedInView()
+    public void SetType_ShouldThrowSqlObjectBuilderException_WhenColumnIsUsedInView()
     {
         var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
@@ -528,15 +590,15 @@ public class SqliteColumnBuilderTests : TestsBase
         var sut = table.Columns.Create( "C2" );
         schema.Objects.CreateView( "V", table.ToRecordSet().ToDataSource().Select( s => new[] { s.From["C2"].AsSelf() } ) );
 
-        var action = Lambda.Of( () => ((ISqlColumnBuilder)sut).SetType<int>() );
+        var action = Lambda.Of( () => sut.SetType<int>() );
 
         action.Should()
-            .ThrowExactly<SqliteObjectBuilderException>()
+            .ThrowExactly<SqlObjectBuilderException>()
             .AndMatch( e => e.Dialect == SqliteDialect.Instance && e.Errors.Count == 1 );
     }
 
     [Fact]
-    public void SetType_ShouldThrowSqliteObjectBuilderException_WhenTypeDefinitionDoesNotBelongToDatabase()
+    public void SetType_ShouldThrowSqlObjectBuilderException_WhenTypeDefinitionDoesNotBelongToDatabase()
     {
         var definition = SqliteDatabaseBuilderMock.Create().TypeDefinitions.GetByType<int>();
         var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
@@ -544,10 +606,10 @@ public class SqliteColumnBuilderTests : TestsBase
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Columns.Create( "C2" );
 
-        var action = Lambda.Of( () => ((ISqlColumnBuilder)sut).SetType( definition ) );
+        var action = Lambda.Of( () => sut.SetType( definition ) );
 
         action.Should()
-            .ThrowExactly<SqliteObjectBuilderException>()
+            .ThrowExactly<SqlObjectBuilderException>()
             .AndMatch( e => e.Dialect == SqliteDialect.Instance && e.Errors.Count == 1 );
     }
 
@@ -564,7 +626,7 @@ public class SqliteColumnBuilderTests : TestsBase
 
         action.Should()
             .ThrowExactly<SqlObjectCastException>()
-            .AndMatch( e => e.Dialect == SqliteDialect.Instance && e.Expected == typeof( SqliteColumnTypeDefinition ) );
+            .AndMatch( e => e.Dialect == SqliteDialect.Instance && e.Expected == typeof( SqlColumnTypeDefinition ) );
     }
 
     [Theory]
@@ -577,15 +639,14 @@ public class SqliteColumnBuilderTests : TestsBase
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Columns.Create( "C2" ).MarkAsNullable( value );
 
-        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
-
-        var result = ((ISqlColumnBuilder)sut).MarkAsNullable( value );
-        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
+        var actionCount = schema.Database.GetPendingActionCount();
+        var result = sut.MarkAsNullable( value );
+        var actions = schema.Database.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )
         {
             result.Should().BeSameAs( sut );
-            statements.Should().BeEmpty();
+            actions.Should().BeEmpty();
         }
     }
 
@@ -599,17 +660,15 @@ public class SqliteColumnBuilderTests : TestsBase
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Columns.Create( "C2" ).MarkAsNullable( value );
 
-        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
-
+        var actionCount = schema.Database.GetPendingActionCount();
         sut.MarkAsNullable( ! value );
-        var result = ((ISqlColumnBuilder)sut).MarkAsNullable( value );
-
-        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
+        var result = sut.MarkAsNullable( value );
+        var actions = schema.Database.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )
         {
             result.Should().BeSameAs( sut );
-            statements.Should().BeEmpty();
+            actions.Should().BeEmpty();
         }
     }
 
@@ -621,20 +680,18 @@ public class SqliteColumnBuilderTests : TestsBase
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Columns.Create( "C2" );
 
-        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
-
-        var result = ((ISqlColumnBuilder)sut).MarkAsNullable();
-        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
+        var actionCount = schema.Database.GetPendingActionCount();
+        var result = sut.MarkAsNullable();
+        var actions = schema.Database.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )
         {
             result.Should().BeSameAs( sut );
             sut.IsNullable.Should().BeTrue();
 
-            statements.Should().HaveCount( 1 );
-            statements.ElementAtOrDefault( 0 )
-                .Sql
-                .Should()
+            actions.Should().HaveCount( 1 );
+            actions.ElementAtOrDefault( 0 )
+                .Sql.Should()
                 .SatisfySql(
                     @"CREATE TABLE ""__foo_T__{GUID}__"" (
                       ""C1"" ANY NOT NULL,
@@ -659,20 +716,18 @@ public class SqliteColumnBuilderTests : TestsBase
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Columns.Create( "C2" ).MarkAsNullable();
 
-        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
-
-        var result = ((ISqlColumnBuilder)sut).MarkAsNullable( false );
-        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
+        var actionCount = schema.Database.GetPendingActionCount();
+        var result = sut.MarkAsNullable( false );
+        var actions = schema.Database.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )
         {
             result.Should().BeSameAs( sut );
             result.IsNullable.Should().BeFalse();
 
-            statements.Should().HaveCount( 1 );
-            statements.ElementAtOrDefault( 0 )
-                .Sql
-                .Should()
+            actions.Should().HaveCount( 1 );
+            actions.ElementAtOrDefault( 0 )
+                .Sql.Should()
                 .SatisfySql(
                     @"CREATE TABLE ""__foo_T__{GUID}__"" (
                       ""C1"" ANY NOT NULL,
@@ -697,20 +752,18 @@ public class SqliteColumnBuilderTests : TestsBase
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Columns.Create( "C2" ).MarkAsNullable().SetDefaultValue( new byte[] { 1, 2, 3 } );
 
-        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
-
-        var result = ((ISqlColumnBuilder)sut).MarkAsNullable( false );
-        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
+        var actionCount = schema.Database.GetPendingActionCount();
+        var result = sut.MarkAsNullable( false );
+        var actions = schema.Database.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )
         {
             result.Should().BeSameAs( sut );
             result.IsNullable.Should().BeFalse();
 
-            statements.Should().HaveCount( 1 );
-            statements.ElementAtOrDefault( 0 )
-                .Sql
-                .Should()
+            actions.Should().HaveCount( 1 );
+            actions.ElementAtOrDefault( 0 )
+                .Sql.Should()
                 .SatisfySql(
                     @"CREATE TABLE ""__foo_T__{GUID}__"" (
                       ""C1"" ANY NOT NULL,
@@ -735,20 +788,18 @@ public class SqliteColumnBuilderTests : TestsBase
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Columns.Create( "C2" ).MarkAsNullable();
 
-        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
-
-        var result = ((ISqlColumnBuilder)sut.SetType( SqliteDataType.Integer )).MarkAsNullable( false );
-        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
+        var actionCount = schema.Database.GetPendingActionCount();
+        var result = sut.SetType( SqliteDataType.Integer ).MarkAsNullable( false );
+        var actions = schema.Database.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )
         {
             result.Should().BeSameAs( sut );
             result.IsNullable.Should().BeFalse();
 
-            statements.Should().HaveCount( 1 );
-            statements.ElementAtOrDefault( 0 )
-                .Sql
-                .Should()
+            actions.Should().HaveCount( 1 );
+            actions.ElementAtOrDefault( 0 )
+                .Sql.Should()
                 .SatisfySql(
                     @"CREATE TABLE ""__foo_T__{GUID}__"" (
                       ""C1"" ANY NOT NULL,
@@ -768,7 +819,7 @@ public class SqliteColumnBuilderTests : TestsBase
     [Theory]
     [InlineData( true )]
     [InlineData( false )]
-    public void MarkAsNullable_ShouldThrowSqliteObjectBuilderException_WhenColumnIsRemoved(bool value)
+    public void MarkAsNullable_ShouldThrowSqlObjectBuilderException_WhenColumnIsRemoved(bool value)
     {
         var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
@@ -776,17 +827,17 @@ public class SqliteColumnBuilderTests : TestsBase
         var sut = table.Columns.Create( "C2" ).MarkAsNullable( ! value );
         sut.Remove();
 
-        var action = Lambda.Of( () => ((ISqlColumnBuilder)sut).MarkAsNullable( value ) );
+        var action = Lambda.Of( () => sut.MarkAsNullable( value ) );
 
         action.Should()
-            .ThrowExactly<SqliteObjectBuilderException>()
+            .ThrowExactly<SqlObjectBuilderException>()
             .AndMatch( e => e.Dialect == SqliteDialect.Instance && e.Errors.Count == 1 );
     }
 
     [Theory]
     [InlineData( true )]
     [InlineData( false )]
-    public void MarkAsNullable_ShouldThrowSqliteObjectBuilderException_WhenColumnIsUsedInIndex(bool value)
+    public void MarkAsNullable_ShouldThrowSqlObjectBuilderException_WhenColumnIsUsedInIndex(bool value)
     {
         var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
@@ -794,17 +845,17 @@ public class SqliteColumnBuilderTests : TestsBase
         var sut = table.Columns.Create( "C2" ).MarkAsNullable( ! value );
         table.Constraints.CreateIndex( sut.Asc() );
 
-        var action = Lambda.Of( () => ((ISqlColumnBuilder)sut).MarkAsNullable( value ) );
+        var action = Lambda.Of( () => sut.MarkAsNullable( value ) );
 
         action.Should()
-            .ThrowExactly<SqliteObjectBuilderException>()
+            .ThrowExactly<SqlObjectBuilderException>()
             .AndMatch( e => e.Dialect == SqliteDialect.Instance && e.Errors.Count == 1 );
     }
 
     [Theory]
     [InlineData( true )]
     [InlineData( false )]
-    public void MarkAsNullable_ShouldThrowSqliteObjectBuilderException_WhenColumnIsUsedInView(bool value)
+    public void MarkAsNullable_ShouldThrowSqlObjectBuilderException_WhenColumnIsUsedInView(bool value)
     {
         var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
@@ -812,10 +863,10 @@ public class SqliteColumnBuilderTests : TestsBase
         var sut = table.Columns.Create( "C2" ).MarkAsNullable( ! value );
         schema.Objects.CreateView( "V", table.ToRecordSet().ToDataSource().Select( s => new[] { s.From["C2"].AsSelf() } ) );
 
-        var action = Lambda.Of( () => ((ISqlColumnBuilder)sut).MarkAsNullable( value ) );
+        var action = Lambda.Of( () => sut.MarkAsNullable( value ) );
 
         action.Should()
-            .ThrowExactly<SqliteObjectBuilderException>()
+            .ThrowExactly<SqlObjectBuilderException>()
             .AndMatch( e => e.Dialect == SqliteDialect.Instance && e.Errors.Count == 1 );
     }
 
@@ -827,15 +878,14 @@ public class SqliteColumnBuilderTests : TestsBase
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Columns.Create( "C2" ).SetDefaultValue( 123 );
 
-        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
-
-        var result = ((ISqlColumnBuilder)sut).SetDefaultValue( sut.DefaultValue );
-        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
+        var actionCount = schema.Database.GetPendingActionCount();
+        var result = sut.SetDefaultValue( sut.DefaultValue );
+        var actions = schema.Database.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )
         {
             result.Should().BeSameAs( sut );
-            statements.Should().BeEmpty();
+            actions.Should().BeEmpty();
         }
     }
 
@@ -848,17 +898,15 @@ public class SqliteColumnBuilderTests : TestsBase
         var sut = table.Columns.Create( "C2" ).SetDefaultValue( 123 );
         var originalDefaultValue = sut.DefaultValue;
 
-        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
-
+        var actionCount = schema.Database.GetPendingActionCount();
         sut.SetDefaultValue( (int?)42 );
-        var result = ((ISqlColumnBuilder)sut).SetDefaultValue( originalDefaultValue );
-
-        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
+        var result = sut.SetDefaultValue( originalDefaultValue );
+        var actions = schema.Database.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )
         {
             result.Should().BeSameAs( sut );
-            statements.Should().BeEmpty();
+            actions.Should().BeEmpty();
         }
     }
 
@@ -870,20 +918,18 @@ public class SqliteColumnBuilderTests : TestsBase
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Columns.Create( "C2" ).SetDefaultValue( 123 );
 
-        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
-
-        var result = ((ISqlColumnBuilder)sut).SetDefaultValue( 42 );
-        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
+        var actionCount = schema.Database.GetPendingActionCount();
+        var result = sut.SetDefaultValue( 42 );
+        var actions = schema.Database.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )
         {
             result.Should().BeSameAs( sut );
             sut.DefaultValue.Should().BeEquivalentTo( SqlNode.Literal( 42 ) );
 
-            statements.Should().HaveCount( 1 );
-            statements.ElementAtOrDefault( 0 )
-                .Sql
-                .Should()
+            actions.Should().HaveCount( 1 );
+            actions.ElementAtOrDefault( 0 )
+                .Sql.Should()
                 .SatisfySql(
                     @"CREATE TABLE ""__foo_T__{GUID}__"" (
                       ""C1"" ANY NOT NULL,
@@ -908,20 +954,18 @@ public class SqliteColumnBuilderTests : TestsBase
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Columns.Create( "C2" ).SetDefaultValue( 123 );
 
-        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
-
-        var result = ((ISqlColumnBuilder)sut).SetDefaultValue( null );
-        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
+        var actionCount = schema.Database.GetPendingActionCount();
+        var result = sut.SetDefaultValue( null );
+        var actions = schema.Database.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )
         {
             result.Should().BeSameAs( sut );
             sut.DefaultValue.Should().BeNull();
 
-            statements.Should().HaveCount( 1 );
-            statements.ElementAtOrDefault( 0 )
-                .Sql
-                .Should()
+            actions.Should().HaveCount( 1 );
+            actions.ElementAtOrDefault( 0 )
+                .Sql.Should()
                 .SatisfySql(
                     @"CREATE TABLE ""__foo_T__{GUID}__"" (
                       ""C1"" ANY NOT NULL,
@@ -946,22 +990,19 @@ public class SqliteColumnBuilderTests : TestsBase
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Columns.Create( "C2" );
 
-        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
-
+        var actionCount = schema.Database.GetPendingActionCount();
         var defaultValue = SqlNode.Literal( 10 ) + SqlNode.Literal( 50 ) + SqlNode.Literal( 100 ).Max( SqlNode.Literal( 80 ) );
-        var result = ((ISqlColumnBuilder)sut).SetDefaultValue( defaultValue );
-
-        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
+        var result = sut.SetDefaultValue( defaultValue );
+        var actions = schema.Database.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )
         {
             result.Should().BeSameAs( sut );
             sut.DefaultValue.Should().BeSameAs( defaultValue );
 
-            statements.Should().HaveCount( 1 );
-            statements.ElementAtOrDefault( 0 )
-                .Sql
-                .Should()
+            actions.Should().HaveCount( 1 );
+            actions.ElementAtOrDefault( 0 )
+                .Sql.Should()
                 .SatisfySql(
                     @"CREATE TABLE ""__foo_T__{GUID}__"" (
                       ""C1"" ANY NOT NULL,
@@ -987,20 +1028,18 @@ public class SqliteColumnBuilderTests : TestsBase
         var sut = table.Columns.Create( "C2" );
         table.Constraints.CreateIndex( sut.Asc() );
 
-        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
-
-        var result = ((ISqlColumnBuilder)sut).SetDefaultValue( 123 );
-        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
+        var actionCount = schema.Database.GetPendingActionCount();
+        var result = sut.SetDefaultValue( 123 );
+        var actions = schema.Database.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )
         {
             result.Should().BeSameAs( sut );
             sut.DefaultValue.Should().BeEquivalentTo( SqlNode.Literal( 123 ) );
 
-            statements.Should().HaveCount( 1 );
-            statements.ElementAtOrDefault( 0 )
-                .Sql
-                .Should()
+            actions.Should().HaveCount( 1 );
+            actions.ElementAtOrDefault( 0 )
+                .Sql.Should()
                 .SatisfySql(
                     "DROP INDEX \"foo_IX_T_C2A\";",
                     @"CREATE TABLE ""__foo_T__{GUID}__"" (
@@ -1028,20 +1067,18 @@ public class SqliteColumnBuilderTests : TestsBase
         var sut = table.Columns.Create( "C2" );
         schema.Objects.CreateView( "V", table.ToRecordSet().ToDataSource().Select( s => new[] { s.From["C2"].AsSelf() } ) );
 
-        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
-
-        var result = ((ISqlColumnBuilder)sut).SetDefaultValue( (int?)123 );
-        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
+        var actionCount = schema.Database.GetPendingActionCount();
+        var result = sut.SetDefaultValue( (int?)123 );
+        var actions = schema.Database.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )
         {
             result.Should().BeSameAs( sut );
             sut.DefaultValue.Should().BeEquivalentTo( SqlNode.Literal( 123 ) );
 
-            statements.Should().HaveCount( 1 );
-            statements.ElementAtOrDefault( 0 )
-                .Sql
-                .Should()
+            actions.Should().HaveCount( 1 );
+            actions.ElementAtOrDefault( 0 )
+                .Sql.Should()
                 .SatisfySql(
                     @"CREATE TABLE ""__foo_T__{GUID}__"" (
                       ""C1"" ANY NOT NULL,
@@ -1059,7 +1096,7 @@ public class SqliteColumnBuilderTests : TestsBase
     }
 
     [Fact]
-    public void SetDefaultValue_ShouldThrowSqliteObjectBuilderException_WhenColumnIsRemoved()
+    public void SetDefaultValue_ShouldThrowSqlObjectBuilderException_WhenColumnIsRemoved()
     {
         var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
@@ -1067,26 +1104,58 @@ public class SqliteColumnBuilderTests : TestsBase
         var sut = table.Columns.Create( "C2" );
         sut.Remove();
 
-        var action = Lambda.Of( () => ((ISqlColumnBuilder)sut).SetDefaultValue( 42 ) );
+        var action = Lambda.Of( () => sut.SetDefaultValue( 42 ) );
 
         action.Should()
-            .ThrowExactly<SqliteObjectBuilderException>()
+            .ThrowExactly<SqlObjectBuilderException>()
             .AndMatch( e => e.Dialect == SqliteDialect.Instance && e.Errors.Count == 1 );
     }
 
     [Fact]
-    public void SetDefaultValue_ShouldThrowSqliteObjectBuilderException_WhenExpressionIsInvalid()
+    public void SetDefaultValue_ShouldThrowSqlObjectBuilderException_WhenExpressionIsInvalid()
     {
         var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Columns.Create( "C2" );
 
-        var action = Lambda.Of( () => ((ISqlColumnBuilder)sut).SetDefaultValue( table.ToRecordSet().GetField( "C1" ) ) );
+        var action = Lambda.Of( () => sut.SetDefaultValue( table.ToRecordSet().GetField( "C1" ) ) );
 
         action.Should()
-            .ThrowExactly<SqliteObjectBuilderException>()
+            .ThrowExactly<SqlObjectBuilderException>()
             .AndMatch( e => e.Dialect == SqliteDialect.Instance && e.Errors.Count == 1 );
+    }
+
+    [Fact]
+    public void Asc_ShouldReturnCorrectIndexedColumn()
+    {
+        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var table = schema.Objects.CreateTable( "T" );
+        var sut = table.Columns.Create( "C" );
+
+        var result = sut.Asc();
+
+        using ( new AssertionScope() )
+        {
+            result.Column.Should().BeSameAs( sut );
+            result.Ordering.Should().Be( OrderBy.Asc );
+        }
+    }
+
+    [Fact]
+    public void Desc_ShouldReturnCorrectIndexedColumn()
+    {
+        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var table = schema.Objects.CreateTable( "T" );
+        var sut = table.Columns.Create( "C" );
+
+        var result = sut.Desc();
+
+        using ( new AssertionScope() )
+        {
+            result.Column.Should().BeSameAs( sut );
+            result.Ordering.Should().Be( OrderBy.Desc );
+        }
     }
 
     [Fact]
@@ -1097,19 +1166,17 @@ public class SqliteColumnBuilderTests : TestsBase
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Columns.Create( "C2" );
 
-        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
-
+        var actionCount = schema.Database.GetPendingActionCount();
         sut.SetName( "bar" ).Remove();
-        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
+        var actions = schema.Database.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )
         {
             table.Columns.Contains( sut.Name ).Should().BeFalse();
             sut.IsRemoved.Should().BeTrue();
-            sut.ReferencingIndexes.Should().BeEmpty();
 
-            statements.Should().HaveCount( 1 );
-            statements.ElementAtOrDefault( 0 ).Sql.Should().SatisfySql( "ALTER TABLE \"foo_T\" DROP COLUMN \"C2\";" );
+            actions.Should().HaveCount( 1 );
+            actions.ElementAtOrDefault( 0 ).Sql.Should().SatisfySql( "ALTER TABLE \"foo_T\" DROP COLUMN \"C2\";" );
         }
     }
 
@@ -1121,18 +1188,18 @@ public class SqliteColumnBuilderTests : TestsBase
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Columns.Create( "C2" );
 
-        _ = schema.Database.Changes.GetPendingActions();
+        schema.Database.Changes.CompletePendingChanges();
         sut.Remove();
-        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
 
+        var actionCount = schema.Database.GetPendingActionCount();
         sut.Remove();
-        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
+        var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        statements.Should().BeEmpty();
+        actions.Should().BeEmpty();
     }
 
     [Fact]
-    public void Remove_ShouldThrowSqliteObjectBuilderException_WhenColumnIsReferencedByIndexes()
+    public void Remove_ShouldThrowSqlObjectBuilderException_WhenColumnIsReferencedByIndex()
     {
         var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var t1 = schema.Objects.CreateTable( "T1" );
@@ -1142,11 +1209,11 @@ public class SqliteColumnBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.Remove() );
 
-        action.Should().ThrowExactly<SqliteObjectBuilderException>();
+        action.Should().ThrowExactly<SqlObjectBuilderException>();
     }
 
     [Fact]
-    public void Remove_ShouldThrowSqliteObjectBuilderException_WhenColumnIsReferencedByIndexFilters()
+    public void Remove_ShouldThrowSqlObjectBuilderException_WhenColumnIsReferencedByIndexFilter()
     {
         var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var t1 = schema.Objects.CreateTable( "T1" );
@@ -1156,11 +1223,11 @@ public class SqliteColumnBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.Remove() );
 
-        action.Should().ThrowExactly<SqliteObjectBuilderException>();
+        action.Should().ThrowExactly<SqlObjectBuilderException>();
     }
 
     [Fact]
-    public void Remove_ShouldThrowSqliteObjectBuilderException_WhenColumnIsReferencedByViews()
+    public void Remove_ShouldThrowSqlObjectBuilderException_WhenColumnIsReferencedByView()
     {
         var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var t1 = schema.Objects.CreateTable( "T1" );
@@ -1170,11 +1237,11 @@ public class SqliteColumnBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.Remove() );
 
-        action.Should().ThrowExactly<SqliteObjectBuilderException>();
+        action.Should().ThrowExactly<SqlObjectBuilderException>();
     }
 
     [Fact]
-    public void Remove_ShouldThrowSqliteObjectBuilderException_WhenColumnIsReferencedByChecks()
+    public void Remove_ShouldThrowSqlObjectBuilderException_WhenColumnIsReferencedByCheck()
     {
         var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var t1 = schema.Objects.CreateTable( "T1" );
@@ -1184,7 +1251,7 @@ public class SqliteColumnBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.Remove() );
 
-        action.Should().ThrowExactly<SqliteObjectBuilderException>();
+        action.Should().ThrowExactly<SqlObjectBuilderException>();
     }
 
     [Fact]

@@ -1,12 +1,21 @@
-﻿using LfrlAnvil.Sql.Objects;
+﻿using System.Diagnostics.Contracts;
+using LfrlAnvil.Sql.Objects;
+using LfrlAnvil.Sqlite.Internal;
 using LfrlAnvil.Sqlite.Objects.Builders;
 
 namespace LfrlAnvil.Sqlite.Objects;
 
-public sealed class SqliteCheck : SqliteConstraint, ISqlCheck
+public sealed class SqliteCheck : SqlCheck
 {
     internal SqliteCheck(SqliteTable table, SqliteCheckBuilder builder)
         : base( table, builder ) { }
 
-    public override SqliteDatabase Database => Table.Database;
+    public new SqliteTable Table => ReinterpretCast.To<SqliteTable>( base.Table );
+    public new SqliteDatabase Database => ReinterpretCast.To<SqliteDatabase>( base.Database );
+
+    [Pure]
+    public override string ToString()
+    {
+        return $"[{Type}] {SqliteHelpers.GetFullName( Table.Schema.Name, Name )}";
+    }
 }

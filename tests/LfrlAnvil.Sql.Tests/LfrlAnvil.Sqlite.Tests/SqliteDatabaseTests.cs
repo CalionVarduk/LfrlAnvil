@@ -3,8 +3,8 @@ using System.Data;
 using System.Threading.Tasks;
 using LfrlAnvil.Functional;
 using LfrlAnvil.Sql;
-using LfrlAnvil.Sql.Objects;
 using LfrlAnvil.Sql.Versioning;
+using LfrlAnvil.Sqlite.Objects;
 using LfrlAnvil.Sqlite.Tests.Helpers;
 using LfrlAnvil.TestExtensions.FluentAssertions;
 
@@ -16,10 +16,13 @@ public class SqliteDatabaseTests : TestsBase
     public void Properties_ShouldBeCorrectlyCopiedFromBuilder()
     {
         var dbBuilder = SqliteDatabaseBuilderMock.Create();
-        ISqlDatabase sut = new SqliteDatabaseMock( dbBuilder );
+        var sut = new SqliteDatabaseMock( dbBuilder );
 
         using ( new AssertionScope() )
         {
+            sut.Dialect.Should().BeSameAs( dbBuilder.Dialect );
+            sut.Version.Should().Be( new Version( "0.0" ) );
+            sut.ServerVersion.Should().BeSameAs( dbBuilder.ServerVersion );
             sut.DataTypes.Should().BeSameAs( dbBuilder.DataTypes );
             sut.TypeDefinitions.Should().BeSameAs( dbBuilder.TypeDefinitions );
             sut.NodeInterpreters.Should().BeSameAs( dbBuilder.NodeInterpreters );
@@ -41,7 +44,7 @@ public class SqliteDatabaseTests : TestsBase
         var dbBuilder = SqliteDatabaseBuilderMock.Create();
         dbBuilder.Schemas.Create( "foo" );
         var db = new SqliteDatabaseMock( dbBuilder );
-        ISqlSchemaCollection sut = db.Schemas;
+        var sut = db.Schemas;
 
         var result = sut.Contains( name );
 
@@ -49,12 +52,12 @@ public class SqliteDatabaseTests : TestsBase
     }
 
     [Fact]
-    public void Schemas_GetSchema_ShouldReturnExistingSchema()
+    public void Schemas_Get_ShouldReturnExistingSchema()
     {
         var dbBuilder = SqliteDatabaseBuilderMock.Create();
         dbBuilder.Schemas.Default.SetName( "foo" );
         var db = new SqliteDatabaseMock( dbBuilder );
-        ISqlSchemaCollection sut = db.Schemas;
+        var sut = db.Schemas;
 
         var result = sut.Get( "foo" );
 
@@ -62,12 +65,12 @@ public class SqliteDatabaseTests : TestsBase
     }
 
     [Fact]
-    public void Schemas_GetSchema_ShouldThrowKeyNotFoundException_WhenSchemaDoesNotExist()
+    public void Schemas_Get_ShouldThrowKeyNotFoundException_WhenSchemaDoesNotExist()
     {
         var dbBuilder = SqliteDatabaseBuilderMock.Create();
         dbBuilder.Schemas.Default.SetName( "foo" );
         var db = new SqliteDatabaseMock( dbBuilder );
-        ISqlSchemaCollection sut = db.Schemas;
+        var sut = db.Schemas;
 
         var action = Lambda.Of( () => sut.Get( "bar" ) );
 
@@ -75,12 +78,12 @@ public class SqliteDatabaseTests : TestsBase
     }
 
     [Fact]
-    public void Schemas_TryGetSchema_ShouldReturnExistingSchema()
+    public void Schemas_TryGet_ShouldReturnExistingSchema()
     {
         var dbBuilder = SqliteDatabaseBuilderMock.Create();
         dbBuilder.Schemas.Default.SetName( "foo" );
         var db = new SqliteDatabaseMock( dbBuilder );
-        ISqlSchemaCollection sut = db.Schemas;
+        var sut = db.Schemas;
 
         var result = sut.TryGet( "foo" );
 
@@ -88,16 +91,35 @@ public class SqliteDatabaseTests : TestsBase
     }
 
     [Fact]
-    public void Schemas_TryGetSchema_ShouldReturnNull_WhenSchemaDoesNotExist()
+    public void Schemas_TryGet_ShouldReturnNull_WhenSchemaDoesNotExist()
     {
         var dbBuilder = SqliteDatabaseBuilderMock.Create();
         dbBuilder.Schemas.Default.SetName( "foo" );
         var db = new SqliteDatabaseMock( dbBuilder );
-        ISqlSchemaCollection sut = db.Schemas;
+        var sut = db.Schemas;
 
         var result = sut.TryGet( "bar" );
 
         result.Should().BeNull();
+    }
+
+    [Fact]
+    public void Schemas_GetEnumerator_ShouldReturnCorrectResult()
+    {
+        var dbBuilder = SqliteDatabaseBuilderMock.Create();
+        dbBuilder.Schemas.Create( "foo" );
+        var sut = new SqliteDatabaseMock( dbBuilder ).Schemas;
+        var schema = sut.Get( "foo" );
+
+        var result = new List<SqliteSchema>();
+        foreach ( var s in sut )
+            result.Add( s );
+
+        using ( new AssertionScope() )
+        {
+            result.Should().HaveCount( 2 );
+            result.Should().BeEquivalentTo( sut.Default, schema );
+        }
     }
 
     [Fact]

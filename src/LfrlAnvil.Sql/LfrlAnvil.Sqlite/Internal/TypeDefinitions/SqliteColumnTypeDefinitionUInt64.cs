@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics.Contracts;
+using LfrlAnvil.Sql.Internal;
 
 namespace LfrlAnvil.Sqlite.Internal.TypeDefinitions;
 
@@ -10,7 +11,7 @@ internal sealed class SqliteColumnTypeDefinitionUInt64 : SqliteColumnTypeDefinit
     [Pure]
     public override string ToDbLiteral(ulong value)
     {
-        return SqliteHelpers.GetDbLiteral( checked( (long)value ) );
+        return SqlHelpers.GetDbLiteral( checked( (long)value ) );
     }
 
     [Pure]

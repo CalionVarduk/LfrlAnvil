@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 using LfrlAnvil.Functional;
-using LfrlAnvil.Sqlite.Extensions;
+using LfrlAnvil.Sql.Extensions;
 using Microsoft.Data.Sqlite;
 
 namespace LfrlAnvil.Sqlite.Tests.SqliteColumnTypeDefinitionTests;
@@ -14,7 +14,7 @@ public class SqliteColumnTypeDefinitionTests : TestsBase
     [InlineData( typeof( Guid ), "System.Guid <=> 'BLOB' (Blob), DefaultValue: [\"00000000-0000-0000-0000-000000000000\" : System.Guid]" )]
     public void ToString_ShouldReturnCorrectResult(Type type, string expected)
     {
-        var provider = new SqliteColumnTypeDefinitionProvider();
+        var provider = new SqliteColumnTypeDefinitionProvider( new SqliteColumnTypeDefinitionProviderBuilder() );
         var sut = provider.GetByType( type );
 
         var result = sut.ToString();
@@ -25,7 +25,7 @@ public class SqliteColumnTypeDefinitionTests : TestsBase
     [Fact]
     public void ProviderShouldThrowKeyNotFoundException_WhenDefinitionDoesNotExistAndIsNotEnum()
     {
-        var provider = new SqliteColumnTypeDefinitionProvider();
+        var provider = new SqliteColumnTypeDefinitionProvider( new SqliteColumnTypeDefinitionProviderBuilder() );
         var action = Lambda.Of( () => provider.GetByType<SqliteParameter>() );
         action.Should().ThrowExactly<KeyNotFoundException>();
     }

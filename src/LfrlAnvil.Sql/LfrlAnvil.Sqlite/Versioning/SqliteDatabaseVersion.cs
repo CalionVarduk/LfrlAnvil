@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Diagnostics.Contracts;
+using LfrlAnvil.Sql.Internal;
 using LfrlAnvil.Sql.Objects.Builders;
 using LfrlAnvil.Sql.Versioning;
-using LfrlAnvil.Sqlite.Internal;
 using LfrlAnvil.Sqlite.Objects.Builders;
 
 namespace LfrlAnvil.Sqlite.Versioning;
@@ -26,7 +26,7 @@ public abstract class SqliteDatabaseVersion : SqlDatabaseVersion
 
     public sealed override void Apply(ISqlDatabaseBuilder database)
     {
-        Apply( SqliteHelpers.CastOrThrow<SqliteDatabaseBuilder>( database ) );
+        Apply( SqlHelpers.CastOrThrow<SqliteDatabaseBuilder>( SqliteDialect.Instance, database ) );
     }
 
     protected abstract void Apply(SqliteDatabaseBuilder database);

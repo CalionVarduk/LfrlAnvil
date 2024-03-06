@@ -7,7 +7,8 @@ namespace LfrlAnvil.Sqlite.Tests.SqliteColumnTypeDefinitionTests;
 
 public class SqliteColumnTypeDefinitionGuidTests : TestsBase
 {
-    private readonly ISqlColumnTypeDefinitionProvider _provider = new SqliteColumnTypeDefinitionProvider();
+    private readonly ISqlColumnTypeDefinitionProvider _provider =
+        new SqliteColumnTypeDefinitionProvider( new SqliteColumnTypeDefinitionProviderBuilder() );
 
     [Theory]
     [InlineData( "00000000-0000-0000-0000-000000000000", "X'00000000000000000000000000000000'" )]

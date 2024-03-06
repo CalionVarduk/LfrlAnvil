@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics.Contracts;
+using LfrlAnvil.Sql.Internal;
 
 namespace LfrlAnvil.Sqlite.Internal.TypeDefinitions;
 
@@ -11,7 +12,7 @@ internal sealed class SqliteColumnTypeDefinitionGuid : SqliteColumnTypeDefinitio
     [Pure]
     public override string ToDbLiteral(Guid value)
     {
-        return SqliteHelpers.GetDbLiteral( value.ToByteArray() );
+        return SqlHelpers.GetDbLiteral( value.ToByteArray() );
     }
 
     [Pure]

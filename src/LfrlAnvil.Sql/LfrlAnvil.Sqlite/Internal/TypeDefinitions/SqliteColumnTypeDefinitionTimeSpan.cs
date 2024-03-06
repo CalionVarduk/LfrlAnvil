@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics.Contracts;
+using LfrlAnvil.Sql.Internal;
 
 namespace LfrlAnvil.Sqlite.Internal.TypeDefinitions;
 
@@ -11,7 +12,7 @@ internal sealed class SqliteColumnTypeDefinitionTimeSpan : SqliteColumnTypeDefin
     [Pure]
     public override string ToDbLiteral(TimeSpan value)
     {
-        return SqliteHelpers.GetDbLiteral( value.Ticks );
+        return SqlHelpers.GetDbLiteral( value.Ticks );
     }
 
     [Pure]

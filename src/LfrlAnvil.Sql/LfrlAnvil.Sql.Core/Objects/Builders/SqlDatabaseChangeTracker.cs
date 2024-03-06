@@ -360,6 +360,12 @@ public abstract class SqlDatabaseChangeTracker : ISqlDatabaseChangeTracker
         return _interpreterContext ??= SqlNodeInterpreterContext.Create( capacity: 2048 );
     }
 
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    protected void AddSqlAction(string sql)
+    {
+        AddAction( SqlDatabaseBuilderCommandAction.CreateSql( sql, ActionTimeout ) );
+    }
+
     protected void AddAction(SqlDatabaseBuilderCommandAction action)
     {
         Assume.True( IsActive );

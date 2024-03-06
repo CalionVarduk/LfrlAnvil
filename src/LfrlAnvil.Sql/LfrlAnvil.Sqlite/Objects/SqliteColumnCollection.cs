@@ -1,106 +1,38 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Diagnostics.Contracts;
-using System.Runtime.CompilerServices;
+﻿using System.Diagnostics.Contracts;
+using LfrlAnvil.Sql.Internal;
 using LfrlAnvil.Sql.Objects;
+using LfrlAnvil.Sql.Objects.Builders;
 using LfrlAnvil.Sqlite.Objects.Builders;
 
 namespace LfrlAnvil.Sqlite.Objects;
 
-public sealed class SqliteColumnCollection : ISqlColumnCollection
+public sealed class SqliteColumnCollection : SqlColumnCollection
 {
-    private readonly Dictionary<string, SqliteColumn> _map;
+    internal SqliteColumnCollection(SqliteColumnBuilderCollection source)
+        : base( source ) { }
 
-    internal SqliteColumnCollection(SqliteTable table, SqliteColumnBuilderCollection columns)
-    {
-        Table = table;
-
-        _map = new Dictionary<string, SqliteColumn>( capacity: columns.Count, comparer: StringComparer.OrdinalIgnoreCase );
-        foreach ( var b in columns )
-            _map.Add( b.Name, new SqliteColumn( table, b ) );
-    }
-
-    public SqliteTable Table { get; }
-    public int Count => _map.Count;
-
-    ISqlTable ISqlColumnCollection.Table => Table;
+    public new SqliteTable Table => ReinterpretCast.To<SqliteTable>( base.Table );
 
     [Pure]
-    public bool Contains(string name)
+    public new SqliteColumn Get(string name)
     {
-        return _map.ContainsKey( name );
+        return ReinterpretCast.To<SqliteColumn>( base.Get( name ) );
     }
 
     [Pure]
-    public SqliteColumn Get(string name)
+    public new SqliteColumn? TryGet(string name)
     {
-        return _map[name];
+        return ReinterpretCast.To<SqliteColumn>( base.TryGet( name ) );
     }
 
     [Pure]
-    public SqliteColumn? TryGet(string name)
+    public new SqlObjectEnumerator<SqlColumn, SqliteColumn> GetEnumerator()
     {
-        return _map.GetValueOrDefault( name );
+        return base.GetEnumerator().UnsafeReinterpretAs<SqliteColumn>();
     }
 
-    [Pure]
-    public Enumerator GetEnumerator()
+    protected override SqliteColumn CreateColumn(SqlColumnBuilder builder)
     {
-        return new Enumerator( _map );
-    }
-
-    public struct Enumerator : IEnumerator<SqliteColumn>
-    {
-        private Dictionary<string, SqliteColumn>.ValueCollection.Enumerator _enumerator;
-
-        internal Enumerator(Dictionary<string, SqliteColumn> source)
-        {
-            _enumerator = source.Values.GetEnumerator();
-        }
-
-        public SqliteColumn Current => _enumerator.Current;
-        object IEnumerator.Current => Current;
-
-        [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        public void Dispose()
-        {
-            _enumerator.Dispose();
-        }
-
-        [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        public bool MoveNext()
-        {
-            return _enumerator.MoveNext();
-        }
-
-        void IEnumerator.Reset()
-        {
-            ((IEnumerator)_enumerator).Reset();
-        }
-    }
-
-    [Pure]
-    ISqlColumn ISqlColumnCollection.Get(string name)
-    {
-        return Get( name );
-    }
-
-    [Pure]
-    ISqlColumn? ISqlColumnCollection.TryGet(string name)
-    {
-        return TryGet( name );
-    }
-
-    [Pure]
-    IEnumerator<ISqlColumn> IEnumerable<ISqlColumn>.GetEnumerator()
-    {
-        return GetEnumerator();
-    }
-
-    [Pure]
-    IEnumerator IEnumerable.GetEnumerator()
-    {
-        return GetEnumerator();
+        return new SqliteColumn( Table, ReinterpretCast.To<SqliteColumnBuilder>( builder ) );
     }
 }

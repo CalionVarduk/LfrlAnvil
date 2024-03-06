@@ -1,26 +1,23 @@
-﻿using LfrlAnvil.Sql;
+﻿using System.Diagnostics.Contracts;
 using LfrlAnvil.Sql.Objects;
+using LfrlAnvil.Sqlite.Internal;
 using LfrlAnvil.Sqlite.Objects.Builders;
 
 namespace LfrlAnvil.Sqlite.Objects;
 
-public sealed class SqliteForeignKey : SqliteConstraint, ISqlForeignKey
+public sealed class SqliteForeignKey : SqlForeignKey
 {
     internal SqliteForeignKey(SqliteIndex originIndex, SqliteIndex referencedIndex, SqliteForeignKeyBuilder builder)
-        : base( originIndex.Table, builder )
+        : base( originIndex, referencedIndex, builder ) { }
+
+    public new SqliteIndex OriginIndex => ReinterpretCast.To<SqliteIndex>( base.OriginIndex );
+    public new SqliteIndex ReferencedIndex => ReinterpretCast.To<SqliteIndex>( base.ReferencedIndex );
+    public new SqliteTable Table => ReinterpretCast.To<SqliteTable>( base.Table );
+    public new SqliteDatabase Database => ReinterpretCast.To<SqliteDatabase>( base.Database );
+
+    [Pure]
+    public override string ToString()
     {
-        OriginIndex = originIndex;
-        ReferencedIndex = referencedIndex;
-        OnUpdateBehavior = builder.OnUpdateBehavior;
-        OnDeleteBehavior = builder.OnDeleteBehavior;
+        return $"[{Type}] {SqliteHelpers.GetFullName( Table.Schema.Name, Name )}";
     }
-
-    public SqliteIndex OriginIndex { get; }
-    public SqliteIndex ReferencedIndex { get; }
-    public ReferenceBehavior OnUpdateBehavior { get; }
-    public ReferenceBehavior OnDeleteBehavior { get; }
-    public override SqliteDatabase Database => OriginIndex.Database;
-
-    ISqlIndex ISqlForeignKey.OriginIndex => OriginIndex;
-    ISqlIndex ISqlForeignKey.ReferencedIndex => ReferencedIndex;
 }

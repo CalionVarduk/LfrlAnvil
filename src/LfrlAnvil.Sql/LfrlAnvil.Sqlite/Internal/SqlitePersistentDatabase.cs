@@ -1,46 +1,37 @@
 ﻿using System;
-using System.Diagnostics;
 using System.Diagnostics.Contracts;
-using System.Threading;
-using System.Threading.Tasks;
 using LfrlAnvil.Sql.Objects.Builders;
 using LfrlAnvil.Sql.Statements;
 using LfrlAnvil.Sql.Versioning;
 using LfrlAnvil.Sqlite.Objects.Builders;
+using Microsoft.Data.Sqlite;
 
 namespace LfrlAnvil.Sqlite.Internal;
 
 internal sealed class SqlitePersistentDatabase : SqliteDatabase
 {
-    [DebuggerBrowsable( DebuggerBrowsableState.Never )]
+    private readonly ReadOnlyArray<Action<SqlDatabaseConnectionChangeEvent>> _connectionChangeCallbacks;
     private readonly string _connectionString;
-
-    private readonly Action<SqlDatabaseConnectionChangeEvent>[] _connectionChangeCallbacks;
 
     internal SqlitePersistentDatabase(
         string connectionString,
+        SqliteConnectionStringBuilder connectionStringBuilder,
         SqliteDatabaseBuilder builder,
+        Version version,
         SqlQueryReaderExecutor<SqlDatabaseVersionRecord> versionRecordsQuery,
-        Version version)
-        : base( builder, versionRecordsQuery, version )
+        ReadOnlyArray<Action<SqlDatabaseConnectionChangeEvent>> connectionChangeCallbacks)
+        : base( connectionStringBuilder, builder, version, versionRecordsQuery )
     {
+        Assume.Equals( connectionString, connectionStringBuilder.ToString() );
         _connectionString = connectionString;
-        _connectionChangeCallbacks = builder.ConnectionChanges.GetCallbacksArray();
+        _connectionChangeCallbacks = connectionChangeCallbacks;
     }
 
     [Pure]
-    public override Microsoft.Data.Sqlite.SqliteConnection Connect()
+    protected override SqliteConnection CreateConnection()
     {
-        var result = new SqliteConnection( _connectionString ) { ChangeCallbacks = _connectionChangeCallbacks };
-        result.Open();
-        return result;
-    }
-
-    [Pure]
-    public override async ValueTask<Microsoft.Data.Sqlite.SqliteConnection> ConnectAsync(CancellationToken cancellationToken = default)
-    {
-        var result = new SqliteConnection( _connectionString ) { ChangeCallbacks = _connectionChangeCallbacks };
-        await result.OpenAsync( cancellationToken ).ConfigureAwait( false );
+        var result = new SqliteConnection( _connectionString );
+        InitializeConnectionEventHandlers( result, _connectionChangeCallbacks );
         return result;
     }
 }

@@ -1,35 +1,18 @@
 ﻿using System.Diagnostics.Contracts;
-using LfrlAnvil.Sql;
-using LfrlAnvil.Sql.Expressions;
-using LfrlAnvil.Sql.Expressions.Objects;
 using LfrlAnvil.Sql.Objects;
 using LfrlAnvil.Sqlite.Internal;
 using LfrlAnvil.Sqlite.Objects.Builders;
 
 namespace LfrlAnvil.Sqlite.Objects;
 
-public sealed class SqliteView : SqliteObject, ISqlView
+public sealed class SqliteView : SqlView
 {
-    private SqlRecordSetInfo? _info;
-    private SqlViewNode? _recordSet;
-
     internal SqliteView(SqliteSchema schema, SqliteViewBuilder builder)
-        : base( builder )
-    {
-        Schema = schema;
-        DataFields = new SqliteViewDataFieldCollection( this, builder.Source );
-        _info = builder.GetCachedInfo();
-        _recordSet = null;
-    }
+        : base( schema, builder, new SqliteViewDataFieldCollection( builder.Source ) ) { }
 
-    public SqliteSchema Schema { get; }
-    public SqliteViewDataFieldCollection DataFields { get; }
-    public SqlRecordSetInfo Info => _info ??= SqlRecordSetInfo.Create( Schema.Name, Name );
-    public SqlViewNode Node => _recordSet ??= SqlNode.View( this );
-    public override SqliteDatabase Database => Schema.Database;
-
-    ISqlSchema ISqlView.Schema => Schema;
-    ISqlViewDataFieldCollection ISqlView.DataFields => DataFields;
+    public new SqliteViewDataFieldCollection DataFields => ReinterpretCast.To<SqliteViewDataFieldCollection>( base.DataFields );
+    public new SqliteSchema Schema => ReinterpretCast.To<SqliteSchema>( base.Schema );
+    public new SqliteDatabase Database => ReinterpretCast.To<SqliteDatabase>( base.Database );
 
     [Pure]
     public override string ToString()

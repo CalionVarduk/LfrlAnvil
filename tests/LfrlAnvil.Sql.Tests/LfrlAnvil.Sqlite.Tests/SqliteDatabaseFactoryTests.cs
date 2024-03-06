@@ -5,14 +5,12 @@ using System.Linq;
 using System.Threading.Tasks;
 using LfrlAnvil.Functional;
 using LfrlAnvil.Sql;
-using LfrlAnvil.Sql.Events;
 using LfrlAnvil.Sql.Extensions;
 using LfrlAnvil.Sql.Objects.Builders;
 using LfrlAnvil.Sql.Versioning;
 using LfrlAnvil.Sqlite.Exceptions;
 using LfrlAnvil.Sqlite.Extensions;
 using LfrlAnvil.TestExtensions.FluentAssertions;
-using Microsoft.Data.Sqlite;
 
 namespace LfrlAnvil.Sqlite.Tests;
 
@@ -21,7 +19,7 @@ public class SqliteDatabaseFactoryTests : TestsBase
     [Fact]
     public void Create_WithoutVersions_ShouldCreateCorrectDatabase()
     {
-        ISqlDatabaseFactory sut = new SqliteDatabaseFactory();
+        var sut = new SqliteDatabaseFactory();
 
         var result = sut.Create( "DataSource=:memory:", new SqlDatabaseVersionHistory() );
         var versions = result.Database.GetRegisteredVersions();
@@ -78,41 +76,6 @@ public class SqliteDatabaseFactoryTests : TestsBase
     [Theory]
     [InlineData( SqlDatabaseCreateMode.DryRun )]
     [InlineData( SqlDatabaseCreateMode.Commit )]
-    public void Create_ShouldCorrectlyResetBuilderStateBetweenVersions(SqlDatabaseCreateMode mode)
-    {
-        bool? isAttached = null;
-        SqlDatabaseBuilderCommandAction[]? pendingStatements = null;
-
-        var sut = new SqliteDatabaseFactory();
-        var history = new SqlDatabaseVersionHistory(
-            SqlDatabaseVersion.Create(
-                Version.Parse( "0.1" ),
-                b =>
-                {
-                    var t = b.Schemas.Default.Objects.CreateTable( "T" );
-                    t.Constraints.SetPrimaryKey( t.Columns.Create( "C" ).Asc() );
-                    b.Changes.Attach( false );
-                } ),
-            SqlDatabaseVersion.Create(
-                Version.Parse( "0.2" ),
-                b =>
-                {
-                    isAttached = b.Changes.IsAttached;
-                    pendingStatements = b.Changes.GetPendingActions().ToArray();
-                } ) );
-
-        sut.Create( "DataSource=:memory:", history, SqlCreateDatabaseOptions.Default.SetMode( mode ) );
-
-        using ( new AssertionScope() )
-        {
-            isAttached.Should().BeTrue();
-            pendingStatements.Should().BeEmpty();
-        }
-    }
-
-    [Theory]
-    [InlineData( SqlDatabaseCreateMode.DryRun )]
-    [InlineData( SqlDatabaseCreateMode.Commit )]
     public void Create_ShouldRethrowException_WhenVersionThrows(SqlDatabaseCreateMode mode)
     {
         var exception = new Exception();
@@ -126,22 +89,6 @@ public class SqliteDatabaseFactoryTests : TestsBase
         var action = Lambda.Of( () => sut.Create( "DataSource=:memory:", history, SqlCreateDatabaseOptions.Default.SetMode( mode ) ) );
 
         action.Should().Throw<Exception>().And.Should().BeSameAs( exception );
-    }
-
-    [Theory]
-    [InlineData( SqlDatabaseCreateMode.DryRun )]
-    [InlineData( SqlDatabaseCreateMode.Commit )]
-    public void Create_ShouldRethrowException_WhenValidationOutsideOfVersionThrows(SqlDatabaseCreateMode mode)
-    {
-        var sut = new SqliteDatabaseFactory();
-        var history = new SqlDatabaseVersionHistory(
-            SqlDatabaseVersion.Create(
-                Version.Parse( "0.1" ),
-                b => { b.Schemas.Default.Objects.CreateTable( "T" ); } ) );
-
-        var action = Lambda.Of( () => sut.Create( "DataSource=:memory:", history, SqlCreateDatabaseOptions.Default.SetMode( mode ) ) );
-
-        action.Should().ThrowExactly<SqliteObjectBuilderException>();
     }
 
     [Fact]
@@ -632,163 +579,6 @@ public class SqliteDatabaseFactoryTests : TestsBase
         var result = reader.GetDouble( 0 );
 
         result.Should().Be( 10.0 );
-    }
-
-    [Fact]
-    public void Create_ShouldInvokeStatementListenersWithCorrectEvents_WhenModeIsCommit()
-    {
-        var onBefore = Substitute.For<Action<SqlDatabaseFactoryStatementEvent>>();
-        var onAfter = Substitute.For<Action<SqlDatabaseFactoryStatementEvent, TimeSpan, Exception?>>();
-        var listener = SqlDatabaseFactoryStatementListener.Create( onBefore, onAfter );
-
-        var sut = new SqliteDatabaseFactory();
-        var history = new SqlDatabaseVersionHistory(
-            SqlDatabaseVersion.Create(
-                Version.Parse( "0.0.1" ),
-                b =>
-                {
-                    var table = b.Schemas.Default.Objects.CreateTable( "T" );
-                    table.Constraints.SetPrimaryKey( table.Columns.Create( "A" ).Asc() );
-                } ),
-            SqlDatabaseVersion.Create(
-                Version.Parse( "0.0.2" ),
-                b =>
-                {
-                    b.Schemas.Default.Objects.GetTable( "T" ).Columns.Create( "B" );
-                    var table = b.Schemas.Default.Objects.CreateTable( "U" );
-                    table.Constraints.SetPrimaryKey( table.Columns.Create( "C" ).Asc() );
-                } ) );
-
-        sut.Create(
-            "DataSource=:memory:",
-            history,
-            SqlCreateDatabaseOptions.Default.SetMode( SqlDatabaseCreateMode.Commit ).AddStatementListener( listener ) );
-
-        using ( new AssertionScope() )
-        {
-            onBefore.Verify().CallCount.Should().Be( 18 );
-            onAfter.Verify().CallCount.Should().Be( 18 );
-        }
-    }
-
-    [Fact]
-    public void Create_ShouldInvokeStatementListenersWithCorrectEvents_WhenModeIsCommitAndStatementThrowsAnException()
-    {
-        var onBefore = Substitute.For<Action<SqlDatabaseFactoryStatementEvent>>();
-        var onAfter = Substitute.For<Action<SqlDatabaseFactoryStatementEvent, TimeSpan, Exception?>>();
-        var listener = SqlDatabaseFactoryStatementListener.Create( onBefore, onAfter );
-
-        var sut = new SqliteDatabaseFactory();
-        var history = new SqlDatabaseVersionHistory(
-            SqlDatabaseVersion.Create(
-                Version.Parse( "0.0.1" ),
-                b =>
-                {
-                    var table = b.Schemas.Default.Objects.CreateTable( "T" );
-                    table.Constraints.SetPrimaryKey( table.Columns.Create( "A" ).Asc() );
-                } ),
-            SqlDatabaseVersion.Create(
-                Version.Parse( "0.0.2" ),
-                b => b.Changes.AddStatement( "INSERT INTO T (A, B) VALUES (1, 1)" ) ) );
-
-        var min = DateTime.UtcNow;
-
-        sut.Create(
-            "DataSource=:memory:",
-            history,
-            SqlCreateDatabaseOptions.Default.SetMode( SqlDatabaseCreateMode.Commit ).AddStatementListener( listener ) );
-
-        var max = DateTime.UtcNow;
-
-        using ( new AssertionScope() )
-        {
-            var invalidArgs = onAfter.Verify().CallAt( 10 ).Exists().And.Arguments;
-            var @event = (SqlDatabaseFactoryStatementEvent)invalidArgs[0]!;
-            var elapsedTime = (TimeSpan)invalidArgs[1]!;
-            var exception = (Exception)invalidArgs[2]!;
-
-            @event.Key.Version.Should().BeEquivalentTo( Version.Parse( "0.0.2" ) );
-            @event.Key.Ordinal.Should().Be( 2 );
-            @event.Sql.Should().Be( $"INSERT INTO T (A, B) VALUES (1, 1){Environment.NewLine}" );
-            @event.Parameters.Should().BeEmpty();
-            @event.Type.Should().Be( SqlDatabaseFactoryStatementType.Change );
-            @event.UtcStartDate.Should().BeOnOrAfter( min );
-            @event.UtcStartDate.Should().BeOnOrBefore( max );
-            elapsedTime.Should().BeGreaterThan( TimeSpan.Zero );
-            exception.Should().BeOfType<SqliteException>();
-        }
-    }
-
-    [Fact]
-    public void AddConnectionChangeCallback_ShouldRegisterCallbackAndInvokeItDuringDatabaseCreation()
-    {
-        var firstCallback = Substitute.For<Action<SqlDatabaseConnectionChangeEvent>>();
-        var secondCallback = Substitute.For<Action<SqlDatabaseConnectionChangeEvent>>();
-
-        var sut = new SqliteDatabaseFactory();
-        var history = new SqlDatabaseVersionHistory(
-            SqlDatabaseVersion.Create( Version.Parse( "0.0.1" ), b => b.AddConnectionChangeCallback( firstCallback ) ),
-            SqlDatabaseVersion.Create( Version.Parse( "0.0.2" ), b => b.AddConnectionChangeCallback( secondCallback ) ) );
-
-        var result = sut.Create( "DataSource=:memory:", history, SqlCreateDatabaseOptions.Default.SetMode( SqlDatabaseCreateMode.DryRun ) );
-
-        using ( new AssertionScope() )
-        {
-            firstCallback.Verify().CallCount.Should().Be( 1 );
-            var firstEvent = (SqlDatabaseConnectionChangeEvent?)firstCallback.Verify().CallAt( 0 ).Arguments.ElementAtOrDefault( 0 );
-            (firstEvent?.Connection).Should().BeSameAs( result.Database.Connect() );
-            (firstEvent?.StateChange).Should().BeEquivalentTo( new StateChangeEventArgs( ConnectionState.Closed, ConnectionState.Open ) );
-
-            secondCallback.Verify().CallCount.Should().Be( 1 );
-            var secondEvent = (SqlDatabaseConnectionChangeEvent?)secondCallback.Verify().CallAt( 0 ).Arguments.ElementAtOrDefault( 0 );
-            (secondEvent?.Connection).Should().BeSameAs( result.Database.Connect() );
-            (secondEvent?.StateChange).Should().BeEquivalentTo( new StateChangeEventArgs( ConnectionState.Closed, ConnectionState.Open ) );
-        }
-    }
-
-    [Fact]
-    public void AddConnectionChangeCallback_ShouldRegisterCallbackAndInvokeItDuringDatabaseDisposal()
-    {
-        var callback = Substitute.For<Action<SqlDatabaseConnectionChangeEvent>>();
-
-        var sut = new SqliteDatabaseFactory();
-        var history = new SqlDatabaseVersionHistory(
-            SqlDatabaseVersion.Create( Version.Parse( "0.0.1" ), b => b.AddConnectionChangeCallback( callback ) ) );
-
-        var result = sut.Create( "DataSource=:memory:", history, SqlCreateDatabaseOptions.Default.SetMode( SqlDatabaseCreateMode.DryRun ) );
-        result.Database.Dispose();
-
-        using ( new AssertionScope() )
-        {
-            callback.Verify().CallCount.Should().Be( 2 );
-            var @event = (SqlDatabaseConnectionChangeEvent?)callback.Verify().CallAt( 1 ).Arguments.ElementAtOrDefault( 0 );
-            (@event?.Connection).Should().BeSameAs( result.Database.Connect() );
-            (@event?.StateChange).Should().BeEquivalentTo( new StateChangeEventArgs( ConnectionState.Open, ConnectionState.Closed ) );
-        }
-    }
-
-    [Fact]
-    public void AddConnectionChangeCallback_ShouldRegisterCallbackAndInvokeItOnConnectionClose_WhenBuilderThrowsAnException()
-    {
-        var callback = Substitute.For<Action<SqlDatabaseConnectionChangeEvent>>();
-
-        var sut = new SqliteDatabaseFactory();
-        var history = new SqlDatabaseVersionHistory(
-            SqlDatabaseVersion.Create( Version.Parse( "0.0.1" ), b => b.AddConnectionChangeCallback( callback ) ),
-            SqlDatabaseVersion.Create( Version.Parse( "0.0.2" ), _ => throw new Exception() ) );
-
-        try
-        {
-            sut.Create( "DataSource=:memory:", history, SqlCreateDatabaseOptions.Default.SetMode( SqlDatabaseCreateMode.Commit ) );
-        }
-        catch { }
-
-        using ( new AssertionScope() )
-        {
-            callback.Verify().CallCount.Should().Be( 2 );
-            var @event = (SqlDatabaseConnectionChangeEvent?)callback.Verify().CallAt( 1 ).Arguments.ElementAtOrDefault( 0 );
-            (@event?.StateChange).Should().BeEquivalentTo( new StateChangeEventArgs( ConnectionState.Open, ConnectionState.Closed ) );
-        }
     }
 
     [Fact]

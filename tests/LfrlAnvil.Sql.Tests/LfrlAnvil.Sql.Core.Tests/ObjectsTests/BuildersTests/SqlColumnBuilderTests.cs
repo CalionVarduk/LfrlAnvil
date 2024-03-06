@@ -1042,6 +1042,33 @@ public class SqlColumnBuilderTests : TestsBase
     }
 
     [Fact]
+    public void ISqlColumnBuilder_SetType_ByDataType_ShouldBeEquivalentToSetType()
+    {
+        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var table = schema.Objects.CreateTable( "T" );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        var sut = table.Columns.Create( "C2" );
+
+        var actionCount = schema.Database.GetPendingActionCount();
+        var result = ((ISqlColumnBuilder)sut).SetType( SqlDataTypeMock.Integer );
+        var actions = schema.Database.GetLastPendingActions( actionCount );
+
+        using ( new AssertionScope() )
+        {
+            result.Should().BeSameAs( sut );
+            sut.TypeDefinition.Should().BeSameAs( schema.Database.TypeDefinitions.GetByDataType( SqlDataTypeMock.Integer ) );
+            sut.DefaultValue.Should().BeNull();
+
+            actions.Should().HaveCount( 1 );
+            actions.ElementAtOrDefault( 0 )
+                .Sql.Should()
+                .Be(
+                    @"ALTER [Table] foo.T
+  ALTER [Column] foo.T.C2 ([3] : 'DataType' (LfrlAnvil.Sql.ISqlDataType) FROM OBJECT);" );
+        }
+    }
+
+    [Fact]
     public void ISqlColumnBuilder_MarkAsNullable_ShouldBeEquivalentToMarkAsNullable()
     {
         var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
