@@ -97,7 +97,7 @@ public class SqlDatabaseNamedObjectsSetTests : TestsBase
     }
 
     [Fact]
-    public void TryGetObject_ShouldReturnNul_WhenNameDoesNotExist()
+    public void TryGetObject_ShouldReturnNull_WhenNameDoesNotExist()
     {
         var sut = SqlDatabaseNamedObjectsSet<SqlObjectBuilder>.Create();
         var result = sut.TryGetObject( "foo" );
