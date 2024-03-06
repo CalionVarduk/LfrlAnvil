@@ -81,6 +81,20 @@ public static class SqlNodeExtensions
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static SqlSelectFieldNode As(this SqlConditionNode node, string alias)
+    {
+        return node.ToValue().As( alias );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static SqlDataSourceQueryExpressionNode<SqlDummyDataSourceNode> ToQuery(this SqlSelectFieldNode node)
+    {
+        return SqlNode.DummyDataSource().Select( node );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static SqlValueAssignmentNode Assign(this SqlDataFieldNode node, SqlExpressionNode value)
     {
         return SqlNode.ValueAssignment( node, value );
@@ -218,6 +232,13 @@ public static class SqlNodeExtensions
     public static SqlTypeCastExpressionNode CastTo(this SqlExpressionNode node, Type type)
     {
         return SqlNode.TypeCast( node, type );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static SqlTypeCastExpressionNode CastTo(this SqlExpressionNode node, ISqlColumnTypeDefinition typeDefinition)
+    {
+        return SqlNode.TypeCast( node, typeDefinition );
     }
 
     [Pure]

@@ -85,6 +85,12 @@ public static partial class SqlNode
     }
 
     [Pure]
+    public static SqlTypeCastExpressionNode TypeCast(SqlExpressionNode expression, ISqlColumnTypeDefinition typeDefinition)
+    {
+        return new SqlTypeCastExpressionNode( expression, typeDefinition );
+    }
+
+    [Pure]
     public static SqlNegateExpressionNode Negate(SqlExpressionNode value)
     {
         return new SqlNegateExpressionNode( value );

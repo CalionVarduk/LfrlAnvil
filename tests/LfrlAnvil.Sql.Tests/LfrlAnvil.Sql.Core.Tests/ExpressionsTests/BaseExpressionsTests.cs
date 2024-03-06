@@ -6,6 +6,7 @@ using LfrlAnvil.Functional;
 using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Expressions.Objects;
 using LfrlAnvil.Sql.Expressions.Traits;
+using LfrlAnvil.Sql.Extensions;
 using LfrlAnvil.TestExtensions.FluentAssertions;
 using LfrlAnvil.TestExtensions.NSubstitute;
 using LfrlAnvil.TestExtensions.Sql.Mocks;
@@ -65,6 +66,28 @@ public partial class BaseExpressionsTests : TestsBase
         {
             sut.NodeType.Should().Be( SqlNodeType.TypeCast );
             sut.TargetType.Should().Be( typeof( long ) );
+            sut.TargetTypeDefinition.Should().BeNull();
+            sut.Value.Should().BeSameAs( node );
+            text.Should().Be( $"CAST(({node}) AS System.Int64)" );
+        }
+    }
+
+    [Theory]
+    [InlineData( false )]
+    [InlineData( true )]
+    public void TypeCast_ShouldCreateTypeCastExpressionNode_WithTypeDefinition(bool isNullable)
+    {
+        var typeDefinitions = new SqlColumnTypeDefinitionProviderMock( new SqlColumnTypeDefinitionProviderBuilderMock() );
+        var definition = typeDefinitions.GetByType<long>();
+        var node = SqlNode.Parameter<int>( "foo", isNullable );
+        var sut = node.CastTo( definition );
+        var text = sut.ToString();
+
+        using ( new AssertionScope() )
+        {
+            sut.NodeType.Should().Be( SqlNodeType.TypeCast );
+            sut.TargetType.Should().Be( typeof( long ) );
+            sut.TargetTypeDefinition.Should().BeSameAs( definition );
             sut.Value.Should().BeSameAs( node );
             text.Should().Be( $"CAST(({node}) AS System.Int64)" );
         }
@@ -101,6 +124,27 @@ public partial class BaseExpressionsTests : TestsBase
             sut.Type.Should().BeNull();
             sut.Parameters.ToArray().Should().BeSequentiallyEqualTo( parameters );
             text.Should().Be( "foo(@a, @b, 10) + 15" );
+        }
+    }
+
+    [Fact]
+    public void Query_FromSelectField_ShouldCreateDataSourceQueryExpressionNodeFromDummy()
+    {
+        var field = SqlNode.Literal( 1 ).As( "foo" );
+        var sut = field.ToQuery();
+        var text = sut.ToString();
+
+        using ( new AssertionScope() )
+        {
+            sut.NodeType.Should().Be( SqlNodeType.DataSourceQuery );
+            sut.DataSource.Should().BeSameAs( SqlNode.DummyDataSource() );
+            sut.Traits.Should().BeEmpty();
+            sut.Selection.ToArray().Should().BeSequentiallyEqualTo( field );
+            text.Should()
+                .Be(
+                    $@"FROM <DUMMY>
+SELECT
+  (""1"" : System.Int32) AS [foo]" );
         }
     }
 

@@ -9,8 +9,18 @@ public sealed class SqlTypeCastExpressionNode : SqlExpressionNode
     {
         Value = value;
         TargetType = targetType;
+        TargetTypeDefinition = null;
+    }
+
+    internal SqlTypeCastExpressionNode(SqlExpressionNode value, ISqlColumnTypeDefinition targetTypeDefinition)
+        : base( SqlNodeType.TypeCast )
+    {
+        Value = value;
+        TargetType = targetTypeDefinition.RuntimeType;
+        TargetTypeDefinition = targetTypeDefinition;
     }
 
     public SqlExpressionNode Value { get; }
     public Type TargetType { get; }
+    public ISqlColumnTypeDefinition? TargetTypeDefinition { get; }
 }

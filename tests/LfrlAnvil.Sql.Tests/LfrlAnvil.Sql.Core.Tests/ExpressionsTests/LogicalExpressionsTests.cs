@@ -607,6 +607,23 @@ public class LogicalExpressionsTests : TestsBase
     }
 
     [Fact]
+    public void AliasedValue_ShouldReturnSelectFieldNode()
+    {
+        var condition = SqlNode.True();
+        var sut = condition.As( "foo" );
+        var text = sut.ToString();
+
+        using ( new AssertionScope() )
+        {
+            sut.NodeType.Should().Be( SqlNodeType.SelectField );
+            sut.Alias.Should().Be( "foo" );
+            sut.FieldName.Should().Be( "foo" );
+            sut.Expression.Should().BeEquivalentTo( condition.ToValue() );
+            text.Should().Be( $"(CONDITION_VALUE({condition})) AS [foo]" );
+        }
+    }
+
+    [Fact]
     public void And_ShouldReturnAndConditionNode()
     {
         var left = SqlNode.True();

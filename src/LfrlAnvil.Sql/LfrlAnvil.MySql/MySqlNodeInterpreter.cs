@@ -420,7 +420,7 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
         VisitChild( node.Value );
         Context.Sql.AppendSpace().Append( "AS" ).AppendSpace();
 
-        var typeDefinition = ColumnTypeDefinitions.GetByType( node.TargetType );
+        var typeDefinition = (MySqlColumnTypeDefinition?)node.TargetTypeDefinition ?? ColumnTypeDefinitions.GetByType( node.TargetType );
         var name = typeDefinition.DataType.Value switch
         {
             MySqlDbType.Bool => signed,
