@@ -349,14 +349,11 @@ public abstract class SqlIndexBuilder : SqlConstraintBuilder, ISqlIndexBuilder
         Assume.Equals( primaryKey.Table, Table );
         Assume.IsNull( PrimaryKey );
         Assume.True( IsUnique );
+        Assume.False( IsVirtual );
         Assume.IsNull( Filter );
 
-        if ( ! IsVirtual )
-        {
-            IsVirtual = true;
-            AfterIsVirtualChange( false );
-        }
-
+        IsVirtual = true;
+        AfterIsVirtualChange( false );
         PrimaryKey = primaryKey;
         AfterPrimaryKeyChange( null );
     }

@@ -38,6 +38,7 @@ public partial class SqliteTableBuilderTests
                 result.ReferencedFilterColumns.Should().BeEmpty();
                 result.PrimaryKey.Should().BeNull();
                 result.IsUnique.Should().Be( isUnique );
+                result.IsVirtual.Should().BeFalse();
                 result.Filter.Should().BeNull();
                 result.ReferencingObjects.Should().BeEmpty();
 
@@ -78,6 +79,7 @@ public partial class SqliteTableBuilderTests
                 result.ReferencedFilterColumns.Should().BeEmpty();
                 result.PrimaryKey.Should().BeNull();
                 result.IsUnique.Should().Be( isUnique );
+                result.IsVirtual.Should().BeFalse();
                 result.Filter.Should().BeNull();
                 result.ReferencingObjects.Should().BeEmpty();
 
@@ -248,6 +250,7 @@ public partial class SqliteTableBuilderTests
                 result.Index.ReferencedFilterColumns.Should().BeEmpty();
                 result.Index.PrimaryKey.Should().BeSameAs( result );
                 result.Index.IsUnique.Should().BeTrue();
+                result.Index.IsVirtual.Should().BeTrue();
                 result.Index.Filter.Should().BeNull();
                 result.ReferencingObjects.Should().BeEmpty();
 
@@ -329,6 +332,7 @@ public partial class SqliteTableBuilderTests
                 result.Index.ReferencedFilterColumns.Should().BeEmpty();
                 result.Index.PrimaryKey.Should().BeSameAs( result );
                 result.Index.IsUnique.Should().BeTrue();
+                result.Index.IsVirtual.Should().BeTrue();
                 result.Index.Filter.Should().BeNull();
                 result.ReferencingObjects.Should().BeEmpty();
 
@@ -370,6 +374,7 @@ public partial class SqliteTableBuilderTests
                 result.Index.ReferencedFilterColumns.Should().BeEmpty();
                 result.Index.PrimaryKey.Should().BeSameAs( result );
                 result.Index.IsUnique.Should().BeTrue();
+                result.Index.IsVirtual.Should().BeTrue();
                 result.Index.Filter.Should().BeNull();
                 result.ReferencingObjects.Should().BeEmpty();
 
@@ -413,6 +418,7 @@ public partial class SqliteTableBuilderTests
                 result.Index.ReferencedFilterColumns.Should().BeEmpty();
                 result.Index.PrimaryKey.Should().BeSameAs( result );
                 result.Index.IsUnique.Should().BeTrue();
+                result.Index.IsVirtual.Should().BeTrue();
                 result.Index.Filter.Should().BeNull();
                 result.ReferencingObjects.Should().BeEmpty();
 

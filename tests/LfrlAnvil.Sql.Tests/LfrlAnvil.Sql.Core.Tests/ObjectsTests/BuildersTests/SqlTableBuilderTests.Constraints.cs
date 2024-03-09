@@ -36,6 +36,7 @@ public partial class SqlTableBuilderTests
                 result.ReferencedFilterColumns.Should().BeEmpty();
                 result.PrimaryKey.Should().BeNull();
                 result.IsUnique.Should().Be( isUnique );
+                result.IsVirtual.Should().BeFalse();
                 result.Filter.Should().BeNull();
                 result.ReferencingObjects.Should().BeEmpty();
 
@@ -88,6 +89,7 @@ public partial class SqlTableBuilderTests
                 result.ReferencedFilterColumns.Should().BeEmpty();
                 result.PrimaryKey.Should().BeNull();
                 result.IsUnique.Should().Be( isUnique );
+                result.IsVirtual.Should().BeFalse();
                 result.Filter.Should().BeNull();
                 result.ReferencingObjects.Should().BeEmpty();
 

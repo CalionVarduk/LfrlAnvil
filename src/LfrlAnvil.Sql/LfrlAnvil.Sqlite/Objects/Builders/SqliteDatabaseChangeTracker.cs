@@ -347,7 +347,7 @@ public sealed class SqliteDatabaseChangeTracker : SqlDatabaseChangeTracker
                 continue;
 
             var index = ReinterpretCast.To<SqliteIndexBuilder>( constraint );
-            if ( index.PrimaryKey is not null || changeAggregator.CreatedIndexes.Contains( index ) )
+            if ( index.IsVirtual || changeAggregator.CreatedIndexes.Contains( index ) )
                 continue;
 
             var name = this.GetOriginalValue( index, SqlObjectChangeDescriptor.Name ).GetValueOrDefault( index.Name );
@@ -522,7 +522,7 @@ public sealed class SqliteDatabaseChangeTracker : SqlDatabaseChangeTracker
                 continue;
 
             var index = ReinterpretCast.To<SqliteIndexBuilder>( constraint );
-            if ( index.PrimaryKey is not null )
+            if ( index.IsVirtual )
                 continue;
 
             var name = this.GetOriginalValue( index, SqlObjectChangeDescriptor.Name ).GetValueOrDefault( index.Name );
@@ -575,7 +575,7 @@ public sealed class SqliteDatabaseChangeTracker : SqlDatabaseChangeTracker
                 continue;
 
             var ix = ReinterpretCast.To<SqliteIndexBuilder>( constraint );
-            if ( ix.PrimaryKey is not null )
+            if ( ix.IsVirtual )
                 continue;
 
             interpreter.VisitCreateIndex( ix.ToCreateNode() );

@@ -46,6 +46,12 @@ public sealed class SqliteIndexBuilder : SqlIndexBuilder
         return this;
     }
 
+    public new SqliteIndexBuilder MarkAsVirtual(bool enabled = true)
+    {
+        base.MarkAsVirtual( enabled );
+        return this;
+    }
+
     public new SqliteIndexBuilder SetFilter(SqlConditionNode? filter)
     {
         base.SetFilter( filter );

@@ -9,15 +9,21 @@ namespace LfrlAnvil.Sqlite.Tests.ObjectsTests;
 public class SqliteIndexTests : TestsBase
 {
     [Theory]
-    [InlineData( true )]
-    [InlineData( false )]
-    public void Properties_ShouldBeCorrectlyCopiedFromBuilder(bool isUnique)
+    [InlineData( true, false )]
+    [InlineData( false, true )]
+    [InlineData( false, false )]
+    public void Properties_ShouldBeCorrectlyCopiedFromBuilder(bool isUnique, bool isVirtual)
     {
         var schemaBuilder = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var tableBuilder = schemaBuilder.Objects.CreateTable( "T" );
         var c1Builder = tableBuilder.Columns.Create( "C1" );
         var c2Builder = tableBuilder.Columns.Create( "C2" );
-        tableBuilder.Constraints.CreateIndex( c1Builder.Asc(), c2Builder.Desc() ).SetName( "IX_TEST" ).MarkAsUnique( isUnique );
+
+        tableBuilder.Constraints.CreateIndex( c1Builder.Asc(), c2Builder.Desc() )
+            .SetName( "IX_TEST" )
+            .MarkAsUnique( isUnique )
+            .MarkAsVirtual( isVirtual );
+
         tableBuilder.Constraints.SetPrimaryKey( tableBuilder.Columns.Create( "X" ).Asc() );
 
         var db = new SqliteDatabaseMock( schemaBuilder.Database );
@@ -35,6 +41,7 @@ public class SqliteIndexTests : TestsBase
             sut.Type.Should().Be( SqlObjectType.Index );
             sut.Name.Should().Be( "IX_TEST" );
             sut.IsUnique.Should().Be( isUnique );
+            sut.IsVirtual.Should().Be( isVirtual );
             sut.IsPartial.Should().BeFalse();
             sut.Columns.Should().BeSequentiallyEqualTo( c1.Asc(), c2.Desc() );
             sut.Columns.Should().BeSequentiallyEqualTo( c1.Asc(), c2.Desc() );
@@ -65,6 +72,7 @@ public class SqliteIndexTests : TestsBase
             sut.Type.Should().Be( SqlObjectType.Index );
             sut.Name.Should().Be( "IX_TEST" );
             sut.IsUnique.Should().BeFalse();
+            sut.IsVirtual.Should().BeFalse();
             sut.IsPartial.Should().BeTrue();
             sut.Columns.Should().BeSequentiallyEqualTo( c1.Asc() );
             sut.ToString().Should().Be( "[Index] foo_IX_TEST" );
