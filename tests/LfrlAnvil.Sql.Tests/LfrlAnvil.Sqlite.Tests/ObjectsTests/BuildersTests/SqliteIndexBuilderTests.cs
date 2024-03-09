@@ -732,6 +732,52 @@ public class SqliteIndexBuilderTests : TestsBase
     }
 
     [Fact]
+    public void MarkAsVirtual_ShouldNotRecreateOriginatingForeignKeys_WhenValueChangesToTrue()
+    {
+        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var table = schema.Objects.CreateTable( "T" );
+        var pk = table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        var sut = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() );
+        table.Constraints.CreateForeignKey( sut, pk.Index );
+
+        var actionCount = schema.Database.GetPendingActionCount();
+        var result = sut.MarkAsVirtual();
+        var actions = schema.Database.GetLastPendingActions( actionCount );
+
+        using ( new AssertionScope() )
+        {
+            result.Should().BeSameAs( sut );
+            sut.IsVirtual.Should().BeTrue();
+
+            actions.Should().HaveCount( 1 );
+            actions.ElementAtOrDefault( 0 ).Sql.Should().SatisfySql( "DROP INDEX \"foo_IX_T_C2A\";" );
+        }
+    }
+
+    [Fact]
+    public void MarkAsVirtual_ShouldNotRecreateOriginatingForeignKeys_WhenValueChangesToFalse()
+    {
+        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var table = schema.Objects.CreateTable( "T" );
+        var pk = table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        var sut = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() ).MarkAsVirtual();
+        table.Constraints.CreateForeignKey( sut, pk.Index );
+
+        var actionCount = schema.Database.GetPendingActionCount();
+        var result = sut.MarkAsVirtual( false );
+        var actions = schema.Database.GetLastPendingActions( actionCount );
+
+        using ( new AssertionScope() )
+        {
+            result.Should().BeSameAs( sut );
+            sut.IsVirtual.Should().BeFalse();
+
+            actions.Should().HaveCount( 1 );
+            actions.ElementAtOrDefault( 0 ).Sql.Should().SatisfySql( "CREATE INDEX \"foo_IX_T_C2A\" ON \"foo_T\" (\"C2\" ASC);" );
+        }
+    }
+
+    [Fact]
     public void MarkAsVirtual_ShouldThrowSqlObjectBuilderException_WhenPrimaryKeyIndexVirtualityChangesToFalse()
     {
         var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );

@@ -88,7 +88,7 @@ internal sealed class MySqlDatabaseChangeAggregator : SqlDatabaseChangeAggregato
             case SqlObjectType.Index:
             {
                 var index = ReinterpretCast.To<MySqlIndexBuilder>( obj );
-                if ( index.PrimaryKey is null )
+                if ( ! index.IsVirtual )
                     CreatedIndexes.Add( index );
 
                 break;
@@ -127,11 +127,12 @@ internal sealed class MySqlDatabaseChangeAggregator : SqlDatabaseChangeAggregato
             }
             case SqlObjectType.Index:
             {
-                if ( Changes.ContainsChange( obj, SqlObjectChangeDescriptor.PrimaryKey ) )
+                var index = ReinterpretCast.To<MySqlIndexBuilder>( obj );
+                if ( index.IsVirtual && ! Changes.ContainsChange( index, SqlObjectChangeDescriptor.IsVirtual ) )
                     break;
 
-                var name = Changes.GetOriginalValue( obj, SqlObjectChangeDescriptor.Name ).GetValueOrDefault( obj.Name );
-                RemovedIndexes.Add( name, ReinterpretCast.To<MySqlIndexBuilder>( obj ) );
+                var name = Changes.GetOriginalValue( index, SqlObjectChangeDescriptor.Name ).GetValueOrDefault( index.Name );
+                RemovedIndexes.Add( name, index );
                 break;
             }
             case SqlObjectType.ForeignKey:
@@ -182,14 +183,21 @@ internal sealed class MySqlDatabaseChangeAggregator : SqlDatabaseChangeAggregato
                 var index = ReinterpretCast.To<MySqlIndexBuilder>( obj );
                 var originalName = Changes.GetOriginalValue( obj, SqlObjectChangeDescriptor.Name ).GetValueOrDefault( obj.Name );
 
-                if ( index.PrimaryKey is not null )
+                if ( index.IsVirtual )
                 {
-                    if ( Changes.ContainsChange( index, SqlObjectChangeDescriptor.PrimaryKey ) )
+                    if ( Changes.ContainsChange( index, SqlObjectChangeDescriptor.IsVirtual ) )
                     {
                         RemovedIndexes.Add( originalName, index );
                         ModifiedIndexes.Add( index );
                     }
 
+                    break;
+                }
+
+                if ( Changes.ContainsChange( index, SqlObjectChangeDescriptor.IsVirtual ) )
+                {
+                    CreatedIndexes.Add( index );
+                    ModifiedIndexes.Add( index );
                     break;
                 }
 

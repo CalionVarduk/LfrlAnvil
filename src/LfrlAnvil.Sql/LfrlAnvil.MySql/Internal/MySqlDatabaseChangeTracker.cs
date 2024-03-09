@@ -226,7 +226,7 @@ public sealed class MySqlDatabaseChangeTracker : SqlDatabaseChangeTracker
                         continue;
 
                     var index = ReinterpretCast.To<MySqlIndexBuilder>( constraint );
-                    if ( index.PrimaryKey is not null )
+                    if ( index.IsVirtual )
                         continue;
 
                     interpreter.VisitCreateIndex( index.ToCreateNode() );

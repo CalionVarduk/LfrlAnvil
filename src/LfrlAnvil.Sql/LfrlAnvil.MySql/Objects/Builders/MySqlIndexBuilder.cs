@@ -38,6 +38,12 @@ public sealed class MySqlIndexBuilder : SqlIndexBuilder
         return this;
     }
 
+    public new MySqlIndexBuilder MarkAsVirtual(bool enabled = true)
+    {
+        base.MarkAsVirtual( enabled );
+        return this;
+    }
+
     public new MySqlIndexBuilder SetFilter(SqlConditionNode? filter)
     {
         base.SetFilter( filter );
