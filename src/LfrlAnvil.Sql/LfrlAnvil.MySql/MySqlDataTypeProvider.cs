@@ -5,7 +5,7 @@ namespace LfrlAnvil.MySql;
 
 public sealed class MySqlDataTypeProvider : ISqlDataTypeProvider
 {
-    private readonly MySqlDataType _guid = MySqlDataType.CreateBinary( 16 );
+    internal static readonly MySqlDataType Guid = MySqlDataType.CreateBinary( 16 );
 
     internal MySqlDataTypeProvider() { }
 
@@ -90,7 +90,7 @@ public sealed class MySqlDataTypeProvider : ISqlDataTypeProvider
     [Pure]
     public MySqlDataType GetGuid()
     {
-        return _guid;
+        return Guid;
     }
 
     [Pure]

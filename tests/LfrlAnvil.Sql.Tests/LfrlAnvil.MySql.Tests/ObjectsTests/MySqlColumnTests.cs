@@ -1,8 +1,8 @@
-﻿using LfrlAnvil.Sql;
-using LfrlAnvil.Sql.Expressions;
-using LfrlAnvil.Sql.Objects;
-using LfrlAnvil.MySql.Extensions;
+﻿using LfrlAnvil.MySql.Extensions;
 using LfrlAnvil.MySql.Tests.Helpers;
+using LfrlAnvil.Sql;
+using LfrlAnvil.Sql.Expressions;
+using LfrlAnvil.Sql.Extensions;
 
 namespace LfrlAnvil.MySql.Tests.ObjectsTests;
 
@@ -23,7 +23,7 @@ public class MySqlColumnTests : TestsBase
         var db = MySqlDatabaseMock.Create( schemaBuilder.Database );
         var table = db.Schemas.Default.Objects.GetTable( "T" );
 
-        ISqlColumn sut = table.Columns.Get( "C" );
+        var sut = table.Columns.Get( "C" );
 
         using ( new AssertionScope() )
         {
@@ -50,7 +50,7 @@ public class MySqlColumnTests : TestsBase
         var db = MySqlDatabaseMock.Create( schemaBuilder.Database );
         var table = db.Schemas.Default.Objects.GetTable( "T" );
 
-        ISqlColumn sut = table.Columns.Get( "C" );
+        var sut = table.Columns.Get( "C" );
 
         using ( new AssertionScope() )
         {
@@ -63,6 +63,46 @@ public class MySqlColumnTests : TestsBase
             sut.TypeDefinition.Should().BeSameAs( db.TypeDefinitions.GetByType<object>() );
             sut.Node.Should().BeSameAs( table.Node["C"] );
             sut.ToString().Should().Be( "[Column] common.T.C" );
+        }
+    }
+
+    [Fact]
+    public void Asc_ShouldReturnCorrectResult()
+    {
+        var schemaBuilder = MySqlDatabaseBuilderMock.Create().Schemas.Default;
+        var tableBuilder = schemaBuilder.Objects.CreateTable( "T" );
+        tableBuilder.Constraints.SetPrimaryKey( tableBuilder.Columns.Create( "C" ).Asc() );
+
+        var db = MySqlDatabaseMock.Create( schemaBuilder.Database );
+        var table = db.Schemas.Default.Objects.GetTable( "T" );
+        var sut = table.Columns.Get( "C" );
+
+        var result = sut.Asc();
+
+        using ( new AssertionScope() )
+        {
+            result.Column.Should().BeSameAs( sut );
+            result.Ordering.Should().Be( OrderBy.Asc );
+        }
+    }
+
+    [Fact]
+    public void Desc_ShouldReturnCorrectResult()
+    {
+        var schemaBuilder = MySqlDatabaseBuilderMock.Create().Schemas.Default;
+        var tableBuilder = schemaBuilder.Objects.CreateTable( "T" );
+        tableBuilder.Constraints.SetPrimaryKey( tableBuilder.Columns.Create( "C" ).Asc() );
+
+        var db = MySqlDatabaseMock.Create( schemaBuilder.Database );
+        var table = db.Schemas.Default.Objects.GetTable( "T" );
+        var sut = table.Columns.Get( "C" );
+
+        var result = sut.Desc();
+
+        using ( new AssertionScope() )
+        {
+            result.Column.Should().BeSameAs( sut );
+            result.Ordering.Should().Be( OrderBy.Desc );
         }
     }
 }

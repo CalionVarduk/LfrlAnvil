@@ -1,7 +1,6 @@
-﻿using LfrlAnvil.Sql;
-using LfrlAnvil.Sql.Objects;
-using LfrlAnvil.MySql.Extensions;
+﻿using LfrlAnvil.MySql.Extensions;
 using LfrlAnvil.MySql.Tests.Helpers;
+using LfrlAnvil.Sql;
 
 namespace LfrlAnvil.MySql.Tests.ObjectsTests;
 
@@ -17,7 +16,7 @@ public class MySqlPrimaryKeyTests : TestsBase
         var db = MySqlDatabaseMock.Create( schemaBuilder.Database );
         var schema = db.Schemas.Get( "foo" );
 
-        ISqlPrimaryKey sut = schema.Objects.GetTable( "T" ).Constraints.PrimaryKey;
+        var sut = schema.Objects.GetTable( "T" ).Constraints.PrimaryKey;
         var index = schema.Objects.GetIndex( "UIX_T_C1A" );
 
         using ( new AssertionScope() )

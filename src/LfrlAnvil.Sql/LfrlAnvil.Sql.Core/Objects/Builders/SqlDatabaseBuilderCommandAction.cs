@@ -83,9 +83,8 @@ public readonly struct SqlDatabaseBuilderCommandAction
             timeout );
     }
 
-    // TODO: make private when ready
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public void PrepareCommand(IDbCommand command)
+    internal void PrepareCommand(IDbCommand command)
     {
         if ( Sql is not null )
             command.CommandText = Sql;

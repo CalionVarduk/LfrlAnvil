@@ -1,17 +1,18 @@
 ﻿using System;
 using System.Diagnostics.Contracts;
+using LfrlAnvil.Sql.Internal;
 
 namespace LfrlAnvil.MySql.Internal.TypeDefinitions;
 
 internal sealed class MySqlColumnTypeDefinitionGuid : MySqlColumnTypeDefinition<Guid>
 {
-    internal MySqlColumnTypeDefinitionGuid(MySqlDataTypeProvider provider)
-        : base( provider.GetGuid(), Guid.Empty, static (reader, ordinal) => new Guid( (byte[])reader.GetValue( ordinal ) ) ) { }
+    internal MySqlColumnTypeDefinitionGuid()
+        : base( MySqlDataTypeProvider.Guid, Guid.Empty, static (reader, ordinal) => new Guid( (byte[])reader.GetValue( ordinal ) ) ) { }
 
     [Pure]
     public override string ToDbLiteral(Guid value)
     {
-        return MySqlHelpers.GetDbLiteral( value.ToByteArray() );
+        return SqlHelpers.GetDbLiteral( value.ToByteArray() );
     }
 
     [Pure]

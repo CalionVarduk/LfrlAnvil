@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics.Contracts;
+using LfrlAnvil.Sql.Internal;
 
 namespace LfrlAnvil.MySql.Internal.TypeDefinitions;
 
@@ -10,7 +11,7 @@ internal sealed class MySqlColumnTypeDefinitionInt64 : MySqlColumnTypeDefinition
     [Pure]
     public override string ToDbLiteral(long value)
     {
-        return MySqlHelpers.GetDbLiteral( value );
+        return SqlHelpers.GetDbLiteral( value );
     }
 
     [Pure]

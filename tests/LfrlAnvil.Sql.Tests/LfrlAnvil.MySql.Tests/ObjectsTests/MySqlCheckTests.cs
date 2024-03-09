@@ -1,8 +1,7 @@
-﻿using LfrlAnvil.Sql;
-using LfrlAnvil.Sql.Expressions;
-using LfrlAnvil.Sql.Objects;
-using LfrlAnvil.MySql.Extensions;
+﻿using LfrlAnvil.MySql.Extensions;
 using LfrlAnvil.MySql.Tests.Helpers;
+using LfrlAnvil.Sql;
+using LfrlAnvil.Sql.Expressions;
 
 namespace LfrlAnvil.MySql.Tests.ObjectsTests;
 
@@ -20,7 +19,7 @@ public class MySqlCheckTests : TestsBase
         var db = MySqlDatabaseMock.Create( schemaBuilder.Database );
         var table = db.Schemas.Get( "foo" ).Objects.GetTable( "T" );
 
-        ISqlCheck sut = table.Constraints.GetCheck( "CHK_T_0" );
+        var sut = table.Constraints.GetCheck( "CHK_T_0" );
 
         using ( new AssertionScope() )
         {

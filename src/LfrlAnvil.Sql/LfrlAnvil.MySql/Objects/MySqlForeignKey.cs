@@ -1,26 +1,15 @@
-﻿using LfrlAnvil.Sql;
+﻿using LfrlAnvil.MySql.Objects.Builders;
 using LfrlAnvil.Sql.Objects;
-using LfrlAnvil.MySql.Objects.Builders;
 
 namespace LfrlAnvil.MySql.Objects;
 
-public sealed class MySqlForeignKey : MySqlConstraint, ISqlForeignKey
+public sealed class MySqlForeignKey : SqlForeignKey
 {
     internal MySqlForeignKey(MySqlIndex originIndex, MySqlIndex referencedIndex, MySqlForeignKeyBuilder builder)
-        : base( originIndex.Table, builder )
-    {
-        OriginIndex = originIndex;
-        ReferencedIndex = referencedIndex;
-        OnUpdateBehavior = builder.OnUpdateBehavior;
-        OnDeleteBehavior = builder.OnDeleteBehavior;
-    }
+        : base( originIndex, referencedIndex, builder ) { }
 
-    public MySqlIndex OriginIndex { get; }
-    public MySqlIndex ReferencedIndex { get; }
-    public ReferenceBehavior OnUpdateBehavior { get; }
-    public ReferenceBehavior OnDeleteBehavior { get; }
-    public override MySqlDatabase Database => OriginIndex.Database;
-
-    ISqlIndex ISqlForeignKey.OriginIndex => OriginIndex;
-    ISqlIndex ISqlForeignKey.ReferencedIndex => ReferencedIndex;
+    public new MySqlIndex OriginIndex => ReinterpretCast.To<MySqlIndex>( base.OriginIndex );
+    public new MySqlIndex ReferencedIndex => ReinterpretCast.To<MySqlIndex>( base.ReferencedIndex );
+    public new MySqlTable Table => ReinterpretCast.To<MySqlTable>( base.Table );
+    public new MySqlDatabase Database => ReinterpretCast.To<MySqlDatabase>( base.Database );
 }

@@ -1,17 +1,11 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using LfrlAnvil.Functional;
-using LfrlAnvil.MySql.Exceptions;
+﻿using System.Linq;
 using LfrlAnvil.MySql.Extensions;
 using LfrlAnvil.MySql.Objects.Builders;
 using LfrlAnvil.MySql.Tests.Helpers;
 using LfrlAnvil.Sql;
-using LfrlAnvil.Sql.Exceptions;
-using LfrlAnvil.Sql.Expressions;
-using LfrlAnvil.Sql.Expressions.Visitors;
-using LfrlAnvil.Sql.Extensions;
 using LfrlAnvil.Sql.Objects.Builders;
 using LfrlAnvil.TestExtensions.FluentAssertions;
+using LfrlAnvil.TestExtensions.Sql;
 
 namespace LfrlAnvil.MySql.Tests.ObjectsTests.BuildersTests;
 
@@ -26,365 +20,82 @@ public partial class MySqlDatabaseBuilderTests : TestsBase
         {
             sut.Schemas.Count.Should().Be( 1 );
             sut.Schemas.Database.Should().BeSameAs( sut );
-            sut.Schemas.Should().BeEquivalentTo( sut.Schemas.Default );
-            ((ISqlSchemaBuilderCollection)sut.Schemas).Default.Should().BeSameAs( sut.Schemas.Default );
-            ((ISqlSchemaBuilderCollection)sut.Schemas).Database.Should().BeSameAs( sut.Schemas.Database );
+            sut.Schemas.Should().BeSequentiallyEqualTo( sut.Schemas.Default );
 
             sut.Schemas.Default.Database.Should().BeSameAs( sut );
             sut.Schemas.Default.Name.Should().Be( "common" );
-            ((ISqlSchemaBuilder)sut.Schemas.Default).Database.Should().BeSameAs( sut.Schemas.Default.Database );
-            ((ISqlSchemaBuilder)sut.Schemas.Default).Objects.Should().BeSameAs( sut.Schemas.Default.Objects );
-
-            sut.Schemas.Default.Objects.Count.Should().Be( 0 );
             sut.Schemas.Default.Objects.Should().BeEmpty();
             sut.Schemas.Default.Objects.Schema.Should().BeSameAs( sut.Schemas.Default );
-            ((ISqlObjectBuilderCollection)sut.Schemas.Default.Objects).Schema.Should().BeSameAs( sut.Schemas.Default.Objects.Schema );
 
             sut.Dialect.Should().BeSameAs( MySqlDialect.Instance );
-            sut.IsAttached.Should().BeTrue();
+            sut.ServerVersion.Should().Be( "0.0.0" );
+
+            sut.Changes.Database.Should().BeSameAs( sut );
+            sut.Changes.Mode.Should().Be( SqlDatabaseCreateMode.DryRun );
+            sut.Changes.IsAttached.Should().BeTrue();
+            sut.Changes.ActiveObject.Should().BeNull();
+            sut.Changes.ActiveObjectExistenceState.Should().Be( default( SqlObjectExistenceState ) );
+            sut.Changes.IsActive.Should().BeTrue();
             sut.Changes.GetPendingActions().ToArray().Should().BeEmpty();
-            sut.ServerVersion.Should().NotBeEmpty();
-
-            ((ISqlDatabaseBuilder)sut).DataTypes.Should().BeSameAs( sut.DataTypes );
-            ((ISqlDatabaseBuilder)sut).TypeDefinitions.Should().BeSameAs( sut.TypeDefinitions );
-            ((ISqlDatabaseBuilder)sut).NodeInterpreters.Should().BeSameAs( sut.NodeInterpreters );
-            ((ISqlDatabaseBuilder)sut).QueryReaders.Should().BeSameAs( sut.QueryReaders );
-            ((ISqlDatabaseBuilder)sut).ParameterBinders.Should().BeSameAs( sut.ParameterBinders );
-            ((ISqlDatabaseBuilder)sut).Schemas.Should().BeSameAs( sut.Schemas );
         }
     }
 
     [Fact]
-    public void AddStatement_ShouldAddNewStatement_WhenThereAreNoPendingChanges()
+    public void AddConnectionChangeCallback_ShouldNotThrow()
     {
-        var statement = Fixture.Create<string>();
         var sut = MySqlDatabaseBuilderMock.Create();
-
-        sut.Changes.AddStatement( statement );
-        var result = sut.Changes.GetPendingActions().ToArray();
-
-        result.Select( s => s.Sql ).Should().BeSequentiallyEqualTo( $"{statement}{Environment.NewLine}" );
+        var result = sut.AddConnectionChangeCallback( _ => { } );
+        result.Should().BeSameAs( sut );
     }
 
     [Fact]
-    public void AddStatement_ShouldAddNewStatement_WhenThereAreSomePendingChanges()
+    public void Changes_AddCreateGuidFunctionAction_ShouldAddCorrectAction()
     {
-        var statement = Fixture.Create<string>();
         var sut = MySqlDatabaseBuilderMock.Create();
-        sut.Changes.SetMode( SqlDatabaseCreateMode.Commit );
+        sut.Changes.AddCreateGuidFunctionAction();
 
-        var table = sut.Schemas.Default.Objects.CreateTable( "T" );
-        var column = table.Columns.Create( "C" );
-        table.Constraints.SetPrimaryKey( column.Asc() );
-
-        sut.Changes.AddStatement( statement );
-        var result = sut.Changes.GetPendingActions().ToArray();
+        var actions = sut.GetLastPendingActions( 0 );
 
         using ( new AssertionScope() )
         {
-            result.Should().HaveCount( 2 );
-            result[^1].Sql.Should().Be( $"{statement}{Environment.NewLine}" );
+            actions.Should().HaveCount( 1 );
+            actions.ElementAtOrDefault( 0 )
+                .Sql.Should()
+                .Be(
+                    @"CREATE FUNCTION `common`.`GUID`() RETURNS BINARY(16)
+BEGIN
+  SET @value = UNHEX(REPLACE(UUID(), '-', ''));
+  RETURN CONCAT(REVERSE(SUBSTRING(@value, 1, 4)), REVERSE(SUBSTRING(@value, 5, 2)), REVERSE(SUBSTRING(@value, 7, 2)), SUBSTRING(@value, 9));
+END;
+" );
         }
     }
 
     [Fact]
-    public void AddStatement_ShouldDoNothing_WhenBuilderIsDetached()
-    {
-        var statement = Fixture.Create<string>();
-        var sut = MySqlDatabaseBuilderMock.Create();
-        sut.Changes.SetDetachedMode();
-
-        sut.Changes.AddStatement( statement );
-
-        sut.Changes.GetPendingActions().Length.Should().Be( 0 );
-    }
-
-    [Fact]
-    public void AddStatement_ShouldDoNothing_WhenBuilderIsInNoChangesMode()
-    {
-        var statement = Fixture.Create<string>();
-        var sut = MySqlDatabaseBuilderMock.Create();
-        sut.Changes.SetMode( SqlDatabaseCreateMode.NoChanges );
-
-        sut.Changes.AddStatement( statement );
-
-        sut.Changes.GetPendingActions().Length.Should().Be( 0 );
-    }
-
-    [Fact]
-    public void AddStatement_ShouldThrowMySqlObjectBuilderException_WhenStatementContainsParameters()
+    public void Changes_AddCreateDropIndexIfExistsProcedureAction_ShouldAddCorrectAction()
     {
         var sut = MySqlDatabaseBuilderMock.Create();
-        var action = Lambda.Of(
-            () => sut.Changes.AddStatement( SqlNode.RawStatement( Fixture.Create<string>(), SqlNode.Parameter( "a" ) ) ) );
+        sut.Changes.AddCreateDropIndexIfExistsProcedureAction();
 
-        action.Should().ThrowExactly<MySqlObjectBuilderException>();
-    }
-
-    [Fact]
-    public void AddParameterizedStatement_TypeErased_ShouldAddNewStatement_WhenThereAreNoPendingChanges()
-    {
-        var statement = Fixture.Create<string>();
-        var sut = MySqlDatabaseBuilderMock.Create();
-
-        sut.Changes.AddParameterizedStatement(
-            SqlNode.RawStatement( statement, SqlNode.Parameter( "a" ) ),
-            new[] { KeyValuePair.Create( "a", (object?)1 ) }.AsEnumerable() );
-
-        var result = sut.Changes.GetPendingActions().ToArray();
+        var actions = sut.GetLastPendingActions( 0 );
 
         using ( new AssertionScope() )
         {
-            result.Select( s => s.Sql ).Should().BeSequentiallyEqualTo( $"{statement}{Environment.NewLine}" );
-            result.ElementAtOrDefault( 0 ).OnCommandSetup.Should().NotBeNull();
+            actions.Should().HaveCount( 1 );
+            actions.ElementAtOrDefault( 0 )
+                .Sql.Should()
+                .Be(
+                    @"CREATE PROCEDURE `common`.`_DROP_INDEX_IF_EXISTS`(`schema_name` VARCHAR(128), `table_name` VARCHAR(128), `index_name` VARCHAR(128))
+BEGIN
+  SET @schema_name = COALESCE(`schema_name`, DATABASE());
+  IF EXISTS (SELECT * FROM `information_schema`.`statistics` AS `s` WHERE `s`.`table_schema` = @schema_name AND `s`.`table_name` = `table_name` AND `s`.`index_name` = `index_name`) THEN
+    SET @text = CONCAT('DROP INDEX `', `index_name`, '` ON `', @schema_name, '`.`', `table_name`, '`;');
+    PREPARE stmt FROM @text;
+    EXECUTE stmt;
+  END IF;
+END;
+" );
         }
-    }
-
-    [Fact]
-    public void AddParameterizedStatement_TypeErased_ShouldAddNewStatement_WhenThereAreSomePendingChanges()
-    {
-        var statement = Fixture.Create<string>();
-        var sut = MySqlDatabaseBuilderMock.Create();
-        sut.Changes.SetMode( SqlDatabaseCreateMode.Commit );
-
-        var table = sut.Schemas.Default.Objects.CreateTable( "T" );
-        var column = table.Columns.Create( "C" );
-        table.Constraints.SetPrimaryKey( column.Asc() );
-
-        sut.Changes.AddParameterizedStatement(
-            SqlNode.RawStatement( statement, SqlNode.Parameter( "a" ) ),
-            new[] { KeyValuePair.Create( "a", (object?)1 ) }.AsEnumerable() );
-
-        var result = sut.Changes.GetPendingActions().ToArray();
-
-        using ( new AssertionScope() )
-        {
-            result.Should().HaveCount( 2 );
-            result[^1].Sql.Should().Be( $"{statement}{Environment.NewLine}" );
-            result[^1].OnCommandSetup.Should().NotBeNull();
-        }
-    }
-
-    [Fact]
-    public void AddParameterizedStatement_TypeErased_ShouldDoNothing_WhenBuilderIsDetached()
-    {
-        var statement = Fixture.Create<string>();
-        var sut = MySqlDatabaseBuilderMock.Create();
-        sut.Changes.SetDetachedMode();
-
-        sut.Changes.AddParameterizedStatement(
-            SqlNode.RawStatement( statement, SqlNode.Parameter( "a" ) ),
-            new[] { KeyValuePair.Create( "a", (object?)1 ) }.AsEnumerable() );
-
-        sut.Changes.GetPendingActions().Length.Should().Be( 0 );
-    }
-
-    [Fact]
-    public void AddParameterizedStatement_TypeErased_ShouldDoNothing_WhenBuilderIsInNoChangesMode()
-    {
-        var statement = Fixture.Create<string>();
-        var sut = MySqlDatabaseBuilderMock.Create();
-        sut.Changes.SetMode( SqlDatabaseCreateMode.NoChanges );
-
-        sut.Changes.AddParameterizedStatement(
-            SqlNode.RawStatement( statement, SqlNode.Parameter( "a" ) ),
-            new[] { KeyValuePair.Create( "a", (object?)1 ) }.AsEnumerable() );
-
-        sut.Changes.GetPendingActions().Length.Should().Be( 0 );
-    }
-
-    [Fact]
-    public void AddParameterizedStatement_Generic_ShouldAddNewStatement_WhenThereAreNoPendingChanges()
-    {
-        var statement = Fixture.Create<string>();
-        var sut = MySqlDatabaseBuilderMock.Create();
-
-        sut.Changes.AddParameterizedStatement( SqlNode.RawStatement( statement, SqlNode.Parameter<int>( "a" ) ), new Source { A = 1 } );
-        var result = sut.Changes.GetPendingActions().ToArray();
-
-        using ( new AssertionScope() )
-        {
-            result.Select( s => s.Sql ).Should().BeSequentiallyEqualTo( $"{statement}{Environment.NewLine}" );
-            result.ElementAtOrDefault( 0 ).OnCommandSetup.Should().NotBeNull();
-        }
-    }
-
-    [Fact]
-    public void AddParameterizedStatement_Generic_ShouldAddNewStatement_WhenThereAreSomePendingChanges()
-    {
-        var statement = Fixture.Create<string>();
-        var sut = MySqlDatabaseBuilderMock.Create();
-        sut.Changes.SetMode( SqlDatabaseCreateMode.Commit );
-
-        var table = sut.Schemas.Default.Objects.CreateTable( "T" );
-        var column = table.Columns.Create( "C" );
-        table.Constraints.SetPrimaryKey( column.Asc() );
-
-        sut.Changes.AddParameterizedStatement( SqlNode.RawStatement( statement, SqlNode.Parameter<int>( "a" ) ), new Source { A = 1 } );
-        var result = sut.Changes.GetPendingActions().ToArray();
-
-        using ( new AssertionScope() )
-        {
-            result.Should().HaveCount( 2 );
-            result[^1].Sql.Should().Be( $"{statement}{Environment.NewLine}" );
-            result[^1].OnCommandSetup.Should().NotBeNull();
-        }
-    }
-
-    [Fact]
-    public void AddParameterizedStatement_Generic_ShouldDoNothing_WhenBuilderIsDetached()
-    {
-        var statement = Fixture.Create<string>();
-        var sut = MySqlDatabaseBuilderMock.Create();
-        sut.Changes.SetDetachedMode();
-
-        sut.Changes.AddParameterizedStatement( SqlNode.RawStatement( statement, SqlNode.Parameter<int>( "a" ) ), new Source { A = 1 } );
-
-        sut.Changes.GetPendingActions().Length.Should().Be( 0 );
-    }
-
-    [Fact]
-    public void AddParameterizedStatement_Generic_ShouldDoNothing_WhenBuilderIsInNoChangesMode()
-    {
-        var statement = Fixture.Create<string>();
-        var sut = MySqlDatabaseBuilderMock.Create();
-        sut.Changes.SetMode( SqlDatabaseCreateMode.NoChanges );
-
-        sut.Changes.AddParameterizedStatement( SqlNode.RawStatement( statement, SqlNode.Parameter<int>( "a" ) ), new Source { A = 1 } );
-
-        sut.Changes.GetPendingActions().Length.Should().Be( 0 );
-    }
-
-    [Fact]
-    public void AddParameterizedStatement_ShouldThrowSqlCompilerException_WhenParametersAreInvalid()
-    {
-        var sut = MySqlDatabaseBuilderMock.Create();
-        var action = Lambda.Of(
-            () => sut.Changes.AddParameterizedStatement(
-                SqlNode.RawStatement( Fixture.Create<string>(), SqlNode.Parameter<string>( "a" ) ),
-                new Source { A = 1 } ) );
-
-        action.Should().ThrowExactly<SqlCompilerException>();
-    }
-
-    [Fact]
-    public void ObjectChanges_ShouldDoNothing_WhenBuilderIsDetached()
-    {
-        var sut = MySqlDatabaseBuilderMock.Create();
-        sut.Changes.SetDetachedMode();
-
-        sut.Schemas.Default.SetName( "s" );
-        var table = sut.Schemas.Default.Objects.CreateTable( "T" );
-        var ix1 = table.Constraints.CreateIndex( table.Columns.Create( "D" ).Asc() ).MarkAsUnique().SetFilter( SqlNode.True() );
-        var ix2 = table.Constraints.SetPrimaryKey( table.Columns.Create( "C" ).Asc() ).Index;
-        var fk = table.Constraints.CreateForeignKey( ix1, ix2 );
-        table.Constraints.CreateCheck( table.Node["C"] != SqlNode.Literal( 0 ) );
-        fk.SetOnDeleteBehavior( ReferenceBehavior.Cascade ).SetOnUpdateBehavior( ReferenceBehavior.Cascade );
-        var column = table.Columns.Create( "E" );
-        column.SetName( "F" ).MarkAsNullable().SetType<int>().SetDefaultValue( 123 );
-        table.SetName( "U" );
-        column.Remove();
-
-        sut.Changes.GetPendingActions().Length.Should().Be( 0 );
-    }
-
-    [Fact]
-    public void ObjectCreation_ShouldDoNothing_WhenBuilderIsInNoChangesMode()
-    {
-        var sut = MySqlDatabaseBuilderMock.Create();
-        sut.Changes.SetMode( SqlDatabaseCreateMode.NoChanges );
-
-        sut.Schemas.Default.SetName( "s" );
-        var table = sut.Schemas.Default.Objects.CreateTable( "T" );
-        var ix1 = table.Constraints.CreateIndex( table.Columns.Create( "D" ).Asc() ).MarkAsUnique().SetFilter( SqlNode.True() );
-        var ix2 = table.Constraints.SetPrimaryKey( table.Columns.Create( "C" ).Asc() ).Index;
-        var fk = table.Constraints.CreateForeignKey( ix1, ix2 );
-        table.Constraints.CreateCheck( table.Node["C"] != SqlNode.Literal( 0 ) );
-        fk.SetOnDeleteBehavior( ReferenceBehavior.Cascade ).SetOnUpdateBehavior( ReferenceBehavior.Cascade );
-        var column = table.Columns.Create( "E" );
-        column.SetName( "F" ).MarkAsNullable().SetType<string>().SetDefaultValue( "123" );
-        table.SetName( "U" );
-        column.Remove();
-
-        sut.Changes.GetPendingActions().Length.Should().Be( 0 );
-    }
-
-    [Theory]
-    [InlineData( true )]
-    [InlineData( false )]
-    public void SetAttachedMode_ShouldUpdateIsAttached(bool enabled)
-    {
-        var sut = MySqlDatabaseBuilderMock.Create();
-        sut.Changes.Attach( ! enabled );
-
-        var result = ((ISqlDatabaseBuilder)sut).Changes.Attach( enabled );
-
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut.Changes );
-            sut.IsAttached.Should().Be( enabled );
-        }
-    }
-
-    [Fact]
-    public void SetAttachedMode_ShouldDoNothing_WhenBuilderIsAlreadyAttached()
-    {
-        var sut = MySqlDatabaseBuilderMock.Create();
-
-        var result = ((ISqlDatabaseBuilder)sut).Changes.Attach();
-
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut.Changes );
-            sut.IsAttached.Should().BeTrue();
-        }
-    }
-
-    [Theory]
-    [InlineData( true )]
-    [InlineData( false )]
-    public void SetDetachedMode_ShouldUpdateIsAttached(bool enabled)
-    {
-        var sut = MySqlDatabaseBuilderMock.Create();
-        sut.Changes.SetDetachedMode( ! enabled );
-
-        var result = ((ISqlDatabaseBuilder)sut).Changes.Attach( ! enabled );
-
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut.Changes );
-            sut.IsAttached.Should().Be( ! enabled );
-        }
-    }
-
-    [Fact]
-    public void SetDetachedMode_ShouldDoNothing_WhenBuilderIsAlreadyDetached()
-    {
-        var sut = MySqlDatabaseBuilderMock.Create();
-        sut.Changes.SetDetachedMode();
-
-        var result = ((ISqlDatabaseBuilder)sut).Changes.Attach( false );
-
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut.Changes );
-            sut.IsAttached.Should().BeFalse();
-        }
-    }
-
-    [Fact]
-    public void DetachingBuilder_ShouldCompletePendingChanges()
-    {
-        var sut = MySqlDatabaseBuilderMock.Create();
-
-        var table = sut.Schemas.Default.Objects.CreateTable( "T" );
-        var column = table.Columns.Create( "C" );
-        table.Constraints.SetPrimaryKey( column.Asc() );
-
-        sut.Changes.SetDetachedMode();
-        var result = sut.Changes.GetPendingActions().ToArray();
-
-        result.Should().HaveCount( 1 );
     }
 
     [Fact]
@@ -409,26 +120,5 @@ public partial class MySqlDatabaseBuilderTests : TestsBase
 
         result.Should().BeSameAs( sut );
         action.Verify().CallCount.Should().Be( 0 );
-    }
-
-    [Fact]
-    public void DefaultNodeInterpreterFactory_ShouldCreateCorrectInterpreter()
-    {
-        var sut = MySqlDatabaseBuilderMock.Create().NodeInterpreters;
-        var result = sut.Create();
-
-        using ( new AssertionScope() )
-        {
-            result.Context.Sql.Capacity.Should().Be( 1024 );
-            result.Context.Indent.Should().Be( 0 );
-            result.Context.ChildDepth.Should().Be( 0 );
-            result.Context.Parameters.Should().BeEmpty();
-            result.Should().BeOfType( typeof( MySqlNodeInterpreter ) );
-        }
-    }
-
-    public sealed class Source
-    {
-        public int A { get; init; }
     }
 }

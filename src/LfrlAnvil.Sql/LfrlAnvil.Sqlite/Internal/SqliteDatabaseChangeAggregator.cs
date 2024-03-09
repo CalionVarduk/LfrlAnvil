@@ -17,7 +17,7 @@ internal sealed class SqliteDatabaseChangeAggregator : SqlDatabaseChangeAggregat
         ColumnRenames = new Dictionary<ulong, SqliteColumnRename>();
         RemovedColumns = SqlDatabaseNamedObjectsSet<SqliteColumnBuilder>.Create();
         CreatedIndexes = SqlDatabaseObjectsSet<SqliteIndexBuilder>.Create();
-        RemovedIndexes = SqlDatabaseNamedSchemaObjectsSet<SqliteIndexBuilder>.Create();
+        RemovedIndexes = SqlDatabaseNamedObjectsSet<SqliteIndexBuilder>.Create();
         ColumnsByOriginalName = SqlDatabaseNamedObjectsSet<SqliteColumnBuilder>.Create();
     }
 
@@ -26,7 +26,7 @@ internal sealed class SqliteDatabaseChangeAggregator : SqlDatabaseChangeAggregat
     public Dictionary<ulong, SqliteColumnRename> ColumnRenames { get; }
     public SqlDatabaseNamedObjectsSet<SqliteColumnBuilder> RemovedColumns { get; }
     public SqlDatabaseObjectsSet<SqliteIndexBuilder> CreatedIndexes { get; }
-    public SqlDatabaseNamedSchemaObjectsSet<SqliteIndexBuilder> RemovedIndexes { get; }
+    public SqlDatabaseNamedObjectsSet<SqliteIndexBuilder> RemovedIndexes { get; }
     public SqlObjectOriginalValue<string> OriginalName { get; private set; }
     public SqlDatabaseNamedObjectsSet<SqliteColumnBuilder> ColumnsByOriginalName { get; }
     public bool RequiresReconstruction { get; private set; }
@@ -100,12 +100,8 @@ internal sealed class SqliteDatabaseChangeAggregator : SqlDatabaseChangeAggregat
                 if ( Changes.ContainsChange( obj, SqlObjectChangeDescriptor.PrimaryKey ) )
                     break;
 
-                var index = ReinterpretCast.To<SqliteIndexBuilder>( obj );
-                var name = SqlSchemaObjectName.Create(
-                    index.Table.Schema.Name,
-                    Changes.GetOriginalValue( obj, SqlObjectChangeDescriptor.Name ).GetValueOrDefault( index.Name ) );
-
-                RemovedIndexes.Add( name, index );
+                var name = Changes.GetOriginalValue( obj, SqlObjectChangeDescriptor.Name ).GetValueOrDefault( obj.Name );
+                RemovedIndexes.Add( name, ReinterpretCast.To<SqliteIndexBuilder>( obj ) );
                 break;
             }
             default:
@@ -150,9 +146,7 @@ internal sealed class SqliteDatabaseChangeAggregator : SqlDatabaseChangeAggregat
             case SqlObjectType.Index:
             {
                 var index = ReinterpretCast.To<SqliteIndexBuilder>( obj );
-                var originalName = SqlSchemaObjectName.Create(
-                    index.Table.Schema.Name,
-                    Changes.GetOriginalValue( index, SqlObjectChangeDescriptor.Name ).GetValueOrDefault( index.Name ) );
+                var originalName = Changes.GetOriginalValue( index, SqlObjectChangeDescriptor.Name ).GetValueOrDefault( index.Name );
 
                 if ( index.PrimaryKey is not null )
                 {

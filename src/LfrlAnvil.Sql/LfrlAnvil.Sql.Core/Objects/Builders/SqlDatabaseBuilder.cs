@@ -14,7 +14,6 @@ using ExceptionResources = LfrlAnvil.Sql.Exceptions.ExceptionResources;
 namespace LfrlAnvil.Sql.Objects.Builders;
 
 // TODO:
-// THEN, update mysql to work fully with new core
 // THEN, create db version object that works with core classes rather than interfaces
 //  ^ requires sqlite & mysql brought up to speed
 //  ^ add ISqlDatabaseVersion interface & make SqlDatabaseVersion be its implementation that works with SqlDatabaseBuilder type

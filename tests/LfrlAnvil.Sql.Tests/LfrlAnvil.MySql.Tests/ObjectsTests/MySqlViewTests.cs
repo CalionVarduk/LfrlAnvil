@@ -1,10 +1,10 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using LfrlAnvil.Functional;
+using LfrlAnvil.MySql.Objects;
+using LfrlAnvil.MySql.Tests.Helpers;
 using LfrlAnvil.Sql;
 using LfrlAnvil.Sql.Expressions;
-using LfrlAnvil.Sql.Objects;
-using LfrlAnvil.MySql.Tests.Helpers;
 using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.MySql.Tests.ObjectsTests;
@@ -24,7 +24,7 @@ public class MySqlViewTests : TestsBase
         var db = MySqlDatabaseMock.Create( schemaBuilder.Database );
         var schema = db.Schemas.Get( "foo" );
 
-        ISqlView sut = schema.Objects.GetView( "V" );
+        var sut = schema.Objects.GetView( "V" );
         var a = sut.DataFields.Get( "a" );
         var x = sut.DataFields.Get( "x" );
         var c = sut.DataFields.Get( "c" );
@@ -61,7 +61,7 @@ public class MySqlViewTests : TestsBase
             SqlNode.RawRecordSet( "foo" ).ToDataSource().Select( s => new[] { s.From["F1"].AsSelf(), s.From["F2"].AsSelf() } ) );
 
         var db = MySqlDatabaseMock.Create( schemaBuilder.Database );
-        ISqlViewDataFieldCollection sut = db.Schemas.Default.Objects.GetView( "V" ).DataFields;
+        var sut = db.Schemas.Default.Objects.GetView( "V" ).DataFields;
 
         var result = sut.Contains( name );
 
@@ -69,7 +69,7 @@ public class MySqlViewTests : TestsBase
     }
 
     [Fact]
-    public void DataFields_GetField_ShouldReturnCorrectField()
+    public void DataFields_Get_ShouldReturnCorrectField()
     {
         var schemaBuilder = MySqlDatabaseBuilderMock.Create().Schemas.Default;
         schemaBuilder.Objects.CreateView(
@@ -77,7 +77,7 @@ public class MySqlViewTests : TestsBase
             SqlNode.RawRecordSet( "foo" ).ToDataSource().Select( s => new[] { s.From["F1"].AsSelf(), s.From["F2"].AsSelf() } ) );
 
         var db = MySqlDatabaseMock.Create( schemaBuilder.Database );
-        ISqlViewDataFieldCollection sut = db.Schemas.Default.Objects.GetView( "V" ).DataFields;
+        var sut = db.Schemas.Default.Objects.GetView( "V" ).DataFields;
 
         var result = sut.Get( "F2" );
 
@@ -85,7 +85,7 @@ public class MySqlViewTests : TestsBase
     }
 
     [Fact]
-    public void DataFields_GetField_ShouldThrowKeyNotFoundException_WhenFieldDoesNotExist()
+    public void DataFields_Get_ShouldThrowKeyNotFoundException_WhenFieldDoesNotExist()
     {
         var schemaBuilder = MySqlDatabaseBuilderMock.Create().Schemas.Default;
         schemaBuilder.Objects.CreateView(
@@ -93,7 +93,7 @@ public class MySqlViewTests : TestsBase
             SqlNode.RawRecordSet( "foo" ).ToDataSource().Select( s => new[] { s.From["F1"].AsSelf() } ) );
 
         var db = MySqlDatabaseMock.Create( schemaBuilder.Database );
-        ISqlViewDataFieldCollection sut = db.Schemas.Default.Objects.GetView( "V" ).DataFields;
+        var sut = db.Schemas.Default.Objects.GetView( "V" ).DataFields;
 
         var action = Lambda.Of( () => sut.Get( "F2" ) );
 
@@ -101,7 +101,7 @@ public class MySqlViewTests : TestsBase
     }
 
     [Fact]
-    public void DataFields_TryGetField_ShouldReturnCorrectField()
+    public void DataFields_TryGet_ShouldReturnCorrectField()
     {
         var schemaBuilder = MySqlDatabaseBuilderMock.Create().Schemas.Default;
         schemaBuilder.Objects.CreateView(
@@ -109,7 +109,7 @@ public class MySqlViewTests : TestsBase
             SqlNode.RawRecordSet( "foo" ).ToDataSource().Select( s => new[] { s.From["F1"].AsSelf(), s.From["F2"].AsSelf() } ) );
 
         var db = MySqlDatabaseMock.Create( schemaBuilder.Database );
-        ISqlViewDataFieldCollection sut = db.Schemas.Default.Objects.GetView( "V" ).DataFields;
+        var sut = db.Schemas.Default.Objects.GetView( "V" ).DataFields;
 
         var result = sut.TryGet( "F2" );
 
@@ -117,7 +117,7 @@ public class MySqlViewTests : TestsBase
     }
 
     [Fact]
-    public void DataFields_TryGetField_ShouldReturnNull_WhenFieldDoesNotExist()
+    public void DataFields_TryGet_ShouldReturnNull_WhenFieldDoesNotExist()
     {
         var schemaBuilder = MySqlDatabaseBuilderMock.Create().Schemas.Default;
         schemaBuilder.Objects.CreateView(
@@ -125,10 +125,32 @@ public class MySqlViewTests : TestsBase
             SqlNode.RawRecordSet( "foo" ).ToDataSource().Select( s => new[] { s.From["F1"].AsSelf() } ) );
 
         var db = MySqlDatabaseMock.Create( schemaBuilder.Database );
-        ISqlViewDataFieldCollection sut = db.Schemas.Default.Objects.GetView( "V" ).DataFields;
+        var sut = db.Schemas.Default.Objects.GetView( "V" ).DataFields;
 
         var result = sut.TryGet( "F2" );
 
         result.Should().BeNull();
+    }
+
+    [Fact]
+    public void DataFields_GetEnumerator_ShouldReturnCorrectResult()
+    {
+        var schemaBuilder = MySqlDatabaseBuilderMock.Create().Schemas.Default;
+        schemaBuilder.Objects.CreateView(
+            "V",
+            SqlNode.RawRecordSet( "foo" ).ToDataSource().Select( s => new[] { s.From["F1"].AsSelf(), s.From["F2"].As( "C2" ) } ) );
+
+        var db = MySqlDatabaseMock.Create( schemaBuilder.Database );
+        var sut = db.Schemas.Default.Objects.GetView( "V" ).DataFields;
+
+        var result = new List<MySqlViewDataField>();
+        foreach ( var e in sut )
+            result.Add( e );
+
+        using ( new AssertionScope() )
+        {
+            result.Should().HaveCount( 2 );
+            result.Should().BeEquivalentTo( sut.Get( "F1" ), sut.Get( "C2" ) );
+        }
     }
 }

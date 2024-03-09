@@ -1,9 +1,7 @@
-﻿using LfrlAnvil.Sql;
-using LfrlAnvil.Sql.Expressions;
-using LfrlAnvil.Sql.Objects;
-using LfrlAnvil.MySql.Extensions;
-using LfrlAnvil.MySql.Objects;
+﻿using LfrlAnvil.MySql.Extensions;
 using LfrlAnvil.MySql.Tests.Helpers;
+using LfrlAnvil.Sql;
+using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.MySql.Tests.ObjectsTests;
@@ -28,7 +26,7 @@ public class MySqlIndexTests : TestsBase
         var c1 = table.Columns.Get( "C1" );
         var c2 = table.Columns.Get( "C2" );
 
-        ISqlIndex sut = schema.Objects.GetIndex( "IX_TEST" );
+        var sut = schema.Objects.GetIndex( "IX_TEST" );
 
         using ( new AssertionScope() )
         {
@@ -38,7 +36,7 @@ public class MySqlIndexTests : TestsBase
             sut.Name.Should().Be( "IX_TEST" );
             sut.IsUnique.Should().Be( isUnique );
             sut.IsPartial.Should().BeFalse();
-            ((MySqlIndex)sut).Columns.Should().BeSequentiallyEqualTo( c1.Asc(), c2.Desc() );
+            sut.Columns.Should().BeSequentiallyEqualTo( c1.Asc(), c2.Desc() );
             sut.Columns.Should().BeSequentiallyEqualTo( c1.Asc(), c2.Desc() );
             sut.ToString().Should().Be( "[Index] foo.IX_TEST" );
         }
@@ -58,7 +56,7 @@ public class MySqlIndexTests : TestsBase
         var table = schema.Objects.GetTable( "T" );
         var c1 = table.Columns.Get( "C1" );
 
-        ISqlIndex sut = schema.Objects.GetIndex( "IX_TEST" );
+        var sut = schema.Objects.GetIndex( "IX_TEST" );
 
         using ( new AssertionScope() )
         {

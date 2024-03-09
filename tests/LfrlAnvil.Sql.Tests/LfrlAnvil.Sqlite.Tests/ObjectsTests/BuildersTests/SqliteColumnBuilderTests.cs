@@ -1127,38 +1127,6 @@ public class SqliteColumnBuilderTests : TestsBase
     }
 
     [Fact]
-    public void Asc_ShouldReturnCorrectIndexedColumn()
-    {
-        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
-        var table = schema.Objects.CreateTable( "T" );
-        var sut = table.Columns.Create( "C" );
-
-        var result = sut.Asc();
-
-        using ( new AssertionScope() )
-        {
-            result.Column.Should().BeSameAs( sut );
-            result.Ordering.Should().Be( OrderBy.Asc );
-        }
-    }
-
-    [Fact]
-    public void Desc_ShouldReturnCorrectIndexedColumn()
-    {
-        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
-        var table = schema.Objects.CreateTable( "T" );
-        var sut = table.Columns.Create( "C" );
-
-        var result = sut.Desc();
-
-        using ( new AssertionScope() )
-        {
-            result.Column.Should().BeSameAs( sut );
-            result.Ordering.Should().Be( OrderBy.Desc );
-        }
-    }
-
-    [Fact]
     public void Remove_ShouldRemoveColumn()
     {
         var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );

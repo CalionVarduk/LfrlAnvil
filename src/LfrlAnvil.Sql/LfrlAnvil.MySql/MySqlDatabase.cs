@@ -1,130 +1,74 @@
 ﻿using System;
-using System.Data;
 using System.Data.Common;
-using System.Diagnostics;
 using System.Diagnostics.Contracts;
 using System.Threading;
 using System.Threading.Tasks;
 using LfrlAnvil.MySql.Objects;
 using LfrlAnvil.MySql.Objects.Builders;
-using LfrlAnvil.Sql;
-using LfrlAnvil.Sql.Expressions.Visitors;
 using LfrlAnvil.Sql.Objects;
 using LfrlAnvil.Sql.Objects.Builders;
 using LfrlAnvil.Sql.Statements;
-using LfrlAnvil.Sql.Statements.Compilers;
 using LfrlAnvil.Sql.Versioning;
 using MySqlConnector;
 
 namespace LfrlAnvil.MySql;
 
-public sealed class MySqlDatabase : ISqlDatabase
+public sealed class MySqlDatabase : SqlDatabase
 {
-    [DebuggerBrowsable( DebuggerBrowsableState.Never )]
+    private readonly MySqlConnectionStringBuilder _connectionStringBuilder;
+    private readonly ReadOnlyArray<Action<SqlDatabaseConnectionChangeEvent>> _connectionChangeCallbacks;
     private readonly string _connectionString;
 
-    private readonly Action<SqlDatabaseConnectionChangeEvent>[] _connectionChangeCallbacks;
-
     internal MySqlDatabase(
-        string connectionString,
+        MySqlConnectionStringBuilder connectionStringBuilder,
         MySqlDatabaseBuilder builder,
+        Version version,
         SqlQueryReaderExecutor<SqlDatabaseVersionRecord> versionRecordsQuery,
-        Version version)
+        ReadOnlyArray<Action<SqlDatabaseConnectionChangeEvent>> connectionChangeCallbacks)
+        : base( builder, new MySqlSchemaCollection( builder.Schemas ), version, versionRecordsQuery )
     {
-        _connectionString = connectionString;
-        VersionRecordsQuery = versionRecordsQuery;
-        Version = version;
-        Dialect = builder.Dialect;
-        DataTypes = builder.DataTypes;
-        TypeDefinitions = builder.TypeDefinitions;
-        NodeInterpreters = builder.NodeInterpreters;
-        QueryReaders = builder.QueryReaders;
-        ParameterBinders = builder.ParameterBinders;
-        ServerVersion = builder.ServerVersion;
-        Schemas = new MySqlSchemaCollection( this, builder.Schemas );
-        _connectionChangeCallbacks = builder.ConnectionChanges.GetCallbacksArray();
+        _connectionString = connectionStringBuilder.ToString();
+        _connectionStringBuilder = connectionStringBuilder;
+        _connectionChangeCallbacks = connectionChangeCallbacks;
     }
 
-    public SqlDialect Dialect { get; }
-    public Version Version { get; }
-    public MySqlSchemaCollection Schemas { get; }
-    public MySqlDataTypeProvider DataTypes { get; }
-    public MySqlColumnTypeDefinitionProvider TypeDefinitions { get; }
-    public MySqlNodeInterpreterFactory NodeInterpreters { get; }
-    public MySqlQueryReaderFactory QueryReaders { get; }
-    public MySqlParameterBinderFactory ParameterBinders { get; }
-    public string ServerVersion { get; }
-    public SqlQueryReaderExecutor<SqlDatabaseVersionRecord> VersionRecordsQuery { get; }
+    public new MySqlSchemaCollection Schemas => ReinterpretCast.To<MySqlSchemaCollection>( base.Schemas );
+    public new MySqlDataTypeProvider DataTypes => ReinterpretCast.To<MySqlDataTypeProvider>( base.DataTypes );
 
-    ISqlSchemaCollection ISqlDatabase.Schemas => Schemas;
-    ISqlDataTypeProvider ISqlDatabase.DataTypes => DataTypes;
-    ISqlColumnTypeDefinitionProvider ISqlDatabase.TypeDefinitions => TypeDefinitions;
-    ISqlNodeInterpreterFactory ISqlDatabase.NodeInterpreters => NodeInterpreters;
-    ISqlQueryReaderFactory ISqlDatabase.QueryReaders => QueryReaders;
-    ISqlParameterBinderFactory ISqlDatabase.ParameterBinders => ParameterBinders;
+    public new MySqlColumnTypeDefinitionProvider TypeDefinitions =>
+        ReinterpretCast.To<MySqlColumnTypeDefinitionProvider>( base.TypeDefinitions );
+
+    public new MySqlNodeInterpreterFactory NodeInterpreters => ReinterpretCast.To<MySqlNodeInterpreterFactory>( base.NodeInterpreters );
+    public new MySqlQueryReaderFactory QueryReaders => ReinterpretCast.To<MySqlQueryReaderFactory>( base.QueryReaders );
+    public new MySqlParameterBinderFactory ParameterBinders => ReinterpretCast.To<MySqlParameterBinderFactory>( base.ParameterBinders );
 
     [Pure]
-    public MySqlConnection Connect()
+    public override MySqlConnection Connect()
     {
-        var result = CreateConnection();
-        result.Open();
-        return result;
+        var connection = CreateConnection();
+        connection.Open();
+        return connection;
     }
 
     [Pure]
-    public async ValueTask<MySqlConnection> ConnectAsync(CancellationToken cancellationToken = default)
+    public async ValueTask<MySqlConnection> ConnectMySqlAsync(CancellationToken cancellationToken = default)
     {
-        var result = CreateConnection();
-        await result.OpenAsync( cancellationToken ).ConfigureAwait( false );
-        return result;
+        var connection = CreateConnection();
+        await connection.OpenAsync( cancellationToken ).ConfigureAwait( false );
+        return connection;
     }
 
     [Pure]
-    public SqlDatabaseVersionRecord[] GetRegisteredVersions()
+    public override async ValueTask<DbConnection> ConnectAsync(CancellationToken cancellationToken = default)
     {
-        using var connection = Connect();
-        using var command = connection.CreateCommand();
-        var result = VersionRecordsQuery.Execute( command );
-        return result.IsEmpty ? Array.Empty<SqlDatabaseVersionRecord>() : result.Rows.ToArray();
+        return await ConnectMySqlAsync( cancellationToken ).ConfigureAwait( false );
     }
-
-    public void Dispose() { }
 
     [Pure]
     private MySqlConnection CreateConnection()
     {
         var result = new MySqlConnection( _connectionString );
-        result.StateChange += OnConnectionStateChange;
-        result.Disposed += OnConnectionDisposal;
+        InitializeConnectionEventHandlers( result, _connectionChangeCallbacks );
         return result;
-    }
-
-    private void OnConnectionStateChange(object sender, StateChangeEventArgs e)
-    {
-        var @event = new SqlDatabaseConnectionChangeEvent( (DbConnection)sender, e );
-        foreach ( var callback in _connectionChangeCallbacks )
-            callback( @event );
-    }
-
-    private void OnConnectionDisposal(object? sender, EventArgs e)
-    {
-        var connection = (DbConnection?)sender;
-        if ( connection is not null )
-        {
-            connection.StateChange -= OnConnectionStateChange;
-            connection.Disposed -= OnConnectionDisposal;
-        }
-    }
-
-    [Pure]
-    IDbConnection ISqlDatabase.Connect()
-    {
-        return Connect();
-    }
-
-    [Pure]
-    async ValueTask<IDbConnection> ISqlDatabase.ConnectAsync(CancellationToken cancellationToken)
-    {
-        return await ConnectAsync( cancellationToken ).ConfigureAwait( false );
     }
 }

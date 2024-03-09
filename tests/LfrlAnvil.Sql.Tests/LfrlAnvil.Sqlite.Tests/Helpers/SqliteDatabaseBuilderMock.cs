@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics.Contracts;
 using LfrlAnvil.Sql;
+using LfrlAnvil.Sqlite.Internal;
 using LfrlAnvil.Sqlite.Objects.Builders;
 
 namespace LfrlAnvil.Sqlite.Tests.Helpers;
@@ -11,7 +12,7 @@ internal sealed class SqliteDatabaseBuilderMock
     {
         var result = new SqliteDatabaseBuilder(
             "0.0.0",
-            string.Empty,
+            SqliteHelpers.DefaultVersionHistoryName.Schema,
             new SqliteColumnTypeDefinitionProvider( new SqliteColumnTypeDefinitionProviderBuilder() ) );
 
         result.Changes.SetModeAndAttach( SqlDatabaseCreateMode.DryRun );

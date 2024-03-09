@@ -43,6 +43,12 @@ public class SqliteColumnTypeDefinitionProviderBuilder : SqlColumnTypeDefinition
         AddOrUpdate( new SqliteColumnTypeDefinitionGuid() );
     }
 
+    public new SqliteColumnTypeDefinitionProviderBuilder Register(SqlColumnTypeDefinition definition)
+    {
+        base.Register( definition );
+        return this;
+    }
+
     [Pure]
     public sealed override SqliteColumnTypeDefinitionProvider Build()
     {

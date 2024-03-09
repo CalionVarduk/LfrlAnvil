@@ -1,330 +1,125 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Diagnostics.Contracts;
-using System.Runtime.CompilerServices;
-using LfrlAnvil.Memory;
+﻿using System.Diagnostics.Contracts;
 using LfrlAnvil.MySql.Objects.Builders;
-using LfrlAnvil.Sql;
-using LfrlAnvil.Sql.Exceptions;
 using LfrlAnvil.Sql.Objects;
+using LfrlAnvil.Sql.Objects.Builders;
 
 namespace LfrlAnvil.MySql.Objects;
 
-public sealed class MySqlObjectCollection : ISqlObjectCollection
+public sealed class MySqlObjectCollection : SqlObjectCollection
 {
-    private readonly Dictionary<string, MySqlObject> _map;
+    internal MySqlObjectCollection(MySqlObjectBuilderCollection source)
+        : base( source ) { }
 
-    internal MySqlObjectCollection(MySqlSchema schema, int count)
-    {
-        Schema = schema;
-        _map = new Dictionary<string, MySqlObject>( capacity: count, comparer: StringComparer.OrdinalIgnoreCase );
-    }
-
-    public MySqlSchema Schema { get; }
-    public int Count => _map.Count;
-
-    ISqlSchema ISqlObjectCollection.Schema => Schema;
+    public new MySqlSchema Schema => ReinterpretCast.To<MySqlSchema>( base.Schema );
 
     [Pure]
-    public bool Contains(string name)
+    public new MySqlTable GetTable(string name)
     {
-        return _map.ContainsKey( name );
+        return ReinterpretCast.To<MySqlTable>( base.GetTable( name ) );
     }
 
     [Pure]
-    public MySqlObject Get(string name)
+    public new MySqlTable? TryGetTable(string name)
     {
-        return _map[name];
+        return ReinterpretCast.To<MySqlTable>( base.TryGetTable( name ) );
     }
 
     [Pure]
-    public MySqlObject? TryGet(string name)
+    public new MySqlIndex GetIndex(string name)
     {
-        return _map.GetValueOrDefault( name );
+        return ReinterpretCast.To<MySqlIndex>( base.GetIndex( name ) );
     }
 
     [Pure]
-    public MySqlTable GetTable(string name)
+    public new MySqlIndex? TryGetIndex(string name)
     {
-        return GetTypedObject<MySqlTable>( name, SqlObjectType.Table );
+        return ReinterpretCast.To<MySqlIndex>( base.TryGetIndex( name ) );
     }
 
     [Pure]
-    public MySqlTable? TryGetTable(string name)
+    public new MySqlPrimaryKey GetPrimaryKey(string name)
     {
-        return TryGetTypedObject<MySqlTable>( name, SqlObjectType.Table );
+        return ReinterpretCast.To<MySqlPrimaryKey>( base.GetPrimaryKey( name ) );
     }
 
     [Pure]
-    public MySqlIndex GetIndex(string name)
+    public new MySqlPrimaryKey? TryGetPrimaryKey(string name)
     {
-        return GetTypedObject<MySqlIndex>( name, SqlObjectType.Index );
+        return ReinterpretCast.To<MySqlPrimaryKey>( base.TryGetPrimaryKey( name ) );
     }
 
     [Pure]
-    public MySqlIndex? TryGetIndex(string name)
+    public new MySqlForeignKey GetForeignKey(string name)
     {
-        return TryGetTypedObject<MySqlIndex>( name, SqlObjectType.Index );
+        return ReinterpretCast.To<MySqlForeignKey>( base.GetForeignKey( name ) );
     }
 
     [Pure]
-    public MySqlPrimaryKey GetPrimaryKey(string name)
+    public new MySqlForeignKey? TryGetForeignKey(string name)
     {
-        return GetTypedObject<MySqlPrimaryKey>( name, SqlObjectType.PrimaryKey );
+        return ReinterpretCast.To<MySqlForeignKey>( base.TryGetForeignKey( name ) );
     }
 
     [Pure]
-    public MySqlPrimaryKey? TryGetPrimaryKey(string name)
+    public new MySqlCheck GetCheck(string name)
     {
-        return TryGetTypedObject<MySqlPrimaryKey>( name, SqlObjectType.PrimaryKey );
+        return ReinterpretCast.To<MySqlCheck>( base.GetCheck( name ) );
     }
 
     [Pure]
-    public MySqlForeignKey GetForeignKey(string name)
+    public new MySqlCheck? TryGetCheck(string name)
     {
-        return GetTypedObject<MySqlForeignKey>( name, SqlObjectType.ForeignKey );
+        return ReinterpretCast.To<MySqlCheck>( base.TryGetCheck( name ) );
     }
 
     [Pure]
-    public MySqlForeignKey? TryGetForeignKey(string name)
+    public new MySqlView GetView(string name)
     {
-        return TryGetTypedObject<MySqlForeignKey>( name, SqlObjectType.ForeignKey );
+        return ReinterpretCast.To<MySqlView>( base.GetView( name ) );
     }
 
     [Pure]
-    public MySqlCheck GetCheck(string name)
+    public new MySqlView? TryGetView(string name)
     {
-        return GetTypedObject<MySqlCheck>( name, SqlObjectType.Check );
+        return ReinterpretCast.To<MySqlView>( base.TryGetView( name ) );
     }
 
     [Pure]
-    public MySqlCheck? TryGetCheck(string name)
+    protected override MySqlTable CreateTable(SqlTableBuilder builder)
     {
-        return TryGetTypedObject<MySqlCheck>( name, SqlObjectType.Check );
+        return new MySqlTable( Schema, ReinterpretCast.To<MySqlTableBuilder>( builder ) );
     }
 
     [Pure]
-    public MySqlView GetView(string name)
+    protected override MySqlView CreateView(SqlViewBuilder builder)
     {
-        return GetTypedObject<MySqlView>( name, SqlObjectType.View );
+        return new MySqlView( Schema, ReinterpretCast.To<MySqlViewBuilder>( builder ) );
     }
 
     [Pure]
-    public MySqlView? TryGetView(string name)
+    protected override MySqlIndex CreateIndex(SqlTable table, SqlIndexBuilder builder)
     {
-        return TryGetTypedObject<MySqlView>( name, SqlObjectType.View );
+        return new MySqlIndex( ReinterpretCast.To<MySqlTable>( table ), ReinterpretCast.To<MySqlIndexBuilder>( builder ) );
     }
 
     [Pure]
-    public Enumerator GetEnumerator()
+    protected override MySqlPrimaryKey CreatePrimaryKey(SqlIndex index, SqlPrimaryKeyBuilder builder)
     {
-        return new Enumerator( _map );
-    }
-
-    public struct Enumerator : IEnumerator<MySqlObject>
-    {
-        private Dictionary<string, MySqlObject>.ValueCollection.Enumerator _enumerator;
-
-        internal Enumerator(Dictionary<string, MySqlObject> source)
-        {
-            _enumerator = source.Values.GetEnumerator();
-        }
-
-        public MySqlObject Current => _enumerator.Current;
-        object IEnumerator.Current => Current;
-
-        [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        public void Dispose()
-        {
-            _enumerator.Dispose();
-        }
-
-        [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        public bool MoveNext()
-        {
-            return _enumerator.MoveNext();
-        }
-
-        void IEnumerator.Reset()
-        {
-            ((IEnumerator)_enumerator).Reset();
-        }
-    }
-
-    internal void AddConstraintsWithoutForeignKeys(
-        MySqlObjectBuilderCollection objects,
-        RentedMemorySequence<MySqlObjectBuilder> foreignKeys)
-    {
-        foreach ( var b in objects )
-        {
-            switch ( b.Type )
-            {
-                case SqlObjectType.Table:
-                {
-                    var builder = ReinterpretCast.To<MySqlTableBuilder>( b );
-                    var table = new MySqlTable( Schema, builder );
-                    _map.Add( table.Name, table );
-
-                    foreach ( var cb in builder.Constraints )
-                    {
-                        switch ( cb.Type )
-                        {
-                            case SqlObjectType.Index:
-                            {
-                                var index = table.Constraints.AddIndex( ReinterpretCast.To<MySqlIndexBuilder>( cb ) );
-                                _map.Add( index.Name, index );
-                                break;
-                            }
-                            case SqlObjectType.Check:
-                            {
-                                var check = table.Constraints.AddCheck( ReinterpretCast.To<MySqlCheckBuilder>( cb ) );
-                                _map.Add( check.Name, check );
-                                break;
-                            }
-                            case SqlObjectType.ForeignKey:
-                            {
-                                foreignKeys.Push( cb );
-                                break;
-                            }
-                        }
-                    }
-
-                    var pk = table.Constraints.SetPrimaryKey( builder.Constraints );
-                    _map.Add( pk.Name, pk );
-                    break;
-                }
-                case SqlObjectType.View:
-                {
-                    var view = new MySqlView( Schema, ReinterpretCast.To<MySqlViewBuilder>( b ) );
-                    _map.Add( view.Name, view );
-                    break;
-                }
-            }
-        }
-    }
-
-    internal void AddForeignKey(MySqlForeignKeyBuilder builder, MySqlSchema referencedSchema)
-    {
-        var table = ReinterpretCast.To<MySqlTable>( _map[builder.Table.Name] );
-        var foreignKey = table.Constraints.AddForeignKey(
-            ReinterpretCast.To<MySqlIndex>( _map[builder.OriginIndex.Name] ),
-            ReinterpretCast.To<MySqlIndex>( referencedSchema.Objects._map[builder.ReferencedIndex.Name] ),
-            builder );
-
-        _map.Add( foreignKey.Name, foreignKey );
+        return new MySqlPrimaryKey( ReinterpretCast.To<MySqlIndex>( index ), ReinterpretCast.To<MySqlPrimaryKeyBuilder>( builder ) );
     }
 
     [Pure]
-    private T GetTypedObject<T>(string name, SqlObjectType type)
-        where T : MySqlObject
+    protected override MySqlCheck CreateCheck(SqlTable table, SqlCheckBuilder builder)
     {
-        var obj = _map[name];
-        return obj.Type == type
-            ? ReinterpretCast.To<T>( obj )
-            : throw new SqlObjectCastException( MySqlDialect.Instance, typeof( T ), obj.GetType() );
+        return new MySqlCheck( ReinterpretCast.To<MySqlTable>( table ), ReinterpretCast.To<MySqlCheckBuilder>( builder ) );
     }
 
     [Pure]
-    private T? TryGetTypedObject<T>(string name, SqlObjectType type)
-        where T : MySqlObject
+    protected override MySqlForeignKey CreateForeignKey(SqlIndex originIndex, SqlIndex referencedIndex, SqlForeignKeyBuilder builder)
     {
-        return _map.TryGetValue( name, out var obj ) && obj.Type == type ? ReinterpretCast.To<T>( obj ) : null;
-    }
-
-    [Pure]
-    ISqlObject ISqlObjectCollection.Get(string name)
-    {
-        return Get( name );
-    }
-
-    [Pure]
-    ISqlObject? ISqlObjectCollection.TryGet(string name)
-    {
-        return TryGet( name );
-    }
-
-    [Pure]
-    ISqlTable ISqlObjectCollection.GetTable(string name)
-    {
-        return GetTable( name );
-    }
-
-    [Pure]
-    ISqlTable? ISqlObjectCollection.TryGetTable(string name)
-    {
-        return TryGetTable( name );
-    }
-
-    [Pure]
-    ISqlIndex ISqlObjectCollection.GetIndex(string name)
-    {
-        return GetIndex( name );
-    }
-
-    [Pure]
-    ISqlIndex? ISqlObjectCollection.TryGetIndex(string name)
-    {
-        return TryGetIndex( name );
-    }
-
-    [Pure]
-    ISqlPrimaryKey ISqlObjectCollection.GetPrimaryKey(string name)
-    {
-        return GetPrimaryKey( name );
-    }
-
-    [Pure]
-    ISqlPrimaryKey? ISqlObjectCollection.TryGetPrimaryKey(string name)
-    {
-        return TryGetPrimaryKey( name );
-    }
-
-    [Pure]
-    ISqlForeignKey ISqlObjectCollection.GetForeignKey(string name)
-    {
-        return GetForeignKey( name );
-    }
-
-    [Pure]
-    ISqlForeignKey? ISqlObjectCollection.TryGetForeignKey(string name)
-    {
-        return TryGetForeignKey( name );
-    }
-
-    [Pure]
-    ISqlCheck ISqlObjectCollection.GetCheck(string name)
-    {
-        return GetCheck( name );
-    }
-
-    [Pure]
-    ISqlCheck? ISqlObjectCollection.TryGetCheck(string name)
-    {
-        return TryGetCheck( name );
-    }
-
-    [Pure]
-    ISqlView ISqlObjectCollection.GetView(string name)
-    {
-        return GetView( name );
-    }
-
-    [Pure]
-    ISqlView? ISqlObjectCollection.TryGetView(string name)
-    {
-        return TryGetView( name );
-    }
-
-    [Pure]
-    IEnumerator<ISqlObject> IEnumerable<ISqlObject>.GetEnumerator()
-    {
-        return GetEnumerator();
-    }
-
-    [Pure]
-    IEnumerator IEnumerable.GetEnumerator()
-    {
-        return GetEnumerator();
+        return new MySqlForeignKey(
+            ReinterpretCast.To<MySqlIndex>( originIndex ),
+            ReinterpretCast.To<MySqlIndex>( referencedIndex ),
+            ReinterpretCast.To<MySqlForeignKeyBuilder>( builder ) );
     }
 }

@@ -1,18 +1,14 @@
-﻿using LfrlAnvil.Sql.Objects;
-using LfrlAnvil.MySql.Objects.Builders;
+﻿using LfrlAnvil.MySql.Objects.Builders;
+using LfrlAnvil.Sql.Objects;
 
 namespace LfrlAnvil.MySql.Objects;
 
-public sealed class MySqlPrimaryKey : MySqlConstraint, ISqlPrimaryKey
+public sealed class MySqlPrimaryKey : SqlPrimaryKey
 {
     internal MySqlPrimaryKey(MySqlIndex index, MySqlPrimaryKeyBuilder builder)
-        : base( index.Table, builder )
-    {
-        Index = index;
-    }
+        : base( index, builder ) { }
 
-    public MySqlIndex Index { get; }
-    public override MySqlDatabase Database => Index.Database;
-
-    ISqlIndex ISqlPrimaryKey.Index => Index;
+    public new MySqlIndex Index => ReinterpretCast.To<MySqlIndex>( base.Index );
+    public new MySqlTable Table => ReinterpretCast.To<MySqlTable>( base.Table );
+    public new MySqlDatabase Database => ReinterpretCast.To<MySqlDatabase>( base.Database );
 }

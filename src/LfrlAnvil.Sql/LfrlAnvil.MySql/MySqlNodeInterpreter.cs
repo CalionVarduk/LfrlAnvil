@@ -5,7 +5,6 @@ using System.Globalization;
 using System.Runtime.CompilerServices;
 using LfrlAnvil.Extensions;
 using LfrlAnvil.MySql.Internal;
-using LfrlAnvil.MySql.Internal.Expressions;
 using LfrlAnvil.Sql;
 using LfrlAnvil.Sql.Exceptions;
 using LfrlAnvil.Sql.Expressions;
@@ -14,6 +13,7 @@ using LfrlAnvil.Sql.Expressions.Objects;
 using LfrlAnvil.Sql.Expressions.Persistence;
 using LfrlAnvil.Sql.Expressions.Traits;
 using LfrlAnvil.Sql.Expressions.Visitors;
+using LfrlAnvil.Sql.Internal;
 using MySqlConnector;
 
 namespace LfrlAnvil.MySql;
@@ -420,8 +420,9 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
         VisitChild( node.Value );
         Context.Sql.AppendSpace().Append( "AS" ).AppendSpace();
 
-        var typeDefinition = (MySqlColumnTypeDefinition?)node.TargetTypeDefinition ?? ColumnTypeDefinitions.GetByType( node.TargetType );
-        var name = typeDefinition.DataType.Value switch
+        var typeDefinition = node.TargetTypeDefinition ?? ColumnTypeDefinitions.GetByType( node.TargetType );
+        var dataType = SqlHelpers.CastOrThrow<MySqlDataType>( MySqlDialect.Instance, typeDefinition.DataType );
+        var name = dataType.Value switch
         {
             MySqlDbType.Bool => signed,
             MySqlDbType.Byte => signed,
@@ -434,20 +435,20 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
             MySqlDbType.UInt24 => unsigned,
             MySqlDbType.UInt32 => unsigned,
             MySqlDbType.UInt64 => unsigned,
-            MySqlDbType.String => GetChar( typeDefinition.DataType ),
-            MySqlDbType.VarString => GetChar( typeDefinition.DataType ),
-            MySqlDbType.VarChar => GetChar( typeDefinition.DataType ),
-            MySqlDbType.TinyText => GetChar( typeDefinition.DataType ),
-            MySqlDbType.Text => GetChar( typeDefinition.DataType ),
-            MySqlDbType.MediumText => GetChar( typeDefinition.DataType ),
-            MySqlDbType.LongText => GetChar( typeDefinition.DataType ),
-            MySqlDbType.Binary => GetBinary( typeDefinition.DataType ),
-            MySqlDbType.VarBinary => GetBinary( typeDefinition.DataType ),
-            MySqlDbType.TinyBlob => GetBinary( typeDefinition.DataType ),
-            MySqlDbType.Blob => GetBinary( typeDefinition.DataType ),
-            MySqlDbType.MediumBlob => GetBinary( typeDefinition.DataType ),
-            MySqlDbType.LongBlob => GetBinary( typeDefinition.DataType ),
-            _ => typeDefinition.DataType.Name
+            MySqlDbType.String => GetChar( dataType ),
+            MySqlDbType.VarString => GetChar( dataType ),
+            MySqlDbType.VarChar => GetChar( dataType ),
+            MySqlDbType.TinyText => GetChar( dataType ),
+            MySqlDbType.Text => GetChar( dataType ),
+            MySqlDbType.MediumText => GetChar( dataType ),
+            MySqlDbType.LongText => GetChar( dataType ),
+            MySqlDbType.Binary => GetBinary( dataType ),
+            MySqlDbType.VarBinary => GetBinary( dataType ),
+            MySqlDbType.TinyBlob => GetBinary( dataType ),
+            MySqlDbType.Blob => GetBinary( dataType ),
+            MySqlDbType.MediumBlob => GetBinary( dataType ),
+            MySqlDbType.LongBlob => GetBinary( dataType ),
+            _ => dataType.Name
         };
 
         Context.Sql.Append( name ).Append( ')' );
@@ -793,115 +794,6 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
             Context.Sql.AppendSpace().Append( "WITH" ).AppendSpace().Append( "CONSISTENT" ).AppendSpace().Append( "SNAPSHOT" );
     }
 
-    public override void VisitCustom(SqlNodeBase node)
-    {
-        if ( node is MySqlAlterTableNode alterTable )
-            VisitAlterTable( alterTable );
-        else
-            base.VisitCustom( node );
-    }
-
-    public void VisitAlterTable(MySqlAlterTableNode node)
-    {
-        using ( TempIgnoreAllRecordSets() )
-        {
-            Context.Sql.Append( "ALTER" ).AppendSpace().Append( "TABLE" ).AppendSpace();
-            AppendDelimitedRecordSetInfo( node.Info );
-
-            using ( Context.TempIndentIncrease() )
-            {
-                var containsChange = false;
-
-                foreach ( var name in node.OldForeignKeys )
-                {
-                    Context.AppendIndent().Append( "DROP" ).AppendSpace().Append( "FOREIGN" ).AppendSpace().Append( "KEY" ).AppendSpace();
-                    AppendDelimitedName( name );
-                    Context.Sql.AppendComma();
-                    containsChange = true;
-                }
-
-                if ( node.NewPrimaryKey is not null )
-                {
-                    Context.AppendIndent();
-                    Context.Sql.Append( "DROP" ).AppendSpace().Append( "PRIMARY" ).AppendSpace().Append( "KEY" ).AppendComma();
-                    containsChange = true;
-                }
-
-                foreach ( var name in node.OldChecks )
-                {
-                    Context.AppendIndent().Append( "DROP" ).AppendSpace().Append( "CHECK" ).AppendSpace();
-                    AppendDelimitedName( name );
-                    Context.Sql.AppendComma();
-                    containsChange = true;
-                }
-
-                foreach ( var (oldName, newName) in node.RenamedIndexes )
-                {
-                    Context.AppendIndent();
-                    Context.Sql.Append( "RENAME" ).AppendSpace().Append( "INDEX" ).AppendSpace();
-                    AppendDelimitedName( oldName );
-                    Context.Sql.AppendSpace().Append( "TO" ).AppendSpace();
-                    AppendDelimitedName( newName );
-                    Context.Sql.AppendComma();
-                    containsChange = true;
-                }
-
-                foreach ( var name in node.OldColumns )
-                {
-                    Context.AppendIndent().Append( "DROP" ).AppendSpace().Append( "COLUMN" ).AppendSpace();
-                    AppendDelimitedName( name );
-                    Context.Sql.AppendComma();
-                    containsChange = true;
-                }
-
-                foreach ( var (oldName, column) in node.ChangedColumns )
-                {
-                    Context.AppendIndent().Append( "CHANGE" ).AppendSpace().Append( "COLUMN" ).AppendSpace();
-                    AppendDelimitedName( oldName );
-                    Context.Sql.AppendSpace();
-                    VisitColumnDefinition( column );
-                    Context.Sql.AppendComma();
-                    containsChange = true;
-                }
-
-                foreach ( var column in node.NewColumns )
-                {
-                    Context.AppendIndent().Append( "ADD" ).AppendSpace().Append( "COLUMN" ).AppendSpace();
-                    VisitColumnDefinition( column );
-                    Context.Sql.AppendComma();
-                    containsChange = true;
-                }
-
-                if ( node.NewPrimaryKey is not null )
-                {
-                    Context.AppendIndent();
-                    Context.Sql.Append( "ADD" ).AppendSpace();
-                    VisitPrimaryKeyDefinition( node.NewPrimaryKey );
-                    Context.Sql.AppendComma();
-                }
-
-                foreach ( var check in node.NewChecks )
-                {
-                    Context.AppendIndent().Append( "ADD" ).AppendSpace();
-                    VisitCheckDefinition( check );
-                    Context.Sql.AppendComma();
-                    containsChange = true;
-                }
-
-                foreach ( var foreignKey in node.NewForeignKeys )
-                {
-                    Context.AppendIndent().Append( "ADD" ).AppendSpace();
-                    VisitForeignKeyDefinition( foreignKey );
-                    Context.Sql.AppendComma();
-                    containsChange = true;
-                }
-
-                if ( containsChange )
-                    Context.Sql.ShrinkBy( 1 );
-            }
-        }
-    }
-
     public sealed override void AppendDelimitedTemporaryObjectName(string name)
     {
         AppendDelimitedName( name );
@@ -1042,7 +934,7 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
             if ( type is not null )
             {
                 var typeDefinition = ColumnTypeDefinitions.GetByType( type.Value.UnderlyingType );
-                if ( IsTextOrBlobType( typeDefinition.DataType ) )
+                if ( typeDefinition.DataType is MySqlDataType dataType && IsTextOrBlobType( dataType ) )
                     Context.Sql.Append( '(' ).Append( _indexPrefixLength ).Append( ')' );
             }
         }

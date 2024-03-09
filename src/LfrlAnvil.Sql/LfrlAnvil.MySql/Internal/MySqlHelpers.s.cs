@@ -1,17 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics.Contracts;
-using System.Globalization;
-using System.Runtime.CompilerServices;
-using System.Text;
-using LfrlAnvil.Exceptions;
-using LfrlAnvil.Extensions;
-using LfrlAnvil.MySql.Exceptions;
-using LfrlAnvil.MySql.Objects.Builders;
+﻿using LfrlAnvil.Extensions;
 using LfrlAnvil.Sql;
-using LfrlAnvil.Sql.Exceptions;
-using LfrlAnvil.Sql.Objects.Builders;
-using ExceptionResources = LfrlAnvil.Sql.Exceptions.ExceptionResources;
+using LfrlAnvil.Sql.Expressions;
+using LfrlAnvil.Sql.Expressions.Visitors;
+using LfrlAnvil.Sql.Internal;
 
 namespace LfrlAnvil.MySql.Internal;
 
@@ -20,227 +11,106 @@ internal static class MySqlHelpers
     public static readonly SqlSchemaObjectName DefaultVersionHistoryName = SqlSchemaObjectName.Create( "common", "__VersionHistory" );
     public const string GuidFunctionName = "GUID";
     public const string DropIndexIfExistsProcedureName = "_DROP_INDEX_IF_EXISTS";
-    private const int StackallocThreshold = 64;
-    private const char TextDelimiter = '\'';
-    private const char BlobMarker = 'X';
-    private static readonly string EmptyTextLiteral = $"{TextDelimiter}{TextDelimiter}";
-    private static readonly string EmptyBlobLiteral = $"{BlobMarker}{EmptyTextLiteral}";
 
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static T CastOrThrow<T>(object obj)
+    public static void AppendAlterTableHeader(SqlNodeInterpreter interpreter, SqlRecordSetInfo info)
     {
-        if ( obj is T t )
-            return t;
-
-        ExceptionThrower.Throw( new SqlObjectCastException( MySqlDialect.Instance, typeof( T ), obj.GetType() ) );
-        return default!;
+        interpreter.Context.Sql.Append( "ALTER" ).AppendSpace().Append( "TABLE" ).AppendSpace();
+        interpreter.AppendDelimitedRecordSetInfo( info );
     }
 
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static string GetFullName(string schemaName, string name)
+    public static void AppendAlterTableDropForeignKey(SqlNodeInterpreter interpreter, string name)
     {
-        return $"{schemaName}.{name}";
+        interpreter.Context.AppendIndent().Append( "DROP" ).AppendSpace().Append( "FOREIGN" ).AppendSpace().Append( "KEY" ).AppendSpace();
+        interpreter.AppendDelimitedName( name );
+        interpreter.Context.Sql.AppendComma();
     }
 
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static string GetFullName(string schemaName, string recordSetName, string name)
+    public static void AppendAlterTableDropPrimaryKey(SqlNodeInterpreter interpreter)
     {
-        return $"{schemaName}.{recordSetName}.{name}";
+        interpreter.Context.AppendIndent();
+        interpreter.Context.Sql.Append( "DROP" ).AppendSpace().Append( "PRIMARY" ).AppendSpace().Append( "KEY" ).AppendComma();
     }
 
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static string GetDefaultPrimaryKeyName(MySqlTableBuilder table)
+    public static void AppendAlterTableDropCheck(SqlNodeInterpreter interpreter, string name)
     {
-        return $"PK_{table.Name}";
+        interpreter.Context.AppendIndent().Append( "DROP" ).AppendSpace().Append( "CHECK" ).AppendSpace();
+        interpreter.AppendDelimitedName( name );
+        interpreter.Context.Sql.AppendComma();
     }
 
-    [Pure]
-    public static string GetDefaultForeignKeyName(MySqlIndexBuilder originIndex, MySqlIndexBuilder referencedIndex)
+    public static void AppendAlterTableRenameIndex(SqlNodeInterpreter interpreter, string originalName, string name)
     {
-        var builder = new StringBuilder( 32 );
-        builder.Append( "FK_" ).Append( originIndex.Table.Name );
-
-        foreach ( var c in originIndex.Columns )
-            builder.Append( '_' ).Append( c.Column.Name );
-
-        builder.Append( "_REF_" );
-        if ( ! ReferenceEquals( originIndex.Table.Schema, referencedIndex.Table.Schema ) )
-            builder.Append( referencedIndex.Table.Schema.Name ).Append( '_' );
-
-        builder.Append( referencedIndex.Table.Name );
-        return builder.ToString();
+        interpreter.Context.AppendIndent();
+        interpreter.Context.Sql.Append( "RENAME" ).AppendSpace().Append( "INDEX" ).AppendSpace();
+        interpreter.AppendDelimitedName( originalName );
+        interpreter.Context.Sql.AppendSpace().Append( "TO" ).AppendSpace();
+        interpreter.AppendDelimitedName( name );
+        interpreter.Context.Sql.AppendComma();
     }
 
-    [Pure]
-    public static string GetDefaultCheckName(MySqlTableBuilder table)
+    public static void AppendAlterTableDropColumn(SqlNodeInterpreter interpreter, string name)
     {
-        return $"CHK_{table.Name}_{Guid.NewGuid():N}";
+        interpreter.Context.AppendIndent().Append( "DROP" ).AppendSpace().Append( "COLUMN" ).AppendSpace();
+        interpreter.AppendDelimitedName( name );
+        interpreter.Context.Sql.AppendComma();
     }
 
-    [Pure]
-    public static string GetDefaultIndexName(
-        MySqlTableBuilder table,
-        ReadOnlyArray<SqlIndexColumnBuilder<ISqlColumnBuilder>> columns,
-        bool isUnique)
+    public static void AppendAlterTableChangeColumn(SqlNodeInterpreter interpreter, string originalName, SqlColumnDefinitionNode column)
     {
-        var builder = new StringBuilder( 32 );
-        if ( isUnique )
-            builder.Append( 'U' );
-
-        builder.Append( "IX_" ).Append( table.Name );
-
-        foreach ( var c in columns )
-            builder.Append( '_' ).Append( c.Column.Name ).Append( c.Ordering == OrderBy.Asc ? 'A' : 'D' );
-
-        return builder.ToString();
+        interpreter.Context.AppendIndent().Append( "CHANGE" ).AppendSpace().Append( "COLUMN" ).AppendSpace();
+        interpreter.AppendDelimitedName( originalName );
+        interpreter.Context.Sql.AppendSpace();
+        interpreter.VisitColumnDefinition( column );
+        interpreter.Context.Sql.AppendComma();
     }
 
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static void AssertName(string name)
+    public static void AppendAlterTableAddColumn(SqlNodeInterpreter interpreter, SqlColumnDefinitionNode column)
     {
-        if ( string.IsNullOrWhiteSpace( name ) || name.Contains( '`' ) || name.Contains( '\'' ) )
-            ExceptionThrower.Throw( new MySqlObjectBuilderException( ExceptionResources.InvalidName( name ) ) );
+        interpreter.Context.AppendIndent().Append( "ADD" ).AppendSpace().Append( "COLUMN" ).AppendSpace();
+        interpreter.VisitColumnDefinition( column );
+        interpreter.Context.Sql.AppendComma();
     }
 
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static string GetDbLiteral(bool value)
+    public static void AppendAlterTableAddPrimaryKey(SqlNodeInterpreter interpreter, SqlPrimaryKeyDefinitionNode primaryKey)
     {
-        return value ? "1" : "0";
+        interpreter.Context.AppendIndent();
+        interpreter.Context.Sql.Append( "ADD" ).AppendSpace();
+        interpreter.VisitPrimaryKeyDefinition( primaryKey );
+        interpreter.Context.Sql.AppendComma();
     }
 
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static string GetDbLiteral(ulong value)
+    public static void AppendAlterTableAddCheck(SqlNodeInterpreter interpreter, SqlCheckDefinitionNode check)
     {
-        return value.ToString( CultureInfo.InvariantCulture );
+        interpreter.Context.AppendIndent().Append( "ADD" ).AppendSpace();
+        interpreter.VisitCheckDefinition( check );
+        interpreter.Context.Sql.AppendComma();
     }
 
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static string GetDbLiteral(long value)
+    public static void AppendAlterTableAddForeignKey(SqlNodeInterpreter interpreter, SqlForeignKeyDefinitionNode foreignKey)
     {
-        return value.ToString( CultureInfo.InvariantCulture );
+        interpreter.Context.AppendIndent().Append( "ADD" ).AppendSpace();
+        interpreter.VisitForeignKeyDefinition( foreignKey );
+        interpreter.Context.Sql.AppendComma();
     }
 
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static string GetDbLiteral(double value)
-    {
-        var result = value.ToString( "G17", CultureInfo.InvariantCulture );
-        return IsFloatingPoint( result ) ? result : $"{result}.0";
-    }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static string GetDbLiteral(float value)
-    {
-        var result = value.ToString( "G9", CultureInfo.InvariantCulture );
-        return IsFloatingPoint( result ) ? result : $"{result}.0";
-    }
-
-    [Pure]
-    public static string GetDbLiteral(string value)
-    {
-        var delimiterIndex = value.IndexOf( TextDelimiter );
-        if ( delimiterIndex == -1 )
-            return value.Length == 0 ? EmptyTextLiteral : $"{TextDelimiter}{value}{TextDelimiter}";
-
-        var delimiterCount = GetDelimiterCount( value.AsSpan( delimiterIndex + 1 ) ) + 1;
-
-        var length = checked( value.Length + delimiterCount + 2 );
-        var data = length <= StackallocThreshold ? stackalloc char[length] : new char[length];
-        data[0] = TextDelimiter;
-
-        var startIndex = 0;
-        var buffer = data.Slice( 1, data.Length - 2 );
-
-        do
-        {
-            var segment = value.AsSpan( startIndex, delimiterIndex - startIndex );
-            segment.CopyTo( buffer );
-            buffer[segment.Length] = TextDelimiter;
-            buffer[segment.Length + 1] = TextDelimiter;
-            buffer = buffer.Slice( segment.Length + 2 );
-
-            startIndex = delimiterIndex + 1;
-            delimiterIndex = value.IndexOf( TextDelimiter, startIndex );
-        }
-        while ( delimiterIndex != -1 );
-
-        value.AsSpan( startIndex ).CopyTo( buffer );
-        data[^1] = TextDelimiter;
-        return new string( data );
-
-        [Pure]
-        static int GetDelimiterCount(ReadOnlySpan<char> text)
-        {
-            var count = 0;
-            for ( var i = 0; i < text.Length; ++i )
-            {
-                if ( text[i] == TextDelimiter )
-                    ++count;
-            }
-
-            return count;
-        }
-    }
-
-    [Pure]
-    public static string GetDbLiteral(ReadOnlySpan<byte> value)
-    {
-        if ( value.Length == 0 )
-            return EmptyBlobLiteral;
-
-        var length = checked( (value.Length << 1) + 3 );
-        var data = length <= StackallocThreshold ? stackalloc char[length] : new char[length];
-        data[0] = BlobMarker;
-        data[1] = TextDelimiter;
-        var index = 2;
-
-        for ( var i = 0; i < value.Length; ++i )
-        {
-            var b = value[i];
-            data[index++] = ToHexChar( b >> 4 );
-            data[index++] = ToHexChar( b & 0xF );
-        }
-
-        data[^1] = TextDelimiter;
-        return new string( data );
-
-        [Pure]
-        [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        static char ToHexChar(int value)
-        {
-            Assume.IsInRange( value, 0, 15 );
-            return (char)(value < 10 ? '0' + value : 'A' + value - 10);
-        }
-    }
-
-    public static void AppendCreateSchemaStatement(MySqlNodeInterpreter interpreter, string name)
+    public static void AppendCreateSchema(SqlNodeInterpreter interpreter, string name)
     {
         interpreter.Context.Sql.Append( "CREATE" ).AppendSpace().Append( "SCHEMA" ).AppendSpace();
         interpreter.AppendDelimitedName( name );
-        interpreter.Context.Sql.AppendSemicolon();
     }
 
-    public static void AppendDropSchemaStatement(MySqlNodeInterpreter interpreter, string name)
+    public static void AppendDropSchema(SqlNodeInterpreter interpreter, string name)
     {
         interpreter.Context.Sql.Append( "DROP" ).AppendSpace().Append( "SCHEMA" ).AppendSpace();
         interpreter.AppendDelimitedName( name );
-        interpreter.Context.Sql.AppendSemicolon();
     }
 
-    public static void AppendCreateGuidFunctionStatement(MySqlNodeInterpreter interpreter, string schemaName)
+    public static void AppendCreateGuidFunction(SqlNodeInterpreter interpreter, string schemaName)
     {
         interpreter.Context.Sql.Append( "CREATE" ).AppendSpace().Append( "FUNCTION" ).AppendSpace();
         interpreter.AppendDelimitedSchemaObjectName( schemaName, GuidFunctionName );
         interpreter.Context.Sql.Append( '(' ).Append( ')' ).AppendSpace();
-        interpreter.Context.Sql.Append( "RETURNS" ).AppendSpace().Append( MySqlDataType.CreateBinary( 16 ).Name );
+        interpreter.Context.Sql.Append( "RETURNS" ).AppendSpace().Append( MySqlDataTypeProvider.Guid.Name );
         interpreter.Context.AppendIndent().Append( "BEGIN" );
 
         using ( interpreter.Context.TempIndentIncrease() )
@@ -250,8 +120,10 @@ internal static class MySqlHelpers
             interpreter.Context.Sql.Append( '=' ).AppendSpace().Append( "UNHEX" ).Append( '(' );
             interpreter.Context.Sql.Append( "REPLACE" ).Append( '(' );
             interpreter.Context.Sql.Append( "UUID" ).Append( '(' ).Append( ')' ).AppendComma().AppendSpace();
-            interpreter.Context.Sql.Append( TextDelimiter ).Append( '-' ).Append( TextDelimiter ).AppendComma().AppendSpace();
-            interpreter.Context.Sql.Append( EmptyTextLiteral ).Append( ')' ).Append( ')' ).AppendSemicolon();
+            interpreter.Context.Sql.Append( SqlHelpers.TextDelimiter ).Append( '-' ).Append( SqlHelpers.TextDelimiter );
+            interpreter.Context.Sql.AppendComma().AppendSpace();
+
+            interpreter.Context.Sql.Append( SqlHelpers.EmptyTextLiteral ).Append( ')' ).Append( ')' ).AppendSemicolon();
 
             interpreter.Context.AppendIndent().Append( "RETURN" ).AppendSpace().Append( "CONCAT" ).Append( '(' );
             interpreter.Context.Sql.Append( "REVERSE" ).Append( '(' ).Append( "SUBSTRING" ).Append( '(' );
@@ -268,10 +140,10 @@ internal static class MySqlHelpers
             interpreter.Context.Sql.Append( ')' ).AppendSemicolon();
         }
 
-        interpreter.Context.AppendIndent().Append( "END" ).AppendSemicolon();
+        interpreter.Context.AppendIndent().Append( "END" );
     }
 
-    public static void AppendDropIndexIfExistsProcedureStatement(MySqlNodeInterpreter interpreter, string schemaName)
+    public static void AppendCreateDropIndexIfExistsProcedure(SqlNodeInterpreter interpreter, string schemaName)
     {
         const string pSchemaName = "schema_name";
         const string pTableName = "table_name";
@@ -322,18 +194,23 @@ internal static class MySqlHelpers
                 const string vText = "@text";
                 interpreter.Context.AppendIndent().Append( "SET" ).AppendSpace().Append( vText ).AppendSpace();
                 interpreter.Context.Sql.Append( '=' ).AppendSpace().Append( "CONCAT" ).Append( '(' );
-                interpreter.Context.Sql.Append( TextDelimiter ).Append( "DROP" ).AppendSpace().Append( "INDEX" ).AppendSpace();
-                interpreter.Context.Sql.Append( interpreter.BeginNameDelimiter ).Append( TextDelimiter ).AppendComma().AppendSpace();
+                interpreter.Context.Sql.Append( SqlHelpers.TextDelimiter ).Append( "DROP" ).AppendSpace().Append( "INDEX" ).AppendSpace();
+                interpreter.Context.Sql.Append( interpreter.BeginNameDelimiter );
+                interpreter.Context.Sql.Append( SqlHelpers.TextDelimiter ).AppendComma().AppendSpace();
+
                 interpreter.AppendDelimitedName( pIndexName );
-                interpreter.Context.Sql.AppendComma().AppendSpace().Append( TextDelimiter );
+                interpreter.Context.Sql.AppendComma().AppendSpace().Append( SqlHelpers.TextDelimiter );
                 interpreter.Context.Sql.Append( interpreter.EndNameDelimiter ).AppendSpace().Append( "ON" ).AppendSpace();
-                interpreter.Context.Sql.Append( interpreter.BeginNameDelimiter ).Append( TextDelimiter ).AppendComma().AppendSpace();
-                interpreter.Context.Sql.Append( vSchemaName ).AppendComma().AppendSpace().Append( TextDelimiter );
-                interpreter.Context.Sql.Append( interpreter.EndNameDelimiter ).AppendDot();
-                interpreter.Context.Sql.Append( interpreter.BeginNameDelimiter ).Append( TextDelimiter ).AppendComma().AppendSpace();
+                interpreter.Context.Sql.Append( interpreter.BeginNameDelimiter );
+                interpreter.Context.Sql.Append( SqlHelpers.TextDelimiter ).AppendComma().AppendSpace();
+
+                interpreter.Context.Sql.Append( vSchemaName ).AppendComma().AppendSpace().Append( SqlHelpers.TextDelimiter );
+                interpreter.Context.Sql.Append( interpreter.EndNameDelimiter ).AppendDot().Append( interpreter.BeginNameDelimiter );
+                interpreter.Context.Sql.Append( SqlHelpers.TextDelimiter ).AppendComma().AppendSpace();
+
                 interpreter.AppendDelimitedName( pTableName );
-                interpreter.Context.Sql.AppendComma().AppendSpace().Append( TextDelimiter );
-                interpreter.Context.Sql.Append( interpreter.EndNameDelimiter ).AppendSemicolon().Append( TextDelimiter );
+                interpreter.Context.Sql.AppendComma().AppendSpace().Append( SqlHelpers.TextDelimiter );
+                interpreter.Context.Sql.Append( interpreter.EndNameDelimiter ).AppendSemicolon().Append( SqlHelpers.TextDelimiter );
                 interpreter.Context.Sql.Append( ')' ).AppendSemicolon();
 
                 const string vStmt = "stmt";
@@ -345,130 +222,6 @@ internal static class MySqlHelpers
             interpreter.Context.AppendIndent().Append( "END" ).AppendSpace().Append( "IF" ).AppendSemicolon();
         }
 
-        interpreter.Context.AppendIndent().Append( "END" ).AppendSemicolon();
-    }
-
-    [Pure]
-    internal static SqlIndexColumnBuilder<ISqlColumnBuilder>[] CreateIndexColumns(
-        MySqlTableBuilder table,
-        ReadOnlyArray<SqlIndexColumnBuilder<ISqlColumnBuilder>> columns)
-    {
-        if ( columns.Count == 0 )
-            throw new MySqlObjectBuilderException( ExceptionResources.IndexMustHaveAtLeastOneColumn );
-
-        var errors = Chain<string>.Empty;
-        var uniqueColumnIds = new HashSet<ulong>();
-
-        var result = new SqlIndexColumnBuilder<ISqlColumnBuilder>[columns.Count];
-        for ( var i = 0; i < columns.Count; ++i )
-        {
-            var column = CastOrThrow<MySqlColumnBuilder>( columns[i].Column );
-            result[i] = columns[i];
-
-            if ( ! uniqueColumnIds.Add( column.Id ) )
-            {
-                errors = errors.Extend( ExceptionResources.ColumnIsDuplicated( column ) );
-                continue;
-            }
-
-            if ( ! ReferenceEquals( column.Table, table ) )
-                errors = errors.Extend( ExceptionResources.ObjectDoesNotBelongToTable( column, table ) );
-
-            if ( column.IsRemoved )
-                errors = errors.Extend( ExceptionResources.ObjectHasBeenRemoved( column ) );
-        }
-
-        if ( errors.Count > 0 )
-            throw new MySqlObjectBuilderException( errors );
-
-        return result;
-    }
-
-    internal static void AssertPrimaryKey(MySqlTableBuilder table, MySqlIndexBuilder index)
-    {
-        var errors = Chain<string>.Empty;
-        if ( index.IsRemoved )
-            errors = errors.Extend( ExceptionResources.ObjectHasBeenRemoved( index ) );
-
-        if ( ! index.IsUnique )
-            errors = errors.Extend( ExceptionResources.IndexIsNotMarkedAsUnique( index ) );
-
-        if ( index.Filter is not null )
-            errors = errors.Extend( ExceptionResources.IndexIsPartial( index ) );
-
-        if ( ! ReferenceEquals( index.Table, table ) )
-            errors = errors.Extend( ExceptionResources.ObjectDoesNotBelongToTable( index, table ) );
-
-        foreach ( var c in index.Columns )
-        {
-            if ( c.Column.IsNullable )
-                errors = errors.Extend( ExceptionResources.ColumnIsNullable( c.Column ) );
-        }
-
-        if ( errors.Count > 0 )
-            throw new MySqlObjectBuilderException( errors );
-    }
-
-    internal static void AssertForeignKey(MySqlTableBuilder table, MySqlIndexBuilder originIndex, MySqlIndexBuilder referencedIndex)
-    {
-        var errors = Chain<string>.Empty;
-
-        if ( ReferenceEquals( originIndex, referencedIndex ) )
-            errors = errors.Extend( ExceptionResources.ForeignKeyOriginIndexAndReferencedIndexAreTheSame );
-
-        if ( ! ReferenceEquals( table, originIndex.Table ) )
-            errors = errors.Extend( ExceptionResources.ObjectDoesNotBelongToTable( originIndex, table ) );
-
-        if ( ! ReferenceEquals( originIndex.Database, referencedIndex.Database ) )
-            errors = errors.Extend( ExceptionResources.ObjectBelongsToAnotherDatabase( referencedIndex ) );
-
-        if ( originIndex.IsRemoved )
-            errors = errors.Extend( ExceptionResources.ObjectHasBeenRemoved( originIndex ) );
-
-        if ( referencedIndex.IsRemoved )
-            errors = errors.Extend( ExceptionResources.ObjectHasBeenRemoved( referencedIndex ) );
-
-        if ( ! referencedIndex.IsUnique )
-            errors = errors.Extend( ExceptionResources.IndexIsNotMarkedAsUnique( referencedIndex ) );
-
-        if ( referencedIndex.Filter is not null )
-            errors = errors.Extend( ExceptionResources.IndexIsPartial( referencedIndex ) );
-
-        var indexColumns = originIndex.Columns;
-        var referencedIndexColumns = referencedIndex.Columns;
-
-        foreach ( var c in referencedIndexColumns )
-        {
-            if ( c.Column.IsNullable )
-                errors = errors.Extend( ExceptionResources.ColumnIsNullable( c.Column ) );
-        }
-
-        if ( indexColumns.Count != referencedIndexColumns.Count )
-            errors = errors.Extend( ExceptionResources.ForeignKeyOriginIndexAndReferencedIndexMustHaveTheSameAmountOfColumns );
-        else
-        {
-            for ( var i = 0; i < indexColumns.Count; ++i )
-            {
-                var column = indexColumns[i].Column;
-                var refColumn = referencedIndexColumns[i].Column;
-                if ( column.TypeDefinition.RuntimeType != refColumn.TypeDefinition.RuntimeType )
-                    errors = errors.Extend( ExceptionResources.ColumnTypesAreIncompatible( column, refColumn ) );
-            }
-        }
-
-        if ( errors.Count > 0 )
-            throw new MySqlObjectBuilderException( errors );
-    }
-
-    [Pure]
-    private static bool IsFloatingPoint(string value)
-    {
-        foreach ( var c in value )
-        {
-            if ( c == '.' || char.ToLower( c ) == 'e' )
-                return true;
-        }
-
-        return false;
+        interpreter.Context.AppendIndent().Append( "END" );
     }
 }

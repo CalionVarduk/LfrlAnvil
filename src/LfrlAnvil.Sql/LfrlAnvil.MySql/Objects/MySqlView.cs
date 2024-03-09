@@ -1,39 +1,14 @@
-﻿using System.Diagnostics.Contracts;
-using LfrlAnvil.MySql.Internal;
-using LfrlAnvil.Sql;
-using LfrlAnvil.Sql.Expressions;
-using LfrlAnvil.Sql.Expressions.Objects;
+﻿using LfrlAnvil.MySql.Objects.Builders;
 using LfrlAnvil.Sql.Objects;
-using LfrlAnvil.MySql.Objects.Builders;
 
 namespace LfrlAnvil.MySql.Objects;
 
-public sealed class MySqlView : MySqlObject, ISqlView
+public sealed class MySqlView : SqlView
 {
-    private SqlRecordSetInfo? _info;
-    private SqlViewNode? _recordSet;
-
     internal MySqlView(MySqlSchema schema, MySqlViewBuilder builder)
-        : base( builder )
-    {
-        Schema = schema;
-        DataFields = new MySqlViewDataFieldCollection( this, builder.Source );
-        _info = builder.GetCachedInfo();
-        _recordSet = null;
-    }
+        : base( schema, builder, new MySqlViewDataFieldCollection( builder.Source ) ) { }
 
-    public MySqlSchema Schema { get; }
-    public MySqlViewDataFieldCollection DataFields { get; }
-    public SqlRecordSetInfo Info => _info ??= SqlRecordSetInfo.Create( Schema.Name, Name );
-    public SqlViewNode Node => _recordSet ??= SqlNode.View( this );
-    public override MySqlDatabase Database => Schema.Database;
-
-    ISqlSchema ISqlView.Schema => Schema;
-    ISqlViewDataFieldCollection ISqlView.DataFields => DataFields;
-
-    [Pure]
-    public override string ToString()
-    {
-        return $"[{Type}] {MySqlHelpers.GetFullName( Schema.Name, Name )}";
-    }
+    public new MySqlViewDataFieldCollection DataFields => ReinterpretCast.To<MySqlViewDataFieldCollection>( base.DataFields );
+    public new MySqlSchema Schema => ReinterpretCast.To<MySqlSchema>( base.Schema );
+    public new MySqlDatabase Database => ReinterpretCast.To<MySqlDatabase>( base.Database );
 }

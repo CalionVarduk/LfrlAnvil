@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics.Contracts;
+using LfrlAnvil.Sql.Internal;
 
 namespace LfrlAnvil.MySql.Internal.TypeDefinitions;
 
@@ -14,7 +15,7 @@ internal sealed class MySqlColumnTypeDefinitionByteArray : MySqlColumnTypeDefini
     [Pure]
     public override string ToDbLiteral(byte[] value)
     {
-        return MySqlHelpers.GetDbLiteral( value );
+        return SqlHelpers.GetDbLiteral( value );
     }
 
     [Pure]

@@ -22,7 +22,6 @@ internal sealed class SqlitePersistentDatabase : SqliteDatabase
         ReadOnlyArray<Action<SqlDatabaseConnectionChangeEvent>> connectionChangeCallbacks)
         : base( connectionStringBuilder, builder, version, versionRecordsQuery )
     {
-        Assume.Equals( connectionString, connectionStringBuilder.ToString() );
         _connectionString = connectionString;
         _connectionChangeCallbacks = connectionChangeCallbacks;
     }

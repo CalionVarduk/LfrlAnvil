@@ -3,17 +3,11 @@ using LfrlAnvil.Sql.Objects;
 
 namespace LfrlAnvil.MySql.Objects;
 
-public sealed class MySqlSchema : MySqlObject, ISqlSchema
+public sealed class MySqlSchema : SqlSchema
 {
     internal MySqlSchema(MySqlDatabase database, MySqlSchemaBuilder builder)
-        : base( builder )
-    {
-        Database = database;
-        Objects = new MySqlObjectCollection( this, builder.Objects.Count );
-    }
+        : base( database, builder, new MySqlObjectCollection( builder.Objects ) ) { }
 
-    public MySqlObjectCollection Objects { get; }
-    public override MySqlDatabase Database { get; }
-
-    ISqlObjectCollection ISqlSchema.Objects => Objects;
+    public new MySqlObjectCollection Objects => ReinterpretCast.To<MySqlObjectCollection>( base.Objects );
+    public new MySqlDatabase Database => ReinterpretCast.To<MySqlDatabase>( base.Database );
 }

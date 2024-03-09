@@ -4,29 +4,26 @@ using System.Diagnostics.Contracts;
 using System.Linq;
 using LfrlAnvil.Functional;
 using LfrlAnvil.MySql.Extensions;
-using LfrlAnvil.MySql.Internal;
-using LfrlAnvil.MySql.Internal.Expressions;
 using LfrlAnvil.MySql.Objects;
 using LfrlAnvil.MySql.Objects.Builders;
 using LfrlAnvil.MySql.Tests.Helpers;
 using LfrlAnvil.Sql;
 using LfrlAnvil.Sql.Exceptions;
 using LfrlAnvil.Sql.Expressions;
-using LfrlAnvil.Sql.Expressions.Functions;
 using LfrlAnvil.Sql.Expressions.Objects;
 using LfrlAnvil.Sql.Expressions.Traits;
 using LfrlAnvil.Sql.Expressions.Visitors;
 using LfrlAnvil.Sql.Objects.Builders;
 using LfrlAnvil.TestExtensions.FluentAssertions;
+using LfrlAnvil.TestExtensions.Sql.FluentAssertions;
+using LfrlAnvil.TestExtensions.Sql.Mocks;
 using MySqlConnector;
 
 namespace LfrlAnvil.MySql.Tests;
 
 public class MySqlNodeInterpreterTests : TestsBase
 {
-    private readonly MySqlColumnTypeDefinitionProvider _typeDefinitions =
-        new MySqlColumnTypeDefinitionProvider( new MySqlDataTypeProvider() );
-
+    private readonly MySqlColumnTypeDefinitionProvider _typeDefinitions = CreateTypeDefinitions();
     private readonly MySqlNodeInterpreter _sut;
 
     public MySqlNodeInterpreterTests()
@@ -881,7 +878,7 @@ END" );
     [Fact]
     public void Visit_ShouldThrowUnrecognizedSqlNodeException_WhenFunctionIsCustom()
     {
-        var function = new FunctionMock();
+        var function = new SqlFunctionNodeMock();
 
         var action = Lambda.Of( () => _sut.Visit( function ) );
 
@@ -1164,7 +1161,7 @@ END" );
     [Fact]
     public void Visit_ShouldThrowUnrecognizedSqlNodeException_WhenAggregateFunctionIsCustom()
     {
-        var function = new AggregateFunctionMock();
+        var function = new SqlAggregateFunctionNodeMock();
 
         var action = Lambda.Of( () => _sut.Visit( function ) );
 
@@ -2365,7 +2362,7 @@ LIMIT 50 OFFSET 75" );
     [Fact]
     public void Visit_ShouldThrowUnrecognizedSqlNodeException_WhenNodeIsCustomWindowFrame()
     {
-        var node = new WindowFrameMock();
+        var node = new SqlWindowFrameMock();
 
         var action = Lambda.Of( () => _sut.Visit( node ) );
 
@@ -2407,18 +2404,6 @@ LIMIT 50 OFFSET 75" );
     [InlineData( typeof( DateTime ), "DATETIME(6)" )]
     public void Visit_ShouldInterpretTypeCast(Type type, string expectedDbType)
     {
-        _typeDefinitions.RegisterDefinition( new TypeDefinition<TypeMock<int>>( MySqlDbType.Int24 ) );
-        _typeDefinitions.RegisterDefinition( new TypeDefinition<TypeMock<uint>>( MySqlDbType.UInt24 ) );
-        _typeDefinitions.RegisterDefinition( new TypeDefinition<TypeMock<IEnumerable<char>>>( MySqlDbType.VarString ) );
-        _typeDefinitions.RegisterDefinition( new TypeDefinition<TypeMock<ICollection<char>>>( MySqlDataType.VarChar ) );
-        _typeDefinitions.RegisterDefinition( new TypeDefinition<TypeMock<IList<char>>>( MySqlDbType.TinyText ) );
-        _typeDefinitions.RegisterDefinition( new TypeDefinition<TypeMock<char[]>>( MySqlDbType.Text ) );
-        _typeDefinitions.RegisterDefinition( new TypeDefinition<TypeMock<IReadOnlyList<char>>>( MySqlDbType.MediumText ) );
-        _typeDefinitions.RegisterDefinition( new TypeDefinition<TypeMock<ICollection<byte>>>( MySqlDataType.VarBinary ) );
-        _typeDefinitions.RegisterDefinition( new TypeDefinition<TypeMock<IList<byte>>>( MySqlDbType.TinyBlob ) );
-        _typeDefinitions.RegisterDefinition( new TypeDefinition<TypeMock<IEnumerable<byte>>>( MySqlDbType.Blob ) );
-        _typeDefinitions.RegisterDefinition( new TypeDefinition<TypeMock<IReadOnlyList<byte>>>( MySqlDbType.MediumBlob ) );
-
         _sut.Visit( SqlNode.RawExpression( "foo.a" ).CastTo( type ) );
         _sut.Context.Sql.ToString().Should().Be( $"CAST((foo.a) AS {expectedDbType})" );
     }
@@ -4221,13 +4206,6 @@ WHERE EXISTS (
     [InlineData( typeof( byte[] ), "LONGBLOB" )]
     public void Visit_ShouldInterpretColumnDefinition_WithDefaultLiteralValueAsExpression(Type type, string expectedType)
     {
-        _typeDefinitions.RegisterDefinition( new TypeDefinition<TypeMock<IList<char>>>( MySqlDbType.TinyText ) );
-        _typeDefinitions.RegisterDefinition( new TypeDefinition<TypeMock<char[]>>( MySqlDbType.Text ) );
-        _typeDefinitions.RegisterDefinition( new TypeDefinition<TypeMock<IReadOnlyList<char>>>( MySqlDbType.MediumText ) );
-        _typeDefinitions.RegisterDefinition( new TypeDefinition<TypeMock<IList<byte>>>( MySqlDbType.TinyBlob ) );
-        _typeDefinitions.RegisterDefinition( new TypeDefinition<TypeMock<IEnumerable<byte>>>( MySqlDbType.Blob ) );
-        _typeDefinitions.RegisterDefinition( new TypeDefinition<TypeMock<IReadOnlyList<byte>>>( MySqlDbType.MediumBlob ) );
-
         _sut.Visit( SqlNode.Column( "a", TypeNullability.Create( type, isNullable: false ), defaultValue: SqlNode.Literal( "foo" ) ) );
         _sut.Context.Sql.ToString().Should().Be( $"`a` {expectedType} NOT NULL DEFAULT ('foo')" );
     }
@@ -4633,72 +4611,9 @@ COMMIT;" );
     }
 
     [Fact]
-    public void Visit_ShouldInterpretAlterTable()
-    {
-        var table = SqlNode.RawRecordSet( "foo.bar" );
-        var other = SqlNode.RawRecordSet( "foo.qux" );
-
-        _sut.Visit(
-            new MySqlAlterTableNode(
-                info: SqlRecordSetInfo.Create( "foo", "bar" ),
-                oldColumns: new[] { "a", "b" },
-                oldForeignKeys: new[] { "FK_1", "FK_2" },
-                oldChecks: new[] { "CHK_1", "CHK_2" },
-                renamedIndexes: new[] { KeyValuePair.Create( "IX_A", "IX_1" ), KeyValuePair.Create( "IX_B", "IX_2" ) },
-                changedColumns: new[]
-                {
-                    KeyValuePair.Create( "CA", SqlNode.Column<int>( "C1" ) ),
-                    KeyValuePair.Create( "CB", SqlNode.Column<int>( "C2", isNullable: true ) )
-                },
-                newColumns: new[] { SqlNode.Column<long>( "C3" ), SqlNode.Column<long>( "C4", isNullable: true ) },
-                newPrimaryKey: SqlNode.PrimaryKey( SqlSchemaObjectName.Create( "PK" ), SqlNode.OrderByAsc( table["C5"] ) ),
-                newForeignKeys: new[]
-                {
-                    SqlNode.ForeignKey(
-                        SqlSchemaObjectName.Create( "FK_3" ),
-                        new SqlDataFieldNode[] { table["C6"] },
-                        other,
-                        new SqlDataFieldNode[] { other["C1"] } ),
-                    SqlNode.ForeignKey(
-                        SqlSchemaObjectName.Create( "FK_4" ),
-                        new SqlDataFieldNode[] { table["C7"] },
-                        other,
-                        new SqlDataFieldNode[] { other["C2"] } )
-                },
-                newChecks: new[]
-                {
-                    SqlNode.Check( SqlSchemaObjectName.Create( "CHK_3" ), SqlNode.True() ),
-                    SqlNode.Check( SqlSchemaObjectName.Create( "CHK_4" ), SqlNode.False() )
-                } ) );
-
-        _sut.Context.Sql.ToString()
-            .Should()
-            .Be(
-                @"ALTER TABLE `foo`.`bar`
-  DROP FOREIGN KEY `FK_1`,
-  DROP FOREIGN KEY `FK_2`,
-  DROP PRIMARY KEY,
-  DROP CHECK `CHK_1`,
-  DROP CHECK `CHK_2`,
-  RENAME INDEX `IX_A` TO `IX_1`,
-  RENAME INDEX `IX_B` TO `IX_2`,
-  DROP COLUMN `a`,
-  DROP COLUMN `b`,
-  CHANGE COLUMN `CA` `C1` INT NOT NULL,
-  CHANGE COLUMN `CB` `C2` INT,
-  ADD COLUMN `C3` BIGINT NOT NULL,
-  ADD COLUMN `C4` BIGINT,
-  ADD CONSTRAINT `PK` PRIMARY KEY (`C5` ASC),
-  ADD CONSTRAINT `CHK_3` CHECK (TRUE),
-  ADD CONSTRAINT `CHK_4` CHECK (FALSE),
-  ADD CONSTRAINT `FK_3` FOREIGN KEY (`C6`) REFERENCES foo.qux (`C1`) ON DELETE RESTRICT ON UPDATE RESTRICT,
-  ADD CONSTRAINT `FK_4` FOREIGN KEY (`C7`) REFERENCES foo.qux (`C2`) ON DELETE RESTRICT ON UPDATE RESTRICT" );
-    }
-
-    [Fact]
     public void Visit_ShouldThrowUnrecognizedSqlNodeException_WhenNodeIsCustom()
     {
-        var node = new NodeMock();
+        var node = new SqlNodeMock();
 
         var action = Lambda.Of( () => _sut.Visit( node ) );
 
@@ -4707,52 +4622,22 @@ COMMIT;" );
             .AndMatch( e => ReferenceEquals( e.Node, node ) && ReferenceEquals( e.Visitor, _sut ) );
     }
 
-    [Fact]
-    public void AppendCreateSchemaStatement_ShouldAddCorrectSql()
+    [Pure]
+    private static MySqlColumnTypeDefinitionProvider CreateTypeDefinitions()
     {
-        MySqlHelpers.AppendCreateSchemaStatement( _sut, "foo" );
-        _sut.Context.Sql.ToString().Should().Be( "CREATE SCHEMA `foo`;" );
-    }
-
-    [Fact]
-    public void AppendDropSchemaStatement_ShouldAddCorrectSql()
-    {
-        MySqlHelpers.AppendDropSchemaStatement( _sut, "foo" );
-        _sut.Context.Sql.ToString().Should().Be( "DROP SCHEMA `foo`;" );
-    }
-
-    [Fact]
-    public void AppendCreateGuidFunctionStatement_ShouldAddCorrectSql()
-    {
-        MySqlHelpers.AppendCreateGuidFunctionStatement( _sut, "foo" );
-
-        _sut.Context.Sql.ToString()
-            .Should()
-            .Be(
-                @"CREATE FUNCTION `foo`.`GUID`() RETURNS BINARY(16)
-BEGIN
-  SET @value = UNHEX(REPLACE(UUID(), '-', ''));
-  RETURN CONCAT(REVERSE(SUBSTRING(@value, 1, 4)), REVERSE(SUBSTRING(@value, 5, 2)), REVERSE(SUBSTRING(@value, 7, 2)), SUBSTRING(@value, 9));
-END;" );
-    }
-
-    [Fact]
-    public void AppendDropIndexIfExistsProcedureStatement_ShouldAddCorrectSql()
-    {
-        MySqlHelpers.AppendDropIndexIfExistsProcedureStatement( _sut, "foo" );
-
-        _sut.Context.Sql.ToString()
-            .Should()
-            .Be(
-                @"CREATE PROCEDURE `foo`.`_DROP_INDEX_IF_EXISTS`(`schema_name` VARCHAR(128), `table_name` VARCHAR(128), `index_name` VARCHAR(128))
-BEGIN
-  SET @schema_name = COALESCE(`schema_name`, DATABASE());
-  IF EXISTS (SELECT * FROM `information_schema`.`statistics` AS `s` WHERE `s`.`table_schema` = @schema_name AND `s`.`table_name` = `table_name` AND `s`.`index_name` = `index_name`) THEN
-    SET @text = CONCAT('DROP INDEX `', `index_name`, '` ON `', @schema_name, '`.`', `table_name`, '`;');
-    PREPARE stmt FROM @text;
-    EXECUTE stmt;
-  END IF;
-END;" );
+        var builder = new MySqlColumnTypeDefinitionProviderBuilder();
+        builder.Register( new TypeDefinition<TypeMock<int>>( MySqlDbType.Int24 ) );
+        builder.Register( new TypeDefinition<TypeMock<uint>>( MySqlDbType.UInt24 ) );
+        builder.Register( new TypeDefinition<TypeMock<IEnumerable<char>>>( MySqlDbType.VarString ) );
+        builder.Register( new TypeDefinition<TypeMock<ICollection<char>>>( MySqlDataType.VarChar ) );
+        builder.Register( new TypeDefinition<TypeMock<IList<char>>>( MySqlDbType.TinyText ) );
+        builder.Register( new TypeDefinition<TypeMock<char[]>>( MySqlDbType.Text ) );
+        builder.Register( new TypeDefinition<TypeMock<IReadOnlyList<char>>>( MySqlDbType.MediumText ) );
+        builder.Register( new TypeDefinition<TypeMock<ICollection<byte>>>( MySqlDataType.VarBinary ) );
+        builder.Register( new TypeDefinition<TypeMock<IList<byte>>>( MySqlDbType.TinyBlob ) );
+        builder.Register( new TypeDefinition<TypeMock<IEnumerable<byte>>>( MySqlDbType.Blob ) );
+        builder.Register( new TypeDefinition<TypeMock<IReadOnlyList<byte>>>( MySqlDbType.MediumBlob ) );
+        return new MySqlColumnTypeDefinitionProvider( builder );
     }
 
     [Pure]
@@ -4829,31 +4714,6 @@ END;" );
         var builder = CreateViewBuilder( schemaName, viewName, source );
         var db = MySqlDatabaseMock.Create( builder.Database );
         return db.Schemas.Get( schemaName ).Objects.GetView( viewName );
-    }
-
-    private sealed class FunctionMock : SqlFunctionExpressionNode
-    {
-        public FunctionMock()
-            : base( Array.Empty<SqlExpressionNode>() ) { }
-    }
-
-    private sealed class AggregateFunctionMock : SqlAggregateFunctionExpressionNode
-    {
-        public AggregateFunctionMock()
-            : base( ReadOnlyMemory<SqlExpressionNode>.Empty, Chain<SqlTraitNode>.Empty ) { }
-
-        public override SqlAggregateFunctionExpressionNode SetTraits(Chain<SqlTraitNode> traits)
-        {
-            return new AggregateFunctionMock();
-        }
-    }
-
-    private sealed class NodeMock : SqlNodeBase { }
-
-    private sealed class WindowFrameMock : SqlWindowFrameNode
-    {
-        public WindowFrameMock()
-            : base( SqlWindowFrameBoundary.UnboundedPreceding, SqlWindowFrameBoundary.UnboundedFollowing ) { }
     }
 
     public readonly struct TypeMock<T> { }

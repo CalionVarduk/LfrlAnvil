@@ -48,6 +48,8 @@ public abstract class SqlDatabaseFactory<TDatabase> : ISqlDatabaseFactory
             var executor = new SqlDatabaseFactoryStatementExecutor( options );
             var versionHistoryName = options.VersionHistoryName ?? GetDefaultVersionHistoryName();
             var builder = CreateDatabaseBuilder( versionHistoryName.Schema, connection, ref executor );
+            stateChanges.SetBuilder( builder );
+
             Assume.Equals( builder.Schemas.Default.Name, versionHistoryName.Schema );
             Assume.IsEmpty( builder.Schemas.Default.Objects );
             Assume.ContainsExactly( builder.Schemas, 1 );
@@ -61,7 +63,6 @@ public abstract class SqlDatabaseFactory<TDatabase> : ISqlDatabaseFactory
                 ref executor );
 
             builder.Changes.SetModeAndAttach( SqlDatabaseCreateMode.NoChanges );
-            stateChanges.SetBuilder( builder );
 
             var versionHistoryRecordsQuery = CreateVersionHistoryRecordsQuery( versionHistoryTable, nodeInterpreter );
             var versions = CompareVersionHistoryToDatabase(
@@ -442,6 +443,7 @@ public abstract class SqlDatabaseFactory<TDatabase> : ISqlDatabaseFactory
         DbConnection connection,
         ref SqlDatabaseFactoryStatementExecutor executor)
     {
+        builder.Changes.SetModeAndAttach( SqlDatabaseCreateMode.DryRun );
         var attach = GetChangeTrackerAttachmentForVersionHistoryTableInit(
             builder.Changes,
             name,
@@ -450,7 +452,6 @@ public abstract class SqlDatabaseFactory<TDatabase> : ISqlDatabaseFactory
             ref executor );
 
         nodeInterpreter.Context.Clear();
-        builder.Changes.SetModeAndAttach( SqlDatabaseCreateMode.DryRun );
         builder.Changes.Attach( attach );
 
         var table = builder.Schemas.Default.Objects.CreateTable( name.Object );
@@ -467,7 +468,7 @@ public abstract class SqlDatabaseFactory<TDatabase> : ISqlDatabaseFactory
             return table;
 
         using var transaction = connection.BeginTransaction( IsolationLevel.Serializable );
-        using var command = connection.CreateCommand();
+        using var command = transaction.CreateCommand();
 
         foreach ( var action in actions )
             executor.ExecuteForVersionHistory( command, action );

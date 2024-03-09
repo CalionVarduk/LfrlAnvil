@@ -1,31 +1,12 @@
-﻿using System.Diagnostics.Contracts;
-using LfrlAnvil.Sql;
-using LfrlAnvil.Sql.Expressions.Objects;
-using LfrlAnvil.Sql.Objects;
-using LfrlAnvil.MySql.Internal;
+﻿using LfrlAnvil.Sql.Objects;
 
 namespace LfrlAnvil.MySql.Objects;
 
-public sealed class MySqlViewDataField : MySqlObject, ISqlViewDataField
+public sealed class MySqlViewDataField : SqlViewDataField
 {
-    private SqlViewDataFieldNode? _node;
-
     internal MySqlViewDataField(MySqlView view, string name)
-        : base( name, SqlObjectType.ViewDataField )
-    {
-        View = view;
-        _node = null;
-    }
+        : base( view, name ) { }
 
-    public MySqlView View { get; }
-    public override MySqlDatabase Database => View.Database;
-    public SqlViewDataFieldNode Node => _node ??= View.Node[Name];
-
-    ISqlView ISqlViewDataField.View => View;
-
-    [Pure]
-    public override string ToString()
-    {
-        return $"[{Type}] {MySqlHelpers.GetFullName( View.Schema.Name, View.Name, Name )}";
-    }
+    public new MySqlView View => ReinterpretCast.To<MySqlView>( base.View );
+    public new MySqlDatabase Database => ReinterpretCast.To<MySqlDatabase>( base.Database );
 }

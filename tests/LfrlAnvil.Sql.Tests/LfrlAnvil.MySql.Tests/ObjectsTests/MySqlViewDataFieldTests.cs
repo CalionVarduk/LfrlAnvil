@@ -1,7 +1,6 @@
-﻿using LfrlAnvil.Sql;
+﻿using LfrlAnvil.MySql.Tests.Helpers;
+using LfrlAnvil.Sql;
 using LfrlAnvil.Sql.Expressions;
-using LfrlAnvil.Sql.Objects;
-using LfrlAnvil.MySql.Tests.Helpers;
 
 namespace LfrlAnvil.MySql.Tests.ObjectsTests;
 
@@ -17,7 +16,7 @@ public class MySqlViewDataFieldTests : TestsBase
         var schema = db.Schemas.Get( "foo" );
         var view = schema.Objects.GetView( "V" );
 
-        ISqlViewDataField sut = view.DataFields.Get( "a" );
+        var sut = view.DataFields.Get( "a" );
 
         using ( new AssertionScope() )
         {

@@ -1,12 +1,14 @@
 ﻿using System.Linq;
 using LfrlAnvil.Functional;
-using LfrlAnvil.MySql.Exceptions;
 using LfrlAnvil.MySql.Extensions;
 using LfrlAnvil.MySql.Objects.Builders;
 using LfrlAnvil.MySql.Tests.Helpers;
 using LfrlAnvil.Sql;
+using LfrlAnvil.Sql.Exceptions;
 using LfrlAnvil.Sql.Objects.Builders;
 using LfrlAnvil.TestExtensions.FluentAssertions;
+using LfrlAnvil.TestExtensions.Sql;
+using LfrlAnvil.TestExtensions.Sql.FluentAssertions;
 
 namespace LfrlAnvil.MySql.Tests.ObjectsTests.BuildersTests;
 
@@ -27,29 +29,133 @@ public class MySqlForeignKeyBuilderTests : TestsBase
     }
 
     [Fact]
-    public void Creation_ShouldMarkTableForAlteration_WhenForeignKeyReferencesAnotherTable()
+    public void Creation_ShouldMarkTableForAlteration_WhenForeignKeyReferencesTheSameTable()
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var table = schema.Objects.CreateTable( "T" );
+        var ix1 = table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() ).Index;
+        var ix2 = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() );
 
-        var t1 = schema.Objects.CreateTable( "T1" );
-        var ix2 = t1.Constraints.SetPrimaryKey( t1.Columns.Create( "C1" ).Asc() ).Index;
-
-        var t2 = schema.Objects.CreateTable( "T2" );
-        var ix1 = t2.Constraints.SetPrimaryKey( t2.Columns.Create( "C2" ).Asc() ).Index;
-
-        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
-
-        t2.Constraints.CreateForeignKey( ix1, ix2 );
-        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
+        var actionCount = schema.Database.GetPendingActionCount();
+        var sut = table.Constraints.CreateForeignKey( ix2, ix1 );
+        var actions = schema.Database.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )
         {
-            statements.Should().HaveCount( 1 );
-            statements.ElementAtOrDefault( 0 )
+            table.Constraints.TryGet( sut.Name ).Should().BeSameAs( sut );
+            schema.Objects.TryGet( sut.Name ).Should().BeSameAs( sut );
+            sut.Name.Should().Be( "FK_T_C2_REF_T" );
+            sut.OriginIndex.Should().BeSameAs( ix2 );
+            sut.ReferencedIndex.Should().BeSameAs( ix1 );
+
+            ix1.ReferencingObjects.Should()
+                .BeSequentiallyEqualTo(
+                    SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), ix1 ) );
+
+            ix2.ReferencingObjects.Should()
+                .BeSequentiallyEqualTo(
+                    SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), ix2 ) );
+
+            table.ReferencingObjects.Should().BeEmpty();
+            schema.ReferencingObjects.Should().BeEmpty();
+
+            actions.Should().HaveCount( 1 );
+            actions.ElementAtOrDefault( 0 )
+                .Sql.Should()
+                .SatisfySql(
+                    @"ALTER TABLE `foo`.`T`
+                      ADD CONSTRAINT `FK_T_C2_REF_T` FOREIGN KEY (`C2`) REFERENCES `foo`.`T` (`C1`) ON DELETE RESTRICT ON UPDATE RESTRICT;" );
+        }
+    }
+
+    [Fact]
+    public void Creation_ShouldMarkTableForAlteration_WhenForeignKeyReferencesDifferentTableFromTheSameSchema()
+    {
+        var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var table = schema.Objects.CreateTable( "T" );
+        var ix1 = table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() ).Index;
+        var t2 = schema.Objects.CreateTable( "T2" );
+        var ix2 = t2.Constraints.SetPrimaryKey( t2.Columns.Create( "C2" ).Asc() ).Index;
+
+        var actionCount = schema.Database.GetPendingActionCount();
+        var sut = t2.Constraints.CreateForeignKey( ix2, ix1 );
+        var actions = schema.Database.GetLastPendingActions( actionCount );
+
+        using ( new AssertionScope() )
+        {
+            t2.Constraints.TryGet( sut.Name ).Should().BeSameAs( sut );
+            schema.Objects.TryGet( sut.Name ).Should().BeSameAs( sut );
+            sut.Name.Should().Be( "FK_T2_C2_REF_T" );
+            sut.OriginIndex.Should().BeSameAs( ix2 );
+            sut.ReferencedIndex.Should().BeSameAs( ix1 );
+
+            ix1.ReferencingObjects.Should()
+                .BeSequentiallyEqualTo(
+                    SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), ix1 ) );
+
+            ix2.ReferencingObjects.Should()
+                .BeSequentiallyEqualTo(
+                    SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), ix2 ) );
+
+            table.ReferencingObjects.Should()
+                .BeSequentiallyEqualTo(
+                    SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), ix1 ) );
+
+            schema.ReferencingObjects.Should().BeEmpty();
+
+            actions.Should().HaveCount( 1 );
+            actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
                     @"ALTER TABLE `foo`.`T2`
-                      ADD CONSTRAINT `FK_T2_C2_REF_T1` FOREIGN KEY (`C2`) REFERENCES `foo`.`T1` (`C1`) ON DELETE RESTRICT ON UPDATE RESTRICT;" );
+                      ADD CONSTRAINT `FK_T2_C2_REF_T` FOREIGN KEY (`C2`) REFERENCES `foo`.`T` (`C1`) ON DELETE RESTRICT ON UPDATE RESTRICT;" );
+        }
+    }
+
+    [Fact]
+    public void Creation_ShouldMarkTableForAlteration_WhenForeignKeyReferencesDifferentSchema()
+    {
+        var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var table = schema.Objects.CreateTable( "T" );
+        var ix1 = table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() ).Index;
+        var s2 = schema.Database.Schemas.Create( "bar" );
+        var t2 = s2.Objects.CreateTable( "T2" );
+        var ix2 = t2.Constraints.SetPrimaryKey( t2.Columns.Create( "C2" ).Asc() ).Index;
+
+        var actionCount = schema.Database.GetPendingActionCount();
+        var sut = t2.Constraints.CreateForeignKey( ix2, ix1 );
+        var actions = schema.Database.GetLastPendingActions( actionCount );
+
+        using ( new AssertionScope() )
+        {
+            t2.Constraints.TryGet( sut.Name ).Should().BeSameAs( sut );
+            s2.Objects.TryGet( sut.Name ).Should().BeSameAs( sut );
+            sut.Name.Should().Be( "FK_T2_C2_REF_foo_T" );
+            sut.OriginIndex.Should().BeSameAs( ix2 );
+            sut.ReferencedIndex.Should().BeSameAs( ix1 );
+
+            ix1.ReferencingObjects.Should()
+                .BeSequentiallyEqualTo(
+                    SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), ix1 ) );
+
+            ix2.ReferencingObjects.Should()
+                .BeSequentiallyEqualTo(
+                    SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), ix2 ) );
+
+            table.ReferencingObjects.Should()
+                .BeSequentiallyEqualTo(
+                    SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), ix1 ) );
+
+            schema.ReferencingObjects.Should()
+                .BeSequentiallyEqualTo(
+                    SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), ix1 ) );
+
+            actions.Should().HaveCount( 1 );
+            actions.ElementAtOrDefault( 0 )
+                .Sql.Should()
+                .SatisfySql(
+                    @"ALTER TABLE `bar`.`T2`
+                      ADD CONSTRAINT `FK_T2_C2_REF_foo_T` FOREIGN KEY (`C2`) REFERENCES `foo`.`T` (`C1`) ON DELETE RESTRICT ON UPDATE RESTRICT;" );
         }
     }
 
@@ -61,37 +167,12 @@ public class MySqlForeignKeyBuilderTests : TestsBase
         var ix1 = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() );
         var ix2 = table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() ).Index;
 
-        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
-
+        var actionCount = schema.Database.GetPendingActionCount();
         var sut = table.Constraints.CreateForeignKey( ix1, ix2 );
         sut.Remove();
-        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
+        var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        statements.Should().BeEmpty();
-    }
-
-    [Fact]
-    public void Creation_ShouldMarkTableForAlteration_WhenForeignKeyIsSelfReference()
-    {
-        var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
-        var table = schema.Objects.CreateTable( "T" );
-        var ix1 = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() );
-        var ix2 = table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() ).Index;
-
-        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
-
-        table.Constraints.CreateForeignKey( ix1, ix2 );
-        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
-
-        using ( new AssertionScope() )
-        {
-            statements.Should().HaveCount( 1 );
-            statements.ElementAtOrDefault( 0 )
-                .Sql.Should()
-                .SatisfySql(
-                    @"ALTER TABLE `foo`.`T`
-                      ADD CONSTRAINT `FK_T_C2_REF_T` FOREIGN KEY (`C2`) REFERENCES `foo`.`T` (`C1`) ON DELETE RESTRICT ON UPDATE RESTRICT;" );
-        }
+        actions.Should().BeEmpty();
     }
 
     [Fact]
@@ -103,15 +184,14 @@ public class MySqlForeignKeyBuilderTests : TestsBase
         var ix2 = table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() ).Index;
         var sut = table.Constraints.CreateForeignKey( ix1, ix2 );
 
-        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
-
-        var result = ((ISqlForeignKeyBuilder)sut).SetName( sut.Name );
-        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
+        var actionCount = schema.Database.GetPendingActionCount();
+        var result = sut.SetName( sut.Name );
+        var actions = schema.Database.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )
         {
             result.Should().BeSameAs( sut );
-            statements.Should().BeEmpty();
+            actions.Should().BeEmpty();
         }
     }
 
@@ -125,17 +205,15 @@ public class MySqlForeignKeyBuilderTests : TestsBase
         var sut = table.Constraints.CreateForeignKey( ix1, ix2 );
         var oldName = sut.Name;
 
-        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
-
+        var actionCount = schema.Database.GetPendingActionCount();
         sut.SetName( "bar" );
-        var result = ((ISqlForeignKeyBuilder)sut).SetName( oldName );
-
-        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
+        var result = sut.SetName( oldName );
+        var actions = schema.Database.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )
         {
             result.Should().BeSameAs( sut );
-            statements.Should().BeEmpty();
+            actions.Should().BeEmpty();
         }
     }
 
@@ -149,22 +227,21 @@ public class MySqlForeignKeyBuilderTests : TestsBase
         var sut = table.Constraints.CreateForeignKey( ix1, ix2 );
         var oldName = sut.Name;
 
-        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
-
-        var result = ((ISqlForeignKeyBuilder)sut).SetName( "bar" );
-        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
+        var actionCount = schema.Database.GetPendingActionCount();
+        var result = sut.SetName( "bar" );
+        var actions = schema.Database.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )
         {
             result.Should().BeSameAs( sut );
             sut.Name.Should().Be( "bar" );
-            table.Constraints.Get( "bar" ).Should().BeSameAs( sut );
-            table.Constraints.Contains( oldName ).Should().BeFalse();
-            schema.Objects.Get( "bar" ).Should().BeSameAs( sut );
-            schema.Objects.Contains( oldName ).Should().BeFalse();
+            table.Constraints.TryGet( "bar" ).Should().BeSameAs( sut );
+            table.Constraints.TryGet( oldName ).Should().BeNull();
+            schema.Objects.TryGet( "bar" ).Should().BeSameAs( sut );
+            schema.Objects.TryGet( oldName ).Should().BeNull();
 
-            statements.Should().HaveCount( 1 );
-            statements.ElementAtOrDefault( 0 )
+            actions.Should().HaveCount( 1 );
+            actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
                     @"ALTER TABLE `foo`.`T`
@@ -180,7 +257,7 @@ public class MySqlForeignKeyBuilderTests : TestsBase
     [InlineData( "`" )]
     [InlineData( "'" )]
     [InlineData( "f`oo" )]
-    public void SetName_ShouldThrowMySqlObjectBuilderException_WhenNameIsInvalid(string name)
+    public void SetName_ShouldThrowSqlObjectBuilderException_WhenNameIsInvalid(string name)
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
@@ -188,15 +265,15 @@ public class MySqlForeignKeyBuilderTests : TestsBase
         var ix2 = table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() ).Index;
         var sut = table.Constraints.CreateForeignKey( ix1, ix2 );
 
-        var action = Lambda.Of( () => ((ISqlForeignKeyBuilder)sut).SetName( name ) );
+        var action = Lambda.Of( () => sut.SetName( name ) );
 
         action.Should()
-            .ThrowExactly<MySqlObjectBuilderException>()
+            .ThrowExactly<SqlObjectBuilderException>()
             .AndMatch( e => e.Dialect == MySqlDialect.Instance && e.Errors.Count == 1 );
     }
 
     [Fact]
-    public void SetName_ShouldThrowMySqlObjectBuilderException_WhenForeignKeyIsRemoved()
+    public void SetName_ShouldThrowSqlObjectBuilderException_WhenForeignKeyIsRemoved()
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
@@ -205,15 +282,15 @@ public class MySqlForeignKeyBuilderTests : TestsBase
         var sut = table.Constraints.CreateForeignKey( ix1, ix2 );
         sut.Remove();
 
-        var action = Lambda.Of( () => ((ISqlForeignKeyBuilder)sut).SetName( "bar" ) );
+        var action = Lambda.Of( () => sut.SetName( "bar" ) );
 
         action.Should()
-            .ThrowExactly<MySqlObjectBuilderException>()
+            .ThrowExactly<SqlObjectBuilderException>()
             .AndMatch( e => e.Dialect == MySqlDialect.Instance && e.Errors.Count == 1 );
     }
 
     [Fact]
-    public void SetName_ShouldThrowMySqlObjectBuilderException_WhenNewNameAlreadyExistsInSchema()
+    public void SetName_ShouldThrowSqlObjectBuilderException_WhenNewNameAlreadyExistsInSchemaObjects()
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
@@ -221,10 +298,10 @@ public class MySqlForeignKeyBuilderTests : TestsBase
         var ix2 = table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() ).Index;
         var sut = table.Constraints.CreateForeignKey( ix1, ix2 );
 
-        var action = Lambda.Of( () => ((ISqlForeignKeyBuilder)sut).SetName( "T" ) );
+        var action = Lambda.Of( () => sut.SetName( "T" ) );
 
         action.Should()
-            .ThrowExactly<MySqlObjectBuilderException>()
+            .ThrowExactly<SqlObjectBuilderException>()
             .AndMatch( e => e.Dialect == MySqlDialect.Instance && e.Errors.Count == 1 );
     }
 
@@ -237,15 +314,14 @@ public class MySqlForeignKeyBuilderTests : TestsBase
         var ix2 = table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() ).Index;
         var sut = table.Constraints.CreateForeignKey( ix1, ix2 );
 
-        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
-
-        var result = ((ISqlForeignKeyBuilder)sut).SetDefaultName();
-        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
+        var actionCount = schema.Database.GetPendingActionCount();
+        var result = sut.SetDefaultName();
+        var actions = schema.Database.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )
         {
             result.Should().BeSameAs( sut );
-            statements.Should().BeEmpty();
+            actions.Should().BeEmpty();
         }
     }
 
@@ -258,17 +334,15 @@ public class MySqlForeignKeyBuilderTests : TestsBase
         var ix2 = table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() ).Index;
         var sut = table.Constraints.CreateForeignKey( ix1, ix2 );
 
-        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
-
+        var actionCount = schema.Database.GetPendingActionCount();
         sut.SetName( "bar" );
-        var result = ((ISqlForeignKeyBuilder)sut).SetDefaultName();
-
-        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
+        var result = sut.SetDefaultName();
+        var actions = schema.Database.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )
         {
             result.Should().BeSameAs( sut );
-            statements.Should().BeEmpty();
+            actions.Should().BeEmpty();
         }
     }
 
@@ -280,24 +354,22 @@ public class MySqlForeignKeyBuilderTests : TestsBase
         var ix1 = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() );
         var ix2 = table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() ).Index;
         var sut = table.Constraints.CreateForeignKey( ix1, ix2 ).SetName( "bar" );
-        var oldName = sut.Name;
 
-        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
-
-        var result = ((ISqlForeignKeyBuilder)sut).SetDefaultName();
-        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
+        var actionCount = schema.Database.GetPendingActionCount();
+        var result = sut.SetDefaultName();
+        var actions = schema.Database.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )
         {
             result.Should().BeSameAs( sut );
             sut.Name.Should().Be( "FK_T_C2_REF_T" );
-            table.Constraints.Get( "FK_T_C2_REF_T" ).Should().BeSameAs( sut );
-            table.Constraints.Contains( oldName ).Should().BeFalse();
-            schema.Objects.Get( "FK_T_C2_REF_T" ).Should().BeSameAs( sut );
-            schema.Objects.Contains( oldName ).Should().BeFalse();
+            table.Constraints.TryGet( "FK_T_C2_REF_T" ).Should().BeSameAs( sut );
+            table.Constraints.TryGet( "bar" ).Should().BeNull();
+            schema.Objects.TryGet( "FK_T_C2_REF_T" ).Should().BeSameAs( sut );
+            schema.Objects.TryGet( "bar" ).Should().BeNull();
 
-            statements.Should().HaveCount( 1 );
-            statements.ElementAtOrDefault( 0 )
+            actions.Should().HaveCount( 1 );
+            actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
                     @"ALTER TABLE `foo`.`T`
@@ -308,7 +380,7 @@ public class MySqlForeignKeyBuilderTests : TestsBase
     }
 
     [Fact]
-    public void SetDefaultName_ShouldThrowMySqlObjectBuilderException_WhenForeignKeyIsRemoved()
+    public void SetDefaultName_ShouldThrowSqlObjectBuilderException_WhenForeignKeyIsRemoved()
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
@@ -317,15 +389,15 @@ public class MySqlForeignKeyBuilderTests : TestsBase
         var sut = table.Constraints.CreateForeignKey( ix1, ix2 ).SetName( "bar" );
         sut.Remove();
 
-        var action = Lambda.Of( () => ((ISqlForeignKeyBuilder)sut).SetDefaultName() );
+        var action = Lambda.Of( () => sut.SetDefaultName() );
 
         action.Should()
-            .ThrowExactly<MySqlObjectBuilderException>()
+            .ThrowExactly<SqlObjectBuilderException>()
             .AndMatch( e => e.Dialect == MySqlDialect.Instance && e.Errors.Count == 1 );
     }
 
     [Fact]
-    public void SetDefaultName_ShouldThrowMySqlObjectBuilderException_WhenNewNameAlreadyExistsInSchema()
+    public void SetDefaultName_ShouldThrowSqlObjectBuilderException_WhenNewNameAlreadyExistsInSchema()
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
@@ -334,10 +406,10 @@ public class MySqlForeignKeyBuilderTests : TestsBase
         var sut = table.Constraints.CreateForeignKey( ix1, ix2 ).SetName( "bar" );
         ix1.SetName( "FK_T_C2_REF_T" );
 
-        var action = Lambda.Of( () => ((ISqlForeignKeyBuilder)sut).SetDefaultName() );
+        var action = Lambda.Of( () => sut.SetDefaultName() );
 
         action.Should()
-            .ThrowExactly<MySqlObjectBuilderException>()
+            .ThrowExactly<SqlObjectBuilderException>()
             .AndMatch( e => e.Dialect == MySqlDialect.Instance && e.Errors.Count == 1 );
     }
 
@@ -350,18 +422,17 @@ public class MySqlForeignKeyBuilderTests : TestsBase
         var ix2 = table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() ).Index;
         var sut = table.Constraints.CreateForeignKey( ix1, ix2 );
 
-        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
-
-        var result = ((ISqlForeignKeyBuilder)sut).SetOnDeleteBehavior( ReferenceBehavior.Cascade );
-        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
+        var actionCount = schema.Database.GetPendingActionCount();
+        var result = sut.SetOnDeleteBehavior( ReferenceBehavior.Cascade );
+        var actions = schema.Database.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )
         {
             result.Should().BeSameAs( sut );
             result.OnDeleteBehavior.Should().Be( ReferenceBehavior.Cascade );
 
-            statements.Should().HaveCount( 1 );
-            statements.ElementAtOrDefault( 0 )
+            actions.Should().HaveCount( 1 );
+            actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
                     @"ALTER TABLE `foo`.`T`
@@ -380,15 +451,14 @@ public class MySqlForeignKeyBuilderTests : TestsBase
         var ix2 = table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() ).Index;
         var sut = table.Constraints.CreateForeignKey( ix1, ix2 );
 
-        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
-
-        var result = ((ISqlForeignKeyBuilder)sut).SetOnDeleteBehavior( ReferenceBehavior.Restrict );
-        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
+        var actionCount = schema.Database.GetPendingActionCount();
+        var result = sut.SetOnDeleteBehavior( ReferenceBehavior.Restrict );
+        var actions = schema.Database.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )
         {
             result.Should().BeSameAs( sut );
-            statements.Should().BeEmpty();
+            actions.Should().BeEmpty();
         }
     }
 
@@ -401,22 +471,20 @@ public class MySqlForeignKeyBuilderTests : TestsBase
         var ix2 = table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() ).Index;
         var sut = table.Constraints.CreateForeignKey( ix1, ix2 );
 
-        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
-
+        var actionCount = schema.Database.GetPendingActionCount();
         sut.SetOnDeleteBehavior( ReferenceBehavior.Cascade );
-        var result = ((ISqlForeignKeyBuilder)sut).SetOnDeleteBehavior( ReferenceBehavior.Restrict );
-
-        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
+        var result = sut.SetOnDeleteBehavior( ReferenceBehavior.Restrict );
+        var actions = schema.Database.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )
         {
             result.Should().BeSameAs( sut );
-            statements.Should().BeEmpty();
+            actions.Should().BeEmpty();
         }
     }
 
     [Fact]
-    public void SetOnDeleteBehavior_ShouldThrowMySqlObjectBuilderException_WhenForeignKeyIsRemoved()
+    public void SetOnDeleteBehavior_ShouldThrowSqlObjectBuilderException_WhenForeignKeyIsRemoved()
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
@@ -425,10 +493,10 @@ public class MySqlForeignKeyBuilderTests : TestsBase
         var sut = table.Constraints.CreateForeignKey( ix1, ix2 );
         sut.Remove();
 
-        var action = Lambda.Of( () => ((ISqlForeignKeyBuilder)sut).SetOnDeleteBehavior( ReferenceBehavior.Cascade ) );
+        var action = Lambda.Of( () => sut.SetOnDeleteBehavior( ReferenceBehavior.Cascade ) );
 
         action.Should()
-            .ThrowExactly<MySqlObjectBuilderException>()
+            .ThrowExactly<SqlObjectBuilderException>()
             .AndMatch( e => e.Dialect == MySqlDialect.Instance && e.Errors.Count == 1 );
     }
 
@@ -441,18 +509,17 @@ public class MySqlForeignKeyBuilderTests : TestsBase
         var ix2 = table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() ).Index;
         var sut = table.Constraints.CreateForeignKey( ix1, ix2 );
 
-        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
-
-        var result = ((ISqlForeignKeyBuilder)sut).SetOnUpdateBehavior( ReferenceBehavior.Cascade );
-        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
+        var actionCount = schema.Database.GetPendingActionCount();
+        var result = sut.SetOnUpdateBehavior( ReferenceBehavior.Cascade );
+        var actions = schema.Database.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )
         {
             result.Should().BeSameAs( sut );
             result.OnUpdateBehavior.Should().Be( ReferenceBehavior.Cascade );
 
-            statements.Should().HaveCount( 1 );
-            statements.ElementAtOrDefault( 0 )
+            actions.Should().HaveCount( 1 );
+            actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
                     @"ALTER TABLE `foo`.`T`
@@ -471,15 +538,14 @@ public class MySqlForeignKeyBuilderTests : TestsBase
         var ix2 = table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() ).Index;
         var sut = table.Constraints.CreateForeignKey( ix1, ix2 );
 
-        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
-
-        var result = ((ISqlForeignKeyBuilder)sut).SetOnUpdateBehavior( ReferenceBehavior.Restrict );
-        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
+        var actionCount = schema.Database.GetPendingActionCount();
+        var result = sut.SetOnUpdateBehavior( ReferenceBehavior.Restrict );
+        var actions = schema.Database.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )
         {
             result.Should().BeSameAs( sut );
-            statements.Should().BeEmpty();
+            actions.Should().BeEmpty();
         }
     }
 
@@ -492,22 +558,20 @@ public class MySqlForeignKeyBuilderTests : TestsBase
         var ix2 = table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() ).Index;
         var sut = table.Constraints.CreateForeignKey( ix1, ix2 );
 
-        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
-
+        var actionCount = schema.Database.GetPendingActionCount();
         sut.SetOnUpdateBehavior( ReferenceBehavior.Cascade );
-        var result = ((ISqlForeignKeyBuilder)sut).SetOnUpdateBehavior( ReferenceBehavior.Restrict );
-
-        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
+        var result = sut.SetOnUpdateBehavior( ReferenceBehavior.Restrict );
+        var actions = schema.Database.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )
         {
             result.Should().BeSameAs( sut );
-            statements.Should().BeEmpty();
+            actions.Should().BeEmpty();
         }
     }
 
     [Fact]
-    public void SetOnUpdateBehavior_ShouldThrowMySqlObjectBuilderException_WhenForeignKeyIsRemoved()
+    public void SetOnUpdateBehavior_ShouldThrowSqlObjectBuilderException_WhenForeignKeyIsRemoved()
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
@@ -516,15 +580,15 @@ public class MySqlForeignKeyBuilderTests : TestsBase
         var sut = table.Constraints.CreateForeignKey( ix1, ix2 );
         sut.Remove();
 
-        var action = Lambda.Of( () => ((ISqlForeignKeyBuilder)sut).SetOnUpdateBehavior( ReferenceBehavior.Cascade ) );
+        var action = Lambda.Of( () => sut.SetOnUpdateBehavior( ReferenceBehavior.Cascade ) );
 
         action.Should()
-            .ThrowExactly<MySqlObjectBuilderException>()
+            .ThrowExactly<SqlObjectBuilderException>()
             .AndMatch( e => e.Dialect == MySqlDialect.Instance && e.Errors.Count == 1 );
     }
 
     [Fact]
-    public void Remove_ShouldRemoveForeignKey()
+    public void Remove_ShouldRemoveForeignKey_WhenForeignKeyReferencesTheSameTable()
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
@@ -532,25 +596,90 @@ public class MySqlForeignKeyBuilderTests : TestsBase
         var ix2 = table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() ).Index;
         var sut = table.Constraints.CreateForeignKey( ix1, ix2 );
 
-        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
-
+        var actionCount = schema.Database.GetPendingActionCount();
         sut.Remove();
-        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
+        var actions = schema.Database.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )
         {
-            table.Constraints.Contains( sut.Name ).Should().BeFalse();
-            schema.Objects.Contains( sut.Name ).Should().BeFalse();
+            table.Constraints.TryGet( sut.Name ).Should().BeNull();
+            schema.Objects.TryGet( sut.Name ).Should().BeNull();
             sut.IsRemoved.Should().BeTrue();
-            ix1.OriginatingForeignKeys.Should().BeEmpty();
-            ix2.ReferencingForeignKeys.Should().BeEmpty();
+            ix1.ReferencingObjects.Should().BeEmpty();
+            ix2.ReferencingObjects.Should().BeEmpty();
 
-            statements.Should().HaveCount( 1 );
-            statements.ElementAtOrDefault( 0 )
+            actions.Should().HaveCount( 1 );
+            actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
                     @"ALTER TABLE `foo`.`T`
                       DROP FOREIGN KEY `FK_T_C2_REF_T`;" );
+        }
+    }
+
+    [Fact]
+    public void Remove_ShouldRemoveForeignKey_WhenForeignKeyReferencesDifferentTableFromTheSameSchema()
+    {
+        var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var table = schema.Objects.CreateTable( "T" );
+        var ix1 = table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() ).Index;
+        var t2 = schema.Objects.CreateTable( "T2" );
+        var ix2 = t2.Constraints.SetPrimaryKey( t2.Columns.Create( "C2" ).Asc() ).Index;
+        var sut = t2.Constraints.CreateForeignKey( ix2, ix1 );
+
+        var actionCount = schema.Database.GetPendingActionCount();
+        sut.Remove();
+        var actions = schema.Database.GetLastPendingActions( actionCount );
+
+        using ( new AssertionScope() )
+        {
+            t2.Constraints.TryGet( sut.Name ).Should().BeNull();
+            schema.Objects.TryGet( sut.Name ).Should().BeNull();
+            sut.IsRemoved.Should().BeTrue();
+            ix1.ReferencingObjects.Should().BeEmpty();
+            ix2.ReferencingObjects.Should().BeEmpty();
+            table.ReferencingObjects.Should().BeEmpty();
+
+            actions.Should().HaveCount( 1 );
+            actions.ElementAtOrDefault( 0 )
+                .Sql.Should()
+                .SatisfySql(
+                    @"ALTER TABLE `foo`.`T2`
+                      DROP FOREIGN KEY `FK_T2_C2_REF_T`;" );
+        }
+    }
+
+    [Fact]
+    public void Remove_ShouldRemoveForeignKey_WhenForeignKeyReferencesDifferentSchema()
+    {
+        var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var table = schema.Objects.CreateTable( "T" );
+        var ix1 = table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() ).Index;
+        var s2 = schema.Database.Schemas.Create( "bar" );
+        var t2 = s2.Objects.CreateTable( "T2" );
+        var ix2 = t2.Constraints.SetPrimaryKey( t2.Columns.Create( "C2" ).Asc() ).Index;
+        var sut = t2.Constraints.CreateForeignKey( ix2, ix1 );
+
+        var actionCount = schema.Database.GetPendingActionCount();
+        sut.Remove();
+        var actions = schema.Database.GetLastPendingActions( actionCount );
+
+        using ( new AssertionScope() )
+        {
+            t2.Constraints.TryGet( sut.Name ).Should().BeNull();
+            s2.Objects.TryGet( sut.Name ).Should().BeNull();
+            sut.IsRemoved.Should().BeTrue();
+            ix1.ReferencingObjects.Should().BeEmpty();
+            ix2.ReferencingObjects.Should().BeEmpty();
+            table.ReferencingObjects.Should().BeEmpty();
+            schema.ReferencingObjects.Should().BeEmpty();
+
+            actions.Should().HaveCount( 1 );
+            actions.ElementAtOrDefault( 0 )
+                .Sql.Should()
+                .SatisfySql(
+                    @"ALTER TABLE `bar`.`T2`
+                      DROP FOREIGN KEY `FK_T2_C2_REF_foo_T`;" );
         }
     }
 
@@ -563,14 +692,14 @@ public class MySqlForeignKeyBuilderTests : TestsBase
         var ix2 = table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() ).Index;
         var sut = table.Constraints.CreateForeignKey( ix1, ix2 );
 
-        _ = schema.Database.Changes.GetPendingActions();
+        schema.Database.Changes.CompletePendingChanges();
         sut.Remove();
-        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
 
+        var actionCount = schema.Database.GetPendingActionCount();
         sut.Remove();
-        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
+        var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        statements.Should().BeEmpty();
+        actions.Should().BeEmpty();
     }
 
     [Fact]

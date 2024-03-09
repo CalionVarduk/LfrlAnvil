@@ -1,5 +1,5 @@
 ﻿using System.Diagnostics.Contracts;
-using System.Globalization;
+using LfrlAnvil.Sql.Internal;
 
 namespace LfrlAnvil.MySql.Internal.TypeDefinitions;
 
@@ -14,7 +14,7 @@ internal sealed class MySqlColumnTypeDefinitionDecimal : MySqlColumnTypeDefiniti
     [Pure]
     public override string ToDbLiteral(decimal value)
     {
-        return value.ToString( "0.0###########################", CultureInfo.InvariantCulture );
+        return SqlHelpers.GetDbLiteral( value );
     }
 
     [Pure]

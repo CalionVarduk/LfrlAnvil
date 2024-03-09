@@ -9,7 +9,7 @@ namespace LfrlAnvil.Sql.Objects.Builders;
 
 // TODO:
 // idea => IsVirtual property
-// it would allow to create an IX that won't actually be created on DB
+// it would allow to create an IX that won't actually be created on DB (PK index is an example of a virtual IX)
 // IsVirtual set to true resets (or simply throw an error when the following are not as expected):
 // - IsUnique => false
 // - Filter => null
@@ -23,14 +23,6 @@ namespace LfrlAnvil.Sql.Objects.Builders;
 // - FK cannot reference a virtual IX
 // - virtual IX cannot be made unique
 // - virtual IX cannot be partial
-//
-// for MySql, check if having:
-// - table A => PK (A)
-// - table B => PK (A)
-// - table C => PK (A,B), FK (A) REF A (A), FK (B) REF B (A)
-// with virtual IX on C.A will work?
-// will MySql create a new IX automatically due to FK, or use PK?
-// if IX is created for FK, will then MySql drop that IX when FK is dropped?
 
 public abstract class SqlIndexBuilder : SqlConstraintBuilder, ISqlIndexBuilder
 {

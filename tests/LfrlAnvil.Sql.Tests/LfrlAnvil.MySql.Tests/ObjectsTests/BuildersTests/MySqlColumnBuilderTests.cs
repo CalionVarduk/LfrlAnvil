@@ -1,6 +1,5 @@
 ﻿using System.Linq;
 using LfrlAnvil.Functional;
-using LfrlAnvil.MySql.Exceptions;
 using LfrlAnvil.MySql.Extensions;
 using LfrlAnvil.MySql.Objects.Builders;
 using LfrlAnvil.MySql.Tests.Helpers;
@@ -10,6 +9,8 @@ using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Extensions;
 using LfrlAnvil.Sql.Objects.Builders;
 using LfrlAnvil.TestExtensions.FluentAssertions;
+using LfrlAnvil.TestExtensions.Sql;
+using LfrlAnvil.TestExtensions.Sql.FluentAssertions;
 
 namespace LfrlAnvil.MySql.Tests.ObjectsTests.BuildersTests;
 
@@ -34,7 +35,7 @@ public class MySqlColumnBuilderTests : TestsBase
         var table = schema.Objects.CreateTable( "T" );
         var sut = table.Columns.Create( "C" );
 
-        var result = ((ISqlColumnBuilder)sut).Asc();
+        var result = sut.Asc();
 
         using ( new AssertionScope() )
         {
@@ -51,7 +52,7 @@ public class MySqlColumnBuilderTests : TestsBase
         var table = schema.Objects.CreateTable( "T" );
         var sut = table.Columns.Create( "C" );
 
-        var result = ((ISqlColumnBuilder)sut).Desc();
+        var result = sut.Desc();
 
         using ( new AssertionScope() )
         {
@@ -68,19 +69,18 @@ public class MySqlColumnBuilderTests : TestsBase
         var table = schema.Objects.CreateTable( "T" );
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
 
-        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
-
+        var actionCount = schema.Database.GetPendingActionCount();
         var sut = table.Columns.Create( "C2" );
-        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
+        var actions = schema.Database.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )
         {
             table.Columns.Get( sut.Name ).Should().BeSameAs( sut );
             sut.Name.Should().Be( "C2" );
-            sut.DefaultValue.Should().BeEquivalentTo( SqlNode.Literal<object>( Array.Empty<byte>() ) );
+            sut.DefaultValue.Should().BeSameAs( sut.TypeDefinition.DefaultValue );
 
-            statements.Should().HaveCount( 1 );
-            statements.ElementAtOrDefault( 0 )
+            actions.Should().HaveCount( 1 );
+            actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
                     @"ALTER TABLE `foo`.`T`
@@ -95,10 +95,9 @@ public class MySqlColumnBuilderTests : TestsBase
         var table = schema.Objects.CreateTable( "T" );
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
 
-        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
-
+        var actionCount = schema.Database.GetPendingActionCount();
         var sut = table.Columns.Create( "C2" ).MarkAsNullable();
-        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
+        var actions = schema.Database.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )
         {
@@ -106,8 +105,8 @@ public class MySqlColumnBuilderTests : TestsBase
             sut.Name.Should().Be( "C2" );
             sut.DefaultValue.Should().BeNull();
 
-            statements.Should().HaveCount( 1 );
-            statements.ElementAtOrDefault( 0 )
+            actions.Should().HaveCount( 1 );
+            actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
                     @"ALTER TABLE `foo`.`T`
@@ -122,18 +121,17 @@ public class MySqlColumnBuilderTests : TestsBase
         var table = schema.Objects.CreateTable( "T" );
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
 
-        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
-
+        var actionCount = schema.Database.GetPendingActionCount();
         var sut = table.Columns.Create( "C2" ).SetDefaultValue( new byte[] { 1, 2, 3 } );
-        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
+        var actions = schema.Database.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )
         {
             table.Columns.Get( sut.Name ).Should().BeSameAs( sut );
             sut.Name.Should().Be( "C2" );
 
-            statements.Should().HaveCount( 1 );
-            statements.ElementAtOrDefault( 0 )
+            actions.Should().HaveCount( 1 );
+            actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
                     @"ALTER TABLE `foo`.`T`
@@ -149,11 +147,11 @@ public class MySqlColumnBuilderTests : TestsBase
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var removed = table.Columns.Create( "C2" );
 
-        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
-
+        var actionCount = schema.Database.GetPendingActionCount();
         removed.SetName( "C3" ).Remove();
+        table.Columns.Create( "C3" ).MarkAsNullable();
         var sut = table.Columns.Create( "C2" ).SetType<string>();
-        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
+        var actions = schema.Database.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )
         {
@@ -162,12 +160,71 @@ public class MySqlColumnBuilderTests : TestsBase
             sut.DefaultValue.Should().BeNull();
             removed.IsRemoved.Should().BeTrue();
 
-            statements.Should().HaveCount( 1 );
-            statements.ElementAtOrDefault( 0 )
+            actions.Should().HaveCount( 1 );
+            actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
                     @"ALTER TABLE `foo`.`T`
-                      CHANGE COLUMN `C2` `C2` LONGTEXT NOT NULL;" );
+                      CHANGE COLUMN `C2` `C2` LONGTEXT NOT NULL,
+                      ADD COLUMN `C3` LONGBLOB;" );
+        }
+    }
+
+    [Fact]
+    public void Creation_WithReusedRemovedColumnName_ShouldTreatTheColumnAsModified_WithOriginalIsNullableChange()
+    {
+        var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var table = schema.Objects.CreateTable( "T" );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        var removed = table.Columns.Create( "C2" ).MarkAsNullable();
+
+        var actionCount = schema.Database.GetPendingActionCount();
+        removed.SetName( "C3" ).MarkAsNullable( false ).Remove();
+        var sut = table.Columns.Create( "C2" );
+        var actions = schema.Database.GetLastPendingActions( actionCount );
+
+        using ( new AssertionScope() )
+        {
+            table.Columns.Get( sut.Name ).Should().BeSameAs( sut );
+            sut.Name.Should().Be( "C2" );
+            sut.DefaultValue.Should().BeNull();
+            removed.IsRemoved.Should().BeTrue();
+
+            actions.Should().HaveCount( 1 );
+            actions.ElementAtOrDefault( 0 )
+                .Sql.Should()
+                .SatisfySql(
+                    @"ALTER TABLE `foo`.`T`
+                      CHANGE COLUMN `C2` `C2` LONGBLOB NOT NULL;" );
+        }
+    }
+
+    [Fact]
+    public void Creation_WithReusedRemovedColumnName_ShouldTreatTheColumnAsModified_WithOriginalTypeDefinitionChange()
+    {
+        var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var table = schema.Objects.CreateTable( "T" );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        var removed = table.Columns.Create( "C2" );
+
+        var actionCount = schema.Database.GetPendingActionCount();
+        removed.SetName( "C3" ).SetType<string>().Remove();
+        var sut = table.Columns.Create( "C2" );
+        var actions = schema.Database.GetLastPendingActions( actionCount );
+
+        using ( new AssertionScope() )
+        {
+            table.Columns.Get( sut.Name ).Should().BeSameAs( sut );
+            sut.Name.Should().Be( "C2" );
+            sut.DefaultValue.Should().BeNull();
+            removed.IsRemoved.Should().BeTrue();
+
+            actions.Should().HaveCount( 1 );
+            actions.ElementAtOrDefault( 0 )
+                .Sql.Should()
+                .SatisfySql(
+                    @"ALTER TABLE `foo`.`T`
+                      CHANGE COLUMN `C2` `C2` LONGBLOB NOT NULL;" );
         }
     }
 
@@ -178,13 +235,12 @@ public class MySqlColumnBuilderTests : TestsBase
         var table = schema.Objects.CreateTable( "T" );
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
 
-        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
-
+        var actionCount = schema.Database.GetPendingActionCount();
         var sut = table.Columns.Create( "C2" );
         sut.Remove();
-        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
+        var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        statements.Should().BeEmpty();
+        actions.Should().BeEmpty();
     }
 
     [Fact]
@@ -195,15 +251,14 @@ public class MySqlColumnBuilderTests : TestsBase
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Columns.Create( "C2" );
 
-        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
-
-        var result = ((ISqlColumnBuilder)sut).SetName( sut.Name );
-        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
+        var actionCount = schema.Database.GetPendingActionCount();
+        var result = sut.SetName( sut.Name );
+        var actions = schema.Database.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )
         {
             result.Should().BeSameAs( sut );
-            statements.Should().BeEmpty();
+            actions.Should().BeEmpty();
         }
     }
 
@@ -216,17 +271,15 @@ public class MySqlColumnBuilderTests : TestsBase
         var sut = table.Columns.Create( "C2" );
         var oldName = sut.Name;
 
-        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
-
+        var actionCount = schema.Database.GetPendingActionCount();
         sut.SetName( "bar" );
-        var result = ((ISqlColumnBuilder)sut).SetName( oldName );
-
-        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
+        var result = sut.SetName( oldName );
+        var actions = schema.Database.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )
         {
             result.Should().BeSameAs( sut );
-            statements.Should().BeEmpty();
+            actions.Should().BeEmpty();
         }
     }
 
@@ -237,24 +290,22 @@ public class MySqlColumnBuilderTests : TestsBase
         var table = schema.Objects.CreateTable( "T" );
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Columns.Create( "C2" );
-        var oldName = sut.Name;
         var node = sut.Node;
 
-        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
-
-        var result = ((ISqlColumnBuilder)sut).SetName( "bar" );
-        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
+        var actionCount = schema.Database.GetPendingActionCount();
+        var result = sut.SetName( "bar" );
+        var actions = schema.Database.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )
         {
             result.Should().BeSameAs( sut );
             sut.Name.Should().Be( "bar" );
-            table.Columns.Get( "bar" ).Should().BeSameAs( sut );
-            table.Columns.Contains( oldName ).Should().BeFalse();
+            table.Columns.TryGet( "bar" ).Should().BeSameAs( sut );
+            table.Columns.TryGet( "C2" ).Should().BeNull();
             node.Name.Should().Be( "bar" );
 
-            statements.Should().HaveCount( 1 );
-            statements.ElementAtOrDefault( 0 )
+            actions.Should().HaveCount( 1 );
+            actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
                     @"ALTER TABLE `foo`.`T`
@@ -268,22 +319,22 @@ public class MySqlColumnBuilderTests : TestsBase
     [InlineData( "`" )]
     [InlineData( "'" )]
     [InlineData( "f`oo" )]
-    public void SetName_ShouldThrowMySqlObjectBuilderException_WhenNameIsInvalid(string name)
+    public void SetName_ShouldThrowSqlObjectBuilderException_WhenNameIsInvalid(string name)
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Columns.Create( "C2" );
 
-        var action = Lambda.Of( () => ((ISqlColumnBuilder)sut).SetName( name ) );
+        var action = Lambda.Of( () => sut.SetName( name ) );
 
         action.Should()
-            .ThrowExactly<MySqlObjectBuilderException>()
+            .ThrowExactly<SqlObjectBuilderException>()
             .AndMatch( e => e.Dialect == MySqlDialect.Instance && e.Errors.Count == 1 );
     }
 
     [Fact]
-    public void SetName_ShouldThrowMySqlObjectBuilderException_WhenColumnIsRemoved()
+    public void SetName_ShouldThrowSqlObjectBuilderException_WhenColumnIsRemoved()
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
@@ -291,30 +342,30 @@ public class MySqlColumnBuilderTests : TestsBase
         var sut = table.Columns.Create( "C2" );
         sut.Remove();
 
-        var action = Lambda.Of( () => ((ISqlColumnBuilder)sut).SetName( "bar" ) );
+        var action = Lambda.Of( () => sut.SetName( "bar" ) );
 
         action.Should()
-            .ThrowExactly<MySqlObjectBuilderException>()
+            .ThrowExactly<SqlObjectBuilderException>()
             .AndMatch( e => e.Dialect == MySqlDialect.Instance && e.Errors.Count == 1 );
     }
 
     [Fact]
-    public void SetName_ShouldThrowMySqlObjectBuilderException_WhenNewNameAlreadyExistsInTableColumns()
+    public void SetName_ShouldThrowSqlObjectBuilderException_WhenNewNameAlreadyExistsInTableColumns()
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Columns.Create( "C2" );
 
-        var action = Lambda.Of( () => ((ISqlColumnBuilder)sut).SetName( "C1" ) );
+        var action = Lambda.Of( () => sut.SetName( "C1" ) );
 
         action.Should()
-            .ThrowExactly<MySqlObjectBuilderException>()
+            .ThrowExactly<SqlObjectBuilderException>()
             .AndMatch( e => e.Dialect == MySqlDialect.Instance && e.Errors.Count == 1 );
     }
 
     [Fact]
-    public void SetName_ShouldThrowMySqlObjectBuilderException_WhenColumnIsUsedInIndex()
+    public void SetName_ShouldThrowSqlObjectBuilderException_WhenColumnIsUsedInIndex()
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
@@ -322,15 +373,15 @@ public class MySqlColumnBuilderTests : TestsBase
         var sut = table.Columns.Create( "C2" );
         table.Constraints.CreateIndex( sut.Asc() );
 
-        var action = Lambda.Of( () => ((ISqlColumnBuilder)sut).SetName( "C3" ) );
+        var action = Lambda.Of( () => sut.SetName( "C3" ) );
 
         action.Should()
-            .ThrowExactly<MySqlObjectBuilderException>()
+            .ThrowExactly<SqlObjectBuilderException>()
             .AndMatch( e => e.Dialect == MySqlDialect.Instance && e.Errors.Count == 1 );
     }
 
     [Fact]
-    public void SetName_ShouldThrowMySqlObjectBuilderException_WhenColumnIsUsedInView()
+    public void SetName_ShouldThrowSqlObjectBuilderException_WhenColumnIsUsedInView()
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
@@ -338,10 +389,10 @@ public class MySqlColumnBuilderTests : TestsBase
         var sut = table.Columns.Create( "C2" );
         schema.Objects.CreateView( "V", table.ToRecordSet().ToDataSource().Select( s => new[] { s.From["C2"].AsSelf() } ) );
 
-        var action = Lambda.Of( () => ((ISqlColumnBuilder)sut).SetName( "C3" ) );
+        var action = Lambda.Of( () => sut.SetName( "C3" ) );
 
         action.Should()
-            .ThrowExactly<MySqlObjectBuilderException>()
+            .ThrowExactly<SqlObjectBuilderException>()
             .AndMatch( e => e.Dialect == MySqlDialect.Instance && e.Errors.Count == 1 );
     }
 
@@ -353,15 +404,14 @@ public class MySqlColumnBuilderTests : TestsBase
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Columns.Create( "C2" );
 
-        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
-
-        var result = ((ISqlColumnBuilder)sut).SetType( schema.Database.TypeDefinitions.GetByType<object>() );
-        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
+        var actionCount = schema.Database.GetPendingActionCount();
+        var result = sut.SetType( schema.Database.TypeDefinitions.GetByType<object>() );
+        var actions = schema.Database.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )
         {
             result.Should().BeSameAs( sut );
-            statements.Should().BeEmpty();
+            actions.Should().BeEmpty();
         }
     }
 
@@ -373,17 +423,15 @@ public class MySqlColumnBuilderTests : TestsBase
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Columns.Create( "C2" );
 
-        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
-
-        sut.SetType<int>();
-        var result = ((ISqlColumnBuilder)sut).SetType( schema.Database.TypeDefinitions.GetByType<object>() );
-
-        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
+        var actionCount = schema.Database.GetPendingActionCount();
+        sut.SetType( MySqlDataType.Int );
+        var result = sut.SetType( schema.Database.TypeDefinitions.GetByType<object>() );
+        var actions = schema.Database.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )
         {
             result.Should().BeSameAs( sut );
-            statements.Should().BeEmpty();
+            actions.Should().BeEmpty();
         }
     }
 
@@ -395,10 +443,9 @@ public class MySqlColumnBuilderTests : TestsBase
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Columns.Create( "C2" ).SetDefaultValue( 123 );
 
-        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
-
-        var result = ((ISqlColumnBuilder)sut).SetType<int>();
-        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
+        var actionCount = schema.Database.GetPendingActionCount();
+        var result = sut.SetType<int>();
+        var actions = schema.Database.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )
         {
@@ -406,8 +453,8 @@ public class MySqlColumnBuilderTests : TestsBase
             sut.TypeDefinition.Should().BeSameAs( schema.Database.TypeDefinitions.GetByType<int>() );
             sut.DefaultValue.Should().BeNull();
 
-            statements.Should().HaveCount( 1 );
-            statements.ElementAtOrDefault( 0 )
+            actions.Should().HaveCount( 1 );
+            actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
                     @"ALTER TABLE `foo`.`T`
@@ -418,27 +465,25 @@ public class MySqlColumnBuilderTests : TestsBase
     [Fact]
     public void SetType_ShouldDoNothing_WhenNewTypeIsDifferentFromOldTypeButMySqlTypeRemainsTheSameAndDefaultValueIsNull()
     {
-        var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
-        schema.Database.TypeDefinitions.RegisterDefinition( new TypeDefinitionMock() );
+        var schema = MySqlDatabaseBuilderMock.Create( new TypeDefinitionMock() ).Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
-        var sut = table.Columns.Create( "C2" ).SetType( schema.Database.TypeDefinitions.GetByDataType( MySqlDataType.Int ) );
+        var sut = table.Columns.Create( "C2" ).SetType( MySqlDataType.Int );
 
-        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
-
-        var result = ((ISqlColumnBuilder)sut).SetType<int>();
-        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
+        var actionCount = schema.Database.GetPendingActionCount();
+        var result = sut.SetType<int>();
+        var actions = schema.Database.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )
         {
             result.Should().BeSameAs( sut );
             sut.TypeDefinition.Should().BeSameAs( schema.Database.TypeDefinitions.GetByType<int>() );
-            statements.Should().BeEmpty();
+            actions.Should().BeEmpty();
         }
     }
 
     [Fact]
-    public void SetType_ShouldThrowMySqlObjectBuilderException_WhenColumnIsRemoved()
+    public void SetType_ShouldThrowSqlObjectBuilderException_WhenColumnIsRemoved()
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
@@ -446,15 +491,15 @@ public class MySqlColumnBuilderTests : TestsBase
         var sut = table.Columns.Create( "C2" );
         sut.Remove();
 
-        var action = Lambda.Of( () => ((ISqlColumnBuilder)sut).SetType<int>() );
+        var action = Lambda.Of( () => sut.SetType<int>() );
 
         action.Should()
-            .ThrowExactly<MySqlObjectBuilderException>()
+            .ThrowExactly<SqlObjectBuilderException>()
             .AndMatch( e => e.Dialect == MySqlDialect.Instance && e.Errors.Count == 1 );
     }
 
     [Fact]
-    public void SetType_ShouldThrowMySqlObjectBuilderException_WhenColumnIsUsedInIndex()
+    public void SetType_ShouldThrowSqlObjectBuilderException_WhenColumnIsUsedInIndex()
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
@@ -462,15 +507,15 @@ public class MySqlColumnBuilderTests : TestsBase
         var sut = table.Columns.Create( "C2" );
         table.Constraints.CreateIndex( sut.Asc() );
 
-        var action = Lambda.Of( () => ((ISqlColumnBuilder)sut).SetType<int>() );
+        var action = Lambda.Of( () => sut.SetType<int>() );
 
         action.Should()
-            .ThrowExactly<MySqlObjectBuilderException>()
+            .ThrowExactly<SqlObjectBuilderException>()
             .AndMatch( e => e.Dialect == MySqlDialect.Instance && e.Errors.Count == 1 );
     }
 
     [Fact]
-    public void SetType_ShouldThrowMySqlObjectBuilderException_WhenColumnIsUsedInView()
+    public void SetType_ShouldThrowSqlObjectBuilderException_WhenColumnIsUsedInView()
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
@@ -478,15 +523,15 @@ public class MySqlColumnBuilderTests : TestsBase
         var sut = table.Columns.Create( "C2" );
         schema.Objects.CreateView( "V", table.ToRecordSet().ToDataSource().Select( s => new[] { s.From["C2"].AsSelf() } ) );
 
-        var action = Lambda.Of( () => ((ISqlColumnBuilder)sut).SetType<int>() );
+        var action = Lambda.Of( () => sut.SetType<int>() );
 
         action.Should()
-            .ThrowExactly<MySqlObjectBuilderException>()
+            .ThrowExactly<SqlObjectBuilderException>()
             .AndMatch( e => e.Dialect == MySqlDialect.Instance && e.Errors.Count == 1 );
     }
 
     [Fact]
-    public void SetType_ShouldThrowMySqlObjectBuilderException_WhenTypeDefinitionDoesNotBelongToDatabase()
+    public void SetType_ShouldThrowSqlObjectBuilderException_WhenTypeDefinitionDoesNotBelongToDatabase()
     {
         var definition = MySqlDatabaseBuilderMock.Create().TypeDefinitions.GetByType<int>();
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
@@ -494,10 +539,10 @@ public class MySqlColumnBuilderTests : TestsBase
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Columns.Create( "C2" );
 
-        var action = Lambda.Of( () => ((ISqlColumnBuilder)sut).SetType( definition ) );
+        var action = Lambda.Of( () => sut.SetType( definition ) );
 
         action.Should()
-            .ThrowExactly<MySqlObjectBuilderException>()
+            .ThrowExactly<SqlObjectBuilderException>()
             .AndMatch( e => e.Dialect == MySqlDialect.Instance && e.Errors.Count == 1 );
     }
 
@@ -514,7 +559,7 @@ public class MySqlColumnBuilderTests : TestsBase
 
         action.Should()
             .ThrowExactly<SqlObjectCastException>()
-            .AndMatch( e => e.Dialect == MySqlDialect.Instance && e.Expected == typeof( MySqlColumnTypeDefinition ) );
+            .AndMatch( e => e.Dialect == MySqlDialect.Instance && e.Expected == typeof( SqlColumnTypeDefinition ) );
     }
 
     [Theory]
@@ -527,15 +572,14 @@ public class MySqlColumnBuilderTests : TestsBase
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Columns.Create( "C2" ).MarkAsNullable( value );
 
-        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
-
-        var result = ((ISqlColumnBuilder)sut).MarkAsNullable( value );
-        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
+        var actionCount = schema.Database.GetPendingActionCount();
+        var result = sut.MarkAsNullable( value );
+        var actions = schema.Database.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )
         {
             result.Should().BeSameAs( sut );
-            statements.Should().BeEmpty();
+            actions.Should().BeEmpty();
         }
     }
 
@@ -549,17 +593,15 @@ public class MySqlColumnBuilderTests : TestsBase
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Columns.Create( "C2" ).MarkAsNullable( value );
 
-        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
-
+        var actionCount = schema.Database.GetPendingActionCount();
         sut.MarkAsNullable( ! value );
-        var result = ((ISqlColumnBuilder)sut).MarkAsNullable( value );
-
-        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
+        var result = sut.MarkAsNullable( value );
+        var actions = schema.Database.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )
         {
             result.Should().BeSameAs( sut );
-            statements.Should().BeEmpty();
+            actions.Should().BeEmpty();
         }
     }
 
@@ -571,18 +613,17 @@ public class MySqlColumnBuilderTests : TestsBase
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Columns.Create( "C2" );
 
-        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
-
-        var result = ((ISqlColumnBuilder)sut).MarkAsNullable();
-        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
+        var actionCount = schema.Database.GetPendingActionCount();
+        var result = sut.MarkAsNullable();
+        var actions = schema.Database.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )
         {
             result.Should().BeSameAs( sut );
             sut.IsNullable.Should().BeTrue();
 
-            statements.Should().HaveCount( 1 );
-            statements.ElementAtOrDefault( 0 )
+            actions.Should().HaveCount( 1 );
+            actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
                     @"ALTER TABLE `foo`.`T`
@@ -598,18 +639,17 @@ public class MySqlColumnBuilderTests : TestsBase
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Columns.Create( "C2" ).MarkAsNullable();
 
-        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
-
-        var result = ((ISqlColumnBuilder)sut).MarkAsNullable( false );
-        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
+        var actionCount = schema.Database.GetPendingActionCount();
+        var result = sut.MarkAsNullable( false );
+        var actions = schema.Database.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )
         {
             result.Should().BeSameAs( sut );
             result.IsNullable.Should().BeFalse();
 
-            statements.Should().HaveCount( 1 );
-            statements.ElementAtOrDefault( 0 )
+            actions.Should().HaveCount( 1 );
+            actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
                     @"ALTER TABLE `foo`.`T`
@@ -625,18 +665,17 @@ public class MySqlColumnBuilderTests : TestsBase
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Columns.Create( "C2" ).MarkAsNullable().SetDefaultValue( new byte[] { 1, 2, 3 } );
 
-        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
-
-        var result = ((ISqlColumnBuilder)sut).MarkAsNullable( false );
-        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
+        var actionCount = schema.Database.GetPendingActionCount();
+        var result = sut.MarkAsNullable( false );
+        var actions = schema.Database.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )
         {
             result.Should().BeSameAs( sut );
             result.IsNullable.Should().BeFalse();
 
-            statements.Should().HaveCount( 1 );
-            statements.ElementAtOrDefault( 0 )
+            actions.Should().HaveCount( 1 );
+            actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
                     @"ALTER TABLE `foo`.`T`
@@ -652,18 +691,17 @@ public class MySqlColumnBuilderTests : TestsBase
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Columns.Create( "C2" ).MarkAsNullable();
 
-        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
-
-        var result = ((ISqlColumnBuilder)sut.SetType( MySqlDataType.Int )).MarkAsNullable( false );
-        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
+        var actionCount = schema.Database.GetPendingActionCount();
+        var result = sut.SetType( MySqlDataType.Int ).MarkAsNullable( false );
+        var actions = schema.Database.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )
         {
             result.Should().BeSameAs( sut );
             result.IsNullable.Should().BeFalse();
 
-            statements.Should().HaveCount( 1 );
-            statements.ElementAtOrDefault( 0 )
+            actions.Should().HaveCount( 1 );
+            actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
                     @"ALTER TABLE `foo`.`T`
@@ -674,7 +712,7 @@ public class MySqlColumnBuilderTests : TestsBase
     [Theory]
     [InlineData( true )]
     [InlineData( false )]
-    public void MarkAsNullable_ShouldThrowMySqlObjectBuilderException_WhenColumnIsRemoved(bool value)
+    public void MarkAsNullable_ShouldThrowSqlObjectBuilderException_WhenColumnIsRemoved(bool value)
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
@@ -682,17 +720,17 @@ public class MySqlColumnBuilderTests : TestsBase
         var sut = table.Columns.Create( "C2" ).MarkAsNullable( ! value );
         sut.Remove();
 
-        var action = Lambda.Of( () => ((ISqlColumnBuilder)sut).MarkAsNullable( value ) );
+        var action = Lambda.Of( () => sut.MarkAsNullable( value ) );
 
         action.Should()
-            .ThrowExactly<MySqlObjectBuilderException>()
+            .ThrowExactly<SqlObjectBuilderException>()
             .AndMatch( e => e.Dialect == MySqlDialect.Instance && e.Errors.Count == 1 );
     }
 
     [Theory]
     [InlineData( true )]
     [InlineData( false )]
-    public void MarkAsNullable_ShouldThrowMySqlObjectBuilderException_WhenColumnIsUsedInIndex(bool value)
+    public void MarkAsNullable_ShouldThrowSqlObjectBuilderException_WhenColumnIsUsedInIndex(bool value)
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
@@ -700,17 +738,17 @@ public class MySqlColumnBuilderTests : TestsBase
         var sut = table.Columns.Create( "C2" ).MarkAsNullable( ! value );
         table.Constraints.CreateIndex( sut.Asc() );
 
-        var action = Lambda.Of( () => ((ISqlColumnBuilder)sut).MarkAsNullable( value ) );
+        var action = Lambda.Of( () => sut.MarkAsNullable( value ) );
 
         action.Should()
-            .ThrowExactly<MySqlObjectBuilderException>()
+            .ThrowExactly<SqlObjectBuilderException>()
             .AndMatch( e => e.Dialect == MySqlDialect.Instance && e.Errors.Count == 1 );
     }
 
     [Theory]
     [InlineData( true )]
     [InlineData( false )]
-    public void MarkAsNullable_ShouldThrowMySqlObjectBuilderException_WhenColumnIsUsedInView(bool value)
+    public void MarkAsNullable_ShouldThrowSqlObjectBuilderException_WhenColumnIsUsedInView(bool value)
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
@@ -718,10 +756,10 @@ public class MySqlColumnBuilderTests : TestsBase
         var sut = table.Columns.Create( "C2" ).MarkAsNullable( ! value );
         schema.Objects.CreateView( "V", table.ToRecordSet().ToDataSource().Select( s => new[] { s.From["C2"].AsSelf() } ) );
 
-        var action = Lambda.Of( () => ((ISqlColumnBuilder)sut).MarkAsNullable( value ) );
+        var action = Lambda.Of( () => sut.MarkAsNullable( value ) );
 
         action.Should()
-            .ThrowExactly<MySqlObjectBuilderException>()
+            .ThrowExactly<SqlObjectBuilderException>()
             .AndMatch( e => e.Dialect == MySqlDialect.Instance && e.Errors.Count == 1 );
     }
 
@@ -733,15 +771,14 @@ public class MySqlColumnBuilderTests : TestsBase
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Columns.Create( "C2" ).SetDefaultValue( 123 );
 
-        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
-
-        var result = ((ISqlColumnBuilder)sut).SetDefaultValue( sut.DefaultValue );
-        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
+        var actionCount = schema.Database.GetPendingActionCount();
+        var result = sut.SetDefaultValue( sut.DefaultValue );
+        var actions = schema.Database.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )
         {
             result.Should().BeSameAs( sut );
-            statements.Should().BeEmpty();
+            actions.Should().BeEmpty();
         }
     }
 
@@ -754,17 +791,15 @@ public class MySqlColumnBuilderTests : TestsBase
         var sut = table.Columns.Create( "C2" ).SetDefaultValue( 123 );
         var originalDefaultValue = sut.DefaultValue;
 
-        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
-
+        var actionCount = schema.Database.GetPendingActionCount();
         sut.SetDefaultValue( (int?)42 );
-        var result = ((ISqlColumnBuilder)sut).SetDefaultValue( originalDefaultValue );
-
-        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
+        var result = sut.SetDefaultValue( originalDefaultValue );
+        var actions = schema.Database.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )
         {
             result.Should().BeSameAs( sut );
-            statements.Should().BeEmpty();
+            actions.Should().BeEmpty();
         }
     }
 
@@ -776,18 +811,17 @@ public class MySqlColumnBuilderTests : TestsBase
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Columns.Create( "C2" ).SetDefaultValue( 123 );
 
-        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
-
-        var result = ((ISqlColumnBuilder)sut).SetDefaultValue( 42 );
-        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
+        var actionCount = schema.Database.GetPendingActionCount();
+        var result = sut.SetDefaultValue( 42 );
+        var actions = schema.Database.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )
         {
             result.Should().BeSameAs( sut );
             sut.DefaultValue.Should().BeEquivalentTo( SqlNode.Literal( 42 ) );
 
-            statements.Should().HaveCount( 1 );
-            statements.ElementAtOrDefault( 0 )
+            actions.Should().HaveCount( 1 );
+            actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
                     @"ALTER TABLE `foo`.`T`
@@ -803,18 +837,17 @@ public class MySqlColumnBuilderTests : TestsBase
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Columns.Create( "C2" ).SetDefaultValue( 123 );
 
-        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
-
-        var result = ((ISqlColumnBuilder)sut).SetDefaultValue( null );
-        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
+        var actionCount = schema.Database.GetPendingActionCount();
+        var result = sut.SetDefaultValue( null );
+        var actions = schema.Database.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )
         {
             result.Should().BeSameAs( sut );
             sut.DefaultValue.Should().BeNull();
 
-            statements.Should().HaveCount( 1 );
-            statements.ElementAtOrDefault( 0 )
+            actions.Should().HaveCount( 1 );
+            actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
                     @"ALTER TABLE `foo`.`T`
@@ -830,20 +863,18 @@ public class MySqlColumnBuilderTests : TestsBase
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Columns.Create( "C2" ).SetType<long>();
 
-        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
-
+        var actionCount = schema.Database.GetPendingActionCount();
         var defaultValue = SqlNode.Literal( 10 ) + SqlNode.Literal( 50 ) + SqlNode.Literal( 100 ).Max( SqlNode.Literal( 80 ) );
-        var result = ((ISqlColumnBuilder)sut).SetDefaultValue( defaultValue );
-
-        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
+        var result = sut.SetDefaultValue( defaultValue );
+        var actions = schema.Database.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )
         {
             result.Should().BeSameAs( sut );
             sut.DefaultValue.Should().BeSameAs( defaultValue );
 
-            statements.Should().HaveCount( 1 );
-            statements.ElementAtOrDefault( 0 )
+            actions.Should().HaveCount( 1 );
+            actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
                     @"ALTER TABLE `foo`.`T`
@@ -860,18 +891,17 @@ public class MySqlColumnBuilderTests : TestsBase
         var sut = table.Columns.Create( "C2" );
         table.Constraints.CreateIndex( sut.Asc() );
 
-        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
-
-        var result = ((ISqlColumnBuilder)sut).SetDefaultValue( 123 );
-        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
+        var actionCount = schema.Database.GetPendingActionCount();
+        var result = sut.SetDefaultValue( 123 );
+        var actions = schema.Database.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )
         {
             result.Should().BeSameAs( sut );
             sut.DefaultValue.Should().BeEquivalentTo( SqlNode.Literal( 123 ) );
 
-            statements.Should().HaveCount( 1 );
-            statements.ElementAtOrDefault( 0 )
+            actions.Should().HaveCount( 1 );
+            actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
                     @"ALTER TABLE `foo`.`T`
@@ -888,18 +918,17 @@ public class MySqlColumnBuilderTests : TestsBase
         var sut = table.Columns.Create( "C2" );
         schema.Objects.CreateView( "V", table.ToRecordSet().ToDataSource().Select( s => new[] { s.From["C2"].AsSelf() } ) );
 
-        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
-
-        var result = ((ISqlColumnBuilder)sut).SetDefaultValue( (int?)123 );
-        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
+        var actionCount = schema.Database.GetPendingActionCount();
+        var result = sut.SetDefaultValue( (int?)123 );
+        var actions = schema.Database.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )
         {
             result.Should().BeSameAs( sut );
             sut.DefaultValue.Should().BeEquivalentTo( SqlNode.Literal( 123 ) );
 
-            statements.Should().HaveCount( 1 );
-            statements.ElementAtOrDefault( 0 )
+            actions.Should().HaveCount( 1 );
+            actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
                     @"ALTER TABLE `foo`.`T`
@@ -908,7 +937,7 @@ public class MySqlColumnBuilderTests : TestsBase
     }
 
     [Fact]
-    public void SetDefaultValue_ShouldThrowMySqlObjectBuilderException_WhenColumnIsRemoved()
+    public void SetDefaultValue_ShouldThrowSqlObjectBuilderException_WhenColumnIsRemoved()
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
@@ -916,25 +945,25 @@ public class MySqlColumnBuilderTests : TestsBase
         var sut = table.Columns.Create( "C2" );
         sut.Remove();
 
-        var action = Lambda.Of( () => ((ISqlColumnBuilder)sut).SetDefaultValue( 42 ) );
+        var action = Lambda.Of( () => sut.SetDefaultValue( 42 ) );
 
         action.Should()
-            .ThrowExactly<MySqlObjectBuilderException>()
+            .ThrowExactly<SqlObjectBuilderException>()
             .AndMatch( e => e.Dialect == MySqlDialect.Instance && e.Errors.Count == 1 );
     }
 
     [Fact]
-    public void SetDefaultValue_ShouldThrowMySqlObjectBuilderException_WhenExpressionIsInvalid()
+    public void SetDefaultValue_ShouldThrowSqlObjectBuilderException_WhenExpressionIsInvalid()
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Columns.Create( "C2" );
 
-        var action = Lambda.Of( () => ((ISqlColumnBuilder)sut).SetDefaultValue( table.ToRecordSet().GetField( "C1" ) ) );
+        var action = Lambda.Of( () => sut.SetDefaultValue( table.ToRecordSet().GetField( "C1" ) ) );
 
         action.Should()
-            .ThrowExactly<MySqlObjectBuilderException>()
+            .ThrowExactly<SqlObjectBuilderException>()
             .AndMatch( e => e.Dialect == MySqlDialect.Instance && e.Errors.Count == 1 );
     }
 
@@ -946,19 +975,17 @@ public class MySqlColumnBuilderTests : TestsBase
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Columns.Create( "C2" );
 
-        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
-
+        var actionCount = schema.Database.GetPendingActionCount();
         sut.SetName( "bar" ).Remove();
-        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
+        var actions = schema.Database.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )
         {
             table.Columns.Contains( sut.Name ).Should().BeFalse();
             sut.IsRemoved.Should().BeTrue();
-            sut.ReferencingIndexes.Should().BeEmpty();
 
-            statements.Should().HaveCount( 1 );
-            statements.ElementAtOrDefault( 0 )
+            actions.Should().HaveCount( 1 );
+            actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
                     @"ALTER TABLE `foo`.`T`
@@ -974,18 +1001,18 @@ public class MySqlColumnBuilderTests : TestsBase
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Columns.Create( "C2" );
 
-        _ = schema.Database.Changes.GetPendingActions();
+        schema.Database.Changes.CompletePendingChanges();
         sut.Remove();
-        var startStatementCount = schema.Database.Changes.GetPendingActions().Length;
 
+        var actionCount = schema.Database.GetPendingActionCount();
         sut.Remove();
-        var statements = schema.Database.Changes.GetPendingActions().Slice( startStatementCount ).ToArray();
+        var actions = schema.Database.GetLastPendingActions( actionCount );
 
-        statements.Should().BeEmpty();
+        actions.Should().BeEmpty();
     }
 
     [Fact]
-    public void Remove_ShouldThrowMySqlObjectBuilderException_WhenColumnIsReferencedByIndexes()
+    public void Remove_ShouldThrowSqlObjectBuilderException_WhenColumnIsReferencedByIndex()
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var t1 = schema.Objects.CreateTable( "T1" );
@@ -995,11 +1022,11 @@ public class MySqlColumnBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.Remove() );
 
-        action.Should().ThrowExactly<MySqlObjectBuilderException>();
+        action.Should().ThrowExactly<SqlObjectBuilderException>();
     }
 
     [Fact]
-    public void Remove_ShouldThrowMySqlObjectBuilderException_WhenColumnIsReferencedByIndexFilters()
+    public void Remove_ShouldThrowSqlObjectBuilderException_WhenColumnIsReferencedByIndexFilter()
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var t1 = schema.Objects.CreateTable( "T1" );
@@ -1009,11 +1036,11 @@ public class MySqlColumnBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.Remove() );
 
-        action.Should().ThrowExactly<MySqlObjectBuilderException>();
+        action.Should().ThrowExactly<SqlObjectBuilderException>();
     }
 
     [Fact]
-    public void Remove_ShouldThrowMySqlObjectBuilderException_WhenColumnIsReferencedByViews()
+    public void Remove_ShouldThrowSqlObjectBuilderException_WhenColumnIsReferencedByView()
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var t1 = schema.Objects.CreateTable( "T1" );
@@ -1023,11 +1050,11 @@ public class MySqlColumnBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.Remove() );
 
-        action.Should().ThrowExactly<MySqlObjectBuilderException>();
+        action.Should().ThrowExactly<SqlObjectBuilderException>();
     }
 
     [Fact]
-    public void Remove_ShouldThrowMySqlObjectBuilderException_WhenColumnIsReferencedByChecks()
+    public void Remove_ShouldThrowSqlObjectBuilderException_WhenColumnIsReferencedByCheck()
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var t1 = schema.Objects.CreateTable( "T1" );
@@ -1037,7 +1064,7 @@ public class MySqlColumnBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.Remove() );
 
-        action.Should().ThrowExactly<MySqlObjectBuilderException>();
+        action.Should().ThrowExactly<SqlObjectBuilderException>();
     }
 
     [Fact]

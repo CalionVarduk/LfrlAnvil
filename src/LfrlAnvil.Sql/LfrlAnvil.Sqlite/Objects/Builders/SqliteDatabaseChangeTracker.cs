@@ -296,7 +296,7 @@ public sealed class SqliteDatabaseChangeTracker : SqlDatabaseChangeTracker
         var interpreter = CreateNodeInterpreter();
         if ( changeAggregator.IsRenamed )
         {
-            var name = this.GetOriginalValue( table, SqlObjectChangeDescriptor.Name ).GetValueOrDefault( table.Name );
+            var name = changeAggregator.OriginalName.GetValueOrDefault( table.Name );
             AddRenameTableAction( table, SqlRecordSetInfo.Create( table.Schema.Name, name ), interpreter );
 
             HashSet<ulong>? reconstructedTables = null;
@@ -450,12 +450,12 @@ public sealed class SqliteDatabaseChangeTracker : SqlDatabaseChangeTracker
             AppendSqlCommandEnd( interpreter );
         }
 
-        if ( interpreter.Context.Sql.Length > 0 )
-        {
-            var sql = interpreter.Context.Sql.ToString();
-            interpreter.Context.Clear();
-            AddSqlAction( sql );
-        }
+        if ( interpreter.Context.Sql.Length == 0 )
+            return;
+
+        var sql = interpreter.Context.Sql.ToString();
+        interpreter.Context.Clear();
+        AddSqlAction( sql );
 
         static void HandleColumnRename(
             SqlNodeInterpreter interpreter,
@@ -586,11 +586,11 @@ public sealed class SqliteDatabaseChangeTracker : SqlDatabaseChangeTracker
     private static void AppendDropRemovedIndexes(
         SqlNodeInterpreter interpreter,
         SqliteTableBuilder table,
-        SqlDatabaseNamedSchemaObjectsSet<SqliteIndexBuilder> indexes)
+        SqlDatabaseNamedObjectsSet<SqliteIndexBuilder> indexes)
     {
         foreach ( var (name, _) in indexes )
         {
-            interpreter.VisitDropIndex( SqlNode.DropIndex( table.Info, name ) );
+            interpreter.VisitDropIndex( SqlNode.DropIndex( table.Info, SqlSchemaObjectName.Create( table.Schema.Name, name ) ) );
             AppendSqlCommandEnd( interpreter );
         }
     }

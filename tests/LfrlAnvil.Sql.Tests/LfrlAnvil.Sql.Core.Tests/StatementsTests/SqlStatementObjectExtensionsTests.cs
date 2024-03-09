@@ -21,6 +21,22 @@ public class SqlStatementObjectExtensionsTests : TestsBase
     }
 
     [Fact]
+    public void CreateCommand_ForInterface_ShouldReturnCommandWithTransaction()
+    {
+        IDbTransaction sut = new DbConnectionMock().BeginTransaction();
+        var result = sut.CreateCommand();
+        result.Transaction.Should().BeSameAs( sut );
+    }
+
+    [Fact]
+    public void CreateCommand_ShouldReturnCommandWithTransaction()
+    {
+        var sut = new DbConnectionMock().BeginTransaction();
+        var result = sut.CreateCommand();
+        result.Transaction.Should().BeSameAs( sut );
+    }
+
+    [Fact]
     public void Query_TypeErased_WithReader_ShouldInvokeReader()
     {
         var command = new DbCommandMock(

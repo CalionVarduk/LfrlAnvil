@@ -21,6 +21,22 @@ public static class SqlStatementObjectExtensions
         return await ((DbConnection)connection).BeginTransactionAsync( isolationLevel, cancellationToken ).ConfigureAwait( false );
     }
 
+    public static IDbCommand CreateCommand(this IDbTransaction transaction)
+    {
+        Ensure.IsNotNull( transaction.Connection );
+        var result = transaction.Connection.CreateCommand();
+        result.Transaction = transaction;
+        return result;
+    }
+
+    public static DbCommand CreateCommand(this DbTransaction transaction)
+    {
+        Ensure.IsNotNull( transaction.Connection );
+        var result = transaction.Connection.CreateCommand();
+        result.Transaction = transaction;
+        return result;
+    }
+
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static SqlMultiDataReader Multi(this IDataReader reader)

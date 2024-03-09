@@ -38,7 +38,6 @@
   - custom traits handling configuration (sqlite too): silently ignore or throw exception
   - configuration for aggregate function filter trait: silently ignore, throw exception or append as switch
   - configurable offset without limit (sqlite too): add implicit max limit or throw exception
-  - remove MySqlAlterTableNode? change tracker's _ongoingStatements needs it right now
   - IXs/PKs/FKs => check how mysql handles column type discrepancies and/or prefix length (text/blob)
     - DB builder may require additional validation
 
@@ -48,6 +47,8 @@
 
 - ISqlDatabaseBuilder:
   - add IDefaultNameProvider => allows to override default name generation (PK, FK, IX, CHK, anything else?)
+  - computed columns?
+  - nodes: ReadOnlyMemory => ReadOnlyArray
 
 
 - Connection strings:
@@ -162,9 +163,6 @@ Add nodes for JSON column manipulation (read value, set value etc.)
 - this heavily depends on all sql providers' support for json
 
 ### Sqlite: Improvement ideas
-- Add column script can be handled with ALTER TABLE
-  - however, situation where column with this name was also removed must be treated as a full reconstruction
-  - this may need to be handled anyway for MySQL and/or PostgreSQL - leave it as-is, for now
 - Support for Sqlite COLLATION in added columns? let's see how other SQL providers handle that
 - ON CONFLICT ROLLBACK instead of ABORT? https://www.sqlite.org/lang_conflict.html
 - STRICT table option is supported in v3.37.0 (2021-11-27), disabled for now

@@ -1,8 +1,7 @@
 ﻿using System.Collections.Generic;
 using LfrlAnvil.Functional;
+using LfrlAnvil.MySql.Objects;
 using LfrlAnvil.MySql.Tests.Helpers;
-using LfrlAnvil.Sql;
-using LfrlAnvil.Sql.Objects;
 using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.MySql.Tests;
@@ -13,10 +12,13 @@ public class MySqlDatabaseTests : TestsBase
     public void Properties_ShouldBeCorrectlyCopiedFromBuilder()
     {
         var dbBuilder = MySqlDatabaseBuilderMock.Create();
-        ISqlDatabase sut = MySqlDatabaseMock.Create( dbBuilder );
+        var sut = MySqlDatabaseMock.Create( dbBuilder );
 
         using ( new AssertionScope() )
         {
+            sut.Dialect.Should().BeSameAs( dbBuilder.Dialect );
+            sut.Version.Should().Be( new Version( "0.0" ) );
+            sut.ServerVersion.Should().BeSameAs( dbBuilder.ServerVersion );
             sut.DataTypes.Should().BeSameAs( dbBuilder.DataTypes );
             sut.TypeDefinitions.Should().BeSameAs( dbBuilder.TypeDefinitions );
             sut.NodeInterpreters.Should().BeSameAs( dbBuilder.NodeInterpreters );
@@ -38,7 +40,7 @@ public class MySqlDatabaseTests : TestsBase
         var dbBuilder = MySqlDatabaseBuilderMock.Create();
         dbBuilder.Schemas.Create( "foo" );
         var db = MySqlDatabaseMock.Create( dbBuilder );
-        ISqlSchemaCollection sut = db.Schemas;
+        var sut = db.Schemas;
 
         var result = sut.Contains( name );
 
@@ -46,12 +48,12 @@ public class MySqlDatabaseTests : TestsBase
     }
 
     [Fact]
-    public void Schemas_GetSchema_ShouldReturnExistingSchema()
+    public void Schemas_Get_ShouldReturnExistingSchema()
     {
         var dbBuilder = MySqlDatabaseBuilderMock.Create();
         dbBuilder.Schemas.Default.SetName( "foo" );
         var db = MySqlDatabaseMock.Create( dbBuilder );
-        ISqlSchemaCollection sut = db.Schemas;
+        var sut = db.Schemas;
 
         var result = sut.Get( "foo" );
 
@@ -59,12 +61,12 @@ public class MySqlDatabaseTests : TestsBase
     }
 
     [Fact]
-    public void Schemas_GetSchema_ShouldThrowKeyNotFoundException_WhenSchemaDoesNotExist()
+    public void Schemas_Get_ShouldThrowKeyNotFoundException_WhenSchemaDoesNotExist()
     {
         var dbBuilder = MySqlDatabaseBuilderMock.Create();
         dbBuilder.Schemas.Default.SetName( "foo" );
         var db = MySqlDatabaseMock.Create( dbBuilder );
-        ISqlSchemaCollection sut = db.Schemas;
+        var sut = db.Schemas;
 
         var action = Lambda.Of( () => sut.Get( "bar" ) );
 
@@ -72,12 +74,12 @@ public class MySqlDatabaseTests : TestsBase
     }
 
     [Fact]
-    public void Schemas_TryGetSchema_ShouldReturnExistingSchema()
+    public void Schemas_TryGet_ShouldReturnExistingSchema()
     {
         var dbBuilder = MySqlDatabaseBuilderMock.Create();
         dbBuilder.Schemas.Default.SetName( "foo" );
         var db = MySqlDatabaseMock.Create( dbBuilder );
-        ISqlSchemaCollection sut = db.Schemas;
+        var sut = db.Schemas;
 
         var result = sut.TryGet( "foo" );
 
@@ -85,16 +87,35 @@ public class MySqlDatabaseTests : TestsBase
     }
 
     [Fact]
-    public void Schemas_TryGetSchema_ShouldReturnNull_WhenSchemaDoesNotExist()
+    public void Schemas_TryGet_ShouldReturnNull_WhenSchemaDoesNotExist()
     {
         var dbBuilder = MySqlDatabaseBuilderMock.Create();
         dbBuilder.Schemas.Default.SetName( "foo" );
         var db = MySqlDatabaseMock.Create( dbBuilder );
-        ISqlSchemaCollection sut = db.Schemas;
+        var sut = db.Schemas;
 
         var result = sut.TryGet( "bar" );
 
         result.Should().BeNull();
+    }
+
+    [Fact]
+    public void Schemas_GetEnumerator_ShouldReturnCorrectResult()
+    {
+        var dbBuilder = MySqlDatabaseBuilderMock.Create();
+        dbBuilder.Schemas.Create( "foo" );
+        var sut = MySqlDatabaseMock.Create( dbBuilder ).Schemas;
+        var schema = sut.Get( "foo" );
+
+        var result = new List<MySqlSchema>();
+        foreach ( var s in sut )
+            result.Add( s );
+
+        using ( new AssertionScope() )
+        {
+            result.Should().HaveCount( 2 );
+            result.Should().BeEquivalentTo( sut.Default, schema );
+        }
     }
 
     [Fact]

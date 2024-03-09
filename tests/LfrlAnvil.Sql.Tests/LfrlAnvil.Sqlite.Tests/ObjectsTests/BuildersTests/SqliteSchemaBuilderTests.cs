@@ -27,7 +27,7 @@ public partial class SqliteSchemaBuilderTests : TestsBase
     }
 
     [Fact]
-    public void Creation_ShouldDoNothing()
+    public void Creation_ShouldNotAddAnyStatements()
     {
         var db = SqliteDatabaseBuilderMock.Create();
 
@@ -710,7 +710,7 @@ public partial class SqliteSchemaBuilderTests : TestsBase
     }
 
     [Fact]
-    public void Remove_ShouldDoNothing_WhenSchemaIsRemoved()
+    public void Remove_ShouldNotAddAnyStatements_WhenSchemaIsRemoved()
     {
         var db = SqliteDatabaseBuilderMock.Create();
         var sut = db.Schemas.Create( "foo" );
