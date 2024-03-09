@@ -270,6 +270,11 @@ public abstract class SqlDatabaseChangeTracker : ISqlDatabaseChangeTracker
         AddChange( target.Table, target, SqlObjectChangeDescriptor.IsUnique, ! target.IsUnique, target.IsUnique );
     }
 
+    protected virtual void AddIsVirtualChange(SqlIndexBuilder target)
+    {
+        AddChange( target.Table, target, SqlObjectChangeDescriptor.IsVirtual, ! target.IsVirtual, target.IsVirtual );
+    }
+
     protected virtual void AddFilterChange(SqlIndexBuilder target, SqlConditionNode? originalValue)
     {
         AddChange( target.Table, target, SqlObjectChangeDescriptor.Filter, originalValue, target.Filter );
@@ -436,6 +441,13 @@ public abstract class SqlDatabaseChangeTracker : ISqlDatabaseChangeTracker
         Assume.NotEquals( target.IsUnique, originalValue );
         if ( IsActive )
             AddIsUniqueChange( target );
+    }
+
+    internal void IsVirtualChanged(SqlIndexBuilder target, bool originalValue)
+    {
+        Assume.NotEquals( target.IsVirtual, originalValue );
+        if ( IsActive )
+            AddIsVirtualChange( target );
     }
 
     internal void FilterChanged(SqlIndexBuilder target, SqlConditionNode? originalValue)

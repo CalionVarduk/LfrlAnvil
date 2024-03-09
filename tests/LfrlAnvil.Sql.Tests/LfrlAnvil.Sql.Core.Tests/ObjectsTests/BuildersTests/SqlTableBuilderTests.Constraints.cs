@@ -269,6 +269,7 @@ public partial class SqlTableBuilderTests
                 result.Index.ReferencedFilterColumns.Should().BeEmpty();
                 result.Index.PrimaryKey.Should().BeSameAs( result );
                 result.Index.IsUnique.Should().BeTrue();
+                result.Index.IsVirtual.Should().BeTrue();
                 result.Index.Filter.Should().BeNull();
                 result.ReferencingObjects.Should().BeEmpty();
 
@@ -356,6 +357,7 @@ public partial class SqlTableBuilderTests
                 result.Index.ReferencedFilterColumns.Should().BeEmpty();
                 result.Index.PrimaryKey.Should().BeSameAs( result );
                 result.Index.IsUnique.Should().BeTrue();
+                result.Index.IsVirtual.Should().BeTrue();
                 result.Index.Filter.Should().BeNull();
                 result.ReferencingObjects.Should().BeEmpty();
 
@@ -403,6 +405,7 @@ public partial class SqlTableBuilderTests
                 result.Index.ReferencedFilterColumns.Should().BeEmpty();
                 result.Index.PrimaryKey.Should().BeSameAs( result );
                 result.Index.IsUnique.Should().BeTrue();
+                result.Index.IsVirtual.Should().BeTrue();
                 result.Index.Filter.Should().BeNull();
                 result.ReferencingObjects.Should().BeEmpty();
 
@@ -452,6 +455,7 @@ public partial class SqlTableBuilderTests
                 result.Index.ReferencedFilterColumns.Should().BeEmpty();
                 result.Index.PrimaryKey.Should().BeSameAs( result );
                 result.Index.IsUnique.Should().BeTrue();
+                result.Index.IsVirtual.Should().BeTrue();
                 result.Index.Filter.Should().BeNull();
                 result.ReferencingObjects.Should().BeEmpty();
 

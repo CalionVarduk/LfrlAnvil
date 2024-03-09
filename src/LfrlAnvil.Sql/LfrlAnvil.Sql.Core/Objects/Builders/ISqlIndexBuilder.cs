@@ -9,9 +9,11 @@ public interface ISqlIndexBuilder : ISqlConstraintBuilder
     IReadOnlyCollection<ISqlColumnBuilder> ReferencedFilterColumns { get; }
     ISqlPrimaryKeyBuilder? PrimaryKey { get; }
     bool IsUnique { get; }
+    bool IsVirtual { get; }
     SqlConditionNode? Filter { get; }
 
     ISqlIndexBuilder MarkAsUnique(bool enabled = true);
+    ISqlIndexBuilder MarkAsVirtual(bool enabled = true);
     ISqlIndexBuilder SetFilter(SqlConditionNode? filter);
     new ISqlIndexBuilder SetName(string name);
     new ISqlIndexBuilder SetDefaultName();

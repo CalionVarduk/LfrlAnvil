@@ -169,6 +169,12 @@ public abstract class SqlBuilderApi
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    protected static void AddIsVirtualChange(SqlIndexBuilder target, bool originalValue)
+    {
+        target.Database.Changes.IsVirtualChanged( target, originalValue );
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     protected static void AddFilterChange(SqlIndexBuilder target, SqlConditionNode? originalValue)
     {
         target.Database.Changes.FilterChanged( target, originalValue );

@@ -12,6 +12,7 @@ public abstract class SqlIndex : SqlConstraint, ISqlIndex
     {
         IsUnique = builder.IsUnique;
         IsPartial = builder.Filter is not null;
+        IsVirtual = builder.IsVirtual;
 
         var columns = new SqlIndexColumn<ISqlColumn>[builder.Columns.Count];
         for ( var i = 0; i < columns.Length; ++i )
@@ -25,6 +26,7 @@ public abstract class SqlIndex : SqlConstraint, ISqlIndex
 
     public bool IsUnique { get; }
     public bool IsPartial { get; }
+    public bool IsVirtual { get; }
     public SqlIndexColumnArray<SqlColumn> Columns => SqlIndexColumnArray<SqlColumn>.From( _columns );
 
     IReadOnlyList<SqlIndexColumn<ISqlColumn>> ISqlIndex.Columns => _columns.GetUnderlyingArray();

@@ -7,4 +7,5 @@ public interface ISqlIndex : ISqlConstraint
     IReadOnlyList<SqlIndexColumn<ISqlColumn>> Columns { get; }
     bool IsUnique { get; }
     bool IsPartial { get; }
+    bool IsVirtual { get; }
 }

@@ -20,7 +20,12 @@ public static class ExceptionResources
     public const string CommonSchemaCannotBeRemoved = "Common schema cannot be removed.";
     public const string IndexMustHaveAtLeastOneColumn = "Index must have at least one column.";
     public const string PrimaryKeyIndexMustRemainUnique = "Primary key index must remain unique.";
+    public const string PrimaryKeyIndexMustRemainVirtual = "Primary key index must remain virtual.";
     public const string PrimaryKeyIndexCannotBePartial = "Primary key index cannot be partial.";
+    public const string VirtualIndexCannotBePartial = "Virtual index cannot be partial.";
+    public const string VirtualIndexCannotBeUnique = "Virtual index cannot be unique (unless it is attached to a primary key).";
+    public const string UniqueIndexCannotBeVirtual = "Unique index cannot be virtual (unless it is attached to a primary key).";
+    public const string PartialIndexCannotBeVirtual = "Partial index cannot be virtual.";
     public const string ForeignKeyOriginIndexAndReferencedIndexAreTheSame = "Foreign key origin index and referenced index are the same.";
 
     public const string ForeignKeyOriginIndexAndReferencedIndexMustHaveTheSameAmountOfColumns =
@@ -117,20 +122,6 @@ public static class ExceptionResources
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static string DetectedExternalForeignKey(ISqlForeignKeyBuilder foreignKey)
-    {
-        return $"Detected an external {foreignKey}.";
-    }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static string DetectedExternalReferencingView(ISqlViewBuilder view, ISqlObjectBuilder obj)
-    {
-        return $"{obj} is referenced by external {view}.";
-    }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static string ObjectDoesNotBelongToTable(ISqlObjectBuilder obj, ISqlTableBuilder expectedTable)
     {
         return $"{obj} does not belong to {expectedTable}.";
@@ -210,30 +201,9 @@ public static class ExceptionResources
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static string ColumnIsReferencedByObject(ISqlObjectBuilder obj)
+    public static string IndexMustRemainNonVirtualBecauseItIsReferencedByForeignKey(ISqlForeignKeyBuilder foreignKey)
     {
-        return $"Column is referenced by {obj}.";
-    }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static string ColumnIsReferencedByIndexFilter(ISqlIndexBuilder index)
-    {
-        return $"Column is referenced by filter of {index}.";
-    }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static string TableIsReferencedByObject(ISqlObjectBuilder obj)
-    {
-        return $"Table is referenced by {obj}.";
-    }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static string ViewIsReferencedByObject(ISqlObjectBuilder obj)
-    {
-        return $"View is referenced by {obj}.";
+        return $"Index must remain non-virtual because it is referenced by {foreignKey}.";
     }
 
     [Pure]

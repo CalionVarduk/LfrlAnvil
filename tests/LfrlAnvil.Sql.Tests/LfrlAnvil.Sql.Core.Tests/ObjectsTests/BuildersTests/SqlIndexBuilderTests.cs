@@ -431,6 +431,20 @@ public class SqlIndexBuilderTests : TestsBase
     }
 
     [Fact]
+    public void MarkAsUnique_ShouldThrowSqlObjectBuilderException_WhenVirtualIndexUniquenessChangesToTrue()
+    {
+        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var table = schema.Objects.CreateTable( "T" );
+        var sut = table.Constraints.CreateIndex( table.Columns.Create( "C" ).Asc() ).MarkAsVirtual();
+
+        var action = Lambda.Of( () => sut.MarkAsUnique() );
+
+        action.Should()
+            .ThrowExactly<SqlObjectBuilderException>()
+            .AndMatch( e => e.Dialect == SqlDialectMock.Instance && e.Errors.Count == 1 );
+    }
+
+    [Fact]
     public void MarkAsUnique_ShouldThrowSqlObjectBuilderException_WhenUniquenessChangesToFalseAndIndexIsReferencedByForeignKey()
     {
         var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
@@ -456,6 +470,173 @@ public class SqlIndexBuilderTests : TestsBase
         sut.Remove();
 
         var action = Lambda.Of( () => sut.MarkAsUnique() );
+
+        action.Should()
+            .ThrowExactly<SqlObjectBuilderException>()
+            .AndMatch( e => e.Dialect == SqlDialectMock.Instance && e.Errors.Count == 1 );
+    }
+
+    [Theory]
+    [InlineData( true )]
+    [InlineData( false )]
+    public void MarkAsVirtual_ShouldDoNothing_WhenVirtualityFlagDoesNotChange(bool value)
+    {
+        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var table = schema.Objects.CreateTable( "T" );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        var sut = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() ).MarkAsVirtual( value );
+
+        var actionCount = schema.Database.GetPendingActionCount();
+        var result = sut.MarkAsVirtual( value );
+        var actions = schema.Database.GetLastPendingActions( actionCount );
+
+        using ( new AssertionScope() )
+        {
+            result.Should().BeSameAs( sut );
+            actions.Should().BeEmpty();
+        }
+    }
+
+    [Fact]
+    public void MarkAsVirtual_ShouldDoNothing_WhenValueChangeIsFollowedByChangeToOriginal()
+    {
+        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var table = schema.Objects.CreateTable( "T" );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        var sut = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() );
+
+        var actionCount = schema.Database.GetPendingActionCount();
+        sut.MarkAsVirtual();
+        var result = sut.MarkAsVirtual( false );
+        var actions = schema.Database.GetLastPendingActions( actionCount );
+
+        using ( new AssertionScope() )
+        {
+            result.Should().BeSameAs( sut );
+            actions.Should().BeEmpty();
+        }
+    }
+
+    [Fact]
+    public void MarkAsVirtual_ShouldUpdateIsVirtual_WhenValueChangesToTrue()
+    {
+        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var table = schema.Objects.CreateTable( "T" );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        var sut = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() );
+
+        var actionCount = schema.Database.GetPendingActionCount();
+        var result = sut.MarkAsVirtual();
+        var actions = schema.Database.GetLastPendingActions( actionCount );
+
+        using ( new AssertionScope() )
+        {
+            result.Should().BeSameAs( sut );
+            sut.IsVirtual.Should().BeTrue();
+
+            actions.Should().HaveCount( 1 );
+            actions.ElementAtOrDefault( 0 )
+                .Sql.Should()
+                .Be(
+                    @"ALTER [Table] foo.T
+  ALTER [Index] foo.IX_T_C2A ([6] : 'IsVirtual' (System.Boolean) FROM False);" );
+        }
+    }
+
+    [Fact]
+    public void MarkAsVirtual_ShouldUpdateIsVirtual_WhenValueChangesToFalse()
+    {
+        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var table = schema.Objects.CreateTable( "T" );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        var sut = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() ).MarkAsVirtual();
+
+        var actionCount = schema.Database.GetPendingActionCount();
+        var result = sut.MarkAsVirtual( false );
+        var actions = schema.Database.GetLastPendingActions( actionCount );
+
+        using ( new AssertionScope() )
+        {
+            result.Should().BeSameAs( sut );
+            sut.IsVirtual.Should().BeFalse();
+
+            actions.Should().HaveCount( 1 );
+            actions.ElementAtOrDefault( 0 )
+                .Sql.Should()
+                .Be(
+                    @"ALTER [Table] foo.T
+  ALTER [Index] foo.IX_T_C2A ([6] : 'IsVirtual' (System.Boolean) FROM True);" );
+        }
+    }
+
+    [Fact]
+    public void MarkAsVirtual_ShouldThrowSqlObjectBuilderException_WhenPrimaryKeyIndexVirtualityChangesToFalse()
+    {
+        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var table = schema.Objects.CreateTable( "T" );
+        var sut = table.Constraints.SetPrimaryKey( table.Columns.Create( "C" ).Asc() ).Index;
+
+        var action = Lambda.Of( () => sut.MarkAsVirtual( false ) );
+
+        action.Should()
+            .ThrowExactly<SqlObjectBuilderException>()
+            .AndMatch( e => e.Dialect == SqlDialectMock.Instance && e.Errors.Count == 1 );
+    }
+
+    [Fact]
+    public void MarkAsVirtual_ShouldThrowSqlObjectBuilderException_WhenPartialIndexVirtualityChangesToTrue()
+    {
+        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var table = schema.Objects.CreateTable( "T" );
+        var sut = table.Constraints.CreateIndex( table.Columns.Create( "C" ).Asc() ).SetFilter( SqlNode.True() );
+
+        var action = Lambda.Of( () => sut.MarkAsVirtual() );
+
+        action.Should()
+            .ThrowExactly<SqlObjectBuilderException>()
+            .AndMatch( e => e.Dialect == SqlDialectMock.Instance && e.Errors.Count == 1 );
+    }
+
+    [Fact]
+    public void MarkAsVirtual_ShouldThrowSqlObjectBuilderException_WhenUniqueIndexVirtualityChangesToTrue()
+    {
+        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var table = schema.Objects.CreateTable( "T" );
+        var sut = table.Constraints.CreateIndex( table.Columns.Create( "C" ).Asc() ).MarkAsUnique();
+
+        var action = Lambda.Of( () => sut.MarkAsVirtual() );
+
+        action.Should()
+            .ThrowExactly<SqlObjectBuilderException>()
+            .AndMatch( e => e.Dialect == SqlDialectMock.Instance && e.Errors.Count == 1 );
+    }
+
+    [Fact]
+    public void MarkAsVirtual_ShouldThrowSqlObjectBuilderException_WhenVirtualityChangesToTrueAndIndexIsReferencedByForeignKey()
+    {
+        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var table = schema.Objects.CreateTable( "T" );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        var sut = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() ).MarkAsUnique();
+        table.Constraints.CreateForeignKey( table.Constraints.CreateIndex( table.Columns.Create( "C3" ).Asc() ), sut );
+
+        var action = Lambda.Of( () => sut.MarkAsVirtual() );
+
+        action.Should()
+            .ThrowExactly<SqlObjectBuilderException>()
+            .AndMatch( e => e.Dialect == SqlDialectMock.Instance && e.Errors.Count == 2 );
+    }
+
+    [Fact]
+    public void MarkAsVirtual_ShouldThrowSqlObjectBuilderException_WhenIndexIsRemoved()
+    {
+        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var table = schema.Objects.CreateTable( "T" );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        var sut = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() );
+        sut.Remove();
+
+        var action = Lambda.Of( () => sut.MarkAsVirtual() );
 
         action.Should()
             .ThrowExactly<SqlObjectBuilderException>()
@@ -531,7 +712,7 @@ public class SqlIndexBuilderTests : TestsBase
                 .Sql.Should()
                 .Be(
                     @"ALTER [Table] foo.T
-  ALTER [Index] foo.IX_T_C2A ([6] : 'Filter' (LfrlAnvil.Sql.Expressions.Logical.SqlConditionNode) FROM <null>);" );
+  ALTER [Index] foo.IX_T_C2A ([7] : 'Filter' (LfrlAnvil.Sql.Expressions.Logical.SqlConditionNode) FROM <null>);" );
         }
     }
 
@@ -563,7 +744,7 @@ public class SqlIndexBuilderTests : TestsBase
                 .Sql.Should()
                 .Be(
                     @"ALTER [Table] foo.T
-  ALTER [Index] foo.IX_T_C2A ([6] : 'Filter' (LfrlAnvil.Sql.Expressions.Logical.SqlConditionNode) FROM ([foo].[T].[C2] : System.Object) <> (NULL));" );
+  ALTER [Index] foo.IX_T_C2A ([7] : 'Filter' (LfrlAnvil.Sql.Expressions.Logical.SqlConditionNode) FROM ([foo].[T].[C2] : System.Object) <> (NULL));" );
         }
     }
 
@@ -592,7 +773,7 @@ public class SqlIndexBuilderTests : TestsBase
 
         action.Should()
             .ThrowExactly<SqlObjectBuilderException>()
-            .AndMatch( e => e.Dialect == SqlDialectMock.Instance && e.Errors.Count == 1 );
+            .AndMatch( e => e.Dialect == SqlDialectMock.Instance && e.Errors.Count == 2 );
     }
 
     [Fact]
@@ -603,6 +784,21 @@ public class SqlIndexBuilderTests : TestsBase
         var ix = table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() ).Index;
         var sut = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() ).MarkAsUnique();
         table.Constraints.CreateForeignKey( ix, sut );
+
+        var action = Lambda.Of( () => sut.SetFilter( SqlNode.True() ) );
+
+        action.Should()
+            .ThrowExactly<SqlObjectBuilderException>()
+            .AndMatch( e => e.Dialect == SqlDialectMock.Instance && e.Errors.Count == 1 );
+    }
+
+    [Fact]
+    public void SetFilter_ShouldThrowSqlObjectBuilderException_WhenIndexIsVirtual()
+    {
+        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var table = schema.Objects.CreateTable( "T" );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        var sut = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() ).MarkAsVirtual();
 
         var action = Lambda.Of( () => sut.SetFilter( SqlNode.True() ) );
 
@@ -1008,6 +1204,32 @@ public class SqlIndexBuilderTests : TestsBase
     }
 
     [Fact]
+    public void ISqlIndexBuilder_MarkAsVirtual_ShouldBeEquivalentToMarkAsVirtual()
+    {
+        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var table = schema.Objects.CreateTable( "T" );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        var sut = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() );
+
+        var actionCount = schema.Database.GetPendingActionCount();
+        var result = ((ISqlIndexBuilder)sut).MarkAsVirtual();
+        var actions = schema.Database.GetLastPendingActions( actionCount );
+
+        using ( new AssertionScope() )
+        {
+            result.Should().BeSameAs( sut );
+            sut.IsVirtual.Should().BeTrue();
+
+            actions.Should().HaveCount( 1 );
+            actions.ElementAtOrDefault( 0 )
+                .Sql.Should()
+                .Be(
+                    @"ALTER [Table] foo.T
+  ALTER [Index] foo.IX_T_C2A ([6] : 'IsVirtual' (System.Boolean) FROM False);" );
+        }
+    }
+
+    [Fact]
     public void ISqlIndexBuilder_SetFilter_ShouldBeEquivalentToSetFilter()
     {
         var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
@@ -1037,7 +1259,7 @@ public class SqlIndexBuilderTests : TestsBase
                 .Sql.Should()
                 .Be(
                     @"ALTER [Table] foo.T
-  ALTER [Index] foo.IX_T_C2A ([6] : 'Filter' (LfrlAnvil.Sql.Expressions.Logical.SqlConditionNode) FROM <null>);" );
+  ALTER [Index] foo.IX_T_C2A ([7] : 'Filter' (LfrlAnvil.Sql.Expressions.Logical.SqlConditionNode) FROM <null>);" );
         }
     }
 }

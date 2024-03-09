@@ -38,6 +38,12 @@ public sealed class SqlIndexBuilderMock : SqlIndexBuilder
         return this;
     }
 
+    public new SqlIndexBuilderMock MarkAsVirtual(bool enabled = true)
+    {
+        base.MarkAsVirtual( enabled );
+        return this;
+    }
+
     public new SqlIndexBuilderMock SetFilter(SqlConditionNode? filter)
     {
         base.SetFilter( filter );

@@ -1,28 +1,12 @@
 ﻿using System.Collections.Generic;
 using System.Diagnostics.Contracts;
-using LfrlAnvil.Sql.Exceptions;
+using LfrlAnvil.Exceptions;
 using LfrlAnvil.Sql.Expressions.Logical;
 using LfrlAnvil.Sql.Expressions.Visitors;
 using LfrlAnvil.Sql.Internal;
+using ExceptionResources = LfrlAnvil.Sql.Exceptions.ExceptionResources;
 
 namespace LfrlAnvil.Sql.Objects.Builders;
-
-// TODO:
-// idea => IsVirtual property
-// it would allow to create an IX that won't actually be created on DB (PK index is an example of a virtual IX)
-// IsVirtual set to true resets (or simply throw an error when the following are not as expected):
-// - IsUnique => false
-// - Filter => null
-// - PrimaryKey => null
-// IsVirtual can be set to true only when:
-// - IX is not referenced by any FK
-// - IX is not linked to PK
-// IsVirtual can always be set to false
-// additional validation:
-// - PK cannot be assigned when IX is virtual
-// - FK cannot reference a virtual IX
-// - virtual IX cannot be made unique
-// - virtual IX cannot be partial
 
 public abstract class SqlIndexBuilder : SqlConstraintBuilder, ISqlIndexBuilder
 {
@@ -39,6 +23,7 @@ public abstract class SqlIndexBuilder : SqlConstraintBuilder, ISqlIndexBuilder
         _referencedFilterColumns = ReadOnlyArray<SqlColumnBuilder>.Empty;
         _columns = ReadOnlyArray<SqlIndexColumnBuilder<ISqlColumnBuilder>>.Empty;
         IsUnique = isUnique;
+        IsVirtual = false;
         PrimaryKey = null;
         Filter = null;
         SetColumnReferences( columns );
@@ -46,6 +31,7 @@ public abstract class SqlIndexBuilder : SqlConstraintBuilder, ISqlIndexBuilder
 
     public SqlPrimaryKeyBuilder? PrimaryKey { get; private set; }
     public bool IsUnique { get; private set; }
+    public bool IsVirtual { get; private set; }
     public SqlConditionNode? Filter { get; private set; }
     public override bool CanRemove => base.CanRemove && (PrimaryKey?.ReferencedTargets is null || PrimaryKey.ReferencedTargets.Count == 0);
     public SqlIndexColumnBuilderArray<SqlColumnBuilder> Columns => SqlIndexColumnBuilderArray<SqlColumnBuilder>.From( _columns );
@@ -83,6 +69,19 @@ public abstract class SqlIndexBuilder : SqlConstraintBuilder, ISqlIndexBuilder
         return this;
     }
 
+    public SqlIndexBuilder MarkAsVirtual(bool enabled = true)
+    {
+        ThrowIfRemoved();
+        var change = BeforeIsVirtualChange( enabled );
+        if ( change.IsCancelled )
+            return this;
+
+        var originalValue = IsVirtual;
+        IsVirtual = change.NewValue;
+        AfterIsVirtualChange( originalValue );
+        return this;
+    }
+
     public SqlIndexBuilder SetFilter(SqlConditionNode? filter)
     {
         ThrowIfRemoved();
@@ -109,6 +108,8 @@ public abstract class SqlIndexBuilder : SqlConstraintBuilder, ISqlIndexBuilder
 
         if ( IsUnique )
             ThrowIfMustRemainUnique();
+        else
+            ThrowIfCannotBeUnique();
 
         return newValue;
     }
@@ -116,6 +117,24 @@ public abstract class SqlIndexBuilder : SqlConstraintBuilder, ISqlIndexBuilder
     protected virtual void AfterIsUniqueChange(bool originalValue)
     {
         AddIsUniqueChange( this, originalValue );
+    }
+
+    protected virtual SqlPropertyChange<bool> BeforeIsVirtualChange(bool newValue)
+    {
+        if ( IsVirtual == newValue )
+            return SqlPropertyChange.Cancel<bool>();
+
+        if ( IsVirtual )
+            ThrowIfMustRemainVirtual();
+        else
+            ThrowIfCannotBeVirtual();
+
+        return newValue;
+    }
+
+    protected virtual void AfterIsVirtualChange(bool originalValue)
+    {
+        AddIsVirtualChange( this, originalValue );
     }
 
     protected virtual SqlPropertyChange<SqlConditionNode?> BeforeFilterChange(SqlConditionNode? newValue)
@@ -169,12 +188,52 @@ public abstract class SqlIndexBuilder : SqlConstraintBuilder, ISqlIndexBuilder
             throw SqlHelpers.CreateObjectBuilderException( Database, errors );
     }
 
+    protected void ThrowIfCannotBeUnique()
+    {
+        if ( IsVirtual )
+            ExceptionThrower.Throw( SqlHelpers.CreateObjectBuilderException( Database, ExceptionResources.VirtualIndexCannotBeUnique ) );
+    }
+
+    protected void ThrowIfMustRemainVirtual()
+    {
+        if ( PrimaryKey is not null )
+            ExceptionThrower.Throw(
+                SqlHelpers.CreateObjectBuilderException( Database, ExceptionResources.PrimaryKeyIndexMustRemainVirtual ) );
+    }
+
+    protected void ThrowIfCannotBeVirtual()
+    {
+        var errors = Chain<string>.Empty;
+
+        if ( IsUnique )
+            errors = errors.Extend( ExceptionResources.UniqueIndexCannotBeVirtual );
+
+        if ( Filter is not null )
+            errors = errors.Extend( ExceptionResources.PartialIndexCannotBeVirtual );
+
+        foreach ( var reference in ReferencingObjects )
+        {
+            if ( reference.Source.Object.Type != SqlObjectType.ForeignKey || reference.Source.Property is not null )
+                continue;
+
+            var foreignKey = ReinterpretCast.To<SqlForeignKeyBuilder>( reference.Source.Object );
+            if ( ReferenceEquals( foreignKey.ReferencedIndex, this ) )
+                errors = errors.Extend( ExceptionResources.IndexMustRemainNonVirtualBecauseItIsReferencedByForeignKey( foreignKey ) );
+        }
+
+        if ( errors.Count > 0 )
+            throw SqlHelpers.CreateObjectBuilderException( Database, errors );
+    }
+
     protected void ThrowIfCannotBePartial()
     {
         var errors = Chain<string>.Empty;
 
         if ( PrimaryKey is not null )
             errors = errors.Extend( ExceptionResources.PrimaryKeyIndexCannotBePartial );
+
+        if ( IsVirtual )
+            errors = errors.Extend( ExceptionResources.VirtualIndexCannotBePartial );
 
         foreach ( var reference in ReferencingObjects )
         {
@@ -291,6 +350,13 @@ public abstract class SqlIndexBuilder : SqlConstraintBuilder, ISqlIndexBuilder
         Assume.IsNull( PrimaryKey );
         Assume.True( IsUnique );
         Assume.IsNull( Filter );
+
+        if ( ! IsVirtual )
+        {
+            IsVirtual = true;
+            AfterIsVirtualChange( false );
+        }
+
         PrimaryKey = primaryKey;
         AfterPrimaryKeyChange( null );
     }
@@ -308,6 +374,11 @@ public abstract class SqlIndexBuilder : SqlConstraintBuilder, ISqlIndexBuilder
     ISqlIndexBuilder ISqlIndexBuilder.MarkAsUnique(bool enabled)
     {
         return MarkAsUnique( enabled );
+    }
+
+    ISqlIndexBuilder ISqlIndexBuilder.MarkAsVirtual(bool enabled)
+    {
+        return MarkAsVirtual( enabled );
     }
 
     ISqlIndexBuilder ISqlIndexBuilder.SetFilter(SqlConditionNode? filter)
