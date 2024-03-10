@@ -43,8 +43,12 @@ public class SqlIndexTests : TestsBase
             sut.IsUnique.Should().Be( isUnique );
             sut.IsVirtual.Should().Be( isVirtual );
             sut.IsPartial.Should().BeFalse();
-            ((SqlIndex)sut).Columns.Should().BeSequentiallyEqualTo( c1.Asc(), c2.Desc() );
-            sut.Columns.Should().BeSequentiallyEqualTo( c1.Asc(), c2.Desc() );
+            ((SqlIndex)sut).Columns.Should()
+                .BeSequentiallyEqualTo( new SqlIndexed<SqlColumn>( c1, OrderBy.Asc ), new SqlIndexed<SqlColumn>( c2, OrderBy.Desc ) );
+
+            sut.Columns.Should()
+                .BeSequentiallyEqualTo( new SqlIndexed<ISqlColumn>( c1, OrderBy.Asc ), new SqlIndexed<ISqlColumn>( c2, OrderBy.Desc ) );
+
             sut.ToString().Should().Be( "[Index] foo.IX_TEST" );
         }
     }
@@ -74,7 +78,7 @@ public class SqlIndexTests : TestsBase
             sut.IsUnique.Should().BeFalse();
             sut.IsVirtual.Should().BeFalse();
             sut.IsPartial.Should().BeTrue();
-            sut.Columns.Should().BeSequentiallyEqualTo( c1.Asc() );
+            sut.Columns.Should().BeSequentiallyEqualTo( new SqlIndexed<ISqlColumn>( c1, OrderBy.Asc ) );
             sut.ToString().Should().Be( "[Index] foo.IX_TEST" );
         }
     }

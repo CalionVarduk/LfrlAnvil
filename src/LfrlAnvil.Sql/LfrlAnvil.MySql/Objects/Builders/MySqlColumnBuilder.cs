@@ -1,5 +1,4 @@
-﻿using System.Diagnostics.Contracts;
-using System.Runtime.CompilerServices;
+﻿using System.Runtime.CompilerServices;
 using LfrlAnvil.Sql;
 using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Objects.Builders;
@@ -36,18 +35,6 @@ public sealed class MySqlColumnBuilder : SqlColumnBuilder
     {
         base.SetDefaultValue( value );
         return this;
-    }
-
-    [Pure]
-    public new SqlIndexColumnBuilder<MySqlColumnBuilder> Asc()
-    {
-        return base.Asc().UnsafeReinterpretAs<MySqlColumnBuilder>();
-    }
-
-    [Pure]
-    public new SqlIndexColumnBuilder<MySqlColumnBuilder> Desc()
-    {
-        return base.Desc().UnsafeReinterpretAs<MySqlColumnBuilder>();
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]

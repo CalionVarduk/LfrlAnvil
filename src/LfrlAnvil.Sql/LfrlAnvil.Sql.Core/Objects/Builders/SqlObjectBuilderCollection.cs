@@ -6,6 +6,7 @@ using System.Runtime.InteropServices;
 using LfrlAnvil.Sql.Exceptions;
 using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Expressions.Logical;
+using LfrlAnvil.Sql.Expressions.Traits;
 using LfrlAnvil.Sql.Internal;
 
 namespace LfrlAnvil.Sql.Objects.Builders;
@@ -218,8 +219,9 @@ public abstract class SqlObjectBuilderCollection : SqlBuilderApi, ISqlObjectBuil
     protected abstract SqlIndexBuilder CreateIndexBuilder(
         SqlTableBuilder table,
         string name,
-        ReadOnlyArray<SqlIndexColumnBuilder<ISqlColumnBuilder>> columns,
-        bool isUnique);
+        SqlIndexBuilderColumns<SqlColumnBuilder> columns,
+        bool isUnique,
+        ReadOnlyArray<SqlColumnBuilder> referencedColumns);
 
     protected abstract SqlPrimaryKeyBuilder CreatePrimaryKeyBuilder(string name, SqlIndexBuilder index);
 
@@ -236,9 +238,10 @@ public abstract class SqlObjectBuilderCollection : SqlBuilderApi, ISqlObjectBuil
 
     protected virtual void ThrowIfIndexColumnsAreInvalid(
         SqlTableBuilder table,
-        ReadOnlyArray<SqlIndexColumnBuilder<ISqlColumnBuilder>> columns)
+        SqlIndexBuilderColumns<SqlColumnBuilder> columns,
+        bool isUnique)
     {
-        SqlHelpers.AssertIndexColumns( table, columns );
+        SqlHelpers.AssertIndexColumns( table, columns, isUnique );
     }
 
     protected virtual void ThrowIfPrimaryKeyIsInvalid(SqlTableBuilder table, SqlIndexBuilder index)
@@ -272,20 +275,18 @@ public abstract class SqlObjectBuilderCollection : SqlBuilderApi, ISqlObjectBuil
         _schema = schema;
     }
 
-    internal SqlIndexBuilder CreateIndex(
-        SqlTableBuilder table,
-        string name,
-        ReadOnlyArray<SqlIndexColumnBuilder<ISqlColumnBuilder>> columns,
-        bool isUnique)
+    internal SqlIndexBuilder CreateIndex(SqlTableBuilder table, string name, ReadOnlyArray<SqlOrderByNode> columns, bool isUnique)
     {
         Schema.Database.ThrowIfNameIsInvalid( SqlObjectType.Index, name );
-        ThrowIfIndexColumnsAreInvalid( table, columns );
+        var visitor = SqlIndexBuilder.AssertColumnExpressions( table, columns );
+        var indexColumns = new SqlIndexBuilderColumns<SqlColumnBuilder>( columns );
+        ThrowIfIndexColumnsAreInvalid( table, indexColumns, isUnique );
 
         ref var obj = ref CollectionsMarshal.GetValueRefOrAddDefault( _map, name, out var exists )!;
         if ( exists )
             throw SqlHelpers.CreateObjectBuilderException( Schema.Database, ExceptionResources.NameIsAlreadyTaken( obj, name ) );
 
-        var result = CreateIndexBuilder( table, name, columns, isUnique );
+        var result = CreateIndexBuilder( table, name, indexColumns, isUnique, visitor.GetReferencedColumns() );
         Assume.Equals( result.Name, name );
         obj = result;
         return result;

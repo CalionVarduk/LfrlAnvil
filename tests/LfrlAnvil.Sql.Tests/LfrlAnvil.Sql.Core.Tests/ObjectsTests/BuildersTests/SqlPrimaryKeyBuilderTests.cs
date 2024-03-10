@@ -286,7 +286,7 @@ public class SqlPrimaryKeyBuilderTests : TestsBase
             sut.IsRemoved.Should().BeTrue();
             sut.Index.IsRemoved.Should().BeTrue();
             sut.Index.PrimaryKey.Should().BeNull();
-            sut.Index.Columns.Should().BeEmpty();
+            sut.Index.Columns.Expressions.Should().BeEmpty();
             column.ReferencingObjects.Should().BeEmpty();
 
             actions.Should().HaveCount( 1 );

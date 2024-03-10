@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using LfrlAnvil.Sql.Expressions.Logical;
+using LfrlAnvil.Sql.Expressions.Traits;
 
 namespace LfrlAnvil.Sql.Objects.Builders;
 
@@ -43,8 +44,8 @@ public interface ISqlConstraintBuilderCollection : IReadOnlyCollection<ISqlConst
 
     ISqlPrimaryKeyBuilder SetPrimaryKey(ISqlIndexBuilder index);
     ISqlPrimaryKeyBuilder SetPrimaryKey(string name, ISqlIndexBuilder index);
-    ISqlIndexBuilder CreateIndex(ReadOnlyArray<SqlIndexColumnBuilder<ISqlColumnBuilder>> columns, bool isUnique = false);
-    ISqlIndexBuilder CreateIndex(string name, ReadOnlyArray<SqlIndexColumnBuilder<ISqlColumnBuilder>> columns, bool isUnique = false);
+    ISqlIndexBuilder CreateIndex(ReadOnlyArray<SqlOrderByNode> columns, bool isUnique = false);
+    ISqlIndexBuilder CreateIndex(string name, ReadOnlyArray<SqlOrderByNode> columns, bool isUnique = false);
     ISqlForeignKeyBuilder CreateForeignKey(ISqlIndexBuilder originIndex, ISqlIndexBuilder referencedIndex);
     ISqlForeignKeyBuilder CreateForeignKey(string name, ISqlIndexBuilder originIndex, ISqlIndexBuilder referencedIndex);
     ISqlCheckBuilder CreateCheck(SqlConditionNode condition);

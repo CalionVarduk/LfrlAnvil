@@ -45,9 +45,7 @@ public sealed class SqlTableBuilderMock : SqlTableBuilder
         foreach ( var c in pkColumns )
             table.Columns.Get( c ).MarkAsNullable( false );
 
-        table.Constraints.SetPrimaryKey(
-            pkColumns.Select( c => table.Columns.Get( c ).Asc().UnsafeReinterpretAs<ISqlColumnBuilder>() ).ToArray() );
-
+        table.Constraints.SetPrimaryKey( pkColumns.Select( c => table.Columns.Get( c ).Asc() ).ToArray() );
         return table;
     }
 }

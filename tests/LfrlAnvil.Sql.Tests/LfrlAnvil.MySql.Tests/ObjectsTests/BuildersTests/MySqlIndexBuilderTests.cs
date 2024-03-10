@@ -33,9 +33,10 @@ public class MySqlIndexBuilderTests : TestsBase
         var table = schema.Objects.CreateTable( "T" );
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var c2 = table.Columns.Create( "C2" ).SetType<int>();
+        var ixc2 = c2.Asc();
 
         var actionCount = schema.Database.GetPendingActionCount();
-        var sut = table.Constraints.CreateIndex( c2.Asc() );
+        var sut = table.Constraints.CreateIndex( ixc2 );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )
@@ -43,10 +44,40 @@ public class MySqlIndexBuilderTests : TestsBase
             table.Constraints.TryGet( sut.Name ).Should().BeSameAs( sut );
             schema.Objects.TryGet( sut.Name ).Should().BeSameAs( sut );
             sut.Name.Should().MatchRegex( "IX_T_C2A" );
-            sut.Columns.Should().BeSequentiallyEqualTo( c2.Asc() );
+            sut.Columns.Expressions.Should().BeSequentiallyEqualTo( ixc2 );
+            sut.ReferencedColumns.Should().BeSequentiallyEqualTo( c2 );
 
             actions.Should().HaveCount( 1 );
             actions.ElementAtOrDefault( 0 ).Sql.Should().SatisfySql( "CREATE INDEX `IX_T_C2A` ON `foo`.`T` (`C2` ASC);" );
+        }
+    }
+
+    [Fact]
+    public void Creation_ShouldNotMarkTableForAlteration_WhenIndexContainsExpressions()
+    {
+        var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var table = schema.Objects.CreateTable( "T" );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        var c2 = table.Columns.Create( "C2" ).SetType<int>();
+        var c3 = table.Columns.Create( "C3" ).SetType<int>();
+        var ixc1 = c2.Asc();
+        var ixc2 = (c3.Node + SqlNode.Literal( 1 )).Desc();
+
+        var actionCount = schema.Database.GetPendingActionCount();
+        var sut = table.Constraints.CreateIndex( ixc1, ixc2 );
+        var actions = schema.Database.GetLastPendingActions( actionCount );
+
+        using ( new AssertionScope() )
+        {
+            table.Constraints.TryGet( sut.Name ).Should().BeSameAs( sut );
+            schema.Objects.TryGet( sut.Name ).Should().BeSameAs( sut );
+            sut.Name.Should().MatchRegex( "IX_T_C2A_E1D" );
+            sut.Columns.Expressions.Should().BeSequentiallyEqualTo( ixc1, ixc2 );
+
+            actions.Should().HaveCount( 1 );
+            actions.ElementAtOrDefault( 0 )
+                .Sql.Should()
+                .SatisfySql( "CREATE INDEX `IX_T_C2A_E1D` ON `foo`.`T` (`C2` ASC, (`C3` + 1) DESC);" );
         }
     }
 
@@ -73,9 +104,10 @@ public class MySqlIndexBuilderTests : TestsBase
         var table = schema.Objects.CreateTable( "T" );
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var c2 = table.Columns.Create( "C2" ).SetType<int>();
+        var ixc2 = c2.Asc();
 
         var actionCount = schema.Database.GetPendingActionCount();
-        var sut = table.Constraints.CreateUniqueIndex( c2.Asc() );
+        var sut = table.Constraints.CreateUniqueIndex( ixc2 );
         table.Constraints.SetPrimaryKey( sut );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
@@ -84,7 +116,8 @@ public class MySqlIndexBuilderTests : TestsBase
             table.Constraints.TryGet( sut.Name ).Should().BeSameAs( sut );
             schema.Objects.TryGet( sut.Name ).Should().BeSameAs( sut );
             sut.Name.Should().MatchRegex( "UIX_T_C2A" );
-            sut.Columns.Should().BeSequentiallyEqualTo( c2.Asc() );
+            sut.Columns.Expressions.Should().BeSequentiallyEqualTo( ixc2 );
+            sut.ReferencedColumns.Should().BeSequentiallyEqualTo( c2 );
 
             actions.Should().HaveCount( 1 );
             actions.ElementAtOrDefault( 0 )
@@ -570,6 +603,21 @@ public class MySqlIndexBuilderTests : TestsBase
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         var sut = table.Constraints.CreateIndex( table.Columns.Create( "C" ).Asc() ).MarkAsVirtual();
+
+        var action = Lambda.Of( () => sut.MarkAsUnique() );
+
+        action.Should()
+            .ThrowExactly<SqlObjectBuilderException>()
+            .AndMatch( e => e.Dialect == MySqlDialect.Instance && e.Errors.Count == 1 );
+    }
+
+    [Fact]
+    public void MarkAsUnique_ShouldThrowSqlObjectBuilderException_WhenIndexWithExpressionsUniquenessChangesToTrue()
+    {
+        var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var table = schema.Objects.CreateTable( "T" );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        var sut = table.Constraints.CreateIndex( (table.Columns.Create( "C2" ).Node + SqlNode.Literal( 1 )).Asc() );
 
         var action = Lambda.Of( () => sut.MarkAsUnique() );
 
@@ -1174,7 +1222,8 @@ public class MySqlIndexBuilderTests : TestsBase
             table.Constraints.TryGet( sut.Name ).Should().BeNull();
             schema.Objects.TryGet( sut.Name ).Should().BeNull();
             sut.IsRemoved.Should().BeTrue();
-            sut.Columns.Should().BeEmpty();
+            sut.Columns.Expressions.Should().BeEmpty();
+            sut.ReferencedColumns.Should().BeEmpty();
             sut.ReferencedFilterColumns.Should().BeEmpty();
             sut.Filter.Should().BeNull();
             c2.ReferencingObjects.Should().BeEmpty();
@@ -1204,7 +1253,8 @@ public class MySqlIndexBuilderTests : TestsBase
             schema.Objects.TryGet( pk.Name ).Should().BeNull();
             sut.IsRemoved.Should().BeTrue();
             sut.PrimaryKey.Should().BeNull();
-            sut.Columns.Should().BeEmpty();
+            sut.Columns.Expressions.Should().BeEmpty();
+            sut.ReferencedColumns.Should().BeEmpty();
             pk.IsRemoved.Should().BeTrue();
             column.ReferencingObjects.Should().BeEmpty();
         }

@@ -5,7 +5,7 @@ using LfrlAnvil.TestExtensions.Sql.Mocks;
 
 namespace LfrlAnvil.Sql.Tests;
 
-public class SqlIndexColumnArrayTests : TestsBase
+public class SqlIndexedArrayTests : TestsBase
 {
     [Fact]
     public void From_ShouldCreateCorrectArray()
@@ -17,11 +17,11 @@ public class SqlIndexColumnArrayTests : TestsBase
         tableBuilder.Columns.Create( "C3" );
         var db = SqlDatabaseMock.Create( dbBuilder );
         var table = db.Schemas.Default.Objects.GetTable( "T" );
-        var c1 = table.Columns.Get( "C1" ).Asc().UnsafeReinterpretAs<SqlColumnMock>();
-        var c2 = table.Columns.Get( "C2" ).Desc().UnsafeReinterpretAs<SqlColumnMock>();
-        var c3 = table.Columns.Get( "C3" ).Asc().UnsafeReinterpretAs<SqlColumnMock>();
+        var c1 = new SqlIndexed<SqlColumnMock>( (SqlColumnMock)table.Columns.Get( "C1" ), OrderBy.Asc );
+        var c2 = new SqlIndexed<SqlColumnMock>( (SqlColumnMock)table.Columns.Get( "C2" ), OrderBy.Desc );
+        var c3 = new SqlIndexed<SqlColumnMock>( null, OrderBy.Asc );
 
-        var sut = SqlIndexColumnArray<SqlColumnMock>.From( new SqlIndexColumn<ISqlColumn>[] { c1, c2, c3 } );
+        var sut = SqlIndexedArray<SqlColumnMock>.From( new SqlIndexed<ISqlColumn>[] { c1, c2, c3 } );
 
         using ( new AssertionScope() )
         {
@@ -43,10 +43,10 @@ public class SqlIndexColumnArrayTests : TestsBase
         tableBuilder.Columns.Create( "C3" );
         var db = SqlDatabaseMock.Create( dbBuilder );
         var table = db.Schemas.Default.Objects.GetTable( "T" );
-        var c1 = table.Columns.Get( "C1" ).Asc();
-        var c2 = table.Columns.Get( "C2" ).Desc();
-        var c3 = table.Columns.Get( "C3" ).Asc();
-        var sut = SqlIndexColumnArray<SqlColumnMock>.From( new SqlIndexColumn<ISqlColumn>[] { c1, c2, c3 } );
+        var c1 = new SqlIndexed<ISqlColumn>( table.Columns.Get( "C1" ), OrderBy.Asc );
+        var c2 = new SqlIndexed<ISqlColumn>( table.Columns.Get( "C2" ), OrderBy.Desc );
+        var c3 = new SqlIndexed<ISqlColumn>( null, OrderBy.Asc );
+        var sut = SqlIndexedArray<SqlColumnMock>.From( new[] { c1, c2, c3 } );
 
         var result = sut.UnsafeReinterpretAs<SqlColumn>();
 
@@ -55,9 +55,9 @@ public class SqlIndexColumnArrayTests : TestsBase
             result.Count.Should().Be( 3 );
             result.Should()
                 .BeSequentiallyEqualTo(
-                    c1.UnsafeReinterpretAs<SqlColumn>(),
-                    c2.UnsafeReinterpretAs<SqlColumn>(),
-                    c3.UnsafeReinterpretAs<SqlColumn>() );
+                    new SqlIndexed<SqlColumn>( table.Columns.Get( "C1" ), OrderBy.Asc ),
+                    new SqlIndexed<SqlColumn>( table.Columns.Get( "C2" ), OrderBy.Desc ),
+                    new SqlIndexed<SqlColumn>( null, OrderBy.Asc ) );
         }
     }
 }

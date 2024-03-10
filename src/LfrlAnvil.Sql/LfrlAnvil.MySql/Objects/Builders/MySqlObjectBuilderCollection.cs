@@ -114,10 +114,16 @@ public sealed class MySqlObjectBuilderCollection : SqlObjectBuilderCollection
     protected override MySqlIndexBuilder CreateIndexBuilder(
         SqlTableBuilder table,
         string name,
-        ReadOnlyArray<SqlIndexColumnBuilder<ISqlColumnBuilder>> columns,
-        bool isUnique)
+        SqlIndexBuilderColumns<SqlColumnBuilder> columns,
+        bool isUnique,
+        ReadOnlyArray<SqlColumnBuilder> referencedColumns)
     {
-        return new MySqlIndexBuilder( ReinterpretCast.To<MySqlTableBuilder>( table ), name, columns, isUnique );
+        return new MySqlIndexBuilder(
+            ReinterpretCast.To<MySqlTableBuilder>( table ),
+            name,
+            new SqlIndexBuilderColumns<MySqlColumnBuilder>( columns.Expressions ),
+            isUnique,
+            referencedColumns );
     }
 
     protected override MySqlPrimaryKeyBuilder CreatePrimaryKeyBuilder(string name, SqlIndexBuilder index)

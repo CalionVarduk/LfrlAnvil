@@ -1,7 +1,9 @@
 ﻿using LfrlAnvil.MySql.Extensions;
+using LfrlAnvil.MySql.Objects;
 using LfrlAnvil.MySql.Tests.Helpers;
 using LfrlAnvil.Sql;
 using LfrlAnvil.Sql.Expressions;
+using LfrlAnvil.Sql.Objects;
 using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.MySql.Tests.ObjectsTests;
@@ -43,8 +45,9 @@ public class MySqlIndexTests : TestsBase
             sut.IsUnique.Should().Be( isUnique );
             sut.IsVirtual.Should().Be( isVirtual );
             sut.IsPartial.Should().BeFalse();
-            sut.Columns.Should().BeSequentiallyEqualTo( c1.Asc(), c2.Desc() );
-            sut.Columns.Should().BeSequentiallyEqualTo( c1.Asc(), c2.Desc() );
+            sut.Columns.Should()
+                .BeSequentiallyEqualTo( new SqlIndexed<MySqlColumn>( c1, OrderBy.Asc ), new SqlIndexed<MySqlColumn>( c2, OrderBy.Desc ) );
+
             sut.ToString().Should().Be( "[Index] foo.IX_TEST" );
         }
     }
@@ -74,7 +77,7 @@ public class MySqlIndexTests : TestsBase
             sut.IsUnique.Should().BeFalse();
             sut.IsVirtual.Should().BeFalse();
             sut.IsPartial.Should().BeTrue();
-            sut.Columns.Should().BeSequentiallyEqualTo( c1.Asc() );
+            sut.Columns.Should().BeSequentiallyEqualTo( new SqlIndexed<MySqlColumn>( c1, OrderBy.Asc ) );
             sut.ToString().Should().Be( "[Index] foo.IX_TEST" );
         }
     }

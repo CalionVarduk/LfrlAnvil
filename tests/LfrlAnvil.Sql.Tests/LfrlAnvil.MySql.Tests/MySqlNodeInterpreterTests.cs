@@ -13,7 +13,6 @@ using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Expressions.Objects;
 using LfrlAnvil.Sql.Expressions.Traits;
 using LfrlAnvil.Sql.Expressions.Visitors;
-using LfrlAnvil.Sql.Objects.Builders;
 using LfrlAnvil.TestExtensions.FluentAssertions;
 using LfrlAnvil.TestExtensions.Sql.FluentAssertions;
 using LfrlAnvil.TestExtensions.Sql.Mocks;
@@ -3055,7 +3054,8 @@ WHERE EXISTS (
             info,
             new[] { SqlNode.Column<int>( "a" ), SqlNode.Column<int>( "b" ) },
             constraintsProvider: t =>
-                SqlCreateTableConstraints.Empty.WithPrimaryKey( SqlNode.PrimaryKey( SqlSchemaObjectName.Create( "PK" ), t["a"].Asc() ) ) );
+                SqlCreateTableConstraints.Empty.WithPrimaryKey(
+                    SqlNode.PrimaryKey( SqlSchemaObjectName.Create( "PK" ), new[] { t["a"].Asc() } ) ) );
 
         var foo = table.RecordSet.As( "f" );
         var other = SqlNode.RawRecordSet( "bar" );
@@ -3097,7 +3097,7 @@ WHERE {expectedName}.`a` IN (
             new[] { SqlNode.Column<int>( "a" ), SqlNode.Column<int>( "b" ) },
             constraintsProvider: t =>
                 SqlCreateTableConstraints.Empty.WithPrimaryKey(
-                    SqlNode.PrimaryKey( SqlSchemaObjectName.Create( "PK" ), t["a"].Asc(), t["b"].Asc() ) ) );
+                    SqlNode.PrimaryKey( SqlSchemaObjectName.Create( "PK" ), new[] { t["a"].Asc(), t["b"].Asc() } ) ) );
 
         var foo = table.RecordSet.As( "f" );
         var other = SqlNode.RawRecordSet( "bar" );
@@ -3502,7 +3502,8 @@ WHERE `s`.`foo`.`a` IN (
                 SqlRecordSetInfo.Create( "foo" ),
                 new[] { SqlNode.Column<int>( "a" ) },
                 constraintsProvider: _ =>
-                    SqlCreateTableConstraints.Empty.WithPrimaryKey( SqlNode.PrimaryKey( SqlSchemaObjectName.Create( "PK" ) ) ) )
+                    SqlCreateTableConstraints.Empty.WithPrimaryKey(
+                        SqlNode.PrimaryKey( SqlSchemaObjectName.Create( "PK" ), ReadOnlyArray<SqlOrderByNode>.Empty ) ) )
             .AsSet( "f" );
 
         var node = foo.Join( SqlNode.RawRecordSet( "bar" ).Cross() ).GroupBy( s => new[] { s["bar"]["x"] } ).ToUpdate();
@@ -3522,7 +3523,7 @@ WHERE `s`.`foo`.`a` IN (
                 new[] { SqlNode.Column<int>( "a" ) },
                 constraintsProvider: t =>
                     SqlCreateTableConstraints.Empty.WithPrimaryKey(
-                        SqlNode.PrimaryKey( SqlSchemaObjectName.Create( "PK" ), (t["a"] + SqlNode.Literal( 1 )).Asc() ) ) )
+                        SqlNode.PrimaryKey( SqlSchemaObjectName.Create( "PK" ), new[] { (t["a"] + SqlNode.Literal( 1 )).Asc() } ) ) )
             .AsSet( "f" );
 
         var node = foo.Join( SqlNode.RawRecordSet( "bar" ).Cross() ).GroupBy( s => new[] { s["bar"]["x"] } ).ToUpdate();
@@ -3953,7 +3954,8 @@ WHERE EXISTS (
             info,
             new[] { SqlNode.Column<int>( "a" ), SqlNode.Column<int>( "b" ) },
             constraintsProvider: t =>
-                SqlCreateTableConstraints.Empty.WithPrimaryKey( SqlNode.PrimaryKey( SqlSchemaObjectName.Create( "PK" ), t["a"].Asc() ) ) );
+                SqlCreateTableConstraints.Empty.WithPrimaryKey(
+                    SqlNode.PrimaryKey( SqlSchemaObjectName.Create( "PK" ), new[] { t["a"].Asc() } ) ) );
 
         var foo = table.RecordSet.As( "f" );
         var other = SqlNode.RawRecordSet( "bar" );
@@ -3994,7 +3996,7 @@ WHERE {expectedName}.`a` IN (
             new[] { SqlNode.Column<int>( "a" ), SqlNode.Column<int>( "b" ) },
             constraintsProvider: t =>
                 SqlCreateTableConstraints.Empty.WithPrimaryKey(
-                    SqlNode.PrimaryKey( SqlSchemaObjectName.Create( "PK" ), t["a"].Asc(), t["b"].Asc() ) ) );
+                    SqlNode.PrimaryKey( SqlSchemaObjectName.Create( "PK" ), new[] { t["a"].Asc(), t["b"].Asc() } ) ) );
 
         var foo = table.RecordSet.As( "f" );
         var other = SqlNode.RawRecordSet( "bar" );
@@ -4118,7 +4120,8 @@ WHERE EXISTS (
                 SqlRecordSetInfo.Create( "foo" ),
                 new[] { SqlNode.Column<int>( "a" ) },
                 constraintsProvider: _ =>
-                    SqlCreateTableConstraints.Empty.WithPrimaryKey( SqlNode.PrimaryKey( SqlSchemaObjectName.Create( "PK" ) ) ) )
+                    SqlCreateTableConstraints.Empty.WithPrimaryKey(
+                        SqlNode.PrimaryKey( SqlSchemaObjectName.Create( "PK" ), ReadOnlyArray<SqlOrderByNode>.Empty ) ) )
             .AsSet( "f" );
 
         var node = foo.ToDataSource().GroupBy( foo.GetUnsafeField( "a" ) ).ToDeleteFrom();
@@ -4138,7 +4141,7 @@ WHERE EXISTS (
                 new[] { SqlNode.Column<int>( "a" ) },
                 constraintsProvider: t =>
                     SqlCreateTableConstraints.Empty.WithPrimaryKey(
-                        SqlNode.PrimaryKey( SqlSchemaObjectName.Create( "PK" ), (t["a"] + SqlNode.Literal( 1 )).Asc() ) ) )
+                        SqlNode.PrimaryKey( SqlSchemaObjectName.Create( "PK" ), new[] { (t["a"] + SqlNode.Literal( 1 )).Asc() } ) ) )
             .AsSet( "f" );
 
         var node = foo.ToDataSource().GroupBy( foo.GetUnsafeField( "a" ) ).ToDeleteFrom();
@@ -4234,7 +4237,7 @@ WHERE EXISTS (
                 new[] { SqlNode.Column<int>( "a" ), SqlNode.Column<int>( "b" ) } )
             .RecordSet;
 
-        var node = SqlNode.PrimaryKey( SqlSchemaObjectName.Create( "foo", "PK_foobar" ), table["a"].Asc(), table["b"].Desc() );
+        var node = SqlNode.PrimaryKey( SqlSchemaObjectName.Create( "foo", "PK_foobar" ), new[] { table["a"].Asc(), table["b"].Desc() } );
         _sut.Visit( node );
 
         _sut.Context.Sql.ToString().Should().Be( "CONSTRAINT `PK_foobar` PRIMARY KEY (`foo`.`bar`.`a` ASC, `foo`.`bar`.`b` DESC)" );
@@ -4303,7 +4306,7 @@ WHERE EXISTS (
             {
                 var qux = SqlNode.RawRecordSet( "qux" );
                 return SqlCreateTableConstraints.Empty
-                    .WithPrimaryKey( SqlNode.PrimaryKey( SqlSchemaObjectName.Create( "PK_foobar" ), t["x"].Asc() ) )
+                    .WithPrimaryKey( SqlNode.PrimaryKey( SqlSchemaObjectName.Create( "PK_foobar" ), new[] { t["x"].Asc() } ) )
                     .WithForeignKeys(
                         SqlNode.ForeignKey(
                             SqlSchemaObjectName.Create( "FK_foobar_REF_qux" ),
@@ -4667,7 +4670,7 @@ COMMIT;" );
         foreach ( var c in columnNames )
             table.Columns.Create( c ).SetType<TColumnType>();
 
-        var pkColumns = pkColumnNames.Select( n => table.Columns.Get( n ).Asc().UnsafeReinterpretAs<ISqlColumnBuilder>() ).ToArray();
+        var pkColumns = pkColumnNames.Select( n => table.Columns.Get( n ).Asc() ).ToArray();
         table.Constraints.SetPrimaryKey( pkColumns );
         return table;
     }

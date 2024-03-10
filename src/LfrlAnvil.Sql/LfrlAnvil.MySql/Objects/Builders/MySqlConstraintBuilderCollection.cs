@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics.Contracts;
 using LfrlAnvil.Sql.Expressions.Logical;
+using LfrlAnvil.Sql.Expressions.Traits;
 using LfrlAnvil.Sql.Objects.Builders;
 
 namespace LfrlAnvil.MySql.Objects.Builders;
@@ -68,15 +69,12 @@ public sealed class MySqlConstraintBuilderCollection : SqlConstraintBuilderColle
         return ReinterpretCast.To<MySqlPrimaryKeyBuilder>( base.SetPrimaryKey( name, index ) );
     }
 
-    public new MySqlIndexBuilder CreateIndex(ReadOnlyArray<SqlIndexColumnBuilder<ISqlColumnBuilder>> columns, bool isUnique = false)
+    public new MySqlIndexBuilder CreateIndex(ReadOnlyArray<SqlOrderByNode> columns, bool isUnique = false)
     {
         return ReinterpretCast.To<MySqlIndexBuilder>( base.CreateIndex( columns, isUnique ) );
     }
 
-    public new MySqlIndexBuilder CreateIndex(
-        string name,
-        ReadOnlyArray<SqlIndexColumnBuilder<ISqlColumnBuilder>> columns,
-        bool isUnique = false)
+    public new MySqlIndexBuilder CreateIndex(string name, ReadOnlyArray<SqlOrderByNode> columns, bool isUnique = false)
     {
         return ReinterpretCast.To<MySqlIndexBuilder>( base.CreateIndex( name, columns, isUnique ) );
     }

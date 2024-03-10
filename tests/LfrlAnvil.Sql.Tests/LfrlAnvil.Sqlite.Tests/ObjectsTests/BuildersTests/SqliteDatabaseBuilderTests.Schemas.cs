@@ -250,11 +250,11 @@ public partial class SqliteDatabaseBuilderTests
                 pk.ReferencingObjects.Should().BeEmpty();
                 pk.Index.IsRemoved.Should().BeTrue();
                 pk.Index.ReferencingObjects.Should().BeEmpty();
-                pk.Index.Columns.Should().BeEmpty();
+                pk.Index.Columns.Expressions.Should().BeEmpty();
                 pk.Index.PrimaryKey.Should().BeNull();
                 ix.IsRemoved.Should().BeTrue();
                 ix.ReferencingObjects.Should().BeEmpty();
-                ix.Columns.Should().BeEmpty();
+                ix.Columns.Expressions.Should().BeEmpty();
                 selfFk.IsRemoved.Should().BeTrue();
                 selfFk.ReferencingObjects.Should().BeEmpty();
                 externalFk.IsRemoved.Should().BeTrue();

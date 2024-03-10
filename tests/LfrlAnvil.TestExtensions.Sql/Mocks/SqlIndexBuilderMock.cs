@@ -8,14 +8,17 @@ public sealed class SqlIndexBuilderMock : SqlIndexBuilder
     public SqlIndexBuilderMock(
         SqlTableBuilderMock table,
         string name,
-        ReadOnlyArray<SqlIndexColumnBuilder<ISqlColumnBuilder>> columns,
-        bool isUnique)
-        : base( table, name, columns, isUnique ) { }
+        SqlIndexBuilderColumns<SqlColumnBuilderMock> columns,
+        bool isUnique,
+        ReadOnlyArray<SqlColumnBuilder> referencedColumns)
+        : base( table, name, new SqlIndexBuilderColumns<SqlColumnBuilder>( columns.Expressions ), isUnique, referencedColumns ) { }
 
     public new SqlDatabaseBuilderMock Database => ReinterpretCast.To<SqlDatabaseBuilderMock>( base.Database );
     public new SqlTableBuilderMock Table => ReinterpretCast.To<SqlTableBuilderMock>( base.Table );
     public new SqlPrimaryKeyBuilderMock? PrimaryKey => ReinterpretCast.To<SqlPrimaryKeyBuilderMock>( base.PrimaryKey );
-    public new SqlIndexColumnBuilderArray<SqlColumnBuilderMock> Columns => base.Columns.UnsafeReinterpretAs<SqlColumnBuilderMock>();
+
+    public new SqlIndexBuilderColumns<SqlColumnBuilderMock> Columns =>
+        new SqlIndexBuilderColumns<SqlColumnBuilderMock>( base.Columns.Expressions );
 
     public new SqlObjectBuilderArray<SqlColumnBuilderMock> ReferencedFilterColumns =>
         base.ReferencedFilterColumns.UnsafeReinterpretAs<SqlColumnBuilderMock>();

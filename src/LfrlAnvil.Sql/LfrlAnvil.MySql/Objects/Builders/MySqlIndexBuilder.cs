@@ -8,14 +8,20 @@ public sealed class MySqlIndexBuilder : SqlIndexBuilder
     internal MySqlIndexBuilder(
         MySqlTableBuilder table,
         string name,
-        ReadOnlyArray<SqlIndexColumnBuilder<ISqlColumnBuilder>> columns,
-        bool isUnique)
-        : base( table, name, columns, isUnique ) { }
+        SqlIndexBuilderColumns<MySqlColumnBuilder> columns,
+        bool isUnique,
+        ReadOnlyArray<SqlColumnBuilder> referencedColumns)
+        : base( table, name, new SqlIndexBuilderColumns<SqlColumnBuilder>( columns.Expressions ), isUnique, referencedColumns ) { }
 
     public new MySqlDatabaseBuilder Database => ReinterpretCast.To<MySqlDatabaseBuilder>( base.Database );
     public new MySqlTableBuilder Table => ReinterpretCast.To<MySqlTableBuilder>( base.Table );
     public new MySqlPrimaryKeyBuilder? PrimaryKey => ReinterpretCast.To<MySqlPrimaryKeyBuilder>( base.PrimaryKey );
-    public new SqlIndexColumnBuilderArray<MySqlColumnBuilder> Columns => base.Columns.UnsafeReinterpretAs<MySqlColumnBuilder>();
+
+    public new SqlIndexBuilderColumns<MySqlColumnBuilder> Columns =>
+        new SqlIndexBuilderColumns<MySqlColumnBuilder>( base.Columns.Expressions );
+
+    public new SqlObjectBuilderArray<MySqlColumnBuilder> ReferencedColumns =>
+        base.ReferencedColumns.UnsafeReinterpretAs<MySqlColumnBuilder>();
 
     public new SqlObjectBuilderArray<MySqlColumnBuilder> ReferencedFilterColumns =>
         base.ReferencedFilterColumns.UnsafeReinterpretAs<MySqlColumnBuilder>();

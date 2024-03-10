@@ -3,6 +3,7 @@ using System.Runtime.CompilerServices;
 using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Expressions.Logical;
 using LfrlAnvil.Sql.Expressions.Objects;
+using LfrlAnvil.Sql.Expressions.Traits;
 using LfrlAnvil.Sql.Objects.Builders;
 using LfrlAnvil.Sqlite.Objects.Builders;
 
@@ -17,9 +18,7 @@ public static class SqliteObjectExtensions
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static SqlitePrimaryKeyBuilder SetPrimaryKey(
-        this SqliteConstraintBuilderCollection constraints,
-        params SqlIndexColumnBuilder<ISqlColumnBuilder>[] columns)
+    public static SqlitePrimaryKeyBuilder SetPrimaryKey(this SqliteConstraintBuilderCollection constraints, params SqlOrderByNode[] columns)
     {
         var index = constraints.CreateUniqueIndex( columns );
         return constraints.SetPrimaryKey( index );
@@ -29,16 +28,14 @@ public static class SqliteObjectExtensions
     public static SqlitePrimaryKeyBuilder SetPrimaryKey(
         this SqliteConstraintBuilderCollection constraints,
         string name,
-        params SqlIndexColumnBuilder<ISqlColumnBuilder>[] columns)
+        params SqlOrderByNode[] columns)
     {
         var index = constraints.CreateUniqueIndex( columns );
         return constraints.SetPrimaryKey( name, index );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static SqliteIndexBuilder CreateIndex(
-        this SqliteConstraintBuilderCollection constraints,
-        params SqlIndexColumnBuilder<ISqlColumnBuilder>[] columns)
+    public static SqliteIndexBuilder CreateIndex(this SqliteConstraintBuilderCollection constraints, params SqlOrderByNode[] columns)
     {
         return constraints.CreateIndex( columns );
     }
@@ -47,15 +44,13 @@ public static class SqliteObjectExtensions
     public static SqliteIndexBuilder CreateIndex(
         this SqliteConstraintBuilderCollection constraints,
         string name,
-        params SqlIndexColumnBuilder<ISqlColumnBuilder>[] columns)
+        params SqlOrderByNode[] columns)
     {
         return constraints.CreateIndex( name, columns );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static SqliteIndexBuilder CreateUniqueIndex(
-        this SqliteConstraintBuilderCollection constraints,
-        params SqlIndexColumnBuilder<ISqlColumnBuilder>[] columns)
+    public static SqliteIndexBuilder CreateUniqueIndex(this SqliteConstraintBuilderCollection constraints, params SqlOrderByNode[] columns)
     {
         return constraints.CreateIndex( columns, isUnique: true );
     }
@@ -64,7 +59,7 @@ public static class SqliteObjectExtensions
     public static SqliteIndexBuilder CreateUniqueIndex(
         this SqliteConstraintBuilderCollection constraints,
         string name,
-        params SqlIndexColumnBuilder<ISqlColumnBuilder>[] columns)
+        params SqlOrderByNode[] columns)
     {
         return constraints.CreateIndex( name, columns, isUnique: true );
     }

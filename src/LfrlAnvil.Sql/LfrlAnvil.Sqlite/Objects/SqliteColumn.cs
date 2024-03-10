@@ -18,16 +18,4 @@ public sealed class SqliteColumn : SqlColumn
     {
         return $"[{Type}] {SqliteHelpers.GetFullName( Table.Schema.Name, Table.Name, Name )}";
     }
-
-    [Pure]
-    public new SqlIndexColumn<SqliteColumn> Asc()
-    {
-        return SqlIndexColumn.CreateAsc( this );
-    }
-
-    [Pure]
-    public new SqlIndexColumn<SqliteColumn> Desc()
-    {
-        return SqlIndexColumn.CreateDesc( this );
-    }
 }

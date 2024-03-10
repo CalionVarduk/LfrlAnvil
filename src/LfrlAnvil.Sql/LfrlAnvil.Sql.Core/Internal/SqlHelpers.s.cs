@@ -184,8 +184,15 @@ public static class SqlHelpers
         var builder = new StringBuilder( 32 );
         builder.Append( "FK_" ).Append( originIndex.Table.Name );
 
-        foreach ( var c in originIndex.Columns )
-            builder.Append( '_' ).Append( c.Column.Name );
+        var nextExpressionNo = 1;
+        foreach ( var column in originIndex.Columns )
+        {
+            builder.Append( '_' );
+            if ( column is not null )
+                builder.Append( column.Name );
+            else
+                builder.Append( 'E' ).Append( nextExpressionNo++ );
+        }
 
         builder
             .Append( "_REF_" )
@@ -204,8 +211,7 @@ public static class SqlHelpers
     }
 
     [Pure]
-    public static string GetDefaultIndexName<T>(ISqlTableBuilder table, ReadOnlyArray<SqlIndexColumnBuilder<T>> columns, bool isUnique)
-        where T : class, ISqlColumnBuilder
+    public static string GetDefaultIndexName(ISqlTableBuilder table, SqlIndexBuilderColumns<ISqlColumnBuilder> columns, bool isUnique)
     {
         var builder = new StringBuilder( 32 );
         if ( isUnique )
@@ -213,23 +219,46 @@ public static class SqlHelpers
 
         builder.Append( "IX_" ).Append( table.Name );
 
-        foreach ( var c in columns )
-            builder.Append( '_' ).Append( c.Column.Name ).Append( c.Ordering == OrderBy.Asc ? 'A' : 'D' );
+        var nextExpressionNo = 1;
+        for ( var i = 0; i < columns.Expressions.Count; ++i )
+        {
+            var node = columns.Expressions[i];
+            var column = columns.TryGet( i );
+
+            builder.Append( '_' );
+            if ( column is not null )
+                builder.Append( column.Name );
+            else
+                builder.Append( 'E' ).Append( nextExpressionNo++ );
+
+            builder.Append( node.Ordering == OrderBy.Asc ? 'A' : 'D' );
+        }
 
         return builder.ToString();
     }
 
-    public static void AssertIndexColumns(SqlTableBuilder table, ReadOnlyArray<SqlIndexColumnBuilder<ISqlColumnBuilder>> columns)
+    public static void AssertIndexColumns(SqlTableBuilder table, SqlIndexBuilderColumns<SqlColumnBuilder> columns, bool isUnique)
     {
-        if ( columns.Count == 0 )
+        if ( columns.Expressions.Count == 0 )
             throw CreateObjectBuilderException( table.Database, ExceptionResources.IndexMustHaveAtLeastOneColumn );
 
         var errors = Chain<string>.Empty;
         var uniqueColumnIds = new HashSet<ulong>();
+        var expressionFound = false;
 
-        for ( var i = 0; i < columns.Count; ++i )
+        for ( var i = 0; i < columns.Expressions.Count; ++i )
         {
-            var column = CastOrThrow<SqlColumnBuilder>( table.Database, columns[i].Column );
+            var column = columns.TryGet( i );
+            if ( column is null )
+            {
+                if ( isUnique && ! expressionFound )
+                {
+                    expressionFound = true;
+                    errors = errors.Extend( ExceptionResources.UniqueIndexCannotContainExpressions );
+                }
+
+                continue;
+            }
 
             if ( ! uniqueColumnIds.Add( column.Id ) )
             {
@@ -263,10 +292,22 @@ public static class SqlHelpers
         if ( ! ReferenceEquals( index.Table, table ) )
             errors = errors.Extend( ExceptionResources.ObjectDoesNotBelongToTable( index, table ) );
 
+        var expressionsFound = false;
         foreach ( var c in index.Columns )
         {
-            if ( c.Column.IsNullable )
-                errors = errors.Extend( ExceptionResources.ColumnIsNullable( c.Column ) );
+            if ( c is null )
+            {
+                if ( ! expressionsFound )
+                {
+                    expressionsFound = true;
+                    errors = errors.Extend( ExceptionResources.IndexContainsExpressions( index ) );
+                }
+
+                continue;
+            }
+
+            if ( c.IsNullable )
+                errors = errors.Extend( ExceptionResources.ColumnIsNullable( c ) );
         }
 
         if ( errors.Count > 0 )
@@ -299,22 +340,45 @@ public static class SqlHelpers
             errors = errors.Extend( ExceptionResources.IndexIsPartial( referencedIndex ) );
 
         var indexColumns = originIndex.Columns;
-        var referencedIndexColumns = referencedIndex.Columns;
-
-        foreach ( var c in referencedIndexColumns )
+        foreach ( var c in indexColumns )
         {
-            if ( c.Column.IsNullable )
-                errors = errors.Extend( ExceptionResources.ColumnIsNullable( c.Column ) );
+            if ( c is null )
+            {
+                errors = errors.Extend( ExceptionResources.IndexContainsExpressions( originIndex ) );
+                break;
+            }
         }
 
-        if ( indexColumns.Count != referencedIndexColumns.Count )
+        var expressionsFound = false;
+        var referencedIndexColumns = referencedIndex.Columns;
+        foreach ( var c in referencedIndexColumns )
+        {
+            if ( c is null )
+            {
+                if ( ! expressionsFound )
+                {
+                    expressionsFound = true;
+                    errors = errors.Extend( ExceptionResources.IndexContainsExpressions( referencedIndex ) );
+                }
+
+                continue;
+            }
+
+            if ( c.IsNullable )
+                errors = errors.Extend( ExceptionResources.ColumnIsNullable( c ) );
+        }
+
+        if ( indexColumns.Expressions.Count != referencedIndexColumns.Expressions.Count )
             errors = errors.Extend( ExceptionResources.ForeignKeyOriginIndexAndReferencedIndexMustHaveTheSameAmountOfColumns );
         else
         {
-            for ( var i = 0; i < indexColumns.Count; ++i )
+            for ( var i = 0; i < indexColumns.Expressions.Count; ++i )
             {
-                var column = indexColumns[i].Column;
-                var refColumn = referencedIndexColumns[i].Column;
+                var column = indexColumns.TryGet( i );
+                var refColumn = referencedIndexColumns.TryGet( i );
+                if ( column is null || refColumn is null )
+                    continue;
+
                 if ( column.TypeDefinition.RuntimeType != refColumn.TypeDefinition.RuntimeType )
                     errors = errors.Extend( ExceptionResources.ColumnTypesAreIncompatible( column, refColumn ) );
             }

@@ -114,10 +114,16 @@ public sealed class SqliteObjectBuilderCollection : SqlObjectBuilderCollection
     protected override SqliteIndexBuilder CreateIndexBuilder(
         SqlTableBuilder table,
         string name,
-        ReadOnlyArray<SqlIndexColumnBuilder<ISqlColumnBuilder>> columns,
-        bool isUnique)
+        SqlIndexBuilderColumns<SqlColumnBuilder> columns,
+        bool isUnique,
+        ReadOnlyArray<SqlColumnBuilder> referencedColumns)
     {
-        return new SqliteIndexBuilder( ReinterpretCast.To<SqliteTableBuilder>( table ), name, columns, isUnique );
+        return new SqliteIndexBuilder(
+            ReinterpretCast.To<SqliteTableBuilder>( table ),
+            name,
+            new SqlIndexBuilderColumns<SqliteColumnBuilder>( columns.Expressions ),
+            isUnique,
+            referencedColumns );
     }
 
     protected override SqlitePrimaryKeyBuilder CreatePrimaryKeyBuilder(string name, SqlIndexBuilder index)

@@ -112,10 +112,16 @@ public sealed class SqlObjectBuilderCollectionMock : SqlObjectBuilderCollection
     protected override SqlIndexBuilderMock CreateIndexBuilder(
         SqlTableBuilder table,
         string name,
-        ReadOnlyArray<SqlIndexColumnBuilder<ISqlColumnBuilder>> columns,
-        bool isUnique)
+        SqlIndexBuilderColumns<SqlColumnBuilder> columns,
+        bool isUnique,
+        ReadOnlyArray<SqlColumnBuilder> referencedColumns)
     {
-        return new SqlIndexBuilderMock( ReinterpretCast.To<SqlTableBuilderMock>( table ), name, columns, isUnique );
+        return new SqlIndexBuilderMock(
+            ReinterpretCast.To<SqlTableBuilderMock>( table ),
+            name,
+            new SqlIndexBuilderColumns<SqlColumnBuilderMock>( columns.Expressions ),
+            isUnique,
+            referencedColumns );
     }
 
     protected override SqlPrimaryKeyBuilderMock CreatePrimaryKeyBuilder(string name, SqlIndexBuilder index)

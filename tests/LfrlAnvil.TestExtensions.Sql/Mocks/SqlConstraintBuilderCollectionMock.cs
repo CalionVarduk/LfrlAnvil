@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics.Contracts;
 using LfrlAnvil.Sql.Expressions.Logical;
+using LfrlAnvil.Sql.Expressions.Traits;
 using LfrlAnvil.Sql.Objects.Builders;
 
 namespace LfrlAnvil.TestExtensions.Sql.Mocks;
@@ -66,15 +67,12 @@ public sealed class SqlConstraintBuilderCollectionMock : SqlConstraintBuilderCol
         return ReinterpretCast.To<SqlPrimaryKeyBuilderMock>( base.SetPrimaryKey( name, index ) );
     }
 
-    public new SqlIndexBuilderMock CreateIndex(ReadOnlyArray<SqlIndexColumnBuilder<ISqlColumnBuilder>> columns, bool isUnique = false)
+    public new SqlIndexBuilderMock CreateIndex(ReadOnlyArray<SqlOrderByNode> columns, bool isUnique = false)
     {
         return ReinterpretCast.To<SqlIndexBuilderMock>( base.CreateIndex( columns, isUnique ) );
     }
 
-    public new SqlIndexBuilderMock CreateIndex(
-        string name,
-        ReadOnlyArray<SqlIndexColumnBuilder<ISqlColumnBuilder>> columns,
-        bool isUnique = false)
+    public new SqlIndexBuilderMock CreateIndex(string name, ReadOnlyArray<SqlOrderByNode> columns, bool isUnique = false)
     {
         return ReinterpretCast.To<SqlIndexBuilderMock>( base.CreateIndex( name, columns, isUnique ) );
     }

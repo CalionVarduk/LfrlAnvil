@@ -960,7 +960,7 @@ VALUES
             constraintsProvider: t =>
             {
                 var qux = SqlNode.RawRecordSet( "qux" );
-                primaryKey = SqlNode.PrimaryKey( SqlSchemaObjectName.Create( "PK_foobar" ), t["x"].Asc() );
+                primaryKey = SqlNode.PrimaryKey( SqlSchemaObjectName.Create( "PK_foobar" ), new[] { t["x"].Asc() } );
                 foreignKeys = new[]
                 {
                     SqlNode.ForeignKey(

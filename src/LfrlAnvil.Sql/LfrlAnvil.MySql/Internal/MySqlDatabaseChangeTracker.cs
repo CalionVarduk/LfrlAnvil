@@ -372,7 +372,7 @@ public sealed class MySqlDatabaseChangeTracker : SqlDatabaseChangeTracker
                 if ( changeAggregator.IsPrimaryKeyChanged )
                 {
                     var primaryKey = table.Constraints.GetPrimaryKey();
-                    MySqlHelpers.AppendAlterTableAddPrimaryKey( interpreter, primaryKey.ToDefinitionNode( table.Node ) );
+                    MySqlHelpers.AppendAlterTableAddPrimaryKey( interpreter, primaryKey.ToDefinitionNode() );
                 }
 
                 foreach ( var check in changeAggregator.CreatedChecks )

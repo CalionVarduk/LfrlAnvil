@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics.Contracts;
 using LfrlAnvil.Sql.Expressions.Logical;
+using LfrlAnvil.Sql.Expressions.Traits;
 using LfrlAnvil.Sql.Objects.Builders;
 
 namespace LfrlAnvil.Sqlite.Objects.Builders;
@@ -68,15 +69,12 @@ public sealed class SqliteConstraintBuilderCollection : SqlConstraintBuilderColl
         return ReinterpretCast.To<SqlitePrimaryKeyBuilder>( base.SetPrimaryKey( name, index ) );
     }
 
-    public new SqliteIndexBuilder CreateIndex(ReadOnlyArray<SqlIndexColumnBuilder<ISqlColumnBuilder>> columns, bool isUnique = false)
+    public new SqliteIndexBuilder CreateIndex(ReadOnlyArray<SqlOrderByNode> columns, bool isUnique = false)
     {
         return ReinterpretCast.To<SqliteIndexBuilder>( base.CreateIndex( columns, isUnique ) );
     }
 
-    public new SqliteIndexBuilder CreateIndex(
-        string name,
-        ReadOnlyArray<SqlIndexColumnBuilder<ISqlColumnBuilder>> columns,
-        bool isUnique = false)
+    public new SqliteIndexBuilder CreateIndex(string name, ReadOnlyArray<SqlOrderByNode> columns, bool isUnique = false)
     {
         return ReinterpretCast.To<SqliteIndexBuilder>( base.CreateIndex( name, columns, isUnique ) );
     }

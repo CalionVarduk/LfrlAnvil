@@ -23,9 +23,7 @@ public static class SqlObjectExtensions
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static ISqlPrimaryKeyBuilder SetPrimaryKey(
-        this ISqlConstraintBuilderCollection constraints,
-        params SqlIndexColumnBuilder<ISqlColumnBuilder>[] columns)
+    public static ISqlPrimaryKeyBuilder SetPrimaryKey(this ISqlConstraintBuilderCollection constraints, params SqlOrderByNode[] columns)
     {
         var index = constraints.CreateUniqueIndex( columns );
         return constraints.SetPrimaryKey( index );
@@ -35,16 +33,14 @@ public static class SqlObjectExtensions
     public static ISqlPrimaryKeyBuilder SetPrimaryKey(
         this ISqlConstraintBuilderCollection constraints,
         string name,
-        params SqlIndexColumnBuilder<ISqlColumnBuilder>[] columns)
+        params SqlOrderByNode[] columns)
     {
         var index = constraints.CreateUniqueIndex( columns );
         return constraints.SetPrimaryKey( name, index );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static ISqlIndexBuilder CreateIndex(
-        this ISqlConstraintBuilderCollection constraints,
-        params SqlIndexColumnBuilder<ISqlColumnBuilder>[] columns)
+    public static ISqlIndexBuilder CreateIndex(this ISqlConstraintBuilderCollection constraints, params SqlOrderByNode[] columns)
     {
         return constraints.CreateIndex( columns );
     }
@@ -53,15 +49,13 @@ public static class SqlObjectExtensions
     public static ISqlIndexBuilder CreateIndex(
         this ISqlConstraintBuilderCollection constraints,
         string name,
-        params SqlIndexColumnBuilder<ISqlColumnBuilder>[] columns)
+        params SqlOrderByNode[] columns)
     {
         return constraints.CreateIndex( name, columns );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static ISqlIndexBuilder CreateUniqueIndex(
-        this ISqlConstraintBuilderCollection constraints,
-        params SqlIndexColumnBuilder<ISqlColumnBuilder>[] columns)
+    public static ISqlIndexBuilder CreateUniqueIndex(this ISqlConstraintBuilderCollection constraints, params SqlOrderByNode[] columns)
     {
         return constraints.CreateIndex( columns, isUnique: true );
     }
@@ -70,7 +64,7 @@ public static class SqlObjectExtensions
     public static ISqlIndexBuilder CreateUniqueIndex(
         this ISqlConstraintBuilderCollection constraints,
         string name,
-        params SqlIndexColumnBuilder<ISqlColumnBuilder>[] columns)
+        params SqlOrderByNode[] columns)
     {
         return constraints.CreateIndex( name, columns, isUnique: true );
     }
@@ -122,9 +116,7 @@ public static class SqlObjectExtensions
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static SqlPrimaryKeyBuilder SetPrimaryKey(
-        this SqlConstraintBuilderCollection constraints,
-        params SqlIndexColumnBuilder<ISqlColumnBuilder>[] columns)
+    public static SqlPrimaryKeyBuilder SetPrimaryKey(this SqlConstraintBuilderCollection constraints, params SqlOrderByNode[] columns)
     {
         var index = constraints.CreateUniqueIndex( columns );
         return constraints.SetPrimaryKey( index );
@@ -134,16 +126,14 @@ public static class SqlObjectExtensions
     public static SqlPrimaryKeyBuilder SetPrimaryKey(
         this SqlConstraintBuilderCollection constraints,
         string name,
-        params SqlIndexColumnBuilder<ISqlColumnBuilder>[] columns)
+        params SqlOrderByNode[] columns)
     {
         var index = constraints.CreateUniqueIndex( columns );
         return constraints.SetPrimaryKey( name, index );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static SqlIndexBuilder CreateIndex(
-        this SqlConstraintBuilderCollection constraints,
-        params SqlIndexColumnBuilder<ISqlColumnBuilder>[] columns)
+    public static SqlIndexBuilder CreateIndex(this SqlConstraintBuilderCollection constraints, params SqlOrderByNode[] columns)
     {
         return constraints.CreateIndex( columns );
     }
@@ -152,15 +142,13 @@ public static class SqlObjectExtensions
     public static SqlIndexBuilder CreateIndex(
         this SqlConstraintBuilderCollection constraints,
         string name,
-        params SqlIndexColumnBuilder<ISqlColumnBuilder>[] columns)
+        params SqlOrderByNode[] columns)
     {
         return constraints.CreateIndex( name, columns );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static SqlIndexBuilder CreateUniqueIndex(
-        this SqlConstraintBuilderCollection constraints,
-        params SqlIndexColumnBuilder<ISqlColumnBuilder>[] columns)
+    public static SqlIndexBuilder CreateUniqueIndex(this SqlConstraintBuilderCollection constraints, params SqlOrderByNode[] columns)
     {
         return constraints.CreateIndex( columns, isUnique: true );
     }
@@ -169,7 +157,7 @@ public static class SqlObjectExtensions
     public static SqlIndexBuilder CreateUniqueIndex(
         this SqlConstraintBuilderCollection constraints,
         string name,
-        params SqlIndexColumnBuilder<ISqlColumnBuilder>[] columns)
+        params SqlOrderByNode[] columns)
     {
         return constraints.CreateIndex( name, columns, isUnique: true );
     }
@@ -241,7 +229,7 @@ public static class SqlObjectExtensions
             t =>
             {
                 var constraints = table.Constraints;
-                var primaryKey = constraints.TryGetPrimaryKey()?.ToDefinitionNode( t );
+                var primaryKey = constraints.TryGetPrimaryKey()?.ToDefinitionNode();
 
                 var result = primaryKey is not null
                     ? SqlCreateTableConstraints.Empty.WithPrimaryKey( primaryKey )
@@ -278,13 +266,11 @@ public static class SqlObjectExtensions
     public static SqlCreateIndexNode ToCreateNode(this ISqlIndexBuilder index)
     {
         var ixTable = index.Table;
-        var columns = index.Columns.ToDefinitionNode( ixTable.Node );
-
         return SqlNode.CreateIndex(
             SqlSchemaObjectName.Create( ixTable.Schema.Name, index.Name ),
             index.IsUnique,
             ixTable.Node,
-            columns,
+            index.Columns.Expressions,
             replaceIfExists: false,
             index.Filter );
     }
@@ -296,10 +282,11 @@ public static class SqlObjectExtensions
     }
 
     [Pure]
-    public static SqlPrimaryKeyDefinitionNode ToDefinitionNode(this ISqlPrimaryKeyBuilder primaryKey, SqlRecordSetNode table)
+    public static SqlPrimaryKeyDefinitionNode ToDefinitionNode(this ISqlPrimaryKeyBuilder primaryKey)
     {
-        var columns = primaryKey.Index.Columns.ToDefinitionNode( table );
-        return SqlNode.PrimaryKey( SqlSchemaObjectName.Create( primaryKey.Table.Schema.Name, primaryKey.Name ), columns );
+        return SqlNode.PrimaryKey(
+            SqlSchemaObjectName.Create( primaryKey.Table.Schema.Name, primaryKey.Name ),
+            primaryKey.Index.Columns.Expressions );
     }
 
     [Pure]
@@ -312,27 +299,36 @@ public static class SqlObjectExtensions
 
         var i = 0;
         var columns = Array.Empty<SqlDataFieldNode>();
-        if ( fkColumns.Count > 0 )
+        if ( fkColumns.Expressions.Count > 0 )
         {
-            columns = new SqlDataFieldNode[fkColumns.Count];
+            columns = new SqlDataFieldNode[fkColumns.Expressions.Count];
             foreach ( var column in fkColumns )
-                columns[i++] = table[column.Column.Name];
+            {
+                Assume.IsNotNull( column );
+                columns[i++] = table[column.Name];
+            }
         }
 
         var referencedColumns = Array.Empty<SqlDataFieldNode>();
-        if ( fkReferencedColumns.Count > 0 )
+        if ( fkReferencedColumns.Expressions.Count > 0 )
         {
             i = 0;
-            referencedColumns = new SqlDataFieldNode[fkReferencedColumns.Count];
+            referencedColumns = new SqlDataFieldNode[fkReferencedColumns.Expressions.Count];
             if ( isSelfReference )
             {
                 foreach ( var column in fkReferencedColumns )
-                    referencedColumns[i++] = table[column.Column.Name];
+                {
+                    Assume.IsNotNull( column );
+                    referencedColumns[i++] = table[column.Name];
+                }
             }
             else
             {
                 foreach ( var column in fkReferencedColumns )
-                    referencedColumns[i++] = column.Column.Node;
+                {
+                    Assume.IsNotNull( column );
+                    referencedColumns[i++] = column.Node;
+                }
             }
         }
 
@@ -361,52 +357,6 @@ public static class SqlObjectExtensions
         var result = new SqlColumnDefinitionNode[columns.Count];
         foreach ( var column in columns )
             result[i++] = column.ToDefinitionNode();
-
-        return result;
-    }
-
-    [Pure]
-    public static SqlOrderByNode[] ToDefinitionNode(
-        this IReadOnlyCollection<SqlIndexColumnBuilder<ISqlColumnBuilder>> columns,
-        SqlRecordSetNode table)
-    {
-        if ( columns.Count == 0 )
-            return Array.Empty<SqlOrderByNode>();
-
-        var i = 0;
-        var result = new SqlOrderByNode[columns.Count];
-        foreach ( var c in columns )
-            result[i++] = SqlNode.OrderBy( table[c.Column.Name], c.Ordering );
-
-        return result;
-    }
-
-    [Pure]
-    public static SqlForeignKeyDefinitionNode[] ToDefinitionRange(
-        this IReadOnlyCollection<ISqlForeignKeyBuilder> foreignKeys,
-        SqlRecordSetNode table)
-    {
-        if ( foreignKeys.Count == 0 )
-            return Array.Empty<SqlForeignKeyDefinitionNode>();
-
-        var i = 0;
-        var result = new SqlForeignKeyDefinitionNode[foreignKeys.Count];
-        foreach ( var fk in foreignKeys )
-            result[i++] = fk.ToDefinitionNode( table );
-
-        return result;
-    }
-
-    [Pure]
-    public static SqlCheckDefinitionNode[] ToDefinitionRange(this IReadOnlyCollection<ISqlCheckBuilder> checks)
-    {
-        if ( checks.Count == 0 )
-            return Array.Empty<SqlCheckDefinitionNode>();
-
-        var i = 0;
-        var result = new SqlCheckDefinitionNode[checks.Count];
-        foreach ( var chk in checks )
-            result[i++] = chk.ToDefinitionNode();
 
         return result;
     }

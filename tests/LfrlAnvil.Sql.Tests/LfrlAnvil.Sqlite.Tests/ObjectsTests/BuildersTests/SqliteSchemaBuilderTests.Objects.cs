@@ -1090,11 +1090,11 @@ public partial class SqliteSchemaBuilderTests
                 pk.ReferencingObjects.Should().BeEmpty();
                 pk.Index.IsRemoved.Should().BeTrue();
                 pk.Index.ReferencingObjects.Should().BeEmpty();
-                pk.Index.Columns.Should().BeEmpty();
+                pk.Index.Columns.Expressions.Should().BeEmpty();
                 pk.Index.PrimaryKey.Should().BeNull();
                 ix.IsRemoved.Should().BeTrue();
                 ix.ReferencingObjects.Should().BeEmpty();
-                ix.Columns.Should().BeEmpty();
+                ix.Columns.Expressions.Should().BeEmpty();
                 selfFk.IsRemoved.Should().BeTrue();
                 selfFk.ReferencingObjects.Should().BeEmpty();
                 externalFk.IsRemoved.Should().BeTrue();
@@ -1194,9 +1194,9 @@ public partial class SqliteSchemaBuilderTests
             var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
             var sut = schema.Objects;
             var table = sut.CreateTable( "T" );
-            var c1 = table.Columns.Create( "C1" ).Asc();
-            var c2 = table.Columns.Create( "C2" ).Desc();
-            var index = table.Constraints.CreateIndex( c1, c2 );
+            var c1 = table.Columns.Create( "C1" );
+            var c2 = table.Columns.Create( "C2" );
+            var index = table.Constraints.CreateIndex( c1.Asc(), c2.Desc() );
 
             var result = sut.Remove( index.Name );
 
@@ -1206,8 +1206,8 @@ public partial class SqliteSchemaBuilderTests
                 sut.TryGet( index.Name ).Should().BeNull();
                 index.IsRemoved.Should().BeTrue();
                 table.Constraints.TryGet( index.Name ).Should().BeNull();
-                c1.Column.ReferencingObjects.Should().BeEmpty();
-                c2.Column.ReferencingObjects.Should().BeEmpty();
+                c1.ReferencingObjects.Should().BeEmpty();
+                c2.ReferencingObjects.Should().BeEmpty();
             }
         }
 

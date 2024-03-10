@@ -1,6 +1,8 @@
 ﻿using LfrlAnvil.Sql;
 using LfrlAnvil.Sql.Expressions;
+using LfrlAnvil.Sql.Objects;
 using LfrlAnvil.Sqlite.Extensions;
+using LfrlAnvil.Sqlite.Objects;
 using LfrlAnvil.Sqlite.Tests.Helpers;
 using LfrlAnvil.TestExtensions.FluentAssertions;
 
@@ -43,8 +45,9 @@ public class SqliteIndexTests : TestsBase
             sut.IsUnique.Should().Be( isUnique );
             sut.IsVirtual.Should().Be( isVirtual );
             sut.IsPartial.Should().BeFalse();
-            sut.Columns.Should().BeSequentiallyEqualTo( c1.Asc(), c2.Desc() );
-            sut.Columns.Should().BeSequentiallyEqualTo( c1.Asc(), c2.Desc() );
+            sut.Columns.Should()
+                .BeSequentiallyEqualTo( new SqlIndexed<SqliteColumn>( c1, OrderBy.Asc ), new SqlIndexed<SqliteColumn>( c2, OrderBy.Desc ) );
+
             sut.ToString().Should().Be( "[Index] foo_IX_TEST" );
         }
     }
@@ -74,7 +77,7 @@ public class SqliteIndexTests : TestsBase
             sut.IsUnique.Should().BeFalse();
             sut.IsVirtual.Should().BeFalse();
             sut.IsPartial.Should().BeTrue();
-            sut.Columns.Should().BeSequentiallyEqualTo( c1.Asc() );
+            sut.Columns.Should().BeSequentiallyEqualTo( new SqlIndexed<SqliteColumn>( c1, OrderBy.Asc ) );
             sut.ToString().Should().Be( "[Index] foo_IX_TEST" );
         }
     }

@@ -80,7 +80,7 @@ public class SqlColumnTests : TestsBase
 
         using ( new AssertionScope() )
         {
-            result.Column.Should().BeSameAs( sut );
+            result.Expression.Should().BeSameAs( sut.Node );
             result.Ordering.Should().Be( OrderBy.Asc );
         }
     }
@@ -100,7 +100,7 @@ public class SqlColumnTests : TestsBase
 
         using ( new AssertionScope() )
         {
-            result.Column.Should().BeSameAs( sut );
+            result.Expression.Should().BeSameAs( sut.Node );
             result.Ordering.Should().Be( OrderBy.Desc );
         }
     }

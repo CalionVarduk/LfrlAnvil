@@ -3,6 +3,7 @@ using System.Runtime.CompilerServices;
 using LfrlAnvil.Exceptions;
 using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Expressions.Objects;
+using LfrlAnvil.Sql.Expressions.Traits;
 using LfrlAnvil.Sql.Expressions.Visitors;
 using LfrlAnvil.Sql.Internal;
 using ExceptionResources = LfrlAnvil.Sql.Exceptions.ExceptionResources;
@@ -83,15 +84,17 @@ public abstract class SqlColumnBuilder : SqlObjectBuilder, ISqlColumnBuilder
     }
 
     [Pure]
-    public SqlIndexColumnBuilder<SqlColumnBuilder> Asc()
+    public SqlOrderByNode Asc()
     {
-        return SqlIndexColumnBuilder.CreateAsc( this );
+        ThrowIfRemoved();
+        return SqlNode.OrderByAsc( Node );
     }
 
     [Pure]
-    public SqlIndexColumnBuilder<SqlColumnBuilder> Desc()
+    public SqlOrderByNode Desc()
     {
-        return SqlIndexColumnBuilder.CreateDesc( this );
+        ThrowIfRemoved();
+        return SqlNode.OrderByDesc( Node );
     }
 
     protected virtual SqlPropertyChange<SqlColumnTypeDefinition> BeforeTypeDefinitionChange(SqlColumnTypeDefinition newValue)
@@ -210,17 +213,5 @@ public abstract class SqlColumnBuilder : SqlObjectBuilder, ISqlColumnBuilder
     ISqlColumnBuilder ISqlColumnBuilder.SetDefaultValue(SqlExpressionNode? value)
     {
         return SetDefaultValue( value );
-    }
-
-    [Pure]
-    SqlIndexColumnBuilder<ISqlColumnBuilder> ISqlColumnBuilder.Asc()
-    {
-        return Asc().UnsafeReinterpretAs<ISqlColumnBuilder>();
-    }
-
-    [Pure]
-    SqlIndexColumnBuilder<ISqlColumnBuilder> ISqlColumnBuilder.Desc()
-    {
-        return Desc().UnsafeReinterpretAs<ISqlColumnBuilder>();
     }
 }

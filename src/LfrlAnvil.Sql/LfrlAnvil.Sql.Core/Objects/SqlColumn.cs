@@ -1,5 +1,7 @@
 ﻿using System.Diagnostics.Contracts;
+using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Expressions.Objects;
+using LfrlAnvil.Sql.Expressions.Traits;
 using LfrlAnvil.Sql.Internal;
 using LfrlAnvil.Sql.Objects.Builders;
 
@@ -35,26 +37,14 @@ public abstract class SqlColumn : SqlObject, ISqlColumn
     }
 
     [Pure]
-    public SqlIndexColumn<SqlColumn> Asc()
+    public SqlOrderByNode Asc()
     {
-        return SqlIndexColumn.CreateAsc( this );
+        return SqlNode.OrderByAsc( Node );
     }
 
     [Pure]
-    public SqlIndexColumn<SqlColumn> Desc()
+    public SqlOrderByNode Desc()
     {
-        return SqlIndexColumn.CreateDesc( this );
-    }
-
-    [Pure]
-    SqlIndexColumn<ISqlColumn> ISqlColumn.Asc()
-    {
-        return Asc();
-    }
-
-    [Pure]
-    SqlIndexColumn<ISqlColumn> ISqlColumn.Desc()
-    {
-        return Desc();
+        return SqlNode.OrderByDesc( Node );
     }
 }

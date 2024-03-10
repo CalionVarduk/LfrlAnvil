@@ -1794,7 +1794,10 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
         var identityColumns = node.Table.Constraints.PrimaryKey.Index.Columns;
         var identityColumnNames = new string[identityColumns.Count];
         foreach ( var c in identityColumns )
+        {
+            Ensure.IsNotNull( c.Column );
             identityColumnNames[i++] = c.Column.Name;
+        }
 
         return new ChangeTargetInfo( node, node.AsSelf(), identityColumnNames );
     }
@@ -1984,11 +1987,14 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
         if ( primaryKey is not null )
         {
             var identityColumns = primaryKey.Index.Columns;
-            identityColumnNames = new string[identityColumns.Count];
+            identityColumnNames = new string[identityColumns.Expressions.Count];
 
             var i = 0;
-            foreach ( var c in identityColumns )
-                identityColumnNames[i++] = c.Column.Name;
+            foreach ( var column in identityColumns )
+            {
+                Ensure.IsNotNull( column );
+                identityColumnNames[i++] = column.Name;
+            }
         }
         else
         {
@@ -2022,8 +2028,8 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
 
         if ( primaryKey is not null )
         {
-            var identityColumns = primaryKey.Columns.Span;
-            if ( identityColumns.Length == 0 )
+            var identityColumns = primaryKey.Columns;
+            if ( identityColumns.Count == 0 )
             {
                 var reason = isUpdate
                     ? ExceptionResources.UpdateTargetDoesNotHaveAnyColumns
@@ -2032,8 +2038,8 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
                 throw new SqlNodeVisitorException( reason, this, source );
             }
 
-            identityColumnNames = new string[identityColumns.Length];
-            for ( var i = 0; i < identityColumns.Length; ++i )
+            identityColumnNames = new string[identityColumns.Count];
+            for ( var i = 0; i < identityColumns.Count; ++i )
             {
                 if ( identityColumns[i].Expression is not SqlDataFieldNode dataField )
                 {

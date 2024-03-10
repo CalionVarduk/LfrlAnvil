@@ -1,6 +1,7 @@
 ﻿using System.Diagnostics.Contracts;
 using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Expressions.Objects;
+using LfrlAnvil.Sql.Expressions.Traits;
 
 namespace LfrlAnvil.Sql.Objects.Builders;
 
@@ -18,8 +19,8 @@ public interface ISqlColumnBuilder : ISqlObjectBuilder
     ISqlColumnBuilder SetDefaultValue(SqlExpressionNode? value);
 
     [Pure]
-    SqlIndexColumnBuilder<ISqlColumnBuilder> Asc();
+    SqlOrderByNode Asc();
 
     [Pure]
-    SqlIndexColumnBuilder<ISqlColumnBuilder> Desc();
+    SqlOrderByNode Desc();
 }

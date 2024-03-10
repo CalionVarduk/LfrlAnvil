@@ -10,7 +10,7 @@ public sealed class SqliteIndex : SqlIndex
     internal SqliteIndex(SqliteTable table, SqliteIndexBuilder builder)
         : base( table, builder ) { }
 
-    public new SqlIndexColumnArray<SqliteColumn> Columns => base.Columns.UnsafeReinterpretAs<SqliteColumn>();
+    public new SqlIndexedArray<SqliteColumn> Columns => base.Columns.UnsafeReinterpretAs<SqliteColumn>();
     public new SqliteTable Table => ReinterpretCast.To<SqliteTable>( base.Table );
     public new SqliteDatabase Database => ReinterpretCast.To<SqliteDatabase>( base.Database );
 

@@ -1162,7 +1162,7 @@ public class SqlConstantExpressionValidatorTests : TestsBase
     [Fact]
     public void VisitPrimaryKeyDefinition_ShouldRegisterError()
     {
-        _sut.VisitPrimaryKeyDefinition( SqlNode.PrimaryKey( SqlSchemaObjectName.Create( "PK" ) ) );
+        _sut.VisitPrimaryKeyDefinition( SqlNode.PrimaryKey( SqlSchemaObjectName.Create( "PK" ), ReadOnlyArray<SqlOrderByNode>.Empty ) );
         _sut.GetErrors().Should().HaveCount( 1 );
     }
 

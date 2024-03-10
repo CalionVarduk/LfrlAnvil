@@ -739,7 +739,7 @@ public static partial class SqlNode
     }
 
     [Pure]
-    public static SqlPrimaryKeyDefinitionNode PrimaryKey(SqlSchemaObjectName name, params SqlOrderByNode[] columns)
+    public static SqlPrimaryKeyDefinitionNode PrimaryKey(SqlSchemaObjectName name, ReadOnlyArray<SqlOrderByNode> columns)
     {
         return new SqlPrimaryKeyDefinitionNode( name, columns );
     }
@@ -789,7 +789,7 @@ public static partial class SqlNode
         SqlSchemaObjectName name,
         bool isUnique,
         SqlRecordSetNode table,
-        SqlOrderByNode[] columns,
+        ReadOnlyArray<SqlOrderByNode> columns,
         bool replaceIfExists = false,
         SqlConditionNode? filter = null)
     {

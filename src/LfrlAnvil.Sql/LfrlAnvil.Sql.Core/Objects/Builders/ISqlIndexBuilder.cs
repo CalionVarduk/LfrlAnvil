@@ -5,7 +5,8 @@ namespace LfrlAnvil.Sql.Objects.Builders;
 
 public interface ISqlIndexBuilder : ISqlConstraintBuilder
 {
-    IReadOnlyList<SqlIndexColumnBuilder<ISqlColumnBuilder>> Columns { get; }
+    SqlIndexBuilderColumns<ISqlColumnBuilder> Columns { get; }
+    IReadOnlyCollection<ISqlColumnBuilder> ReferencedColumns { get; }
     IReadOnlyCollection<ISqlColumnBuilder> ReferencedFilterColumns { get; }
     ISqlPrimaryKeyBuilder? PrimaryKey { get; }
     bool IsUnique { get; }

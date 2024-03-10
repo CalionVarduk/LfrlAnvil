@@ -4,6 +4,7 @@ using LfrlAnvil.MySql.Objects.Builders;
 using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Expressions.Logical;
 using LfrlAnvil.Sql.Expressions.Objects;
+using LfrlAnvil.Sql.Expressions.Traits;
 using LfrlAnvil.Sql.Objects.Builders;
 
 namespace LfrlAnvil.MySql.Extensions;
@@ -17,9 +18,7 @@ public static class MySqlObjectExtensions
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static MySqlPrimaryKeyBuilder SetPrimaryKey(
-        this MySqlConstraintBuilderCollection constraints,
-        params SqlIndexColumnBuilder<ISqlColumnBuilder>[] columns)
+    public static MySqlPrimaryKeyBuilder SetPrimaryKey(this MySqlConstraintBuilderCollection constraints, params SqlOrderByNode[] columns)
     {
         var index = constraints.CreateUniqueIndex( columns );
         return constraints.SetPrimaryKey( index );
@@ -29,16 +28,14 @@ public static class MySqlObjectExtensions
     public static MySqlPrimaryKeyBuilder SetPrimaryKey(
         this MySqlConstraintBuilderCollection constraints,
         string name,
-        params SqlIndexColumnBuilder<ISqlColumnBuilder>[] columns)
+        params SqlOrderByNode[] columns)
     {
         var index = constraints.CreateUniqueIndex( columns );
         return constraints.SetPrimaryKey( name, index );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static MySqlIndexBuilder CreateIndex(
-        this MySqlConstraintBuilderCollection constraints,
-        params SqlIndexColumnBuilder<ISqlColumnBuilder>[] columns)
+    public static MySqlIndexBuilder CreateIndex(this MySqlConstraintBuilderCollection constraints, params SqlOrderByNode[] columns)
     {
         return constraints.CreateIndex( columns );
     }
@@ -47,15 +44,13 @@ public static class MySqlObjectExtensions
     public static MySqlIndexBuilder CreateIndex(
         this MySqlConstraintBuilderCollection constraints,
         string name,
-        params SqlIndexColumnBuilder<ISqlColumnBuilder>[] columns)
+        params SqlOrderByNode[] columns)
     {
         return constraints.CreateIndex( name, columns );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static MySqlIndexBuilder CreateUniqueIndex(
-        this MySqlConstraintBuilderCollection constraints,
-        params SqlIndexColumnBuilder<ISqlColumnBuilder>[] columns)
+    public static MySqlIndexBuilder CreateUniqueIndex(this MySqlConstraintBuilderCollection constraints, params SqlOrderByNode[] columns)
     {
         return constraints.CreateIndex( columns, isUnique: true );
     }
@@ -64,7 +59,7 @@ public static class MySqlObjectExtensions
     public static MySqlIndexBuilder CreateUniqueIndex(
         this MySqlConstraintBuilderCollection constraints,
         string name,
-        params SqlIndexColumnBuilder<ISqlColumnBuilder>[] columns)
+        params SqlOrderByNode[] columns)
     {
         return constraints.CreateIndex( name, columns, isUnique: true );
     }

@@ -8,7 +8,7 @@ public sealed class MySqlIndex : SqlIndex
     internal MySqlIndex(MySqlTable table, MySqlIndexBuilder builder)
         : base( table, builder ) { }
 
-    public new SqlIndexColumnArray<MySqlColumn> Columns => base.Columns.UnsafeReinterpretAs<MySqlColumn>();
+    public new SqlIndexedArray<MySqlColumn> Columns => base.Columns.UnsafeReinterpretAs<MySqlColumn>();
     public new MySqlTable Table => ReinterpretCast.To<MySqlTable>( base.Table );
     public new MySqlDatabase Database => ReinterpretCast.To<MySqlDatabase>( base.Database );
 }

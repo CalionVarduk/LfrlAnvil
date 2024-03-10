@@ -4,6 +4,7 @@ using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using LfrlAnvil.Sql.Exceptions;
 using LfrlAnvil.Sql.Expressions.Logical;
+using LfrlAnvil.Sql.Expressions.Traits;
 using LfrlAnvil.Sql.Internal;
 
 namespace LfrlAnvil.Sql.Objects.Builders;
@@ -120,12 +121,15 @@ public abstract class SqlConstraintBuilderCollection : SqlBuilderApi, ISqlConstr
         return _primaryKey;
     }
 
-    public SqlIndexBuilder CreateIndex(ReadOnlyArray<SqlIndexColumnBuilder<ISqlColumnBuilder>> columns, bool isUnique = false)
+    public SqlIndexBuilder CreateIndex(ReadOnlyArray<SqlOrderByNode> columns, bool isUnique = false)
     {
-        return CreateIndex( SqlHelpers.GetDefaultIndexName( Table, columns, isUnique ), columns, isUnique );
+        return CreateIndex(
+            SqlHelpers.GetDefaultIndexName( Table, new SqlIndexBuilderColumns<ISqlColumnBuilder>( columns ), isUnique ),
+            columns,
+            isUnique );
     }
 
-    public SqlIndexBuilder CreateIndex(string name, ReadOnlyArray<SqlIndexColumnBuilder<ISqlColumnBuilder>> columns, bool isUnique = false)
+    public SqlIndexBuilder CreateIndex(string name, ReadOnlyArray<SqlOrderByNode> columns, bool isUnique = false)
     {
         Table.ThrowIfRemoved();
         var result = Table.Schema.Objects.CreateIndex( Table, name, columns, isUnique );
@@ -323,17 +327,12 @@ public abstract class SqlConstraintBuilderCollection : SqlBuilderApi, ISqlConstr
         return SetPrimaryKey( name, SqlHelpers.CastOrThrow<SqlIndexBuilder>( Table.Database, index ) );
     }
 
-    ISqlIndexBuilder ISqlConstraintBuilderCollection.CreateIndex(
-        ReadOnlyArray<SqlIndexColumnBuilder<ISqlColumnBuilder>> columns,
-        bool isUnique)
+    ISqlIndexBuilder ISqlConstraintBuilderCollection.CreateIndex(ReadOnlyArray<SqlOrderByNode> columns, bool isUnique)
     {
         return CreateIndex( columns, isUnique );
     }
 
-    ISqlIndexBuilder ISqlConstraintBuilderCollection.CreateIndex(
-        string name,
-        ReadOnlyArray<SqlIndexColumnBuilder<ISqlColumnBuilder>> columns,
-        bool isUnique)
+    ISqlIndexBuilder ISqlConstraintBuilderCollection.CreateIndex(string name, ReadOnlyArray<SqlOrderByNode> columns, bool isUnique)
     {
         return CreateIndex( name, columns, isUnique );
     }

@@ -555,7 +555,7 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
         AppendDelimitedName( node.Name.Object );
         Context.Sql.AppendSpace().Append( "PRIMARY" ).AppendSpace().Append( "KEY" ).AppendSpace().Append( '(' );
 
-        if ( node.Columns.Length > 0 )
+        if ( node.Columns.Count > 0 )
         {
             foreach ( var column in node.Columns )
             {
@@ -667,7 +667,7 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
             AppendDelimitedRecordSetName( node.Table );
 
             Context.Sql.AppendSpace().Append( '(' );
-            if ( node.Columns.Length > 0 )
+            if ( node.Columns.Count > 0 )
             {
                 using ( Context.TempIndentIncrease() )
                 {

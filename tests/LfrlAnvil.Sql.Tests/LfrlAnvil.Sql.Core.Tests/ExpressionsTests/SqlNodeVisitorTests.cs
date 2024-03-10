@@ -1513,7 +1513,8 @@ public class SqlNodeVisitorTests : TestsBase
         var table = SqlNode.RawRecordSet( "foo" );
         var columns = new[] { table["a"], table["b"] };
 
-        sut.VisitPrimaryKeyDefinition( SqlNode.PrimaryKey( SqlSchemaObjectName.Create( "PK" ), columns[0].Asc(), columns[1].Desc() ) );
+        sut.VisitPrimaryKeyDefinition(
+            SqlNode.PrimaryKey( SqlSchemaObjectName.Create( "PK" ), new[] { columns[0].Asc(), columns[1].Desc() } ) );
 
         sut.Nodes.Should().BeSequentiallyEqualTo( table, table );
     }
@@ -1560,7 +1561,7 @@ public class SqlNodeVisitorTests : TestsBase
             },
             constraintsProvider: t =>
                 SqlCreateTableConstraints.Empty
-                    .WithPrimaryKey( SqlNode.PrimaryKey( SqlSchemaObjectName.Create( "PK" ), t["a"].Asc() ) )
+                    .WithPrimaryKey( SqlNode.PrimaryKey( SqlSchemaObjectName.Create( "PK" ), new[] { t["a"].Asc() } ) )
                     .WithForeignKeys(
                         SqlNode.ForeignKey(
                             SqlSchemaObjectName.Create( "FK" ),

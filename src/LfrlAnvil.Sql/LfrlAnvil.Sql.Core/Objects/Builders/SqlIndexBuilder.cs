@@ -2,6 +2,7 @@
 using System.Diagnostics.Contracts;
 using LfrlAnvil.Exceptions;
 using LfrlAnvil.Sql.Expressions.Logical;
+using LfrlAnvil.Sql.Expressions.Traits;
 using LfrlAnvil.Sql.Expressions.Visitors;
 using LfrlAnvil.Sql.Internal;
 using ExceptionResources = LfrlAnvil.Sql.Exceptions.ExceptionResources;
@@ -10,38 +11,46 @@ namespace LfrlAnvil.Sql.Objects.Builders;
 
 public abstract class SqlIndexBuilder : SqlConstraintBuilder, ISqlIndexBuilder
 {
-    private ReadOnlyArray<SqlIndexColumnBuilder<ISqlColumnBuilder>> _columns;
+    private ReadOnlyArray<SqlColumnBuilder> _referencedColumns;
     private ReadOnlyArray<SqlColumnBuilder> _referencedFilterColumns;
 
     protected SqlIndexBuilder(
         SqlTableBuilder table,
         string name,
-        ReadOnlyArray<SqlIndexColumnBuilder<ISqlColumnBuilder>> columns,
-        bool isUnique)
+        SqlIndexBuilderColumns<SqlColumnBuilder> columns,
+        bool isUnique,
+        ReadOnlyArray<SqlColumnBuilder> referencedColumns)
         : base( table, SqlObjectType.Index, name )
     {
+        _referencedColumns = ReadOnlyArray<SqlColumnBuilder>.Empty;
         _referencedFilterColumns = ReadOnlyArray<SqlColumnBuilder>.Empty;
-        _columns = ReadOnlyArray<SqlIndexColumnBuilder<ISqlColumnBuilder>>.Empty;
+        Columns = SqlIndexBuilderColumns<SqlColumnBuilder>.Empty;
         IsUnique = isUnique;
         IsVirtual = false;
         PrimaryKey = null;
         Filter = null;
-        SetColumnReferences( columns );
+        SetColumnReferences( columns, referencedColumns );
     }
 
     public SqlPrimaryKeyBuilder? PrimaryKey { get; private set; }
     public bool IsUnique { get; private set; }
     public bool IsVirtual { get; private set; }
     public SqlConditionNode? Filter { get; private set; }
+    public SqlIndexBuilderColumns<SqlColumnBuilder> Columns { get; private set; }
     public override bool CanRemove => base.CanRemove && (PrimaryKey?.ReferencedTargets is null || PrimaryKey.ReferencedTargets.Count == 0);
-    public SqlIndexColumnBuilderArray<SqlColumnBuilder> Columns => SqlIndexColumnBuilderArray<SqlColumnBuilder>.From( _columns );
+
+    public SqlObjectBuilderArray<SqlColumnBuilder> ReferencedColumns => SqlObjectBuilderArray<SqlColumnBuilder>.From( _referencedColumns );
 
     public SqlObjectBuilderArray<SqlColumnBuilder> ReferencedFilterColumns =>
         SqlObjectBuilderArray<SqlColumnBuilder>.From( _referencedFilterColumns );
 
     ISqlPrimaryKeyBuilder? ISqlIndexBuilder.PrimaryKey => PrimaryKey;
     ISqlDatabaseBuilder ISqlObjectBuilder.Database => Database;
-    IReadOnlyList<SqlIndexColumnBuilder<ISqlColumnBuilder>> ISqlIndexBuilder.Columns => _columns.GetUnderlyingArray();
+
+    SqlIndexBuilderColumns<ISqlColumnBuilder> ISqlIndexBuilder.Columns =>
+        new SqlIndexBuilderColumns<ISqlColumnBuilder>( Columns.Expressions );
+
+    IReadOnlyCollection<ISqlColumnBuilder> ISqlIndexBuilder.ReferencedColumns => _referencedColumns.GetUnderlyingArray();
     IReadOnlyCollection<ISqlColumnBuilder> ISqlIndexBuilder.ReferencedFilterColumns => _referencedFilterColumns.GetUnderlyingArray();
 
     public new SqlIndexBuilder SetName(string name)
@@ -98,7 +107,7 @@ public abstract class SqlIndexBuilder : SqlConstraintBuilder, ISqlIndexBuilder
     [Pure]
     protected override string GetDefaultName()
     {
-        return SqlHelpers.GetDefaultIndexName( Table, _columns, IsUnique );
+        return SqlHelpers.GetDefaultIndexName( Table, new SqlIndexBuilderColumns<ISqlColumnBuilder>( Columns.Expressions ), IsUnique );
     }
 
     protected virtual SqlPropertyChange<bool> BeforeIsUniqueChange(bool newValue)
@@ -190,8 +199,22 @@ public abstract class SqlIndexBuilder : SqlConstraintBuilder, ISqlIndexBuilder
 
     protected void ThrowIfCannotBeUnique()
     {
+        var errors = Chain<string>.Empty;
+
         if ( IsVirtual )
-            ExceptionThrower.Throw( SqlHelpers.CreateObjectBuilderException( Database, ExceptionResources.VirtualIndexCannotBeUnique ) );
+            errors = errors.Extend( ExceptionResources.VirtualIndexCannotBeUnique );
+
+        foreach ( var column in Columns )
+        {
+            if ( column is null )
+            {
+                errors = errors.Extend( ExceptionResources.UniqueIndexCannotContainExpressions );
+                break;
+            }
+        }
+
+        if ( errors.Count > 0 )
+            throw SqlHelpers.CreateObjectBuilderException( Database, errors );
     }
 
     protected void ThrowIfMustRemainVirtual()
@@ -264,21 +287,23 @@ public abstract class SqlIndexBuilder : SqlConstraintBuilder, ISqlIndexBuilder
         return validator.GetReferencedColumns();
     }
 
-    protected void SetColumnReferences(ReadOnlyArray<SqlIndexColumnBuilder<ISqlColumnBuilder>> columns)
+    protected void SetColumnReferences(SqlIndexBuilderColumns<SqlColumnBuilder> columns, ReadOnlyArray<SqlColumnBuilder> referencedColumns)
     {
-        _columns = columns;
+        Columns = columns;
+        _referencedColumns = referencedColumns;
         var refSource = SqlObjectBuilderReferenceSource.Create( this );
-        foreach ( var c in _columns )
-            AddReference( c.UnsafeReinterpretAs<SqlColumnBuilder>().Column, refSource );
+        foreach ( var c in _referencedColumns )
+            AddReference( c, refSource );
     }
 
     protected void ClearColumnReferences()
     {
         var refSource = SqlObjectBuilderReferenceSource.Create( this );
-        foreach ( var c in _columns )
-            RemoveReference( c.UnsafeReinterpretAs<SqlColumnBuilder>().Column, refSource );
+        foreach ( var c in _referencedColumns )
+            RemoveReference( c, refSource );
 
-        _columns = ReadOnlyArray<SqlIndexColumnBuilder<ISqlColumnBuilder>>.Empty;
+        Columns = SqlIndexBuilderColumns<SqlColumnBuilder>.Empty;
+        _referencedColumns = ReadOnlyArray<SqlColumnBuilder>.Empty;
     }
 
     protected void SetFilterColumnReferences(ReadOnlyArray<SqlColumnBuilder> columns)
@@ -338,8 +363,9 @@ public abstract class SqlIndexBuilder : SqlConstraintBuilder, ISqlIndexBuilder
     protected override void QuickRemoveCore()
     {
         base.QuickRemoveCore();
-        _columns = ReadOnlyArray<SqlIndexColumnBuilder<ISqlColumnBuilder>>.Empty;
+        _referencedColumns = ReadOnlyArray<SqlColumnBuilder>.Empty;
         _referencedFilterColumns = ReadOnlyArray<SqlColumnBuilder>.Empty;
+        Columns = SqlIndexBuilderColumns<SqlColumnBuilder>.Empty;
         PrimaryKey = null;
         Filter = null;
     }
@@ -356,6 +382,24 @@ public abstract class SqlIndexBuilder : SqlConstraintBuilder, ISqlIndexBuilder
         AfterIsVirtualChange( false );
         PrimaryKey = primaryKey;
         AfterPrimaryKeyChange( null );
+    }
+
+    [Pure]
+    internal static SqlTableScopeExpressionValidator AssertColumnExpressions(
+        SqlTableBuilder table,
+        ReadOnlyArray<SqlOrderByNode> expressions)
+    {
+        // TODO:
+        // move to configurable db builder interface (low priority, later)
+        var visitor = new SqlTableScopeExpressionValidator( table );
+        foreach ( var orderBy in expressions )
+            visitor.Visit( orderBy.Expression );
+
+        var errors = visitor.GetErrors();
+        if ( errors.Count > 0 )
+            throw SqlHelpers.CreateObjectBuilderException( table.Database, errors );
+
+        return visitor;
     }
 
     ISqlIndexBuilder ISqlIndexBuilder.SetDefaultName()

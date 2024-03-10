@@ -45,18 +45,6 @@ public sealed class SqliteColumnBuilder : SqlColumnBuilder
         return this;
     }
 
-    [Pure]
-    public new SqlIndexColumnBuilder<SqliteColumnBuilder> Asc()
-    {
-        return base.Asc().UnsafeReinterpretAs<SqliteColumnBuilder>();
-    }
-
-    [Pure]
-    public new SqlIndexColumnBuilder<SqliteColumnBuilder> Desc()
-    {
-        return base.Desc().UnsafeReinterpretAs<SqliteColumnBuilder>();
-    }
-
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal void UpdateDefaultValueBasedOnDataType()
     {

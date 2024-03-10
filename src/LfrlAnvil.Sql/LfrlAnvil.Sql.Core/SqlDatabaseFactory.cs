@@ -485,8 +485,11 @@ public abstract class SqlDatabaseFactory<TDatabase> : ISqlDatabaseFactory
     {
         var dataSource = versionHistoryTable.Node.ToDataSource();
         var query = dataSource.Select( dataSource.GetAll() );
-        foreach ( var c in versionHistoryTable.Constraints.GetPrimaryKey().Index.Columns )
-            query = query.OrderBy( c.Column.Node.Asc() );
+        foreach ( var column in versionHistoryTable.Constraints.GetPrimaryKey().Index.Columns )
+        {
+            Assume.IsNotNull( column );
+            query = query.OrderBy( column.Asc() );
+        }
 
         nodeInterpreter.VisitDataSourceQuery( query );
         var sql = nodeInterpreter.Context.Sql.AppendSemicolon().ToString();
@@ -510,14 +513,17 @@ public abstract class SqlDatabaseFactory<TDatabase> : ISqlDatabaseFactory
 
         var dataSource = versionHistoryTable.Node.ToDataSource().Limit( SqlNode.Literal( 1 ) );
         var query = dataSource.Select( dataSource.GetAll() );
-        foreach ( var c in versionHistoryTable.Constraints.GetPrimaryKey().Index.Columns )
-            query = query.OrderBy( c.Column.Node.Desc() );
+        foreach ( var column in versionHistoryTable.Constraints.GetPrimaryKey().Index.Columns )
+        {
+            Assume.IsNotNull( column );
+            query = query.OrderBy( column.Desc() );
+        }
 
         nodeInterpreter.VisitDataSourceQuery( query );
         var sql = nodeInterpreter.Context.Sql.AppendSemicolon().ToString();
         nodeInterpreter.Context.Clear();
 
-        return new SqlQueryReader<SqlDatabaseVersionRecord>( versionHistoryTable.Database.Dialect, fullQuery.Reader.Delegate ).Bind( sql );
+        return fullQuery.Reader.Bind( sql );
     }
 
     SqlCreateDatabaseResult<ISqlDatabase> ISqlDatabaseFactory.Create(

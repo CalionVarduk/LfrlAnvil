@@ -1,11 +1,10 @@
-﻿using System;
-using LfrlAnvil.Sql.Expressions.Traits;
+﻿using LfrlAnvil.Sql.Expressions.Traits;
 
 namespace LfrlAnvil.Sql.Expressions;
 
 public sealed class SqlPrimaryKeyDefinitionNode : SqlNodeBase
 {
-    internal SqlPrimaryKeyDefinitionNode(SqlSchemaObjectName name, SqlOrderByNode[] columns)
+    internal SqlPrimaryKeyDefinitionNode(SqlSchemaObjectName name, ReadOnlyArray<SqlOrderByNode> columns)
         : base( SqlNodeType.PrimaryKeyDefinition )
     {
         Name = name;
@@ -13,5 +12,5 @@ public sealed class SqlPrimaryKeyDefinitionNode : SqlNodeBase
     }
 
     public SqlSchemaObjectName Name { get; }
-    public ReadOnlyMemory<SqlOrderByNode> Columns { get; }
+    public ReadOnlyArray<SqlOrderByNode> Columns { get; }
 }

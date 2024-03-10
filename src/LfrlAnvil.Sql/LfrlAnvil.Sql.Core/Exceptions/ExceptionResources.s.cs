@@ -19,6 +19,7 @@ public static class ExceptionResources
     public const string DefaultSchemaCannotBeRemoved = "Default schema cannot be removed.";
     public const string CommonSchemaCannotBeRemoved = "Common schema cannot be removed.";
     public const string IndexMustHaveAtLeastOneColumn = "Index must have at least one column.";
+    public const string UniqueIndexCannotContainExpressions = "Unique index cannot contain expressions.";
     public const string PrimaryKeyIndexMustRemainUnique = "Primary key index must remain unique.";
     public const string PrimaryKeyIndexMustRemainVirtual = "Primary key index must remain virtual.";
     public const string PrimaryKeyIndexCannotBePartial = "Primary key index cannot be partial.";
@@ -169,6 +170,13 @@ public static class ExceptionResources
     public static string IndexIsPartial(ISqlIndexBuilder index)
     {
         return $"{index} is partial.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static string IndexContainsExpressions(ISqlIndexBuilder index)
+    {
+        return $"{index} contains expressions.";
     }
 
     [Pure]

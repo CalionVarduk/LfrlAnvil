@@ -34,10 +34,22 @@ public class SqlColumnBuilderTests : TestsBase
 
         using ( new AssertionScope() )
         {
-            result.Column.Should().BeSameAs( sut );
+            result.Expression.Should().BeSameAs( sut.Node );
             result.Ordering.Should().BeSameAs( OrderBy.Asc );
-            result.ToString().Should().Be( "[Column] foo.T.C ASC" );
         }
+    }
+
+    [Fact]
+    public void Asc_ShouldThrowSqlObjectBuilderException_WhenColumnIsRemoved()
+    {
+        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var table = schema.Objects.CreateTable( "T" );
+        var sut = table.Columns.Create( "C" );
+        sut.Remove();
+
+        var action = Lambda.Of( () => sut.Asc() );
+
+        action.Should().ThrowExactly<SqlObjectBuilderException>();
     }
 
     [Fact]
@@ -51,10 +63,22 @@ public class SqlColumnBuilderTests : TestsBase
 
         using ( new AssertionScope() )
         {
-            result.Column.Should().BeSameAs( sut );
+            result.Expression.Should().BeSameAs( sut.Node );
             result.Ordering.Should().BeSameAs( OrderBy.Desc );
-            result.ToString().Should().Be( "[Column] foo.T.C DESC" );
         }
+    }
+
+    [Fact]
+    public void Desc_ShouldThrowSqlObjectBuilderException_WhenColumnIsRemoved()
+    {
+        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var table = schema.Objects.CreateTable( "T" );
+        var sut = table.Columns.Create( "C" );
+        sut.Remove();
+
+        var action = Lambda.Of( () => sut.Desc() );
+
+        action.Should().ThrowExactly<SqlObjectBuilderException>();
     }
 
     [Fact]
@@ -884,7 +908,8 @@ public class SqlColumnBuilderTests : TestsBase
         var table = schema.Objects.CreateTable( "T" );
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Columns.Create( "C2" );
-        var ix = table.Constraints.CreateIndex( sut.Asc() );
+        var ixColumn = sut.Asc();
+        var ix = table.Constraints.CreateIndex( ixColumn );
         var chk = table.Constraints.CreateCheck( sut.Node > SqlNode.Literal( 0 ) );
 
         var actionCount = schema.Database.GetPendingActionCount();
@@ -897,7 +922,7 @@ public class SqlColumnBuilderTests : TestsBase
             sut.IsRemoved.Should().BeTrue();
             sut.ReferencingObjects.Should().BeEmpty();
 
-            ix.Columns.Should().BeSequentiallyEqualTo( ((SqlColumnBuilder)sut).Asc() );
+            ix.Columns.Expressions.Should().BeSequentiallyEqualTo( ixColumn );
             chk.ReferencedColumns.Should().BeSequentiallyEqualTo( sut );
 
             actions.Should().BeEmpty();
@@ -1071,7 +1096,7 @@ public class SqlColumnBuilderTests : TestsBase
         var sut = table.Columns.Create( "C2" );
 
         var actionCount = schema.Database.GetPendingActionCount();
-        var result = ((ISqlColumnBuilder)sut).SetDefaultValue( 42 );
+        var result = ((ISqlColumnBuilder)sut).SetDefaultValue( (int?)123 ).SetDefaultValue( 42 );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )
@@ -1085,38 +1110,6 @@ public class SqlColumnBuilderTests : TestsBase
                 .Be(
                     @"ALTER [Table] foo.T
   ALTER [Column] foo.T.C2 ([4] : 'DefaultValue' (LfrlAnvil.Sql.Expressions.SqlExpressionNode) FROM <null>);" );
-        }
-    }
-
-    [Fact]
-    public void ISqlColumnBuilder_Asc_ShouldBeEquivalentToAsc()
-    {
-        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
-        var table = schema.Objects.CreateTable( "T" );
-        var sut = table.Columns.Create( "C" );
-
-        var result = ((ISqlColumnBuilder)sut).Asc();
-
-        using ( new AssertionScope() )
-        {
-            result.Column.Should().BeSameAs( sut );
-            result.Ordering.Should().Be( OrderBy.Asc );
-        }
-    }
-
-    [Fact]
-    public void ISqlColumnBuilder_Desc_ShouldBeEquivalentToDesc()
-    {
-        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
-        var table = schema.Objects.CreateTable( "T" );
-        var sut = table.Columns.Create( "C" );
-
-        var result = ((ISqlColumnBuilder)sut).Desc();
-
-        using ( new AssertionScope() )
-        {
-            result.Column.Should().BeSameAs( sut );
-            result.Ordering.Should().Be( OrderBy.Desc );
         }
     }
 }

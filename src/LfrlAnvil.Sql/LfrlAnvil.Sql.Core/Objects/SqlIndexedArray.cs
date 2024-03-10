@@ -5,32 +5,40 @@ using System.Runtime.CompilerServices;
 
 namespace LfrlAnvil.Sql.Objects;
 
-public readonly struct SqlIndexColumnArray<T> : IReadOnlyList<SqlIndexColumn<T>>
+public readonly struct SqlIndexedArray<T> : IReadOnlyList<SqlIndexed<T>>
     where T : class, ISqlColumn
 {
-    private readonly ReadOnlyArray<SqlIndexColumn<ISqlColumn>> _source;
+    private readonly ReadOnlyArray<SqlIndexed<ISqlColumn>> _source;
 
-    private SqlIndexColumnArray(ReadOnlyArray<SqlIndexColumn<ISqlColumn>> source)
+    private SqlIndexedArray(ReadOnlyArray<SqlIndexed<ISqlColumn>> source)
     {
         _source = source;
     }
 
     public int Count => _source.Count;
-    public SqlIndexColumn<T> this[int index] => _source[index].UnsafeReinterpretAs<T>();
 
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static SqlIndexColumnArray<T> From(ReadOnlyArray<SqlIndexColumn<ISqlColumn>> source)
+    public SqlIndexed<T> this[int index]
     {
-        return new SqlIndexColumnArray<T>( source );
+        get
+        {
+            var source = _source[index];
+            return new SqlIndexed<T>( ReinterpretCast.To<T>( source.Column ), source.Ordering );
+        }
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public SqlIndexColumnArray<TDestination> UnsafeReinterpretAs<TDestination>()
+    public static SqlIndexedArray<T> From(ReadOnlyArray<SqlIndexed<ISqlColumn>> source)
+    {
+        return new SqlIndexedArray<T>( source );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public SqlIndexedArray<TDestination> UnsafeReinterpretAs<TDestination>()
         where TDestination : class, ISqlColumn
     {
-        return new SqlIndexColumnArray<TDestination>( _source );
+        return new SqlIndexedArray<TDestination>( _source );
     }
 
     [Pure]
@@ -40,16 +48,24 @@ public readonly struct SqlIndexColumnArray<T> : IReadOnlyList<SqlIndexColumn<T>>
         return new Enumerator( _source );
     }
 
-    public struct Enumerator : IEnumerator<SqlIndexColumn<T>>
+    public struct Enumerator : IEnumerator<SqlIndexed<T>>
     {
-        private ReadOnlyArray<SqlIndexColumn<ISqlColumn>>.Enumerator _source;
+        private ReadOnlyArray<SqlIndexed<ISqlColumn>>.Enumerator _source;
 
-        internal Enumerator(ReadOnlyArray<SqlIndexColumn<ISqlColumn>> source)
+        internal Enumerator(ReadOnlyArray<SqlIndexed<ISqlColumn>> source)
         {
             _source = source.GetEnumerator();
         }
 
-        public SqlIndexColumn<T> Current => _source.Current.UnsafeReinterpretAs<T>();
+        public SqlIndexed<T> Current
+        {
+            get
+            {
+                var source = _source.Current;
+                return new SqlIndexed<T>( ReinterpretCast.To<T>( source.Column ), source.Ordering );
+            }
+        }
+
         object IEnumerator.Current => Current;
 
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -70,7 +86,7 @@ public readonly struct SqlIndexColumnArray<T> : IReadOnlyList<SqlIndexColumn<T>>
     }
 
     [Pure]
-    IEnumerator<SqlIndexColumn<T>> IEnumerable<SqlIndexColumn<T>>.GetEnumerator()
+    IEnumerator<SqlIndexed<T>> IEnumerable<SqlIndexed<T>>.GetEnumerator()
     {
         return GetEnumerator();
     }

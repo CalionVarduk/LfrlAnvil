@@ -1,5 +1,4 @@
-﻿using System;
-using LfrlAnvil.Sql.Expressions.Logical;
+﻿using LfrlAnvil.Sql.Expressions.Logical;
 using LfrlAnvil.Sql.Expressions.Objects;
 using LfrlAnvil.Sql.Expressions.Traits;
 
@@ -12,7 +11,7 @@ public sealed class SqlCreateIndexNode : SqlNodeBase, ISqlStatementNode
         bool isUnique,
         bool replaceIfExists,
         SqlRecordSetNode table,
-        SqlOrderByNode[] columns,
+        ReadOnlyArray<SqlOrderByNode> columns,
         SqlConditionNode? filter)
         : base( SqlNodeType.CreateIndex )
     {
@@ -28,7 +27,7 @@ public sealed class SqlCreateIndexNode : SqlNodeBase, ISqlStatementNode
     public bool IsUnique { get; }
     public bool ReplaceIfExists { get; }
     public SqlRecordSetNode Table { get; }
-    public ReadOnlyMemory<SqlOrderByNode> Columns { get; }
+    public ReadOnlyArray<SqlOrderByNode> Columns { get; }
     public SqlConditionNode? Filter { get; }
     SqlNodeBase ISqlStatementNode.Node => this;
     int ISqlStatementNode.QueryCount => 0;

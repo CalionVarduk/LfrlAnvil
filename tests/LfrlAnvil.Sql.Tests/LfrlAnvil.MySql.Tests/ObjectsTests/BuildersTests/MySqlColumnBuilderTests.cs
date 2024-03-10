@@ -29,40 +29,6 @@ public class MySqlColumnBuilderTests : TestsBase
     }
 
     [Fact]
-    public void Asc_ShouldReturnCorrectResult()
-    {
-        var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
-        var table = schema.Objects.CreateTable( "T" );
-        var sut = table.Columns.Create( "C" );
-
-        var result = sut.Asc();
-
-        using ( new AssertionScope() )
-        {
-            result.Column.Should().BeSameAs( sut );
-            result.Ordering.Should().BeSameAs( OrderBy.Asc );
-            result.ToString().Should().Be( "[Column] foo.T.C ASC" );
-        }
-    }
-
-    [Fact]
-    public void Desc_ShouldReturnCorrectResult()
-    {
-        var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
-        var table = schema.Objects.CreateTable( "T" );
-        var sut = table.Columns.Create( "C" );
-
-        var result = sut.Desc();
-
-        using ( new AssertionScope() )
-        {
-            result.Column.Should().BeSameAs( sut );
-            result.Ordering.Should().BeSameAs( OrderBy.Desc );
-            result.ToString().Should().Be( "[Column] foo.T.C DESC" );
-        }
-    }
-
-    [Fact]
     public void Creation_ShouldMarkTableForAlterationAndAutomaticallySetDefaultValue()
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );

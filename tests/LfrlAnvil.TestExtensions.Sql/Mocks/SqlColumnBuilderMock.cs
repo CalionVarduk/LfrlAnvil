@@ -1,5 +1,4 @@
-﻿using System.Diagnostics.Contracts;
-using LfrlAnvil.Sql;
+﻿using LfrlAnvil.Sql;
 using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Objects.Builders;
 
@@ -35,17 +34,5 @@ public sealed class SqlColumnBuilderMock : SqlColumnBuilder
     {
         base.SetDefaultValue( value );
         return this;
-    }
-
-    [Pure]
-    public new SqlIndexColumnBuilder<SqlColumnBuilderMock> Asc()
-    {
-        return base.Asc().UnsafeReinterpretAs<SqlColumnBuilderMock>();
-    }
-
-    [Pure]
-    public new SqlIndexColumnBuilder<SqlColumnBuilderMock> Desc()
-    {
-        return base.Desc().UnsafeReinterpretAs<SqlColumnBuilderMock>();
     }
 }

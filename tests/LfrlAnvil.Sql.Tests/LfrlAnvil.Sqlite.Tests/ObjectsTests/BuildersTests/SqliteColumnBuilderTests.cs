@@ -29,40 +29,6 @@ public class SqliteColumnBuilderTests : TestsBase
     }
 
     [Fact]
-    public void Asc_ShouldReturnCorrectResult()
-    {
-        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
-        var table = schema.Objects.CreateTable( "T" );
-        var sut = table.Columns.Create( "C" );
-
-        var result = sut.Asc();
-
-        using ( new AssertionScope() )
-        {
-            result.Column.Should().BeSameAs( sut );
-            result.Ordering.Should().BeSameAs( OrderBy.Asc );
-            result.ToString().Should().Be( "[Column] foo_T.C ASC" );
-        }
-    }
-
-    [Fact]
-    public void Desc_ShouldReturnCorrectResult()
-    {
-        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
-        var table = schema.Objects.CreateTable( "T" );
-        var sut = table.Columns.Create( "C" );
-
-        var result = sut.Desc();
-
-        using ( new AssertionScope() )
-        {
-            result.Column.Should().BeSameAs( sut );
-            result.Ordering.Should().BeSameAs( OrderBy.Desc );
-            result.ToString().Should().Be( "[Column] foo_T.C DESC" );
-        }
-    }
-
-    [Fact]
     public void Creation_ShouldMarkTableForReconstructionAndAutomaticallySetDefaultValue()
     {
         var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );

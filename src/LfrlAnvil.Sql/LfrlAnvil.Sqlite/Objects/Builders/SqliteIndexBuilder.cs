@@ -10,14 +10,20 @@ public sealed class SqliteIndexBuilder : SqlIndexBuilder
     internal SqliteIndexBuilder(
         SqliteTableBuilder table,
         string name,
-        ReadOnlyArray<SqlIndexColumnBuilder<ISqlColumnBuilder>> columns,
-        bool isUnique)
-        : base( table, name, columns, isUnique ) { }
+        SqlIndexBuilderColumns<SqliteColumnBuilder> columns,
+        bool isUnique,
+        ReadOnlyArray<SqlColumnBuilder> referencedColumns)
+        : base( table, name, new SqlIndexBuilderColumns<SqlColumnBuilder>( columns.Expressions ), isUnique, referencedColumns ) { }
 
     public new SqliteDatabaseBuilder Database => ReinterpretCast.To<SqliteDatabaseBuilder>( base.Database );
     public new SqliteTableBuilder Table => ReinterpretCast.To<SqliteTableBuilder>( base.Table );
     public new SqlitePrimaryKeyBuilder? PrimaryKey => ReinterpretCast.To<SqlitePrimaryKeyBuilder>( base.PrimaryKey );
-    public new SqlIndexColumnBuilderArray<SqliteColumnBuilder> Columns => base.Columns.UnsafeReinterpretAs<SqliteColumnBuilder>();
+
+    public new SqlIndexBuilderColumns<SqliteColumnBuilder> Columns =>
+        new SqlIndexBuilderColumns<SqliteColumnBuilder>( base.Columns.Expressions );
+
+    public new SqlObjectBuilderArray<SqliteColumnBuilder> ReferencedColumns =>
+        base.ReferencedColumns.UnsafeReinterpretAs<SqliteColumnBuilder>();
 
     public new SqlObjectBuilderArray<SqliteColumnBuilder> ReferencedFilterColumns =>
         base.ReferencedFilterColumns.UnsafeReinterpretAs<SqliteColumnBuilder>();

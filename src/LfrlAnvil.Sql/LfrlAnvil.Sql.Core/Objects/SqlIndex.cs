@@ -5,7 +5,7 @@ namespace LfrlAnvil.Sql.Objects;
 
 public abstract class SqlIndex : SqlConstraint, ISqlIndex
 {
-    private readonly ReadOnlyArray<SqlIndexColumn<ISqlColumn>> _columns;
+    private readonly ReadOnlyArray<SqlIndexed<ISqlColumn>> _columns;
 
     protected SqlIndex(SqlTable table, SqlIndexBuilder builder)
         : base( table, builder )
@@ -14,11 +14,13 @@ public abstract class SqlIndex : SqlConstraint, ISqlIndex
         IsPartial = builder.Filter is not null;
         IsVirtual = builder.IsVirtual;
 
-        var columns = new SqlIndexColumn<ISqlColumn>[builder.Columns.Count];
+        var columns = new SqlIndexed<ISqlColumn>[builder.Columns.Expressions.Count];
         for ( var i = 0; i < columns.Length; ++i )
         {
-            var c = builder.Columns[i];
-            columns[i] = SqlIndexColumn.Create( table.Columns.Get( c.Column.Name ), c.Ordering );
+            var column = builder.Columns.TryGet( i );
+            columns[i] = new SqlIndexed<ISqlColumn>(
+                column is null ? null : table.Columns.Get( column.Name ),
+                builder.Columns.Expressions[i].Ordering );
         }
 
         _columns = columns;
@@ -27,7 +29,7 @@ public abstract class SqlIndex : SqlConstraint, ISqlIndex
     public bool IsUnique { get; }
     public bool IsPartial { get; }
     public bool IsVirtual { get; }
-    public SqlIndexColumnArray<SqlColumn> Columns => SqlIndexColumnArray<SqlColumn>.From( _columns );
+    public SqlIndexedArray<SqlColumn> Columns => SqlIndexedArray<SqlColumn>.From( _columns );
 
-    IReadOnlyList<SqlIndexColumn<ISqlColumn>> ISqlIndex.Columns => _columns.GetUnderlyingArray();
+    IReadOnlyList<SqlIndexed<ISqlColumn>> ISqlIndex.Columns => _columns.GetUnderlyingArray();
 }

@@ -535,7 +535,7 @@ public sealed class SqlNodeDebugInterpreter : SqlNodeInterpreter
         AppendDelimitedSchemaObjectName( node.Name );
         Context.Sql.AppendSpace().Append( '(' );
 
-        if ( node.Columns.Length > 0 )
+        if ( node.Columns.Count > 0 )
         {
             foreach ( var column in node.Columns )
             {
@@ -634,7 +634,7 @@ public sealed class SqlNodeDebugInterpreter : SqlNodeInterpreter
         AppendDelimitedRecordSetName( node.Table );
 
         Context.Sql.AppendSpace().Append( '(' );
-        if ( node.Columns.Length > 0 )
+        if ( node.Columns.Count > 0 )
         {
             using ( Context.TempIndentIncrease() )
             {

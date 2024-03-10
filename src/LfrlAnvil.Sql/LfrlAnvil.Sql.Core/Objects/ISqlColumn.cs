@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics.Contracts;
 using LfrlAnvil.Sql.Expressions.Objects;
+using LfrlAnvil.Sql.Expressions.Traits;
 
 namespace LfrlAnvil.Sql.Objects;
 
@@ -12,8 +13,8 @@ public interface ISqlColumn : ISqlObject
     SqlColumnNode Node { get; }
 
     [Pure]
-    SqlIndexColumn<ISqlColumn> Asc();
+    SqlOrderByNode Asc();
 
     [Pure]
-    SqlIndexColumn<ISqlColumn> Desc();
+    SqlOrderByNode Desc();
 }

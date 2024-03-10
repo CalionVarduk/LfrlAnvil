@@ -2049,7 +2049,7 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
     [Fact]
     public void VisitPrimaryKeyDefinition_ShouldRegisterError()
     {
-        _sut.VisitPrimaryKeyDefinition( SqlNode.PrimaryKey( SqlSchemaObjectName.Create( "PK" ) ) );
+        _sut.VisitPrimaryKeyDefinition( SqlNode.PrimaryKey( SqlSchemaObjectName.Create( "PK" ), ReadOnlyArray<SqlOrderByNode>.Empty ) );
 
         using ( new AssertionScope() )
         {
