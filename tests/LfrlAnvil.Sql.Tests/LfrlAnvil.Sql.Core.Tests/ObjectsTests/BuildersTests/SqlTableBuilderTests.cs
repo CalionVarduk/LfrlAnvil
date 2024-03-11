@@ -342,7 +342,7 @@ public partial class SqlTableBuilderTests : TestsBase
     public void QuickRemove_ShouldDoNothing_WhenTableIsRemoved()
     {
         var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
-        var sut = schema.Objects.CreateView( "V", SqlNode.RawQuery( "SELECT * FROM bar" ) );
+        var sut = schema.Objects.CreateTable( "T" );
 
         schema.Database.Changes.CompletePendingChanges();
         sut.Remove();
@@ -352,6 +352,174 @@ public partial class SqlTableBuilderTests : TestsBase
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
         actions.Should().BeEmpty();
+    }
+
+    [Theory]
+    [InlineData( true )]
+    [InlineData( false )]
+    public void ToCreateNode_ShouldReturnCorrectNode(bool ifNotExists)
+    {
+        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var sut = schema.Objects.CreateTable( "T" );
+        var c1 = sut.Columns.Create( "C1" );
+        var c2 = sut.Columns.Create( "C2" );
+        var pk = sut.Constraints.SetPrimaryKey( c1.Asc() );
+        var ix = sut.Constraints.CreateIndex( c2.Asc() );
+        var fk = sut.Constraints.CreateForeignKey( ix, pk.Index );
+        var chk = sut.Constraints.CreateCheck( c1.Node > SqlNode.Literal( 0 ) );
+
+        var result = sut.ToCreateNode( ifNotExists: ifNotExists );
+
+        using ( new AssertionScope() )
+        {
+            result.Info.Should().Be( sut.Info );
+            result.RecordSet.Info.Should().Be( result.Info );
+            result.RecordSet.CreationNode.Should().BeSameAs( result );
+            result.RecordSet.GetKnownFields().Should().HaveCount( 2 );
+            result.Columns.ToArray().Should().HaveCount( 2 );
+            (result.Columns.ToArray().ElementAtOrDefault( 0 )?.Name).Should().Be( c1.Name );
+            (result.Columns.ToArray().ElementAtOrDefault( 1 )?.Name).Should().Be( c2.Name );
+            result.ForeignKeys.ToArray().Should().HaveCount( 1 );
+            (result.ForeignKeys.ToArray().ElementAtOrDefault( 0 )?.Name).Should().Be( SqlSchemaObjectName.Create( "foo", fk.Name ) );
+            result.Checks.ToArray().Should().HaveCount( 1 );
+            (result.Checks.ToArray().ElementAtOrDefault( 0 )?.Name).Should().Be( SqlSchemaObjectName.Create( "foo", chk.Name ) );
+            (result.PrimaryKey?.Name).Should().Be( SqlSchemaObjectName.Create( "foo", pk.Name ) );
+            result.IfNotExists.Should().Be( ifNotExists );
+        }
+    }
+
+    [Fact]
+    public void ToCreateNode_ShouldReturnCorrectNode_WithEmptyTable()
+    {
+        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var sut = schema.Objects.CreateTable( "T" );
+
+        var result = sut.ToCreateNode();
+
+        using ( new AssertionScope() )
+        {
+            result.Info.Should().Be( sut.Info );
+            result.RecordSet.Info.Should().Be( result.Info );
+            result.RecordSet.CreationNode.Should().BeSameAs( result );
+            result.RecordSet.GetKnownFields().Should().BeEmpty();
+            result.Columns.ToArray().Should().BeEmpty();
+            result.ForeignKeys.ToArray().Should().BeEmpty();
+            result.Checks.ToArray().Should().BeEmpty();
+            result.PrimaryKey.Should().BeNull();
+            result.IfNotExists.Should().BeFalse();
+        }
+    }
+
+    [Fact]
+    public void ToCreateNode_ShouldReturnCorrectNode_WithCustomInfo()
+    {
+        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var sut = schema.Objects.CreateTable( "T" );
+
+        var result = sut.ToCreateNode( customInfo: SqlRecordSetInfo.Create( "bar", "qux" ) );
+
+        using ( new AssertionScope() )
+        {
+            result.Info.Should().Be( SqlRecordSetInfo.Create( "bar", "qux" ) );
+            result.RecordSet.Info.Should().Be( result.Info );
+        }
+    }
+
+    [Fact]
+    public void ToCreateNode_ShouldReturnCorrectNode_WithIgnoredForeignKeys()
+    {
+        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var sut = schema.Objects.CreateTable( "T" );
+        var c1 = sut.Columns.Create( "C1" );
+        var c2 = sut.Columns.Create( "C2" );
+        var pk = sut.Constraints.SetPrimaryKey( c1.Asc() );
+        var ix = sut.Constraints.CreateIndex( c2.Asc() );
+        var fk = sut.Constraints.CreateForeignKey( ix, pk.Index );
+        var chk = sut.Constraints.CreateCheck( c1.Node > SqlNode.Literal( 0 ) );
+
+        var result = sut.ToCreateNode( includeForeignKeys: false );
+
+        using ( new AssertionScope() )
+        {
+            result.Info.Should().Be( sut.Info );
+            result.RecordSet.Info.Should().Be( result.Info );
+            result.RecordSet.CreationNode.Should().BeSameAs( result );
+            result.RecordSet.GetKnownFields().Should().HaveCount( 2 );
+            result.Columns.ToArray().Should().HaveCount( 2 );
+            (result.Columns.ToArray().ElementAtOrDefault( 0 )?.Name).Should().Be( c1.Name );
+            (result.Columns.ToArray().ElementAtOrDefault( 1 )?.Name).Should().Be( c2.Name );
+            result.ForeignKeys.ToArray().Should().BeEmpty();
+            result.Checks.ToArray().Should().HaveCount( 1 );
+            (result.Checks.ToArray().ElementAtOrDefault( 0 )?.Name).Should().Be( SqlSchemaObjectName.Create( "foo", chk.Name ) );
+            (result.PrimaryKey?.Name).Should().Be( SqlSchemaObjectName.Create( "foo", pk.Name ) );
+        }
+    }
+
+    [Fact]
+    public void ToCreateNode_ShouldReturnCorrectNode_WithSortedGeneratedColumns_WithoutAny()
+    {
+        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var sut = schema.Objects.CreateTable( "T" );
+        var c1 = sut.Columns.Create( "C1" );
+        var c2 = sut.Columns.Create( "C2" );
+
+        var result = sut.ToCreateNode( sortGeneratedColumns: true );
+
+        using ( new AssertionScope() )
+        {
+            result.Info.Should().Be( sut.Info );
+            result.Columns.ToArray().Should().HaveCount( 2 );
+            (result.Columns.ToArray().ElementAtOrDefault( 0 )?.Name).Should().Be( c1.Name );
+            (result.Columns.ToArray().ElementAtOrDefault( 1 )?.Name).Should().Be( c2.Name );
+        }
+    }
+
+    [Fact]
+    public void ToCreateNode_ShouldReturnCorrectNode_WithSortedGeneratedColumns_WithOne()
+    {
+        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var sut = schema.Objects.CreateTable( "T" );
+        var c1 = sut.Columns.Create( "C1" );
+        var c2 = sut.Columns.Create( "C2" );
+        var c3 = sut.Columns.Create( "C3" );
+        c2.SetComputation( SqlColumnComputation.Virtual( c1.Node + SqlNode.Literal( 1 ) ) );
+
+        var result = sut.ToCreateNode( sortGeneratedColumns: true );
+
+        using ( new AssertionScope() )
+        {
+            result.Info.Should().Be( sut.Info );
+            result.Columns.ToArray().Should().HaveCount( 3 );
+            (result.Columns.ToArray().ElementAtOrDefault( 0 )?.Name).Should().Be( c1.Name );
+            (result.Columns.ToArray().ElementAtOrDefault( 1 )?.Name).Should().Be( c3.Name );
+            (result.Columns.ToArray().ElementAtOrDefault( 2 )?.Name).Should().Be( c2.Name );
+        }
+    }
+
+    [Fact]
+    public void ToCreateNode_ShouldReturnCorrectNode_WithSortedGeneratedColumns_WithMoreThanOne()
+    {
+        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var sut = schema.Objects.CreateTable( "T" );
+        var c1 = sut.Columns.Create( "C1" );
+        var c2 = sut.Columns.Create( "C2" );
+        var c3 = sut.Columns.Create( "C3" );
+        var c4 = sut.Columns.Create( "C4" );
+        c4.SetComputation( SqlColumnComputation.Virtual( c1.Node + SqlNode.Literal( 1 ) ) );
+        c2.SetComputation( SqlColumnComputation.Stored( c4.Node * SqlNode.Literal( 2 ) ) );
+        c3.SetComputation( SqlColumnComputation.Stored( c4.Node + c2.Node ) );
+
+        var result = sut.ToCreateNode( sortGeneratedColumns: true );
+
+        using ( new AssertionScope() )
+        {
+            result.Info.Should().Be( sut.Info );
+            result.Columns.ToArray().Should().HaveCount( 4 );
+            (result.Columns.ToArray().ElementAtOrDefault( 0 )?.Name).Should().Be( c1.Name );
+            (result.Columns.ToArray().ElementAtOrDefault( 1 )?.Name).Should().Be( c4.Name );
+            (result.Columns.ToArray().ElementAtOrDefault( 2 )?.Name).Should().Be( c2.Name );
+            (result.Columns.ToArray().ElementAtOrDefault( 3 )?.Name).Should().Be( c3.Name );
+        }
     }
 
     [Fact]

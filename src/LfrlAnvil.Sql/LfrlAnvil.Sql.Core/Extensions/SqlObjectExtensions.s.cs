@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Expressions.Logical;
@@ -211,21 +212,23 @@ public static class SqlObjectExtensions
     }
 
     [Pure]
-    public static SqlCreateViewNode ToCreateNode(this ISqlViewBuilder view)
+    public static SqlCreateViewNode ToCreateNode(this ISqlViewBuilder view, bool replaceIfExists = false)
     {
-        return SqlNode.CreateView( view.Info, view.Source );
+        return SqlNode.CreateView( view.Info, view.Source, replaceIfExists );
     }
 
     [Pure]
     public static SqlCreateTableNode ToCreateNode(
         this ISqlTableBuilder table,
         SqlRecordSetInfo? customInfo = null,
-        bool includeForeignKeys = true)
+        bool includeForeignKeys = true,
+        bool sortGeneratedColumns = false,
+        bool ifNotExists = false)
     {
         return SqlNode.CreateTable(
             customInfo ?? table.Info,
-            table.Columns.ToDefinitionRange(),
-            ifNotExists: false,
+            table.Columns.ToDefinitionRange( sortGeneratedColumns ),
+            ifNotExists,
             t =>
             {
                 var constraints = table.Constraints;
@@ -247,9 +250,7 @@ public static class SqlObjectExtensions
                             break;
 
                         case SqlObjectType.ForeignKey:
-                            foreignKeys?.Add(
-                                ReinterpretCast.To<ISqlForeignKeyBuilder>( constraint ).ToDefinitionNode( t ) );
-
+                            foreignKeys?.Add( ReinterpretCast.To<ISqlForeignKeyBuilder>( constraint ).ToDefinitionNode( t ) );
                             break;
                     }
                 }
@@ -263,7 +264,7 @@ public static class SqlObjectExtensions
     }
 
     [Pure]
-    public static SqlCreateIndexNode ToCreateNode(this ISqlIndexBuilder index)
+    public static SqlCreateIndexNode ToCreateNode(this ISqlIndexBuilder index, bool replaceIfExists = false)
     {
         var ixTable = index.Table;
         return SqlNode.CreateIndex(
@@ -271,14 +272,14 @@ public static class SqlObjectExtensions
             index.IsUnique,
             ixTable.Node,
             index.Columns.Expressions,
-            replaceIfExists: false,
+            replaceIfExists,
             index.Filter );
     }
 
     [Pure]
     public static SqlColumnDefinitionNode ToDefinitionNode(this ISqlColumnBuilder column)
     {
-        return SqlNode.Column( column.Name, column.TypeDefinition, column.IsNullable, column.DefaultValue );
+        return SqlNode.Column( column.Name, column.TypeDefinition, column.IsNullable, column.DefaultValue, column.Computation );
     }
 
     [Pure]
@@ -304,7 +305,7 @@ public static class SqlObjectExtensions
             columns = new SqlDataFieldNode[fkColumns.Expressions.Count];
             foreach ( var column in fkColumns )
             {
-                Assume.IsNotNull( column );
+                Ensure.IsNotNull( column );
                 columns[i++] = table[column.Name];
             }
         }
@@ -318,7 +319,7 @@ public static class SqlObjectExtensions
             {
                 foreach ( var column in fkReferencedColumns )
                 {
-                    Assume.IsNotNull( column );
+                    Ensure.IsNotNull( column );
                     referencedColumns[i++] = table[column.Name];
                 }
             }
@@ -326,7 +327,7 @@ public static class SqlObjectExtensions
             {
                 foreach ( var column in fkReferencedColumns )
                 {
-                    Assume.IsNotNull( column );
+                    Ensure.IsNotNull( column );
                     referencedColumns[i++] = column.Node;
                 }
             }
@@ -348,15 +349,65 @@ public static class SqlObjectExtensions
     }
 
     [Pure]
-    public static SqlColumnDefinitionNode[] ToDefinitionRange(this IReadOnlyCollection<ISqlColumnBuilder> columns)
+    public static SqlColumnDefinitionNode[] ToDefinitionRange(
+        this IReadOnlyCollection<ISqlColumnBuilder> columns,
+        bool sortGeneratedColumns = false)
     {
         if ( columns.Count == 0 )
             return Array.Empty<SqlColumnDefinitionNode>();
 
-        var i = 0;
         var result = new SqlColumnDefinitionNode[columns.Count];
-        foreach ( var column in columns )
-            result[i++] = column.ToDefinitionNode();
+
+        if ( sortGeneratedColumns )
+        {
+            var nonGeneratedColumnCount = 0;
+            var sortedColumns = columns.ToArray();
+            for ( var i = 0; i < sortedColumns.Length; ++i )
+            {
+                var column = sortedColumns[i];
+                if ( column.Computation is not null )
+                    continue;
+
+                sortedColumns[i] = sortedColumns[nonGeneratedColumnCount];
+                sortedColumns[nonGeneratedColumnCount++] = column;
+            }
+
+            var generatedColumns = sortedColumns.AsSpan( nonGeneratedColumnCount );
+            if ( generatedColumns.Length > 1 )
+            {
+                var sortInfoByColumnName = new Dictionary<string, ColumnDefinitionSortInfo>(
+                    comparer: SqlHelpers.NameComparer,
+                    capacity: generatedColumns.Length );
+
+                for ( var i = 0; i < generatedColumns.Length; ++i )
+                {
+                    var column = generatedColumns[i];
+                    sortInfoByColumnName.Add( column.Name, new ColumnDefinitionSortInfo( column ) );
+                }
+
+                foreach ( var sortInfo in sortInfoByColumnName.Values )
+                {
+                    foreach ( var column in sortInfo.Column.ReferencedComputationColumns )
+                    {
+                        if ( sortInfoByColumnName.TryGetValue( column.Name, out var columnSortInfo ) )
+                            columnSortInfo.AddParent( sortInfo );
+                    }
+                }
+
+                var j = 0;
+                foreach ( var sortInfo in sortInfoByColumnName.Values.OrderDescending() )
+                    generatedColumns[j++] = sortInfo.Column;
+            }
+
+            for ( var i = 0; i < sortedColumns.Length; ++i )
+                result[i] = sortedColumns[i].ToDefinitionNode();
+        }
+        else
+        {
+            var i = 0;
+            foreach ( var column in columns )
+                result[i++] = column.ToDefinitionNode();
+        }
 
         return result;
     }
@@ -371,5 +422,46 @@ public static class SqlObjectExtensions
         return changeTracker.TryGetOriginalValue( target, descriptor, out var result )
             ? SqlObjectOriginalValue<T>.Create( (T)result! )
             : SqlObjectOriginalValue<T>.CreateEmpty();
+    }
+
+    private sealed class ColumnDefinitionSortInfo : IComparable<ColumnDefinitionSortInfo>
+    {
+        internal readonly ISqlColumnBuilder Column;
+        private Chain<ColumnDefinitionSortInfo> _parents;
+        private int _depth;
+
+        internal ColumnDefinitionSortInfo(ISqlColumnBuilder column)
+        {
+            Column = column;
+            _parents = Chain<ColumnDefinitionSortInfo>.Empty;
+            _depth = -1;
+        }
+
+        internal int Depth
+        {
+            get
+            {
+                if ( _depth != -1 )
+                    return _depth;
+
+                _depth = 0;
+                foreach ( var parent in _parents )
+                    _depth = Math.Max( _depth, parent.Depth + 1 );
+
+                return _depth;
+            }
+        }
+
+        [Pure]
+        public int CompareTo(ColumnDefinitionSortInfo? other)
+        {
+            return other is null ? 1 : Depth.CompareTo( other.Depth );
+        }
+
+        internal void AddParent(ColumnDefinitionSortInfo info)
+        {
+            Assume.Equals( _depth, -1 );
+            _parents = _parents.Extend( info );
+        }
     }
 }

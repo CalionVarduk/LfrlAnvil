@@ -7,6 +7,7 @@ using LfrlAnvil.Sql.Expressions.Logical;
 using LfrlAnvil.Sql.Expressions.Objects;
 using LfrlAnvil.Sql.Expressions.Traits;
 using LfrlAnvil.Sql.Expressions.Visitors;
+using LfrlAnvil.Sql.Objects.Builders;
 using LfrlAnvil.TestExtensions.FluentAssertions;
 using LfrlAnvil.TestExtensions.Sql.Mocks;
 
@@ -1495,15 +1496,16 @@ public class SqlNodeVisitorTests : TestsBase
     }
 
     [Fact]
-    public void VisitColumnDefinition_ShouldVisitDefaultValue()
+    public void VisitColumnDefinition_ShouldVisitDefaultValueAndComputationExpression()
     {
         var sut = new VisitorMock();
-        var parameter = SqlNode.Parameter( "a" );
-        var column = SqlNode.Column<int>( "a", defaultValue: parameter );
+        var parameter1 = SqlNode.Parameter( "a" );
+        var parameter2 = SqlNode.Parameter( "b" );
+        var column = SqlNode.Column<int>( "a", defaultValue: parameter1, computation: SqlColumnComputation.Virtual( parameter2 ) );
 
         sut.VisitColumnDefinition( column );
 
-        sut.Nodes.Should().BeSequentiallyEqualTo( parameter );
+        sut.Nodes.Should().BeSequentiallyEqualTo( parameter1, parameter2 );
     }
 
     [Fact]

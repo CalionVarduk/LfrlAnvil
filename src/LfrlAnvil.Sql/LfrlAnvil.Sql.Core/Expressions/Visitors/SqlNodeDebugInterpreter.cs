@@ -527,6 +527,13 @@ public sealed class SqlNodeDebugInterpreter : SqlNodeInterpreter
             Context.Sql.AppendSpace().Append( "DEFAULT" ).AppendSpace();
             VisitChild( node.DefaultValue );
         }
+
+        if ( node.Computation is not null )
+        {
+            Context.Sql.AppendSpace().Append( "GENERATED" ).AppendSpace();
+            VisitChild( node.Computation.Value.Expression );
+            Context.Sql.AppendSpace().Append( node.Computation.Value.Storage.ToString().ToUpperInvariant() );
+        }
     }
 
     public override void VisitPrimaryKeyDefinition(SqlPrimaryKeyDefinitionNode node)

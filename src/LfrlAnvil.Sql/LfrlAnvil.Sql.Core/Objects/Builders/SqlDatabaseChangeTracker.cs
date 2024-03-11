@@ -265,6 +265,11 @@ public abstract class SqlDatabaseChangeTracker : ISqlDatabaseChangeTracker
         AddChange( target.Table, target, SqlObjectChangeDescriptor.DefaultValue, originalValue, target.DefaultValue );
     }
 
+    protected virtual void AddComputationChange(SqlColumnBuilder target, SqlColumnComputation? originalValue)
+    {
+        AddChange( target.Table, target, SqlObjectChangeDescriptor.Computation, originalValue, target.Computation );
+    }
+
     protected virtual void AddIsUniqueChange(SqlIndexBuilder target)
     {
         AddChange( target.Table, target, SqlObjectChangeDescriptor.IsUnique, ! target.IsUnique, target.IsUnique );
@@ -434,6 +439,13 @@ public abstract class SqlDatabaseChangeTracker : ISqlDatabaseChangeTracker
 
         if ( IsActive )
             AddDefaultValueChange( target, originalValue );
+    }
+
+    internal void ComputationChanged(SqlColumnBuilder target, SqlColumnComputation? originalValue)
+    {
+        Assume.NotEquals( target.Computation ?? default, originalValue ?? default );
+        if ( IsActive )
+            AddComputationChange( target, originalValue );
     }
 
     internal void IsUniqueChanged(SqlIndexBuilder target, bool originalValue)

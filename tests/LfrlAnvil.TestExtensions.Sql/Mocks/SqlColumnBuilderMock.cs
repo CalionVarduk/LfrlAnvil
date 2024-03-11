@@ -35,4 +35,10 @@ public sealed class SqlColumnBuilderMock : SqlColumnBuilder
         base.SetDefaultValue( value );
         return this;
     }
+
+    public new SqlColumnBuilderMock SetComputation(SqlColumnComputation? computation)
+    {
+        base.SetComputation( computation );
+        return this;
+    }
 }

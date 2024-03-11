@@ -779,6 +779,21 @@ public class SqlColumnBuilderTests : TestsBase
     }
 
     [Fact]
+    public void SetDefaultValue_ShouldThrowSqlObjectBuilderException_WhenColumnIsGenerated()
+    {
+        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var table = schema.Objects.CreateTable( "T" );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        var sut = table.Columns.Create( "C2" ).SetComputation( SqlColumnComputation.Virtual( SqlNode.Literal( 1 ) ) );
+
+        var action = Lambda.Of( () => sut.SetDefaultValue( 42 ) );
+
+        action.Should()
+            .ThrowExactly<SqlObjectBuilderException>()
+            .AndMatch( e => e.Dialect == SqlDialectMock.Instance && e.Errors.Count == 1 );
+    }
+
+    [Fact]
     public void SetDefaultValue_ShouldThrowSqlObjectBuilderException_WhenExpressionIsInvalid()
     {
         var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
@@ -794,12 +809,351 @@ public class SqlColumnBuilderTests : TestsBase
     }
 
     [Fact]
-    public void Remove_ShouldRemoveColumn()
+    public void SetComputation_ShouldDoNothing_WhenNewNullValueEqualsOldValue()
     {
         var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Columns.Create( "C2" );
+
+        var actionCount = schema.Database.GetPendingActionCount();
+        var result = sut.SetComputation( null );
+        var actions = schema.Database.GetLastPendingActions( actionCount );
+
+        using ( new AssertionScope() )
+        {
+            result.Should().BeSameAs( sut );
+            actions.Should().BeEmpty();
+        }
+    }
+
+    [Fact]
+    public void SetComputation_ShouldDoNothing_WhenNewNonNullValueEqualsOldValue()
+    {
+        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var table = schema.Objects.CreateTable( "T" );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        var sut = table.Columns.Create( "C2" ).SetComputation( SqlColumnComputation.Virtual( SqlNode.Literal( 1 ) ) );
+
+        var actionCount = schema.Database.GetPendingActionCount();
+        var result = sut.SetComputation( sut.Computation );
+        var actions = schema.Database.GetLastPendingActions( actionCount );
+
+        using ( new AssertionScope() )
+        {
+            result.Should().BeSameAs( sut );
+            actions.Should().BeEmpty();
+        }
+    }
+
+    [Fact]
+    public void SetComputation_ShouldDoNothing_WhenValueChangeIsFollowedByChangeToOriginal()
+    {
+        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var table = schema.Objects.CreateTable( "T" );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        var sut = table.Columns.Create( "C2" ).SetComputation( SqlColumnComputation.Virtual( SqlNode.Literal( 1 ) ) );
+        var originalComputation = sut.Computation;
+
+        var actionCount = schema.Database.GetPendingActionCount();
+        sut.SetComputation( SqlColumnComputation.Stored( SqlNode.Literal( 42 ) ) );
+        var result = sut.SetComputation( originalComputation );
+        var actions = schema.Database.GetLastPendingActions( actionCount );
+
+        using ( new AssertionScope() )
+        {
+            result.Should().BeSameAs( sut );
+            actions.Should().BeEmpty();
+        }
+    }
+
+    [Fact]
+    public void SetComputation_ShouldUpdateComputation_WhenNewNullValueIsDifferentFromOldValue()
+    {
+        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var table = schema.Objects.CreateTable( "T" );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        var other = table.Columns.Create( "C2" );
+        var sut = table.Columns.Create( "C3" ).SetComputation( SqlColumnComputation.Stored( other.Node + SqlNode.Literal( 1 ) ) );
+
+        var actionCount = schema.Database.GetPendingActionCount();
+        var result = sut.SetComputation( null );
+        var actions = schema.Database.GetLastPendingActions( actionCount );
+
+        using ( new AssertionScope() )
+        {
+            result.Should().BeSameAs( sut );
+            sut.Computation.Should().BeNull();
+            sut.ReferencedComputationColumns.Should().BeEmpty();
+            other.ReferencingObjects.Should().BeEmpty();
+
+            actions.Should().HaveCount( 1 );
+            actions.ElementAtOrDefault( 0 )
+                .Sql.Should()
+                .Be(
+                    @"ALTER [Table] foo.T
+  ALTER [Column] foo.T.C3 ([5] : 'Computation' (System.Nullable`1[T is LfrlAnvil.Sql.Objects.Builders.SqlColumnComputation]) FROM SqlColumnComputation { Expression = ([foo].[T].[C2] : System.Object) + (""1"" : System.Int32), Storage = Stored });" );
+        }
+    }
+
+    [Fact]
+    public void SetComputation_ShouldUpdateComputation_WhenNewValueIsDifferentFromOldNullValue()
+    {
+        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var table = schema.Objects.CreateTable( "T" );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        var other = table.Columns.Create( "C2" );
+        var sut = table.Columns.Create( "C3" );
+        var computation = SqlColumnComputation.Stored( other.Node + SqlNode.Literal( 1 ) );
+
+        var actionCount = schema.Database.GetPendingActionCount();
+        var result = sut.SetComputation( computation );
+        var actions = schema.Database.GetLastPendingActions( actionCount );
+
+        using ( new AssertionScope() )
+        {
+            result.Should().BeSameAs( sut );
+            sut.Computation.Should().Be( computation );
+            sut.ReferencedComputationColumns.Should().BeSequentiallyEqualTo( other );
+
+            other.ReferencingObjects.Should()
+                .BeSequentiallyEqualTo(
+                    SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut, property: "Computation" ), other ) );
+
+            actions.Should().HaveCount( 1 );
+            actions.ElementAtOrDefault( 0 )
+                .Sql.Should()
+                .Be(
+                    @"ALTER [Table] foo.T
+  ALTER [Column] foo.T.C3 ([5] : 'Computation' (System.Nullable`1[T is LfrlAnvil.Sql.Objects.Builders.SqlColumnComputation]) FROM <null>);" );
+        }
+    }
+
+    [Fact]
+    public void SetComputation_ShouldUpdateComputation_WhenNewExpressionIsDifferentFromOldExpression()
+    {
+        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var table = schema.Objects.CreateTable( "T" );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        var other = table.Columns.Create( "C2" );
+        var oldOther = table.Columns.Create( "C4" );
+        var sut = table.Columns.Create( "C3" ).SetComputation( SqlColumnComputation.Stored( oldOther.Node + SqlNode.Literal( 1 ) ) );
+        var computation = SqlColumnComputation.Stored( other.Node + SqlNode.Literal( 1 ) );
+
+        var actionCount = schema.Database.GetPendingActionCount();
+        var result = sut.SetComputation( computation );
+        var actions = schema.Database.GetLastPendingActions( actionCount );
+
+        using ( new AssertionScope() )
+        {
+            result.Should().BeSameAs( sut );
+            sut.Computation.Should().Be( computation );
+            sut.ReferencedComputationColumns.Should().BeSequentiallyEqualTo( other );
+
+            oldOther.ReferencingObjects.Should().BeEmpty();
+            other.ReferencingObjects.Should()
+                .BeSequentiallyEqualTo(
+                    SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut, property: "Computation" ), other ) );
+
+            actions.Should().HaveCount( 1 );
+            actions.ElementAtOrDefault( 0 )
+                .Sql.Should()
+                .Be(
+                    @"ALTER [Table] foo.T
+  ALTER [Column] foo.T.C3 ([5] : 'Computation' (System.Nullable`1[T is LfrlAnvil.Sql.Objects.Builders.SqlColumnComputation]) FROM SqlColumnComputation { Expression = ([foo].[T].[C4] : System.Object) + (""1"" : System.Int32), Storage = Stored });" );
+        }
+    }
+
+    [Theory]
+    [InlineData( SqlColumnComputationStorage.Virtual, SqlColumnComputationStorage.Stored )]
+    [InlineData( SqlColumnComputationStorage.Stored, SqlColumnComputationStorage.Virtual )]
+    public void SetComputation_ShouldUpdateComputation_WhenNewStorageIsDifferentFromOldStorage(
+        SqlColumnComputationStorage oldStorage,
+        SqlColumnComputationStorage newStorage)
+    {
+        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var table = schema.Objects.CreateTable( "T" );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        var other = table.Columns.Create( "C2" );
+        var expression = other.Node + SqlNode.Literal( 1 );
+        var sut = table.Columns.Create( "C3" ).SetComputation( new SqlColumnComputation( expression, oldStorage ) );
+        table.Constraints.CreateIndex( sut.Asc() );
+
+        var actionCount = schema.Database.GetPendingActionCount();
+        var result = sut.SetComputation( new SqlColumnComputation( expression, newStorage ) );
+        var actions = schema.Database.GetLastPendingActions( actionCount );
+
+        using ( new AssertionScope() )
+        {
+            result.Should().BeSameAs( sut );
+            sut.Computation.Should().Be( new SqlColumnComputation( expression, newStorage ) );
+            sut.ReferencedComputationColumns.Should().BeSequentiallyEqualTo( other );
+
+            other.ReferencingObjects.Should()
+                .BeSequentiallyEqualTo(
+                    SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut, property: "Computation" ), other ) );
+
+            actions.Should().HaveCount( 1 );
+            actions.ElementAtOrDefault( 0 )
+                .Sql.Should()
+                .Be(
+                    $@"ALTER [Table] foo.T
+  ALTER [Column] foo.T.C3 ([5] : 'Computation' (System.Nullable`1[T is LfrlAnvil.Sql.Objects.Builders.SqlColumnComputation]) FROM SqlColumnComputation {{ Expression = ([foo].[T].[C2] : System.Object) + (""1"" : System.Int32), Storage = {oldStorage} }});" );
+        }
+    }
+
+    [Fact]
+    public void SetComputation_ShouldSetDefaultValueToNull_WhenValueIsNotNull()
+    {
+        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var table = schema.Objects.CreateTable( "T" );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        var other = table.Columns.Create( "C2" );
+        var sut = table.Columns.Create( "C3" ).SetDefaultValue( 42 );
+        var computation = SqlColumnComputation.Stored( other.Node + SqlNode.Literal( 1 ) );
+
+        var actionCount = schema.Database.GetPendingActionCount();
+        var result = sut.SetComputation( computation );
+        var actions = schema.Database.GetLastPendingActions( actionCount );
+
+        using ( new AssertionScope() )
+        {
+            result.Should().BeSameAs( sut );
+            sut.DefaultValue.Should().BeNull();
+            sut.Computation.Should().Be( computation );
+            sut.ReferencedComputationColumns.Should().BeSequentiallyEqualTo( other );
+
+            other.ReferencingObjects.Should()
+                .BeSequentiallyEqualTo(
+                    SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut, property: "Computation" ), other ) );
+
+            actions.Should().HaveCount( 1 );
+            actions.ElementAtOrDefault( 0 )
+                .Sql.Should()
+                .Be(
+                    @"ALTER [Table] foo.T
+  ALTER [Column] foo.T.C3 ([4] : 'DefaultValue' (LfrlAnvil.Sql.Expressions.SqlExpressionNode) FROM ""42"" : System.Int32)
+  ALTER [Column] foo.T.C3 ([5] : 'Computation' (System.Nullable`1[T is LfrlAnvil.Sql.Objects.Builders.SqlColumnComputation]) FROM <null>);" );
+        }
+    }
+
+    [Fact]
+    public void SetComputation_ShouldThrowSqlObjectBuilderException_WhenColumnIsRemoved()
+    {
+        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var table = schema.Objects.CreateTable( "T" );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        var sut = table.Columns.Create( "C2" );
+        sut.Remove();
+
+        var action = Lambda.Of( () => sut.SetComputation( SqlColumnComputation.Virtual( SqlNode.Literal( 1 ) ) ) );
+
+        action.Should()
+            .ThrowExactly<SqlObjectBuilderException>()
+            .AndMatch( e => e.Dialect == SqlDialectMock.Instance && e.Errors.Count == 1 );
+    }
+
+    [Fact]
+    public void SetComputation_ShouldThrowSqlObjectBuilderException_WhenColumnIsReferencedAndOldValueIsNull()
+    {
+        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var table = schema.Objects.CreateTable( "T" );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        var sut = table.Columns.Create( "C2" );
+        table.Constraints.CreateIndex( sut.Asc() );
+
+        var action = Lambda.Of( () => sut.SetComputation( SqlColumnComputation.Virtual( SqlNode.Literal( 1 ) ) ) );
+
+        action.Should()
+            .ThrowExactly<SqlObjectBuilderException>()
+            .AndMatch( e => e.Dialect == SqlDialectMock.Instance && e.Errors.Count == 1 );
+    }
+
+    [Fact]
+    public void SetComputation_ShouldThrowSqlObjectBuilderException_WhenExpressionIsInvalidAndOldValueIsNull()
+    {
+        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var table = schema.Objects.CreateTable( "T" );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        var sut = table.Columns.Create( "C2" );
+
+        var action = Lambda.Of( () => sut.SetComputation( SqlColumnComputation.Virtual( SqlNode.RawRecordSet( "bar" )["x"] ) ) );
+
+        action.Should()
+            .ThrowExactly<SqlObjectBuilderException>()
+            .AndMatch( e => e.Dialect == SqlDialectMock.Instance && e.Errors.Count == 1 );
+    }
+
+    [Fact]
+    public void SetComputation_ShouldThrowSqlObjectBuilderException_WhenColumnIsReferencedAndOldValueIsNotNull()
+    {
+        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var table = schema.Objects.CreateTable( "T" );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        var sut = table.Columns.Create( "C2" ).SetComputation( SqlColumnComputation.Stored( SqlNode.Literal( 42 ) ) );
+        table.Constraints.CreateIndex( sut.Asc() );
+
+        var action = Lambda.Of( () => sut.SetComputation( SqlColumnComputation.Virtual( SqlNode.Literal( 1 ) ) ) );
+
+        action.Should()
+            .ThrowExactly<SqlObjectBuilderException>()
+            .AndMatch( e => e.Dialect == SqlDialectMock.Instance && e.Errors.Count == 1 );
+    }
+
+    [Fact]
+    public void SetComputation_ShouldThrowSqlObjectBuilderException_WhenExpressionIsInvalidAndOldValueIsNotNull()
+    {
+        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var table = schema.Objects.CreateTable( "T" );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        var sut = table.Columns.Create( "C2" ).SetComputation( SqlColumnComputation.Stored( SqlNode.Literal( 42 ) ) );
+
+        var action = Lambda.Of( () => sut.SetComputation( SqlColumnComputation.Virtual( SqlNode.RawRecordSet( "bar" )["x"] ) ) );
+
+        action.Should()
+            .ThrowExactly<SqlObjectBuilderException>()
+            .AndMatch( e => e.Dialect == SqlDialectMock.Instance && e.Errors.Count == 1 );
+    }
+
+    [Fact]
+    public void SetComputation_ShouldThrowSqlObjectBuilderException_WhenColumnIsReferencedAndNewValueIsNull()
+    {
+        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var table = schema.Objects.CreateTable( "T" );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        var sut = table.Columns.Create( "C2" ).SetComputation( SqlColumnComputation.Virtual( SqlNode.Literal( 1 ) ) );
+        table.Constraints.CreateIndex( sut.Asc() );
+
+        var action = Lambda.Of( () => sut.SetComputation( null ) );
+
+        action.Should()
+            .ThrowExactly<SqlObjectBuilderException>()
+            .AndMatch( e => e.Dialect == SqlDialectMock.Instance && e.Errors.Count == 1 );
+    }
+
+    [Fact]
+    public void SetComputation_ShouldThrowSqlObjectBuilderException_WhenColumnReferencesSelf()
+    {
+        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var table = schema.Objects.CreateTable( "T" );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        var sut = table.Columns.Create( "C2" );
+
+        var action = Lambda.Of( () => sut.SetComputation( SqlColumnComputation.Virtual( sut.Node + SqlNode.Literal( 1 ) ) ) );
+
+        action.Should()
+            .ThrowExactly<SqlObjectBuilderException>()
+            .AndMatch( e => e.Dialect == SqlDialectMock.Instance && e.Errors.Count == 1 );
+    }
+
+    [Fact]
+    public void Remove_ShouldRemoveColumnAndClearReferencedComputationColumns()
+    {
+        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var table = schema.Objects.CreateTable( "T" );
+        var other = table.Columns.Create( "C1" );
+        var pk = table.Constraints.SetPrimaryKey( other.Asc() );
+        var sut = table.Columns.Create( "C2" ).SetComputation( SqlColumnComputation.Stored( other.Node + SqlNode.Literal( 1 ) ) );
 
         var actionCount = schema.Database.GetPendingActionCount();
         sut.Remove();
@@ -808,7 +1162,12 @@ public class SqlColumnBuilderTests : TestsBase
         using ( new AssertionScope() )
         {
             table.Columns.TryGet( sut.Name ).Should().BeNull();
+            sut.ReferencedComputationColumns.Should().BeEmpty();
+            sut.Computation.Should().BeNull();
             sut.IsRemoved.Should().BeTrue();
+
+            other.ReferencingObjects.Should()
+                .BeSequentiallyEqualTo( SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( pk.Index ), other ) );
 
             actions.Should().HaveCount( 1 );
             actions.ElementAtOrDefault( 0 )
@@ -902,12 +1261,13 @@ public class SqlColumnBuilderTests : TestsBase
     }
 
     [Fact]
-    public void QuickRemove_ShouldClearReferencingObjectsAndReferencedColumns()
+    public void QuickRemove_ShouldClearReferencingObjectsAndReferencedComputationColumns()
     {
         var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
-        var sut = table.Columns.Create( "C2" );
+        var other = table.Columns.Create( "C1" );
+        var pk = table.Constraints.SetPrimaryKey( other.Asc() );
+        var sut = table.Columns.Create( "C2" ).SetComputation( SqlColumnComputation.Stored( other.Node + SqlNode.Literal( 1 ) ) );
         var ixColumn = sut.Asc();
         var ix = table.Constraints.CreateIndex( ixColumn );
         var chk = table.Constraints.CreateCheck( sut.Node > SqlNode.Literal( 0 ) );
@@ -919,11 +1279,19 @@ public class SqlColumnBuilderTests : TestsBase
         using ( new AssertionScope() )
         {
             table.Columns.TryGet( sut.Name ).Should().BeSameAs( sut );
+            sut.ReferencedComputationColumns.Should().BeEmpty();
+            sut.Computation.Should().BeNull();
             sut.IsRemoved.Should().BeTrue();
             sut.ReferencingObjects.Should().BeEmpty();
 
             ix.Columns.Expressions.Should().BeSequentiallyEqualTo( ixColumn );
             chk.ReferencedColumns.Should().BeSequentiallyEqualTo( sut );
+
+            other.ReferencingObjects.Should().HaveCount( 2 );
+            other.ReferencingObjects.Should()
+                .BeEquivalentTo(
+                    SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( pk.Index ), other ),
+                    SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut, property: "Computation" ), other ) );
 
             actions.Should().BeEmpty();
         }
@@ -945,6 +1313,30 @@ public class SqlColumnBuilderTests : TestsBase
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
         actions.Should().BeEmpty();
+    }
+
+    [Theory]
+    [InlineData( true )]
+    [InlineData( false )]
+    public void ToDefinitionNode_ShouldReturnCorrectNode(bool isNullable)
+    {
+        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var table = schema.Objects.CreateTable( "T" );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        var sut = table.Columns.Create( "C2" )
+            .MarkAsNullable( isNullable )
+            .SetComputation( SqlColumnComputation.Stored( SqlNode.Literal( 1 ) ) );
+
+        var result = sut.ToDefinitionNode();
+
+        using ( new AssertionScope() )
+        {
+            result.Name.Should().BeSameAs( sut.Name );
+            result.Type.Should().Be( TypeNullability.Create<object>( isNullable ) );
+            result.TypeDefinition.Should().BeSameAs( sut.TypeDefinition );
+            result.DefaultValue.Should().BeSameAs( sut.DefaultValue );
+            result.Computation.Should().Be( sut.Computation );
+        }
     }
 
     [Fact]
@@ -1110,6 +1502,33 @@ public class SqlColumnBuilderTests : TestsBase
                 .Be(
                     @"ALTER [Table] foo.T
   ALTER [Column] foo.T.C2 ([4] : 'DefaultValue' (LfrlAnvil.Sql.Expressions.SqlExpressionNode) FROM <null>);" );
+        }
+    }
+
+    [Fact]
+    public void ISqlColumnBuilder_SetComputation_ShouldBeEquivalentToSetComputation()
+    {
+        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var table = schema.Objects.CreateTable( "T" );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        var sut = table.Columns.Create( "C2" );
+        var computation = SqlColumnComputation.Virtual( SqlNode.Literal( 1 ) );
+
+        var actionCount = schema.Database.GetPendingActionCount();
+        var result = ((ISqlColumnBuilder)sut).SetComputation( computation );
+        var actions = schema.Database.GetLastPendingActions( actionCount );
+
+        using ( new AssertionScope() )
+        {
+            result.Should().BeSameAs( sut );
+            sut.Computation.Should().Be( computation );
+
+            actions.Should().HaveCount( 1 );
+            actions.ElementAtOrDefault( 0 )
+                .Sql.Should()
+                .Be(
+                    @"ALTER [Table] foo.T
+  ALTER [Column] foo.T.C2 ([5] : 'Computation' (System.Nullable`1[T is LfrlAnvil.Sql.Objects.Builders.SqlColumnComputation]) FROM <null>);" );
         }
     }
 }

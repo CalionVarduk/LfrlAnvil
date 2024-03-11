@@ -275,6 +275,24 @@ public class SqlViewBuilderTests : TestsBase
         actions.Should().BeEmpty();
     }
 
+    [Theory]
+    [InlineData( true )]
+    [InlineData( false )]
+    public void ToCreateNode_ShouldReturnCorrectNode(bool replaceIfExists)
+    {
+        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var sut = schema.Objects.CreateView( "V", SqlNode.RawQuery( "SELECT * FROM bar" ) );
+
+        var result = sut.ToCreateNode( replaceIfExists );
+
+        using ( new AssertionScope() )
+        {
+            result.Info.Should().Be( sut.Info );
+            result.Source.Should().BeSameAs( sut.Source );
+            result.ReplaceIfExists.Should().Be( replaceIfExists );
+        }
+    }
+
     [Fact]
     public void ISqlViewBuilder_SetName_ShouldBeEquivalentToSetName()
     {

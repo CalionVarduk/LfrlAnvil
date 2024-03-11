@@ -23,23 +23,26 @@ public abstract class SqlObjectChangeDescriptor : IEquatable<SqlObjectChangeDesc
     public static readonly SqlObjectChangeDescriptor<SqlExpressionNode?> DefaultValue =
         new SqlObjectChangeDescriptor<SqlExpressionNode?>( nameof( DefaultValue ), 4 );
 
+    public static readonly SqlObjectChangeDescriptor<SqlColumnComputation?> Computation =
+        new SqlObjectChangeDescriptor<SqlColumnComputation?>( nameof( Computation ), 5 );
+
     public static readonly SqlObjectChangeDescriptor<bool> IsUnique =
-        new SqlObjectChangeDescriptor<bool>( nameof( IsUnique ), 5 );
+        new SqlObjectChangeDescriptor<bool>( nameof( IsUnique ), 6 );
 
     public static readonly SqlObjectChangeDescriptor<bool> IsVirtual =
-        new SqlObjectChangeDescriptor<bool>( nameof( IsVirtual ), 6 );
+        new SqlObjectChangeDescriptor<bool>( nameof( IsVirtual ), 7 );
 
     public static readonly SqlObjectChangeDescriptor<SqlConditionNode?> Filter =
-        new SqlObjectChangeDescriptor<SqlConditionNode?>( nameof( Filter ), 7 );
+        new SqlObjectChangeDescriptor<SqlConditionNode?>( nameof( Filter ), 8 );
 
     public static readonly SqlObjectChangeDescriptor<SqlPrimaryKeyBuilder?> PrimaryKey =
-        new SqlObjectChangeDescriptor<SqlPrimaryKeyBuilder?>( nameof( PrimaryKey ), 8 );
+        new SqlObjectChangeDescriptor<SqlPrimaryKeyBuilder?>( nameof( PrimaryKey ), 9 );
 
     public static readonly SqlObjectChangeDescriptor<ReferenceBehavior> OnDeleteBehavior =
-        new SqlObjectChangeDescriptor<ReferenceBehavior>( nameof( OnDeleteBehavior ), 9 );
+        new SqlObjectChangeDescriptor<ReferenceBehavior>( nameof( OnDeleteBehavior ), 10 );
 
     public static readonly SqlObjectChangeDescriptor<ReferenceBehavior> OnUpdateBehavior =
-        new SqlObjectChangeDescriptor<ReferenceBehavior>( nameof( OnUpdateBehavior ), 10 );
+        new SqlObjectChangeDescriptor<ReferenceBehavior>( nameof( OnUpdateBehavior ), 11 );
 
     internal SqlObjectChangeDescriptor(string description, int key)
     {

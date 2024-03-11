@@ -760,6 +760,9 @@ public abstract class SqlNodeVisitor : ISqlNodeVisitor
     {
         if ( node.DefaultValue is not null )
             this.Visit( node.DefaultValue );
+
+        if ( node.Computation is not null )
+            this.Visit( node.Computation.Value.Expression );
     }
 
     public virtual void VisitPrimaryKeyDefinition(SqlPrimaryKeyDefinitionNode node)

@@ -9,6 +9,7 @@ using LfrlAnvil.Sql.Expressions.Objects;
 using LfrlAnvil.Sql.Expressions.Persistence;
 using LfrlAnvil.Sql.Expressions.Traits;
 using LfrlAnvil.Sql.Expressions.Visitors;
+using LfrlAnvil.Sql.Objects.Builders;
 
 namespace LfrlAnvil.Sqlite;
 
@@ -388,7 +389,26 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
 
     public override void VisitColumnDefinition(SqlColumnDefinitionNode node)
     {
-        VisitColumnDefinition( node, ColumnTypeDefinitions, requiresDefaultValueParentheses: static (_, _) => true );
+        var typeDefinition = node.TypeDefinition ?? ColumnTypeDefinitions.GetByType( node.Type.UnderlyingType );
+        AppendDelimitedName( node.Name );
+        Context.Sql.AppendSpace().Append( typeDefinition.DataType.Name );
+
+        if ( ! node.Type.IsNullable )
+            Context.Sql.AppendSpace().Append( "NOT" ).AppendSpace().Append( "NULL" );
+
+        if ( node.DefaultValue is not null )
+        {
+            Context.Sql.AppendSpace().Append( "DEFAULT" ).AppendSpace();
+            VisitChildWrappedInParentheses( node.DefaultValue );
+        }
+
+        if ( node.Computation is not null )
+        {
+            var storage = node.Computation.Value.Storage == SqlColumnComputationStorage.Virtual ? "VIRTUAL" : "STORED";
+            Context.Sql.AppendSpace().Append( "GENERATED" ).AppendSpace().Append( "ALWAYS" ).AppendSpace().Append( "AS" ).AppendSpace();
+            VisitChildWrappedInParentheses( node.Computation.Value.Expression );
+            Context.Sql.AppendSpace().Append( storage );
+        }
     }
 
     public override void VisitPrimaryKeyDefinition(SqlPrimaryKeyDefinitionNode node)

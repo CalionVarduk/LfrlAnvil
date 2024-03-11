@@ -427,7 +427,7 @@ public class SqlForeignKeyBuilderTests : TestsBase
                 .Sql.Should()
                 .Be(
                     @"ALTER [Table] foo.T
-  ALTER [ForeignKey] foo.FK_T_C2_REF_T ([9] : 'OnDeleteBehavior' (LfrlAnvil.Sql.ReferenceBehavior) FROM 'RESTRICT' (Restrict));" );
+  ALTER [ForeignKey] foo.FK_T_C2_REF_T ([10] : 'OnDeleteBehavior' (LfrlAnvil.Sql.ReferenceBehavior) FROM 'RESTRICT' (Restrict));" );
         }
     }
 
@@ -512,7 +512,7 @@ public class SqlForeignKeyBuilderTests : TestsBase
                 .Sql.Should()
                 .Be(
                     @"ALTER [Table] foo.T
-  ALTER [ForeignKey] foo.FK_T_C2_REF_T ([10] : 'OnUpdateBehavior' (LfrlAnvil.Sql.ReferenceBehavior) FROM 'RESTRICT' (Restrict));" );
+  ALTER [ForeignKey] foo.FK_T_C2_REF_T ([11] : 'OnUpdateBehavior' (LfrlAnvil.Sql.ReferenceBehavior) FROM 'RESTRICT' (Restrict));" );
         }
     }
 
@@ -795,6 +795,63 @@ public class SqlForeignKeyBuilderTests : TestsBase
     }
 
     [Fact]
+    public void ToDefinitionNode_ShouldReturnCorrectNode_WhenForeignKeyIsSelfReference()
+    {
+        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var table = schema.Objects.CreateTable( "T" );
+        var c1 = table.Columns.Create( "C1" );
+        var c2 = table.Columns.Create( "C2" );
+        var ix1 = table.Constraints.CreateIndex( c2.Asc() );
+        var ix2 = table.Constraints.SetPrimaryKey( c1.Asc() ).Index;
+        var sut = table.Constraints.CreateForeignKey( ix1, ix2 ).SetOnUpdateBehavior( ReferenceBehavior.Cascade );
+
+        var result = sut.ToDefinitionNode( table.Node );
+
+        using ( new AssertionScope() )
+        {
+            result.Name.Should().Be( SqlSchemaObjectName.Create( "foo", "FK_T_C2_REF_T" ) );
+            result.Columns.ToArray().Should().HaveCount( 1 );
+            (result.Columns.ToArray().ElementAtOrDefault( 0 )?.Name).Should().Be( c2.Name );
+            (result.Columns.ToArray().ElementAtOrDefault( 0 )?.RecordSet).Should().BeSameAs( table.Node );
+            result.ReferencedTable.Should().BeSameAs( table.Node );
+            result.ReferencedColumns.ToArray().Should().HaveCount( 1 );
+            (result.ReferencedColumns.ToArray().ElementAtOrDefault( 0 )?.Name).Should().Be( c1.Name );
+            (result.ReferencedColumns.ToArray().ElementAtOrDefault( 0 )?.RecordSet).Should().BeSameAs( table.Node );
+            result.OnDeleteBehavior.Should().BeSameAs( sut.OnDeleteBehavior );
+            result.OnUpdateBehavior.Should().BeSameAs( sut.OnUpdateBehavior );
+        }
+    }
+
+    [Fact]
+    public void ToDefinitionNode_ShouldReturnCorrectNode_WhenForeignKeyIsNotSelfReference()
+    {
+        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var table = schema.Objects.CreateTable( "T" );
+        var c1 = table.Columns.Create( "C1" );
+        var ix1 = table.Constraints.SetPrimaryKey( c1.Asc() ).Index;
+        var t2 = schema.Objects.CreateTable( "T2" );
+        var c2 = t2.Columns.Create( "C2" );
+        var ix2 = t2.Constraints.SetPrimaryKey( c2.Asc() ).Index;
+        var sut = t2.Constraints.CreateForeignKey( ix2, ix1 ).SetOnUpdateBehavior( ReferenceBehavior.Cascade );
+
+        var result = sut.ToDefinitionNode( t2.Node );
+
+        using ( new AssertionScope() )
+        {
+            result.Name.Should().Be( SqlSchemaObjectName.Create( "foo", "FK_T2_C2_REF_T" ) );
+            result.Columns.ToArray().Should().HaveCount( 1 );
+            (result.Columns.ToArray().ElementAtOrDefault( 0 )?.Name).Should().Be( c2.Name );
+            (result.Columns.ToArray().ElementAtOrDefault( 0 )?.RecordSet).Should().BeSameAs( t2.Node );
+            result.ReferencedTable.Should().BeSameAs( table.Node );
+            result.ReferencedColumns.ToArray().Should().HaveCount( 1 );
+            (result.ReferencedColumns.ToArray().ElementAtOrDefault( 0 )?.Name).Should().Be( c1.Name );
+            (result.ReferencedColumns.ToArray().ElementAtOrDefault( 0 )?.RecordSet).Should().BeSameAs( table.Node );
+            result.OnDeleteBehavior.Should().BeSameAs( sut.OnDeleteBehavior );
+            result.OnUpdateBehavior.Should().BeSameAs( sut.OnUpdateBehavior );
+        }
+    }
+
+    [Fact]
     public void ISqlForeignKeyBuilder_SetName_ShouldBeEquivalentToSetName()
     {
         var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
@@ -975,7 +1032,7 @@ public class SqlForeignKeyBuilderTests : TestsBase
                 .Sql.Should()
                 .Be(
                     @"ALTER [Table] foo.T
-  ALTER [ForeignKey] foo.FK_T_C2_REF_T ([9] : 'OnDeleteBehavior' (LfrlAnvil.Sql.ReferenceBehavior) FROM 'RESTRICT' (Restrict));" );
+  ALTER [ForeignKey] foo.FK_T_C2_REF_T ([10] : 'OnDeleteBehavior' (LfrlAnvil.Sql.ReferenceBehavior) FROM 'RESTRICT' (Restrict));" );
         }
     }
 
@@ -1002,7 +1059,7 @@ public class SqlForeignKeyBuilderTests : TestsBase
                 .Sql.Should()
                 .Be(
                     @"ALTER [Table] foo.T
-  ALTER [ForeignKey] foo.FK_T_C2_REF_T ([10] : 'OnUpdateBehavior' (LfrlAnvil.Sql.ReferenceBehavior) FROM 'RESTRICT' (Restrict));" );
+  ALTER [ForeignKey] foo.FK_T_C2_REF_T ([11] : 'OnUpdateBehavior' (LfrlAnvil.Sql.ReferenceBehavior) FROM 'RESTRICT' (Restrict));" );
         }
     }
 }

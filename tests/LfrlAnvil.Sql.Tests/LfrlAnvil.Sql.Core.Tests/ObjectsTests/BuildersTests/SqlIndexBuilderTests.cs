@@ -388,7 +388,7 @@ public class SqlIndexBuilderTests : TestsBase
                 .Sql.Should()
                 .Be(
                     @"ALTER [Table] foo.T
-  ALTER [Index] foo.IX_T_C2A ([5] : 'IsUnique' (System.Boolean) FROM False);" );
+  ALTER [Index] foo.IX_T_C2A ([6] : 'IsUnique' (System.Boolean) FROM False);" );
         }
     }
 
@@ -414,7 +414,7 @@ public class SqlIndexBuilderTests : TestsBase
                 .Sql.Should()
                 .Be(
                     @"ALTER [Table] foo.T
-  ALTER [Index] foo.IX_T_C2A ([5] : 'IsUnique' (System.Boolean) FROM True);" );
+  ALTER [Index] foo.IX_T_C2A ([6] : 'IsUnique' (System.Boolean) FROM True);" );
         }
     }
 
@@ -556,7 +556,7 @@ public class SqlIndexBuilderTests : TestsBase
                 .Sql.Should()
                 .Be(
                     @"ALTER [Table] foo.T
-  ALTER [Index] foo.IX_T_C2A ([6] : 'IsVirtual' (System.Boolean) FROM False);" );
+  ALTER [Index] foo.IX_T_C2A ([7] : 'IsVirtual' (System.Boolean) FROM False);" );
         }
     }
 
@@ -582,7 +582,7 @@ public class SqlIndexBuilderTests : TestsBase
                 .Sql.Should()
                 .Be(
                     @"ALTER [Table] foo.T
-  ALTER [Index] foo.IX_T_C2A ([6] : 'IsVirtual' (System.Boolean) FROM True);" );
+  ALTER [Index] foo.IX_T_C2A ([7] : 'IsVirtual' (System.Boolean) FROM True);" );
         }
     }
 
@@ -729,7 +729,7 @@ public class SqlIndexBuilderTests : TestsBase
                 .Sql.Should()
                 .Be(
                     @"ALTER [Table] foo.T
-  ALTER [Index] foo.IX_T_C2A ([7] : 'Filter' (LfrlAnvil.Sql.Expressions.Logical.SqlConditionNode) FROM <null>);" );
+  ALTER [Index] foo.IX_T_C2A ([8] : 'Filter' (LfrlAnvil.Sql.Expressions.Logical.SqlConditionNode) FROM <null>);" );
         }
     }
 
@@ -761,7 +761,7 @@ public class SqlIndexBuilderTests : TestsBase
                 .Sql.Should()
                 .Be(
                     @"ALTER [Table] foo.T
-  ALTER [Index] foo.IX_T_C2A ([7] : 'Filter' (LfrlAnvil.Sql.Expressions.Logical.SqlConditionNode) FROM ([foo].[T].[C2] : System.Object) <> (NULL));" );
+  ALTER [Index] foo.IX_T_C2A ([8] : 'Filter' (LfrlAnvil.Sql.Expressions.Logical.SqlConditionNode) FROM ([foo].[T].[C2] : System.Object) <> (NULL));" );
         }
     }
 
@@ -1045,6 +1045,32 @@ public class SqlIndexBuilderTests : TestsBase
         actions.Should().BeEmpty();
     }
 
+    [Theory]
+    [InlineData( true, true )]
+    [InlineData( true, false )]
+    [InlineData( false, true )]
+    [InlineData( false, false )]
+    public void ToCreateNode_ShouldReturnCorrectNode(bool isUnique, bool replaceIfExists)
+    {
+        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var table = schema.Objects.CreateTable( "T" );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        var filter = SqlNode.True();
+        var sut = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() ).MarkAsUnique( isUnique ).SetFilter( filter );
+
+        var result = sut.ToCreateNode( replaceIfExists );
+
+        using ( new AssertionScope() )
+        {
+            result.Table.Should().BeSameAs( table.Node );
+            result.Columns.Should().BeSequentiallyEqualTo( sut.Columns.Expressions );
+            result.Name.Should().Be( SqlSchemaObjectName.Create( "foo", "IX_T_C2A" ) );
+            result.Filter.Should().BeSameAs( filter );
+            result.IsUnique.Should().Be( isUnique );
+            result.ReplaceIfExists.Should().Be( replaceIfExists );
+        }
+    }
+
     [Fact]
     public void ISqlIndexBuilder_SetName_ShouldBeEquivalentToSetName()
     {
@@ -1220,7 +1246,7 @@ public class SqlIndexBuilderTests : TestsBase
                 .Sql.Should()
                 .Be(
                     @"ALTER [Table] foo.T
-  ALTER [Index] foo.IX_T_C2A ([5] : 'IsUnique' (System.Boolean) FROM False);" );
+  ALTER [Index] foo.IX_T_C2A ([6] : 'IsUnique' (System.Boolean) FROM False);" );
         }
     }
 
@@ -1246,7 +1272,7 @@ public class SqlIndexBuilderTests : TestsBase
                 .Sql.Should()
                 .Be(
                     @"ALTER [Table] foo.T
-  ALTER [Index] foo.IX_T_C2A ([6] : 'IsVirtual' (System.Boolean) FROM False);" );
+  ALTER [Index] foo.IX_T_C2A ([7] : 'IsVirtual' (System.Boolean) FROM False);" );
         }
     }
 
@@ -1280,7 +1306,7 @@ public class SqlIndexBuilderTests : TestsBase
                 .Sql.Should()
                 .Be(
                     @"ALTER [Table] foo.T
-  ALTER [Index] foo.IX_T_C2A ([7] : 'Filter' (LfrlAnvil.Sql.Expressions.Logical.SqlConditionNode) FROM <null>);" );
+  ALTER [Index] foo.IX_T_C2A ([8] : 'Filter' (LfrlAnvil.Sql.Expressions.Logical.SqlConditionNode) FROM <null>);" );
         }
     }
 }

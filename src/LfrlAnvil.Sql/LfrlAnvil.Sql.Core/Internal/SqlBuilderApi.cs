@@ -163,6 +163,12 @@ public abstract class SqlBuilderApi
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    protected static void AddComputationChange(SqlColumnBuilder target, SqlColumnComputation? originalValue)
+    {
+        target.Database.Changes.ComputationChanged( target, originalValue );
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     protected static void AddIsUniqueChange(SqlIndexBuilder target, bool originalValue)
     {
         target.Database.Changes.IsUniqueChanged( target, originalValue );

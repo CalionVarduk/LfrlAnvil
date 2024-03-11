@@ -27,6 +27,8 @@ public static class ExceptionResources
     public const string VirtualIndexCannotBeUnique = "Virtual index cannot be unique (unless it is attached to a primary key).";
     public const string UniqueIndexCannotBeVirtual = "Unique index cannot be virtual (unless it is attached to a primary key).";
     public const string PartialIndexCannotBeVirtual = "Partial index cannot be virtual.";
+    public const string GeneratedColumnCannotHaveDefaultValue = "Generated column cannot have a default value.";
+    public const string GeneratedColumnCannotReferenceSelf = "Generated column cannot reference self.";
     public const string ForeignKeyOriginIndexAndReferencedIndexAreTheSame = "Foreign key origin index and referenced index are the same.";
 
     public const string ForeignKeyOriginIndexAndReferencedIndexMustHaveTheSameAmountOfColumns =

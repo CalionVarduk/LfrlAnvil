@@ -1615,29 +1615,6 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
     [Pure]
     protected abstract bool DoesChildNodeRequireParentheses(SqlNodeBase node);
 
-    protected void VisitColumnDefinition(
-        SqlColumnDefinitionNode node,
-        ISqlColumnTypeDefinitionProvider typeDefinitions,
-        Func<SqlExpressionNode, ISqlColumnTypeDefinition, bool> requiresDefaultValueParentheses)
-    {
-        var typeDefinition = node.TypeDefinition ?? typeDefinitions.GetByType( node.Type.UnderlyingType );
-        AppendDelimitedName( node.Name );
-        Context.Sql.AppendSpace().Append( typeDefinition.DataType.Name );
-
-        if ( ! node.Type.IsNullable )
-            Context.Sql.AppendSpace().Append( "NOT" ).AppendSpace().Append( "NULL" );
-
-        if ( node.DefaultValue is not null )
-        {
-            Context.Sql.AppendSpace().Append( "DEFAULT" ).AppendSpace();
-
-            if ( requiresDefaultValueParentheses( node.DefaultValue, typeDefinition ) )
-                VisitChildWrappedInParentheses( node.DefaultValue );
-            else
-                this.Visit( node.DefaultValue );
-        }
-    }
-
     protected void VisitCreateTableDefinition(SqlCreateTableNode node)
     {
         using ( Context.TempIndentIncrease() )

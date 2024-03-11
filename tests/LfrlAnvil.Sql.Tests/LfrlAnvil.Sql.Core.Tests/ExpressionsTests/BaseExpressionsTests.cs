@@ -7,6 +7,7 @@ using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Expressions.Objects;
 using LfrlAnvil.Sql.Expressions.Traits;
 using LfrlAnvil.Sql.Extensions;
+using LfrlAnvil.Sql.Objects.Builders;
 using LfrlAnvil.TestExtensions.FluentAssertions;
 using LfrlAnvil.TestExtensions.NSubstitute;
 using LfrlAnvil.TestExtensions.Sql.Mocks;
@@ -731,6 +732,7 @@ VALUES
             sut.NodeType.Should().Be( SqlNodeType.ColumnDefinition );
             sut.Name.Should().Be( "foo" );
             sut.DefaultValue.Should().BeNull();
+            sut.Computation.Should().BeNull();
             sut.Type.Should().BeEquivalentTo( TypeNullability.Create<string>( isNullable: false ) );
             sut.TypeDefinition.Should().BeNull();
             text.Should().Be( "[foo] : System.String" );
@@ -748,6 +750,7 @@ VALUES
             sut.NodeType.Should().Be( SqlNodeType.ColumnDefinition );
             sut.Name.Should().Be( "foo" );
             sut.DefaultValue.Should().BeNull();
+            sut.Computation.Should().BeNull();
             sut.Type.Should().BeEquivalentTo( TypeNullability.Create<string>( isNullable: true ) );
             sut.TypeDefinition.Should().BeNull();
             text.Should().Be( "[foo] : Nullable<System.String>" );
@@ -766,6 +769,7 @@ VALUES
             sut.NodeType.Should().Be( SqlNodeType.ColumnDefinition );
             sut.Name.Should().Be( "foo" );
             sut.DefaultValue.Should().BeSameAs( defaultValue );
+            sut.Computation.Should().BeNull();
             sut.Type.Should().BeEquivalentTo( TypeNullability.Create<string>() );
             sut.TypeDefinition.Should().BeNull();
             text.Should().Be( "[foo] : System.String DEFAULT ((\"abc\" : System.String) || (\"def\" : System.String))" );
@@ -784,6 +788,7 @@ VALUES
             sut.NodeType.Should().Be( SqlNodeType.ColumnDefinition );
             sut.Name.Should().Be( "foo" );
             sut.DefaultValue.Should().BeNull();
+            sut.Computation.Should().BeNull();
             sut.Type.Should().BeEquivalentTo( TypeNullability.Create<int>( isNullable: false ) );
             sut.TypeDefinition.Should().BeSameAs( typeDef );
             text.Should().Be( "[foo] : System.Int32" );
@@ -802,6 +807,7 @@ VALUES
             sut.NodeType.Should().Be( SqlNodeType.ColumnDefinition );
             sut.Name.Should().Be( "foo" );
             sut.DefaultValue.Should().BeNull();
+            sut.Computation.Should().BeNull();
             sut.Type.Should().BeEquivalentTo( TypeNullability.Create<int>( isNullable: true ) );
             sut.TypeDefinition.Should().BeSameAs( typeDef );
             text.Should().Be( "[foo] : Nullable<System.Int32>" );
@@ -821,9 +827,31 @@ VALUES
             sut.NodeType.Should().Be( SqlNodeType.ColumnDefinition );
             sut.Name.Should().Be( "foo" );
             sut.DefaultValue.Should().BeSameAs( defaultValue );
+            sut.Computation.Should().BeNull();
             sut.Type.Should().BeEquivalentTo( TypeNullability.Create<int>() );
             sut.TypeDefinition.Should().BeSameAs( typeDef );
             text.Should().Be( "[foo] : System.Int32 DEFAULT ((\"abc\" : System.String) || (\"def\" : System.String))" );
+        }
+    }
+
+    [Theory]
+    [InlineData( SqlColumnComputationStorage.Virtual )]
+    [InlineData( SqlColumnComputationStorage.Stored )]
+    public void Column_ShouldCreateColumnDefinitionNode_WithComputation(SqlColumnComputationStorage storage)
+    {
+        var computation = new SqlColumnComputation( SqlNode.Literal( "abc" ), storage );
+        var sut = SqlNode.Column<string>( "foo", computation: computation );
+        var text = sut.ToString();
+
+        using ( new AssertionScope() )
+        {
+            sut.NodeType.Should().Be( SqlNodeType.ColumnDefinition );
+            sut.Name.Should().Be( "foo" );
+            sut.DefaultValue.Should().BeNull();
+            sut.Computation.Should().Be( computation );
+            sut.Type.Should().BeEquivalentTo( TypeNullability.Create<string>() );
+            sut.TypeDefinition.Should().BeNull();
+            text.Should().Be( $"[foo] : System.String GENERATED (\"abc\" : System.String) {storage.ToString().ToUpperInvariant()}" );
         }
     }
 
@@ -946,7 +974,9 @@ VALUES
         {
             SqlNode.Column<int>( "x" ),
             SqlNode.Column<string>( "y", isNullable: true ),
-            SqlNode.Column<double>( "z", defaultValue: SqlNode.Literal( 10.5 ) )
+            SqlNode.Column<double>( "z", defaultValue: SqlNode.Literal( 10.5 ) ),
+            SqlNode.Column<string>( "a", computation: SqlColumnComputation.Virtual( SqlNode.Literal( "foo" ) ) ),
+            SqlNode.Column<string>( "b", isNullable: true, computation: SqlColumnComputation.Stored( SqlNode.Literal( "bar" ) ) )
         };
 
         SqlPrimaryKeyDefinitionNode? primaryKey = null;
@@ -997,6 +1027,8 @@ VALUES
   [x] : System.Int32,
   [y] : Nullable<System.String>,
   [z] : System.Double DEFAULT (""10,5"" : System.Double),
+  [a] : System.String GENERATED (""foo"" : System.String) VIRTUAL,
+  [b] : Nullable<System.String> GENERATED (""bar"" : System.String) STORED,
   PRIMARY KEY [PK_foobar] (([foo].[bar].[x] : System.Int32) ASC),
   FOREIGN KEY [FK_foobar_REF_qux] (([foo].[bar].[y] : Nullable<System.String>)) REFERENCES [qux] (([qux].[y] : ?)) ON DELETE RESTRICT ON UPDATE RESTRICT,
   CHECK [CHK_foobar] (([foo].[bar].[z] : System.Double) > (""100"" : System.Double))

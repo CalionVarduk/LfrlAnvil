@@ -14,6 +14,7 @@ using LfrlAnvil.Sql.Expressions.Persistence;
 using LfrlAnvil.Sql.Expressions.Traits;
 using LfrlAnvil.Sql.Expressions.Visitors;
 using LfrlAnvil.Sql.Internal;
+using LfrlAnvil.Sql.Objects.Builders;
 using MySqlConnector;
 
 namespace LfrlAnvil.MySql;
@@ -542,11 +543,34 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
 
     public override void VisitColumnDefinition(SqlColumnDefinitionNode node)
     {
-        VisitColumnDefinition(
-            node,
-            ColumnTypeDefinitions,
-            requiresDefaultValueParentheses: static (v, t) => v.NodeType is not SqlNodeType.Literal and not SqlNodeType.Null ||
-                (t.DataType is MySqlDataType mySqlDataType && IsTextOrBlobType( mySqlDataType )) );
+        var typeDefinition = node.TypeDefinition ?? ColumnTypeDefinitions.GetByType( node.Type.UnderlyingType );
+        AppendDelimitedName( node.Name );
+        Context.Sql.AppendSpace().Append( typeDefinition.DataType.Name );
+
+        if ( ! node.Type.IsNullable && node.Computation is null )
+            Context.Sql.AppendSpace().Append( "NOT" ).AppendSpace().Append( "NULL" );
+
+        if ( node.DefaultValue is not null )
+        {
+            Context.Sql.AppendSpace().Append( "DEFAULT" ).AppendSpace();
+
+            if ( node.DefaultValue.NodeType is not SqlNodeType.Literal and not SqlNodeType.Null ||
+                (typeDefinition.DataType is MySqlDataType mySqlDataType && IsTextOrBlobType( mySqlDataType )) )
+                VisitChildWrappedInParentheses( node.DefaultValue );
+            else
+                this.Visit( node.DefaultValue );
+        }
+
+        if ( node.Computation is not null )
+        {
+            var storage = node.Computation.Value.Storage == SqlColumnComputationStorage.Virtual ? "VIRTUAL" : "STORED";
+            Context.Sql.AppendSpace().Append( "GENERATED" ).AppendSpace().Append( "ALWAYS" ).AppendSpace().Append( "AS" ).AppendSpace();
+            VisitChildWrappedInParentheses( node.Computation.Value.Expression );
+            Context.Sql.AppendSpace().Append( storage );
+
+            if ( ! node.Type.IsNullable )
+                Context.Sql.AppendSpace().Append( "NOT" ).AppendSpace().Append( "NULL" );
+        }
     }
 
     public override void VisitPrimaryKeyDefinition(SqlPrimaryKeyDefinitionNode node)

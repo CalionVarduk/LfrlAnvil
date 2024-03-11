@@ -33,9 +33,13 @@ public partial class SqlTableBuilderTests
                 result.DefaultValue.Should().BeNull();
                 result.Node.Should().BeEquivalentTo( table.Node["C"] );
                 result.ReferencingObjects.Should().BeEmpty();
+                result.Computation.Should().BeNull();
+                result.ReferencedComputationColumns.Should().BeEmpty();
 
                 ((ISqlColumnBuilder)result).Table.Should().BeSameAs( result.Table );
                 ((ISqlColumnBuilder)result).TypeDefinition.Should().BeSameAs( result.TypeDefinition );
+                ((ISqlColumnBuilder)result).ReferencedComputationColumns.Should()
+                    .BeSequentiallyEqualTo( result.ReferencedComputationColumns );
 
                 ((ISqlObjectBuilder)result).Database.Should().BeSameAs( result.Database );
                 ((ISqlObjectBuilder)result).ReferencingObjects.Should()
@@ -114,9 +118,13 @@ public partial class SqlTableBuilderTests
                 result.DefaultValue.Should().BeNull();
                 result.Node.Should().BeEquivalentTo( table.Node["C"] );
                 result.ReferencingObjects.Should().BeEmpty();
+                result.Computation.Should().BeNull();
+                result.ReferencedComputationColumns.Should().BeEmpty();
 
                 ((ISqlColumnBuilder)result).Table.Should().BeSameAs( result.Table );
                 ((ISqlColumnBuilder)result).TypeDefinition.Should().BeSameAs( result.TypeDefinition );
+                ((ISqlColumnBuilder)result).ReferencedComputationColumns.Should()
+                    .BeSequentiallyEqualTo( result.ReferencedComputationColumns );
 
                 ((ISqlObjectBuilder)result).Database.Should().BeSameAs( result.Database );
                 ((ISqlObjectBuilder)result).ReferencingObjects.Should()
@@ -421,6 +429,8 @@ public partial class SqlTableBuilderTests
                 result.DefaultValue.Should().BeNull();
                 result.Node.Should().BeEquivalentTo( table.Node["C"] );
                 result.ReferencingObjects.Should().BeEmpty();
+                result.Computation.Should().BeNull();
+                result.ReferencedComputationColumns.Should().BeEmpty();
 
                 sut.Count.Should().Be( 1 );
                 sut.Should().BeSequentiallyEqualTo( result );

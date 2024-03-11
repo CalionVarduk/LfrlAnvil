@@ -17,6 +17,7 @@ public abstract class SqlColumn : SqlObject, ISqlColumn
         Table = table;
         IsNullable = builder.IsNullable;
         HasDefaultValue = builder.DefaultValue is not null;
+        ComputationStorage = builder.Computation?.Storage;
         TypeDefinition = builder.TypeDefinition;
         _node = null;
     }
@@ -24,6 +25,7 @@ public abstract class SqlColumn : SqlObject, ISqlColumn
     public SqlTable Table { get; }
     public bool IsNullable { get; }
     public bool HasDefaultValue { get; }
+    public SqlColumnComputationStorage? ComputationStorage { get; }
     public SqlColumnTypeDefinition TypeDefinition { get; }
     public SqlColumnNode Node => _node ??= Table.Node[Name];
 

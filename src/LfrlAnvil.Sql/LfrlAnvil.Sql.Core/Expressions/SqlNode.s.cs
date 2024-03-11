@@ -716,16 +716,24 @@ public static partial class SqlNode
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static SqlColumnDefinitionNode Column<T>(string name, bool isNullable = false, SqlExpressionNode? defaultValue = null)
+    public static SqlColumnDefinitionNode Column<T>(
+        string name,
+        bool isNullable = false,
+        SqlExpressionNode? defaultValue = null,
+        SqlColumnComputation? computation = null)
         where T : notnull
     {
-        return Column( name, TypeNullability.Create<T>( isNullable ), defaultValue );
+        return Column( name, TypeNullability.Create<T>( isNullable ), defaultValue, computation );
     }
 
     [Pure]
-    public static SqlColumnDefinitionNode Column(string name, TypeNullability type, SqlExpressionNode? defaultValue = null)
+    public static SqlColumnDefinitionNode Column(
+        string name,
+        TypeNullability type,
+        SqlExpressionNode? defaultValue = null,
+        SqlColumnComputation? computation = null)
     {
-        return new SqlColumnDefinitionNode( name, type, defaultValue );
+        return new SqlColumnDefinitionNode( name, type, defaultValue, computation );
     }
 
     [Pure]
@@ -733,9 +741,10 @@ public static partial class SqlNode
         string name,
         ISqlColumnTypeDefinition typeDefinition,
         bool isNullable = false,
-        SqlExpressionNode? defaultValue = null)
+        SqlExpressionNode? defaultValue = null,
+        SqlColumnComputation? computation = null)
     {
-        return new SqlColumnDefinitionNode( name, typeDefinition, isNullable, defaultValue );
+        return new SqlColumnDefinitionNode( name, typeDefinition, isNullable, defaultValue, computation );
     }
 
     [Pure]

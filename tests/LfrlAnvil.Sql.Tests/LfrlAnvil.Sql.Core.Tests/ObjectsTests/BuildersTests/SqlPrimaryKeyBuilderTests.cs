@@ -408,6 +408,22 @@ public class SqlPrimaryKeyBuilderTests : TestsBase
     }
 
     [Fact]
+    public void ToDefinitionNode_ShouldReturnCorrectNode()
+    {
+        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var table = schema.Objects.CreateTable( "T" );
+        var sut = table.Constraints.SetPrimaryKey( table.Columns.Create( "C" ).Asc() );
+
+        var result = sut.ToDefinitionNode();
+
+        using ( new AssertionScope() )
+        {
+            result.Name.Should().Be( SqlSchemaObjectName.Create( "foo", "PK_T" ) );
+            result.Columns.Should().BeSequentiallyEqualTo( sut.Index.Columns.Expressions );
+        }
+    }
+
+    [Fact]
     public void ISqlPrimaryKeyBuilder_SetName_ShouldBeEquivalentToSetName()
     {
         var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );

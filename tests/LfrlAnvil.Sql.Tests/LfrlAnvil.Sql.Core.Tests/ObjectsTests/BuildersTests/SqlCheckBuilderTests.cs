@@ -361,6 +361,23 @@ public class SqlCheckBuilderTests : TestsBase
     }
 
     [Fact]
+    public void ToDefinitionNode_ShouldReturnCorrectNode()
+    {
+        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var table = schema.Objects.CreateTable( "T" );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C" ).Asc() );
+        var sut = table.Constraints.CreateCheck( SqlNode.True() );
+
+        var result = sut.ToDefinitionNode();
+
+        using ( new AssertionScope() )
+        {
+            result.Name.Should().Be( SqlSchemaObjectName.Create( "foo", sut.Name ) );
+            result.Condition.Should().BeSameAs( sut.Condition );
+        }
+    }
+
+    [Fact]
     public void ISqlCheckBuilder_SetName_ShouldBeEquivalentToSetName()
     {
         var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
