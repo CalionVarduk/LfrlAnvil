@@ -36,6 +36,10 @@ public partial class SqliteTableBuilderTests : TestsBase
         sut.Constraints.CreateIndex( sut.Columns.Create( "C3" ).Asc(), sut.Columns.Create( "C4" ).Desc() );
         sut.Constraints.CreateForeignKey( ix1, ix2 );
         sut.Constraints.CreateCheck( sut.Node["C1"] > SqlNode.Literal( 0 ) );
+        sut.Columns.Create( "C5" ).SetComputation( SqlColumnComputation.Virtual( sut.Columns.Get( "C1" ).Node + SqlNode.Literal( 1 ) ) );
+        sut.Columns.Create( "C6" )
+            .MarkAsNullable()
+            .SetComputation( SqlColumnComputation.Stored( sut.Columns.Get( "C2" ).Node * sut.Columns.Get( "C5" ).Node ) );
 
         var actions = schema.Database.GetLastPendingActions( 0 );
 
@@ -54,6 +58,8 @@ public partial class SqliteTableBuilderTests : TestsBase
                       ""C2"" ANY NOT NULL,
                       ""C3"" ANY NOT NULL,
                       ""C4"" ANY NOT NULL,
+                      ""C5"" ANY NOT NULL GENERATED ALWAYS AS (""C1"" + 1) VIRTUAL,
+                      ""C6"" ANY GENERATED ALWAYS AS (""C2"" * ""C5"") STORED,
                       CONSTRAINT ""foo_PK_T"" PRIMARY KEY (""C2"" ASC),
                       CONSTRAINT ""foo_FK_T_C1_REF_T"" FOREIGN KEY (""C1"") REFERENCES ""foo_T"" (""C2"") ON DELETE RESTRICT ON UPDATE RESTRICT,
                       CONSTRAINT ""foo_CHK_T_{GUID}"" CHECK (""C1"" > 0)
@@ -280,6 +286,56 @@ public partial class SqliteTableBuilderTests : TestsBase
                 .SatisfySql(
                     @"CREATE TABLE ""__foo_T2__{GUID}__"" (
                       ""C2"" ANY NOT NULL,
+                      CONSTRAINT ""foo_PK_T2"" PRIMARY KEY (""C2"" ASC),
+                      CONSTRAINT ""foo_FK_T2_C2_REF_T1"" FOREIGN KEY (""C2"") REFERENCES ""foo_U"" (""C1"") ON DELETE RESTRICT ON UPDATE RESTRICT
+                    ) WITHOUT ROWID;",
+                    @"INSERT INTO ""__foo_T2__{GUID}__"" (""C2"")
+                    SELECT
+                      ""foo_T2"".""C2""
+                    FROM ""foo_T2"";",
+                    "DROP TABLE \"foo_T2\";",
+                    "ALTER TABLE \"__foo_T2__{GUID}__\" RENAME TO \"foo_T2\";" );
+        }
+    }
+
+    [Fact]
+    public void SetName_ShouldUpdateName_WhenNameChangesAndTableHasExternalForeignKeyReferencesWithComputedColumns()
+    {
+        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var sut = schema.Objects.CreateTable( "T1" );
+        var c1 = sut.Columns.Create( "C1" );
+        var pk1 = sut.Constraints.SetPrimaryKey( c1.Asc() );
+
+        var t2 = schema.Objects.CreateTable( "T2" );
+        var c2 = t2.Columns.Create( "C2" );
+        t2.Columns.Create( "C3" ).SetComputation( SqlColumnComputation.Stored( c2.Node * SqlNode.Literal( 3 ) ) );
+        var pk2 = t2.Constraints.SetPrimaryKey( c2.Asc() );
+        var fk = t2.Constraints.CreateForeignKey( pk2.Index, pk1.Index );
+
+        var actionCount = schema.Database.GetPendingActionCount();
+        schema.Database.Changes.ClearModifiedTables();
+        var result = sut.SetName( "U" );
+        var actions = schema.Database.GetLastPendingActions( actionCount );
+
+        using ( new AssertionScope() )
+        {
+            result.Should().BeSameAs( sut );
+            sut.Name.Should().Be( "U" );
+            schema.Objects.TryGet( "U" ).Should().BeSameAs( sut );
+            schema.Objects.TryGet( "T" ).Should().BeNull();
+            schema.Database.Changes.ModifiedTables.Should().BeEquivalentTo( t2 );
+            fk.IsRemoved.Should().BeFalse();
+
+            actions.Should().HaveCount( 2 );
+
+            actions.ElementAtOrDefault( 0 ).Sql.Should().SatisfySql( "ALTER TABLE \"foo_T1\" RENAME TO \"foo_U\";" );
+
+            actions.ElementAtOrDefault( 1 )
+                .Sql.Should()
+                .SatisfySql(
+                    @"CREATE TABLE ""__foo_T2__{GUID}__"" (
+                      ""C2"" ANY NOT NULL,
+                      ""C3"" ANY NOT NULL GENERATED ALWAYS AS (""C2"" * 3) STORED,
                       CONSTRAINT ""foo_PK_T2"" PRIMARY KEY (""C2"" ASC),
                       CONSTRAINT ""foo_FK_T2_C2_REF_T1"" FOREIGN KEY (""C2"") REFERENCES ""foo_U"" (""C1"") ON DELETE RESTRICT ON UPDATE RESTRICT
                     ) WITHOUT ROWID;",

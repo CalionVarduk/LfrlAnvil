@@ -45,6 +45,12 @@ public sealed class SqliteColumnBuilder : SqlColumnBuilder
         return this;
     }
 
+    public new SqliteColumnBuilder SetComputation(SqlColumnComputation? computation)
+    {
+        base.SetComputation( computation );
+        return this;
+    }
+
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal void UpdateDefaultValueBasedOnDataType()
     {

@@ -704,6 +704,23 @@ public partial class SqlTableBuilderTests
         }
 
         [Fact]
+        public void SetPrimaryKey_ShouldThrowSqlObjectBuilderException_WhenAtLeastOneColumnIsGenerated()
+        {
+            var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+            var table = schema.Objects.CreateTable( "T" );
+            var sut = table.Constraints;
+            var c1 = table.Columns.Create( "C1" );
+            var c2 = table.Columns.Create( "C2" ).SetComputation( SqlColumnComputation.Virtual( SqlNode.Literal( 1 ) ) );
+            var index = sut.CreateUniqueIndex( c1.Asc(), c2.Asc() );
+
+            var action = Lambda.Of( () => sut.SetPrimaryKey( index ) );
+
+            action.Should()
+                .ThrowExactly<SqlObjectBuilderException>()
+                .AndMatch( e => e.Dialect == SqlDialectMock.Instance && e.Errors.Count == 1 );
+        }
+
+        [Fact]
         public void SetPrimaryKey_ShouldThrowSqlObjectBuilderException_WhenTableHasBeenRemoved()
         {
             var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
@@ -1128,6 +1145,24 @@ public partial class SqlTableBuilderTests
             var sut = table.Constraints;
             var ix1 = sut.CreateIndex( table.Columns.Create( "C1" ).Asc(), table.Columns.Create( "C2" ).Asc() );
             var ix2 = sut.CreateUniqueIndex( table.Columns.Create( "C3" ).Asc(), table.Columns.Create( "C4" ).MarkAsNullable().Asc() );
+
+            var action = Lambda.Of( () => sut.CreateForeignKey( ix1, ix2 ) );
+
+            action.Should()
+                .ThrowExactly<SqlObjectBuilderException>()
+                .AndMatch( e => e.Dialect == SqlDialectMock.Instance && e.Errors.Count == 1 );
+        }
+
+        [Fact]
+        public void CreateForeignKey_ShouldThrowSqlObjectBuilderException_WhenReferencedIndexContainsGeneratedColumn()
+        {
+            var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+            var table = schema.Objects.CreateTable( "T" );
+            var sut = table.Constraints;
+            var ix1 = sut.CreateIndex( table.Columns.Create( "C1" ).Asc(), table.Columns.Create( "C2" ).Asc() );
+            var ix2 = sut.CreateUniqueIndex(
+                table.Columns.Create( "C3" ).Asc(),
+                table.Columns.Create( "C4" ).SetComputation( SqlColumnComputation.Virtual( SqlNode.Literal( 1 ) ) ).Asc() );
 
             var action = Lambda.Of( () => sut.CreateForeignKey( ix1, ix2 ) );
 

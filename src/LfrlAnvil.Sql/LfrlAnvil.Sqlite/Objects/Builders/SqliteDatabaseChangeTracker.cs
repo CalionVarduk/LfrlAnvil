@@ -357,7 +357,7 @@ public sealed class SqliteDatabaseChangeTracker : SqlDatabaseChangeTracker
 
         foreach ( var column in changeAggregator.CreatedColumns )
         {
-            if ( column.DefaultValue is null && ! column.IsNullable )
+            if ( column.DefaultValue is null && ! column.IsNullable && column.Computation is null )
                 column.UpdateDefaultValueBasedOnDataType();
         }
 
@@ -369,6 +369,9 @@ public sealed class SqliteDatabaseChangeTracker : SqlDatabaseChangeTracker
 
         foreach ( var column in table.Columns )
         {
+            if ( column.Computation is not null )
+                continue;
+
             tableColumns[i] = temporaryTable[column.Name];
 
             if ( changeAggregator.CreatedColumns.Contains( column ) )
@@ -407,6 +410,12 @@ public sealed class SqliteDatabaseChangeTracker : SqlDatabaseChangeTracker
                 oldDataField = oldDataField.Coalesce( column.DefaultValue ?? column.TypeDefinition.DefaultValue );
 
             selections[i++] = oldDataField.As( column.Name );
+        }
+
+        if ( i != selections.Length )
+        {
+            selections = selections.AsSpan( 0, i ).ToArray();
+            tableColumns = tableColumns.AsSpan( 0, i ).ToArray();
         }
 
         AppendTableReconstructionWrapUp( interpreter, table, temporaryTable, selections, tableColumns );
@@ -538,8 +547,17 @@ public sealed class SqliteDatabaseChangeTracker : SqlDatabaseChangeTracker
 
         foreach ( var column in table.Columns )
         {
+            if ( column.Computation is not null )
+                continue;
+
             tableColumns[i] = temporaryTable[column.Name];
             selections[i++] = column.Node;
+        }
+
+        if ( i != selections.Length )
+        {
+            selections = selections.AsSpan( 0, i ).ToArray();
+            tableColumns = tableColumns.AsSpan( 0, i ).ToArray();
         }
 
         AppendTableReconstructionWrapUp( interpreter, table, temporaryTable, selections, tableColumns );

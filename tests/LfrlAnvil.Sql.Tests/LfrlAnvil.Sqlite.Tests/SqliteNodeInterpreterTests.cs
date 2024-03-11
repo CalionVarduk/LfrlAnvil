@@ -10,6 +10,7 @@ using LfrlAnvil.Sql.Expressions.Functions;
 using LfrlAnvil.Sql.Expressions.Objects;
 using LfrlAnvil.Sql.Expressions.Traits;
 using LfrlAnvil.Sql.Expressions.Visitors;
+using LfrlAnvil.Sql.Objects.Builders;
 using LfrlAnvil.Sqlite.Extensions;
 using LfrlAnvil.Sqlite.Objects;
 using LfrlAnvil.Sqlite.Objects.Builders;
@@ -4032,6 +4033,30 @@ DELETE FROM ""SQLITE_SEQUENCE"" WHERE ""name"" = 'qux'" );
     {
         _sut.Visit( SqlNode.Column<string>( "a", defaultValue: SqlNode.Literal( "abc" ).Concat( SqlNode.Literal( "def" ) ) ) );
         _sut.Context.Sql.ToString().Should().Be( "\"a\" TEXT NOT NULL DEFAULT ('abc' || 'def')" );
+    }
+
+    [Theory]
+    [InlineData( SqlColumnComputationStorage.Virtual, "VIRTUAL" )]
+    [InlineData( SqlColumnComputationStorage.Stored, "STORED" )]
+    public void Visit_ShouldInterpretColumnDefinition_WithComputation_WhenNonNullable(
+        SqlColumnComputationStorage storage,
+        string expectedStorage)
+    {
+        _sut.Visit( SqlNode.Column<string>( "a", computation: new SqlColumnComputation( SqlNode.Literal( "abc" ), storage ) ) );
+        _sut.Context.Sql.ToString().Should().Be( $"\"a\" TEXT NOT NULL GENERATED ALWAYS AS ('abc') {expectedStorage}" );
+    }
+
+    [Theory]
+    [InlineData( SqlColumnComputationStorage.Virtual, "VIRTUAL" )]
+    [InlineData( SqlColumnComputationStorage.Stored, "STORED" )]
+    public void Visit_ShouldInterpretColumnDefinition_WithComputation_WhenNullable(
+        SqlColumnComputationStorage storage,
+        string expectedStorage)
+    {
+        _sut.Visit(
+            SqlNode.Column<string>( "a", isNullable: true, computation: new SqlColumnComputation( SqlNode.Literal( "abc" ), storage ) ) );
+
+        _sut.Context.Sql.ToString().Should().Be( $"\"a\" TEXT GENERATED ALWAYS AS ('abc') {expectedStorage}" );
     }
 
     [Fact]

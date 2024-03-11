@@ -146,6 +146,13 @@ public static class ExceptionResources
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static string ColumnIsGenerated(ISqlColumnBuilder column)
+    {
+        return $"{column} is generated.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static string ColumnIsDuplicated(ISqlColumnBuilder column)
     {
         return $"{column} is duplicated.";

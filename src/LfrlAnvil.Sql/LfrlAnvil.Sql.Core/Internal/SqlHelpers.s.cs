@@ -308,6 +308,9 @@ public static class SqlHelpers
 
             if ( c.IsNullable )
                 errors = errors.Extend( ExceptionResources.ColumnIsNullable( c ) );
+
+            if ( c.Computation is not null )
+                errors = errors.Extend( ExceptionResources.ColumnIsGenerated( c ) );
         }
 
         if ( errors.Count > 0 )
@@ -366,6 +369,9 @@ public static class SqlHelpers
 
             if ( c.IsNullable )
                 errors = errors.Extend( ExceptionResources.ColumnIsNullable( c ) );
+
+            if ( c.Computation is not null )
+                errors = errors.Extend( ExceptionResources.ColumnIsGenerated( c ) );
         }
 
         if ( indexColumns.Expressions.Count != referencedIndexColumns.Expressions.Count )
