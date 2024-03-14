@@ -1,5 +1,4 @@
 ﻿using System.Diagnostics.Contracts;
-using LfrlAnvil.Sql.Internal;
 
 namespace LfrlAnvil.Sql.Objects.Builders;
 
@@ -28,9 +27,9 @@ public abstract class SqlPrimaryKeyBuilder : SqlConstraintBuilder, ISqlPrimaryKe
     }
 
     [Pure]
-    protected override string GetDefaultName()
+    protected sealed override string GetDefaultName()
     {
-        return SqlHelpers.GetDefaultPrimaryKeyName( Table );
+        return Database.DefaultNames.GetForPrimaryKey( Table );
     }
 
     protected override void BeforeRemove()

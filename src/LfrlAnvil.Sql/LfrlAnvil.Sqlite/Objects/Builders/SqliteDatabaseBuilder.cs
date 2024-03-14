@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics.Contracts;
 using LfrlAnvil.Sql;
+using LfrlAnvil.Sql.Objects;
 using LfrlAnvil.Sql.Objects.Builders;
 
 namespace LfrlAnvil.Sqlite.Objects.Builders;
@@ -17,6 +18,7 @@ public sealed class SqliteDatabaseBuilder : SqlDatabaseBuilder
             new SqliteNodeInterpreterFactory( typeDefinitions ),
             new SqliteQueryReaderFactory( typeDefinitions ),
             new SqliteParameterBinderFactory( typeDefinitions ),
+            new SqlDefaultObjectNameProvider(),
             new SqliteSchemaBuilderCollection(),
             new SqliteDatabaseChangeTracker() ) { }
 

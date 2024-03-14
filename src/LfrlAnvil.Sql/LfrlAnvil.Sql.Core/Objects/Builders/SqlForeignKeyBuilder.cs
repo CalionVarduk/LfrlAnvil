@@ -62,9 +62,9 @@ public abstract class SqlForeignKeyBuilder : SqlConstraintBuilder, ISqlForeignKe
     }
 
     [Pure]
-    protected override string GetDefaultName()
+    protected sealed override string GetDefaultName()
     {
-        return SqlHelpers.GetDefaultForeignKeyName( OriginIndex, ReferencedIndex );
+        return Database.DefaultNames.GetForForeignKey( OriginIndex, ReferencedIndex );
     }
 
     protected virtual SqlPropertyChange<ReferenceBehavior> BeforeOnDeleteBehaviorChange(ReferenceBehavior newValue)

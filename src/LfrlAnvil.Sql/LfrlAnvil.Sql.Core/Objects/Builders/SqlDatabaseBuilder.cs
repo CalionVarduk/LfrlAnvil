@@ -27,6 +27,7 @@ public abstract class SqlDatabaseBuilder : SqlBuilderApi, ISqlDatabaseBuilder
         ISqlNodeInterpreterFactory nodeInterpreters,
         SqlQueryReaderFactory queryReaders,
         SqlParameterBinderFactory parameterBinders,
+        SqlDefaultObjectNameProvider defaultNames,
         SqlSchemaBuilderCollection schemas,
         SqlDatabaseChangeTracker changes)
     {
@@ -43,6 +44,7 @@ public abstract class SqlDatabaseBuilder : SqlBuilderApi, ISqlDatabaseBuilder
         NodeInterpreters = nodeInterpreters;
         QueryReaders = queryReaders;
         ParameterBinders = parameterBinders;
+        DefaultNames = defaultNames;
         Dialect = dialect;
         ServerVersion = serverVersion;
         Changes = changes;
@@ -59,6 +61,7 @@ public abstract class SqlDatabaseBuilder : SqlBuilderApi, ISqlDatabaseBuilder
     public ISqlNodeInterpreterFactory NodeInterpreters { get; }
     public SqlQueryReaderFactory QueryReaders { get; }
     public SqlParameterBinderFactory ParameterBinders { get; }
+    public SqlDefaultObjectNameProvider DefaultNames { get; }
     public SqlSchemaBuilderCollection Schemas { get; }
     public SqlDatabaseChangeTracker Changes { get; }
     internal MemorySequencePool<SqlObjectBuilder> ObjectPool { get; }
@@ -70,6 +73,7 @@ public abstract class SqlDatabaseBuilder : SqlBuilderApi, ISqlDatabaseBuilder
     ISqlColumnTypeDefinitionProvider ISqlDatabaseBuilder.TypeDefinitions => TypeDefinitions;
     ISqlQueryReaderFactory ISqlDatabaseBuilder.QueryReaders => QueryReaders;
     ISqlParameterBinderFactory ISqlDatabaseBuilder.ParameterBinders => ParameterBinders;
+    ISqlDefaultObjectNameProvider ISqlDatabaseBuilder.DefaultNames => DefaultNames;
     ISqlDatabaseChangeTracker ISqlDatabaseBuilder.Changes => Changes;
 
     public SqlDatabaseBuilder AddConnectionChangeCallback(Action<SqlDatabaseConnectionChangeEvent> callback)

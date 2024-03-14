@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Diagnostics.Contracts;
-using LfrlAnvil.MySql.Internal;
 using LfrlAnvil.Sql;
+using LfrlAnvil.Sql.Objects;
 using LfrlAnvil.Sql.Objects.Builders;
 
 namespace LfrlAnvil.MySql.Objects.Builders;
@@ -18,6 +18,7 @@ public sealed class MySqlDatabaseBuilder : SqlDatabaseBuilder
             new MySqlNodeInterpreterFactory( typeDefinitions, defaultSchemaName ),
             new MySqlQueryReaderFactory( typeDefinitions ),
             new MySqlParameterBinderFactory( typeDefinitions ),
+            new SqlDefaultObjectNameProvider(),
             new MySqlSchemaBuilderCollection(),
             new MySqlDatabaseChangeTracker() )
     {

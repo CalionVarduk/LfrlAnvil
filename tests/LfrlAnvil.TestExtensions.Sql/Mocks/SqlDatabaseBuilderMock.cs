@@ -1,6 +1,7 @@
 ﻿using System.Diagnostics.Contracts;
 using LfrlAnvil.Sql;
 using LfrlAnvil.Sql.Internal;
+using LfrlAnvil.Sql.Objects;
 using LfrlAnvil.Sql.Objects.Builders;
 
 namespace LfrlAnvil.TestExtensions.Sql.Mocks;
@@ -17,6 +18,7 @@ public sealed class SqlDatabaseBuilderMock : SqlDatabaseBuilder
             new SqlNodeInterpreterFactoryMock(),
             new SqlQueryReaderFactoryMock( typeDefinitions ),
             new SqlParameterBinderFactoryMock( typeDefinitions ),
+            new SqlDefaultObjectNameProvider(),
             new SqlSchemaBuilderCollectionMock(),
             new SqlDatabaseChangeTrackerMock() )
     {

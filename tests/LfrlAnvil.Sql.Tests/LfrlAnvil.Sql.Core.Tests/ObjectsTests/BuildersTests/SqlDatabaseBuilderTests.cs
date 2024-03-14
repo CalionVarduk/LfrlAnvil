@@ -40,6 +40,7 @@ public partial class SqlDatabaseBuilderTests : TestsBase
             ((ISqlDatabaseBuilder)sut).NodeInterpreters.Should().BeSameAs( sut.NodeInterpreters );
             ((ISqlDatabaseBuilder)sut).QueryReaders.Should().BeSameAs( sut.QueryReaders );
             ((ISqlDatabaseBuilder)sut).ParameterBinders.Should().BeSameAs( sut.ParameterBinders );
+            ((ISqlDatabaseBuilder)sut).DefaultNames.Should().BeSameAs( sut.DefaultNames );
             ((ISqlDatabaseBuilder)sut).Schemas.Should().BeSameAs( sut.Schemas );
             ((ISqlDatabaseBuilder)sut).Changes.Should().BeSameAs( sut.Changes );
             ((ISqlSchemaBuilderCollection)sut.Schemas).Default.Should().BeSameAs( sut.Schemas.Default );

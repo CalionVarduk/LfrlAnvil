@@ -57,7 +57,7 @@ public abstract class SqlCheckBuilder : SqlConstraintBuilder, ISqlCheckBuilder
     [Pure]
     protected sealed override string GetDefaultName()
     {
-        return SqlHelpers.GetDefaultCheckName( Table );
+        return Database.DefaultNames.GetForCheck( Table );
     }
 
     protected void SetReferencedColumns(ReadOnlyArray<SqlColumnBuilder> columns)

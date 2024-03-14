@@ -105,9 +105,12 @@ public abstract class SqlIndexBuilder : SqlConstraintBuilder, ISqlIndexBuilder
     }
 
     [Pure]
-    protected override string GetDefaultName()
+    protected sealed override string GetDefaultName()
     {
-        return SqlHelpers.GetDefaultIndexName( Table, new SqlIndexBuilderColumns<ISqlColumnBuilder>( Columns.Expressions ), IsUnique );
+        return Database.DefaultNames.GetForIndex(
+            Table,
+            new SqlIndexBuilderColumns<ISqlColumnBuilder>( Columns.Expressions ),
+            IsUnique );
     }
 
     protected virtual SqlPropertyChange<bool> BeforeIsUniqueChange(bool newValue)

@@ -12,6 +12,7 @@ public interface ISqlDatabaseBuilder
     ISqlNodeInterpreterFactory NodeInterpreters { get; }
     ISqlQueryReaderFactory QueryReaders { get; }
     ISqlParameterBinderFactory ParameterBinders { get; }
+    ISqlDefaultObjectNameProvider DefaultNames { get; }
     ISqlSchemaBuilderCollection Schemas { get; }
     ISqlDatabaseChangeTracker Changes { get; }
     string ServerVersion { get; }
