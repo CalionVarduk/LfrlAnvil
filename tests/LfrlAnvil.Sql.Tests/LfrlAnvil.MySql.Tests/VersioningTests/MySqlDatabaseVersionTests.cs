@@ -2,23 +2,23 @@
 using LfrlAnvil.Sql.Exceptions;
 using LfrlAnvil.Sql.Objects.Builders;
 using LfrlAnvil.Sql.Versioning;
-using LfrlAnvil.Sqlite.Objects.Builders;
-using LfrlAnvil.Sqlite.Tests.Helpers;
-using LfrlAnvil.Sqlite.Versioning;
+using LfrlAnvil.MySql.Objects.Builders;
+using LfrlAnvil.MySql.Tests.Helpers;
+using LfrlAnvil.MySql.Versioning;
 using LfrlAnvil.TestExtensions.FluentAssertions;
 
-namespace LfrlAnvil.Sqlite.Tests.VersioningTests;
+namespace LfrlAnvil.MySql.Tests.VersioningTests;
 
-public class SqliteDatabaseVersionTests : TestsBase
+public class MySqlDatabaseVersionTests : TestsBase
 {
     [Fact]
     public void Create_ShouldReturnCorrectResult()
     {
         var version = Version.Parse( "1.2.3.4" );
         var description = Fixture.Create<string>();
-        var apply = Substitute.For<Action<SqliteDatabaseBuilder>>();
-        var builder = SqliteDatabaseBuilderMock.Create();
-        var sut = SqliteDatabaseVersion.Create( version, description, apply );
+        var apply = Substitute.For<Action<MySqlDatabaseBuilder>>();
+        var builder = MySqlDatabaseBuilderMock.Create();
+        var sut = MySqlDatabaseVersion.Create( version, description, apply );
 
         sut.Apply( builder );
 
@@ -34,9 +34,9 @@ public class SqliteDatabaseVersionTests : TestsBase
     public void Create_WithoutDescription_ShouldReturnCorrectResult()
     {
         var version = Version.Parse( "1.2.3.4" );
-        var apply = Substitute.For<Action<SqliteDatabaseBuilder>>();
-        var builder = SqliteDatabaseBuilderMock.Create();
-        var sut = SqliteDatabaseVersion.Create( version, apply );
+        var apply = Substitute.For<Action<MySqlDatabaseBuilder>>();
+        var builder = MySqlDatabaseBuilderMock.Create();
+        var sut = MySqlDatabaseVersion.Create( version, apply );
 
         sut.Apply( builder );
 
@@ -52,9 +52,9 @@ public class SqliteDatabaseVersionTests : TestsBase
     public void Apply_ShouldThrowSqlObjectCastException_WhenDatabaseBuilderIsOfInvalidType()
     {
         var version = Version.Parse( "1.2.3.4" );
-        var apply = Substitute.For<Action<SqliteDatabaseBuilder>>();
+        var apply = Substitute.For<Action<MySqlDatabaseBuilder>>();
         var builder = Substitute.For<ISqlDatabaseBuilder>();
-        var sut = SqliteDatabaseVersion.Create( version, apply );
+        var sut = MySqlDatabaseVersion.Create( version, apply );
 
         var action = Lambda.Of( () => ((ISqlDatabaseVersion)sut).Apply( builder ) );
 

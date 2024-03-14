@@ -10,12 +10,12 @@ public class SqlDatabaseVersionHistory
 {
     public static readonly Version InitialVersion = new Version();
 
-    private readonly SqlDatabaseVersion[] _versions;
+    private readonly ISqlDatabaseVersion[] _versions;
 
-    public SqlDatabaseVersionHistory(IEnumerable<SqlDatabaseVersion> versions)
+    public SqlDatabaseVersionHistory(IEnumerable<ISqlDatabaseVersion> versions)
         : this( versions.ToArray() ) { }
 
-    public SqlDatabaseVersionHistory(params SqlDatabaseVersion[] versions)
+    public SqlDatabaseVersionHistory(params ISqlDatabaseVersion[] versions)
     {
         _versions = versions;
 
@@ -40,7 +40,7 @@ public class SqlDatabaseVersionHistory
             throw new SqlDatabaseVersionHistoryException( errors );
     }
 
-    public ReadOnlySpan<SqlDatabaseVersion> Versions => _versions;
+    public ReadOnlySpan<ISqlDatabaseVersion> Versions => _versions;
 
     [Pure]
     public DatabaseComparisonResult CompareToDatabase(ReadOnlySpan<SqlDatabaseVersionRecord> records)
@@ -66,7 +66,7 @@ public class SqlDatabaseVersionHistory
 
         var persistedCommittedVersions = ordinalOffset < committedVersionCount
             ? allVersions.Slice( ordinalOffset, committedVersionCount - ordinalOffset )
-            : ReadOnlySpan<SqlDatabaseVersion>.Empty;
+            : ReadOnlySpan<ISqlDatabaseVersion>.Empty;
 
         if ( ordinalOffset > 0 && records.Length != persistedCommittedVersions.Length )
         {
@@ -96,11 +96,11 @@ public class SqlDatabaseVersionHistory
 
     public readonly struct DatabaseComparisonResult
     {
-        private readonly SqlDatabaseVersion[] _allVersions;
+        private readonly ISqlDatabaseVersion[] _allVersions;
         private readonly int _committedVersionCount;
 
         internal DatabaseComparisonResult(
-            SqlDatabaseVersion[] allVersions,
+            ISqlDatabaseVersion[] allVersions,
             int committedVersionCount,
             Version current,
             int nextOrdinal)
@@ -112,14 +112,14 @@ public class SqlDatabaseVersionHistory
             NextOrdinal = nextOrdinal;
         }
 
-        public ReadOnlySpan<SqlDatabaseVersion> Committed => _allVersions.AsSpan( 0, _committedVersionCount );
-        public ReadOnlySpan<SqlDatabaseVersion> Uncommitted => _allVersions.AsSpan( _committedVersionCount );
+        public ReadOnlySpan<ISqlDatabaseVersion> Committed => _allVersions.AsSpan( 0, _committedVersionCount );
+        public ReadOnlySpan<ISqlDatabaseVersion> Uncommitted => _allVersions.AsSpan( _committedVersionCount );
         public Version Current { get; }
         public int NextOrdinal { get; }
     }
 
     [Pure]
-    private static int GetVersionCountUpTo(ReadOnlySpan<SqlDatabaseVersion> versions, Version target)
+    private static int GetVersionCountUpTo(ReadOnlySpan<ISqlDatabaseVersion> versions, Version target)
     {
         var lo = 0;
         var hi = versions.Length - 1;

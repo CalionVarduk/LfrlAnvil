@@ -272,7 +272,7 @@ public abstract class SqlDatabaseFactory<TDatabase> : ISqlDatabaseFactory
     private static void ApplyCommittedVersions(
         SqlDatabaseBuilder builder,
         SqlDatabaseConnectionStateChanges stateChanges,
-        ReadOnlySpan<SqlDatabaseVersion> versions)
+        ReadOnlySpan<ISqlDatabaseVersion> versions)
     {
         Assume.Equals( builder.Changes.Mode, SqlDatabaseCreateMode.NoChanges );
 
@@ -286,7 +286,7 @@ public abstract class SqlDatabaseFactory<TDatabase> : ISqlDatabaseFactory
 
     private static void ApplyUncommittedVersionsInDryRunMode(
         SqlDatabaseBuilder builder,
-        ReadOnlySpan<SqlDatabaseVersion> versions)
+        ReadOnlySpan<ISqlDatabaseVersion> versions)
     {
         builder.Changes.SetModeAndAttach( SqlDatabaseCreateMode.DryRun );
 

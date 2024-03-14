@@ -395,15 +395,15 @@ contains {parameters.Count} parameter(s):
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static string VersionIsPrecededByVersionWithGreaterOrEqualValue(
         int index,
-        SqlDatabaseVersion previous,
-        SqlDatabaseVersion current)
+        ISqlDatabaseVersion previous,
+        ISqlDatabaseVersion current)
     {
         return $"Version {current} at position {index} is preceded by version {previous} with greater or equal value.";
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static string FirstVersionHasValueEqualToInitialValue(SqlDatabaseVersion version)
+    internal static string FirstVersionHasValueEqualToInitialValue(ISqlDatabaseVersion version)
     {
         return $"First version {version} has value equal to the initial value.";
     }

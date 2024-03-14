@@ -13,12 +13,6 @@ using ExceptionResources = LfrlAnvil.Sql.Exceptions.ExceptionResources;
 
 namespace LfrlAnvil.Sql.Objects.Builders;
 
-// TODO:
-// THEN, create db version object that works with core classes rather than interfaces
-//  ^ requires sqlite & mysql brought up to speed
-//  ^ add ISqlDatabaseVersion interface & make SqlDatabaseVersion be its implementation that works with SqlDatabaseBuilder type
-//  ^ each dialect can have its own [DIALECT]DatabaseVersion classes, but that's low priority
-
 public abstract class SqlDatabaseBuilder : SqlBuilderApi, ISqlDatabaseBuilder
 {
     private readonly UlongSequenceGenerator _idGenerator;

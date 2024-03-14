@@ -46,7 +46,6 @@
 
 - ISqlDatabaseBuilder:
   - add IDefaultNameProvider => allows to override default name generation (PK, FK, IX, CHK, anything else?)
-  - nodes: ReadOnlyMemory => ReadOnlyArray
 
 
 - Connection strings:

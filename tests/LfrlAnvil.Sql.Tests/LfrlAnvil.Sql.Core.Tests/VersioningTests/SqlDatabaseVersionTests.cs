@@ -1,6 +1,9 @@
-﻿using LfrlAnvil.Sql.Objects.Builders;
+﻿using LfrlAnvil.Functional;
+using LfrlAnvil.Sql.Exceptions;
+using LfrlAnvil.Sql.Objects.Builders;
 using LfrlAnvil.Sql.Versioning;
 using LfrlAnvil.TestExtensions.FluentAssertions;
+using LfrlAnvil.TestExtensions.Sql.Mocks;
 
 namespace LfrlAnvil.Sql.Tests.VersioningTests;
 
@@ -11,8 +14,8 @@ public class SqlDatabaseVersionTests : TestsBase
     {
         var version = Version.Parse( "1.2.3.4" );
         var description = Fixture.Create<string>();
-        var apply = Substitute.For<Action<ISqlDatabaseBuilder>>();
-        var builder = Substitute.For<ISqlDatabaseBuilder>();
+        var apply = Substitute.For<Action<SqlDatabaseBuilder>>();
+        var builder = SqlDatabaseBuilderMock.Create();
         var sut = SqlDatabaseVersion.Create( version, description, apply );
 
         sut.Apply( builder );
@@ -29,8 +32,8 @@ public class SqlDatabaseVersionTests : TestsBase
     public void Create_WithoutDescription_ShouldReturnCorrectResult()
     {
         var version = Version.Parse( "1.2.3.4" );
-        var apply = Substitute.For<Action<ISqlDatabaseBuilder>>();
-        var builder = Substitute.For<ISqlDatabaseBuilder>();
+        var apply = Substitute.For<Action<SqlDatabaseBuilder>>();
+        var builder = SqlDatabaseBuilderMock.Create();
         var sut = SqlDatabaseVersion.Create( version, apply );
 
         sut.Apply( builder );
@@ -41,6 +44,19 @@ public class SqlDatabaseVersionTests : TestsBase
             sut.Description.Should().BeEmpty();
             apply.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( builder );
         }
+    }
+
+    [Fact]
+    public void Apply_ShouldThrowSqlObjectCastException_WhenDatabaseBuilderIsOfInvalidType()
+    {
+        var version = Version.Parse( "1.2.3.4" );
+        var apply = Substitute.For<Action<SqlDatabaseBuilder>>();
+        var builder = Substitute.For<ISqlDatabaseBuilder>();
+        var sut = SqlDatabaseVersion.Create( version, apply );
+
+        var action = Lambda.Of( () => ((ISqlDatabaseVersion)sut).Apply( builder ) );
+
+        action.Should().ThrowExactly<SqlObjectCastException>();
     }
 
     [Fact]

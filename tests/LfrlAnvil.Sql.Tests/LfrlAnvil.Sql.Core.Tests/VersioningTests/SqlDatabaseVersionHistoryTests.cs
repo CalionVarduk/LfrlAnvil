@@ -19,7 +19,7 @@ public class SqlDatabaseVersionHistoryTests : TestsBase
     [Fact]
     public void Ctor_ShouldCreateCorrectHistory_WhenVersionsAreEmpty()
     {
-        var sut = new SqlDatabaseVersionHistory( Enumerable.Empty<SqlDatabaseVersion>() );
+        var sut = new SqlDatabaseVersionHistory( Enumerable.Empty<ISqlDatabaseVersion>() );
         sut.Versions.Length.Should().Be( 0 );
     }
 
