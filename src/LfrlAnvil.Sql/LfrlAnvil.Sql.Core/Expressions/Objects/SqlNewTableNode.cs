@@ -63,8 +63,8 @@ public sealed class SqlNewTableNode : SqlRecordSetNode
     [Pure]
     private Dictionary<string, SqlRawDataFieldNode> CreateColumnFields()
     {
-        var columns = CreationNode.Columns.Span;
-        var result = new Dictionary<string, SqlRawDataFieldNode>( capacity: columns.Length, comparer: SqlHelpers.NameComparer );
+        var columns = CreationNode.Columns;
+        var result = new Dictionary<string, SqlRawDataFieldNode>( capacity: columns.Count, comparer: SqlHelpers.NameComparer );
 
         foreach ( var column in columns )
             result.Add( column.Name, new SqlRawDataFieldNode( this, column.Name, IsOptional ? column.Type.MakeNullable() : column.Type ) );

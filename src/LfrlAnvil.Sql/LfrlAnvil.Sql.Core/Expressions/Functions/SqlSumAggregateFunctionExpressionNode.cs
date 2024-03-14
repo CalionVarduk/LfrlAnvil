@@ -1,12 +1,11 @@
-﻿using System;
-using System.Diagnostics.Contracts;
+﻿using System.Diagnostics.Contracts;
 using LfrlAnvil.Sql.Expressions.Traits;
 
 namespace LfrlAnvil.Sql.Expressions.Functions;
 
 public sealed class SqlSumAggregateFunctionExpressionNode : SqlAggregateFunctionExpressionNode
 {
-    internal SqlSumAggregateFunctionExpressionNode(ReadOnlyMemory<SqlExpressionNode> arguments, Chain<SqlTraitNode> traits)
+    internal SqlSumAggregateFunctionExpressionNode(ReadOnlyArray<SqlExpressionNode> arguments, Chain<SqlTraitNode> traits)
         : base( SqlFunctionType.Sum, arguments, traits ) { }
 
     [Pure]

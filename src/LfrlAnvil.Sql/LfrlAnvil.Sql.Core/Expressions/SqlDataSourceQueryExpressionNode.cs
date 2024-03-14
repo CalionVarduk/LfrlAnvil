@@ -1,5 +1,4 @@
-﻿using System;
-using System.Diagnostics.Contracts;
+﻿using System.Diagnostics.Contracts;
 using LfrlAnvil.Sql.Expressions.Objects;
 using LfrlAnvil.Sql.Expressions.Traits;
 
@@ -19,7 +18,7 @@ public abstract class SqlDataSourceQueryExpressionNode : SqlExtendableQueryExpre
 public sealed class SqlDataSourceQueryExpressionNode<TDataSourceNode> : SqlDataSourceQueryExpressionNode
     where TDataSourceNode : SqlDataSourceNode
 {
-    internal SqlDataSourceQueryExpressionNode(TDataSourceNode dataSource, ReadOnlyMemory<SqlSelectNode> selection)
+    internal SqlDataSourceQueryExpressionNode(TDataSourceNode dataSource, ReadOnlyArray<SqlSelectNode> selection)
         : base( Chain<SqlTraitNode>.Empty )
     {
         DataSource = dataSource;
@@ -35,7 +34,7 @@ public sealed class SqlDataSourceQueryExpressionNode<TDataSourceNode> : SqlDataS
 
     private SqlDataSourceQueryExpressionNode(
         SqlDataSourceQueryExpressionNode<TDataSourceNode> @base,
-        ReadOnlyMemory<SqlSelectNode> selection)
+        ReadOnlyArray<SqlSelectNode> selection)
         : base( @base.Traits )
     {
         DataSource = @base.DataSource;
@@ -43,7 +42,7 @@ public sealed class SqlDataSourceQueryExpressionNode<TDataSourceNode> : SqlDataS
     }
 
     public override TDataSourceNode DataSource { get; }
-    public override ReadOnlyMemory<SqlSelectNode> Selection { get; }
+    public override ReadOnlyArray<SqlSelectNode> Selection { get; }
 
     [Pure]
     public override SqlDataSourceQueryExpressionNode<TDataSourceNode> Select(params SqlSelectNode[] selection)
@@ -51,9 +50,9 @@ public sealed class SqlDataSourceQueryExpressionNode<TDataSourceNode> : SqlDataS
         if ( selection.Length == 0 )
             return this;
 
-        var newSelection = new SqlSelectNode[Selection.Length + selection.Length];
-        Selection.CopyTo( newSelection );
-        selection.CopyTo( newSelection, Selection.Length );
+        var newSelection = new SqlSelectNode[Selection.Count + selection.Length];
+        Selection.AsSpan().CopyTo( newSelection );
+        selection.CopyTo( newSelection, Selection.Count );
         return new SqlDataSourceQueryExpressionNode<TDataSourceNode>( this, newSelection );
     }
 

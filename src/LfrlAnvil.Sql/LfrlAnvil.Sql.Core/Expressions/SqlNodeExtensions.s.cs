@@ -835,9 +835,9 @@ public static class SqlNodeExtensions
         if ( assignments.Length == 0 )
             return node;
 
-        var newAssignments = new SqlValueAssignmentNode[node.Assignments.Length + assignments.Length];
-        node.Assignments.CopyTo( newAssignments );
-        assignments.CopyTo( newAssignments, node.Assignments.Length );
+        var newAssignments = new SqlValueAssignmentNode[node.Assignments.Count + assignments.Length];
+        node.Assignments.AsSpan().CopyTo( newAssignments );
+        assignments.CopyTo( newAssignments, node.Assignments.Count );
         return new SqlUpdateNode( node.DataSource, newAssignments );
     }
 

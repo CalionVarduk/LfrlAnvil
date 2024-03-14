@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace LfrlAnvil.Sql.Expressions;
+﻿namespace LfrlAnvil.Sql.Expressions;
 
 public sealed class SqlSelectCompoundFieldNode : SqlSelectNode
 {
@@ -12,7 +10,7 @@ public sealed class SqlSelectCompoundFieldNode : SqlSelectNode
     }
 
     public string Name { get; }
-    public ReadOnlyMemory<Origin> Origins { get; }
+    public ReadOnlyArray<Origin> Origins { get; }
 
     internal override void VisitExpressions(ISqlSelectNodeExpressionVisitor visitor)
     {

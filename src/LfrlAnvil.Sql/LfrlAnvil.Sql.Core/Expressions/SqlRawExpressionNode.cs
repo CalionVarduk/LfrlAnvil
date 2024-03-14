@@ -14,6 +14,6 @@ public sealed class SqlRawExpressionNode : SqlExpressionNode
     }
 
     public string Sql { get; }
-    public ReadOnlyMemory<SqlParameterNode> Parameters { get; }
+    public ReadOnlyArray<SqlParameterNode> Parameters { get; }
     public TypeNullability? Type { get; }
 }

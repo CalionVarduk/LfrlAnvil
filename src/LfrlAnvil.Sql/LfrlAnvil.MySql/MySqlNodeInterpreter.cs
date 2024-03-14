@@ -77,7 +77,7 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
     public override void VisitNewGuidFunction(SqlNewGuidFunctionExpressionNode node)
     {
         AppendDelimitedSchemaObjectName( SqlSchemaObjectName.Create( CommonSchemaName, MySqlHelpers.GuidFunctionName ) );
-        VisitFunctionArguments( node.Arguments.Span );
+        VisitFunctionArguments( node.Arguments );
     }
 
     public override void VisitLengthFunction(SqlLengthFunctionExpressionNode node)
@@ -102,11 +102,11 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
 
     public override void VisitTrimStartFunction(SqlTrimStartFunctionExpressionNode node)
     {
-        if ( node.Arguments.Length == 1 )
+        if ( node.Arguments.Count == 1 )
             VisitSimpleFunction( "LTRIM", node );
         else
         {
-            var args = node.Arguments.Span;
+            var args = node.Arguments;
             Context.Sql.Append( "TRIM" ).Append( '(' ).Append( "LEADING" ).AppendSpace();
             VisitChild( args[1] );
             Context.Sql.AppendSpace().Append( "FROM" ).AppendSpace();
@@ -117,11 +117,11 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
 
     public override void VisitTrimEndFunction(SqlTrimEndFunctionExpressionNode node)
     {
-        if ( node.Arguments.Length == 1 )
+        if ( node.Arguments.Count == 1 )
             VisitSimpleFunction( "RTRIM", node );
         else
         {
-            var args = node.Arguments.Span;
+            var args = node.Arguments;
             Context.Sql.Append( "TRIM" ).Append( '(' ).Append( "TRAILING" ).AppendSpace();
             VisitChild( args[1] );
             Context.Sql.AppendSpace().Append( "FROM" ).AppendSpace();
@@ -132,11 +132,11 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
 
     public override void VisitTrimFunction(SqlTrimFunctionExpressionNode node)
     {
-        if ( node.Arguments.Length == 1 )
+        if ( node.Arguments.Count == 1 )
             VisitSimpleFunction( "TRIM", node );
         else
         {
-            var args = node.Arguments.Span;
+            var args = node.Arguments;
             Context.Sql.Append( "TRIM" ).Append( '(' ).Append( "BOTH" ).AppendSpace();
             VisitChild( args[1] );
             Context.Sql.AppendSpace().Append( "FROM" ).AppendSpace();
@@ -167,7 +167,7 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
 
     public override void VisitLastIndexOfFunction(SqlLastIndexOfFunctionExpressionNode node)
     {
-        var args = node.Arguments.Span;
+        var args = node.Arguments;
         Context.Sql.Append( "CHAR_LENGTH" ).Append( '(' );
         VisitChild( args[0] );
         Context.Sql.Append( ')' ).AppendSpace().Append( '-' ).AppendSpace().Append( "CHAR_LENGTH" ).Append( '(' );
@@ -203,10 +203,10 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
 
     public override void VisitTruncateFunction(SqlTruncateFunctionExpressionNode node)
     {
-        if ( node.Arguments.Length == 1 )
+        if ( node.Arguments.Count == 1 )
         {
             Context.Sql.Append( "TRUNCATE" ).Append( '(' );
-            VisitChild( node.Arguments.Span[0] );
+            VisitChild( node.Arguments[0] );
             Context.Sql.AppendComma().AppendSpace().Append( '0' ).Append( ')' );
         }
         else
@@ -230,16 +230,16 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
 
     public override void VisitMinFunction(SqlMinFunctionExpressionNode node)
     {
-        if ( node.Arguments.Length == 1 )
-            VisitChild( node.Arguments.Span[0] );
+        if ( node.Arguments.Count == 1 )
+            VisitChild( node.Arguments[0] );
         else
             VisitSimpleFunction( "LEAST", node );
     }
 
     public override void VisitMaxFunction(SqlMaxFunctionExpressionNode node)
     {
-        if ( node.Arguments.Length == 1 )
-            VisitChild( node.Arguments.Span[0] );
+        if ( node.Arguments.Count == 1 )
+            VisitChild( node.Arguments[0] );
         else
             VisitSimpleFunction( "GREATEST", node );
     }
@@ -248,7 +248,7 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
     {
         var traits = ExtractAggregateFunctionTraits( node.Traits );
         AppendDelimitedSchemaObjectName( node.Name );
-        VisitAggregateFunctionArgumentsAndTraits( node.Arguments.Span, traits );
+        VisitAggregateFunctionArgumentsAndTraits( node.Arguments, traits );
     }
 
     public override void VisitMinAggregateFunction(SqlMinAggregateFunctionExpressionNode node)
@@ -281,7 +281,7 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
         var traits = ExtractAggregateFunctionTraits( node.Traits );
         Context.Sql.Append( "GROUP_CONCAT" ).Append( '(' );
 
-        var arguments = node.Arguments.Span;
+        var arguments = node.Arguments;
         using ( Context.TempIndentIncrease() )
         {
             if ( traits.Distinct is not null )
@@ -303,7 +303,7 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
 
             var sortTraits = FilterTraits(
                 traits.Custom,
-                static t => t.NodeType == SqlNodeType.SortTrait && ReinterpretCast.To<SqlSortTraitNode>( t ).Ordering.Length > 0 );
+                static t => t.NodeType == SqlNodeType.SortTrait && ReinterpretCast.To<SqlSortTraitNode>( t ).Ordering.Count > 0 );
 
             if ( sortTraits.Count > 0 )
             {
@@ -320,7 +320,7 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
                 Context.Sql.ShrinkBy( 2 );
             }
 
-            if ( arguments.Length > 1 )
+            if ( arguments.Count > 1 )
             {
                 Context.Sql.AppendSpace().Append( "SEPARATOR" ).AppendSpace();
                 VisitChild( arguments[1] );
@@ -599,7 +599,7 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
         AppendDelimitedName( node.Name.Object );
         Context.Sql.AppendSpace().Append( "FOREIGN" ).AppendSpace().Append( "KEY" ).AppendSpace().Append( '(' );
 
-        if ( node.Columns.Length > 0 )
+        if ( node.Columns.Count > 0 )
         {
             foreach ( var column in node.Columns )
             {
@@ -614,7 +614,7 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
         AppendDelimitedRecordSetName( node.ReferencedTable );
         Context.Sql.AppendSpace().Append( '(' );
 
-        if ( node.ReferencedColumns.Length > 0 )
+        if ( node.ReferencedColumns.Count > 0 )
         {
             foreach ( var column in node.ReferencedColumns )
             {
@@ -867,14 +867,15 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
     {
         var traits = ExtractAggregateFunctionTraits( node.Traits );
         Context.Sql.Append( functionName );
-        VisitAggregateFunctionArgumentsAndTraits( node.Arguments.Span, traits );
+        VisitAggregateFunctionArgumentsAndTraits( node.Arguments, traits );
     }
 
-    protected void VisitAggregateFunctionArgumentsAndTraits(ReadOnlySpan<SqlExpressionNode> arguments, SqlAggregateFunctionTraits traits)
+    protected void VisitAggregateFunctionArgumentsAndTraits(ReadOnlyArray<SqlExpressionNode> arguments, SqlAggregateFunctionTraits traits)
     {
         Context.Sql.Append( '(' );
 
-        if ( arguments.Length > 0 )
+        var args = arguments.AsSpan();
+        if ( args.Length > 0 )
         {
             using ( Context.TempIndentIncrease() )
             {
@@ -889,22 +890,22 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
                     Context.Sql.Append( "CASE" ).AppendSpace().Append( "WHEN" ).AppendSpace();
                     this.Visit( traits.Filter );
                     Context.Sql.AppendSpace().Append( "THEN" ).AppendSpace();
-                    VisitChild( arguments[0] );
+                    VisitChild( args[0] );
                     Context.Sql.AppendSpace().Append( "ELSE" ).AppendSpace().Append( "NULL" ).AppendSpace().Append( "END" );
 
-                    arguments = arguments.Slice( 1 );
-                    if ( arguments.Length > 0 )
+                    args = args.Slice( 1 );
+                    if ( args.Length > 0 )
                         Context.Sql.AppendComma().AppendSpace();
                 }
 
-                foreach ( var arg in arguments )
+                foreach ( var arg in args )
                 {
                     VisitChild( arg );
                     Context.Sql.AppendComma().AppendSpace();
                 }
             }
 
-            if ( arguments.Length > 0 )
+            if ( args.Length > 0 )
                 Context.Sql.ShrinkBy( 2 );
         }
 
@@ -1014,7 +1015,7 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
         VisitDataSourceBeforeTraits( in traits );
         Context.Sql.Append( "UPDATE" ).AppendSpace();
         this.Visit( node.DataSource.From );
-        VisitUpdateAssignmentRange( node.Assignments.Span );
+        VisitUpdateAssignmentRange( node.Assignments );
         VisitDataSourceAfterTraits( in traits );
     }
 
@@ -1032,8 +1033,8 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
 
         Context.Sql.AppendSpace().Append( "SET" );
 
-        var assignments = node.Assignments.Span;
-        if ( assignments.Length > 0 )
+        var assignments = node.Assignments;
+        if ( assignments.Count > 0 )
         {
             using ( Context.TempIndentIncrease() )
             {
@@ -1063,7 +1064,7 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
         AppendDelimitedRecordSetName( targetInfo.BaseTarget );
 
         using ( TempReplaceRecordSet( targetInfo.Target, targetInfo.BaseTarget ) )
-            VisitUpdateAssignmentRange( node.Assignments.Span );
+            VisitUpdateAssignmentRange( node.Assignments );
 
         var filter = CreateComplexDeleteOrUpdateFilter( targetInfo, node.DataSource );
         Context.AppendIndent();
@@ -1084,7 +1085,7 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
         AppendDelimitedRecordSetName( node.DataSource.From );
 
         using ( TempReplaceRecordSet( targetInfo.Target, targetInfo.BaseTarget ) )
-            VisitUpdateAssignmentRange( node.Assignments.Span );
+            VisitUpdateAssignmentRange( node.Assignments );
 
         VisitDataSourceAfterTraits( in traits );
     }
@@ -1139,7 +1140,7 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
     {
         return traits with
         {
-            CommonTableExpressions = Chain<ReadOnlyMemory<SqlCommonTableExpressionNode>>.Empty,
+            CommonTableExpressions = Chain<ReadOnlyArray<SqlCommonTableExpressionNode>>.Empty,
             ContainsRecursiveCommonTableExpression = false
         };
     }
@@ -1150,7 +1151,7 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
     {
         return traits with
         {
-            CommonTableExpressions = Chain<ReadOnlyMemory<SqlCommonTableExpressionNode>>.Empty,
+            CommonTableExpressions = Chain<ReadOnlyArray<SqlCommonTableExpressionNode>>.Empty,
             ContainsRecursiveCommonTableExpression = false
         };
     }

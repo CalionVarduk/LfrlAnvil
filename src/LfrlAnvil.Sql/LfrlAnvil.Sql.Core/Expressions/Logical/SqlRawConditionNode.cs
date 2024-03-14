@@ -1,5 +1,4 @@
-﻿using System;
-using LfrlAnvil.Sql.Expressions.Objects;
+﻿using LfrlAnvil.Sql.Expressions.Objects;
 
 namespace LfrlAnvil.Sql.Expressions.Logical;
 
@@ -13,5 +12,5 @@ public sealed class SqlRawConditionNode : SqlConditionNode
     }
 
     public string Sql { get; }
-    public ReadOnlyMemory<SqlParameterNode> Parameters { get; }
+    public ReadOnlyArray<SqlParameterNode> Parameters { get; }
 }

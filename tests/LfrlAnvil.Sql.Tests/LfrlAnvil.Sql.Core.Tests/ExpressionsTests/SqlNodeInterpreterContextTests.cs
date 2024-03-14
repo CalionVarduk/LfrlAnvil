@@ -391,7 +391,7 @@ public class SqlNodeInterpreterContextTests : TestsBase
         using ( new AssertionScope() )
         {
             result.Sql.Should().Be( "SELECT * FROM bar" );
-            result.Parameters.ToArray().Should().BeSequentiallyEqualTo( result.Parameters.ToArray() );
+            result.Parameters.Should().BeSequentiallyEqualTo( result.Parameters );
             result.Type.Should().BeNull();
         }
     }
@@ -409,7 +409,7 @@ public class SqlNodeInterpreterContextTests : TestsBase
         using ( new AssertionScope() )
         {
             result.Sql.Should().Be( "SELECT * FROM bar" );
-            result.Parameters.ToArray().Should().BeSequentiallyEqualTo( result.Parameters.ToArray() );
+            result.Parameters.Should().BeSequentiallyEqualTo( result.Parameters );
             result.Type.Should().Be( TypeNullability.Create<string>() );
         }
     }
@@ -427,7 +427,7 @@ public class SqlNodeInterpreterContextTests : TestsBase
         using ( new AssertionScope() )
         {
             result.Sql.Should().Be( "SELECT * FROM bar" );
-            result.Parameters.ToArray().Should().BeSequentiallyEqualTo( result.Parameters.ToArray() );
+            result.Parameters.Should().BeSequentiallyEqualTo( result.Parameters );
         }
     }
 
@@ -444,7 +444,7 @@ public class SqlNodeInterpreterContextTests : TestsBase
         using ( new AssertionScope() )
         {
             result.Sql.Should().Be( "SELECT * FROM bar" );
-            result.Parameters.ToArray().Should().BeSequentiallyEqualTo( result.Parameters.ToArray() );
+            result.Parameters.Should().BeSequentiallyEqualTo( result.Parameters );
         }
     }
 
@@ -461,7 +461,7 @@ public class SqlNodeInterpreterContextTests : TestsBase
         using ( new AssertionScope() )
         {
             result.Sql.Should().Be( "SELECT * FROM bar" );
-            result.Parameters.ToArray().Should().BeSequentiallyEqualTo( result.Parameters.ToArray() );
+            result.Parameters.Should().BeSequentiallyEqualTo( result.Parameters );
         }
     }
 }

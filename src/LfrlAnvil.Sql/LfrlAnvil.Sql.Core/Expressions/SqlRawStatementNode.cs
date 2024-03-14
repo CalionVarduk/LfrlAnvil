@@ -1,5 +1,4 @@
-﻿using System;
-using LfrlAnvil.Sql.Expressions.Objects;
+﻿using LfrlAnvil.Sql.Expressions.Objects;
 
 namespace LfrlAnvil.Sql.Expressions;
 
@@ -13,7 +12,7 @@ public sealed class SqlRawStatementNode : SqlNodeBase, ISqlStatementNode
     }
 
     public string Sql { get; }
-    public ReadOnlyMemory<SqlParameterNode> Parameters { get; }
+    public ReadOnlyArray<SqlParameterNode> Parameters { get; }
     SqlNodeBase ISqlStatementNode.Node => this;
     int ISqlStatementNode.QueryCount => 0;
 }

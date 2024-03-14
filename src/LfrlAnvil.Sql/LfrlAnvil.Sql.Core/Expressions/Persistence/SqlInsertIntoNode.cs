@@ -1,5 +1,4 @@
-﻿using System;
-using LfrlAnvil.Sql.Expressions.Objects;
+﻿using LfrlAnvil.Sql.Expressions.Objects;
 
 namespace LfrlAnvil.Sql.Expressions.Persistence;
 
@@ -23,7 +22,7 @@ public sealed class SqlInsertIntoNode : SqlNodeBase, ISqlStatementNode
 
     public SqlNodeBase Source { get; }
     public SqlRecordSetNode RecordSet { get; }
-    public ReadOnlyMemory<SqlDataFieldNode> DataFields { get; }
+    public ReadOnlyArray<SqlDataFieldNode> DataFields { get; }
     SqlNodeBase ISqlStatementNode.Node => this;
     int ISqlStatementNode.QueryCount => 0;
 }

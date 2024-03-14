@@ -1,12 +1,11 @@
-﻿using System;
-using System.Diagnostics.Contracts;
+﻿using System.Diagnostics.Contracts;
 using LfrlAnvil.Sql.Expressions.Traits;
 
 namespace LfrlAnvil.Sql.Expressions.Functions;
 
 public sealed class SqlLeadWindowFunctionExpressionNode : SqlAggregateFunctionExpressionNode
 {
-    internal SqlLeadWindowFunctionExpressionNode(ReadOnlyMemory<SqlExpressionNode> arguments, Chain<SqlTraitNode> traits)
+    internal SqlLeadWindowFunctionExpressionNode(ReadOnlyArray<SqlExpressionNode> arguments, Chain<SqlTraitNode> traits)
         : base( SqlFunctionType.Lead, arguments, traits ) { }
 
     [Pure]

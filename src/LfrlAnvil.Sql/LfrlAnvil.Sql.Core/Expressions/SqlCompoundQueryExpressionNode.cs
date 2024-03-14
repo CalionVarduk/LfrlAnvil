@@ -1,8 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Runtime.InteropServices;
-using LfrlAnvil.Extensions;
 using LfrlAnvil.Sql.Expressions.Traits;
 using LfrlAnvil.Sql.Internal;
 
@@ -10,7 +8,7 @@ namespace LfrlAnvil.Sql.Expressions;
 
 public sealed class SqlCompoundQueryExpressionNode : SqlExtendableQueryExpressionNode
 {
-    private ReadOnlyMemory<SqlSelectNode>? _selection;
+    private ReadOnlyArray<SqlSelectNode>? _selection;
 
     internal SqlCompoundQueryExpressionNode(
         SqlQueryExpressionNode firstQuery,
@@ -32,8 +30,8 @@ public sealed class SqlCompoundQueryExpressionNode : SqlExtendableQueryExpressio
     }
 
     public SqlQueryExpressionNode FirstQuery { get; }
-    public ReadOnlyMemory<SqlCompoundQueryComponentNode> FollowingQueries { get; }
-    public override ReadOnlyMemory<SqlSelectNode> Selection => _selection ??= CreateSelection();
+    public ReadOnlyArray<SqlCompoundQueryComponentNode> FollowingQueries { get; }
+    public override ReadOnlyArray<SqlSelectNode> Selection => _selection ??= CreateSelection();
 
     [Pure]
     public override SqlCompoundQueryExpressionNode AddTrait(SqlTraitNode trait)
@@ -48,9 +46,9 @@ public sealed class SqlCompoundQueryExpressionNode : SqlExtendableQueryExpressio
     }
 
     [Pure]
-    private ReadOnlyMemory<SqlSelectNode> CreateSelection()
+    private ReadOnlyArray<SqlSelectNode> CreateSelection()
     {
-        var visitor = new SelectionExpressionVisitor( FirstQuery, FollowingQueries.Length + 1 );
+        var visitor = new SelectionExpressionVisitor( FirstQuery, FollowingQueries.Count + 1 );
 
         foreach ( var selection in FirstQuery.Selection )
         {
@@ -81,7 +79,7 @@ public sealed class SqlCompoundQueryExpressionNode : SqlExtendableQueryExpressio
             QueryIndex = 0;
             _queryCount = queryCount;
             _origins = new Dictionary<string, List<SqlSelectCompoundFieldNode.Origin>>(
-                capacity: firstQuery.Selection.Length,
+                capacity: firstQuery.Selection.Count,
                 comparer: SqlHelpers.NameComparer );
         }
 
@@ -100,10 +98,10 @@ public sealed class SqlCompoundQueryExpressionNode : SqlExtendableQueryExpressio
         }
 
         [Pure]
-        internal ReadOnlyMemory<SqlSelectNode> GetSelection()
+        internal ReadOnlyArray<SqlSelectNode> GetSelection()
         {
             if ( _origins.Count == 0 )
-                return ReadOnlyMemory<SqlSelectNode>.Empty;
+                return ReadOnlyArray<SqlSelectNode>.Empty;
 
             var index = 0;
             var result = new SqlSelectCompoundFieldNode[_origins.Count];

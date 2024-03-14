@@ -13,7 +13,7 @@ public abstract class SqlViewDataFieldCollection : ISqlViewDataFieldCollection
 
     protected SqlViewDataFieldCollection(SqlQueryExpressionNode source)
     {
-        _map = new Dictionary<string, SqlViewDataField>( capacity: source.Selection.Length, comparer: SqlHelpers.NameComparer );
+        _map = new Dictionary<string, SqlViewDataField>( capacity: source.Selection.Count, comparer: SqlHelpers.NameComparer );
         _view = null;
     }
 

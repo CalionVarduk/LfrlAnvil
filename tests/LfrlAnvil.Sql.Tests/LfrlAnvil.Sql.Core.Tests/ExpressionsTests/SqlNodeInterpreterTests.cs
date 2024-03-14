@@ -86,21 +86,21 @@ public class SqlNodeInterpreterTests : TestsBase
         using ( new AssertionScope() )
         {
             result.CommonTableExpressions.Should().HaveCount( 2 );
-            result.CommonTableExpressions.ElementAtOrDefault( 0 ).ToArray().Should().BeSequentiallyEqualTo( cte1 );
-            result.CommonTableExpressions.ElementAtOrDefault( 1 ).ToArray().Should().BeSequentiallyEqualTo( cte2 );
+            result.CommonTableExpressions.ElementAtOrDefault( 0 ).Should().BeSequentiallyEqualTo( cte1 );
+            result.CommonTableExpressions.ElementAtOrDefault( 1 ).Should().BeSequentiallyEqualTo( cte2 );
             result.ContainsRecursiveCommonTableExpression.Should().BeTrue();
             result.Distinct.Should().NotBeNull();
             (result.Filter?.ToString()).Should().Be( "((A > 10) AND (C > 11)) OR (E > 12)" );
             result.Aggregations.Should().HaveCount( 2 );
-            result.Aggregations.ElementAtOrDefault( 0 ).ToArray().Should().BeSequentiallyEqualTo( aggregation1 );
-            result.Aggregations.ElementAtOrDefault( 1 ).ToArray().Should().BeSequentiallyEqualTo( aggregation2 );
+            result.Aggregations.ElementAtOrDefault( 0 ).Should().BeSequentiallyEqualTo( aggregation1 );
+            result.Aggregations.ElementAtOrDefault( 1 ).Should().BeSequentiallyEqualTo( aggregation2 );
             (result.AggregationFilter?.ToString()).Should().Be( "((B > 15) AND (D > 16)) OR (D < 27)" );
             result.Windows.Should().HaveCount( 2 );
-            result.Windows.ElementAtOrDefault( 0 ).ToArray().Should().BeSequentiallyEqualTo( windows1 );
-            result.Windows.ElementAtOrDefault( 1 ).ToArray().Should().BeSequentiallyEqualTo( windows2 );
+            result.Windows.ElementAtOrDefault( 0 ).Should().BeSequentiallyEqualTo( windows1 );
+            result.Windows.ElementAtOrDefault( 1 ).Should().BeSequentiallyEqualTo( windows2 );
             result.Ordering.Should().HaveCount( 2 );
-            result.Ordering.ElementAtOrDefault( 0 ).ToArray().Should().BeSequentiallyEqualTo( ordering1 );
-            result.Ordering.ElementAtOrDefault( 1 ).ToArray().Should().BeSequentiallyEqualTo( ordering2 );
+            result.Ordering.ElementAtOrDefault( 0 ).Should().BeSequentiallyEqualTo( ordering1 );
+            result.Ordering.ElementAtOrDefault( 1 ).Should().BeSequentiallyEqualTo( ordering2 );
             result.Limit.Should().BeSameAs( limit );
             result.Offset.Should().BeSameAs( offset );
             result.Custom.Should().HaveCount( 3 );
@@ -124,7 +124,7 @@ public class SqlNodeInterpreterTests : TestsBase
         var filter = SqlNode.FilterTrait( SqlNode.RawCondition( "A > 10" ), isConjunction: true );
         var aggregation = SqlNode.AggregationTrait( SqlNode.RawExpression( "B" ) );
         var aggregationFilter = SqlNode.AggregationFilterTrait( SqlNode.RawCondition( "B > 15" ), isConjunction: true );
-        var over = SqlNode.WindowTrait( windows.Windows.Span[0] );
+        var over = SqlNode.WindowTrait( windows.Windows[0] );
         var custom = new SqlTraitNodeMock();
 
         var traits = Chain.Create<SqlTraitNode>(
@@ -180,7 +180,7 @@ public class SqlNodeInterpreterTests : TestsBase
         var aggregation = SqlNode.AggregationTrait( SqlNode.RawExpression( "B" ) );
         var aggregationFilter = SqlNode.AggregationFilterTrait( SqlNode.RawCondition( "B > 15" ), isConjunction: true );
         var windows = SqlNode.WindowDefinitionTrait( SqlNode.WindowDefinition( "W", new[] { SqlNode.RawExpression( "C" ).Asc() } ) );
-        var over = SqlNode.WindowTrait( windows.Windows.Span[0] );
+        var over = SqlNode.WindowTrait( windows.Windows[0] );
         var sort = SqlNode.SortTrait( SqlNode.OrderByAsc( SqlNode.RawExpression( "A" ) ) );
         var custom = new SqlTraitNodeMock();
 

@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace LfrlAnvil.Sql.Expressions.Traits;
+﻿namespace LfrlAnvil.Sql.Expressions.Traits;
 
 public sealed class SqlAggregationTraitNode : SqlTraitNode
 {
@@ -10,5 +8,5 @@ public sealed class SqlAggregationTraitNode : SqlTraitNode
         Expressions = expressions;
     }
 
-    public ReadOnlyMemory<SqlExpressionNode> Expressions { get; }
+    public ReadOnlyArray<SqlExpressionNode> Expressions { get; }
 }

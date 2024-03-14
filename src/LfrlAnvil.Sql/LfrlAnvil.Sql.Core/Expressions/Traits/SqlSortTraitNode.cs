@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace LfrlAnvil.Sql.Expressions.Traits;
+﻿namespace LfrlAnvil.Sql.Expressions.Traits;
 
 public sealed class SqlSortTraitNode : SqlTraitNode
 {
@@ -10,5 +8,5 @@ public sealed class SqlSortTraitNode : SqlTraitNode
         Ordering = ordering;
     }
 
-    public ReadOnlyMemory<SqlOrderByNode> Ordering { get; }
+    public ReadOnlyArray<SqlOrderByNode> Ordering { get; }
 }

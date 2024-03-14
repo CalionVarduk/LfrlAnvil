@@ -24,7 +24,7 @@ public sealed class SqlSingleDataSourceNode<TRecordSetNode> : SqlDataSourceNode
     }
 
     public override TRecordSetNode From => _from[0];
-    public override ReadOnlyMemory<SqlDataSourceJoinOnNode> Joins => ReadOnlyMemory<SqlDataSourceJoinOnNode>.Empty;
+    public override ReadOnlyArray<SqlDataSourceJoinOnNode> Joins => ReadOnlyArray<SqlDataSourceJoinOnNode>.Empty;
     public override IReadOnlyCollection<SqlRecordSetNode> RecordSets => _from;
     public new TRecordSetNode this[string name] => GetRecordSet( name );
 

@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace LfrlAnvil.Sql.Expressions;
+﻿namespace LfrlAnvil.Sql.Expressions;
 
 public sealed class SqlSwitchExpressionNode : SqlExpressionNode
 {
@@ -12,6 +10,6 @@ public sealed class SqlSwitchExpressionNode : SqlExpressionNode
         Default = @default;
     }
 
-    public ReadOnlyMemory<SqlSwitchCaseNode> Cases { get; }
+    public ReadOnlyArray<SqlSwitchCaseNode> Cases { get; }
     public SqlExpressionNode Default { get; }
 }

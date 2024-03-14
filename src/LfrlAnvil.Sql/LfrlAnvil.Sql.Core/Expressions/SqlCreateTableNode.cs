@@ -20,23 +20,23 @@ public sealed class SqlCreateTableNode : SqlNodeBase, ISqlStatementNode
         {
             var constraints = constraintsProvider( RecordSet );
             PrimaryKey = constraints.PrimaryKey;
-            ForeignKeys = constraints.ForeignKeys;
-            Checks = constraints.Checks;
+            ForeignKeys = constraints.ForeignKeys ?? ReadOnlyArray<SqlForeignKeyDefinitionNode>.Empty;
+            Checks = constraints.Checks ?? ReadOnlyArray<SqlCheckDefinitionNode>.Empty;
         }
         else
         {
             PrimaryKey = null;
-            ForeignKeys = ReadOnlyMemory<SqlForeignKeyDefinitionNode>.Empty;
-            Checks = ReadOnlyMemory<SqlCheckDefinitionNode>.Empty;
+            ForeignKeys = ReadOnlyArray<SqlForeignKeyDefinitionNode>.Empty;
+            Checks = ReadOnlyArray<SqlCheckDefinitionNode>.Empty;
         }
     }
 
     public SqlRecordSetInfo Info { get; }
     public bool IfNotExists { get; }
-    public ReadOnlyMemory<SqlColumnDefinitionNode> Columns { get; }
+    public ReadOnlyArray<SqlColumnDefinitionNode> Columns { get; }
     public SqlPrimaryKeyDefinitionNode? PrimaryKey { get; }
-    public ReadOnlyMemory<SqlForeignKeyDefinitionNode> ForeignKeys { get; }
-    public ReadOnlyMemory<SqlCheckDefinitionNode> Checks { get; }
+    public ReadOnlyArray<SqlForeignKeyDefinitionNode> ForeignKeys { get; }
+    public ReadOnlyArray<SqlCheckDefinitionNode> Checks { get; }
     public SqlNewTableNode RecordSet { get; }
     SqlNodeBase ISqlStatementNode.Node => this;
     int ISqlStatementNode.QueryCount => 0;

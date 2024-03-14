@@ -201,7 +201,7 @@ public sealed class SqlNodeDebugInterpreter : SqlNodeInterpreter
     {
         Context.Sql.Append( "AGG" ).Append( '_' );
         AppendDelimitedSchemaObjectName( node.Name );
-        VisitFunctionArguments( node.Arguments.Span );
+        VisitFunctionArguments( node.Arguments );
 
         using ( Context.TempIndentIncrease() )
             VisitTraits( node.Traits );
@@ -351,7 +351,7 @@ public sealed class SqlNodeDebugInterpreter : SqlNodeInterpreter
         VisitTraits( node.Traits );
         Context.AppendIndent().Append( "SELECT" );
 
-        if ( node.Selection.Length == 0 )
+        if ( node.Selection.Count == 0 )
             return;
 
         using ( Context.TempIndentIncrease() )
@@ -417,7 +417,7 @@ public sealed class SqlNodeDebugInterpreter : SqlNodeInterpreter
     public override void VisitCommonTableExpressionTrait(SqlCommonTableExpressionTraitNode node)
     {
         Context.Sql.Append( "WITH" );
-        if ( node.CommonTableExpressions.Length == 0 )
+        if ( node.CommonTableExpressions.Count == 0 )
             return;
 
         Context.Sql.AppendSpace();
@@ -461,7 +461,7 @@ public sealed class SqlNodeDebugInterpreter : SqlNodeInterpreter
 
         Context.Sql.AppendSpace().Append( '(' );
 
-        if ( node.DataFields.Length > 0 )
+        if ( node.DataFields.Count > 0 )
         {
             foreach ( var dataField in node.DataFields )
             {
@@ -484,7 +484,7 @@ public sealed class SqlNodeDebugInterpreter : SqlNodeInterpreter
         this.Visit( node.DataSource );
         Context.AppendIndent().Append( "SET" );
 
-        if ( node.Assignments.Length == 0 )
+        if ( node.Assignments.Count == 0 )
             return;
 
         using ( Context.TempIndentIncrease() )
@@ -562,7 +562,7 @@ public sealed class SqlNodeDebugInterpreter : SqlNodeInterpreter
         AppendDelimitedSchemaObjectName( node.Name );
         Context.Sql.AppendSpace().Append( '(' );
 
-        if ( node.Columns.Length > 0 )
+        if ( node.Columns.Count > 0 )
         {
             foreach ( var column in node.Columns )
             {
@@ -577,7 +577,7 @@ public sealed class SqlNodeDebugInterpreter : SqlNodeInterpreter
         AppendDelimitedRecordSetName( node.ReferencedTable );
         Context.Sql.AppendSpace().Append( '(' );
 
-        if ( node.ReferencedColumns.Length > 0 )
+        if ( node.ReferencedColumns.Count > 0 )
         {
             foreach ( var column in node.ReferencedColumns )
             {
@@ -792,7 +792,7 @@ public sealed class SqlNodeDebugInterpreter : SqlNodeInterpreter
     private void VisitSimpleAggregateFunction(string prefix, string functionName, SqlAggregateFunctionExpressionNode node)
     {
         Context.Sql.Append( prefix ).Append( '_' ).Append( functionName );
-        VisitFunctionArguments( node.Arguments.Span );
+        VisitFunctionArguments( node.Arguments );
 
         using ( Context.TempIndentIncrease() )
             VisitTraits( node.Traits );

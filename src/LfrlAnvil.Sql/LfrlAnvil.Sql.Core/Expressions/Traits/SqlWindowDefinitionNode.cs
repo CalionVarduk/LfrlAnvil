@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace LfrlAnvil.Sql.Expressions.Traits;
+﻿namespace LfrlAnvil.Sql.Expressions.Traits;
 
 public sealed class SqlWindowDefinitionNode : SqlNodeBase
 {
@@ -18,7 +16,7 @@ public sealed class SqlWindowDefinitionNode : SqlNodeBase
     }
 
     public string Name { get; }
-    public ReadOnlyMemory<SqlExpressionNode> Partitioning { get; }
-    public ReadOnlyMemory<SqlOrderByNode> Ordering { get; }
+    public ReadOnlyArray<SqlExpressionNode> Partitioning { get; }
+    public ReadOnlyArray<SqlOrderByNode> Ordering { get; }
     public SqlWindowFrameNode? Frame { get; }
 }

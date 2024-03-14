@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using LfrlAnvil.Sql.Expressions.Traits;
 
@@ -15,7 +14,7 @@ public abstract class SqlDataSourceNode : SqlNodeBase
 
     public Chain<SqlTraitNode> Traits { get; }
     public abstract SqlRecordSetNode From { get; }
-    public abstract ReadOnlyMemory<SqlDataSourceJoinOnNode> Joins { get; }
+    public abstract ReadOnlyArray<SqlDataSourceJoinOnNode> Joins { get; }
     public abstract IReadOnlyCollection<SqlRecordSetNode> RecordSets { get; }
     public SqlRecordSetNode this[string recordSetName] => GetRecordSet( recordSetName );
 

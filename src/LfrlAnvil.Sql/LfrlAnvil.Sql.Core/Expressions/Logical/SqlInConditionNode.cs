@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace LfrlAnvil.Sql.Expressions.Logical;
+﻿namespace LfrlAnvil.Sql.Expressions.Logical;
 
 public sealed class SqlInConditionNode : SqlConditionNode
 {
@@ -14,6 +12,6 @@ public sealed class SqlInConditionNode : SqlConditionNode
     }
 
     public SqlExpressionNode Value { get; }
-    public ReadOnlyMemory<SqlExpressionNode> Expressions { get; }
+    public ReadOnlyArray<SqlExpressionNode> Expressions { get; }
     public bool IsNegated { get; }
 }

@@ -1,5 +1,4 @@
-﻿using System;
-using System.Diagnostics.Contracts;
+﻿using System.Diagnostics.Contracts;
 using LfrlAnvil.Sql.Expressions.Traits;
 
 namespace LfrlAnvil.Sql.Expressions.Functions;
@@ -8,7 +7,7 @@ public sealed class SqlNamedAggregateFunctionExpressionNode : SqlAggregateFuncti
 {
     internal SqlNamedAggregateFunctionExpressionNode(
         SqlSchemaObjectName name,
-        ReadOnlyMemory<SqlExpressionNode> arguments,
+        ReadOnlyArray<SqlExpressionNode> arguments,
         Chain<SqlTraitNode> traits)
         : base( SqlFunctionType.Named, arguments, traits )
     {

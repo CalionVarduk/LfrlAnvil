@@ -1,12 +1,11 @@
-﻿using System;
-using System.Diagnostics.Contracts;
+﻿using System.Diagnostics.Contracts;
 using LfrlAnvil.Sql.Expressions.Traits;
 
 namespace LfrlAnvil.Sql.Expressions.Functions;
 
 public sealed class SqlAverageAggregateFunctionExpressionNode : SqlAggregateFunctionExpressionNode
 {
-    internal SqlAverageAggregateFunctionExpressionNode(ReadOnlyMemory<SqlExpressionNode> arguments, Chain<SqlTraitNode> traits)
+    internal SqlAverageAggregateFunctionExpressionNode(ReadOnlyArray<SqlExpressionNode> arguments, Chain<SqlTraitNode> traits)
         : base( SqlFunctionType.Average, arguments, traits ) { }
 
     [Pure]

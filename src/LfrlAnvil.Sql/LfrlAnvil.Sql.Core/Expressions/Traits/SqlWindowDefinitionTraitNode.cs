@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace LfrlAnvil.Sql.Expressions.Traits;
+﻿namespace LfrlAnvil.Sql.Expressions.Traits;
 
 public sealed class SqlWindowDefinitionTraitNode : SqlTraitNode
 {
@@ -10,5 +8,5 @@ public sealed class SqlWindowDefinitionTraitNode : SqlTraitNode
         Windows = windows;
     }
 
-    public ReadOnlyMemory<SqlWindowDefinitionNode> Windows { get; }
+    public ReadOnlyArray<SqlWindowDefinitionNode> Windows { get; }
 }

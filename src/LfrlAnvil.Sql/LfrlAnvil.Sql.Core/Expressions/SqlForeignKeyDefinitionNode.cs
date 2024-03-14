@@ -1,5 +1,4 @@
-﻿using System;
-using LfrlAnvil.Sql.Expressions.Objects;
+﻿using LfrlAnvil.Sql.Expressions.Objects;
 
 namespace LfrlAnvil.Sql.Expressions;
 
@@ -23,9 +22,9 @@ public sealed class SqlForeignKeyDefinitionNode : SqlNodeBase
     }
 
     public SqlSchemaObjectName Name { get; }
-    public ReadOnlyMemory<SqlDataFieldNode> Columns { get; }
+    public ReadOnlyArray<SqlDataFieldNode> Columns { get; }
     public SqlRecordSetNode ReferencedTable { get; }
-    public ReadOnlyMemory<SqlDataFieldNode> ReferencedColumns { get; }
+    public ReadOnlyArray<SqlDataFieldNode> ReferencedColumns { get; }
     public ReferenceBehavior OnDeleteBehavior { get; }
     public ReferenceBehavior OnUpdateBehavior { get; }
 }

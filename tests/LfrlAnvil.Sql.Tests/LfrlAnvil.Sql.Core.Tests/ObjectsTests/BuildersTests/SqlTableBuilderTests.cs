@@ -434,7 +434,7 @@ public partial class SqlTableBuilderTests : TestsBase
         var c2 = sut.Columns.Create( "C2" );
         var pk = sut.Constraints.SetPrimaryKey( c1.Asc() );
         var ix = sut.Constraints.CreateIndex( c2.Asc() );
-        var fk = sut.Constraints.CreateForeignKey( ix, pk.Index );
+        sut.Constraints.CreateForeignKey( ix, pk.Index );
         var chk = sut.Constraints.CreateCheck( c1.Node > SqlNode.Literal( 0 ) );
 
         var result = sut.ToCreateNode( includeForeignKeys: false );
@@ -445,12 +445,12 @@ public partial class SqlTableBuilderTests : TestsBase
             result.RecordSet.Info.Should().Be( result.Info );
             result.RecordSet.CreationNode.Should().BeSameAs( result );
             result.RecordSet.GetKnownFields().Should().HaveCount( 2 );
-            result.Columns.ToArray().Should().HaveCount( 2 );
-            (result.Columns.ToArray().ElementAtOrDefault( 0 )?.Name).Should().Be( c1.Name );
-            (result.Columns.ToArray().ElementAtOrDefault( 1 )?.Name).Should().Be( c2.Name );
-            result.ForeignKeys.ToArray().Should().BeEmpty();
-            result.Checks.ToArray().Should().HaveCount( 1 );
-            (result.Checks.ToArray().ElementAtOrDefault( 0 )?.Name).Should().Be( SqlSchemaObjectName.Create( "foo", chk.Name ) );
+            result.Columns.Should().HaveCount( 2 );
+            (result.Columns.ElementAtOrDefault( 0 )?.Name).Should().Be( c1.Name );
+            (result.Columns.ElementAtOrDefault( 1 )?.Name).Should().Be( c2.Name );
+            result.ForeignKeys.Should().BeEmpty();
+            result.Checks.Should().HaveCount( 1 );
+            (result.Checks.ElementAtOrDefault( 0 )?.Name).Should().Be( SqlSchemaObjectName.Create( "foo", chk.Name ) );
             (result.PrimaryKey?.Name).Should().Be( SqlSchemaObjectName.Create( "foo", pk.Name ) );
         }
     }

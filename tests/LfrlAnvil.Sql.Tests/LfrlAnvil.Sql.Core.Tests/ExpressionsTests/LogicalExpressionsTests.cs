@@ -333,11 +333,11 @@ public class LogicalExpressionsTests : TestsBase
             sut.NodeType.Should().Be( SqlNodeType.Exists );
             var query = sut.Query as SqlDataSourceQueryExpressionNode;
             (query?.Traits.ToArray()).Should().BeEmpty();
-            (query?.DataSource.Joins.ToArray()).Should().BeEmpty();
+            (query?.DataSource.Joins).Should().BeEmpty();
             (query?.DataSource.From).Should().BeSameAs( recordSet );
             (query?.DataSource.RecordSets).Should().BeSequentiallyEqualTo( recordSet );
-            sut.Query.Selection.ToArray().Should().HaveCount( 1 );
-            (sut.Query.Selection.ToArray().ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.SelectAll );
+            sut.Query.Selection.Should().HaveCount( 1 );
+            (sut.Query.Selection.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.SelectAll );
             sut.IsNegated.Should().BeFalse();
             text.Should()
                 .Be(

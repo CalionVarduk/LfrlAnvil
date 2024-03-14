@@ -187,15 +187,15 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
     public virtual void VisitNamedFunction(SqlNamedFunctionExpressionNode node)
     {
         AppendDelimitedSchemaObjectName( node.Name );
-        VisitFunctionArguments( node.Arguments.Span );
+        VisitFunctionArguments( node.Arguments );
     }
 
     public abstract void VisitRecordsAffectedFunction(SqlRecordsAffectedFunctionExpressionNode node);
 
     public virtual void VisitCoalesceFunction(SqlCoalesceFunctionExpressionNode node)
     {
-        if ( node.Arguments.Length == 1 )
-            VisitChild( node.Arguments.Span[0] );
+        if ( node.Arguments.Count == 1 )
+            VisitChild( node.Arguments[0] );
         else
             VisitSimpleFunction( "COALESCE", node );
     }
@@ -610,7 +610,7 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
     public virtual void VisitAggregationTrait(SqlAggregationTraitNode node)
     {
         Context.Sql.Append( "GROUP BY" );
-        if ( node.Expressions.Length == 0 )
+        if ( node.Expressions.Count == 0 )
             return;
 
         Context.Sql.AppendSpace();
@@ -632,7 +632,7 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
     public virtual void VisitSortTrait(SqlSortTraitNode node)
     {
         Context.Sql.Append( "ORDER BY" );
-        if ( node.Ordering.Length == 0 )
+        if ( node.Ordering.Count == 0 )
             return;
 
         Context.Sql.AppendSpace();
@@ -651,7 +651,7 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
     public virtual void VisitCommonTableExpressionTrait(SqlCommonTableExpressionTraitNode node)
     {
         Context.Sql.Append( "WITH" );
-        if ( node.CommonTableExpressions.Length == 0 )
+        if ( node.CommonTableExpressions.Count == 0 )
             return;
 
         Context.Sql.AppendSpace();
@@ -671,7 +671,7 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
     public virtual void VisitWindowDefinitionTrait(SqlWindowDefinitionTraitNode node)
     {
         Context.Sql.Append( "WINDOW" );
-        if ( node.Windows.Length == 0 )
+        if ( node.Windows.Count == 0 )
             return;
 
         Context.Sql.AppendSpace();
@@ -712,7 +712,7 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
         AppendDelimitedName( node.Name );
         Context.Sql.AppendSpace().Append( "AS" ).AppendSpace().Append( '(' );
 
-        if ( node.Partitioning.Length > 0 )
+        if ( node.Partitioning.Count > 0 )
         {
             Context.Sql.Append( "PARTITION" ).AppendSpace().Append( "BY" ).AppendSpace();
             foreach ( var partition in node.Partitioning )
@@ -724,9 +724,9 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
             Context.Sql.ShrinkBy( 2 );
         }
 
-        if ( node.Ordering.Length > 0 )
+        if ( node.Ordering.Count > 0 )
         {
-            if ( node.Partitioning.Length > 0 )
+            if ( node.Partitioning.Count > 0 )
                 Context.Sql.AppendSpace();
 
             Context.Sql.Append( "ORDER" ).AppendSpace().Append( "BY" ).AppendSpace();
@@ -741,7 +741,7 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
 
         if ( node.Frame is not null )
         {
-            if ( node.Partitioning.Length > 0 || node.Ordering.Length > 0 )
+            if ( node.Partitioning.Count > 0 || node.Ordering.Count > 0 )
                 Context.Sql.AppendSpace();
 
             VisitWindowFrame( node.Frame );
@@ -832,7 +832,7 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
 
     public virtual void VisitStatementBatch(SqlStatementBatchNode node)
     {
-        if ( node.Statements.Length == 0 )
+        if ( node.Statements.Count == 0 )
             return;
 
         foreach ( var statement in node.Statements )
@@ -1013,7 +1013,7 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
                 case SqlNodeType.AggregationTrait:
                 {
                     var aggregationTrait = ReinterpretCast.To<SqlAggregationTraitNode>( trait );
-                    if ( aggregationTrait.Expressions.Length > 0 )
+                    if ( aggregationTrait.Expressions.Count > 0 )
                         aggregations = aggregations.Extend( aggregationTrait.Expressions );
 
                     break;
@@ -1033,7 +1033,7 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
                 case SqlNodeType.SortTrait:
                 {
                     var sortTrait = ReinterpretCast.To<SqlSortTraitNode>( trait );
-                    if ( sortTrait.Ordering.Length > 0 )
+                    if ( sortTrait.Ordering.Count > 0 )
                         ordering = ordering.Extend( sortTrait.Ordering );
 
                     break;
@@ -1051,7 +1051,7 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
                 case SqlNodeType.CommonTableExpressionTrait:
                 {
                     var cteTrait = ReinterpretCast.To<SqlCommonTableExpressionTraitNode>( trait );
-                    if ( cteTrait.CommonTableExpressions.Length > 0 )
+                    if ( cteTrait.CommonTableExpressions.Count > 0 )
                     {
                         commonTableExpressions = commonTableExpressions.Extend( cteTrait.CommonTableExpressions );
                         containsRecursiveCommonTableExpression = containsRecursiveCommonTableExpression || cteTrait.ContainsRecursive;
@@ -1062,7 +1062,7 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
                 case SqlNodeType.WindowDefinitionTrait:
                 {
                     var windowTrait = ReinterpretCast.To<SqlWindowDefinitionTraitNode>( trait );
-                    if ( windowTrait.Windows.Length > 0 )
+                    if ( windowTrait.Windows.Count > 0 )
                         windows = windows.Extend( windowTrait.Windows );
 
                     break;
@@ -1113,7 +1113,7 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
                 case SqlNodeType.SortTrait:
                 {
                     var sortTrait = ReinterpretCast.To<SqlSortTraitNode>( trait );
-                    if ( sortTrait.Ordering.Length > 0 )
+                    if ( sortTrait.Ordering.Count > 0 )
                         ordering = ordering.Extend( sortTrait.Ordering );
 
                     break;
@@ -1131,7 +1131,7 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
                 case SqlNodeType.CommonTableExpressionTrait:
                 {
                     var cteTrait = ReinterpretCast.To<SqlCommonTableExpressionTraitNode>( trait );
-                    if ( cteTrait.CommonTableExpressions.Length > 0 )
+                    if ( cteTrait.CommonTableExpressions.Count > 0 )
                     {
                         commonTableExpressions = commonTableExpressions.Extend( cteTrait.CommonTableExpressions );
                         containsRecursiveCommonTableExpression = containsRecursiveCommonTableExpression || cteTrait.ContainsRecursive;
@@ -1322,14 +1322,14 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
     protected void VisitSimpleFunction(string functionName, SqlFunctionExpressionNode node)
     {
         Context.Sql.Append( functionName );
-        VisitFunctionArguments( node.Arguments.Span );
+        VisitFunctionArguments( node.Arguments );
     }
 
-    protected void VisitFunctionArguments(ReadOnlySpan<SqlExpressionNode> arguments)
+    protected void VisitFunctionArguments(ReadOnlyArray<SqlExpressionNode> arguments)
     {
         Context.Sql.Append( '(' );
 
-        if ( arguments.Length > 0 )
+        if ( arguments.Count > 0 )
         {
             using ( Context.TempIndentIncrease() )
             {
@@ -1393,7 +1393,7 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
         AppendDelimitedRecordSetName( node.RecordSet );
         Context.Sql.AppendSpace().Append( '(' );
 
-        if ( node.DataFields.Length > 0 )
+        if ( node.DataFields.Count > 0 )
         {
             foreach ( var dataField in node.DataFields )
             {
@@ -1481,7 +1481,7 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
     }
 
     protected void VisitOptionalCommonTableExpressionRange(
-        Chain<ReadOnlyMemory<SqlCommonTableExpressionNode>> commonTableExpressions,
+        Chain<ReadOnlyArray<SqlCommonTableExpressionNode>> commonTableExpressions,
         bool addRecursiveKeyword)
     {
         if ( commonTableExpressions.Count == 0 )
@@ -1523,7 +1523,7 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
         this.Visit( filter );
     }
 
-    protected void VisitOptionalAggregationRange(Chain<ReadOnlyMemory<SqlExpressionNode>> aggregations)
+    protected void VisitOptionalAggregationRange(Chain<ReadOnlyArray<SqlExpressionNode>> aggregations)
     {
         if ( aggregations.Count == 0 )
             return;
@@ -1551,7 +1551,7 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
         this.Visit( filter );
     }
 
-    protected void VisitOptionalWindowRange(Chain<ReadOnlyMemory<SqlWindowDefinitionNode>> windows)
+    protected void VisitOptionalWindowRange(Chain<ReadOnlyArray<SqlWindowDefinitionNode>> windows)
     {
         if ( windows.Count == 0 )
             return;
@@ -1573,7 +1573,7 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
         }
     }
 
-    protected void VisitOptionalOrderingRange(Chain<ReadOnlyMemory<SqlOrderByNode>> ordering)
+    protected void VisitOptionalOrderingRange(Chain<ReadOnlyArray<SqlOrderByNode>> ordering)
     {
         if ( ordering.Count == 0 )
             return;
@@ -1592,11 +1592,11 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
         Context.Sql.ShrinkBy( 2 );
     }
 
-    protected void VisitUpdateAssignmentRange(ReadOnlySpan<SqlValueAssignmentNode> assignments)
+    protected void VisitUpdateAssignmentRange(ReadOnlyArray<SqlValueAssignmentNode> assignments)
     {
         Context.Sql.AppendSpace().Append( "SET" );
 
-        if ( assignments.Length > 0 )
+        if ( assignments.Count > 0 )
         {
             using ( Context.TempIndentIncrease() )
             {
@@ -1647,7 +1647,7 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
                 Context.Sql.AppendComma();
             }
 
-            if ( node.Columns.Length > 0 || node.PrimaryKey is not null || node.ForeignKeys.Length > 0 || node.Checks.Length > 0 )
+            if ( node.Columns.Count > 0 || node.PrimaryKey is not null || node.ForeignKeys.Count > 0 || node.Checks.Count > 0 )
                 Context.Sql.ShrinkBy( 1 );
         }
     }
@@ -1706,7 +1706,7 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
         var cteIdentityFieldNames = new string[targetInfo.IdentityColumnNames.Length];
         var cteComplexAssignmentFieldNames = new string[indexesOfComplexAssignments.Length];
         var cteSelection = new SqlSelectNode[targetInfo.IdentityColumnNames.Length + indexesOfComplexAssignments.Length];
-        var assignments = node.Assignments.ToArray();
+        var assignments = node.Assignments.AsSpan().ToArray();
 
         var i = 0;
         foreach ( var name in targetInfo.IdentityColumnNames )
@@ -1852,11 +1852,11 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
     [Pure]
     protected static ComplexUpdateAssignmentsVisitor? CreateUpdateAssignmentsVisitor(SqlUpdateNode node)
     {
-        if ( node.DataSource.Joins.Length == 0 )
+        if ( node.DataSource.Joins.Count == 0 )
             return null;
 
         var result = new ComplexUpdateAssignmentsVisitor( node.DataSource );
-        result.VisitAssignmentRange( node.Assignments.Span );
+        result.VisitAssignmentRange( node.Assignments );
         return result;
     }
 
@@ -1870,10 +1870,10 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
 
         internal ComplexUpdateAssignmentsVisitor(SqlDataSourceNode dataSource)
         {
-            Assume.IsGreaterThan( dataSource.Joins.Length, 0 );
+            Assume.IsGreaterThan( dataSource.Joins.Count, 0 );
 
             var index = 0;
-            _joinedRecordSets = new SqlRecordSetNode[dataSource.Joins.Length];
+            _joinedRecordSets = new SqlRecordSetNode[dataSource.Joins.Count];
             foreach ( var join in dataSource.Joins )
                 _joinedRecordSets[index++] = join.InnerRecordSet;
 
@@ -1926,7 +1926,7 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
                 VisitDataField( dataField );
         }
 
-        internal void VisitAssignmentRange(ReadOnlySpan<SqlValueAssignmentNode> assignments)
+        internal void VisitAssignmentRange(ReadOnlyArray<SqlValueAssignmentNode> assignments)
         {
             Assume.Equals( _nextAssignmentIndex, 0 );
             foreach ( var assignment in assignments )
@@ -2034,8 +2034,8 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
         else
         {
             var index = 0;
-            var identityColumns = node.CreationNode.Columns.Span;
-            if ( identityColumns.Length == 0 )
+            var identityColumns = node.CreationNode.Columns;
+            if ( identityColumns.Count == 0 )
             {
                 var reason = isUpdate
                     ? ExceptionResources.UpdateTargetDoesNotHaveAnyColumns
@@ -2044,7 +2044,7 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
                 throw new SqlNodeVisitorException( reason, this, source );
             }
 
-            identityColumnNames = new string[identityColumns.Length];
+            identityColumnNames = new string[identityColumns.Count];
             foreach ( var column in identityColumns )
                 identityColumnNames[index++] = column.Name;
         }

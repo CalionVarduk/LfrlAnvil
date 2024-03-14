@@ -1123,7 +1123,7 @@ public class FunctionExpressionTests : TestsBase
         {
             sut.NodeType.Should().Be( SqlNodeType.AggregateFunctionExpression );
             sut.FunctionType.Should().Be( SqlFunctionType.Lag );
-            sut.Arguments.Length.Should().Be( 2 );
+            sut.Arguments.Count.Should().Be( 2 );
             sut.Arguments.ToArray().ElementAtOrDefault( 0 ).Should().BeSameAs( arg );
             sut.Arguments.ToArray().ElementAtOrDefault( 1 ).Should().BeEquivalentTo( SqlNode.Literal( 1 ) );
             sut.Traits.Should().BeEmpty();
@@ -1180,7 +1180,7 @@ public class FunctionExpressionTests : TestsBase
         {
             sut.NodeType.Should().Be( SqlNodeType.AggregateFunctionExpression );
             sut.FunctionType.Should().Be( SqlFunctionType.Lag );
-            sut.Arguments.Length.Should().Be( 3 );
+            sut.Arguments.Count.Should().Be( 3 );
             sut.Arguments.ToArray().ElementAtOrDefault( 0 ).Should().BeSameAs( arg );
             sut.Arguments.ToArray().ElementAtOrDefault( 1 ).Should().BeEquivalentTo( SqlNode.Literal( 1 ) );
             sut.Arguments.ToArray().ElementAtOrDefault( 2 ).Should().BeSameAs( @default );
@@ -1223,7 +1223,7 @@ public class FunctionExpressionTests : TestsBase
         {
             sut.NodeType.Should().Be( SqlNodeType.AggregateFunctionExpression );
             sut.FunctionType.Should().Be( SqlFunctionType.Lead );
-            sut.Arguments.Length.Should().Be( 2 );
+            sut.Arguments.Count.Should().Be( 2 );
             sut.Arguments.ToArray().ElementAtOrDefault( 0 ).Should().BeSameAs( arg );
             sut.Arguments.ToArray().ElementAtOrDefault( 1 ).Should().BeEquivalentTo( SqlNode.Literal( 1 ) );
             sut.Traits.Should().BeEmpty();
@@ -1280,7 +1280,7 @@ public class FunctionExpressionTests : TestsBase
         {
             sut.NodeType.Should().Be( SqlNodeType.AggregateFunctionExpression );
             sut.FunctionType.Should().Be( SqlFunctionType.Lead );
-            sut.Arguments.Length.Should().Be( 3 );
+            sut.Arguments.Count.Should().Be( 3 );
             sut.Arguments.ToArray().ElementAtOrDefault( 0 ).Should().BeSameAs( arg );
             sut.Arguments.ToArray().ElementAtOrDefault( 1 ).Should().BeEquivalentTo( SqlNode.Literal( 1 ) );
             sut.Arguments.ToArray().ElementAtOrDefault( 2 ).Should().BeSameAs( @default );

@@ -960,7 +960,7 @@ public class SqlNodeVisitorTests : TestsBase
 
         sut.VisitExists( query.Exists() );
 
-        sut.Nodes.Should().BeSequentiallyEqualTo( query.Parameters.Span[0] );
+        sut.Nodes.Should().BeSequentiallyEqualTo( query.Parameters[0] );
     }
 
     [Fact]
@@ -994,7 +994,7 @@ public class SqlNodeVisitorTests : TestsBase
 
         sut.VisitInQuery( value.InQuery( query ) );
 
-        sut.Nodes.Should().BeSequentiallyEqualTo( value, query.Parameters.Span[0] );
+        sut.Nodes.Should().BeSequentiallyEqualTo( value, query.Parameters[0] );
     }
 
     [Fact]
@@ -1013,7 +1013,7 @@ public class SqlNodeVisitorTests : TestsBase
 
         sut.VisitNamedFunctionRecordSet( function.AsSet( "bar" ) );
 
-        sut.Nodes.Should().BeSequentiallyEqualTo( function.Arguments.Span[0] );
+        sut.Nodes.Should().BeSequentiallyEqualTo( function.Arguments[0] );
     }
 
     [Fact]
@@ -1056,7 +1056,7 @@ public class SqlNodeVisitorTests : TestsBase
 
         sut.VisitQueryRecordSet( query.AsSet( "bar" ) );
 
-        sut.Nodes.Should().BeSequentiallyEqualTo( query.Parameters.Span[0] );
+        sut.Nodes.Should().BeSequentiallyEqualTo( query.Parameters[0] );
     }
 
     [Fact]
@@ -1151,7 +1151,7 @@ public class SqlNodeVisitorTests : TestsBase
                     .Select( x => new[] { x.From["x"].AsSelf() } )
                     .CompoundWith(
                         SqlNode.RawRecordSet( "bar" ).ToDataSource().Select( x => new[] { x.From["x"].AsSelf() } ).ToUnion() )
-                    .Selection.Span[0] ) );
+                    .Selection[0] ) );
 
         action.Should().NotThrow();
     }
@@ -1226,7 +1226,7 @@ public class SqlNodeVisitorTests : TestsBase
         sut.VisitCompoundQuery( query );
 
         sut.Nodes.Should()
-            .BeSequentiallyEqualTo( query.Selection.Span[0], firstRecordSet, firstRecordSet, secondRecordSet, secondRecordSet, trait );
+            .BeSequentiallyEqualTo( query.Selection[0], firstRecordSet, firstRecordSet, secondRecordSet, secondRecordSet, trait );
     }
 
     [Fact]
@@ -1328,7 +1328,7 @@ public class SqlNodeVisitorTests : TestsBase
 
         sut.VisitCommonTableExpressionTrait( SqlNode.CommonTableExpressionTrait( queries[0].ToCte( "X" ), queries[1].ToCte( "Y" ) ) );
 
-        sut.Nodes.Should().BeSequentiallyEqualTo( queries[0].Parameters.Span[0], queries[1].Parameters.Span[0] );
+        sut.Nodes.Should().BeSequentiallyEqualTo( queries[0].Parameters[0], queries[1].Parameters[0] );
     }
 
     [Fact]
@@ -1377,7 +1377,7 @@ public class SqlNodeVisitorTests : TestsBase
 
         sut.VisitCommonTableExpression( query.ToCte( "X" ) );
 
-        sut.Nodes.Should().BeSequentiallyEqualTo( query.Parameters.Span[0] );
+        sut.Nodes.Should().BeSequentiallyEqualTo( query.Parameters[0] );
     }
 
     [Fact]

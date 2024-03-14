@@ -1,6 +1,4 @@
-﻿using System;
-using LfrlAnvil.Extensions;
-using LfrlAnvil.Sql.Expressions.Objects;
+﻿using LfrlAnvil.Sql.Expressions.Objects;
 
 namespace LfrlAnvil.Sql.Expressions.Traits;
 
@@ -12,7 +10,7 @@ public sealed class SqlCommonTableExpressionTraitNode : SqlTraitNode
         CommonTableExpressions = commonTableExpressions;
     }
 
-    public ReadOnlyMemory<SqlCommonTableExpressionNode> CommonTableExpressions { get; }
+    public ReadOnlyArray<SqlCommonTableExpressionNode> CommonTableExpressions { get; }
 
     public bool ContainsRecursive
     {

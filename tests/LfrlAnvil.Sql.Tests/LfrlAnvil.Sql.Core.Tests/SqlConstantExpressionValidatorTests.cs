@@ -892,7 +892,7 @@ public class SqlConstantExpressionValidatorTests : TestsBase
             .ToDataSource()
             .Select( s => new[] { s.From["a"].AsSelf() } )
             .CompoundWith( SqlNode.RawRecordSet( "bar" ).ToDataSource().Select( s => new[] { s.From["a"].AsSelf() } ).ToUnionAll() )
-            .Selection.Span[0];
+            .Selection[0];
 
         _sut.VisitSelectCompoundField( node );
 
@@ -1310,7 +1310,7 @@ public class SqlConstantExpressionValidatorTests : TestsBase
 
         public override SqlAggregateFunctionExpressionNode SetTraits(Chain<SqlTraitNode> traits)
         {
-            return new AggregateFunctionMock( Arguments.ToArray(), traits );
+            return new AggregateFunctionMock( Arguments.AsSpan().ToArray(), traits );
         }
     }
 

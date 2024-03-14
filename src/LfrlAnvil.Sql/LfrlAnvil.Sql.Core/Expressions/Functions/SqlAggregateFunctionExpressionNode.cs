@@ -1,17 +1,16 @@
-﻿using System;
-using System.Diagnostics.Contracts;
+﻿using System.Diagnostics.Contracts;
 using LfrlAnvil.Sql.Expressions.Traits;
 
 namespace LfrlAnvil.Sql.Expressions.Functions;
 
 public abstract class SqlAggregateFunctionExpressionNode : SqlExpressionNode
 {
-    protected SqlAggregateFunctionExpressionNode(ReadOnlyMemory<SqlExpressionNode> arguments, Chain<SqlTraitNode> traits)
+    protected SqlAggregateFunctionExpressionNode(ReadOnlyArray<SqlExpressionNode> arguments, Chain<SqlTraitNode> traits)
         : this( SqlFunctionType.Custom, arguments, traits ) { }
 
     internal SqlAggregateFunctionExpressionNode(
         SqlFunctionType functionType,
-        ReadOnlyMemory<SqlExpressionNode> arguments,
+        ReadOnlyArray<SqlExpressionNode> arguments,
         Chain<SqlTraitNode> traits)
         : base( SqlNodeType.AggregateFunctionExpression )
     {
@@ -22,7 +21,7 @@ public abstract class SqlAggregateFunctionExpressionNode : SqlExpressionNode
     }
 
     public SqlFunctionType FunctionType { get; }
-    public ReadOnlyMemory<SqlExpressionNode> Arguments { get; }
+    public ReadOnlyArray<SqlExpressionNode> Arguments { get; }
     public Chain<SqlTraitNode> Traits { get; }
 
     [Pure]

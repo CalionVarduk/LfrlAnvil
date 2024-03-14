@@ -110,7 +110,7 @@ AND WHERE ([foo].[a] : ?) > (""5"" : System.Int32)" );
             assignmentsSelector.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( dataSource );
             sut.NodeType.Should().Be( SqlNodeType.Update );
             sut.DataSource.Should().BeSameAs( dataSource );
-            sut.Assignments.ToArray().Should().BeSequentiallyEqualTo( assignments );
+            sut.Assignments.Should().BeSequentiallyEqualTo( assignments );
             ((ISqlStatementNode)sut).Node.Should().BeSameAs( sut );
             ((ISqlStatementNode)sut).QueryCount.Should().Be( 0 );
             text.Should()
@@ -138,7 +138,7 @@ SET
         {
             sut.NodeType.Should().Be( SqlNodeType.Update );
             sut.DataSource.Should().BeSameAs( dataSource );
-            sut.Assignments.ToArray().Should().BeEmpty();
+            sut.Assignments.Should().BeEmpty();
             ((ISqlStatementNode)sut).Node.Should().BeSameAs( sut );
             ((ISqlStatementNode)sut).QueryCount.Should().Be( 0 );
             text.Should()
@@ -174,7 +174,7 @@ SET" );
             sut.Should().NotBeSameAs( oldUpdate );
             sut.NodeType.Should().Be( SqlNodeType.Update );
             sut.DataSource.Should().BeSameAs( dataSource );
-            sut.Assignments.ToArray().Should().BeSequentiallyEqualTo( oldAssignments[0], newAssignments[0], newAssignments[1] );
+            sut.Assignments.Should().BeSequentiallyEqualTo( oldAssignments[0], newAssignments[0], newAssignments[1] );
             text.Should()
                 .Be(
                     @"UPDATE FROM [foo]
@@ -230,7 +230,7 @@ SET
             sut.NodeType.Should().Be( SqlNodeType.InsertInto );
             sut.Source.Should().BeSameAs( query );
             sut.RecordSet.Should().BeSameAs( set );
-            sut.DataFields.ToArray().Should().BeSequentiallyEqualTo( dataFields );
+            sut.DataFields.Should().BeSequentiallyEqualTo( dataFields );
             ((ISqlStatementNode)sut).Node.Should().BeSameAs( sut );
             ((ISqlStatementNode)sut).QueryCount.Should().Be( 0 );
             text.Should()
@@ -262,7 +262,7 @@ SELECT a, b FROM bar" );
             sut.NodeType.Should().Be( SqlNodeType.InsertInto );
             sut.Source.Should().BeSameAs( values );
             sut.RecordSet.Should().BeSameAs( set );
-            sut.DataFields.ToArray().Should().BeSequentiallyEqualTo( dataFields );
+            sut.DataFields.Should().BeSequentiallyEqualTo( dataFields );
             ((ISqlStatementNode)sut).Node.Should().BeSameAs( sut );
             ((ISqlStatementNode)sut).QueryCount.Should().Be( 0 );
             text.Should()
@@ -286,7 +286,7 @@ VALUES
             sut.NodeType.Should().Be( SqlNodeType.InsertInto );
             sut.Source.Should().BeSameAs( query );
             sut.RecordSet.Should().BeSameAs( set );
-            sut.DataFields.ToArray().Should().BeEmpty();
+            sut.DataFields.Should().BeEmpty();
             ((ISqlStatementNode)sut).Node.Should().BeSameAs( sut );
             ((ISqlStatementNode)sut).QueryCount.Should().Be( 0 );
             text.Should()

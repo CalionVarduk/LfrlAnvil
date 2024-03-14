@@ -781,7 +781,7 @@ WHERE value < 10" );
 ) AS [foo]" );
 
             var dataField = sut.GetField( "a" );
-            dataField.Selection.Should().BeSameAs( query.Selection.Span[0] );
+            dataField.Selection.Should().BeSameAs( query.Selection[0] );
             dataField.Expression.Should().BeNull();
         }
     }

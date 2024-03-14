@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace LfrlAnvil.Sql.Expressions.Functions;
+﻿namespace LfrlAnvil.Sql.Expressions.Functions;
 
 public abstract class SqlFunctionExpressionNode : SqlExpressionNode
 {
@@ -15,6 +13,6 @@ public abstract class SqlFunctionExpressionNode : SqlExpressionNode
         Arguments = arguments;
     }
 
-    public ReadOnlyMemory<SqlExpressionNode> Arguments { get; }
+    public ReadOnlyArray<SqlExpressionNode> Arguments { get; }
     public SqlFunctionType FunctionType { get; }
 }

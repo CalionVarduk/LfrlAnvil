@@ -16,7 +16,7 @@ public sealed class SqlDataSourceNodeMock : SqlDataSourceNode
     }
 
     public override SqlRecordSetNode From => _from[0];
-    public override ReadOnlyMemory<SqlDataSourceJoinOnNode> Joins => ReadOnlyMemory<SqlDataSourceJoinOnNode>.Empty;
+    public override ReadOnlyArray<SqlDataSourceJoinOnNode> Joins => ReadOnlyArray<SqlDataSourceJoinOnNode>.Empty;
     public override IReadOnlyCollection<SqlRecordSetNode> RecordSets => _from;
 
     public override SqlRecordSetNode GetRecordSet(string name)

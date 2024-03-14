@@ -6,7 +6,6 @@ using LfrlAnvil.Functional;
 using LfrlAnvil.Sql;
 using LfrlAnvil.Sql.Exceptions;
 using LfrlAnvil.Sql.Expressions;
-using LfrlAnvil.Sql.Expressions.Functions;
 using LfrlAnvil.Sql.Expressions.Objects;
 using LfrlAnvil.Sql.Expressions.Traits;
 using LfrlAnvil.Sql.Expressions.Visitors;
@@ -17,6 +16,7 @@ using LfrlAnvil.Sqlite.Objects.Builders;
 using LfrlAnvil.Sqlite.Tests.Helpers;
 using LfrlAnvil.TestExtensions.FluentAssertions;
 using LfrlAnvil.TestExtensions.Sql.FluentAssertions;
+using LfrlAnvil.TestExtensions.Sql.Mocks;
 
 namespace LfrlAnvil.Sqlite.Tests;
 
@@ -847,7 +847,7 @@ END" );
     [Fact]
     public void Visit_ShouldThrowUnrecognizedSqlNodeException_WhenFunctionIsCustom()
     {
-        var function = new FunctionMock();
+        var function = new SqlFunctionNodeMock();
 
         var action = Lambda.Of( () => _sut.Visit( function ) );
 
@@ -1080,7 +1080,7 @@ END" );
     [Fact]
     public void Visit_ShouldThrowUnrecognizedSqlNodeException_WhenAggregateFunctionIsCustom()
     {
-        var function = new AggregateFunctionMock();
+        var function = new SqlAggregateFunctionNodeMock();
 
         var action = Lambda.Of( () => _sut.Visit( function ) );
 
@@ -1670,7 +1670,7 @@ LEFT JOIN qux ON qux.b = foo.b" );
                     .Select( t => new[] { t.From["a"].AsSelf() } )
                     .ToUnionAll() );
 
-        _sut.Visit( query.Selection.Span[0] );
+        _sut.Visit( query.Selection[0] );
 
         _sut.Context.Sql.ToString().Should().Be( "\"a\"" );
     }
@@ -1689,7 +1689,7 @@ LEFT JOIN qux ON qux.b = foo.b" );
                     .Select( t => new[] { t.From["a"].AsSelf() } )
                     .ToUnionAll() );
 
-        _sut.VisitChild( query.Selection.Span[0] );
+        _sut.VisitChild( query.Selection[0] );
 
         _sut.Context.Sql.ToString().Should().Be( "\"a\"" );
     }
@@ -2277,7 +2277,7 @@ LIMIT 50 OFFSET 75" );
     [Fact]
     public void Visit_ShouldThrowUnrecognizedSqlNodeException_WhenNodeIsCustomWindowFrame()
     {
-        var node = new WindowFrameMock();
+        var node = new SqlWindowFrameMock();
 
         var action = Lambda.Of( () => _sut.Visit( node ) );
 
@@ -4443,7 +4443,7 @@ BEGIN" );
     [Fact]
     public void Visit_ShouldThrowUnrecognizedSqlNodeException_WhenNodeIsCustom()
     {
-        var node = new NodeMock();
+        var node = new SqlNodeMock();
 
         var action = Lambda.Of( () => _sut.Visit( node ) );
 
@@ -4519,30 +4519,5 @@ BEGIN" );
         var builder = CreateViewBuilder( schemaName, viewName, source );
         var db = new SqliteDatabaseMock( builder.Database );
         return db.Schemas.Get( schemaName ).Objects.GetView( viewName );
-    }
-
-    private sealed class FunctionMock : SqlFunctionExpressionNode
-    {
-        public FunctionMock()
-            : base( Array.Empty<SqlExpressionNode>() ) { }
-    }
-
-    private sealed class AggregateFunctionMock : SqlAggregateFunctionExpressionNode
-    {
-        public AggregateFunctionMock()
-            : base( ReadOnlyMemory<SqlExpressionNode>.Empty, Chain<SqlTraitNode>.Empty ) { }
-
-        public override SqlAggregateFunctionExpressionNode SetTraits(Chain<SqlTraitNode> traits)
-        {
-            return new AggregateFunctionMock();
-        }
-    }
-
-    private sealed class NodeMock : SqlNodeBase { }
-
-    private sealed class WindowFrameMock : SqlWindowFrameNode
-    {
-        public WindowFrameMock()
-            : base( SqlWindowFrameBoundary.UnboundedPreceding, SqlWindowFrameBoundary.UnboundedFollowing ) { }
     }
 }

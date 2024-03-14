@@ -39,13 +39,13 @@ public partial class BaseExpressionsTests
                 (element1?.ToString()).Should().Be( "[a]" );
                 (element1?.NodeType).Should().Be( SqlNodeType.SelectCompoundField );
                 (element1?.Name).Should().Be( "a" );
-                (element1?.Origins.Length).Should().Be( 2 );
+                (element1?.Origins.Count).Should().Be( 2 );
 
-                var origin1 = element1?.Origins.Span[0];
+                var origin1 = element1?.Origins[0];
                 (origin1?.QueryIndex).Should().Be( 0 );
                 (origin1?.Selection).Should().BeSameAs( a1Select );
                 (origin1?.Expression).Should().BeSameAs( a1 );
-                var origin2 = element1?.Origins.Span[1];
+                var origin2 = element1?.Origins[1];
                 (origin2?.QueryIndex).Should().Be( 1 );
                 (origin2?.Selection).Should().BeSameAs( a2Select );
                 (origin2?.Expression).Should().BeSameAs( a2 );
@@ -54,13 +54,13 @@ public partial class BaseExpressionsTests
                 (element2?.ToString()).Should().Be( "[b]" );
                 (element2?.NodeType).Should().Be( SqlNodeType.SelectCompoundField );
                 (element2?.Name).Should().Be( "b" );
-                (element2?.Origins.Length).Should().Be( 2 );
+                (element2?.Origins.Count).Should().Be( 2 );
 
-                var origin3 = element2?.Origins.Span[0];
+                var origin3 = element2?.Origins[0];
                 (origin3?.QueryIndex).Should().Be( 0 );
                 (origin3?.Selection).Should().BeSameAs( b1Select );
                 (origin3?.Expression).Should().BeSameAs( b1 );
-                var origin4 = element2?.Origins.Span[1];
+                var origin4 = element2?.Origins[1];
                 (origin4?.QueryIndex).Should().Be( 1 );
                 (origin4?.Selection).Should().BeSameAs( b2Select );
                 (origin4?.Expression).Should().BeSameAs( b2 );

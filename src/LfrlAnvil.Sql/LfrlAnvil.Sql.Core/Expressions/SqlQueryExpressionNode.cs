@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
-using LfrlAnvil.Extensions;
 using LfrlAnvil.Sql.Exceptions;
 using LfrlAnvil.Sql.Expressions.Objects;
 using LfrlAnvil.Sql.Internal;
@@ -14,7 +13,7 @@ public abstract class SqlQueryExpressionNode : SqlExpressionNode, ISqlStatementN
     internal SqlQueryExpressionNode(SqlNodeType nodeType)
         : base( nodeType ) { }
 
-    public abstract ReadOnlyMemory<SqlSelectNode> Selection { get; }
+    public abstract ReadOnlyArray<SqlSelectNode> Selection { get; }
     SqlNodeBase ISqlStatementNode.Node => this;
     int ISqlStatementNode.QueryCount => 1;
 
@@ -31,7 +30,7 @@ public abstract class SqlQueryExpressionNode : SqlExpressionNode, ISqlStatementN
     [Pure]
     protected internal virtual Dictionary<string, SqlQueryDataFieldNode> ExtractKnownDataFields(SqlRecordSetNode recordSet)
     {
-        var visitor = new DataFieldVisitor( recordSet, Selection.Length );
+        var visitor = new DataFieldVisitor( recordSet, Selection.Count );
         foreach ( var selection in Selection )
         {
             visitor.Selection = selection;

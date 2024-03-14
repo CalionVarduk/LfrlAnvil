@@ -163,7 +163,7 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
 
     public override void VisitTruncateFunction(SqlTruncateFunctionExpressionNode node)
     {
-        VisitSimpleFunction( node.Arguments.Length == 1 ? "TRUNC" : "TRUNC2", node );
+        VisitSimpleFunction( node.Arguments.Count == 1 ? "TRUNC" : "TRUNC2", node );
     }
 
     public override void VisitRoundFunction(SqlRoundFunctionExpressionNode node)
@@ -183,16 +183,16 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
 
     public override void VisitMinFunction(SqlMinFunctionExpressionNode node)
     {
-        if ( node.Arguments.Length == 1 )
-            VisitChild( node.Arguments.Span[0] );
+        if ( node.Arguments.Count == 1 )
+            VisitChild( node.Arguments[0] );
         else
             VisitSimpleFunction( "MIN", node );
     }
 
     public override void VisitMaxFunction(SqlMaxFunctionExpressionNode node)
     {
-        if ( node.Arguments.Length == 1 )
-            VisitChild( node.Arguments.Span[0] );
+        if ( node.Arguments.Count == 1 )
+            VisitChild( node.Arguments[0] );
         else
             VisitSimpleFunction( "MAX", node );
     }
@@ -201,7 +201,7 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
     {
         var traits = ExtractAggregateFunctionTraits( node.Traits );
         AppendDelimitedSchemaObjectName( node.Name );
-        VisitAggregateFunctionArgumentsAndTraits( node.Arguments.Span, traits );
+        VisitAggregateFunctionArgumentsAndTraits( node.Arguments, traits );
     }
 
     public override void VisitMinAggregateFunction(SqlMinAggregateFunctionExpressionNode node)
@@ -437,7 +437,7 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
         AppendDelimitedSchemaObjectName( node.Name );
         Context.Sql.AppendSpace().Append( "FOREIGN" ).AppendSpace().Append( "KEY" ).AppendSpace().Append( '(' );
 
-        if ( node.Columns.Length > 0 )
+        if ( node.Columns.Count > 0 )
         {
             foreach ( var column in node.Columns )
             {
@@ -452,7 +452,7 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
         AppendDelimitedRecordSetName( node.ReferencedTable );
         Context.Sql.AppendSpace().Append( '(' );
 
-        if ( node.ReferencedColumns.Length > 0 )
+        if ( node.ReferencedColumns.Count > 0 )
         {
             foreach ( var column in node.ReferencedColumns )
             {
@@ -703,14 +703,14 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
     {
         var traits = ExtractAggregateFunctionTraits( node.Traits );
         Context.Sql.Append( functionName );
-        VisitAggregateFunctionArgumentsAndTraits( node.Arguments.Span, traits );
+        VisitAggregateFunctionArgumentsAndTraits( node.Arguments, traits );
     }
 
-    protected void VisitAggregateFunctionArgumentsAndTraits(ReadOnlySpan<SqlExpressionNode> arguments, SqlAggregateFunctionTraits traits)
+    protected void VisitAggregateFunctionArgumentsAndTraits(ReadOnlyArray<SqlExpressionNode> arguments, SqlAggregateFunctionTraits traits)
     {
         Context.Sql.Append( '(' );
 
-        if ( arguments.Length > 0 )
+        if ( arguments.Count > 0 )
         {
             using ( Context.TempIndentIncrease() )
             {
@@ -805,7 +805,7 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
         VisitDataSourceBeforeTraits( in traits );
         Context.Sql.Append( "UPDATE" ).AppendSpace();
         AppendDelimitedRecordSetName( node.DataSource.From );
-        VisitUpdateAssignmentRange( node.Assignments.Span );
+        VisitUpdateAssignmentRange( node.Assignments );
         VisitDataSourceAfterTraits( in traits );
     }
 
@@ -819,7 +819,7 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
         AppendDelimitedRecordSetName( targetInfo.BaseTarget );
 
         using ( TempReplaceRecordSet( targetInfo.Target, targetInfo.BaseTarget ) )
-            VisitUpdateAssignmentRange( node.Assignments.Span );
+            VisitUpdateAssignmentRange( node.Assignments );
 
         var filter = CreateComplexDeleteOrUpdateFilter( targetInfo, node.DataSource );
         Context.AppendIndent();
@@ -840,7 +840,7 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
         AppendDelimitedRecordSetName( node.DataSource.From );
 
         using ( TempReplaceRecordSet( targetInfo.Target, targetInfo.BaseTarget ) )
-            VisitUpdateAssignmentRange( node.Assignments.Span );
+            VisitUpdateAssignmentRange( node.Assignments );
 
         VisitDataSourceAfterTraits( in traits );
     }

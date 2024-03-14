@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace LfrlAnvil.Sql.Expressions;
+﻿namespace LfrlAnvil.Sql.Expressions;
 
 public sealed class SqlStatementBatchNode : SqlNodeBase, ISqlStatementNode
 {
@@ -13,7 +11,7 @@ public sealed class SqlStatementBatchNode : SqlNodeBase, ISqlStatementNode
             QueryCount += statement.QueryCount;
     }
 
-    public ReadOnlyMemory<ISqlStatementNode> Statements { get; }
+    public ReadOnlyArray<ISqlStatementNode> Statements { get; }
     public int QueryCount { get; }
     SqlNodeBase ISqlStatementNode.Node => this;
 }

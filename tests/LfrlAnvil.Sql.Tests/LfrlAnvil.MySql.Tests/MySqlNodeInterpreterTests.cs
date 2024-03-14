@@ -1754,7 +1754,7 @@ LEFT JOIN qux ON qux.b = foo.b" );
                     .Select( t => new[] { t.From["a"].AsSelf() } )
                     .ToUnionAll() );
 
-        _sut.Visit( query.Selection.Span[0] );
+        _sut.Visit( query.Selection[0] );
 
         _sut.Context.Sql.ToString().Should().Be( "`a`" );
     }
@@ -1773,7 +1773,7 @@ LEFT JOIN qux ON qux.b = foo.b" );
                     .Select( t => new[] { t.From["a"].AsSelf() } )
                     .ToUnionAll() );
 
-        _sut.VisitChild( query.Selection.Span[0] );
+        _sut.VisitChild( query.Selection[0] );
 
         _sut.Context.Sql.ToString().Should().Be( "`a`" );
     }

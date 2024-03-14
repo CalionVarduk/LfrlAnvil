@@ -1,13 +1,12 @@
-﻿using System;
-using System.Diagnostics.Contracts;
+﻿using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 
 namespace LfrlAnvil.Sql.Expressions;
 
 public readonly record struct SqlCreateTableConstraints(
     SqlPrimaryKeyDefinitionNode? PrimaryKey,
-    ReadOnlyMemory<SqlForeignKeyDefinitionNode> ForeignKeys,
-    ReadOnlyMemory<SqlCheckDefinitionNode> Checks)
+    ReadOnlyArray<SqlForeignKeyDefinitionNode>? ForeignKeys,
+    ReadOnlyArray<SqlCheckDefinitionNode>? Checks)
 {
     public static readonly SqlCreateTableConstraints Empty = new SqlCreateTableConstraints();
 

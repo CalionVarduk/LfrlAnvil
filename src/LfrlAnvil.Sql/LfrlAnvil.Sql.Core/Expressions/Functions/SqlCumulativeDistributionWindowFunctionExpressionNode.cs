@@ -1,5 +1,4 @@
-﻿using System;
-using System.Diagnostics.Contracts;
+﻿using System.Diagnostics.Contracts;
 using LfrlAnvil.Sql.Expressions.Traits;
 
 namespace LfrlAnvil.Sql.Expressions.Functions;
@@ -7,7 +6,7 @@ namespace LfrlAnvil.Sql.Expressions.Functions;
 public sealed class SqlCumulativeDistributionWindowFunctionExpressionNode : SqlAggregateFunctionExpressionNode
 {
     internal SqlCumulativeDistributionWindowFunctionExpressionNode(Chain<SqlTraitNode> traits)
-        : base( SqlFunctionType.CumulativeDistribution, ReadOnlyMemory<SqlExpressionNode>.Empty, traits ) { }
+        : base( SqlFunctionType.CumulativeDistribution, ReadOnlyArray<SqlExpressionNode>.Empty, traits ) { }
 
     [Pure]
     public override SqlCumulativeDistributionWindowFunctionExpressionNode AddTrait(SqlTraitNode trait)

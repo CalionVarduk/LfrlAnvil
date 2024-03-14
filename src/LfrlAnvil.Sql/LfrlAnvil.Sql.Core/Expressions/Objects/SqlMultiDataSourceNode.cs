@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using LfrlAnvil.Extensions;
@@ -38,7 +37,7 @@ public class SqlMultiDataSourceNode : SqlDataSourceNode
         if ( definitions.Length == 0 )
         {
             From = from;
-            Joins = ReadOnlyMemory<SqlDataSourceJoinOnNode>.Empty;
+            Joins = ReadOnlyArray<SqlDataSourceJoinOnNode>.Empty;
             return;
         }
 
@@ -67,12 +66,12 @@ public class SqlMultiDataSourceNode : SqlDataSourceNode
             _recordSets.Add( recordSet.Identifier, recordSet );
 
         var sourceJoins = source.Joins;
-        var offset = sourceJoins.Length;
+        var offset = sourceJoins.Count;
         SqlDataSourceJoinOnNode[] joins;
         if ( offset > 0 )
         {
             joins = new SqlDataSourceJoinOnNode[offset + newJoins.Length];
-            sourceJoins.CopyTo( joins );
+            sourceJoins.AsSpan().CopyTo( joins );
             newJoins.CopyTo( joins, offset );
         }
         else
@@ -103,12 +102,12 @@ public class SqlMultiDataSourceNode : SqlDataSourceNode
             return;
         }
 
-        var offset = sourceJoins.Length;
+        var offset = sourceJoins.Count;
         SqlDataSourceJoinOnNode[] joins;
         if ( offset > 0 )
         {
             joins = new SqlDataSourceJoinOnNode[offset + newDefinitions.Length];
-            sourceJoins.CopyTo( joins );
+            sourceJoins.AsSpan().CopyTo( joins );
         }
         else
             joins = new SqlDataSourceJoinOnNode[newDefinitions.Length];
@@ -136,7 +135,7 @@ public class SqlMultiDataSourceNode : SqlDataSourceNode
     }
 
     public sealed override SqlRecordSetNode From { get; }
-    public sealed override ReadOnlyMemory<SqlDataSourceJoinOnNode> Joins { get; }
+    public sealed override ReadOnlyArray<SqlDataSourceJoinOnNode> Joins { get; }
     public sealed override IReadOnlyCollection<SqlRecordSetNode> RecordSets => _recordSets.Values;
 
     [Pure]
