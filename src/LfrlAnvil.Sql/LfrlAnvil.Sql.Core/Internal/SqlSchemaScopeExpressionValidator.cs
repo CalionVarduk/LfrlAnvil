@@ -20,6 +20,7 @@ public class SqlSchemaScopeExpressionValidator : SqlExpressionValidator
     }
 
     public SqlSchemaBuilder Schema { get; }
+    protected Dictionary<ulong, SqlObjectBuilder>.ValueCollection ReferencedObjects => _referencedObjects.Values;
 
     public void VisitDataFieldRecordSet(SqlRecordSetNode node)
     {
@@ -138,7 +139,7 @@ public class SqlSchemaScopeExpressionValidator : SqlExpressionValidator
     [Pure]
     public SqlObjectBuilder[] GetReferencedObjects()
     {
-        return _referencedObjects.Values.ToArray();
+        return ReferencedObjects.ToArray();
     }
 
     protected void AddReferencedObject(SqlSchemaBuilder schema, SqlObjectBuilder obj)

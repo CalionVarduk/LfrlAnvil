@@ -1,8 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using LfrlAnvil.Sql.Expressions.Logical;
-using LfrlAnvil.Sql.Expressions.Visitors;
-using LfrlAnvil.Sql.Internal;
 
 namespace LfrlAnvil.Sql.Objects.Builders;
 
@@ -37,21 +35,6 @@ public abstract class SqlCheckBuilder : SqlConstraintBuilder, ISqlCheckBuilder
     {
         base.SetDefaultName();
         return this;
-    }
-
-    [Pure]
-    internal static SqlTableScopeExpressionValidator AssertConditionNode(SqlTableBuilder table, SqlConditionNode condition)
-    {
-        // TODO:
-        // move to configurable db builder interface (low priority, later)
-        var visitor = new SqlTableScopeExpressionValidator( table );
-        visitor.Visit( condition );
-
-        var errors = visitor.GetErrors();
-        if ( errors.Count > 0 )
-            throw SqlHelpers.CreateObjectBuilderException( table.Database, errors );
-
-        return visitor;
     }
 
     [Pure]

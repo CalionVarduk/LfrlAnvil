@@ -2,7 +2,6 @@
 using System.Diagnostics.Contracts;
 using LfrlAnvil.Exceptions;
 using LfrlAnvil.Sql.Expressions.Logical;
-using LfrlAnvil.Sql.Expressions.Traits;
 using LfrlAnvil.Sql.Expressions.Visitors;
 using LfrlAnvil.Sql.Internal;
 using ExceptionResources = LfrlAnvil.Sql.Exceptions.ExceptionResources;
@@ -278,9 +277,7 @@ public abstract class SqlIndexBuilder : SqlConstraintBuilder, ISqlIndexBuilder
     [Pure]
     protected ReadOnlyArray<SqlColumnBuilder> ValidateFilterCondition(SqlConditionNode condition)
     {
-        // TODO:
-        // move to configurable db builder interface (low priority, later)
-        var validator = new SqlTableScopeExpressionValidator( Table );
+        var validator = CreateFilterConditionValidator();
         validator.Visit( condition );
 
         var errors = validator.GetErrors();
@@ -288,6 +285,12 @@ public abstract class SqlIndexBuilder : SqlConstraintBuilder, ISqlIndexBuilder
             throw SqlHelpers.CreateObjectBuilderException( Database, errors );
 
         return validator.GetReferencedColumns();
+    }
+
+    [Pure]
+    protected virtual SqlTableScopeExpressionValidator CreateFilterConditionValidator()
+    {
+        return new SqlTableScopeExpressionValidator( Table );
     }
 
     protected void SetColumnReferences(SqlIndexBuilderColumns<SqlColumnBuilder> columns, ReadOnlyArray<SqlColumnBuilder> referencedColumns)
@@ -385,24 +388,6 @@ public abstract class SqlIndexBuilder : SqlConstraintBuilder, ISqlIndexBuilder
         AfterIsVirtualChange( false );
         PrimaryKey = primaryKey;
         AfterPrimaryKeyChange( null );
-    }
-
-    [Pure]
-    internal static SqlTableScopeExpressionValidator AssertColumnExpressions(
-        SqlTableBuilder table,
-        ReadOnlyArray<SqlOrderByNode> expressions)
-    {
-        // TODO:
-        // move to configurable db builder interface (low priority, later)
-        var visitor = new SqlTableScopeExpressionValidator( table );
-        foreach ( var orderBy in expressions )
-            visitor.Visit( orderBy.Expression );
-
-        var errors = visitor.GetErrors();
-        if ( errors.Count > 0 )
-            throw SqlHelpers.CreateObjectBuilderException( table.Database, errors );
-
-        return visitor;
     }
 
     ISqlIndexBuilder ISqlIndexBuilder.SetDefaultName()

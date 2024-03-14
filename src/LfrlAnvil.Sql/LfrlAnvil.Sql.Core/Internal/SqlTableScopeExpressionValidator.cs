@@ -22,6 +22,7 @@ public class SqlTableScopeExpressionValidator : SqlExpressionValidator
     }
 
     public SqlTableBuilder Table { get; }
+    protected Dictionary<ulong, SqlColumnBuilder>.ValueCollection ReferencedColumns => _referencedColumns.Values;
 
     public override void VisitColumnBuilder(SqlColumnBuilderNode node)
     {
@@ -350,7 +351,7 @@ public class SqlTableScopeExpressionValidator : SqlExpressionValidator
     [Pure]
     public SqlColumnBuilder[] GetReferencedColumns()
     {
-        return _referencedColumns.Values.ToArray();
+        return ReferencedColumns.ToArray();
     }
 
     protected void AddReferencedColumn(SqlColumnBuilder column)

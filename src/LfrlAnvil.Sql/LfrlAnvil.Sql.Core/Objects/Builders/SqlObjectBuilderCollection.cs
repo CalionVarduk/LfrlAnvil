@@ -7,6 +7,7 @@ using LfrlAnvil.Sql.Exceptions;
 using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Expressions.Logical;
 using LfrlAnvil.Sql.Expressions.Traits;
+using LfrlAnvil.Sql.Expressions.Visitors;
 using LfrlAnvil.Sql.Internal;
 
 namespace LfrlAnvil.Sql.Objects.Builders;
@@ -143,9 +144,6 @@ public abstract class SqlObjectBuilderCollection : SqlBuilderApi, ISqlObjectBuil
 
     public SqlTableBuilder GetOrCreateTable(string name)
     {
-        // TODO:
-        // move name validation to configurable db builder interface (low priority, later)
-        // maybe include this in the interface responsible for default names
         Schema.ThrowIfRemoved();
         Schema.Database.ThrowIfNameIsInvalid( SqlObjectType.Table, name );
 
@@ -170,13 +168,18 @@ public abstract class SqlObjectBuilderCollection : SqlBuilderApi, ISqlObjectBuil
         Schema.ThrowIfRemoved();
         Schema.Database.ThrowIfNameIsInvalid( SqlObjectType.View, name );
 
-        var visitor = SqlViewBuilder.AssertSourceNode( Schema, source );
+        var validator = CreateViewSourceValidator();
+        validator.Visit( source );
+
+        var errors = validator.GetErrors();
+        if ( errors.Count > 0 )
+            throw SqlHelpers.CreateObjectBuilderException( Schema.Database, errors );
 
         ref var obj = ref CollectionsMarshal.GetValueRefOrAddDefault( _map, name, out var exists )!;
         if ( exists )
             throw SqlHelpers.CreateObjectBuilderException( Schema.Database, ExceptionResources.NameIsAlreadyTaken( obj, name ) );
 
-        var view = CreateViewBuilder( name, source, visitor.GetReferencedObjects() );
+        var view = CreateViewBuilder( name, source, validator.GetReferencedObjects() );
         Assume.Equals( view.Name, name );
         obj = view;
         AfterCreateView( view );
@@ -255,6 +258,24 @@ public abstract class SqlObjectBuilderCollection : SqlBuilderApi, ISqlObjectBuil
     }
 
     [Pure]
+    protected virtual SqlTableScopeExpressionValidator CreateCheckConditionValidator(SqlTableBuilder table)
+    {
+        return new SqlTableScopeExpressionValidator( table );
+    }
+
+    [Pure]
+    protected virtual SqlTableScopeExpressionValidator CreateIndexColumnExpressionValidator(SqlTableBuilder table)
+    {
+        return new SqlTableScopeExpressionValidator( table );
+    }
+
+    [Pure]
+    protected virtual SqlSchemaScopeExpressionValidator CreateViewSourceValidator()
+    {
+        return new SqlSchemaScopeExpressionValidator( Schema );
+    }
+
+    [Pure]
     protected static bool CanReplaceWithPrimaryKey(SqlObjectBuilder obj, SqlPrimaryKeyBuilder? oldPrimaryKey)
     {
         if ( oldPrimaryKey is null )
@@ -278,7 +299,15 @@ public abstract class SqlObjectBuilderCollection : SqlBuilderApi, ISqlObjectBuil
     internal SqlIndexBuilder CreateIndex(SqlTableBuilder table, string name, ReadOnlyArray<SqlOrderByNode> columns, bool isUnique)
     {
         Schema.Database.ThrowIfNameIsInvalid( SqlObjectType.Index, name );
-        var visitor = SqlIndexBuilder.AssertColumnExpressions( table, columns );
+
+        var validator = CreateIndexColumnExpressionValidator( table );
+        foreach ( var orderBy in columns )
+            validator.Visit( orderBy.Expression );
+
+        var errors = validator.GetErrors();
+        if ( errors.Count > 0 )
+            throw SqlHelpers.CreateObjectBuilderException( table.Database, errors );
+
         var indexColumns = new SqlIndexBuilderColumns<SqlColumnBuilder>( columns );
         ThrowIfIndexColumnsAreInvalid( table, indexColumns, isUnique );
 
@@ -286,7 +315,7 @@ public abstract class SqlObjectBuilderCollection : SqlBuilderApi, ISqlObjectBuil
         if ( exists )
             throw SqlHelpers.CreateObjectBuilderException( Schema.Database, ExceptionResources.NameIsAlreadyTaken( obj, name ) );
 
-        var result = CreateIndexBuilder( table, name, indexColumns, isUnique, visitor.GetReferencedColumns() );
+        var result = CreateIndexBuilder( table, name, indexColumns, isUnique, validator.GetReferencedColumns() );
         Assume.Equals( result.Name, name );
         obj = result;
         return result;
@@ -332,13 +361,19 @@ public abstract class SqlObjectBuilderCollection : SqlBuilderApi, ISqlObjectBuil
     internal SqlCheckBuilder CreateCheck(SqlTableBuilder table, string name, SqlConditionNode condition)
     {
         table.Database.ThrowIfNameIsInvalid( SqlObjectType.Check, name );
-        var visitor = SqlCheckBuilder.AssertConditionNode( table, condition );
+
+        var validator = CreateCheckConditionValidator( table );
+        validator.Visit( condition );
+
+        var errors = validator.GetErrors();
+        if ( errors.Count > 0 )
+            throw SqlHelpers.CreateObjectBuilderException( table.Database, errors );
 
         ref var obj = ref CollectionsMarshal.GetValueRefOrAddDefault( _map, name, out var exists )!;
         if ( exists )
             throw SqlHelpers.CreateObjectBuilderException( Schema.Database, ExceptionResources.NameIsAlreadyTaken( obj, name ) );
 
-        var result = CreateCheckBuilder( table, name, condition, visitor.GetReferencedColumns() );
+        var result = CreateCheckBuilder( table, name, condition, validator.GetReferencedColumns() );
         obj = result;
         return result;
     }

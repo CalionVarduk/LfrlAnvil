@@ -250,9 +250,7 @@ public abstract class SqlColumnBuilder : SqlObjectBuilder, ISqlColumnBuilder
 
     protected void ValidateDefaultValueExpression(SqlExpressionNode node)
     {
-        // TODO:
-        // move to configurable db builder interface (low priority, later)
-        var validator = new SqlConstantExpressionValidator();
+        var validator = CreateDefaultValueExpressionValidator();
         validator.Visit( node );
 
         var errors = validator.GetErrors();
@@ -261,11 +259,15 @@ public abstract class SqlColumnBuilder : SqlObjectBuilder, ISqlColumnBuilder
     }
 
     [Pure]
+    protected virtual SqlConstantExpressionValidator CreateDefaultValueExpressionValidator()
+    {
+        return new SqlConstantExpressionValidator();
+    }
+
+    [Pure]
     protected ReadOnlyArray<SqlColumnBuilder> ValidateComputationExpression(SqlExpressionNode expression)
     {
-        // TODO:
-        // move to configurable db builder interface (low priority, later)
-        var validator = new SqlTableScopeExpressionValidator( Table );
+        var validator = CreateComputationExpressionValidator();
         validator.Visit( expression );
 
         var errors = validator.GetErrors();
@@ -283,6 +285,12 @@ public abstract class SqlColumnBuilder : SqlObjectBuilder, ISqlColumnBuilder
             throw SqlHelpers.CreateObjectBuilderException( Database, errors );
 
         return result;
+    }
+
+    [Pure]
+    protected virtual SqlTableScopeExpressionValidator CreateComputationExpressionValidator()
+    {
+        return new SqlTableScopeExpressionValidator( Table );
     }
 
     protected void ThrowIfCannotHaveDefaultValue()

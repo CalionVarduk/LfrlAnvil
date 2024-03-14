@@ -44,10 +44,6 @@
 - SqlStringConcatAggregateFunctionExpressionNode: add OrderBy extension method only for this node?
 
 
-- ISqlDatabaseBuilder:
-  - add IDefaultNameProvider => allows to override default name generation (PK, FK, IX, CHK, anything else?)
-
-
 - Connection strings:
   - Some options will be hardcoded (like e.g. mysql GuidFormat=None),
   - DB objects should have an additional method that allows to provide custom user/password & maybe other options as well

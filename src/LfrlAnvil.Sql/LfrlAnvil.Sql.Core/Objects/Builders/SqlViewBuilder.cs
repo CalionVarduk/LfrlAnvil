@@ -3,7 +3,6 @@ using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Expressions.Objects;
-using LfrlAnvil.Sql.Expressions.Visitors;
 using LfrlAnvil.Sql.Internal;
 
 namespace LfrlAnvil.Sql.Objects.Builders;
@@ -99,21 +98,6 @@ public abstract class SqlViewBuilder : SqlObjectBuilder, ISqlViewBuilder
     {
         base.QuickRemoveCore();
         _referencedObjects = ReadOnlyArray<SqlObjectBuilder>.Empty;
-    }
-
-    [Pure]
-    internal static SqlSchemaScopeExpressionValidator AssertSourceNode(SqlSchemaBuilder schema, SqlQueryExpressionNode source)
-    {
-        // TODO:
-        // move to configurable db builder interface (low priority, later)
-        var visitor = new SqlSchemaScopeExpressionValidator( schema );
-        visitor.Visit( source );
-
-        var errors = visitor.GetErrors();
-        if ( errors.Count > 0 )
-            throw SqlHelpers.CreateObjectBuilderException( schema.Database, errors );
-
-        return visitor;
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
