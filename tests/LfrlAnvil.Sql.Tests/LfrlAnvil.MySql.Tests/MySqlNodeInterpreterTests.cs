@@ -13,6 +13,7 @@ using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Expressions.Objects;
 using LfrlAnvil.Sql.Expressions.Traits;
 using LfrlAnvil.Sql.Expressions.Visitors;
+using LfrlAnvil.Sql.Objects.Builders;
 using LfrlAnvil.TestExtensions.FluentAssertions;
 using LfrlAnvil.TestExtensions.Sql.FluentAssertions;
 using LfrlAnvil.TestExtensions.Sql.Mocks;
@@ -4227,6 +4228,30 @@ WHERE EXISTS (
         var typeDef = _typeDefinitions.GetByDataType( MySqlDataType.VarChar );
         _sut.Visit( SqlNode.Column( "a", typeDef, isNullable: false ) );
         _sut.Context.Sql.ToString().Should().Be( "`a` VARCHAR(65535) NOT NULL" );
+    }
+
+    [Theory]
+    [InlineData( SqlColumnComputationStorage.Virtual, "VIRTUAL" )]
+    [InlineData( SqlColumnComputationStorage.Stored, "STORED" )]
+    public void Visit_ShouldInterpretColumnDefinition_WithComputation_WhenNonNullable(
+        SqlColumnComputationStorage storage,
+        string expectedStorage)
+    {
+        _sut.Visit( SqlNode.Column<string>( "a", computation: new SqlColumnComputation( SqlNode.Literal( "abc" ), storage ) ) );
+        _sut.Context.Sql.ToString().Should().Be( $"`a` LONGTEXT GENERATED ALWAYS AS ('abc') {expectedStorage} NOT NULL" );
+    }
+
+    [Theory]
+    [InlineData( SqlColumnComputationStorage.Virtual, "VIRTUAL" )]
+    [InlineData( SqlColumnComputationStorage.Stored, "STORED" )]
+    public void Visit_ShouldInterpretColumnDefinition_WithComputation_WhenNullable(
+        SqlColumnComputationStorage storage,
+        string expectedStorage)
+    {
+        _sut.Visit(
+            SqlNode.Column<string>( "a", isNullable: true, computation: new SqlColumnComputation( SqlNode.Literal( "abc" ), storage ) ) );
+
+        _sut.Context.Sql.ToString().Should().Be( $"`a` LONGTEXT GENERATED ALWAYS AS ('abc') {expectedStorage}" );
     }
 
     [Fact]

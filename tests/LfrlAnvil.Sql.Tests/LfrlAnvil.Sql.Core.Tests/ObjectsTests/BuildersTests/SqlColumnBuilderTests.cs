@@ -868,7 +868,7 @@ public class SqlColumnBuilderTests : TestsBase
     }
 
     [Fact]
-    public void SetComputation_ShouldUpdateComputation_WhenNewNullValueIsDifferentFromOldValue()
+    public void SetComputation_ShouldUpdateComputation_WhenNewNullValueIsDifferentFromOldStoredValue()
     {
         var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
@@ -897,7 +897,36 @@ public class SqlColumnBuilderTests : TestsBase
     }
 
     [Fact]
-    public void SetComputation_ShouldUpdateComputation_WhenNewValueIsDifferentFromOldNullValue()
+    public void SetComputation_ShouldUpdateComputation_WhenNewNullValueIsDifferentFromOldVirtualValue()
+    {
+        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var table = schema.Objects.CreateTable( "T" );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        var other = table.Columns.Create( "C2" );
+        var sut = table.Columns.Create( "C3" ).SetComputation( SqlColumnComputation.Virtual( other.Node + SqlNode.Literal( 1 ) ) );
+
+        var actionCount = schema.Database.GetPendingActionCount();
+        var result = sut.SetComputation( null );
+        var actions = schema.Database.GetLastPendingActions( actionCount );
+
+        using ( new AssertionScope() )
+        {
+            result.Should().BeSameAs( sut );
+            sut.Computation.Should().BeNull();
+            sut.ReferencedComputationColumns.Should().BeEmpty();
+            other.ReferencingObjects.Should().BeEmpty();
+
+            actions.Should().HaveCount( 1 );
+            actions.ElementAtOrDefault( 0 )
+                .Sql.Should()
+                .Be(
+                    @"ALTER [Table] foo.T
+  ALTER [Column] foo.T.C3 ([5] : 'Computation' (System.Nullable`1[T is LfrlAnvil.Sql.Objects.Builders.SqlColumnComputation]) FROM SqlColumnComputation { Expression = ([foo].[T].[C2] : System.Object) + (""1"" : System.Int32), Storage = Virtual });" );
+        }
+    }
+
+    [Fact]
+    public void SetComputation_ShouldUpdateComputation_WhenNewStoredValueIsDifferentFromOldNullValue()
     {
         var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
@@ -930,15 +959,50 @@ public class SqlColumnBuilderTests : TestsBase
     }
 
     [Fact]
-    public void SetComputation_ShouldUpdateComputation_WhenNewExpressionIsDifferentFromOldExpression()
+    public void SetComputation_ShouldUpdateComputation_WhenNewVirtualValueIsDifferentFromOldNullValue()
+    {
+        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var table = schema.Objects.CreateTable( "T" );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        var other = table.Columns.Create( "C2" );
+        var sut = table.Columns.Create( "C3" );
+        var computation = SqlColumnComputation.Virtual( other.Node + SqlNode.Literal( 1 ) );
+
+        var actionCount = schema.Database.GetPendingActionCount();
+        var result = sut.SetComputation( computation );
+        var actions = schema.Database.GetLastPendingActions( actionCount );
+
+        using ( new AssertionScope() )
+        {
+            result.Should().BeSameAs( sut );
+            sut.Computation.Should().Be( computation );
+            sut.ReferencedComputationColumns.Should().BeSequentiallyEqualTo( other );
+
+            other.ReferencingObjects.Should()
+                .BeSequentiallyEqualTo(
+                    SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut, property: "Computation" ), other ) );
+
+            actions.Should().HaveCount( 1 );
+            actions.ElementAtOrDefault( 0 )
+                .Sql.Should()
+                .Be(
+                    @"ALTER [Table] foo.T
+  ALTER [Column] foo.T.C3 ([5] : 'Computation' (System.Nullable`1[T is LfrlAnvil.Sql.Objects.Builders.SqlColumnComputation]) FROM <null>);" );
+        }
+    }
+
+    [Theory]
+    [InlineData( SqlColumnComputationStorage.Virtual )]
+    [InlineData( SqlColumnComputationStorage.Stored )]
+    public void SetComputation_ShouldUpdateComputation_WhenNewExpressionIsDifferentFromOldExpression(SqlColumnComputationStorage storage)
     {
         var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var other = table.Columns.Create( "C2" );
         var oldOther = table.Columns.Create( "C4" );
-        var sut = table.Columns.Create( "C3" ).SetComputation( SqlColumnComputation.Stored( oldOther.Node + SqlNode.Literal( 1 ) ) );
-        var computation = SqlColumnComputation.Stored( other.Node + SqlNode.Literal( 1 ) );
+        var sut = table.Columns.Create( "C3" ).SetComputation( new SqlColumnComputation( oldOther.Node + SqlNode.Literal( 1 ), storage ) );
+        var computation = new SqlColumnComputation( other.Node + SqlNode.Literal( 1 ), storage );
 
         var actionCount = schema.Database.GetPendingActionCount();
         var result = sut.SetComputation( computation );
@@ -959,8 +1023,8 @@ public class SqlColumnBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .Be(
-                    @"ALTER [Table] foo.T
-  ALTER [Column] foo.T.C3 ([5] : 'Computation' (System.Nullable`1[T is LfrlAnvil.Sql.Objects.Builders.SqlColumnComputation]) FROM SqlColumnComputation { Expression = ([foo].[T].[C4] : System.Object) + (""1"" : System.Int32), Storage = Stored });" );
+                    $@"ALTER [Table] foo.T
+  ALTER [Column] foo.T.C3 ([5] : 'Computation' (System.Nullable`1[T is LfrlAnvil.Sql.Objects.Builders.SqlColumnComputation]) FROM SqlColumnComputation {{ Expression = ([foo].[T].[C4] : System.Object) + (""1"" : System.Int32), Storage = {storage} }});" );
         }
     }
 

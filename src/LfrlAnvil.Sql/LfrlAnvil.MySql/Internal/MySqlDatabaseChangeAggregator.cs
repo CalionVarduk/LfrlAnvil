@@ -1,4 +1,5 @@
-﻿using LfrlAnvil.MySql.Objects.Builders;
+﻿using System.Collections.Generic;
+using LfrlAnvil.MySql.Objects.Builders;
 using LfrlAnvil.Sql;
 using LfrlAnvil.Sql.Extensions;
 using LfrlAnvil.Sql.Internal;
@@ -8,6 +9,8 @@ namespace LfrlAnvil.MySql.Internal;
 
 internal sealed class MySqlDatabaseChangeAggregator : SqlDatabaseChangeAggregator
 {
+    private List<SqlColumnModificationSource<MySqlColumnBuilder>>? _columnsToRecreate;
+
     internal MySqlDatabaseChangeAggregator(MySqlDatabaseChangeTracker changes)
         : base( changes )
     {
@@ -22,6 +25,7 @@ internal sealed class MySqlDatabaseChangeAggregator : SqlDatabaseChangeAggregato
         RemovedForeignKeys = SqlDatabaseNamedObjectsSet<MySqlForeignKeyBuilder>.Create();
         CreatedChecks = SqlDatabaseObjectsSet<MySqlCheckBuilder>.Create();
         RemovedChecks = SqlDatabaseNamedObjectsSet<MySqlCheckBuilder>.Create();
+        _columnsToRecreate = null;
     }
 
     public SqlDatabaseObjectsSet<MySqlColumnBuilder> CreatedColumns { get; }
@@ -58,6 +62,7 @@ internal sealed class MySqlDatabaseChangeAggregator : SqlDatabaseChangeAggregato
 
     public override void Clear()
     {
+        _columnsToRecreate?.Clear();
         CreatedColumns.Clear();
         ModifiedColumns.Clear();
         RemovedColumns.Clear();
@@ -241,20 +246,48 @@ internal sealed class MySqlDatabaseChangeAggregator : SqlDatabaseChangeAggregato
     internal void PrepareColumnsForAlteration(MySqlTableBuilder table)
     {
         Assume.Equals( table, Changes.ActiveObject );
-        if ( CreatedColumns.Count == 0 || RemovedColumns.Count == 0 )
+        if ( CreatedColumns.Count > 0 && RemovedColumns.Count > 0 )
+        {
+            foreach ( var column in table.Columns )
+            {
+                if ( ! CreatedColumns.Contains( column ) )
+                    continue;
+
+                var removed = RemovedColumns.Remove( column.Name );
+                if ( removed is null )
+                    continue;
+
+                CreatedColumns.Remove( column );
+                ModifiedColumns.Add( new SqlColumnModificationSource<MySqlColumnBuilder>( column, removed ) );
+            }
+        }
+
+        foreach ( var modification in ModifiedColumns )
+        {
+            var computationStorage = modification.Column.Computation?.Storage ?? SqlColumnComputationStorage.Stored;
+            var originalComputationStorage = Changes.GetOriginalValue( modification.Source, SqlObjectChangeDescriptor.Computation )
+                    .GetValueOrDefault( modification.Source.Computation )
+                    ?.Storage ??
+                SqlColumnComputationStorage.Stored;
+
+            if ( originalComputationStorage == computationStorage )
+                continue;
+
+            _columnsToRecreate ??= new List<SqlColumnModificationSource<MySqlColumnBuilder>>();
+            _columnsToRecreate.Add( modification );
+        }
+
+        if ( _columnsToRecreate is null || _columnsToRecreate.Count == 0 )
             return;
 
-        foreach ( var column in table.Columns )
+        foreach ( var modification in _columnsToRecreate )
         {
-            if ( ! CreatedColumns.Contains( column ) )
-                continue;
+            var originalName = Changes.GetOriginalValue( modification.Source, SqlObjectChangeDescriptor.Name )
+                .GetValueOrDefault( modification.Source.Name );
 
-            var removed = RemovedColumns.Remove( column.Name );
-            if ( removed is null )
-                continue;
-
-            CreatedColumns.Remove( column );
-            ModifiedColumns.Add( new SqlColumnModificationSource<MySqlColumnBuilder>( column, removed ) );
+            ModifiedColumns.Remove( modification.Column );
+            RemovedColumns.Add( originalName, modification.Column );
+            CreatedColumns.Add( modification.Column );
         }
     }
 

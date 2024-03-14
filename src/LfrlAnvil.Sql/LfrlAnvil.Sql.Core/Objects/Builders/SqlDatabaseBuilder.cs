@@ -18,7 +18,6 @@ namespace LfrlAnvil.Sql.Objects.Builders;
 //  ^ requires sqlite & mysql brought up to speed
 //  ^ add ISqlDatabaseVersion interface & make SqlDatabaseVersion be its implementation that works with SqlDatabaseBuilder type
 //  ^ each dialect can have its own [DIALECT]DatabaseVersion classes, but that's low priority
-// THEN (?), add possibility to register generated/computed columns (low priority)
 
 public abstract class SqlDatabaseBuilder : SqlBuilderApi, ISqlDatabaseBuilder
 {

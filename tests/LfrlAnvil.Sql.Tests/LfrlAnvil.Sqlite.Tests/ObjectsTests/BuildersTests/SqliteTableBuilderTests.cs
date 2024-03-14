@@ -31,15 +31,15 @@ public partial class SqliteTableBuilderTests : TestsBase
     {
         var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var sut = schema.Objects.CreateTable( "T" );
+        var c5 = sut.Columns.Create( "C5" );
         var ix1 = sut.Constraints.CreateIndex( sut.Columns.Create( "C1" ).Asc() );
         var ix2 = sut.Constraints.SetPrimaryKey( sut.Columns.Create( "C2" ).Asc() ).Index;
+        var c6 = sut.Columns.Create( "C6" ).MarkAsNullable();
         sut.Constraints.CreateIndex( sut.Columns.Create( "C3" ).Asc(), sut.Columns.Create( "C4" ).Desc() );
         sut.Constraints.CreateForeignKey( ix1, ix2 );
         sut.Constraints.CreateCheck( sut.Node["C1"] > SqlNode.Literal( 0 ) );
-        sut.Columns.Create( "C5" ).SetComputation( SqlColumnComputation.Virtual( sut.Columns.Get( "C1" ).Node + SqlNode.Literal( 1 ) ) );
-        sut.Columns.Create( "C6" )
-            .MarkAsNullable()
-            .SetComputation( SqlColumnComputation.Stored( sut.Columns.Get( "C2" ).Node * sut.Columns.Get( "C5" ).Node ) );
+        c5.SetComputation( SqlColumnComputation.Virtual( sut.Columns.Get( "C1" ).Node + SqlNode.Literal( 1 ) ) );
+        c6.SetComputation( SqlColumnComputation.Stored( sut.Columns.Get( "C2" ).Node * sut.Columns.Get( "C5" ).Node ) );
 
         var actions = schema.Database.GetLastPendingActions( 0 );
 
@@ -54,12 +54,12 @@ public partial class SqliteTableBuilderTests : TestsBase
                 .Sql.Should()
                 .SatisfySql(
                     @"CREATE TABLE ""foo_T"" (
+                      ""C5"" ANY NOT NULL GENERATED ALWAYS AS (""C1"" + 1) VIRTUAL,
                       ""C1"" ANY NOT NULL,
                       ""C2"" ANY NOT NULL,
+                      ""C6"" ANY GENERATED ALWAYS AS (""C2"" * ""C5"") STORED,
                       ""C3"" ANY NOT NULL,
                       ""C4"" ANY NOT NULL,
-                      ""C5"" ANY NOT NULL GENERATED ALWAYS AS (""C1"" + 1) VIRTUAL,
-                      ""C6"" ANY GENERATED ALWAYS AS (""C2"" * ""C5"") STORED,
                       CONSTRAINT ""foo_PK_T"" PRIMARY KEY (""C2"" ASC),
                       CONSTRAINT ""foo_FK_T_C1_REF_T"" FOREIGN KEY (""C1"") REFERENCES ""foo_T"" (""C2"") ON DELETE RESTRICT ON UPDATE RESTRICT,
                       CONSTRAINT ""foo_CHK_T_{GUID}"" CHECK (""C1"" > 0)

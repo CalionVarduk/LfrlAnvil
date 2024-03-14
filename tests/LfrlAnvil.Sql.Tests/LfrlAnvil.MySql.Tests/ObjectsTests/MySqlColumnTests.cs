@@ -3,6 +3,7 @@ using LfrlAnvil.MySql.Tests.Helpers;
 using LfrlAnvil.Sql;
 using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Extensions;
+using LfrlAnvil.Sql.Objects.Builders;
 
 namespace LfrlAnvil.MySql.Tests.ObjectsTests;
 
@@ -34,6 +35,7 @@ public class MySqlColumnTests : TestsBase
             sut.IsNullable.Should().Be( isNullable );
             sut.HasDefaultValue.Should().BeFalse();
             sut.TypeDefinition.Should().BeSameAs( db.TypeDefinitions.GetByType( type ) );
+            sut.ComputationStorage.Should().BeNull();
             sut.Node.Should().BeSameAs( table.Node["C"] );
             sut.ToString().Should().Be( "[Column] common.T.C" );
         }
@@ -61,6 +63,37 @@ public class MySqlColumnTests : TestsBase
             sut.IsNullable.Should().BeFalse();
             sut.HasDefaultValue.Should().BeTrue();
             sut.TypeDefinition.Should().BeSameAs( db.TypeDefinitions.GetByType<object>() );
+            sut.ComputationStorage.Should().BeNull();
+            sut.Node.Should().BeSameAs( table.Node["C"] );
+            sut.ToString().Should().Be( "[Column] common.T.C" );
+        }
+    }
+
+    [Theory]
+    [InlineData( SqlColumnComputationStorage.Virtual )]
+    [InlineData( SqlColumnComputationStorage.Stored )]
+    public void Properties_ShouldBeCorrectlyCopiedFromBuilder_WithComputation(SqlColumnComputationStorage storage)
+    {
+        var schemaBuilder = MySqlDatabaseBuilderMock.Create().Schemas.Default;
+        var tableBuilder = schemaBuilder.Objects.CreateTable( "T" );
+        tableBuilder.Columns.Create( "C" ).SetComputation( new SqlColumnComputation( SqlNode.Literal( 1 ), storage ) );
+        tableBuilder.Constraints.SetPrimaryKey( tableBuilder.Columns.Create( "X" ).Asc() );
+
+        var db = MySqlDatabaseMock.Create( schemaBuilder.Database );
+        var table = db.Schemas.Default.Objects.GetTable( "T" );
+
+        var sut = table.Columns.Get( "C" );
+
+        using ( new AssertionScope() )
+        {
+            sut.Database.Should().BeSameAs( db );
+            sut.Table.Should().BeSameAs( table );
+            sut.Type.Should().Be( SqlObjectType.Column );
+            sut.Name.Should().Be( "C" );
+            sut.IsNullable.Should().BeFalse();
+            sut.HasDefaultValue.Should().BeFalse();
+            sut.TypeDefinition.Should().BeSameAs( db.TypeDefinitions.GetByType<object>() );
+            sut.ComputationStorage.Should().Be( storage );
             sut.Node.Should().BeSameAs( table.Node["C"] );
             sut.ToString().Should().Be( "[Column] common.T.C" );
         }

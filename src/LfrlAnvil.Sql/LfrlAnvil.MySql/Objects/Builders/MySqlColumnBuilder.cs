@@ -37,6 +37,12 @@ public sealed class MySqlColumnBuilder : SqlColumnBuilder
         return this;
     }
 
+    public new MySqlColumnBuilder SetComputation(SqlColumnComputation? computation)
+    {
+        base.SetComputation( computation );
+        return this;
+    }
+
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal void UpdateDefaultValueBasedOnDataType()
     {

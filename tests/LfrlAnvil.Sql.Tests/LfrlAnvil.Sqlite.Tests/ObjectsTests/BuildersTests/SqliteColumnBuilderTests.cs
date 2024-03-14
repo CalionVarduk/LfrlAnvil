@@ -101,7 +101,7 @@ public class SqliteColumnBuilderTests : TestsBase
     }
 
     [Fact]
-    public void Creation_ShouldMarkTableForReconstruction_WithComputation()
+    public void Creation_ShouldMarkTableForReconstruction_WithoutDefaultValueWhenColumnIsGenerated()
     {
         var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
@@ -1202,7 +1202,7 @@ public class SqliteColumnBuilderTests : TestsBase
     }
 
     [Fact]
-    public void SetComputation_ShouldUpdateComputation_WhenNewNullValueIsDifferentFromOldValue()
+    public void SetComputation_ShouldUpdateComputation_WhenNewNullValueIsDifferentFromOldStoredValue()
     {
         var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
@@ -1243,7 +1243,48 @@ public class SqliteColumnBuilderTests : TestsBase
     }
 
     [Fact]
-    public void SetComputation_ShouldUpdateComputation_WhenNewValueIsDifferentFromOldNullValue()
+    public void SetComputation_ShouldUpdateComputation_WhenNewNullValueIsDifferentFromOldVirtualValue()
+    {
+        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var table = schema.Objects.CreateTable( "T" );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        var other = table.Columns.Create( "C2" );
+        var sut = table.Columns.Create( "C3" ).SetComputation( SqlColumnComputation.Virtual( other.Node + SqlNode.Literal( 1 ) ) );
+
+        var actionCount = schema.Database.GetPendingActionCount();
+        var result = sut.SetComputation( null );
+        var actions = schema.Database.GetLastPendingActions( actionCount );
+
+        using ( new AssertionScope() )
+        {
+            result.Should().BeSameAs( sut );
+            sut.Computation.Should().BeNull();
+            sut.ReferencedComputationColumns.Should().BeEmpty();
+            other.ReferencingObjects.Should().BeEmpty();
+
+            actions.Should().HaveCount( 1 );
+            actions.ElementAtOrDefault( 0 )
+                .Sql.Should()
+                .SatisfySql(
+                    @"CREATE TABLE ""__foo_T__{GUID}__"" (
+                      ""C1"" ANY NOT NULL,
+                      ""C2"" ANY NOT NULL,
+                      ""C3"" ANY NOT NULL,
+                      CONSTRAINT ""foo_PK_T"" PRIMARY KEY (""C1"" ASC)
+                    ) WITHOUT ROWID;",
+                    @"INSERT INTO ""__foo_T__{GUID}__"" (""C1"", ""C2"", ""C3"")
+                    SELECT
+                      ""foo_T"".""C1"",
+                      ""foo_T"".""C2"",
+                      ""foo_T"".""C3"" AS ""C3""
+                    FROM ""foo_T"";",
+                    "DROP TABLE \"foo_T\";",
+                    "ALTER TABLE \"__foo_T__{GUID}__\" RENAME TO \"foo_T\";" );
+        }
+    }
+
+    [Fact]
+    public void SetComputation_ShouldUpdateComputation_WhenNewStoredValueIsDifferentFromOldNullValue()
     {
         var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
@@ -1287,15 +1328,63 @@ public class SqliteColumnBuilderTests : TestsBase
     }
 
     [Fact]
-    public void SetComputation_ShouldUpdateComputation_WhenNewExpressionIsDifferentFromOldExpression()
+    public void SetComputation_ShouldUpdateComputation_WhenNewVirtualValueIsDifferentFromOldNullValue()
+    {
+        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var table = schema.Objects.CreateTable( "T" );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        var other = table.Columns.Create( "C2" );
+        var sut = table.Columns.Create( "C3" );
+        var computation = SqlColumnComputation.Virtual( other.Node + SqlNode.Literal( 1 ) );
+
+        var actionCount = schema.Database.GetPendingActionCount();
+        var result = sut.SetComputation( computation );
+        var actions = schema.Database.GetLastPendingActions( actionCount );
+
+        using ( new AssertionScope() )
+        {
+            result.Should().BeSameAs( sut );
+            sut.Computation.Should().Be( computation );
+            sut.ReferencedComputationColumns.Should().BeSequentiallyEqualTo( other );
+
+            other.ReferencingObjects.Should()
+                .BeSequentiallyEqualTo(
+                    SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut, property: "Computation" ), other ) );
+
+            actions.Should().HaveCount( 1 );
+            actions.ElementAtOrDefault( 0 )
+                .Sql.Should()
+                .SatisfySql(
+                    @"CREATE TABLE ""__foo_T__{GUID}__"" (
+                      ""C1"" ANY NOT NULL,
+                      ""C2"" ANY NOT NULL,
+                      ""C3"" ANY NOT NULL GENERATED ALWAYS AS (""C2"" + 1) VIRTUAL,
+                      CONSTRAINT ""foo_PK_T"" PRIMARY KEY (""C1"" ASC)
+                    ) WITHOUT ROWID;",
+                    @"INSERT INTO ""__foo_T__{GUID}__"" (""C1"", ""C2"")
+                    SELECT
+                      ""foo_T"".""C1"",
+                      ""foo_T"".""C2""
+                    FROM ""foo_T"";",
+                    "DROP TABLE \"foo_T\";",
+                    "ALTER TABLE \"__foo_T__{GUID}__\" RENAME TO \"foo_T\";" );
+        }
+    }
+
+    [Theory]
+    [InlineData( SqlColumnComputationStorage.Virtual, "VIRTUAL" )]
+    [InlineData( SqlColumnComputationStorage.Stored, "STORED" )]
+    public void SetComputation_ShouldUpdateComputation_WhenNewExpressionIsDifferentFromOldExpression(
+        SqlColumnComputationStorage storage,
+        string expectedStorage)
     {
         var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var other = table.Columns.Create( "C2" );
         var oldOther = table.Columns.Create( "C4" );
-        var sut = table.Columns.Create( "C3" ).SetComputation( SqlColumnComputation.Stored( oldOther.Node + SqlNode.Literal( 1 ) ) );
-        var computation = SqlColumnComputation.Stored( other.Node + SqlNode.Literal( 1 ) );
+        var sut = table.Columns.Create( "C3" ).SetComputation( new SqlColumnComputation( oldOther.Node + SqlNode.Literal( 1 ), storage ) );
+        var computation = new SqlColumnComputation( other.Node + SqlNode.Literal( 1 ), storage );
 
         var actionCount = schema.Database.GetPendingActionCount();
         var result = sut.SetComputation( computation );
@@ -1316,11 +1405,11 @@ public class SqliteColumnBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
-                    @"CREATE TABLE ""__foo_T__{GUID}__"" (
+                    $@"CREATE TABLE ""__foo_T__{{GUID}}__"" (
                       ""C1"" ANY NOT NULL,
                       ""C2"" ANY NOT NULL,
                       ""C4"" ANY NOT NULL,
-                      ""C3"" ANY NOT NULL GENERATED ALWAYS AS (""C2"" + 1) STORED,
+                      ""C3"" ANY NOT NULL GENERATED ALWAYS AS (""C2"" + 1) {expectedStorage},
                       CONSTRAINT ""foo_PK_T"" PRIMARY KEY (""C1"" ASC)
                     ) WITHOUT ROWID;",
                     @"INSERT INTO ""__foo_T__{GUID}__"" (""C1"", ""C2"", ""C4"")

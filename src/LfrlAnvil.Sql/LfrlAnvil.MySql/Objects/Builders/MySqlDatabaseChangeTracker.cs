@@ -5,7 +5,7 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using LfrlAnvil.Exceptions;
 using LfrlAnvil.Extensions;
-using LfrlAnvil.MySql.Objects.Builders;
+using LfrlAnvil.MySql.Internal;
 using LfrlAnvil.Sql;
 using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Expressions.Visitors;
@@ -14,7 +14,7 @@ using LfrlAnvil.Sql.Internal;
 using LfrlAnvil.Sql.Objects.Builders;
 using ExceptionResources = LfrlAnvil.Sql.Exceptions.ExceptionResources;
 
-namespace LfrlAnvil.MySql.Internal;
+namespace LfrlAnvil.MySql.Objects.Builders;
 
 public sealed class MySqlDatabaseChangeTracker : SqlDatabaseChangeTracker
 {
@@ -206,7 +206,7 @@ public sealed class MySqlDatabaseChangeTracker : SqlDatabaseChangeTracker
         ValidateTable( table );
 
         var interpreter = CreateNodeInterpreter();
-        var createTable = table.ToCreateNode( includeForeignKeys: false );
+        var createTable = table.ToCreateNode( includeForeignKeys: false, sortGeneratedColumns: true );
         interpreter.VisitCreateTable( createTable );
         AppendSqlCommandEnd( interpreter );
 
@@ -363,7 +363,7 @@ public sealed class MySqlDatabaseChangeTracker : SqlDatabaseChangeTracker
 
                 foreach ( var column in changeAggregator.CreatedColumns )
                 {
-                    if ( column.DefaultValue is null && ! column.IsNullable )
+                    if ( column.DefaultValue is null && ! column.IsNullable && column.Computation is null )
                         column.UpdateDefaultValueBasedOnDataType();
 
                     MySqlHelpers.AppendAlterTableAddColumn( interpreter, column.ToDefinitionNode() );
