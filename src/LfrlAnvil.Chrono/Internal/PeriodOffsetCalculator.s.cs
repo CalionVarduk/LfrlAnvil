@@ -170,7 +170,7 @@ internal static class PeriodOffsetCalculator
         {
             var offsetInYears = DateTime.Year - start.Year;
             if ( offsetInYears != 0 )
-                DateTime = DateTime.AddMonths( -offsetInYears * ChronoConstants.MonthsPerYear );
+                SubtractMonths( offsetInYears * ChronoConstants.MonthsPerYear );
 
             return offsetInYears;
         }
@@ -190,7 +190,7 @@ internal static class PeriodOffsetCalculator
 
             var fullOffsetInMonths = offsetInYears * ChronoConstants.MonthsPerYear + offsetInMonths;
             if ( fullOffsetInMonths != 0 )
-                DateTime = DateTime.AddMonths( -fullOffsetInMonths );
+                SubtractMonths( fullOffsetInMonths );
 
             return fullOffsetInMonths;
         }
@@ -210,7 +210,7 @@ internal static class PeriodOffsetCalculator
 
             var fullOffsetInMonths = offsetInYears * ChronoConstants.MonthsPerYear + offsetInMonths;
             if ( fullOffsetInMonths != 0 )
-                DateTime = DateTime.AddMonths( -fullOffsetInMonths );
+                SubtractMonths( fullOffsetInMonths );
 
             return (Years: offsetInYears, Months: offsetInMonths);
         }
@@ -240,6 +240,19 @@ internal static class PeriodOffsetCalculator
 
             DateTime = DateTime.AddMonths( compensationInMonths );
             return true;
+        }
+
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        private void SubtractMonths(int months)
+        {
+            var originalDay = DateTime.Day;
+            DateTime = DateTime.AddMonths( -months );
+            var currentDay = DateTime.Day;
+            if ( originalDay == currentDay )
+                return;
+
+            Assume.IsGreaterThan( originalDay, currentDay );
+            DateTime = DateTime.AddDays( originalDay - currentDay );
         }
     }
 

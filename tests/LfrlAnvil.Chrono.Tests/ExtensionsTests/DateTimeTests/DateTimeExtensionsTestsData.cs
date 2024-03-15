@@ -576,6 +576,24 @@ public class DateTimeExtensionsTestsData
                 new DateTime( 2020, 6, 26, 11, 31, 42, 503 ).AddTicks( 6005 ),
                 PeriodUnits.Months | PeriodUnits.Days | PeriodUnits.Minutes,
                 Period.FromMonths( 14 ).AddMinutes( 58 )
+            },
+            {
+                new DateTime( 2021, 3, 31, 20, 0, 0 ),
+                new DateTime( 2021, 2, 28, 21, 0, 0 ),
+                PeriodUnits.Months | PeriodUnits.Days | PeriodUnits.Hours,
+                Period.FromMonths( 1 ).AddDays( 2 ).AddHours( 23 )
+            },
+            {
+                new DateTime( 2024, 2, 29, 20, 0, 0 ),
+                new DateTime( 2023, 2, 28, 21, 0, 0 ),
+                PeriodUnits.Years | PeriodUnits.Days | PeriodUnits.Hours,
+                Period.FromYears( 1 ).AddHours( 23 )
+            },
+            {
+                new DateTime( 2021, 3, 28, 20, 0, 0 ),
+                new DateTime( 2021, 2, 28, 21, 0, 0 ),
+                PeriodUnits.Months | PeriodUnits.Days | PeriodUnits.Hours,
+                Period.FromDays( 27 ).AddHours( 23 )
             }
         };
     }
@@ -692,6 +710,24 @@ public class DateTimeExtensionsTestsData
                 new DateTime( 2020, 6, 26, 11, 31, 42, 503 ).AddTicks( 6005 ),
                 PeriodUnits.Months | PeriodUnits.Days | PeriodUnits.Minutes,
                 Period.FromMonths( 14 ).AddMinutes( 59 )
+            },
+            {
+                new DateTime( 2021, 3, 31, 20, 0, 0 ),
+                new DateTime( 2021, 2, 28, 21, 0, 0 ),
+                PeriodUnits.Months | PeriodUnits.Days | PeriodUnits.Hours,
+                Period.FromMonths( 1 ).AddDays( 3 ).AddHours( -1 )
+            },
+            {
+                new DateTime( 2024, 2, 29, 20, 0, 0 ),
+                new DateTime( 2023, 2, 28, 21, 0, 0 ),
+                PeriodUnits.Years | PeriodUnits.Days | PeriodUnits.Hours,
+                Period.FromYears( 1 ).AddDays( 1 ).AddHours( -1 )
+            },
+            {
+                new DateTime( 2021, 3, 28, 20, 0, 0 ),
+                new DateTime( 2021, 2, 28, 21, 0, 0 ),
+                PeriodUnits.Months | PeriodUnits.Days | PeriodUnits.Hours,
+                Period.FromMonths( 1 ).AddHours( -1 )
             }
         };
     }
