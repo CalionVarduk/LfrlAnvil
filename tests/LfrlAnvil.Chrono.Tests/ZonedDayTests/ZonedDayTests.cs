@@ -533,6 +533,7 @@ public class ZonedDayTests : TestsBase
             minutes: Fixture.Create<short>(),
             seconds: Fixture.Create<short>(),
             milliseconds: Fixture.Create<short>(),
+            microseconds: Fixture.Create<short>(),
             ticks: Fixture.Create<short>() );
 
         var dateTime = Fixture.Create<DateTime>();
@@ -858,7 +859,7 @@ public class ZonedDayTests : TestsBase
         var expected = BoundsRange.Create(
             new[]
             {
-                Bounds.Create( sut.Start, sut.Start.Add( new Duration( 0, 39, 59, 999, 9999 ) ) ),
+                Bounds.Create( sut.Start, sut.Start.Add( new Duration( 0, 39, 59, 999, 999, 9 ) ) ),
                 Bounds.Create( sut.Start.Add( Duration.FromHours( 1 ) ), sut.End )
             } );
 
@@ -882,7 +883,7 @@ public class ZonedDayTests : TestsBase
             new[]
             {
                 Bounds.Create( sut.Start, sut.End.Subtract( Duration.FromHours( 1 ) ) ),
-                Bounds.Create( sut.End.Subtract( new Duration( 0, 19, 59, 999, 9999 ) ), sut.End )
+                Bounds.Create( sut.End.Subtract( new Duration( 0, 19, 59, 999, 999, 9 ) ), sut.End )
             } );
 
         var result = sut.ToCheckedBounds();
@@ -926,6 +927,7 @@ public class ZonedDayTests : TestsBase
             minutes: Fixture.Create<short>(),
             seconds: Fixture.Create<short>(),
             milliseconds: Fixture.Create<short>(),
+            microseconds: Fixture.Create<short>(),
             ticks: Fixture.Create<short>() );
 
         var dateTime = Fixture.Create<DateTime>();
@@ -951,6 +953,7 @@ public class ZonedDayTests : TestsBase
             minutes: Fixture.Create<short>(),
             seconds: Fixture.Create<short>(),
             milliseconds: Fixture.Create<short>(),
+            microseconds: Fixture.Create<short>(),
             ticks: Fixture.Create<short>() );
 
         var dateTime = Fixture.Create<DateTime>();

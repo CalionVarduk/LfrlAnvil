@@ -112,6 +112,7 @@ public class DateTimeExtensionsTests : TestsBase
             minutes: Fixture.Create<short>(),
             seconds: Fixture.Create<short>(),
             milliseconds: Fixture.Create<short>(),
+            microseconds: Fixture.Create<short>(),
             ticks: Fixture.Create<short>() );
 
         var expected = sut.Add( -periodToSubtract );

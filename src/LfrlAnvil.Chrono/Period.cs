@@ -11,13 +11,23 @@ public readonly struct Period : IEquatable<Period>
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public Period(int years, int months, int weeks, int days)
-        : this( years, months, weeks, days, 0, 0, 0, 0, 0 ) { }
+        : this( years, months, weeks, days, 0, 0, 0, 0, 0, 0 ) { }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public Period(int hours, long minutes, long seconds, long milliseconds, long ticks)
-        : this( 0, 0, 0, 0, hours, minutes, seconds, milliseconds, ticks ) { }
+    public Period(int hours, long minutes, long seconds, long milliseconds, long microseconds, long ticks)
+        : this( 0, 0, 0, 0, hours, minutes, seconds, milliseconds, microseconds, ticks ) { }
 
-    public Period(int years, int months, int weeks, int days, int hours, long minutes, long seconds, long milliseconds, long ticks)
+    public Period(
+        int years,
+        int months,
+        int weeks,
+        int days,
+        int hours,
+        long minutes,
+        long seconds,
+        long milliseconds,
+        long microseconds,
+        long ticks)
     {
         Years = years;
         Months = months;
@@ -27,6 +37,7 @@ public readonly struct Period : IEquatable<Period>
         Minutes = minutes;
         Seconds = seconds;
         Milliseconds = milliseconds;
+        Microseconds = microseconds;
         Ticks = ticks;
     }
 
@@ -40,7 +51,8 @@ public readonly struct Period : IEquatable<Period>
             timeSpan.Minutes,
             timeSpan.Seconds,
             timeSpan.Milliseconds,
-            timeSpan.Ticks % ChronoConstants.TicksPerMillisecond ) { }
+            timeSpan.Microseconds,
+            timeSpan.Ticks % ChronoConstants.TicksPerMicrosecond ) { }
 
     public int Years { get; }
     public int Months { get; }
@@ -50,6 +62,7 @@ public readonly struct Period : IEquatable<Period>
     public long Minutes { get; }
     public long Seconds { get; }
     public long Milliseconds { get; }
+    public long Microseconds { get; }
     public long Ticks { get; }
 
     public PeriodUnits ActiveUnits =>
@@ -61,41 +74,49 @@ public readonly struct Period : IEquatable<Period>
         (Minutes != 0 ? PeriodUnits.Minutes : PeriodUnits.None) |
         (Seconds != 0 ? PeriodUnits.Seconds : PeriodUnits.None) |
         (Milliseconds != 0 ? PeriodUnits.Milliseconds : PeriodUnits.None) |
+        (Microseconds != 0 ? PeriodUnits.Microseconds : PeriodUnits.None) |
         (Ticks != 0 ? PeriodUnits.Ticks : PeriodUnits.None);
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static Period FromTicks(long ticks)
     {
-        return new Period( 0, 0, 0, 0, ticks );
+        return new Period( 0, 0, 0, 0, 0, ticks );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static Period FromMicroseconds(long microseconds)
+    {
+        return new Period( 0, 0, 0, 0, microseconds, 0 );
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static Period FromMilliseconds(long milliseconds)
     {
-        return new Period( 0, 0, 0, milliseconds, 0 );
+        return new Period( 0, 0, 0, milliseconds, 0, 0 );
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static Period FromSeconds(long seconds)
     {
-        return new Period( 0, 0, seconds, 0, 0 );
+        return new Period( 0, 0, seconds, 0, 0, 0 );
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static Period FromMinutes(long minutes)
     {
-        return new Period( 0, minutes, 0, 0, 0 );
+        return new Period( 0, minutes, 0, 0, 0, 0 );
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static Period FromHours(int hours)
     {
-        return new Period( hours, 0, 0, 0, 0 );
+        return new Period( hours, 0, 0, 0, 0, 0 );
     }
 
     [Pure]
@@ -139,6 +160,7 @@ public readonly struct Period : IEquatable<Period>
             Minutes != 0 ? $"{Minutes} minute(s)" : string.Empty,
             Seconds != 0 ? $"{Seconds} second(s)" : string.Empty,
             Milliseconds != 0 ? $"{Milliseconds} millisecond(s)" : string.Empty,
+            Microseconds != 0 ? $"{Microseconds} microsecond(s)" : string.Empty,
             Ticks != 0 ? $"{Ticks} tick(s)" : string.Empty
         };
 
@@ -159,6 +181,7 @@ public readonly struct Period : IEquatable<Period>
             .Add( Minutes )
             .Add( Seconds )
             .Add( Milliseconds )
+            .Add( Microseconds )
             .Add( Ticks )
             .Value;
     }
@@ -181,6 +204,7 @@ public readonly struct Period : IEquatable<Period>
             Minutes.Equals( other.Minutes ) &&
             Seconds.Equals( other.Seconds ) &&
             Milliseconds.Equals( other.Milliseconds ) &&
+            Microseconds.Equals( other.Microseconds ) &&
             Ticks.Equals( other.Ticks );
     }
 
@@ -196,6 +220,7 @@ public readonly struct Period : IEquatable<Period>
             Minutes + other.Minutes,
             Seconds + other.Seconds,
             Milliseconds + other.Milliseconds,
+            Microseconds + other.Microseconds,
             Ticks + other.Ticks );
     }
 
@@ -204,6 +229,13 @@ public readonly struct Period : IEquatable<Period>
     public Period AddTicks(long ticks)
     {
         return SetTicks( Ticks + ticks );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public Period AddMicroseconds(long microseconds)
+    {
+        return SetMicroseconds( Microseconds + microseconds );
     }
 
     [Pure]
@@ -274,6 +306,7 @@ public readonly struct Period : IEquatable<Period>
             Minutes - other.Minutes,
             Seconds - other.Seconds,
             Milliseconds - other.Milliseconds,
+            Microseconds - other.Microseconds,
             Ticks - other.Ticks );
     }
 
@@ -282,6 +315,13 @@ public readonly struct Period : IEquatable<Period>
     public Period SubtractTicks(long ticks)
     {
         return SetTicks( Ticks - ticks );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public Period SubtractMicroseconds(long microseconds)
+    {
+        return SetMicroseconds( Microseconds - microseconds );
     }
 
     [Pure]
@@ -352,6 +392,7 @@ public readonly struct Period : IEquatable<Period>
             (units & PeriodUnits.Minutes) != 0 ? other.Minutes : Minutes,
             (units & PeriodUnits.Seconds) != 0 ? other.Seconds : Seconds,
             (units & PeriodUnits.Milliseconds) != 0 ? other.Milliseconds : Milliseconds,
+            (units & PeriodUnits.Microseconds) != 0 ? other.Microseconds : Microseconds,
             (units & PeriodUnits.Ticks) != 0 ? other.Ticks : Ticks );
     }
 
@@ -368,12 +409,13 @@ public readonly struct Period : IEquatable<Period>
             Minutes,
             Seconds,
             Milliseconds,
+            Microseconds,
             Ticks );
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public Period SetTime(int hours, long minutes, long seconds, long milliseconds, long ticks)
+    public Period SetTime(int hours, long minutes, long seconds, long milliseconds, long microseconds, long ticks)
     {
         return new Period(
             Years,
@@ -384,6 +426,7 @@ public readonly struct Period : IEquatable<Period>
             minutes,
             seconds,
             milliseconds,
+            microseconds,
             ticks );
     }
 
@@ -400,7 +443,25 @@ public readonly struct Period : IEquatable<Period>
             Minutes,
             Seconds,
             Milliseconds,
+            Microseconds,
             ticks );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public Period SetMicroseconds(long microseconds)
+    {
+        return new Period(
+            Years,
+            Months,
+            Weeks,
+            Days,
+            Hours,
+            Minutes,
+            Seconds,
+            Milliseconds,
+            microseconds,
+            Ticks );
     }
 
     [Pure]
@@ -416,6 +477,7 @@ public readonly struct Period : IEquatable<Period>
             Minutes,
             Seconds,
             milliseconds,
+            Microseconds,
             Ticks );
     }
 
@@ -432,6 +494,7 @@ public readonly struct Period : IEquatable<Period>
             Minutes,
             seconds,
             Milliseconds,
+            Microseconds,
             Ticks );
     }
 
@@ -448,6 +511,7 @@ public readonly struct Period : IEquatable<Period>
             minutes,
             Seconds,
             Milliseconds,
+            Microseconds,
             Ticks );
     }
 
@@ -464,6 +528,7 @@ public readonly struct Period : IEquatable<Period>
             Minutes,
             Seconds,
             Milliseconds,
+            Microseconds,
             Ticks );
     }
 
@@ -480,6 +545,7 @@ public readonly struct Period : IEquatable<Period>
             Minutes,
             Seconds,
             Milliseconds,
+            Microseconds,
             Ticks );
     }
 
@@ -496,6 +562,7 @@ public readonly struct Period : IEquatable<Period>
             Minutes,
             Seconds,
             Milliseconds,
+            Microseconds,
             Ticks );
     }
 
@@ -512,6 +579,7 @@ public readonly struct Period : IEquatable<Period>
             Minutes,
             Seconds,
             Milliseconds,
+            Microseconds,
             Ticks );
     }
 
@@ -528,6 +596,7 @@ public readonly struct Period : IEquatable<Period>
             Minutes,
             Seconds,
             Milliseconds,
+            Microseconds,
             Ticks );
     }
 
@@ -544,6 +613,7 @@ public readonly struct Period : IEquatable<Period>
             -Minutes,
             -Seconds,
             -Milliseconds,
+            -Microseconds,
             -Ticks );
     }
 
@@ -559,6 +629,7 @@ public readonly struct Period : IEquatable<Period>
             Math.Abs( Minutes ),
             Math.Abs( Seconds ),
             Math.Abs( Milliseconds ),
+            Math.Abs( Microseconds ),
             Math.Abs( Ticks ) );
     }
 
@@ -574,6 +645,7 @@ public readonly struct Period : IEquatable<Period>
             (units & PeriodUnits.Minutes) != 0 ? 0 : Minutes,
             (units & PeriodUnits.Seconds) != 0 ? 0 : Seconds,
             (units & PeriodUnits.Milliseconds) != 0 ? 0 : Milliseconds,
+            (units & PeriodUnits.Microseconds) != 0 ? 0 : Microseconds,
             (units & PeriodUnits.Ticks) != 0 ? 0 : Ticks );
     }
 
@@ -589,6 +661,7 @@ public readonly struct Period : IEquatable<Period>
             (units & PeriodUnits.Minutes) != 0 ? Minutes : 0,
             (units & PeriodUnits.Seconds) != 0 ? Seconds : 0,
             (units & PeriodUnits.Milliseconds) != 0 ? Milliseconds : 0,
+            (units & PeriodUnits.Microseconds) != 0 ? Microseconds : 0,
             (units & PeriodUnits.Ticks) != 0 ? Ticks : 0 );
     }
 

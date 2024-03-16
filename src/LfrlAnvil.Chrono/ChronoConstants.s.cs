@@ -4,12 +4,14 @@ namespace LfrlAnvil.Chrono;
 
 public static class ChronoConstants
 {
+    public const long TicksPerMicrosecond = TimeSpan.TicksPerMicrosecond;
     public const long TicksPerMillisecond = TimeSpan.TicksPerMillisecond;
     public const long TicksPerSecond = TimeSpan.TicksPerSecond;
     public const long TicksPerMinute = TimeSpan.TicksPerMinute;
     public const long TicksPerHour = TimeSpan.TicksPerHour;
     public const long TicksPerStandardDay = TimeSpan.TicksPerDay;
     public const long TicksPerStandardWeek = TicksPerStandardDay * DaysPerWeek;
+    public const int MicrosecondsPerMillisecond = 1000;
     public const int MillisecondsPerSecond = 1000;
     public const int SecondsPerMinute = 60;
     public const int MinutesPerHour = 60;

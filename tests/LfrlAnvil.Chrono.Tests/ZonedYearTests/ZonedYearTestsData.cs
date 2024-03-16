@@ -319,9 +319,11 @@ public class ZonedYearTestsData
             { year, timeZone, Period.FromSeconds( 31536000 ), new DateTime( 2022, 1, 1 ) },
             { year, timeZone, Period.FromMilliseconds( 31535999999 ), year },
             { year, timeZone, Period.FromMilliseconds( 31536000000 ), new DateTime( 2022, 1, 1 ) },
+            { year, timeZone, Period.FromMicroseconds( 31535999999999 ), year },
+            { year, timeZone, Period.FromMicroseconds( 31536000000000 ), new DateTime( 2022, 1, 1 ) },
             { year, timeZone, Period.FromTicks( 315359999999999 ), year },
             { year, timeZone, Period.FromTicks( 315360000000000 ), new DateTime( 2022, 1, 1 ) },
-            { year, timeZone, new Period( 1, 11, 3, 9, 22, 90, 1700, 80000, 200000000 ), new DateTime( 2023, 1, 1 ) },
+            { year, timeZone, new Period( 1, 11, 3, 9, 22, 90, 1700, 80000, 18000000, 20000000 ), new DateTime( 2023, 1, 1 ) },
             {
                 year,
                 timeZoneWithDaylightSaving,

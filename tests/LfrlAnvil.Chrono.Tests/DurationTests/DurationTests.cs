@@ -44,38 +44,18 @@ public class DurationTests : TestsBase
     }
 
     [Theory]
-    [MethodData( nameof( DurationTestsData.GetCtorWithSecondsPrecisionData ) )]
-    public void Ctor_WithSecondsPrecision_ShouldCreateCorrectly(int hours, int minutes, int seconds, long expectedSeconds)
-    {
-        var sut = new Duration( hours, minutes, seconds );
-        sut.Ticks.Should().Be( expectedSeconds * ChronoConstants.TicksPerSecond );
-    }
-
-    [Theory]
-    [MethodData( nameof( DurationTestsData.GetCtorWithMsPrecisionData ) )]
-    public void Ctor_WithMsPrecision_ShouldCreateCorrectly(
-        int hours,
-        int minutes,
-        int seconds,
-        int milliseconds,
-        long expectedMilliseconds)
-    {
-        var sut = new Duration( hours, minutes, seconds, milliseconds );
-        sut.Ticks.Should().Be( expectedMilliseconds * ChronoConstants.TicksPerMillisecond );
-    }
-
-    [Theory]
     [MethodData( nameof( DurationTestsData.GetCtorWithTicksPrecisionData ) )]
     public void Ctor_WithTicksPrecision_ShouldCreateCorrectly(
         int hours,
         int minutes,
         int seconds,
         int milliseconds,
+        int microseconds,
         int ticks,
-        long expectedMilliseconds)
+        long expectedTicks)
     {
-        var sut = new Duration( hours, minutes, seconds, milliseconds, ticks );
-        sut.Ticks.Should().Be( expectedMilliseconds * ChronoConstants.TicksPerMillisecond + ticks );
+        var sut = new Duration( hours, minutes, seconds, milliseconds, microseconds, ticks );
+        sut.Ticks.Should().Be( expectedTicks );
     }
 
     [Theory]
@@ -87,98 +67,161 @@ public class DurationTests : TestsBase
     }
 
     [Theory]
-    [MethodData( nameof( DurationTestsData.GetFullMillisecondsData ) )]
-    public void FullMilliseconds_ShouldReturnCorrectResult(int milliseconds, int ticks, long expected)
+    [MethodData( nameof( DurationTestsData.GetFullMicrosecondsData ) )]
+    public void FullMicroseconds_ShouldReturnCorrectResult(int microseconds, int ticks, long expected)
     {
-        var sut = new Duration( 0, 0, 0, milliseconds, ticks );
+        var sut = new Duration( 0, 0, 0, 0, microseconds, ticks );
+        sut.FullMicroseconds.Should().Be( expected );
+    }
+
+    [Theory]
+    [MethodData( nameof( DurationTestsData.GetFullMillisecondsData ) )]
+    public void FullMilliseconds_ShouldReturnCorrectResult(int milliseconds, int microseconds, int ticks, long expected)
+    {
+        var sut = new Duration( 0, 0, 0, milliseconds, microseconds, ticks );
         sut.FullMilliseconds.Should().Be( expected );
     }
 
     [Theory]
     [MethodData( nameof( DurationTestsData.GetFullSecondsData ) )]
-    public void FullSeconds_ShouldReturnCorrectResult(int seconds, int milliseconds, int ticks, long expected)
+    public void FullSeconds_ShouldReturnCorrectResult(int seconds, int milliseconds, int microseconds, int ticks, long expected)
     {
-        var sut = new Duration( 0, 0, seconds, milliseconds, ticks );
+        var sut = new Duration( 0, 0, seconds, milliseconds, microseconds, ticks );
         sut.FullSeconds.Should().Be( expected );
     }
 
     [Theory]
     [MethodData( nameof( DurationTestsData.GetFullMinutesData ) )]
-    public void FullMinutes_ShouldReturnCorrectResult(int minutes, int seconds, int milliseconds, int ticks, long expected)
+    public void FullMinutes_ShouldReturnCorrectResult(
+        int minutes,
+        int seconds,
+        int milliseconds,
+        int microseconds,
+        int ticks,
+        long expected)
     {
-        var sut = new Duration( 0, minutes, seconds, milliseconds, ticks );
+        var sut = new Duration( 0, minutes, seconds, milliseconds, microseconds, ticks );
         sut.FullMinutes.Should().Be( expected );
     }
 
     [Theory]
     [MethodData( nameof( DurationTestsData.GetFullHoursData ) )]
-    public void FullHours_ShouldReturnCorrectResult(int hours, int minutes, int seconds, int milliseconds, int ticks, long expected)
+    public void FullHours_ShouldReturnCorrectResult(
+        int hours,
+        int minutes,
+        int seconds,
+        int milliseconds,
+        int microseconds,
+        int ticks,
+        long expected)
     {
-        var sut = new Duration( hours, minutes, seconds, milliseconds, ticks );
+        var sut = new Duration( hours, minutes, seconds, milliseconds, microseconds, ticks );
         sut.FullHours.Should().Be( expected );
     }
 
     [Theory]
-    [MethodData( nameof( DurationTestsData.GetTicksInMillisecondData ) )]
-    public void TicksInMillisecond_ShouldReturnCorrectResult(int milliseconds, int ticks, int expected)
+    [MethodData( nameof( DurationTestsData.GetTicksInMicrosecondData ) )]
+    public void TicksInMicrosecond_ShouldReturnCorrectResult(int microseconds, int ticks, int expected)
     {
-        var sut = new Duration( 0, 0, 0, milliseconds, ticks );
-        sut.TicksInMillisecond.Should().Be( expected );
+        var sut = new Duration( 0, 0, 0, 0, microseconds, ticks );
+        sut.TicksInMicrosecond.Should().Be( expected );
+    }
+
+    [Theory]
+    [MethodData( nameof( DurationTestsData.GetMicrosecondsInMillisecondData ) )]
+    public void MicrosecondsInMillisecond_ShouldReturnCorrectResult(int milliseconds, int microseconds, int ticks, int expected)
+    {
+        var sut = new Duration( 0, 0, 0, milliseconds, microseconds, ticks );
+        sut.MicrosecondsInMillisecond.Should().Be( expected );
     }
 
     [Theory]
     [MethodData( nameof( DurationTestsData.GetMillisecondsInSecondData ) )]
-    public void MillisecondsInSecond_ShouldReturnCorrectResult(int seconds, int milliseconds, int ticks, int expected)
+    public void MillisecondsInSecond_ShouldReturnCorrectResult(int seconds, int milliseconds, int microseconds, int ticks, int expected)
     {
-        var sut = new Duration( 0, 0, seconds, milliseconds, ticks );
+        var sut = new Duration( 0, 0, seconds, milliseconds, microseconds, ticks );
         sut.MillisecondsInSecond.Should().Be( expected );
     }
 
     [Theory]
     [MethodData( nameof( DurationTestsData.GetSecondsInMinuteData ) )]
-    public void SecondsInMinute_ShouldReturnCorrectResult(int minutes, int seconds, int milliseconds, int ticks, int expected)
+    public void SecondsInMinute_ShouldReturnCorrectResult(
+        int minutes,
+        int seconds,
+        int milliseconds,
+        int microseconds,
+        int ticks,
+        int expected)
     {
-        var sut = new Duration( 0, minutes, seconds, milliseconds, ticks );
+        var sut = new Duration( 0, minutes, seconds, milliseconds, microseconds, ticks );
         sut.SecondsInMinute.Should().Be( expected );
     }
 
     [Theory]
     [MethodData( nameof( DurationTestsData.GetMinutesInHourData ) )]
-    public void MinutesInHour_ShouldReturnCorrectResult(int hours, int minutes, int seconds, int milliseconds, int ticks, int expected)
+    public void MinutesInHour_ShouldReturnCorrectResult(
+        int hours,
+        int minutes,
+        int seconds,
+        int milliseconds,
+        int microseconds,
+        int ticks,
+        int expected)
     {
-        var sut = new Duration( hours, minutes, seconds, milliseconds, ticks );
+        var sut = new Duration( hours, minutes, seconds, milliseconds, microseconds, ticks );
         sut.MinutesInHour.Should().Be( expected );
     }
 
     [Theory]
-    [MethodData( nameof( DurationTestsData.GetTotalMillisecondsData ) )]
-    public void TotalMilliseconds_ShouldReturnCorrectResult(int milliseconds, int ticks, double expected)
+    [MethodData( nameof( DurationTestsData.GetTotalMicrosecondsData ) )]
+    public void TotalMicroseconds_ShouldReturnCorrectResult(int microseconds, int ticks, double expected)
     {
-        var sut = new Duration( 0, 0, 0, milliseconds, ticks );
+        var sut = new Duration( 0, 0, 0, 0, microseconds, ticks );
+        sut.TotalMicroseconds.Should().BeApproximately( expected, 0.0000000001 );
+    }
+
+    [Theory]
+    [MethodData( nameof( DurationTestsData.GetTotalMillisecondsData ) )]
+    public void TotalMilliseconds_ShouldReturnCorrectResult(int milliseconds, int microseconds, int ticks, double expected)
+    {
+        var sut = new Duration( 0, 0, 0, milliseconds, microseconds, ticks );
         sut.TotalMilliseconds.Should().BeApproximately( expected, 0.0000000001 );
     }
 
     [Theory]
     [MethodData( nameof( DurationTestsData.GetTotalSecondsData ) )]
-    public void TotalSeconds_ShouldReturnCorrectResult(int seconds, int milliseconds, int ticks, double expected)
+    public void TotalSeconds_ShouldReturnCorrectResult(int seconds, int milliseconds, int microseconds, int ticks, double expected)
     {
-        var sut = new Duration( 0, 0, seconds, milliseconds, ticks );
+        var sut = new Duration( 0, 0, seconds, milliseconds, microseconds, ticks );
         sut.TotalSeconds.Should().BeApproximately( expected, 0.0000000001 );
     }
 
     [Theory]
     [MethodData( nameof( DurationTestsData.GetTotalMinutesData ) )]
-    public void TotalMinutes_ShouldReturnCorrectResult(int minutes, int seconds, int milliseconds, int ticks, double expected)
+    public void TotalMinutes_ShouldReturnCorrectResult(
+        int minutes,
+        int seconds,
+        int milliseconds,
+        int microseconds,
+        int ticks,
+        double expected)
     {
-        var sut = new Duration( 0, minutes, seconds, milliseconds, ticks );
+        var sut = new Duration( 0, minutes, seconds, milliseconds, microseconds, ticks );
         sut.TotalMinutes.Should().BeApproximately( expected, 0.0000000001 );
     }
 
     [Theory]
     [MethodData( nameof( DurationTestsData.GetTotalHoursData ) )]
-    public void TotalHours_ShouldReturnCorrectResult(int hours, int minutes, int seconds, int milliseconds, int ticks, double expected)
+    public void TotalHours_ShouldReturnCorrectResult(
+        int hours,
+        int minutes,
+        int seconds,
+        int milliseconds,
+        int microseconds,
+        int ticks,
+        double expected)
     {
-        var sut = new Duration( hours, minutes, seconds, milliseconds, ticks );
+        var sut = new Duration( hours, minutes, seconds, milliseconds, microseconds, ticks );
         sut.TotalHours.Should().BeApproximately( expected, 0.0000000001 );
     }
 
@@ -188,6 +231,22 @@ public class DurationTests : TestsBase
     {
         var sut = Duration.FromTicks( ticks );
         sut.Ticks.Should().Be( ticks );
+    }
+
+    [Theory]
+    [MethodData( nameof( DurationTestsData.GetFromMicrosecondsWithDoubleData ) )]
+    public void FromMicroseconds_WithDouble_ShouldReturnCorrectResult(double microseconds, long expectedTicks)
+    {
+        var sut = Duration.FromMicroseconds( microseconds );
+        sut.Ticks.Should().Be( expectedTicks );
+    }
+
+    [Theory]
+    [MethodData( nameof( DurationTestsData.GetFromMicrosecondsWithLongData ) )]
+    public void FromMicroseconds_WithLong_ShouldReturnCorrectResult(long microseconds, long expectedTicks)
+    {
+        var sut = Duration.FromMicroseconds( microseconds );
+        sut.Ticks.Should().Be( expectedTicks );
     }
 
     [Theory]
@@ -338,6 +397,24 @@ public class DurationTests : TestsBase
     }
 
     [Theory]
+    [MethodData( nameof( DurationTestsData.GetAddMicrosecondsWithDoubleData ) )]
+    public void AddMicroseconds_WithDouble_ShouldReturnCorrectResult(long ticks, double microseconds, long expectedTicks)
+    {
+        var sut = new Duration( ticks );
+        var result = sut.AddMicroseconds( microseconds );
+        result.Ticks.Should().Be( expectedTicks );
+    }
+
+    [Theory]
+    [MethodData( nameof( DurationTestsData.GetAddMicrosecondsWithLongData ) )]
+    public void AddMicroseconds_WithLong_ShouldReturnCorrectResult(long ticks, long microseconds, long expectedTicks)
+    {
+        var sut = new Duration( ticks );
+        var result = sut.AddMicroseconds( microseconds );
+        result.Ticks.Should().Be( expectedTicks );
+    }
+
+    [Theory]
     [MethodData( nameof( DurationTestsData.GetAddMillisecondsWithDoubleData ) )]
     public void AddMilliseconds_WithDouble_ShouldReturnCorrectResult(long ticks, double milliseconds, long expectedTicks)
     {
@@ -427,6 +504,24 @@ public class DurationTests : TestsBase
     {
         var sut = new Duration( ticks1 );
         var result = sut.SubtractTicks( ticks2 );
+        result.Ticks.Should().Be( expectedTicks );
+    }
+
+    [Theory]
+    [MethodData( nameof( DurationTestsData.GetSubtractMicrosecondsWithDoubleData ) )]
+    public void SubtractMicroseconds_WithDouble_ShouldReturnCorrectResult(long ticks, double microseconds, long expectedTicks)
+    {
+        var sut = new Duration( ticks );
+        var result = sut.SubtractMicroseconds( microseconds );
+        result.Ticks.Should().Be( expectedTicks );
+    }
+
+    [Theory]
+    [MethodData( nameof( DurationTestsData.GetSubtractMicrosecondsWithLongData ) )]
+    public void SubtractMicroseconds_WithLong_ShouldReturnCorrectResult(long ticks, long microseconds, long expectedTicks)
+    {
+        var sut = new Duration( ticks );
+        var result = sut.SubtractMicroseconds( microseconds );
         result.Ticks.Should().Be( expectedTicks );
     }
 
@@ -529,6 +624,15 @@ public class DurationTests : TestsBase
     }
 
     [Theory]
+    [MethodData( nameof( DurationTestsData.GetTrimToMicrosecondData ) )]
+    public void TrimToMicrosecond_ShouldReturnCorrectResult(long ticks, long expectedTicks)
+    {
+        var sut = new Duration( ticks );
+        var result = sut.TrimToMicrosecond();
+        result.Ticks.Should().Be( expectedTicks );
+    }
+
+    [Theory]
     [MethodData( nameof( DurationTestsData.GetTrimToMillisecondData ) )]
     public void TrimToMillisecond_ShouldReturnCorrectResult(long ticks, long expectedTicks)
     {
@@ -565,24 +669,47 @@ public class DurationTests : TestsBase
     }
 
     [Theory]
-    [MethodData( nameof( DurationTestsData.GetSetTicksInMillisecondThrowData ) )]
-    public void SetTicksInMillisecond_ShouldThrowArgumentOutOfRangeException_WhenValueIsInvalid(long ticks, int value)
+    [MethodData( nameof( DurationTestsData.GetSetTicksInMicrosecondThrowData ) )]
+    public void SetTicksInMicrosecond_ShouldThrowArgumentOutOfRangeException_WhenValueIsInvalid(long ticks, int value)
     {
         var sut = new Duration( ticks );
-        var action = Lambda.Of( () => sut.SetTicksInMillisecond( value ) );
+        var action = Lambda.Of( () => sut.SetTicksInMicrosecond( value ) );
         action.Should().ThrowExactly<ArgumentOutOfRangeException>();
     }
 
     [Theory]
-    [MethodData( nameof( DurationTestsData.GetSetTicksInMillisecondData ) )]
-    public void SetTicksInMillisecond_ShouldReturnCorrectResult(long ticks, int value, long expectedTicks)
+    [MethodData( nameof( DurationTestsData.GetSetTicksInMicrosecondData ) )]
+    public void SetTicksInMicrosecond_ShouldReturnCorrectResult(long ticks, int value, long expectedTicks)
     {
         var sut = new Duration( ticks );
-        var result = sut.SetTicksInMillisecond( value );
+        var result = sut.SetTicksInMicrosecond( value );
 
         using ( new AssertionScope() )
         {
-            result.TicksInMillisecond.Should().Be( value );
+            result.TicksInMicrosecond.Should().Be( value );
+            result.Ticks.Should().Be( expectedTicks );
+        }
+    }
+
+    [Theory]
+    [MethodData( nameof( DurationTestsData.GetSetMicrosecondsInMillisecondThrowData ) )]
+    public void SetMicrosecondsInMillisecond_ShouldThrowArgumentOutOfRangeException_WhenValueIsInvalid(long ticks, int value)
+    {
+        var sut = new Duration( ticks );
+        var action = Lambda.Of( () => sut.SetMicrosecondsInMillisecond( value ) );
+        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+    }
+
+    [Theory]
+    [MethodData( nameof( DurationTestsData.GetSetMicrosecondsInMillisecondData ) )]
+    public void SetMicrosecondsInMillisecond_ShouldReturnCorrectResult(long ticks, int value, long expectedTicks)
+    {
+        var sut = new Duration( ticks );
+        var result = sut.SetMicrosecondsInMillisecond( value );
+
+        using ( new AssertionScope() )
+        {
+            result.MicrosecondsInMillisecond.Should().Be( value );
             result.Ticks.Should().Be( expectedTicks );
         }
     }

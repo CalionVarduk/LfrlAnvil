@@ -30,7 +30,7 @@ public class BoundsRangeExtensionsTestsData
         {
             { new[] { (dt1, dt1) }, Duration.FromTicks( 1 ) },
             { new[] { (dt1, dt1), (dt2, dt2), (dt3, dt3) }, Duration.FromTicks( 3 ) },
-            { new[] { (dt1, dt2), (dt3, dt4) }, new Duration( 37, 34, 56, 789, 9877 ) }
+            { new[] { (dt1, dt2), (dt3, dt4) }, new Duration( 37, 34, 56, 789, 987, 7 ) }
         };
     }
 }

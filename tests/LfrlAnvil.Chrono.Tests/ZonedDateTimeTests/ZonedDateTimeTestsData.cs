@@ -1143,14 +1143,14 @@ public class ZonedDateTimeTestsData
             {
                 new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
                 TimeZoneFactory.Create( 1 ),
-                new Period( 1, 2, 3, 4, 5 ),
-                new DateTime( 2021, 8, 26, 13, 32, 43, 504 ).AddTicks( 6006 )
+                new Period( 1, 2, 3, 4, 5, 6 ),
+                new DateTime( 2021, 8, 26, 13, 32, 43, 504 ).AddTicks( 6057 )
             },
             {
                 new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
                 TimeZoneFactory.Create( 1 ),
-                new Period( -1, -2, -3, -4, -5 ),
-                new DateTime( 2021, 8, 26, 11, 28, 37, 496 ).AddTicks( 5996 )
+                new Period( -1, -2, -3, -4, -5, -6 ),
+                new DateTime( 2021, 8, 26, 11, 28, 37, 496 ).AddTicks( 5945 )
             },
             {
                 new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
@@ -1185,14 +1185,14 @@ public class ZonedDateTimeTestsData
             {
                 new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
                 TimeZoneFactory.Create( 1 ),
-                new Period( 1, 2, 3, 4, 5, 6, 7, 8, 9 ),
-                new DateTime( 2022, 11, 20, 17, 36, 47, 508 ).AddTicks( 6010 )
+                new Period( 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 ),
+                new DateTime( 2022, 11, 20, 17, 36, 47, 508 ).AddTicks( 6101 )
             },
             {
                 new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
                 TimeZoneFactory.Create( 1 ),
-                new Period( 1, -2, 3, -4, 5, -6, 7, -8, 9 ),
-                new DateTime( 2022, 7, 13, 17, 24, 47, 492 ).AddTicks( 6010 )
+                new Period( 1, -2, 3, -4, 5, -6, 7, -8, 9, -10 ),
+                new DateTime( 2022, 7, 13, 17, 24, 47, 492 ).AddTicks( 6081 )
             },
             {
                 new DateTime( 2021, 7, 25, 11, 59, 59, 999 ).AddTicks( 9998 ),
@@ -1365,23 +1365,23 @@ public class ZonedDateTimeTestsData
             {
                 new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
                 timeZone,
-                new DateTime( 2020, 6, 1, 7, 24, 33, 492 ).AddTicks( 5992 ),
+                new DateTime( 2020, 6, 1, 7, 24, 33, 492 ).AddTicks( 5910 ),
                 PeriodUnits.All,
-                new Period( 1, 2, 3, 4, 5, 6, 7, 8, 9 )
+                new Period( 1, 2, 3, 4, 5, 6, 7, 8, 9, 1 )
             },
             {
                 new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
                 timeZone,
-                new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6101 ),
+                new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6092 ),
                 PeriodUnits.All,
-                new Period( 0, 10, 0, 5, 21, 0, 50, 49, 9900 )
+                new Period( 0, 10, 0, 5, 21, 0, 50, 49, 990, 9 )
             },
             {
                 new DateTime( 2022, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
                 timeZone,
                 new DateTime( 2020, 9, 28, 13, 31, 41, 501 ).AddTicks( 6002 ),
                 PeriodUnits.All,
-                new Period( 1, 10, 3, 6, 22, 58, 58, 998, 9999 )
+                new Period( 1, 10, 3, 6, 22, 58, 58, 998, 999, 9 )
             },
             {
                 new DateTime( 2022, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
@@ -1456,9 +1456,9 @@ public class ZonedDateTimeTestsData
             {
                 new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
                 timeZone,
-                new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6101 ),
+                new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6092 ),
                 PeriodUnits.Time,
-                new Period( 7437, 0, 50, 49, 9900 )
+                new Period( 7437, 0, 50, 49, 990, 9 )
             },
             {
                 new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
@@ -1501,23 +1501,23 @@ public class ZonedDateTimeTestsData
             {
                 new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
                 timeZone,
-                new DateTime( 2020, 6, 1, 7, 24, 33, 492 ).AddTicks( 5992 ),
+                new DateTime( 2020, 6, 1, 7, 24, 33, 492 ).AddTicks( 5910 ),
                 PeriodUnits.All,
-                new Period( 1, 2, 3, 4, 5, 6, 7, 8, 9 )
+                new Period( 1, 2, 3, 4, 5, 6, 7, 8, 9, 1 )
             },
             {
                 new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
                 timeZone,
-                new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6101 ),
+                new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 7006 ),
                 PeriodUnits.All,
-                new Period( 1, -2, 0, 6, -3, 1, -10, 50, -100 )
+                new Period( 1, -2, 0, 6, -3, 1, -10, 50, -100, -5 )
             },
             {
                 new DateTime( 2022, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
                 timeZone,
-                new DateTime( 2020, 9, 28, 13, 31, 41, 501 ).AddTicks( 6002 ),
+                new DateTime( 2020, 9, 28, 13, 31, 41, 501 ).AddTicks( 6012 ),
                 PeriodUnits.All,
-                new Period( 2, -1, 0, -2, -1, -1, -1, -1, -1 )
+                new Period( 2, -1, 0, -2, -1, -1, -1, -1, -1, -1 )
             },
             {
                 new DateTime( 2022, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
@@ -1592,9 +1592,9 @@ public class ZonedDateTimeTestsData
             {
                 new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
                 timeZone,
-                new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6101 ),
+                new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 7006 ),
                 PeriodUnits.Time,
-                new Period( 7437, 1, -10, 50, -100 )
+                new Period( 7437, 1, -10, 50, -100, -5 )
             },
             {
                 new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
@@ -2344,19 +2344,19 @@ public class ZonedDateTimeTestsData
             {
                 new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
                 simpleTimeZone,
-                new TimeOfDay( 12, 30, 40, 500, 6001 ),
+                new TimeOfDay( 12, 30, 40, 500, 600, 1 ),
                 new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 )
             },
             {
                 new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
                 simpleTimeZone,
-                new TimeOfDay( 17, 40, 30, 200, 1001 ),
+                new TimeOfDay( 17, 40, 30, 200, 100, 1 ),
                 new DateTime( 2021, 8, 26, 17, 40, 30, 200 ).AddTicks( 1001 )
             },
             {
                 new DateTime( 2021, 8, 26 ),
                 timeZoneWithInvalidity,
-                new TimeOfDay( 11, 59, 59, 999, 9999 ),
+                new TimeOfDay( 11, 59, 59, 999, 999, 9 ),
                 new DateTime( 2021, 8, 26, 11, 59, 59, 999 ).AddTicks( 9999 )
             },
             {
@@ -2411,28 +2411,28 @@ public class ZonedDateTimeTestsData
                 new DateTime( 2021, 10, 26, 11, 59, 59, 999 ).AddTicks( 9999 ),
                 timeZone,
                 false,
-                new TimeOfDay( 11, 59, 59, 999, 9999 ),
+                new TimeOfDay( 11, 59, 59, 999, 999, 9 ),
                 new DateTime( 2021, 10, 26, 11, 59, 59, 999 ).AddTicks( 9999 )
             },
             {
                 new DateTime( 2021, 10, 26, 11, 59, 59, 999 ).AddTicks( 9999 ),
                 timeZone,
                 true,
-                new TimeOfDay( 11, 59, 59, 999, 9999 ),
+                new TimeOfDay( 11, 59, 59, 999, 999, 9 ),
                 new DateTime( 2021, 10, 26, 11, 59, 59, 999 ).AddTicks( 9999 )
             },
             {
                 new DateTime( 2021, 10, 26, 16, 0, 0 ),
                 timeZone,
                 false,
-                new TimeOfDay( 11, 59, 59, 999, 9999 ),
+                new TimeOfDay( 11, 59, 59, 999, 999, 9 ),
                 new DateTime( 2021, 10, 26, 11, 59, 59, 999 ).AddTicks( 9999 )
             },
             {
                 new DateTime( 2021, 10, 26, 6, 0, 0 ),
                 timeZone,
                 true,
-                new TimeOfDay( 11, 59, 59, 999, 9999 ),
+                new TimeOfDay( 11, 59, 59, 999, 999, 9 ),
                 new DateTime( 2021, 10, 26, 11, 59, 59, 999 ).AddTicks( 9999 )
             }
         };
@@ -2456,7 +2456,7 @@ public class ZonedDateTimeTestsData
             {
                 new DateTime( 2021, 8, 26 ),
                 timeZoneWithInvalidity,
-                new TimeOfDay( 12, 59, 59, 999, 9999 )
+                new TimeOfDay( 12, 59, 59, 999, 999, 9 )
             }
         };
     }

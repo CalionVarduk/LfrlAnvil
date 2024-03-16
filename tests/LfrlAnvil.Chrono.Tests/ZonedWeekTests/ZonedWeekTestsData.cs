@@ -1154,9 +1154,11 @@ public class ZonedWeekTestsData
             { week, timeZone, Period.FromSeconds( 604800 ), new DateTime( 2021, 8, 8 ) },
             { week, timeZone, Period.FromMilliseconds( 604799999 ), week },
             { week, timeZone, Period.FromMilliseconds( 604800000 ), new DateTime( 2021, 8, 8 ) },
+            { week, timeZone, Period.FromMicroseconds( 604799999999 ), week },
+            { week, timeZone, Period.FromMicroseconds( 604800000000 ), new DateTime( 2021, 8, 8 ) },
             { week, timeZone, Period.FromTicks( 6047999999999 ), week },
             { week, timeZone, Period.FromTicks( 6048000000000 ), new DateTime( 2021, 8, 8 ) },
-            { week, timeZone, new Period( 1, 2, 3, 15, 22, 90, 1700, 80000, 200000000 ), new DateTime( 2022, 11, 6 ) },
+            { week, timeZone, new Period( 1, 2, 3, 15, 22, 90, 1700, 80000, 18000000, 20000000 ), new DateTime( 2022, 11, 6 ) },
             { week, timeZoneWithDaylightSaving, Period.FromMonths( 1 ).AddDays( 25 ).AddHours( 2 ), new DateTime( 2021, 9, 26 ) },
             {
                 week,

@@ -841,6 +841,7 @@ public class ZonedDateTimeTests : TestsBase
             minutes: Fixture.Create<short>(),
             seconds: Fixture.Create<short>(),
             milliseconds: Fixture.Create<short>(),
+            microseconds: Fixture.Create<short>(),
             ticks: Fixture.Create<short>() );
 
         var sut = ZonedDateTime.Create( value, timeZone );
@@ -867,6 +868,7 @@ public class ZonedDateTimeTests : TestsBase
             minutes: Fixture.Create<short>(),
             seconds: Fixture.Create<short>(),
             milliseconds: Fixture.Create<short>(),
+            microseconds: Fixture.Create<short>(),
             ticks: Fixture.Create<short>() );
 
         var sut = ZonedDateTime.Create( value, timeZone );
@@ -1411,6 +1413,7 @@ public class ZonedDateTimeTests : TestsBase
             minutes: Fixture.Create<short>(),
             seconds: Fixture.Create<short>(),
             milliseconds: Fixture.Create<short>(),
+            microseconds: Fixture.Create<short>(),
             ticks: Fixture.Create<short>() );
 
         var sut = ZonedDateTime.Create( value, timeZone );
@@ -1454,6 +1457,7 @@ public class ZonedDateTimeTests : TestsBase
             minutes: Fixture.Create<short>(),
             seconds: Fixture.Create<short>(),
             milliseconds: Fixture.Create<short>(),
+            microseconds: Fixture.Create<short>(),
             ticks: Fixture.Create<short>() );
 
         var sut = ZonedDateTime.Create( value, timeZone );

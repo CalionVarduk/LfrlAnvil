@@ -17,6 +17,7 @@ public class TimeOfDayTests : TestsBase
             result.Minute.Should().Be( 0 );
             result.Second.Should().Be( 0 );
             result.Millisecond.Should().Be( 0 );
+            result.Microsecond.Should().Be( 0 );
             result.Tick.Should().Be( 0 );
         }
     }
@@ -32,6 +33,7 @@ public class TimeOfDayTests : TestsBase
             result.Minute.Should().Be( 0 );
             result.Second.Should().Be( 0 );
             result.Millisecond.Should().Be( 0 );
+            result.Microsecond.Should().Be( 0 );
             result.Tick.Should().Be( 0 );
         }
     }
@@ -47,7 +49,8 @@ public class TimeOfDayTests : TestsBase
             result.Minute.Should().Be( 59 );
             result.Second.Should().Be( 59 );
             result.Millisecond.Should().Be( 999 );
-            result.Tick.Should().Be( 9999 );
+            result.Microsecond.Should().Be( 999 );
+            result.Tick.Should().Be( 9 );
         }
     }
 
@@ -62,122 +65,30 @@ public class TimeOfDayTests : TestsBase
             sut.Minute.Should().Be( 0 );
             sut.Second.Should().Be( 0 );
             sut.Millisecond.Should().Be( 0 );
+            sut.Microsecond.Should().Be( 0 );
             sut.Tick.Should().Be( 0 );
         }
-    }
-
-    [Theory]
-    [MethodData( nameof( TimeOfDayTestsData.GetCtorWithHourPrecisionData ) )]
-    public void Ctor_WithHourPrecision_ShouldReturnCorrectResult(int hour)
-    {
-        var sut = new TimeOfDay( hour );
-
-        using ( new AssertionScope() )
-        {
-            sut.Hour.Should().Be( hour );
-            sut.Minute.Should().Be( 0 );
-            sut.Second.Should().Be( 0 );
-            sut.Millisecond.Should().Be( 0 );
-            sut.Tick.Should().Be( 0 );
-        }
-    }
-
-    [Theory]
-    [MethodData( nameof( TimeOfDayTestsData.GetCtorWithHourPrecisionThrowData ) )]
-    public void Ctor_WithHourPrecision_ShouldThrow_WhenHourIsInvalid(int hour)
-    {
-        var action = Lambda.Of( () => new TimeOfDay( hour ) );
-        action.Should().Throw<ArgumentOutOfRangeException>();
-    }
-
-    [Theory]
-    [MethodData( nameof( TimeOfDayTestsData.GetCtorWithMinutePrecisionData ) )]
-    public void Ctor_WithMinutePrecision_ShouldReturnCorrectResult(int hour, int minute)
-    {
-        var sut = new TimeOfDay( hour, minute );
-
-        using ( new AssertionScope() )
-        {
-            sut.Hour.Should().Be( hour );
-            sut.Minute.Should().Be( minute );
-            sut.Second.Should().Be( 0 );
-            sut.Millisecond.Should().Be( 0 );
-            sut.Tick.Should().Be( 0 );
-        }
-    }
-
-    [Theory]
-    [MethodData( nameof( TimeOfDayTestsData.GetCtorWithMinutePrecisionThrowData ) )]
-    public void Ctor_WithMinutePrecision_ShouldThrow_WhenParamsAreInvalid(int hour, int minute)
-    {
-        var action = Lambda.Of( () => new TimeOfDay( hour, minute ) );
-        action.Should().Throw<ArgumentOutOfRangeException>();
-    }
-
-    [Theory]
-    [MethodData( nameof( TimeOfDayTestsData.GetCtorWithSecondPrecisionData ) )]
-    public void Ctor_WithSecondPrecision_ShouldReturnCorrectResult(int hour, int minute, int second)
-    {
-        var sut = new TimeOfDay( hour, minute, second );
-
-        using ( new AssertionScope() )
-        {
-            sut.Hour.Should().Be( hour );
-            sut.Minute.Should().Be( minute );
-            sut.Second.Should().Be( second );
-            sut.Millisecond.Should().Be( 0 );
-            sut.Tick.Should().Be( 0 );
-        }
-    }
-
-    [Theory]
-    [MethodData( nameof( TimeOfDayTestsData.GetCtorWithSecondPrecisionThrowData ) )]
-    public void Ctor_WithSecondPrecision_ShouldThrow_WhenParamsAreInvalid(int hour, int minute, int second)
-    {
-        var action = Lambda.Of( () => new TimeOfDay( hour, minute, second ) );
-        action.Should().Throw<ArgumentOutOfRangeException>();
-    }
-
-    [Theory]
-    [MethodData( nameof( TimeOfDayTestsData.GetCtorWithMsPrecisionData ) )]
-    public void Ctor_WithMsPrecision_ShouldReturnCorrectResult(int hour, int minute, int second, int ms)
-    {
-        var sut = new TimeOfDay( hour, minute, second, ms );
-
-        using ( new AssertionScope() )
-        {
-            sut.Hour.Should().Be( hour );
-            sut.Minute.Should().Be( minute );
-            sut.Second.Should().Be( second );
-            sut.Millisecond.Should().Be( ms );
-            sut.Tick.Should().Be( 0 );
-        }
-    }
-
-    [Theory]
-    [MethodData( nameof( TimeOfDayTestsData.GetCtorWithMsPrecisionThrowData ) )]
-    public void Ctor_WithMsPrecision_ShouldThrowArgumentOutOfRangeException_WhenParamsAreInvalid(
-        int hour,
-        int minute,
-        int second,
-        int ms)
-    {
-        var action = Lambda.Of( () => new TimeOfDay( hour, minute, second, ms ) );
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
     }
 
     [Theory]
     [MethodData( nameof( TimeOfDayTestsData.GetCtorWithTickPrecisionData ) )]
-    public void Ctor_WithTickPrecision_ShouldReturnCorrectResult(int hour, int minute, int second, int ms, int tick)
+    public void Ctor_WithTickPrecision_ShouldReturnCorrectResult(
+        int hour,
+        int minute,
+        int second,
+        int millisecond,
+        int microsecond,
+        int tick)
     {
-        var sut = new TimeOfDay( hour, minute, second, ms, tick );
+        var sut = new TimeOfDay( hour, minute, second, millisecond, microsecond, tick );
 
         using ( new AssertionScope() )
         {
             sut.Hour.Should().Be( hour );
             sut.Minute.Should().Be( minute );
             sut.Second.Should().Be( second );
-            sut.Millisecond.Should().Be( ms );
+            sut.Millisecond.Should().Be( millisecond );
+            sut.Microsecond.Should().Be( microsecond );
             sut.Tick.Should().Be( tick );
         }
     }
@@ -188,10 +99,11 @@ public class TimeOfDayTests : TestsBase
         int hour,
         int minute,
         int second,
-        int ms,
+        int millisecond,
+        int microsecond,
         int tick)
     {
-        var action = Lambda.Of( () => new TimeOfDay( hour, minute, second, ms, tick ) );
+        var action = Lambda.Of( () => new TimeOfDay( hour, minute, second, millisecond, microsecond, tick ) );
         action.Should().ThrowExactly<ArgumentOutOfRangeException>();
     }
 
@@ -208,7 +120,8 @@ public class TimeOfDayTests : TestsBase
             sut.Minute.Should().Be( timeSpan.Minutes );
             sut.Second.Should().Be( timeSpan.Seconds );
             sut.Millisecond.Should().Be( timeSpan.Milliseconds );
-            sut.Tick.Should().Be( (int)(timeSpan.Ticks % ChronoConstants.TicksPerMillisecond) );
+            sut.Microsecond.Should().Be( timeSpan.Microseconds );
+            sut.Tick.Should().Be( (int)(timeSpan.Ticks % ChronoConstants.TicksPerMicrosecond) );
         }
     }
 
@@ -296,6 +209,18 @@ public class TimeOfDayTests : TestsBase
     }
 
     [Theory]
+    [MethodData( nameof( TimeOfDayTestsData.GetTrimToMicrosecondData ) )]
+    public void TrimToMicrosecond_ShouldResetTicksToZero(long ticks, long expectedTicks)
+    {
+        var sut = new TimeOfDay( TimeSpan.FromTicks( ticks ) );
+        var expected = new TimeOfDay( TimeSpan.FromTicks( expectedTicks ) );
+
+        var result = sut.TrimToMicrosecond();
+
+        result.Should().Be( expected );
+    }
+
+    [Theory]
     [MethodData( nameof( TimeOfDayTestsData.GetTrimToMillisecondData ) )]
     public void TrimToMillisecond_ShouldResetTicksToZero(long ticks, long expectedTicks)
     {
@@ -364,6 +289,31 @@ public class TimeOfDayTests : TestsBase
         using ( new AssertionScope() )
         {
             result.Tick.Should().Be( value );
+            result.Should().Be( expected );
+        }
+    }
+
+    [Theory]
+    [MethodData( nameof( TimeOfDayTestsData.GetSetMicrosecondThrowData ) )]
+    public void SetMicrosecond_ShouldThrowArgumentOutOfRangeException_WhenValueIsInvalid(int value)
+    {
+        var sut = TimeOfDay.Start;
+        var action = Lambda.Of( () => sut.SetMicrosecond( value ) );
+        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+    }
+
+    [Theory]
+    [MethodData( nameof( TimeOfDayTestsData.GetSetMicrosecondData ) )]
+    public void SetMicrosecond_ShouldReturnCorrectResult(long ticks, int value, long expectedTicks)
+    {
+        var sut = new TimeOfDay( TimeSpan.FromTicks( ticks ) );
+        var expected = new TimeOfDay( TimeSpan.FromTicks( expectedTicks ) );
+
+        var result = sut.SetMicrosecond( value );
+
+        using ( new AssertionScope() )
+        {
+            result.Microsecond.Should().Be( value );
             result.Should().Be( expected );
         }
     }

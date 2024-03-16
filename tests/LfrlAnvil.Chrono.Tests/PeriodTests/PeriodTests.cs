@@ -20,6 +20,7 @@ public class PeriodTests : TestsBase
             sut.Minutes.Should().Be( 0 );
             sut.Seconds.Should().Be( 0 );
             sut.Milliseconds.Should().Be( 0 );
+            sut.Microseconds.Should().Be( 0 );
             sut.Ticks.Should().Be( 0 );
             sut.ActiveUnits.Should().Be( PeriodUnits.None );
         }
@@ -40,6 +41,7 @@ public class PeriodTests : TestsBase
             sut.Minutes.Should().Be( 0 );
             sut.Seconds.Should().Be( 0 );
             sut.Milliseconds.Should().Be( 0 );
+            sut.Microseconds.Should().Be( 0 );
             sut.Ticks.Should().Be( 0 );
             sut.ActiveUnits.Should().Be( PeriodUnits.None );
         }
@@ -66,6 +68,7 @@ public class PeriodTests : TestsBase
             sut.Minutes.Should().Be( 0 );
             sut.Seconds.Should().Be( 0 );
             sut.Milliseconds.Should().Be( 0 );
+            sut.Microseconds.Should().Be( 0 );
             sut.Ticks.Should().Be( 0 );
             sut.ActiveUnits.Should().Be( expectedUnits );
         }
@@ -78,10 +81,11 @@ public class PeriodTests : TestsBase
         int minutes,
         int seconds,
         int milliseconds,
+        int microseconds,
         int ticks,
         PeriodUnits expectedUnits)
     {
-        var sut = new Period( hours, minutes, seconds, milliseconds, ticks );
+        var sut = new Period( hours, minutes, seconds, milliseconds, microseconds, ticks );
 
         using ( new AssertionScope() )
         {
@@ -93,6 +97,7 @@ public class PeriodTests : TestsBase
             sut.Minutes.Should().Be( minutes );
             sut.Seconds.Should().Be( seconds );
             sut.Milliseconds.Should().Be( milliseconds );
+            sut.Microseconds.Should().Be( microseconds );
             sut.Ticks.Should().Be( ticks );
             sut.ActiveUnits.Should().Be( expectedUnits );
         }
@@ -102,7 +107,7 @@ public class PeriodTests : TestsBase
     [MethodData( nameof( PeriodTestsData.GetCtorWithFullData ) )]
     public void Ctor_Full_ShouldReturnCorrectResult(
         (int Years, int Months, int Weeks, int Days) date,
-        (int Hours, int Minutes, int Seconds, int Milliseconds, int Ticks) time,
+        (int Hours, int Minutes, int Seconds, int Milliseconds, int Microseconds, int Ticks) time,
         PeriodUnits expectedUnits)
     {
         var sut = new Period(
@@ -114,6 +119,7 @@ public class PeriodTests : TestsBase
             time.Minutes,
             time.Seconds,
             time.Milliseconds,
+            time.Microseconds,
             time.Ticks );
 
         using ( new AssertionScope() )
@@ -126,6 +132,7 @@ public class PeriodTests : TestsBase
             sut.Minutes.Should().Be( time.Minutes );
             sut.Seconds.Should().Be( time.Seconds );
             sut.Milliseconds.Should().Be( time.Milliseconds );
+            sut.Microseconds.Should().Be( time.Microseconds );
             sut.Ticks.Should().Be( time.Ticks );
             sut.ActiveUnits.Should().Be( expectedUnits );
         }
@@ -140,6 +147,7 @@ public class PeriodTests : TestsBase
         int expectedMinutes,
         int expectedSeconds,
         int expectedMilliseconds,
+        int expectedMicroseconds,
         int expectedTicks,
         PeriodUnits expectedUnits)
     {
@@ -155,6 +163,7 @@ public class PeriodTests : TestsBase
             sut.Minutes.Should().Be( expectedMinutes );
             sut.Seconds.Should().Be( expectedSeconds );
             sut.Milliseconds.Should().Be( expectedMilliseconds );
+            sut.Microseconds.Should().Be( expectedMicroseconds );
             sut.Ticks.Should().Be( expectedTicks );
             sut.ActiveUnits.Should().Be( expectedUnits );
         }
@@ -176,8 +185,31 @@ public class PeriodTests : TestsBase
             sut.Minutes.Should().Be( 0 );
             sut.Seconds.Should().Be( 0 );
             sut.Milliseconds.Should().Be( 0 );
+            sut.Microseconds.Should().Be( 0 );
             sut.Ticks.Should().Be( value );
             sut.ActiveUnits.Should().Be( PeriodUnits.Ticks );
+        }
+    }
+
+    [Fact]
+    public void FromMicroseconds_ShouldReturnCorrectResult()
+    {
+        var value = Fixture.CreateNotDefault<int>();
+        var sut = Period.FromMicroseconds( value );
+
+        using ( new AssertionScope() )
+        {
+            sut.Years.Should().Be( 0 );
+            sut.Months.Should().Be( 0 );
+            sut.Weeks.Should().Be( 0 );
+            sut.Days.Should().Be( 0 );
+            sut.Hours.Should().Be( 0 );
+            sut.Minutes.Should().Be( 0 );
+            sut.Seconds.Should().Be( 0 );
+            sut.Milliseconds.Should().Be( 0 );
+            sut.Microseconds.Should().Be( value );
+            sut.Ticks.Should().Be( 0 );
+            sut.ActiveUnits.Should().Be( PeriodUnits.Microseconds );
         }
     }
 
@@ -197,6 +229,7 @@ public class PeriodTests : TestsBase
             sut.Minutes.Should().Be( 0 );
             sut.Seconds.Should().Be( 0 );
             sut.Milliseconds.Should().Be( value );
+            sut.Microseconds.Should().Be( 0 );
             sut.Ticks.Should().Be( 0 );
             sut.ActiveUnits.Should().Be( PeriodUnits.Milliseconds );
         }
@@ -218,6 +251,7 @@ public class PeriodTests : TestsBase
             sut.Minutes.Should().Be( 0 );
             sut.Seconds.Should().Be( value );
             sut.Milliseconds.Should().Be( 0 );
+            sut.Microseconds.Should().Be( 0 );
             sut.Ticks.Should().Be( 0 );
             sut.ActiveUnits.Should().Be( PeriodUnits.Seconds );
         }
@@ -239,6 +273,7 @@ public class PeriodTests : TestsBase
             sut.Minutes.Should().Be( value );
             sut.Seconds.Should().Be( 0 );
             sut.Milliseconds.Should().Be( 0 );
+            sut.Microseconds.Should().Be( 0 );
             sut.Ticks.Should().Be( 0 );
             sut.ActiveUnits.Should().Be( PeriodUnits.Minutes );
         }
@@ -260,6 +295,7 @@ public class PeriodTests : TestsBase
             sut.Minutes.Should().Be( 0 );
             sut.Seconds.Should().Be( 0 );
             sut.Milliseconds.Should().Be( 0 );
+            sut.Microseconds.Should().Be( 0 );
             sut.Ticks.Should().Be( 0 );
             sut.ActiveUnits.Should().Be( PeriodUnits.Hours );
         }
@@ -281,6 +317,7 @@ public class PeriodTests : TestsBase
             sut.Minutes.Should().Be( 0 );
             sut.Seconds.Should().Be( 0 );
             sut.Milliseconds.Should().Be( 0 );
+            sut.Microseconds.Should().Be( 0 );
             sut.Ticks.Should().Be( 0 );
             sut.ActiveUnits.Should().Be( PeriodUnits.Days );
         }
@@ -302,6 +339,7 @@ public class PeriodTests : TestsBase
             sut.Minutes.Should().Be( 0 );
             sut.Seconds.Should().Be( 0 );
             sut.Milliseconds.Should().Be( 0 );
+            sut.Microseconds.Should().Be( 0 );
             sut.Ticks.Should().Be( 0 );
             sut.ActiveUnits.Should().Be( PeriodUnits.Weeks );
         }
@@ -323,6 +361,7 @@ public class PeriodTests : TestsBase
             sut.Minutes.Should().Be( 0 );
             sut.Seconds.Should().Be( 0 );
             sut.Milliseconds.Should().Be( 0 );
+            sut.Microseconds.Should().Be( 0 );
             sut.Ticks.Should().Be( 0 );
             sut.ActiveUnits.Should().Be( PeriodUnits.Months );
         }
@@ -344,6 +383,7 @@ public class PeriodTests : TestsBase
             sut.Minutes.Should().Be( 0 );
             sut.Seconds.Should().Be( 0 );
             sut.Milliseconds.Should().Be( 0 );
+            sut.Microseconds.Should().Be( 0 );
             sut.Ticks.Should().Be( 0 );
             sut.ActiveUnits.Should().Be( PeriodUnits.Years );
         }
@@ -353,7 +393,7 @@ public class PeriodTests : TestsBase
     [MethodData( nameof( PeriodTestsData.GetToStringData ) )]
     public void ToString_ShouldReturnCorrectResult(
         (int Years, int Months, int Weeks, int Days) date,
-        (int Hours, int Minutes, int Seconds, int Milliseconds, int Ticks) time,
+        (int Hours, int Minutes, int Seconds, int Milliseconds, int Microseconds, int Ticks) time,
         string expected)
     {
         var sut = new Period(
@@ -365,6 +405,7 @@ public class PeriodTests : TestsBase
             time.Minutes,
             time.Seconds,
             time.Milliseconds,
+            time.Microseconds,
             time.Ticks );
 
         var result = sut.ToString();
@@ -385,6 +426,7 @@ public class PeriodTests : TestsBase
             .Add( sut.Minutes )
             .Add( sut.Seconds )
             .Add( sut.Milliseconds )
+            .Add( sut.Microseconds )
             .Add( sut.Ticks )
             .Value;
 
@@ -397,9 +439,9 @@ public class PeriodTests : TestsBase
     [MethodData( nameof( PeriodTestsData.GetEqualsData ) )]
     public void Equals_ShouldReturnCorrectResult(
         (int Years, int Months, int Weeks, int Days) date1,
-        (int Hours, int Minutes, int Seconds, int Milliseconds, int Ticks) time1,
+        (int Hours, int Minutes, int Seconds, int Milliseconds, int Microseconds, int Ticks) time1,
         (int Years, int Months, int Weeks, int Days) date2,
-        (int Hours, int Minutes, int Seconds, int Milliseconds, int Ticks) time2,
+        (int Hours, int Minutes, int Seconds, int Milliseconds, int Microseconds, int Ticks) time2,
         bool expected)
     {
         var a = new Period(
@@ -411,6 +453,7 @@ public class PeriodTests : TestsBase
             time1.Minutes,
             time1.Seconds,
             time1.Milliseconds,
+            time1.Microseconds,
             time1.Ticks );
 
         var b = new Period(
@@ -422,6 +465,7 @@ public class PeriodTests : TestsBase
             time2.Minutes,
             time2.Seconds,
             time2.Milliseconds,
+            time2.Microseconds,
             time2.Ticks );
 
         var result = a.Equals( b );
@@ -433,11 +477,11 @@ public class PeriodTests : TestsBase
     [MethodData( nameof( PeriodTestsData.GetAddData ) )]
     public void Add_ShouldReturnCorrectResult(
         (int Years, int Months, int Weeks, int Days) date1,
-        (int Hours, int Minutes, int Seconds, int Milliseconds, int Ticks) time1,
+        (int Hours, int Minutes, int Seconds, int Milliseconds, int Microseconds, int Ticks) time1,
         (int Years, int Months, int Weeks, int Days) date2,
-        (int Hours, int Minutes, int Seconds, int Milliseconds, int Ticks) time2,
+        (int Hours, int Minutes, int Seconds, int Milliseconds, int Microseconds, int Ticks) time2,
         (int Years, int Months, int Weeks, int Days) expectedDate,
-        (int Hours, int Minutes, int Seconds, int Milliseconds, int Ticks) expectedTime)
+        (int Hours, int Minutes, int Seconds, int Milliseconds, int Microseconds, int Ticks) expectedTime)
     {
         var sut = new Period(
             date1.Years,
@@ -448,6 +492,7 @@ public class PeriodTests : TestsBase
             time1.Minutes,
             time1.Seconds,
             time1.Milliseconds,
+            time1.Microseconds,
             time1.Ticks );
 
         var other = new Period(
@@ -459,6 +504,7 @@ public class PeriodTests : TestsBase
             time2.Minutes,
             time2.Seconds,
             time2.Milliseconds,
+            time2.Microseconds,
             time2.Ticks );
 
         var result = sut.Add( other );
@@ -473,6 +519,7 @@ public class PeriodTests : TestsBase
             result.Minutes.Should().Be( expectedTime.Minutes );
             result.Seconds.Should().Be( expectedTime.Seconds );
             result.Milliseconds.Should().Be( expectedTime.Milliseconds );
+            result.Microseconds.Should().Be( expectedTime.Microseconds );
             result.Ticks.Should().Be( expectedTime.Ticks );
         }
     }
@@ -485,6 +532,18 @@ public class PeriodTests : TestsBase
         var expected = sut.SetTicks( sut.Ticks + value );
 
         var result = sut.AddTicks( value );
+
+        result.Should().BeEquivalentTo( expected );
+    }
+
+    [Fact]
+    public void AddMicroseconds_ShouldBeEquivalentToSetMicrosecondsWithSum()
+    {
+        var sut = CreatePeriod();
+        var value = Fixture.Create<int>();
+        var expected = sut.SetMicroseconds( sut.Microseconds + value );
+
+        var result = sut.AddMicroseconds( value );
 
         result.Should().BeEquivalentTo( expected );
     }
@@ -589,11 +648,11 @@ public class PeriodTests : TestsBase
     [MethodData( nameof( PeriodTestsData.GetSubtractData ) )]
     public void Subtract_ShouldReturnCorrectResult(
         (int Years, int Months, int Weeks, int Days) date1,
-        (int Hours, int Minutes, int Seconds, int Milliseconds, int Ticks) time1,
+        (int Hours, int Minutes, int Seconds, int Milliseconds, int Microseconds, int Ticks) time1,
         (int Years, int Months, int Weeks, int Days) date2,
-        (int Hours, int Minutes, int Seconds, int Milliseconds, int Ticks) time2,
+        (int Hours, int Minutes, int Seconds, int Milliseconds, int Microseconds, int Ticks) time2,
         (int Years, int Months, int Weeks, int Days) expectedDate,
-        (int Hours, int Minutes, int Seconds, int Milliseconds, int Ticks) expectedTime)
+        (int Hours, int Minutes, int Seconds, int Milliseconds, int Microseconds, int Ticks) expectedTime)
     {
         var sut = new Period(
             date1.Years,
@@ -604,6 +663,7 @@ public class PeriodTests : TestsBase
             time1.Minutes,
             time1.Seconds,
             time1.Milliseconds,
+            time1.Microseconds,
             time1.Ticks );
 
         var other = new Period(
@@ -615,6 +675,7 @@ public class PeriodTests : TestsBase
             time2.Minutes,
             time2.Seconds,
             time2.Milliseconds,
+            time2.Microseconds,
             time2.Ticks );
 
         var result = sut.Subtract( other );
@@ -629,6 +690,7 @@ public class PeriodTests : TestsBase
             result.Minutes.Should().Be( expectedTime.Minutes );
             result.Seconds.Should().Be( expectedTime.Seconds );
             result.Milliseconds.Should().Be( expectedTime.Milliseconds );
+            result.Microseconds.Should().Be( expectedTime.Microseconds );
             result.Ticks.Should().Be( expectedTime.Ticks );
         }
     }
@@ -641,6 +703,18 @@ public class PeriodTests : TestsBase
         var expected = sut.SetTicks( sut.Ticks - value );
 
         var result = sut.SubtractTicks( value );
+
+        result.Should().BeEquivalentTo( expected );
+    }
+
+    [Fact]
+    public void SubtractMicroseconds_ShouldBeEquivalentToSetMicrosecondsWithDifference()
+    {
+        var sut = CreatePeriod();
+        var value = Fixture.Create<int>();
+        var expected = sut.SetMicroseconds( sut.Microseconds - value );
+
+        var result = sut.SubtractMicroseconds( value );
 
         result.Should().BeEquivalentTo( expected );
     }
@@ -745,12 +819,12 @@ public class PeriodTests : TestsBase
     [MethodData( nameof( PeriodTestsData.GetSetData ) )]
     public void Set_ShouldReturnCorrectResult(
         (int Years, int Months, int Weeks, int Days) date1,
-        (int Hours, int Minutes, int Seconds, int Milliseconds, int Ticks) time1,
+        (int Hours, int Minutes, int Seconds, int Milliseconds, int Microseconds, int Ticks) time1,
         (int Years, int Months, int Weeks, int Days) date2,
-        (int Hours, int Minutes, int Seconds, int Milliseconds, int Ticks) time2,
+        (int Hours, int Minutes, int Seconds, int Milliseconds, int Microseconds, int Ticks) time2,
         PeriodUnits units,
         (int Years, int Months, int Weeks, int Days) expectedDate,
-        (int Hours, int Minutes, int Seconds, int Milliseconds, int Ticks) expectedTime)
+        (int Hours, int Minutes, int Seconds, int Milliseconds, int Microseconds, int Ticks) expectedTime)
     {
         var sut = new Period(
             date1.Years,
@@ -761,6 +835,7 @@ public class PeriodTests : TestsBase
             time1.Minutes,
             time1.Seconds,
             time1.Milliseconds,
+            time1.Microseconds,
             time1.Ticks );
 
         var other = new Period(
@@ -772,6 +847,7 @@ public class PeriodTests : TestsBase
             time2.Minutes,
             time2.Seconds,
             time2.Milliseconds,
+            time2.Microseconds,
             time2.Ticks );
 
         var result = sut.Set( other, units );
@@ -786,6 +862,7 @@ public class PeriodTests : TestsBase
             result.Minutes.Should().Be( expectedTime.Minutes );
             result.Seconds.Should().Be( expectedTime.Seconds );
             result.Milliseconds.Should().Be( expectedTime.Milliseconds );
+            result.Microseconds.Should().Be( expectedTime.Microseconds );
             result.Ticks.Should().Be( expectedTime.Ticks );
         }
     }
@@ -811,6 +888,7 @@ public class PeriodTests : TestsBase
             result.Minutes.Should().Be( sut.Minutes );
             result.Seconds.Should().Be( sut.Seconds );
             result.Milliseconds.Should().Be( sut.Milliseconds );
+            result.Microseconds.Should().Be( sut.Microseconds );
             result.Ticks.Should().Be( sut.Ticks );
         }
     }
@@ -823,9 +901,10 @@ public class PeriodTests : TestsBase
         var minutes = Fixture.Create<int>();
         var seconds = Fixture.Create<int>();
         var milliseconds = Fixture.Create<int>();
+        var microseconds = Fixture.Create<int>();
         var ticks = Fixture.Create<int>();
 
-        var result = sut.SetTime( hours, minutes, seconds, milliseconds, ticks );
+        var result = sut.SetTime( hours, minutes, seconds, milliseconds, microseconds, ticks );
 
         using ( new AssertionScope() )
         {
@@ -837,6 +916,7 @@ public class PeriodTests : TestsBase
             result.Minutes.Should().Be( minutes );
             result.Seconds.Should().Be( seconds );
             result.Milliseconds.Should().Be( milliseconds );
+            result.Microseconds.Should().Be( microseconds );
             result.Ticks.Should().Be( ticks );
         }
     }
@@ -859,6 +939,7 @@ public class PeriodTests : TestsBase
             result.Minutes.Should().Be( sut.Minutes );
             result.Seconds.Should().Be( sut.Seconds );
             result.Milliseconds.Should().Be( sut.Milliseconds );
+            result.Microseconds.Should().Be( sut.Microseconds );
             result.Ticks.Should().Be( value );
         }
     }
@@ -881,6 +962,7 @@ public class PeriodTests : TestsBase
             result.Minutes.Should().Be( sut.Minutes );
             result.Seconds.Should().Be( sut.Seconds );
             result.Milliseconds.Should().Be( value );
+            result.Microseconds.Should().Be( sut.Microseconds );
             result.Ticks.Should().Be( sut.Ticks );
         }
     }
@@ -903,6 +985,7 @@ public class PeriodTests : TestsBase
             result.Minutes.Should().Be( sut.Minutes );
             result.Seconds.Should().Be( value );
             result.Milliseconds.Should().Be( sut.Milliseconds );
+            result.Microseconds.Should().Be( sut.Microseconds );
             result.Ticks.Should().Be( sut.Ticks );
         }
     }
@@ -925,6 +1008,7 @@ public class PeriodTests : TestsBase
             result.Minutes.Should().Be( value );
             result.Seconds.Should().Be( sut.Seconds );
             result.Milliseconds.Should().Be( sut.Milliseconds );
+            result.Microseconds.Should().Be( sut.Microseconds );
             result.Ticks.Should().Be( sut.Ticks );
         }
     }
@@ -947,6 +1031,7 @@ public class PeriodTests : TestsBase
             result.Minutes.Should().Be( sut.Minutes );
             result.Seconds.Should().Be( sut.Seconds );
             result.Milliseconds.Should().Be( sut.Milliseconds );
+            result.Microseconds.Should().Be( sut.Microseconds );
             result.Ticks.Should().Be( sut.Ticks );
         }
     }
@@ -969,6 +1054,7 @@ public class PeriodTests : TestsBase
             result.Minutes.Should().Be( sut.Minutes );
             result.Seconds.Should().Be( sut.Seconds );
             result.Milliseconds.Should().Be( sut.Milliseconds );
+            result.Microseconds.Should().Be( sut.Microseconds );
             result.Ticks.Should().Be( sut.Ticks );
         }
     }
@@ -991,6 +1077,7 @@ public class PeriodTests : TestsBase
             result.Minutes.Should().Be( sut.Minutes );
             result.Seconds.Should().Be( sut.Seconds );
             result.Milliseconds.Should().Be( sut.Milliseconds );
+            result.Microseconds.Should().Be( sut.Microseconds );
             result.Ticks.Should().Be( sut.Ticks );
         }
     }
@@ -1013,6 +1100,7 @@ public class PeriodTests : TestsBase
             result.Minutes.Should().Be( sut.Minutes );
             result.Seconds.Should().Be( sut.Seconds );
             result.Milliseconds.Should().Be( sut.Milliseconds );
+            result.Microseconds.Should().Be( sut.Microseconds );
             result.Ticks.Should().Be( sut.Ticks );
         }
     }
@@ -1035,6 +1123,7 @@ public class PeriodTests : TestsBase
             result.Minutes.Should().Be( sut.Minutes );
             result.Seconds.Should().Be( sut.Seconds );
             result.Milliseconds.Should().Be( sut.Milliseconds );
+            result.Microseconds.Should().Be( sut.Microseconds );
             result.Ticks.Should().Be( sut.Ticks );
         }
     }
@@ -1056,6 +1145,7 @@ public class PeriodTests : TestsBase
             result.Minutes.Should().Be( -sut.Minutes );
             result.Seconds.Should().Be( -sut.Seconds );
             result.Milliseconds.Should().Be( -sut.Milliseconds );
+            result.Microseconds.Should().Be( -sut.Microseconds );
             result.Ticks.Should().Be( -sut.Ticks );
         }
     }
@@ -1064,9 +1154,9 @@ public class PeriodTests : TestsBase
     [MethodData( nameof( PeriodTestsData.GetAbsData ) )]
     public void Abs_ShouldReturnCorrectResult(
         (int Years, int Months, int Weeks, int Days) date,
-        (int Hours, int Minutes, int Seconds, int Milliseconds, int Ticks) time,
+        (int Hours, int Minutes, int Seconds, int Milliseconds, int Microseconds, int Ticks) time,
         (int Years, int Months, int Weeks, int Days) expectedDate,
-        (int Hours, int Minutes, int Seconds, int Milliseconds, int Ticks) expectedTime)
+        (int Hours, int Minutes, int Seconds, int Milliseconds, int Microseconds, int Ticks) expectedTime)
     {
         var sut = new Period(
             date.Years,
@@ -1077,6 +1167,7 @@ public class PeriodTests : TestsBase
             time.Minutes,
             time.Seconds,
             time.Milliseconds,
+            time.Microseconds,
             time.Ticks );
 
         var result = sut.Abs();
@@ -1091,6 +1182,7 @@ public class PeriodTests : TestsBase
             result.Minutes.Should().Be( expectedTime.Minutes );
             result.Seconds.Should().Be( expectedTime.Seconds );
             result.Milliseconds.Should().Be( expectedTime.Milliseconds );
+            result.Microseconds.Should().Be( expectedTime.Microseconds );
             result.Ticks.Should().Be( expectedTime.Ticks );
         }
     }
@@ -1099,10 +1191,10 @@ public class PeriodTests : TestsBase
     [MethodData( nameof( PeriodTestsData.GetSkipData ) )]
     public void Skip_ShouldResetProvidedUnitsToZero(
         (int Years, int Months, int Weeks, int Days) date,
-        (int Hours, int Minutes, int Seconds, int Milliseconds, int Ticks) time,
+        (int Hours, int Minutes, int Seconds, int Milliseconds, int Microseconds, int Ticks) time,
         PeriodUnits units,
         (int Years, int Months, int Weeks, int Days) expectedDate,
-        (int Hours, int Minutes, int Seconds, int Milliseconds, int Ticks) expectedTime)
+        (int Hours, int Minutes, int Seconds, int Milliseconds, int Microseconds, int Ticks) expectedTime)
     {
         var sut = new Period(
             date.Years,
@@ -1113,6 +1205,7 @@ public class PeriodTests : TestsBase
             time.Minutes,
             time.Seconds,
             time.Milliseconds,
+            time.Microseconds,
             time.Ticks );
 
         var result = sut.Skip( units );
@@ -1127,6 +1220,7 @@ public class PeriodTests : TestsBase
             result.Minutes.Should().Be( expectedTime.Minutes );
             result.Seconds.Should().Be( expectedTime.Seconds );
             result.Milliseconds.Should().Be( expectedTime.Milliseconds );
+            result.Microseconds.Should().Be( expectedTime.Microseconds );
             result.Ticks.Should().Be( expectedTime.Ticks );
         }
     }
@@ -1135,10 +1229,10 @@ public class PeriodTests : TestsBase
     [MethodData( nameof( PeriodTestsData.GetTakeData ) )]
     public void Take_ShouldOnlyReturnProvidedUnits(
         (int Years, int Months, int Weeks, int Days) date,
-        (int Hours, int Minutes, int Seconds, int Milliseconds, int Ticks) time,
+        (int Hours, int Minutes, int Seconds, int Milliseconds, int Microseconds, int Ticks) time,
         PeriodUnits units,
         (int Years, int Months, int Weeks, int Days) expectedDate,
-        (int Hours, int Minutes, int Seconds, int Milliseconds, int Ticks) expectedTime)
+        (int Hours, int Minutes, int Seconds, int Milliseconds, int Microseconds, int Ticks) expectedTime)
     {
         var sut = new Period(
             date.Years,
@@ -1149,6 +1243,7 @@ public class PeriodTests : TestsBase
             time.Minutes,
             time.Seconds,
             time.Milliseconds,
+            time.Microseconds,
             time.Ticks );
 
         var result = sut.Take( units );
@@ -1163,6 +1258,7 @@ public class PeriodTests : TestsBase
             result.Minutes.Should().Be( expectedTime.Minutes );
             result.Seconds.Should().Be( expectedTime.Seconds );
             result.Milliseconds.Should().Be( expectedTime.Milliseconds );
+            result.Microseconds.Should().Be( expectedTime.Microseconds );
             result.Ticks.Should().Be( expectedTime.Ticks );
         }
     }
@@ -1206,9 +1302,9 @@ public class PeriodTests : TestsBase
     [MethodData( nameof( PeriodTestsData.GetEqualsData ) )]
     public void EqualityOperator_ShouldReturnCorrectResult(
         (int Years, int Months, int Weeks, int Days) date1,
-        (int Hours, int Minutes, int Seconds, int Milliseconds, int Ticks) time1,
+        (int Hours, int Minutes, int Seconds, int Milliseconds, int Microseconds, int Ticks) time1,
         (int Years, int Months, int Weeks, int Days) date2,
-        (int Hours, int Minutes, int Seconds, int Milliseconds, int Ticks) time2,
+        (int Hours, int Minutes, int Seconds, int Milliseconds, int Microseconds, int Ticks) time2,
         bool expected)
     {
         var a = new Period(
@@ -1220,6 +1316,7 @@ public class PeriodTests : TestsBase
             time1.Minutes,
             time1.Seconds,
             time1.Milliseconds,
+            time1.Microseconds,
             time1.Ticks );
 
         var b = new Period(
@@ -1231,6 +1328,7 @@ public class PeriodTests : TestsBase
             time2.Minutes,
             time2.Seconds,
             time2.Milliseconds,
+            time2.Microseconds,
             time2.Ticks );
 
         var result = a == b;
@@ -1242,9 +1340,9 @@ public class PeriodTests : TestsBase
     [MethodData( nameof( PeriodTestsData.GetNotEqualsData ) )]
     public void InequalityOperator_ShouldReturnCorrectResult(
         (int Years, int Months, int Weeks, int Days) date1,
-        (int Hours, int Minutes, int Seconds, int Milliseconds, int Ticks) time1,
+        (int Hours, int Minutes, int Seconds, int Milliseconds, int Microseconds, int Ticks) time1,
         (int Years, int Months, int Weeks, int Days) date2,
-        (int Hours, int Minutes, int Seconds, int Milliseconds, int Ticks) time2,
+        (int Hours, int Minutes, int Seconds, int Milliseconds, int Microseconds, int Ticks) time2,
         bool expected)
     {
         var a = new Period(
@@ -1256,6 +1354,7 @@ public class PeriodTests : TestsBase
             time1.Minutes,
             time1.Seconds,
             time1.Milliseconds,
+            time1.Microseconds,
             time1.Ticks );
 
         var b = new Period(
@@ -1267,6 +1366,7 @@ public class PeriodTests : TestsBase
             time2.Minutes,
             time2.Seconds,
             time2.Milliseconds,
+            time2.Microseconds,
             time2.Ticks );
 
         var result = a != b;
@@ -1284,7 +1384,8 @@ public class PeriodTests : TestsBase
         var minutes = Fixture.Create<int>();
         var seconds = Fixture.Create<int>();
         var milliseconds = Fixture.Create<int>();
+        var microseconds = Fixture.Create<int>();
         var ticks = Fixture.Create<int>();
-        return new Period( years, months, weeks, days, hours, minutes, seconds, milliseconds, ticks );
+        return new Period( years, months, weeks, days, hours, minutes, seconds, milliseconds, microseconds, ticks );
     }
 }

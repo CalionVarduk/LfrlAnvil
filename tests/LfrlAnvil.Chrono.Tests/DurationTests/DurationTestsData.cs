@@ -14,33 +14,13 @@ public class DurationTestsData
         };
     }
 
-    public static TheoryData<int, int, int, long> GetCtorWithSecondsPrecisionData(IFixture fixture)
+    public static TheoryData<int, int, int, int, int, int, long> GetCtorWithTicksPrecisionData(IFixture fixture)
     {
-        return new TheoryData<int, int, int, long>
+        return new TheoryData<int, int, int, int, int, int, long>
         {
-            { 3, 111, 321, 17781 },
-            { -4, 40, 1, -11999 },
-            { 78, -765, -303, 234597 }
-        };
-    }
-
-    public static TheoryData<int, int, int, int, long> GetCtorWithMsPrecisionData(IFixture fixture)
-    {
-        return new TheoryData<int, int, int, int, long>
-        {
-            { 3, 111, 321, 987, 17781987 },
-            { -4, 40, 1, 3456, -11995544 },
-            { 78, -765, -303, -12345, 234584655 }
-        };
-    }
-
-    public static TheoryData<int, int, int, int, int, long> GetCtorWithTicksPrecisionData(IFixture fixture)
-    {
-        return new TheoryData<int, int, int, int, int, long>
-        {
-            { 3, 111, 321, 987, 123456, 17781987 },
-            { -4, 40, 1, 3456, 789, -11995544 },
-            { 78, -765, -303, -12345, -9876543, 234584655 }
+            { 3, 111, 321, 987, 12345, 6, 177819993456 },
+            { -4, 40, 1, 3456, 7, 89, -119955439841 },
+            { 78, -765, -303, -12345, -9876, -543, 2345846450697 }
         };
     }
 
@@ -56,183 +36,260 @@ public class DurationTestsData
         };
     }
 
-    public static TheoryData<int, int, long> GetFullMillisecondsData(IFixture fixture)
+    public static TheoryData<int, int, long> GetFullMicrosecondsData(IFixture fixture)
     {
         return new TheoryData<int, int, long>
         {
             { 300, 0, 300 },
-            { 400, 5000, 400 },
-            { 999, 9999, 999 },
-            { 12345, 1234, 12345 },
+            { 400, 5, 400 },
+            { 999, 9, 999 },
+            { 12345, 4, 12345 },
             { -300, 0, -300 },
-            { -400, -5000, -400 },
-            { -999, -9999, -999 },
-            { -12345, -1234, -12345 }
+            { -400, -5, -400 },
+            { -999, -9, -999 },
+            { -12345, -4, -12345 }
         };
     }
 
-    public static TheoryData<int, int, int, long> GetFullSecondsData(IFixture fixture)
+    public static TheoryData<int, int, int, long> GetFullMillisecondsData(IFixture fixture)
     {
         return new TheoryData<int, int, int, long>
         {
-            { 30, 0, 0, 30 },
-            { 40, 400, 5000, 40 },
-            { 59, 999, 9999, 59 },
-            { 12345, 123, 4567, 12345 },
-            { -30, 0, 0, -30 },
-            { -40, -400, -5000, -40 },
-            { -59, -999, -9999, -59 },
-            { -12345, -123, -4567, -12345 }
+            { 300, 0, 0, 300 },
+            { 400, 500, 0, 400 },
+            { 999, 999, 9, 999 },
+            { 12345, 123, 4, 12345 },
+            { -300, 0, 0, -300 },
+            { -400, -500, 0, -400 },
+            { -999, -999, -9, -999 },
+            { -12345, -123, -4, -12345 }
         };
     }
 
-    public static TheoryData<int, int, int, int, long> GetFullMinutesData(IFixture fixture)
+    public static TheoryData<int, int, int, int, long> GetFullSecondsData(IFixture fixture)
     {
         return new TheoryData<int, int, int, int, long>
         {
             { 30, 0, 0, 0, 30 },
-            { 50, 40, 400, 5000, 50 },
-            { 59, 59, 999, 9999, 59 },
-            { 12345, 12, 123, 4567, 12345 },
+            { 40, 400, 500, 0, 40 },
+            { 59, 999, 999, 9, 59 },
+            { 12345, 123, 456, 7, 12345 },
             { -30, 0, 0, 0, -30 },
-            { -50, -40, -400, -5000, -50 },
-            { -59, -59, -999, -9999, -59 },
-            { -12345, -12, -123, -4567, -12345 }
+            { -40, -400, -500, 0, -40 },
+            { -59, -999, -999, -9, -59 },
+            { -12345, -123, -456, -7, -12345 }
         };
     }
 
-    public static TheoryData<int, int, int, int, int, long> GetFullHoursData(IFixture fixture)
+    public static TheoryData<int, int, int, int, int, long> GetFullMinutesData(IFixture fixture)
     {
         return new TheoryData<int, int, int, int, int, long>
         {
             { 30, 0, 0, 0, 0, 30 },
-            { 70, 50, 40, 400, 5000, 70 },
-            { 25, 59, 59, 999, 9999, 25 },
-            { 12345, 34, 12, 123, 4567, 12345 },
+            { 50, 40, 400, 500, 0, 50 },
+            { 59, 59, 999, 999, 9, 59 },
+            { 12345, 12, 123, 456, 7, 12345 },
             { -30, 0, 0, 0, 0, -30 },
-            { -70, -50, -40, -400, -5000, -70 },
-            { -25, -59, -59, -999, -9999, -25 },
-            { -12345, -34, -12, -123, -4567, -12345 }
+            { -50, -40, -400, -500, 0, -50 },
+            { -59, -59, -999, -999, -9, -59 },
+            { -12345, -12, -123, -456, -7, -12345 }
         };
     }
 
-    public static TheoryData<int, int, int> GetTicksInMillisecondData(IFixture fixture)
+    public static TheoryData<int, int, int, int, int, int, long> GetFullHoursData(IFixture fixture)
+    {
+        return new TheoryData<int, int, int, int, int, int, long>
+        {
+            { 30, 0, 0, 0, 0, 0, 30 },
+            { 70, 50, 40, 400, 500, 0, 70 },
+            { 25, 59, 59, 999, 999, 9, 25 },
+            { 12345, 34, 12, 123, 456, 7, 12345 },
+            { -30, 0, 0, 0, 0, 0, -30 },
+            { -70, -50, -40, -400, -500, 0, -70 },
+            { -25, -59, -59, -999, -999, -9, -25 },
+            { -12345, -34, -12, -123, -456, -7, -12345 }
+        };
+    }
+
+    public static TheoryData<int, int, int> GetTicksInMicrosecondData(IFixture fixture)
     {
         return new TheoryData<int, int, int>
         {
             { 300, 0, 0 },
-            { 400, 5000, 5000 },
-            { 999, 9999, 9999 },
-            { 12345, 1234, 1234 },
+            { 400, 5, 5 },
+            { 999, 9, 9 },
+            { 12345, 4, 4 },
             { -300, 0, 0 },
-            { -400, -5000, -5000 },
-            { -999, -9999, -9999 },
-            { -12345, -1234, -1234 }
+            { -400, -5, -5 },
+            { -999, -9, -9 },
+            { -12345, -4, -4 }
         };
     }
 
-    public static TheoryData<int, int, int, int> GetMillisecondsInSecondData(IFixture fixture)
+    public static TheoryData<int, int, int, int> GetMicrosecondsInMillisecondData(IFixture fixture)
     {
         return new TheoryData<int, int, int, int>
         {
-            { 30, 0, 0, 0 },
-            { 40, 400, 5000, 400 },
-            { 59, 999, 9999, 999 },
-            { 12345, 123, 4567, 123 },
-            { -30, 0, 0, 0 },
-            { -40, -400, -5000, -400 },
-            { -59, -999, -9999, -999 },
-            { -12345, -123, -4567, -123 }
+            { 300, 0, 0, 0 },
+            { 400, 400, 5, 400 },
+            { 999, 999, 9, 999 },
+            { 12345, 123, 4, 123 },
+            { -300, 0, 0, 0 },
+            { -400, -400, -5, -400 },
+            { -999, -999, -9, -999 },
+            { -12345, -123, -4, -123 }
         };
     }
 
-    public static TheoryData<int, int, int, int, int> GetSecondsInMinuteData(IFixture fixture)
+    public static TheoryData<int, int, int, int, int> GetMillisecondsInSecondData(IFixture fixture)
     {
         return new TheoryData<int, int, int, int, int>
         {
             { 30, 0, 0, 0, 0 },
-            { 50, 40, 400, 5000, 40 },
-            { 59, 59, 999, 9999, 59 },
-            { 12345, 12, 123, 4567, 12 },
+            { 40, 400, 500, 0, 400 },
+            { 59, 999, 999, 9, 999 },
+            { 12345, 123, 456, 7, 123 },
             { -30, 0, 0, 0, 0 },
-            { -50, -40, -400, -5000, -40 },
-            { -59, -59, -999, -9999, -59 },
-            { -12345, -12, -123, -4567, -12 }
+            { -40, -400, -500, 0, -400 },
+            { -59, -999, -999, -9, -999 },
+            { -12345, -123, -456, -7, -123 }
         };
     }
 
-    public static TheoryData<int, int, int, int, int, int> GetMinutesInHourData(IFixture fixture)
+    public static TheoryData<int, int, int, int, int, int> GetSecondsInMinuteData(IFixture fixture)
     {
         return new TheoryData<int, int, int, int, int, int>
         {
             { 30, 0, 0, 0, 0, 0 },
-            { 70, 50, 40, 400, 5000, 50 },
-            { 25, 59, 59, 999, 9999, 59 },
-            { 12345, 34, 12, 123, 4567, 34 },
+            { 50, 40, 400, 500, 0, 40 },
+            { 59, 59, 999, 999, 9, 59 },
+            { 12345, 12, 123, 456, 7, 12 },
             { -30, 0, 0, 0, 0, 0 },
-            { -70, -50, -40, -400, -5000, -50 },
-            { -25, -59, -59, -999, -9999, -59 },
-            { -12345, -34, -12, -123, -4567, -34 }
+            { -50, -40, -400, -500, 0, -40 },
+            { -59, -59, -999, -999, -9, -59 },
+            { -12345, -12, -123, -456, -7, -12 }
         };
     }
 
-    public static TheoryData<int, int, double> GetTotalMillisecondsData(IFixture fixture)
+    public static TheoryData<int, int, int, int, int, int, int> GetMinutesInHourData(IFixture fixture)
+    {
+        return new TheoryData<int, int, int, int, int, int, int>
+        {
+            { 30, 0, 0, 0, 0, 0, 0 },
+            { 70, 50, 40, 400, 500, 0, 50 },
+            { 25, 59, 59, 999, 999, 9, 59 },
+            { 12345, 34, 12, 123, 456, 7, 34 },
+            { -30, 0, 0, 0, 0, 0, 0 },
+            { -70, -50, -40, -400, -500, 0, -50 },
+            { -25, -59, -59, -999, -999, -9, -59 },
+            { -12345, -34, -12, -123, -456, -7, -34 }
+        };
+    }
+
+    public static TheoryData<int, int, double> GetTotalMicrosecondsData(IFixture fixture)
     {
         return new TheoryData<int, int, double>
         {
             { 300, 0, 300.0 },
-            { 400, 5000, 400.5 },
-            { 999, 9999, 999.9999 },
-            { 12345, 1234, 12345.1234 },
+            { 400, 5, 400.5 },
+            { 999, 9, 999.9 },
+            { 12345, 4, 12345.4 },
             { -300, 0, -300.0 },
-            { -400, -5000, -400.5 },
-            { -999, -9999, -999.9999 },
-            { -12345, -1234, -12345.1234 }
+            { -400, -5, -400.5 },
+            { -999, -9, -999.9 },
+            { -12345, -4, -12345.4 }
         };
     }
 
-    public static TheoryData<int, int, int, double> GetTotalSecondsData(IFixture fixture)
+    public static TheoryData<int, int, int, double> GetTotalMillisecondsData(IFixture fixture)
     {
         return new TheoryData<int, int, int, double>
         {
-            { 30, 0, 0, 30.0 },
-            { 40, 400, 5000, 40.4005 },
-            { 59, 999, 9999, 59.9999999 },
-            { 12345, 123, 4567, 12345.1234567 },
-            { -30, 0, 0, -30.0 },
-            { -40, -400, -5000, -40.4005 },
-            { -59, -999, -9999, -59.9999999 },
-            { -12345, -123, -4567, -12345.1234567 }
+            { 300, 0, 0, 300.0 },
+            { 400, 500, 0, 400.5 },
+            { 999, 999, 9, 999.9999 },
+            { 12345, 123, 4, 12345.1234 },
+            { -300, 0, 0, -300.0 },
+            { -400, -500, 0, -400.5 },
+            { -999, -999, -9, -999.9999 },
+            { -12345, -123, -4, -12345.1234 }
         };
     }
 
-    public static TheoryData<int, int, int, int, double> GetTotalMinutesData(IFixture fixture)
+    public static TheoryData<int, int, int, int, double> GetTotalSecondsData(IFixture fixture)
     {
         return new TheoryData<int, int, int, int, double>
         {
             { 30, 0, 0, 0, 30.0 },
-            { 50, 40, 400, 5000, 50.67334166667 },
-            { 59, 59, 999, 9999, 59.99999999833 },
-            { 12345, 12, 123, 4567, 12345.20205761167 },
+            { 40, 400, 500, 0, 40.4005 },
+            { 59, 999, 999, 9, 59.9999999 },
+            { 12345, 123, 456, 7, 12345.1234567 },
             { -30, 0, 0, 0, -30.0 },
-            { -50, -40, -400, -5000, -50.67334166667 },
-            { -59, -59, -999, -9999, -59.99999999833 },
-            { -12345, -12, -123, -4567, -12345.20205761167 }
+            { -40, -400, -500, 0, -40.4005 },
+            { -59, -999, -999, -9, -59.9999999 },
+            { -12345, -123, -456, -7, -12345.1234567 }
         };
     }
 
-    public static TheoryData<int, int, int, int, int, double> GetTotalHoursData(IFixture fixture)
+    public static TheoryData<int, int, int, int, int, double> GetTotalMinutesData(IFixture fixture)
     {
         return new TheoryData<int, int, int, int, int, double>
         {
             { 30, 0, 0, 0, 0, 30.0 },
-            { 70, 50, 40, 400, 5000, 70.84455569444 },
-            { 25, 59, 59, 999, 9999, 25.99999999997 },
-            { 12345, 34, 12, 123, 4567, 12345.57003429353 },
+            { 50, 40, 400, 500, 0, 50.67334166667 },
+            { 59, 59, 999, 999, 9, 59.99999999833 },
+            { 12345, 12, 123, 456, 7, 12345.20205761167 },
             { -30, 0, 0, 0, 0, -30.0 },
-            { -70, -50, -40, -400, -5000, -70.84455569444 },
-            { -25, -59, -59, -999, -9999, -25.99999999997 },
-            { -12345, -34, -12, -123, -4567, -12345.57003429353 }
+            { -50, -40, -400, -500, 0, -50.67334166667 },
+            { -59, -59, -999, -999, -9, -59.99999999833 },
+            { -12345, -12, -123, -456, -7, -12345.20205761167 }
+        };
+    }
+
+    public static TheoryData<int, int, int, int, int, int, double> GetTotalHoursData(IFixture fixture)
+    {
+        return new TheoryData<int, int, int, int, int, int, double>
+        {
+            { 30, 0, 0, 0, 0, 0, 30.0 },
+            { 70, 50, 40, 400, 500, 0, 70.84455569444 },
+            { 25, 59, 59, 999, 999, 9, 25.99999999997 },
+            { 12345, 34, 12, 123, 456, 7, 12345.57003429353 },
+            { -30, 0, 0, 0, 0, 0, -30.0 },
+            { -70, -50, -40, -400, -500, 0, -70.84455569444 },
+            { -25, -59, -59, -999, -999, -9, -25.99999999997 },
+            { -12345, -34, -12, -123, -456, -7, -12345.57003429353 }
+        };
+    }
+
+    public static TheoryData<double, long> GetFromMicrosecondsWithDoubleData(IFixture fixture)
+    {
+        return new TheoryData<double, long>
+        {
+            { 300.0, 3000 },
+            { 400.5, 4005 },
+            { 999.949999, 9999 },
+            { 999.950001, 10000 },
+            { 12345.120001, 123451 },
+            { -300.0, -3000 },
+            { -400.5, -4005 },
+            { -999.949999, -9999 },
+            { -999.950001, -10000 },
+            { -12345.120001, -123451 }
+        };
+    }
+
+    public static TheoryData<long, long> GetFromMicrosecondsWithLongData(IFixture fixture)
+    {
+        return new TheoryData<long, long>
+        {
+            { 300, 3000 },
+            { 400, 4000 },
+            { 999, 9990 },
+            { 12345, 123450 },
+            { -300, -3000 },
+            { -400, -4000 },
+            { -999, -9990 },
+            { -12345, -123450 }
         };
     }
 
@@ -463,6 +520,34 @@ public class DurationTestsData
         };
     }
 
+    public static TheoryData<long, double, long> GetAddMicrosecondsWithDoubleData(IFixture fixture)
+    {
+        return new TheoryData<long, double, long>
+        {
+            { 0, 0.0, 0 },
+            { 1, 2.0, 21 },
+            { -1, -2.0, -21 },
+            { 1, -2.0, -19 },
+            { -1, 2.0, 19 },
+            { 1, 0.949999, 10 },
+            { 1, 0.950001, 11 },
+            { -1, -0.949999, -10 },
+            { -1, -0.950001, -11 }
+        };
+    }
+
+    public static TheoryData<long, long, long> GetAddMicrosecondsWithLongData(IFixture fixture)
+    {
+        return new TheoryData<long, long, long>
+        {
+            { 0, 0, 0 },
+            { 1, 2, 21 },
+            { -1, -2, -21 },
+            { 1, -2, -19 },
+            { -1, 2, 19 }
+        };
+    }
+
     public static TheoryData<long, double, long> GetAddMillisecondsWithDoubleData(IFixture fixture)
     {
         return new TheoryData<long, double, long>
@@ -584,6 +669,34 @@ public class DurationTestsData
             { -1, -2, 1 },
             { 1, -2, 3 },
             { -1, 2, -3 }
+        };
+    }
+
+    public static TheoryData<long, double, long> GetSubtractMicrosecondsWithDoubleData(IFixture fixture)
+    {
+        return new TheoryData<long, double, long>
+        {
+            { 0, 0.0, 0 },
+            { 1, 2.0, -19 },
+            { -1, -2.0, 19 },
+            { 1, -2.0, 21 },
+            { -1, 2.0, -21 },
+            { 1, 0.949999, -8 },
+            { 1, 0.950001, -9 },
+            { -1, -0.949999, 8 },
+            { -1, -0.950001, 9 }
+        };
+    }
+
+    public static TheoryData<long, long, long> GetSubtractMicrosecondsWithLongData(IFixture fixture)
+    {
+        return new TheoryData<long, long, long>
+        {
+            { 0, 0, 0 },
+            { 1, 2, -19 },
+            { -1, -2, 19 },
+            { 1, -2, 21 },
+            { -1, 2, -21 }
         };
     }
 
@@ -737,6 +850,24 @@ public class DurationTestsData
         };
     }
 
+    public static TheoryData<long, long> GetTrimToMicrosecondData(IFixture fixture)
+    {
+        return new TheoryData<long, long>
+        {
+            { 0, 0 },
+            { 1, 0 },
+            { 9, 0 },
+            { 10, 10 },
+            { 11, 10 },
+            { 29, 20 },
+            { -1, 0 },
+            { -9, 0 },
+            { -10, -10 },
+            { -11, -10 },
+            { -29, -20 }
+        };
+    }
+
     public static TheoryData<long, long> GetTrimToMillisecondData(IFixture fixture)
     {
         return new TheoryData<long, long>
@@ -809,46 +940,89 @@ public class DurationTestsData
         };
     }
 
-    public static TheoryData<long, int> GetSetTicksInMillisecondThrowData(IFixture fixture)
+    public static TheoryData<long, int> GetSetTicksInMicrosecondThrowData(IFixture fixture)
     {
         return new TheoryData<long, int>
         {
             { 1, -1 },
             { 1, -2 },
-            { 1, (int)ChronoConstants.TicksPerMillisecond },
-            { 1, (int)ChronoConstants.TicksPerMillisecond + 1 },
-            { 1, (int)ChronoConstants.TicksPerMillisecond + 2 },
+            { 1, (int)ChronoConstants.TicksPerMicrosecond },
+            { 1, (int)ChronoConstants.TicksPerMicrosecond + 1 },
+            { 1, (int)ChronoConstants.TicksPerMicrosecond + 2 },
             { -1, 1 },
             { -1, 2 },
-            { -1, (int)-ChronoConstants.TicksPerMillisecond },
-            { -1, (int)-ChronoConstants.TicksPerMillisecond - 1 },
-            { -1, (int)-ChronoConstants.TicksPerMillisecond - 2 },
-            { 0, (int)ChronoConstants.TicksPerMillisecond },
-            { 0, (int)ChronoConstants.TicksPerMillisecond + 1 },
-            { 0, (int)ChronoConstants.TicksPerMillisecond + 2 },
-            { 0, (int)-ChronoConstants.TicksPerMillisecond },
-            { 0, (int)-ChronoConstants.TicksPerMillisecond - 1 },
-            { 0, (int)-ChronoConstants.TicksPerMillisecond - 2 }
+            { -1, (int)-ChronoConstants.TicksPerMicrosecond },
+            { -1, (int)-ChronoConstants.TicksPerMicrosecond - 1 },
+            { -1, (int)-ChronoConstants.TicksPerMicrosecond - 2 },
+            { 0, (int)ChronoConstants.TicksPerMicrosecond },
+            { 0, (int)ChronoConstants.TicksPerMicrosecond + 1 },
+            { 0, (int)ChronoConstants.TicksPerMicrosecond + 2 },
+            { 0, (int)-ChronoConstants.TicksPerMicrosecond },
+            { 0, (int)-ChronoConstants.TicksPerMicrosecond - 1 },
+            { 0, (int)-ChronoConstants.TicksPerMicrosecond - 2 }
         };
     }
 
-    public static TheoryData<long, int, long> GetSetTicksInMillisecondData(IFixture fixture)
+    public static TheoryData<long, int, long> GetSetTicksInMicrosecondData(IFixture fixture)
     {
         return new TheoryData<long, int, long>
         {
             { 0, 0, 0 },
-            { 0, 4567, 4567 },
-            { 0, -4567, -4567 },
-            { 1234, 0, 0 },
-            { 1234, 9999, 9999 },
-            { -1234, 0, 0 },
-            { -1234, -9999, -9999 },
-            { 36630046789, 0, 36630040000 },
-            { 36630046789, 9999, 36630049999 },
-            { 36630046789, 1234, 36630041234 },
-            { -36630046789, 0, -36630040000 },
-            { -36630046789, -9999, -36630049999 },
-            { -36630046789, -1234, -36630041234 }
+            { 0, 4, 4 },
+            { 0, -4, -4 },
+            { 4, 0, 0 },
+            { 4, 9, 9 },
+            { -4, 0, 0 },
+            { -4, -9, -9 },
+            { 36630046, 0, 36630040 },
+            { 36630046, 9, 36630049 },
+            { 36630046, 4, 36630044 },
+            { -36630046, 0, -36630040 },
+            { -36630046, -9, -36630049 },
+            { -36630046, -4, -36630044 }
+        };
+    }
+
+    public static TheoryData<long, int> GetSetMicrosecondsInMillisecondThrowData(IFixture fixture)
+    {
+        return new TheoryData<long, int>
+        {
+            { 1, -1 },
+            { 1, -2 },
+            { 1, ChronoConstants.MicrosecondsPerMillisecond },
+            { 1, ChronoConstants.MicrosecondsPerMillisecond + 1 },
+            { 1, ChronoConstants.MicrosecondsPerMillisecond + 2 },
+            { -1, 1 },
+            { -1, 2 },
+            { -1, -ChronoConstants.MicrosecondsPerMillisecond },
+            { -1, -ChronoConstants.MicrosecondsPerMillisecond - 1 },
+            { -1, -ChronoConstants.MicrosecondsPerMillisecond - 2 },
+            { 0, ChronoConstants.MicrosecondsPerMillisecond },
+            { 0, ChronoConstants.MicrosecondsPerMillisecond + 1 },
+            { 0, ChronoConstants.MicrosecondsPerMillisecond + 2 },
+            { 0, -ChronoConstants.MicrosecondsPerMillisecond },
+            { 0, -ChronoConstants.MicrosecondsPerMillisecond - 1 },
+            { 0, -ChronoConstants.MicrosecondsPerMillisecond - 2 }
+        };
+    }
+
+    public static TheoryData<long, int, long> GetSetMicrosecondsInMillisecondData(IFixture fixture)
+    {
+        return new TheoryData<long, int, long>
+        {
+            { 0, 0, 0 },
+            { 0, 456, 4560 },
+            { 0, -456, -4560 },
+            { 1230, 0, 0 },
+            { 1230, 999, 9990 },
+            { -1230, 0, 0 },
+            { -1230, -999, -9990 },
+            { 36637895, 0, 36630005 },
+            { 36637895, 999, 36639995 },
+            { 36637895, 123, 36631235 },
+            { -36637895, 0, -36630005 },
+            { -36637895, -999, -36639995 },
+            { -36637895, -123, -36631235 }
         };
     }
 

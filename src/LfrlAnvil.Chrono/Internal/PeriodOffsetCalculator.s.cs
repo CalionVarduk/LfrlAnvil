@@ -17,6 +17,7 @@ internal static class PeriodOffsetCalculator
         var minutes = 0L;
         var seconds = 0L;
         var milliseconds = 0L;
+        var microseconds = 0L;
         var ticks = 0L;
 
         var yearMonthEndOffset = new YearMonthOffsetState( end );
@@ -68,13 +69,19 @@ internal static class PeriodOffsetCalculator
         if ( IncludesUnit( units, PeriodUnits.Milliseconds ) )
             milliseconds = endOffset.HandleMillisecondsGreedyOffset( startOffset.Current );
 
+        startOffset.MoveMicroseconds();
+        endOffset.MoveMicroseconds();
+
+        if ( IncludesUnit( units, PeriodUnits.Microseconds ) )
+            microseconds = endOffset.HandleMicrosecondsGreedyOffset( startOffset.Current );
+
         startOffset.MoveTicks();
         endOffset.MoveTicks();
 
         if ( IncludesUnit( units, PeriodUnits.Ticks ) )
             ticks = endOffset.HandleTicksOffset( startOffset.Current );
 
-        return new Period( years, months, weeks, days, hours, minutes, seconds, milliseconds, ticks );
+        return new Period( years, months, weeks, days, hours, minutes, seconds, milliseconds, microseconds, ticks );
     }
 
     [Pure]
@@ -89,6 +96,7 @@ internal static class PeriodOffsetCalculator
         var minutes = 0L;
         var seconds = 0L;
         var milliseconds = 0L;
+        var microseconds = 0L;
         var ticks = 0L;
 
         var yearMonthEndOffset = new YearMonthOffsetState( end );
@@ -140,13 +148,19 @@ internal static class PeriodOffsetCalculator
         if ( IncludesUnit( units, PeriodUnits.Milliseconds ) )
             milliseconds = endOffset.HandleMillisecondsOffset( startOffset );
 
+        startOffset.MoveMicroseconds();
+        endOffset.MoveMicroseconds();
+
+        if ( IncludesUnit( units, PeriodUnits.Microseconds ) )
+            microseconds = endOffset.HandleMicrosecondsOffset( startOffset );
+
         startOffset.MoveTicks();
         endOffset.MoveTicks();
 
         if ( IncludesUnit( units, PeriodUnits.Ticks ) )
             ticks = endOffset.HandleTicksOffset( startOffset.Current );
 
-        return new Period( years, months, weeks, days, hours, minutes, seconds, milliseconds, ticks );
+        return new Period( years, months, weeks, days, hours, minutes, seconds, milliseconds, microseconds, ticks );
     }
 
     [Pure]
@@ -294,6 +308,12 @@ internal static class PeriodOffsetCalculator
         }
 
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public void MoveMicroseconds()
+        {
+            Move( RemainingTimeOfDay.TrimToMicrosecond() );
+        }
+
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public void MoveTicks()
         {
             Move( RemainingTimeOfDay );
@@ -436,6 +456,26 @@ internal static class PeriodOffsetCalculator
             return TryCompensateForGreedyOffset( start, ChronoConstants.TicksPerMillisecond )
                 ? offsetInMilliseconds - 1
                 : offsetInMilliseconds;
+        }
+
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public long HandleMicrosecondsGreedyOffset(Duration currentStart)
+        {
+            var duration = Current - currentStart;
+            if ( duration == Duration.Zero )
+                return 0;
+
+            Current = Current.Subtract( duration );
+            return duration.FullMicroseconds;
+        }
+
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public long HandleMicrosecondsOffset(FixedUnitOffsetState start)
+        {
+            var offsetInMicroseconds = HandleMicrosecondsGreedyOffset( start.Current );
+            return TryCompensateForGreedyOffset( start, ChronoConstants.TicksPerMicrosecond )
+                ? offsetInMicroseconds - 1
+                : offsetInMicroseconds;
         }
 
         [MethodImpl( MethodImplOptions.AggressiveInlining )]

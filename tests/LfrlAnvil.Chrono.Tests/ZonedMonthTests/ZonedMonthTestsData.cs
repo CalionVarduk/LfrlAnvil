@@ -968,9 +968,11 @@ public class ZonedMonthTestsData
             { month, timeZone, Period.FromSeconds( 2678400 ), new DateTime( 2021, 9, 1 ) },
             { month, timeZone, Period.FromMilliseconds( 2678399999 ), month },
             { month, timeZone, Period.FromMilliseconds( 2678400000 ), new DateTime( 2021, 9, 1 ) },
+            { month, timeZone, Period.FromMicroseconds( 2678399999999 ), month },
+            { month, timeZone, Period.FromMicroseconds( 2678400000000 ), new DateTime( 2021, 9, 1 ) },
             { month, timeZone, Period.FromTicks( 26783999999999 ), month },
             { month, timeZone, Period.FromTicks( 26784000000000 ), new DateTime( 2021, 9, 1 ) },
-            { month, timeZone, new Period( 1, 2, 3, 9, 22, 90, 1700, 80000, 200000000 ), new DateTime( 2022, 11, 1 ) },
+            { month, timeZone, new Period( 1, 2, 3, 9, 22, 90, 1700, 80000, 18000000, 20000000 ), new DateTime( 2022, 11, 1 ) },
             { month, timeZoneWithDaylightSaving, Period.FromMonths( 1 ).AddDays( 25 ).AddHours( 2 ), new DateTime( 2021, 9, 1 ) },
             {
                 month,

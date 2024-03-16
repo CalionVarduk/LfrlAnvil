@@ -100,6 +100,7 @@ public static class DateTimeExtensions
             period.Minutes * ChronoConstants.TicksPerMinute +
             period.Seconds * ChronoConstants.TicksPerSecond +
             period.Milliseconds * ChronoConstants.TicksPerMillisecond +
+            period.Microseconds * ChronoConstants.TicksPerMicrosecond +
             period.Ticks;
 
         var result = dt

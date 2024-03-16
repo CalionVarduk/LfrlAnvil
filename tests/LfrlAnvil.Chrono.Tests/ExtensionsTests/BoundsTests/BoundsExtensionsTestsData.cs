@@ -25,10 +25,10 @@ public class BoundsExtensionsTestsData
         return new TheoryData<DateTime, DateTime, PeriodUnits, Period>
         {
             { dt1, dt1, PeriodUnits.All, Period.FromTicks( 1 ) },
-            { dt1, dt2, PeriodUnits.All, new Period( 0, 1, 3, 1, 12, 34, 56, 789, 9877 ) },
+            { dt1, dt2, PeriodUnits.All, new Period( 0, 1, 3, 1, 12, 34, 56, 789, 987, 7 ) },
             { dt1, dt2, PeriodUnits.Date, new Period( 0, 1, 3, 1 ) },
-            { dt1, dt2, PeriodUnits.Time, new Period( 1260, 34, 56, 789, 9877 ) },
-            { dt2, dt3, PeriodUnits.All, new Period( 1, 11, 0, 0, 1, 0, 0, 0, 0 ) },
+            { dt1, dt2, PeriodUnits.Time, new Period( 1260, 34, 56, 789, 987, 7 ) },
+            { dt2, dt3, PeriodUnits.All, new Period( 1, 11, 0, 0, 1, 0, 0, 0, 0, 0 ) },
             { dt2, dt3, PeriodUnits.Date, new Period( 1, 11, 0, 0 ) },
             { dt2, dt3, PeriodUnits.Time, Period.FromHours( 16801 ) }
         };
@@ -43,10 +43,10 @@ public class BoundsExtensionsTestsData
         return new TheoryData<DateTime, DateTime, PeriodUnits, Period>
         {
             { dt1, dt1, PeriodUnits.All, Period.FromTicks( 1 ) },
-            { dt1, dt2, PeriodUnits.All, new Period( 0, 2, -1, -2, 12, 34, 56, 789, 9877 ) },
+            { dt1, dt2, PeriodUnits.All, new Period( 0, 2, -1, -2, 12, 34, 56, 789, 987, 7 ) },
             { dt1, dt2, PeriodUnits.Date, new Period( 0, 2, -1, -2 ) },
-            { dt1, dt2, PeriodUnits.Time, new Period( 1260, 34, 56, 789, 9877 ) },
-            { dt2, dt3, PeriodUnits.All, new Period( 2, -1, 0, 0, 1, 0, 0, 0, 0 ) },
+            { dt1, dt2, PeriodUnits.Time, new Period( 1260, 34, 56, 789, 987, 7 ) },
+            { dt2, dt3, PeriodUnits.All, new Period( 2, -1, 0, 0, 1, 0, 0, 0, 0, 0 ) },
             { dt2, dt3, PeriodUnits.Date, new Period( 2, -1, 0, 0 ) },
             { dt2, dt3, PeriodUnits.Time, Period.FromHours( 16801 ) }
         };
@@ -61,7 +61,7 @@ public class BoundsExtensionsTestsData
         return new TheoryData<DateTime, DateTime, Duration>
         {
             { dt1, dt1, Duration.FromTicks( 1 ) },
-            { dt1, dt2, new Duration( 36, 34, 56, 789, 9877 ) },
+            { dt1, dt2, new Duration( 36, 34, 56, 789, 987, 7 ) },
             { dt2, dt3, Duration.FromHours( 1 ) }
         };
     }

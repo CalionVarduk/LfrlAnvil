@@ -12,30 +12,20 @@ public readonly struct TimeOfDay : IEquatable<TimeOfDay>, IComparable<TimeOfDay>
 
     private readonly long _value;
 
-    public TimeOfDay(int hour)
-        : this( hour, 0, 0, 0, 0 ) { }
-
-    public TimeOfDay(int hour, int minute)
-        : this( hour, minute, 0, 0, 0 ) { }
-
-    public TimeOfDay(int hour, int minute, int second)
-        : this( hour, minute, second, 0, 0 ) { }
-
-    public TimeOfDay(int hour, int minute, int second, int millisecond)
-        : this( hour, minute, second, millisecond, 0 ) { }
-
-    public TimeOfDay(int hour, int minute, int second, int millisecond, int tick)
+    public TimeOfDay(int hour, int minute = 0, int second = 0, int millisecond = 0, int microsecond = 0, int tick = 0)
     {
         Ensure.IsInRange( hour, 0, ChronoConstants.HoursPerStandardDay - 1 );
         Ensure.IsInRange( minute, 0, ChronoConstants.MinutesPerHour - 1 );
         Ensure.IsInRange( second, 0, ChronoConstants.SecondsPerMinute - 1 );
         Ensure.IsInRange( millisecond, 0, ChronoConstants.MillisecondsPerSecond - 1 );
-        Ensure.IsInRange( tick, 0, ChronoConstants.TicksPerMillisecond - 1 );
+        Ensure.IsInRange( microsecond, 0, ChronoConstants.MicrosecondsPerMillisecond - 1 );
+        Ensure.IsInRange( tick, 0, ChronoConstants.TicksPerMicrosecond - 1 );
 
         _value = hour * ChronoConstants.TicksPerHour +
             minute * ChronoConstants.TicksPerMinute +
             second * ChronoConstants.TicksPerSecond +
             millisecond * ChronoConstants.TicksPerMillisecond +
+            microsecond * ChronoConstants.TicksPerMicrosecond +
             tick;
     }
 
@@ -45,14 +35,16 @@ public readonly struct TimeOfDay : IEquatable<TimeOfDay>, IComparable<TimeOfDay>
             timeSpan.Minutes,
             timeSpan.Seconds,
             timeSpan.Milliseconds,
-            (int)(timeSpan.Ticks % ChronoConstants.TicksPerMillisecond) ) { }
+            timeSpan.Microseconds,
+            (int)(timeSpan.Ticks % ChronoConstants.TicksPerMicrosecond) ) { }
 
     private TimeOfDay(long value)
     {
         _value = value;
     }
 
-    public int Tick => (int)(_value % ChronoConstants.TicksPerMillisecond);
+    public int Tick => (int)(_value % ChronoConstants.TicksPerMicrosecond);
+    public int Microsecond => (int)(_value / ChronoConstants.TicksPerMicrosecond % ChronoConstants.MicrosecondsPerMillisecond);
     public int Millisecond => (int)(_value / ChronoConstants.TicksPerMillisecond % ChronoConstants.MillisecondsPerSecond);
     public int Second => (int)(_value / ChronoConstants.TicksPerSecond % ChronoConstants.SecondsPerMinute);
     public int Minute => (int)(_value / ChronoConstants.TicksPerMinute % ChronoConstants.MinutesPerHour);
@@ -61,7 +53,7 @@ public readonly struct TimeOfDay : IEquatable<TimeOfDay>, IComparable<TimeOfDay>
     [Pure]
     public override string ToString()
     {
-        return $"{Hour:00}h {Minute:00}m {Second:00}.{Millisecond:000}{Tick:0000}s";
+        return $"{Hour:00}h {Minute:00}m {Second:00}.{Millisecond:000}{Microsecond:000}{Tick:0}s";
     }
 
     [Pure]
@@ -113,6 +105,13 @@ public readonly struct TimeOfDay : IEquatable<TimeOfDay>, IComparable<TimeOfDay>
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public TimeOfDay TrimToMicrosecond()
+    {
+        return new TimeOfDay( _value - _value % ChronoConstants.TicksPerMicrosecond );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public TimeOfDay TrimToMillisecond()
     {
         return new TimeOfDay( _value - _value % ChronoConstants.TicksPerMillisecond );
@@ -143,8 +142,16 @@ public readonly struct TimeOfDay : IEquatable<TimeOfDay>, IComparable<TimeOfDay>
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public TimeOfDay SetTick(int value)
     {
-        Ensure.IsInRange( value, 0, ChronoConstants.TicksPerMillisecond - 1 );
+        Ensure.IsInRange( value, 0, ChronoConstants.TicksPerMicrosecond - 1 );
         return new TimeOfDay( _value + value - Tick );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public TimeOfDay SetMicrosecond(int value)
+    {
+        Ensure.IsInRange( value, 0, ChronoConstants.MicrosecondsPerMillisecond - 1 );
+        return new TimeOfDay( _value + (value - Microsecond) * ChronoConstants.TicksPerMicrosecond );
     }
 
     [Pure]
