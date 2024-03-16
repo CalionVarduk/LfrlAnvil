@@ -57,6 +57,60 @@ public static partial class SqlNode
         }
 
         [Pure]
+        public static SqlExtractDateFunctionExpressionNode ExtractDate(SqlExpressionNode expression)
+        {
+            return new SqlExtractDateFunctionExpressionNode( expression );
+        }
+
+        [Pure]
+        public static SqlExtractTimeOfDayFunctionExpressionNode ExtractTimeOfDay(SqlExpressionNode expression)
+        {
+            return new SqlExtractTimeOfDayFunctionExpressionNode( expression );
+        }
+
+        [Pure]
+        public static SqlExtractDayFunctionExpressionNode ExtractDayOfYear(SqlExpressionNode expression)
+        {
+            return new SqlExtractDayFunctionExpressionNode( expression, SqlTemporalUnit.Year );
+        }
+
+        [Pure]
+        public static SqlExtractDayFunctionExpressionNode ExtractDayOfMonth(SqlExpressionNode expression)
+        {
+            return new SqlExtractDayFunctionExpressionNode( expression, SqlTemporalUnit.Month );
+        }
+
+        [Pure]
+        public static SqlExtractDayFunctionExpressionNode ExtractDayOfWeek(SqlExpressionNode expression)
+        {
+            return new SqlExtractDayFunctionExpressionNode( expression, SqlTemporalUnit.Week );
+        }
+
+        [Pure]
+        public static SqlExtractTemporalUnitFunctionExpressionNode ExtractTemporalUnit(SqlExpressionNode expression, SqlTemporalUnit unit)
+        {
+            return new SqlExtractTemporalUnitFunctionExpressionNode( expression, unit );
+        }
+
+        [Pure]
+        public static SqlTemporalAddFunctionExpressionNode TemporalAdd(
+            SqlExpressionNode expression,
+            SqlExpressionNode value,
+            SqlTemporalUnit unit)
+        {
+            return new SqlTemporalAddFunctionExpressionNode( expression, value, unit );
+        }
+
+        [Pure]
+        public static SqlTemporalDiffFunctionExpressionNode TemporalDiff(
+            SqlExpressionNode first,
+            SqlExpressionNode second,
+            SqlTemporalUnit unit)
+        {
+            return new SqlTemporalDiffFunctionExpressionNode( first, second, unit );
+        }
+
+        [Pure]
         public static SqlNewGuidFunctionExpressionNode NewGuid()
         {
             return _newGuid ??= new SqlNewGuidFunctionExpressionNode();

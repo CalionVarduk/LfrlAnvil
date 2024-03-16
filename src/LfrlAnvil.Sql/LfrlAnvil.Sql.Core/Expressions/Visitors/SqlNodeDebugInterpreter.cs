@@ -77,6 +77,40 @@ public sealed class SqlNodeDebugInterpreter : SqlNodeInterpreter
         VisitSimpleFunction( "CURRENT_TIMESTAMP", node );
     }
 
+    public override void VisitExtractDateFunction(SqlExtractDateFunctionExpressionNode node)
+    {
+        VisitSimpleFunction( "EXTRACT_DATE", node );
+    }
+
+    public override void VisitExtractTimeOfDayFunction(SqlExtractTimeOfDayFunctionExpressionNode node)
+    {
+        VisitSimpleFunction( "EXTRACT_TIME_OF_DAY", node );
+    }
+
+    public override void VisitExtractDayFunction(SqlExtractDayFunctionExpressionNode node)
+    {
+        Context.Sql.Append( "EXTRACT_DAY_OF" ).Append( '_' ).Append( node.Unit.ToString().ToUpperInvariant() );
+        VisitFunctionArguments( node.Arguments );
+    }
+
+    public override void VisitExtractTemporalUnitFunction(SqlExtractTemporalUnitFunctionExpressionNode node)
+    {
+        Context.Sql.Append( "EXTRACT_TEMPORAL" ).Append( '_' ).Append( node.Unit.ToString().ToUpperInvariant() );
+        VisitFunctionArguments( node.Arguments );
+    }
+
+    public override void VisitTemporalAddFunction(SqlTemporalAddFunctionExpressionNode node)
+    {
+        Context.Sql.Append( "TEMPORAL_ADD" ).Append( '_' ).Append( node.Unit.ToString().ToUpperInvariant() );
+        VisitFunctionArguments( node.Arguments );
+    }
+
+    public override void VisitTemporalDiffFunction(SqlTemporalDiffFunctionExpressionNode node)
+    {
+        Context.Sql.Append( "TEMPORAL_DIFF" ).Append( '_' ).Append( node.Unit.ToString().ToUpperInvariant() );
+        VisitFunctionArguments( node.Arguments );
+    }
+
     public override void VisitNewGuidFunction(SqlNewGuidFunctionExpressionNode node)
     {
         VisitSimpleFunction( "NEW_GUID", node );

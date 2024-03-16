@@ -533,6 +533,68 @@ public static class SqlNodeExtensions
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static SqlExtractDateFunctionExpressionNode ExtractDate(this SqlExpressionNode node)
+    {
+        return SqlNode.Functions.ExtractDate( node );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static SqlExtractTimeOfDayFunctionExpressionNode ExtractTimeOfDay(this SqlExpressionNode node)
+    {
+        return SqlNode.Functions.ExtractTimeOfDay( node );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static SqlExtractDayFunctionExpressionNode ExtractDayOfYear(this SqlExpressionNode node)
+    {
+        return SqlNode.Functions.ExtractDayOfYear( node );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static SqlExtractDayFunctionExpressionNode ExtractDayOfMonth(this SqlExpressionNode node)
+    {
+        return SqlNode.Functions.ExtractDayOfMonth( node );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static SqlExtractDayFunctionExpressionNode ExtractDayOfWeek(this SqlExpressionNode node)
+    {
+        return SqlNode.Functions.ExtractDayOfWeek( node );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static SqlExtractTemporalUnitFunctionExpressionNode ExtractTemporalUnit(this SqlExpressionNode node, SqlTemporalUnit unit)
+    {
+        return SqlNode.Functions.ExtractTemporalUnit( node, unit );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static SqlTemporalAddFunctionExpressionNode TemporalAdd(
+        this SqlExpressionNode node,
+        SqlExpressionNode other,
+        SqlTemporalUnit unit)
+    {
+        return SqlNode.Functions.TemporalAdd( node, other, unit );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static SqlTemporalDiffFunctionExpressionNode TemporalDiff(
+        this SqlExpressionNode node,
+        SqlExpressionNode other,
+        SqlTemporalUnit unit)
+    {
+        return SqlNode.Functions.TemporalDiff( node, other, unit );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static SqlLengthFunctionExpressionNode Length(this SqlExpressionNode node)
     {
         return SqlNode.Functions.Length( node );

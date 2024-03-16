@@ -10,6 +10,7 @@ using LfrlAnvil.Sql.Expressions.Persistence;
 using LfrlAnvil.Sql.Expressions.Traits;
 using LfrlAnvil.Sql.Expressions.Visitors;
 using LfrlAnvil.Sql.Objects.Builders;
+using LfrlAnvil.Sqlite.Internal;
 
 namespace LfrlAnvil.Sqlite;
 
@@ -74,6 +75,58 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
     public override void VisitCurrentTimestampFunction(SqlCurrentTimestampFunctionExpressionNode node)
     {
         VisitSimpleFunction( "GET_CURRENT_TIMESTAMP", node );
+    }
+
+    public override void VisitExtractDateFunction(SqlExtractDateFunctionExpressionNode node)
+    {
+        VisitSimpleFunction( "DATE", node );
+    }
+
+    public override void VisitExtractTimeOfDayFunction(SqlExtractTimeOfDayFunctionExpressionNode node)
+    {
+        VisitSimpleFunction( "TIME_OF_DAY", node );
+    }
+
+    public override void VisitExtractDayFunction(SqlExtractDayFunctionExpressionNode node)
+    {
+        var unit = node.Unit switch
+        {
+            SqlTemporalUnit.Year => SqliteHelpers.TemporalDayOfYearUnit,
+            SqlTemporalUnit.Month => SqliteHelpers.TemporalDayOfMonthUnit,
+            _ => SqliteHelpers.TemporalDayOfWeekUnit
+        };
+
+        Context.Sql.Append( "EXTRACT_TEMPORAL" ).Append( '(' ).Append( unit ).AppendComma().AppendSpace();
+        VisitChild( node.Arguments[0] );
+        Context.Sql.Append( ')' );
+    }
+
+    public override void VisitExtractTemporalUnitFunction(SqlExtractTemporalUnitFunctionExpressionNode node)
+    {
+        var unit = SqliteHelpers.GetDbTemporalUnit( node.Unit );
+        Context.Sql.Append( "EXTRACT_TEMPORAL" ).Append( '(' ).Append( unit ).AppendComma().AppendSpace();
+        VisitChild( node.Arguments[0] );
+        Context.Sql.Append( ')' );
+    }
+
+    public override void VisitTemporalAddFunction(SqlTemporalAddFunctionExpressionNode node)
+    {
+        var unit = SqliteHelpers.GetDbTemporalUnit( node.Unit );
+        Context.Sql.Append( "TEMPORAL_ADD" ).Append( '(' ).Append( unit ).AppendComma().AppendSpace();
+        VisitChild( node.Arguments[1] );
+        Context.Sql.AppendComma().AppendSpace();
+        VisitChild( node.Arguments[0] );
+        Context.Sql.Append( ')' );
+    }
+
+    public override void VisitTemporalDiffFunction(SqlTemporalDiffFunctionExpressionNode node)
+    {
+        var unit = SqliteHelpers.GetDbTemporalUnit( node.Unit );
+        Context.Sql.Append( "TEMPORAL_DIFF" ).Append( '(' ).Append( unit ).AppendComma().AppendSpace();
+        VisitChild( node.Arguments[0] );
+        Context.Sql.AppendComma().AppendSpace();
+        VisitChild( node.Arguments[1] );
+        Context.Sql.Append( ')' );
     }
 
     public override void VisitNewGuidFunction(SqlNewGuidFunctionExpressionNode node)

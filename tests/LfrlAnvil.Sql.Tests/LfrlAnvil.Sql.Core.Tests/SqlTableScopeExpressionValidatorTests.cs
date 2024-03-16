@@ -327,6 +327,54 @@ public class SqlTableScopeExpressionValidatorTests : TestsBase
     }
 
     [Fact]
+    public void VisitExtractDateFunction_ShouldVisitArguments()
+    {
+        var node = SqlNode.Parameter( "a" ).ExtractDate();
+        _sut.VisitExtractDateFunction( node );
+        _sut.GetErrors().Should().HaveCount( 1 );
+    }
+
+    [Fact]
+    public void VisitExtractTimeOfDayFunction_ShouldVisitArguments()
+    {
+        var node = SqlNode.Parameter( "a" ).ExtractTimeOfDay();
+        _sut.VisitExtractTimeOfDayFunction( node );
+        _sut.GetErrors().Should().HaveCount( 1 );
+    }
+
+    [Fact]
+    public void VisitExtractDayFunction_ShouldVisitArguments()
+    {
+        var node = SqlNode.Parameter( "a" ).ExtractDayOfYear();
+        _sut.VisitExtractDayFunction( node );
+        _sut.GetErrors().Should().HaveCount( 1 );
+    }
+
+    [Fact]
+    public void VisitExtractTemporalUnitFunction_ShouldVisitArguments()
+    {
+        var node = SqlNode.Parameter( "a" ).ExtractTemporalUnit( SqlTemporalUnit.Year );
+        _sut.VisitExtractTemporalUnitFunction( node );
+        _sut.GetErrors().Should().HaveCount( 1 );
+    }
+
+    [Fact]
+    public void VisitTemporalAddFunction_ShouldVisitArguments()
+    {
+        var node = SqlNode.Parameter( "a" ).TemporalAdd( SqlNode.Parameter( "b" ), SqlTemporalUnit.Year );
+        _sut.VisitTemporalAddFunction( node );
+        _sut.GetErrors().Should().HaveCount( 2 );
+    }
+
+    [Fact]
+    public void VisitTemporalDiffFunction_ShouldVisitArguments()
+    {
+        var node = SqlNode.Parameter( "a" ).TemporalDiff( SqlNode.Parameter( "b" ), SqlTemporalUnit.Year );
+        _sut.VisitTemporalDiffFunction( node );
+        _sut.GetErrors().Should().HaveCount( 2 );
+    }
+
+    [Fact]
     public void VisitNewGuidFunction_ShouldRegisterError()
     {
         _sut.VisitNewGuidFunction( SqlNode.Functions.NewGuid() );

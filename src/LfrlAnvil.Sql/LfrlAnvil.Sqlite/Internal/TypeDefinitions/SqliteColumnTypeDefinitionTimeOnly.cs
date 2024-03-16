@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics.Contracts;
 using System.Globalization;
+using LfrlAnvil.Sql.Internal;
 
 namespace LfrlAnvil.Sqlite.Internal.TypeDefinitions;
 
@@ -15,12 +16,13 @@ internal sealed class SqliteColumnTypeDefinitionTimeOnly : SqliteColumnTypeDefin
     [Pure]
     public override string ToDbLiteral(TimeOnly value)
     {
-        return value.ToString( "\\'HH:mm:ss.fffffff\\'", CultureInfo.InvariantCulture );
+        const string format = $@"\'{SqlHelpers.TimeFormat}\'";
+        return value.ToString( format, CultureInfo.InvariantCulture );
     }
 
     [Pure]
     public override object ToParameterValue(TimeOnly value)
     {
-        return value.ToString( "HH:mm:ss.fffffff", CultureInfo.InvariantCulture );
+        return value.ToString( SqlHelpers.TimeFormat, CultureInfo.InvariantCulture );
     }
 }

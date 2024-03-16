@@ -40,6 +40,12 @@ public interface ISqlNodeVisitor
     void VisitCurrentTimeFunction(SqlCurrentTimeFunctionExpressionNode node);
     void VisitCurrentDateTimeFunction(SqlCurrentDateTimeFunctionExpressionNode node);
     void VisitCurrentTimestampFunction(SqlCurrentTimestampFunctionExpressionNode node);
+    void VisitExtractDateFunction(SqlExtractDateFunctionExpressionNode node);
+    void VisitExtractTimeOfDayFunction(SqlExtractTimeOfDayFunctionExpressionNode node);
+    void VisitExtractDayFunction(SqlExtractDayFunctionExpressionNode node);
+    void VisitExtractTemporalUnitFunction(SqlExtractTemporalUnitFunctionExpressionNode node);
+    void VisitTemporalAddFunction(SqlTemporalAddFunctionExpressionNode node);
+    void VisitTemporalDiffFunction(SqlTemporalDiffFunctionExpressionNode node);
     void VisitNewGuidFunction(SqlNewGuidFunctionExpressionNode node);
     void VisitLengthFunction(SqlLengthFunctionExpressionNode node);
     void VisitByteLengthFunction(SqlByteLengthFunctionExpressionNode node);

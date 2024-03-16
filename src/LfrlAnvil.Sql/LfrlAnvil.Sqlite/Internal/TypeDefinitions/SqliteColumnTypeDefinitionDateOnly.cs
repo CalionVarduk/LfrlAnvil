@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics.Contracts;
 using System.Globalization;
+using LfrlAnvil.Sql.Internal;
 
 namespace LfrlAnvil.Sqlite.Internal.TypeDefinitions;
 
@@ -15,12 +16,13 @@ internal sealed class SqliteColumnTypeDefinitionDateOnly : SqliteColumnTypeDefin
     [Pure]
     public override string ToDbLiteral(DateOnly value)
     {
-        return value.ToString( "\\'yyyy-MM-dd\\'", CultureInfo.InvariantCulture );
+        const string format = $@"\'{SqlHelpers.DateFormat}\'";
+        return value.ToString( format, CultureInfo.InvariantCulture );
     }
 
     [Pure]
     public override object ToParameterValue(DateOnly value)
     {
-        return value.ToString( "yyyy-MM-dd", CultureInfo.InvariantCulture );
+        return value.ToString( SqlHelpers.DateFormat, CultureInfo.InvariantCulture );
     }
 }

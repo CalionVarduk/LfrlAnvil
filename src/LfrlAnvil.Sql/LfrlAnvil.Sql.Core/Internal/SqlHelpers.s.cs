@@ -24,11 +24,14 @@ public static class SqlHelpers
     public const string VersionHistoryDescriptionName = "Description";
     public const string VersionHistoryCommitDateUtcName = "CommitDateUtc";
     public const string VersionHistoryCommitDurationInTicksName = "CommitDurationInTicks";
+    public const string DateFormat = "yyyy-MM-dd";
+    public const string TimeFormat = "HH:mm:ss.fffffff";
+    public const string DateTimeFormat = $"{DateFormat} {TimeFormat}";
     public const char TextDelimiter = '\'';
     public const char BlobMarker = 'X';
     public const int StackallocThreshold = 64;
-    public static readonly string EmptyTextLiteral = $"{TextDelimiter}{TextDelimiter}";
-    public static readonly string EmptyBlobLiteral = $"{BlobMarker}{EmptyTextLiteral}";
+    public const string EmptyTextLiteral = "\'\'";
+    public const string EmptyBlobLiteral = $"X{EmptyTextLiteral}";
     public static readonly StringComparer NameComparer = StringComparer.OrdinalIgnoreCase;
     public static readonly Func<IDbCommand, int> ExecuteNonQueryDelegate = static cmd => cmd.ExecuteNonQuery();
 

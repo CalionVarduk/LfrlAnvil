@@ -153,5 +153,9 @@ public sealed class SqliteDatabaseFactory : SqlDatabaseFactory<SqliteDatabase>
         connection.CreateFunction<string?, string?, long?>( "INSTR_LAST", SqliteHelpers.DbInstrLast, isDeterministic: true );
         connection.CreateFunction<string?, string?>( "REVERSE", SqliteHelpers.DbReverse, isDeterministic: true );
         connection.CreateFunction<double?, int?, double?>( "TRUNC2", SqliteHelpers.DbTrunc2, isDeterministic: true );
+        connection.CreateFunction<string?, string?>( "TIME_OF_DAY", SqliteHelpers.DbTimeOfDay, isDeterministic: true );
+        connection.CreateFunction<long?, string?, long?>( "EXTRACT_TEMPORAL", SqliteHelpers.DbExtractTemporal, isDeterministic: true );
+        connection.CreateFunction<long?, long?, string?, string?>( "TEMPORAL_ADD", SqliteHelpers.DbTemporalAdd, isDeterministic: true );
+        connection.CreateFunction<long?, string?, string?, long?>( "TEMPORAL_DIFF", SqliteHelpers.DbTemporalDiff, isDeterministic: true );
     }
 }

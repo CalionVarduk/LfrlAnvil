@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics.Contracts;
 using System.Globalization;
+using LfrlAnvil.Sql.Internal;
 
 namespace LfrlAnvil.MySql.Internal.TypeDefinitions;
 
@@ -15,12 +16,14 @@ internal sealed class MySqlColumnTypeDefinitionDateTimeOffset : MySqlColumnTypeD
     [Pure]
     public override string ToDbLiteral(DateTimeOffset value)
     {
-        return value.ToString( "\\'yyyy-MM-dd HH:mm:ss.fffffffzzz\\'", CultureInfo.InvariantCulture );
+        const string format = $@"\'{SqlHelpers.DateTimeFormat}zzz\'";
+        return value.ToString( format, CultureInfo.InvariantCulture );
     }
 
     [Pure]
     public override object ToParameterValue(DateTimeOffset value)
     {
-        return value.ToString( "yyyy-MM-dd HH:mm:ss.fffffffzzz", CultureInfo.InvariantCulture );
+        const string format = $"{SqlHelpers.DateTimeFormat}zzz";
+        return value.ToString( format, CultureInfo.InvariantCulture );
     }
 }

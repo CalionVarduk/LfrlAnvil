@@ -10,6 +10,7 @@ using LfrlAnvil.MySql.Tests.Helpers;
 using LfrlAnvil.Sql;
 using LfrlAnvil.Sql.Exceptions;
 using LfrlAnvil.Sql.Expressions;
+using LfrlAnvil.Sql.Expressions.Functions;
 using LfrlAnvil.Sql.Expressions.Objects;
 using LfrlAnvil.Sql.Expressions.Traits;
 using LfrlAnvil.Sql.Expressions.Visitors;
@@ -638,6 +639,126 @@ END" );
     {
         _sut.Visit( SqlNode.Functions.CurrentTimestamp() );
         _sut.Context.Sql.ToString().Should().Be( "CAST(UNIX_TIMESTAMP(NOW(6)) * 10000000 AS SIGNED)" );
+    }
+
+    [Fact]
+    public void Visit_ShouldInterpretExtractDateFunction()
+    {
+        _sut.Visit( SqlNode.Literal( 10 ).ExtractDate() );
+        _sut.Context.Sql.ToString().Should().Be( "DATE(10)" );
+    }
+
+    [Fact]
+    public void Visit_ShouldInterpretExtractTimeOfDayFunction()
+    {
+        _sut.Visit( SqlNode.Literal( 10 ).ExtractTimeOfDay() );
+        _sut.Context.Sql.ToString().Should().Be( "TIME(10)" );
+    }
+
+    [Fact]
+    public void Visit_ShouldInterpretExtractDayOfYearFunction()
+    {
+        _sut.Visit( SqlNode.Literal( 10 ).ExtractDayOfYear() );
+        _sut.Context.Sql.ToString().Should().Be( "DAYOFYEAR(10)" );
+    }
+
+    [Fact]
+    public void Visit_ShouldInterpretExtractDayOfMonthFunction()
+    {
+        _sut.Visit( SqlNode.Literal( 10 ).ExtractDayOfMonth() );
+        _sut.Context.Sql.ToString().Should().Be( "DAYOFMONTH(10)" );
+    }
+
+    [Fact]
+    public void Visit_ShouldInterpretExtractDayOfWeekFunction()
+    {
+        _sut.Visit( SqlNode.Literal( 10 ).ExtractDayOfWeek() );
+        _sut.Context.Sql.ToString().Should().Be( "WEEKDAY(10)" );
+    }
+
+    [Theory]
+    [InlineData( SqlTemporalUnit.Nanosecond, "MICROSECOND(10) * 1000" )]
+    [InlineData( SqlTemporalUnit.Microsecond, "MICROSECOND(10)" )]
+    [InlineData( SqlTemporalUnit.Millisecond, "MICROSECOND(10) DIV 1000" )]
+    [InlineData( SqlTemporalUnit.Second, "SECOND(10)" )]
+    [InlineData( SqlTemporalUnit.Minute, "MINUTE(10)" )]
+    [InlineData( SqlTemporalUnit.Hour, "HOUR(10)" )]
+    [InlineData( SqlTemporalUnit.Day, "DAYOFMONTH(10)" )]
+    [InlineData( SqlTemporalUnit.Week, "WEEKOFYEAR(10)" )]
+    [InlineData( SqlTemporalUnit.Month, "MONTH(10)" )]
+    [InlineData( SqlTemporalUnit.Year, "YEAR(10)" )]
+    public void Visit_ShouldInterpretExtractTemporalUnitFunction(SqlTemporalUnit unit, string expected)
+    {
+        _sut.Visit( SqlNode.Literal( 10 ).ExtractTemporalUnit( unit ) );
+        _sut.Context.Sql.ToString().Should().Be( expected );
+    }
+
+    [Theory]
+    [InlineData( SqlTemporalUnit.Nanosecond, "(MICROSECOND(10) * 1000)" )]
+    [InlineData( SqlTemporalUnit.Microsecond, "MICROSECOND(10)" )]
+    [InlineData( SqlTemporalUnit.Millisecond, "(MICROSECOND(10) DIV 1000)" )]
+    [InlineData( SqlTemporalUnit.Second, "SECOND(10)" )]
+    [InlineData( SqlTemporalUnit.Minute, "MINUTE(10)" )]
+    [InlineData( SqlTemporalUnit.Hour, "HOUR(10)" )]
+    [InlineData( SqlTemporalUnit.Day, "DAYOFMONTH(10)" )]
+    [InlineData( SqlTemporalUnit.Week, "WEEKOFYEAR(10)" )]
+    [InlineData( SqlTemporalUnit.Month, "MONTH(10)" )]
+    [InlineData( SqlTemporalUnit.Year, "YEAR(10)" )]
+    public void VisitChild_ShouldInterpretExtractTemporalUnitFunction(SqlTemporalUnit unit, string expected)
+    {
+        _sut.VisitChild( SqlNode.Literal( 10 ).ExtractTemporalUnit( unit ) );
+        _sut.Context.Sql.ToString().Should().Be( expected );
+    }
+
+    [Theory]
+    [InlineData( SqlTemporalUnit.Nanosecond, "TIMESTAMPADD(MICROSECOND, 5 DIV 1000, 10)" )]
+    [InlineData( SqlTemporalUnit.Microsecond, "TIMESTAMPADD(MICROSECOND, 5, 10)" )]
+    [InlineData( SqlTemporalUnit.Millisecond, "TIMESTAMPADD(MICROSECOND, 5 * 1000, 10)" )]
+    [InlineData( SqlTemporalUnit.Second, "TIMESTAMPADD(SECOND, 5, 10)" )]
+    [InlineData( SqlTemporalUnit.Minute, "TIMESTAMPADD(MINUTE, 5, 10)" )]
+    [InlineData( SqlTemporalUnit.Hour, "TIMESTAMPADD(HOUR, 5, 10)" )]
+    [InlineData( SqlTemporalUnit.Day, "TIMESTAMPADD(DAY, 5, 10)" )]
+    [InlineData( SqlTemporalUnit.Week, "TIMESTAMPADD(WEEK, 5, 10)" )]
+    [InlineData( SqlTemporalUnit.Month, "TIMESTAMPADD(MONTH, 5, 10)" )]
+    [InlineData( SqlTemporalUnit.Year, "TIMESTAMPADD(YEAR, 5, 10)" )]
+    public void Visit_ShouldInterpretTemporalAddFunction(SqlTemporalUnit unit, string expected)
+    {
+        _sut.Visit( SqlNode.Literal( 10 ).TemporalAdd( SqlNode.Literal( 5 ), unit ) );
+        _sut.Context.Sql.ToString().Should().Be( expected );
+    }
+
+    [Theory]
+    [InlineData( SqlTemporalUnit.Nanosecond, "TIMESTAMPDIFF(MICROSECOND, 10, 5) * 1000" )]
+    [InlineData( SqlTemporalUnit.Microsecond, "TIMESTAMPDIFF(MICROSECOND, 10, 5)" )]
+    [InlineData( SqlTemporalUnit.Millisecond, "TIMESTAMPDIFF(MICROSECOND, 10, 5) DIV 1000" )]
+    [InlineData( SqlTemporalUnit.Second, "TIMESTAMPDIFF(SECOND, 10, 5)" )]
+    [InlineData( SqlTemporalUnit.Minute, "TIMESTAMPDIFF(MINUTE, 10, 5)" )]
+    [InlineData( SqlTemporalUnit.Hour, "TIMESTAMPDIFF(HOUR, 10, 5)" )]
+    [InlineData( SqlTemporalUnit.Day, "TIMESTAMPDIFF(DAY, 10, 5)" )]
+    [InlineData( SqlTemporalUnit.Week, "TIMESTAMPDIFF(WEEK, 10, 5)" )]
+    [InlineData( SqlTemporalUnit.Month, "TIMESTAMPDIFF(MONTH, 10, 5)" )]
+    [InlineData( SqlTemporalUnit.Year, "TIMESTAMPDIFF(YEAR, 10, 5)" )]
+    public void Visit_ShouldInterpretTemporalDiffFunction(SqlTemporalUnit unit, string expected)
+    {
+        _sut.Visit( SqlNode.Literal( 10 ).TemporalDiff( SqlNode.Literal( 5 ), unit ) );
+        _sut.Context.Sql.ToString().Should().Be( expected );
+    }
+
+    [Theory]
+    [InlineData( SqlTemporalUnit.Nanosecond, "(TIMESTAMPDIFF(MICROSECOND, 10, 5) * 1000)" )]
+    [InlineData( SqlTemporalUnit.Microsecond, "TIMESTAMPDIFF(MICROSECOND, 10, 5)" )]
+    [InlineData( SqlTemporalUnit.Millisecond, "(TIMESTAMPDIFF(MICROSECOND, 10, 5) DIV 1000)" )]
+    [InlineData( SqlTemporalUnit.Second, "TIMESTAMPDIFF(SECOND, 10, 5)" )]
+    [InlineData( SqlTemporalUnit.Minute, "TIMESTAMPDIFF(MINUTE, 10, 5)" )]
+    [InlineData( SqlTemporalUnit.Hour, "TIMESTAMPDIFF(HOUR, 10, 5)" )]
+    [InlineData( SqlTemporalUnit.Day, "TIMESTAMPDIFF(DAY, 10, 5)" )]
+    [InlineData( SqlTemporalUnit.Week, "TIMESTAMPDIFF(WEEK, 10, 5)" )]
+    [InlineData( SqlTemporalUnit.Month, "TIMESTAMPDIFF(MONTH, 10, 5)" )]
+    [InlineData( SqlTemporalUnit.Year, "TIMESTAMPDIFF(YEAR, 10, 5)" )]
+    public void VisitChild_ShouldInterpretTemporalDiffFunction(SqlTemporalUnit unit, string expected)
+    {
+        _sut.VisitChild( SqlNode.Literal( 10 ).TemporalDiff( SqlNode.Literal( 5 ), unit ) );
+        _sut.Context.Sql.ToString().Should().Be( expected );
     }
 
     [Fact]

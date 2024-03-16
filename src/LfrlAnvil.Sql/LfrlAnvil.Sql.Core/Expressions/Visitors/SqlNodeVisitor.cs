@@ -1,5 +1,4 @@
-﻿using LfrlAnvil.Extensions;
-using LfrlAnvil.Sql.Expressions.Arithmetic;
+﻿using LfrlAnvil.Sql.Expressions.Arithmetic;
 using LfrlAnvil.Sql.Expressions.Functions;
 using LfrlAnvil.Sql.Expressions.Logical;
 using LfrlAnvil.Sql.Expressions.Objects;
@@ -153,6 +152,43 @@ public abstract class SqlNodeVisitor : ISqlNodeVisitor
     public virtual void VisitCurrentTimeFunction(SqlCurrentTimeFunctionExpressionNode node) { }
     public virtual void VisitCurrentDateTimeFunction(SqlCurrentDateTimeFunctionExpressionNode node) { }
     public virtual void VisitCurrentTimestampFunction(SqlCurrentTimestampFunctionExpressionNode node) { }
+
+    public virtual void VisitExtractDateFunction(SqlExtractDateFunctionExpressionNode node)
+    {
+        foreach ( var arg in node.Arguments )
+            this.Visit( arg );
+    }
+
+    public virtual void VisitExtractTimeOfDayFunction(SqlExtractTimeOfDayFunctionExpressionNode node)
+    {
+        foreach ( var arg in node.Arguments )
+            this.Visit( arg );
+    }
+
+    public virtual void VisitExtractDayFunction(SqlExtractDayFunctionExpressionNode node)
+    {
+        foreach ( var arg in node.Arguments )
+            this.Visit( arg );
+    }
+
+    public virtual void VisitExtractTemporalUnitFunction(SqlExtractTemporalUnitFunctionExpressionNode node)
+    {
+        foreach ( var arg in node.Arguments )
+            this.Visit( arg );
+    }
+
+    public virtual void VisitTemporalAddFunction(SqlTemporalAddFunctionExpressionNode node)
+    {
+        foreach ( var arg in node.Arguments )
+            this.Visit( arg );
+    }
+
+    public virtual void VisitTemporalDiffFunction(SqlTemporalDiffFunctionExpressionNode node)
+    {
+        foreach ( var arg in node.Arguments )
+            this.Visit( arg );
+    }
+
     public virtual void VisitNewGuidFunction(SqlNewGuidFunctionExpressionNode node) { }
 
     public virtual void VisitLengthFunction(SqlLengthFunctionExpressionNode node)

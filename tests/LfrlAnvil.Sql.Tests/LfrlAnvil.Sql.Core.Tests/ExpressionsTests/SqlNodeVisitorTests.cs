@@ -342,6 +342,72 @@ public class SqlNodeVisitorTests : TestsBase
     }
 
     [Fact]
+    public void VisitExtractDateFunction_ShouldVisitArguments()
+    {
+        var sut = new VisitorMock();
+        var arguments = new[] { SqlNode.Literal( 10 ) };
+
+        sut.VisitExtractDateFunction( arguments[0].ExtractDate() );
+
+        sut.Nodes.Should().BeSequentiallyEqualTo( arguments[0] );
+    }
+
+    [Fact]
+    public void VisitExtractTimeOfDayFunction_ShouldVisitArguments()
+    {
+        var sut = new VisitorMock();
+        var arguments = new[] { SqlNode.Literal( 10 ) };
+
+        sut.VisitExtractTimeOfDayFunction( arguments[0].ExtractTimeOfDay() );
+
+        sut.Nodes.Should().BeSequentiallyEqualTo( arguments[0] );
+    }
+
+    [Fact]
+    public void VisitExtractDayFunction_ShouldVisitArguments()
+    {
+        var sut = new VisitorMock();
+        var arguments = new[] { SqlNode.Literal( 10 ) };
+
+        sut.VisitExtractDayFunction( arguments[0].ExtractDayOfYear() );
+
+        sut.Nodes.Should().BeSequentiallyEqualTo( arguments[0] );
+    }
+
+    [Fact]
+    public void VisitExtractTemporalUnitFunction_ShouldVisitArguments()
+    {
+        var sut = new VisitorMock();
+        var arguments = new[] { SqlNode.Literal( 10 ) };
+
+        sut.VisitExtractTemporalUnitFunction( arguments[0].ExtractTemporalUnit( SqlTemporalUnit.Year ) );
+
+        sut.Nodes.Should().BeSequentiallyEqualTo( arguments[0] );
+    }
+
+    [Fact]
+    public void VisitTemporalAddFunction_ShouldVisitArguments()
+    {
+        var sut = new VisitorMock();
+        var arguments = new[] { SqlNode.Literal( 10 ), SqlNode.Literal( 20 ) };
+
+        sut.VisitTemporalAddFunction( arguments[0].TemporalAdd( arguments[1], SqlTemporalUnit.Year ) );
+
+        sut.Nodes.Should().BeSequentiallyEqualTo( arguments[0], arguments[1] );
+    }
+
+    [Fact]
+    public void VisitTemporalDiffFunction_ShouldVisitArguments()
+    {
+        var sut = new VisitorMock();
+        var arguments = new[] { SqlNode.Literal( 10 ), SqlNode.Literal( 20 ) };
+
+        sut.VisitTemporalDiffFunction( arguments[0].TemporalDiff( arguments[1], SqlTemporalUnit.Year ) );
+
+        sut.Nodes.Should().BeSequentiallyEqualTo( arguments[0], arguments[1] );
+    }
+
+    [Fact]
     public void VisitNewGuidFunction_ShouldDoNothing()
     {
         var sut = new Visitor();

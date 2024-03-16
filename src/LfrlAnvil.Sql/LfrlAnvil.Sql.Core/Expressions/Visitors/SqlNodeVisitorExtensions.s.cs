@@ -469,6 +469,30 @@ public static class SqlNodeVisitorExtensions
                 visitor.VisitCurrentTimestampFunction( ReinterpretCast.To<SqlCurrentTimestampFunctionExpressionNode>( node ) );
                 break;
 
+            case SqlFunctionType.ExtractDate:
+                visitor.VisitExtractDateFunction( ReinterpretCast.To<SqlExtractDateFunctionExpressionNode>( node ) );
+                break;
+
+            case SqlFunctionType.ExtractTimeOfDay:
+                visitor.VisitExtractTimeOfDayFunction( ReinterpretCast.To<SqlExtractTimeOfDayFunctionExpressionNode>( node ) );
+                break;
+
+            case SqlFunctionType.ExtractDay:
+                visitor.VisitExtractDayFunction( ReinterpretCast.To<SqlExtractDayFunctionExpressionNode>( node ) );
+                break;
+
+            case SqlFunctionType.ExtractTemporalUnit:
+                visitor.VisitExtractTemporalUnitFunction( ReinterpretCast.To<SqlExtractTemporalUnitFunctionExpressionNode>( node ) );
+                break;
+
+            case SqlFunctionType.TemporalAdd:
+                visitor.VisitTemporalAddFunction( ReinterpretCast.To<SqlTemporalAddFunctionExpressionNode>( node ) );
+                break;
+
+            case SqlFunctionType.TemporalDiff:
+                visitor.VisitTemporalDiffFunction( ReinterpretCast.To<SqlTemporalDiffFunctionExpressionNode>( node ) );
+                break;
+
             case SqlFunctionType.NewGuid:
                 visitor.VisitNewGuidFunction( ReinterpretCast.To<SqlNewGuidFunctionExpressionNode>( node ) );
                 break;

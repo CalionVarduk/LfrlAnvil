@@ -526,6 +526,84 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
     }
 
     [Fact]
+    public void VisitExtractDateFunction_ShouldVisitArguments()
+    {
+        var node = SqlNode.Parameter( "a" ).ExtractDate();
+        _sut.VisitExtractDateFunction( node );
+
+        using ( new AssertionScope() )
+        {
+            _sut.GetErrors().Should().HaveCount( 1 );
+            _sut.GetReferencedObjects().Should().BeEmpty();
+        }
+    }
+
+    [Fact]
+    public void VisitExtractTimeOfDayFunction_ShouldVisitArguments()
+    {
+        var node = SqlNode.Parameter( "a" ).ExtractTimeOfDay();
+        _sut.VisitExtractTimeOfDayFunction( node );
+
+        using ( new AssertionScope() )
+        {
+            _sut.GetErrors().Should().HaveCount( 1 );
+            _sut.GetReferencedObjects().Should().BeEmpty();
+        }
+    }
+
+    [Fact]
+    public void VisitExtractDayFunction_ShouldVisitArguments()
+    {
+        var node = SqlNode.Parameter( "a" ).ExtractDayOfYear();
+        _sut.VisitExtractDayFunction( node );
+
+        using ( new AssertionScope() )
+        {
+            _sut.GetErrors().Should().HaveCount( 1 );
+            _sut.GetReferencedObjects().Should().BeEmpty();
+        }
+    }
+
+    [Fact]
+    public void VisitExtractTemporalUnitFunction_ShouldVisitArguments()
+    {
+        var node = SqlNode.Parameter( "a" ).ExtractTemporalUnit( SqlTemporalUnit.Year );
+        _sut.VisitExtractTemporalUnitFunction( node );
+
+        using ( new AssertionScope() )
+        {
+            _sut.GetErrors().Should().HaveCount( 1 );
+            _sut.GetReferencedObjects().Should().BeEmpty();
+        }
+    }
+
+    [Fact]
+    public void VisitTemporalAddFunction_ShouldVisitArguments()
+    {
+        var node = SqlNode.Parameter( "a" ).TemporalAdd( SqlNode.Parameter( "b" ), SqlTemporalUnit.Year );
+        _sut.VisitTemporalAddFunction( node );
+
+        using ( new AssertionScope() )
+        {
+            _sut.GetErrors().Should().HaveCount( 2 );
+            _sut.GetReferencedObjects().Should().BeEmpty();
+        }
+    }
+
+    [Fact]
+    public void VisitTemporalDiffFunction_ShouldVisitArguments()
+    {
+        var node = SqlNode.Parameter( "a" ).TemporalDiff( SqlNode.Parameter( "b" ), SqlTemporalUnit.Year );
+        _sut.VisitTemporalDiffFunction( node );
+
+        using ( new AssertionScope() )
+        {
+            _sut.GetErrors().Should().HaveCount( 2 );
+            _sut.GetReferencedObjects().Should().BeEmpty();
+        }
+    }
+
+    [Fact]
     public void VisitNewGuidFunction_ShouldDoNothing()
     {
         _sut.VisitNewGuidFunction( SqlNode.Functions.NewGuid() );

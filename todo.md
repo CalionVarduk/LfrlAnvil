@@ -1,28 +1,27 @@
 # TODO
 | Priority |       Project       |                            Title                            |                                   Details                                   |                    Requirements                    |
 |:--------:|:-------------------:|:-----------------------------------------------------------:|:---------------------------------------------------------------------------:|:--------------------------------------------------:|
-|    1     |      Sql.Core       |               Add DateTime related functions                |               [link](#sqlcore-add-datetime-related-functions)               |                         -                          |
-|    2     |       Sqlite        |                Add node interpreter options                 |                [link](#sqlite-add-node-interpreter-options)                 |                         -                          |
-|    3     |      Sql.Core       |                       Add Upsert node                       |                      [link](#sqlcore-add-upsert-node)                       |                         -                          |
-|    4     |      Sql.Core       |                       Add JSON nodes                        |                       [link](#sqlcore-add-json-nodes)                       |                         -                          |
-|    5     |        Sql.*        |                         PostgreSql                          |                           [link](#sql-postgresql)                           |                         -                          |
-|    6     |      Sql.Core       |                 Add Attach/Detach DB nodes                  |                 [link](#sqlcore-add-attachdetach-db-nodes)                  |                         -                          |
-|    7     |       Sqlite        |                      Improvement ideas                      |                      [link](#sqlite-improvement-ideas)                      |                         -                          |
-|    8     |          -          |                     Reactive.Scheduling                     |                         [link](#reactivescheduling)                         |                         -                          |
-|    9     |   Dependencies.*    |                   Dependencies.AspNetCore                   |                      [link](#dependencies-aspnetcore)                       |                         -                          |
-|    10    |          -          |                          Terminal                           |                              [link](#terminal)                              |                         -                          |
-|    11    |          -          |                         Diagnostics                         |                            [link](#diagnostics)                             |                         -                          |
-|    12    |          -          |                    Diagnostics.Terminal                     |                        [link](#diagnosticsterminal)                         | [Terminal](#terminal), [Diagnostics](#diagnostics) |
-|    13    |    Dependencies     |                     Reader/Writer Lock                      |                   [link](#dependencies-readerwriter-lock)                   |                         -                          |
-|    14    |    Computable.*     |                    Math/Physics structs                     |                   [link](#computable-mathphysics-structs)                   |                         -                          |
-|    15    | Computable.Automata |                  Add Context-free grammar                   |                                      -                                      |                         -                          |
-|    16    |     Collections     |                        Add SkipList                         |                                      -                                      |                         -                          |
-|    17    |      Sql.Core       |          Add Visitor for node CLR type extraction           |          [link](#sqlcore-add-visitor-for-node-clr-type-extraction)          |                         -                          |
-|    18    |      Sql.Core       |               Add Custom node tree validators               |              [link](#sqlcore-add-custom-node-tree-validators)               |                         -                          |
-|    19    |    Dependencies     |                  Generic dependency types                   |               [link](#dependencies-generic-dependency-types)                |                         -                          |
-|    20    |      Sql.Core       |                  Pin/Unpin builder methods                  |                  [link](#sqlcore-pinunpin-builder-methods)                  |                         -                          |
-|    21    |    Dependencies     |                    Generic builder types                    |                 [link](#dependencies-generic-builder-types)                 |                         -                          |
-|    22    |   Reactive.State    |                       Extension ideas                       |                   [link](#reactivestate-extension-ideas)                    |                         -                          |
+|    1     |       Sqlite        |                Add node interpreter options                 |                [link](#sqlite-add-node-interpreter-options)                 |                         -                          |
+|    2     |      Sql.Core       |                       Add Upsert node                       |                      [link](#sqlcore-add-upsert-node)                       |                         -                          |
+|    3     |      Sql.Core       |                       Add JSON nodes                        |                       [link](#sqlcore-add-json-nodes)                       |                         -                          |
+|    4     |        Sql.*        |                         PostgreSql                          |                           [link](#sql-postgresql)                           |                         -                          |
+|    5     |      Sql.Core       |                 Add Attach/Detach DB nodes                  |                 [link](#sqlcore-add-attachdetach-db-nodes)                  |                         -                          |
+|    6     |       Sqlite        |                      Improvement ideas                      |                      [link](#sqlite-improvement-ideas)                      |                         -                          |
+|    7     |          -          |                     Reactive.Scheduling                     |                         [link](#reactivescheduling)                         |                         -                          |
+|    8     |   Dependencies.*    |                   Dependencies.AspNetCore                   |                      [link](#dependencies-aspnetcore)                       |                         -                          |
+|    9     |          -          |                          Terminal                           |                              [link](#terminal)                              |                         -                          |
+|    10    |          -          |                         Diagnostics                         |                            [link](#diagnostics)                             |                         -                          |
+|    11    |          -          |                    Diagnostics.Terminal                     |                        [link](#diagnosticsterminal)                         | [Terminal](#terminal), [Diagnostics](#diagnostics) |
+|    12    |    Dependencies     |                     Reader/Writer Lock                      |                   [link](#dependencies-readerwriter-lock)                   |                         -                          |
+|    13    |    Computable.*     |                    Math/Physics structs                     |                   [link](#computable-mathphysics-structs)                   |                         -                          |
+|    14    | Computable.Automata |                  Add Context-free grammar                   |                                      -                                      |                         -                          |
+|    15    |     Collections     |                        Add SkipList                         |                                      -                                      |                         -                          |
+|    16    |      Sql.Core       |          Add Visitor for node CLR type extraction           |          [link](#sqlcore-add-visitor-for-node-clr-type-extraction)          |                         -                          |
+|    17    |      Sql.Core       |               Add Custom node tree validators               |              [link](#sqlcore-add-custom-node-tree-validators)               |                         -                          |
+|    18    |    Dependencies     |                  Generic dependency types                   |               [link](#dependencies-generic-dependency-types)                |                         -                          |
+|    19    |      Sql.Core       |                  Pin/Unpin builder methods                  |                  [link](#sqlcore-pinunpin-builder-methods)                  |                         -                          |
+|    20    |    Dependencies     |                    Generic builder types                    |                 [link](#dependencies-generic-builder-types)                 |                         -                          |
+|    21    |   Reactive.State    |                       Extension ideas                       |                   [link](#reactivestate-extension-ideas)                    |                         -                          |
 
 ### Scribbles:
 - Chrono:
@@ -136,10 +135,6 @@ ideas for other LfrlAnvil.Computable projects:
 
 ### Sql: PostgreSql
 Implement Sql.Core for PostgreSql
-
-### Sql.Core: Add DateTime related functions
-Add datetime related functions? kind of depends on other sql dialects
-- things like Add or GetMonth etc.
 
 ### Sqlite: Add node interpreter options
 Add sqlite interpreter options, that can be enabled e.g. based on server version

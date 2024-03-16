@@ -74,6 +74,172 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
         Context.Sql.AppendSpace().Append( "AS" ).AppendSpace().Append( "SIGNED" ).Append( ')' );
     }
 
+    public override void VisitExtractDateFunction(SqlExtractDateFunctionExpressionNode node)
+    {
+        VisitSimpleFunction( "DATE", node );
+    }
+
+    public override void VisitExtractTimeOfDayFunction(SqlExtractTimeOfDayFunctionExpressionNode node)
+    {
+        VisitSimpleFunction( "TIME", node );
+    }
+
+    public override void VisitExtractDayFunction(SqlExtractDayFunctionExpressionNode node)
+    {
+        switch ( node.Unit )
+        {
+            case SqlTemporalUnit.Year:
+                VisitSimpleFunction( "DAYOFYEAR", node );
+                break;
+
+            case SqlTemporalUnit.Month:
+                VisitSimpleFunction( "DAYOFMONTH", node );
+                break;
+
+            case SqlTemporalUnit.Week:
+                VisitSimpleFunction( "WEEKDAY", node );
+                break;
+        }
+    }
+
+    public override void VisitExtractTemporalUnitFunction(SqlExtractTemporalUnitFunctionExpressionNode node)
+    {
+        switch ( node.Unit )
+        {
+            case SqlTemporalUnit.Year:
+                VisitSimpleFunction( "YEAR", node );
+                break;
+
+            case SqlTemporalUnit.Month:
+                VisitSimpleFunction( "MONTH", node );
+                break;
+
+            case SqlTemporalUnit.Week:
+                VisitSimpleFunction( "WEEKOFYEAR", node );
+                break;
+
+            case SqlTemporalUnit.Day:
+                VisitSimpleFunction( "DAYOFMONTH", node );
+                break;
+
+            case SqlTemporalUnit.Hour:
+                VisitSimpleFunction( "HOUR", node );
+                break;
+
+            case SqlTemporalUnit.Minute:
+                VisitSimpleFunction( "MINUTE", node );
+                break;
+
+            case SqlTemporalUnit.Second:
+                VisitSimpleFunction( "SECOND", node );
+                break;
+
+            case SqlTemporalUnit.Millisecond:
+                VisitSimpleFunction( "MICROSECOND", node );
+                Context.Sql.AppendSpace().Append( "DIV" ).AppendSpace().Append( '1' ).Append( '0', repeatCount: 3 );
+                break;
+
+            case SqlTemporalUnit.Microsecond:
+                VisitSimpleFunction( "MICROSECOND", node );
+                break;
+
+            case SqlTemporalUnit.Nanosecond:
+                VisitSimpleFunction( "MICROSECOND", node );
+                Context.Sql.AppendSpace().Append( '*' ).AppendSpace().Append( '1' ).Append( '0', repeatCount: 3 );
+                break;
+        }
+    }
+
+    public override void VisitTemporalAddFunction(SqlTemporalAddFunctionExpressionNode node)
+    {
+        switch ( node.Unit )
+        {
+            case SqlTemporalUnit.Nanosecond:
+                Context.Sql.Append( "TIMESTAMPADD" ).Append( '(' ).Append( "MICROSECOND" ).AppendComma().AppendSpace();
+                VisitChild( node.Arguments[1] );
+                Context.Sql.AppendSpace().Append( "DIV" ).AppendSpace().Append( '1' ).Append( '0', repeatCount: 3 );
+                Context.Sql.AppendComma().AppendSpace();
+                VisitChild( node.Arguments[0] );
+                Context.Sql.Append( ')' );
+                break;
+
+            case SqlTemporalUnit.Millisecond:
+                Context.Sql.Append( "TIMESTAMPADD" ).Append( '(' ).Append( "MICROSECOND" ).AppendComma().AppendSpace();
+                VisitChild( node.Arguments[1] );
+                Context.Sql.AppendSpace().Append( '*' ).AppendSpace().Append( '1' ).Append( '0', repeatCount: 3 );
+                Context.Sql.AppendComma().AppendSpace();
+                VisitChild( node.Arguments[0] );
+                Context.Sql.Append( ')' );
+                break;
+
+            default:
+            {
+                var unit = node.Unit switch
+                {
+                    SqlTemporalUnit.Year => "YEAR",
+                    SqlTemporalUnit.Month => "MONTH",
+                    SqlTemporalUnit.Week => "WEEK",
+                    SqlTemporalUnit.Day => "DAY",
+                    SqlTemporalUnit.Hour => "HOUR",
+                    SqlTemporalUnit.Minute => "MINUTE",
+                    SqlTemporalUnit.Second => "SECOND",
+                    _ => "MICROSECOND"
+                };
+
+                Context.Sql.Append( "TIMESTAMPADD" ).Append( '(' ).Append( unit ).AppendComma().AppendSpace();
+                VisitChild( node.Arguments[1] );
+                Context.Sql.AppendComma().AppendSpace();
+                VisitChild( node.Arguments[0] );
+                Context.Sql.Append( ')' );
+                break;
+            }
+        }
+    }
+
+    public override void VisitTemporalDiffFunction(SqlTemporalDiffFunctionExpressionNode node)
+    {
+        switch ( node.Unit )
+        {
+            case SqlTemporalUnit.Nanosecond:
+                Context.Sql.Append( "TIMESTAMPDIFF" ).Append( '(' ).Append( "MICROSECOND" ).AppendComma().AppendSpace();
+                VisitChild( node.Arguments[0] );
+                Context.Sql.AppendComma().AppendSpace();
+                VisitChild( node.Arguments[1] );
+                Context.Sql.Append( ')' ).AppendSpace().Append( '*' ).AppendSpace().Append( '1' ).Append( '0', repeatCount: 3 );
+                break;
+
+            case SqlTemporalUnit.Millisecond:
+                Context.Sql.Append( "TIMESTAMPDIFF" ).Append( '(' ).Append( "MICROSECOND" ).AppendComma().AppendSpace();
+                VisitChild( node.Arguments[0] );
+                Context.Sql.AppendComma().AppendSpace();
+                VisitChild( node.Arguments[1] );
+                Context.Sql.Append( ')' ).AppendSpace().Append( "DIV" ).AppendSpace().Append( '1' ).Append( '0', repeatCount: 3 );
+                break;
+
+            default:
+            {
+                var unit = node.Unit switch
+                {
+                    SqlTemporalUnit.Year => "YEAR",
+                    SqlTemporalUnit.Month => "MONTH",
+                    SqlTemporalUnit.Week => "WEEK",
+                    SqlTemporalUnit.Day => "DAY",
+                    SqlTemporalUnit.Hour => "HOUR",
+                    SqlTemporalUnit.Minute => "MINUTE",
+                    SqlTemporalUnit.Second => "SECOND",
+                    _ => "MICROSECOND"
+                };
+
+                Context.Sql.Append( "TIMESTAMPDIFF" ).Append( '(' ).Append( unit ).AppendComma().AppendSpace();
+                VisitChild( node.Arguments[0] );
+                Context.Sql.AppendComma().AppendSpace();
+                VisitChild( node.Arguments[1] );
+                Context.Sql.Append( ')' );
+                break;
+            }
+        }
+    }
+
     public override void VisitNewGuidFunction(SqlNewGuidFunctionExpressionNode node)
     {
         AppendDelimitedSchemaObjectName( SqlSchemaObjectName.Create( CommonSchemaName, MySqlHelpers.GuidFunctionName ) );
@@ -848,8 +1014,17 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
                 return false;
 
             case SqlNodeType.FunctionExpression:
-                return ReinterpretCast.To<SqlFunctionExpressionNode>( node ).FunctionType == SqlFunctionType.LastIndexOf;
-
+            {
+                return ReinterpretCast.To<SqlFunctionExpressionNode>( node ).FunctionType switch
+                {
+                    SqlFunctionType.LastIndexOf => true,
+                    SqlFunctionType.ExtractTemporalUnit => ReinterpretCast.To<SqlExtractTemporalUnitFunctionExpressionNode>( node ).Unit
+                        is SqlTemporalUnit.Millisecond or SqlTemporalUnit.Nanosecond,
+                    SqlFunctionType.TemporalDiff => ReinterpretCast.To<SqlTemporalDiffFunctionExpressionNode>( node ).Unit
+                        is SqlTemporalUnit.Millisecond or SqlTemporalUnit.Nanosecond,
+                    _ => false
+                };
+            }
             case SqlNodeType.AggregateFunctionExpression:
                 foreach ( var trait in ReinterpretCast.To<SqlAggregateFunctionExpressionNode>( node ).Traits )
                 {

@@ -10,6 +10,7 @@ using LfrlAnvil.Sql.Objects.Builders;
 using LfrlAnvil.Sql.Versioning;
 using LfrlAnvil.Sqlite.Exceptions;
 using LfrlAnvil.Sqlite.Extensions;
+using LfrlAnvil.Sqlite.Internal;
 using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Sqlite.Tests;
@@ -579,6 +580,795 @@ public class SqliteDatabaseFactoryTests : TestsBase
         var result = reader.GetDouble( 0 );
 
         result.Should().Be( 10.0 );
+    }
+
+    [Theory]
+    [InlineData( "2024-03-15 12:34:56.7890123", "12:34:56.7890123" )]
+    [InlineData( "2024-03-15", "00:00:00.0000000" )]
+    [InlineData( "12:34:56.7890123", "12:34:56.7890123" )]
+    public void Create_ShouldReturnDatabaseWithCustomTimeOfDayFunction(string parameter, string expected)
+    {
+        var sut = new SqliteDatabaseFactory();
+        var db = sut.Create( "DataSource=:memory:", new SqlDatabaseVersionHistory() ).Database;
+
+        using var connection = db.Connect();
+        using var command = connection.CreateCommand();
+        command.CommandText = $"SELECT TIME_OF_DAY('{parameter}')";
+
+        using var reader = command.ExecuteReader();
+        reader.Read();
+        var result = reader.GetString( 0 );
+
+        result.Should().Be( expected );
+    }
+
+    [Fact]
+    public void Create_ShouldReturnDatabaseWithCustomTimeOfDayFunction_ThatReturnsNullWhenParameterIsNull()
+    {
+        var sut = new SqliteDatabaseFactory();
+        var db = sut.Create( "DataSource=:memory:", new SqlDatabaseVersionHistory() ).Database;
+
+        using var connection = db.Connect();
+        using var command = connection.CreateCommand();
+        command.CommandText = "SELECT TIME_OF_DAY(NULL)";
+
+        using var reader = command.ExecuteReader();
+        reader.Read();
+        var result = reader.GetValue( 0 );
+
+        result.Should().BeOfType<DBNull>();
+    }
+
+    [Theory]
+    [InlineData( SqliteHelpers.TemporalYearUnit, 2024 )]
+    [InlineData( SqliteHelpers.TemporalMonthUnit, 3 )]
+    [InlineData( SqliteHelpers.TemporalWeekOfYearUnit, 11 )]
+    [InlineData( SqliteHelpers.TemporalDayOfYearUnit, 75 )]
+    [InlineData( SqliteHelpers.TemporalDayOfMonthUnit, 15 )]
+    [InlineData( SqliteHelpers.TemporalDayOfWeekUnit, 5 )]
+    [InlineData( SqliteHelpers.TemporalHourUnit, 12 )]
+    [InlineData( SqliteHelpers.TemporalMinuteUnit, 34 )]
+    [InlineData( SqliteHelpers.TemporalSecondUnit, 56 )]
+    [InlineData( SqliteHelpers.TemporalMillisecondUnit, 789 )]
+    [InlineData( SqliteHelpers.TemporalMicrosecondUnit, 789012 )]
+    [InlineData( SqliteHelpers.TemporalNanosecondUnit, 789012300 )]
+    public void Create_ShouldReturnDatabaseWithCustomExtractTemporalFunction_ThatReturnsCorrectResultForDateTime(long unit, long expected)
+    {
+        var sut = new SqliteDatabaseFactory();
+        var db = sut.Create( "DataSource=:memory:", new SqlDatabaseVersionHistory() ).Database;
+
+        using var connection = db.Connect();
+        using var command = connection.CreateCommand();
+        command.CommandText = $"SELECT EXTRACT_TEMPORAL({unit}, '2024-03-15 12:34:56.7890123')";
+
+        using var reader = command.ExecuteReader();
+        reader.Read();
+        var result = reader.GetInt64( 0 );
+
+        result.Should().Be( expected );
+    }
+
+    [Theory]
+    [InlineData( SqliteHelpers.TemporalYearUnit, 2024 )]
+    [InlineData( SqliteHelpers.TemporalMonthUnit, 3 )]
+    [InlineData( SqliteHelpers.TemporalWeekOfYearUnit, 11 )]
+    [InlineData( SqliteHelpers.TemporalDayOfYearUnit, 75 )]
+    [InlineData( SqliteHelpers.TemporalDayOfMonthUnit, 15 )]
+    [InlineData( SqliteHelpers.TemporalDayOfWeekUnit, 5 )]
+    [InlineData( SqliteHelpers.TemporalHourUnit, 0 )]
+    [InlineData( SqliteHelpers.TemporalMinuteUnit, 0 )]
+    [InlineData( SqliteHelpers.TemporalSecondUnit, 0 )]
+    [InlineData( SqliteHelpers.TemporalMillisecondUnit, 0 )]
+    [InlineData( SqliteHelpers.TemporalMicrosecondUnit, 0 )]
+    [InlineData( SqliteHelpers.TemporalNanosecondUnit, 0 )]
+    public void Create_ShouldReturnDatabaseWithCustomExtractTemporalFunction_ThatReturnsCorrectResultForDate(long unit, long expected)
+    {
+        var sut = new SqliteDatabaseFactory();
+        var db = sut.Create( "DataSource=:memory:", new SqlDatabaseVersionHistory() ).Database;
+
+        using var connection = db.Connect();
+        using var command = connection.CreateCommand();
+        command.CommandText = $"SELECT EXTRACT_TEMPORAL({unit}, '2024-03-15')";
+
+        using var reader = command.ExecuteReader();
+        reader.Read();
+        var result = reader.GetInt64( 0 );
+
+        result.Should().Be( expected );
+    }
+
+    [Theory]
+    [InlineData( SqliteHelpers.TemporalYearUnit, null )]
+    [InlineData( SqliteHelpers.TemporalMonthUnit, null )]
+    [InlineData( SqliteHelpers.TemporalWeekOfYearUnit, null )]
+    [InlineData( SqliteHelpers.TemporalDayOfYearUnit, null )]
+    [InlineData( SqliteHelpers.TemporalDayOfMonthUnit, null )]
+    [InlineData( SqliteHelpers.TemporalDayOfWeekUnit, null )]
+    [InlineData( SqliteHelpers.TemporalHourUnit, 12 )]
+    [InlineData( SqliteHelpers.TemporalMinuteUnit, 34 )]
+    [InlineData( SqliteHelpers.TemporalSecondUnit, 56 )]
+    [InlineData( SqliteHelpers.TemporalMillisecondUnit, 789 )]
+    [InlineData( SqliteHelpers.TemporalMicrosecondUnit, 789012 )]
+    [InlineData( SqliteHelpers.TemporalNanosecondUnit, 789012300 )]
+    public void Create_ShouldReturnDatabaseWithCustomExtractTemporalFunction_ThatReturnsCorrectResultForTime(long unit, object? expected)
+    {
+        var sut = new SqliteDatabaseFactory();
+        var db = sut.Create( "DataSource=:memory:", new SqlDatabaseVersionHistory() ).Database;
+
+        using var connection = db.Connect();
+        using var command = connection.CreateCommand();
+        command.CommandText = $"SELECT EXTRACT_TEMPORAL({unit}, '12:34:56.7890123')";
+
+        using var reader = command.ExecuteReader();
+        reader.Read();
+        var result = reader.GetValue( 0 );
+
+        result.Should().Be( expected ?? DBNull.Value );
+    }
+
+    [Fact]
+    public void Create_ShouldReturnDatabaseWithCustomExtractTemporalFunction_ThatReturnsNullWhenFirstParameterIsNull()
+    {
+        var sut = new SqliteDatabaseFactory();
+        var db = sut.Create( "DataSource=:memory:", new SqlDatabaseVersionHistory() ).Database;
+
+        using var connection = db.Connect();
+        using var command = connection.CreateCommand();
+        command.CommandText = "SELECT EXTRACT_TEMPORAL(NULL, '2024-03-15')";
+
+        using var reader = command.ExecuteReader();
+        reader.Read();
+        var result = reader.GetValue( 0 );
+
+        result.Should().BeOfType<DBNull>();
+    }
+
+    [Theory]
+    [InlineData( -1 )]
+    [InlineData( 12 )]
+    public void Create_ShouldReturnDatabaseWithCustomExtractTemporalFunction_ThatReturnsNullWhenFirstParameterIsInvalid(long unit)
+    {
+        var sut = new SqliteDatabaseFactory();
+        var db = sut.Create( "DataSource=:memory:", new SqlDatabaseVersionHistory() ).Database;
+
+        using var connection = db.Connect();
+        using var command = connection.CreateCommand();
+        command.CommandText = $"SELECT EXTRACT_TEMPORAL({unit}, '2024-03-15')";
+
+        using var reader = command.ExecuteReader();
+        reader.Read();
+        var result = reader.GetValue( 0 );
+
+        result.Should().BeOfType<DBNull>();
+    }
+
+    [Theory]
+    [InlineData( SqliteHelpers.TemporalYearUnit )]
+    [InlineData( SqliteHelpers.TemporalMonthUnit )]
+    [InlineData( SqliteHelpers.TemporalWeekOfYearUnit )]
+    [InlineData( SqliteHelpers.TemporalDayOfYearUnit )]
+    [InlineData( SqliteHelpers.TemporalDayOfMonthUnit )]
+    [InlineData( SqliteHelpers.TemporalDayOfWeekUnit )]
+    [InlineData( SqliteHelpers.TemporalHourUnit )]
+    [InlineData( SqliteHelpers.TemporalMinuteUnit )]
+    [InlineData( SqliteHelpers.TemporalSecondUnit )]
+    [InlineData( SqliteHelpers.TemporalMillisecondUnit )]
+    [InlineData( SqliteHelpers.TemporalMicrosecondUnit )]
+    [InlineData( SqliteHelpers.TemporalNanosecondUnit )]
+    public void Create_ShouldReturnDatabaseWithCustomExtractTemporalFunction_ThatReturnsNullWhenSecondParameterIsNull(long unit)
+    {
+        var sut = new SqliteDatabaseFactory();
+        var db = sut.Create( "DataSource=:memory:", new SqlDatabaseVersionHistory() ).Database;
+
+        using var connection = db.Connect();
+        using var command = connection.CreateCommand();
+        command.CommandText = $"SELECT EXTRACT_TEMPORAL({unit}, NULL)";
+
+        using var reader = command.ExecuteReader();
+        reader.Read();
+        var result = reader.GetValue( 0 );
+
+        result.Should().BeOfType<DBNull>();
+    }
+
+    [Theory]
+    [InlineData( SqliteHelpers.TemporalYearUnit, "2274-03-15 12:34:56.7890123" )]
+    [InlineData( SqliteHelpers.TemporalMonthUnit, "2045-01-15 12:34:56.7890123" )]
+    [InlineData( SqliteHelpers.TemporalWeekOfYearUnit, "2028-12-29 12:34:56.7890123" )]
+    [InlineData( SqliteHelpers.TemporalDayOfMonthUnit, "2024-11-20 12:34:56.7890123" )]
+    [InlineData( SqliteHelpers.TemporalHourUnit, "2024-03-25 22:34:56.7890123" )]
+    [InlineData( SqliteHelpers.TemporalMinuteUnit, "2024-03-15 16:44:56.7890123" )]
+    [InlineData( SqliteHelpers.TemporalSecondUnit, "2024-03-15 12:39:06.7890123" )]
+    [InlineData( SqliteHelpers.TemporalMillisecondUnit, "2024-03-15 12:34:57.0390123" )]
+    [InlineData( SqliteHelpers.TemporalMicrosecondUnit, "2024-03-15 12:34:56.7892623" )]
+    [InlineData( SqliteHelpers.TemporalNanosecondUnit, "2024-03-15 12:34:56.7890125" )]
+    public void Create_ShouldReturnDatabaseWithCustomTemporalAddFunction_ThatReturnsCorrectResultForDateTime(long unit, string expected)
+    {
+        var sut = new SqliteDatabaseFactory();
+        var db = sut.Create( "DataSource=:memory:", new SqlDatabaseVersionHistory() ).Database;
+
+        using var connection = db.Connect();
+        using var command = connection.CreateCommand();
+        command.CommandText = $"SELECT TEMPORAL_ADD({unit}, 250, '2024-03-15 12:34:56.7890123')";
+
+        using var reader = command.ExecuteReader();
+        reader.Read();
+        var result = reader.GetString( 0 );
+
+        result.Should().Be( expected );
+    }
+
+    [Theory]
+    [InlineData( SqliteHelpers.TemporalYearUnit, "2274-03-15" )]
+    [InlineData( SqliteHelpers.TemporalMonthUnit, "2045-01-15" )]
+    [InlineData( SqliteHelpers.TemporalWeekOfYearUnit, "2028-12-29" )]
+    [InlineData( SqliteHelpers.TemporalDayOfMonthUnit, "2024-11-20" )]
+    [InlineData( SqliteHelpers.TemporalHourUnit, "2024-03-25 10:00:00.0000000" )]
+    [InlineData( SqliteHelpers.TemporalMinuteUnit, "2024-03-15 04:10:00.0000000" )]
+    [InlineData( SqliteHelpers.TemporalSecondUnit, "2024-03-15 00:04:10.0000000" )]
+    [InlineData( SqliteHelpers.TemporalMillisecondUnit, "2024-03-15 00:00:00.2500000" )]
+    [InlineData( SqliteHelpers.TemporalMicrosecondUnit, "2024-03-15 00:00:00.0002500" )]
+    [InlineData( SqliteHelpers.TemporalNanosecondUnit, "2024-03-15 00:00:00.0000002" )]
+    public void Create_ShouldReturnDatabaseWithCustomTemporalAddFunction_ThatReturnsCorrectResultForDate(long unit, string expected)
+    {
+        var sut = new SqliteDatabaseFactory();
+        var db = sut.Create( "DataSource=:memory:", new SqlDatabaseVersionHistory() ).Database;
+
+        using var connection = db.Connect();
+        using var command = connection.CreateCommand();
+        command.CommandText = $"SELECT TEMPORAL_ADD({unit}, 250, '2024-03-15')";
+
+        using var reader = command.ExecuteReader();
+        reader.Read();
+        var result = reader.GetString( 0 );
+
+        result.Should().Be( expected );
+    }
+
+    [Theory]
+    [InlineData( SqliteHelpers.TemporalYearUnit, null )]
+    [InlineData( SqliteHelpers.TemporalMonthUnit, null )]
+    [InlineData( SqliteHelpers.TemporalWeekOfYearUnit, null )]
+    [InlineData( SqliteHelpers.TemporalDayOfMonthUnit, null )]
+    [InlineData( SqliteHelpers.TemporalHourUnit, "22:34:56.7890123" )]
+    [InlineData( SqliteHelpers.TemporalMinuteUnit, "16:44:56.7890123" )]
+    [InlineData( SqliteHelpers.TemporalSecondUnit, "12:39:06.7890123" )]
+    [InlineData( SqliteHelpers.TemporalMillisecondUnit, "12:34:57.0390123" )]
+    [InlineData( SqliteHelpers.TemporalMicrosecondUnit, "12:34:56.7892623" )]
+    [InlineData( SqliteHelpers.TemporalNanosecondUnit, "12:34:56.7890125" )]
+    public void Create_ShouldReturnDatabaseWithCustomTemporalAddFunction_ThatReturnsCorrectResultForTime(long unit, string? expected)
+    {
+        var sut = new SqliteDatabaseFactory();
+        var db = sut.Create( "DataSource=:memory:", new SqlDatabaseVersionHistory() ).Database;
+
+        using var connection = db.Connect();
+        using var command = connection.CreateCommand();
+        command.CommandText = $"SELECT TEMPORAL_ADD({unit}, 250, '12:34:56.7890123')";
+
+        using var reader = command.ExecuteReader();
+        reader.Read();
+        var result = reader.GetValue( 0 );
+
+        result.Should().Be( (object?)expected ?? DBNull.Value );
+    }
+
+    [Fact]
+    public void Create_ShouldReturnDatabaseWithCustomTemporalAddFunction_ThatReturnsNullWhenFirstParameterIsNull()
+    {
+        var sut = new SqliteDatabaseFactory();
+        var db = sut.Create( "DataSource=:memory:", new SqlDatabaseVersionHistory() ).Database;
+
+        using var connection = db.Connect();
+        using var command = connection.CreateCommand();
+        command.CommandText = "SELECT TEMPORAL_ADD(NULL, 1, '2024-03-15')";
+
+        using var reader = command.ExecuteReader();
+        reader.Read();
+        var result = reader.GetValue( 0 );
+
+        result.Should().BeOfType<DBNull>();
+    }
+
+    [Theory]
+    [InlineData( -1 )]
+    [InlineData( 12 )]
+    [InlineData( SqliteHelpers.TemporalDayOfYearUnit )]
+    [InlineData( SqliteHelpers.TemporalDayOfWeekUnit )]
+    public void Create_ShouldReturnDatabaseWithCustomTemporalAddFunction_ThatReturnsNullWhenFirstParameterIsInvalid(long unit)
+    {
+        var sut = new SqliteDatabaseFactory();
+        var db = sut.Create( "DataSource=:memory:", new SqlDatabaseVersionHistory() ).Database;
+
+        using var connection = db.Connect();
+        using var command = connection.CreateCommand();
+        command.CommandText = $"SELECT TEMPORAL_ADD({unit}, 1, '2024-03-15')";
+
+        using var reader = command.ExecuteReader();
+        reader.Read();
+        var result = reader.GetValue( 0 );
+
+        result.Should().BeOfType<DBNull>();
+    }
+
+    [Theory]
+    [InlineData( SqliteHelpers.TemporalYearUnit )]
+    [InlineData( SqliteHelpers.TemporalMonthUnit )]
+    [InlineData( SqliteHelpers.TemporalWeekOfYearUnit )]
+    [InlineData( SqliteHelpers.TemporalDayOfMonthUnit )]
+    [InlineData( SqliteHelpers.TemporalHourUnit )]
+    [InlineData( SqliteHelpers.TemporalMinuteUnit )]
+    [InlineData( SqliteHelpers.TemporalSecondUnit )]
+    [InlineData( SqliteHelpers.TemporalMillisecondUnit )]
+    [InlineData( SqliteHelpers.TemporalMicrosecondUnit )]
+    [InlineData( SqliteHelpers.TemporalNanosecondUnit )]
+    public void Create_ShouldReturnDatabaseWithCustomTemporalAddFunction_ThatReturnsNullWhenSecondParameterIsNull(long unit)
+    {
+        var sut = new SqliteDatabaseFactory();
+        var db = sut.Create( "DataSource=:memory:", new SqlDatabaseVersionHistory() ).Database;
+
+        using var connection = db.Connect();
+        using var command = connection.CreateCommand();
+        command.CommandText = $"SELECT TEMPORAL_ADD({unit}, NULL, '2024-03-15')";
+
+        using var reader = command.ExecuteReader();
+        reader.Read();
+        var result = reader.GetValue( 0 );
+
+        result.Should().BeOfType<DBNull>();
+    }
+
+    [Theory]
+    [InlineData( SqliteHelpers.TemporalYearUnit )]
+    [InlineData( SqliteHelpers.TemporalMonthUnit )]
+    [InlineData( SqliteHelpers.TemporalWeekOfYearUnit )]
+    [InlineData( SqliteHelpers.TemporalDayOfMonthUnit )]
+    [InlineData( SqliteHelpers.TemporalHourUnit )]
+    [InlineData( SqliteHelpers.TemporalMinuteUnit )]
+    [InlineData( SqliteHelpers.TemporalSecondUnit )]
+    [InlineData( SqliteHelpers.TemporalMillisecondUnit )]
+    [InlineData( SqliteHelpers.TemporalMicrosecondUnit )]
+    [InlineData( SqliteHelpers.TemporalNanosecondUnit )]
+    public void Create_ShouldReturnDatabaseWithCustomTemporalAddFunction_ThatReturnsNullWhenThirdParameterIsNull(long unit)
+    {
+        var sut = new SqliteDatabaseFactory();
+        var db = sut.Create( "DataSource=:memory:", new SqlDatabaseVersionHistory() ).Database;
+
+        using var connection = db.Connect();
+        using var command = connection.CreateCommand();
+        command.CommandText = $"SELECT TEMPORAL_ADD({unit}, 1, NULL)";
+
+        using var reader = command.ExecuteReader();
+        reader.Read();
+        var result = reader.GetValue( 0 );
+
+        result.Should().BeOfType<DBNull>();
+    }
+
+    [Theory]
+    [InlineData( SqliteHelpers.TemporalHourUnit, -8 )]
+    [InlineData( SqliteHelpers.TemporalMinuteUnit, -515 )]
+    [InlineData( SqliteHelpers.TemporalSecondUnit, -30900 )]
+    [InlineData( SqliteHelpers.TemporalMillisecondUnit, -30900895 )]
+    [InlineData( SqliteHelpers.TemporalMicrosecondUnit, -30900895308 )]
+    [InlineData( SqliteHelpers.TemporalNanosecondUnit, -30900895308700 )]
+    public void
+        Create_ShouldReturnDatabaseWithCustomTemporalDiffFunction_ThatReturnsCorrectResultForTimeWhenSecondParameterIsGreaterThanThird(
+            long unit,
+            long expected)
+    {
+        var sut = new SqliteDatabaseFactory();
+        var db = sut.Create( "DataSource=:memory:", new SqlDatabaseVersionHistory() ).Database;
+
+        using var connection = db.Connect();
+        using var command = connection.CreateCommand();
+        command.CommandText = $"SELECT TEMPORAL_DIFF({unit}, '21:09:57.6843210', '12:34:56.7890123')";
+
+        using var reader = command.ExecuteReader();
+        reader.Read();
+        var result = reader.GetInt64( 0 );
+
+        result.Should().Be( expected );
+    }
+
+    [Theory]
+    [InlineData( SqliteHelpers.TemporalHourUnit, 8 )]
+    [InlineData( SqliteHelpers.TemporalMinuteUnit, 515 )]
+    [InlineData( SqliteHelpers.TemporalSecondUnit, 30900 )]
+    [InlineData( SqliteHelpers.TemporalMillisecondUnit, 30900895 )]
+    [InlineData( SqliteHelpers.TemporalMicrosecondUnit, 30900895308 )]
+    [InlineData( SqliteHelpers.TemporalNanosecondUnit, 30900895308700 )]
+    public void Create_ShouldReturnDatabaseWithCustomTemporalDiffFunction_ThatReturnsCorrectResultForTimeWhenSecondParameterIsLessThanThird(
+        long unit,
+        long expected)
+    {
+        var sut = new SqliteDatabaseFactory();
+        var db = sut.Create( "DataSource=:memory:", new SqlDatabaseVersionHistory() ).Database;
+
+        using var connection = db.Connect();
+        using var command = connection.CreateCommand();
+        command.CommandText = $"SELECT TEMPORAL_DIFF({unit}, '12:34:56.7890123', '21:09:57.6843210')";
+
+        using var reader = command.ExecuteReader();
+        reader.Read();
+        var result = reader.GetInt64( 0 );
+
+        result.Should().Be( expected );
+    }
+
+    [Theory]
+    [InlineData( SqliteHelpers.TemporalHourUnit )]
+    [InlineData( SqliteHelpers.TemporalMinuteUnit )]
+    [InlineData( SqliteHelpers.TemporalSecondUnit )]
+    [InlineData( SqliteHelpers.TemporalMillisecondUnit )]
+    [InlineData( SqliteHelpers.TemporalMicrosecondUnit )]
+    [InlineData( SqliteHelpers.TemporalNanosecondUnit )]
+    public void Create_ShouldReturnDatabaseWithCustomTemporalDiffFunction_ThatReturnsZeroForTimeWhenSecondAndThirdParametersAreEqual(
+        long unit)
+    {
+        var sut = new SqliteDatabaseFactory();
+        var db = sut.Create( "DataSource=:memory:", new SqlDatabaseVersionHistory() ).Database;
+
+        using var connection = db.Connect();
+        using var command = connection.CreateCommand();
+        command.CommandText = $"SELECT TEMPORAL_DIFF({unit}, '12:34:56.7890123', '12:34:56.7890123')";
+
+        using var reader = command.ExecuteReader();
+        reader.Read();
+        var result = reader.GetInt64( 0 );
+
+        result.Should().Be( 0 );
+    }
+
+    [Theory]
+    [InlineData( SqliteHelpers.TemporalYearUnit, -2 )]
+    [InlineData( SqliteHelpers.TemporalMonthUnit, -30 )]
+    [InlineData( SqliteHelpers.TemporalWeekOfYearUnit, -133 )]
+    [InlineData( SqliteHelpers.TemporalDayOfMonthUnit, -932 )]
+    [InlineData( SqliteHelpers.TemporalHourUnit, -22376 )]
+    [InlineData( SqliteHelpers.TemporalMinuteUnit, -1342595 )]
+    [InlineData( SqliteHelpers.TemporalSecondUnit, -80555700 )]
+    [InlineData( SqliteHelpers.TemporalMillisecondUnit, -80555700895 )]
+    [InlineData( SqliteHelpers.TemporalMicrosecondUnit, -80555700895308 )]
+    [InlineData( SqliteHelpers.TemporalNanosecondUnit, -80555700895308700 )]
+    public void
+        Create_ShouldReturnDatabaseWithCustomTemporalDiffFunction_ThatReturnsCorrectResultForDateWhenSecondParameterIsGreaterThanThird(
+            long unit,
+            long expected)
+    {
+        var sut = new SqliteDatabaseFactory();
+        var db = sut.Create( "DataSource=:memory:", new SqlDatabaseVersionHistory() ).Database;
+
+        using var connection = db.Connect();
+        using var command = connection.CreateCommand();
+        command.CommandText = $"SELECT TEMPORAL_DIFF({unit}, '2024-03-15 21:09:57.6843210', '2021-08-26 12:34:56.7890123')";
+
+        using var reader = command.ExecuteReader();
+        reader.Read();
+        var result = reader.GetInt64( 0 );
+
+        result.Should().Be( expected );
+    }
+
+    [Theory]
+    [InlineData( SqliteHelpers.TemporalYearUnit, 2 )]
+    [InlineData( SqliteHelpers.TemporalMonthUnit, 30 )]
+    [InlineData( SqliteHelpers.TemporalWeekOfYearUnit, 133 )]
+    [InlineData( SqliteHelpers.TemporalDayOfMonthUnit, 932 )]
+    [InlineData( SqliteHelpers.TemporalHourUnit, 22376 )]
+    [InlineData( SqliteHelpers.TemporalMinuteUnit, 1342595 )]
+    [InlineData( SqliteHelpers.TemporalSecondUnit, 80555700 )]
+    [InlineData( SqliteHelpers.TemporalMillisecondUnit, 80555700895 )]
+    [InlineData( SqliteHelpers.TemporalMicrosecondUnit, 80555700895308 )]
+    [InlineData( SqliteHelpers.TemporalNanosecondUnit, 80555700895308700 )]
+    public void Create_ShouldReturnDatabaseWithCustomTemporalDiffFunction_ThatReturnsCorrectResultForDateWhenSecondParameterIsLessThanThird(
+        long unit,
+        long expected)
+    {
+        var sut = new SqliteDatabaseFactory();
+        var db = sut.Create( "DataSource=:memory:", new SqlDatabaseVersionHistory() ).Database;
+
+        using var connection = db.Connect();
+        using var command = connection.CreateCommand();
+        command.CommandText = $"SELECT TEMPORAL_DIFF({unit}, '2021-08-26 12:34:56.7890123', '2024-03-15 21:09:57.6843210')";
+
+        using var reader = command.ExecuteReader();
+        reader.Read();
+        var result = reader.GetInt64( 0 );
+
+        result.Should().Be( expected );
+    }
+
+    [Theory]
+    [InlineData( SqliteHelpers.TemporalYearUnit )]
+    [InlineData( SqliteHelpers.TemporalMonthUnit )]
+    [InlineData( SqliteHelpers.TemporalWeekOfYearUnit )]
+    [InlineData( SqliteHelpers.TemporalDayOfMonthUnit )]
+    [InlineData( SqliteHelpers.TemporalHourUnit )]
+    [InlineData( SqliteHelpers.TemporalMinuteUnit )]
+    [InlineData( SqliteHelpers.TemporalSecondUnit )]
+    [InlineData( SqliteHelpers.TemporalMillisecondUnit )]
+    [InlineData( SqliteHelpers.TemporalMicrosecondUnit )]
+    [InlineData( SqliteHelpers.TemporalNanosecondUnit )]
+    public void Create_ShouldReturnDatabaseWithCustomTemporalDiffFunction_ThatReturnsZeroForDateWhenSecondAndThirdParametersAreEqual(
+        long unit)
+    {
+        var sut = new SqliteDatabaseFactory();
+        var db = sut.Create( "DataSource=:memory:", new SqlDatabaseVersionHistory() ).Database;
+
+        using var connection = db.Connect();
+        using var command = connection.CreateCommand();
+        command.CommandText = $"SELECT TEMPORAL_DIFF({unit}, '2024-03-15 12:34:56.7890123', '2024-03-15 12:34:56.7890123')";
+
+        using var reader = command.ExecuteReader();
+        reader.Read();
+        var result = reader.GetInt64( 0 );
+
+        result.Should().Be( 0 );
+    }
+
+    [Fact]
+    public void
+        Create_ShouldReturnDatabaseWithCustomTemporalDiffFunction_ThatReturnsCorrectResultForDateWhenMonthDiffCalculationChangesDayOfMonth()
+    {
+        var sut = new SqliteDatabaseFactory();
+        var db = sut.Create( "DataSource=:memory:", new SqlDatabaseVersionHistory() ).Database;
+
+        using var connection = db.Connect();
+        using var command = connection.CreateCommand();
+        command.CommandText =
+            $"SELECT TEMPORAL_DIFF({SqliteHelpers.TemporalMonthUnit}, '2024-02-29 21:00:00.0000000', '2024-03-30 20:00:00.0000000')";
+
+        using var reader = command.ExecuteReader();
+        reader.Read();
+        var result = reader.GetInt64( 0 );
+
+        result.Should().Be( 1 );
+    }
+
+    [Fact]
+    public void Create_ShouldReturnDatabaseWithCustomTemporalDiffFunction_ThatReturnsNullWhenFirstParameterIsNull()
+    {
+        var sut = new SqliteDatabaseFactory();
+        var db = sut.Create( "DataSource=:memory:", new SqlDatabaseVersionHistory() ).Database;
+
+        using var connection = db.Connect();
+        using var command = connection.CreateCommand();
+        command.CommandText = "SELECT TEMPORAL_DIFF(NULL, '2024-03-14', '2024-03-15')";
+
+        using var reader = command.ExecuteReader();
+        reader.Read();
+        var result = reader.GetValue( 0 );
+
+        result.Should().BeOfType<DBNull>();
+    }
+
+    [Theory]
+    [InlineData( SqliteHelpers.TemporalYearUnit )]
+    [InlineData( SqliteHelpers.TemporalMonthUnit )]
+    [InlineData( SqliteHelpers.TemporalWeekOfYearUnit )]
+    [InlineData( SqliteHelpers.TemporalDayOfMonthUnit )]
+    public void
+        Create_ShouldReturnDatabaseWithCustomTemporalDiffFunction_ThatReturnsNullWhenFirstParameterIsDateUnitAndSecondParameterIsTime(
+            long unit)
+    {
+        var sut = new SqliteDatabaseFactory();
+        var db = sut.Create( "DataSource=:memory:", new SqlDatabaseVersionHistory() ).Database;
+
+        using var connection = db.Connect();
+        using var command = connection.CreateCommand();
+        command.CommandText = $"SELECT TEMPORAL_DIFF({unit}, '12:34:56.7890123', '2024-03-15')";
+
+        using var reader = command.ExecuteReader();
+        reader.Read();
+        var result = reader.GetValue( 0 );
+
+        result.Should().BeOfType<DBNull>();
+    }
+
+    [Theory]
+    [InlineData( SqliteHelpers.TemporalYearUnit )]
+    [InlineData( SqliteHelpers.TemporalMonthUnit )]
+    [InlineData( SqliteHelpers.TemporalWeekOfYearUnit )]
+    [InlineData( SqliteHelpers.TemporalDayOfMonthUnit )]
+    public void
+        Create_ShouldReturnDatabaseWithCustomTemporalDiffFunction_ThatReturnsNullWhenFirstParameterIsDateUnitAndThirdParameterIsTime(
+            long unit)
+    {
+        var sut = new SqliteDatabaseFactory();
+        var db = sut.Create( "DataSource=:memory:", new SqlDatabaseVersionHistory() ).Database;
+
+        using var connection = db.Connect();
+        using var command = connection.CreateCommand();
+        command.CommandText = $"SELECT TEMPORAL_DIFF({unit}, '2024-03-15', '12:34:56.7890123')";
+
+        using var reader = command.ExecuteReader();
+        reader.Read();
+        var result = reader.GetValue( 0 );
+
+        result.Should().BeOfType<DBNull>();
+    }
+
+    [Theory]
+    [InlineData( SqliteHelpers.TemporalHourUnit )]
+    [InlineData( SqliteHelpers.TemporalMinuteUnit )]
+    [InlineData( SqliteHelpers.TemporalSecondUnit )]
+    [InlineData( SqliteHelpers.TemporalMillisecondUnit )]
+    [InlineData( SqliteHelpers.TemporalMicrosecondUnit )]
+    [InlineData( SqliteHelpers.TemporalNanosecondUnit )]
+    public void
+        Create_ShouldReturnDatabaseWithCustomTemporalDiffFunction_ThatReturnsNullWhenFirstParameterIsTimeUnitAndSecondParameterIsTimeAndThirdParameterIsDate(
+            long unit)
+    {
+        var sut = new SqliteDatabaseFactory();
+        var db = sut.Create( "DataSource=:memory:", new SqlDatabaseVersionHistory() ).Database;
+
+        using var connection = db.Connect();
+        using var command = connection.CreateCommand();
+        command.CommandText = $"SELECT TEMPORAL_DIFF({unit}, '12:34:56.7890123', '2024-03-15')";
+
+        using var reader = command.ExecuteReader();
+        reader.Read();
+        var result = reader.GetValue( 0 );
+
+        result.Should().BeOfType<DBNull>();
+    }
+
+    [Theory]
+    [InlineData( SqliteHelpers.TemporalHourUnit )]
+    [InlineData( SqliteHelpers.TemporalMinuteUnit )]
+    [InlineData( SqliteHelpers.TemporalSecondUnit )]
+    [InlineData( SqliteHelpers.TemporalMillisecondUnit )]
+    [InlineData( SqliteHelpers.TemporalMicrosecondUnit )]
+    [InlineData( SqliteHelpers.TemporalNanosecondUnit )]
+    public void
+        Create_ShouldReturnDatabaseWithCustomTemporalDiffFunction_ThatReturnsNullWhenFirstParameterIsTimeUnitAndSecondParameterIsDateAndThirdParameterIsTime(
+            long unit)
+    {
+        var sut = new SqliteDatabaseFactory();
+        var db = sut.Create( "DataSource=:memory:", new SqlDatabaseVersionHistory() ).Database;
+
+        using var connection = db.Connect();
+        using var command = connection.CreateCommand();
+        command.CommandText = $"SELECT TEMPORAL_DIFF({unit}, '2024-03-15', '12:34:56.7890123')";
+
+        using var reader = command.ExecuteReader();
+        reader.Read();
+        var result = reader.GetValue( 0 );
+
+        result.Should().BeOfType<DBNull>();
+    }
+
+    [Theory]
+    [InlineData( -1 )]
+    [InlineData( 12 )]
+    [InlineData( SqliteHelpers.TemporalDayOfYearUnit )]
+    [InlineData( SqliteHelpers.TemporalDayOfWeekUnit )]
+    public void Create_ShouldReturnDatabaseWithCustomTemporalDiffFunction_ThatReturnsNullWhenFirstParameterIsInvalid(long unit)
+    {
+        var sut = new SqliteDatabaseFactory();
+        var db = sut.Create( "DataSource=:memory:", new SqlDatabaseVersionHistory() ).Database;
+
+        using var connection = db.Connect();
+        using var command = connection.CreateCommand();
+        command.CommandText = $"SELECT TEMPORAL_DIFF({unit}, '2024-03-14', '2024-03-15')";
+
+        using var reader = command.ExecuteReader();
+        reader.Read();
+        var result = reader.GetValue( 0 );
+
+        result.Should().BeOfType<DBNull>();
+    }
+
+    [Theory]
+    [InlineData( SqliteHelpers.TemporalYearUnit )]
+    [InlineData( SqliteHelpers.TemporalMonthUnit )]
+    [InlineData( SqliteHelpers.TemporalWeekOfYearUnit )]
+    [InlineData( SqliteHelpers.TemporalDayOfMonthUnit )]
+    [InlineData( SqliteHelpers.TemporalHourUnit )]
+    [InlineData( SqliteHelpers.TemporalMinuteUnit )]
+    [InlineData( SqliteHelpers.TemporalSecondUnit )]
+    [InlineData( SqliteHelpers.TemporalMillisecondUnit )]
+    [InlineData( SqliteHelpers.TemporalMicrosecondUnit )]
+    [InlineData( SqliteHelpers.TemporalNanosecondUnit )]
+    public void Create_ShouldReturnDatabaseWithCustomTemporalDiffFunction_ThatReturnsNullWhenSecondParameterIsNullAndThirdParameterIsDate(
+        long unit)
+    {
+        var sut = new SqliteDatabaseFactory();
+        var db = sut.Create( "DataSource=:memory:", new SqlDatabaseVersionHistory() ).Database;
+
+        using var connection = db.Connect();
+        using var command = connection.CreateCommand();
+        command.CommandText = $"SELECT TEMPORAL_DIFF({unit}, NULL, '2024-03-15')";
+
+        using var reader = command.ExecuteReader();
+        reader.Read();
+        var result = reader.GetValue( 0 );
+
+        result.Should().BeOfType<DBNull>();
+    }
+
+    [Theory]
+    [InlineData( SqliteHelpers.TemporalYearUnit )]
+    [InlineData( SqliteHelpers.TemporalMonthUnit )]
+    [InlineData( SqliteHelpers.TemporalWeekOfYearUnit )]
+    [InlineData( SqliteHelpers.TemporalDayOfMonthUnit )]
+    [InlineData( SqliteHelpers.TemporalHourUnit )]
+    [InlineData( SqliteHelpers.TemporalMinuteUnit )]
+    [InlineData( SqliteHelpers.TemporalSecondUnit )]
+    [InlineData( SqliteHelpers.TemporalMillisecondUnit )]
+    [InlineData( SqliteHelpers.TemporalMicrosecondUnit )]
+    [InlineData( SqliteHelpers.TemporalNanosecondUnit )]
+    public void Create_ShouldReturnDatabaseWithCustomTemporalDiffFunction_ThatReturnsNullWhenSecondParameterIsNullAndThirdParameterIsTime(
+        long unit)
+    {
+        var sut = new SqliteDatabaseFactory();
+        var db = sut.Create( "DataSource=:memory:", new SqlDatabaseVersionHistory() ).Database;
+
+        using var connection = db.Connect();
+        using var command = connection.CreateCommand();
+        command.CommandText = $"SELECT TEMPORAL_DIFF({unit}, NULL, '12:34:56.7890123')";
+
+        using var reader = command.ExecuteReader();
+        reader.Read();
+        var result = reader.GetValue( 0 );
+
+        result.Should().BeOfType<DBNull>();
+    }
+
+    [Theory]
+    [InlineData( SqliteHelpers.TemporalYearUnit )]
+    [InlineData( SqliteHelpers.TemporalMonthUnit )]
+    [InlineData( SqliteHelpers.TemporalWeekOfYearUnit )]
+    [InlineData( SqliteHelpers.TemporalDayOfMonthUnit )]
+    [InlineData( SqliteHelpers.TemporalHourUnit )]
+    [InlineData( SqliteHelpers.TemporalMinuteUnit )]
+    [InlineData( SqliteHelpers.TemporalSecondUnit )]
+    [InlineData( SqliteHelpers.TemporalMillisecondUnit )]
+    [InlineData( SqliteHelpers.TemporalMicrosecondUnit )]
+    [InlineData( SqliteHelpers.TemporalNanosecondUnit )]
+    public void Create_ShouldReturnDatabaseWithCustomTemporalDiffFunction_ThatReturnsNullWhenSecondParameterIsDateAndThirdParameterIsNull(
+        long unit)
+    {
+        var sut = new SqliteDatabaseFactory();
+        var db = sut.Create( "DataSource=:memory:", new SqlDatabaseVersionHistory() ).Database;
+
+        using var connection = db.Connect();
+        using var command = connection.CreateCommand();
+        command.CommandText = $"SELECT TEMPORAL_DIFF({unit}, '2024-03-15', NULL)";
+
+        using var reader = command.ExecuteReader();
+        reader.Read();
+        var result = reader.GetValue( 0 );
+
+        result.Should().BeOfType<DBNull>();
+    }
+
+    [Theory]
+    [InlineData( SqliteHelpers.TemporalYearUnit )]
+    [InlineData( SqliteHelpers.TemporalMonthUnit )]
+    [InlineData( SqliteHelpers.TemporalWeekOfYearUnit )]
+    [InlineData( SqliteHelpers.TemporalDayOfMonthUnit )]
+    [InlineData( SqliteHelpers.TemporalHourUnit )]
+    [InlineData( SqliteHelpers.TemporalMinuteUnit )]
+    [InlineData( SqliteHelpers.TemporalSecondUnit )]
+    [InlineData( SqliteHelpers.TemporalMillisecondUnit )]
+    [InlineData( SqliteHelpers.TemporalMicrosecondUnit )]
+    [InlineData( SqliteHelpers.TemporalNanosecondUnit )]
+    public void Create_ShouldReturnDatabaseWithCustomTemporalDiffFunction_ThatReturnsNullWhenSecondParameterIsTimeAndThirdParameterIsNull(
+        long unit)
+    {
+        var sut = new SqliteDatabaseFactory();
+        var db = sut.Create( "DataSource=:memory:", new SqlDatabaseVersionHistory() ).Database;
+
+        using var connection = db.Connect();
+        using var command = connection.CreateCommand();
+        command.CommandText = $"SELECT TEMPORAL_DIFF({unit}, '12:34:56.7890123', NULL)";
+
+        using var reader = command.ExecuteReader();
+        reader.Read();
+        var result = reader.GetValue( 0 );
+
+        result.Should().BeOfType<DBNull>();
     }
 
     [Fact]
