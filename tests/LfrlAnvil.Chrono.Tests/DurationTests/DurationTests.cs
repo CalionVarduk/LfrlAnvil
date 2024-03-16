@@ -816,6 +816,15 @@ public class DurationTests : TestsBase
     }
 
     [Theory]
+    [MethodData( nameof( DurationTestsData.GetTicksData ) )]
+    public void FloatingDurationConversionOperator_ShouldReturnFloatingDurationWithCorrectTicks(long ticks)
+    {
+        var sut = new Duration( ticks );
+        var result = (FloatingDuration)sut;
+        result.Ticks.Should().Be( sut.Ticks );
+    }
+
+    [Theory]
     [MethodData( nameof( DurationTestsData.GetNegateData ) )]
     public void NegateOperator_ShouldReturnCorrectResult(long ticks, long expectedTicks)
     {

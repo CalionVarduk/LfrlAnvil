@@ -24,11 +24,6 @@
 |    21    |   Reactive.State    |                       Extension ideas                       |                   [link](#reactivestate-extension-ideas)                    |                         -                          |
 
 ### Scribbles:
-- Chrono:
-  - Add microsecond support?
-  - Add FloatingDuration? Duration but with decimal instead of long as an underlying value
-
-
 - MySqlNodeInterpreter:
   - allow to disable IX prefixes altogether? so blob/text would be added to sql without prefix, which will throw mysql exception
   - also, IX prefix value should be configurable
