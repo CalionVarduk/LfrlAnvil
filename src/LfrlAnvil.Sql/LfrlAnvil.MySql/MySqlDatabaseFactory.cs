@@ -57,13 +57,15 @@ public sealed class MySqlDatabaseFactory : SqlDatabaseFactory<MySqlDatabase>
         SqlDatabaseBuilder builder,
         DbConnectionStringBuilder connectionString,
         DbConnection connection,
-        ReadOnlyArray<Action<SqlDatabaseConnectionChangeEvent>> connectionChangeCallbacks,
+        DbConnectionEventHandler eventHandler,
         SqlQueryReaderExecutor<SqlDatabaseVersionRecord> versionHistoryRecordsQuery,
         Version version)
     {
-        var mySqlConnectionString = ReinterpretCast.To<MySqlConnectionStringBuilder>( connectionString );
-        var mySqlBuilder = ReinterpretCast.To<MySqlDatabaseBuilder>( builder );
-        return new MySqlDatabase( mySqlConnectionString, mySqlBuilder, version, versionHistoryRecordsQuery, connectionChangeCallbacks );
+        return new MySqlDatabase(
+            ReinterpretCast.To<MySqlDatabaseBuilder>( builder ),
+            new MySqlDatabaseConnector( ReinterpretCast.To<MySqlConnectionStringBuilder>( connectionString ), eventHandler ),
+            version,
+            versionHistoryRecordsQuery );
     }
 
     private static bool CheckCommonSchemaExistenceAndPrepare(

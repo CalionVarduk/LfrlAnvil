@@ -2,26 +2,26 @@
 using System.Data.Common;
 using System.Diagnostics.Contracts;
 using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
+using LfrlAnvil.Sql.Internal;
 using LfrlAnvil.Sql.Objects;
+using LfrlAnvil.Sql.Objects.Builders;
 using LfrlAnvil.Sql.Statements;
 using LfrlAnvil.Sql.Versioning;
-using LfrlAnvil.TestExtensions.Sql.Mocks.System;
 
 namespace LfrlAnvil.TestExtensions.Sql.Mocks;
 
 public sealed class SqlDatabaseMock : SqlDatabase
 {
-    public SqlDatabaseMock(
+    internal SqlDatabaseMock(
         SqlDatabaseBuilderMock builder,
-        DbConnectionStringBuilder? connectionString = null,
-        Version? version = null,
+        SqlDatabaseConnectorMock connector,
+        Version version,
         Func<IEnumerable<SqlDatabaseVersionRecord>>? versionRecordsProvider = null)
         : base(
             builder,
             new SqlSchemaCollectionMock( builder.Schemas ),
-            version ?? new Version( "0.0.0" ),
+            connector,
+            version,
             new SqlQueryReader<SqlDatabaseVersionRecord>(
                     builder.Dialect,
                     (_, _) => versionRecordsProvider is null
@@ -29,37 +29,21 @@ public sealed class SqlDatabaseMock : SqlDatabase
                         : new SqlQueryResult<SqlDatabaseVersionRecord>( null, versionRecordsProvider().ToList() ) )
                 .Bind( string.Empty ) )
     {
-        ConnectionString = connectionString;
+        connector.SetDatabase( this );
     }
 
-    public DbConnectionStringBuilder? ConnectionString { get; }
     public new SqlSchemaCollectionMock Schemas => ReinterpretCast.To<SqlSchemaCollectionMock>( base.Schemas );
+    public new SqlDatabaseConnectorMock Connector => ReinterpretCast.To<SqlDatabaseConnectorMock>( base.Connector );
 
     [Pure]
-    public override DbConnection Connect()
+    public static SqlDatabaseMock Create(
+        SqlDatabaseBuilderMock builder,
+        Func<IEnumerable<SqlDatabaseVersionRecord>>? versionRecordsProvider = null)
     {
-        var result = CreateConnection();
-        result.Open();
-        return result;
-    }
+        var connector = new SqlDatabaseConnectorMock(
+            new DbConnectionStringBuilder(),
+            new DbConnectionEventHandler( ReadOnlyArray<Action<SqlDatabaseConnectionChangeEvent>>.Empty ) );
 
-    [Pure]
-    public override async ValueTask<DbConnection> ConnectAsync(CancellationToken cancellationToken = default)
-    {
-        var result = CreateConnection();
-        await result.OpenAsync( cancellationToken ).ConfigureAwait( false );
-        return result;
-    }
-
-    [Pure]
-    public static SqlDatabaseMock Create(SqlDatabaseBuilderMock builder)
-    {
-        return new SqlDatabaseMock( builder );
-    }
-
-    [Pure]
-    private DbConnection CreateConnection()
-    {
-        return new DbConnectionMock( ServerVersion ) { ConnectionString = ConnectionString?.ToString() ?? string.Empty };
+        return new SqlDatabaseMock( builder, connector, new Version( "0.0.0" ), versionRecordsProvider );
     }
 }

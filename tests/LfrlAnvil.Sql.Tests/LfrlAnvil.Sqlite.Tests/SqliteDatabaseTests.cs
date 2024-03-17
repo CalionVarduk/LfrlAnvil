@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Data;
+using System.Data.Common;
 using System.Threading.Tasks;
 using LfrlAnvil.Functional;
 using LfrlAnvil.Sql;
@@ -16,7 +17,7 @@ public class SqliteDatabaseTests : TestsBase
     public void Properties_ShouldBeCorrectlyCopiedFromBuilder()
     {
         var dbBuilder = SqliteDatabaseBuilderMock.Create();
-        var sut = new SqliteDatabaseMock( dbBuilder );
+        var sut = SqliteDatabaseMock.Create( dbBuilder );
 
         using ( new AssertionScope() )
         {
@@ -32,6 +33,9 @@ public class SqliteDatabaseTests : TestsBase
             sut.Schemas.Count.Should().Be( 1 );
             sut.Schemas.Default.Name.Should().BeEmpty();
             sut.Schemas.Should().BeSequentiallyEqualTo( sut.Schemas.Default );
+            sut.Connector.Database.Should().BeSameAs( sut );
+            ((ISqlDatabaseConnector<DbConnection>)sut.Connector).Database.Should().BeSameAs( sut );
+            ((ISqlDatabaseConnector)sut.Connector).Database.Should().BeSameAs( sut );
         }
     }
 
@@ -43,7 +47,7 @@ public class SqliteDatabaseTests : TestsBase
     {
         var dbBuilder = SqliteDatabaseBuilderMock.Create();
         dbBuilder.Schemas.Create( "foo" );
-        var db = new SqliteDatabaseMock( dbBuilder );
+        var db = SqliteDatabaseMock.Create( dbBuilder );
         var sut = db.Schemas;
 
         var result = sut.Contains( name );
@@ -56,7 +60,7 @@ public class SqliteDatabaseTests : TestsBase
     {
         var dbBuilder = SqliteDatabaseBuilderMock.Create();
         dbBuilder.Schemas.Default.SetName( "foo" );
-        var db = new SqliteDatabaseMock( dbBuilder );
+        var db = SqliteDatabaseMock.Create( dbBuilder );
         var sut = db.Schemas;
 
         var result = sut.Get( "foo" );
@@ -69,7 +73,7 @@ public class SqliteDatabaseTests : TestsBase
     {
         var dbBuilder = SqliteDatabaseBuilderMock.Create();
         dbBuilder.Schemas.Default.SetName( "foo" );
-        var db = new SqliteDatabaseMock( dbBuilder );
+        var db = SqliteDatabaseMock.Create( dbBuilder );
         var sut = db.Schemas;
 
         var action = Lambda.Of( () => sut.Get( "bar" ) );
@@ -82,7 +86,7 @@ public class SqliteDatabaseTests : TestsBase
     {
         var dbBuilder = SqliteDatabaseBuilderMock.Create();
         dbBuilder.Schemas.Default.SetName( "foo" );
-        var db = new SqliteDatabaseMock( dbBuilder );
+        var db = SqliteDatabaseMock.Create( dbBuilder );
         var sut = db.Schemas;
 
         var result = sut.TryGet( "foo" );
@@ -95,7 +99,7 @@ public class SqliteDatabaseTests : TestsBase
     {
         var dbBuilder = SqliteDatabaseBuilderMock.Create();
         dbBuilder.Schemas.Default.SetName( "foo" );
-        var db = new SqliteDatabaseMock( dbBuilder );
+        var db = SqliteDatabaseMock.Create( dbBuilder );
         var sut = db.Schemas;
 
         var result = sut.TryGet( "bar" );
@@ -108,7 +112,7 @@ public class SqliteDatabaseTests : TestsBase
     {
         var dbBuilder = SqliteDatabaseBuilderMock.Create();
         dbBuilder.Schemas.Create( "foo" );
-        var sut = new SqliteDatabaseMock( dbBuilder ).Schemas;
+        var sut = SqliteDatabaseMock.Create( dbBuilder ).Schemas;
         var schema = sut.Get( "foo" );
 
         var result = new List<SqliteSchema>();
@@ -123,25 +127,25 @@ public class SqliteDatabaseTests : TestsBase
     }
 
     [Fact]
-    public void Connect_ForInMemoryDatabase_ShouldAlwaysReturnTheSameObject()
+    public void Connector_Connect_ForInMemoryDatabase_ShouldAlwaysReturnTheSameObject()
     {
         var factory = new SqliteDatabaseFactory();
         ISqlDatabase sut = factory.Create( "DataSource=:memory:", new SqlDatabaseVersionHistory() ).Database;
 
-        var first = sut.Connect();
-        var second = sut.Connect();
+        var first = sut.Connector.Connect();
+        var second = sut.Connector.Connect();
 
         first.Should().BeSameAs( second );
     }
 
     [Fact]
-    public async Task ConnectAsync_ForInMemoryDatabase_ShouldAlwaysReturnTheSameObject()
+    public async Task Connector_ConnectAsync_ForInMemoryDatabase_ShouldAlwaysReturnTheSameObject()
     {
         var factory = new SqliteDatabaseFactory();
         ISqlDatabase sut = factory.Create( "DataSource=:memory:", new SqlDatabaseVersionHistory() ).Database;
 
-        var first = await sut.ConnectAsync();
-        var second = await sut.ConnectAsync();
+        var first = await sut.Connector.ConnectAsync();
+        var second = await ((ISqlDatabaseConnector<DbConnection>)sut.Connector).ConnectAsync();
 
         first.Should().BeSameAs( second );
     }
@@ -151,7 +155,7 @@ public class SqliteDatabaseTests : TestsBase
     {
         var factory = new SqliteDatabaseFactory();
         var sut = factory.Create( "DataSource=:memory:", new SqlDatabaseVersionHistory() ).Database;
-        var connection = sut.Connect();
+        var connection = sut.Connector.Connect();
 
         sut.Dispose();
 
@@ -163,7 +167,7 @@ public class SqliteDatabaseTests : TestsBase
     {
         var factory = new SqliteDatabaseFactory();
         var sut = factory.Create( "DataSource=:memory:", new SqlDatabaseVersionHistory() ).Database;
-        var connection = sut.Connect();
+        var connection = sut.Connector.Connect();
         sut.Dispose();
 
         var action = Lambda.Of( () => connection.Open() );
@@ -176,7 +180,7 @@ public class SqliteDatabaseTests : TestsBase
     {
         var factory = new SqliteDatabaseFactory();
         var sut = factory.Create( "DataSource=:memory:", new SqlDatabaseVersionHistory() ).Database;
-        var connection = sut.Connect();
+        var connection = sut.Connector.Connect();
 
         var action = Lambda.Of( () => connection.ConnectionString = connection.ConnectionString );
 

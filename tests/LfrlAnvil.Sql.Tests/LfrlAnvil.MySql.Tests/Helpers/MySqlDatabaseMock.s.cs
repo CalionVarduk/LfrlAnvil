@@ -1,6 +1,6 @@
 ﻿using System.Diagnostics.Contracts;
 using LfrlAnvil.MySql.Objects.Builders;
-using LfrlAnvil.Sql;
+using LfrlAnvil.Sql.Internal;
 using LfrlAnvil.Sql.Objects.Builders;
 using LfrlAnvil.Sql.Statements;
 using LfrlAnvil.Sql.Versioning;
@@ -14,10 +14,11 @@ public static class MySqlDatabaseMock
     public static MySqlDatabase Create(MySqlDatabaseBuilder builder)
     {
         return new MySqlDatabase(
-            new MySqlConnectionStringBuilder(),
             builder,
+            new MySqlDatabaseConnector(
+                new MySqlConnectionStringBuilder(),
+                new DbConnectionEventHandler( ReadOnlyArray<Action<SqlDatabaseConnectionChangeEvent>>.Empty ) ),
             new Version(),
-            new SqlQueryReader<SqlDatabaseVersionRecord>( new SqlDialect( "foo" ), (_, _) => default ).Bind( string.Empty ),
-            ReadOnlyArray<Action<SqlDatabaseConnectionChangeEvent>>.Empty );
+            new SqlQueryReader<SqlDatabaseVersionRecord>( MySqlDialect.Instance, (_, _) => default ).Bind( string.Empty ) );
     }
 }

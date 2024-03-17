@@ -1,30 +1,29 @@
 ﻿using System;
 using System.Data.Common;
-using System.Diagnostics.Contracts;
-using System.Threading;
-using System.Threading.Tasks;
+using LfrlAnvil.Sql;
 using LfrlAnvil.Sql.Objects;
 using LfrlAnvil.Sql.Statements;
 using LfrlAnvil.Sql.Versioning;
+using LfrlAnvil.Sqlite.Internal;
 using LfrlAnvil.Sqlite.Objects;
 using LfrlAnvil.Sqlite.Objects.Builders;
 using Microsoft.Data.Sqlite;
 
 namespace LfrlAnvil.Sqlite;
 
-public abstract class SqliteDatabase : SqlDatabase
+public sealed class SqliteDatabase : SqlDatabase
 {
-    protected readonly SqliteConnectionStringBuilder ConnectionStringBuilder;
-
     internal SqliteDatabase(
-        SqliteConnectionStringBuilder connectionStringBuilder,
         SqliteDatabaseBuilder builder,
+        ISqlDatabaseConnector<SqliteConnection> connector,
         Version version,
         SqlQueryReaderExecutor<SqlDatabaseVersionRecord> versionRecordsQuery)
-        : base( builder, new SqliteSchemaCollection( builder.Schemas ), version, versionRecordsQuery )
-    {
-        ConnectionStringBuilder = connectionStringBuilder;
-    }
+        : base(
+            builder,
+            new SqliteSchemaCollection( builder.Schemas ),
+            ReinterpretCast.To<ISqlDatabaseConnector<DbConnection>>( connector ),
+            version,
+            versionRecordsQuery ) { }
 
     public new SqliteSchemaCollection Schemas => ReinterpretCast.To<SqliteSchemaCollection>( base.Schemas );
     public new SqliteDataTypeProvider DataTypes => ReinterpretCast.To<SqliteDataTypeProvider>( base.DataTypes );
@@ -36,30 +35,13 @@ public abstract class SqliteDatabase : SqlDatabase
     public new SqliteQueryReaderFactory QueryReaders => ReinterpretCast.To<SqliteQueryReaderFactory>( base.QueryReaders );
     public new SqliteParameterBinderFactory ParameterBinders => ReinterpretCast.To<SqliteParameterBinderFactory>( base.ParameterBinders );
 
-    [Pure]
-    public sealed override SqliteConnection Connect()
+    public new ISqlDatabaseConnector<SqliteConnection> Connector =>
+        ReinterpretCast.To<ISqlDatabaseConnector<SqliteConnection>>( base.Connector );
+
+    public override void Dispose()
     {
-        var connection = CreateConnection();
-        connection.Open();
-        return connection;
+        base.Dispose();
+        if ( Connector is SqliteDatabasePermanentConnector permanentConnector )
+            permanentConnector.CloseConnection();
     }
-
-    [Pure]
-    public async ValueTask<SqliteConnection> ConnectSqliteAsync(CancellationToken cancellationToken = default)
-    {
-        var connection = CreateConnection();
-        await connection.OpenAsync( cancellationToken ).ConfigureAwait( false );
-        return connection;
-    }
-
-    [Pure]
-    public sealed override async ValueTask<DbConnection> ConnectAsync(CancellationToken cancellationToken = default)
-    {
-        return await ConnectSqliteAsync( cancellationToken ).ConfigureAwait( false );
-    }
-
-    public virtual void Dispose() { }
-
-    [Pure]
-    protected abstract SqliteConnection CreateConnection();
 }

@@ -21,7 +21,7 @@ public class SqliteViewTests : TestsBase
                 .ToDataSource()
                 .Select( s => new[] { s.From["a"].AsSelf(), s.From["b"].As( "x" ), s.From["c"].AsSelf() } ) );
 
-        var db = new SqliteDatabaseMock( schemaBuilder.Database );
+        var db = SqliteDatabaseMock.Create( schemaBuilder.Database );
         var schema = db.Schemas.Get( "foo" );
 
         var sut = schema.Objects.GetView( "V" );
@@ -60,7 +60,7 @@ public class SqliteViewTests : TestsBase
             "V",
             SqlNode.RawRecordSet( "foo" ).ToDataSource().Select( s => new[] { s.From["F1"].AsSelf(), s.From["F2"].AsSelf() } ) );
 
-        var db = new SqliteDatabaseMock( schemaBuilder.Database );
+        var db = SqliteDatabaseMock.Create( schemaBuilder.Database );
         var sut = db.Schemas.Default.Objects.GetView( "V" ).DataFields;
 
         var result = sut.Contains( name );
@@ -76,7 +76,7 @@ public class SqliteViewTests : TestsBase
             "V",
             SqlNode.RawRecordSet( "foo" ).ToDataSource().Select( s => new[] { s.From["F1"].AsSelf(), s.From["F2"].AsSelf() } ) );
 
-        var db = new SqliteDatabaseMock( schemaBuilder.Database );
+        var db = SqliteDatabaseMock.Create( schemaBuilder.Database );
         var sut = db.Schemas.Default.Objects.GetView( "V" ).DataFields;
 
         var result = sut.Get( "F2" );
@@ -92,7 +92,7 @@ public class SqliteViewTests : TestsBase
             "V",
             SqlNode.RawRecordSet( "foo" ).ToDataSource().Select( s => new[] { s.From["F1"].AsSelf() } ) );
 
-        var db = new SqliteDatabaseMock( schemaBuilder.Database );
+        var db = SqliteDatabaseMock.Create( schemaBuilder.Database );
         var sut = db.Schemas.Default.Objects.GetView( "V" ).DataFields;
 
         var action = Lambda.Of( () => sut.Get( "F2" ) );
@@ -108,7 +108,7 @@ public class SqliteViewTests : TestsBase
             "V",
             SqlNode.RawRecordSet( "foo" ).ToDataSource().Select( s => new[] { s.From["F1"].AsSelf(), s.From["F2"].AsSelf() } ) );
 
-        var db = new SqliteDatabaseMock( schemaBuilder.Database );
+        var db = SqliteDatabaseMock.Create( schemaBuilder.Database );
         var sut = db.Schemas.Default.Objects.GetView( "V" ).DataFields;
 
         var result = sut.TryGet( "F2" );
@@ -124,7 +124,7 @@ public class SqliteViewTests : TestsBase
             "V",
             SqlNode.RawRecordSet( "foo" ).ToDataSource().Select( s => new[] { s.From["F1"].AsSelf() } ) );
 
-        var db = new SqliteDatabaseMock( schemaBuilder.Database );
+        var db = SqliteDatabaseMock.Create( schemaBuilder.Database );
         var sut = db.Schemas.Default.Objects.GetView( "V" ).DataFields;
 
         var result = sut.TryGet( "F2" );
@@ -140,7 +140,7 @@ public class SqliteViewTests : TestsBase
             "V",
             SqlNode.RawRecordSet( "foo" ).ToDataSource().Select( s => new[] { s.From["F1"].AsSelf(), s.From["F2"].As( "C2" ) } ) );
 
-        var db = new SqliteDatabaseMock( schemaBuilder.Database );
+        var db = SqliteDatabaseMock.Create( schemaBuilder.Database );
         var sut = db.Schemas.Default.Objects.GetView( "V" ).DataFields;
 
         var result = new List<SqliteViewDataField>();

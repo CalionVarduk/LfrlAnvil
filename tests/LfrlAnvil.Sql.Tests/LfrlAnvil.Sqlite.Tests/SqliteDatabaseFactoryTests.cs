@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Data;
+using System.Data.Common;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -37,7 +38,10 @@ public class SqliteDatabaseFactoryTests : TestsBase
             result.OldVersion.Should().Be( SqlDatabaseVersionHistory.InitialVersion );
             result.NewVersion.Should().Be( SqlDatabaseVersionHistory.InitialVersion );
             result.Database.Version.Should().Be( result.NewVersion );
-            result.Database.ServerVersion.Should().Be( db.Connect().ServerVersion );
+            result.Database.ServerVersion.Should().Be( db.Connector.Connect().ServerVersion );
+            result.Database.Connector.Database.Should().BeSameAs( result.Database );
+            ((ISqlDatabaseConnector<DbConnection>)result.Database.Connector).Database.Should().BeSameAs( result.Database );
+            ((ISqlDatabaseConnector)result.Database.Connector).Database.Should().BeSameAs( result.Database );
             versions.Should().BeEmpty();
         }
     }
@@ -273,7 +277,7 @@ public class SqliteDatabaseFactoryTests : TestsBase
         var sut = new SqliteDatabaseFactory();
         var db = sut.Create( "DataSource=:memory:", new SqlDatabaseVersionHistory() ).Database;
 
-        using var connection = db.Connect();
+        using var connection = db.Connector.Connect();
         using var command = connection.CreateCommand();
         command.CommandText = "SELECT GET_CURRENT_DATE()";
 
@@ -296,7 +300,7 @@ public class SqliteDatabaseFactoryTests : TestsBase
         var sut = new SqliteDatabaseFactory();
         var db = sut.Create( "DataSource=:memory:", new SqlDatabaseVersionHistory() ).Database;
 
-        using var connection = db.Connect();
+        using var connection = db.Connector.Connect();
         using var command = connection.CreateCommand();
         command.CommandText = "SELECT GET_CURRENT_TIME()";
 
@@ -319,7 +323,7 @@ public class SqliteDatabaseFactoryTests : TestsBase
         var sut = new SqliteDatabaseFactory();
         var db = sut.Create( "DataSource=:memory:", new SqlDatabaseVersionHistory() ).Database;
 
-        using var connection = db.Connect();
+        using var connection = db.Connector.Connect();
         using var command = connection.CreateCommand();
         command.CommandText = "SELECT GET_CURRENT_DATETIME()";
 
@@ -342,7 +346,7 @@ public class SqliteDatabaseFactoryTests : TestsBase
         var sut = new SqliteDatabaseFactory();
         var db = sut.Create( "DataSource=:memory:", new SqlDatabaseVersionHistory() ).Database;
 
-        using var connection = db.Connect();
+        using var connection = db.Connector.Connect();
         using var command = connection.CreateCommand();
         command.CommandText = "SELECT GET_CURRENT_TIMESTAMP()";
 
@@ -365,7 +369,7 @@ public class SqliteDatabaseFactoryTests : TestsBase
         var sut = new SqliteDatabaseFactory();
         var db = sut.Create( "DataSource=:memory:", new SqlDatabaseVersionHistory() ).Database;
 
-        using var connection = db.Connect();
+        using var connection = db.Connector.Connect();
         using var command = connection.CreateCommand();
         command.CommandText = "SELECT NEW_GUID()";
 
@@ -384,7 +388,7 @@ public class SqliteDatabaseFactoryTests : TestsBase
         var sut = new SqliteDatabaseFactory();
         var db = sut.Create( "DataSource=:memory:", new SqlDatabaseVersionHistory() ).Database;
 
-        using var connection = db.Connect();
+        using var connection = db.Connector.Connect();
         using var command = connection.CreateCommand();
         command.CommandText = "SELECT TO_LOWER('FooBarQUX')";
 
@@ -401,7 +405,7 @@ public class SqliteDatabaseFactoryTests : TestsBase
         var sut = new SqliteDatabaseFactory();
         var db = sut.Create( "DataSource=:memory:", new SqlDatabaseVersionHistory() ).Database;
 
-        using var connection = db.Connect();
+        using var connection = db.Connector.Connect();
         using var command = connection.CreateCommand();
         command.CommandText = "SELECT TO_LOWER(NULL)";
 
@@ -418,7 +422,7 @@ public class SqliteDatabaseFactoryTests : TestsBase
         var sut = new SqliteDatabaseFactory();
         var db = sut.Create( "DataSource=:memory:", new SqlDatabaseVersionHistory() ).Database;
 
-        using var connection = db.Connect();
+        using var connection = db.Connector.Connect();
         using var command = connection.CreateCommand();
         command.CommandText = "SELECT TO_UPPER('fOObARqux')";
 
@@ -435,7 +439,7 @@ public class SqliteDatabaseFactoryTests : TestsBase
         var sut = new SqliteDatabaseFactory();
         var db = sut.Create( "DataSource=:memory:", new SqlDatabaseVersionHistory() ).Database;
 
-        using var connection = db.Connect();
+        using var connection = db.Connector.Connect();
         using var command = connection.CreateCommand();
         command.CommandText = "SELECT TO_UPPER(NULL)";
 
@@ -452,7 +456,7 @@ public class SqliteDatabaseFactoryTests : TestsBase
         var sut = new SqliteDatabaseFactory();
         var db = sut.Create( "DataSource=:memory:", new SqlDatabaseVersionHistory() ).Database;
 
-        using var connection = db.Connect();
+        using var connection = db.Connector.Connect();
         using var command = connection.CreateCommand();
         command.CommandText = "SELECT INSTR_LAST('foo.bar.qux', '.')";
 
@@ -469,7 +473,7 @@ public class SqliteDatabaseFactoryTests : TestsBase
         var sut = new SqliteDatabaseFactory();
         var db = sut.Create( "DataSource=:memory:", new SqlDatabaseVersionHistory() ).Database;
 
-        using var connection = db.Connect();
+        using var connection = db.Connector.Connect();
         using var command = connection.CreateCommand();
         command.CommandText = "SELECT INSTR_LAST(NULL, '.')";
 
@@ -486,7 +490,7 @@ public class SqliteDatabaseFactoryTests : TestsBase
         var sut = new SqliteDatabaseFactory();
         var db = sut.Create( "DataSource=:memory:", new SqlDatabaseVersionHistory() ).Database;
 
-        using var connection = db.Connect();
+        using var connection = db.Connector.Connect();
         using var command = connection.CreateCommand();
         command.CommandText = "SELECT INSTR_LAST('foo', NULL)";
 
@@ -503,7 +507,7 @@ public class SqliteDatabaseFactoryTests : TestsBase
         var sut = new SqliteDatabaseFactory();
         var db = sut.Create( "DataSource=:memory:", new SqlDatabaseVersionHistory() ).Database;
 
-        using var connection = db.Connect();
+        using var connection = db.Connector.Connect();
         using var command = connection.CreateCommand();
         command.CommandText = "SELECT REVERSE('foo.bar.qux')";
 
@@ -520,7 +524,7 @@ public class SqliteDatabaseFactoryTests : TestsBase
         var sut = new SqliteDatabaseFactory();
         var db = sut.Create( "DataSource=:memory:", new SqlDatabaseVersionHistory() ).Database;
 
-        using var connection = db.Connect();
+        using var connection = db.Connector.Connect();
         using var command = connection.CreateCommand();
         command.CommandText = "SELECT REVERSE(NULL)";
 
@@ -537,7 +541,7 @@ public class SqliteDatabaseFactoryTests : TestsBase
         var sut = new SqliteDatabaseFactory();
         var db = sut.Create( "DataSource=:memory:", new SqlDatabaseVersionHistory() ).Database;
 
-        using var connection = db.Connect();
+        using var connection = db.Connector.Connect();
         using var command = connection.CreateCommand();
         command.CommandText = "SELECT TRUNC2(10.5678, 2)";
 
@@ -554,7 +558,7 @@ public class SqliteDatabaseFactoryTests : TestsBase
         var sut = new SqliteDatabaseFactory();
         var db = sut.Create( "DataSource=:memory:", new SqlDatabaseVersionHistory() ).Database;
 
-        using var connection = db.Connect();
+        using var connection = db.Connector.Connect();
         using var command = connection.CreateCommand();
         command.CommandText = "SELECT TRUNC2(NULL, 2)";
 
@@ -571,7 +575,7 @@ public class SqliteDatabaseFactoryTests : TestsBase
         var sut = new SqliteDatabaseFactory();
         var db = sut.Create( "DataSource=:memory:", new SqlDatabaseVersionHistory() ).Database;
 
-        using var connection = db.Connect();
+        using var connection = db.Connector.Connect();
         using var command = connection.CreateCommand();
         command.CommandText = "SELECT TRUNC2(10.5678, NULL)";
 
@@ -591,7 +595,7 @@ public class SqliteDatabaseFactoryTests : TestsBase
         var sut = new SqliteDatabaseFactory();
         var db = sut.Create( "DataSource=:memory:", new SqlDatabaseVersionHistory() ).Database;
 
-        using var connection = db.Connect();
+        using var connection = db.Connector.Connect();
         using var command = connection.CreateCommand();
         command.CommandText = $"SELECT TIME_OF_DAY('{parameter}')";
 
@@ -608,7 +612,7 @@ public class SqliteDatabaseFactoryTests : TestsBase
         var sut = new SqliteDatabaseFactory();
         var db = sut.Create( "DataSource=:memory:", new SqlDatabaseVersionHistory() ).Database;
 
-        using var connection = db.Connect();
+        using var connection = db.Connector.Connect();
         using var command = connection.CreateCommand();
         command.CommandText = "SELECT TIME_OF_DAY(NULL)";
 
@@ -637,7 +641,7 @@ public class SqliteDatabaseFactoryTests : TestsBase
         var sut = new SqliteDatabaseFactory();
         var db = sut.Create( "DataSource=:memory:", new SqlDatabaseVersionHistory() ).Database;
 
-        using var connection = db.Connect();
+        using var connection = db.Connector.Connect();
         using var command = connection.CreateCommand();
         command.CommandText = $"SELECT EXTRACT_TEMPORAL({unit}, '2024-03-15 12:34:56.7890123')";
 
@@ -666,7 +670,7 @@ public class SqliteDatabaseFactoryTests : TestsBase
         var sut = new SqliteDatabaseFactory();
         var db = sut.Create( "DataSource=:memory:", new SqlDatabaseVersionHistory() ).Database;
 
-        using var connection = db.Connect();
+        using var connection = db.Connector.Connect();
         using var command = connection.CreateCommand();
         command.CommandText = $"SELECT EXTRACT_TEMPORAL({unit}, '2024-03-15')";
 
@@ -695,7 +699,7 @@ public class SqliteDatabaseFactoryTests : TestsBase
         var sut = new SqliteDatabaseFactory();
         var db = sut.Create( "DataSource=:memory:", new SqlDatabaseVersionHistory() ).Database;
 
-        using var connection = db.Connect();
+        using var connection = db.Connector.Connect();
         using var command = connection.CreateCommand();
         command.CommandText = $"SELECT EXTRACT_TEMPORAL({unit}, '12:34:56.7890123')";
 
@@ -712,7 +716,7 @@ public class SqliteDatabaseFactoryTests : TestsBase
         var sut = new SqliteDatabaseFactory();
         var db = sut.Create( "DataSource=:memory:", new SqlDatabaseVersionHistory() ).Database;
 
-        using var connection = db.Connect();
+        using var connection = db.Connector.Connect();
         using var command = connection.CreateCommand();
         command.CommandText = "SELECT EXTRACT_TEMPORAL(NULL, '2024-03-15')";
 
@@ -731,7 +735,7 @@ public class SqliteDatabaseFactoryTests : TestsBase
         var sut = new SqliteDatabaseFactory();
         var db = sut.Create( "DataSource=:memory:", new SqlDatabaseVersionHistory() ).Database;
 
-        using var connection = db.Connect();
+        using var connection = db.Connector.Connect();
         using var command = connection.CreateCommand();
         command.CommandText = $"SELECT EXTRACT_TEMPORAL({unit}, '2024-03-15')";
 
@@ -760,7 +764,7 @@ public class SqliteDatabaseFactoryTests : TestsBase
         var sut = new SqliteDatabaseFactory();
         var db = sut.Create( "DataSource=:memory:", new SqlDatabaseVersionHistory() ).Database;
 
-        using var connection = db.Connect();
+        using var connection = db.Connector.Connect();
         using var command = connection.CreateCommand();
         command.CommandText = $"SELECT EXTRACT_TEMPORAL({unit}, NULL)";
 
@@ -787,7 +791,7 @@ public class SqliteDatabaseFactoryTests : TestsBase
         var sut = new SqliteDatabaseFactory();
         var db = sut.Create( "DataSource=:memory:", new SqlDatabaseVersionHistory() ).Database;
 
-        using var connection = db.Connect();
+        using var connection = db.Connector.Connect();
         using var command = connection.CreateCommand();
         command.CommandText = $"SELECT TEMPORAL_ADD({unit}, 250, '2024-03-15 12:34:56.7890123')";
 
@@ -814,7 +818,7 @@ public class SqliteDatabaseFactoryTests : TestsBase
         var sut = new SqliteDatabaseFactory();
         var db = sut.Create( "DataSource=:memory:", new SqlDatabaseVersionHistory() ).Database;
 
-        using var connection = db.Connect();
+        using var connection = db.Connector.Connect();
         using var command = connection.CreateCommand();
         command.CommandText = $"SELECT TEMPORAL_ADD({unit}, 250, '2024-03-15')";
 
@@ -841,7 +845,7 @@ public class SqliteDatabaseFactoryTests : TestsBase
         var sut = new SqliteDatabaseFactory();
         var db = sut.Create( "DataSource=:memory:", new SqlDatabaseVersionHistory() ).Database;
 
-        using var connection = db.Connect();
+        using var connection = db.Connector.Connect();
         using var command = connection.CreateCommand();
         command.CommandText = $"SELECT TEMPORAL_ADD({unit}, 250, '12:34:56.7890123')";
 
@@ -858,7 +862,7 @@ public class SqliteDatabaseFactoryTests : TestsBase
         var sut = new SqliteDatabaseFactory();
         var db = sut.Create( "DataSource=:memory:", new SqlDatabaseVersionHistory() ).Database;
 
-        using var connection = db.Connect();
+        using var connection = db.Connector.Connect();
         using var command = connection.CreateCommand();
         command.CommandText = "SELECT TEMPORAL_ADD(NULL, 1, '2024-03-15')";
 
@@ -879,7 +883,7 @@ public class SqliteDatabaseFactoryTests : TestsBase
         var sut = new SqliteDatabaseFactory();
         var db = sut.Create( "DataSource=:memory:", new SqlDatabaseVersionHistory() ).Database;
 
-        using var connection = db.Connect();
+        using var connection = db.Connector.Connect();
         using var command = connection.CreateCommand();
         command.CommandText = $"SELECT TEMPORAL_ADD({unit}, 1, '2024-03-15')";
 
@@ -906,7 +910,7 @@ public class SqliteDatabaseFactoryTests : TestsBase
         var sut = new SqliteDatabaseFactory();
         var db = sut.Create( "DataSource=:memory:", new SqlDatabaseVersionHistory() ).Database;
 
-        using var connection = db.Connect();
+        using var connection = db.Connector.Connect();
         using var command = connection.CreateCommand();
         command.CommandText = $"SELECT TEMPORAL_ADD({unit}, NULL, '2024-03-15')";
 
@@ -933,7 +937,7 @@ public class SqliteDatabaseFactoryTests : TestsBase
         var sut = new SqliteDatabaseFactory();
         var db = sut.Create( "DataSource=:memory:", new SqlDatabaseVersionHistory() ).Database;
 
-        using var connection = db.Connect();
+        using var connection = db.Connector.Connect();
         using var command = connection.CreateCommand();
         command.CommandText = $"SELECT TEMPORAL_ADD({unit}, 1, NULL)";
 
@@ -959,7 +963,7 @@ public class SqliteDatabaseFactoryTests : TestsBase
         var sut = new SqliteDatabaseFactory();
         var db = sut.Create( "DataSource=:memory:", new SqlDatabaseVersionHistory() ).Database;
 
-        using var connection = db.Connect();
+        using var connection = db.Connector.Connect();
         using var command = connection.CreateCommand();
         command.CommandText = $"SELECT TEMPORAL_DIFF({unit}, '21:09:57.6843210', '12:34:56.7890123')";
 
@@ -984,7 +988,7 @@ public class SqliteDatabaseFactoryTests : TestsBase
         var sut = new SqliteDatabaseFactory();
         var db = sut.Create( "DataSource=:memory:", new SqlDatabaseVersionHistory() ).Database;
 
-        using var connection = db.Connect();
+        using var connection = db.Connector.Connect();
         using var command = connection.CreateCommand();
         command.CommandText = $"SELECT TEMPORAL_DIFF({unit}, '12:34:56.7890123', '21:09:57.6843210')";
 
@@ -1008,7 +1012,7 @@ public class SqliteDatabaseFactoryTests : TestsBase
         var sut = new SqliteDatabaseFactory();
         var db = sut.Create( "DataSource=:memory:", new SqlDatabaseVersionHistory() ).Database;
 
-        using var connection = db.Connect();
+        using var connection = db.Connector.Connect();
         using var command = connection.CreateCommand();
         command.CommandText = $"SELECT TEMPORAL_DIFF({unit}, '12:34:56.7890123', '12:34:56.7890123')";
 
@@ -1038,7 +1042,7 @@ public class SqliteDatabaseFactoryTests : TestsBase
         var sut = new SqliteDatabaseFactory();
         var db = sut.Create( "DataSource=:memory:", new SqlDatabaseVersionHistory() ).Database;
 
-        using var connection = db.Connect();
+        using var connection = db.Connector.Connect();
         using var command = connection.CreateCommand();
         command.CommandText = $"SELECT TEMPORAL_DIFF({unit}, '2024-03-15 21:09:57.6843210', '2021-08-26 12:34:56.7890123')";
 
@@ -1067,7 +1071,7 @@ public class SqliteDatabaseFactoryTests : TestsBase
         var sut = new SqliteDatabaseFactory();
         var db = sut.Create( "DataSource=:memory:", new SqlDatabaseVersionHistory() ).Database;
 
-        using var connection = db.Connect();
+        using var connection = db.Connector.Connect();
         using var command = connection.CreateCommand();
         command.CommandText = $"SELECT TEMPORAL_DIFF({unit}, '2021-08-26 12:34:56.7890123', '2024-03-15 21:09:57.6843210')";
 
@@ -1095,7 +1099,7 @@ public class SqliteDatabaseFactoryTests : TestsBase
         var sut = new SqliteDatabaseFactory();
         var db = sut.Create( "DataSource=:memory:", new SqlDatabaseVersionHistory() ).Database;
 
-        using var connection = db.Connect();
+        using var connection = db.Connector.Connect();
         using var command = connection.CreateCommand();
         command.CommandText = $"SELECT TEMPORAL_DIFF({unit}, '2024-03-15 12:34:56.7890123', '2024-03-15 12:34:56.7890123')";
 
@@ -1113,7 +1117,7 @@ public class SqliteDatabaseFactoryTests : TestsBase
         var sut = new SqliteDatabaseFactory();
         var db = sut.Create( "DataSource=:memory:", new SqlDatabaseVersionHistory() ).Database;
 
-        using var connection = db.Connect();
+        using var connection = db.Connector.Connect();
         using var command = connection.CreateCommand();
         command.CommandText =
             $"SELECT TEMPORAL_DIFF({SqliteHelpers.TemporalMonthUnit}, '2024-02-29 21:00:00.0000000', '2024-03-30 20:00:00.0000000')";
@@ -1131,7 +1135,7 @@ public class SqliteDatabaseFactoryTests : TestsBase
         var sut = new SqliteDatabaseFactory();
         var db = sut.Create( "DataSource=:memory:", new SqlDatabaseVersionHistory() ).Database;
 
-        using var connection = db.Connect();
+        using var connection = db.Connector.Connect();
         using var command = connection.CreateCommand();
         command.CommandText = "SELECT TEMPORAL_DIFF(NULL, '2024-03-14', '2024-03-15')";
 
@@ -1154,7 +1158,7 @@ public class SqliteDatabaseFactoryTests : TestsBase
         var sut = new SqliteDatabaseFactory();
         var db = sut.Create( "DataSource=:memory:", new SqlDatabaseVersionHistory() ).Database;
 
-        using var connection = db.Connect();
+        using var connection = db.Connector.Connect();
         using var command = connection.CreateCommand();
         command.CommandText = $"SELECT TEMPORAL_DIFF({unit}, '12:34:56.7890123', '2024-03-15')";
 
@@ -1177,7 +1181,7 @@ public class SqliteDatabaseFactoryTests : TestsBase
         var sut = new SqliteDatabaseFactory();
         var db = sut.Create( "DataSource=:memory:", new SqlDatabaseVersionHistory() ).Database;
 
-        using var connection = db.Connect();
+        using var connection = db.Connector.Connect();
         using var command = connection.CreateCommand();
         command.CommandText = $"SELECT TEMPORAL_DIFF({unit}, '2024-03-15', '12:34:56.7890123')";
 
@@ -1202,7 +1206,7 @@ public class SqliteDatabaseFactoryTests : TestsBase
         var sut = new SqliteDatabaseFactory();
         var db = sut.Create( "DataSource=:memory:", new SqlDatabaseVersionHistory() ).Database;
 
-        using var connection = db.Connect();
+        using var connection = db.Connector.Connect();
         using var command = connection.CreateCommand();
         command.CommandText = $"SELECT TEMPORAL_DIFF({unit}, '12:34:56.7890123', '2024-03-15')";
 
@@ -1227,7 +1231,7 @@ public class SqliteDatabaseFactoryTests : TestsBase
         var sut = new SqliteDatabaseFactory();
         var db = sut.Create( "DataSource=:memory:", new SqlDatabaseVersionHistory() ).Database;
 
-        using var connection = db.Connect();
+        using var connection = db.Connector.Connect();
         using var command = connection.CreateCommand();
         command.CommandText = $"SELECT TEMPORAL_DIFF({unit}, '2024-03-15', '12:34:56.7890123')";
 
@@ -1248,7 +1252,7 @@ public class SqliteDatabaseFactoryTests : TestsBase
         var sut = new SqliteDatabaseFactory();
         var db = sut.Create( "DataSource=:memory:", new SqlDatabaseVersionHistory() ).Database;
 
-        using var connection = db.Connect();
+        using var connection = db.Connector.Connect();
         using var command = connection.CreateCommand();
         command.CommandText = $"SELECT TEMPORAL_DIFF({unit}, '2024-03-14', '2024-03-15')";
 
@@ -1276,7 +1280,7 @@ public class SqliteDatabaseFactoryTests : TestsBase
         var sut = new SqliteDatabaseFactory();
         var db = sut.Create( "DataSource=:memory:", new SqlDatabaseVersionHistory() ).Database;
 
-        using var connection = db.Connect();
+        using var connection = db.Connector.Connect();
         using var command = connection.CreateCommand();
         command.CommandText = $"SELECT TEMPORAL_DIFF({unit}, NULL, '2024-03-15')";
 
@@ -1304,7 +1308,7 @@ public class SqliteDatabaseFactoryTests : TestsBase
         var sut = new SqliteDatabaseFactory();
         var db = sut.Create( "DataSource=:memory:", new SqlDatabaseVersionHistory() ).Database;
 
-        using var connection = db.Connect();
+        using var connection = db.Connector.Connect();
         using var command = connection.CreateCommand();
         command.CommandText = $"SELECT TEMPORAL_DIFF({unit}, NULL, '12:34:56.7890123')";
 
@@ -1332,7 +1336,7 @@ public class SqliteDatabaseFactoryTests : TestsBase
         var sut = new SqliteDatabaseFactory();
         var db = sut.Create( "DataSource=:memory:", new SqlDatabaseVersionHistory() ).Database;
 
-        using var connection = db.Connect();
+        using var connection = db.Connector.Connect();
         using var command = connection.CreateCommand();
         command.CommandText = $"SELECT TEMPORAL_DIFF({unit}, '2024-03-15', NULL)";
 
@@ -1360,7 +1364,7 @@ public class SqliteDatabaseFactoryTests : TestsBase
         var sut = new SqliteDatabaseFactory();
         var db = sut.Create( "DataSource=:memory:", new SqlDatabaseVersionHistory() ).Database;
 
-        using var connection = db.Connect();
+        using var connection = db.Connector.Connect();
         using var command = connection.CreateCommand();
         command.CommandText = $"SELECT TEMPORAL_DIFF({unit}, '12:34:56.7890123', NULL)";
 
@@ -1426,6 +1430,10 @@ public class SqliteDatabaseFactoryTests : TestsBase
 
                     versions.Should().HaveCount( 1 );
                     versions.ElementAtOrDefault( 0 )?.Version.Should().Be( Version.Parse( "0.1" ) );
+
+                    result2.Database.Connector.Database.Should().BeSameAs( result2.Database );
+                    ((ISqlDatabaseConnector<DbConnection>)result2.Database.Connector).Database.Should().BeSameAs( result2.Database );
+                    ((ISqlDatabaseConnector)result2.Database.Connector).Database.Should().BeSameAs( result2.Database );
                 }
             }
             finally
@@ -1537,7 +1545,7 @@ public class SqliteDatabaseFactoryTests : TestsBase
                     history,
                     SqlCreateDatabaseOptions.Default.SetMode( SqlDatabaseCreateMode.Commit ) );
 
-                var connection = await result.Database.ConnectAsync();
+                var connection = await ((ISqlDatabaseConnector)result.Database.Connector).ConnectAsync();
                 connection.Dispose();
 
                 using ( new AssertionScope() )

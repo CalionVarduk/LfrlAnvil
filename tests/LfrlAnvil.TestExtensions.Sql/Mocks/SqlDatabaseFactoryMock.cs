@@ -58,11 +58,12 @@ public sealed class SqlDatabaseFactoryMock : SqlDatabaseFactory<SqlDatabaseMock>
         SqlDatabaseBuilder builder,
         DbConnectionStringBuilder connectionString,
         DbConnection connection,
-        ReadOnlyArray<Action<SqlDatabaseConnectionChangeEvent>> connectionChangeCallbacks,
+        DbConnectionEventHandler eventHandler,
         SqlQueryReaderExecutor<SqlDatabaseVersionRecord> versionHistoryRecordsQuery,
         Version version)
     {
-        return new SqlDatabaseMock( ReinterpretCast.To<SqlDatabaseBuilderMock>( builder ), connectionString, version );
+        var connector = new SqlDatabaseConnectorMock( connectionString, eventHandler );
+        return new SqlDatabaseMock( ReinterpretCast.To<SqlDatabaseBuilderMock>( builder ), connector, version );
     }
 
     [Pure]

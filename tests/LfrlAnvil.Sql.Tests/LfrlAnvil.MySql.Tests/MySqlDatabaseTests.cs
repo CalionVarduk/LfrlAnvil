@@ -1,8 +1,11 @@
 ﻿using System.Collections.Generic;
+using System.Data.Common;
 using LfrlAnvil.Functional;
 using LfrlAnvil.MySql.Objects;
 using LfrlAnvil.MySql.Tests.Helpers;
+using LfrlAnvil.Sql;
 using LfrlAnvil.TestExtensions.FluentAssertions;
+using MySqlConnector;
 
 namespace LfrlAnvil.MySql.Tests;
 
@@ -28,6 +31,9 @@ public class MySqlDatabaseTests : TestsBase
             sut.Schemas.Count.Should().Be( 1 );
             sut.Schemas.Default.Name.Should().Be( "common" );
             sut.Schemas.Should().BeSequentiallyEqualTo( sut.Schemas.Default );
+            ((ISqlDatabaseConnector<MySqlConnection>)sut.Connector).Database.Should().BeSameAs( sut );
+            ((ISqlDatabaseConnector<DbConnection>)sut.Connector).Database.Should().BeSameAs( sut );
+            ((ISqlDatabaseConnector)sut.Connector).Database.Should().BeSameAs( sut );
         }
     }
 

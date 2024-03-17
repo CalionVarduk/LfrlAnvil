@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Data;
+using System.Data.Common;
 using System.Linq;
 using System.Threading.Tasks;
 using LfrlAnvil.Functional;
@@ -8,6 +9,7 @@ using LfrlAnvil.Sql.Objects;
 using LfrlAnvil.Sql.Versioning;
 using LfrlAnvil.TestExtensions.FluentAssertions;
 using LfrlAnvil.TestExtensions.Sql.Mocks;
+using LfrlAnvil.TestExtensions.Sql.Mocks.System;
 
 namespace LfrlAnvil.Sql.Tests.ObjectsTests;
 
@@ -33,6 +35,9 @@ public class SqlDatabaseTests : TestsBase
             sut.Schemas.Count.Should().Be( 1 );
             sut.Schemas.Default.Name.Should().Be( "common" );
             sut.Schemas.Should().BeSequentiallyEqualTo( sut.Schemas.Default );
+            ((ISqlDatabaseConnector<DbConnectionMock>)sut.Connector).Database.Should().BeSameAs( sut );
+            ((ISqlDatabaseConnector<DbConnection>)sut.Connector).Database.Should().BeSameAs( sut );
+            sut.Connector.Database.Should().BeSameAs( sut );
         }
     }
 
@@ -48,23 +53,23 @@ public class SqlDatabaseTests : TestsBase
     }
 
     [Fact]
-    public void Connect_ShouldCallConnectImplementation()
+    public void Connector_Connect_ShouldCallConnectImplementation()
     {
         var dbBuilder = SqlDatabaseBuilderMock.Create();
         ISqlDatabase sut = SqlDatabaseMock.Create( dbBuilder );
 
-        var result = sut.Connect();
+        var result = sut.Connector.Connect();
 
         result.State.Should().Be( ConnectionState.Open );
     }
 
     [Fact]
-    public async Task ConnectAsync_ShouldCallConnectImplementation()
+    public async Task Connector_ConnectAsync_ShouldCallConnectImplementation()
     {
         var dbBuilder = SqlDatabaseBuilderMock.Create();
         ISqlDatabase sut = SqlDatabaseMock.Create( dbBuilder );
 
-        var result = await sut.ConnectAsync();
+        var result = await sut.Connector.ConnectAsync();
 
         result.State.Should().Be( ConnectionState.Open );
     }
@@ -74,7 +79,7 @@ public class SqlDatabaseTests : TestsBase
     {
         var dbBuilder = SqlDatabaseBuilderMock.Create();
         var versionRecordsProvider = Lambda.Of( Enumerable.Empty<SqlDatabaseVersionRecord> );
-        ISqlDatabase sut = new SqlDatabaseMock( dbBuilder, versionRecordsProvider: versionRecordsProvider );
+        ISqlDatabase sut = SqlDatabaseMock.Create( dbBuilder, versionRecordsProvider: versionRecordsProvider );
 
         var result = sut.GetRegisteredVersions();
 
@@ -92,7 +97,7 @@ public class SqlDatabaseTests : TestsBase
 
         var dbBuilder = SqlDatabaseBuilderMock.Create();
         var versionRecordsProvider = Lambda.Of( () => expected );
-        ISqlDatabase sut = new SqlDatabaseMock( dbBuilder, versionRecordsProvider: versionRecordsProvider );
+        ISqlDatabase sut = SqlDatabaseMock.Create( dbBuilder, versionRecordsProvider: versionRecordsProvider );
 
         var result = sut.GetRegisteredVersions();
 

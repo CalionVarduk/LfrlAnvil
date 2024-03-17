@@ -13,7 +13,7 @@ public class SqlitePrimaryKeyTests : TestsBase
         var tableBuilder = schemaBuilder.Objects.CreateTable( "T" );
         tableBuilder.Constraints.SetPrimaryKey( tableBuilder.Columns.Create( "C1" ).Asc() ).SetName( "PK_TEST" );
 
-        var db = new SqliteDatabaseMock( schemaBuilder.Database );
+        var db = SqliteDatabaseMock.Create( schemaBuilder.Database );
         var schema = db.Schemas.Get( "foo" );
 
         var sut = schema.Objects.GetTable( "T" ).Constraints.PrimaryKey;

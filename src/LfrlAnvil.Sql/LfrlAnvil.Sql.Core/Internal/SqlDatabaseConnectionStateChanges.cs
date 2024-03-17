@@ -21,9 +21,10 @@ internal sealed class SqlDatabaseConnectionStateChanges
     }
 
     [Pure]
-    internal Action<SqlDatabaseConnectionChangeEvent>[] GetCallbacks()
+    internal DbConnectionEventHandler CreateEventHandler()
     {
-        return _builder?.ConnectionChangeCallbacks.ToArray() ?? Array.Empty<Action<SqlDatabaseConnectionChangeEvent>>();
+        var callbacks = _builder?.ConnectionChangeCallbacks.ToArray() ?? Array.Empty<Action<SqlDatabaseConnectionChangeEvent>>();
+        return new DbConnectionEventHandler( callbacks );
     }
 
     internal void Add(object? sender, StateChangeEventArgs change)

@@ -2,6 +2,7 @@
 using System.Data;
 using System.Data.Common;
 using System.Diagnostics.Contracts;
+using System.Runtime.CompilerServices;
 using LfrlAnvil.Extensions;
 using LfrlAnvil.Sql;
 using LfrlAnvil.Sql.Expressions;
@@ -17,6 +18,15 @@ using Microsoft.Data.Sqlite;
 
 namespace LfrlAnvil.Sqlite;
 
+// TODO: options
+// - IsConnectionPermanent is fine
+// - is FK check enabled (default: true)
+// - allow to provide custom SqliteNodeInterpreterFactory factory as delegate
+//   ^ expose server version, SqliteDataTypeProvider & SqliteColumnTypeDefinitionProvider instances as parameters
+// - allow to provide custom SqliteColumnTypeDefinitionProvider factory as delegate
+//   ^ expose server version & SqliteDataTypeProvider instance as parameter
+// - allow to provide custom SqlDefaultObjectNameProvider
+//   ^ expose server version as parameter
 public sealed class SqliteDatabaseFactory : SqlDatabaseFactory<SqliteDatabase>
 {
     public SqliteDatabaseFactory(bool isConnectionPermanent = false)
@@ -57,7 +67,7 @@ public sealed class SqliteDatabaseFactory : SqlDatabaseFactory<SqliteDatabase>
         SqlDatabaseBuilder builder,
         DbConnectionStringBuilder connectionString,
         DbConnection connection,
-        ReadOnlyArray<Action<SqlDatabaseConnectionChangeEvent>> connectionChangeCallbacks,
+        DbConnectionEventHandler eventHandler,
         SqlQueryReaderExecutor<SqlDatabaseVersionRecord> versionHistoryRecordsQuery,
         Version version)
     {
@@ -65,20 +75,20 @@ public sealed class SqliteDatabaseFactory : SqlDatabaseFactory<SqliteDatabase>
         var sqliteBuilder = ReinterpretCast.To<SqliteDatabaseBuilder>( builder );
 
         return connection is SqlitePermanentConnection permanentConnection
-            ? new SqlitePermanentlyConnectedDatabase(
+            ? CreateSqliteDatabaseWithPermanentConnection(
+                sqliteBuilder,
+                sqliteConnectionString,
                 permanentConnection,
-                sqliteConnectionString,
-                sqliteBuilder,
-                version,
+                eventHandler,
                 versionHistoryRecordsQuery,
-                connectionChangeCallbacks )
-            : new SqlitePersistentDatabase(
+                version )
+            : CreateSqliteDatabase(
+                sqliteBuilder,
+                sqliteConnectionString,
                 connection.ConnectionString,
-                sqliteConnectionString,
-                sqliteBuilder,
-                version,
+                eventHandler,
                 versionHistoryRecordsQuery,
-                connectionChangeCallbacks );
+                version );
     }
 
     [Pure]
@@ -128,6 +138,38 @@ public sealed class SqliteDatabaseFactory : SqlDatabaseFactory<SqliteDatabase>
         SqlCreateDatabaseOptions options)
     {
         return new SqliteDatabaseCommitVersionsContext();
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    private static SqliteDatabase CreateSqliteDatabaseWithPermanentConnection(
+        SqliteDatabaseBuilder builder,
+        SqliteConnectionStringBuilder connectionStringBuilder,
+        SqlitePermanentConnection connection,
+        DbConnectionEventHandler eventHandler,
+        SqlQueryReaderExecutor<SqlDatabaseVersionRecord> versionHistoryRecordsQuery,
+        Version version)
+    {
+        var connector = new SqliteDatabasePermanentConnector( connection, connectionStringBuilder, eventHandler );
+        var result = new SqliteDatabase( builder, connector, version, versionHistoryRecordsQuery );
+        connector.SetDatabase( result );
+        return result;
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    private static SqliteDatabase CreateSqliteDatabase(
+        SqliteDatabaseBuilder builder,
+        SqliteConnectionStringBuilder connectionStringBuilder,
+        string connectionString,
+        DbConnectionEventHandler eventHandler,
+        SqlQueryReaderExecutor<SqlDatabaseVersionRecord> versionHistoryRecordsQuery,
+        Version version)
+    {
+        var connector = new SqliteDatabaseConnector( connectionString, connectionStringBuilder, eventHandler );
+        var result = new SqliteDatabase( builder, connector, version, versionHistoryRecordsQuery );
+        connector.SetDatabase( result );
+        return result;
     }
 
     private static void FunctionInitializer(SqlDatabaseConnectionChangeEvent @event)

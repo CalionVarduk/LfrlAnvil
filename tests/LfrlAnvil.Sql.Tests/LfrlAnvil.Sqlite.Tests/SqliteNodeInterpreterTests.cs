@@ -4587,7 +4587,7 @@ BEGIN" );
     private static SqliteTable CreateTable(string schemaName, string tableName, string[] columnNames, params string[] pkColumnNames)
     {
         var builder = CreateTableBuilder( schemaName, tableName, columnNames, pkColumnNames );
-        var db = new SqliteDatabaseMock( builder.Database );
+        var db = SqliteDatabaseMock.Create( builder.Database );
         return db.Schemas.Get( schemaName ).Objects.GetTable( tableName );
     }
 
@@ -4604,7 +4604,7 @@ BEGIN" );
     private static SqliteView CreateView(string schemaName, string viewName, SqlQueryExpressionNode? source = null)
     {
         var builder = CreateViewBuilder( schemaName, viewName, source );
-        var db = new SqliteDatabaseMock( builder.Database );
+        var db = SqliteDatabaseMock.Create( builder.Database );
         return db.Schemas.Get( schemaName ).Objects.GetView( viewName );
     }
 }

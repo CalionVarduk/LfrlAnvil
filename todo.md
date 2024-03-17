@@ -142,6 +142,10 @@ Add upsert node? or sth more akin to insert or update on duplicate key
 - this could be an extension to insert node, rather than sth completely new?
 - this, however, would move the oldest supported version for Sqlite to 3.24.0 (2018-06-04), unless upsert isn't used
 - or an alternative statement can be constructed, that may not be as efficient, but will work pretty much like an upsert
+- node can accept an optional ConflictTargets collection (data fields)
+- MySql will ignore that collection (or throw, depending on configuration)
+- for non-MySql, if ConflictTargets are not provided, then it must be possible to extract PK from the target table
+  - Sqlite apparently can handle ON CONFLICT DO UPDATE, without conflict target (configurable?)
 
 ### Sql.Core: Add JSON nodes
 Add nodes for JSON column manipulation (read value, set value etc.)

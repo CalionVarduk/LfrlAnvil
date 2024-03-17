@@ -28,7 +28,7 @@ public class SqliteIndexTests : TestsBase
 
         tableBuilder.Constraints.SetPrimaryKey( tableBuilder.Columns.Create( "X" ).Asc() );
 
-        var db = new SqliteDatabaseMock( schemaBuilder.Database );
+        var db = SqliteDatabaseMock.Create( schemaBuilder.Database );
         var schema = db.Schemas.Get( "foo" );
         var table = schema.Objects.GetTable( "T" );
         var c1 = table.Columns.Get( "C1" );
@@ -61,7 +61,7 @@ public class SqliteIndexTests : TestsBase
         tableBuilder.Constraints.CreateIndex( c1Builder.Asc() ).SetName( "IX_TEST" ).SetFilter( SqlNode.True() );
         tableBuilder.Constraints.SetPrimaryKey( tableBuilder.Columns.Create( "X" ).Asc() );
 
-        var db = new SqliteDatabaseMock( schemaBuilder.Database );
+        var db = SqliteDatabaseMock.Create( schemaBuilder.Database );
         var schema = db.Schemas.Get( "foo" );
         var table = schema.Objects.GetTable( "T" );
         var c1 = table.Columns.Get( "C1" );

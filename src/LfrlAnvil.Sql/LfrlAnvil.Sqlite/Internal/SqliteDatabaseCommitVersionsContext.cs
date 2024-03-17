@@ -33,8 +33,8 @@ internal sealed class SqliteDatabaseCommitVersionsContext : SqlDatabaseCommitVer
         ReinterpretCast.To<SqliteDatabaseChangeTracker>( builder.Changes ).ClearModifiedTables();
 
         using var command = connection.CreateCommand();
-        command.CommandText = "PRAGMA foreign_keys; PRAGMA ignore_check_constraints; PRAGMA legacy_alter_table;";
-        var (areForeignKeysEnabled, areCheckConstraintsIgnored, isLegacyAlterTableEnabled) = executor.ExecuteForVersionHistory(
+        command.CommandText = "PRAGMA foreign_keys; PRAGMA legacy_alter_table;";
+        var (areForeignKeysEnabled, isLegacyAlterTableEnabled) = executor.ExecuteForVersionHistory(
             command,
             static cmd =>
             {
@@ -43,10 +43,7 @@ internal sealed class SqliteDatabaseCommitVersionsContext : SqlDatabaseCommitVer
                 var fkResult = reader.GetBoolean( 0 );
                 reader.NextResult();
                 reader.Read();
-                var checkResult = reader.GetBoolean( 0 );
-                reader.NextResult();
-                reader.Read();
-                return (fkResult, checkResult, reader.GetBoolean( 0 ));
+                return (fkResult, reader.GetBoolean( 0 ));
             },
             SqlDatabaseFactoryStatementType.Other );
 
@@ -56,14 +53,6 @@ internal sealed class SqliteDatabaseCommitVersionsContext : SqlDatabaseCommitVer
             _preparePragmaCommand.CommandText = "PRAGMA foreign_keys = 0;";
             _restorePragmaCommand = connection.CreateCommand();
             _restorePragmaCommand.CommandText = "PRAGMA foreign_keys = 1;";
-        }
-
-        if ( ! areCheckConstraintsIgnored )
-        {
-            _preparePragmaCommand ??= connection.CreateCommand();
-            _preparePragmaCommand.CommandText += "PRAGMA ignore_check_constraints = 1;";
-            _restorePragmaCommand ??= connection.CreateCommand();
-            _restorePragmaCommand.CommandText += "PRAGMA ignore_check_constraints = 0;";
         }
 
         if ( ! isLegacyAlterTableEnabled )
@@ -127,9 +116,6 @@ internal sealed class SqliteDatabaseCommitVersionsContext : SqlDatabaseCommitVer
             foreignKeyCheckFailures ??= new HashSet<string>( SqlHelpers.NameComparer );
             foreignKeyCheckFailures.Add( tableName );
         }
-
-        // TODO: can use PRAGMA quick_check(TABLENAME) to run similar tests, but for CHECK constrains
-        // use PRAGMA integrity_check(TABLENAME) to run full verification (configurable in the future)
 
         changeTracker.ClearModifiedTables();
         if ( foreignKeyCheckFailures is not null )

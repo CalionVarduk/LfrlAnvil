@@ -21,7 +21,7 @@ public class SqliteColumnTests : TestsBase
         tableBuilder.Columns.Create( "C" ).SetType( type ).MarkAsNullable( isNullable );
         tableBuilder.Constraints.SetPrimaryKey( tableBuilder.Columns.Create( "X" ).Asc() );
 
-        var db = new SqliteDatabaseMock( schemaBuilder.Database );
+        var db = SqliteDatabaseMock.Create( schemaBuilder.Database );
         var table = db.Schemas.Default.Objects.GetTable( "T" );
 
         var sut = table.Columns.Get( "C" );
@@ -49,7 +49,7 @@ public class SqliteColumnTests : TestsBase
         tableBuilder.Columns.Create( "C" ).SetDefaultValue( SqlNode.Literal( 0 ) );
         tableBuilder.Constraints.SetPrimaryKey( tableBuilder.Columns.Create( "X" ).Asc() );
 
-        var db = new SqliteDatabaseMock( schemaBuilder.Database );
+        var db = SqliteDatabaseMock.Create( schemaBuilder.Database );
         var table = db.Schemas.Default.Objects.GetTable( "T" );
 
         var sut = table.Columns.Get( "C" );
@@ -79,7 +79,7 @@ public class SqliteColumnTests : TestsBase
         tableBuilder.Columns.Create( "C" ).SetComputation( new SqlColumnComputation( SqlNode.Literal( 1 ), storage ) );
         tableBuilder.Constraints.SetPrimaryKey( tableBuilder.Columns.Create( "X" ).Asc() );
 
-        var db = new SqliteDatabaseMock( schemaBuilder.Database );
+        var db = SqliteDatabaseMock.Create( schemaBuilder.Database );
         var table = db.Schemas.Default.Objects.GetTable( "T" );
 
         var sut = table.Columns.Get( "C" );

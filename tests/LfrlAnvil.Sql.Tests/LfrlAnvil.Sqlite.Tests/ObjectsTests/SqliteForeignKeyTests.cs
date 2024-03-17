@@ -24,7 +24,7 @@ public class SqliteForeignKeyTests : TestsBase
             .SetOnDeleteBehavior( onDeleteBehavior )
             .SetOnUpdateBehavior( onUpdateBehavior );
 
-        var db = new SqliteDatabaseMock( schemaBuilder.Database );
+        var db = SqliteDatabaseMock.Create( schemaBuilder.Database );
         var schema = db.Schemas.Get( "foo" );
 
         var sut = schema.Objects.GetForeignKey( "FK_TEST" );
@@ -65,7 +65,7 @@ public class SqliteForeignKeyTests : TestsBase
             .SetOnDeleteBehavior( onDeleteBehavior )
             .SetOnUpdateBehavior( onUpdateBehavior );
 
-        var db = new SqliteDatabaseMock( schemaBuilder.Database );
+        var db = SqliteDatabaseMock.Create( schemaBuilder.Database );
         var schema = db.Schemas.Get( "foo" );
 
         var sut = schema.Objects.GetForeignKey( "FK_TEST" );
@@ -108,7 +108,7 @@ public class SqliteForeignKeyTests : TestsBase
             .SetOnDeleteBehavior( onDeleteBehavior )
             .SetOnUpdateBehavior( onUpdateBehavior );
 
-        var db = new SqliteDatabaseMock( dbBuilder );
+        var db = SqliteDatabaseMock.Create( dbBuilder );
         var schema1 = db.Schemas.Get( "foo" );
         var schema2 = db.Schemas.Get( "bar" );
 

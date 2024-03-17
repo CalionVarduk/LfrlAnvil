@@ -1,9 +1,6 @@
 ﻿using System;
-using System.Data;
 using System.Data.Common;
 using System.Diagnostics.Contracts;
-using System.Threading;
-using System.Threading.Tasks;
 using LfrlAnvil.Sql.Expressions.Visitors;
 using LfrlAnvil.Sql.Objects.Builders;
 using LfrlAnvil.Sql.Statements;
@@ -17,6 +14,7 @@ public abstract class SqlDatabase : ISqlDatabase
     protected SqlDatabase(
         SqlDatabaseBuilder builder,
         SqlSchemaCollection schemas,
+        ISqlDatabaseConnector<DbConnection> connector,
         Version version,
         SqlQueryReaderExecutor<SqlDatabaseVersionRecord> versionRecordsQuery)
     {
@@ -29,6 +27,7 @@ public abstract class SqlDatabase : ISqlDatabase
         NodeInterpreters = builder.NodeInterpreters;
         QueryReaders = builder.QueryReaders;
         ParameterBinders = builder.ParameterBinders;
+        Connector = connector;
         Schemas = schemas;
         Schemas.SetDatabase( this, builder.Schemas );
         TypeDefinitions.Lock();
@@ -44,68 +43,22 @@ public abstract class SqlDatabase : ISqlDatabase
     public SqlParameterBinderFactory ParameterBinders { get; }
     public SqlSchemaCollection Schemas { get; }
     public SqlQueryReaderExecutor<SqlDatabaseVersionRecord> VersionRecordsQuery { get; }
+    public ISqlDatabaseConnector<DbConnection> Connector { get; }
 
     ISqlSchemaCollection ISqlDatabase.Schemas => Schemas;
     ISqlColumnTypeDefinitionProvider ISqlDatabase.TypeDefinitions => TypeDefinitions;
     ISqlQueryReaderFactory ISqlDatabase.QueryReaders => QueryReaders;
     ISqlParameterBinderFactory ISqlDatabase.ParameterBinders => ParameterBinders;
+    ISqlDatabaseConnector ISqlDatabase.Connector => Connector;
 
     public virtual void Dispose() { }
 
     [Pure]
-    public abstract DbConnection Connect();
-
-    [Pure]
-    public abstract ValueTask<DbConnection> ConnectAsync(CancellationToken cancellationToken = default);
-
-    [Pure]
     public SqlDatabaseVersionRecord[] GetRegisteredVersions()
     {
-        using var connection = Connect();
+        using var connection = Connector.Connect();
         using var command = connection.CreateCommand();
         var result = VersionRecordsQuery.Execute( command );
         return result.IsEmpty ? Array.Empty<SqlDatabaseVersionRecord>() : result.Rows.ToArray();
-    }
-
-    protected static void InitializeConnectionEventHandlers(
-        DbConnection connection,
-        ReadOnlyArray<Action<SqlDatabaseConnectionChangeEvent>> callbacks)
-    {
-        if ( callbacks.Count == 0 )
-            return;
-
-        StateChangeEventHandler stateChangeHandler = (o, e) =>
-        {
-            if ( o is DbConnection conn )
-            {
-                foreach ( var callback in callbacks )
-                    callback( new SqlDatabaseConnectionChangeEvent( conn, e ) );
-            }
-        };
-
-        var disposedHandler = new Ref<EventHandler?>( null );
-        disposedHandler.Value = (o, _) =>
-        {
-            if ( o is DbConnection conn )
-            {
-                conn.StateChange -= stateChangeHandler;
-                conn.Disposed -= disposedHandler.Value;
-            }
-        };
-
-        connection.StateChange += stateChangeHandler;
-        connection.Disposed += disposedHandler.Value;
-    }
-
-    [Pure]
-    IDbConnection ISqlDatabase.Connect()
-    {
-        return Connect();
-    }
-
-    [Pure]
-    async ValueTask<IDbConnection> ISqlDatabase.ConnectAsync(CancellationToken cancellationToken)
-    {
-        return await ConnectAsync( cancellationToken ).ConfigureAwait( false );
     }
 }
