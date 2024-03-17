@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using LfrlAnvil.Functional;
 using LfrlAnvil.Sql;
 using LfrlAnvil.Sql.Extensions;
+using LfrlAnvil.Sql.Objects;
 using LfrlAnvil.Sql.Objects.Builders;
 using LfrlAnvil.Sql.Versioning;
 using LfrlAnvil.Sqlite.Exceptions;
@@ -18,6 +19,44 @@ namespace LfrlAnvil.Sqlite.Tests;
 
 public class SqliteDatabaseFactoryTests : TestsBase
 {
+    [Fact]
+    public void Ctor_WithoutOptions_ShouldCreateWithDefaultOptions()
+    {
+        var sut = new SqliteDatabaseFactory();
+        sut.Options.Should().BeEquivalentTo( SqliteDatabaseFactoryOptions.Default );
+    }
+
+    [Fact]
+    public void Ctor_WithOptions_ShouldCreateWithProvidedOptions()
+    {
+        var options = SqliteDatabaseFactoryOptions.Default.EnableConnectionPermanence().EnableForeignKeyChecks( false );
+        var sut = new SqliteDatabaseFactory( options );
+        sut.Options.Should().BeEquivalentTo( options );
+    }
+
+    [Fact]
+    public void Create_WithCustomOptions_ShouldCreateCorrectDatabase()
+    {
+        var defaultNames = new SqlDefaultObjectNameProvider();
+        var typeDefinitions = new SqliteColumnTypeDefinitionProviderBuilder().Build();
+        var nodeInterpreters = new SqliteNodeInterpreterFactory( typeDefinitions );
+
+        var sut = new SqliteDatabaseFactory(
+            SqliteDatabaseFactoryOptions.Default
+                .SetDefaultNamesCreator( _ => defaultNames )
+                .SetTypeDefinitionsCreator( (_, _) => typeDefinitions )
+                .SetNodeInterpretersCreator( (_, _, _) => nodeInterpreters ) );
+
+        var result = sut.Create( "DataSource=:memory:", new SqlDatabaseVersionHistory() );
+
+        using ( new AssertionScope() )
+        {
+            var db = ReinterpretCast.To<SqliteDatabase>( result.Database );
+            db.TypeDefinitions.Should().BeSameAs( typeDefinitions );
+            db.NodeInterpreters.Should().BeSameAs( nodeInterpreters );
+        }
+    }
+
     [Fact]
     public void Create_WithoutVersions_ShouldCreateCorrectDatabase()
     {
@@ -268,6 +307,59 @@ public class SqliteDatabaseFactoryTests : TestsBase
 
             versions.Should().HaveCount( 1 );
             (versions.ElementAtOrDefault( 0 )?.Version).Should().Be( Version.Parse( "0.1" ) );
+        }
+    }
+
+    [Fact]
+    public void Create_ShouldReturnResultWithoutException_WhenVersionCausesForeignKeyConflictsAndForeignKeyChecksAreDisabled()
+    {
+        var sut = new SqliteDatabaseFactory( SqliteDatabaseFactoryOptions.Default.EnableForeignKeyChecks( false ) );
+        var history = new SqlDatabaseVersionHistory(
+            SqlDatabaseVersion.Create(
+                Version.Parse( "0.1" ),
+                "1st version",
+                b =>
+                {
+                    var t = b.Schemas.Default.Objects.CreateTable( "T" );
+                    t.Constraints.SetPrimaryKey( t.Columns.Create( "C1" ).SetType<int>().Asc() );
+                    t.Columns.Create( "C2" ).SetType<int>().MarkAsNullable();
+                    b.Changes.AddStatement( "INSERT INTO T (C1, C2) VALUES (1, NULL), (2, 1), (3, 5), (4, 6)" );
+                } ),
+            SqlDatabaseVersion.Create(
+                Version.Parse( "0.2" ),
+                "2nd version",
+                b =>
+                {
+                    b.Schemas.Default.SetName( "foo" );
+                    var t = b.Schemas.Default.Objects.GetTable( "T" );
+                    var ix = t.Constraints.CreateIndex( t.Columns.Get( "C2" ).Asc() );
+                    t.Constraints.CreateForeignKey( ix, t.Constraints.GetPrimaryKey().Index );
+                } ),
+            SqlDatabaseVersion.Create(
+                Version.Parse( "0.3" ),
+                "3rd version",
+                _ => { } ) );
+
+        var result = sut.Create( "DataSource=:memory:", history, SqlCreateDatabaseOptions.Default.SetMode( SqlDatabaseCreateMode.Commit ) );
+        var versions = result.Database.GetRegisteredVersions();
+
+        using ( new AssertionScope() )
+        {
+            result.Exception.Should().BeNull();
+
+            result.CommittedVersions.ToArray()
+                .Select( v => v.Value )
+                .Should()
+                .BeSequentiallyEqualTo( Version.Parse( "0.1" ), Version.Parse( "0.2" ), Version.Parse( "0.3" ) );
+
+            result.PendingVersions.ToArray().Should().BeEmpty();
+            result.OldVersion.Should().Be( SqlDatabaseVersionHistory.InitialVersion );
+            result.NewVersion.Should().Be( Version.Parse( "0.3" ) );
+
+            versions.Should().HaveCount( 3 );
+            (versions.ElementAtOrDefault( 0 )?.Version).Should().Be( Version.Parse( "0.1" ) );
+            (versions.ElementAtOrDefault( 1 )?.Version).Should().Be( Version.Parse( "0.2" ) );
+            (versions.ElementAtOrDefault( 2 )?.Version).Should().Be( Version.Parse( "0.3" ) );
         }
     }
 

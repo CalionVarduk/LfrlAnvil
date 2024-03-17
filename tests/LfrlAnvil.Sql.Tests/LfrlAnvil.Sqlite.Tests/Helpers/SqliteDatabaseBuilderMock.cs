@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics.Contracts;
 using LfrlAnvil.Sql;
+using LfrlAnvil.Sql.Objects;
 using LfrlAnvil.Sqlite.Internal;
 using LfrlAnvil.Sqlite.Objects.Builders;
 
@@ -10,10 +11,14 @@ internal sealed class SqliteDatabaseBuilderMock
     [Pure]
     internal static SqliteDatabaseBuilder Create()
     {
+        var typeDefinitions = new SqliteColumnTypeDefinitionProviderBuilder().Build();
         var result = new SqliteDatabaseBuilder(
             "0.0.0",
             SqliteHelpers.DefaultVersionHistoryName.Schema,
-            new SqliteColumnTypeDefinitionProvider( new SqliteColumnTypeDefinitionProviderBuilder() ) );
+            new SqlDefaultObjectNameProvider(),
+            new SqliteDataTypeProvider(),
+            typeDefinitions,
+            new SqliteNodeInterpreterFactory( typeDefinitions ) );
 
         result.Changes.SetModeAndAttach( SqlDatabaseCreateMode.DryRun );
         return result;

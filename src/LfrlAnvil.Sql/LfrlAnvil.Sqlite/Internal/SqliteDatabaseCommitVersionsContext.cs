@@ -10,9 +10,15 @@ namespace LfrlAnvil.Sqlite.Internal;
 
 internal sealed class SqliteDatabaseCommitVersionsContext : SqlDatabaseCommitVersionsContext
 {
+    private readonly bool _disableForeignKeyChecks;
     private DbCommand? _preparePragmaCommand;
     private DbCommand? _restorePragmaCommand;
     private bool _isPragmaSwapped;
+
+    internal SqliteDatabaseCommitVersionsContext(bool disableForeignKeyChecks)
+    {
+        _disableForeignKeyChecks = disableForeignKeyChecks;
+    }
 
     public override void Dispose()
     {
@@ -90,8 +96,13 @@ internal sealed class SqliteDatabaseCommitVersionsContext : SqlDatabaseCommitVer
         key = base.OnAfterVersionActionRangeExecution( builder, key, command, ref executor );
 
         var changeTracker = ReinterpretCast.To<SqliteDatabaseChangeTracker>( builder.Changes );
-        HashSet<string>? foreignKeyCheckFailures = null;
+        if ( _disableForeignKeyChecks )
+        {
+            changeTracker.ClearModifiedTables();
+            return key;
+        }
 
+        HashSet<string>? foreignKeyCheckFailures = null;
         foreach ( var table in changeTracker.ModifiedTables )
         {
             var tableName = SqliteHelpers.GetFullName( table.Schema.Name, table.Name );

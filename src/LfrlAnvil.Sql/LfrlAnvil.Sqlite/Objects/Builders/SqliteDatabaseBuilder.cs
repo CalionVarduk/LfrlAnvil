@@ -8,17 +8,23 @@ namespace LfrlAnvil.Sqlite.Objects.Builders;
 
 public sealed class SqliteDatabaseBuilder : SqlDatabaseBuilder
 {
-    internal SqliteDatabaseBuilder(string serverVersion, string defaultSchemaName, SqliteColumnTypeDefinitionProvider typeDefinitions)
+    internal SqliteDatabaseBuilder(
+        string serverVersion,
+        string defaultSchemaName,
+        SqlDefaultObjectNameProvider defaultNames,
+        SqliteDataTypeProvider dataTypes,
+        SqliteColumnTypeDefinitionProvider typeDefinitions,
+        SqliteNodeInterpreterFactory nodeInterpreters)
         : base(
             SqliteDialect.Instance,
             serverVersion,
             defaultSchemaName,
-            new SqliteDataTypeProvider(),
+            dataTypes,
             typeDefinitions,
-            new SqliteNodeInterpreterFactory( typeDefinitions ),
+            nodeInterpreters,
             new SqliteQueryReaderFactory( typeDefinitions ),
             new SqliteParameterBinderFactory( typeDefinitions ),
-            new SqlDefaultObjectNameProvider(),
+            defaultNames,
             new SqliteSchemaBuilderCollection(),
             new SqliteDatabaseChangeTracker() ) { }
 

@@ -18,24 +18,15 @@ using Microsoft.Data.Sqlite;
 
 namespace LfrlAnvil.Sqlite;
 
-// TODO: options
-// - IsConnectionPermanent is fine
-// - is FK check enabled (default: true)
-// - allow to provide custom SqliteNodeInterpreterFactory factory as delegate
-//   ^ expose server version, SqliteDataTypeProvider & SqliteColumnTypeDefinitionProvider instances as parameters
-// - allow to provide custom SqliteColumnTypeDefinitionProvider factory as delegate
-//   ^ expose server version & SqliteDataTypeProvider instance as parameter
-// - allow to provide custom SqlDefaultObjectNameProvider
-//   ^ expose server version as parameter
 public sealed class SqliteDatabaseFactory : SqlDatabaseFactory<SqliteDatabase>
 {
-    public SqliteDatabaseFactory(bool isConnectionPermanent = false)
+    public SqliteDatabaseFactory(SqliteDatabaseFactoryOptions? options = null)
         : base( SqliteDialect.Instance )
     {
-        IsConnectionPermanent = isConnectionPermanent;
+        Options = options ?? SqliteDatabaseFactoryOptions.Default;
     }
 
-    public bool IsConnectionPermanent { get; }
+    public SqliteDatabaseFactoryOptions Options { get; }
 
     [Pure]
     protected override SqliteConnectionStringBuilder CreateConnectionStringBuilder(string connectionString)
@@ -47,7 +38,7 @@ public sealed class SqliteDatabaseFactory : SqlDatabaseFactory<SqliteDatabase>
     protected override SqliteConnection CreateConnection(DbConnectionStringBuilder connectionString)
     {
         var sqliteConnectionString = ReinterpretCast.To<SqliteConnectionStringBuilder>( connectionString );
-        return IsConnectionPermanent || sqliteConnectionString.DataSource == SqliteHelpers.MemoryDataSource
+        return Options.IsConnectionPermanent || sqliteConnectionString.DataSource == SqliteHelpers.MemoryDataSource
             ? new SqlitePermanentConnection( sqliteConnectionString.ToString() )
             : new SqliteConnection( sqliteConnectionString.ToString() );
     }
@@ -57,8 +48,20 @@ public sealed class SqliteDatabaseFactory : SqlDatabaseFactory<SqliteDatabase>
         DbConnection connection,
         ref SqlDatabaseFactoryStatementExecutor executor)
     {
-        var builder = new SqliteColumnTypeDefinitionProviderBuilder();
-        var result = new SqliteDatabaseBuilder( connection.ServerVersion, defaultSchemaName, builder.Build() );
+        var serverVersion = connection.ServerVersion;
+        var defaultNames = Options.DefaultNamesCreator( serverVersion );
+        var dataTypes = new SqliteDataTypeProvider();
+        var typeDefinitions = Options.TypeDefinitionsCreator( serverVersion, dataTypes );
+        var nodeInterpreters = Options.NodeInterpretersCreator( serverVersion, dataTypes, typeDefinitions );
+
+        var result = new SqliteDatabaseBuilder(
+            serverVersion,
+            defaultSchemaName,
+            defaultNames,
+            dataTypes,
+            typeDefinitions,
+            nodeInterpreters );
+
         result.AddConnectionChangeCallback( FunctionInitializer );
         return result;
     }
@@ -137,7 +140,7 @@ public sealed class SqliteDatabaseFactory : SqlDatabaseFactory<SqliteDatabase>
         SqlParameterBinderFactory parameterBinders,
         SqlCreateDatabaseOptions options)
     {
-        return new SqliteDatabaseCommitVersionsContext();
+        return new SqliteDatabaseCommitVersionsContext( Options.AreForeignKeyChecksDisabled );
     }
 
     [Pure]

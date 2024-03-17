@@ -8,6 +8,7 @@ using System.Text;
 using LfrlAnvil.Exceptions;
 using LfrlAnvil.Memory;
 using LfrlAnvil.Sql.Exceptions;
+using LfrlAnvil.Sql.Objects;
 using LfrlAnvil.Sql.Objects.Builders;
 using ExceptionResources = LfrlAnvil.Sql.Exceptions.ExceptionResources;
 
@@ -34,6 +35,8 @@ public static class SqlHelpers
     public const string EmptyBlobLiteral = $"X{EmptyTextLiteral}";
     public static readonly StringComparer NameComparer = StringComparer.OrdinalIgnoreCase;
     public static readonly Func<IDbCommand, int> ExecuteNonQueryDelegate = static cmd => cmd.ExecuteNonQuery();
+    public static readonly SqlDefaultObjectNameProviderCreator<SqlDefaultObjectNameProvider> DefaultNamesCreator =
+        static _ => new SqlDefaultObjectNameProvider();
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
