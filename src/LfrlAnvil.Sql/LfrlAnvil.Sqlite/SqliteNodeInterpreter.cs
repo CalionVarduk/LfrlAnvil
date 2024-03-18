@@ -16,17 +16,19 @@ namespace LfrlAnvil.Sqlite;
 
 public class SqliteNodeInterpreter : SqlNodeInterpreter
 {
-    public SqliteNodeInterpreter(SqliteColumnTypeDefinitionProvider columnTypeDefinitions, SqlNodeInterpreterContext context)
+    public SqliteNodeInterpreter(SqliteNodeInterpreterOptions options, SqlNodeInterpreterContext context)
         : base( context, beginNameDelimiter: '"', endNameDelimiter: '"' )
     {
-        ColumnTypeDefinitions = columnTypeDefinitions;
+        Options = options;
+        TypeDefinitions = Options.TypeDefinitions ?? new SqliteColumnTypeDefinitionProviderBuilder().Build();
     }
 
-    public SqliteColumnTypeDefinitionProvider ColumnTypeDefinitions { get; }
+    public SqliteNodeInterpreterOptions Options { get; }
+    public SqliteColumnTypeDefinitionProvider TypeDefinitions { get; }
 
     public override void VisitLiteral(SqlLiteralNode node)
     {
-        var sql = node.GetSql( ColumnTypeDefinitions );
+        var sql = node.GetSql( TypeDefinitions );
         Context.Sql.Append( sql );
     }
 
@@ -355,7 +357,7 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
         VisitChild( node.Value );
         Context.Sql.AppendSpace().Append( "AS" ).AppendSpace();
 
-        var typeDefinition = node.TargetTypeDefinition ?? ColumnTypeDefinitions.GetByType( node.TargetType );
+        var typeDefinition = node.TargetTypeDefinition ?? TypeDefinitions.GetByType( node.TargetType );
         Context.Sql.Append( typeDefinition.DataType.Name ).Append( ')' );
     }
 
@@ -385,9 +387,15 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
     {
         var traits = ExtractDataSourceTraits( node.DataSource.Traits );
 
-        if ( IsUpdateOrDeleteDataSourceSimple( node.DataSource, in traits ) )
+        if ( IsValidSingleTableUpdateOrDeleteStatement( node.DataSource, in traits ) )
         {
             VisitUpdateWithSimpleDataSource( node, in traits );
+            return;
+        }
+
+        if ( IsValidUpdateFromStatement( node.DataSource, in traits ) )
+        {
+            VisitUpdateFrom( node, in traits );
             return;
         }
 
@@ -400,6 +408,15 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
             return;
         }
 
+        if ( Options.IsUpdateFromEnabled )
+        {
+            node = CreateSimplifiedUpdateFromWithComplexAssignments( targetInfo, node, updateVisitor.GetIndexesOfComplexAssignments() );
+            traits = ExtractDataSourceTraits( node.DataSource.Traits );
+            Assume.True( IsValidUpdateFromStatement( node.DataSource, in traits ) );
+            VisitUpdateFrom( node, in traits );
+            return;
+        }
+
         VisitUpdateWithComplexDataSourceAndComplexAssignments( node, targetInfo, updateVisitor.GetIndexesOfComplexAssignments() );
     }
 
@@ -407,7 +424,7 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
     {
         var traits = ExtractDataSourceTraits( node.DataSource.Traits );
 
-        if ( IsUpdateOrDeleteDataSourceSimple( node.DataSource, in traits ) )
+        if ( IsValidSingleTableUpdateOrDeleteStatement( node.DataSource, in traits ) )
         {
             VisitDeleteFromWithSimpleDataSource( node, in traits );
             return;
@@ -442,7 +459,7 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
 
     public override void VisitColumnDefinition(SqlColumnDefinitionNode node)
     {
-        var typeDefinition = node.TypeDefinition ?? ColumnTypeDefinitions.GetByType( node.Type.UnderlyingType );
+        var typeDefinition = node.TypeDefinition ?? TypeDefinitions.GetByType( node.Type.UnderlyingType );
         AppendDelimitedName( node.Name );
         Context.Sql.AppendSpace().Append( typeDefinition.DataType.Name );
 
@@ -541,6 +558,9 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
             Context.Sql.AppendSpace().Append( '(' );
             VisitCreateTableDefinition( node );
             Context.AppendIndent().Append( ')' ).AppendSpace().Append( "WITHOUT" ).AppendSpace().Append( "ROWID" );
+
+            if ( Options.IsStrictModeEnabled )
+                Context.Sql.AppendComma().AppendSpace().Append( "STRICT" );
         }
     }
 
@@ -857,9 +877,34 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
     {
         VisitDataSourceBeforeTraits( in traits );
         Context.Sql.Append( "UPDATE" ).AppendSpace();
-        AppendDelimitedRecordSetName( node.DataSource.From );
+        this.Visit( node.DataSource.From );
         VisitUpdateAssignmentRange( node.Assignments );
         VisitDataSourceAfterTraits( in traits );
+    }
+
+    protected virtual void VisitUpdateFrom(SqlUpdateNode node, in SqlDataSourceTraits traits)
+    {
+        Assume.ContainsExactly( node.DataSource.Joins, 1 );
+        VisitDataSourceBeforeTraits( in traits );
+        Context.Sql.Append( "UPDATE" ).AppendSpace();
+        this.Visit( node.DataSource.From );
+        VisitUpdateAssignmentRange( node.Assignments );
+
+        var join = node.DataSource.Joins[0];
+        Context.AppendIndent().Append( "FROM" ).AppendSpace();
+        this.Visit( join.InnerRecordSet );
+
+        if ( join.JoinType == SqlJoinType.Cross )
+            VisitDataSourceAfterTraits( in traits );
+        else
+        {
+            Assume.Equals( join.JoinType, SqlJoinType.Inner );
+            var traitsWithJoinFilter = traits.Filter is null
+                ? traits with { Filter = join.OnExpression }
+                : traits with { Filter = join.OnExpression.And( traits.Filter ) };
+
+            VisitDataSourceAfterTraits( in traitsWithJoinFilter );
+        }
     }
 
     protected virtual void VisitUpdateWithComplexDataSourceAndSimpleAssignments(
@@ -886,7 +931,7 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
     {
         node = CreateSimplifiedUpdateWithComplexAssignments( targetInfo, node, indexesOfComplexAssignments );
         var traits = ExtractDataSourceTraits( node.DataSource.Traits );
-        Assume.True( IsUpdateOrDeleteDataSourceSimple( node.DataSource, in traits ) );
+        Assume.True( IsValidSingleTableUpdateOrDeleteStatement( node.DataSource, in traits ) );
 
         VisitDataSourceBeforeTraits( in traits );
         Context.Sql.Append( "UPDATE" ).AppendSpace();
@@ -902,7 +947,7 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
     {
         VisitDataSourceBeforeTraits( in traits );
         Context.Sql.Append( "DELETE" ).AppendSpace().Append( "FROM" ).AppendSpace();
-        AppendDelimitedRecordSetName( node.DataSource.From );
+        this.Visit( node.DataSource.From );
         VisitDataSourceAfterTraits( in traits );
     }
 
@@ -933,17 +978,28 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
     }
 
     [Pure]
-    protected virtual bool IsUpdateOrDeleteDataSourceSimple(SqlDataSourceNode node, in SqlDataSourceTraits traits)
+    protected virtual bool IsValidSingleTableUpdateOrDeleteStatement(SqlDataSourceNode node, in SqlDataSourceTraits traits)
     {
-        return ! node.From.IsAliased &&
-            node.RecordSets.Count == 1 &&
+        return node.RecordSets.Count == 1 &&
             traits.Distinct is null &&
             traits.Aggregations.Count == 0 &&
             traits.AggregationFilter is null &&
             traits.Windows.Count == 0 &&
-            traits.Ordering.Count == 0 &&
-            traits.Limit is null &&
-            traits.Offset is null &&
+            (Options.IsUpdateOrDeleteLimitEnabled || (traits.Ordering.Count == 0 && traits.Limit is null && traits.Offset is null)) &&
+            traits.Custom.Count == 0;
+    }
+
+    [Pure]
+    protected virtual bool IsValidUpdateFromStatement(SqlDataSourceNode node, in SqlDataSourceTraits traits)
+    {
+        return Options.IsUpdateFromEnabled &&
+            node.RecordSets.Count == 2 &&
+            node.Joins[0].JoinType is SqlJoinType.Inner or SqlJoinType.Cross &&
+            traits.Distinct is null &&
+            traits.Aggregations.Count == 0 &&
+            traits.AggregationFilter is null &&
+            traits.Windows.Count == 0 &&
+            (Options.IsUpdateOrDeleteLimitEnabled || (traits.Ordering.Count == 0 && traits.Limit is null && traits.Offset is null)) &&
             traits.Custom.Count == 0;
     }
 }

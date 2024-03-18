@@ -18,7 +18,7 @@ internal sealed class SqliteDatabaseBuilderMock
             new SqlDefaultObjectNameProvider(),
             new SqliteDataTypeProvider(),
             typeDefinitions,
-            new SqliteNodeInterpreterFactory( typeDefinitions ) );
+            new SqliteNodeInterpreterFactory( SqliteNodeInterpreterOptions.Default ) );
 
         result.Changes.SetModeAndAttach( SqlDatabaseCreateMode.DryRun );
         return result;

@@ -14,7 +14,8 @@ public readonly struct SqliteDatabaseFactoryOptions
 
     public static readonly
         SqlNodeInterpreterFactoryCreator<SqliteDataTypeProvider, SqliteColumnTypeDefinitionProvider, SqliteNodeInterpreterFactory>
-        BaseNodeInterpretersCreator = static (_, _, typeDefinitions) => new SqliteNodeInterpreterFactory( typeDefinitions );
+        BaseNodeInterpretersCreator = static (_, _, typeDefinitions) =>
+            new SqliteNodeInterpreterFactory( SqliteNodeInterpreterOptions.Default.SetTypeDefinitions( typeDefinitions ) );
 
     private readonly SqlDefaultObjectNameProviderCreator<SqlDefaultObjectNameProvider>? _defaultNamesCreator;
 

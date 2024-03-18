@@ -39,7 +39,8 @@ public class SqliteDatabaseFactoryTests : TestsBase
     {
         var defaultNames = new SqlDefaultObjectNameProvider();
         var typeDefinitions = new SqliteColumnTypeDefinitionProviderBuilder().Build();
-        var nodeInterpreters = new SqliteNodeInterpreterFactory( typeDefinitions );
+        var nodeInterpreters = new SqliteNodeInterpreterFactory(
+            SqliteNodeInterpreterOptions.Default.SetTypeDefinitions( typeDefinitions ) );
 
         var sut = new SqliteDatabaseFactory(
             SqliteDatabaseFactoryOptions.Default

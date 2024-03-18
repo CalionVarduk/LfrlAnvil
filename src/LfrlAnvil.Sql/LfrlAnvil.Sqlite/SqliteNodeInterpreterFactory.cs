@@ -5,17 +5,19 @@ namespace LfrlAnvil.Sqlite;
 
 public class SqliteNodeInterpreterFactory : ISqlNodeInterpreterFactory
 {
-    private readonly SqliteColumnTypeDefinitionProvider _columnTypeDefinitions;
-
-    protected internal SqliteNodeInterpreterFactory(SqliteColumnTypeDefinitionProvider columnTypeDefinitions)
+    protected internal SqliteNodeInterpreterFactory(SqliteNodeInterpreterOptions options)
     {
-        _columnTypeDefinitions = columnTypeDefinitions;
+        Options = options;
+        if ( Options.TypeDefinitions is null )
+            Options = Options.SetTypeDefinitions( new SqliteColumnTypeDefinitionProviderBuilder().Build() );
     }
+
+    public SqliteNodeInterpreterOptions Options { get; }
 
     [Pure]
     public virtual SqliteNodeInterpreter Create(SqlNodeInterpreterContext context)
     {
-        return new SqliteNodeInterpreter( _columnTypeDefinitions, context );
+        return new SqliteNodeInterpreter( Options, context );
     }
 
     [Pure]

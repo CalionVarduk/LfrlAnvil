@@ -34,10 +34,7 @@ public sealed class SqlTableBuilderMock : SqlTableBuilder
         string? schemaName = null)
         where TColumnType : notnull
     {
-        var db = SqlDatabaseBuilderMock.Create();
-        var schema = schemaName is null ? db.Schemas.Default : db.Schemas.GetOrCreate( schemaName );
-        var table = schema.Objects.CreateTable( name );
-
+        var table = CreateEmpty( name, schemaName );
         foreach ( var c in columns )
             table.Columns.Create( c ).SetType<TColumnType>().MarkAsNullable( areColumnsNullable );
 
@@ -46,6 +43,15 @@ public sealed class SqlTableBuilderMock : SqlTableBuilder
             table.Columns.Get( c ).MarkAsNullable( false );
 
         table.Constraints.SetPrimaryKey( pkColumns.Select( c => table.Columns.Get( c ).Asc() ).ToArray() );
+        return table;
+    }
+
+    [Pure]
+    public static SqlTableBuilderMock CreateEmpty(string name, string? schemaName = null)
+    {
+        var db = SqlDatabaseBuilderMock.Create();
+        var schema = schemaName is null ? db.Schemas.Default : db.Schemas.GetOrCreate( schemaName );
+        var table = schema.Objects.CreateTable( name );
         return table;
     }
 }

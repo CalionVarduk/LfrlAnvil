@@ -1691,6 +1691,75 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
     }
 
     [Pure]
+    protected static SqlUpdateNode CreateSimplifiedUpdateFromWithComplexAssignments(
+        ChangeTargetInfo targetInfo,
+        SqlUpdateNode node,
+        ReadOnlySpan<int> indexesOfComplexAssignments)
+    {
+        Ensure.IsNotNull( targetInfo.Target.Alias );
+        Assume.IsGreaterThan( indexesOfComplexAssignments.Length, 0 );
+
+        var updateTraits = Chain<SqlTraitNode>.Empty;
+        var cteTraits = Chain<SqlTraitNode>.Empty;
+        foreach ( var trait in node.DataSource.Traits )
+        {
+            if ( trait.NodeType == SqlNodeType.CommonTableExpressionTrait )
+                updateTraits = updateTraits.Extend( trait );
+            else
+                cteTraits = cteTraits.Extend( trait );
+        }
+
+        var cteIdentityFieldNames = new string[targetInfo.IdentityColumnNames.Length];
+        var cteComplexAssignmentFieldNames = new string[indexesOfComplexAssignments.Length];
+        var cteSelection = new SqlSelectNode[targetInfo.IdentityColumnNames.Length + indexesOfComplexAssignments.Length];
+        var assignments = node.Assignments.AsSpan().ToArray();
+
+        var i = 0;
+        foreach ( var name in targetInfo.IdentityColumnNames )
+        {
+            var fieldName = $"ID_{name}_{i}";
+            cteIdentityFieldNames[i] = fieldName;
+            cteSelection[i] = targetInfo.Target.GetUnsafeField( name ).As( fieldName );
+            ++i;
+        }
+
+        foreach ( var assignmentIndex in indexesOfComplexAssignments )
+        {
+            var assignment = assignments[assignmentIndex];
+            var fieldName = $"VAL_{assignment.DataField.Name}_{assignmentIndex}";
+            cteComplexAssignmentFieldNames[i - cteIdentityFieldNames.Length] = fieldName;
+            cteSelection[i++] = assignment.Value.As( fieldName );
+        }
+
+        var cte = node.DataSource.SetTraits( cteTraits ).Select( cteSelection ).ToCte( $"_{Guid.NewGuid():N}" );
+        var cteDataSource = cte.RecordSet.ToDataSource();
+
+        var pkBaseColumnNode = targetInfo.BaseTarget.GetUnsafeField( targetInfo.IdentityColumnNames[0] );
+        var pkCteColumnNode = cteDataSource.From.GetUnsafeField( cteIdentityFieldNames[0] );
+        var pkFilter = pkBaseColumnNode == pkCteColumnNode;
+
+        i = 1;
+        foreach ( var name in targetInfo.IdentityColumnNames.AsSpan( 1 ) )
+        {
+            pkBaseColumnNode = targetInfo.BaseTarget.GetUnsafeField( name );
+            pkCteColumnNode = cteDataSource.From.GetUnsafeField( cteIdentityFieldNames[i++] );
+            pkFilter = pkFilter.And( pkBaseColumnNode == pkCteColumnNode );
+        }
+
+        i = 0;
+        foreach ( var assignmentIndex in indexesOfComplexAssignments )
+        {
+            var assignment = assignments[assignmentIndex];
+            var cteField = cteDataSource.From.GetUnsafeField( cteComplexAssignmentFieldNames[i++] );
+            assignments[assignmentIndex] = assignment.DataField.Assign( cteField );
+        }
+
+        updateTraits = updateTraits.Extend( SqlNode.CommonTableExpressionTrait( cte ) );
+        return targetInfo.BaseTarget.Join( cte.RecordSet.InnerOn( pkFilter ) ).SetTraits( updateTraits ).ToUpdate( assignments );
+    }
+
+    // TODO: move to sqlite only?
+    [Pure]
     protected static SqlUpdateNode CreateSimplifiedUpdateWithComplexAssignments(
         ChangeTargetInfo targetInfo,
         SqlUpdateNode node,

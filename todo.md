@@ -24,6 +24,17 @@
 |    21    |   Reactive.State    |                       Extension ideas                       |                   [link](#reactivestate-extension-ideas)                    |                         -                          |
 
 ### Scribbles:
+- Chrono:
+  - TimedCache here? old entries would be removed when new entry is added, so no timers required
+  - may be better to create a new Chrono.Collections project?
+
+
+- Dependencies:
+  - scopes & their attachment to thread may be an issue
+  - when dealing with async code that after await doesn't go back to the original context (e.g. default aspnetcore)
+  - and then a child scope spawn attempt is made, now all of a sudden from a parent scope attached to another thread
+
+
 - MySqlNodeInterpreter:
   - allow to disable IX prefixes altogether? so blob/text would be added to sql without prefix, which will throw mysql exception
   - also, IX prefix value should be configurable
