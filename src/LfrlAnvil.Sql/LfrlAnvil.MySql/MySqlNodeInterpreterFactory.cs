@@ -5,20 +5,19 @@ namespace LfrlAnvil.MySql;
 
 public class MySqlNodeInterpreterFactory : ISqlNodeInterpreterFactory
 {
-    private readonly MySqlColumnTypeDefinitionProvider _columnTypeDefinitions;
-
-    protected internal MySqlNodeInterpreterFactory(MySqlColumnTypeDefinitionProvider columnTypeDefinitions, string commonSchemaName)
+    protected internal MySqlNodeInterpreterFactory(MySqlNodeInterpreterOptions options)
     {
-        _columnTypeDefinitions = columnTypeDefinitions;
-        CommonSchemaName = commonSchemaName;
+        Options = options;
+        if ( Options.TypeDefinitions is null )
+            Options = Options.SetTypeDefinitions( new MySqlColumnTypeDefinitionProviderBuilder().Build() );
     }
 
-    public string CommonSchemaName { get; }
+    public MySqlNodeInterpreterOptions Options { get; }
 
     [Pure]
     public virtual MySqlNodeInterpreter Create(SqlNodeInterpreterContext context)
     {
-        return new MySqlNodeInterpreter( _columnTypeDefinitions, CommonSchemaName, context );
+        return new MySqlNodeInterpreter( Options, context );
     }
 
     [Pure]

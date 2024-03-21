@@ -1,4 +1,7 @@
-﻿using LfrlAnvil.Sql.Expressions.Logical;
+﻿using LfrlAnvil.MySql.Exceptions;
+using LfrlAnvil.Sql;
+using LfrlAnvil.Sql.Expressions.Logical;
+using LfrlAnvil.Sql.Internal;
 using LfrlAnvil.Sql.Objects.Builders;
 
 namespace LfrlAnvil.MySql.Objects.Builders;
@@ -54,5 +57,16 @@ public sealed class MySqlIndexBuilder : SqlIndexBuilder
     {
         base.SetFilter( filter );
         return this;
+    }
+
+    protected override SqlPropertyChange<SqlConditionNode?> BeforeFilterChange(SqlConditionNode? newValue)
+    {
+        if ( ReferenceEquals( Filter, newValue ) || Database.IndexFilterResolution == SqlOptionalFunctionalityResolution.Ignore )
+            return SqlPropertyChange.Cancel<SqlConditionNode?>();
+
+        if ( newValue is not null && Database.IndexFilterResolution == SqlOptionalFunctionalityResolution.Forbid )
+            throw SqlHelpers.CreateObjectBuilderException( Database, Resources.IndexFiltersAreForbidden( this, newValue ) );
+
+        return base.BeforeFilterChange( newValue );
     }
 }

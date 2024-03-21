@@ -44,9 +44,9 @@ public class SqliteDatabaseFactoryTests : TestsBase
 
         var sut = new SqliteDatabaseFactory(
             SqliteDatabaseFactoryOptions.Default
-                .SetDefaultNamesCreator( _ => defaultNames )
+                .SetDefaultNamesCreator( (_, _) => defaultNames )
                 .SetTypeDefinitionsCreator( (_, _) => typeDefinitions )
-                .SetNodeInterpretersCreator( (_, _, _) => nodeInterpreters ) );
+                .SetNodeInterpretersCreator( (_, _, _, _) => nodeInterpreters ) );
 
         var result = sut.Create( "DataSource=:memory:", new SqlDatabaseVersionHistory() );
 

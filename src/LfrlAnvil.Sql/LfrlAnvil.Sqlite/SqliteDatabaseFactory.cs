@@ -49,10 +49,10 @@ public sealed class SqliteDatabaseFactory : SqlDatabaseFactory<SqliteDatabase>
         ref SqlDatabaseFactoryStatementExecutor executor)
     {
         var serverVersion = connection.ServerVersion;
-        var defaultNames = Options.DefaultNamesCreator( serverVersion );
+        var defaultNames = Options.DefaultNamesCreator( serverVersion, defaultSchemaName );
         var dataTypes = new SqliteDataTypeProvider();
         var typeDefinitions = Options.TypeDefinitionsCreator( serverVersion, dataTypes );
-        var nodeInterpreters = Options.NodeInterpretersCreator( serverVersion, dataTypes, typeDefinitions );
+        var nodeInterpreters = Options.NodeInterpretersCreator( serverVersion, defaultSchemaName, dataTypes, typeDefinitions );
 
         var result = new SqliteDatabaseBuilder(
             serverVersion,

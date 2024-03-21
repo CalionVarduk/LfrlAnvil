@@ -293,7 +293,9 @@ public partial class MySqlTableBuilderTests
         [Fact]
         public void Remove_ShouldReturnFalse_WhenColumnExistsButIsReferencedByIndexFilter()
         {
-            var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+            var schema = MySqlDatabaseBuilderMock.Create( indexFilterResolution: SqlOptionalFunctionalityResolution.Include )
+                .Schemas.Create( "foo" );
+
             var table = schema.Objects.CreateTable( "T" );
             var sut = table.Columns;
             table.Constraints.SetPrimaryKey( sut.Create( "C1" ).Asc() );

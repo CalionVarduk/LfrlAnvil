@@ -5,6 +5,7 @@ using LfrlAnvil.Extensions;
 using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Expressions.Arithmetic;
 using LfrlAnvil.Sql.Expressions.Functions;
+using LfrlAnvil.Sql.Expressions.Logical;
 using LfrlAnvil.Sql.Expressions.Objects;
 using LfrlAnvil.Sql.Expressions.Persistence;
 using LfrlAnvil.Sql.Expressions.Traits;
@@ -410,10 +411,10 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
 
         if ( Options.IsUpdateFromEnabled )
         {
-            node = CreateSimplifiedUpdateFromWithComplexAssignments( targetInfo, node, updateVisitor.GetIndexesOfComplexAssignments() );
+            node = CreateSimplifiedUpdateFrom( targetInfo, node, updateVisitor );
             traits = ExtractDataSourceTraits( node.DataSource.Traits );
             Assume.True( IsValidUpdateFromStatement( node.DataSource, in traits ) );
-            VisitUpdateFrom( node, in traits );
+            VisitSimplifiedUpdateFrom( node, targetInfo, in traits );
             return;
         }
 
@@ -907,6 +908,28 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
         }
     }
 
+    protected virtual void VisitSimplifiedUpdateFrom(SqlUpdateNode node, ChangeTargetInfo targetInfo, in SqlDataSourceTraits traits)
+    {
+        Assume.ContainsExactly( node.DataSource.Joins, 1 );
+        VisitDataSourceBeforeTraits( in traits );
+        Context.Sql.Append( "UPDATE" ).AppendSpace();
+        this.Visit( node.DataSource.From );
+
+        using ( TempReplaceRecordSet( targetInfo.Target, targetInfo.BaseTarget ) )
+            VisitUpdateAssignmentRange( node.Assignments );
+
+        var join = node.DataSource.Joins[0];
+        Assume.Equals( join.JoinType, SqlJoinType.Inner );
+        Context.AppendIndent().Append( "FROM" ).AppendSpace();
+        this.Visit( join.InnerRecordSet );
+
+        var traitsWithJoinFilter = traits.Filter is null
+            ? traits with { Filter = join.OnExpression }
+            : traits with { Filter = join.OnExpression.And( traits.Filter ) };
+
+        VisitDataSourceAfterTraits( in traitsWithJoinFilter );
+    }
+
     protected virtual void VisitUpdateWithComplexDataSourceAndSimpleAssignments(
         SqlUpdateNode node,
         ChangeTargetInfo targetInfo,
@@ -1001,5 +1024,87 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
             traits.Windows.Count == 0 &&
             (Options.IsUpdateOrDeleteLimitEnabled || (traits.Ordering.Count == 0 && traits.Limit is null && traits.Offset is null)) &&
             traits.Custom.Count == 0;
+    }
+
+    [Pure]
+    protected static SqlUpdateNode CreateSimplifiedUpdateWithComplexAssignments(
+        ChangeTargetInfo targetInfo,
+        SqlUpdateNode node,
+        ReadOnlySpan<int> indexesOfComplexAssignments)
+    {
+        Ensure.IsNotNull( targetInfo.Target.Alias );
+
+        var updateTraits = Chain<SqlTraitNode>.Empty;
+        var cteTraits = Chain<SqlTraitNode>.Empty;
+        foreach ( var trait in node.DataSource.Traits )
+        {
+            if ( trait.NodeType == SqlNodeType.CommonTableExpressionTrait )
+                updateTraits = updateTraits.Extend( trait );
+            else
+                cteTraits = cteTraits.Extend( trait );
+        }
+
+        var cteIdentityFieldNames = new string[targetInfo.IdentityColumnNames.Length];
+        var cteComplexAssignmentFieldNames = indexesOfComplexAssignments.Length > 0
+            ? new string[indexesOfComplexAssignments.Length]
+            : Array.Empty<string>();
+
+        var cteSelection = new SqlSelectNode[targetInfo.IdentityColumnNames.Length + indexesOfComplexAssignments.Length];
+        var assignments = node.Assignments.AsSpan().ToArray();
+
+        var i = 0;
+        foreach ( var name in targetInfo.IdentityColumnNames )
+        {
+            var fieldName = $"ID_{name}_{i}";
+            cteIdentityFieldNames[i] = fieldName;
+            cteSelection[i] = targetInfo.Target.GetUnsafeField( name ).As( fieldName );
+            ++i;
+        }
+
+        foreach ( var assignmentIndex in indexesOfComplexAssignments )
+        {
+            var assignment = assignments[assignmentIndex];
+            var fieldName = $"VAL_{assignment.DataField.Name}_{assignmentIndex}";
+            cteComplexAssignmentFieldNames[i - cteIdentityFieldNames.Length] = fieldName;
+            cteSelection[i++] = assignment.Value.As( fieldName );
+        }
+
+        var cte = node.DataSource.SetTraits( cteTraits ).Select( cteSelection ).ToCte( $"_{Guid.NewGuid():N}" );
+        var cteDataSource = cte.RecordSet.ToDataSource();
+
+        var pkBaseColumnNode = targetInfo.BaseTarget.GetUnsafeField( targetInfo.IdentityColumnNames[0] );
+        var pkCteColumnNode = cteDataSource.From.GetUnsafeField( cteIdentityFieldNames[0] );
+        var pkFilter = pkBaseColumnNode == pkCteColumnNode;
+
+        i = 1;
+        foreach ( var name in targetInfo.IdentityColumnNames.AsSpan( 1 ) )
+        {
+            pkBaseColumnNode = targetInfo.BaseTarget.GetUnsafeField( name );
+            pkCteColumnNode = cteDataSource.From.GetUnsafeField( cteIdentityFieldNames[i++] );
+            pkFilter = pkFilter.And( pkBaseColumnNode == pkCteColumnNode );
+        }
+
+        var pkFilterTrait = SqlNode.FilterTrait( pkFilter, isConjunction: true );
+        var filteredCteDataSource = cteDataSource.SetTraits(
+            Chain.Create<SqlTraitNode>( pkFilterTrait ).Extend( SqlNode.LimitTrait( SqlNode.Literal( 1 ) ) ) );
+
+        i = 0;
+        foreach ( var assignmentIndex in indexesOfComplexAssignments )
+        {
+            var assignment = assignments[assignmentIndex];
+            var selection = filteredCteDataSource.From.GetUnsafeField( cteComplexAssignmentFieldNames[i++] ).AsSelf();
+            assignments[assignmentIndex] = assignment.DataField.Assign( filteredCteDataSource.Select( selection ) );
+        }
+
+        SqlConditionNode updateFilter = cteIdentityFieldNames.Length == 1
+            ? targetInfo.BaseTarget.GetUnsafeField( targetInfo.IdentityColumnNames[0] )
+                .InQuery( cteDataSource.Select( cteDataSource.From.GetUnsafeField( cteIdentityFieldNames[0] ).AsSelf() ) )
+            : cteDataSource.AddTrait( pkFilterTrait ).Exists();
+
+        updateTraits = updateTraits
+            .Extend( SqlNode.CommonTableExpressionTrait( cte ) )
+            .Extend( SqlNode.FilterTrait( updateFilter, isConjunction: true ) );
+
+        return targetInfo.BaseTarget.ToDataSource().SetTraits( updateTraits ).ToUpdate( assignments );
     }
 }

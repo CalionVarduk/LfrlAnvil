@@ -6,6 +6,21 @@ namespace LfrlAnvil.Sqlite.Tests;
 public class SqliteDatabaseFactoryOptionsTests : TestsBase
 {
     [Fact]
+    public void BaseTypeDefinitionsCreator_ShouldReturnDefaultTypeDefinitions()
+    {
+        var result = SqliteDatabaseFactoryOptions.BaseTypeDefinitionsCreator( "", new SqliteDataTypeProvider() );
+        result.Should().BeEquivalentTo( new SqliteColumnTypeDefinitionProviderBuilder().Build() );
+    }
+
+    [Fact]
+    public void BaseNodeInterpretersCreator_ShouldReturnDefaultNodeInterpreters()
+    {
+        var typeDefinitions = new SqliteColumnTypeDefinitionProviderBuilder().Build();
+        var result = SqliteDatabaseFactoryOptions.BaseNodeInterpretersCreator( "", "", new SqliteDataTypeProvider(), typeDefinitions );
+        result.Options.Should().BeEquivalentTo( SqliteNodeInterpreterOptions.Default.SetTypeDefinitions( typeDefinitions ) );
+    }
+
+    [Fact]
     public void Default_ShouldReturnCorrectOptions()
     {
         var sut = SqliteDatabaseFactoryOptions.Default;

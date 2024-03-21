@@ -3,6 +3,7 @@ using LfrlAnvil.Functional;
 using LfrlAnvil.MySql.Extensions;
 using LfrlAnvil.MySql.Objects.Builders;
 using LfrlAnvil.MySql.Tests.Helpers;
+using LfrlAnvil.Sql;
 using LfrlAnvil.Sql.Exceptions;
 using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Objects.Builders;
@@ -850,7 +851,9 @@ public class MySqlIndexBuilderTests : TestsBase
     [Fact]
     public void MarkAsVirtual_ShouldThrowSqlObjectBuilderException_WhenPartialIndexVirtualityChangesToTrue()
     {
-        var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var schema = MySqlDatabaseBuilderMock.Create( indexFilterResolution: SqlOptionalFunctionalityResolution.Include )
+            .Schemas.Create( "foo" );
+
         var table = schema.Objects.CreateTable( "T" );
         var sut = table.Constraints.CreateIndex( table.Columns.Create( "C" ).Asc() ).SetFilter( SqlNode.True() );
 
@@ -947,9 +950,55 @@ public class MySqlIndexBuilderTests : TestsBase
     }
 
     [Fact]
-    public void SetFilter_ShouldUpdateFilterAndFilterColumns_WhenValueChangesToNonNull()
+    public void SetFilter_ShouldIgnoreChange_WhenValueChanges()
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var table = schema.Objects.CreateTable( "T" );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).SetType<int>().Asc() );
+        var column = table.Columns.Create( "C2" ).SetType<int>();
+        var sut = table.Constraints.CreateIndex( column.Asc() );
+
+        var actionCount = schema.Database.GetPendingActionCount();
+        var result = sut.SetFilter( t => t["C2"] != null );
+        var actions = schema.Database.GetLastPendingActions( actionCount );
+
+        using ( new AssertionScope() )
+        {
+            result.Should().BeSameAs( sut );
+            result.Filter.Should().BeNull();
+            result.ReferencedFilterColumns.Should().BeEmpty();
+
+            column.ReferencingObjects.Should()
+                .BeSequentiallyEqualTo( SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), column ) );
+
+            actions.Should().BeEmpty();
+        }
+    }
+
+    [Fact]
+    public void SetFilter_ShouldThrowSqlObjectBuilderException_WhenValueChangesAndIndexFiltersAreForbidden()
+    {
+        var schema = MySqlDatabaseBuilderMock.Create( indexFilterResolution: SqlOptionalFunctionalityResolution.Forbid )
+            .Schemas.Create( "foo" );
+
+        var table = schema.Objects.CreateTable( "T" );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).SetType<int>().Asc() );
+        var column = table.Columns.Create( "C2" ).SetType<int>();
+        var sut = table.Constraints.CreateIndex( column.Asc() );
+
+        var action = Lambda.Of( () => sut.SetFilter( t => t["C2"] != null ) );
+
+        action.Should()
+            .ThrowExactly<SqlObjectBuilderException>()
+            .AndMatch( e => e.Dialect == MySqlDialect.Instance && e.Errors.Count == 1 );
+    }
+
+    [Fact]
+    public void SetFilter_ShouldUpdateFilterAndFilterColumns_WhenValueChangesToNonNullAndIndexFiltersAreIncluded()
+    {
+        var schema = MySqlDatabaseBuilderMock.Create( indexFilterResolution: SqlOptionalFunctionalityResolution.Include )
+            .Schemas.Create( "foo" );
+
         var table = schema.Objects.CreateTable( "T" );
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).SetType<int>().Asc() );
         var column = table.Columns.Create( "C2" ).SetType<int>();
@@ -981,9 +1030,11 @@ public class MySqlIndexBuilderTests : TestsBase
     }
 
     [Fact]
-    public void SetFilter_ShouldUpdateFilterAndFilterColumns_WhenValueChangesToNull()
+    public void SetFilter_ShouldUpdateFilterAndFilterColumns_WhenValueChangesToNullAndIndexFiltersAreIncluded()
     {
-        var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var schema = MySqlDatabaseBuilderMock.Create( indexFilterResolution: SqlOptionalFunctionalityResolution.Include )
+            .Schemas.Create( "foo" );
+
         var table = schema.Objects.CreateTable( "T" );
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).SetType<int>().Asc() );
         var column = table.Columns.Create( "C2" ).SetType<int>();
@@ -1012,10 +1063,12 @@ public class MySqlIndexBuilderTests : TestsBase
         }
     }
 
-    [Fact]
-    public void SetFilter_ShouldThrowSqlObjectBuilderException_WhenFilterIsInvalid()
+    [Theory]
+    [InlineData( SqlOptionalFunctionalityResolution.Include )]
+    [InlineData( SqlOptionalFunctionalityResolution.Forbid )]
+    public void SetFilter_ShouldThrowSqlObjectBuilderException_WhenFilterIsInvalid(SqlOptionalFunctionalityResolution indexFilterResolution)
     {
-        var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var schema = MySqlDatabaseBuilderMock.Create( indexFilterResolution ).Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         var sut = table.Constraints.CreateIndex( table.Columns.Create( "C" ).Asc() );
 
@@ -1027,7 +1080,9 @@ public class MySqlIndexBuilderTests : TestsBase
     [Fact]
     public void SetFilter_ShouldThrowSqlObjectBuilderException_WhenPrimaryKeyIndexFilterChangesToNonNull()
     {
-        var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var schema = MySqlDatabaseBuilderMock.Create( indexFilterResolution: SqlOptionalFunctionalityResolution.Include )
+            .Schemas.Create( "foo" );
+
         var table = schema.Objects.CreateTable( "T" );
         var sut = table.Constraints.SetPrimaryKey( table.Columns.Create( "C" ).Asc() ).Index;
 
@@ -1039,7 +1094,9 @@ public class MySqlIndexBuilderTests : TestsBase
     [Fact]
     public void SetFilter_ShouldThrowSqlObjectBuilderException_WhenReferencedIndexFilterChangesToNonNull()
     {
-        var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var schema = MySqlDatabaseBuilderMock.Create( indexFilterResolution: SqlOptionalFunctionalityResolution.Include )
+            .Schemas.Create( "foo" );
+
         var table = schema.Objects.CreateTable( "T" );
         var ix = table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() ).Index;
         var sut = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() ).MarkAsUnique();
@@ -1053,7 +1110,9 @@ public class MySqlIndexBuilderTests : TestsBase
     [Fact]
     public void SetFilter_ShouldThrowSqlObjectBuilderException_WhenIndexIsVirtual()
     {
-        var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var schema = MySqlDatabaseBuilderMock.Create( indexFilterResolution: SqlOptionalFunctionalityResolution.Include )
+            .Schemas.Create( "foo" );
+
         var table = schema.Objects.CreateTable( "T" );
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() ).MarkAsVirtual();
@@ -1082,9 +1141,11 @@ public class MySqlIndexBuilderTests : TestsBase
     }
 
     [Fact]
-    public void SetFilter_ShouldRecreateOriginatingForeignKeys_WhenValueChanges()
+    public void SetFilter_ShouldRecreateOriginatingForeignKeys_WhenValueChangesAndIndexFiltersAreIncluded()
     {
-        var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var schema = MySqlDatabaseBuilderMock.Create( indexFilterResolution: SqlOptionalFunctionalityResolution.Include )
+            .Schemas.Create( "foo" );
+
         var table = schema.Objects.CreateTable( "T" );
         var pk = table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).SetType<int>().Asc() );
         var sut = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).SetType<int>().Asc() );
@@ -1113,9 +1174,12 @@ public class MySqlIndexBuilderTests : TestsBase
     }
 
     [Fact]
-    public void SetFilter_ShouldUpdateFilterAndIsUniqueAndNameCorrectly_WhenFilterAndIsUniqueAndNameChangeAtTheSameTime()
+    public void
+        SetFilter_ShouldUpdateFilterAndIsUniqueAndNameCorrectly_WhenFilterAndIsUniqueAndNameChangeAtTheSameTimeAndIndexFiltersAreIncluded()
     {
-        var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var schema = MySqlDatabaseBuilderMock.Create( indexFilterResolution: SqlOptionalFunctionalityResolution.Include )
+            .Schemas.Create( "foo" );
+
         var table = schema.Objects.CreateTable( "T" );
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).SetType<int>().Asc() );
         var sut = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).SetType<int>().Asc() );
@@ -1207,7 +1271,9 @@ public class MySqlIndexBuilderTests : TestsBase
     [Fact]
     public void Remove_ShouldRemoveIndexAndClearReferencedColumnsAndReferencedFilterColumns()
     {
-        var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var schema = MySqlDatabaseBuilderMock.Create( indexFilterResolution: SqlOptionalFunctionalityResolution.Include )
+            .Schemas.Create( "foo" );
+
         var table = schema.Objects.CreateTable( "T" );
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var c2 = table.Columns.Create( "C2" );

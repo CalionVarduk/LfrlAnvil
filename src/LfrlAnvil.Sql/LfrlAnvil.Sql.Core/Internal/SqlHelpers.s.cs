@@ -36,7 +36,7 @@ public static class SqlHelpers
     public static readonly StringComparer NameComparer = StringComparer.OrdinalIgnoreCase;
     public static readonly Func<IDbCommand, int> ExecuteNonQueryDelegate = static cmd => cmd.ExecuteNonQuery();
     public static readonly SqlDefaultObjectNameProviderCreator<SqlDefaultObjectNameProvider> DefaultNamesCreator =
-        static _ => new SqlDefaultObjectNameProvider();
+        static (_, _) => new SqlDefaultObjectNameProvider();
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]

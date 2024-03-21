@@ -492,7 +492,7 @@ public class MySqlColumnBuilderTests : TestsBase
     [Fact]
     public void SetType_ShouldDoNothing_WhenNewTypeIsDifferentFromOldTypeButMySqlTypeRemainsTheSameAndDefaultValueIsNull()
     {
-        var schema = MySqlDatabaseBuilderMock.Create( new TypeDefinitionMock() ).Schemas.Create( "foo" );
+        var schema = MySqlDatabaseBuilderMock.Create( typeDefinitions: new TypeDefinitionMock() ).Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Columns.Create( "C2" ).SetType( MySqlDataType.Int );
@@ -1522,7 +1522,9 @@ public class MySqlColumnBuilderTests : TestsBase
     [Fact]
     public void Remove_ShouldThrowSqlObjectBuilderException_WhenColumnIsReferencedByIndexFilter()
     {
-        var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var schema = MySqlDatabaseBuilderMock.Create( indexFilterResolution: SqlOptionalFunctionalityResolution.Include )
+            .Schemas.Create( "foo" );
+
         var t1 = schema.Objects.CreateTable( "T1" );
         t1.Constraints.SetPrimaryKey( t1.Columns.Create( "C1" ).Asc() );
         var sut = t1.Columns.Create( "C2" );

@@ -595,7 +595,9 @@ public partial class MySqlTableBuilderTests
         [Fact]
         public void SetPrimaryKey_ShouldThrowSqlObjectBuilderException_WhenIndexIsPartial()
         {
-            var schema = MySqlDatabaseBuilderMock.Create().Schemas.Default;
+            var schema = MySqlDatabaseBuilderMock.Create( indexFilterResolution: SqlOptionalFunctionalityResolution.Include )
+                .Schemas.Default;
+
             var table = schema.Objects.CreateTable( Fixture.Create<string>() );
             var column = table.Columns.Create( "C" );
             var index = table.Constraints.CreateUniqueIndex( column.Asc() ).SetFilter( SqlNode.True() );
@@ -961,7 +963,9 @@ public partial class MySqlTableBuilderTests
         [Fact]
         public void CreateForeignKey_ShouldThrowSqlObjectBuilderException_WhenReferencedIndexHasFilter()
         {
-            var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+            var schema = MySqlDatabaseBuilderMock.Create( indexFilterResolution: SqlOptionalFunctionalityResolution.Include )
+                .Schemas.Create( "foo" );
+
             var table = schema.Objects.CreateTable( "T" );
             var sut = table.Constraints;
             var ix1 = sut.CreateIndex( table.Columns.Create( "C1" ).Asc() );

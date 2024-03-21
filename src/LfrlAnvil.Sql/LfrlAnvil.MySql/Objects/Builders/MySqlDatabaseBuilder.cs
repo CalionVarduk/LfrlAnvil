@@ -8,24 +8,34 @@ namespace LfrlAnvil.MySql.Objects.Builders;
 
 public sealed class MySqlDatabaseBuilder : SqlDatabaseBuilder
 {
-    internal MySqlDatabaseBuilder(string serverVersion, string defaultSchemaName, MySqlColumnTypeDefinitionProvider typeDefinitions)
+    internal MySqlDatabaseBuilder(
+        string serverVersion,
+        string defaultSchemaName,
+        SqlDefaultObjectNameProvider defaultNames,
+        MySqlDataTypeProvider dataTypes,
+        MySqlColumnTypeDefinitionProvider typeDefinitions,
+        MySqlNodeInterpreterFactory nodeInterpreters,
+        SqlOptionalFunctionalityResolution indexFilterResolution)
         : base(
             MySqlDialect.Instance,
             serverVersion,
             defaultSchemaName,
-            new MySqlDataTypeProvider(),
+            dataTypes,
             typeDefinitions,
-            new MySqlNodeInterpreterFactory( typeDefinitions, defaultSchemaName ),
+            nodeInterpreters,
             new MySqlQueryReaderFactory( typeDefinitions ),
             new MySqlParameterBinderFactory( typeDefinitions ),
-            new SqlDefaultObjectNameProvider(),
+            defaultNames,
             new MySqlSchemaBuilderCollection(),
             new MySqlDatabaseChangeTracker() )
     {
+        Assume.IsDefined( indexFilterResolution );
         CommonSchemaName = defaultSchemaName;
+        IndexFilterResolution = indexFilterResolution;
     }
 
     public string CommonSchemaName { get; }
+    public SqlOptionalFunctionalityResolution IndexFilterResolution { get; }
     public new MySqlSchemaBuilderCollection Schemas => ReinterpretCast.To<MySqlSchemaBuilderCollection>( base.Schemas );
     public new MySqlDataTypeProvider DataTypes => ReinterpretCast.To<MySqlDataTypeProvider>( base.DataTypes );
 

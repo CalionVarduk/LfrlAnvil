@@ -11,6 +11,7 @@ internal static class MySqlHelpers
     public static readonly SqlSchemaObjectName DefaultVersionHistoryName = SqlSchemaObjectName.Create( "common", "__VersionHistory" );
     public const string GuidFunctionName = "GUID";
     public const string DropIndexIfExistsProcedureName = "_DROP_INDEX_IF_EXISTS";
+    public const int DefaultIndexPrefixLength = 500;
 
     public static void AppendAlterTableHeader(SqlNodeInterpreter interpreter, SqlRecordSetInfo info)
     {

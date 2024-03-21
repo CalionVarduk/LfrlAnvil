@@ -1,9 +1,9 @@
-﻿using System;
-using System.Data;
+﻿using System.Data;
 using System.Diagnostics.Contracts;
 using System.Globalization;
 using System.Runtime.CompilerServices;
 using LfrlAnvil.Extensions;
+using LfrlAnvil.MySql.Exceptions;
 using LfrlAnvil.MySql.Internal;
 using LfrlAnvil.Sql;
 using LfrlAnvil.Sql.Exceptions;
@@ -21,28 +21,25 @@ namespace LfrlAnvil.MySql;
 
 public class MySqlNodeInterpreter : SqlNodeInterpreter
 {
-    private readonly string _maxLimit;
-    private readonly string _indexPrefixLength;
+    private const string MaxLimit = "18446744073709551615";
+    private readonly string? _indexPrefixLength;
 
-    public MySqlNodeInterpreter(
-        MySqlColumnTypeDefinitionProvider columnTypeDefinitions,
-        string commonSchemaName,
-        SqlNodeInterpreterContext context)
+    public MySqlNodeInterpreter(MySqlNodeInterpreterOptions options, SqlNodeInterpreterContext context)
         : base( context, beginNameDelimiter: '`', endNameDelimiter: '`' )
     {
-        ColumnTypeDefinitions = columnTypeDefinitions;
-        CommonSchemaName = commonSchemaName;
-        _maxLimit = ulong.MaxValue.ToString( CultureInfo.InvariantCulture );
-        _indexPrefixLength = IndexPrefixLength.ToString( CultureInfo.InvariantCulture );
+        Options = options;
+        TypeDefinitions = Options.TypeDefinitions ?? new MySqlColumnTypeDefinitionProviderBuilder().Build();
+        CommonSchemaName = Options.CommonSchemaName ?? MySqlHelpers.DefaultVersionHistoryName.Schema;
+        _indexPrefixLength = Options.IndexPrefixLength?.ToString( CultureInfo.InvariantCulture );
     }
 
-    public MySqlColumnTypeDefinitionProvider ColumnTypeDefinitions { get; }
-    public int IndexPrefixLength { get; } = 500;
+    public MySqlNodeInterpreterOptions Options { get; }
+    public MySqlColumnTypeDefinitionProvider TypeDefinitions { get; }
     public string CommonSchemaName { get; }
 
     public override void VisitLiteral(SqlLiteralNode node)
     {
-        var sql = node.GetSql( ColumnTypeDefinitions );
+        var sql = node.GetSql( TypeDefinitions );
         Context.Sql.Append( sql );
     }
 
@@ -558,7 +555,7 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
         {
             SqlJoinType.Left => "LEFT",
             SqlJoinType.Right => "RIGHT",
-            SqlJoinType.Full => throw new UnrecognizedSqlNodeException( this, node ),
+            SqlJoinType.Full => Options.IsFullJoinParsingEnabled ? "FULL" : throw new UnrecognizedSqlNodeException( this, node ),
             SqlJoinType.Cross => "CROSS",
             _ => "INNER"
         };
@@ -587,7 +584,7 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
         VisitChild( node.Value );
         Context.Sql.AppendSpace().Append( "AS" ).AppendSpace();
 
-        var typeDefinition = node.TargetTypeDefinition ?? ColumnTypeDefinitions.GetByType( node.TargetType );
+        var typeDefinition = node.TargetTypeDefinition ?? TypeDefinitions.GetByType( node.TargetType );
         var dataType = SqlHelpers.CastOrThrow<MySqlDataType>( MySqlDialect.Instance, typeDefinition.DataType );
         var name = dataType.Value switch
         {
@@ -678,13 +675,10 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
         var targetInfo = ExtractTargetUpdateInfo( node );
         var updateVisitor = CreateUpdateAssignmentsVisitor( node );
 
-        if ( updateVisitor is null || ! updateVisitor.ContainsComplexAssignments() )
-        {
-            VisitUpdateWithComplexDataSourceAndSimpleAssignments( node, targetInfo, in traits );
-            return;
-        }
-
-        VisitUpdateWithComplexDataSourceAndComplexAssignments( node, targetInfo, updateVisitor.GetIndexesOfComplexAssignments() );
+        node = CreateSimplifiedUpdateFrom( targetInfo, node, updateVisitor );
+        traits = ExtractDataSourceTraits( node.DataSource.Traits );
+        Assume.True( IsValidMultiTableUpdateStatement( node.DataSource, in traits ) );
+        VisitSimplifiedUpdateWithMultiTable( node, targetInfo, in traits );
     }
 
     public sealed override void VisitDeleteFrom(SqlDeleteFromNode node)
@@ -704,12 +698,16 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
         }
 
         var targetInfo = ExtractTargetDeleteInfo( node );
-        VisitDeleteFromWithComplexDataSource( node, targetInfo, in traits );
+
+        node = CreateSimplifiedDeleteFrom( targetInfo, node );
+        traits = ExtractDataSourceTraits( node.DataSource.Traits );
+        Assume.True( IsValidMultiTableDeleteStatement( node.DataSource, in traits ) );
+        VisitDeleteFromWithMultiTable( node, traits );
     }
 
     public override void VisitColumnDefinition(SqlColumnDefinitionNode node)
     {
-        var typeDefinition = node.TypeDefinition ?? ColumnTypeDefinitions.GetByType( node.Type.UnderlyingType );
+        var typeDefinition = node.TypeDefinition ?? TypeDefinitions.GetByType( node.Type.UnderlyingType );
         AppendDelimitedName( node.Name );
         Context.Sql.AppendSpace().Append( typeDefinition.DataType.Name );
 
@@ -825,12 +823,15 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
 
     public override void VisitCreateView(SqlCreateViewNode node)
     {
+        if ( node.Info.IsTemporary && Options.AreTemporaryViewsForbidden )
+            throw new SqlNodeVisitorException( Resources.TemporaryViewsAreForbidden, this, node );
+
         Context.Sql.Append( "CREATE" ).AppendSpace();
         if ( node.ReplaceIfExists )
             Context.Sql.Append( "OR" ).AppendSpace().Append( "REPLACE" ).AppendSpace();
 
         Context.Sql.Append( "VIEW" ).AppendSpace();
-        AppendDelimitedRecordSetInfo( node.Info );
+        AppendDelimitedSchemaObjectName( node.Info.Name );
         Context.Sql.AppendSpace().Append( "AS" );
         Context.AppendIndent();
         this.Visit( node.Source );
@@ -873,7 +874,7 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
 
             Context.Sql.Append( ')' );
 
-            if ( node.Filter is not null )
+            if ( node.Filter is not null && Options.IsIndexFilterParsingEnabled )
             {
                 Context.Sql.AppendSpace().Append( "WHERE" ).AppendSpace();
                 VisitChild( node.Filter );
@@ -930,6 +931,9 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
 
     public override void VisitDropView(SqlDropViewNode node)
     {
+        if ( node.View.IsTemporary && Options.AreTemporaryViewsForbidden )
+            throw new SqlNodeVisitorException( Resources.TemporaryViewsAreForbidden, this, node );
+
         Context.Sql.Append( "DROP" ).AppendSpace().Append( "VIEW" ).AppendSpace();
         if ( node.IfExists )
             Context.Sql.Append( "IF" ).AppendSpace().Append( "EXISTS" ).AppendSpace();
@@ -1112,7 +1116,7 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
         if ( offset is null )
             return;
 
-        Context.AppendIndent().Append( "LIMIT" ).AppendSpace().Append( _maxLimit );
+        Context.AppendIndent().Append( "LIMIT" ).AppendSpace().Append( MaxLimit );
         Context.Sql.AppendSpace().Append( "OFFSET" ).AppendSpace();
         VisitChild( offset );
     }
@@ -1133,8 +1137,8 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
 
             if ( type is not null )
             {
-                var typeDefinition = ColumnTypeDefinitions.GetByType( type.Value.UnderlyingType );
-                if ( typeDefinition.DataType is MySqlDataType dataType && IsTextOrBlobType( dataType ) )
+                var typeDefinition = TypeDefinitions.GetByType( type.Value.UnderlyingType );
+                if ( _indexPrefixLength is not null && typeDefinition.DataType is MySqlDataType dataType && IsTextOrBlobType( dataType ) )
                     Context.Sql.Append( '(' ).Append( _indexPrefixLength ).Append( ')' );
             }
         }
@@ -1206,61 +1210,27 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
             VisitJoinOn( join );
         }
 
-        Context.Sql.AppendSpace().Append( "SET" );
-
-        var assignments = node.Assignments;
-        if ( assignments.Count > 0 )
-        {
-            using ( Context.TempIndentIncrease() )
-            {
-                foreach ( var assignment in assignments )
-                {
-                    Context.AppendIndent();
-                    this.Visit( assignment.DataField );
-                    Context.Sql.AppendSpace().Append( '=' ).AppendSpace();
-                    VisitChild( assignment.Value );
-                    Context.Sql.AppendComma();
-                }
-            }
-
-            Context.Sql.ShrinkBy( 1 );
-        }
-
+        VisitMultiUpdateAssignmentRange( node.Assignments );
         VisitDataSourceAfterTraits( in traits );
     }
 
-    protected virtual void VisitUpdateWithComplexDataSourceAndSimpleAssignments(
+    protected virtual void VisitSimplifiedUpdateWithMultiTable(
         SqlUpdateNode node,
         ChangeTargetInfo targetInfo,
         in SqlDataSourceTraits traits)
     {
         VisitDataSourceBeforeTraits( in traits );
         Context.Sql.Append( "UPDATE" ).AppendSpace();
-        AppendDelimitedRecordSetName( targetInfo.BaseTarget );
+
+        this.Visit( node.DataSource.From );
+        foreach ( var join in node.DataSource.Joins )
+        {
+            Context.AppendIndent();
+            VisitJoinOn( join );
+        }
 
         using ( TempReplaceRecordSet( targetInfo.Target, targetInfo.BaseTarget ) )
-            VisitUpdateAssignmentRange( node.Assignments );
-
-        var filter = CreateComplexDeleteOrUpdateFilter( targetInfo, node.DataSource );
-        Context.AppendIndent();
-        VisitFilterTrait( filter );
-    }
-
-    protected virtual void VisitUpdateWithComplexDataSourceAndComplexAssignments(
-        SqlUpdateNode node,
-        ChangeTargetInfo targetInfo,
-        ReadOnlySpan<int> indexesOfComplexAssignments)
-    {
-        node = CreateSimplifiedUpdateWithComplexAssignments( targetInfo, node, indexesOfComplexAssignments );
-        var traits = ExtractDataSourceTraits( node.DataSource.Traits );
-        Assume.True( IsValidSingleTableUpdateStatement( node.DataSource, in traits ) );
-
-        VisitDataSourceBeforeTraits( in traits );
-        Context.Sql.Append( "UPDATE" ).AppendSpace();
-        AppendDelimitedRecordSetName( node.DataSource.From );
-
-        using ( TempReplaceRecordSet( targetInfo.Target, targetInfo.BaseTarget ) )
-            VisitUpdateAssignmentRange( node.Assignments );
+            VisitMultiUpdateAssignmentRange( node.Assignments );
 
         VisitDataSourceAfterTraits( in traits );
     }
@@ -1281,20 +1251,6 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
         Context.AppendIndent();
         VisitDataSource( node.DataSource );
         VisitDataSourceAfterTraits( in traits );
-    }
-
-    protected virtual void VisitDeleteFromWithComplexDataSource(
-        SqlDeleteFromNode node,
-        ChangeTargetInfo targetInfo,
-        in SqlDataSourceTraits traits)
-    {
-        VisitDataSourceBeforeTraits( in traits );
-        Context.Sql.Append( "DELETE" ).AppendSpace().Append( "FROM" ).AppendSpace();
-        AppendDelimitedRecordSetName( targetInfo.BaseTarget );
-
-        var filter = CreateComplexDeleteOrUpdateFilter( targetInfo, node.DataSource );
-        Context.AppendIndent();
-        VisitFilterTrait( filter );
     }
 
     protected override void VisitDataSourceAfterTraits(in SqlDataSourceTraits traits)
@@ -1382,40 +1338,25 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
             traits.Custom.Count == 0;
     }
 
-    [Pure]
-    protected new static SqlFilterTraitNode CreateComplexDeleteOrUpdateFilter(ChangeTargetInfo targetInfo, SqlDataSourceNode dataSource)
+    protected void VisitMultiUpdateAssignmentRange(ReadOnlyArray<SqlValueAssignmentNode> assignments)
     {
-        var traits = Chain<SqlTraitNode>.Empty;
-        foreach ( var trait in dataSource.Traits )
+        Context.Sql.AppendSpace().Append( "SET" );
+
+        if ( assignments.Count > 0 )
         {
-            if ( trait.NodeType != SqlNodeType.CommonTableExpressionTrait )
-                traits = traits.Extend( trait );
+            using ( Context.TempIndentIncrease() )
+            {
+                foreach ( var assignment in assignments )
+                {
+                    Context.AppendIndent();
+                    this.Visit( assignment.DataField );
+                    Context.Sql.AppendSpace().Append( '=' ).AppendSpace();
+                    VisitChild( assignment.Value );
+                    Context.Sql.AppendComma();
+                }
+            }
+
+            Context.Sql.ShrinkBy( 1 );
         }
-
-        var pkBaseColumnNode = targetInfo.BaseTarget.GetUnsafeField( targetInfo.IdentityColumnNames[0] );
-        var pkColumnNode = targetInfo.Target.GetUnsafeField( targetInfo.IdentityColumnNames[0] );
-
-        if ( targetInfo.IdentityColumnNames.Length == 1 )
-        {
-            dataSource = dataSource.SetTraits( traits ).Select( pkColumnNode.AsSelf() ).AsSet( $"_{Guid.NewGuid():N}" ).ToDataSource();
-            return SqlNode.FilterTrait( pkBaseColumnNode.InQuery( dataSource.Select( dataSource.GetAll() ) ), isConjunction: true );
-        }
-
-        var pkSelection = new SqlSelectNode[targetInfo.IdentityColumnNames.Length];
-        for ( var i = 0; i < targetInfo.IdentityColumnNames.Length; ++i )
-            pkSelection[i] = targetInfo.Target.GetUnsafeField( targetInfo.IdentityColumnNames[i] ).AsSelf();
-
-        dataSource = dataSource.SetTraits( traits ).Select( pkSelection ).AsSet( $"_{Guid.NewGuid():N}" ).ToDataSource();
-
-        pkColumnNode = dataSource.From.GetUnsafeField( pkColumnNode.Name );
-        var pkFilter = pkBaseColumnNode == pkColumnNode;
-        foreach ( var name in targetInfo.IdentityColumnNames.AsSpan( 1 ) )
-        {
-            pkBaseColumnNode = targetInfo.BaseTarget.GetUnsafeField( name );
-            pkColumnNode = dataSource.From.GetUnsafeField( name );
-            pkFilter = pkFilter.And( pkBaseColumnNode == pkColumnNode );
-        }
-
-        return SqlNode.FilterTrait( dataSource.AndWhere( pkFilter ).Exists(), isConjunction: true );
     }
 }

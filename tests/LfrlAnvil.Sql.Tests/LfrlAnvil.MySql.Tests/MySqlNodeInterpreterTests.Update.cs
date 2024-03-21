@@ -9,9 +9,9 @@ using LfrlAnvil.TestExtensions.FluentAssertions;
 using LfrlAnvil.TestExtensions.Sql.FluentAssertions;
 using LfrlAnvil.TestExtensions.Sql.Mocks;
 
-namespace LfrlAnvil.Sqlite.Tests;
+namespace LfrlAnvil.MySql.Tests;
 
-public partial class SqliteNodeInterpreterTests
+public partial class MySqlNodeInterpreterTests
 {
     public class Update : TestsBase
     {
@@ -27,7 +27,7 @@ public partial class SqliteNodeInterpreterTests
                 .Should()
                 .Be(
                     @"UPDATE foo SET
-  ""a"" = 'bar'" );
+  `a` = 'bar'" );
         }
 
         [Fact]
@@ -44,8 +44,8 @@ public partial class SqliteNodeInterpreterTests
                 .Should()
                 .Be(
                     @"UPDATE foo SET
-  ""a"" = 'bar'
-WHERE foo.""a"" < 10" );
+  `a` = 'bar'
+WHERE foo.`a` < 10" );
         }
 
         [Fact]
@@ -62,9 +62,9 @@ WHERE foo.""a"" < 10" );
             sut.Context.Sql.ToString()
                 .Should()
                 .Be(
-                    @"UPDATE ""common_foo"" AS ""bar"" SET
-  ""a"" = 10
-WHERE ""bar"".""a"" < 10" );
+                    @"UPDATE `common`.`foo` AS `bar` SET
+  `a` = 10
+WHERE `bar`.`a` < 10" );
         }
 
         [Fact]
@@ -72,64 +72,28 @@ WHERE ""bar"".""a"" < 10" );
         {
             var sut = CreateInterpreter();
             var dataSource = SqlTableMock.Create<int>( "foo", new[] { "a" } )
-                .ToRecordSet( "f" )
+                .Node
                 .ToDataSource()
                 .With( SqlNode.RawQuery( "SELECT * FROM abc" ).ToCte( "cba" ) )
-                .AndWhere( s => s["f"]["a"].InQuery( SqlNode.RawQuery( "SELECT cba.c FROM cba" ) ) )
-                .OrderBy( s => new[] { s["f"]["a"].Asc() } )
-                .Limit( SqlNode.Literal( 5 ) )
-                .Offset( SqlNode.Literal( 10 ) );
+                .AndWhere( s => s["common.foo"]["a"].InQuery( SqlNode.RawQuery( "SELECT cba.c FROM cba" ) ) )
+                .OrderBy( s => new[] { s["common.foo"]["a"].Asc() } )
+                .Limit( SqlNode.Literal( 5 ) );
 
-            sut.Visit( dataSource.ToUpdate( s => new[] { s["f"]["a"].Assign( SqlNode.Literal( 10 ) ) } ) );
+            sut.Visit( dataSource.ToUpdate( s => new[] { s["common.foo"]["a"].Assign( SqlNode.Literal( 10 ) ) } ) );
 
             sut.Context.Sql.ToString()
                 .Should()
                 .Be(
-                    @"WITH ""cba"" AS (
+                    @"WITH `cba` AS (
   SELECT * FROM abc
 )
-UPDATE ""common_foo"" AS ""f"" SET
-  ""a"" = 10
-WHERE ""f"".""a"" IN (
+UPDATE `common`.`foo` SET
+  `a` = 10
+WHERE `common`.`foo`.`a` IN (
   SELECT cba.c FROM cba
 )
-ORDER BY ""f"".""a"" ASC
-LIMIT 5 OFFSET 10" );
-        }
-
-        [Fact]
-        public void Visit_ShouldInterpretUpdateSingleDataSource_WithUpdateLimitDisabled_WithCteAndWhereAndOrderByAndLimit()
-        {
-            var sut = CreateInterpreter( SqliteNodeInterpreterOptions.Default.EnableUpdateOrDeleteLimit( false ) );
-            var dataSource = SqlTableMock.Create<int>( "foo", new[] { "a" } )
-                .ToRecordSet( "f" )
-                .ToDataSource()
-                .With( SqlNode.RawQuery( "SELECT * FROM abc" ).ToCte( "cba" ) )
-                .AndWhere( s => s["f"]["a"].InQuery( SqlNode.RawQuery( "SELECT cba.c FROM cba" ) ) )
-                .OrderBy( s => new[] { s["f"]["a"].Asc() } )
-                .Limit( SqlNode.Literal( 5 ) )
-                .Offset( SqlNode.Literal( 10 ) );
-
-            sut.Visit( dataSource.ToUpdate( s => new[] { s["f"]["a"].Assign( SqlNode.Literal( 10 ) ) } ) );
-
-            sut.Context.Sql.ToString()
-                .Should()
-                .Be(
-                    @"WITH ""cba"" AS (
-  SELECT * FROM abc
-)
-UPDATE ""common_foo"" SET
-  ""a"" = 10
-WHERE ""common_foo"".""a"" IN (
-  SELECT
-    ""f"".""a""
-  FROM ""common_foo"" AS ""f""
-  WHERE ""f"".""a"" IN (
-    SELECT cba.c FROM cba
-  )
-  ORDER BY ""f"".""a"" ASC
-  LIMIT 5 OFFSET 10
-)" );
+ORDER BY `common`.`foo`.`a` ASC
+LIMIT 5" );
         }
 
         [Fact]
@@ -155,25 +119,26 @@ WHERE ""common_foo"".""a"" IN (
 
             sut.Context.Sql.ToString()
                 .Should()
-                .Be(
-                    @"WITH ""cba"" AS (
+                .SatisfySql(
+                    @"WITH `cba` AS (
   SELECT * FROM abc
-)
-UPDATE ""common_foo"" SET
-  ""a"" = 10
-WHERE ""common_foo"".""a"" IN (
+),
+`_{GUID}` AS (
   SELECT DISTINCT
-    ""f"".""a""
-  FROM ""common_foo"" AS ""f""
-  WHERE ""f"".""a"" IN (
+    `f`.`a` AS `ID_a_0`
+  FROM `common`.`foo` AS `f`
+  WHERE `f`.`a` IN (
     SELECT cba.c FROM cba
   )
-  GROUP BY ""f"".""b""
-  HAVING ""f"".""b"" > 20
-  WINDOW ""wnd"" AS ()
-  ORDER BY ""f"".""a"" ASC
+  GROUP BY `f`.`b`
+  HAVING `f`.`b` > 20
+  WINDOW `wnd` AS ()
+  ORDER BY `f`.`a` ASC
   LIMIT 5 OFFSET 10
-)" );
+)
+UPDATE `common`.`foo`
+INNER JOIN `_{GUID}` ON `common`.`foo`.`a` = `_{GUID}`.`ID_a_0` SET
+  `common`.`foo`.`a` = 10;" );
         }
 
         [Fact]
@@ -198,11 +163,11 @@ WHERE ""common_foo"".""a"" IN (
                 .Should()
                 .Be(
                     @"UPDATE foo SET
-  ""b"" = (
+  `b` = (
     SELECT
-      bar.""y""
+      bar.`y`
     FROM bar
-    WHERE bar.""x"" = foo.""a""
+    WHERE bar.`x` = foo.`a`
   )" );
         }
 
@@ -224,8 +189,8 @@ WHERE ""common_foo"".""a"" IN (
                 .Should()
                 .Be(
                     @"UPDATE foo SET
-  ""a"" = (foo.""a"" + 1),
-  ""b"" = (foo.""c"" * foo.""d"")" );
+  `a` = (foo.`a` + 1),
+  `b` = (foo.`c` * foo.`d`)" );
         }
 
         [Fact]
@@ -241,145 +206,9 @@ WHERE ""common_foo"".""a"" IN (
             sut.Context.Sql.ToString()
                 .Should()
                 .Be(
-                    @"UPDATE ""common_foo"" AS ""f"" SET
-  ""a"" = 10
-FROM bar
-WHERE ""f"".""a"" = bar.""a""" );
-        }
-
-        [Fact]
-        public void Visit_ShouldInterpretUpdateMultiDataSource_WithUpdateFromDisabled_WithoutTraits()
-        {
-            var sut = CreateInterpreter( SqliteNodeInterpreterOptions.Default.EnableUpdateFrom( false ) );
-            var foo = SqlTableMock.Create<int>( "foo", new[] { "a" } ).ToRecordSet( "f" );
-            var other = SqlNode.RawRecordSet( "bar" );
-            var dataSource = foo.Join( other.InnerOn( foo["a"] == other["a"] ) );
-
-            sut.Visit( dataSource.ToUpdate( s => new[] { s["f"]["a"].Assign( SqlNode.Literal( 10 ) ) } ) );
-
-            sut.Context.Sql.ToString()
-                .Should()
-                .Be(
-                    @"UPDATE ""common_foo"" SET
-  ""a"" = 10
-WHERE ""common_foo"".""a"" IN (
-  SELECT
-    ""f"".""a""
-  FROM ""common_foo"" AS ""f""
-  INNER JOIN bar ON ""f"".""a"" = bar.""a""
-)" );
-        }
-
-        [Fact]
-        public void Visit_ShouldInterpretUpdateMultiDataSource_WithMoreThanTwoRecordSets()
-        {
-            var sut = CreateInterpreter();
-            var foo = SqlTableMock.Create<int>( "foo", new[] { "a" } ).ToRecordSet( "f" );
-            var bar = SqlNode.RawRecordSet( "bar" );
-            var qux = SqlNode.RawRecordSet( "qux" );
-            var dataSource = foo.Join( bar.InnerOn( foo["a"] == bar["a"] ), qux.InnerOn( bar["b"] == qux["b"] ) );
-
-            sut.Visit( dataSource.ToUpdate( s => new[] { s["f"]["a"].Assign( SqlNode.Literal( 10 ) ) } ) );
-
-            sut.Context.Sql.ToString()
-                .Should()
-                .Be(
-                    @"UPDATE ""common_foo"" SET
-  ""a"" = 10
-WHERE ""common_foo"".""a"" IN (
-  SELECT
-    ""f"".""a""
-  FROM ""common_foo"" AS ""f""
-  INNER JOIN bar ON ""f"".""a"" = bar.""a""
-  INNER JOIN qux ON bar.""b"" = qux.""b""
-)" );
-        }
-
-        [Fact]
-        public void Visit_ShouldInterpretUpdateMultiDataSource_WithCrossJoin()
-        {
-            var sut = CreateInterpreter();
-            var foo = SqlTableMock.Create<int>( "foo", new[] { "a" } ).ToRecordSet( "f" );
-            var other = SqlNode.RawRecordSet( "bar" );
-            var dataSource = foo.Join( other.Cross() );
-
-            sut.Visit( dataSource.ToUpdate( s => new[] { s["f"]["a"].Assign( SqlNode.Literal( 10 ) ) } ) );
-
-            sut.Context.Sql.ToString()
-                .Should()
-                .Be(
-                    @"UPDATE ""common_foo"" AS ""f"" SET
-  ""a"" = 10
-FROM bar" );
-        }
-
-        [Fact]
-        public void Visit_ShouldInterpretUpdateMultiDataSource_WithLeftJoin()
-        {
-            var sut = CreateInterpreter();
-            var foo = SqlTableMock.Create<int>( "foo", new[] { "a" } ).ToRecordSet( "f" );
-            var other = SqlNode.RawRecordSet( "bar" );
-            var dataSource = foo.Join( other.LeftOn( foo["a"] == other["a"] ) );
-
-            sut.Visit( dataSource.ToUpdate( s => new[] { s["f"]["a"].Assign( SqlNode.Literal( 10 ) ) } ) );
-
-            sut.Context.Sql.ToString()
-                .Should()
-                .Be(
-                    @"UPDATE ""common_foo"" SET
-  ""a"" = 10
-WHERE ""common_foo"".""a"" IN (
-  SELECT
-    ""f"".""a""
-  FROM ""common_foo"" AS ""f""
-  LEFT JOIN bar ON ""f"".""a"" = bar.""a""
-)" );
-        }
-
-        [Fact]
-        public void Visit_ShouldInterpretUpdateMultiDataSource_WithRightJoin()
-        {
-            var sut = CreateInterpreter();
-            var foo = SqlTableMock.Create<int>( "foo", new[] { "a" } ).ToRecordSet( "f" );
-            var other = SqlNode.RawRecordSet( "bar" );
-            var dataSource = foo.Join( other.RightOn( foo["a"] == other["a"] ) );
-
-            sut.Visit( dataSource.ToUpdate( s => new[] { s["f"]["a"].Assign( SqlNode.Literal( 10 ) ) } ) );
-
-            sut.Context.Sql.ToString()
-                .Should()
-                .Be(
-                    @"UPDATE ""common_foo"" SET
-  ""a"" = 10
-WHERE ""common_foo"".""a"" IN (
-  SELECT
-    ""f"".""a""
-  FROM ""common_foo"" AS ""f""
-  RIGHT JOIN bar ON ""f"".""a"" = bar.""a""
-)" );
-        }
-
-        [Fact]
-        public void Visit_ShouldInterpretUpdateMultiDataSource_WithFullJoin()
-        {
-            var sut = CreateInterpreter();
-            var foo = SqlTableMock.Create<int>( "foo", new[] { "a" } ).ToRecordSet( "f" );
-            var other = SqlNode.RawRecordSet( "bar" );
-            var dataSource = foo.Join( other.FullOn( foo["a"] == other["a"] ) );
-
-            sut.Visit( dataSource.ToUpdate( s => new[] { s["f"]["a"].Assign( SqlNode.Literal( 10 ) ) } ) );
-
-            sut.Context.Sql.ToString()
-                .Should()
-                .Be(
-                    @"UPDATE ""common_foo"" SET
-  ""a"" = 10
-WHERE ""common_foo"".""a"" IN (
-  SELECT
-    ""f"".""a""
-  FROM ""common_foo"" AS ""f""
-  FULL JOIN bar ON ""f"".""a"" = bar.""a""
-)" );
+                    @"UPDATE `common`.`foo` AS `f`
+INNER JOIN bar ON `f`.`a` = bar.`a` SET
+  `f`.`a` = 10" );
         }
 
         [Fact]
@@ -399,44 +228,13 @@ WHERE ""common_foo"".""a"" IN (
             sut.Context.Sql.ToString()
                 .Should()
                 .Be(
-                    @"WITH ""cba"" AS (
+                    @"WITH `cba` AS (
   SELECT * FROM abc
 )
-UPDATE ""common_foo"" AS ""f"" SET
-  ""a"" = 10
-FROM bar AS ""b""
-WHERE (""f"".""a"" = ""b"".""a"") AND (""f"".""a"" < 10)" );
-        }
-
-        [Fact]
-        public void Visit_ShouldInterpretUpdateMultiDataSource_WithUpdateFromDisabled_WithCteAndWhere()
-        {
-            var sut = CreateInterpreter( SqliteNodeInterpreterOptions.Default.EnableUpdateFrom( false ) );
-            var foo = SqlTableMock.Create<int>( "foo", new[] { "a" } ).ToRecordSet( "f" );
-            var other = SqlNode.RawRecordSet( "bar", "b" );
-
-            var dataSource = foo
-                .Join( other.InnerOn( foo["a"] == other["a"] ) )
-                .With( SqlNode.RawQuery( "SELECT * FROM abc" ).ToCte( "cba" ) )
-                .AndWhere( s => s["f"]["a"] < SqlNode.Literal( 10 ) );
-
-            sut.Visit( dataSource.ToUpdate( s => new[] { s["f"]["a"].Assign( SqlNode.Literal( 10 ) ) } ) );
-
-            sut.Context.Sql.ToString()
-                .Should()
-                .Be(
-                    @"WITH ""cba"" AS (
-  SELECT * FROM abc
-)
-UPDATE ""common_foo"" SET
-  ""a"" = 10
-WHERE ""common_foo"".""a"" IN (
-  SELECT
-    ""f"".""a""
-  FROM ""common_foo"" AS ""f""
-  INNER JOIN bar AS ""b"" ON ""f"".""a"" = ""b"".""a""
-  WHERE ""f"".""a"" < 10
-)" );
+UPDATE `common`.`foo` AS `f`
+INNER JOIN bar AS `b` ON `f`.`a` = `b`.`a` SET
+  `f`.`a` = 10
+WHERE `f`.`a` < 10" );
         }
 
         [Fact]
@@ -452,103 +250,30 @@ WHERE ""common_foo"".""a"" IN (
                 .With( SqlNode.RawQuery( "SELECT * FROM abc" ).ToCte( "cba" ) )
                 .AndWhere( s => s["f"]["a"].InQuery( SqlNode.RawQuery( "SELECT cba.c FROM cba" ) ) )
                 .OrderBy( s => new[] { s["f"]["a"].Asc() } )
-                .Limit( SqlNode.Literal( 5 ) )
-                .Offset( SqlNode.Literal( 10 ) );
+                .Limit( SqlNode.Literal( 5 ) );
 
             sut.Visit( dataSource.ToUpdate( s => new[] { s["f"]["a"].Assign( SqlNode.Literal( 10 ) ) } ) );
 
             sut.Context.Sql.ToString()
                 .Should()
-                .Be(
-                    @"WITH ""cba"" AS (
+                .SatisfySql(
+                    @"WITH `cba` AS (
   SELECT * FROM abc
-)
-UPDATE ""common_foo"" AS ""f"" SET
-  ""a"" = 10
-FROM bar
-WHERE (""f"".""a"" = bar.""a"") AND (""f"".""a"" IN (
-    SELECT cba.c FROM cba
-  ))
-ORDER BY ""f"".""a"" ASC
-LIMIT 5 OFFSET 10" );
-        }
-
-        [Fact]
-        public void Visit_ShouldInterpretUpdateMultiDataSource_WithUpdateLimitDisabled_WithCteAndWhereAndOrderByAndLimit()
-        {
-            var sut = CreateInterpreter( SqliteNodeInterpreterOptions.Default.EnableUpdateOrDeleteLimit( false ) );
-            var table = SqlTableMock.Create<int>( "foo", new[] { "a", "b" }, new[] { "a" } );
-            var foo = table.ToRecordSet( "f" );
-            var other = SqlNode.RawRecordSet( "bar" );
-
-            var dataSource = foo
-                .Join( other.InnerOn( foo["a"] == other["a"] ) )
-                .With( SqlNode.RawQuery( "SELECT * FROM abc" ).ToCte( "cba" ) )
-                .AndWhere( s => s["f"]["a"].InQuery( SqlNode.RawQuery( "SELECT cba.c FROM cba" ) ) )
-                .OrderBy( s => new[] { s["f"]["a"].Asc() } )
-                .Limit( SqlNode.Literal( 5 ) )
-                .Offset( SqlNode.Literal( 10 ) );
-
-            sut.Visit( dataSource.ToUpdate( s => new[] { s["f"]["a"].Assign( SqlNode.Literal( 10 ) ) } ) );
-
-            sut.Context.Sql.ToString()
-                .Should()
-                .Be(
-                    @"WITH ""cba"" AS (
-  SELECT * FROM abc
-)
-UPDATE ""common_foo"" SET
-  ""a"" = 10
-WHERE ""common_foo"".""a"" IN (
+),
+`_{GUID}` AS (
   SELECT
-    ""f"".""a""
-  FROM ""common_foo"" AS ""f""
-  INNER JOIN bar ON ""f"".""a"" = bar.""a""
-  WHERE ""f"".""a"" IN (
+    `f`.`a` AS `ID_a_0`
+  FROM `common`.`foo` AS `f`
+  INNER JOIN bar ON `f`.`a` = bar.`a`
+  WHERE `f`.`a` IN (
     SELECT cba.c FROM cba
   )
-  ORDER BY ""f"".""a"" ASC
-  LIMIT 5 OFFSET 10
-)" );
-        }
-
-        [Fact]
-        public void Visit_ShouldInterpretUpdateMultiDataSource_WithUpdateFromDisabled_WithCteAndWhereAndOrderByAndLimit()
-        {
-            var sut = CreateInterpreter( SqliteNodeInterpreterOptions.Default.EnableUpdateFrom( false ) );
-            var table = SqlTableMock.Create<int>( "foo", new[] { "a", "b" }, new[] { "a" } );
-            var foo = table.ToRecordSet( "f" );
-            var other = SqlNode.RawRecordSet( "bar" );
-
-            var dataSource = foo
-                .Join( other.InnerOn( foo["a"] == other["a"] ) )
-                .With( SqlNode.RawQuery( "SELECT * FROM abc" ).ToCte( "cba" ) )
-                .AndWhere( s => s["f"]["a"].InQuery( SqlNode.RawQuery( "SELECT cba.c FROM cba" ) ) )
-                .OrderBy( s => new[] { s["f"]["a"].Asc() } )
-                .Limit( SqlNode.Literal( 5 ) )
-                .Offset( SqlNode.Literal( 10 ) );
-
-            sut.Visit( dataSource.ToUpdate( s => new[] { s["f"]["a"].Assign( SqlNode.Literal( 10 ) ) } ) );
-
-            sut.Context.Sql.ToString()
-                .Should()
-                .Be(
-                    @"WITH ""cba"" AS (
-  SELECT * FROM abc
+  ORDER BY `f`.`a` ASC
+  LIMIT 5
 )
-UPDATE ""common_foo"" SET
-  ""a"" = 10
-WHERE ""common_foo"".""a"" IN (
-  SELECT
-    ""f"".""a""
-  FROM ""common_foo"" AS ""f""
-  INNER JOIN bar ON ""f"".""a"" = bar.""a""
-  WHERE ""f"".""a"" IN (
-    SELECT cba.c FROM cba
-  )
-  ORDER BY ""f"".""a"" ASC
-  LIMIT 5 OFFSET 10
-)" );
+UPDATE `common`.`foo`
+INNER JOIN `_{GUID}` ON `common`.`foo`.`a` = `_{GUID}`.`ID_a_0` SET
+  `common`.`foo`.`a` = 10;" );
         }
 
         [Fact]
@@ -575,26 +300,27 @@ WHERE ""common_foo"".""a"" IN (
 
             sut.Context.Sql.ToString()
                 .Should()
-                .Be(
-                    @"WITH ""cba"" AS (
+                .SatisfySql(
+                    @"WITH `cba` AS (
   SELECT * FROM abc
-)
-UPDATE ""common_foo"" SET
-  ""a"" = 10
-WHERE ""common_foo"".""a"" IN (
+),
+`_{GUID}` AS (
   SELECT DISTINCT
-    ""f"".""a""
-  FROM ""common_foo"" AS ""f""
-  INNER JOIN bar ON ""f"".""a"" = bar.""a""
-  WHERE ""f"".""a"" IN (
+    `f`.`a` AS `ID_a_0`
+  FROM `common`.`foo` AS `f`
+  INNER JOIN bar ON `f`.`a` = bar.`a`
+  WHERE `f`.`a` IN (
     SELECT cba.c FROM cba
   )
-  GROUP BY ""f"".""b""
-  HAVING ""f"".""b"" > 20
-  WINDOW ""wnd"" AS ()
-  ORDER BY ""f"".""a"" ASC
+  GROUP BY `f`.`b`
+  HAVING `f`.`b` > 20
+  WINDOW `wnd` AS ()
+  ORDER BY `f`.`a` ASC
   LIMIT 5 OFFSET 10
-)" );
+)
+UPDATE `common`.`foo`
+INNER JOIN `_{GUID}` ON `common`.`foo`.`a` = `_{GUID}`.`ID_a_0` SET
+  `common`.`foo`.`a` = 10;" );
         }
 
         [Fact]
@@ -621,66 +347,14 @@ WHERE ""common_foo"".""a"" IN (
             sut.Context.Sql.ToString()
                 .Should()
                 .Be(
-                    @"UPDATE ""common_foo"" AS ""f"" SET
-  ""b"" = (
+                    @"UPDATE `common`.`foo` AS `f`
+INNER JOIN bar ON `f`.`a` = bar.`a` SET
+  `f`.`b` = (
     SELECT
-      (bar.""y"" + qux.""y"") AS ""y""
+      (bar.`y` + qux.`y`) AS `y`
     FROM qux
-    WHERE qux.""x"" = ""f"".""a""
-  )
-FROM bar
-WHERE ""f"".""a"" = bar.""a""" );
-        }
-
-        [Fact]
-        public void Visit_ShouldInterpretUpdateMultiDataSource_WithUpdateFromDisabled_WithSubQueryInAssignment()
-        {
-            var sut = CreateInterpreter( SqliteNodeInterpreterOptions.Default.EnableUpdateFrom( false ) );
-            var table = SqlTableMock.Create<int>( "foo", new[] { "a", "b" }, new[] { "a" } );
-            var foo = table.ToRecordSet( "f" );
-            var other = SqlNode.RawRecordSet( "bar" );
-            var dataSource = foo.Join( other.InnerOn( foo["a"] == other["a"] ) );
-
-            sut.Visit(
-                dataSource.ToUpdate(
-                    s => new[]
-                    {
-                        s["f"]["b"]
-                            .Assign(
-                                SqlNode.RawRecordSet( "qux" )
-                                    .ToDataSource()
-                                    .AndWhere( b => b.From["x"] == s["f"]["a"] )
-                                    .Select( b => new[] { (s["bar"]["y"] + b.From["y"]).As( "y" ) } ) )
-                    } ) );
-
-            sut.Context.Sql.ToString()
-                .Should()
-                .SatisfySql(
-                    @"WITH ""_{GUID}"" AS (
-  SELECT
-    ""f"".""a"" AS ""ID_a_0"",
-    (
-      SELECT
-        (bar.""y"" + qux.""y"") AS ""y""
-      FROM qux
-      WHERE qux.""x"" = ""f"".""a""
-    ) AS ""VAL_b_0""
-  FROM ""common_foo"" AS ""f""
-  INNER JOIN bar ON ""f"".""a"" = bar.""a""
-)
-UPDATE ""common_foo"" SET
-  ""b"" = (
-    SELECT
-      ""_{GUID}"".""VAL_b_0""
-    FROM ""_{GUID}""
-    WHERE ""common_foo"".""a"" = ""_{GUID}"".""ID_a_0""
-    LIMIT 1
-  )
-WHERE ""common_foo"".""a"" IN (
-  SELECT
-    ""_{GUID}"".""ID_a_0""
-  FROM ""_{GUID}""
-);" );
+    WHERE qux.`x` = `f`.`a`
+  )" );
         }
 
         [Fact]
@@ -703,54 +377,10 @@ WHERE ""common_foo"".""a"" IN (
             sut.Context.Sql.ToString()
                 .Should()
                 .Be(
-                    @"UPDATE ""common_foo"" AS ""f"" SET
-  ""a"" = ((""f"".""a"" + bar.""a"") + 1),
-  ""b"" = (""f"".""c"" * ""f"".""d"")
-FROM bar
-WHERE ""f"".""a"" = bar.""a""" );
-        }
-
-        [Fact]
-        public void Visit_ShouldInterpretUpdateMultiDataSource_WithUpdateFromDisabled_WithDataSourceFieldsAsAssignedValues()
-        {
-            var sut = CreateInterpreter( SqliteNodeInterpreterOptions.Default.EnableUpdateFrom( false ) );
-            var table = SqlTableMock.Create<int>( "foo", new[] { "a", "b", "c", "d" }, new[] { "a" } );
-            var foo = table.ToRecordSet( "f" );
-            var other = SqlNode.RawRecordSet( "bar" );
-            var dataSource = foo.Join( other.InnerOn( foo["a"] == other["a"] ) );
-
-            sut.Visit(
-                dataSource.ToUpdate(
-                    s => new[]
-                    {
-                        s["f"]["a"].Assign( s["f"]["a"] + s["bar"]["a"] + SqlNode.Literal( 1 ) ),
-                        s["f"]["b"].Assign( s["f"]["c"] * s["f"]["d"] )
-                    } ) );
-
-            sut.Context.Sql.ToString()
-                .Should()
-                .SatisfySql(
-                    @"WITH ""_{GUID}"" AS (
-  SELECT
-    ""f"".""a"" AS ""ID_a_0"",
-    ((""f"".""a"" + bar.""a"") + 1) AS ""VAL_a_0""
-  FROM ""common_foo"" AS ""f""
-  INNER JOIN bar ON ""f"".""a"" = bar.""a""
-)
-UPDATE ""common_foo"" SET
-  ""a"" = (
-    SELECT
-      ""_{GUID}"".""VAL_a_0""
-    FROM ""_{GUID}""
-    WHERE ""common_foo"".""a"" = ""_{GUID}"".""ID_a_0""
-    LIMIT 1
-  ),
-  ""b"" = (""common_foo"".""c"" * ""common_foo"".""d"")
-WHERE ""common_foo"".""a"" IN (
-  SELECT
-    ""_{GUID}"".""ID_a_0""
-  FROM ""_{GUID}""
-);" );
+                    @"UPDATE `common`.`foo` AS `f`
+INNER JOIN bar ON `f`.`a` = bar.`a` SET
+  `f`.`a` = ((`f`.`a` + bar.`a`) + 1),
+  `f`.`b` = (`f`.`c` * `f`.`d`)" );
         }
 
         [Fact]
@@ -769,16 +399,17 @@ WHERE ""common_foo"".""a"" IN (
 
             sut.Context.Sql.ToString()
                 .Should()
-                .Be(
-                    @"UPDATE ""common_foo"" SET
-  ""a"" = 10
-WHERE ""common_foo"".""a"" IN (
+                .SatisfySql(
+                    @"WITH `_{GUID}` AS (
   SELECT
-    ""f"".""a""
-  FROM ""common_foo"" AS ""f""
-  INNER JOIN bar ON ""f"".""a"" = bar.""a""
-  GROUP BY ""f"".""b""
-)" );
+    `f`.`a` AS `ID_a_0`
+  FROM `common`.`foo` AS `f`
+  INNER JOIN bar ON `f`.`a` = bar.`a`
+  GROUP BY `f`.`b`
+)
+UPDATE `common`.`foo`
+INNER JOIN `_{GUID}` ON `common`.`foo`.`a` = `_{GUID}`.`ID_a_0` SET
+  `common`.`foo`.`a` = 10;" );
         }
 
         [Fact]
@@ -797,17 +428,18 @@ WHERE ""common_foo"".""a"" IN (
 
             sut.Context.Sql.ToString()
                 .Should()
-                .Be(
-                    @"UPDATE ""common_foo"" SET
-  ""a"" = 10
-WHERE EXISTS (
+                .SatisfySql(
+                    @"WITH `_{GUID}` AS (
   SELECT
-    *
-  FROM ""common_foo"" AS ""f""
-  INNER JOIN bar ON ""f"".""a"" = bar.""a""
-  WHERE (""common_foo"".""a"" = ""f"".""a"") AND (""common_foo"".""b"" = ""f"".""b"")
-  GROUP BY ""f"".""b""
-)" );
+    `f`.`a` AS `ID_a_0`,
+    `f`.`b` AS `ID_b_1`
+  FROM `common`.`foo` AS `f`
+  INNER JOIN bar ON `f`.`a` = bar.`a`
+  GROUP BY `f`.`b`
+)
+UPDATE `common`.`foo`
+INNER JOIN `_{GUID}` ON (`common`.`foo`.`a` = `_{GUID}`.`ID_a_0`) AND (`common`.`foo`.`b` = `_{GUID}`.`ID_b_1`) SET
+  `common`.`foo`.`a` = 10;" );
         }
 
         [Fact]
@@ -826,16 +458,17 @@ WHERE EXISTS (
 
             sut.Context.Sql.ToString()
                 .Should()
-                .Be(
-                    @"UPDATE ""common_foo"" SET
-  ""a"" = 10
-WHERE ""common_foo"".""a"" IN (
+                .SatisfySql(
+                    @"WITH `_{GUID}` AS (
   SELECT
-    ""f"".""a""
-  FROM ""common_foo"" AS ""f""
-  INNER JOIN bar ON ""f"".""a"" = bar.""a""
-  GROUP BY ""f"".""b""
-)" );
+    `f`.`a` AS `ID_a_0`
+  FROM `common`.`foo` AS `f`
+  INNER JOIN bar ON `f`.`a` = bar.`a`
+  GROUP BY `f`.`b`
+)
+UPDATE `common`.`foo`
+INNER JOIN `_{GUID}` ON `common`.`foo`.`a` = `_{GUID}`.`ID_a_0` SET
+  `common`.`foo`.`a` = 10;" );
         }
 
         [Fact]
@@ -854,17 +487,18 @@ WHERE ""common_foo"".""a"" IN (
 
             sut.Context.Sql.ToString()
                 .Should()
-                .Be(
-                    @"UPDATE ""common_foo"" SET
-  ""a"" = 10
-WHERE EXISTS (
+                .SatisfySql(
+                    @"WITH `_{GUID}` AS (
   SELECT
-    *
-  FROM ""common_foo"" AS ""f""
-  INNER JOIN bar ON ""f"".""a"" = bar.""a""
-  WHERE (""common_foo"".""a"" = ""f"".""a"") AND (""common_foo"".""b"" = ""f"".""b"")
-  GROUP BY ""f"".""b""
-)" );
+    `f`.`a` AS `ID_a_0`,
+    `f`.`b` AS `ID_b_1`
+  FROM `common`.`foo` AS `f`
+  INNER JOIN bar ON `f`.`a` = bar.`a`
+  GROUP BY `f`.`b`
+)
+UPDATE `common`.`foo`
+INNER JOIN `_{GUID}` ON (`common`.`foo`.`a` = `_{GUID}`.`ID_a_0`) AND (`common`.`foo`.`b` = `_{GUID}`.`ID_b_1`) SET
+  `common`.`foo`.`a` = 10;" );
         }
 
         [Fact]
@@ -886,22 +520,24 @@ WHERE EXISTS (
 
             sut.Context.Sql.ToString()
                 .Should()
-                .Be(
-                    @"UPDATE ""common_foo"" SET
-  ""a"" = 10
-WHERE EXISTS (
+                .SatisfySql(
+                    @"WITH `_{GUID}` AS (
   SELECT
-    *
-  FROM ""common_foo"" AS ""f""
-  INNER JOIN bar ON ""f"".""a"" = bar.""a""
-  WHERE (""f"".""a"" > 10) AND ((""common_foo"".""a"" = ""f"".""a"") AND (""common_foo"".""b"" = ""f"".""b""))
-  GROUP BY ""f"".""b""
-)" );
+    `f`.`a` AS `ID_a_0`,
+    `f`.`b` AS `ID_b_1`
+  FROM `common`.`foo` AS `f`
+  INNER JOIN bar ON `f`.`a` = bar.`a`
+  WHERE `f`.`a` > 10
+  GROUP BY `f`.`b`
+)
+UPDATE `common`.`foo`
+INNER JOIN `_{GUID}` ON (`common`.`foo`.`a` = `_{GUID}`.`ID_a_0`) AND (`common`.`foo`.`b` = `_{GUID}`.`ID_b_1`) SET
+  `common`.`foo`.`a` = 10;" );
         }
 
         [Theory]
-        [InlineData( false, "\"foo_bar\"" )]
-        [InlineData( true, "temp.\"foo\"" )]
+        [InlineData( false, "`foo`.`bar`" )]
+        [InlineData( true, "`foo`" )]
         public void Visit_ShouldInterpretUpdateComplexDataSource_WhenTargetIsNewTableWithSingleColumnPrimaryKey(
             bool isTemporary,
             string expectedName)
@@ -926,21 +562,22 @@ WHERE EXISTS (
 
             sut.Context.Sql.ToString()
                 .Should()
-                .Be(
-                    $@"UPDATE {expectedName} SET
-  ""a"" = 10
-WHERE {expectedName}.""a"" IN (
+                .SatisfySql(
+                    $@"WITH `_{{GUID}}` AS (
   SELECT
-    ""f"".""a""
-  FROM {expectedName} AS ""f""
-  INNER JOIN bar ON ""f"".""a"" = bar.""a""
-  GROUP BY ""f"".""b""
-)" );
+    `f`.`a` AS `ID_a_0`
+  FROM {expectedName} AS `f`
+  INNER JOIN bar ON `f`.`a` = bar.`a`
+  GROUP BY `f`.`b`
+)
+UPDATE {expectedName}
+INNER JOIN `_{{GUID}}` ON {expectedName}.`a` = `_{{GUID}}`.`ID_a_0` SET
+  {expectedName}.`a` = 10;" );
         }
 
         [Theory]
-        [InlineData( false, "\"foo_bar\"" )]
-        [InlineData( true, "temp.\"foo\"" )]
+        [InlineData( false, "`foo`.`bar`" )]
+        [InlineData( true, "`foo`" )]
         public void Visit_ShouldInterpretUpdateComplexDataSource_WhenTargetIsNewTableWithMultiColumnPrimaryKey(
             bool isTemporary,
             string expectedName)
@@ -965,22 +602,23 @@ WHERE {expectedName}.""a"" IN (
 
             sut.Context.Sql.ToString()
                 .Should()
-                .Be(
-                    $@"UPDATE {expectedName} SET
-  ""a"" = 10
-WHERE EXISTS (
+                .SatisfySql(
+                    $@"WITH `_{{GUID}}` AS (
   SELECT
-    *
-  FROM {expectedName} AS ""f""
-  INNER JOIN bar ON ""f"".""a"" = bar.""a""
-  WHERE ({expectedName}.""a"" = ""f"".""a"") AND ({expectedName}.""b"" = ""f"".""b"")
-  GROUP BY ""f"".""b""
-)" );
+    `f`.`a` AS `ID_a_0`,
+    `f`.`b` AS `ID_b_1`
+  FROM {expectedName} AS `f`
+  INNER JOIN bar ON `f`.`a` = bar.`a`
+  GROUP BY `f`.`b`
+)
+UPDATE {expectedName}
+INNER JOIN `_{{GUID}}` ON ({expectedName}.`a` = `_{{GUID}}`.`ID_a_0`) AND ({expectedName}.`b` = `_{{GUID}}`.`ID_b_1`) SET
+  {expectedName}.`a` = 10;" );
         }
 
         [Theory]
-        [InlineData( false, "\"foo_bar\"" )]
-        [InlineData( true, "temp.\"foo\"" )]
+        [InlineData( false, "`foo`.`bar`" )]
+        [InlineData( true, "`foo`" )]
         public void Visit_ShouldInterpretUpdateComplexDataSource_WhenTargetIsNewTableWithoutPrimaryKey(
             bool isTemporary,
             string expectedName)
@@ -999,22 +637,22 @@ WHERE EXISTS (
 
             sut.Context.Sql.ToString()
                 .Should()
-                .Be(
-                    $@"UPDATE {expectedName} SET
-  ""a"" = 10
-WHERE EXISTS (
+                .SatisfySql(
+                    $@"WITH `_{{GUID}}` AS (
   SELECT
-    *
-  FROM {expectedName} AS ""f""
-  INNER JOIN bar ON ""f"".""a"" = bar.""a""
-  WHERE ({expectedName}.""a"" = ""f"".""a"") AND ({expectedName}.""b"" = ""f"".""b"")
-  GROUP BY ""f"".""b""
-)" );
+    `f`.`a` AS `ID_a_0`,
+    `f`.`b` AS `ID_b_1`
+  FROM {expectedName} AS `f`
+  INNER JOIN bar ON `f`.`a` = bar.`a`
+  GROUP BY `f`.`b`
+)
+UPDATE {expectedName}
+INNER JOIN `_{{GUID}}` ON ({expectedName}.`a` = `_{{GUID}}`.`ID_a_0`) AND ({expectedName}.`b` = `_{{GUID}}`.`ID_b_1`) SET
+  {expectedName}.`a` = 10;" );
         }
 
         [Fact]
-        public void
-            Visit_ShouldInterpretUpdateComplexDataSource_WhenTargetHasSingleColumnPrimaryKey_WithDataSourceFieldsAsAssignedValues()
+        public void Visit_ShouldInterpretUpdateComplexDataSource_WhenTargetHasSingleColumnPrimaryKey_WithDataSourceFieldsAsAssignedValues()
         {
             var sut = CreateInterpreter();
             var table = SqlTableBuilderMock.Create<int>( "foo", new[] { "a", "b", "c", "d" }, new[] { "a" } );
@@ -1040,27 +678,27 @@ WHERE EXISTS (
 
             sut.Context.Sql.ToString()
                 .Should()
-                .Be(
-                    @"UPDATE ""common_foo"" SET
-  ""a"" = (
-    SELECT
-      ""x"".""b""
-    FROM ""common_foo"" AS ""x""
-    WHERE ""x"".""a"" > ""common_foo"".""a""
-  ),
-  ""b"" = (""common_foo"".""c"" * ""common_foo"".""d"")
-WHERE ""common_foo"".""a"" IN (
+                .SatisfySql(
+                    @"WITH `_{GUID}` AS (
   SELECT
-    ""f"".""a""
-  FROM ""common_foo"" AS ""f""
-  INNER JOIN bar ON ""f"".""a"" = bar.""a""
-  GROUP BY ""f"".""b""
-)" );
+    `f`.`a` AS `ID_a_0`
+  FROM `common`.`foo` AS `f`
+  INNER JOIN bar ON `f`.`a` = bar.`a`
+  GROUP BY `f`.`b`
+)
+UPDATE `common`.`foo`
+INNER JOIN `_{GUID}` ON `common`.`foo`.`a` = `_{GUID}`.`ID_a_0` SET
+  `common`.`foo`.`a` = (
+    SELECT
+      `x`.`b`
+    FROM `common`.`foo` AS `x`
+    WHERE `x`.`a` > `common`.`foo`.`a`
+  ),
+  `common`.`foo`.`b` = (`common`.`foo`.`c` * `common`.`foo`.`d`);" );
         }
 
         [Fact]
-        public void
-            Visit_ShouldInterpretUpdateComplexDataSource_WhenTargetHasMultiColumnPrimaryKey_WithDataSourceFieldsAsAssignedValues()
+        public void Visit_ShouldInterpretUpdateComplexDataSource_WhenTargetHasMultiColumnPrimaryKey_WithDataSourceFieldsAsAssignedValues()
         {
             var sut = CreateInterpreter();
             var table = SqlTableBuilderMock.Create<int>( "foo", new[] { "a", "b", "c", "d" }, new[] { "a", "b" } );
@@ -1086,30 +724,31 @@ WHERE ""common_foo"".""a"" IN (
 
             sut.Context.Sql.ToString()
                 .Should()
-                .Be(
-                    @"UPDATE ""common_foo"" SET
-  ""a"" = (
-    SELECT
-      ""x"".""b""
-    FROM ""common_foo"" AS ""x""
-    WHERE ""x"".""a"" > ""common_foo"".""a""
-  ),
-  ""b"" = (""common_foo"".""c"" * ""common_foo"".""d"")
-WHERE EXISTS (
+                .SatisfySql(
+                    @"WITH `_{GUID}` AS (
   SELECT
-    *
-  FROM ""common_foo"" AS ""f""
-  INNER JOIN bar ON ""f"".""a"" = bar.""a""
-  WHERE (""common_foo"".""a"" = ""f"".""a"") AND (""common_foo"".""b"" = ""f"".""b"")
-  GROUP BY ""f"".""b""
-)" );
+    `f`.`a` AS `ID_a_0`,
+    `f`.`b` AS `ID_b_1`
+  FROM `common`.`foo` AS `f`
+  INNER JOIN bar ON `f`.`a` = bar.`a`
+  GROUP BY `f`.`b`
+)
+UPDATE `common`.`foo`
+INNER JOIN `_{GUID}` ON (`common`.`foo`.`a` = `_{GUID}`.`ID_a_0`) AND (`common`.`foo`.`b` = `_{GUID}`.`ID_b_1`) SET
+  `common`.`foo`.`a` = (
+    SELECT
+      `x`.`b`
+    FROM `common`.`foo` AS `x`
+    WHERE `x`.`a` > `common`.`foo`.`a`
+  ),
+  `common`.`foo`.`b` = (`common`.`foo`.`c` * `common`.`foo`.`d`);" );
         }
 
         [Fact]
         public void Visit_ShouldInterpretUpdateComplexDataSource_WithComplexAssignmentAndSingleColumnPrimaryKey()
         {
             var sut = CreateInterpreter();
-            var table = SqlTableMock.Create<int>( "foo", new[] { "a", "b", "c" }, new[] { "a" } );
+            var table = SqlTableBuilderMock.Create<int>( "foo", new[] { "a", "b", "c" }, new[] { "a" } );
             var foo = table.ToRecordSet( "f" );
             var dataSource = foo
                 .Join( SqlJoinDefinition.Inner( SqlNode.RawRecordSet( "bar" ), x => x.Inner["a"] == foo["a"] ) )
@@ -1126,71 +765,25 @@ WHERE EXISTS (
             sut.Context.Sql.ToString()
                 .Should()
                 .SatisfySql(
-                    @"WITH ""_{GUID}"" AS (
+                    @"WITH `_{GUID}` AS (
   SELECT
-    ""f"".""a"" AS ""ID_a_0"",
-    (""f"".""b"" + bar.""b"") AS ""VAL_b_0""
-  FROM ""common_foo"" AS ""f""
-  INNER JOIN bar ON bar.""a"" = ""f"".""a""
-  GROUP BY ""f"".""b""
+    `f`.`a` AS `ID_a_0`,
+    (`f`.`b` + bar.`b`) AS `VAL_b_0`
+  FROM `common`.`foo` AS `f`
+  INNER JOIN bar ON bar.`a` = `f`.`a`
+  GROUP BY `f`.`b`
 )
-UPDATE ""common_foo"" SET
-  ""b"" = ""_{GUID}"".""VAL_b_0"",
-  ""c"" = (""common_foo"".""c"" + 1)
-FROM ""_{GUID}""
-WHERE ""common_foo"".""a"" = ""_{GUID}"".""ID_a_0"";" );
-        }
-
-        [Fact]
-        public void Visit_ShouldInterpretUpdateComplexDataSource_WithUpdateFromDisabled_WithComplexAssignmentAndSingleColumnPrimaryKey()
-        {
-            var sut = CreateInterpreter( SqliteNodeInterpreterOptions.Default.EnableUpdateFrom( false ) );
-            var table = SqlTableMock.Create<int>( "foo", new[] { "a", "b", "c" }, new[] { "a" } );
-            var foo = table.ToRecordSet( "f" );
-            var dataSource = foo
-                .Join( SqlJoinDefinition.Inner( SqlNode.RawRecordSet( "bar" ), x => x.Inner["a"] == foo["a"] ) )
-                .GroupBy( s => new[] { s["f"]["b"] } );
-
-            sut.Visit(
-                dataSource.ToUpdate(
-                    s => new[]
-                    {
-                        s["f"]["b"].Assign( s["f"]["b"] + s["bar"]["b"] ),
-                        s["f"]["c"].Assign( s["f"]["c"] + SqlNode.Literal( 1 ) )
-                    } ) );
-
-            sut.Context.Sql.ToString()
-                .Should()
-                .SatisfySql(
-                    @"WITH ""_{GUID}"" AS (
-  SELECT
-    ""f"".""a"" AS ""ID_a_0"",
-    (""f"".""b"" + bar.""b"") AS ""VAL_b_0""
-  FROM ""common_foo"" AS ""f""
-  INNER JOIN bar ON bar.""a"" = ""f"".""a""
-  GROUP BY ""f"".""b""
-)
-UPDATE ""common_foo"" SET
-  ""b"" = (
-    SELECT
-      ""_{GUID}"".""VAL_b_0""
-    FROM ""_{GUID}""
-    WHERE ""common_foo"".""a"" = ""_{GUID}"".""ID_a_0""
-    LIMIT 1
-  ),
-  ""c"" = (""common_foo"".""c"" + 1)
-WHERE ""common_foo"".""a"" IN (
-  SELECT
-    ""_{GUID}"".""ID_a_0""
-    FROM ""_{GUID}""
-);" );
+UPDATE `common`.`foo`
+INNER JOIN `_{GUID}` ON `common`.`foo`.`a` = `_{GUID}`.`ID_a_0` SET
+  `common`.`foo`.`b` = `_{GUID}`.`VAL_b_0`,
+  `common`.`foo`.`c` = (`common`.`foo`.`c` + 1);" );
         }
 
         [Fact]
         public void Visit_ShouldInterpretUpdateComplexDataSource_WithComplexAssignmentAndMultipleColumnPrimaryKey()
         {
             var sut = CreateInterpreter();
-            var table = SqlTableMock.Create<int>( "foo", new[] { "a", "b", "c", "d" }, new[] { "a", "b" } );
+            var table = SqlTableBuilderMock.Create<int>( "foo", new[] { "a", "b", "c", "d" }, new[] { "a", "b" } );
             var foo = table.ToRecordSet( "f" );
             var dataSource = foo
                 .Join( SqlJoinDefinition.Inner( SqlNode.RawRecordSet( "bar" ), x => x.Inner["a"] == foo["a"] ) )
@@ -1207,74 +800,26 @@ WHERE ""common_foo"".""a"" IN (
             sut.Context.Sql.ToString()
                 .Should()
                 .SatisfySql(
-                    @"WITH ""_{GUID}"" AS (
+                    @"WITH `_{GUID}` AS (
   SELECT
-    ""f"".""a"" AS ""ID_a_0"",
-    ""f"".""b"" AS ""ID_b_1"",
-    (""f"".""c"" + bar.""c"") AS ""VAL_c_0""
-  FROM ""common_foo"" AS ""f""
-  INNER JOIN bar ON bar.""a"" = ""f"".""a""
-  GROUP BY ""f"".""b""
+    `f`.`a` AS `ID_a_0`,
+    `f`.`b` AS `ID_b_1`,
+    (`f`.`c` + bar.`c`) AS `VAL_c_0`
+  FROM `common`.`foo` AS `f`
+  INNER JOIN bar ON bar.`a` = `f`.`a`
+  GROUP BY `f`.`b`
 )
-UPDATE ""common_foo"" SET
-  ""c"" = ""_{GUID}"".""VAL_c_0"",
-  ""d"" = (""common_foo"".""d"" + 1)
-FROM ""_{GUID}""
-WHERE (""common_foo"".""a"" = ""_{GUID}"".""ID_a_0"") AND (""common_foo"".""b"" = ""_{GUID}"".""ID_b_1"");" );
-        }
-
-        [Fact]
-        public void Visit_ShouldInterpretUpdateComplexDataSource_WithUpdateFromDisabled_WithComplexAssignmentAndMultipleColumnPrimaryKey()
-        {
-            var sut = CreateInterpreter( SqliteNodeInterpreterOptions.Default.EnableUpdateFrom( false ) );
-            var table = SqlTableMock.Create<int>( "foo", new[] { "a", "b", "c", "d" }, new[] { "a", "b" } );
-            var foo = table.ToRecordSet( "f" );
-            var dataSource = foo
-                .Join( SqlJoinDefinition.Inner( SqlNode.RawRecordSet( "bar" ), x => x.Inner["a"] == foo["a"] ) )
-                .GroupBy( s => new[] { s["f"]["b"] } );
-
-            sut.Visit(
-                dataSource.ToUpdate(
-                    s => new[]
-                    {
-                        s["f"]["c"].Assign( s["f"]["c"] + s["bar"]["c"] ),
-                        s["f"]["d"].Assign( s["f"]["d"] + SqlNode.Literal( 1 ) )
-                    } ) );
-
-            sut.Context.Sql.ToString()
-                .Should()
-                .SatisfySql(
-                    @"WITH ""_{GUID}"" AS (
-  SELECT
-    ""f"".""a"" AS ""ID_a_0"",
-    ""f"".""b"" AS ""ID_b_1"",
-    (""f"".""c"" + bar.""c"") AS ""VAL_c_0""
-  FROM ""common_foo"" AS ""f""
-  INNER JOIN bar ON bar.""a"" = ""f"".""a""
-  GROUP BY ""f"".""b""
-)
-UPDATE ""common_foo"" SET
-  ""c"" = (
-    SELECT
-      ""_{GUID}"".""VAL_c_0""
-    FROM ""_{GUID}""
-    WHERE (""common_foo"".""a"" = ""_{GUID}"".""ID_a_0"") AND (""common_foo"".""b"" = ""_{GUID}"".""ID_b_1"")
-    LIMIT 1
-  ),
-  ""d"" = (""common_foo"".""d"" + 1)
-WHERE EXISTS (
-  SELECT
-    *
-  FROM ""_{GUID}""
-  WHERE (""common_foo"".""a"" = ""_{GUID}"".""ID_a_0"") AND (""common_foo"".""b"" = ""_{GUID}"".""ID_b_1"")
-);" );
+UPDATE `common`.`foo`
+INNER JOIN `_{GUID}` ON (`common`.`foo`.`a` = `_{GUID}`.`ID_a_0`) AND (`common`.`foo`.`b` = `_{GUID}`.`ID_b_1`) SET
+  `common`.`foo`.`c` = `_{GUID}`.`VAL_c_0`,
+  `common`.`foo`.`d` = (`common`.`foo`.`d` + 1);" );
         }
 
         [Fact]
         public void Visit_ShouldInterpretUpdateComplexDataSource_WithCteAndComplexAssignment()
         {
             var sut = CreateInterpreter();
-            var table = SqlTableMock.Create<int>( "foo", new[] { "a", "b" }, new[] { "a" } );
+            var table = SqlTableBuilderMock.Create<int>( "foo", new[] { "a", "b" }, new[] { "a" } );
             var view = SqlViewMock.Create(
                     "v",
                     SqlNode.RawRecordSet( "bar" ).ToDataSource().Select( s => new[] { s.From["a"].AsSelf(), s.From["b"].AsSelf() } ) )
@@ -1292,76 +837,27 @@ WHERE EXISTS (
             sut.Context.Sql.ToString()
                 .Should()
                 .SatisfySql(
-                    @"WITH ""ipsum"" AS (
+                    @"WITH `ipsum` AS (
   SELECT * FROM lorem
 ),
-""_{GUID}"" AS (
+`_{GUID}` AS (
   SELECT
-    ""f"".""a"" AS ""ID_a_0"",
-    (""f"".""b"" + ""common_v"".""b"") AS ""VAL_b_0""
-  FROM ""common_foo"" AS ""f""
-  INNER JOIN ""common_v"" ON ""common_v"".""a"" = ""f"".""a""
-  GROUP BY ""f"".""b""
+    `f`.`a` AS `ID_a_0`,
+    (`f`.`b` + `common`.`v`.`b`) AS `VAL_b_0`
+  FROM `common`.`foo` AS `f`
+  INNER JOIN `common`.`v` ON `common`.`v`.`a` = `f`.`a`
+  GROUP BY `f`.`b`
 )
-UPDATE ""common_foo"" SET
-  ""b"" = ""_{GUID}"".""VAL_b_0""
-FROM ""_{GUID}""
-WHERE ""common_foo"".""a"" = ""_{GUID}"".""ID_a_0"";" );
-        }
-
-        [Fact]
-        public void Visit_ShouldInterpretUpdateComplexDataSource_WithUpdateFromDisabled_WithCteAndComplexAssignment()
-        {
-            var sut = CreateInterpreter( SqliteNodeInterpreterOptions.Default.EnableUpdateFrom( false ) );
-            var table = SqlTableMock.Create<int>( "foo", new[] { "a", "b" }, new[] { "a" } );
-            var view = SqlViewMock.Create(
-                    "v",
-                    SqlNode.RawRecordSet( "bar" ).ToDataSource().Select( s => new[] { s.From["a"].AsSelf(), s.From["b"].AsSelf() } ) )
-                .Node;
-
-            var foo = table.ToRecordSet( "f" );
-
-            var dataSource = foo
-                .Join( SqlJoinDefinition.Inner( view, x => x.Inner["a"] == foo["a"] ) )
-                .With( SqlNode.RawQuery( "SELECT * FROM lorem" ).ToCte( "ipsum" ) )
-                .GroupBy( s => new[] { s["f"]["b"] } );
-
-            sut.Visit( dataSource.ToUpdate( s => new[] { s["f"]["b"].Assign( s["f"]["b"] + s["common.v"]["b"] ) } ) );
-
-            sut.Context.Sql.ToString()
-                .Should()
-                .SatisfySql(
-                    @"WITH ""ipsum"" AS (
-  SELECT * FROM lorem
-),
-""_{GUID}"" AS (
-  SELECT
-    ""f"".""a"" AS ""ID_a_0"",
-    (""f"".""b"" + ""common_v"".""b"") AS ""VAL_b_0""
-  FROM ""common_foo"" AS ""f""
-  INNER JOIN ""common_v"" ON ""common_v"".""a"" = ""f"".""a""
-  GROUP BY ""f"".""b""
-)
-UPDATE ""common_foo"" SET
-  ""b"" = (
-    SELECT
-      ""_{GUID}"".""VAL_b_0""
-    FROM ""_{GUID}""
-    WHERE ""common_foo"".""a"" = ""_{GUID}"".""ID_a_0""
-    LIMIT 1
-  )
-WHERE ""common_foo"".""a"" IN (
-  SELECT
-    ""_{GUID}"".""ID_a_0""
-  FROM ""_{GUID}""
-);" );
+UPDATE `common`.`foo`
+INNER JOIN `_{GUID}` ON `common`.`foo`.`a` = `_{GUID}`.`ID_a_0` SET
+  `common`.`foo`.`b` = `_{GUID}`.`VAL_b_0`;" );
         }
 
         [Fact]
         public void Visit_ShouldInterpretUpdateWithComplexAssignments_WithMultipleAssignments()
         {
             var sut = CreateInterpreter();
-            var table = SqlTableMock.Create<int>( "foo", new[] { "a", "b", "c", "d" }, new[] { "a" } );
+            var table = SqlTableBuilderMock.Create<int>( "foo", new[] { "a", "b", "c", "d" }, new[] { "a" } );
             var subQuery = SqlNode.RawRecordSet( "U" )
                 .ToDataSource()
                 .Select( x => new[] { x.From["x"].AsSelf(), x.From["y"].AsSelf() } )
@@ -1382,31 +878,31 @@ WHERE ""common_foo"".""a"" IN (
             sut.Context.Sql.ToString()
                 .Should()
                 .SatisfySql(
-                    @"UPDATE ""common_foo"" AS ""f"" SET
-  ""b"" = (""lorem"".""x"" + 1),
-  ""d"" = (""f"".""d"" + 1),
-  ""c"" = (""f"".""c"" * ""lorem"".""y"")
-FROM (
+                    @"UPDATE `common`.`foo` AS `f`
+INNER JOIN (
   SELECT
-    U.""x"",
-    U.""y""
+    U.`x`,
+    U.`y`
   FROM U
-) AS ""lorem""
-WHERE ""lorem"".""x"" = ""f"".""b"";" );
+) AS `lorem` ON `lorem`.`x` = `f`.`b` SET
+  `f`.`b` = (`lorem`.`x` + 1),
+  `f`.`d` = (`f`.`d` + 1),
+  `f`.`c` = (`f`.`c` * `lorem`.`y`);" );
         }
 
         [Fact]
-        public void Visit_ShouldInterpretUpdateWithComplexAssignments_WithUpdateFromDisabled_WithMultipleAssignments()
+        public void Visit_ShouldInterpretUpdateWithComplexAssignments_WithComplexDataSourceAndMultipleAssignments()
         {
-            var sut = CreateInterpreter( SqliteNodeInterpreterOptions.Default.EnableUpdateFrom( false ) );
-            var table = SqlTableMock.Create<int>( "foo", new[] { "a", "b", "c", "d" }, new[] { "a" } );
+            var sut = CreateInterpreter();
+            var table = SqlTableBuilderMock.Create<int>( "foo", new[] { "a", "b", "c", "d" }, new[] { "a" } );
             var subQuery = SqlNode.RawRecordSet( "U" )
                 .ToDataSource()
                 .Select( x => new[] { x.From["x"].AsSelf(), x.From["y"].AsSelf() } )
                 .AsSet( "lorem" );
 
             var foo = table.ToRecordSet( "f" );
-            var dataSource = foo.Join( SqlJoinDefinition.Inner( subQuery, x => x.Inner["x"] == foo["b"] ) );
+            var dataSource = foo.Join( SqlJoinDefinition.Inner( subQuery, x => x.Inner["x"] == foo["b"] ) )
+                .GroupBy( d => new[] { d["f"]["a"] } );
 
             sut.Visit(
                 dataSource.ToUpdate(
@@ -1420,40 +916,25 @@ WHERE ""lorem"".""x"" = ""f"".""b"";" );
             sut.Context.Sql.ToString()
                 .Should()
                 .SatisfySql(
-                    @"WITH ""_{GUID}"" AS (
+                    @"WITH `_{GUID}` AS (
   SELECT
-    ""f"".""a"" AS ""ID_a_0"",
-    (""lorem"".""x"" + 1) AS ""VAL_b_0"",
-    (""f"".""c"" * ""lorem"".""y"") AS ""VAL_c_2""
-  FROM ""common_foo"" AS ""f""
+    `f`.`a` AS `ID_a_0`,
+    (`lorem`.`x` + 1) AS `VAL_b_0`,
+    (`f`.`c` * `lorem`.`y`) AS `VAL_c_2`
+  FROM `common`.`foo` AS `f`
   INNER JOIN (
     SELECT
-      U.""x"",
-      U.""y""
+      U.`x`,
+      U.`y`
     FROM U
-  ) AS ""lorem"" ON ""lorem"".""x"" = ""f"".""b""
+  ) AS `lorem` ON `lorem`.`x` = `f`.`b`
+  GROUP BY `f`.`a`
 )
-UPDATE ""common_foo"" SET
-  ""b"" = (
-    SELECT
-      ""_{GUID}"".""VAL_b_0""
-    FROM ""_{GUID}""
-    WHERE ""common_foo"".""a"" = ""_{GUID}"".""ID_a_0""
-    LIMIT 1
-  ),
-  ""d"" = (""common_foo"".""d"" + 1),
-  ""c"" = (
-    SELECT
-      ""_{GUID}"".""VAL_c_2""
-    FROM ""_{GUID}""
-    WHERE ""common_foo"".""a"" = ""_{GUID}"".""ID_a_0""
-    LIMIT 1
-  )
-WHERE ""common_foo"".""a"" IN (
-  SELECT
-    ""_{GUID}"".""ID_a_0""
-  FROM ""_{GUID}""
-);" );
+UPDATE `common`.`foo`
+INNER JOIN `_{GUID}` ON `common`.`foo`.`a` = `_{GUID}`.`ID_a_0` SET
+  `common`.`foo`.`b` = `_{GUID}`.`VAL_b_0`,
+  `common`.`foo`.`d` = (`common`.`foo`.`d` + 1),
+  `common`.`foo`.`c` = `_{GUID}`.`VAL_c_2`;" );
         }
 
         [Fact]
@@ -1472,7 +953,7 @@ WHERE ""common_foo"".""a"" IN (
         public void Visit_ShouldThrowSqlNodeVisitorException_WhenUpdateIsComplexAndDataSourceFromIsTableWithoutAlias()
         {
             var sut = CreateInterpreter();
-            var foo = SqlTableMock.Create<int>( "foo", new[] { "a" } ).ToRecordSet();
+            var foo = SqlTableBuilderMock.CreateEmpty( "foo" ).ToRecordSet();
             var node = foo.Join( SqlNode.RawRecordSet( "bar" ).Cross() ).GroupBy( s => new[] { s["bar"]["x"] } ).ToUpdate();
             var action = Lambda.Of( () => sut.Visit( node ) );
 
@@ -1539,9 +1020,7 @@ WHERE ""common_foo"".""a"" IN (
                     new[] { SqlNode.Column<int>( "a" ) },
                     constraintsProvider: t =>
                         SqlCreateTableConstraints.Empty.WithPrimaryKey(
-                            SqlNode.PrimaryKey(
-                                SqlSchemaObjectName.Create( "PK" ),
-                                new[] { (t["a"] + SqlNode.Literal( 1 )).Asc() } ) ) )
+                            SqlNode.PrimaryKey( SqlSchemaObjectName.Create( "PK" ), new[] { (t["a"] + SqlNode.Literal( 1 )).Asc() } ) ) )
                 .AsSet( "f" );
 
             var node = foo.Join( SqlNode.RawRecordSet( "bar" ).Cross() ).GroupBy( s => new[] { s["bar"]["x"] } ).ToUpdate();

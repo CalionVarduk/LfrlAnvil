@@ -20,8 +20,13 @@ namespace LfrlAnvil.MySql;
 
 public sealed class MySqlDatabaseFactory : SqlDatabaseFactory<MySqlDatabase>
 {
-    public MySqlDatabaseFactory()
-        : base( MySqlDialect.Instance ) { }
+    public MySqlDatabaseFactory(MySqlDatabaseFactoryOptions? options = null)
+        : base( MySqlDialect.Instance )
+    {
+        Options = options ?? MySqlDatabaseFactoryOptions.Default;
+    }
+
+    public MySqlDatabaseFactoryOptions Options { get; }
 
     [Pure]
     protected override MySqlConnectionStringBuilder CreateConnectionStringBuilder(string connectionString)
@@ -47,8 +52,21 @@ public sealed class MySqlDatabaseFactory : SqlDatabaseFactory<MySqlDatabase>
         DbConnection connection,
         ref SqlDatabaseFactoryStatementExecutor executor)
     {
-        var builder = new MySqlColumnTypeDefinitionProviderBuilder();
-        var result = new MySqlDatabaseBuilder( connection.ServerVersion, defaultSchemaName, builder.Build() );
+        var serverVersion = connection.ServerVersion;
+        var defaultNames = Options.DefaultNamesCreator( serverVersion, defaultSchemaName );
+        var dataTypes = new MySqlDataTypeProvider();
+        var typeDefinitions = Options.TypeDefinitionsCreator( serverVersion, dataTypes );
+        var nodeInterpreters = Options.NodeInterpretersCreator( serverVersion, defaultSchemaName, dataTypes, typeDefinitions );
+
+        var result = new MySqlDatabaseBuilder(
+            connection.ServerVersion,
+            defaultSchemaName,
+            defaultNames,
+            dataTypes,
+            typeDefinitions,
+            nodeInterpreters,
+            Options.IndexFilterResolution );
+
         result.AddConnectionChangeCallback( InitializeSessionSqlMode );
         return result;
     }

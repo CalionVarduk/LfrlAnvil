@@ -55,7 +55,9 @@ public class MySqlIndexTests : TestsBase
     [Fact]
     public void Properties_ShouldBeCorrectlyCopiedFromBuilder_ForPartialIndex()
     {
-        var schemaBuilder = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var schemaBuilder = MySqlDatabaseBuilderMock.Create( indexFilterResolution: SqlOptionalFunctionalityResolution.Include )
+            .Schemas.Create( "foo" );
+
         var tableBuilder = schemaBuilder.Objects.CreateTable( "T" );
         var c1Builder = tableBuilder.Columns.Create( "C1" );
         tableBuilder.Constraints.CreateIndex( c1Builder.Asc() ).SetName( "IX_TEST" ).SetFilter( SqlNode.True() );
