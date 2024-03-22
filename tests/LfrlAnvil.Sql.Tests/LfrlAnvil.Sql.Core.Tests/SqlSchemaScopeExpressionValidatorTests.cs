@@ -2077,6 +2077,24 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
     }
 
     [Fact]
+    public void VisitUpsert_ShouldRegisterError()
+    {
+        var node = SqlNode.Upsert(
+            SqlNode.RawQuery( "SELECT a FROM foo" ),
+            SqlNode.RawRecordSet( "bar" ),
+            new[] { SqlNode.RawRecordSet( "bar" ).GetField( "a" ) },
+            (r, i) => new[] { r["b"].Assign( i["b"] ) } );
+
+        _sut.VisitUpsert( node );
+
+        using ( new AssertionScope() )
+        {
+            _sut.GetErrors().Should().HaveCount( 1 );
+            _sut.GetReferencedObjects().Should().BeEmpty();
+        }
+    }
+
+    [Fact]
     public void VisitValueAssignment_ShouldRegisterError()
     {
         _sut.VisitValueAssignment( SqlNode.ValueAssignment( SqlNode.RawRecordSet( "foo" ).GetField( "a" ), SqlNode.Literal( 10 ) ) );

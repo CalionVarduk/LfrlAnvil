@@ -1,4 +1,6 @@
-﻿namespace LfrlAnvil.Sql.Expressions.Objects;
+﻿using System.Diagnostics.Contracts;
+
+namespace LfrlAnvil.Sql.Expressions.Objects;
 
 public sealed class SqlRawDataFieldNode : SqlDataFieldNode
 {
@@ -11,4 +13,10 @@ public sealed class SqlRawDataFieldNode : SqlDataFieldNode
 
     public override string Name { get; }
     public TypeNullability? Type { get; }
+
+    [Pure]
+    public override SqlRawDataFieldNode ReplaceRecordSet(SqlRecordSetNode recordSet)
+    {
+        return new SqlRawDataFieldNode( recordSet, Name, Type );
+    }
 }

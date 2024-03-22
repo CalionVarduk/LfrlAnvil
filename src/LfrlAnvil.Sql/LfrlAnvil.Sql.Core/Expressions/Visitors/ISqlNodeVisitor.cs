@@ -145,6 +145,7 @@ public interface ISqlNodeVisitor
     void VisitRawStatement(SqlRawStatementNode node);
     void VisitInsertInto(SqlInsertIntoNode node);
     void VisitUpdate(SqlUpdateNode node);
+    void VisitUpsert(SqlUpsertNode node);
     void VisitValueAssignment(SqlValueAssignmentNode node);
     void VisitDeleteFrom(SqlDeleteFromNode node);
     void VisitTruncate(SqlTruncateNode node);

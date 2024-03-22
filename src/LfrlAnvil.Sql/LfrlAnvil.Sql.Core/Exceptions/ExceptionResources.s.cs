@@ -44,6 +44,7 @@ public static class ExceptionResources
     internal const string ScalarResultDoesNotHaveValue = "Scalar result does not have a value.";
     internal const string SchemaQuickRemovalIsUnsupported = "Schema quick-removal is unsupported.";
     internal const string UnknownObjectsAreUnsupported = "Unknown objects are unsupported.";
+    internal const string InternalRecordSetsCannotBeAliased = "Internal record sets cannot be aliased.";
 
     internal static readonly string DataReaderDoesNotSupportAsyncQueries =
         $"Only data readers of type '{typeof( DbDataReader ).GetDebugString()}' support asynchronous queries.";

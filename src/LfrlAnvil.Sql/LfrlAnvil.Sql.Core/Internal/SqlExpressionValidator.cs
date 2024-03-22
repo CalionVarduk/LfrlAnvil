@@ -84,6 +84,11 @@ public abstract class SqlExpressionValidator : SqlNodeVisitor
         AddForbiddenNode( node );
     }
 
+    public override void VisitUpsert(SqlUpsertNode node)
+    {
+        AddForbiddenNode( node );
+    }
+
     public override void VisitValueAssignment(SqlValueAssignmentNode node)
     {
         AddForbiddenNode( node );

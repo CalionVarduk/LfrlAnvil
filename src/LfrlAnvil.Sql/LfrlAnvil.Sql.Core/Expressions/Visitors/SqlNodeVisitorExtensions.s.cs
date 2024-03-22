@@ -347,6 +347,10 @@ public static class SqlNodeVisitorExtensions
                 visitor.VisitUpdate( ReinterpretCast.To<SqlUpdateNode>( node ) );
                 break;
 
+            case SqlNodeType.Upsert:
+                visitor.VisitUpsert( ReinterpretCast.To<SqlUpsertNode>( node ) );
+                break;
+
             case SqlNodeType.ValueAssignment:
                 visitor.VisitValueAssignment( ReinterpretCast.To<SqlValueAssignmentNode>( node ) );
                 break;

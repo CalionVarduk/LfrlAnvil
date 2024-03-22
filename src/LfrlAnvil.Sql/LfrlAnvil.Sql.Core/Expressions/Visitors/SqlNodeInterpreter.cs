@@ -805,6 +805,7 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
 
     public abstract void VisitInsertInto(SqlInsertIntoNode node);
     public abstract void VisitUpdate(SqlUpdateNode node);
+    public abstract void VisitUpsert(SqlUpsertNode node);
 
     public virtual void VisitValueAssignment(SqlValueAssignmentNode node)
     {
@@ -1395,13 +1396,18 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
 
     protected void VisitInsertIntoFields(SqlInsertIntoNode node)
     {
+        VisitInsertIntoFields( node.RecordSet, node.DataFields );
+    }
+
+    protected void VisitInsertIntoFields(SqlRecordSetNode recordSet, ReadOnlyArray<SqlDataFieldNode> dataFields)
+    {
         Context.Sql.Append( "INSERT INTO" ).AppendSpace();
-        AppendDelimitedRecordSetName( node.RecordSet );
+        AppendDelimitedRecordSetName( recordSet );
         Context.Sql.AppendSpace().Append( '(' );
 
-        if ( node.DataFields.Count > 0 )
+        if ( dataFields.Count > 0 )
         {
-            foreach ( var dataField in node.DataFields )
+            foreach ( var dataField in dataFields )
             {
                 AppendDelimitedName( dataField.Name );
                 Context.Sql.AppendComma().AppendSpace();

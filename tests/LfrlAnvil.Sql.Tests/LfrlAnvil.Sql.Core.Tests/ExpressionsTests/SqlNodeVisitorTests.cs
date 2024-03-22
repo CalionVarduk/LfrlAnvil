@@ -1528,6 +1528,37 @@ public class SqlNodeVisitorTests : TestsBase
     }
 
     [Fact]
+    public void VisitUpsert_ShouldVisitRecordSetAndInsertDataFieldsAndUpdateAssignmentsAndConflictTargetAndSource()
+    {
+        var sut = new VisitorMock();
+        var recordSet = SqlNode.RawRecordSet( "foo" );
+        var dataFields = new[] { recordSet["x"], recordSet["y"], recordSet["z"] };
+        var source = new[,] { { SqlNode.Literal( 10 ), SqlNode.Literal( 20 ) }, { SqlNode.Literal( 30 ), SqlNode.Literal( 40 ) } };
+        var updateValues = new[] { SqlNode.Literal( 50 ) };
+
+        sut.VisitUpsert(
+            SqlNode.Values( source )
+                .ToUpsert(
+                    recordSet,
+                    new[] { dataFields[0], dataFields[1] },
+                    (_, _) => new[] { dataFields[2].Assign( updateValues[0] ) },
+                    new[] { dataFields[0] } ) );
+
+        sut.Nodes.Should()
+            .BeSequentiallyEqualTo(
+                recordSet,
+                recordSet,
+                recordSet,
+                recordSet,
+                updateValues[0],
+                recordSet,
+                source[0, 0],
+                source[0, 1],
+                source[1, 0],
+                source[1, 1] );
+    }
+
+    [Fact]
     public void VisitValueAssignment_ShouldVisitDataFieldAndValue()
     {
         var sut = new VisitorMock();

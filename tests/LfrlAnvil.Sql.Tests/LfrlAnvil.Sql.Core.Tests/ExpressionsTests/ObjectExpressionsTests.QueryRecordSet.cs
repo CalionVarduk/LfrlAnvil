@@ -239,5 +239,23 @@ public partial class ObjectExpressionsTests
 
             action.Should().ThrowExactly<ArgumentException>();
         }
+
+        [Fact]
+        public void DataField_ReplaceRecordSet_ShouldReturnQueryDataFieldNodeWithReplacedRecordSet()
+        {
+            var dataSource = SqlTableMock.Create<int>( "t", new[] { "Col0" } ).Node.ToDataSource();
+            var recordSet = SqlNode.RawRecordSet( "bar" );
+            var sut = dataSource.Select( dataSource.GetAll() ).AsSet( "foo" )["Col0"];
+            var result = sut.ReplaceRecordSet( recordSet );
+
+            using ( new AssertionScope() )
+            {
+                result.Should().NotBeSameAs( sut );
+                result.Name.Should().Be( sut.Name );
+                result.Selection.Should().BeSameAs( sut.Selection );
+                result.Expression.Should().BeSameAs( sut.Expression );
+                result.RecordSet.Should().BeSameAs( recordSet );
+            }
+        }
     }
 }

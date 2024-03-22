@@ -295,4 +295,123 @@ VALUES
 SELECT a, b FROM bar" );
         }
     }
+
+    [Fact]
+    public void Upsert_ShouldCreateUpsertNode_FromQuery()
+    {
+        var set = SqlNode.RawRecordSet( "foo" );
+        var query = SqlNode.RawQuery( "SELECT a, b FROM bar" );
+        var insertDataFields = new SqlDataFieldNode[]
+        {
+            set["x"],
+            set["y"]
+        };
+
+        var updateAssignments = new[]
+        {
+            set["x"].Assign( SqlNode.Literal( 10 ) ),
+            set["y"].Assign( SqlNode.Parameter<double>( "dVal" ) )
+        };
+
+        var conflictTarget = new SqlDataFieldNode[]
+        {
+            set["x"]
+        };
+
+        var dataFieldsSelector = Substitute.For<Func<SqlRecordSetNode, IEnumerable<SqlDataFieldNode>>>();
+        dataFieldsSelector.WithAnyArgs( _ => insertDataFields );
+        var updateAssignmentsSelector =
+            Substitute.For<Func<SqlRecordSetNode, SqlInternalRecordSetNode, IEnumerable<SqlValueAssignmentNode>>>();
+
+        updateAssignmentsSelector.WithAnyArgs( _ => updateAssignments );
+        var conflictTargetSelector = Substitute.For<Func<SqlRecordSetNode, IEnumerable<SqlDataFieldNode>>>();
+        conflictTargetSelector.WithAnyArgs( _ => conflictTarget );
+        var sut = query.ToUpsert( set, dataFieldsSelector, updateAssignmentsSelector, conflictTargetSelector );
+        var text = sut.ToString();
+
+        using ( new AssertionScope() )
+        {
+            dataFieldsSelector.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( set );
+            updateAssignmentsSelector.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( set, sut.UpdateSource );
+            conflictTargetSelector.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( set );
+            sut.NodeType.Should().Be( SqlNodeType.Upsert );
+            sut.Source.Should().BeSameAs( query );
+            sut.RecordSet.Should().BeSameAs( set );
+            sut.UpdateSource.Base.Should().BeSameAs( sut.RecordSet );
+            sut.InsertDataFields.Should().BeSequentiallyEqualTo( insertDataFields );
+            sut.UpdateAssignments.Should().BeSequentiallyEqualTo( updateAssignments );
+            sut.ConflictTarget.Should().BeSequentiallyEqualTo( conflictTarget );
+            ((ISqlStatementNode)sut).Node.Should().BeSameAs( sut );
+            ((ISqlStatementNode)sut).QueryCount.Should().Be( 0 );
+            text.Should()
+                .Be(
+                    @"UPSERT [foo] USING
+SELECT a, b FROM bar
+WITH CONFLICT TARGET ([foo].[x] : ?)
+INSERT ([foo].[x] : ?, [foo].[y] : ?)
+ON CONFLICT SET
+  ([foo].[x] : ?) = (""10"" : System.Int32),
+  ([foo].[y] : ?) = (@dVal : System.Double)" );
+        }
+    }
+
+    [Fact]
+    public void Upsert_ShouldCreateUpsertNode_FromValues()
+    {
+        var set = SqlNode.RawRecordSet( "foo" );
+        var values = SqlNode.Values( SqlNode.Literal( 5 ), SqlNode.Parameter<string>( "a" ) );
+        var insertDataFields = new SqlDataFieldNode[]
+        {
+            set["x"],
+            set["y"]
+        };
+
+        var updateAssignments = new[]
+        {
+            set["x"].Assign( SqlNode.Literal( 10 ) ),
+            set["y"].Assign( SqlNode.Parameter<double>( "dVal" ) )
+        };
+
+        var conflictTarget = new SqlDataFieldNode[]
+        {
+            set["x"]
+        };
+
+        var dataFieldsSelector = Substitute.For<Func<SqlRecordSetNode, IEnumerable<SqlDataFieldNode>>>();
+        dataFieldsSelector.WithAnyArgs( _ => insertDataFields );
+        var updateAssignmentsSelector =
+            Substitute.For<Func<SqlRecordSetNode, SqlInternalRecordSetNode, IEnumerable<SqlValueAssignmentNode>>>();
+
+        updateAssignmentsSelector.WithAnyArgs( _ => updateAssignments );
+        var conflictTargetSelector = Substitute.For<Func<SqlRecordSetNode, IEnumerable<SqlDataFieldNode>>>();
+        conflictTargetSelector.WithAnyArgs( _ => conflictTarget );
+        var sut = values.ToUpsert( set, dataFieldsSelector, updateAssignmentsSelector, conflictTargetSelector );
+        var text = sut.ToString();
+
+        using ( new AssertionScope() )
+        {
+            dataFieldsSelector.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( set );
+            updateAssignmentsSelector.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( set, sut.UpdateSource );
+            conflictTargetSelector.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( set );
+            sut.NodeType.Should().Be( SqlNodeType.Upsert );
+            sut.Source.Should().BeSameAs( values );
+            sut.RecordSet.Should().BeSameAs( set );
+            sut.UpdateSource.Base.Should().BeSameAs( sut.RecordSet );
+            sut.InsertDataFields.Should().BeSequentiallyEqualTo( insertDataFields );
+            sut.UpdateAssignments.Should().BeSequentiallyEqualTo( updateAssignments );
+            sut.ConflictTarget.Should().BeSequentiallyEqualTo( conflictTarget );
+            ((ISqlStatementNode)sut).Node.Should().BeSameAs( sut );
+            ((ISqlStatementNode)sut).QueryCount.Should().Be( 0 );
+            text.Should()
+                .Be(
+                    @"UPSERT [foo] USING
+VALUES
+((""5"" : System.Int32), (@a : System.String))
+WITH CONFLICT TARGET ([foo].[x] : ?)
+INSERT ([foo].[x] : ?, [foo].[y] : ?)
+ON CONFLICT SET
+  ([foo].[x] : ?) = (""10"" : System.Int32),
+  ([foo].[y] : ?) = (@dVal : System.Double)" );
+        }
+    }
 }

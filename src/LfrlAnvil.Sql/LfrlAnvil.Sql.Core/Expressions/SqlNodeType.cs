@@ -86,6 +86,7 @@ public enum SqlNodeType : byte
     RawStatement,
     InsertInto,
     Update,
+    Upsert,
     ValueAssignment,
     DeleteFrom,
     Truncate,

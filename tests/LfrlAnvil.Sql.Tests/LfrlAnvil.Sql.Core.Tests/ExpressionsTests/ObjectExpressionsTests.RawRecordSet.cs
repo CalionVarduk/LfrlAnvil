@@ -174,5 +174,22 @@ public partial class ObjectExpressionsTests
                 result.IsOptional.Should().Be( optional );
             }
         }
+
+        [Fact]
+        public void DataField_ReplaceRecordSet_ShouldReturnRawDataFieldNodeWithReplacedRecordSet()
+        {
+            var source = SqlNode.RawRecordSet( "foo" );
+            var recordSet = SqlNode.RawRecordSet( "bar" );
+            var sut = source["Col0"];
+            var result = sut.ReplaceRecordSet( recordSet );
+
+            using ( new AssertionScope() )
+            {
+                result.Should().NotBeSameAs( sut );
+                result.Name.Should().Be( sut.Name );
+                result.Type.Should().Be( sut.Type );
+                result.RecordSet.Should().BeSameAs( recordSet );
+            }
+        }
     }
 }

@@ -14,6 +14,9 @@ public abstract class SqlDataFieldNode : SqlExpressionNode
     public abstract string Name { get; }
 
     [Pure]
+    public abstract SqlDataFieldNode ReplaceRecordSet(SqlRecordSetNode recordSet);
+
+    [Pure]
     public static implicit operator SqlSelectFieldNode(SqlDataFieldNode node)
     {
         return node.AsSelf();

@@ -1,4 +1,5 @@
-﻿using LfrlAnvil.Sql.Objects.Builders;
+﻿using System.Diagnostics.Contracts;
+using LfrlAnvil.Sql.Objects.Builders;
 
 namespace LfrlAnvil.Sql.Expressions.Objects;
 
@@ -16,4 +17,10 @@ public sealed class SqlColumnBuilderNode : SqlDataFieldNode
     public ISqlColumnBuilder Value { get; }
     public TypeNullability Type => TypeNullability.Create( Value.TypeDefinition.RuntimeType, _isOptional || Value.IsNullable );
     public override string Name => Value.Name;
+
+    [Pure]
+    public override SqlColumnBuilderNode ReplaceRecordSet(SqlRecordSetNode recordSet)
+    {
+        return new SqlColumnBuilderNode( recordSet, Value, _isOptional );
+    }
 }

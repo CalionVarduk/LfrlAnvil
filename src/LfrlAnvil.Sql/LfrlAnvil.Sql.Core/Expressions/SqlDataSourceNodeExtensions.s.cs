@@ -323,4 +323,62 @@ public static class SqlDataSourceNodeExtensions
     {
         return SqlNode.InsertInto( node, recordSet, dataFields );
     }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static SqlUpsertNode ToUpsert<TRecordSetNode>(
+        this SqlQueryExpressionNode node,
+        TRecordSetNode recordSet,
+        Func<TRecordSetNode, IEnumerable<SqlDataFieldNode>> insertDataFields,
+        Func<TRecordSetNode, SqlInternalRecordSetNode, IEnumerable<SqlValueAssignmentNode>> updateAssignments,
+        Func<TRecordSetNode, IEnumerable<SqlDataFieldNode>>? conflictTarget = null)
+        where TRecordSetNode : SqlRecordSetNode
+    {
+        return node.ToUpsert(
+            recordSet,
+            insertDataFields( recordSet ).ToArray(),
+            (r, i) => updateAssignments( ReinterpretCast.To<TRecordSetNode>( r ), i ),
+            conflictTarget?.Invoke( recordSet ).ToArray() ?? (ReadOnlyArray<SqlDataFieldNode>?)null );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static SqlUpsertNode ToUpsert(
+        this SqlQueryExpressionNode node,
+        SqlRecordSetNode recordSet,
+        ReadOnlyArray<SqlDataFieldNode> insertDataFields,
+        Func<SqlRecordSetNode, SqlInternalRecordSetNode, IEnumerable<SqlValueAssignmentNode>> updateAssignments,
+        ReadOnlyArray<SqlDataFieldNode>? conflictTarget = null)
+    {
+        return SqlNode.Upsert( node, recordSet, insertDataFields, updateAssignments, conflictTarget );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static SqlUpsertNode ToUpsert<TRecordSetNode>(
+        this SqlValuesNode node,
+        TRecordSetNode recordSet,
+        Func<TRecordSetNode, IEnumerable<SqlDataFieldNode>> insertDataFields,
+        Func<TRecordSetNode, SqlInternalRecordSetNode, IEnumerable<SqlValueAssignmentNode>> updateAssignments,
+        Func<TRecordSetNode, IEnumerable<SqlDataFieldNode>>? conflictTarget = null)
+        where TRecordSetNode : SqlRecordSetNode
+    {
+        return node.ToUpsert(
+            recordSet,
+            insertDataFields( recordSet ).ToArray(),
+            (r, i) => updateAssignments( ReinterpretCast.To<TRecordSetNode>( r ), i ),
+            conflictTarget?.Invoke( recordSet ).ToArray() ?? (ReadOnlyArray<SqlDataFieldNode>?)null );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static SqlUpsertNode ToUpsert(
+        this SqlValuesNode node,
+        SqlRecordSetNode recordSet,
+        ReadOnlyArray<SqlDataFieldNode> insertDataFields,
+        Func<SqlRecordSetNode, SqlInternalRecordSetNode, IEnumerable<SqlValueAssignmentNode>> updateAssignments,
+        ReadOnlyArray<SqlDataFieldNode>? conflictTarget = null)
+    {
+        return SqlNode.Upsert( node, recordSet, insertDataFields, updateAssignments, conflictTarget );
+    }
 }

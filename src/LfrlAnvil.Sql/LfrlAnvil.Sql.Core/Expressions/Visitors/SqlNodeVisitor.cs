@@ -776,6 +776,21 @@ public abstract class SqlNodeVisitor : ISqlNodeVisitor
         this.Visit( node.DataSource );
     }
 
+    public virtual void VisitUpsert(SqlUpsertNode node)
+    {
+        this.Visit( node.RecordSet );
+        foreach ( var dataField in node.InsertDataFields )
+            this.Visit( dataField );
+
+        foreach ( var assignment in node.UpdateAssignments )
+            VisitValueAssignment( assignment );
+
+        foreach ( var target in node.ConflictTarget )
+            this.Visit( target );
+
+        this.Visit( node.Source );
+    }
+
     public virtual void VisitValueAssignment(SqlValueAssignmentNode node)
     {
         this.Visit( node.DataField );

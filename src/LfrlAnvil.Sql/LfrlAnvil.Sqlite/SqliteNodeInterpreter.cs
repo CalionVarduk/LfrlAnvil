@@ -421,6 +421,21 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
         VisitUpdateWithComplexDataSourceAndComplexAssignments( node, targetInfo, updateVisitor.GetIndexesOfComplexAssignments() );
     }
 
+    public sealed override void VisitUpsert(SqlUpsertNode node)
+    {
+        throw new NotImplementedException();
+        // - https://www.sqlite.org/lang_upsert.html
+        // - accepts empty ConflictTarget? 2021, 2018 version requires it (configurable)
+        //   ^ it can however be extracted from PK
+        // - INSERT INTO <table> (<columns>...) VALUES (...)
+        // - ON CONFLICT <conflict-target> DO UPDATE SET <column> = <assigned-value>, ...;
+        //   ^ <assigned-value> requires access to UpdateSource record set (hardcoded name: "excluded")
+        // - INSERT INTO <table> (<columns>...) <source> <= SELECT
+        // - ON CONFLICT <conflict-target> DO UPDATE SET <column> = <assigned-value>, ...;
+        //   ^ parsing ambiguity: if SELECT doesn't have an explicit WHERE, then add WHERE TRUE
+        //   ^ "excluded" column names are the same as <table> column names
+    }
+
     public sealed override void VisitDeleteFrom(SqlDeleteFromNode node)
     {
         var traits = ExtractDataSourceTraits( node.DataSource.Traits );

@@ -715,6 +715,38 @@ public static partial class SqlNode
     }
 
     [Pure]
+    public static SqlUpsertNode Upsert(
+        SqlQueryExpressionNode query,
+        SqlRecordSetNode recordSet,
+        ReadOnlyArray<SqlDataFieldNode> insertDataFields,
+        Func<SqlRecordSetNode, SqlInternalRecordSetNode, IEnumerable<SqlValueAssignmentNode>> updateAssignments,
+        ReadOnlyArray<SqlDataFieldNode>? conflictTarget = null)
+    {
+        return new SqlUpsertNode(
+            query,
+            recordSet,
+            insertDataFields,
+            conflictTarget ?? ReadOnlyArray<SqlDataFieldNode>.Empty,
+            updateAssignments );
+    }
+
+    [Pure]
+    public static SqlUpsertNode Upsert(
+        SqlValuesNode values,
+        SqlRecordSetNode recordSet,
+        ReadOnlyArray<SqlDataFieldNode> insertDataFields,
+        Func<SqlRecordSetNode, SqlInternalRecordSetNode, IEnumerable<SqlValueAssignmentNode>> updateAssignments,
+        ReadOnlyArray<SqlDataFieldNode>? conflictTarget = null)
+    {
+        return new SqlUpsertNode(
+            values,
+            recordSet,
+            insertDataFields,
+            conflictTarget ?? ReadOnlyArray<SqlDataFieldNode>.Empty,
+            updateAssignments );
+    }
+
+    [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static SqlColumnDefinitionNode Column<T>(
         string name,

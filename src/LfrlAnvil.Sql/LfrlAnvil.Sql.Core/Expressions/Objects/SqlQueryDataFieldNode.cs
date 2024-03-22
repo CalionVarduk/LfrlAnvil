@@ -1,4 +1,6 @@
-﻿namespace LfrlAnvil.Sql.Expressions.Objects;
+﻿using System.Diagnostics.Contracts;
+
+namespace LfrlAnvil.Sql.Expressions.Objects;
 
 public sealed class SqlQueryDataFieldNode : SqlDataFieldNode
 {
@@ -13,4 +15,10 @@ public sealed class SqlQueryDataFieldNode : SqlDataFieldNode
     public SqlSelectNode Selection { get; }
     public SqlExpressionNode? Expression { get; }
     public override string Name { get; }
+
+    [Pure]
+    public override SqlQueryDataFieldNode ReplaceRecordSet(SqlRecordSetNode recordSet)
+    {
+        return new SqlQueryDataFieldNode( recordSet, Name, Selection, Expression );
+    }
 }

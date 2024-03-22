@@ -534,6 +534,61 @@ public sealed class SqlNodeDebugInterpreter : SqlNodeInterpreter
         }
     }
 
+    public override void VisitUpsert(SqlUpsertNode node)
+    {
+        Context.Sql.Append( "UPSERT" ).AppendSpace();
+
+        AppendDelimitedRecordSetName( node.RecordSet.AsSelf() );
+        AppendDelimitedAlias( node.RecordSet.Alias );
+
+        Context.Sql.AppendSpace().Append( "USING" );
+        Context.AppendIndent();
+        this.Visit( node.Source );
+
+        if ( node.ConflictTarget.Count > 0 )
+        {
+            Context.AppendIndent().Append( "WITH" ).AppendSpace().Append( "CONFLICT" ).AppendSpace().Append( "TARGET" );
+            Context.Sql.AppendSpace().Append( '(' );
+
+            foreach ( var target in node.ConflictTarget )
+            {
+                this.Visit( target );
+                Context.Sql.AppendComma().AppendSpace();
+            }
+
+            Context.Sql.ShrinkBy( 2 ).Append( ')' );
+        }
+
+        Context.AppendIndent().Append( "INSERT" ).AppendSpace().Append( '(' );
+        if ( node.InsertDataFields.Count > 0 )
+        {
+            foreach ( var dataField in node.InsertDataFields )
+            {
+                this.Visit( dataField );
+                Context.Sql.AppendComma().AppendSpace();
+            }
+
+            Context.Sql.ShrinkBy( 2 );
+        }
+
+        Context.Sql.Append( ')' );
+        Context.AppendIndent().Append( "ON" ).AppendSpace().Append( "CONFLICT" ).AppendSpace().Append( "SET" );
+        if ( node.UpdateAssignments.Count > 0 )
+        {
+            using ( Context.TempIndentIncrease() )
+            {
+                foreach ( var assignment in node.UpdateAssignments )
+                {
+                    Context.AppendIndent();
+                    VisitValueAssignment( assignment );
+                    Context.Sql.AppendComma();
+                }
+
+                Context.Sql.ShrinkBy( 1 );
+            }
+        }
+    }
+
     public override void VisitValueAssignment(SqlValueAssignmentNode node)
     {
         VisitInfixBinaryOperator( node.DataField, symbol: "=", node.Value );
@@ -789,6 +844,16 @@ public sealed class SqlNodeDebugInterpreter : SqlNodeInterpreter
 
     public override void VisitCustom(SqlNodeBase node)
     {
+        if ( node is SqlInternalRecordSetNode internalRecordSet )
+        {
+            Context.Sql.Append( '(' );
+            AppendDelimitedRecordSetName( internalRecordSet );
+            Context.Sql.AppendSpace().Append( "FROM" ).AppendSpace();
+            AppendDelimitedRecordSetName( internalRecordSet.Base );
+            Context.Sql.Append( ')' );
+            return;
+        }
+
         Context.Sql.Append( '{' ).Append( node.GetType().GetDebugString() ).Append( '}' );
     }
 

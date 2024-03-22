@@ -681,6 +681,22 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
         VisitSimplifiedUpdateWithMultiTable( node, targetInfo, in traits );
     }
 
+    public sealed override void VisitUpsert(SqlUpsertNode node)
+    {
+        throw new System.NotImplementedException();
+        // - https://dev.mysql.com/doc/refman/8.0/en/insert-on-duplicate.html
+        // - ignores (or throws) non-empty ConflictTarget
+        // - INSERT INTO <table> (<columns>...) VALUES (...) AS `new`
+        // - ON DUPLICATE KEY UPDATE <column> = <assigned-value>, ...;
+        //   ^ <assigned-value> requires access to the `new` record set (UpdateSource)
+        // - INSERT INTO <table> (<columns>...) SELECT * FROM (<source>) AS `_{GUID}`
+        // - ON DUPLICATE KEY UPDATE <column> = <assigned-value>, ...;
+        //   ^ I think <source> requires dedicated selection aliases, so that there is no name conflict with target <table>
+        //   ^ can these columns be accessed by `_{GUID}`.`column`?
+        //   ^ and, can current column values be accessed by `<table>`.`column`?
+        //   ^ this would solve a lot of problems
+    }
+
     public sealed override void VisitDeleteFrom(SqlDeleteFromNode node)
     {
         var traits = ExtractDataSourceTraits( node.DataSource.Traits );

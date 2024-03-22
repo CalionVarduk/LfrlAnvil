@@ -250,5 +250,25 @@ public partial class ObjectExpressionsTests
                 result.IsOptional.Should().Be( optional );
             }
         }
+
+        [Fact]
+        public void DataField_ReplaceRecordSet_ShouldReturnViewDataFieldNodeWithReplacedRecordSet()
+        {
+            var view = SqlViewMock.Create(
+                "foo",
+                SqlNode.RawRecordSet( "x" ).ToDataSource().Select( x => new[] { x.From["Col0"].AsSelf() } ) );
+
+            var recordSet = SqlNode.RawRecordSet( "bar" );
+            var sut = SqlNode.View( view )["Col0"];
+            var result = sut.ReplaceRecordSet( recordSet );
+
+            using ( new AssertionScope() )
+            {
+                result.Should().NotBeSameAs( sut );
+                result.Name.Should().Be( sut.Name );
+                result.Value.Should().BeSameAs( sut.Value );
+                result.RecordSet.Should().BeSameAs( recordSet );
+            }
+        }
     }
 }
