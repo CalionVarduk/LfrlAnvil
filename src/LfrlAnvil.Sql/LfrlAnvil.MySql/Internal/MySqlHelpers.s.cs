@@ -1,4 +1,6 @@
-﻿using LfrlAnvil.Extensions;
+﻿using System.Diagnostics.Contracts;
+using System.Runtime.CompilerServices;
+using LfrlAnvil.Extensions;
 using LfrlAnvil.Sql;
 using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Expressions.Visitors;
@@ -11,7 +13,15 @@ internal static class MySqlHelpers
     public static readonly SqlSchemaObjectName DefaultVersionHistoryName = SqlSchemaObjectName.Create( "common", "__VersionHistory" );
     public const string GuidFunctionName = "GUID";
     public const string DropIndexIfExistsProcedureName = "_DROP_INDEX_IF_EXISTS";
+    public const string DefaultUpdateSourceAlias = "new";
     public const int DefaultIndexPrefixLength = 500;
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static string GetUpdateSourceAlias(MySqlNodeInterpreterOptions options)
+    {
+        return string.IsNullOrEmpty( options.UpsertSourceAlias ) ? DefaultUpdateSourceAlias : options.UpsertSourceAlias;
+    }
 
     public static void AppendAlterTableHeader(SqlNodeInterpreter interpreter, SqlRecordSetInfo info)
     {

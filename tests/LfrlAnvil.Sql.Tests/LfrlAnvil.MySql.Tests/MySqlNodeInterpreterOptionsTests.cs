@@ -17,6 +17,7 @@ public class MySqlNodeInterpreterOptionsTests : TestsBase
             sut.IsFullJoinParsingEnabled.Should().BeFalse();
             sut.IsIndexFilterParsingEnabled.Should().BeFalse();
             sut.AreTemporaryViewsForbidden.Should().BeFalse();
+            sut.UpsertSourceAlias.Should().BeNull();
         }
     }
 
@@ -35,6 +36,7 @@ public class MySqlNodeInterpreterOptionsTests : TestsBase
             result.IsFullJoinParsingEnabled.Should().BeFalse();
             result.IsIndexFilterParsingEnabled.Should().BeFalse();
             result.AreTemporaryViewsForbidden.Should().BeFalse();
+            result.UpsertSourceAlias.Should().BeNull();
         }
     }
 
@@ -52,6 +54,7 @@ public class MySqlNodeInterpreterOptionsTests : TestsBase
             result.IsFullJoinParsingEnabled.Should().BeFalse();
             result.IsIndexFilterParsingEnabled.Should().BeFalse();
             result.AreTemporaryViewsForbidden.Should().BeFalse();
+            result.UpsertSourceAlias.Should().BeNull();
         }
     }
 
@@ -69,6 +72,7 @@ public class MySqlNodeInterpreterOptionsTests : TestsBase
             result.IsFullJoinParsingEnabled.Should().BeFalse();
             result.IsIndexFilterParsingEnabled.Should().BeFalse();
             result.AreTemporaryViewsForbidden.Should().BeFalse();
+            result.UpsertSourceAlias.Should().BeNull();
         }
     }
 
@@ -86,6 +90,7 @@ public class MySqlNodeInterpreterOptionsTests : TestsBase
             result.IsFullJoinParsingEnabled.Should().BeFalse();
             result.IsIndexFilterParsingEnabled.Should().BeFalse();
             result.AreTemporaryViewsForbidden.Should().BeFalse();
+            result.UpsertSourceAlias.Should().BeNull();
         }
     }
 
@@ -103,6 +108,7 @@ public class MySqlNodeInterpreterOptionsTests : TestsBase
             result.IsFullJoinParsingEnabled.Should().BeFalse();
             result.IsIndexFilterParsingEnabled.Should().BeFalse();
             result.AreTemporaryViewsForbidden.Should().BeFalse();
+            result.UpsertSourceAlias.Should().BeNull();
         }
     }
 
@@ -130,6 +136,7 @@ public class MySqlNodeInterpreterOptionsTests : TestsBase
             result.IsFullJoinParsingEnabled.Should().BeFalse();
             result.IsIndexFilterParsingEnabled.Should().BeFalse();
             result.AreTemporaryViewsForbidden.Should().BeFalse();
+            result.UpsertSourceAlias.Should().BeNull();
         }
     }
 
@@ -149,6 +156,7 @@ public class MySqlNodeInterpreterOptionsTests : TestsBase
             result.IsFullJoinParsingEnabled.Should().Be( enabled );
             result.IsIndexFilterParsingEnabled.Should().BeFalse();
             result.AreTemporaryViewsForbidden.Should().BeFalse();
+            result.UpsertSourceAlias.Should().BeNull();
         }
     }
 
@@ -168,6 +176,7 @@ public class MySqlNodeInterpreterOptionsTests : TestsBase
             result.IsFullJoinParsingEnabled.Should().BeFalse();
             result.IsIndexFilterParsingEnabled.Should().Be( enabled );
             result.AreTemporaryViewsForbidden.Should().BeFalse();
+            result.UpsertSourceAlias.Should().BeNull();
         }
     }
 
@@ -187,6 +196,28 @@ public class MySqlNodeInterpreterOptionsTests : TestsBase
             result.IsFullJoinParsingEnabled.Should().BeFalse();
             result.IsIndexFilterParsingEnabled.Should().BeFalse();
             result.AreTemporaryViewsForbidden.Should().Be( enabled );
+            result.UpsertSourceAlias.Should().BeNull();
+        }
+    }
+
+    [Theory]
+    [InlineData( "" )]
+    [InlineData( "foo" )]
+    [InlineData( null )]
+    public void SetUpdateSourceAlias_ShouldReturnCorrectResult(string? alias)
+    {
+        var sut = MySqlNodeInterpreterOptions.Default;
+        var result = sut.SetUpdateSourceAlias( alias );
+
+        using ( new AssertionScope() )
+        {
+            result.TypeDefinitions.Should().BeNull();
+            result.CommonSchemaName.Should().BeNull();
+            result.IndexPrefixLength.Should().Be( 500 );
+            result.IsFullJoinParsingEnabled.Should().BeFalse();
+            result.IsIndexFilterParsingEnabled.Should().BeFalse();
+            result.AreTemporaryViewsForbidden.Should().BeFalse();
+            result.UpsertSourceAlias.Should().BeSameAs( alias );
         }
     }
 }

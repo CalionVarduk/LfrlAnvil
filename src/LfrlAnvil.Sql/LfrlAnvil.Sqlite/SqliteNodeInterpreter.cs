@@ -1028,18 +1028,19 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
         var traits = ExtractQueryTraits( query.Traits );
         VisitQueryBeforeTraits( in traits );
         VisitInsertIntoFields( node.RecordSet, node.InsertDataFields );
-        Context.AppendIndent();
 
-        var topDataSource = query
-            .SetTraits( RemoveCommonTableExpressionTraits( query.Traits ) )
-            .AsSet( "source" )
-            .ToDataSource();
+        Context.AppendIndent().Append( "SELECT" ).AppendSpace().Append( '*' ).AppendSpace().Append( "FROM" ).AppendSpace().Append( '(' );
+        using ( Context.TempIndentIncrease() )
+        {
+            Context.AppendIndent();
+            VisitCompoundQueryComponents( query, in traits );
+            VisitQueryAfterTraits( in traits );
+        }
 
-        var topQuery = topDataSource.Select( topDataSource.GetAll() ).AndWhere( SqlNode.True() );
-        var topTraits = ExtractDataSourceTraits( topQuery.Traits );
-        VisitDataSourceQuerySelection( topQuery, in topTraits );
-        VisitDataSource( topQuery.DataSource );
-        VisitDataSourceAfterTraits( in topTraits );
+        Context.AppendIndent().Append( ')' );
+        AppendDelimitedAlias( "source" );
+        Context.AppendIndent().Append( "WHERE" ).AppendSpace().Append( "TRUE" );
+
         AppendUpsertOnConflict( node, conflictTarget );
     }
 

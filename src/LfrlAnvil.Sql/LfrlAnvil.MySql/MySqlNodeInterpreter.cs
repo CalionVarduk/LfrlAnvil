@@ -23,11 +23,13 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
 {
     private const string MaxLimit = "18446744073709551615";
     private readonly string? _indexPrefixLength;
+    private SqlRecordSetNode? _upsertUpdateSourceReplacement;
 
     public MySqlNodeInterpreter(MySqlNodeInterpreterOptions options, SqlNodeInterpreterContext context)
         : base( context, beginNameDelimiter: '`', endNameDelimiter: '`' )
     {
         Options = options;
+        _upsertUpdateSourceReplacement = null;
         TypeDefinitions = Options.TypeDefinitions ?? new MySqlColumnTypeDefinitionProviderBuilder().Build();
         CommonSchemaName = Options.CommonSchemaName ?? MySqlHelpers.DefaultVersionHistoryName.Schema;
         _indexPrefixLength = Options.IndexPrefixLength?.ToString( CultureInfo.InvariantCulture );
@@ -683,18 +685,29 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
 
     public sealed override void VisitUpsert(SqlUpsertNode node)
     {
-        throw new System.NotImplementedException();
-        // - https://dev.mysql.com/doc/refman/8.0/en/insert-on-duplicate.html
-        // - ignores (or throws) non-empty ConflictTarget
-        // - INSERT INTO <table> (<columns>...) VALUES (...) AS `new`
-        // - ON DUPLICATE KEY UPDATE <column> = <assigned-value>, ...;
-        //   ^ <assigned-value> requires access to the `new` record set (UpdateSource)
-        // - INSERT INTO <table> (<columns>...) SELECT * FROM (<source>) AS `_{GUID}`
-        // - ON DUPLICATE KEY UPDATE <column> = <assigned-value>, ...;
-        //   ^ I think <source> requires dedicated selection aliases, so that there is no name conflict with target <table>
-        //   ^ can these columns be accessed by `_{GUID}`.`column`?
-        //   ^ and, can current column values be accessed by `<table>`.`column`?
-        //   ^ this would solve a lot of problems
+        switch ( node.Source.NodeType )
+        {
+            case SqlNodeType.DataSourceQuery:
+            {
+                VisitUpsertFromDataSourceQuery( node, ReinterpretCast.To<SqlDataSourceQueryExpressionNode>( node.Source ) );
+                break;
+            }
+            case SqlNodeType.CompoundQuery:
+            {
+                VisitUpsertFromCompoundQuery( node, ReinterpretCast.To<SqlCompoundQueryExpressionNode>( node.Source ) );
+                break;
+            }
+            case SqlNodeType.RawQuery:
+            {
+                VisitUpsertFromRawQuery( node, ReinterpretCast.To<SqlRawQueryExpressionNode>( node.Source ) );
+                break;
+            }
+            default:
+            {
+                VisitUpsertFromGenericSource( node );
+                break;
+            }
+        }
     }
 
     public sealed override void VisitDeleteFrom(SqlDeleteFromNode node)
@@ -1249,6 +1262,125 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
             VisitMultiUpdateAssignmentRange( node.Assignments );
 
         VisitDataSourceAfterTraits( in traits );
+    }
+
+    protected virtual void VisitUpsertFromDataSourceQuery(SqlUpsertNode node, SqlDataSourceQueryExpressionNode query)
+    {
+        Assume.Equals( node.Source, query );
+        var traits = ExtractDataSourceTraits( ExtractDataSourceTraits( query.DataSource.Traits ), query.Traits );
+        VisitDataSourceBeforeTraits( RemoveCommonTableExpressions( in traits ) );
+        VisitInsertIntoFields( node.RecordSet, node.InsertDataFields );
+        Context.AppendIndent();
+        VisitDataSourceBeforeTraits( in traits );
+
+        Context.Sql.Append( "SELECT" ).AppendSpace().Append( '*' ).AppendSpace().Append( "FROM" ).AppendSpace().Append( '(' );
+        using ( Context.TempIndentIncrease() )
+        {
+            Context.AppendIndent();
+            VisitDataSourceQuerySelection( query, in traits );
+            VisitDataSource( query.DataSource );
+            VisitDataSourceAfterTraits( in traits );
+        }
+
+        Context.AppendIndent().Append( ')' ).AppendSpace();
+        AppendUpsertSourceAlias( node, includeFieldNames: true );
+        AppendUpsertOnDuplicateKey( node );
+    }
+
+    protected virtual void VisitUpsertFromCompoundQuery(SqlUpsertNode node, SqlCompoundQueryExpressionNode query)
+    {
+        Assume.Equals( node.Source, query );
+        var traits = ExtractQueryTraits( query.Traits );
+        VisitQueryBeforeTraits( RemoveCommonTableExpressions( in traits ) );
+        VisitInsertIntoFields( node.RecordSet, node.InsertDataFields );
+        Context.AppendIndent();
+        VisitQueryBeforeTraits( in traits );
+
+        Context.Sql.Append( "SELECT" ).AppendSpace().Append( '*' ).AppendSpace().Append( "FROM" ).AppendSpace().Append( '(' );
+        using ( Context.TempIndentIncrease() )
+        {
+            Context.AppendIndent();
+            VisitCompoundQueryComponents( query, in traits );
+            VisitQueryAfterTraits( in traits );
+        }
+
+        Context.AppendIndent().Append( ')' ).AppendSpace();
+        AppendUpsertSourceAlias( node, includeFieldNames: true );
+        AppendUpsertOnDuplicateKey( node );
+    }
+
+    protected virtual void VisitUpsertFromRawQuery(SqlUpsertNode node, SqlRawQueryExpressionNode query)
+    {
+        Assume.Equals( node.Source, query );
+        VisitInsertIntoFields( node.RecordSet, node.InsertDataFields );
+
+        Context.AppendIndent().Append( "SELECT" ).AppendSpace().Append( '*' ).AppendSpace().Append( "FROM" ).AppendSpace().Append( '(' );
+        using ( Context.TempIndentIncrease() )
+        {
+            Context.AppendIndent();
+            VisitRawQuery( query );
+        }
+
+        Context.AppendIndent().Append( ')' ).AppendSpace();
+        AppendUpsertSourceAlias( node, includeFieldNames: true );
+        AppendUpsertOnDuplicateKey( node );
+    }
+
+    protected virtual void VisitUpsertFromGenericSource(SqlUpsertNode node)
+    {
+        VisitInsertIntoFields( node.RecordSet, node.InsertDataFields );
+        Context.AppendIndent();
+        this.Visit( node.Source );
+        Context.AppendIndent();
+        AppendUpsertSourceAlias( node, includeFieldNames: false );
+        AppendUpsertOnDuplicateKey( node );
+    }
+
+    protected void AppendUpsertSourceAlias(SqlUpsertNode node, bool includeFieldNames)
+    {
+        Context.Sql.Append( "AS" ).AppendSpace();
+        AppendDelimitedName( MySqlHelpers.GetUpdateSourceAlias( Options ) );
+        if ( ! includeFieldNames )
+            return;
+
+        Context.Sql.Append( '(' );
+        if ( node.InsertDataFields.Count > 0 )
+        {
+            foreach ( var dataField in node.InsertDataFields )
+            {
+                AppendDelimitedName( dataField.Name );
+                Context.Sql.AppendComma().AppendSpace();
+            }
+
+            Context.Sql.ShrinkBy( 2 );
+        }
+
+        Context.Sql.Append( ')' );
+    }
+
+    protected void AppendUpsertOnDuplicateKey(SqlUpsertNode node)
+    {
+        Context.AppendIndent().Append( "ON" ).AppendSpace().Append( "DUPLICATE" ).AppendSpace();
+        Context.Sql.Append( "KEY" ).AppendSpace().Append( "UPDATE" );
+
+        if ( node.UpdateAssignments.Count > 0 )
+        {
+            _upsertUpdateSourceReplacement ??= SqlNode.RawRecordSet(
+                SqlRecordSetInfo.Create( MySqlHelpers.GetUpdateSourceAlias( Options ) ) );
+
+            using ( TempReplaceRecordSet( node.UpdateSource, _upsertUpdateSourceReplacement ) )
+            using ( Context.TempIndentIncrease() )
+            {
+                foreach ( var assignment in node.UpdateAssignments )
+                {
+                    Context.AppendIndent();
+                    VisitValueAssignment( assignment );
+                    Context.Sql.AppendComma();
+                }
+            }
+
+            Context.Sql.ShrinkBy( 1 );
+        }
     }
 
     protected virtual void VisitDeleteFromWithSingleTable(SqlDeleteFromNode node, in SqlDataSourceTraits traits)

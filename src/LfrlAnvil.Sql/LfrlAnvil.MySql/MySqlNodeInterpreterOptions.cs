@@ -15,7 +15,8 @@ public readonly struct MySqlNodeInterpreterOptions
         int? indexPrefixLength,
         bool isFullJoinParsingEnabled,
         bool isIndexFilterParsingEnabled,
-        bool areTemporaryViewsForbidden)
+        bool areTemporaryViewsForbidden,
+        string? upsertSourceAlias)
     {
         TypeDefinitions = typeDefinitions;
         CommonSchemaName = commonSchemaName;
@@ -23,6 +24,7 @@ public readonly struct MySqlNodeInterpreterOptions
         IsFullJoinParsingEnabled = isFullJoinParsingEnabled;
         IsIndexFilterParsingEnabled = isIndexFilterParsingEnabled;
         AreTemporaryViewsForbidden = areTemporaryViewsForbidden;
+        UpsertSourceAlias = upsertSourceAlias;
     }
 
     public MySqlColumnTypeDefinitionProvider? TypeDefinitions { get; }
@@ -31,6 +33,7 @@ public readonly struct MySqlNodeInterpreterOptions
     public bool IsFullJoinParsingEnabled { get; }
     public bool IsIndexFilterParsingEnabled { get; }
     public bool AreTemporaryViewsForbidden { get; }
+    public string? UpsertSourceAlias { get; }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -42,7 +45,8 @@ public readonly struct MySqlNodeInterpreterOptions
             IndexPrefixLength,
             IsFullJoinParsingEnabled,
             IsIndexFilterParsingEnabled,
-            AreTemporaryViewsForbidden );
+            AreTemporaryViewsForbidden,
+            UpsertSourceAlias );
     }
 
     [Pure]
@@ -55,7 +59,8 @@ public readonly struct MySqlNodeInterpreterOptions
             IndexPrefixLength,
             IsFullJoinParsingEnabled,
             IsIndexFilterParsingEnabled,
-            AreTemporaryViewsForbidden );
+            AreTemporaryViewsForbidden,
+            UpsertSourceAlias );
     }
 
     [Pure]
@@ -69,7 +74,8 @@ public readonly struct MySqlNodeInterpreterOptions
             length,
             IsFullJoinParsingEnabled,
             IsIndexFilterParsingEnabled,
-            AreTemporaryViewsForbidden );
+            AreTemporaryViewsForbidden,
+            UpsertSourceAlias );
     }
 
     [Pure]
@@ -82,7 +88,8 @@ public readonly struct MySqlNodeInterpreterOptions
             null,
             IsFullJoinParsingEnabled,
             IsIndexFilterParsingEnabled,
-            AreTemporaryViewsForbidden );
+            AreTemporaryViewsForbidden,
+            UpsertSourceAlias );
     }
 
     [Pure]
@@ -95,7 +102,8 @@ public readonly struct MySqlNodeInterpreterOptions
             IndexPrefixLength,
             enabled,
             IsIndexFilterParsingEnabled,
-            AreTemporaryViewsForbidden );
+            AreTemporaryViewsForbidden,
+            UpsertSourceAlias );
     }
 
     [Pure]
@@ -108,7 +116,8 @@ public readonly struct MySqlNodeInterpreterOptions
             IndexPrefixLength,
             IsFullJoinParsingEnabled,
             enabled,
-            AreTemporaryViewsForbidden );
+            AreTemporaryViewsForbidden,
+            UpsertSourceAlias );
     }
 
     [Pure]
@@ -121,6 +130,21 @@ public readonly struct MySqlNodeInterpreterOptions
             IndexPrefixLength,
             IsFullJoinParsingEnabled,
             IsIndexFilterParsingEnabled,
-            enabled );
+            enabled,
+            UpsertSourceAlias );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public MySqlNodeInterpreterOptions SetUpdateSourceAlias(string? alias)
+    {
+        return new MySqlNodeInterpreterOptions(
+            TypeDefinitions,
+            CommonSchemaName,
+            IndexPrefixLength,
+            IsFullJoinParsingEnabled,
+            IsIndexFilterParsingEnabled,
+            AreTemporaryViewsForbidden,
+            alias );
     }
 }

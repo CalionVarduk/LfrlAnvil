@@ -523,20 +523,12 @@ ON CONFLICT (""a"", ""c"") DO UPDATE SET
   SELECT * FROM ipsum
 )
 INSERT INTO qux (""a"", ""b"")
-SELECT
-  *
-FROM (
-  
+SELECT * FROM (
   SELECT foo.a, foo.b FROM foo JOIN x ON x.a = foo.a
-
   UNION ALL
-  
   SELECT a, b FROM bar
-
   UNION
-  
   SELECT a, b FROM qux
-
   ORDER BY (a) ASC
   LIMIT 50 OFFSET 75
 ) AS ""source""
@@ -573,20 +565,12 @@ ON CONFLICT (""a"", ""c"") DO UPDATE SET
   SELECT * FROM ipsum
 )
 INSERT INTO ""common_qux"" (""a"", ""b"")
-SELECT
-  *
-FROM (
-  
+SELECT * FROM (
   SELECT foo.a, foo.b FROM foo JOIN x ON x.a = foo.a
-
   UNION ALL
-  
   SELECT a, b FROM bar
-
   UNION
-  
   SELECT a, b FROM qux
-
   ORDER BY (a) ASC
   LIMIT 50 OFFSET 75
 ) AS ""source""
@@ -623,20 +607,12 @@ ON CONFLICT (""a"", ""c"") DO UPDATE SET
   SELECT * FROM ipsum
 )
 INSERT INTO ""common_qux"" (""a"", ""b"")
-SELECT
-  *
-FROM (
-  
+SELECT * FROM (
   SELECT foo.a, foo.b FROM foo JOIN x ON x.a = foo.a
-
   UNION ALL
-  
   SELECT a, b FROM bar
-
   UNION
-  
   SELECT a, b FROM qux
-
   ORDER BY (a) ASC
   LIMIT 50 OFFSET 75
 ) AS ""source""
@@ -678,20 +654,12 @@ ON CONFLICT (""a"", ""c"") DO UPDATE SET
   SELECT * FROM ipsum
 )
 INSERT INTO ""qux"" (""a"", ""b"")
-SELECT
-  *
-FROM (
-  
+SELECT * FROM (
   SELECT foo.a, foo.b FROM foo JOIN x ON x.a = foo.a
-
   UNION ALL
-  
   SELECT a, b FROM bar
-
   UNION
-  
   SELECT a, b FROM qux
-
   ORDER BY (a) ASC
   LIMIT 50 OFFSET 75
 ) AS ""source""
@@ -729,20 +697,12 @@ ON CONFLICT (""a"", ""c"") DO UPDATE SET
   SELECT * FROM ipsum
 )
 INSERT INTO qux (""a"", ""b"")
-SELECT
-  *
-FROM (
-  
+SELECT * FROM (
   SELECT foo.a, foo.b FROM foo JOIN x ON x.a = foo.a
-
   UNION ALL
-  
   SELECT a, b FROM bar
-
   UNION
-  
   SELECT a, b FROM qux
-
   ORDER BY (a) ASC
   LIMIT 50 OFFSET 75
 ) AS ""source""
