@@ -2,6 +2,7 @@
 using System.Data;
 using System.Diagnostics.Contracts;
 using LfrlAnvil.Extensions;
+using LfrlAnvil.Sql.Exceptions;
 using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Expressions.Arithmetic;
 using LfrlAnvil.Sql.Expressions.Functions;
@@ -17,9 +18,12 @@ namespace LfrlAnvil.Sqlite;
 
 public class SqliteNodeInterpreter : SqlNodeInterpreter
 {
+    private SqlRecordSetNode? _upsertUpdateSourceReplacement;
+
     public SqliteNodeInterpreter(SqliteNodeInterpreterOptions options, SqlNodeInterpreterContext context)
         : base( context, beginNameDelimiter: '"', endNameDelimiter: '"' )
     {
+        _upsertUpdateSourceReplacement = null;
         Options = options;
         TypeDefinitions = Options.TypeDefinitions ?? new SqliteColumnTypeDefinitionProviderBuilder().Build();
     }
@@ -400,7 +404,7 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
             return;
         }
 
-        var targetInfo = ExtractTargetUpdateInfo( node );
+        var targetInfo = ExtractTargetInfo( node );
         var updateVisitor = CreateUpdateAssignmentsVisitor( node );
 
         if ( updateVisitor is null || ! updateVisitor.ContainsComplexAssignments() )
@@ -423,17 +427,32 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
 
     public sealed override void VisitUpsert(SqlUpsertNode node)
     {
-        throw new NotImplementedException();
-        // - https://www.sqlite.org/lang_upsert.html
-        // - accepts empty ConflictTarget? 2021, 2018 version requires it (configurable)
-        //   ^ it can however be extracted from PK
-        // - INSERT INTO <table> (<columns>...) VALUES (...)
-        // - ON CONFLICT <conflict-target> DO UPDATE SET <column> = <assigned-value>, ...;
-        //   ^ <assigned-value> requires access to UpdateSource record set (hardcoded name: "excluded")
-        // - INSERT INTO <table> (<columns>...) <source> <= SELECT
-        // - ON CONFLICT <conflict-target> DO UPDATE SET <column> = <assigned-value>, ...;
-        //   ^ parsing ambiguity: if SELECT doesn't have an explicit WHERE, then add WHERE TRUE
-        //   ^ "excluded" column names are the same as <table> column names
+        if ( (Options.UpsertOptions & SqliteUpsertOptions.Supported) == SqliteUpsertOptions.Disabled )
+            throw new UnrecognizedSqlNodeException( this, node );
+
+        var conflictTarget = node.ConflictTarget.Count == 0 &&
+            (Options.UpsertOptions & SqliteUpsertOptions.AllowEmptyConflictTarget) == SqliteUpsertOptions.Disabled
+                ? ExtractUpsertConflictTargets( node )
+                : node.ConflictTarget;
+
+        switch ( node.Source.NodeType )
+        {
+            case SqlNodeType.DataSourceQuery:
+            {
+                VisitUpsertFromDataSourceQuery( node, conflictTarget, ReinterpretCast.To<SqlDataSourceQueryExpressionNode>( node.Source ) );
+                break;
+            }
+            case SqlNodeType.CompoundQuery:
+            {
+                VisitUpsertFromCompoundQuery( node, conflictTarget, ReinterpretCast.To<SqlCompoundQueryExpressionNode>( node.Source ) );
+                break;
+            }
+            default:
+            {
+                VisitUpsertFromGenericSource( node, conflictTarget );
+                break;
+            }
+        }
     }
 
     public sealed override void VisitDeleteFrom(SqlDeleteFromNode node)
@@ -446,7 +465,7 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
             return;
         }
 
-        var targetInfo = ExtractTargetDeleteInfo( node );
+        var targetInfo = ExtractTargetInfo( node );
         VisitDeleteFromWithComplexDataSource( node, targetInfo, in traits );
     }
 
@@ -979,6 +998,79 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
             VisitUpdateAssignmentRange( node.Assignments );
 
         VisitDataSourceAfterTraits( in traits );
+    }
+
+    protected virtual void VisitUpsertFromDataSourceQuery(
+        SqlUpsertNode node,
+        ReadOnlyArray<SqlDataFieldNode> conflictTarget,
+        SqlDataSourceQueryExpressionNode query)
+    {
+        Assume.Equals( node.Source, query );
+        var traits = ExtractDataSourceTraits( ExtractDataSourceTraits( query.DataSource.Traits ), query.Traits );
+        if ( traits.Filter is null )
+            traits = traits with { Filter = SqlNode.True() };
+
+        VisitDataSourceBeforeTraits( in traits );
+        VisitInsertIntoFields( node.RecordSet, node.InsertDataFields );
+        Context.AppendIndent();
+        VisitDataSourceQuerySelection( query, in traits );
+        VisitDataSource( query.DataSource );
+        VisitDataSourceAfterTraits( in traits );
+        AppendUpsertOnConflict( node, conflictTarget );
+    }
+
+    protected virtual void VisitUpsertFromCompoundQuery(
+        SqlUpsertNode node,
+        ReadOnlyArray<SqlDataFieldNode> conflictTarget,
+        SqlCompoundQueryExpressionNode query)
+    {
+        Assume.Equals( node.Source, query );
+        var traits = ExtractQueryTraits( query.Traits );
+        VisitQueryBeforeTraits( in traits );
+        VisitInsertIntoFields( node.RecordSet, node.InsertDataFields );
+        Context.AppendIndent();
+
+        var topDataSource = query
+            .SetTraits( RemoveCommonTableExpressionTraits( query.Traits ) )
+            .AsSet( "source" )
+            .ToDataSource();
+
+        var topQuery = topDataSource.Select( topDataSource.GetAll() ).AndWhere( SqlNode.True() );
+        var topTraits = ExtractDataSourceTraits( topQuery.Traits );
+        VisitDataSourceQuerySelection( topQuery, in topTraits );
+        VisitDataSource( topQuery.DataSource );
+        VisitDataSourceAfterTraits( in topTraits );
+        AppendUpsertOnConflict( node, conflictTarget );
+    }
+
+    protected virtual void VisitUpsertFromGenericSource(SqlUpsertNode node, ReadOnlyArray<SqlDataFieldNode> conflictTarget)
+    {
+        VisitInsertIntoFields( node.RecordSet, node.InsertDataFields );
+        Context.AppendIndent();
+        this.Visit( node.Source );
+        AppendUpsertOnConflict( node, conflictTarget );
+    }
+
+    protected void AppendUpsertOnConflict(SqlUpsertNode node, ReadOnlyArray<SqlDataFieldNode> conflictTarget)
+    {
+        Context.AppendIndent().Append( "ON" ).AppendSpace().Append( "CONFLICT" ).AppendSpace();
+        if ( conflictTarget.Count > 0 )
+        {
+            Context.Sql.Append( '(' );
+            foreach ( var target in conflictTarget )
+            {
+                AppendDelimitedName( target.Name );
+                Context.Sql.AppendComma().AppendSpace();
+            }
+
+            Context.Sql.ShrinkBy( 2 ).Append( ')' ).AppendSpace();
+        }
+
+        Context.Sql.Append( "DO" ).AppendSpace().Append( "UPDATE" );
+
+        _upsertUpdateSourceReplacement ??= SqlNode.RawRecordSet( SqliteHelpers.UpsertExcludedRecordSetInfo );
+        using ( TempReplaceRecordSet( node.UpdateSource, _upsertUpdateSourceReplacement ) )
+            VisitUpdateAssignmentRange( node.UpdateAssignments );
     }
 
     protected virtual void VisitDeleteFromWithSimpleDataSource(SqlDeleteFromNode node, in SqlDataSourceTraits traits)

@@ -25,6 +25,7 @@ public static class SqliteHelpers
     public const long TemporalDayOfYearUnit = 10;
     public const long TemporalDayOfWeekUnit = 11;
     public static readonly SqlSchemaObjectName DefaultVersionHistoryName = SqlSchemaObjectName.Create( SqlHelpers.VersionHistoryName );
+    public static readonly SqlRecordSetInfo UpsertExcludedRecordSetInfo = SqlRecordSetInfo.Create( "excluded" );
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]

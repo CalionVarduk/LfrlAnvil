@@ -672,7 +672,7 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
             return;
         }
 
-        var targetInfo = ExtractTargetUpdateInfo( node );
+        var targetInfo = ExtractTargetInfo( node );
         var updateVisitor = CreateUpdateAssignmentsVisitor( node );
 
         node = CreateSimplifiedUpdateFrom( targetInfo, node, updateVisitor );
@@ -713,7 +713,7 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
             return;
         }
 
-        var targetInfo = ExtractTargetDeleteInfo( node );
+        var targetInfo = ExtractTargetInfo( node );
 
         node = CreateSimplifiedDeleteFrom( targetInfo, node );
         traits = ExtractDataSourceTraits( node.DataSource.Traits );

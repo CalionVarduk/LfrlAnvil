@@ -13,6 +13,7 @@ public class SqliteNodeInterpreterOptionsTests : TestsBase
             sut.IsStrictModeEnabled.Should().BeFalse();
             sut.IsUpdateFromEnabled.Should().BeTrue();
             sut.IsUpdateOrDeleteLimitEnabled.Should().BeTrue();
+            sut.UpsertOptions.Should().Be( SqliteUpsertOptions.Supported );
         }
     }
 
@@ -29,6 +30,7 @@ public class SqliteNodeInterpreterOptionsTests : TestsBase
             result.IsStrictModeEnabled.Should().Be( sut.IsStrictModeEnabled );
             result.IsUpdateFromEnabled.Should().Be( sut.IsUpdateFromEnabled );
             result.IsUpdateOrDeleteLimitEnabled.Should().Be( sut.IsUpdateOrDeleteLimitEnabled );
+            result.UpsertOptions.Should().Be( sut.UpsertOptions );
         }
     }
 
@@ -44,6 +46,7 @@ public class SqliteNodeInterpreterOptionsTests : TestsBase
             result.IsStrictModeEnabled.Should().Be( sut.IsStrictModeEnabled );
             result.IsUpdateFromEnabled.Should().Be( sut.IsUpdateFromEnabled );
             result.IsUpdateOrDeleteLimitEnabled.Should().Be( sut.IsUpdateOrDeleteLimitEnabled );
+            result.UpsertOptions.Should().Be( sut.UpsertOptions );
         }
     }
 
@@ -61,6 +64,7 @@ public class SqliteNodeInterpreterOptionsTests : TestsBase
             result.IsStrictModeEnabled.Should().Be( enabled );
             result.IsUpdateFromEnabled.Should().Be( sut.IsUpdateFromEnabled );
             result.IsUpdateOrDeleteLimitEnabled.Should().Be( sut.IsUpdateOrDeleteLimitEnabled );
+            result.UpsertOptions.Should().Be( sut.UpsertOptions );
         }
     }
 
@@ -78,6 +82,7 @@ public class SqliteNodeInterpreterOptionsTests : TestsBase
             result.IsStrictModeEnabled.Should().Be( sut.IsStrictModeEnabled );
             result.IsUpdateFromEnabled.Should().Be( enabled );
             result.IsUpdateOrDeleteLimitEnabled.Should().Be( sut.IsUpdateOrDeleteLimitEnabled );
+            result.UpsertOptions.Should().Be( sut.UpsertOptions );
         }
     }
 
@@ -95,6 +100,31 @@ public class SqliteNodeInterpreterOptionsTests : TestsBase
             result.IsStrictModeEnabled.Should().Be( sut.IsStrictModeEnabled );
             result.IsUpdateFromEnabled.Should().Be( sut.IsUpdateFromEnabled );
             result.IsUpdateOrDeleteLimitEnabled.Should().Be( enabled );
+            result.UpsertOptions.Should().Be( sut.UpsertOptions );
+        }
+    }
+
+    [Theory]
+    [InlineData( SqliteUpsertOptions.Disabled, SqliteUpsertOptions.Disabled )]
+    [InlineData( SqliteUpsertOptions.Supported, SqliteUpsertOptions.Supported )]
+    [InlineData(
+        SqliteUpsertOptions.AllowEmptyConflictTarget,
+        SqliteUpsertOptions.Supported | SqliteUpsertOptions.AllowEmptyConflictTarget )]
+    [InlineData(
+        SqliteUpsertOptions.Supported | SqliteUpsertOptions.AllowEmptyConflictTarget,
+        SqliteUpsertOptions.Supported | SqliteUpsertOptions.AllowEmptyConflictTarget )]
+    public void SetUpsertOptions_ShouldReturnCorrectResult(SqliteUpsertOptions options, SqliteUpsertOptions expected)
+    {
+        var sut = SqliteNodeInterpreterOptions.Default;
+        var result = sut.SetUpsertOptions( options );
+
+        using ( new AssertionScope() )
+        {
+            result.TypeDefinitions.Should().BeSameAs( sut.TypeDefinitions );
+            result.IsStrictModeEnabled.Should().Be( sut.IsStrictModeEnabled );
+            result.IsUpdateFromEnabled.Should().Be( sut.IsUpdateFromEnabled );
+            result.IsUpdateOrDeleteLimitEnabled.Should().Be( sut.IsUpdateOrDeleteLimitEnabled );
+            result.UpsertOptions.Should().Be( expected );
         }
     }
 }

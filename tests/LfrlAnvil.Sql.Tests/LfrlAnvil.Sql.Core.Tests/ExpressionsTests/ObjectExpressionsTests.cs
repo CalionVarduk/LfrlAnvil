@@ -723,17 +723,17 @@ WHERE value < 10" );
             text.Should()
                 .Be(
                     @"(
-  (
-    SELECT a, b
-    FROM foo
-    WHERE value > 10
-  )
+  
+  SELECT a, b
+  FROM foo
+  WHERE value > 10
+
   UNION
-  (
-    SELECT a, c AS b
-    FROM qux
-    WHERE value < 10
-  )
+  
+  SELECT a, c AS b
+  FROM qux
+  WHERE value < 10
+
 ) AS [bar]" );
         }
     }
@@ -767,17 +767,17 @@ WHERE value < 10" );
             text.Should()
                 .Be(
                     @"(
-  (
-    FROM [T1]
-    SELECT
-      ([T1].[a] : ?)
-  )
+  
+  FROM [T1]
+  SELECT
+    ([T1].[a] : ?)
+
   UNION
-  (
-    FROM [T2]
-    SELECT
-      ([T2].[a] : ?)
-  )
+  
+  FROM [T2]
+  SELECT
+    ([T2].[a] : ?)
+
 ) AS [foo]" );
 
             var dataField = sut.GetField( "a" );
@@ -1146,15 +1146,15 @@ INNER JOIN [qux] ON FALSE" );
             text.Should()
                 .Be(
                     @"RECURSIVE [A] (
-  (
-    SELECT * FROM foo
-  )
+  
+  SELECT * FROM foo
+
   UNION
-  (
-    FROM [A]
-    SELECT
-      [A].*
-  )
+  
+  FROM [A]
+  SELECT
+    [A].*
+
 )" );
         }
     }

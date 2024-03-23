@@ -599,7 +599,7 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
 
         Context.Sql.Append( operatorText );
         Context.AppendIndent();
-        VisitChild( node.Query );
+        this.Visit( node.Query );
     }
 
     public virtual void VisitDistinctTrait(SqlDistinctTraitNode node)
@@ -1386,7 +1386,7 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
 
     protected virtual void VisitCompoundQueryComponents(SqlCompoundQueryExpressionNode node, in SqlQueryTraits traits)
     {
-        VisitChild( node.FirstQuery );
+        this.Visit( node.FirstQuery );
         foreach ( var component in node.FollowingQueries )
         {
             Context.AppendIndent();
@@ -1773,7 +1773,20 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
     }
 
     [Pure]
-    protected static ChangeTargetInfo ExtractTableDeleteOrUpdateInfo(SqlTableNode node)
+    protected static Chain<SqlTraitNode> RemoveCommonTableExpressionTraits(Chain<SqlTraitNode> traits)
+    {
+        var result = Chain<SqlTraitNode>.Empty;
+        foreach ( var trait in traits )
+        {
+            if ( trait.NodeType != SqlNodeType.CommonTableExpressionTrait )
+                result = result.Extend( trait );
+        }
+
+        return result;
+    }
+
+    [Pure]
+    protected static string[] ExtractIdentityColumnNames(SqlTableNode node)
     {
         var i = 0;
         var identityColumns = node.Table.Constraints.PrimaryKey.Index.Columns;
@@ -1784,19 +1797,103 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
             identityColumnNames[i++] = c.Column.Name;
         }
 
+        return identityColumnNames;
+    }
+
+    [Pure]
+    protected static string[]? TryExtractIdentityColumnNames(SqlTableBuilderNode node)
+    {
+        string[] identityColumnNames;
+        var primaryKey = node.Table.Constraints.TryGetPrimaryKey();
+
+        if ( primaryKey is not null )
+        {
+            var identityColumns = primaryKey.Index.Columns;
+            identityColumnNames = new string[identityColumns.Expressions.Count];
+
+            var i = 0;
+            foreach ( var column in identityColumns )
+            {
+                Ensure.IsNotNull( column );
+                identityColumnNames[i++] = column.Name;
+            }
+        }
+        else
+        {
+            var index = 0;
+            var identityColumns = node.Table.Columns;
+            if ( identityColumns.Count == 0 )
+                return null;
+
+            identityColumnNames = new string[identityColumns.Count];
+            foreach ( var column in identityColumns )
+                identityColumnNames[index++] = column.Name;
+        }
+
+        return identityColumnNames;
+    }
+
+    [Pure]
+    protected static string[]? TryExtractIdentityColumnNames(SqlNewTableNode node)
+    {
+        string[] identityColumnNames;
+        var primaryKey = node.CreationNode.PrimaryKey;
+
+        if ( primaryKey is not null )
+        {
+            var identityColumns = primaryKey.Columns;
+            if ( identityColumns.Count == 0 )
+                return null;
+
+            identityColumnNames = new string[identityColumns.Count];
+            for ( var i = 0; i < identityColumns.Count; ++i )
+            {
+                if ( identityColumns[i].Expression is not SqlDataFieldNode dataField )
+                    return null;
+
+                identityColumnNames[i] = dataField.Name;
+            }
+        }
+        else
+        {
+            var index = 0;
+            var identityColumns = node.CreationNode.Columns;
+            if ( identityColumns.Count == 0 )
+                return null;
+
+            identityColumnNames = new string[identityColumns.Count];
+            foreach ( var column in identityColumns )
+                identityColumnNames[index++] = column.Name;
+        }
+
+        return identityColumnNames;
+    }
+
+    [Pure]
+    protected static ChangeTargetInfo ExtractTableDeleteOrUpdateInfo(SqlTableNode node)
+    {
+        var identityColumnNames = ExtractIdentityColumnNames( node );
         return new ChangeTargetInfo( node, node.MarkAsOptional( false ).AsSelf(), identityColumnNames );
     }
 
     [Pure]
     protected ChangeTargetInfo ExtractTableBuilderDeleteInfo(SqlDeleteFromNode node, SqlTableBuilderNode target)
     {
-        return ExtractTableBuilderDeleteOrUpdateInfo( node, target, isUpdate: false );
+        var identityColumnNames = TryExtractIdentityColumnNames( target );
+        if ( identityColumnNames is null )
+            throw new SqlNodeVisitorException( ExceptionResources.TargetDoesNotContainValidIdentityColumns, this, node );
+
+        return new ChangeTargetInfo( target, target.MarkAsOptional( false ).AsSelf(), identityColumnNames );
     }
 
     [Pure]
     protected ChangeTargetInfo ExtractTableBuilderUpdateInfo(SqlUpdateNode node, SqlTableBuilderNode target)
     {
-        return ExtractTableBuilderDeleteOrUpdateInfo( node, target, isUpdate: true );
+        var identityColumnNames = TryExtractIdentityColumnNames( target );
+        if ( identityColumnNames is null )
+            throw new SqlNodeVisitorException( ExceptionResources.TargetDoesNotContainValidIdentityColumns, this, node );
+
+        return new ChangeTargetInfo( target, target.MarkAsOptional( false ).AsSelf(), identityColumnNames );
     }
 
     [Pure]
@@ -1804,57 +1901,79 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
         SqlDeleteFromNode node,
         SqlNewTableNode target)
     {
-        return ExtractNewTableDeleteOrUpdateInfo( node, target, isUpdate: false );
+        var identityColumnNames = TryExtractIdentityColumnNames( target );
+        if ( identityColumnNames is null )
+            throw new SqlNodeVisitorException( ExceptionResources.TargetDoesNotContainValidIdentityColumns, this, node );
+
+        return new ChangeTargetInfo( target, target.MarkAsOptional( false ).AsSelf(), identityColumnNames );
     }
 
     [Pure]
     protected ChangeTargetInfo ExtractNewTableUpdateInfo(SqlUpdateNode node, SqlNewTableNode target)
     {
-        return ExtractNewTableDeleteOrUpdateInfo( node, target, isUpdate: true );
+        var identityColumnNames = TryExtractIdentityColumnNames( target );
+        if ( identityColumnNames is null )
+            throw new SqlNodeVisitorException( ExceptionResources.TargetDoesNotContainValidIdentityColumns, this, node );
+
+        return new ChangeTargetInfo( target, target.MarkAsOptional( false ).AsSelf(), identityColumnNames );
     }
 
     [Pure]
-    protected ChangeTargetInfo ExtractTargetDeleteInfo(SqlDeleteFromNode node)
+    protected ChangeTargetInfo ExtractTargetInfo(SqlDeleteFromNode node)
     {
         var from = node.DataSource.From;
         var info = from.NodeType switch
         {
             SqlNodeType.Table => ExtractTableDeleteOrUpdateInfo( ReinterpretCast.To<SqlTableNode>( from ) ),
-            SqlNodeType.TableBuilder => ExtractTableBuilderDeleteInfo(
-                node,
-                ReinterpretCast.To<SqlTableBuilderNode>( from ) ),
-            SqlNodeType.NewTable => ExtractNewTableDeleteInfo(
-                node,
-                ReinterpretCast.To<SqlNewTableNode>( from ) ),
-            _ => throw new SqlNodeVisitorException( ExceptionResources.DeleteTargetIsNotTable, this, node )
+            SqlNodeType.TableBuilder => ExtractTableBuilderDeleteInfo( node, ReinterpretCast.To<SqlTableBuilderNode>( from ) ),
+            SqlNodeType.NewTable => ExtractNewTableDeleteInfo( node, ReinterpretCast.To<SqlNewTableNode>( from ) ),
+            _ => throw new SqlNodeVisitorException( ExceptionResources.TargetIsNotValidRecordSet, this, node )
         };
 
         if ( ! from.IsAliased )
-            throw new SqlNodeVisitorException( ExceptionResources.DeleteTargetIsNotAliased, this, node );
+            throw new SqlNodeVisitorException( ExceptionResources.TargetIsNotAliased, this, node );
 
         return info;
     }
 
     [Pure]
-    protected ChangeTargetInfo ExtractTargetUpdateInfo(SqlUpdateNode node)
+    protected ChangeTargetInfo ExtractTargetInfo(SqlUpdateNode node)
     {
         var from = node.DataSource.From;
         var info = from.NodeType switch
         {
             SqlNodeType.Table => ExtractTableDeleteOrUpdateInfo( ReinterpretCast.To<SqlTableNode>( from ) ),
-            SqlNodeType.TableBuilder => ExtractTableBuilderUpdateInfo(
-                node,
-                ReinterpretCast.To<SqlTableBuilderNode>( from ) ),
-            SqlNodeType.NewTable => ExtractNewTableUpdateInfo(
-                node,
-                ReinterpretCast.To<SqlNewTableNode>( from ) ),
-            _ => throw new SqlNodeVisitorException( ExceptionResources.UpdateTargetIsNotTable, this, node )
+            SqlNodeType.TableBuilder => ExtractTableBuilderUpdateInfo( node, ReinterpretCast.To<SqlTableBuilderNode>( from ) ),
+            SqlNodeType.NewTable => ExtractNewTableUpdateInfo( node, ReinterpretCast.To<SqlNewTableNode>( from ) ),
+            _ => throw new SqlNodeVisitorException( ExceptionResources.TargetIsNotValidRecordSet, this, node )
         };
 
         if ( ! from.IsAliased )
-            throw new SqlNodeVisitorException( ExceptionResources.UpdateTargetIsNotAliased, this, node );
+            throw new SqlNodeVisitorException( ExceptionResources.TargetIsNotAliased, this, node );
 
         return info;
+    }
+
+    [Pure]
+    protected SqlDataFieldNode[] ExtractUpsertConflictTargets(SqlUpsertNode node)
+    {
+        var target = node.RecordSet;
+        var identityColumnNames = target.NodeType switch
+        {
+            SqlNodeType.Table => ExtractIdentityColumnNames( ReinterpretCast.To<SqlTableNode>( target ) ),
+            SqlNodeType.TableBuilder => TryExtractIdentityColumnNames( ReinterpretCast.To<SqlTableBuilderNode>( target ) ),
+            SqlNodeType.NewTable => TryExtractIdentityColumnNames( ReinterpretCast.To<SqlNewTableNode>( target ) ),
+            _ => throw new SqlNodeVisitorException( ExceptionResources.TargetIsNotValidRecordSet, this, node )
+        };
+
+        if ( identityColumnNames is null )
+            throw new SqlNodeVisitorException( ExceptionResources.TargetDoesNotContainValidIdentityColumns, this, node );
+
+        var result = new SqlDataFieldNode[identityColumnNames.Length];
+        for ( var i = 0; i < result.Length; ++i )
+            result[i] = target.GetUnsafeField( identityColumnNames[i] );
+
+        return result;
     }
 
     [Pure]
@@ -1958,106 +2077,6 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
             if ( _indexesOfComplexAssignments[^1] != _nextAssignmentIndex )
                 _indexesOfComplexAssignments.Add( _nextAssignmentIndex );
         }
-    }
-
-    [Pure]
-    private ChangeTargetInfo ExtractTableBuilderDeleteOrUpdateInfo(
-        SqlNodeBase source,
-        SqlTableBuilderNode node,
-        bool isUpdate)
-    {
-        string[] identityColumnNames;
-        var primaryKey = node.Table.Constraints.TryGetPrimaryKey();
-
-        if ( primaryKey is not null )
-        {
-            var identityColumns = primaryKey.Index.Columns;
-            identityColumnNames = new string[identityColumns.Expressions.Count];
-
-            var i = 0;
-            foreach ( var column in identityColumns )
-            {
-                Ensure.IsNotNull( column );
-                identityColumnNames[i++] = column.Name;
-            }
-        }
-        else
-        {
-            var index = 0;
-            var identityColumns = node.Table.Columns;
-            if ( identityColumns.Count == 0 )
-            {
-                var reason = isUpdate
-                    ? ExceptionResources.UpdateTargetDoesNotHaveAnyColumns
-                    : ExceptionResources.DeleteTargetDoesNotHaveAnyColumns;
-
-                throw new SqlNodeVisitorException( reason, this, source );
-            }
-
-            identityColumnNames = new string[identityColumns.Count];
-            foreach ( var column in identityColumns )
-                identityColumnNames[index++] = column.Name;
-        }
-
-        return new ChangeTargetInfo( node, node.MarkAsOptional( false ).AsSelf(), identityColumnNames );
-    }
-
-    [Pure]
-    private ChangeTargetInfo ExtractNewTableDeleteOrUpdateInfo(
-        SqlNodeBase source,
-        SqlNewTableNode node,
-        bool isUpdate)
-    {
-        string[] identityColumnNames;
-        var primaryKey = node.CreationNode.PrimaryKey;
-
-        if ( primaryKey is not null )
-        {
-            var identityColumns = primaryKey.Columns;
-            if ( identityColumns.Count == 0 )
-            {
-                var reason = isUpdate
-                    ? ExceptionResources.UpdateTargetDoesNotHaveAnyColumns
-                    : ExceptionResources.DeleteTargetDoesNotHaveAnyColumns;
-
-                throw new SqlNodeVisitorException( reason, this, source );
-            }
-
-            identityColumnNames = new string[identityColumns.Count];
-            for ( var i = 0; i < identityColumns.Count; ++i )
-            {
-                if ( identityColumns[i].Expression is not SqlDataFieldNode dataField )
-                {
-                    var reason = ExceptionResources.DeleteOrUpdateTargetPrimaryKeyColumnIsComplexExpression(
-                        isUpdate,
-                        i,
-                        identityColumns[i].Expression );
-
-                    throw new SqlNodeVisitorException( reason, this, source );
-                }
-
-                identityColumnNames[i] = dataField.Name;
-            }
-        }
-        else
-        {
-            var index = 0;
-            var identityColumns = node.CreationNode.Columns;
-            if ( identityColumns.Count == 0 )
-            {
-                var reason = isUpdate
-                    ? ExceptionResources.UpdateTargetDoesNotHaveAnyColumns
-                    : ExceptionResources.DeleteTargetDoesNotHaveAnyColumns;
-
-                throw new SqlNodeVisitorException( reason, this, source );
-            }
-
-            identityColumnNames = new string[identityColumns.Count];
-            foreach ( var column in identityColumns )
-                identityColumnNames[index++] = column.Name;
-        }
-
-        return new ChangeTargetInfo( node, node.MarkAsOptional( false ).AsSelf(), identityColumnNames );
     }
 
     private static string[] PrepareCommonTableExpressionIdentitySelection(ChangeTargetInfo targetInfo, SqlSelectNode[] selection)

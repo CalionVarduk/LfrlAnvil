@@ -5,7 +5,8 @@ namespace LfrlAnvil.Sqlite;
 
 public readonly struct SqliteNodeInterpreterOptions
 {
-    public static readonly SqliteNodeInterpreterOptions Default = new SqliteNodeInterpreterOptions();
+    public static readonly SqliteNodeInterpreterOptions Default = new SqliteNodeInterpreterOptions()
+        .SetUpsertOptions( SqliteUpsertOptions.Supported );
 
     private readonly bool _isUpdateFromDisabled;
     private readonly bool _isUpdateOrDeleteLimitDisabled;
@@ -14,16 +15,19 @@ public readonly struct SqliteNodeInterpreterOptions
         SqliteColumnTypeDefinitionProvider? typeDefinitions,
         bool isStrictModeEnabled,
         bool isUpdateFromDisabled,
-        bool isUpdateOrDeleteLimitDisabled)
+        bool isUpdateOrDeleteLimitDisabled,
+        SqliteUpsertOptions upsertOptions)
     {
         TypeDefinitions = typeDefinitions;
         IsStrictModeEnabled = isStrictModeEnabled;
         _isUpdateFromDisabled = isUpdateFromDisabled;
         _isUpdateOrDeleteLimitDisabled = isUpdateOrDeleteLimitDisabled;
+        UpsertOptions = upsertOptions;
     }
 
     public SqliteColumnTypeDefinitionProvider? TypeDefinitions { get; }
     public bool IsStrictModeEnabled { get; }
+    public SqliteUpsertOptions UpsertOptions { get; }
     public bool IsUpdateFromEnabled => ! _isUpdateFromDisabled;
     public bool IsUpdateOrDeleteLimitEnabled => ! _isUpdateOrDeleteLimitDisabled;
 
@@ -35,27 +39,59 @@ public readonly struct SqliteNodeInterpreterOptions
             typeDefinitions,
             IsStrictModeEnabled,
             _isUpdateFromDisabled,
-            _isUpdateOrDeleteLimitDisabled );
+            _isUpdateOrDeleteLimitDisabled,
+            UpsertOptions );
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public SqliteNodeInterpreterOptions EnableStrictMode(bool enabled = true)
     {
-        return new SqliteNodeInterpreterOptions( TypeDefinitions, enabled, _isUpdateFromDisabled, _isUpdateOrDeleteLimitDisabled );
+        return new SqliteNodeInterpreterOptions(
+            TypeDefinitions,
+            enabled,
+            _isUpdateFromDisabled,
+            _isUpdateOrDeleteLimitDisabled,
+            UpsertOptions );
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public SqliteNodeInterpreterOptions EnableUpdateFrom(bool enabled = true)
     {
-        return new SqliteNodeInterpreterOptions( TypeDefinitions, IsStrictModeEnabled, ! enabled, _isUpdateOrDeleteLimitDisabled );
+        return new SqliteNodeInterpreterOptions(
+            TypeDefinitions,
+            IsStrictModeEnabled,
+            ! enabled,
+            _isUpdateOrDeleteLimitDisabled,
+            UpsertOptions );
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public SqliteNodeInterpreterOptions EnableUpdateOrDeleteLimit(bool enabled = true)
     {
-        return new SqliteNodeInterpreterOptions( TypeDefinitions, IsStrictModeEnabled, _isUpdateFromDisabled, ! enabled );
+        return new SqliteNodeInterpreterOptions(
+            TypeDefinitions,
+            IsStrictModeEnabled,
+            _isUpdateFromDisabled,
+            ! enabled,
+            UpsertOptions );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public SqliteNodeInterpreterOptions SetUpsertOptions(SqliteUpsertOptions options)
+    {
+        options &= SqliteUpsertOptions.Supported | SqliteUpsertOptions.AllowEmptyConflictTarget;
+        if ( (options & SqliteUpsertOptions.AllowEmptyConflictTarget) != SqliteUpsertOptions.Disabled )
+            options |= SqliteUpsertOptions.Supported;
+
+        return new SqliteNodeInterpreterOptions(
+            TypeDefinitions,
+            IsStrictModeEnabled,
+            _isUpdateFromDisabled,
+            _isUpdateOrDeleteLimitDisabled,
+            options );
     }
 }

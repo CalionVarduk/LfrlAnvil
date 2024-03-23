@@ -410,7 +410,7 @@ public sealed class SqlNodeDebugInterpreter : SqlNodeInterpreter
         if ( isChild )
             Context.AppendIndent();
 
-        VisitChild( node.FirstQuery );
+        this.Visit( node.FirstQuery );
 
         foreach ( var component in node.FollowingQueries )
         {

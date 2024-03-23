@@ -45,45 +45,12 @@ public static class ExceptionResources
     internal const string SchemaQuickRemovalIsUnsupported = "Schema quick-removal is unsupported.";
     internal const string UnknownObjectsAreUnsupported = "Unknown objects are unsupported.";
     internal const string InternalRecordSetsCannotBeAliased = "Internal record sets cannot be aliased.";
+    internal const string TargetIsNotValidRecordSet = "target is not a valid record set";
+    internal const string TargetIsNotAliased = "target record set is not aliased";
+    internal const string TargetDoesNotContainValidIdentityColumns = "target record set does not contain valid indentity columns";
 
     internal static readonly string DataReaderDoesNotSupportAsyncQueries =
         $"Only data readers of type '{typeof( DbDataReader ).GetDebugString()}' support asynchronous queries.";
-
-    internal const string UpdateTargetIsNotTable = "update target (" +
-        nameof( SqlDataSourceQueryExpressionNode.DataSource ) +
-        "." +
-        nameof( SqlDataSourceNode.From ) +
-        ") is not a table";
-
-    internal const string DeleteTargetIsNotTable = "delete target (" +
-        nameof( SqlDataSourceQueryExpressionNode.DataSource ) +
-        "." +
-        nameof( SqlDataSourceNode.From ) +
-        ") is not a table";
-
-    internal const string UpdateTargetIsNotAliased = "update target (" +
-        nameof( SqlDataSourceQueryExpressionNode.DataSource ) +
-        "." +
-        nameof( SqlDataSourceNode.From ) +
-        ") is not aliased";
-
-    internal const string DeleteTargetIsNotAliased = "delete target (" +
-        nameof( SqlDataSourceQueryExpressionNode.DataSource ) +
-        "." +
-        nameof( SqlDataSourceNode.From ) +
-        ") is not aliased";
-
-    internal const string UpdateTargetDoesNotHaveAnyColumns = "update target (" +
-        nameof( SqlDataSourceQueryExpressionNode.DataSource ) +
-        "." +
-        nameof( SqlDataSourceNode.From ) +
-        ") does not have any columns";
-
-    internal const string DeleteTargetDoesNotHaveAnyColumns = "delete target (" +
-        nameof( SqlDataSourceQueryExpressionNode.DataSource ) +
-        "." +
-        nameof( SqlDataSourceNode.From ) +
-        ") does not have any columns";
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -492,17 +459,6 @@ contains {parameters.Count} parameter(s):
         return parameters.Count == 0
             ? "Some parameters are invalid."
             : MergeErrors( $"Encountered {parameters.Count} invalid parameter(s):", parameters.Select( GetInvalidParameterError ) );
-    }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static string DeleteOrUpdateTargetPrimaryKeyColumnIsComplexExpression(bool isUpdate, int index, SqlExpressionNode node)
-    {
-        return (isUpdate ? "update target (" : "delete target (") +
-            nameof( SqlDataSourceQueryExpressionNode.DataSource ) +
-            "." +
-            nameof( SqlDataSourceNode.From ) +
-            $") contains a primary key column at index {index} that represents a complex expression [{node}]";
     }
 
     [Pure]

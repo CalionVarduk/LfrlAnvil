@@ -228,13 +228,13 @@ ORDINAL [B] (
   SELECT * FROM foo
 ),
 RECURSIVE [B] (
-  (
-    SELECT * FROM bar
-  )
+  
+  SELECT * FROM bar
+
   UNION
-  (
-    SELECT * FROM B
-  )
+  
+  SELECT * FROM B
+
 )" );
         }
     }
@@ -1618,13 +1618,9 @@ SELECT" );
             (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.SortTrait );
             text.Should()
                 .Be(
-                    @"(
-  SELECT * FROM foo
-)
+                    @"SELECT * FROM foo
 UNION
-(
-  SELECT * FROM bar
-)
+SELECT * FROM bar
 ORDER BY (a) ASC, (b) DESC" );
         }
     }
@@ -1718,13 +1714,9 @@ SELECT" );
             (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.CommonTableExpressionTrait );
             text.Should()
                 .Be(
-                    @"(
-  SELECT * FROM foo
-)
+                    @"SELECT * FROM foo
 UNION
-(
-  SELECT * FROM bar
-)
+SELECT * FROM bar
 WITH ORDINAL [A] (
   SELECT * FROM qux
 )" );
@@ -1790,13 +1782,9 @@ SELECT" );
             (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.LimitTrait );
             text.Should()
                 .Be(
-                    @"(
-  SELECT * FROM foo
-)
+                    @"SELECT * FROM foo
 UNION
-(
-  SELECT * FROM bar
-)
+SELECT * FROM bar
 LIMIT (""10"" : System.Int32)" );
         }
     }
@@ -1845,13 +1833,9 @@ SELECT" );
             (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.OffsetTrait );
             text.Should()
                 .Be(
-                    @"(
-  SELECT * FROM foo
-)
+                    @"SELECT * FROM foo
 UNION
-(
-  SELECT * FROM bar
-)
+SELECT * FROM bar
 OFFSET (""10"" : System.Int32)" );
         }
     }

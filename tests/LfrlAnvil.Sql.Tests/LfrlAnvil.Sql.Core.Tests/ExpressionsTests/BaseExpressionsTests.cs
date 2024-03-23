@@ -370,17 +370,13 @@ WHERE value < 10" );
             ((ISqlStatementNode)sut).QueryCount.Should().Be( 1 );
             text.Should()
                 .Be(
-                    @"(
-  SELECT a, b
-  FROM foo
-  WHERE value > 10
-)
+                    @"SELECT a, b
+FROM foo
+WHERE value > 10
 UNION
-(
-  SELECT a, c AS b
-  FROM qux
-  WHERE value < 10
-)" );
+SELECT a, c AS b
+FROM qux
+WHERE value < 10" );
         }
     }
 
@@ -526,9 +522,7 @@ END" );
             text.Should()
                 .Be(
                     @"UNION
-(
-  SELECT * FROM foo
-)" );
+SELECT * FROM foo" );
         }
     }
 
@@ -547,9 +541,7 @@ END" );
             text.Should()
                 .Be(
                     @"UNION ALL
-(
-  SELECT * FROM foo
-)" );
+SELECT * FROM foo" );
         }
     }
 
@@ -568,9 +560,7 @@ END" );
             text.Should()
                 .Be(
                     @"INTERSECT
-(
-  SELECT * FROM foo
-)" );
+SELECT * FROM foo" );
         }
     }
 
@@ -589,9 +579,7 @@ END" );
             text.Should()
                 .Be(
                     @"EXCEPT
-(
-  SELECT * FROM foo
-)" );
+SELECT * FROM foo" );
         }
     }
 

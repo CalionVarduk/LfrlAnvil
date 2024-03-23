@@ -920,13 +920,13 @@ LIMIT 50 OFFSET 100" );
   SELECT * FROM abc
 ),
 ""zyx"" AS (
-  (
-    SELECT * FROM xyz JOIN cba ON cba.h = xyz.h
-  )
+  
+  SELECT * FROM xyz JOIN cba ON cba.h = xyz.h
+
   UNION
-  (
-    SELECT * FROM zyx
-  )
+  
+  SELECT * FROM zyx
+
 )
 SELECT
   foo.""a""
@@ -1006,17 +1006,11 @@ LIMIT -1 OFFSET 100" );
         sut.Context.Sql.ToString()
             .Should()
             .Be(
-                @"(
-  SELECT * FROM foo
-)
+                @"SELECT * FROM foo
 UNION ALL
-(
-  SELECT * FROM bar
-)
+SELECT * FROM bar
 UNION
-(
-  SELECT * FROM qux
-)" );
+SELECT * FROM qux" );
     }
 
     [Fact]
@@ -1039,17 +1033,11 @@ UNION
                 @"WITH ""x"" AS (
   SELECT * FROM lorem
 )
-(
-  SELECT foo.* FROM foo JOIN x ON x.a = foo.a
-)
+SELECT foo.* FROM foo JOIN x ON x.a = foo.a
 UNION ALL
-(
-  SELECT * FROM bar
-)
+SELECT * FROM bar
 UNION
-(
-  SELECT * FROM qux
-)
+SELECT * FROM qux
 ORDER BY (a) ASC, (b) DESC
 LIMIT 50 OFFSET 75" );
     }
@@ -1067,17 +1055,17 @@ LIMIT 50 OFFSET 75" );
             .Should()
             .Be(
                 @"(
-  (
-    SELECT * FROM foo
-  )
+  
+  SELECT * FROM foo
+
   UNION ALL
-  (
-    SELECT * FROM bar
-  )
+  
+  SELECT * FROM bar
+
   UNION
-  (
-    SELECT * FROM qux
-  )
+  
+  SELECT * FROM qux
+
 )" );
     }
 
@@ -1091,9 +1079,7 @@ LIMIT 50 OFFSET 75" );
             .Should()
             .Be(
                 @"EXCEPT
-(
-  SELECT * FROM qux
-)" );
+SELECT * FROM qux" );
     }
 
     [Fact]
@@ -1106,9 +1092,7 @@ LIMIT 50 OFFSET 75" );
             .Should()
             .Be(
                 @"INTERSECT
-(
-  SELECT * FROM qux
-)" );
+SELECT * FROM qux" );
     }
 
     [Fact]
@@ -1203,13 +1187,13 @@ LIMIT 50 OFFSET 75" );
   SELECT * FROM foo
 ),
 ""B"" AS (
-  (
-    SELECT * FROM bar
-  )
+  
+  SELECT * FROM bar
+
   UNION
-  (
-    SELECT * FROM B
-  )
+  
+  SELECT * FROM B
+
 )" );
     }
 
@@ -1270,13 +1254,13 @@ LIMIT 50 OFFSET 75" );
             .Should()
             .Be(
                 @"""A"" AS (
-  (
-    SELECT * FROM foo
-  )
+  
+  SELECT * FROM foo
+
   UNION ALL
-  (
-    SELECT * FROM A WHERE A.depth < 10
-  )
+  
+  SELECT * FROM A WHERE A.depth < 10
+
 )" );
     }
 
@@ -1488,17 +1472,11 @@ LIMIT 50 OFFSET 100" );
   SELECT * FROM ipsum
 )
 INSERT INTO lorem (""a"", ""b"")
-(
-  SELECT foo.a, foo.b FROM foo JOIN x ON x.a = foo.a
-)
+SELECT foo.a, foo.b FROM foo JOIN x ON x.a = foo.a
 UNION ALL
-(
-  SELECT a, b FROM bar
-)
+SELECT a, b FROM bar
 UNION
-(
-  SELECT a, b FROM qux
-)
+SELECT a, b FROM qux
 ORDER BY (a) ASC
 LIMIT 50 OFFSET 75" );
     }
