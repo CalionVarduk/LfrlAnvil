@@ -39,6 +39,12 @@
   - ^ this may also have to be a linked list...
 
 
+- PostgreSql:
+  - https://www.postgresql.org/docs/current/runtime-config-compatible.html#GUC-STANDARD-CONFORMING-STRINGS
+  - ^ standard_conforming_strings, must be 'on'
+  - ^ also, backslash_quote, must be 'off'
+
+
 ### Reactive.Scheduling
 project idea:
 - combines Reactive.Chrono & Reactive.Queues
