@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics.Contracts;
+using LfrlAnvil.Sql.Exceptions;
 using LfrlAnvil.Sql.Internal;
 
 namespace LfrlAnvil.Sql.Objects.Builders;
@@ -69,7 +70,13 @@ public abstract class SqlForeignKeyBuilder : SqlConstraintBuilder, ISqlForeignKe
 
     protected virtual SqlPropertyChange<ReferenceBehavior> BeforeOnDeleteBehaviorChange(ReferenceBehavior newValue)
     {
-        return OnDeleteBehavior == newValue ? SqlPropertyChange.Cancel<ReferenceBehavior>() : newValue;
+        if ( OnDeleteBehavior == newValue )
+            return SqlPropertyChange.Cancel<ReferenceBehavior>();
+
+        if ( newValue == ReferenceBehavior.SetNull )
+            ThrowIfCannotUseSetNullReferenceBehavior();
+
+        return newValue;
     }
 
     protected virtual void AfterOnDeleteBehaviorChange(ReferenceBehavior originalValue)
@@ -79,12 +86,29 @@ public abstract class SqlForeignKeyBuilder : SqlConstraintBuilder, ISqlForeignKe
 
     protected virtual SqlPropertyChange<ReferenceBehavior> BeforeOnUpdateBehaviorChange(ReferenceBehavior newValue)
     {
-        return OnUpdateBehavior == newValue ? SqlPropertyChange.Cancel<ReferenceBehavior>() : newValue;
+        if ( OnUpdateBehavior == newValue )
+            return SqlPropertyChange.Cancel<ReferenceBehavior>();
+
+        if ( newValue == ReferenceBehavior.SetNull )
+            ThrowIfCannotUseSetNullReferenceBehavior();
+
+        return newValue;
     }
 
     protected virtual void AfterOnUpdateBehaviorChange(ReferenceBehavior originalValue)
     {
         AddOnUpdateBehaviorChange( this, originalValue );
+    }
+
+    protected void ThrowIfCannotUseSetNullReferenceBehavior()
+    {
+        foreach ( var column in OriginIndex.Columns )
+        {
+            if ( column is null || ! column.IsNullable )
+                throw SqlHelpers.CreateObjectBuilderException(
+                    Database,
+                    ExceptionResources.IndexContainsNonNullableColumns( OriginIndex ) );
+        }
     }
 
     protected void AddIndexReferences()

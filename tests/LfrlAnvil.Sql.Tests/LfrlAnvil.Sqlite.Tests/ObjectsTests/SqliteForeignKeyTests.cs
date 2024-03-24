@@ -8,16 +8,20 @@ namespace LfrlAnvil.Sqlite.Tests.ObjectsTests;
 public class SqliteForeignKeyTests : TestsBase
 {
     [Theory]
-    [InlineData( "CASCADE", "RESTRICT" )]
-    [InlineData( "RESTRICT", "CASCADE" )]
-    public void Properties_ShouldBeCorrectlyCopiedFromBuilder_WhenForeignKeyIsSelfReference(string onDelete, string onUpdate)
+    [InlineData( ReferenceBehavior.Values.Cascade, ReferenceBehavior.Values.Restrict )]
+    [InlineData( ReferenceBehavior.Values.SetNull, ReferenceBehavior.Values.NoAction )]
+    [InlineData( ReferenceBehavior.Values.Restrict, ReferenceBehavior.Values.Cascade )]
+    [InlineData( ReferenceBehavior.Values.NoAction, ReferenceBehavior.Values.SetNull )]
+    public void Properties_ShouldBeCorrectlyCopiedFromBuilder_WhenForeignKeyIsSelfReference(
+        ReferenceBehavior.Values onDelete,
+        ReferenceBehavior.Values onUpdate)
     {
-        var onDeleteBehavior = onDelete == "CASCADE" ? ReferenceBehavior.Cascade : ReferenceBehavior.Restrict;
-        var onUpdateBehavior = onUpdate == "CASCADE" ? ReferenceBehavior.Cascade : ReferenceBehavior.Restrict;
+        var onDeleteBehavior = ReferenceBehavior.GetBehavior( onDelete );
+        var onUpdateBehavior = ReferenceBehavior.GetBehavior( onUpdate );
 
         var schemaBuilder = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var tableBuilder = schemaBuilder.Objects.CreateTable( "T" );
-        var indexBuilder1 = tableBuilder.Constraints.CreateIndex( tableBuilder.Columns.Create( "C1" ).Asc() );
+        var indexBuilder1 = tableBuilder.Constraints.CreateIndex( tableBuilder.Columns.Create( "C1" ).MarkAsNullable().Asc() );
         var indexBuilder2 = tableBuilder.Constraints.SetPrimaryKey( tableBuilder.Columns.Create( "C2" ).Asc() ).Index;
         tableBuilder.Constraints.CreateForeignKey( indexBuilder1, indexBuilder2 )
             .SetName( "FK_TEST" )
@@ -46,20 +50,23 @@ public class SqliteForeignKeyTests : TestsBase
     }
 
     [Theory]
-    [InlineData( "CASCADE", "RESTRICT" )]
-    [InlineData( "RESTRICT", "CASCADE" )]
+    [InlineData( ReferenceBehavior.Values.Cascade, ReferenceBehavior.Values.Restrict )]
+    [InlineData( ReferenceBehavior.Values.SetNull, ReferenceBehavior.Values.NoAction )]
+    [InlineData( ReferenceBehavior.Values.Restrict, ReferenceBehavior.Values.Cascade )]
+    [InlineData( ReferenceBehavior.Values.NoAction, ReferenceBehavior.Values.SetNull )]
     public void Properties_ShouldBeCorrectlyCopiedFromBuilder_WhenForeignKeyReferencesOtherTableFromTheSameSchema(
-        string onDelete,
-        string onUpdate)
+        ReferenceBehavior.Values onDelete,
+        ReferenceBehavior.Values onUpdate)
     {
-        var onDeleteBehavior = onDelete == "CASCADE" ? ReferenceBehavior.Cascade : ReferenceBehavior.Restrict;
-        var onUpdateBehavior = onUpdate == "CASCADE" ? ReferenceBehavior.Cascade : ReferenceBehavior.Restrict;
+        var onDeleteBehavior = ReferenceBehavior.GetBehavior( onDelete );
+        var onUpdateBehavior = ReferenceBehavior.GetBehavior( onUpdate );
 
         var schemaBuilder = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var tableBuilder1 = schemaBuilder.Objects.CreateTable( "T1" );
-        var indexBuilder1 = tableBuilder1.Constraints.SetPrimaryKey( tableBuilder1.Columns.Create( "C1" ).Asc() ).Index;
+        tableBuilder1.Constraints.SetPrimaryKey( tableBuilder1.Columns.Create( "C1" ).Asc() );
+        var indexBuilder1 = tableBuilder1.Constraints.CreateIndex( tableBuilder1.Columns.Create( "C2" ).MarkAsNullable().Asc() );
         var tableBuilder2 = schemaBuilder.Objects.CreateTable( "T2" );
-        var indexBuilder2 = tableBuilder2.Constraints.SetPrimaryKey( tableBuilder2.Columns.Create( "C2" ).Asc() ).Index;
+        var indexBuilder2 = tableBuilder2.Constraints.SetPrimaryKey( tableBuilder2.Columns.Create( "C3" ).Asc() ).Index;
         tableBuilder1.Constraints.CreateForeignKey( indexBuilder1, indexBuilder2 )
             .SetName( "FK_TEST" )
             .SetOnDeleteBehavior( onDeleteBehavior )
@@ -69,8 +76,8 @@ public class SqliteForeignKeyTests : TestsBase
         var schema = db.Schemas.Get( "foo" );
 
         var sut = schema.Objects.GetForeignKey( "FK_TEST" );
-        var index = schema.Objects.GetIndex( "UIX_T1_C1A" );
-        var refIndex = schema.Objects.GetIndex( "UIX_T2_C2A" );
+        var index = schema.Objects.GetIndex( "IX_T1_C2A" );
+        var refIndex = schema.Objects.GetIndex( "UIX_T2_C3A" );
 
         using ( new AssertionScope() )
         {
@@ -87,22 +94,25 @@ public class SqliteForeignKeyTests : TestsBase
     }
 
     [Theory]
-    [InlineData( "CASCADE", "RESTRICT" )]
-    [InlineData( "RESTRICT", "CASCADE" )]
+    [InlineData( ReferenceBehavior.Values.Cascade, ReferenceBehavior.Values.Restrict )]
+    [InlineData( ReferenceBehavior.Values.SetNull, ReferenceBehavior.Values.NoAction )]
+    [InlineData( ReferenceBehavior.Values.Restrict, ReferenceBehavior.Values.Cascade )]
+    [InlineData( ReferenceBehavior.Values.NoAction, ReferenceBehavior.Values.SetNull )]
     public void Properties_ShouldBeCorrectlyCopiedFromBuilder_WhenForeignKeyReferencesOtherTableFromAnotherSchema(
-        string onDelete,
-        string onUpdate)
+        ReferenceBehavior.Values onDelete,
+        ReferenceBehavior.Values onUpdate)
     {
-        var onDeleteBehavior = onDelete == "CASCADE" ? ReferenceBehavior.Cascade : ReferenceBehavior.Restrict;
-        var onUpdateBehavior = onUpdate == "CASCADE" ? ReferenceBehavior.Cascade : ReferenceBehavior.Restrict;
+        var onDeleteBehavior = ReferenceBehavior.GetBehavior( onDelete );
+        var onUpdateBehavior = ReferenceBehavior.GetBehavior( onUpdate );
 
         var dbBuilder = SqliteDatabaseBuilderMock.Create();
         var schemaBuilder1 = dbBuilder.Schemas.Create( "foo" );
         var tableBuilder1 = schemaBuilder1.Objects.CreateTable( "T1" );
-        var indexBuilder1 = tableBuilder1.Constraints.SetPrimaryKey( tableBuilder1.Columns.Create( "C1" ).Asc() ).Index;
+        tableBuilder1.Constraints.SetPrimaryKey( tableBuilder1.Columns.Create( "C1" ).Asc() );
+        var indexBuilder1 = tableBuilder1.Constraints.CreateIndex( tableBuilder1.Columns.Create( "C2" ).MarkAsNullable().Asc() );
         var schemaBuilder2 = dbBuilder.Schemas.Create( "bar" );
         var tableBuilder2 = schemaBuilder2.Objects.CreateTable( "T2" );
-        var indexBuilder2 = tableBuilder2.Constraints.SetPrimaryKey( tableBuilder2.Columns.Create( "C2" ).Asc() ).Index;
+        var indexBuilder2 = tableBuilder2.Constraints.SetPrimaryKey( tableBuilder2.Columns.Create( "C3" ).Asc() ).Index;
         tableBuilder1.Constraints.CreateForeignKey( indexBuilder1, indexBuilder2 )
             .SetName( "FK_TEST" )
             .SetOnDeleteBehavior( onDeleteBehavior )
@@ -113,8 +123,8 @@ public class SqliteForeignKeyTests : TestsBase
         var schema2 = db.Schemas.Get( "bar" );
 
         var sut = schema1.Objects.GetForeignKey( "FK_TEST" );
-        var index = schema1.Objects.GetIndex( "UIX_T1_C1A" );
-        var refIndex = schema2.Objects.GetIndex( "UIX_T2_C2A" );
+        var index = schema1.Objects.GetIndex( "IX_T1_C2A" );
+        var refIndex = schema2.Objects.GetIndex( "UIX_T2_C3A" );
 
         using ( new AssertionScope() )
         {

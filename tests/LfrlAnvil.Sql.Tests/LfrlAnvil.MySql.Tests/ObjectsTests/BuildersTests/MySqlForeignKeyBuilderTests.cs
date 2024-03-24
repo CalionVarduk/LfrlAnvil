@@ -413,23 +413,27 @@ public class MySqlForeignKeyBuilderTests : TestsBase
             .AndMatch( e => e.Dialect == MySqlDialect.Instance && e.Errors.Count == 1 );
     }
 
-    [Fact]
-    public void SetOnDeleteBehavior_ShouldUpdateBehavior_WhenNewValueIsDifferentFromOldValue()
+    [Theory]
+    [InlineData( ReferenceBehavior.Values.Cascade )]
+    [InlineData( ReferenceBehavior.Values.SetNull )]
+    [InlineData( ReferenceBehavior.Values.NoAction )]
+    public void SetOnDeleteBehavior_ShouldUpdateBehavior_WhenNewValueIsDifferentFromOldValue(ReferenceBehavior.Values value)
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        var ix1 = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() );
+        var ix1 = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).MarkAsNullable().Asc() );
         var ix2 = table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() ).Index;
         var sut = table.Constraints.CreateForeignKey( ix1, ix2 );
+        var behavior = ReferenceBehavior.GetBehavior( value );
 
         var actionCount = schema.Database.GetPendingActionCount();
-        var result = sut.SetOnDeleteBehavior( ReferenceBehavior.Cascade );
+        var result = sut.SetOnDeleteBehavior( behavior );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )
         {
             result.Should().BeSameAs( sut );
-            result.OnDeleteBehavior.Should().Be( ReferenceBehavior.Cascade );
+            result.OnDeleteBehavior.Should().Be( behavior );
 
             actions.Should().HaveCount( 1 );
             actions.ElementAtOrDefault( 0 )
@@ -437,8 +441,8 @@ public class MySqlForeignKeyBuilderTests : TestsBase
                 .SatisfySql(
                     @"ALTER TABLE `foo`.`T`
                       DROP FOREIGN KEY `FK_T_C2_REF_T`;",
-                    @"ALTER TABLE `foo`.`T`
-                      ADD CONSTRAINT `FK_T_C2_REF_T` FOREIGN KEY (`C2`) REFERENCES `foo`.`T` (`C1`) ON DELETE CASCADE ON UPDATE RESTRICT;" );
+                    $@"ALTER TABLE `foo`.`T`
+                      ADD CONSTRAINT `FK_T_C2_REF_T` FOREIGN KEY (`C2`) REFERENCES `foo`.`T` (`C1`) ON DELETE {behavior.Name} ON UPDATE RESTRICT;" );
         }
     }
 
@@ -484,6 +488,22 @@ public class MySqlForeignKeyBuilderTests : TestsBase
     }
 
     [Fact]
+    public void SetOnDeleteBehavior_ShouldThrowSqlObjectBuilderException_WhenBehaviorIsSetNullAndNotAllOriginColumnsAreNullable()
+    {
+        var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var table = schema.Objects.CreateTable( "T" );
+        var ix1 = table.Constraints.CreateIndex( table.Columns.Create( "C3" ).MarkAsNullable().Asc(), table.Columns.Create( "C4" ).Asc() );
+        var ix2 = table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc(), table.Columns.Create( "C2" ).Asc() ).Index;
+        var sut = table.Constraints.CreateForeignKey( ix1, ix2 );
+
+        var action = Lambda.Of( () => sut.SetOnDeleteBehavior( ReferenceBehavior.SetNull ) );
+
+        action.Should()
+            .ThrowExactly<SqlObjectBuilderException>()
+            .AndMatch( e => e.Dialect == MySqlDialect.Instance && e.Errors.Count == 1 );
+    }
+
+    [Fact]
     public void SetOnDeleteBehavior_ShouldThrowSqlObjectBuilderException_WhenForeignKeyIsRemoved()
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
@@ -500,23 +520,27 @@ public class MySqlForeignKeyBuilderTests : TestsBase
             .AndMatch( e => e.Dialect == MySqlDialect.Instance && e.Errors.Count == 1 );
     }
 
-    [Fact]
-    public void SetOnUpdateBehavior_ShouldUpdateBehavior_WhenNewValueIsDifferentFromOldValue()
+    [Theory]
+    [InlineData( ReferenceBehavior.Values.Cascade )]
+    [InlineData( ReferenceBehavior.Values.SetNull )]
+    [InlineData( ReferenceBehavior.Values.NoAction )]
+    public void SetOnUpdateBehavior_ShouldUpdateBehavior_WhenNewValueIsDifferentFromOldValue(ReferenceBehavior.Values value)
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        var ix1 = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() );
+        var ix1 = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).MarkAsNullable().Asc() );
         var ix2 = table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() ).Index;
         var sut = table.Constraints.CreateForeignKey( ix1, ix2 );
+        var behavior = ReferenceBehavior.GetBehavior( value );
 
         var actionCount = schema.Database.GetPendingActionCount();
-        var result = sut.SetOnUpdateBehavior( ReferenceBehavior.Cascade );
+        var result = sut.SetOnUpdateBehavior( behavior );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )
         {
             result.Should().BeSameAs( sut );
-            result.OnUpdateBehavior.Should().Be( ReferenceBehavior.Cascade );
+            result.OnUpdateBehavior.Should().Be( behavior );
 
             actions.Should().HaveCount( 1 );
             actions.ElementAtOrDefault( 0 )
@@ -524,8 +548,8 @@ public class MySqlForeignKeyBuilderTests : TestsBase
                 .SatisfySql(
                     @"ALTER TABLE `foo`.`T`
                       DROP FOREIGN KEY `FK_T_C2_REF_T`;",
-                    @"ALTER TABLE `foo`.`T`
-                      ADD CONSTRAINT `FK_T_C2_REF_T` FOREIGN KEY (`C2`) REFERENCES `foo`.`T` (`C1`) ON DELETE RESTRICT ON UPDATE CASCADE;" );
+                    $@"ALTER TABLE `foo`.`T`
+                      ADD CONSTRAINT `FK_T_C2_REF_T` FOREIGN KEY (`C2`) REFERENCES `foo`.`T` (`C1`) ON DELETE RESTRICT ON UPDATE {behavior.Name};" );
         }
     }
 
@@ -568,6 +592,22 @@ public class MySqlForeignKeyBuilderTests : TestsBase
             result.Should().BeSameAs( sut );
             actions.Should().BeEmpty();
         }
+    }
+
+    [Fact]
+    public void SetOnUpdateBehavior_ShouldThrowSqlObjectBuilderException_WhenBehaviorIsSetNullAndNotAllOriginColumnsAreNullable()
+    {
+        var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var table = schema.Objects.CreateTable( "T" );
+        var ix1 = table.Constraints.CreateIndex( table.Columns.Create( "C3" ).MarkAsNullable().Asc(), table.Columns.Create( "C4" ).Asc() );
+        var ix2 = table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc(), table.Columns.Create( "C2" ).Asc() ).Index;
+        var sut = table.Constraints.CreateForeignKey( ix1, ix2 );
+
+        var action = Lambda.Of( () => sut.SetOnUpdateBehavior( ReferenceBehavior.SetNull ) );
+
+        action.Should()
+            .ThrowExactly<SqlObjectBuilderException>()
+            .AndMatch( e => e.Dialect == MySqlDialect.Instance && e.Errors.Count == 1 );
     }
 
     [Fact]

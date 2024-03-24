@@ -466,34 +466,38 @@ public class SqliteForeignKeyBuilderTests : TestsBase
             .AndMatch( e => e.Dialect == SqliteDialect.Instance && e.Errors.Count == 1 );
     }
 
-    [Fact]
-    public void SetOnDeleteBehavior_ShouldUpdateBehavior_WhenNewValueIsDifferentFromOldValue()
+    [Theory]
+    [InlineData( ReferenceBehavior.Values.Cascade )]
+    [InlineData( ReferenceBehavior.Values.SetNull )]
+    [InlineData( ReferenceBehavior.Values.NoAction )]
+    public void SetOnDeleteBehavior_ShouldUpdateBehavior_WhenNewValueIsDifferentFromOldValue(ReferenceBehavior.Values value)
     {
         var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        var ix1 = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() );
+        var ix1 = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).MarkAsNullable().Asc() );
         var ix2 = table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() ).Index;
         var sut = table.Constraints.CreateForeignKey( ix1, ix2 );
+        var behavior = ReferenceBehavior.GetBehavior( value );
 
         var actionCount = schema.Database.GetPendingActionCount();
-        var result = sut.SetOnDeleteBehavior( ReferenceBehavior.Cascade );
+        var result = sut.SetOnDeleteBehavior( behavior );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )
         {
             result.Should().BeSameAs( sut );
-            result.OnDeleteBehavior.Should().Be( ReferenceBehavior.Cascade );
+            result.OnDeleteBehavior.Should().Be( behavior );
 
             actions.Should().HaveCount( 1 );
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
                     "DROP INDEX \"foo_IX_T_C2A\";",
-                    @"CREATE TABLE ""__foo_T__{GUID}__"" (
-                      ""C2"" ANY NOT NULL,
+                    $@"CREATE TABLE ""__foo_T__{{GUID}}__"" (
+                      ""C2"" ANY,
                       ""C1"" ANY NOT NULL,
                       CONSTRAINT ""foo_PK_T"" PRIMARY KEY (""C1"" ASC),
-                      CONSTRAINT ""foo_FK_T_C2_REF_T"" FOREIGN KEY (""C2"") REFERENCES ""foo_T"" (""C1"") ON DELETE CASCADE ON UPDATE RESTRICT
+                      CONSTRAINT ""foo_FK_T_C2_REF_T"" FOREIGN KEY (""C2"") REFERENCES ""foo_T"" (""C1"") ON DELETE {behavior.Name} ON UPDATE RESTRICT
                     ) WITHOUT ROWID;",
                     @"INSERT INTO ""__foo_T__{GUID}__"" (""C2"", ""C1"")
                     SELECT
@@ -548,6 +552,22 @@ public class SqliteForeignKeyBuilderTests : TestsBase
     }
 
     [Fact]
+    public void SetOnDeleteBehavior_ShouldThrowSqlObjectBuilderException_WhenBehaviorIsSetNullAndNotAllOriginColumnsAreNullable()
+    {
+        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var table = schema.Objects.CreateTable( "T" );
+        var ix1 = table.Constraints.CreateIndex( table.Columns.Create( "C3" ).MarkAsNullable().Asc(), table.Columns.Create( "C4" ).Asc() );
+        var ix2 = table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc(), table.Columns.Create( "C2" ).Asc() ).Index;
+        var sut = table.Constraints.CreateForeignKey( ix1, ix2 );
+
+        var action = Lambda.Of( () => sut.SetOnDeleteBehavior( ReferenceBehavior.SetNull ) );
+
+        action.Should()
+            .ThrowExactly<SqlObjectBuilderException>()
+            .AndMatch( e => e.Dialect == SqliteDialect.Instance && e.Errors.Count == 1 );
+    }
+
+    [Fact]
     public void SetOnDeleteBehavior_ShouldThrowSqlObjectBuilderException_WhenForeignKeyIsRemoved()
     {
         var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
@@ -564,34 +584,38 @@ public class SqliteForeignKeyBuilderTests : TestsBase
             .AndMatch( e => e.Dialect == SqliteDialect.Instance && e.Errors.Count == 1 );
     }
 
-    [Fact]
-    public void SetOnUpdateBehavior_ShouldUpdateBehavior_WhenNewValueIsDifferentFromOldValue()
+    [Theory]
+    [InlineData( ReferenceBehavior.Values.Cascade )]
+    [InlineData( ReferenceBehavior.Values.SetNull )]
+    [InlineData( ReferenceBehavior.Values.NoAction )]
+    public void SetOnUpdateBehavior_ShouldUpdateBehavior_WhenNewValueIsDifferentFromOldValue(ReferenceBehavior.Values value)
     {
         var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
-        var ix1 = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() );
+        var ix1 = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).MarkAsNullable().Asc() );
         var ix2 = table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() ).Index;
         var sut = table.Constraints.CreateForeignKey( ix1, ix2 );
+        var behavior = ReferenceBehavior.GetBehavior( value );
 
         var actionCount = schema.Database.GetPendingActionCount();
-        var result = sut.SetOnUpdateBehavior( ReferenceBehavior.Cascade );
+        var result = sut.SetOnUpdateBehavior( behavior );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )
         {
             result.Should().BeSameAs( sut );
-            result.OnUpdateBehavior.Should().Be( ReferenceBehavior.Cascade );
+            result.OnUpdateBehavior.Should().Be( behavior );
 
             actions.Should().HaveCount( 1 );
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
                     "DROP INDEX \"foo_IX_T_C2A\";",
-                    @"CREATE TABLE ""__foo_T__{GUID}__"" (
-                      ""C2"" ANY NOT NULL,
+                    $@"CREATE TABLE ""__foo_T__{{GUID}}__"" (
+                      ""C2"" ANY,
                       ""C1"" ANY NOT NULL,
                       CONSTRAINT ""foo_PK_T"" PRIMARY KEY (""C1"" ASC),
-                      CONSTRAINT ""foo_FK_T_C2_REF_T"" FOREIGN KEY (""C2"") REFERENCES ""foo_T"" (""C1"") ON DELETE RESTRICT ON UPDATE CASCADE
+                      CONSTRAINT ""foo_FK_T_C2_REF_T"" FOREIGN KEY (""C2"") REFERENCES ""foo_T"" (""C1"") ON DELETE RESTRICT ON UPDATE {behavior.Name}
                     ) WITHOUT ROWID;",
                     @"INSERT INTO ""__foo_T__{GUID}__"" (""C2"", ""C1"")
                     SELECT
@@ -643,6 +667,22 @@ public class SqliteForeignKeyBuilderTests : TestsBase
             result.Should().BeSameAs( sut );
             actions.Should().BeEmpty();
         }
+    }
+
+    [Fact]
+    public void SetOnUpdateBehavior_ShouldThrowSqlObjectBuilderException_WhenBehaviorIsSetNullAndNotAllOriginColumnsAreNullable()
+    {
+        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var table = schema.Objects.CreateTable( "T" );
+        var ix1 = table.Constraints.CreateIndex( table.Columns.Create( "C3" ).MarkAsNullable().Asc(), table.Columns.Create( "C4" ).Asc() );
+        var ix2 = table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc(), table.Columns.Create( "C2" ).Asc() ).Index;
+        var sut = table.Constraints.CreateForeignKey( ix1, ix2 );
+
+        var action = Lambda.Of( () => sut.SetOnUpdateBehavior( ReferenceBehavior.SetNull ) );
+
+        action.Should()
+            .ThrowExactly<SqlObjectBuilderException>()
+            .AndMatch( e => e.Dialect == SqliteDialect.Instance && e.Errors.Count == 1 );
     }
 
     [Fact]

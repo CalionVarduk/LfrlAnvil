@@ -193,6 +193,13 @@ public static class ExceptionResources
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static string IndexContainsNonNullableColumns(ISqlIndexBuilder index)
+    {
+        return $"{index} contains non-nullable columns.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static string ValueCannotBeConvertedToDbLiteral(Type type)
     {
         return $"Value cannot be converted to database literal through definition of '{type.GetDebugString()}' type.";

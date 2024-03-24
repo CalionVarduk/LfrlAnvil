@@ -903,15 +903,17 @@ VALUES
     [Theory]
     [InlineData( ReferenceBehavior.Values.Cascade, ReferenceBehavior.Values.Cascade )]
     [InlineData( ReferenceBehavior.Values.Cascade, ReferenceBehavior.Values.Restrict )]
+    [InlineData( ReferenceBehavior.Values.SetNull, ReferenceBehavior.Values.NoAction )]
     [InlineData( ReferenceBehavior.Values.Restrict, ReferenceBehavior.Values.Cascade )]
     [InlineData( ReferenceBehavior.Values.Restrict, ReferenceBehavior.Values.Restrict )]
+    [InlineData( ReferenceBehavior.Values.NoAction, ReferenceBehavior.Values.SetNull )]
     public void ForeignKey_ShouldCreateForeignKeyDefinitionNode_WithoutColumns(
         ReferenceBehavior.Values onDelete,
         ReferenceBehavior.Values onUpdate)
     {
         var referencedTable = SqlNode.RawRecordSet( "bar" );
-        var onDeleteBehavior = onDelete == ReferenceBehavior.Values.Restrict ? ReferenceBehavior.Restrict : ReferenceBehavior.Cascade;
-        var onUpdateBehavior = onUpdate == ReferenceBehavior.Values.Restrict ? ReferenceBehavior.Restrict : ReferenceBehavior.Cascade;
+        var onDeleteBehavior = ReferenceBehavior.GetBehavior( onDelete );
+        var onUpdateBehavior = ReferenceBehavior.GetBehavior( onUpdate );
 
         var sut = SqlNode.ForeignKey(
             SqlSchemaObjectName.Create( "FK_foo_REF_bar" ),
