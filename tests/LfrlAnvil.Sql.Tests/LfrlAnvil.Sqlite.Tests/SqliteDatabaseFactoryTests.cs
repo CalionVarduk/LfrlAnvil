@@ -1469,6 +1469,17 @@ public class SqliteDatabaseFactoryTests : TestsBase
     }
 
     [Fact]
+    public void Connector_Connect_WithOptions_ShouldThrowInvalidOperationException_WhenDatabaseIsInMemory()
+    {
+        var sut = new SqliteDatabaseFactory();
+        var db = sut.Create( "DataSource=:memory:", new SqlDatabaseVersionHistory() ).Database;
+
+        var action = Lambda.Of( () => db.Connector.Connect( "Foreign Keys=false" ) );
+
+        action.Should().ThrowExactly<InvalidOperationException>();
+    }
+
+    [Fact]
     public void RegisterSqlite_ShouldAddSqliteFactory()
     {
         var sut = new SqlDatabaseFactoryProvider();
@@ -1662,6 +1673,100 @@ public class SqliteDatabaseFactoryTests : TestsBase
                     (fourthEvent?.Connection).Should().BeSameAs( connection );
                     (fourthEvent?.StateChange).Should()
                         .BeEquivalentTo( new StateChangeEventArgs( ConnectionState.Open, ConnectionState.Closed ) );
+                }
+            }
+            finally
+            {
+                var dbPath = Path.Combine( Environment.CurrentDirectory, dbName );
+                File.Delete( dbPath );
+            }
+        }
+
+        [Fact]
+        public async Task Connector_ShouldHandleDifferentFormsOfConnectingToDatabase()
+        {
+            const string dbName = ".test_3.db";
+            const string connectionString = $"Data Source=./{dbName};Pooling=False";
+            const string extendedConnectionString = $"Data Source=./{dbName};Foreign Keys=False;Pooling=False";
+
+            var sut = new SqliteDatabaseFactory();
+            var history = new SqlDatabaseVersionHistory();
+
+            try
+            {
+                var db = sut.Create(
+                        connectionString,
+                        history,
+                        SqlCreateDatabaseOptions.Default.SetMode( SqlDatabaseCreateMode.Commit ) )
+                    .Database;
+
+                using var c1 = ((ISqlDatabaseConnector)db.Connector).Connect();
+                using var c2 = ((ISqlDatabaseConnector)db.Connector).Connect( "DataSource=other;Foreign Keys=false" );
+                await using var c3 = ((ISqlDatabaseConnector<DbConnection>)db.Connector).Connect();
+                await using var c4 = ((ISqlDatabaseConnector<DbConnection>)db.Connector).Connect( "DataSource=other;Foreign Keys=false" );
+                using var c5 = await ((ISqlDatabaseConnector)db.Connector).ConnectAsync();
+                using var c6 = await ((ISqlDatabaseConnector)db.Connector).ConnectAsync( "DataSource=other;Foreign Keys=false" );
+                await using var c7 = await ((ISqlDatabaseConnector<DbConnection>)db.Connector).ConnectAsync();
+                await using var c8 = await ((ISqlDatabaseConnector<DbConnection>)db.Connector)
+                    .ConnectAsync( "DataSource=other;Foreign Keys=false" );
+
+                using ( new AssertionScope() )
+                {
+                    c1.ConnectionString.Should().Be( connectionString );
+                    c2.ConnectionString.Should().Be( extendedConnectionString );
+                    c3.ConnectionString.Should().Be( connectionString );
+                    c4.ConnectionString.Should().Be( extendedConnectionString );
+                    c5.ConnectionString.Should().Be( connectionString );
+                    c6.ConnectionString.Should().Be( extendedConnectionString );
+                    c7.ConnectionString.Should().Be( connectionString );
+                    c8.ConnectionString.Should().Be( extendedConnectionString );
+                }
+            }
+            finally
+            {
+                var dbPath = Path.Combine( Environment.CurrentDirectory, dbName );
+                File.Delete( dbPath );
+            }
+        }
+
+        [Fact]
+        public async Task Connector_ShouldHandleDifferentFormsOfConnectingToDatabase_WithPermanentConnection()
+        {
+            const string dbName = ".test_4.db";
+            const string connectionString = $"Data Source=./{dbName};Pooling=False";
+            const string extendedConnectionString = $"Data Source=./{dbName};Foreign Keys=False;Pooling=False";
+
+            var sut = new SqliteDatabaseFactory( SqliteDatabaseFactoryOptions.Default.EnableConnectionPermanence() );
+            var history = new SqlDatabaseVersionHistory();
+
+            try
+            {
+                using var db = sut.Create(
+                        connectionString,
+                        history,
+                        SqlCreateDatabaseOptions.Default.SetMode( SqlDatabaseCreateMode.Commit ) )
+                    .Database;
+
+                using var c1 = ((ISqlDatabaseConnector)db.Connector).Connect();
+                using var c2 = ((ISqlDatabaseConnector)db.Connector).Connect( "DataSource=other;Foreign Keys=false" );
+                await using var c3 = ((ISqlDatabaseConnector<DbConnection>)db.Connector).Connect();
+                await using var c4 = ((ISqlDatabaseConnector<DbConnection>)db.Connector).Connect( "DataSource=other;Foreign Keys=false" );
+                using var c5 = await ((ISqlDatabaseConnector)db.Connector).ConnectAsync();
+                using var c6 = await ((ISqlDatabaseConnector)db.Connector).ConnectAsync( "DataSource=other;Foreign Keys=false" );
+                await using var c7 = await ((ISqlDatabaseConnector<DbConnection>)db.Connector).ConnectAsync();
+                await using var c8 = await ((ISqlDatabaseConnector<DbConnection>)db.Connector)
+                    .ConnectAsync( "DataSource=other;Foreign Keys=false" );
+
+                using ( new AssertionScope() )
+                {
+                    c1.ConnectionString.Should().Be( connectionString );
+                    c2.ConnectionString.Should().Be( extendedConnectionString );
+                    c3.ConnectionString.Should().Be( connectionString );
+                    c4.ConnectionString.Should().Be( extendedConnectionString );
+                    c5.ConnectionString.Should().Be( connectionString );
+                    c6.ConnectionString.Should().Be( extendedConnectionString );
+                    c7.ConnectionString.Should().Be( connectionString );
+                    c8.ConnectionString.Should().Be( extendedConnectionString );
                 }
             }
             finally

@@ -200,10 +200,10 @@ public class NullabilityInfoContextTests : TestsBase
 
     private sealed class Source
     {
-        public readonly int NotNullValueField;
-        public readonly int? NullableValueField;
+        public readonly int NotNullValueField = 0;
+        public readonly int? NullableValueField = null;
         public readonly string NotNullRefField = string.Empty;
-        public readonly string? NullableRefField;
+        public readonly string? NullableRefField = null;
         public int NotNullValueProperty { get; }
         public int? NullableValueProperty { get; }
         public string NotNullRefProperty { get; } = string.Empty;

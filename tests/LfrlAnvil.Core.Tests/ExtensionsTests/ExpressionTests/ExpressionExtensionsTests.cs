@@ -561,7 +561,7 @@ public class ExpressionExtensionsTests : TestsBase
         public static string? StaticProperty { get; set; }
 
         public string? Property { get; set; }
-        public string? Field;
+        public string? Field = null;
         public TestClass? Other { get; set; }
 
         public string? Method()

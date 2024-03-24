@@ -1,4 +1,5 @@
-﻿using System.Data;
+﻿using System;
+using System.Data;
 using System.Data.Common;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
@@ -7,14 +8,17 @@ using System.Threading.Tasks;
 using LfrlAnvil.Sql;
 using LfrlAnvil.Sql.Internal;
 using LfrlAnvil.Sql.Objects;
+using LfrlAnvil.Sqlite.Exceptions;
 using Microsoft.Data.Sqlite;
 
 namespace LfrlAnvil.Sqlite.Internal;
 
-internal sealed class SqliteDatabasePermanentConnector : ISqlDatabaseConnector<SqliteConnection>, ISqlDatabaseConnector<DbConnection>
+internal sealed class SqliteDatabasePermanentConnector : ISqliteDatabaseConnector, ISqlDatabaseConnector<DbConnection>
 {
     private readonly SqlitePermanentConnection _connection;
-    private readonly SqliteConnectionStringBuilder _connectionStringBuilder;
+    private readonly DbConnectionEventHandler _eventHandler;
+    private readonly SqlConnectionStringEntry[] _connectionStringEntries;
+    private readonly bool _isInMemoryDatabase;
     private SqliteDatabase? _database;
 
     internal SqliteDatabasePermanentConnector(
@@ -24,8 +28,10 @@ internal sealed class SqliteDatabasePermanentConnector : ISqlDatabaseConnector<S
     {
         _database = null;
         _connection = connection;
-        _connectionStringBuilder = connectionStringBuilder;
-        eventHandler.Attach( _connection );
+        _eventHandler = eventHandler;
+        _connectionStringEntries = SqliteHelpers.ExtractConnectionStringEntries( connectionStringBuilder );
+        _isInMemoryDatabase = connectionStringBuilder.DataSource == SqliteHelpers.MemoryDataSource;
+        _eventHandler.Attach( _connection );
     }
 
     public SqliteDatabase Database
@@ -50,9 +56,27 @@ internal sealed class SqliteDatabasePermanentConnector : ISqlDatabaseConnector<S
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public SqliteConnection Connect(string options)
+    {
+        var connection = CreateConnection( options );
+        connection.Open();
+        return connection;
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public ValueTask<SqliteConnection> ConnectAsync(CancellationToken cancellationToken = default)
     {
         return ValueTask.FromResult<SqliteConnection>( _connection );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public async ValueTask<SqliteConnection> ConnectAsync(string options, CancellationToken cancellationToken = default)
+    {
+        var connection = CreateConnection( options );
+        await connection.OpenAsync( cancellationToken ).ConfigureAwait( false );
+        return connection;
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -70,9 +94,27 @@ internal sealed class SqliteDatabasePermanentConnector : ISqlDatabaseConnector<S
     }
 
     [Pure]
+    private SqliteConnection CreateConnection(string options)
+    {
+        if ( _isInMemoryDatabase )
+            throw new InvalidOperationException( Resources.ConnectionStringToInMemoryDatabaseCannotBeModified );
+
+        var connectionString = SqliteHelpers.ExtendConnectionString( _connectionStringEntries, options );
+        var result = new SqliteConnection( connectionString );
+        _eventHandler.Attach( result );
+        return result;
+    }
+
+    [Pure]
     DbConnection ISqlDatabaseConnector<DbConnection>.Connect()
     {
         return Connect();
+    }
+
+    [Pure]
+    DbConnection ISqlDatabaseConnector<DbConnection>.Connect(string options)
+    {
+        return Connect( options );
     }
 
     [Pure]
@@ -82,14 +124,32 @@ internal sealed class SqliteDatabasePermanentConnector : ISqlDatabaseConnector<S
     }
 
     [Pure]
+    async ValueTask<DbConnection> ISqlDatabaseConnector<DbConnection>.ConnectAsync(string options, CancellationToken cancellationToken)
+    {
+        return await ConnectAsync( options, cancellationToken ).ConfigureAwait( false );
+    }
+
+    [Pure]
     IDbConnection ISqlDatabaseConnector.Connect()
     {
         return Connect();
     }
 
     [Pure]
+    IDbConnection ISqlDatabaseConnector.Connect(string options)
+    {
+        return Connect( options );
+    }
+
+    [Pure]
     async ValueTask<IDbConnection> ISqlDatabaseConnector.ConnectAsync(CancellationToken cancellationToken)
     {
         return await ConnectAsync( cancellationToken ).ConfigureAwait( false );
+    }
+
+    [Pure]
+    async ValueTask<IDbConnection> ISqlDatabaseConnector.ConnectAsync(string options, CancellationToken cancellationToken)
+    {
+        return await ConnectAsync( options, cancellationToken ).ConfigureAwait( false );
     }
 }

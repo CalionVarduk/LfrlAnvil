@@ -1,10 +1,13 @@
-﻿using System.Diagnostics.Contracts;
+﻿using System;
+using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using LfrlAnvil.Extensions;
 using LfrlAnvil.Sql;
 using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Expressions.Visitors;
 using LfrlAnvil.Sql.Internal;
+using MySqlConnector;
 
 namespace LfrlAnvil.MySql.Internal;
 
@@ -15,6 +18,55 @@ internal static class MySqlHelpers
     public const string DropIndexIfExistsProcedureName = "_DROP_INDEX_IF_EXISTS";
     public const string DefaultUpdateSourceAlias = "new";
     public const int DefaultIndexPrefixLength = 500;
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static SqlConnectionStringEntry[] ExtractConnectionStringEntries(MySqlConnectionStringBuilder builder)
+    {
+        var i = 0;
+        var result = new SqlConnectionStringEntry[builder.Count];
+        foreach ( var e in builder )
+        {
+            var (key, value) = (KeyValuePair<string, object>)e;
+            result[i++] = new SqlConnectionStringEntry( key, value, IsMutableConnectionStringKey( key ) );
+        }
+
+        return result;
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static string ExtendConnectionString(ReadOnlyArray<SqlConnectionStringEntry> entries, string options)
+    {
+        var builder = new MySqlConnectionStringBuilder( options );
+        foreach ( var (key, value, isMutable) in entries )
+        {
+            if ( ! isMutable || ! builder.ShouldSerialize( key ) )
+                builder.Add( key, value );
+        }
+
+        return builder.ToString();
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static bool IsMutableConnectionStringKey(string key)
+    {
+        return ! key.Equals( "Server", StringComparison.OrdinalIgnoreCase ) &&
+            ! key.Equals( "Host", StringComparison.OrdinalIgnoreCase ) &&
+            ! key.Equals( "Data Source", StringComparison.OrdinalIgnoreCase ) &&
+            ! key.Equals( "DataSource", StringComparison.OrdinalIgnoreCase ) &&
+            ! key.Equals( "Address", StringComparison.OrdinalIgnoreCase ) &&
+            ! key.Equals( "Addr", StringComparison.OrdinalIgnoreCase ) &&
+            ! key.Equals( "Network Address", StringComparison.OrdinalIgnoreCase ) &&
+            ! key.Equals( "Port", StringComparison.OrdinalIgnoreCase ) &&
+            ! key.Equals( "Allow User Variables", StringComparison.OrdinalIgnoreCase ) &&
+            ! key.Equals( "AllowUserVariables", StringComparison.OrdinalIgnoreCase ) &&
+            ! key.Equals( "GUID Format", StringComparison.OrdinalIgnoreCase ) &&
+            ! key.Equals( "GuidFormat", StringComparison.OrdinalIgnoreCase ) &&
+            ! key.Equals( "No Backslash Escapes", StringComparison.OrdinalIgnoreCase ) &&
+            ! key.Equals( "NoBackslashEscapes", StringComparison.OrdinalIgnoreCase );
+    }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]

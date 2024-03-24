@@ -4,6 +4,7 @@ using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
+using LfrlAnvil.MySql.Internal;
 using LfrlAnvil.Sql;
 using LfrlAnvil.Sql.Internal;
 using LfrlAnvil.Sql.Objects;
@@ -14,7 +15,7 @@ namespace LfrlAnvil.MySql;
 public sealed class MySqlDatabaseConnector : ISqlDatabaseConnector<MySqlConnection>, ISqlDatabaseConnector<DbConnection>
 {
     private readonly string _connectionString;
-    private readonly MySqlConnectionStringBuilder _connectionStringBuilder;
+    private readonly SqlConnectionStringEntry[] _connectionStringEntries;
     private readonly DbConnectionEventHandler _eventHandler;
     private MySqlDatabase? _database;
 
@@ -22,7 +23,7 @@ public sealed class MySqlDatabaseConnector : ISqlDatabaseConnector<MySqlConnecti
     {
         _database = null;
         _connectionString = connectionStringBuilder.ToString();
-        _connectionStringBuilder = connectionStringBuilder;
+        _connectionStringEntries = MySqlHelpers.ExtractConnectionStringEntries( connectionStringBuilder );
         _eventHandler = eventHandler;
     }
 
@@ -43,7 +44,17 @@ public sealed class MySqlDatabaseConnector : ISqlDatabaseConnector<MySqlConnecti
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public MySqlConnection Connect()
     {
-        var connection = CreateConnection();
+        var connection = CreateConnection( _connectionString );
+        connection.Open();
+        return connection;
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public MySqlConnection Connect(string options)
+    {
+        var connectionString = MySqlHelpers.ExtendConnectionString( _connectionStringEntries, options );
+        var connection = CreateConnection( connectionString );
         connection.Open();
         return connection;
     }
@@ -52,7 +63,17 @@ public sealed class MySqlDatabaseConnector : ISqlDatabaseConnector<MySqlConnecti
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public async ValueTask<MySqlConnection> ConnectAsync(CancellationToken cancellationToken = default)
     {
-        var connection = CreateConnection();
+        var connection = CreateConnection( _connectionString );
+        await connection.OpenAsync( cancellationToken ).ConfigureAwait( false );
+        return connection;
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public async ValueTask<MySqlConnection> ConnectAsync(string options, CancellationToken cancellationToken = default)
+    {
+        var connectionString = MySqlHelpers.ExtendConnectionString( _connectionStringEntries, options );
+        var connection = CreateConnection( connectionString );
         await connection.OpenAsync( cancellationToken ).ConfigureAwait( false );
         return connection;
     }
@@ -67,9 +88,9 @@ public sealed class MySqlDatabaseConnector : ISqlDatabaseConnector<MySqlConnecti
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private MySqlConnection CreateConnection()
+    private MySqlConnection CreateConnection(string connectionString)
     {
-        var result = new MySqlConnection( _connectionString );
+        var result = new MySqlConnection( connectionString );
         _eventHandler.Attach( result );
         return result;
     }
@@ -81,9 +102,21 @@ public sealed class MySqlDatabaseConnector : ISqlDatabaseConnector<MySqlConnecti
     }
 
     [Pure]
+    DbConnection ISqlDatabaseConnector<DbConnection>.Connect(string options)
+    {
+        return Connect( options );
+    }
+
+    [Pure]
     async ValueTask<DbConnection> ISqlDatabaseConnector<DbConnection>.ConnectAsync(CancellationToken cancellationToken)
     {
         return await ConnectAsync( cancellationToken ).ConfigureAwait( false );
+    }
+
+    [Pure]
+    async ValueTask<DbConnection> ISqlDatabaseConnector<DbConnection>.ConnectAsync(string options, CancellationToken cancellationToken)
+    {
+        return await ConnectAsync( options, cancellationToken ).ConfigureAwait( false );
     }
 
     [Pure]
@@ -93,8 +126,20 @@ public sealed class MySqlDatabaseConnector : ISqlDatabaseConnector<MySqlConnecti
     }
 
     [Pure]
+    IDbConnection ISqlDatabaseConnector.Connect(string options)
+    {
+        return Connect( options );
+    }
+
+    [Pure]
     async ValueTask<IDbConnection> ISqlDatabaseConnector.ConnectAsync(CancellationToken cancellationToken)
     {
         return await ConnectAsync( cancellationToken ).ConfigureAwait( false );
+    }
+
+    [Pure]
+    async ValueTask<IDbConnection> ISqlDatabaseConnector.ConnectAsync(string options, CancellationToken cancellationToken)
+    {
+        return await ConnectAsync( options, cancellationToken ).ConfigureAwait( false );
     }
 }

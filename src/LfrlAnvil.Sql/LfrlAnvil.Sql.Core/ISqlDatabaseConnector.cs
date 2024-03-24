@@ -15,7 +15,13 @@ public interface ISqlDatabaseConnector
     IDbConnection Connect();
 
     [Pure]
+    IDbConnection Connect(string options);
+
+    [Pure]
     ValueTask<IDbConnection> ConnectAsync(CancellationToken cancellationToken = default);
+
+    [Pure]
+    ValueTask<IDbConnection> ConnectAsync(string options, CancellationToken cancellationToken = default);
 }
 
 public interface ISqlDatabaseConnector<TConnection> : ISqlDatabaseConnector
@@ -27,5 +33,11 @@ public interface ISqlDatabaseConnector<TConnection> : ISqlDatabaseConnector
     new TConnection Connect();
 
     [Pure]
+    new TConnection Connect(string options);
+
+    [Pure]
     new ValueTask<TConnection> ConnectAsync(CancellationToken cancellationToken = default);
+
+    [Pure]
+    new ValueTask<TConnection> ConnectAsync(string options, CancellationToken cancellationToken = default);
 }

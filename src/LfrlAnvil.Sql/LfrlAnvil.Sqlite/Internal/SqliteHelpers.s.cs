@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Globalization;
 using System.Runtime.CompilerServices;
@@ -6,6 +7,7 @@ using LfrlAnvil.Extensions;
 using LfrlAnvil.Sql;
 using LfrlAnvil.Sql.Expressions.Functions;
 using LfrlAnvil.Sql.Internal;
+using Microsoft.Data.Sqlite;
 
 namespace LfrlAnvil.Sqlite.Internal;
 
@@ -26,6 +28,44 @@ public static class SqliteHelpers
     public const long TemporalDayOfWeekUnit = 11;
     public static readonly SqlSchemaObjectName DefaultVersionHistoryName = SqlSchemaObjectName.Create( SqlHelpers.VersionHistoryName );
     public static readonly SqlRecordSetInfo UpsertExcludedRecordSetInfo = SqlRecordSetInfo.Create( "excluded" );
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static SqlConnectionStringEntry[] ExtractConnectionStringEntries(SqliteConnectionStringBuilder builder)
+    {
+        var i = 0;
+        var result = new SqlConnectionStringEntry[builder.Count];
+        foreach ( var e in builder )
+        {
+            var (key, value) = (KeyValuePair<string, object>)e;
+            result[i++] = new SqlConnectionStringEntry( key, value, IsMutableConnectionStringKey( key ) );
+        }
+
+        return result;
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static string ExtendConnectionString(ReadOnlyArray<SqlConnectionStringEntry> entries, string options)
+    {
+        var builder = new SqliteConnectionStringBuilder( options );
+        foreach ( var (key, value, isMutable) in entries )
+        {
+            if ( ! isMutable || ! builder.ShouldSerialize( key ) )
+                builder.Add( key, value );
+        }
+
+        return builder.ToString();
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static bool IsMutableConnectionStringKey(string key)
+    {
+        return ! key.Equals( "Data Source", StringComparison.OrdinalIgnoreCase ) &&
+            ! key.Equals( "DataSource", StringComparison.OrdinalIgnoreCase ) &&
+            ! key.Equals( "Filename", StringComparison.OrdinalIgnoreCase );
+    }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]

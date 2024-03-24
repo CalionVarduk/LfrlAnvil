@@ -14,6 +14,9 @@ internal static class Resources
     internal const string ConnectionForClosedPermanentDatabaseCannotBeReopened =
         "Connection for closed permanent SQLite database cannot be reopened.";
 
+    internal const string ConnectionStringToInMemoryDatabaseCannotBeModified =
+        "Connection string to in-memory SQLite database cannot be modified.";
+
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static string ForeignKeyCheckFailure(Version version, IReadOnlySet<string> failedTableNames)

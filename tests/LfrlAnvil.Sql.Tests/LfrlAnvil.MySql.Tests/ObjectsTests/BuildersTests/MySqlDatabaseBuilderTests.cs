@@ -1,11 +1,14 @@
 ﻿using System.Linq;
 using LfrlAnvil.MySql.Extensions;
+using LfrlAnvil.MySql.Internal;
 using LfrlAnvil.MySql.Objects.Builders;
 using LfrlAnvil.MySql.Tests.Helpers;
 using LfrlAnvil.Sql;
+using LfrlAnvil.Sql.Internal;
 using LfrlAnvil.Sql.Objects.Builders;
 using LfrlAnvil.TestExtensions.FluentAssertions;
 using LfrlAnvil.TestExtensions.Sql;
+using MySqlConnector;
 
 namespace LfrlAnvil.MySql.Tests.ObjectsTests.BuildersTests;
 
@@ -96,6 +99,42 @@ BEGIN
 END;
 " );
         }
+    }
+
+    [Fact]
+    public void Helpers_ExtractConnectionStringEntries_ShouldReturnCorrectResult()
+    {
+        var connectionString = new MySqlConnectionStringBuilder(
+            "Server=localhost;Port=3306;Database=tests;UserID=admin;Password=password;GuidFormat=None;AllowUserVariables=true;NoBackslashEscapes=true" );
+
+        var result = MySqlHelpers.ExtractConnectionStringEntries( connectionString );
+
+        result.Should()
+            .BeSequentiallyEqualTo(
+                new SqlConnectionStringEntry( "Server", "localhost", false ),
+                new SqlConnectionStringEntry( "Port", "3306", false ),
+                new SqlConnectionStringEntry( "Database", "tests", true ),
+                new SqlConnectionStringEntry( "User ID", "admin", true ),
+                new SqlConnectionStringEntry( "Password", "password", true ),
+                new SqlConnectionStringEntry( "GUID Format", "None", false ),
+                new SqlConnectionStringEntry( "Allow User Variables", "True", false ),
+                new SqlConnectionStringEntry( "No Backslash Escapes", "True", false ) );
+    }
+
+    [Fact]
+    public void Helpers_ExtendConnectionString_ShouldReturnCorrectResult()
+    {
+        var connectionString = new MySqlConnectionStringBuilder(
+            "Server=localhost;Port=3306;Database=tests;UserID=admin;Password=password;GuidFormat=None;AllowUserVariables=true;NoBackslashEscapes=true" );
+
+        var entries = MySqlHelpers.ExtractConnectionStringEntries( connectionString );
+        var result = MySqlHelpers.ExtendConnectionString(
+            entries,
+            "Port=3307;Database=tests2;UserID=tester;Password=pwd;AllowUserVariables=false" );
+
+        result.Should()
+            .Be(
+                "Server=localhost;Port=3306;User ID=tester;Password=pwd;Database=tests2;Allow User Variables=True;GUID Format=None;No Backslash Escapes=True" );
     }
 
     [Fact]

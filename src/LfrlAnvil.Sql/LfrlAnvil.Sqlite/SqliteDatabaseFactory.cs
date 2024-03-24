@@ -88,7 +88,6 @@ public sealed class SqliteDatabaseFactory : SqlDatabaseFactory<SqliteDatabase>
             : CreateSqliteDatabase(
                 sqliteBuilder,
                 sqliteConnectionString,
-                connection.ConnectionString,
                 eventHandler,
                 versionHistoryRecordsQuery,
                 version );
@@ -164,12 +163,11 @@ public sealed class SqliteDatabaseFactory : SqlDatabaseFactory<SqliteDatabase>
     private static SqliteDatabase CreateSqliteDatabase(
         SqliteDatabaseBuilder builder,
         SqliteConnectionStringBuilder connectionStringBuilder,
-        string connectionString,
         DbConnectionEventHandler eventHandler,
         SqlQueryReaderExecutor<SqlDatabaseVersionRecord> versionHistoryRecordsQuery,
         Version version)
     {
-        var connector = new SqliteDatabaseConnector( connectionString, connectionStringBuilder, eventHandler );
+        var connector = new SqliteDatabaseConnector( connectionStringBuilder, eventHandler );
         var result = new SqliteDatabase( builder, connector, version, versionHistoryRecordsQuery );
         connector.SetDatabase( result );
         return result;

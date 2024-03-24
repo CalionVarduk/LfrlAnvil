@@ -39,11 +39,6 @@
   - ^ this may also have to be a linked list...
 
 
-- Connection strings:
-  - Some options will be hardcoded (like e.g. mysql GuidFormat=None),
-  - DB objects should have an additional method that allows to provide custom user/password & maybe other options as well
-
-
 ### Reactive.Scheduling
 project idea:
 - combines Reactive.Chrono & Reactive.Queues

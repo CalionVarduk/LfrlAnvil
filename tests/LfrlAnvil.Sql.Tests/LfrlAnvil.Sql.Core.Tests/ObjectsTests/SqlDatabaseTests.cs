@@ -64,6 +64,21 @@ public class SqlDatabaseTests : TestsBase
     }
 
     [Fact]
+    public void Connector_Connect_WithOptions_ShouldCallConnectImplementation()
+    {
+        var dbBuilder = SqlDatabaseBuilderMock.Create();
+        ISqlDatabase sut = SqlDatabaseMock.Create( dbBuilder );
+
+        var result = sut.Connector.Connect( "test=true" );
+
+        using ( new AssertionScope() )
+        {
+            result.State.Should().Be( ConnectionState.Open );
+            result.ConnectionString.Should().Be( "test=true" );
+        }
+    }
+
+    [Fact]
     public async Task Connector_ConnectAsync_ShouldCallConnectImplementation()
     {
         var dbBuilder = SqlDatabaseBuilderMock.Create();
@@ -72,6 +87,21 @@ public class SqlDatabaseTests : TestsBase
         var result = await sut.Connector.ConnectAsync();
 
         result.State.Should().Be( ConnectionState.Open );
+    }
+
+    [Fact]
+    public async Task Connector_ConnectAsync_WithOptions_ShouldCallConnectImplementation()
+    {
+        var dbBuilder = SqlDatabaseBuilderMock.Create();
+        ISqlDatabase sut = SqlDatabaseMock.Create( dbBuilder );
+
+        var result = await sut.Connector.ConnectAsync( "test=true" );
+
+        using ( new AssertionScope() )
+        {
+            result.State.Should().Be( ConnectionState.Open );
+            result.ConnectionString.Should().Be( "test=true" );
+        }
     }
 
     [Fact]
