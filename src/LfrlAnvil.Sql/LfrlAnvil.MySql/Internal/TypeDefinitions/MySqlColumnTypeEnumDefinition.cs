@@ -16,7 +16,6 @@ public sealed class MySqlColumnTypeEnumDefinition<TEnum, TUnderlying>
 
     public override void SetParameterInfo(MySqlParameter parameter, bool isNullable)
     {
-        base.SetParameterInfo( parameter, isNullable );
         parameter.MySqlDbType = DataType.Value;
         parameter.IsNullable = isNullable;
     }

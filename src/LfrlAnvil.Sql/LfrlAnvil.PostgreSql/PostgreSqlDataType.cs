@@ -48,12 +48,12 @@ public sealed class PostgreSqlDataType : ISqlDataType, IEquatable<PostgreSqlData
     public static readonly PostgreSqlDataType Bytea = new PostgreSqlDataType( "BYTEA", NpgsqlDbType.Bytea, DbType.Binary );
     public static readonly PostgreSqlDataType Date = new PostgreSqlDataType( "DATE", NpgsqlDbType.Date, DbType.Date );
     public static readonly PostgreSqlDataType Time = new PostgreSqlDataType( "TIME", NpgsqlDbType.Time, DbType.Time );
-    public static readonly PostgreSqlDataType Timestamp = new PostgreSqlDataType( "TIMESTAMP", NpgsqlDbType.Timestamp, DbType.DateTime );
+    public static readonly PostgreSqlDataType Timestamp = new PostgreSqlDataType( "TIMESTAMP", NpgsqlDbType.Timestamp, DbType.DateTime2 );
 
     public static readonly PostgreSqlDataType TimestampTz = new PostgreSqlDataType(
-        "TIMESTAMP WITH TIME ZONE",
+        "TIMESTAMPTZ",
         NpgsqlDbType.TimestampTz,
-        DbType.DateTimeOffset );
+        DbType.DateTime );
 
     private readonly int[] _parameters;
     private readonly SqlDataTypeParameter[] _parameterDefinitions;

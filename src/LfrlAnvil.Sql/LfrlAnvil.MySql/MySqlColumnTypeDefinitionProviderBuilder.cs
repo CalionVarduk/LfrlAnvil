@@ -94,7 +94,7 @@ public class MySqlColumnTypeDefinitionProviderBuilder : SqlColumnTypeDefinitionP
     [Pure]
     internal Dictionary<string, SqlColumnTypeDefinition> CreateDataTypeDefinitionsByName()
     {
-        return new Dictionary<string, SqlColumnTypeDefinition>( SqlHelpers.NameComparer )
+        return new Dictionary<string, SqlColumnTypeDefinition>( capacity: 21, comparer: SqlHelpers.NameComparer )
         {
             { DefaultBool.DataType.Name, DefaultBool },
             { DefaultTinyInt.DataType.Name, DefaultTinyInt },

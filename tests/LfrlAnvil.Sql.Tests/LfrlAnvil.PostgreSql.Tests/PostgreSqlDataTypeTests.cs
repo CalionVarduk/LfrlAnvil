@@ -234,7 +234,7 @@ public class PostgreSqlDataTypeTests : TestsBase
         {
             sut.Name.Should().Be( "TIMESTAMP" );
             sut.Value.Should().Be( NpgsqlDbType.Timestamp );
-            sut.DbType.Should().Be( DbType.DateTime );
+            sut.DbType.Should().Be( DbType.DateTime2 );
             sut.Dialect.Should().BeSameAs( PostgreSqlDialect.Instance );
             sut.Parameters.ToArray().Should().BeEmpty();
             sut.ParameterDefinitions.ToArray().Should().BeEmpty();
@@ -248,9 +248,9 @@ public class PostgreSqlDataTypeTests : TestsBase
 
         using ( new AssertionScope() )
         {
-            sut.Name.Should().Be( "TIMESTAMP WITH TIME ZONE" );
+            sut.Name.Should().Be( "TIMESTAMPTZ" );
             sut.Value.Should().Be( NpgsqlDbType.TimestampTz );
-            sut.DbType.Should().Be( DbType.DateTimeOffset );
+            sut.DbType.Should().Be( DbType.DateTime );
             sut.Dialect.Should().BeSameAs( PostgreSqlDialect.Instance );
             sut.Parameters.ToArray().Should().BeEmpty();
             sut.ParameterDefinitions.ToArray().Should().BeEmpty();

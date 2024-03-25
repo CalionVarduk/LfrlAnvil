@@ -15,7 +15,6 @@ public abstract class MySqlColumnTypeDefinition<T> : SqlColumnTypeDefinition<T, 
 
     public override void SetParameterInfo(MySqlParameter parameter, bool isNullable)
     {
-        base.SetParameterInfo( parameter, isNullable );
         parameter.MySqlDbType = DataType.Value;
         parameter.IsNullable = isNullable;
     }
