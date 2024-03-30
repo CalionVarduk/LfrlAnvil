@@ -246,6 +246,13 @@ public class MySqlDataTypeProviderTests : TestsBase
     }
 
     [Fact]
+    public void GetUtcDateTime_ShouldReturnDateTime()
+    {
+        var result = _sut.GetUtcDateTime();
+        result.Should().BeSameAs( MySqlDataType.DateTime );
+    }
+
+    [Fact]
     public void GetDateTime_ShouldReturnDateTime()
     {
         var result = _sut.GetDateTime();

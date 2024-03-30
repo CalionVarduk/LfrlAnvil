@@ -122,6 +122,12 @@ public sealed class SqliteDataTypeProvider : ISqlDataTypeProvider
     }
 
     [Pure]
+    public SqliteDataType GetUtcDateTime()
+    {
+        return SqliteDataType.Text;
+    }
+
+    [Pure]
     public SqliteDataType GetDateTime()
     {
         return SqliteDataType.Text;
@@ -287,6 +293,12 @@ public sealed class SqliteDataTypeProvider : ISqlDataTypeProvider
     ISqlDataType ISqlDataTypeProvider.GetTimestamp()
     {
         return GetTimestamp();
+    }
+
+    [Pure]
+    ISqlDataType ISqlDataTypeProvider.GetUtcDateTime()
+    {
+        return GetUtcDateTime();
     }
 
     [Pure]

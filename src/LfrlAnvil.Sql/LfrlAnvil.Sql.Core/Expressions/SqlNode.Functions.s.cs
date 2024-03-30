@@ -11,6 +11,7 @@ public static partial class SqlNode
         private static SqlCurrentDateFunctionExpressionNode? _currentDate;
         private static SqlCurrentTimeFunctionExpressionNode? _currentTime;
         private static SqlCurrentDateTimeFunctionExpressionNode? _currentDateTime;
+        private static SqlCurrentUtcDateTimeFunctionExpressionNode? _currentUtcDateTime;
         private static SqlCurrentTimestampFunctionExpressionNode? _currentTimestamp;
         private static SqlNewGuidFunctionExpressionNode? _newGuid;
 
@@ -48,6 +49,12 @@ public static partial class SqlNode
         public static SqlCurrentDateTimeFunctionExpressionNode CurrentDateTime()
         {
             return _currentDateTime ??= new SqlCurrentDateTimeFunctionExpressionNode();
+        }
+
+        [Pure]
+        public static SqlCurrentUtcDateTimeFunctionExpressionNode CurrentUtcDateTime()
+        {
+            return _currentUtcDateTime ??= new SqlCurrentUtcDateTimeFunctionExpressionNode();
         }
 
         [Pure]

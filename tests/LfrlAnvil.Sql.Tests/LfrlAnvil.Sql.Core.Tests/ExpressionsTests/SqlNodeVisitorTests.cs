@@ -334,6 +334,14 @@ public class SqlNodeVisitorTests : TestsBase
     }
 
     [Fact]
+    public void VisitCurrentUtcDateTimeFunction_ShouldDoNothing()
+    {
+        var sut = new Visitor();
+        var action = Lambda.Of( () => sut.VisitCurrentUtcDateTimeFunction( SqlNode.Functions.CurrentUtcDateTime() ) );
+        action.Should().NotThrow();
+    }
+
+    [Fact]
     public void VisitCurrentTimestampFunction_ShouldDoNothing()
     {
         var sut = new Visitor();

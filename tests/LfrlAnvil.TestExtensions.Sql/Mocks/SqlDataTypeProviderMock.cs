@@ -120,6 +120,12 @@ public sealed class SqlDataTypeProviderMock : ISqlDataTypeProvider
     }
 
     [Pure]
+    public SqlDataTypeMock GetUtcDateTime()
+    {
+        return SqlDataTypeMock.Text;
+    }
+
+    [Pure]
     public SqlDataTypeMock GetDateTime()
     {
         return SqlDataTypeMock.Text;
@@ -279,6 +285,12 @@ public sealed class SqlDataTypeProviderMock : ISqlDataTypeProvider
     ISqlDataType ISqlDataTypeProvider.GetTimestamp()
     {
         return GetTimestamp();
+    }
+
+    [Pure]
+    ISqlDataType ISqlDataTypeProvider.GetUtcDateTime()
+    {
+        return GetUtcDateTime();
     }
 
     [Pure]

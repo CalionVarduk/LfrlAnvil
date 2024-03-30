@@ -62,6 +62,9 @@ public interface ISqlDataTypeProvider
     ISqlDataType GetTimestamp();
 
     [Pure]
+    ISqlDataType GetUtcDateTime();
+
+    [Pure]
     ISqlDataType GetDateTime();
 
     [Pure]

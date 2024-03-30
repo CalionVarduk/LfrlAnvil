@@ -66,6 +66,11 @@ public class SqlTableScopeExpressionValidator : SqlExpressionValidator
         AddForbiddenNode( node );
     }
 
+    public override void VisitCurrentUtcDateTimeFunction(SqlCurrentUtcDateTimeFunctionExpressionNode node)
+    {
+        AddForbiddenNode( node );
+    }
+
     public override void VisitCurrentTimestampFunction(SqlCurrentTimestampFunctionExpressionNode node)
     {
         AddForbiddenNode( node );

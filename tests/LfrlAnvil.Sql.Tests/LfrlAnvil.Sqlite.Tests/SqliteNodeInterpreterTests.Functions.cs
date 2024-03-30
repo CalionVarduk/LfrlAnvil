@@ -99,6 +99,14 @@ public partial class SqliteNodeInterpreterTests
         }
 
         [Fact]
+        public void Visit_ShouldInterpretCurrentUtcDateTimeFunction()
+        {
+            var sut = CreateInterpreter();
+            sut.Visit( SqlNode.Functions.CurrentUtcDateTime() );
+            sut.Context.Sql.ToString().Should().Be( "GET_CURRENT_UTC_DATETIME()" );
+        }
+
+        [Fact]
         public void Visit_ShouldInterpretCurrentTimestampFunction()
         {
             var sut = CreateInterpreter();

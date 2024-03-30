@@ -65,6 +65,11 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
         Context.Sql.Append( "NOW" ).Append( '(' ).Append( '6' ).Append( ')' );
     }
 
+    public override void VisitCurrentUtcDateTimeFunction(SqlCurrentUtcDateTimeFunctionExpressionNode node)
+    {
+        Context.Sql.Append( "UTC_TIMESTAMP" ).Append( '(' ).Append( '6' ).Append( ')' );
+    }
+
     public override void VisitCurrentTimestampFunction(SqlCurrentTimestampFunctionExpressionNode node)
     {
         Context.Sql.Append( "CAST" ).Append( '(' ).Append( "UNIX_TIMESTAMP" ).Append( '(' );

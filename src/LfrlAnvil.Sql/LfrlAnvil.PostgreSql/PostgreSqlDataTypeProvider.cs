@@ -122,6 +122,12 @@ public sealed class PostgreSqlDataTypeProvider : ISqlDataTypeProvider
     }
 
     [Pure]
+    public PostgreSqlDataType GetUtcDateTime()
+    {
+        return PostgreSqlDataType.TimestampTz;
+    }
+
+    [Pure]
     public PostgreSqlDataType GetDateTime()
     {
         return PostgreSqlDataType.Timestamp;
@@ -281,6 +287,12 @@ public sealed class PostgreSqlDataTypeProvider : ISqlDataTypeProvider
     ISqlDataType ISqlDataTypeProvider.GetTimestamp()
     {
         return GetTimestamp();
+    }
+
+    [Pure]
+    ISqlDataType ISqlDataTypeProvider.GetUtcDateTime()
+    {
+        return GetUtcDateTime();
     }
 
     [Pure]

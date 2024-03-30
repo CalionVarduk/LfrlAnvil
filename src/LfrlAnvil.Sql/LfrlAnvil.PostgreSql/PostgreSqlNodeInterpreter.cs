@@ -63,6 +63,11 @@ public class PostgreSqlNodeInterpreter : SqlNodeInterpreter
         Context.Sql.Append( "LOCALTIMESTAMP" );
     }
 
+    public override void VisitCurrentUtcDateTimeFunction(SqlCurrentUtcDateTimeFunctionExpressionNode node)
+    {
+        Context.Sql.Append( "CURRENT_TIMESTAMP" );
+    }
+
     public override void VisitCurrentTimestampFunction(SqlCurrentTimestampFunctionExpressionNode node)
     {
         Context.Sql.Append( "CAST" ).Append( '(' ).Append( "EXTRACT" ).Append( '(' );

@@ -120,6 +120,12 @@ public static class SqliteHelpers
     }
 
     [Pure]
+    public static string DbGetCurrentUtcDateTime()
+    {
+        return DateTime.UtcNow.ToString( SqlHelpers.DateTimeFormat, CultureInfo.InvariantCulture );
+    }
+
+    [Pure]
     public static long DbGetCurrentTimestamp()
     {
         return DateTime.UtcNow.Ticks;

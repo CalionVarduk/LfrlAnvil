@@ -79,6 +79,11 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
         VisitSimpleFunction( "GET_CURRENT_DATETIME", node );
     }
 
+    public override void VisitCurrentUtcDateTimeFunction(SqlCurrentUtcDateTimeFunctionExpressionNode node)
+    {
+        VisitSimpleFunction( "GET_CURRENT_UTC_DATETIME", node );
+    }
+
     public override void VisitCurrentTimestampFunction(SqlCurrentTimestampFunctionExpressionNode node)
     {
         VisitSimpleFunction( "GET_CURRENT_TIMESTAMP", node );

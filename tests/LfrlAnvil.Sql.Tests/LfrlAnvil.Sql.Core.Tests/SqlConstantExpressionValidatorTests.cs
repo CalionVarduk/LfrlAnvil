@@ -278,6 +278,13 @@ public class SqlConstantExpressionValidatorTests : TestsBase
     }
 
     [Fact]
+    public void VisitCurrentUtcDateTimeFunction_ShouldDoNothing()
+    {
+        _sut.VisitCurrentUtcDateTimeFunction( SqlNode.Functions.CurrentUtcDateTime() );
+        _sut.GetErrors().Should().BeEmpty();
+    }
+
+    [Fact]
     public void VisitCurrentTimestampFunction_ShouldDoNothing()
     {
         _sut.VisitCurrentTimestampFunction( SqlNode.Functions.CurrentTimestamp() );

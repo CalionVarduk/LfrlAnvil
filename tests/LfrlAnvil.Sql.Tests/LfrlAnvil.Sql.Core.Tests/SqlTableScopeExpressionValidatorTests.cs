@@ -320,6 +320,13 @@ public class SqlTableScopeExpressionValidatorTests : TestsBase
     }
 
     [Fact]
+    public void VisitCurrentUtcDateTimeFunction_ShouldRegisterError()
+    {
+        _sut.VisitCurrentUtcDateTimeFunction( SqlNode.Functions.CurrentUtcDateTime() );
+        _sut.GetErrors().Should().HaveCount( 1 );
+    }
+
+    [Fact]
     public void VisitCurrentTimestampFunction_ShouldRegisterError()
     {
         _sut.VisitCurrentTimestampFunction( SqlNode.Functions.CurrentTimestamp() );

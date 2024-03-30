@@ -152,6 +152,21 @@ public class FunctionExpressionTests : TestsBase
     }
 
     [Fact]
+    public void CurrentUtcDateTime_ShouldCreateCurrentUtcDateTimeFunctionExpressionNode()
+    {
+        var sut = SqlNode.Functions.CurrentUtcDateTime();
+        var text = sut.ToString();
+
+        using ( new AssertionScope() )
+        {
+            sut.NodeType.Should().Be( SqlNodeType.FunctionExpression );
+            sut.FunctionType.Should().Be( SqlFunctionType.CurrentUtcDateTime );
+            sut.Arguments.Should().BeEmpty();
+            text.Should().Be( "CURRENT_UTC_DATETIME()" );
+        }
+    }
+
+    [Fact]
     public void CurrentTimestamp_ShouldCreateCurrentTimestampFunctionExpressionNode()
     {
         var sut = SqlNode.Functions.CurrentTimestamp();

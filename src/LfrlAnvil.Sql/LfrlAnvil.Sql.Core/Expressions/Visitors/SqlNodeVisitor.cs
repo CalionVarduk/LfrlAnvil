@@ -151,6 +151,7 @@ public abstract class SqlNodeVisitor : ISqlNodeVisitor
     public virtual void VisitCurrentDateFunction(SqlCurrentDateFunctionExpressionNode node) { }
     public virtual void VisitCurrentTimeFunction(SqlCurrentTimeFunctionExpressionNode node) { }
     public virtual void VisitCurrentDateTimeFunction(SqlCurrentDateTimeFunctionExpressionNode node) { }
+    public virtual void VisitCurrentUtcDateTimeFunction(SqlCurrentUtcDateTimeFunctionExpressionNode node) { }
     public virtual void VisitCurrentTimestampFunction(SqlCurrentTimestampFunctionExpressionNode node) { }
 
     public virtual void VisitExtractDateFunction(SqlExtractDateFunctionExpressionNode node)

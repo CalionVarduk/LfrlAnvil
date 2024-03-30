@@ -223,6 +223,13 @@ public class PostgreSqlDataTypeProviderTests : TestsBase
     }
 
     [Fact]
+    public void GetUtcDateTime_ShouldReturnTimestampTz()
+    {
+        var result = _sut.GetUtcDateTime();
+        result.Should().BeSameAs( PostgreSqlDataType.TimestampTz );
+    }
+
+    [Fact]
     public void GetDateTime_ShouldReturnTimestamp()
     {
         var result = _sut.GetDateTime();

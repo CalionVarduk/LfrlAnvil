@@ -99,6 +99,14 @@ public partial class MySqlNodeInterpreterTests
         }
 
         [Fact]
+        public void Visit_ShouldInterpretCurrentUtcDateTimeFunction()
+        {
+            var sut = CreateInterpreter();
+            sut.Visit( SqlNode.Functions.CurrentUtcDateTime() );
+            sut.Context.Sql.ToString().Should().Be( "UTC_TIMESTAMP(6)" );
+        }
+
+        [Fact]
         public void Visit_ShouldInterpretCurrentTimestampFunction()
         {
             var sut = CreateInterpreter();
@@ -363,7 +371,8 @@ public partial class MySqlNodeInterpreterTests
             sut.Visit( SqlNode.Functions.LastIndexOf( SqlNode.RawExpression( "foo.a" ), SqlNode.Literal( "bar" ) ) );
             sut.Context.Sql.ToString()
                 .Should()
-                .Be( "LEAST(GREATEST(CHAR_LENGTH((foo.a)) - CHAR_LENGTH(SUBSTRING_INDEX((foo.a), 'bar', -1)) - CHAR_LENGTH('bar') + 1, 0), CHAR_LENGTH((foo.a)))" );
+                .Be(
+                    "LEAST(GREATEST(CHAR_LENGTH((foo.a)) - CHAR_LENGTH(SUBSTRING_INDEX((foo.a), 'bar', -1)) - CHAR_LENGTH('bar') + 1, 0), CHAR_LENGTH((foo.a)))" );
         }
 
         [Fact]

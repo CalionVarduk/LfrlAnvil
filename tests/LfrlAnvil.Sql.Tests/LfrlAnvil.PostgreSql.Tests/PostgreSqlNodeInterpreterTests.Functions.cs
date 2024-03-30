@@ -99,6 +99,14 @@ public partial class PostgreSqlNodeInterpreterTests
         }
 
         [Fact]
+        public void Visit_ShouldInterpretCurrentUtcDateTimeFunction()
+        {
+            var sut = CreateInterpreter();
+            sut.Visit( SqlNode.Functions.CurrentUtcDateTime() );
+            sut.Context.Sql.ToString().Should().Be( "CURRENT_TIMESTAMP" );
+        }
+
+        [Fact]
         public void Visit_ShouldInterpretCurrentTimestampFunction()
         {
             var sut = CreateInterpreter();

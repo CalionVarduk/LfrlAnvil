@@ -203,6 +203,7 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
     public abstract void VisitCurrentDateFunction(SqlCurrentDateFunctionExpressionNode node);
     public abstract void VisitCurrentTimeFunction(SqlCurrentTimeFunctionExpressionNode node);
     public abstract void VisitCurrentDateTimeFunction(SqlCurrentDateTimeFunctionExpressionNode node);
+    public abstract void VisitCurrentUtcDateTimeFunction(SqlCurrentUtcDateTimeFunctionExpressionNode node);
     public abstract void VisitCurrentTimestampFunction(SqlCurrentTimestampFunctionExpressionNode node);
     public abstract void VisitExtractDateFunction(SqlExtractDateFunctionExpressionNode node);
     public abstract void VisitExtractTimeOfDayFunction(SqlExtractTimeOfDayFunctionExpressionNode node);

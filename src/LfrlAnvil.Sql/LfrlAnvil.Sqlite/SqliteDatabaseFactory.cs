@@ -189,6 +189,7 @@ public sealed class SqliteDatabaseFactory : SqlDatabaseFactory<SqliteDatabase>
         connection.CreateFunction( "GET_CURRENT_DATE", SqliteHelpers.DbGetCurrentDate );
         connection.CreateFunction( "GET_CURRENT_TIME", SqliteHelpers.DbGetCurrentTime );
         connection.CreateFunction( "GET_CURRENT_DATETIME", SqliteHelpers.DbGetCurrentDateTime );
+        connection.CreateFunction( "GET_CURRENT_UTC_DATETIME", SqliteHelpers.DbGetCurrentUtcDateTime );
         connection.CreateFunction( "GET_CURRENT_TIMESTAMP", SqliteHelpers.DbGetCurrentTimestamp );
         connection.CreateFunction( "NEW_GUID", SqliteHelpers.DbNewGuid );
         connection.CreateFunction<string?, string?>( "TO_LOWER", SqliteHelpers.DbToLower, isDeterministic: true );

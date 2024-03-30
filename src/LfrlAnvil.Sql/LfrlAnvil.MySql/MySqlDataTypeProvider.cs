@@ -128,6 +128,12 @@ public sealed class MySqlDataTypeProvider : ISqlDataTypeProvider
     }
 
     [Pure]
+    public MySqlDataType GetUtcDateTime()
+    {
+        return MySqlDataType.DateTime;
+    }
+
+    [Pure]
     public MySqlDataType GetDateTime()
     {
         return MySqlDataType.DateTime;
@@ -291,6 +297,12 @@ public sealed class MySqlDataTypeProvider : ISqlDataTypeProvider
     ISqlDataType ISqlDataTypeProvider.GetTimestamp()
     {
         return GetTimestamp();
+    }
+
+    [Pure]
+    ISqlDataType ISqlDataTypeProvider.GetUtcDateTime()
+    {
+        return GetUtcDateTime();
     }
 
     [Pure]

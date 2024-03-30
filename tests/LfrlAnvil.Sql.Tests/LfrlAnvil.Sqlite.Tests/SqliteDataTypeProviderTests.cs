@@ -140,6 +140,13 @@ public class SqliteDataTypeProviderTests : TestsBase
     }
 
     [Fact]
+    public void GetUtcDateTime_ShouldReturnText()
+    {
+        var result = _sut.GetUtcDateTime();
+        result.Should().BeSameAs( SqliteDataType.Text );
+    }
+
+    [Fact]
     public void GetDateTime_ShouldReturnText()
     {
         var result = _sut.GetDateTime();

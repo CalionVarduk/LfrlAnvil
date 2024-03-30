@@ -469,6 +469,10 @@ public static class SqlNodeVisitorExtensions
                 visitor.VisitCurrentDateTimeFunction( ReinterpretCast.To<SqlCurrentDateTimeFunctionExpressionNode>( node ) );
                 break;
 
+            case SqlFunctionType.CurrentUtcDateTime:
+                visitor.VisitCurrentUtcDateTimeFunction( ReinterpretCast.To<SqlCurrentUtcDateTimeFunctionExpressionNode>( node ) );
+                break;
+
             case SqlFunctionType.CurrentTimestamp:
                 visitor.VisitCurrentTimestampFunction( ReinterpretCast.To<SqlCurrentTimestampFunctionExpressionNode>( node ) );
                 break;

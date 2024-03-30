@@ -514,6 +514,18 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
     }
 
     [Fact]
+    public void VisitCurrentUtcDateTimeFunction_ShouldDoNothing()
+    {
+        _sut.VisitCurrentUtcDateTimeFunction( SqlNode.Functions.CurrentUtcDateTime() );
+
+        using ( new AssertionScope() )
+        {
+            _sut.GetErrors().Should().BeEmpty();
+            _sut.GetReferencedObjects().Should().BeEmpty();
+        }
+    }
+
+    [Fact]
     public void VisitCurrentTimestampFunction_ShouldDoNothing()
     {
         _sut.VisitCurrentTimestampFunction( SqlNode.Functions.CurrentTimestamp() );

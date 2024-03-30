@@ -72,6 +72,11 @@ public sealed class SqlNodeDebugInterpreter : SqlNodeInterpreter
         VisitSimpleFunction( "CURRENT_DATETIME", node );
     }
 
+    public override void VisitCurrentUtcDateTimeFunction(SqlCurrentUtcDateTimeFunctionExpressionNode node)
+    {
+        VisitSimpleFunction( "CURRENT_UTC_DATETIME", node );
+    }
+
     public override void VisitCurrentTimestampFunction(SqlCurrentTimestampFunctionExpressionNode node)
     {
         VisitSimpleFunction( "CURRENT_TIMESTAMP", node );

@@ -434,6 +434,29 @@ public class SqliteDatabaseFactoryTests : TestsBase
     }
 
     [Fact]
+    public void Create_ShouldReturnDatabaseWithCustomGetCurrentUtcDateTimeFunction()
+    {
+        var sut = new SqliteDatabaseFactory();
+        var db = sut.Create( "DataSource=:memory:", new SqlDatabaseVersionHistory() ).Database;
+
+        using var connection = db.Connector.Connect();
+        using var command = connection.CreateCommand();
+        command.CommandText = "SELECT GET_CURRENT_UTC_DATETIME()";
+
+        var min = DateTime.UtcNow;
+        using var reader = command.ExecuteReader();
+        reader.Read();
+        var result = DateTime.Parse( reader.GetString( 0 ) );
+        var max = DateTime.UtcNow;
+
+        using ( new AssertionScope() )
+        {
+            result.Should().BeOnOrAfter( min );
+            result.Should().BeOnOrBefore( max );
+        }
+    }
+
+    [Fact]
     public void Create_ShouldReturnDatabaseWithCustomGetCurrentTimestampFunction()
     {
         var sut = new SqliteDatabaseFactory();

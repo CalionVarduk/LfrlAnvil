@@ -9,6 +9,7 @@ public enum SqlFunctionType : byte
     CurrentDate,
     CurrentTime,
     CurrentDateTime,
+    CurrentUtcDateTime,
     CurrentTimestamp,
     ExtractDate,
     ExtractTimeOfDay,
