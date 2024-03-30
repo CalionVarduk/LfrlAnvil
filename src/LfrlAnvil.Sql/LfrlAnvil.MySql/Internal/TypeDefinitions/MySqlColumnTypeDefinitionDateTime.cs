@@ -7,7 +7,10 @@ namespace LfrlAnvil.MySql.Internal.TypeDefinitions;
 internal sealed class MySqlColumnTypeDefinitionDateTime : MySqlColumnTypeDefinition<DateTime>
 {
     internal MySqlColumnTypeDefinitionDateTime()
-        : base( MySqlDataType.DateTime, DateTime.UnixEpoch, static (reader, ordinal) => reader.GetDateTime( ordinal ) ) { }
+        : base(
+            MySqlDataType.DateTime,
+            DateTime.SpecifyKind( DateTime.UnixEpoch, DateTimeKind.Unspecified ),
+            static (reader, ordinal) => reader.GetDateTime( ordinal ) ) { }
 
     [Pure]
     public override string ToDbLiteral(DateTime value)
@@ -18,6 +21,6 @@ internal sealed class MySqlColumnTypeDefinitionDateTime : MySqlColumnTypeDefinit
     [Pure]
     public override object ToParameterValue(DateTime value)
     {
-        return value;
+        return DateTime.SpecifyKind( value, DateTimeKind.Unspecified );
     }
 }

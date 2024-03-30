@@ -7,7 +7,10 @@ namespace LfrlAnvil.PostgreSql.Internal.TypeDefinitions;
 internal sealed class PostgreSqlColumnTypeDefinitionDateTime : PostgreSqlColumnTypeDefinition<DateTime>
 {
     internal PostgreSqlColumnTypeDefinitionDateTime(PostgreSqlDataType dataType)
-        : base( dataType, DateTime.UnixEpoch, static (reader, ordinal) => reader.GetDateTime( ordinal ) ) { }
+        : base(
+            dataType,
+            DateTime.SpecifyKind( DateTime.UnixEpoch, DateTimeKind.Unspecified ),
+            static (reader, ordinal) => reader.GetDateTime( ordinal ) ) { }
 
     [Pure]
     public override string ToDbLiteral(DateTime value)

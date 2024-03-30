@@ -10,7 +10,7 @@ internal sealed class SqliteColumnTypeDefinitionDateTime : SqliteColumnTypeDefin
     internal SqliteColumnTypeDefinitionDateTime()
         : base(
             SqliteDataType.Text,
-            DateTime.UnixEpoch,
+            DateTime.SpecifyKind( DateTime.UnixEpoch, DateTimeKind.Unspecified ),
             static (reader, ordinal) => DateTime.Parse( reader.GetString( ordinal ), CultureInfo.InvariantCulture ) ) { }
 
     [Pure]

@@ -40,6 +40,7 @@ public class PostgreSqlColumnTypeDefinitionProviderBuilder : SqlColumnTypeDefini
         DefaultTime = new PostgreSqlColumnTypeDefinitionTimeOnly();
         DefaultTimestamp = new PostgreSqlColumnTypeDefinitionDateTime( PostgreSqlDataType.Timestamp );
         DefaultTimestampTz = new PostgreSqlColumnTypeDefinitionDateTime( PostgreSqlDataType.TimestampTz );
+        // TODO: DefaultTimestampTz is wrong now (Unspecified instead of Utc datetime)
 
         AddOrUpdate( DefaultBoolean );
         AddOrUpdate( DefaultInt2 );
