@@ -148,25 +148,25 @@ public sealed class PostgreSqlDataTypeProvider : ISqlDataTypeProvider
     [Pure]
     public PostgreSqlDataType GetBinary()
     {
-        return PostgreSqlDataType.VarBit;
+        return PostgreSqlDataType.Bytea;
     }
 
     [Pure]
     public PostgreSqlDataType GetBinary(int maxLength)
     {
-        return PostgreSqlDataType.CreateVarBit( maxLength );
+        return PostgreSqlDataType.Bytea;
     }
 
     [Pure]
     public PostgreSqlDataType GetFixedBinary()
     {
-        return PostgreSqlDataType.VarBit;
+        return PostgreSqlDataType.Bytea;
     }
 
     [Pure]
     public PostgreSqlDataType GetFixedBinary(int length)
     {
-        return PostgreSqlDataType.CreateVarBit( length );
+        return PostgreSqlDataType.Bytea;
     }
 
     [Pure]

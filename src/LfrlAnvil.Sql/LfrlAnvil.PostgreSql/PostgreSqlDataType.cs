@@ -37,13 +37,6 @@ public sealed class PostgreSqlDataType : ISqlDataType, IEquatable<PostgreSqlData
         new[] { 10485760 },
         new[] { new SqlDataTypeParameter( "MAX_LENGTH", Bounds.Create( 0, 10485760 ) ) } );
 
-    public static readonly PostgreSqlDataType VarBit = new PostgreSqlDataType(
-        "VARBIT",
-        NpgsqlDbType.Varbit,
-        DbType.Binary,
-        new[] { 10485760 },
-        new[] { new SqlDataTypeParameter( "MAX_LENGTH", Bounds.Create( 0, 10485760 ) ) } );
-
     public static readonly PostgreSqlDataType Uuid = new PostgreSqlDataType( "UUID", NpgsqlDbType.Uuid, DbType.Guid );
     public static readonly PostgreSqlDataType Bytea = new PostgreSqlDataType( "BYTEA", NpgsqlDbType.Bytea, DbType.Binary );
     public static readonly PostgreSqlDataType Date = new PostgreSqlDataType( "DATE", NpgsqlDbType.Date, DbType.Date );
@@ -121,19 +114,6 @@ public sealed class PostgreSqlDataType : ISqlDataType, IEquatable<PostgreSqlData
             throw new SqlDataTypeException( Chain.Create( Pair.Create( parameters[0], maxLength ) ) );
 
         return VarChar;
-    }
-
-    [Pure]
-    public static PostgreSqlDataType CreateVarBit(int maxLength)
-    {
-        var parameters = VarBit._parameterDefinitions;
-        if ( parameters[0].Bounds.Contains( maxLength ) )
-            return new PostgreSqlDataType( $"VARBIT({maxLength})", VarBit.Value, VarBit.DbType, new[] { maxLength }, parameters );
-
-        if ( maxLength < parameters[0].Bounds.Min )
-            throw new SqlDataTypeException( Chain.Create( Pair.Create( parameters[0], maxLength ) ) );
-
-        return VarBit;
     }
 
     [Pure]

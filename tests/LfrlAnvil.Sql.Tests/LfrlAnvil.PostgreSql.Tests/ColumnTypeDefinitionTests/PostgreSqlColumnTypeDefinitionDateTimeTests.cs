@@ -17,7 +17,7 @@ public class PostgreSqlColumnTypeDefinitionDateTimeTests : TestsBase
     public void TryToDbLiteral_ShouldReturnCorrectResult(string dt)
     {
         var value = DateTime.Parse( dt );
-        var expected = $"TIMESTAMP '{dt[..^1]}'";
+        var expected = $"TIMESTAMP'{dt[..^1]}'";
         var sut = _provider.GetByType<DateTime>();
         var result = sut.TryToDbLiteral( value );
         result.Should().Be( expected );

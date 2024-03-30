@@ -17,7 +17,7 @@ public class PostgreSqlColumnTypeDefinitionDateOnlyTests : TestsBase
     public void TryToDbLiteral_ShouldReturnCorrectResult(string dt)
     {
         var value = DateOnly.Parse( dt );
-        var expected = $"DATE '{dt}'";
+        var expected = $"DATE'{dt}'";
         var sut = _provider.GetByType<DateOnly>();
         var result = sut.TryToDbLiteral( value );
         result.Should().Be( expected );

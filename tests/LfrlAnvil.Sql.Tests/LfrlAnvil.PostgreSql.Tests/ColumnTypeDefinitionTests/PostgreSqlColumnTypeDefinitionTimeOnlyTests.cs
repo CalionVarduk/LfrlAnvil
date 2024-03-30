@@ -17,7 +17,7 @@ public class PostgreSqlColumnTypeDefinitionTimeOnlyTests : TestsBase
     public void TryToDbLiteral_ShouldReturnCorrectResult(string dt)
     {
         var value = TimeOnly.Parse( dt );
-        var expected = $"TIME '{dt[..^1]}'";
+        var expected = $"TIME'{dt[..^1]}'";
         var sut = _provider.GetByType<TimeOnly>();
         var result = sut.TryToDbLiteral( value );
         result.Should().Be( expected );

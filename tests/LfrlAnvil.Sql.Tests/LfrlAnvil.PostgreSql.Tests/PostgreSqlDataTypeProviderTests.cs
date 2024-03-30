@@ -251,82 +251,30 @@ public class PostgreSqlDataTypeProviderTests : TestsBase
     }
 
     [Fact]
-    public void GetBinary_ShouldReturnVarBit()
+    public void GetBinary_ShouldReturnBytea()
     {
         var result = _sut.GetBinary();
-        result.Should().BeSameAs( PostgreSqlDataType.VarBit );
+        result.Should().BeSameAs( PostgreSqlDataType.Bytea );
     }
 
     [Fact]
-    public void GetBinary_WithMaxLength_ShouldReturnVarBit_WhenMaxLengthIsTooLarge()
+    public void GetBinary_WithMaxLength_ShouldReturnBytea()
     {
         var sut = _sut.GetBinary( 10485761 );
-        sut.Should().BeSameAs( PostgreSqlDataType.VarBit );
-    }
-
-    [Theory]
-    [InlineData( 0, "VARBIT(0)" )]
-    [InlineData( 500, "VARBIT(500)" )]
-    [InlineData( 10485760, "VARBIT(10485760)" )]
-    public void GetBinary_WithMaxLength_ShouldReturnCorrectVarBit_WhenMaxLengthIsInVarCharBounds(int maxLength, string expected)
-    {
-        var sut = (PostgreSqlDataType)_sut.GetBinary( maxLength );
-
-        using ( new AssertionScope() )
-        {
-            sut.Name.Should().Be( expected );
-            sut.Value.Should().Be( NpgsqlDbType.Varbit );
-            sut.DbType.Should().Be( DbType.Binary );
-            sut.Dialect.Should().BeSameAs( PostgreSqlDialect.Instance );
-            sut.Parameters.ToArray().Should().BeSequentiallyEqualTo( maxLength );
-            sut.ParameterDefinitions.ToArray().Should().BeSequentiallyEqualTo( PostgreSqlDataType.VarBit.ParameterDefinitions.ToArray() );
-        }
+        sut.Should().BeSameAs( PostgreSqlDataType.Bytea );
     }
 
     [Fact]
-    public void GetBinary_WithMaxLength_ShouldThrowSqlDataTypeException_WhenMaxLengthIsLessThanZero()
-    {
-        var action = Lambda.Of( () => _sut.GetBinary( -1 ) );
-        action.Should().ThrowExactly<SqlDataTypeException>();
-    }
-
-    [Fact]
-    public void GetFixedBinary_ShouldReturnVarBit()
+    public void GetFixedBinary_ShouldReturnBytea()
     {
         var result = _sut.GetFixedBinary();
-        result.Should().BeSameAs( PostgreSqlDataType.VarBit );
+        result.Should().BeSameAs( PostgreSqlDataType.Bytea );
     }
 
     [Fact]
-    public void GetFixedBinary_WithLength_ShouldReturnVarBit_WhenLengthIsTooLarge()
+    public void GetFixedBinary_WithLength_ShouldReturnBytea()
     {
         var sut = _sut.GetFixedBinary( 10485761 );
-        sut.Should().BeSameAs( PostgreSqlDataType.VarBit );
-    }
-
-    [Theory]
-    [InlineData( 0, "VARBIT(0)" )]
-    [InlineData( 500, "VARBIT(500)" )]
-    [InlineData( 10485760, "VARBIT(10485760)" )]
-    public void GetFixedBinary_WithLength_ShouldReturnCorrectVarBit_WhenLengthIsInVarCharBounds(int length, string expected)
-    {
-        var sut = (PostgreSqlDataType)_sut.GetFixedBinary( length );
-
-        using ( new AssertionScope() )
-        {
-            sut.Name.Should().Be( expected );
-            sut.Value.Should().Be( NpgsqlDbType.Varbit );
-            sut.DbType.Should().Be( DbType.Binary );
-            sut.Dialect.Should().BeSameAs( PostgreSqlDialect.Instance );
-            sut.Parameters.ToArray().Should().BeSequentiallyEqualTo( length );
-            sut.ParameterDefinitions.ToArray().Should().BeSequentiallyEqualTo( PostgreSqlDataType.VarBit.ParameterDefinitions.ToArray() );
-        }
-    }
-
-    [Fact]
-    public void GetFixedBinary_WithLength_ShouldThrowSqlDataTypeException_WhenLengthIsLessThanZero()
-    {
-        var action = Lambda.Of( () => _sut.GetFixedBinary( -1 ) );
-        action.Should().ThrowExactly<SqlDataTypeException>();
+        sut.Should().BeSameAs( PostgreSqlDataType.Bytea );
     }
 }

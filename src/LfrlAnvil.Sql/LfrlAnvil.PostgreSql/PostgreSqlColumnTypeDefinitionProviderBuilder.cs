@@ -16,7 +16,7 @@ public class PostgreSqlColumnTypeDefinitionProviderBuilder : SqlColumnTypeDefini
     internal readonly PostgreSqlColumnTypeDefinitionDouble DefaultFloat8;
     internal readonly PostgreSqlColumnTypeDefinitionDecimal DefaultDecimal;
     internal readonly PostgreSqlColumnTypeDefinitionString DefaultVarChar;
-    internal readonly PostgreSqlColumnTypeDefinitionByteArray DefaultVarBit;
+    internal readonly PostgreSqlColumnTypeDefinitionByteArray DefaultBytea;
     internal readonly PostgreSqlColumnTypeDefinitionGuid DefaultUuid;
     internal readonly PostgreSqlColumnTypeDefinitionDateOnly DefaultDate;
     internal readonly PostgreSqlColumnTypeDefinitionTimeOnly DefaultTime;
@@ -34,7 +34,7 @@ public class PostgreSqlColumnTypeDefinitionProviderBuilder : SqlColumnTypeDefini
         DefaultFloat8 = new PostgreSqlColumnTypeDefinitionDouble();
         DefaultDecimal = new PostgreSqlColumnTypeDefinitionDecimal();
         DefaultVarChar = new PostgreSqlColumnTypeDefinitionString();
-        DefaultVarBit = new PostgreSqlColumnTypeDefinitionByteArray( PostgreSqlDataType.VarBit );
+        DefaultBytea = new PostgreSqlColumnTypeDefinitionByteArray();
         DefaultUuid = new PostgreSqlColumnTypeDefinitionGuid();
         DefaultDate = new PostgreSqlColumnTypeDefinitionDateOnly();
         DefaultTime = new PostgreSqlColumnTypeDefinitionTimeOnly();
@@ -49,7 +49,7 @@ public class PostgreSqlColumnTypeDefinitionProviderBuilder : SqlColumnTypeDefini
         AddOrUpdate( DefaultFloat8 );
         AddOrUpdate( DefaultDecimal );
         AddOrUpdate( DefaultVarChar );
-        AddOrUpdate( DefaultVarBit );
+        AddOrUpdate( DefaultBytea );
         AddOrUpdate( DefaultUuid );
         AddOrUpdate( DefaultDate );
         AddOrUpdate( DefaultTime );
@@ -90,7 +90,7 @@ public class PostgreSqlColumnTypeDefinitionProviderBuilder : SqlColumnTypeDefini
             { DefaultFloat8.DataType.Name, DefaultFloat8 },
             { DefaultDecimal.DataType.Name, DefaultDecimal },
             { DefaultVarChar.DataType.Name, DefaultVarChar },
-            { DefaultVarBit.DataType.Name, DefaultVarBit },
+            { DefaultBytea.DataType.Name, DefaultBytea },
             { DefaultUuid.DataType.Name, DefaultUuid },
             { DefaultDate.DataType.Name, DefaultDate },
             { DefaultTime.DataType.Name, DefaultTime },

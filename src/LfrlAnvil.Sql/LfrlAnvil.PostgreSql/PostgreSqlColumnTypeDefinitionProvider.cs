@@ -12,7 +12,6 @@ public sealed class PostgreSqlColumnTypeDefinitionProvider : SqlColumnTypeDefini
 {
     private readonly PostgreSqlColumnTypeDefinitionDecimal _defaultDecimal;
     private readonly PostgreSqlColumnTypeDefinitionString _defaultVarChar;
-    private readonly PostgreSqlColumnTypeDefinitionByteArray _defaultVarBit;
     private readonly PostgreSqlColumnTypeDefinitionObject _defaultObject;
     private readonly Dictionary<string, SqlColumnTypeDefinition> _defaultDefinitionsByTypeName;
     private readonly object _sync = new object();
@@ -22,8 +21,7 @@ public sealed class PostgreSqlColumnTypeDefinitionProvider : SqlColumnTypeDefini
     {
         _defaultDecimal = builder.DefaultDecimal;
         _defaultVarChar = builder.DefaultVarChar;
-        _defaultVarBit = builder.DefaultVarBit;
-        _defaultObject = new PostgreSqlColumnTypeDefinitionObject( this, _defaultVarBit );
+        _defaultObject = new PostgreSqlColumnTypeDefinitionObject( this, builder.DefaultBytea );
         _defaultDefinitionsByTypeName = builder.CreateDataTypeDefinitionsByName();
         TryAddDefinition( _defaultObject );
     }
@@ -55,13 +53,6 @@ public sealed class PostgreSqlColumnTypeDefinitionProvider : SqlColumnTypeDefini
                 case NpgsqlDbType.Varchar:
                 {
                     var result = new PostgreSqlColumnTypeDefinitionString( _defaultVarChar, dataType );
-                    _defaultDefinitionsByTypeName[dataType.Name] = result;
-                    return result;
-                }
-                case NpgsqlDbType.Bit:
-                case NpgsqlDbType.Varbit:
-                {
-                    var result = new PostgreSqlColumnTypeDefinitionByteArray( _defaultVarBit, dataType );
                     _defaultDefinitionsByTypeName[dataType.Name] = result;
                     return result;
                 }

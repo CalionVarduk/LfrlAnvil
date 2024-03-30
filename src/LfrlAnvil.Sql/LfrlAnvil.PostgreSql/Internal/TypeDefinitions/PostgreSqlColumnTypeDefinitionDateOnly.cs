@@ -16,7 +16,7 @@ internal sealed class PostgreSqlColumnTypeDefinitionDateOnly : PostgreSqlColumnT
     [Pure]
     public override string ToDbLiteral(DateOnly value)
     {
-        const string format = $@"DATE \'{SqlHelpers.DateFormat}\'";
+        const string format = $@"DATE\'{SqlHelpers.DateFormat}\'";
         return value.ToString( format, CultureInfo.InvariantCulture );
     }
 

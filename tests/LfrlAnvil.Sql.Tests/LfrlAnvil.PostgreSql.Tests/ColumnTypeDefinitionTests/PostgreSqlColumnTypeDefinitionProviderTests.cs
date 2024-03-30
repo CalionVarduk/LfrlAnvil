@@ -115,13 +115,13 @@ public class PostgreSqlColumnTypeDefinitionProviderTests : TestsBase
     }
 
     [Fact]
-    public void GetByDataType_ShouldReturnByteArrayForVarBit()
+    public void GetByDataType_ShouldReturnByteArrayForBytea()
     {
-        var result = _sut.GetByDataType( PostgreSqlDataType.VarBit );
+        var result = _sut.GetByDataType( PostgreSqlDataType.Bytea );
 
         using ( new AssertionScope() )
         {
-            result.DataType.Should().BeSameAs( PostgreSqlDataType.VarBit );
+            result.DataType.Should().BeSameAs( PostgreSqlDataType.Bytea );
             result.DefaultValue.GetValue().Should().BeSameAs( Array.Empty<byte>() );
             result.RuntimeType.Should().Be( typeof( byte[] ) );
         }
@@ -199,7 +199,7 @@ public class PostgreSqlColumnTypeDefinitionProviderTests : TestsBase
 
         using ( new AssertionScope() )
         {
-            result.DataType.Should().BeSameAs( PostgreSqlDataType.VarBit );
+            result.DataType.Should().BeSameAs( PostgreSqlDataType.Bytea );
             result.DefaultValue.GetValue().Should().BeEquivalentTo( Array.Empty<byte>() );
             result.RuntimeType.Should().Be( typeof( object ) );
         }
@@ -240,24 +240,6 @@ public class PostgreSqlColumnTypeDefinitionProviderTests : TestsBase
         }
     }
 
-    [Theory]
-    [InlineData( NpgsqlDbType.Bit )]
-    [InlineData( NpgsqlDbType.Varbit )]
-    public void GetByDataType_ShouldReturnCustomByteArrayForCustomBit(NpgsqlDbType dbType)
-    {
-        var type = PostgreSqlDataType.Custom( "BYTEARRAY", dbType, DbType.Binary );
-        var result = _sut.GetByDataType( type );
-        var secondResult = _sut.GetByDataType( type );
-
-        using ( new AssertionScope() )
-        {
-            result.DataType.Should().BeSameAs( type );
-            result.DefaultValue.GetValue().Should().BeSameAs( Array.Empty<byte>() );
-            result.RuntimeType.Should().Be( typeof( byte[] ) );
-            secondResult.Should().BeSameAs( result );
-        }
-    }
-
     [Fact]
     public void GetTypeDefinitions_ShouldReturnAllTypeDefinitionsRegisteredByRuntimeType()
     {
@@ -277,7 +259,7 @@ public class PostgreSqlColumnTypeDefinitionProviderTests : TestsBase
                     (PostgreSqlDataType.Float8, typeof( double )),
                     (PostgreSqlDataType.Decimal, typeof( decimal )),
                     (PostgreSqlDataType.VarChar, typeof( string )),
-                    (PostgreSqlDataType.VarBit, typeof( byte[] )),
+                    (PostgreSqlDataType.Bytea, typeof( byte[] )),
                     (PostgreSqlDataType.Uuid, typeof( Guid )),
                     (PostgreSqlDataType.Date, typeof( DateOnly )),
                     (PostgreSqlDataType.Time, typeof( TimeOnly )),
@@ -290,7 +272,7 @@ public class PostgreSqlColumnTypeDefinitionProviderTests : TestsBase
                     (PostgreSqlDataType.Int4, typeof( ushort )),
                     (PostgreSqlDataType.Int8, typeof( uint )),
                     (PostgreSqlDataType.Int8, typeof( ulong )),
-                    (PostgreSqlDataType.VarBit, typeof( object )) );
+                    (PostgreSqlDataType.Bytea, typeof( object )) );
         }
     }
 
@@ -313,7 +295,7 @@ public class PostgreSqlColumnTypeDefinitionProviderTests : TestsBase
                     PostgreSqlDataType.Float8,
                     PostgreSqlDataType.Decimal,
                     PostgreSqlDataType.VarChar,
-                    PostgreSqlDataType.VarBit,
+                    PostgreSqlDataType.Bytea,
                     PostgreSqlDataType.Uuid,
                     PostgreSqlDataType.Date,
                     PostgreSqlDataType.Time,

@@ -144,24 +144,6 @@ public class PostgreSqlDataTypeTests : TestsBase
     }
 
     [Fact]
-    public void VarBit_ShouldHaveCorrectProperties()
-    {
-        var sut = PostgreSqlDataType.VarBit;
-
-        using ( new AssertionScope() )
-        {
-            sut.Name.Should().Be( "VARBIT" );
-            sut.Value.Should().Be( NpgsqlDbType.Varbit );
-            sut.DbType.Should().Be( DbType.Binary );
-            sut.Dialect.Should().BeSameAs( PostgreSqlDialect.Instance );
-            sut.Parameters.ToArray().Should().BeSequentiallyEqualTo( 10485760 );
-            sut.ParameterDefinitions.ToArray()
-                .Should()
-                .BeSequentiallyEqualTo( new SqlDataTypeParameter( "MAX_LENGTH", Bounds.Create( 0, 10485760 ) ) );
-        }
-    }
-
-    [Fact]
     public void Uuid_ShouldHaveCorrectProperties()
     {
         var sut = PostgreSqlDataType.Uuid;
@@ -326,39 +308,6 @@ public class PostgreSqlDataTypeTests : TestsBase
     public void CreateVarChar_ShouldThrowSqlDataTypeException_WhenMaxLengthIsLessThanZero()
     {
         var action = Lambda.Of( () => PostgreSqlDataType.CreateVarChar( -1 ) );
-        action.Should().ThrowExactly<SqlDataTypeException>();
-    }
-
-    [Fact]
-    public void CreateVarBit_ShouldReturnStaticVarBit_WhenMaxLengthIsTooLarge()
-    {
-        var sut = PostgreSqlDataType.CreateVarBit( 10485761 );
-        sut.Should().BeSameAs( PostgreSqlDataType.VarBit );
-    }
-
-    [Theory]
-    [InlineData( 0, "VARBIT(0)" )]
-    [InlineData( 500, "VARBIT(500)" )]
-    [InlineData( 10485760, "VARBIT(10485760)" )]
-    public void CreateVarBit_ShouldReturnNewVarBit_WhenMaxLengthIsNotDefault(int maxLength, string expected)
-    {
-        var sut = PostgreSqlDataType.CreateVarBit( maxLength );
-
-        using ( new AssertionScope() )
-        {
-            sut.Name.Should().Be( expected );
-            sut.Value.Should().Be( NpgsqlDbType.Varbit );
-            sut.DbType.Should().Be( DbType.Binary );
-            sut.Dialect.Should().BeSameAs( PostgreSqlDialect.Instance );
-            sut.Parameters.ToArray().Should().BeSequentiallyEqualTo( maxLength );
-            sut.ParameterDefinitions.ToArray().Should().BeSequentiallyEqualTo( PostgreSqlDataType.VarBit.ParameterDefinitions.ToArray() );
-        }
-    }
-
-    [Fact]
-    public void CreateVarBit_ShouldThrowSqlDataTypeException_WhenMaxLengthIsLessThanZero()
-    {
-        var action = Lambda.Of( () => PostgreSqlDataType.CreateVarBit( -1 ) );
         action.Should().ThrowExactly<SqlDataTypeException>();
     }
 

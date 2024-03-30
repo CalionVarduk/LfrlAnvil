@@ -11,8 +11,8 @@ public class PostgreSqlColumnTypeDefinitionBoolTests : TestsBase
         new PostgreSqlColumnTypeDefinitionProvider( new PostgreSqlColumnTypeDefinitionProviderBuilder() );
 
     [Theory]
-    [InlineData( true, "1" )]
-    [InlineData( false, "0" )]
+    [InlineData( true, "1::BOOLEAN" )]
+    [InlineData( false, "0::BOOLEAN" )]
     public void TryToDbLiteral_ShouldReturnCorrectResult(bool value, string expected)
     {
         var sut = _provider.GetByType<bool>();

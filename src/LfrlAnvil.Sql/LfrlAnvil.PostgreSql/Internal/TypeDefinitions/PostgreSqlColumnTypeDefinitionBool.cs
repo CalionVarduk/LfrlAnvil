@@ -1,5 +1,4 @@
 ﻿using System.Diagnostics.Contracts;
-using LfrlAnvil.Sql.Internal;
 
 namespace LfrlAnvil.PostgreSql.Internal.TypeDefinitions;
 
@@ -11,7 +10,7 @@ internal sealed class PostgreSqlColumnTypeDefinitionBool : PostgreSqlColumnTypeD
     [Pure]
     public override string ToDbLiteral(bool value)
     {
-        return SqlHelpers.GetDbLiteral( value );
+        return PostgreSqlHelpers.GetDbLiteral( value );
     }
 
     [Pure]

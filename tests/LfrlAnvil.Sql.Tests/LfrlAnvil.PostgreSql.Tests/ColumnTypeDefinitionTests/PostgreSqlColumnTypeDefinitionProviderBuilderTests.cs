@@ -62,7 +62,7 @@ public class PostgreSqlColumnTypeDefinitionProviderBuilderTests : TestsBase
                     (PostgreSqlDataType.Float8, typeof( double )),
                     (PostgreSqlDataType.Decimal, typeof( decimal )),
                     (PostgreSqlDataType.VarChar, typeof( string )),
-                    (PostgreSqlDataType.VarBit, typeof( byte[] )),
+                    (PostgreSqlDataType.Bytea, typeof( byte[] )),
                     (PostgreSqlDataType.Uuid, typeof( Guid )),
                     (PostgreSqlDataType.Date, typeof( DateOnly )),
                     (PostgreSqlDataType.Time, typeof( TimeOnly )),
@@ -76,7 +76,7 @@ public class PostgreSqlColumnTypeDefinitionProviderBuilderTests : TestsBase
                     (PostgreSqlDataType.Int8, typeof( uint )),
                     (PostgreSqlDataType.Int8, typeof( ulong )),
                     (PostgreSqlDataType.VarChar, typeof( StringBuilder )),
-                    (PostgreSqlDataType.VarBit, typeof( object )) );
+                    (PostgreSqlDataType.Bytea, typeof( object )) );
 
             dataTypeDefinitions.Count.Should().Be( 14 );
             dataTypeDefinitions.Select( t => t.DataType )
@@ -90,7 +90,7 @@ public class PostgreSqlColumnTypeDefinitionProviderBuilderTests : TestsBase
                     PostgreSqlDataType.Float8,
                     PostgreSqlDataType.Decimal,
                     PostgreSqlDataType.VarChar,
-                    PostgreSqlDataType.VarBit,
+                    PostgreSqlDataType.Bytea,
                     PostgreSqlDataType.Uuid,
                     PostgreSqlDataType.Date,
                     PostgreSqlDataType.Time,

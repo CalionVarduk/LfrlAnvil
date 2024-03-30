@@ -44,7 +44,7 @@ public class PostgreSqlColumnTypeDefinitionObjectTests : TestsBase
         var value = new byte[] { 123, 45, 6 };
         var sut = _provider.GetByType<object>();
         var result = sut.TryToDbLiteral( value );
-        result.Should().Be( "X'7B2D06'" );
+        result.Should().Be( "'\\x7B2D06'::BYTEA" );
     }
 
     [Fact]

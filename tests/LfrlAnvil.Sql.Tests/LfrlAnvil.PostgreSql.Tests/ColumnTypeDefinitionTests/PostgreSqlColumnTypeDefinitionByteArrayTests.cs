@@ -15,7 +15,7 @@ public class PostgreSqlColumnTypeDefinitionByteArrayTests : TestsBase
     {
         var sut = _provider.GetByType<byte[]>();
         var result = sut.TryToDbLiteral( Array.Empty<byte>() );
-        result.Should().Be( "X''" );
+        result.Should().Be( "'\\x'::BYTEA" );
     }
 
     [Fact]
@@ -24,7 +24,7 @@ public class PostgreSqlColumnTypeDefinitionByteArrayTests : TestsBase
         var value = new byte[] { 0, 10, 21, 31, 42, 58, 73, 89, 104, 129, 155, 181, 206, 233, 255 };
         var sut = _provider.GetByType<byte[]>();
         var result = sut.TryToDbLiteral( value );
-        result.Should().Be( "X'000A151F2A3A495968819BB5CEE9FF'" );
+        result.Should().Be( "'\\x000A151F2A3A495968819BB5CEE9FF'::BYTEA" );
     }
 
     [Fact]
@@ -72,8 +72,8 @@ public class PostgreSqlColumnTypeDefinitionByteArrayTests : TestsBase
 
         using ( new AssertionScope() )
         {
-            parameter.DbType.Should().Be( DbType.Object );
-            parameter.NpgsqlDbType.Should().Be( NpgsqlDbType.Varbit );
+            parameter.DbType.Should().Be( DbType.Binary );
+            parameter.NpgsqlDbType.Should().Be( NpgsqlDbType.Bytea );
             parameter.IsNullable.Should().Be( isNullable );
         }
     }
