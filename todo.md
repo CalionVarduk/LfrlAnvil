@@ -45,6 +45,35 @@
   - ^ also, backslash_quote, must be 'off'
 
 
+- Sql.Core:
+  - Remove RecordsAffected function node
+    - postresql doesn't have it as a simple function
+    - will have to be handled through ado.net api
+  - add OrderBy extension method for aggregate function nodes?
+    - postgresql supports this for pretty much every function
+    - mysql supports this only for group_concat function (silently ignore for other functions?)
+    - sqlite supports this since 3.44.0 (2023-11-01), handle with node interpreter option
+  - support for positional parameters?
+    - node interpreter context would have to track it
+    - this would also require changes to parameter binder factory
+  - support for UTC datetime?
+    - postgresql: 'timestamptz' type would do nicely
+    - mysql: 'timestamp' type is a thing, but it's currently limited to y2038...
+      - 'datetime' would be ok, assuming that a proper type definition exists
+      - that writes/reads values as Utc
+    - sqlite: well, sqlite can do whatever, as text; this would be no different than current DateTime
+      - the only difference would be DateTime's kind (Utc vs Unspecified)
+    - supporting this would probably require minor changes to current date time function node
+      - there would have to be a distinction between Local & Utc current date time
+  - RETURNING for INSERT/DELETE/UPDATE:
+    - postgresql: ok, RETURNING is always the last 'thing' in statement
+    - sqlite: ok, however DELETE/UPDATE with ORDER-BY/LIMIT require RETURNING directly after WHERE
+      - also, sqlite supports this since 2021, so this would require an option for node interpreter
+      - also, RETURNING cannot be used in CTEs (postgresql supports this)
+      - this could still be useful
+    - mysql: NO SUPPORT! this is probably a deal breaker then
+  - take a look at ado.net dbbatch & its commands
+
 ### Reactive.Scheduling
 project idea:
 - combines Reactive.Chrono & Reactive.Queues
