@@ -363,17 +363,7 @@ public partial class MySqlNodeInterpreterTests
             sut.Visit( SqlNode.Functions.LastIndexOf( SqlNode.RawExpression( "foo.a" ), SqlNode.Literal( "bar" ) ) );
             sut.Context.Sql.ToString()
                 .Should()
-                .Be( "CHAR_LENGTH((foo.a)) - CHAR_LENGTH(SUBSTRING_INDEX((foo.a), 'bar', -1)) - CHAR_LENGTH('bar') + 1" );
-        }
-
-        [Fact]
-        public void VisitChild_ShouldInterpretLastIndexOfFunctionWithParentheses()
-        {
-            var sut = CreateInterpreter();
-            sut.VisitChild( SqlNode.Functions.LastIndexOf( SqlNode.RawExpression( "foo.a" ), SqlNode.Literal( "bar" ) ) );
-            sut.Context.Sql.ToString()
-                .Should()
-                .Be( "(CHAR_LENGTH((foo.a)) - CHAR_LENGTH(SUBSTRING_INDEX((foo.a), 'bar', -1)) - CHAR_LENGTH('bar') + 1)" );
+                .Be( "LEAST(GREATEST(CHAR_LENGTH((foo.a)) - CHAR_LENGTH(SUBSTRING_INDEX((foo.a), 'bar', -1)) - CHAR_LENGTH('bar') + 1, 0), CHAR_LENGTH((foo.a)))" );
         }
 
         [Fact]

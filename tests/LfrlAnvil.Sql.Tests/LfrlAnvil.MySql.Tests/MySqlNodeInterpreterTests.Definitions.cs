@@ -152,11 +152,13 @@ public partial class MySqlNodeInterpreterTests
         [InlineData( ReferenceBehavior.Values.Restrict, ReferenceBehavior.Values.Cascade )]
         [InlineData( ReferenceBehavior.Values.Cascade, ReferenceBehavior.Values.Restrict )]
         [InlineData( ReferenceBehavior.Values.Restrict, ReferenceBehavior.Values.Restrict )]
+        [InlineData( ReferenceBehavior.Values.SetNull, ReferenceBehavior.Values.NoAction )]
+        [InlineData( ReferenceBehavior.Values.NoAction, ReferenceBehavior.Values.SetNull )]
         public void Visit_ShouldInterpretForeignKeyDefinition(ReferenceBehavior.Values onDelete, ReferenceBehavior.Values onUpdate)
         {
             var sut = CreateInterpreter();
-            var onDeleteBehavior = onDelete == ReferenceBehavior.Values.Cascade ? ReferenceBehavior.Cascade : ReferenceBehavior.Restrict;
-            var onUpdateBehavior = onUpdate == ReferenceBehavior.Values.Cascade ? ReferenceBehavior.Cascade : ReferenceBehavior.Restrict;
+            var onDeleteBehavior = ReferenceBehavior.GetBehavior( onDelete );
+            var onUpdateBehavior = ReferenceBehavior.GetBehavior( onUpdate );
 
             var qux = SqlTableMock.Create<int>( "qux", new[] { "a", "b" } ).ToRecordSet();
             var table = SqlNode.CreateTable(

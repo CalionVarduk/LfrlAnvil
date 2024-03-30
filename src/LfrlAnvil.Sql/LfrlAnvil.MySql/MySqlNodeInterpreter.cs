@@ -333,17 +333,21 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
     public override void VisitLastIndexOfFunction(SqlLastIndexOfFunctionExpressionNode node)
     {
         var args = node.Arguments;
-        Context.Sql.Append( "CHAR_LENGTH" ).Append( '(' );
+        Context.Sql.Append( "LEAST" ).Append( '(' ).Append( "GREATEST" ).Append( '(' ).Append( "CHAR_LENGTH" ).Append( '(' );
         VisitChild( args[0] );
         Context.Sql.Append( ')' ).AppendSpace().Append( '-' ).AppendSpace().Append( "CHAR_LENGTH" ).Append( '(' );
         Context.Sql.Append( "SUBSTRING_INDEX" ).Append( '(' );
         VisitChild( args[0] );
         Context.Sql.AppendComma().AppendSpace();
         VisitChild( args[1] );
-        Context.Sql.AppendComma().AppendSpace().Append( '-' ).Append( '1' ).Append( ')' ).Append( ')' );
+        Context.Sql.AppendComma().AppendSpace().Append( '-' ).Append( '1' ).Append( ')', repeatCount: 2 );
         Context.Sql.AppendSpace().Append( '-' ).AppendSpace().Append( "CHAR_LENGTH" ).Append( '(' );
         VisitChild( args[1] );
         Context.Sql.Append( ')' ).AppendSpace().Append( '+' ).AppendSpace().Append( '1' );
+        Context.Sql.AppendComma().AppendSpace().Append( '0' ).Append( ')' ).AppendComma().AppendSpace();
+        Context.Sql.Append( "CHAR_LENGTH" ).Append( '(' );
+        VisitChild( args[0] );
+        Context.Sql.Append( ')', repeatCount: 2 );
     }
 
     public override void VisitSignFunction(SqlSignFunctionExpressionNode node)
@@ -1050,7 +1054,6 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
             {
                 return ReinterpretCast.To<SqlFunctionExpressionNode>( node ).FunctionType switch
                 {
-                    SqlFunctionType.LastIndexOf => true,
                     SqlFunctionType.ExtractTemporalUnit => ReinterpretCast.To<SqlExtractTemporalUnitFunctionExpressionNode>( node ).Unit
                         is SqlTemporalUnit.Millisecond or SqlTemporalUnit.Nanosecond,
                     SqlFunctionType.TemporalDiff => ReinterpretCast.To<SqlTemporalDiffFunctionExpressionNode>( node ).Unit
