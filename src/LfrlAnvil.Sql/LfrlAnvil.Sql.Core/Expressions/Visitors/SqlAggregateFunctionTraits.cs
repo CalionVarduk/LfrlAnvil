@@ -7,4 +7,5 @@ public readonly record struct SqlAggregateFunctionTraits(
     SqlDistinctTraitNode? Distinct,
     SqlConditionNode? Filter,
     SqlWindowDefinitionNode? Window,
+    Chain<ReadOnlyArray<SqlOrderByNode>> Ordering,
     Chain<SqlTraitNode> Custom);

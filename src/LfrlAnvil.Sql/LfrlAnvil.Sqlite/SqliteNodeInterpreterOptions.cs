@@ -16,18 +16,21 @@ public readonly struct SqliteNodeInterpreterOptions
         bool isStrictModeEnabled,
         bool isUpdateFromDisabled,
         bool isUpdateOrDeleteLimitDisabled,
+        bool isAggregateFunctionOrderingEnabled,
         SqliteUpsertOptions upsertOptions)
     {
         TypeDefinitions = typeDefinitions;
         IsStrictModeEnabled = isStrictModeEnabled;
         _isUpdateFromDisabled = isUpdateFromDisabled;
         _isUpdateOrDeleteLimitDisabled = isUpdateOrDeleteLimitDisabled;
+        IsAggregateFunctionOrderingEnabled = isAggregateFunctionOrderingEnabled;
         UpsertOptions = upsertOptions;
     }
 
     public SqliteColumnTypeDefinitionProvider? TypeDefinitions { get; }
     public bool IsStrictModeEnabled { get; }
     public SqliteUpsertOptions UpsertOptions { get; }
+    public bool IsAggregateFunctionOrderingEnabled { get; }
     public bool IsUpdateFromEnabled => ! _isUpdateFromDisabled;
     public bool IsUpdateOrDeleteLimitEnabled => ! _isUpdateOrDeleteLimitDisabled;
 
@@ -40,6 +43,7 @@ public readonly struct SqliteNodeInterpreterOptions
             IsStrictModeEnabled,
             _isUpdateFromDisabled,
             _isUpdateOrDeleteLimitDisabled,
+            IsAggregateFunctionOrderingEnabled,
             UpsertOptions );
     }
 
@@ -52,6 +56,7 @@ public readonly struct SqliteNodeInterpreterOptions
             enabled,
             _isUpdateFromDisabled,
             _isUpdateOrDeleteLimitDisabled,
+            IsAggregateFunctionOrderingEnabled,
             UpsertOptions );
     }
 
@@ -64,6 +69,7 @@ public readonly struct SqliteNodeInterpreterOptions
             IsStrictModeEnabled,
             ! enabled,
             _isUpdateOrDeleteLimitDisabled,
+            IsAggregateFunctionOrderingEnabled,
             UpsertOptions );
     }
 
@@ -76,6 +82,20 @@ public readonly struct SqliteNodeInterpreterOptions
             IsStrictModeEnabled,
             _isUpdateFromDisabled,
             ! enabled,
+            IsAggregateFunctionOrderingEnabled,
+            UpsertOptions );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public SqliteNodeInterpreterOptions EnableAggregateFunctionOrdering(bool enabled = true)
+    {
+        return new SqliteNodeInterpreterOptions(
+            TypeDefinitions,
+            IsStrictModeEnabled,
+            _isUpdateFromDisabled,
+            _isUpdateOrDeleteLimitDisabled,
+            enabled,
             UpsertOptions );
     }
 
@@ -92,6 +112,7 @@ public readonly struct SqliteNodeInterpreterOptions
             IsStrictModeEnabled,
             _isUpdateFromDisabled,
             _isUpdateOrDeleteLimitDisabled,
+            IsAggregateFunctionOrderingEnabled,
             options );
     }
 }

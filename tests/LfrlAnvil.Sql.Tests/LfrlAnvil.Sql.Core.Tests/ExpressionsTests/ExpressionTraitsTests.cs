@@ -722,6 +722,31 @@ OR WHERE a > 10" );
     }
 
     [Fact]
+    public void OrderBy_ForAggregateFunction_ShouldReturnAggregateFunctionWithTrait()
+    {
+        var ordering = new[] { SqlNode.Literal( 10 ).Asc() }.AsEnumerable();
+        var selector = Substitute.For<Func<SqlSingleDataSourceNode<SqlRawRecordSetNode>, IEnumerable<SqlOrderByNode>>>();
+        selector.WithAnyArgs( _ => ordering );
+        var function = SqlNode.AggregateFunctions.Count( SqlNode.RawExpression( "*" ) );
+        var sut = function.OrderBy( ordering );
+        var text = sut.ToString();
+
+        using ( new AssertionScope() )
+        {
+            sut.Should().NotBeSameAs( function );
+            sut.NodeType.Should().Be( function.NodeType );
+            sut.FunctionType.Should().Be( function.FunctionType );
+            sut.Arguments.ToArray().Should().BeSequentiallyEqualTo( function.Arguments.ToArray() );
+            sut.Traits.Should().HaveCount( 1 );
+            (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.SortTrait );
+            text.Should()
+                .Be(
+                    @"AGG_COUNT((*))
+  ORDER BY (""10"" : System.Int32) ASC" );
+        }
+    }
+
+    [Fact]
     public void GroupBy_ForSingleDataSource_ShouldReturnDataSourceWithTrait()
     {
         var dataSource = SqlNode.RawRecordSet( "foo" ).ToDataSource();

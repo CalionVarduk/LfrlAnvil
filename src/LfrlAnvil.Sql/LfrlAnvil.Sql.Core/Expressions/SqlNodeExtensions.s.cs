@@ -877,6 +877,24 @@ public static class SqlNodeExtensions
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static TAggregateFunctionNode OrderBy<TAggregateFunctionNode>(
+        this TAggregateFunctionNode node,
+        IEnumerable<SqlOrderByNode> ordering)
+        where TAggregateFunctionNode : SqlAggregateFunctionExpressionNode
+    {
+        return node.OrderBy( ordering.ToArray() );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static TAggregateFunctionNode OrderBy<TAggregateFunctionNode>(this TAggregateFunctionNode node, params SqlOrderByNode[] ordering)
+        where TAggregateFunctionNode : SqlAggregateFunctionExpressionNode
+    {
+        return ordering.Length == 0 ? node : (TAggregateFunctionNode)node.AddTrait( SqlNode.SortTrait( ordering ) );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static TAggregateFunctionNode Over<TAggregateFunctionNode>(this TAggregateFunctionNode node, SqlWindowDefinitionNode window)
         where TAggregateFunctionNode : SqlAggregateFunctionExpressionNode
     {

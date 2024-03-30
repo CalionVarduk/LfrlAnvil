@@ -943,19 +943,15 @@ public class PostgreSqlNodeInterpreter : SqlNodeInterpreter
             Context.Sql.ShrinkBy( 2 );
         }
 
-        var sortTraits = FilterTraits(
-            traits.Custom,
-            static t => t.NodeType == SqlNodeType.SortTrait && ReinterpretCast.To<SqlSortTraitNode>( t ).Ordering.Count > 0 );
-
-        if ( sortTraits.Count > 0 )
+        if ( traits.Ordering.Count > 0 )
         {
             if ( arguments.Count > 0 )
                 Context.Sql.AppendSpace();
 
             Context.Sql.Append( "ORDER" ).AppendSpace().Append( "BY" ).AppendSpace();
-            foreach ( var trait in sortTraits )
+            foreach ( var ordering in traits.Ordering )
             {
-                foreach ( var orderBy in ReinterpretCast.To<SqlSortTraitNode>( trait ).Ordering )
+                foreach ( var orderBy in ordering )
                 {
                     VisitOrderBy( orderBy );
                     Context.Sql.AppendComma().AppendSpace();

@@ -1169,6 +1169,7 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
         var distinct = @base.Distinct;
         var filter = @base.Filter;
         var window = @base.Window;
+        var ordering = @base.Ordering.ToExtendable();
         var custom = @base.Custom.ToExtendable();
 
         foreach ( var trait in traits )
@@ -1197,6 +1198,14 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
                     window = ReinterpretCast.To<SqlWindowTraitNode>( trait ).Definition;
                     break;
                 }
+                case SqlNodeType.SortTrait:
+                {
+                    var sortTrait = ReinterpretCast.To<SqlSortTraitNode>( trait );
+                    if ( sortTrait.Ordering.Count > 0 )
+                        ordering = ordering.Extend( sortTrait.Ordering );
+
+                    break;
+                }
                 default:
                 {
                     custom = custom.Extend( trait );
@@ -1205,7 +1214,7 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
             }
         }
 
-        return new SqlAggregateFunctionTraits( distinct, filter, window, custom );
+        return new SqlAggregateFunctionTraits( distinct, filter, window, ordering, custom );
     }
 
     [Pure]

@@ -838,6 +838,24 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
             Context.Sql.ShrinkBy( 2 );
         }
 
+        if ( traits.Ordering.Count > 0 && Options.IsAggregateFunctionOrderingEnabled )
+        {
+            if ( arguments.Count > 0 )
+                Context.Sql.AppendSpace();
+
+            Context.Sql.Append( "ORDER" ).AppendSpace().Append( "BY" ).AppendSpace();
+            foreach ( var ordering in traits.Ordering )
+            {
+                foreach ( var orderBy in ordering )
+                {
+                    VisitOrderBy( orderBy );
+                    Context.Sql.AppendComma().AppendSpace();
+                }
+            }
+
+            Context.Sql.ShrinkBy( 2 );
+        }
+
         Context.Sql.Append( ')' );
 
         if ( traits.Filter is not null )

@@ -643,7 +643,7 @@ public partial class MySqlNodeInterpreterTests
                     .Distinct()
                     .AndWhere( SqlNode.RawCondition( "foo.b > 10" ) )
                     .Over( window )
-                    .AddTrait( SqlNode.SortTrait( SqlNode.RawExpression( "foo.c" ).Asc(), SqlNode.RawExpression( "foo.d" ).Desc() ) ) );
+                    .OrderBy( SqlNode.RawExpression( "foo.c" ).Asc(), SqlNode.RawExpression( "foo.d" ).Desc() ) );
 
             sut.Context.Sql.ToString()
                 .Should()

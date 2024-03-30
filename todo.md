@@ -46,10 +46,6 @@
 
 
 - Sql.Core:
-  - add OrderBy extension method for aggregate function nodes?
-    - postgresql supports this for pretty much every function
-    - mysql supports this only for group_concat function (silently ignore for other functions?)
-    - sqlite supports this since 3.44.0 (2023-11-01), handle with node interpreter option
   - support for positional parameters?
     - node interpreter context would have to track it
     - this would also require changes to parameter binder factory

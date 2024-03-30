@@ -468,9 +468,28 @@ public partial class SqliteNodeInterpreterTests
                         SqlNode.Parameter<int>( "a" ),
                         SqlNode.RawExpression( "qux.a" ) )
                     .Distinct()
-                    .AndWhere( SqlNode.RawCondition( "foo.a > 10" ) ) );
+                    .AndWhere( SqlNode.RawCondition( "foo.a > 10" ) )
+                    .OrderBy( SqlNode.Parameter<int>( "b" ).Asc(), SqlNode.Parameter<int>( "c" ).Desc() ) );
 
             sut.Context.Sql.ToString().Should().Be( "\"foo_bar\"(DISTINCT @a, (qux.a)) FILTER (WHERE foo.a > 10)" );
+        }
+
+        [Fact]
+        public void Visit_ShouldInterpretNamedAggregateFunctionWithTraits_WithEnabledOrdering()
+        {
+            var sut = CreateInterpreter( SqliteNodeInterpreterOptions.Default.EnableAggregateFunctionOrdering() );
+            sut.Visit(
+                SqlNode.AggregateFunctions.Named(
+                        SqlSchemaObjectName.Create( "foo", "bar" ),
+                        SqlNode.Parameter<int>( "a" ),
+                        SqlNode.RawExpression( "qux.a" ) )
+                    .Distinct()
+                    .AndWhere( SqlNode.RawCondition( "foo.a > 10" ) )
+                    .OrderBy( SqlNode.Parameter<int>( "b" ).Asc(), SqlNode.Parameter<int>( "c" ).Desc() ) );
+
+            sut.Context.Sql.ToString()
+                .Should()
+                .Be( "\"foo_bar\"(DISTINCT @a, (qux.a) ORDER BY @b ASC, @c DESC) FILTER (WHERE foo.a > 10)" );
         }
 
         [Fact]

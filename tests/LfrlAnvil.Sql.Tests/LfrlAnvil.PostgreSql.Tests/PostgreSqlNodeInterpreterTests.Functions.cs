@@ -525,7 +525,7 @@ public partial class PostgreSqlNodeInterpreterTests
                         SqlNode.RawExpression( "qux.a" ) )
                     .Distinct()
                     .AndWhere( SqlNode.RawCondition( "foo.a > 10" ) )
-                    .AddTrait( SqlNode.SortTrait( SqlNode.Parameter<int>( "b" ).Asc(), SqlNode.Parameter<int>( "c" ).Desc() ) ) );
+                    .OrderBy( SqlNode.Parameter<int>( "b" ).Asc(), SqlNode.Parameter<int>( "c" ).Desc() ) );
 
             sut.Context.Sql.ToString()
                 .Should()
