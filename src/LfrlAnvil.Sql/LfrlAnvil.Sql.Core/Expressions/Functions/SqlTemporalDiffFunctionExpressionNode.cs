@@ -2,8 +2,8 @@
 
 public sealed class SqlTemporalDiffFunctionExpressionNode : SqlFunctionExpressionNode
 {
-    internal SqlTemporalDiffFunctionExpressionNode(SqlExpressionNode first, SqlExpressionNode second, SqlTemporalUnit unit)
-        : base( SqlFunctionType.TemporalDiff, new[] { first, second } )
+    internal SqlTemporalDiffFunctionExpressionNode(SqlExpressionNode start, SqlExpressionNode end, SqlTemporalUnit unit)
+        : base( SqlFunctionType.TemporalDiff, new[] { start, end } )
     {
         Ensure.IsDefined( unit );
         Unit = unit;

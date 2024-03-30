@@ -103,11 +103,11 @@ public static partial class SqlNode
 
         [Pure]
         public static SqlTemporalDiffFunctionExpressionNode TemporalDiff(
-            SqlExpressionNode first,
-            SqlExpressionNode second,
+            SqlExpressionNode start,
+            SqlExpressionNode end,
             SqlTemporalUnit unit)
         {
-            return new SqlTemporalDiffFunctionExpressionNode( first, second, unit );
+            return new SqlTemporalDiffFunctionExpressionNode( start, end, unit );
         }
 
         [Pure]

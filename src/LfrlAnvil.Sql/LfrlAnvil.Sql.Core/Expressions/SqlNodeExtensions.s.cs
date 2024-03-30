@@ -577,20 +577,20 @@ public static class SqlNodeExtensions
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static SqlTemporalAddFunctionExpressionNode TemporalAdd(
         this SqlExpressionNode node,
-        SqlExpressionNode other,
+        SqlExpressionNode value,
         SqlTemporalUnit unit)
     {
-        return SqlNode.Functions.TemporalAdd( node, other, unit );
+        return SqlNode.Functions.TemporalAdd( node, value, unit );
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static SqlTemporalDiffFunctionExpressionNode TemporalDiff(
         this SqlExpressionNode node,
-        SqlExpressionNode other,
+        SqlExpressionNode end,
         SqlTemporalUnit unit)
     {
-        return SqlNode.Functions.TemporalDiff( node, other, unit );
+        return SqlNode.Functions.TemporalDiff( node, end, unit );
     }
 
     [Pure]
