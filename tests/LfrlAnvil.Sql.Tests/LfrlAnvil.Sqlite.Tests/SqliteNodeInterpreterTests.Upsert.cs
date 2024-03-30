@@ -38,8 +38,8 @@ VALUES
 ('foo', 5),
 ((bar.a), 25)
 ON CONFLICT (""a"", ""c"") DO UPDATE SET
-  ""b"" = (qux.""b"" + ""excluded"".""b""),
-  ""c"" = (""excluded"".""b"" + 1)" );
+  ""b"" = (qux.""b"" + EXCLUDED.""b""),
+  ""c"" = (EXCLUDED.""b"" + 1)" );
         }
 
         [Fact]
@@ -67,8 +67,8 @@ VALUES
 ('foo', 5),
 ((bar.a), 25)
 ON CONFLICT (""a"", ""c"") DO UPDATE SET
-  ""b"" = (""common_qux"".""b"" + ""excluded"".""b""),
-  ""c"" = (""excluded"".""b"" + 1)" );
+  ""b"" = (""common_qux"".""b"" + EXCLUDED.""b""),
+  ""c"" = (EXCLUDED.""b"" + 1)" );
         }
 
         [Fact]
@@ -96,8 +96,8 @@ VALUES
 ('foo', 5),
 ((bar.a), 25)
 ON CONFLICT (""a"", ""c"") DO UPDATE SET
-  ""b"" = (""common_qux"".""b"" + ""excluded"".""b""),
-  ""c"" = (""excluded"".""b"" + 1)" );
+  ""b"" = (""common_qux"".""b"" + EXCLUDED.""b""),
+  ""c"" = (EXCLUDED.""b"" + 1)" );
         }
 
         [Fact]
@@ -130,8 +130,8 @@ VALUES
 ('foo', 5),
 ((bar.a), 25)
 ON CONFLICT (""a"", ""c"") DO UPDATE SET
-  ""b"" = (""qux"".""b"" + ""excluded"".""b""),
-  ""c"" = (""excluded"".""b"" + 1)" );
+  ""b"" = (""qux"".""b"" + EXCLUDED.""b""),
+  ""c"" = (EXCLUDED.""b"" + 1)" );
         }
 
         [Fact]
@@ -160,8 +160,8 @@ VALUES
 ('foo', 5),
 ((bar.a), 25)
 ON CONFLICT DO UPDATE SET
-  ""b"" = (qux.""b"" + ""excluded"".""b""),
-  ""c"" = (""excluded"".""b"" + 1)" );
+  ""b"" = (qux.""b"" + EXCLUDED.""b""),
+  ""c"" = (EXCLUDED.""b"" + 1)" );
         }
 
         [Fact]
@@ -218,8 +218,8 @@ WINDOW ""wnd"" AS (ORDER BY ""common_foo"".""a"" ASC)
 ORDER BY ""common_foo"".""b"" ASC
 LIMIT 50 OFFSET 100
 ON CONFLICT (""a"", ""c"") DO UPDATE SET
-  ""b"" = (qux.""b"" + ""excluded"".""b""),
-  ""c"" = (""excluded"".""b"" + 1)" );
+  ""b"" = (qux.""b"" + EXCLUDED.""b""),
+  ""c"" = (EXCLUDED.""b"" + 1)" );
         }
 
         [Fact]
@@ -276,8 +276,8 @@ WINDOW ""wnd"" AS (ORDER BY ""common_foo"".""a"" ASC)
 ORDER BY ""common_foo"".""b"" ASC
 LIMIT 50 OFFSET 100
 ON CONFLICT (""a"", ""c"") DO UPDATE SET
-  ""b"" = (""common_qux"".""b"" + ""excluded"".""b""),
-  ""c"" = (""excluded"".""b"" + 1)" );
+  ""b"" = (""common_qux"".""b"" + EXCLUDED.""b""),
+  ""c"" = (EXCLUDED.""b"" + 1)" );
         }
 
         [Fact]
@@ -334,8 +334,8 @@ WINDOW ""wnd"" AS (ORDER BY ""common_foo"".""a"" ASC)
 ORDER BY ""common_foo"".""b"" ASC
 LIMIT 50 OFFSET 100
 ON CONFLICT (""a"", ""c"") DO UPDATE SET
-  ""b"" = (""common_qux"".""b"" + ""excluded"".""b""),
-  ""c"" = (""excluded"".""b"" + 1)" );
+  ""b"" = (""common_qux"".""b"" + EXCLUDED.""b""),
+  ""c"" = (EXCLUDED.""b"" + 1)" );
         }
 
         [Fact]
@@ -397,8 +397,8 @@ WINDOW ""wnd"" AS (ORDER BY ""common_foo"".""a"" ASC)
 ORDER BY ""common_foo"".""b"" ASC
 LIMIT 50 OFFSET 100
 ON CONFLICT (""a"", ""c"") DO UPDATE SET
-  ""b"" = (""qux"".""b"" + ""excluded"".""b""),
-  ""c"" = (""excluded"".""b"" + 1)" );
+  ""b"" = (""qux"".""b"" + EXCLUDED.""b""),
+  ""c"" = (EXCLUDED.""b"" + 1)" );
         }
 
         [Fact]
@@ -456,8 +456,8 @@ WINDOW ""wnd"" AS (ORDER BY ""common_foo"".""a"" ASC)
 ORDER BY ""common_foo"".""b"" ASC
 LIMIT 50 OFFSET 100
 ON CONFLICT DO UPDATE SET
-  ""b"" = (qux.""b"" + ""excluded"".""b""),
-  ""c"" = (""excluded"".""b"" + 1)" );
+  ""b"" = (qux.""b"" + EXCLUDED.""b""),
+  ""c"" = (EXCLUDED.""b"" + 1)" );
         }
 
         [Fact]
@@ -492,8 +492,8 @@ SELECT
 FROM ""common_foo""
 WHERE TRUE
 ON CONFLICT (""a"", ""c"") DO UPDATE SET
-  ""b"" = (qux.""b"" + ""excluded"".""b""),
-  ""c"" = (""excluded"".""b"" + 1)" );
+  ""b"" = (qux.""b"" + EXCLUDED.""b""),
+  ""c"" = (EXCLUDED.""b"" + 1)" );
         }
 
         [Fact]
@@ -534,8 +534,8 @@ SELECT * FROM (
 ) AS ""source""
 WHERE TRUE
 ON CONFLICT (""a"", ""c"") DO UPDATE SET
-  ""b"" = (qux.""b"" + ""excluded"".""b""),
-  ""c"" = (""excluded"".""b"" + 1)" );
+  ""b"" = (qux.""b"" + EXCLUDED.""b""),
+  ""c"" = (EXCLUDED.""b"" + 1)" );
         }
 
         [Fact]
@@ -576,8 +576,8 @@ SELECT * FROM (
 ) AS ""source""
 WHERE TRUE
 ON CONFLICT (""a"", ""c"") DO UPDATE SET
-  ""b"" = (""common_qux"".""b"" + ""excluded"".""b""),
-  ""c"" = (""excluded"".""b"" + 1)" );
+  ""b"" = (""common_qux"".""b"" + EXCLUDED.""b""),
+  ""c"" = (EXCLUDED.""b"" + 1)" );
         }
 
         [Fact]
@@ -618,8 +618,8 @@ SELECT * FROM (
 ) AS ""source""
 WHERE TRUE
 ON CONFLICT (""a"", ""c"") DO UPDATE SET
-  ""b"" = (""common_qux"".""b"" + ""excluded"".""b""),
-  ""c"" = (""excluded"".""b"" + 1)" );
+  ""b"" = (""common_qux"".""b"" + EXCLUDED.""b""),
+  ""c"" = (EXCLUDED.""b"" + 1)" );
         }
 
         [Fact]
@@ -665,8 +665,8 @@ SELECT * FROM (
 ) AS ""source""
 WHERE TRUE
 ON CONFLICT (""a"", ""c"") DO UPDATE SET
-  ""b"" = (""qux"".""b"" + ""excluded"".""b""),
-  ""c"" = (""excluded"".""b"" + 1)" );
+  ""b"" = (""qux"".""b"" + EXCLUDED.""b""),
+  ""c"" = (EXCLUDED.""b"" + 1)" );
         }
 
         [Fact]
@@ -708,8 +708,8 @@ SELECT * FROM (
 ) AS ""source""
 WHERE TRUE
 ON CONFLICT DO UPDATE SET
-  ""b"" = (qux.""b"" + ""excluded"".""b""),
-  ""c"" = (""excluded"".""b"" + 1)" );
+  ""b"" = (qux.""b"" + EXCLUDED.""b""),
+  ""c"" = (EXCLUDED.""b"" + 1)" );
         }
 
         [Fact]
@@ -730,8 +730,8 @@ ON CONFLICT DO UPDATE SET
                     @"INSERT INTO qux (""a"", ""b"")
 SELECT * FROM bar
 ON CONFLICT (""a"", ""c"") DO UPDATE SET
-  ""b"" = (qux.""b"" + ""excluded"".""b""),
-  ""c"" = (""excluded"".""b"" + 1)" );
+  ""b"" = (qux.""b"" + EXCLUDED.""b""),
+  ""c"" = (EXCLUDED.""b"" + 1)" );
         }
 
         [Fact]
@@ -752,8 +752,8 @@ ON CONFLICT (""a"", ""c"") DO UPDATE SET
                     @"INSERT INTO ""common_qux"" (""a"", ""b"")
 SELECT * FROM bar
 ON CONFLICT (""a"", ""c"") DO UPDATE SET
-  ""b"" = (""common_qux"".""b"" + ""excluded"".""b""),
-  ""c"" = (""excluded"".""b"" + 1)" );
+  ""b"" = (""common_qux"".""b"" + EXCLUDED.""b""),
+  ""c"" = (EXCLUDED.""b"" + 1)" );
         }
 
         [Fact]
@@ -774,8 +774,8 @@ ON CONFLICT (""a"", ""c"") DO UPDATE SET
                     @"INSERT INTO ""common_qux"" (""a"", ""b"")
 SELECT * FROM bar
 ON CONFLICT (""a"", ""c"") DO UPDATE SET
-  ""b"" = (""common_qux"".""b"" + ""excluded"".""b""),
-  ""c"" = (""excluded"".""b"" + 1)" );
+  ""b"" = (""common_qux"".""b"" + EXCLUDED.""b""),
+  ""c"" = (EXCLUDED.""b"" + 1)" );
         }
 
         [Fact]
@@ -801,8 +801,8 @@ ON CONFLICT (""a"", ""c"") DO UPDATE SET
                     @"INSERT INTO ""qux"" (""a"", ""b"")
 SELECT * FROM bar
 ON CONFLICT (""a"", ""c"") DO UPDATE SET
-  ""b"" = (""qux"".""b"" + ""excluded"".""b""),
-  ""c"" = (""excluded"".""b"" + 1)" );
+  ""b"" = (""qux"".""b"" + EXCLUDED.""b""),
+  ""c"" = (EXCLUDED.""b"" + 1)" );
         }
 
         [Fact]
@@ -824,8 +824,8 @@ ON CONFLICT (""a"", ""c"") DO UPDATE SET
                     @"INSERT INTO qux (""a"", ""b"")
 SELECT * FROM bar
 ON CONFLICT DO UPDATE SET
-  ""b"" = (qux.""b"" + ""excluded"".""b""),
-  ""c"" = (""excluded"".""b"" + 1)" );
+  ""b"" = (qux.""b"" + EXCLUDED.""b""),
+  ""c"" = (EXCLUDED.""b"" + 1)" );
         }
 
         [Fact]

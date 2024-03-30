@@ -1069,7 +1069,7 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
 
         Context.Sql.Append( "DO" ).AppendSpace().Append( "UPDATE" );
 
-        _upsertUpdateSourceReplacement ??= SqlNode.RawRecordSet( SqliteHelpers.UpsertExcludedRecordSetInfo );
+        _upsertUpdateSourceReplacement ??= SqlNode.RawRecordSet( SqliteHelpers.UpsertExcludedRecordSetName );
         using ( TempReplaceRecordSet( node.UpdateSource, _upsertUpdateSourceReplacement ) )
             VisitUpdateAssignmentRange( node.UpdateAssignments );
     }
