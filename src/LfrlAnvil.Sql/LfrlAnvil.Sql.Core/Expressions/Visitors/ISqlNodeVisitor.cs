@@ -34,7 +34,6 @@ public interface ISqlNodeVisitor
     void VisitSwitchCase(SqlSwitchCaseNode node);
     void VisitSwitch(SqlSwitchExpressionNode node);
     void VisitNamedFunction(SqlNamedFunctionExpressionNode node);
-    void VisitRecordsAffectedFunction(SqlRecordsAffectedFunctionExpressionNode node);
     void VisitCoalesceFunction(SqlCoalesceFunctionExpressionNode node);
     void VisitCurrentDateFunction(SqlCurrentDateFunctionExpressionNode node);
     void VisitCurrentTimeFunction(SqlCurrentTimeFunctionExpressionNode node);

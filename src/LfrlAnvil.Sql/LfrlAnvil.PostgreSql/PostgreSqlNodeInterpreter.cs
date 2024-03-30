@@ -5,7 +5,6 @@ using System.Runtime.CompilerServices;
 using LfrlAnvil.Extensions;
 using LfrlAnvil.PostgreSql.Internal;
 using LfrlAnvil.Sql;
-using LfrlAnvil.Sql.Exceptions;
 using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Expressions.Arithmetic;
 using LfrlAnvil.Sql.Expressions.Functions;
@@ -41,11 +40,6 @@ public class PostgreSqlNodeInterpreter : SqlNodeInterpreter
     public override void VisitBitwiseXor(SqlBitwiseXorExpressionNode node)
     {
         VisitInfixBinaryOperator( node.Left, symbol: "#", node.Right );
-    }
-
-    public override void VisitRecordsAffectedFunction(SqlRecordsAffectedFunctionExpressionNode node)
-    {
-        throw new UnrecognizedSqlNodeException( this, node );
     }
 
     public override void VisitCurrentDateFunction(SqlCurrentDateFunctionExpressionNode node)

@@ -45,11 +45,6 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
         Context.Sql.Append( sql );
     }
 
-    public override void VisitRecordsAffectedFunction(SqlRecordsAffectedFunctionExpressionNode node)
-    {
-        VisitSimpleFunction( "ROW_COUNT", node );
-    }
-
     public override void VisitCurrentDateFunction(SqlCurrentDateFunctionExpressionNode node)
     {
         VisitSimpleFunction( "CURRENT_DATE", node );

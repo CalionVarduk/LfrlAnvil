@@ -291,14 +291,6 @@ public class SqlNodeVisitorTests : TestsBase
     }
 
     [Fact]
-    public void VisitRecordsAffectedFunction_ShouldDoNothing()
-    {
-        var sut = new Visitor();
-        var action = Lambda.Of( () => sut.VisitRecordsAffectedFunction( SqlNode.Functions.RecordsAffected() ) );
-        action.Should().NotThrow();
-    }
-
-    [Fact]
     public void VisitCoalesceFunction_ShouldVisitArguments()
     {
         var sut = new VisitorMock();
@@ -1853,12 +1845,6 @@ public class SqlNodeVisitorTests : TestsBase
         public override void VisitParameter(SqlParameterNode node)
         {
             base.VisitParameter( node );
-            Nodes.Add( node );
-        }
-
-        public override void VisitRecordsAffectedFunction(SqlRecordsAffectedFunctionExpressionNode node)
-        {
-            base.VisitRecordsAffectedFunction( node );
             Nodes.Add( node );
         }
 

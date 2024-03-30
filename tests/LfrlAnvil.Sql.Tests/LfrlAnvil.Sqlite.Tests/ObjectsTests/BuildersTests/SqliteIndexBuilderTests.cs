@@ -1009,7 +1009,7 @@ public class SqliteIndexBuilderTests : TestsBase
         var table = schema.Objects.CreateTable( "T" );
         var sut = table.Constraints.CreateIndex( table.Columns.Create( "C" ).Asc() );
 
-        var action = Lambda.Of( () => sut.SetFilter( _ => SqlNode.Functions.RecordsAffected() == SqlNode.Literal( 0 ) ) );
+        var action = Lambda.Of( () => sut.SetFilter( _ => SqlNode.WindowFunctions.RowNumber() == SqlNode.Literal( 0 ) ) );
 
         action.Should().ThrowExactly<SqlObjectBuilderException>();
     }

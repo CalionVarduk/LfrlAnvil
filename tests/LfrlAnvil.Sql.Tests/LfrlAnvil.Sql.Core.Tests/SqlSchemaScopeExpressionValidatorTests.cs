@@ -453,18 +453,6 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
     }
 
     [Fact]
-    public void VisitRecordsAffectedFunction_ShouldDoNothing()
-    {
-        _sut.VisitRecordsAffectedFunction( SqlNode.Functions.RecordsAffected() );
-
-        using ( new AssertionScope() )
-        {
-            _sut.GetErrors().Should().BeEmpty();
-            _sut.GetReferencedObjects().Should().BeEmpty();
-        }
-    }
-
-    [Fact]
     public void VisitCoalesceFunction_ShouldVisitArguments()
     {
         var node = SqlNode.Parameter( "a" ).Coalesce( SqlNode.Parameter( "b" ) );

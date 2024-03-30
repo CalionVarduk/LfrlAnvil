@@ -1268,7 +1268,7 @@ public partial class MySqlTableBuilderTests
             var table = schema.Objects.CreateTable( "T" );
             var sut = table.Constraints;
 
-            var action = Lambda.Of( () => sut.CreateCheck( SqlNode.Functions.RecordsAffected() == SqlNode.Literal( 0 ) ) );
+            var action = Lambda.Of( () => sut.CreateCheck( SqlNode.WindowFunctions.RowNumber() == SqlNode.Literal( 0 ) ) );
 
             action.Should()
                 .ThrowExactly<SqlObjectBuilderException>()

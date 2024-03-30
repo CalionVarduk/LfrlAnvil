@@ -242,13 +242,6 @@ public class SqlConstantExpressionValidatorTests : TestsBase
     }
 
     [Fact]
-    public void VisitRecordsAffectedFunction_ShouldDoNothing()
-    {
-        _sut.VisitRecordsAffectedFunction( SqlNode.Functions.RecordsAffected() );
-        _sut.GetErrors().Should().BeEmpty();
-    }
-
-    [Fact]
     public void VisitCoalesceFunction_ShouldVisitArguments()
     {
         var node = SqlNode.Parameter( "a" ).Coalesce( SqlNode.Parameter( "b" ) );

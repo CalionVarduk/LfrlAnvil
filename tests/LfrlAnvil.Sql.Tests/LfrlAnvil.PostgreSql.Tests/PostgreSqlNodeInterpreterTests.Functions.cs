@@ -27,14 +27,6 @@ public partial class PostgreSqlNodeInterpreterTests
         }
 
         [Fact]
-        public void Visit_ShouldThrowUnrecognizedSqlNodeException_WhenNodeIsRecordsAffectedFunction()
-        {
-            var sut = CreateInterpreter();
-            var action = Lambda.Of( () => sut.Visit( SqlNode.Functions.RecordsAffected() ) );
-            action.Should().ThrowExactly<UnrecognizedSqlNodeException>();
-        }
-
-        [Fact]
         public void Visit_ShouldInterpretCoalesceFunction()
         {
             var sut = CreateInterpreter();

@@ -190,8 +190,6 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
         VisitFunctionArguments( node.Arguments );
     }
 
-    public abstract void VisitRecordsAffectedFunction(SqlRecordsAffectedFunctionExpressionNode node);
-
     public virtual void VisitCoalesceFunction(SqlCoalesceFunctionExpressionNode node)
     {
         if ( node.Arguments.Count == 1 )

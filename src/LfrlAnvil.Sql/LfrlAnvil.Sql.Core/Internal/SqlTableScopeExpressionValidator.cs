@@ -46,11 +46,6 @@ public class SqlTableScopeExpressionValidator : SqlExpressionValidator
         AddForbiddenNode( node );
     }
 
-    public override void VisitRecordsAffectedFunction(SqlRecordsAffectedFunctionExpressionNode node)
-    {
-        AddForbiddenNode( node );
-    }
-
     public override void VisitCurrentDateFunction(SqlCurrentDateFunctionExpressionNode node)
     {
         AddForbiddenNode( node );

@@ -47,11 +47,6 @@ public sealed class SqlNodeDebugInterpreter : SqlNodeInterpreter
         AppendExpressionType( node.Type );
     }
 
-    public override void VisitRecordsAffectedFunction(SqlRecordsAffectedFunctionExpressionNode node)
-    {
-        VisitSimpleFunction( "RECORDS_AFFECTED", node );
-    }
-
     public override void VisitCoalesceFunction(SqlCoalesceFunctionExpressionNode node)
     {
         VisitSimpleFunction( "COALESCE", node );

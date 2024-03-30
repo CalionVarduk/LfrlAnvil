@@ -7,7 +7,6 @@ public static partial class SqlNode
 {
     public static class Functions
     {
-        private static SqlRecordsAffectedFunctionExpressionNode? _recordsAffected;
         private static SqlCurrentDateFunctionExpressionNode? _currentDate;
         private static SqlCurrentTimeFunctionExpressionNode? _currentTime;
         private static SqlCurrentDateTimeFunctionExpressionNode? _currentDateTime;
@@ -19,12 +18,6 @@ public static partial class SqlNode
         public static SqlNamedFunctionExpressionNode Named(SqlSchemaObjectName name, params SqlExpressionNode[] arguments)
         {
             return new SqlNamedFunctionExpressionNode( name, arguments );
-        }
-
-        [Pure]
-        public static SqlRecordsAffectedFunctionExpressionNode RecordsAffected()
-        {
-            return _recordsAffected ??= new SqlRecordsAffectedFunctionExpressionNode();
         }
 
         [Pure]

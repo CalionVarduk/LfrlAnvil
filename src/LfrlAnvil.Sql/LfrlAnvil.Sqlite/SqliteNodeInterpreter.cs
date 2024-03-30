@@ -59,11 +59,6 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
         Context.Sql.Append( ')' );
     }
 
-    public override void VisitRecordsAffectedFunction(SqlRecordsAffectedFunctionExpressionNode node)
-    {
-        VisitSimpleFunction( "CHANGES", node );
-    }
-
     public override void VisitCurrentDateFunction(SqlCurrentDateFunctionExpressionNode node)
     {
         VisitSimpleFunction( "GET_CURRENT_DATE", node );

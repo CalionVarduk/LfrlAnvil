@@ -47,21 +47,6 @@ public class FunctionExpressionTests : TestsBase
     }
 
     [Fact]
-    public void RecordsAffected_ShouldCreateRecordsAffectedFunctionExpressionNode()
-    {
-        var sut = SqlNode.Functions.RecordsAffected();
-        var text = sut.ToString();
-
-        using ( new AssertionScope() )
-        {
-            sut.NodeType.Should().Be( SqlNodeType.FunctionExpression );
-            sut.FunctionType.Should().Be( SqlFunctionType.RecordsAffected );
-            sut.Arguments.Should().BeEmpty();
-            text.Should().Be( "RECORDS_AFFECTED()" );
-        }
-    }
-
-    [Fact]
     public void Coalesce_ShouldThrowArgumentException_WhenArgumentsAreEmpty()
     {
         var action = Lambda.Of( () => SqlNode.Functions.Coalesce() );

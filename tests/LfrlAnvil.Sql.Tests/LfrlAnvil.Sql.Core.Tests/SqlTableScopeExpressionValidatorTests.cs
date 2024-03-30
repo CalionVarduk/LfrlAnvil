@@ -284,13 +284,6 @@ public class SqlTableScopeExpressionValidatorTests : TestsBase
     }
 
     [Fact]
-    public void VisitRecordsAffectedFunction_ShouldRegisterError()
-    {
-        _sut.VisitRecordsAffectedFunction( SqlNode.Functions.RecordsAffected() );
-        _sut.GetErrors().Should().HaveCount( 1 );
-    }
-
-    [Fact]
     public void VisitCoalesceFunction_ShouldVisitArguments()
     {
         var node = SqlNode.Parameter( "a" ).Coalesce( SqlNode.Parameter( "b" ) );

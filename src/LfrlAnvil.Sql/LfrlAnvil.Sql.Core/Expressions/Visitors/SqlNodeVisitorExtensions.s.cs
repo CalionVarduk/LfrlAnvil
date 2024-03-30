@@ -449,10 +449,6 @@ public static class SqlNodeVisitorExtensions
                 visitor.VisitNamedFunction( ReinterpretCast.To<SqlNamedFunctionExpressionNode>( node ) );
                 break;
 
-            case SqlFunctionType.RecordsAffected:
-                visitor.VisitRecordsAffectedFunction( ReinterpretCast.To<SqlRecordsAffectedFunctionExpressionNode>( node ) );
-                break;
-
             case SqlFunctionType.Coalesce:
                 visitor.VisitCoalesceFunction( ReinterpretCast.To<SqlCoalesceFunctionExpressionNode>( node ) );
                 break;

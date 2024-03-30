@@ -4,7 +4,6 @@ public enum SqlFunctionType : byte
 {
     Custom,
     Named,
-    RecordsAffected,
     Coalesce,
     CurrentDate,
     CurrentTime,

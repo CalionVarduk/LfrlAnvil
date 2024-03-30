@@ -27,14 +27,6 @@ public partial class SqliteNodeInterpreterTests
         }
 
         [Fact]
-        public void Visit_ShouldInterpretRecordsAffectedFunction()
-        {
-            var sut = CreateInterpreter();
-            sut.Visit( SqlNode.Functions.RecordsAffected() );
-            sut.Context.Sql.ToString().Should().Be( "CHANGES()" );
-        }
-
-        [Fact]
         public void Visit_ShouldInterpretCoalesceFunction()
         {
             var sut = CreateInterpreter();
@@ -436,8 +428,8 @@ public partial class SqliteNodeInterpreterTests
         public void VisitChild_ShouldInterpretSimpleFunctionWithoutParentheses()
         {
             var sut = CreateInterpreter();
-            sut.VisitChild( SqlNode.Functions.RecordsAffected() );
-            sut.Context.Sql.ToString().Should().Be( "CHANGES()" );
+            sut.VisitChild( SqlNode.Functions.CurrentDate() );
+            sut.Context.Sql.ToString().Should().Be( "GET_CURRENT_DATE()" );
         }
 
         [Fact]

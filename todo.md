@@ -46,9 +46,6 @@
 
 
 - Sql.Core:
-  - Remove RecordsAffected function node
-    - postresql doesn't have it as a simple function
-    - will have to be handled through ado.net api
   - add OrderBy extension method for aggregate function nodes?
     - postgresql supports this for pretty much every function
     - mysql supports this only for group_concat function (silently ignore for other functions?)

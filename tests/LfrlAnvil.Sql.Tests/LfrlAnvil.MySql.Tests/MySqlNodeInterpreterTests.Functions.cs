@@ -27,14 +27,6 @@ public partial class MySqlNodeInterpreterTests
         }
 
         [Fact]
-        public void Visit_ShouldInterpretRecordsAffectedFunction()
-        {
-            var sut = CreateInterpreter();
-            sut.Visit( SqlNode.Functions.RecordsAffected() );
-            sut.Context.Sql.ToString().Should().Be( "ROW_COUNT()" );
-        }
-
-        [Fact]
         public void Visit_ShouldInterpretCoalesceFunction()
         {
             var sut = CreateInterpreter();
@@ -499,8 +491,8 @@ public partial class MySqlNodeInterpreterTests
         public void VisitChild_ShouldInterpretSimpleFunctionWithoutParentheses()
         {
             var sut = CreateInterpreter();
-            sut.VisitChild( SqlNode.Functions.RecordsAffected() );
-            sut.Context.Sql.ToString().Should().Be( "ROW_COUNT()" );
+            sut.VisitChild( SqlNode.Functions.CurrentDate() );
+            sut.Context.Sql.ToString().Should().Be( "CURRENT_DATE()" );
         }
 
         [Fact]

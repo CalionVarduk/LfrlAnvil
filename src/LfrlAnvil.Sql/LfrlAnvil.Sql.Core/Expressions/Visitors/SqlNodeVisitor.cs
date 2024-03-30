@@ -140,8 +140,6 @@ public abstract class SqlNodeVisitor : ISqlNodeVisitor
             this.Visit( arg );
     }
 
-    public virtual void VisitRecordsAffectedFunction(SqlRecordsAffectedFunctionExpressionNode node) { }
-
     public virtual void VisitCoalesceFunction(SqlCoalesceFunctionExpressionNode node)
     {
         foreach ( var arg in node.Arguments )
