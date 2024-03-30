@@ -21,7 +21,7 @@ public class PostgreSqlColumnTypeDefinitionProviderBuilder : SqlColumnTypeDefini
     internal readonly PostgreSqlColumnTypeDefinitionDateOnly DefaultDate;
     internal readonly PostgreSqlColumnTypeDefinitionTimeOnly DefaultTime;
     internal readonly PostgreSqlColumnTypeDefinitionDateTime DefaultTimestamp;
-    internal readonly PostgreSqlColumnTypeDefinitionDateTime DefaultTimestampTz;
+    internal readonly PostgreSqlColumnTypeDefinitionUtcDateTime DefaultTimestampTz;
 
     public PostgreSqlColumnTypeDefinitionProviderBuilder()
         : base( PostgreSqlDialect.Instance )
@@ -38,9 +38,8 @@ public class PostgreSqlColumnTypeDefinitionProviderBuilder : SqlColumnTypeDefini
         DefaultUuid = new PostgreSqlColumnTypeDefinitionGuid();
         DefaultDate = new PostgreSqlColumnTypeDefinitionDateOnly();
         DefaultTime = new PostgreSqlColumnTypeDefinitionTimeOnly();
-        DefaultTimestamp = new PostgreSqlColumnTypeDefinitionDateTime( PostgreSqlDataType.Timestamp );
-        DefaultTimestampTz = new PostgreSqlColumnTypeDefinitionDateTime( PostgreSqlDataType.TimestampTz );
-        // TODO: DefaultTimestampTz is wrong now (Unspecified instead of Utc datetime)
+        DefaultTimestamp = new PostgreSqlColumnTypeDefinitionDateTime();
+        DefaultTimestampTz = new PostgreSqlColumnTypeDefinitionUtcDateTime();
 
         AddOrUpdate( DefaultBoolean );
         AddOrUpdate( DefaultInt2 );

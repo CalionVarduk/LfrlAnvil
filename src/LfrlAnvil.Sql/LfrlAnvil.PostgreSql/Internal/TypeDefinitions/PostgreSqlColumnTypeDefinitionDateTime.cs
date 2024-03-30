@@ -6,9 +6,9 @@ namespace LfrlAnvil.PostgreSql.Internal.TypeDefinitions;
 
 internal sealed class PostgreSqlColumnTypeDefinitionDateTime : PostgreSqlColumnTypeDefinition<DateTime>
 {
-    internal PostgreSqlColumnTypeDefinitionDateTime(PostgreSqlDataType dataType)
+    internal PostgreSqlColumnTypeDefinitionDateTime()
         : base(
-            dataType,
+            PostgreSqlDataType.Timestamp,
             DateTime.SpecifyKind( DateTime.UnixEpoch, DateTimeKind.Unspecified ),
             static (reader, ordinal) => reader.GetDateTime( ordinal ) ) { }
 
