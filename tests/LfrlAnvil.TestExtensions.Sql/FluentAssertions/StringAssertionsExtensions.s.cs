@@ -17,6 +17,7 @@ public static class StringAssertionsExtensions
                 expected[i]
                     .Replace( " ", "[ ]" )
                     .Replace( "{GUID}", "[0-9a-fA-F]{32}" )
+                    .Replace( "\\", "\\\\" )
                     .Replace( "(", "\\(" )
                     .Replace( ")", "\\)" )
                     .Replace( ".", "\\." )

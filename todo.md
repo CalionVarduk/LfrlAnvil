@@ -46,6 +46,7 @@
 
 
 - Sql.Core:
+  - extract type definition constants (format etc.) to dialect XHelpers static classes
   - support for positional parameters?
     - node interpreter context would have to track it
     - this would also require changes to parameter binder factory
@@ -57,6 +58,11 @@
       - this could still be useful
     - mysql: NO SUPPORT! this is probably a deal breaker then
   - take a look at ado.net dbbatch & its commands
+  - node replacer: visitor that allows to 'modify' nodes (like linq expression visitor)
+    - low priority
+    - could be fun to implement
+    - requires a lot of testing
+
 
 ### Reactive.Scheduling
 project idea:

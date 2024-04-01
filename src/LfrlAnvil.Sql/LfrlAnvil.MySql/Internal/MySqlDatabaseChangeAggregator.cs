@@ -286,7 +286,7 @@ internal sealed class MySqlDatabaseChangeAggregator : SqlDatabaseChangeAggregato
                 .GetValueOrDefault( modification.Source.Name );
 
             ModifiedColumns.Remove( modification.Column );
-            RemovedColumns.Add( originalName, modification.Column );
+            RemovedColumns.Add( originalName, modification.Source );
             CreatedColumns.Add( modification.Column );
         }
     }

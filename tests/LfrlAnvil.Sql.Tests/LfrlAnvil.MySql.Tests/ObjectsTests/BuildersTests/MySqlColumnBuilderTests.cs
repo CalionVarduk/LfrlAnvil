@@ -197,7 +197,7 @@ public class MySqlColumnBuilderTests : TestsBase
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
-        var removed = table.Columns.Create( "C2" );
+        var removed = table.Columns.Create( "C2" ).SetType<int>();
 
         var actionCount = schema.Database.GetPendingActionCount();
         removed.SetName( "C3" ).SetType<string>().Remove();
@@ -879,6 +879,32 @@ public class MySqlColumnBuilderTests : TestsBase
                 .SatisfySql(
                     @"ALTER TABLE `foo`.`T`
                       CHANGE COLUMN `C2` `C2` LONGBLOB NOT NULL;" );
+        }
+    }
+
+    [Fact]
+    public void SetDefaultValue_ShouldUpdateDefaultValue_WhenOldValueIsNull()
+    {
+        var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var table = schema.Objects.CreateTable( "T" );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        var sut = table.Columns.Create( "C2" );
+
+        var actionCount = schema.Database.GetPendingActionCount();
+        var result = sut.SetDefaultValue( 123 );
+        var actions = schema.Database.GetLastPendingActions( actionCount );
+
+        using ( new AssertionScope() )
+        {
+            result.Should().BeSameAs( sut );
+            sut.DefaultValue.Should().BeEquivalentTo( SqlNode.Literal( 123 ) );
+
+            actions.Should().HaveCount( 1 );
+            actions.ElementAtOrDefault( 0 )
+                .Sql.Should()
+                .SatisfySql(
+                    @"ALTER TABLE `foo`.`T`
+                      CHANGE COLUMN `C2` `C2` LONGBLOB NOT NULL DEFAULT (123);" );
         }
     }
 

@@ -222,9 +222,6 @@ public sealed class MySqlDatabaseChangeTracker : SqlDatabaseChangeTracker
                 }
                 case SqlObjectType.Index:
                 {
-                    if ( constraint.Type != SqlObjectType.Index )
-                        continue;
-
                     var index = ReinterpretCast.To<MySqlIndexBuilder>( constraint );
                     if ( index.IsVirtual )
                         continue;
@@ -356,7 +353,7 @@ public sealed class MySqlDatabaseChangeTracker : SqlDatabaseChangeTracker
                 foreach ( var modification in changeAggregator.ModifiedColumns )
                 {
                     var originalName = this.GetOriginalValue( modification.Source, SqlObjectChangeDescriptor.Name )
-                        .GetValueOrDefault( modification.Column.Name );
+                        .GetValueOrDefault( modification.Source.Name );
 
                     MySqlHelpers.AppendAlterTableChangeColumn( interpreter, originalName, modification.Column.ToDefinitionNode() );
                 }

@@ -257,7 +257,7 @@ public class SqliteColumnBuilderTests : TestsBase
         var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var table = schema.Objects.CreateTable( "T" );
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
-        var removed = table.Columns.Create( "C2" );
+        var removed = table.Columns.Create( "C2" ).SetType<int>();
 
         var actionCount = schema.Database.GetPendingActionCount();
         removed.SetName( "C3" ).SetType<string>().Remove();
@@ -283,7 +283,7 @@ public class SqliteColumnBuilderTests : TestsBase
                     @"INSERT INTO ""__foo_T__{GUID}__"" (""C1"", ""C2"")
                     SELECT
                       ""foo_T"".""C1"",
-                      ""foo_T"".""C2"" AS ""C2""
+                      CAST(""foo_T"".""C2"" AS ANY) AS ""C2""
                     FROM ""foo_T"";",
                     "DROP TABLE \"foo_T\";",
                     "ALTER TABLE \"__foo_T__{GUID}__\" RENAME TO \"foo_T\";" );
@@ -971,6 +971,42 @@ public class SqliteColumnBuilderTests : TestsBase
                     @"CREATE TABLE ""__foo_T__{GUID}__"" (
                       ""C1"" ANY NOT NULL,
                       ""C2"" ANY NOT NULL,
+                      CONSTRAINT ""foo_PK_T"" PRIMARY KEY (""C1"" ASC)
+                    ) WITHOUT ROWID;",
+                    @"INSERT INTO ""__foo_T__{GUID}__"" (""C1"", ""C2"")
+                    SELECT
+                      ""foo_T"".""C1"",
+                      ""foo_T"".""C2"" AS ""C2""
+                    FROM ""foo_T"";",
+                    "DROP TABLE \"foo_T\";",
+                    "ALTER TABLE \"__foo_T__{GUID}__\" RENAME TO \"foo_T\";" );
+        }
+    }
+
+    [Fact]
+    public void SetDefaultValue_ShouldUpdateDefaultValue_WhenOldValueIsNull()
+    {
+        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var table = schema.Objects.CreateTable( "T" );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        var sut = table.Columns.Create( "C2" );
+
+        var actionCount = schema.Database.GetPendingActionCount();
+        var result = sut.SetDefaultValue( 123 );
+        var actions = schema.Database.GetLastPendingActions( actionCount );
+
+        using ( new AssertionScope() )
+        {
+            result.Should().BeSameAs( sut );
+            sut.DefaultValue.Should().BeEquivalentTo( SqlNode.Literal( 123 ) );
+
+            actions.Should().HaveCount( 1 );
+            actions.ElementAtOrDefault( 0 )
+                .Sql.Should()
+                .SatisfySql(
+                    @"CREATE TABLE ""__foo_T__{GUID}__"" (
+                      ""C1"" ANY NOT NULL,
+                      ""C2"" ANY NOT NULL DEFAULT (123),
                       CONSTRAINT ""foo_PK_T"" PRIMARY KEY (""C1"" ASC)
                     ) WITHOUT ROWID;",
                     @"INSERT INTO ""__foo_T__{GUID}__"" (""C1"", ""C2"")

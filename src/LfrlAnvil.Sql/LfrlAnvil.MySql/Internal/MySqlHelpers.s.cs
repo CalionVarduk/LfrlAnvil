@@ -136,8 +136,7 @@ internal static class MySqlHelpers
 
     public static void AppendAlterTableAddPrimaryKey(SqlNodeInterpreter interpreter, SqlPrimaryKeyDefinitionNode primaryKey)
     {
-        interpreter.Context.AppendIndent();
-        interpreter.Context.Sql.Append( "ADD" ).AppendSpace();
+        interpreter.Context.AppendIndent().Append( "ADD" ).AppendSpace();
         interpreter.VisitPrimaryKeyDefinition( primaryKey );
         interpreter.Context.Sql.AppendComma();
     }

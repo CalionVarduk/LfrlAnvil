@@ -823,6 +823,176 @@ public partial class SqliteTableBuilderTests : TestsBase
     }
 
     [Fact]
+    public void ConstraintChainNameSwap_ShouldGenerateCorrectScript()
+    {
+        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var sut = schema.Objects.CreateTable( "T" );
+        var a = sut.Constraints.SetPrimaryKey( "A", sut.Columns.Create( "P" ).Asc() );
+        var b = sut.Constraints.CreateCheck( "B", SqlNode.True() );
+        var c = sut.Constraints.CreateIndex( "C", sut.Columns.Create( "I" ).Asc() );
+        var d = sut.Constraints.CreateCheck( "D", SqlNode.True() );
+
+        var actionCount = schema.Database.GetPendingActionCount();
+        a.SetName( "E" );
+        b.SetName( "A" );
+        c.SetName( "B" );
+        d.SetName( "C" );
+        a.SetName( "D" );
+        var actions = schema.Database.GetLastPendingActions( actionCount );
+
+        using ( new AssertionScope() )
+        {
+            actions.Should().HaveCount( 1 );
+            actions.ElementAtOrDefault( 0 )
+                .Sql.Should()
+                .SatisfySql(
+                    "DROP INDEX \"foo_C\";",
+                    @"CREATE TABLE ""__foo_T__{GUID}__"" (
+                      ""P"" ANY NOT NULL,
+                      ""I"" ANY NOT NULL,
+                      CONSTRAINT ""foo_D"" PRIMARY KEY (""P"" ASC),
+                      CONSTRAINT ""foo_A"" CHECK (TRUE),
+                      CONSTRAINT ""foo_C"" CHECK (TRUE)
+                    ) WITHOUT ROWID;",
+                    @"INSERT INTO ""__foo_T__{GUID}__"" (""P"", ""I"")
+                    SELECT
+                      ""foo_T"".""P"",
+                      ""foo_T"".""I""
+                    FROM ""foo_T"";",
+                    "DROP TABLE \"foo_T\";",
+                    "ALTER TABLE \"__foo_T__{GUID}__\" RENAME TO \"foo_T\";",
+                    "CREATE INDEX \"foo_B\" ON \"foo_T\" (\"I\" ASC);" );
+        }
+    }
+
+    [Fact]
+    public void MultipleConstraintNameChange_ShouldGenerateCorrectScript_WhenThereAreTemporaryNameConflicts()
+    {
+        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var sut = schema.Objects.CreateTable( "T" );
+        var a = sut.Constraints.SetPrimaryKey( "A", sut.Columns.Create( "P" ).Asc() );
+        var b = sut.Constraints.CreateCheck( "B", SqlNode.True() );
+        var c = sut.Constraints.CreateIndex( "C", sut.Columns.Create( "I" ).Asc() );
+
+        var actionCount = schema.Database.GetPendingActionCount();
+        a.SetName( "X" );
+        b.SetName( "Y" );
+        c.SetName( "D" );
+        b.SetName( "C" );
+        a.SetName( "B" );
+        var actions = schema.Database.GetLastPendingActions( actionCount );
+
+        using ( new AssertionScope() )
+        {
+            actions.Should().HaveCount( 1 );
+            actions.ElementAtOrDefault( 0 )
+                .Sql.Should()
+                .SatisfySql(
+                    "DROP INDEX \"foo_C\";",
+                    @"CREATE TABLE ""__foo_T__{GUID}__"" (
+                      ""P"" ANY NOT NULL,
+                      ""I"" ANY NOT NULL,
+                      CONSTRAINT ""foo_B"" PRIMARY KEY (""P"" ASC),
+                      CONSTRAINT ""foo_C"" CHECK (TRUE)
+                    ) WITHOUT ROWID;",
+                    @"INSERT INTO ""__foo_T__{GUID}__"" (""P"", ""I"")
+                    SELECT
+                      ""foo_T"".""P"",
+                      ""foo_T"".""I""
+                    FROM ""foo_T"";",
+                    "DROP TABLE \"foo_T\";",
+                    "ALTER TABLE \"__foo_T__{GUID}__\" RENAME TO \"foo_T\";",
+                    "CREATE INDEX \"foo_D\" ON \"foo_T\" (\"I\" ASC);" );
+        }
+    }
+
+    [Fact]
+    public void MultipleTableChanges_ShouldGenerateCorrectScript()
+    {
+        var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var sut = schema.Objects.CreateTable( "T" );
+        sut.Constraints.SetPrimaryKey( sut.Columns.Create( "C1" ).Asc() );
+        var c2 = sut.Columns.Create( "C2" ).SetType<int>();
+        var c3 = sut.Columns.Create( "C3" ).SetType<int>();
+        var c4 = sut.Columns.Create( "C4" ).SetType<int>();
+        var c5 = sut.Columns.Create( "C5" ).SetType<int>().SetDefaultValue( 123 );
+        var c6 = sut.Columns.Create( "C6" ).SetType<int>().SetComputation( SqlColumnComputation.Stored( SqlNode.Literal( 42 ) ) );
+        var ix1 = sut.Constraints.CreateIndex( c2.Asc() );
+        var ix2 = sut.Constraints.CreateIndex( sut.Columns.Create( "C7" ).Asc() );
+        var chk1 = sut.Constraints.CreateCheck( "CHK_1", SqlNode.True() );
+        var chk2 = sut.Constraints.CreateCheck( "CHK_2", SqlNode.True() );
+        var fk1 = sut.Constraints.CreateForeignKey( ix2, sut.Constraints.CreateUniqueIndex( sut.Columns.Create( "C8" ).Asc() ) );
+        var fk2 = sut.Constraints.CreateForeignKey( "FK", ix2, sut.Constraints.CreateUniqueIndex( sut.Columns.Create( "C9" ).Asc() ) );
+
+        var actionCount = schema.Database.GetPendingActionCount();
+        sut.SetName( "U" );
+        c3.SetName( "X" ).MarkAsNullable().SetType<long>();
+        c4.Remove();
+        c5.SetComputation( SqlColumnComputation.Stored( SqlNode.Literal( 1 ) ) );
+        c6.SetComputation( null ).SetName( "Y" );
+        ix1.Remove();
+        ix2.SetName( "IX_2" );
+        fk1.Remove();
+        fk2.SetName( "FK_2" );
+        chk1.Remove();
+        chk2.SetName( "CHK_1" );
+        sut.Constraints.CreateIndex( c2.Asc(), c3.Desc() );
+        sut.Constraints.CreateCheck( "CHK_3", SqlNode.True() );
+        sut.Constraints.SetPrimaryKey( sut.Columns.Create( "C10" ).Asc() );
+        sut.Constraints.CreateForeignKey( ix2, sut.Constraints.CreateUniqueIndex( sut.Columns.Create( "C11" ).Asc() ) );
+        var actions = schema.Database.GetLastPendingActions( actionCount );
+
+        using ( new AssertionScope() )
+        {
+            actions.Should().HaveCount( 2 );
+            actions.ElementAtOrDefault( 0 ).Sql.Should().SatisfySql( "ALTER TABLE \"foo_T\" RENAME TO \"foo_U\";" );
+            actions.ElementAtOrDefault( 1 )
+                .Sql.Should()
+                .SatisfySql(
+                    "DROP INDEX \"foo_IX_T_C2A\";",
+                    "DROP INDEX \"foo_IX_T_C7A\";",
+                    "DROP INDEX \"foo_UIX_T_C8A\";",
+                    "DROP INDEX \"foo_UIX_T_C9A\";",
+                    @"CREATE TABLE ""__foo_U__{GUID}__"" (
+                      ""C1"" ANY NOT NULL,
+                      ""C2"" INTEGER NOT NULL,
+                      ""C11"" ANY NOT NULL DEFAULT (X''),
+                      ""Y"" INTEGER NOT NULL,
+                      ""C5"" INTEGER NOT NULL GENERATED ALWAYS AS (1) STORED,
+                      ""C10"" ANY NOT NULL DEFAULT (X''),
+                      ""C7"" ANY NOT NULL,
+                      ""C8"" ANY NOT NULL,
+                      ""C9"" ANY NOT NULL,
+                      ""X"" INTEGER,
+                      CONSTRAINT ""foo_PK_U"" PRIMARY KEY (""C10"" ASC),
+                      CONSTRAINT ""foo_FK_2"" FOREIGN KEY (""C7"") REFERENCES ""foo_U"" (""C9"") ON DELETE RESTRICT ON UPDATE RESTRICT,
+                      CONSTRAINT ""foo_FK_U_C7_REF_U"" FOREIGN KEY (""C7"") REFERENCES ""foo_U"" (""C11"") ON DELETE RESTRICT ON UPDATE RESTRICT,
+                      CONSTRAINT ""foo_CHK_1"" CHECK (TRUE),
+                      CONSTRAINT ""foo_CHK_3"" CHECK (TRUE)
+                    ) WITHOUT ROWID;",
+                    @"INSERT INTO ""__foo_U__{GUID}__"" (""C1"", ""C2"", ""C11"", ""Y"", ""C10"", ""C7"", ""C8"", ""C9"", ""X"")
+                    SELECT
+                      ""foo_U"".""C1"",
+                      ""foo_U"".""C2"",
+                      X'' AS ""C11"",
+                      ""foo_U"".""Y"" AS ""Y"",
+                      X'' AS ""C10"",
+                      ""foo_U"".""C7"",
+                      ""foo_U"".""C8"",
+                      ""foo_U"".""C9"",
+                      ""foo_U"".""X"" AS ""X""
+                    FROM ""foo_U"";",
+                    "DROP TABLE \"foo_U\";",
+                    "ALTER TABLE \"__foo_U__{GUID}__\" RENAME TO \"foo_U\";",
+                    "CREATE UNIQUE INDEX \"foo_UIX_U_C11A\" ON \"foo_U\" (\"C11\" ASC);",
+                    "CREATE INDEX \"foo_IX_2\" ON \"foo_U\" (\"C7\" ASC);",
+                    "CREATE INDEX \"foo_IX_U_C2A_XD\" ON \"foo_U\" (\"C2\" ASC, \"X\" DESC);",
+                    "CREATE UNIQUE INDEX \"foo_UIX_T_C8A\" ON \"foo_U\" (\"C8\" ASC);",
+                    "CREATE UNIQUE INDEX \"foo_UIX_T_C9A\" ON \"foo_U\" (\"C9\" ASC);" );
+        }
+    }
+
+    [Fact]
     public void MultipleTableChangesWithoutReconstruction_ShouldGenerateCorrectScript()
     {
         var schema = SqliteDatabaseBuilderMock.Create().Schemas.Create( "foo" );

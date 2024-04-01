@@ -667,6 +667,73 @@ public partial class MySqlTableBuilderTests : TestsBase
     }
 
     [Fact]
+    public void ConstraintChainNameSwap_ShouldGenerateCorrectScript()
+    {
+        var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var sut = schema.Objects.CreateTable( "T" );
+        var a = sut.Constraints.SetPrimaryKey( "A", sut.Columns.Create( "P" ).Asc() );
+        var b = sut.Constraints.CreateCheck( "B", SqlNode.True() );
+        var c = sut.Constraints.CreateIndex( "C", sut.Columns.Create( "I" ).Asc() );
+        var d = sut.Constraints.CreateCheck( "D", SqlNode.True() );
+
+        var actionCount = schema.Database.GetPendingActionCount();
+        a.SetName( "E" );
+        b.SetName( "A" );
+        c.SetName( "B" );
+        d.SetName( "C" );
+        a.SetName( "D" );
+        var actions = schema.Database.GetLastPendingActions( actionCount );
+
+        using ( new AssertionScope() )
+        {
+            actions.Should().HaveCount( 1 );
+            actions.ElementAtOrDefault( 0 )
+                .Sql.Should()
+                .SatisfySql(
+                    @"ALTER TABLE `foo`.`T`
+                      DROP PRIMARY KEY,
+                      DROP CHECK `B`,
+                      DROP CHECK `D`,
+                      RENAME INDEX `C` TO `B`,
+                      ADD CONSTRAINT `D` PRIMARY KEY (`P`(500) ASC),
+                      ADD CONSTRAINT `A` CHECK (TRUE),
+                      ADD CONSTRAINT `C` CHECK (TRUE);" );
+        }
+    }
+
+    [Fact]
+    public void MultipleConstraintNameChange_ShouldGenerateCorrectScript_WhenThereAreTemporaryNameConflicts()
+    {
+        var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var sut = schema.Objects.CreateTable( "T" );
+        var a = sut.Constraints.SetPrimaryKey( "A", sut.Columns.Create( "P" ).Asc() );
+        var b = sut.Constraints.CreateCheck( "B", SqlNode.True() );
+        var c = sut.Constraints.CreateIndex( "C", sut.Columns.Create( "I" ).Asc() );
+
+        var actionCount = schema.Database.GetPendingActionCount();
+        a.SetName( "X" );
+        b.SetName( "Y" );
+        c.SetName( "D" );
+        b.SetName( "C" );
+        a.SetName( "B" );
+        var actions = schema.Database.GetLastPendingActions( actionCount );
+
+        using ( new AssertionScope() )
+        {
+            actions.Should().HaveCount( 1 );
+            actions.ElementAtOrDefault( 0 )
+                .Sql.Should()
+                .SatisfySql(
+                    @"ALTER TABLE `foo`.`T`
+                      DROP PRIMARY KEY,
+                      DROP CHECK `B`,
+                      RENAME INDEX `C` TO `D`,
+                      ADD CONSTRAINT `B` PRIMARY KEY (`P`(500) ASC),
+                      ADD CONSTRAINT `C` CHECK (TRUE);" );
+        }
+    }
+
+    [Fact]
     public void MultipleTableChanges_ShouldGenerateCorrectScript()
     {
         var schema = MySqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
@@ -675,14 +742,31 @@ public partial class MySqlTableBuilderTests : TestsBase
         var c2 = sut.Columns.Create( "C2" ).SetType<int>();
         var c3 = sut.Columns.Create( "C3" ).SetType<int>();
         var c4 = sut.Columns.Create( "C4" ).SetType<int>();
-        var ix = sut.Constraints.CreateIndex( c2.Asc() );
+        var c5 = sut.Columns.Create( "C5" ).SetType<int>().SetDefaultValue( 123 );
+        var c6 = sut.Columns.Create( "C6" ).SetType<int>().SetComputation( SqlColumnComputation.Stored( SqlNode.Literal( 42 ) ) );
+        var ix1 = sut.Constraints.CreateIndex( c2.Asc() );
+        var ix2 = sut.Constraints.CreateIndex( sut.Columns.Create( "C7" ).Asc() );
+        var chk1 = sut.Constraints.CreateCheck( "CHK_1", SqlNode.True() );
+        var chk2 = sut.Constraints.CreateCheck( "CHK_2", SqlNode.True() );
+        var fk1 = sut.Constraints.CreateForeignKey( ix2, sut.Constraints.CreateUniqueIndex( sut.Columns.Create( "C8" ).Asc() ) );
+        var fk2 = sut.Constraints.CreateForeignKey( "FK", ix2, sut.Constraints.CreateUniqueIndex( sut.Columns.Create( "C9" ).Asc() ) );
 
         var actionCount = schema.Database.GetPendingActionCount();
         sut.SetName( "U" );
-        c3.SetName( "X" );
+        c3.SetName( "X" ).MarkAsNullable().SetType<long>();
         c4.Remove();
-        ix.Remove();
+        c5.SetComputation( SqlColumnComputation.Stored( SqlNode.Literal( 1 ) ) );
+        c6.SetComputation( null ).SetName( "Y" );
+        ix1.Remove();
+        ix2.SetName( "IX_2" );
+        fk1.Remove();
+        fk2.SetName( "FK_2" );
+        chk1.Remove();
+        chk2.SetName( "CHK_1" );
         sut.Constraints.CreateIndex( c2.Asc(), c3.Desc() );
+        sut.Constraints.CreateCheck( "CHK_3", SqlNode.True() );
+        sut.Constraints.SetPrimaryKey( sut.Columns.Create( "C10" ).Asc() );
+        sut.Constraints.CreateForeignKey( ix2, sut.Constraints.CreateUniqueIndex( sut.Columns.Create( "C11" ).Asc() ) );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )
@@ -692,11 +776,29 @@ public partial class MySqlTableBuilderTests : TestsBase
             actions.ElementAtOrDefault( 1 )
                 .Sql.Should()
                 .SatisfySql(
+                    @"ALTER TABLE `foo`.`U`
+                      DROP FOREIGN KEY `FK_T_C7_REF_T`,
+                      DROP FOREIGN KEY `FK`;",
                     "DROP INDEX `IX_T_C2A` ON `foo`.`U`;",
                     @"ALTER TABLE `foo`.`U`
+                      DROP PRIMARY KEY,
+                      DROP CHECK `CHK_1`,
+                      DROP CHECK `CHK_2`,
+                      RENAME INDEX `IX_T_C7A` TO `IX_2`,
                       DROP COLUMN `C4`,
-                      CHANGE COLUMN `C3` `X` INT NOT NULL;",
-                    "CREATE INDEX `IX_U_C2A_XD` ON `foo`.`U` (`C2` ASC, `X` DESC);" );
+                      CHANGE COLUMN `C3` `X` BIGINT,
+                      CHANGE COLUMN `C5` `C5` INT GENERATED ALWAYS AS (1) STORED NOT NULL,
+                      CHANGE COLUMN `C6` `Y` INT NOT NULL,
+                      ADD COLUMN `C10` LONGBLOB NOT NULL DEFAULT (X''),
+                      ADD COLUMN `C11` LONGBLOB NOT NULL DEFAULT (X''),
+                      ADD CONSTRAINT `PK_U` PRIMARY KEY (`C10`(500) ASC),
+                      ADD CONSTRAINT `CHK_1` CHECK (TRUE),
+                      ADD CONSTRAINT `CHK_3` CHECK (TRUE);",
+                    "CREATE INDEX `IX_U_C2A_XD` ON `foo`.`U` (`C2` ASC, `X` DESC);",
+                    "CREATE UNIQUE INDEX `UIX_U_C11A` ON `foo`.`U` (`C11`(500) ASC);",
+                    @"ALTER TABLE `foo`.`U`
+                      ADD CONSTRAINT `FK_2` FOREIGN KEY (`C7`) REFERENCES `foo`.`U` (`C9`) ON DELETE RESTRICT ON UPDATE RESTRICT,
+                      ADD CONSTRAINT `FK_U_C7_REF_U` FOREIGN KEY (`C7`) REFERENCES `foo`.`U` (`C11`) ON DELETE RESTRICT ON UPDATE RESTRICT;" );
         }
     }
 

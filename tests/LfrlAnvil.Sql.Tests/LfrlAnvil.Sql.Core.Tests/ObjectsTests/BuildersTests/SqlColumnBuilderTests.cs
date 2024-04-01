@@ -682,6 +682,32 @@ public class SqlColumnBuilderTests : TestsBase
     }
 
     [Fact]
+    public void SetDefaultValue_ShouldUpdateDefaultValue_WhenOldValueIsNull()
+    {
+        var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
+        var table = schema.Objects.CreateTable( "T" );
+        table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
+        var sut = table.Columns.Create( "C2" );
+
+        var actionCount = schema.Database.GetPendingActionCount();
+        var result = sut.SetDefaultValue( 123 );
+        var actions = schema.Database.GetLastPendingActions( actionCount );
+
+        using ( new AssertionScope() )
+        {
+            result.Should().BeSameAs( sut );
+            sut.DefaultValue.Should().BeEquivalentTo( SqlNode.Literal( 123 ) );
+
+            actions.Should().HaveCount( 1 );
+            actions.ElementAtOrDefault( 0 )
+                .Sql.Should()
+                .Be(
+                    @"ALTER [Table] foo.T
+  ALTER [Column] foo.T.C2 ([4] : 'DefaultValue' (LfrlAnvil.Sql.Expressions.SqlExpressionNode) FROM <null>);" );
+        }
+    }
+
+    [Fact]
     public void SetDefaultValue_ShouldUpdateDefaultValue_WhenNewValueIsValidComplexExpression()
     {
         var schema = SqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
