@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics.Contracts;
+using LfrlAnvil.PostgreSql.Internal;
 using LfrlAnvil.Sql;
 using LfrlAnvil.Sql.Objects;
 using LfrlAnvil.Sql.Objects.Builders;
@@ -31,6 +32,9 @@ public sealed class PostgreSqlDatabaseBuilder : SqlDatabaseBuilder
     {
         Assume.IsDefined( virtualGeneratedColumnStorageResolution );
         VirtualGeneratedColumnStorageResolution = virtualGeneratedColumnStorageResolution;
+
+        if ( ! defaultSchemaName.Equals( PostgreSqlHelpers.DefaultVersionHistoryName.Schema ) )
+            Schemas.Create( PostgreSqlHelpers.DefaultVersionHistoryName.Schema );
     }
 
     public SqlOptionalFunctionalityResolution VirtualGeneratedColumnStorageResolution { get; }

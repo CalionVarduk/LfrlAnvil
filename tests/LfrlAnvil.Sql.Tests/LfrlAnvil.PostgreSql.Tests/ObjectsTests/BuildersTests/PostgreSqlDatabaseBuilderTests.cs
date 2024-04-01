@@ -3,6 +3,7 @@ using LfrlAnvil.PostgreSql.Internal;
 using LfrlAnvil.PostgreSql.Objects.Builders;
 using LfrlAnvil.PostgreSql.Tests.Helpers;
 using LfrlAnvil.Sql;
+using LfrlAnvil.Sql.Expressions.Visitors;
 using LfrlAnvil.Sql.Internal;
 using LfrlAnvil.Sql.Objects.Builders;
 using LfrlAnvil.TestExtensions.FluentAssertions;
@@ -42,11 +43,49 @@ public partial class PostgreSqlDatabaseBuilderTests : TestsBase
     }
 
     [Fact]
+    public void Ctor_ShouldCreateBuilderWithDefaultSchemaDifferentThenPublic()
+    {
+        var sut = PostgreSqlDatabaseBuilderMock.Create( defaultSchemaName: "common" );
+
+        using ( new AssertionScope() )
+        {
+            sut.Schemas.Count.Should().Be( 2 );
+            sut.Schemas.Database.Should().BeSameAs( sut );
+            sut.Schemas.Should().BeSequentiallyEqualTo( sut.Schemas.Default, sut.Schemas.TryGet( "public" )! );
+
+            sut.Schemas.Default.Database.Should().BeSameAs( sut );
+            sut.Schemas.Default.Name.Should().Be( "common" );
+            sut.Schemas.Default.Objects.Should().BeEmpty();
+            sut.Schemas.Default.Objects.Schema.Should().BeSameAs( sut.Schemas.Default );
+
+            sut.Dialect.Should().BeSameAs( PostgreSqlDialect.Instance );
+            sut.ServerVersion.Should().Be( "0.0.0" );
+
+            sut.Changes.Database.Should().BeSameAs( sut );
+            sut.Changes.Mode.Should().Be( SqlDatabaseCreateMode.DryRun );
+            sut.Changes.IsAttached.Should().BeTrue();
+            sut.Changes.ActiveObject.Should().BeNull();
+            sut.Changes.ActiveObjectExistenceState.Should().Be( default( SqlObjectExistenceState ) );
+            sut.Changes.IsActive.Should().BeTrue();
+            sut.Changes.GetPendingActions().ToArray().Should().BeEmpty();
+        }
+    }
+
+    [Fact]
     public void AddConnectionChangeCallback_ShouldNotThrow()
     {
         var sut = PostgreSqlDatabaseBuilderMock.Create();
         var result = sut.AddConnectionChangeCallback( _ => { } );
         result.Should().BeSameAs( sut );
+    }
+
+    [Fact]
+    public void Helpers_AppendCreateDatabase_ShouldReturnCorrectResult()
+    {
+        var interpreter = new PostgreSqlNodeInterpreter( PostgreSqlNodeInterpreterOptions.Default, SqlNodeInterpreterContext.Create() );
+        PostgreSqlHelpers.AppendCreateDatabase( interpreter, "foo" );
+        var result = interpreter.Context.Sql.ToString();
+        result.Should().Be( "CREATE DATABASE \"foo\"" );
     }
 
     [Fact]

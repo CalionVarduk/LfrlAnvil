@@ -43,10 +43,8 @@ public sealed class SqliteDatabaseFactory : SqlDatabaseFactory<SqliteDatabase>
             : new SqliteConnection( sqliteConnectionString.ToString() );
     }
 
-    protected override SqliteDatabaseBuilder CreateDatabaseBuilder(
-        string defaultSchemaName,
-        DbConnection connection,
-        ref SqlDatabaseFactoryStatementExecutor executor)
+    [Pure]
+    protected override SqliteDatabaseBuilder CreateDatabaseBuilder(string defaultSchemaName, DbConnection connection)
     {
         var serverVersion = connection.ServerVersion;
         var defaultNames = Options.DefaultNamesCreator( serverVersion, defaultSchemaName );

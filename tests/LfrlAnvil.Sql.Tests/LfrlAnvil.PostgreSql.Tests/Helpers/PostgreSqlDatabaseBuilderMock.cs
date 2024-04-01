@@ -11,6 +11,7 @@ internal sealed class PostgreSqlDatabaseBuilderMock
     [Pure]
     internal static PostgreSqlDatabaseBuilder Create(
         SqlOptionalFunctionalityResolution virtualGeneratedColumnStorageResolution = SqlOptionalFunctionalityResolution.Ignore,
+        string? defaultSchemaName = null,
         params SqlColumnTypeDefinition[] typeDefinitions)
     {
         var typeBuilder = new PostgreSqlColumnTypeDefinitionProviderBuilder();
@@ -19,7 +20,7 @@ internal sealed class PostgreSqlDatabaseBuilderMock
 
         var result = new PostgreSqlDatabaseBuilder(
             "0.0.0",
-            PostgreSqlHelpers.DefaultVersionHistoryName.Schema,
+            defaultSchemaName ?? PostgreSqlHelpers.DefaultVersionHistoryName.Schema,
             new SqlDefaultObjectNameProvider(),
             new PostgreSqlDataTypeProvider(),
             new PostgreSqlColumnTypeDefinitionProvider( typeBuilder ),

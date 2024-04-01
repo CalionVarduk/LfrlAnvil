@@ -101,6 +101,12 @@ public static class PostgreSqlHelpers
         }
     }
 
+    public static void AppendCreateDatabase(SqlNodeInterpreter interpreter, string name)
+    {
+        interpreter.Context.Sql.Append( "CREATE" ).AppendSpace().Append( "DATABASE" ).AppendSpace();
+        interpreter.AppendDelimitedName( name );
+    }
+
     public static void AppendCreateSchema(SqlNodeInterpreter interpreter, string name)
     {
         interpreter.Context.Sql.Append( "CREATE" ).AppendSpace().Append( "SCHEMA" ).AppendSpace();

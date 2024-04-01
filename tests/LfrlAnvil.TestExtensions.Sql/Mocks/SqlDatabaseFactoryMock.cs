@@ -42,10 +42,8 @@ public sealed class SqlDatabaseFactoryMock : SqlDatabaseFactory<SqlDatabaseMock>
         return Connection;
     }
 
-    protected override SqlDatabaseBuilderMock CreateDatabaseBuilder(
-        string defaultSchemaName,
-        DbConnection connection,
-        ref SqlDatabaseFactoryStatementExecutor executor)
+    [Pure]
+    protected override SqlDatabaseBuilderMock CreateDatabaseBuilder(string defaultSchemaName, DbConnection connection)
     {
         var result = SqlDatabaseBuilderMock.Create( connection.ServerVersion, defaultSchemaName );
         foreach ( var callback in ConnectionChangeCallbacks )

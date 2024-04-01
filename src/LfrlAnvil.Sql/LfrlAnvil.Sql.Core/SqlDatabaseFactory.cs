@@ -45,16 +45,19 @@ public abstract class SqlDatabaseFactory<TDatabase> : ISqlDatabaseFactory
             connection.StateChange += stateChanges.Add;
             connection.Open();
 
-            var executor = new SqlDatabaseFactoryStatementExecutor( options );
             var versionHistoryName = options.VersionHistoryName ?? GetDefaultVersionHistoryName();
-            var builder = CreateDatabaseBuilder( versionHistoryName.Schema, connection, ref executor );
+            var builder = CreateDatabaseBuilder( versionHistoryName.Schema, connection );
             stateChanges.SetBuilder( builder );
 
             Assume.Equals( builder.Schemas.Default.Name, versionHistoryName.Schema );
             Assume.IsEmpty( builder.Schemas.Default.Objects );
-            Assume.ContainsExactly( builder.Schemas, 1 );
+            Assume.ContainsAtLeast( builder.Schemas, 1 );
 
+            var executor = new SqlDatabaseFactoryStatementExecutor( options );
             var nodeInterpreter = builder.NodeInterpreters.Create( SqlNodeInterpreterContext.Create( capacity: 256 ) );
+            FinalizeConnectionPreparations( connectionStringBuilder, connection, nodeInterpreter, ref executor );
+            Assume.Equals( connection.State, ConnectionState.Open );
+
             var versionHistoryTable = InitializeVersionHistoryTable(
                 builder,
                 versionHistoryName,
@@ -88,7 +91,7 @@ public abstract class SqlDatabaseFactory<TDatabase> : ISqlDatabaseFactory
                         options.VersionHistoryPersistenceMode );
 
                     versionHistoryTable.Remove();
-                    Assume.ContainsExactly( builder.Schemas, 1 );
+                    Assume.ContainsAtLeast( builder.Schemas, 1 );
                     Assume.IsEmpty( builder.Schemas.Default.Objects );
 
                     ApplyCommittedVersions( builder, stateChanges, versions.Committed );
@@ -116,7 +119,7 @@ public abstract class SqlDatabaseFactory<TDatabase> : ISqlDatabaseFactory
                 case SqlDatabaseCreateMode.DryRun:
                 {
                     versionHistoryTable.Remove();
-                    Assume.ContainsExactly( builder.Schemas, 1 );
+                    Assume.ContainsAtLeast( builder.Schemas, 1 );
                     Assume.IsEmpty( builder.Schemas.Default.Objects );
 
                     ApplyCommittedVersions( builder, stateChanges, versions.Committed );
@@ -137,7 +140,7 @@ public abstract class SqlDatabaseFactory<TDatabase> : ISqlDatabaseFactory
                 default:
                 {
                     versionHistoryTable.Remove();
-                    Assume.ContainsExactly( builder.Schemas, 1 );
+                    Assume.ContainsAtLeast( builder.Schemas, 1 );
                     Assume.IsEmpty( builder.Schemas.Default.Objects );
 
                     ApplyCommittedVersions( builder, stateChanges, versions.Committed );
@@ -174,10 +177,8 @@ public abstract class SqlDatabaseFactory<TDatabase> : ISqlDatabaseFactory
     [Pure]
     protected abstract DbConnection CreateConnection(DbConnectionStringBuilder connectionString);
 
-    protected abstract SqlDatabaseBuilder CreateDatabaseBuilder(
-        string defaultSchemaName,
-        DbConnection connection,
-        ref SqlDatabaseFactoryStatementExecutor executor);
+    [Pure]
+    protected abstract SqlDatabaseBuilder CreateDatabaseBuilder(string defaultSchemaName, DbConnection connection);
 
     protected abstract TDatabase CreateDatabase(
         SqlDatabaseBuilder builder,
@@ -189,6 +190,12 @@ public abstract class SqlDatabaseFactory<TDatabase> : ISqlDatabaseFactory
 
     [Pure]
     protected abstract SqlSchemaObjectName GetDefaultVersionHistoryName();
+
+    protected virtual void FinalizeConnectionPreparations(
+        DbConnectionStringBuilder connectionString,
+        DbConnection connection,
+        SqlNodeInterpreter nodeInterpreter,
+        ref SqlDatabaseFactoryStatementExecutor executor) { }
 
     protected abstract bool GetChangeTrackerAttachmentForVersionHistoryTableInit(
         SqlDatabaseChangeTracker changeTracker,
@@ -459,7 +466,7 @@ public abstract class SqlDatabaseFactory<TDatabase> : ISqlDatabaseFactory
         var ordinal = table.Columns.Create( SqlHelpers.VersionHistoryOrdinalName ).SetType<int>();
         table.Constraints.SetPrimaryKey( ordinal.Asc() );
 
-        Assume.ContainsExactly( table.Database.Schemas, 1 );
+        Assume.ContainsAtLeast( table.Database.Schemas, 1 );
         Assume.Equals( table.Schema.Name, name.Schema );
         Assume.Equals( table.Name, name.Object );
 

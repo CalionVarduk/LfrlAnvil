@@ -7,6 +7,8 @@ namespace LfrlAnvil.PostgreSql.Exceptions;
 
 internal static class Resources
 {
+    internal const string ConnectionStringMustIncludeDatabase = "PostgreSql connection string must include a database.";
+
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static string GeneratedColumnsWithVirtualStorageAreForbidden(PostgreSqlColumnBuilder column, SqlColumnComputation computation)
