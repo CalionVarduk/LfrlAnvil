@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Data.Common;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using LfrlAnvil.Extensions;
@@ -6,6 +8,7 @@ using LfrlAnvil.Sql;
 using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Expressions.Visitors;
 using LfrlAnvil.Sql.Internal;
+using Npgsql;
 
 namespace LfrlAnvil.PostgreSql.Internal;
 
@@ -18,6 +21,46 @@ public static class PostgreSqlHelpers
 
     public static readonly SqlSchemaObjectName DefaultVersionHistoryName =
         SqlSchemaObjectName.Create( "public", SqlHelpers.VersionHistoryName );
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static SqlConnectionStringEntry[] ExtractConnectionStringEntries(NpgsqlConnectionStringBuilder builder)
+    {
+        var i = 0;
+        var result = new SqlConnectionStringEntry[builder.Count];
+        foreach ( var e in (DbConnectionStringBuilder)builder )
+        {
+            var (key, value) = (KeyValuePair<string, object>)e;
+            result[i++] = new SqlConnectionStringEntry( key, value, IsMutableConnectionStringKey( key ) );
+        }
+
+        return result;
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static string ExtendConnectionString(ReadOnlyArray<SqlConnectionStringEntry> entries, string options)
+    {
+        var builder = new NpgsqlConnectionStringBuilder( options );
+        foreach ( var (key, value, isMutable) in entries )
+        {
+            if ( ! isMutable || ! builder.ShouldSerialize( key ) )
+                builder.Add( key, value );
+        }
+
+        return builder.ToString();
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static bool IsMutableConnectionStringKey(string key)
+    {
+        return ! key.Equals( "HOST", StringComparison.OrdinalIgnoreCase ) &&
+            ! key.Equals( "SERVER", StringComparison.OrdinalIgnoreCase ) &&
+            ! key.Equals( "PORT", StringComparison.OrdinalIgnoreCase ) &&
+            ! key.Equals( "DATABASE", StringComparison.OrdinalIgnoreCase ) &&
+            ! key.Equals( "DB", StringComparison.OrdinalIgnoreCase );
+    }
 
     [Pure]
     public static string GetDbLiteral(bool value)

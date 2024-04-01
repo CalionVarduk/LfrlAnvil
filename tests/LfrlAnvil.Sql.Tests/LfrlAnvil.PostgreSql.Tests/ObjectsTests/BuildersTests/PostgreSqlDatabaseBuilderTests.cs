@@ -1,9 +1,12 @@
 ﻿using LfrlAnvil.PostgreSql.Extensions;
+using LfrlAnvil.PostgreSql.Internal;
 using LfrlAnvil.PostgreSql.Objects.Builders;
 using LfrlAnvil.PostgreSql.Tests.Helpers;
 using LfrlAnvil.Sql;
+using LfrlAnvil.Sql.Internal;
 using LfrlAnvil.Sql.Objects.Builders;
 using LfrlAnvil.TestExtensions.FluentAssertions;
+using Npgsql;
 
 namespace LfrlAnvil.PostgreSql.Tests.ObjectsTests.BuildersTests;
 
@@ -44,6 +47,38 @@ public partial class PostgreSqlDatabaseBuilderTests : TestsBase
         var sut = PostgreSqlDatabaseBuilderMock.Create();
         var result = sut.AddConnectionChangeCallback( _ => { } );
         result.Should().BeSameAs( sut );
+    }
+
+    [Fact]
+    public void Helpers_ExtractConnectionStringEntries_ShouldReturnCorrectResult()
+    {
+        var connectionString = new NpgsqlConnectionStringBuilder(
+            "Host=localhost;Port=5431;Database=tests;UserID=admin;Password=password;Pooling=False" );
+
+        var result = PostgreSqlHelpers.ExtractConnectionStringEntries( connectionString );
+
+        result.Should()
+            .BeSequentiallyEqualTo(
+                new SqlConnectionStringEntry( "Host", "localhost", false ),
+                new SqlConnectionStringEntry( "Port", "5431", false ),
+                new SqlConnectionStringEntry( "Database", "tests", false ),
+                new SqlConnectionStringEntry( "Username", "admin", true ),
+                new SqlConnectionStringEntry( "Password", "password", true ),
+                new SqlConnectionStringEntry( "Pooling", "False", true ) );
+    }
+
+    [Fact]
+    public void Helpers_ExtendConnectionString_ShouldReturnCorrectResult()
+    {
+        var connectionString = new NpgsqlConnectionStringBuilder(
+            "Host=localhost;Port=5431;Database=tests;UserID=admin;Password=password;Pooling=False" );
+
+        var entries = PostgreSqlHelpers.ExtractConnectionStringEntries( connectionString );
+        var result = PostgreSqlHelpers.ExtendConnectionString(
+            entries,
+            "Port=5432;Database=tests2;UserID=tester;Password=pwd;Pooling=true" );
+
+        result.Should().Be( "Port=5431;Database=tests;Username=tester;Password=pwd;Pooling=True;Host=localhost" );
     }
 
     [Fact]
