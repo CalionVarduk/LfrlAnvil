@@ -29,6 +29,7 @@ public readonly struct SqliteDatabaseFactoryOptions
     private SqliteDatabaseFactoryOptions(
         bool isConnectionPermanent,
         bool areForeignKeyChecksDisabled,
+        SqliteDatabaseEncoding? encoding,
         SqlDefaultObjectNameProviderCreator<SqlDefaultObjectNameProvider>? defaultNamesCreator,
         SqlColumnTypeDefinitionProviderCreator<SqliteDataTypeProvider, SqliteColumnTypeDefinitionProvider>? typeDefinitionsCreator,
         SqlNodeInterpreterFactoryCreator<SqliteDataTypeProvider, SqliteColumnTypeDefinitionProvider, SqliteNodeInterpreterFactory>?
@@ -36,6 +37,7 @@ public readonly struct SqliteDatabaseFactoryOptions
     {
         IsConnectionPermanent = isConnectionPermanent;
         AreForeignKeyChecksDisabled = areForeignKeyChecksDisabled;
+        Encoding = encoding;
         _defaultNamesCreator = defaultNamesCreator;
         _typeDefinitionsCreator = typeDefinitionsCreator;
         _nodeInterpretersCreator = nodeInterpretersCreator;
@@ -43,6 +45,7 @@ public readonly struct SqliteDatabaseFactoryOptions
 
     public bool IsConnectionPermanent { get; }
     public bool AreForeignKeyChecksDisabled { get; }
+    public SqliteDatabaseEncoding? Encoding { get; }
 
     public SqlDefaultObjectNameProviderCreator<SqlDefaultObjectNameProvider> DefaultNamesCreator =>
         _defaultNamesCreator ?? SqlHelpers.DefaultNamesCreator;
@@ -61,6 +64,7 @@ public readonly struct SqliteDatabaseFactoryOptions
         return new SqliteDatabaseFactoryOptions(
             enabled,
             AreForeignKeyChecksDisabled,
+            Encoding,
             _defaultNamesCreator,
             _typeDefinitionsCreator,
             _nodeInterpretersCreator );
@@ -73,6 +77,23 @@ public readonly struct SqliteDatabaseFactoryOptions
         return new SqliteDatabaseFactoryOptions(
             IsConnectionPermanent,
             ! enabled,
+            Encoding,
+            _defaultNamesCreator,
+            _typeDefinitionsCreator,
+            _nodeInterpretersCreator );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public SqliteDatabaseFactoryOptions SetEncoding(SqliteDatabaseEncoding? value)
+    {
+        if ( value is not null )
+            Ensure.IsDefined( value.Value );
+
+        return new SqliteDatabaseFactoryOptions(
+            IsConnectionPermanent,
+            AreForeignKeyChecksDisabled,
+            value,
             _defaultNamesCreator,
             _typeDefinitionsCreator,
             _nodeInterpretersCreator );
@@ -85,6 +106,7 @@ public readonly struct SqliteDatabaseFactoryOptions
         return new SqliteDatabaseFactoryOptions(
             IsConnectionPermanent,
             AreForeignKeyChecksDisabled,
+            Encoding,
             creator,
             _typeDefinitionsCreator,
             _nodeInterpretersCreator );
@@ -98,6 +120,7 @@ public readonly struct SqliteDatabaseFactoryOptions
         return new SqliteDatabaseFactoryOptions(
             IsConnectionPermanent,
             AreForeignKeyChecksDisabled,
+            Encoding,
             _defaultNamesCreator,
             creator,
             _nodeInterpretersCreator );
@@ -111,6 +134,7 @@ public readonly struct SqliteDatabaseFactoryOptions
         return new SqliteDatabaseFactoryOptions(
             IsConnectionPermanent,
             AreForeignKeyChecksDisabled,
+            Encoding,
             _defaultNamesCreator,
             _typeDefinitionsCreator,
             creator );

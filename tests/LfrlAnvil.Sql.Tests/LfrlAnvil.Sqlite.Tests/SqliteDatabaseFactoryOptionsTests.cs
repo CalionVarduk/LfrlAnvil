@@ -29,6 +29,7 @@ public class SqliteDatabaseFactoryOptionsTests : TestsBase
         {
             sut.IsConnectionPermanent.Should().BeFalse();
             sut.AreForeignKeyChecksDisabled.Should().BeFalse();
+            sut.Encoding.Should().BeNull();
             sut.DefaultNamesCreator.Should().BeSameAs( SqlHelpers.DefaultNamesCreator );
             sut.TypeDefinitionsCreator.Should().BeSameAs( SqliteDatabaseFactoryOptions.BaseTypeDefinitionsCreator );
             sut.NodeInterpretersCreator.Should().BeSameAs( SqliteDatabaseFactoryOptions.BaseNodeInterpretersCreator );
@@ -47,6 +48,7 @@ public class SqliteDatabaseFactoryOptionsTests : TestsBase
         {
             result.IsConnectionPermanent.Should().Be( enabled );
             result.AreForeignKeyChecksDisabled.Should().Be( sut.AreForeignKeyChecksDisabled );
+            result.Encoding.Should().Be( sut.Encoding );
             result.DefaultNamesCreator.Should().BeSameAs( sut.DefaultNamesCreator );
             result.TypeDefinitionsCreator.Should().BeSameAs( sut.TypeDefinitionsCreator );
             result.NodeInterpretersCreator.Should().BeSameAs( sut.NodeInterpretersCreator );
@@ -65,6 +67,29 @@ public class SqliteDatabaseFactoryOptionsTests : TestsBase
         {
             result.IsConnectionPermanent.Should().Be( sut.IsConnectionPermanent );
             result.AreForeignKeyChecksDisabled.Should().Be( ! enabled );
+            result.Encoding.Should().Be( sut.Encoding );
+            result.DefaultNamesCreator.Should().BeSameAs( sut.DefaultNamesCreator );
+            result.TypeDefinitionsCreator.Should().BeSameAs( sut.TypeDefinitionsCreator );
+            result.NodeInterpretersCreator.Should().BeSameAs( sut.NodeInterpretersCreator );
+        }
+    }
+
+    [Theory]
+    [InlineData( null )]
+    [InlineData( SqliteDatabaseEncoding.UTF_8 )]
+    [InlineData( SqliteDatabaseEncoding.UTF_16 )]
+    [InlineData( SqliteDatabaseEncoding.UTF_16_LE )]
+    [InlineData( SqliteDatabaseEncoding.UTF_16_BE )]
+    public void SetEncoding_ShouldReturnCorrectResult(SqliteDatabaseEncoding? value)
+    {
+        var sut = SqliteDatabaseFactoryOptions.Default;
+        var result = sut.SetEncoding( value );
+
+        using ( new AssertionScope() )
+        {
+            result.IsConnectionPermanent.Should().Be( sut.IsConnectionPermanent );
+            result.AreForeignKeyChecksDisabled.Should().Be( sut.AreForeignKeyChecksDisabled );
+            result.Encoding.Should().Be( value );
             result.DefaultNamesCreator.Should().BeSameAs( sut.DefaultNamesCreator );
             result.TypeDefinitionsCreator.Should().BeSameAs( sut.TypeDefinitionsCreator );
             result.NodeInterpretersCreator.Should().BeSameAs( sut.NodeInterpretersCreator );
@@ -82,6 +107,7 @@ public class SqliteDatabaseFactoryOptionsTests : TestsBase
         {
             result.IsConnectionPermanent.Should().Be( sut.IsConnectionPermanent );
             result.AreForeignKeyChecksDisabled.Should().Be( sut.AreForeignKeyChecksDisabled );
+            result.Encoding.Should().Be( sut.Encoding );
             result.DefaultNamesCreator.Should().BeSameAs( creator );
             result.TypeDefinitionsCreator.Should().BeSameAs( sut.TypeDefinitionsCreator );
             result.NodeInterpretersCreator.Should().BeSameAs( sut.NodeInterpretersCreator );
@@ -98,6 +124,7 @@ public class SqliteDatabaseFactoryOptionsTests : TestsBase
         {
             result.IsConnectionPermanent.Should().Be( sut.IsConnectionPermanent );
             result.AreForeignKeyChecksDisabled.Should().Be( sut.AreForeignKeyChecksDisabled );
+            result.Encoding.Should().Be( sut.Encoding );
             result.DefaultNamesCreator.Should().BeSameAs( SqlHelpers.DefaultNamesCreator );
             result.TypeDefinitionsCreator.Should().BeSameAs( sut.TypeDefinitionsCreator );
             result.NodeInterpretersCreator.Should().BeSameAs( sut.NodeInterpretersCreator );
@@ -115,6 +142,7 @@ public class SqliteDatabaseFactoryOptionsTests : TestsBase
         {
             result.IsConnectionPermanent.Should().Be( sut.IsConnectionPermanent );
             result.AreForeignKeyChecksDisabled.Should().Be( sut.AreForeignKeyChecksDisabled );
+            result.Encoding.Should().Be( sut.Encoding );
             result.DefaultNamesCreator.Should().BeSameAs( sut.DefaultNamesCreator );
             result.TypeDefinitionsCreator.Should().BeSameAs( creator );
             result.NodeInterpretersCreator.Should().BeSameAs( sut.NodeInterpretersCreator );
@@ -131,6 +159,7 @@ public class SqliteDatabaseFactoryOptionsTests : TestsBase
         {
             result.IsConnectionPermanent.Should().Be( sut.IsConnectionPermanent );
             result.AreForeignKeyChecksDisabled.Should().Be( sut.AreForeignKeyChecksDisabled );
+            result.Encoding.Should().Be( sut.Encoding );
             result.DefaultNamesCreator.Should().BeSameAs( sut.DefaultNamesCreator );
             result.TypeDefinitionsCreator.Should().BeSameAs( SqliteDatabaseFactoryOptions.BaseTypeDefinitionsCreator );
             result.NodeInterpretersCreator.Should().BeSameAs( sut.NodeInterpretersCreator );
@@ -151,6 +180,7 @@ public class SqliteDatabaseFactoryOptionsTests : TestsBase
         {
             result.IsConnectionPermanent.Should().Be( sut.IsConnectionPermanent );
             result.AreForeignKeyChecksDisabled.Should().Be( sut.AreForeignKeyChecksDisabled );
+            result.Encoding.Should().Be( sut.Encoding );
             result.DefaultNamesCreator.Should().BeSameAs( sut.DefaultNamesCreator );
             result.TypeDefinitionsCreator.Should().BeSameAs( sut.TypeDefinitionsCreator );
             result.NodeInterpretersCreator.Should().BeSameAs( creator );
@@ -167,6 +197,7 @@ public class SqliteDatabaseFactoryOptionsTests : TestsBase
         {
             result.IsConnectionPermanent.Should().Be( sut.IsConnectionPermanent );
             result.AreForeignKeyChecksDisabled.Should().Be( sut.AreForeignKeyChecksDisabled );
+            result.Encoding.Should().Be( sut.Encoding );
             result.DefaultNamesCreator.Should().BeSameAs( sut.DefaultNamesCreator );
             result.TypeDefinitionsCreator.Should().BeSameAs( sut.TypeDefinitionsCreator );
             result.NodeInterpretersCreator.Should().BeSameAs( SqliteDatabaseFactoryOptions.BaseNodeInterpretersCreator );

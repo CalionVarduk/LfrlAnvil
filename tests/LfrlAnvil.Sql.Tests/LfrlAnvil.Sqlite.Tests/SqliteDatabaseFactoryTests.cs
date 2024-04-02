@@ -364,6 +364,27 @@ public class SqliteDatabaseFactoryTests : TestsBase
         }
     }
 
+    [Theory]
+    [InlineData( SqliteDatabaseEncoding.UTF_8, "UTF-8" )]
+    [InlineData( SqliteDatabaseEncoding.UTF_16, "UTF-16??" )]
+    [InlineData( SqliteDatabaseEncoding.UTF_16_LE, "UTF-16le" )]
+    [InlineData( SqliteDatabaseEncoding.UTF_16_BE, "UTF-16be" )]
+    public void Create_ShouldSetDatabaseEncoding_WhenOptionsContainCustomEncoding(SqliteDatabaseEncoding encoding, string expected)
+    {
+        var sut = new SqliteDatabaseFactory( SqliteDatabaseFactoryOptions.Default.SetEncoding( encoding ) );
+
+        var result = sut.Create(
+            "DataSource=:memory:",
+            new SqlDatabaseVersionHistory(),
+            SqlCreateDatabaseOptions.Default.SetMode( SqlDatabaseCreateMode.Commit ) );
+
+        using var cmd = result.Database.Connector.Connect().CreateCommand();
+        cmd.CommandText = "PRAGMA encoding;";
+        var actual = cmd.ExecuteScalar() as string;
+
+        actual.Should().MatchRegex( expected );
+    }
+
     [Fact]
     public void Create_ShouldReturnDatabaseWithCustomGetCurrentDateFunction()
     {

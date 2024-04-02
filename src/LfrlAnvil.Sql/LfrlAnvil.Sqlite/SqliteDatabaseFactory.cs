@@ -123,6 +123,10 @@ public sealed class SqliteDatabaseFactory : SqlDatabaseFactory<SqliteDatabase>
         using var command = connection.CreateCommand();
         command.CommandText = sql;
         var exists = executor.ExecuteForVersionHistory( command, SqlHelpers.ExecuteBoolScalarDelegate );
+
+        if ( Options.Encoding is not null && ! exists )
+            SetEncoding( command, Options.Encoding.Value, ref executor );
+
         return ! exists;
     }
 
@@ -169,6 +173,21 @@ public sealed class SqliteDatabaseFactory : SqlDatabaseFactory<SqliteDatabase>
         var result = new SqliteDatabase( builder, connector, version, versionHistoryRecordsQuery );
         connector.SetDatabase( result );
         return result;
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    private static void SetEncoding(DbCommand command, SqliteDatabaseEncoding encoding, ref SqlDatabaseFactoryStatementExecutor executor)
+    {
+        var encodingName = encoding switch
+        {
+            SqliteDatabaseEncoding.UTF_8 => "UTF-8",
+            SqliteDatabaseEncoding.UTF_16 => "UTF-16",
+            SqliteDatabaseEncoding.UTF_16_LE => "UTF-16le",
+            _ => "UTF-16be"
+        };
+
+        command.CommandText = $"PRAGMA encoding = '{encodingName}';";
+        executor.ExecuteForVersionHistory( command, SqlHelpers.ExecuteNonQueryDelegate );
     }
 
     private static void FunctionInitializer(SqlDatabaseConnectionChangeEvent @event)
