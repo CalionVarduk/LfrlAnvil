@@ -16,13 +16,12 @@ internal sealed class SqliteColumnTypeDefinitionTimeOnly : SqliteColumnTypeDefin
     [Pure]
     public override string ToDbLiteral(TimeOnly value)
     {
-        const string format = $@"\'{SqlHelpers.TimeFormat}\'";
-        return value.ToString( format, CultureInfo.InvariantCulture );
+        return value.ToString( SqlHelpers.TimeFormatTickQuoted, CultureInfo.InvariantCulture );
     }
 
     [Pure]
     public override object ToParameterValue(TimeOnly value)
     {
-        return value.ToString( SqlHelpers.TimeFormat, CultureInfo.InvariantCulture );
+        return value.ToString( SqlHelpers.TimeFormatTick, CultureInfo.InvariantCulture );
     }
 }

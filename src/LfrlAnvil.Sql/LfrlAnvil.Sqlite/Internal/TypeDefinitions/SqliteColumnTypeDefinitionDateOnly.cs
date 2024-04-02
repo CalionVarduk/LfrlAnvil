@@ -16,8 +16,7 @@ internal sealed class SqliteColumnTypeDefinitionDateOnly : SqliteColumnTypeDefin
     [Pure]
     public override string ToDbLiteral(DateOnly value)
     {
-        const string format = $@"\'{SqlHelpers.DateFormat}\'";
-        return value.ToString( format, CultureInfo.InvariantCulture );
+        return value.ToString( SqlHelpers.DateFormatQuoted, CultureInfo.InvariantCulture );
     }
 
     [Pure]

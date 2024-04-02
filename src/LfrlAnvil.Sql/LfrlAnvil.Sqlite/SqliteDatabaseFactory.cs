@@ -122,7 +122,7 @@ public sealed class SqliteDatabaseFactory : SqlDatabaseFactory<SqliteDatabase>
 
         using var command = connection.CreateCommand();
         command.CommandText = sql;
-        var exists = executor.ExecuteForVersionHistory( command, static cmd => Convert.ToBoolean( cmd.ExecuteScalar() ) );
+        var exists = executor.ExecuteForVersionHistory( command, SqlHelpers.ExecuteBoolScalarDelegate );
         return ! exists;
     }
 

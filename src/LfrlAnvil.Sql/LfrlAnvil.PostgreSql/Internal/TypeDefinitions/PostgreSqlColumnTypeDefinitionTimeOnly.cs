@@ -15,7 +15,7 @@ internal sealed class PostgreSqlColumnTypeDefinitionTimeOnly : PostgreSqlColumnT
     [Pure]
     public override string ToDbLiteral(TimeOnly value)
     {
-        return value.ToString( "TI\\ME\\'HH:mm:ss.ffffff\\'", CultureInfo.InvariantCulture );
+        return value.ToString( PostgreSqlHelpers.TimeFormatQuoted, CultureInfo.InvariantCulture );
     }
 
     [Pure]

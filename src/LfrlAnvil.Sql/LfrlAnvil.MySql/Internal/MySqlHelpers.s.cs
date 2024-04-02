@@ -16,6 +16,8 @@ internal static class MySqlHelpers
     public static readonly SqlSchemaObjectName DefaultVersionHistoryName = SqlSchemaObjectName.Create( "common", "__VersionHistory" );
     public const string GuidFunctionName = "GUID";
     public const string DropIndexIfExistsProcedureName = "_DROP_INDEX_IF_EXISTS";
+    public const string DateFormatQuoted = $"DATE{SqlHelpers.DateFormatQuoted}";
+    public const string TimeFormatQuoted = $@"TI\ME{SqlHelpers.TimeFormatMicrosecondQuoted}";
     public const string DefaultUpdateSourceAlias = "new";
     public const int DefaultIndexPrefixLength = 500;
 

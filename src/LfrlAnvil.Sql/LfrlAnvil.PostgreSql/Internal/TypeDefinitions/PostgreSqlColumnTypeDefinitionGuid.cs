@@ -11,7 +11,7 @@ internal sealed class PostgreSqlColumnTypeDefinitionGuid : PostgreSqlColumnTypeD
     [Pure]
     public override string ToDbLiteral(Guid value)
     {
-        return $"'{value}'";
+        return PostgreSqlHelpers.GetDbLiteral( value );
     }
 
     [Pure]

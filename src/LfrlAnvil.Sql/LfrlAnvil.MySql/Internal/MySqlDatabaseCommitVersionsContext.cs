@@ -37,6 +37,6 @@ internal sealed class MySqlDatabaseCommitVersionsContext : SqlDatabaseCommitVers
         pVersionRevision.Value = version.Revision >= 0 ? pVersionRevisionType.TryToParameterValue( version.Revision ) : DBNull.Value;
         pDescription.Value = pDescriptionType.TryToParameterValue( description );
         pCommitDateUtc.Value = pCommitDateUtcType.TryToParameterValue(
-            DateTime.UtcNow.ToString( SqlHelpers.DateTimeFormat, CultureInfo.InvariantCulture ) );
+            DateTime.UtcNow.ToString( SqlHelpers.DateTimeFormatTick, CultureInfo.InvariantCulture ) );
     }
 }

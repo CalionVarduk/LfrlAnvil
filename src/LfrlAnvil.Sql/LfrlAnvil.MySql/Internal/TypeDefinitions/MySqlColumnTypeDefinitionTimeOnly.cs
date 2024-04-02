@@ -12,7 +12,7 @@ internal sealed class MySqlColumnTypeDefinitionTimeOnly : MySqlColumnTypeDefinit
     [Pure]
     public override string ToDbLiteral(TimeOnly value)
     {
-        return value.ToString( "TI\\ME\\'HH:mm:ss.ffffff\\'", CultureInfo.InvariantCulture );
+        return value.ToString( MySqlHelpers.TimeFormatQuoted, CultureInfo.InvariantCulture );
     }
 
     [Pure]

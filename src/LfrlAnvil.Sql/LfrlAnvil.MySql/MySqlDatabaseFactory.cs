@@ -107,7 +107,7 @@ public sealed class MySqlDatabaseFactory : SqlDatabaseFactory<MySqlDatabase>
         command.CommandText = nodeInterpreter.Context.Sql.AppendSemicolon().ToString();
         nodeInterpreter.Context.Clear();
 
-        var exists = executor.ExecuteForVersionHistory( command, static cmd => Convert.ToBoolean( cmd.ExecuteScalar() ) );
+        var exists = executor.ExecuteForVersionHistory( command, SqlHelpers.ExecuteBoolScalarDelegate );
         if ( ! exists )
         {
             changeTracker.AddCreateSchemaAction( schemaName );
@@ -133,7 +133,7 @@ public sealed class MySqlDatabaseFactory : SqlDatabaseFactory<MySqlDatabase>
         command.CommandText = nodeInterpreter.Context.Sql.AppendSemicolon().ToString();
         nodeInterpreter.Context.Clear();
 
-        exists = executor.ExecuteForVersionHistory( command, static cmd => Convert.ToBoolean( cmd.ExecuteScalar() ) );
+        exists = executor.ExecuteForVersionHistory( command, SqlHelpers.ExecuteBoolScalarDelegate );
         if ( ! exists )
             changeTracker.AddCreateGuidFunctionAction();
 
@@ -148,7 +148,7 @@ public sealed class MySqlDatabaseFactory : SqlDatabaseFactory<MySqlDatabase>
         command.CommandText = nodeInterpreter.Context.Sql.AppendSemicolon().ToString();
         nodeInterpreter.Context.Clear();
 
-        exists = executor.ExecuteForVersionHistory( command, static cmd => Convert.ToBoolean( cmd.ExecuteScalar() ) );
+        exists = executor.ExecuteForVersionHistory( command, SqlHelpers.ExecuteBoolScalarDelegate );
         if ( ! exists )
             changeTracker.AddCreateDropIndexIfExistsProcedureAction();
 
@@ -187,7 +187,7 @@ public sealed class MySqlDatabaseFactory : SqlDatabaseFactory<MySqlDatabase>
 
         using var command = connection.CreateCommand();
         command.CommandText = sql;
-        var exists = executor.ExecuteForVersionHistory( command, static cmd => Convert.ToBoolean( cmd.ExecuteScalar() ) );
+        var exists = executor.ExecuteForVersionHistory( command, SqlHelpers.ExecuteBoolScalarDelegate );
         return ! exists;
     }
 

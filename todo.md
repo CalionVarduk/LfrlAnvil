@@ -39,8 +39,6 @@
 
 
 - Sql.Core:
-  - extract type definition constants (format etc.) to dialect XHelpers static classes
-  - take a look at unicode string literals
   - support for positional parameters?
     - node interpreter context would have to track it
     - this would also require changes to parameter binder factory

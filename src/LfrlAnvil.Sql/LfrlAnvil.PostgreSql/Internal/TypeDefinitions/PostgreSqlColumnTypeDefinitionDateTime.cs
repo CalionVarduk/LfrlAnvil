@@ -15,8 +15,7 @@ internal sealed class PostgreSqlColumnTypeDefinitionDateTime : PostgreSqlColumnT
     [Pure]
     public override string ToDbLiteral(DateTime value)
     {
-        const string format = "TI\\MESTA\\MP\\'yyyy-MM-dd HH:mm:ss.ffffff\\'";
-        return value.ToString( format, CultureInfo.InvariantCulture );
+        return value.ToString( PostgreSqlHelpers.TimestampFormatQuoted, CultureInfo.InvariantCulture );
     }
 
     [Pure]

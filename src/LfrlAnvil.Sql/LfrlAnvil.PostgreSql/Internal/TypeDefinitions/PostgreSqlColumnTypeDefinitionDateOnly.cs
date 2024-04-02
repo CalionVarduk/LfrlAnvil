@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Diagnostics.Contracts;
 using System.Globalization;
-using LfrlAnvil.Sql.Internal;
 
 namespace LfrlAnvil.PostgreSql.Internal.TypeDefinitions;
 
@@ -16,8 +15,7 @@ internal sealed class PostgreSqlColumnTypeDefinitionDateOnly : PostgreSqlColumnT
     [Pure]
     public override string ToDbLiteral(DateOnly value)
     {
-        const string format = $@"DATE\'{SqlHelpers.DateFormat}\'";
-        return value.ToString( format, CultureInfo.InvariantCulture );
+        return value.ToString( PostgreSqlHelpers.DateFormatQuoted, CultureInfo.InvariantCulture );
     }
 
     [Pure]

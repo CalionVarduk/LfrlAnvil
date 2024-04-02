@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics.Contracts;
+using LfrlAnvil.Sql.Internal;
 
 namespace LfrlAnvil.PostgreSql.Internal.TypeDefinitions;
 
@@ -10,7 +11,7 @@ internal sealed class PostgreSqlColumnTypeDefinitionChar : PostgreSqlColumnTypeD
     [Pure]
     public override string ToDbLiteral(char value)
     {
-        return $"'{value}'";
+        return SqlHelpers.GetDbLiteral( value );
     }
 
     [Pure]

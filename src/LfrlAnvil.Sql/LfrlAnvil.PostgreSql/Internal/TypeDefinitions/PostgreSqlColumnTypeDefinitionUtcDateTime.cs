@@ -15,8 +15,7 @@ internal sealed class PostgreSqlColumnTypeDefinitionUtcDateTime : PostgreSqlColu
     [Pure]
     public override string ToDbLiteral(DateTime value)
     {
-        const string format = "TI\\MESTA\\MPTZ\\'yyyy-MM-dd HH:mm:ss.ffffff\\'";
-        return value.ToUniversalTime().ToString( format, CultureInfo.InvariantCulture );
+        return value.ToUniversalTime().ToString( PostgreSqlHelpers.TimestampTzFormatQuoted, CultureInfo.InvariantCulture );
     }
 
     [Pure]

@@ -27,6 +27,8 @@ public static class SqliteHelpers
     public const long TemporalDayOfYearUnit = 10;
     public const long TemporalDayOfWeekUnit = 11;
     public const string UpsertExcludedRecordSetName = "EXCLUDED";
+    public const string DecimalFormatNegative = $"-{SqlHelpers.DecimalFormat}";
+    public const string DecimalFormatNegativeQuoted = $@"\'{DecimalFormatNegative}\'";
     public static readonly SqlSchemaObjectName DefaultVersionHistoryName = SqlSchemaObjectName.Create( SqlHelpers.VersionHistoryName );
 
     [Pure]
@@ -65,6 +67,15 @@ public static class SqliteHelpers
         return ! key.Equals( "Data Source", StringComparison.OrdinalIgnoreCase ) &&
             ! key.Equals( "DataSource", StringComparison.OrdinalIgnoreCase ) &&
             ! key.Equals( "Filename", StringComparison.OrdinalIgnoreCase );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static string GetDbLiteral(decimal value)
+    {
+        return value >= 0
+            ? value.ToString( SqlHelpers.DecimalFormatQuoted, CultureInfo.InvariantCulture )
+            : (-value).ToString( DecimalFormatNegativeQuoted, CultureInfo.InvariantCulture );
     }
 
     [Pure]
@@ -110,19 +121,19 @@ public static class SqliteHelpers
     [Pure]
     public static string DbGetCurrentTime()
     {
-        return DateTime.Now.ToString( SqlHelpers.TimeFormat, CultureInfo.InvariantCulture );
+        return DateTime.Now.ToString( SqlHelpers.TimeFormatTick, CultureInfo.InvariantCulture );
     }
 
     [Pure]
     public static string DbGetCurrentDateTime()
     {
-        return DateTime.Now.ToString( SqlHelpers.DateTimeFormat, CultureInfo.InvariantCulture );
+        return DateTime.Now.ToString( SqlHelpers.DateTimeFormatTick, CultureInfo.InvariantCulture );
     }
 
     [Pure]
     public static string DbGetCurrentUtcDateTime()
     {
-        return DateTime.UtcNow.ToString( SqlHelpers.DateTimeFormat, CultureInfo.InvariantCulture );
+        return DateTime.UtcNow.ToString( SqlHelpers.DateTimeFormatTick, CultureInfo.InvariantCulture );
     }
 
     [Pure]
@@ -170,7 +181,7 @@ public static class SqliteHelpers
     [Pure]
     public static string? DbTimeOfDay(string? s)
     {
-        return TryParseDateTime( s )?.ToString( SqlHelpers.TimeFormat, CultureInfo.InvariantCulture );
+        return TryParseDateTime( s )?.ToString( SqlHelpers.TimeFormatTick, CultureInfo.InvariantCulture );
     }
 
     [Pure]
@@ -253,7 +264,7 @@ public static class SqliteHelpers
             return date.Value.AddMonths( (int)value ).ToString( SqlHelpers.DateFormat, CultureInfo.InvariantCulture );
 
         var dateTime = TryParseDateTime( s );
-        return dateTime?.AddMonths( (int)value ).ToString( SqlHelpers.DateTimeFormat, CultureInfo.InvariantCulture );
+        return dateTime?.AddMonths( (int)value ).ToString( SqlHelpers.DateTimeFormatTick, CultureInfo.InvariantCulture );
     }
 
     [Pure]
@@ -268,7 +279,7 @@ public static class SqliteHelpers
             return date.Value.AddDays( (int)value ).ToString( SqlHelpers.DateFormat, CultureInfo.InvariantCulture );
 
         var dateTime = TryParseDateTime( s );
-        return dateTime?.AddDays( value ).ToString( SqlHelpers.DateTimeFormat, CultureInfo.InvariantCulture );
+        return dateTime?.AddDays( value ).ToString( SqlHelpers.DateTimeFormatTick, CultureInfo.InvariantCulture );
     }
 
     [Pure]
@@ -277,10 +288,10 @@ public static class SqliteHelpers
     {
         var time = TryParseTime( s );
         if ( time is not null )
-            return time.Value.Add( TimeSpan.FromTicks( value ) ).ToString( SqlHelpers.TimeFormat, CultureInfo.InvariantCulture );
+            return time.Value.Add( TimeSpan.FromTicks( value ) ).ToString( SqlHelpers.TimeFormatTick, CultureInfo.InvariantCulture );
 
         var dateTime = TryParseDateTime( s );
-        return dateTime?.AddTicks( value ).ToString( SqlHelpers.DateTimeFormat, CultureInfo.InvariantCulture );
+        return dateTime?.AddTicks( value ).ToString( SqlHelpers.DateTimeFormatTick, CultureInfo.InvariantCulture );
     }
 
     [Pure]

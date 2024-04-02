@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics.Contracts;
 using System.Globalization;
+using LfrlAnvil.Sql.Internal;
 
 namespace LfrlAnvil.Sqlite.Internal.TypeDefinitions;
 
@@ -17,16 +18,14 @@ internal sealed class SqliteColumnTypeDefinitionDecimal : SqliteColumnTypeDefini
     [Pure]
     public override string ToDbLiteral(decimal value)
     {
-        return value >= 0
-            ? value.ToString( "\\'0.0###########################\\'", CultureInfo.InvariantCulture )
-            : (-value).ToString( "\\'-0.0###########################\\'", CultureInfo.InvariantCulture );
+        return SqliteHelpers.GetDbLiteral( value );
     }
 
     [Pure]
     public override object ToParameterValue(decimal value)
     {
         return value >= 0
-            ? value.ToString( "0.0###########################", CultureInfo.InvariantCulture )
-            : (-value).ToString( "-0.0###########################", CultureInfo.InvariantCulture );
+            ? value.ToString( SqlHelpers.DecimalFormat, CultureInfo.InvariantCulture )
+            : (-value).ToString( SqliteHelpers.DecimalFormatNegative, CultureInfo.InvariantCulture );
     }
 }

@@ -114,7 +114,7 @@ public sealed class PostgreSqlDatabaseFactory : SqlDatabaseFactory<PostgreSqlDat
 
             var exists = executor.ExecuteForVersionHistory(
                 command,
-                static cmd => Convert.ToBoolean( cmd.ExecuteScalar() ),
+                SqlHelpers.ExecuteBoolScalarDelegate,
                 SqlDatabaseFactoryStatementType.Other );
 
             if ( ! exists )
@@ -151,7 +151,7 @@ public sealed class PostgreSqlDatabaseFactory : SqlDatabaseFactory<PostgreSqlDat
         command.CommandText = nodeInterpreter.Context.Sql.AppendSemicolon().ToString();
         nodeInterpreter.Context.Clear();
 
-        var exists = executor.ExecuteForVersionHistory( command, static cmd => Convert.ToBoolean( cmd.ExecuteScalar() ) );
+        var exists = executor.ExecuteForVersionHistory( command, SqlHelpers.ExecuteBoolScalarDelegate );
         if ( exists )
             return true;
 
@@ -198,7 +198,7 @@ public sealed class PostgreSqlDatabaseFactory : SqlDatabaseFactory<PostgreSqlDat
 
         using var command = connection.CreateCommand();
         command.CommandText = sql;
-        var exists = executor.ExecuteForVersionHistory( command, static cmd => Convert.ToBoolean( cmd.ExecuteScalar() ) );
+        var exists = executor.ExecuteForVersionHistory( command, SqlHelpers.ExecuteBoolScalarDelegate );
         return ! exists;
     }
 

@@ -16,13 +16,12 @@ internal sealed class SqliteColumnTypeDefinitionDateTime : SqliteColumnTypeDefin
     [Pure]
     public override string ToDbLiteral(DateTime value)
     {
-        const string format = $@"\'{SqlHelpers.DateTimeFormat}\'";
-        return value.ToString( format, CultureInfo.InvariantCulture );
+        return value.ToString( SqlHelpers.DateTimeFormatTickQuoted, CultureInfo.InvariantCulture );
     }
 
     [Pure]
     public override object ToParameterValue(DateTime value)
     {
-        return value.ToString( SqlHelpers.DateTimeFormat, CultureInfo.InvariantCulture );
+        return value.ToString( SqlHelpers.DateTimeFormatTick, CultureInfo.InvariantCulture );
     }
 }

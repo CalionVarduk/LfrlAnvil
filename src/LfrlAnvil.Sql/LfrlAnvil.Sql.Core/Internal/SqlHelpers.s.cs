@@ -26,15 +26,28 @@ public static class SqlHelpers
     public const string VersionHistoryCommitDateUtcName = "CommitDateUtc";
     public const string VersionHistoryCommitDurationInTicksName = "CommitDurationInTicks";
     public const string DateFormat = "yyyy-MM-dd";
-    public const string TimeFormat = "HH:mm:ss.fffffff";
-    public const string DateTimeFormat = $"{DateFormat} {TimeFormat}";
+    public const string TimeFormatMicrosecond = "HH:mm:ss.ffffff";
+    public const string DateTimeFormatMicrosecond = $"{DateFormat} {TimeFormatMicrosecond}";
+    public const string TimeFormatTick = $"{TimeFormatMicrosecond}f";
+    public const string DateTimeFormatTick = $"{DateFormat} {TimeFormatTick}";
+    public const string DateTimeOffsetFormat = $"{DateTimeFormatTick}zzz";
+    public const string DateFormatQuoted = $@"\'{DateFormat}\'";
+    public const string TimeFormatMicrosecondQuoted = $@"\'{TimeFormatMicrosecond}\'";
+    public const string DateTimeFormatMicrosecondQuoted = $@"\'{DateTimeFormatMicrosecond}\'";
+    public const string TimeFormatTickQuoted = $@"\'{TimeFormatTick}\'";
+    public const string DateTimeFormatTickQuoted = $@"\'{DateTimeFormatTick}\'";
+    public const string DateTimeOffsetFormatQuoted = $@"\'{DateTimeFormatTick}zzz\'";
+    public const string DecimalFormat = "0.0###########################";
+    public const string DecimalFormatQuoted = $@"\'{DecimalFormat}\'";
+    public const string EmptyTextLiteral = "\'\'";
+    public const string EmptyBlobLiteral = $"X{EmptyTextLiteral}";
     public const char TextDelimiter = '\'';
     public const char BlobMarker = 'X';
     public const int StackallocThreshold = 64;
-    public const string EmptyTextLiteral = "\'\'";
-    public const string EmptyBlobLiteral = $"X{EmptyTextLiteral}";
     public static readonly StringComparer NameComparer = StringComparer.OrdinalIgnoreCase;
     public static readonly Func<IDbCommand, int> ExecuteNonQueryDelegate = static cmd => cmd.ExecuteNonQuery();
+    public static readonly Func<IDbCommand, bool> ExecuteBoolScalarDelegate = static cmd => Convert.ToBoolean( cmd.ExecuteScalar() );
+
     public static readonly SqlDefaultObjectNameProviderCreator<SqlDefaultObjectNameProvider> DefaultNamesCreator =
         static (_, _) => new SqlDefaultObjectNameProvider();
 
@@ -79,7 +92,14 @@ public static class SqlHelpers
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static string GetDbLiteral(decimal value)
     {
-        return value.ToString( "0.0###########################", CultureInfo.InvariantCulture );
+        return value.ToString( DecimalFormat, CultureInfo.InvariantCulture );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static string GetDbLiteral(char value)
+    {
+        return $"{TextDelimiter}{value}{TextDelimiter}";
     }
 
     [Pure]

@@ -17,6 +17,10 @@ public static class PostgreSqlHelpers
     public const string ByteaMarker = "\\x";
     public const string ByteaTypeCast = "::BYTEA";
     public const string EmptyByteaLiteral = $"'{ByteaMarker}'{ByteaTypeCast}";
+    public const string DateFormatQuoted = $"DATE{SqlHelpers.DateFormatQuoted}";
+    public const string TimeFormatQuoted = $@"TI\ME{SqlHelpers.TimeFormatMicrosecondQuoted}";
+    public const string TimestampFormatQuoted = $@"TI\MESTA\MP{SqlHelpers.DateTimeFormatMicrosecondQuoted}";
+    public const string TimestampTzFormatQuoted = $@"TI\MESTA\MPTZ{SqlHelpers.DateTimeFormatMicrosecondQuoted}";
     public const string UpsertExcludedRecordSetName = "EXCLUDED";
 
     public static readonly SqlSchemaObjectName DefaultVersionHistoryName =
@@ -63,9 +67,17 @@ public static class PostgreSqlHelpers
     }
 
     [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static string GetDbLiteral(bool value)
     {
         return value ? "1::BOOLEAN" : "0::BOOLEAN";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static string GetDbLiteral(Guid value)
+    {
+        return $"'{value}'";
     }
 
     [Pure]

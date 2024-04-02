@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics.Contracts;
 using System.Globalization;
+using LfrlAnvil.Sql.Internal;
 
 namespace LfrlAnvil.MySql.Internal.TypeDefinitions;
 
@@ -15,7 +16,7 @@ internal sealed class MySqlColumnTypeDefinitionDateTime : MySqlColumnTypeDefinit
     [Pure]
     public override string ToDbLiteral(DateTime value)
     {
-        return value.ToString( "\\'yyyy-MM-dd HH:mm:ss.ffffff\\'", CultureInfo.InvariantCulture );
+        return value.ToString( SqlHelpers.DateTimeFormatMicrosecondQuoted, CultureInfo.InvariantCulture );
     }
 
     [Pure]
