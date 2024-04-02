@@ -11,6 +11,9 @@ internal sealed class MySqlDatabaseBuilderMock
     [Pure]
     internal static MySqlDatabaseBuilder Create(
         SqlOptionalFunctionalityResolution indexFilterResolution = SqlOptionalFunctionalityResolution.Ignore,
+        string? characterSetName = null,
+        string? collationName = null,
+        bool? isEncryptionEnabled = null,
         params SqlColumnTypeDefinition[] typeDefinitions)
     {
         var typeBuilder = new MySqlColumnTypeDefinitionProviderBuilder();
@@ -24,7 +27,10 @@ internal sealed class MySqlDatabaseBuilderMock
             new MySqlDataTypeProvider(),
             new MySqlColumnTypeDefinitionProvider( typeBuilder ),
             new MySqlNodeInterpreterFactory( MySqlNodeInterpreterOptions.Default.EnableIndexFilterParsing() ),
-            indexFilterResolution );
+            indexFilterResolution,
+            characterSetName,
+            collationName,
+            isEncryptionEnabled );
 
         result.Changes.SetModeAndAttach( SqlDatabaseCreateMode.DryRun );
         return result;

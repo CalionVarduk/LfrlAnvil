@@ -30,18 +30,27 @@ public readonly struct MySqlDatabaseFactoryOptions
 
     private MySqlDatabaseFactoryOptions(
         SqlOptionalFunctionalityResolution indexFilterResolution,
+        string? characterSetName,
+        string? collationName,
+        bool? isEncryptionEnabled,
         SqlDefaultObjectNameProviderCreator<SqlDefaultObjectNameProvider>? defaultNamesCreator,
         SqlColumnTypeDefinitionProviderCreator<MySqlDataTypeProvider, MySqlColumnTypeDefinitionProvider>? typeDefinitionsCreator,
         SqlNodeInterpreterFactoryCreator<MySqlDataTypeProvider, MySqlColumnTypeDefinitionProvider, MySqlNodeInterpreterFactory>?
             nodeInterpretersCreator)
     {
         IndexFilterResolution = indexFilterResolution;
+        CharacterSetName = characterSetName;
+        CollationName = collationName;
+        IsEncryptionEnabled = isEncryptionEnabled;
         _defaultNamesCreator = defaultNamesCreator;
         _typeDefinitionsCreator = typeDefinitionsCreator;
         _nodeInterpretersCreator = nodeInterpretersCreator;
     }
 
     public SqlOptionalFunctionalityResolution IndexFilterResolution { get; }
+    public string? CharacterSetName { get; }
+    public string? CollationName { get; }
+    public bool? IsEncryptionEnabled { get; }
 
     public SqlDefaultObjectNameProviderCreator<SqlDefaultObjectNameProvider> DefaultNamesCreator =>
         _defaultNamesCreator ?? SqlHelpers.DefaultNamesCreator;
@@ -58,14 +67,70 @@ public readonly struct MySqlDatabaseFactoryOptions
     public MySqlDatabaseFactoryOptions SetIndexFilterResolution(SqlOptionalFunctionalityResolution resolution)
     {
         Ensure.IsDefined( resolution );
-        return new MySqlDatabaseFactoryOptions( resolution, _defaultNamesCreator, _typeDefinitionsCreator, _nodeInterpretersCreator );
+        return new MySqlDatabaseFactoryOptions(
+            resolution,
+            CharacterSetName,
+            CollationName,
+            IsEncryptionEnabled,
+            _defaultNamesCreator,
+            _typeDefinitionsCreator,
+            _nodeInterpretersCreator );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public MySqlDatabaseFactoryOptions SetCharacterSetName(string? name)
+    {
+        return new MySqlDatabaseFactoryOptions(
+            IndexFilterResolution,
+            name,
+            CollationName,
+            IsEncryptionEnabled,
+            _defaultNamesCreator,
+            _typeDefinitionsCreator,
+            _nodeInterpretersCreator );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public MySqlDatabaseFactoryOptions SetCollationName(string? name)
+    {
+        return new MySqlDatabaseFactoryOptions(
+            IndexFilterResolution,
+            CharacterSetName,
+            name,
+            IsEncryptionEnabled,
+            _defaultNamesCreator,
+            _typeDefinitionsCreator,
+            _nodeInterpretersCreator );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public MySqlDatabaseFactoryOptions EnableEncryption(bool? enabled = true)
+    {
+        return new MySqlDatabaseFactoryOptions(
+            IndexFilterResolution,
+            CharacterSetName,
+            CollationName,
+            enabled,
+            _defaultNamesCreator,
+            _typeDefinitionsCreator,
+            _nodeInterpretersCreator );
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public MySqlDatabaseFactoryOptions SetDefaultNamesCreator(SqlDefaultObjectNameProviderCreator<SqlDefaultObjectNameProvider>? creator)
     {
-        return new MySqlDatabaseFactoryOptions( IndexFilterResolution, creator, _typeDefinitionsCreator, _nodeInterpretersCreator );
+        return new MySqlDatabaseFactoryOptions(
+            IndexFilterResolution,
+            CharacterSetName,
+            CollationName,
+            IsEncryptionEnabled,
+            creator,
+            _typeDefinitionsCreator,
+            _nodeInterpretersCreator );
     }
 
     [Pure]
@@ -73,7 +138,14 @@ public readonly struct MySqlDatabaseFactoryOptions
     public MySqlDatabaseFactoryOptions SetTypeDefinitionsCreator(
         SqlColumnTypeDefinitionProviderCreator<MySqlDataTypeProvider, MySqlColumnTypeDefinitionProvider>? creator)
     {
-        return new MySqlDatabaseFactoryOptions( IndexFilterResolution, _defaultNamesCreator, creator, _nodeInterpretersCreator );
+        return new MySqlDatabaseFactoryOptions(
+            IndexFilterResolution,
+            CharacterSetName,
+            CollationName,
+            IsEncryptionEnabled,
+            _defaultNamesCreator,
+            creator,
+            _nodeInterpretersCreator );
     }
 
     [Pure]
@@ -81,6 +153,13 @@ public readonly struct MySqlDatabaseFactoryOptions
     public MySqlDatabaseFactoryOptions SetNodeInterpretersCreator(
         SqlNodeInterpreterFactoryCreator<MySqlDataTypeProvider, MySqlColumnTypeDefinitionProvider, MySqlNodeInterpreterFactory>? creator)
     {
-        return new MySqlDatabaseFactoryOptions( IndexFilterResolution, _defaultNamesCreator, _typeDefinitionsCreator, creator );
+        return new MySqlDatabaseFactoryOptions(
+            IndexFilterResolution,
+            CharacterSetName,
+            CollationName,
+            IsEncryptionEnabled,
+            _defaultNamesCreator,
+            _typeDefinitionsCreator,
+            creator );
     }
 }

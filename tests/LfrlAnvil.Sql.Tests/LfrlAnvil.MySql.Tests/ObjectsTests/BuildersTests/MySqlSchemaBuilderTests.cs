@@ -63,6 +63,34 @@ public partial class MySqlSchemaBuilderTests : TestsBase
         }
     }
 
+    [Theory]
+    [InlineData( "charset", "coll", true, "CREATE SCHEMA `foo` CHARACTER SET = 'charset' COLLATE = 'coll' ENCRYPTION = 'Y';" )]
+    [InlineData( "charset", "coll", false, "CREATE SCHEMA `foo` CHARACTER SET = 'charset' COLLATE = 'coll' ENCRYPTION = 'N';" )]
+    public void Creation_ShouldAddStatement_WithCustomOptions(
+        string characterSetName,
+        string collationName,
+        bool isEncryptionEnabled,
+        string expected)
+    {
+        var db = MySqlDatabaseBuilderMock.Create(
+            characterSetName: characterSetName,
+            collationName: collationName,
+            isEncryptionEnabled: isEncryptionEnabled );
+
+        var actionCount = db.GetPendingActionCount();
+        var sut = db.Schemas.Create( "foo" );
+        var actions = db.GetLastPendingActions( actionCount );
+
+        using ( new AssertionScope() )
+        {
+            db.Schemas.TryGet( sut.Name ).Should().BeSameAs( sut );
+            sut.Name.Should().Be( "foo" );
+
+            actions.Should().HaveCount( 1 );
+            actions.ElementAtOrDefault( 0 ).Sql.Should().SatisfySql( expected );
+        }
+    }
+
     [Fact]
     public void SetName_ShouldDoNothing_WhenNewNameEqualsOldName()
     {

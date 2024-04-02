@@ -129,7 +129,13 @@ public sealed class MySqlDatabaseChangeTracker : SqlDatabaseChangeTracker
     internal void AddCreateSchemaAction(string name)
     {
         var interpreter = CreateNodeInterpreter();
-        MySqlHelpers.AppendCreateSchema( interpreter, name );
+        MySqlHelpers.AppendCreateSchema(
+            interpreter,
+            name,
+            Database.CharacterSetName,
+            Database.CollationName,
+            Database.IsEncryptionEnabled );
+
         var sql = GetSqlAndClearContext( interpreter );
         AddSqlAction( sql );
     }

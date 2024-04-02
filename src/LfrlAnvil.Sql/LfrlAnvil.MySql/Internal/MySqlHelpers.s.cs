@@ -157,10 +157,35 @@ internal static class MySqlHelpers
         interpreter.Context.Sql.AppendComma();
     }
 
-    public static void AppendCreateSchema(SqlNodeInterpreter interpreter, string name)
+    public static void AppendCreateSchema(
+        SqlNodeInterpreter interpreter,
+        string name,
+        string? characterSetName,
+        string? collationName,
+        bool? isEncrypted)
     {
         interpreter.Context.Sql.Append( "CREATE" ).AppendSpace().Append( "SCHEMA" ).AppendSpace();
         interpreter.AppendDelimitedName( name );
+
+        if ( characterSetName is not null )
+        {
+            interpreter.Context.Sql.AppendSpace().Append( "CHARACTER" ).AppendSpace().Append( "SET" ).AppendSpace();
+            interpreter.Context.Sql.Append( '=' ).AppendSpace();
+            interpreter.Context.Sql.Append( SqlHelpers.TextDelimiter ).Append( characterSetName ).Append( SqlHelpers.TextDelimiter );
+        }
+
+        if ( collationName is not null )
+        {
+            interpreter.Context.Sql.AppendSpace().Append( "COLLATE" ).AppendSpace().Append( '=' ).AppendSpace();
+            interpreter.Context.Sql.Append( SqlHelpers.TextDelimiter ).Append( collationName ).Append( SqlHelpers.TextDelimiter );
+        }
+
+        if ( isEncrypted is not null )
+        {
+            var symbol = isEncrypted.Value ? 'Y' : 'N';
+            interpreter.Context.Sql.AppendSpace().Append( "ENCRYPTION" ).AppendSpace().Append( '=' ).AppendSpace();
+            interpreter.Context.Sql.Append( SqlHelpers.TextDelimiter ).Append( symbol ).Append( SqlHelpers.TextDelimiter );
+        }
     }
 
     public static void AppendDropSchema(SqlNodeInterpreter interpreter, string name)

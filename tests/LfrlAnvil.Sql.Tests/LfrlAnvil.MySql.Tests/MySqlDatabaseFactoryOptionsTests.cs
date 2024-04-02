@@ -30,6 +30,9 @@ public class MySqlDatabaseFactoryOptionsTests : TestsBase
         using ( new AssertionScope() )
         {
             sut.IndexFilterResolution.Should().Be( SqlOptionalFunctionalityResolution.Ignore );
+            sut.CharacterSetName.Should().BeNull();
+            sut.CollationName.Should().BeNull();
+            sut.IsEncryptionEnabled.Should().BeNull();
             sut.DefaultNamesCreator.Should().BeSameAs( SqlHelpers.DefaultNamesCreator );
             sut.TypeDefinitionsCreator.Should().BeSameAs( MySqlDatabaseFactoryOptions.BaseTypeDefinitionsCreator );
             sut.NodeInterpretersCreator.Should().BeSameAs( MySqlDatabaseFactoryOptions.BaseNodeInterpretersCreator );
@@ -48,6 +51,70 @@ public class MySqlDatabaseFactoryOptionsTests : TestsBase
         using ( new AssertionScope() )
         {
             result.IndexFilterResolution.Should().Be( resolution );
+            result.CharacterSetName.Should().Be( sut.CharacterSetName );
+            result.CollationName.Should().Be( sut.CollationName );
+            result.IsEncryptionEnabled.Should().Be( sut.IsEncryptionEnabled );
+            result.DefaultNamesCreator.Should().BeSameAs( sut.DefaultNamesCreator );
+            result.TypeDefinitionsCreator.Should().BeSameAs( sut.TypeDefinitionsCreator );
+            result.NodeInterpretersCreator.Should().BeSameAs( sut.NodeInterpretersCreator );
+        }
+    }
+
+    [Theory]
+    [InlineData( null )]
+    [InlineData( "foo" )]
+    public void SetCharacterSetName_ShouldReturnCorrectResult(string? name)
+    {
+        var sut = MySqlDatabaseFactoryOptions.Default;
+        var result = sut.SetCharacterSetName( name );
+
+        using ( new AssertionScope() )
+        {
+            result.IndexFilterResolution.Should().Be( sut.IndexFilterResolution );
+            result.CharacterSetName.Should().Be( name );
+            result.CollationName.Should().Be( sut.CollationName );
+            result.IsEncryptionEnabled.Should().Be( sut.IsEncryptionEnabled );
+            result.DefaultNamesCreator.Should().BeSameAs( sut.DefaultNamesCreator );
+            result.TypeDefinitionsCreator.Should().BeSameAs( sut.TypeDefinitionsCreator );
+            result.NodeInterpretersCreator.Should().BeSameAs( sut.NodeInterpretersCreator );
+        }
+    }
+
+    [Theory]
+    [InlineData( null )]
+    [InlineData( "foo" )]
+    public void SetCollationName_ShouldReturnCorrectResult(string? name)
+    {
+        var sut = MySqlDatabaseFactoryOptions.Default;
+        var result = sut.SetCollationName( name );
+
+        using ( new AssertionScope() )
+        {
+            result.IndexFilterResolution.Should().Be( sut.IndexFilterResolution );
+            result.CharacterSetName.Should().Be( sut.CharacterSetName );
+            result.CollationName.Should().Be( name );
+            result.IsEncryptionEnabled.Should().Be( sut.IsEncryptionEnabled );
+            result.DefaultNamesCreator.Should().BeSameAs( sut.DefaultNamesCreator );
+            result.TypeDefinitionsCreator.Should().BeSameAs( sut.TypeDefinitionsCreator );
+            result.NodeInterpretersCreator.Should().BeSameAs( sut.NodeInterpretersCreator );
+        }
+    }
+
+    [Theory]
+    [InlineData( null )]
+    [InlineData( true )]
+    [InlineData( false )]
+    public void EnableEncryption_ShouldReturnCorrectResult(bool? enabled)
+    {
+        var sut = MySqlDatabaseFactoryOptions.Default;
+        var result = sut.EnableEncryption( enabled );
+
+        using ( new AssertionScope() )
+        {
+            result.IndexFilterResolution.Should().Be( sut.IndexFilterResolution );
+            result.CharacterSetName.Should().Be( sut.CharacterSetName );
+            result.CollationName.Should().Be( sut.CollationName );
+            result.IsEncryptionEnabled.Should().Be( enabled );
             result.DefaultNamesCreator.Should().BeSameAs( sut.DefaultNamesCreator );
             result.TypeDefinitionsCreator.Should().BeSameAs( sut.TypeDefinitionsCreator );
             result.NodeInterpretersCreator.Should().BeSameAs( sut.NodeInterpretersCreator );
@@ -64,6 +131,9 @@ public class MySqlDatabaseFactoryOptionsTests : TestsBase
         using ( new AssertionScope() )
         {
             result.IndexFilterResolution.Should().Be( sut.IndexFilterResolution );
+            result.CharacterSetName.Should().Be( sut.CharacterSetName );
+            result.CollationName.Should().Be( sut.CollationName );
+            result.IsEncryptionEnabled.Should().Be( sut.IsEncryptionEnabled );
             result.DefaultNamesCreator.Should().BeSameAs( creator );
             result.TypeDefinitionsCreator.Should().BeSameAs( sut.TypeDefinitionsCreator );
             result.NodeInterpretersCreator.Should().BeSameAs( sut.NodeInterpretersCreator );
@@ -79,6 +149,9 @@ public class MySqlDatabaseFactoryOptionsTests : TestsBase
         using ( new AssertionScope() )
         {
             result.IndexFilterResolution.Should().Be( sut.IndexFilterResolution );
+            result.CharacterSetName.Should().Be( sut.CharacterSetName );
+            result.CollationName.Should().Be( sut.CollationName );
+            result.IsEncryptionEnabled.Should().Be( sut.IsEncryptionEnabled );
             result.DefaultNamesCreator.Should().BeSameAs( SqlHelpers.DefaultNamesCreator );
             result.TypeDefinitionsCreator.Should().BeSameAs( sut.TypeDefinitionsCreator );
             result.NodeInterpretersCreator.Should().BeSameAs( sut.NodeInterpretersCreator );
@@ -95,6 +168,9 @@ public class MySqlDatabaseFactoryOptionsTests : TestsBase
         using ( new AssertionScope() )
         {
             result.IndexFilterResolution.Should().Be( sut.IndexFilterResolution );
+            result.CharacterSetName.Should().Be( sut.CharacterSetName );
+            result.CollationName.Should().Be( sut.CollationName );
+            result.IsEncryptionEnabled.Should().Be( sut.IsEncryptionEnabled );
             result.DefaultNamesCreator.Should().BeSameAs( sut.DefaultNamesCreator );
             result.TypeDefinitionsCreator.Should().BeSameAs( creator );
             result.NodeInterpretersCreator.Should().BeSameAs( sut.NodeInterpretersCreator );
@@ -110,6 +186,9 @@ public class MySqlDatabaseFactoryOptionsTests : TestsBase
         using ( new AssertionScope() )
         {
             result.IndexFilterResolution.Should().Be( sut.IndexFilterResolution );
+            result.CharacterSetName.Should().Be( sut.CharacterSetName );
+            result.CollationName.Should().Be( sut.CollationName );
+            result.IsEncryptionEnabled.Should().Be( sut.IsEncryptionEnabled );
             result.DefaultNamesCreator.Should().BeSameAs( sut.DefaultNamesCreator );
             result.TypeDefinitionsCreator.Should().BeSameAs( MySqlDatabaseFactoryOptions.BaseTypeDefinitionsCreator );
             result.NodeInterpretersCreator.Should().BeSameAs( sut.NodeInterpretersCreator );
@@ -129,6 +208,9 @@ public class MySqlDatabaseFactoryOptionsTests : TestsBase
         using ( new AssertionScope() )
         {
             result.IndexFilterResolution.Should().Be( sut.IndexFilterResolution );
+            result.CharacterSetName.Should().Be( sut.CharacterSetName );
+            result.CollationName.Should().Be( sut.CollationName );
+            result.IsEncryptionEnabled.Should().Be( sut.IsEncryptionEnabled );
             result.DefaultNamesCreator.Should().BeSameAs( sut.DefaultNamesCreator );
             result.TypeDefinitionsCreator.Should().BeSameAs( sut.TypeDefinitionsCreator );
             result.NodeInterpretersCreator.Should().BeSameAs( creator );
@@ -144,6 +226,9 @@ public class MySqlDatabaseFactoryOptionsTests : TestsBase
         using ( new AssertionScope() )
         {
             result.IndexFilterResolution.Should().Be( sut.IndexFilterResolution );
+            result.CharacterSetName.Should().Be( sut.CharacterSetName );
+            result.CollationName.Should().Be( sut.CollationName );
+            result.IsEncryptionEnabled.Should().Be( sut.IsEncryptionEnabled );
             result.DefaultNamesCreator.Should().BeSameAs( sut.DefaultNamesCreator );
             result.TypeDefinitionsCreator.Should().BeSameAs( sut.TypeDefinitionsCreator );
             result.NodeInterpretersCreator.Should().BeSameAs( MySqlDatabaseFactoryOptions.BaseNodeInterpretersCreator );

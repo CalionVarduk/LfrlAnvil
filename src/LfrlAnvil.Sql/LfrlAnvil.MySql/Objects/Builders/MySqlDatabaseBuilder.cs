@@ -15,7 +15,10 @@ public sealed class MySqlDatabaseBuilder : SqlDatabaseBuilder
         MySqlDataTypeProvider dataTypes,
         MySqlColumnTypeDefinitionProvider typeDefinitions,
         MySqlNodeInterpreterFactory nodeInterpreters,
-        SqlOptionalFunctionalityResolution indexFilterResolution)
+        SqlOptionalFunctionalityResolution indexFilterResolution,
+        string? characterSetName,
+        string? collationName,
+        bool? isEncryptionEnabled)
         : base(
             MySqlDialect.Instance,
             serverVersion,
@@ -32,10 +35,16 @@ public sealed class MySqlDatabaseBuilder : SqlDatabaseBuilder
         Assume.IsDefined( indexFilterResolution );
         CommonSchemaName = defaultSchemaName;
         IndexFilterResolution = indexFilterResolution;
+        CharacterSetName = characterSetName;
+        CollationName = collationName;
+        IsEncryptionEnabled = isEncryptionEnabled;
     }
 
     public string CommonSchemaName { get; }
     public SqlOptionalFunctionalityResolution IndexFilterResolution { get; }
+    public string? CharacterSetName { get; }
+    public string? CollationName { get; }
+    public bool? IsEncryptionEnabled { get; }
     public new MySqlSchemaBuilderCollection Schemas => ReinterpretCast.To<MySqlSchemaBuilderCollection>( base.Schemas );
     public new MySqlDataTypeProvider DataTypes => ReinterpretCast.To<MySqlDataTypeProvider>( base.DataTypes );
 

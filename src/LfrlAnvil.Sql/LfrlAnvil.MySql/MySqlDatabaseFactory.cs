@@ -63,7 +63,10 @@ public sealed class MySqlDatabaseFactory : SqlDatabaseFactory<MySqlDatabase>
             dataTypes,
             typeDefinitions,
             nodeInterpreters,
-            Options.IndexFilterResolution );
+            Options.IndexFilterResolution,
+            Options.CharacterSetName,
+            Options.CollationName,
+            Options.IsEncryptionEnabled );
 
         result.AddConnectionChangeCallback( InitializeSessionSqlMode );
         return result;
