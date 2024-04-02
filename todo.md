@@ -39,7 +39,6 @@
 
 
 - Sql.Core:
-  - db factory db-wide options for e.g. encoding, character sets, etc.?
   - support for positional parameters?
     - node interpreter context would have to track it
     - this would also require changes to parameter binder factory

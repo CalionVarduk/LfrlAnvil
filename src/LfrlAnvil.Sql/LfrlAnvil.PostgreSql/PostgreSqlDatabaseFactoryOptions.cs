@@ -31,6 +31,9 @@ public readonly struct PostgreSqlDatabaseFactoryOptions
 
     private PostgreSqlDatabaseFactoryOptions(
         SqlOptionalFunctionalityResolution virtualGeneratedColumnStorageResolution,
+        string? encodingName,
+        string? localeName,
+        int? concurrentConnectionsLimit,
         SqlDefaultObjectNameProviderCreator<SqlDefaultObjectNameProvider>? defaultNamesCreator,
         SqlColumnTypeDefinitionProviderCreator<PostgreSqlDataTypeProvider, PostgreSqlColumnTypeDefinitionProvider>? typeDefinitionsCreator,
         SqlNodeInterpreterFactoryCreator<PostgreSqlDataTypeProvider, PostgreSqlColumnTypeDefinitionProvider,
@@ -38,12 +41,18 @@ public readonly struct PostgreSqlDatabaseFactoryOptions
             nodeInterpretersCreator)
     {
         VirtualGeneratedColumnStorageResolution = virtualGeneratedColumnStorageResolution;
+        EncodingName = encodingName;
+        LocaleName = localeName;
+        ConcurrentConnectionsLimit = concurrentConnectionsLimit;
         _defaultNamesCreator = defaultNamesCreator;
         _typeDefinitionsCreator = typeDefinitionsCreator;
         _nodeInterpretersCreator = nodeInterpretersCreator;
     }
 
     public SqlOptionalFunctionalityResolution VirtualGeneratedColumnStorageResolution { get; }
+    public string? EncodingName { get; }
+    public string? LocaleName { get; }
+    public int? ConcurrentConnectionsLimit { get; }
 
     public SqlDefaultObjectNameProviderCreator<SqlDefaultObjectNameProvider> DefaultNamesCreator =>
         _defaultNamesCreator ?? SqlHelpers.DefaultNamesCreator;
@@ -62,7 +71,59 @@ public readonly struct PostgreSqlDatabaseFactoryOptions
     public PostgreSqlDatabaseFactoryOptions SetVirtualGeneratedColumnStorageResolution(SqlOptionalFunctionalityResolution resolution)
     {
         Ensure.IsDefined( resolution );
-        return new PostgreSqlDatabaseFactoryOptions( resolution, _defaultNamesCreator, _typeDefinitionsCreator, _nodeInterpretersCreator );
+        return new PostgreSqlDatabaseFactoryOptions(
+            resolution,
+            EncodingName,
+            LocaleName,
+            ConcurrentConnectionsLimit,
+            _defaultNamesCreator,
+            _typeDefinitionsCreator,
+            _nodeInterpretersCreator );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public PostgreSqlDatabaseFactoryOptions SetEncodingName(string? name)
+    {
+        return new PostgreSqlDatabaseFactoryOptions(
+            VirtualGeneratedColumnStorageResolution,
+            name,
+            LocaleName,
+            ConcurrentConnectionsLimit,
+            _defaultNamesCreator,
+            _typeDefinitionsCreator,
+            _nodeInterpretersCreator );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public PostgreSqlDatabaseFactoryOptions SetLocaleName(string? name)
+    {
+        return new PostgreSqlDatabaseFactoryOptions(
+            VirtualGeneratedColumnStorageResolution,
+            EncodingName,
+            name,
+            ConcurrentConnectionsLimit,
+            _defaultNamesCreator,
+            _typeDefinitionsCreator,
+            _nodeInterpretersCreator );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public PostgreSqlDatabaseFactoryOptions SetConcurrentConnectionsLimit(int? value)
+    {
+        if ( value is not null )
+            Ensure.IsGreaterThanOrEqualTo( value.Value, 0 );
+
+        return new PostgreSqlDatabaseFactoryOptions(
+            VirtualGeneratedColumnStorageResolution,
+            EncodingName,
+            LocaleName,
+            value,
+            _defaultNamesCreator,
+            _typeDefinitionsCreator,
+            _nodeInterpretersCreator );
     }
 
     [Pure]
@@ -72,6 +133,9 @@ public readonly struct PostgreSqlDatabaseFactoryOptions
     {
         return new PostgreSqlDatabaseFactoryOptions(
             VirtualGeneratedColumnStorageResolution,
+            EncodingName,
+            LocaleName,
+            ConcurrentConnectionsLimit,
             creator,
             _typeDefinitionsCreator,
             _nodeInterpretersCreator );
@@ -84,6 +148,9 @@ public readonly struct PostgreSqlDatabaseFactoryOptions
     {
         return new PostgreSqlDatabaseFactoryOptions(
             VirtualGeneratedColumnStorageResolution,
+            EncodingName,
+            LocaleName,
+            ConcurrentConnectionsLimit,
             _defaultNamesCreator,
             creator,
             _nodeInterpretersCreator );
@@ -97,6 +164,9 @@ public readonly struct PostgreSqlDatabaseFactoryOptions
     {
         return new PostgreSqlDatabaseFactoryOptions(
             VirtualGeneratedColumnStorageResolution,
+            EncodingName,
+            LocaleName,
+            ConcurrentConnectionsLimit,
             _defaultNamesCreator,
             _typeDefinitionsCreator,
             creator );

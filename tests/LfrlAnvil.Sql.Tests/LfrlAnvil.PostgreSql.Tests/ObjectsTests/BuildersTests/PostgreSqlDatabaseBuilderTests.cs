@@ -79,13 +79,19 @@ public partial class PostgreSqlDatabaseBuilderTests : TestsBase
         result.Should().BeSameAs( sut );
     }
 
-    [Fact]
-    public void Helpers_AppendCreateDatabase_ShouldReturnCorrectResult()
+    [Theory]
+    [InlineData( null, null, null, "CREATE DATABASE \"foo\"" )]
+    [InlineData( "enc", "loc", 10, "CREATE DATABASE \"foo\" ENCODING = 'enc' LOCALE = 'loc' CONNECTION LIMIT = 10" )]
+    public void Helpers_AppendCreateDatabase_ShouldReturnCorrectResult(
+        string? encodingName,
+        string? localeName,
+        int? concurrentConnectionsLimit,
+        string expected)
     {
         var interpreter = new PostgreSqlNodeInterpreter( PostgreSqlNodeInterpreterOptions.Default, SqlNodeInterpreterContext.Create() );
-        PostgreSqlHelpers.AppendCreateDatabase( interpreter, "foo" );
+        PostgreSqlHelpers.AppendCreateDatabase( interpreter, "foo", encodingName, localeName, concurrentConnectionsLimit );
         var result = interpreter.Context.Sql.ToString();
-        result.Should().Be( "CREATE DATABASE \"foo\"" );
+        result.Should().Be( expected );
     }
 
     [Fact]

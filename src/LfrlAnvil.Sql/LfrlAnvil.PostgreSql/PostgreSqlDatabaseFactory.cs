@@ -119,7 +119,13 @@ public sealed class PostgreSqlDatabaseFactory : SqlDatabaseFactory<PostgreSqlDat
 
             if ( ! exists )
             {
-                PostgreSqlHelpers.AppendCreateDatabase( nodeInterpreter, npgsqlConnectionString.Database );
+                PostgreSqlHelpers.AppendCreateDatabase(
+                    nodeInterpreter,
+                    npgsqlConnectionString.Database,
+                    Options.EncodingName,
+                    Options.LocaleName,
+                    Options.ConcurrentConnectionsLimit );
+
                 command.CommandText = nodeInterpreter.Context.Sql.AppendSemicolon().ToString();
                 nodeInterpreter.Context.Clear();
                 executor.ExecuteForVersionHistory( command, SqlHelpers.ExecuteNonQueryDelegate, SqlDatabaseFactoryStatementType.Other );

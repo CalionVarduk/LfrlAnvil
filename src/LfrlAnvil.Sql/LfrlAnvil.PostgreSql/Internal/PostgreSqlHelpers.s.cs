@@ -113,10 +113,33 @@ public static class PostgreSqlHelpers
         }
     }
 
-    public static void AppendCreateDatabase(SqlNodeInterpreter interpreter, string name)
+    public static void AppendCreateDatabase(
+        SqlNodeInterpreter interpreter,
+        string name,
+        string? encodingName,
+        string? localeName,
+        int? concurrentConnectionsLimit)
     {
         interpreter.Context.Sql.Append( "CREATE" ).AppendSpace().Append( "DATABASE" ).AppendSpace();
         interpreter.AppendDelimitedName( name );
+
+        if ( encodingName is not null )
+        {
+            interpreter.Context.Sql.AppendSpace().Append( "ENCODING" ).AppendSpace().Append( '=' ).AppendSpace();
+            interpreter.Context.Sql.Append( SqlHelpers.TextDelimiter ).Append( encodingName ).Append( SqlHelpers.TextDelimiter );
+        }
+
+        if ( localeName is not null )
+        {
+            interpreter.Context.Sql.AppendSpace().Append( "LOCALE" ).AppendSpace().Append( '=' ).AppendSpace();
+            interpreter.Context.Sql.Append( SqlHelpers.TextDelimiter ).Append( localeName ).Append( SqlHelpers.TextDelimiter );
+        }
+
+        if ( concurrentConnectionsLimit is not null )
+        {
+            interpreter.Context.Sql.AppendSpace().Append( "CONNECTION" ).AppendSpace().Append( "LIMIT" ).AppendSpace();
+            interpreter.Context.Sql.Append( '=' ).AppendSpace().Append( concurrentConnectionsLimit.Value );
+        }
     }
 
     public static void AppendCreateSchema(SqlNodeInterpreter interpreter, string name)

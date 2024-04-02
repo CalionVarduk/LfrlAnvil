@@ -34,6 +34,9 @@ public class PostgreSqlDatabaseFactoryOptionsTests : TestsBase
         using ( new AssertionScope() )
         {
             sut.VirtualGeneratedColumnStorageResolution.Should().Be( SqlOptionalFunctionalityResolution.Ignore );
+            sut.EncodingName.Should().BeNull();
+            sut.LocaleName.Should().BeNull();
+            sut.ConcurrentConnectionsLimit.Should().BeNull();
             sut.DefaultNamesCreator.Should().BeSameAs( SqlHelpers.DefaultNamesCreator );
             sut.TypeDefinitionsCreator.Should().BeSameAs( PostgreSqlDatabaseFactoryOptions.BaseTypeDefinitionsCreator );
             sut.NodeInterpretersCreator.Should().BeSameAs( PostgreSqlDatabaseFactoryOptions.BaseNodeInterpretersCreator );
@@ -52,6 +55,70 @@ public class PostgreSqlDatabaseFactoryOptionsTests : TestsBase
         using ( new AssertionScope() )
         {
             result.VirtualGeneratedColumnStorageResolution.Should().Be( resolution );
+            result.EncodingName.Should().Be( sut.EncodingName );
+            result.LocaleName.Should().Be( sut.LocaleName );
+            result.ConcurrentConnectionsLimit.Should().Be( sut.ConcurrentConnectionsLimit );
+            result.DefaultNamesCreator.Should().BeSameAs( sut.DefaultNamesCreator );
+            result.TypeDefinitionsCreator.Should().BeSameAs( sut.TypeDefinitionsCreator );
+            result.NodeInterpretersCreator.Should().BeSameAs( sut.NodeInterpretersCreator );
+        }
+    }
+
+    [Theory]
+    [InlineData( null )]
+    [InlineData( "foo" )]
+    public void SetEncodingName_ShouldReturnCorrectResult(string? name)
+    {
+        var sut = PostgreSqlDatabaseFactoryOptions.Default;
+        var result = sut.SetEncodingName( name );
+
+        using ( new AssertionScope() )
+        {
+            result.VirtualGeneratedColumnStorageResolution.Should().Be( sut.VirtualGeneratedColumnStorageResolution );
+            result.EncodingName.Should().Be( name );
+            result.LocaleName.Should().Be( sut.LocaleName );
+            result.ConcurrentConnectionsLimit.Should().Be( sut.ConcurrentConnectionsLimit );
+            result.DefaultNamesCreator.Should().BeSameAs( sut.DefaultNamesCreator );
+            result.TypeDefinitionsCreator.Should().BeSameAs( sut.TypeDefinitionsCreator );
+            result.NodeInterpretersCreator.Should().BeSameAs( sut.NodeInterpretersCreator );
+        }
+    }
+
+    [Theory]
+    [InlineData( null )]
+    [InlineData( "foo" )]
+    public void SetLocaleName_ShouldReturnCorrectResult(string? name)
+    {
+        var sut = PostgreSqlDatabaseFactoryOptions.Default;
+        var result = sut.SetLocaleName( name );
+
+        using ( new AssertionScope() )
+        {
+            result.VirtualGeneratedColumnStorageResolution.Should().Be( sut.VirtualGeneratedColumnStorageResolution );
+            result.EncodingName.Should().Be( sut.EncodingName );
+            result.LocaleName.Should().Be( name );
+            result.ConcurrentConnectionsLimit.Should().Be( sut.ConcurrentConnectionsLimit );
+            result.DefaultNamesCreator.Should().BeSameAs( sut.DefaultNamesCreator );
+            result.TypeDefinitionsCreator.Should().BeSameAs( sut.TypeDefinitionsCreator );
+            result.NodeInterpretersCreator.Should().BeSameAs( sut.NodeInterpretersCreator );
+        }
+    }
+
+    [Theory]
+    [InlineData( null )]
+    [InlineData( 0 )]
+    [InlineData( 1 )]
+    public void SetConcurrentConnectionsLimit_ShouldReturnCorrectResult(int? value)
+    {
+        var sut = PostgreSqlDatabaseFactoryOptions.Default;
+        var result = sut.SetConcurrentConnectionsLimit( value );
+
+        using ( new AssertionScope() )
+        {
+            result.VirtualGeneratedColumnStorageResolution.Should().Be( sut.VirtualGeneratedColumnStorageResolution );
+            result.EncodingName.Should().Be( sut.EncodingName );
+            result.LocaleName.Should().Be( sut.LocaleName );
+            result.ConcurrentConnectionsLimit.Should().Be( value );
             result.DefaultNamesCreator.Should().BeSameAs( sut.DefaultNamesCreator );
             result.TypeDefinitionsCreator.Should().BeSameAs( sut.TypeDefinitionsCreator );
             result.NodeInterpretersCreator.Should().BeSameAs( sut.NodeInterpretersCreator );
@@ -68,6 +135,9 @@ public class PostgreSqlDatabaseFactoryOptionsTests : TestsBase
         using ( new AssertionScope() )
         {
             result.VirtualGeneratedColumnStorageResolution.Should().Be( sut.VirtualGeneratedColumnStorageResolution );
+            result.EncodingName.Should().Be( sut.EncodingName );
+            result.LocaleName.Should().Be( sut.LocaleName );
+            result.ConcurrentConnectionsLimit.Should().Be( sut.ConcurrentConnectionsLimit );
             result.DefaultNamesCreator.Should().BeSameAs( creator );
             result.TypeDefinitionsCreator.Should().BeSameAs( sut.TypeDefinitionsCreator );
             result.NodeInterpretersCreator.Should().BeSameAs( sut.NodeInterpretersCreator );
@@ -83,6 +153,9 @@ public class PostgreSqlDatabaseFactoryOptionsTests : TestsBase
         using ( new AssertionScope() )
         {
             result.VirtualGeneratedColumnStorageResolution.Should().Be( sut.VirtualGeneratedColumnStorageResolution );
+            result.EncodingName.Should().Be( sut.EncodingName );
+            result.LocaleName.Should().Be( sut.LocaleName );
+            result.ConcurrentConnectionsLimit.Should().Be( sut.ConcurrentConnectionsLimit );
             result.DefaultNamesCreator.Should().BeSameAs( SqlHelpers.DefaultNamesCreator );
             result.TypeDefinitionsCreator.Should().BeSameAs( sut.TypeDefinitionsCreator );
             result.NodeInterpretersCreator.Should().BeSameAs( sut.NodeInterpretersCreator );
@@ -101,6 +174,9 @@ public class PostgreSqlDatabaseFactoryOptionsTests : TestsBase
         using ( new AssertionScope() )
         {
             result.VirtualGeneratedColumnStorageResolution.Should().Be( sut.VirtualGeneratedColumnStorageResolution );
+            result.EncodingName.Should().Be( sut.EncodingName );
+            result.LocaleName.Should().Be( sut.LocaleName );
+            result.ConcurrentConnectionsLimit.Should().Be( sut.ConcurrentConnectionsLimit );
             result.DefaultNamesCreator.Should().BeSameAs( sut.DefaultNamesCreator );
             result.TypeDefinitionsCreator.Should().BeSameAs( creator );
             result.NodeInterpretersCreator.Should().BeSameAs( sut.NodeInterpretersCreator );
@@ -116,6 +192,9 @@ public class PostgreSqlDatabaseFactoryOptionsTests : TestsBase
         using ( new AssertionScope() )
         {
             result.VirtualGeneratedColumnStorageResolution.Should().Be( sut.VirtualGeneratedColumnStorageResolution );
+            result.EncodingName.Should().Be( sut.EncodingName );
+            result.LocaleName.Should().Be( sut.LocaleName );
+            result.ConcurrentConnectionsLimit.Should().Be( sut.ConcurrentConnectionsLimit );
             result.DefaultNamesCreator.Should().BeSameAs( sut.DefaultNamesCreator );
             result.TypeDefinitionsCreator.Should().BeSameAs( PostgreSqlDatabaseFactoryOptions.BaseTypeDefinitionsCreator );
             result.NodeInterpretersCreator.Should().BeSameAs( sut.NodeInterpretersCreator );
@@ -135,6 +214,9 @@ public class PostgreSqlDatabaseFactoryOptionsTests : TestsBase
         using ( new AssertionScope() )
         {
             result.VirtualGeneratedColumnStorageResolution.Should().Be( sut.VirtualGeneratedColumnStorageResolution );
+            result.EncodingName.Should().Be( sut.EncodingName );
+            result.LocaleName.Should().Be( sut.LocaleName );
+            result.ConcurrentConnectionsLimit.Should().Be( sut.ConcurrentConnectionsLimit );
             result.DefaultNamesCreator.Should().BeSameAs( sut.DefaultNamesCreator );
             result.TypeDefinitionsCreator.Should().BeSameAs( sut.TypeDefinitionsCreator );
             result.NodeInterpretersCreator.Should().BeSameAs( creator );
@@ -150,6 +232,9 @@ public class PostgreSqlDatabaseFactoryOptionsTests : TestsBase
         using ( new AssertionScope() )
         {
             result.VirtualGeneratedColumnStorageResolution.Should().Be( sut.VirtualGeneratedColumnStorageResolution );
+            result.EncodingName.Should().Be( sut.EncodingName );
+            result.LocaleName.Should().Be( sut.LocaleName );
+            result.ConcurrentConnectionsLimit.Should().Be( sut.ConcurrentConnectionsLimit );
             result.DefaultNamesCreator.Should().BeSameAs( sut.DefaultNamesCreator );
             result.TypeDefinitionsCreator.Should().BeSameAs( sut.TypeDefinitionsCreator );
             result.NodeInterpretersCreator.Should().BeSameAs( PostgreSqlDatabaseFactoryOptions.BaseNodeInterpretersCreator );
