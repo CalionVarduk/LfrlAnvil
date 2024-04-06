@@ -1,48 +1,32 @@
 # TODO
-| Priority |       Project       |                            Title                            |                                   Details                                   |                    Requirements                    |
-|:--------:|:-------------------:|:-----------------------------------------------------------:|:---------------------------------------------------------------------------:|:--------------------------------------------------:|
-|    1     |      Sql.Core       |                       Add JSON nodes                        |                       [link](#sqlcore-add-json-nodes)                       |                         -                          |
-|    2     |      Sql.Core       |                 Add Attach/Detach DB nodes                  |                 [link](#sqlcore-add-attachdetach-db-nodes)                  |                         -                          |
-|    3     |          -          |                     Reactive.Scheduling                     |                         [link](#reactivescheduling)                         |                         -                          |
-|    4     |   Dependencies.*    |                   Dependencies.AspNetCore                   |                      [link](#dependencies-aspnetcore)                       |                         -                          |
-|    5     |          -          |                          Terminal                           |                              [link](#terminal)                              |                         -                          |
-|    6     |          -          |                         Diagnostics                         |                            [link](#diagnostics)                             |                         -                          |
-|    7     |          -          |                    Diagnostics.Terminal                     |                        [link](#diagnosticsterminal)                         | [Terminal](#terminal), [Diagnostics](#diagnostics) |
-|    8     |    Dependencies     |                     Reader/Writer Lock                      |                   [link](#dependencies-readerwriter-lock)                   |                         -                          |
-|    9     |    Computable.*     |                    Math/Physics structs                     |                   [link](#computable-mathphysics-structs)                   |                         -                          |
-|    10    | Computable.Automata |                  Add Context-free grammar                   |                                      -                                      |                         -                          |
-|    11    |     Collections     |                        Add SkipList                         |                                      -                                      |                         -                          |
-|    12    |      Sql.Core       |          Add Visitor for node CLR type extraction           |          [link](#sqlcore-add-visitor-for-node-clr-type-extraction)          |                         -                          |
-|    13    |      Sql.Core       |               Add Custom node tree validators               |              [link](#sqlcore-add-custom-node-tree-validators)               |                         -                          |
-|    14    |    Dependencies     |                  Generic dependency types                   |               [link](#dependencies-generic-dependency-types)                |                         -                          |
-|    15    |      Sql.Core       |                  Pin/Unpin builder methods                  |                  [link](#sqlcore-pinunpin-builder-methods)                  |                         -                          |
-|    16    |    Dependencies     |                    Generic builder types                    |                 [link](#dependencies-generic-builder-types)                 |                         -                          |
-|    17    |   Reactive.State    |                       Extension ideas                       |                   [link](#reactivestate-extension-ideas)                    |                         -                          |
+| Priority |       Project       |                  Title                   |                          Details                          |                Requirements                 |
+|:--------:|:-------------------:|:----------------------------------------:|:---------------------------------------------------------:|:-------------------------------------------:|
+|    1     |          -          |           Add Caching project            |                     [link](#caching)                      |                      -                      |
+|    2     |   Dependencies.*    |          Multi-threaded scopes           |        [link](#dependencies-multi-threaded-scopes)        |                      -                      |
+|    3     |          -          |           Reactive.Scheduling            |                [link](#reactivescheduling)                | [link](#dependencies-multi-threaded-scopes) |
+|    4     |    Dependencies     |            Reader/Writer Lock            |          [link](#dependencies-readerwriter-lock)          |                      -                      |
+|    5     |   Dependencies.*    |         Dependencies.AspNetCore          |             [link](#dependencies-aspnetcore)              |                      -                      |
+|    6     |        Sql.*        |          Positional parameters           |          [link](#sqlcore-positional-parameters)           |                      -                      |
+|    7     |          -          |                 Terminal                 |                     [link](#terminal)                     |                      -                      |
+|    8     |          -          |               Diagnostics                |                   [link](#diagnostics)                    |                      -                      |
+|    9     | Computable.Automata |         Add Context-free grammar         |                             -                             |                      -                      |
+|    10    |    Computable.*     |           Math/Physics structs           |          [link](#computable-mathphysics-structs)          |                      -                      |
+|    11    |        Sql.*        |        Add Microsoft SQL support         |                             -                             |                      -                      |
+|    12    |     Collections     |               Add SkipList               |                             -                             |                      -                      |
+|    13    |   Reactive.State    |     Async validator & change tracker     |  [link](#reactivestate-async-validator--change-tracker)   |                      -                      |
+|    14    |        Sql.*        |             DbBatch support              |             [link](#sqlcore-dbbatch-support)              |                      -                      |
+|    15    |      Sql.Core       |              Add JSON nodes              |              [link](#sqlcore-add-json-nodes)              |                      -                      |
+|    16    |    Dependencies     |         Generic dependency types         |      [link](#dependencies-generic-dependency-types)       |                      -                      |
+|    17    |      Sql.Core       | Add Visitor for node CLR type extraction | [link](#sqlcore-add-visitor-for-node-clr-type-extraction) |                      -                      |
 
 ### Scribbles:
-- Chrono:
-  - TimedCache here? old entries would be removed when new entry is added, so no timers required
-  - may be better to create a new Chrono.Collections project?
 
-
-- Dependencies:
-  - scopes & their attachment to thread may be an issue
-  - when dealing with async code that after await doesn't go back to the original context (e.g. default aspnetcore)
-  - and then a child scope spawn attempt is made, now all of a sudden from a parent scope attached to another thread
-  - it should always be possible to create a child scope
-  - parent scopes should be able to support multiple child scopes, as an implicit linked list
-  - ^ child scopes will have a pointer to the 'next sibling' scope ('first' node is the last created child scope?)
-  - ^ this shouldn't require a doubly linked list
-  - parent scope disposal cleans up all child scopes
-  - the only thing to 'work out' is attachment of created scope as the active thread scope
-  - ^ this may also have to be a linked list...
-
-
-- Sql.Core:
-  - support for positional parameters?
-    - node interpreter context would have to track it
-    - this would also require changes to parameter binder factory
-  - take a look at ado.net dbbatch & its commands
+### Caching
+project idea:
+- move Cache-like classes from Collections project to Caching
+- Add reference to Collections(?) & Chrono
+- Add TimedCache class, that is capable of removing entries old enough when new entry is added
+- or when manual cache validation is invoked
 
 
 ### Reactive.Scheduling
@@ -53,6 +37,8 @@ project idea:
 each entry can have a different lifetime
 - contains schedulers, that run on a timer & use an underlying queue,
 can they delegate event handling to a different thread?
+- may have an additional reference to the Caching project
+- its implementation may drive what Reactive.Scheduling actually consists of
 
 ### Terminal
 project idea:
@@ -66,13 +52,22 @@ project idea:
 - move most of Core.Diagnostics (except for stopwatch-related stuff & memory size) to that project
 - separate Benchmark into Macro & Micro benchmarks, macro stays pretty much the same as it is now
 - micro will attempt to calculate during warmup how many operations can it perform in order to be done in X amount of time
-- this could use a floating-point time & memory structs for tracking
+- this could use a floating-point time & memory structs for tracking (related to Chrono?)
 - also, macro benchmark can track zero-elapsed-time samples
 - benchmark itself can have a 'title' property, that describes it and it can have a RunFiltered method + base IBenchmark interface
+- Micro benchmark may be split into a separate step, if done at all, focus on extracting things from Core.Diagnostics
 
-### Diagnostics.Terminal
-project idea:
-- extends Benchmarking project with Terminal project capabilities (writes benchmark "events" to console)
+### Dependencies: Multi-threaded scopes
+- scopes & their attachment to thread may be an issue
+- when dealing with async code that after await doesn't go back to the original context (e.g. default aspnetcore)
+- and then a child scope spawn attempt is made, now all of a sudden from a parent scope attached to another thread
+- it should always be possible to create a child scope
+- parent scopes should be able to support multiple child scopes, as an implicit linked list
+- ^ child scopes will have a pointer to the 'next sibling' scope ('first' node is the last created child scope?)
+- ^ this shouldn't require a doubly linked list
+- parent scope disposal cleans up all child scopes
+- the only thing to 'work out' is attachment of created scope as the active thread scope
+- ^ this may also have to be a linked list... but now between parent-child rather than siblings
 
 ### Dependencies: Reader/Writer Lock
 - instead of 'lock', there should be a lot more reading (resolving dependencies) then writing (creating scopes)
@@ -83,18 +78,6 @@ project idea:
 - each generic dependency could provide partial generic parameters resolution
 - e.g. Implementor<T, U> : IDependency<T>, T will be filled in automatically, but U cannot be resolved based on the interface alone
 - the functionality could allow to provide a concrete type to use as a substitution for the U type
-
-### Dependencies: Generic builder types
-dedicated generic builder types for generic extension methods:
-- this would allow to provide a factory that returns T instead of object
-- also, this would possibly allow to set callback for disposal strategy that accepts T instead of object
-- simple QoL & DevExp improvements
-- LOW PRIORITY, needs a lot of annoying changes for little gain, setup can still go wrong
-- since, e.g. providing an explicit ctor should still be available, which can't really be done 'generically'
-- at least not without complete interface rework
-- e.g. FromCtor<T>(Func<ConstructorInfo, bool> selector), where selector is fed constructors from the provided T type
-- however, this would have its own drawbacks & annoyances
-- e.g. why need to filter at all if desired ctor info ref is already assigned to a variable? feels inefficient
 
 ### Computable: Math/Physics structs
 ideas for other LfrlAnvil.Computable projects:
@@ -108,37 +91,50 @@ ideas for other LfrlAnvil.Computable projects:
   - this could actually be implemented for decimal type, for now
   - and when the decision is made to move to .NET7, then add support for generic value types
 
-### Reactive.State: Extension ideas
-- extract VariableValidator & VariableChangeTracker to separate interfaces
+### Reactive.State: Async validator & change tracker
+- extract VariableValidator & VariableChangeTracker(?) to separate interfaces
 - this could potentially allow for more flexibility & for easier async validation?
-
-### Sql.Core: Add Attach/Detach DB nodes
-- Add attach/detach DB nodes
-- Add optional explicit DB name to table/view record set nodes (cross-DB queries), in SqlSchemaObjectName?
-- postgresql will be awkward, since dblink would have to be used,
-  - which requires that all result set column names & types are defined explicitly
-  - https://www.postgresql.org/docs/current/postgres-fdw.html
+- or add a separate IAsyncVariable stack, since CancellationToken should be supported
 
 ### Sql.Core: Add JSON nodes
 Add nodes for JSON column manipulation (read value, set value etc.)
 - this heavily depends on all sql providers' support for json
 
 ### Sql.Core: Add Visitor for node CLR type extraction
-- Add sql node visitor that allows to extract node's type (+ add Type to ViewDataField)
-
-### Sql.Core: Add Custom node tree validators
-- Add possibility to register custom view/default-value/index-filter validators in db builders
+Add sql node visitor that allows to extract node's type (+ add Type to ViewDataField)
+- this is a LOT of work, since every dialect needs to define its own visitor
+- and those visitors must handle all node types
+- not sure how necessary it is to have this functionality, since any visitor usage is expensive
+- and it requires intimate knowledge of each db type system
+  - type systems have to be basically re-implemented in those visitors which feels redundant
 
 ### Dependencies: AspNetCore
 - Add adapter layer between lfrlanvil & aspnetcore service providers
 - so that lfrlanvil provider can be used as service container in aspentcore apps
 
-### Sql.Core: Pin/Unpin builder methods
-- a loose idea
-- allow to Pin/Unpin db object builders for some reason
-- Pin could be associated with object removal and/or its modification
-- this would allow to manually mark a db object as read-only, pretty much
-- e.g. if a custom trigger is created & consumer wants to be extra safe that referenced tables/columns/views etc. won't be removed/modified
-- this could also replace current Referencing* properties
-- however, sometimes even though an object is 'locked' for removal, it can still be removed when its parent is removed
-- so, keep that in mind
+### Sql.Core: Positional parameters
+- Add support for positional parameters in parameter binder factory & in sql nodes
+- each sql parameter node will probably still require some sort of name
+- in order to identify the parameter & extract its optional position
+- parameter binder factory, along with context instance, will be able to translate the nodes
+- parameter binder factory will also contain type-erased versions of binders
+- that just accept an array of System.Object as parameter values
+
+### Sql.Core: DbBatch support
+- Add support for DbBatch and its commands
+- Awkward to implement, since there is no shared interface between DbCommand & DbBatchCommand
+- statement/query execution can be done already, with a trivial bit of boiler-plate
+- same situation with multi reading: DbBatch allows to create a reader, which can be linked to multi reader
+- DbBatchCommand parameters are an issue:
+  - param binder factory spews out delegates that accept IDbCommand instances
+  - support for DbBatch would require either accepting IDataParameterCollection instance as a binder argument
+    - which leads to an issue: how to create an actual parameter instance?
+    - methods for parameter creation can only be found in commands, not parameter collections
+    - an alternative would be to somehow scan the generic DbConnection type
+    - in order to find correct DbParameter type? seems finicky, but there may not be a better way to do this
+  - or a separate factory method would need to be created, that supports DbBatchCommand instances
+- another minor issue: how to share parameter instances between multiple DbBatchCommand instances
+- that belong to the same DbBatch? dealing with that may be a micro-optimization, but it may "add up"
+- maybe a separate binder factory method for the whole DbBatch...?
+- this would need some sort of way to define to which db batch commands all of the parameters should be attached to
+- either way, quite a bit of work
