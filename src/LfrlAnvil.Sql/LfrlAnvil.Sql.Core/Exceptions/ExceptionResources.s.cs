@@ -469,6 +469,26 @@ contains {parameters.Count} parameter(s):
     }
 
     [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string InvalidNodeMutatorResult(
+        SqlNodeBase parent,
+        SqlNodeBase node,
+        SqlNodeBase result,
+        Type expectedType,
+        string description)
+    {
+        return
+            $"""
+             Expected a node of type '{expectedType.GetDebugString()}' but found a node of type '{result.GetType().GetDebugString()}':
+             {result}
+             Error occurred while visiting {description} of:
+             {parent}
+             Visited node:
+             {node}
+             """;
+    }
+
+    [Pure]
     private static string MergeErrors(string header, IEnumerable<string> elements)
     {
         var errorsText = string.Join( Environment.NewLine, elements.Select( static (e, i) => $"{i + 1}. {e}" ) );

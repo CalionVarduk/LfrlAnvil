@@ -42,18 +42,7 @@
   - support for positional parameters?
     - node interpreter context would have to track it
     - this would also require changes to parameter binder factory
-  - RETURNING for INSERT/DELETE/UPDATE:
-    - postgresql: ok, RETURNING is always the last 'thing' in statement
-    - sqlite: ok, however DELETE/UPDATE with ORDER-BY/LIMIT require RETURNING directly after WHERE
-      - also, sqlite supports this since 2021, so this would require an option for node interpreter
-      - also, RETURNING cannot be used in CTEs (postgresql supports this)
-      - this could still be useful
-    - mysql: NO SUPPORT! this is probably a deal breaker then
   - take a look at ado.net dbbatch & its commands
-  - node replacer: visitor that allows to 'modify' nodes (like linq expression visitor)
-    - low priority
-    - could be fun to implement
-    - requires a lot of testing
 
 
 ### Reactive.Scheduling
