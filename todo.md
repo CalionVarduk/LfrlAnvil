@@ -20,6 +20,13 @@
 |    17    |      Sql.Core       | Add Visitor for node CLR type extraction | [link](#sqlcore-add-visitor-for-node-clr-type-extraction) |                      -                      |
 
 ### Scribbles:
+- IO: directory scanning?
+  - a generic recursive traversal of file system tree
+  - that can spew out any type of result
+  - can limit depth etc.
+  - options could include a simple break traversal predicate
+  - & file result selector & optional file result propagation strategy?
+  - take a look at DirectoryLookup solution
 
 ### Caching
 project idea:
