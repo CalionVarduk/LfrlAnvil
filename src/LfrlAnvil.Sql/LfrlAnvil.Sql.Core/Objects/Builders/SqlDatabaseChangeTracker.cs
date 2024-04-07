@@ -51,7 +51,7 @@ public abstract class SqlDatabaseChangeTracker : ISqlDatabaseChangeTracker
     public SqlObjectBuilder? ActiveObject { get; private set; }
     public SqlObjectExistenceState ActiveObjectExistenceState { get; private set; }
     public TimeSpan? ActionTimeout { get; private set; }
-    public SqlDatabaseCreateMode Mode => (SqlDatabaseCreateMode)((_mode & ModeMask) >> 1);
+    public SqlDatabaseCreateMode Mode => ( SqlDatabaseCreateMode )((_mode & ModeMask) >> 1);
     public bool IsAttached => (_mode & IsDetachedBit) == 0;
     public bool IsActive => _mode > 0 && IsAttached;
 
@@ -322,7 +322,7 @@ public abstract class SqlDatabaseChangeTracker : ISqlDatabaseChangeTracker
         if ( descriptor.Equals( SqlObjectChangeDescriptor.IsRemoved ) )
         {
             Assume.IsNotNull( newValue );
-            HandleIsRemovedChange( target, (bool)(object)newValue );
+            HandleIsRemovedChange( target, ( bool )( object )newValue );
             return;
         }
 
@@ -509,7 +509,7 @@ public abstract class SqlDatabaseChangeTracker : ISqlDatabaseChangeTracker
     {
         Assume.IsDefined( mode );
         Assume.IsNull( ActiveObject );
-        _mode = (byte)((int)mode << 1);
+        _mode = ( byte )(( int )mode << 1);
     }
 
     internal void ClearPendingActions()
@@ -561,7 +561,7 @@ public abstract class SqlDatabaseChangeTracker : ISqlDatabaseChangeTracker
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private static object? GetChangePayloadValue<T>(T value)
     {
-        return typeof( T ) == typeof( bool ) ? Boxed.GetBool( (bool)(object)value! ) : value;
+        return typeof( T ) == typeof( bool ) ? Boxed.GetBool( ( bool )( object )value! ) : value;
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]

@@ -33,7 +33,7 @@ public class PostgreSqlColumnTypeDefinitionInt8Tests : TestsBase
     public void TryToParameterValue_ShouldReturnCorrectResult()
     {
         var sut = _provider.GetByType<sbyte>();
-        var result = sut.TryToParameterValue( (sbyte)123 );
+        var result = sut.TryToParameterValue( ( sbyte )123 );
         result.Should().Be( 123 );
     }
 

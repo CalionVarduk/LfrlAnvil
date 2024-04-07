@@ -48,19 +48,19 @@ internal sealed class PostgreSqlDatabaseChangeAggregator : SqlDatabaseChangeAggr
     public bool IsRenamed => OriginalName.Exists;
 
     public bool HasChanged =>
-        IsRenamed ||
-        DroppedPrimaryKey is not null ||
-        CreatedPrimaryKey is not null ||
-        CreatedColumns.Count > 0 ||
-        ModifiedColumns.Count > 0 ||
-        RemovedColumns.Count > 0 ||
-        CreatedChecks.Count > 0 ||
-        RemovedChecks.Count > 0 ||
-        CreatedIndexes.Count > 0 ||
-        RemovedIndexes.Count > 0 ||
-        CreatedForeignKeys.Count > 0 ||
-        RemovedForeignKeys.Count > 0 ||
-        ConstraintRenames.Count > 0;
+        IsRenamed
+        || DroppedPrimaryKey is not null
+        || CreatedPrimaryKey is not null
+        || CreatedColumns.Count > 0
+        || ModifiedColumns.Count > 0
+        || RemovedColumns.Count > 0
+        || CreatedChecks.Count > 0
+        || RemovedChecks.Count > 0
+        || CreatedIndexes.Count > 0
+        || RemovedIndexes.Count > 0
+        || CreatedForeignKeys.Count > 0
+        || RemovedForeignKeys.Count > 0
+        || ConstraintRenames.Count > 0;
 
     public override void Clear()
     {

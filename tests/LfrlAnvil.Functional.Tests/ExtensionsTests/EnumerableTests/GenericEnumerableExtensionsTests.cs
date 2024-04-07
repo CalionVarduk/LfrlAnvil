@@ -79,7 +79,13 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
     [Fact]
     public void SelectErrors_ShouldFilterOutValueElements()
     {
-        var expected = new List<Exception> { new Exception(), new Exception(), new Exception() };
+        var expected = new List<Exception>
+        {
+            new Exception(),
+            new Exception(),
+            new Exception()
+        };
+
         var sut = expected.Select( e => e.ToUnsafe<T>() )
             .Prepend( Fixture.Create<T>().ToUnsafe() )
             .Append( Fixture.Create<T>().ToUnsafe() );
@@ -93,7 +99,12 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
     public void Partition_WithUnsafe_ShouldReturnResultWithValueAndErrorElementsSplitBetweenCorrectCollections()
     {
         var expectedValues = Fixture.CreateMany<T>().ToList();
-        var expectedErrors = new List<Exception> { new Exception(), new Exception(), new Exception() };
+        var expectedErrors = new List<Exception>
+        {
+            new Exception(),
+            new Exception(),
+            new Exception()
+        };
 
         var sut = expectedValues.Select( e => e.ToUnsafe() ).Concat( expectedErrors.Select( e => e.ToUnsafe<T>() ) );
 

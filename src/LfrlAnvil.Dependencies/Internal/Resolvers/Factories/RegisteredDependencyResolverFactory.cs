@@ -112,7 +112,7 @@ internal abstract class RegisteredDependencyResolverFactory : DependencyResolver
                 var resolution = GetResolution( explicitParameterResolutions, usedExplicitResolutions, customResolutionIndex );
                 if ( resolution.Factory is not null )
                 {
-                    _parameterResolutions[i] = KeyValuePair.Create( parameter, (object?)resolution.Factory );
+                    _parameterResolutions[i] = KeyValuePair.Create( parameter, ( object? )resolution.Factory );
                     continue;
                 }
 
@@ -121,16 +121,17 @@ internal abstract class RegisteredDependencyResolverFactory : DependencyResolver
 
             if ( availableDependencies.TryGetValue( implementorKey, out var parameterFactory ) )
             {
-                _parameterResolutions[i] = KeyValuePair.Create( parameter, (object?)parameterFactory );
+                _parameterResolutions[i] = KeyValuePair.Create( parameter, ( object? )parameterFactory );
                 captiveDependencies = ValidateCaptiveDependency( captiveDependencies, parameter, implementorKey, parameterFactory );
                 continue;
             }
 
-            if ( parameter.HasDefaultValue ||
-                parameter.HasAttribute( configuration.OptionalDependencyAttributeType, inherit: false ) ||
-                (parameter.ParameterType.IsGenericType && parameter.ParameterType.GetGenericTypeDefinition() == typeof( IEnumerable<> )) )
+            if ( parameter.HasDefaultValue
+                || parameter.HasAttribute( configuration.OptionalDependencyAttributeType, inherit: false )
+                || (parameter.ParameterType.IsGenericType
+                    && parameter.ParameterType.GetGenericTypeDefinition() == typeof( IEnumerable<> )) )
             {
-                _parameterResolutions[i] = KeyValuePair.Create( parameter, (object?)null );
+                _parameterResolutions[i] = KeyValuePair.Create( parameter, ( object? )null );
                 continue;
             }
 
@@ -165,7 +166,7 @@ internal abstract class RegisteredDependencyResolverFactory : DependencyResolver
                 var resolution = GetResolution( explicitMemberResolutions, usedExplicitResolutions, customResolutionIndex );
                 if ( resolution.Factory is not null )
                 {
-                    _memberResolutions[i] = KeyValuePair.Create( member, (object?)resolution.Factory );
+                    _memberResolutions[i] = KeyValuePair.Create( member, ( object? )resolution.Factory );
                     continue;
                 }
 
@@ -174,15 +175,15 @@ internal abstract class RegisteredDependencyResolverFactory : DependencyResolver
 
             if ( availableDependencies.TryGetValue( implementorKey, out var memberFactory ) )
             {
-                _memberResolutions[i] = KeyValuePair.Create( member, (object?)memberFactory );
+                _memberResolutions[i] = KeyValuePair.Create( member, ( object? )memberFactory );
                 captiveDependencies = ValidateCaptiveDependency( captiveDependencies, member, implementorKey, memberFactory );
                 continue;
             }
 
-            if ( IsInjectableMemberOptional( member, configuration ) ||
-                (memberType.IsGenericType && memberType.GetGenericTypeDefinition() == typeof( IEnumerable<> )) )
+            if ( IsInjectableMemberOptional( member, configuration )
+                || (memberType.IsGenericType && memberType.GetGenericTypeDefinition() == typeof( IEnumerable<> )) )
             {
-                _memberResolutions[i] = KeyValuePair.Create( member, (object?)null );
+                _memberResolutions[i] = KeyValuePair.Create( member, ( object? )null );
                 continue;
             }
 
@@ -419,15 +420,15 @@ internal abstract class RegisteredDependencyResolverFactory : DependencyResolver
                     if ( member is FieldInfo field )
                         return field.FieldType.IsGenericType && field.FieldType.GetGenericTypeDefinition() == injectablePropertyType;
 
-                    return member is PropertyInfo property &&
-                        property.PropertyType.IsGenericType &&
-                        property.PropertyType.GetGenericTypeDefinition() == injectablePropertyType &&
-                        property.GetSetMethod( nonPublic: true ) is not null &&
-                        ! property.IsIndexer() &&
-                        property.GetBackingField() is null;
+                    return member is PropertyInfo property
+                        && property.PropertyType.IsGenericType
+                        && property.PropertyType.GetGenericTypeDefinition() == injectablePropertyType
+                        && property.GetSetMethod( nonPublic: true ) is not null
+                        && ! property.IsIndexer()
+                        && property.GetBackingField() is null;
                 },
-                configuration.InjectablePropertyType ) ??
-            Array.Empty<MemberInfo>();
+                configuration.InjectablePropertyType )
+            ?? Array.Empty<MemberInfo>();
 
         return result;
     }
@@ -538,9 +539,9 @@ internal abstract class RegisteredDependencyResolverFactory : DependencyResolver
                 continue;
             }
 
-            if ( ! hasRequiredValueTypeDependency &&
-                parameter.ParameterType.IsValueType &&
-                Nullable.GetUnderlyingType( parameter.ParameterType ) is null )
+            if ( ! hasRequiredValueTypeDependency
+                && parameter.ParameterType.IsValueType
+                && Nullable.GetUnderlyingType( parameter.ParameterType ) is null )
                 hasRequiredValueTypeDependency = true;
         }
 
@@ -631,10 +632,10 @@ internal abstract class RegisteredDependencyResolverFactory : DependencyResolver
                     continue;
                 }
 
-                if ( ! parameter.HasDefaultValue &&
-                    ! parameter.HasAttribute( configuration.OptionalDependencyAttributeType, inherit: false ) &&
-                    ! (parameter.ParameterType.IsGenericType &&
-                        parameter.ParameterType.GetGenericTypeDefinition() == typeof( IEnumerable<> )) )
+                if ( ! parameter.HasDefaultValue
+                    && ! parameter.HasAttribute( configuration.OptionalDependencyAttributeType, inherit: false )
+                    && ! (parameter.ParameterType.IsGenericType
+                        && parameter.ParameterType.GetGenericTypeDefinition() == typeof( IEnumerable<> )) )
                 {
                     score = notEligibleScore;
                     break;
@@ -653,9 +654,9 @@ internal abstract class RegisteredDependencyResolverFactory : DependencyResolver
             if ( other.Score == notEligibleScore )
                 continue;
 
-            if ( result is null ||
-                other.Score > result.Value.Score ||
-                (other.Score == result.Value.Score && other.ParameterCount > result.Value.ParameterCount) )
+            if ( result is null
+                || other.Score > result.Value.Score
+                || (other.Score == result.Value.Score && other.ParameterCount > result.Value.ParameterCount) )
                 result = other;
         }
 

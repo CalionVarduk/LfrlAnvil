@@ -91,10 +91,10 @@ public class AssumeTests : TestsBase
     [Theory]
     [Conditional( "DEBUG" )]
     [InlineData( -1 )]
-    [InlineData( (int)TestEnum.Bar + 1 )]
+    [InlineData( ( int )TestEnum.Bar + 1 )]
     public void IsDefined_ShouldFail_WhenParamIsNotDefined(int param)
     {
-        var action = Lambda.Of( () => Assume.IsDefined( (TestEnum)param ) );
+        var action = Lambda.Of( () => Assume.IsDefined( ( TestEnum )param ) );
         action.Should().Throw<Exception>();
     }
 

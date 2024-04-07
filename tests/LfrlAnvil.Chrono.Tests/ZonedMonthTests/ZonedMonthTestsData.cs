@@ -153,61 +153,31 @@ public class ZonedMonthTestsData
         return new TheoryData<DateTime, TimeZoneInfo, DateTime, int, Duration>
         {
             {
-                new DateTime( 2021, 8, 1 ),
-                positiveTimeZone1,
-                new DateTime( 2021, 8, 1, 0, 1, 0 ),
-                31,
+                new DateTime( 2021, 8, 1 ), positiveTimeZone1, new DateTime( 2021, 8, 1, 0, 1, 0 ), 31,
                 Duration.FromHours( 744 ).SubtractMinutes( 1 )
             },
             {
-                new DateTime( 2021, 7, 1 ),
-                positiveTimeZone2,
-                new DateTime( 2021, 7, 1, 0, 30, 0 ),
-                31,
+                new DateTime( 2021, 7, 1 ), positiveTimeZone2, new DateTime( 2021, 7, 1, 0, 30, 0 ), 31,
                 Duration.FromHours( 744 ).SubtractMinutes( 30 )
             },
             {
-                new DateTime( 2021, 6, 1 ),
-                positiveTimeZone3,
-                new DateTime( 2021, 6, 1, 0, 59, 0 ),
-                30,
+                new DateTime( 2021, 6, 1 ), positiveTimeZone3, new DateTime( 2021, 6, 1, 0, 59, 0 ), 30,
                 Duration.FromHours( 720 ).SubtractMinutes( 59 )
             },
+            { new DateTime( 2021, 5, 1 ), positiveTimeZone4, new DateTime( 2021, 5, 1, 1, 0, 0 ), 31, Duration.FromHours( 743 ) },
             {
-                new DateTime( 2021, 5, 1 ),
-                positiveTimeZone4,
-                new DateTime( 2021, 5, 1, 1, 0, 0 ),
-                31,
-                Duration.FromHours( 743 )
-            },
-            {
-                new DateTime( 2021, 8, 1 ),
-                negativeTimeZone1,
-                new DateTime( 2021, 8, 1, 0, 1, 0 ),
-                31,
+                new DateTime( 2021, 8, 1 ), negativeTimeZone1, new DateTime( 2021, 8, 1, 0, 1, 0 ), 31,
                 Duration.FromHours( 744 ).SubtractMinutes( 1 )
             },
             {
-                new DateTime( 2021, 7, 1 ),
-                negativeTimeZone2,
-                new DateTime( 2021, 7, 1, 0, 30, 0 ),
-                31,
+                new DateTime( 2021, 7, 1 ), negativeTimeZone2, new DateTime( 2021, 7, 1, 0, 30, 0 ), 31,
                 Duration.FromHours( 744 ).SubtractMinutes( 30 )
             },
             {
-                new DateTime( 2021, 6, 1 ),
-                negativeTimeZone3,
-                new DateTime( 2021, 6, 1, 0, 59, 0 ),
-                30,
+                new DateTime( 2021, 6, 1 ), negativeTimeZone3, new DateTime( 2021, 6, 1, 0, 59, 0 ), 30,
                 Duration.FromHours( 720 ).SubtractMinutes( 59 )
             },
-            {
-                new DateTime( 2021, 5, 1 ),
-                negativeTimeZone4,
-                new DateTime( 2021, 5, 1, 1, 0, 0 ),
-                31,
-                Duration.FromHours( 743 )
-            }
+            { new DateTime( 2021, 5, 1 ), negativeTimeZone4, new DateTime( 2021, 5, 1, 1, 0, 0 ), 31, Duration.FromHours( 743 ) }
         };
     }
 
@@ -269,59 +239,35 @@ public class ZonedMonthTestsData
         return new TheoryData<DateTime, TimeZoneInfo, DateTime, int, Duration>
         {
             {
-                new DateTime( 2021, 8, 1 ),
-                positiveTimeZone1,
-                new DateTime( 2021, 8, 31, 23, 0, 59, 999 ).AddTicks( 9999 ),
-                31,
+                new DateTime( 2021, 8, 1 ), positiveTimeZone1, new DateTime( 2021, 8, 31, 23, 0, 59, 999 ).AddTicks( 9999 ), 31,
                 Duration.FromHours( 744 ).SubtractMinutes( 59 )
             },
             {
-                new DateTime( 2021, 9, 1 ),
-                positiveTimeZone2,
-                new DateTime( 2021, 9, 30, 23, 29, 59, 999 ).AddTicks( 9999 ),
-                30,
+                new DateTime( 2021, 9, 1 ), positiveTimeZone2, new DateTime( 2021, 9, 30, 23, 29, 59, 999 ).AddTicks( 9999 ), 30,
                 Duration.FromHours( 720 ).SubtractMinutes( 30 )
             },
             {
-                new DateTime( 2021, 10, 1 ),
-                positiveTimeZone3,
-                new DateTime( 2021, 10, 31, 23, 58, 59, 999 ).AddTicks( 9999 ),
-                31,
+                new DateTime( 2021, 10, 1 ), positiveTimeZone3, new DateTime( 2021, 10, 31, 23, 58, 59, 999 ).AddTicks( 9999 ), 31,
                 Duration.FromHours( 744 ).SubtractMinutes( 1 )
             },
             {
-                new DateTime( 2021, 11, 1 ),
-                positiveTimeZone4,
-                new DateTime( 2021, 11, 30, 22, 59, 59, 999 ).AddTicks( 9999 ),
-                30,
+                new DateTime( 2021, 11, 1 ), positiveTimeZone4, new DateTime( 2021, 11, 30, 22, 59, 59, 999 ).AddTicks( 9999 ), 30,
                 Duration.FromHours( 719 )
             },
             {
-                new DateTime( 2021, 8, 1 ),
-                negativeTimeZone1,
-                new DateTime( 2021, 8, 31, 23, 0, 59, 999 ).AddTicks( 9999 ),
-                31,
+                new DateTime( 2021, 8, 1 ), negativeTimeZone1, new DateTime( 2021, 8, 31, 23, 0, 59, 999 ).AddTicks( 9999 ), 31,
                 Duration.FromHours( 744 ).SubtractMinutes( 59 )
             },
             {
-                new DateTime( 2021, 9, 1 ),
-                negativeTimeZone2,
-                new DateTime( 2021, 9, 30, 23, 29, 59, 999 ).AddTicks( 9999 ),
-                30,
+                new DateTime( 2021, 9, 1 ), negativeTimeZone2, new DateTime( 2021, 9, 30, 23, 29, 59, 999 ).AddTicks( 9999 ), 30,
                 Duration.FromHours( 720 ).SubtractMinutes( 30 )
             },
             {
-                new DateTime( 2021, 10, 1 ),
-                negativeTimeZone3,
-                new DateTime( 2021, 10, 31, 23, 58, 59, 999 ).AddTicks( 9999 ),
-                31,
+                new DateTime( 2021, 10, 1 ), negativeTimeZone3, new DateTime( 2021, 10, 31, 23, 58, 59, 999 ).AddTicks( 9999 ), 31,
                 Duration.FromHours( 744 ).SubtractMinutes( 1 )
             },
             {
-                new DateTime( 2021, 11, 1 ),
-                negativeTimeZone4,
-                new DateTime( 2021, 11, 30, 22, 59, 59, 999 ).AddTicks( 9999 ),
-                30,
+                new DateTime( 2021, 11, 1 ), negativeTimeZone4, new DateTime( 2021, 11, 30, 22, 59, 59, 999 ).AddTicks( 9999 ), 30,
                 Duration.FromHours( 719 )
             }
         };
@@ -384,62 +330,14 @@ public class ZonedMonthTestsData
 
         return new TheoryData<DateTime, TimeZoneInfo, bool, int, Duration>
         {
-            {
-                new DateTime( 2021, 8, 1 ),
-                positiveTimeZone1,
-                true,
-                31,
-                Duration.FromHours( 744 ).AddMinutes( 1 )
-            },
-            {
-                new DateTime( 2021, 7, 1 ),
-                positiveTimeZone2,
-                true,
-                31,
-                Duration.FromHours( 744 ).AddMinutes( 30 )
-            },
-            {
-                new DateTime( 2021, 6, 1 ),
-                positiveTimeZone3,
-                true,
-                30,
-                Duration.FromHours( 720 ).AddMinutes( 59 )
-            },
-            {
-                new DateTime( 2021, 5, 1 ),
-                positiveTimeZone4,
-                true,
-                31,
-                Duration.FromHours( 745 )
-            },
-            {
-                new DateTime( 2021, 8, 1 ),
-                negativeTimeZone1,
-                false,
-                31,
-                Duration.FromHours( 744 ).AddMinutes( 1 )
-            },
-            {
-                new DateTime( 2021, 7, 1 ),
-                negativeTimeZone2,
-                false,
-                31,
-                Duration.FromHours( 744 ).AddMinutes( 30 )
-            },
-            {
-                new DateTime( 2021, 6, 1 ),
-                negativeTimeZone3,
-                false,
-                30,
-                Duration.FromHours( 720 ).AddMinutes( 59 )
-            },
-            {
-                new DateTime( 2021, 5, 1 ),
-                negativeTimeZone4,
-                false,
-                31,
-                Duration.FromHours( 745 )
-            }
+            { new DateTime( 2021, 8, 1 ), positiveTimeZone1, true, 31, Duration.FromHours( 744 ).AddMinutes( 1 ) },
+            { new DateTime( 2021, 7, 1 ), positiveTimeZone2, true, 31, Duration.FromHours( 744 ).AddMinutes( 30 ) },
+            { new DateTime( 2021, 6, 1 ), positiveTimeZone3, true, 30, Duration.FromHours( 720 ).AddMinutes( 59 ) },
+            { new DateTime( 2021, 5, 1 ), positiveTimeZone4, true, 31, Duration.FromHours( 745 ) },
+            { new DateTime( 2021, 8, 1 ), negativeTimeZone1, false, 31, Duration.FromHours( 744 ).AddMinutes( 1 ) },
+            { new DateTime( 2021, 7, 1 ), negativeTimeZone2, false, 31, Duration.FromHours( 744 ).AddMinutes( 30 ) },
+            { new DateTime( 2021, 6, 1 ), negativeTimeZone3, false, 30, Duration.FromHours( 720 ).AddMinutes( 59 ) },
+            { new DateTime( 2021, 5, 1 ), negativeTimeZone4, false, 31, Duration.FromHours( 745 ) }
         };
     }
 
@@ -500,62 +398,14 @@ public class ZonedMonthTestsData
 
         return new TheoryData<DateTime, TimeZoneInfo, bool, int, Duration>
         {
-            {
-                new DateTime( 2021, 8, 1 ),
-                positiveTimeZone1,
-                false,
-                31,
-                Duration.FromHours( 744 ).AddMinutes( 59 )
-            },
-            {
-                new DateTime( 2021, 9, 1 ),
-                positiveTimeZone2,
-                false,
-                30,
-                Duration.FromHours( 720 ).AddMinutes( 30 )
-            },
-            {
-                new DateTime( 2021, 10, 1 ),
-                positiveTimeZone3,
-                false,
-                31,
-                Duration.FromHours( 744 ).AddMinutes( 1 )
-            },
-            {
-                new DateTime( 2021, 11, 1 ),
-                positiveTimeZone4,
-                false,
-                30,
-                Duration.FromHours( 721 )
-            },
-            {
-                new DateTime( 2021, 8, 1 ),
-                negativeTimeZone1,
-                true,
-                31,
-                Duration.FromHours( 744 ).AddMinutes( 59 )
-            },
-            {
-                new DateTime( 2021, 9, 1 ),
-                negativeTimeZone2,
-                true,
-                30,
-                Duration.FromHours( 720 ).AddMinutes( 30 )
-            },
-            {
-                new DateTime( 2021, 10, 1 ),
-                negativeTimeZone3,
-                true,
-                31,
-                Duration.FromHours( 744 ).AddMinutes( 1 )
-            },
-            {
-                new DateTime( 2021, 11, 1 ),
-                negativeTimeZone4,
-                true,
-                30,
-                Duration.FromHours( 721 )
-            }
+            { new DateTime( 2021, 8, 1 ), positiveTimeZone1, false, 31, Duration.FromHours( 744 ).AddMinutes( 59 ) },
+            { new DateTime( 2021, 9, 1 ), positiveTimeZone2, false, 30, Duration.FromHours( 720 ).AddMinutes( 30 ) },
+            { new DateTime( 2021, 10, 1 ), positiveTimeZone3, false, 31, Duration.FromHours( 744 ).AddMinutes( 1 ) },
+            { new DateTime( 2021, 11, 1 ), positiveTimeZone4, false, 30, Duration.FromHours( 721 ) },
+            { new DateTime( 2021, 8, 1 ), negativeTimeZone1, true, 31, Duration.FromHours( 744 ).AddMinutes( 59 ) },
+            { new DateTime( 2021, 9, 1 ), negativeTimeZone2, true, 30, Duration.FromHours( 720 ).AddMinutes( 30 ) },
+            { new DateTime( 2021, 10, 1 ), negativeTimeZone3, true, 31, Duration.FromHours( 744 ).AddMinutes( 1 ) },
+            { new DateTime( 2021, 11, 1 ), negativeTimeZone4, true, 30, Duration.FromHours( 721 ) }
         };
     }
 
@@ -604,53 +454,23 @@ public class ZonedMonthTestsData
         return new TheoryData<DateTime, TimeZoneInfo, DateTime, bool, int, Duration>
         {
             {
-                new DateTime( 2021, 8, 1 ),
-                positiveTimeZone1,
-                new DateTime( 2021, 8, 1, 0, 1, 0 ),
-                false,
-                31,
+                new DateTime( 2021, 8, 1 ), positiveTimeZone1, new DateTime( 2021, 8, 1, 0, 1, 0 ), false, 31,
                 Duration.FromHours( 744 ).AddMinutes( 58 )
             },
             {
-                new DateTime( 2021, 7, 1 ),
-                positiveTimeZone2,
-                new DateTime( 2021, 7, 1, 0, 59, 0 ),
-                false,
-                31,
+                new DateTime( 2021, 7, 1 ), positiveTimeZone2, new DateTime( 2021, 7, 1, 0, 59, 0 ), false, 31,
                 Duration.FromHours( 744 ).SubtractMinutes( 58 )
             },
+            { new DateTime( 2021, 6, 1 ), positiveTimeZone3, new DateTime( 2021, 6, 1, 1, 0, 0 ), false, 30, Duration.FromHours( 720 ) },
             {
-                new DateTime( 2021, 6, 1 ),
-                positiveTimeZone3,
-                new DateTime( 2021, 6, 1, 1, 0, 0 ),
-                false,
-                30,
-                Duration.FromHours( 720 )
-            },
-            {
-                new DateTime( 2021, 8, 1 ),
-                negativeTimeZone1,
-                new DateTime( 2021, 8, 1, 0, 1, 0 ),
-                true,
-                31,
+                new DateTime( 2021, 8, 1 ), negativeTimeZone1, new DateTime( 2021, 8, 1, 0, 1, 0 ), true, 31,
                 Duration.FromHours( 744 ).AddMinutes( 58 )
             },
             {
-                new DateTime( 2021, 7, 1 ),
-                negativeTimeZone2,
-                new DateTime( 2021, 7, 1, 0, 59, 0 ),
-                true,
-                31,
+                new DateTime( 2021, 7, 1 ), negativeTimeZone2, new DateTime( 2021, 7, 1, 0, 59, 0 ), true, 31,
                 Duration.FromHours( 744 ).SubtractMinutes( 58 )
             },
-            {
-                new DateTime( 2021, 6, 1 ),
-                negativeTimeZone3,
-                new DateTime( 2021, 6, 1, 1, 0, 0 ),
-                true,
-                30,
-                Duration.FromHours( 720 )
-            }
+            { new DateTime( 2021, 6, 1 ), negativeTimeZone3, new DateTime( 2021, 6, 1, 1, 0, 0 ), true, 30, Duration.FromHours( 720 ) }
         };
     }
 
@@ -699,51 +519,27 @@ public class ZonedMonthTestsData
         return new TheoryData<DateTime, TimeZoneInfo, DateTime, bool, int, Duration>
         {
             {
-                new DateTime( 2021, 8, 1 ),
-                positiveTimeZone1,
-                new DateTime( 2021, 8, 31, 23, 58, 59, 999 ).AddTicks( 9999 ),
-                true,
-                31,
+                new DateTime( 2021, 8, 1 ), positiveTimeZone1, new DateTime( 2021, 8, 31, 23, 58, 59, 999 ).AddTicks( 9999 ), true, 31,
                 Duration.FromHours( 744 ).AddMinutes( 58 )
             },
             {
-                new DateTime( 2021, 7, 1 ),
-                positiveTimeZone2,
-                new DateTime( 2021, 7, 31, 23, 0, 59, 999 ).AddTicks( 9999 ),
-                true,
-                31,
+                new DateTime( 2021, 7, 1 ), positiveTimeZone2, new DateTime( 2021, 7, 31, 23, 0, 59, 999 ).AddTicks( 9999 ), true, 31,
                 Duration.FromHours( 744 ).SubtractMinutes( 58 )
             },
             {
-                new DateTime( 2021, 6, 1 ),
-                positiveTimeZone3,
-                new DateTime( 2021, 6, 30, 22, 59, 59, 999 ).AddTicks( 9999 ),
-                true,
-                30,
+                new DateTime( 2021, 6, 1 ), positiveTimeZone3, new DateTime( 2021, 6, 30, 22, 59, 59, 999 ).AddTicks( 9999 ), true, 30,
                 Duration.FromHours( 720 )
             },
             {
-                new DateTime( 2021, 8, 1 ),
-                negativeTimeZone1,
-                new DateTime( 2021, 8, 31, 23, 58, 59, 999 ).AddTicks( 9999 ),
-                false,
-                31,
+                new DateTime( 2021, 8, 1 ), negativeTimeZone1, new DateTime( 2021, 8, 31, 23, 58, 59, 999 ).AddTicks( 9999 ), false, 31,
                 Duration.FromHours( 744 ).AddMinutes( 58 )
             },
             {
-                new DateTime( 2021, 7, 1 ),
-                negativeTimeZone2,
-                new DateTime( 2021, 7, 31, 23, 0, 59, 999 ).AddTicks( 9999 ),
-                false,
-                31,
+                new DateTime( 2021, 7, 1 ), negativeTimeZone2, new DateTime( 2021, 7, 31, 23, 0, 59, 999 ).AddTicks( 9999 ), false, 31,
                 Duration.FromHours( 744 ).SubtractMinutes( 58 )
             },
             {
-                new DateTime( 2021, 6, 1 ),
-                negativeTimeZone3,
-                new DateTime( 2021, 6, 30, 22, 59, 59, 999 ).AddTicks( 9999 ),
-                false,
-                30,
+                new DateTime( 2021, 6, 1 ), negativeTimeZone3, new DateTime( 2021, 6, 30, 22, 59, 59, 999 ).AddTicks( 9999 ), false, 30,
                 Duration.FromHours( 720 )
             }
         };
@@ -975,9 +771,7 @@ public class ZonedMonthTestsData
             { month, timeZone, new Period( 1, 2, 3, 9, 22, 90, 1700, 80000, 18000000, 20000000 ), new DateTime( 2022, 11, 1 ) },
             { month, timeZoneWithDaylightSaving, Period.FromMonths( 1 ).AddDays( 25 ).AddHours( 2 ), new DateTime( 2021, 9, 1 ) },
             {
-                month,
-                timeZoneWithDaylightSaving,
-                Period.FromMonths( 1 ).AddDays( 25 ).AddHours( 3 ).SubtractTicks( 1 ),
+                month, timeZoneWithDaylightSaving, Period.FromMonths( 1 ).AddDays( 25 ).AddHours( 3 ).SubtractTicks( 1 ),
                 new DateTime( 2021, 9, 1 )
             },
             { month, timeZone, Period.FromTicks( -1 ), new DateTime( 2021, 7, 1 ) }

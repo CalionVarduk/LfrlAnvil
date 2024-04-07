@@ -347,7 +347,7 @@ public class ZonedMonthTests : TestsBase
         var timeZone = TimeZoneFactory.CreateRandom( Fixture );
         var expected = ZonedMonth.Create( dateTime, timeZone );
 
-        var result = ZonedMonth.Create( dateTime.Year, (IsoMonthOfYear)dateTime.Month, timeZone );
+        var result = ZonedMonth.Create( dateTime.Year, ( IsoMonthOfYear )dateTime.Month, timeZone );
 
         result.Should().BeEquivalentTo( expected );
     }
@@ -408,7 +408,7 @@ public class ZonedMonthTests : TestsBase
         var dateTime = Fixture.Create<DateTime>();
         var expected = ZonedMonth.CreateUtc( dateTime );
 
-        var result = ZonedMonth.CreateUtc( dateTime.Year, (IsoMonthOfYear)dateTime.Month );
+        var result = ZonedMonth.CreateUtc( dateTime.Year, ( IsoMonthOfYear )dateTime.Month );
 
         result.Should().BeEquivalentTo( expected );
     }
@@ -430,7 +430,7 @@ public class ZonedMonthTests : TestsBase
         var dateTime = Fixture.Create<DateTime>();
         var expected = ZonedMonth.CreateLocal( dateTime );
 
-        var result = ZonedMonth.CreateLocal( dateTime.Year, (IsoMonthOfYear)dateTime.Month );
+        var result = ZonedMonth.CreateLocal( dateTime.Year, ( IsoMonthOfYear )dateTime.Month );
 
         result.Should().BeEquivalentTo( expected );
     }
@@ -842,7 +842,7 @@ public class ZonedMonthTests : TestsBase
         var dateTime = Fixture.Create<DateTime>();
         var timeZone = TimeZoneFactory.CreateRandom( Fixture );
         var sut = ZonedMonth.Create( dateTime, timeZone );
-        var action = Lambda.Of( () => sut.GetWeekOfMonth( 1, (IsoDayOfWeek)weekStart ) );
+        var action = Lambda.Of( () => sut.GetWeekOfMonth( 1, ( IsoDayOfWeek )weekStart ) );
         action.Should().ThrowExactly<ArgumentOutOfRangeException>();
     }
 
@@ -884,7 +884,7 @@ public class ZonedMonthTests : TestsBase
         var dateTime = Fixture.Create<DateTime>();
         var timeZone = TimeZoneFactory.CreateRandom( Fixture );
         var sut = ZonedMonth.Create( dateTime, timeZone );
-        var action = Lambda.Of( () => sut.TryGetWeekOfMonth( 1, (IsoDayOfWeek)weekStart ) );
+        var action = Lambda.Of( () => sut.TryGetWeekOfMonth( 1, ( IsoDayOfWeek )weekStart ) );
         action.Should().ThrowExactly<ArgumentOutOfRangeException>();
     }
 
@@ -911,9 +911,21 @@ public class ZonedMonthTests : TestsBase
 
         using ( new AssertionScope() )
         {
-            result.Select( d => new { d.Year, d.Month, d.TimeZone } )
+            result.Select(
+                    d => new
+                    {
+                        d.Year,
+                        d.Month,
+                        d.TimeZone
+                    } )
                 .Should()
-                .AllBeEquivalentTo( new { sut.Year, sut.Month, sut.TimeZone } );
+                .AllBeEquivalentTo(
+                    new
+                    {
+                        sut.Year,
+                        sut.Month,
+                        sut.TimeZone
+                    } );
 
             result.Select( d => d.DayOfMonth ).Should().BeSequentiallyEqualTo( Enumerable.Range( 1, expectedDayCount ) );
         }
@@ -936,7 +948,7 @@ public class ZonedMonthTests : TestsBase
         var dateTime = Fixture.Create<DateTime>();
         var timeZone = TimeZoneFactory.CreateRandom( Fixture );
         var sut = ZonedMonth.Create( dateTime, timeZone );
-        var action = Lambda.Of( () => sut.GetWeekCount( (IsoDayOfWeek)weekStart ) );
+        var action = Lambda.Of( () => sut.GetWeekCount( ( IsoDayOfWeek )weekStart ) );
         action.Should().ThrowExactly<ArgumentOutOfRangeException>();
     }
 
@@ -956,9 +968,19 @@ public class ZonedMonthTests : TestsBase
         {
             result.Should().HaveCount( expectedWeekCount );
 
-            result.Select( w => new { w.Start.DayOfWeek, w.TimeZone } )
+            result.Select(
+                    w => new
+                    {
+                        w.Start.DayOfWeek,
+                        w.TimeZone
+                    } )
                 .Should()
-                .AllBeEquivalentTo( new { DayOfWeek = weekStart, sut.TimeZone } );
+                .AllBeEquivalentTo(
+                    new
+                    {
+                        DayOfWeek = weekStart,
+                        sut.TimeZone
+                    } );
 
             result.Should().OnlyContain( w => w.Start.Month == sut.Month || w.End.Month == sut.Month );
             result.Should().BeInAscendingOrder( w => w.Start );
@@ -973,7 +995,7 @@ public class ZonedMonthTests : TestsBase
         var dateTime = Fixture.Create<DateTime>();
         var timeZone = TimeZoneFactory.CreateRandom( Fixture );
         var sut = ZonedMonth.Create( dateTime, timeZone );
-        var action = Lambda.Of( () => sut.GetAllWeeks( (IsoDayOfWeek)weekStart ) );
+        var action = Lambda.Of( () => sut.GetAllWeeks( ( IsoDayOfWeek )weekStart ) );
         action.Should().ThrowExactly<ArgumentOutOfRangeException>();
     }
 

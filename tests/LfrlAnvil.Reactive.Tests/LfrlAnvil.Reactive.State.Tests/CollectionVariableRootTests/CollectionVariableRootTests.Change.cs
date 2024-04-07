@@ -144,18 +144,12 @@ public partial class CollectionVariableRootTests
 
             errorsValidator.VerifyCalls()
                 .Received(
-                    v =>
-                    {
-                        _ = v.Validate( sut.Elements );
-                    },
+                    v => { _ = v.Validate( sut.Elements ); },
                     1 );
 
             warningsValidator.VerifyCalls()
                 .Received(
-                    v =>
-                    {
-                        _ = v.Validate( sut.Elements );
-                    },
+                    v => { _ = v.Validate( sut.Elements ); },
                     1 );
         }
     }
@@ -173,13 +167,7 @@ public partial class CollectionVariableRootTests
         var initialElements = new[] { allElements[0], allElements[1], allElements[2] };
         var addedElements = new[]
         {
-            allElements[3],
-            allElements[4],
-            allElements[5],
-            allElements[6],
-            allElements[7],
-            allElements[8],
-            allElements[9]
+            allElements[3], allElements[4], allElements[5], allElements[6], allElements[7], allElements[8], allElements[9]
         };
 
         var elementsToAdd = new[]
@@ -301,18 +289,12 @@ public partial class CollectionVariableRootTests
 
             errorsValidator.VerifyCalls()
                 .Received(
-                    v =>
-                    {
-                        _ = v.Validate( sut.Elements );
-                    },
+                    v => { _ = v.Validate( sut.Elements ); },
                     1 );
 
             warningsValidator.VerifyCalls()
                 .Received(
-                    v =>
-                    {
-                        _ = v.Validate( sut.Elements );
-                    },
+                    v => { _ = v.Validate( sut.Elements ); },
                     1 );
         }
     }

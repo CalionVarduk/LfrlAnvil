@@ -68,10 +68,16 @@ public class BitmaskStaticTests
     }
 }
 
-public enum EnumWithoutFlagsAttribute { A = 0 }
+public enum EnumWithoutFlagsAttribute
+{
+    A = 0
+}
 
 [Flags]
-public enum EnumWithoutZeroValueMember { A = 1 }
+public enum EnumWithoutZeroValueMember
+{
+    A = 1
+}
 
 public readonly struct InvalidStructA : IConvertible, IComparable
 {

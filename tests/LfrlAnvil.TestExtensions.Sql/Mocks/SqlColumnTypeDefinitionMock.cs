@@ -8,7 +8,7 @@ public sealed class SqlColumnTypeDefinitionMock<T> : SqlColumnTypeDefinition<T, 
     where T : notnull
 {
     public SqlColumnTypeDefinitionMock(SqlDataTypeMock dataType, T defaultValue)
-        : base( dataType, defaultValue, static (r, i) => (T)r.GetValue( i ) ) { }
+        : base( dataType, defaultValue, static (r, i) => ( T )r.GetValue( i ) ) { }
 
     public new SqlDataTypeMock DataType => ReinterpretCast.To<SqlDataTypeMock>( base.DataType );
 

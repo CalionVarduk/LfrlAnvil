@@ -25,7 +25,7 @@ public abstract class GenericMaybeTests<T> : TestsBase
     [Fact]
     public void StaticNone_ShouldNotHaveValue()
     {
-        var sut = (Maybe<T>)Maybe.None;
+        var sut = ( Maybe<T> )Maybe.None;
 
         using ( new AssertionScope() )
         {
@@ -556,7 +556,7 @@ public abstract class GenericMaybeTests<T> : TestsBase
     {
         var value = Fixture.CreateNotDefault<T>();
 
-        var sut = (Maybe<T>)value;
+        var sut = ( Maybe<T> )value;
 
         using ( new AssertionScope() )
         {
@@ -568,7 +568,7 @@ public abstract class GenericMaybeTests<T> : TestsBase
     [Fact]
     public void MaybeConversionOperator_FromNil_ReturnNone()
     {
-        var sut = (Maybe<T>)Nil.Instance;
+        var sut = ( Maybe<T> )Nil.Instance;
         sut.HasValue.Should().BeFalse();
     }
 
@@ -579,7 +579,7 @@ public abstract class GenericMaybeTests<T> : TestsBase
 
         var sut = Maybe.Some( value );
 
-        var result = (T)sut;
+        var result = ( T )sut;
 
         result.Should().Be( value );
     }
@@ -588,7 +588,7 @@ public abstract class GenericMaybeTests<T> : TestsBase
     public void TConversionOperator_ShouldThrowValueAccessException_WhenDoesntHaveValue()
     {
         var sut = Maybe<T>.None;
-        var action = Lambda.Of( () => (T)sut );
+        var action = Lambda.Of( () => ( T )sut );
         action.Should().ThrowExactly<ValueAccessException>().AndMatch( e => e.MemberName == nameof( Maybe<T>.Value ) );
     }
 

@@ -37,7 +37,7 @@ public partial class MySqlNodeInterpreterTests : TestsBase
             sut.Context.Sql.ToString().Should().Be( "foo.a + @bar" );
             sut.Context.Parameters.Should().HaveCount( 1 );
             sut.Context.Parameters.Should()
-                .BeEquivalentTo( KeyValuePair.Create( "bar", (TypeNullability?)TypeNullability.Create<int>() ) );
+                .BeEquivalentTo( KeyValuePair.Create( "bar", ( TypeNullability? )TypeNullability.Create<int>() ) );
         }
     }
 
@@ -138,7 +138,7 @@ public partial class MySqlNodeInterpreterTests : TestsBase
             sut.Context.Sql.ToString().Should().Be( "@a" );
             sut.Context.Parameters.Should().HaveCount( 1 );
             sut.Context.Parameters.Should()
-                .BeEquivalentTo( KeyValuePair.Create( "a", (TypeNullability?)TypeNullability.Create<int>() ) );
+                .BeEquivalentTo( KeyValuePair.Create( "a", ( TypeNullability? )TypeNullability.Create<int>() ) );
         }
     }
 
@@ -153,7 +153,7 @@ public partial class MySqlNodeInterpreterTests : TestsBase
             sut.Context.Sql.ToString().Should().Be( "@b" );
             sut.Context.Parameters.Should().HaveCount( 1 );
             sut.Context.Parameters.Should()
-                .BeEquivalentTo( KeyValuePair.Create( "b", (TypeNullability?)TypeNullability.Create<string>( isNullable: true ) ) );
+                .BeEquivalentTo( KeyValuePair.Create( "b", ( TypeNullability? )TypeNullability.Create<string>( isNullable: true ) ) );
         }
     }
 
@@ -319,7 +319,7 @@ END" );
         {
             sut.Context.Parameters.Should().HaveCount( 1 );
             sut.Context.Parameters.Should()
-                .BeEquivalentTo( KeyValuePair.Create( "a", (TypeNullability?)TypeNullability.Create<int>() ) );
+                .BeEquivalentTo( KeyValuePair.Create( "a", ( TypeNullability? )TypeNullability.Create<int>() ) );
 
             sut.Context.Sql.ToString().Should().Be( "foo.a > @a" );
         }
@@ -770,7 +770,7 @@ LEFT JOIN qux ON qux.b = foo.b" );
         {
             sut.Context.Parameters.Should().HaveCount( 1 );
             sut.Context.Parameters.Should()
-                .BeEquivalentTo( KeyValuePair.Create( "a", (TypeNullability?)TypeNullability.Create<int>() ) );
+                .BeEquivalentTo( KeyValuePair.Create( "a", ( TypeNullability? )TypeNullability.Create<int>() ) );
 
             sut.Context.Sql.ToString().Should().Be( "SELECT * FROM foo WHERE foo.a = @a" );
         }
@@ -816,7 +816,7 @@ LEFT JOIN qux ON qux.b = foo.b" );
         {
             sut.Context.Parameters.Should().HaveCount( 1 );
             sut.Context.Parameters.Should()
-                .BeEquivalentTo( KeyValuePair.Create( "p", (TypeNullability?)TypeNullability.Create<int>() ) );
+                .BeEquivalentTo( KeyValuePair.Create( "p", ( TypeNullability? )TypeNullability.Create<int>() ) );
 
             sut.Context.Sql.ToString()
                 .Should()
@@ -1372,8 +1372,7 @@ SELECT * FROM qux" );
             SqlNode.Values(
                 new[,]
                 {
-                    { SqlNode.Literal( "foo" ), SqlNode.Literal( 5 ) },
-                    { SqlNode.RawExpression( "bar.a" ), SqlNode.Literal( 25 ) }
+                    { SqlNode.Literal( "foo" ), SqlNode.Literal( 5 ) }, { SqlNode.RawExpression( "bar.a" ), SqlNode.Literal( 25 ) }
                 } ) );
 
         sut.Context.Sql.ToString()
@@ -1404,7 +1403,7 @@ VALUES (@a, 1)" );
 
             sut.Context.Parameters.Should().HaveCount( 1 );
             sut.Context.Parameters.Should()
-                .BeEquivalentTo( KeyValuePair.Create( "a", (TypeNullability?)TypeNullability.Create<int>() ) );
+                .BeEquivalentTo( KeyValuePair.Create( "a", ( TypeNullability? )TypeNullability.Create<int>() ) );
         }
     }
 
@@ -1416,8 +1415,7 @@ VALUES (@a, 1)" );
             SqlNode.Values(
                     new[,]
                     {
-                        { SqlNode.Literal( "foo" ), SqlNode.Literal( 5 ) },
-                        { SqlNode.RawExpression( "bar.a" ), SqlNode.Literal( 25 ) }
+                        { SqlNode.Literal( "foo" ), SqlNode.Literal( 5 ) }, { SqlNode.RawExpression( "bar.a" ), SqlNode.Literal( 25 ) }
                     } )
                 .ToInsertInto( SqlNode.RawRecordSet( "qux" ), r => new[] { r["a"], r["b"] } ) );
 
@@ -1463,8 +1461,7 @@ SELECT a, b FROM foo" );
             .Select(
                 s => new SqlSelectNode[]
                 {
-                    s["common.foo"]["b"].As( "a" ),
-                    SqlNode.AggregateFunctions.Count( s.GetAll().ToExpression() ).Over( wnd ).As( "b" )
+                    s["common.foo"]["b"].As( "a" ), SqlNode.AggregateFunctions.Count( s.GetAll().ToExpression() ).Over( wnd ).As( "b" )
                 } )
             .OrderBy( s => new[] { s.DataSource["common.foo"]["b"].Asc() } )
             .Limit( SqlNode.Literal( 50 ) )

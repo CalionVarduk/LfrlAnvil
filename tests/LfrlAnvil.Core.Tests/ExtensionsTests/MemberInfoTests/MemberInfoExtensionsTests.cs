@@ -117,10 +117,7 @@ public class MemberInfoExtensionsTests : TestsBase
         var sut = typeof( DerivedClass );
         var expected = new[]
             {
-                new TestMultiAttribute( 1 ),
-                new TestMultiAttribute( 2 ),
-                new TestMultiAttribute( 5 ),
-                new TestMultiAttribute( 6 )
+                new TestMultiAttribute( 1 ), new TestMultiAttribute( 2 ), new TestMultiAttribute( 5 ), new TestMultiAttribute( 6 )
             }
             .AsEnumerable();
 

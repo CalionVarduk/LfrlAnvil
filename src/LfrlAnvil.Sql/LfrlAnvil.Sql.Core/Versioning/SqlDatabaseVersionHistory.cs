@@ -126,7 +126,7 @@ public class SqlDatabaseVersionHistory
 
         while ( lo <= hi )
         {
-            var mid = unchecked( (int)(((uint)hi + (uint)lo) >> 1) );
+            var mid = unchecked( ( int )((( uint )hi + ( uint )lo) >> 1) );
             var cmp = target.CompareTo( versions[mid].Value );
 
             if ( cmp == 0 )

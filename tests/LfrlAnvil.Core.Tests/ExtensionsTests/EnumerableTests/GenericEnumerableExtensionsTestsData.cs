@@ -184,13 +184,7 @@ public class GenericEnumerableExtensionsTestsData<T>
             { new[] { new Pair<T, IEnumerable<T>>( _1, new[] { _2 } ) }, new[] { Pair.Create( _1, _2 ) } },
             {
                 new[] { new Pair<T, IEnumerable<T>>( _1, new[] { _2, _3 } ), new Pair<T, IEnumerable<T>>( _2, new[] { _1, _3 } ) },
-                new[]
-                {
-                    Pair.Create( _1, _2 ),
-                    Pair.Create( _1, _3 ),
-                    Pair.Create( _2, _1 ),
-                    Pair.Create( _2, _3 )
-                }
+                new[] { Pair.Create( _1, _2 ), Pair.Create( _1, _3 ), Pair.Create( _2, _1 ), Pair.Create( _2, _3 ) }
             }
         };
     }

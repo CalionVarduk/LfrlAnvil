@@ -31,7 +31,7 @@ public class SqliteColumnTypeDefinitionUInt32Tests : TestsBase
     public void TryToParameterValue_ShouldReturnCorrectResult()
     {
         var sut = _provider.GetByType<uint>();
-        var result = sut.TryToParameterValue( (uint)1234567 );
+        var result = sut.TryToParameterValue( ( uint )1234567 );
         result.Should().Be( 1234567L );
     }
 

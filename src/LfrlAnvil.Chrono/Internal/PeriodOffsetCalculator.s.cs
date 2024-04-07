@@ -323,7 +323,7 @@ internal static class PeriodOffsetCalculator
         public int HandleWeeksGreedyOffset(Duration currentStart)
         {
             var duration = Current - currentStart;
-            var offsetInWeeks = (int)(duration.Ticks / ChronoConstants.TicksPerStandardWeek);
+            var offsetInWeeks = ( int )(duration.Ticks / ChronoConstants.TicksPerStandardWeek);
 
             if ( offsetInWeeks != 0 )
                 Current = Current.SubtractTicks( offsetInWeeks * ChronoConstants.TicksPerStandardWeek );
@@ -345,7 +345,7 @@ internal static class PeriodOffsetCalculator
             if ( duration == Duration.Zero )
                 return 0;
 
-            var offsetInDays = (int)(duration.Ticks / ChronoConstants.TicksPerStandardDay);
+            var offsetInDays = ( int )(duration.Ticks / ChronoConstants.TicksPerStandardDay);
             Current = Current.Subtract( duration );
             return offsetInDays;
         }
@@ -364,7 +364,7 @@ internal static class PeriodOffsetCalculator
             if ( duration == Duration.Zero )
                 return (Weeks: 0, Days: 0);
 
-            var fullOffsetInDays = (int)(duration.Ticks / ChronoConstants.TicksPerStandardDay);
+            var fullOffsetInDays = ( int )(duration.Ticks / ChronoConstants.TicksPerStandardDay);
             var offsetInWeeks = fullOffsetInDays / ChronoConstants.DaysPerWeek;
             var offsetInDays = fullOffsetInDays - offsetInWeeks * ChronoConstants.DaysPerWeek;
 
@@ -392,7 +392,7 @@ internal static class PeriodOffsetCalculator
                 return 0;
 
             Current = Current.Subtract( duration );
-            return (int)duration.FullHours;
+            return ( int )duration.FullHours;
         }
 
         [MethodImpl( MethodImplOptions.AggressiveInlining )]

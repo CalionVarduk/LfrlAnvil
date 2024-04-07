@@ -174,9 +174,9 @@ internal static class TypeHelpers
                 var methods = t.GetMethods( PublicDeclaredMember );
                 foreach ( var m in methods )
                 {
-                    if ( m.IsGenericMethod ||
-                        m.ReturnType != typeof( object ) ||
-                        m.Name != nameof( ISqlColumnTypeDefinition<int>.ToParameterValue ) )
+                    if ( m.IsGenericMethod
+                        || m.ReturnType != typeof( object )
+                        || m.Name != nameof( ISqlColumnTypeDefinition<int>.ToParameterValue ) )
                         continue;
 
                     var parameters = m.GetParameters();
@@ -186,9 +186,9 @@ internal static class TypeHelpers
 
                 foreach ( var m in methods )
                 {
-                    if ( m.IsGenericMethod ||
-                        m.ReturnType != typeof( object ) ||
-                        m.Name != nameof( ISqlColumnTypeDefinition.TryToParameterValue ) )
+                    if ( m.IsGenericMethod
+                        || m.ReturnType != typeof( object )
+                        || m.Name != nameof( ISqlColumnTypeDefinition.TryToParameterValue ) )
                         continue;
 
                     var parameters = m.GetParameters();
@@ -212,9 +212,9 @@ internal static class TypeHelpers
                 var methods = t.GetMethods( PublicDeclaredMember );
                 foreach ( var m in methods )
                 {
-                    if ( m.IsGenericMethod ||
-                        m.ReturnType != typeof( void ) ||
-                        m.Name != nameof( ISqlColumnTypeDefinition.SetParameterInfo ) )
+                    if ( m.IsGenericMethod
+                        || m.ReturnType != typeof( void )
+                        || m.Name != nameof( ISqlColumnTypeDefinition.SetParameterInfo ) )
                         continue;
 
                     var parameters = m.GetParameters();
@@ -228,15 +228,15 @@ internal static class TypeHelpers
 
                 foreach ( var m in methods )
                 {
-                    if ( m.IsGenericMethod ||
-                        m.ReturnType != typeof( void ) ||
-                        m.Name != nameof( ISqlColumnTypeDefinition.SetParameterInfo ) )
+                    if ( m.IsGenericMethod
+                        || m.ReturnType != typeof( void )
+                        || m.Name != nameof( ISqlColumnTypeDefinition.SetParameterInfo ) )
                         continue;
 
                     var parameters = m.GetParameters();
-                    if ( parameters.Length == 2 &&
-                        parameters[0].ParameterType == typeof( IDbDataParameter ) &&
-                        parameters[1].ParameterType == typeof( bool ) )
+                    if ( parameters.Length == 2
+                        && parameters[0].ParameterType == typeof( IDbDataParameter )
+                        && parameters[1].ParameterType == typeof( bool ) )
                         return m;
                 }
 
@@ -280,10 +280,10 @@ internal static class TypeHelpers
                 var properties = t.GetProperties( PublicDeclaredMember );
                 foreach ( var p in properties )
                 {
-                    if ( p.PropertyType == typeof( int ) &&
-                        p.GetGetMethod() is not null &&
-                        p.Name == nameof( IDataRecord.FieldCount ) &&
-                        p.GetIndexParameters().Length == 0 )
+                    if ( p.PropertyType == typeof( int )
+                        && p.GetGetMethod() is not null
+                        && p.Name == nameof( IDataRecord.FieldCount )
+                        && p.GetIndexParameters().Length == 0 )
                         return p;
                 }
 
@@ -375,10 +375,10 @@ internal static class TypeHelpers
                 var methods = t.GetMethods( PublicDeclaredMember );
                 foreach ( var m in methods )
                 {
-                    if ( ! m.IsGenericMethod &&
-                        m.ReturnType == typeof( bool ) &&
-                        m.Name == nameof( IDataReader.Read ) &&
-                        m.GetParameters().Length == 0 )
+                    if ( ! m.IsGenericMethod
+                        && m.ReturnType == typeof( bool )
+                        && m.Name == nameof( IDataReader.Read )
+                        && m.GetParameters().Length == 0 )
                         return m;
                 }
 
@@ -398,10 +398,10 @@ internal static class TypeHelpers
                 var properties = t.GetProperties( PublicDeclaredMember );
                 foreach ( var p in properties )
                 {
-                    if ( p.GetGetMethod() is not null &&
-                        p.Name == nameof( IDbCommand.Parameters ) &&
-                        p.PropertyType.IsAssignableTo( typeof( IDataParameterCollection ) ) &&
-                        p.GetIndexParameters().Length == 0 )
+                    if ( p.GetGetMethod() is not null
+                        && p.Name == nameof( IDbCommand.Parameters )
+                        && p.PropertyType.IsAssignableTo( typeof( IDataParameterCollection ) )
+                        && p.GetIndexParameters().Length == 0 )
                         return p;
                 }
 
@@ -421,10 +421,10 @@ internal static class TypeHelpers
                 var methods = t.GetMethods( PublicDeclaredMember );
                 foreach ( var m in methods )
                 {
-                    if ( ! m.IsGenericMethod &&
-                        m.Name == nameof( IDbCommand.CreateParameter ) &&
-                        m.ReturnType.IsAssignableTo( typeof( IDbDataParameter ) ) &&
-                        m.GetParameters().Length == 0 )
+                    if ( ! m.IsGenericMethod
+                        && m.Name == nameof( IDbCommand.CreateParameter )
+                        && m.ReturnType.IsAssignableTo( typeof( IDbDataParameter ) )
+                        && m.GetParameters().Length == 0 )
                         return m;
                 }
 
@@ -444,10 +444,10 @@ internal static class TypeHelpers
                 var properties = t.GetProperties( PublicDeclaredMember );
                 foreach ( var p in properties )
                 {
-                    if ( p.PropertyType == typeof( int ) &&
-                        p.GetGetMethod() is not null &&
-                        p.Name == nameof( IDataParameterCollection.Count ) &&
-                        p.GetIndexParameters().Length == 0 )
+                    if ( p.PropertyType == typeof( int )
+                        && p.GetGetMethod() is not null
+                        && p.Name == nameof( IDataParameterCollection.Count )
+                        && p.GetIndexParameters().Length == 0 )
                         return p;
                 }
 
@@ -467,8 +467,8 @@ internal static class TypeHelpers
                 var properties = t.GetProperties( PublicDeclaredMember );
                 foreach ( var p in properties )
                 {
-                    if ( p.GetGetMethod() is null ||
-                        (t.IsInterface ? p.PropertyType != typeof( object ) : ! p.PropertyType.IsAssignableTo( parameterType )) )
+                    if ( p.GetGetMethod() is null
+                        || (t.IsInterface ? p.PropertyType != typeof( object ) : ! p.PropertyType.IsAssignableTo( parameterType )) )
                         continue;
 
                     var indexParameters = p.GetIndexParameters();
@@ -564,10 +564,10 @@ internal static class TypeHelpers
                 var properties = t.GetProperties( PublicDeclaredMember );
                 foreach ( var p in properties )
                 {
-                    if ( p.PropertyType == typeof( ParameterDirection ) &&
-                        p.GetSetMethod() is not null &&
-                        p.Name == nameof( IDataParameter.Direction ) &&
-                        p.GetIndexParameters().Length == 0 )
+                    if ( p.PropertyType == typeof( ParameterDirection )
+                        && p.GetSetMethod() is not null
+                        && p.Name == nameof( IDataParameter.Direction )
+                        && p.GetIndexParameters().Length == 0 )
                         return p;
                 }
 
@@ -587,10 +587,10 @@ internal static class TypeHelpers
                 var properties = t.GetProperties( PublicDeclaredMember );
                 foreach ( var p in properties )
                 {
-                    if ( p.PropertyType == typeof( string ) &&
-                        p.GetSetMethod() is not null &&
-                        p.Name == nameof( IDataParameter.ParameterName ) &&
-                        p.GetIndexParameters().Length == 0 )
+                    if ( p.PropertyType == typeof( string )
+                        && p.GetSetMethod() is not null
+                        && p.Name == nameof( IDataParameter.ParameterName )
+                        && p.GetIndexParameters().Length == 0 )
                         return p;
                 }
 
@@ -610,10 +610,10 @@ internal static class TypeHelpers
                 var properties = t.GetProperties( PublicDeclaredMember );
                 foreach ( var p in properties )
                 {
-                    if ( p.PropertyType == typeof( object ) &&
-                        p.GetSetMethod() is not null &&
-                        p.Name == nameof( IDataParameter.Value ) &&
-                        p.GetIndexParameters().Length == 0 )
+                    if ( p.PropertyType == typeof( object )
+                        && p.GetSetMethod() is not null
+                        && p.Name == nameof( IDataParameter.Value )
+                        && p.GetIndexParameters().Length == 0 )
                         return p;
                 }
 

@@ -402,8 +402,8 @@ public class ExpressionExtensionsTests : TestsBase
             newP1P2P3PNoNameAdd.Left.NodeType.Should().Be( ExpressionType.Add );
             newP1P2P3PNoNameAdd.Right.NodeType.Should().Be( ExpressionType.Add );
 
-            if ( newP1P2P3PNoNameAdd.Left is not BinaryExpression newP1P2Add ||
-                newP1P2P3PNoNameAdd.Right is not BinaryExpression newP3PNoNameAdd )
+            if ( newP1P2P3PNoNameAdd.Left is not BinaryExpression newP1P2Add
+                || newP1P2P3PNoNameAdd.Right is not BinaryExpression newP3PNoNameAdd )
                 return;
 
             newP1P2Add.Left.Should().BeSameAs( p1Replacement );
@@ -454,8 +454,8 @@ public class ExpressionExtensionsTests : TestsBase
             newP1P2P3PNoNameAdd.Left.NodeType.Should().Be( ExpressionType.Add );
             newP1P2P3PNoNameAdd.Right.NodeType.Should().Be( ExpressionType.Add );
 
-            if ( newP1P2P3PNoNameAdd.Left is not BinaryExpression newP1P2Add ||
-                newP1P2P3PNoNameAdd.Right is not BinaryExpression newP3PNoNameAdd )
+            if ( newP1P2P3PNoNameAdd.Left is not BinaryExpression newP1P2Add
+                || newP1P2P3PNoNameAdd.Right is not BinaryExpression newP3PNoNameAdd )
                 return;
 
             newP1P2Add.Left.Should().BeSameAs( p1Replacement );

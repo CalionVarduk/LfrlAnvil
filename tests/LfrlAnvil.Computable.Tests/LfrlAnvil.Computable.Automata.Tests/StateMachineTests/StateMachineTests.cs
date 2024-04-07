@@ -266,8 +266,7 @@ public class StateMachineTests : TestsBase
         var sut = builder.Build();
 
         var result = sut.WithOptimization(
-            StateMachineOptimizationParams<string>.Minimize(
-                (s1, s2) => new string( s1.Concat( s2 ).OrderBy( x => x ).ToArray() ) ) );
+            StateMachineOptimizationParams<string>.Minimize( (s1, s2) => new string( s1.Concat( s2 ).OrderBy( x => x ).ToArray() ) ) );
 
         using ( new AssertionScope() )
         {
@@ -297,8 +296,7 @@ public class StateMachineTests : TestsBase
         var sut = builder.Build();
 
         var result = sut.WithOptimization(
-            StateMachineOptimizationParams<string>.Minimize(
-                (s1, s2) => new string( s1.Concat( s2 ).OrderBy( x => x ).ToArray() ) ) );
+            StateMachineOptimizationParams<string>.Minimize( (s1, s2) => new string( s1.Concat( s2 ).OrderBy( x => x ).ToArray() ) ) );
 
         using ( new AssertionScope() )
         {
@@ -330,8 +328,7 @@ public class StateMachineTests : TestsBase
         var sut = builder.Build();
 
         var result = sut.WithOptimization(
-            StateMachineOptimizationParams<string>.Minimize(
-                (s1, s2) => new string( s1.Concat( s2 ).OrderBy( x => x ).ToArray() ) ) );
+            StateMachineOptimizationParams<string>.Minimize( (s1, s2) => new string( s1.Concat( s2 ).OrderBy( x => x ).ToArray() ) ) );
 
         using ( new AssertionScope() )
         {
@@ -363,8 +360,7 @@ public class StateMachineTests : TestsBase
         var sut = builder.Build();
 
         var result = sut.WithOptimization(
-            StateMachineOptimizationParams<string>.Minimize(
-                (s1, s2) => new string( s1.Concat( s2 ).OrderBy( x => x ).ToArray() ) ) );
+            StateMachineOptimizationParams<string>.Minimize( (s1, s2) => new string( s1.Concat( s2 ).OrderBy( x => x ).ToArray() ) ) );
 
         using ( new AssertionScope() )
         {
@@ -397,8 +393,7 @@ public class StateMachineTests : TestsBase
         var sut = builder.Build();
 
         var result = sut.WithOptimization(
-            StateMachineOptimizationParams<string>.Minimize(
-                (s1, s2) => new string( s1.Concat( s2 ).OrderBy( x => x ).ToArray() ) ) );
+            StateMachineOptimizationParams<string>.Minimize( (s1, s2) => new string( s1.Concat( s2 ).OrderBy( x => x ).ToArray() ) ) );
 
         using ( new AssertionScope() )
         {

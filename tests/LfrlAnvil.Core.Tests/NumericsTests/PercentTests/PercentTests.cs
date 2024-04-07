@@ -112,7 +112,7 @@ public class PercentTests : TestsBase
     {
         var sut = Percent.Normalize( value );
         var result = sut.Truncate();
-        result.Value.Should().Be( (decimal)expected );
+        result.Value.Should().Be( ( decimal )expected );
     }
 
     [Theory]
@@ -125,7 +125,7 @@ public class PercentTests : TestsBase
     {
         var sut = Percent.Normalize( value );
         var result = sut.Floor();
-        result.Value.Should().Be( (decimal)expected );
+        result.Value.Should().Be( ( decimal )expected );
     }
 
     [Theory]
@@ -138,7 +138,7 @@ public class PercentTests : TestsBase
     {
         var sut = Percent.Normalize( value );
         var result = sut.Ceiling();
-        result.Value.Should().Be( (decimal)expected );
+        result.Value.Should().Be( ( decimal )expected );
     }
 
     [Theory]
@@ -150,7 +150,7 @@ public class PercentTests : TestsBase
     {
         var sut = Percent.Normalize( value );
         var result = sut.Round( decimals );
-        result.Value.Should().Be( (decimal)expected );
+        result.Value.Should().Be( ( decimal )expected );
     }
 
     [Theory]
@@ -160,7 +160,7 @@ public class PercentTests : TestsBase
     public void DecimalConversionOperator_ShouldReturnCorrectResult(int value)
     {
         var sut = Percent.Normalize( value );
-        var result = (decimal)sut;
+        var result = ( decimal )sut;
         result.Should().Be( sut.Ratio );
     }
 
@@ -171,8 +171,8 @@ public class PercentTests : TestsBase
     public void DoubleConversionOperator_ShouldReturnCorrectResult(int value)
     {
         var sut = Percent.Normalize( value );
-        var result = (double)sut;
-        result.Should().Be( (double)sut.Ratio );
+        var result = ( double )sut;
+        result.Should().Be( ( double )sut.Ratio );
     }
 
     [Theory]
@@ -311,7 +311,7 @@ public class PercentTests : TestsBase
     [InlineData( -200, -120, 240 )]
     public void MultiplyOperator_ForDecimalLeft_ShouldReturnCorrectResult(int left, int right, int expected)
     {
-        var a = (decimal)left;
+        var a = ( decimal )left;
         var b = Percent.Normalize( right );
 
         var result = a * b;
@@ -330,7 +330,7 @@ public class PercentTests : TestsBase
     [InlineData( -200, -120, 240 )]
     public void MultiplyOperator_ForDecimalRight_ShouldReturnCorrectResult(int left, int right, int expected)
     {
-        var a = (decimal)right;
+        var a = ( decimal )right;
         var b = Percent.Normalize( left );
 
         var result = b * a;
@@ -349,7 +349,7 @@ public class PercentTests : TestsBase
     [InlineData( -200, -120, 240 )]
     public void MultiplyOperator_ForDoubleLeft_ShouldReturnCorrectResult(int left, int right, int expected)
     {
-        var a = (double)left;
+        var a = ( double )left;
         var b = Percent.Normalize( right );
 
         var result = a * b;
@@ -368,7 +368,7 @@ public class PercentTests : TestsBase
     [InlineData( -200, -120, 240 )]
     public void MultiplyOperator_ForDoubleRight_ShouldReturnCorrectResult(int left, int right, int expected)
     {
-        var a = (double)right;
+        var a = ( double )right;
         var b = Percent.Normalize( left );
 
         var result = b * a;
@@ -387,7 +387,7 @@ public class PercentTests : TestsBase
     [InlineData( -200, -120, 240 )]
     public void MultiplyOperator_ForFloatLeft_ShouldReturnCorrectResult(int left, int right, int expected)
     {
-        var a = (float)left;
+        var a = ( float )left;
         var b = Percent.Normalize( right );
 
         var result = a * b;
@@ -406,7 +406,7 @@ public class PercentTests : TestsBase
     [InlineData( -200, -120, 240 )]
     public void MultiplyOperator_ForFloatRight_ShouldReturnCorrectResult(int left, int right, int expected)
     {
-        var a = (float)right;
+        var a = ( float )right;
         var b = Percent.Normalize( left );
 
         var result = b * a;

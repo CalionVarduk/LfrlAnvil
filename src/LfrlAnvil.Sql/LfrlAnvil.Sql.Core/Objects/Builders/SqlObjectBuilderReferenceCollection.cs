@@ -29,8 +29,8 @@ public readonly struct SqlObjectBuilderReferenceCollection<T> : IReadOnlyCollect
     [Pure]
     public SqlObjectBuilderReference<T> GetReference(SqlObjectBuilderReferenceSource<T> source)
     {
-        return TryGetReference( source ) ??
-            throw SqlHelpers.CreateObjectBuilderException( source.Object.Database, ExceptionResources.ReferenceDoesNotExist( source ) );
+        return TryGetReference( source )
+            ?? throw SqlHelpers.CreateObjectBuilderException( source.Object.Database, ExceptionResources.ReferenceDoesNotExist( source ) );
     }
 
     [Pure]
@@ -112,7 +112,7 @@ public readonly struct SqlObjectBuilderReferenceCollection<T> : IReadOnlyCollect
         void IEnumerator.Reset()
         {
             if ( ! _isEmpty )
-                ((IEnumerator)_enumerator).Reset();
+                (( IEnumerator )_enumerator).Reset();
         }
     }
 

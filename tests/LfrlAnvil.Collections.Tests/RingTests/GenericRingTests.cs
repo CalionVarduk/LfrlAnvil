@@ -214,10 +214,8 @@ public abstract class GenericRingTests<T> : TestsBase
         var items = Fixture.CreateDistinctCollection<T>( 3 );
         var expected = new[]
         {
-            items[(0 + readIndex).EuclidModulo( 3 )],
-            items[(1 + readIndex).EuclidModulo( 3 )],
-            items[(2 + readIndex).EuclidModulo( 3 )]
-        }.Select( x => (T?)x );
+            items[(0 + readIndex).EuclidModulo( 3 )], items[(1 + readIndex).EuclidModulo( 3 )], items[(2 + readIndex).EuclidModulo( 3 )]
+        }.Select( x => ( T? )x );
 
         var sut = new Ring<T>( items );
         var result = sut.Read( readIndex );
@@ -232,12 +230,8 @@ public abstract class GenericRingTests<T> : TestsBase
     public void GetEnumerator_ShouldReturnCorrectResult(int writeIndex)
     {
         var items = Fixture.CreateDistinctCollection<T>( 3 );
-        var expected = new[]
-        {
-            items[(0 + writeIndex) % 3],
-            items[(1 + writeIndex) % 3],
-            items[(2 + writeIndex) % 3]
-        }.Select( x => (T?)x );
+        var expected
+            = new[] { items[(0 + writeIndex) % 3], items[(1 + writeIndex) % 3], items[(2 + writeIndex) % 3] }.Select( x => ( T? )x );
 
         var sut = new Ring<T>( items ) { WriteIndex = writeIndex };
 

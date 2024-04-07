@@ -50,31 +50,31 @@ public partial class CollectionVariableRootTests
             sut.Elements.TryGetValue( key, out var tryGetResult ).Should().BeFalse();
             tryGetResult.Should().Be( default( VariableMock ) );
 
-            ((IReadOnlyDictionary<int, VariableMock>)sut.Elements).Keys.Should().BeSameAs( sut.Elements.Keys );
-            ((IReadOnlyDictionary<int, VariableMock>)sut.Elements).Values.Should().BeSameAs( sut.Elements.Values );
-            ((ICollectionVariableRootElements)sut.Elements).Count.Should().Be( sut.Elements.Count );
-            ((ICollectionVariableRootElements)sut.Elements).Keys.Should().BeSameAs( sut.Elements.Keys );
-            ((ICollectionVariableRootElements)sut.Elements).Values.Should().BeSameAs( sut.Elements.Values );
-            ((ICollectionVariableRootElements)sut.Elements).InvalidElementKeys.Should().BeSameAs( sut.Elements.InvalidElementKeys );
-            ((ICollectionVariableRootElements)sut.Elements).WarningElementKeys.Should().BeSameAs( sut.Elements.WarningElementKeys );
-            ((ICollectionVariableRootElements)sut.Elements).AddedElementKeys.Should().BeSameAs( sut.Elements.AddedElementKeys );
-            ((ICollectionVariableRootElements)sut.Elements).RemovedElementKeys.Should().BeSameAs( sut.Elements.RemovedElementKeys );
-            ((ICollectionVariableRootElements)sut.Elements).ChangedElementKeys.Should().BeSameAs( sut.Elements.ChangedElementKeys );
+            (( IReadOnlyDictionary<int, VariableMock> )sut.Elements).Keys.Should().BeSameAs( sut.Elements.Keys );
+            (( IReadOnlyDictionary<int, VariableMock> )sut.Elements).Values.Should().BeSameAs( sut.Elements.Values );
+            (( ICollectionVariableRootElements )sut.Elements).Count.Should().Be( sut.Elements.Count );
+            (( ICollectionVariableRootElements )sut.Elements).Keys.Should().BeSameAs( sut.Elements.Keys );
+            (( ICollectionVariableRootElements )sut.Elements).Values.Should().BeSameAs( sut.Elements.Values );
+            (( ICollectionVariableRootElements )sut.Elements).InvalidElementKeys.Should().BeSameAs( sut.Elements.InvalidElementKeys );
+            (( ICollectionVariableRootElements )sut.Elements).WarningElementKeys.Should().BeSameAs( sut.Elements.WarningElementKeys );
+            (( ICollectionVariableRootElements )sut.Elements).AddedElementKeys.Should().BeSameAs( sut.Elements.AddedElementKeys );
+            (( ICollectionVariableRootElements )sut.Elements).RemovedElementKeys.Should().BeSameAs( sut.Elements.RemovedElementKeys );
+            (( ICollectionVariableRootElements )sut.Elements).ChangedElementKeys.Should().BeSameAs( sut.Elements.ChangedElementKeys );
 
-            ((IReadOnlyCollectionVariableRoot<int, VariableMock>)sut).Elements.Should().BeSameAs( sut.Elements );
-            ((IReadOnlyCollectionVariableRoot<int, VariableMock>)sut).OnChange.Should().BeSameAs( sut.OnChange );
-            ((IReadOnlyCollectionVariableRoot)sut).KeyType.Should().Be( typeof( int ) );
-            ((IReadOnlyCollectionVariableRoot)sut).ElementType.Should().Be( typeof( VariableMock ) );
-            ((IReadOnlyCollectionVariableRoot)sut).ValidationResultType.Should().Be( typeof( string ) );
-            ((IReadOnlyCollectionVariableRoot)sut).InitialElements.Should().BeSameAs( sut.InitialElements.Values );
-            ((IReadOnlyCollectionVariableRoot)sut).Elements.Should().BeSameAs( sut.Elements );
-            ((IReadOnlyCollectionVariableRoot)sut).Errors.Should().BeEquivalentTo( sut.Errors );
-            ((IReadOnlyCollectionVariableRoot)sut).Warnings.Should().BeEquivalentTo( sut.Warnings );
-            ((IReadOnlyCollectionVariableRoot)sut).OnValidate.Should().Be( sut.OnValidate );
-            ((IReadOnlyCollectionVariableRoot)sut).OnChange.Should().Be( sut.OnChange );
-            ((IVariableNode)sut).OnValidate.Should().Be( sut.OnValidate );
-            ((IVariableNode)sut).OnChange.Should().Be( sut.OnChange );
-            ((IVariableNode)sut).GetChildren().Should().BeEmpty();
+            (( IReadOnlyCollectionVariableRoot<int, VariableMock> )sut).Elements.Should().BeSameAs( sut.Elements );
+            (( IReadOnlyCollectionVariableRoot<int, VariableMock> )sut).OnChange.Should().BeSameAs( sut.OnChange );
+            (( IReadOnlyCollectionVariableRoot )sut).KeyType.Should().Be( typeof( int ) );
+            (( IReadOnlyCollectionVariableRoot )sut).ElementType.Should().Be( typeof( VariableMock ) );
+            (( IReadOnlyCollectionVariableRoot )sut).ValidationResultType.Should().Be( typeof( string ) );
+            (( IReadOnlyCollectionVariableRoot )sut).InitialElements.Should().BeSameAs( sut.InitialElements.Values );
+            (( IReadOnlyCollectionVariableRoot )sut).Elements.Should().BeSameAs( sut.Elements );
+            (( IReadOnlyCollectionVariableRoot )sut).Errors.Should().BeEquivalentTo( sut.Errors );
+            (( IReadOnlyCollectionVariableRoot )sut).Warnings.Should().BeEquivalentTo( sut.Warnings );
+            (( IReadOnlyCollectionVariableRoot )sut).OnValidate.Should().Be( sut.OnValidate );
+            (( IReadOnlyCollectionVariableRoot )sut).OnChange.Should().Be( sut.OnChange );
+            (( IVariableNode )sut).OnValidate.Should().Be( sut.OnValidate );
+            (( IVariableNode )sut).OnChange.Should().Be( sut.OnChange );
+            (( IVariableNode )sut).GetChildren().Should().BeEmpty();
         }
     }
 
@@ -130,7 +130,7 @@ public partial class CollectionVariableRootTests
 
             elements.Should().OnlyContain( e => e.Parent == sut );
 
-            ((IVariableNode)sut).GetChildren().Should().BeEquivalentTo( elements );
+            (( IVariableNode )sut).GetChildren().Should().BeEquivalentTo( elements );
         }
     }
 
@@ -196,7 +196,7 @@ public partial class CollectionVariableRootTests
 
             allElements.Should().OnlyContain( e => e.Parent == sut );
 
-            ((IVariableNode)sut).GetChildren().Should().BeEquivalentTo( allElements );
+            (( IVariableNode )sut).GetChildren().Should().BeEquivalentTo( allElements );
         }
     }
 

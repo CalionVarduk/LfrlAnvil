@@ -25,6 +25,6 @@ public class ByteSequenceGenerator : SequenceGeneratorBase<byte>
 
     protected sealed override byte AddStep(byte value)
     {
-        return checked( (byte)(value + Step) );
+        return checked( ( byte )(value + Step) );
     }
 }

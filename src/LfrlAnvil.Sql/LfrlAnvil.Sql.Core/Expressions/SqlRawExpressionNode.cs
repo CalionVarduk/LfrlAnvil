@@ -1,5 +1,4 @@
-﻿using System;
-using LfrlAnvil.Sql.Expressions.Objects;
+﻿using LfrlAnvil.Sql.Expressions.Objects;
 
 namespace LfrlAnvil.Sql.Expressions;
 

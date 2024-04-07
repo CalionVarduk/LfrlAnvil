@@ -640,8 +640,7 @@ ON CONFLICT (""a"", ""c"") DO UPDATE SET
             var node = SqlNode.Values(
                     new[,]
                     {
-                        { SqlNode.Literal( "foo" ), SqlNode.Literal( 5 ) },
-                        { SqlNode.RawExpression( "bar.a" ), SqlNode.Literal( 25 ) }
+                        { SqlNode.Literal( "foo" ), SqlNode.Literal( 5 ) }, { SqlNode.RawExpression( "bar.a" ), SqlNode.Literal( 25 ) }
                     } )
                 .ToUpsert(
                     SqlTableBuilderMock.CreateEmpty( "qux" ).Node,
@@ -660,8 +659,7 @@ ON CONFLICT (""a"", ""c"") DO UPDATE SET
             var node = SqlNode.Values(
                     new[,]
                     {
-                        { SqlNode.Literal( "foo" ), SqlNode.Literal( 5 ) },
-                        { SqlNode.RawExpression( "bar.a" ), SqlNode.Literal( 25 ) }
+                        { SqlNode.Literal( "foo" ), SqlNode.Literal( 5 ) }, { SqlNode.RawExpression( "bar.a" ), SqlNode.Literal( 25 ) }
                     } )
                 .ToUpsert(
                     SqlNode.RawRecordSet( "qux" ),

@@ -54,7 +54,7 @@ public class SqlDatabaseVersionTests : TestsBase
         var builder = Substitute.For<ISqlDatabaseBuilder>();
         var sut = SqlDatabaseVersion.Create( version, apply );
 
-        var action = Lambda.Of( () => ((ISqlDatabaseVersion)sut).Apply( builder ) );
+        var action = Lambda.Of( () => (( ISqlDatabaseVersion )sut).Apply( builder ) );
 
         action.Should().ThrowExactly<SqlObjectCastException>();
     }

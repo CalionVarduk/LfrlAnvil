@@ -143,7 +143,7 @@ public class TimeZoneInfoExtensionsTests : TestsBase
         (DateTime Start, DateTime End)? expected)
     {
         var expectedBounds = expected is null
-            ? (Bounds<DateTime>?)null
+            ? ( Bounds<DateTime>? )null
             : Bounds.Create( expected.Value.Start, expected.Value.End );
 
         var result = timeZone.GetContainingInvalidityRange( dateTime );
@@ -163,7 +163,7 @@ public class TimeZoneInfoExtensionsTests : TestsBase
         (DateTime Start, DateTime End)? expected)
     {
         var expectedBounds = expected is null
-            ? (Bounds<DateTime>?)null
+            ? ( Bounds<DateTime>? )null
             : Bounds.Create( expected.Value.Start, expected.Value.End );
 
         var result = timeZone.GetContainingAmbiguityRange( dateTime );

@@ -28,8 +28,8 @@ public class LogicalExpressionsTests : TestsBase
     [Fact]
     public void EqualTo_ShouldReturnEqualToConditionNode_AndReplaceNullParametersWithNullNode()
     {
-        var left = (SqlExpressionNode?)null;
-        var right = (SqlExpressionNode?)null;
+        var left = ( SqlExpressionNode? )null;
+        var right = ( SqlExpressionNode? )null;
         var sut = left == right;
         var text = sut.ToString();
 
@@ -64,8 +64,8 @@ public class LogicalExpressionsTests : TestsBase
     [Fact]
     public void NotEqualTo_ShouldReturnNotEqualToConditionNode_AndReplaceNullParametersWithNullNode()
     {
-        var left = (SqlExpressionNode?)null;
-        var right = (SqlExpressionNode?)null;
+        var left = ( SqlExpressionNode? )null;
+        var right = ( SqlExpressionNode? )null;
         var sut = left != right;
         var text = sut.ToString();
 
@@ -100,8 +100,8 @@ public class LogicalExpressionsTests : TestsBase
     [Fact]
     public void GreaterThan_ShouldReturnGreaterThanConditionNode_AndReplaceNullParametersWithNullNode()
     {
-        var left = (SqlExpressionNode?)null;
-        var right = (SqlExpressionNode?)null;
+        var left = ( SqlExpressionNode? )null;
+        var right = ( SqlExpressionNode? )null;
         var sut = left > right;
         var text = sut.ToString();
 
@@ -136,8 +136,8 @@ public class LogicalExpressionsTests : TestsBase
     [Fact]
     public void LessThan_ShouldReturnLessThanConditionNode_AndReplaceNullParametersWithNullNode()
     {
-        var left = (SqlExpressionNode?)null;
-        var right = (SqlExpressionNode?)null;
+        var left = ( SqlExpressionNode? )null;
+        var right = ( SqlExpressionNode? )null;
         var sut = left < right;
         var text = sut.ToString();
 
@@ -172,8 +172,8 @@ public class LogicalExpressionsTests : TestsBase
     [Fact]
     public void GreaterThanOrEqualTo_ShouldReturnGreaterThanOrEqualToConditionNode_AndReplaceNullParametersWithNullNode()
     {
-        var left = (SqlExpressionNode?)null;
-        var right = (SqlExpressionNode?)null;
+        var left = ( SqlExpressionNode? )null;
+        var right = ( SqlExpressionNode? )null;
         var sut = left >= right;
         var text = sut.ToString();
 
@@ -208,8 +208,8 @@ public class LogicalExpressionsTests : TestsBase
     [Fact]
     public void LessThanOrEqualTo_ShouldReturnLessThanOrEqualToConditionNode_AndReplaceNullParametersWithNullNode()
     {
-        var left = (SqlExpressionNode?)null;
-        var right = (SqlExpressionNode?)null;
+        var left = ( SqlExpressionNode? )null;
+        var right = ( SqlExpressionNode? )null;
         var sut = left <= right;
         var text = sut.ToString();
 

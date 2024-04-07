@@ -16,10 +16,7 @@ public sealed class IdentifierGenerator : IIdentifierGenerator
     private readonly ulong _highValueOffset;
     private readonly ulong _maxHighValue;
 
-    public IdentifierGenerator(ITimestampProvider timestampProvider)
-        : this( timestampProvider, new IdentifierGeneratorParams() ) { }
-
-    public IdentifierGenerator(ITimestampProvider timestampProvider, IdentifierGeneratorParams @params)
+    public IdentifierGenerator(ITimestampProvider timestampProvider, IdentifierGeneratorParams @params = default)
     {
         var timeEpsilon = @params.TimeEpsilon;
         Ensure.IsInRange( timeEpsilon, Duration.FromTicks( 1 ), Duration.FromMilliseconds( 3 ) );
@@ -99,7 +96,7 @@ public sealed class IdentifierGenerator : IIdentifierGenerator
             if ( highValue > _maxHighValue )
                 return 0;
 
-            var lowValuesPerHighValue = (ulong)(LowValueBounds.Max - LowValueBounds.Min + 1);
+            var lowValuesPerHighValue = ( ulong )(LowValueBounds.Max - LowValueBounds.Min + 1);
 
             if ( highValue > LastHighValue )
             {
@@ -108,7 +105,7 @@ public sealed class IdentifierGenerator : IIdentifierGenerator
             }
 
             var futureHighValuesLeft = _maxHighValue - LastHighValue;
-            var lowValuesLeft = (ulong)(LowValueBounds.Max - LastLowValue);
+            var lowValuesLeft = ( ulong )(LowValueBounds.Max - LastLowValue);
             return futureHighValuesLeft * lowValuesPerHighValue + lowValuesLeft;
         }
     }
@@ -177,9 +174,9 @@ public sealed class IdentifierGenerator : IIdentifierGenerator
     {
         duration = duration.Max( Duration.Zero );
         var fullHighValueCount = ConvertToHighValue( duration, TimeEpsilon );
-        var fullLowValueCount = (ulong)(LowValueBounds.Max - LowValueBounds.Min + 1);
-        var lowValueRemainderRatio = (double)(duration.Ticks % TimeEpsilon.Ticks) / TimeEpsilon.Ticks;
-        var remainingLowValueCount = (ulong)Math.Truncate( lowValueRemainderRatio * fullLowValueCount );
+        var fullLowValueCount = ( ulong )(LowValueBounds.Max - LowValueBounds.Min + 1);
+        var lowValueRemainderRatio = ( double )(duration.Ticks % TimeEpsilon.Ticks) / TimeEpsilon.Ticks;
+        var remainingLowValueCount = ( ulong )Math.Truncate( lowValueRemainderRatio * fullLowValueCount );
         return fullHighValueCount * fullLowValueCount + remainingLowValueCount;
     }
 
@@ -209,7 +206,7 @@ public sealed class IdentifierGenerator : IIdentifierGenerator
         do
         {
             var timeout = ConvertToDuration( LastHighValue - highValue, TimeEpsilon ).Max( Duration.FromMilliseconds( 1 ) );
-            Thread.Sleep( (int)Math.Ceiling( timeout.TotalMilliseconds ) );
+            Thread.Sleep( ( int )Math.Ceiling( timeout.TotalMilliseconds ) );
             highValue = GetCurrentHighValue();
         }
         while ( highValue <= LastHighValue );
@@ -222,13 +219,13 @@ public sealed class IdentifierGenerator : IIdentifierGenerator
     {
         LastHighValue = highValue;
         LastLowValue = LowValueBounds.Min;
-        return new Identifier( highValue, (ushort)LastLowValue );
+        return new Identifier( highValue, ( ushort )LastLowValue );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private Identifier CreateNextId()
     {
-        return new Identifier( LastHighValue, (ushort)++LastLowValue );
+        return new Identifier( LastHighValue, ( ushort )++LastLowValue );
     }
 
     [Pure]
@@ -243,14 +240,14 @@ public sealed class IdentifierGenerator : IIdentifierGenerator
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private static ulong ConvertToHighValue(Duration elapsedTime, Duration epsilon)
     {
-        return (ulong)(elapsedTime.Ticks / epsilon.Ticks);
+        return ( ulong )(elapsedTime.Ticks / epsilon.Ticks);
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private static Duration ConvertToDuration(ulong highValue, Duration epsilon)
     {
-        return Duration.FromTicks( (long)highValue * epsilon.Ticks );
+        return Duration.FromTicks( ( long )highValue * epsilon.Ticks );
     }
 
     object IGenerator.Generate()

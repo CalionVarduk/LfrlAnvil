@@ -43,17 +43,17 @@ public partial class SqlTableBuilderTests
                 result.Filter.Should().BeNull();
                 result.ReferencingObjects.Should().BeEmpty();
 
-                ((ISqlIndexBuilder)result).PrimaryKey.Should().BeSameAs( result.PrimaryKey );
-                ((ISqlIndexBuilder)result).Columns.Expressions.Should().BeSequentiallyEqualTo( result.Columns.Expressions );
-                ((ISqlIndexBuilder)result).ReferencedColumns.Should()
+                (( ISqlIndexBuilder )result).PrimaryKey.Should().BeSameAs( result.PrimaryKey );
+                (( ISqlIndexBuilder )result).Columns.Expressions.Should().BeSequentiallyEqualTo( result.Columns.Expressions );
+                (( ISqlIndexBuilder )result).ReferencedColumns.Should()
                     .BeSequentiallyEqualTo( result.ReferencedColumns.UnsafeReinterpretAs<ISqlColumnBuilder>() );
 
-                ((ISqlIndexBuilder)result).ReferencedFilterColumns.Should()
+                (( ISqlIndexBuilder )result).ReferencedFilterColumns.Should()
                     .BeSequentiallyEqualTo( result.ReferencedFilterColumns.UnsafeReinterpretAs<ISqlColumnBuilder>() );
 
-                ((ISqlConstraintBuilder)result).Table.Should().BeSameAs( result.Table );
-                ((ISqlObjectBuilder)result).Database.Should().BeSameAs( result.Database );
-                ((ISqlObjectBuilder)result).ReferencingObjects.Should()
+                (( ISqlConstraintBuilder )result).Table.Should().BeSameAs( result.Table );
+                (( ISqlObjectBuilder )result).Database.Should().BeSameAs( result.Database );
+                (( ISqlObjectBuilder )result).ReferencingObjects.Should()
                     .BeSequentiallyEqualTo( result.ReferencingObjects.UnsafeReinterpretAs<ISqlObjectBuilder>() );
 
                 sut.Count.Should().Be( 1 );
@@ -61,12 +61,10 @@ public partial class SqlTableBuilderTests
                 schema.Objects.TryGet( result.Name ).Should().BeSameAs( result );
 
                 c1.ReferencingObjects.Should()
-                    .BeSequentiallyEqualTo(
-                        SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), c1 ) );
+                    .BeSequentiallyEqualTo( SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), c1 ) );
 
                 c2.ReferencingObjects.Should()
-                    .BeSequentiallyEqualTo(
-                        SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), c2 ) );
+                    .BeSequentiallyEqualTo( SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), c2 ) );
             }
         }
 
@@ -100,17 +98,17 @@ public partial class SqlTableBuilderTests
                 result.Filter.Should().BeNull();
                 result.ReferencingObjects.Should().BeEmpty();
 
-                ((ISqlIndexBuilder)result).PrimaryKey.Should().BeSameAs( result.PrimaryKey );
-                ((ISqlIndexBuilder)result).Columns.Expressions.Should().BeSequentiallyEqualTo( result.Columns.Expressions );
-                ((ISqlIndexBuilder)result).ReferencedColumns.Should()
+                (( ISqlIndexBuilder )result).PrimaryKey.Should().BeSameAs( result.PrimaryKey );
+                (( ISqlIndexBuilder )result).Columns.Expressions.Should().BeSequentiallyEqualTo( result.Columns.Expressions );
+                (( ISqlIndexBuilder )result).ReferencedColumns.Should()
                     .BeSequentiallyEqualTo( result.ReferencedColumns.UnsafeReinterpretAs<ISqlColumnBuilder>() );
 
-                ((ISqlIndexBuilder)result).ReferencedFilterColumns.Should()
+                (( ISqlIndexBuilder )result).ReferencedFilterColumns.Should()
                     .BeSequentiallyEqualTo( result.ReferencedFilterColumns.UnsafeReinterpretAs<ISqlColumnBuilder>() );
 
-                ((ISqlConstraintBuilder)result).Table.Should().BeSameAs( result.Table );
-                ((ISqlObjectBuilder)result).Database.Should().BeSameAs( result.Database );
-                ((ISqlObjectBuilder)result).ReferencingObjects.Should()
+                (( ISqlConstraintBuilder )result).Table.Should().BeSameAs( result.Table );
+                (( ISqlObjectBuilder )result).Database.Should().BeSameAs( result.Database );
+                (( ISqlObjectBuilder )result).ReferencingObjects.Should()
                     .BeSequentiallyEqualTo( result.ReferencingObjects.UnsafeReinterpretAs<ISqlObjectBuilder>() );
 
                 sut.Count.Should().Be( 1 );
@@ -118,12 +116,10 @@ public partial class SqlTableBuilderTests
                 schema.Objects.TryGet( result.Name ).Should().BeSameAs( result );
 
                 c1.ReferencingObjects.Should()
-                    .BeSequentiallyEqualTo(
-                        SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), c1 ) );
+                    .BeSequentiallyEqualTo( SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), c1 ) );
 
                 c2.ReferencingObjects.Should()
-                    .BeSequentiallyEqualTo(
-                        SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), c2 ) );
+                    .BeSequentiallyEqualTo( SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), c2 ) );
             }
         }
 
@@ -156,17 +152,17 @@ public partial class SqlTableBuilderTests
                 result.Filter.Should().BeNull();
                 result.ReferencingObjects.Should().BeEmpty();
 
-                ((ISqlIndexBuilder)result).PrimaryKey.Should().BeSameAs( result.PrimaryKey );
-                ((ISqlIndexBuilder)result).Columns.Expressions.Should().BeSequentiallyEqualTo( result.Columns.Expressions );
-                ((ISqlIndexBuilder)result).ReferencedColumns.Should()
+                (( ISqlIndexBuilder )result).PrimaryKey.Should().BeSameAs( result.PrimaryKey );
+                (( ISqlIndexBuilder )result).Columns.Expressions.Should().BeSequentiallyEqualTo( result.Columns.Expressions );
+                (( ISqlIndexBuilder )result).ReferencedColumns.Should()
                     .BeSequentiallyEqualTo( result.ReferencedColumns.UnsafeReinterpretAs<ISqlColumnBuilder>() );
 
-                ((ISqlIndexBuilder)result).ReferencedFilterColumns.Should()
+                (( ISqlIndexBuilder )result).ReferencedFilterColumns.Should()
                     .BeSequentiallyEqualTo( result.ReferencedFilterColumns.UnsafeReinterpretAs<ISqlColumnBuilder>() );
 
-                ((ISqlConstraintBuilder)result).Table.Should().BeSameAs( result.Table );
-                ((ISqlObjectBuilder)result).Database.Should().BeSameAs( result.Database );
-                ((ISqlObjectBuilder)result).ReferencingObjects.Should()
+                (( ISqlConstraintBuilder )result).Table.Should().BeSameAs( result.Table );
+                (( ISqlObjectBuilder )result).Database.Should().BeSameAs( result.Database );
+                (( ISqlObjectBuilder )result).ReferencingObjects.Should()
                     .BeSequentiallyEqualTo( result.ReferencingObjects.UnsafeReinterpretAs<ISqlObjectBuilder>() );
 
                 sut.Count.Should().Be( 1 );
@@ -174,12 +170,10 @@ public partial class SqlTableBuilderTests
                 schema.Objects.TryGet( result.Name ).Should().BeSameAs( result );
 
                 c1.ReferencingObjects.Should()
-                    .BeSequentiallyEqualTo(
-                        SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), c1 ) );
+                    .BeSequentiallyEqualTo( SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), c1 ) );
 
                 c2.ReferencingObjects.Should()
-                    .BeSequentiallyEqualTo(
-                        SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), c2 ) );
+                    .BeSequentiallyEqualTo( SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), c2 ) );
             }
         }
 
@@ -343,10 +337,10 @@ public partial class SqlTableBuilderTests
                 result.Index.Filter.Should().BeNull();
                 result.ReferencingObjects.Should().BeEmpty();
 
-                ((ISqlPrimaryKeyBuilder)result).Index.Should().BeSameAs( result.Index );
-                ((ISqlConstraintBuilder)result).Table.Should().BeSameAs( result.Table );
-                ((ISqlObjectBuilder)result).Database.Should().BeSameAs( result.Database );
-                ((ISqlObjectBuilder)result).ReferencingObjects.Should()
+                (( ISqlPrimaryKeyBuilder )result).Index.Should().BeSameAs( result.Index );
+                (( ISqlConstraintBuilder )result).Table.Should().BeSameAs( result.Table );
+                (( ISqlObjectBuilder )result).Database.Should().BeSameAs( result.Database );
+                (( ISqlObjectBuilder )result).ReferencingObjects.Should()
                     .BeSequentiallyEqualTo( result.ReferencingObjects.UnsafeReinterpretAs<ISqlObjectBuilder>() );
 
                 sut.Count.Should().Be( 2 );
@@ -433,10 +427,10 @@ public partial class SqlTableBuilderTests
                 result.Index.Filter.Should().BeNull();
                 result.ReferencingObjects.Should().BeEmpty();
 
-                ((ISqlPrimaryKeyBuilder)result).Index.Should().BeSameAs( result.Index );
-                ((ISqlConstraintBuilder)result).Table.Should().BeSameAs( result.Table );
-                ((ISqlObjectBuilder)result).Database.Should().BeSameAs( result.Database );
-                ((ISqlObjectBuilder)result).ReferencingObjects.Should()
+                (( ISqlPrimaryKeyBuilder )result).Index.Should().BeSameAs( result.Index );
+                (( ISqlConstraintBuilder )result).Table.Should().BeSameAs( result.Table );
+                (( ISqlObjectBuilder )result).Database.Should().BeSameAs( result.Database );
+                (( ISqlObjectBuilder )result).ReferencingObjects.Should()
                     .BeSequentiallyEqualTo( result.ReferencingObjects.UnsafeReinterpretAs<ISqlObjectBuilder>() );
 
                 sut.Count.Should().Be( 2 );
@@ -483,10 +477,10 @@ public partial class SqlTableBuilderTests
                 result.Index.Filter.Should().BeNull();
                 result.ReferencingObjects.Should().BeEmpty();
 
-                ((ISqlPrimaryKeyBuilder)result).Index.Should().BeSameAs( result.Index );
-                ((ISqlConstraintBuilder)result).Table.Should().BeSameAs( result.Table );
-                ((ISqlObjectBuilder)result).Database.Should().BeSameAs( result.Database );
-                ((ISqlObjectBuilder)result).ReferencingObjects.Should()
+                (( ISqlPrimaryKeyBuilder )result).Index.Should().BeSameAs( result.Index );
+                (( ISqlConstraintBuilder )result).Table.Should().BeSameAs( result.Table );
+                (( ISqlObjectBuilder )result).Database.Should().BeSameAs( result.Database );
+                (( ISqlObjectBuilder )result).ReferencingObjects.Should()
                     .BeSequentiallyEqualTo( result.ReferencingObjects.UnsafeReinterpretAs<ISqlObjectBuilder>() );
 
                 sut.Count.Should().Be( 2 );
@@ -535,10 +529,10 @@ public partial class SqlTableBuilderTests
                 result.Index.Filter.Should().BeNull();
                 result.ReferencingObjects.Should().BeEmpty();
 
-                ((ISqlPrimaryKeyBuilder)result).Index.Should().BeSameAs( result.Index );
-                ((ISqlConstraintBuilder)result).Table.Should().BeSameAs( result.Table );
-                ((ISqlObjectBuilder)result).Database.Should().BeSameAs( result.Database );
-                ((ISqlObjectBuilder)result).ReferencingObjects.Should()
+                (( ISqlPrimaryKeyBuilder )result).Index.Should().BeSameAs( result.Index );
+                (( ISqlConstraintBuilder )result).Table.Should().BeSameAs( result.Table );
+                (( ISqlObjectBuilder )result).Database.Should().BeSameAs( result.Database );
+                (( ISqlObjectBuilder )result).ReferencingObjects.Should()
                     .BeSequentiallyEqualTo( result.ReferencingObjects.UnsafeReinterpretAs<ISqlObjectBuilder>() );
 
                 sut.Count.Should().Be( 2 );
@@ -779,11 +773,11 @@ public partial class SqlTableBuilderTests
                 result.OnDeleteBehavior.Should().Be( ReferenceBehavior.Restrict );
                 result.ReferencingObjects.Should().BeEmpty();
 
-                ((ISqlForeignKeyBuilder)result).OriginIndex.Should().BeSameAs( result.OriginIndex );
-                ((ISqlForeignKeyBuilder)result).ReferencedIndex.Should().BeSameAs( result.ReferencedIndex );
-                ((ISqlConstraintBuilder)result).Table.Should().BeSameAs( result.Table );
-                ((ISqlObjectBuilder)result).Database.Should().BeSameAs( result.Database );
-                ((ISqlObjectBuilder)result).ReferencingObjects.Should()
+                (( ISqlForeignKeyBuilder )result).OriginIndex.Should().BeSameAs( result.OriginIndex );
+                (( ISqlForeignKeyBuilder )result).ReferencedIndex.Should().BeSameAs( result.ReferencedIndex );
+                (( ISqlConstraintBuilder )result).Table.Should().BeSameAs( result.Table );
+                (( ISqlObjectBuilder )result).Database.Should().BeSameAs( result.Database );
+                (( ISqlObjectBuilder )result).ReferencingObjects.Should()
                     .BeSequentiallyEqualTo( result.ReferencingObjects.UnsafeReinterpretAs<ISqlObjectBuilder>() );
 
                 sut.Count.Should().Be( 3 );
@@ -791,12 +785,10 @@ public partial class SqlTableBuilderTests
                 schema.Objects.TryGet( result.Name ).Should().BeSameAs( result );
 
                 ix1.ReferencingObjects.Should()
-                    .BeSequentiallyEqualTo(
-                        SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), ix1 ) );
+                    .BeSequentiallyEqualTo( SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), ix1 ) );
 
                 ix2.ReferencingObjects.Should()
-                    .BeSequentiallyEqualTo(
-                        SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), ix2 ) );
+                    .BeSequentiallyEqualTo( SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), ix2 ) );
 
                 table.ReferencingObjects.Should().BeEmpty();
                 schema.ReferencingObjects.Should().BeEmpty();
@@ -827,11 +819,11 @@ public partial class SqlTableBuilderTests
                 result.OnDeleteBehavior.Should().Be( ReferenceBehavior.Restrict );
                 result.ReferencingObjects.Should().BeEmpty();
 
-                ((ISqlForeignKeyBuilder)result).OriginIndex.Should().BeSameAs( result.OriginIndex );
-                ((ISqlForeignKeyBuilder)result).ReferencedIndex.Should().BeSameAs( result.ReferencedIndex );
-                ((ISqlConstraintBuilder)result).Table.Should().BeSameAs( result.Table );
-                ((ISqlObjectBuilder)result).Database.Should().BeSameAs( result.Database );
-                ((ISqlObjectBuilder)result).ReferencingObjects.Should()
+                (( ISqlForeignKeyBuilder )result).OriginIndex.Should().BeSameAs( result.OriginIndex );
+                (( ISqlForeignKeyBuilder )result).ReferencedIndex.Should().BeSameAs( result.ReferencedIndex );
+                (( ISqlConstraintBuilder )result).Table.Should().BeSameAs( result.Table );
+                (( ISqlObjectBuilder )result).Database.Should().BeSameAs( result.Database );
+                (( ISqlObjectBuilder )result).ReferencingObjects.Should()
                     .BeSequentiallyEqualTo( result.ReferencingObjects.UnsafeReinterpretAs<ISqlObjectBuilder>() );
 
                 sut.Count.Should().Be( 2 );
@@ -839,16 +831,13 @@ public partial class SqlTableBuilderTests
                 schema.Objects.TryGet( result.Name ).Should().BeSameAs( result );
 
                 ix1.ReferencingObjects.Should()
-                    .BeSequentiallyEqualTo(
-                        SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), ix1 ) );
+                    .BeSequentiallyEqualTo( SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), ix1 ) );
 
                 ix2.ReferencingObjects.Should()
-                    .BeSequentiallyEqualTo(
-                        SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), ix2 ) );
+                    .BeSequentiallyEqualTo( SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), ix2 ) );
 
                 t1.ReferencingObjects.Should()
-                    .BeSequentiallyEqualTo(
-                        SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), ix2 ) );
+                    .BeSequentiallyEqualTo( SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), ix2 ) );
 
                 schema.ReferencingObjects.Should().BeEmpty();
             }
@@ -880,11 +869,11 @@ public partial class SqlTableBuilderTests
                 result.OnDeleteBehavior.Should().Be( ReferenceBehavior.Restrict );
                 result.ReferencingObjects.Should().BeEmpty();
 
-                ((ISqlForeignKeyBuilder)result).OriginIndex.Should().BeSameAs( result.OriginIndex );
-                ((ISqlForeignKeyBuilder)result).ReferencedIndex.Should().BeSameAs( result.ReferencedIndex );
-                ((ISqlConstraintBuilder)result).Table.Should().BeSameAs( result.Table );
-                ((ISqlObjectBuilder)result).Database.Should().BeSameAs( result.Database );
-                ((ISqlObjectBuilder)result).ReferencingObjects.Should()
+                (( ISqlForeignKeyBuilder )result).OriginIndex.Should().BeSameAs( result.OriginIndex );
+                (( ISqlForeignKeyBuilder )result).ReferencedIndex.Should().BeSameAs( result.ReferencedIndex );
+                (( ISqlConstraintBuilder )result).Table.Should().BeSameAs( result.Table );
+                (( ISqlObjectBuilder )result).Database.Should().BeSameAs( result.Database );
+                (( ISqlObjectBuilder )result).ReferencingObjects.Should()
                     .BeSequentiallyEqualTo( result.ReferencingObjects.UnsafeReinterpretAs<ISqlObjectBuilder>() );
 
                 sut.Count.Should().Be( 2 );
@@ -892,20 +881,16 @@ public partial class SqlTableBuilderTests
                 schema2.Objects.TryGet( result.Name ).Should().BeSameAs( result );
 
                 ix1.ReferencingObjects.Should()
-                    .BeSequentiallyEqualTo(
-                        SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), ix1 ) );
+                    .BeSequentiallyEqualTo( SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), ix1 ) );
 
                 ix2.ReferencingObjects.Should()
-                    .BeSequentiallyEqualTo(
-                        SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), ix2 ) );
+                    .BeSequentiallyEqualTo( SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), ix2 ) );
 
                 t1.ReferencingObjects.Should()
-                    .BeSequentiallyEqualTo(
-                        SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), ix2 ) );
+                    .BeSequentiallyEqualTo( SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), ix2 ) );
 
                 schema1.ReferencingObjects.Should()
-                    .BeSequentiallyEqualTo(
-                        SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), ix2 ) );
+                    .BeSequentiallyEqualTo( SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), ix2 ) );
             }
         }
 
@@ -932,11 +917,11 @@ public partial class SqlTableBuilderTests
                 result.OnDeleteBehavior.Should().Be( ReferenceBehavior.Restrict );
                 result.ReferencingObjects.Should().BeEmpty();
 
-                ((ISqlForeignKeyBuilder)result).OriginIndex.Should().BeSameAs( result.OriginIndex );
-                ((ISqlForeignKeyBuilder)result).ReferencedIndex.Should().BeSameAs( result.ReferencedIndex );
-                ((ISqlConstraintBuilder)result).Table.Should().BeSameAs( result.Table );
-                ((ISqlObjectBuilder)result).Database.Should().BeSameAs( result.Database );
-                ((ISqlObjectBuilder)result).ReferencingObjects.Should()
+                (( ISqlForeignKeyBuilder )result).OriginIndex.Should().BeSameAs( result.OriginIndex );
+                (( ISqlForeignKeyBuilder )result).ReferencedIndex.Should().BeSameAs( result.ReferencedIndex );
+                (( ISqlConstraintBuilder )result).Table.Should().BeSameAs( result.Table );
+                (( ISqlObjectBuilder )result).Database.Should().BeSameAs( result.Database );
+                (( ISqlObjectBuilder )result).ReferencingObjects.Should()
                     .BeSequentiallyEqualTo( result.ReferencingObjects.UnsafeReinterpretAs<ISqlObjectBuilder>() );
 
                 sut.Count.Should().Be( 3 );
@@ -944,12 +929,10 @@ public partial class SqlTableBuilderTests
                 schema.Objects.TryGet( result.Name ).Should().BeSameAs( result );
 
                 ix1.ReferencingObjects.Should()
-                    .BeSequentiallyEqualTo(
-                        SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), ix1 ) );
+                    .BeSequentiallyEqualTo( SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), ix1 ) );
 
                 ix2.ReferencingObjects.Should()
-                    .BeSequentiallyEqualTo(
-                        SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), ix2 ) );
+                    .BeSequentiallyEqualTo( SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), ix2 ) );
 
                 table.ReferencingObjects.Should().BeEmpty();
                 schema.ReferencingObjects.Should().BeEmpty();
@@ -1281,12 +1264,12 @@ public partial class SqlTableBuilderTests
                 result.Condition.Should().BeSameAs( condition );
                 result.ReferencedColumns.Should().BeSequentiallyEqualTo( c );
 
-                ((ISqlCheckBuilder)result).ReferencedColumns.Should()
+                (( ISqlCheckBuilder )result).ReferencedColumns.Should()
                     .BeSequentiallyEqualTo( result.ReferencedColumns.UnsafeReinterpretAs<ISqlColumnBuilder>() );
 
-                ((ISqlConstraintBuilder)result).Table.Should().BeSameAs( result.Table );
-                ((ISqlObjectBuilder)result).Database.Should().BeSameAs( result.Database );
-                ((ISqlObjectBuilder)result).ReferencingObjects.Should()
+                (( ISqlConstraintBuilder )result).Table.Should().BeSameAs( result.Table );
+                (( ISqlObjectBuilder )result).Database.Should().BeSameAs( result.Database );
+                (( ISqlObjectBuilder )result).ReferencingObjects.Should()
                     .BeSequentiallyEqualTo( result.ReferencingObjects.UnsafeReinterpretAs<ISqlObjectBuilder>() );
 
                 sut.Count.Should().Be( 1 );
@@ -1294,8 +1277,7 @@ public partial class SqlTableBuilderTests
                 schema.Objects.TryGet( result.Name ).Should().BeSameAs( result );
 
                 c.ReferencingObjects.Should()
-                    .BeSequentiallyEqualTo(
-                        SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), c ) );
+                    .BeSequentiallyEqualTo( SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), c ) );
             }
         }
 
@@ -1319,12 +1301,12 @@ public partial class SqlTableBuilderTests
                 result.Condition.Should().BeSameAs( condition );
                 result.ReferencedColumns.Should().BeSequentiallyEqualTo( c );
 
-                ((ISqlCheckBuilder)result).ReferencedColumns.Should()
+                (( ISqlCheckBuilder )result).ReferencedColumns.Should()
                     .BeSequentiallyEqualTo( result.ReferencedColumns.UnsafeReinterpretAs<ISqlColumnBuilder>() );
 
-                ((ISqlConstraintBuilder)result).Table.Should().BeSameAs( result.Table );
-                ((ISqlObjectBuilder)result).Database.Should().BeSameAs( result.Database );
-                ((ISqlObjectBuilder)result).ReferencingObjects.Should()
+                (( ISqlConstraintBuilder )result).Table.Should().BeSameAs( result.Table );
+                (( ISqlObjectBuilder )result).Database.Should().BeSameAs( result.Database );
+                (( ISqlObjectBuilder )result).ReferencingObjects.Should()
                     .BeSequentiallyEqualTo( result.ReferencingObjects.UnsafeReinterpretAs<ISqlObjectBuilder>() );
 
                 sut.Count.Should().Be( 1 );
@@ -1332,8 +1314,7 @@ public partial class SqlTableBuilderTests
                 schema.Objects.TryGet( result.Name ).Should().BeSameAs( result );
 
                 c.ReferencingObjects.Should()
-                    .BeSequentiallyEqualTo(
-                        SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), c ) );
+                    .BeSequentiallyEqualTo( SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), c ) );
             }
         }
 
@@ -1506,9 +1487,9 @@ public partial class SqlTableBuilderTests
             action.Should()
                 .ThrowExactly<SqlObjectCastException>()
                 .AndMatch(
-                    e => e.Dialect == SqlDialectMock.Instance &&
-                        e.Expected == typeof( SqlIndexBuilder ) &&
-                        e.Actual == typeof( SqlCheckBuilderMock ) );
+                    e => e.Dialect == SqlDialectMock.Instance
+                        && e.Expected == typeof( SqlIndexBuilder )
+                        && e.Actual == typeof( SqlCheckBuilderMock ) );
         }
 
         [Fact]
@@ -1589,9 +1570,9 @@ public partial class SqlTableBuilderTests
             action.Should()
                 .ThrowExactly<SqlObjectCastException>()
                 .AndMatch(
-                    e => e.Dialect == SqlDialectMock.Instance &&
-                        e.Expected == typeof( SqlForeignKeyBuilder ) &&
-                        e.Actual == typeof( SqlIndexBuilderMock ) );
+                    e => e.Dialect == SqlDialectMock.Instance
+                        && e.Expected == typeof( SqlForeignKeyBuilder )
+                        && e.Actual == typeof( SqlIndexBuilderMock ) );
         }
 
         [Fact]
@@ -1672,9 +1653,9 @@ public partial class SqlTableBuilderTests
             action.Should()
                 .ThrowExactly<SqlObjectCastException>()
                 .AndMatch(
-                    e => e.Dialect == SqlDialectMock.Instance &&
-                        e.Expected == typeof( SqlCheckBuilder ) &&
-                        e.Actual == typeof( SqlIndexBuilderMock ) );
+                    e => e.Dialect == SqlDialectMock.Instance
+                        && e.Expected == typeof( SqlCheckBuilder )
+                        && e.Actual == typeof( SqlIndexBuilderMock ) );
         }
 
         [Fact]
@@ -1968,7 +1949,7 @@ public partial class SqlTableBuilderTests
             var ixc1 = c1.Asc();
             var ixc2 = c2.Desc();
 
-            var result = ((ISqlConstraintBuilderCollection)sut).CreateIndex( ixc1, ixc2 );
+            var result = (( ISqlConstraintBuilderCollection )sut).CreateIndex( ixc1, ixc2 );
 
             using ( new AssertionScope() )
             {
@@ -1990,11 +1971,11 @@ public partial class SqlTableBuilderTests
 
                 c1.ReferencingObjects.Should()
                     .BeSequentiallyEqualTo(
-                        SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( (SqlObjectBuilder)result ), c1 ) );
+                        SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( ( SqlObjectBuilder )result ), c1 ) );
 
                 c2.ReferencingObjects.Should()
                     .BeSequentiallyEqualTo(
-                        SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( (SqlObjectBuilder)result ), c2 ) );
+                        SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( ( SqlObjectBuilder )result ), c2 ) );
             }
         }
 
@@ -2009,7 +1990,7 @@ public partial class SqlTableBuilderTests
             var ixc1 = c1.Asc();
             var ixc2 = c2.Desc();
 
-            var result = ((ISqlConstraintBuilderCollection)sut).CreateIndex( "IX_T", ixc1, ixc2 );
+            var result = (( ISqlConstraintBuilderCollection )sut).CreateIndex( "IX_T", ixc1, ixc2 );
 
             using ( new AssertionScope() )
             {
@@ -2031,11 +2012,11 @@ public partial class SqlTableBuilderTests
 
                 c1.ReferencingObjects.Should()
                     .BeSequentiallyEqualTo(
-                        SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( (SqlObjectBuilder)result ), c1 ) );
+                        SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( ( SqlObjectBuilder )result ), c1 ) );
 
                 c2.ReferencingObjects.Should()
                     .BeSequentiallyEqualTo(
-                        SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( (SqlObjectBuilder)result ), c2 ) );
+                        SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( ( SqlObjectBuilder )result ), c2 ) );
             }
         }
 
@@ -2050,7 +2031,7 @@ public partial class SqlTableBuilderTests
             var ixc1 = c1.Asc();
             var ixc2 = c2.Desc();
 
-            var result = ((ISqlConstraintBuilderCollection)sut).CreateUniqueIndex( "IX_T", ixc1, ixc2 );
+            var result = (( ISqlConstraintBuilderCollection )sut).CreateUniqueIndex( "IX_T", ixc1, ixc2 );
 
             using ( new AssertionScope() )
             {
@@ -2072,11 +2053,11 @@ public partial class SqlTableBuilderTests
 
                 c1.ReferencingObjects.Should()
                     .BeSequentiallyEqualTo(
-                        SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( (SqlObjectBuilder)result ), c1 ) );
+                        SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( ( SqlObjectBuilder )result ), c1 ) );
 
                 c2.ReferencingObjects.Should()
                     .BeSequentiallyEqualTo(
-                        SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( (SqlObjectBuilder)result ), c2 ) );
+                        SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( ( SqlObjectBuilder )result ), c2 ) );
             }
         }
 
@@ -2089,7 +2070,7 @@ public partial class SqlTableBuilderTests
             var column = table.Columns.Create( "C" );
             var ixColumn = column.Asc();
 
-            var result = ((ISqlConstraintBuilderCollection)sut).SetPrimaryKey( ixColumn );
+            var result = (( ISqlConstraintBuilderCollection )sut).SetPrimaryKey( ixColumn );
 
             using ( new AssertionScope() )
             {
@@ -2118,7 +2099,7 @@ public partial class SqlTableBuilderTests
                 column.ReferencingObjects.Should()
                     .BeSequentiallyEqualTo(
                         SqlObjectBuilderReference.Create(
-                            SqlObjectBuilderReferenceSource.Create( (SqlObjectBuilder)result.Index ),
+                            SqlObjectBuilderReferenceSource.Create( ( SqlObjectBuilder )result.Index ),
                             column ) );
             }
         }
@@ -2132,7 +2113,7 @@ public partial class SqlTableBuilderTests
             var column = table.Columns.Create( "C" );
             var ixColumn = column.Asc();
 
-            var result = ((ISqlConstraintBuilderCollection)sut).SetPrimaryKey( "PK", ixColumn );
+            var result = (( ISqlConstraintBuilderCollection )sut).SetPrimaryKey( "PK", ixColumn );
 
             using ( new AssertionScope() )
             {
@@ -2161,7 +2142,7 @@ public partial class SqlTableBuilderTests
                 column.ReferencingObjects.Should()
                     .BeSequentiallyEqualTo(
                         SqlObjectBuilderReference.Create(
-                            SqlObjectBuilderReferenceSource.Create( (SqlObjectBuilder)result.Index ),
+                            SqlObjectBuilderReferenceSource.Create( ( SqlObjectBuilder )result.Index ),
                             column ) );
             }
         }
@@ -2175,7 +2156,7 @@ public partial class SqlTableBuilderTests
             var ix1 = sut.CreateIndex( "IX_T_C1", table.Columns.Create( "C1" ).Asc() );
             var ix2 = sut.CreateUniqueIndex( "UIX_T_C2", table.Columns.Create( "C2" ).Asc() );
 
-            var result = ((ISqlConstraintBuilderCollection)sut).CreateForeignKey( ix1, ix2 );
+            var result = (( ISqlConstraintBuilderCollection )sut).CreateForeignKey( ix1, ix2 );
 
             using ( new AssertionScope() )
             {
@@ -2195,11 +2176,11 @@ public partial class SqlTableBuilderTests
 
                 ix1.ReferencingObjects.Should()
                     .BeSequentiallyEqualTo(
-                        SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( (SqlObjectBuilder)result ), ix1 ) );
+                        SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( ( SqlObjectBuilder )result ), ix1 ) );
 
                 ix2.ReferencingObjects.Should()
                     .BeSequentiallyEqualTo(
-                        SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( (SqlObjectBuilder)result ), ix2 ) );
+                        SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( ( SqlObjectBuilder )result ), ix2 ) );
 
                 table.ReferencingObjects.Should().BeEmpty();
                 schema.ReferencingObjects.Should().BeEmpty();
@@ -2215,7 +2196,7 @@ public partial class SqlTableBuilderTests
             var ix1 = sut.CreateIndex( "IX_T_C1", table.Columns.Create( "C1" ).Asc() );
             var ix2 = sut.CreateUniqueIndex( "UIX_T_C2", table.Columns.Create( "C2" ).Asc() );
 
-            var result = ((ISqlConstraintBuilderCollection)sut).CreateForeignKey( "FK_T", ix1, ix2 );
+            var result = (( ISqlConstraintBuilderCollection )sut).CreateForeignKey( "FK_T", ix1, ix2 );
 
             using ( new AssertionScope() )
             {
@@ -2235,11 +2216,11 @@ public partial class SqlTableBuilderTests
 
                 ix1.ReferencingObjects.Should()
                     .BeSequentiallyEqualTo(
-                        SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( (SqlObjectBuilder)result ), ix1 ) );
+                        SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( ( SqlObjectBuilder )result ), ix1 ) );
 
                 ix2.ReferencingObjects.Should()
                     .BeSequentiallyEqualTo(
-                        SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( (SqlObjectBuilder)result ), ix2 ) );
+                        SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( ( SqlObjectBuilder )result ), ix2 ) );
 
                 table.ReferencingObjects.Should().BeEmpty();
                 schema.ReferencingObjects.Should().BeEmpty();
@@ -2255,7 +2236,7 @@ public partial class SqlTableBuilderTests
             var c = table.Columns.Create( "C" );
             var condition = c.Node > SqlNode.Literal( 0 );
 
-            var result = ((ISqlConstraintBuilderCollection)sut).CreateCheck( condition );
+            var result = (( ISqlConstraintBuilderCollection )sut).CreateCheck( condition );
 
             using ( new AssertionScope() )
             {
@@ -2272,7 +2253,7 @@ public partial class SqlTableBuilderTests
 
                 c.ReferencingObjects.Should()
                     .BeSequentiallyEqualTo(
-                        SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( (SqlObjectBuilder)result ), c ) );
+                        SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( ( SqlObjectBuilder )result ), c ) );
             }
         }
 
@@ -2285,7 +2266,7 @@ public partial class SqlTableBuilderTests
             var c = table.Columns.Create( "C" );
             var condition = c.Node > SqlNode.Literal( 0 );
 
-            var result = ((ISqlConstraintBuilderCollection)sut).CreateCheck( "CHK", condition );
+            var result = (( ISqlConstraintBuilderCollection )sut).CreateCheck( "CHK", condition );
 
             using ( new AssertionScope() )
             {
@@ -2302,7 +2283,7 @@ public partial class SqlTableBuilderTests
 
                 c.ReferencingObjects.Should()
                     .BeSequentiallyEqualTo(
-                        SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( (SqlObjectBuilder)result ), c ) );
+                        SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( ( SqlObjectBuilder )result ), c ) );
             }
         }
     }

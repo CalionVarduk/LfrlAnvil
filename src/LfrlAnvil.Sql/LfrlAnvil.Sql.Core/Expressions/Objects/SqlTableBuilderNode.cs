@@ -42,7 +42,7 @@ public sealed class SqlTableBuilderNode : SqlRecordSetNode
     [Pure]
     public override SqlDataFieldNode GetUnsafeField(string name)
     {
-        return (SqlDataFieldNode?)_columns.TryGet( name ) ?? new SqlRawDataFieldNode( this, name, type: null );
+        return ( SqlDataFieldNode? )_columns.TryGet( name ) ?? new SqlRawDataFieldNode( this, name, type: null );
     }
 
     [Pure]

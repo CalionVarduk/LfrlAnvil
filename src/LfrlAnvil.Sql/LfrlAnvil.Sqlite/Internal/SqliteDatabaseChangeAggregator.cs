@@ -33,13 +33,13 @@ internal sealed class SqliteDatabaseChangeAggregator : SqlDatabaseChangeAggregat
     public bool IsRenamed => OriginalName.Exists;
 
     public bool HasChanged =>
-        IsRenamed ||
-        RequiresReconstruction ||
-        CreatedColumns.Count > 0 ||
-        ModifiedColumns.Count > 0 ||
-        RemovedColumns.Count > 0 ||
-        CreatedIndexes.Count > 0 ||
-        RemovedIndexes.Count > 0;
+        IsRenamed
+        || RequiresReconstruction
+        || CreatedColumns.Count > 0
+        || ModifiedColumns.Count > 0
+        || RemovedColumns.Count > 0
+        || CreatedIndexes.Count > 0
+        || RemovedIndexes.Count > 0;
 
     public override void Clear()
     {

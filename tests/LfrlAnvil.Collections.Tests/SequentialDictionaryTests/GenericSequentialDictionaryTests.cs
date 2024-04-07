@@ -119,7 +119,11 @@ public abstract class GenericSequentialDictionaryTests<TKey, TValue> : GenericDi
     {
         var keys = Fixture.CreateDistinctCollection<TKey>( 2 );
         var values = Fixture.CreateDistinctCollection<TValue>( 2 );
-        var sut = new SequentialDictionary<TKey, TValue> { { keys[0], values[0] }, { keys[1], values[1] } };
+        var sut = new SequentialDictionary<TKey, TValue>
+        {
+            { keys[0], values[0] },
+            { keys[1], values[1] }
+        };
 
         var result = sut.Remove( keys[0] );
 
@@ -172,7 +176,11 @@ public abstract class GenericSequentialDictionaryTests<TKey, TValue> : GenericDi
     {
         var keys = Fixture.CreateDistinctCollection<TKey>( 2 );
         var values = Fixture.CreateDistinctCollection<TValue>( 2 );
-        var sut = new SequentialDictionary<TKey, TValue> { { keys[0], values[0] }, { keys[1], values[1] } };
+        var sut = new SequentialDictionary<TKey, TValue>
+        {
+            { keys[0], values[0] },
+            { keys[1], values[1] }
+        };
 
         var result = sut.Remove( keys[0], out var removed );
 

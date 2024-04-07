@@ -801,7 +801,7 @@ public abstract class GenericMultiDictionaryTests<TKey, TValue> : TestsBase
         foreach ( var (k, v) in keys.Zip( values ) )
             sut.Add( k, v );
 
-        var result = ((ILookup<TKey, TValue>)sut).ToList();
+        var result = (( ILookup<TKey, TValue> )sut).ToList();
 
         using ( new AssertionScope() )
         {
@@ -925,7 +925,7 @@ public abstract class GenericMultiDictionaryTests<TKey, TValue> : TestsBase
         ICollection<KeyValuePair<TKey, IReadOnlyList<TValue>>> sut = source;
         source.Add( key, allValues[0] );
 
-        sut.Add( KeyValuePair.Create( key, (IReadOnlyList<TValue>)values ) );
+        sut.Add( KeyValuePair.Create( key, ( IReadOnlyList<TValue> )values ) );
 
         using ( new AssertionScope() )
         {
@@ -944,7 +944,7 @@ public abstract class GenericMultiDictionaryTests<TKey, TValue> : TestsBase
         source.AddRange( keys[0], values.Take( 3 ) );
         source.AddRange( keys[1], values.Skip( 3 ) );
 
-        var result = sut.Remove( KeyValuePair.Create( keys[0], (IReadOnlyList<TValue>)new[] { values[0], values[2] } ) );
+        var result = sut.Remove( KeyValuePair.Create( keys[0], ( IReadOnlyList<TValue> )new[] { values[0], values[2] } ) );
 
         using ( new AssertionScope() )
         {
@@ -977,7 +977,7 @@ public abstract class GenericMultiDictionaryTests<TKey, TValue> : TestsBase
         ICollection<KeyValuePair<TKey, IReadOnlyList<TValue>>> sut = source;
         source.AddRange( key, values );
 
-        var result = sut.Contains( KeyValuePair.Create( key, (IReadOnlyList<TValue>)new[] { values[0], values[2] } ) );
+        var result = sut.Contains( KeyValuePair.Create( key, ( IReadOnlyList<TValue> )new[] { values[0], values[2] } ) );
 
         result.Should().BeTrue();
     }

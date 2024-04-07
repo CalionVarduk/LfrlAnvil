@@ -118,10 +118,7 @@ public class ParameterInfoExtensionsTests : TestsBase
         var sut = GetDerivedParameter();
         var expected = new[]
             {
-                new TestMultiAttribute( 1 ),
-                new TestMultiAttribute( 2 ),
-                new TestMultiAttribute( 5 ),
-                new TestMultiAttribute( 6 )
+                new TestMultiAttribute( 1 ), new TestMultiAttribute( 2 ), new TestMultiAttribute( 5 ), new TestMultiAttribute( 6 )
             }
             .AsEnumerable();
 
@@ -254,14 +251,14 @@ public class ParameterInfoExtensionsTests : TestsBase
     public class BaseClass
     {
         public virtual void TestMethod(
-            [TestUnique( 0 )] [TestMulti( 1 )] [TestMulti( 2 )] [TestBaseOnly( 3 )]
+            [TestUnique( 0 )][TestMulti( 1 )][TestMulti( 2 )][TestBaseOnly( 3 )]
             int parameter) { }
     }
 
     public class DerivedClass : BaseClass
     {
         public override void TestMethod(
-            [TestUnique( 4 )] [TestMulti( 5 )] [TestMulti( 6 )]
+            [TestUnique( 4 )][TestMulti( 5 )][TestMulti( 6 )]
             int parameter) { }
     }
 }

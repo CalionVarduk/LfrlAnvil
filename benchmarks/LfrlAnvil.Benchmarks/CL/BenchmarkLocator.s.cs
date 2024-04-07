@@ -15,7 +15,7 @@ public static class BenchmarkLocator
         var benchmarkProperties = FindBenchmarkProperties();
 
         var types = benchmarkProperties
-            .Where( x => (bool)x.Property.GetValue( options )! )
+            .Where( x => ( bool )x.Property.GetValue( options )! )
             .Select( x => x.BenchmarkType )
             .ToList();
 
@@ -37,6 +37,6 @@ public static class BenchmarkLocator
 
     private static CommandLineBenchmarkAttribute? GetBenchmarkAttribute(PropertyInfo property)
     {
-        return (CommandLineBenchmarkAttribute?)Attribute.GetCustomAttribute( property, typeof( CommandLineBenchmarkAttribute ) );
+        return ( CommandLineBenchmarkAttribute? )Attribute.GetCustomAttribute( property, typeof( CommandLineBenchmarkAttribute ) );
     }
 }

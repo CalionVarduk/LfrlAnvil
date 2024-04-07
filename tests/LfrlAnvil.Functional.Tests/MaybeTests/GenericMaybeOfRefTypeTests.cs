@@ -13,7 +13,7 @@ public abstract class GenericMaybeOfRefTypeTests<T> : GenericMaybeTests<T>
     [Fact]
     public void MaybeConversionOperator_FromT_ShouldReturnNone_WhenParameterIsNull()
     {
-        var sut = (Maybe<T>)null;
+        var sut = ( Maybe<T> )null;
         sut.HasValue.Should().BeFalse();
     }
 }

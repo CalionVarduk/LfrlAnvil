@@ -531,7 +531,7 @@ public partial class SqlTableBuilderTests : TestsBase
         _ = sut.Info;
 
         var actionCount = schema.Database.GetPendingActionCount();
-        var result = ((ISqlTableBuilder)sut).SetName( "bar" );
+        var result = (( ISqlTableBuilder )sut).SetName( "bar" );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )
@@ -561,7 +561,7 @@ public partial class SqlTableBuilderTests : TestsBase
         _ = sut.Info;
 
         var actionCount = schema.Database.GetPendingActionCount();
-        var result = ((ISqlObjectBuilder)sut).SetName( "bar" );
+        var result = (( ISqlObjectBuilder )sut).SetName( "bar" );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )

@@ -72,8 +72,8 @@ public class TypeNullabilityTests : TestsBase
     [Fact]
     public void GetCommonType_ShouldReturnNull_WhenBothTypesAreNull()
     {
-        var a = (TypeNullability?)null;
-        var b = (TypeNullability?)null;
+        var a = ( TypeNullability? )null;
+        var b = ( TypeNullability? )null;
 
         var result = TypeNullability.GetCommonType( a, b );
 
@@ -83,7 +83,7 @@ public class TypeNullabilityTests : TestsBase
     [Fact]
     public void GetCommonType_ShouldReturnNull_WhenFirstTypeIsNull()
     {
-        var a = (TypeNullability?)null;
+        var a = ( TypeNullability? )null;
         var b = TypeNullability.Create<int>();
 
         var result = TypeNullability.GetCommonType( a, b );
@@ -95,7 +95,7 @@ public class TypeNullabilityTests : TestsBase
     public void GetCommonType_ShouldReturnNull_WhenSecondTypeIsNull()
     {
         var a = TypeNullability.Create<int>();
-        var b = (TypeNullability?)null;
+        var b = ( TypeNullability? )null;
 
         var result = TypeNullability.GetCommonType( a, b );
 

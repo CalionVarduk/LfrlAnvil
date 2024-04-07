@@ -26,16 +26,12 @@ public class EventListenerConcurrentAllDecoratorTests : TestsBase
     {
         var sourceEvents = new[]
         {
-            Substitute.For<IEventStream<int>>(),
-            Substitute.For<IEventStream<int>>(),
-            Substitute.For<IEventStream<int>>()
+            Substitute.For<IEventStream<int>>(), Substitute.For<IEventStream<int>>(), Substitute.For<IEventStream<int>>()
         };
 
         var expectedSourceEvents = new[]
         {
-            Substitute.For<IEventStream<int>>(),
-            Substitute.For<IEventStream<int>>(),
-            Substitute.For<IEventStream<int>>()
+            Substitute.For<IEventStream<int>>(), Substitute.For<IEventStream<int>>(), Substitute.For<IEventStream<int>>()
         };
 
         foreach ( var (source, result) in sourceEvents.Zip( expectedSourceEvents ) )

@@ -284,7 +284,7 @@ public static class SqlQueryExpressionNodeExtensions
     public static TQueryExpressionNode OrderBy<TQueryExpressionNode>(this TQueryExpressionNode node, params SqlOrderByNode[] ordering)
         where TQueryExpressionNode : SqlExtendableQueryExpressionNode
     {
-        return ordering.Length == 0 ? node : (TQueryExpressionNode)node.AddTrait( SqlNode.SortTrait( ordering ) );
+        return ordering.Length == 0 ? node : ( TQueryExpressionNode )node.AddTrait( SqlNode.SortTrait( ordering ) );
     }
 
     [Pure]
@@ -316,7 +316,7 @@ public static class SqlQueryExpressionNodeExtensions
     {
         return commonTableExpressions.Length == 0
             ? node
-            : (TQueryExpressionNode)node.AddTrait( SqlNode.CommonTableExpressionTrait( commonTableExpressions ) );
+            : ( TQueryExpressionNode )node.AddTrait( SqlNode.CommonTableExpressionTrait( commonTableExpressions ) );
     }
 
     [Pure]
@@ -324,7 +324,7 @@ public static class SqlQueryExpressionNodeExtensions
     public static TQueryExpressionNode Limit<TQueryExpressionNode>(this TQueryExpressionNode node, SqlExpressionNode value)
         where TQueryExpressionNode : SqlExtendableQueryExpressionNode
     {
-        return (TQueryExpressionNode)node.AddTrait( SqlNode.LimitTrait( value ) );
+        return ( TQueryExpressionNode )node.AddTrait( SqlNode.LimitTrait( value ) );
     }
 
     [Pure]
@@ -332,7 +332,7 @@ public static class SqlQueryExpressionNodeExtensions
     public static TQueryExpressionNode Offset<TQueryExpressionNode>(this TQueryExpressionNode node, SqlExpressionNode value)
         where TQueryExpressionNode : SqlExtendableQueryExpressionNode
     {
-        return (TQueryExpressionNode)node.AddTrait( SqlNode.OffsetTrait( value ) );
+        return ( TQueryExpressionNode )node.AddTrait( SqlNode.OffsetTrait( value ) );
     }
 
     [Pure]

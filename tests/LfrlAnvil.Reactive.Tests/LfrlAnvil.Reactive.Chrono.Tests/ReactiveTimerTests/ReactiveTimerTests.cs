@@ -796,10 +796,7 @@ public class ReactiveTimerTests : TestsBase
         var interval = Duration.FromTicks( 1 );
         var timestamps = new[]
         {
-            Timestamp.Zero,
-            Timestamp.Zero + interval * 3,
-            Timestamp.Zero + interval * 3,
-            Timestamp.Zero + interval * 4
+            Timestamp.Zero, Timestamp.Zero + interval * 3, Timestamp.Zero + interval * 3, Timestamp.Zero + interval * 4
         };
 
         var expectedEvents = new[]
@@ -832,13 +829,7 @@ public class ReactiveTimerTests : TestsBase
     public void RunningTimer_ShouldSkipLastEvents_WhenAwaitingForLastEventPreparationTakesTooLong()
     {
         var interval = Duration.FromTicks( 1 );
-        var timestamps = new[]
-        {
-            Timestamp.Zero,
-            Timestamp.Zero + interval,
-            Timestamp.Zero + interval,
-            Timestamp.Zero + interval * 10
-        };
+        var timestamps = new[] { Timestamp.Zero, Timestamp.Zero + interval, Timestamp.Zero + interval, Timestamp.Zero + interval * 10 };
 
         var expectedEvents = new[]
         {
@@ -1008,10 +999,7 @@ public class ReactiveTimerTests : TestsBase
         var interval = Duration.FromTicks( 100 );
         var timestamps = new[]
         {
-            Timestamp.Zero,
-            Timestamp.Zero + interval * 0.8,
-            Timestamp.Zero + interval * 0.9,
-            Timestamp.Zero + interval
+            Timestamp.Zero, Timestamp.Zero + interval * 0.8, Timestamp.Zero + interval * 0.9, Timestamp.Zero + interval
         };
 
         var expectedEvent = new WithInterval<long>( 0, Timestamp.Zero + interval, interval );
@@ -1167,12 +1155,7 @@ public class ReactiveTimerTests : TestsBase
     public void Stop_ShouldStopTheTimer_WhenTimerIsPreparingToWaitForTheNextStep()
     {
         var interval = Duration.FromTicks( 100 );
-        var timestamps = new[]
-        {
-            Timestamp.Zero,
-            Timestamp.Zero + interval,
-            Timestamp.Zero + interval
-        };
+        var timestamps = new[] { Timestamp.Zero, Timestamp.Zero + interval, Timestamp.Zero + interval };
 
         var timestampProvider = Substitute.For<ITimestampProvider>();
         timestampProvider.GetNow().Returns( timestamps );

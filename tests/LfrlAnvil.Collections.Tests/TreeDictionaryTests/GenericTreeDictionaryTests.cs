@@ -702,8 +702,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
         var values = Fixture.CreateDistinctCollection<TValue>( 4 );
 
         var comparer = EqualityComparerFactory<TKey>.Create(
-            (a, b) => ((a!.Equals( keys[1] ) || a.Equals( keys[2] )) && (b!.Equals( keys[1] ) || b.Equals( keys[2] ))) ||
-                a.Equals( b ),
+            (a, b) => ((a!.Equals( keys[1] ) || a.Equals( keys[2] )) && (b!.Equals( keys[1] ) || b.Equals( keys[2] ))) || a.Equals( b ),
             a => a.Equals( keys[1] ) || a.Equals( keys[2] ) ? keys[1].GetHashCode() : a.GetHashCode() );
 
         var sut = new TreeDictionary<TKey, TValue>( comparer );
@@ -1951,8 +1950,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     [Fact]
     public void MoveTo_ShouldChangeParentCorrectly_WhenNodeIsRootAndParentIsIndirectDescendant()
     {
-        MoveTo_ShouldChangeParentCorrectly_WhenNodeIsRootAndParentIsIndirectDescendant_Impl(
-            (sut, a, b) => sut.MoveTo( a.Key, b.Key ) );
+        MoveTo_ShouldChangeParentCorrectly_WhenNodeIsRootAndParentIsIndirectDescendant_Impl( (sut, a, b) => sut.MoveTo( a.Key, b.Key ) );
     }
 
     [Fact]
@@ -2015,8 +2013,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     [Fact]
     public void MoveTo_ShouldChangeParentCorrectly_WhenParentIsNodesFirstChild()
     {
-        MoveTo_ShouldChangeParentCorrectly_WhenParentIsNodesFirstChild_Impl(
-            (sut, a, b) => sut.MoveTo( a.Key, b.Key ) );
+        MoveTo_ShouldChangeParentCorrectly_WhenParentIsNodesFirstChild_Impl( (sut, a, b) => sut.MoveTo( a.Key, b.Key ) );
     }
 
     [Fact]
@@ -2081,8 +2078,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     [Fact]
     public void MoveTo_ShouldChangeParentCorrectly_WhenParentIsNodesNonFirstChild()
     {
-        MoveTo_ShouldChangeParentCorrectly_WhenParentIsNodesNonFirstChild_Impl(
-            (sut, a, b) => sut.MoveTo( a.Key, b.Key ) );
+        MoveTo_ShouldChangeParentCorrectly_WhenParentIsNodesNonFirstChild_Impl( (sut, a, b) => sut.MoveTo( a.Key, b.Key ) );
     }
 
     [Fact]
@@ -2147,8 +2143,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     [Fact]
     public void MoveTo_ShouldChangeParentCorrectly_WhenParentIsNodesIndirectDescendant()
     {
-        MoveTo_ShouldChangeParentCorrectly_WhenParentIsNodesIndirectDescendant_Impl(
-            (sut, a, b) => sut.MoveTo( a.Key, b.Key ) );
+        MoveTo_ShouldChangeParentCorrectly_WhenParentIsNodesIndirectDescendant_Impl( (sut, a, b) => sut.MoveTo( a.Key, b.Key ) );
     }
 
     [Fact]
@@ -2215,8 +2210,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     [Fact]
     public void MoveTo_ShouldChangeParentCorrectly_WhenNodeIsParentsIndirectDescendant()
     {
-        MoveTo_ShouldChangeParentCorrectly_WhenNodeIsParentsIndirectDescendant_Impl(
-            (sut, a, b) => sut.MoveTo( a.Key, b.Key ) );
+        MoveTo_ShouldChangeParentCorrectly_WhenNodeIsParentsIndirectDescendant_Impl( (sut, a, b) => sut.MoveTo( a.Key, b.Key ) );
     }
 
     [Fact]
@@ -2283,8 +2277,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     [Fact]
     public void MoveTo_ShouldChangeParentCorrectly_WhenParentAndNodeAreNotDirectlyRelated()
     {
-        MoveTo_ShouldChangeParentCorrectly_WhenParentAndNodeAreNotDirectlyRelated_Impl(
-            (sut, a, b) => sut.MoveTo( a.Key, b.Key ) );
+        MoveTo_ShouldChangeParentCorrectly_WhenParentAndNodeAreNotDirectlyRelated_Impl( (sut, a, b) => sut.MoveTo( a.Key, b.Key ) );
     }
 
     [Fact]
@@ -2353,8 +2346,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     [Fact]
     public void MoveTo_ShouldThrowInvalidOperationException_WhenParentNodeAndTargetNodeAreEqual()
     {
-        MoveTo_ShouldThrowInvalidOperationException_WhenParentNodeAndTargetNodeAreEqual_Impl(
-            (sut, a, b) => sut.MoveTo( a.Key, b.Key ) );
+        MoveTo_ShouldThrowInvalidOperationException_WhenParentNodeAndTargetNodeAreEqual_Impl( (sut, a, b) => sut.MoveTo( a.Key, b.Key ) );
     }
 
     [Fact]
@@ -2620,8 +2612,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     [Fact]
     public void MoveSubtreeTo_WithParentNode_ShouldChangeParentCorrectly_WhenNodeIsParentsIndirectDescendant()
     {
-        MoveSubtreeTo_ShouldChangeParentCorrectly_WhenNodeIsParentsIndirectDescendant_Impl(
-            (sut, a, b) => sut.MoveSubtreeTo( a, b.Key ) );
+        MoveSubtreeTo_ShouldChangeParentCorrectly_WhenNodeIsParentsIndirectDescendant_Impl( (sut, a, b) => sut.MoveSubtreeTo( a, b.Key ) );
     }
 
     [Fact]
@@ -2793,8 +2784,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     {
         MoveSubtreeTo_ShouldThrowInvalidOperationException_WhenNodeIsRootAndParentIsRootChild_Impl(
             (sut, a, b) =>
-                sut.MoveSubtreeTo( a.Key, b )
-        );
+                sut.MoveSubtreeTo( a.Key, b ) );
     }
 
     [Fact]
@@ -2809,8 +2799,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     {
         MoveSubtreeTo_ShouldThrowInvalidOperationException_WhenNodeIsRootAndParentIsRootChild_Impl(
             (sut, a, b) =>
-                sut.MoveSubtreeTo( a, b )
-        );
+                sut.MoveSubtreeTo( a, b ) );
     }
 
     private void MoveSubtreeTo_ShouldThrowInvalidOperationException_WhenNodeIsRootAndParentIsRootChild_Impl(
@@ -2839,8 +2828,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     {
         MoveSubtreeTo_ShouldThrowInvalidOperationException_WhenNodeIsRootAndParentIsIndirectDescendant_Impl(
             (sut, a, b) =>
-                sut.MoveSubtreeTo( a.Key, b )
-        );
+                sut.MoveSubtreeTo( a.Key, b ) );
     }
 
     [Fact]
@@ -2855,8 +2843,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     {
         MoveSubtreeTo_ShouldThrowInvalidOperationException_WhenNodeIsRootAndParentIsIndirectDescendant_Impl(
             (sut, a, b) =>
-                sut.MoveSubtreeTo( a, b )
-        );
+                sut.MoveSubtreeTo( a, b ) );
     }
 
     private void MoveSubtreeTo_ShouldThrowInvalidOperationException_WhenNodeIsRootAndParentIsIndirectDescendant_Impl(
@@ -2877,8 +2864,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     [Fact]
     public void MoveSubtreeTo_ShouldThrowInvalidOperationException_WhenParentIsNodesChild()
     {
-        MoveSubtreeTo_ShouldThrowInvalidOperationException_WhenParentIsNodesChild_Impl(
-            (sut, a, b) => sut.MoveSubtreeTo( a.Key, b.Key ) );
+        MoveSubtreeTo_ShouldThrowInvalidOperationException_WhenParentIsNodesChild_Impl( (sut, a, b) => sut.MoveSubtreeTo( a.Key, b.Key ) );
     }
 
     [Fact]
@@ -2886,8 +2872,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     {
         MoveSubtreeTo_ShouldThrowInvalidOperationException_WhenParentIsNodesChild_Impl(
             (sut, a, b) =>
-                sut.MoveSubtreeTo( a.Key, b )
-        );
+                sut.MoveSubtreeTo( a.Key, b ) );
     }
 
     [Fact]
@@ -2901,8 +2886,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     {
         MoveSubtreeTo_ShouldThrowInvalidOperationException_WhenParentIsNodesChild_Impl(
             (sut, a, b) =>
-                sut.MoveSubtreeTo( a, b )
-        );
+                sut.MoveSubtreeTo( a, b ) );
     }
 
     private void MoveSubtreeTo_ShouldThrowInvalidOperationException_WhenParentIsNodesChild_Impl(
@@ -2932,8 +2916,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     {
         MoveSubtreeTo_ShouldThrowInvalidOperationException_WhenParentIsNodesIndirectDescendant_Impl(
             (sut, a, b) =>
-                sut.MoveSubtreeTo( a.Key, b )
-        );
+                sut.MoveSubtreeTo( a.Key, b ) );
     }
 
     [Fact]
@@ -2948,8 +2931,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     {
         MoveSubtreeTo_ShouldThrowInvalidOperationException_WhenParentIsNodesIndirectDescendant_Impl(
             (sut, a, b) =>
-                sut.MoveSubtreeTo( a, b )
-        );
+                sut.MoveSubtreeTo( a, b ) );
     }
 
     private void MoveSubtreeTo_ShouldThrowInvalidOperationException_WhenParentIsNodesIndirectDescendant_Impl(
@@ -3428,7 +3410,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
         var sut = new TreeDictionary<TKey, TValue> { { key, value } };
         var expected = sut.GetNode( key );
 
-        var result = ((IReadOnlyTreeDictionary<TKey, TValue>)sut).GetNode( key );
+        var result = (( IReadOnlyTreeDictionary<TKey, TValue> )sut).GetNode( key );
 
         result.Should().Be( expected );
     }
@@ -3441,7 +3423,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
         var sut = new TreeDictionary<TKey, TValue> { { key, value } };
         var expected = sut.CreateSubtree( key );
 
-        var result = ((IReadOnlyTreeDictionary<TKey, TValue>)sut).CreateSubtree( key );
+        var result = (( IReadOnlyTreeDictionary<TKey, TValue> )sut).CreateSubtree( key );
 
         result.AsEnumerable().Should().BeEquivalentTo( expected );
     }
@@ -3453,7 +3435,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
         var value = Fixture.Create<TValue>();
         var sut = new TreeDictionary<TKey, TValue>();
 
-        var result = ((ITreeDictionary<TKey, TValue>)sut).SetRoot( key, value );
+        var result = (( ITreeDictionary<TKey, TValue> )sut).SetRoot( key, value );
 
         result.Should().Be( sut.Root );
     }
@@ -3466,7 +3448,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
         var sut = new TreeDictionary<TKey, TValue>();
         var node = new TreeDictionaryNode<TKey, TValue>( key, value );
 
-        ((ITreeDictionary<TKey, TValue>)sut).SetRoot( node );
+        (( ITreeDictionary<TKey, TValue> )sut).SetRoot( node );
 
         node.Should().Be( sut.Root );
     }
@@ -3477,7 +3459,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
         var sut = new TreeDictionary<TKey, TValue>();
         var node = Substitute.For<ITreeDictionaryNode<TKey, TValue>>();
 
-        var action = Lambda.Of( () => ((ITreeDictionary<TKey, TValue>)sut).SetRoot( node ) );
+        var action = Lambda.Of( () => (( ITreeDictionary<TKey, TValue> )sut).SetRoot( node ) );
 
         action.Should().ThrowExactly<ArgumentException>();
     }
@@ -3489,7 +3471,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
         var values = Fixture.CreateDistinctCollection<TValue>( 2 );
         var sut = new TreeDictionary<TKey, TValue> { { keys[0], values[0] } };
 
-        var result = ((ITreeDictionary<TKey, TValue>)sut).Add( keys[1], values[1] );
+        var result = (( ITreeDictionary<TKey, TValue> )sut).Add( keys[1], values[1] );
 
         result.Should().Be( sut.Root!.Children[0] );
     }
@@ -3502,7 +3484,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
         var sut = new TreeDictionary<TKey, TValue> { { keys[0], values[0] } };
         var node = new TreeDictionaryNode<TKey, TValue>( keys[1], values[1] );
 
-        ((ITreeDictionary<TKey, TValue>)sut).Add( node );
+        (( ITreeDictionary<TKey, TValue> )sut).Add( node );
 
         node.Should().Be( sut.Root!.Children[0] );
     }
@@ -3513,7 +3495,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
         var sut = new TreeDictionary<TKey, TValue>();
         var node = Substitute.For<ITreeDictionaryNode<TKey, TValue>>();
 
-        var action = Lambda.Of( () => ((ITreeDictionary<TKey, TValue>)sut).Add( node ) );
+        var action = Lambda.Of( () => (( ITreeDictionary<TKey, TValue> )sut).Add( node ) );
 
         action.Should().ThrowExactly<ArgumentException>();
     }
@@ -3525,7 +3507,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
         var values = Fixture.CreateDistinctCollection<TValue>( 2 );
         var sut = new TreeDictionary<TKey, TValue> { { keys[0], values[0] } };
 
-        var result = ((ITreeDictionary<TKey, TValue>)sut).AddTo( keys[0], keys[1], values[1] );
+        var result = (( ITreeDictionary<TKey, TValue> )sut).AddTo( keys[0], keys[1], values[1] );
 
         result.Should().Be( sut.Root!.Children[0] );
     }
@@ -3538,7 +3520,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
         var sut = new TreeDictionary<TKey, TValue> { { keys[0], values[0] } };
         var node = new TreeDictionaryNode<TKey, TValue>( keys[1], values[1] );
 
-        ((ITreeDictionary<TKey, TValue>)sut).AddTo( keys[0], node );
+        (( ITreeDictionary<TKey, TValue> )sut).AddTo( keys[0], node );
 
         node.Should().Be( sut.Root!.Children[0] );
     }
@@ -3551,7 +3533,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
         var sut = new TreeDictionary<TKey, TValue> { { key, value } };
         var node = Substitute.For<ITreeDictionaryNode<TKey, TValue>>();
 
-        var action = Lambda.Of( () => ((ITreeDictionary<TKey, TValue>)sut).AddTo( key, node ) );
+        var action = Lambda.Of( () => (( ITreeDictionary<TKey, TValue> )sut).AddTo( key, node ) );
 
         action.Should().ThrowExactly<ArgumentException>();
     }
@@ -3563,7 +3545,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
         var values = Fixture.CreateDistinctCollection<TValue>( 2 );
         var sut = new TreeDictionary<TKey, TValue> { { keys[0], values[0] } };
 
-        var result = ((ITreeDictionary<TKey, TValue>)sut).AddTo( sut.Root!, keys[1], values[1] );
+        var result = (( ITreeDictionary<TKey, TValue> )sut).AddTo( sut.Root!, keys[1], values[1] );
 
         result.Should().Be( sut.Root!.Children[0] );
     }
@@ -3576,7 +3558,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
         var sut = new TreeDictionary<TKey, TValue> { { keys[0], values[0] } };
         var parent = Substitute.For<ITreeDictionaryNode<TKey, TValue>>();
 
-        var action = Lambda.Of( () => ((ITreeDictionary<TKey, TValue>)sut).AddTo( parent, keys[1], values[1] ) );
+        var action = Lambda.Of( () => (( ITreeDictionary<TKey, TValue> )sut).AddTo( parent, keys[1], values[1] ) );
 
         action.Should().ThrowExactly<ArgumentException>();
     }
@@ -3589,7 +3571,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
         var sut = new TreeDictionary<TKey, TValue> { { keys[0], values[0] } };
         var node = new TreeDictionaryNode<TKey, TValue>( keys[1], values[1] );
 
-        ((ITreeDictionary<TKey, TValue>)sut).AddTo( sut.Root!, node );
+        (( ITreeDictionary<TKey, TValue> )sut).AddTo( sut.Root!, node );
 
         node.Should().Be( sut.Root!.Children[0] );
     }
@@ -3603,7 +3585,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
         var parent = Substitute.For<ITreeDictionaryNode<TKey, TValue>>();
         var node = new TreeDictionaryNode<TKey, TValue>( keys[1], values[1] );
 
-        var action = Lambda.Of( () => ((ITreeDictionary<TKey, TValue>)sut).AddTo( parent, node ) );
+        var action = Lambda.Of( () => (( ITreeDictionary<TKey, TValue> )sut).AddTo( parent, node ) );
 
         action.Should().ThrowExactly<ArgumentException>();
     }
@@ -3616,7 +3598,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
         var sut = new TreeDictionary<TKey, TValue> { { key, value } };
         var node = Substitute.For<ITreeDictionaryNode<TKey, TValue>>();
 
-        var action = Lambda.Of( () => ((ITreeDictionary<TKey, TValue>)sut).AddTo( sut.Root!, node ) );
+        var action = Lambda.Of( () => (( ITreeDictionary<TKey, TValue> )sut).AddTo( sut.Root!, node ) );
 
         action.Should().ThrowExactly<ArgumentException>();
     }
@@ -3629,7 +3611,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
         var sut = new TreeDictionary<TKey, TValue>();
         var subtree = new TreeDictionary<TKey, TValue> { { key, value } };
 
-        var result = ((ITreeDictionary<TKey, TValue>)sut).AddSubtree( subtree.Root! );
+        var result = (( ITreeDictionary<TKey, TValue> )sut).AddSubtree( subtree.Root! );
 
         result.Should().Be( sut.Root );
     }
@@ -3642,7 +3624,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
         var sut = new TreeDictionary<TKey, TValue> { { keys[0], values[0] } };
         var subtree = new TreeDictionary<TKey, TValue> { { keys[1], values[1] } };
 
-        var result = ((ITreeDictionary<TKey, TValue>)sut).AddSubtreeTo( keys[0], subtree.Root! );
+        var result = (( ITreeDictionary<TKey, TValue> )sut).AddSubtreeTo( keys[0], subtree.Root! );
 
         result.Should().Be( sut.Root!.Children[0] );
     }
@@ -3655,7 +3637,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
         var sut = new TreeDictionary<TKey, TValue> { { keys[0], values[0] } };
         var subtree = new TreeDictionary<TKey, TValue> { { keys[1], values[1] } };
 
-        var result = ((ITreeDictionary<TKey, TValue>)sut).AddSubtreeTo( sut.Root!, subtree.Root! );
+        var result = (( ITreeDictionary<TKey, TValue> )sut).AddSubtreeTo( sut.Root!, subtree.Root! );
 
         result.Should().Be( sut.Root!.Children[0] );
     }
@@ -3669,7 +3651,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
         var subtree = new TreeDictionary<TKey, TValue> { { key, value } };
         var parent = Substitute.For<ITreeDictionaryNode<TKey, TValue>>();
 
-        var action = Lambda.Of( () => ((ITreeDictionary<TKey, TValue>)sut).AddSubtreeTo( parent, subtree.Root! ) );
+        var action = Lambda.Of( () => (( ITreeDictionary<TKey, TValue> )sut).AddSubtreeTo( parent, subtree.Root! ) );
 
         action.Should().ThrowExactly<ArgumentException>();
     }
@@ -3681,7 +3663,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
         var value = Fixture.Create<TValue>();
         var sut = new TreeDictionary<TKey, TValue> { { key, value } };
 
-        ((ITreeDictionary<TKey, TValue>)sut).Remove( sut.Root! );
+        (( ITreeDictionary<TKey, TValue> )sut).Remove( sut.Root! );
 
         sut.Should().BeEmpty();
     }
@@ -3692,7 +3674,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
         var sut = new TreeDictionary<TKey, TValue>();
         var node = Substitute.For<ITreeDictionaryNode<TKey, TValue>>();
 
-        var action = Lambda.Of( () => ((ITreeDictionary<TKey, TValue>)sut).Remove( node ) );
+        var action = Lambda.Of( () => (( ITreeDictionary<TKey, TValue> )sut).Remove( node ) );
 
         action.Should().ThrowExactly<ArgumentException>();
     }
@@ -3704,7 +3686,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
         var value = Fixture.Create<TValue>();
         var sut = new TreeDictionary<TKey, TValue> { { key, value } };
 
-        var result = ((ITreeDictionary<TKey, TValue>)sut).RemoveSubtree( sut.Root! );
+        var result = (( ITreeDictionary<TKey, TValue> )sut).RemoveSubtree( sut.Root! );
 
         using ( new AssertionScope() )
         {
@@ -3719,7 +3701,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
         var sut = new TreeDictionary<TKey, TValue>();
         var node = Substitute.For<ITreeDictionaryNode<TKey, TValue>>();
 
-        var action = Lambda.Of( () => ((ITreeDictionary<TKey, TValue>)sut).RemoveSubtree( node ) );
+        var action = Lambda.Of( () => (( ITreeDictionary<TKey, TValue> )sut).RemoveSubtree( node ) );
 
         action.Should().ThrowExactly<ArgumentException>();
     }
@@ -3733,7 +3715,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
         var a = sut.Add( keys[0], values[0] );
         var b = sut.Add( keys[1], values[1] );
 
-        ((ITreeDictionary<TKey, TValue>)sut).Swap( a, b );
+        (( ITreeDictionary<TKey, TValue> )sut).Swap( a, b );
 
         using ( new AssertionScope() )
         {
@@ -3751,7 +3733,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
         var sut = new TreeDictionary<TKey, TValue> { { key, value } };
         var node = Substitute.For<ITreeDictionaryNode<TKey, TValue>>();
 
-        var action = Lambda.Of( () => ((ITreeDictionary<TKey, TValue>)sut).Swap( node, sut.Root! ) );
+        var action = Lambda.Of( () => (( ITreeDictionary<TKey, TValue> )sut).Swap( node, sut.Root! ) );
 
         action.Should().ThrowExactly<ArgumentException>();
     }
@@ -3764,7 +3746,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
         var sut = new TreeDictionary<TKey, TValue> { { key, value } };
         var node = Substitute.For<ITreeDictionaryNode<TKey, TValue>>();
 
-        var action = Lambda.Of( () => ((ITreeDictionary<TKey, TValue>)sut).Swap( sut.Root!, node ) );
+        var action = Lambda.Of( () => (( ITreeDictionary<TKey, TValue> )sut).Swap( sut.Root!, node ) );
 
         action.Should().ThrowExactly<ArgumentException>();
     }
@@ -3778,7 +3760,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
         var a = sut.Add( keys[0], values[0] );
         var b = sut.Add( keys[1], values[1] );
 
-        var result = ((ITreeDictionary<TKey, TValue>)sut).MoveTo( keys[1], keys[0] );
+        var result = (( ITreeDictionary<TKey, TValue> )sut).MoveTo( keys[1], keys[0] );
 
         using ( new AssertionScope() )
         {
@@ -3798,7 +3780,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
         var a = sut.Add( keys[0], values[0] );
         var b = sut.Add( keys[1], values[1] );
 
-        ((ITreeDictionary<TKey, TValue>)sut).MoveTo( keys[1], a );
+        (( ITreeDictionary<TKey, TValue> )sut).MoveTo( keys[1], a );
 
         using ( new AssertionScope() )
         {
@@ -3816,7 +3798,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
         var sut = new TreeDictionary<TKey, TValue> { { key, value } };
         var node = Substitute.For<ITreeDictionaryNode<TKey, TValue>>();
 
-        var action = Lambda.Of( () => ((ITreeDictionary<TKey, TValue>)sut).MoveTo( key, node ) );
+        var action = Lambda.Of( () => (( ITreeDictionary<TKey, TValue> )sut).MoveTo( key, node ) );
 
         action.Should().ThrowExactly<ArgumentException>();
     }
@@ -3830,7 +3812,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
         var a = sut.Add( keys[0], values[0] );
         var b = sut.Add( keys[1], values[1] );
 
-        var result = ((ITreeDictionary<TKey, TValue>)sut).MoveTo( b, keys[0] );
+        var result = (( ITreeDictionary<TKey, TValue> )sut).MoveTo( b, keys[0] );
 
         using ( new AssertionScope() )
         {
@@ -3849,7 +3831,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
         var sut = new TreeDictionary<TKey, TValue> { { key, value } };
         var parent = Substitute.For<ITreeDictionaryNode<TKey, TValue>>();
 
-        var action = Lambda.Of( () => ((ITreeDictionary<TKey, TValue>)sut).MoveTo( parent, key ) );
+        var action = Lambda.Of( () => (( ITreeDictionary<TKey, TValue> )sut).MoveTo( parent, key ) );
 
         action.Should().ThrowExactly<ArgumentException>();
     }
@@ -3863,7 +3845,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
         var a = sut.Add( keys[0], values[0] );
         var b = sut.Add( keys[1], values[1] );
 
-        ((ITreeDictionary<TKey, TValue>)sut).MoveTo( b, a );
+        (( ITreeDictionary<TKey, TValue> )sut).MoveTo( b, a );
 
         using ( new AssertionScope() )
         {
@@ -3881,7 +3863,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
         var sut = new TreeDictionary<TKey, TValue> { { key, value } };
         var parent = Substitute.For<ITreeDictionaryNode<TKey, TValue>>();
 
-        var action = Lambda.Of( () => ((ITreeDictionary<TKey, TValue>)sut).MoveTo( parent, sut.Root! ) );
+        var action = Lambda.Of( () => (( ITreeDictionary<TKey, TValue> )sut).MoveTo( parent, sut.Root! ) );
 
         action.Should().ThrowExactly<ArgumentException>();
     }
@@ -3894,7 +3876,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
         var sut = new TreeDictionary<TKey, TValue> { { key, value } };
         var node = Substitute.For<ITreeDictionaryNode<TKey, TValue>>();
 
-        var action = Lambda.Of( () => ((ITreeDictionary<TKey, TValue>)sut).MoveTo( sut.Root!, node ) );
+        var action = Lambda.Of( () => (( ITreeDictionary<TKey, TValue> )sut).MoveTo( sut.Root!, node ) );
 
         action.Should().ThrowExactly<ArgumentException>();
     }
@@ -3909,7 +3891,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
         var b = sut.Add( keys[1], values[1] );
         var c = sut.Add( keys[2], values[2] );
 
-        var result = ((ITreeDictionary<TKey, TValue>)sut).MoveSubtreeTo( keys[2], keys[1] );
+        var result = (( ITreeDictionary<TKey, TValue> )sut).MoveSubtreeTo( keys[2], keys[1] );
 
         using ( new AssertionScope() )
         {
@@ -3931,7 +3913,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
         var b = sut.Add( keys[1], values[1] );
         var c = sut.Add( keys[2], values[2] );
 
-        ((ITreeDictionary<TKey, TValue>)sut).MoveSubtreeTo( keys[2], b );
+        (( ITreeDictionary<TKey, TValue> )sut).MoveSubtreeTo( keys[2], b );
 
         using ( new AssertionScope() )
         {
@@ -3950,7 +3932,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
         var sut = new TreeDictionary<TKey, TValue> { { key, value } };
         var node = Substitute.For<ITreeDictionaryNode<TKey, TValue>>();
 
-        var action = Lambda.Of( () => ((ITreeDictionary<TKey, TValue>)sut).MoveSubtreeTo( key, node ) );
+        var action = Lambda.Of( () => (( ITreeDictionary<TKey, TValue> )sut).MoveSubtreeTo( key, node ) );
 
         action.Should().ThrowExactly<ArgumentException>();
     }
@@ -3965,7 +3947,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
         var b = sut.Add( keys[1], values[1] );
         var c = sut.Add( keys[2], values[2] );
 
-        var result = ((ITreeDictionary<TKey, TValue>)sut).MoveSubtreeTo( c, keys[1] );
+        var result = (( ITreeDictionary<TKey, TValue> )sut).MoveSubtreeTo( c, keys[1] );
 
         using ( new AssertionScope() )
         {
@@ -3985,7 +3967,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
         var sut = new TreeDictionary<TKey, TValue> { { key, value } };
         var parent = Substitute.For<ITreeDictionaryNode<TKey, TValue>>();
 
-        var action = Lambda.Of( () => ((ITreeDictionary<TKey, TValue>)sut).MoveSubtreeTo( parent, key ) );
+        var action = Lambda.Of( () => (( ITreeDictionary<TKey, TValue> )sut).MoveSubtreeTo( parent, key ) );
 
         action.Should().ThrowExactly<ArgumentException>();
     }
@@ -4000,7 +3982,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
         var b = sut.Add( keys[1], values[1] );
         var c = sut.Add( keys[2], values[2] );
 
-        ((ITreeDictionary<TKey, TValue>)sut).MoveSubtreeTo( c, b );
+        (( ITreeDictionary<TKey, TValue> )sut).MoveSubtreeTo( c, b );
 
         using ( new AssertionScope() )
         {
@@ -4019,7 +4001,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
         var sut = new TreeDictionary<TKey, TValue> { { key, value } };
         var parent = Substitute.For<ITreeDictionaryNode<TKey, TValue>>();
 
-        var action = Lambda.Of( () => ((ITreeDictionary<TKey, TValue>)sut).MoveSubtreeTo( parent, sut.Root! ) );
+        var action = Lambda.Of( () => (( ITreeDictionary<TKey, TValue> )sut).MoveSubtreeTo( parent, sut.Root! ) );
 
         action.Should().ThrowExactly<ArgumentException>();
     }
@@ -4032,7 +4014,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
         var sut = new TreeDictionary<TKey, TValue> { { key, value } };
         var node = Substitute.For<ITreeDictionaryNode<TKey, TValue>>();
 
-        var action = Lambda.Of( () => ((ITreeDictionary<TKey, TValue>)sut).MoveSubtreeTo( sut.Root!, node ) );
+        var action = Lambda.Of( () => (( ITreeDictionary<TKey, TValue> )sut).MoveSubtreeTo( sut.Root!, node ) );
 
         action.Should().ThrowExactly<ArgumentException>();
     }

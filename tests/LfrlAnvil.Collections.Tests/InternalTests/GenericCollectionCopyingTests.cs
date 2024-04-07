@@ -13,14 +13,7 @@ public abstract class GenericCollectionCopyingTests<T> : TestsBase
         var items = allItems.Take( 3 ).ToList();
         var arrayItem = allItems[^1];
 
-        var arr = new[]
-        {
-            arrayItem,
-            arrayItem,
-            arrayItem,
-            arrayItem,
-            arrayItem
-        };
+        var arr = new[] { arrayItem, arrayItem, arrayItem, arrayItem, arrayItem };
 
         CollectionCopying.CopyTo( items, arr, 1 );
 
@@ -34,12 +27,7 @@ public abstract class GenericCollectionCopyingTests<T> : TestsBase
         var items = allItems.Take( 3 ).ToList();
         var arrayItem = allItems[^1];
 
-        var arr = new[]
-        {
-            arrayItem,
-            arrayItem,
-            arrayItem
-        };
+        var arr = new[] { arrayItem, arrayItem, arrayItem };
 
         CollectionCopying.CopyTo( items, arr, 1 );
 
@@ -53,12 +41,7 @@ public abstract class GenericCollectionCopyingTests<T> : TestsBase
         var items = allItems.Take( 3 ).ToList();
         var arrayItem = allItems[^1];
 
-        var arr = new[]
-        {
-            arrayItem,
-            arrayItem,
-            arrayItem
-        };
+        var arr = new[] { arrayItem, arrayItem, arrayItem };
 
         CollectionCopying.CopyTo( items, arr, -1 );
 
@@ -72,12 +55,7 @@ public abstract class GenericCollectionCopyingTests<T> : TestsBase
         var items = allItems.Take( 5 ).ToList();
         var arrayItem = allItems[^1];
 
-        var arr = new[]
-        {
-            arrayItem,
-            arrayItem,
-            arrayItem
-        };
+        var arr = new[] { arrayItem, arrayItem, arrayItem };
 
         CollectionCopying.CopyTo( items, arr, -1 );
 
@@ -93,12 +71,7 @@ public abstract class GenericCollectionCopyingTests<T> : TestsBase
         var items = allItems.Take( 3 ).ToList();
         var arrayItem = allItems[^1];
 
-        var arr = new[]
-        {
-            arrayItem,
-            arrayItem,
-            arrayItem
-        };
+        var arr = new[] { arrayItem, arrayItem, arrayItem };
 
         CollectionCopying.CopyTo( items, arr, arrayIndex );
 

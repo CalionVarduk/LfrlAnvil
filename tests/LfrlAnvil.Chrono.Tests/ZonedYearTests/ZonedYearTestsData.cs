@@ -64,46 +64,28 @@ public class ZonedYearTestsData
         return new TheoryData<DateTime, TimeZoneInfo, DateTime, DateTime, bool>
         {
             {
-                new DateTime( 2021, 1, 1 ),
-                positiveTimeZone1,
-                new DateTime( 2021, 1, 1, 0, 1, 0 ),
-                new DateTime( 2021, 12, 31, 23, 0, 59, 999 ).AddTicks( 9999 ),
-                false
+                new DateTime( 2021, 1, 1 ), positiveTimeZone1, new DateTime( 2021, 1, 1, 0, 1, 0 ),
+                new DateTime( 2021, 12, 31, 23, 0, 59, 999 ).AddTicks( 9999 ), false
             },
             {
-                new DateTime( 2020, 1, 1 ),
-                positiveTimeZone2,
-                new DateTime( 2020, 1, 1, 0, 30, 0 ),
-                new DateTime( 2020, 12, 31, 23, 29, 59, 999 ).AddTicks( 9999 ),
-                true
+                new DateTime( 2020, 1, 1 ), positiveTimeZone2, new DateTime( 2020, 1, 1, 0, 30, 0 ),
+                new DateTime( 2020, 12, 31, 23, 29, 59, 999 ).AddTicks( 9999 ), true
             },
             {
-                new DateTime( 2021, 1, 1 ),
-                positiveTimeZone3,
-                new DateTime( 2021, 1, 1, 0, 59, 0 ),
-                new DateTime( 2021, 12, 31, 23, 58, 59, 999 ).AddTicks( 9999 ),
-                false
+                new DateTime( 2021, 1, 1 ), positiveTimeZone3, new DateTime( 2021, 1, 1, 0, 59, 0 ),
+                new DateTime( 2021, 12, 31, 23, 58, 59, 999 ).AddTicks( 9999 ), false
             },
             {
-                new DateTime( 2021, 1, 1 ),
-                negativeTimeZone1,
-                new DateTime( 2021, 1, 1, 0, 1, 0 ),
-                new DateTime( 2021, 12, 31, 23, 0, 59, 999 ).AddTicks( 9999 ),
-                false
+                new DateTime( 2021, 1, 1 ), negativeTimeZone1, new DateTime( 2021, 1, 1, 0, 1, 0 ),
+                new DateTime( 2021, 12, 31, 23, 0, 59, 999 ).AddTicks( 9999 ), false
             },
             {
-                new DateTime( 2020, 1, 1 ),
-                negativeTimeZone2,
-                new DateTime( 2020, 1, 1, 0, 30, 0 ),
-                new DateTime( 2020, 12, 31, 23, 29, 59, 999 ).AddTicks( 9999 ),
-                true
+                new DateTime( 2020, 1, 1 ), negativeTimeZone2, new DateTime( 2020, 1, 1, 0, 30, 0 ),
+                new DateTime( 2020, 12, 31, 23, 29, 59, 999 ).AddTicks( 9999 ), true
             },
             {
-                new DateTime( 2021, 1, 1 ),
-                negativeTimeZone3,
-                new DateTime( 2021, 1, 1, 0, 59, 0 ),
-                new DateTime( 2021, 12, 31, 23, 58, 59, 999 ).AddTicks( 9999 ),
-                false
+                new DateTime( 2021, 1, 1 ), negativeTimeZone3, new DateTime( 2021, 1, 1, 0, 59, 0 ),
+                new DateTime( 2021, 12, 31, 23, 58, 59, 999 ).AddTicks( 9999 ), false
             }
         };
     }
@@ -325,15 +307,11 @@ public class ZonedYearTestsData
             { year, timeZone, Period.FromTicks( 315360000000000 ), new DateTime( 2022, 1, 1 ) },
             { year, timeZone, new Period( 1, 11, 3, 9, 22, 90, 1700, 80000, 18000000, 20000000 ), new DateTime( 2023, 1, 1 ) },
             {
-                year,
-                timeZoneWithDaylightSaving,
-                Period.FromYears( 1 ).AddMonths( 9 ).AddDays( 25 ).AddHours( 2 ),
+                year, timeZoneWithDaylightSaving, Period.FromYears( 1 ).AddMonths( 9 ).AddDays( 25 ).AddHours( 2 ),
                 new DateTime( 2022, 1, 1 )
             },
             {
-                year,
-                timeZoneWithDaylightSaving,
-                Period.FromYears( 1 ).AddMonths( 9 ).AddDays( 25 ).AddHours( 3 ).SubtractTicks( 1 ),
+                year, timeZoneWithDaylightSaving, Period.FromYears( 1 ).AddMonths( 9 ).AddDays( 25 ).AddHours( 3 ).SubtractTicks( 1 ),
                 new DateTime( 2022, 1, 1 )
             },
             { year, timeZone, Period.FromTicks( -1 ), new DateTime( 2020, 1, 1 ) }

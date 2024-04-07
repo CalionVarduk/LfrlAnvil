@@ -42,7 +42,7 @@ public abstract class SqlColumnTypeDefinition<T> : SqlColumnTypeDefinition, ISql
     where T : notnull
 {
     internal SqlColumnTypeDefinition(ISqlDataType dataType, T defaultValue, LambdaExpression outputMapping)
-        : base( dataType, (SqlLiteralNode)SqlNode.Literal( defaultValue ), outputMapping ) { }
+        : base( dataType, ( SqlLiteralNode )SqlNode.Literal( defaultValue ), outputMapping ) { }
 
     public new SqlLiteralNode<T> DefaultValue => ReinterpretCast.To<SqlLiteralNode<T>>( base.DefaultValue );
     public sealed override Type RuntimeType => typeof( T );

@@ -43,11 +43,11 @@ public class CollectionVariable<TKey, TElement, TValidationResult>
 
         KeySelector = keySelector;
 
-        ErrorsValidator = errorsValidator ??
-            Validators<TValidationResult>.Pass<ICollectionVariableElements<TKey, TElement, TValidationResult>>();
+        ErrorsValidator = errorsValidator
+            ?? Validators<TValidationResult>.Pass<ICollectionVariableElements<TKey, TElement, TValidationResult>>();
 
-        WarningsValidator = warningsValidator ??
-            Validators<TValidationResult>.Pass<ICollectionVariableElements<TKey, TElement, TValidationResult>>();
+        WarningsValidator = warningsValidator
+            ?? Validators<TValidationResult>.Pass<ICollectionVariableElements<TKey, TElement, TValidationResult>>();
 
         Errors = Chain<TValidationResult>.Empty;
         Warnings = Chain<TValidationResult>.Empty;
@@ -80,11 +80,11 @@ public class CollectionVariable<TKey, TElement, TValidationResult>
 
         KeySelector = keySelector;
 
-        ErrorsValidator = errorsValidator ??
-            Validators<TValidationResult>.Pass<ICollectionVariableElements<TKey, TElement, TValidationResult>>();
+        ErrorsValidator = errorsValidator
+            ?? Validators<TValidationResult>.Pass<ICollectionVariableElements<TKey, TElement, TValidationResult>>();
 
-        WarningsValidator = warningsValidator ??
-            Validators<TValidationResult>.Pass<ICollectionVariableElements<TKey, TElement, TValidationResult>>();
+        WarningsValidator = warningsValidator
+            ?? Validators<TValidationResult>.Pass<ICollectionVariableElements<TKey, TElement, TValidationResult>>();
 
         Errors = Chain<TValidationResult>.Empty;
         Warnings = Chain<TValidationResult>.Empty;
@@ -640,9 +640,9 @@ public class CollectionVariable<TKey, TElement, TValidationResult>
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private bool CanTryReplace(TKey key, TElement element, [MaybeNullWhen( false )] out TElement current)
     {
-        return _elements.Elements.TryGetValue( key, out current ) &&
-            ! _elements.ElementComparer.Equals( current, element ) &&
-            ContinueElementReplacement( current, element );
+        return _elements.Elements.TryGetValue( key, out current )
+            && ! _elements.ElementComparer.Equals( current, element )
+            && ContinueElementReplacement( current, element );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -1613,27 +1613,27 @@ public class CollectionVariable<TKey, TElement, TValidationResult>
             {
                 result.Add(
                     (ElementChangeType.Replace, new CollectionVariableReplacedElementSnapshot<TElement, TValidationResult>(
-                         oldElement,
-                         element,
-                         oldInfo.State,
-                         info.State,
-                         oldInfo.Errors,
-                         info.Errors,
-                         oldInfo.Warnings,
-                         info.Warnings )) );
+                        oldElement,
+                        element,
+                        oldInfo.State,
+                        info.State,
+                        oldInfo.Errors,
+                        info.Errors,
+                        oldInfo.Warnings,
+                        info.Warnings )) );
 
                 continue;
             }
 
             result.Add(
                 (ElementChangeType.Add, new CollectionVariableElementSnapshot<TElement, TValidationResult>(
-                     element,
-                     oldInfo.State,
-                     info.State,
-                     oldInfo.Errors,
-                     info.Errors,
-                     oldInfo.Warnings,
-                     info.Warnings )) );
+                    element,
+                    oldInfo.State,
+                    info.State,
+                    oldInfo.Errors,
+                    info.Errors,
+                    oldInfo.Warnings,
+                    info.Warnings )) );
         }
 
         foreach ( var (key, oldElement) in _elements.Elements )
@@ -1647,13 +1647,13 @@ public class CollectionVariable<TKey, TElement, TValidationResult>
 
             result.Add(
                 (ElementChangeType.Remove, new CollectionVariableElementSnapshot<TElement, TValidationResult>(
-                     oldElement,
-                     oldInfo.State,
-                     info.State,
-                     oldInfo.Errors,
-                     info.Errors,
-                     oldInfo.Warnings,
-                     info.Warnings )) );
+                    oldElement,
+                    oldInfo.State,
+                    info.State,
+                    oldInfo.Errors,
+                    info.Errors,
+                    oldInfo.Warnings,
+                    info.Warnings )) );
         }
 
         return result;

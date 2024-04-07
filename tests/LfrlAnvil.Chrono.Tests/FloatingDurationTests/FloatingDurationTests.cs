@@ -79,7 +79,7 @@ public class FloatingDurationTests : TestsBase
     public void FullTicks_ShouldReturnCorrectResult(decimal ticks)
     {
         var sut = new FloatingDuration( ticks );
-        sut.FullTicks.Should().Be( (long)ticks );
+        sut.FullTicks.Should().Be( ( long )ticks );
     }
 
     [Theory]
@@ -707,8 +707,8 @@ public class FloatingDurationTests : TestsBase
     {
         var expected = Math.Round( ticks, MidpointRounding.AwayFromZero );
         var sut = new FloatingDuration( ticks );
-        var result = (TimeSpan)sut;
-        result.Ticks.Should().Be( (long)expected );
+        var result = ( TimeSpan )sut;
+        result.Ticks.Should().Be( ( long )expected );
     }
 
     [Theory]
@@ -717,8 +717,8 @@ public class FloatingDurationTests : TestsBase
     {
         var expected = Math.Round( ticks, MidpointRounding.AwayFromZero );
         var sut = new FloatingDuration( ticks );
-        var result = (Duration)sut;
-        result.Ticks.Should().Be( (long)expected );
+        var result = ( Duration )sut;
+        result.Ticks.Should().Be( ( long )expected );
     }
 
     [Theory]

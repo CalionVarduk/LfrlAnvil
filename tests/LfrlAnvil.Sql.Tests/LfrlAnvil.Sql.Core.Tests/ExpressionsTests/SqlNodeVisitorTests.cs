@@ -49,7 +49,7 @@ public class SqlNodeVisitorTests : TestsBase
     public void VisitLiteral_ShouldDoNothing()
     {
         var sut = new Visitor();
-        var action = Lambda.Of( () => sut.VisitLiteral( (SqlLiteralNode)SqlNode.Literal( 20 ) ) );
+        var action = Lambda.Of( () => sut.VisitLiteral( ( SqlLiteralNode )SqlNode.Literal( 20 ) ) );
         action.Should().NotThrow();
     }
 
@@ -1046,7 +1046,7 @@ public class SqlNodeVisitorTests : TestsBase
         var sut = new VisitorMock();
         var operands = new[] { SqlNode.Literal( 10 ), SqlNode.Literal( 20 ), SqlNode.Literal( 30 ) };
 
-        sut.VisitIn( (SqlInConditionNode)operands[0].In( operands[1], operands[2] ) );
+        sut.VisitIn( ( SqlInConditionNode )operands[0].In( operands[1], operands[2] ) );
 
         sut.Nodes.Should().BeSequentiallyEqualTo( operands[0], operands[1], operands[2] );
     }
@@ -1212,11 +1212,10 @@ public class SqlNodeVisitorTests : TestsBase
         var sut = new Visitor();
         var action = Lambda.Of(
             () => sut.VisitSelectCompoundField(
-                (SqlSelectCompoundFieldNode)SqlNode.RawRecordSet( "foo" )
+                ( SqlSelectCompoundFieldNode )SqlNode.RawRecordSet( "foo" )
                     .ToDataSource()
                     .Select( x => new[] { x.From["x"].AsSelf() } )
-                    .CompoundWith(
-                        SqlNode.RawRecordSet( "bar" ).ToDataSource().Select( x => new[] { x.From["x"].AsSelf() } ).ToUnion() )
+                    .CompoundWith( SqlNode.RawRecordSet( "bar" ).ToDataSource().Select( x => new[] { x.From["x"].AsSelf() } ).ToUnion() )
                     .Selection[0] ) );
 
         action.Should().NotThrow();
@@ -1653,11 +1652,7 @@ public class SqlNodeVisitorTests : TestsBase
 
         var table = SqlNode.CreateTable(
             SqlRecordSetInfo.Create( "foo" ),
-            new[]
-            {
-                SqlNode.Column<int>( "a", defaultValue: parameters[0] ),
-                SqlNode.Column<int>( "b", defaultValue: parameters[1] )
-            },
+            new[] { SqlNode.Column<int>( "a", defaultValue: parameters[0] ), SqlNode.Column<int>( "b", defaultValue: parameters[1] ) },
             constraintsProvider: t =>
                 SqlCreateTableConstraints.Empty
                     .WithPrimaryKey( SqlNode.PrimaryKey( SqlSchemaObjectName.Create( "PK" ), new[] { t["a"].Asc() } ) )

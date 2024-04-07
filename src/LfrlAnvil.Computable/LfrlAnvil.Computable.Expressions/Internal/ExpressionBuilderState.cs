@@ -43,10 +43,10 @@ internal class ExpressionBuilderState
         LastHandledToken = null;
         _rootState = ReinterpretCast.To<ExpressionBuilderRootState>( this );
 
-        _expectation = Expectation.Operand |
-            Expectation.OpenedParenthesis |
-            Expectation.PrefixUnaryConstruct |
-            Expectation.LocalTermDeclaration;
+        _expectation = Expectation.Operand
+            | Expectation.OpenedParenthesis
+            | Expectation.PrefixUnaryConstruct
+            | Expectation.LocalTermDeclaration;
     }
 
     protected ExpressionBuilderState(
@@ -345,11 +345,11 @@ internal class ExpressionBuilderState
 
         var parameterType = LastHandledToken.Value.Constructs.TypeDeclaration;
 
-        if ( LocalTerms.ContainsArgument( parameterName ) ||
-            LocalTerms.ContainsVariable( parameterName ) ||
-            LocalTerms.ContainsMacro( parameterName ) ||
-            LocalTerms.IsTermStarted( parameterName ) ||
-            ! _delegateCollectionState.TryAddParameter( parameterType, parameterName ) )
+        if ( LocalTerms.ContainsArgument( parameterName )
+            || LocalTerms.ContainsVariable( parameterName )
+            || LocalTerms.ContainsMacro( parameterName )
+            || LocalTerms.IsTermStarted( parameterName )
+            || ! _delegateCollectionState.TryAddParameter( parameterType, parameterName ) )
             return Chain.Create( ParsedExpressionBuilderError.CreateDuplicatedDelegateParameterName( token ) );
 
         _expectation = Expectation.InlineParameterSeparator | Expectation.InlineParametersResolution;
@@ -364,10 +364,10 @@ internal class ExpressionBuilderState
         if ( ! TokenValidation.IsValidLocalTermName( parameterName, Configuration.StringDelimiter ) )
             return Chain.Create( ParsedExpressionBuilderError.CreateInvalidMacroParameterName( token ) );
 
-        if ( LocalTerms.ContainsArgument( parameterName ) ||
-            LocalTerms.ContainsVariable( parameterName ) ||
-            LocalTerms.ContainsMacro( parameterName ) ||
-            LocalTerms.IsTermStarted( parameterName ) )
+        if ( LocalTerms.ContainsArgument( parameterName )
+            || LocalTerms.ContainsVariable( parameterName )
+            || LocalTerms.ContainsMacro( parameterName )
+            || LocalTerms.IsTermStarted( parameterName ) )
             return Chain.Create( ParsedExpressionBuilderError.CreateDuplicatedMacroParameterName( token ) );
 
         _expectation = Expectation.InlineParameterSeparator | Expectation.InlineParametersResolution;
@@ -417,9 +417,9 @@ internal class ExpressionBuilderState
         if ( ! TokenValidation.IsValidLocalTermName( token.Symbol, Configuration.StringDelimiter ) )
             return Chain.Create( ParsedExpressionBuilderError.CreateInvalidLocalTermName( token ) );
 
-        if ( LocalTerms.ContainsArgument( token.Symbol ) ||
-            LocalTerms.ContainsVariable( token.Symbol ) ||
-            LocalTerms.ContainsMacro( token.Symbol ) )
+        if ( LocalTerms.ContainsArgument( token.Symbol )
+            || LocalTerms.ContainsVariable( token.Symbol )
+            || LocalTerms.ContainsMacro( token.Symbol ) )
             return Chain.Create( ParsedExpressionBuilderError.CreateDuplicatedLocalTermName( token ) );
 
         var self = ReinterpretCast.To<ExpressionBuilderChildState>( this );
@@ -818,11 +818,11 @@ internal class ExpressionBuilderState
 
         var self = ReinterpretCast.To<ExpressionBuilderChildState>( this );
         if ( ! self.ParentState.ExpectsAny(
-                Expectation.FunctionResolution |
-                Expectation.MethodResolution |
-                Expectation.ConstructorResolution |
-                Expectation.InvocationResolution |
-                Expectation.InlineDelegateResolution ) )
+            Expectation.FunctionResolution
+            | Expectation.MethodResolution
+            | Expectation.ConstructorResolution
+            | Expectation.InvocationResolution
+            | Expectation.InlineDelegateResolution ) )
             return Chain.Create( ParsedExpressionBuilderError.CreateUnexpectedClosedParenthesis( token ) );
 
         if ( self.ParentState.Expects( Expectation.InlineDelegateResolution ) )
@@ -830,9 +830,9 @@ internal class ExpressionBuilderState
 
         Assume.IsNotNull( LastHandledToken );
 
-        var containsOneMoreElement = _tokenStack.Count > 0 ||
-            _operandStack.Count > 0 ||
-            LastHandledToken.Value.Type == IntermediateTokenType.ElementSeparator;
+        var containsOneMoreElement = _tokenStack.Count > 0
+            || _operandStack.Count > 0
+            || LastHandledToken.Value.Type == IntermediateTokenType.ElementSeparator;
 
         if ( containsOneMoreElement )
         {
@@ -987,10 +987,10 @@ internal class ExpressionBuilderState
 
         _rootState.ClearCompilableDelegates();
 
-        _expectation = Expectation.Operand |
-            Expectation.OpenedParenthesis |
-            Expectation.PrefixUnaryConstruct |
-            Expectation.LocalTermDeclaration;
+        _expectation = Expectation.Operand
+            | Expectation.OpenedParenthesis
+            | Expectation.PrefixUnaryConstruct
+            | Expectation.LocalTermDeclaration;
 
         return errors;
     }
@@ -1010,10 +1010,10 @@ internal class ExpressionBuilderState
         if ( errors.Count > 0 )
             return errors;
 
-        _expectation = Expectation.Operand |
-            Expectation.OpenedParenthesis |
-            Expectation.PrefixUnaryConstruct |
-            Expectation.LocalTermDeclaration;
+        _expectation = Expectation.Operand
+            | Expectation.OpenedParenthesis
+            | Expectation.PrefixUnaryConstruct
+            | Expectation.LocalTermDeclaration;
 
         return errors;
     }
@@ -1064,7 +1064,7 @@ internal class ExpressionBuilderState
 
         var self = ReinterpretCast.To<ExpressionBuilderChildState>( this );
         if ( ! self.ParentState.ExpectsAny(
-                Expectation.ArrayResolution | Expectation.IndexerResolution | Expectation.InlineDelegateResolution ) )
+            Expectation.ArrayResolution | Expectation.IndexerResolution | Expectation.InlineDelegateResolution ) )
             return Chain.Create( ParsedExpressionBuilderError.CreateUnexpectedClosedSquareBracket( token ) );
 
         if ( self.ParentState.Expects( Expectation.InlineDelegateResolution ) )
@@ -1072,9 +1072,9 @@ internal class ExpressionBuilderState
 
         Assume.IsNotNull( LastHandledToken );
 
-        var containsOneMoreElement = _tokenStack.Count > 0 ||
-            _operandStack.Count > 0 ||
-            LastHandledToken.Value.Type == IntermediateTokenType.ElementSeparator;
+        var containsOneMoreElement = _tokenStack.Count > 0
+            || _operandStack.Count > 0
+            || LastHandledToken.Value.Type == IntermediateTokenType.ElementSeparator;
 
         if ( containsOneMoreElement )
         {
@@ -1352,8 +1352,7 @@ internal class ExpressionBuilderState
 
         Assume.IsNotNull( LastHandledToken );
 
-        var containsOneMoreElement = _tokenStack.Count > 0 ||
-            LastHandledToken.Value.Type == IntermediateTokenType.ElementSeparator;
+        var containsOneMoreElement = _tokenStack.Count > 0 || LastHandledToken.Value.Type == IntermediateTokenType.ElementSeparator;
 
         if ( containsOneMoreElement )
         {
@@ -1759,9 +1758,7 @@ internal class ExpressionBuilderState
         _operandStack.Push( operand );
 
         _expectation = GetExpectationWithPreservedPrefixUnaryConstructResolution(
-            Expectation.PostfixUnaryConstruct |
-            Expectation.BinaryOperator |
-            Expectation.MemberAccess );
+            Expectation.PostfixUnaryConstruct | Expectation.BinaryOperator | Expectation.MemberAccess );
 
         if ( _parenthesesCount > 0 )
             _expectation |= Expectation.ClosedParenthesis;
@@ -1848,10 +1845,10 @@ internal class ExpressionBuilderState
             return false;
 
         result = LastHandledToken.Value;
-        if ( result.Type != IntermediateTokenType.Argument &&
-            result.Type != IntermediateTokenType.ClosedParenthesis &&
-            result.Type != IntermediateTokenType.ClosedSquareBracket &&
-            (result.Type != IntermediateTokenType.Constructs || result.Constructs!.Type != ParsedExpressionConstructType.Constant) )
+        if ( result.Type != IntermediateTokenType.Argument
+            && result.Type != IntermediateTokenType.ClosedParenthesis
+            && result.Type != IntermediateTokenType.ClosedSquareBracket
+            && (result.Type != IntermediateTokenType.Constructs || result.Constructs!.Type != ParsedExpressionConstructType.Constant) )
             return false;
 
         var operand = _operandStack[0];

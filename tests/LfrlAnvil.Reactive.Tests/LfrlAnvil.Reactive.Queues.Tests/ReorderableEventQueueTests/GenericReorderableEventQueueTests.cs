@@ -547,7 +547,7 @@ public abstract class GenericReorderableEventQueueTests<TEvent> : TestsBase
         var (oldDequeuePoint, otherDequeuePoint) = Fixture.CreateDistinctSortedCollection<long>( count: 2 );
         var delta = Fixture.Create<int>();
         var repetitions = Fixture.CreatePositiveInt32();
-        var delay = (int)(otherDequeuePoint - oldDequeuePoint) + 1;
+        var delay = ( int )(otherDequeuePoint - oldDequeuePoint) + 1;
         var sut = new MockEventQueue( Fixture.Create<long>() );
         var enqueuedOther = sut.EnqueueAt( other, otherDequeuePoint );
         sut.EnqueueAt( @event, oldDequeuePoint, delta, repetitions );
@@ -589,7 +589,7 @@ public abstract class GenericReorderableEventQueueTests<TEvent> : TestsBase
         var (otherDequeuePoint, oldDequeuePoint) = Fixture.CreateDistinctSortedCollection<long>( count: 2 );
         var delta = Fixture.Create<int>();
         var repetitions = Fixture.CreatePositiveInt32();
-        var advance = (int)(oldDequeuePoint - otherDequeuePoint) + 1;
+        var advance = ( int )(oldDequeuePoint - otherDequeuePoint) + 1;
         var sut = new MockEventQueue( Fixture.Create<long>() );
         sut.EnqueueAt( other, otherDequeuePoint );
         sut.EnqueueAt( @event, oldDequeuePoint, delta, repetitions );

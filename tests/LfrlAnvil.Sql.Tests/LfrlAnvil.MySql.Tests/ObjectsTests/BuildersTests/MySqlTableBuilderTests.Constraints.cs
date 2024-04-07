@@ -50,12 +50,10 @@ public partial class MySqlTableBuilderTests
                 schema.Objects.TryGet( result.Name ).Should().BeSameAs( result );
 
                 c1.ReferencingObjects.Should()
-                    .BeSequentiallyEqualTo(
-                        SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), c1 ) );
+                    .BeSequentiallyEqualTo( SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), c1 ) );
 
                 c2.ReferencingObjects.Should()
-                    .BeSequentiallyEqualTo(
-                        SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), c2 ) );
+                    .BeSequentiallyEqualTo( SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), c2 ) );
             }
         }
 
@@ -94,12 +92,10 @@ public partial class MySqlTableBuilderTests
                 schema.Objects.TryGet( result.Name ).Should().BeSameAs( result );
 
                 c1.ReferencingObjects.Should()
-                    .BeSequentiallyEqualTo(
-                        SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), c1 ) );
+                    .BeSequentiallyEqualTo( SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), c1 ) );
 
                 c2.ReferencingObjects.Should()
-                    .BeSequentiallyEqualTo(
-                        SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), c2 ) );
+                    .BeSequentiallyEqualTo( SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), c2 ) );
             }
         }
 
@@ -137,12 +133,10 @@ public partial class MySqlTableBuilderTests
                 schema.Objects.TryGet( result.Name ).Should().BeSameAs( result );
 
                 c1.ReferencingObjects.Should()
-                    .BeSequentiallyEqualTo(
-                        SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), c1 ) );
+                    .BeSequentiallyEqualTo( SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), c1 ) );
 
                 c2.ReferencingObjects.Should()
-                    .BeSequentiallyEqualTo(
-                        SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), c2 ) );
+                    .BeSequentiallyEqualTo( SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), c2 ) );
             }
         }
 
@@ -720,12 +714,10 @@ public partial class MySqlTableBuilderTests
                 schema.Objects.TryGet( result.Name ).Should().BeSameAs( result );
 
                 ix1.ReferencingObjects.Should()
-                    .BeSequentiallyEqualTo(
-                        SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), ix1 ) );
+                    .BeSequentiallyEqualTo( SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), ix1 ) );
 
                 ix2.ReferencingObjects.Should()
-                    .BeSequentiallyEqualTo(
-                        SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), ix2 ) );
+                    .BeSequentiallyEqualTo( SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), ix2 ) );
 
                 table.ReferencingObjects.Should().BeEmpty();
                 schema.ReferencingObjects.Should().BeEmpty();
@@ -761,16 +753,13 @@ public partial class MySqlTableBuilderTests
                 schema.Objects.TryGet( result.Name ).Should().BeSameAs( result );
 
                 ix1.ReferencingObjects.Should()
-                    .BeSequentiallyEqualTo(
-                        SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), ix1 ) );
+                    .BeSequentiallyEqualTo( SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), ix1 ) );
 
                 ix2.ReferencingObjects.Should()
-                    .BeSequentiallyEqualTo(
-                        SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), ix2 ) );
+                    .BeSequentiallyEqualTo( SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), ix2 ) );
 
                 t1.ReferencingObjects.Should()
-                    .BeSequentiallyEqualTo(
-                        SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), ix2 ) );
+                    .BeSequentiallyEqualTo( SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), ix2 ) );
 
                 schema.ReferencingObjects.Should().BeEmpty();
             }
@@ -807,20 +796,16 @@ public partial class MySqlTableBuilderTests
                 schema2.Objects.TryGet( result.Name ).Should().BeSameAs( result );
 
                 ix1.ReferencingObjects.Should()
-                    .BeSequentiallyEqualTo(
-                        SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), ix1 ) );
+                    .BeSequentiallyEqualTo( SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), ix1 ) );
 
                 ix2.ReferencingObjects.Should()
-                    .BeSequentiallyEqualTo(
-                        SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), ix2 ) );
+                    .BeSequentiallyEqualTo( SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), ix2 ) );
 
                 t1.ReferencingObjects.Should()
-                    .BeSequentiallyEqualTo(
-                        SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), ix2 ) );
+                    .BeSequentiallyEqualTo( SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), ix2 ) );
 
                 schema1.ReferencingObjects.Should()
-                    .BeSequentiallyEqualTo(
-                        SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), ix2 ) );
+                    .BeSequentiallyEqualTo( SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), ix2 ) );
             }
         }
 
@@ -852,12 +837,10 @@ public partial class MySqlTableBuilderTests
                 schema.Objects.TryGet( result.Name ).Should().BeSameAs( result );
 
                 ix1.ReferencingObjects.Should()
-                    .BeSequentiallyEqualTo(
-                        SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), ix1 ) );
+                    .BeSequentiallyEqualTo( SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), ix1 ) );
 
                 ix2.ReferencingObjects.Should()
-                    .BeSequentiallyEqualTo(
-                        SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), ix2 ) );
+                    .BeSequentiallyEqualTo( SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), ix2 ) );
 
                 table.ReferencingObjects.Should().BeEmpty();
                 schema.ReferencingObjects.Should().BeEmpty();
@@ -1128,7 +1111,7 @@ public partial class MySqlTableBuilderTests
             var ix1 = Substitute.For<ISqlIndexBuilder>();
             var ix2 = sut.CreateUniqueIndex( table.Columns.Create( "C2" ).Asc() );
 
-            var action = Lambda.Of( () => ((ISqlConstraintBuilderCollection)sut).CreateForeignKey( ix1, ix2 ) );
+            var action = Lambda.Of( () => (( ISqlConstraintBuilderCollection )sut).CreateForeignKey( ix1, ix2 ) );
 
             action.Should()
                 .ThrowExactly<SqlObjectCastException>()
@@ -1144,7 +1127,7 @@ public partial class MySqlTableBuilderTests
             var ix1 = sut.CreateIndex( table.Columns.Create( "C1" ).Asc() );
             var ix2 = Substitute.For<ISqlIndexBuilder>();
 
-            var action = Lambda.Of( () => ((ISqlConstraintBuilderCollection)sut).CreateForeignKey( ix1, ix2 ) );
+            var action = Lambda.Of( () => (( ISqlConstraintBuilderCollection )sut).CreateForeignKey( ix1, ix2 ) );
 
             action.Should()
                 .ThrowExactly<SqlObjectCastException>()
@@ -1197,8 +1180,7 @@ public partial class MySqlTableBuilderTests
                 schema.Objects.TryGet( result.Name ).Should().BeSameAs( result );
 
                 c.ReferencingObjects.Should()
-                    .BeSequentiallyEqualTo(
-                        SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), c ) );
+                    .BeSequentiallyEqualTo( SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), c ) );
             }
         }
 
@@ -1227,8 +1209,7 @@ public partial class MySqlTableBuilderTests
                 schema.Objects.TryGet( result.Name ).Should().BeSameAs( result );
 
                 c.ReferencingObjects.Should()
-                    .BeSequentiallyEqualTo(
-                        SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), c ) );
+                    .BeSequentiallyEqualTo( SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), c ) );
             }
         }
 
@@ -1402,9 +1383,9 @@ public partial class MySqlTableBuilderTests
             action.Should()
                 .ThrowExactly<SqlObjectCastException>()
                 .AndMatch(
-                    e => e.Dialect == MySqlDialect.Instance &&
-                        e.Expected == typeof( SqlIndexBuilder ) &&
-                        e.Actual == typeof( MySqlCheckBuilder ) );
+                    e => e.Dialect == MySqlDialect.Instance
+                        && e.Expected == typeof( SqlIndexBuilder )
+                        && e.Actual == typeof( MySqlCheckBuilder ) );
         }
 
         [Fact]
@@ -1485,9 +1466,9 @@ public partial class MySqlTableBuilderTests
             action.Should()
                 .ThrowExactly<SqlObjectCastException>()
                 .AndMatch(
-                    e => e.Dialect == MySqlDialect.Instance &&
-                        e.Expected == typeof( SqlForeignKeyBuilder ) &&
-                        e.Actual == typeof( MySqlIndexBuilder ) );
+                    e => e.Dialect == MySqlDialect.Instance
+                        && e.Expected == typeof( SqlForeignKeyBuilder )
+                        && e.Actual == typeof( MySqlIndexBuilder ) );
         }
 
         [Fact]
@@ -1568,9 +1549,9 @@ public partial class MySqlTableBuilderTests
             action.Should()
                 .ThrowExactly<SqlObjectCastException>()
                 .AndMatch(
-                    e => e.Dialect == MySqlDialect.Instance &&
-                        e.Expected == typeof( SqlCheckBuilder ) &&
-                        e.Actual == typeof( MySqlIndexBuilder ) );
+                    e => e.Dialect == MySqlDialect.Instance
+                        && e.Expected == typeof( SqlCheckBuilder )
+                        && e.Actual == typeof( MySqlIndexBuilder ) );
         }
 
         [Fact]

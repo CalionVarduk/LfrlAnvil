@@ -375,7 +375,7 @@ public partial class SqliteTableBuilderTests
             var sut = table.Columns;
             var definition = SqliteDatabaseBuilderMock.Create().TypeDefinitions.GetByType<string>();
 
-            var action = Lambda.Of( () => ((ISqlColumnBuilderCollection)sut).SetDefaultTypeDefinition( definition ) );
+            var action = Lambda.Of( () => (( ISqlColumnBuilderCollection )sut).SetDefaultTypeDefinition( definition ) );
 
             action.Should()
                 .ThrowExactly<SqlObjectBuilderException>()
@@ -390,7 +390,7 @@ public partial class SqliteTableBuilderTests
             var sut = table.Columns;
             var definition = Substitute.For<ISqlColumnTypeDefinition>();
 
-            var action = Lambda.Of( () => ((ISqlColumnBuilderCollection)sut).SetDefaultTypeDefinition( definition ) );
+            var action = Lambda.Of( () => (( ISqlColumnBuilderCollection )sut).SetDefaultTypeDefinition( definition ) );
 
             action.Should()
                 .ThrowExactly<SqlObjectCastException>()

@@ -132,8 +132,7 @@ public class SqliteIndexBuilderTests : TestsBase
                       ""foo_T"".""C2""
                     FROM ""foo_T"";",
                     "DROP TABLE \"foo_T\";",
-                    "ALTER TABLE \"__foo_T__{GUID}__\" RENAME TO \"foo_T\";"
-                );
+                    "ALTER TABLE \"__foo_T__{GUID}__\" RENAME TO \"foo_T\";" );
         }
     }
 
@@ -990,8 +989,7 @@ public class SqliteIndexBuilderTests : TestsBase
             result.ReferencedFilterColumns.Should().BeEmpty();
 
             column.ReferencingObjects.Should()
-                .BeSequentiallyEqualTo(
-                    SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), column ) );
+                .BeSequentiallyEqualTo( SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), column ) );
 
             actions.Should().HaveCount( 1 );
             actions.ElementAtOrDefault( 0 )
@@ -1203,8 +1201,7 @@ public class SqliteIndexBuilderTests : TestsBase
                       ""foo_T"".""C2""
                     FROM ""foo_T"";",
                     "DROP TABLE \"foo_T\";",
-                    "ALTER TABLE \"__foo_T__{GUID}__\" RENAME TO \"foo_T\";"
-                );
+                    "ALTER TABLE \"__foo_T__{GUID}__\" RENAME TO \"foo_T\";" );
         }
     }
 

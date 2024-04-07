@@ -98,69 +98,57 @@ public class TimeZoneInfoExtensionsTestsData
             { simpleTimeZone, new DateTime( 2021, 2, 1, 2, 59, 59, 999 ).AddTicks( 9999 ), null },
             { simpleTimeZone, new DateTime( 2021, 2, 1, 4, 0, 0 ), null },
             {
-                simpleTimeZone,
-                new DateTime( 2021, 2, 1, 3, 0, 0 ),
+                simpleTimeZone, new DateTime( 2021, 2, 1, 3, 0, 0 ),
                 (new DateTime( 2021, 2, 1, 3, 0, 0 ), new DateTime( 2021, 2, 1, 3, 59, 59, 999 ).AddTicks( 9999 ))
             },
             {
-                simpleTimeZone,
-                new DateTime( 2021, 2, 1, 3, 59, 59, 999 ).AddTicks( 9999 ),
+                simpleTimeZone, new DateTime( 2021, 2, 1, 3, 59, 59, 999 ).AddTicks( 9999 ),
                 (new DateTime( 2021, 2, 1, 3, 0, 0 ), new DateTime( 2021, 2, 1, 3, 59, 59, 999 ).AddTicks( 9999 ))
             },
             { reverseSimpleTimeZone, new DateTime( 2021, 11, 1, 2, 59, 59, 999 ).AddTicks( 9999 ), null },
             { reverseSimpleTimeZone, new DateTime( 2021, 11, 1, 4, 0, 0 ), null },
             {
-                reverseSimpleTimeZone,
-                new DateTime( 2021, 11, 1, 3, 0, 0 ),
+                reverseSimpleTimeZone, new DateTime( 2021, 11, 1, 3, 0, 0 ),
                 (new DateTime( 2021, 11, 1, 3, 0, 0 ), new DateTime( 2021, 11, 1, 3, 59, 59, 999 ).AddTicks( 9999 ))
             },
             {
-                reverseSimpleTimeZone,
-                new DateTime( 2021, 11, 1, 3, 59, 59, 999 ).AddTicks( 9999 ),
+                reverseSimpleTimeZone, new DateTime( 2021, 11, 1, 3, 59, 59, 999 ).AddTicks( 9999 ),
                 (new DateTime( 2021, 11, 1, 3, 0, 0 ), new DateTime( 2021, 11, 1, 3, 59, 59, 999 ).AddTicks( 9999 ))
             },
             { yearOverlapTimeZone, new DateTime( 2021, 1, 1, 0, 30, 0, 0 ), null },
             { yearOverlapTimeZone, new DateTime( 2021, 12, 31, 23, 29, 59, 999 ).AddTicks( 9999 ), null },
             {
-                yearOverlapTimeZone,
-                new DateTime( 2021, 1, 1 ),
+                yearOverlapTimeZone, new DateTime( 2021, 1, 1 ),
                 (new DateTime( 2020, 12, 31, 23, 30, 0 ), new DateTime( 2021, 1, 1, 0, 29, 59, 999 ).AddTicks( 9999 ))
             },
             {
-                yearOverlapTimeZone,
-                new DateTime( 2021, 1, 1, 0, 29, 59, 999 ).AddTicks( 9999 ),
+                yearOverlapTimeZone, new DateTime( 2021, 1, 1, 0, 29, 59, 999 ).AddTicks( 9999 ),
                 (new DateTime( 2020, 12, 31, 23, 30, 0 ), new DateTime( 2021, 1, 1, 0, 29, 59, 999 ).AddTicks( 9999 ))
             },
             {
-                yearOverlapTimeZone,
-                new DateTime( 2021, 12, 31, 23, 30, 0 ),
+                yearOverlapTimeZone, new DateTime( 2021, 12, 31, 23, 30, 0 ),
                 (new DateTime( 2021, 12, 31, 23, 30, 0 ), new DateTime( 2022, 1, 1, 0, 29, 59, 999 ).AddTicks( 9999 ))
             },
             {
-                yearOverlapTimeZone,
-                new DateTime( 2021, 12, 31, 23, 59, 59, 999 ).AddTicks( 9999 ),
+                yearOverlapTimeZone, new DateTime( 2021, 12, 31, 23, 59, 59, 999 ).AddTicks( 9999 ),
                 (new DateTime( 2021, 12, 31, 23, 30, 0 ), new DateTime( 2022, 1, 1, 0, 29, 59, 999 ).AddTicks( 9999 ))
             },
             { reverseYearOverlapTimeZone, new DateTime( 2021, 1, 1, 0, 30, 0, 0 ), null },
             { reverseYearOverlapTimeZone, new DateTime( 2021, 12, 31, 23, 29, 59, 999 ).AddTicks( 9999 ), null },
             {
-                reverseYearOverlapTimeZone,
-                new DateTime( 2021, 1, 1 ),
+                reverseYearOverlapTimeZone, new DateTime( 2021, 1, 1 ),
                 (new DateTime( 2020, 12, 31, 23, 30, 0 ), new DateTime( 2021, 1, 1, 0, 29, 59, 999 ).AddTicks( 9999 ))
             },
             {
-                reverseYearOverlapTimeZone,
-                new DateTime( 2021, 1, 1, 0, 29, 59, 999 ).AddTicks( 9999 ),
+                reverseYearOverlapTimeZone, new DateTime( 2021, 1, 1, 0, 29, 59, 999 ).AddTicks( 9999 ),
                 (new DateTime( 2020, 12, 31, 23, 30, 0 ), new DateTime( 2021, 1, 1, 0, 29, 59, 999 ).AddTicks( 9999 ))
             },
             {
-                reverseYearOverlapTimeZone,
-                new DateTime( 2021, 12, 31, 23, 30, 0 ),
+                reverseYearOverlapTimeZone, new DateTime( 2021, 12, 31, 23, 30, 0 ),
                 (new DateTime( 2021, 12, 31, 23, 30, 0 ), new DateTime( 2022, 1, 1, 0, 29, 59, 999 ).AddTicks( 9999 ))
             },
             {
-                reverseYearOverlapTimeZone,
-                new DateTime( 2021, 12, 31, 23, 59, 59, 999 ).AddTicks( 9999 ),
+                reverseYearOverlapTimeZone, new DateTime( 2021, 12, 31, 23, 59, 59, 999 ).AddTicks( 9999 ),
                 (new DateTime( 2021, 12, 31, 23, 30, 0 ), new DateTime( 2022, 1, 1, 0, 29, 59, 999 ).AddTicks( 9999 ))
             }
         };
@@ -202,69 +190,57 @@ public class TimeZoneInfoExtensionsTestsData
             { simpleTimeZone, new DateTime( 2021, 11, 1, 1, 59, 59, 999 ).AddTicks( 9999 ), null },
             { simpleTimeZone, new DateTime( 2021, 11, 1, 3, 0, 0 ), null },
             {
-                simpleTimeZone,
-                new DateTime( 2021, 11, 1, 2, 0, 0 ),
+                simpleTimeZone, new DateTime( 2021, 11, 1, 2, 0, 0 ),
                 (new DateTime( 2021, 11, 1, 2, 0, 0 ), new DateTime( 2021, 11, 1, 2, 59, 59, 999 ).AddTicks( 9999 ))
             },
             {
-                simpleTimeZone,
-                new DateTime( 2021, 11, 1, 2, 59, 59, 999 ).AddTicks( 9999 ),
+                simpleTimeZone, new DateTime( 2021, 11, 1, 2, 59, 59, 999 ).AddTicks( 9999 ),
                 (new DateTime( 2021, 11, 1, 2, 0, 0 ), new DateTime( 2021, 11, 1, 2, 59, 59, 999 ).AddTicks( 9999 ))
             },
             { reverseSimpleTimeZone, new DateTime( 2021, 2, 1, 1, 59, 59, 999 ).AddTicks( 9999 ), null },
             { reverseSimpleTimeZone, new DateTime( 2021, 2, 1, 3, 0, 0 ), null },
             {
-                reverseSimpleTimeZone,
-                new DateTime( 2021, 2, 1, 2, 0, 0 ),
+                reverseSimpleTimeZone, new DateTime( 2021, 2, 1, 2, 0, 0 ),
                 (new DateTime( 2021, 2, 1, 2, 0, 0 ), new DateTime( 2021, 2, 1, 2, 59, 59, 999 ).AddTicks( 9999 ))
             },
             {
-                reverseSimpleTimeZone,
-                new DateTime( 2021, 2, 1, 2, 59, 59, 999 ).AddTicks( 9999 ),
+                reverseSimpleTimeZone, new DateTime( 2021, 2, 1, 2, 59, 59, 999 ).AddTicks( 9999 ),
                 (new DateTime( 2021, 2, 1, 2, 0, 0 ), new DateTime( 2021, 2, 1, 2, 59, 59, 999 ).AddTicks( 9999 ))
             },
             { yearOverlapTimeZone, new DateTime( 2021, 1, 1, 0, 30, 0, 0 ), null },
             { yearOverlapTimeZone, new DateTime( 2021, 12, 31, 23, 29, 59, 999 ).AddTicks( 9999 ), null },
             {
-                yearOverlapTimeZone,
-                new DateTime( 2021, 1, 1 ),
+                yearOverlapTimeZone, new DateTime( 2021, 1, 1 ),
                 (new DateTime( 2020, 12, 31, 23, 30, 0 ), new DateTime( 2021, 1, 1, 0, 29, 59, 999 ).AddTicks( 9999 ))
             },
             {
-                yearOverlapTimeZone,
-                new DateTime( 2021, 1, 1, 0, 29, 59, 999 ).AddTicks( 9999 ),
+                yearOverlapTimeZone, new DateTime( 2021, 1, 1, 0, 29, 59, 999 ).AddTicks( 9999 ),
                 (new DateTime( 2020, 12, 31, 23, 30, 0 ), new DateTime( 2021, 1, 1, 0, 29, 59, 999 ).AddTicks( 9999 ))
             },
             {
-                yearOverlapTimeZone,
-                new DateTime( 2021, 12, 31, 23, 30, 0 ),
+                yearOverlapTimeZone, new DateTime( 2021, 12, 31, 23, 30, 0 ),
                 (new DateTime( 2021, 12, 31, 23, 30, 0 ), new DateTime( 2022, 1, 1, 0, 29, 59, 999 ).AddTicks( 9999 ))
             },
             {
-                yearOverlapTimeZone,
-                new DateTime( 2021, 12, 31, 23, 59, 59, 999 ).AddTicks( 9999 ),
+                yearOverlapTimeZone, new DateTime( 2021, 12, 31, 23, 59, 59, 999 ).AddTicks( 9999 ),
                 (new DateTime( 2021, 12, 31, 23, 30, 0 ), new DateTime( 2022, 1, 1, 0, 29, 59, 999 ).AddTicks( 9999 ))
             },
             { reverseYearOverlapTimeZone, new DateTime( 2021, 1, 1, 0, 30, 0, 0 ), null },
             { reverseYearOverlapTimeZone, new DateTime( 2021, 12, 31, 23, 29, 59, 999 ).AddTicks( 9999 ), null },
             {
-                reverseYearOverlapTimeZone,
-                new DateTime( 2021, 1, 1 ),
+                reverseYearOverlapTimeZone, new DateTime( 2021, 1, 1 ),
                 (new DateTime( 2020, 12, 31, 23, 30, 0 ), new DateTime( 2021, 1, 1, 0, 29, 59, 999 ).AddTicks( 9999 ))
             },
             {
-                reverseYearOverlapTimeZone,
-                new DateTime( 2021, 1, 1, 0, 29, 59, 999 ).AddTicks( 9999 ),
+                reverseYearOverlapTimeZone, new DateTime( 2021, 1, 1, 0, 29, 59, 999 ).AddTicks( 9999 ),
                 (new DateTime( 2020, 12, 31, 23, 30, 0 ), new DateTime( 2021, 1, 1, 0, 29, 59, 999 ).AddTicks( 9999 ))
             },
             {
-                reverseYearOverlapTimeZone,
-                new DateTime( 2021, 12, 31, 23, 30, 0 ),
+                reverseYearOverlapTimeZone, new DateTime( 2021, 12, 31, 23, 30, 0 ),
                 (new DateTime( 2021, 12, 31, 23, 30, 0 ), new DateTime( 2022, 1, 1, 0, 29, 59, 999 ).AddTicks( 9999 ))
             },
             {
-                reverseYearOverlapTimeZone,
-                new DateTime( 2021, 12, 31, 23, 59, 59, 999 ).AddTicks( 9999 ),
+                reverseYearOverlapTimeZone, new DateTime( 2021, 12, 31, 23, 59, 59, 999 ).AddTicks( 9999 ),
                 (new DateTime( 2021, 12, 31, 23, 30, 0 ), new DateTime( 2022, 1, 1, 0, 29, 59, 999 ).AddTicks( 9999 ))
             }
         };

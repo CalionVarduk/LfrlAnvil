@@ -432,7 +432,7 @@ public class SqlPrimaryKeyBuilderTests : TestsBase
         var oldName = sut.Name;
 
         var actionCount = schema.Database.GetPendingActionCount();
-        var result = ((ISqlPrimaryKeyBuilder)sut).SetName( "bar" );
+        var result = (( ISqlPrimaryKeyBuilder )sut).SetName( "bar" );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )
@@ -462,7 +462,7 @@ public class SqlPrimaryKeyBuilderTests : TestsBase
         var oldName = sut.Name;
 
         var actionCount = schema.Database.GetPendingActionCount();
-        var result = ((ISqlConstraintBuilder)sut).SetName( "bar" );
+        var result = (( ISqlConstraintBuilder )sut).SetName( "bar" );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )
@@ -492,7 +492,7 @@ public class SqlPrimaryKeyBuilderTests : TestsBase
         var oldName = sut.Name;
 
         var actionCount = schema.Database.GetPendingActionCount();
-        var result = ((ISqlObjectBuilder)sut).SetName( "bar" );
+        var result = (( ISqlObjectBuilder )sut).SetName( "bar" );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )
@@ -521,7 +521,7 @@ public class SqlPrimaryKeyBuilderTests : TestsBase
         var sut = table.Constraints.SetPrimaryKey( table.Columns.Create( "C" ).Asc() ).SetName( "bar" );
 
         var actionCount = schema.Database.GetPendingActionCount();
-        var result = ((ISqlPrimaryKeyBuilder)sut).SetDefaultName();
+        var result = (( ISqlPrimaryKeyBuilder )sut).SetDefaultName();
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )
@@ -550,7 +550,7 @@ public class SqlPrimaryKeyBuilderTests : TestsBase
         var sut = table.Constraints.SetPrimaryKey( table.Columns.Create( "C" ).Asc() ).SetName( "bar" );
 
         var actionCount = schema.Database.GetPendingActionCount();
-        var result = ((ISqlConstraintBuilder)sut).SetDefaultName();
+        var result = (( ISqlConstraintBuilder )sut).SetDefaultName();
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )

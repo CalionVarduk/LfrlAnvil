@@ -16,7 +16,7 @@ public class NSubstituteDelegateMockCallAssertions<T> : ObjectAssertions
 
     public NSubstituteDelegateMockAssertions<T> Target { get; }
     public int CallIndex { get; }
-    public new ICall? Subject => (ICall?)base.Subject;
+    public new ICall? Subject => ( ICall? )base.Subject;
     public object?[] Arguments => Subject?.GetArguments() ?? Array.Empty<object>();
 
     public AndConstraint<NSubstituteDelegateMockCallAssertions<T>> Exists()

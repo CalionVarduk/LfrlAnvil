@@ -280,7 +280,7 @@ public abstract class GenericBitmaskTests<T> : TestsBase
         var value = Fixture.Create<T>();
         var sut = new Bitmask<T>( value );
 
-        var result = (T)sut;
+        var result = ( T )sut;
 
         result.Should().Be( value );
     }
@@ -289,7 +289,7 @@ public abstract class GenericBitmaskTests<T> : TestsBase
     public void BitmaskConversionOperator_ShouldCreateProperBitmask()
     {
         var value = Fixture.Create<T>();
-        var result = (Bitmask<T>)value;
+        var result = ( Bitmask<T> )value;
         result.Value.Should().Be( value );
     }
 

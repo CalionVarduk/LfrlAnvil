@@ -28,26 +28,26 @@ public partial class VariableRootTests : TestsBase
             sut.Nodes.ReadOnlyNodeKeys.Should().BeEmpty();
             sut.Nodes.DirtyNodeKeys.Should().BeEmpty();
 
-            ((IVariableNodeCollection)sut.Nodes).Keys.Should().BeSameAs( sut.Nodes.Keys );
-            ((IVariableNodeCollection)sut.Nodes).Values.Should().BeSameAs( sut.Nodes.Values );
-            ((IVariableNodeCollection)sut.Nodes).ChangedNodeKeys.Should().BeSameAs( sut.Nodes.ChangedNodeKeys );
-            ((IVariableNodeCollection)sut.Nodes).InvalidNodeKeys.Should().BeSameAs( sut.Nodes.InvalidNodeKeys );
-            ((IVariableNodeCollection)sut.Nodes).WarningNodeKeys.Should().BeSameAs( sut.Nodes.WarningNodeKeys );
-            ((IVariableNodeCollection)sut.Nodes).ReadOnlyNodeKeys.Should().BeSameAs( sut.Nodes.ReadOnlyNodeKeys );
-            ((IVariableNodeCollection)sut.Nodes).DirtyNodeKeys.Should().BeSameAs( sut.Nodes.DirtyNodeKeys );
+            (( IVariableNodeCollection )sut.Nodes).Keys.Should().BeSameAs( sut.Nodes.Keys );
+            (( IVariableNodeCollection )sut.Nodes).Values.Should().BeSameAs( sut.Nodes.Values );
+            (( IVariableNodeCollection )sut.Nodes).ChangedNodeKeys.Should().BeSameAs( sut.Nodes.ChangedNodeKeys );
+            (( IVariableNodeCollection )sut.Nodes).InvalidNodeKeys.Should().BeSameAs( sut.Nodes.InvalidNodeKeys );
+            (( IVariableNodeCollection )sut.Nodes).WarningNodeKeys.Should().BeSameAs( sut.Nodes.WarningNodeKeys );
+            (( IVariableNodeCollection )sut.Nodes).ReadOnlyNodeKeys.Should().BeSameAs( sut.Nodes.ReadOnlyNodeKeys );
+            (( IVariableNodeCollection )sut.Nodes).DirtyNodeKeys.Should().BeSameAs( sut.Nodes.DirtyNodeKeys );
 
-            ((IReadOnlyDictionary<string, IVariableNode>)sut.Nodes).Keys.Should().BeSameAs( sut.Nodes.Keys );
-            ((IReadOnlyDictionary<string, IVariableNode>)sut.Nodes).Values.Should().BeSameAs( sut.Nodes.Values );
+            (( IReadOnlyDictionary<string, IVariableNode> )sut.Nodes).Keys.Should().BeSameAs( sut.Nodes.Keys );
+            (( IReadOnlyDictionary<string, IVariableNode> )sut.Nodes).Values.Should().BeSameAs( sut.Nodes.Values );
 
-            ((IReadOnlyVariableRoot<string>)sut).OnChange.Should().BeSameAs( sut.OnChange );
-            ((IReadOnlyVariableRoot<string>)sut).OnValidate.Should().BeSameAs( sut.OnValidate );
+            (( IReadOnlyVariableRoot<string> )sut).OnChange.Should().BeSameAs( sut.OnChange );
+            (( IReadOnlyVariableRoot<string> )sut).OnValidate.Should().BeSameAs( sut.OnValidate );
 
-            ((object)((IReadOnlyVariableRoot)sut).Nodes).Should().BeSameAs( sut.Nodes );
-            ((IReadOnlyVariableRoot)sut).OnChange.Should().BeSameAs( sut.OnChange );
-            ((IReadOnlyVariableRoot)sut).OnValidate.Should().BeSameAs( sut.OnValidate );
-            ((IVariableNode)sut).OnChange.Should().BeSameAs( sut.OnChange );
-            ((IVariableNode)sut).OnValidate.Should().BeSameAs( sut.OnValidate );
-            ((IVariableNode)sut).GetChildren().Should().BeEmpty();
+            (( object )(( IReadOnlyVariableRoot )sut).Nodes).Should().BeSameAs( sut.Nodes );
+            (( IReadOnlyVariableRoot )sut).OnChange.Should().BeSameAs( sut.OnChange );
+            (( IReadOnlyVariableRoot )sut).OnValidate.Should().BeSameAs( sut.OnValidate );
+            (( IVariableNode )sut).OnChange.Should().BeSameAs( sut.OnChange );
+            (( IVariableNode )sut).OnValidate.Should().BeSameAs( sut.OnValidate );
+            (( IVariableNode )sut).GetChildren().Should().BeEmpty();
         }
     }
 

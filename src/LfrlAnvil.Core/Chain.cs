@@ -69,7 +69,7 @@ public readonly struct Chain<T> : IReadOnlyCollection<T>
         }
     }
 
-    internal Chain(HeadNode head, Node tail, int count)
+    private Chain(HeadNode head, Node tail, int count)
     {
         _head = head;
         _tail = tail;

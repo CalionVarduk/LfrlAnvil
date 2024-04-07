@@ -12,7 +12,7 @@ public readonly struct IntegerFixedPartition : IReadOnlyCollection<ulong>
         Ensure.IsGreaterThanOrEqualTo( partCount, 0 );
         Value = value;
         Count = partCount;
-        (Quotient, Remainder) = Count > 0 ? Math.DivRem( Value, unchecked( (ulong)Count ) ) : (0, 0);
+        (Quotient, Remainder) = Count > 0 ? Math.DivRem( Value, unchecked( ( ulong )Count ) ) : (0, 0);
     }
 
     public ulong Value { get; }
@@ -28,7 +28,7 @@ public readonly struct IntegerFixedPartition : IReadOnlyCollection<ulong>
 
     public Enumerator GetEnumerator()
     {
-        return new Enumerator( Quotient, Remainder, unchecked( (ulong)Count ) );
+        return new Enumerator( Quotient, Remainder, unchecked( ( ulong )Count ) );
     }
 
     IEnumerator<ulong> IEnumerable<ulong>.GetEnumerator()
@@ -64,7 +64,7 @@ public readonly struct IntegerFixedPartition : IReadOnlyCollection<ulong>
 
         public bool MoveNext()
         {
-            if ( unchecked( (ulong)++_index ) >= _partCount )
+            if ( unchecked( ( ulong )++_index ) >= _partCount )
             {
                 Assume.Equals( _offset, 0UL );
                 return false;

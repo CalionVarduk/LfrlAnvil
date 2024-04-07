@@ -50,7 +50,7 @@ public sealed class DbCommandMock : DbCommand
     protected override DbTransaction? DbTransaction
     {
         get => Transaction;
-        set => Transaction = (DbTransactionMock?)value;
+        set => Transaction = ( DbTransactionMock? )value;
     }
 
     protected override DbParameterCollection DbParameterCollection => Parameters;

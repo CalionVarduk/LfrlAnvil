@@ -24,16 +24,10 @@ public sealed class ReactiveTimer : ConcurrentEventSource<WithInterval<long>, Ev
     private long _prevIndex;
     private byte _state;
 
-    public ReactiveTimer(ITimestampProvider timestampProvider, Duration interval)
-        : this( timestampProvider, interval, long.MaxValue ) { }
-
-    public ReactiveTimer(ITimestampProvider timestampProvider, Duration interval, long count)
+    public ReactiveTimer(ITimestampProvider timestampProvider, Duration interval, long count = long.MaxValue)
         : this( timestampProvider, interval, DefaultSpinWaitDurationHint, count ) { }
 
-    public ReactiveTimer(ITimestampProvider timestampProvider, Duration interval, Duration spinWaitDurationHint)
-        : this( timestampProvider, interval, spinWaitDurationHint, long.MaxValue ) { }
-
-    public ReactiveTimer(ITimestampProvider timestampProvider, Duration interval, Duration spinWaitDurationHint, long count)
+    public ReactiveTimer(ITimestampProvider timestampProvider, Duration interval, Duration spinWaitDurationHint, long count = long.MaxValue)
         : base( new EventPublisher<WithInterval<long>>() )
     {
         Ensure.IsGreaterThan( count, 0 );
@@ -170,7 +164,7 @@ public sealed class ReactiveTimer : ConcurrentEventSource<WithInterval<long>, Ev
         {
             try
             {
-                _reset.Wait( (TimeSpan)initialDelay );
+                _reset.Wait( initialDelay );
             }
             catch ( ObjectDisposedException ) { }
 

@@ -10,7 +10,7 @@ public abstract class GenericEitherExtensionsTests<T1, T2> : TestsBase
     {
         var value = Fixture.CreateNotDefault<T1>();
 
-        var sut = (Either<T1, T2>)value;
+        var sut = ( Either<T1, T2> )value;
 
         var result = sut.ToMaybe();
 
@@ -26,7 +26,7 @@ public abstract class GenericEitherExtensionsTests<T1, T2> : TestsBase
     {
         var value = Fixture.Create<T2>();
 
-        var sut = (Either<T1, T2>)value;
+        var sut = ( Either<T1, T2> )value;
 
         var result = sut.ToMaybe();
 
@@ -38,7 +38,7 @@ public abstract class GenericEitherExtensionsTests<T1, T2> : TestsBase
     {
         var value = Fixture.Create<T1>();
 
-        var sut = (Either<T1, Exception>)value;
+        var sut = ( Either<T1, Exception> )value;
 
         var result = sut.ToUnsafe();
 
@@ -54,7 +54,7 @@ public abstract class GenericEitherExtensionsTests<T1, T2> : TestsBase
     {
         var error = new Exception();
 
-        var sut = (Either<T1, Exception>)error;
+        var sut = ( Either<T1, Exception> )error;
 
         var result = sut.ToUnsafe();
 
@@ -69,7 +69,7 @@ public abstract class GenericEitherExtensionsTests<T1, T2> : TestsBase
     public void Reduce_WithEitherAndEither_ShouldReturnCorrectResult_WhenHasFirstWithFirst()
     {
         var value = Fixture.Create<T1>();
-        var first = (Either<T1, T2>)value;
+        var first = ( Either<T1, T2> )value;
         var sut = first.ToEither().WithSecond<Either<T1, T2>>();
 
         var result = sut.Reduce();
@@ -85,7 +85,7 @@ public abstract class GenericEitherExtensionsTests<T1, T2> : TestsBase
     public void Reduce_WithEitherAndEither_ShouldReturnCorrectResult_WhenHasFirstWithSecond()
     {
         var value = Fixture.Create<T2>();
-        var first = (Either<T1, T2>)value;
+        var first = ( Either<T1, T2> )value;
         var sut = first.ToEither().WithSecond<Either<T1, T2>>();
 
         var result = sut.Reduce();
@@ -101,7 +101,7 @@ public abstract class GenericEitherExtensionsTests<T1, T2> : TestsBase
     public void Reduce_WithEitherAndEither_ShouldReturnCorrectResult_WhenHasSecondWithFirst()
     {
         var value = Fixture.Create<T1>();
-        var first = (Either<T1, T2>)value;
+        var first = ( Either<T1, T2> )value;
         var sut = first.ToEither().WithFirst<Either<T1, T2>>();
 
         var result = sut.Reduce();
@@ -117,7 +117,7 @@ public abstract class GenericEitherExtensionsTests<T1, T2> : TestsBase
     public void Reduce_WithEitherAndEither_ShouldReturnCorrectResult_WhenHasSecondWithSecond()
     {
         var value = Fixture.Create<T2>();
-        var first = (Either<T1, T2>)value;
+        var first = ( Either<T1, T2> )value;
         var sut = first.ToEither().WithFirst<Either<T1, T2>>();
 
         var result = sut.Reduce();
@@ -133,7 +133,7 @@ public abstract class GenericEitherExtensionsTests<T1, T2> : TestsBase
     public void Reduce_WithEitherAndT1_ShouldReturnCorrectResult_WhenHasFirstWithFirst()
     {
         var value = Fixture.Create<T1>();
-        var first = (Either<T1, T2>)value;
+        var first = ( Either<T1, T2> )value;
         var sut = first.ToEither().WithSecond<T1>();
 
         var result = sut.Reduce();
@@ -149,7 +149,7 @@ public abstract class GenericEitherExtensionsTests<T1, T2> : TestsBase
     public void Reduce_WithEitherAndT1_ShouldReturnCorrectResult_WhenHasFirstWithSecond()
     {
         var value = Fixture.Create<T2>();
-        var first = (Either<T1, T2>)value;
+        var first = ( Either<T1, T2> )value;
         var sut = first.ToEither().WithSecond<T1>();
 
         var result = sut.Reduce();
@@ -180,7 +180,7 @@ public abstract class GenericEitherExtensionsTests<T1, T2> : TestsBase
     public void Reduce_WithEitherAndT2_ShouldReturnCorrectResult_WhenHasFirstWithFirst()
     {
         var value = Fixture.Create<T1>();
-        var first = (Either<T1, T2>)value;
+        var first = ( Either<T1, T2> )value;
         var sut = first.ToEither().WithSecond<T2>();
 
         var result = sut.Reduce();
@@ -196,7 +196,7 @@ public abstract class GenericEitherExtensionsTests<T1, T2> : TestsBase
     public void Reduce_WithEitherAndT2_ShouldReturnCorrectResult_WhenHasFirstWithSecond()
     {
         var value = Fixture.Create<T2>();
-        var first = (Either<T1, T2>)value;
+        var first = ( Either<T1, T2> )value;
         var sut = first.ToEither().WithSecond<T2>();
 
         var result = sut.Reduce();
@@ -242,7 +242,7 @@ public abstract class GenericEitherExtensionsTests<T1, T2> : TestsBase
     public void Reduce_WithT1AndEither_ShouldReturnCorrectResult_WhenHasSecondWithFirst()
     {
         var value = Fixture.Create<T1>();
-        var second = (Either<T1, T2>)value;
+        var second = ( Either<T1, T2> )value;
         var sut = second.ToEither().WithFirst<T1>();
 
         var result = sut.Reduce();
@@ -258,7 +258,7 @@ public abstract class GenericEitherExtensionsTests<T1, T2> : TestsBase
     public void Reduce_WithT1AndEither_ShouldReturnCorrectResult_WhenHasSecondWithSecond()
     {
         var value = Fixture.Create<T2>();
-        var second = (Either<T1, T2>)value;
+        var second = ( Either<T1, T2> )value;
         var sut = second.ToEither().WithFirst<T1>();
 
         var result = sut.Reduce();
@@ -289,7 +289,7 @@ public abstract class GenericEitherExtensionsTests<T1, T2> : TestsBase
     public void Reduce_WithT2AndEither_ShouldReturnCorrectResult_WhenHasSecondWithFirst()
     {
         var value = Fixture.Create<T1>();
-        var second = (Either<T1, T2>)value;
+        var second = ( Either<T1, T2> )value;
         var sut = second.ToEither().WithFirst<T2>();
 
         var result = sut.Reduce();
@@ -305,7 +305,7 @@ public abstract class GenericEitherExtensionsTests<T1, T2> : TestsBase
     public void Reduce_WithT2AndEither_ShouldReturnCorrectResult_WhenHasSecondWithSecond()
     {
         var value = Fixture.Create<T2>();
-        var second = (Either<T1, T2>)value;
+        var second = ( Either<T1, T2> )value;
         var sut = second.ToEither().WithFirst<T2>();
 
         var result = sut.Reduce();

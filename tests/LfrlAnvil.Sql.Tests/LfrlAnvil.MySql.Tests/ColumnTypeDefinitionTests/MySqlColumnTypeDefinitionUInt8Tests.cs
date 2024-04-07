@@ -31,7 +31,7 @@ public class MySqlColumnTypeDefinitionUInt8Tests : TestsBase
     public void TryToParameterValue_ShouldReturnCorrectResult()
     {
         var sut = _provider.GetByType<byte>();
-        var result = sut.TryToParameterValue( (byte)123 );
+        var result = sut.TryToParameterValue( ( byte )123 );
         result.Should().Be( 123L );
     }
 

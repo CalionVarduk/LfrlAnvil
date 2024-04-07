@@ -9,7 +9,7 @@ public class NSubstituteObjectMockAssertions<T> : ObjectAssertions
     internal NSubstituteObjectMockAssertions(T obj)
         : base( obj ) { }
 
-    public new T Subject => (T)base.Subject;
+    public new T Subject => ( T )base.Subject;
 
     public AndConstraint<NSubstituteObjectMockAssertions<T>> Received(Action<T> verification)
     {

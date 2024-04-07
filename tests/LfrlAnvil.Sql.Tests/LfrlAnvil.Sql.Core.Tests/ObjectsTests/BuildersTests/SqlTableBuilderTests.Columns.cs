@@ -36,13 +36,13 @@ public partial class SqlTableBuilderTests
                 result.Computation.Should().BeNull();
                 result.ReferencedComputationColumns.Should().BeEmpty();
 
-                ((ISqlColumnBuilder)result).Table.Should().BeSameAs( result.Table );
-                ((ISqlColumnBuilder)result).TypeDefinition.Should().BeSameAs( result.TypeDefinition );
-                ((ISqlColumnBuilder)result).ReferencedComputationColumns.Should()
+                (( ISqlColumnBuilder )result).Table.Should().BeSameAs( result.Table );
+                (( ISqlColumnBuilder )result).TypeDefinition.Should().BeSameAs( result.TypeDefinition );
+                (( ISqlColumnBuilder )result).ReferencedComputationColumns.Should()
                     .BeSequentiallyEqualTo( result.ReferencedComputationColumns );
 
-                ((ISqlObjectBuilder)result).Database.Should().BeSameAs( result.Database );
-                ((ISqlObjectBuilder)result).ReferencingObjects.Should()
+                (( ISqlObjectBuilder )result).Database.Should().BeSameAs( result.Database );
+                (( ISqlObjectBuilder )result).ReferencingObjects.Should()
                     .BeSequentiallyEqualTo( result.ReferencingObjects.UnsafeReinterpretAs<ISqlObjectBuilder>() );
 
                 sut.Count.Should().Be( 1 );
@@ -121,13 +121,13 @@ public partial class SqlTableBuilderTests
                 result.Computation.Should().BeNull();
                 result.ReferencedComputationColumns.Should().BeEmpty();
 
-                ((ISqlColumnBuilder)result).Table.Should().BeSameAs( result.Table );
-                ((ISqlColumnBuilder)result).TypeDefinition.Should().BeSameAs( result.TypeDefinition );
-                ((ISqlColumnBuilder)result).ReferencedComputationColumns.Should()
+                (( ISqlColumnBuilder )result).Table.Should().BeSameAs( result.Table );
+                (( ISqlColumnBuilder )result).TypeDefinition.Should().BeSameAs( result.TypeDefinition );
+                (( ISqlColumnBuilder )result).ReferencedComputationColumns.Should()
                     .BeSequentiallyEqualTo( result.ReferencedComputationColumns );
 
-                ((ISqlObjectBuilder)result).Database.Should().BeSameAs( result.Database );
-                ((ISqlObjectBuilder)result).ReferencingObjects.Should()
+                (( ISqlObjectBuilder )result).Database.Should().BeSameAs( result.Database );
+                (( ISqlObjectBuilder )result).ReferencingObjects.Should()
                     .BeSequentiallyEqualTo( result.ReferencingObjects.UnsafeReinterpretAs<ISqlObjectBuilder>() );
 
                 sut.Count.Should().Be( 1 );
@@ -208,7 +208,7 @@ public partial class SqlTableBuilderTests
             var sut = table.Columns;
             var expected = sut.Create( "C" );
 
-            var result = ((ISqlColumnBuilderCollection)sut).Get( "C" );
+            var result = (( ISqlColumnBuilderCollection )sut).Get( "C" );
 
             result.Should().BeSameAs( expected );
         }
@@ -221,7 +221,7 @@ public partial class SqlTableBuilderTests
             var sut = table.Columns;
             sut.Create( "C" );
 
-            var action = Lambda.Of( () => ((ISqlColumnBuilderCollection)sut).Get( "D" ) );
+            var action = Lambda.Of( () => (( ISqlColumnBuilderCollection )sut).Get( "D" ) );
 
             action.Should().ThrowExactly<KeyNotFoundException>();
         }
@@ -234,7 +234,7 @@ public partial class SqlTableBuilderTests
             var sut = table.Columns;
             var expected = sut.Create( "C" );
 
-            var result = ((ISqlColumnBuilderCollection)sut).TryGet( "C" );
+            var result = (( ISqlColumnBuilderCollection )sut).TryGet( "C" );
 
             result.Should().BeSameAs( expected );
         }
@@ -247,7 +247,7 @@ public partial class SqlTableBuilderTests
             var sut = table.Columns;
             sut.Create( "C" );
 
-            var result = ((ISqlColumnBuilderCollection)sut).TryGet( "D" );
+            var result = (( ISqlColumnBuilderCollection )sut).TryGet( "D" );
 
             result.Should().BeNull();
         }
@@ -370,7 +370,7 @@ public partial class SqlTableBuilderTests
             var sut = table.Columns;
             var definition = schema.Database.TypeDefinitions.GetByType<string>();
 
-            var result = ((ISqlColumnBuilderCollection)sut).SetDefaultTypeDefinition( definition );
+            var result = (( ISqlColumnBuilderCollection )sut).SetDefaultTypeDefinition( definition );
 
             using ( new AssertionScope() )
             {
@@ -387,7 +387,7 @@ public partial class SqlTableBuilderTests
             var sut = table.Columns;
             var definition = SqlDatabaseBuilderMock.Create().TypeDefinitions.GetByType<string>();
 
-            var action = Lambda.Of( () => ((ISqlColumnBuilderCollection)sut).SetDefaultTypeDefinition( definition ) );
+            var action = Lambda.Of( () => (( ISqlColumnBuilderCollection )sut).SetDefaultTypeDefinition( definition ) );
 
             action.Should()
                 .ThrowExactly<SqlObjectBuilderException>()
@@ -402,7 +402,7 @@ public partial class SqlTableBuilderTests
             var sut = table.Columns;
             var definition = Substitute.For<ISqlColumnTypeDefinition>();
 
-            var action = Lambda.Of( () => ((ISqlColumnBuilderCollection)sut).SetDefaultTypeDefinition( definition ) );
+            var action = Lambda.Of( () => (( ISqlColumnBuilderCollection )sut).SetDefaultTypeDefinition( definition ) );
 
             action.Should()
                 .ThrowExactly<SqlObjectCastException>()
@@ -416,7 +416,7 @@ public partial class SqlTableBuilderTests
             var table = schema.Objects.CreateTable( "T" );
             var sut = table.Columns;
 
-            var result = ((ISqlColumnBuilderCollection)sut).Create( "C" );
+            var result = (( ISqlColumnBuilderCollection )sut).Create( "C" );
 
             using ( new AssertionScope() )
             {
@@ -445,7 +445,7 @@ public partial class SqlTableBuilderTests
             var sut = table.Columns;
             var expected = sut.Create( "C" );
 
-            var result = ((ISqlColumnBuilderCollection)sut).GetOrCreate( "C" );
+            var result = (( ISqlColumnBuilderCollection )sut).GetOrCreate( "C" );
 
             using ( new AssertionScope() )
             {

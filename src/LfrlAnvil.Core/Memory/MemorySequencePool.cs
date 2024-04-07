@@ -110,7 +110,7 @@ public class MemorySequencePool<T>
         Ensure.IsGreaterThan( minSegmentLength, 0 );
         Ensure.IsLessThanOrEqualTo( minSegmentLength, 1 << 30 );
 
-        _segmentLengthLog2 = BitOperations.Log2( BitOperations.RoundUpToPowerOf2( unchecked( (uint)minSegmentLength ) ) );
+        _segmentLengthLog2 = BitOperations.Log2( BitOperations.RoundUpToPowerOf2( unchecked( ( uint )minSegmentLength ) ) );
         SegmentLength = 1 << _segmentLengthLog2;
         ClearReturnedSequences = true;
 
@@ -1021,11 +1021,11 @@ public class MemorySequencePool<T>
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         internal Buffer<TElement> TrimExcess()
         {
-            var capacity = 1U << BitOperations.Log2( BitOperations.RoundUpToPowerOf2( unchecked( (uint)Length ) ) );
+            var capacity = 1U << BitOperations.Log2( BitOperations.RoundUpToPowerOf2( unchecked( ( uint )Length ) ) );
             capacity = Math.Max( (capacity == Length ? capacity << 1 : capacity) - 1, DefaultBufferSize );
 
             var data = Data;
-            Array.Resize( ref data, unchecked( (int)capacity ) );
+            Array.Resize( ref data, unchecked( ( int )capacity ) );
             return new Buffer<TElement>( data, Length );
         }
     }

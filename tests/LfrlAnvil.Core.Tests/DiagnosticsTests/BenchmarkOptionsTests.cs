@@ -46,7 +46,7 @@ public class BenchmarkOptionsTests : TestsBase
     {
         var collectGarbage = Fixture.Create<bool>();
         var samples = new BenchmarkSampleOptions( 20, Fixture.CreatePositiveInt32(), collectGarbage );
-        var result = (BenchmarkOptions)samples;
+        var result = ( BenchmarkOptions )samples;
 
         using ( new AssertionScope() )
         {

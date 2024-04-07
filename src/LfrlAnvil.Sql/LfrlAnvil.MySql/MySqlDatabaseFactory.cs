@@ -166,11 +166,11 @@ public sealed class MySqlDatabaseFactory : SqlDatabaseFactory<MySqlDatabase>
         ref SqlDatabaseFactoryStatementExecutor executor)
     {
         if ( ! CheckCommonSchemaExistenceAndPrepare(
-                ReinterpretCast.To<MySqlDatabaseChangeTracker>( changeTracker ),
-                connection,
-                versionHistoryTableName.Schema,
-                nodeInterpreter,
-                ref executor ) )
+            ReinterpretCast.To<MySqlDatabaseChangeTracker>( changeTracker ),
+            connection,
+            versionHistoryTableName.Schema,
+            nodeInterpreter,
+            ref executor ) )
             return true;
 
         var tables = SqlNode.RawRecordSet( SqlRecordSetInfo.Create( "information_schema", "tables" ) );
@@ -225,7 +225,7 @@ public sealed class MySqlDatabaseFactory : SqlDatabaseFactory<MySqlDatabase>
     {
         return static (reader, options) =>
         {
-            var mySqlReader = (MySqlDataReader)reader;
+            var mySqlReader = ( MySqlDataReader )reader;
             if ( ! mySqlReader.Read() )
                 return SqlQueryResult<SqlDatabaseVersionRecord>.Empty;
 
@@ -244,9 +244,9 @@ public sealed class MySqlDatabaseFactory : SqlDatabaseFactory<MySqlDatabase>
             {
                 var versionMajor = mySqlReader.GetInt32( iVersionMajor );
                 var versionMinor = mySqlReader.GetInt32( iVersionMinor );
-                var versionBuild = mySqlReader.IsDBNull( iVersionBuild ) ? (int?)null : mySqlReader.GetInt32( iVersionBuild );
+                var versionBuild = mySqlReader.IsDBNull( iVersionBuild ) ? ( int? )null : mySqlReader.GetInt32( iVersionBuild );
                 var versionRevision = versionBuild is null || mySqlReader.IsDBNull( iVersionRevision )
-                    ? (int?)null
+                    ? ( int? )null
                     : mySqlReader.GetInt32( iVersionRevision );
 
                 var record = new SqlDatabaseVersionRecord(

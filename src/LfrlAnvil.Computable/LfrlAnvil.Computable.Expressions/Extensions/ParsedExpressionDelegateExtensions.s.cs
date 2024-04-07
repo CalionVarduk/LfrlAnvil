@@ -60,7 +60,7 @@ public static class ParsedExpressionDelegateExtensions
         TArg?[] buffer,
         IEnumerable<KeyValuePair<string, TArg?>> arguments)
     {
-        MapArguments( source, buffer, arguments.Select( static kv => KeyValuePair.Create( (StringSegment)kv.Key, kv.Value ) ) );
+        MapArguments( source, buffer, arguments.Select( static kv => KeyValuePair.Create( ( StringSegment )kv.Key, kv.Value ) ) );
     }
 
     public static void MapArguments<TArg, TResult>(

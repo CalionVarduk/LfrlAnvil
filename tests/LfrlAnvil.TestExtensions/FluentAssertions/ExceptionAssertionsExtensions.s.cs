@@ -12,6 +12,6 @@ public static class ExceptionAssertionsExtensions
         params object[] becauseArgs)
         where TException : Exception
     {
-        return source.And.Should().Match( s => predicate( (TException)s ), because, becauseArgs );
+        return source.And.Should().Match( s => predicate( ( TException )s ), because, becauseArgs );
     }
 }

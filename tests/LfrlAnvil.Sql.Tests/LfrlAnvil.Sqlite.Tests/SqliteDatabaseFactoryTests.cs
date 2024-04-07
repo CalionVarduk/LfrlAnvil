@@ -80,8 +80,8 @@ public class SqliteDatabaseFactoryTests : TestsBase
             result.Database.Version.Should().Be( result.NewVersion );
             result.Database.ServerVersion.Should().Be( db.Connector.Connect().ServerVersion );
             result.Database.Connector.Database.Should().BeSameAs( result.Database );
-            ((ISqlDatabaseConnector<DbConnection>)result.Database.Connector).Database.Should().BeSameAs( result.Database );
-            ((ISqlDatabaseConnector)result.Database.Connector).Database.Should().BeSameAs( result.Database );
+            (( ISqlDatabaseConnector<DbConnection> )result.Database.Connector).Database.Should().BeSameAs( result.Database );
+            (( ISqlDatabaseConnector )result.Database.Connector).Database.Should().BeSameAs( result.Database );
             versions.Should().BeEmpty();
         }
     }
@@ -292,7 +292,7 @@ public class SqliteDatabaseFactoryTests : TestsBase
         using ( new AssertionScope() )
         {
             var exception =
-                (SqliteForeignKeyCheckException?)result.Exception.Should().BeOfType<SqliteForeignKeyCheckException>().And.Subject;
+                ( SqliteForeignKeyCheckException? )result.Exception.Should().BeOfType<SqliteForeignKeyCheckException>().And.Subject;
 
             (exception?.Version).Should().Be( Version.Parse( "0.2" ) );
             (exception?.FailedTableNames).Should().BeSequentiallyEqualTo( "foo_T" );
@@ -990,7 +990,7 @@ public class SqliteDatabaseFactoryTests : TestsBase
         reader.Read();
         var result = reader.GetValue( 0 );
 
-        result.Should().Be( (object?)expected ?? DBNull.Value );
+        result.Should().Be( ( object? )expected ?? DBNull.Value );
     }
 
     [Fact]
@@ -1580,8 +1580,8 @@ public class SqliteDatabaseFactoryTests : TestsBase
                     versions.ElementAtOrDefault( 0 )?.Version.Should().Be( Version.Parse( "0.1" ) );
 
                     result2.Database.Connector.Database.Should().BeSameAs( result2.Database );
-                    ((ISqlDatabaseConnector<DbConnection>)result2.Database.Connector).Database.Should().BeSameAs( result2.Database );
-                    ((ISqlDatabaseConnector)result2.Database.Connector).Database.Should().BeSameAs( result2.Database );
+                    (( ISqlDatabaseConnector<DbConnection> )result2.Database.Connector).Database.Should().BeSameAs( result2.Database );
+                    (( ISqlDatabaseConnector )result2.Database.Connector).Database.Should().BeSameAs( result2.Database );
                 }
             }
             finally
@@ -1693,27 +1693,27 @@ public class SqliteDatabaseFactoryTests : TestsBase
                     history,
                     SqlCreateDatabaseOptions.Default.SetMode( SqlDatabaseCreateMode.Commit ) );
 
-                var connection = await ((ISqlDatabaseConnector)result.Database.Connector).ConnectAsync();
+                var connection = await (( ISqlDatabaseConnector )result.Database.Connector).ConnectAsync();
                 connection.Dispose();
 
                 using ( new AssertionScope() )
                 {
                     callback.Verify().CallCount.Should().Be( 4 );
 
-                    var firstEvent = (SqlDatabaseConnectionChangeEvent?)callback.Verify().CallAt( 0 ).Arguments.ElementAtOrDefault( 0 );
+                    var firstEvent = ( SqlDatabaseConnectionChangeEvent? )callback.Verify().CallAt( 0 ).Arguments.ElementAtOrDefault( 0 );
                     (firstEvent?.StateChange).Should()
                         .BeEquivalentTo( new StateChangeEventArgs( ConnectionState.Closed, ConnectionState.Open ) );
 
-                    var secondEvent = (SqlDatabaseConnectionChangeEvent?)callback.Verify().CallAt( 1 ).Arguments.ElementAtOrDefault( 0 );
+                    var secondEvent = ( SqlDatabaseConnectionChangeEvent? )callback.Verify().CallAt( 1 ).Arguments.ElementAtOrDefault( 0 );
                     (secondEvent?.StateChange).Should()
                         .BeEquivalentTo( new StateChangeEventArgs( ConnectionState.Open, ConnectionState.Closed ) );
 
-                    var thirdEvent = (SqlDatabaseConnectionChangeEvent?)callback.Verify().CallAt( 2 ).Arguments.ElementAtOrDefault( 0 );
+                    var thirdEvent = ( SqlDatabaseConnectionChangeEvent? )callback.Verify().CallAt( 2 ).Arguments.ElementAtOrDefault( 0 );
                     (thirdEvent?.Connection).Should().BeSameAs( connection );
                     (thirdEvent?.StateChange).Should()
                         .BeEquivalentTo( new StateChangeEventArgs( ConnectionState.Closed, ConnectionState.Open ) );
 
-                    var fourthEvent = (SqlDatabaseConnectionChangeEvent?)callback.Verify().CallAt( 3 ).Arguments.ElementAtOrDefault( 0 );
+                    var fourthEvent = ( SqlDatabaseConnectionChangeEvent? )callback.Verify().CallAt( 3 ).Arguments.ElementAtOrDefault( 0 );
                     (fourthEvent?.Connection).Should().BeSameAs( connection );
                     (fourthEvent?.StateChange).Should()
                         .BeEquivalentTo( new StateChangeEventArgs( ConnectionState.Open, ConnectionState.Closed ) );
@@ -1744,14 +1744,14 @@ public class SqliteDatabaseFactoryTests : TestsBase
                         SqlCreateDatabaseOptions.Default.SetMode( SqlDatabaseCreateMode.Commit ) )
                     .Database;
 
-                using var c1 = ((ISqlDatabaseConnector)db.Connector).Connect();
-                using var c2 = ((ISqlDatabaseConnector)db.Connector).Connect( "DataSource=other;Foreign Keys=false" );
-                await using var c3 = ((ISqlDatabaseConnector<DbConnection>)db.Connector).Connect();
-                await using var c4 = ((ISqlDatabaseConnector<DbConnection>)db.Connector).Connect( "DataSource=other;Foreign Keys=false" );
-                using var c5 = await ((ISqlDatabaseConnector)db.Connector).ConnectAsync();
-                using var c6 = await ((ISqlDatabaseConnector)db.Connector).ConnectAsync( "DataSource=other;Foreign Keys=false" );
-                await using var c7 = await ((ISqlDatabaseConnector<DbConnection>)db.Connector).ConnectAsync();
-                await using var c8 = await ((ISqlDatabaseConnector<DbConnection>)db.Connector)
+                using var c1 = (( ISqlDatabaseConnector )db.Connector).Connect();
+                using var c2 = (( ISqlDatabaseConnector )db.Connector).Connect( "DataSource=other;Foreign Keys=false" );
+                await using var c3 = (( ISqlDatabaseConnector<DbConnection> )db.Connector).Connect();
+                await using var c4 = (( ISqlDatabaseConnector<DbConnection> )db.Connector).Connect( "DataSource=other;Foreign Keys=false" );
+                using var c5 = await (( ISqlDatabaseConnector )db.Connector).ConnectAsync();
+                using var c6 = await (( ISqlDatabaseConnector )db.Connector).ConnectAsync( "DataSource=other;Foreign Keys=false" );
+                await using var c7 = await (( ISqlDatabaseConnector<DbConnection> )db.Connector).ConnectAsync();
+                await using var c8 = await (( ISqlDatabaseConnector<DbConnection> )db.Connector)
                     .ConnectAsync( "DataSource=other;Foreign Keys=false" );
 
                 using ( new AssertionScope() )
@@ -1791,14 +1791,14 @@ public class SqliteDatabaseFactoryTests : TestsBase
                         SqlCreateDatabaseOptions.Default.SetMode( SqlDatabaseCreateMode.Commit ) )
                     .Database;
 
-                using var c1 = ((ISqlDatabaseConnector)db.Connector).Connect();
-                using var c2 = ((ISqlDatabaseConnector)db.Connector).Connect( "DataSource=other;Foreign Keys=false" );
-                await using var c3 = ((ISqlDatabaseConnector<DbConnection>)db.Connector).Connect();
-                await using var c4 = ((ISqlDatabaseConnector<DbConnection>)db.Connector).Connect( "DataSource=other;Foreign Keys=false" );
-                using var c5 = await ((ISqlDatabaseConnector)db.Connector).ConnectAsync();
-                using var c6 = await ((ISqlDatabaseConnector)db.Connector).ConnectAsync( "DataSource=other;Foreign Keys=false" );
-                await using var c7 = await ((ISqlDatabaseConnector<DbConnection>)db.Connector).ConnectAsync();
-                await using var c8 = await ((ISqlDatabaseConnector<DbConnection>)db.Connector)
+                using var c1 = (( ISqlDatabaseConnector )db.Connector).Connect();
+                using var c2 = (( ISqlDatabaseConnector )db.Connector).Connect( "DataSource=other;Foreign Keys=false" );
+                await using var c3 = (( ISqlDatabaseConnector<DbConnection> )db.Connector).Connect();
+                await using var c4 = (( ISqlDatabaseConnector<DbConnection> )db.Connector).Connect( "DataSource=other;Foreign Keys=false" );
+                using var c5 = await (( ISqlDatabaseConnector )db.Connector).ConnectAsync();
+                using var c6 = await (( ISqlDatabaseConnector )db.Connector).ConnectAsync( "DataSource=other;Foreign Keys=false" );
+                await using var c7 = await (( ISqlDatabaseConnector<DbConnection> )db.Connector).ConnectAsync();
+                await using var c8 = await (( ISqlDatabaseConnector<DbConnection> )db.Connector)
                     .ConnectAsync( "DataSource=other;Foreign Keys=false" );
 
                 using ( new AssertionScope() )

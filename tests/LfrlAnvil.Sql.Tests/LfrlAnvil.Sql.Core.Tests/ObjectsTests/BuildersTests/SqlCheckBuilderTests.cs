@@ -263,8 +263,7 @@ public class SqlCheckBuilderTests : TestsBase
             sut.ReferencedColumns.Should().BeEmpty();
 
             column.ReferencingObjects.Should()
-                .BeSequentiallyEqualTo(
-                    SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( pk.Index ), column ) );
+                .BeSequentiallyEqualTo( SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( pk.Index ), column ) );
 
             actions.Should().HaveCount( 1 );
             actions.ElementAtOrDefault( 0 )
@@ -387,7 +386,7 @@ public class SqlCheckBuilderTests : TestsBase
         var oldName = sut.Name;
 
         var actionCount = schema.Database.GetPendingActionCount();
-        var result = ((ISqlCheckBuilder)sut).SetName( "bar" );
+        var result = (( ISqlCheckBuilder )sut).SetName( "bar" );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )
@@ -418,7 +417,7 @@ public class SqlCheckBuilderTests : TestsBase
         var oldName = sut.Name;
 
         var actionCount = schema.Database.GetPendingActionCount();
-        var result = ((ISqlConstraintBuilder)sut).SetName( "bar" );
+        var result = (( ISqlConstraintBuilder )sut).SetName( "bar" );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )
@@ -449,7 +448,7 @@ public class SqlCheckBuilderTests : TestsBase
         var oldName = sut.Name;
 
         var actionCount = schema.Database.GetPendingActionCount();
-        var result = ((ISqlObjectBuilder)sut).SetName( "bar" );
+        var result = (( ISqlObjectBuilder )sut).SetName( "bar" );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )
@@ -479,7 +478,7 @@ public class SqlCheckBuilderTests : TestsBase
         var sut = table.Constraints.CreateCheck( SqlNode.True() ).SetName( "bar" );
 
         var actionCount = schema.Database.GetPendingActionCount();
-        var result = ((ISqlCheckBuilder)sut).SetDefaultName();
+        var result = (( ISqlCheckBuilder )sut).SetDefaultName();
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )
@@ -509,7 +508,7 @@ public class SqlCheckBuilderTests : TestsBase
         var sut = table.Constraints.CreateCheck( SqlNode.True() ).SetName( "bar" );
 
         var actionCount = schema.Database.GetPendingActionCount();
-        var result = ((ISqlConstraintBuilder)sut).SetDefaultName();
+        var result = (( ISqlConstraintBuilder )sut).SetDefaultName();
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )

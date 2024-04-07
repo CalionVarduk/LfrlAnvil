@@ -302,6 +302,6 @@ public readonly struct Unsafe<T> : IUnsafe, IEquatable<Unsafe<T>>, IReadOnlyColl
     [Pure]
     IEnumerator IEnumerable.GetEnumerator()
     {
-        return ((IEnumerable<T>)this).GetEnumerator();
+        return (( IEnumerable<T> )this).GetEnumerator();
     }
 }

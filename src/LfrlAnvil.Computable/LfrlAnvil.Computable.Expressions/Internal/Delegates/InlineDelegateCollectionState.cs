@@ -220,7 +220,7 @@ internal sealed class InlineDelegateCollectionState
     private FinalizedDelegate FinalizeDelegate(StateRegistration state, int? parentStateId, Expression body, bool compileWhenStatic)
     {
         var nestedFinalization = parentStateId == _parentStateIdOfLastFinalizedState
-            ? (IReadOnlyList<FinalizedDelegate>)Array.Empty<FinalizedDelegate>()
+            ? ( IReadOnlyList<FinalizedDelegate> )Array.Empty<FinalizedDelegate>()
             : _nestedStateFinalization;
 
         if ( ! _capturedParametersByState.TryGetValue( state.Id, out var capturedParameters ) )
@@ -319,8 +319,8 @@ internal sealed class InlineDelegateCollectionState
         [return: NotNullIfNotNull( "node" )]
         public override Expression? Visit(Expression? node)
         {
-            if ( _usableArgumentCount > 0 &&
-                node.TryGetArgumentAccessIndex( _localTerms.ParameterExpression, _usableArgumentCount, out var index ) )
+            if ( _usableArgumentCount > 0
+                && node.TryGetArgumentAccessIndex( _localTerms.ParameterExpression, _usableArgumentCount, out var index ) )
             {
                 if ( ! _usesRootParameter )
                 {

@@ -49,14 +49,14 @@ async Task RunTimer(IEventSource<WithInterval<long>> timer, Action starter, Dura
 
     starter();
 
-    await Task.Delay( (int)duration.FullMilliseconds );
+    await Task.Delay( ( int )duration.FullMilliseconds );
 
     timer.Dispose();
 
     var variance = intervalVarianceBase / count;
-    var stdDev = Duration.FromTicks( (long)Math.Sqrt( variance ) );
+    var stdDev = Duration.FromTicks( ( long )Math.Sqrt( variance ) );
     Console.WriteLine(
-        $"[INTERVALS] Min: {minInterval}, Max: {maxInterval}, Avg: {Duration.FromTicks( (long)intervalMean )}, StdDev: {stdDev}" );
+        $"[INTERVALS] Min: {minInterval}, Max: {maxInterval}, Avg: {Duration.FromTicks( ( long )intervalMean )}, StdDev: {stdDev}" );
 
     Console.WriteLine( $"[CAUGHT EVENTS] {count} out of {last + 1} (skipped {last - count + 1}) ({count / (last + 1.0):P})" );
 

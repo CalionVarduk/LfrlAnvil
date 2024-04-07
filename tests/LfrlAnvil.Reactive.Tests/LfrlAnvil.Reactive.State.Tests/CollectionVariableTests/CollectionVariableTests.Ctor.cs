@@ -59,38 +59,38 @@ public partial class CollectionVariableTests
             sut.Elements.GetWarnings( key ).Should().BeEmpty();
             sut.Elements.GetState( key ).Should().Be( CollectionVariableElementState.NotFound );
 
-            ((IReadOnlyDictionary<int, TestElement>)sut.Elements).Keys.Should().BeSameAs( sut.Elements.Keys );
-            ((IReadOnlyDictionary<int, TestElement>)sut.Elements).Values.Should().BeSameAs( sut.Elements.Values );
+            (( IReadOnlyDictionary<int, TestElement> )sut.Elements).Keys.Should().BeSameAs( sut.Elements.Keys );
+            (( IReadOnlyDictionary<int, TestElement> )sut.Elements).Values.Should().BeSameAs( sut.Elements.Values );
 
-            ((ICollectionVariableElements<int, TestElement>)sut.Elements).GetErrors( key )
+            (( ICollectionVariableElements<int, TestElement> )sut.Elements).GetErrors( key )
                 .Should()
                 .BeEquivalentTo( sut.Elements.GetErrors( key ) );
 
-            ((ICollectionVariableElements<int, TestElement>)sut.Elements).GetWarnings( key )
+            (( ICollectionVariableElements<int, TestElement> )sut.Elements).GetWarnings( key )
                 .Should()
                 .BeEquivalentTo( sut.Elements.GetWarnings( key ) );
 
-            ((ICollectionVariableElements)sut.Elements).Count.Should().Be( sut.Elements.Count );
-            ((ICollectionVariableElements)sut.Elements).Keys.Should().BeSameAs( sut.Elements.Keys );
-            ((ICollectionVariableElements)sut.Elements).Values.Should().BeSameAs( sut.Elements.Values );
-            ((ICollectionVariableElements)sut.Elements).InvalidElementKeys.Should().BeSameAs( sut.Elements.InvalidElementKeys );
-            ((ICollectionVariableElements)sut.Elements).WarningElementKeys.Should().BeSameAs( sut.Elements.WarningElementKeys );
-            ((ICollectionVariableElements)sut.Elements).ModifiedElementKeys.Should().BeSameAs( sut.Elements.ModifiedElementKeys );
+            (( ICollectionVariableElements )sut.Elements).Count.Should().Be( sut.Elements.Count );
+            (( ICollectionVariableElements )sut.Elements).Keys.Should().BeSameAs( sut.Elements.Keys );
+            (( ICollectionVariableElements )sut.Elements).Values.Should().BeSameAs( sut.Elements.Values );
+            (( ICollectionVariableElements )sut.Elements).InvalidElementKeys.Should().BeSameAs( sut.Elements.InvalidElementKeys );
+            (( ICollectionVariableElements )sut.Elements).WarningElementKeys.Should().BeSameAs( sut.Elements.WarningElementKeys );
+            (( ICollectionVariableElements )sut.Elements).ModifiedElementKeys.Should().BeSameAs( sut.Elements.ModifiedElementKeys );
 
-            ((IReadOnlyCollectionVariable<int, TestElement>)sut).Elements.Should().BeSameAs( sut.Elements );
-            ((IReadOnlyCollectionVariable<int, TestElement>)sut).OnChange.Should().BeSameAs( sut.OnChange );
-            ((IReadOnlyCollectionVariable)sut).KeyType.Should().Be( typeof( int ) );
-            ((IReadOnlyCollectionVariable)sut).ElementType.Should().Be( typeof( TestElement ) );
-            ((IReadOnlyCollectionVariable)sut).ValidationResultType.Should().Be( typeof( string ) );
-            ((IReadOnlyCollectionVariable)sut).InitialElements.Should().BeSameAs( sut.InitialElements.Values );
-            ((IReadOnlyCollectionVariable)sut).Elements.Should().BeSameAs( sut.Elements );
-            ((IReadOnlyCollectionVariable)sut).Errors.Should().BeEquivalentTo( sut.Errors );
-            ((IReadOnlyCollectionVariable)sut).Warnings.Should().BeEquivalentTo( sut.Warnings );
-            ((IReadOnlyCollectionVariable)sut).OnValidate.Should().Be( sut.OnValidate );
-            ((IReadOnlyCollectionVariable)sut).OnChange.Should().Be( sut.OnChange );
-            ((IVariableNode)sut).OnValidate.Should().Be( sut.OnValidate );
-            ((IVariableNode)sut).OnChange.Should().Be( sut.OnChange );
-            ((IVariableNode)sut).GetChildren().Should().BeEmpty();
+            (( IReadOnlyCollectionVariable<int, TestElement> )sut).Elements.Should().BeSameAs( sut.Elements );
+            (( IReadOnlyCollectionVariable<int, TestElement> )sut).OnChange.Should().BeSameAs( sut.OnChange );
+            (( IReadOnlyCollectionVariable )sut).KeyType.Should().Be( typeof( int ) );
+            (( IReadOnlyCollectionVariable )sut).ElementType.Should().Be( typeof( TestElement ) );
+            (( IReadOnlyCollectionVariable )sut).ValidationResultType.Should().Be( typeof( string ) );
+            (( IReadOnlyCollectionVariable )sut).InitialElements.Should().BeSameAs( sut.InitialElements.Values );
+            (( IReadOnlyCollectionVariable )sut).Elements.Should().BeSameAs( sut.Elements );
+            (( IReadOnlyCollectionVariable )sut).Errors.Should().BeEquivalentTo( sut.Errors );
+            (( IReadOnlyCollectionVariable )sut).Warnings.Should().BeEquivalentTo( sut.Warnings );
+            (( IReadOnlyCollectionVariable )sut).OnValidate.Should().Be( sut.OnValidate );
+            (( IReadOnlyCollectionVariable )sut).OnChange.Should().Be( sut.OnChange );
+            (( IVariableNode )sut).OnValidate.Should().Be( sut.OnValidate );
+            (( IVariableNode )sut).OnChange.Should().Be( sut.OnChange );
+            (( IVariableNode )sut).GetChildren().Should().BeEmpty();
         }
     }
 

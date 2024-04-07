@@ -667,12 +667,8 @@ public abstract class GenericTwoWayDictionaryTests<T1, T2> : GenericCollectionTe
         var (first1, first2, first3) = Fixture.CreateDistinctCollection<T1>( 3 );
         var (second1, second2, second3) = Fixture.CreateDistinctCollection<T2>( 3 );
 
-        var expected = new[]
-        {
-            Pair.Create( first1, second1 ),
-            Pair.Create( first2, second2 ),
-            Pair.Create( first3, second3 )
-        }.AsEnumerable();
+        var expected
+            = new[] { Pair.Create( first1, second1 ), Pair.Create( first2, second2 ), Pair.Create( first3, second3 ) }.AsEnumerable();
 
         var sut = new TwoWayDictionary<T1, T2>
         {
@@ -691,7 +687,7 @@ public abstract class GenericTwoWayDictionaryTests<T1, T2> : GenericCollectionTe
         var (second1, second2) = Fixture.CreateDistinctCollection<T2>( 2 );
 
         var dictionary = new TwoWayDictionary<T1, T2> { { first, second1 } };
-        var sut = (ICollection<Pair<T1, T2>>)dictionary;
+        var sut = ( ICollection<Pair<T1, T2>> )dictionary;
 
         var result = sut.Remove( Pair.Create( first, second2 ) );
 
@@ -705,7 +701,7 @@ public abstract class GenericTwoWayDictionaryTests<T1, T2> : GenericCollectionTe
         var second = Fixture.Create<T2>();
 
         var dictionary = new TwoWayDictionary<T1, T2> { { first1, second } };
-        var sut = (ICollection<Pair<T1, T2>>)dictionary;
+        var sut = ( ICollection<Pair<T1, T2>> )dictionary;
 
         var result = sut.Remove( Pair.Create( first2, second ) );
 

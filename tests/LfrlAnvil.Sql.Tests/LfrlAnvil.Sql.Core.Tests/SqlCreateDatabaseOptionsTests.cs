@@ -119,7 +119,7 @@ public class SqlCreateDatabaseOptionsTests : TestsBase
     [InlineData( 100L )]
     public void SetCommandTimeout_ShouldUpdateTimeoutCorrectly(long? seconds)
     {
-        var value = seconds is null ? (TimeSpan?)null : TimeSpan.FromSeconds( seconds.Value );
+        var value = seconds is null ? ( TimeSpan? )null : TimeSpan.FromSeconds( seconds.Value );
         var sut = SqlCreateDatabaseOptions.Default;
         var result = sut.SetCommandTimeout( value );
 

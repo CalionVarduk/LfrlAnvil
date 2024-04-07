@@ -39,7 +39,7 @@ public static class SqliteHelpers
         var result = new SqlConnectionStringEntry[builder.Count];
         foreach ( var e in builder )
         {
-            var (key, value) = (KeyValuePair<string, object>)e;
+            var (key, value) = ( KeyValuePair<string, object> )e;
             result[i++] = new SqlConnectionStringEntry( key, value, IsMutableConnectionStringKey( key ) );
         }
 
@@ -64,9 +64,9 @@ public static class SqliteHelpers
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static bool IsMutableConnectionStringKey(string key)
     {
-        return ! key.Equals( "Data Source", StringComparison.OrdinalIgnoreCase ) &&
-            ! key.Equals( "DataSource", StringComparison.OrdinalIgnoreCase ) &&
-            ! key.Equals( "Filename", StringComparison.OrdinalIgnoreCase );
+        return ! key.Equals( "Data Source", StringComparison.OrdinalIgnoreCase )
+            && ! key.Equals( "DataSource", StringComparison.OrdinalIgnoreCase )
+            && ! key.Equals( "Filename", StringComparison.OrdinalIgnoreCase );
     }
 
     [Pure]
@@ -197,7 +197,7 @@ public static class SqliteHelpers
             TemporalWeekOfYearUnit => TryGetIsoWeekOfYear( TryParseTime( s ) is null ? TryParseDateTime( s ) : null ),
             TemporalDayOfYearUnit => TryParseTime( s ) is null ? TryParseDateTime( s )?.DayOfYear : null,
             TemporalDayOfMonthUnit => TryParseTime( s ) is null ? TryParseDateTime( s )?.Day : null,
-            TemporalDayOfWeekUnit => TryParseTime( s ) is null ? (int?)TryParseDateTime( s )?.DayOfWeek : null,
+            TemporalDayOfWeekUnit => TryParseTime( s ) is null ? ( int? )TryParseDateTime( s )?.DayOfWeek : null,
             TemporalHourUnit => TryParseDateTime( s )?.Hour,
             TemporalMinuteUnit => TryParseDateTime( s )?.Minute,
             TemporalSecondUnit => TryParseDateTime( s )?.Second,
@@ -261,10 +261,10 @@ public static class SqliteHelpers
 
         var date = TryParseDate( s );
         if ( date is not null )
-            return date.Value.AddMonths( (int)value ).ToString( SqlHelpers.DateFormat, CultureInfo.InvariantCulture );
+            return date.Value.AddMonths( ( int )value ).ToString( SqlHelpers.DateFormat, CultureInfo.InvariantCulture );
 
         var dateTime = TryParseDateTime( s );
-        return dateTime?.AddMonths( (int)value ).ToString( SqlHelpers.DateTimeFormatTick, CultureInfo.InvariantCulture );
+        return dateTime?.AddMonths( ( int )value ).ToString( SqlHelpers.DateTimeFormatTick, CultureInfo.InvariantCulture );
     }
 
     [Pure]
@@ -276,7 +276,7 @@ public static class SqliteHelpers
 
         var date = TryParseDate( s );
         if ( date is not null )
-            return date.Value.AddDays( (int)value ).ToString( SqlHelpers.DateFormat, CultureInfo.InvariantCulture );
+            return date.Value.AddDays( ( int )value ).ToString( SqlHelpers.DateFormat, CultureInfo.InvariantCulture );
 
         var dateTime = TryParseDateTime( s );
         return dateTime?.AddDays( value ).ToString( SqlHelpers.DateTimeFormatTick, CultureInfo.InvariantCulture );

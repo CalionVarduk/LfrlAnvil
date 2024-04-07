@@ -1145,7 +1145,7 @@ public class DirectedGraphNodeTests : TestsBase
         var graph = new DirectedGraph<string, int, long>();
         var sut = graph.AddNode( "a", 10 );
 
-        var result = ((IDirectedGraphNode<string, int, long>)sut).Graph;
+        var result = (( IDirectedGraphNode<string, int, long> )sut).Graph;
 
         result.Should().BeSameAs( sut.Graph );
     }
@@ -1156,7 +1156,7 @@ public class DirectedGraphNodeTests : TestsBase
         var graph = new DirectedGraph<string, int, long>();
         var sut = graph.AddNode( "a", 10 );
 
-        var result = ((IDirectedGraphNode<string, int, long>)sut).Edges;
+        var result = (( IDirectedGraphNode<string, int, long> )sut).Edges;
 
         result.Should().BeSameAs( sut.Edges );
     }
@@ -1168,7 +1168,7 @@ public class DirectedGraphNodeTests : TestsBase
         var sut = graph.AddNode( "a", Fixture.Create<int>() );
         graph.AddEdge( "a", "a", Fixture.Create<long>() );
 
-        var result = ((IDirectedGraphNode<string, int, long>)sut).GetEdgeTo( "a" );
+        var result = (( IDirectedGraphNode<string, int, long> )sut).GetEdgeTo( "a" );
 
         result.Should().BeSameAs( sut.GetEdgeTo( "a" ) );
     }
@@ -1181,7 +1181,7 @@ public class DirectedGraphNodeTests : TestsBase
         graph.AddEdge( "a", "a", Fixture.Create<long>() );
         var expected = sut.TryGetEdgeTo( "a", out var outExpected );
 
-        var result = ((IDirectedGraphNode<string, int, long>)sut).TryGetEdgeTo( "a", out var outResult );
+        var result = (( IDirectedGraphNode<string, int, long> )sut).TryGetEdgeTo( "a", out var outResult );
 
         using ( new AssertionScope() )
         {
@@ -1200,7 +1200,7 @@ public class DirectedGraphNodeTests : TestsBase
         graph.AddEdge( "a", "b", Fixture.Create<long>() );
         graph.AddEdge( "c", "a", Fixture.Create<long>() );
 
-        var result = ((IDirectedGraphNode<string, int, long>)sut).GetReachableNodes();
+        var result = (( IDirectedGraphNode<string, int, long> )sut).GetReachableNodes();
 
         result.Should().BeSequentiallyEqualTo( sut.GetReachableNodes() );
     }

@@ -91,7 +91,11 @@ public abstract class GenericMultiHashSetTests<T> : GenericCollectionTestsBase<P
     {
         var (other, item) = Fixture.CreateDistinctCollection<T>( 2 );
 
-        var sut = new MultiHashSet<T> { other, item };
+        var sut = new MultiHashSet<T>
+        {
+            other,
+            item
+        };
 
         var result = sut.Add( item );
 
@@ -189,7 +193,11 @@ public abstract class GenericMultiHashSetTests<T> : GenericCollectionTestsBase<P
     {
         var (other, item) = Fixture.CreateDistinctCollection<T>( 2 );
 
-        var sut = new MultiHashSet<T> { other, item };
+        var sut = new MultiHashSet<T>
+        {
+            other,
+            item
+        };
 
         var result = sut.AddMany( item, count );
 
@@ -1029,15 +1037,7 @@ public abstract class GenericMultiHashSetTests<T> : GenericCollectionTestsBase<P
     {
         var items = Fixture.CreateDistinctCollection<T>( 3 );
 
-        var expected = new[]
-        {
-            items[0],
-            items[1],
-            items[1],
-            items[2],
-            items[2],
-            items[2]
-        };
+        var expected = new[] { items[0], items[1], items[1], items[2], items[2], items[2] };
 
         var sut = new MultiHashSet<T>();
 
@@ -1051,12 +1051,7 @@ public abstract class GenericMultiHashSetTests<T> : GenericCollectionTestsBase<P
     public void GetEnumerator_ShouldReturnCorrectResult()
     {
         var items = Fixture.CreateDistinctCollection<T>( 3 );
-        var expected = new[]
-            {
-                Pair.Create( items[0], 1 ),
-                Pair.Create( items[1], 2 ),
-                Pair.Create( items[2], 3 )
-            }
+        var expected = new[] { Pair.Create( items[0], 1 ), Pair.Create( items[1], 2 ), Pair.Create( items[2], 3 ) }
             .AsEnumerable();
 
         var sut = new MultiHashSet<T>();

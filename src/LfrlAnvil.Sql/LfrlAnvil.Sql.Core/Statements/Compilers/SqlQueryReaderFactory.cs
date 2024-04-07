@@ -210,8 +210,8 @@ public class SqlQueryReaderFactory : ISqlQueryReaderFactory
             creationOptions.AlwaysTestForNull );
 
         var persistResultSetFields = creationOptions.ResultSetFieldsPersistenceMode != SqlQueryReaderResultSetFieldsPersistenceMode.Ignore;
-        var persistResultSetFieldTypes = creationOptions.ResultSetFieldsPersistenceMode ==
-            SqlQueryReaderResultSetFieldsPersistenceMode.PersistWithTypes;
+        var persistResultSetFieldTypes = creationOptions.ResultSetFieldsPersistenceMode
+            == SqlQueryReaderResultSetFieldsPersistenceMode.PersistWithTypes;
 
         Expression<Func<TDataReader, SqlAsyncQueryReaderInitResult>> initExpression;
         if ( persistResultSetFields )
@@ -325,8 +325,8 @@ public class SqlQueryReaderFactory : ISqlQueryReaderFactory
             creationOptions.AlwaysTestForNull );
 
         var persistResultSetFields = creationOptions.ResultSetFieldsPersistenceMode != SqlQueryReaderResultSetFieldsPersistenceMode.Ignore;
-        var persistResultSetFieldTypes = creationOptions.ResultSetFieldsPersistenceMode ==
-            SqlQueryReaderResultSetFieldsPersistenceMode.PersistWithTypes;
+        var persistResultSetFieldTypes = creationOptions.ResultSetFieldsPersistenceMode
+            == SqlQueryReaderResultSetFieldsPersistenceMode.PersistWithTypes;
 
         var rowTypeToolbox = new RowTypeToolbox( rowType, in _toolbox );
         var readVariables = new ParameterExpression[ordinals.Source.Count + (persistResultSetFields ? 1 : 0) + 1];
@@ -690,7 +690,7 @@ public class SqlQueryReaderFactory : ISqlQueryReaderFactory
         SqlQueryReaderOptions options,
         CancellationToken cancellationToken)
     {
-        var dbReader = (DbDataReader)reader;
+        var dbReader = ( DbDataReader )reader;
         if ( ! await dbReader.ReadAsync( cancellationToken ).ConfigureAwait( false ) )
             return SqlQueryResult.Empty;
 
@@ -716,7 +716,7 @@ public class SqlQueryReaderFactory : ISqlQueryReaderFactory
         SqlQueryReaderOptions options,
         CancellationToken cancellationToken)
     {
-        var dbReader = (DbDataReader)reader;
+        var dbReader = ( DbDataReader )reader;
         if ( ! await dbReader.ReadAsync( cancellationToken ).ConfigureAwait( false ) )
             return SqlQueryResult.Empty;
 
@@ -750,7 +750,7 @@ public class SqlQueryReaderFactory : ISqlQueryReaderFactory
     [Pure]
     private static async ValueTask<SqlScalarQueryResult> ReadScalarAsync(IDataReader reader, CancellationToken cancellationToken)
     {
-        var dbReader = (DbDataReader)reader;
+        var dbReader = ( DbDataReader )reader;
         if ( ! await dbReader.ReadAsync( cancellationToken ).ConfigureAwait( false ) )
             return SqlScalarQueryResult.Empty;
 
@@ -842,7 +842,8 @@ public class SqlQueryReaderFactory : ISqlQueryReaderFactory
         object Target,
         TypeNullability Type,
         bool HasCustomMapping,
-        LambdaExpression? Mapping)
+        LambdaExpression? Mapping
+    )
     {
         [MemberNotNullWhen( false, nameof( Mapping ) )]
         internal bool IsIgnored => Mapping is null;

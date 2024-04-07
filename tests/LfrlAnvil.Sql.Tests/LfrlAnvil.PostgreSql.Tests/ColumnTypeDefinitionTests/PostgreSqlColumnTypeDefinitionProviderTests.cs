@@ -31,7 +31,7 @@ public class PostgreSqlColumnTypeDefinitionProviderTests : TestsBase
         using ( new AssertionScope() )
         {
             result.DataType.Should().BeSameAs( PostgreSqlDataType.Int2 );
-            result.DefaultValue.GetValue().Should().Be( (short)0 );
+            result.DefaultValue.GetValue().Should().Be( ( short )0 );
             result.RuntimeType.Should().Be( typeof( short ) );
         }
     }
@@ -57,7 +57,7 @@ public class PostgreSqlColumnTypeDefinitionProviderTests : TestsBase
         using ( new AssertionScope() )
         {
             result.DataType.Should().BeSameAs( PostgreSqlDataType.Int8 );
-            result.DefaultValue.GetValue().Should().Be( (long)0 );
+            result.DefaultValue.GetValue().Should().Be( ( long )0 );
             result.RuntimeType.Should().Be( typeof( long ) );
         }
     }

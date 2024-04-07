@@ -23,9 +23,9 @@ public sealed class ParsedExpressionInvoke : ParsedExpressionVariadicFunction
         var target = parameters[0];
         var callParameters = parameters.Slice( 1 );
 
-        return FoldConstantsWhenPossible &&
-            target is ConstantExpression constantTarget &&
-            callParameters.All( static p => p is ConstantExpression )
+        return FoldConstantsWhenPossible
+            && target is ConstantExpression constantTarget
+            && callParameters.All( static p => p is ConstantExpression )
                 ? ExpressionHelpers.CreateConstantDelegateInvocation( constantTarget, callParameters )
                 : Expression.Invoke( target, callParameters );
     }

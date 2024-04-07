@@ -31,9 +31,9 @@ public class MySqlDatabaseTests : TestsBase
             sut.Schemas.Count.Should().Be( 1 );
             sut.Schemas.Default.Name.Should().Be( "common" );
             sut.Schemas.Should().BeSequentiallyEqualTo( sut.Schemas.Default );
-            ((ISqlDatabaseConnector<MySqlConnection>)sut.Connector).Database.Should().BeSameAs( sut );
-            ((ISqlDatabaseConnector<DbConnection>)sut.Connector).Database.Should().BeSameAs( sut );
-            ((ISqlDatabaseConnector)sut.Connector).Database.Should().BeSameAs( sut );
+            (( ISqlDatabaseConnector<MySqlConnection> )sut.Connector).Database.Should().BeSameAs( sut );
+            (( ISqlDatabaseConnector<DbConnection> )sut.Connector).Database.Should().BeSameAs( sut );
+            (( ISqlDatabaseConnector )sut.Connector).Database.Should().BeSameAs( sut );
         }
     }
 

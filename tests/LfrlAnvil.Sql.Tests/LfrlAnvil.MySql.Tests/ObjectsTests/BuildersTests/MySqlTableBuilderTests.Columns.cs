@@ -377,7 +377,7 @@ public partial class MySqlTableBuilderTests
             var sut = table.Columns;
             var definition = MySqlDatabaseBuilderMock.Create().TypeDefinitions.GetByType<string>();
 
-            var action = Lambda.Of( () => ((ISqlColumnBuilderCollection)sut).SetDefaultTypeDefinition( definition ) );
+            var action = Lambda.Of( () => (( ISqlColumnBuilderCollection )sut).SetDefaultTypeDefinition( definition ) );
 
             action.Should()
                 .ThrowExactly<SqlObjectBuilderException>()
@@ -392,7 +392,7 @@ public partial class MySqlTableBuilderTests
             var sut = table.Columns;
             var definition = Substitute.For<ISqlColumnTypeDefinition>();
 
-            var action = Lambda.Of( () => ((ISqlColumnBuilderCollection)sut).SetDefaultTypeDefinition( definition ) );
+            var action = Lambda.Of( () => (( ISqlColumnBuilderCollection )sut).SetDefaultTypeDefinition( definition ) );
 
             action.Should()
                 .ThrowExactly<SqlObjectCastException>()

@@ -56,7 +56,7 @@ public class SqliteDatabaseVersionTests : TestsBase
         var builder = Substitute.For<ISqlDatabaseBuilder>();
         var sut = SqliteDatabaseVersion.Create( version, apply );
 
-        var action = Lambda.Of( () => ((ISqlDatabaseVersion)sut).Apply( builder ) );
+        var action = Lambda.Of( () => (( ISqlDatabaseVersion )sut).Apply( builder ) );
 
         action.Should().ThrowExactly<SqlObjectCastException>();
     }

@@ -156,7 +156,7 @@ public struct RentedMemorySequence<T> : IReadOnlyList<T>, ICollection<T>, IDispo
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public void CopyTo(RentedMemorySequenceSpan<T> span)
     {
-        ((RentedMemorySequenceSpan<T>)this).CopyTo( span );
+        (( RentedMemorySequenceSpan<T> )this).CopyTo( span );
     }
 
     public void CopyFrom(ReadOnlySpan<T> span)
@@ -186,7 +186,7 @@ public struct RentedMemorySequence<T> : IReadOnlyList<T>, ICollection<T>, IDispo
 
     public void Sort(Comparison<T> comparer)
     {
-        ((RentedMemorySequenceSpan<T>)this).Sort( comparer );
+        (( RentedMemorySequenceSpan<T> )this).Sort( comparer );
     }
 
     [Pure]

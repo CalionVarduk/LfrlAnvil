@@ -482,9 +482,9 @@ public class CollectionVariableRoot<TKey, TElement, TValidationResult>
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private bool CanAddInitial(TElement element)
     {
-        return (element.State & VariableState.Disposed) == VariableState.Default &&
-            ! ReferenceEquals( element, this ) &&
-            element.Parent is null;
+        return (element.State & VariableState.Disposed) == VariableState.Default
+            && ! ReferenceEquals( element, this )
+            && element.Parent is null;
     }
 
     [Pure]
@@ -510,10 +510,10 @@ public class CollectionVariableRoot<TKey, TElement, TValidationResult>
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private bool IsAdditionCandidate(TKey key, TElement element)
     {
-        return ! _elements.Owned.ContainsKey( key ) &&
-            (element.State & VariableState.Disposed) == VariableState.Default &&
-            ! ReferenceEquals( element, this ) &&
-            (element.Parent is null || ReferenceEquals( element.Parent, this ));
+        return ! _elements.Owned.ContainsKey( key )
+            && (element.State & VariableState.Disposed) == VariableState.Default
+            && ! ReferenceEquals( element, this )
+            && (element.Parent is null || ReferenceEquals( element.Parent, this ));
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -705,11 +705,8 @@ public class CollectionVariableRoot<TKey, TElement, TValidationResult>
 
         foreach ( var (key, element) in _elements.Elements )
         {
-            if ( handledKeys.ContainsKey( key ) )
-                continue;
-
-            handledKeys.Add( key, ElementChangeType.Remove );
-            result.Add( new ElementChangeDto( ElementChangeType.Remove, key, element ) );
+            if ( handledKeys.TryAdd( key, ElementChangeType.Remove ) )
+                result.Add( new ElementChangeDto( ElementChangeType.Remove, key, element ) );
         }
 
         foreach ( var element in changes.ElementsToAdd )

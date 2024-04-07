@@ -58,7 +58,7 @@ public class SqlDialectTests : TestsBase
     public void Equals_ShouldReturnFalse_WhenOtherIsNull()
     {
         var sut = new SqlDialect( Fixture.Create<string>() );
-        var result = sut.Equals( (SqlDialect?)null );
+        var result = sut.Equals( ( SqlDialect? )null );
         result.Should().BeFalse();
     }
 
@@ -79,7 +79,7 @@ public class SqlDialectTests : TestsBase
     public void EqualityOperator_ShouldReturnFalse_WhenFirstIsNotNullAndSecondIsNull()
     {
         var sut = new SqlDialect( Fixture.Create<string>() );
-        var result = sut == (SqlDialect?)null;
+        var result = sut == ( SqlDialect? )null;
         result.Should().BeFalse();
     }
 
@@ -87,14 +87,14 @@ public class SqlDialectTests : TestsBase
     public void EqualityOperator_ShouldReturnFalse_WhenFirstIsNullAndSecondIsNotNull()
     {
         var sut = new SqlDialect( Fixture.Create<string>() );
-        var result = (SqlDialect?)null == sut;
+        var result = ( SqlDialect? )null == sut;
         result.Should().BeFalse();
     }
 
     [Fact]
     public void EqualityOperator_ShouldReturnTrue_WhenFirstIsNullAndSecondIsNull()
     {
-        var result = (SqlDialect?)null == null;
+        var result = ( SqlDialect? )null == null;
         result.Should().BeTrue();
     }
 
@@ -115,7 +115,7 @@ public class SqlDialectTests : TestsBase
     public void InequalityOperator_ShouldReturnTrue_WhenFirstIsNotNullAndSecondIsNull()
     {
         var sut = new SqlDialect( Fixture.Create<string>() );
-        var result = sut != (SqlDialect?)null;
+        var result = sut != ( SqlDialect? )null;
         result.Should().BeTrue();
     }
 
@@ -123,14 +123,14 @@ public class SqlDialectTests : TestsBase
     public void InequalityOperator_ShouldReturnTrue_WhenFirstIsNullAndSecondIsNotNull()
     {
         var sut = new SqlDialect( Fixture.Create<string>() );
-        var result = (SqlDialect?)null != sut;
+        var result = ( SqlDialect? )null != sut;
         result.Should().BeTrue();
     }
 
     [Fact]
     public void InequalityOperator_ShouldReturnFalse_WhenFirstIsNullAndSecondIsNull()
     {
-        var result = (SqlDialect?)null != null;
+        var result = ( SqlDialect? )null != null;
         result.Should().BeFalse();
     }
 }

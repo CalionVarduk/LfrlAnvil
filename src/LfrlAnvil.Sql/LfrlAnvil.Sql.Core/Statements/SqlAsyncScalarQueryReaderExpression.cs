@@ -8,7 +8,8 @@ namespace LfrlAnvil.Sql.Statements;
 public readonly record struct SqlAsyncScalarQueryReaderExpression(
     SqlDialect Dialect,
     Type ResultType,
-    ISqlAsyncScalarQueryLambdaExpression Expression);
+    ISqlAsyncScalarQueryLambdaExpression Expression
+);
 
 public readonly struct SqlAsyncScalarQueryReaderExpression<T>
 {

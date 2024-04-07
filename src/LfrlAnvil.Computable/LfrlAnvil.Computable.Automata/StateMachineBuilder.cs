@@ -145,8 +145,8 @@ public sealed class StateMachineBuilder<TState, TInput, TResult>
         foreach ( var (source, data) in _states )
         {
             var sourceNode = ReinterpretCast.To<StateMachineNode<TState, TInput, TResult>>( states[source] );
-            var sourceTransitions = ReinterpretCast.To<Dictionary<TInput, IStateMachineTransition<TState, TInput, TResult>>>(
-                sourceNode.Transitions );
+            var sourceTransitions
+                = ReinterpretCast.To<Dictionary<TInput, IStateMachineTransition<TState, TInput, TResult>>>( sourceNode.Transitions );
 
             foreach ( var (input, (destination, handler)) in data.Transitions )
             {

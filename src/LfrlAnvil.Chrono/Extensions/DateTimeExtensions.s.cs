@@ -11,7 +11,7 @@ public static class DateTimeExtensions
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static IsoMonthOfYear GetMonthOfYear(this DateTime dt)
     {
-        return (IsoMonthOfYear)dt.Month;
+        return ( IsoMonthOfYear )dt.Month;
     }
 
     [Pure]
@@ -39,7 +39,7 @@ public static class DateTimeExtensions
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static DateTime GetStartOfWeek(this DateTime dt, DayOfWeek weekStart)
     {
-        var dayDelta = (int)dt.DayOfWeek - (int)weekStart;
+        var dayDelta = ( int )dt.DayOfWeek - ( int )weekStart;
         if ( dayDelta < 0 )
             dayDelta += ChronoConstants.DaysPerWeek;
 
@@ -50,7 +50,7 @@ public static class DateTimeExtensions
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static DateTime GetEndOfWeek(this DateTime dt, DayOfWeek weekStart)
     {
-        var dayDelta = (int)dt.DayOfWeek - (int)weekStart;
+        var dayDelta = ( int )dt.DayOfWeek - ( int )weekStart;
         if ( dayDelta < 0 )
             dayDelta += ChronoConstants.DaysPerWeek;
 
@@ -78,14 +78,14 @@ public static class DateTimeExtensions
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static DateTime GetStartOfYear(this DateTime dt)
     {
-        return new DateTime( dt.Year, (int)IsoMonthOfYear.January, 1 );
+        return new DateTime( dt.Year, ( int )IsoMonthOfYear.January, 1 );
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static DateTime GetEndOfYear(this DateTime dt)
     {
-        return new DateTime( dt.Year, (int)IsoMonthOfYear.December, ChronoConstants.DaysInDecember ).GetEndOfDay();
+        return new DateTime( dt.Year, ( int )IsoMonthOfYear.December, ChronoConstants.DaysInDecember ).GetEndOfDay();
     }
 
     [Pure]
@@ -94,14 +94,14 @@ public static class DateTimeExtensions
         var normalizedMonths = period.Years * ChronoConstants.MonthsPerYear + period.Months;
 
         var normalizedTicks =
-            period.Weeks * ChronoConstants.TicksPerStandardWeek +
-            period.Days * ChronoConstants.TicksPerStandardDay +
-            period.Hours * ChronoConstants.TicksPerHour +
-            period.Minutes * ChronoConstants.TicksPerMinute +
-            period.Seconds * ChronoConstants.TicksPerSecond +
-            period.Milliseconds * ChronoConstants.TicksPerMillisecond +
-            period.Microseconds * ChronoConstants.TicksPerMicrosecond +
-            period.Ticks;
+            period.Weeks * ChronoConstants.TicksPerStandardWeek
+            + period.Days * ChronoConstants.TicksPerStandardDay
+            + period.Hours * ChronoConstants.TicksPerHour
+            + period.Minutes * ChronoConstants.TicksPerMinute
+            + period.Seconds * ChronoConstants.TicksPerSecond
+            + period.Milliseconds * ChronoConstants.TicksPerMillisecond
+            + period.Microseconds * ChronoConstants.TicksPerMicrosecond
+            + period.Ticks;
 
         var result = dt
             .AddMonths( normalizedMonths )
@@ -130,10 +130,10 @@ public static class DateTimeExtensions
     [Pure]
     public static DateTime SetMonth(this DateTime dt, IsoMonthOfYear month)
     {
-        var daysInMonth = DateTime.DaysInMonth( dt.Year, (int)month );
+        var daysInMonth = DateTime.DaysInMonth( dt.Year, ( int )month );
 
         return DateTime.SpecifyKind(
-            new DateTime( dt.Year, (int)month, Math.Min( dt.Day, daysInMonth ) ).Add( dt.TimeOfDay ),
+            new DateTime( dt.Year, ( int )month, Math.Min( dt.Day, daysInMonth ) ).Add( dt.TimeOfDay ),
             dt.Kind );
     }
 
@@ -151,9 +151,11 @@ public static class DateTimeExtensions
         var maxDay = DateTime.IsLeapYear( dt.Year ) ? ChronoConstants.DaysInLeapYear : ChronoConstants.DaysInYear;
 
         return DateTime.SpecifyKind(
-            (day < 1 ? new DateTime( dt.Year, (int)IsoMonthOfYear.January, day ) :
-                day > maxDay ? new DateTime( dt.Year, (int)IsoMonthOfYear.December, day - maxDay + ChronoConstants.DaysInDecember ) :
-                dt.GetStartOfYear().AddDays( day - 1 ))
+            (day < 1
+                ? new DateTime( dt.Year, ( int )IsoMonthOfYear.January, day )
+                : day > maxDay
+                    ? new DateTime( dt.Year, ( int )IsoMonthOfYear.December, day - maxDay + ChronoConstants.DaysInDecember )
+                    : dt.GetStartOfYear().AddDays( day - 1 ))
             .Add( dt.TimeOfDay ),
             dt.Kind );
     }
@@ -162,7 +164,7 @@ public static class DateTimeExtensions
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static DateTime SetTimeOfDay(this DateTime dt, TimeOfDay timeOfDay)
     {
-        return dt.GetStartOfDay().Add( (TimeSpan)timeOfDay );
+        return dt.GetStartOfDay().Add( ( TimeSpan )timeOfDay );
     }
 
     [Pure]

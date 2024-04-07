@@ -14,8 +14,8 @@ public class MathUtilsTests : TestsBase
     [InlineData( uint.MaxValue, uint.MaxValue )]
     [InlineData( long.MaxValue, long.MaxValue )]
     [InlineData( -1, 1 )]
-    [InlineData( int.MinValue, (ulong)int.MaxValue + 1 )]
-    [InlineData( long.MinValue, (ulong)long.MaxValue + 1 )]
+    [InlineData( int.MinValue, ( ulong )int.MaxValue + 1 )]
+    [InlineData( long.MinValue, ( ulong )long.MaxValue + 1 )]
     public void UnsignedAbs_ShouldReturnCorrectResult(long value, ulong expected)
     {
         var result = MathUtils.UnsignedAbs( value );
@@ -35,15 +35,15 @@ public class MathUtilsTests : TestsBase
 
         using ( new AssertionScope() )
         {
-            result.Should().Be( (ulong)value );
+            result.Should().Be( ( ulong )value );
             refSign.Should().Be( sign );
         }
     }
 
     [Theory]
     [InlineData( -1, 1 )]
-    [InlineData( int.MinValue, (ulong)int.MaxValue + 1 )]
-    [InlineData( long.MinValue, (ulong)long.MaxValue + 1 )]
+    [InlineData( int.MinValue, ( ulong )int.MaxValue + 1 )]
+    [InlineData( long.MinValue, ( ulong )long.MaxValue + 1 )]
     public void ToUnsigned_ShouldReturnCorrectResult_WhenValueIsNegative(long value, ulong expected)
     {
         var sign = Fixture.Create<int>();
@@ -72,7 +72,7 @@ public class MathUtilsTests : TestsBase
     [InlineData( 1, -1 )]
     [InlineData( uint.MaxValue, -uint.MaxValue )]
     [InlineData( long.MaxValue, -long.MaxValue )]
-    [InlineData( (ulong)long.MaxValue + 1, long.MinValue )]
+    [InlineData( ( ulong )long.MaxValue + 1, long.MinValue )]
     public void ToSigned_ShouldReturnCorrectResult_WhenValueIsNegative(ulong value, long expected)
     {
         var result = MathUtils.ToSigned( value, sign: -1 );
@@ -82,22 +82,22 @@ public class MathUtilsTests : TestsBase
     [Fact]
     public void ToSigned_ShouldThrowOverflowException_WhenValueIsNotNegativeAndExceedsInt64MaxValue()
     {
-        var action = Lambda.Of( () => MathUtils.ToSigned( (ulong)long.MaxValue + 1, sign: 1 ) );
+        var action = Lambda.Of( () => MathUtils.ToSigned( ( ulong )long.MaxValue + 1, sign: 1 ) );
         action.Should().ThrowExactly<OverflowException>();
     }
 
     [Fact]
     public void ToSigned_ShouldThrowOverflowException_WhenValueIsNegativeAndExceedsInt64MinValue()
     {
-        var action = Lambda.Of( () => MathUtils.ToSigned( (ulong)long.MaxValue + 2, sign: -1 ) );
+        var action = Lambda.Of( () => MathUtils.ToSigned( ( ulong )long.MaxValue + 2, sign: -1 ) );
         action.Should().ThrowExactly<OverflowException>();
     }
 
     [Theory]
     [InlineData( 0, 0, 0, 0 )]
     [InlineData( 100, 200, 0, 20000 )]
-    [InlineData( long.MaxValue, 1, 0, (ulong)long.MaxValue )]
-    [InlineData( 1, long.MaxValue, 0, (ulong)long.MaxValue )]
+    [InlineData( long.MaxValue, 1, 0, ( ulong )long.MaxValue )]
+    [InlineData( 1, long.MaxValue, 0, ( ulong )long.MaxValue )]
     [InlineData( 3, 6148914691236517205, 0, ulong.MaxValue )]
     [InlineData( 1L << 62, 4, 1, 0 )]
     [InlineData( long.MaxValue, long.MaxValue, 4611686018427387903UL, 1 )]
@@ -197,12 +197,7 @@ public class MathUtilsTests : TestsBase
     {
         var action = Lambda.Of(
             () => MathUtils.ConvertToFractions(
-                new[]
-                {
-                    Percent.One,
-                    Percent.One,
-                    Percent.Normalize( value )
-                },
+                new[] { Percent.One, Percent.One, Percent.Normalize( value ) },
                 new Fraction( 1, 1 ) ) );
 
         action.Should().ThrowExactly<ArgumentOutOfRangeException>();

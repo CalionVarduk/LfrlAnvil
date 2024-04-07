@@ -137,7 +137,8 @@ public readonly struct SqlParameterBinderCreationOptions
 
     public readonly record struct ParameterConfigurationLookups(
         Dictionary<string, SqlParameterConfiguration>? MembersByMemberName,
-        Dictionary<string, SqlParameterConfiguration>? SelectorsByParameterName)
+        Dictionary<string, SqlParameterConfiguration>? SelectorsByParameterName
+    )
     {
         [Pure]
         public SqlParameterConfiguration GetMemberConfiguration(string name)

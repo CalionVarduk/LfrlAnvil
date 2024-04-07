@@ -561,9 +561,9 @@ public sealed class ParsedExpressionFactoryBuilder
         prefixBuffer.Clear();
         postfixBuffer.Clear();
 
-        if ( prefixCollection.TargetType is not null &&
-            postfixCollection.TargetType is not null &&
-            prefixCollection.TargetType != postfixCollection.TargetType )
+        if ( prefixCollection.TargetType is not null
+            && postfixCollection.TargetType is not null
+            && prefixCollection.TargetType != postfixCollection.TargetType )
         {
             errorMessages = errorMessages.Extend(
                 Resources.TypeConverterCollectionsDoNotHaveTheSameTargetType(

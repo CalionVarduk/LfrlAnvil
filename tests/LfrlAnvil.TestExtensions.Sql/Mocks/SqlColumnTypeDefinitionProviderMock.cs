@@ -14,7 +14,7 @@ public sealed class SqlColumnTypeDefinitionProviderMock : SqlColumnTypeDefinitio
     {
         _definitionsByDataType = new Dictionary<SqlDataTypeMock, SqlColumnTypeDefinition>();
         foreach ( var definition in builder.DefaultDefinitions )
-            _definitionsByDataType.Add( (SqlDataTypeMock)definition.DataType, definition );
+            _definitionsByDataType.Add( ( SqlDataTypeMock )definition.DataType, definition );
     }
 
     [Pure]

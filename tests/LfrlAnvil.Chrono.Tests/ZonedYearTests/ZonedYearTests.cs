@@ -804,7 +804,7 @@ public class ZonedYearTests : TestsBase
         var dateTime = Fixture.Create<DateTime>();
         var timeZone = TimeZoneFactory.CreateRandom( Fixture );
         var sut = ZonedYear.Create( dateTime, timeZone );
-        var action = Lambda.Of( () => sut.GetWeekCount( (IsoDayOfWeek)weekStart ) );
+        var action = Lambda.Of( () => sut.GetWeekCount( ( IsoDayOfWeek )weekStart ) );
         action.Should().ThrowExactly<ArgumentOutOfRangeException>();
     }
 
@@ -822,9 +822,21 @@ public class ZonedYearTests : TestsBase
 
         using ( new AssertionScope() )
         {
-            result.Select( w => new { w.Year, w.Start.DayOfWeek, w.TimeZone } )
+            result.Select(
+                    w => new
+                    {
+                        w.Year,
+                        w.Start.DayOfWeek,
+                        w.TimeZone
+                    } )
                 .Should()
-                .AllBeEquivalentTo( new { sut.Year, DayOfWeek = weekStart, sut.TimeZone } );
+                .AllBeEquivalentTo(
+                    new
+                    {
+                        sut.Year,
+                        DayOfWeek = weekStart,
+                        sut.TimeZone
+                    } );
 
             result.Select( w => w.WeekOfYear ).Should().BeSequentiallyEqualTo( Enumerable.Range( 1, expectedWeekCount ) );
         }
@@ -838,7 +850,7 @@ public class ZonedYearTests : TestsBase
         var dateTime = Fixture.Create<DateTime>();
         var timeZone = TimeZoneFactory.CreateRandom( Fixture );
         var sut = ZonedYear.Create( dateTime, timeZone );
-        var action = Lambda.Of( () => sut.GetAllWeeks( (IsoDayOfWeek)weekStart ) );
+        var action = Lambda.Of( () => sut.GetAllWeeks( ( IsoDayOfWeek )weekStart ) );
         action.Should().ThrowExactly<ArgumentOutOfRangeException>();
     }
 
@@ -853,11 +865,21 @@ public class ZonedYearTests : TestsBase
 
         using ( new AssertionScope() )
         {
-            result.Select( d => new { d.Year, d.TimeZone } )
+            result.Select(
+                    d => new
+                    {
+                        d.Year,
+                        d.TimeZone
+                    } )
                 .Should()
-                .AllBeEquivalentTo( new { sut.Year, sut.TimeZone } );
+                .AllBeEquivalentTo(
+                    new
+                    {
+                        sut.Year,
+                        sut.TimeZone
+                    } );
 
-            result.Select( d => (int)d.Month ).Should().BeSequentiallyEqualTo( Enumerable.Range( 1, 12 ) );
+            result.Select( d => ( int )d.Month ).Should().BeSequentiallyEqualTo( Enumerable.Range( 1, 12 ) );
         }
     }
 
@@ -871,9 +893,19 @@ public class ZonedYearTests : TestsBase
 
         using ( new AssertionScope() )
         {
-            result.Select( d => new { d.Year, d.TimeZone } )
+            result.Select(
+                    d => new
+                    {
+                        d.Year,
+                        d.TimeZone
+                    } )
                 .Should()
-                .AllBeEquivalentTo( new { sut.Year, sut.TimeZone } );
+                .AllBeEquivalentTo(
+                    new
+                    {
+                        sut.Year,
+                        sut.TimeZone
+                    } );
 
             result.Select( d => d.DayOfYear ).Should().BeSequentiallyEqualTo( Enumerable.Range( 1, expectedDayCount ) );
         }

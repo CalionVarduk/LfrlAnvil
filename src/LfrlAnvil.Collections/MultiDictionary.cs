@@ -42,7 +42,7 @@ public class MultiDictionary<TKey, TValue> : IMultiDictionary<TKey, TValue>
     IEnumerable<IReadOnlyList<TValue>> IReadOnlyDictionary<TKey, IReadOnlyList<TValue>>.Values => _map.Values;
 
     bool ICollection<KeyValuePair<TKey, IReadOnlyList<TValue>>>.IsReadOnly =>
-        ((ICollection<KeyValuePair<TKey, ValuesCollection>>)_map).IsReadOnly;
+        (( ICollection<KeyValuePair<TKey, ValuesCollection>> )_map).IsReadOnly;
 
     [Pure]
     public bool ContainsKey(TKey key)
@@ -173,7 +173,7 @@ public class MultiDictionary<TKey, TValue> : IMultiDictionary<TKey, TValue>
     [Pure]
     public IEnumerator<KeyValuePair<TKey, IReadOnlyList<TValue>>> GetEnumerator()
     {
-        return _map.Select( static kv => KeyValuePair.Create( kv.Key, (IReadOnlyList<TValue>)kv.Value ) ).GetEnumerator();
+        return _map.Select( static kv => KeyValuePair.Create( kv.Key, ( IReadOnlyList<TValue> )kv.Value ) ).GetEnumerator();
     }
 
     [Pure]
@@ -216,7 +216,7 @@ public class MultiDictionary<TKey, TValue> : IMultiDictionary<TKey, TValue>
     [Pure]
     IEnumerator<IGrouping<TKey, TValue>> IEnumerable<IGrouping<TKey, TValue>>.GetEnumerator()
     {
-        return _map.Select( static kv => (IGrouping<TKey, TValue>)kv.Value ).GetEnumerator();
+        return _map.Select( static kv => ( IGrouping<TKey, TValue> )kv.Value ).GetEnumerator();
     }
 
     [Pure]

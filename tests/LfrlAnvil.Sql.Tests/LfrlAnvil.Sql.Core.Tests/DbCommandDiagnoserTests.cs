@@ -31,7 +31,7 @@ public class DbCommandDiagnoserTests : TestsBase
             var afterArgs = afterExecute.Verify().CallAt( 0 ).Exists().And.Arguments;
             afterArgs.ElementAtOrDefault( 0 ).Should().BeSameAs( command );
             afterArgs.ElementAtOrDefault( 1 ).Should().BeSameAs( args );
-            ((TimeSpan?)afterArgs.ElementAtOrDefault( 2 )).Should().BeGreaterOrEqualTo( TimeSpan.Zero );
+            (( TimeSpan? )afterArgs.ElementAtOrDefault( 2 )).Should().BeGreaterOrEqualTo( TimeSpan.Zero );
             afterArgs.ElementAtOrDefault( 3 ).Should().BeNull();
         }
     }
@@ -58,7 +58,7 @@ public class DbCommandDiagnoserTests : TestsBase
             var afterArgs = afterExecute.Verify().CallAt( 0 ).Exists().And.Arguments;
             afterArgs.ElementAtOrDefault( 0 ).Should().BeSameAs( command );
             afterArgs.ElementAtOrDefault( 1 ).Should().BeSameAs( args );
-            ((TimeSpan?)afterArgs.ElementAtOrDefault( 2 )).Should().BeGreaterOrEqualTo( TimeSpan.Zero );
+            (( TimeSpan? )afterArgs.ElementAtOrDefault( 2 )).Should().BeGreaterOrEqualTo( TimeSpan.Zero );
             afterArgs.ElementAtOrDefault( 3 ).Should().BeSameAs( exception );
         }
     }
@@ -85,7 +85,7 @@ public class DbCommandDiagnoserTests : TestsBase
             var afterArgs = afterExecute.Verify().CallAt( 0 ).Exists().And.Arguments;
             afterArgs.ElementAtOrDefault( 0 ).Should().BeSameAs( command );
             afterArgs.ElementAtOrDefault( 1 ).Should().BeSameAs( args );
-            ((TimeSpan?)afterArgs.ElementAtOrDefault( 2 )).Should().BeGreaterOrEqualTo( TimeSpan.Zero );
+            (( TimeSpan? )afterArgs.ElementAtOrDefault( 2 )).Should().BeGreaterOrEqualTo( TimeSpan.Zero );
             afterArgs.ElementAtOrDefault( 3 ).Should().BeNull();
         }
     }
@@ -120,7 +120,7 @@ public class DbCommandDiagnoserTests : TestsBase
             var afterArgs = afterExecute.Verify().CallAt( 0 ).Exists().And.Arguments;
             afterArgs.ElementAtOrDefault( 0 ).Should().BeSameAs( command );
             afterArgs.ElementAtOrDefault( 1 ).Should().BeSameAs( args );
-            ((TimeSpan?)afterArgs.ElementAtOrDefault( 2 )).Should().BeGreaterOrEqualTo( TimeSpan.Zero );
+            (( TimeSpan? )afterArgs.ElementAtOrDefault( 2 )).Should().BeGreaterOrEqualTo( TimeSpan.Zero );
             afterArgs.ElementAtOrDefault( 3 ).Should().BeSameAs( exception );
         }
     }
@@ -147,7 +147,7 @@ public class DbCommandDiagnoserTests : TestsBase
             var afterArgs = afterExecute.Verify().CallAt( 0 ).Exists().And.Arguments;
             afterArgs.ElementAtOrDefault( 0 ).Should().BeSameAs( command );
             afterArgs.ElementAtOrDefault( 1 ).Should().BeSameAs( args );
-            ((TimeSpan?)afterArgs.ElementAtOrDefault( 2 )).Should().BeGreaterOrEqualTo( TimeSpan.Zero );
+            (( TimeSpan? )afterArgs.ElementAtOrDefault( 2 )).Should().BeGreaterOrEqualTo( TimeSpan.Zero );
             afterArgs.ElementAtOrDefault( 3 ).Should().BeNull();
         }
     }
@@ -182,7 +182,7 @@ public class DbCommandDiagnoserTests : TestsBase
             var afterArgs = afterExecute.Verify().CallAt( 0 ).Exists().And.Arguments;
             afterArgs.ElementAtOrDefault( 0 ).Should().BeSameAs( command );
             afterArgs.ElementAtOrDefault( 1 ).Should().BeSameAs( args );
-            ((TimeSpan?)afterArgs.ElementAtOrDefault( 2 )).Should().BeGreaterOrEqualTo( TimeSpan.Zero );
+            (( TimeSpan? )afterArgs.ElementAtOrDefault( 2 )).Should().BeGreaterOrEqualTo( TimeSpan.Zero );
             afterArgs.ElementAtOrDefault( 3 ).Should().BeSameAs( exception );
         }
     }

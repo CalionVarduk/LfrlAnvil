@@ -49,12 +49,10 @@ public class SqliteForeignKeyBuilderTests : TestsBase
             sut.ReferencedIndex.Should().BeSameAs( ix1 );
 
             ix1.ReferencingObjects.Should()
-                .BeSequentiallyEqualTo(
-                    SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), ix1 ) );
+                .BeSequentiallyEqualTo( SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), ix1 ) );
 
             ix2.ReferencingObjects.Should()
-                .BeSequentiallyEqualTo(
-                    SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), ix2 ) );
+                .BeSequentiallyEqualTo( SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), ix2 ) );
 
             table.ReferencingObjects.Should().BeEmpty();
             schema.ReferencingObjects.Should().BeEmpty();
@@ -103,16 +101,13 @@ public class SqliteForeignKeyBuilderTests : TestsBase
             sut.ReferencedIndex.Should().BeSameAs( ix1 );
 
             ix1.ReferencingObjects.Should()
-                .BeSequentiallyEqualTo(
-                    SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), ix1 ) );
+                .BeSequentiallyEqualTo( SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), ix1 ) );
 
             ix2.ReferencingObjects.Should()
-                .BeSequentiallyEqualTo(
-                    SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), ix2 ) );
+                .BeSequentiallyEqualTo( SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), ix2 ) );
 
             table.ReferencingObjects.Should()
-                .BeSequentiallyEqualTo(
-                    SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), ix1 ) );
+                .BeSequentiallyEqualTo( SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), ix1 ) );
 
             schema.ReferencingObjects.Should().BeEmpty();
 
@@ -157,20 +152,16 @@ public class SqliteForeignKeyBuilderTests : TestsBase
             sut.ReferencedIndex.Should().BeSameAs( ix1 );
 
             ix1.ReferencingObjects.Should()
-                .BeSequentiallyEqualTo(
-                    SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), ix1 ) );
+                .BeSequentiallyEqualTo( SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), ix1 ) );
 
             ix2.ReferencingObjects.Should()
-                .BeSequentiallyEqualTo(
-                    SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), ix2 ) );
+                .BeSequentiallyEqualTo( SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), ix2 ) );
 
             table.ReferencingObjects.Should()
-                .BeSequentiallyEqualTo(
-                    SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), ix1 ) );
+                .BeSequentiallyEqualTo( SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), ix1 ) );
 
             schema.ReferencingObjects.Should()
-                .BeSequentiallyEqualTo(
-                    SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), ix1 ) );
+                .BeSequentiallyEqualTo( SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), ix1 ) );
 
             actions.Should().HaveCount( 1 );
             actions.ElementAtOrDefault( 0 )

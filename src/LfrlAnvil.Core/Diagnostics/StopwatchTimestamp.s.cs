@@ -7,14 +7,14 @@ namespace LfrlAnvil.Diagnostics;
 
 public static class StopwatchTimestamp
 {
-    public static readonly double TicksPerStopwatchTick = (double)TimeSpan.TicksPerSecond / Stopwatch.Frequency;
+    public static readonly double TicksPerStopwatchTick = ( double )TimeSpan.TicksPerSecond / Stopwatch.Frequency;
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static long GetTicks(long start, long end)
     {
         var elapsedTicks = unchecked( end - start ) * TicksPerStopwatchTick;
-        return unchecked( (long)elapsedTicks );
+        return unchecked( ( long )elapsedTicks );
     }
 
     [Pure]
@@ -29,7 +29,7 @@ public static class StopwatchTimestamp
     public static long GetStopwatchTicks(long ticks)
     {
         var stopwatchTicks = ticks / TicksPerStopwatchTick;
-        return checked( (long)stopwatchTicks );
+        return checked( ( long )stopwatchTicks );
     }
 
     [Pure]

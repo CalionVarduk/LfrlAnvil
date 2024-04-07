@@ -40,8 +40,7 @@ public readonly struct Pair<T1, T2> : IEquatable<Pair<T1, T2>>
     [Pure]
     public bool Equals(Pair<T1, T2> other)
     {
-        return Equality.Create( First, other.First ).Result &&
-            Equality.Create( Second, other.Second ).Result;
+        return Equality.Create( First, other.First ).Result && Equality.Create( Second, other.Second ).Result;
     }
 
     [Pure]

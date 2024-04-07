@@ -56,7 +56,7 @@ public class TreeDictionary<TKey, TValue> : ITreeDictionary<TKey, TValue>
     ICollection<TValue> IDictionary<TKey, TValue>.Values => Values.ToList();
 
     bool ICollection<KeyValuePair<TKey, TValue>>.IsReadOnly =>
-        ((ICollection<KeyValuePair<TKey, TreeDictionaryNode<TKey, TValue>>>)_map).IsReadOnly;
+        (( ICollection<KeyValuePair<TKey, TreeDictionaryNode<TKey, TValue>>> )_map).IsReadOnly;
 
     public TreeDictionaryNode<TKey, TValue> SetRoot(TKey key, TValue value)
     {
@@ -721,8 +721,7 @@ public class TreeDictionary<TKey, TValue> : ITreeDictionary<TKey, TValue>
 
     bool ICollection<KeyValuePair<TKey, TValue>>.Remove(KeyValuePair<TKey, TValue> item)
     {
-        if ( ! _map.TryGetValue( item.Key, out var node ) ||
-            ! EqualityComparer<TValue>.Default.Equals( node.Value, item.Value ) )
+        if ( ! _map.TryGetValue( item.Key, out var node ) || ! EqualityComparer<TValue>.Default.Equals( node.Value, item.Value ) )
             return false;
 
         return Remove( item.Key );

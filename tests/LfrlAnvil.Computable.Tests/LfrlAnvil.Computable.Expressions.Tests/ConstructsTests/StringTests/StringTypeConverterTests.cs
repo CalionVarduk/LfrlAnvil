@@ -47,7 +47,7 @@ public class StringTypeConverterTests : TypeConvertersTestsBase
     public static void TypeConverterProcess_ShouldThrowArgumentNullException_WhenOperandIsConstantAndNull()
     {
         var sut = new ParsedExpressionToStringTypeConverter();
-        var operand = CreateConstantOperand( (object?)null );
+        var operand = CreateConstantOperand( ( object? )null );
 
         var action = Lambda.Of( () => sut.Process( operand ) );
 

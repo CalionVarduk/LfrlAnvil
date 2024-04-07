@@ -32,18 +32,18 @@ public static class ChronoConstants
     public const int DaysInNovember = 30;
     public const int DaysInDecember = 31;
 
-    public const int DaysInYear = DaysInJanuary +
-        DaysInFebruary +
-        DaysInMarch +
-        DaysInApril +
-        DaysInMay +
-        DaysInJune +
-        DaysInJuly +
-        DaysInAugust +
-        DaysInSeptember +
-        DaysInOctober +
-        DaysInNovember +
-        DaysInDecember;
+    public const int DaysInYear = DaysInJanuary
+        + DaysInFebruary
+        + DaysInMarch
+        + DaysInApril
+        + DaysInMay
+        + DaysInJune
+        + DaysInJuly
+        + DaysInAugust
+        + DaysInSeptember
+        + DaysInOctober
+        + DaysInNovember
+        + DaysInDecember;
 
     public const int DaysInLeapYear = DaysInYear - DaysInFebruary + DaysInLeapFebruary;
 }

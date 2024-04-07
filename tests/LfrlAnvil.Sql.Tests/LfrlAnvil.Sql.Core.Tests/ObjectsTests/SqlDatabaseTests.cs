@@ -35,8 +35,8 @@ public class SqlDatabaseTests : TestsBase
             sut.Schemas.Count.Should().Be( 1 );
             sut.Schemas.Default.Name.Should().Be( "common" );
             sut.Schemas.Should().BeSequentiallyEqualTo( sut.Schemas.Default );
-            ((ISqlDatabaseConnector<DbConnectionMock>)sut.Connector).Database.Should().BeSameAs( sut );
-            ((ISqlDatabaseConnector<DbConnection>)sut.Connector).Database.Should().BeSameAs( sut );
+            (( ISqlDatabaseConnector<DbConnectionMock> )sut.Connector).Database.Should().BeSameAs( sut );
+            (( ISqlDatabaseConnector<DbConnection> )sut.Connector).Database.Should().BeSameAs( sut );
             sut.Connector.Database.Should().BeSameAs( sut );
         }
     }

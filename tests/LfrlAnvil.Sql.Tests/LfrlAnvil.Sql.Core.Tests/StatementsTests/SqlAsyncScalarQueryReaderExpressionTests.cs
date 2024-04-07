@@ -18,7 +18,7 @@ public class SqlAsyncScalarQueryReaderExpressionTests : TestsBase
         var resultType = typeof( string );
 
         var readResultExpression =
-            Lambda.ExpressionOf( (DbDataReaderMock r) => new SqlScalarQueryResult<string>( (string)r.GetValue( 0 ) ) );
+            Lambda.ExpressionOf( (DbDataReaderMock r) => new SqlScalarQueryResult<string>( ( string )r.GetValue( 0 ) ) );
 
         var expression = SqlAsyncScalarQueryLambdaExpression<DbDataReaderMock, string>.Create( readResultExpression );
         var @base = new SqlAsyncScalarQueryReaderExpression( dialect, resultType, expression );

@@ -355,8 +355,7 @@ public class ZonedDateTimeTestsData
         return new TheoryData<DateTime, TimeZoneInfo, TimeZoneInfo, DateTime>
         {
             {
-                dt, tz1, TimeZoneFactory.Create( 0, TimeZoneFactory.CreateInfiniteRule( tStart, tEnd ) ),
-                dt.Subtract( tz1.BaseUtcOffset )
+                dt, tz1, TimeZoneFactory.Create( 0, TimeZoneFactory.CreateInfiniteRule( tStart, tEnd ) ), dt.Subtract( tz1.BaseUtcOffset )
             },
             {
                 dt, tz1, TimeZoneFactory.Create( 1, TimeZoneFactory.CreateInfiniteRule( tStart, tEnd ) ),
@@ -374,10 +373,7 @@ public class ZonedDateTimeTestsData
                 dt, tz1, TimeZoneFactory.Create( -10, TimeZoneFactory.CreateInfiniteRule( tStart, tEnd ) ),
                 dt.Subtract( tz1.BaseUtcOffset + TimeSpan.FromHours( 10 ) )
             },
-            {
-                dt, tz2, TimeZoneFactory.Create( 0, TimeZoneFactory.CreateInfiniteRule( tStart, tEnd ) ),
-                dt.Subtract( tz2.BaseUtcOffset )
-            },
+            { dt, tz2, TimeZoneFactory.Create( 0, TimeZoneFactory.CreateInfiniteRule( tStart, tEnd ) ), dt.Subtract( tz2.BaseUtcOffset ) },
             {
                 dt, tz2, TimeZoneFactory.Create( 1, TimeZoneFactory.CreateInfiniteRule( tStart, tEnd ) ),
                 dt.Subtract( tz2.BaseUtcOffset - TimeSpan.FromHours( 1 ) )
@@ -418,10 +414,7 @@ public class ZonedDateTimeTestsData
                 dt, tz1, TimeZoneFactory.Create( 10, TimeZoneFactory.CreateInfiniteRule( tStart, tEnd ) ),
                 dt.Subtract( tz1.BaseUtcOffset - TimeSpan.FromHours( 11 ) )
             },
-            {
-                dt, tz1, TimeZoneFactory.Create( -1, TimeZoneFactory.CreateInfiniteRule( tStart, tEnd ) ),
-                dt.Subtract( tz1.BaseUtcOffset )
-            },
+            { dt, tz1, TimeZoneFactory.Create( -1, TimeZoneFactory.CreateInfiniteRule( tStart, tEnd ) ), dt.Subtract( tz1.BaseUtcOffset ) },
             {
                 dt, tz1, TimeZoneFactory.Create( -10, TimeZoneFactory.CreateInfiniteRule( tStart, tEnd ) ),
                 dt.Subtract( tz1.BaseUtcOffset + TimeSpan.FromHours( 9 ) )
@@ -438,10 +431,7 @@ public class ZonedDateTimeTestsData
                 dt, tz2, TimeZoneFactory.Create( 10, TimeZoneFactory.CreateInfiniteRule( tStart, tEnd ) ),
                 dt.Subtract( tz2.BaseUtcOffset - TimeSpan.FromHours( 11 ) )
             },
-            {
-                dt, tz2, TimeZoneFactory.Create( -1, TimeZoneFactory.CreateInfiniteRule( tStart, tEnd ) ),
-                dt.Subtract( tz2.BaseUtcOffset )
-            },
+            { dt, tz2, TimeZoneFactory.Create( -1, TimeZoneFactory.CreateInfiniteRule( tStart, tEnd ) ), dt.Subtract( tz2.BaseUtcOffset ) },
             {
                 dt, tz2, TimeZoneFactory.Create( -10, TimeZoneFactory.CreateInfiniteRule( tStart, tEnd ) ),
                 dt.Subtract( tz2.BaseUtcOffset + TimeSpan.FromHours( 9 ) )
@@ -472,61 +462,27 @@ public class ZonedDateTimeTestsData
         return new TheoryData<DateTime, TimeZoneInfo, TimeZoneInfo, DateTime, bool>
         {
             {
-                new DateTime( 2021, 9, 26, 13, 59, 59, 999 ).AddTicks( 9999 ),
-                tz1,
-                timeZoneWithPositiveDaylightSaving,
-                new DateTime( 2021, 9, 26, 11, 59, 59, 999 ).AddTicks( 9999 ),
-                false
+                new DateTime( 2021, 9, 26, 13, 59, 59, 999 ).AddTicks( 9999 ), tz1, timeZoneWithPositiveDaylightSaving,
+                new DateTime( 2021, 9, 26, 11, 59, 59, 999 ).AddTicks( 9999 ), false
+            },
+            { new DateTime( 2021, 9, 26, 14, 0, 0 ), tz1, timeZoneWithPositiveDaylightSaving, new DateTime( 2021, 9, 26, 13, 0, 0 ), true },
+            {
+                new DateTime( 2021, 9, 26, 15, 59, 59, 999 ).AddTicks( 9999 ), tz2, timeZoneWithPositiveDaylightSaving,
+                new DateTime( 2021, 9, 26, 11, 59, 59, 999 ).AddTicks( 9999 ), false
+            },
+            { new DateTime( 2021, 9, 26, 16, 0, 0 ), tz2, timeZoneWithPositiveDaylightSaving, new DateTime( 2021, 9, 26, 13, 0, 0 ), true },
+            {
+                new DateTime( 2021, 3, 26, 14, 59, 59, 999 ).AddTicks( 9999 ), tz1, timeZoneWithNegativeDaylightSaving,
+                new DateTime( 2021, 3, 26, 11, 59, 59, 999 ).AddTicks( 9999 ), true
             },
             {
-                new DateTime( 2021, 9, 26, 14, 0, 0 ),
-                tz1,
-                timeZoneWithPositiveDaylightSaving,
-                new DateTime( 2021, 9, 26, 13, 0, 0 ),
-                true
+                new DateTime( 2021, 3, 26, 15, 0, 0 ), tz1, timeZoneWithNegativeDaylightSaving, new DateTime( 2021, 3, 26, 13, 0, 0 ), false
             },
             {
-                new DateTime( 2021, 9, 26, 15, 59, 59, 999 ).AddTicks( 9999 ),
-                tz2,
-                timeZoneWithPositiveDaylightSaving,
-                new DateTime( 2021, 9, 26, 11, 59, 59, 999 ).AddTicks( 9999 ),
-                false
+                new DateTime( 2021, 3, 26, 16, 59, 59, 999 ).AddTicks( 9999 ), tz2, timeZoneWithNegativeDaylightSaving,
+                new DateTime( 2021, 3, 26, 11, 59, 59, 999 ).AddTicks( 9999 ), true
             },
-            {
-                new DateTime( 2021, 9, 26, 16, 0, 0 ),
-                tz2,
-                timeZoneWithPositiveDaylightSaving,
-                new DateTime( 2021, 9, 26, 13, 0, 0 ),
-                true
-            },
-            {
-                new DateTime( 2021, 3, 26, 14, 59, 59, 999 ).AddTicks( 9999 ),
-                tz1,
-                timeZoneWithNegativeDaylightSaving,
-                new DateTime( 2021, 3, 26, 11, 59, 59, 999 ).AddTicks( 9999 ),
-                true
-            },
-            {
-                new DateTime( 2021, 3, 26, 15, 0, 0 ),
-                tz1,
-                timeZoneWithNegativeDaylightSaving,
-                new DateTime( 2021, 3, 26, 13, 0, 0 ),
-                false
-            },
-            {
-                new DateTime( 2021, 3, 26, 16, 59, 59, 999 ).AddTicks( 9999 ),
-                tz2,
-                timeZoneWithNegativeDaylightSaving,
-                new DateTime( 2021, 3, 26, 11, 59, 59, 999 ).AddTicks( 9999 ),
-                true
-            },
-            {
-                new DateTime( 2021, 3, 26, 17, 0, 0 ),
-                tz2,
-                timeZoneWithNegativeDaylightSaving,
-                new DateTime( 2021, 3, 26, 13, 0, 0 ),
-                false
-            }
+            { new DateTime( 2021, 3, 26, 17, 0, 0 ), tz2, timeZoneWithNegativeDaylightSaving, new DateTime( 2021, 3, 26, 13, 0, 0 ), false }
         };
     }
 
@@ -555,33 +511,25 @@ public class ZonedDateTimeTestsData
             { new DateTime( 2021, 3, 26, 13, 0, 0 ), tz1, timeZoneWithPositiveDaylightSaving, new DateTime( 2021, 3, 26, 11, 0, 0 ) },
             { new DateTime( 2021, 3, 26, 13, 30, 0 ), tz1, timeZoneWithPositiveDaylightSaving, new DateTime( 2021, 3, 26, 11, 30, 0 ) },
             {
-                new DateTime( 2021, 3, 26, 13, 59, 59, 999 ).AddTicks( 9999 ),
-                tz1,
-                timeZoneWithPositiveDaylightSaving,
+                new DateTime( 2021, 3, 26, 13, 59, 59, 999 ).AddTicks( 9999 ), tz1, timeZoneWithPositiveDaylightSaving,
                 new DateTime( 2021, 3, 26, 11, 59, 59, 999 ).AddTicks( 9999 )
             },
             { new DateTime( 2021, 3, 26, 15, 0, 0 ), tz2, timeZoneWithPositiveDaylightSaving, new DateTime( 2021, 3, 26, 11, 0, 0 ) },
             { new DateTime( 2021, 3, 26, 15, 30, 0 ), tz2, timeZoneWithPositiveDaylightSaving, new DateTime( 2021, 3, 26, 11, 30, 0 ) },
             {
-                new DateTime( 2021, 3, 26, 15, 59, 59, 999 ).AddTicks( 9999 ),
-                tz2,
-                timeZoneWithPositiveDaylightSaving,
+                new DateTime( 2021, 3, 26, 15, 59, 59, 999 ).AddTicks( 9999 ), tz2, timeZoneWithPositiveDaylightSaving,
                 new DateTime( 2021, 3, 26, 11, 59, 59, 999 ).AddTicks( 9999 )
             },
             { new DateTime( 2021, 9, 26, 13, 0, 0 ), tz1, timeZoneWithNegativeDaylightSaving, new DateTime( 2021, 9, 26, 11, 0, 0 ) },
             { new DateTime( 2021, 9, 26, 13, 30, 0 ), tz1, timeZoneWithNegativeDaylightSaving, new DateTime( 2021, 9, 26, 11, 30, 0 ) },
             {
-                new DateTime( 2021, 9, 26, 13, 59, 59, 999 ).AddTicks( 9999 ),
-                tz1,
-                timeZoneWithNegativeDaylightSaving,
+                new DateTime( 2021, 9, 26, 13, 59, 59, 999 ).AddTicks( 9999 ), tz1, timeZoneWithNegativeDaylightSaving,
                 new DateTime( 2021, 9, 26, 11, 59, 59, 999 ).AddTicks( 9999 )
             },
             { new DateTime( 2021, 9, 26, 15, 0, 0 ), tz2, timeZoneWithNegativeDaylightSaving, new DateTime( 2021, 9, 26, 11, 0, 0 ) },
             { new DateTime( 2021, 9, 26, 15, 30, 0 ), tz2, timeZoneWithNegativeDaylightSaving, new DateTime( 2021, 9, 26, 11, 30, 0 ) },
             {
-                new DateTime( 2021, 9, 26, 15, 59, 59, 999 ).AddTicks( 9999 ),
-                tz2,
-                timeZoneWithNegativeDaylightSaving,
+                new DateTime( 2021, 9, 26, 15, 59, 59, 999 ).AddTicks( 9999 ), tz2, timeZoneWithNegativeDaylightSaving,
                 new DateTime( 2021, 9, 26, 11, 59, 59, 999 ).AddTicks( 9999 )
             }
         };
@@ -610,61 +558,29 @@ public class ZonedDateTimeTestsData
         return new TheoryData<DateTime, TimeZoneInfo, TimeZoneInfo, DateTime, bool>
         {
             {
-                new DateTime( 2021, 3, 26, 11, 59, 59, 999 ).AddTicks( 9999 ),
-                tz1,
-                timeZoneWithPositiveDaylightSaving,
-                new DateTime( 2021, 3, 26, 10, 59, 59, 999 ).AddTicks( 9999 ),
-                true
+                new DateTime( 2021, 3, 26, 11, 59, 59, 999 ).AddTicks( 9999 ), tz1, timeZoneWithPositiveDaylightSaving,
+                new DateTime( 2021, 3, 26, 10, 59, 59, 999 ).AddTicks( 9999 ), true
             },
             {
-                new DateTime( 2021, 3, 26, 14, 0, 0 ),
-                tz1,
-                timeZoneWithPositiveDaylightSaving,
-                new DateTime( 2021, 3, 26, 12, 0, 0 ),
-                false
+                new DateTime( 2021, 3, 26, 14, 0, 0 ), tz1, timeZoneWithPositiveDaylightSaving, new DateTime( 2021, 3, 26, 12, 0, 0 ), false
             },
             {
-                new DateTime( 2021, 3, 26, 13, 59, 59, 999 ).AddTicks( 9999 ),
-                tz2,
-                timeZoneWithPositiveDaylightSaving,
-                new DateTime( 2021, 3, 26, 10, 59, 59, 999 ).AddTicks( 9999 ),
-                true
+                new DateTime( 2021, 3, 26, 13, 59, 59, 999 ).AddTicks( 9999 ), tz2, timeZoneWithPositiveDaylightSaving,
+                new DateTime( 2021, 3, 26, 10, 59, 59, 999 ).AddTicks( 9999 ), true
             },
             {
-                new DateTime( 2021, 3, 26, 16, 0, 0 ),
-                tz2,
-                timeZoneWithPositiveDaylightSaving,
-                new DateTime( 2021, 3, 26, 12, 0, 0 ),
-                false
+                new DateTime( 2021, 3, 26, 16, 0, 0 ), tz2, timeZoneWithPositiveDaylightSaving, new DateTime( 2021, 3, 26, 12, 0, 0 ), false
             },
             {
-                new DateTime( 2021, 9, 26, 12, 59, 59, 999 ).AddTicks( 9999 ),
-                tz1,
-                timeZoneWithNegativeDaylightSaving,
-                new DateTime( 2021, 9, 26, 10, 59, 59, 999 ).AddTicks( 9999 ),
-                false
+                new DateTime( 2021, 9, 26, 12, 59, 59, 999 ).AddTicks( 9999 ), tz1, timeZoneWithNegativeDaylightSaving,
+                new DateTime( 2021, 9, 26, 10, 59, 59, 999 ).AddTicks( 9999 ), false
             },
+            { new DateTime( 2021, 9, 26, 15, 0, 0 ), tz1, timeZoneWithNegativeDaylightSaving, new DateTime( 2021, 9, 26, 12, 0, 0 ), true },
             {
-                new DateTime( 2021, 9, 26, 15, 0, 0 ),
-                tz1,
-                timeZoneWithNegativeDaylightSaving,
-                new DateTime( 2021, 9, 26, 12, 0, 0 ),
-                true
+                new DateTime( 2021, 9, 26, 14, 59, 59, 999 ).AddTicks( 9999 ), tz2, timeZoneWithNegativeDaylightSaving,
+                new DateTime( 2021, 9, 26, 10, 59, 59, 999 ).AddTicks( 9999 ), false
             },
-            {
-                new DateTime( 2021, 9, 26, 14, 59, 59, 999 ).AddTicks( 9999 ),
-                tz2,
-                timeZoneWithNegativeDaylightSaving,
-                new DateTime( 2021, 9, 26, 10, 59, 59, 999 ).AddTicks( 9999 ),
-                false
-            },
-            {
-                new DateTime( 2021, 9, 26, 17, 0, 0 ),
-                tz2,
-                timeZoneWithNegativeDaylightSaving,
-                new DateTime( 2021, 9, 26, 12, 0, 0 ),
-                true
-            }
+            { new DateTime( 2021, 9, 26, 17, 0, 0 ), tz2, timeZoneWithNegativeDaylightSaving, new DateTime( 2021, 9, 26, 12, 0, 0 ), true }
         };
     }
 
@@ -676,201 +592,163 @@ public class ZonedDateTimeTestsData
         return new TheoryData<DateTime, TimeZoneInfo, long, DateTime>
         {
             {
-                new DateTime( 2021, 8, 12, 12, 30, 17, 123 ).AddTicks( 99 ),
-                TimeZoneInfo.Utc,
-                0,
+                new DateTime( 2021, 8, 12, 12, 30, 17, 123 ).AddTicks( 99 ), TimeZoneInfo.Utc, 0,
                 new DateTime( 2021, 8, 12, 12, 30, 17, 123 ).AddTicks( 99 )
             },
             {
-                new DateTime( 2021, 8, 12, 12, 30, 17, 123 ).AddTicks( 99 ),
-                TimeZoneFactory.Create( 1 ),
-                1,
+                new DateTime( 2021, 8, 12, 12, 30, 17, 123 ).AddTicks( 99 ), TimeZoneFactory.Create( 1 ), 1,
                 new DateTime( 2021, 8, 12, 12, 30, 17, 123 ).AddTicks( 100 )
             },
             {
-                new DateTime( 2021, 8, 12, 12, 30, 17, 123 ).AddTicks( 99 ),
-                TimeZoneFactory.Create( 1 ),
-                -1,
+                new DateTime( 2021, 8, 12, 12, 30, 17, 123 ).AddTicks( 99 ), TimeZoneFactory.Create( 1 ), -1,
                 new DateTime( 2021, 8, 12, 12, 30, 17, 123 ).AddTicks( 98 )
             },
             {
-                new DateTime( 2021, 8, 12, 12, 30, 17, 123 ).AddTicks( 99 ),
-                TimeZoneFactory.Create( 2 ),
-                900610010001,
+                new DateTime( 2021, 8, 12, 12, 30, 17, 123 ).AddTicks( 99 ), TimeZoneFactory.Create( 2 ), 900610010001,
                 new DateTime( 2021, 8, 13, 13, 31, 18, 124 ).AddTicks( 100 )
             },
             {
-                new DateTime( 2021, 8, 12, 12, 30, 17, 123 ).AddTicks( 99 ),
-                TimeZoneFactory.Create( 2 ),
-                -900610010001,
+                new DateTime( 2021, 8, 12, 12, 30, 17, 123 ).AddTicks( 99 ), TimeZoneFactory.Create( 2 ), -900610010001,
                 new DateTime( 2021, 8, 11, 11, 29, 16, 122 ).AddTicks( 98 )
             },
             {
                 new DateTime( 2021, 8, 12, 12, 30, 17, 123 ).AddTicks( 99 ),
-                TimeZoneFactory.Create( 3, TimeZoneFactory.CreateInfiniteRule( tStart, tEnd ) ),
-                900610010002,
+                TimeZoneFactory.Create( 3, TimeZoneFactory.CreateInfiniteRule( tStart, tEnd ) ), 900610010002,
                 new DateTime( 2021, 8, 13, 13, 31, 18, 124 ).AddTicks( 101 )
             },
             {
                 new DateTime( 2021, 8, 12, 12, 30, 17, 123 ).AddTicks( 99 ),
-                TimeZoneFactory.Create( 3, TimeZoneFactory.CreateInfiniteRule( tStart, tEnd ) ),
-                -900610010002,
+                TimeZoneFactory.Create( 3, TimeZoneFactory.CreateInfiniteRule( tStart, tEnd ) ), -900610010002,
                 new DateTime( 2021, 8, 11, 11, 29, 16, 122 ).AddTicks( 97 )
             },
             {
                 new DateTime( 2021, 8, 12, 12, 30, 17, 123 ).AddTicks( 99 ),
-                TimeZoneFactory.Create( 3, TimeZoneFactory.CreateInfiniteRule( tStart, tEnd, daylightDeltaInHours: -1 ) ),
-                900610010002,
+                TimeZoneFactory.Create( 3, TimeZoneFactory.CreateInfiniteRule( tStart, tEnd, daylightDeltaInHours: -1 ) ), 900610010002,
                 new DateTime( 2021, 8, 13, 13, 31, 18, 124 ).AddTicks( 101 )
             },
             {
                 new DateTime( 2021, 8, 12, 12, 30, 17, 123 ).AddTicks( 99 ),
-                TimeZoneFactory.Create( 3, TimeZoneFactory.CreateInfiniteRule( tStart, tEnd, daylightDeltaInHours: -1 ) ),
-                -900610010002,
+                TimeZoneFactory.Create( 3, TimeZoneFactory.CreateInfiniteRule( tStart, tEnd, daylightDeltaInHours: -1 ) ), -900610010002,
                 new DateTime( 2021, 8, 11, 11, 29, 16, 122 ).AddTicks( 97 )
             },
             {
                 new DateTime( 2021, 8, 12, 12, 30, 17, 123 ).AddTicks( 99 ),
-                TimeZoneFactory.Create( 4, TimeZoneFactory.CreateInfiniteRule( tEnd, tStart ) ),
-                900610010002,
+                TimeZoneFactory.Create( 4, TimeZoneFactory.CreateInfiniteRule( tEnd, tStart ) ), 900610010002,
                 new DateTime( 2021, 8, 13, 13, 31, 18, 124 ).AddTicks( 101 )
             },
             {
                 new DateTime( 2021, 8, 12, 12, 30, 17, 123 ).AddTicks( 99 ),
-                TimeZoneFactory.Create( 4, TimeZoneFactory.CreateInfiniteRule( tEnd, tStart ) ),
-                -900610010002,
+                TimeZoneFactory.Create( 4, TimeZoneFactory.CreateInfiniteRule( tEnd, tStart ) ), -900610010002,
                 new DateTime( 2021, 8, 11, 11, 29, 16, 122 ).AddTicks( 97 )
             },
             {
                 new DateTime( 2021, 8, 12, 12, 30, 17, 123 ).AddTicks( 99 ),
-                TimeZoneFactory.Create( 4, TimeZoneFactory.CreateInfiniteRule( tEnd, tStart, daylightDeltaInHours: -1 ) ),
-                900610010002,
+                TimeZoneFactory.Create( 4, TimeZoneFactory.CreateInfiniteRule( tEnd, tStart, daylightDeltaInHours: -1 ) ), 900610010002,
                 new DateTime( 2021, 8, 13, 13, 31, 18, 124 ).AddTicks( 101 )
             },
             {
                 new DateTime( 2021, 8, 12, 12, 30, 17, 123 ).AddTicks( 99 ),
-                TimeZoneFactory.Create( 4, TimeZoneFactory.CreateInfiniteRule( tEnd, tStart, daylightDeltaInHours: -1 ) ),
-                -900610010002,
+                TimeZoneFactory.Create( 4, TimeZoneFactory.CreateInfiniteRule( tEnd, tStart, daylightDeltaInHours: -1 ) ), -900610010002,
                 new DateTime( 2021, 8, 11, 11, 29, 16, 122 ).AddTicks( 97 )
             },
             {
                 new DateTime( 2021, 8, 12, 12, 30, 17, 123 ).AddTicks( 99 ),
-                TimeZoneFactory.Create( 5, TimeZoneFactory.CreateInfiniteRule( tStart, tEnd ) ),
-                315360000000000,
+                TimeZoneFactory.Create( 5, TimeZoneFactory.CreateInfiniteRule( tStart, tEnd ) ), 315360000000000,
                 new DateTime( 2022, 8, 12, 12, 30, 17, 123 ).AddTicks( 99 )
             },
             {
                 new DateTime( 2021, 8, 12, 12, 30, 17, 123 ).AddTicks( 99 ),
-                TimeZoneFactory.Create( 5, TimeZoneFactory.CreateInfiniteRule( tStart, tEnd ) ),
-                -315360000000000,
+                TimeZoneFactory.Create( 5, TimeZoneFactory.CreateInfiniteRule( tStart, tEnd ) ), -315360000000000,
                 new DateTime( 2020, 8, 12, 12, 30, 17, 123 ).AddTicks( 99 )
             },
             {
                 new DateTime( 2021, 8, 12, 12, 30, 17, 123 ).AddTicks( 99 ),
-                TimeZoneFactory.Create( 5, TimeZoneFactory.CreateInfiniteRule( tEnd, tStart ) ),
-                315360000000000,
+                TimeZoneFactory.Create( 5, TimeZoneFactory.CreateInfiniteRule( tEnd, tStart ) ), 315360000000000,
                 new DateTime( 2022, 8, 12, 12, 30, 17, 123 ).AddTicks( 99 )
             },
             {
                 new DateTime( 2021, 8, 12, 12, 30, 17, 123 ).AddTicks( 99 ),
-                TimeZoneFactory.Create( 5, TimeZoneFactory.CreateInfiniteRule( tEnd, tStart ) ),
-                -315360000000000,
+                TimeZoneFactory.Create( 5, TimeZoneFactory.CreateInfiniteRule( tEnd, tStart ) ), -315360000000000,
                 new DateTime( 2020, 8, 12, 12, 30, 17, 123 ).AddTicks( 99 )
             },
             {
                 new DateTime( 2021, 3, 25, 11, 30, 10, 100 ),
-                TimeZoneFactory.Create( 2, TimeZoneFactory.CreateInfiniteRule( tStart, tEnd ) ),
-                881898999999,
+                TimeZoneFactory.Create( 2, TimeZoneFactory.CreateInfiniteRule( tStart, tEnd ) ), 881898999999,
                 new DateTime( 2021, 3, 26, 11, 59, 59, 999 ).AddTicks( 9999 )
             },
             {
                 new DateTime( 2021, 3, 27, 13, 29, 49, 899 ).AddTicks( 9999 ),
-                TimeZoneFactory.Create( 2, TimeZoneFactory.CreateInfiniteRule( tStart, tEnd ) ),
-                -881898999999,
+                TimeZoneFactory.Create( 2, TimeZoneFactory.CreateInfiniteRule( tStart, tEnd ) ), -881898999999,
                 new DateTime( 2021, 3, 26, 13, 0, 0 )
             },
             {
                 new DateTime( 2021, 9, 25, 10, 30, 10, 100 ),
-                TimeZoneFactory.Create( 2, TimeZoneFactory.CreateInfiniteRule( tStart, tEnd ) ),
-                881898999999,
+                TimeZoneFactory.Create( 2, TimeZoneFactory.CreateInfiniteRule( tStart, tEnd ) ), 881898999999,
                 new DateTime( 2021, 9, 26, 10, 59, 59, 999 ).AddTicks( 9999 )
             },
             {
                 new DateTime( 2021, 9, 27, 12, 29, 49, 899 ).AddTicks( 9999 ),
-                TimeZoneFactory.Create( 2, TimeZoneFactory.CreateInfiniteRule( tStart, tEnd ) ),
-                -881898999999,
+                TimeZoneFactory.Create( 2, TimeZoneFactory.CreateInfiniteRule( tStart, tEnd ) ), -881898999999,
                 new DateTime( 2021, 9, 26, 12, 0, 0 )
             },
             {
                 new DateTime( 2021, 9, 25, 11, 30, 10, 100 ),
-                TimeZoneFactory.Create( 2, TimeZoneFactory.CreateInfiniteRule( tEnd, tStart ) ),
-                881898999999,
+                TimeZoneFactory.Create( 2, TimeZoneFactory.CreateInfiniteRule( tEnd, tStart ) ), 881898999999,
                 new DateTime( 2021, 9, 26, 11, 59, 59, 999 ).AddTicks( 9999 )
             },
             {
                 new DateTime( 2021, 9, 27, 13, 29, 49, 899 ).AddTicks( 9999 ),
-                TimeZoneFactory.Create( 2, TimeZoneFactory.CreateInfiniteRule( tEnd, tStart ) ),
-                -881898999999,
+                TimeZoneFactory.Create( 2, TimeZoneFactory.CreateInfiniteRule( tEnd, tStart ) ), -881898999999,
                 new DateTime( 2021, 9, 26, 13, 0, 0 )
             },
             {
                 new DateTime( 2021, 3, 25, 10, 30, 10, 100 ),
-                TimeZoneFactory.Create( 2, TimeZoneFactory.CreateInfiniteRule( tEnd, tStart ) ),
-                881898999999,
+                TimeZoneFactory.Create( 2, TimeZoneFactory.CreateInfiniteRule( tEnd, tStart ) ), 881898999999,
                 new DateTime( 2021, 3, 26, 10, 59, 59, 999 ).AddTicks( 9999 )
             },
             {
                 new DateTime( 2021, 3, 27, 12, 29, 49, 899 ).AddTicks( 9999 ),
-                TimeZoneFactory.Create( 2, TimeZoneFactory.CreateInfiniteRule( tEnd, tStart ) ),
-                -881898999999,
+                TimeZoneFactory.Create( 2, TimeZoneFactory.CreateInfiniteRule( tEnd, tStart ) ), -881898999999,
                 new DateTime( 2021, 3, 26, 12, 0, 0 )
             },
             {
                 new DateTime( 2021, 3, 25, 10, 30, 10, 100 ),
-                TimeZoneFactory.Create( 2, TimeZoneFactory.CreateInfiniteRule( tStart, tEnd, daylightDeltaInHours: -1 ) ),
-                881898999999,
+                TimeZoneFactory.Create( 2, TimeZoneFactory.CreateInfiniteRule( tStart, tEnd, daylightDeltaInHours: -1 ) ), 881898999999,
                 new DateTime( 2021, 3, 26, 10, 59, 59, 999 ).AddTicks( 9999 )
             },
             {
                 new DateTime( 2021, 3, 27, 12, 29, 49, 899 ).AddTicks( 9999 ),
-                TimeZoneFactory.Create( 2, TimeZoneFactory.CreateInfiniteRule( tStart, tEnd, daylightDeltaInHours: -1 ) ),
-                -881898999999,
+                TimeZoneFactory.Create( 2, TimeZoneFactory.CreateInfiniteRule( tStart, tEnd, daylightDeltaInHours: -1 ) ), -881898999999,
                 new DateTime( 2021, 3, 26, 12, 0, 0 )
             },
             {
                 new DateTime( 2021, 9, 25, 11, 30, 10, 100 ),
-                TimeZoneFactory.Create( 2, TimeZoneFactory.CreateInfiniteRule( tStart, tEnd, daylightDeltaInHours: -1 ) ),
-                881898999999,
+                TimeZoneFactory.Create( 2, TimeZoneFactory.CreateInfiniteRule( tStart, tEnd, daylightDeltaInHours: -1 ) ), 881898999999,
                 new DateTime( 2021, 9, 26, 11, 59, 59, 999 ).AddTicks( 9999 )
             },
             {
                 new DateTime( 2021, 9, 27, 13, 29, 49, 899 ).AddTicks( 9999 ),
-                TimeZoneFactory.Create( 2, TimeZoneFactory.CreateInfiniteRule( tStart, tEnd, daylightDeltaInHours: -1 ) ),
-                -881898999999,
+                TimeZoneFactory.Create( 2, TimeZoneFactory.CreateInfiniteRule( tStart, tEnd, daylightDeltaInHours: -1 ) ), -881898999999,
                 new DateTime( 2021, 9, 26, 13, 0, 0 )
             },
             {
                 new DateTime( 2021, 9, 25, 10, 30, 10, 100 ),
-                TimeZoneFactory.Create( 2, TimeZoneFactory.CreateInfiniteRule( tEnd, tStart, daylightDeltaInHours: -1 ) ),
-                881898999999,
+                TimeZoneFactory.Create( 2, TimeZoneFactory.CreateInfiniteRule( tEnd, tStart, daylightDeltaInHours: -1 ) ), 881898999999,
                 new DateTime( 2021, 9, 26, 10, 59, 59, 999 ).AddTicks( 9999 )
             },
             {
                 new DateTime( 2021, 9, 27, 12, 29, 49, 899 ).AddTicks( 9999 ),
-                TimeZoneFactory.Create( 2, TimeZoneFactory.CreateInfiniteRule( tEnd, tStart, daylightDeltaInHours: -1 ) ),
-                -881898999999,
+                TimeZoneFactory.Create( 2, TimeZoneFactory.CreateInfiniteRule( tEnd, tStart, daylightDeltaInHours: -1 ) ), -881898999999,
                 new DateTime( 2021, 9, 26, 12, 0, 0 )
             },
             {
                 new DateTime( 2021, 3, 25, 11, 30, 10, 100 ),
-                TimeZoneFactory.Create( 2, TimeZoneFactory.CreateInfiniteRule( tEnd, tStart, daylightDeltaInHours: -1 ) ),
-                881898999999,
+                TimeZoneFactory.Create( 2, TimeZoneFactory.CreateInfiniteRule( tEnd, tStart, daylightDeltaInHours: -1 ) ), 881898999999,
                 new DateTime( 2021, 3, 26, 11, 59, 59, 999 ).AddTicks( 9999 )
             },
             {
                 new DateTime( 2021, 3, 27, 13, 29, 49, 899 ).AddTicks( 9999 ),
-                TimeZoneFactory.Create( 2, TimeZoneFactory.CreateInfiniteRule( tEnd, tStart, daylightDeltaInHours: -1 ) ),
-                -881898999999,
+                TimeZoneFactory.Create( 2, TimeZoneFactory.CreateInfiniteRule( tEnd, tStart, daylightDeltaInHours: -1 ) ), -881898999999,
                 new DateTime( 2021, 3, 26, 13, 0, 0 )
             }
         };
@@ -885,146 +763,119 @@ public class ZonedDateTimeTestsData
         {
             {
                 new DateTime( 2021, 3, 25, 11, 30, 10, 100 ).AddTicks( 2000 ),
-                TimeZoneFactory.Create( 1, TimeZoneFactory.CreateInfiniteRule( tStart, tEnd ) ),
-                1728000000000,
+                TimeZoneFactory.Create( 1, TimeZoneFactory.CreateInfiniteRule( tStart, tEnd ) ), 1728000000000,
                 new DateTime( 2021, 3, 27, 12, 30, 10, 100 ).AddTicks( 2000 )
             },
             {
                 new DateTime( 2021, 3, 25, 11, 30, 10, 100 ).AddTicks( 2000 ),
-                TimeZoneFactory.Create( 1, TimeZoneFactory.CreateInfiniteRule( tStart, tEnd ) ),
-                317088000000000,
+                TimeZoneFactory.Create( 1, TimeZoneFactory.CreateInfiniteRule( tStart, tEnd ) ), 317088000000000,
                 new DateTime( 2022, 3, 27, 12, 30, 10, 100 ).AddTicks( 2000 )
             },
             {
                 new DateTime( 2021, 3, 27, 12, 30, 10, 100 ).AddTicks( 2000 ),
-                TimeZoneFactory.Create( 1, TimeZoneFactory.CreateInfiniteRule( tStart, tEnd ) ),
-                -1728000000000,
+                TimeZoneFactory.Create( 1, TimeZoneFactory.CreateInfiniteRule( tStart, tEnd ) ), -1728000000000,
                 new DateTime( 2021, 3, 25, 11, 30, 10, 100 ).AddTicks( 2000 )
             },
             {
                 new DateTime( 2022, 3, 27, 12, 30, 10, 100 ).AddTicks( 2000 ),
-                TimeZoneFactory.Create( 1, TimeZoneFactory.CreateInfiniteRule( tStart, tEnd ) ),
-                -317088000000000,
+                TimeZoneFactory.Create( 1, TimeZoneFactory.CreateInfiniteRule( tStart, tEnd ) ), -317088000000000,
                 new DateTime( 2021, 3, 25, 11, 30, 10, 100 ).AddTicks( 2000 )
             },
             {
                 new DateTime( 2021, 9, 25, 12, 30, 10, 100 ).AddTicks( 2000 ),
-                TimeZoneFactory.Create( 1, TimeZoneFactory.CreateInfiniteRule( tStart, tEnd ) ),
-                1728000000000,
+                TimeZoneFactory.Create( 1, TimeZoneFactory.CreateInfiniteRule( tStart, tEnd ) ), 1728000000000,
                 new DateTime( 2021, 9, 27, 11, 30, 10, 100 ).AddTicks( 2000 )
             },
             {
                 new DateTime( 2021, 9, 25, 12, 30, 10, 100 ).AddTicks( 2000 ),
-                TimeZoneFactory.Create( 1, TimeZoneFactory.CreateInfiniteRule( tStart, tEnd ) ),
-                317088000000000,
+                TimeZoneFactory.Create( 1, TimeZoneFactory.CreateInfiniteRule( tStart, tEnd ) ), 317088000000000,
                 new DateTime( 2022, 9, 27, 11, 30, 10, 100 ).AddTicks( 2000 )
             },
             {
                 new DateTime( 2021, 9, 27, 11, 30, 10, 100 ).AddTicks( 2000 ),
-                TimeZoneFactory.Create( 1, TimeZoneFactory.CreateInfiniteRule( tStart, tEnd ) ),
-                -1728000000000,
+                TimeZoneFactory.Create( 1, TimeZoneFactory.CreateInfiniteRule( tStart, tEnd ) ), -1728000000000,
                 new DateTime( 2021, 9, 25, 12, 30, 10, 100 ).AddTicks( 2000 )
             },
             {
                 new DateTime( 2022, 9, 27, 11, 30, 10, 100 ).AddTicks( 2000 ),
-                TimeZoneFactory.Create( 1, TimeZoneFactory.CreateInfiniteRule( tStart, tEnd ) ),
-                -317088000000000,
+                TimeZoneFactory.Create( 1, TimeZoneFactory.CreateInfiniteRule( tStart, tEnd ) ), -317088000000000,
                 new DateTime( 2021, 9, 25, 12, 30, 10, 100 ).AddTicks( 2000 )
             },
             {
                 new DateTime( 2021, 3, 25, 12, 30, 10, 100 ).AddTicks( 2000 ),
-                TimeZoneFactory.Create( 1, TimeZoneFactory.CreateInfiniteRule( tStart, tEnd, daylightDeltaInHours: -1 ) ),
-                1728000000000,
+                TimeZoneFactory.Create( 1, TimeZoneFactory.CreateInfiniteRule( tStart, tEnd, daylightDeltaInHours: -1 ) ), 1728000000000,
                 new DateTime( 2021, 3, 27, 11, 30, 10, 100 ).AddTicks( 2000 )
             },
             {
                 new DateTime( 2021, 3, 25, 12, 30, 10, 100 ).AddTicks( 2000 ),
-                TimeZoneFactory.Create( 1, TimeZoneFactory.CreateInfiniteRule( tStart, tEnd, daylightDeltaInHours: -1 ) ),
-                317088000000000,
+                TimeZoneFactory.Create( 1, TimeZoneFactory.CreateInfiniteRule( tStart, tEnd, daylightDeltaInHours: -1 ) ), 317088000000000,
                 new DateTime( 2022, 3, 27, 11, 30, 10, 100 ).AddTicks( 2000 )
             },
             {
                 new DateTime( 2021, 3, 27, 11, 30, 10, 100 ).AddTicks( 2000 ),
-                TimeZoneFactory.Create( 1, TimeZoneFactory.CreateInfiniteRule( tStart, tEnd, daylightDeltaInHours: -1 ) ),
-                -1728000000000,
+                TimeZoneFactory.Create( 1, TimeZoneFactory.CreateInfiniteRule( tStart, tEnd, daylightDeltaInHours: -1 ) ), -1728000000000,
                 new DateTime( 2021, 3, 25, 12, 30, 10, 100 ).AddTicks( 2000 )
             },
             {
                 new DateTime( 2022, 3, 27, 11, 30, 10, 100 ).AddTicks( 2000 ),
-                TimeZoneFactory.Create( 1, TimeZoneFactory.CreateInfiniteRule( tStart, tEnd, daylightDeltaInHours: -1 ) ),
-                -317088000000000,
+                TimeZoneFactory.Create( 1, TimeZoneFactory.CreateInfiniteRule( tStart, tEnd, daylightDeltaInHours: -1 ) ), -317088000000000,
                 new DateTime( 2021, 3, 25, 12, 30, 10, 100 ).AddTicks( 2000 )
             },
             {
                 new DateTime( 2021, 9, 25, 11, 30, 10, 100 ).AddTicks( 2000 ),
-                TimeZoneFactory.Create( 1, TimeZoneFactory.CreateInfiniteRule( tStart, tEnd, daylightDeltaInHours: -1 ) ),
-                1728000000000,
+                TimeZoneFactory.Create( 1, TimeZoneFactory.CreateInfiniteRule( tStart, tEnd, daylightDeltaInHours: -1 ) ), 1728000000000,
                 new DateTime( 2021, 9, 27, 12, 30, 10, 100 ).AddTicks( 2000 )
             },
             {
                 new DateTime( 2021, 9, 25, 11, 30, 10, 100 ).AddTicks( 2000 ),
-                TimeZoneFactory.Create( 1, TimeZoneFactory.CreateInfiniteRule( tStart, tEnd, daylightDeltaInHours: -1 ) ),
-                317088000000000,
+                TimeZoneFactory.Create( 1, TimeZoneFactory.CreateInfiniteRule( tStart, tEnd, daylightDeltaInHours: -1 ) ), 317088000000000,
                 new DateTime( 2022, 9, 27, 12, 30, 10, 100 ).AddTicks( 2000 )
             },
             {
                 new DateTime( 2021, 9, 27, 12, 30, 10, 100 ).AddTicks( 2000 ),
-                TimeZoneFactory.Create( 1, TimeZoneFactory.CreateInfiniteRule( tStart, tEnd, daylightDeltaInHours: -1 ) ),
-                -1728000000000,
+                TimeZoneFactory.Create( 1, TimeZoneFactory.CreateInfiniteRule( tStart, tEnd, daylightDeltaInHours: -1 ) ), -1728000000000,
                 new DateTime( 2021, 9, 25, 11, 30, 10, 100 ).AddTicks( 2000 )
             },
             {
                 new DateTime( 2022, 9, 27, 12, 30, 10, 100 ).AddTicks( 2000 ),
-                TimeZoneFactory.Create( 1, TimeZoneFactory.CreateInfiniteRule( tStart, tEnd, daylightDeltaInHours: -1 ) ),
-                -317088000000000,
+                TimeZoneFactory.Create( 1, TimeZoneFactory.CreateInfiniteRule( tStart, tEnd, daylightDeltaInHours: -1 ) ), -317088000000000,
                 new DateTime( 2021, 9, 25, 11, 30, 10, 100 ).AddTicks( 2000 )
             },
             {
                 new DateTime( 2021, 3, 26, 11, 59, 59, 999 ).AddTicks( 9999 ),
-                TimeZoneFactory.Create( 1, TimeZoneFactory.CreateInfiniteRule( tStart, tEnd ) ),
-                1,
-                new DateTime( 2021, 3, 26, 13, 0, 0 )
+                TimeZoneFactory.Create( 1, TimeZoneFactory.CreateInfiniteRule( tStart, tEnd ) ), 1, new DateTime( 2021, 3, 26, 13, 0, 0 )
             },
             {
-                new DateTime( 2021, 3, 26, 13, 0, 0 ),
-                TimeZoneFactory.Create( 1, TimeZoneFactory.CreateInfiniteRule( tStart, tEnd ) ),
-                -1,
+                new DateTime( 2021, 3, 26, 13, 0, 0 ), TimeZoneFactory.Create( 1, TimeZoneFactory.CreateInfiniteRule( tStart, tEnd ) ), -1,
                 new DateTime( 2021, 3, 26, 11, 59, 59, 999 ).AddTicks( 9999 )
             },
             {
                 new DateTime( 2021, 9, 26, 10, 59, 59, 999 ).AddTicks( 9999 ),
-                TimeZoneFactory.Create( 1, TimeZoneFactory.CreateInfiniteRule( tStart, tEnd ) ),
-                72000000001,
+                TimeZoneFactory.Create( 1, TimeZoneFactory.CreateInfiniteRule( tStart, tEnd ) ), 72000000001,
                 new DateTime( 2021, 9, 26, 12, 0, 0 )
             },
             {
-                new DateTime( 2021, 9, 26, 12, 0, 0 ),
-                TimeZoneFactory.Create( 1, TimeZoneFactory.CreateInfiniteRule( tStart, tEnd ) ),
-                -72000000001,
-                new DateTime( 2021, 9, 26, 10, 59, 59, 999 ).AddTicks( 9999 )
+                new DateTime( 2021, 9, 26, 12, 0, 0 ), TimeZoneFactory.Create( 1, TimeZoneFactory.CreateInfiniteRule( tStart, tEnd ) ),
+                -72000000001, new DateTime( 2021, 9, 26, 10, 59, 59, 999 ).AddTicks( 9999 )
             },
             {
                 new DateTime( 2021, 3, 26, 10, 59, 59, 999 ).AddTicks( 9999 ),
-                TimeZoneFactory.Create( 1, TimeZoneFactory.CreateInfiniteRule( tStart, tEnd, daylightDeltaInHours: -1 ) ),
-                72000000001,
+                TimeZoneFactory.Create( 1, TimeZoneFactory.CreateInfiniteRule( tStart, tEnd, daylightDeltaInHours: -1 ) ), 72000000001,
                 new DateTime( 2021, 3, 26, 12, 0, 0 )
             },
             {
                 new DateTime( 2021, 3, 26, 12, 0, 0 ),
-                TimeZoneFactory.Create( 1, TimeZoneFactory.CreateInfiniteRule( tStart, tEnd, daylightDeltaInHours: -1 ) ),
-                -72000000001,
+                TimeZoneFactory.Create( 1, TimeZoneFactory.CreateInfiniteRule( tStart, tEnd, daylightDeltaInHours: -1 ) ), -72000000001,
                 new DateTime( 2021, 3, 26, 10, 59, 59, 999 ).AddTicks( 9999 )
             },
             {
                 new DateTime( 2021, 9, 26, 11, 59, 59, 999 ).AddTicks( 9999 ),
-                TimeZoneFactory.Create( 1, TimeZoneFactory.CreateInfiniteRule( tStart, tEnd, daylightDeltaInHours: -1 ) ),
-                1,
+                TimeZoneFactory.Create( 1, TimeZoneFactory.CreateInfiniteRule( tStart, tEnd, daylightDeltaInHours: -1 ) ), 1,
                 new DateTime( 2021, 9, 26, 13, 0, 0 )
             },
             {
                 new DateTime( 2021, 9, 26, 13, 0, 0 ),
-                TimeZoneFactory.Create( 1, TimeZoneFactory.CreateInfiniteRule( tStart, tEnd, daylightDeltaInHours: -1 ) ),
-                -1,
+                TimeZoneFactory.Create( 1, TimeZoneFactory.CreateInfiniteRule( tStart, tEnd, daylightDeltaInHours: -1 ) ), -1,
                 new DateTime( 2021, 9, 26, 11, 59, 59, 999 ).AddTicks( 9999 )
             }
         };
@@ -1039,87 +890,63 @@ public class ZonedDateTimeTestsData
         {
             {
                 new DateTime( 2021, 9, 26, 10, 59, 59, 999 ).AddTicks( 9999 ),
-                TimeZoneFactory.Create( 1, TimeZoneFactory.CreateInfiniteRule( tStart, tEnd ) ),
-                1,
-                new DateTime( 2021, 9, 26, 11, 0, 0 ),
+                TimeZoneFactory.Create( 1, TimeZoneFactory.CreateInfiniteRule( tStart, tEnd ) ), 1, new DateTime( 2021, 9, 26, 11, 0, 0 ),
                 true
             },
             {
                 new DateTime( 2021, 9, 26, 10, 59, 59, 999 ).AddTicks( 9999 ),
-                TimeZoneFactory.Create( 1, TimeZoneFactory.CreateInfiniteRule( tStart, tEnd ) ),
-                18000000001,
-                new DateTime( 2021, 9, 26, 11, 30, 0 ),
-                true
+                TimeZoneFactory.Create( 1, TimeZoneFactory.CreateInfiniteRule( tStart, tEnd ) ), 18000000001,
+                new DateTime( 2021, 9, 26, 11, 30, 0 ), true
             },
             {
                 new DateTime( 2021, 9, 26, 10, 59, 59, 999 ).AddTicks( 9999 ),
-                TimeZoneFactory.Create( 1, TimeZoneFactory.CreateInfiniteRule( tStart, tEnd ) ),
-                36000000000,
-                new DateTime( 2021, 9, 26, 11, 59, 59, 999 ).AddTicks( 9999 ),
-                true
+                TimeZoneFactory.Create( 1, TimeZoneFactory.CreateInfiniteRule( tStart, tEnd ) ), 36000000000,
+                new DateTime( 2021, 9, 26, 11, 59, 59, 999 ).AddTicks( 9999 ), true
             },
             {
                 new DateTime( 2021, 9, 26, 10, 59, 59, 999 ).AddTicks( 9999 ),
-                TimeZoneFactory.Create( 1, TimeZoneFactory.CreateInfiniteRule( tStart, tEnd ) ),
-                36000000001,
-                new DateTime( 2021, 9, 26, 11, 0, 0 ),
-                false
+                TimeZoneFactory.Create( 1, TimeZoneFactory.CreateInfiniteRule( tStart, tEnd ) ), 36000000001,
+                new DateTime( 2021, 9, 26, 11, 0, 0 ), false
             },
             {
                 new DateTime( 2021, 9, 26, 10, 59, 59, 999 ).AddTicks( 9999 ),
-                TimeZoneFactory.Create( 1, TimeZoneFactory.CreateInfiniteRule( tStart, tEnd ) ),
-                54000000001,
-                new DateTime( 2021, 9, 26, 11, 30, 0 ),
-                false
+                TimeZoneFactory.Create( 1, TimeZoneFactory.CreateInfiniteRule( tStart, tEnd ) ), 54000000001,
+                new DateTime( 2021, 9, 26, 11, 30, 0 ), false
             },
             {
                 new DateTime( 2021, 9, 26, 10, 59, 59, 999 ).AddTicks( 9999 ),
-                TimeZoneFactory.Create( 1, TimeZoneFactory.CreateInfiniteRule( tStart, tEnd ) ),
-                72000000000,
-                new DateTime( 2021, 9, 26, 11, 59, 59, 999 ).AddTicks( 9999 ),
-                false
+                TimeZoneFactory.Create( 1, TimeZoneFactory.CreateInfiniteRule( tStart, tEnd ) ), 72000000000,
+                new DateTime( 2021, 9, 26, 11, 59, 59, 999 ).AddTicks( 9999 ), false
             },
             {
                 new DateTime( 2021, 3, 26, 10, 59, 59, 999 ).AddTicks( 9999 ),
-                TimeZoneFactory.Create( 1, TimeZoneFactory.CreateInfiniteRule( tStart, tEnd, daylightDeltaInHours: -1 ) ),
-                1,
-                new DateTime( 2021, 3, 26, 11, 0, 0 ),
-                false
+                TimeZoneFactory.Create( 1, TimeZoneFactory.CreateInfiniteRule( tStart, tEnd, daylightDeltaInHours: -1 ) ), 1,
+                new DateTime( 2021, 3, 26, 11, 0, 0 ), false
             },
             {
                 new DateTime( 2021, 3, 26, 10, 59, 59, 999 ).AddTicks( 9999 ),
-                TimeZoneFactory.Create( 1, TimeZoneFactory.CreateInfiniteRule( tStart, tEnd, daylightDeltaInHours: -1 ) ),
-                18000000001,
-                new DateTime( 2021, 3, 26, 11, 30, 0 ),
-                false
+                TimeZoneFactory.Create( 1, TimeZoneFactory.CreateInfiniteRule( tStart, tEnd, daylightDeltaInHours: -1 ) ), 18000000001,
+                new DateTime( 2021, 3, 26, 11, 30, 0 ), false
             },
             {
                 new DateTime( 2021, 3, 26, 10, 59, 59, 999 ).AddTicks( 9999 ),
-                TimeZoneFactory.Create( 1, TimeZoneFactory.CreateInfiniteRule( tStart, tEnd, daylightDeltaInHours: -1 ) ),
-                36000000000,
-                new DateTime( 2021, 3, 26, 11, 59, 59, 999 ).AddTicks( 9999 ),
-                false
+                TimeZoneFactory.Create( 1, TimeZoneFactory.CreateInfiniteRule( tStart, tEnd, daylightDeltaInHours: -1 ) ), 36000000000,
+                new DateTime( 2021, 3, 26, 11, 59, 59, 999 ).AddTicks( 9999 ), false
             },
             {
                 new DateTime( 2021, 3, 26, 10, 59, 59, 999 ).AddTicks( 9999 ),
-                TimeZoneFactory.Create( 1, TimeZoneFactory.CreateInfiniteRule( tStart, tEnd, daylightDeltaInHours: -1 ) ),
-                36000000001,
-                new DateTime( 2021, 3, 26, 11, 0, 0 ),
-                true
+                TimeZoneFactory.Create( 1, TimeZoneFactory.CreateInfiniteRule( tStart, tEnd, daylightDeltaInHours: -1 ) ), 36000000001,
+                new DateTime( 2021, 3, 26, 11, 0, 0 ), true
             },
             {
                 new DateTime( 2021, 3, 26, 10, 59, 59, 999 ).AddTicks( 9999 ),
-                TimeZoneFactory.Create( 1, TimeZoneFactory.CreateInfiniteRule( tStart, tEnd, daylightDeltaInHours: -1 ) ),
-                54000000001,
-                new DateTime( 2021, 3, 26, 11, 30, 0 ),
-                true
+                TimeZoneFactory.Create( 1, TimeZoneFactory.CreateInfiniteRule( tStart, tEnd, daylightDeltaInHours: -1 ) ), 54000000001,
+                new DateTime( 2021, 3, 26, 11, 30, 0 ), true
             },
             {
                 new DateTime( 2021, 3, 26, 10, 59, 59, 999 ).AddTicks( 9999 ),
-                TimeZoneFactory.Create( 1, TimeZoneFactory.CreateInfiniteRule( tStart, tEnd, daylightDeltaInHours: -1 ) ),
-                72000000000,
-                new DateTime( 2021, 3, 26, 11, 59, 59, 999 ).AddTicks( 9999 ),
-                true
+                TimeZoneFactory.Create( 1, TimeZoneFactory.CreateInfiniteRule( tStart, tEnd, daylightDeltaInHours: -1 ) ), 72000000000,
+                new DateTime( 2021, 3, 26, 11, 59, 59, 999 ).AddTicks( 9999 ), true
             }
         };
     }
@@ -1135,111 +962,69 @@ public class ZonedDateTimeTestsData
         return new TheoryData<DateTime, TimeZoneInfo, Period, DateTime>
         {
             {
-                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
-                TimeZoneFactory.Create( 1 ),
-                Period.Empty,
+                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ), TimeZoneFactory.Create( 1 ), Period.Empty,
                 new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 )
             },
             {
-                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
-                TimeZoneFactory.Create( 1 ),
-                new Period( 1, 2, 3, 4, 5, 6 ),
+                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ), TimeZoneFactory.Create( 1 ), new Period( 1, 2, 3, 4, 5, 6 ),
                 new DateTime( 2021, 8, 26, 13, 32, 43, 504 ).AddTicks( 6057 )
             },
             {
-                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
-                TimeZoneFactory.Create( 1 ),
-                new Period( -1, -2, -3, -4, -5, -6 ),
-                new DateTime( 2021, 8, 26, 11, 28, 37, 496 ).AddTicks( 5945 )
+                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ), TimeZoneFactory.Create( 1 ),
+                new Period( -1, -2, -3, -4, -5, -6 ), new DateTime( 2021, 8, 26, 11, 28, 37, 496 ).AddTicks( 5945 )
             },
             {
-                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
-                TimeZoneFactory.Create( 1 ),
-                new Period( 1, 2, 3, 4 ),
+                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ), TimeZoneFactory.Create( 1 ), new Period( 1, 2, 3, 4 ),
                 new DateTime( 2022, 11, 20, 12, 30, 40, 500 ).AddTicks( 6001 )
             },
             {
-                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
-                TimeZoneFactory.Create( 1 ),
-                new Period( -1, -2, -3, -4 ),
+                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ), TimeZoneFactory.Create( 1 ), new Period( -1, -2, -3, -4 ),
                 new DateTime( 2020, 6, 1, 12, 30, 40, 500 ).AddTicks( 6001 )
             },
             {
-                new DateTime( 2021, 3, 31, 12, 30, 40, 500 ).AddTicks( 6001 ),
-                TimeZoneFactory.Create( 1 ),
-                Period.FromMonths( 1 ),
+                new DateTime( 2021, 3, 31, 12, 30, 40, 500 ).AddTicks( 6001 ), TimeZoneFactory.Create( 1 ), Period.FromMonths( 1 ),
                 new DateTime( 2021, 4, 30, 12, 30, 40, 500 ).AddTicks( 6001 )
             },
             {
-                new DateTime( 2021, 3, 31, 12, 30, 40, 500 ).AddTicks( 6001 ),
-                TimeZoneFactory.Create( 1 ),
-                Period.FromMonths( -1 ),
+                new DateTime( 2021, 3, 31, 12, 30, 40, 500 ).AddTicks( 6001 ), TimeZoneFactory.Create( 1 ), Period.FromMonths( -1 ),
                 new DateTime( 2021, 2, 28, 12, 30, 40, 500 ).AddTicks( 6001 )
             },
             {
-                new DateTime( 2021, 3, 31, 12, 30, 40, 500 ).AddTicks( 6001 ),
-                TimeZoneFactory.Create( 1 ),
-                Period.FromYears( -1 ).SubtractMonths( 1 ),
-                new DateTime( 2020, 2, 29, 12, 30, 40, 500 ).AddTicks( 6001 )
+                new DateTime( 2021, 3, 31, 12, 30, 40, 500 ).AddTicks( 6001 ), TimeZoneFactory.Create( 1 ),
+                Period.FromYears( -1 ).SubtractMonths( 1 ), new DateTime( 2020, 2, 29, 12, 30, 40, 500 ).AddTicks( 6001 )
             },
             {
-                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
-                TimeZoneFactory.Create( 1 ),
-                new Period( 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 ),
-                new DateTime( 2022, 11, 20, 17, 36, 47, 508 ).AddTicks( 6101 )
+                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ), TimeZoneFactory.Create( 1 ),
+                new Period( 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 ), new DateTime( 2022, 11, 20, 17, 36, 47, 508 ).AddTicks( 6101 )
             },
             {
-                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
-                TimeZoneFactory.Create( 1 ),
-                new Period( 1, -2, 3, -4, 5, -6, 7, -8, 9, -10 ),
-                new DateTime( 2022, 7, 13, 17, 24, 47, 492 ).AddTicks( 6081 )
+                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ), TimeZoneFactory.Create( 1 ),
+                new Period( 1, -2, 3, -4, 5, -6, 7, -8, 9, -10 ), new DateTime( 2022, 7, 13, 17, 24, 47, 492 ).AddTicks( 6081 )
             },
             {
-                new DateTime( 2021, 7, 25, 11, 59, 59, 999 ).AddTicks( 9998 ),
-                dsTimeZone,
-                Period.FromMonths( 1 ).AddDays( 1 ).AddTicks( 1 ),
+                new DateTime( 2021, 7, 25, 11, 59, 59, 999 ).AddTicks( 9998 ), dsTimeZone,
+                Period.FromMonths( 1 ).AddDays( 1 ).AddTicks( 1 ), new DateTime( 2021, 8, 26, 11, 59, 59, 999 ).AddTicks( 9999 )
+            },
+            { new DateTime( 2021, 8, 26, 11, 0, 0 ), dsTimeZone, Period.FromHours( 2 ), new DateTime( 2021, 8, 26, 13, 0, 0 ) },
+            {
+                new DateTime( 2021, 9, 27, 13, 0, 0 ).AddTicks( 1 ), dsTimeZone,
+                Period.FromMonths( -1 ).SubtractDays( 1 ).SubtractTicks( 1 ), new DateTime( 2021, 8, 26, 13, 0, 0 )
+            },
+            {
+                new DateTime( 2021, 8, 26, 13, 0, 0 ), dsTimeZone, Period.FromHours( -1 ).SubtractTicks( 1 ),
                 new DateTime( 2021, 8, 26, 11, 59, 59, 999 ).AddTicks( 9999 )
             },
             {
-                new DateTime( 2021, 8, 26, 11, 0, 0 ),
-                dsTimeZone,
-                Period.FromHours( 2 ),
-                new DateTime( 2021, 8, 26, 13, 0, 0 )
+                new DateTime( 2021, 9, 25, 10, 59, 59, 999 ).AddTicks( 9998 ), dsTimeZone,
+                Period.FromMonths( 1 ).AddDays( 1 ).AddTicks( 1 ), new DateTime( 2021, 10, 26, 10, 59, 59, 999 ).AddTicks( 9999 )
+            },
+            { new DateTime( 2021, 10, 26, 10, 0, 0 ), dsTimeZone, Period.FromHours( 2 ), new DateTime( 2021, 10, 26, 12, 0, 0 ) },
+            {
+                new DateTime( 2021, 11, 27, 12, 0, 0 ).AddTicks( 1 ), dsTimeZone,
+                Period.FromMonths( -1 ).SubtractDays( 1 ).SubtractTicks( 1 ), new DateTime( 2021, 10, 26, 12, 0, 0 )
             },
             {
-                new DateTime( 2021, 9, 27, 13, 0, 0 ).AddTicks( 1 ),
-                dsTimeZone,
-                Period.FromMonths( -1 ).SubtractDays( 1 ).SubtractTicks( 1 ),
-                new DateTime( 2021, 8, 26, 13, 0, 0 )
-            },
-            {
-                new DateTime( 2021, 8, 26, 13, 0, 0 ),
-                dsTimeZone,
-                Period.FromHours( -1 ).SubtractTicks( 1 ),
-                new DateTime( 2021, 8, 26, 11, 59, 59, 999 ).AddTicks( 9999 )
-            },
-            {
-                new DateTime( 2021, 9, 25, 10, 59, 59, 999 ).AddTicks( 9998 ),
-                dsTimeZone,
-                Period.FromMonths( 1 ).AddDays( 1 ).AddTicks( 1 ),
-                new DateTime( 2021, 10, 26, 10, 59, 59, 999 ).AddTicks( 9999 )
-            },
-            {
-                new DateTime( 2021, 10, 26, 10, 0, 0 ),
-                dsTimeZone,
-                Period.FromHours( 2 ),
-                new DateTime( 2021, 10, 26, 12, 0, 0 )
-            },
-            {
-                new DateTime( 2021, 11, 27, 12, 0, 0 ).AddTicks( 1 ),
-                dsTimeZone,
-                Period.FromMonths( -1 ).SubtractDays( 1 ).SubtractTicks( 1 ),
-                new DateTime( 2021, 10, 26, 12, 0, 0 )
-            },
-            {
-                new DateTime( 2021, 10, 26, 12, 0, 0 ),
-                dsTimeZone,
-                Period.FromHours( -1 ).SubtractTicks( 1 ),
+                new DateTime( 2021, 10, 26, 12, 0, 0 ), dsTimeZone, Period.FromHours( -1 ).SubtractTicks( 1 ),
                 new DateTime( 2021, 10, 26, 10, 59, 59, 999 ).AddTicks( 9999 )
             }
         };
@@ -1256,59 +1041,31 @@ public class ZonedDateTimeTestsData
 
         return new TheoryData<DateTime, TimeZoneInfo, bool, Period, DateTime>
         {
+            { new DateTime( 2021, 10, 26, 11, 0, 0 ), timeZone, false, Period.Empty, new DateTime( 2021, 10, 26, 11, 0, 0 ) },
+            { new DateTime( 2021, 10, 26, 11, 0, 0 ), timeZone, true, Period.Empty, new DateTime( 2021, 10, 26, 11, 0, 0 ) },
             {
-                new DateTime( 2021, 10, 26, 11, 0, 0 ),
-                timeZone,
-                false,
-                Period.Empty,
+                new DateTime( 2022, 11, 27, 16, 0, 0 ), timeZone, false,
+                Period.FromYears( -1 ).SubtractMonths( 1 ).SubtractDays( 1 ).SubtractHours( 5 ), new DateTime( 2021, 10, 26, 11, 0, 0 )
+            },
+            {
+                new DateTime( 2020, 9, 25, 6, 0, 0 ), timeZone, true, Period.FromYears( 1 ).AddMonths( 1 ).AddDays( 1 ).AddHours( 5 ),
                 new DateTime( 2021, 10, 26, 11, 0, 0 )
             },
             {
-                new DateTime( 2021, 10, 26, 11, 0, 0 ),
-                timeZone,
-                true,
-                Period.Empty,
-                new DateTime( 2021, 10, 26, 11, 0, 0 )
-            },
-            {
-                new DateTime( 2022, 11, 27, 16, 0, 0 ),
-                timeZone,
-                false,
-                Period.FromYears( -1 ).SubtractMonths( 1 ).SubtractDays( 1 ).SubtractHours( 5 ),
-                new DateTime( 2021, 10, 26, 11, 0, 0 )
-            },
-            {
-                new DateTime( 2020, 9, 25, 6, 0, 0 ),
-                timeZone,
-                true,
-                Period.FromYears( 1 ).AddMonths( 1 ).AddDays( 1 ).AddHours( 5 ),
-                new DateTime( 2021, 10, 26, 11, 0, 0 )
-            },
-            {
-                new DateTime( 2021, 10, 26, 11, 59, 59, 999 ).AddTicks( 9999 ),
-                timeZone,
-                false,
-                Period.Empty,
+                new DateTime( 2021, 10, 26, 11, 59, 59, 999 ).AddTicks( 9999 ), timeZone, false, Period.Empty,
                 new DateTime( 2021, 10, 26, 11, 59, 59, 999 ).AddTicks( 9999 )
             },
             {
-                new DateTime( 2021, 10, 26, 11, 59, 59, 999 ).AddTicks( 9999 ),
-                timeZone,
-                true,
-                Period.Empty,
+                new DateTime( 2021, 10, 26, 11, 59, 59, 999 ).AddTicks( 9999 ), timeZone, true, Period.Empty,
                 new DateTime( 2021, 10, 26, 11, 59, 59, 999 ).AddTicks( 9999 )
             },
             {
-                new DateTime( 2022, 11, 27, 16, 0, 0 ),
-                timeZone,
-                false,
+                new DateTime( 2022, 11, 27, 16, 0, 0 ), timeZone, false,
                 Period.FromYears( -1 ).SubtractMonths( 1 ).SubtractDays( 1 ).SubtractHours( 4 ).SubtractTicks( 1 ),
                 new DateTime( 2021, 10, 26, 11, 59, 59, 999 ).AddTicks( 9999 )
             },
             {
-                new DateTime( 2020, 9, 25, 6, 0, 0 ),
-                timeZone,
-                true,
+                new DateTime( 2020, 9, 25, 6, 0, 0 ), timeZone, true,
                 Period.FromYears( 1 ).AddMonths( 1 ).AddDays( 1 ).AddHours( 6 ).SubtractTicks( 1 ),
                 new DateTime( 2021, 10, 26, 11, 59, 59, 999 ).AddTicks( 9999 )
             }
@@ -1326,23 +1083,19 @@ public class ZonedDateTimeTestsData
         return new TheoryData<DateTime, TimeZoneInfo, Period>
         {
             {
-                new DateTime( 2020, 7, 20, 11, 0, 0 ),
-                timeZoneWithInvalidity,
+                new DateTime( 2020, 7, 20, 11, 0, 0 ), timeZoneWithInvalidity,
                 Period.FromYears( 1 ).AddMonths( 1 ).AddDays( 6 ).AddHours( 1 )
             },
             {
-                new DateTime( 2020, 7, 20, 11, 0, 0 ),
-                timeZoneWithInvalidity,
+                new DateTime( 2020, 7, 20, 11, 0, 0 ), timeZoneWithInvalidity,
                 Period.FromYears( 1 ).AddMonths( 1 ).AddDays( 6 ).AddHours( 2 ).SubtractTicks( 1 )
             },
             {
-                new DateTime( 2022, 9, 30, 14, 0, 0 ),
-                timeZoneWithInvalidity,
+                new DateTime( 2022, 9, 30, 14, 0, 0 ), timeZoneWithInvalidity,
                 Period.FromYears( -1 ).SubtractMonths( 1 ).SubtractDays( 4 ).SubtractHours( 2 )
             },
             {
-                new DateTime( 2022, 9, 30, 14, 0, 0 ),
-                timeZoneWithInvalidity,
+                new DateTime( 2022, 9, 30, 14, 0, 0 ), timeZoneWithInvalidity,
                 Period.FromYears( -1 ).SubtractMonths( 1 ).SubtractDays( 4 ).SubtractHours( 1 ).SubtractTicks( 1 )
             }
         };
@@ -1356,129 +1109,82 @@ public class ZonedDateTimeTestsData
         return new TheoryData<DateTime, TimeZoneInfo, DateTime, PeriodUnits, Period>
         {
             {
-                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
-                timeZone,
-                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
-                PeriodUnits.All,
-                Period.Empty
+                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ), timeZone,
+                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ), PeriodUnits.All, Period.Empty
             },
             {
-                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
-                timeZone,
-                new DateTime( 2020, 6, 1, 7, 24, 33, 492 ).AddTicks( 5910 ),
-                PeriodUnits.All,
-                new Period( 1, 2, 3, 4, 5, 6, 7, 8, 9, 1 )
+                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ), timeZone,
+                new DateTime( 2020, 6, 1, 7, 24, 33, 492 ).AddTicks( 5910 ), PeriodUnits.All, new Period( 1, 2, 3, 4, 5, 6, 7, 8, 9, 1 )
             },
             {
-                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
-                timeZone,
-                new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6092 ),
-                PeriodUnits.All,
+                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ), timeZone,
+                new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6092 ), PeriodUnits.All,
                 new Period( 0, 10, 0, 5, 21, 0, 50, 49, 990, 9 )
             },
             {
-                new DateTime( 2022, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
-                timeZone,
-                new DateTime( 2020, 9, 28, 13, 31, 41, 501 ).AddTicks( 6002 ),
-                PeriodUnits.All,
+                new DateTime( 2022, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ), timeZone,
+                new DateTime( 2020, 9, 28, 13, 31, 41, 501 ).AddTicks( 6002 ), PeriodUnits.All,
                 new Period( 1, 10, 3, 6, 22, 58, 58, 998, 999, 9 )
             },
             {
-                new DateTime( 2022, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
-                timeZone,
-                new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6101 ),
-                PeriodUnits.Years,
-                Period.FromYears( 1 )
+                new DateTime( 2022, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ), timeZone,
+                new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6101 ), PeriodUnits.Years, Period.FromYears( 1 )
             },
             {
-                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
-                timeZone,
-                new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6101 ),
-                PeriodUnits.Months,
-                Period.FromMonths( 10 )
+                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ), timeZone,
+                new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6101 ), PeriodUnits.Months, Period.FromMonths( 10 )
             },
             {
-                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
-                timeZone,
-                new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6101 ),
-                PeriodUnits.Weeks,
-                Period.FromWeeks( 44 )
+                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ), timeZone,
+                new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6101 ), PeriodUnits.Weeks, Period.FromWeeks( 44 )
             },
             {
-                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
-                timeZone,
-                new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6101 ),
-                PeriodUnits.Days,
-                Period.FromDays( 309 )
+                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ), timeZone,
+                new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6101 ), PeriodUnits.Days, Period.FromDays( 309 )
             },
             {
-                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
-                timeZone,
-                new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6101 ),
-                PeriodUnits.Hours,
-                Period.FromHours( 7437 )
+                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ), timeZone,
+                new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6101 ), PeriodUnits.Hours, Period.FromHours( 7437 )
             },
             {
-                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
-                timeZone,
-                new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6101 ),
-                PeriodUnits.Minutes,
-                Period.FromMinutes( 446220 )
+                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ), timeZone,
+                new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6101 ), PeriodUnits.Minutes, Period.FromMinutes( 446220 )
             },
             {
-                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
-                timeZone,
-                new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6101 ),
-                PeriodUnits.Seconds,
-                Period.FromSeconds( 26773250 )
+                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ), timeZone,
+                new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6101 ), PeriodUnits.Seconds, Period.FromSeconds( 26773250 )
             },
             {
-                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
-                timeZone,
-                new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6101 ),
-                PeriodUnits.Milliseconds,
+                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ), timeZone,
+                new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6101 ), PeriodUnits.Milliseconds,
                 Period.FromMilliseconds( 26773250049 )
             },
             {
-                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
-                timeZone,
-                new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6101 ),
-                PeriodUnits.Ticks,
-                Period.FromTicks( 267732500499900 )
+                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ), timeZone,
+                new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6101 ), PeriodUnits.Ticks, Period.FromTicks( 267732500499900 )
             },
             {
-                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
-                timeZone,
-                new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6101 ),
-                PeriodUnits.Date,
-                new Period( 0, 10, 0, 5 )
+                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ), timeZone,
+                new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6101 ), PeriodUnits.Date, new Period( 0, 10, 0, 5 )
             },
             {
-                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
-                timeZone,
-                new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6092 ),
-                PeriodUnits.Time,
-                new Period( 7437, 0, 50, 49, 990, 9 )
+                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ), timeZone,
+                new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6092 ), PeriodUnits.Time, new Period( 7437, 0, 50, 49, 990, 9 )
             },
             {
-                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
-                timeZone,
+                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ), timeZone,
                 new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6101 ),
                 PeriodUnits.Months | PeriodUnits.Days | PeriodUnits.Seconds | PeriodUnits.Ticks,
                 Period.FromMonths( 10 ).AddDays( 5 ).AddSeconds( 75650 ).AddTicks( 499900 )
             },
             {
-                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
-                timeZone,
-                new DateTime( 2021, 6, 28, 13, 31, 42, 503 ).AddTicks( 6005 ),
-                PeriodUnits.Months | PeriodUnits.Weeks | PeriodUnits.Hours,
+                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ), timeZone,
+                new DateTime( 2021, 6, 28, 13, 31, 42, 503 ).AddTicks( 6005 ), PeriodUnits.Months | PeriodUnits.Weeks | PeriodUnits.Hours,
                 Period.FromMonths( 1 ).AddWeeks( 3 ).AddHours( 166 )
             },
             {
-                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
-                timeZone,
-                new DateTime( 2020, 6, 26, 11, 31, 42, 503 ).AddTicks( 6005 ),
-                PeriodUnits.Months | PeriodUnits.Days | PeriodUnits.Minutes,
+                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ), timeZone,
+                new DateTime( 2020, 6, 26, 11, 31, 42, 503 ).AddTicks( 6005 ), PeriodUnits.Months | PeriodUnits.Days | PeriodUnits.Minutes,
                 Period.FromMonths( 14 ).AddMinutes( 58 )
             }
         };
@@ -1492,129 +1198,82 @@ public class ZonedDateTimeTestsData
         return new TheoryData<DateTime, TimeZoneInfo, DateTime, PeriodUnits, Period>
         {
             {
-                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
-                timeZone,
-                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
-                PeriodUnits.All,
-                Period.Empty
+                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ), timeZone,
+                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ), PeriodUnits.All, Period.Empty
             },
             {
-                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
-                timeZone,
-                new DateTime( 2020, 6, 1, 7, 24, 33, 492 ).AddTicks( 5910 ),
-                PeriodUnits.All,
-                new Period( 1, 2, 3, 4, 5, 6, 7, 8, 9, 1 )
+                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ), timeZone,
+                new DateTime( 2020, 6, 1, 7, 24, 33, 492 ).AddTicks( 5910 ), PeriodUnits.All, new Period( 1, 2, 3, 4, 5, 6, 7, 8, 9, 1 )
             },
             {
-                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
-                timeZone,
-                new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 7006 ),
-                PeriodUnits.All,
+                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ), timeZone,
+                new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 7006 ), PeriodUnits.All,
                 new Period( 1, -2, 0, 6, -3, 1, -10, 50, -100, -5 )
             },
             {
-                new DateTime( 2022, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
-                timeZone,
-                new DateTime( 2020, 9, 28, 13, 31, 41, 501 ).AddTicks( 6012 ),
-                PeriodUnits.All,
+                new DateTime( 2022, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ), timeZone,
+                new DateTime( 2020, 9, 28, 13, 31, 41, 501 ).AddTicks( 6012 ), PeriodUnits.All,
                 new Period( 2, -1, 0, -2, -1, -1, -1, -1, -1, -1 )
             },
             {
-                new DateTime( 2022, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
-                timeZone,
-                new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6101 ),
-                PeriodUnits.Years,
-                Period.FromYears( 2 )
+                new DateTime( 2022, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ), timeZone,
+                new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6101 ), PeriodUnits.Years, Period.FromYears( 2 )
             },
             {
-                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
-                timeZone,
-                new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6101 ),
-                PeriodUnits.Months,
-                Period.FromMonths( 10 )
+                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ), timeZone,
+                new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6101 ), PeriodUnits.Months, Period.FromMonths( 10 )
             },
             {
-                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
-                timeZone,
-                new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6101 ),
-                PeriodUnits.Weeks,
-                Period.FromWeeks( 44 )
+                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ), timeZone,
+                new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6101 ), PeriodUnits.Weeks, Period.FromWeeks( 44 )
             },
             {
-                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
-                timeZone,
-                new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6101 ),
-                PeriodUnits.Days,
-                Period.FromDays( 310 )
+                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ), timeZone,
+                new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6101 ), PeriodUnits.Days, Period.FromDays( 310 )
             },
             {
-                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
-                timeZone,
-                new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6101 ),
-                PeriodUnits.Hours,
-                Period.FromHours( 7437 )
+                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ), timeZone,
+                new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6101 ), PeriodUnits.Hours, Period.FromHours( 7437 )
             },
             {
-                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
-                timeZone,
-                new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6101 ),
-                PeriodUnits.Minutes,
-                Period.FromMinutes( 446221 )
+                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ), timeZone,
+                new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6101 ), PeriodUnits.Minutes, Period.FromMinutes( 446221 )
             },
             {
-                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
-                timeZone,
-                new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6101 ),
-                PeriodUnits.Seconds,
-                Period.FromSeconds( 26773250 )
+                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ), timeZone,
+                new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6101 ), PeriodUnits.Seconds, Period.FromSeconds( 26773250 )
             },
             {
-                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
-                timeZone,
-                new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6101 ),
-                PeriodUnits.Milliseconds,
+                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ), timeZone,
+                new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6101 ), PeriodUnits.Milliseconds,
                 Period.FromMilliseconds( 26773250050 )
             },
             {
-                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
-                timeZone,
-                new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6101 ),
-                PeriodUnits.Ticks,
-                Period.FromTicks( 267732500499900 )
+                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ), timeZone,
+                new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6101 ), PeriodUnits.Ticks, Period.FromTicks( 267732500499900 )
             },
             {
-                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
-                timeZone,
-                new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6101 ),
-                PeriodUnits.Date,
-                new Period( 1, -2, 0, 6 )
+                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ), timeZone,
+                new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6101 ), PeriodUnits.Date, new Period( 1, -2, 0, 6 )
             },
             {
-                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
-                timeZone,
-                new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 7006 ),
-                PeriodUnits.Time,
-                new Period( 7437, 1, -10, 50, -100, -5 )
+                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ), timeZone,
+                new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 7006 ), PeriodUnits.Time, new Period( 7437, 1, -10, 50, -100, -5 )
             },
             {
-                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
-                timeZone,
+                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ), timeZone,
                 new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6101 ),
                 PeriodUnits.Months | PeriodUnits.Days | PeriodUnits.Seconds | PeriodUnits.Ticks,
                 Period.FromMonths( 10 ).AddDays( 6 ).SubtractSeconds( 10750 ).AddTicks( 499900 )
             },
             {
-                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
-                timeZone,
-                new DateTime( 2021, 6, 28, 13, 31, 42, 503 ).AddTicks( 6005 ),
-                PeriodUnits.Months | PeriodUnits.Weeks | PeriodUnits.Hours,
+                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ), timeZone,
+                new DateTime( 2021, 6, 28, 13, 31, 42, 503 ).AddTicks( 6005 ), PeriodUnits.Months | PeriodUnits.Weeks | PeriodUnits.Hours,
                 Period.FromMonths( 2 ).SubtractHours( 49 )
             },
             {
-                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
-                timeZone,
-                new DateTime( 2020, 6, 26, 11, 31, 42, 503 ).AddTicks( 6005 ),
-                PeriodUnits.Months | PeriodUnits.Days | PeriodUnits.Minutes,
+                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ), timeZone,
+                new DateTime( 2020, 6, 26, 11, 31, 42, 503 ).AddTicks( 6005 ), PeriodUnits.Months | PeriodUnits.Days | PeriodUnits.Minutes,
                 Period.FromMonths( 14 ).AddMinutes( 59 )
             }
         };
@@ -1643,81 +1302,46 @@ public class ZonedDateTimeTestsData
         return new TheoryData<DateTime, TimeZoneInfo, int, DateTime>
         {
             {
-                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
-                simpleTimeZone,
-                DateTime.MinValue.Year,
+                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ), simpleTimeZone, DateTime.MinValue.Year,
                 new DateTime( DateTime.MinValue.Year, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 )
             },
             {
-                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
-                simpleTimeZone,
-                DateTime.MaxValue.Year,
+                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ), simpleTimeZone, DateTime.MaxValue.Year,
                 new DateTime( DateTime.MaxValue.Year, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 )
             },
             {
-                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
-                simpleTimeZone,
-                2021,
+                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ), simpleTimeZone, 2021,
                 new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 )
             },
             {
-                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
-                simpleTimeZone,
-                2022,
+                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ), simpleTimeZone, 2022,
                 new DateTime( 2022, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 )
             },
             {
-                new DateTime( 2020, 2, 29, 12, 30, 40, 500 ).AddTicks( 6001 ),
-                simpleTimeZone,
-                2016,
+                new DateTime( 2020, 2, 29, 12, 30, 40, 500 ).AddTicks( 6001 ), simpleTimeZone, 2016,
                 new DateTime( 2016, 2, 29, 12, 30, 40, 500 ).AddTicks( 6001 )
             },
             {
-                new DateTime( 2020, 2, 29, 12, 30, 40, 500 ).AddTicks( 6001 ),
-                simpleTimeZone,
-                2017,
+                new DateTime( 2020, 2, 29, 12, 30, 40, 500 ).AddTicks( 6001 ), simpleTimeZone, 2017,
                 new DateTime( 2017, 2, 28, 12, 30, 40, 500 ).AddTicks( 6001 )
             },
             {
-                new DateTime( 2021, 8, 26, 11, 59, 59, 999 ).AddTicks( 9999 ),
-                timeZoneWithInvalidity,
-                2019,
+                new DateTime( 2021, 8, 26, 11, 59, 59, 999 ).AddTicks( 9999 ), timeZoneWithInvalidity, 2019,
                 new DateTime( 2019, 8, 26, 11, 59, 59, 999 ).AddTicks( 9999 )
             },
+            { new DateTime( 2021, 8, 26, 13, 0, 0 ), timeZoneWithInvalidity, 2018, new DateTime( 2018, 8, 26, 13, 0, 0 ) },
             {
-                new DateTime( 2021, 8, 26, 13, 0, 0 ),
-                timeZoneWithInvalidity,
-                2018,
-                new DateTime( 2018, 8, 26, 13, 0, 0 )
-            },
-            {
-                new DateTime( 2021, 8, 26, 12, 0, 0 ),
-                timeZoneWithInvalidity,
-                2017,
+                new DateTime( 2021, 8, 26, 12, 0, 0 ), timeZoneWithInvalidity, 2017,
                 new DateTime( 2017, 8, 26, 11, 59, 59, 999 ).AddTicks( 9999 )
             },
             {
-                new DateTime( 2021, 8, 26, 12, 59, 59, 999 ).AddTicks( 9999 ),
-                timeZoneWithInvalidity,
-                2016,
+                new DateTime( 2021, 8, 26, 12, 59, 59, 999 ).AddTicks( 9999 ), timeZoneWithInvalidity, 2016,
                 new DateTime( 2016, 8, 26, 11, 59, 59, 999 ).AddTicks( 9999 )
             },
+            { new DateTime( 2021, 1, 1, 0, 30, 0 ), timeZoneWithYearOverlapInvalidity, 2015, new DateTime( 2015, 1, 1, 0, 30, 0 ) },
+            { new DateTime( 2021, 1, 1 ), timeZoneWithYearOverlapInvalidity, 2014, new DateTime( 2014, 1, 1, 0, 30, 0 ) },
             {
-                new DateTime( 2021, 1, 1, 0, 30, 0 ),
-                timeZoneWithYearOverlapInvalidity,
-                2015,
-                new DateTime( 2015, 1, 1, 0, 30, 0 )
-            },
-            {
-                new DateTime( 2021, 1, 1 ),
-                timeZoneWithYearOverlapInvalidity,
-                2014,
-                new DateTime( 2014, 1, 1, 0, 30, 0 )
-            },
-            {
-                new DateTime( 2021, 1, 1, 0, 29, 59, 999 ).AddTicks( 9999 ),
-                timeZoneWithYearOverlapInvalidity,
-                2013,
+                new DateTime( 2021, 1, 1, 0, 29, 59, 999 ).AddTicks( 9999 ), timeZoneWithYearOverlapInvalidity, 2013,
                 new DateTime( 2013, 1, 1, 0, 30, 0 )
             }
         };
@@ -1738,31 +1362,19 @@ public class ZonedDateTimeTestsData
             { new DateTime( 2021, 10, 26, 11, 0, 0 ), timeZone, false, 2019, new DateTime( 2019, 10, 26, 11, 0, 0 ) },
             { new DateTime( 2021, 10, 26, 11, 0, 0 ), timeZone, true, 2019, new DateTime( 2019, 10, 26, 11, 0, 0 ) },
             {
-                new DateTime( 2021, 10, 26, 11, 59, 59, 999 ).AddTicks( 9999 ),
-                timeZone,
-                false,
-                2021,
+                new DateTime( 2021, 10, 26, 11, 59, 59, 999 ).AddTicks( 9999 ), timeZone, false, 2021,
                 new DateTime( 2021, 10, 26, 11, 59, 59, 999 ).AddTicks( 9999 )
             },
             {
-                new DateTime( 2021, 10, 26, 11, 59, 59, 999 ).AddTicks( 9999 ),
-                timeZone,
-                true,
-                2021,
+                new DateTime( 2021, 10, 26, 11, 59, 59, 999 ).AddTicks( 9999 ), timeZone, true, 2021,
                 new DateTime( 2021, 10, 26, 11, 59, 59, 999 ).AddTicks( 9999 )
             },
             {
-                new DateTime( 2021, 10, 26, 11, 59, 59, 999 ).AddTicks( 9999 ),
-                timeZone,
-                false,
-                2019,
+                new DateTime( 2021, 10, 26, 11, 59, 59, 999 ).AddTicks( 9999 ), timeZone, false, 2019,
                 new DateTime( 2019, 10, 26, 11, 59, 59, 999 ).AddTicks( 9999 )
             },
             {
-                new DateTime( 2021, 10, 26, 11, 59, 59, 999 ).AddTicks( 9999 ),
-                timeZone,
-                true,
-                2019,
+                new DateTime( 2021, 10, 26, 11, 59, 59, 999 ).AddTicks( 9999 ), timeZone, true, 2019,
                 new DateTime( 2019, 10, 26, 11, 59, 59, 999 ).AddTicks( 9999 )
             }
         };
@@ -1796,93 +1408,57 @@ public class ZonedDateTimeTestsData
         return new TheoryData<DateTime, TimeZoneInfo, IsoMonthOfYear, DateTime>
         {
             {
-                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
-                simpleTimeZone,
-                IsoMonthOfYear.January,
+                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ), simpleTimeZone, IsoMonthOfYear.January,
                 new DateTime( 2021, 1, 26, 12, 30, 40, 500 ).AddTicks( 6001 )
             },
             {
-                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
-                simpleTimeZone,
-                IsoMonthOfYear.December,
+                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ), simpleTimeZone, IsoMonthOfYear.December,
                 new DateTime( 2021, 12, 26, 12, 30, 40, 500 ).AddTicks( 6001 )
             },
             {
-                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
-                simpleTimeZone,
-                IsoMonthOfYear.August,
+                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ), simpleTimeZone, IsoMonthOfYear.August,
                 new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 )
             },
             {
-                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
-                simpleTimeZone,
-                IsoMonthOfYear.March,
+                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ), simpleTimeZone, IsoMonthOfYear.March,
                 new DateTime( 2021, 3, 26, 12, 30, 40, 500 ).AddTicks( 6001 )
             },
             {
-                new DateTime( 2021, 3, 29, 12, 30, 40, 500 ).AddTicks( 6001 ),
-                simpleTimeZone,
-                IsoMonthOfYear.February,
+                new DateTime( 2021, 3, 29, 12, 30, 40, 500 ).AddTicks( 6001 ), simpleTimeZone, IsoMonthOfYear.February,
                 new DateTime( 2021, 2, 28, 12, 30, 40, 500 ).AddTicks( 6001 )
             },
             {
-                new DateTime( 2021, 4, 30, 12, 30, 40, 500 ).AddTicks( 6001 ),
-                simpleTimeZone,
-                IsoMonthOfYear.February,
+                new DateTime( 2021, 4, 30, 12, 30, 40, 500 ).AddTicks( 6001 ), simpleTimeZone, IsoMonthOfYear.February,
                 new DateTime( 2021, 2, 28, 12, 30, 40, 500 ).AddTicks( 6001 )
             },
             {
-                new DateTime( 2021, 5, 31, 12, 30, 40, 500 ).AddTicks( 6001 ),
-                simpleTimeZone,
-                IsoMonthOfYear.February,
+                new DateTime( 2021, 5, 31, 12, 30, 40, 500 ).AddTicks( 6001 ), simpleTimeZone, IsoMonthOfYear.February,
                 new DateTime( 2021, 2, 28, 12, 30, 40, 500 ).AddTicks( 6001 )
             },
             {
-                new DateTime( 2020, 5, 31, 12, 30, 40, 500 ).AddTicks( 6001 ),
-                simpleTimeZone,
-                IsoMonthOfYear.February,
+                new DateTime( 2020, 5, 31, 12, 30, 40, 500 ).AddTicks( 6001 ), simpleTimeZone, IsoMonthOfYear.February,
                 new DateTime( 2020, 2, 29, 12, 30, 40, 500 ).AddTicks( 6001 )
             },
             {
-                new DateTime( 2021, 8, 26, 11, 59, 59, 999 ).AddTicks( 9999 ),
-                timeZoneWithInvalidity,
-                IsoMonthOfYear.April,
+                new DateTime( 2021, 8, 26, 11, 59, 59, 999 ).AddTicks( 9999 ), timeZoneWithInvalidity, IsoMonthOfYear.April,
+                new DateTime( 2021, 4, 26, 11, 59, 59, 999 ).AddTicks( 9999 )
+            },
+            { new DateTime( 2021, 8, 26, 13, 0, 0 ), timeZoneWithInvalidity, IsoMonthOfYear.April, new DateTime( 2021, 4, 26, 13, 0, 0 ) },
+            {
+                new DateTime( 2021, 8, 26, 12, 0, 0 ), timeZoneWithInvalidity, IsoMonthOfYear.April,
                 new DateTime( 2021, 4, 26, 11, 59, 59, 999 ).AddTicks( 9999 )
             },
             {
-                new DateTime( 2021, 8, 26, 13, 0, 0 ),
-                timeZoneWithInvalidity,
-                IsoMonthOfYear.April,
-                new DateTime( 2021, 4, 26, 13, 0, 0 )
-            },
-            {
-                new DateTime( 2021, 8, 26, 12, 0, 0 ),
-                timeZoneWithInvalidity,
-                IsoMonthOfYear.April,
+                new DateTime( 2021, 8, 26, 12, 59, 59, 999 ).AddTicks( 9999 ), timeZoneWithInvalidity, IsoMonthOfYear.April,
                 new DateTime( 2021, 4, 26, 11, 59, 59, 999 ).AddTicks( 9999 )
             },
             {
-                new DateTime( 2021, 8, 26, 12, 59, 59, 999 ).AddTicks( 9999 ),
-                timeZoneWithInvalidity,
-                IsoMonthOfYear.April,
-                new DateTime( 2021, 4, 26, 11, 59, 59, 999 ).AddTicks( 9999 )
-            },
-            {
-                new DateTime( 2021, 8, 1, 0, 30, 0 ),
-                timeZoneWithMonthOverlapInvalidity,
-                IsoMonthOfYear.May,
+                new DateTime( 2021, 8, 1, 0, 30, 0 ), timeZoneWithMonthOverlapInvalidity, IsoMonthOfYear.May,
                 new DateTime( 2021, 5, 1, 0, 30, 0 )
             },
+            { new DateTime( 2021, 8, 1 ), timeZoneWithMonthOverlapInvalidity, IsoMonthOfYear.May, new DateTime( 2021, 5, 1, 0, 30, 0 ) },
             {
-                new DateTime( 2021, 8, 1 ),
-                timeZoneWithMonthOverlapInvalidity,
-                IsoMonthOfYear.May,
-                new DateTime( 2021, 5, 1, 0, 30, 0 )
-            },
-            {
-                new DateTime( 2021, 8, 1, 0, 29, 59, 999 ).AddTicks( 9999 ),
-                timeZoneWithMonthOverlapInvalidity,
-                IsoMonthOfYear.May,
+                new DateTime( 2021, 8, 1, 0, 29, 59, 999 ).AddTicks( 9999 ), timeZoneWithMonthOverlapInvalidity, IsoMonthOfYear.May,
                 new DateTime( 2021, 5, 1, 0, 30, 0 )
             }
         };
@@ -1903,31 +1479,19 @@ public class ZonedDateTimeTestsData
             { new DateTime( 2021, 7, 26, 11, 0, 0 ), timeZone, false, IsoMonthOfYear.October, new DateTime( 2021, 10, 26, 11, 0, 0 ) },
             { new DateTime( 2021, 9, 26, 11, 0, 0 ), timeZone, true, IsoMonthOfYear.October, new DateTime( 2021, 10, 26, 11, 0, 0 ) },
             {
-                new DateTime( 2021, 10, 26, 11, 59, 59, 999 ).AddTicks( 9999 ),
-                timeZone,
-                false,
-                IsoMonthOfYear.October,
+                new DateTime( 2021, 10, 26, 11, 59, 59, 999 ).AddTicks( 9999 ), timeZone, false, IsoMonthOfYear.October,
                 new DateTime( 2021, 10, 26, 11, 59, 59, 999 ).AddTicks( 9999 )
             },
             {
-                new DateTime( 2021, 10, 26, 11, 59, 59, 999 ).AddTicks( 9999 ),
-                timeZone,
-                true,
-                IsoMonthOfYear.October,
+                new DateTime( 2021, 10, 26, 11, 59, 59, 999 ).AddTicks( 9999 ), timeZone, true, IsoMonthOfYear.October,
                 new DateTime( 2021, 10, 26, 11, 59, 59, 999 ).AddTicks( 9999 )
             },
             {
-                new DateTime( 2021, 7, 26, 11, 59, 59, 999 ).AddTicks( 9999 ),
-                timeZone,
-                false,
-                IsoMonthOfYear.October,
+                new DateTime( 2021, 7, 26, 11, 59, 59, 999 ).AddTicks( 9999 ), timeZone, false, IsoMonthOfYear.October,
                 new DateTime( 2021, 10, 26, 11, 59, 59, 999 ).AddTicks( 9999 )
             },
             {
-                new DateTime( 2021, 9, 26, 11, 59, 59, 999 ).AddTicks( 9999 ),
-                timeZone,
-                true,
-                IsoMonthOfYear.October,
+                new DateTime( 2021, 9, 26, 11, 59, 59, 999 ).AddTicks( 9999 ), timeZone, true, IsoMonthOfYear.October,
                 new DateTime( 2021, 10, 26, 11, 59, 59, 999 ).AddTicks( 9999 )
             }
         };
@@ -1952,87 +1516,50 @@ public class ZonedDateTimeTestsData
         return new TheoryData<DateTime, TimeZoneInfo, int, DateTime>
         {
             {
-                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
-                simpleTimeZone,
-                1,
+                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ), simpleTimeZone, 1,
                 new DateTime( 2021, 8, 1, 12, 30, 40, 500 ).AddTicks( 6001 )
             },
             {
-                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
-                simpleTimeZone,
-                31,
+                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ), simpleTimeZone, 31,
                 new DateTime( 2021, 8, 31, 12, 30, 40, 500 ).AddTicks( 6001 )
             },
             {
-                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
-                simpleTimeZone,
-                26,
+                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ), simpleTimeZone, 26,
                 new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 )
             },
             {
-                new DateTime( 2021, 6, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
-                simpleTimeZone,
-                30,
+                new DateTime( 2021, 6, 26, 12, 30, 40, 500 ).AddTicks( 6001 ), simpleTimeZone, 30,
                 new DateTime( 2021, 6, 30, 12, 30, 40, 500 ).AddTicks( 6001 )
             },
             {
-                new DateTime( 2021, 2, 20, 12, 30, 40, 500 ).AddTicks( 6001 ),
-                simpleTimeZone,
-                28,
+                new DateTime( 2021, 2, 20, 12, 30, 40, 500 ).AddTicks( 6001 ), simpleTimeZone, 28,
                 new DateTime( 2021, 2, 28, 12, 30, 40, 500 ).AddTicks( 6001 )
             },
             {
-                new DateTime( 2020, 2, 20, 12, 30, 40, 500 ).AddTicks( 6001 ),
-                simpleTimeZone,
-                29,
+                new DateTime( 2020, 2, 20, 12, 30, 40, 500 ).AddTicks( 6001 ), simpleTimeZone, 29,
                 new DateTime( 2020, 2, 29, 12, 30, 40, 500 ).AddTicks( 6001 )
             },
             {
-                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
-                simpleTimeZone,
-                11,
+                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ), simpleTimeZone, 11,
                 new DateTime( 2021, 8, 11, 12, 30, 40, 500 ).AddTicks( 6001 )
             },
             {
-                new DateTime( 2021, 8, 26, 11, 59, 59, 999 ).AddTicks( 9999 ),
-                timeZoneWithInvalidity,
-                16,
+                new DateTime( 2021, 8, 26, 11, 59, 59, 999 ).AddTicks( 9999 ), timeZoneWithInvalidity, 16,
+                new DateTime( 2021, 8, 16, 11, 59, 59, 999 ).AddTicks( 9999 )
+            },
+            { new DateTime( 2021, 8, 26, 13, 0, 0 ), timeZoneWithInvalidity, 16, new DateTime( 2021, 8, 16, 13, 0, 0 ) },
+            {
+                new DateTime( 2021, 8, 26, 12, 0, 0 ), timeZoneWithInvalidity, 16,
                 new DateTime( 2021, 8, 16, 11, 59, 59, 999 ).AddTicks( 9999 )
             },
             {
-                new DateTime( 2021, 8, 26, 13, 0, 0 ),
-                timeZoneWithInvalidity,
-                16,
-                new DateTime( 2021, 8, 16, 13, 0, 0 )
-            },
-            {
-                new DateTime( 2021, 8, 26, 12, 0, 0 ),
-                timeZoneWithInvalidity,
-                16,
+                new DateTime( 2021, 8, 26, 12, 59, 59, 999 ).AddTicks( 9999 ), timeZoneWithInvalidity, 16,
                 new DateTime( 2021, 8, 16, 11, 59, 59, 999 ).AddTicks( 9999 )
             },
+            { new DateTime( 2021, 8, 26, 0, 30, 0 ), timeZoneWithDayOverlapInvalidity, 16, new DateTime( 2021, 8, 16, 0, 30, 0 ) },
+            { new DateTime( 2021, 8, 26 ), timeZoneWithDayOverlapInvalidity, 16, new DateTime( 2021, 8, 16, 0, 30, 0 ) },
             {
-                new DateTime( 2021, 8, 26, 12, 59, 59, 999 ).AddTicks( 9999 ),
-                timeZoneWithInvalidity,
-                16,
-                new DateTime( 2021, 8, 16, 11, 59, 59, 999 ).AddTicks( 9999 )
-            },
-            {
-                new DateTime( 2021, 8, 26, 0, 30, 0 ),
-                timeZoneWithDayOverlapInvalidity,
-                16,
-                new DateTime( 2021, 8, 16, 0, 30, 0 )
-            },
-            {
-                new DateTime( 2021, 8, 26 ),
-                timeZoneWithDayOverlapInvalidity,
-                16,
-                new DateTime( 2021, 8, 16, 0, 30, 0 )
-            },
-            {
-                new DateTime( 2021, 8, 26, 0, 29, 59, 999 ).AddTicks( 9999 ),
-                timeZoneWithDayOverlapInvalidity,
-                16,
+                new DateTime( 2021, 8, 26, 0, 29, 59, 999 ).AddTicks( 9999 ), timeZoneWithDayOverlapInvalidity, 16,
                 new DateTime( 2021, 8, 16, 0, 30, 0 )
             }
         };
@@ -2053,31 +1580,19 @@ public class ZonedDateTimeTestsData
             { new DateTime( 2021, 10, 30, 11, 0, 0 ), timeZone, false, 26, new DateTime( 2021, 10, 26, 11, 0, 0 ) },
             { new DateTime( 2021, 10, 16, 11, 0, 0 ), timeZone, true, 26, new DateTime( 2021, 10, 26, 11, 0, 0 ) },
             {
-                new DateTime( 2021, 10, 26, 11, 59, 59, 999 ).AddTicks( 9999 ),
-                timeZone,
-                false,
-                26,
+                new DateTime( 2021, 10, 26, 11, 59, 59, 999 ).AddTicks( 9999 ), timeZone, false, 26,
                 new DateTime( 2021, 10, 26, 11, 59, 59, 999 ).AddTicks( 9999 )
             },
             {
-                new DateTime( 2021, 10, 26, 11, 59, 59, 999 ).AddTicks( 9999 ),
-                timeZone,
-                true,
-                26,
+                new DateTime( 2021, 10, 26, 11, 59, 59, 999 ).AddTicks( 9999 ), timeZone, true, 26,
                 new DateTime( 2021, 10, 26, 11, 59, 59, 999 ).AddTicks( 9999 )
             },
             {
-                new DateTime( 2021, 10, 30, 11, 59, 59, 999 ).AddTicks( 9999 ),
-                timeZone,
-                false,
-                26,
+                new DateTime( 2021, 10, 30, 11, 59, 59, 999 ).AddTicks( 9999 ), timeZone, false, 26,
                 new DateTime( 2021, 10, 26, 11, 59, 59, 999 ).AddTicks( 9999 )
             },
             {
-                new DateTime( 2021, 10, 16, 11, 59, 59, 999 ).AddTicks( 9999 ),
-                timeZone,
-                true,
-                26,
+                new DateTime( 2021, 10, 16, 11, 59, 59, 999 ).AddTicks( 9999 ), timeZone, true, 26,
                 new DateTime( 2021, 10, 26, 11, 59, 59, 999 ).AddTicks( 9999 )
             }
         };
@@ -2134,123 +1649,74 @@ public class ZonedDateTimeTestsData
         return new TheoryData<DateTime, TimeZoneInfo, int, DateTime>
         {
             {
-                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
-                simpleTimeZone,
-                1,
+                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ), simpleTimeZone, 1,
                 new DateTime( 2021, 1, 1, 12, 30, 40, 500 ).AddTicks( 6001 )
             },
             {
-                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
-                simpleTimeZone,
-                31,
+                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ), simpleTimeZone, 31,
                 new DateTime( 2021, 1, 31, 12, 30, 40, 500 ).AddTicks( 6001 )
             },
             {
-                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
-                simpleTimeZone,
-                32,
+                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ), simpleTimeZone, 32,
                 new DateTime( 2021, 2, 1, 12, 30, 40, 500 ).AddTicks( 6001 )
             },
             {
-                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
-                simpleTimeZone,
-                59,
+                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ), simpleTimeZone, 59,
                 new DateTime( 2021, 2, 28, 12, 30, 40, 500 ).AddTicks( 6001 )
             },
             {
-                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
-                simpleTimeZone,
-                60,
+                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ), simpleTimeZone, 60,
                 new DateTime( 2021, 3, 1, 12, 30, 40, 500 ).AddTicks( 6001 )
             },
             {
-                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
-                simpleTimeZone,
-                90,
+                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ), simpleTimeZone, 90,
                 new DateTime( 2021, 3, 31, 12, 30, 40, 500 ).AddTicks( 6001 )
             },
             {
-                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
-                simpleTimeZone,
-                91,
+                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ), simpleTimeZone, 91,
                 new DateTime( 2021, 4, 1, 12, 30, 40, 500 ).AddTicks( 6001 )
             },
             {
-                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
-                simpleTimeZone,
-                238,
+                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ), simpleTimeZone, 238,
                 new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 )
             },
             {
-                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
-                simpleTimeZone,
-                365,
+                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ), simpleTimeZone, 365,
                 new DateTime( 2021, 12, 31, 12, 30, 40, 500 ).AddTicks( 6001 )
             },
             {
-                new DateTime( 2020, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
-                simpleTimeZone,
-                60,
+                new DateTime( 2020, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ), simpleTimeZone, 60,
                 new DateTime( 2020, 2, 29, 12, 30, 40, 500 ).AddTicks( 6001 )
             },
             {
-                new DateTime( 2020, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
-                simpleTimeZone,
-                61,
+                new DateTime( 2020, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ), simpleTimeZone, 61,
                 new DateTime( 2020, 3, 1, 12, 30, 40, 500 ).AddTicks( 6001 )
             },
             {
-                new DateTime( 2020, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
-                simpleTimeZone,
-                365,
+                new DateTime( 2020, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ), simpleTimeZone, 365,
                 new DateTime( 2020, 12, 30, 12, 30, 40, 500 ).AddTicks( 6001 )
             },
             {
-                new DateTime( 2020, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
-                simpleTimeZone,
-                366,
+                new DateTime( 2020, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ), simpleTimeZone, 366,
                 new DateTime( 2020, 12, 31, 12, 30, 40, 500 ).AddTicks( 6001 )
             },
             {
-                new DateTime( 2021, 8, 26, 11, 59, 59, 999 ).AddTicks( 9999 ),
-                timeZoneWithInvalidity,
-                16,
+                new DateTime( 2021, 8, 26, 11, 59, 59, 999 ).AddTicks( 9999 ), timeZoneWithInvalidity, 16,
+                new DateTime( 2021, 1, 16, 11, 59, 59, 999 ).AddTicks( 9999 )
+            },
+            { new DateTime( 2021, 8, 26, 13, 0, 0 ), timeZoneWithInvalidity, 16, new DateTime( 2021, 1, 16, 13, 0, 0 ) },
+            {
+                new DateTime( 2021, 8, 26, 12, 0, 0 ), timeZoneWithInvalidity, 16,
                 new DateTime( 2021, 1, 16, 11, 59, 59, 999 ).AddTicks( 9999 )
             },
             {
-                new DateTime( 2021, 8, 26, 13, 0, 0 ),
-                timeZoneWithInvalidity,
-                16,
-                new DateTime( 2021, 1, 16, 13, 0, 0 )
-            },
-            {
-                new DateTime( 2021, 8, 26, 12, 0, 0 ),
-                timeZoneWithInvalidity,
-                16,
+                new DateTime( 2021, 8, 26, 12, 59, 59, 999 ).AddTicks( 9999 ), timeZoneWithInvalidity, 16,
                 new DateTime( 2021, 1, 16, 11, 59, 59, 999 ).AddTicks( 9999 )
             },
+            { new DateTime( 2021, 8, 26, 0, 30, 0 ), timeZoneWithDayOverlapInvalidity, 16, new DateTime( 2021, 1, 16, 0, 30, 0 ) },
+            { new DateTime( 2021, 8, 26 ), timeZoneWithDayOverlapInvalidity, 16, new DateTime( 2021, 1, 16, 0, 30, 0 ) },
             {
-                new DateTime( 2021, 8, 26, 12, 59, 59, 999 ).AddTicks( 9999 ),
-                timeZoneWithInvalidity,
-                16,
-                new DateTime( 2021, 1, 16, 11, 59, 59, 999 ).AddTicks( 9999 )
-            },
-            {
-                new DateTime( 2021, 8, 26, 0, 30, 0 ),
-                timeZoneWithDayOverlapInvalidity,
-                16,
-                new DateTime( 2021, 1, 16, 0, 30, 0 )
-            },
-            {
-                new DateTime( 2021, 8, 26 ),
-                timeZoneWithDayOverlapInvalidity,
-                16,
-                new DateTime( 2021, 1, 16, 0, 30, 0 )
-            },
-            {
-                new DateTime( 2021, 8, 26, 0, 29, 59, 999 ).AddTicks( 9999 ),
-                timeZoneWithDayOverlapInvalidity,
-                16,
+                new DateTime( 2021, 8, 26, 0, 29, 59, 999 ).AddTicks( 9999 ), timeZoneWithDayOverlapInvalidity, 16,
                 new DateTime( 2021, 1, 16, 0, 30, 0 )
             }
         };
@@ -2271,31 +1737,19 @@ public class ZonedDateTimeTestsData
             { new DateTime( 2021, 11, 30, 11, 0, 0 ), timeZone, false, 299, new DateTime( 2021, 10, 26, 11, 0, 0 ) },
             { new DateTime( 2021, 9, 16, 11, 0, 0 ), timeZone, true, 299, new DateTime( 2021, 10, 26, 11, 0, 0 ) },
             {
-                new DateTime( 2021, 10, 26, 11, 59, 59, 999 ).AddTicks( 9999 ),
-                timeZone,
-                false,
-                299,
+                new DateTime( 2021, 10, 26, 11, 59, 59, 999 ).AddTicks( 9999 ), timeZone, false, 299,
                 new DateTime( 2021, 10, 26, 11, 59, 59, 999 ).AddTicks( 9999 )
             },
             {
-                new DateTime( 2021, 10, 26, 11, 59, 59, 999 ).AddTicks( 9999 ),
-                timeZone,
-                true,
-                299,
+                new DateTime( 2021, 10, 26, 11, 59, 59, 999 ).AddTicks( 9999 ), timeZone, true, 299,
                 new DateTime( 2021, 10, 26, 11, 59, 59, 999 ).AddTicks( 9999 )
             },
             {
-                new DateTime( 2021, 11, 30, 11, 59, 59, 999 ).AddTicks( 9999 ),
-                timeZone,
-                false,
-                299,
+                new DateTime( 2021, 11, 30, 11, 59, 59, 999 ).AddTicks( 9999 ), timeZone, false, 299,
                 new DateTime( 2021, 10, 26, 11, 59, 59, 999 ).AddTicks( 9999 )
             },
             {
-                new DateTime( 2021, 9, 16, 11, 59, 59, 999 ).AddTicks( 9999 ),
-                timeZone,
-                true,
-                299,
+                new DateTime( 2021, 9, 16, 11, 59, 59, 999 ).AddTicks( 9999 ), timeZone, true, 299,
                 new DateTime( 2021, 10, 26, 11, 59, 59, 999 ).AddTicks( 9999 )
             }
         };
@@ -2324,47 +1778,29 @@ public class ZonedDateTimeTestsData
         return new TheoryData<DateTime, TimeZoneInfo, TimeOfDay, DateTime>
         {
             {
-                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
-                simpleTimeZone,
-                TimeOfDay.Start,
-                new DateTime( 2021, 8, 26 )
+                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ), simpleTimeZone, TimeOfDay.Start, new DateTime( 2021, 8, 26 )
             },
             {
-                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
-                simpleTimeZone,
-                TimeOfDay.Mid,
+                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ), simpleTimeZone, TimeOfDay.Mid,
                 new DateTime( 2021, 8, 26, 12, 0, 0 )
             },
             {
-                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
-                simpleTimeZone,
-                TimeOfDay.End,
+                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ), simpleTimeZone, TimeOfDay.End,
                 new DateTime( 2021, 8, 26, 23, 59, 59, 999 ).AddTicks( 9999 )
             },
             {
-                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
-                simpleTimeZone,
-                new TimeOfDay( 12, 30, 40, 500, 600, 1 ),
+                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ), simpleTimeZone, new TimeOfDay( 12, 30, 40, 500, 600, 1 ),
                 new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 )
             },
             {
-                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
-                simpleTimeZone,
-                new TimeOfDay( 17, 40, 30, 200, 100, 1 ),
+                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ), simpleTimeZone, new TimeOfDay( 17, 40, 30, 200, 100, 1 ),
                 new DateTime( 2021, 8, 26, 17, 40, 30, 200 ).AddTicks( 1001 )
             },
             {
-                new DateTime( 2021, 8, 26 ),
-                timeZoneWithInvalidity,
-                new TimeOfDay( 11, 59, 59, 999, 999, 9 ),
+                new DateTime( 2021, 8, 26 ), timeZoneWithInvalidity, new TimeOfDay( 11, 59, 59, 999, 999, 9 ),
                 new DateTime( 2021, 8, 26, 11, 59, 59, 999 ).AddTicks( 9999 )
             },
-            {
-                new DateTime( 2021, 8, 26 ),
-                timeZoneWithInvalidity,
-                new TimeOfDay( 13 ),
-                new DateTime( 2021, 8, 26, 13, 0, 0 )
-            }
+            { new DateTime( 2021, 8, 26 ), timeZoneWithInvalidity, new TimeOfDay( 13 ), new DateTime( 2021, 8, 26, 13, 0, 0 ) }
         };
     }
 
@@ -2379,60 +1815,24 @@ public class ZonedDateTimeTestsData
 
         return new TheoryData<DateTime, TimeZoneInfo, bool, TimeOfDay, DateTime>
         {
+            { new DateTime( 2021, 10, 26, 11, 0, 0 ), timeZone, false, new TimeOfDay( 11 ), new DateTime( 2021, 10, 26, 11, 0, 0 ) },
+            { new DateTime( 2021, 10, 26, 11, 0, 0 ), timeZone, true, new TimeOfDay( 11 ), new DateTime( 2021, 10, 26, 11, 0, 0 ) },
+            { new DateTime( 2021, 10, 26, 16, 0, 0 ), timeZone, false, new TimeOfDay( 11 ), new DateTime( 2021, 10, 26, 11, 0, 0 ) },
+            { new DateTime( 2021, 10, 26, 6, 0, 0 ), timeZone, true, new TimeOfDay( 11 ), new DateTime( 2021, 10, 26, 11, 0, 0 ) },
             {
-                new DateTime( 2021, 10, 26, 11, 0, 0 ),
-                timeZone,
-                false,
-                new TimeOfDay( 11 ),
-                new DateTime( 2021, 10, 26, 11, 0, 0 )
+                new DateTime( 2021, 10, 26, 11, 59, 59, 999 ).AddTicks( 9999 ), timeZone, false,
+                new TimeOfDay( 11, 59, 59, 999, 999, 9 ), new DateTime( 2021, 10, 26, 11, 59, 59, 999 ).AddTicks( 9999 )
             },
             {
-                new DateTime( 2021, 10, 26, 11, 0, 0 ),
-                timeZone,
-                true,
-                new TimeOfDay( 11 ),
-                new DateTime( 2021, 10, 26, 11, 0, 0 )
+                new DateTime( 2021, 10, 26, 11, 59, 59, 999 ).AddTicks( 9999 ), timeZone, true,
+                new TimeOfDay( 11, 59, 59, 999, 999, 9 ), new DateTime( 2021, 10, 26, 11, 59, 59, 999 ).AddTicks( 9999 )
             },
             {
-                new DateTime( 2021, 10, 26, 16, 0, 0 ),
-                timeZone,
-                false,
-                new TimeOfDay( 11 ),
-                new DateTime( 2021, 10, 26, 11, 0, 0 )
-            },
-            {
-                new DateTime( 2021, 10, 26, 6, 0, 0 ),
-                timeZone,
-                true,
-                new TimeOfDay( 11 ),
-                new DateTime( 2021, 10, 26, 11, 0, 0 )
-            },
-            {
-                new DateTime( 2021, 10, 26, 11, 59, 59, 999 ).AddTicks( 9999 ),
-                timeZone,
-                false,
-                new TimeOfDay( 11, 59, 59, 999, 999, 9 ),
+                new DateTime( 2021, 10, 26, 16, 0, 0 ), timeZone, false, new TimeOfDay( 11, 59, 59, 999, 999, 9 ),
                 new DateTime( 2021, 10, 26, 11, 59, 59, 999 ).AddTicks( 9999 )
             },
             {
-                new DateTime( 2021, 10, 26, 11, 59, 59, 999 ).AddTicks( 9999 ),
-                timeZone,
-                true,
-                new TimeOfDay( 11, 59, 59, 999, 999, 9 ),
-                new DateTime( 2021, 10, 26, 11, 59, 59, 999 ).AddTicks( 9999 )
-            },
-            {
-                new DateTime( 2021, 10, 26, 16, 0, 0 ),
-                timeZone,
-                false,
-                new TimeOfDay( 11, 59, 59, 999, 999, 9 ),
-                new DateTime( 2021, 10, 26, 11, 59, 59, 999 ).AddTicks( 9999 )
-            },
-            {
-                new DateTime( 2021, 10, 26, 6, 0, 0 ),
-                timeZone,
-                true,
-                new TimeOfDay( 11, 59, 59, 999, 999, 9 ),
+                new DateTime( 2021, 10, 26, 6, 0, 0 ), timeZone, true, new TimeOfDay( 11, 59, 59, 999, 999, 9 ),
                 new DateTime( 2021, 10, 26, 11, 59, 59, 999 ).AddTicks( 9999 )
             }
         };
@@ -2448,16 +1848,8 @@ public class ZonedDateTimeTestsData
 
         return new TheoryData<DateTime, TimeZoneInfo, TimeOfDay>
         {
-            {
-                new DateTime( 2021, 8, 26 ),
-                timeZoneWithInvalidity,
-                new TimeOfDay( 12 )
-            },
-            {
-                new DateTime( 2021, 8, 26 ),
-                timeZoneWithInvalidity,
-                new TimeOfDay( 12, 59, 59, 999, 999, 9 )
-            }
+            { new DateTime( 2021, 8, 26 ), timeZoneWithInvalidity, new TimeOfDay( 12 ) },
+            { new DateTime( 2021, 8, 26 ), timeZoneWithInvalidity, new TimeOfDay( 12, 59, 59, 999, 999, 9 ) }
         };
     }
 
@@ -2501,13 +1893,11 @@ public class ZonedDateTimeTestsData
                 new DateTime( 2021, 9, 26, 9, 0, 0 )
             },
             {
-                new DateTime( 2021, 9, 26, 9, 30, 0 ),
-                TimeZoneFactory.Create( 1, TimeZoneFactory.CreateInfiniteRule( tStart, tEnd ) ),
+                new DateTime( 2021, 9, 26, 9, 30, 0 ), TimeZoneFactory.Create( 1, TimeZoneFactory.CreateInfiniteRule( tStart, tEnd ) ),
                 new DateTime( 2021, 9, 26, 10, 30, 0 )
             },
             {
-                new DateTime( 2021, 9, 26, 10, 30, 0 ),
-                TimeZoneFactory.Create( 1, TimeZoneFactory.CreateInfiniteRule( tStart, tEnd ) ),
+                new DateTime( 2021, 9, 26, 10, 30, 0 ), TimeZoneFactory.Create( 1, TimeZoneFactory.CreateInfiniteRule( tStart, tEnd ) ),
                 new DateTime( 2021, 9, 26, 9, 30, 0 )
             },
             {

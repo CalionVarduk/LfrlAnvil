@@ -433,7 +433,7 @@ public class SqlColumnBuilderTests : TestsBase
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Columns.Create( "C2" );
 
-        var action = Lambda.Of( () => ((ISqlColumnBuilder)sut).SetType( definition ) );
+        var action = Lambda.Of( () => (( ISqlColumnBuilder )sut).SetType( definition ) );
 
         action.Should()
             .ThrowExactly<SqlObjectCastException>()
@@ -618,7 +618,7 @@ public class SqlColumnBuilderTests : TestsBase
         var originalDefaultValue = sut.DefaultValue;
 
         var actionCount = schema.Database.GetPendingActionCount();
-        sut.SetDefaultValue( (int?)42 );
+        sut.SetDefaultValue( ( int? )42 );
         var result = sut.SetDefaultValue( originalDefaultValue );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
@@ -771,7 +771,7 @@ public class SqlColumnBuilderTests : TestsBase
         schema.Objects.CreateView( "V", table.Node.ToDataSource().Select( s => new[] { s.From["C2"].AsSelf() } ) );
 
         var actionCount = schema.Database.GetPendingActionCount();
-        var result = sut.SetDefaultValue( (int?)123 );
+        var result = sut.SetDefaultValue( ( int? )123 );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )
@@ -1439,7 +1439,7 @@ public class SqlColumnBuilderTests : TestsBase
         var node = sut.Node;
 
         var actionCount = schema.Database.GetPendingActionCount();
-        var result = ((ISqlColumnBuilder)sut).SetName( "bar" );
+        var result = (( ISqlColumnBuilder )sut).SetName( "bar" );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )
@@ -1469,7 +1469,7 @@ public class SqlColumnBuilderTests : TestsBase
         var node = sut.Node;
 
         var actionCount = schema.Database.GetPendingActionCount();
-        var result = ((ISqlObjectBuilder)sut).SetName( "bar" );
+        var result = (( ISqlObjectBuilder )sut).SetName( "bar" );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )
@@ -1498,7 +1498,7 @@ public class SqlColumnBuilderTests : TestsBase
         var sut = table.Columns.Create( "C2" );
 
         var actionCount = schema.Database.GetPendingActionCount();
-        var result = ((ISqlColumnBuilder)sut).SetType<int>();
+        var result = (( ISqlColumnBuilder )sut).SetType<int>();
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )
@@ -1525,7 +1525,7 @@ public class SqlColumnBuilderTests : TestsBase
         var sut = table.Columns.Create( "C2" );
 
         var actionCount = schema.Database.GetPendingActionCount();
-        var result = ((ISqlColumnBuilder)sut).SetType( SqlDataTypeMock.Integer );
+        var result = (( ISqlColumnBuilder )sut).SetType( SqlDataTypeMock.Integer );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )
@@ -1552,7 +1552,7 @@ public class SqlColumnBuilderTests : TestsBase
         var sut = table.Columns.Create( "C2" );
 
         var actionCount = schema.Database.GetPendingActionCount();
-        var result = ((ISqlColumnBuilder)sut).MarkAsNullable();
+        var result = (( ISqlColumnBuilder )sut).MarkAsNullable();
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )
@@ -1578,7 +1578,7 @@ public class SqlColumnBuilderTests : TestsBase
         var sut = table.Columns.Create( "C2" );
 
         var actionCount = schema.Database.GetPendingActionCount();
-        var result = ((ISqlColumnBuilder)sut).SetDefaultValue( (int?)123 ).SetDefaultValue( 42 );
+        var result = (( ISqlColumnBuilder )sut).SetDefaultValue( ( int? )123 ).SetDefaultValue( 42 );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )
@@ -1605,7 +1605,7 @@ public class SqlColumnBuilderTests : TestsBase
         var computation = SqlColumnComputation.Virtual( SqlNode.Literal( 1 ) );
 
         var actionCount = schema.Database.GetPendingActionCount();
-        var result = ((ISqlColumnBuilder)sut).SetComputation( computation );
+        var result = (( ISqlColumnBuilder )sut).SetComputation( computation );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )

@@ -27,10 +27,8 @@ internal struct ExpressionTokenizerSubStream
             if ( char.IsWhiteSpace( c ) )
                 break;
 
-            if ( c is TokenConstants.OpenedParenthesis or
-                    TokenConstants.ClosedParenthesis or
-                    TokenConstants.LineSeparator ||
-                c == configuration.StringDelimiter )
+            if ( c is TokenConstants.OpenedParenthesis or TokenConstants.ClosedParenthesis or TokenConstants.LineSeparator
+                || c == configuration.StringDelimiter )
                 break;
 
             ++index;

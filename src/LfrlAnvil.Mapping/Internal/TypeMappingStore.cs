@@ -19,28 +19,28 @@ public readonly struct TypeMappingStore
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public Func<TSource, ITypeMapper, TDestination> GetDelegate<TSource, TDestination>()
     {
-        return (Func<TSource, ITypeMapper, TDestination>)FastDelegate;
+        return ( Func<TSource, ITypeMapper, TDestination> )FastDelegate;
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public Func<object, ITypeMapper, TDestination> GetDelegate<TDestination>()
     {
-        return (Func<object, ITypeMapper, TDestination>)SlowDelegate;
+        return ( Func<object, ITypeMapper, TDestination> )SlowDelegate;
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public Func<object, ITypeMapper, object> GetDelegate()
     {
-        return (Func<object, ITypeMapper, object>)SlowDelegate;
+        return ( Func<object, ITypeMapper, object> )SlowDelegate;
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static TypeMappingStore Create<TSource, TDestination>(Func<TSource, ITypeMapper, TDestination> mapping)
     {
-        Func<object, ITypeMapper, TDestination> slowMapping = (source, provider) => mapping( (TSource)source, provider );
+        Func<object, ITypeMapper, TDestination> slowMapping = (source, provider) => mapping( ( TSource )source, provider );
         return new TypeMappingStore( mapping, slowMapping );
     }
 }

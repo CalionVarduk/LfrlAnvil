@@ -175,7 +175,7 @@ public static class SqlHelpers
         static char ToHexChar(int value)
         {
             Assume.IsInRange( value, 0, 15 );
-            return (char)(value < 10 ? '0' + value : 'A' + value - 10);
+            return ( char )(value < 10 ? '0' + value : 'A' + value - 10);
         }
     }
 

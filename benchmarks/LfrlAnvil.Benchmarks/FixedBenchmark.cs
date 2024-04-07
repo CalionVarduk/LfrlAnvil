@@ -23,11 +23,11 @@ public class FixedBenchmark
             otherValue = 1;
 
         _fixed = Fixed.CreateRaw( value, 5 );
-        _decimal = (decimal)value / Fixed.GetScale( 5 );
-        _double = (double)value / Fixed.GetScale( 5 );
+        _decimal = ( decimal )value / Fixed.GetScale( 5 );
+        _double = ( double )value / Fixed.GetScale( 5 );
         _otherFixed = Fixed.CreateRaw( otherValue, 5 );
-        _otherDecimal = (decimal)otherValue / Fixed.GetScale( 5 );
-        _otherDouble = (double)otherValue / Fixed.GetScale( 5 );
+        _otherDecimal = ( decimal )otherValue / Fixed.GetScale( 5 );
+        _otherDouble = ( double )otherValue / Fixed.GetScale( 5 );
     }
 
     [Benchmark]

@@ -129,9 +129,9 @@ public partial class CollectionVariableTests
             elementSnapshot.Element.Should().BeSameAs( element );
             elementSnapshot.PreviousState.Should()
                 .Be(
-                    CollectionVariableElementState.Added |
-                    CollectionVariableElementState.Invalid |
-                    CollectionVariableElementState.Warning );
+                    CollectionVariableElementState.Added
+                    | CollectionVariableElementState.Invalid
+                    | CollectionVariableElementState.Warning );
 
             elementSnapshot.NewState.Should().Be( sut.Elements.GetState( element.Key ) );
             elementSnapshot.PreviousErrors.Should().BeSequentiallyEqualTo( elementError );
@@ -213,12 +213,7 @@ public partial class CollectionVariableTests
         var initialElements = new[] { allElements[0], allElements[1] };
         var keys = new[]
         {
-            allElements[3].Key,
-            allElements[1].Key,
-            allElements[2].Key,
-            allElements[1].Key,
-            allElements[2].Key,
-            allElements[3].Key
+            allElements[3].Key, allElements[1].Key, allElements[2].Key, allElements[1].Key, allElements[2].Key, allElements[3].Key
         };
 
         var keySelector = Lambda.Of( (TestElement e) => e.Key );

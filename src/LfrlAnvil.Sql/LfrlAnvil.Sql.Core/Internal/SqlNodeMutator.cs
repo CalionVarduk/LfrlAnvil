@@ -1127,9 +1127,7 @@ internal sealed class SqlNodeMutator : ISqlNodeVisitor
         var min = Handle( node.Min, node );
         var max = Handle( node.Max, node );
 
-        if ( ! ReferenceEquals( value, node.Value ) ||
-            ! ReferenceEquals( min, node.Min ) ||
-            ! ReferenceEquals( max, node.Max ) )
+        if ( ! ReferenceEquals( value, node.Value ) || ! ReferenceEquals( min, node.Min ) || ! ReferenceEquals( max, node.Max ) )
             next = node.IsNegated ? value.IsNotBetween( min, max ) : value.IsBetween( min, max );
 
         Push( next );
@@ -1158,9 +1156,9 @@ internal sealed class SqlNodeMutator : ISqlNodeVisitor
         var pattern = Handle( node.Pattern, node );
         var escape = node.Escape is null ? null : Handle( node.Escape, node );
 
-        if ( ! ReferenceEquals( value, node.Value ) ||
-            ! ReferenceEquals( pattern, node.Pattern ) ||
-            ! ReferenceEquals( escape, node.Escape ) )
+        if ( ! ReferenceEquals( value, node.Value )
+            || ! ReferenceEquals( pattern, node.Pattern )
+            || ! ReferenceEquals( escape, node.Escape ) )
             next = node.IsNegated ? value.NotLike( pattern, escape ) : value.Like( pattern, escape );
 
         Push( next );
@@ -1701,11 +1699,11 @@ internal sealed class SqlNodeMutator : ISqlNodeVisitor
         var conflictTarget = HandleCollection( node.ConflictTarget, node );
         var updateAssignments = HandleCollection( node.UpdateAssignments, node );
 
-        if ( ! ReferenceEquals( source, node.Source ) ||
-            ! ReferenceEquals( recordSet, node.RecordSet ) ||
-            insertDataFields is not null ||
-            conflictTarget is not null ||
-            updateAssignments is not null )
+        if ( ! ReferenceEquals( source, node.Source )
+            || ! ReferenceEquals( recordSet, node.RecordSet )
+            || insertDataFields is not null
+            || conflictTarget is not null
+            || updateAssignments is not null )
         {
             insertDataFields ??= node.InsertDataFields.GetUnderlyingArray().ToArray();
             conflictTarget ??= node.ConflictTarget.GetUnderlyingArray().ToArray();
@@ -1781,11 +1779,11 @@ internal sealed class SqlNodeMutator : ISqlNodeVisitor
         var defaultValue = node.DefaultValue is null ? null : Handle( node.DefaultValue, node );
         var computationExpression = node.Computation is null ? null : Handle( node.Computation.Value.Expression, node );
 
-        if ( ! ReferenceEquals( defaultValue, node.DefaultValue ) ||
-            ! ReferenceEquals( computationExpression, node.Computation?.Expression ) )
+        if ( ! ReferenceEquals( defaultValue, node.DefaultValue )
+            || ! ReferenceEquals( computationExpression, node.Computation?.Expression ) )
         {
             var computation = computationExpression is null
-                ? (SqlColumnComputation?)null
+                ? ( SqlColumnComputation? )null
                 : new SqlColumnComputation( computationExpression, node.Computation!.Value.Storage );
 
             next = node.TypeDefinition is null
@@ -1819,9 +1817,7 @@ internal sealed class SqlNodeMutator : ISqlNodeVisitor
         var referencedTable = Handle( node.ReferencedTable, node );
         var referencedColumns = HandleCollection( node.ReferencedColumns, node );
 
-        if ( columns is not null ||
-            referencedColumns is not null ||
-            ! ReferenceEquals( referencedTable, node.ReferencedTable ) )
+        if ( columns is not null || referencedColumns is not null || ! ReferenceEquals( referencedTable, node.ReferencedTable ) )
             next = SqlNode.ForeignKey(
                 node.Name,
                 columns ?? node.Columns.GetUnderlyingArray().ToArray(),

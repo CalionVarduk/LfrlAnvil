@@ -145,10 +145,10 @@ public class PropertyInfoExtensionsTests : TestsBase
 
     private static bool MatchBackingField(PropertyInfo property, FieldInfo? info)
     {
-        return info != null &&
-            info.IsPrivate &&
-            info.Name.Contains( property.Name ) &&
-            Attribute.IsDefined( info, typeof( CompilerGeneratedAttribute ) );
+        return info != null
+            && info.IsPrivate
+            && info.Name.Contains( property.Name )
+            && Attribute.IsDefined( info, typeof( CompilerGeneratedAttribute ) );
     }
 }
 

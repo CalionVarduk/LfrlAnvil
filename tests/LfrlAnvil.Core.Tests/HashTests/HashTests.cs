@@ -90,7 +90,7 @@ public class HashTests : TestsBase
         var value = Fixture.Create<int>();
         var sut = new Hash( value );
 
-        var result = (int)sut;
+        var result = ( int )sut;
 
         result.Should().Be( value );
     }

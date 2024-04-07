@@ -116,7 +116,7 @@ internal static class TimeZoneFactory
 
     internal static double CreateRandomOffset(IFixture fixture, double absMax = 14.0)
     {
-        var utcOffsetInHours = fixture.Create<int>() % ((int)absMax * 4) / 4.0;
+        var utcOffsetInHours = fixture.Create<int>() % (( int )absMax * 4) / 4.0;
         var negate = fixture.Create<bool>();
         return utcOffsetInHours * (negate ? -1 : 1);
     }
@@ -181,7 +181,7 @@ internal static class TimeZoneFactory
             return $"{dayOfMonthText}t{timeOfDayText}";
         }
 
-        var dayOfWeekText = $"{time.Month:00}w{time.Week:0}{(int)time.DayOfWeek:0}";
+        var dayOfWeekText = $"{time.Month:00}w{time.Week:0}{( int )time.DayOfWeek:0}";
         return $"{dayOfWeekText}t{timeOfDayText}";
     }
 }

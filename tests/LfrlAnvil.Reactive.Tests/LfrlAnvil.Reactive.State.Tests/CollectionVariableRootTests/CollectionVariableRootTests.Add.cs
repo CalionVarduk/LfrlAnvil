@@ -189,18 +189,12 @@ public partial class CollectionVariableRootTests
 
             errorsValidator.VerifyCalls()
                 .Received(
-                    v =>
-                    {
-                        _ = v.Validate( sut.Elements );
-                    },
+                    v => { _ = v.Validate( sut.Elements ); },
                     1 );
 
             warningsValidator.VerifyCalls()
                 .Received(
-                    v =>
-                    {
-                        _ = v.Validate( sut.Elements );
-                    },
+                    v => { _ = v.Validate( sut.Elements ); },
                     1 );
         }
     }
@@ -329,18 +323,12 @@ public partial class CollectionVariableRootTests
 
             errorsValidator.VerifyCalls()
                 .Received(
-                    v =>
-                    {
-                        _ = v.Validate( sut.Elements );
-                    },
+                    v => { _ = v.Validate( sut.Elements ); },
                     1 );
 
             warningsValidator.VerifyCalls()
                 .Received(
-                    v =>
-                    {
-                        _ = v.Validate( sut.Elements );
-                    },
+                    v => { _ = v.Validate( sut.Elements ); },
                     1 );
         }
     }
@@ -401,18 +389,12 @@ public partial class CollectionVariableRootTests
 
             errorsValidator.VerifyCalls()
                 .Received(
-                    v =>
-                    {
-                        _ = v.Validate( sut.Elements );
-                    },
+                    v => { _ = v.Validate( sut.Elements ); },
                     1 );
 
             warningsValidator.VerifyCalls()
                 .Received(
-                    v =>
-                    {
-                        _ = v.Validate( sut.Elements );
-                    },
+                    v => { _ = v.Validate( sut.Elements ); },
                     1 );
         }
     }

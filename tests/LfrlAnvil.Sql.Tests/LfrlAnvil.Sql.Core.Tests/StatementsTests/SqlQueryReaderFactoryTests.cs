@@ -200,9 +200,27 @@ public class SqlQueryReaderFactoryTests : TestsBase
             result.Rows.Should().BeInAscendingOrder( r => r.A );
             result.Rows.Should()
                 .BeEquivalentTo(
-                    new Row { A = 1, B = "foo", C = 5.0, D = true },
-                    new Row { A = 2, B = "bar", C = null, D = false },
-                    new Row { A = 3, B = "lorem", C = 10.0, D = null } );
+                    new Row
+                    {
+                        A = 1,
+                        B = "foo",
+                        C = 5.0,
+                        D = true
+                    },
+                    new Row
+                    {
+                        A = 2,
+                        B = "bar",
+                        C = null,
+                        D = false
+                    },
+                    new Row
+                    {
+                        A = 3,
+                        B = "lorem",
+                        C = 10.0,
+                        D = null
+                    } );
 
             result.ResultSetFields.ToArray().Should().BeEmpty();
         }
@@ -236,9 +254,27 @@ public class SqlQueryReaderFactoryTests : TestsBase
             result.Rows.Should().BeInAscendingOrder( r => r.A );
             result.Rows.Should()
                 .BeEquivalentTo(
-                    new Row { A = 1, B = "foo", C = 5.0, D = true },
-                    new Row { A = 2, B = "bar", C = null, D = false },
-                    new Row { A = 3, B = "lorem", C = 10.0, D = null } );
+                    new Row
+                    {
+                        A = 1,
+                        B = "foo",
+                        C = 5.0,
+                        D = true
+                    },
+                    new Row
+                    {
+                        A = 2,
+                        B = "bar",
+                        C = null,
+                        D = false
+                    },
+                    new Row
+                    {
+                        A = 3,
+                        B = "lorem",
+                        C = 10.0,
+                        D = null
+                    } );
 
             result.ResultSetFields.ToArray()
                 .Should()
@@ -278,9 +314,27 @@ public class SqlQueryReaderFactoryTests : TestsBase
             result.Rows.Should().BeInAscendingOrder( r => r.A );
             result.Rows.Should()
                 .BeEquivalentTo(
-                    new Row { A = 1, B = "foo", C = 5.0, D = true },
-                    new Row { A = 2, B = "bar", C = null, D = false },
-                    new Row { A = 3, B = "lorem", C = 10.0, D = null } );
+                    new Row
+                    {
+                        A = 1,
+                        B = "foo",
+                        C = 5.0,
+                        D = true
+                    },
+                    new Row
+                    {
+                        A = 2,
+                        B = "bar",
+                        C = null,
+                        D = false
+                    },
+                    new Row
+                    {
+                        A = 3,
+                        B = "lorem",
+                        C = 10.0,
+                        D = null
+                    } );
 
             result.ResultSetFields[0].Ordinal.Should().Be( 0 );
             result.ResultSetFields[0].Name.Should().Be( "a" );
@@ -357,9 +411,27 @@ public class SqlQueryReaderFactoryTests : TestsBase
             result.Rows.Should().BeInAscendingOrder( r => r.A );
             result.Rows.Should()
                 .BeEquivalentTo(
-                    new { A = 1, B = "foo", C = (double?)5.0, D = "x" },
-                    new { A = 2, B = "bar", C = (double?)null, D = "y" },
-                    new { A = 3, B = "lorem", C = (double?)10.0, D = (string?)null } );
+                    new
+                    {
+                        A = 1,
+                        B = "foo",
+                        C = ( double? )5.0,
+                        D = "x"
+                    },
+                    new
+                    {
+                        A = 2,
+                        B = "bar",
+                        C = ( double? )null,
+                        D = "y"
+                    },
+                    new
+                    {
+                        A = 3,
+                        B = "lorem",
+                        C = ( double? )10.0,
+                        D = ( string? )null
+                    } );
         }
     }
 
@@ -390,9 +462,27 @@ public class SqlQueryReaderFactoryTests : TestsBase
             result.Rows.Should().BeInAscendingOrder( r => r.A );
             result.Rows.Should()
                 .BeEquivalentTo(
-                    new Row { A = 1, B = "foo", C = 5.0, D = true },
-                    new Row { A = 2, B = "bar", C = null, D = false },
-                    new Row { A = 3, B = "lorem", C = 10.0, D = null } );
+                    new Row
+                    {
+                        A = 1,
+                        B = "foo",
+                        C = 5.0,
+                        D = true
+                    },
+                    new Row
+                    {
+                        A = 2,
+                        B = "bar",
+                        C = null,
+                        D = false
+                    },
+                    new Row
+                    {
+                        A = 3,
+                        B = "lorem",
+                        C = 10.0,
+                        D = null
+                    } );
         }
     }
 
@@ -422,9 +512,27 @@ public class SqlQueryReaderFactoryTests : TestsBase
             result.Rows.Should().BeInAscendingOrder( r => r.A );
             result.Rows.Should()
                 .BeEquivalentTo(
-                    new Row { A = 1, B = "foo", C = null, D = true },
-                    new Row { A = 2, B = "bar", C = null, D = false },
-                    new Row { A = 3, B = "lorem", C = null, D = null } );
+                    new Row
+                    {
+                        A = 1,
+                        B = "foo",
+                        C = null,
+                        D = true
+                    },
+                    new Row
+                    {
+                        A = 2,
+                        B = "bar",
+                        C = null,
+                        D = false
+                    },
+                    new Row
+                    {
+                        A = 3,
+                        B = "lorem",
+                        C = null,
+                        D = null
+                    } );
         }
     }
 
@@ -454,9 +562,27 @@ public class SqlQueryReaderFactoryTests : TestsBase
             result.Rows.Should().BeInAscendingOrder( r => r.A );
             result.Rows.Should()
                 .BeEquivalentTo(
-                    new Row { A = 1, B = "foo", C = 5.0, D = true },
-                    new Row { A = 2, B = "bar", C = null, D = false },
-                    new Row { A = 3, B = "lorem", C = 10.0, D = null } );
+                    new Row
+                    {
+                        A = 1,
+                        B = "foo",
+                        C = 5.0,
+                        D = true
+                    },
+                    new Row
+                    {
+                        A = 2,
+                        B = "bar",
+                        C = null,
+                        D = false
+                    },
+                    new Row
+                    {
+                        A = 3,
+                        B = "lorem",
+                        C = 10.0,
+                        D = null
+                    } );
         }
     }
 
@@ -479,8 +605,8 @@ public class SqlQueryReaderFactoryTests : TestsBase
                 SqlQueryReaderCreationOptions.Default.With(
                     SqlQueryMemberConfiguration.From(
                         "c",
-                        (ISqlDataRecordFacade<DbDataReaderMock> r) => (double)(r.Record.GetInt32( r.Record.GetOrdinal( "a" ) ) +
-                            r.Record.GetString( r.Record.GetOrdinal( "b" ) ).Length) ) ) );
+                        (ISqlDataRecordFacade<DbDataReaderMock> r) => ( double )(r.Record.GetInt32( r.Record.GetOrdinal( "a" ) )
+                            + r.Record.GetString( r.Record.GetOrdinal( "b" ) ).Length) ) ) );
 
         var result = queryReader.Read( reader );
 
@@ -492,9 +618,27 @@ public class SqlQueryReaderFactoryTests : TestsBase
             result.Rows.Should().BeInAscendingOrder( r => r.A );
             result.Rows.Should()
                 .BeEquivalentTo(
-                    new Row { A = 1, B = "foo", C = 4.0, D = true },
-                    new Row { A = 2, B = "bar", C = 5.0, D = false },
-                    new Row { A = 3, B = "lorem", C = 8.0, D = null } );
+                    new Row
+                    {
+                        A = 1,
+                        B = "foo",
+                        C = 4.0,
+                        D = true
+                    },
+                    new Row
+                    {
+                        A = 2,
+                        B = "bar",
+                        C = 5.0,
+                        D = false
+                    },
+                    new Row
+                    {
+                        A = 3,
+                        B = "lorem",
+                        C = 8.0,
+                        D = null
+                    } );
         }
     }
 
@@ -532,9 +676,27 @@ public class SqlQueryReaderFactoryTests : TestsBase
             result.Rows.Should().BeInAscendingOrder( r => r.A );
             result.Rows.Should()
                 .BeEquivalentTo(
-                    new Row { A = 1, B = "foo", C = 11.0, D = true },
-                    new Row { A = 2, B = "bar", C = 1.0, D = false },
-                    new Row { A = 3, B = "lorem", C = 10.0, D = null } );
+                    new Row
+                    {
+                        A = 1,
+                        B = "foo",
+                        C = 11.0,
+                        D = true
+                    },
+                    new Row
+                    {
+                        A = 2,
+                        B = "bar",
+                        C = 1.0,
+                        D = false
+                    },
+                    new Row
+                    {
+                        A = 3,
+                        B = "lorem",
+                        C = 10.0,
+                        D = null
+                    } );
         }
     }
 
@@ -555,7 +717,7 @@ public class SqlQueryReaderFactoryTests : TestsBase
         var queryReader = sut.Create<UnsafeRow>(
             SqlQueryReaderCreationOptions.Default.EnableAlwaysTestingForNull()
                 .SetRowTypeMemberPredicate(
-                    m => m.MemberType == MemberTypes.Property || (m.MemberType == MemberTypes.Field && ((FieldInfo)m).IsPublic) )
+                    m => m.MemberType == MemberTypes.Property || (m.MemberType == MemberTypes.Field && (( FieldInfo )m).IsPublic) )
                 .SetRowTypeConstructorPredicate( c => c.GetParameters().Length == 0 ) );
 
         var result = queryReader.Read( reader );
@@ -843,9 +1005,27 @@ public class SqlQueryReaderFactoryTests : TestsBase
             result.Rows.Should().BeInAscendingOrder( r => r.A );
             result.Rows.Should()
                 .BeEquivalentTo(
-                    new Row { A = 1, B = "foo", C = 5.0, D = true },
-                    new Row { A = 2, B = "bar", C = null, D = false },
-                    new Row { A = 3, B = "lorem", C = 10.0, D = null } );
+                    new Row
+                    {
+                        A = 1,
+                        B = "foo",
+                        C = 5.0,
+                        D = true
+                    },
+                    new Row
+                    {
+                        A = 2,
+                        B = "bar",
+                        C = null,
+                        D = false
+                    },
+                    new Row
+                    {
+                        A = 3,
+                        B = "lorem",
+                        C = 10.0,
+                        D = null
+                    } );
 
             result.ResultSetFields.ToArray().Should().BeEmpty();
         }
@@ -879,9 +1059,27 @@ public class SqlQueryReaderFactoryTests : TestsBase
             result.Rows.Should().BeInAscendingOrder( r => r.A );
             result.Rows.Should()
                 .BeEquivalentTo(
-                    new Row { A = 1, B = "foo", C = 5.0, D = true },
-                    new Row { A = 2, B = "bar", C = null, D = false },
-                    new Row { A = 3, B = "lorem", C = 10.0, D = null } );
+                    new Row
+                    {
+                        A = 1,
+                        B = "foo",
+                        C = 5.0,
+                        D = true
+                    },
+                    new Row
+                    {
+                        A = 2,
+                        B = "bar",
+                        C = null,
+                        D = false
+                    },
+                    new Row
+                    {
+                        A = 3,
+                        B = "lorem",
+                        C = 10.0,
+                        D = null
+                    } );
 
             result.ResultSetFields.ToArray()
                 .Should()
@@ -922,9 +1120,27 @@ public class SqlQueryReaderFactoryTests : TestsBase
             result.Rows.Should().BeInAscendingOrder( r => r.A );
             result.Rows.Should()
                 .BeEquivalentTo(
-                    new Row { A = 1, B = "foo", C = 5.0, D = true },
-                    new Row { A = 2, B = "bar", C = null, D = false },
-                    new Row { A = 3, B = "lorem", C = 10.0, D = null } );
+                    new Row
+                    {
+                        A = 1,
+                        B = "foo",
+                        C = 5.0,
+                        D = true
+                    },
+                    new Row
+                    {
+                        A = 2,
+                        B = "bar",
+                        C = null,
+                        D = false
+                    },
+                    new Row
+                    {
+                        A = 3,
+                        B = "lorem",
+                        C = 10.0,
+                        D = null
+                    } );
 
             result.ResultSetFields[0].Ordinal.Should().Be( 0 );
             result.ResultSetFields[0].Name.Should().Be( "a" );
@@ -1002,9 +1218,27 @@ public class SqlQueryReaderFactoryTests : TestsBase
             result.Rows.Should().BeInAscendingOrder( r => r.A );
             result.Rows.Should()
                 .BeEquivalentTo(
-                    new { A = 1, B = "foo", C = (double?)5.0, D = "x" },
-                    new { A = 2, B = "bar", C = (double?)null, D = "y" },
-                    new { A = 3, B = "lorem", C = (double?)10.0, D = (string?)null } );
+                    new
+                    {
+                        A = 1,
+                        B = "foo",
+                        C = ( double? )5.0,
+                        D = "x"
+                    },
+                    new
+                    {
+                        A = 2,
+                        B = "bar",
+                        C = ( double? )null,
+                        D = "y"
+                    },
+                    new
+                    {
+                        A = 3,
+                        B = "lorem",
+                        C = ( double? )10.0,
+                        D = ( string? )null
+                    } );
         }
     }
 
@@ -1035,9 +1269,27 @@ public class SqlQueryReaderFactoryTests : TestsBase
             result.Rows.Should().BeInAscendingOrder( r => r.A );
             result.Rows.Should()
                 .BeEquivalentTo(
-                    new Row { A = 1, B = "foo", C = 5.0, D = true },
-                    new Row { A = 2, B = "bar", C = null, D = false },
-                    new Row { A = 3, B = "lorem", C = 10.0, D = null } );
+                    new Row
+                    {
+                        A = 1,
+                        B = "foo",
+                        C = 5.0,
+                        D = true
+                    },
+                    new Row
+                    {
+                        A = 2,
+                        B = "bar",
+                        C = null,
+                        D = false
+                    },
+                    new Row
+                    {
+                        A = 3,
+                        B = "lorem",
+                        C = 10.0,
+                        D = null
+                    } );
         }
     }
 
@@ -1067,9 +1319,27 @@ public class SqlQueryReaderFactoryTests : TestsBase
             result.Rows.Should().BeInAscendingOrder( r => r.A );
             result.Rows.Should()
                 .BeEquivalentTo(
-                    new Row { A = 1, B = "foo", C = null, D = true },
-                    new Row { A = 2, B = "bar", C = null, D = false },
-                    new Row { A = 3, B = "lorem", C = null, D = null } );
+                    new Row
+                    {
+                        A = 1,
+                        B = "foo",
+                        C = null,
+                        D = true
+                    },
+                    new Row
+                    {
+                        A = 2,
+                        B = "bar",
+                        C = null,
+                        D = false
+                    },
+                    new Row
+                    {
+                        A = 3,
+                        B = "lorem",
+                        C = null,
+                        D = null
+                    } );
         }
     }
 
@@ -1100,9 +1370,27 @@ public class SqlQueryReaderFactoryTests : TestsBase
             result.Rows.Should().BeInAscendingOrder( r => r.A );
             result.Rows.Should()
                 .BeEquivalentTo(
-                    new Row { A = 1, B = "foo", C = 5.0, D = true },
-                    new Row { A = 2, B = "bar", C = null, D = false },
-                    new Row { A = 3, B = "lorem", C = 10.0, D = null } );
+                    new Row
+                    {
+                        A = 1,
+                        B = "foo",
+                        C = 5.0,
+                        D = true
+                    },
+                    new Row
+                    {
+                        A = 2,
+                        B = "bar",
+                        C = null,
+                        D = false
+                    },
+                    new Row
+                    {
+                        A = 3,
+                        B = "lorem",
+                        C = 10.0,
+                        D = null
+                    } );
         }
     }
 
@@ -1125,8 +1413,8 @@ public class SqlQueryReaderFactoryTests : TestsBase
                 SqlQueryReaderCreationOptions.Default.With(
                     SqlQueryMemberConfiguration.From(
                         "c",
-                        (ISqlDataRecordFacade<DbDataReaderMock> r) => (double)(r.Record.GetInt32( r.Record.GetOrdinal( "a" ) ) +
-                            r.Record.GetString( r.Record.GetOrdinal( "b" ) ).Length) ) ) );
+                        (ISqlDataRecordFacade<DbDataReaderMock> r) => ( double )(r.Record.GetInt32( r.Record.GetOrdinal( "a" ) )
+                            + r.Record.GetString( r.Record.GetOrdinal( "b" ) ).Length) ) ) );
 
         var result = await queryReader.ReadAsync( reader );
 
@@ -1138,9 +1426,27 @@ public class SqlQueryReaderFactoryTests : TestsBase
             result.Rows.Should().BeInAscendingOrder( r => r.A );
             result.Rows.Should()
                 .BeEquivalentTo(
-                    new Row { A = 1, B = "foo", C = 4.0, D = true },
-                    new Row { A = 2, B = "bar", C = 5.0, D = false },
-                    new Row { A = 3, B = "lorem", C = 8.0, D = null } );
+                    new Row
+                    {
+                        A = 1,
+                        B = "foo",
+                        C = 4.0,
+                        D = true
+                    },
+                    new Row
+                    {
+                        A = 2,
+                        B = "bar",
+                        C = 5.0,
+                        D = false
+                    },
+                    new Row
+                    {
+                        A = 3,
+                        B = "lorem",
+                        C = 8.0,
+                        D = null
+                    } );
         }
     }
 
@@ -1178,9 +1484,27 @@ public class SqlQueryReaderFactoryTests : TestsBase
             result.Rows.Should().BeInAscendingOrder( r => r.A );
             result.Rows.Should()
                 .BeEquivalentTo(
-                    new Row { A = 1, B = "foo", C = 11.0, D = true },
-                    new Row { A = 2, B = "bar", C = 1.0, D = false },
-                    new Row { A = 3, B = "lorem", C = 10.0, D = null } );
+                    new Row
+                    {
+                        A = 1,
+                        B = "foo",
+                        C = 11.0,
+                        D = true
+                    },
+                    new Row
+                    {
+                        A = 2,
+                        B = "bar",
+                        C = 1.0,
+                        D = false
+                    },
+                    new Row
+                    {
+                        A = 3,
+                        B = "lorem",
+                        C = 10.0,
+                        D = null
+                    } );
         }
     }
 
@@ -1201,7 +1525,7 @@ public class SqlQueryReaderFactoryTests : TestsBase
         var queryReader = sut.CreateAsync<UnsafeRow>(
             SqlQueryReaderCreationOptions.Default.EnableAlwaysTestingForNull()
                 .SetRowTypeMemberPredicate(
-                    m => m.MemberType == MemberTypes.Property || (m.MemberType == MemberTypes.Field && ((FieldInfo)m).IsPublic) )
+                    m => m.MemberType == MemberTypes.Property || (m.MemberType == MemberTypes.Field && (( FieldInfo )m).IsPublic) )
                 .SetRowTypeConstructorPredicate( c => c.GetParameters().Length == 0 ) );
 
         var result = await queryReader.ReadAsync( reader );
@@ -1339,11 +1663,7 @@ public class SqlQueryReaderFactoryTests : TestsBase
         var reader = new DbDataReaderMock(
             new ResultSet(
                 FieldNames: new[] { "a", "b", "c", "d" },
-                Rows: new[]
-                {
-                    new object?[] { 1, "foo", 5.0, true },
-                    new object?[] { 2, "bar", null, false }
-                } ) );
+                Rows: new[] { new object?[] { 1, "foo", 5.0, true }, new object?[] { 2, "bar", null, false } } ) );
 
         var sut = SqlQueryReaderFactoryMock.CreateInstance();
         var scalarReader = sut.CreateScalar();
@@ -1364,11 +1684,7 @@ public class SqlQueryReaderFactoryTests : TestsBase
         var reader = new DbDataReaderMock(
             new ResultSet(
                 FieldNames: new[] { "a", "b", "c", "d" },
-                Rows: new[]
-                {
-                    new object?[] { null, "foo", 5.0, true },
-                    new object?[] { 2, "bar", null, false }
-                } ) );
+                Rows: new[] { new object?[] { null, "foo", 5.0, true }, new object?[] { 2, "bar", null, false } } ) );
 
         var sut = SqlQueryReaderFactoryMock.CreateInstance();
         var scalarReader = sut.CreateScalar();
@@ -1405,11 +1721,7 @@ public class SqlQueryReaderFactoryTests : TestsBase
         var reader = new DbDataReaderMock(
             new ResultSet(
                 FieldNames: new[] { "a", "b", "c", "d" },
-                Rows: new[]
-                {
-                    new object?[] { 1, "foo", 5.0, true },
-                    new object?[] { 2, "bar", null, false }
-                } ) );
+                Rows: new[] { new object?[] { 1, "foo", 5.0, true }, new object?[] { 2, "bar", null, false } } ) );
 
         var sut = SqlQueryReaderFactoryMock.CreateInstance();
         var queryReader = sut.CreateScalar<int>();
@@ -1430,11 +1742,7 @@ public class SqlQueryReaderFactoryTests : TestsBase
         var reader = new DbDataReaderMock(
             new ResultSet(
                 FieldNames: new[] { "a", "b", "c", "d" },
-                Rows: new[]
-                {
-                    new object?[] { null, "foo", 5.0, true },
-                    new object?[] { 2, "bar", null, false }
-                } ) );
+                Rows: new[] { new object?[] { null, "foo", 5.0, true }, new object?[] { 2, "bar", null, false } } ) );
 
         var sut = SqlQueryReaderFactoryMock.CreateInstance();
         var queryReader = sut.CreateScalar<int>( isNullable: true );
@@ -1454,11 +1762,7 @@ public class SqlQueryReaderFactoryTests : TestsBase
         var reader = new DbDataReaderMock(
             new ResultSet(
                 FieldNames: new[] { "a", "b", "c", "d" },
-                Rows: new[]
-                {
-                    new object?[] { 1, "foo", 5.0, true },
-                    new object?[] { 2, "bar", null, false }
-                } ) );
+                Rows: new[] { new object?[] { 1, "foo", 5.0, true }, new object?[] { 2, "bar", null, false } } ) );
 
         var sut = SqlQueryReaderFactoryMock.CreateInstance();
         var queryReader = sut.CreateScalar<int?>();
@@ -1479,11 +1783,7 @@ public class SqlQueryReaderFactoryTests : TestsBase
         var reader = new DbDataReaderMock(
             new ResultSet(
                 FieldNames: new[] { "a", "b", "c", "d" },
-                Rows: new[]
-                {
-                    new object?[] { null, "foo", 5.0, true },
-                    new object?[] { 2, "bar", null, false }
-                } ) );
+                Rows: new[] { new object?[] { null, "foo", 5.0, true }, new object?[] { 2, "bar", null, false } } ) );
 
         var sut = SqlQueryReaderFactoryMock.CreateInstance();
         var queryReader = sut.CreateScalar<int?>();
@@ -1503,11 +1803,7 @@ public class SqlQueryReaderFactoryTests : TestsBase
         var reader = new DbDataReaderMock(
             new ResultSet(
                 FieldNames: new[] { "a", "b", "c", "d" },
-                Rows: new[]
-                {
-                    new object?[] { "foo", 1, 5.0, true },
-                    new object?[] { "bar", 2, null, false }
-                } ) );
+                Rows: new[] { new object?[] { "foo", 1, 5.0, true }, new object?[] { "bar", 2, null, false } } ) );
 
         var sut = SqlQueryReaderFactoryMock.CreateInstance();
         var queryReader = sut.CreateScalar<string>();
@@ -1528,11 +1824,7 @@ public class SqlQueryReaderFactoryTests : TestsBase
         var reader = new DbDataReaderMock(
             new ResultSet(
                 FieldNames: new[] { "a", "b", "c", "d" },
-                Rows: new[]
-                {
-                    new object?[] { null, 1, 5.0, true },
-                    new object?[] { "bar", 2, null, false }
-                } ) );
+                Rows: new[] { new object?[] { null, 1, 5.0, true }, new object?[] { "bar", 2, null, false } } ) );
 
         var sut = SqlQueryReaderFactoryMock.CreateInstance();
         var queryReader = sut.CreateScalar<string>( isNullable: true );
@@ -1584,11 +1876,7 @@ public class SqlQueryReaderFactoryTests : TestsBase
         var reader = new DbDataReaderMock(
             new ResultSet(
                 FieldNames: new[] { "a", "b", "c", "d" },
-                Rows: new[]
-                {
-                    new object?[] { 1, "foo", 5.0, true },
-                    new object?[] { 2, "bar", null, false }
-                } ) );
+                Rows: new[] { new object?[] { 1, "foo", 5.0, true }, new object?[] { 2, "bar", null, false } } ) );
 
         var sut = SqlQueryReaderFactoryMock.CreateInstance();
         var scalarReader = sut.CreateAsyncScalar();
@@ -1610,11 +1898,7 @@ public class SqlQueryReaderFactoryTests : TestsBase
         var reader = new DbDataReaderMock(
             new ResultSet(
                 FieldNames: new[] { "a", "b", "c", "d" },
-                Rows: new[]
-                {
-                    new object?[] { null, "foo", 5.0, true },
-                    new object?[] { 2, "bar", null, false }
-                } ) );
+                Rows: new[] { new object?[] { null, "foo", 5.0, true }, new object?[] { 2, "bar", null, false } } ) );
 
         var sut = SqlQueryReaderFactoryMock.CreateInstance();
         var scalarReader = sut.CreateAsyncScalar();
@@ -1652,11 +1936,7 @@ public class SqlQueryReaderFactoryTests : TestsBase
         var reader = new DbDataReaderMock(
             new ResultSet(
                 FieldNames: new[] { "a", "b", "c", "d" },
-                Rows: new[]
-                {
-                    new object?[] { 1, "foo", 5.0, true },
-                    new object?[] { 2, "bar", null, false }
-                } ) );
+                Rows: new[] { new object?[] { 1, "foo", 5.0, true }, new object?[] { 2, "bar", null, false } } ) );
 
         var sut = SqlQueryReaderFactoryMock.CreateInstance();
         var queryReader = sut.CreateAsyncScalar<int>();
@@ -1677,11 +1957,7 @@ public class SqlQueryReaderFactoryTests : TestsBase
         var reader = new DbDataReaderMock(
             new ResultSet(
                 FieldNames: new[] { "a", "b", "c", "d" },
-                Rows: new[]
-                {
-                    new object?[] { null, "foo", 5.0, true },
-                    new object?[] { 2, "bar", null, false }
-                } ) );
+                Rows: new[] { new object?[] { null, "foo", 5.0, true }, new object?[] { 2, "bar", null, false } } ) );
 
         var sut = SqlQueryReaderFactoryMock.CreateInstance();
         var queryReader = sut.CreateAsyncScalar<int>( isNullable: true );
@@ -1702,11 +1978,7 @@ public class SqlQueryReaderFactoryTests : TestsBase
         var reader = new DbDataReaderMock(
             new ResultSet(
                 FieldNames: new[] { "a", "b", "c", "d" },
-                Rows: new[]
-                {
-                    new object?[] { 1, "foo", 5.0, true },
-                    new object?[] { 2, "bar", null, false }
-                } ) );
+                Rows: new[] { new object?[] { 1, "foo", 5.0, true }, new object?[] { 2, "bar", null, false } } ) );
 
         var sut = SqlQueryReaderFactoryMock.CreateInstance();
         var queryReader = sut.CreateAsyncScalar<int?>();
@@ -1727,11 +1999,7 @@ public class SqlQueryReaderFactoryTests : TestsBase
         var reader = new DbDataReaderMock(
             new ResultSet(
                 FieldNames: new[] { "a", "b", "c", "d" },
-                Rows: new[]
-                {
-                    new object?[] { null, "foo", 5.0, true },
-                    new object?[] { 2, "bar", null, false }
-                } ) );
+                Rows: new[] { new object?[] { null, "foo", 5.0, true }, new object?[] { 2, "bar", null, false } } ) );
 
         var sut = SqlQueryReaderFactoryMock.CreateInstance();
         var queryReader = sut.CreateAsyncScalar<int?>();
@@ -1746,16 +2014,13 @@ public class SqlQueryReaderFactoryTests : TestsBase
     }
 
     [Fact]
-    public async Task CreateAsyncScalar_Generic_ShouldCreateAsyncScalarQueryReaderThatReturnsCorrectResult_WhenDataReaderIsNotEmpty_ForRefType()
+    public async Task
+        CreateAsyncScalar_Generic_ShouldCreateAsyncScalarQueryReaderThatReturnsCorrectResult_WhenDataReaderIsNotEmpty_ForRefType()
     {
         var reader = new DbDataReaderMock(
             new ResultSet(
                 FieldNames: new[] { "a", "b", "c", "d" },
-                Rows: new[]
-                {
-                    new object?[] { "foo", 1, 5.0, true },
-                    new object?[] { "bar", 2, null, false }
-                } ) );
+                Rows: new[] { new object?[] { "foo", 1, 5.0, true }, new object?[] { "bar", 2, null, false } } ) );
 
         var sut = SqlQueryReaderFactoryMock.CreateInstance();
         var queryReader = sut.CreateAsyncScalar<string>();
@@ -1776,11 +2041,7 @@ public class SqlQueryReaderFactoryTests : TestsBase
         var reader = new DbDataReaderMock(
             new ResultSet(
                 FieldNames: new[] { "a", "b", "c", "d" },
-                Rows: new[]
-                {
-                    new object?[] { null, 1, 5.0, true },
-                    new object?[] { "bar", 2, null, false }
-                } ) );
+                Rows: new[] { new object?[] { null, 1, 5.0, true }, new object?[] { "bar", 2, null, false } } ) );
 
         var sut = SqlQueryReaderFactoryMock.CreateInstance();
         var queryReader = sut.CreateAsyncScalar<string>( isNullable: true );

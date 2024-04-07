@@ -344,7 +344,7 @@ public partial class SqlSchemaBuilderTests : TestsBase
         var sut = db.Schemas.Create( "foo" );
 
         var actionCount = db.GetPendingActionCount();
-        var result = ((ISqlSchemaBuilder)sut).SetName( "bar" );
+        var result = (( ISqlSchemaBuilder )sut).SetName( "bar" );
         var actions = db.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )
@@ -370,7 +370,7 @@ public partial class SqlSchemaBuilderTests : TestsBase
         var sut = db.Schemas.Create( "foo" );
 
         var actionCount = db.GetPendingActionCount();
-        var result = ((ISqlObjectBuilder)sut).SetName( "bar" );
+        var result = (( ISqlObjectBuilder )sut).SetName( "bar" );
         var actions = db.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )

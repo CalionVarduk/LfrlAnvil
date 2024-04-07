@@ -1051,8 +1051,7 @@ public class MySqlIndexBuilderTests : TestsBase
             result.ReferencedFilterColumns.Should().BeEmpty();
 
             column.ReferencingObjects.Should()
-                .BeSequentiallyEqualTo(
-                    SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), column ) );
+                .BeSequentiallyEqualTo( SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), column ) );
 
             actions.Should().HaveCount( 1 );
             actions.ElementAtOrDefault( 0 )

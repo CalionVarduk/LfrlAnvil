@@ -45,8 +45,7 @@ public class SqlIndexBuilderTests : TestsBase
             sut.ReferencedColumns.Should().BeSequentiallyEqualTo( c2 );
 
             c2.ReferencingObjects.Should()
-                .BeSequentiallyEqualTo(
-                    SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), c2 ) );
+                .BeSequentiallyEqualTo( SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), c2 ) );
 
             actions.Should().HaveCount( 1 );
             actions.ElementAtOrDefault( 0 )
@@ -753,8 +752,7 @@ public class SqlIndexBuilderTests : TestsBase
             result.ReferencedFilterColumns.Should().BeEmpty();
 
             column.ReferencingObjects.Should()
-                .BeSequentiallyEqualTo(
-                    SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), column ) );
+                .BeSequentiallyEqualTo( SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), column ) );
 
             actions.Should().HaveCount( 1 );
             actions.ElementAtOrDefault( 0 )
@@ -1020,8 +1018,7 @@ public class SqlIndexBuilderTests : TestsBase
             pk.IsRemoved.Should().BeFalse();
 
             column.ReferencingObjects.Should()
-                .BeSequentiallyEqualTo(
-                    SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), column ) );
+                .BeSequentiallyEqualTo( SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), column ) );
 
             actions.Should().BeEmpty();
         }
@@ -1081,7 +1078,7 @@ public class SqlIndexBuilderTests : TestsBase
         var oldName = sut.Name;
 
         var actionCount = schema.Database.GetPendingActionCount();
-        var result = ((ISqlIndexBuilder)sut).SetName( "bar" );
+        var result = (( ISqlIndexBuilder )sut).SetName( "bar" );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )
@@ -1112,7 +1109,7 @@ public class SqlIndexBuilderTests : TestsBase
         var oldName = sut.Name;
 
         var actionCount = schema.Database.GetPendingActionCount();
-        var result = ((ISqlConstraintBuilder)sut).SetName( "bar" );
+        var result = (( ISqlConstraintBuilder )sut).SetName( "bar" );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )
@@ -1143,7 +1140,7 @@ public class SqlIndexBuilderTests : TestsBase
         var oldName = sut.Name;
 
         var actionCount = schema.Database.GetPendingActionCount();
-        var result = ((ISqlObjectBuilder)sut).SetName( "bar" );
+        var result = (( ISqlObjectBuilder )sut).SetName( "bar" );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )
@@ -1173,7 +1170,7 @@ public class SqlIndexBuilderTests : TestsBase
         var sut = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() ).SetName( "bar" );
 
         var actionCount = schema.Database.GetPendingActionCount();
-        var result = ((ISqlIndexBuilder)sut).SetDefaultName();
+        var result = (( ISqlIndexBuilder )sut).SetDefaultName();
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )
@@ -1203,7 +1200,7 @@ public class SqlIndexBuilderTests : TestsBase
         var sut = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() ).SetName( "bar" );
 
         var actionCount = schema.Database.GetPendingActionCount();
-        var result = ((ISqlConstraintBuilder)sut).SetDefaultName();
+        var result = (( ISqlConstraintBuilder )sut).SetDefaultName();
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )
@@ -1233,7 +1230,7 @@ public class SqlIndexBuilderTests : TestsBase
         var sut = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() );
 
         var actionCount = schema.Database.GetPendingActionCount();
-        var result = ((ISqlIndexBuilder)sut).MarkAsUnique();
+        var result = (( ISqlIndexBuilder )sut).MarkAsUnique();
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )
@@ -1259,7 +1256,7 @@ public class SqlIndexBuilderTests : TestsBase
         var sut = table.Constraints.CreateIndex( table.Columns.Create( "C2" ).Asc() );
 
         var actionCount = schema.Database.GetPendingActionCount();
-        var result = ((ISqlIndexBuilder)sut).MarkAsVirtual();
+        var result = (( ISqlIndexBuilder )sut).MarkAsVirtual();
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )
@@ -1286,7 +1283,7 @@ public class SqlIndexBuilderTests : TestsBase
         var sut = table.Constraints.CreateIndex( column.Asc() );
 
         var actionCount = schema.Database.GetPendingActionCount();
-        var result = ((ISqlIndexBuilder)sut).SetFilter( t => t["C2"] != null );
+        var result = (( ISqlIndexBuilder )sut).SetFilter( t => t["C2"] != null );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )

@@ -230,10 +230,7 @@ public class IntervalEventSourceTests : TestsBase
         var interval = Duration.FromTicks( 1 );
         var timestamps = new[]
         {
-            Timestamp.Zero,
-            Timestamp.Zero + interval,
-            Timestamp.Zero + interval * 10,
-            Timestamp.Zero + interval * 11
+            Timestamp.Zero, Timestamp.Zero + interval, Timestamp.Zero + interval * 10, Timestamp.Zero + interval * 11
         };
 
         var expectedFirstEvent = new WithInterval<long>( 0, Timestamp.Zero + interval, interval );
@@ -307,13 +304,7 @@ public class IntervalEventSourceTests : TestsBase
     public async Task Interval_WithCount_ThenListen_ShouldCreateActiveSubscriberThatPublishesMultipleEventsInCorrectOrder()
     {
         var interval = Duration.FromTicks( 1 );
-        var timestamps = new[]
-        {
-            Timestamp.Zero,
-            Timestamp.Zero + interval,
-            Timestamp.Zero + interval,
-            Timestamp.Zero + interval * 2
-        };
+        var timestamps = new[] { Timestamp.Zero, Timestamp.Zero + interval, Timestamp.Zero + interval, Timestamp.Zero + interval * 2 };
 
         var completion = new TaskCompletionSource();
         var eventTimestamps = timestamps.Skip( 1 ).Distinct().ToList();
@@ -417,13 +408,7 @@ public class IntervalEventSourceTests : TestsBase
     {
         var scheduler = new SynchronousTaskScheduler();
         var interval = Duration.FromTicks( 1 );
-        var timestamps = new[]
-        {
-            Timestamp.Zero,
-            Timestamp.Zero + interval,
-            Timestamp.Zero + interval,
-            Timestamp.Zero + interval * 2
-        };
+        var timestamps = new[] { Timestamp.Zero, Timestamp.Zero + interval, Timestamp.Zero + interval, Timestamp.Zero + interval * 2 };
 
         var eventTimestamps = timestamps.Skip( 1 ).Distinct().ToList();
         var expectedEvents = eventTimestamps.Select( (t, i) => new WithInterval<long>( i, t, interval ) );
@@ -485,11 +470,7 @@ public class IntervalEventSourceTests : TestsBase
     public async Task Timeout_ThenListen_ShouldCreateActiveSubscriberThatPublishesSingleEvent()
     {
         var timeout = Duration.FromTicks( 1 );
-        var timestamps = new[]
-        {
-            Timestamp.Zero,
-            Timestamp.Zero + timeout
-        };
+        var timestamps = new[] { Timestamp.Zero, Timestamp.Zero + timeout };
 
         var completion = new TaskCompletionSource();
         var expectedEvent = new WithInterval<long>( 0, Timestamp.Zero + timeout, timeout );
@@ -512,11 +493,7 @@ public class IntervalEventSourceTests : TestsBase
     {
         var scheduler = new SynchronousTaskScheduler();
         var timeout = Duration.FromTicks( 1 );
-        var timestamps = new[]
-        {
-            Timestamp.Zero,
-            Timestamp.Zero + timeout
-        };
+        var timestamps = new[] { Timestamp.Zero, Timestamp.Zero + timeout };
 
         var expectedEvent = new WithInterval<long>( 0, Timestamp.Zero + timeout, timeout );
         var actualEvents = new List<WithInterval<long>>();

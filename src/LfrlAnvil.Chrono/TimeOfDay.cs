@@ -21,34 +21,34 @@ public readonly struct TimeOfDay : IEquatable<TimeOfDay>, IComparable<TimeOfDay>
         Ensure.IsInRange( microsecond, 0, ChronoConstants.MicrosecondsPerMillisecond - 1 );
         Ensure.IsInRange( tick, 0, ChronoConstants.TicksPerMicrosecond - 1 );
 
-        _value = hour * ChronoConstants.TicksPerHour +
-            minute * ChronoConstants.TicksPerMinute +
-            second * ChronoConstants.TicksPerSecond +
-            millisecond * ChronoConstants.TicksPerMillisecond +
-            microsecond * ChronoConstants.TicksPerMicrosecond +
-            tick;
+        _value = hour * ChronoConstants.TicksPerHour
+            + minute * ChronoConstants.TicksPerMinute
+            + second * ChronoConstants.TicksPerSecond
+            + millisecond * ChronoConstants.TicksPerMillisecond
+            + microsecond * ChronoConstants.TicksPerMicrosecond
+            + tick;
     }
 
     public TimeOfDay(TimeSpan timeSpan)
         : this(
-            (int)timeSpan.TotalHours,
+            ( int )timeSpan.TotalHours,
             timeSpan.Minutes,
             timeSpan.Seconds,
             timeSpan.Milliseconds,
             timeSpan.Microseconds,
-            (int)(timeSpan.Ticks % ChronoConstants.TicksPerMicrosecond) ) { }
+            ( int )(timeSpan.Ticks % ChronoConstants.TicksPerMicrosecond) ) { }
 
     private TimeOfDay(long value)
     {
         _value = value;
     }
 
-    public int Tick => (int)(_value % ChronoConstants.TicksPerMicrosecond);
-    public int Microsecond => (int)(_value / ChronoConstants.TicksPerMicrosecond % ChronoConstants.MicrosecondsPerMillisecond);
-    public int Millisecond => (int)(_value / ChronoConstants.TicksPerMillisecond % ChronoConstants.MillisecondsPerSecond);
-    public int Second => (int)(_value / ChronoConstants.TicksPerSecond % ChronoConstants.SecondsPerMinute);
-    public int Minute => (int)(_value / ChronoConstants.TicksPerMinute % ChronoConstants.MinutesPerHour);
-    public int Hour => (int)(_value / ChronoConstants.TicksPerHour);
+    public int Tick => ( int )(_value % ChronoConstants.TicksPerMicrosecond);
+    public int Microsecond => ( int )(_value / ChronoConstants.TicksPerMicrosecond % ChronoConstants.MicrosecondsPerMillisecond);
+    public int Millisecond => ( int )(_value / ChronoConstants.TicksPerMillisecond % ChronoConstants.MillisecondsPerSecond);
+    public int Second => ( int )(_value / ChronoConstants.TicksPerSecond % ChronoConstants.SecondsPerMinute);
+    public int Minute => ( int )(_value / ChronoConstants.TicksPerMinute % ChronoConstants.MinutesPerHour);
+    public int Hour => ( int )(_value / ChronoConstants.TicksPerHour);
 
     [Pure]
     public override string ToString()

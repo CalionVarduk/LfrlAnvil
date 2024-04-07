@@ -17,7 +17,7 @@ public class ByteSequenceGeneratorTests : GenericSequenceGeneratorTestsBase<byte
 
     protected sealed override byte Add(byte a, byte b)
     {
-        return (byte)(a + b);
+        return ( byte )(a + b);
     }
 
     protected sealed override SequenceGeneratorBase<byte> Create()

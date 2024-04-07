@@ -28,7 +28,7 @@ public abstract class GenericEitherTests<T1, T2> : TestsBase
     public void GetHashCode_ShouldReturnCorrectResult_WhenHasFirst()
     {
         var value = Fixture.Create<T1>();
-        var sut = (Either<T1, T2>)value;
+        var sut = ( Either<T1, T2> )value;
         var expected = Hash.Default.Add( value ).Value;
 
         var result = sut.GetHashCode();
@@ -40,7 +40,7 @@ public abstract class GenericEitherTests<T1, T2> : TestsBase
     public void GetHashCode_ShouldReturnCorrectResult_WhenHasSecond()
     {
         var value = Fixture.Create<T2>();
-        var sut = (Either<T1, T2>)value;
+        var sut = ( Either<T1, T2> )value;
         var expected = Hash.Default.Add( value ).Value;
 
         var result = sut.GetHashCode();
@@ -52,8 +52,8 @@ public abstract class GenericEitherTests<T1, T2> : TestsBase
     [GenericMethodData( nameof( GenericEitherTestsData<T1, T2>.CreateEqualsTestData ) )]
     public void Equals_ShouldReturnCorrectResult(object value1, bool hasFirst1, object value2, bool hasFirst2, bool expected)
     {
-        var a = (Either<T1, T2>)(hasFirst1 ? (T1)value1 : (T2)value1);
-        var b = (Either<T1, T2>)(hasFirst2 ? (T1)value2 : (T2)value2);
+        var a = ( Either<T1, T2> )(hasFirst1 ? ( T1 )value1 : ( T2 )value1);
+        var b = ( Either<T1, T2> )(hasFirst2 ? ( T1 )value2 : ( T2 )value2);
 
         var result = a.Equals( b );
 
@@ -64,7 +64,7 @@ public abstract class GenericEitherTests<T1, T2> : TestsBase
     public void GetFirst_ShouldReturnCorrectResult_WhenHasFirst()
     {
         var value = Fixture.Create<T1>();
-        var sut = (Either<T1, T2>)value;
+        var sut = ( Either<T1, T2> )value;
 
         var result = sut.GetFirst();
 
@@ -75,7 +75,7 @@ public abstract class GenericEitherTests<T1, T2> : TestsBase
     public void GetFirst_ShouldThrowValueAccessException_WhenHasSecond()
     {
         var value = Fixture.Create<T2>();
-        var sut = (Either<T1, T2>)value;
+        var sut = ( Either<T1, T2> )value;
 
         var action = Lambda.Of( () => sut.GetFirst() );
 
@@ -86,7 +86,7 @@ public abstract class GenericEitherTests<T1, T2> : TestsBase
     public void GetFirstOrDefault_ShouldReturnCorrectResult_WhenHasFirst()
     {
         var value = Fixture.CreateNotDefault<T1>();
-        var sut = (Either<T1, T2>)value;
+        var sut = ( Either<T1, T2> )value;
 
         var result = sut.GetFirstOrDefault();
 
@@ -97,7 +97,7 @@ public abstract class GenericEitherTests<T1, T2> : TestsBase
     public void GetFirstOrDefault_ShouldReturnDefaultValue_WhenHasSecond()
     {
         var value = Fixture.Create<T2>();
-        var sut = (Either<T1, T2>)value;
+        var sut = ( Either<T1, T2> )value;
 
         var result = sut.GetFirstOrDefault();
 
@@ -108,7 +108,7 @@ public abstract class GenericEitherTests<T1, T2> : TestsBase
     public void GetFirstOrDefault_WithValue_ShouldReturnCorrectResult_WhenHasFirst()
     {
         var value = Fixture.CreateNotDefault<T1>();
-        var sut = (Either<T1, T2>)value;
+        var sut = ( Either<T1, T2> )value;
 
         var result = sut.GetFirstOrDefault( Fixture.CreateNotDefault<T1>() );
 
@@ -120,7 +120,7 @@ public abstract class GenericEitherTests<T1, T2> : TestsBase
     {
         var defaultValue = Fixture.CreateNotDefault<T1>();
         var value = Fixture.Create<T2>();
-        var sut = (Either<T1, T2>)value;
+        var sut = ( Either<T1, T2> )value;
 
         var result = sut.GetFirstOrDefault( defaultValue );
 
@@ -131,7 +131,7 @@ public abstract class GenericEitherTests<T1, T2> : TestsBase
     public void GetSecond_ShouldReturnCorrectResult_WhenHasSecond()
     {
         var value = Fixture.Create<T2>();
-        var sut = (Either<T1, T2>)value;
+        var sut = ( Either<T1, T2> )value;
 
         var result = sut.GetSecond();
 
@@ -142,7 +142,7 @@ public abstract class GenericEitherTests<T1, T2> : TestsBase
     public void GetSecond_ShouldThrowValueAccessException_WhenHasFirst()
     {
         var value = Fixture.Create<T1>();
-        var sut = (Either<T1, T2>)value;
+        var sut = ( Either<T1, T2> )value;
 
         var action = Lambda.Of( () => sut.GetSecond() );
 
@@ -153,7 +153,7 @@ public abstract class GenericEitherTests<T1, T2> : TestsBase
     public void GetSecondOrDefault_ShouldReturnCorrectResult_WhenHasSecond()
     {
         var value = Fixture.CreateNotDefault<T2>();
-        var sut = (Either<T1, T2>)value;
+        var sut = ( Either<T1, T2> )value;
 
         var result = sut.GetSecondOrDefault();
 
@@ -164,7 +164,7 @@ public abstract class GenericEitherTests<T1, T2> : TestsBase
     public void GetSecondOrDefault_ShouldReturnDefaultValue_WhenHasFirst()
     {
         var value = Fixture.Create<T1>();
-        var sut = (Either<T1, T2>)value;
+        var sut = ( Either<T1, T2> )value;
 
         var result = sut.GetSecondOrDefault();
 
@@ -175,7 +175,7 @@ public abstract class GenericEitherTests<T1, T2> : TestsBase
     public void GetSecondOrDefault_WithValue_ShouldReturnCorrectResult_WhenHasSecond()
     {
         var value = Fixture.CreateNotDefault<T2>();
-        var sut = (Either<T1, T2>)value;
+        var sut = ( Either<T1, T2> )value;
 
         var result = sut.GetSecondOrDefault( Fixture.CreateNotDefault<T2>() );
 
@@ -187,7 +187,7 @@ public abstract class GenericEitherTests<T1, T2> : TestsBase
     {
         var defaultValue = Fixture.CreateNotDefault<T2>();
         var value = Fixture.Create<T1>();
-        var sut = (Either<T1, T2>)value;
+        var sut = ( Either<T1, T2> )value;
 
         var result = sut.GetSecondOrDefault( defaultValue );
 
@@ -198,7 +198,7 @@ public abstract class GenericEitherTests<T1, T2> : TestsBase
     public void Swap_ShouldReturnCorrectResult_WhenHasFirst()
     {
         var value = Fixture.Create<T1>();
-        var sut = (Either<T1, T2>)value;
+        var sut = ( Either<T1, T2> )value;
 
         var result = sut.Swap();
 
@@ -213,7 +213,7 @@ public abstract class GenericEitherTests<T1, T2> : TestsBase
     public void Swap_ShouldReturnCorrectResult_WhenHasSecond()
     {
         var value = Fixture.Create<T2>();
-        var sut = (Either<T1, T2>)value;
+        var sut = ( Either<T1, T2> )value;
 
         var result = sut.Swap();
 
@@ -231,7 +231,7 @@ public abstract class GenericEitherTests<T1, T2> : TestsBase
         var returnedValue = Fixture.Create<T1>();
         var firstDelegate = Substitute.For<Func<T1, Either<T1, T2>>>().WithAnyArgs( _ => returnedValue );
 
-        var sut = (Either<T1, T2>)value;
+        var sut = ( Either<T1, T2> )value;
 
         var result = sut.Bind( firstDelegate );
 
@@ -249,7 +249,7 @@ public abstract class GenericEitherTests<T1, T2> : TestsBase
         var value = Fixture.Create<T2>();
         var firstDelegate = Substitute.For<Func<T1, Either<T1, T2>>>().WithAnyArgs( i => i.ArgAt<T1>( 0 ) );
 
-        var sut = (Either<T1, T2>)value;
+        var sut = ( Either<T1, T2> )value;
 
         var result = sut.Bind( firstDelegate );
 
@@ -268,7 +268,7 @@ public abstract class GenericEitherTests<T1, T2> : TestsBase
         var returnedValue = Fixture.Create<T2>();
         var secondDelegate = Substitute.For<Func<T2, Either<T1, T2>>>().WithAnyArgs( _ => returnedValue );
 
-        var sut = (Either<T1, T2>)value;
+        var sut = ( Either<T1, T2> )value;
 
         var result = sut.BindSecond( secondDelegate );
 
@@ -286,7 +286,7 @@ public abstract class GenericEitherTests<T1, T2> : TestsBase
         var value = Fixture.Create<T1>();
         var secondDelegate = Substitute.For<Func<T2, Either<T1, T2>>>().WithAnyArgs( i => i.ArgAt<T2>( 0 ) );
 
-        var sut = (Either<T1, T2>)value;
+        var sut = ( Either<T1, T2> )value;
 
         var result = sut.BindSecond( secondDelegate );
 
@@ -306,7 +306,7 @@ public abstract class GenericEitherTests<T1, T2> : TestsBase
         var firstDelegate = Substitute.For<Func<T1, Either<T1, T2>>>().WithAnyArgs( _ => returnedValue );
         var secondDelegate = Substitute.For<Func<T2, Either<T1, T2>>>().WithAnyArgs( i => i.ArgAt<T2>( 0 ) );
 
-        var sut = (Either<T1, T2>)value;
+        var sut = ( Either<T1, T2> )value;
 
         var result = sut.Bind( first: firstDelegate, second: secondDelegate );
 
@@ -327,7 +327,7 @@ public abstract class GenericEitherTests<T1, T2> : TestsBase
         var firstDelegate = Substitute.For<Func<T1, Either<T1, T2>>>().WithAnyArgs( i => i.ArgAt<T1>( 0 ) );
         var secondDelegate = Substitute.For<Func<T2, Either<T1, T2>>>().WithAnyArgs( _ => returnedValue );
 
-        var sut = (Either<T1, T2>)value;
+        var sut = ( Either<T1, T2> )value;
 
         var result = sut.Bind( first: firstDelegate, second: secondDelegate );
 
@@ -348,7 +348,7 @@ public abstract class GenericEitherTests<T1, T2> : TestsBase
         var firstDelegate = Substitute.For<Func<T1, T1>>().WithAnyArgs( _ => returnedValue );
         var secondDelegate = Substitute.For<Func<T2, T1>>().WithAnyArgs( _ => value );
 
-        var sut = (Either<T1, T2>)value;
+        var sut = ( Either<T1, T2> )value;
 
         var result = sut.Match( first: firstDelegate, second: secondDelegate );
 
@@ -368,7 +368,7 @@ public abstract class GenericEitherTests<T1, T2> : TestsBase
         var firstDelegate = Substitute.For<Func<T1, T2>>().WithAnyArgs( _ => value );
         var secondDelegate = Substitute.For<Func<T2, T2>>().WithAnyArgs( _ => returnedValue );
 
-        var sut = (Either<T1, T2>)value;
+        var sut = ( Either<T1, T2> )value;
 
         var result = sut.Match( first: firstDelegate, second: secondDelegate );
 
@@ -387,7 +387,7 @@ public abstract class GenericEitherTests<T1, T2> : TestsBase
         var firstDelegate = Substitute.For<Action<T1>>();
         var secondDelegate = Substitute.For<Action<T2>>();
 
-        var sut = (Either<T1, T2>)value;
+        var sut = ( Either<T1, T2> )value;
 
         sut.Match( first: firstDelegate, second: secondDelegate );
 
@@ -405,7 +405,7 @@ public abstract class GenericEitherTests<T1, T2> : TestsBase
         var firstDelegate = Substitute.For<Action<T1>>();
         var secondDelegate = Substitute.For<Action<T2>>();
 
-        var sut = (Either<T1, T2>)value;
+        var sut = ( Either<T1, T2> )value;
 
         sut.Match( first: firstDelegate, second: secondDelegate );
 
@@ -423,7 +423,7 @@ public abstract class GenericEitherTests<T1, T2> : TestsBase
         var returnedValue = Fixture.Create<T1>();
         var firstDelegate = Substitute.For<Func<T1, T1>>().WithAnyArgs( _ => returnedValue );
 
-        var sut = (Either<T1, T2>)value;
+        var sut = ( Either<T1, T2> )value;
 
         var result = sut.IfFirst( firstDelegate );
 
@@ -440,7 +440,7 @@ public abstract class GenericEitherTests<T1, T2> : TestsBase
         var value = Fixture.Create<T2>();
         var firstDelegate = Substitute.For<Func<T1, T1>>().WithAnyArgs( i => i.ArgAt<T1>( 0 ) );
 
-        var sut = (Either<T1, T2>)value;
+        var sut = ( Either<T1, T2> )value;
 
         var result = sut.IfFirst( firstDelegate );
 
@@ -457,7 +457,7 @@ public abstract class GenericEitherTests<T1, T2> : TestsBase
         var value = Fixture.Create<T1>();
         var firstDelegate = Substitute.For<Action<T1>>();
 
-        var sut = (Either<T1, T2>)value;
+        var sut = ( Either<T1, T2> )value;
 
         sut.IfFirst( firstDelegate );
 
@@ -470,7 +470,7 @@ public abstract class GenericEitherTests<T1, T2> : TestsBase
         var value = Fixture.Create<T2>();
         var firstDelegate = Substitute.For<Action<T1>>();
 
-        var sut = (Either<T1, T2>)value;
+        var sut = ( Either<T1, T2> )value;
 
         sut.IfFirst( firstDelegate );
 
@@ -484,7 +484,7 @@ public abstract class GenericEitherTests<T1, T2> : TestsBase
         var returnedValue = Fixture.Create<T1>();
         var firstDelegate = Substitute.For<Func<T1, T1>>().WithAnyArgs( _ => returnedValue );
 
-        var sut = (Either<T1, T2>)value;
+        var sut = ( Either<T1, T2> )value;
 
         var result = sut.IfFirstOrDefault( firstDelegate );
 
@@ -501,7 +501,7 @@ public abstract class GenericEitherTests<T1, T2> : TestsBase
         var value = Fixture.Create<T2>();
         var firstDelegate = Substitute.For<Func<T1, T1>>().WithAnyArgs( i => i.ArgAt<T1>( 0 ) );
 
-        var sut = (Either<T1, T2>)value;
+        var sut = ( Either<T1, T2> )value;
 
         var result = sut.IfFirstOrDefault( firstDelegate );
 
@@ -519,7 +519,7 @@ public abstract class GenericEitherTests<T1, T2> : TestsBase
         var returnedValue = Fixture.Create<T1>();
         var firstDelegate = Substitute.For<Func<T1, T1>>().WithAnyArgs( _ => returnedValue );
 
-        var sut = (Either<T1, T2>)value;
+        var sut = ( Either<T1, T2> )value;
 
         var result = sut.IfFirstOrDefault( firstDelegate, Fixture.CreateNotDefault<T1>() );
 
@@ -537,7 +537,7 @@ public abstract class GenericEitherTests<T1, T2> : TestsBase
         var value = Fixture.Create<T2>();
         var firstDelegate = Substitute.For<Func<T1, T1>>().WithAnyArgs( i => i.ArgAt<T1>( 0 ) );
 
-        var sut = (Either<T1, T2>)value;
+        var sut = ( Either<T1, T2> )value;
 
         var result = sut.IfFirstOrDefault( firstDelegate, defaultValue );
 
@@ -555,7 +555,7 @@ public abstract class GenericEitherTests<T1, T2> : TestsBase
         var returnedValue = Fixture.Create<T2>();
         var secondDelegate = Substitute.For<Func<T2, T2>>().WithAnyArgs( _ => returnedValue );
 
-        var sut = (Either<T1, T2>)value;
+        var sut = ( Either<T1, T2> )value;
 
         var result = sut.IfSecond( secondDelegate );
 
@@ -572,7 +572,7 @@ public abstract class GenericEitherTests<T1, T2> : TestsBase
         var value = Fixture.Create<T1>();
         var secondDelegate = Substitute.For<Func<T2, T2>>().WithAnyArgs( i => i.ArgAt<T2>( 0 ) );
 
-        var sut = (Either<T1, T2>)value;
+        var sut = ( Either<T1, T2> )value;
 
         var result = sut.IfSecond( secondDelegate );
 
@@ -589,7 +589,7 @@ public abstract class GenericEitherTests<T1, T2> : TestsBase
         var value = Fixture.Create<T2>();
         var secondDelegate = Substitute.For<Action<T2>>();
 
-        var sut = (Either<T1, T2>)value;
+        var sut = ( Either<T1, T2> )value;
 
         sut.IfSecond( secondDelegate );
 
@@ -602,7 +602,7 @@ public abstract class GenericEitherTests<T1, T2> : TestsBase
         var value = Fixture.Create<T1>();
         var secondDelegate = Substitute.For<Action<T2>>();
 
-        var sut = (Either<T1, T2>)value;
+        var sut = ( Either<T1, T2> )value;
 
         sut.IfSecond( secondDelegate );
 
@@ -616,7 +616,7 @@ public abstract class GenericEitherTests<T1, T2> : TestsBase
         var returnedValue = Fixture.Create<T2>();
         var secondDelegate = Substitute.For<Func<T2, T2>>().WithAnyArgs( _ => returnedValue );
 
-        var sut = (Either<T1, T2>)value;
+        var sut = ( Either<T1, T2> )value;
 
         var result = sut.IfSecondOrDefault( secondDelegate );
 
@@ -633,7 +633,7 @@ public abstract class GenericEitherTests<T1, T2> : TestsBase
         var value = Fixture.Create<T1>();
         var secondDelegate = Substitute.For<Func<T2, T2>>().WithAnyArgs( i => i.ArgAt<T2>( 0 ) );
 
-        var sut = (Either<T1, T2>)value;
+        var sut = ( Either<T1, T2> )value;
 
         var result = sut.IfSecondOrDefault( secondDelegate );
 
@@ -651,7 +651,7 @@ public abstract class GenericEitherTests<T1, T2> : TestsBase
         var returnedValue = Fixture.Create<T2>();
         var secondDelegate = Substitute.For<Func<T2, T2>>().WithAnyArgs( _ => returnedValue );
 
-        var sut = (Either<T1, T2>)value;
+        var sut = ( Either<T1, T2> )value;
 
         var result = sut.IfSecondOrDefault( secondDelegate, Fixture.CreateNotDefault<T2>() );
 
@@ -669,7 +669,7 @@ public abstract class GenericEitherTests<T1, T2> : TestsBase
         var value = Fixture.Create<T1>();
         var secondDelegate = Substitute.For<Func<T2, T2>>().WithAnyArgs( i => i.ArgAt<T2>( 0 ) );
 
-        var sut = (Either<T1, T2>)value;
+        var sut = ( Either<T1, T2> )value;
 
         var result = sut.IfSecondOrDefault( secondDelegate, defaultValue );
 
@@ -685,7 +685,7 @@ public abstract class GenericEitherTests<T1, T2> : TestsBase
     {
         var value = Fixture.Create<T1>();
 
-        var result = (Either<T1, T2>)value;
+        var result = ( Either<T1, T2> )value;
 
         using ( new AssertionScope() )
         {
@@ -699,7 +699,7 @@ public abstract class GenericEitherTests<T1, T2> : TestsBase
     {
         var value = Fixture.Create<T2>();
 
-        var result = (Either<T1, T2>)value;
+        var result = ( Either<T1, T2> )value;
 
         using ( new AssertionScope() )
         {
@@ -714,7 +714,7 @@ public abstract class GenericEitherTests<T1, T2> : TestsBase
         var value = Fixture.Create<T1>();
         var partial = new PartialEither<T1>( value );
 
-        var result = (Either<T1, T2>)partial;
+        var result = ( Either<T1, T2> )partial;
 
         using ( new AssertionScope() )
         {
@@ -729,7 +729,7 @@ public abstract class GenericEitherTests<T1, T2> : TestsBase
         var value = Fixture.Create<T2>();
         var partial = new PartialEither<T2>( value );
 
-        var result = (Either<T1, T2>)partial;
+        var result = ( Either<T1, T2> )partial;
 
         using ( new AssertionScope() )
         {
@@ -741,7 +741,7 @@ public abstract class GenericEitherTests<T1, T2> : TestsBase
     [Fact]
     public void EitherConversionOperator_FromNil_ShouldReturnCorrectResult()
     {
-        var result = (Either<T1, T2>)Nil.Instance;
+        var result = ( Either<T1, T2> )Nil.Instance;
 
         using ( new AssertionScope() )
         {
@@ -756,9 +756,9 @@ public abstract class GenericEitherTests<T1, T2> : TestsBase
     public void T1ConversionOperator_ShouldReturnCorrectResult_WhenHasFirst()
     {
         var value = Fixture.Create<T1>();
-        var sut = (Either<T1, T2>)value;
+        var sut = ( Either<T1, T2> )value;
 
-        var result = (T1)sut;
+        var result = ( T1 )sut;
 
         result.Should().Be( value );
     }
@@ -767,9 +767,9 @@ public abstract class GenericEitherTests<T1, T2> : TestsBase
     public void T1ConversionOperator_ShouldThrowValueAccessException_WhenHasSecond()
     {
         var value = Fixture.Create<T2>();
-        var sut = (Either<T1, T2>)value;
+        var sut = ( Either<T1, T2> )value;
 
-        var action = Lambda.Of( () => (T1)sut );
+        var action = Lambda.Of( () => ( T1 )sut );
 
         action.Should().ThrowExactly<ValueAccessException>().AndMatch( e => e.MemberName == nameof( Either<T1, T2>.First ) );
     }
@@ -778,9 +778,9 @@ public abstract class GenericEitherTests<T1, T2> : TestsBase
     public void T2ConversionOperator_ShouldReturnCorrectResult_WhenHasSecond()
     {
         var value = Fixture.Create<T2>();
-        var sut = (Either<T1, T2>)value;
+        var sut = ( Either<T1, T2> )value;
 
-        var result = (T2)sut;
+        var result = ( T2 )sut;
 
         result.Should().Be( value );
     }
@@ -789,9 +789,9 @@ public abstract class GenericEitherTests<T1, T2> : TestsBase
     public void T2ConversionOperator_ShouldThrowValueAccessException_WhenHasFirst()
     {
         var value = Fixture.Create<T1>();
-        var sut = (Either<T1, T2>)value;
+        var sut = ( Either<T1, T2> )value;
 
-        var action = Lambda.Of( () => (T2)sut );
+        var action = Lambda.Of( () => ( T2 )sut );
 
         action.Should().ThrowExactly<ValueAccessException>().AndMatch( e => e.MemberName == nameof( Either<T1, T2>.Second ) );
     }
@@ -800,8 +800,8 @@ public abstract class GenericEitherTests<T1, T2> : TestsBase
     [GenericMethodData( nameof( GenericEitherTestsData<T1, T2>.CreateEqualsTestData ) )]
     public void EqualityOperator_ShouldReturnCorrectResult(object value1, bool hasFirst1, object value2, bool hasFirst2, bool expected)
     {
-        var a = (Either<T1, T2>)(hasFirst1 ? (T1)value1 : (T2)value1);
-        var b = (Either<T1, T2>)(hasFirst2 ? (T1)value2 : (T2)value2);
+        var a = ( Either<T1, T2> )(hasFirst1 ? ( T1 )value1 : ( T2 )value1);
+        var b = ( Either<T1, T2> )(hasFirst2 ? ( T1 )value2 : ( T2 )value2);
 
         var result = a == b;
 
@@ -817,8 +817,8 @@ public abstract class GenericEitherTests<T1, T2> : TestsBase
         bool hasFirst2,
         bool expected)
     {
-        var a = (Either<T1, T2>)(hasFirst1 ? (T1)value1 : (T2)value1);
-        var b = (Either<T1, T2>)(hasFirst2 ? (T1)value2 : (T2)value2);
+        var a = ( Either<T1, T2> )(hasFirst1 ? ( T1 )value1 : ( T2 )value1);
+        var b = ( Either<T1, T2> )(hasFirst2 ? ( T1 )value2 : ( T2 )value2);
 
         var result = a != b;
 

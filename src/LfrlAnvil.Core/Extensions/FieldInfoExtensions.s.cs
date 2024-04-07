@@ -11,9 +11,9 @@ public static class FieldInfoExtensions
     [Pure]
     public static PropertyInfo? GetBackedProperty(this FieldInfo source)
     {
-        if ( ! source.IsPrivate ||
-            ! source.Name.StartsWith( '<' ) ||
-            ! Attribute.IsDefined( source, typeof( CompilerGeneratedAttribute ) ) )
+        if ( ! source.IsPrivate
+            || ! source.Name.StartsWith( '<' )
+            || ! Attribute.IsDefined( source, typeof( CompilerGeneratedAttribute ) ) )
             return null;
 
         var nameEndIndex = Math.Max( source.Name.LastIndexOf( ">k__BackingField", StringComparison.Ordinal ), 1 );

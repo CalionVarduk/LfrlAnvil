@@ -34,7 +34,7 @@ public sealed class SqlAsyncScalarQueryLambdaExpression<TDataReader, T> : ISqlAs
 
         return async (reader, cancellationToken) =>
         {
-            var concreteReader = (TDataReader)reader;
+            var concreteReader = ( TDataReader )reader;
             return await concreteReader.ReadAsync( cancellationToken ).ConfigureAwait( false )
                 ? readRowDelegate( concreteReader )
                 : SqlScalarQueryResult<T>.Empty;

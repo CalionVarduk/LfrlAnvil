@@ -747,8 +747,8 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
         {
             Context.Sql.AppendSpace().Append( "DEFAULT" ).AppendSpace();
 
-            if ( node.DefaultValue.NodeType is not SqlNodeType.Literal and not SqlNodeType.Null ||
-                (typeDefinition.DataType is MySqlDataType mySqlDataType && IsTextOrBlobType( mySqlDataType )) )
+            if ( node.DefaultValue.NodeType is not SqlNodeType.Literal and not SqlNodeType.Null
+                || (typeDefinition.DataType is MySqlDataType mySqlDataType && IsTextOrBlobType( mySqlDataType )) )
                 VisitChildWrappedInParentheses( node.DefaultValue );
             else
                 this.Visit( node.DefaultValue );
@@ -1180,8 +1180,13 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     protected static bool IsTextOrBlobType(MySqlDataType dataType)
     {
-        return dataType.Value is MySqlDbType.TinyText or MySqlDbType.Text
-            or MySqlDbType.MediumText or MySqlDbType.LongText or MySqlDbType.TinyBlob or MySqlDbType.Blob or MySqlDbType.MediumBlob
+        return dataType.Value is MySqlDbType.TinyText
+            or MySqlDbType.Text
+            or MySqlDbType.MediumText
+            or MySqlDbType.LongText
+            or MySqlDbType.TinyBlob
+            or MySqlDbType.Blob
+            or MySqlDbType.MediumBlob
             or MySqlDbType.LongBlob;
     }
 
@@ -1437,52 +1442,52 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
     [Pure]
     protected virtual bool IsValidSingleTableDeleteStatement(SqlDataSourceNode node, in SqlDataSourceTraits traits)
     {
-        return node.RecordSets.Count == 1 &&
-            ! node.From.IsAliased &&
-            traits.Distinct is null &&
-            traits.Aggregations.Count == 0 &&
-            traits.AggregationFilter is null &&
-            traits.Windows.Count == 0 &&
-            traits.Offset is null &&
-            traits.Custom.Count == 0;
+        return node.RecordSets.Count == 1
+            && ! node.From.IsAliased
+            && traits.Distinct is null
+            && traits.Aggregations.Count == 0
+            && traits.AggregationFilter is null
+            && traits.Windows.Count == 0
+            && traits.Offset is null
+            && traits.Custom.Count == 0;
     }
 
     [Pure]
     protected virtual bool IsValidMultiTableDeleteStatement(SqlDataSourceNode node, in SqlDataSourceTraits traits)
     {
-        return traits.Distinct is null &&
-            traits.Aggregations.Count == 0 &&
-            traits.AggregationFilter is null &&
-            traits.Windows.Count == 0 &&
-            traits.Ordering.Count == 0 &&
-            traits.Limit is null &&
-            traits.Offset is null &&
-            traits.Custom.Count == 0;
+        return traits.Distinct is null
+            && traits.Aggregations.Count == 0
+            && traits.AggregationFilter is null
+            && traits.Windows.Count == 0
+            && traits.Ordering.Count == 0
+            && traits.Limit is null
+            && traits.Offset is null
+            && traits.Custom.Count == 0;
     }
 
     [Pure]
     protected virtual bool IsValidSingleTableUpdateStatement(SqlDataSourceNode node, in SqlDataSourceTraits traits)
     {
-        return node.RecordSets.Count == 1 &&
-            traits.Distinct is null &&
-            traits.Aggregations.Count == 0 &&
-            traits.AggregationFilter is null &&
-            traits.Windows.Count == 0 &&
-            traits.Offset is null &&
-            traits.Custom.Count == 0;
+        return node.RecordSets.Count == 1
+            && traits.Distinct is null
+            && traits.Aggregations.Count == 0
+            && traits.AggregationFilter is null
+            && traits.Windows.Count == 0
+            && traits.Offset is null
+            && traits.Custom.Count == 0;
     }
 
     [Pure]
     protected virtual bool IsValidMultiTableUpdateStatement(SqlDataSourceNode node, in SqlDataSourceTraits traits)
     {
-        return traits.Distinct is null &&
-            traits.Aggregations.Count == 0 &&
-            traits.AggregationFilter is null &&
-            traits.Windows.Count == 0 &&
-            traits.Ordering.Count == 0 &&
-            traits.Limit is null &&
-            traits.Offset is null &&
-            traits.Custom.Count == 0;
+        return traits.Distinct is null
+            && traits.Aggregations.Count == 0
+            && traits.AggregationFilter is null
+            && traits.Windows.Count == 0
+            && traits.Ordering.Count == 0
+            && traits.Limit is null
+            && traits.Offset is null
+            && traits.Custom.Count == 0;
     }
 
     protected void VisitMultiUpdateAssignmentRange(ReadOnlyArray<SqlValueAssignmentNode> assignments)

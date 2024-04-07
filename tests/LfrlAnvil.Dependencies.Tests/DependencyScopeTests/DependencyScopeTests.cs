@@ -96,7 +96,7 @@ public class DependencyScopeTests : DependencyTestsBase
         using ( new AssertionScope() )
         {
             result.Key.Should().Be( key );
-            ((IDependencyLocator)result).Key.Should().Be( key );
+            (( IDependencyLocator )result).Key.Should().Be( key );
             result.KeyType.Should().Be( typeof( int ) );
             result.IsKeyed.Should().BeTrue();
             result.AttachedScope.Should().BeSameAs( sut );
@@ -359,7 +359,7 @@ public class DependencyScopeTests : DependencyTestsBase
     public void Dispose_ShouldDisposeContainer_WhenScopeIsRoot()
     {
         var container = new DependencyContainerBuilder().Build();
-        var sut = (IDisposable)container.RootScope;
+        var sut = ( IDisposable )container.RootScope;
 
         sut.Dispose();
 

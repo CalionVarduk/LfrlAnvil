@@ -76,7 +76,7 @@ public sealed class EventListenerMergeAllDecorator<TEvent> : IEventListenerDecor
 
         private void StartListeningToNextInnerStream(IEventStream<TEvent> stream)
         {
-            var innerSubscriberNode = _innerSubscribers.AddLast( (IEventSubscriber?)null );
+            var innerSubscriberNode = _innerSubscribers.AddLast( ( IEventSubscriber? )null );
             var innerListener = new InnerEventListener( this, innerSubscriberNode );
 
             var innerSubscriber = stream.Listen( innerListener );

@@ -1,10 +1,10 @@
 ﻿using LfrlAnvil.Functional;
-using LfrlAnvil.Sql.Exceptions;
-using LfrlAnvil.Sql.Objects.Builders;
-using LfrlAnvil.Sql.Versioning;
 using LfrlAnvil.PostgreSql.Objects.Builders;
 using LfrlAnvil.PostgreSql.Tests.Helpers;
 using LfrlAnvil.PostgreSql.Versioning;
+using LfrlAnvil.Sql.Exceptions;
+using LfrlAnvil.Sql.Objects.Builders;
+using LfrlAnvil.Sql.Versioning;
 using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.PostgreSql.Tests.VersioningTests;
@@ -56,7 +56,7 @@ public class PostgreSqlDatabaseVersionTests : TestsBase
         var builder = Substitute.For<ISqlDatabaseBuilder>();
         var sut = PostgreSqlDatabaseVersion.Create( version, apply );
 
-        var action = Lambda.Of( () => ((ISqlDatabaseVersion)sut).Apply( builder ) );
+        var action = Lambda.Of( () => (( ISqlDatabaseVersion )sut).Apply( builder ) );
 
         action.Should().ThrowExactly<SqlObjectCastException>();
     }

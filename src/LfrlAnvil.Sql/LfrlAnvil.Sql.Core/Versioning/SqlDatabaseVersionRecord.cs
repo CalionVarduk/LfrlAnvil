@@ -7,4 +7,5 @@ public sealed record SqlDatabaseVersionRecord(
     Version Version,
     string Description,
     DateTime CommitDateUtc,
-    TimeSpan CommitDuration);
+    TimeSpan CommitDuration
+);

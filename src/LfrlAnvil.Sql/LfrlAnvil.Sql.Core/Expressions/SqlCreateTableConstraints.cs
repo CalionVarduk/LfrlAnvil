@@ -6,7 +6,8 @@ namespace LfrlAnvil.Sql.Expressions;
 public readonly record struct SqlCreateTableConstraints(
     SqlPrimaryKeyDefinitionNode? PrimaryKey,
     ReadOnlyArray<SqlForeignKeyDefinitionNode>? ForeignKeys,
-    ReadOnlyArray<SqlCheckDefinitionNode>? Checks)
+    ReadOnlyArray<SqlCheckDefinitionNode>? Checks
+)
 {
     public static readonly SqlCreateTableConstraints Empty = new SqlCreateTableConstraints();
 

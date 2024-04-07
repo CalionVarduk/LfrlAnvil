@@ -43,9 +43,9 @@ public class FiniteCache<TKey, TValue> : IFiniteCache<TKey, TValue>
     public KeyValuePair<TKey, TValue>? Oldest => _map.First;
     public KeyValuePair<TKey, TValue>? Newest => _map.Last;
 
-    ICollection<TKey> IDictionary<TKey, TValue>.Keys => ((IDictionary<TKey, TValue>)_map).Keys;
-    ICollection<TValue> IDictionary<TKey, TValue>.Values => ((IDictionary<TKey, TValue>)_map).Values;
-    bool ICollection<KeyValuePair<TKey, TValue>>.IsReadOnly => ((ICollection<KeyValuePair<TKey, TValue>>)_map).IsReadOnly;
+    ICollection<TKey> IDictionary<TKey, TValue>.Keys => (( IDictionary<TKey, TValue> )_map).Keys;
+    ICollection<TValue> IDictionary<TKey, TValue>.Values => (( IDictionary<TKey, TValue> )_map).Values;
+    bool ICollection<KeyValuePair<TKey, TValue>>.IsReadOnly => (( ICollection<KeyValuePair<TKey, TValue>> )_map).IsReadOnly;
 
     public void Add(TKey key, TValue value)
     {
@@ -98,32 +98,32 @@ public class FiniteCache<TKey, TValue> : IFiniteCache<TKey, TValue>
 
     bool IDictionary<TKey, TValue>.TryGetValue(TKey key, [MaybeNullWhen( false )] out TValue value)
     {
-        return ((IDictionary<TKey, TValue>)_map).TryGetValue( key, out value );
+        return (( IDictionary<TKey, TValue> )_map).TryGetValue( key, out value );
     }
 
     bool IReadOnlyDictionary<TKey, TValue>.TryGetValue(TKey key, [MaybeNullWhen( false )] out TValue value)
     {
-        return ((IReadOnlyDictionary<TKey, TValue>)_map).TryGetValue( key, out value );
+        return (( IReadOnlyDictionary<TKey, TValue> )_map).TryGetValue( key, out value );
     }
 
     [Pure]
     bool ICollection<KeyValuePair<TKey, TValue>>.Contains(KeyValuePair<TKey, TValue> item)
     {
-        return ((ICollection<KeyValuePair<TKey, TValue>>)_map).Contains( item );
+        return (( ICollection<KeyValuePair<TKey, TValue>> )_map).Contains( item );
     }
 
     void ICollection<KeyValuePair<TKey, TValue>>.Add(KeyValuePair<TKey, TValue> item)
     {
-        ((ICollection<KeyValuePair<TKey, TValue>>)_map).Add( item );
+        (( ICollection<KeyValuePair<TKey, TValue>> )_map).Add( item );
     }
 
     bool ICollection<KeyValuePair<TKey, TValue>>.Remove(KeyValuePair<TKey, TValue> item)
     {
-        return ((ICollection<KeyValuePair<TKey, TValue>>)_map).Remove( item );
+        return (( ICollection<KeyValuePair<TKey, TValue>> )_map).Remove( item );
     }
 
     void ICollection<KeyValuePair<TKey, TValue>>.CopyTo(KeyValuePair<TKey, TValue>[] array, int arrayIndex)
     {
-        ((ICollection<KeyValuePair<TKey, TValue>>)_map).CopyTo( array, arrayIndex );
+        (( ICollection<KeyValuePair<TKey, TValue>> )_map).CopyTo( array, arrayIndex );
     }
 }

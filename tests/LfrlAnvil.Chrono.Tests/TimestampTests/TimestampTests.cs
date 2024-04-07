@@ -147,7 +147,7 @@ public class TimestampTests : TestsBase
     {
         var sut = new Timestamp( ticks );
 
-        var result = (DateTime)sut;
+        var result = ( DateTime )sut;
 
         using ( new AssertionScope() )
         {

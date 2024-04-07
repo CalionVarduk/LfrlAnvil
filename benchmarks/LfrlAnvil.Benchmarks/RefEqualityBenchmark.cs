@@ -31,7 +31,7 @@ public class RefEqualityBenchmark
     [Benchmark]
     public bool ClassEquality_Boxing()
     {
-        return ((object)_value1).Equals( _value2 );
+        return (( object )_value1).Equals( _value2 );
     }
 
     [Benchmark]

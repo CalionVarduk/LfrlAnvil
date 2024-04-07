@@ -9,7 +9,7 @@ public abstract class GenericEitherExtensionsOfRefTypeTests<T1, T2> : GenericEit
     public void ToMaybe_ShouldReturnWithoutValue_WhenHasNullFirst()
     {
         var value = default( T1 );
-        var sut = (Either<T1, T2>)value!;
+        var sut = ( Either<T1, T2> )value!;
 
         var result = sut.ToMaybe();
 

@@ -11,7 +11,7 @@ public abstract class MethodDataAttributeBase : MemberDataAttributeBase
     protected MethodDataAttributeBase(string memberName, IFixture fixture, params object[] parameters)
         : base( memberName, CreateParameters( fixture, parameters ) ) { }
 
-    public IFixture Fixture => (IFixture)Parameters[0];
+    public IFixture Fixture => ( IFixture )Parameters[0];
 
     public sealed override IEnumerable<object[]?>? GetData(MethodInfo testMethod)
     {

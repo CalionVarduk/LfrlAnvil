@@ -42,50 +42,21 @@ public class MathUtilsTestsData
             { Array.Empty<Percent>(), new Fraction( 0, 1 ), Array.Empty<Fraction>() },
             { Array.Empty<Percent>(), new Fraction( 1000, 1000 ), Array.Empty<Fraction>() },
             {
-                new[]
-                {
-                    Percent.Normalize( 50 ),
-                    Percent.Normalize( 50 )
-                },
-                new Fraction( 0, 50 ),
-                new[]
-                {
-                    new Fraction( 0, 50 ),
-                    new Fraction( 0, 50 )
-                }
+                new[] { Percent.Normalize( 50 ), Percent.Normalize( 50 ) }, new Fraction( 0, 50 ),
+                new[] { new Fraction( 0, 50 ), new Fraction( 0, 50 ) }
             },
             { new[] { Percent.Normalize( 100 ) }, new Fraction( 100, 100 ), new[] { new Fraction( 100, 100 ) } },
             { new[] { Percent.Normalize( 50 ) }, new Fraction( 2000, 1000 ), new[] { new Fraction( 2000, 1000 ) } },
             { new[] { Percent.Normalize( 150 ) }, new Fraction( 500, 1000 ), new[] { new Fraction( 500, 1000 ) } },
             {
-                new[]
-                {
-                    Percent.Normalize( 100m / 3 ),
-                    Percent.Normalize( 100m / 3 ),
-                    Percent.Normalize( 100m / 3 )
-                },
+                new[] { Percent.Normalize( 100m / 3 ), Percent.Normalize( 100m / 3 ), Percent.Normalize( 100m / 3 ) },
                 new Fraction( 100, 100 ),
-                new[]
-                {
-                    new Fraction( 33, 100 ),
-                    new Fraction( 33, 100 ),
-                    new Fraction( 34, 100 )
-                }
+                new[] { new Fraction( 33, 100 ), new Fraction( 33, 100 ), new Fraction( 34, 100 ) }
             },
             {
-                new[]
-                {
-                    Percent.Normalize( 100m / 3 ),
-                    Percent.Normalize( 100m / 3 ),
-                    Percent.Normalize( 100m / 3 )
-                },
+                new[] { Percent.Normalize( 100m / 3 ), Percent.Normalize( 100m / 3 ), Percent.Normalize( 100m / 3 ) },
                 new Fraction( 10000, 10000 ),
-                new[]
-                {
-                    new Fraction( 3333, 10000 ),
-                    new Fraction( 3333, 10000 ),
-                    new Fraction( 3334, 10000 )
-                }
+                new[] { new Fraction( 3333, 10000 ), new Fraction( 3333, 10000 ), new Fraction( 3334, 10000 ) }
             },
             {
                 new[]

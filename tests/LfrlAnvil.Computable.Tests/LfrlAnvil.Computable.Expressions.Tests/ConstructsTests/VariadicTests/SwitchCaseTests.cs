@@ -24,12 +24,7 @@ public class SwitchCaseTests : TestsBase
     [Fact]
     public void Process_ShouldReturnSwitchCaseWithLastParameterAsBody()
     {
-        var parameters = new Expression[]
-        {
-            Expression.Constant( 0 ),
-            Expression.Constant( 1 ),
-            Expression.Constant( "foo" )
-        };
+        var parameters = new Expression[] { Expression.Constant( 0 ), Expression.Constant( 1 ), Expression.Constant( "foo" ) };
 
         var sut = new ParsedExpressionSwitchCase();
 

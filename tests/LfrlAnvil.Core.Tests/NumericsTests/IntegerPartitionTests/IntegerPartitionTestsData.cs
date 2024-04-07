@@ -31,14 +31,7 @@ public class IntegerPartitionTestsData
             { 7, new[] { new Fraction( 1, 2 ), new Fraction( 1, 2 ), Fraction.Zero }, new[] { 3UL, 4UL, 0UL } },
             {
                 1000,
-                new[]
-                {
-                    new Fraction( 1, 8 ),
-                    new Fraction( 1, 4 ),
-                    new Fraction( 1, 8 ),
-                    new Fraction( 3, 8 ),
-                    new Fraction( 1, 8 )
-                },
+                new[] { new Fraction( 1, 8 ), new Fraction( 1, 4 ), new Fraction( 1, 8 ), new Fraction( 3, 8 ), new Fraction( 1, 8 ) },
                 new[] { 125UL, 250UL, 125UL, 375UL, 125UL }
             },
             { 100, new[] { new Fraction( 1, 3 ), new Fraction( 1, 4 ) }, new[] { 33UL, 25UL } },
@@ -50,11 +43,7 @@ public class IntegerPartitionTestsData
                 1234,
                 new[]
                 {
-                    new Fraction( 1, 4 ),
-                    new Fraction( 1, 8 ),
-                    new Fraction( 2, 5 ),
-                    new Fraction( 2, 16 ),
-                    new Fraction( 4, 40 )
+                    new Fraction( 1, 4 ), new Fraction( 1, 8 ), new Fraction( 2, 5 ), new Fraction( 2, 16 ), new Fraction( 4, 40 )
                 },
                 new[] { 308UL, 154UL, 494UL, 154UL, 124UL }
             }

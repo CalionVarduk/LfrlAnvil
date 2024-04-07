@@ -6,4 +6,5 @@ public readonly record struct BenchmarkStepInfo(
     AggregateStatistic<MemorySize> AllocatedBytes,
     AggregateStatistic<TimeSpan> ElapsedTimeWithOutliers,
     AggregateStatistic<TimeSpan> ElapsedTime,
-    int ElapsedTimeOutliers);
+    int ElapsedTimeOutliers
+);

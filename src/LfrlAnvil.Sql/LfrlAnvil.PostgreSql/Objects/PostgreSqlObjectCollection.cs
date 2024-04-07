@@ -105,7 +105,9 @@ public sealed class PostgreSqlObjectCollection : SqlObjectCollection
     [Pure]
     protected override PostgreSqlPrimaryKey CreatePrimaryKey(SqlIndex index, SqlPrimaryKeyBuilder builder)
     {
-        return new PostgreSqlPrimaryKey( ReinterpretCast.To<PostgreSqlIndex>( index ), ReinterpretCast.To<PostgreSqlPrimaryKeyBuilder>( builder ) );
+        return new PostgreSqlPrimaryKey(
+            ReinterpretCast.To<PostgreSqlIndex>( index ),
+            ReinterpretCast.To<PostgreSqlPrimaryKeyBuilder>( builder ) );
     }
 
     [Pure]

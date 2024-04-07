@@ -245,6 +245,6 @@ public readonly struct TypeCast<TSource, TDestination> : ITypeCast<TDestination>
     [Pure]
     IEnumerator IEnumerable.GetEnumerator()
     {
-        return ((IEnumerable<TDestination>)this).GetEnumerator();
+        return (( IEnumerable<TDestination> )this).GetEnumerator();
     }
 }

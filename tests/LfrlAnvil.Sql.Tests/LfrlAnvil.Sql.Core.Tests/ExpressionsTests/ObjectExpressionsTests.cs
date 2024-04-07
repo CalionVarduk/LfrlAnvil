@@ -59,7 +59,7 @@ public partial class ObjectExpressionsTests : TestsBase
     [Fact]
     public void Literal_WithNullableValueType_ShouldCreateLiteralNode_WhenValueIsNotNull()
     {
-        var sut = SqlNode.Literal( (int?)42 );
+        var sut = SqlNode.Literal( ( int? )42 );
         var text = sut.ToString();
 
         using ( new AssertionScope() )

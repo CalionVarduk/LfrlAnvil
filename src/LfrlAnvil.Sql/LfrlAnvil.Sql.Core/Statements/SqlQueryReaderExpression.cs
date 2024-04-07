@@ -15,8 +15,7 @@ public readonly struct SqlQueryReaderExpression<TRow>
     {
         Assume.Equals( @base.RowType, typeof( TRow ) );
         Dialect = @base.Dialect;
-        Expression = ReinterpretCast.To<Expression<Func<IDataReader, SqlQueryReaderOptions, SqlQueryResult<TRow>>>>(
-            @base.Expression );
+        Expression = ReinterpretCast.To<Expression<Func<IDataReader, SqlQueryReaderOptions, SqlQueryResult<TRow>>>>( @base.Expression );
     }
 
     public SqlDialect Dialect { get; }

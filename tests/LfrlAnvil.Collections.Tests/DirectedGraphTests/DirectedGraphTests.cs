@@ -15,7 +15,7 @@ public class DirectedGraphTests : TestsBase
             sut.Nodes.Should().BeEmpty();
             sut.Edges.Should().BeEmpty();
             sut.KeyComparer.Should().BeSameAs( EqualityComparer<string>.Default );
-            ((IDirectedGraph<string, int, long>)sut).Nodes.Should().BeSameAs( sut.Nodes );
+            (( IDirectedGraph<string, int, long> )sut).Nodes.Should().BeSameAs( sut.Nodes );
         }
     }
 
@@ -30,7 +30,7 @@ public class DirectedGraphTests : TestsBase
             sut.Nodes.Should().BeEmpty();
             sut.Edges.Should().BeEmpty();
             sut.KeyComparer.Should().BeSameAs( comparer );
-            ((IDirectedGraph<string, int, long>)sut).Nodes.Should().BeSameAs( sut.Nodes );
+            (( IDirectedGraph<string, int, long> )sut).Nodes.Should().BeSameAs( sut.Nodes );
         }
     }
 
@@ -1477,7 +1477,7 @@ public class DirectedGraphTests : TestsBase
         sut.AddEdge( b.Key, c.Key, Fixture.Create<long>() );
         var expected = sut.Edges;
 
-        var result = ((IReadOnlyDirectedGraph<string, int, long>)sut).Edges;
+        var result = (( IReadOnlyDirectedGraph<string, int, long> )sut).Edges;
 
         result.Should().BeSequentiallyEqualTo( expected );
     }
@@ -1489,7 +1489,7 @@ public class DirectedGraphTests : TestsBase
         sut.AddNode( "a", Fixture.Create<int>() );
         var expected = sut.GetNode( "a" );
 
-        var result = ((IReadOnlyDirectedGraph<string, int, long>)sut).GetNode( "a" );
+        var result = (( IReadOnlyDirectedGraph<string, int, long> )sut).GetNode( "a" );
 
         result.Should().BeSameAs( expected );
     }
@@ -1501,7 +1501,7 @@ public class DirectedGraphTests : TestsBase
         sut.AddNode( "a", Fixture.Create<int>() );
         var expected = sut.TryGetNode( "a", out var outExpected );
 
-        var result = ((IReadOnlyDirectedGraph<string, int, long>)sut).TryGetNode( "a", out var outResult );
+        var result = (( IReadOnlyDirectedGraph<string, int, long> )sut).TryGetNode( "a", out var outResult );
 
         using ( new AssertionScope() )
         {
@@ -1516,7 +1516,7 @@ public class DirectedGraphTests : TestsBase
         var sut = new DirectedGraph<string, int, long>();
         var expected = sut.TryGetNode( "a", out var outExpected );
 
-        var result = ((IReadOnlyDirectedGraph<string, int, long>)sut).TryGetNode( "a", out var outResult );
+        var result = (( IReadOnlyDirectedGraph<string, int, long> )sut).TryGetNode( "a", out var outResult );
 
         using ( new AssertionScope() )
         {
@@ -1533,7 +1533,7 @@ public class DirectedGraphTests : TestsBase
         sut.AddEdge( "a", "a", Fixture.Create<long>() );
         var expected = sut.GetEdge( "a", "a" );
 
-        var result = ((IReadOnlyDirectedGraph<string, int, long>)sut).GetEdge( "a", "a" );
+        var result = (( IReadOnlyDirectedGraph<string, int, long> )sut).GetEdge( "a", "a" );
 
         result.Should().BeSameAs( expected );
     }
@@ -1546,7 +1546,7 @@ public class DirectedGraphTests : TestsBase
         sut.AddEdge( "a", "a", Fixture.Create<long>() );
         var expected = sut.TryGetEdge( "a", "a", out var outExpected );
 
-        var result = ((IReadOnlyDirectedGraph<string, int, long>)sut).TryGetEdge( "a", "a", out var outResult );
+        var result = (( IReadOnlyDirectedGraph<string, int, long> )sut).TryGetEdge( "a", "a", out var outResult );
 
         using ( new AssertionScope() )
         {
@@ -1562,7 +1562,7 @@ public class DirectedGraphTests : TestsBase
         sut.AddNode( "a", Fixture.Create<int>() );
         var expected = sut.TryGetEdge( "a", "a", out var outExpected );
 
-        var result = ((IReadOnlyDirectedGraph<string, int, long>)sut).TryGetEdge( "a", "a", out var outResult );
+        var result = (( IReadOnlyDirectedGraph<string, int, long> )sut).TryGetEdge( "a", "a", out var outResult );
 
         using ( new AssertionScope() )
         {
@@ -1575,7 +1575,7 @@ public class DirectedGraphTests : TestsBase
     public void IDirectedGraph_AddNode_ShouldBeEquivalentToAddNode()
     {
         var sut = new DirectedGraph<string, int, long>();
-        var result = ((IDirectedGraph<string, int, long>)sut).AddNode( "a", Fixture.Create<int>() );
+        var result = (( IDirectedGraph<string, int, long> )sut).AddNode( "a", Fixture.Create<int>() );
         result.Should().BeSameAs( sut.GetNode( "a" ) );
     }
 
@@ -1584,7 +1584,7 @@ public class DirectedGraphTests : TestsBase
     {
         var sut = new DirectedGraph<string, int, long>();
 
-        var result = ((IDirectedGraph<string, int, long>)sut).TryAddNode( "a", Fixture.Create<int>(), out var outResult );
+        var result = (( IDirectedGraph<string, int, long> )sut).TryAddNode( "a", Fixture.Create<int>(), out var outResult );
 
         using ( new AssertionScope() )
         {
@@ -1597,7 +1597,7 @@ public class DirectedGraphTests : TestsBase
     public void IDirectedGraph_GetOrAddNode_ShouldBeEquivalentToGetOrAddNode()
     {
         var sut = new DirectedGraph<string, int, long>();
-        var result = ((IDirectedGraph<string, int, long>)sut).GetOrAddNode( "a", Fixture.Create<int>() );
+        var result = (( IDirectedGraph<string, int, long> )sut).GetOrAddNode( "a", Fixture.Create<int>() );
         result.Should().BeSameAs( sut.GetOrAddNode( "a", Fixture.Create<int>() ) );
     }
 
@@ -1607,7 +1607,7 @@ public class DirectedGraphTests : TestsBase
         var sut = new DirectedGraph<string, int, long>();
         sut.AddNode( "a", Fixture.Create<int>() );
 
-        var result = ((IDirectedGraph<string, int, long>)sut).AddEdge( "a", "a", Fixture.Create<long>() );
+        var result = (( IDirectedGraph<string, int, long> )sut).AddEdge( "a", "a", Fixture.Create<long>() );
 
         result.Should().BeSameAs( sut.GetEdge( "a", "a" ) );
     }
@@ -1618,7 +1618,7 @@ public class DirectedGraphTests : TestsBase
         var sut = new DirectedGraph<string, int, long>();
         sut.AddNode( "a", Fixture.Create<int>() );
 
-        var result = ((IDirectedGraph<string, int, long>)sut).TryAddEdge(
+        var result = (( IDirectedGraph<string, int, long> )sut).TryAddEdge(
             "a",
             "a",
             Fixture.Create<long>(),

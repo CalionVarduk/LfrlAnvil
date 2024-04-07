@@ -253,10 +253,10 @@ public class SqlNodeMutatorTestsData
             (SqlNode.CreateTable( SqlRecordSetInfo.Create( "a" ), Array.Empty<SqlColumnDefinitionNode>() ).RecordSet, null),
             (SqlNode.CreateView( SqlRecordSetInfo.Create( "a" ), SqlNode.RawQuery( "SELECT * FROM foo" ) ).AsSet(), null),
             (SqlTableMock.Create<int>( "a", new[] { "b" } )
-                 .Node.ToDataSource()
-                 .Select( t => new[] { t.From["b"].AsSelf() } )
-                 .CompoundWith( SqlNode.RawQuery( "SELECT * FROM foo" ).ToCompound( SqlCompoundQueryOperator.UnionAll ) )
-                 .Selection[0], null),
+                .Node.ToDataSource()
+                .Select( t => new[] { t.From["b"].AsSelf() } )
+                .CompoundWith( SqlNode.RawQuery( "SELECT * FROM foo" ).ToCompound( SqlCompoundQueryOperator.UnionAll ) )
+                .Selection[0], null),
             (SqlNode.RawQuery( "SELECT * FROM foo" ), null),
             (SqlNode.DistinctTrait(), null),
             (SqlNode.RowsWindowFrame( SqlWindowFrameBoundary.CurrentRow, SqlWindowFrameBoundary.CurrentRow ), null),
@@ -293,7 +293,7 @@ public class SqlNodeMutatorTestsData
             (SqlTableBuilderMock.Create<int>( "a", new[] { "b" } ).Node["b"], "[replaced].[b] : System.Int32"),
             (SqlNode.RawRecordSet( "a" ).ToDataSource().Select( r => new[] { r.From["b"].AsSelf() } ).AsSet( "c" )["b"], "[replaced].[b]"),
             (SqlViewMock.Create( "a", SqlNode.RawRecordSet( "c" ).ToDataSource().Select( r => new[] { r.From["b"].AsSelf() } ) ).Node["b"],
-             "[replaced].[b]")
+                "[replaced].[b]")
         };
 
         var result = new TheoryData<SqlDataFieldNode, SqlRecordSetNode?, bool, string>();
@@ -335,9 +335,9 @@ public class SqlNodeMutatorTestsData
             (arg1 | arg2, new[] { Arg( arg1, $"({replacement}) | ({arg2})" ), Arg( arg2, $"({arg1}) | ({replacement})" ) }),
             (arg1 ^ arg2, new[] { Arg( arg1, $"({replacement}) ^ ({arg2})" ), Arg( arg2, $"({arg1}) ^ ({replacement})" ) }),
             (arg1.BitwiseLeftShift( arg2 ),
-             new[] { Arg( arg1, $"({replacement}) << ({arg2})" ), Arg( arg2, $"({arg1}) << ({replacement})" ) }),
+                new[] { Arg( arg1, $"({replacement}) << ({arg2})" ), Arg( arg2, $"({arg1}) << ({replacement})" ) }),
             (arg1.BitwiseRightShift( arg2 ),
-             new[] { Arg( arg1, $"({replacement}) >> ({arg2})" ), Arg( arg2, $"({arg1}) >> ({replacement})" ) }),
+                new[] { Arg( arg1, $"({replacement}) >> ({arg2})" ), Arg( arg2, $"({arg1}) >> ({replacement})" ) }),
             (arg1 == arg2, new[] { Arg( arg1, $"({replacement}) == ({arg2})" ), Arg( arg2, $"({arg1}) == ({replacement})" ) }),
             (arg1 != arg2, new[] { Arg( arg1, $"({replacement}) <> ({arg2})" ), Arg( arg2, $"({arg1}) <> ({replacement})" ) }),
             (arg1 > arg2, new[] { Arg( arg1, $"({replacement}) > ({arg2})" ), Arg( arg2, $"({arg1}) > ({replacement})" ) }),
@@ -347,71 +347,67 @@ public class SqlNodeMutatorTestsData
             (arg1 <= arg2, new[] { Arg( arg1, $"({replacement}) <= ({arg2})" ), Arg( arg2, $"({arg1}) <= ({replacement})" ) }),
             (arg1 <= arg2, new[] { Arg( arg1, $"({replacement}) <= ({arg2})" ), Arg( arg2, $"({arg1}) <= ({replacement})" ) }),
             (cArg1.And( cArg2 ),
-             new[] { Arg( cArg1, $"({cReplacement}) AND ({cArg2})" ), Arg( cArg2, $"({cArg1}) AND ({cReplacement})" ) }),
+                new[] { Arg( cArg1, $"({cReplacement}) AND ({cArg2})" ), Arg( cArg2, $"({cArg1}) AND ({cReplacement})" ) }),
             (cArg1.Or( cArg2 ), new[] { Arg( cArg1, $"({cReplacement}) OR ({cArg2})" ), Arg( cArg2, $"({cArg1}) OR ({cReplacement})" ) }),
             (arg1.IsBetween( arg2, arg3 ),
-             new[]
-             {
-                 Arg( arg1, $"({replacement}) BETWEEN ({arg2}) AND ({arg3})" ),
-                 Arg( arg2, $"({arg1}) BETWEEN ({replacement}) AND ({arg3})" ),
-                 Arg( arg3, $"({arg1}) BETWEEN ({arg2}) AND ({replacement})" )
-             }),
+                new[]
+                {
+                    Arg( arg1, $"({replacement}) BETWEEN ({arg2}) AND ({arg3})" ),
+                    Arg( arg2, $"({arg1}) BETWEEN ({replacement}) AND ({arg3})" ),
+                    Arg( arg3, $"({arg1}) BETWEEN ({arg2}) AND ({replacement})" )
+                }),
             (arg1.IsNotBetween( arg2, arg3 ),
-             new[]
-             {
-                 Arg( arg1, $"({replacement}) NOT BETWEEN ({arg2}) AND ({arg3})" ),
-                 Arg( arg2, $"({arg1}) NOT BETWEEN ({replacement}) AND ({arg3})" ),
-                 Arg( arg3, $"({arg1}) NOT BETWEEN ({arg2}) AND ({replacement})" )
-             }),
+                new[]
+                {
+                    Arg( arg1, $"({replacement}) NOT BETWEEN ({arg2}) AND ({arg3})" ),
+                    Arg( arg2, $"({arg1}) NOT BETWEEN ({replacement}) AND ({arg3})" ),
+                    Arg( arg3, $"({arg1}) NOT BETWEEN ({arg2}) AND ({replacement})" )
+                }),
             (query.Exists(), new[] { Arg( query, $"EXISTS ({Environment.NewLine}  {queryReplacement}{Environment.NewLine})" ) }),
             (query.NotExists(), new[] { Arg( query, $"NOT EXISTS ({Environment.NewLine}  {queryReplacement}{Environment.NewLine})" ) }),
             (arg1.Like( arg2 ), new[] { Arg( arg1, $"({replacement}) LIKE ({arg2})" ), Arg( arg2, $"({arg1}) LIKE ({replacement})" ) }),
             (arg1.NotLike( arg2 ),
-             new[]
-             {
-                 Arg( arg1, $"({replacement}) NOT LIKE ({arg2})" ),
-                 Arg( arg2, $"({arg1}) NOT LIKE ({replacement})" )
-             }),
+                new[] { Arg( arg1, $"({replacement}) NOT LIKE ({arg2})" ), Arg( arg2, $"({arg1}) NOT LIKE ({replacement})" ) }),
             (arg1.Like( arg2, arg3 ),
-             new[]
-             {
-                 Arg( arg1, $"({replacement}) LIKE ({arg2}) ESCAPE ({arg3})" ),
-                 Arg( arg2, $"({arg1}) LIKE ({replacement}) ESCAPE ({arg3})" ),
-                 Arg( arg3, $"({arg1}) LIKE ({arg2}) ESCAPE ({replacement})" )
-             }),
+                new[]
+                {
+                    Arg( arg1, $"({replacement}) LIKE ({arg2}) ESCAPE ({arg3})" ),
+                    Arg( arg2, $"({arg1}) LIKE ({replacement}) ESCAPE ({arg3})" ),
+                    Arg( arg3, $"({arg1}) LIKE ({arg2}) ESCAPE ({replacement})" )
+                }),
             (arg1.NotLike( arg2, arg3 ),
-             new[]
-             {
-                 Arg( arg1, $"({replacement}) NOT LIKE ({arg2}) ESCAPE ({arg3})" ),
-                 Arg( arg2, $"({arg1}) NOT LIKE ({replacement}) ESCAPE ({arg3})" ),
-                 Arg( arg3, $"({arg1}) NOT LIKE ({arg2}) ESCAPE ({replacement})" )
-             }),
+                new[]
+                {
+                    Arg( arg1, $"({replacement}) NOT LIKE ({arg2}) ESCAPE ({arg3})" ),
+                    Arg( arg2, $"({arg1}) NOT LIKE ({replacement}) ESCAPE ({arg3})" ),
+                    Arg( arg3, $"({arg1}) NOT LIKE ({arg2}) ESCAPE ({replacement})" )
+                }),
             (arg1.In( arg2, arg3 ),
-             new[]
-             {
-                 Arg( arg1, $"({replacement}) IN (({arg2}), ({arg3}))" ),
-                 Arg( arg2, $"({arg1}) IN (({replacement}), ({arg3}))" ),
-                 Arg( arg3, $"({arg1}) IN (({arg2}), ({replacement}))" )
-             }),
+                new[]
+                {
+                    Arg( arg1, $"({replacement}) IN (({arg2}), ({arg3}))" ),
+                    Arg( arg2, $"({arg1}) IN (({replacement}), ({arg3}))" ),
+                    Arg( arg3, $"({arg1}) IN (({arg2}), ({replacement}))" )
+                }),
             (arg1.NotIn( arg2, arg3 ),
-             new[]
-             {
-                 Arg( arg1, $"({replacement}) NOT IN (({arg2}), ({arg3}))" ),
-                 Arg( arg2, $"({arg1}) NOT IN (({replacement}), ({arg3}))" ),
-                 Arg( arg3, $"({arg1}) NOT IN (({arg2}), ({replacement}))" )
-             }),
+                new[]
+                {
+                    Arg( arg1, $"({replacement}) NOT IN (({arg2}), ({arg3}))" ),
+                    Arg( arg2, $"({arg1}) NOT IN (({replacement}), ({arg3}))" ),
+                    Arg( arg3, $"({arg1}) NOT IN (({arg2}), ({replacement}))" )
+                }),
             (arg1.InQuery( query ),
-             new[]
-             {
-                 Arg( arg1, $"({replacement}) IN ({Environment.NewLine}  {query}{Environment.NewLine})" ),
-                 Arg( query, $"({arg1}) IN ({Environment.NewLine}  {queryReplacement}{Environment.NewLine})" )
-             }),
+                new[]
+                {
+                    Arg( arg1, $"({replacement}) IN ({Environment.NewLine}  {query}{Environment.NewLine})" ),
+                    Arg( query, $"({arg1}) IN ({Environment.NewLine}  {queryReplacement}{Environment.NewLine})" )
+                }),
             (arg1.NotInQuery( query ),
-             new[]
-             {
-                 Arg( arg1, $"({replacement}) NOT IN ({Environment.NewLine}  {query}{Environment.NewLine})" ),
-                 Arg( query, $"({arg1}) NOT IN ({Environment.NewLine}  {queryReplacement}{Environment.NewLine})" )
-             }),
+                new[]
+                {
+                    Arg( arg1, $"({replacement}) NOT IN ({Environment.NewLine}  {query}{Environment.NewLine})" ),
+                    Arg( query, $"({arg1}) NOT IN ({Environment.NewLine}  {queryReplacement}{Environment.NewLine})" )
+                }),
             (arg1.CastTo<int>(), new[] { Arg( arg1, $"CAST(({replacement}) AS System.Int32)" ) })
         };
 
@@ -457,9 +453,9 @@ public class SqlNodeMutatorTestsData
         var data = new (SqlExpressionNode, (SqlExpressionNode, string)[])[]
         {
             (SqlNode.Functions.Named( SqlSchemaObjectName.Create( "f" ), arg1, arg2 ),
-             new[] { Arg( arg1, $"[f](({replacement}), ({arg2}))" ), Arg( arg2, $"[f](({arg1}), ({replacement}))" ) }),
+                new[] { Arg( arg1, $"[f](({replacement}), ({arg2}))" ), Arg( arg2, $"[f](({arg1}), ({replacement}))" ) }),
             (arg1.Coalesce( arg2 ),
-             new[] { Arg( arg1, $"COALESCE(({replacement}), ({arg2}))" ), Arg( arg2, $"COALESCE(({arg1}), ({replacement}))" ) }),
+                new[] { Arg( arg1, $"COALESCE(({replacement}), ({arg2}))" ), Arg( arg2, $"COALESCE(({arg1}), ({replacement}))" ) }),
             (arg1.ExtractDate(), new[] { Arg( arg1, $"EXTRACT_DATE(({replacement}))" ) }),
             (arg1.ExtractTimeOfDay(), new[] { Arg( arg1, $"EXTRACT_TIME_OF_DAY(({replacement}))" ) }),
             (arg1.ExtractDayOfYear(), new[] { Arg( arg1, $"EXTRACT_DAY_OF_YEAR(({replacement}))" ) }),
@@ -468,82 +464,85 @@ public class SqlNodeMutatorTestsData
             (arg1.ExtractTemporalUnit( SqlTemporalUnit.Month ), new[] { Arg( arg1, $"EXTRACT_TEMPORAL_MONTH(({replacement}))" ) }),
             (arg1.ExtractTemporalUnit( SqlTemporalUnit.Hour ), new[] { Arg( arg1, $"EXTRACT_TEMPORAL_HOUR(({replacement}))" ) }),
             (arg1.TemporalAdd( arg2, SqlTemporalUnit.Month ),
-             new[]
-             {
-                 Arg( arg1, $"TEMPORAL_ADD_MONTH(({replacement}), ({arg2}))" ),
-                 Arg( arg2, $"TEMPORAL_ADD_MONTH(({arg1}), ({replacement}))" )
-             }),
+                new[]
+                {
+                    Arg( arg1, $"TEMPORAL_ADD_MONTH(({replacement}), ({arg2}))" ),
+                    Arg( arg2, $"TEMPORAL_ADD_MONTH(({arg1}), ({replacement}))" )
+                }),
             (arg1.TemporalAdd( arg2, SqlTemporalUnit.Hour ),
-             new[]
-             {
-                 Arg( arg1, $"TEMPORAL_ADD_HOUR(({replacement}), ({arg2}))" ),
-                 Arg( arg2, $"TEMPORAL_ADD_HOUR(({arg1}), ({replacement}))" )
-             }),
+                new[]
+                {
+                    Arg( arg1, $"TEMPORAL_ADD_HOUR(({replacement}), ({arg2}))" ),
+                    Arg( arg2, $"TEMPORAL_ADD_HOUR(({arg1}), ({replacement}))" )
+                }),
             (arg1.TemporalDiff( arg2, SqlTemporalUnit.Month ),
-             new[]
-             {
-                 Arg( arg1, $"TEMPORAL_DIFF_MONTH(({replacement}), ({arg2}))" ),
-                 Arg( arg2, $"TEMPORAL_DIFF_MONTH(({arg1}), ({replacement}))" )
-             }),
+                new[]
+                {
+                    Arg( arg1, $"TEMPORAL_DIFF_MONTH(({replacement}), ({arg2}))" ),
+                    Arg( arg2, $"TEMPORAL_DIFF_MONTH(({arg1}), ({replacement}))" )
+                }),
             (arg1.TemporalDiff( arg2, SqlTemporalUnit.Hour ),
-             new[]
-             {
-                 Arg( arg1, $"TEMPORAL_DIFF_HOUR(({replacement}), ({arg2}))" ),
-                 Arg( arg2, $"TEMPORAL_DIFF_HOUR(({arg1}), ({replacement}))" )
-             }),
+                new[]
+                {
+                    Arg( arg1, $"TEMPORAL_DIFF_HOUR(({replacement}), ({arg2}))" ),
+                    Arg( arg2, $"TEMPORAL_DIFF_HOUR(({arg1}), ({replacement}))" )
+                }),
             (arg1.Length(), new[] { Arg( arg1, $"LENGTH(({replacement}))" ) }),
             (arg1.ByteLength(), new[] { Arg( arg1, $"BYTE_LENGTH(({replacement}))" ) }),
             (arg1.ToLower(), new[] { Arg( arg1, $"TO_LOWER(({replacement}))" ) }),
             (arg1.ToUpper(), new[] { Arg( arg1, $"TO_UPPER(({replacement}))" ) }),
             (arg1.TrimStart(), new[] { Arg( arg1, $"TRIM_START(({replacement}))" ) }),
             (arg1.TrimStart( arg2 ),
-             new[] { Arg( arg1, $"TRIM_START(({replacement}), ({arg2}))" ), Arg( arg2, $"TRIM_START(({arg1}), ({replacement}))" ) }),
+                new[] { Arg( arg1, $"TRIM_START(({replacement}), ({arg2}))" ), Arg( arg2, $"TRIM_START(({arg1}), ({replacement}))" ) }),
             (arg1.TrimEnd(), new[] { Arg( arg1, $"TRIM_END(({replacement}))" ) }),
             (arg1.TrimEnd( arg2 ),
-             new[] { Arg( arg1, $"TRIM_END(({replacement}), ({arg2}))" ), Arg( arg2, $"TRIM_END(({arg1}), ({replacement}))" ) }),
+                new[] { Arg( arg1, $"TRIM_END(({replacement}), ({arg2}))" ), Arg( arg2, $"TRIM_END(({arg1}), ({replacement}))" ) }),
             (arg1.Trim(), new[] { Arg( arg1, $"TRIM(({replacement}))" ) }),
             (arg1.Trim( arg2 ), new[] { Arg( arg1, $"TRIM(({replacement}), ({arg2}))" ), Arg( arg2, $"TRIM(({arg1}), ({replacement}))" ) }),
             (arg1.Substring( arg2 ),
-             new[] { Arg( arg1, $"SUBSTRING(({replacement}), ({arg2}))" ), Arg( arg2, $"SUBSTRING(({arg1}), ({replacement}))" ) }),
+                new[] { Arg( arg1, $"SUBSTRING(({replacement}), ({arg2}))" ), Arg( arg2, $"SUBSTRING(({arg1}), ({replacement}))" ) }),
             (arg1.Substring( arg2, arg3 ),
-             new[]
-             {
-                 Arg( arg1, $"SUBSTRING(({replacement}), ({arg2}), ({arg3}))" ),
-                 Arg( arg2, $"SUBSTRING(({arg1}), ({replacement}), ({arg3}))" ),
-                 Arg( arg3, $"SUBSTRING(({arg1}), ({arg2}), ({replacement}))" )
-             }),
+                new[]
+                {
+                    Arg( arg1, $"SUBSTRING(({replacement}), ({arg2}), ({arg3}))" ),
+                    Arg( arg2, $"SUBSTRING(({arg1}), ({replacement}), ({arg3}))" ),
+                    Arg( arg3, $"SUBSTRING(({arg1}), ({arg2}), ({replacement}))" )
+                }),
             (arg1.Replace( arg2, arg3 ),
-             new[]
-             {
-                 Arg( arg1, $"REPLACE(({replacement}), ({arg2}), ({arg3}))" ),
-                 Arg( arg2, $"REPLACE(({arg1}), ({replacement}), ({arg3}))" ),
-                 Arg( arg3, $"REPLACE(({arg1}), ({arg2}), ({replacement}))" )
-             }),
+                new[]
+                {
+                    Arg( arg1, $"REPLACE(({replacement}), ({arg2}), ({arg3}))" ),
+                    Arg( arg2, $"REPLACE(({arg1}), ({replacement}), ({arg3}))" ),
+                    Arg( arg3, $"REPLACE(({arg1}), ({arg2}), ({replacement}))" )
+                }),
             (arg1.Reverse(), new[] { Arg( arg1, $"REVERSE(({replacement}))" ) }),
             (arg1.IndexOf( arg2 ),
-             new[] { Arg( arg1, $"INDEX_OF(({replacement}), ({arg2}))" ), Arg( arg2, $"INDEX_OF(({arg1}), ({replacement}))" ) }),
+                new[] { Arg( arg1, $"INDEX_OF(({replacement}), ({arg2}))" ), Arg( arg2, $"INDEX_OF(({arg1}), ({replacement}))" ) }),
             (arg1.LastIndexOf( arg2 ),
-             new[] { Arg( arg1, $"LAST_INDEX_OF(({replacement}), ({arg2}))" ), Arg( arg2, $"LAST_INDEX_OF(({arg1}), ({replacement}))" ) }),
+                new[]
+                {
+                    Arg( arg1, $"LAST_INDEX_OF(({replacement}), ({arg2}))" ), Arg( arg2, $"LAST_INDEX_OF(({arg1}), ({replacement}))" )
+                }),
             (arg1.Sign(), new[] { Arg( arg1, $"SIGN(({replacement}))" ) }),
             (arg1.Abs(), new[] { Arg( arg1, $"ABS(({replacement}))" ) }),
             (arg1.Ceiling(), new[] { Arg( arg1, $"CEILING(({replacement}))" ) }),
             (arg1.Floor(), new[] { Arg( arg1, $"FLOOR(({replacement}))" ) }),
             (arg1.Truncate(), new[] { Arg( arg1, $"TRUNCATE(({replacement}))" ) }),
             (arg1.Truncate( arg2 ),
-             new[] { Arg( arg1, $"TRUNCATE(({replacement}), ({arg2}))" ), Arg( arg2, $"TRUNCATE(({arg1}), ({replacement}))" ) }),
+                new[] { Arg( arg1, $"TRUNCATE(({replacement}), ({arg2}))" ), Arg( arg2, $"TRUNCATE(({arg1}), ({replacement}))" ) }),
             (arg1.Round( arg2 ),
-             new[] { Arg( arg1, $"ROUND(({replacement}), ({arg2}))" ), Arg( arg2, $"ROUND(({arg1}), ({replacement}))" ) }),
+                new[] { Arg( arg1, $"ROUND(({replacement}), ({arg2}))" ), Arg( arg2, $"ROUND(({arg1}), ({replacement}))" ) }),
             (arg1.Power( arg2 ),
-             new[] { Arg( arg1, $"POWER(({replacement}), ({arg2}))" ), Arg( arg2, $"POWER(({arg1}), ({replacement}))" ) }),
+                new[] { Arg( arg1, $"POWER(({replacement}), ({arg2}))" ), Arg( arg2, $"POWER(({arg1}), ({replacement}))" ) }),
             (arg1.SquareRoot(), new[] { Arg( arg1, $"SQUARE_ROOT(({replacement}))" ) }),
             (arg1.Min( arg2 ), new[] { Arg( arg1, $"MIN(({replacement}), ({arg2}))" ), Arg( arg2, $"MIN(({arg1}), ({replacement}))" ) }),
             (arg1.Max( arg2 ), new[] { Arg( arg1, $"MAX(({replacement}), ({arg2}))" ), Arg( arg2, $"MAX(({arg1}), ({replacement}))" ) }),
             (SqlNode.AggregateFunctions.Named( SqlSchemaObjectName.Create( "f" ), arg1, arg2 ).SetTraits( traits ),
-             new[]
-             {
-                 Arg( arg1, $"AGG_[f](({replacement}), ({arg2})){traitsText}" ),
-                 Arg( arg2, $"AGG_[f](({arg1}), ({replacement})){traitsText}" )
-             }),
+                new[]
+                {
+                    Arg( arg1, $"AGG_[f](({replacement}), ({arg2})){traitsText}" ),
+                    Arg( arg2, $"AGG_[f](({arg1}), ({replacement})){traitsText}" )
+                }),
             (arg1.Min().SetTraits( traits ), new[] { Arg( arg1, $"AGG_MIN(({replacement})){traitsText}" ) }),
             (arg1.Max().SetTraits( traits ), new[] { Arg( arg1, $"AGG_MAX(({replacement})){traitsText}" ) }),
             (arg1.Average().SetTraits( traits ), new[] { Arg( arg1, $"AGG_AVERAGE(({replacement})){traitsText}" ) }),
@@ -551,46 +550,46 @@ public class SqlNodeMutatorTestsData
             (arg1.Count().SetTraits( traits ), new[] { Arg( arg1, $"AGG_COUNT(({replacement})){traitsText}" ) }),
             (arg1.StringConcat().SetTraits( traits ), new[] { Arg( arg1, $"AGG_STRING_CONCAT(({replacement})){traitsText}" ) }),
             (arg1.StringConcat( arg2 ).SetTraits( traits ),
-             new[]
-             {
-                 Arg( arg1, $"AGG_STRING_CONCAT(({replacement}), ({arg2})){traitsText}" ),
-                 Arg( arg2, $"AGG_STRING_CONCAT(({arg1}), ({replacement})){traitsText}" )
-             }),
+                new[]
+                {
+                    Arg( arg1, $"AGG_STRING_CONCAT(({replacement}), ({arg2})){traitsText}" ),
+                    Arg( arg2, $"AGG_STRING_CONCAT(({arg1}), ({replacement})){traitsText}" )
+                }),
             (arg1.NTile().SetTraits( traits ), new[] { Arg( arg1, $"WND_N_TILE(({replacement})){traitsText}" ) }),
             (arg1.Lag( arg2 ).SetTraits( traits ),
-             new[]
-             {
-                 Arg( arg1, $"WND_LAG(({replacement}), ({arg2})){traitsText}" ),
-                 Arg( arg2, $"WND_LAG(({arg1}), ({replacement})){traitsText}" )
-             }),
+                new[]
+                {
+                    Arg( arg1, $"WND_LAG(({replacement}), ({arg2})){traitsText}" ),
+                    Arg( arg2, $"WND_LAG(({arg1}), ({replacement})){traitsText}" )
+                }),
             (arg1.Lag( arg2, arg3 ).SetTraits( traits ),
-             new[]
-             {
-                 Arg( arg1, $"WND_LAG(({replacement}), ({arg2}), ({arg3})){traitsText}" ),
-                 Arg( arg2, $"WND_LAG(({arg1}), ({replacement}), ({arg3})){traitsText}" ),
-                 Arg( arg3, $"WND_LAG(({arg1}), ({arg2}), ({replacement})){traitsText}" )
-             }),
+                new[]
+                {
+                    Arg( arg1, $"WND_LAG(({replacement}), ({arg2}), ({arg3})){traitsText}" ),
+                    Arg( arg2, $"WND_LAG(({arg1}), ({replacement}), ({arg3})){traitsText}" ),
+                    Arg( arg3, $"WND_LAG(({arg1}), ({arg2}), ({replacement})){traitsText}" )
+                }),
             (arg1.Lead( arg2 ).SetTraits( traits ),
-             new[]
-             {
-                 Arg( arg1, $"WND_LEAD(({replacement}), ({arg2})){traitsText}" ),
-                 Arg( arg2, $"WND_LEAD(({arg1}), ({replacement})){traitsText}" )
-             }),
+                new[]
+                {
+                    Arg( arg1, $"WND_LEAD(({replacement}), ({arg2})){traitsText}" ),
+                    Arg( arg2, $"WND_LEAD(({arg1}), ({replacement})){traitsText}" )
+                }),
             (arg1.Lead( arg2, arg3 ).SetTraits( traits ),
-             new[]
-             {
-                 Arg( arg1, $"WND_LEAD(({replacement}), ({arg2}), ({arg3})){traitsText}" ),
-                 Arg( arg2, $"WND_LEAD(({arg1}), ({replacement}), ({arg3})){traitsText}" ),
-                 Arg( arg3, $"WND_LEAD(({arg1}), ({arg2}), ({replacement})){traitsText}" )
-             }),
+                new[]
+                {
+                    Arg( arg1, $"WND_LEAD(({replacement}), ({arg2}), ({arg3})){traitsText}" ),
+                    Arg( arg2, $"WND_LEAD(({arg1}), ({replacement}), ({arg3})){traitsText}" ),
+                    Arg( arg3, $"WND_LEAD(({arg1}), ({arg2}), ({replacement})){traitsText}" )
+                }),
             (arg1.FirstValue().SetTraits( traits ), new[] { Arg( arg1, $"WND_FIRST_VALUE(({replacement})){traitsText}" ) }),
             (arg1.LastValue().SetTraits( traits ), new[] { Arg( arg1, $"WND_LAST_VALUE(({replacement})){traitsText}" ) }),
             (arg1.NthValue( arg2 ).SetTraits( traits ),
-             new[]
-             {
-                 Arg( arg1, $"WND_NTH_VALUE(({replacement}), ({arg2})){traitsText}" ),
-                 Arg( arg2, $"WND_NTH_VALUE(({arg1}), ({replacement})){traitsText}" )
-             }),
+                new[]
+                {
+                    Arg( arg1, $"WND_NTH_VALUE(({replacement}), ({arg2})){traitsText}" ),
+                    Arg( arg2, $"WND_NTH_VALUE(({arg1}), ({replacement})){traitsText}" )
+                }),
         };
 
         var result = new TheoryData<SqlExpressionNode, (SqlExpressionNode, SqlExpressionNode)?, bool, string>();
@@ -627,83 +626,73 @@ public class SqlNodeMutatorTestsData
         var data = new (SqlAggregateFunctionExpressionNode, (SqlTraitNode, string)[])[]
         {
             (SqlNode.AggregateFunctions.Named( SqlSchemaObjectName.Create( "f" ), arg1 ).SetTraits( traits ),
-             new[]
-             {
-                 Arg( trait1, $"AGG_[f](({arg1})){replacementText1}" ),
-                 Arg( trait2, $"AGG_[f](({arg1})){replacementText2}" )
-             }),
+                new[] { Arg( trait1, $"AGG_[f](({arg1})){replacementText1}" ), Arg( trait2, $"AGG_[f](({arg1})){replacementText2}" ) }),
             (arg1.Min().SetTraits( traits ),
-             new[] { Arg( trait1, $"AGG_MIN(({arg1})){replacementText1}" ), Arg( trait2, $"AGG_MIN(({arg1})){replacementText2}" ) }),
+                new[] { Arg( trait1, $"AGG_MIN(({arg1})){replacementText1}" ), Arg( trait2, $"AGG_MIN(({arg1})){replacementText2}" ) }),
             (arg1.Max().SetTraits( traits ),
-             new[] { Arg( trait1, $"AGG_MAX(({arg1})){replacementText1}" ), Arg( trait2, $"AGG_MAX(({arg1})){replacementText2}" ) }),
+                new[] { Arg( trait1, $"AGG_MAX(({arg1})){replacementText1}" ), Arg( trait2, $"AGG_MAX(({arg1})){replacementText2}" ) }),
             (arg1.Average().SetTraits( traits ),
-             new[]
-             {
-                 Arg( trait1, $"AGG_AVERAGE(({arg1})){replacementText1}" ),
-                 Arg( trait2, $"AGG_AVERAGE(({arg1})){replacementText2}" )
-             }),
+                new[]
+                {
+                    Arg( trait1, $"AGG_AVERAGE(({arg1})){replacementText1}" ), Arg( trait2, $"AGG_AVERAGE(({arg1})){replacementText2}" )
+                }),
             (arg1.Sum().SetTraits( traits ),
-             new[] { Arg( trait1, $"AGG_SUM(({arg1})){replacementText1}" ), Arg( trait2, $"AGG_SUM(({arg1})){replacementText2}" ) }),
+                new[] { Arg( trait1, $"AGG_SUM(({arg1})){replacementText1}" ), Arg( trait2, $"AGG_SUM(({arg1})){replacementText2}" ) }),
             (arg1.Count().SetTraits( traits ),
-             new[] { Arg( trait1, $"AGG_COUNT(({arg1})){replacementText1}" ), Arg( trait2, $"AGG_COUNT(({arg1})){replacementText2}" ) }),
-            (arg1.StringConcat().SetTraits( traits ), new[]
-            {
-                Arg( trait1, $"AGG_STRING_CONCAT(({arg1})){replacementText1}" ),
-                Arg( trait2, $"AGG_STRING_CONCAT(({arg1})){replacementText2}" )
-            }),
-            (SqlNode.WindowFunctions.RowNumber().SetTraits( traits ), new[]
-            {
-                Arg( trait1, $"WND_ROW_NUMBER(){replacementText1}" ),
-                Arg( trait2, $"WND_ROW_NUMBER(){replacementText2}" )
-            }),
-            (SqlNode.WindowFunctions.Rank().SetTraits( traits ), new[]
-            {
-                Arg( trait1, $"WND_RANK(){replacementText1}" ),
-                Arg( trait2, $"WND_RANK(){replacementText2}" )
-            }),
-            (SqlNode.WindowFunctions.DenseRank().SetTraits( traits ), new[]
-            {
-                Arg( trait1, $"WND_DENSE_RANK(){replacementText1}" ),
-                Arg( trait2, $"WND_DENSE_RANK(){replacementText2}" )
-            }),
-            (SqlNode.WindowFunctions.CumulativeDistribution().SetTraits( traits ), new[]
-            {
-                Arg( trait1, $"WND_CUMULATIVE_DISTRIBUTION(){replacementText1}" ),
-                Arg( trait2, $"WND_CUMULATIVE_DISTRIBUTION(){replacementText2}" )
-            }),
-            (arg1.NTile().SetTraits( traits ), new[]
-            {
-                Arg( trait1, $"WND_N_TILE(({arg1})){replacementText1}" ),
-                Arg( trait2, $"WND_N_TILE(({arg1})){replacementText2}" )
-            }),
+                new[] { Arg( trait1, $"AGG_COUNT(({arg1})){replacementText1}" ), Arg( trait2, $"AGG_COUNT(({arg1})){replacementText2}" ) }),
+            (arg1.StringConcat().SetTraits( traits ),
+                new[]
+                {
+                    Arg( trait1, $"AGG_STRING_CONCAT(({arg1})){replacementText1}" ),
+                    Arg( trait2, $"AGG_STRING_CONCAT(({arg1})){replacementText2}" )
+                }),
+            (SqlNode.WindowFunctions.RowNumber().SetTraits( traits ),
+                new[] { Arg( trait1, $"WND_ROW_NUMBER(){replacementText1}" ), Arg( trait2, $"WND_ROW_NUMBER(){replacementText2}" ) }),
+            (SqlNode.WindowFunctions.Rank().SetTraits( traits ),
+                new[] { Arg( trait1, $"WND_RANK(){replacementText1}" ), Arg( trait2, $"WND_RANK(){replacementText2}" ) }),
+            (SqlNode.WindowFunctions.DenseRank().SetTraits( traits ),
+                new[] { Arg( trait1, $"WND_DENSE_RANK(){replacementText1}" ), Arg( trait2, $"WND_DENSE_RANK(){replacementText2}" ) }),
+            (SqlNode.WindowFunctions.CumulativeDistribution().SetTraits( traits ),
+                new[]
+                {
+                    Arg( trait1, $"WND_CUMULATIVE_DISTRIBUTION(){replacementText1}" ),
+                    Arg( trait2, $"WND_CUMULATIVE_DISTRIBUTION(){replacementText2}" )
+                }),
+            (arg1.NTile().SetTraits( traits ),
+                new[]
+                {
+                    Arg( trait1, $"WND_N_TILE(({arg1})){replacementText1}" ), Arg( trait2, $"WND_N_TILE(({arg1})){replacementText2}" )
+                }),
             (arg1.Lag( arg2 ).SetTraits( traits ),
-             new[]
-             {
-                 Arg( trait1, $"WND_LAG(({arg1}), ({arg2})){replacementText1}" ),
-                 Arg( trait2, $"WND_LAG(({arg1}), ({arg2})){replacementText2}" )
-             }),
+                new[]
+                {
+                    Arg( trait1, $"WND_LAG(({arg1}), ({arg2})){replacementText1}" ),
+                    Arg( trait2, $"WND_LAG(({arg1}), ({arg2})){replacementText2}" )
+                }),
             (arg1.Lead( arg2 ).SetTraits( traits ),
-             new[]
-             {
-                 Arg( trait1, $"WND_LEAD(({arg1}), ({arg2})){replacementText1}" ),
-                 Arg( trait2, $"WND_LEAD(({arg1}), ({arg2})){replacementText2}" )
-             }),
-            (arg1.FirstValue().SetTraits( traits ), new[]
-            {
-                Arg( trait1, $"WND_FIRST_VALUE(({arg1})){replacementText1}" ),
-                Arg( trait2, $"WND_FIRST_VALUE(({arg1})){replacementText2}" )
-            }),
-            (arg1.LastValue().SetTraits( traits ), new[]
-            {
-                Arg( trait1, $"WND_LAST_VALUE(({arg1})){replacementText1}" ),
-                Arg( trait2, $"WND_LAST_VALUE(({arg1})){replacementText2}" )
-            }),
+                new[]
+                {
+                    Arg( trait1, $"WND_LEAD(({arg1}), ({arg2})){replacementText1}" ),
+                    Arg( trait2, $"WND_LEAD(({arg1}), ({arg2})){replacementText2}" )
+                }),
+            (arg1.FirstValue().SetTraits( traits ),
+                new[]
+                {
+                    Arg( trait1, $"WND_FIRST_VALUE(({arg1})){replacementText1}" ),
+                    Arg( trait2, $"WND_FIRST_VALUE(({arg1})){replacementText2}" )
+                }),
+            (arg1.LastValue().SetTraits( traits ),
+                new[]
+                {
+                    Arg( trait1, $"WND_LAST_VALUE(({arg1})){replacementText1}" ),
+                    Arg( trait2, $"WND_LAST_VALUE(({arg1})){replacementText2}" )
+                }),
             (arg1.NthValue( arg2 ).SetTraits( traits ),
-             new[]
-             {
-                 Arg( trait1, $"WND_NTH_VALUE(({arg1}), ({arg2})){replacementText1}" ),
-                 Arg( trait2, $"WND_NTH_VALUE(({arg1}), ({arg2})){replacementText2}" )
-             }),
+                new[]
+                {
+                    Arg( trait1, $"WND_NTH_VALUE(({arg1}), ({arg2})){replacementText1}" ),
+                    Arg( trait2, $"WND_NTH_VALUE(({arg1}), ({arg2})){replacementText2}" )
+                }),
         };
 
         var result = new TheoryData<SqlAggregateFunctionExpressionNode, (SqlTraitNode, SqlTraitNode)?, bool, string>();
@@ -745,8 +734,7 @@ public class SqlNodeMutatorTestsData
                     FROM <DUMMY>
                     ORDER BY
                     AND WHERE TRUE
-                    """
-                ),
+                    """ ),
                 Arg(
                     trait2,
                     SqlNode.SortTrait(),
@@ -754,8 +742,7 @@ public class SqlNodeMutatorTestsData
                     FROM <DUMMY>
                     DISTINCT
                     ORDER BY
-                    """
-                )
+                    """ )
             }),
             (set1.ToDataSource().SetTraits( traits ), new[]
             {
@@ -766,8 +753,7 @@ public class SqlNodeMutatorTestsData
                     FROM [foo]
                     DISTINCT
                     AND WHERE TRUE
-                    """
-                ),
+                    """ ),
                 Arg(
                     trait1,
                     SqlNode.SortTrait(),
@@ -775,8 +761,7 @@ public class SqlNodeMutatorTestsData
                     FROM [a]
                     ORDER BY
                     AND WHERE TRUE
-                    """
-                ),
+                    """ ),
                 Arg(
                     trait2,
                     SqlNode.SortTrait(),
@@ -784,8 +769,7 @@ public class SqlNodeMutatorTestsData
                     FROM [a]
                     DISTINCT
                     ORDER BY
-                    """
-                )
+                    """ )
             }),
             (set1.Join( set2.InnerOn( SqlNode.True() ), set3.LeftOn( SqlNode.True() ) ).SetTraits( traits ), new[]
             {
@@ -798,8 +782,7 @@ public class SqlNodeMutatorTestsData
                     LEFT JOIN [c] ON TRUE
                     DISTINCT
                     AND WHERE TRUE
-                    """
-                ),
+                    """ ),
                 Arg(
                     set2,
                     SqlNode.RawRecordSet( "foo" ),
@@ -809,8 +792,7 @@ public class SqlNodeMutatorTestsData
                     LEFT JOIN [c] ON TRUE
                     DISTINCT
                     AND WHERE TRUE
-                    """
-                ),
+                    """ ),
                 Arg(
                     set3,
                     SqlNode.RawRecordSet( "foo" ),
@@ -820,8 +802,7 @@ public class SqlNodeMutatorTestsData
                     LEFT JOIN [foo] ON TRUE
                     DISTINCT
                     AND WHERE TRUE
-                    """
-                ),
+                    """ ),
                 Arg(
                     trait1,
                     SqlNode.SortTrait(),
@@ -831,8 +812,7 @@ public class SqlNodeMutatorTestsData
                     LEFT JOIN [c] ON TRUE
                     ORDER BY
                     AND WHERE TRUE
-                    """
-                ),
+                    """ ),
                 Arg(
                     trait2,
                     SqlNode.SortTrait(),
@@ -842,8 +822,7 @@ public class SqlNodeMutatorTestsData
                     LEFT JOIN [c] ON TRUE
                     DISTINCT
                     ORDER BY
-                    """
-                )
+                    """ )
             })
         };
 
@@ -892,8 +871,7 @@ public class SqlNodeMutatorTestsData
                     SELECT
                       ([a].[x] : ?),
                       ([a].[y] : ?)
-                    """
-                ),
+                    """ ),
                 Arg(
                     field1,
                     SqlNode.Literal( 1 ).As( "x" ),
@@ -904,8 +882,7 @@ public class SqlNodeMutatorTestsData
                     SELECT
                       ("1" : System.Int32) AS [x],
                       ([a].[y] : ?)
-                    """
-                ),
+                    """ ),
                 Arg(
                     field2,
                     SqlNode.Literal( 1 ).As( "y" ),
@@ -916,8 +893,7 @@ public class SqlNodeMutatorTestsData
                     SELECT
                       ([a].[x] : ?),
                       ("1" : System.Int32) AS [y]
-                    """
-                ),
+                    """ ),
                 Arg(
                     trait1,
                     SqlNode.SortTrait(),
@@ -928,8 +904,7 @@ public class SqlNodeMutatorTestsData
                     SELECT
                       ([a].[x] : ?),
                       ([a].[y] : ?)
-                    """
-                ),
+                    """ ),
                 Arg(
                     trait2,
                     SqlNode.SortTrait(),
@@ -940,81 +915,75 @@ public class SqlNodeMutatorTestsData
                     SELECT
                       ([a].[x] : ?),
                       ([a].[y] : ?)
-                    """
-                )
+                    """ )
             }),
             (query1.CompoundWith(
-                     query2.ToCompound( SqlCompoundQueryOperator.UnionAll ),
-                     query3.ToCompound( SqlCompoundQueryOperator.Intersect ) )
-                 .SetTraits( traits ),
-             new[]
-             {
-                 Arg(
-                     query1,
-                     SqlNode.RawQuery( "SELECT * FROM lorem" ),
-                     """
-                     SELECT * FROM lorem
-                     UNION ALL
-                     SELECT * FROM bar
-                     INTERSECT
-                     SELECT * FROM qux
-                     DISTINCT
-                     AND WHERE TRUE
-                     """
-                 ),
-                 Arg(
-                     query2,
-                     SqlNode.RawQuery( "SELECT * FROM lorem" ),
-                     """
-                     SELECT * FROM foo
-                     UNION ALL
-                     SELECT * FROM lorem
-                     INTERSECT
-                     SELECT * FROM qux
-                     DISTINCT
-                     AND WHERE TRUE
-                     """
-                 ),
-                 Arg(
-                     query3,
-                     SqlNode.RawQuery( "SELECT * FROM lorem" ),
-                     """
-                     SELECT * FROM foo
-                     UNION ALL
-                     SELECT * FROM bar
-                     INTERSECT
-                     SELECT * FROM lorem
-                     DISTINCT
-                     AND WHERE TRUE
-                     """
-                 ),
-                 Arg(
-                     trait1,
-                     SqlNode.SortTrait(),
-                     """
-                     SELECT * FROM foo
-                     UNION ALL
-                     SELECT * FROM bar
-                     INTERSECT
-                     SELECT * FROM qux
-                     ORDER BY
-                     AND WHERE TRUE
-                     """
-                 ),
-                 Arg(
-                     trait2,
-                     SqlNode.SortTrait(),
-                     """
-                     SELECT * FROM foo
-                     UNION ALL
-                     SELECT * FROM bar
-                     INTERSECT
-                     SELECT * FROM qux
-                     DISTINCT
-                     ORDER BY
-                     """
-                 )
-             })
+                        query2.ToCompound( SqlCompoundQueryOperator.UnionAll ),
+                        query3.ToCompound( SqlCompoundQueryOperator.Intersect ) )
+                    .SetTraits( traits ),
+                new[]
+                {
+                    Arg(
+                        query1,
+                        SqlNode.RawQuery( "SELECT * FROM lorem" ),
+                        """
+                        SELECT * FROM lorem
+                        UNION ALL
+                        SELECT * FROM bar
+                        INTERSECT
+                        SELECT * FROM qux
+                        DISTINCT
+                        AND WHERE TRUE
+                        """ ),
+                    Arg(
+                        query2,
+                        SqlNode.RawQuery( "SELECT * FROM lorem" ),
+                        """
+                        SELECT * FROM foo
+                        UNION ALL
+                        SELECT * FROM lorem
+                        INTERSECT
+                        SELECT * FROM qux
+                        DISTINCT
+                        AND WHERE TRUE
+                        """ ),
+                    Arg(
+                        query3,
+                        SqlNode.RawQuery( "SELECT * FROM lorem" ),
+                        """
+                        SELECT * FROM foo
+                        UNION ALL
+                        SELECT * FROM bar
+                        INTERSECT
+                        SELECT * FROM lorem
+                        DISTINCT
+                        AND WHERE TRUE
+                        """ ),
+                    Arg(
+                        trait1,
+                        SqlNode.SortTrait(),
+                        """
+                        SELECT * FROM foo
+                        UNION ALL
+                        SELECT * FROM bar
+                        INTERSECT
+                        SELECT * FROM qux
+                        ORDER BY
+                        AND WHERE TRUE
+                        """ ),
+                    Arg(
+                        trait2,
+                        SqlNode.SortTrait(),
+                        """
+                        SELECT * FROM foo
+                        UNION ALL
+                        SELECT * FROM bar
+                        INTERSECT
+                        SELECT * FROM qux
+                        DISTINCT
+                        ORDER BY
+                        """ )
+                })
         };
 
         var result = new TheoryData<SqlQueryExpressionNode, (SqlNodeBase, SqlNodeBase)?, bool, string>();
@@ -1056,8 +1025,7 @@ public class SqlNodeMutatorTestsData
                     """
                     INSERT INTO [bar] ([bar].[x] : ?, [bar].[y] : ?)
                     SELECT * FROM foo
-                    """
-                ),
+                    """ ),
                 Arg(
                     set,
                     SqlNode.RawRecordSet( "qux" ),
@@ -1065,8 +1033,7 @@ public class SqlNodeMutatorTestsData
                     INSERT INTO [qux] ([qux].[x] : ?, [qux].[y] : ?)
                     VALUES
                     ((@a : ?), (@b : ?))
-                    """
-                ),
+                    """ ),
                 Arg(
                     field1,
                     set["z"],
@@ -1074,8 +1041,7 @@ public class SqlNodeMutatorTestsData
                     INSERT INTO [bar] ([bar].[z] : ?, [bar].[y] : ?)
                     VALUES
                     ((@a : ?), (@b : ?))
-                    """
-                ),
+                    """ ),
                 Arg(
                     field2,
                     set["z"],
@@ -1083,8 +1049,7 @@ public class SqlNodeMutatorTestsData
                     INSERT INTO [bar] ([bar].[x] : ?, [bar].[z] : ?)
                     VALUES
                     ((@a : ?), (@b : ?))
-                    """
-                )
+                    """ )
             }),
             (query.ToInsertInto( set, field1, field2 ), new[]
             {
@@ -1095,32 +1060,28 @@ public class SqlNodeMutatorTestsData
                     INSERT INTO [bar] ([bar].[x] : ?, [bar].[y] : ?)
                     VALUES
                     ((@a : ?), (@b : ?))
-                    """
-                ),
+                    """ ),
                 Arg(
                     set,
                     SqlNode.RawRecordSet( "qux" ),
                     """
                     INSERT INTO [qux] ([qux].[x] : ?, [qux].[y] : ?)
                     SELECT * FROM foo
-                    """
-                ),
+                    """ ),
                 Arg(
                     field1,
                     set["z"],
                     """
                     INSERT INTO [bar] ([bar].[z] : ?, [bar].[y] : ?)
                     SELECT * FROM foo
-                    """
-                ),
+                    """ ),
                 Arg(
                     field2,
                     set["z"],
                     """
                     INSERT INTO [bar] ([bar].[x] : ?, [bar].[z] : ?)
                     SELECT * FROM foo
-                    """
-                )
+                    """ )
             }),
             (set.ToDataSource().ToUpdate( field1.Assign( SqlNode.Literal( 1 ) ), field2.Assign( SqlNode.Literal( 2 ) ) ), new[]
             {
@@ -1132,8 +1093,7 @@ public class SqlNodeMutatorTestsData
                     SET
                       ([qux].[x] : ?) = ("1" : System.Int32),
                       ([qux].[y] : ?) = ("2" : System.Int32)
-                    """
-                ),
+                    """ ),
                 Arg(
                     field1,
                     set["z"],
@@ -1142,8 +1102,7 @@ public class SqlNodeMutatorTestsData
                     SET
                       ([bar].[z] : ?) = ("1" : System.Int32),
                       ([bar].[y] : ?) = ("2" : System.Int32)
-                    """
-                ),
+                    """ ),
                 Arg(
                     field2,
                     set["z"],
@@ -1152,187 +1111,174 @@ public class SqlNodeMutatorTestsData
                     SET
                       ([bar].[x] : ?) = ("1" : System.Int32),
                       ([bar].[z] : ?) = ("2" : System.Int32)
-                    """
-                )
+                    """ )
             }),
             (values.ToUpsert(
-                 set,
-                 new[] { field1, field2 },
-                 (_, i) => new[] { field1.Assign( i["x"] ), field2.Assign( i["y"] ) },
-                 new[] { field3, field4 } ),
-             new[]
-             {
-                 Arg(
-                     values,
-                     query,
-                     """
-                     UPSERT [bar] USING
-                     SELECT * FROM foo
-                     WITH CONFLICT TARGET ([bar].[w] : ?, [bar].[v] : ?)
-                     INSERT ([bar].[x] : ?, [bar].[y] : ?)
-                     ON CONFLICT SET
-                       ([bar].[x] : ?) = ([<internal>].[x] : ?),
-                       ([bar].[y] : ?) = ([<internal>].[y] : ?)
-                     """
-                 ),
-                 Arg(
-                     set,
-                     SqlNode.RawRecordSet( "qux" ),
-                     """
-                     UPSERT [qux] USING
-                     VALUES
-                     ((@a : ?), (@b : ?))
-                     WITH CONFLICT TARGET ([qux].[w] : ?, [qux].[v] : ?)
-                     INSERT ([qux].[x] : ?, [qux].[y] : ?)
-                     ON CONFLICT SET
-                       ([qux].[x] : ?) = ([<internal>].[x] : ?),
-                       ([qux].[y] : ?) = ([<internal>].[y] : ?)
-                     """
-                 ),
-                 Arg(
-                     field1,
-                     set["z"],
-                     """
-                     UPSERT [bar] USING
-                     VALUES
-                     ((@a : ?), (@b : ?))
-                     WITH CONFLICT TARGET ([bar].[w] : ?, [bar].[v] : ?)
-                     INSERT ([bar].[z] : ?, [bar].[y] : ?)
-                     ON CONFLICT SET
-                       ([bar].[z] : ?) = ([<internal>].[x] : ?),
-                       ([bar].[y] : ?) = ([<internal>].[y] : ?)
-                     """
-                 ),
-                 Arg(
-                     field2,
-                     set["z"],
-                     """
-                     UPSERT [bar] USING
-                     VALUES
-                     ((@a : ?), (@b : ?))
-                     WITH CONFLICT TARGET ([bar].[w] : ?, [bar].[v] : ?)
-                     INSERT ([bar].[x] : ?, [bar].[z] : ?)
-                     ON CONFLICT SET
-                       ([bar].[x] : ?) = ([<internal>].[x] : ?),
-                       ([bar].[z] : ?) = ([<internal>].[y] : ?)
-                     """
-                 ),
-                 Arg(
-                     field3,
-                     set["z"],
-                     """
-                     UPSERT [bar] USING
-                     VALUES
-                     ((@a : ?), (@b : ?))
-                     WITH CONFLICT TARGET ([bar].[z] : ?, [bar].[v] : ?)
-                     INSERT ([bar].[x] : ?, [bar].[y] : ?)
-                     ON CONFLICT SET
-                       ([bar].[x] : ?) = ([<internal>].[x] : ?),
-                       ([bar].[y] : ?) = ([<internal>].[y] : ?)
-                     """
-                 ),
-                 Arg(
-                     field4,
-                     set["z"],
-                     """
-                     UPSERT [bar] USING
-                     VALUES
-                     ((@a : ?), (@b : ?))
-                     WITH CONFLICT TARGET ([bar].[w] : ?, [bar].[z] : ?)
-                     INSERT ([bar].[x] : ?, [bar].[y] : ?)
-                     ON CONFLICT SET
-                       ([bar].[x] : ?) = ([<internal>].[x] : ?),
-                       ([bar].[y] : ?) = ([<internal>].[y] : ?)
-                     """
-                 )
-             }),
+                    set,
+                    new[] { field1, field2 },
+                    (_, i) => new[] { field1.Assign( i["x"] ), field2.Assign( i["y"] ) },
+                    new[] { field3, field4 } ),
+                new[]
+                {
+                    Arg(
+                        values,
+                        query,
+                        """
+                        UPSERT [bar] USING
+                        SELECT * FROM foo
+                        WITH CONFLICT TARGET ([bar].[w] : ?, [bar].[v] : ?)
+                        INSERT ([bar].[x] : ?, [bar].[y] : ?)
+                        ON CONFLICT SET
+                          ([bar].[x] : ?) = ([<internal>].[x] : ?),
+                          ([bar].[y] : ?) = ([<internal>].[y] : ?)
+                        """ ),
+                    Arg(
+                        set,
+                        SqlNode.RawRecordSet( "qux" ),
+                        """
+                        UPSERT [qux] USING
+                        VALUES
+                        ((@a : ?), (@b : ?))
+                        WITH CONFLICT TARGET ([qux].[w] : ?, [qux].[v] : ?)
+                        INSERT ([qux].[x] : ?, [qux].[y] : ?)
+                        ON CONFLICT SET
+                          ([qux].[x] : ?) = ([<internal>].[x] : ?),
+                          ([qux].[y] : ?) = ([<internal>].[y] : ?)
+                        """ ),
+                    Arg(
+                        field1,
+                        set["z"],
+                        """
+                        UPSERT [bar] USING
+                        VALUES
+                        ((@a : ?), (@b : ?))
+                        WITH CONFLICT TARGET ([bar].[w] : ?, [bar].[v] : ?)
+                        INSERT ([bar].[z] : ?, [bar].[y] : ?)
+                        ON CONFLICT SET
+                          ([bar].[z] : ?) = ([<internal>].[x] : ?),
+                          ([bar].[y] : ?) = ([<internal>].[y] : ?)
+                        """ ),
+                    Arg(
+                        field2,
+                        set["z"],
+                        """
+                        UPSERT [bar] USING
+                        VALUES
+                        ((@a : ?), (@b : ?))
+                        WITH CONFLICT TARGET ([bar].[w] : ?, [bar].[v] : ?)
+                        INSERT ([bar].[x] : ?, [bar].[z] : ?)
+                        ON CONFLICT SET
+                          ([bar].[x] : ?) = ([<internal>].[x] : ?),
+                          ([bar].[z] : ?) = ([<internal>].[y] : ?)
+                        """ ),
+                    Arg(
+                        field3,
+                        set["z"],
+                        """
+                        UPSERT [bar] USING
+                        VALUES
+                        ((@a : ?), (@b : ?))
+                        WITH CONFLICT TARGET ([bar].[z] : ?, [bar].[v] : ?)
+                        INSERT ([bar].[x] : ?, [bar].[y] : ?)
+                        ON CONFLICT SET
+                          ([bar].[x] : ?) = ([<internal>].[x] : ?),
+                          ([bar].[y] : ?) = ([<internal>].[y] : ?)
+                        """ ),
+                    Arg(
+                        field4,
+                        set["z"],
+                        """
+                        UPSERT [bar] USING
+                        VALUES
+                        ((@a : ?), (@b : ?))
+                        WITH CONFLICT TARGET ([bar].[w] : ?, [bar].[z] : ?)
+                        INSERT ([bar].[x] : ?, [bar].[y] : ?)
+                        ON CONFLICT SET
+                          ([bar].[x] : ?) = ([<internal>].[x] : ?),
+                          ([bar].[y] : ?) = ([<internal>].[y] : ?)
+                        """ )
+                }),
             (query.ToUpsert(
-                 set,
-                 new[] { field1, field2 },
-                 (_, i) => new[] { field1.Assign( i["x"] ), field2.Assign( i["y"] ) },
-                 new[] { field3, field4 } ),
-             new[]
-             {
-                 Arg(
-                     query,
-                     values,
-                     """
-                     UPSERT [bar] USING
-                     VALUES
-                     ((@a : ?), (@b : ?))
-                     WITH CONFLICT TARGET ([bar].[w] : ?, [bar].[v] : ?)
-                     INSERT ([bar].[x] : ?, [bar].[y] : ?)
-                     ON CONFLICT SET
-                       ([bar].[x] : ?) = ([<internal>].[x] : ?),
-                       ([bar].[y] : ?) = ([<internal>].[y] : ?)
-                     """
-                 ),
-                 Arg(
-                     set,
-                     SqlNode.RawRecordSet( "qux" ),
-                     """
-                     UPSERT [qux] USING
-                     SELECT * FROM foo
-                     WITH CONFLICT TARGET ([qux].[w] : ?, [qux].[v] : ?)
-                     INSERT ([qux].[x] : ?, [qux].[y] : ?)
-                     ON CONFLICT SET
-                       ([qux].[x] : ?) = ([<internal>].[x] : ?),
-                       ([qux].[y] : ?) = ([<internal>].[y] : ?)
-                     """
-                 ),
-                 Arg(
-                     field1,
-                     set["z"],
-                     """
-                     UPSERT [bar] USING
-                     SELECT * FROM foo
-                     WITH CONFLICT TARGET ([bar].[w] : ?, [bar].[v] : ?)
-                     INSERT ([bar].[z] : ?, [bar].[y] : ?)
-                     ON CONFLICT SET
-                       ([bar].[z] : ?) = ([<internal>].[x] : ?),
-                       ([bar].[y] : ?) = ([<internal>].[y] : ?)
-                     """
-                 ),
-                 Arg(
-                     field2,
-                     set["z"],
-                     """
-                     UPSERT [bar] USING
-                     SELECT * FROM foo
-                     WITH CONFLICT TARGET ([bar].[w] : ?, [bar].[v] : ?)
-                     INSERT ([bar].[x] : ?, [bar].[z] : ?)
-                     ON CONFLICT SET
-                       ([bar].[x] : ?) = ([<internal>].[x] : ?),
-                       ([bar].[z] : ?) = ([<internal>].[y] : ?)
-                     """
-                 ),
-                 Arg(
-                     field3,
-                     set["z"],
-                     """
-                     UPSERT [bar] USING
-                     SELECT * FROM foo
-                     WITH CONFLICT TARGET ([bar].[z] : ?, [bar].[v] : ?)
-                     INSERT ([bar].[x] : ?, [bar].[y] : ?)
-                     ON CONFLICT SET
-                       ([bar].[x] : ?) = ([<internal>].[x] : ?),
-                       ([bar].[y] : ?) = ([<internal>].[y] : ?)
-                     """
-                 ),
-                 Arg(
-                     field4,
-                     set["z"],
-                     """
-                     UPSERT [bar] USING
-                     SELECT * FROM foo
-                     WITH CONFLICT TARGET ([bar].[w] : ?, [bar].[z] : ?)
-                     INSERT ([bar].[x] : ?, [bar].[y] : ?)
-                     ON CONFLICT SET
-                       ([bar].[x] : ?) = ([<internal>].[x] : ?),
-                       ([bar].[y] : ?) = ([<internal>].[y] : ?)
-                     """
-                 )
-             }),
+                    set,
+                    new[] { field1, field2 },
+                    (_, i) => new[] { field1.Assign( i["x"] ), field2.Assign( i["y"] ) },
+                    new[] { field3, field4 } ),
+                new[]
+                {
+                    Arg(
+                        query,
+                        values,
+                        """
+                        UPSERT [bar] USING
+                        VALUES
+                        ((@a : ?), (@b : ?))
+                        WITH CONFLICT TARGET ([bar].[w] : ?, [bar].[v] : ?)
+                        INSERT ([bar].[x] : ?, [bar].[y] : ?)
+                        ON CONFLICT SET
+                          ([bar].[x] : ?) = ([<internal>].[x] : ?),
+                          ([bar].[y] : ?) = ([<internal>].[y] : ?)
+                        """ ),
+                    Arg(
+                        set,
+                        SqlNode.RawRecordSet( "qux" ),
+                        """
+                        UPSERT [qux] USING
+                        SELECT * FROM foo
+                        WITH CONFLICT TARGET ([qux].[w] : ?, [qux].[v] : ?)
+                        INSERT ([qux].[x] : ?, [qux].[y] : ?)
+                        ON CONFLICT SET
+                          ([qux].[x] : ?) = ([<internal>].[x] : ?),
+                          ([qux].[y] : ?) = ([<internal>].[y] : ?)
+                        """ ),
+                    Arg(
+                        field1,
+                        set["z"],
+                        """
+                        UPSERT [bar] USING
+                        SELECT * FROM foo
+                        WITH CONFLICT TARGET ([bar].[w] : ?, [bar].[v] : ?)
+                        INSERT ([bar].[z] : ?, [bar].[y] : ?)
+                        ON CONFLICT SET
+                          ([bar].[z] : ?) = ([<internal>].[x] : ?),
+                          ([bar].[y] : ?) = ([<internal>].[y] : ?)
+                        """ ),
+                    Arg(
+                        field2,
+                        set["z"],
+                        """
+                        UPSERT [bar] USING
+                        SELECT * FROM foo
+                        WITH CONFLICT TARGET ([bar].[w] : ?, [bar].[v] : ?)
+                        INSERT ([bar].[x] : ?, [bar].[z] : ?)
+                        ON CONFLICT SET
+                          ([bar].[x] : ?) = ([<internal>].[x] : ?),
+                          ([bar].[z] : ?) = ([<internal>].[y] : ?)
+                        """ ),
+                    Arg(
+                        field3,
+                        set["z"],
+                        """
+                        UPSERT [bar] USING
+                        SELECT * FROM foo
+                        WITH CONFLICT TARGET ([bar].[z] : ?, [bar].[v] : ?)
+                        INSERT ([bar].[x] : ?, [bar].[y] : ?)
+                        ON CONFLICT SET
+                          ([bar].[x] : ?) = ([<internal>].[x] : ?),
+                          ([bar].[y] : ?) = ([<internal>].[y] : ?)
+                        """ ),
+                    Arg(
+                        field4,
+                        set["z"],
+                        """
+                        UPSERT [bar] USING
+                        SELECT * FROM foo
+                        WITH CONFLICT TARGET ([bar].[w] : ?, [bar].[z] : ?)
+                        INSERT ([bar].[x] : ?, [bar].[y] : ?)
+                        ON CONFLICT SET
+                          ([bar].[x] : ?) = ([<internal>].[x] : ?),
+                          ([bar].[y] : ?) = ([<internal>].[y] : ?)
+                        """ )
+                }),
             (set.ToDataSource().ToDeleteFrom(), new[] { Arg( set, SqlNode.RawRecordSet( "qux" ), "DELETE FROM [qux]" ) }),
             (set.ToTruncate(), new[] { Arg( set, SqlNode.RawRecordSet( "qux" ), "TRUNCATE [qux]" ) })
         };
@@ -1384,136 +1330,131 @@ public class SqlNodeMutatorTestsData
         var data = new (SqlNodeBase, (SqlNodeBase, SqlNodeBase, string)[])[]
         {
             (SqlNode.Column<int>( "a", defaultValue: expr1 ),
-             new[] { Arg( expr1, SqlNode.Literal( 1 ), "[a] : System.Int32 DEFAULT (\"1\" : System.Int32)" ) }),
+                new[] { Arg( expr1, SqlNode.Literal( 1 ), "[a] : System.Int32 DEFAULT (\"1\" : System.Int32)" ) }),
             (SqlNode.Column<int>( "a", computation: SqlColumnComputation.Stored( expr1 ) ),
-             new[] { Arg( expr1, SqlNode.Literal( 1 ), "[a] : System.Int32 GENERATED (\"1\" : System.Int32) STORED" ) }),
+                new[] { Arg( expr1, SqlNode.Literal( 1 ), "[a] : System.Int32 GENERATED (\"1\" : System.Int32) STORED" ) }),
             (SqlNode.Column<int>( "a", defaultValue: expr1, computation: SqlColumnComputation.Virtual( expr2 ) ),
-             new[]
-             {
-                 Arg( expr1, SqlNode.Literal( 1 ), "[a] : System.Int32 DEFAULT (\"1\" : System.Int32) GENERATED (@b : ?) VIRTUAL" ),
-                 Arg( expr2, SqlNode.Literal( 1 ), "[a] : System.Int32 DEFAULT (@a : ?) GENERATED (\"1\" : System.Int32) VIRTUAL" )
-             }),
-            (SqlNode.PrimaryKey( SqlSchemaObjectName.Create( "a" ), new[] { expr1.Asc(), expr2.Desc() } ), new[]
-            {
-                Arg( expr1, SqlNode.Literal( 1 ), "PRIMARY KEY [a] ((\"1\" : System.Int32) ASC, (@b : ?) DESC)" ),
-                Arg( expr2, SqlNode.Literal( 1 ), "PRIMARY KEY [a] ((@a : ?) ASC, (\"1\" : System.Int32) DESC)" ),
-            }),
+                new[]
+                {
+                    Arg( expr1, SqlNode.Literal( 1 ), "[a] : System.Int32 DEFAULT (\"1\" : System.Int32) GENERATED (@b : ?) VIRTUAL" ),
+                    Arg( expr2, SqlNode.Literal( 1 ), "[a] : System.Int32 DEFAULT (@a : ?) GENERATED (\"1\" : System.Int32) VIRTUAL" )
+                }),
+            (SqlNode.PrimaryKey( SqlSchemaObjectName.Create( "a" ), new[] { expr1.Asc(), expr2.Desc() } ),
+                new[]
+                {
+                    Arg( expr1, SqlNode.Literal( 1 ), "PRIMARY KEY [a] ((\"1\" : System.Int32) ASC, (@b : ?) DESC)" ),
+                    Arg( expr2, SqlNode.Literal( 1 ), "PRIMARY KEY [a] ((@a : ?) ASC, (\"1\" : System.Int32) DESC)" ),
+                }),
             (SqlNode.ForeignKey(
-                 SqlSchemaObjectName.Create( "a" ),
-                 new SqlDataFieldNode[] { field1, field2 },
-                 set2,
-                 new SqlDataFieldNode[] { field3, field4 },
-                 ReferenceBehavior.SetNull,
-                 ReferenceBehavior.NoAction ),
-             new[]
-             {
-                 Arg(
-                     field1,
-                     set1["z"],
-                     "FOREIGN KEY [a] (([foo].[z] : ?), ([foo].[y] : ?)) REFERENCES [bar] (([bar].[v] : ?), ([bar].[w] : ?)) ON DELETE SET NULL ON UPDATE NO ACTION" ),
-                 Arg(
-                     field2,
-                     set1["z"],
-                     "FOREIGN KEY [a] (([foo].[x] : ?), ([foo].[z] : ?)) REFERENCES [bar] (([bar].[v] : ?), ([bar].[w] : ?)) ON DELETE SET NULL ON UPDATE NO ACTION" ),
-                 Arg(
-                     set2,
-                     SqlNode.RawRecordSet( "qux" ),
-                     "FOREIGN KEY [a] (([foo].[x] : ?), ([foo].[y] : ?)) REFERENCES [qux] (([qux].[v] : ?), ([qux].[w] : ?)) ON DELETE SET NULL ON UPDATE NO ACTION" ),
-                 Arg(
-                     field3,
-                     set2["z"],
-                     "FOREIGN KEY [a] (([foo].[x] : ?), ([foo].[y] : ?)) REFERENCES [bar] (([bar].[z] : ?), ([bar].[w] : ?)) ON DELETE SET NULL ON UPDATE NO ACTION" ),
-                 Arg(
-                     field4,
-                     set2["z"],
-                     "FOREIGN KEY [a] (([foo].[x] : ?), ([foo].[y] : ?)) REFERENCES [bar] (([bar].[v] : ?), ([bar].[z] : ?)) ON DELETE SET NULL ON UPDATE NO ACTION" ),
-             }),
+                    SqlSchemaObjectName.Create( "a" ),
+                    new SqlDataFieldNode[] { field1, field2 },
+                    set2,
+                    new SqlDataFieldNode[] { field3, field4 },
+                    ReferenceBehavior.SetNull,
+                    ReferenceBehavior.NoAction ),
+                new[]
+                {
+                    Arg(
+                        field1,
+                        set1["z"],
+                        "FOREIGN KEY [a] (([foo].[z] : ?), ([foo].[y] : ?)) REFERENCES [bar] (([bar].[v] : ?), ([bar].[w] : ?)) ON DELETE SET NULL ON UPDATE NO ACTION" ),
+                    Arg(
+                        field2,
+                        set1["z"],
+                        "FOREIGN KEY [a] (([foo].[x] : ?), ([foo].[z] : ?)) REFERENCES [bar] (([bar].[v] : ?), ([bar].[w] : ?)) ON DELETE SET NULL ON UPDATE NO ACTION" ),
+                    Arg(
+                        set2,
+                        SqlNode.RawRecordSet( "qux" ),
+                        "FOREIGN KEY [a] (([foo].[x] : ?), ([foo].[y] : ?)) REFERENCES [qux] (([qux].[v] : ?), ([qux].[w] : ?)) ON DELETE SET NULL ON UPDATE NO ACTION" ),
+                    Arg(
+                        field3,
+                        set2["z"],
+                        "FOREIGN KEY [a] (([foo].[x] : ?), ([foo].[y] : ?)) REFERENCES [bar] (([bar].[z] : ?), ([bar].[w] : ?)) ON DELETE SET NULL ON UPDATE NO ACTION" ),
+                    Arg(
+                        field4,
+                        set2["z"],
+                        "FOREIGN KEY [a] (([foo].[x] : ?), ([foo].[y] : ?)) REFERENCES [bar] (([bar].[v] : ?), ([bar].[z] : ?)) ON DELETE SET NULL ON UPDATE NO ACTION" ),
+                }),
             (SqlNode.Check( SqlSchemaObjectName.Create( "a" ), cond ), new[] { Arg( cond, SqlNode.True(), "CHECK [a] (TRUE)" ) }),
             (SqlNode.CreateTable(
-                 SqlRecordSetInfo.Create( "a" ),
-                 new[] { SqlNode.Column<int>( "b", defaultValue: expr1 ) },
-                 ifNotExists: true ),
-             new[]
-             {
-                 Arg(
-                     expr1,
-                     SqlNode.Literal( 1 ),
-                     """
-                     CREATE TABLE IF NOT EXISTS [a] (
-                       [b] : System.Int32 DEFAULT ("1" : System.Int32)
-                     )
-                     """
-                 )
-             }),
+                    SqlRecordSetInfo.Create( "a" ),
+                    new[] { SqlNode.Column<int>( "b", defaultValue: expr1 ) },
+                    ifNotExists: true ),
+                new[]
+                {
+                    Arg(
+                        expr1,
+                        SqlNode.Literal( 1 ),
+                        """
+                        CREATE TABLE IF NOT EXISTS [a] (
+                          [b] : System.Int32 DEFAULT ("1" : System.Int32)
+                        )
+                        """ )
+                }),
             (createTable,
-             new[]
-             {
-                 Arg(
-                     expr1,
-                     SqlNode.Literal( 1 ),
-                     """
-                     CREATE TABLE [a] (
-                       [b] : System.Int32 DEFAULT ("1" : System.Int32),
-                       [c] : System.String DEFAULT (@b : ?),
-                       PRIMARY KEY [pk] (([a].[b] : System.Int32) ASC),
-                       FOREIGN KEY [fk] (([a].[b] : System.Int32)) REFERENCES [bar] (([bar].[v] : ?)) ON DELETE RESTRICT ON UPDATE RESTRICT,
-                       CHECK [chk] (a > 0)
-                     )
-                     """
-                 ),
-                 Arg(
-                     expr2,
-                     SqlNode.Literal( 1 ),
-                     """
-                     CREATE TABLE [a] (
-                       [b] : System.Int32 DEFAULT (@a : ?),
-                       [c] : System.String DEFAULT ("1" : System.Int32),
-                       PRIMARY KEY [pk] (([a].[b] : System.Int32) ASC),
-                       FOREIGN KEY [fk] (([a].[b] : System.Int32)) REFERENCES [bar] (([bar].[v] : ?)) ON DELETE RESTRICT ON UPDATE RESTRICT,
-                       CHECK [chk] (a > 0)
-                     )
-                     """
-                 ),
-                 Arg(
-                     createTable.PrimaryKey!.Columns[0].Expression,
-                     createTable.RecordSet["b"],
-                     """
-                     CREATE TABLE [a] (
-                       [b] : System.Int32 DEFAULT (@a : ?),
-                       [c] : System.String DEFAULT (@b : ?),
-                       PRIMARY KEY [pk] (([a].[b] : System.Int32) ASC),
-                       FOREIGN KEY [fk] (([a].[b] : System.Int32)) REFERENCES [bar] (([bar].[v] : ?)) ON DELETE RESTRICT ON UPDATE RESTRICT,
-                       CHECK [chk] (a > 0)
-                     )
-                     """
-                 ),
-                 Arg(
-                     createTable.ForeignKeys[0].ReferencedTable,
-                     set1,
-                     """
-                     CREATE TABLE [a] (
-                       [b] : System.Int32 DEFAULT (@a : ?),
-                       [c] : System.String DEFAULT (@b : ?),
-                       PRIMARY KEY [pk] (([a].[b] : System.Int32) ASC),
-                       FOREIGN KEY [fk] (([a].[b] : System.Int32)) REFERENCES [foo] (([foo].[v] : ?)) ON DELETE RESTRICT ON UPDATE RESTRICT,
-                       CHECK [chk] (a > 0)
-                     )
-                     """
-                 ),
-                 Arg(
-                     createTable.Checks[0].Condition,
-                     SqlNode.True(),
-                     """
-                     CREATE TABLE [a] (
-                       [b] : System.Int32 DEFAULT (@a : ?),
-                       [c] : System.String DEFAULT (@b : ?),
-                       PRIMARY KEY [pk] (([a].[b] : System.Int32) ASC),
-                       FOREIGN KEY [fk] (([a].[b] : System.Int32)) REFERENCES [bar] (([bar].[v] : ?)) ON DELETE RESTRICT ON UPDATE RESTRICT,
-                       CHECK [chk] (TRUE)
-                     )
-                     """
-                 )
-             }),
+                new[]
+                {
+                    Arg(
+                        expr1,
+                        SqlNode.Literal( 1 ),
+                        """
+                        CREATE TABLE [a] (
+                          [b] : System.Int32 DEFAULT ("1" : System.Int32),
+                          [c] : System.String DEFAULT (@b : ?),
+                          PRIMARY KEY [pk] (([a].[b] : System.Int32) ASC),
+                          FOREIGN KEY [fk] (([a].[b] : System.Int32)) REFERENCES [bar] (([bar].[v] : ?)) ON DELETE RESTRICT ON UPDATE RESTRICT,
+                          CHECK [chk] (a > 0)
+                        )
+                        """ ),
+                    Arg(
+                        expr2,
+                        SqlNode.Literal( 1 ),
+                        """
+                        CREATE TABLE [a] (
+                          [b] : System.Int32 DEFAULT (@a : ?),
+                          [c] : System.String DEFAULT ("1" : System.Int32),
+                          PRIMARY KEY [pk] (([a].[b] : System.Int32) ASC),
+                          FOREIGN KEY [fk] (([a].[b] : System.Int32)) REFERENCES [bar] (([bar].[v] : ?)) ON DELETE RESTRICT ON UPDATE RESTRICT,
+                          CHECK [chk] (a > 0)
+                        )
+                        """ ),
+                    Arg(
+                        createTable.PrimaryKey!.Columns[0].Expression,
+                        createTable.RecordSet["b"],
+                        """
+                        CREATE TABLE [a] (
+                          [b] : System.Int32 DEFAULT (@a : ?),
+                          [c] : System.String DEFAULT (@b : ?),
+                          PRIMARY KEY [pk] (([a].[b] : System.Int32) ASC),
+                          FOREIGN KEY [fk] (([a].[b] : System.Int32)) REFERENCES [bar] (([bar].[v] : ?)) ON DELETE RESTRICT ON UPDATE RESTRICT,
+                          CHECK [chk] (a > 0)
+                        )
+                        """ ),
+                    Arg(
+                        createTable.ForeignKeys[0].ReferencedTable,
+                        set1,
+                        """
+                        CREATE TABLE [a] (
+                          [b] : System.Int32 DEFAULT (@a : ?),
+                          [c] : System.String DEFAULT (@b : ?),
+                          PRIMARY KEY [pk] (([a].[b] : System.Int32) ASC),
+                          FOREIGN KEY [fk] (([a].[b] : System.Int32)) REFERENCES [foo] (([foo].[v] : ?)) ON DELETE RESTRICT ON UPDATE RESTRICT,
+                          CHECK [chk] (a > 0)
+                        )
+                        """ ),
+                    Arg(
+                        createTable.Checks[0].Condition,
+                        SqlNode.True(),
+                        """
+                        CREATE TABLE [a] (
+                          [b] : System.Int32 DEFAULT (@a : ?),
+                          [c] : System.String DEFAULT (@b : ?),
+                          PRIMARY KEY [pk] (([a].[b] : System.Int32) ASC),
+                          FOREIGN KEY [fk] (([a].[b] : System.Int32)) REFERENCES [bar] (([bar].[v] : ?)) ON DELETE RESTRICT ON UPDATE RESTRICT,
+                          CHECK [chk] (TRUE)
+                        )
+                        """ )
+                }),
             (SqlNode.CreateView( SqlRecordSetInfo.Create( "a" ), query ), new[]
             {
                 Arg(
@@ -1522,37 +1463,33 @@ public class SqlNodeMutatorTestsData
                     """
                     CREATE VIEW [a] AS
                     SELECT * FROM bar
-                    """
-                )
+                    """ )
             }),
             (SqlNode.CreateIndex(
-                 SqlSchemaObjectName.Create( "a" ),
-                 isUnique: false,
-                 set1,
-                 new[] { field1.Asc(), field2.Desc() },
-                 replaceIfExists: true ),
-             new[]
-             {
-                 Arg(
-                     set1,
-                     set2,
-                     "CREATE OR REPLACE INDEX [a] ON [bar] (([bar].[x] : ?) ASC, ([bar].[y] : ?) DESC)"
-                 ),
-                 Arg(
-                     field1,
-                     field2,
-                     "CREATE OR REPLACE INDEX [a] ON [foo] (([foo].[y] : ?) ASC, ([foo].[y] : ?) DESC)"
-                 ),
-                 Arg(
-                     field2,
-                     field1,
-                     "CREATE OR REPLACE INDEX [a] ON [foo] (([foo].[x] : ?) ASC, ([foo].[x] : ?) DESC)"
-                 )
-             }),
+                    SqlSchemaObjectName.Create( "a" ),
+                    isUnique: false,
+                    set1,
+                    new[] { field1.Asc(), field2.Desc() },
+                    replaceIfExists: true ),
+                new[]
+                {
+                    Arg(
+                        set1,
+                        set2,
+                        "CREATE OR REPLACE INDEX [a] ON [bar] (([bar].[x] : ?) ASC, ([bar].[y] : ?) DESC)" ),
+                    Arg(
+                        field1,
+                        field2,
+                        "CREATE OR REPLACE INDEX [a] ON [foo] (([foo].[y] : ?) ASC, ([foo].[y] : ?) DESC)" ),
+                    Arg(
+                        field2,
+                        field1,
+                        "CREATE OR REPLACE INDEX [a] ON [foo] (([foo].[x] : ?) ASC, ([foo].[x] : ?) DESC)" )
+                }),
             (SqlNode.CreateIndex( SqlSchemaObjectName.Create( "a" ), isUnique: true, set1, new[] { field1.Asc() }, filter: cond ),
-             new[] { Arg( cond, SqlNode.True(), "CREATE UNIQUE INDEX [a] ON [foo] (([foo].[x] : ?) ASC) WHERE (TRUE)" ) }),
+                new[] { Arg( cond, SqlNode.True(), "CREATE UNIQUE INDEX [a] ON [foo] (([foo].[x] : ?) ASC) WHERE (TRUE)" ) }),
             (SqlNode.AddColumn( SqlRecordSetInfo.Create( "a" ), SqlNode.Column<int>( "b", defaultValue: expr1 ) ),
-             new[] { Arg( expr1, SqlNode.Literal( 1 ), "ADD COLUMN [a].[b] : System.Int32 DEFAULT (\"1\" : System.Int32)" ) })
+                new[] { Arg( expr1, SqlNode.Literal( 1 ), "ADD COLUMN [a].[b] : System.Int32 DEFAULT (\"1\" : System.Int32)" ) })
         };
 
         var result = new TheoryData<SqlNodeBase, (SqlNodeBase, SqlNodeBase)?, bool, string>();
@@ -1621,8 +1558,7 @@ public class SqlNodeMutatorTestsData
                          THEN (@e : ?)
                        ELSE ({expr2})
                      END
-                     """
-                ),
+                     """ ),
                 Arg(
                     case2,
                     SqlNode.SwitchCase( SqlNode.True(), SqlNode.Literal( 1 ) ),
@@ -1634,8 +1570,7 @@ public class SqlNodeMutatorTestsData
                          THEN ("1" : System.Int32)
                        ELSE ({expr2})
                      END
-                     """
-                ),
+                     """ ),
                 Arg(
                     expr2,
                     SqlNode.Literal( 1 ),
@@ -1647,30 +1582,33 @@ public class SqlNodeMutatorTestsData
                         THEN (@e : ?)
                       ELSE ("1" : System.Int32)
                     END
-                    """
-                )
+                    """ )
             }),
             (cond.ToValue(), new[] { Arg( cond, SqlNode.True(), "CONDITION_VALUE(TRUE)" ) }),
-            (SqlNode.InnerJoinOn( set, cond ), new[]
-            {
-                Arg( set, SqlNode.RawRecordSet( "bar" ), $"INNER JOIN [bar] ON {cond}" ),
-                Arg( cond, SqlNode.True(), $"INNER JOIN {set} ON TRUE" )
-            }),
-            (SqlNode.LeftJoinOn( set, cond ), new[]
-            {
-                Arg( set, SqlNode.RawRecordSet( "bar" ), $"LEFT JOIN [bar] ON {cond}" ),
-                Arg( cond, SqlNode.True(), $"LEFT JOIN {set} ON TRUE" )
-            }),
-            (SqlNode.RightJoinOn( set, cond ), new[]
-            {
-                Arg( set, SqlNode.RawRecordSet( "bar" ), $"RIGHT JOIN [bar] ON {cond}" ),
-                Arg( cond, SqlNode.True(), $"RIGHT JOIN {set} ON TRUE" )
-            }),
-            (SqlNode.FullJoinOn( set, cond ), new[]
-            {
-                Arg( set, SqlNode.RawRecordSet( "bar" ), $"FULL JOIN [bar] ON {cond}" ),
-                Arg( cond, SqlNode.True(), $"FULL JOIN {set} ON TRUE" )
-            }),
+            (SqlNode.InnerJoinOn( set, cond ),
+                new[]
+                {
+                    Arg( set, SqlNode.RawRecordSet( "bar" ), $"INNER JOIN [bar] ON {cond}" ),
+                    Arg( cond, SqlNode.True(), $"INNER JOIN {set} ON TRUE" )
+                }),
+            (SqlNode.LeftJoinOn( set, cond ),
+                new[]
+                {
+                    Arg( set, SqlNode.RawRecordSet( "bar" ), $"LEFT JOIN [bar] ON {cond}" ),
+                    Arg( cond, SqlNode.True(), $"LEFT JOIN {set} ON TRUE" )
+                }),
+            (SqlNode.RightJoinOn( set, cond ),
+                new[]
+                {
+                    Arg( set, SqlNode.RawRecordSet( "bar" ), $"RIGHT JOIN [bar] ON {cond}" ),
+                    Arg( cond, SqlNode.True(), $"RIGHT JOIN {set} ON TRUE" )
+                }),
+            (SqlNode.FullJoinOn( set, cond ),
+                new[]
+                {
+                    Arg( set, SqlNode.RawRecordSet( "bar" ), $"FULL JOIN [bar] ON {cond}" ),
+                    Arg( cond, SqlNode.True(), $"FULL JOIN {set} ON TRUE" )
+                }),
             (SqlNode.CrossJoin( set ), new[] { Arg( set, SqlNode.RawRecordSet( "bar" ), "CROSS JOIN [bar]" ) }),
             (expr1.As( "x" ), new[] { Arg( expr1, SqlNode.Literal( 1 ), "(\"1\" : System.Int32) AS [x]" ) }),
             (set["x"].AsSelf(), new[] { Arg( set, SqlNode.RawRecordSet( "bar" ), "([bar].[x] : ?)" ) }),
@@ -1678,43 +1616,43 @@ public class SqlNodeMutatorTestsData
             (set.ToDataSource().GetAll(), new[] { Arg( set, SqlNode.RawRecordSet( "bar" ), "*" ) }),
             (set.GetAll().ToExpression(), new[] { Arg( set, SqlNode.RawRecordSet( "bar" ), "[bar].*" ) }),
             (query1.ToCompound( SqlCompoundQueryOperator.UnionAll ),
-             new[]
-             {
-                 Arg(
-                     query1,
-                     SqlNode.RawQuery( "SELECT * FROM qux" ),
-                     """
-                     UNION ALL
-                     SELECT * FROM qux
-                     """
-                 )
-             }),
+                new[]
+                {
+                    Arg(
+                        query1,
+                        SqlNode.RawQuery( "SELECT * FROM qux" ),
+                        """
+                        UNION ALL
+                        SELECT * FROM qux
+                        """ )
+                }),
             (query1.ToCompound( SqlCompoundQueryOperator.Intersect ),
-             new[]
-             {
-                 Arg(
-                     query1,
-                     SqlNode.RawQuery( "SELECT * FROM qux" ),
-                     """
-                     INTERSECT
-                     SELECT * FROM qux
-                     """
-                 )
-             }),
+                new[]
+                {
+                    Arg(
+                        query1,
+                        SqlNode.RawQuery( "SELECT * FROM qux" ),
+                        """
+                        INTERSECT
+                        SELECT * FROM qux
+                        """ )
+                }),
             (SqlNode.FilterTrait( cond, true ), new[] { Arg( cond, SqlNode.True(), "AND WHERE TRUE" ) }),
             (SqlNode.FilterTrait( cond, false ), new[] { Arg( cond, SqlNode.True(), "OR WHERE TRUE" ) }),
-            (SqlNode.AggregationTrait( expr1, expr2 ), new[]
-            {
-                Arg( expr1, SqlNode.Literal( 1 ), $"GROUP BY (\"1\" : System.Int32), ({expr2})" ),
-                Arg( expr2, SqlNode.Literal( 1 ), $"GROUP BY ({expr1}), (\"1\" : System.Int32)" )
-            }),
+            (SqlNode.AggregationTrait( expr1, expr2 ),
+                new[]
+                {
+                    Arg( expr1, SqlNode.Literal( 1 ), $"GROUP BY (\"1\" : System.Int32), ({expr2})" ),
+                    Arg( expr2, SqlNode.Literal( 1 ), $"GROUP BY ({expr1}), (\"1\" : System.Int32)" )
+                }),
             (SqlNode.AggregationFilterTrait( cond, true ), new[] { Arg( cond, SqlNode.True(), "AND HAVING TRUE" ) }),
             (SqlNode.AggregationFilterTrait( cond, false ), new[] { Arg( cond, SqlNode.True(), "OR HAVING TRUE" ) }),
-            (SqlNode.SortTrait( expr1.Asc(), expr2.Desc() ), new[]
-            {
-                Arg( expr1, SqlNode.Literal( 1 ), $"ORDER BY (\"1\" : System.Int32) ASC, ({expr2}) DESC" ),
-                Arg( expr2, SqlNode.Literal( 1 ), $"ORDER BY ({expr1}) ASC, (\"1\" : System.Int32) DESC" ),
-            }),
+            (SqlNode.SortTrait( expr1.Asc(), expr2.Desc() ),
+                new[]
+                {
+                    Arg( expr1, SqlNode.Literal( 1 ), $"ORDER BY (\"1\" : System.Int32) ASC, ({expr2}) DESC" ),
+                    Arg( expr2, SqlNode.Literal( 1 ), $"ORDER BY ({expr1}) ASC, (\"1\" : System.Int32) DESC" ),
+                }),
             (SqlNode.LimitTrait( expr1 ), new[] { Arg( expr1, SqlNode.Literal( 1 ), "LIMIT (\"1\" : System.Int32)" ) }),
             (SqlNode.OffsetTrait( expr1 ), new[] { Arg( expr1, SqlNode.Literal( 1 ), "OFFSET (\"1\" : System.Int32)" ) }),
             (SqlNode.CommonTableExpressionTrait( query1.ToCte( "u" ), query2.ToCte( "v" ) ), new[]
@@ -1729,8 +1667,7 @@ public class SqlNodeMutatorTestsData
                     ORDINAL [v] (
                       SELECT * FROM bar
                     )
-                    """
-                ),
+                    """ ),
                 Arg(
                     query2,
                     SqlNode.RawQuery( "SELECT * FROM qux" ),
@@ -1741,42 +1678,38 @@ public class SqlNodeMutatorTestsData
                     ORDINAL [v] (
                       SELECT * FROM qux
                     )
-                    """
-                )
+                    """ )
             }),
             (SqlNode.WindowDefinitionTrait(
-                 SqlNode.WindowDefinition( "u", new[] { expr1.Asc() } ),
-                 SqlNode.WindowDefinition( "v", new[] { expr2.Desc() } ) ),
-             new[]
-             {
-                 Arg(
-                     expr1,
-                     SqlNode.Literal( 1 ),
-                     """
-                     WINDOW [u] AS (ORDER BY ("1" : System.Int32) ASC),
-                       [v] AS (ORDER BY (@b : ?) DESC)
-                     """
-                 ),
-                 Arg(
-                     expr2,
-                     SqlNode.Literal( 1 ),
-                     """
-                     WINDOW [u] AS (ORDER BY (@a : ?) ASC),
-                       [v] AS (ORDER BY ("1" : System.Int32) DESC)
-                     """
-                 )
-             }),
+                    SqlNode.WindowDefinition( "u", new[] { expr1.Asc() } ),
+                    SqlNode.WindowDefinition( "v", new[] { expr2.Desc() } ) ),
+                new[]
+                {
+                    Arg(
+                        expr1,
+                        SqlNode.Literal( 1 ),
+                        """
+                        WINDOW [u] AS (ORDER BY ("1" : System.Int32) ASC),
+                          [v] AS (ORDER BY (@b : ?) DESC)
+                        """ ),
+                    Arg(
+                        expr2,
+                        SqlNode.Literal( 1 ),
+                        """
+                        WINDOW [u] AS (ORDER BY (@a : ?) ASC),
+                          [v] AS (ORDER BY ("1" : System.Int32) DESC)
+                        """ )
+                }),
             (SqlNode.WindowTrait( SqlNode.WindowDefinition( "u", new[] { expr1.Asc() } ) ),
-             new[]
-             {
-                 Arg(
-                     expr1,
-                     SqlNode.Literal( 1 ),
-                     """
-                     OVER [u] AS (ORDER BY ("1" : System.Int32) ASC)
-                     """
-                 )
-             }),
+                new[]
+                {
+                    Arg(
+                        expr1,
+                        SqlNode.Literal( 1 ),
+                        """
+                        OVER [u] AS (ORDER BY ("1" : System.Int32) ASC)
+                        """ )
+                }),
             (expr1.Asc(), new[] { Arg( expr1, SqlNode.Literal( 1 ), "(\"1\" : System.Int32) ASC" ) }),
             (expr1.Desc(), new[] { Arg( expr1, SqlNode.Literal( 1 ), "(\"1\" : System.Int32) DESC" ) }),
             (query1.ToCte( "u" ), new[]
@@ -1788,8 +1721,7 @@ public class SqlNodeMutatorTestsData
                     ORDINAL [u] (
                       SELECT * FROM qux
                     )
-                    """
-                )
+                    """ )
             }),
             (recursiveCte, new[]
             {
@@ -1807,8 +1739,7 @@ public class SqlNodeMutatorTestsData
                       SELECT * FROM lorem
 
                     )
-                    """
-                )
+                    """ )
             }),
             (SqlNode.WindowDefinition( "w", new SqlExpressionNode[] { expr1, expr2 }, new[] { expr3.Asc(), expr4.Desc() } ), new[]
             {
@@ -1817,29 +1748,25 @@ public class SqlNodeMutatorTestsData
                     SqlNode.Literal( 1 ),
                     $"""
                      [w] AS (PARTITION BY ("1" : System.Int32), ({expr2}) ORDER BY ({expr3}) ASC, ({expr4}) DESC)
-                     """
-                ),
+                     """ ),
                 Arg(
                     expr2,
                     SqlNode.Literal( 1 ),
                     $"""
                      [w] AS (PARTITION BY ({expr1}), ("1" : System.Int32) ORDER BY ({expr3}) ASC, ({expr4}) DESC)
-                     """
-                ),
+                     """ ),
                 Arg(
                     expr3,
                     SqlNode.Literal( 1 ),
                     $"""
                      [w] AS (PARTITION BY ({expr1}), ({expr2}) ORDER BY ("1" : System.Int32) ASC, ({expr4}) DESC)
-                     """
-                ),
+                     """ ),
                 Arg(
                     expr4,
                     SqlNode.Literal( 1 ),
                     $"""
                      [w] AS (PARTITION BY ({expr1}), ({expr2}) ORDER BY ({expr3}) ASC, ("1" : System.Int32) DESC)
-                     """
-                ),
+                     """ ),
             }),
             (SqlNode.WindowDefinition( "w", new SqlExpressionNode[] { expr1 }, new[] { expr2.Asc() }, frame ), new[]
             {
@@ -1848,8 +1775,7 @@ public class SqlNodeMutatorTestsData
                     SqlNode.RangeWindowFrame( SqlWindowFrameBoundary.UnboundedPreceding, SqlWindowFrameBoundary.UnboundedFollowing ),
                     $"""
                      [w] AS (PARTITION BY ({expr1}) ORDER BY ({expr2}) ASC RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING)
-                     """
-                ),
+                     """ ),
             }),
             (SqlNode.Values( expr1, expr2 ), new[]
             {
@@ -1859,16 +1785,14 @@ public class SqlNodeMutatorTestsData
                     $"""
                      VALUES
                      (("1" : System.Int32), ({expr2}))
-                     """
-                ),
+                     """ ),
                 Arg(
                     expr2,
                     SqlNode.Literal( 1 ),
                     $"""
                      VALUES
                      (({expr1}), ("1" : System.Int32))
-                     """
-                ),
+                     """ ),
             }),
             (SqlNode.Values( new SqlExpressionNode[,] { { expr1, expr2 }, { expr3, expr4 } } ), new[]
             {
@@ -1879,8 +1803,7 @@ public class SqlNodeMutatorTestsData
                      VALUES
                      (("1" : System.Int32), ({expr2})),
                      (({expr3}), ({expr4}))
-                     """
-                ),
+                     """ ),
                 Arg(
                     expr2,
                     SqlNode.Literal( 1 ),
@@ -1888,8 +1811,7 @@ public class SqlNodeMutatorTestsData
                      VALUES
                      (({expr1}), ("1" : System.Int32)),
                      (({expr3}), ({expr4}))
-                     """
-                ),
+                     """ ),
                 Arg(
                     expr3,
                     SqlNode.Literal( 1 ),
@@ -1897,8 +1819,7 @@ public class SqlNodeMutatorTestsData
                      VALUES
                      (({expr1}), ({expr2})),
                      (("1" : System.Int32), ({expr4}))
-                     """
-                ),
+                     """ ),
                 Arg(
                     expr4,
                     SqlNode.Literal( 1 ),
@@ -1906,14 +1827,14 @@ public class SqlNodeMutatorTestsData
                      VALUES
                      (({expr1}), ({expr2})),
                      (({expr3}), ("1" : System.Int32))
-                     """
-                ),
+                     """ ),
             }),
-            (set["x"].Assign( expr1 ), new[]
-            {
-                Arg( set, SqlNode.RawRecordSet( "bar" ), $"([bar].[x] : ?) = ({expr1})" ),
-                Arg( expr1, SqlNode.Literal( 1 ), "([foo].[x] : ?) = (\"1\" : System.Int32)" )
-            }),
+            (set["x"].Assign( expr1 ),
+                new[]
+                {
+                    Arg( set, SqlNode.RawRecordSet( "bar" ), $"([bar].[x] : ?) = ({expr1})" ),
+                    Arg( expr1, SqlNode.Literal( 1 ), "([foo].[x] : ?) = (\"1\" : System.Int32)" )
+                }),
             (SqlNode.Batch( query1, query2 ), new[]
             {
                 Arg(
@@ -1926,8 +1847,7 @@ public class SqlNodeMutatorTestsData
                     
                       SELECT * FROM bar;
                     )
-                    """
-                ),
+                    """ ),
                 Arg(
                     query2,
                     SqlNode.RawQuery( "SELECT * FROM qux" ),
@@ -1938,8 +1858,7 @@ public class SqlNodeMutatorTestsData
                     
                       SELECT * FROM qux;
                     )
-                    """
-                ),
+                    """ ),
             })
         };
 

@@ -28,11 +28,7 @@ public partial class ObjectExpressionsTests
         {
             var table = SqlNode.CreateTable(
                 SqlRecordSetInfo.Create( "foo" ),
-                new[]
-                {
-                    SqlNode.Column<int>( "Col0" ),
-                    SqlNode.Column<string>( "Col1" )
-                } );
+                new[] { SqlNode.Column<int>( "Col0" ), SqlNode.Column<string>( "Col1" ) } );
 
             var sut = table.AsSet();
 

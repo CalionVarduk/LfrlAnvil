@@ -420,7 +420,7 @@ public static class SqlObjectExtensions
         SqlObjectChangeDescriptor<T> descriptor)
     {
         return changeTracker.TryGetOriginalValue( target, descriptor, out var result )
-            ? SqlObjectOriginalValue<T>.Create( (T)result! )
+            ? SqlObjectOriginalValue<T>.Create( ( T )result! )
             : SqlObjectOriginalValue<T>.CreateEmpty();
     }
 

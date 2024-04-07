@@ -50,8 +50,8 @@ public sealed class ParsedExpressionFactory : IParsedExpressionFactory
     {
         return _configuration.Constructs.GetValueOrDefault( symbol )
                 ?.BinaryOperators.SpecializedConstructs?.Select(
-                    kv => new ParsedExpressionBinaryOperatorInfo( kv.Value.GetType(), kv.Key.Left, kv.Key.Right ) ) ??
-            Enumerable.Empty<ParsedExpressionBinaryOperatorInfo>();
+                    kv => new ParsedExpressionBinaryOperatorInfo( kv.Value.GetType(), kv.Key.Left, kv.Key.Right ) )
+            ?? Enumerable.Empty<ParsedExpressionBinaryOperatorInfo>();
     }
 
     [Pure]
@@ -67,12 +67,12 @@ public sealed class ParsedExpressionFactory : IParsedExpressionFactory
     {
         return _configuration.Constructs.TryGetValue( symbol, out var definition )
             ? (definition.PrefixUnaryOperators.SpecializedConstructs?.Select(
-                    kv => new ParsedExpressionUnaryConstructInfo( kv.Value.GetType(), kv.Key ) ) ??
-                Enumerable.Empty<ParsedExpressionUnaryConstructInfo>())
+                    kv => new ParsedExpressionUnaryConstructInfo( kv.Value.GetType(), kv.Key ) )
+                ?? Enumerable.Empty<ParsedExpressionUnaryConstructInfo>())
             .Concat(
                 definition.PrefixTypeConverters.SpecializedConstructs?.Select(
-                    kv => new ParsedExpressionUnaryConstructInfo( kv.Value.GetType(), kv.Key ) ) ??
-                Enumerable.Empty<ParsedExpressionUnaryConstructInfo>() )
+                    kv => new ParsedExpressionUnaryConstructInfo( kv.Value.GetType(), kv.Key ) )
+                ?? Enumerable.Empty<ParsedExpressionUnaryConstructInfo>() )
             : Enumerable.Empty<ParsedExpressionUnaryConstructInfo>();
     }
 
@@ -89,12 +89,12 @@ public sealed class ParsedExpressionFactory : IParsedExpressionFactory
     {
         return _configuration.Constructs.TryGetValue( symbol, out var definition )
             ? (definition.PostfixUnaryOperators.SpecializedConstructs?.Select(
-                    kv => new ParsedExpressionUnaryConstructInfo( kv.Value.GetType(), kv.Key ) ) ??
-                Enumerable.Empty<ParsedExpressionUnaryConstructInfo>())
+                    kv => new ParsedExpressionUnaryConstructInfo( kv.Value.GetType(), kv.Key ) )
+                ?? Enumerable.Empty<ParsedExpressionUnaryConstructInfo>())
             .Concat(
                 definition.PostfixTypeConverters.SpecializedConstructs?.Select(
-                    kv => new ParsedExpressionUnaryConstructInfo( kv.Value.GetType(), kv.Key ) ) ??
-                Enumerable.Empty<ParsedExpressionUnaryConstructInfo>() )
+                    kv => new ParsedExpressionUnaryConstructInfo( kv.Value.GetType(), kv.Key ) )
+                ?? Enumerable.Empty<ParsedExpressionUnaryConstructInfo>() )
             : Enumerable.Empty<ParsedExpressionUnaryConstructInfo>();
     }
 
@@ -122,8 +122,8 @@ public sealed class ParsedExpressionFactory : IParsedExpressionFactory
     public IEnumerable<LambdaExpression> GetFunctionExpressions(StringSegment symbol)
     {
         return _configuration.Constructs.GetValueOrDefault( symbol )
-                ?.Functions.Functions.Select( kv => kv.Value.Lambda ) ??
-            Enumerable.Empty<LambdaExpression>();
+                ?.Functions.Functions.Select( kv => kv.Value.Lambda )
+            ?? Enumerable.Empty<LambdaExpression>();
     }
 
     [Pure]

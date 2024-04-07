@@ -66,7 +66,7 @@ public abstract class GenericUnsafeTests<T> : TestsBase
     public void GetHashCode_ShouldReturnCorrectResult_WhenHasValue()
     {
         var value = Fixture.Create<T>();
-        var sut = (Unsafe<T>)value;
+        var sut = ( Unsafe<T> )value;
         var expected = Hash.Default.Add( value ).Value;
 
         var result = sut.GetHashCode();
@@ -78,7 +78,7 @@ public abstract class GenericUnsafeTests<T> : TestsBase
     public void GetHashCode_ShouldReturnCorrectResult_WhenHasError()
     {
         var error = new Exception();
-        var sut = (Unsafe<T>)error;
+        var sut = ( Unsafe<T> )error;
         var expected = Hash.Default.Add( error ).Value;
 
         var result = sut.GetHashCode();
@@ -90,8 +90,8 @@ public abstract class GenericUnsafeTests<T> : TestsBase
     [GenericMethodData( nameof( GenericUnsafeTestsData<T>.CreateEqualsTestData ) )]
     public void Equals_ShouldReturnCorrectResult(object value1, bool isOk1, object value2, bool isOk2, bool expected)
     {
-        var a = (Unsafe<T>)(isOk1 ? (T)value1 : (Exception)value1);
-        var b = (Unsafe<T>)(isOk2 ? (T)value2 : (Exception)value2);
+        var a = ( Unsafe<T> )(isOk1 ? ( T )value1 : ( Exception )value1);
+        var b = ( Unsafe<T> )(isOk2 ? ( T )value2 : ( Exception )value2);
 
         var result = a.Equals( b );
 
@@ -102,7 +102,7 @@ public abstract class GenericUnsafeTests<T> : TestsBase
     public void GetValue_ShouldReturnCorrectResult_WhenHasValue()
     {
         var value = Fixture.Create<T>();
-        IUnsafe sut = (Unsafe<T>)value;
+        IUnsafe sut = ( Unsafe<T> )value;
 
         var result = sut.GetValue();
 
@@ -113,7 +113,7 @@ public abstract class GenericUnsafeTests<T> : TestsBase
     public void GetValue_ShouldThrowValueAccessException_WhenHasError()
     {
         var error = new Exception();
-        IUnsafe sut = (Unsafe<T>)error;
+        IUnsafe sut = ( Unsafe<T> )error;
 
         var action = Lambda.Of( () => sut.GetValue() );
 
@@ -124,7 +124,7 @@ public abstract class GenericUnsafeTests<T> : TestsBase
     public void GetValueOrDefault_ShouldReturnCorrectResult_WhenHasValue()
     {
         var value = Fixture.CreateNotDefault<T>();
-        IUnsafe sut = (Unsafe<T>)value;
+        IUnsafe sut = ( Unsafe<T> )value;
 
         var result = sut.GetValueOrDefault();
 
@@ -135,7 +135,7 @@ public abstract class GenericUnsafeTests<T> : TestsBase
     public void GetValueOrDefault_ShouldReturnDefaultValue_WhenHasError()
     {
         var error = new Exception();
-        IUnsafe sut = (Unsafe<T>)error;
+        IUnsafe sut = ( Unsafe<T> )error;
 
         var result = sut.GetValueOrDefault();
 
@@ -146,7 +146,7 @@ public abstract class GenericUnsafeTests<T> : TestsBase
     public void GetValueOrDefault_WithValue_ShouldReturnCorrectResult_WhenHasValue()
     {
         var value = Fixture.CreateNotDefault<T>();
-        var sut = (Unsafe<T>)value;
+        var sut = ( Unsafe<T> )value;
 
         var result = sut.GetValueOrDefault( Fixture.CreateNotDefault<T>() );
 
@@ -158,7 +158,7 @@ public abstract class GenericUnsafeTests<T> : TestsBase
     {
         var defaultValue = Fixture.CreateNotDefault<T>();
         var error = new Exception();
-        var sut = (Unsafe<T>)error;
+        var sut = ( Unsafe<T> )error;
 
         var result = sut.GetValueOrDefault( defaultValue );
 
@@ -169,7 +169,7 @@ public abstract class GenericUnsafeTests<T> : TestsBase
     public void GetError_ShouldReturnCorrectResult_WhenHasError()
     {
         var error = new Exception();
-        IUnsafe sut = (Unsafe<T>)error;
+        IUnsafe sut = ( Unsafe<T> )error;
 
         var result = sut.GetError();
 
@@ -180,7 +180,7 @@ public abstract class GenericUnsafeTests<T> : TestsBase
     public void GetError_ShouldThrowValueAccessException_WhenHasValue()
     {
         var value = Fixture.Create<T>();
-        IUnsafe sut = (Unsafe<T>)value;
+        IUnsafe sut = ( Unsafe<T> )value;
 
         var action = Lambda.Of( () => sut.GetError() );
 
@@ -191,7 +191,7 @@ public abstract class GenericUnsafeTests<T> : TestsBase
     public void GetErrorOrDefault_ShouldReturnCorrectResult_WhenHasError()
     {
         var error = new Exception();
-        IUnsafe sut = (Unsafe<T>)error;
+        IUnsafe sut = ( Unsafe<T> )error;
 
         var result = sut.GetErrorOrDefault();
 
@@ -202,7 +202,7 @@ public abstract class GenericUnsafeTests<T> : TestsBase
     public void GetErrorOrDefault_ShouldReturnNull_WhenHasValue()
     {
         var value = Fixture.Create<T>();
-        IUnsafe sut = (Unsafe<T>)value;
+        IUnsafe sut = ( Unsafe<T> )value;
 
         var result = sut.GetErrorOrDefault();
 
@@ -216,7 +216,7 @@ public abstract class GenericUnsafeTests<T> : TestsBase
         var returnedValue = Fixture.Create<T>();
         var okDelegate = Substitute.For<Func<T, Unsafe<T>>>().WithAnyArgs( _ => returnedValue );
 
-        var sut = (Unsafe<T>)value;
+        var sut = ( Unsafe<T> )value;
 
         var result = sut.Bind( okDelegate );
 
@@ -234,7 +234,7 @@ public abstract class GenericUnsafeTests<T> : TestsBase
         var error = new Exception();
         var okDelegate = Substitute.For<Func<T, Unsafe<T>>>().WithAnyArgs( i => i.ArgAt<T>( 0 ) );
 
-        var sut = (Unsafe<T>)error;
+        var sut = ( Unsafe<T> )error;
 
         var result = sut.Bind( okDelegate );
 
@@ -254,7 +254,7 @@ public abstract class GenericUnsafeTests<T> : TestsBase
         var okDelegate = Substitute.For<Func<T, Unsafe<T>>>().WithAnyArgs( _ => returnedValue );
         var errorDelegate = Substitute.For<Func<Exception, Unsafe<T>>>().WithAnyArgs( _ => value );
 
-        var sut = (Unsafe<T>)value;
+        var sut = ( Unsafe<T> )value;
 
         var result = sut.Bind( okDelegate, errorDelegate );
 
@@ -275,7 +275,7 @@ public abstract class GenericUnsafeTests<T> : TestsBase
         var okDelegate = Substitute.For<Func<T, Unsafe<T>>>().WithAnyArgs( i => i.ArgAt<T>( 0 ) );
         var errorDelegate = Substitute.For<Func<Exception, Unsafe<T>>>().WithAnyArgs( _ => returnedValue );
 
-        var sut = (Unsafe<T>)error;
+        var sut = ( Unsafe<T> )error;
 
         var result = sut.Bind( okDelegate, errorDelegate );
 
@@ -296,7 +296,7 @@ public abstract class GenericUnsafeTests<T> : TestsBase
         var okDelegate = Substitute.For<Func<T, T>>().WithAnyArgs( _ => returnedValue );
         var errorDelegate = Substitute.For<Func<Exception, T>>().WithAnyArgs( _ => value );
 
-        var sut = (Unsafe<T>)value;
+        var sut = ( Unsafe<T> )value;
 
         var result = sut.Match( okDelegate, errorDelegate );
 
@@ -316,7 +316,7 @@ public abstract class GenericUnsafeTests<T> : TestsBase
         var okDelegate = Substitute.For<Func<T, T>>().WithAnyArgs( i => i.ArgAt<T>( 0 ) );
         var errorDelegate = Substitute.For<Func<Exception, T>>().WithAnyArgs( _ => returnedValue );
 
-        var sut = (Unsafe<T>)error;
+        var sut = ( Unsafe<T> )error;
 
         var result = sut.Match( okDelegate, errorDelegate );
 
@@ -335,7 +335,7 @@ public abstract class GenericUnsafeTests<T> : TestsBase
         var okDelegate = Substitute.For<Action<T>>();
         var errorDelegate = Substitute.For<Action<Exception>>();
 
-        var sut = (Unsafe<T>)value;
+        var sut = ( Unsafe<T> )value;
 
         sut.Match( okDelegate, errorDelegate );
 
@@ -353,7 +353,7 @@ public abstract class GenericUnsafeTests<T> : TestsBase
         var okDelegate = Substitute.For<Action<T>>();
         var errorDelegate = Substitute.For<Action<Exception>>();
 
-        var sut = (Unsafe<T>)error;
+        var sut = ( Unsafe<T> )error;
 
         sut.Match( okDelegate, errorDelegate );
 
@@ -371,7 +371,7 @@ public abstract class GenericUnsafeTests<T> : TestsBase
         var returnedValue = Fixture.Create<T>();
         var okDelegate = Substitute.For<Func<T, T>>().WithAnyArgs( _ => returnedValue );
 
-        var sut = (Unsafe<T>)value;
+        var sut = ( Unsafe<T> )value;
 
         var result = sut.IfOk( okDelegate );
 
@@ -388,7 +388,7 @@ public abstract class GenericUnsafeTests<T> : TestsBase
         var error = new Exception();
         var okDelegate = Substitute.For<Func<T, T>>().WithAnyArgs( i => i.ArgAt<T>( 0 ) );
 
-        var sut = (Unsafe<T>)error;
+        var sut = ( Unsafe<T> )error;
 
         var result = sut.IfOk( okDelegate );
 
@@ -405,7 +405,7 @@ public abstract class GenericUnsafeTests<T> : TestsBase
         var value = Fixture.Create<T>();
         var okDelegate = Substitute.For<Action<T>>();
 
-        var sut = (Unsafe<T>)value;
+        var sut = ( Unsafe<T> )value;
 
         sut.IfOk( okDelegate );
 
@@ -418,7 +418,7 @@ public abstract class GenericUnsafeTests<T> : TestsBase
         var error = new Exception();
         var okDelegate = Substitute.For<Action<T>>();
 
-        var sut = (Unsafe<T>)error;
+        var sut = ( Unsafe<T> )error;
 
         sut.IfOk( okDelegate );
 
@@ -432,7 +432,7 @@ public abstract class GenericUnsafeTests<T> : TestsBase
         var returnedValue = Fixture.Create<T>();
         var okDelegate = Substitute.For<Func<T, T>>().WithAnyArgs( _ => returnedValue );
 
-        var sut = (Unsafe<T>)value;
+        var sut = ( Unsafe<T> )value;
 
         var result = sut.IfOkOrDefault( okDelegate );
 
@@ -449,7 +449,7 @@ public abstract class GenericUnsafeTests<T> : TestsBase
         var error = new Exception();
         var okDelegate = Substitute.For<Func<T, T>>().WithAnyArgs( i => i.ArgAt<T>( 0 ) );
 
-        var sut = (Unsafe<T>)error;
+        var sut = ( Unsafe<T> )error;
 
         var result = sut.IfOkOrDefault( okDelegate );
 
@@ -467,7 +467,7 @@ public abstract class GenericUnsafeTests<T> : TestsBase
         var returnedValue = Fixture.Create<T>();
         var okDelegate = Substitute.For<Func<T, T>>().WithAnyArgs( _ => returnedValue );
 
-        var sut = (Unsafe<T>)value;
+        var sut = ( Unsafe<T> )value;
 
         var result = sut.IfOkOrDefault( okDelegate, Fixture.CreateNotDefault<T>() );
 
@@ -485,7 +485,7 @@ public abstract class GenericUnsafeTests<T> : TestsBase
         var error = new Exception();
         var okDelegate = Substitute.For<Func<T, T>>().WithAnyArgs( i => i.ArgAt<T>( 0 ) );
 
-        var sut = (Unsafe<T>)error;
+        var sut = ( Unsafe<T> )error;
 
         var result = sut.IfOkOrDefault( okDelegate, defaultValue );
 
@@ -503,7 +503,7 @@ public abstract class GenericUnsafeTests<T> : TestsBase
         var returnedValue = Fixture.Create<T>();
         var errorDelegate = Substitute.For<Func<Exception, T>>().WithAnyArgs( _ => returnedValue );
 
-        var sut = (Unsafe<T>)error;
+        var sut = ( Unsafe<T> )error;
 
         var result = sut.IfError( errorDelegate );
 
@@ -520,7 +520,7 @@ public abstract class GenericUnsafeTests<T> : TestsBase
         var value = Fixture.Create<T>();
         var errorDelegate = Substitute.For<Func<Exception, T>>().WithAnyArgs( _ => value );
 
-        var sut = (Unsafe<T>)value;
+        var sut = ( Unsafe<T> )value;
 
         var result = sut.IfError( errorDelegate );
 
@@ -537,7 +537,7 @@ public abstract class GenericUnsafeTests<T> : TestsBase
         var error = new Exception();
         var errorDelegate = Substitute.For<Action<Exception>>();
 
-        var sut = (Unsafe<T>)error;
+        var sut = ( Unsafe<T> )error;
 
         sut.IfError( errorDelegate );
 
@@ -550,7 +550,7 @@ public abstract class GenericUnsafeTests<T> : TestsBase
         var value = Fixture.Create<T>();
         var errorDelegate = Substitute.For<Action<Exception>>();
 
-        var sut = (Unsafe<T>)value;
+        var sut = ( Unsafe<T> )value;
 
         sut.IfError( errorDelegate );
 
@@ -564,7 +564,7 @@ public abstract class GenericUnsafeTests<T> : TestsBase
         var returnedValue = Fixture.Create<T>();
         var errorDelegate = Substitute.For<Func<Exception, T>>().WithAnyArgs( _ => returnedValue );
 
-        var sut = (Unsafe<T>)error;
+        var sut = ( Unsafe<T> )error;
 
         var result = sut.IfErrorOrDefault( errorDelegate );
 
@@ -581,7 +581,7 @@ public abstract class GenericUnsafeTests<T> : TestsBase
         var value = Fixture.Create<T>();
         var errorDelegate = Substitute.For<Func<Exception, T>>().WithAnyArgs( _ => value );
 
-        var sut = (Unsafe<T>)value;
+        var sut = ( Unsafe<T> )value;
 
         var result = sut.IfErrorOrDefault( errorDelegate );
 
@@ -599,7 +599,7 @@ public abstract class GenericUnsafeTests<T> : TestsBase
         var returnedValue = Fixture.Create<T>();
         var errorDelegate = Substitute.For<Func<Exception, T>>().WithAnyArgs( _ => returnedValue );
 
-        var sut = (Unsafe<T>)error;
+        var sut = ( Unsafe<T> )error;
 
         var result = sut.IfErrorOrDefault( errorDelegate, Fixture.CreateNotDefault<T>() );
 
@@ -617,7 +617,7 @@ public abstract class GenericUnsafeTests<T> : TestsBase
         var value = Fixture.Create<T>();
         var errorDelegate = Substitute.For<Func<Exception, T>>().WithAnyArgs( _ => value );
 
-        var sut = (Unsafe<T>)value;
+        var sut = ( Unsafe<T> )value;
 
         var result = sut.IfErrorOrDefault( errorDelegate, defaultValue );
 
@@ -633,7 +633,7 @@ public abstract class GenericUnsafeTests<T> : TestsBase
     {
         var value = Fixture.Create<T>();
 
-        var result = (Unsafe<T>)value;
+        var result = ( Unsafe<T> )value;
 
         using ( new AssertionScope() )
         {
@@ -647,7 +647,7 @@ public abstract class GenericUnsafeTests<T> : TestsBase
     {
         var error = new Exception();
 
-        var result = (Unsafe<T>)error;
+        var result = ( Unsafe<T> )error;
 
         using ( new AssertionScope() )
         {
@@ -661,9 +661,9 @@ public abstract class GenericUnsafeTests<T> : TestsBase
     {
         var value = Fixture.Create<T>();
 
-        var sut = (Unsafe<T>)value;
+        var sut = ( Unsafe<T> )value;
 
-        var result = (Either<T, Exception>)sut;
+        var result = ( Either<T, Exception> )sut;
 
         using ( new AssertionScope() )
         {
@@ -677,9 +677,9 @@ public abstract class GenericUnsafeTests<T> : TestsBase
     {
         var error = new Exception();
 
-        var sut = (Unsafe<T>)error;
+        var sut = ( Unsafe<T> )error;
 
-        var result = (Either<T, Exception>)sut;
+        var result = ( Either<T, Exception> )sut;
 
         using ( new AssertionScope() )
         {
@@ -693,9 +693,9 @@ public abstract class GenericUnsafeTests<T> : TestsBase
     {
         var value = Fixture.Create<T>();
 
-        var sut = (Either<T, Exception>)value;
+        var sut = ( Either<T, Exception> )value;
 
-        var result = (Unsafe<T>)sut;
+        var result = ( Unsafe<T> )sut;
 
         using ( new AssertionScope() )
         {
@@ -709,9 +709,9 @@ public abstract class GenericUnsafeTests<T> : TestsBase
     {
         var error = new Exception();
 
-        var sut = (Either<T, Exception>)error;
+        var sut = ( Either<T, Exception> )error;
 
-        var result = (Unsafe<T>)sut;
+        var result = ( Unsafe<T> )sut;
 
         using ( new AssertionScope() )
         {
@@ -723,7 +723,7 @@ public abstract class GenericUnsafeTests<T> : TestsBase
     [Fact]
     public void UnsafeConversionOperator_FromNil_ShouldReturnCorrectResult()
     {
-        var result = (Unsafe<T>)Nil.Instance;
+        var result = ( Unsafe<T> )Nil.Instance;
 
         using ( new AssertionScope() )
         {
@@ -738,9 +738,9 @@ public abstract class GenericUnsafeTests<T> : TestsBase
     public void TConversionOperator_ShouldReturnCorrectResult_WhenHasValue()
     {
         var value = Fixture.Create<T>();
-        var sut = (Unsafe<T>)value;
+        var sut = ( Unsafe<T> )value;
 
-        var result = (T)sut;
+        var result = ( T )sut;
 
         result.Should().Be( value );
     }
@@ -749,9 +749,9 @@ public abstract class GenericUnsafeTests<T> : TestsBase
     public void TConversionOperator_ShouldThrowValueAccessException_WhenHasError()
     {
         var error = new Exception();
-        var sut = (Unsafe<T>)error;
+        var sut = ( Unsafe<T> )error;
 
-        var action = Lambda.Of( () => (T)sut );
+        var action = Lambda.Of( () => ( T )sut );
 
         action.Should().ThrowExactly<ValueAccessException>().AndMatch( e => e.MemberName == nameof( Unsafe<T>.Value ) );
     }
@@ -760,9 +760,9 @@ public abstract class GenericUnsafeTests<T> : TestsBase
     public void ExceptionConversionOperator_ShouldReturnCorrectResult_WhenHasError()
     {
         var error = new Exception();
-        var sut = (Unsafe<T>)error;
+        var sut = ( Unsafe<T> )error;
 
-        var result = (Exception)sut;
+        var result = ( Exception )sut;
 
         result.Should().Be( error );
     }
@@ -771,9 +771,9 @@ public abstract class GenericUnsafeTests<T> : TestsBase
     public void ExceptionConversionOperator_ShouldThrowValueAccessException_WhenHasValue()
     {
         var value = Fixture.Create<T>();
-        var sut = (Unsafe<T>)value;
+        var sut = ( Unsafe<T> )value;
 
-        var action = Lambda.Of( () => (Exception)sut );
+        var action = Lambda.Of( () => ( Exception )sut );
 
         action.Should().ThrowExactly<ValueAccessException>().AndMatch( e => e.MemberName == nameof( Unsafe<T>.Error ) );
     }
@@ -782,8 +782,8 @@ public abstract class GenericUnsafeTests<T> : TestsBase
     [GenericMethodData( nameof( GenericUnsafeTestsData<T>.CreateEqualsTestData ) )]
     public void EqualityOperator_ShouldReturnCorrectResult(object value1, bool isOk1, object value2, bool isOk2, bool expected)
     {
-        var a = (Unsafe<T>)(isOk1 ? (T)value1 : (Exception)value1);
-        var b = (Unsafe<T>)(isOk2 ? (T)value2 : (Exception)value2);
+        var a = ( Unsafe<T> )(isOk1 ? ( T )value1 : ( Exception )value1);
+        var b = ( Unsafe<T> )(isOk2 ? ( T )value2 : ( Exception )value2);
 
         var result = a == b;
 
@@ -794,8 +794,8 @@ public abstract class GenericUnsafeTests<T> : TestsBase
     [GenericMethodData( nameof( GenericUnsafeTestsData<T>.CreateNotEqualsTestData ) )]
     public void InequalityOperator_ShouldReturnCorrectResult(object value1, bool isOk1, object value2, bool isOk2, bool expected)
     {
-        var a = (Unsafe<T>)(isOk1 ? (T)value1 : (Exception)value1);
-        var b = (Unsafe<T>)(isOk2 ? (T)value2 : (Exception)value2);
+        var a = ( Unsafe<T> )(isOk1 ? ( T )value1 : ( Exception )value1);
+        var b = ( Unsafe<T> )(isOk2 ? ( T )value2 : ( Exception )value2);
 
         var result = a != b;
 
@@ -807,7 +807,7 @@ public abstract class GenericUnsafeTests<T> : TestsBase
     {
         var value = Fixture.CreateNotDefault<T>();
 
-        var sut = (Unsafe<T>)value;
+        var sut = ( Unsafe<T> )value;
         IReadOnlyCollection<T> collection = sut;
 
         var result = collection.Count;
@@ -820,7 +820,7 @@ public abstract class GenericUnsafeTests<T> : TestsBase
     {
         var error = new Exception();
 
-        var sut = (Unsafe<T>)error;
+        var sut = ( Unsafe<T> )error;
         IReadOnlyCollection<T> collection = sut;
 
         var result = collection.Count;
@@ -832,7 +832,7 @@ public abstract class GenericUnsafeTests<T> : TestsBase
     public void IEnumerableGetEnumerator_ShouldReturnEnumeratorWithOneItem_WhenHasValue()
     {
         var value = Fixture.CreateNotDefault<T>();
-        var sut = (Unsafe<T>)value;
+        var sut = ( Unsafe<T> )value;
         sut.Should().BeSequentiallyEqualTo( value );
     }
 
@@ -840,7 +840,7 @@ public abstract class GenericUnsafeTests<T> : TestsBase
     public void IEnumerableGetEnumerator_ShouldReturnEmptyEnumerator_WhenHasError()
     {
         var error = new Exception();
-        var sut = (Unsafe<T>)error;
+        var sut = ( Unsafe<T> )error;
         sut.Should().BeEmpty();
     }
 }

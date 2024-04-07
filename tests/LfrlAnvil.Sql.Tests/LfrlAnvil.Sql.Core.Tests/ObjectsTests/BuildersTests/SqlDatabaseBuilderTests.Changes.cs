@@ -23,7 +23,7 @@ public partial class SqlDatabaseBuilderTests
 
             var actionCount = sut.Database.GetPendingActionCount();
             sut.Database.Schemas.Default.Objects.CreateTable( "T" );
-            var result = ((ISqlDatabaseChangeTracker)sut).CompletePendingChanges();
+            var result = (( ISqlDatabaseChangeTracker )sut).CompletePendingChanges();
             var activeObject = sut.ActiveObject;
             var actions = sut.Database.GetLastPendingActions( actionCount );
 
@@ -48,7 +48,7 @@ public partial class SqlDatabaseBuilderTests
 
             var actionCount = sut.Database.GetPendingActionCount();
             table.Remove();
-            var result = ((ISqlDatabaseChangeTracker)sut).CompletePendingChanges();
+            var result = (( ISqlDatabaseChangeTracker )sut).CompletePendingChanges();
             var activeObject = sut.ActiveObject;
             var actions = sut.Database.GetLastPendingActions( actionCount );
 
@@ -73,7 +73,7 @@ public partial class SqlDatabaseBuilderTests
 
             var actionCount = sut.Database.GetPendingActionCount();
             table.SetName( "U" );
-            var result = ((ISqlDatabaseChangeTracker)sut).CompletePendingChanges();
+            var result = (( ISqlDatabaseChangeTracker )sut).CompletePendingChanges();
             var activeObject = sut.ActiveObject;
             var actions = sut.Database.GetLastPendingActions( actionCount );
 
@@ -151,7 +151,7 @@ public partial class SqlDatabaseBuilderTests
             sut.CompletePendingChanges().SetActionTimeout( timeout ).SetModeAndAttach( mode );
 
             var actionCount = sut.Database.GetPendingActionCount();
-            var result = ((ISqlDatabaseChangeTracker)sut).AddAction( actionCallback, setupCallback );
+            var result = (( ISqlDatabaseChangeTracker )sut).AddAction( actionCallback, setupCallback );
             var actions = sut.Database.GetLastPendingActions( actionCount );
 
             using ( new AssertionScope() )
@@ -231,7 +231,7 @@ public partial class SqlDatabaseBuilderTests
             sut.CompletePendingChanges().SetActionTimeout( timeout ).SetModeAndAttach( mode );
 
             var actionCount = sut.Database.GetPendingActionCount();
-            var result = ((ISqlDatabaseChangeTracker)sut).AddStatement( statement );
+            var result = (( ISqlDatabaseChangeTracker )sut).AddStatement( statement );
             var actions = sut.Database.GetLastPendingActions( actionCount );
 
             using ( new AssertionScope() )
@@ -301,8 +301,7 @@ public partial class SqlDatabaseBuilderTests
         public void AddStatement_ShouldThrowSqlObjectBuilderException_WhenStatementContainsParameters()
         {
             var sut = SqlDatabaseBuilderMock.Create().Changes;
-            var action = Lambda.Of(
-                () => sut.AddStatement( SqlNode.RawStatement( Fixture.Create<string>(), SqlNode.Parameter( "a" ) ) ) );
+            var action = Lambda.Of( () => sut.AddStatement( SqlNode.RawStatement( Fixture.Create<string>(), SqlNode.Parameter( "a" ) ) ) );
 
             action.Should()
                 .ThrowExactly<SqlObjectBuilderException>()
@@ -320,9 +319,9 @@ public partial class SqlDatabaseBuilderTests
             sut.CompletePendingChanges().SetActionTimeout( timeout ).SetModeAndAttach( mode );
 
             var actionCount = sut.Database.GetPendingActionCount();
-            var result = ((ISqlDatabaseChangeTracker)sut).AddParameterizedStatement(
+            var result = (( ISqlDatabaseChangeTracker )sut).AddParameterizedStatement(
                 SqlNode.RawStatement( statement, SqlNode.Parameter( "a" ) ),
-                new[] { KeyValuePair.Create( "a", (object?)1 ) }.AsEnumerable() );
+                new[] { KeyValuePair.Create( "a", ( object? )1 ) }.AsEnumerable() );
 
             var actions = sut.Database.GetLastPendingActions( actionCount );
 
@@ -347,9 +346,9 @@ public partial class SqlDatabaseBuilderTests
 
             var actionCount = sut.Database.GetPendingActionCount();
             sut.Database.Schemas.Default.Objects.CreateTable( "T" );
-            var result = ((ISqlDatabaseChangeTracker)sut).AddParameterizedStatement(
+            var result = (( ISqlDatabaseChangeTracker )sut).AddParameterizedStatement(
                 SqlNode.RawStatement( statement, SqlNode.Parameter( "a" ) ),
-                new[] { KeyValuePair.Create( "a", (object?)1 ) }.AsEnumerable() );
+                new[] { KeyValuePair.Create( "a", ( object? )1 ) }.AsEnumerable() );
 
             var actions = sut.Database.GetLastPendingActions( actionCount );
 
@@ -376,7 +375,7 @@ public partial class SqlDatabaseBuilderTests
             var actionCount = sut.Database.GetPendingActionCount();
             sut.AddParameterizedStatement(
                 SqlNode.RawStatement( statement, SqlNode.Parameter( "a" ) ),
-                new[] { KeyValuePair.Create( "a", (object?)1 ) }.AsEnumerable() );
+                new[] { KeyValuePair.Create( "a", ( object? )1 ) }.AsEnumerable() );
 
             var actions = sut.Database.GetLastPendingActions( actionCount );
 
@@ -393,7 +392,7 @@ public partial class SqlDatabaseBuilderTests
             var actionCount = sut.Database.GetPendingActionCount();
             sut.AddParameterizedStatement(
                 SqlNode.RawStatement( statement, SqlNode.Parameter( "a" ) ),
-                new[] { KeyValuePair.Create( "a", (object?)1 ) }.AsEnumerable() );
+                new[] { KeyValuePair.Create( "a", ( object? )1 ) }.AsEnumerable() );
 
             var actions = sut.Database.GetLastPendingActions( actionCount );
 
@@ -411,7 +410,7 @@ public partial class SqlDatabaseBuilderTests
             sut.CompletePendingChanges().SetActionTimeout( timeout ).SetModeAndAttach( mode );
 
             var actionCount = sut.Database.GetPendingActionCount();
-            var result = ((ISqlDatabaseChangeTracker)sut).AddParameterizedStatement(
+            var result = (( ISqlDatabaseChangeTracker )sut).AddParameterizedStatement(
                 SqlNode.RawStatement( statement, SqlNode.Parameter<int>( "a" ) ),
                 new Source { A = 1 } );
 
@@ -439,7 +438,7 @@ public partial class SqlDatabaseBuilderTests
 
             var actionCount = sut.Database.GetPendingActionCount();
             sut.Database.Schemas.Default.Objects.CreateTable( "T" );
-            var result = ((ISqlDatabaseChangeTracker)sut).AddParameterizedStatement(
+            var result = (( ISqlDatabaseChangeTracker )sut).AddParameterizedStatement(
                 SqlNode.RawStatement( statement, SqlNode.Parameter<int>( "a" ) ),
                 new Source { A = 1 } );
 
@@ -505,7 +504,7 @@ public partial class SqlDatabaseBuilderTests
             var sut = SqlDatabaseBuilderMock.Create().Changes;
 
             var target = sut.Database.Schemas.Default.Objects.CreateTable( "T" );
-            var result = ((ISqlDatabaseChangeTracker)sut).GetExistenceState( target );
+            var result = (( ISqlDatabaseChangeTracker )sut).GetExistenceState( target );
 
             result.Should().Be( SqlObjectExistenceState.Unchanged );
         }
@@ -518,7 +517,7 @@ public partial class SqlDatabaseBuilderTests
 
             sut.CompletePendingChanges();
             target.Remove();
-            var result = ((ISqlDatabaseChangeTracker)sut).GetExistenceState( target );
+            var result = (( ISqlDatabaseChangeTracker )sut).GetExistenceState( target );
 
             result.Should().Be( SqlObjectExistenceState.Unchanged );
         }
@@ -531,7 +530,7 @@ public partial class SqlDatabaseBuilderTests
 
             sut.CompletePendingChanges();
             target.SetName( "U" );
-            var result = ((ISqlDatabaseChangeTracker)sut).GetExistenceState( target );
+            var result = (( ISqlDatabaseChangeTracker )sut).GetExistenceState( target );
 
             result.Should().Be( SqlObjectExistenceState.Unchanged );
         }
@@ -544,7 +543,7 @@ public partial class SqlDatabaseBuilderTests
 
             sut.CompletePendingChanges();
             var target = table.Columns.Create( "C" );
-            var result = ((ISqlDatabaseChangeTracker)sut).GetExistenceState( target );
+            var result = (( ISqlDatabaseChangeTracker )sut).GetExistenceState( target );
 
             result.Should().Be( SqlObjectExistenceState.Created );
         }
@@ -557,7 +556,7 @@ public partial class SqlDatabaseBuilderTests
 
             sut.CompletePendingChanges();
             target.Remove();
-            var result = ((ISqlDatabaseChangeTracker)sut).GetExistenceState( target );
+            var result = (( ISqlDatabaseChangeTracker )sut).GetExistenceState( target );
 
             result.Should().Be( SqlObjectExistenceState.Removed );
         }
@@ -570,7 +569,7 @@ public partial class SqlDatabaseBuilderTests
 
             sut.CompletePendingChanges();
             target.SetName( "U" );
-            var result = ((ISqlDatabaseChangeTracker)sut).GetExistenceState( target );
+            var result = (( ISqlDatabaseChangeTracker )sut).GetExistenceState( target );
 
             result.Should().Be( SqlObjectExistenceState.Unchanged );
         }
@@ -583,7 +582,7 @@ public partial class SqlDatabaseBuilderTests
             sut.CompletePendingChanges();
             var target = sut.Database.Schemas.Default.Objects.CreateTable( "T" ).Columns.Create( "C" );
             target.Remove();
-            var result = ((ISqlDatabaseChangeTracker)sut).GetExistenceState( target );
+            var result = (( ISqlDatabaseChangeTracker )sut).GetExistenceState( target );
 
             result.Should().Be( SqlObjectExistenceState.Unchanged );
         }
@@ -594,7 +593,7 @@ public partial class SqlDatabaseBuilderTests
             var sut = SqlDatabaseBuilderMock.Create().Changes;
             var target = sut.Database.Schemas.Default.Objects.CreateTable( "T" );
 
-            var result = ((ISqlDatabaseChangeTracker)sut).ContainsChange( target, SqlObjectChangeDescriptor.IsRemoved );
+            var result = (( ISqlDatabaseChangeTracker )sut).ContainsChange( target, SqlObjectChangeDescriptor.IsRemoved );
 
             result.Should().BeFalse();
         }
@@ -607,7 +606,7 @@ public partial class SqlDatabaseBuilderTests
             sut.CompletePendingChanges();
             target.SetName( "U" );
 
-            var result = ((ISqlDatabaseChangeTracker)sut).ContainsChange( target, SqlObjectChangeDescriptor.Name );
+            var result = (( ISqlDatabaseChangeTracker )sut).ContainsChange( target, SqlObjectChangeDescriptor.Name );
 
             result.Should().BeTrue();
         }
@@ -620,7 +619,7 @@ public partial class SqlDatabaseBuilderTests
             sut.CompletePendingChanges();
             var target = table.Columns.Create( "C" );
 
-            var result = ((ISqlDatabaseChangeTracker)sut).ContainsChange( target, SqlObjectChangeDescriptor.IsRemoved );
+            var result = (( ISqlDatabaseChangeTracker )sut).ContainsChange( target, SqlObjectChangeDescriptor.IsRemoved );
 
             result.Should().BeTrue();
         }
@@ -633,7 +632,7 @@ public partial class SqlDatabaseBuilderTests
             sut.CompletePendingChanges();
             target.MarkAsNullable();
 
-            var result = ((ISqlDatabaseChangeTracker)sut).ContainsChange( target, SqlObjectChangeDescriptor.IsNullable );
+            var result = (( ISqlDatabaseChangeTracker )sut).ContainsChange( target, SqlObjectChangeDescriptor.IsNullable );
 
             result.Should().BeTrue();
         }
@@ -646,7 +645,7 @@ public partial class SqlDatabaseBuilderTests
             sut.CompletePendingChanges();
             target.MarkAsNullable();
 
-            var result = ((ISqlDatabaseChangeTracker)sut).ContainsChange( target, SqlObjectChangeDescriptor.Name );
+            var result = (( ISqlDatabaseChangeTracker )sut).ContainsChange( target, SqlObjectChangeDescriptor.Name );
 
             result.Should().BeFalse();
         }
@@ -740,7 +739,7 @@ public partial class SqlDatabaseBuilderTests
             var sut = SqlDatabaseBuilderMock.Create().Changes;
             sut.Attach( ! enabled );
 
-            var result = ((ISqlDatabaseChangeTracker)sut).Attach( enabled );
+            var result = (( ISqlDatabaseChangeTracker )sut).Attach( enabled );
 
             using ( new AssertionScope() )
             {
@@ -754,7 +753,7 @@ public partial class SqlDatabaseBuilderTests
         {
             var sut = SqlDatabaseBuilderMock.Create().Changes;
 
-            var result = ((ISqlDatabaseChangeTracker)sut).Attach();
+            var result = (( ISqlDatabaseChangeTracker )sut).Attach();
 
             using ( new AssertionScope() )
             {
@@ -806,7 +805,7 @@ public partial class SqlDatabaseBuilderTests
         [InlineData( 100L )]
         public void SetActionTimeout_ShouldUpdateActionTimeout(long? seconds)
         {
-            var timeout = seconds is null ? (TimeSpan?)null : TimeSpan.FromSeconds( seconds.Value );
+            var timeout = seconds is null ? ( TimeSpan? )null : TimeSpan.FromSeconds( seconds.Value );
             ISqlDatabaseChangeTracker sut = SqlDatabaseBuilderMock.Create().Changes;
 
             var result = sut.SetActionTimeout( timeout );

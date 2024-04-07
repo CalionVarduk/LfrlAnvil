@@ -25,8 +25,13 @@ public sealed class PostgreSqlDatabase : SqlDatabase
     public new PostgreSqlColumnTypeDefinitionProvider TypeDefinitions =>
         ReinterpretCast.To<PostgreSqlColumnTypeDefinitionProvider>( base.TypeDefinitions );
 
-    public new PostgreSqlNodeInterpreterFactory NodeInterpreters => ReinterpretCast.To<PostgreSqlNodeInterpreterFactory>( base.NodeInterpreters );
+    public new PostgreSqlNodeInterpreterFactory NodeInterpreters =>
+        ReinterpretCast.To<PostgreSqlNodeInterpreterFactory>( base.NodeInterpreters );
+
     public new PostgreSqlQueryReaderFactory QueryReaders => ReinterpretCast.To<PostgreSqlQueryReaderFactory>( base.QueryReaders );
-    public new PostgreSqlParameterBinderFactory ParameterBinders => ReinterpretCast.To<PostgreSqlParameterBinderFactory>( base.ParameterBinders );
+
+    public new PostgreSqlParameterBinderFactory ParameterBinders =>
+        ReinterpretCast.To<PostgreSqlParameterBinderFactory>( base.ParameterBinders );
+
     public new PostgreSqlDatabaseConnector Connector => ReinterpretCast.To<PostgreSqlDatabaseConnector>( base.Connector );
 }

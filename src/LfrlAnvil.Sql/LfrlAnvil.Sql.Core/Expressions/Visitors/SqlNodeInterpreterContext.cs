@@ -26,8 +26,8 @@ public sealed class SqlNodeInterpreterContext
     public int ChildDepth { get; private set; }
 
     public IReadOnlyCollection<KeyValuePair<string, TypeNullability?>> Parameters =>
-        (IReadOnlyCollection<KeyValuePair<string, TypeNullability?>>?)_parameters ??
-        Array.Empty<KeyValuePair<string, TypeNullability?>>();
+        ( IReadOnlyCollection<KeyValuePair<string, TypeNullability?>>? )_parameters
+        ?? Array.Empty<KeyValuePair<string, TypeNullability?>>();
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]

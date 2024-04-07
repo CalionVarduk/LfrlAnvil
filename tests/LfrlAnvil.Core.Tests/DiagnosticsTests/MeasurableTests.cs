@@ -35,7 +35,7 @@ public class MeasurableTests : TestsBase
                     ("Prepare", MeasurableState.Preparing, TimeMeasurement.Zero),
                     ("Run", MeasurableState.Running, new TimeMeasurement( sut.Measurement.Preparation, TimeSpan.Zero, TimeSpan.Zero )),
                     ("Teardown", MeasurableState.TearingDown,
-                     new TimeMeasurement( sut.Measurement.Preparation, sut.Measurement.Invocation, TimeSpan.Zero )),
+                        new TimeMeasurement( sut.Measurement.Preparation, sut.Measurement.Invocation, TimeSpan.Zero )),
                     ("Done", MeasurableState.Done, sut.Measurement) );
         }
     }
@@ -57,7 +57,7 @@ public class MeasurableTests : TestsBase
                     ("Prepare", MeasurableState.Preparing, TimeMeasurement.Zero),
                     ("Run", MeasurableState.Running, new TimeMeasurement( sut.Measurement.Preparation, TimeSpan.Zero, TimeSpan.Zero )),
                     ("Teardown", MeasurableState.TearingDown,
-                     new TimeMeasurement( sut.Measurement.Preparation, sut.Measurement.Invocation, TimeSpan.Zero )),
+                        new TimeMeasurement( sut.Measurement.Preparation, sut.Measurement.Invocation, TimeSpan.Zero )),
                     ("Done", MeasurableState.Done, sut.Measurement) );
         }
     }

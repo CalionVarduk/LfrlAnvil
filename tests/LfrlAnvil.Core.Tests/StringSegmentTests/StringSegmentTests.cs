@@ -597,7 +597,7 @@ public class StringSegmentTests : TestsBase
     public void StringSegmentConversionOperator_ShouldReturnCorrectResult()
     {
         var source = Fixture.Create<string>();
-        var result = (StringSegment)source;
+        var result = ( StringSegment )source;
 
         using ( new AssertionScope() )
         {

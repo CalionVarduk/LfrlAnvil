@@ -20,7 +20,7 @@ public static class DynamicCast
     public static T? To<T>(object? value)
         where T : class
     {
-        return (T?)value;
+        return ( T? )value;
     }
 
     [Pure]
@@ -36,6 +36,6 @@ public static class DynamicCast
     public static T Unbox<T>(object? value)
         where T : struct
     {
-        return (T)value!;
+        return ( T )value!;
     }
 }

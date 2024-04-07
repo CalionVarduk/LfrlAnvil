@@ -294,8 +294,7 @@ public class SqliteCheckBuilderTests : TestsBase
             sut.ReferencedColumns.Should().BeEmpty();
 
             column.ReferencingObjects.Should()
-                .BeSequentiallyEqualTo(
-                    SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( pk.Index ), column ) );
+                .BeSequentiallyEqualTo( SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( pk.Index ), column ) );
 
             actions.Should().HaveCount( 1 );
             actions.ElementAtOrDefault( 0 )

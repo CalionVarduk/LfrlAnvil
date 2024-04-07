@@ -32,9 +32,9 @@ public static class PostgreSqlHelpers
     {
         var i = 0;
         var result = new SqlConnectionStringEntry[builder.Count];
-        foreach ( var e in (DbConnectionStringBuilder)builder )
+        foreach ( var e in ( DbConnectionStringBuilder )builder )
         {
-            var (key, value) = (KeyValuePair<string, object>)e;
+            var (key, value) = ( KeyValuePair<string, object> )e;
             result[i++] = new SqlConnectionStringEntry( key, value, IsMutableConnectionStringKey( key ) );
         }
 
@@ -59,11 +59,11 @@ public static class PostgreSqlHelpers
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static bool IsMutableConnectionStringKey(string key)
     {
-        return ! key.Equals( "HOST", StringComparison.OrdinalIgnoreCase ) &&
-            ! key.Equals( "SERVER", StringComparison.OrdinalIgnoreCase ) &&
-            ! key.Equals( "PORT", StringComparison.OrdinalIgnoreCase ) &&
-            ! key.Equals( "DATABASE", StringComparison.OrdinalIgnoreCase ) &&
-            ! key.Equals( "DB", StringComparison.OrdinalIgnoreCase );
+        return ! key.Equals( "HOST", StringComparison.OrdinalIgnoreCase )
+            && ! key.Equals( "SERVER", StringComparison.OrdinalIgnoreCase )
+            && ! key.Equals( "PORT", StringComparison.OrdinalIgnoreCase )
+            && ! key.Equals( "DATABASE", StringComparison.OrdinalIgnoreCase )
+            && ! key.Equals( "DB", StringComparison.OrdinalIgnoreCase );
     }
 
     [Pure]
@@ -109,7 +109,7 @@ public static class PostgreSqlHelpers
         static char ToHexChar(int value)
         {
             Assume.IsInRange( value, 0, 15 );
-            return (char)(value < 10 ? '0' + value : 'A' + value - 10);
+            return ( char )(value < 10 ? '0' + value : 'A' + value - 10);
         }
     }
 

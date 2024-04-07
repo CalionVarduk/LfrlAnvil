@@ -31,7 +31,13 @@ public class SqlAsyncQueryReaderExecutorTests : TestsBase
     {
         var expected = new SqlQueryResult(
             new[] { new SqlResultSetField( 0, "a" ), new SqlResultSetField( 1, "b" ) },
-            new List<object?> { "foo", 3, "lorem", 5 } );
+            new List<object?>
+            {
+                "foo",
+                3,
+                "lorem",
+                5
+            } );
 
         var sql = "SELECT * FROM foo";
         var command = new DbCommandMock();

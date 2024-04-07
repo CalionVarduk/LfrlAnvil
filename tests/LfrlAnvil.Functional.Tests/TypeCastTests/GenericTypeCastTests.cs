@@ -20,7 +20,7 @@ public abstract class GenericTypeCastTests<TSource, TDestination> : TestsBase
     public void GetHashCode_ShouldReturnCorrectResult()
     {
         var value = Fixture.Create<TSource>();
-        var sut = (TypeCast<TSource, TDestination>)value;
+        var sut = ( TypeCast<TSource, TDestination> )value;
         var expected = Hash.Default.Add( value ).Value;
 
         var result = sut.GetHashCode();
@@ -31,7 +31,7 @@ public abstract class GenericTypeCastTests<TSource, TDestination> : TestsBase
     [Fact]
     public void TypeCastConversionOperator_FromNil_ShouldReturnCorrectResult()
     {
-        var result = (TypeCast<TSource, TDestination>)Nil.Instance;
+        var result = ( TypeCast<TSource, TDestination> )Nil.Instance;
 
         using ( new AssertionScope() )
         {
@@ -47,7 +47,7 @@ public abstract class GenericTypeCastTests<TSource, TDestination> : TestsBase
     {
         var value = Fixture.Create<TSource>();
 
-        ITypeCast<TDestination> sut = (TypeCast<TSource, TDestination>)value;
+        ITypeCast<TDestination> sut = ( TypeCast<TSource, TDestination> )value;
 
         var result = sut.Source;
 

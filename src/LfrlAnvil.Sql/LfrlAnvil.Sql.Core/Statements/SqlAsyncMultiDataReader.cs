@@ -13,7 +13,7 @@ public readonly struct SqlAsyncMultiDataReader : IDisposable, IAsyncDisposable
 {
     public SqlAsyncMultiDataReader(IDataReader reader)
     {
-        Reader = (DbDataReader)reader;
+        Reader = ( DbDataReader )reader;
     }
 
     public DbDataReader Reader { get; }

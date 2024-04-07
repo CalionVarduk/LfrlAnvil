@@ -17,6 +17,6 @@ public sealed class SqlViewMock : SqlView
         var db = SqlDatabaseMock.Create( builder.Database );
         var schema = schemaName is null ? db.Schemas.Default : db.Schemas.Get( schemaName );
         var view = schema.Objects.GetView( name );
-        return (SqlViewMock)view;
+        return ( SqlViewMock )view;
     }
 }

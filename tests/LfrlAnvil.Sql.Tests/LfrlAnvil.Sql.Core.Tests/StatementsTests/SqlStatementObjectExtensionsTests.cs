@@ -16,7 +16,7 @@ public class SqlStatementObjectExtensionsTests : TestsBase
     public async Task BeginTransactionAsync_ShouldReturnTransaction()
     {
         var sut = new DbConnectionMock();
-        var result = await ((IDbConnection)sut).BeginTransactionAsync( IsolationLevel.Serializable );
+        var result = await (( IDbConnection )sut).BeginTransactionAsync( IsolationLevel.Serializable );
         result.Should().BeSameAs( sut.CreatedTransactions[0] );
     }
 
@@ -391,7 +391,7 @@ public class SqlStatementObjectExtensionsTests : TestsBase
         var command = new DbCommandMock();
         var factory = SqlParameterBinderFactoryMock.CreateInstance();
 
-        var result = command.Parameterize( factory.Create().Bind( new[] { KeyValuePair.Create( "a", (object?)1 ) } ) );
+        var result = command.Parameterize( factory.Create().Bind( new[] { KeyValuePair.Create( "a", ( object? )1 ) } ) );
 
         using ( new AssertionScope() )
         {

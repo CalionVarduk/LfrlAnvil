@@ -256,7 +256,7 @@ public readonly struct ZonedDateTime : IEquatable<ZonedDateTime>, IComparable<Zo
         if ( invalidity is not null )
         {
             dateTime = invalidity.Value.Min.AddTicks( -1 );
-            if ( dateTime.Month != (int)month )
+            if ( dateTime.Month != ( int )month )
                 dateTime = invalidity.Value.Max.AddTicks( 1 );
 
             return CreateUnsafe( DateTime.SpecifyKind( dateTime, value.Kind ), timeZone );

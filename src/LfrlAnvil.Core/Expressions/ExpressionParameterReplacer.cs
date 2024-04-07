@@ -18,9 +18,7 @@ public class ExpressionParameterReplacer : ExpressionVisitor
     [return: NotNullIfNotNull( "node" )]
     public override Expression? Visit(Expression? node)
     {
-        if ( node is null ||
-            node.NodeType != ExpressionType.Parameter ||
-            node is not ParameterExpression parameterExpression )
+        if ( node is null || node.NodeType != ExpressionType.Parameter || node is not ParameterExpression parameterExpression )
             return base.Visit( node );
 
         var index = Array.IndexOf( _parametersToReplace, parameterExpression );

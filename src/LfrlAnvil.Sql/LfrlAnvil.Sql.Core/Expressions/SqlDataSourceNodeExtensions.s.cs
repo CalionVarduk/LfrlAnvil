@@ -17,7 +17,7 @@ public static class SqlDataSourceNodeExtensions
     public static TDataSourceNode Distinct<TDataSourceNode>(this TDataSourceNode node)
         where TDataSourceNode : SqlDataSourceNode
     {
-        return (TDataSourceNode)node.AddTrait( SqlNode.DistinctTrait() );
+        return ( TDataSourceNode )node.AddTrait( SqlNode.DistinctTrait() );
     }
 
     [Pure]
@@ -33,7 +33,7 @@ public static class SqlDataSourceNodeExtensions
     public static TDataSourceNode AndWhere<TDataSourceNode>(this TDataSourceNode node, SqlConditionNode filter)
         where TDataSourceNode : SqlDataSourceNode
     {
-        return (TDataSourceNode)node.AddTrait( SqlNode.FilterTrait( filter, isConjunction: true ) );
+        return ( TDataSourceNode )node.AddTrait( SqlNode.FilterTrait( filter, isConjunction: true ) );
     }
 
     [Pure]
@@ -49,7 +49,7 @@ public static class SqlDataSourceNodeExtensions
     public static TDataSourceNode OrWhere<TDataSourceNode>(this TDataSourceNode node, SqlConditionNode filter)
         where TDataSourceNode : SqlDataSourceNode
     {
-        return (TDataSourceNode)node.AddTrait( SqlNode.FilterTrait( filter, isConjunction: false ) );
+        return ( TDataSourceNode )node.AddTrait( SqlNode.FilterTrait( filter, isConjunction: false ) );
     }
 
     [Pure]
@@ -75,7 +75,7 @@ public static class SqlDataSourceNodeExtensions
     public static TDataSourceNode GroupBy<TDataSourceNode>(this TDataSourceNode node, params SqlExpressionNode[] expressions)
         where TDataSourceNode : SqlDataSourceNode
     {
-        return expressions.Length == 0 ? node : (TDataSourceNode)node.AddTrait( SqlNode.AggregationTrait( expressions ) );
+        return expressions.Length == 0 ? node : ( TDataSourceNode )node.AddTrait( SqlNode.AggregationTrait( expressions ) );
     }
 
     [Pure]
@@ -91,7 +91,7 @@ public static class SqlDataSourceNodeExtensions
     public static TDataSourceNode AndHaving<TDataSourceNode>(this TDataSourceNode node, SqlConditionNode filter)
         where TDataSourceNode : SqlDataSourceNode
     {
-        return (TDataSourceNode)node.AddTrait( SqlNode.AggregationFilterTrait( filter, isConjunction: true ) );
+        return ( TDataSourceNode )node.AddTrait( SqlNode.AggregationFilterTrait( filter, isConjunction: true ) );
     }
 
     [Pure]
@@ -107,7 +107,7 @@ public static class SqlDataSourceNodeExtensions
     public static TDataSourceNode OrHaving<TDataSourceNode>(this TDataSourceNode node, SqlConditionNode filter)
         where TDataSourceNode : SqlDataSourceNode
     {
-        return (TDataSourceNode)node.AddTrait( SqlNode.AggregationFilterTrait( filter, isConjunction: false ) );
+        return ( TDataSourceNode )node.AddTrait( SqlNode.AggregationFilterTrait( filter, isConjunction: false ) );
     }
 
     [Pure]
@@ -133,7 +133,7 @@ public static class SqlDataSourceNodeExtensions
     public static TDataSourceNode Window<TDataSourceNode>(this TDataSourceNode node, params SqlWindowDefinitionNode[] windows)
         where TDataSourceNode : SqlDataSourceNode
     {
-        return windows.Length == 0 ? node : (TDataSourceNode)node.AddTrait( SqlNode.WindowDefinitionTrait( windows ) );
+        return windows.Length == 0 ? node : ( TDataSourceNode )node.AddTrait( SqlNode.WindowDefinitionTrait( windows ) );
     }
 
     [Pure]
@@ -159,7 +159,7 @@ public static class SqlDataSourceNodeExtensions
     public static TDataSourceNode OrderBy<TDataSourceNode>(this TDataSourceNode node, params SqlOrderByNode[] ordering)
         where TDataSourceNode : SqlDataSourceNode
     {
-        return ordering.Length == 0 ? node : (TDataSourceNode)node.AddTrait( SqlNode.SortTrait( ordering ) );
+        return ordering.Length == 0 ? node : ( TDataSourceNode )node.AddTrait( SqlNode.SortTrait( ordering ) );
     }
 
     [Pure]
@@ -191,7 +191,7 @@ public static class SqlDataSourceNodeExtensions
     {
         return commonTableExpressions.Length == 0
             ? node
-            : (TDataSourceNode)node.AddTrait( SqlNode.CommonTableExpressionTrait( commonTableExpressions ) );
+            : ( TDataSourceNode )node.AddTrait( SqlNode.CommonTableExpressionTrait( commonTableExpressions ) );
     }
 
     [Pure]
@@ -199,7 +199,7 @@ public static class SqlDataSourceNodeExtensions
     public static TDataSourceNode Limit<TDataSourceNode>(this TDataSourceNode node, SqlExpressionNode value)
         where TDataSourceNode : SqlDataSourceNode
     {
-        return (TDataSourceNode)node.AddTrait( SqlNode.LimitTrait( value ) );
+        return ( TDataSourceNode )node.AddTrait( SqlNode.LimitTrait( value ) );
     }
 
     [Pure]
@@ -207,7 +207,7 @@ public static class SqlDataSourceNodeExtensions
     public static TDataSourceNode Offset<TDataSourceNode>(this TDataSourceNode node, SqlExpressionNode value)
         where TDataSourceNode : SqlDataSourceNode
     {
-        return (TDataSourceNode)node.AddTrait( SqlNode.OffsetTrait( value ) );
+        return ( TDataSourceNode )node.AddTrait( SqlNode.OffsetTrait( value ) );
     }
 
     [Pure]
@@ -338,7 +338,7 @@ public static class SqlDataSourceNodeExtensions
             recordSet,
             insertDataFields( recordSet ).ToArray(),
             (r, i) => updateAssignments( ReinterpretCast.To<TRecordSetNode>( r ), i ),
-            conflictTarget?.Invoke( recordSet ).ToArray() ?? (ReadOnlyArray<SqlDataFieldNode>?)null );
+            conflictTarget?.Invoke( recordSet ).ToArray() ?? ( ReadOnlyArray<SqlDataFieldNode>? )null );
     }
 
     [Pure]
@@ -367,7 +367,7 @@ public static class SqlDataSourceNodeExtensions
             recordSet,
             insertDataFields( recordSet ).ToArray(),
             (r, i) => updateAssignments( ReinterpretCast.To<TRecordSetNode>( r ), i ),
-            conflictTarget?.Invoke( recordSet ).ToArray() ?? (ReadOnlyArray<SqlDataFieldNode>?)null );
+            conflictTarget?.Invoke( recordSet ).ToArray() ?? ( ReadOnlyArray<SqlDataFieldNode>? )null );
     }
 
     [Pure]

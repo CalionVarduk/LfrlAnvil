@@ -31,7 +31,7 @@ public class MySqlColumnTypeDefinitionProviderTests : TestsBase
         using ( new AssertionScope() )
         {
             result.DataType.Should().BeSameAs( MySqlDataType.TinyInt );
-            result.DefaultValue.GetValue().Should().Be( (sbyte)0 );
+            result.DefaultValue.GetValue().Should().Be( ( sbyte )0 );
             result.RuntimeType.Should().Be( typeof( sbyte ) );
         }
     }
@@ -44,7 +44,7 @@ public class MySqlColumnTypeDefinitionProviderTests : TestsBase
         using ( new AssertionScope() )
         {
             result.DataType.Should().BeSameAs( MySqlDataType.UnsignedTinyInt );
-            result.DefaultValue.GetValue().Should().Be( (byte)0 );
+            result.DefaultValue.GetValue().Should().Be( ( byte )0 );
             result.RuntimeType.Should().Be( typeof( byte ) );
         }
     }
@@ -57,7 +57,7 @@ public class MySqlColumnTypeDefinitionProviderTests : TestsBase
         using ( new AssertionScope() )
         {
             result.DataType.Should().BeSameAs( MySqlDataType.SmallInt );
-            result.DefaultValue.GetValue().Should().Be( (short)0 );
+            result.DefaultValue.GetValue().Should().Be( ( short )0 );
             result.RuntimeType.Should().Be( typeof( short ) );
         }
     }
@@ -70,7 +70,7 @@ public class MySqlColumnTypeDefinitionProviderTests : TestsBase
         using ( new AssertionScope() )
         {
             result.DataType.Should().BeSameAs( MySqlDataType.UnsignedSmallInt );
-            result.DefaultValue.GetValue().Should().Be( (ushort)0 );
+            result.DefaultValue.GetValue().Should().Be( ( ushort )0 );
             result.RuntimeType.Should().Be( typeof( ushort ) );
         }
     }
@@ -96,7 +96,7 @@ public class MySqlColumnTypeDefinitionProviderTests : TestsBase
         using ( new AssertionScope() )
         {
             result.DataType.Should().BeSameAs( MySqlDataType.UnsignedInt );
-            result.DefaultValue.GetValue().Should().Be( (uint)0 );
+            result.DefaultValue.GetValue().Should().Be( ( uint )0 );
             result.RuntimeType.Should().Be( typeof( uint ) );
         }
     }
@@ -135,7 +135,7 @@ public class MySqlColumnTypeDefinitionProviderTests : TestsBase
         using ( new AssertionScope() )
         {
             result.DataType.Should().BeSameAs( MySqlDataType.Float );
-            result.DefaultValue.GetValue().Should().Be( (float)0.0 );
+            result.DefaultValue.GetValue().Should().Be( ( float )0.0 );
             result.RuntimeType.Should().Be( typeof( float ) );
         }
     }

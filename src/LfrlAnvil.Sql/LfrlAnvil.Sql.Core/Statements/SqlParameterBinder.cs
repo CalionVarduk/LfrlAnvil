@@ -8,7 +8,8 @@ namespace LfrlAnvil.Sql.Statements;
 
 public readonly record struct SqlParameterBinder(
     SqlDialect Dialect,
-    Action<IDbCommand, IEnumerable<KeyValuePair<string, object?>>> Delegate)
+    Action<IDbCommand, IEnumerable<KeyValuePair<string, object?>>> Delegate
+)
 {
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public void Bind(IDbCommand command, IEnumerable<KeyValuePair<string, object?>>? source = null)

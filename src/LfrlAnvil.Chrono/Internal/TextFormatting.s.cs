@@ -130,7 +130,7 @@ public static class TextFormatting
     public static string StringifyOffset(Duration offset)
     {
         var sign = offset < Duration.Zero ? '-' : '+';
-        var hour = StringifyHour( Math.Abs( (int)offset.FullHours ) );
+        var hour = StringifyHour( Math.Abs( ( int )offset.FullHours ) );
         var minute = StringifyMinute( offset.MinutesInHour );
         return $"{sign}{hour}{TimeComponentSeparator}{minute}";
     }

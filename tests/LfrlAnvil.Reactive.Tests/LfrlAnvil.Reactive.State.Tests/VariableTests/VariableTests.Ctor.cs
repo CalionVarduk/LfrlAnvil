@@ -27,19 +27,19 @@ public partial class VariableTests
             sut.ErrorsValidator.Should().BeSameAs( errorsValidator );
             sut.WarningsValidator.Should().BeSameAs( warningsValidator );
 
-            ((IReadOnlyVariable<int, string>)sut).OnValidate.Should().BeSameAs( sut.OnValidate );
-            ((IReadOnlyVariable<int>)sut).OnChange.Should().BeSameAs( sut.OnChange );
-            ((IReadOnlyVariable)sut).ValueType.Should().Be( typeof( int ) );
-            ((IReadOnlyVariable)sut).ValidationResultType.Should().Be( typeof( string ) );
-            ((IReadOnlyVariable)sut).InitialValue.Should().Be( sut.InitialValue );
-            ((IReadOnlyVariable)sut).Value.Should().Be( sut.Value );
-            ((IReadOnlyVariable)sut).Errors.Should().BeEquivalentTo( sut.Errors );
-            ((IReadOnlyVariable)sut).Warnings.Should().BeEquivalentTo( sut.Warnings );
-            ((IReadOnlyVariable)sut).OnValidate.Should().Be( sut.OnValidate );
-            ((IReadOnlyVariable)sut).OnChange.Should().Be( sut.OnChange );
-            ((IVariableNode)sut).OnValidate.Should().Be( sut.OnValidate );
-            ((IVariableNode)sut).OnChange.Should().Be( sut.OnChange );
-            ((IVariableNode)sut).GetChildren().Should().BeEmpty();
+            (( IReadOnlyVariable<int, string> )sut).OnValidate.Should().BeSameAs( sut.OnValidate );
+            (( IReadOnlyVariable<int> )sut).OnChange.Should().BeSameAs( sut.OnChange );
+            (( IReadOnlyVariable )sut).ValueType.Should().Be( typeof( int ) );
+            (( IReadOnlyVariable )sut).ValidationResultType.Should().Be( typeof( string ) );
+            (( IReadOnlyVariable )sut).InitialValue.Should().Be( sut.InitialValue );
+            (( IReadOnlyVariable )sut).Value.Should().Be( sut.Value );
+            (( IReadOnlyVariable )sut).Errors.Should().BeEquivalentTo( sut.Errors );
+            (( IReadOnlyVariable )sut).Warnings.Should().BeEquivalentTo( sut.Warnings );
+            (( IReadOnlyVariable )sut).OnValidate.Should().Be( sut.OnValidate );
+            (( IReadOnlyVariable )sut).OnChange.Should().Be( sut.OnChange );
+            (( IVariableNode )sut).OnValidate.Should().Be( sut.OnValidate );
+            (( IVariableNode )sut).OnChange.Should().Be( sut.OnChange );
+            (( IVariableNode )sut).GetChildren().Should().BeEmpty();
         }
     }
 

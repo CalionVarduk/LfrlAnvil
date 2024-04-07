@@ -125,13 +125,13 @@ public readonly struct Fixed : IEquatable<Fixed>, IComparable<Fixed>, IComparabl
     [Pure]
     public string ToString(string? format, IFormatProvider? formatProvider)
     {
-        return ((decimal)this).ToString( format, formatProvider );
+        return (( decimal )this).ToString( format, formatProvider );
     }
 
     [Pure]
     public override int GetHashCode()
     {
-        return ((decimal)this).GetHashCode();
+        return (( decimal )this).GetHashCode();
     }
 
     [Pure]
@@ -397,14 +397,14 @@ public readonly struct Fixed : IEquatable<Fixed>, IComparable<Fixed>, IComparabl
     [Pure]
     public static implicit operator decimal(Fixed f)
     {
-        var result = (decimal)f.RawValue / PowersOfTen[f.Precision];
+        var result = ( decimal )f.RawValue / PowersOfTen[f.Precision];
         return result;
     }
 
     [Pure]
     public static explicit operator double(Fixed f)
     {
-        var result = (double)f.RawValue / PowersOfTen[f.Precision];
+        var result = ( double )f.RawValue / PowersOfTen[f.Precision];
         return result;
     }
 
@@ -566,9 +566,9 @@ public readonly struct Fixed : IEquatable<Fixed>, IComparable<Fixed>, IComparabl
     {
         Assume.IsLessThanOrEqualTo( precision, MaxPrecision );
         var integerInputPart = Math.Truncate( value );
-        var integerPart = checked( (long)integerInputPart * PowersOfTen[precision] );
+        var integerPart = checked( ( long )integerInputPart * PowersOfTen[precision] );
         var fractionalInputPart = Math.Round( value - integerInputPart, precision, MidpointRounding.AwayFromZero );
-        var fractionalPart = (long)(fractionalInputPart * PowersOfTen[precision]);
+        var fractionalPart = ( long )(fractionalInputPart * PowersOfTen[precision]);
         var rawValue = checked( integerPart + fractionalPart );
         return rawValue;
     }
@@ -579,9 +579,9 @@ public readonly struct Fixed : IEquatable<Fixed>, IComparable<Fixed>, IComparabl
     {
         Assume.IsLessThanOrEqualTo( precision, MaxPrecision );
         var integerInputPart = Math.Truncate( value );
-        var integerPart = checked( (long)integerInputPart * PowersOfTen[precision] );
+        var integerPart = checked( ( long )integerInputPart * PowersOfTen[precision] );
         var fractionalInputPart = Math.Round( value - integerInputPart, precision, MidpointRounding.AwayFromZero );
-        var fractionalPart = (long)(fractionalInputPart * PowersOfTen[precision]);
+        var fractionalPart = ( long )(fractionalInputPart * PowersOfTen[precision]);
         var rawValue = checked( integerPart + fractionalPart );
         return rawValue;
     }
@@ -613,14 +613,16 @@ public readonly struct Fixed : IEquatable<Fixed>, IComparable<Fixed>, IComparabl
 
         if ( resultHigh > 0 )
         {
-            (var resultOverflow, unsignedResult, remainder) = MathUtils.BigDivU128( resultHigh, resultLow, (ulong)PowersOfTen[precision] );
+            (var resultOverflow, unsignedResult, remainder)
+                = MathUtils.BigDivU128( resultHigh, resultLow, ( ulong )PowersOfTen[precision] );
+
             if ( resultOverflow > 0 )
                 ExceptionThrower.Throw( new OverflowException() );
         }
         else
-            (unsignedResult, remainder) = Math.DivRem( resultLow, (ulong)PowersOfTen[precision] );
+            (unsignedResult, remainder) = Math.DivRem( resultLow, ( ulong )PowersOfTen[precision] );
 
-        if ( remainder > 0 && remainder >= (ulong)PowersOfTen[precision] >> 1 )
+        if ( remainder > 0 && remainder >= ( ulong )PowersOfTen[precision] >> 1 )
             unsignedResult = checked( unsignedResult + 1 );
 
         var result = MathUtils.ToSigned( unsignedResult, sign );
@@ -636,7 +638,7 @@ public readonly struct Fixed : IEquatable<Fixed>, IComparable<Fixed>, IComparabl
         var right = MathUtils.ToUnsigned( rawRight, ref sign );
 
         ulong unsignedResult, remainder;
-        var (leftHigh, leftLow) = MathUtils.BigMulU128( left, (ulong)PowersOfTen[precision] );
+        var (leftHigh, leftLow) = MathUtils.BigMulU128( left, ( ulong )PowersOfTen[precision] );
 
         if ( leftHigh > 0 )
         {

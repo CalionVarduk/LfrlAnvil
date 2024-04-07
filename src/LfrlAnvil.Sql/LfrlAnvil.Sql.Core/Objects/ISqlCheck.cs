@@ -1,5 +1,3 @@
 ﻿namespace LfrlAnvil.Sql.Objects;
 
-public interface ISqlCheck : ISqlConstraint
-{
-}
+public interface ISqlCheck : ISqlConstraint { }

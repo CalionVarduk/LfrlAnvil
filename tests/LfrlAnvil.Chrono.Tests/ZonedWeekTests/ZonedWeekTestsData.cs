@@ -83,20 +83,12 @@ public class ZonedWeekTestsData
             { new DateTime( 2019, 8, 26 ), negativeTimeZone, IsoDayOfWeek.Monday, 2019, 35, Duration.FromHours( 167 ) },
             { new DateTime( 2021, 8, 26, 2, 0, 0 ), positiveTimeZone, IsoDayOfWeek.Thursday, 2021, 35, Duration.FromHours( 167 ) },
             {
-                new DateTime( 2021, 8, 26, 2, 59, 59, 999 ).AddTicks( 9999 ),
-                negativeTimeZone,
-                IsoDayOfWeek.Thursday,
-                2021,
-                35,
+                new DateTime( 2021, 8, 26, 2, 59, 59, 999 ).AddTicks( 9999 ), negativeTimeZone, IsoDayOfWeek.Thursday, 2021, 35,
                 Duration.FromHours( 167 )
             },
             { new DateTime( 2019, 8, 26, 2, 0, 0 ), positiveTimeZone, IsoDayOfWeek.Monday, 2019, 35, Duration.FromHours( 167 ) },
             {
-                new DateTime( 2019, 8, 26, 2, 59, 59, 999 ).AddTicks( 9999 ),
-                negativeTimeZone,
-                IsoDayOfWeek.Monday,
-                2019,
-                35,
+                new DateTime( 2019, 8, 26, 2, 59, 59, 999 ).AddTicks( 9999 ), negativeTimeZone, IsoDayOfWeek.Monday, 2019, 35,
                 Duration.FromHours( 167 )
             }
         };
@@ -126,20 +118,12 @@ public class ZonedWeekTestsData
             { new DateTime( 2018, 9, 26 ), negativeTimeZone, IsoDayOfWeek.Wednesday, 2018, 40, Duration.FromHours( 169 ) },
             { new DateTime( 2021, 9, 26, 2, 0, 0 ), positiveTimeZone, IsoDayOfWeek.Sunday, 2021, 40, Duration.FromHours( 169 ) },
             {
-                new DateTime( 2021, 9, 26, 2, 59, 59, 999 ).AddTicks( 9999 ),
-                negativeTimeZone,
-                IsoDayOfWeek.Sunday,
-                2021,
-                40,
+                new DateTime( 2021, 9, 26, 2, 59, 59, 999 ).AddTicks( 9999 ), negativeTimeZone, IsoDayOfWeek.Sunday, 2021, 40,
                 Duration.FromHours( 169 )
             },
             { new DateTime( 2018, 9, 26, 2, 0, 0 ), positiveTimeZone, IsoDayOfWeek.Wednesday, 2018, 40, Duration.FromHours( 169 ) },
             {
-                new DateTime( 2018, 9, 26, 2, 59, 59, 999 ).AddTicks( 9999 ),
-                negativeTimeZone,
-                IsoDayOfWeek.Wednesday,
-                2018,
-                40,
+                new DateTime( 2018, 9, 26, 2, 59, 59, 999 ).AddTicks( 9999 ), negativeTimeZone, IsoDayOfWeek.Wednesday, 2018, 40,
                 Duration.FromHours( 169 )
             }
         };
@@ -203,75 +187,35 @@ public class ZonedWeekTestsData
         return new TheoryData<DateTime, TimeZoneInfo, DateTime, IsoDayOfWeek, int, int, Duration>
         {
             {
-                new DateTime( 2021, 8, 1 ),
-                positiveTimeZone1,
-                new DateTime( 2021, 8, 1, 0, 1, 0 ),
-                IsoDayOfWeek.Sunday,
-                2021,
-                32,
+                new DateTime( 2021, 8, 1 ), positiveTimeZone1, new DateTime( 2021, 8, 1, 0, 1, 0 ), IsoDayOfWeek.Sunday, 2021, 32,
                 Duration.FromHours( 168 ).SubtractMinutes( 1 )
             },
             {
-                new DateTime( 2021, 7, 1 ),
-                positiveTimeZone2,
-                new DateTime( 2021, 7, 1, 0, 30, 0 ),
-                IsoDayOfWeek.Thursday,
-                2021,
-                27,
+                new DateTime( 2021, 7, 1 ), positiveTimeZone2, new DateTime( 2021, 7, 1, 0, 30, 0 ), IsoDayOfWeek.Thursday, 2021, 27,
                 Duration.FromHours( 168 ).SubtractMinutes( 30 )
             },
             {
-                new DateTime( 2021, 6, 1 ),
-                positiveTimeZone3,
-                new DateTime( 2021, 6, 1, 0, 59, 0 ),
-                IsoDayOfWeek.Tuesday,
-                2021,
-                23,
+                new DateTime( 2021, 6, 1 ), positiveTimeZone3, new DateTime( 2021, 6, 1, 0, 59, 0 ), IsoDayOfWeek.Tuesday, 2021, 23,
                 Duration.FromHours( 168 ).SubtractMinutes( 59 )
             },
             {
-                new DateTime( 2021, 5, 1 ),
-                positiveTimeZone4,
-                new DateTime( 2021, 5, 1, 1, 0, 0 ),
-                IsoDayOfWeek.Saturday,
-                2021,
-                19,
+                new DateTime( 2021, 5, 1 ), positiveTimeZone4, new DateTime( 2021, 5, 1, 1, 0, 0 ), IsoDayOfWeek.Saturday, 2021, 19,
                 Duration.FromHours( 167 )
             },
             {
-                new DateTime( 2021, 8, 1 ),
-                negativeTimeZone1,
-                new DateTime( 2021, 8, 1, 0, 1, 0 ),
-                IsoDayOfWeek.Sunday,
-                2021,
-                32,
+                new DateTime( 2021, 8, 1 ), negativeTimeZone1, new DateTime( 2021, 8, 1, 0, 1, 0 ), IsoDayOfWeek.Sunday, 2021, 32,
                 Duration.FromHours( 168 ).SubtractMinutes( 1 )
             },
             {
-                new DateTime( 2021, 7, 1 ),
-                negativeTimeZone2,
-                new DateTime( 2021, 7, 1, 0, 30, 0 ),
-                IsoDayOfWeek.Thursday,
-                2021,
-                27,
+                new DateTime( 2021, 7, 1 ), negativeTimeZone2, new DateTime( 2021, 7, 1, 0, 30, 0 ), IsoDayOfWeek.Thursday, 2021, 27,
                 Duration.FromHours( 168 ).SubtractMinutes( 30 )
             },
             {
-                new DateTime( 2021, 6, 1 ),
-                negativeTimeZone3,
-                new DateTime( 2021, 6, 1, 0, 59, 0 ),
-                IsoDayOfWeek.Tuesday,
-                2021,
-                23,
+                new DateTime( 2021, 6, 1 ), negativeTimeZone3, new DateTime( 2021, 6, 1, 0, 59, 0 ), IsoDayOfWeek.Tuesday, 2021, 23,
                 Duration.FromHours( 168 ).SubtractMinutes( 59 )
             },
             {
-                new DateTime( 2021, 5, 1 ),
-                negativeTimeZone4,
-                new DateTime( 2021, 5, 1, 1, 0, 0 ),
-                IsoDayOfWeek.Saturday,
-                2021,
-                19,
+                new DateTime( 2021, 5, 1 ), negativeTimeZone4, new DateTime( 2021, 5, 1, 1, 0, 0 ), IsoDayOfWeek.Saturday, 2021, 19,
                 Duration.FromHours( 167 )
             }
         };
@@ -335,76 +279,36 @@ public class ZonedWeekTestsData
         return new TheoryData<DateTime, TimeZoneInfo, DateTime, IsoDayOfWeek, int, int, Duration>
         {
             {
-                new DateTime( 2021, 8, 31 ),
-                positiveTimeZone1,
-                new DateTime( 2021, 8, 31, 23, 0, 59, 999 ).AddTicks( 9999 ),
-                IsoDayOfWeek.Wednesday,
-                2021,
-                35,
-                Duration.FromHours( 168 ).SubtractMinutes( 59 )
+                new DateTime( 2021, 8, 31 ), positiveTimeZone1, new DateTime( 2021, 8, 31, 23, 0, 59, 999 ).AddTicks( 9999 ),
+                IsoDayOfWeek.Wednesday, 2021, 35, Duration.FromHours( 168 ).SubtractMinutes( 59 )
             },
             {
-                new DateTime( 2021, 9, 30 ),
-                positiveTimeZone2,
-                new DateTime( 2021, 9, 30, 23, 29, 59, 999 ).AddTicks( 9999 ),
-                IsoDayOfWeek.Friday,
-                2021,
-                39,
-                Duration.FromHours( 168 ).SubtractMinutes( 30 )
+                new DateTime( 2021, 9, 30 ), positiveTimeZone2, new DateTime( 2021, 9, 30, 23, 29, 59, 999 ).AddTicks( 9999 ),
+                IsoDayOfWeek.Friday, 2021, 39, Duration.FromHours( 168 ).SubtractMinutes( 30 )
             },
             {
-                new DateTime( 2021, 10, 31 ),
-                positiveTimeZone3,
-                new DateTime( 2021, 10, 31, 23, 58, 59, 999 ).AddTicks( 9999 ),
-                IsoDayOfWeek.Monday,
-                2021,
-                43,
-                Duration.FromHours( 168 ).SubtractMinutes( 1 )
+                new DateTime( 2021, 10, 31 ), positiveTimeZone3, new DateTime( 2021, 10, 31, 23, 58, 59, 999 ).AddTicks( 9999 ),
+                IsoDayOfWeek.Monday, 2021, 43, Duration.FromHours( 168 ).SubtractMinutes( 1 )
             },
             {
-                new DateTime( 2021, 11, 30 ),
-                positiveTimeZone4,
-                new DateTime( 2021, 11, 30, 22, 59, 59, 999 ).AddTicks( 9999 ),
-                IsoDayOfWeek.Wednesday,
-                2021,
-                48,
-                Duration.FromHours( 167 )
+                new DateTime( 2021, 11, 30 ), positiveTimeZone4, new DateTime( 2021, 11, 30, 22, 59, 59, 999 ).AddTicks( 9999 ),
+                IsoDayOfWeek.Wednesday, 2021, 48, Duration.FromHours( 167 )
             },
             {
-                new DateTime( 2021, 8, 31 ),
-                negativeTimeZone1,
-                new DateTime( 2021, 8, 31, 23, 0, 59, 999 ).AddTicks( 9999 ),
-                IsoDayOfWeek.Wednesday,
-                2021,
-                35,
-                Duration.FromHours( 168 ).SubtractMinutes( 59 )
+                new DateTime( 2021, 8, 31 ), negativeTimeZone1, new DateTime( 2021, 8, 31, 23, 0, 59, 999 ).AddTicks( 9999 ),
+                IsoDayOfWeek.Wednesday, 2021, 35, Duration.FromHours( 168 ).SubtractMinutes( 59 )
             },
             {
-                new DateTime( 2021, 9, 30 ),
-                negativeTimeZone2,
-                new DateTime( 2021, 9, 30, 23, 29, 59, 999 ).AddTicks( 9999 ),
-                IsoDayOfWeek.Friday,
-                2021,
-                39,
-                Duration.FromHours( 168 ).SubtractMinutes( 30 )
+                new DateTime( 2021, 9, 30 ), negativeTimeZone2, new DateTime( 2021, 9, 30, 23, 29, 59, 999 ).AddTicks( 9999 ),
+                IsoDayOfWeek.Friday, 2021, 39, Duration.FromHours( 168 ).SubtractMinutes( 30 )
             },
             {
-                new DateTime( 2021, 10, 31 ),
-                negativeTimeZone3,
-                new DateTime( 2021, 10, 31, 23, 58, 59, 999 ).AddTicks( 9999 ),
-                IsoDayOfWeek.Monday,
-                2021,
-                43,
-                Duration.FromHours( 168 ).SubtractMinutes( 1 )
+                new DateTime( 2021, 10, 31 ), negativeTimeZone3, new DateTime( 2021, 10, 31, 23, 58, 59, 999 ).AddTicks( 9999 ),
+                IsoDayOfWeek.Monday, 2021, 43, Duration.FromHours( 168 ).SubtractMinutes( 1 )
             },
             {
-                new DateTime( 2021, 11, 30 ),
-                negativeTimeZone4,
-                new DateTime( 2021, 11, 30, 22, 59, 59, 999 ).AddTicks( 9999 ),
-                IsoDayOfWeek.Wednesday,
-                2021,
-                48,
-                Duration.FromHours( 167 )
+                new DateTime( 2021, 11, 30 ), negativeTimeZone4, new DateTime( 2021, 11, 30, 22, 59, 59, 999 ).AddTicks( 9999 ),
+                IsoDayOfWeek.Wednesday, 2021, 48, Duration.FromHours( 167 )
             }
         };
     }
@@ -467,77 +371,31 @@ public class ZonedWeekTestsData
         return new TheoryData<DateTime, TimeZoneInfo, bool, IsoDayOfWeek, int, int, Duration>
         {
             {
-                new DateTime( 2021, 8, 1 ),
-                positiveTimeZone1,
-                true,
-                IsoDayOfWeek.Sunday,
-                2021,
-                32,
+                new DateTime( 2021, 8, 1 ), positiveTimeZone1, true, IsoDayOfWeek.Sunday, 2021, 32,
                 Duration.FromHours( 168 ).AddMinutes( 1 )
             },
             {
-                new DateTime( 2021, 7, 1 ),
-                positiveTimeZone2,
-                true,
-                IsoDayOfWeek.Thursday,
-                2021,
-                27,
+                new DateTime( 2021, 7, 1 ), positiveTimeZone2, true, IsoDayOfWeek.Thursday, 2021, 27,
                 Duration.FromHours( 168 ).AddMinutes( 30 )
             },
             {
-                new DateTime( 2021, 6, 1 ),
-                positiveTimeZone3,
-                true,
-                IsoDayOfWeek.Tuesday,
-                2021,
-                23,
+                new DateTime( 2021, 6, 1 ), positiveTimeZone3, true, IsoDayOfWeek.Tuesday, 2021, 23,
                 Duration.FromHours( 168 ).AddMinutes( 59 )
             },
+            { new DateTime( 2021, 5, 1 ), positiveTimeZone4, true, IsoDayOfWeek.Saturday, 2021, 19, Duration.FromHours( 169 ) },
             {
-                new DateTime( 2021, 5, 1 ),
-                positiveTimeZone4,
-                true,
-                IsoDayOfWeek.Saturday,
-                2021,
-                19,
-                Duration.FromHours( 169 )
-            },
-            {
-                new DateTime( 2021, 8, 1 ),
-                negativeTimeZone1,
-                false,
-                IsoDayOfWeek.Sunday,
-                2021,
-                32,
+                new DateTime( 2021, 8, 1 ), negativeTimeZone1, false, IsoDayOfWeek.Sunday, 2021, 32,
                 Duration.FromHours( 168 ).AddMinutes( 1 )
             },
             {
-                new DateTime( 2021, 7, 1 ),
-                negativeTimeZone2,
-                false,
-                IsoDayOfWeek.Thursday,
-                2021,
-                27,
+                new DateTime( 2021, 7, 1 ), negativeTimeZone2, false, IsoDayOfWeek.Thursday, 2021, 27,
                 Duration.FromHours( 168 ).AddMinutes( 30 )
             },
             {
-                new DateTime( 2021, 6, 1 ),
-                negativeTimeZone3,
-                false,
-                IsoDayOfWeek.Tuesday,
-                2021,
-                23,
+                new DateTime( 2021, 6, 1 ), negativeTimeZone3, false, IsoDayOfWeek.Tuesday, 2021, 23,
                 Duration.FromHours( 168 ).AddMinutes( 59 )
             },
-            {
-                new DateTime( 2021, 5, 1 ),
-                negativeTimeZone4,
-                false,
-                IsoDayOfWeek.Saturday,
-                2021,
-                19,
-                Duration.FromHours( 169 )
-            }
+            { new DateTime( 2021, 5, 1 ), negativeTimeZone4, false, IsoDayOfWeek.Saturday, 2021, 19, Duration.FromHours( 169 ) }
         };
     }
 
@@ -599,77 +457,31 @@ public class ZonedWeekTestsData
         return new TheoryData<DateTime, TimeZoneInfo, bool, IsoDayOfWeek, int, int, Duration>
         {
             {
-                new DateTime( 2021, 8, 31 ),
-                positiveTimeZone1,
-                false,
-                IsoDayOfWeek.Wednesday,
-                2021,
-                35,
+                new DateTime( 2021, 8, 31 ), positiveTimeZone1, false, IsoDayOfWeek.Wednesday, 2021, 35,
                 Duration.FromHours( 168 ).AddMinutes( 59 )
             },
             {
-                new DateTime( 2021, 9, 30 ),
-                positiveTimeZone2,
-                false,
-                IsoDayOfWeek.Friday,
-                2021,
-                39,
+                new DateTime( 2021, 9, 30 ), positiveTimeZone2, false, IsoDayOfWeek.Friday, 2021, 39,
                 Duration.FromHours( 168 ).AddMinutes( 30 )
             },
             {
-                new DateTime( 2021, 10, 31 ),
-                positiveTimeZone3,
-                false,
-                IsoDayOfWeek.Monday,
-                2021,
-                43,
+                new DateTime( 2021, 10, 31 ), positiveTimeZone3, false, IsoDayOfWeek.Monday, 2021, 43,
                 Duration.FromHours( 168 ).AddMinutes( 1 )
             },
+            { new DateTime( 2021, 11, 30 ), positiveTimeZone4, false, IsoDayOfWeek.Wednesday, 2021, 48, Duration.FromHours( 169 ) },
             {
-                new DateTime( 2021, 11, 30 ),
-                positiveTimeZone4,
-                false,
-                IsoDayOfWeek.Wednesday,
-                2021,
-                48,
-                Duration.FromHours( 169 )
-            },
-            {
-                new DateTime( 2021, 8, 31 ),
-                negativeTimeZone1,
-                true,
-                IsoDayOfWeek.Wednesday,
-                2021,
-                35,
+                new DateTime( 2021, 8, 31 ), negativeTimeZone1, true, IsoDayOfWeek.Wednesday, 2021, 35,
                 Duration.FromHours( 168 ).AddMinutes( 59 )
             },
             {
-                new DateTime( 2021, 9, 30 ),
-                negativeTimeZone2,
-                true,
-                IsoDayOfWeek.Friday,
-                2021,
-                39,
+                new DateTime( 2021, 9, 30 ), negativeTimeZone2, true, IsoDayOfWeek.Friday, 2021, 39,
                 Duration.FromHours( 168 ).AddMinutes( 30 )
             },
             {
-                new DateTime( 2021, 10, 31 ),
-                negativeTimeZone3,
-                true,
-                IsoDayOfWeek.Monday,
-                2021,
-                43,
+                new DateTime( 2021, 10, 31 ), negativeTimeZone3, true, IsoDayOfWeek.Monday, 2021, 43,
                 Duration.FromHours( 168 ).AddMinutes( 1 )
             },
-            {
-                new DateTime( 2021, 11, 30 ),
-                negativeTimeZone4,
-                true,
-                IsoDayOfWeek.Wednesday,
-                2021,
-                48,
-                Duration.FromHours( 169 )
-            }
+            { new DateTime( 2021, 11, 30 ), negativeTimeZone4, true, IsoDayOfWeek.Wednesday, 2021, 48, Duration.FromHours( 169 ) }
         };
     }
 
@@ -718,63 +530,27 @@ public class ZonedWeekTestsData
         return new TheoryData<DateTime, TimeZoneInfo, DateTime, bool, IsoDayOfWeek, int, int, Duration>
         {
             {
-                new DateTime( 2021, 8, 1 ),
-                positiveTimeZone1,
-                new DateTime( 2021, 8, 1, 0, 1, 0 ),
-                false,
-                IsoDayOfWeek.Sunday,
-                2021,
-                32,
+                new DateTime( 2021, 8, 1 ), positiveTimeZone1, new DateTime( 2021, 8, 1, 0, 1, 0 ), false, IsoDayOfWeek.Sunday, 2021, 32,
                 Duration.FromHours( 168 ).AddMinutes( 58 )
             },
             {
-                new DateTime( 2021, 7, 1 ),
-                positiveTimeZone2,
-                new DateTime( 2021, 7, 1, 0, 59, 0 ),
-                false,
-                IsoDayOfWeek.Thursday,
-                2021,
-                27,
+                new DateTime( 2021, 7, 1 ), positiveTimeZone2, new DateTime( 2021, 7, 1, 0, 59, 0 ), false, IsoDayOfWeek.Thursday, 2021, 27,
                 Duration.FromHours( 168 ).SubtractMinutes( 58 )
             },
             {
-                new DateTime( 2021, 6, 1 ),
-                positiveTimeZone3,
-                new DateTime( 2021, 6, 1, 1, 0, 0 ),
-                false,
-                IsoDayOfWeek.Tuesday,
-                2021,
-                23,
+                new DateTime( 2021, 6, 1 ), positiveTimeZone3, new DateTime( 2021, 6, 1, 1, 0, 0 ), false, IsoDayOfWeek.Tuesday, 2021, 23,
                 Duration.FromHours( 168 )
             },
             {
-                new DateTime( 2021, 8, 1 ),
-                negativeTimeZone1,
-                new DateTime( 2021, 8, 1, 0, 1, 0 ),
-                true,
-                IsoDayOfWeek.Sunday,
-                2021,
-                32,
+                new DateTime( 2021, 8, 1 ), negativeTimeZone1, new DateTime( 2021, 8, 1, 0, 1, 0 ), true, IsoDayOfWeek.Sunday, 2021, 32,
                 Duration.FromHours( 168 ).AddMinutes( 58 )
             },
             {
-                new DateTime( 2021, 7, 1 ),
-                negativeTimeZone2,
-                new DateTime( 2021, 7, 1, 0, 59, 0 ),
-                true,
-                IsoDayOfWeek.Thursday,
-                2021,
-                27,
+                new DateTime( 2021, 7, 1 ), negativeTimeZone2, new DateTime( 2021, 7, 1, 0, 59, 0 ), true, IsoDayOfWeek.Thursday, 2021, 27,
                 Duration.FromHours( 168 ).SubtractMinutes( 58 )
             },
             {
-                new DateTime( 2021, 6, 1 ),
-                negativeTimeZone3,
-                new DateTime( 2021, 6, 1, 1, 0, 0 ),
-                true,
-                IsoDayOfWeek.Tuesday,
-                2021,
-                23,
+                new DateTime( 2021, 6, 1 ), negativeTimeZone3, new DateTime( 2021, 6, 1, 1, 0, 0 ), true, IsoDayOfWeek.Tuesday, 2021, 23,
                 Duration.FromHours( 168 )
             }
         };
@@ -825,64 +601,28 @@ public class ZonedWeekTestsData
         return new TheoryData<DateTime, TimeZoneInfo, DateTime, bool, IsoDayOfWeek, int, int, Duration>
         {
             {
-                new DateTime( 2021, 8, 31 ),
-                positiveTimeZone1,
-                new DateTime( 2021, 8, 31, 23, 58, 59, 999 ).AddTicks( 9999 ),
-                true,
-                IsoDayOfWeek.Wednesday,
-                2021,
-                35,
-                Duration.FromHours( 168 ).AddMinutes( 58 )
+                new DateTime( 2021, 8, 31 ), positiveTimeZone1, new DateTime( 2021, 8, 31, 23, 58, 59, 999 ).AddTicks( 9999 ), true,
+                IsoDayOfWeek.Wednesday, 2021, 35, Duration.FromHours( 168 ).AddMinutes( 58 )
             },
             {
-                new DateTime( 2021, 7, 31 ),
-                positiveTimeZone2,
-                new DateTime( 2021, 7, 31, 23, 0, 59, 999 ).AddTicks( 9999 ),
-                true,
-                IsoDayOfWeek.Sunday,
-                2021,
-                31,
-                Duration.FromHours( 168 ).SubtractMinutes( 58 )
+                new DateTime( 2021, 7, 31 ), positiveTimeZone2, new DateTime( 2021, 7, 31, 23, 0, 59, 999 ).AddTicks( 9999 ), true,
+                IsoDayOfWeek.Sunday, 2021, 31, Duration.FromHours( 168 ).SubtractMinutes( 58 )
             },
             {
-                new DateTime( 2021, 6, 30 ),
-                positiveTimeZone3,
-                new DateTime( 2021, 6, 30, 22, 59, 59, 999 ).AddTicks( 9999 ),
-                true,
-                IsoDayOfWeek.Thursday,
-                2021,
-                26,
-                Duration.FromHours( 168 )
+                new DateTime( 2021, 6, 30 ), positiveTimeZone3, new DateTime( 2021, 6, 30, 22, 59, 59, 999 ).AddTicks( 9999 ), true,
+                IsoDayOfWeek.Thursday, 2021, 26, Duration.FromHours( 168 )
             },
             {
-                new DateTime( 2021, 8, 31 ),
-                negativeTimeZone1,
-                new DateTime( 2021, 8, 31, 23, 58, 59, 999 ).AddTicks( 9999 ),
-                false,
-                IsoDayOfWeek.Wednesday,
-                2021,
-                35,
-                Duration.FromHours( 168 ).AddMinutes( 58 )
+                new DateTime( 2021, 8, 31 ), negativeTimeZone1, new DateTime( 2021, 8, 31, 23, 58, 59, 999 ).AddTicks( 9999 ), false,
+                IsoDayOfWeek.Wednesday, 2021, 35, Duration.FromHours( 168 ).AddMinutes( 58 )
             },
             {
-                new DateTime( 2021, 7, 31 ),
-                negativeTimeZone2,
-                new DateTime( 2021, 7, 31, 23, 0, 59, 999 ).AddTicks( 9999 ),
-                false,
-                IsoDayOfWeek.Sunday,
-                2021,
-                31,
-                Duration.FromHours( 168 ).SubtractMinutes( 58 )
+                new DateTime( 2021, 7, 31 ), negativeTimeZone2, new DateTime( 2021, 7, 31, 23, 0, 59, 999 ).AddTicks( 9999 ), false,
+                IsoDayOfWeek.Sunday, 2021, 31, Duration.FromHours( 168 ).SubtractMinutes( 58 )
             },
             {
-                new DateTime( 2021, 6, 30 ),
-                negativeTimeZone3,
-                new DateTime( 2021, 6, 30, 22, 59, 59, 999 ).AddTicks( 9999 ),
-                false,
-                IsoDayOfWeek.Thursday,
-                2021,
-                26,
-                Duration.FromHours( 168 )
+                new DateTime( 2021, 6, 30 ), negativeTimeZone3, new DateTime( 2021, 6, 30, 22, 59, 59, 999 ).AddTicks( 9999 ), false,
+                IsoDayOfWeek.Thursday, 2021, 26, Duration.FromHours( 168 )
             }
         };
     }
@@ -1161,9 +901,7 @@ public class ZonedWeekTestsData
             { week, timeZone, new Period( 1, 2, 3, 15, 22, 90, 1700, 80000, 18000000, 20000000 ), new DateTime( 2022, 11, 6 ) },
             { week, timeZoneWithDaylightSaving, Period.FromMonths( 1 ).AddDays( 25 ).AddHours( 2 ), new DateTime( 2021, 9, 26 ) },
             {
-                week,
-                timeZoneWithDaylightSaving,
-                Period.FromMonths( 1 ).AddDays( 25 ).AddHours( 3 ).SubtractTicks( 1 ),
+                week, timeZoneWithDaylightSaving, Period.FromMonths( 1 ).AddDays( 25 ).AddHours( 3 ).SubtractTicks( 1 ),
                 new DateTime( 2021, 9, 26 )
             },
             { week, timeZone, Period.FromTicks( -1 ), new DateTime( 2021, 7, 25 ) }
@@ -1310,8 +1048,7 @@ public class ZonedWeekTestsData
         return new TheoryData<DateTime, TimeZoneInfo, IReadOnlyList<DateTime>>
         {
             {
-                new DateTime( 2021, 1, 4 ),
-                timeZone,
+                new DateTime( 2021, 1, 4 ), timeZone,
                 new[]
                 {
                     new DateTime( 2021, 1, 4 ),
@@ -1324,8 +1061,7 @@ public class ZonedWeekTestsData
                 }
             },
             {
-                new DateTime( 2020, 12, 31 ),
-                timeZone,
+                new DateTime( 2020, 12, 31 ), timeZone,
                 new[]
                 {
                     new DateTime( 2020, 12, 31 ),
@@ -1338,8 +1074,7 @@ public class ZonedWeekTestsData
                 }
             },
             {
-                new DateTime( 2020, 12, 27 ),
-                timeZone,
+                new DateTime( 2020, 12, 27 ), timeZone,
                 new[]
                 {
                     new DateTime( 2020, 12, 27 ),

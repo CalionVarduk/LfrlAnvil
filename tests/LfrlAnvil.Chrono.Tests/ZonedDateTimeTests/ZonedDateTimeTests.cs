@@ -655,8 +655,7 @@ public class ZonedDateTimeTests : TestsBase
         var result = sut.Add( durationToAdd );
 
         var daylightSavingOffset = timeZone.GetAdjustmentRules()[0].DaylightDelta;
-        var expectedUtcOffset = sut.UtcOffset +
-            new Duration( sut.IsInDaylightSavingTime ? -daylightSavingOffset : daylightSavingOffset );
+        var expectedUtcOffset = sut.UtcOffset + new Duration( sut.IsInDaylightSavingTime ? -daylightSavingOffset : daylightSavingOffset );
 
         using ( new AssertionScope() )
         {
@@ -687,8 +686,7 @@ public class ZonedDateTimeTests : TestsBase
         var result = sut.Add( durationToAdd );
 
         var daylightSavingOffset = timeZone.GetAdjustmentRules()[0].DaylightDelta;
-        var expectedUtcOffset = new Duration(
-            timeZone.BaseUtcOffset.Ticks + (isInDaylightSavingTime ? daylightSavingOffset.Ticks : 0) );
+        var expectedUtcOffset = new Duration( timeZone.BaseUtcOffset.Ticks + (isInDaylightSavingTime ? daylightSavingOffset.Ticks : 0) );
 
         using ( new AssertionScope() )
         {
@@ -1197,7 +1195,7 @@ public class ZonedDateTimeTests : TestsBase
 
         action.Should()
             .ThrowExactly<InvalidZonedDateTimeException>()
-            .AndMatch( e => e.DateTime == dateTime.Date + (TimeSpan)newTime && ReferenceEquals( e.TimeZone, timeZone ) );
+            .AndMatch( e => e.DateTime == dateTime.Date + ( TimeSpan )newTime && ReferenceEquals( e.TimeZone, timeZone ) );
     }
 
     [Theory]
@@ -1362,7 +1360,7 @@ public class ZonedDateTimeTests : TestsBase
 
         var sut = ZonedDateTime.Create( value, timeZone );
 
-        var result = (DateTime)sut;
+        var result = ( DateTime )sut;
 
         result.Should().Be( sut.Value );
     }
@@ -1375,7 +1373,7 @@ public class ZonedDateTimeTests : TestsBase
 
         var sut = ZonedDateTime.Create( value, timeZone );
 
-        var result = (Timestamp)sut;
+        var result = ( Timestamp )sut;
 
         result.Should().Be( sut.Timestamp );
     }

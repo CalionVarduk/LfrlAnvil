@@ -17,7 +17,7 @@ public readonly record struct SqlAsyncQueryReaderExecutor(SqlAsyncQueryReader Re
         CancellationToken cancellationToken = default)
     {
         command.CommandText = Sql;
-        await using var reader = await ((DbCommand)command).ExecuteReaderAsync( cancellationToken ).ConfigureAwait( false );
+        await using var reader = await (( DbCommand )command).ExecuteReaderAsync( cancellationToken ).ConfigureAwait( false );
         return await Reader.ReadAsync( reader, options, cancellationToken ).ConfigureAwait( false );
     }
 }
@@ -33,7 +33,7 @@ public readonly record struct SqlAsyncQueryReaderExecutor<TRow>(SqlAsyncQueryRea
         CancellationToken cancellationToken = default)
     {
         command.CommandText = Sql;
-        await using var reader = await ((DbCommand)command).ExecuteReaderAsync( cancellationToken ).ConfigureAwait( false );
+        await using var reader = await (( DbCommand )command).ExecuteReaderAsync( cancellationToken ).ConfigureAwait( false );
         return await Reader.ReadAsync( reader, options, cancellationToken ).ConfigureAwait( false );
     }
 }

@@ -758,8 +758,7 @@ INNER JOIN `_{GUID}` ON (`common`.`foo`.`a` = `_{GUID}`.`ID_a_0`) AND (`common`.
                 dataSource.ToUpdate(
                     s => new[]
                     {
-                        s["f"]["b"].Assign( s["f"]["b"] + s["bar"]["b"] ),
-                        s["f"]["c"].Assign( s["f"]["c"] + SqlNode.Literal( 1 ) )
+                        s["f"]["b"].Assign( s["f"]["b"] + s["bar"]["b"] ), s["f"]["c"].Assign( s["f"]["c"] + SqlNode.Literal( 1 ) )
                     } ) );
 
             sut.Context.Sql.ToString()
@@ -793,8 +792,7 @@ INNER JOIN `_{GUID}` ON `common`.`foo`.`a` = `_{GUID}`.`ID_a_0` SET
                 dataSource.ToUpdate(
                     s => new[]
                     {
-                        s["f"]["c"].Assign( s["f"]["c"] + s["bar"]["c"] ),
-                        s["f"]["d"].Assign( s["f"]["d"] + SqlNode.Literal( 1 ) )
+                        s["f"]["c"].Assign( s["f"]["c"] + s["bar"]["c"] ), s["f"]["d"].Assign( s["f"]["d"] + SqlNode.Literal( 1 ) )
                     } ) );
 
             sut.Context.Sql.ToString()

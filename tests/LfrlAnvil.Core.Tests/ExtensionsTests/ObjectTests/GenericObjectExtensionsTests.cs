@@ -24,10 +24,7 @@ public abstract class GenericObjectExtensionsTests<T> : TestsBase
         var sourceCount = 3;
         var @delegate = Substitute.For<Func<int, T>>().WithAnyArgs( _ => Fixture.Create<T>() );
 
-        var sut = new
-        {
-            Values = Enumerable.Range( 0, sourceCount ).Select( @delegate )
-        };
+        var sut = new { Values = Enumerable.Range( 0, sourceCount ).Select( @delegate ) };
 
         var result = sut.Memoize( o => o.Values );
 
@@ -41,10 +38,7 @@ public abstract class GenericObjectExtensionsTests<T> : TestsBase
     [Fact]
     public void Memoize_ShouldReturnSource_WhenSourceIsAlreadyMemoized()
     {
-        var sut = new
-        {
-            Values = Fixture.CreateMany<T>().Memoize()
-        };
+        var sut = new { Values = Fixture.CreateMany<T>().Memoize() };
 
         var result = sut.Memoize( o => o.Values );
 
@@ -139,7 +133,12 @@ public abstract class GenericObjectExtensionsTests<T> : TestsBase
     public void VisitMany_WithStopPredicate_ShouldReturnResultAccordingToBreadthFirstTraversal()
     {
         var values = Fixture.CreateDistinctCollection<T>( 11 ).ToList();
-        var valuesToStopAt = new HashSet<T> { values[1], values[6] };
+        var valuesToStopAt = new HashSet<T>
+        {
+            values[1],
+            values[6]
+        };
+
         T?[] expected = { values[1], values[2], values[3], values[6] };
 
         var children = new[]
@@ -294,7 +293,12 @@ public abstract class GenericObjectExtensionsTests<T> : TestsBase
     public void VisitManyWithSelf_WithStopPredicate_ShouldReturnResultAccordingToBreadthFirstTraversal()
     {
         var values = Fixture.CreateDistinctCollection<T>( 11 ).ToList();
-        var valuesToStopAt = new HashSet<T> { values[1], values[6] };
+        var valuesToStopAt = new HashSet<T>
+        {
+            values[1],
+            values[6]
+        };
+
         T?[] expected = { values[0], values[1], values[2], values[3], values[6] };
 
         var children = new[]

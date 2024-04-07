@@ -227,7 +227,7 @@ public class SqlNodeInterpreterContextTests : TestsBase
         using ( new AssertionScope() )
         {
             sut.Parameters.Should().HaveCount( 1 );
-            sut.Parameters.Should().BeEquivalentTo( KeyValuePair.Create( name, (TypeNullability?)type ) );
+            sut.Parameters.Should().BeEquivalentTo( KeyValuePair.Create( name, ( TypeNullability? )type ) );
         }
     }
 
@@ -244,7 +244,7 @@ public class SqlNodeInterpreterContextTests : TestsBase
         using ( new AssertionScope() )
         {
             sut.Parameters.Should().HaveCount( 1 );
-            sut.Parameters.Should().BeEquivalentTo( KeyValuePair.Create( name, (TypeNullability?)type ) );
+            sut.Parameters.Should().BeEquivalentTo( KeyValuePair.Create( name, ( TypeNullability? )type ) );
         }
     }
 
@@ -262,7 +262,7 @@ public class SqlNodeInterpreterContextTests : TestsBase
         using ( new AssertionScope() )
         {
             sut.Parameters.Should().HaveCount( 1 );
-            sut.Parameters.Should().BeEquivalentTo( KeyValuePair.Create( name, (TypeNullability?)null ) );
+            sut.Parameters.Should().BeEquivalentTo( KeyValuePair.Create( name, ( TypeNullability? )null ) );
         }
     }
 
@@ -283,8 +283,8 @@ public class SqlNodeInterpreterContextTests : TestsBase
             sut.Parameters.Should().HaveCount( 2 );
             sut.Parameters.Should()
                 .BeEquivalentTo(
-                    KeyValuePair.Create( firstName, (TypeNullability?)firstType ),
-                    KeyValuePair.Create( secondName, (TypeNullability?)secondType ) );
+                    KeyValuePair.Create( firstName, ( TypeNullability? )firstType ),
+                    KeyValuePair.Create( secondName, ( TypeNullability? )secondType ) );
         }
     }
 

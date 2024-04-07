@@ -121,9 +121,9 @@ public class ParsedExpressionTests : TestsBase
         var sut = factory.Create<decimal, decimal>( input );
 
         var result = sut.BindArguments(
-            KeyValuePair.Create( (StringSegment)"b", bValue ),
-            KeyValuePair.Create( (StringSegment)"c", cValue ),
-            KeyValuePair.Create( (StringSegment)"e", eValue ) );
+            KeyValuePair.Create( ( StringSegment )"b", bValue ),
+            KeyValuePair.Create( ( StringSegment )"c", cValue ),
+            KeyValuePair.Create( ( StringSegment )"e", eValue ) );
 
         using ( new AssertionScope() )
         {
@@ -201,12 +201,7 @@ public class ParsedExpressionTests : TestsBase
         var sut = factory.Create<decimal, decimal>( input );
 
         var result = sut.BindArguments(
-            new[]
-                {
-                    KeyValuePair.Create( 1, 0m ),
-                    KeyValuePair.Create( 2, 0m ),
-                    KeyValuePair.Create( 4, 0m )
-                }
+            new[] { KeyValuePair.Create( 1, 0m ), KeyValuePair.Create( 2, 0m ), KeyValuePair.Create( 4, 0m ) }
                 .Where( _ => false ) );
 
         result.Should().BeSameAs( sut );
@@ -419,7 +414,7 @@ public class ParsedExpressionTests : TestsBase
         var factory = builder.Build();
         IParsedExpression<decimal, decimal> sut = factory.Create<decimal, decimal>( input );
 
-        var result = sut.BindArguments( new[] { KeyValuePair.Create( (StringSegment)"a", aValue ) }.AsEnumerable() );
+        var result = sut.BindArguments( new[] { KeyValuePair.Create( ( StringSegment )"a", aValue ) }.AsEnumerable() );
         var @delegate = result.Compile();
         var resultValue = @delegate.Invoke( bValue );
 
@@ -440,7 +435,7 @@ public class ParsedExpressionTests : TestsBase
         var factory = builder.Build();
         IParsedExpression<decimal, decimal> sut = factory.Create<decimal, decimal>( input );
 
-        var result = sut.BindArguments( KeyValuePair.Create( (StringSegment)"a", aValue ) );
+        var result = sut.BindArguments( KeyValuePair.Create( ( StringSegment )"a", aValue ) );
         var @delegate = result.Compile();
         var resultValue = @delegate.Invoke( bValue );
 

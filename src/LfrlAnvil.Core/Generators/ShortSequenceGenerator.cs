@@ -25,6 +25,6 @@ public class ShortSequenceGenerator : SequenceGeneratorBase<short>
 
     protected sealed override short AddStep(short value)
     {
-        return checked( (short)(value + Step) );
+        return checked( ( short )(value + Step) );
     }
 }

@@ -56,8 +56,8 @@ public abstract class SqlConstraintBuilderCollection : SqlBuilderApi, ISqlConstr
     [Pure]
     public SqlPrimaryKeyBuilder GetPrimaryKey()
     {
-        return TryGetPrimaryKey() ??
-            throw SqlHelpers.CreateObjectBuilderException( Table.Database, ExceptionResources.PrimaryKeyIsMissing( Table ) );
+        return TryGetPrimaryKey()
+            ?? throw SqlHelpers.CreateObjectBuilderException( Table.Database, ExceptionResources.PrimaryKeyIsMissing( Table ) );
     }
 
     [Pure]

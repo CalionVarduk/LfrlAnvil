@@ -103,7 +103,7 @@ public class MySqlDataTypeProviderTests : TestsBase
     [InlineData( 65, 30, "DECIMAL(65, 30)" )]
     public void GetDecimal_WithParameters_ShouldReturnCorrectDecimal(int precision, int scale, string expected)
     {
-        var sut = (MySqlDataType)_sut.GetDecimal( precision, scale );
+        var sut = ( MySqlDataType )_sut.GetDecimal( precision, scale );
 
         using ( new AssertionScope() )
         {
@@ -149,7 +149,7 @@ public class MySqlDataTypeProviderTests : TestsBase
     [InlineData( 65535, "VARCHAR(65535)" )]
     public void GetString_WithMaxLength_ShouldReturnCorrectVarChar_WhenMaxLengthIsInVarCharBounds(int maxLength, string expected)
     {
-        var sut = (MySqlDataType)_sut.GetString( maxLength );
+        var sut = ( MySqlDataType )_sut.GetString( maxLength );
 
         using ( new AssertionScope() )
         {
@@ -190,7 +190,7 @@ public class MySqlDataTypeProviderTests : TestsBase
     [InlineData( 255, "CHAR(255)" )]
     public void GetFixedString_WithLength_ShouldReturnCorrectChar_WhenLengthIsInCharBounds(int length, string expected)
     {
-        var sut = (MySqlDataType)_sut.GetFixedString( length );
+        var sut = ( MySqlDataType )_sut.GetFixedString( length );
 
         using ( new AssertionScope() )
         {
@@ -211,7 +211,7 @@ public class MySqlDataTypeProviderTests : TestsBase
         int length,
         string expected)
     {
-        var sut = (MySqlDataType)_sut.GetFixedString( length );
+        var sut = ( MySqlDataType )_sut.GetFixedString( length );
 
         using ( new AssertionScope() )
         {
@@ -294,7 +294,7 @@ public class MySqlDataTypeProviderTests : TestsBase
     [InlineData( 65535, "VARBINARY(65535)" )]
     public void GetBinary_WithMaxLength_ShouldReturnCorrectVarBinary_WhenMaxLengthIsInVarBinaryBounds(int maxLength, string expected)
     {
-        var sut = (MySqlDataType)_sut.GetBinary( maxLength );
+        var sut = ( MySqlDataType )_sut.GetBinary( maxLength );
 
         using ( new AssertionScope() )
         {
@@ -335,7 +335,7 @@ public class MySqlDataTypeProviderTests : TestsBase
     [InlineData( 255, "BINARY(255)" )]
     public void GetFixedBinary_WithLength_ShouldReturnCorrectBinary_WhenLengthIsInBinaryBounds(int length, string expected)
     {
-        var sut = (MySqlDataType)_sut.GetFixedBinary( length );
+        var sut = ( MySqlDataType )_sut.GetFixedBinary( length );
 
         using ( new AssertionScope() )
         {
@@ -356,7 +356,7 @@ public class MySqlDataTypeProviderTests : TestsBase
         int length,
         string expected)
     {
-        var sut = (MySqlDataType)_sut.GetFixedBinary( length );
+        var sut = ( MySqlDataType )_sut.GetFixedBinary( length );
 
         using ( new AssertionScope() )
         {

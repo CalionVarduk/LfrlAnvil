@@ -51,8 +51,7 @@ public readonly struct Bounds<T> : IEquatable<Bounds<T>>
     [Pure]
     public bool Equals(Bounds<T> other)
     {
-        return Equality.Create( Min, other.Min ).Result &&
-            Equality.Create( Max, other.Max ).Result;
+        return Equality.Create( Min, other.Min ).Result && Equality.Create( Max, other.Max ).Result;
     }
 
     [Pure]
@@ -132,8 +131,8 @@ public readonly struct Bounds<T> : IEquatable<Bounds<T>>
     public Pair<Bounds<T>, Bounds<T>?> SplitAt(T value)
     {
         return ContainsExclusively( value )
-            ? Pair.Create( new Bounds<T>( (Min, value) ), (Bounds<T>?)new Bounds<T>( (value, Max) ) )
-            : Pair.Create( this, (Bounds<T>?)null );
+            ? Pair.Create( new Bounds<T>( (Min, value) ), ( Bounds<T>? )new Bounds<T>( (value, Max) ) )
+            : Pair.Create( this, ( Bounds<T>? )null );
     }
 
     [Pure]
@@ -143,18 +142,18 @@ public readonly struct Bounds<T> : IEquatable<Bounds<T>>
         var maxComparisonResult = Max.CompareTo( other.Max );
 
         if ( minComparisonResult >= 0 && maxComparisonResult <= 0 )
-            return Pair.Create( (Bounds<T>?)null, (Bounds<T>?)null );
+            return Pair.Create( ( Bounds<T>? )null, ( Bounds<T>? )null );
 
         if ( minComparisonResult > 0 || maxComparisonResult < 0 )
-            return Pair.Create( (Bounds<T>?)this, (Bounds<T>?)null );
+            return Pair.Create( ( Bounds<T>? )this, ( Bounds<T>? )null );
 
         if ( minComparisonResult == 0 )
-            return Pair.Create( (Bounds<T>?)new Bounds<T>( (other.Max, Max) ), (Bounds<T>?)null );
+            return Pair.Create( ( Bounds<T>? )new Bounds<T>( (other.Max, Max) ), ( Bounds<T>? )null );
 
         if ( maxComparisonResult == 0 )
-            return Pair.Create( (Bounds<T>?)new Bounds<T>( (Min, other.Min) ), (Bounds<T>?)null );
+            return Pair.Create( ( Bounds<T>? )new Bounds<T>( (Min, other.Min) ), ( Bounds<T>? )null );
 
-        return Pair.Create( (Bounds<T>?)new Bounds<T>( (Min, other.Min) ), (Bounds<T>?)new Bounds<T>( (other.Max, Max) ) );
+        return Pair.Create( ( Bounds<T>? )new Bounds<T>( (Min, other.Min) ), ( Bounds<T>? )new Bounds<T>( (other.Max, Max) ) );
     }
 
     [Pure]

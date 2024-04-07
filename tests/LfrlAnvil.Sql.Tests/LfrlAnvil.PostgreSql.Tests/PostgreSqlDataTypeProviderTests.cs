@@ -104,7 +104,7 @@ public class PostgreSqlDataTypeProviderTests : TestsBase
     [InlineData( 1000, -1000, "DECIMAL(1000, -1000)" )]
     public void GetDecimal_WithParameters_ShouldReturnCorrectDecimal(int precision, int scale, string expected)
     {
-        var sut = (PostgreSqlDataType)_sut.GetDecimal( precision, scale );
+        var sut = ( PostgreSqlDataType )_sut.GetDecimal( precision, scale );
 
         using ( new AssertionScope() )
         {
@@ -155,7 +155,7 @@ public class PostgreSqlDataTypeProviderTests : TestsBase
     [InlineData( 10485760, "VARCHAR(10485760)" )]
     public void GetString_WithMaxLength_ShouldReturnCorrectVarChar_WhenMaxLengthIsInVarCharBounds(int maxLength, string expected)
     {
-        var sut = (PostgreSqlDataType)_sut.GetString( maxLength );
+        var sut = ( PostgreSqlDataType )_sut.GetString( maxLength );
 
         using ( new AssertionScope() )
         {
@@ -195,7 +195,7 @@ public class PostgreSqlDataTypeProviderTests : TestsBase
     [InlineData( 10485760, "VARCHAR(10485760)" )]
     public void GetFixedString_WithLength_ShouldReturnCorrectVarChar_WhenLengthIsInVarCharBounds(int length, string expected)
     {
-        var sut = (PostgreSqlDataType)_sut.GetFixedString( length );
+        var sut = ( PostgreSqlDataType )_sut.GetFixedString( length );
 
         using ( new AssertionScope() )
         {

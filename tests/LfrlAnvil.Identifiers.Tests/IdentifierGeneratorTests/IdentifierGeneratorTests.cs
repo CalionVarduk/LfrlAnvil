@@ -211,8 +211,7 @@ public class IdentifierGeneratorTests : TestsBase
             Identifier expected)
     {
         var lowValueCount = @params.LowValueBounds.Max - @params.LowValueBounds.Min + 1;
-        var timestampProvider = GetTimestampProviderMock(
-            Repeat( startTimestamp, lowValueCount + 2 ).Append( futureTimestamp ).ToArray() );
+        var timestampProvider = GetTimestampProviderMock( Repeat( startTimestamp, lowValueCount + 2 ).Append( futureTimestamp ).ToArray() );
 
         var sut = new IdentifierGenerator( timestampProvider, @params );
         GenerateRange( sut, lowValueCount );
@@ -227,7 +226,7 @@ public class IdentifierGeneratorTests : TestsBase
     {
         var startTimestamp = Timestamp.Zero;
         var maxTimestamp = new Timestamp( DateTime.MaxValue ).Subtract( Duration.FromMilliseconds( 1 ).SubtractTicks( 1 ) );
-        var expected = new Identifier( (ulong)maxTimestamp.Subtract( startTimestamp ).FullMilliseconds, 0 );
+        var expected = new Identifier( ( ulong )maxTimestamp.Subtract( startTimestamp ).FullMilliseconds, 0 );
         var timestampProvider = GetTimestampProviderMock( startTimestamp, maxTimestamp );
 
         var sut = new IdentifierGenerator( timestampProvider );
@@ -374,8 +373,7 @@ public class IdentifierGeneratorTests : TestsBase
             Identifier expected)
     {
         var lowValueCount = @params.LowValueBounds.Max - @params.LowValueBounds.Min + 1;
-        var timestampProvider = GetTimestampProviderMock(
-            Repeat( startTimestamp, lowValueCount + 2 ).Append( futureTimestamp ).ToArray() );
+        var timestampProvider = GetTimestampProviderMock( Repeat( startTimestamp, lowValueCount + 2 ).Append( futureTimestamp ).ToArray() );
 
         var sut = new IdentifierGenerator( timestampProvider, @params );
         GenerateRange( sut, lowValueCount );
@@ -394,7 +392,7 @@ public class IdentifierGeneratorTests : TestsBase
     {
         var startTimestamp = Timestamp.Zero;
         var maxTimestamp = new Timestamp( DateTime.MaxValue ).Subtract( Duration.FromMilliseconds( 1 ).SubtractTicks( 1 ) );
-        var expected = new Identifier( (ulong)maxTimestamp.Subtract( startTimestamp ).FullMilliseconds, 0 );
+        var expected = new Identifier( ( ulong )maxTimestamp.Subtract( startTimestamp ).FullMilliseconds, 0 );
         var timestampProvider = GetTimestampProviderMock( startTimestamp, maxTimestamp );
 
         var sut = new IdentifierGenerator( timestampProvider );
@@ -580,8 +578,7 @@ public class IdentifierGeneratorTests : TestsBase
     {
         var startTimestamp = @params.BaseTimestamp;
         var lowValueCount = @params.LowValueBounds.Max - @params.LowValueBounds.Min + 1;
-        var timestampProvider = GetTimestampProviderMock(
-            Repeat( startTimestamp, lowValueCount + 2 ).Append( nextTimestamp ).ToArray() );
+        var timestampProvider = GetTimestampProviderMock( Repeat( startTimestamp, lowValueCount + 2 ).Append( nextTimestamp ).ToArray() );
 
         var sut = new IdentifierGenerator( timestampProvider, @params );
         GenerateRange( sut, lowValueCount );

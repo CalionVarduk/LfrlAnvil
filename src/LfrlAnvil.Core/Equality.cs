@@ -43,9 +43,7 @@ public readonly struct Equality<T> : IEquatable<Equality<T>>
     [Pure]
     public bool Equals(Equality<T> other)
     {
-        return Generic<T>.AreEqual( First, other.First ) &&
-            Generic<T>.AreEqual( Second, other.Second ) &&
-            Result == other.Result;
+        return Generic<T>.AreEqual( First, other.First ) && Generic<T>.AreEqual( Second, other.Second ) && Result == other.Result;
     }
 
     [Pure]

@@ -9,28 +9,28 @@ public static class SqlColumnTypeDefinitionExtensions
     public static ISqlColumnTypeDefinition<T> GetByType<T>(this ISqlColumnTypeDefinitionProvider provider)
         where T : notnull
     {
-        return (ISqlColumnTypeDefinition<T>)provider.GetByType( typeof( T ) );
+        return ( ISqlColumnTypeDefinition<T> )provider.GetByType( typeof( T ) );
     }
 
     [Pure]
     public static ISqlColumnTypeDefinition<T>? TryGetByType<T>(this ISqlColumnTypeDefinitionProvider provider)
         where T : notnull
     {
-        return (ISqlColumnTypeDefinition<T>?)provider.TryGetByType( typeof( T ) );
+        return ( ISqlColumnTypeDefinition<T>? )provider.TryGetByType( typeof( T ) );
     }
 
     [Pure]
     public static SqlColumnTypeDefinition<T> GetByType<T>(this SqlColumnTypeDefinitionProvider provider)
         where T : notnull
     {
-        return (SqlColumnTypeDefinition<T>)provider.GetByType( typeof( T ) );
+        return ( SqlColumnTypeDefinition<T> )provider.GetByType( typeof( T ) );
     }
 
     [Pure]
     public static SqlColumnTypeDefinition<T>? TryGetByType<T>(this SqlColumnTypeDefinitionProvider provider)
         where T : notnull
     {
-        return (SqlColumnTypeDefinition<T>?)provider.TryGetByType( typeof( T ) );
+        return ( SqlColumnTypeDefinition<T>? )provider.TryGetByType( typeof( T ) );
     }
 
     [Pure]

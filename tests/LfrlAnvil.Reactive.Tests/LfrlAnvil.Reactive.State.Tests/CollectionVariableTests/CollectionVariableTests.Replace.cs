@@ -177,9 +177,9 @@ public partial class CollectionVariableTests
             sut.Elements.GetState( element.Key )
                 .Should()
                 .Be(
-                    CollectionVariableElementState.Changed |
-                    CollectionVariableElementState.Invalid |
-                    CollectionVariableElementState.Warning );
+                    CollectionVariableElementState.Changed
+                    | CollectionVariableElementState.Invalid
+                    | CollectionVariableElementState.Warning );
 
             sut.Elements.GetErrors( element.Key ).Should().BeSequentiallyEqualTo( elementError );
             sut.Elements.GetWarnings( element.Key ).Should().BeSequentiallyEqualTo( elementWarning );

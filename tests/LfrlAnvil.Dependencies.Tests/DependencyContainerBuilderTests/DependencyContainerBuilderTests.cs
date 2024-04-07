@@ -22,9 +22,9 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
         sut.Configuration.InjectablePropertyType.Should().BeSameAs( typeof( Injected<> ) );
         sut.Configuration.OptionalDependencyAttributeType.Should().BeSameAs( typeof( OptionalDependencyAttribute ) );
         sut.Configuration.TreatCaptiveDependenciesAsErrors.Should().BeFalse();
-        ((IDependencyLocatorBuilder)sut).KeyType.Should().BeNull();
-        ((IDependencyLocatorBuilder)sut).Key.Should().BeNull();
-        ((IDependencyLocatorBuilder)sut).IsKeyed.Should().BeFalse();
+        (( IDependencyLocatorBuilder )sut).KeyType.Should().BeNull();
+        (( IDependencyLocatorBuilder )sut).Key.Should().BeNull();
+        (( IDependencyLocatorBuilder )sut).IsKeyed.Should().BeFalse();
     }
 
     [Theory]
@@ -51,7 +51,7 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
     public void SetDefaultLifetime_ShouldThrowArgumentException_WhenValueIsNotValid()
     {
         var sut = new DependencyContainerBuilder();
-        var action = Lambda.Of( () => { sut.SetDefaultLifetime( (DependencyLifetime)4 ); } );
+        var action = Lambda.Of( () => { sut.SetDefaultLifetime( ( DependencyLifetime )4 ); } );
         action.Should().ThrowExactly<ArgumentException>();
     }
 
@@ -205,7 +205,7 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
         using ( new AssertionScope() )
         {
             result.Key.Should().Be( key );
-            ((IDependencyLocatorBuilder)result).Key.Should().Be( key );
+            (( IDependencyLocatorBuilder )result).Key.Should().Be( key );
             result.KeyType.Should().Be( typeof( int ) );
             result.IsKeyed.Should().BeTrue();
         }
@@ -501,7 +501,7 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
         var sut = new DependencyContainerBuilder();
         var builder = sut.Add( typeof( IFoo ) );
 
-        var action = Lambda.Of( () => { builder.SetLifetime( (DependencyLifetime)4 ); } );
+        var action = Lambda.Of( () => { builder.SetLifetime( ( DependencyLifetime )4 ); } );
 
         action.Should().ThrowExactly<ArgumentException>();
     }

@@ -34,8 +34,8 @@ public class SqliteDatabaseTests : TestsBase
             sut.Schemas.Default.Name.Should().BeEmpty();
             sut.Schemas.Should().BeSequentiallyEqualTo( sut.Schemas.Default );
             sut.Connector.Database.Should().BeSameAs( sut );
-            ((ISqlDatabaseConnector<DbConnection>)sut.Connector).Database.Should().BeSameAs( sut );
-            ((ISqlDatabaseConnector)sut.Connector).Database.Should().BeSameAs( sut );
+            (( ISqlDatabaseConnector<DbConnection> )sut.Connector).Database.Should().BeSameAs( sut );
+            (( ISqlDatabaseConnector )sut.Connector).Database.Should().BeSameAs( sut );
         }
     }
 
@@ -145,7 +145,7 @@ public class SqliteDatabaseTests : TestsBase
         ISqlDatabase sut = factory.Create( "DataSource=:memory:", new SqlDatabaseVersionHistory() ).Database;
 
         var first = await sut.Connector.ConnectAsync();
-        var second = await ((ISqlDatabaseConnector<DbConnection>)sut.Connector).ConnectAsync();
+        var second = await (( ISqlDatabaseConnector<DbConnection> )sut.Connector).ConnectAsync();
 
         first.Should().BeSameAs( second );
     }

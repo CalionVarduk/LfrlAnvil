@@ -8,7 +8,7 @@ public class ArithmeticExtensionsTestsData
     {
         var result = new TheoryData<float, float, float>();
         foreach ( var (a, b, r) in GetEuclidModuloRealData() )
-            result.Add( (float)a, (float)b, (float)r );
+            result.Add( ( float )a, ( float )b, ( float )r );
 
         return result;
     }
@@ -17,7 +17,7 @@ public class ArithmeticExtensionsTestsData
     {
         var result = new TheoryData<double, double, double>();
         foreach ( var (a, b, r) in GetEuclidModuloRealData() )
-            result.Add( (double)a, (double)b, (double)r );
+            result.Add( ( double )a, ( double )b, ( double )r );
 
         return result;
     }
@@ -71,7 +71,7 @@ public class ArithmeticExtensionsTestsData
     {
         var result = new TheoryData<ushort, ushort, ushort>();
         foreach ( var (a, b, r) in GetEuclidModuloUnsignedIntData() )
-            result.Add( (ushort)a, (ushort)b, (ushort)r );
+            result.Add( ( ushort )a, ( ushort )b, ( ushort )r );
 
         return result;
     }
@@ -80,7 +80,7 @@ public class ArithmeticExtensionsTestsData
     {
         var result = new TheoryData<short, short, short>();
         foreach ( var (a, b, r) in GetEuclidModuloSignedIntData() )
-            result.Add( (short)a, (short)b, (short)r );
+            result.Add( ( short )a, ( short )b, ( short )r );
 
         return result;
     }
@@ -89,7 +89,7 @@ public class ArithmeticExtensionsTestsData
     {
         var result = new TheoryData<byte, byte, byte>();
         foreach ( var (a, b, r) in GetEuclidModuloUnsignedIntData() )
-            result.Add( (byte)a, (byte)b, (byte)r );
+            result.Add( ( byte )a, ( byte )b, ( byte )r );
 
         return result;
     }
@@ -98,7 +98,7 @@ public class ArithmeticExtensionsTestsData
     {
         var result = new TheoryData<sbyte, sbyte, sbyte>();
         foreach ( var (a, b, r) in GetEuclidModuloSignedIntData() )
-            result.Add( (sbyte)a, (sbyte)b, (sbyte)r );
+            result.Add( ( sbyte )a, ( sbyte )b, ( sbyte )r );
 
         return result;
     }
@@ -179,7 +179,7 @@ public class ArithmeticExtensionsTestsData
     {
         var result = new TheoryData<ushort, bool>();
         foreach ( var (x, r) in GetIsEvenUnsignedIntData() )
-            result.Add( (ushort)x, r );
+            result.Add( ( ushort )x, r );
 
         return result;
     }
@@ -188,7 +188,7 @@ public class ArithmeticExtensionsTestsData
     {
         var result = new TheoryData<ushort, bool>();
         foreach ( var (x, r) in GetIsEvenUnsignedIntData() )
-            result.Add( (ushort)x, ! r );
+            result.Add( ( ushort )x, ! r );
 
         return result;
     }
@@ -197,7 +197,7 @@ public class ArithmeticExtensionsTestsData
     {
         var result = new TheoryData<short, bool>();
         foreach ( var (x, r) in GetIsEvenSignedIntData() )
-            result.Add( (short)x, r );
+            result.Add( ( short )x, r );
 
         return result;
     }
@@ -206,7 +206,7 @@ public class ArithmeticExtensionsTestsData
     {
         var result = new TheoryData<short, bool>();
         foreach ( var (x, r) in GetIsEvenSignedIntData() )
-            result.Add( (short)x, ! r );
+            result.Add( ( short )x, ! r );
 
         return result;
     }
@@ -215,7 +215,7 @@ public class ArithmeticExtensionsTestsData
     {
         var result = new TheoryData<byte, bool>();
         foreach ( var (x, r) in GetIsEvenUnsignedIntData() )
-            result.Add( (byte)x, r );
+            result.Add( ( byte )x, r );
 
         return result;
     }
@@ -224,7 +224,7 @@ public class ArithmeticExtensionsTestsData
     {
         var result = new TheoryData<byte, bool>();
         foreach ( var (x, r) in GetIsEvenUnsignedIntData() )
-            result.Add( (byte)x, ! r );
+            result.Add( ( byte )x, ! r );
 
         return result;
     }
@@ -233,7 +233,7 @@ public class ArithmeticExtensionsTestsData
     {
         var result = new TheoryData<sbyte, bool>();
         foreach ( var (x, r) in GetIsEvenSignedIntData() )
-            result.Add( (sbyte)x, r );
+            result.Add( ( sbyte )x, r );
 
         return result;
     }
@@ -242,7 +242,7 @@ public class ArithmeticExtensionsTestsData
     {
         var result = new TheoryData<sbyte, bool>();
         foreach ( var (x, r) in GetIsEvenSignedIntData() )
-            result.Add( (sbyte)x, ! r );
+            result.Add( ( sbyte )x, ! r );
 
         return result;
     }

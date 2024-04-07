@@ -14,7 +14,7 @@ public class SqlColumnTypeDefinitionProviderTests : TestsBase
     [Fact]
     public void GetTypeDefinitions_ShouldReturnAllTypeDefinitionsRegisteredByRuntimeType()
     {
-        var result = ((ISqlColumnTypeDefinitionProvider)_sut).GetTypeDefinitions();
+        var result = (( ISqlColumnTypeDefinitionProvider )_sut).GetTypeDefinitions();
 
         using ( new AssertionScope() )
         {
@@ -37,7 +37,7 @@ public class SqlColumnTypeDefinitionProviderTests : TestsBase
     [Fact]
     public void GetDataTypeDefinitions_ShouldReturnGetDataTypeDefinitionsImplementationResult()
     {
-        var result = ((ISqlColumnTypeDefinitionProvider)_sut).GetDataTypeDefinitions();
+        var result = (( ISqlColumnTypeDefinitionProvider )_sut).GetDataTypeDefinitions();
 
         using ( new AssertionScope() )
         {
@@ -57,7 +57,7 @@ public class SqlColumnTypeDefinitionProviderTests : TestsBase
     [Fact]
     public void TryGetByType_ShouldReturnCorrectTypeDefinition_WhenTypeDefinitionForRuntimeTypeExists()
     {
-        var result = ((ISqlColumnTypeDefinitionProvider)_sut).TryGetByType<long>();
+        var result = (( ISqlColumnTypeDefinitionProvider )_sut).TryGetByType<long>();
 
         using ( new AssertionScope() )
         {
@@ -77,7 +77,7 @@ public class SqlColumnTypeDefinitionProviderTests : TestsBase
     [Fact]
     public void GetByType_ShouldReturnCorrectTypeDefinition_WhenTypeDefinitionForRuntimeTypeExists()
     {
-        var result = ((ISqlColumnTypeDefinitionProvider)_sut).GetByType<long>();
+        var result = (( ISqlColumnTypeDefinitionProvider )_sut).GetByType<long>();
 
         using ( new AssertionScope() )
         {
@@ -103,7 +103,7 @@ public class SqlColumnTypeDefinitionProviderTests : TestsBase
     [Fact]
     public void Contains_ShouldReturnTrue_WhenDataTypeDefinitionExists()
     {
-        var result = _sut.Contains( ((ISqlColumnTypeDefinitionProvider)_sut).GetByDataType( SqlDataTypeMock.Integer ) );
+        var result = _sut.Contains( (( ISqlColumnTypeDefinitionProvider )_sut).GetByDataType( SqlDataTypeMock.Integer ) );
         result.Should().BeTrue();
     }
 

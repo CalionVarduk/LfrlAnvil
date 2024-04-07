@@ -31,7 +31,22 @@ public partial class SqlQueryResultTests
                 new SqlResultSetField( 3, "d" )
             };
 
-            var cells = new List<object?> { "foo", 3, true, 1.0, "bar", 3, false, 2.0, "lorem", 5, false, 5.0 };
+            var cells = new List<object?>
+            {
+                "foo",
+                3,
+                true,
+                1.0,
+                "bar",
+                3,
+                false,
+                2.0,
+                "lorem",
+                5,
+                false,
+                5.0
+            };
+
             var sut = new SqlQueryResult( resultSetFields, cells ).Rows![row];
 
             var result = sut.GetValue( ordinal );
@@ -62,7 +77,22 @@ public partial class SqlQueryResultTests
                 new SqlResultSetField( 3, "d" )
             };
 
-            var cells = new List<object?> { "foo", 3, true, 1.0, "bar", 3, false, 2.0, "lorem", 5, false, 5.0 };
+            var cells = new List<object?>
+            {
+                "foo",
+                3,
+                true,
+                1.0,
+                "bar",
+                3,
+                false,
+                2.0,
+                "lorem",
+                5,
+                false,
+                5.0
+            };
+
             var sut = new SqlQueryResult( resultSetFields, cells ).Rows![row];
 
             var result = sut.GetValue( field );
@@ -89,7 +119,22 @@ public partial class SqlQueryResultTests
                 new SqlResultSetField( 1, "b" )
             };
 
-            var cells = new List<object?> { "foo", 3, true, 1.0, "bar", 3, false, 2.0, "lorem", 5, false, 5.0 };
+            var cells = new List<object?>
+            {
+                "foo",
+                3,
+                true,
+                1.0,
+                "bar",
+                3,
+                false,
+                2.0,
+                "lorem",
+                5,
+                false,
+                5.0
+            };
+
             var sut = new SqlQueryResult( resultSetFields, cells ).Rows![row];
 
             var result = sut.AsSpan();
@@ -111,7 +156,22 @@ public partial class SqlQueryResultTests
                 new SqlResultSetField( 1, "b" )
             };
 
-            var cells = new List<object?> { "foo", 3, true, 1.0, "bar", 3, false, 2.0, "lorem", 5, false, 5.0 };
+            var cells = new List<object?>
+            {
+                "foo",
+                3,
+                true,
+                1.0,
+                "bar",
+                3,
+                false,
+                2.0,
+                "lorem",
+                5,
+                false,
+                5.0
+            };
+
             var sut = new SqlQueryResult( resultSetFields, cells ).Rows![row];
 
             var result = sut.ToArray();
@@ -133,7 +193,22 @@ public partial class SqlQueryResultTests
                 new SqlResultSetField( 1, "b" )
             };
 
-            var cells = new List<object?> { "foo", 3, true, 1.0, "bar", 3, false, 2.0, "lorem", 5, false, 5.0 };
+            var cells = new List<object?>
+            {
+                "foo",
+                3,
+                true,
+                1.0,
+                "bar",
+                3,
+                false,
+                2.0,
+                "lorem",
+                5,
+                false,
+                5.0
+            };
+
             var sut = new SqlQueryResult( resultSetFields, cells ).Rows![row];
 
             var result = sut.ToDictionary();

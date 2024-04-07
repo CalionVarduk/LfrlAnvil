@@ -52,26 +52,22 @@ internal static class TokenConstants
 
         if ( source[text.StartIndex] == 'f' )
         {
-            return source[text.StartIndex + 1] == 'a' &&
-                source[text.StartIndex + 2] == 'l' &&
-                source[text.StartIndex + 3] == 's' &&
-                source[text.StartIndex + 4] == 'e';
+            return source[text.StartIndex + 1] == 'a'
+                && source[text.StartIndex + 2] == 'l'
+                && source[text.StartIndex + 3] == 's'
+                && source[text.StartIndex + 4] == 'e';
         }
 
         if ( source[text.StartIndex] == 'F' )
         {
             if ( source[text.StartIndex + 1] == 'A' )
             {
-                return source[text.StartIndex + 2] == 'L' &&
-                    source[text.StartIndex + 3] == 'S' &&
-                    source[text.StartIndex + 4] == 'E';
+                return source[text.StartIndex + 2] == 'L' && source[text.StartIndex + 3] == 'S' && source[text.StartIndex + 4] == 'E';
             }
 
             if ( source[text.StartIndex + 1] == 'a' )
             {
-                return source[text.StartIndex + 2] == 'l' &&
-                    source[text.StartIndex + 3] == 's' &&
-                    source[text.StartIndex + 4] == 'e';
+                return source[text.StartIndex + 2] == 'l' && source[text.StartIndex + 3] == 's' && source[text.StartIndex + 4] == 'e';
             }
         }
 
@@ -87,8 +83,7 @@ internal static class TokenConstants
 
         var source = text.Source;
 
-        return source[text.StartIndex] == OpenedSquareBracket &&
-            source[text.StartIndex + 1] == ClosedSquareBracket;
+        return source[text.StartIndex] == OpenedSquareBracket && source[text.StartIndex + 1] == ClosedSquareBracket;
     }
 
     [Pure]
@@ -126,23 +121,19 @@ internal static class TokenConstants
 
         if ( source[text.StartIndex] == 'm' )
         {
-            return source[text.StartIndex + 1] == 'a' &&
-                source[text.StartIndex + 2] == 'c' &&
-                source[text.StartIndex + 3] == 'r' &&
-                source[text.StartIndex + 4] == 'o';
+            return source[text.StartIndex + 1] == 'a'
+                && source[text.StartIndex + 2] == 'c'
+                && source[text.StartIndex + 3] == 'r'
+                && source[text.StartIndex + 4] == 'o';
         }
 
         if ( source[text.StartIndex] == 'M' )
         {
             if ( source[text.StartIndex + 1] == 'A' )
-                return source[text.StartIndex + 2] == 'C' &&
-                    source[text.StartIndex + 3] == 'R' &&
-                    source[text.StartIndex + 4] == 'O';
+                return source[text.StartIndex + 2] == 'C' && source[text.StartIndex + 3] == 'R' && source[text.StartIndex + 4] == 'O';
 
             if ( source[text.StartIndex + 1] == 'a' )
-                return source[text.StartIndex + 2] == 'c' &&
-                    source[text.StartIndex + 3] == 'r' &&
-                    source[text.StartIndex + 4] == 'o';
+                return source[text.StartIndex + 2] == 'c' && source[text.StartIndex + 3] == 'r' && source[text.StartIndex + 4] == 'o';
         }
 
         return false;

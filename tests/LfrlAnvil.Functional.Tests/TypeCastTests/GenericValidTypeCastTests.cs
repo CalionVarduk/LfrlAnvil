@@ -14,10 +14,10 @@ public abstract class GenericValidTypeCastTests<TSource, TDestination> : Generic
     [GenericMethodData( nameof( GenericValidTypeCastTestsData<TSource, TDestination>.CreateEqualsTestData ) )]
     public void Equals_ShouldReturnCorrectResult(object? value1, object? value2, bool expected)
     {
-        var a = value1 is null ? TypeCast<TSource, TDestination>.Empty : (TSource)value1;
-        var b = value2 is null ? TypeCast<TSource, TDestination>.Empty : (TSource)value2;
+        var a = value1 is null ? TypeCast<TSource, TDestination>.Empty : ( TSource )value1;
+        var b = value2 is null ? TypeCast<TSource, TDestination>.Empty : ( TSource )value2;
 
-        var result = ((object)a).Equals( b );
+        var result = (( object )a).Equals( b );
 
         result.Should().Be( expected );
     }
@@ -26,7 +26,7 @@ public abstract class GenericValidTypeCastTests<TSource, TDestination> : Generic
     public void GetResult_ShouldReturnCorrectResult()
     {
         var value = Fixture.Create<TSource>();
-        var sut = (TypeCast<TSource, TDestination>)value;
+        var sut = ( TypeCast<TSource, TDestination> )value;
 
         var result = sut.GetResult();
 
@@ -37,7 +37,7 @@ public abstract class GenericValidTypeCastTests<TSource, TDestination> : Generic
     public void GetResultOrDefault_ShouldReturnCorrectResult()
     {
         var value = Fixture.Create<TSource>();
-        var sut = (TypeCast<TSource, TDestination>)value;
+        var sut = ( TypeCast<TSource, TDestination> )value;
 
         var result = sut.GetResultOrDefault();
 
@@ -48,7 +48,7 @@ public abstract class GenericValidTypeCastTests<TSource, TDestination> : Generic
     public void GetResultOrDefault_WithValue_ShouldReturnCorrectResult()
     {
         var value = Fixture.Create<TSource>();
-        var sut = (TypeCast<TSource, TDestination>)value;
+        var sut = ( TypeCast<TSource, TDestination> )value;
 
         var result = sut.GetResultOrDefault( Fixture.CreateNotDefault<TDestination>() );
 
@@ -63,7 +63,7 @@ public abstract class GenericValidTypeCastTests<TSource, TDestination> : Generic
         var validDelegate = Substitute.For<Func<TDestination, TypeCast<TDestination, TDestination>>>()
             .WithAnyArgs( _ => returnedValue );
 
-        var sut = (TypeCast<TSource, TDestination>)value;
+        var sut = ( TypeCast<TSource, TDestination> )value;
 
         var result = sut.Bind( validDelegate );
 
@@ -86,7 +86,7 @@ public abstract class GenericValidTypeCastTests<TSource, TDestination> : Generic
         var invalidDelegate = Substitute.For<Func<TSource, TypeCast<TDestination, TDestination>>>()
             .WithAnyArgs( _ => TypeCast<TDestination, TDestination>.Empty );
 
-        var sut = (TypeCast<TSource, TDestination>)value;
+        var sut = ( TypeCast<TSource, TDestination> )value;
 
         var result = sut.Bind( validDelegate, invalidDelegate );
 
@@ -107,7 +107,7 @@ public abstract class GenericValidTypeCastTests<TSource, TDestination> : Generic
         var validDelegate = Substitute.For<Func<TDestination, TDestination>>().WithAnyArgs( _ => returnedValue );
         var invalidDelegate = Substitute.For<Func<TSource, TDestination>>().WithAnyArgs( _ => default! );
 
-        var sut = (TypeCast<TSource, TDestination>)value;
+        var sut = ( TypeCast<TSource, TDestination> )value;
 
         var result = sut.Match( validDelegate, invalidDelegate );
 
@@ -126,7 +126,7 @@ public abstract class GenericValidTypeCastTests<TSource, TDestination> : Generic
         var validDelegate = Substitute.For<Action<TDestination>>();
         var invalidDelegate = Substitute.For<Action<TSource>>();
 
-        var sut = (TypeCast<TSource, TDestination>)value;
+        var sut = ( TypeCast<TSource, TDestination> )value;
 
         sut.Match( validDelegate, invalidDelegate );
 
@@ -144,7 +144,7 @@ public abstract class GenericValidTypeCastTests<TSource, TDestination> : Generic
         var returnedValue = Fixture.Create<TDestination>();
         var validDelegate = Substitute.For<Func<TDestination, TDestination>>().WithAnyArgs( _ => returnedValue );
 
-        var sut = (TypeCast<TSource, TDestination>)value;
+        var sut = ( TypeCast<TSource, TDestination> )value;
 
         var result = sut.IfValid( validDelegate );
 
@@ -161,7 +161,7 @@ public abstract class GenericValidTypeCastTests<TSource, TDestination> : Generic
         var value = Fixture.Create<TSource>();
         var validDelegate = Substitute.For<Action<TDestination>>();
 
-        var sut = (TypeCast<TSource, TDestination>)value;
+        var sut = ( TypeCast<TSource, TDestination> )value;
 
         sut.IfValid( validDelegate );
 
@@ -175,7 +175,7 @@ public abstract class GenericValidTypeCastTests<TSource, TDestination> : Generic
         var returnedValue = Fixture.Create<TDestination>();
         var validDelegate = Substitute.For<Func<TDestination, TDestination>>().WithAnyArgs( _ => returnedValue );
 
-        var sut = (TypeCast<TSource, TDestination>)value;
+        var sut = ( TypeCast<TSource, TDestination> )value;
 
         var result = sut.IfValidOrDefault( validDelegate );
 
@@ -193,7 +193,7 @@ public abstract class GenericValidTypeCastTests<TSource, TDestination> : Generic
         var returnedValue = Fixture.Create<TDestination>();
         var validDelegate = Substitute.For<Func<TDestination, TDestination>>().WithAnyArgs( _ => returnedValue );
 
-        var sut = (TypeCast<TSource, TDestination>)value;
+        var sut = ( TypeCast<TSource, TDestination> )value;
 
         var result = sut.IfValidOrDefault( validDelegate, Fixture.CreateNotDefault<TDestination>() );
 
@@ -210,7 +210,7 @@ public abstract class GenericValidTypeCastTests<TSource, TDestination> : Generic
         var value = Fixture.Create<TSource>();
         var invalidDelegate = Substitute.For<Func<TSource, TDestination>>().WithAnyArgs( _ => value );
 
-        var sut = (TypeCast<TSource, TDestination>)value;
+        var sut = ( TypeCast<TSource, TDestination> )value;
 
         var result = sut.IfInvalid( invalidDelegate );
 
@@ -227,7 +227,7 @@ public abstract class GenericValidTypeCastTests<TSource, TDestination> : Generic
         var value = Fixture.Create<TSource>();
         var invalidDelegate = Substitute.For<Action<TSource>>();
 
-        var sut = (TypeCast<TSource, TDestination>)value;
+        var sut = ( TypeCast<TSource, TDestination> )value;
 
         sut.IfInvalid( invalidDelegate );
 
@@ -240,7 +240,7 @@ public abstract class GenericValidTypeCastTests<TSource, TDestination> : Generic
         var value = Fixture.Create<TSource>();
         var invalidDelegate = Substitute.For<Func<TSource, TDestination>>().WithAnyArgs( _ => value );
 
-        var sut = (TypeCast<TSource, TDestination>)value;
+        var sut = ( TypeCast<TSource, TDestination> )value;
 
         var result = sut.IfInvalidOrDefault( invalidDelegate );
 
@@ -258,7 +258,7 @@ public abstract class GenericValidTypeCastTests<TSource, TDestination> : Generic
         var value = Fixture.Create<TSource>();
         var invalidDelegate = Substitute.For<Func<TSource, TDestination>>().WithAnyArgs( _ => value );
 
-        var sut = (TypeCast<TSource, TDestination>)value;
+        var sut = ( TypeCast<TSource, TDestination> )value;
 
         var result = sut.IfInvalidOrDefault( invalidDelegate, defaultValue );
 
@@ -274,7 +274,7 @@ public abstract class GenericValidTypeCastTests<TSource, TDestination> : Generic
     {
         var value = Fixture.Create<TSource>();
 
-        var result = (TypeCast<TSource, TDestination>)value;
+        var result = ( TypeCast<TSource, TDestination> )value;
 
         using ( new AssertionScope() )
         {
@@ -291,7 +291,7 @@ public abstract class GenericValidTypeCastTests<TSource, TDestination> : Generic
         var value = Fixture.Create<TSource>();
         var partial = new PartialTypeCast<TSource>( value );
 
-        var result = (TypeCast<TSource, TDestination>)partial;
+        var result = ( TypeCast<TSource, TDestination> )partial;
 
         using ( new AssertionScope() )
         {
@@ -306,9 +306,9 @@ public abstract class GenericValidTypeCastTests<TSource, TDestination> : Generic
     public void TDestinationConversionOperator_ShouldReturnCorrectResult()
     {
         var value = Fixture.Create<TSource>();
-        var sut = (TypeCast<TSource, TDestination>)value;
+        var sut = ( TypeCast<TSource, TDestination> )value;
 
-        var result = (TDestination)sut;
+        var result = ( TDestination )sut;
 
         result.Should().Be( value );
     }
@@ -317,8 +317,8 @@ public abstract class GenericValidTypeCastTests<TSource, TDestination> : Generic
     [GenericMethodData( nameof( GenericValidTypeCastTestsData<TSource, TDestination>.CreateEqualsTestData ) )]
     public void EqualityOperator_ShouldReturnCorrectResult(object? value1, object? value2, bool expected)
     {
-        var a = value1 is null ? TypeCast<TSource, TDestination>.Empty : (TSource)value1;
-        var b = value2 is null ? TypeCast<TSource, TDestination>.Empty : (TSource)value2;
+        var a = value1 is null ? TypeCast<TSource, TDestination>.Empty : ( TSource )value1;
+        var b = value2 is null ? TypeCast<TSource, TDestination>.Empty : ( TSource )value2;
 
         var result = a == b;
 
@@ -329,8 +329,8 @@ public abstract class GenericValidTypeCastTests<TSource, TDestination> : Generic
     [GenericMethodData( nameof( GenericValidTypeCastTestsData<TSource, TDestination>.CreateNotEqualsTestData ) )]
     public void InequalityOperator_ShouldReturnCorrectResult(object? value1, object? value2, bool expected)
     {
-        var a = value1 is null ? TypeCast<TSource, TDestination>.Empty : (TSource)value1;
-        var b = value2 is null ? TypeCast<TSource, TDestination>.Empty : (TSource)value2;
+        var a = value1 is null ? TypeCast<TSource, TDestination>.Empty : ( TSource )value1;
+        var b = value2 is null ? TypeCast<TSource, TDestination>.Empty : ( TSource )value2;
 
         var result = a != b;
 
@@ -342,7 +342,7 @@ public abstract class GenericValidTypeCastTests<TSource, TDestination> : Generic
     {
         var value = Fixture.Create<TSource>();
 
-        var sut = (TypeCast<TSource, TDestination>)value;
+        var sut = ( TypeCast<TSource, TDestination> )value;
         IReadOnlyCollection<TDestination> collection = sut;
 
         var result = collection.Count;
@@ -355,7 +355,7 @@ public abstract class GenericValidTypeCastTests<TSource, TDestination> : Generic
     {
         var value = Fixture.Create<TSource>();
 
-        var sut = (TypeCast<TSource, TDestination>)value;
+        var sut = ( TypeCast<TSource, TDestination> )value;
 
         sut.Should().BeSequentiallyEqualTo( value );
     }

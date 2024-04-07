@@ -33,7 +33,7 @@ public class TwoWayDictionary<T1, T2> : ITwoWayDictionary<T1, T2>
     public IEqualityComparer<T1> ForwardComparer => _forward.Comparer;
     public IEqualityComparer<T2> ReverseComparer => _reverse.Comparer;
 
-    bool ICollection<Pair<T1, T2>>.IsReadOnly => ((ICollection<KeyValuePair<T1, T2>>)_forward).IsReadOnly;
+    bool ICollection<Pair<T1, T2>>.IsReadOnly => (( ICollection<KeyValuePair<T1, T2>> )_forward).IsReadOnly;
 
     public bool TryAdd(T1 first, T2 second)
     {

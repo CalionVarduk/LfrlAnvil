@@ -23,7 +23,7 @@ public sealed class RequestHandlerFactory : IRequestHandlerFactory
         where TRequest : IRequest<TRequest, TResult>
     {
         return _factories.TryGetValue( typeof( TRequest ), out var factory )
-            ? ((Func<IRequestHandler<TRequest, TResult>>)factory)()
+            ? (( Func<IRequestHandler<TRequest, TResult>> )factory)()
             : null;
     }
 }

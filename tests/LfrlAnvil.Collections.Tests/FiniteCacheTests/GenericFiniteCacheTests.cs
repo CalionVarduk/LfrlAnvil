@@ -175,7 +175,11 @@ public abstract class GenericFiniteCacheTests<TKey, TValue> : GenericDictionaryT
     {
         var keys = Fixture.CreateDistinctCollection<TKey>( 2 );
         var values = Fixture.CreateDistinctCollection<TValue>( 2 );
-        var sut = new FiniteCache<TKey, TValue>( capacity: 3 ) { { keys[0], values[0] }, { keys[1], values[1] } };
+        var sut = new FiniteCache<TKey, TValue>( capacity: 3 )
+        {
+            { keys[0], values[0] },
+            { keys[1], values[1] }
+        };
 
         var result = sut.Remove( keys[0] );
 
@@ -253,7 +257,11 @@ public abstract class GenericFiniteCacheTests<TKey, TValue> : GenericDictionaryT
     {
         var keys = Fixture.CreateDistinctCollection<TKey>( 2 );
         var values = Fixture.CreateDistinctCollection<TValue>( 2 );
-        var sut = new FiniteCache<TKey, TValue>( capacity: 3 ) { { keys[0], values[0] }, { keys[1], values[1] } };
+        var sut = new FiniteCache<TKey, TValue>( capacity: 3 )
+        {
+            { keys[0], values[0] },
+            { keys[1], values[1] }
+        };
 
         var result = sut.Remove( keys[0], out var removed );
 
@@ -507,11 +515,7 @@ public abstract class GenericFiniteCacheTests<TKey, TValue> : GenericDictionaryT
         var keys = Fixture.CreateDistinctCollection<TKey>( 2 );
         var values = Fixture.CreateDistinctCollection<TValue>( 2 );
 
-        var expected = new[]
-        {
-            KeyValuePair.Create( keys[0], values[0] ),
-            KeyValuePair.Create( keys[1], values[1] )
-        };
+        var expected = new[] { KeyValuePair.Create( keys[0], values[0] ), KeyValuePair.Create( keys[1], values[1] ) };
 
         var sut = new FiniteCache<TKey, TValue>( capacity: 3 );
         foreach ( var (key, value) in keys.Zip( values ) )

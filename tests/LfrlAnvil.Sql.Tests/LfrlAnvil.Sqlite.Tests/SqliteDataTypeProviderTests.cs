@@ -205,7 +205,7 @@ public class SqliteDataTypeProviderTests : TestsBase
     [Fact]
     public void GetAny_ShouldReturnAny()
     {
-        var result = ((SqliteDataTypeProvider)_sut).GetAny();
+        var result = (( SqliteDataTypeProvider )_sut).GetAny();
         result.Should().BeSameAs( SqliteDataType.Any );
     }
 }

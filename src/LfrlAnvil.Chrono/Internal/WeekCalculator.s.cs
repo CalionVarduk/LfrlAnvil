@@ -19,7 +19,7 @@ internal static class WeekCalculator
     internal static DateTime GetDayInFirstWeekOfYear(int year, DayOfWeek weekStart)
     {
         var dayOfJanuary = GetDayOfJanuaryInFirstWeekOfYear( weekStart );
-        return new DateTime( year, (int)IsoMonthOfYear.January, dayOfJanuary );
+        return new DateTime( year, ( int )IsoMonthOfYear.January, dayOfJanuary );
     }
 
     [Pure]

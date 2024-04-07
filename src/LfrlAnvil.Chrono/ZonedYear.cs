@@ -67,7 +67,7 @@ public readonly struct ZonedYear : IEquatable<ZonedYear>, IComparable<ZonedYear>
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static ZonedYear Create(int year, TimeZoneInfo timeZone)
     {
-        return Create( new DateTime( year, (int)IsoMonthOfYear.January, 1 ), timeZone );
+        return Create( new DateTime( year, ( int )IsoMonthOfYear.January, 1 ), timeZone );
     }
 
     [Pure]
@@ -90,7 +90,7 @@ public readonly struct ZonedYear : IEquatable<ZonedYear>, IComparable<ZonedYear>
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static ZonedYear CreateUtc(int year)
     {
-        return CreateUtc( new DateTime( year, (int)IsoMonthOfYear.January, 1 ) );
+        return CreateUtc( new DateTime( year, ( int )IsoMonthOfYear.January, 1 ) );
     }
 
     [Pure]
@@ -104,7 +104,7 @@ public readonly struct ZonedYear : IEquatable<ZonedYear>, IComparable<ZonedYear>
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static ZonedYear CreateLocal(int year)
     {
-        return Create( new DateTime( year, (int)IsoMonthOfYear.January, 1 ), TimeZoneInfo.Local );
+        return Create( new DateTime( year, ( int )IsoMonthOfYear.January, 1 ), TimeZoneInfo.Local );
     }
 
     [Pure]
@@ -388,7 +388,7 @@ public readonly struct ZonedYear : IEquatable<ZonedYear>, IComparable<ZonedYear>
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public int GetWeekCount(IsoDayOfWeek weekStart = IsoDayOfWeek.Monday)
     {
-        Ensure.IsInRange( (int)weekStart, (int)IsoDayOfWeek.Monday, (int)IsoDayOfWeek.Sunday );
+        Ensure.IsInRange( ( int )weekStart, ( int )IsoDayOfWeek.Monday, ( int )IsoDayOfWeek.Sunday );
         return WeekCalculator.GetWeekCountInYear( Year, weekStart.ToBcl() );
     }
 
@@ -407,7 +407,7 @@ public readonly struct ZonedYear : IEquatable<ZonedYear>, IComparable<ZonedYear>
         var timeZone = start.TimeZone;
 
         for ( var month = 1; month <= ChronoConstants.MonthsPerYear; ++month )
-            yield return ZonedMonth.Create( year, (IsoMonthOfYear)month, timeZone );
+            yield return ZonedMonth.Create( year, ( IsoMonthOfYear )month, timeZone );
     }
 
     [Pure]
@@ -418,41 +418,41 @@ public readonly struct ZonedYear : IEquatable<ZonedYear>, IComparable<ZonedYear>
         var timeZone = start.TimeZone;
 
         for ( var day = 1; day <= ChronoConstants.DaysInJanuary; ++day )
-            yield return ZonedDay.Create( new DateTime( year, (int)IsoMonthOfYear.January, day ), timeZone );
+            yield return ZonedDay.Create( new DateTime( year, ( int )IsoMonthOfYear.January, day ), timeZone );
 
         var februaryDayCount = DateTime.IsLeapYear( year ) ? ChronoConstants.DaysInLeapFebruary : ChronoConstants.DaysInFebruary;
         for ( var day = 1; day <= februaryDayCount; ++day )
-            yield return ZonedDay.Create( new DateTime( year, (int)IsoMonthOfYear.February, day ), timeZone );
+            yield return ZonedDay.Create( new DateTime( year, ( int )IsoMonthOfYear.February, day ), timeZone );
 
         for ( var day = 1; day <= ChronoConstants.DaysInMarch; ++day )
-            yield return ZonedDay.Create( new DateTime( year, (int)IsoMonthOfYear.March, day ), timeZone );
+            yield return ZonedDay.Create( new DateTime( year, ( int )IsoMonthOfYear.March, day ), timeZone );
 
         for ( var day = 1; day <= ChronoConstants.DaysInApril; ++day )
-            yield return ZonedDay.Create( new DateTime( year, (int)IsoMonthOfYear.April, day ), timeZone );
+            yield return ZonedDay.Create( new DateTime( year, ( int )IsoMonthOfYear.April, day ), timeZone );
 
         for ( var day = 1; day <= ChronoConstants.DaysInMay; ++day )
-            yield return ZonedDay.Create( new DateTime( year, (int)IsoMonthOfYear.May, day ), timeZone );
+            yield return ZonedDay.Create( new DateTime( year, ( int )IsoMonthOfYear.May, day ), timeZone );
 
         for ( var day = 1; day <= ChronoConstants.DaysInJune; ++day )
-            yield return ZonedDay.Create( new DateTime( year, (int)IsoMonthOfYear.June, day ), timeZone );
+            yield return ZonedDay.Create( new DateTime( year, ( int )IsoMonthOfYear.June, day ), timeZone );
 
         for ( var day = 1; day <= ChronoConstants.DaysInJuly; ++day )
-            yield return ZonedDay.Create( new DateTime( year, (int)IsoMonthOfYear.July, day ), timeZone );
+            yield return ZonedDay.Create( new DateTime( year, ( int )IsoMonthOfYear.July, day ), timeZone );
 
         for ( var day = 1; day <= ChronoConstants.DaysInAugust; ++day )
-            yield return ZonedDay.Create( new DateTime( year, (int)IsoMonthOfYear.August, day ), timeZone );
+            yield return ZonedDay.Create( new DateTime( year, ( int )IsoMonthOfYear.August, day ), timeZone );
 
         for ( var day = 1; day <= ChronoConstants.DaysInSeptember; ++day )
-            yield return ZonedDay.Create( new DateTime( year, (int)IsoMonthOfYear.September, day ), timeZone );
+            yield return ZonedDay.Create( new DateTime( year, ( int )IsoMonthOfYear.September, day ), timeZone );
 
         for ( var day = 1; day <= ChronoConstants.DaysInOctober; ++day )
-            yield return ZonedDay.Create( new DateTime( year, (int)IsoMonthOfYear.October, day ), timeZone );
+            yield return ZonedDay.Create( new DateTime( year, ( int )IsoMonthOfYear.October, day ), timeZone );
 
         for ( var day = 1; day <= ChronoConstants.DaysInNovember; ++day )
-            yield return ZonedDay.Create( new DateTime( year, (int)IsoMonthOfYear.November, day ), timeZone );
+            yield return ZonedDay.Create( new DateTime( year, ( int )IsoMonthOfYear.November, day ), timeZone );
 
         for ( var day = 1; day <= ChronoConstants.DaysInDecember; ++day )
-            yield return ZonedDay.Create( new DateTime( year, (int)IsoMonthOfYear.December, day ), timeZone );
+            yield return ZonedDay.Create( new DateTime( year, ( int )IsoMonthOfYear.December, day ), timeZone );
     }
 
     [Pure]

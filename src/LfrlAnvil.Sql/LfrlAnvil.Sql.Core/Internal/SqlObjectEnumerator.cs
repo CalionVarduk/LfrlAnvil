@@ -40,7 +40,7 @@ public struct SqlObjectEnumerator<T> : IEnumerator<T>
 
     void IEnumerator.Reset()
     {
-        ((IEnumerator)_enumerator).Reset();
+        (( IEnumerator )_enumerator).Reset();
     }
 }
 
@@ -71,6 +71,6 @@ public struct SqlObjectEnumerator<TSource, TDestination> : IEnumerator<TDestinat
 
     void IEnumerator.Reset()
     {
-        ((IEnumerator)_enumerator).Reset();
+        (( IEnumerator )_enumerator).Reset();
     }
 }

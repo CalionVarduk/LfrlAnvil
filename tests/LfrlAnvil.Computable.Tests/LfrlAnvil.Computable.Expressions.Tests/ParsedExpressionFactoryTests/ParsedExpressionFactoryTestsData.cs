@@ -212,30 +212,24 @@ public class ParsedExpressionFactoryTestsData
             { "- Zero", Array.Empty<string>(), "( PreOp|ZERO )" },
             { "- foo()", Array.Empty<string>(), "( PreOp|Func() )" },
             { "- a", new[] { "foo" }, "( PreOp|foo )" },
-
             { "[string] 12.34", Array.Empty<string>(), "( PreCast|12.34 )" },
             { "[string] false", Array.Empty<string>(), "( PreCast|False )" },
-
             { "'foobar' %", Array.Empty<string>(), "( foobar|PostOp )" },
             { "12.34 %", Array.Empty<string>(), "( 12.34|PostOp )" },
             { "false %", Array.Empty<string>(), "( False|PostOp )" },
             { "Zero %", Array.Empty<string>(), "( ZERO|PostOp )" },
             { "foo() %", Array.Empty<string>(), "( Func()|PostOp )" },
             { "a %", new[] { "foo" }, "( foo|PostOp )" },
-
             { "12.34 ToString", Array.Empty<string>(), "( 12.34|PostCast )" },
             { "false ToString", Array.Empty<string>(), "( False|PostCast )" },
-
             { "- 'foobar' %", Array.Empty<string>(), "( ( PreOp|foobar )|PostOp )" },
             { "- 12.34 %", Array.Empty<string>(), "( ( PreOp|12.34 )|PostOp )" },
             { "- false %", Array.Empty<string>(), "( ( PreOp|False )|PostOp )" },
             { "- Zero %", Array.Empty<string>(), "( ( PreOp|ZERO )|PostOp )" },
             { "- foo() %", Array.Empty<string>(), "( ( PreOp|Func() )|PostOp )" },
             { "- a %", new[] { "foo" }, "( ( PreOp|foo )|PostOp )" },
-
             { "[string] 12.34 %", Array.Empty<string>(), "( ( PreCast|12.34 )|PostOp )" },
             { "[string] false %", Array.Empty<string>(), "( ( PreCast|False )|PostOp )" },
-
             { "'foobar' + 'qux'", Array.Empty<string>(), "( foobar|BiOp|qux )" },
             { "'foobar' + 12.34", Array.Empty<string>(), "( foobar|BiOp|12.34 )" },
             { "'foobar' + false", Array.Empty<string>(), "( foobar|BiOp|False )" },
@@ -273,7 +267,6 @@ public class ParsedExpressionFactoryTestsData
             { "foo() + Zero", Array.Empty<string>(), "( Func()|BiOp|ZERO )" },
             { "foo() + foo()", Array.Empty<string>(), "( Func()|BiOp|Func() )" },
             { "foo() + a", new[] { "foo" }, "( Func()|BiOp|foo )" },
-
             { "- 'foobar' + 'qux'", Array.Empty<string>(), "( ( PreOp|foobar )|BiOp|qux )" },
             { "- 'foobar' + 12.34", Array.Empty<string>(), "( ( PreOp|foobar )|BiOp|12.34 )" },
             { "- 'foobar' + false", Array.Empty<string>(), "( ( PreOp|foobar )|BiOp|False )" },
@@ -311,7 +304,6 @@ public class ParsedExpressionFactoryTestsData
             { "- foo() + Zero", Array.Empty<string>(), "( ( PreOp|Func() )|BiOp|ZERO )" },
             { "- foo() + foo()", Array.Empty<string>(), "( ( PreOp|Func() )|BiOp|Func() )" },
             { "- foo() + a", new[] { "foo" }, "( ( PreOp|Func() )|BiOp|foo )" },
-
             { "- 'foobar' % + 'qux'", Array.Empty<string>(), "( ( ( PreOp|foobar )|PostOp )|BiOp|qux )" },
             { "- 'foobar' % + 12.34", Array.Empty<string>(), "( ( ( PreOp|foobar )|PostOp )|BiOp|12.34 )" },
             { "- 'foobar' % + false", Array.Empty<string>(), "( ( ( PreOp|foobar )|PostOp )|BiOp|False )" },
@@ -349,7 +341,6 @@ public class ParsedExpressionFactoryTestsData
             { "- foo() % + Zero", Array.Empty<string>(), "( ( ( PreOp|Func() )|PostOp )|BiOp|ZERO )" },
             { "- foo() % + foo()", Array.Empty<string>(), "( ( ( PreOp|Func() )|PostOp )|BiOp|Func() )" },
             { "- foo() % + a", new[] { "foo" }, "( ( ( PreOp|Func() )|PostOp )|BiOp|foo )" },
-
             { "'foobar' + - 'qux'", Array.Empty<string>(), "( foobar|BiOp|( PreOp|qux ) )" },
             { "'foobar' + - 12.34", Array.Empty<string>(), "( foobar|BiOp|( PreOp|12.34 ) )" },
             { "'foobar' + - false", Array.Empty<string>(), "( foobar|BiOp|( PreOp|False ) )" },
@@ -387,7 +378,6 @@ public class ParsedExpressionFactoryTestsData
             { "foo() + - Zero", Array.Empty<string>(), "( Func()|BiOp|( PreOp|ZERO ) )" },
             { "foo() + - foo()", Array.Empty<string>(), "( Func()|BiOp|( PreOp|Func() ) )" },
             { "foo() + - a", new[] { "foo" }, "( Func()|BiOp|( PreOp|foo ) )" },
-
             { "- 'foobar' + - 'qux'", Array.Empty<string>(), "( ( PreOp|foobar )|BiOp|( PreOp|qux ) )" },
             { "- 'foobar' + - 12.34", Array.Empty<string>(), "( ( PreOp|foobar )|BiOp|( PreOp|12.34 ) )" },
             { "- 'foobar' + - false", Array.Empty<string>(), "( ( PreOp|foobar )|BiOp|( PreOp|False ) )" },
@@ -425,7 +415,6 @@ public class ParsedExpressionFactoryTestsData
             { "- foo() + - Zero", Array.Empty<string>(), "( ( PreOp|Func() )|BiOp|( PreOp|ZERO ) )" },
             { "- foo() + - foo()", Array.Empty<string>(), "( ( PreOp|Func() )|BiOp|( PreOp|Func() ) )" },
             { "- foo() + - a", new[] { "foo" }, "( ( PreOp|Func() )|BiOp|( PreOp|foo ) )" },
-
             { "- 'foobar' % + - 'qux'", Array.Empty<string>(), "( ( ( PreOp|foobar )|PostOp )|BiOp|( PreOp|qux ) )" },
             { "- 'foobar' % + - 12.34", Array.Empty<string>(), "( ( ( PreOp|foobar )|PostOp )|BiOp|( PreOp|12.34 ) )" },
             { "- 'foobar' % + - false", Array.Empty<string>(), "( ( ( PreOp|foobar )|PostOp )|BiOp|( PreOp|False ) )" },
@@ -463,7 +452,6 @@ public class ParsedExpressionFactoryTestsData
             { "- foo() % + - Zero", Array.Empty<string>(), "( ( ( PreOp|Func() )|PostOp )|BiOp|( PreOp|ZERO ) )" },
             { "- foo() % + - foo()", Array.Empty<string>(), "( ( ( PreOp|Func() )|PostOp )|BiOp|( PreOp|Func() ) )" },
             { "- foo() % + - a", new[] { "foo" }, "( ( ( PreOp|Func() )|PostOp )|BiOp|( PreOp|foo ) )" },
-
             { "'foobar' + - 'qux' %", Array.Empty<string>(), "( foobar|BiOp|( ( PreOp|qux )|PostOp ) )" },
             { "'foobar' + - 12.34 %", Array.Empty<string>(), "( foobar|BiOp|( ( PreOp|12.34 )|PostOp ) )" },
             { "'foobar' + - false %", Array.Empty<string>(), "( foobar|BiOp|( ( PreOp|False )|PostOp ) )" },
@@ -501,7 +489,6 @@ public class ParsedExpressionFactoryTestsData
             { "foo() + - Zero %", Array.Empty<string>(), "( Func()|BiOp|( ( PreOp|ZERO )|PostOp ) )" },
             { "foo() + - foo() %", Array.Empty<string>(), "( Func()|BiOp|( ( PreOp|Func() )|PostOp ) )" },
             { "foo() + - a %", new[] { "foo" }, "( Func()|BiOp|( ( PreOp|foo )|PostOp ) )" },
-
             { "- 'foobar' + - 'qux' %", Array.Empty<string>(), "( ( PreOp|foobar )|BiOp|( ( PreOp|qux )|PostOp ) )" },
             { "- 'foobar' + - 12.34 %", Array.Empty<string>(), "( ( PreOp|foobar )|BiOp|( ( PreOp|12.34 )|PostOp ) )" },
             { "- 'foobar' + - false %", Array.Empty<string>(), "( ( PreOp|foobar )|BiOp|( ( PreOp|False )|PostOp ) )" },
@@ -539,7 +526,6 @@ public class ParsedExpressionFactoryTestsData
             { "- foo() + - Zero %", Array.Empty<string>(), "( ( PreOp|Func() )|BiOp|( ( PreOp|ZERO )|PostOp ) )" },
             { "- foo() + - foo() %", Array.Empty<string>(), "( ( PreOp|Func() )|BiOp|( ( PreOp|Func() )|PostOp ) )" },
             { "- foo() + - a %", new[] { "foo" }, "( ( PreOp|Func() )|BiOp|( ( PreOp|foo )|PostOp ) )" },
-
             { "- 'foobar' % + - 'qux' %", Array.Empty<string>(), "( ( ( PreOp|foobar )|PostOp )|BiOp|( ( PreOp|qux )|PostOp ) )" },
             { "- 'foobar' % + - 12.34 %", Array.Empty<string>(), "( ( ( PreOp|foobar )|PostOp )|BiOp|( ( PreOp|12.34 )|PostOp ) )" },
             { "- 'foobar' % + - false %", Array.Empty<string>(), "( ( ( PreOp|foobar )|PostOp )|BiOp|( ( PreOp|False )|PostOp ) )" },
@@ -577,7 +563,6 @@ public class ParsedExpressionFactoryTestsData
             { "- foo() % + - Zero %", Array.Empty<string>(), "( ( ( PreOp|Func() )|PostOp )|BiOp|( ( PreOp|ZERO )|PostOp ) )" },
             { "- foo() % + - foo() %", Array.Empty<string>(), "( ( ( PreOp|Func() )|PostOp )|BiOp|( ( PreOp|Func() )|PostOp ) )" },
             { "- foo() % + - a %", new[] { "foo" }, "( ( ( PreOp|Func() )|PostOp )|BiOp|( ( PreOp|foo )|PostOp ) )" },
-
             { "- ( 'foobar' )", Array.Empty<string>(), "( PreOp|foobar )" },
             { "( 'foobar' ) %", Array.Empty<string>(), "( foobar|PostOp )" },
             { "- ( 'foobar' ) %", Array.Empty<string>(), "( ( PreOp|foobar )|PostOp )" },
@@ -608,7 +593,6 @@ public class ParsedExpressionFactoryTestsData
             { "^ 12.34 !", "( ( PreCaretOp|12.34 )|PostExclOp )" },
             { "[string] 12.34 %", "( ( PreCast|12.34 )|PostPerOp )" },
             { "[string] 12.34 !", "( ( PreCast|12.34 )|PostExclOp )" },
-
             { "'foo' + 'bar' + 'qux'", "( ( foo|BiAddOp|bar )|BiAddOp|qux )" },
             { "( 'foo' + 'bar' ) + 'qux'", "( ( foo|BiAddOp|bar )|BiAddOp|qux )" },
             { "'foo' + ( 'bar' + 'qux' )", "( foo|BiAddOp|( bar|BiAddOp|qux ) )" },
@@ -618,7 +602,6 @@ public class ParsedExpressionFactoryTestsData
             { "'foo' + 'bar' * 'qux'", "( foo|BiAddOp|( bar|BiMultOp|qux ) )" },
             { "( 'foo' + 'bar' ) * 'qux'", "( ( foo|BiAddOp|bar )|BiMultOp|qux )" },
             { "'foo' + ( 'bar' * 'qux' )", "( foo|BiAddOp|( bar|BiMultOp|qux ) )" },
-
             { "'foo' + 'bar' + 'qux' + 'abc'", "( ( ( foo|BiAddOp|bar )|BiAddOp|qux )|BiAddOp|abc )" },
             { "( 'foo' + 'bar' ) + 'qux' + 'abc'", "( ( ( foo|BiAddOp|bar )|BiAddOp|qux )|BiAddOp|abc )" },
             { "'foo' + ( 'bar' + 'qux' ) + 'abc'", "( ( foo|BiAddOp|( bar|BiAddOp|qux ) )|BiAddOp|abc )" },
@@ -629,7 +612,6 @@ public class ParsedExpressionFactoryTestsData
             { "'foo' + ( 'bar' + 'qux' + 'abc' )", "( foo|BiAddOp|( ( bar|BiAddOp|qux )|BiAddOp|abc ) )" },
             { "'foo' + ( ( 'bar' + 'qux' ) + 'abc' )", "( foo|BiAddOp|( ( bar|BiAddOp|qux )|BiAddOp|abc ) )" },
             { "'foo' + ( 'bar' + ( 'qux' + 'abc' ) )", "( foo|BiAddOp|( bar|BiAddOp|( qux|BiAddOp|abc ) ) )" },
-
             { "'foo' * 'bar' + 'qux' + 'abc'", "( ( ( foo|BiMultOp|bar )|BiAddOp|qux )|BiAddOp|abc )" },
             { "( 'foo' * 'bar' ) + 'qux' + 'abc'", "( ( ( foo|BiMultOp|bar )|BiAddOp|qux )|BiAddOp|abc )" },
             { "'foo' * ( 'bar' + 'qux' ) + 'abc'", "( ( foo|BiMultOp|( bar|BiAddOp|qux ) )|BiAddOp|abc )" },
@@ -640,7 +622,6 @@ public class ParsedExpressionFactoryTestsData
             { "'foo' * ( 'bar' + 'qux' + 'abc' )", "( foo|BiMultOp|( ( bar|BiAddOp|qux )|BiAddOp|abc ) )" },
             { "'foo' * ( ( 'bar' + 'qux' ) + 'abc' )", "( foo|BiMultOp|( ( bar|BiAddOp|qux )|BiAddOp|abc ) )" },
             { "'foo' * ( 'bar' + ( 'qux' + 'abc' ) )", "( foo|BiMultOp|( bar|BiAddOp|( qux|BiAddOp|abc ) ) )" },
-
             { "'foo' + 'bar' * 'qux' + 'abc'", "( ( foo|BiAddOp|( bar|BiMultOp|qux ) )|BiAddOp|abc )" },
             { "( 'foo' + 'bar' ) * 'qux' + 'abc'", "( ( ( foo|BiAddOp|bar )|BiMultOp|qux )|BiAddOp|abc )" },
             { "'foo' + ( 'bar' * 'qux' ) + 'abc'", "( ( foo|BiAddOp|( bar|BiMultOp|qux ) )|BiAddOp|abc )" },
@@ -651,7 +632,6 @@ public class ParsedExpressionFactoryTestsData
             { "'foo' + ( 'bar' * 'qux' + 'abc' )", "( foo|BiAddOp|( ( bar|BiMultOp|qux )|BiAddOp|abc ) )" },
             { "'foo' + ( ( 'bar' * 'qux' ) + 'abc' )", "( foo|BiAddOp|( ( bar|BiMultOp|qux )|BiAddOp|abc ) )" },
             { "'foo' + ( 'bar' * ( 'qux' + 'abc' ) )", "( foo|BiAddOp|( bar|BiMultOp|( qux|BiAddOp|abc ) ) )" },
-
             { "'foo' + 'bar' + 'qux' * 'abc'", "( ( foo|BiAddOp|bar )|BiAddOp|( qux|BiMultOp|abc ) )" },
             { "( 'foo' + 'bar' ) + 'qux' * 'abc'", "( ( foo|BiAddOp|bar )|BiAddOp|( qux|BiMultOp|abc ) )" },
             { "'foo' + ( 'bar' + 'qux' ) * 'abc'", "( foo|BiAddOp|( ( bar|BiAddOp|qux )|BiMultOp|abc ) )" },
@@ -662,7 +642,6 @@ public class ParsedExpressionFactoryTestsData
             { "'foo' + ( 'bar' + 'qux' * 'abc' )", "( foo|BiAddOp|( bar|BiAddOp|( qux|BiMultOp|abc ) ) )" },
             { "'foo' + ( ( 'bar' + 'qux' ) * 'abc' )", "( foo|BiAddOp|( ( bar|BiAddOp|qux )|BiMultOp|abc ) )" },
             { "'foo' + ( 'bar' + ( 'qux' * 'abc' ) )", "( foo|BiAddOp|( bar|BiAddOp|( qux|BiMultOp|abc ) ) )" },
-
             { "'foo' * 'bar' * 'qux' + 'abc'", "( ( ( foo|BiMultOp|bar )|BiMultOp|qux )|BiAddOp|abc )" },
             { "( 'foo' * 'bar' ) * 'qux' + 'abc'", "( ( ( foo|BiMultOp|bar )|BiMultOp|qux )|BiAddOp|abc )" },
             { "'foo' * ( 'bar' * 'qux' ) + 'abc'", "( ( foo|BiMultOp|( bar|BiMultOp|qux ) )|BiAddOp|abc )" },
@@ -673,7 +652,6 @@ public class ParsedExpressionFactoryTestsData
             { "'foo' * ( 'bar' * 'qux' + 'abc' )", "( foo|BiMultOp|( ( bar|BiMultOp|qux )|BiAddOp|abc ) )" },
             { "'foo' * ( ( 'bar' * 'qux' ) + 'abc' )", "( foo|BiMultOp|( ( bar|BiMultOp|qux )|BiAddOp|abc ) )" },
             { "'foo' * ( 'bar' * ( 'qux' + 'abc' ) )", "( foo|BiMultOp|( bar|BiMultOp|( qux|BiAddOp|abc ) ) )" },
-
             { "'foo' + 'bar' * 'qux' * 'abc'", "( foo|BiAddOp|( ( bar|BiMultOp|qux )|BiMultOp|abc ) )" },
             { "( 'foo' + 'bar' ) * 'qux' * 'abc'", "( ( ( foo|BiAddOp|bar )|BiMultOp|qux )|BiMultOp|abc )" },
             { "'foo' + ( 'bar' * 'qux' ) * 'abc'", "( foo|BiAddOp|( ( bar|BiMultOp|qux )|BiMultOp|abc ) )" },
@@ -684,7 +662,6 @@ public class ParsedExpressionFactoryTestsData
             { "'foo' + ( 'bar' * 'qux' * 'abc' )", "( foo|BiAddOp|( ( bar|BiMultOp|qux )|BiMultOp|abc ) )" },
             { "'foo' + ( ( 'bar' * 'qux' ) * 'abc' )", "( foo|BiAddOp|( ( bar|BiMultOp|qux )|BiMultOp|abc ) )" },
             { "'foo' + ( 'bar' * ( 'qux' * 'abc' ) )", "( foo|BiAddOp|( bar|BiMultOp|( qux|BiMultOp|abc ) ) )" },
-
             { "'foo' * 'bar' + 'qux' * 'abc'", "( ( foo|BiMultOp|bar )|BiAddOp|( qux|BiMultOp|abc ) )" },
             { "( 'foo' * 'bar' ) + 'qux' * 'abc'", "( ( foo|BiMultOp|bar )|BiAddOp|( qux|BiMultOp|abc ) )" },
             { "'foo' * ( 'bar' + 'qux' ) * 'abc'", "( ( foo|BiMultOp|( bar|BiAddOp|qux ) )|BiMultOp|abc )" },
@@ -718,7 +695,6 @@ public class ParsedExpressionFactoryTestsData
             { "'foo' +", Array.Empty<string>(), "( foo|PostPlusOp )" },
             { "'foo' %", Array.Empty<string>(), "( foo|PostPerOp )" },
             { "'foo' -", Array.Empty<string>(), "( foo|PostNegOp )" },
-
             { "( ^ 'foo' )", Array.Empty<string>(), "( PreCaretOp|foo )" },
             { "( * 'foo' )", Array.Empty<string>(), "( PreRefOp|foo )" },
             { "( % 'foo' )", Array.Empty<string>(), "( PrePerOp|foo )" },
@@ -727,7 +703,6 @@ public class ParsedExpressionFactoryTestsData
             { "( 'foo' + )", Array.Empty<string>(), "( foo|PostPlusOp )" },
             { "( 'foo' % )", Array.Empty<string>(), "( foo|PostPerOp )" },
             { "( 'foo' - )", Array.Empty<string>(), "( foo|PostNegOp )" },
-
             { "'foo' / 'bar'", Array.Empty<string>(), "( foo|BiDivOp|bar )" },
             { "'foo' / ^ 'bar'", Array.Empty<string>(), "( foo|BiDivOp|( PreCaretOp|bar ) )" },
             { "'foo' / * 'bar'", Array.Empty<string>(), "( foo|BiDivOp|( PreRefOp|bar ) )" },
@@ -753,7 +728,6 @@ public class ParsedExpressionFactoryTestsData
             { "'foo' - / * 'bar'", Array.Empty<string>(), "( ( foo|PostNegOp )|BiDivOp|( PreRefOp|bar ) )" },
             { "'foo' - / % 'bar'", Array.Empty<string>(), "( ( foo|PostNegOp )|BiDivOp|( PrePerOp|bar ) )" },
             { "'foo' - / - 'bar'", Array.Empty<string>(), "( ( foo|PostNegOp )|BiDivOp|( PreNegOp|bar ) )" },
-
             { "'foo' * 'bar'", Array.Empty<string>(), "( foo|BiMultOp|bar )" },
             { "'foo' * ^ 'bar'", Array.Empty<string>(), "( foo|BiMultOp|( PreCaretOp|bar ) )" },
             { "'foo' * * 'bar'", Array.Empty<string>(), "( foo|BiMultOp|( PreRefOp|bar ) )" },
@@ -779,7 +753,6 @@ public class ParsedExpressionFactoryTestsData
             { "'foo' - * * 'bar'", Array.Empty<string>(), "( ( foo|PostNegOp )|BiMultOp|( PreRefOp|bar ) )" },
             { "'foo' - * % 'bar'", Array.Empty<string>(), "( ( foo|PostNegOp )|BiMultOp|( PrePerOp|bar ) )" },
             { "'foo' - * - 'bar'", Array.Empty<string>(), "( ( foo|PostNegOp )|BiMultOp|( PreNegOp|bar ) )" },
-
             { "'foo' + 'bar'", Array.Empty<string>(), "( foo|BiAddOp|bar )" },
             { "'foo' + ^ 'bar'", Array.Empty<string>(), "( foo|BiAddOp|( PreCaretOp|bar ) )" },
             { "'foo' + * 'bar'", Array.Empty<string>(), "( ( foo|PostPlusOp )|BiMultOp|bar )" },
@@ -805,7 +778,6 @@ public class ParsedExpressionFactoryTestsData
             { "'foo' - + * 'bar'", Array.Empty<string>(), "( ( foo|PostNegOp )|BiAddOp|( PreRefOp|bar ) )" },
             { "'foo' - + % 'bar'", Array.Empty<string>(), "( ( foo|PostNegOp )|BiAddOp|( PrePerOp|bar ) )" },
             { "'foo' - + - 'bar'", Array.Empty<string>(), "( ( foo|PostNegOp )|BiAddOp|( PreNegOp|bar ) )" },
-
             { "'foo' - 'bar'", Array.Empty<string>(), "( foo|BiSubOp|bar )" },
             { "'foo' - ^ 'bar'", Array.Empty<string>(), "( foo|BiSubOp|( PreCaretOp|bar ) )" },
             { "'foo' - * 'bar'", Array.Empty<string>(), "( ( foo|PostNegOp )|BiMultOp|bar )" },
@@ -831,7 +803,6 @@ public class ParsedExpressionFactoryTestsData
             { "'foo' - - * 'bar'", Array.Empty<string>(), "( ( foo|PostNegOp )|BiSubOp|( PreRefOp|bar ) )" },
             { "'foo' - - % 'bar'", Array.Empty<string>(), "( ( foo|PostNegOp )|BiSubOp|( PrePerOp|bar ) )" },
             { "'foo' - - - 'bar'", Array.Empty<string>(), "( ( foo|PostNegOp )|BiSubOp|( PreNegOp|bar ) )" },
-
             { "'foo' / 12.34", Array.Empty<string>(), "( foo|BiDivOp|12.34 )" },
             { "'foo' / ^ 12.34", Array.Empty<string>(), "( foo|BiDivOp|( PreCaretOp|12.34 ) )" },
             { "'foo' / * 12.34", Array.Empty<string>(), "( foo|BiDivOp|( PreRefOp|12.34 ) )" },
@@ -857,7 +828,6 @@ public class ParsedExpressionFactoryTestsData
             { "'foo' - / * 12.34", Array.Empty<string>(), "( ( foo|PostNegOp )|BiDivOp|( PreRefOp|12.34 ) )" },
             { "'foo' - / % 12.34", Array.Empty<string>(), "( ( foo|PostNegOp )|BiDivOp|( PrePerOp|12.34 ) )" },
             { "'foo' - / - 12.34", Array.Empty<string>(), "( ( foo|PostNegOp )|BiDivOp|( PreNegOp|12.34 ) )" },
-
             { "'foo' * 12.34", Array.Empty<string>(), "( foo|BiMultOp|12.34 )" },
             { "'foo' * ^ 12.34", Array.Empty<string>(), "( foo|BiMultOp|( PreCaretOp|12.34 ) )" },
             { "'foo' * * 12.34", Array.Empty<string>(), "( foo|BiMultOp|( PreRefOp|12.34 ) )" },
@@ -883,7 +853,6 @@ public class ParsedExpressionFactoryTestsData
             { "'foo' - * * 12.34", Array.Empty<string>(), "( ( foo|PostNegOp )|BiMultOp|( PreRefOp|12.34 ) )" },
             { "'foo' - * % 12.34", Array.Empty<string>(), "( ( foo|PostNegOp )|BiMultOp|( PrePerOp|12.34 ) )" },
             { "'foo' - * - 12.34", Array.Empty<string>(), "( ( foo|PostNegOp )|BiMultOp|( PreNegOp|12.34 ) )" },
-
             { "'foo' + 12.34", Array.Empty<string>(), "( foo|BiAddOp|12.34 )" },
             { "'foo' + ^ 12.34", Array.Empty<string>(), "( foo|BiAddOp|( PreCaretOp|12.34 ) )" },
             { "'foo' + * 12.34", Array.Empty<string>(), "( ( foo|PostPlusOp )|BiMultOp|12.34 )" },
@@ -909,7 +878,6 @@ public class ParsedExpressionFactoryTestsData
             { "'foo' - + * 12.34", Array.Empty<string>(), "( ( foo|PostNegOp )|BiAddOp|( PreRefOp|12.34 ) )" },
             { "'foo' - + % 12.34", Array.Empty<string>(), "( ( foo|PostNegOp )|BiAddOp|( PrePerOp|12.34 ) )" },
             { "'foo' - + - 12.34", Array.Empty<string>(), "( ( foo|PostNegOp )|BiAddOp|( PreNegOp|12.34 ) )" },
-
             { "'foo' - 12.34", Array.Empty<string>(), "( foo|BiSubOp|12.34 )" },
             { "'foo' - ^ 12.34", Array.Empty<string>(), "( foo|BiSubOp|( PreCaretOp|12.34 ) )" },
             { "'foo' - * 12.34", Array.Empty<string>(), "( ( foo|PostNegOp )|BiMultOp|12.34 )" },
@@ -935,7 +903,6 @@ public class ParsedExpressionFactoryTestsData
             { "'foo' - - * 12.34", Array.Empty<string>(), "( ( foo|PostNegOp )|BiSubOp|( PreRefOp|12.34 ) )" },
             { "'foo' - - % 12.34", Array.Empty<string>(), "( ( foo|PostNegOp )|BiSubOp|( PrePerOp|12.34 ) )" },
             { "'foo' - - - 12.34", Array.Empty<string>(), "( ( foo|PostNegOp )|BiSubOp|( PreNegOp|12.34 ) )" },
-
             { "'foo' / false", Array.Empty<string>(), "( foo|BiDivOp|False )" },
             { "'foo' / ^ false", Array.Empty<string>(), "( foo|BiDivOp|( PreCaretOp|False ) )" },
             { "'foo' / * false", Array.Empty<string>(), "( foo|BiDivOp|( PreRefOp|False ) )" },
@@ -961,7 +928,6 @@ public class ParsedExpressionFactoryTestsData
             { "'foo' - / * false", Array.Empty<string>(), "( ( foo|PostNegOp )|BiDivOp|( PreRefOp|False ) )" },
             { "'foo' - / % false", Array.Empty<string>(), "( ( foo|PostNegOp )|BiDivOp|( PrePerOp|False ) )" },
             { "'foo' - / - false", Array.Empty<string>(), "( ( foo|PostNegOp )|BiDivOp|( PreNegOp|False ) )" },
-
             { "'foo' * false", Array.Empty<string>(), "( foo|BiMultOp|False )" },
             { "'foo' * ^ false", Array.Empty<string>(), "( foo|BiMultOp|( PreCaretOp|False ) )" },
             { "'foo' * * false", Array.Empty<string>(), "( foo|BiMultOp|( PreRefOp|False ) )" },
@@ -987,7 +953,6 @@ public class ParsedExpressionFactoryTestsData
             { "'foo' - * * false", Array.Empty<string>(), "( ( foo|PostNegOp )|BiMultOp|( PreRefOp|False ) )" },
             { "'foo' - * % false", Array.Empty<string>(), "( ( foo|PostNegOp )|BiMultOp|( PrePerOp|False ) )" },
             { "'foo' - * - false", Array.Empty<string>(), "( ( foo|PostNegOp )|BiMultOp|( PreNegOp|False ) )" },
-
             { "'foo' + false", Array.Empty<string>(), "( foo|BiAddOp|False )" },
             { "'foo' + ^ false", Array.Empty<string>(), "( foo|BiAddOp|( PreCaretOp|False ) )" },
             { "'foo' + * false", Array.Empty<string>(), "( ( foo|PostPlusOp )|BiMultOp|False )" },
@@ -1013,7 +978,6 @@ public class ParsedExpressionFactoryTestsData
             { "'foo' - + * false", Array.Empty<string>(), "( ( foo|PostNegOp )|BiAddOp|( PreRefOp|False ) )" },
             { "'foo' - + % false", Array.Empty<string>(), "( ( foo|PostNegOp )|BiAddOp|( PrePerOp|False ) )" },
             { "'foo' - + - false", Array.Empty<string>(), "( ( foo|PostNegOp )|BiAddOp|( PreNegOp|False ) )" },
-
             { "'foo' - false", Array.Empty<string>(), "( foo|BiSubOp|False )" },
             { "'foo' - ^ false", Array.Empty<string>(), "( foo|BiSubOp|( PreCaretOp|False ) )" },
             { "'foo' - * false", Array.Empty<string>(), "( ( foo|PostNegOp )|BiMultOp|False )" },
@@ -1039,7 +1003,6 @@ public class ParsedExpressionFactoryTestsData
             { "'foo' - - * false", Array.Empty<string>(), "( ( foo|PostNegOp )|BiSubOp|( PreRefOp|False ) )" },
             { "'foo' - - % false", Array.Empty<string>(), "( ( foo|PostNegOp )|BiSubOp|( PrePerOp|False ) )" },
             { "'foo' - - - false", Array.Empty<string>(), "( ( foo|PostNegOp )|BiSubOp|( PreNegOp|False ) )" },
-
             { "'foo' / Zero", Array.Empty<string>(), "( foo|BiDivOp|ZERO )" },
             { "'foo' / ^ Zero", Array.Empty<string>(), "( foo|BiDivOp|( PreCaretOp|ZERO ) )" },
             { "'foo' / * Zero", Array.Empty<string>(), "( foo|BiDivOp|( PreRefOp|ZERO ) )" },
@@ -1065,7 +1028,6 @@ public class ParsedExpressionFactoryTestsData
             { "'foo' - / * Zero", Array.Empty<string>(), "( ( foo|PostNegOp )|BiDivOp|( PreRefOp|ZERO ) )" },
             { "'foo' - / % Zero", Array.Empty<string>(), "( ( foo|PostNegOp )|BiDivOp|( PrePerOp|ZERO ) )" },
             { "'foo' - / - Zero", Array.Empty<string>(), "( ( foo|PostNegOp )|BiDivOp|( PreNegOp|ZERO ) )" },
-
             { "'foo' * Zero", Array.Empty<string>(), "( foo|BiMultOp|ZERO )" },
             { "'foo' * ^ Zero", Array.Empty<string>(), "( foo|BiMultOp|( PreCaretOp|ZERO ) )" },
             { "'foo' * * Zero", Array.Empty<string>(), "( foo|BiMultOp|( PreRefOp|ZERO ) )" },
@@ -1091,7 +1053,6 @@ public class ParsedExpressionFactoryTestsData
             { "'foo' - * * Zero", Array.Empty<string>(), "( ( foo|PostNegOp )|BiMultOp|( PreRefOp|ZERO ) )" },
             { "'foo' - * % Zero", Array.Empty<string>(), "( ( foo|PostNegOp )|BiMultOp|( PrePerOp|ZERO ) )" },
             { "'foo' - * - Zero", Array.Empty<string>(), "( ( foo|PostNegOp )|BiMultOp|( PreNegOp|ZERO ) )" },
-
             { "'foo' + Zero", Array.Empty<string>(), "( foo|BiAddOp|ZERO )" },
             { "'foo' + ^ Zero", Array.Empty<string>(), "( foo|BiAddOp|( PreCaretOp|ZERO ) )" },
             { "'foo' + * Zero", Array.Empty<string>(), "( ( foo|PostPlusOp )|BiMultOp|ZERO )" },
@@ -1117,7 +1078,6 @@ public class ParsedExpressionFactoryTestsData
             { "'foo' - + * Zero", Array.Empty<string>(), "( ( foo|PostNegOp )|BiAddOp|( PreRefOp|ZERO ) )" },
             { "'foo' - + % Zero", Array.Empty<string>(), "( ( foo|PostNegOp )|BiAddOp|( PrePerOp|ZERO ) )" },
             { "'foo' - + - Zero", Array.Empty<string>(), "( ( foo|PostNegOp )|BiAddOp|( PreNegOp|ZERO ) )" },
-
             { "'foo' - Zero", Array.Empty<string>(), "( foo|BiSubOp|ZERO )" },
             { "'foo' - ^ Zero", Array.Empty<string>(), "( foo|BiSubOp|( PreCaretOp|ZERO ) )" },
             { "'foo' - * Zero", Array.Empty<string>(), "( ( foo|PostNegOp )|BiMultOp|ZERO )" },
@@ -1143,7 +1103,6 @@ public class ParsedExpressionFactoryTestsData
             { "'foo' - - * Zero", Array.Empty<string>(), "( ( foo|PostNegOp )|BiSubOp|( PreRefOp|ZERO ) )" },
             { "'foo' - - % Zero", Array.Empty<string>(), "( ( foo|PostNegOp )|BiSubOp|( PrePerOp|ZERO ) )" },
             { "'foo' - - - Zero", Array.Empty<string>(), "( ( foo|PostNegOp )|BiSubOp|( PreNegOp|ZERO ) )" },
-
             { "'foo' / foo()", Array.Empty<string>(), "( foo|BiDivOp|Func() )" },
             { "'foo' / ^ foo()", Array.Empty<string>(), "( foo|BiDivOp|( PreCaretOp|Func() ) )" },
             { "'foo' / * foo()", Array.Empty<string>(), "( foo|BiDivOp|( PreRefOp|Func() ) )" },
@@ -1169,7 +1128,6 @@ public class ParsedExpressionFactoryTestsData
             { "'foo' - / * foo()", Array.Empty<string>(), "( ( foo|PostNegOp )|BiDivOp|( PreRefOp|Func() ) )" },
             { "'foo' - / % foo()", Array.Empty<string>(), "( ( foo|PostNegOp )|BiDivOp|( PrePerOp|Func() ) )" },
             { "'foo' - / - foo()", Array.Empty<string>(), "( ( foo|PostNegOp )|BiDivOp|( PreNegOp|Func() ) )" },
-
             { "'foo' * foo()", Array.Empty<string>(), "( foo|BiMultOp|Func() )" },
             { "'foo' * ^ foo()", Array.Empty<string>(), "( foo|BiMultOp|( PreCaretOp|Func() ) )" },
             { "'foo' * * foo()", Array.Empty<string>(), "( foo|BiMultOp|( PreRefOp|Func() ) )" },
@@ -1195,7 +1153,6 @@ public class ParsedExpressionFactoryTestsData
             { "'foo' - * * foo()", Array.Empty<string>(), "( ( foo|PostNegOp )|BiMultOp|( PreRefOp|Func() ) )" },
             { "'foo' - * % foo()", Array.Empty<string>(), "( ( foo|PostNegOp )|BiMultOp|( PrePerOp|Func() ) )" },
             { "'foo' - * - foo()", Array.Empty<string>(), "( ( foo|PostNegOp )|BiMultOp|( PreNegOp|Func() ) )" },
-
             { "'foo' + foo()", Array.Empty<string>(), "( foo|BiAddOp|Func() )" },
             { "'foo' + ^ foo()", Array.Empty<string>(), "( foo|BiAddOp|( PreCaretOp|Func() ) )" },
             { "'foo' + * foo()", Array.Empty<string>(), "( ( foo|PostPlusOp )|BiMultOp|Func() )" },
@@ -1221,7 +1178,6 @@ public class ParsedExpressionFactoryTestsData
             { "'foo' - + * foo()", Array.Empty<string>(), "( ( foo|PostNegOp )|BiAddOp|( PreRefOp|Func() ) )" },
             { "'foo' - + % foo()", Array.Empty<string>(), "( ( foo|PostNegOp )|BiAddOp|( PrePerOp|Func() ) )" },
             { "'foo' - + - foo()", Array.Empty<string>(), "( ( foo|PostNegOp )|BiAddOp|( PreNegOp|Func() ) )" },
-
             { "'foo' - foo()", Array.Empty<string>(), "( foo|BiSubOp|Func() )" },
             { "'foo' - ^ foo()", Array.Empty<string>(), "( foo|BiSubOp|( PreCaretOp|Func() ) )" },
             { "'foo' - * foo()", Array.Empty<string>(), "( ( foo|PostNegOp )|BiMultOp|Func() )" },
@@ -1247,7 +1203,6 @@ public class ParsedExpressionFactoryTestsData
             { "'foo' - - * foo()", Array.Empty<string>(), "( ( foo|PostNegOp )|BiSubOp|( PreRefOp|Func() ) )" },
             { "'foo' - - % foo()", Array.Empty<string>(), "( ( foo|PostNegOp )|BiSubOp|( PrePerOp|Func() ) )" },
             { "'foo' - - - foo()", Array.Empty<string>(), "( ( foo|PostNegOp )|BiSubOp|( PreNegOp|Func() ) )" },
-
             { "'foo' / ( 'bar' )", Array.Empty<string>(), "( foo|BiDivOp|bar )" },
             { "'foo' / ^ ( 'bar' )", Array.Empty<string>(), "( foo|BiDivOp|( PreCaretOp|bar ) )" },
             { "'foo' / * ( 'bar' )", Array.Empty<string>(), "( foo|BiDivOp|( PreRefOp|bar ) )" },
@@ -1273,7 +1228,6 @@ public class ParsedExpressionFactoryTestsData
             { "'foo' - / * ( 'bar' )", Array.Empty<string>(), "( ( foo|PostNegOp )|BiDivOp|( PreRefOp|bar ) )" },
             { "'foo' - / % ( 'bar' )", Array.Empty<string>(), "( ( foo|PostNegOp )|BiDivOp|( PrePerOp|bar ) )" },
             { "'foo' - / - ( 'bar' )", Array.Empty<string>(), "( ( foo|PostNegOp )|BiDivOp|( PreNegOp|bar ) )" },
-
             { "'foo' * ( 'bar' )", Array.Empty<string>(), "( foo|BiMultOp|bar )" },
             { "'foo' * ^ ( 'bar' )", Array.Empty<string>(), "( foo|BiMultOp|( PreCaretOp|bar ) )" },
             { "'foo' * * ( 'bar' )", Array.Empty<string>(), "( foo|BiMultOp|( PreRefOp|bar ) )" },
@@ -1299,7 +1253,6 @@ public class ParsedExpressionFactoryTestsData
             { "'foo' - * * ( 'bar' )", Array.Empty<string>(), "( ( foo|PostNegOp )|BiMultOp|( PreRefOp|bar ) )" },
             { "'foo' - * % ( 'bar' )", Array.Empty<string>(), "( ( foo|PostNegOp )|BiMultOp|( PrePerOp|bar ) )" },
             { "'foo' - * - ( 'bar' )", Array.Empty<string>(), "( ( foo|PostNegOp )|BiMultOp|( PreNegOp|bar ) )" },
-
             { "'foo' + ( 'bar' )", Array.Empty<string>(), "( foo|BiAddOp|bar )" },
             { "'foo' + ^ ( 'bar' )", Array.Empty<string>(), "( foo|BiAddOp|( PreCaretOp|bar ) )" },
             { "'foo' + * ( 'bar' )", Array.Empty<string>(), "( ( foo|PostPlusOp )|BiMultOp|bar )" },
@@ -1325,7 +1278,6 @@ public class ParsedExpressionFactoryTestsData
             { "'foo' - + * ( 'bar' )", Array.Empty<string>(), "( ( foo|PostNegOp )|BiAddOp|( PreRefOp|bar ) )" },
             { "'foo' - + % ( 'bar' )", Array.Empty<string>(), "( ( foo|PostNegOp )|BiAddOp|( PrePerOp|bar ) )" },
             { "'foo' - + - ( 'bar' )", Array.Empty<string>(), "( ( foo|PostNegOp )|BiAddOp|( PreNegOp|bar ) )" },
-
             { "'foo' - ( 'bar' )", Array.Empty<string>(), "( foo|BiSubOp|bar )" },
             { "'foo' - ^ ( 'bar' )", Array.Empty<string>(), "( foo|BiSubOp|( PreCaretOp|bar ) )" },
             { "'foo' - * ( 'bar' )", Array.Empty<string>(), "( ( foo|PostNegOp )|BiMultOp|bar )" },
@@ -1351,7 +1303,6 @@ public class ParsedExpressionFactoryTestsData
             { "'foo' - - * ( 'bar' )", Array.Empty<string>(), "( ( foo|PostNegOp )|BiSubOp|( PreRefOp|bar ) )" },
             { "'foo' - - % ( 'bar' )", Array.Empty<string>(), "( ( foo|PostNegOp )|BiSubOp|( PrePerOp|bar ) )" },
             { "'foo' - - - ( 'bar' )", Array.Empty<string>(), "( ( foo|PostNegOp )|BiSubOp|( PreNegOp|bar ) )" },
-
             { "'foo' / a", new[] { "bar" }, "( foo|BiDivOp|bar )" },
             { "'foo' / ^ a", new[] { "bar" }, "( foo|BiDivOp|( PreCaretOp|bar ) )" },
             { "'foo' / * a", new[] { "bar" }, "( foo|BiDivOp|( PreRefOp|bar ) )" },
@@ -1377,7 +1328,6 @@ public class ParsedExpressionFactoryTestsData
             { "'foo' - / * a", new[] { "bar" }, "( ( foo|PostNegOp )|BiDivOp|( PreRefOp|bar ) )" },
             { "'foo' - / % a", new[] { "bar" }, "( ( foo|PostNegOp )|BiDivOp|( PrePerOp|bar ) )" },
             { "'foo' - / - a", new[] { "bar" }, "( ( foo|PostNegOp )|BiDivOp|( PreNegOp|bar ) )" },
-
             { "'foo' * a", new[] { "bar" }, "( foo|BiMultOp|bar )" },
             { "'foo' * ^ a", new[] { "bar" }, "( foo|BiMultOp|( PreCaretOp|bar ) )" },
             { "'foo' * * a", new[] { "bar" }, "( foo|BiMultOp|( PreRefOp|bar ) )" },
@@ -1403,7 +1353,6 @@ public class ParsedExpressionFactoryTestsData
             { "'foo' - * * a", new[] { "bar" }, "( ( foo|PostNegOp )|BiMultOp|( PreRefOp|bar ) )" },
             { "'foo' - * % a", new[] { "bar" }, "( ( foo|PostNegOp )|BiMultOp|( PrePerOp|bar ) )" },
             { "'foo' - * - a", new[] { "bar" }, "( ( foo|PostNegOp )|BiMultOp|( PreNegOp|bar ) )" },
-
             { "'foo' + a", new[] { "bar" }, "( foo|BiAddOp|bar )" },
             { "'foo' + ^ a", new[] { "bar" }, "( foo|BiAddOp|( PreCaretOp|bar ) )" },
             { "'foo' + * a", new[] { "bar" }, "( ( foo|PostPlusOp )|BiMultOp|bar )" },
@@ -1429,7 +1378,6 @@ public class ParsedExpressionFactoryTestsData
             { "'foo' - + * a", new[] { "bar" }, "( ( foo|PostNegOp )|BiAddOp|( PreRefOp|bar ) )" },
             { "'foo' - + % a", new[] { "bar" }, "( ( foo|PostNegOp )|BiAddOp|( PrePerOp|bar ) )" },
             { "'foo' - + - a", new[] { "bar" }, "( ( foo|PostNegOp )|BiAddOp|( PreNegOp|bar ) )" },
-
             { "'foo' - a", new[] { "bar" }, "( foo|BiSubOp|bar )" },
             { "'foo' - ^ a", new[] { "bar" }, "( foo|BiSubOp|( PreCaretOp|bar ) )" },
             { "'foo' - * a", new[] { "bar" }, "( ( foo|PostNegOp )|BiMultOp|bar )" },
@@ -1455,7 +1403,6 @@ public class ParsedExpressionFactoryTestsData
             { "'foo' - - * a", new[] { "bar" }, "( ( foo|PostNegOp )|BiSubOp|( PreRefOp|bar ) )" },
             { "'foo' - - % a", new[] { "bar" }, "( ( foo|PostNegOp )|BiSubOp|( PrePerOp|bar ) )" },
             { "'foo' - - - a", new[] { "bar" }, "( ( foo|PostNegOp )|BiSubOp|( PreNegOp|bar ) )" },
-
             { "- 'foo' / 'bar'", Array.Empty<string>(), "( ( PreNegOp|foo )|BiDivOp|bar )" },
             { "- 'foo' / ^ 'bar'", Array.Empty<string>(), "( ( PreNegOp|foo )|BiDivOp|( PreCaretOp|bar ) )" },
             { "- 'foo' / * 'bar'", Array.Empty<string>(), "( ( PreNegOp|foo )|BiDivOp|( PreRefOp|bar ) )" },
@@ -1481,7 +1428,6 @@ public class ParsedExpressionFactoryTestsData
             { "- 'foo' - / * 'bar'", Array.Empty<string>(), "( ( ( PreNegOp|foo )|PostNegOp )|BiDivOp|( PreRefOp|bar ) )" },
             { "- 'foo' - / % 'bar'", Array.Empty<string>(), "( ( ( PreNegOp|foo )|PostNegOp )|BiDivOp|( PrePerOp|bar ) )" },
             { "- 'foo' - / - 'bar'", Array.Empty<string>(), "( ( ( PreNegOp|foo )|PostNegOp )|BiDivOp|( PreNegOp|bar ) )" },
-
             { "- 'foo' * 'bar'", Array.Empty<string>(), "( ( PreNegOp|foo )|BiMultOp|bar )" },
             { "- 'foo' * ^ 'bar'", Array.Empty<string>(), "( ( PreNegOp|foo )|BiMultOp|( PreCaretOp|bar ) )" },
             { "- 'foo' * * 'bar'", Array.Empty<string>(), "( ( PreNegOp|foo )|BiMultOp|( PreRefOp|bar ) )" },
@@ -1507,7 +1453,6 @@ public class ParsedExpressionFactoryTestsData
             { "- 'foo' - * * 'bar'", Array.Empty<string>(), "( ( ( PreNegOp|foo )|PostNegOp )|BiMultOp|( PreRefOp|bar ) )" },
             { "- 'foo' - * % 'bar'", Array.Empty<string>(), "( ( ( PreNegOp|foo )|PostNegOp )|BiMultOp|( PrePerOp|bar ) )" },
             { "- 'foo' - * - 'bar'", Array.Empty<string>(), "( ( ( PreNegOp|foo )|PostNegOp )|BiMultOp|( PreNegOp|bar ) )" },
-
             { "- 'foo' + 'bar'", Array.Empty<string>(), "( ( PreNegOp|foo )|BiAddOp|bar )" },
             { "- 'foo' + ^ 'bar'", Array.Empty<string>(), "( ( PreNegOp|foo )|BiAddOp|( PreCaretOp|bar ) )" },
             { "- 'foo' + * 'bar'", Array.Empty<string>(), "( ( ( PreNegOp|foo )|PostPlusOp )|BiMultOp|bar )" },
@@ -1533,7 +1478,6 @@ public class ParsedExpressionFactoryTestsData
             { "- 'foo' - + * 'bar'", Array.Empty<string>(), "( ( ( PreNegOp|foo )|PostNegOp )|BiAddOp|( PreRefOp|bar ) )" },
             { "- 'foo' - + % 'bar'", Array.Empty<string>(), "( ( ( PreNegOp|foo )|PostNegOp )|BiAddOp|( PrePerOp|bar ) )" },
             { "- 'foo' - + - 'bar'", Array.Empty<string>(), "( ( ( PreNegOp|foo )|PostNegOp )|BiAddOp|( PreNegOp|bar ) )" },
-
             { "- 'foo' - 'bar'", Array.Empty<string>(), "( ( PreNegOp|foo )|BiSubOp|bar )" },
             { "- 'foo' - ^ 'bar'", Array.Empty<string>(), "( ( PreNegOp|foo )|BiSubOp|( PreCaretOp|bar ) )" },
             { "- 'foo' - * 'bar'", Array.Empty<string>(), "( ( ( PreNegOp|foo )|PostNegOp )|BiMultOp|bar )" },

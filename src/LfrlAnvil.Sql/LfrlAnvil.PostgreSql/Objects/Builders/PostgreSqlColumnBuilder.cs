@@ -53,9 +53,9 @@ public sealed class PostgreSqlColumnBuilder : SqlColumnBuilder
 
     protected override SqlPropertyChange<SqlColumnComputation?> BeforeComputationChange(SqlColumnComputation? newValue)
     {
-        if ( newValue is null ||
-            newValue.Value.Storage == SqlColumnComputationStorage.Stored ||
-            Database.VirtualGeneratedColumnStorageResolution == SqlOptionalFunctionalityResolution.Include )
+        if ( newValue is null
+            || newValue.Value.Storage == SqlColumnComputationStorage.Stored
+            || Database.VirtualGeneratedColumnStorageResolution == SqlOptionalFunctionalityResolution.Include )
             return base.BeforeComputationChange( newValue );
 
         if ( Database.VirtualGeneratedColumnStorageResolution == SqlOptionalFunctionalityResolution.Ignore )

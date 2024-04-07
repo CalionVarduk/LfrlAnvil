@@ -95,7 +95,7 @@ public class ReadOnlyArrayTests : TestsBase
     public void ReadOnlyArrayConversionOperator_ShouldReturnCorrectArray()
     {
         var source = Fixture.CreateMany<string>( count: 10 ).ToArray();
-        var sut = (ReadOnlyArray<string>)source;
+        var sut = ( ReadOnlyArray<string> )source;
 
         using ( new AssertionScope() )
         {

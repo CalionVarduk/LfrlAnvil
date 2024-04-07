@@ -26,9 +26,9 @@ public readonly struct IntegerPartition : IReadOnlyCollection<ulong>
         _sumOfPartsNumerator = 0UL;
         for ( var i = 0; i < _parts.Length; ++i )
         {
-            var numerator = checked( _parts[i].Numerator * (long)(commonDenominator / _parts[i].Denominator) );
+            var numerator = checked( _parts[i].Numerator * ( long )(commonDenominator / _parts[i].Denominator) );
             _parts[i] = new Fraction( numerator, commonDenominator );
-            var unsignedNumerator = unchecked( (ulong)numerator );
+            var unsignedNumerator = unchecked( ( ulong )numerator );
             _sumOfPartsNumerator = checked( _sumOfPartsNumerator + unsignedNumerator );
         }
 
@@ -81,7 +81,7 @@ public readonly struct IntegerPartition : IReadOnlyCollection<ulong>
         internal Enumerator(Fraction[] parts, ulong quotient, ulong remainder, ulong sumOfPartsNumerator)
         {
             _parts = parts;
-            _partCount = unchecked( (ulong)parts.Length );
+            _partCount = unchecked( ( ulong )parts.Length );
             _quotient = quotient;
             _remainder = remainder;
             _sumOfPartsNumerator = sumOfPartsNumerator;
@@ -95,14 +95,14 @@ public readonly struct IntegerPartition : IReadOnlyCollection<ulong>
 
         public bool MoveNext()
         {
-            if ( unchecked( (ulong)++_index ) >= _partCount )
+            if ( unchecked( ( ulong )++_index ) >= _partCount )
             {
                 Assume.Equals( _offset, 0UL );
                 return false;
             }
 
             Assume.IsNotNull( _parts );
-            var numerator = unchecked( (ulong)_parts[_index].Numerator );
+            var numerator = unchecked( ( ulong )_parts[_index].Numerator );
             (var q, _offset) = Math.DivRem( checked( _offset + _remainder * numerator ), _sumOfPartsNumerator );
             Current = unchecked( _quotient * numerator + q );
             return true;

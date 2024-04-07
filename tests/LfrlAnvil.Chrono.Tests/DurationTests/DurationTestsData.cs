@@ -946,20 +946,20 @@ public class DurationTestsData
         {
             { 1, -1 },
             { 1, -2 },
-            { 1, (int)ChronoConstants.TicksPerMicrosecond },
-            { 1, (int)ChronoConstants.TicksPerMicrosecond + 1 },
-            { 1, (int)ChronoConstants.TicksPerMicrosecond + 2 },
+            { 1, ( int )ChronoConstants.TicksPerMicrosecond },
+            { 1, ( int )ChronoConstants.TicksPerMicrosecond + 1 },
+            { 1, ( int )ChronoConstants.TicksPerMicrosecond + 2 },
             { -1, 1 },
             { -1, 2 },
-            { -1, (int)-ChronoConstants.TicksPerMicrosecond },
-            { -1, (int)-ChronoConstants.TicksPerMicrosecond - 1 },
-            { -1, (int)-ChronoConstants.TicksPerMicrosecond - 2 },
-            { 0, (int)ChronoConstants.TicksPerMicrosecond },
-            { 0, (int)ChronoConstants.TicksPerMicrosecond + 1 },
-            { 0, (int)ChronoConstants.TicksPerMicrosecond + 2 },
-            { 0, (int)-ChronoConstants.TicksPerMicrosecond },
-            { 0, (int)-ChronoConstants.TicksPerMicrosecond - 1 },
-            { 0, (int)-ChronoConstants.TicksPerMicrosecond - 2 }
+            { -1, ( int )-ChronoConstants.TicksPerMicrosecond },
+            { -1, ( int )-ChronoConstants.TicksPerMicrosecond - 1 },
+            { -1, ( int )-ChronoConstants.TicksPerMicrosecond - 2 },
+            { 0, ( int )ChronoConstants.TicksPerMicrosecond },
+            { 0, ( int )ChronoConstants.TicksPerMicrosecond + 1 },
+            { 0, ( int )ChronoConstants.TicksPerMicrosecond + 2 },
+            { 0, ( int )-ChronoConstants.TicksPerMicrosecond },
+            { 0, ( int )-ChronoConstants.TicksPerMicrosecond - 1 },
+            { 0, ( int )-ChronoConstants.TicksPerMicrosecond - 2 }
         };
     }
 

@@ -17,6 +17,6 @@ internal sealed class PostgreSqlColumnTypeDefinitionUInt8 : PostgreSqlColumnType
     [Pure]
     public override object ToParameterValue(byte value)
     {
-        return (short)value;
+        return ( short )value;
     }
 }

@@ -210,9 +210,9 @@ public class TimeOfDayTestsData
         {
             -1,
             -2,
-            (int)ChronoConstants.TicksPerMicrosecond,
-            (int)ChronoConstants.TicksPerMicrosecond + 1,
-            (int)ChronoConstants.TicksPerMicrosecond + 2
+            ( int )ChronoConstants.TicksPerMicrosecond,
+            ( int )ChronoConstants.TicksPerMicrosecond + 1,
+            ( int )ChronoConstants.TicksPerMicrosecond + 2
         };
     }
 

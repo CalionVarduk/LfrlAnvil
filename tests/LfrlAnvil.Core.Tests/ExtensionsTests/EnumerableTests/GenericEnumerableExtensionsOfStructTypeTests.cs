@@ -12,7 +12,7 @@ public abstract class GenericEnumerableExtensionsOfStructTypeTests<T> : GenericE
     public void WhereNotNull_ShouldFilterOutNullElements()
     {
         var expected = Fixture.CreateMany<T>().ToList();
-        var sut = expected.Select( v => (T?)v ).Append( null );
+        var sut = expected.Select( v => ( T? )v ).Append( null );
 
         var result = sut.WhereNotNull();
 
@@ -23,7 +23,7 @@ public abstract class GenericEnumerableExtensionsOfStructTypeTests<T> : GenericE
     public void WhereNotNull_ShouldReturnFalseWhenSourceContainsNullElement()
     {
         var sut = Fixture.CreateMany<T>().ToList();
-        var result = sut.Select( v => (T?)v ).WhereNotNull();
+        var result = sut.Select( v => ( T? )v ).WhereNotNull();
         result.Should().BeSequentiallyEqualTo( sut );
     }
 

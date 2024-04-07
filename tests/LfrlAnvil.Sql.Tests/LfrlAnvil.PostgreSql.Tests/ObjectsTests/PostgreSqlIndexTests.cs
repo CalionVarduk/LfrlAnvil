@@ -46,7 +46,9 @@ public class PostgreSqlIndexTests : TestsBase
             sut.IsVirtual.Should().Be( isVirtual );
             sut.IsPartial.Should().BeFalse();
             sut.Columns.Should()
-                .BeSequentiallyEqualTo( new SqlIndexed<PostgreSqlColumn>( c1, OrderBy.Asc ), new SqlIndexed<PostgreSqlColumn>( c2, OrderBy.Desc ) );
+                .BeSequentiallyEqualTo(
+                    new SqlIndexed<PostgreSqlColumn>( c1, OrderBy.Asc ),
+                    new SqlIndexed<PostgreSqlColumn>( c2, OrderBy.Desc ) );
 
             sut.ToString().Should().Be( "[Index] foo.IX_TEST" );
         }
@@ -55,7 +57,7 @@ public class PostgreSqlIndexTests : TestsBase
     [Fact]
     public void Properties_ShouldBeCorrectlyCopiedFromBuilder_ForPartialIndex()
     {
-        var schemaBuilder = PostgreSqlDatabaseBuilderMock.Create(  ).Schemas.Create( "foo" );
+        var schemaBuilder = PostgreSqlDatabaseBuilderMock.Create().Schemas.Create( "foo" );
         var tableBuilder = schemaBuilder.Objects.CreateTable( "T" );
         var c1Builder = tableBuilder.Columns.Create( "C1" );
         tableBuilder.Constraints.CreateIndex( c1Builder.Asc() ).SetName( "IX_TEST" ).SetFilter( SqlNode.True() );

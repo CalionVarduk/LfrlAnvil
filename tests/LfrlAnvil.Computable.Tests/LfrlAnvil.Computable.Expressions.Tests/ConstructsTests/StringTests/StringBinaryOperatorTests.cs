@@ -272,7 +272,7 @@ public class StringBinaryOperatorTests : BinaryOperatorsTestsBase
                 if ( result is not ConstantExpression constantResult )
                     return;
 
-                Math.Sign( (int)constantResult.Value! ).Should().Be( expected );
+                Math.Sign( ( int )constantResult.Value! ).Should().Be( expected );
             } );
     }
 

@@ -97,7 +97,7 @@ public class IdentifierTests : TestsBase
         var value = Fixture.Create<ulong>();
         var sut = new Identifier( value );
 
-        var result = (ulong)sut;
+        var result = ( ulong )sut;
 
         result.Should().Be( value );
     }

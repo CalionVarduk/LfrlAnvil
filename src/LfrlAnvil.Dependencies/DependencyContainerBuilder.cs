@@ -23,9 +23,9 @@ public class DependencyContainerBuilder : IDependencyContainerBuilder
     public DependencyLifetime DefaultLifetime => _locatorBuilderStore.Global.DefaultLifetime;
     public DependencyImplementorDisposalStrategy DefaultDisposalStrategy => _locatorBuilderStore.Global.DefaultDisposalStrategy;
 
-    Type? IDependencyLocatorBuilder.KeyType => ((IDependencyLocatorBuilder)_locatorBuilderStore.Global).KeyType;
-    object? IDependencyLocatorBuilder.Key => ((IDependencyLocatorBuilder)_locatorBuilderStore.Global).Key;
-    bool IDependencyLocatorBuilder.IsKeyed => ((IDependencyLocatorBuilder)_locatorBuilderStore.Global).IsKeyed;
+    Type? IDependencyLocatorBuilder.KeyType => (( IDependencyLocatorBuilder )_locatorBuilderStore.Global).KeyType;
+    object? IDependencyLocatorBuilder.Key => (( IDependencyLocatorBuilder )_locatorBuilderStore.Global).Key;
+    bool IDependencyLocatorBuilder.IsKeyed => (( IDependencyLocatorBuilder )_locatorBuilderStore.Global).IsKeyed;
 
     public IDependencyImplementorBuilder AddSharedImplementor(Type type)
     {

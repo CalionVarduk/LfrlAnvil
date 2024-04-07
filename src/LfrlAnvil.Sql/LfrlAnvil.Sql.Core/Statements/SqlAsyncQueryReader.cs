@@ -9,7 +9,8 @@ namespace LfrlAnvil.Sql.Statements;
 
 public readonly record struct SqlAsyncQueryReader(
     SqlDialect Dialect,
-    Func<IDataReader, SqlQueryReaderOptions, CancellationToken, ValueTask<SqlQueryResult>> Delegate)
+    Func<IDataReader, SqlQueryReaderOptions, CancellationToken, ValueTask<SqlQueryResult>> Delegate
+)
 {
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -24,7 +25,8 @@ public readonly record struct SqlAsyncQueryReader(
 
 public readonly record struct SqlAsyncQueryReader<TRow>(
     SqlDialect Dialect,
-    Func<IDataReader, SqlQueryReaderOptions, CancellationToken, ValueTask<SqlQueryResult<TRow>>> Delegate)
+    Func<IDataReader, SqlQueryReaderOptions, CancellationToken, ValueTask<SqlQueryResult<TRow>>> Delegate
+)
     where TRow : notnull
 {
     [Pure]

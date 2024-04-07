@@ -246,12 +246,10 @@ public class SqlViewBuilderTests : TestsBase
             sut.ReferencedObjects.Should().BeEmpty();
 
             column.ReferencingObjects.Should()
-                .BeSequentiallyEqualTo(
-                    SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), column ) );
+                .BeSequentiallyEqualTo( SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), column ) );
 
             table.ReferencingObjects.Should()
-                .BeSequentiallyEqualTo(
-                    SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), table ) );
+                .BeSequentiallyEqualTo( SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), table ) );
 
             other.ReferencedObjects.Should().BeSequentiallyEqualTo( sut );
 
@@ -302,7 +300,7 @@ public class SqlViewBuilderTests : TestsBase
         _ = sut.Info;
 
         var actionCount = schema.Database.GetPendingActionCount();
-        var result = ((ISqlViewBuilder)sut).SetName( "bar" );
+        var result = (( ISqlViewBuilder )sut).SetName( "bar" );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )
@@ -332,7 +330,7 @@ public class SqlViewBuilderTests : TestsBase
         _ = sut.Info;
 
         var actionCount = schema.Database.GetPendingActionCount();
-        var result = ((ISqlObjectBuilder)sut).SetName( "bar" );
+        var result = (( ISqlObjectBuilder )sut).SetName( "bar" );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )

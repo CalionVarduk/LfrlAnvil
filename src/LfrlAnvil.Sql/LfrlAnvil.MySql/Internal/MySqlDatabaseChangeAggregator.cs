@@ -44,21 +44,21 @@ internal sealed class MySqlDatabaseChangeAggregator : SqlDatabaseChangeAggregato
     public bool IsRenamed => OriginalName.Exists;
 
     public bool RequiresNonForeignKeyAlteration =>
-        IsPrimaryKeyChanged ||
-        CreatedColumns.Count > 0 ||
-        ModifiedColumns.Count > 0 ||
-        RemovedColumns.Count > 0 ||
-        RenamedIndexes.Count > 0 ||
-        CreatedChecks.Count > 0 ||
-        RemovedChecks.Count > 0;
+        IsPrimaryKeyChanged
+        || CreatedColumns.Count > 0
+        || ModifiedColumns.Count > 0
+        || RemovedColumns.Count > 0
+        || RenamedIndexes.Count > 0
+        || CreatedChecks.Count > 0
+        || RemovedChecks.Count > 0;
 
     public bool HasChanged =>
-        IsRenamed ||
-        RequiresNonForeignKeyAlteration ||
-        CreatedIndexes.Count > 0 ||
-        RemovedIndexes.Count > 0 ||
-        CreatedForeignKeys.Count > 0 ||
-        RemovedForeignKeys.Count > 0;
+        IsRenamed
+        || RequiresNonForeignKeyAlteration
+        || CreatedIndexes.Count > 0
+        || RemovedIndexes.Count > 0
+        || CreatedForeignKeys.Count > 0
+        || RemovedForeignKeys.Count > 0;
 
     public override void Clear()
     {
@@ -267,8 +267,8 @@ internal sealed class MySqlDatabaseChangeAggregator : SqlDatabaseChangeAggregato
             var computationStorage = modification.Column.Computation?.Storage ?? SqlColumnComputationStorage.Stored;
             var originalComputationStorage = Changes.GetOriginalValue( modification.Source, SqlObjectChangeDescriptor.Computation )
                     .GetValueOrDefault( modification.Source.Computation )
-                    ?.Storage ??
-                SqlColumnComputationStorage.Stored;
+                    ?.Storage
+                ?? SqlColumnComputationStorage.Stored;
 
             if ( originalComputationStorage == computationStorage )
                 continue;

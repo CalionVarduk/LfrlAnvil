@@ -14,7 +14,9 @@ public sealed class PostgreSqlTableBuilder : SqlTableBuilder
     public new PostgreSqlDatabaseBuilder Database => ReinterpretCast.To<PostgreSqlDatabaseBuilder>( base.Database );
     public new PostgreSqlSchemaBuilder Schema => ReinterpretCast.To<PostgreSqlSchemaBuilder>( base.Schema );
     public new PostgreSqlColumnBuilderCollection Columns => ReinterpretCast.To<PostgreSqlColumnBuilderCollection>( base.Columns );
-    public new PostgreSqlConstraintBuilderCollection Constraints => ReinterpretCast.To<PostgreSqlConstraintBuilderCollection>( base.Constraints );
+
+    public new PostgreSqlConstraintBuilderCollection Constraints =>
+        ReinterpretCast.To<PostgreSqlConstraintBuilderCollection>( base.Constraints );
 
     public new PostgreSqlTableBuilder SetName(string name)
     {

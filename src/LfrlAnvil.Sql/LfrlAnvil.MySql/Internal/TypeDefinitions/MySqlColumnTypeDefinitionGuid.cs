@@ -7,7 +7,7 @@ namespace LfrlAnvil.MySql.Internal.TypeDefinitions;
 internal sealed class MySqlColumnTypeDefinitionGuid : MySqlColumnTypeDefinition<Guid>
 {
     internal MySqlColumnTypeDefinitionGuid()
-        : base( MySqlDataTypeProvider.Guid, Guid.Empty, static (reader, ordinal) => new Guid( (byte[])reader.GetValue( ordinal ) ) ) { }
+        : base( MySqlDataTypeProvider.Guid, Guid.Empty, static (reader, ordinal) => new Guid( ( byte[] )reader.GetValue( ordinal ) ) ) { }
 
     [Pure]
     public override string ToDbLiteral(Guid value)

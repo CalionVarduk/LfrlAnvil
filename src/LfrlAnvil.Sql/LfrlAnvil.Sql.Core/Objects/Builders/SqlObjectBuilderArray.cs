@@ -66,7 +66,7 @@ public readonly struct SqlObjectBuilderArray<T> : IReadOnlyList<T>
 
         void IEnumerator.Reset()
         {
-            ((IEnumerator)_source).Reset();
+            (( IEnumerator )_source).Reset();
         }
     }
 

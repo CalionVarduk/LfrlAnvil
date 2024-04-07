@@ -46,7 +46,7 @@ public readonly struct Period : IEquatable<Period>
             0,
             0,
             0,
-            (int)timeSpan.TotalDays,
+            ( int )timeSpan.TotalDays,
             timeSpan.Hours,
             timeSpan.Minutes,
             timeSpan.Seconds,
@@ -66,16 +66,16 @@ public readonly struct Period : IEquatable<Period>
     public long Ticks { get; }
 
     public PeriodUnits ActiveUnits =>
-        (Years != 0 ? PeriodUnits.Years : PeriodUnits.None) |
-        (Months != 0 ? PeriodUnits.Months : PeriodUnits.None) |
-        (Weeks != 0 ? PeriodUnits.Weeks : PeriodUnits.None) |
-        (Days != 0 ? PeriodUnits.Days : PeriodUnits.None) |
-        (Hours != 0 ? PeriodUnits.Hours : PeriodUnits.None) |
-        (Minutes != 0 ? PeriodUnits.Minutes : PeriodUnits.None) |
-        (Seconds != 0 ? PeriodUnits.Seconds : PeriodUnits.None) |
-        (Milliseconds != 0 ? PeriodUnits.Milliseconds : PeriodUnits.None) |
-        (Microseconds != 0 ? PeriodUnits.Microseconds : PeriodUnits.None) |
-        (Ticks != 0 ? PeriodUnits.Ticks : PeriodUnits.None);
+        (Years != 0 ? PeriodUnits.Years : PeriodUnits.None)
+        | (Months != 0 ? PeriodUnits.Months : PeriodUnits.None)
+        | (Weeks != 0 ? PeriodUnits.Weeks : PeriodUnits.None)
+        | (Days != 0 ? PeriodUnits.Days : PeriodUnits.None)
+        | (Hours != 0 ? PeriodUnits.Hours : PeriodUnits.None)
+        | (Minutes != 0 ? PeriodUnits.Minutes : PeriodUnits.None)
+        | (Seconds != 0 ? PeriodUnits.Seconds : PeriodUnits.None)
+        | (Milliseconds != 0 ? PeriodUnits.Milliseconds : PeriodUnits.None)
+        | (Microseconds != 0 ? PeriodUnits.Microseconds : PeriodUnits.None)
+        | (Ticks != 0 ? PeriodUnits.Ticks : PeriodUnits.None);
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -196,16 +196,16 @@ public readonly struct Period : IEquatable<Period>
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public bool Equals(Period other)
     {
-        return Years.Equals( other.Years ) &&
-            Months.Equals( other.Months ) &&
-            Weeks.Equals( other.Weeks ) &&
-            Days.Equals( other.Days ) &&
-            Hours.Equals( other.Hours ) &&
-            Minutes.Equals( other.Minutes ) &&
-            Seconds.Equals( other.Seconds ) &&
-            Milliseconds.Equals( other.Milliseconds ) &&
-            Microseconds.Equals( other.Microseconds ) &&
-            Ticks.Equals( other.Ticks );
+        return Years.Equals( other.Years )
+            && Months.Equals( other.Months )
+            && Weeks.Equals( other.Weeks )
+            && Days.Equals( other.Days )
+            && Hours.Equals( other.Hours )
+            && Minutes.Equals( other.Minutes )
+            && Seconds.Equals( other.Seconds )
+            && Milliseconds.Equals( other.Milliseconds )
+            && Microseconds.Equals( other.Microseconds )
+            && Ticks.Equals( other.Ticks );
     }
 
     [Pure]

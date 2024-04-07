@@ -78,7 +78,7 @@ public class SqlPropertyChangeTests : TestsBase
     [Fact]
     public void ToString_ShouldReturnCorrectResult_ForNullValue()
     {
-        var sut = SqlPropertyChange.Create( (string?)null );
+        var sut = SqlPropertyChange.Create( ( string? )null );
         var result = sut.ToString();
         result.Should().Be( "SetNull<System.String>()" );
     }

@@ -6,7 +6,7 @@ namespace LfrlAnvil.PostgreSql.Internal.TypeDefinitions;
 internal sealed class PostgreSqlColumnTypeDefinitionInt8 : PostgreSqlColumnTypeDefinition<sbyte>
 {
     internal PostgreSqlColumnTypeDefinitionInt8()
-        : base( PostgreSqlDataType.Int2, 0, static (reader, ordinal) => (sbyte)reader.GetInt16( ordinal ) ) { }
+        : base( PostgreSqlDataType.Int2, 0, static (reader, ordinal) => ( sbyte )reader.GetInt16( ordinal ) ) { }
 
     [Pure]
     public override string ToDbLiteral(sbyte value)
@@ -17,6 +17,6 @@ internal sealed class PostgreSqlColumnTypeDefinitionInt8 : PostgreSqlColumnTypeD
     [Pure]
     public override object ToParameterValue(sbyte value)
     {
-        return (short)value;
+        return ( short )value;
     }
 }

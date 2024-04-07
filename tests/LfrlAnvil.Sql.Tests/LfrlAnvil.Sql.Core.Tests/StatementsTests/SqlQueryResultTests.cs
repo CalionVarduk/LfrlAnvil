@@ -36,11 +36,7 @@ public partial class SqlQueryResultTests : TestsBase
     [Fact]
     public void Ctor_TypeErased_ShouldCreateEmpty_WhenRowsAreEmpty()
     {
-        var resultSetFields = new[]
-        {
-            new SqlResultSetField( 0, "a" ),
-            new SqlResultSetField( 1, "b" )
-        };
+        var resultSetFields = new[] { new SqlResultSetField( 0, "a" ), new SqlResultSetField( 1, "b" ) };
 
         var sut = new SqlQueryResult( resultSetFields, new List<object?>() );
 
@@ -55,20 +51,33 @@ public partial class SqlQueryResultTests : TestsBase
     [Fact]
     public void Ctor_TypeErased_ShouldThrowArgumentOutOfRangeException_WhenNonEmptyWithEmptyFields()
     {
-        var action = Lambda.Of( () => new SqlQueryResult( Array.Empty<SqlResultSetField>(), new List<object?> { "foo", 3 } ) );
+        var action = Lambda.Of(
+            () => new SqlQueryResult(
+                Array.Empty<SqlResultSetField>(),
+                new List<object?>
+                {
+                    "foo",
+                    3
+                } ) );
+
         action.Should().ThrowExactly<ArgumentOutOfRangeException>();
     }
 
     [Fact]
     public void Ctor_TypeErased_ShouldThrowArgumentException_WhenCellCountIsNotDivisibleByFieldCount()
     {
-        var resultSetFields = new[]
-        {
-            new SqlResultSetField( 0, "a" ),
-            new SqlResultSetField( 1, "b" )
-        };
+        var resultSetFields = new[] { new SqlResultSetField( 0, "a" ), new SqlResultSetField( 1, "b" ) };
 
-        var action = Lambda.Of( () => new SqlQueryResult( resultSetFields, new List<object?> { "foo", 3, true } ) );
+        var action = Lambda.Of(
+            () => new SqlQueryResult(
+                resultSetFields,
+                new List<object?>
+                {
+                    "foo",
+                    3,
+                    true
+                } ) );
+
         action.Should().ThrowExactly<ArgumentException>();
     }
 
@@ -83,7 +92,22 @@ public partial class SqlQueryResultTests : TestsBase
             new SqlResultSetField( 3, "d" )
         };
 
-        var cells = new List<object?> { "foo", 3, true, 1.0, "bar", 3, false, 2.0, "lorem", 5, false, 5.0 };
+        var cells = new List<object?>
+        {
+            "foo",
+            3,
+            true,
+            1.0,
+            "bar",
+            3,
+            false,
+            2.0,
+            "lorem",
+            5,
+            false,
+            5.0
+        };
+
         var sut = new SqlQueryResult( resultSetFields, cells );
 
         using ( new AssertionScope() )
@@ -138,11 +162,7 @@ public partial class SqlQueryResultTests : TestsBase
     [Fact]
     public void Ctor_Generic_ShouldCreateNonEmpty_WhenRowsAreNotEmpty()
     {
-        var resultSetFields = new[]
-        {
-            new SqlResultSetField( 0, "a" ),
-            new SqlResultSetField( 1, "b" )
-        };
+        var resultSetFields = new[] { new SqlResultSetField( 0, "a" ), new SqlResultSetField( 1, "b" ) };
 
         var rows = new List<object[]>
         {

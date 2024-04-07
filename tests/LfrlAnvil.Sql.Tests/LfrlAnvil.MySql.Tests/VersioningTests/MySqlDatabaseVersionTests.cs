@@ -1,10 +1,10 @@
 ﻿using LfrlAnvil.Functional;
-using LfrlAnvil.Sql.Exceptions;
-using LfrlAnvil.Sql.Objects.Builders;
-using LfrlAnvil.Sql.Versioning;
 using LfrlAnvil.MySql.Objects.Builders;
 using LfrlAnvil.MySql.Tests.Helpers;
 using LfrlAnvil.MySql.Versioning;
+using LfrlAnvil.Sql.Exceptions;
+using LfrlAnvil.Sql.Objects.Builders;
+using LfrlAnvil.Sql.Versioning;
 using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.MySql.Tests.VersioningTests;
@@ -56,7 +56,7 @@ public class MySqlDatabaseVersionTests : TestsBase
         var builder = Substitute.For<ISqlDatabaseBuilder>();
         var sut = MySqlDatabaseVersion.Create( version, apply );
 
-        var action = Lambda.Of( () => ((ISqlDatabaseVersion)sut).Apply( builder ) );
+        var action = Lambda.Of( () => (( ISqlDatabaseVersion )sut).Apply( builder ) );
 
         action.Should().ThrowExactly<SqlObjectCastException>();
     }

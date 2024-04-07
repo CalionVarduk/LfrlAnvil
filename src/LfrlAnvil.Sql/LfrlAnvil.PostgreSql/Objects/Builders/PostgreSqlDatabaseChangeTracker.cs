@@ -295,9 +295,9 @@ public sealed class PostgreSqlDatabaseChangeTracker : SqlDatabaseChangeTracker
                 changeAggregator.ObjectsByOriginalName );
         }
 
-        if ( changeAggregator.ModifiedColumns.Count > 0 ||
-            changeAggregator.CreatedColumns.Count > 0 ||
-            changeAggregator.CreatedPrimaryKey is not null )
+        if ( changeAggregator.ModifiedColumns.Count > 0
+            || changeAggregator.CreatedColumns.Count > 0
+            || changeAggregator.CreatedPrimaryKey is not null )
         {
             var isAltered = false;
             if ( changeAggregator.CreatedColumns.Count > 0 || changeAggregator.CreatedPrimaryKey is not null )

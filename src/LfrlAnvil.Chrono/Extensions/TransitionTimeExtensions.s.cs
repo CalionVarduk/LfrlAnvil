@@ -39,7 +39,7 @@ public static class TransitionTimeExtensions
     {
         var result = new DateTime( year, transitionTime.Month, 1 ) + transitionTime.TimeOfDay.TimeOfDay;
 
-        var daysToAdd = (int)transitionTime.DayOfWeek - (int)result.DayOfWeek;
+        var daysToAdd = ( int )transitionTime.DayOfWeek - ( int )result.DayOfWeek;
         if ( daysToAdd < 0 )
             daysToAdd += ChronoConstants.DaysPerWeek;
 
@@ -58,7 +58,7 @@ public static class TransitionTimeExtensions
         var daysInMonth = DateTime.DaysInMonth( year, transitionTime.Month );
         var result = new DateTime( year, transitionTime.Month, daysInMonth ) + transitionTime.TimeOfDay.TimeOfDay;
 
-        var dayDelta = (int)result.DayOfWeek - (int)transitionTime.DayOfWeek;
+        var dayDelta = ( int )result.DayOfWeek - ( int )transitionTime.DayOfWeek;
         if ( dayDelta < 0 )
             dayDelta += ChronoConstants.DaysPerWeek;
 

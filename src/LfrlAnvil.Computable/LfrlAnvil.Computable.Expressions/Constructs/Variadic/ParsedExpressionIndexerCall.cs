@@ -35,9 +35,9 @@ public sealed class ParsedExpressionIndexerCall : ParsedExpressionVariadicFuncti
         if ( indexer is null )
             throw new ParsedExpressionUnresolvableIndexerException( target.Type, parameterTypes );
 
-        return FoldConstantsWhenPossible &&
-            target is ConstantExpression constantTarget &&
-            callParameters.All( static p => p is ConstantExpression )
+        return FoldConstantsWhenPossible
+            && target is ConstantExpression constantTarget
+            && callParameters.All( static p => p is ConstantExpression )
                 ? ExpressionHelpers.CreateConstantIndexer( constantTarget, indexer, callParameters )
                 : CreateVariableIndexer( target, indexer, callParameters );
     }

@@ -33,19 +33,9 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
             ("-", ParsedExpressionConstructType.PrefixUnaryOperator, typeof( ParsedExpressionNegateOperator ))
         };
 
-        var expectedBinaryOperatorPrecedences = new (string Symbol, int Value)[]
-        {
-            ("+", 3),
-            ("-", 3),
-            ("*", 2),
-            ("/", 2),
-            ("mod", 2)
-        };
+        var expectedBinaryOperatorPrecedences = new (string Symbol, int Value)[] { ("+", 3), ("-", 3), ("*", 2), ("/", 2), ("mod", 2) };
 
-        var expectedPrefixUnaryConstructPrecedences = new (string Symbol, int Value)[]
-        {
-            ("-", 1)
-        };
+        var expectedPrefixUnaryConstructPrecedences = new (string Symbol, int Value)[] { ("-", 1) };
 
         var result = sut.AddGenericArithmeticOperators();
         var actualConstructs = result.GetConstructs()
@@ -79,19 +69,9 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
             ("~", ParsedExpressionConstructType.PrefixUnaryOperator, typeof( ParsedExpressionBitwiseNotOperator ))
         };
 
-        var expectedBinaryOperatorPrecedences = new (string Symbol, int Value)[]
-        {
-            ("&", 8),
-            ("|", 10),
-            ("^", 9),
-            ("<<", 4),
-            (">>", 4)
-        };
+        var expectedBinaryOperatorPrecedences = new (string Symbol, int Value)[] { ("&", 8), ("|", 10), ("^", 9), ("<<", 4), (">>", 4) };
 
-        var expectedPrefixUnaryConstructPrecedences = new (string Symbol, int Value)[]
-        {
-            ("~", 1)
-        };
+        var expectedPrefixUnaryConstructPrecedences = new (string Symbol, int Value)[] { ("~", 1) };
 
         var result = sut.AddGenericBitwiseOperators();
         var actualConstructs = result.GetConstructs()
@@ -129,14 +109,7 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
 
         var expectedBinaryOperatorPrecedences = new (string Symbol, int Value)[]
         {
-            ("??", 13),
-            ("==", 7),
-            ("!=", 7),
-            (">", 6),
-            ("<", 6),
-            (">=", 6),
-            ("<=", 6),
-            ("<=>", 5)
+            ("??", 13), ("==", 7), ("!=", 7), (">", 6), ("<", 6), (">=", 6), ("<=", 6), ("<=>", 5)
         };
 
         var result = sut.AddGenericLogicalOperators();
@@ -165,12 +138,7 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
             ("^", ParsedExpressionConstructType.BinaryOperator, typeof( ParsedExpressionBitwiseXorBooleanOperator ))
         };
 
-        var expectedBinaryOperatorPrecedences = new (string Symbol, int Value)[]
-        {
-            ("&", 8),
-            ("|", 10),
-            ("^", 9)
-        };
+        var expectedBinaryOperatorPrecedences = new (string Symbol, int Value)[] { ("&", 8), ("|", 10), ("^", 9) };
 
         var result = sut.AddBooleanBitwiseOperators();
         var actualConstructs = result.GetConstructs()
@@ -203,17 +171,10 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
 
         var expectedBinaryOperatorPrecedences = new (string Symbol, int Value)[]
         {
-            ("==", 7),
-            ("!=", 7),
-            ("<=>", 5),
-            ("and", 11),
-            ("or", 12)
+            ("==", 7), ("!=", 7), ("<=>", 5), ("and", 11), ("or", 12)
         };
 
-        var expectedPrefixUnaryConstructPrecedences = new (string Symbol, int Value)[]
-        {
-            ("not", 1)
-        };
+        var expectedPrefixUnaryConstructPrecedences = new (string Symbol, int Value)[] { ("not", 1) };
 
         var result = sut.AddBooleanLogicalOperators();
         var actualConstructs = result.GetConstructs()
@@ -245,10 +206,7 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
             ("BOOLEAN", ParsedExpressionConstructType.Constant, typeof( ParsedExpressionConstant<Type> ))
         };
 
-        var expectedPrefixUnaryConstructPrecedences = new (string Symbol, int Value)[]
-        {
-            ("[boolean]", 1)
-        };
+        var expectedPrefixUnaryConstructPrecedences = new (string Symbol, int Value)[] { ("[boolean]", 1) };
 
         var expectedPostfixUnaryConstructPrecedences = Array.Empty<(string Symbol, int Value)>();
 
@@ -289,15 +247,9 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
             ("B", ParsedExpressionConstructType.Constant, typeof( ParsedExpressionConstant<Type> ))
         };
 
-        var expectedPrefixUnaryConstructPrecedences = new (string Symbol, int Value)[]
-        {
-            ("[b]", 1)
-        };
+        var expectedPrefixUnaryConstructPrecedences = new (string Symbol, int Value)[] { ("[b]", 1) };
 
-        var expectedPostfixUnaryConstructPrecedences = new (string Symbol, int Value)[]
-        {
-            ("as_b", 1)
-        };
+        var expectedPostfixUnaryConstructPrecedences = new (string Symbol, int Value)[] { ("as_b", 1) };
 
         var result = sut.AddBooleanTypeDefinition( symbols, new ParsedExpressionTypeConverter<bool, int>() );
         var actualConstructs = result.GetConstructs()
@@ -352,19 +304,9 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
             ("-", ParsedExpressionConstructType.PrefixUnaryOperator, typeof( ParsedExpressionNegateDecimalOperator ))
         };
 
-        var expectedBinaryOperatorPrecedences = new (string Symbol, int Value)[]
-        {
-            ("+", 3),
-            ("-", 3),
-            ("*", 2),
-            ("/", 2),
-            ("mod", 2)
-        };
+        var expectedBinaryOperatorPrecedences = new (string Symbol, int Value)[] { ("+", 3), ("-", 3), ("*", 2), ("/", 2), ("mod", 2) };
 
-        var expectedPrefixUnaryConstructPrecedences = new (string Symbol, int Value)[]
-        {
-            ("-", 1)
-        };
+        var expectedPrefixUnaryConstructPrecedences = new (string Symbol, int Value)[] { ("-", 1) };
 
         var result = sut.AddDecimalArithmeticOperators();
         var actualConstructs = result.GetConstructs()
@@ -401,13 +343,7 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
 
         var expectedBinaryOperatorPrecedences = new (string Symbol, int Value)[]
         {
-            ("==", 7),
-            ("!=", 7),
-            (">", 6),
-            ("<", 6),
-            (">=", 6),
-            ("<=", 6),
-            ("<=>", 5)
+            ("==", 7), ("!=", 7), (">", 6), ("<", 6), (">=", 6), ("<=", 6), ("<=>", 5)
         };
 
         var result = sut.AddDecimalLogicalOperators();
@@ -439,15 +375,9 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
             ("DECIMAL", ParsedExpressionConstructType.Constant, typeof( ParsedExpressionConstant<Type> ))
         };
 
-        var expectedPrefixUnaryConstructPrecedences = new (string Symbol, int Value)[]
-        {
-            ("[decimal]", 1)
-        };
+        var expectedPrefixUnaryConstructPrecedences = new (string Symbol, int Value)[] { ("[decimal]", 1) };
 
-        var expectedPostfixUnaryConstructPrecedences = new (string Symbol, int Value)[]
-        {
-            ("m", 1)
-        };
+        var expectedPostfixUnaryConstructPrecedences = new (string Symbol, int Value)[] { ("m", 1) };
 
         var result = sut.AddDecimalTypeDefinition( new ParsedExpressionTypeConverter<decimal, double>() );
         var actualConstructs = result.GetConstructs()
@@ -483,10 +413,7 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
             ("D", ParsedExpressionConstructType.Constant, typeof( ParsedExpressionConstant<Type> ))
         };
 
-        var expectedPrefixUnaryConstructPrecedences = new (string Symbol, int Value)[]
-        {
-            ("[d]", 1)
-        };
+        var expectedPrefixUnaryConstructPrecedences = new (string Symbol, int Value)[] { ("[d]", 1) };
 
         var expectedPostfixUnaryConstructPrecedences = Array.Empty<(string Symbol, int Value)>();
 
@@ -543,19 +470,9 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
             ("-", ParsedExpressionConstructType.PrefixUnaryOperator, typeof( ParsedExpressionNegateDoubleOperator ))
         };
 
-        var expectedBinaryOperatorPrecedences = new (string Symbol, int Value)[]
-        {
-            ("+", 3),
-            ("-", 3),
-            ("*", 2),
-            ("/", 2),
-            ("mod", 2)
-        };
+        var expectedBinaryOperatorPrecedences = new (string Symbol, int Value)[] { ("+", 3), ("-", 3), ("*", 2), ("/", 2), ("mod", 2) };
 
-        var expectedPrefixUnaryConstructPrecedences = new (string Symbol, int Value)[]
-        {
-            ("-", 1)
-        };
+        var expectedPrefixUnaryConstructPrecedences = new (string Symbol, int Value)[] { ("-", 1) };
 
         var result = sut.AddDoubleArithmeticOperators();
         var actualConstructs = result.GetConstructs()
@@ -592,13 +509,7 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
 
         var expectedBinaryOperatorPrecedences = new (string Symbol, int Value)[]
         {
-            ("==", 7),
-            ("!=", 7),
-            (">", 6),
-            ("<", 6),
-            (">=", 6),
-            ("<=", 6),
-            ("<=>", 5)
+            ("==", 7), ("!=", 7), (">", 6), ("<", 6), (">=", 6), ("<=", 6), ("<=>", 5)
         };
 
         var result = sut.AddDoubleLogicalOperators();
@@ -628,10 +539,7 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
             ("DOUBLE", ParsedExpressionConstructType.Constant, typeof( ParsedExpressionConstant<Type> ))
         };
 
-        var expectedPrefixUnaryConstructPrecedences = new (string Symbol, int Value)[]
-        {
-            ("[double]", 1)
-        };
+        var expectedPrefixUnaryConstructPrecedences = new (string Symbol, int Value)[] { ("[double]", 1) };
 
         var expectedPostfixUnaryConstructPrecedences = Array.Empty<(string Symbol, int Value)>();
 
@@ -672,15 +580,9 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
             ("D", ParsedExpressionConstructType.Constant, typeof( ParsedExpressionConstant<Type> ))
         };
 
-        var expectedPrefixUnaryConstructPrecedences = new (string Symbol, int Value)[]
-        {
-            ("[d]", 1)
-        };
+        var expectedPrefixUnaryConstructPrecedences = new (string Symbol, int Value)[] { ("[d]", 1) };
 
-        var expectedPostfixUnaryConstructPrecedences = new (string Symbol, int Value)[]
-        {
-            ("as_d", 1)
-        };
+        var expectedPostfixUnaryConstructPrecedences = new (string Symbol, int Value)[] { ("as_d", 1) };
 
         var result = sut.AddDoubleTypeDefinition( symbols, new ParsedExpressionTypeConverter<double, decimal>() );
         var actualConstructs = result.GetConstructs()
@@ -735,19 +637,9 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
             ("-", ParsedExpressionConstructType.PrefixUnaryOperator, typeof( ParsedExpressionNegateFloatOperator ))
         };
 
-        var expectedBinaryOperatorPrecedences = new (string Symbol, int Value)[]
-        {
-            ("+", 3),
-            ("-", 3),
-            ("*", 2),
-            ("/", 2),
-            ("mod", 2)
-        };
+        var expectedBinaryOperatorPrecedences = new (string Symbol, int Value)[] { ("+", 3), ("-", 3), ("*", 2), ("/", 2), ("mod", 2) };
 
-        var expectedPrefixUnaryConstructPrecedences = new (string Symbol, int Value)[]
-        {
-            ("-", 1)
-        };
+        var expectedPrefixUnaryConstructPrecedences = new (string Symbol, int Value)[] { ("-", 1) };
 
         var result = sut.AddFloatArithmeticOperators();
         var actualConstructs = result.GetConstructs()
@@ -784,13 +676,7 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
 
         var expectedBinaryOperatorPrecedences = new (string Symbol, int Value)[]
         {
-            ("==", 7),
-            ("!=", 7),
-            (">", 6),
-            ("<", 6),
-            (">=", 6),
-            ("<=", 6),
-            ("<=>", 5)
+            ("==", 7), ("!=", 7), (">", 6), ("<", 6), (">=", 6), ("<=", 6), ("<=>", 5)
         };
 
         var result = sut.AddFloatLogicalOperators();
@@ -822,15 +708,9 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
             ("FLOAT", ParsedExpressionConstructType.Constant, typeof( ParsedExpressionConstant<Type> ))
         };
 
-        var expectedPrefixUnaryConstructPrecedences = new (string Symbol, int Value)[]
-        {
-            ("[float]", 1)
-        };
+        var expectedPrefixUnaryConstructPrecedences = new (string Symbol, int Value)[] { ("[float]", 1) };
 
-        var expectedPostfixUnaryConstructPrecedences = new (string Symbol, int Value)[]
-        {
-            ("f", 1)
-        };
+        var expectedPostfixUnaryConstructPrecedences = new (string Symbol, int Value)[] { ("f", 1) };
 
         var result = sut.AddFloatTypeDefinition( new ParsedExpressionTypeConverter<float, decimal>() );
         var actualConstructs = result.GetConstructs()
@@ -866,10 +746,7 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
             ("F", ParsedExpressionConstructType.Constant, typeof( ParsedExpressionConstant<Type> ))
         };
 
-        var expectedPrefixUnaryConstructPrecedences = new (string Symbol, int Value)[]
-        {
-            ("[f]", 1)
-        };
+        var expectedPrefixUnaryConstructPrecedences = new (string Symbol, int Value)[] { ("[f]", 1) };
 
         var expectedPostfixUnaryConstructPrecedences = Array.Empty<(string Symbol, int Value)>();
 
@@ -926,19 +803,9 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
             ("-", ParsedExpressionConstructType.PrefixUnaryOperator, typeof( ParsedExpressionNegateInt32Operator ))
         };
 
-        var expectedBinaryOperatorPrecedences = new (string Symbol, int Value)[]
-        {
-            ("+", 3),
-            ("-", 3),
-            ("*", 2),
-            ("/", 2),
-            ("mod", 2)
-        };
+        var expectedBinaryOperatorPrecedences = new (string Symbol, int Value)[] { ("+", 3), ("-", 3), ("*", 2), ("/", 2), ("mod", 2) };
 
-        var expectedPrefixUnaryConstructPrecedences = new (string Symbol, int Value)[]
-        {
-            ("-", 1)
-        };
+        var expectedPrefixUnaryConstructPrecedences = new (string Symbol, int Value)[] { ("-", 1) };
 
         var result = sut.AddInt32ArithmeticOperators();
         var actualConstructs = result.GetConstructs()
@@ -972,19 +839,9 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
             ("~", ParsedExpressionConstructType.PrefixUnaryOperator, typeof( ParsedExpressionBitwiseNotInt32Operator ))
         };
 
-        var expectedBinaryOperatorPrecedences = new (string Symbol, int Value)[]
-        {
-            ("&", 8),
-            ("|", 10),
-            ("^", 9),
-            ("<<", 4),
-            (">>", 4)
-        };
+        var expectedBinaryOperatorPrecedences = new (string Symbol, int Value)[] { ("&", 8), ("|", 10), ("^", 9), ("<<", 4), (">>", 4) };
 
-        var expectedPrefixUnaryConstructPrecedences = new (string Symbol, int Value)[]
-        {
-            ("~", 1)
-        };
+        var expectedPrefixUnaryConstructPrecedences = new (string Symbol, int Value)[] { ("~", 1) };
 
         var result = sut.AddInt32BitwiseOperators();
         var actualConstructs = result.GetConstructs()
@@ -1021,13 +878,7 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
 
         var expectedBinaryOperatorPrecedences = new (string Symbol, int Value)[]
         {
-            ("==", 7),
-            ("!=", 7),
-            (">", 6),
-            ("<", 6),
-            (">=", 6),
-            ("<=", 6),
-            ("<=>", 5)
+            ("==", 7), ("!=", 7), (">", 6), ("<", 6), (">=", 6), ("<=", 6), ("<=>", 5)
         };
 
         var result = sut.AddInt32LogicalOperators();
@@ -1059,15 +910,9 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
             ("INT32", ParsedExpressionConstructType.Constant, typeof( ParsedExpressionConstant<Type> ))
         };
 
-        var expectedPrefixUnaryConstructPrecedences = new (string Symbol, int Value)[]
-        {
-            ("[int32]", 1)
-        };
+        var expectedPrefixUnaryConstructPrecedences = new (string Symbol, int Value)[] { ("[int32]", 1) };
 
-        var expectedPostfixUnaryConstructPrecedences = new (string Symbol, int Value)[]
-        {
-            ("i", 1)
-        };
+        var expectedPostfixUnaryConstructPrecedences = new (string Symbol, int Value)[] { ("i", 1) };
 
         var result = sut.AddInt32TypeDefinition( new ParsedExpressionTypeConverter<int, long>() );
         var actualConstructs = result.GetConstructs()
@@ -1103,10 +948,7 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
             ("I", ParsedExpressionConstructType.Constant, typeof( ParsedExpressionConstant<Type> ))
         };
 
-        var expectedPrefixUnaryConstructPrecedences = new (string Symbol, int Value)[]
-        {
-            ("[i]", 1)
-        };
+        var expectedPrefixUnaryConstructPrecedences = new (string Symbol, int Value)[] { ("[i]", 1) };
 
         var expectedPostfixUnaryConstructPrecedences = Array.Empty<(string Symbol, int Value)>();
 
@@ -1163,19 +1005,9 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
             ("-", ParsedExpressionConstructType.PrefixUnaryOperator, typeof( ParsedExpressionNegateInt64Operator ))
         };
 
-        var expectedBinaryOperatorPrecedences = new (string Symbol, int Value)[]
-        {
-            ("+", 3),
-            ("-", 3),
-            ("*", 2),
-            ("/", 2),
-            ("mod", 2)
-        };
+        var expectedBinaryOperatorPrecedences = new (string Symbol, int Value)[] { ("+", 3), ("-", 3), ("*", 2), ("/", 2), ("mod", 2) };
 
-        var expectedPrefixUnaryConstructPrecedences = new (string Symbol, int Value)[]
-        {
-            ("-", 1)
-        };
+        var expectedPrefixUnaryConstructPrecedences = new (string Symbol, int Value)[] { ("-", 1) };
 
         var result = sut.AddInt64ArithmeticOperators();
         var actualConstructs = result.GetConstructs()
@@ -1209,19 +1041,9 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
             ("~", ParsedExpressionConstructType.PrefixUnaryOperator, typeof( ParsedExpressionBitwiseNotInt64Operator ))
         };
 
-        var expectedBinaryOperatorPrecedences = new (string Symbol, int Value)[]
-        {
-            ("&", 8),
-            ("|", 10),
-            ("^", 9),
-            ("<<", 4),
-            (">>", 4)
-        };
+        var expectedBinaryOperatorPrecedences = new (string Symbol, int Value)[] { ("&", 8), ("|", 10), ("^", 9), ("<<", 4), (">>", 4) };
 
-        var expectedPrefixUnaryConstructPrecedences = new (string Symbol, int Value)[]
-        {
-            ("~", 1)
-        };
+        var expectedPrefixUnaryConstructPrecedences = new (string Symbol, int Value)[] { ("~", 1) };
 
         var result = sut.AddInt64BitwiseOperators();
         var actualConstructs = result.GetConstructs()
@@ -1258,13 +1080,7 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
 
         var expectedBinaryOperatorPrecedences = new (string Symbol, int Value)[]
         {
-            ("==", 7),
-            ("!=", 7),
-            (">", 6),
-            ("<", 6),
-            (">=", 6),
-            ("<=", 6),
-            ("<=>", 5)
+            ("==", 7), ("!=", 7), (">", 6), ("<", 6), (">=", 6), ("<=", 6), ("<=>", 5)
         };
 
         var result = sut.AddInt64LogicalOperators();
@@ -1296,15 +1112,9 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
             ("INT64", ParsedExpressionConstructType.Constant, typeof( ParsedExpressionConstant<Type> ))
         };
 
-        var expectedPrefixUnaryConstructPrecedences = new (string Symbol, int Value)[]
-        {
-            ("[int64]", 1)
-        };
+        var expectedPrefixUnaryConstructPrecedences = new (string Symbol, int Value)[] { ("[int64]", 1) };
 
-        var expectedPostfixUnaryConstructPrecedences = new (string Symbol, int Value)[]
-        {
-            ("l", 1)
-        };
+        var expectedPostfixUnaryConstructPrecedences = new (string Symbol, int Value)[] { ("l", 1) };
 
         var result = sut.AddInt64TypeDefinition( new ParsedExpressionTypeConverter<long, int>() );
         var actualConstructs = result.GetConstructs()
@@ -1340,10 +1150,7 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
             ("I", ParsedExpressionConstructType.Constant, typeof( ParsedExpressionConstant<Type> ))
         };
 
-        var expectedPrefixUnaryConstructPrecedences = new (string Symbol, int Value)[]
-        {
-            ("[i]", 1)
-        };
+        var expectedPrefixUnaryConstructPrecedences = new (string Symbol, int Value)[] { ("[i]", 1) };
 
         var expectedPostfixUnaryConstructPrecedences = Array.Empty<(string Symbol, int Value)>();
 
@@ -1400,19 +1207,9 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
             ("-", ParsedExpressionConstructType.PrefixUnaryOperator, typeof( ParsedExpressionNegateBigIntOperator ))
         };
 
-        var expectedBinaryOperatorPrecedences = new (string Symbol, int Value)[]
-        {
-            ("+", 3),
-            ("-", 3),
-            ("*", 2),
-            ("/", 2),
-            ("mod", 2)
-        };
+        var expectedBinaryOperatorPrecedences = new (string Symbol, int Value)[] { ("+", 3), ("-", 3), ("*", 2), ("/", 2), ("mod", 2) };
 
-        var expectedPrefixUnaryConstructPrecedences = new (string Symbol, int Value)[]
-        {
-            ("-", 1)
-        };
+        var expectedPrefixUnaryConstructPrecedences = new (string Symbol, int Value)[] { ("-", 1) };
 
         var result = sut.AddBigIntArithmeticOperators();
         var actualConstructs = result.GetConstructs()
@@ -1446,19 +1243,9 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
             ("~", ParsedExpressionConstructType.PrefixUnaryOperator, typeof( ParsedExpressionBitwiseNotBigIntOperator ))
         };
 
-        var expectedBinaryOperatorPrecedences = new (string Symbol, int Value)[]
-        {
-            ("&", 8),
-            ("|", 10),
-            ("^", 9),
-            ("<<", 4),
-            (">>", 4)
-        };
+        var expectedBinaryOperatorPrecedences = new (string Symbol, int Value)[] { ("&", 8), ("|", 10), ("^", 9), ("<<", 4), (">>", 4) };
 
-        var expectedPrefixUnaryConstructPrecedences = new (string Symbol, int Value)[]
-        {
-            ("~", 1)
-        };
+        var expectedPrefixUnaryConstructPrecedences = new (string Symbol, int Value)[] { ("~", 1) };
 
         var result = sut.AddBigIntBitwiseOperators();
         var actualConstructs = result.GetConstructs()
@@ -1495,13 +1282,7 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
 
         var expectedBinaryOperatorPrecedences = new (string Symbol, int Value)[]
         {
-            ("==", 7),
-            ("!=", 7),
-            (">", 6),
-            ("<", 6),
-            (">=", 6),
-            ("<=", 6),
-            ("<=>", 5)
+            ("==", 7), ("!=", 7), (">", 6), ("<", 6), (">=", 6), ("<=", 6), ("<=>", 5)
         };
 
         var result = sut.AddBigIntLogicalOperators();
@@ -1531,10 +1312,7 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
             ("BIGINT", ParsedExpressionConstructType.Constant, typeof( ParsedExpressionConstant<Type> ))
         };
 
-        var expectedPrefixUnaryConstructPrecedences = new (string Symbol, int Value)[]
-        {
-            ("[bigint]", 1)
-        };
+        var expectedPrefixUnaryConstructPrecedences = new (string Symbol, int Value)[] { ("[bigint]", 1) };
 
         var expectedPostfixUnaryConstructPrecedences = Array.Empty<(string Symbol, int Value)>();
 
@@ -1575,15 +1353,9 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
             ("B", ParsedExpressionConstructType.Constant, typeof( ParsedExpressionConstant<Type> ))
         };
 
-        var expectedPrefixUnaryConstructPrecedences = new (string Symbol, int Value)[]
-        {
-            ("[b]", 1)
-        };
+        var expectedPrefixUnaryConstructPrecedences = new (string Symbol, int Value)[] { ("[b]", 1) };
 
-        var expectedPostfixUnaryConstructPrecedences = new (string Symbol, int Value)[]
-        {
-            ("as_b", 1)
-        };
+        var expectedPostfixUnaryConstructPrecedences = new (string Symbol, int Value)[] { ("as_b", 1) };
 
         var result = sut.AddBigIntTypeDefinition( symbols, new ParsedExpressionTypeConverter<BigInteger, long>() );
         var actualConstructs = result.GetConstructs()
@@ -1633,10 +1405,7 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
             ("+", ParsedExpressionConstructType.BinaryOperator, typeof( ParsedExpressionAddStringOperator ))
         };
 
-        var expectedBinaryOperatorPrecedences = new (string Symbol, int Value)[]
-        {
-            ("+", 3)
-        };
+        var expectedBinaryOperatorPrecedences = new (string Symbol, int Value)[] { ("+", 3) };
 
         var result = sut.AddStringArithmeticOperators();
         var actualConstructs = result.GetConstructs()
@@ -1664,12 +1433,7 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
             ("<=>", ParsedExpressionConstructType.BinaryOperator, typeof( ParsedExpressionCompareStringOperator ))
         };
 
-        var expectedBinaryOperatorPrecedences = new (string Symbol, int Value)[]
-        {
-            ("==", 7),
-            ("!=", 7),
-            ("<=>", 5)
-        };
+        var expectedBinaryOperatorPrecedences = new (string Symbol, int Value)[] { ("==", 7), ("!=", 7), ("<=>", 5) };
 
         var result = sut.AddStringLogicalOperators();
         var actualConstructs = result.GetConstructs()
@@ -1698,10 +1462,7 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
             ("STRING", ParsedExpressionConstructType.Constant, typeof( ParsedExpressionConstant<Type> ))
         };
 
-        var expectedPrefixUnaryConstructPrecedences = new (string Symbol, int Value)[]
-        {
-            ("[string]", 1)
-        };
+        var expectedPrefixUnaryConstructPrecedences = new (string Symbol, int Value)[] { ("[string]", 1) };
 
         var expectedPostfixUnaryConstructPrecedences = Array.Empty<(string Symbol, int Value)>();
 
@@ -1742,15 +1503,9 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
             ("S", ParsedExpressionConstructType.Constant, typeof( ParsedExpressionConstant<Type> ))
         };
 
-        var expectedPrefixUnaryConstructPrecedences = new (string Symbol, int Value)[]
-        {
-            ("[s]", 1)
-        };
+        var expectedPrefixUnaryConstructPrecedences = new (string Symbol, int Value)[] { ("[s]", 1) };
 
-        var expectedPostfixUnaryConstructPrecedences = new (string Symbol, int Value)[]
-        {
-            ("as_s", 1)
-        };
+        var expectedPostfixUnaryConstructPrecedences = new (string Symbol, int Value)[] { ("as_s", 1) };
 
         var result = sut.AddStringTypeDefinition( symbols, new ParsedExpressionTypeConverter<string, int>() );
         var actualConstructs = result.GetConstructs()
@@ -1833,16 +1588,12 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
 
         var expectedPrefixUnaryConstructPrecedences = new (string Symbol, int Value)[]
         {
-            ("+", 2),
-            ("-", defaultPrecedence),
-            ("[int]", defaultPrecedence)
+            ("+", 2), ("-", defaultPrecedence), ("[int]", defaultPrecedence)
         };
 
         var expectedPostfixUnaryConstructPrecedences = new (string Symbol, int Value)[]
         {
-            ("+", 2),
-            ("^", defaultPrecedence),
-            ("ToInt", defaultPrecedence)
+            ("+", 2), ("^", defaultPrecedence), ("ToInt", defaultPrecedence)
         };
 
         var result = sut.AddDefaultUnaryConstructPrecedences( defaultPrecedence );

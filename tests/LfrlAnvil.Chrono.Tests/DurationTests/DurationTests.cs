@@ -811,7 +811,7 @@ public class DurationTests : TestsBase
     public void TimeSpanConversionOperator_ShouldReturnTimeSpanWithCorrectTicks(long ticks)
     {
         var sut = new Duration( ticks );
-        var result = (TimeSpan)sut;
+        var result = ( TimeSpan )sut;
         result.Ticks.Should().Be( sut.Ticks );
     }
 
@@ -820,7 +820,7 @@ public class DurationTests : TestsBase
     public void FloatingDurationConversionOperator_ShouldReturnFloatingDurationWithCorrectTicks(long ticks)
     {
         var sut = new Duration( ticks );
-        var result = (FloatingDuration)sut;
+        var result = ( FloatingDuration )sut;
         result.Ticks.Should().Be( sut.Ticks );
     }
 

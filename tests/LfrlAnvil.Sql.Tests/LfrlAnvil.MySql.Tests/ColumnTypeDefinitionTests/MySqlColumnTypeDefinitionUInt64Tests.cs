@@ -31,7 +31,7 @@ public class MySqlColumnTypeDefinitionUInt64Tests : TestsBase
     public void TryToParameterValue_ShouldReturnCorrectResult()
     {
         var sut = _provider.GetByType<ulong>();
-        var result = sut.TryToParameterValue( (ulong)1234567 );
+        var result = sut.TryToParameterValue( ( ulong )1234567 );
         result.Should().Be( 1234567L );
     }
 

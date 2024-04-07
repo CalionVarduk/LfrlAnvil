@@ -688,7 +688,7 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
 
         var result = sut.VisitMany( n => n.Children ).Select( n => n.Value );
 
-        result.Should().BeSequentiallyEqualTo( expected.Select( x => (T?)x ) );
+        result.Should().BeSequentiallyEqualTo( expected.Select( x => ( T? )x ) );
     }
 
     [Fact]
@@ -703,7 +703,12 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
     public void VisitMany_WithStopPredicate_ShouldReturnResultAccordingToBreadthFirstTraversal()
     {
         var sourceOfValues = Fixture.CreateDistinctCollection<T>( 10 ).ToList();
-        var valuesToStopAt = new HashSet<T> { sourceOfValues[0], sourceOfValues[5] };
+        var valuesToStopAt = new HashSet<T>
+        {
+            sourceOfValues[0],
+            sourceOfValues[5]
+        };
+
         var expected = new[] { sourceOfValues[0], sourceOfValues[1], sourceOfValues[2], sourceOfValues[5] };
 
         var sut = new[]
@@ -746,7 +751,7 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
 
         var result = sut.VisitMany( n => n.Children, n => valuesToStopAt.Contains( n.Value! ) ).Select( n => n.Value );
 
-        result.Should().BeSequentiallyEqualTo( expected.Select( x => (T?)x ) );
+        result.Should().BeSequentiallyEqualTo( expected.Select( x => ( T? )x ) );
     }
 
     [Fact]
@@ -912,26 +917,11 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
     {
         var values = Fixture.CreateDistinctCollection<T>( 5 );
 
-        var sut = new[]
-            {
-                values[0],
-                values[1],
-                values[2],
-                values[1],
-                values[3],
-                values[0]
-            }
+        var sut = new[] { values[0], values[1], values[2], values[1], values[3], values[0] }
             .Select( v => new Contained<T> { Value = v } )
             .ToList();
 
-        var inner = new[]
-            {
-                values[1],
-                values[2],
-                values[1],
-                values[3],
-                values[4]
-            }
+        var inner = new[] { values[1], values[2], values[1], values[3], values[4] }
             .Select( v => new Contained<T> { Value = v } )
             .ToList();
 
@@ -961,26 +951,11 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
     {
         var values = Fixture.CreateDistinctCollection<T>( 5 );
 
-        var sut = new[]
-            {
-                values[0],
-                values[1],
-                values[2],
-                values[1],
-                values[3],
-                values[0]
-            }
+        var sut = new[] { values[0], values[1], values[2], values[1], values[3], values[0] }
             .Select( v => new Contained<T> { Value = v } )
             .ToList();
 
-        var inner = new[]
-            {
-                values[1],
-                values[2],
-                values[1],
-                values[3],
-                values[4]
-            }
+        var inner = new[] { values[1], values[2], values[1], values[3], values[4] }
             .Select( v => new Contained<T> { Value = v } )
             .ToList();
 

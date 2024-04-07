@@ -164,7 +164,7 @@ public static class EnumerableExtensions
     public static IEnumerable<T?> AsNullable<T>(this IEnumerable<T> source)
         where T : struct
     {
-        return source.Select( static e => (T?)e );
+        return source.Select( static e => ( T? )e );
     }
 
     [Pure]
@@ -761,7 +761,7 @@ public static class EnumerableExtensions
         if ( typeof( T ) == typeof( char ) )
         {
             if ( source is string str )
-                return (ReadOnlyMemory<T>)(object)str.AsMemory();
+                return ( ReadOnlyMemory<T> )( object )str.AsMemory();
         }
 
         if ( source is T[] arr )

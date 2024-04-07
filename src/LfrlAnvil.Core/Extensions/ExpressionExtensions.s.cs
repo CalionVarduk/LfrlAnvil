@@ -95,10 +95,10 @@ public static class ExpressionExtensions
             static t =>
                 t.GetMethods( BindingFlags.Public | BindingFlags.Instance )
                     .FirstOrDefault(
-                        static m => ! m.IsGenericMethod &&
-                            m.ReturnType != typeof( void ) &&
-                            m.Name == nameof( IEnumerable.GetEnumerator ) &&
-                            m.GetParameters().Length == 0 ) );
+                        static m => ! m.IsGenericMethod
+                            && m.ReturnType != typeof( void )
+                            && m.Name == nameof( IEnumerable.GetEnumerator )
+                            && m.GetParameters().Length == 0 ) );
 
         Ensure.IsNotNull( getEnumeratorMethod );
         Assume.IsNotNull( getEnumeratorMethod.DeclaringType );
@@ -111,9 +111,9 @@ public static class ExpressionExtensions
         var currentProperty = enumerator.Type.FindMember(
             static t => t.GetProperties( BindingFlags.Public | BindingFlags.Instance )
                 .FirstOrDefault(
-                    static p => p.GetGetMethod() is not null &&
-                        p.Name == nameof( IEnumerator.Current ) &&
-                        p.GetIndexParameters().Length == 0 ) );
+                    static p => p.GetGetMethod() is not null
+                        && p.Name == nameof( IEnumerator.Current )
+                        && p.GetIndexParameters().Length == 0 ) );
 
         Ensure.IsNotNull( currentProperty );
         Assume.IsNotNull( currentProperty.DeclaringType );
@@ -121,10 +121,10 @@ public static class ExpressionExtensions
         var moveNextMethod = enumerator.Type.FindMember(
             static t => t.GetMethods( BindingFlags.Public | BindingFlags.Instance )
                 .FirstOrDefault(
-                    static m => ! m.IsGenericMethod &&
-                        m.ReturnType == typeof( bool ) &&
-                        m.Name == nameof( IEnumerator.MoveNext ) &&
-                        m.GetParameters().Length == 0 ) );
+                    static m => ! m.IsGenericMethod
+                        && m.ReturnType == typeof( bool )
+                        && m.Name == nameof( IEnumerator.MoveNext )
+                        && m.GetParameters().Length == 0 ) );
 
         Ensure.IsNotNull( moveNextMethod );
         Assume.IsNotNull( moveNextMethod.DeclaringType );

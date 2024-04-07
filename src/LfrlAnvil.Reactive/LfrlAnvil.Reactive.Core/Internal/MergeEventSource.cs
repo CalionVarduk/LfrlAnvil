@@ -102,7 +102,7 @@ public sealed class MergeEventSource<TEvent> : EventSource<TEvent>
         {
             var stream = _streams[_nextStreamIndex++];
 
-            var innerSubscriberNode = _innerSubscribers.AddLast( (IEventSubscriber?)null );
+            var innerSubscriberNode = _innerSubscribers.AddLast( ( IEventSubscriber? )null );
             var innerListener = new InnerEventListener( this, innerSubscriberNode );
 
             var innerSubscriber = stream.Listen( innerListener );

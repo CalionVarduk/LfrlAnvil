@@ -699,7 +699,7 @@ public class ZonedDayTests : TestsBase
 
         action.Should()
             .ThrowExactly<InvalidZonedDateTimeException>()
-            .AndMatch( e => e.DateTime == day + (TimeSpan)timeOfDay && ReferenceEquals( e.TimeZone, timeZone ) );
+            .AndMatch( e => e.DateTime == day + ( TimeSpan )timeOfDay && ReferenceEquals( e.TimeZone, timeZone ) );
     }
 
     [Theory]
@@ -898,7 +898,7 @@ public class ZonedDayTests : TestsBase
         var timeZone = TimeZoneFactory.CreateRandom( Fixture );
         var sut = ZonedDay.Create( dateTime, timeZone );
 
-        var result = (ZonedDateTime)sut;
+        var result = ( ZonedDateTime )sut;
 
         result.Should().Be( sut.Start );
     }
@@ -910,7 +910,7 @@ public class ZonedDayTests : TestsBase
         var timeZone = TimeZoneFactory.CreateRandom( Fixture );
         var sut = ZonedDay.Create( dateTime, timeZone );
 
-        var result = (DateTime)sut;
+        var result = ( DateTime )sut;
 
         result.Should().Be( sut.Start.Value );
     }

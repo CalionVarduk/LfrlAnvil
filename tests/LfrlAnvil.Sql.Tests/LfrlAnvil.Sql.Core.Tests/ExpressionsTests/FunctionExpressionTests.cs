@@ -74,9 +74,7 @@ public class FunctionExpressionTests : TestsBase
     {
         var args = new SqlExpressionNode[]
         {
-            SqlNode.Parameter<int>( "a", isNullable: true ),
-            SqlNode.Parameter( "b" ),
-            SqlNode.Parameter<int>( "c" )
+            SqlNode.Parameter<int>( "a", isNullable: true ), SqlNode.Parameter( "b" ), SqlNode.Parameter<int>( "c" )
         };
 
         var sut = args[0].Coalesce( args[1], args[2] );
@@ -862,9 +860,7 @@ public class FunctionExpressionTests : TestsBase
     {
         var args = new SqlExpressionNode[]
         {
-            SqlNode.Parameter<int>( "a", isNullable: true ),
-            SqlNode.Parameter( "b" ),
-            SqlNode.Parameter<int>( "c" )
+            SqlNode.Parameter<int>( "a", isNullable: true ), SqlNode.Parameter( "b" ), SqlNode.Parameter<int>( "c" )
         };
 
         var sut = args[0].Min( args[1], args[2] );
@@ -945,9 +941,7 @@ public class FunctionExpressionTests : TestsBase
     {
         var args = new SqlExpressionNode[]
         {
-            SqlNode.Parameter<int>( "a", isNullable: true ),
-            SqlNode.Parameter( "b" ),
-            SqlNode.Parameter<int>( "c" )
+            SqlNode.Parameter<int>( "a", isNullable: true ), SqlNode.Parameter( "b" ), SqlNode.Parameter<int>( "c" )
         };
 
         var sut = args[0].Max( args[1], args[2] );

@@ -17,8 +17,8 @@ public class SqliteDataTypeTests : TestsBase
             sut.Value.Should().Be( SqliteType.Integer );
             sut.DbType.Should().Be( DbType.Int64 );
             sut.Dialect.Should().BeSameAs( SqliteDialect.Instance );
-            ((ISqlDataType)sut).Parameters.ToArray().Should().BeEmpty();
-            ((ISqlDataType)sut).ParameterDefinitions.ToArray().Should().BeEmpty();
+            (( ISqlDataType )sut).Parameters.ToArray().Should().BeEmpty();
+            (( ISqlDataType )sut).ParameterDefinitions.ToArray().Should().BeEmpty();
         }
     }
 
@@ -33,8 +33,8 @@ public class SqliteDataTypeTests : TestsBase
             sut.Value.Should().Be( SqliteType.Real );
             sut.DbType.Should().Be( DbType.Double );
             sut.Dialect.Should().BeSameAs( SqliteDialect.Instance );
-            ((ISqlDataType)sut).Parameters.ToArray().Should().BeEmpty();
-            ((ISqlDataType)sut).ParameterDefinitions.ToArray().Should().BeEmpty();
+            (( ISqlDataType )sut).Parameters.ToArray().Should().BeEmpty();
+            (( ISqlDataType )sut).ParameterDefinitions.ToArray().Should().BeEmpty();
         }
     }
 
@@ -49,8 +49,8 @@ public class SqliteDataTypeTests : TestsBase
             sut.Value.Should().Be( SqliteType.Text );
             sut.DbType.Should().Be( DbType.String );
             sut.Dialect.Should().BeSameAs( SqliteDialect.Instance );
-            ((ISqlDataType)sut).Parameters.ToArray().Should().BeEmpty();
-            ((ISqlDataType)sut).ParameterDefinitions.ToArray().Should().BeEmpty();
+            (( ISqlDataType )sut).Parameters.ToArray().Should().BeEmpty();
+            (( ISqlDataType )sut).ParameterDefinitions.ToArray().Should().BeEmpty();
         }
     }
 
@@ -65,8 +65,8 @@ public class SqliteDataTypeTests : TestsBase
             sut.Value.Should().Be( SqliteType.Blob );
             sut.DbType.Should().Be( DbType.Binary );
             sut.Dialect.Should().BeSameAs( SqliteDialect.Instance );
-            ((ISqlDataType)sut).Parameters.ToArray().Should().BeEmpty();
-            ((ISqlDataType)sut).ParameterDefinitions.ToArray().Should().BeEmpty();
+            (( ISqlDataType )sut).Parameters.ToArray().Should().BeEmpty();
+            (( ISqlDataType )sut).ParameterDefinitions.ToArray().Should().BeEmpty();
         }
     }
 
@@ -81,8 +81,8 @@ public class SqliteDataTypeTests : TestsBase
             sut.Value.Should().Be( 0 );
             sut.DbType.Should().Be( DbType.Object );
             sut.Dialect.Should().BeSameAs( SqliteDialect.Instance );
-            ((ISqlDataType)sut).Parameters.ToArray().Should().BeEmpty();
-            ((ISqlDataType)sut).ParameterDefinitions.ToArray().Should().BeEmpty();
+            (( ISqlDataType )sut).Parameters.ToArray().Should().BeEmpty();
+            (( ISqlDataType )sut).ParameterDefinitions.ToArray().Should().BeEmpty();
         }
     }
 }

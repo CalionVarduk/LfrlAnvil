@@ -10,7 +10,7 @@ public readonly struct TemporaryCommandTimeout : IDisposable
         Command = command;
         PreviousTimeout = Command.CommandTimeout;
         if ( timeout is not null )
-            Command.CommandTimeout = (int)Math.Ceiling( timeout.Value.TotalSeconds );
+            Command.CommandTimeout = ( int )Math.Ceiling( timeout.Value.TotalSeconds );
     }
 
     public IDbCommand Command { get; }

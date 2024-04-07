@@ -18,17 +18,17 @@ public readonly struct MemorySize : IEquatable<MemorySize>, IComparable<MemorySi
     }
 
     public long Bytes { get; }
-    public double TotalKilobytes => (double)Bytes / BytesPerKilobyte;
-    public double TotalMegabytes => (double)Bytes / BytesPerMegabyte;
-    public double TotalGigabytes => (double)Bytes / BytesPerGigabyte;
-    public double TotalTerabytes => (double)Bytes / BytesPerTerabyte;
+    public double TotalKilobytes => ( double )Bytes / BytesPerKilobyte;
+    public double TotalMegabytes => ( double )Bytes / BytesPerMegabyte;
+    public double TotalGigabytes => ( double )Bytes / BytesPerGigabyte;
+    public double TotalTerabytes => ( double )Bytes / BytesPerTerabyte;
     public long FullKilobytes => Bytes / BytesPerKilobyte;
     public long FullMegabytes => Bytes / BytesPerMegabyte;
     public long FullGigabytes => Bytes / BytesPerGigabyte;
-    public int FullTerabytes => (int)(Bytes / BytesPerTerabyte);
-    public int BytesInKilobyte => (int)(Bytes % BytesPerKilobyte);
-    public int BytesInMegabyte => (int)(Bytes % BytesPerMegabyte);
-    public int BytesInGigabyte => (int)(Bytes % BytesPerGigabyte);
+    public int FullTerabytes => ( int )(Bytes / BytesPerTerabyte);
+    public int BytesInKilobyte => ( int )(Bytes % BytesPerKilobyte);
+    public int BytesInMegabyte => ( int )(Bytes % BytesPerMegabyte);
+    public int BytesInGigabyte => ( int )(Bytes % BytesPerGigabyte);
     public long BytesInTerabyte => Bytes % BytesPerTerabyte;
 
     [Pure]
@@ -42,7 +42,7 @@ public readonly struct MemorySize : IEquatable<MemorySize>, IComparable<MemorySi
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static MemorySize FromBytes(double value)
     {
-        return FromBytes( checked( (long)Math.Round( value, MidpointRounding.AwayFromZero ) ) );
+        return FromBytes( checked( ( long )Math.Round( value, MidpointRounding.AwayFromZero ) ) );
     }
 
     [Pure]

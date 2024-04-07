@@ -332,7 +332,7 @@ public class ZonedWeekTests : TestsBase
     {
         var dateTime = Fixture.Create<DateTime>();
         var timeZone = TimeZoneFactory.CreateRandom( Fixture );
-        var action = Lambda.Of( () => ZonedWeek.Create( dateTime, timeZone, (IsoDayOfWeek)weekStart ) );
+        var action = Lambda.Of( () => ZonedWeek.Create( dateTime, timeZone, ( IsoDayOfWeek )weekStart ) );
         action.Should().ThrowExactly<ArgumentOutOfRangeException>();
     }
 
@@ -1010,7 +1010,7 @@ public class ZonedWeekTests : TestsBase
         var week = Fixture.Create<DateTime>();
         var timeZone = TimeZoneFactory.CreateRandom( Fixture );
         var sut = ZonedWeek.Create( week, timeZone, week.GetDayOfWeek() );
-        var action = Lambda.Of( () => sut.GetDayOfWeek( (IsoDayOfWeek)day ) );
+        var action = Lambda.Of( () => sut.GetDayOfWeek( ( IsoDayOfWeek )day ) );
         action.Should().ThrowExactly<ArgumentOutOfRangeException>();
     }
 

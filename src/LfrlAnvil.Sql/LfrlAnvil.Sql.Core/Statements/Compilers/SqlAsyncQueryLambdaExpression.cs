@@ -58,7 +58,7 @@ public sealed class SqlAsyncQueryLambdaExpression<TDataReader, TRow> : ISqlAsync
 
             return async (reader, options, cancellationToken) =>
             {
-                var concreteReader = (TDataReader)reader;
+                var concreteReader = ( TDataReader )reader;
                 if ( ! await concreteReader.ReadAsync( cancellationToken ).ConfigureAwait( false ) )
                     return SqlQueryResult<TRow>.Empty;
 
@@ -82,7 +82,7 @@ public sealed class SqlAsyncQueryLambdaExpression<TDataReader, TRow> : ISqlAsync
 
             return async (reader, options, cancellationToken) =>
             {
-                var concreteReader = (TDataReader)reader;
+                var concreteReader = ( TDataReader )reader;
                 if ( ! await concreteReader.ReadAsync( cancellationToken ).ConfigureAwait( false ) )
                     return SqlQueryResult<TRow>.Empty;
 

@@ -132,7 +132,7 @@ public abstract class GenericTaskEventSourceTests<TEvent> : TestsBase
                     {
                         Status = TaskStatus.RanToCompletion,
                         Result = value,
-                        Exception = (AggregateException?)null,
+                        Exception = ( AggregateException? )null,
                         IsCanceled = false,
                         IsFaulted = false,
                         IsCompletedSuccessfully = true
@@ -220,7 +220,7 @@ public abstract class GenericTaskEventSourceTests<TEvent> : TestsBase
                     {
                         Status = TaskStatus.Canceled,
                         Result = default( TEvent ),
-                        Exception = (AggregateException?)null,
+                        Exception = ( AggregateException? )null,
                         IsCanceled = true,
                         IsFaulted = false,
                         IsCompletedSuccessfully = false
@@ -267,7 +267,7 @@ public abstract class GenericTaskEventSourceTests<TEvent> : TestsBase
                     {
                         Status = TaskStatus.Canceled,
                         Result = default( TEvent ),
-                        Exception = (AggregateException?)null,
+                        Exception = ( AggregateException? )null,
                         IsCanceled = true,
                         IsFaulted = false,
                         IsCompletedSuccessfully = false
@@ -327,7 +327,7 @@ public abstract class GenericTaskEventSourceTests<TEvent> : TestsBase
                     {
                         Status = TaskStatus.RanToCompletion,
                         Result = value,
-                        Exception = (AggregateException?)null,
+                        Exception = ( AggregateException? )null,
                         IsCanceled = false,
                         IsFaulted = false,
                         IsCompletedSuccessfully = true

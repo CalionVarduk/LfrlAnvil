@@ -348,7 +348,7 @@ public class PostgreSqlDataTypeTests : TestsBase
     public void NpgsqlDbTypeConversionOperator_ShouldReturnValue()
     {
         var sut = PostgreSqlDataType.Decimal;
-        var result = (NpgsqlDbType)sut;
+        var result = ( NpgsqlDbType )sut;
         result.Should().Be( sut.Value );
     }
 

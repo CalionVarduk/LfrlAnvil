@@ -18,21 +18,13 @@ internal static class ZonedDateTimeBounds
                 return BoundsRange.Create( Bounds.Create( start, end ) );
 
             return BoundsRange.Create(
-                new[]
-                {
-                    Bounds.Create( start, lastBounds.Value.SecondToLastEnd ),
-                    Bounds.Create( lastBounds.Value.LastStart, end )
-                } );
+                new[] { Bounds.Create( start, lastBounds.Value.SecondToLastEnd ), Bounds.Create( lastBounds.Value.LastStart, end ) } );
         }
 
         if ( lastBounds is null )
         {
             return BoundsRange.Create(
-                new[]
-                {
-                    Bounds.Create( start, firstBounds.Value.FirstEnd ),
-                    Bounds.Create( firstBounds.Value.SecondStart, end )
-                } );
+                new[] { Bounds.Create( start, firstBounds.Value.FirstEnd ), Bounds.Create( firstBounds.Value.SecondStart, end ) } );
         }
 
         return BoundsRange.Create(

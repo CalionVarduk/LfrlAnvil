@@ -103,7 +103,7 @@ public class PostgreSqlColumnTypeDefinitionProviderBuilderTests : TestsBase
     public void Register_ShouldThrowArgumentException_WhenDefinitionDialectIsInvalid()
     {
         var definition = new SqlColumnTypeDefinitionMock<int>( SqlDataTypeMock.Integer, 0 );
-        var action = Lambda.Of( () => ((ISqlColumnTypeDefinitionProviderBuilder)_sut).Register( definition ) );
+        var action = Lambda.Of( () => (( ISqlColumnTypeDefinitionProviderBuilder )_sut).Register( definition ) );
         action.Should().ThrowExactly<ArgumentException>();
     }
 
@@ -120,7 +120,7 @@ public class PostgreSqlColumnTypeDefinitionProviderBuilderTests : TestsBase
         where T : notnull
     {
         public TypeDefinition(PostgreSqlDataType dataType, T defaultValue)
-            : base( dataType, defaultValue, (r, i) => (T)r.GetValue( i ) ) { }
+            : base( dataType, defaultValue, (r, i) => ( T )r.GetValue( i ) ) { }
 
         [Pure]
         public override string ToDbLiteral(T value)

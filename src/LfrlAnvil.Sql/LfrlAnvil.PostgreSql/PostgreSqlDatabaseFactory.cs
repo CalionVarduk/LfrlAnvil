@@ -173,11 +173,11 @@ public sealed class PostgreSqlDatabaseFactory : SqlDatabaseFactory<PostgreSqlDat
         ref SqlDatabaseFactoryStatementExecutor executor)
     {
         if ( ! CheckCommonSchemaExistenceAndPrepare(
-                ReinterpretCast.To<PostgreSqlDatabaseChangeTracker>( changeTracker ),
-                connection,
-                versionHistoryTableName.Schema,
-                nodeInterpreter,
-                ref executor ) )
+            ReinterpretCast.To<PostgreSqlDatabaseChangeTracker>( changeTracker ),
+            connection,
+            versionHistoryTableName.Schema,
+            nodeInterpreter,
+            ref executor ) )
             return true;
 
         var pgNamespace = SqlNode.RawRecordSet( SqlRecordSetInfo.Create( "pg_catalog", "pg_namespace" ) );

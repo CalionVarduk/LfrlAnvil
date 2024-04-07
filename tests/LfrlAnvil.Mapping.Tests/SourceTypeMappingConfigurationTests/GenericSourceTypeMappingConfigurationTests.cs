@@ -34,7 +34,7 @@ public abstract class GenericSourceTypeMappingConfigurationTests<TSource, TDesti
         using ( new AssertionScope() )
         {
             result.Should().BeSameAs( sut );
-            mappingStores.Should().BeSequentiallyEqualTo( KeyValuePair.Create( expectedKey, (Delegate)mapping ) );
+            mappingStores.Should().BeSequentiallyEqualTo( KeyValuePair.Create( expectedKey, ( Delegate )mapping ) );
         }
     }
 
@@ -57,8 +57,8 @@ public abstract class GenericSourceTypeMappingConfigurationTests<TSource, TDesti
             result.Should().BeSameAs( sut );
             mappingStores.Should()
                 .BeSequentiallyEqualTo(
-                    KeyValuePair.Create( expectedFirstKey, (Delegate)firstMapping ),
-                    KeyValuePair.Create( expectedSecondKey, (Delegate)secondMapping ) );
+                    KeyValuePair.Create( expectedFirstKey, ( Delegate )firstMapping ),
+                    KeyValuePair.Create( expectedSecondKey, ( Delegate )secondMapping ) );
         }
     }
 
@@ -78,7 +78,7 @@ public abstract class GenericSourceTypeMappingConfigurationTests<TSource, TDesti
         using ( new AssertionScope() )
         {
             result.Should().BeSameAs( sut );
-            mappingStores.Should().BeSequentiallyEqualTo( KeyValuePair.Create( expectedKey, (Delegate)secondMapping ) );
+            mappingStores.Should().BeSequentiallyEqualTo( KeyValuePair.Create( expectedKey, ( Delegate )secondMapping ) );
         }
     }
 }

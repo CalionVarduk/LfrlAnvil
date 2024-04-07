@@ -173,9 +173,9 @@ public partial class PostgreSqlSchemaBuilderTests
             action.Should()
                 .ThrowExactly<SqlObjectCastException>()
                 .AndMatch(
-                    e => e.Dialect == PostgreSqlDialect.Instance &&
-                        e.Expected == typeof( SqlTableBuilder ) &&
-                        e.Actual == typeof( PostgreSqlPrimaryKeyBuilder ) );
+                    e => e.Dialect == PostgreSqlDialect.Instance
+                        && e.Expected == typeof( SqlTableBuilder )
+                        && e.Actual == typeof( PostgreSqlPrimaryKeyBuilder ) );
         }
 
         [Theory]
@@ -259,8 +259,7 @@ public partial class PostgreSqlSchemaBuilderTests
                 sut.Should().BeEquivalentTo( table, pk.Index, pk, result );
 
                 table.ReferencingObjects.Should()
-                    .BeSequentiallyEqualTo(
-                        SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), table ) );
+                    .BeSequentiallyEqualTo( SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), table ) );
 
                 column.ReferencingObjects.Should().HaveCount( 2 );
                 column.ReferencingObjects.Should()
@@ -303,8 +302,7 @@ public partial class PostgreSqlSchemaBuilderTests
                 sut.Should().BeEquivalentTo( other, result );
 
                 other.ReferencingObjects.Should()
-                    .BeSequentiallyEqualTo(
-                        SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), other ) );
+                    .BeSequentiallyEqualTo( SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), other ) );
 
                 schema.ReferencingObjects.Should().BeEmpty();
             }
@@ -344,8 +342,7 @@ public partial class PostgreSqlSchemaBuilderTests
                 sut.Should().BeEquivalentTo( result );
 
                 table.ReferencingObjects.Should()
-                    .BeSequentiallyEqualTo(
-                        SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), table ) );
+                    .BeSequentiallyEqualTo( SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), table ) );
 
                 column.ReferencingObjects.Should().HaveCount( 2 );
                 column.ReferencingObjects.Should()
@@ -392,8 +389,7 @@ public partial class PostgreSqlSchemaBuilderTests
                 sut.Should().BeEquivalentTo( result );
 
                 other.ReferencingObjects.Should()
-                    .BeSequentiallyEqualTo(
-                        SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), other ) );
+                    .BeSequentiallyEqualTo( SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( result ), other ) );
 
                 schema.Database.Schemas.Default.ReferencingObjects.Should()
                     .BeSequentiallyEqualTo(
@@ -575,9 +571,9 @@ public partial class PostgreSqlSchemaBuilderTests
             action.Should()
                 .ThrowExactly<SqlObjectCastException>()
                 .AndMatch(
-                    e => e.Dialect == PostgreSqlDialect.Instance &&
-                        e.Expected == typeof( SqlTableBuilder ) &&
-                        e.Actual == typeof( PostgreSqlPrimaryKeyBuilder ) );
+                    e => e.Dialect == PostgreSqlDialect.Instance
+                        && e.Expected == typeof( SqlTableBuilder )
+                        && e.Actual == typeof( PostgreSqlPrimaryKeyBuilder ) );
         }
 
         [Fact]
@@ -660,9 +656,9 @@ public partial class PostgreSqlSchemaBuilderTests
             action.Should()
                 .ThrowExactly<SqlObjectCastException>()
                 .AndMatch(
-                    e => e.Dialect == PostgreSqlDialect.Instance &&
-                        e.Expected == typeof( SqlIndexBuilder ) &&
-                        e.Actual == typeof( PostgreSqlTableBuilder ) );
+                    e => e.Dialect == PostgreSqlDialect.Instance
+                        && e.Expected == typeof( SqlIndexBuilder )
+                        && e.Actual == typeof( PostgreSqlTableBuilder ) );
         }
 
         [Fact]
@@ -745,9 +741,9 @@ public partial class PostgreSqlSchemaBuilderTests
             action.Should()
                 .ThrowExactly<SqlObjectCastException>()
                 .AndMatch(
-                    e => e.Dialect == PostgreSqlDialect.Instance &&
-                        e.Expected == typeof( SqlPrimaryKeyBuilder ) &&
-                        e.Actual == typeof( PostgreSqlTableBuilder ) );
+                    e => e.Dialect == PostgreSqlDialect.Instance
+                        && e.Expected == typeof( SqlPrimaryKeyBuilder )
+                        && e.Actual == typeof( PostgreSqlTableBuilder ) );
         }
 
         [Fact]
@@ -833,9 +829,9 @@ public partial class PostgreSqlSchemaBuilderTests
             action.Should()
                 .ThrowExactly<SqlObjectCastException>()
                 .AndMatch(
-                    e => e.Dialect == PostgreSqlDialect.Instance &&
-                        e.Expected == typeof( SqlForeignKeyBuilder ) &&
-                        e.Actual == typeof( PostgreSqlTableBuilder ) );
+                    e => e.Dialect == PostgreSqlDialect.Instance
+                        && e.Expected == typeof( SqlForeignKeyBuilder )
+                        && e.Actual == typeof( PostgreSqlTableBuilder ) );
         }
 
         [Fact]
@@ -919,9 +915,9 @@ public partial class PostgreSqlSchemaBuilderTests
             action.Should()
                 .ThrowExactly<SqlObjectCastException>()
                 .AndMatch(
-                    e => e.Dialect == PostgreSqlDialect.Instance &&
-                        e.Expected == typeof( SqlViewBuilder ) &&
-                        e.Actual == typeof( PostgreSqlTableBuilder ) );
+                    e => e.Dialect == PostgreSqlDialect.Instance
+                        && e.Expected == typeof( SqlViewBuilder )
+                        && e.Actual == typeof( PostgreSqlTableBuilder ) );
         }
 
         [Fact]
@@ -1002,9 +998,9 @@ public partial class PostgreSqlSchemaBuilderTests
             action.Should()
                 .ThrowExactly<SqlObjectCastException>()
                 .AndMatch(
-                    e => e.Dialect == PostgreSqlDialect.Instance &&
-                        e.Expected == typeof( SqlCheckBuilder ) &&
-                        e.Actual == typeof( PostgreSqlTableBuilder ) );
+                    e => e.Dialect == PostgreSqlDialect.Instance
+                        && e.Expected == typeof( SqlCheckBuilder )
+                        && e.Actual == typeof( PostgreSqlTableBuilder ) );
         }
 
         [Fact]

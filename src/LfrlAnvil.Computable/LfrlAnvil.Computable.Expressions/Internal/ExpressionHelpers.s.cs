@@ -18,9 +18,9 @@ internal static class ExpressionHelpers
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static Expression TryUpdateThrowType(Expression expression, Type expectedType)
     {
-        if ( expression.NodeType != ExpressionType.Throw ||
-            expression.Type == expectedType ||
-            expression is not UnaryExpression throwExpression )
+        if ( expression.NodeType != ExpressionType.Throw
+            || expression.Type == expectedType
+            || expression is not UnaryExpression throwExpression )
             return expression;
 
         return Expression.Throw( throwExpression.Operand, expectedType );

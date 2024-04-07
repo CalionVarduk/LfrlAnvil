@@ -22,12 +22,12 @@ public readonly struct Duration : IEquatable<Duration>, IComparable<Duration>, I
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public Duration(int hours, int minutes, int seconds = 0, int milliseconds = 0, int microseconds = 0, int ticks = 0)
         : this(
-            hours * ChronoConstants.TicksPerHour +
-            minutes * ChronoConstants.TicksPerMinute +
-            seconds * ChronoConstants.TicksPerSecond +
-            milliseconds * ChronoConstants.TicksPerMillisecond +
-            microseconds * ChronoConstants.TicksPerMicrosecond +
-            ticks ) { }
+            hours * ChronoConstants.TicksPerHour
+            + minutes * ChronoConstants.TicksPerMinute
+            + seconds * ChronoConstants.TicksPerSecond
+            + milliseconds * ChronoConstants.TicksPerMillisecond
+            + microseconds * ChronoConstants.TicksPerMicrosecond
+            + ticks ) { }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public Duration(TimeSpan timeSpan)
@@ -39,16 +39,16 @@ public readonly struct Duration : IEquatable<Duration>, IComparable<Duration>, I
     public long FullSeconds => Ticks / ChronoConstants.TicksPerSecond;
     public long FullMinutes => Ticks / ChronoConstants.TicksPerMinute;
     public long FullHours => Ticks / ChronoConstants.TicksPerHour;
-    public int TicksInMicrosecond => (int)(Ticks % ChronoConstants.TicksPerMicrosecond);
-    public int MicrosecondsInMillisecond => (int)(FullMicroseconds % ChronoConstants.MicrosecondsPerMillisecond);
-    public int MillisecondsInSecond => (int)(FullMilliseconds % ChronoConstants.MillisecondsPerSecond);
-    public int SecondsInMinute => (int)(FullSeconds % ChronoConstants.SecondsPerMinute);
-    public int MinutesInHour => (int)(FullMinutes % ChronoConstants.MinutesPerHour);
-    public double TotalMicroseconds => (double)Ticks / ChronoConstants.TicksPerMicrosecond;
-    public double TotalMilliseconds => (double)Ticks / ChronoConstants.TicksPerMillisecond;
-    public double TotalSeconds => (double)Ticks / ChronoConstants.TicksPerSecond;
-    public double TotalMinutes => (double)Ticks / ChronoConstants.TicksPerMinute;
-    public double TotalHours => (double)Ticks / ChronoConstants.TicksPerHour;
+    public int TicksInMicrosecond => ( int )(Ticks % ChronoConstants.TicksPerMicrosecond);
+    public int MicrosecondsInMillisecond => ( int )(FullMicroseconds % ChronoConstants.MicrosecondsPerMillisecond);
+    public int MillisecondsInSecond => ( int )(FullMilliseconds % ChronoConstants.MillisecondsPerSecond);
+    public int SecondsInMinute => ( int )(FullSeconds % ChronoConstants.SecondsPerMinute);
+    public int MinutesInHour => ( int )(FullMinutes % ChronoConstants.MinutesPerHour);
+    public double TotalMicroseconds => ( double )Ticks / ChronoConstants.TicksPerMicrosecond;
+    public double TotalMilliseconds => ( double )Ticks / ChronoConstants.TicksPerMillisecond;
+    public double TotalSeconds => ( double )Ticks / ChronoConstants.TicksPerSecond;
+    public double TotalMinutes => ( double )Ticks / ChronoConstants.TicksPerMinute;
+    public double TotalHours => ( double )Ticks / ChronoConstants.TicksPerHour;
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -61,7 +61,7 @@ public readonly struct Duration : IEquatable<Duration>, IComparable<Duration>, I
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static Duration FromMicroseconds(double microseconds)
     {
-        return new Duration( (long)Math.Round( microseconds * ChronoConstants.TicksPerMicrosecond, MidpointRounding.AwayFromZero ) );
+        return new Duration( ( long )Math.Round( microseconds * ChronoConstants.TicksPerMicrosecond, MidpointRounding.AwayFromZero ) );
     }
 
     [Pure]
@@ -75,7 +75,7 @@ public readonly struct Duration : IEquatable<Duration>, IComparable<Duration>, I
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static Duration FromMilliseconds(double milliseconds)
     {
-        return new Duration( (long)Math.Round( milliseconds * ChronoConstants.TicksPerMillisecond, MidpointRounding.AwayFromZero ) );
+        return new Duration( ( long )Math.Round( milliseconds * ChronoConstants.TicksPerMillisecond, MidpointRounding.AwayFromZero ) );
     }
 
     [Pure]
@@ -89,7 +89,7 @@ public readonly struct Duration : IEquatable<Duration>, IComparable<Duration>, I
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static Duration FromSeconds(double seconds)
     {
-        return new Duration( (long)Math.Round( seconds * ChronoConstants.TicksPerSecond, MidpointRounding.AwayFromZero ) );
+        return new Duration( ( long )Math.Round( seconds * ChronoConstants.TicksPerSecond, MidpointRounding.AwayFromZero ) );
     }
 
     [Pure]
@@ -103,7 +103,7 @@ public readonly struct Duration : IEquatable<Duration>, IComparable<Duration>, I
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static Duration FromMinutes(double minutes)
     {
-        return new Duration( (long)Math.Round( minutes * ChronoConstants.TicksPerMinute, MidpointRounding.AwayFromZero ) );
+        return new Duration( ( long )Math.Round( minutes * ChronoConstants.TicksPerMinute, MidpointRounding.AwayFromZero ) );
     }
 
     [Pure]
@@ -117,7 +117,7 @@ public readonly struct Duration : IEquatable<Duration>, IComparable<Duration>, I
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static Duration FromHours(double hours)
     {
-        return new Duration( (long)Math.Round( hours * ChronoConstants.TicksPerHour, MidpointRounding.AwayFromZero ) );
+        return new Duration( ( long )Math.Round( hours * ChronoConstants.TicksPerHour, MidpointRounding.AwayFromZero ) );
     }
 
     [Pure]
@@ -130,7 +130,7 @@ public readonly struct Duration : IEquatable<Duration>, IComparable<Duration>, I
     [Pure]
     public override string ToString()
     {
-        return $"{((decimal)TotalSeconds).ToString( CultureInfo.InvariantCulture )} second(s)";
+        return $"{(( decimal )TotalSeconds).ToString( CultureInfo.InvariantCulture )} second(s)";
     }
 
     [Pure]
@@ -198,7 +198,7 @@ public readonly struct Duration : IEquatable<Duration>, IComparable<Duration>, I
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public Duration AddMicroseconds(double microseconds)
     {
-        return AddTicks( (long)Math.Round( microseconds * ChronoConstants.TicksPerMicrosecond, MidpointRounding.AwayFromZero ) );
+        return AddTicks( ( long )Math.Round( microseconds * ChronoConstants.TicksPerMicrosecond, MidpointRounding.AwayFromZero ) );
     }
 
     [Pure]
@@ -212,7 +212,7 @@ public readonly struct Duration : IEquatable<Duration>, IComparable<Duration>, I
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public Duration AddMilliseconds(double milliseconds)
     {
-        return AddTicks( (long)Math.Round( milliseconds * ChronoConstants.TicksPerMillisecond, MidpointRounding.AwayFromZero ) );
+        return AddTicks( ( long )Math.Round( milliseconds * ChronoConstants.TicksPerMillisecond, MidpointRounding.AwayFromZero ) );
     }
 
     [Pure]
@@ -226,7 +226,7 @@ public readonly struct Duration : IEquatable<Duration>, IComparable<Duration>, I
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public Duration AddSeconds(double seconds)
     {
-        return AddTicks( (long)Math.Round( seconds * ChronoConstants.TicksPerSecond, MidpointRounding.AwayFromZero ) );
+        return AddTicks( ( long )Math.Round( seconds * ChronoConstants.TicksPerSecond, MidpointRounding.AwayFromZero ) );
     }
 
     [Pure]
@@ -240,7 +240,7 @@ public readonly struct Duration : IEquatable<Duration>, IComparable<Duration>, I
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public Duration AddMinutes(double minutes)
     {
-        return AddTicks( (long)Math.Round( minutes * ChronoConstants.TicksPerMinute, MidpointRounding.AwayFromZero ) );
+        return AddTicks( ( long )Math.Round( minutes * ChronoConstants.TicksPerMinute, MidpointRounding.AwayFromZero ) );
     }
 
     [Pure]
@@ -254,7 +254,7 @@ public readonly struct Duration : IEquatable<Duration>, IComparable<Duration>, I
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public Duration AddHours(double hours)
     {
-        return AddTicks( (long)Math.Round( hours * ChronoConstants.TicksPerHour, MidpointRounding.AwayFromZero ) );
+        return AddTicks( ( long )Math.Round( hours * ChronoConstants.TicksPerHour, MidpointRounding.AwayFromZero ) );
     }
 
     [Pure]
@@ -282,7 +282,7 @@ public readonly struct Duration : IEquatable<Duration>, IComparable<Duration>, I
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public Duration SubtractMicroseconds(double microseconds)
     {
-        return SubtractTicks( (long)Math.Round( microseconds * ChronoConstants.TicksPerMicrosecond, MidpointRounding.AwayFromZero ) );
+        return SubtractTicks( ( long )Math.Round( microseconds * ChronoConstants.TicksPerMicrosecond, MidpointRounding.AwayFromZero ) );
     }
 
     [Pure]
@@ -296,7 +296,7 @@ public readonly struct Duration : IEquatable<Duration>, IComparable<Duration>, I
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public Duration SubtractMilliseconds(double milliseconds)
     {
-        return SubtractTicks( (long)Math.Round( milliseconds * ChronoConstants.TicksPerMillisecond, MidpointRounding.AwayFromZero ) );
+        return SubtractTicks( ( long )Math.Round( milliseconds * ChronoConstants.TicksPerMillisecond, MidpointRounding.AwayFromZero ) );
     }
 
     [Pure]
@@ -310,7 +310,7 @@ public readonly struct Duration : IEquatable<Duration>, IComparable<Duration>, I
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public Duration SubtractSeconds(double seconds)
     {
-        return SubtractTicks( (long)Math.Round( seconds * ChronoConstants.TicksPerSecond, MidpointRounding.AwayFromZero ) );
+        return SubtractTicks( ( long )Math.Round( seconds * ChronoConstants.TicksPerSecond, MidpointRounding.AwayFromZero ) );
     }
 
     [Pure]
@@ -324,7 +324,7 @@ public readonly struct Duration : IEquatable<Duration>, IComparable<Duration>, I
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public Duration SubtractMinutes(double minutes)
     {
-        return SubtractTicks( (long)Math.Round( minutes * ChronoConstants.TicksPerMinute, MidpointRounding.AwayFromZero ) );
+        return SubtractTicks( ( long )Math.Round( minutes * ChronoConstants.TicksPerMinute, MidpointRounding.AwayFromZero ) );
     }
 
     [Pure]
@@ -338,7 +338,7 @@ public readonly struct Duration : IEquatable<Duration>, IComparable<Duration>, I
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public Duration SubtractHours(double hours)
     {
-        return SubtractTicks( (long)Math.Round( hours * ChronoConstants.TicksPerHour, MidpointRounding.AwayFromZero ) );
+        return SubtractTicks( ( long )Math.Round( hours * ChronoConstants.TicksPerHour, MidpointRounding.AwayFromZero ) );
     }
 
     [Pure]
@@ -359,7 +359,7 @@ public readonly struct Duration : IEquatable<Duration>, IComparable<Duration>, I
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public Duration Multiply(double multiplier)
     {
-        return FromTicks( (long)Math.Round( Ticks * multiplier, MidpointRounding.AwayFromZero ) );
+        return FromTicks( ( long )Math.Round( Ticks * multiplier, MidpointRounding.AwayFromZero ) );
     }
 
     [Pure]
@@ -369,7 +369,7 @@ public readonly struct Duration : IEquatable<Duration>, IComparable<Duration>, I
         if ( divisor == 0 )
             ExceptionThrower.Throw( new DivideByZeroException( ExceptionResources.DividedByZero ) );
 
-        return FromTicks( (long)Math.Round( Ticks / divisor, MidpointRounding.AwayFromZero ) );
+        return FromTicks( ( long )Math.Round( Ticks / divisor, MidpointRounding.AwayFromZero ) );
     }
 
     [Pure]

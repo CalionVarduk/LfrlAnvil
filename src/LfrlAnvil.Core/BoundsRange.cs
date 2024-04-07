@@ -672,7 +672,12 @@ public readonly struct BoundsRange<T> : IReadOnlyList<Bounds<T>>, IEquatable<Bou
         if ( values.Length <= 2 )
             return this;
 
-        var buffer = new List<T> { values[0], values[1] };
+        var buffer = new List<T>
+        {
+            values[0],
+            values[1]
+        };
+
         for ( var i = 2; i < values.Length; i += 2 )
         {
             var lastMax = buffer[^1];

@@ -50,7 +50,7 @@ public class SequentialDictionary<TKey, TValue> : IDictionary<TKey, TValue>, IRe
     ICollection<TValue> IDictionary<TKey, TValue>.Values => Values.ToList();
 
     bool ICollection<KeyValuePair<TKey, TValue>>.IsReadOnly =>
-        ((ICollection<KeyValuePair<TKey, LinkedListNode<KeyValuePair<TKey, TValue>>>>)_map).IsReadOnly;
+        (( ICollection<KeyValuePair<TKey, LinkedListNode<KeyValuePair<TKey, TValue>>>> )_map).IsReadOnly;
 
     public void Add(TKey key, TValue value)
     {
@@ -140,8 +140,7 @@ public class SequentialDictionary<TKey, TValue> : IDictionary<TKey, TValue>, IRe
 
     bool ICollection<KeyValuePair<TKey, TValue>>.Remove(KeyValuePair<TKey, TValue> item)
     {
-        if ( ! _map.TryGetValue( item.Key, out var node ) ||
-            ! EqualityComparer<TValue>.Default.Equals( node.Value.Value, item.Value ) )
+        if ( ! _map.TryGetValue( item.Key, out var node ) || ! EqualityComparer<TValue>.Default.Equals( node.Value.Value, item.Value ) )
             return false;
 
         _order.Remove( node );

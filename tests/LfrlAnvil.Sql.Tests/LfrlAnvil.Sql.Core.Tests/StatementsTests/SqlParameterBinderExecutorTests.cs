@@ -28,7 +28,7 @@ public class SqlParameterBinderExecutorTests : TestsBase
     {
         var command = new DbCommandMock();
         var @delegate = Substitute.For<Action<IDbCommand, IEnumerable<KeyValuePair<string, object?>>>>();
-        var source = new[] { KeyValuePair.Create( "a", (object?)0 ), KeyValuePair.Create( "b", (object?)1 ) };
+        var source = new[] { KeyValuePair.Create( "a", ( object? )0 ), KeyValuePair.Create( "b", ( object? )1 ) };
         var binder = new SqlParameterBinder( new SqlDialect( "foo" ), @delegate );
         var sut = binder.Bind( source );
 

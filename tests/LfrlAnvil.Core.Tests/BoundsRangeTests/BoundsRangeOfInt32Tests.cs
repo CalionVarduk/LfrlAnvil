@@ -20,13 +20,7 @@ public class BoundsRangeOfInt32Tests : GenericBoundsRangeTests<int>
             } );
 
         var expected = new BoundsRange<int>(
-            new[]
-            {
-                Bounds.Create( 0, 2 ),
-                Bounds.Create( 4, 10 ),
-                Bounds.Create( 13, 21 ),
-                Bounds.Create( 24, 28 )
-            } );
+            new[] { Bounds.Create( 0, 2 ), Bounds.Create( 4, 10 ), Bounds.Create( 13, 21 ), Bounds.Create( 24, 28 ) } );
 
         var result = sut.Normalize( (a, b) => a + 1 == b );
 

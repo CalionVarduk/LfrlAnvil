@@ -142,8 +142,7 @@ public class BenchmarkTests : TestsBase
             new BenchmarkEvent( "OnAfterSample", State: sut.State, Args: args, ElapsedTime: TimeSpan.Zero )
                 .Assert( sut.Events.ElementAtOrDefault( 8 ) );
 
-            var elapsedTime = sut.Events.ElementAtOrDefault( 5 )?.ElapsedTime +
-                sut.Events.ElementAtOrDefault( 8 )?.ElapsedTime;
+            var elapsedTime = sut.Events.ElementAtOrDefault( 5 )?.ElapsedTime + sut.Events.ElementAtOrDefault( 8 )?.ElapsedTime;
 
             new BenchmarkEvent( "OnAfterAll", SampleType: BenchmarkSampleType.Actual, ElapsedTime: elapsedTime )
                 .Assert( sut.Events.ElementAtOrDefault( 9 ) );
@@ -154,8 +153,7 @@ public class BenchmarkTests : TestsBase
             new BenchmarkEvent( "OnAfterResultExtraction", ElapsedTime: TimeSpan.Zero )
                 .Assert( sut.Events.ElementAtOrDefault( 11 ) );
 
-            elapsedTime = sut.Events.ElementAtOrDefault( 9 )?.ElapsedTime +
-                sut.Events.ElementAtOrDefault( 11 )?.ElapsedTime;
+            elapsedTime = sut.Events.ElementAtOrDefault( 9 )?.ElapsedTime + sut.Events.ElementAtOrDefault( 11 )?.ElapsedTime;
 
             new BenchmarkEvent( "OnAfterAll", ElapsedTime: elapsedTime )
                 .Assert( sut.Events.ElementAtOrDefault( 12 ) );
@@ -208,8 +206,7 @@ public class BenchmarkTests : TestsBase
             new BenchmarkEvent( "OnAfterSample", State: sut.State, Args: args, ElapsedTime: TimeSpan.Zero )
                 .Assert( sut.Events.ElementAtOrDefault( 8 ) );
 
-            var elapsedTime = sut.Events.ElementAtOrDefault( 5 )?.ElapsedTime +
-                sut.Events.ElementAtOrDefault( 8 )?.ElapsedTime;
+            var elapsedTime = sut.Events.ElementAtOrDefault( 5 )?.ElapsedTime + sut.Events.ElementAtOrDefault( 8 )?.ElapsedTime;
 
             new BenchmarkEvent( "OnAfterAll", SampleType: BenchmarkSampleType.Warmup, ElapsedTime: elapsedTime )
                 .Assert( sut.Events.ElementAtOrDefault( 9 ) );
@@ -247,9 +244,9 @@ public class BenchmarkTests : TestsBase
             new BenchmarkEvent( "OnAfterSample", State: sut.State, Args: args, ElapsedTime: TimeSpan.Zero )
                 .Assert( sut.Events.ElementAtOrDefault( 19 ) );
 
-            elapsedTime = sut.Events.ElementAtOrDefault( 13 )?.ElapsedTime +
-                sut.Events.ElementAtOrDefault( 16 )?.ElapsedTime +
-                sut.Events.ElementAtOrDefault( 19 )?.ElapsedTime;
+            elapsedTime = sut.Events.ElementAtOrDefault( 13 )?.ElapsedTime
+                + sut.Events.ElementAtOrDefault( 16 )?.ElapsedTime
+                + sut.Events.ElementAtOrDefault( 19 )?.ElapsedTime;
 
             new BenchmarkEvent( "OnAfterAll", SampleType: BenchmarkSampleType.Actual, ElapsedTime: elapsedTime )
                 .Assert( sut.Events.ElementAtOrDefault( 20 ) );
@@ -260,9 +257,9 @@ public class BenchmarkTests : TestsBase
             new BenchmarkEvent( "OnAfterResultExtraction", ElapsedTime: TimeSpan.Zero )
                 .Assert( sut.Events.ElementAtOrDefault( 22 ) );
 
-            elapsedTime = sut.Events.ElementAtOrDefault( 9 )?.ElapsedTime +
-                sut.Events.ElementAtOrDefault( 20 )?.ElapsedTime +
-                sut.Events.ElementAtOrDefault( 22 )?.ElapsedTime;
+            elapsedTime = sut.Events.ElementAtOrDefault( 9 )?.ElapsedTime
+                + sut.Events.ElementAtOrDefault( 20 )?.ElapsedTime
+                + sut.Events.ElementAtOrDefault( 22 )?.ElapsedTime;
 
             new BenchmarkEvent( "OnAfterAll", ElapsedTime: elapsedTime )
                 .Assert( sut.Events.ElementAtOrDefault( 23 ) );
@@ -319,7 +316,8 @@ public class BenchmarkTests : TestsBase
         BenchmarkSampleType? SampleType = null,
         BenchmarkOptions? Options = null,
         BenchmarkSampleArgs? Args = null,
-        TimeSpan? ElapsedTime = null)
+        TimeSpan? ElapsedTime = null
+    )
     {
         public void Assert(BenchmarkEvent? actual)
         {

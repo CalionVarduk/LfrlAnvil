@@ -16,7 +16,7 @@ public class UshortSequenceGeneratorTests : GenericSequenceGeneratorTestsBase<us
 
     protected sealed override ushort Add(ushort a, ushort b)
     {
-        return (ushort)(a + b);
+        return ( ushort )(a + b);
     }
 
     protected sealed override SequenceGeneratorBase<ushort> Create()

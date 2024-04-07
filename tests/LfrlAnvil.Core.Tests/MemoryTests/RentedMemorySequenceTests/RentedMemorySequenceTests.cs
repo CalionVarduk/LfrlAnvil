@@ -179,11 +179,7 @@ public class RentedMemorySequenceTests : TestsBase
         var pool = new MemorySequencePool<int>( 4 );
         var sut = pool.Rent( 8 );
 
-        var action = Lambda.Of(
-            () =>
-            {
-                _ = sut.Slice( startIndex );
-            } );
+        var action = Lambda.Of( () => { _ = sut.Slice( startIndex ); } );
 
         action.Should().ThrowExactly<ArgumentOutOfRangeException>();
     }
@@ -254,11 +250,7 @@ public class RentedMemorySequenceTests : TestsBase
         var pool = new MemorySequencePool<int>( 4 );
         var sut = pool.Rent( 8 );
 
-        var action = Lambda.Of(
-            () =>
-            {
-                _ = sut.Slice( startIndex, length );
-            } );
+        var action = Lambda.Of( () => { _ = sut.Slice( startIndex, length ); } );
 
         action.Should().ThrowExactly<ArgumentOutOfRangeException>();
     }
@@ -1271,7 +1263,7 @@ public class RentedMemorySequenceTests : TestsBase
         var pool = new MemorySequencePool<int>( 4 );
         var sut = pool.Rent( 8 );
 
-        var result = (RentedMemorySequenceSpan<int>)sut;
+        var result = ( RentedMemorySequenceSpan<int> )sut;
 
         using ( new AssertionScope() )
         {
@@ -1288,9 +1280,9 @@ public class RentedMemorySequenceTests : TestsBase
 
         using ( new AssertionScope() )
         {
-            ((ICollection<int>)sut).IsReadOnly.Should().BeFalse();
-            ((ICollection<int>)sut).Count.Should().Be( sut.Length );
-            ((IReadOnlyCollection<int>)sut).Count.Should().Be( sut.Length );
+            (( ICollection<int> )sut).IsReadOnly.Should().BeFalse();
+            (( ICollection<int> )sut).Count.Should().Be( sut.Length );
+            (( IReadOnlyCollection<int> )sut).Count.Should().Be( sut.Length );
         }
     }
 
@@ -1300,7 +1292,7 @@ public class RentedMemorySequenceTests : TestsBase
         var pool = new MemorySequencePool<int>( 8 );
         var sut = pool.Rent( 8 );
 
-        var action = Lambda.Of( () => ((ICollection<int>)sut).Add( Fixture.Create<int>() ) );
+        var action = Lambda.Of( () => (( ICollection<int> )sut).Add( Fixture.Create<int>() ) );
 
         action.Should().ThrowExactly<NotSupportedException>();
     }
@@ -1311,7 +1303,7 @@ public class RentedMemorySequenceTests : TestsBase
         var pool = new MemorySequencePool<int>( 8 );
         var sut = pool.Rent( 8 );
 
-        var action = Lambda.Of( () => ((ICollection<int>)sut).Remove( Fixture.Create<int>() ) );
+        var action = Lambda.Of( () => (( ICollection<int> )sut).Remove( Fixture.Create<int>() ) );
 
         action.Should().ThrowExactly<NotSupportedException>();
     }

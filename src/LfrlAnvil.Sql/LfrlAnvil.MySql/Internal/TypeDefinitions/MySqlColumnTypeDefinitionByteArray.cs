@@ -7,7 +7,7 @@ namespace LfrlAnvil.MySql.Internal.TypeDefinitions;
 internal sealed class MySqlColumnTypeDefinitionByteArray : MySqlColumnTypeDefinition<byte[]>
 {
     internal MySqlColumnTypeDefinitionByteArray()
-        : base( MySqlDataType.Blob, Array.Empty<byte>(), static (reader, ordinal) => (byte[])reader.GetValue( ordinal ) ) { }
+        : base( MySqlDataType.Blob, Array.Empty<byte>(), static (reader, ordinal) => ( byte[] )reader.GetValue( ordinal ) ) { }
 
     internal MySqlColumnTypeDefinitionByteArray(MySqlColumnTypeDefinitionByteArray @base, MySqlDataType dataType)
         : base( dataType, @base.DefaultValue.Value, @base.OutputMapping ) { }

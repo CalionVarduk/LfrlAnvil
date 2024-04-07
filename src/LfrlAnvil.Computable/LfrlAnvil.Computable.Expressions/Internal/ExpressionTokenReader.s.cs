@@ -104,8 +104,7 @@ internal static class ExpressionTokenReader
             ++index;
         }
 
-        var result = IntermediateToken.CreateStringConstant(
-            new StringSegment( input, startIndex, length: index - startIndex ) );
+        var result = IntermediateToken.CreateStringConstant( new StringSegment( input, startIndex, length: index - startIndex ) );
 
         return result;
     }
@@ -182,8 +181,7 @@ internal static class ExpressionTokenReader
             ++index;
         }
 
-        var result = IntermediateToken.CreateNumberConstant(
-            new StringSegment( input, startIndex, length: index - startIndex ) );
+        var result = IntermediateToken.CreateNumberConstant( new StringSegment( input, startIndex, length: index - startIndex ) );
 
         return result;
     }
@@ -264,8 +262,8 @@ internal static class ExpressionTokenReader
         Assume.Equals( state, NumberReadingState.AfterScientificNotationSymbol );
 
         if ( c is TokenConstants.ScientificNotationPositiveExponentOperator
-                or TokenConstants.ScientificNotationNegativeExponentOperator ||
-            char.IsDigit( c ) )
+                or TokenConstants.ScientificNotationNegativeExponentOperator
+            || char.IsDigit( c ) )
         {
             state = NumberReadingState.AfterScientificNotationOperator;
             return true;

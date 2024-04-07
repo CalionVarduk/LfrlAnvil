@@ -31,7 +31,7 @@ public abstract class GenericQueueEventSourceTests<TEvent> : TestsBase
 
         var (firstDelta, secondDelta, thirdDelta) = Fixture.CreateDistinctCollection<int>( count: 3 );
         var (firstEvent, secondEvent, thirdEvent) = Fixture.CreateDistinctCollection<TEvent>( count: 3 );
-        var delta = (int)(thirdDequeuePoint - queueStartPoint);
+        var delta = ( int )(thirdDequeuePoint - queueStartPoint);
 
         var receivedEvents = new List<FromQueue<TEvent, long, int>>();
         var next = EventListener.Create<FromQueue<TEvent, long, int>>( receivedEvents.Add );

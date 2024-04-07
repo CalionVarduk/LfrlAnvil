@@ -19,7 +19,7 @@ public readonly struct Identifier : IEquatable<Identifier>, IComparable<Identifi
         : this( (high << 16) | low ) { }
 
     public ulong High => Value >> 16;
-    public ushort Low => (ushort)Value;
+    public ushort Low => ( ushort )Value;
 
     [Pure]
     public override string ToString()

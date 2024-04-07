@@ -12,6 +12,6 @@ public static class DayOfWeekExtensions
     {
         return dayOfWeek == DayOfWeek.Sunday
             ? IsoDayOfWeek.Sunday
-            : (IsoDayOfWeek)dayOfWeek;
+            : ( IsoDayOfWeek )dayOfWeek;
     }
 }

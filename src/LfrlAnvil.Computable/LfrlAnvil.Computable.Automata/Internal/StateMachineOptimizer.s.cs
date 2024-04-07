@@ -592,8 +592,8 @@ internal static class StateMachineOptimizer
             [Pure]
             public int GetHashCode(StatePair<TState> obj)
             {
-                return unchecked( _stateComparer.GetHashCode( obj.First ) +
-                    (obj.HasSecond ? _stateComparer.GetHashCode( obj.Second ) : 0) );
+                return unchecked( _stateComparer.GetHashCode( obj.First )
+                    + (obj.HasSecond ? _stateComparer.GetHashCode( obj.Second ) : 0) );
             }
         }
     }

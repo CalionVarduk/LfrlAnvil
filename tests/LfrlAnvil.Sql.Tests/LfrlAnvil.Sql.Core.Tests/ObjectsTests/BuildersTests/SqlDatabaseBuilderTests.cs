@@ -35,18 +35,18 @@ public partial class SqlDatabaseBuilderTests : TestsBase
             sut.Changes.IsActive.Should().BeTrue();
             sut.Changes.GetPendingActions().ToArray().Should().BeEmpty();
 
-            ((ISqlDatabaseBuilder)sut).DataTypes.Should().BeSameAs( sut.DataTypes );
-            ((ISqlDatabaseBuilder)sut).TypeDefinitions.Should().BeSameAs( sut.TypeDefinitions );
-            ((ISqlDatabaseBuilder)sut).NodeInterpreters.Should().BeSameAs( sut.NodeInterpreters );
-            ((ISqlDatabaseBuilder)sut).QueryReaders.Should().BeSameAs( sut.QueryReaders );
-            ((ISqlDatabaseBuilder)sut).ParameterBinders.Should().BeSameAs( sut.ParameterBinders );
-            ((ISqlDatabaseBuilder)sut).DefaultNames.Should().BeSameAs( sut.DefaultNames );
-            ((ISqlDatabaseBuilder)sut).Schemas.Should().BeSameAs( sut.Schemas );
-            ((ISqlDatabaseBuilder)sut).Changes.Should().BeSameAs( sut.Changes );
-            ((ISqlSchemaBuilderCollection)sut.Schemas).Default.Should().BeSameAs( sut.Schemas.Default );
-            ((ISqlSchemaBuilderCollection)sut.Schemas).Database.Should().BeSameAs( sut.Schemas.Database );
-            ((ISqlDatabaseChangeTracker)sut.Changes).Database.Should().BeSameAs( sut.Changes.Database );
-            ((ISqlDatabaseChangeTracker)sut.Changes).ActiveObject.Should().BeSameAs( sut.Changes.ActiveObject );
+            (( ISqlDatabaseBuilder )sut).DataTypes.Should().BeSameAs( sut.DataTypes );
+            (( ISqlDatabaseBuilder )sut).TypeDefinitions.Should().BeSameAs( sut.TypeDefinitions );
+            (( ISqlDatabaseBuilder )sut).NodeInterpreters.Should().BeSameAs( sut.NodeInterpreters );
+            (( ISqlDatabaseBuilder )sut).QueryReaders.Should().BeSameAs( sut.QueryReaders );
+            (( ISqlDatabaseBuilder )sut).ParameterBinders.Should().BeSameAs( sut.ParameterBinders );
+            (( ISqlDatabaseBuilder )sut).DefaultNames.Should().BeSameAs( sut.DefaultNames );
+            (( ISqlDatabaseBuilder )sut).Schemas.Should().BeSameAs( sut.Schemas );
+            (( ISqlDatabaseBuilder )sut).Changes.Should().BeSameAs( sut.Changes );
+            (( ISqlSchemaBuilderCollection )sut.Schemas).Default.Should().BeSameAs( sut.Schemas.Default );
+            (( ISqlSchemaBuilderCollection )sut.Schemas).Database.Should().BeSameAs( sut.Schemas.Database );
+            (( ISqlDatabaseChangeTracker )sut.Changes).Database.Should().BeSameAs( sut.Changes.Database );
+            (( ISqlDatabaseChangeTracker )sut.Changes).ActiveObject.Should().BeSameAs( sut.Changes.ActiveObject );
         }
     }
 

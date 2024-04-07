@@ -573,7 +573,7 @@ public class MySqlDataTypeTests : TestsBase
     public void MySqlDbTypeConversionOperator_ShouldReturnValue()
     {
         var sut = MySqlDataType.Decimal;
-        var result = (MySqlDbType)sut;
+        var result = ( MySqlDbType )sut;
         result.Should().Be( sut.Value );
     }
 

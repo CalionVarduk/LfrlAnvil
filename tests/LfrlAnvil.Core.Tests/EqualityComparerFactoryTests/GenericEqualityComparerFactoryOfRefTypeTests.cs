@@ -12,8 +12,7 @@ public abstract class GenericEqualityComparerFactoryOfRefTypeTests<T> : GenericE
 
         var defaultComparer = EqualityComparer<T?>.Default;
 
-        var sut = EqualityComparerFactory<T?>.Create(
-            (a, b) => defaultComparer.Equals( a, b ) );
+        var sut = EqualityComparerFactory<T?>.Create( (a, b) => defaultComparer.Equals( a, b ) );
 
         var result = sut.GetHashCode( obj! );
 

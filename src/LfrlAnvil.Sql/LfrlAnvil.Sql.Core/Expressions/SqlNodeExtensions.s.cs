@@ -856,7 +856,7 @@ public static class SqlNodeExtensions
     public static TAggregateFunctionNode Distinct<TAggregateFunctionNode>(this TAggregateFunctionNode node)
         where TAggregateFunctionNode : SqlAggregateFunctionExpressionNode
     {
-        return (TAggregateFunctionNode)node.AddTrait( SqlNode.DistinctTrait() );
+        return ( TAggregateFunctionNode )node.AddTrait( SqlNode.DistinctTrait() );
     }
 
     [Pure]
@@ -864,7 +864,7 @@ public static class SqlNodeExtensions
     public static TAggregateFunctionNode AndWhere<TAggregateFunctionNode>(this TAggregateFunctionNode node, SqlConditionNode filter)
         where TAggregateFunctionNode : SqlAggregateFunctionExpressionNode
     {
-        return (TAggregateFunctionNode)node.AddTrait( SqlNode.FilterTrait( filter, isConjunction: true ) );
+        return ( TAggregateFunctionNode )node.AddTrait( SqlNode.FilterTrait( filter, isConjunction: true ) );
     }
 
     [Pure]
@@ -872,7 +872,7 @@ public static class SqlNodeExtensions
     public static TAggregateFunctionNode OrWhere<TAggregateFunctionNode>(this TAggregateFunctionNode node, SqlConditionNode filter)
         where TAggregateFunctionNode : SqlAggregateFunctionExpressionNode
     {
-        return (TAggregateFunctionNode)node.AddTrait( SqlNode.FilterTrait( filter, isConjunction: false ) );
+        return ( TAggregateFunctionNode )node.AddTrait( SqlNode.FilterTrait( filter, isConjunction: false ) );
     }
 
     [Pure]
@@ -890,7 +890,7 @@ public static class SqlNodeExtensions
     public static TAggregateFunctionNode OrderBy<TAggregateFunctionNode>(this TAggregateFunctionNode node, params SqlOrderByNode[] ordering)
         where TAggregateFunctionNode : SqlAggregateFunctionExpressionNode
     {
-        return ordering.Length == 0 ? node : (TAggregateFunctionNode)node.AddTrait( SqlNode.SortTrait( ordering ) );
+        return ordering.Length == 0 ? node : ( TAggregateFunctionNode )node.AddTrait( SqlNode.SortTrait( ordering ) );
     }
 
     [Pure]
@@ -898,7 +898,7 @@ public static class SqlNodeExtensions
     public static TAggregateFunctionNode Over<TAggregateFunctionNode>(this TAggregateFunctionNode node, SqlWindowDefinitionNode window)
         where TAggregateFunctionNode : SqlAggregateFunctionExpressionNode
     {
-        return (TAggregateFunctionNode)node.AddTrait( SqlNode.WindowTrait( window ) );
+        return ( TAggregateFunctionNode )node.AddTrait( SqlNode.WindowTrait( window ) );
     }
 
     [Pure]

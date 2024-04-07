@@ -18,7 +18,7 @@ public static class MathUtils
         if ( value < 0 )
             value = unchecked( -value );
 
-        return unchecked( (ulong)value );
+        return unchecked( ( ulong )value );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -30,7 +30,7 @@ public static class MathUtils
             value = unchecked( -value );
         }
 
-        return unchecked( (ulong)value );
+        return unchecked( ( ulong )value );
     }
 
     [Pure]
@@ -38,12 +38,12 @@ public static class MathUtils
     public static long ToSigned(ulong value, int sign)
     {
         if ( sign >= 0 )
-            return checked( (long)value );
+            return checked( ( long )value );
 
-        if ( value > (ulong)long.MaxValue + 1 )
+        if ( value > ( ulong )long.MaxValue + 1 )
             ExceptionThrower.Throw( new OverflowException() );
 
-        return unchecked( -(long)value );
+        return unchecked( -( long )value );
     }
 
     [Pure]
@@ -60,16 +60,16 @@ public static class MathUtils
         if ( right == 0 )
             ExceptionThrower.Throw( new DivideByZeroException( ExceptionResources.DividedByZero ) );
 
-        var left0 = unchecked( (uint)leftLow );
-        var left1 = unchecked( (uint)(leftLow >> 32) );
-        var left2 = unchecked( (uint)leftHigh );
-        var left3 = unchecked( (uint)(leftHigh >> 32) );
+        var left0 = unchecked( ( uint )leftLow );
+        var left1 = unchecked( ( uint )(leftLow >> 32) );
+        var left2 = unchecked( ( uint )leftHigh );
+        var left3 = unchecked( ( uint )(leftHigh >> 32) );
 
         var shift = BitOperations.LeadingZeroCount( right );
         var backShift = 32 - shift;
         var div = right << shift;
 
-        var val = ((ulong)left3 << shift) | ((ulong)left2 >> backShift);
+        var val = (( ulong )left3 << shift) | (( ulong )left2 >> backShift);
         var digit = Math.Min( val / div, uint.MaxValue );
         while ( div * digit > val )
             --digit;
@@ -77,15 +77,15 @@ public static class MathUtils
         left3 = GetFixedDividendDigit( left3, right, 0, ref digit );
         var quotientHigh = digit << 32;
 
-        val = ((((ulong)left3 << 32) | left2) << shift) | ((ulong)left1 >> backShift);
+        val = (((( ulong )left3 << 32) | left2) << shift) | (( ulong )left1 >> backShift);
         digit = Math.Min( val / div, uint.MaxValue );
         while ( div * digit > val )
             --digit;
 
         left2 = GetFixedDividendDigit( left2, right, left3, ref digit );
-        quotientHigh |= unchecked( (uint)digit );
+        quotientHigh |= unchecked( ( uint )digit );
 
-        val = ((((ulong)left2 << 32) | left1) << shift) | ((ulong)left0 >> backShift);
+        val = (((( ulong )left2 << 32) | left1) << shift) | (( ulong )left0 >> backShift);
         digit = Math.Min( val / div, uint.MaxValue );
         while ( div * digit > val )
             --digit;
@@ -93,13 +93,13 @@ public static class MathUtils
         left1 = GetFixedDividendDigit( left1, right, left2, ref digit );
         var quotientLow = digit << 32;
 
-        val = (((ulong)left1 << 32) | left0) << shift;
+        val = ((( ulong )left1 << 32) | left0) << shift;
         digit = Math.Min( val / div, uint.MaxValue );
         while ( div * digit > val )
             --digit;
 
         left0 = GetFixedDividendDigit( left0, right, left1, ref digit );
-        quotientLow |= unchecked( (uint)digit );
+        quotientLow |= unchecked( ( uint )digit );
 
         return (quotientHigh, quotientLow, left0);
 
@@ -110,22 +110,22 @@ public static class MathUtils
                 return left;
 
             var carry = right * digit;
-            var subDigit = unchecked( (uint)carry );
+            var subDigit = unchecked( ( uint )carry );
             carry >>= 32;
             if ( left < subDigit )
                 ++carry;
 
             left = unchecked( left - subDigit );
-            carry = unchecked( (uint)carry );
+            carry = unchecked( ( uint )carry );
 
             if ( carry == prevLeft )
                 return left;
 
             Assume.Equals( carry, prevLeft + 1 );
 
-            var addDigit = (ulong)left + right;
-            left = unchecked( (uint)addDigit );
-            carry = unchecked( (uint)(addDigit >> 32) );
+            var addDigit = ( ulong )left + right;
+            left = unchecked( ( uint )addDigit );
+            carry = unchecked( ( uint )(addDigit >> 32) );
 
             Assume.Equals( carry, 1U );
 
@@ -138,35 +138,35 @@ public static class MathUtils
     public static (ulong QuotientHigh, ulong QuotientLow, ulong Remainder) BigDivU128(ulong leftHigh, ulong leftLow, ulong right)
     {
         // NOTE: adapted from System.Numerics.BigInteger division implementation
-        var right1 = unchecked( (uint)(right >> 32) );
+        var right1 = unchecked( ( uint )(right >> 32) );
 
         if ( right1 == 0 )
-            return BigDivU128( leftHigh, leftLow, unchecked( (uint)right ) );
+            return BigDivU128( leftHigh, leftLow, unchecked( ( uint )right ) );
 
-        var right0 = unchecked( (uint)right );
+        var right0 = unchecked( ( uint )right );
 
-        var left0 = unchecked( (uint)leftLow );
-        var left1 = unchecked( (uint)(leftLow >> 32) );
-        var left2 = unchecked( (uint)leftHigh );
-        var left3 = unchecked( (uint)(leftHigh >> 32) );
+        var left0 = unchecked( ( uint )leftLow );
+        var left1 = unchecked( ( uint )(leftLow >> 32) );
+        var left2 = unchecked( ( uint )leftHigh );
+        var left3 = unchecked( ( uint )(leftHigh >> 32) );
 
         var shift = BitOperations.LeadingZeroCount( right1 );
         var backShift = 32 - shift;
 
-        var divHigh = (right1 << shift) | unchecked( (uint)((ulong)right0 >> backShift) );
+        var divHigh = (right1 << shift) | unchecked( ( uint )(( ulong )right0 >> backShift) );
         var divLow = right0 << shift;
 
-        var valHigh = ((ulong)left3 << shift) | ((ulong)left2 >> backShift);
-        var valLow = (left2 << shift) | unchecked( (uint)((ulong)left1 >> backShift) );
+        var valHigh = (( ulong )left3 << shift) | (( ulong )left2 >> backShift);
+        var valLow = (left2 << shift) | unchecked( ( uint )(( ulong )left1 >> backShift) );
         var digit = Math.Min( valHigh / divHigh, uint.MaxValue );
         while ( IsQuotientDigitTooBig( digit, valHigh, valLow, divHigh, divLow ) )
             --digit;
 
         FixDividendDigits( ref left2, ref left3, right0, right1, 0, ref digit );
-        var quotientHigh = (ulong)unchecked( (uint)digit );
+        var quotientHigh = ( ulong )unchecked( ( uint )digit );
 
-        valHigh = ((((ulong)left3 << 32) | left2) << shift) | ((ulong)left1 >> backShift);
-        valLow = (left1 << shift) | unchecked( (uint)((ulong)left0 >> backShift) );
+        valHigh = (((( ulong )left3 << 32) | left2) << shift) | (( ulong )left1 >> backShift);
+        valLow = (left1 << shift) | unchecked( ( uint )(( ulong )left0 >> backShift) );
         digit = Math.Min( valHigh / divHigh, uint.MaxValue );
         while ( IsQuotientDigitTooBig( digit, valHigh, valLow, divHigh, divLow ) )
             --digit;
@@ -174,16 +174,16 @@ public static class MathUtils
         FixDividendDigits( ref left1, ref left2, right0, right1, left3, ref digit );
         var quotientLow = digit << 32;
 
-        valHigh = ((((ulong)left2 << 32) | left1) << shift) | ((ulong)left0 >> backShift);
+        valHigh = (((( ulong )left2 << 32) | left1) << shift) | (( ulong )left0 >> backShift);
         valLow = left0 << shift;
         digit = Math.Min( valHigh / divHigh, uint.MaxValue );
         while ( IsQuotientDigitTooBig( digit, valHigh, valLow, divHigh, divLow ) )
             --digit;
 
         FixDividendDigits( ref left0, ref left1, right0, right1, left2, ref digit );
-        quotientLow |= unchecked( (uint)digit );
+        quotientLow |= unchecked( ( uint )digit );
 
-        var remainder = ((ulong)left1 << 32) | left0;
+        var remainder = (( ulong )left1 << 32) | left0;
         return (quotientHigh, quotientLow, remainder);
 
         [Pure]
@@ -211,7 +211,7 @@ public static class MathUtils
                 return;
 
             var carry = right0 * digit;
-            var subDigit = unchecked( (uint)carry );
+            var subDigit = unchecked( ( uint )carry );
             carry >>= 32;
             if ( left0 < subDigit )
                 ++carry;
@@ -219,25 +219,25 @@ public static class MathUtils
             left0 = unchecked( left0 - subDigit );
 
             carry += right1 * digit;
-            subDigit = unchecked( (uint)carry );
+            subDigit = unchecked( ( uint )carry );
             carry >>= 32;
             if ( left1 < subDigit )
                 ++carry;
 
             left1 = unchecked( left1 - subDigit );
-            carry = unchecked( (uint)carry );
+            carry = unchecked( ( uint )carry );
 
             if ( carry == prevLeft )
                 return;
 
             Assume.Equals( carry, prevLeft + 1 );
 
-            var addDigit = (ulong)left0 + right0;
-            left0 = unchecked( (uint)addDigit );
+            var addDigit = ( ulong )left0 + right0;
+            left0 = unchecked( ( uint )addDigit );
 
             addDigit = left1 + (addDigit >> 32) + right1;
-            left1 = unchecked( (uint)addDigit );
-            carry = unchecked( (uint)(addDigit >> 32) );
+            left1 = unchecked( ( uint )addDigit );
+            carry = unchecked( ( uint )(addDigit >> 32) );
 
             Assume.Equals( carry, 1U );
             --digit;
@@ -289,7 +289,7 @@ public static class MathUtils
 
         var index = 0;
         var numeratorSum = 0L;
-        var ratioMultiplier = (decimal)targetSum / percentageSum.Ratio;
+        var ratioMultiplier = ( decimal )targetSum / percentageSum.Ratio;
 
         foreach ( var percent in materializedPercentages )
         {
@@ -315,10 +315,10 @@ public static class MathUtils
         if ( roundingError > 0 )
         {
             index = 0;
-            var fixedPartition = new IntegerFixedPartition( unchecked( (ulong)roundingError ), fractions.Length );
+            var fixedPartition = new IntegerFixedPartition( unchecked( ( ulong )roundingError ), fractions.Length );
             foreach ( var part in fixedPartition )
             {
-                var signedPartition = unchecked( (long)part );
+                var signedPartition = unchecked( ( long )part );
                 var numerator = fractions[index].Numerator;
                 numerator = checked( numerator + signedPartition );
                 fractions[index] = fractions[index].SetNumerator( numerator );

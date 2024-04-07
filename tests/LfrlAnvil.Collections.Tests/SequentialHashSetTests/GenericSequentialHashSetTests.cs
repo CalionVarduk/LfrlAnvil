@@ -111,7 +111,11 @@ public abstract class GenericSequentialHashSetTests<T> : GenericCollectionTestsB
     public void Remove_ShouldReturnTrueAndRemoveCorrectExistingItem()
     {
         var items = Fixture.CreateDistinctCollection<T>( 2 );
-        var sut = new SequentialHashSet<T> { items[0], items[1] };
+        var sut = new SequentialHashSet<T>
+        {
+            items[0],
+            items[1]
+        };
 
         var result = sut.Remove( items[0] );
 

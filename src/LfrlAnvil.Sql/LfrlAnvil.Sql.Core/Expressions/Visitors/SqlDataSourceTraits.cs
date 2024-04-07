@@ -15,4 +15,5 @@ public readonly record struct SqlDataSourceTraits(
     Chain<ReadOnlyArray<SqlOrderByNode>> Ordering,
     SqlExpressionNode? Limit,
     SqlExpressionNode? Offset,
-    Chain<SqlTraitNode> Custom);
+    Chain<SqlTraitNode> Custom
+);

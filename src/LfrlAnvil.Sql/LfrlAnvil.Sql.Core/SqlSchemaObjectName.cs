@@ -56,8 +56,8 @@ public readonly struct SqlSchemaObjectName : IEquatable<SqlSchemaObjectName>
     [Pure]
     public bool Equals(SqlSchemaObjectName other)
     {
-        return Schema.Equals( other.Schema, StringComparison.OrdinalIgnoreCase ) &&
-            Object.Equals( other.Object, StringComparison.OrdinalIgnoreCase );
+        return Schema.Equals( other.Schema, StringComparison.OrdinalIgnoreCase )
+            && Object.Equals( other.Object, StringComparison.OrdinalIgnoreCase );
     }
 
     [Pure]

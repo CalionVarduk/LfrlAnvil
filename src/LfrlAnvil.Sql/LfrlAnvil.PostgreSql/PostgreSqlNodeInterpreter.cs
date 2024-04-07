@@ -154,7 +154,7 @@ public class PostgreSqlNodeInterpreter : SqlNodeInterpreter
 
         if ( node.Unit < SqlTemporalUnit.Second )
         {
-            var zeroCount = -((int)node.Unit - 3) * 3;
+            var zeroCount = -(( int )node.Unit - 3) * 3;
             Context.Sql.AppendSpace().Append( '/' ).AppendSpace();
             Context.Sql.Append( '1' ).Append( '0', repeatCount: zeroCount ).Append( '.' ).Append( '0' );
         }
@@ -173,7 +173,7 @@ public class PostgreSqlNodeInterpreter : SqlNodeInterpreter
 
             if ( node.Unit < SqlTemporalUnit.Second )
             {
-                var zeroCount = -((int)node.Unit - 3) * 3;
+                var zeroCount = -(( int )node.Unit - 3) * 3;
                 Context.Sql.AppendSpace().Append( '*' ).AppendSpace().Append( '1' ).Append( '0', repeatCount: zeroCount );
             }
             else if ( node.Unit > SqlTemporalUnit.Second )
@@ -621,8 +621,8 @@ public class PostgreSqlNodeInterpreter : SqlNodeInterpreter
 
         if ( node.Computation is not null )
         {
-            var storage = node.Computation.Value.Storage == SqlColumnComputationStorage.Virtual &&
-                Options.IsVirtualGeneratedColumnStorageParsingEnabled
+            var storage = node.Computation.Value.Storage == SqlColumnComputationStorage.Virtual
+                && Options.IsVirtualGeneratedColumnStorageParsingEnabled
                     ? "VIRTUAL"
                     : "STORED";
 
@@ -1189,59 +1189,59 @@ public class PostgreSqlNodeInterpreter : SqlNodeInterpreter
     [Pure]
     protected virtual bool IsValidSingleTableDeleteStatement(SqlDataSourceNode node, in SqlDataSourceTraits traits)
     {
-        return node.RecordSets.Count == 1 &&
-            traits.Distinct is null &&
-            traits.Aggregations.Count == 0 &&
-            traits.AggregationFilter is null &&
-            traits.Windows.Count == 0 &&
-            traits.Ordering.Count == 0 &&
-            traits.Limit is null &&
-            traits.Offset is null &&
-            traits.Custom.Count == 0;
+        return node.RecordSets.Count == 1
+            && traits.Distinct is null
+            && traits.Aggregations.Count == 0
+            && traits.AggregationFilter is null
+            && traits.Windows.Count == 0
+            && traits.Ordering.Count == 0
+            && traits.Limit is null
+            && traits.Offset is null
+            && traits.Custom.Count == 0;
     }
 
     [Pure]
     protected virtual bool IsValidMultiTableDeleteStatement(SqlDataSourceNode node, in SqlDataSourceTraits traits)
     {
-        return node.RecordSets.Count == 2 &&
-            node.Joins[0].JoinType is SqlJoinType.Inner or SqlJoinType.Cross &&
-            traits.Distinct is null &&
-            traits.Aggregations.Count == 0 &&
-            traits.AggregationFilter is null &&
-            traits.Windows.Count == 0 &&
-            traits.Ordering.Count == 0 &&
-            traits.Limit is null &&
-            traits.Offset is null &&
-            traits.Custom.Count == 0;
+        return node.RecordSets.Count == 2
+            && node.Joins[0].JoinType is SqlJoinType.Inner or SqlJoinType.Cross
+            && traits.Distinct is null
+            && traits.Aggregations.Count == 0
+            && traits.AggregationFilter is null
+            && traits.Windows.Count == 0
+            && traits.Ordering.Count == 0
+            && traits.Limit is null
+            && traits.Offset is null
+            && traits.Custom.Count == 0;
     }
 
     [Pure]
     protected virtual bool IsValidSingleTableUpdateStatement(SqlDataSourceNode node, in SqlDataSourceTraits traits)
     {
-        return node.RecordSets.Count == 1 &&
-            traits.Distinct is null &&
-            traits.Aggregations.Count == 0 &&
-            traits.AggregationFilter is null &&
-            traits.Windows.Count == 0 &&
-            traits.Ordering.Count == 0 &&
-            traits.Limit is null &&
-            traits.Offset is null &&
-            traits.Custom.Count == 0;
+        return node.RecordSets.Count == 1
+            && traits.Distinct is null
+            && traits.Aggregations.Count == 0
+            && traits.AggregationFilter is null
+            && traits.Windows.Count == 0
+            && traits.Ordering.Count == 0
+            && traits.Limit is null
+            && traits.Offset is null
+            && traits.Custom.Count == 0;
     }
 
     [Pure]
     protected virtual bool IsValidUpdateFromStatement(SqlDataSourceNode node, in SqlDataSourceTraits traits)
     {
-        return node.RecordSets.Count == 2 &&
-            node.Joins[0].JoinType is SqlJoinType.Inner or SqlJoinType.Cross &&
-            traits.Distinct is null &&
-            traits.Aggregations.Count == 0 &&
-            traits.AggregationFilter is null &&
-            traits.Windows.Count == 0 &&
-            traits.Ordering.Count == 0 &&
-            traits.Limit is null &&
-            traits.Offset is null &&
-            traits.Custom.Count == 0;
+        return node.RecordSets.Count == 2
+            && node.Joins[0].JoinType is SqlJoinType.Inner or SqlJoinType.Cross
+            && traits.Distinct is null
+            && traits.Aggregations.Count == 0
+            && traits.AggregationFilter is null
+            && traits.Windows.Count == 0
+            && traits.Ordering.Count == 0
+            && traits.Limit is null
+            && traits.Offset is null
+            && traits.Custom.Count == 0;
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]

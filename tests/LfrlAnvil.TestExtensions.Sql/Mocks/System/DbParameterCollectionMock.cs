@@ -112,7 +112,7 @@ public sealed class DbParameterCollectionMock : DbParameterCollection
 
     public override void CopyTo(Array array, int index)
     {
-        ((ICollection)_parameters).CopyTo( array, index );
+        (( ICollection )_parameters).CopyTo( array, index );
     }
 
     [Pure]
@@ -155,6 +155,6 @@ public sealed class DbParameterCollectionMock : DbParameterCollection
     private static DbParameterMock AsParameter(object? obj)
     {
         Ensure.IsNotNull( obj );
-        return (DbParameterMock)obj;
+        return ( DbParameterMock )obj;
     }
 }

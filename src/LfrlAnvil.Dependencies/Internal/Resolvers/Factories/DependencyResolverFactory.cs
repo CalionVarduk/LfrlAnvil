@@ -207,9 +207,9 @@ internal class DependencyResolverFactory
     protected void FinishWithCircularDependencies()
     {
         SetState(
-            DependencyResolverFactoryState.Finished |
-            DependencyResolverFactoryState.Invalid |
-            DependencyResolverFactoryState.CircularDependenciesDetected );
+            DependencyResolverFactoryState.Finished
+            | DependencyResolverFactoryState.Invalid
+            | DependencyResolverFactoryState.CircularDependenciesDetected );
     }
 
     protected void DetectCircularDependencies(List<DependencyGraphNode> path)

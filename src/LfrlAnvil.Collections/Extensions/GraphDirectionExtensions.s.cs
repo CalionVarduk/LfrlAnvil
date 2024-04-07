@@ -9,7 +9,7 @@ public static class GraphDirectionExtensions
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static GraphDirection Invert(this GraphDirection direction)
     {
-        return (GraphDirection)(((byte)(direction & GraphDirection.In) << 1) | ((byte)(direction & GraphDirection.Out) >> 1));
+        return ( GraphDirection )((( byte )(direction & GraphDirection.In) << 1) | (( byte )(direction & GraphDirection.Out) >> 1));
     }
 
     [Pure]

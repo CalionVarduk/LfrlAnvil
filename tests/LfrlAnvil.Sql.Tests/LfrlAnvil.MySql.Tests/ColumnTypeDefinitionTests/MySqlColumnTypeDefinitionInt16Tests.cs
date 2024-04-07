@@ -32,7 +32,7 @@ public class MySqlColumnTypeDefinitionInt16Tests : TestsBase
     public void TryToParameterValue_ShouldReturnCorrectResult()
     {
         var sut = _provider.GetByType<short>();
-        var result = sut.TryToParameterValue( (short)12345 );
+        var result = sut.TryToParameterValue( ( short )12345 );
         result.Should().Be( 12345L );
     }
 

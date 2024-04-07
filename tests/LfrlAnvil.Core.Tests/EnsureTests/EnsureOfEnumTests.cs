@@ -12,10 +12,10 @@ public class EnsureOfEnumTests : EnsureTestsBase
 
     [Theory]
     [InlineData( -1 )]
-    [InlineData( (int)TestEnum.Bar + 1 )]
+    [InlineData( ( int )TestEnum.Bar + 1 )]
     public void IsDefined_ShouldThrowArgumentException_WhenParamIsNotDefined(int param)
     {
-        ShouldThrowArgumentException( () => Ensure.IsDefined( (TestEnum)param ) );
+        ShouldThrowArgumentException( () => Ensure.IsDefined( ( TestEnum )param ) );
     }
 }
 

@@ -81,7 +81,7 @@ public readonly struct SqlIndexedArray<T> : IReadOnlyList<SqlIndexed<T>>
 
         void IEnumerator.Reset()
         {
-            ((IEnumerator)_source).Reset();
+            (( IEnumerator )_source).Reset();
         }
     }
 

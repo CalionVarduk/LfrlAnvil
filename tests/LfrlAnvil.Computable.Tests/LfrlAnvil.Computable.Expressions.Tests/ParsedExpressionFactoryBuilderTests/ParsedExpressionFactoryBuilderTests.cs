@@ -673,7 +673,12 @@ public class ParsedExpressionFactoryBuilderTests : TestsBase
             result.GetGenericPrefixUnaryConstructType( symbol ).Should().BeNull();
             result.GetSpecializedPrefixUnaryConstructs( symbol )
                 .Should()
-                .BeEquivalentTo( new { ArgumentType = typeof( bool ), ConstructType = typeof( ParsedExpressionNotOperator ) } );
+                .BeEquivalentTo(
+                    new
+                    {
+                        ArgumentType = typeof( bool ),
+                        ConstructType = typeof( ParsedExpressionNotOperator )
+                    } );
 
             result.GetGenericPostfixUnaryConstructType( symbol ).Should().BeNull();
             result.GetSpecializedPostfixUnaryConstructs( symbol ).Should().BeEmpty();
@@ -744,7 +749,12 @@ public class ParsedExpressionFactoryBuilderTests : TestsBase
             result.GetGenericPostfixUnaryConstructType( symbol ).Should().BeNull();
             result.GetSpecializedPostfixUnaryConstructs( symbol )
                 .Should()
-                .BeEquivalentTo( new { ArgumentType = typeof( bool ), ConstructType = typeof( ParsedExpressionNotOperator ) } );
+                .BeEquivalentTo(
+                    new
+                    {
+                        ArgumentType = typeof( bool ),
+                        ConstructType = typeof( ParsedExpressionNotOperator )
+                    } );
 
             result.GetTypeConverterTargetType( symbol ).Should().BeNull();
             result.GetTypeDeclarationType( symbol ).Should().BeNull();
@@ -812,7 +822,11 @@ public class ParsedExpressionFactoryBuilderTests : TestsBase
             result.GetSpecializedPrefixUnaryConstructs( symbol )
                 .Should()
                 .BeEquivalentTo(
-                    new { ArgumentType = typeof( long ), ConstructType = typeof( ParsedExpressionTypeConverter<int, long> ) } );
+                    new
+                    {
+                        ArgumentType = typeof( long ),
+                        ConstructType = typeof( ParsedExpressionTypeConverter<int, long> )
+                    } );
 
             result.GetGenericPostfixUnaryConstructType( symbol ).Should().BeNull();
             result.GetSpecializedPostfixUnaryConstructs( symbol ).Should().BeEmpty();
@@ -884,7 +898,11 @@ public class ParsedExpressionFactoryBuilderTests : TestsBase
             result.GetSpecializedPostfixUnaryConstructs( symbol )
                 .Should()
                 .BeEquivalentTo(
-                    new { ArgumentType = typeof( long ), ConstructType = typeof( ParsedExpressionTypeConverter<int, long> ) } );
+                    new
+                    {
+                        ArgumentType = typeof( long ),
+                        ConstructType = typeof( ParsedExpressionTypeConverter<int, long> )
+                    } );
 
             result.GetTypeConverterTargetType( symbol ).Should().Be( typeof( int ) );
             result.GetTypeDeclarationType( symbol ).Should().BeNull();
@@ -1041,7 +1059,7 @@ public class ParsedExpressionFactoryBuilderTests : TestsBase
             .AddConstant( constantSymbol, new ParsedExpressionConstant<int>( Fixture.Create<int>() ) )
             .AddFunction( functionSymbol, new ParsedExpressionFunction<int>( () => Fixture.Create<int>() ) )
             .AddFunction( functionSymbol, new ParsedExpressionFunction<int, int>( a => a ) )
-            .AddFunction( functionSymbol, new ParsedExpressionFunction<double, int>( a => (int)a ) )
+            .AddFunction( functionSymbol, new ParsedExpressionFunction<double, int>( a => ( int )a ) )
             .AddVariadicFunction( variadicFunctionSymbol, Substitute.ForPartsOf<ParsedExpressionVariadicFunction>() )
             .AddTypeDeclaration<int>( typeDeclarationSymbol )
             .SetBinaryOperatorPrecedence( operatorSymbol, precedence )

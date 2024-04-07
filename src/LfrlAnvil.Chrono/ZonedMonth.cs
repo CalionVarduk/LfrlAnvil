@@ -23,7 +23,7 @@ public readonly struct ZonedMonth : IEquatable<ZonedMonth>, IComparable<ZonedMon
     public ZonedDateTime End => _end ?? ZonedDateTime.CreateUtc( DateTime.UnixEpoch.GetEndOfMonth() );
     public int Year => Start.Year;
     public IsoMonthOfYear Month => Start.Month;
-    public int DayCount => DateTime.DaysInMonth( Year, (int)Month );
+    public int DayCount => DateTime.DaysInMonth( Year, ( int )Month );
     public TimeZoneInfo TimeZone => Start.TimeZone;
     public Duration Duration => _duration ?? Duration.FromHours( ChronoConstants.HoursPerStandardDay * ChronoConstants.DaysInJanuary );
     public bool IsUtc => Start.IsUtc;
@@ -60,7 +60,7 @@ public readonly struct ZonedMonth : IEquatable<ZonedMonth>, IComparable<ZonedMon
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static ZonedMonth Create(int year, IsoMonthOfYear month, TimeZoneInfo timeZone)
     {
-        return Create( new DateTime( year, (int)month, 1 ), timeZone );
+        return Create( new DateTime( year, ( int )month, 1 ), timeZone );
     }
 
     [Pure]
@@ -83,7 +83,7 @@ public readonly struct ZonedMonth : IEquatable<ZonedMonth>, IComparable<ZonedMon
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static ZonedMonth CreateUtc(int year, IsoMonthOfYear month)
     {
-        return CreateUtc( new DateTime( year, (int)month, 1 ) );
+        return CreateUtc( new DateTime( year, ( int )month, 1 ) );
     }
 
     [Pure]
@@ -97,7 +97,7 @@ public readonly struct ZonedMonth : IEquatable<ZonedMonth>, IComparable<ZonedMon
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static ZonedMonth CreateLocal(int year, IsoMonthOfYear month)
     {
-        return Create( new DateTime( year, (int)month, 1 ), TimeZoneInfo.Local );
+        return Create( new DateTime( year, ( int )month, 1 ), TimeZoneInfo.Local );
     }
 
     [Pure]
@@ -320,7 +320,7 @@ public readonly struct ZonedMonth : IEquatable<ZonedMonth>, IComparable<ZonedMon
         var dayCount = DayCount;
         var start = Start;
         var year = start.Year;
-        var month = (int)start.Month;
+        var month = ( int )start.Month;
         var timeZone = start.TimeZone;
 
         for ( var day = 1; day <= dayCount; ++day )
@@ -331,7 +331,7 @@ public readonly struct ZonedMonth : IEquatable<ZonedMonth>, IComparable<ZonedMon
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public int GetWeekCount(IsoDayOfWeek weekStart = IsoDayOfWeek.Monday)
     {
-        Ensure.IsInRange( (int)weekStart, (int)IsoDayOfWeek.Monday, (int)IsoDayOfWeek.Sunday );
+        Ensure.IsInRange( ( int )weekStart, ( int )IsoDayOfWeek.Monday, ( int )IsoDayOfWeek.Sunday );
         return WeekCalculator.GetWeekCountInMonth( Start.Value, End.Value, weekStart.ToBcl() );
     }
 

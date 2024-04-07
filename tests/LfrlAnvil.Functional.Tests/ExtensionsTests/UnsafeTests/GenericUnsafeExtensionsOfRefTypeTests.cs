@@ -9,7 +9,7 @@ public abstract class GenericUnsafeExtensionsOfRefTypeTests<T> : GenericUnsafeEx
     public void ToMaybe_ShouldReturnWithoutValue_WhenHasNullValue()
     {
         var value = default( T );
-        var sut = (Unsafe<T>)value!;
+        var sut = ( Unsafe<T> )value!;
 
         var result = sut.ToMaybe();
 

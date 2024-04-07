@@ -40,8 +40,7 @@ public readonly struct Mutation<T> : IEquatable<Mutation<T>>
     [Pure]
     public bool Equals(Mutation<T> other)
     {
-        return Equality.Create( OldValue, other.OldValue ).Result &&
-            Equality.Create( Value, other.Value ).Result;
+        return Equality.Create( OldValue, other.OldValue ).Result && Equality.Create( Value, other.Value ).Result;
     }
 
     [Pure]

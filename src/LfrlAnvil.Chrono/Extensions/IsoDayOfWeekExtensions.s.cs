@@ -10,6 +10,6 @@ public static class IsoDayOfWeekExtensions
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static DayOfWeek ToBcl(this IsoDayOfWeek dayOfWeek)
     {
-        return (DayOfWeek)((int)dayOfWeek % 7);
+        return ( DayOfWeek )(( int )dayOfWeek % 7);
     }
 }

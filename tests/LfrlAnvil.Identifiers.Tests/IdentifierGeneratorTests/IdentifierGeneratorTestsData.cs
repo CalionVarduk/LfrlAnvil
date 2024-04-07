@@ -24,22 +24,14 @@ public class IdentifierGeneratorTestsData
         return new TheoryData<IdentifierGeneratorParams, Timestamp, Timestamp, Timestamp, Timestamp, ulong, int>
         {
             {
-                new IdentifierGeneratorParams(),
-                new Timestamp( Duration.FromMilliseconds( 2 ).Ticks - 1 ),
-                Timestamp.Zero,
+                new IdentifierGeneratorParams(), new Timestamp( Duration.FromMilliseconds( 2 ).Ticks - 1 ), Timestamp.Zero,
                 new Timestamp( Duration.FromMilliseconds( 1 ).Ticks ),
-                new Timestamp( DateTime.MaxValue ).Subtract( Duration.FromMilliseconds( 1 ).SubtractTicks( 1 ) ),
-                1,
-                -1
+                new Timestamp( DateTime.MaxValue ).Subtract( Duration.FromMilliseconds( 1 ).SubtractTicks( 1 ) ), 1, -1
             },
             {
-                new IdentifierGeneratorParams(),
+                new IdentifierGeneratorParams(), new Timestamp( Duration.FromMilliseconds( 2 ).Ticks ), Timestamp.Zero,
                 new Timestamp( Duration.FromMilliseconds( 2 ).Ticks ),
-                Timestamp.Zero,
-                new Timestamp( Duration.FromMilliseconds( 2 ).Ticks ),
-                new Timestamp( DateTime.MaxValue ).Subtract( Duration.FromMilliseconds( 1 ).SubtractTicks( 1 ) ),
-                2,
-                -1
+                new Timestamp( DateTime.MaxValue ).Subtract( Duration.FromMilliseconds( 1 ).SubtractTicks( 1 ) ), 2, -1
             },
             {
                 new IdentifierGeneratorParams
@@ -48,12 +40,9 @@ public class IdentifierGeneratorTestsData
                     LowValueBounds = new Bounds<ushort>( 100, 2000 ),
                     LowValueOverflowStrategy = LowValueOverflowStrategy.AddHighValue
                 },
-                new Timestamp( Duration.FromMilliseconds( 4 ).Ticks - 1 ),
-                new Timestamp( Duration.FromMilliseconds( 1 ).Ticks ),
+                new Timestamp( Duration.FromMilliseconds( 4 ).Ticks - 1 ), new Timestamp( Duration.FromMilliseconds( 1 ).Ticks ),
                 new Timestamp( Duration.FromMilliseconds( 3 ).Ticks ),
-                new Timestamp( DateTime.MaxValue ).Subtract( Duration.FromMilliseconds( 1 ).SubtractTicks( 1 ) ),
-                2,
-                99
+                new Timestamp( DateTime.MaxValue ).Subtract( Duration.FromMilliseconds( 1 ).SubtractTicks( 1 ) ), 2, 99
             },
             {
                 new IdentifierGeneratorParams
@@ -62,12 +51,9 @@ public class IdentifierGeneratorTestsData
                     LowValueBounds = new Bounds<ushort>( 123, 4567 ),
                     LowValueOverflowStrategy = LowValueOverflowStrategy.SpinWait
                 },
+                new Timestamp( Duration.FromMilliseconds( 5 ).Ticks ), new Timestamp( Duration.FromMilliseconds( 2 ).Ticks ),
                 new Timestamp( Duration.FromMilliseconds( 5 ).Ticks ),
-                new Timestamp( Duration.FromMilliseconds( 2 ).Ticks ),
-                new Timestamp( Duration.FromMilliseconds( 5 ).Ticks ),
-                new Timestamp( DateTime.MaxValue ).Subtract( Duration.FromMilliseconds( 1 ).SubtractTicks( 1 ) ),
-                3,
-                122
+                new Timestamp( DateTime.MaxValue ).Subtract( Duration.FromMilliseconds( 1 ).SubtractTicks( 1 ) ), 3, 122
             },
             {
                 new IdentifierGeneratorParams
@@ -76,12 +62,9 @@ public class IdentifierGeneratorTestsData
                     LowValueBounds = new Bounds<ushort>( 1, 1 ),
                     LowValueOverflowStrategy = LowValueOverflowStrategy.Sleep
                 },
+                new Timestamp( Duration.FromMilliseconds( 5 ).Ticks ), new Timestamp( Duration.FromMilliseconds( 2 ).Ticks ),
                 new Timestamp( Duration.FromMilliseconds( 5 ).Ticks ),
-                new Timestamp( Duration.FromMilliseconds( 2 ).Ticks ),
-                new Timestamp( Duration.FromMilliseconds( 5 ).Ticks ),
-                new Timestamp( DateTime.MaxValue ).Subtract( Duration.FromMilliseconds( 1 ).SubtractTicks( 1 ) ),
-                3,
-                0
+                new Timestamp( DateTime.MaxValue ).Subtract( Duration.FromMilliseconds( 1 ).SubtractTicks( 1 ) ), 3, 0
             },
             {
                 new IdentifierGeneratorParams
@@ -89,12 +72,9 @@ public class IdentifierGeneratorTestsData
                     BaseTimestamp = new Timestamp( Duration.FromMilliseconds( 4 ).Ticks - 1 ),
                     TimeEpsilon = Duration.FromMilliseconds( 2 )
                 },
-                new Timestamp( Duration.FromMilliseconds( 8 ).Ticks - 1 ),
-                new Timestamp( Duration.FromMilliseconds( 2 ).Ticks ),
+                new Timestamp( Duration.FromMilliseconds( 8 ).Ticks - 1 ), new Timestamp( Duration.FromMilliseconds( 2 ).Ticks ),
                 new Timestamp( Duration.FromMilliseconds( 6 ).Ticks ),
-                new Timestamp( DateTime.MaxValue ).Subtract( Duration.FromMilliseconds( 2 ).SubtractTicks( 1 ) ),
-                2,
-                -1
+                new Timestamp( DateTime.MaxValue ).Subtract( Duration.FromMilliseconds( 2 ).SubtractTicks( 1 ) ), 2, -1
             },
             {
                 new IdentifierGeneratorParams
@@ -102,12 +82,9 @@ public class IdentifierGeneratorTestsData
                     BaseTimestamp = new Timestamp( Duration.FromMilliseconds( 4 ).Ticks ),
                     TimeEpsilon = Duration.FromMilliseconds( 2 )
                 },
+                new Timestamp( Duration.FromMilliseconds( 10 ).Ticks ), new Timestamp( Duration.FromMilliseconds( 4 ).Ticks ),
                 new Timestamp( Duration.FromMilliseconds( 10 ).Ticks ),
-                new Timestamp( Duration.FromMilliseconds( 4 ).Ticks ),
-                new Timestamp( Duration.FromMilliseconds( 10 ).Ticks ),
-                new Timestamp( DateTime.MaxValue ).Subtract( Duration.FromMilliseconds( 2 ).SubtractTicks( 1 ) ),
-                3,
-                -1
+                new Timestamp( DateTime.MaxValue ).Subtract( Duration.FromMilliseconds( 2 ).SubtractTicks( 1 ) ), 3, -1
             },
             {
                 new IdentifierGeneratorParams
@@ -115,13 +92,10 @@ public class IdentifierGeneratorTestsData
                     BaseTimestamp = new Timestamp( Duration.FromMilliseconds( 1.5 ).Ticks - 1 ),
                     TimeEpsilon = Duration.FromMilliseconds( 0.5 )
                 },
-                new Timestamp( Duration.FromMilliseconds( 2.5 ).Ticks - 1 ),
-                new Timestamp( Duration.FromMilliseconds( 1 ).Ticks ),
-                new Timestamp( Duration.FromMilliseconds( 2 ).Ticks ),
-                new Timestamp( Duration.FromMilliseconds( 1 ).Ticks )
-                    .Add( Duration.FromTicks( (long)((Identifier.MaxHighValue - 1) * (ChronoConstants.TicksPerMillisecond / 2)) ) ),
-                2,
-                -1
+                new Timestamp( Duration.FromMilliseconds( 2.5 ).Ticks - 1 ), new Timestamp( Duration.FromMilliseconds( 1 ).Ticks ),
+                new Timestamp( Duration.FromMilliseconds( 2 ).Ticks ), new Timestamp( Duration.FromMilliseconds( 1 ).Ticks )
+                    .Add( Duration.FromTicks( ( long )((Identifier.MaxHighValue - 1) * (ChronoConstants.TicksPerMillisecond / 2)) ) ),
+                2, -1
             },
             {
                 new IdentifierGeneratorParams
@@ -129,22 +103,15 @@ public class IdentifierGeneratorTestsData
                     BaseTimestamp = new Timestamp( Duration.FromMilliseconds( 2.5 ).Ticks ),
                     TimeEpsilon = Duration.FromMilliseconds( 0.5 )
                 },
-                new Timestamp( Duration.FromMilliseconds( 4.5 ).Ticks ),
-                new Timestamp( Duration.FromMilliseconds( 2.5 ).Ticks ),
-                new Timestamp( Duration.FromMilliseconds( 4.5 ).Ticks ),
-                new Timestamp( Duration.FromMilliseconds( 2.5 ).Ticks )
-                    .Add( Duration.FromTicks( (long)((Identifier.MaxHighValue - 1) * (ChronoConstants.TicksPerMillisecond / 2)) ) ),
-                4,
-                -1
+                new Timestamp( Duration.FromMilliseconds( 4.5 ).Ticks ), new Timestamp( Duration.FromMilliseconds( 2.5 ).Ticks ),
+                new Timestamp( Duration.FromMilliseconds( 4.5 ).Ticks ), new Timestamp( Duration.FromMilliseconds( 2.5 ).Ticks )
+                    .Add( Duration.FromTicks( ( long )((Identifier.MaxHighValue - 1) * (ChronoConstants.TicksPerMillisecond / 2)) ) ),
+                4, -1
             },
             {
-                new IdentifierGeneratorParams { TimeEpsilon = Duration.FromMilliseconds( 3 ) },
+                new IdentifierGeneratorParams { TimeEpsilon = Duration.FromMilliseconds( 3 ) }, Timestamp.Zero, Timestamp.Zero,
                 Timestamp.Zero,
-                Timestamp.Zero,
-                Timestamp.Zero,
-                new Timestamp( DateTime.MaxValue ).Subtract( Duration.FromMilliseconds( 3 ).SubtractTicks( 1 ) ),
-                0,
-                -1
+                new Timestamp( DateTime.MaxValue ).Subtract( Duration.FromMilliseconds( 3 ).SubtractTicks( 1 ) ), 0, -1
             }
         };
     }
@@ -154,44 +121,25 @@ public class IdentifierGeneratorTestsData
     {
         return new TheoryData<IdentifierGeneratorParams, Timestamp, Identifier>
         {
-            {
-                new IdentifierGeneratorParams(),
-                Timestamp.Zero,
-                new Identifier( 0, 0 )
-            },
-            {
-                new IdentifierGeneratorParams(),
-                new Timestamp( Duration.FromMilliseconds( 5 ).Ticks ),
-                new Identifier( 5, 0 )
-            },
+            { new IdentifierGeneratorParams(), Timestamp.Zero, new Identifier( 0, 0 ) },
+            { new IdentifierGeneratorParams(), new Timestamp( Duration.FromMilliseconds( 5 ).Ticks ), new Identifier( 5, 0 ) },
             {
                 new IdentifierGeneratorParams { BaseTimestamp = new Timestamp( Duration.FromMilliseconds( 2 ).Ticks ) },
-                new Timestamp( Duration.FromMilliseconds( 5 ).Ticks ),
-                new Identifier( 3, 0 )
+                new Timestamp( Duration.FromMilliseconds( 5 ).Ticks ), new Identifier( 3, 0 )
             },
-            {
-                new IdentifierGeneratorParams { LowValueBounds = new Bounds<ushort>( 1, 1 ) },
-                Timestamp.Zero,
-                new Identifier( 0, 1 )
-            },
+            { new IdentifierGeneratorParams { LowValueBounds = new Bounds<ushort>( 1, 1 ) }, Timestamp.Zero, new Identifier( 0, 1 ) },
             {
                 new IdentifierGeneratorParams
                 {
                     BaseTimestamp = new Timestamp( Duration.FromMilliseconds( 3 ).Ticks ),
                     LowValueBounds = new Bounds<ushort>( 100, 200 )
                 },
-                new Timestamp( Duration.FromMilliseconds( 7 ).Ticks ),
-                new Identifier( 4, 100 )
+                new Timestamp( Duration.FromMilliseconds( 7 ).Ticks ), new Identifier( 4, 100 )
             },
+            { new IdentifierGeneratorParams { TimeEpsilon = Duration.FromMilliseconds( 2 ) }, Timestamp.Zero, new Identifier( 0, 0 ) },
             {
                 new IdentifierGeneratorParams { TimeEpsilon = Duration.FromMilliseconds( 2 ) },
-                Timestamp.Zero,
-                new Identifier( 0, 0 )
-            },
-            {
-                new IdentifierGeneratorParams { TimeEpsilon = Duration.FromMilliseconds( 2 ) },
-                new Timestamp( Duration.FromMilliseconds( 10 ).Ticks ),
-                new Identifier( 5, 0 )
+                new Timestamp( Duration.FromMilliseconds( 10 ).Ticks ), new Identifier( 5, 0 )
             },
             {
                 new IdentifierGeneratorParams
@@ -199,8 +147,7 @@ public class IdentifierGeneratorTestsData
                     BaseTimestamp = new Timestamp( Duration.FromMilliseconds( 4 ).Ticks ),
                     TimeEpsilon = Duration.FromMilliseconds( 2 )
                 },
-                new Timestamp( Duration.FromMilliseconds( 10 ).Ticks ),
-                new Identifier( 3, 0 )
+                new Timestamp( Duration.FromMilliseconds( 10 ).Ticks ), new Identifier( 3, 0 )
             },
             {
                 new IdentifierGeneratorParams
@@ -208,8 +155,7 @@ public class IdentifierGeneratorTestsData
                     LowValueBounds = new Bounds<ushort>( 1, 1 ),
                     TimeEpsilon = Duration.FromMilliseconds( 2 )
                 },
-                Timestamp.Zero,
-                new Identifier( 0, 1 )
+                Timestamp.Zero, new Identifier( 0, 1 )
             },
             {
                 new IdentifierGeneratorParams
@@ -218,18 +164,14 @@ public class IdentifierGeneratorTestsData
                     LowValueBounds = new Bounds<ushort>( 100, 200 ),
                     TimeEpsilon = Duration.FromMilliseconds( 2 )
                 },
-                new Timestamp( Duration.FromMilliseconds( 14 ).Ticks ),
-                new Identifier( 4, 100 )
+                new Timestamp( Duration.FromMilliseconds( 14 ).Ticks ), new Identifier( 4, 100 )
+            },
+            {
+                new IdentifierGeneratorParams { TimeEpsilon = Duration.FromMilliseconds( 0.5 ) }, Timestamp.Zero, new Identifier( 0, 0 )
             },
             {
                 new IdentifierGeneratorParams { TimeEpsilon = Duration.FromMilliseconds( 0.5 ) },
-                Timestamp.Zero,
-                new Identifier( 0, 0 )
-            },
-            {
-                new IdentifierGeneratorParams { TimeEpsilon = Duration.FromMilliseconds( 0.5 ) },
-                new Timestamp( Duration.FromMilliseconds( 2.5 ).Ticks ),
-                new Identifier( 5, 0 )
+                new Timestamp( Duration.FromMilliseconds( 2.5 ).Ticks ), new Identifier( 5, 0 )
             },
             {
                 new IdentifierGeneratorParams
@@ -237,8 +179,7 @@ public class IdentifierGeneratorTestsData
                     BaseTimestamp = new Timestamp( Duration.FromMilliseconds( 1 ).Ticks ),
                     TimeEpsilon = Duration.FromMilliseconds( 0.5 )
                 },
-                new Timestamp( Duration.FromMilliseconds( 2.5 ).Ticks ),
-                new Identifier( 3, 0 )
+                new Timestamp( Duration.FromMilliseconds( 2.5 ).Ticks ), new Identifier( 3, 0 )
             },
             {
                 new IdentifierGeneratorParams
@@ -246,8 +187,7 @@ public class IdentifierGeneratorTestsData
                     LowValueBounds = new Bounds<ushort>( 1, 1 ),
                     TimeEpsilon = Duration.FromMilliseconds( 0.5 )
                 },
-                Timestamp.Zero,
-                new Identifier( 0, 1 )
+                Timestamp.Zero, new Identifier( 0, 1 )
             },
             {
                 new IdentifierGeneratorParams
@@ -256,8 +196,7 @@ public class IdentifierGeneratorTestsData
                     LowValueBounds = new Bounds<ushort>( 100, 200 ),
                     TimeEpsilon = Duration.FromMilliseconds( 0.5 )
                 },
-                new Timestamp( Duration.FromMilliseconds( 3.5 ).Ticks ),
-                new Identifier( 4, 100 )
+                new Timestamp( Duration.FromMilliseconds( 3.5 ).Ticks ), new Identifier( 4, 100 )
             }
         };
     }
@@ -268,52 +207,24 @@ public class IdentifierGeneratorTestsData
     {
         return new TheoryData<IdentifierGeneratorParams, Timestamp, int, Identifier>
         {
+            { new IdentifierGeneratorParams(), Timestamp.Zero, 1, new Identifier( 0, 1 ) },
+            { new IdentifierGeneratorParams(), Timestamp.Zero, 10, new Identifier( 0, 10 ) },
+            { new IdentifierGeneratorParams(), new Timestamp( Duration.FromMilliseconds( 5 ).Ticks ), 1, new Identifier( 5, 1 ) },
+            { new IdentifierGeneratorParams(), new Timestamp( Duration.FromMilliseconds( 5 ).Ticks ), 10, new Identifier( 5, 10 ) },
             {
-                new IdentifierGeneratorParams(),
-                Timestamp.Zero,
-                1,
-                new Identifier( 0, 1 )
-            },
-            {
-                new IdentifierGeneratorParams(),
-                Timestamp.Zero,
-                10,
-                new Identifier( 0, 10 )
-            },
-            {
-                new IdentifierGeneratorParams(),
-                new Timestamp( Duration.FromMilliseconds( 5 ).Ticks ),
-                1,
-                new Identifier( 5, 1 )
-            },
-            {
-                new IdentifierGeneratorParams(),
-                new Timestamp( Duration.FromMilliseconds( 5 ).Ticks ),
-                10,
-                new Identifier( 5, 10 )
+                new IdentifierGeneratorParams { BaseTimestamp = new Timestamp( Duration.FromMilliseconds( 2 ).Ticks ) },
+                new Timestamp( Duration.FromMilliseconds( 5 ).Ticks ), 1, new Identifier( 3, 1 )
             },
             {
                 new IdentifierGeneratorParams { BaseTimestamp = new Timestamp( Duration.FromMilliseconds( 2 ).Ticks ) },
-                new Timestamp( Duration.FromMilliseconds( 5 ).Ticks ),
-                1,
-                new Identifier( 3, 1 )
+                new Timestamp( Duration.FromMilliseconds( 5 ).Ticks ), 10, new Identifier( 3, 10 )
             },
             {
-                new IdentifierGeneratorParams { BaseTimestamp = new Timestamp( Duration.FromMilliseconds( 2 ).Ticks ) },
-                new Timestamp( Duration.FromMilliseconds( 5 ).Ticks ),
-                10,
-                new Identifier( 3, 10 )
-            },
-            {
-                new IdentifierGeneratorParams { LowValueBounds = new Bounds<ushort>( 1, 11 ) },
-                Timestamp.Zero,
-                1,
+                new IdentifierGeneratorParams { LowValueBounds = new Bounds<ushort>( 1, 11 ) }, Timestamp.Zero, 1,
                 new Identifier( 0, 2 )
             },
             {
-                new IdentifierGeneratorParams { LowValueBounds = new Bounds<ushort>( 1, 11 ) },
-                Timestamp.Zero,
-                10,
+                new IdentifierGeneratorParams { LowValueBounds = new Bounds<ushort>( 1, 11 ) }, Timestamp.Zero, 10,
                 new Identifier( 0, 11 )
             },
             {
@@ -322,9 +233,7 @@ public class IdentifierGeneratorTestsData
                     BaseTimestamp = new Timestamp( Duration.FromMilliseconds( 3 ).Ticks ),
                     LowValueBounds = new Bounds<ushort>( 100, 200 )
                 },
-                new Timestamp( Duration.FromMilliseconds( 7 ).Ticks ),
-                1,
-                new Identifier( 4, 101 )
+                new Timestamp( Duration.FromMilliseconds( 7 ).Ticks ), 1, new Identifier( 4, 101 )
             },
             {
                 new IdentifierGeneratorParams
@@ -332,33 +241,23 @@ public class IdentifierGeneratorTestsData
                     BaseTimestamp = new Timestamp( Duration.FromMilliseconds( 3 ).Ticks ),
                     LowValueBounds = new Bounds<ushort>( 100, 200 )
                 },
-                new Timestamp( Duration.FromMilliseconds( 7 ).Ticks ),
-                10,
-                new Identifier( 4, 110 )
+                new Timestamp( Duration.FromMilliseconds( 7 ).Ticks ), 10, new Identifier( 4, 110 )
             },
             {
-                new IdentifierGeneratorParams { TimeEpsilon = Duration.FromMilliseconds( 2 ) },
-                Timestamp.Zero,
-                1,
+                new IdentifierGeneratorParams { TimeEpsilon = Duration.FromMilliseconds( 2 ) }, Timestamp.Zero, 1,
                 new Identifier( 0, 1 )
             },
             {
-                new IdentifierGeneratorParams { TimeEpsilon = Duration.FromMilliseconds( 2 ) },
-                Timestamp.Zero,
-                10,
+                new IdentifierGeneratorParams { TimeEpsilon = Duration.FromMilliseconds( 2 ) }, Timestamp.Zero, 10,
                 new Identifier( 0, 10 )
             },
             {
                 new IdentifierGeneratorParams { TimeEpsilon = Duration.FromMilliseconds( 2 ) },
-                new Timestamp( Duration.FromMilliseconds( 10 ).Ticks ),
-                1,
-                new Identifier( 5, 1 )
+                new Timestamp( Duration.FromMilliseconds( 10 ).Ticks ), 1, new Identifier( 5, 1 )
             },
             {
                 new IdentifierGeneratorParams { TimeEpsilon = Duration.FromMilliseconds( 2 ) },
-                new Timestamp( Duration.FromMilliseconds( 10 ).Ticks ),
-                10,
-                new Identifier( 5, 10 )
+                new Timestamp( Duration.FromMilliseconds( 10 ).Ticks ), 10, new Identifier( 5, 10 )
             },
             {
                 new IdentifierGeneratorParams
@@ -366,9 +265,7 @@ public class IdentifierGeneratorTestsData
                     BaseTimestamp = new Timestamp( Duration.FromMilliseconds( 4 ).Ticks ),
                     TimeEpsilon = Duration.FromMilliseconds( 2 )
                 },
-                new Timestamp( Duration.FromMilliseconds( 10 ).Ticks ),
-                1,
-                new Identifier( 3, 1 )
+                new Timestamp( Duration.FromMilliseconds( 10 ).Ticks ), 1, new Identifier( 3, 1 )
             },
             {
                 new IdentifierGeneratorParams
@@ -376,9 +273,7 @@ public class IdentifierGeneratorTestsData
                     BaseTimestamp = new Timestamp( Duration.FromMilliseconds( 4 ).Ticks ),
                     TimeEpsilon = Duration.FromMilliseconds( 2 )
                 },
-                new Timestamp( Duration.FromMilliseconds( 10 ).Ticks ),
-                10,
-                new Identifier( 3, 10 )
+                new Timestamp( Duration.FromMilliseconds( 10 ).Ticks ), 10, new Identifier( 3, 10 )
             },
             {
                 new IdentifierGeneratorParams
@@ -386,9 +281,7 @@ public class IdentifierGeneratorTestsData
                     LowValueBounds = new Bounds<ushort>( 1, 11 ),
                     TimeEpsilon = Duration.FromMilliseconds( 2 )
                 },
-                Timestamp.Zero,
-                1,
-                new Identifier( 0, 2 )
+                Timestamp.Zero, 1, new Identifier( 0, 2 )
             },
             {
                 new IdentifierGeneratorParams
@@ -396,9 +289,7 @@ public class IdentifierGeneratorTestsData
                     LowValueBounds = new Bounds<ushort>( 1, 11 ),
                     TimeEpsilon = Duration.FromMilliseconds( 2 )
                 },
-                Timestamp.Zero,
-                10,
-                new Identifier( 0, 11 )
+                Timestamp.Zero, 10, new Identifier( 0, 11 )
             },
             {
                 new IdentifierGeneratorParams
@@ -407,9 +298,7 @@ public class IdentifierGeneratorTestsData
                     LowValueBounds = new Bounds<ushort>( 100, 200 ),
                     TimeEpsilon = Duration.FromMilliseconds( 2 )
                 },
-                new Timestamp( Duration.FromMilliseconds( 14 ).Ticks ),
-                1,
-                new Identifier( 4, 101 )
+                new Timestamp( Duration.FromMilliseconds( 14 ).Ticks ), 1, new Identifier( 4, 101 )
             },
             {
                 new IdentifierGeneratorParams
@@ -418,33 +307,23 @@ public class IdentifierGeneratorTestsData
                     LowValueBounds = new Bounds<ushort>( 100, 200 ),
                     TimeEpsilon = Duration.FromMilliseconds( 2 )
                 },
-                new Timestamp( Duration.FromMilliseconds( 14 ).Ticks ),
-                10,
-                new Identifier( 4, 110 )
+                new Timestamp( Duration.FromMilliseconds( 14 ).Ticks ), 10, new Identifier( 4, 110 )
             },
             {
-                new IdentifierGeneratorParams { TimeEpsilon = Duration.FromMilliseconds( 0.5 ) },
-                Timestamp.Zero,
-                1,
+                new IdentifierGeneratorParams { TimeEpsilon = Duration.FromMilliseconds( 0.5 ) }, Timestamp.Zero, 1,
                 new Identifier( 0, 1 )
             },
             {
-                new IdentifierGeneratorParams { TimeEpsilon = Duration.FromMilliseconds( 0.5 ) },
-                Timestamp.Zero,
-                10,
+                new IdentifierGeneratorParams { TimeEpsilon = Duration.FromMilliseconds( 0.5 ) }, Timestamp.Zero, 10,
                 new Identifier( 0, 10 )
             },
             {
                 new IdentifierGeneratorParams { TimeEpsilon = Duration.FromMilliseconds( 0.5 ) },
-                new Timestamp( Duration.FromMilliseconds( 2.5 ).Ticks ),
-                1,
-                new Identifier( 5, 1 )
+                new Timestamp( Duration.FromMilliseconds( 2.5 ).Ticks ), 1, new Identifier( 5, 1 )
             },
             {
                 new IdentifierGeneratorParams { TimeEpsilon = Duration.FromMilliseconds( 0.5 ) },
-                new Timestamp( Duration.FromMilliseconds( 2.5 ).Ticks ),
-                10,
-                new Identifier( 5, 10 )
+                new Timestamp( Duration.FromMilliseconds( 2.5 ).Ticks ), 10, new Identifier( 5, 10 )
             },
             {
                 new IdentifierGeneratorParams
@@ -452,9 +331,7 @@ public class IdentifierGeneratorTestsData
                     BaseTimestamp = new Timestamp( Duration.FromMilliseconds( 1 ).Ticks ),
                     TimeEpsilon = Duration.FromMilliseconds( 0.5 )
                 },
-                new Timestamp( Duration.FromMilliseconds( 2.5 ).Ticks ),
-                1,
-                new Identifier( 3, 1 )
+                new Timestamp( Duration.FromMilliseconds( 2.5 ).Ticks ), 1, new Identifier( 3, 1 )
             },
             {
                 new IdentifierGeneratorParams
@@ -462,9 +339,7 @@ public class IdentifierGeneratorTestsData
                     BaseTimestamp = new Timestamp( Duration.FromMilliseconds( 1 ).Ticks ),
                     TimeEpsilon = Duration.FromMilliseconds( 0.5 )
                 },
-                new Timestamp( Duration.FromMilliseconds( 2.5 ).Ticks ),
-                10,
-                new Identifier( 3, 10 )
+                new Timestamp( Duration.FromMilliseconds( 2.5 ).Ticks ), 10, new Identifier( 3, 10 )
             },
             {
                 new IdentifierGeneratorParams
@@ -472,9 +347,7 @@ public class IdentifierGeneratorTestsData
                     LowValueBounds = new Bounds<ushort>( 1, 11 ),
                     TimeEpsilon = Duration.FromMilliseconds( 0.5 )
                 },
-                Timestamp.Zero,
-                1,
-                new Identifier( 0, 2 )
+                Timestamp.Zero, 1, new Identifier( 0, 2 )
             },
             {
                 new IdentifierGeneratorParams
@@ -482,9 +355,7 @@ public class IdentifierGeneratorTestsData
                     LowValueBounds = new Bounds<ushort>( 1, 11 ),
                     TimeEpsilon = Duration.FromMilliseconds( 0.5 )
                 },
-                Timestamp.Zero,
-                10,
-                new Identifier( 0, 11 )
+                Timestamp.Zero, 10, new Identifier( 0, 11 )
             },
             {
                 new IdentifierGeneratorParams
@@ -493,9 +364,7 @@ public class IdentifierGeneratorTestsData
                     LowValueBounds = new Bounds<ushort>( 100, 200 ),
                     TimeEpsilon = Duration.FromMilliseconds( 0.5 )
                 },
-                new Timestamp( Duration.FromMilliseconds( 3.5 ).Ticks ),
-                1,
-                new Identifier( 4, 101 )
+                new Timestamp( Duration.FromMilliseconds( 3.5 ).Ticks ), 1, new Identifier( 4, 101 )
             },
             {
                 new IdentifierGeneratorParams
@@ -504,9 +373,7 @@ public class IdentifierGeneratorTestsData
                     LowValueBounds = new Bounds<ushort>( 100, 200 ),
                     TimeEpsilon = Duration.FromMilliseconds( 0.5 )
                 },
-                new Timestamp( Duration.FromMilliseconds( 3.5 ).Ticks ),
-                10,
-                new Identifier( 4, 110 )
+                new Timestamp( Duration.FromMilliseconds( 3.5 ).Ticks ), 10, new Identifier( 4, 110 )
             }
         };
     }
@@ -517,25 +384,15 @@ public class IdentifierGeneratorTestsData
         return new TheoryData<Bounds<ushort>, Timestamp, Identifier>
         {
             {
-                new Bounds<ushort>( ushort.MinValue, ushort.MaxValue ),
-                new Timestamp( Duration.FromMilliseconds( 1 ).Ticks ),
+                new Bounds<ushort>( ushort.MinValue, ushort.MaxValue ), new Timestamp( Duration.FromMilliseconds( 1 ).Ticks ),
                 new Identifier( 1, 0 )
             },
             {
-                new Bounds<ushort>( ushort.MinValue, ushort.MaxValue ),
-                new Timestamp( Duration.FromMilliseconds( 10 ).Ticks ),
+                new Bounds<ushort>( ushort.MinValue, ushort.MaxValue ), new Timestamp( Duration.FromMilliseconds( 10 ).Ticks ),
                 new Identifier( 10, 0 )
             },
-            {
-                new Bounds<ushort>( 100, 200 ),
-                new Timestamp( Duration.FromMilliseconds( 1 ).Ticks ),
-                new Identifier( 1, 100 )
-            },
-            {
-                new Bounds<ushort>( 100, 200 ),
-                new Timestamp( Duration.FromMilliseconds( 10 ).Ticks ),
-                new Identifier( 10, 100 )
-            }
+            { new Bounds<ushort>( 100, 200 ), new Timestamp( Duration.FromMilliseconds( 1 ).Ticks ), new Identifier( 1, 100 ) },
+            { new Bounds<ushort>( 100, 200 ), new Timestamp( Duration.FromMilliseconds( 10 ).Ticks ), new Identifier( 10, 100 ) }
         };
     }
 
@@ -550,9 +407,7 @@ public class IdentifierGeneratorTestsData
                     LowValueBounds = new Bounds<ushort>( 0, 0 ),
                     LowValueOverflowStrategy = LowValueOverflowStrategy.AddHighValue
                 },
-                Timestamp.Zero,
-                new Timestamp( Duration.FromMilliseconds( 5 ).Ticks ),
-                new Identifier( 1, 0 )
+                Timestamp.Zero, new Timestamp( Duration.FromMilliseconds( 5 ).Ticks ), new Identifier( 1, 0 )
             },
             {
                 new IdentifierGeneratorParams
@@ -560,8 +415,7 @@ public class IdentifierGeneratorTestsData
                     LowValueBounds = new Bounds<ushort>( 10, 20 ),
                     LowValueOverflowStrategy = LowValueOverflowStrategy.AddHighValue
                 },
-                new Timestamp( Duration.FromMilliseconds( 1 ).Ticks ),
-                new Timestamp( Duration.FromMilliseconds( 5 ).Ticks ),
+                new Timestamp( Duration.FromMilliseconds( 1 ).Ticks ), new Timestamp( Duration.FromMilliseconds( 5 ).Ticks ),
                 new Identifier( 2, 10 )
             },
             {
@@ -571,9 +425,7 @@ public class IdentifierGeneratorTestsData
                     LowValueBounds = new Bounds<ushort>( 0, 0 ),
                     LowValueOverflowStrategy = LowValueOverflowStrategy.AddHighValue
                 },
-                Timestamp.Zero,
-                new Timestamp( Duration.FromMilliseconds( 10 ).Ticks ),
-                new Identifier( 1, 0 )
+                Timestamp.Zero, new Timestamp( Duration.FromMilliseconds( 10 ).Ticks ), new Identifier( 1, 0 )
             },
             {
                 new IdentifierGeneratorParams
@@ -582,8 +434,7 @@ public class IdentifierGeneratorTestsData
                     LowValueBounds = new Bounds<ushort>( 10, 20 ),
                     LowValueOverflowStrategy = LowValueOverflowStrategy.AddHighValue
                 },
-                new Timestamp( Duration.FromMilliseconds( 2 ).Ticks ),
-                new Timestamp( Duration.FromMilliseconds( 10 ).Ticks ),
+                new Timestamp( Duration.FromMilliseconds( 2 ).Ticks ), new Timestamp( Duration.FromMilliseconds( 10 ).Ticks ),
                 new Identifier( 2, 10 )
             },
             {
@@ -593,9 +444,7 @@ public class IdentifierGeneratorTestsData
                     LowValueBounds = new Bounds<ushort>( 0, 0 ),
                     LowValueOverflowStrategy = LowValueOverflowStrategy.AddHighValue
                 },
-                Timestamp.Zero,
-                new Timestamp( Duration.FromMilliseconds( 2.5 ).Ticks ),
-                new Identifier( 1, 0 )
+                Timestamp.Zero, new Timestamp( Duration.FromMilliseconds( 2.5 ).Ticks ), new Identifier( 1, 0 )
             },
             {
                 new IdentifierGeneratorParams
@@ -604,8 +453,7 @@ public class IdentifierGeneratorTestsData
                     LowValueBounds = new Bounds<ushort>( 10, 20 ),
                     LowValueOverflowStrategy = LowValueOverflowStrategy.AddHighValue
                 },
-                new Timestamp( Duration.FromMilliseconds( 0.5 ).Ticks ),
-                new Timestamp( Duration.FromMilliseconds( 2.5 ).Ticks ),
+                new Timestamp( Duration.FromMilliseconds( 0.5 ).Ticks ), new Timestamp( Duration.FromMilliseconds( 2.5 ).Ticks ),
                 new Identifier( 2, 10 )
             },
             {
@@ -614,9 +462,7 @@ public class IdentifierGeneratorTestsData
                     LowValueBounds = new Bounds<ushort>( 0, 0 ),
                     LowValueOverflowStrategy = LowValueOverflowStrategy.SpinWait
                 },
-                Timestamp.Zero,
-                new Timestamp( Duration.FromMilliseconds( 5 ).Ticks ),
-                new Identifier( 5, 0 )
+                Timestamp.Zero, new Timestamp( Duration.FromMilliseconds( 5 ).Ticks ), new Identifier( 5, 0 )
             },
             {
                 new IdentifierGeneratorParams
@@ -624,8 +470,7 @@ public class IdentifierGeneratorTestsData
                     LowValueBounds = new Bounds<ushort>( 10, 20 ),
                     LowValueOverflowStrategy = LowValueOverflowStrategy.SpinWait
                 },
-                new Timestamp( Duration.FromMilliseconds( 1 ).Ticks ),
-                new Timestamp( Duration.FromMilliseconds( 5 ).Ticks ),
+                new Timestamp( Duration.FromMilliseconds( 1 ).Ticks ), new Timestamp( Duration.FromMilliseconds( 5 ).Ticks ),
                 new Identifier( 5, 10 )
             },
             {
@@ -635,9 +480,7 @@ public class IdentifierGeneratorTestsData
                     LowValueBounds = new Bounds<ushort>( 0, 0 ),
                     LowValueOverflowStrategy = LowValueOverflowStrategy.SpinWait
                 },
-                Timestamp.Zero,
-                new Timestamp( Duration.FromMilliseconds( 10 ).Ticks ),
-                new Identifier( 5, 0 )
+                Timestamp.Zero, new Timestamp( Duration.FromMilliseconds( 10 ).Ticks ), new Identifier( 5, 0 )
             },
             {
                 new IdentifierGeneratorParams
@@ -646,8 +489,7 @@ public class IdentifierGeneratorTestsData
                     LowValueBounds = new Bounds<ushort>( 10, 20 ),
                     LowValueOverflowStrategy = LowValueOverflowStrategy.SpinWait
                 },
-                new Timestamp( Duration.FromMilliseconds( 2 ).Ticks ),
-                new Timestamp( Duration.FromMilliseconds( 10 ).Ticks ),
+                new Timestamp( Duration.FromMilliseconds( 2 ).Ticks ), new Timestamp( Duration.FromMilliseconds( 10 ).Ticks ),
                 new Identifier( 5, 10 )
             },
             {
@@ -657,9 +499,7 @@ public class IdentifierGeneratorTestsData
                     LowValueBounds = new Bounds<ushort>( 0, 0 ),
                     LowValueOverflowStrategy = LowValueOverflowStrategy.SpinWait
                 },
-                Timestamp.Zero,
-                new Timestamp( Duration.FromMilliseconds( 2.5 ).Ticks ),
-                new Identifier( 5, 0 )
+                Timestamp.Zero, new Timestamp( Duration.FromMilliseconds( 2.5 ).Ticks ), new Identifier( 5, 0 )
             },
             {
                 new IdentifierGeneratorParams
@@ -668,8 +508,7 @@ public class IdentifierGeneratorTestsData
                     LowValueBounds = new Bounds<ushort>( 10, 20 ),
                     LowValueOverflowStrategy = LowValueOverflowStrategy.SpinWait
                 },
-                new Timestamp( Duration.FromMilliseconds( 0.5 ).Ticks ),
-                new Timestamp( Duration.FromMilliseconds( 2.5 ).Ticks ),
+                new Timestamp( Duration.FromMilliseconds( 0.5 ).Ticks ), new Timestamp( Duration.FromMilliseconds( 2.5 ).Ticks ),
                 new Identifier( 5, 10 )
             },
             {
@@ -678,9 +517,7 @@ public class IdentifierGeneratorTestsData
                     LowValueBounds = new Bounds<ushort>( 0, 0 ),
                     LowValueOverflowStrategy = LowValueOverflowStrategy.Sleep
                 },
-                Timestamp.Zero,
-                new Timestamp( Duration.FromMilliseconds( 5 ).Ticks ),
-                new Identifier( 5, 0 )
+                Timestamp.Zero, new Timestamp( Duration.FromMilliseconds( 5 ).Ticks ), new Identifier( 5, 0 )
             },
             {
                 new IdentifierGeneratorParams
@@ -688,8 +525,7 @@ public class IdentifierGeneratorTestsData
                     LowValueBounds = new Bounds<ushort>( 10, 20 ),
                     LowValueOverflowStrategy = LowValueOverflowStrategy.Sleep
                 },
-                new Timestamp( Duration.FromMilliseconds( 1 ).Ticks ),
-                new Timestamp( Duration.FromMilliseconds( 5 ).Ticks ),
+                new Timestamp( Duration.FromMilliseconds( 1 ).Ticks ), new Timestamp( Duration.FromMilliseconds( 5 ).Ticks ),
                 new Identifier( 5, 10 )
             },
             {
@@ -699,9 +535,7 @@ public class IdentifierGeneratorTestsData
                     LowValueBounds = new Bounds<ushort>( 0, 0 ),
                     LowValueOverflowStrategy = LowValueOverflowStrategy.Sleep
                 },
-                Timestamp.Zero,
-                new Timestamp( Duration.FromMilliseconds( 10 ).Ticks ),
-                new Identifier( 5, 0 )
+                Timestamp.Zero, new Timestamp( Duration.FromMilliseconds( 10 ).Ticks ), new Identifier( 5, 0 )
             },
             {
                 new IdentifierGeneratorParams
@@ -710,8 +544,7 @@ public class IdentifierGeneratorTestsData
                     LowValueBounds = new Bounds<ushort>( 10, 20 ),
                     LowValueOverflowStrategy = LowValueOverflowStrategy.Sleep
                 },
-                new Timestamp( Duration.FromMilliseconds( 2 ).Ticks ),
-                new Timestamp( Duration.FromMilliseconds( 10 ).Ticks ),
+                new Timestamp( Duration.FromMilliseconds( 2 ).Ticks ), new Timestamp( Duration.FromMilliseconds( 10 ).Ticks ),
                 new Identifier( 5, 10 )
             },
             {
@@ -721,9 +554,7 @@ public class IdentifierGeneratorTestsData
                     LowValueBounds = new Bounds<ushort>( 0, 0 ),
                     LowValueOverflowStrategy = LowValueOverflowStrategy.Sleep
                 },
-                Timestamp.Zero,
-                new Timestamp( Duration.FromMilliseconds( 2.5 ).Ticks ),
-                new Identifier( 5, 0 )
+                Timestamp.Zero, new Timestamp( Duration.FromMilliseconds( 2.5 ).Ticks ), new Identifier( 5, 0 )
             },
             {
                 new IdentifierGeneratorParams
@@ -732,8 +563,7 @@ public class IdentifierGeneratorTestsData
                     LowValueBounds = new Bounds<ushort>( 10, 20 ),
                     LowValueOverflowStrategy = LowValueOverflowStrategy.Sleep
                 },
-                new Timestamp( Duration.FromMilliseconds( 0.5 ).Ticks ),
-                new Timestamp( Duration.FromMilliseconds( 2.5 ).Ticks ),
+                new Timestamp( Duration.FromMilliseconds( 0.5 ).Ticks ), new Timestamp( Duration.FromMilliseconds( 2.5 ).Ticks ),
                 new Identifier( 5, 10 )
             }
         };
@@ -786,7 +616,7 @@ public class IdentifierGeneratorTestsData
                     LowValueOverflowStrategy = LowValueOverflowStrategy.AddHighValue
                 },
                 Timestamp.Zero.Add(
-                    Duration.FromTicks( (long)((Identifier.MaxHighValue - 1) * (ChronoConstants.TicksPerMillisecond / 2)) ) )
+                    Duration.FromTicks( ( long )((Identifier.MaxHighValue - 1) * (ChronoConstants.TicksPerMillisecond / 2)) ) )
             },
             {
                 new IdentifierGeneratorParams
@@ -796,7 +626,7 @@ public class IdentifierGeneratorTestsData
                     LowValueOverflowStrategy = LowValueOverflowStrategy.AddHighValue
                 },
                 Timestamp.Zero.Add(
-                    Duration.FromTicks( (long)((Identifier.MaxHighValue - 1) * (ChronoConstants.TicksPerMillisecond / 2)) ) )
+                    Duration.FromTicks( ( long )((Identifier.MaxHighValue - 1) * (ChronoConstants.TicksPerMillisecond / 2)) ) )
             },
             {
                 new IdentifierGeneratorParams
@@ -840,7 +670,7 @@ public class IdentifierGeneratorTestsData
                     LowValueOverflowStrategy = LowValueOverflowStrategy.SpinWait
                 },
                 Timestamp.Zero.Add(
-                    Duration.FromTicks( (long)((Identifier.MaxHighValue - 1) * (ChronoConstants.TicksPerMillisecond / 2)) ) )
+                    Duration.FromTicks( ( long )((Identifier.MaxHighValue - 1) * (ChronoConstants.TicksPerMillisecond / 2)) ) )
             },
             {
                 new IdentifierGeneratorParams
@@ -850,7 +680,7 @@ public class IdentifierGeneratorTestsData
                     LowValueOverflowStrategy = LowValueOverflowStrategy.SpinWait
                 },
                 Timestamp.Zero.Add(
-                    Duration.FromTicks( (long)((Identifier.MaxHighValue - 1) * (ChronoConstants.TicksPerMillisecond / 2)) ) )
+                    Duration.FromTicks( ( long )((Identifier.MaxHighValue - 1) * (ChronoConstants.TicksPerMillisecond / 2)) ) )
             },
             {
                 new IdentifierGeneratorParams
@@ -894,7 +724,7 @@ public class IdentifierGeneratorTestsData
                     LowValueOverflowStrategy = LowValueOverflowStrategy.Sleep
                 },
                 Timestamp.Zero.Add(
-                    Duration.FromTicks( (long)((Identifier.MaxHighValue - 1) * (ChronoConstants.TicksPerMillisecond / 2)) ) )
+                    Duration.FromTicks( ( long )((Identifier.MaxHighValue - 1) * (ChronoConstants.TicksPerMillisecond / 2)) ) )
             },
             {
                 new IdentifierGeneratorParams
@@ -904,7 +734,7 @@ public class IdentifierGeneratorTestsData
                     LowValueOverflowStrategy = LowValueOverflowStrategy.Sleep
                 },
                 Timestamp.Zero.Add(
-                    Duration.FromTicks( (long)((Identifier.MaxHighValue - 1) * (ChronoConstants.TicksPerMillisecond / 2)) ) )
+                    Duration.FromTicks( ( long )((Identifier.MaxHighValue - 1) * (ChronoConstants.TicksPerMillisecond / 2)) ) )
             }
         };
     }
@@ -913,49 +743,28 @@ public class IdentifierGeneratorTestsData
     {
         return new TheoryData<IdentifierGeneratorParams, Identifier, Timestamp>
         {
+            { new IdentifierGeneratorParams(), new Identifier( 0, 0 ), Timestamp.Zero },
+            { new IdentifierGeneratorParams(), new Identifier( 1, 0 ), new Timestamp( Duration.FromMilliseconds( 1 ).Ticks ) },
+            { new IdentifierGeneratorParams(), new Identifier( 10, 0 ), new Timestamp( Duration.FromMilliseconds( 10 ).Ticks ) },
             {
-                new IdentifierGeneratorParams(),
-                new Identifier( 0, 0 ),
-                Timestamp.Zero
-            },
-            {
-                new IdentifierGeneratorParams(),
-                new Identifier( 1, 0 ),
-                new Timestamp( Duration.FromMilliseconds( 1 ).Ticks )
-            },
-            {
-                new IdentifierGeneratorParams(),
-                new Identifier( 10, 0 ),
-                new Timestamp( Duration.FromMilliseconds( 10 ).Ticks )
+                new IdentifierGeneratorParams { BaseTimestamp = new Timestamp( Duration.FromMilliseconds( 10 ).Ticks ) },
+                new Identifier( 0, 0 ), new Timestamp( Duration.FromMilliseconds( 10 ).Ticks )
             },
             {
                 new IdentifierGeneratorParams { BaseTimestamp = new Timestamp( Duration.FromMilliseconds( 10 ).Ticks ) },
-                new Identifier( 0, 0 ),
-                new Timestamp( Duration.FromMilliseconds( 10 ).Ticks )
+                new Identifier( 1, 0 ), new Timestamp( Duration.FromMilliseconds( 11 ).Ticks )
             },
             {
                 new IdentifierGeneratorParams { BaseTimestamp = new Timestamp( Duration.FromMilliseconds( 10 ).Ticks ) },
-                new Identifier( 1, 0 ),
-                new Timestamp( Duration.FromMilliseconds( 11 ).Ticks )
+                new Identifier( 10, 0 ), new Timestamp( Duration.FromMilliseconds( 20 ).Ticks )
             },
+            { new IdentifierGeneratorParams { TimeEpsilon = Duration.FromMilliseconds( 2 ) }, new Identifier( 0, 0 ), Timestamp.Zero },
             {
-                new IdentifierGeneratorParams { BaseTimestamp = new Timestamp( Duration.FromMilliseconds( 10 ).Ticks ) },
-                new Identifier( 10, 0 ),
-                new Timestamp( Duration.FromMilliseconds( 20 ).Ticks )
-            },
-            {
-                new IdentifierGeneratorParams { TimeEpsilon = Duration.FromMilliseconds( 2 ) },
-                new Identifier( 0, 0 ),
-                Timestamp.Zero
-            },
-            {
-                new IdentifierGeneratorParams { TimeEpsilon = Duration.FromMilliseconds( 2 ) },
-                new Identifier( 1, 0 ),
+                new IdentifierGeneratorParams { TimeEpsilon = Duration.FromMilliseconds( 2 ) }, new Identifier( 1, 0 ),
                 new Timestamp( Duration.FromMilliseconds( 2 ).Ticks )
             },
             {
-                new IdentifierGeneratorParams { TimeEpsilon = Duration.FromMilliseconds( 2 ) },
-                new Identifier( 10, 0 ),
+                new IdentifierGeneratorParams { TimeEpsilon = Duration.FromMilliseconds( 2 ) }, new Identifier( 10, 0 ),
                 new Timestamp( Duration.FromMilliseconds( 20 ).Ticks )
             },
             {
@@ -964,8 +773,7 @@ public class IdentifierGeneratorTestsData
                     BaseTimestamp = new Timestamp( Duration.FromMilliseconds( 20 ).Ticks ),
                     TimeEpsilon = Duration.FromMilliseconds( 2 )
                 },
-                new Identifier( 0, 0 ),
-                new Timestamp( Duration.FromMilliseconds( 20 ).Ticks )
+                new Identifier( 0, 0 ), new Timestamp( Duration.FromMilliseconds( 20 ).Ticks )
             },
             {
                 new IdentifierGeneratorParams
@@ -973,8 +781,7 @@ public class IdentifierGeneratorTestsData
                     BaseTimestamp = new Timestamp( Duration.FromMilliseconds( 20 ).Ticks ),
                     TimeEpsilon = Duration.FromMilliseconds( 2 )
                 },
-                new Identifier( 1, 0 ),
-                new Timestamp( Duration.FromMilliseconds( 22 ).Ticks )
+                new Identifier( 1, 0 ), new Timestamp( Duration.FromMilliseconds( 22 ).Ticks )
             },
             {
                 new IdentifierGeneratorParams
@@ -982,22 +789,17 @@ public class IdentifierGeneratorTestsData
                     BaseTimestamp = new Timestamp( Duration.FromMilliseconds( 20 ).Ticks ),
                     TimeEpsilon = Duration.FromMilliseconds( 2 )
                 },
-                new Identifier( 10, 0 ),
-                new Timestamp( Duration.FromMilliseconds( 40 ).Ticks )
+                new Identifier( 10, 0 ), new Timestamp( Duration.FromMilliseconds( 40 ).Ticks )
             },
             {
-                new IdentifierGeneratorParams { TimeEpsilon = Duration.FromMilliseconds( 0.5 ) },
-                new Identifier( 0, 0 ),
-                Timestamp.Zero
+                new IdentifierGeneratorParams { TimeEpsilon = Duration.FromMilliseconds( 0.5 ) }, new Identifier( 0, 0 ), Timestamp.Zero
             },
             {
-                new IdentifierGeneratorParams { TimeEpsilon = Duration.FromMilliseconds( 0.5 ) },
-                new Identifier( 1, 0 ),
+                new IdentifierGeneratorParams { TimeEpsilon = Duration.FromMilliseconds( 0.5 ) }, new Identifier( 1, 0 ),
                 new Timestamp( Duration.FromMilliseconds( 0.5 ).Ticks )
             },
             {
-                new IdentifierGeneratorParams { TimeEpsilon = Duration.FromMilliseconds( 0.5 ) },
-                new Identifier( 10, 0 ),
+                new IdentifierGeneratorParams { TimeEpsilon = Duration.FromMilliseconds( 0.5 ) }, new Identifier( 10, 0 ),
                 new Timestamp( Duration.FromMilliseconds( 5 ).Ticks )
             },
             {
@@ -1006,8 +808,7 @@ public class IdentifierGeneratorTestsData
                     BaseTimestamp = new Timestamp( Duration.FromMilliseconds( 5 ).Ticks ),
                     TimeEpsilon = Duration.FromMilliseconds( 0.5 )
                 },
-                new Identifier( 0, 0 ),
-                new Timestamp( Duration.FromMilliseconds( 5 ).Ticks )
+                new Identifier( 0, 0 ), new Timestamp( Duration.FromMilliseconds( 5 ).Ticks )
             },
             {
                 new IdentifierGeneratorParams
@@ -1015,8 +816,7 @@ public class IdentifierGeneratorTestsData
                     BaseTimestamp = new Timestamp( Duration.FromMilliseconds( 5 ).Ticks ),
                     TimeEpsilon = Duration.FromMilliseconds( 0.5 )
                 },
-                new Identifier( 1, 0 ),
-                new Timestamp( Duration.FromMilliseconds( 5.5 ).Ticks )
+                new Identifier( 1, 0 ), new Timestamp( Duration.FromMilliseconds( 5.5 ).Ticks )
             },
             {
                 new IdentifierGeneratorParams
@@ -1024,8 +824,7 @@ public class IdentifierGeneratorTestsData
                     BaseTimestamp = new Timestamp( Duration.FromMilliseconds( 5 ).Ticks ),
                     TimeEpsilon = Duration.FromMilliseconds( 0.5 )
                 },
-                new Identifier( 10, 0 ),
-                new Timestamp( Duration.FromMilliseconds( 10 ).Ticks )
+                new Identifier( 10, 0 ), new Timestamp( Duration.FromMilliseconds( 10 ).Ticks )
             }
         };
     }
@@ -1034,130 +833,67 @@ public class IdentifierGeneratorTestsData
     {
         return new TheoryData<IdentifierGeneratorParams, Duration, ulong>
         {
+            { new IdentifierGeneratorParams(), Duration.FromTicks( -1 ), 0 },
+            { new IdentifierGeneratorParams(), Duration.Zero, 0 },
+            { new IdentifierGeneratorParams(), Duration.FromMilliseconds( 1 ), 65536 },
+            { new IdentifierGeneratorParams(), Duration.FromMilliseconds( 2 ), 131072 },
+            { new IdentifierGeneratorParams(), Duration.FromMilliseconds( 0.5 ), 32768 },
+            { new IdentifierGeneratorParams(), Duration.FromMilliseconds( 1.5 ), 98304 },
+            { new IdentifierGeneratorParams { LowValueBounds = new Bounds<ushort>( 100, 200 ) }, Duration.FromMilliseconds( 1 ), 101 },
+            { new IdentifierGeneratorParams { LowValueBounds = new Bounds<ushort>( 100, 200 ) }, Duration.FromMilliseconds( 2 ), 202 },
+            { new IdentifierGeneratorParams { LowValueBounds = new Bounds<ushort>( 100, 200 ) }, Duration.FromMilliseconds( 0.5 ), 50 },
             {
-                new IdentifierGeneratorParams(),
-                Duration.FromTicks( -1 ),
-                0
+                new IdentifierGeneratorParams { LowValueBounds = new Bounds<ushort>( 100, 200 ) }, Duration.FromMilliseconds( 1.5 ), 151
+            },
+            { new IdentifierGeneratorParams { TimeEpsilon = Duration.FromMilliseconds( 2 ) }, Duration.FromMilliseconds( 2 ), 65536 },
+            { new IdentifierGeneratorParams { TimeEpsilon = Duration.FromMilliseconds( 2 ) }, Duration.FromMilliseconds( 4 ), 131072 },
+            { new IdentifierGeneratorParams { TimeEpsilon = Duration.FromMilliseconds( 2 ) }, Duration.FromMilliseconds( 1 ), 32768 },
+            { new IdentifierGeneratorParams { TimeEpsilon = Duration.FromMilliseconds( 2 ) }, Duration.FromMilliseconds( 3 ), 98304 },
+            {
+                new IdentifierGeneratorParams
+                {
+                    LowValueBounds = new Bounds<ushort>( 100, 200 ),
+                    TimeEpsilon = Duration.FromMilliseconds( 2 )
+                },
+                Duration.FromMilliseconds( 2 ), 101
             },
             {
-                new IdentifierGeneratorParams(),
-                Duration.Zero,
-                0
+                new IdentifierGeneratorParams
+                {
+                    LowValueBounds = new Bounds<ushort>( 100, 200 ),
+                    TimeEpsilon = Duration.FromMilliseconds( 2 )
+                },
+                Duration.FromMilliseconds( 4 ), 202
             },
             {
-                new IdentifierGeneratorParams(),
-                Duration.FromMilliseconds( 1 ),
+                new IdentifierGeneratorParams
+                {
+                    LowValueBounds = new Bounds<ushort>( 100, 200 ),
+                    TimeEpsilon = Duration.FromMilliseconds( 2 )
+                },
+                Duration.FromMilliseconds( 1 ), 50
+            },
+            {
+                new IdentifierGeneratorParams
+                {
+                    LowValueBounds = new Bounds<ushort>( 100, 200 ),
+                    TimeEpsilon = Duration.FromMilliseconds( 2 )
+                },
+                Duration.FromMilliseconds( 3 ), 151
+            },
+            {
+                new IdentifierGeneratorParams { TimeEpsilon = Duration.FromMilliseconds( 0.5 ) }, Duration.FromMilliseconds( 0.5 ),
                 65536
             },
             {
-                new IdentifierGeneratorParams(),
-                Duration.FromMilliseconds( 2 ),
-                131072
+                new IdentifierGeneratorParams { TimeEpsilon = Duration.FromMilliseconds( 0.5 ) }, Duration.FromMilliseconds( 1 ), 131072
             },
             {
-                new IdentifierGeneratorParams(),
-                Duration.FromMilliseconds( 0.5 ),
+                new IdentifierGeneratorParams { TimeEpsilon = Duration.FromMilliseconds( 0.5 ) }, Duration.FromMilliseconds( 0.25 ),
                 32768
             },
             {
-                new IdentifierGeneratorParams(),
-                Duration.FromMilliseconds( 1.5 ),
-                98304
-            },
-            {
-                new IdentifierGeneratorParams { LowValueBounds = new Bounds<ushort>( 100, 200 ) },
-                Duration.FromMilliseconds( 1 ),
-                101
-            },
-            {
-                new IdentifierGeneratorParams { LowValueBounds = new Bounds<ushort>( 100, 200 ) },
-                Duration.FromMilliseconds( 2 ),
-                202
-            },
-            {
-                new IdentifierGeneratorParams { LowValueBounds = new Bounds<ushort>( 100, 200 ) },
-                Duration.FromMilliseconds( 0.5 ),
-                50
-            },
-            {
-                new IdentifierGeneratorParams { LowValueBounds = new Bounds<ushort>( 100, 200 ) },
-                Duration.FromMilliseconds( 1.5 ),
-                151
-            },
-            {
-                new IdentifierGeneratorParams { TimeEpsilon = Duration.FromMilliseconds( 2 ) },
-                Duration.FromMilliseconds( 2 ),
-                65536
-            },
-            {
-                new IdentifierGeneratorParams { TimeEpsilon = Duration.FromMilliseconds( 2 ) },
-                Duration.FromMilliseconds( 4 ),
-                131072
-            },
-            {
-                new IdentifierGeneratorParams { TimeEpsilon = Duration.FromMilliseconds( 2 ) },
-                Duration.FromMilliseconds( 1 ),
-                32768
-            },
-            {
-                new IdentifierGeneratorParams { TimeEpsilon = Duration.FromMilliseconds( 2 ) },
-                Duration.FromMilliseconds( 3 ),
-                98304
-            },
-            {
-                new IdentifierGeneratorParams
-                {
-                    LowValueBounds = new Bounds<ushort>( 100, 200 ),
-                    TimeEpsilon = Duration.FromMilliseconds( 2 )
-                },
-                Duration.FromMilliseconds( 2 ),
-                101
-            },
-            {
-                new IdentifierGeneratorParams
-                {
-                    LowValueBounds = new Bounds<ushort>( 100, 200 ),
-                    TimeEpsilon = Duration.FromMilliseconds( 2 )
-                },
-                Duration.FromMilliseconds( 4 ),
-                202
-            },
-            {
-                new IdentifierGeneratorParams
-                {
-                    LowValueBounds = new Bounds<ushort>( 100, 200 ),
-                    TimeEpsilon = Duration.FromMilliseconds( 2 )
-                },
-                Duration.FromMilliseconds( 1 ),
-                50
-            },
-            {
-                new IdentifierGeneratorParams
-                {
-                    LowValueBounds = new Bounds<ushort>( 100, 200 ),
-                    TimeEpsilon = Duration.FromMilliseconds( 2 )
-                },
-                Duration.FromMilliseconds( 3 ),
-                151
-            },
-            {
-                new IdentifierGeneratorParams { TimeEpsilon = Duration.FromMilliseconds( 0.5 ) },
-                Duration.FromMilliseconds( 0.5 ),
-                65536
-            },
-            {
-                new IdentifierGeneratorParams { TimeEpsilon = Duration.FromMilliseconds( 0.5 ) },
-                Duration.FromMilliseconds( 1 ),
-                131072
-            },
-            {
-                new IdentifierGeneratorParams { TimeEpsilon = Duration.FromMilliseconds( 0.5 ) },
-                Duration.FromMilliseconds( 0.25 ),
-                32768
-            },
-            {
-                new IdentifierGeneratorParams { TimeEpsilon = Duration.FromMilliseconds( 0.5 ) },
-                Duration.FromMilliseconds( 0.75 ),
+                new IdentifierGeneratorParams { TimeEpsilon = Duration.FromMilliseconds( 0.5 ) }, Duration.FromMilliseconds( 0.75 ),
                 98304
             },
             {
@@ -1166,8 +902,7 @@ public class IdentifierGeneratorTestsData
                     LowValueBounds = new Bounds<ushort>( 100, 200 ),
                     TimeEpsilon = Duration.FromMilliseconds( 0.5 )
                 },
-                Duration.FromMilliseconds( 0.5 ),
-                101
+                Duration.FromMilliseconds( 0.5 ), 101
             },
             {
                 new IdentifierGeneratorParams
@@ -1175,8 +910,7 @@ public class IdentifierGeneratorTestsData
                     LowValueBounds = new Bounds<ushort>( 100, 200 ),
                     TimeEpsilon = Duration.FromMilliseconds( 0.5 )
                 },
-                Duration.FromMilliseconds( 1 ),
-                202
+                Duration.FromMilliseconds( 1 ), 202
             },
             {
                 new IdentifierGeneratorParams
@@ -1184,8 +918,7 @@ public class IdentifierGeneratorTestsData
                     LowValueBounds = new Bounds<ushort>( 100, 200 ),
                     TimeEpsilon = Duration.FromMilliseconds( 0.5 )
                 },
-                Duration.FromMilliseconds( 0.25 ),
-                50
+                Duration.FromMilliseconds( 0.25 ), 50
             },
             {
                 new IdentifierGeneratorParams
@@ -1193,8 +926,7 @@ public class IdentifierGeneratorTestsData
                     LowValueBounds = new Bounds<ushort>( 100, 200 ),
                     TimeEpsilon = Duration.FromMilliseconds( 0.5 )
                 },
-                Duration.FromMilliseconds( 0.75 ),
-                151
+                Duration.FromMilliseconds( 0.75 ), 151
             }
         };
     }
@@ -1210,8 +942,7 @@ public class IdentifierGeneratorTestsData
                     LowValueOverflowStrategy = LowValueOverflowStrategy.AddHighValue,
                     LowValueBounds = new Bounds<ushort>( 0, 3 )
                 },
-                new Timestamp( Duration.FromMilliseconds( 5 ).Ticks ),
-                new Identifier( 1, 0 ),
+                new Timestamp( Duration.FromMilliseconds( 5 ).Ticks ), new Identifier( 1, 0 ),
                 new Timestamp( Duration.FromMilliseconds( 1 ).Ticks )
             },
             {
@@ -1220,8 +951,7 @@ public class IdentifierGeneratorTestsData
                     LowValueOverflowStrategy = LowValueOverflowStrategy.SpinWait,
                     LowValueBounds = new Bounds<ushort>( 0, 3 )
                 },
-                new Timestamp( Duration.FromMilliseconds( 5 ).Ticks ),
-                new Identifier( 5, 0 ),
+                new Timestamp( Duration.FromMilliseconds( 5 ).Ticks ), new Identifier( 5, 0 ),
                 new Timestamp( Duration.FromMilliseconds( 5 ).Ticks )
             },
             {
@@ -1230,8 +960,7 @@ public class IdentifierGeneratorTestsData
                     LowValueOverflowStrategy = LowValueOverflowStrategy.Sleep,
                     LowValueBounds = new Bounds<ushort>( 0, 3 )
                 },
-                new Timestamp( Duration.FromMilliseconds( 5 ).Ticks ),
-                new Identifier( 5, 0 ),
+                new Timestamp( Duration.FromMilliseconds( 5 ).Ticks ), new Identifier( 5, 0 ),
                 new Timestamp( Duration.FromMilliseconds( 5 ).Ticks )
             }
         };
@@ -1266,30 +995,16 @@ public class IdentifierGeneratorTestsData
     {
         return new TheoryData<IdentifierGeneratorParams, Timestamp, ulong>
         {
-            {
-                new IdentifierGeneratorParams(),
-                Timestamp.Zero,
-                253402300800000
-            },
-            {
-                new IdentifierGeneratorParams(),
-                new Timestamp( Duration.FromMilliseconds( 15 ).Ticks ),
-                253402300799985
-            },
+            { new IdentifierGeneratorParams(), Timestamp.Zero, 253402300800000 },
+            { new IdentifierGeneratorParams(), new Timestamp( Duration.FromMilliseconds( 15 ).Ticks ), 253402300799985 },
             {
                 new IdentifierGeneratorParams { BaseTimestamp = new Timestamp( Duration.FromMilliseconds( 5 ).Ticks ) },
-                new Timestamp( Duration.FromMilliseconds( 15 ).Ticks ),
-                253402300799985
+                new Timestamp( Duration.FromMilliseconds( 15 ).Ticks ), 253402300799985
             },
+            { new IdentifierGeneratorParams { TimeEpsilon = Duration.FromMilliseconds( 2 ) }, Timestamp.Zero, 126701150400000 },
             {
                 new IdentifierGeneratorParams { TimeEpsilon = Duration.FromMilliseconds( 2 ) },
-                Timestamp.Zero,
-                126701150400000
-            },
-            {
-                new IdentifierGeneratorParams { TimeEpsilon = Duration.FromMilliseconds( 2 ) },
-                new Timestamp( Duration.FromMilliseconds( 30 ).Ticks ),
-                126701150399985
+                new Timestamp( Duration.FromMilliseconds( 30 ).Ticks ), 126701150399985
             },
             {
                 new IdentifierGeneratorParams
@@ -1297,18 +1012,12 @@ public class IdentifierGeneratorTestsData
                     BaseTimestamp = new Timestamp( Duration.FromMilliseconds( 10 ).Ticks ),
                     TimeEpsilon = Duration.FromMilliseconds( 2 )
                 },
-                new Timestamp( Duration.FromMilliseconds( 30 ).Ticks ),
-                126701150399985
+                new Timestamp( Duration.FromMilliseconds( 30 ).Ticks ), 126701150399985
             },
+            { new IdentifierGeneratorParams { TimeEpsilon = Duration.FromMilliseconds( 0.5 ) }, Timestamp.Zero, 281474976710655 },
             {
                 new IdentifierGeneratorParams { TimeEpsilon = Duration.FromMilliseconds( 0.5 ) },
-                Timestamp.Zero,
-                281474976710655
-            },
-            {
-                new IdentifierGeneratorParams { TimeEpsilon = Duration.FromMilliseconds( 0.5 ) },
-                new Timestamp( Duration.FromMilliseconds( 7.5 ).Ticks ),
-                281474976710640
+                new Timestamp( Duration.FromMilliseconds( 7.5 ).Ticks ), 281474976710640
             },
             {
                 new IdentifierGeneratorParams
@@ -1316,8 +1025,7 @@ public class IdentifierGeneratorTestsData
                     BaseTimestamp = new Timestamp( Duration.FromMilliseconds( 2.5 ).Ticks ),
                     TimeEpsilon = Duration.FromMilliseconds( 0.5 )
                 },
-                new Timestamp( Duration.FromMilliseconds( 7.5 ).Ticks ),
-                281474976710645
+                new Timestamp( Duration.FromMilliseconds( 7.5 ).Ticks ), 281474976710645
             }
         };
     }
@@ -1327,17 +1035,10 @@ public class IdentifierGeneratorTestsData
     {
         return new TheoryData<IdentifierGeneratorParams, Timestamp, int, ulong>
         {
+            { new IdentifierGeneratorParams { LowValueBounds = new Bounds<ushort>( 10, 20 ) }, Timestamp.Zero, 10, 253402300800000 },
             {
                 new IdentifierGeneratorParams { LowValueBounds = new Bounds<ushort>( 10, 20 ) },
-                Timestamp.Zero,
-                10,
-                253402300800000
-            },
-            {
-                new IdentifierGeneratorParams { LowValueBounds = new Bounds<ushort>( 10, 20 ) },
-                new Timestamp( Duration.FromMilliseconds( 15 ).Ticks ),
-                10,
-                253402300799985
+                new Timestamp( Duration.FromMilliseconds( 15 ).Ticks ), 10, 253402300799985
             },
             {
                 new IdentifierGeneratorParams
@@ -1345,21 +1046,12 @@ public class IdentifierGeneratorTestsData
                     BaseTimestamp = new Timestamp( Duration.FromMilliseconds( 5 ).Ticks ),
                     LowValueBounds = new Bounds<ushort>( 10, 20 )
                 },
-                new Timestamp( Duration.FromMilliseconds( 15 ).Ticks ),
-                10,
-                253402300799985
+                new Timestamp( Duration.FromMilliseconds( 15 ).Ticks ), 10, 253402300799985
             },
+            { new IdentifierGeneratorParams { LowValueBounds = new Bounds<ushort>( 10, 20 ) }, Timestamp.Zero, 11, 253402300799999 },
             {
                 new IdentifierGeneratorParams { LowValueBounds = new Bounds<ushort>( 10, 20 ) },
-                Timestamp.Zero,
-                11,
-                253402300799999
-            },
-            {
-                new IdentifierGeneratorParams { LowValueBounds = new Bounds<ushort>( 10, 20 ) },
-                new Timestamp( Duration.FromMilliseconds( 15 ).Ticks ),
-                11,
-                253402300799984
+                new Timestamp( Duration.FromMilliseconds( 15 ).Ticks ), 11, 253402300799984
             },
             {
                 new IdentifierGeneratorParams
@@ -1367,9 +1059,7 @@ public class IdentifierGeneratorTestsData
                     BaseTimestamp = new Timestamp( Duration.FromMilliseconds( 5 ).Ticks ),
                     LowValueBounds = new Bounds<ushort>( 10, 20 )
                 },
-                new Timestamp( Duration.FromMilliseconds( 15 ).Ticks ),
-                11,
-                253402300799984
+                new Timestamp( Duration.FromMilliseconds( 15 ).Ticks ), 11, 253402300799984
             }
         };
     }
@@ -1378,20 +1068,14 @@ public class IdentifierGeneratorTestsData
     {
         return new TheoryData<IdentifierGeneratorParams, Timestamp, ulong>
         {
-            {
-                new IdentifierGeneratorParams(),
-                new Timestamp( Duration.FromMilliseconds( 15 ).Ticks ),
-                253402300799985
-            },
+            { new IdentifierGeneratorParams(), new Timestamp( Duration.FromMilliseconds( 15 ).Ticks ), 253402300799985 },
             {
                 new IdentifierGeneratorParams { BaseTimestamp = new Timestamp( Duration.FromMilliseconds( 5 ).Ticks ) },
-                new Timestamp( Duration.FromMilliseconds( 15 ).Ticks ),
-                253402300799985
+                new Timestamp( Duration.FromMilliseconds( 15 ).Ticks ), 253402300799985
             },
             {
                 new IdentifierGeneratorParams { TimeEpsilon = Duration.FromMilliseconds( 2 ) },
-                new Timestamp( Duration.FromMilliseconds( 30 ).Ticks ),
-                126701150399985
+                new Timestamp( Duration.FromMilliseconds( 30 ).Ticks ), 126701150399985
             },
             {
                 new IdentifierGeneratorParams
@@ -1399,13 +1083,11 @@ public class IdentifierGeneratorTestsData
                     BaseTimestamp = new Timestamp( Duration.FromMilliseconds( 10 ).Ticks ),
                     TimeEpsilon = Duration.FromMilliseconds( 2 )
                 },
-                new Timestamp( Duration.FromMilliseconds( 30 ).Ticks ),
-                126701150399985
+                new Timestamp( Duration.FromMilliseconds( 30 ).Ticks ), 126701150399985
             },
             {
                 new IdentifierGeneratorParams { TimeEpsilon = Duration.FromMilliseconds( 0.5 ) },
-                new Timestamp( Duration.FromMilliseconds( 7.5 ).Ticks ),
-                281474976710640
+                new Timestamp( Duration.FromMilliseconds( 7.5 ).Ticks ), 281474976710640
             },
             {
                 new IdentifierGeneratorParams
@@ -1413,8 +1095,7 @@ public class IdentifierGeneratorTestsData
                     BaseTimestamp = new Timestamp( Duration.FromMilliseconds( 2.5 ).Ticks ),
                     TimeEpsilon = Duration.FromMilliseconds( 0.5 )
                 },
-                new Timestamp( Duration.FromMilliseconds( 7.5 ).Ticks ),
-                281474976710645
+                new Timestamp( Duration.FromMilliseconds( 7.5 ).Ticks ), 281474976710645
             }
         };
     }
@@ -1424,30 +1105,16 @@ public class IdentifierGeneratorTestsData
     {
         return new TheoryData<IdentifierGeneratorParams, Timestamp, ulong>
         {
-            {
-                new IdentifierGeneratorParams(),
-                Timestamp.Zero,
-                16606973185228800000
-            },
-            {
-                new IdentifierGeneratorParams(),
-                new Timestamp( Duration.FromMilliseconds( 15 ).Ticks ),
-                16606973185227816960
-            },
+            { new IdentifierGeneratorParams(), Timestamp.Zero, 16606973185228800000 },
+            { new IdentifierGeneratorParams(), new Timestamp( Duration.FromMilliseconds( 15 ).Ticks ), 16606973185227816960 },
             {
                 new IdentifierGeneratorParams { BaseTimestamp = new Timestamp( Duration.FromMilliseconds( 5 ).Ticks ) },
-                new Timestamp( Duration.FromMilliseconds( 15 ).Ticks ),
-                16606973185227816960
+                new Timestamp( Duration.FromMilliseconds( 15 ).Ticks ), 16606973185227816960
             },
+            { new IdentifierGeneratorParams { TimeEpsilon = Duration.FromMilliseconds( 2 ) }, Timestamp.Zero, 8303486592614400000 },
             {
                 new IdentifierGeneratorParams { TimeEpsilon = Duration.FromMilliseconds( 2 ) },
-                Timestamp.Zero,
-                8303486592614400000
-            },
-            {
-                new IdentifierGeneratorParams { TimeEpsilon = Duration.FromMilliseconds( 2 ) },
-                new Timestamp( Duration.FromMilliseconds( 30 ).Ticks ),
-                8303486592613416960
+                new Timestamp( Duration.FromMilliseconds( 30 ).Ticks ), 8303486592613416960
             },
             {
                 new IdentifierGeneratorParams
@@ -1455,18 +1122,12 @@ public class IdentifierGeneratorTestsData
                     BaseTimestamp = new Timestamp( Duration.FromMilliseconds( 10 ).Ticks ),
                     TimeEpsilon = Duration.FromMilliseconds( 2 )
                 },
-                new Timestamp( Duration.FromMilliseconds( 30 ).Ticks ),
-                8303486592613416960
+                new Timestamp( Duration.FromMilliseconds( 30 ).Ticks ), 8303486592613416960
             },
+            { new IdentifierGeneratorParams { TimeEpsilon = Duration.FromMilliseconds( 0.5 ) }, Timestamp.Zero, 18446744073709486080 },
             {
                 new IdentifierGeneratorParams { TimeEpsilon = Duration.FromMilliseconds( 0.5 ) },
-                Timestamp.Zero,
-                18446744073709486080
-            },
-            {
-                new IdentifierGeneratorParams { TimeEpsilon = Duration.FromMilliseconds( 0.5 ) },
-                new Timestamp( Duration.FromMilliseconds( 7.5 ).Ticks ),
-                18446744073708503040
+                new Timestamp( Duration.FromMilliseconds( 7.5 ).Ticks ), 18446744073708503040
             },
             {
                 new IdentifierGeneratorParams
@@ -1474,18 +1135,12 @@ public class IdentifierGeneratorTestsData
                     BaseTimestamp = new Timestamp( Duration.FromMilliseconds( 2.5 ).Ticks ),
                     TimeEpsilon = Duration.FromMilliseconds( 0.5 )
                 },
-                new Timestamp( Duration.FromMilliseconds( 7.5 ).Ticks ),
-                18446744073708830720
+                new Timestamp( Duration.FromMilliseconds( 7.5 ).Ticks ), 18446744073708830720
             },
+            { new IdentifierGeneratorParams { LowValueBounds = new Bounds<ushort>( 10, 20 ) }, Timestamp.Zero, 2787425308800000 },
             {
                 new IdentifierGeneratorParams { LowValueBounds = new Bounds<ushort>( 10, 20 ) },
-                Timestamp.Zero,
-                2787425308800000
-            },
-            {
-                new IdentifierGeneratorParams { LowValueBounds = new Bounds<ushort>( 10, 20 ) },
-                new Timestamp( Duration.FromMilliseconds( 15 ).Ticks ),
-                2787425308799835
+                new Timestamp( Duration.FromMilliseconds( 15 ).Ticks ), 2787425308799835
             },
             {
                 new IdentifierGeneratorParams
@@ -1493,8 +1148,7 @@ public class IdentifierGeneratorTestsData
                     BaseTimestamp = new Timestamp( Duration.FromMilliseconds( 5 ).Ticks ),
                     LowValueBounds = new Bounds<ushort>( 10, 20 )
                 },
-                new Timestamp( Duration.FromMilliseconds( 15 ).Ticks ),
-                2787425308799835
+                new Timestamp( Duration.FromMilliseconds( 15 ).Ticks ), 2787425308799835
             },
             {
                 new IdentifierGeneratorParams
@@ -1502,8 +1156,7 @@ public class IdentifierGeneratorTestsData
                     TimeEpsilon = Duration.FromMilliseconds( 2 ),
                     LowValueBounds = new Bounds<ushort>( 10, 20 )
                 },
-                Timestamp.Zero,
-                1393712654400000
+                Timestamp.Zero, 1393712654400000
             },
             {
                 new IdentifierGeneratorParams
@@ -1511,8 +1164,7 @@ public class IdentifierGeneratorTestsData
                     TimeEpsilon = Duration.FromMilliseconds( 2 ),
                     LowValueBounds = new Bounds<ushort>( 10, 20 )
                 },
-                new Timestamp( Duration.FromMilliseconds( 30 ).Ticks ),
-                1393712654399835
+                new Timestamp( Duration.FromMilliseconds( 30 ).Ticks ), 1393712654399835
             },
             {
                 new IdentifierGeneratorParams
@@ -1521,8 +1173,7 @@ public class IdentifierGeneratorTestsData
                     TimeEpsilon = Duration.FromMilliseconds( 2 ),
                     LowValueBounds = new Bounds<ushort>( 10, 20 )
                 },
-                new Timestamp( Duration.FromMilliseconds( 30 ).Ticks ),
-                1393712654399835
+                new Timestamp( Duration.FromMilliseconds( 30 ).Ticks ), 1393712654399835
             },
             {
                 new IdentifierGeneratorParams
@@ -1530,8 +1181,7 @@ public class IdentifierGeneratorTestsData
                     TimeEpsilon = Duration.FromMilliseconds( 0.5 ),
                     LowValueBounds = new Bounds<ushort>( 10, 20 )
                 },
-                Timestamp.Zero,
-                3096224743817205
+                Timestamp.Zero, 3096224743817205
             },
             {
                 new IdentifierGeneratorParams
@@ -1539,8 +1189,7 @@ public class IdentifierGeneratorTestsData
                     TimeEpsilon = Duration.FromMilliseconds( 0.5 ),
                     LowValueBounds = new Bounds<ushort>( 10, 20 )
                 },
-                new Timestamp( Duration.FromMilliseconds( 7.5 ).Ticks ),
-                3096224743817040
+                new Timestamp( Duration.FromMilliseconds( 7.5 ).Ticks ), 3096224743817040
             },
             {
                 new IdentifierGeneratorParams
@@ -1549,8 +1198,7 @@ public class IdentifierGeneratorTestsData
                     TimeEpsilon = Duration.FromMilliseconds( 0.5 ),
                     LowValueBounds = new Bounds<ushort>( 10, 20 )
                 },
-                new Timestamp( Duration.FromMilliseconds( 7.5 ).Ticks ),
-                3096224743817095
+                new Timestamp( Duration.FromMilliseconds( 7.5 ).Ticks ), 3096224743817095
             }
         };
     }
@@ -1560,53 +1208,22 @@ public class IdentifierGeneratorTestsData
     {
         return new TheoryData<IdentifierGeneratorParams, Timestamp, int, ulong>
         {
-            {
-                new IdentifierGeneratorParams(),
-                Timestamp.Zero,
-                10,
-                16606973185228799990
-            },
-            {
-                new IdentifierGeneratorParams(),
-                new Timestamp( Duration.FromMilliseconds( 15 ).Ticks ),
-                10,
-                16606973185227816950
-            },
+            { new IdentifierGeneratorParams(), Timestamp.Zero, 10, 16606973185228799990 },
+            { new IdentifierGeneratorParams(), new Timestamp( Duration.FromMilliseconds( 15 ).Ticks ), 10, 16606973185227816950 },
             {
                 new IdentifierGeneratorParams { BaseTimestamp = new Timestamp( Duration.FromMilliseconds( 5 ).Ticks ) },
-                new Timestamp( Duration.FromMilliseconds( 15 ).Ticks ),
-                10,
-                16606973185227816950
+                new Timestamp( Duration.FromMilliseconds( 15 ).Ticks ), 10, 16606973185227816950
             },
-            {
-                new IdentifierGeneratorParams(),
-                Timestamp.Zero,
-                11,
-                16606973185228799989
-            },
-            {
-                new IdentifierGeneratorParams(),
-                new Timestamp( Duration.FromMilliseconds( 15 ).Ticks ),
-                11,
-                16606973185227816949
-            },
+            { new IdentifierGeneratorParams(), Timestamp.Zero, 11, 16606973185228799989 },
+            { new IdentifierGeneratorParams(), new Timestamp( Duration.FromMilliseconds( 15 ).Ticks ), 11, 16606973185227816949 },
             {
                 new IdentifierGeneratorParams { BaseTimestamp = new Timestamp( Duration.FromMilliseconds( 5 ).Ticks ) },
-                new Timestamp( Duration.FromMilliseconds( 15 ).Ticks ),
-                11,
-                16606973185227816949
+                new Timestamp( Duration.FromMilliseconds( 15 ).Ticks ), 11, 16606973185227816949
             },
+            { new IdentifierGeneratorParams { LowValueBounds = new Bounds<ushort>( 10, 20 ) }, Timestamp.Zero, 10, 2787425308799990 },
             {
                 new IdentifierGeneratorParams { LowValueBounds = new Bounds<ushort>( 10, 20 ) },
-                Timestamp.Zero,
-                10,
-                2787425308799990
-            },
-            {
-                new IdentifierGeneratorParams { LowValueBounds = new Bounds<ushort>( 10, 20 ) },
-                new Timestamp( Duration.FromMilliseconds( 15 ).Ticks ),
-                10,
-                2787425308799825
+                new Timestamp( Duration.FromMilliseconds( 15 ).Ticks ), 10, 2787425308799825
             },
             {
                 new IdentifierGeneratorParams
@@ -1614,21 +1231,12 @@ public class IdentifierGeneratorTestsData
                     BaseTimestamp = new Timestamp( Duration.FromMilliseconds( 5 ).Ticks ),
                     LowValueBounds = new Bounds<ushort>( 10, 20 )
                 },
-                new Timestamp( Duration.FromMilliseconds( 15 ).Ticks ),
-                10,
-                2787425308799825
+                new Timestamp( Duration.FromMilliseconds( 15 ).Ticks ), 10, 2787425308799825
             },
+            { new IdentifierGeneratorParams { LowValueBounds = new Bounds<ushort>( 10, 20 ) }, Timestamp.Zero, 11, 2787425308799989 },
             {
                 new IdentifierGeneratorParams { LowValueBounds = new Bounds<ushort>( 10, 20 ) },
-                Timestamp.Zero,
-                11,
-                2787425308799989
-            },
-            {
-                new IdentifierGeneratorParams { LowValueBounds = new Bounds<ushort>( 10, 20 ) },
-                new Timestamp( Duration.FromMilliseconds( 15 ).Ticks ),
-                11,
-                2787425308799824
+                new Timestamp( Duration.FromMilliseconds( 15 ).Ticks ), 11, 2787425308799824
             },
             {
                 new IdentifierGeneratorParams
@@ -1636,9 +1244,7 @@ public class IdentifierGeneratorTestsData
                     BaseTimestamp = new Timestamp( Duration.FromMilliseconds( 5 ).Ticks ),
                     LowValueBounds = new Bounds<ushort>( 10, 20 )
                 },
-                new Timestamp( Duration.FromMilliseconds( 15 ).Ticks ),
-                11,
-                2787425308799824
+                new Timestamp( Duration.FromMilliseconds( 15 ).Ticks ), 11, 2787425308799824
             }
         };
     }
@@ -1647,20 +1253,14 @@ public class IdentifierGeneratorTestsData
     {
         return new TheoryData<IdentifierGeneratorParams, Timestamp, ulong>
         {
-            {
-                new IdentifierGeneratorParams(),
-                new Timestamp( Duration.FromMilliseconds( 15 ).Ticks ),
-                16606973185227816960
-            },
+            { new IdentifierGeneratorParams(), new Timestamp( Duration.FromMilliseconds( 15 ).Ticks ), 16606973185227816960 },
             {
                 new IdentifierGeneratorParams { BaseTimestamp = new Timestamp( Duration.FromMilliseconds( 5 ).Ticks ) },
-                new Timestamp( Duration.FromMilliseconds( 15 ).Ticks ),
-                16606973185227816960
+                new Timestamp( Duration.FromMilliseconds( 15 ).Ticks ), 16606973185227816960
             },
             {
                 new IdentifierGeneratorParams { TimeEpsilon = Duration.FromMilliseconds( 2 ) },
-                new Timestamp( Duration.FromMilliseconds( 30 ).Ticks ),
-                8303486592613416960
+                new Timestamp( Duration.FromMilliseconds( 30 ).Ticks ), 8303486592613416960
             },
             {
                 new IdentifierGeneratorParams
@@ -1668,13 +1268,11 @@ public class IdentifierGeneratorTestsData
                     BaseTimestamp = new Timestamp( Duration.FromMilliseconds( 10 ).Ticks ),
                     TimeEpsilon = Duration.FromMilliseconds( 2 )
                 },
-                new Timestamp( Duration.FromMilliseconds( 30 ).Ticks ),
-                8303486592613416960
+                new Timestamp( Duration.FromMilliseconds( 30 ).Ticks ), 8303486592613416960
             },
             {
                 new IdentifierGeneratorParams { TimeEpsilon = Duration.FromMilliseconds( 0.5 ) },
-                new Timestamp( Duration.FromMilliseconds( 7.5 ).Ticks ),
-                18446744073708503040
+                new Timestamp( Duration.FromMilliseconds( 7.5 ).Ticks ), 18446744073708503040
             },
             {
                 new IdentifierGeneratorParams
@@ -1682,13 +1280,11 @@ public class IdentifierGeneratorTestsData
                     BaseTimestamp = new Timestamp( Duration.FromMilliseconds( 2.5 ).Ticks ),
                     TimeEpsilon = Duration.FromMilliseconds( 0.5 )
                 },
-                new Timestamp( Duration.FromMilliseconds( 7.5 ).Ticks ),
-                18446744073708830720
+                new Timestamp( Duration.FromMilliseconds( 7.5 ).Ticks ), 18446744073708830720
             },
             {
                 new IdentifierGeneratorParams { LowValueBounds = new Bounds<ushort>( 10, 20 ) },
-                new Timestamp( Duration.FromMilliseconds( 15 ).Ticks ),
-                2787425308799835
+                new Timestamp( Duration.FromMilliseconds( 15 ).Ticks ), 2787425308799835
             },
             {
                 new IdentifierGeneratorParams
@@ -1696,8 +1292,7 @@ public class IdentifierGeneratorTestsData
                     BaseTimestamp = new Timestamp( Duration.FromMilliseconds( 5 ).Ticks ),
                     LowValueBounds = new Bounds<ushort>( 10, 20 )
                 },
-                new Timestamp( Duration.FromMilliseconds( 15 ).Ticks ),
-                2787425308799835
+                new Timestamp( Duration.FromMilliseconds( 15 ).Ticks ), 2787425308799835
             },
             {
                 new IdentifierGeneratorParams
@@ -1705,8 +1300,7 @@ public class IdentifierGeneratorTestsData
                     TimeEpsilon = Duration.FromMilliseconds( 2 ),
                     LowValueBounds = new Bounds<ushort>( 10, 20 )
                 },
-                new Timestamp( Duration.FromMilliseconds( 30 ).Ticks ),
-                1393712654399835
+                new Timestamp( Duration.FromMilliseconds( 30 ).Ticks ), 1393712654399835
             },
             {
                 new IdentifierGeneratorParams
@@ -1715,8 +1309,7 @@ public class IdentifierGeneratorTestsData
                     TimeEpsilon = Duration.FromMilliseconds( 2 ),
                     LowValueBounds = new Bounds<ushort>( 10, 20 )
                 },
-                new Timestamp( Duration.FromMilliseconds( 30 ).Ticks ),
-                1393712654399835
+                new Timestamp( Duration.FromMilliseconds( 30 ).Ticks ), 1393712654399835
             },
             {
                 new IdentifierGeneratorParams
@@ -1724,8 +1317,7 @@ public class IdentifierGeneratorTestsData
                     TimeEpsilon = Duration.FromMilliseconds( 0.5 ),
                     LowValueBounds = new Bounds<ushort>( 10, 20 )
                 },
-                new Timestamp( Duration.FromMilliseconds( 7.5 ).Ticks ),
-                3096224743817040
+                new Timestamp( Duration.FromMilliseconds( 7.5 ).Ticks ), 3096224743817040
             },
             {
                 new IdentifierGeneratorParams
@@ -1734,8 +1326,7 @@ public class IdentifierGeneratorTestsData
                     TimeEpsilon = Duration.FromMilliseconds( 0.5 ),
                     LowValueBounds = new Bounds<ushort>( 10, 20 )
                 },
-                new Timestamp( Duration.FromMilliseconds( 7.5 ).Ticks ),
-                3096224743817095
+                new Timestamp( Duration.FromMilliseconds( 7.5 ).Ticks ), 3096224743817095
             }
         };
     }

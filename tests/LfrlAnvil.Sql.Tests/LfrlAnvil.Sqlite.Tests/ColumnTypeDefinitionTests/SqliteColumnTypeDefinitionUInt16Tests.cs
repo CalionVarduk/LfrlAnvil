@@ -31,7 +31,7 @@ public class SqliteColumnTypeDefinitionUInt16Tests : TestsBase
     public void TryToParameterValue_ShouldReturnCorrectResult()
     {
         var sut = _provider.GetByType<ushort>();
-        var result = sut.TryToParameterValue( (ushort)12345 );
+        var result = sut.TryToParameterValue( ( ushort )12345 );
         result.Should().Be( 12345L );
     }
 

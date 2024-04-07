@@ -103,7 +103,14 @@ public class SqlParameterBinderFactoryTests : TestsBase
         var sut = SqlParameterBinderFactoryMock.CreateInstance();
         var parameterBinder = sut.Create();
 
-        parameterBinder.Bind( command, new Dictionary<string, object?> { { "a", 1 }, { "b", "foo" }, { "c", 5.0 } } );
+        parameterBinder.Bind(
+            command,
+            new Dictionary<string, object?>
+            {
+                { "a", 1 },
+                { "b", "foo" },
+                { "c", 5.0 }
+            } );
 
         using ( new AssertionScope() )
         {
@@ -453,7 +460,15 @@ public class SqlParameterBinderFactoryTests : TestsBase
         var sut = SqlParameterBinderFactoryMock.CreateInstance();
         var parameterBinder = sut.Create<Source>();
 
-        parameterBinder.Bind( command, new Source { A = 10, B = "foo", C = 5.0, D = true } );
+        parameterBinder.Bind(
+            command,
+            new Source
+            {
+                A = 10,
+                B = "foo",
+                C = 5.0,
+                D = true
+            } );
 
         using ( new AssertionScope() )
         {
@@ -488,7 +503,13 @@ public class SqlParameterBinderFactoryTests : TestsBase
         var command = new DbCommandMock();
         var sut = SqlParameterBinderFactoryMock.CreateInstance();
         var parameterBinder = sut.Create<SourceWithFields>();
-        parameterBinder.Bind( command, new SourceWithFields { A = 10, B = "foo" } );
+        parameterBinder.Bind(
+            command,
+            new SourceWithFields
+            {
+                A = 10,
+                B = "foo"
+            } );
 
         using ( new AssertionScope() )
         {
@@ -515,7 +536,13 @@ public class SqlParameterBinderFactoryTests : TestsBase
         var parameterBinder = sut.Create<Source>(
             SqlParameterBinderCreationOptions.Default.With( SqlParameterConfiguration.IgnoreMember( "A" ) ) );
 
-        parameterBinder.Bind( command, new Source { A = 10, B = "foo" } );
+        parameterBinder.Bind(
+            command,
+            new Source
+            {
+                A = 10,
+                B = "foo"
+            } );
 
         using ( new AssertionScope() )
         {
@@ -537,7 +564,13 @@ public class SqlParameterBinderFactoryTests : TestsBase
         var parameterBinder = sut.Create<SourceWithWriteOnlyProperty>(
             SqlParameterBinderCreationOptions.Default.With( SqlParameterConfiguration.IgnoreMember( "_b" ) ) );
 
-        parameterBinder.Bind( command, new SourceWithWriteOnlyProperty { A = 10, B = "foo" } );
+        parameterBinder.Bind(
+            command,
+            new SourceWithWriteOnlyProperty
+            {
+                A = 10,
+                B = "foo"
+            } );
 
         using ( new AssertionScope() )
         {
@@ -559,7 +592,13 @@ public class SqlParameterBinderFactoryTests : TestsBase
         var parameterBinder = sut.Create<Source>(
             SqlParameterBinderCreationOptions.Default.With( SqlParameterConfiguration.From( "E", "B" ) ) );
 
-        parameterBinder.Bind( command, new Source { A = 10, B = "foo" } );
+        parameterBinder.Bind(
+            command,
+            new Source
+            {
+                A = 10,
+                B = "foo"
+            } );
 
         using ( new AssertionScope() )
         {
@@ -589,7 +628,14 @@ public class SqlParameterBinderFactoryTests : TestsBase
                 .With( SqlParameterConfiguration.IgnoreMember( "B" ) )
                 .With( SqlParameterConfiguration.IgnoreMember( "D" ) ) );
 
-        parameterBinder.Bind( command, new Source { A = 10, B = "foo", D = true } );
+        parameterBinder.Bind(
+            command,
+            new Source
+            {
+                A = 10,
+                B = "foo",
+                D = true
+            } );
 
         using ( new AssertionScope() )
         {
@@ -618,7 +664,13 @@ public class SqlParameterBinderFactoryTests : TestsBase
                 .With( SqlParameterConfiguration.From( "E", (Source s) => s.D == true ? 50 : 100 ) )
                 .With( SqlParameterConfiguration.IgnoreMember( "D" ) ) );
 
-        parameterBinder.Bind( command, new Source { A = 10, D = true } );
+        parameterBinder.Bind(
+            command,
+            new Source
+            {
+                A = 10,
+                D = true
+            } );
 
         using ( new AssertionScope() )
         {
@@ -648,7 +700,14 @@ public class SqlParameterBinderFactoryTests : TestsBase
                 .With( SqlParameterConfiguration.IgnoreMember( "B" ) )
                 .With( SqlParameterConfiguration.IgnoreMember( "D" ) ) );
 
-        parameterBinder.Bind( command, new Source { A = 10, B = "foo", D = false } );
+        parameterBinder.Bind(
+            command,
+            new Source
+            {
+                A = 10,
+                B = "foo",
+                D = false
+            } );
 
         using ( new AssertionScope() )
         {
@@ -676,7 +735,14 @@ public class SqlParameterBinderFactoryTests : TestsBase
         var parameterBinder = sut.Create<Source>(
             SqlParameterBinderCreationOptions.Default.EnableIgnoringOfNullValues( false ).SetContext( interpreter.Context ) );
 
-        parameterBinder.Bind( command, new Source { A = 10, B = "foo", D = true } );
+        parameterBinder.Bind(
+            command,
+            new Source
+            {
+                A = 10,
+                B = "foo",
+                D = true
+            } );
 
         using ( new AssertionScope() )
         {

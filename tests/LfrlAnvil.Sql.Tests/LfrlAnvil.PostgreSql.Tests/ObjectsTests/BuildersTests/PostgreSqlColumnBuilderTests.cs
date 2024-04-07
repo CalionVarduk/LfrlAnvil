@@ -586,7 +586,7 @@ public class PostgreSqlColumnBuilderTests : TestsBase
         table.Constraints.SetPrimaryKey( table.Columns.Create( "C1" ).Asc() );
         var sut = table.Columns.Create( "C2" );
 
-        var action = Lambda.Of( () => ((ISqlColumnBuilder)sut).SetType( definition ) );
+        var action = Lambda.Of( () => (( ISqlColumnBuilder )sut).SetType( definition ) );
 
         action.Should()
             .ThrowExactly<SqlObjectCastException>()
@@ -824,7 +824,7 @@ public class PostgreSqlColumnBuilderTests : TestsBase
         var originalDefaultValue = sut.DefaultValue;
 
         var actionCount = schema.Database.GetPendingActionCount();
-        sut.SetDefaultValue( (int?)42 );
+        sut.SetDefaultValue( ( int? )42 );
         var result = sut.SetDefaultValue( originalDefaultValue );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
@@ -978,7 +978,7 @@ public class PostgreSqlColumnBuilderTests : TestsBase
         schema.Objects.CreateView( "V", table.ToRecordSet().ToDataSource().Select( s => new[] { s.From["C2"].AsSelf() } ) );
 
         var actionCount = schema.Database.GetPendingActionCount();
-        var result = sut.SetDefaultValue( (int?)123 );
+        var result = sut.SetDefaultValue( ( int? )123 );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )

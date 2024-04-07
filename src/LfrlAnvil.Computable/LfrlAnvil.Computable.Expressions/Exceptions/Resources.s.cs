@@ -399,8 +399,8 @@ internal static class Resources
         IReadOnlyList<Type>? parameterTypes)
     {
         var distinctMemberTypes = Enumerable.Range( 0, 8 )
-            .Where( i => (((int)memberType >> i) & 1) == 1 )
-            .Select( static i => (MemberTypes)(1 << i) );
+            .Where( i => ((( int )memberType >> i) & 1) == 1 )
+            .Select( static i => ( MemberTypes )(1 << i) );
 
         var memberTypeText = string.Join( " or ", distinctMemberTypes );
 

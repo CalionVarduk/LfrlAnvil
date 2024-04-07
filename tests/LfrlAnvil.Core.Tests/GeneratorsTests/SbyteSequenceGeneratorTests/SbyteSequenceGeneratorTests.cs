@@ -16,12 +16,12 @@ public class SbyteSequenceGeneratorTests : GenericSequenceGeneratorOfSignedTypeT
 
     protected override sbyte Negate(sbyte a)
     {
-        return (sbyte)-a;
+        return ( sbyte )-a;
     }
 
     protected sealed override sbyte Add(sbyte a, sbyte b)
     {
-        return (sbyte)(a + b);
+        return ( sbyte )(a + b);
     }
 
     protected sealed override SequenceGeneratorBase<sbyte> Create()

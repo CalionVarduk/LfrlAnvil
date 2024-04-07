@@ -10,7 +10,7 @@ public abstract class GenericInvalidTypeCastExtensionsTests<TSource, TDestinatio
     {
         var value = Fixture.Create<TSource>();
 
-        var sut = (TypeCast<TSource, TDestination>)value;
+        var sut = ( TypeCast<TSource, TDestination> )value;
 
         var result = sut.ToMaybe();
 

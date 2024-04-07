@@ -223,7 +223,7 @@ public abstract class SqlDatabaseFactory<TDatabase> : ISqlDatabaseFactory
     {
         return static (reader, options) =>
         {
-            var dbReader = (DbDataReader)reader;
+            var dbReader = ( DbDataReader )reader;
             if ( ! dbReader.Read() )
                 return SqlQueryResult<SqlDatabaseVersionRecord>.Empty;
 

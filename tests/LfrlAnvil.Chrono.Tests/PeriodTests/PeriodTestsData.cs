@@ -157,8 +157,7 @@ public class PeriodTestsData
             { (1, 2, 3, 4), (0, 0, 0, 0, 0, 0), "1 year(s), 2 month(s), 3 week(s), 4 day(s)" },
             { (0, 0, 0, 0), (1, 2, 3, 4, 5, 6), "1 hour(s), 2 minute(s), 3 second(s), 4 millisecond(s), 5 microsecond(s), 6 tick(s)" },
             {
-                (1, 2, 3, 4),
-                (5, 6, 7, 8, 9, 10),
+                (1, 2, 3, 4), (5, 6, 7, 8, 9, 10),
                 "1 year(s), 2 month(s), 3 week(s), 4 day(s), 5 hour(s), 6 minute(s), 7 second(s), 8 millisecond(s), 9 microsecond(s), 10 tick(s)"
             },
             { (-1, 0, 2, 0), (-3, 0, 4, 0, -5, 0), "-1 year(s), 2 week(s), -3 hour(s), 4 second(s), -5 microsecond(s)" }

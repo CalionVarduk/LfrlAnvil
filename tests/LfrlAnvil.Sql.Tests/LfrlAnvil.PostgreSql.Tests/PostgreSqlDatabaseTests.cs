@@ -31,9 +31,9 @@ public class PostgreSqlDatabaseTests : TestsBase
             sut.Schemas.Count.Should().Be( 1 );
             sut.Schemas.Default.Name.Should().Be( "public" );
             sut.Schemas.Should().BeSequentiallyEqualTo( sut.Schemas.Default );
-            ((ISqlDatabaseConnector<NpgsqlConnection>)sut.Connector).Database.Should().BeSameAs( sut );
-            ((ISqlDatabaseConnector<DbConnection>)sut.Connector).Database.Should().BeSameAs( sut );
-            ((ISqlDatabaseConnector)sut.Connector).Database.Should().BeSameAs( sut );
+            (( ISqlDatabaseConnector<NpgsqlConnection> )sut.Connector).Database.Should().BeSameAs( sut );
+            (( ISqlDatabaseConnector<DbConnection> )sut.Connector).Database.Should().BeSameAs( sut );
+            (( ISqlDatabaseConnector )sut.Connector).Database.Should().BeSameAs( sut );
         }
     }
 

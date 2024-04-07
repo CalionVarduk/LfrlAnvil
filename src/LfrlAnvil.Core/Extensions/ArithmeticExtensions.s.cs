@@ -71,28 +71,28 @@ public static class ArithmeticExtensions
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static ushort EuclidModulo(this ushort a, ushort b)
     {
-        return (ushort)((uint)a).EuclidModulo( b );
+        return ( ushort )(( uint )a).EuclidModulo( b );
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static short EuclidModulo(this short a, short b)
     {
-        return (short)((int)a).EuclidModulo( b );
+        return ( short )(( int )a).EuclidModulo( b );
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static byte EuclidModulo(this byte a, byte b)
     {
-        return (byte)((uint)a).EuclidModulo( b );
+        return ( byte )(( uint )a).EuclidModulo( b );
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static sbyte EuclidModulo(this sbyte a, sbyte b)
     {
-        return (sbyte)((int)a).EuclidModulo( b );
+        return ( sbyte )(( int )a).EuclidModulo( b );
     }
 
     [Pure]

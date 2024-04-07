@@ -21,6 +21,6 @@ public class BitmaskOfEnumUInt32Tests : GenericBitmaskTests<TestEnumUInt32>
     [MethodData( nameof( BitmaskOfEnumUnit32TestsData.GetSanitizeData ) )]
     public void Sanitize_ShouldReturnResultWithRemovedInvalidEnumValues(uint value, TestEnumUInt32 expected)
     {
-        Sanitize_ShouldReturnCorrectResult_Impl( (TestEnumUInt32)value, expected );
+        Sanitize_ShouldReturnCorrectResult_Impl( ( TestEnumUInt32 )value, expected );
     }
 }

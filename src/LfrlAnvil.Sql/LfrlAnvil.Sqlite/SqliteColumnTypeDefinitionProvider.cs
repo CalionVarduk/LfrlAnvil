@@ -18,11 +18,7 @@ public sealed class SqliteColumnTypeDefinitionProvider : SqlColumnTypeDefinition
         var defaultAny = new SqliteColumnTypeDefinitionObject( this, builder.DefaultBlob );
         _defaultDefinitions = new SqlColumnTypeDefinition[]
         {
-            defaultAny,
-            builder.DefaultInteger,
-            builder.DefaultReal,
-            builder.DefaultText,
-            builder.DefaultBlob
+            defaultAny, builder.DefaultInteger, builder.DefaultReal, builder.DefaultText, builder.DefaultBlob
         };
 
         TryAddDefinition( defaultAny );
@@ -38,7 +34,7 @@ public sealed class SqliteColumnTypeDefinitionProvider : SqlColumnTypeDefinition
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public SqlColumnTypeDefinition GetByDataType(SqliteDataType type)
     {
-        var index = (int)type.Value;
+        var index = ( int )type.Value;
         return _defaultDefinitions[index];
     }
 

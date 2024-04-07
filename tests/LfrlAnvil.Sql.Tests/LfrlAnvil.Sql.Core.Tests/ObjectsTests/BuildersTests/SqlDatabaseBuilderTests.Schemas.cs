@@ -29,10 +29,10 @@ public partial class SqlDatabaseBuilderTests
                 result.Objects.Schema.Should().BeSameAs( result );
                 result.ReferencingObjects.Should().BeEmpty();
 
-                ((ISqlSchemaBuilder)result).Objects.Should().BeSameAs( result.Objects );
-                ((ISqlObjectBuilderCollection)result.Objects).Schema.Should().BeSameAs( result.Objects.Schema );
-                ((ISqlObjectBuilder)result).Database.Should().BeSameAs( result.Database );
-                ((ISqlObjectBuilder)result).ReferencingObjects.Should()
+                (( ISqlSchemaBuilder )result).Objects.Should().BeSameAs( result.Objects );
+                (( ISqlObjectBuilderCollection )result.Objects).Schema.Should().BeSameAs( result.Objects.Schema );
+                (( ISqlObjectBuilder )result).Database.Should().BeSameAs( result.Database );
+                (( ISqlObjectBuilder )result).ReferencingObjects.Should()
                     .BeSequentiallyEqualTo( result.ReferencingObjects.UnsafeReinterpretAs<ISqlObjectBuilder>() );
 
                 sut.Count.Should().Be( 2 );
@@ -85,10 +85,10 @@ public partial class SqlDatabaseBuilderTests
                 result.Objects.Schema.Should().BeSameAs( result );
                 result.ReferencingObjects.Should().BeEmpty();
 
-                ((ISqlSchemaBuilder)result).Objects.Should().BeSameAs( result.Objects );
-                ((ISqlObjectBuilderCollection)result.Objects).Schema.Should().BeSameAs( result.Objects.Schema );
-                ((ISqlObjectBuilder)result).Database.Should().BeSameAs( result.Database );
-                ((ISqlObjectBuilder)result).ReferencingObjects.Should()
+                (( ISqlSchemaBuilder )result).Objects.Should().BeSameAs( result.Objects );
+                (( ISqlObjectBuilderCollection )result.Objects).Schema.Should().BeSameAs( result.Objects.Schema );
+                (( ISqlObjectBuilder )result).Database.Should().BeSameAs( result.Database );
+                (( ISqlObjectBuilder )result).ReferencingObjects.Should()
                     .BeSequentiallyEqualTo( result.ReferencingObjects.UnsafeReinterpretAs<ISqlObjectBuilder>() );
 
                 sut.Count.Should().Be( 2 );
@@ -148,7 +148,7 @@ public partial class SqlDatabaseBuilderTests
             var sut = SqlDatabaseBuilderMock.Create().Schemas;
             var expected = sut.Create( "foo" );
 
-            var result = ((ISqlSchemaBuilderCollection)sut).Get( "foo" );
+            var result = (( ISqlSchemaBuilderCollection )sut).Get( "foo" );
 
             result.Should().BeSameAs( expected );
         }
@@ -157,7 +157,7 @@ public partial class SqlDatabaseBuilderTests
         public void Get_ShouldThrowKeyNotFoundException_WhenSchemaDoesNotExist()
         {
             var sut = SqlDatabaseBuilderMock.Create().Schemas;
-            var action = Lambda.Of( () => ((ISqlSchemaBuilderCollection)sut).Get( "foo" ) );
+            var action = Lambda.Of( () => (( ISqlSchemaBuilderCollection )sut).Get( "foo" ) );
             action.Should().ThrowExactly<KeyNotFoundException>();
         }
 
@@ -167,7 +167,7 @@ public partial class SqlDatabaseBuilderTests
             var sut = SqlDatabaseBuilderMock.Create().Schemas;
             var expected = sut.Create( "foo" );
 
-            var result = ((ISqlSchemaBuilderCollection)sut).TryGet( "foo" );
+            var result = (( ISqlSchemaBuilderCollection )sut).TryGet( "foo" );
 
             result.Should().BeSameAs( expected );
         }
@@ -176,7 +176,7 @@ public partial class SqlDatabaseBuilderTests
         public void TryGet_ShouldReturnNull_WhenSchemaDoesNotExist()
         {
             var sut = SqlDatabaseBuilderMock.Create().Schemas;
-            var result = ((ISqlSchemaBuilderCollection)sut).TryGet( "foo" );
+            var result = (( ISqlSchemaBuilderCollection )sut).TryGet( "foo" );
             result.Should().BeNull();
         }
 
@@ -327,7 +327,7 @@ public partial class SqlDatabaseBuilderTests
         {
             var sut = SqlDatabaseBuilderMock.Create().Schemas;
 
-            var result = ((ISqlSchemaBuilderCollection)sut).Create( "foo" );
+            var result = (( ISqlSchemaBuilderCollection )sut).Create( "foo" );
 
             using ( new AssertionScope() )
             {
@@ -350,7 +350,7 @@ public partial class SqlDatabaseBuilderTests
             var sut = SqlDatabaseBuilderMock.Create().Schemas;
             var expected = sut.Default;
 
-            var result = ((ISqlSchemaBuilderCollection)sut).GetOrCreate( expected.Name );
+            var result = (( ISqlSchemaBuilderCollection )sut).GetOrCreate( expected.Name );
 
             using ( new AssertionScope() )
             {

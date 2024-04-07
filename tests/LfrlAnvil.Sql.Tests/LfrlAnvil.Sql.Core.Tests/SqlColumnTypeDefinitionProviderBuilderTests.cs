@@ -14,7 +14,7 @@ public class SqlColumnTypeDefinitionProviderBuilderTests : TestsBase
     public void Register_ShouldAddNewDefinition()
     {
         var definition = new SqlColumnTypeDefinitionMock<uint>( SqlDataTypeMock.Integer, 0U );
-        var result = ((ISqlColumnTypeDefinitionProviderBuilder)_sut).Register( definition );
+        var result = (( ISqlColumnTypeDefinitionProviderBuilder )_sut).Register( definition );
 
         using ( new AssertionScope() )
         {
@@ -27,7 +27,7 @@ public class SqlColumnTypeDefinitionProviderBuilderTests : TestsBase
     public void Register_ShouldOverrideExistingDefinition()
     {
         var definition = new SqlColumnTypeDefinitionMock<int>( SqlDataTypeMock.Integer, 0 );
-        var result = ((ISqlColumnTypeDefinitionProviderBuilder)_sut).Register( definition );
+        var result = (( ISqlColumnTypeDefinitionProviderBuilder )_sut).Register( definition );
 
         using ( new AssertionScope() )
         {
@@ -42,7 +42,7 @@ public class SqlColumnTypeDefinitionProviderBuilderTests : TestsBase
         var definition = new SqlColumnTypeDefinitionMock<uint>( SqlDataTypeMock.Integer, 0 );
         _sut.Register( definition );
 
-        var result = ((ISqlColumnTypeDefinitionProviderBuilder)_sut).Build();
+        var result = (( ISqlColumnTypeDefinitionProviderBuilder )_sut).Build();
 
         var typeDefinitions = result.GetTypeDefinitions();
         var dataTypeDefinitions = result.GetDataTypeDefinitions();
@@ -81,7 +81,7 @@ public class SqlColumnTypeDefinitionProviderBuilderTests : TestsBase
     public void Register_ShouldThrowArgumentException_WhenDefinitionDialectIsInvalid()
     {
         var definition = new InvalidTypeDefinitionMock<int>( 0 );
-        var action = Lambda.Of( () => ((ISqlColumnTypeDefinitionProviderBuilder)_sut).Register( definition ) );
+        var action = Lambda.Of( () => (( ISqlColumnTypeDefinitionProviderBuilder )_sut).Register( definition ) );
         action.Should().ThrowExactly<ArgumentException>();
     }
 
@@ -98,7 +98,7 @@ public class SqlColumnTypeDefinitionProviderBuilderTests : TestsBase
         where T : notnull
     {
         public InvalidTypeDefinitionMock(T defaultValue)
-            : base( CreateDataType(), defaultValue, (r, i) => (T)r.GetValue( i ) ) { }
+            : base( CreateDataType(), defaultValue, (r, i) => ( T )r.GetValue( i ) ) { }
 
         [Pure]
         public override string ToDbLiteral(T value)

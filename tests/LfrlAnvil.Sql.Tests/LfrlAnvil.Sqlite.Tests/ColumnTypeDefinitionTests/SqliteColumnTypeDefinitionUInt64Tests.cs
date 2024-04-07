@@ -32,7 +32,7 @@ public class SqliteColumnTypeDefinitionUInt64Tests : TestsBase
     public void TryToDbLiteral_ShouldThrowOverflowException_WhenValueIsGreaterThanInt64MaxValue()
     {
         var sut = _provider.GetByType<ulong>();
-        var action = Lambda.Of( () => sut.TryToDbLiteral( (ulong)long.MaxValue + 1 ) );
+        var action = Lambda.Of( () => sut.TryToDbLiteral( ( ulong )long.MaxValue + 1 ) );
         action.Should().ThrowExactly<OverflowException>();
     }
 
@@ -40,7 +40,7 @@ public class SqliteColumnTypeDefinitionUInt64Tests : TestsBase
     public void TryToParameterValue_ShouldReturnCorrectResult()
     {
         var sut = _provider.GetByType<ulong>();
-        var result = sut.TryToParameterValue( (ulong)1234567 );
+        var result = sut.TryToParameterValue( ( ulong )1234567 );
         result.Should().Be( 1234567L );
     }
 
@@ -56,7 +56,7 @@ public class SqliteColumnTypeDefinitionUInt64Tests : TestsBase
     public void TryToParameterValue_ShouldThrowOverflowException_WhenValueIsGreaterThanInt64MaxValue()
     {
         var sut = _provider.GetByType<ulong>();
-        var action = Lambda.Of( () => sut.TryToParameterValue( (ulong)long.MaxValue + 1 ) );
+        var action = Lambda.Of( () => sut.TryToParameterValue( ( ulong )long.MaxValue + 1 ) );
         action.Should().ThrowExactly<OverflowException>();
     }
 

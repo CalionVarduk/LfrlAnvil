@@ -14,7 +14,7 @@ public readonly record struct SqlAsyncScalarQueryReaderExecutor(SqlAsyncScalarQu
     public async ValueTask<SqlScalarQueryResult> ExecuteAsync(IDbCommand command, CancellationToken cancellationToken = default)
     {
         command.CommandText = Sql;
-        await using var reader = await ((DbCommand)command).ExecuteReaderAsync( cancellationToken ).ConfigureAwait( false );
+        await using var reader = await (( DbCommand )command).ExecuteReaderAsync( cancellationToken ).ConfigureAwait( false );
         return await Reader.ReadAsync( reader, cancellationToken ).ConfigureAwait( false );
     }
 }
@@ -26,7 +26,7 @@ public readonly record struct SqlAsyncScalarQueryReaderExecutor<T>(SqlAsyncScala
     public async ValueTask<SqlScalarQueryResult<T>> ExecuteAsync(IDbCommand command, CancellationToken cancellationToken = default)
     {
         command.CommandText = Sql;
-        await using var reader = await ((DbCommand)command).ExecuteReaderAsync( cancellationToken ).ConfigureAwait( false );
+        await using var reader = await (( DbCommand )command).ExecuteReaderAsync( cancellationToken ).ConfigureAwait( false );
         return await Reader.ReadAsync( reader, cancellationToken ).ConfigureAwait( false );
     }
 }

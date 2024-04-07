@@ -152,12 +152,7 @@ public abstract class GenericDictionaryHeapTests<TKey, TValue> : TestsBase
         var keys = Fixture.CreateDistinctCollection<TKey>( 3 );
         var (other, item, left) = Fixture.CreateDistinctSortedCollection<TValue>( 3 );
 
-        var sut = new DictionaryHeap<TKey, TValue>(
-            new[]
-            {
-                KeyValuePair.Create( keys[0], other ),
-                KeyValuePair.Create( keys[1], left )
-            } );
+        var sut = new DictionaryHeap<TKey, TValue>( new[] { KeyValuePair.Create( keys[0], other ), KeyValuePair.Create( keys[1], left ) } );
 
         sut.Add( keys[2], item );
 
@@ -253,12 +248,7 @@ public abstract class GenericDictionaryHeapTests<TKey, TValue> : TestsBase
         var keys = Fixture.CreateDistinctCollection<TKey>( 3 );
         var (other, item, left) = Fixture.CreateDistinctSortedCollection<TValue>( 3 );
 
-        var sut = new DictionaryHeap<TKey, TValue>(
-            new[]
-            {
-                KeyValuePair.Create( keys[0], other ),
-                KeyValuePair.Create( keys[1], left )
-            } );
+        var sut = new DictionaryHeap<TKey, TValue>( new[] { KeyValuePair.Create( keys[0], other ), KeyValuePair.Create( keys[1], left ) } );
 
         var result = sut.TryAdd( keys[2], item );
 

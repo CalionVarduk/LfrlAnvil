@@ -18,7 +18,7 @@ public static class SqlStatementObjectExtensions
         IsolationLevel isolationLevel,
         CancellationToken cancellationToken = default)
     {
-        return await ((DbConnection)connection).BeginTransactionAsync( isolationLevel, cancellationToken ).ConfigureAwait( false );
+        return await (( DbConnection )connection).BeginTransactionAsync( isolationLevel, cancellationToken ).ConfigureAwait( false );
     }
 
     public static IDbCommand CreateCommand(this IDbTransaction transaction)
@@ -137,7 +137,7 @@ public static class SqlStatementObjectExtensions
     public static TCommand SetTimeout<TCommand>(this TCommand command, TimeSpan timeout)
         where TCommand : IDbCommand
     {
-        command.CommandTimeout = (int)Math.Ceiling( timeout.TotalSeconds );
+        command.CommandTimeout = ( int )Math.Ceiling( timeout.TotalSeconds );
         return command;
     }
 
@@ -215,7 +215,7 @@ public static class SqlStatementObjectExtensions
         this IDbCommand command,
         CancellationToken cancellationToken = default)
     {
-        return (await ((DbCommand)command).ExecuteReaderAsync( cancellationToken ).ConfigureAwait( false )).MultiAsync();
+        return (await (( DbCommand )command).ExecuteReaderAsync( cancellationToken ).ConfigureAwait( false )).MultiAsync();
     }
 
     [Pure]
@@ -226,7 +226,7 @@ public static class SqlStatementObjectExtensions
         SqlQueryReaderOptions? options = null,
         CancellationToken cancellationToken = default)
     {
-        await using var r = await ((DbCommand)command).ExecuteReaderAsync( cancellationToken ).ConfigureAwait( false );
+        await using var r = await (( DbCommand )command).ExecuteReaderAsync( cancellationToken ).ConfigureAwait( false );
         return await reader.ReadAsync( r, options, cancellationToken ).ConfigureAwait( false );
     }
 
@@ -239,7 +239,7 @@ public static class SqlStatementObjectExtensions
         CancellationToken cancellationToken = default)
         where TRow : notnull
     {
-        await using var r = await ((DbCommand)command).ExecuteReaderAsync( cancellationToken ).ConfigureAwait( false );
+        await using var r = await (( DbCommand )command).ExecuteReaderAsync( cancellationToken ).ConfigureAwait( false );
         return await reader.ReadAsync( r, options, cancellationToken ).ConfigureAwait( false );
     }
 
@@ -273,7 +273,7 @@ public static class SqlStatementObjectExtensions
         SqlAsyncScalarQueryReader reader,
         CancellationToken cancellationToken = default)
     {
-        await using var r = await ((DbCommand)command).ExecuteReaderAsync( cancellationToken ).ConfigureAwait( false );
+        await using var r = await (( DbCommand )command).ExecuteReaderAsync( cancellationToken ).ConfigureAwait( false );
         return await reader.ReadAsync( r, cancellationToken ).ConfigureAwait( false );
     }
 
@@ -284,7 +284,7 @@ public static class SqlStatementObjectExtensions
         SqlAsyncScalarQueryReader<T> reader,
         CancellationToken cancellationToken = default)
     {
-        await using var r = await ((DbCommand)command).ExecuteReaderAsync( cancellationToken ).ConfigureAwait( false );
+        await using var r = await (( DbCommand )command).ExecuteReaderAsync( cancellationToken ).ConfigureAwait( false );
         return await reader.ReadAsync( r, cancellationToken ).ConfigureAwait( false );
     }
 
@@ -311,7 +311,7 @@ public static class SqlStatementObjectExtensions
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static async ValueTask<int> ExecuteAsync(this IDbCommand command, CancellationToken cancellationToken = default)
     {
-        return await ((DbCommand)command).ExecuteNonQueryAsync( cancellationToken ).ConfigureAwait( false );
+        return await (( DbCommand )command).ExecuteNonQueryAsync( cancellationToken ).ConfigureAwait( false );
     }
 
     [Pure]

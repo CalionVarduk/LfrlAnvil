@@ -45,12 +45,10 @@ public class SqlForeignKeyBuilderTests : TestsBase
             sut.ReferencedIndex.Should().BeSameAs( ix1 );
 
             ix1.ReferencingObjects.Should()
-                .BeSequentiallyEqualTo(
-                    SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), ix1 ) );
+                .BeSequentiallyEqualTo( SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), ix1 ) );
 
             ix2.ReferencingObjects.Should()
-                .BeSequentiallyEqualTo(
-                    SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), ix2 ) );
+                .BeSequentiallyEqualTo( SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), ix2 ) );
 
             table.ReferencingObjects.Should().BeEmpty();
             schema.ReferencingObjects.Should().BeEmpty();
@@ -86,16 +84,13 @@ public class SqlForeignKeyBuilderTests : TestsBase
             sut.ReferencedIndex.Should().BeSameAs( ix1 );
 
             ix1.ReferencingObjects.Should()
-                .BeSequentiallyEqualTo(
-                    SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), ix1 ) );
+                .BeSequentiallyEqualTo( SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), ix1 ) );
 
             ix2.ReferencingObjects.Should()
-                .BeSequentiallyEqualTo(
-                    SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), ix2 ) );
+                .BeSequentiallyEqualTo( SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), ix2 ) );
 
             table.ReferencingObjects.Should()
-                .BeSequentiallyEqualTo(
-                    SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), ix1 ) );
+                .BeSequentiallyEqualTo( SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), ix1 ) );
 
             schema.ReferencingObjects.Should().BeEmpty();
 
@@ -131,20 +126,16 @@ public class SqlForeignKeyBuilderTests : TestsBase
             sut.ReferencedIndex.Should().BeSameAs( ix1 );
 
             ix1.ReferencingObjects.Should()
-                .BeSequentiallyEqualTo(
-                    SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), ix1 ) );
+                .BeSequentiallyEqualTo( SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), ix1 ) );
 
             ix2.ReferencingObjects.Should()
-                .BeSequentiallyEqualTo(
-                    SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), ix2 ) );
+                .BeSequentiallyEqualTo( SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), ix2 ) );
 
             table.ReferencingObjects.Should()
-                .BeSequentiallyEqualTo(
-                    SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), ix1 ) );
+                .BeSequentiallyEqualTo( SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), ix1 ) );
 
             schema.ReferencingObjects.Should()
-                .BeSequentiallyEqualTo(
-                    SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), ix1 ) );
+                .BeSequentiallyEqualTo( SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), ix1 ) );
 
             actions.Should().HaveCount( 1 );
             actions.ElementAtOrDefault( 0 )
@@ -769,12 +760,10 @@ public class SqlForeignKeyBuilderTests : TestsBase
             sut.ReferencingObjects.Should().BeEmpty();
 
             ix2.ReferencingObjects.Should()
-                .BeSequentiallyEqualTo(
-                    SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), ix2 ) );
+                .BeSequentiallyEqualTo( SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), ix2 ) );
 
             ix1.ReferencingObjects.Should()
-                .BeSequentiallyEqualTo(
-                    SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), ix1 ) );
+                .BeSequentiallyEqualTo( SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), ix1 ) );
 
             actions.Should().BeEmpty();
         }
@@ -804,8 +793,7 @@ public class SqlForeignKeyBuilderTests : TestsBase
             sut.ReferencingObjects.Should().BeEmpty();
 
             ix2.ReferencingObjects.Should()
-                .BeSequentiallyEqualTo(
-                    SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), ix2 ) );
+                .BeSequentiallyEqualTo( SqlObjectBuilderReference.Create( SqlObjectBuilderReferenceSource.Create( sut ), ix2 ) );
 
             ix1.ReferencingObjects.Should().BeEmpty();
             table.ReferencingObjects.Should().BeEmpty();
@@ -902,7 +890,7 @@ public class SqlForeignKeyBuilderTests : TestsBase
         var oldName = sut.Name;
 
         var actionCount = schema.Database.GetPendingActionCount();
-        var result = ((ISqlForeignKeyBuilder)sut).SetName( "bar" );
+        var result = (( ISqlForeignKeyBuilder )sut).SetName( "bar" );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )
@@ -934,7 +922,7 @@ public class SqlForeignKeyBuilderTests : TestsBase
         var oldName = sut.Name;
 
         var actionCount = schema.Database.GetPendingActionCount();
-        var result = ((ISqlConstraintBuilder)sut).SetName( "bar" );
+        var result = (( ISqlConstraintBuilder )sut).SetName( "bar" );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )
@@ -966,7 +954,7 @@ public class SqlForeignKeyBuilderTests : TestsBase
         var oldName = sut.Name;
 
         var actionCount = schema.Database.GetPendingActionCount();
-        var result = ((ISqlObjectBuilder)sut).SetName( "bar" );
+        var result = (( ISqlObjectBuilder )sut).SetName( "bar" );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )
@@ -997,7 +985,7 @@ public class SqlForeignKeyBuilderTests : TestsBase
         var sut = table.Constraints.CreateForeignKey( ix1, ix2 ).SetName( "bar" );
 
         var actionCount = schema.Database.GetPendingActionCount();
-        var result = ((ISqlForeignKeyBuilder)sut).SetDefaultName();
+        var result = (( ISqlForeignKeyBuilder )sut).SetDefaultName();
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )
@@ -1028,7 +1016,7 @@ public class SqlForeignKeyBuilderTests : TestsBase
         var sut = table.Constraints.CreateForeignKey( ix1, ix2 ).SetName( "bar" );
 
         var actionCount = schema.Database.GetPendingActionCount();
-        var result = ((ISqlConstraintBuilder)sut).SetDefaultName();
+        var result = (( ISqlConstraintBuilder )sut).SetDefaultName();
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )
@@ -1059,7 +1047,7 @@ public class SqlForeignKeyBuilderTests : TestsBase
         var sut = table.Constraints.CreateForeignKey( ix1, ix2 );
 
         var actionCount = schema.Database.GetPendingActionCount();
-        var result = ((ISqlForeignKeyBuilder)sut).SetOnDeleteBehavior( ReferenceBehavior.Cascade );
+        var result = (( ISqlForeignKeyBuilder )sut).SetOnDeleteBehavior( ReferenceBehavior.Cascade );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )
@@ -1086,7 +1074,7 @@ public class SqlForeignKeyBuilderTests : TestsBase
         var sut = table.Constraints.CreateForeignKey( ix1, ix2 );
 
         var actionCount = schema.Database.GetPendingActionCount();
-        var result = ((ISqlForeignKeyBuilder)sut).SetOnUpdateBehavior( ReferenceBehavior.Cascade );
+        var result = (( ISqlForeignKeyBuilder )sut).SetOnUpdateBehavior( ReferenceBehavior.Cascade );
         var actions = schema.Database.GetLastPendingActions( actionCount );
 
         using ( new AssertionScope() )

@@ -43,7 +43,7 @@ public class EnumerationTests : TestsBase
     public void TValueConversionOperator_ShouldReturnValue()
     {
         var sut = ValidEnum.Two;
-        var result = (int)sut;
+        var result = ( int )sut;
         result.Should().Be( sut.Value );
     }
 

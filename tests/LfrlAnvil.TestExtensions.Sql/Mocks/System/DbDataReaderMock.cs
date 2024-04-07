@@ -58,12 +58,12 @@ public sealed class DbDataReaderMock : DbDataReader
     [Pure]
     public byte[] GetBytes(int ordinal)
     {
-        return (byte[])GetValue( ordinal );
+        return ( byte[] )GetValue( ordinal );
     }
 
     public override long GetBytes(int ordinal, long dataOffset, byte[]? buffer, int bufferOffset, int length)
     {
-        var source = GetBytes( ordinal ).AsSpan( (int)dataOffset, length );
+        var source = GetBytes( ordinal ).AsSpan( ( int )dataOffset, length );
         if ( buffer is not null )
             source.CopyTo( buffer.AsSpan( bufferOffset, length ) );
 
@@ -78,7 +78,7 @@ public sealed class DbDataReaderMock : DbDataReader
 
     public override long GetChars(int ordinal, long dataOffset, char[]? buffer, int bufferOffset, int length)
     {
-        var source = ((IEnumerable<char>)GetValue( ordinal )).ToArray().AsSpan( (int)dataOffset, length );
+        var source = (( IEnumerable<char> )GetValue( ordinal )).ToArray().AsSpan( ( int )dataOffset, length );
         if ( buffer is not null )
             source.CopyTo( buffer.AsSpan( bufferOffset, length ) );
 
@@ -94,7 +94,7 @@ public sealed class DbDataReaderMock : DbDataReader
     [Pure]
     public override DateTime GetDateTime(int ordinal)
     {
-        return (DateTime)GetValue( ordinal );
+        return ( DateTime )GetValue( ordinal );
     }
 
     [Pure]
@@ -124,7 +124,7 @@ public sealed class DbDataReaderMock : DbDataReader
     [Pure]
     public override Guid GetGuid(int ordinal)
     {
-        return (Guid)GetValue( ordinal );
+        return ( Guid )GetValue( ordinal );
     }
 
     [Pure]
@@ -160,7 +160,7 @@ public sealed class DbDataReaderMock : DbDataReader
     [Pure]
     public override string GetString(int ordinal)
     {
-        return (string)GetValue( ordinal );
+        return ( string )GetValue( ordinal );
     }
 
     [Pure]

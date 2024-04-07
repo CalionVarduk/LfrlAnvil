@@ -16,10 +16,10 @@ public class ExpressionParameterByNameReplacer : ExpressionVisitor
     [return: NotNullIfNotNull( "node" )]
     public override Expression? Visit(Expression? node)
     {
-        if ( node is null ||
-            node.NodeType != ExpressionType.Parameter ||
-            node is not ParameterExpression parameterExpression ||
-            parameterExpression.Name is null )
+        if ( node is null
+            || node.NodeType != ExpressionType.Parameter
+            || node is not ParameterExpression parameterExpression
+            || parameterExpression.Name is null )
             return base.Visit( node );
 
         return _parametersToReplace.TryGetValue( parameterExpression.Name, out var expression )

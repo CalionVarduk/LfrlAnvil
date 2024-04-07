@@ -242,11 +242,7 @@ public abstract class GenericCombineEventSourceTests<TEvent> : TestsBase
         var firstStream = new EventPublisher<TEvent>();
         var secondStream = new EventPublisher<TEvent>();
         var thirdStream = new EventPublisher<TEvent>();
-        var expectedResult = new[]
-        {
-            new[] { values[0], values[1], values[2] },
-            new[] { values[0], values[3], values[2] }
-        };
+        var expectedResult = new[] { new[] { values[0], values[1], values[2] }, new[] { values[0], values[3], values[2] } };
 
         var result = new List<TEvent[]>();
         var listener = EventListener.Create<ReadOnlyMemory<TEvent>>( e => result.Add( e.ToArray() ) );

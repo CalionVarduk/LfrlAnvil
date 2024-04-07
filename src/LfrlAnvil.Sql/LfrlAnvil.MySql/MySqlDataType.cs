@@ -31,8 +31,7 @@ public sealed class MySqlDataType : ISqlDataType, IEquatable<MySqlDataType>, ICo
         new[] { 29, 10 },
         new[]
         {
-            new SqlDataTypeParameter( "PRECISION", Bounds.Create( 0, 65 ) ),
-            new SqlDataTypeParameter( "SCALE", Bounds.Create( 0, 30 ) )
+            new SqlDataTypeParameter( "PRECISION", Bounds.Create( 0, 65 ) ), new SqlDataTypeParameter( "SCALE", Bounds.Create( 0, 30 ) )
         } );
 
     public static readonly MySqlDataType Char = new MySqlDataType(

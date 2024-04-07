@@ -24,13 +24,13 @@ public abstract class SqlColumnTypeEnumDefinition<TEnum, TUnderlying, TDataRecor
     [Pure]
     public override string ToDbLiteral(TEnum value)
     {
-        return _base.ToDbLiteral( (TUnderlying)(object)value );
+        return _base.ToDbLiteral( ( TUnderlying )( object )value );
     }
 
     [Pure]
     public override object ToParameterValue(TEnum value)
     {
-        return _base.ToParameterValue( (TUnderlying)(object)value );
+        return _base.ToParameterValue( ( TUnderlying )( object )value );
     }
 
     [Pure]

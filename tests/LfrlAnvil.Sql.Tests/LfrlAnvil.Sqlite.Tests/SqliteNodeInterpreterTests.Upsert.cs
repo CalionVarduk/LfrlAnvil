@@ -468,12 +468,7 @@ ON CONFLICT DO UPDATE SET
 
             var query = foo
                 .ToDataSource()
-                .Select(
-                    s => new SqlSelectNode[]
-                    {
-                        s["common.foo"]["a"].AsSelf(),
-                        s["common.foo"]["b"].AsSelf(),
-                    } );
+                .Select( s => new SqlSelectNode[] { s["common.foo"]["a"].AsSelf(), s["common.foo"]["b"].AsSelf(), } );
 
             sut.Visit(
                 query.ToUpsert(
@@ -835,8 +830,7 @@ ON CONFLICT DO UPDATE SET
             var node = SqlNode.Values(
                     new[,]
                     {
-                        { SqlNode.Literal( "foo" ), SqlNode.Literal( 5 ) },
-                        { SqlNode.RawExpression( "bar.a" ), SqlNode.Literal( 25 ) }
+                        { SqlNode.Literal( "foo" ), SqlNode.Literal( 5 ) }, { SqlNode.RawExpression( "bar.a" ), SqlNode.Literal( 25 ) }
                     } )
                 .ToUpsert(
                     SqlTableBuilderMock.CreateEmpty( "qux" ).Node,
@@ -855,8 +849,7 @@ ON CONFLICT DO UPDATE SET
             var node = SqlNode.Values(
                     new[,]
                     {
-                        { SqlNode.Literal( "foo" ), SqlNode.Literal( 5 ) },
-                        { SqlNode.RawExpression( "bar.a" ), SqlNode.Literal( 25 ) }
+                        { SqlNode.Literal( "foo" ), SqlNode.Literal( 5 ) }, { SqlNode.RawExpression( "bar.a" ), SqlNode.Literal( 25 ) }
                     } )
                 .ToUpsert(
                     SqlNode.RawRecordSet( "qux" ),
@@ -875,8 +868,7 @@ ON CONFLICT DO UPDATE SET
             var node = SqlNode.Values(
                     new[,]
                     {
-                        { SqlNode.Literal( "foo" ), SqlNode.Literal( 5 ) },
-                        { SqlNode.RawExpression( "bar.a" ), SqlNode.Literal( 25 ) }
+                        { SqlNode.Literal( "foo" ), SqlNode.Literal( 5 ) }, { SqlNode.RawExpression( "bar.a" ), SqlNode.Literal( 25 ) }
                     } )
                 .ToUpsert(
                     SqlNode.RawRecordSet( "qux" ),

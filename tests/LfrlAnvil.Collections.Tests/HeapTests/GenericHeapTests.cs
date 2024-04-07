@@ -418,7 +418,12 @@ public abstract class GenericHeapTests<T> : TestsBase
     {
         var items = Fixture.CreateDistinctSortedCollection<T>( 3 );
 
-        var sut = new Heap<T> { items[0], items[1], items[2] };
+        var sut = new Heap<T>
+        {
+            items[0],
+            items[1],
+            items[2]
+        };
 
         var result = sut[index];
 

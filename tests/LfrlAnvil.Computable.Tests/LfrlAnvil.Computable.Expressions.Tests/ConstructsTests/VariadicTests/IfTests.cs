@@ -26,12 +26,7 @@ public class IfTests : TestsBase
     [Fact]
     public void Process_ShouldThrowArgumentException_WhenFirstParameterIsConstantAndNotOfBooleanType()
     {
-        var parameters = new Expression[]
-        {
-            Expression.Constant( "foo" ),
-            Expression.Constant( 1 ),
-            Expression.Constant( 2 )
-        };
+        var parameters = new Expression[] { Expression.Constant( "foo" ), Expression.Constant( 1 ), Expression.Constant( 2 ) };
 
         var sut = new ParsedExpressionIf();
 
@@ -43,12 +38,7 @@ public class IfTests : TestsBase
     [Fact]
     public void Process_ShouldThrowArgumentException_WhenFirstParameterIsNotConstantAndNotOfBooleanType()
     {
-        var parameters = new Expression[]
-        {
-            Expression.Parameter( typeof( string ) ),
-            Expression.Constant( 1 ),
-            Expression.Constant( 2 )
-        };
+        var parameters = new Expression[] { Expression.Parameter( typeof( string ) ), Expression.Constant( 1 ), Expression.Constant( 2 ) };
 
         var sut = new ParsedExpressionIf();
 
@@ -60,12 +50,7 @@ public class IfTests : TestsBase
     [Fact]
     public void Process_ShouldReturnSecondExpression_WhenFirstParameterIsConstantAndEqualToTrue()
     {
-        var parameters = new Expression[]
-        {
-            Expression.Constant( true ),
-            Expression.Constant( 1 ),
-            Expression.Constant( "foo" )
-        };
+        var parameters = new Expression[] { Expression.Constant( true ), Expression.Constant( 1 ), Expression.Constant( "foo" ) };
 
         var sut = new ParsedExpressionIf();
 
@@ -77,12 +62,7 @@ public class IfTests : TestsBase
     [Fact]
     public void Process_ShouldReturnThirdExpression_WhenFirstParameterIsConstantAndEqualToFalse()
     {
-        var parameters = new Expression[]
-        {
-            Expression.Constant( false ),
-            Expression.Constant( 1 ),
-            Expression.Constant( "foo" )
-        };
+        var parameters = new Expression[] { Expression.Constant( false ), Expression.Constant( 1 ), Expression.Constant( "foo" ) };
 
         var sut = new ParsedExpressionIf();
 
@@ -94,12 +74,7 @@ public class IfTests : TestsBase
     [Fact]
     public void Process_ShouldReturnConditionalExpression_WhenFirstParameterIsNotConstant()
     {
-        var parameters = new Expression[]
-        {
-            Expression.Parameter( typeof( bool ) ),
-            Expression.Constant( 1 ),
-            Expression.Constant( 2 )
-        };
+        var parameters = new Expression[] { Expression.Parameter( typeof( bool ) ), Expression.Constant( 1 ), Expression.Constant( 2 ) };
 
         var sut = new ParsedExpressionIf();
 
@@ -122,9 +97,7 @@ public class IfTests : TestsBase
     {
         var parameters = new Expression[]
         {
-            Expression.Parameter( typeof( bool ) ),
-            Expression.Constant( 1 ),
-            Expression.Constant( "foo" )
+            Expression.Parameter( typeof( bool ) ), Expression.Constant( 1 ), Expression.Constant( "foo" )
         };
 
         var sut = new ParsedExpressionIf();
@@ -140,9 +113,7 @@ public class IfTests : TestsBase
         var exception = Expression.Constant( new Exception() );
         var parameters = new Expression[]
         {
-            Expression.Parameter( typeof( bool ) ),
-            Expression.Throw( exception ),
-            Expression.Throw( exception )
+            Expression.Parameter( typeof( bool ) ), Expression.Throw( exception ), Expression.Throw( exception )
         };
 
         var sut = new ParsedExpressionIf();
@@ -158,9 +129,7 @@ public class IfTests : TestsBase
         var exception = Expression.Constant( new Exception() );
         var parameters = new Expression[]
         {
-            Expression.Parameter( typeof( bool ) ),
-            Expression.Throw( exception ),
-            Expression.Constant( 2 )
+            Expression.Parameter( typeof( bool ) ), Expression.Throw( exception ), Expression.Constant( 2 )
         };
 
         var sut = new ParsedExpressionIf();
@@ -191,9 +160,7 @@ public class IfTests : TestsBase
         var exception = Expression.Constant( new Exception() );
         var parameters = new Expression[]
         {
-            Expression.Parameter( typeof( bool ) ),
-            Expression.Constant( 1 ),
-            Expression.Throw( exception )
+            Expression.Parameter( typeof( bool ) ), Expression.Constant( 1 ), Expression.Throw( exception )
         };
 
         var sut = new ParsedExpressionIf();
@@ -222,12 +189,7 @@ public class IfTests : TestsBase
     public void Process_ShouldReturnSecondExpressionWithCorrectType_WhenFirstParameterIsConstantAndEqualToTrueAndSecondExpressionIsThrow()
     {
         var exception = Expression.Constant( new Exception() );
-        var parameters = new Expression[]
-        {
-            Expression.Constant( true ),
-            Expression.Throw( exception ),
-            Expression.Constant( "foo" )
-        };
+        var parameters = new Expression[] { Expression.Constant( true ), Expression.Throw( exception ), Expression.Constant( "foo" ) };
 
         var sut = new ParsedExpressionIf();
 
@@ -248,12 +210,7 @@ public class IfTests : TestsBase
     public void Process_ShouldReturnThirdExpressionWithCorrectType_WhenFirstParameterIsConstantAndEqualToFalseAndThirdExpressionIsThrow()
     {
         var exception = Expression.Constant( new Exception() );
-        var parameters = new Expression[]
-        {
-            Expression.Constant( false ),
-            Expression.Constant( "foo" ),
-            Expression.Throw( exception )
-        };
+        var parameters = new Expression[] { Expression.Constant( false ), Expression.Constant( "foo" ), Expression.Throw( exception ) };
 
         var sut = new ParsedExpressionIf();
 

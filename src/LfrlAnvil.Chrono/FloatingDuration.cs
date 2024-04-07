@@ -21,12 +21,12 @@ public readonly struct FloatingDuration : IEquatable<FloatingDuration>, ICompara
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public FloatingDuration(int hours, int minutes, int seconds = 0, int milliseconds = 0, int microseconds = 0, decimal ticks = 0)
         : this(
-            hours * ChronoConstants.TicksPerHour +
-            minutes * ChronoConstants.TicksPerMinute +
-            seconds * ChronoConstants.TicksPerSecond +
-            milliseconds * ChronoConstants.TicksPerMillisecond +
-            microseconds * ChronoConstants.TicksPerMicrosecond +
-            ticks ) { }
+            hours * ChronoConstants.TicksPerHour
+            + minutes * ChronoConstants.TicksPerMinute
+            + seconds * ChronoConstants.TicksPerSecond
+            + milliseconds * ChronoConstants.TicksPerMillisecond
+            + microseconds * ChronoConstants.TicksPerMicrosecond
+            + ticks ) { }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public FloatingDuration(TimeSpan timeSpan)
@@ -37,17 +37,17 @@ public readonly struct FloatingDuration : IEquatable<FloatingDuration>, ICompara
         : this( duration.Ticks ) { }
 
     public decimal Ticks { get; }
-    public long FullTicks => (long)Ticks;
-    public long FullMicroseconds => (long)(Ticks / ChronoConstants.TicksPerMicrosecond);
-    public long FullMilliseconds => (long)(Ticks / ChronoConstants.TicksPerMillisecond);
-    public long FullSeconds => (long)(Ticks / ChronoConstants.TicksPerSecond);
-    public long FullMinutes => (long)(Ticks / ChronoConstants.TicksPerMinute);
-    public long FullHours => (long)(Ticks / ChronoConstants.TicksPerHour);
+    public long FullTicks => ( long )Ticks;
+    public long FullMicroseconds => ( long )(Ticks / ChronoConstants.TicksPerMicrosecond);
+    public long FullMilliseconds => ( long )(Ticks / ChronoConstants.TicksPerMillisecond);
+    public long FullSeconds => ( long )(Ticks / ChronoConstants.TicksPerSecond);
+    public long FullMinutes => ( long )(Ticks / ChronoConstants.TicksPerMinute);
+    public long FullHours => ( long )(Ticks / ChronoConstants.TicksPerHour);
     public decimal TicksInMicrosecond => Ticks % ChronoConstants.TicksPerMicrosecond;
-    public int MicrosecondsInMillisecond => (int)(FullMicroseconds % ChronoConstants.MicrosecondsPerMillisecond);
-    public int MillisecondsInSecond => (int)(FullMilliseconds % ChronoConstants.MillisecondsPerSecond);
-    public int SecondsInMinute => (int)(FullSeconds % ChronoConstants.SecondsPerMinute);
-    public int MinutesInHour => (int)(FullMinutes % ChronoConstants.MinutesPerHour);
+    public int MicrosecondsInMillisecond => ( int )(FullMicroseconds % ChronoConstants.MicrosecondsPerMillisecond);
+    public int MillisecondsInSecond => ( int )(FullMilliseconds % ChronoConstants.MillisecondsPerSecond);
+    public int SecondsInMinute => ( int )(FullSeconds % ChronoConstants.SecondsPerMinute);
+    public int MinutesInHour => ( int )(FullMinutes % ChronoConstants.MinutesPerHour);
     public decimal TotalMicroseconds => Ticks / ChronoConstants.TicksPerMicrosecond;
     public decimal TotalMilliseconds => Ticks / ChronoConstants.TicksPerMillisecond;
     public decimal TotalSeconds => Ticks / ChronoConstants.TicksPerSecond;
@@ -386,14 +386,14 @@ public readonly struct FloatingDuration : IEquatable<FloatingDuration>, ICompara
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static explicit operator TimeSpan(FloatingDuration d)
     {
-        return TimeSpan.FromTicks( (long)Math.Round( d.Ticks, MidpointRounding.AwayFromZero ) );
+        return TimeSpan.FromTicks( ( long )Math.Round( d.Ticks, MidpointRounding.AwayFromZero ) );
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static explicit operator Duration(FloatingDuration d)
     {
-        return Duration.FromTicks( (long)Math.Round( d.Ticks, MidpointRounding.AwayFromZero ) );
+        return Duration.FromTicks( ( long )Math.Round( d.Ticks, MidpointRounding.AwayFromZero ) );
     }
 
     [Pure]

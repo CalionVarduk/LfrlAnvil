@@ -445,7 +445,7 @@ public abstract class GenericSequenceGeneratorTestsBase<T> : TestsBase
 
         var expected = other.TryGenerate( out _ );
 
-        var result = ((IGenerator)sut).TryGenerate( out var outResult );
+        var result = (( IGenerator )sut).TryGenerate( out var outResult );
 
         using ( new AssertionScope() )
         {

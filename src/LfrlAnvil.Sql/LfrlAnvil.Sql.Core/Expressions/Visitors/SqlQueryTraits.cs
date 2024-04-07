@@ -9,4 +9,5 @@ public readonly record struct SqlQueryTraits(
     Chain<ReadOnlyArray<SqlOrderByNode>> Ordering,
     SqlExpressionNode? Limit,
     SqlExpressionNode? Offset,
-    Chain<SqlTraitNode> Custom);
+    Chain<SqlTraitNode> Custom
+);

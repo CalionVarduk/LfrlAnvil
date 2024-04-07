@@ -511,8 +511,7 @@ public class GenericBoundsRangeTestsData<T>
             { range, Bind( i, l ), new[] { Bind( i, l ) } },
             { range, Bind( e, k ), new[] { Bind( e, f ), Bind( i, k ) } },
             {
-                new[] { Bind( b, c ), Bind( d, e ), Bind( f, g ), Bind( i, j ), Bind( l, m ) },
-                Bind( a, n ),
+                new[] { Bind( b, c ), Bind( d, e ), Bind( f, g ), Bind( i, j ), Bind( l, m ) }, Bind( a, n ),
                 new[] { Bind( b, c ), Bind( d, e ), Bind( f, g ), Bind( i, j ), Bind( l, m ) }
             }
         };
@@ -560,21 +559,18 @@ public class GenericBoundsRangeTestsData<T>
             { range, new[] { Bind( b, d ), Bind( g, h ), Bind( k, n ) }, new[] { Bind( c, d ), Bind( k, l ) } },
             { range, new[] { Bind( d, e ), Bind( i, k ) }, new[] { Bind( d, e ), Bind( i, k ) } },
             {
-                range,
-                new[] { Bind( c, c ), Bind( i, j ), Bind( k, l ), Bind( m, m ) },
+                range, new[] { Bind( c, c ), Bind( i, j ), Bind( k, l ), Bind( m, m ) },
                 new[] { Bind( c, c ), Bind( i, j ), Bind( k, l ) }
             },
             { range, new[] { Bind( d, d ), Bind( i, j ), Bind( k, l ) }, new[] { Bind( d, d ), Bind( i, j ), Bind( k, l ) } },
             { range, new[] { Bind( b, k ), Bind( l, m ) }, new[] { Bind( c, f ), Bind( i, k ), Bind( l, l ) } },
             { new[] { Bind( a, n ) }, range, range },
             {
-                new[] { Bind( a, n ) },
-                new[] { Bind( b, c ), Bind( d, e ), Bind( f, g ), Bind( i, j ), Bind( l, m ) },
+                new[] { Bind( a, n ) }, new[] { Bind( b, c ), Bind( d, e ), Bind( f, g ), Bind( i, j ), Bind( l, m ) },
                 new[] { Bind( b, c ), Bind( d, e ), Bind( f, g ), Bind( i, j ), Bind( l, m ) }
             },
             {
-                new[] { Bind( b, c ), Bind( d, e ), Bind( f, g ), Bind( i, j ), Bind( l, m ) },
-                new[] { Bind( a, n ) },
+                new[] { Bind( b, c ), Bind( d, e ), Bind( f, g ), Bind( i, j ), Bind( l, m ) }, new[] { Bind( a, n ) },
                 new[] { Bind( b, c ), Bind( d, e ), Bind( f, g ), Bind( i, j ), Bind( l, m ) }
             },
             { new[] { Bind( i, j ), Bind( k, l ) }, new[] { Bind( c, d ), Bind( e, f ) }, Array.Empty<Bounds<T>>() },
@@ -659,45 +655,38 @@ public class GenericBoundsRangeTestsData<T>
             { range, new[] { Bind( m, n ) }, new[] { Bind( c, f ), Bind( i, l ), Bind( m, n ) } },
             { range, new[] { Bind( a, b ), Bind( g, h ) }, new[] { Bind( a, b ), Bind( c, f ), Bind( g, h ), Bind( i, l ) } },
             {
-                range,
-                new[] { Bind( a, b ), Bind( g, h ), Bind( m, n ) },
+                range, new[] { Bind( a, b ), Bind( g, h ), Bind( m, n ) },
                 new[] { Bind( a, b ), Bind( c, f ), Bind( g, h ), Bind( i, l ), Bind( m, n ) }
             },
             { range, new[] { Bind( g, h ), Bind( m, n ) }, new[] { Bind( c, f ), Bind( g, h ), Bind( i, l ), Bind( m, n ) } },
             { range, new[] { Bind( b, d ), Bind( g, h ), Bind( k, n ) }, new[] { Bind( b, f ), Bind( g, h ), Bind( i, n ) } },
             { range, new[] { Bind( d, e ), Bind( i, k ) }, range },
             {
-                range,
-                new[] { Bind( c, c ), Bind( i, j ), Bind( k, l ), Bind( m, m ) },
+                range, new[] { Bind( c, c ), Bind( i, j ), Bind( k, l ), Bind( m, m ) },
                 new[] { Bind( c, f ), Bind( i, l ), Bind( m, m ) }
             },
             { range, new[] { Bind( d, d ), Bind( i, j ), Bind( k, l ) }, range },
             { range, new[] { Bind( b, k ), Bind( l, m ) }, new[] { Bind( b, m ) } },
             { new[] { Bind( a, n ) }, range, new[] { Bind( a, n ) } },
             {
-                new[] { Bind( a, n ) },
-                new[] { Bind( b, c ), Bind( d, e ), Bind( f, g ), Bind( i, j ), Bind( l, m ) },
+                new[] { Bind( a, n ) }, new[] { Bind( b, c ), Bind( d, e ), Bind( f, g ), Bind( i, j ), Bind( l, m ) },
                 new[] { Bind( a, n ) }
             },
             {
-                new[] { Bind( b, c ), Bind( d, e ), Bind( f, g ), Bind( i, j ), Bind( l, m ) },
-                new[] { Bind( a, n ) },
+                new[] { Bind( b, c ), Bind( d, e ), Bind( f, g ), Bind( i, j ), Bind( l, m ) }, new[] { Bind( a, n ) },
                 new[] { Bind( a, n ) }
             },
             {
-                new[] { Bind( i, j ), Bind( k, l ) },
-                new[] { Bind( c, d ), Bind( e, f ) },
+                new[] { Bind( i, j ), Bind( k, l ) }, new[] { Bind( c, d ), Bind( e, f ) },
                 new[] { Bind( c, d ), Bind( e, f ), Bind( i, j ), Bind( k, l ) }
             },
             {
-                new[] { Bind( c, d ), Bind( e, f ) },
-                new[] { Bind( i, j ), Bind( k, l ) },
+                new[] { Bind( c, d ), Bind( e, f ) }, new[] { Bind( i, j ), Bind( k, l ) },
                 new[] { Bind( c, d ), Bind( e, f ), Bind( i, j ), Bind( k, l ) }
             },
             { new[] { Bind( c, c ) }, new[] { Bind( c, c ) }, new[] { Bind( c, c ) } },
             {
-                new[] { Bind( c, d ) },
-                new[] { Bind( a, d ), Bind( e, f ), Bind( g, h ) },
+                new[] { Bind( c, d ) }, new[] { Bind( a, d ), Bind( e, f ), Bind( g, h ) },
                 new[] { Bind( a, d ), Bind( e, f ), Bind( g, h ) }
             },
             { new[] { Bind( b, g ) }, new[] { Bind( c, d ), Bind( f, h ) }, new[] { Bind( b, h ) } },
@@ -786,13 +775,11 @@ public class GenericBoundsRangeTestsData<T>
             { range, new[] { Bind( b, k ), Bind( l, m ) }, new[] { Bind( k, l ) } },
             { new[] { Bind( a, n ) }, range, new[] { Bind( a, c ), Bind( f, i ), Bind( l, n ) } },
             {
-                new[] { Bind( a, n ) },
-                new[] { Bind( b, c ), Bind( d, e ), Bind( f, g ), Bind( i, j ), Bind( l, m ) },
+                new[] { Bind( a, n ) }, new[] { Bind( b, c ), Bind( d, e ), Bind( f, g ), Bind( i, j ), Bind( l, m ) },
                 new[] { Bind( a, b ), Bind( c, d ), Bind( e, f ), Bind( g, i ), Bind( j, l ), Bind( m, n ) }
             },
             {
-                new[] { Bind( b, c ), Bind( d, e ), Bind( f, g ), Bind( i, j ), Bind( l, m ) },
-                new[] { Bind( a, n ) },
+                new[] { Bind( b, c ), Bind( d, e ), Bind( f, g ), Bind( i, j ), Bind( l, m ) }, new[] { Bind( a, n ) },
                 Array.Empty<Bounds<T>>()
             },
             { new[] { Bind( i, j ), Bind( k, l ) }, new[] { Bind( c, d ), Bind( e, f ) }, new[] { Bind( i, j ), Bind( k, l ) } },
@@ -856,8 +843,7 @@ public class GenericBoundsRangeTestsData<T>
             { range, Bind( i, l ), Array.Empty<Bounds<T>>() },
             { range, Bind( e, k ), new[] { Bind( f, i ) } },
             {
-                new[] { Bind( b, c ), Bind( d, e ), Bind( f, g ), Bind( i, j ), Bind( l, m ) },
-                Bind( a, n ),
+                new[] { Bind( b, c ), Bind( d, e ), Bind( f, g ), Bind( i, j ), Bind( l, m ) }, Bind( a, n ),
                 new[] { Bind( a, b ), Bind( c, d ), Bind( e, f ), Bind( g, i ), Bind( j, l ), Bind( m, n ) }
             }
         };
@@ -909,21 +895,18 @@ public class GenericBoundsRangeTestsData<T>
             { range, new[] { Bind( b, k ), Bind( l, m ) }, new[] { Bind( b, c ), Bind( f, i ), Bind( l, m ) } },
             { new[] { Bind( a, n ) }, range, Array.Empty<Bounds<T>>() },
             {
-                new[] { Bind( a, n ) },
-                new[] { Bind( b, c ), Bind( d, e ), Bind( f, g ), Bind( i, j ), Bind( l, m ) },
+                new[] { Bind( a, n ) }, new[] { Bind( b, c ), Bind( d, e ), Bind( f, g ), Bind( i, j ), Bind( l, m ) },
                 Array.Empty<Bounds<T>>()
             },
             {
-                new[] { Bind( b, c ), Bind( d, e ), Bind( f, g ), Bind( i, j ), Bind( l, m ) },
-                new[] { Bind( a, n ) },
+                new[] { Bind( b, c ), Bind( d, e ), Bind( f, g ), Bind( i, j ), Bind( l, m ) }, new[] { Bind( a, n ) },
                 new[] { Bind( a, b ), Bind( c, d ), Bind( e, f ), Bind( g, i ), Bind( j, l ), Bind( m, n ) }
             },
             { new[] { Bind( i, j ), Bind( k, l ) }, new[] { Bind( c, d ), Bind( e, f ) }, new[] { Bind( c, d ), Bind( e, f ) } },
             { new[] { Bind( c, d ), Bind( e, f ) }, new[] { Bind( i, j ), Bind( k, l ) }, new[] { Bind( i, j ), Bind( k, l ) } },
             { new[] { Bind( c, c ) }, new[] { Bind( c, c ) }, Array.Empty<Bounds<T>>() },
             {
-                new[] { Bind( c, d ) },
-                new[] { Bind( a, d ), Bind( e, f ), Bind( g, h ) },
+                new[] { Bind( c, d ) }, new[] { Bind( a, d ), Bind( e, f ), Bind( g, h ) },
                 new[] { Bind( a, c ), Bind( e, f ), Bind( g, h ) }
             },
             { new[] { Bind( b, g ) }, new[] { Bind( c, d ), Bind( f, h ) }, new[] { Bind( g, h ) } },

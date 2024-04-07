@@ -24,7 +24,9 @@ public class EventListenerSelectManyDecoratorTests : TestsBase
     {
         var sourceEvents = new[] { 1, 2, 3, 5, 7, 11, 13, 17, 19, 23 };
         var expectedEvents = new[]
-            { "1", "2", "2", "4", "3", "6", "5", "10", "7", "14", "11", "22", "13", "26", "17", "34", "19", "38", "23", "46" };
+        {
+            "1", "2", "2", "4", "3", "6", "5", "10", "7", "14", "11", "22", "13", "26", "17", "34", "19", "38", "23", "46"
+        };
 
         var actualEvents = new List<string>();
 
@@ -59,7 +61,9 @@ public class EventListenerSelectManyDecoratorTests : TestsBase
     {
         var sourceEvents = new[] { 1, 2, 3, 5, 7, 11, 13, 17, 19, 23 };
         var expectedEvents = new[]
-            { "1", "2", "2", "4", "3", "6", "5", "10", "7", "14", "11", "22", "13", "26", "17", "34", "19", "38", "23", "46" };
+        {
+            "1", "2", "2", "4", "3", "6", "5", "10", "7", "14", "11", "22", "13", "26", "17", "34", "19", "38", "23", "46"
+        };
 
         var actualEvents = new List<string>();
 

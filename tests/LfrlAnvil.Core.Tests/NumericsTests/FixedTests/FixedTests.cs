@@ -275,7 +275,7 @@ public class FixedTests : TestsBase
     [InlineData( 18 )]
     public void GetScale_ShouldReturnCorrectResult(byte precision)
     {
-        var expected = (long)Math.Pow( 10, precision );
+        var expected = ( long )Math.Pow( 10, precision );
         var result = Fixed.GetScale( precision );
         result.Should().Be( expected );
     }
@@ -295,7 +295,7 @@ public class FixedTests : TestsBase
     [InlineData( 123.456789, 6, "N6" )]
     public void ToString_ShouldReturnCorrectResult(double value, byte precision, string expectedFormat)
     {
-        var dec = (decimal)value;
+        var dec = ( decimal )value;
         var sut = Fixed.Create( dec, precision );
         var expected = dec.ToString( expectedFormat, NumberFormatInfo.CurrentInfo );
 
@@ -312,7 +312,7 @@ public class FixedTests : TestsBase
 
         var result = sut.GetHashCode();
 
-        result.Should().Be( ((decimal)sut).GetHashCode() );
+        result.Should().Be( (( decimal )sut).GetHashCode() );
     }
 
     [Theory]
@@ -651,8 +651,8 @@ public class FixedTests : TestsBase
     public void DecimalConversionOperator_ShouldReturnCorrectResult(long rawValue, byte precision, double expected)
     {
         var sut = Fixed.CreateRaw( rawValue, precision );
-        var result = (decimal)sut;
-        result.Should().Be( (decimal)expected );
+        var result = ( decimal )sut;
+        result.Should().Be( ( decimal )expected );
     }
 
     [Theory]
@@ -666,7 +666,7 @@ public class FixedTests : TestsBase
     public void DoubleConversionOperator_ShouldReturnCorrectResult(long rawValue, byte precision, double expected)
     {
         var sut = Fixed.CreateRaw( rawValue, precision );
-        var result = (double)sut;
+        var result = ( double )sut;
         result.Should().Be( expected );
     }
 
@@ -683,7 +683,7 @@ public class FixedTests : TestsBase
     public void Int64ConversionOperator_ShouldReturnCorrectResult(long rawValue, byte precision, long expected)
     {
         var sut = Fixed.CreateRaw( rawValue, precision );
-        var result = (long)sut;
+        var result = ( long )sut;
         result.Should().Be( expected );
     }
 

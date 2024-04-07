@@ -130,54 +130,14 @@ public class ZonedDayTestsData
 
         return new TheoryData<DateTime, TimeZoneInfo, DateTime, Duration>
         {
-            {
-                new DateTime( 2021, 8, 26 ),
-                positiveTimeZone1,
-                new DateTime( 2021, 8, 26, 0, 1, 0 ),
-                new Duration( 23, 59 )
-            },
-            {
-                new DateTime( 2021, 8, 26 ),
-                positiveTimeZone2,
-                new DateTime( 2021, 8, 26, 0, 30, 0 ),
-                new Duration( 23, 30 )
-            },
-            {
-                new DateTime( 2021, 8, 26 ),
-                positiveTimeZone3,
-                new DateTime( 2021, 8, 26, 0, 59, 0 ),
-                new Duration( 23, 1 )
-            },
-            {
-                new DateTime( 2021, 8, 26 ),
-                positiveTimeZone4,
-                new DateTime( 2021, 8, 26, 1, 0, 0 ),
-                new Duration( 23, 0 )
-            },
-            {
-                new DateTime( 2021, 8, 26 ),
-                negativeTimeZone1,
-                new DateTime( 2021, 8, 26, 0, 1, 0 ),
-                new Duration( 23, 59 )
-            },
-            {
-                new DateTime( 2021, 8, 26 ),
-                negativeTimeZone2,
-                new DateTime( 2021, 8, 26, 0, 30, 0 ),
-                new Duration( 23, 30 )
-            },
-            {
-                new DateTime( 2021, 8, 26 ),
-                negativeTimeZone3,
-                new DateTime( 2021, 8, 26, 0, 59, 0 ),
-                new Duration( 23, 1 )
-            },
-            {
-                new DateTime( 2021, 8, 26 ),
-                negativeTimeZone4,
-                new DateTime( 2021, 8, 26, 1, 0, 0 ),
-                new Duration( 23, 0 )
-            }
+            { new DateTime( 2021, 8, 26 ), positiveTimeZone1, new DateTime( 2021, 8, 26, 0, 1, 0 ), new Duration( 23, 59 ) },
+            { new DateTime( 2021, 8, 26 ), positiveTimeZone2, new DateTime( 2021, 8, 26, 0, 30, 0 ), new Duration( 23, 30 ) },
+            { new DateTime( 2021, 8, 26 ), positiveTimeZone3, new DateTime( 2021, 8, 26, 0, 59, 0 ), new Duration( 23, 1 ) },
+            { new DateTime( 2021, 8, 26 ), positiveTimeZone4, new DateTime( 2021, 8, 26, 1, 0, 0 ), new Duration( 23, 0 ) },
+            { new DateTime( 2021, 8, 26 ), negativeTimeZone1, new DateTime( 2021, 8, 26, 0, 1, 0 ), new Duration( 23, 59 ) },
+            { new DateTime( 2021, 8, 26 ), negativeTimeZone2, new DateTime( 2021, 8, 26, 0, 30, 0 ), new Duration( 23, 30 ) },
+            { new DateTime( 2021, 8, 26 ), negativeTimeZone3, new DateTime( 2021, 8, 26, 0, 59, 0 ), new Duration( 23, 1 ) },
+            { new DateTime( 2021, 8, 26 ), negativeTimeZone4, new DateTime( 2021, 8, 26, 1, 0, 0 ), new Duration( 23, 0 ) }
         };
     }
 
@@ -239,51 +199,35 @@ public class ZonedDayTestsData
         return new TheoryData<DateTime, TimeZoneInfo, DateTime, Duration>
         {
             {
-                new DateTime( 2021, 8, 25 ),
-                positiveTimeZone1,
-                new DateTime( 2021, 8, 25, 23, 0, 59, 999 ).AddTicks( 9999 ),
+                new DateTime( 2021, 8, 25 ), positiveTimeZone1, new DateTime( 2021, 8, 25, 23, 0, 59, 999 ).AddTicks( 9999 ),
                 new Duration( 23, 1 )
             },
             {
-                new DateTime( 2021, 8, 25 ),
-                positiveTimeZone2,
-                new DateTime( 2021, 8, 25, 23, 29, 59, 999 ).AddTicks( 9999 ),
+                new DateTime( 2021, 8, 25 ), positiveTimeZone2, new DateTime( 2021, 8, 25, 23, 29, 59, 999 ).AddTicks( 9999 ),
                 new Duration( 23, 30 )
             },
             {
-                new DateTime( 2021, 8, 25 ),
-                positiveTimeZone3,
-                new DateTime( 2021, 8, 25, 23, 58, 59, 999 ).AddTicks( 9999 ),
+                new DateTime( 2021, 8, 25 ), positiveTimeZone3, new DateTime( 2021, 8, 25, 23, 58, 59, 999 ).AddTicks( 9999 ),
                 new Duration( 23, 59 )
             },
             {
-                new DateTime( 2021, 8, 25 ),
-                positiveTimeZone4,
-                new DateTime( 2021, 8, 25, 22, 59, 59, 999 ).AddTicks( 9999 ),
+                new DateTime( 2021, 8, 25 ), positiveTimeZone4, new DateTime( 2021, 8, 25, 22, 59, 59, 999 ).AddTicks( 9999 ),
                 new Duration( 23, 0 )
             },
             {
-                new DateTime( 2021, 8, 25 ),
-                negativeTimeZone1,
-                new DateTime( 2021, 8, 25, 23, 0, 59, 999 ).AddTicks( 9999 ),
+                new DateTime( 2021, 8, 25 ), negativeTimeZone1, new DateTime( 2021, 8, 25, 23, 0, 59, 999 ).AddTicks( 9999 ),
                 new Duration( 23, 1 )
             },
             {
-                new DateTime( 2021, 8, 25 ),
-                negativeTimeZone2,
-                new DateTime( 2021, 8, 25, 23, 29, 59, 999 ).AddTicks( 9999 ),
+                new DateTime( 2021, 8, 25 ), negativeTimeZone2, new DateTime( 2021, 8, 25, 23, 29, 59, 999 ).AddTicks( 9999 ),
                 new Duration( 23, 30 )
             },
             {
-                new DateTime( 2021, 8, 25 ),
-                negativeTimeZone3,
-                new DateTime( 2021, 8, 25, 23, 58, 59, 999 ).AddTicks( 9999 ),
+                new DateTime( 2021, 8, 25 ), negativeTimeZone3, new DateTime( 2021, 8, 25, 23, 58, 59, 999 ).AddTicks( 9999 ),
                 new Duration( 23, 59 )
             },
             {
-                new DateTime( 2021, 8, 25 ),
-                negativeTimeZone4,
-                new DateTime( 2021, 8, 25, 22, 59, 59, 999 ).AddTicks( 9999 ),
+                new DateTime( 2021, 8, 25 ), negativeTimeZone4, new DateTime( 2021, 8, 25, 22, 59, 59, 999 ).AddTicks( 9999 ),
                 new Duration( 23, 0 )
             }
         };
@@ -346,54 +290,14 @@ public class ZonedDayTestsData
 
         return new TheoryData<DateTime, TimeZoneInfo, bool, Duration>
         {
-            {
-                new DateTime( 2021, 8, 26 ),
-                positiveTimeZone1,
-                true,
-                new Duration( 24, 1 )
-            },
-            {
-                new DateTime( 2021, 8, 26 ),
-                positiveTimeZone2,
-                true,
-                new Duration( 24, 30 )
-            },
-            {
-                new DateTime( 2021, 8, 26 ),
-                positiveTimeZone3,
-                true,
-                new Duration( 24, 59 )
-            },
-            {
-                new DateTime( 2021, 8, 26 ),
-                positiveTimeZone4,
-                true,
-                new Duration( 25, 0 )
-            },
-            {
-                new DateTime( 2021, 8, 26 ),
-                negativeTimeZone1,
-                false,
-                new Duration( 24, 1 )
-            },
-            {
-                new DateTime( 2021, 8, 26 ),
-                negativeTimeZone2,
-                false,
-                new Duration( 24, 30 )
-            },
-            {
-                new DateTime( 2021, 8, 26 ),
-                negativeTimeZone3,
-                false,
-                new Duration( 24, 59 )
-            },
-            {
-                new DateTime( 2021, 8, 26 ),
-                negativeTimeZone4,
-                false,
-                new Duration( 25, 0 )
-            }
+            { new DateTime( 2021, 8, 26 ), positiveTimeZone1, true, new Duration( 24, 1 ) },
+            { new DateTime( 2021, 8, 26 ), positiveTimeZone2, true, new Duration( 24, 30 ) },
+            { new DateTime( 2021, 8, 26 ), positiveTimeZone3, true, new Duration( 24, 59 ) },
+            { new DateTime( 2021, 8, 26 ), positiveTimeZone4, true, new Duration( 25, 0 ) },
+            { new DateTime( 2021, 8, 26 ), negativeTimeZone1, false, new Duration( 24, 1 ) },
+            { new DateTime( 2021, 8, 26 ), negativeTimeZone2, false, new Duration( 24, 30 ) },
+            { new DateTime( 2021, 8, 26 ), negativeTimeZone3, false, new Duration( 24, 59 ) },
+            { new DateTime( 2021, 8, 26 ), negativeTimeZone4, false, new Duration( 25, 0 ) }
         };
     }
 
@@ -454,54 +358,14 @@ public class ZonedDayTestsData
 
         return new TheoryData<DateTime, TimeZoneInfo, bool, Duration>
         {
-            {
-                new DateTime( 2021, 8, 26 ),
-                positiveTimeZone1,
-                false,
-                new Duration( 24, 59 )
-            },
-            {
-                new DateTime( 2021, 8, 26 ),
-                positiveTimeZone2,
-                false,
-                new Duration( 24, 30 )
-            },
-            {
-                new DateTime( 2021, 8, 26 ),
-                positiveTimeZone3,
-                false,
-                new Duration( 24, 1 )
-            },
-            {
-                new DateTime( 2021, 8, 26 ),
-                positiveTimeZone4,
-                false,
-                new Duration( 25, 0 )
-            },
-            {
-                new DateTime( 2021, 8, 25 ),
-                negativeTimeZone1,
-                true,
-                new Duration( 24, 59 )
-            },
-            {
-                new DateTime( 2021, 8, 25 ),
-                negativeTimeZone2,
-                true,
-                new Duration( 24, 30 )
-            },
-            {
-                new DateTime( 2021, 8, 25 ),
-                negativeTimeZone3,
-                true,
-                new Duration( 24, 1 )
-            },
-            {
-                new DateTime( 2021, 8, 25 ),
-                negativeTimeZone4,
-                true,
-                new Duration( 25, 0 )
-            }
+            { new DateTime( 2021, 8, 26 ), positiveTimeZone1, false, new Duration( 24, 59 ) },
+            { new DateTime( 2021, 8, 26 ), positiveTimeZone2, false, new Duration( 24, 30 ) },
+            { new DateTime( 2021, 8, 26 ), positiveTimeZone3, false, new Duration( 24, 1 ) },
+            { new DateTime( 2021, 8, 26 ), positiveTimeZone4, false, new Duration( 25, 0 ) },
+            { new DateTime( 2021, 8, 25 ), negativeTimeZone1, true, new Duration( 24, 59 ) },
+            { new DateTime( 2021, 8, 25 ), negativeTimeZone2, true, new Duration( 24, 30 ) },
+            { new DateTime( 2021, 8, 25 ), negativeTimeZone3, true, new Duration( 24, 1 ) },
+            { new DateTime( 2021, 8, 25 ), negativeTimeZone4, true, new Duration( 25, 0 ) }
         };
     }
 
@@ -549,48 +413,12 @@ public class ZonedDayTestsData
 
         return new TheoryData<DateTime, TimeZoneInfo, DateTime, bool, Duration>
         {
-            {
-                new DateTime( 2021, 8, 26 ),
-                positiveTimeZone1,
-                new DateTime( 2021, 8, 26, 0, 1, 0 ),
-                false,
-                new Duration( 24, 58 )
-            },
-            {
-                new DateTime( 2021, 8, 26 ),
-                positiveTimeZone2,
-                new DateTime( 2021, 8, 26, 0, 59, 0 ),
-                false,
-                new Duration( 23, 2 )
-            },
-            {
-                new DateTime( 2021, 8, 26 ),
-                positiveTimeZone3,
-                new DateTime( 2021, 8, 26, 1, 0, 0 ),
-                false,
-                new Duration( 24, 0 )
-            },
-            {
-                new DateTime( 2021, 8, 26 ),
-                negativeTimeZone1,
-                new DateTime( 2021, 8, 26, 0, 1, 0 ),
-                true,
-                new Duration( 24, 58 )
-            },
-            {
-                new DateTime( 2021, 8, 26 ),
-                negativeTimeZone2,
-                new DateTime( 2021, 8, 26, 0, 59, 0 ),
-                true,
-                new Duration( 23, 2 )
-            },
-            {
-                new DateTime( 2021, 8, 26 ),
-                negativeTimeZone3,
-                new DateTime( 2021, 8, 26, 1, 0, 0 ),
-                true,
-                new Duration( 24, 0 )
-            }
+            { new DateTime( 2021, 8, 26 ), positiveTimeZone1, new DateTime( 2021, 8, 26, 0, 1, 0 ), false, new Duration( 24, 58 ) },
+            { new DateTime( 2021, 8, 26 ), positiveTimeZone2, new DateTime( 2021, 8, 26, 0, 59, 0 ), false, new Duration( 23, 2 ) },
+            { new DateTime( 2021, 8, 26 ), positiveTimeZone3, new DateTime( 2021, 8, 26, 1, 0, 0 ), false, new Duration( 24, 0 ) },
+            { new DateTime( 2021, 8, 26 ), negativeTimeZone1, new DateTime( 2021, 8, 26, 0, 1, 0 ), true, new Duration( 24, 58 ) },
+            { new DateTime( 2021, 8, 26 ), negativeTimeZone2, new DateTime( 2021, 8, 26, 0, 59, 0 ), true, new Duration( 23, 2 ) },
+            { new DateTime( 2021, 8, 26 ), negativeTimeZone3, new DateTime( 2021, 8, 26, 1, 0, 0 ), true, new Duration( 24, 0 ) }
         };
     }
 
@@ -639,45 +467,27 @@ public class ZonedDayTestsData
         return new TheoryData<DateTime, TimeZoneInfo, DateTime, bool, Duration>
         {
             {
-                new DateTime( 2021, 8, 26 ),
-                positiveTimeZone1,
-                new DateTime( 2021, 8, 26, 23, 58, 59, 999 ).AddTicks( 9999 ),
-                true,
+                new DateTime( 2021, 8, 26 ), positiveTimeZone1, new DateTime( 2021, 8, 26, 23, 58, 59, 999 ).AddTicks( 9999 ), true,
                 new Duration( 24, 58 )
             },
             {
-                new DateTime( 2021, 8, 26 ),
-                positiveTimeZone2,
-                new DateTime( 2021, 8, 26, 23, 0, 59, 999 ).AddTicks( 9999 ),
-                true,
+                new DateTime( 2021, 8, 26 ), positiveTimeZone2, new DateTime( 2021, 8, 26, 23, 0, 59, 999 ).AddTicks( 9999 ), true,
                 new Duration( 23, 2 )
             },
             {
-                new DateTime( 2021, 8, 26 ),
-                positiveTimeZone3,
-                new DateTime( 2021, 8, 26, 22, 59, 59, 999 ).AddTicks( 9999 ),
-                true,
+                new DateTime( 2021, 8, 26 ), positiveTimeZone3, new DateTime( 2021, 8, 26, 22, 59, 59, 999 ).AddTicks( 9999 ), true,
                 new Duration( 24, 0 )
             },
             {
-                new DateTime( 2021, 8, 26 ),
-                negativeTimeZone1,
-                new DateTime( 2021, 8, 26, 23, 58, 59, 999 ).AddTicks( 9999 ),
-                false,
+                new DateTime( 2021, 8, 26 ), negativeTimeZone1, new DateTime( 2021, 8, 26, 23, 58, 59, 999 ).AddTicks( 9999 ), false,
                 new Duration( 24, 58 )
             },
             {
-                new DateTime( 2021, 8, 26 ),
-                negativeTimeZone2,
-                new DateTime( 2021, 8, 26, 23, 0, 59, 999 ).AddTicks( 9999 ),
-                false,
+                new DateTime( 2021, 8, 26 ), negativeTimeZone2, new DateTime( 2021, 8, 26, 23, 0, 59, 999 ).AddTicks( 9999 ), false,
                 new Duration( 23, 2 )
             },
             {
-                new DateTime( 2021, 8, 26 ),
-                negativeTimeZone3,
-                new DateTime( 2021, 8, 26, 22, 59, 59, 999 ).AddTicks( 9999 ),
-                false,
+                new DateTime( 2021, 8, 26 ), negativeTimeZone3, new DateTime( 2021, 8, 26, 22, 59, 59, 999 ).AddTicks( 9999 ), false,
                 new Duration( 24, 0 )
             }
         };
@@ -851,12 +661,7 @@ public class ZonedDayTestsData
             { day, timeZone, Period.FromTicks( 864000000000 ), new DateTime( 2021, 8, 27 ) },
             { day, timeZone, new Period( 1, 2, 3, 4, 22, 90, 1700, 80000, 18000000, 20000000 ), new DateTime( 2022, 11, 21 ) },
             { day, timeZoneWithDaylightSaving, Period.FromMonths( 1 ).AddHours( 2 ), new DateTime( 2021, 9, 26 ) },
-            {
-                day,
-                timeZoneWithDaylightSaving,
-                Period.FromMonths( 1 ).AddHours( 3 ).SubtractTicks( 1 ),
-                new DateTime( 2021, 9, 26 )
-            },
+            { day, timeZoneWithDaylightSaving, Period.FromMonths( 1 ).AddHours( 3 ).SubtractTicks( 1 ), new DateTime( 2021, 9, 26 ) },
             { day, timeZone, Period.FromTicks( -1 ), new DateTime( 2021, 8, 25 ) }
         };
     }
@@ -1064,24 +869,12 @@ public class ZonedDayTestsData
             { day, timeZone, TimeOfDay.Start, day },
             { day, timeZone, TimeOfDay.Mid, new DateTime( 2021, 8, 26, 12, 0, 0 ) },
             { day, timeZone, TimeOfDay.End, new DateTime( 2021, 8, 26, 23, 59, 59, 999 ).AddTicks( 9999 ) },
+            { day, timeZone, new TimeOfDay( 12, 30, 40, 500, 600, 1 ), new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ) },
             {
-                day,
-                timeZone,
-                new TimeOfDay( 12, 30, 40, 500, 600, 1 ),
-                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 )
-            },
-            {
-                day,
-                timeZoneWithInvalidity,
-                new TimeOfDay( 11, 59, 59, 999, 999, 9 ),
+                day, timeZoneWithInvalidity, new TimeOfDay( 11, 59, 59, 999, 999, 9 ),
                 new DateTime( 2021, 8, 26, 11, 59, 59, 999 ).AddTicks( 9999 )
             },
-            {
-                day,
-                timeZoneWithInvalidity,
-                new TimeOfDay( 13 ),
-                new DateTime( 2021, 8, 26, 13, 0, 0 )
-            }
+            { day, timeZoneWithInvalidity, new TimeOfDay( 13 ), new DateTime( 2021, 8, 26, 13, 0, 0 ) }
         };
     }
 
@@ -1132,39 +925,27 @@ public class ZonedDayTestsData
         return new TheoryData<DateTime, TimeZoneInfo, DateTime, DateTime>
         {
             {
-                new DateTime( 2021, 8, 26 ),
-                positiveTimeZoneWithInvalidity,
-                new DateTime( 2021, 8, 26, 12, 0, 0 ),
+                new DateTime( 2021, 8, 26 ), positiveTimeZoneWithInvalidity, new DateTime( 2021, 8, 26, 12, 0, 0 ),
                 new DateTime( 2021, 8, 26, 12, 59, 59, 999 ).AddTicks( 9999 )
             },
             {
-                new DateTime( 2021, 10, 26 ),
-                negativeTimeZoneWithInvalidity,
-                new DateTime( 2021, 10, 26, 12, 0, 0 ),
+                new DateTime( 2021, 10, 26 ), negativeTimeZoneWithInvalidity, new DateTime( 2021, 10, 26, 12, 0, 0 ),
                 new DateTime( 2021, 10, 26, 12, 59, 59, 999 ).AddTicks( 9999 )
             },
             {
-                new DateTime( 2021, 8, 26 ),
-                positiveTimeZoneWithInvalidMidnight,
-                new DateTime( 2021, 8, 25, 23, 30, 0 ),
+                new DateTime( 2021, 8, 26 ), positiveTimeZoneWithInvalidMidnight, new DateTime( 2021, 8, 25, 23, 30, 0 ),
                 new DateTime( 2021, 8, 26, 0, 29, 59, 999 ).AddTicks( 9999 )
             },
             {
-                new DateTime( 2021, 8, 25 ),
-                positiveTimeZoneWithInvalidMidnight,
-                new DateTime( 2021, 8, 25, 23, 30, 0 ),
+                new DateTime( 2021, 8, 25 ), positiveTimeZoneWithInvalidMidnight, new DateTime( 2021, 8, 25, 23, 30, 0 ),
                 new DateTime( 2021, 8, 26, 0, 29, 59, 999 ).AddTicks( 9999 )
             },
             {
-                new DateTime( 2021, 10, 26 ),
-                negativeTimeZoneWithInvalidMidnight,
-                new DateTime( 2021, 10, 25, 23, 30, 0 ),
+                new DateTime( 2021, 10, 26 ), negativeTimeZoneWithInvalidMidnight, new DateTime( 2021, 10, 25, 23, 30, 0 ),
                 new DateTime( 2021, 10, 26, 0, 29, 59, 999 ).AddTicks( 9999 )
             },
             {
-                new DateTime( 2021, 10, 25 ),
-                negativeTimeZoneWithInvalidMidnight,
-                new DateTime( 2021, 10, 25, 23, 30, 0 ),
+                new DateTime( 2021, 10, 25 ), negativeTimeZoneWithInvalidMidnight, new DateTime( 2021, 10, 25, 23, 30, 0 ),
                 new DateTime( 2021, 10, 26, 0, 29, 59, 999 ).AddTicks( 9999 )
             }
         };
@@ -1229,39 +1010,27 @@ public class ZonedDayTestsData
         return new TheoryData<DateTime, TimeZoneInfo, DateTime, DateTime>
         {
             {
-                new DateTime( 2021, 10, 26 ),
-                positiveTimeZoneWithInvalidity,
-                new DateTime( 2021, 10, 26, 11, 0, 0 ),
+                new DateTime( 2021, 10, 26 ), positiveTimeZoneWithInvalidity, new DateTime( 2021, 10, 26, 11, 0, 0 ),
                 new DateTime( 2021, 10, 26, 11, 59, 59, 999 ).AddTicks( 9999 )
             },
             {
-                new DateTime( 2021, 8, 26 ),
-                negativeTimeZoneWithInvalidity,
-                new DateTime( 2021, 8, 26, 11, 0, 0 ),
+                new DateTime( 2021, 8, 26 ), negativeTimeZoneWithInvalidity, new DateTime( 2021, 8, 26, 11, 0, 0 ),
                 new DateTime( 2021, 8, 26, 11, 59, 59, 999 ).AddTicks( 9999 )
             },
             {
-                new DateTime( 2021, 10, 26 ),
-                positiveTimeZoneWithAmbiguousMidnight,
-                new DateTime( 2021, 10, 25, 23, 30, 0 ),
+                new DateTime( 2021, 10, 26 ), positiveTimeZoneWithAmbiguousMidnight, new DateTime( 2021, 10, 25, 23, 30, 0 ),
                 new DateTime( 2021, 10, 26, 0, 29, 59, 999 ).AddTicks( 9999 )
             },
             {
-                new DateTime( 2021, 10, 25 ),
-                positiveTimeZoneWithAmbiguousMidnight,
-                new DateTime( 2021, 10, 25, 23, 30, 0 ),
+                new DateTime( 2021, 10, 25 ), positiveTimeZoneWithAmbiguousMidnight, new DateTime( 2021, 10, 25, 23, 30, 0 ),
                 new DateTime( 2021, 10, 26, 0, 29, 59, 999 ).AddTicks( 9999 )
             },
             {
-                new DateTime( 2021, 8, 26 ),
-                negativeTimeZoneWithAmbiguousMidnight,
-                new DateTime( 2021, 8, 25, 23, 30, 0 ),
+                new DateTime( 2021, 8, 26 ), negativeTimeZoneWithAmbiguousMidnight, new DateTime( 2021, 8, 25, 23, 30, 0 ),
                 new DateTime( 2021, 8, 26, 0, 29, 59, 999 ).AddTicks( 9999 )
             },
             {
-                new DateTime( 2021, 8, 25 ),
-                negativeTimeZoneWithAmbiguousMidnight,
-                new DateTime( 2021, 8, 25, 23, 30, 0 ),
+                new DateTime( 2021, 8, 25 ), negativeTimeZoneWithAmbiguousMidnight, new DateTime( 2021, 8, 25, 23, 30, 0 ),
                 new DateTime( 2021, 8, 26, 0, 29, 59, 999 ).AddTicks( 9999 )
             }
         };

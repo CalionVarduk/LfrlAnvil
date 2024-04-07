@@ -23,7 +23,7 @@ public class SequentialHashSet<T> : ISet<T>, IReadOnlySet<T>
     public int Count => _map.Count;
     public IEqualityComparer<T> Comparer => _map.Comparer;
 
-    bool ICollection<T>.IsReadOnly => ((ICollection<KeyValuePair<T, LinkedListNode<T>>>)_map).IsReadOnly;
+    bool ICollection<T>.IsReadOnly => (( ICollection<KeyValuePair<T, LinkedListNode<T>>> )_map).IsReadOnly;
 
     public bool Add(T item)
     {

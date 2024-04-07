@@ -11,7 +11,7 @@ public abstract class GenericValidTypeCastExtensionsTests<TSource, TDestination>
     {
         var value = Fixture.CreateNotDefault<TSource>();
 
-        var sut = (TypeCast<TSource, TDestination>)value;
+        var sut = ( TypeCast<TSource, TDestination> )value;
 
         var result = sut.ToMaybe();
 

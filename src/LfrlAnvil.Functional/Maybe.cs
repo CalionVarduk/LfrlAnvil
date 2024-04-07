@@ -219,6 +219,6 @@ public readonly struct Maybe<T> : IEquatable<Maybe<T>>, IReadOnlyCollection<T>
     [Pure]
     IEnumerator IEnumerable.GetEnumerator()
     {
-        return ((IEnumerable<T>)this).GetEnumerator();
+        return (( IEnumerable<T> )this).GetEnumerator();
     }
 }

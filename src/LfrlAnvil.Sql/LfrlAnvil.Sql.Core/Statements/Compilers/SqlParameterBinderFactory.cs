@@ -100,7 +100,8 @@ public class SqlParameterBinderFactory : ISqlParameterBinderFactory
         object Source,
         TypeNullability Type,
         bool IgnoreWhenNull,
-        bool IsReducibleCollection);
+        bool IsReducibleCollection
+    );
 
     [Pure]
     private StatementParameterInfo[] CreateParameterSources(Type sourceType, in SqlParameterBinderCreationOptions options)
@@ -240,8 +241,8 @@ public class SqlParameterBinderFactory : ISqlParameterBinderFactory
             if ( parameterType is null )
                 continue;
 
-            if ( (s.Type.IsNullable && ! parameterType.Value.IsNullable) ||
-                ! s.Type.ActualType.IsAssignableTo( parameterType.Value.ActualType ) )
+            if ( (s.Type.IsNullable && ! parameterType.Value.IsNullable)
+                || ! s.Type.ActualType.IsAssignableTo( parameterType.Value.ActualType ) )
             {
                 var error = ExceptionResources.IncompatibleStatementParameterType( s.Name, parameterType.Value, s.Type.ActualType );
                 parameterErrors = parameterErrors.Extend( error );
@@ -407,7 +408,7 @@ public class SqlParameterBinderFactory : ISqlParameterBinderFactory
         IDbDataParameter? parameter;
         if ( index < originalCount )
         {
-            parameter = (IDbDataParameter?)parameters[index];
+            parameter = ( IDbDataParameter? )parameters[index];
             Ensure.IsNotNull( parameter );
         }
         else

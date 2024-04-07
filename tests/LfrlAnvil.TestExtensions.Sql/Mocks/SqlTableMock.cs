@@ -26,6 +26,6 @@ public sealed class SqlTableMock : SqlTable
         var db = SqlDatabaseMock.Create( builder.Database );
         var schema = schemaName is null ? db.Schemas.Default : db.Schemas.Get( schemaName );
         var table = schema.Objects.GetTable( name );
-        return (SqlTableMock)table;
+        return ( SqlTableMock )table;
     }
 }

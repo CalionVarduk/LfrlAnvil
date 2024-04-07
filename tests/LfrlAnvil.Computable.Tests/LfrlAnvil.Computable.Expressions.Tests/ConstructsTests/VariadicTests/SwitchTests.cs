@@ -105,20 +105,16 @@ public class SwitchTests : TestsBase
             @switch.DefaultBody.Should().BeSameAs( parameters[^1] );
             @switch.Cases.Should()
                 .BeSequentiallyEqualTo(
-                    (SwitchCase)((ConstantExpression)parameters[1]).Value!,
-                    (SwitchCase)((ConstantExpression)parameters[2]).Value!,
-                    (SwitchCase)((ConstantExpression)parameters[3]).Value! );
+                    ( SwitchCase )(( ConstantExpression )parameters[1]).Value!,
+                    ( SwitchCase )(( ConstantExpression )parameters[2]).Value!,
+                    ( SwitchCase )(( ConstantExpression )parameters[3]).Value! );
         }
     }
 
     [Fact]
     public void Process_ShouldReturnDefaultBody_WhenValueIsNotConstantAndThereAreNoSwitchCases()
     {
-        var parameters = new Expression[]
-        {
-            Expression.Parameter( typeof( int ) ),
-            Expression.Constant( "foobar" )
-        };
+        var parameters = new Expression[] { Expression.Parameter( typeof( int ) ), Expression.Constant( "foobar" ) };
 
         var sut = new ParsedExpressionSwitch();
 
@@ -147,7 +143,7 @@ public class SwitchTests : TestsBase
                 return;
 
             @switch.SwitchValue.Should().BeSameAs( parameters[0] );
-            @switch.Cases.Should().BeSequentiallyEqualTo( (SwitchCase)((ConstantExpression)parameters[1]).Value! );
+            @switch.Cases.Should().BeSequentiallyEqualTo( ( SwitchCase )(( ConstantExpression )parameters[1]).Value! );
             (@switch.DefaultBody?.NodeType).Should().Be( ExpressionType.Throw );
             if ( @switch.DefaultBody is not UnaryExpression defaultThrow )
                 return;
@@ -218,7 +214,7 @@ public class SwitchTests : TestsBase
 
         var result = sut.Process( parameters );
 
-        result.Should().BeSameAs( ((SwitchCase)((ConstantExpression)parameters[3]).Value!).Body );
+        result.Should().BeSameAs( (( SwitchCase )(( ConstantExpression )parameters[3]).Value!).Body );
     }
 
     [Fact]
@@ -237,7 +233,7 @@ public class SwitchTests : TestsBase
 
         var result = sut.Process( parameters );
 
-        result.Should().BeSameAs( ((SwitchCase)((ConstantExpression)parameters[3]).Value!).Body );
+        result.Should().BeSameAs( (( SwitchCase )(( ConstantExpression )parameters[3]).Value!).Body );
     }
 
     [Fact]
@@ -266,9 +262,9 @@ public class SwitchTests : TestsBase
             @switch.DefaultBody.Should().BeSameAs( parameters[^1] );
             @switch.Cases.Should()
                 .BeSequentiallyEqualTo(
-                    (SwitchCase)((ConstantExpression)parameters[1]).Value!,
-                    (SwitchCase)((ConstantExpression)parameters[2]).Value!,
-                    (SwitchCase)((ConstantExpression)parameters[3]).Value! );
+                    ( SwitchCase )(( ConstantExpression )parameters[1]).Value!,
+                    ( SwitchCase )(( ConstantExpression )parameters[2]).Value!,
+                    ( SwitchCase )(( ConstantExpression )parameters[3]).Value! );
         }
     }
 
@@ -296,7 +292,7 @@ public class SwitchTests : TestsBase
 
             @switch.SwitchValue.Should().BeSameAs( parameters[0] );
             @switch.DefaultBody.Should().BeSameAs( parameters[^1] );
-            @switch.Cases.Should().BeSequentiallyEqualTo( (SwitchCase)((ConstantExpression)parameters[3]).Value! );
+            @switch.Cases.Should().BeSequentiallyEqualTo( ( SwitchCase )(( ConstantExpression )parameters[3]).Value! );
         }
     }
 
@@ -386,14 +382,14 @@ public class SwitchTests : TestsBase
 
             defaultThrow.Type.Should().Be( typeof( string ) );
             defaultThrow.Operand.Should().BeSameAs( exception );
-            @switch.Cases[0].Should().BeSameAs( (SwitchCase)((ConstantExpression)parameters[1]).Value! );
+            @switch.Cases[0].Should().BeSameAs( ( SwitchCase )(( ConstantExpression )parameters[1]).Value! );
 
             @switch.Cases[1].Body.NodeType.Should().Be( ExpressionType.Throw );
             @switch.Cases[1]
                 .TestValues.Should()
-                .BeSequentiallyEqualTo( ((SwitchCase)((ConstantExpression)parameters[2]).Value!).TestValues );
+                .BeSequentiallyEqualTo( (( SwitchCase )(( ConstantExpression )parameters[2]).Value!).TestValues );
 
-            @switch.Cases[2].Should().BeSameAs( (SwitchCase)((ConstantExpression)parameters[3]).Value! );
+            @switch.Cases[2].Should().BeSameAs( ( SwitchCase )(( ConstantExpression )parameters[3]).Value! );
 
             if ( @switch.Cases[1].Body is not UnaryExpression caseThrow )
                 return;

@@ -121,7 +121,7 @@ public class TimeOfDayTests : TestsBase
             sut.Second.Should().Be( timeSpan.Seconds );
             sut.Millisecond.Should().Be( timeSpan.Milliseconds );
             sut.Microsecond.Should().Be( timeSpan.Microseconds );
-            sut.Tick.Should().Be( (int)(timeSpan.Ticks % ChronoConstants.TicksPerMicrosecond) );
+            sut.Tick.Should().Be( ( int )(timeSpan.Ticks % ChronoConstants.TicksPerMicrosecond) );
         }
     }
 
@@ -423,7 +423,7 @@ public class TimeOfDayTests : TestsBase
     public void TimeSpanConversionOperator_ShouldReturnCorrectResult(long ticks)
     {
         var sut = new TimeOfDay( TimeSpan.FromTicks( ticks ) );
-        var result = (TimeSpan)sut;
+        var result = ( TimeSpan )sut;
         result.Ticks.Should().Be( ticks );
     }
 
@@ -432,7 +432,7 @@ public class TimeOfDayTests : TestsBase
     public void DurationConversionOperator_ShouldReturnCorrectResult(long ticks)
     {
         var sut = new TimeOfDay( TimeSpan.FromTicks( ticks ) );
-        var result = (Duration)sut;
+        var result = ( Duration )sut;
         result.Ticks.Should().Be( ticks );
     }
 

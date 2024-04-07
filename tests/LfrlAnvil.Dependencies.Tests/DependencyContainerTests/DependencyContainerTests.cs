@@ -853,12 +853,12 @@ public class DependencyContainerTests : DependencyTestsBase
         action.Should()
             .ThrowExactly<CircularDependencyReferenceException>()
             .AndMatch(
-                e => e.DependencyType == typeof( IFoo ) &&
-                    e.ImplementorType == typeof( IFoo ) &&
-                    e.InnerException is CircularDependencyReferenceException inner &&
-                    inner.DependencyType == typeof( IFoo ) &&
-                    inner.ImplementorType == typeof( IFoo ) &&
-                    inner.InnerException is null );
+                e => e.DependencyType == typeof( IFoo )
+                    && e.ImplementorType == typeof( IFoo )
+                    && e.InnerException is CircularDependencyReferenceException inner
+                    && inner.DependencyType == typeof( IFoo )
+                    && inner.ImplementorType == typeof( IFoo )
+                    && inner.InnerException is null );
     }
 
     [Fact]
@@ -876,21 +876,21 @@ public class DependencyContainerTests : DependencyTestsBase
         action.Should()
             .ThrowExactly<CircularDependencyReferenceException>()
             .AndMatch(
-                e => e.DependencyType == typeof( Implementor ) &&
-                    e.ImplementorType == typeof( Implementor ) &&
-                    e.InnerException is CircularDependencyReferenceException inner1 &&
-                    inner1.DependencyType == typeof( IFoo ) &&
-                    inner1.ImplementorType == typeof( IFoo ) &&
-                    inner1.InnerException is CircularDependencyReferenceException inner2 &&
-                    inner2.DependencyType == typeof( IBar ) &&
-                    inner2.ImplementorType == typeof( IBar ) &&
-                    inner2.InnerException is CircularDependencyReferenceException inner3 &&
-                    inner3.DependencyType == typeof( IQux ) &&
-                    inner3.ImplementorType == typeof( IQux ) &&
-                    inner3.InnerException is CircularDependencyReferenceException inner4 &&
-                    inner4.DependencyType == typeof( Implementor ) &&
-                    inner4.ImplementorType == typeof( Implementor ) &&
-                    inner4.InnerException is null );
+                e => e.DependencyType == typeof( Implementor )
+                    && e.ImplementorType == typeof( Implementor )
+                    && e.InnerException is CircularDependencyReferenceException inner1
+                    && inner1.DependencyType == typeof( IFoo )
+                    && inner1.ImplementorType == typeof( IFoo )
+                    && inner1.InnerException is CircularDependencyReferenceException inner2
+                    && inner2.DependencyType == typeof( IBar )
+                    && inner2.ImplementorType == typeof( IBar )
+                    && inner2.InnerException is CircularDependencyReferenceException inner3
+                    && inner3.DependencyType == typeof( IQux )
+                    && inner3.ImplementorType == typeof( IQux )
+                    && inner3.InnerException is CircularDependencyReferenceException inner4
+                    && inner4.DependencyType == typeof( Implementor )
+                    && inner4.ImplementorType == typeof( Implementor )
+                    && inner4.InnerException is null );
     }
 
     [Theory]
@@ -1514,8 +1514,7 @@ public class DependencyContainerTests : DependencyTestsBase
         var builder = new DependencyContainerBuilder();
         builder.Add<IQux>().FromType<Implementor>();
         builder.Add<MultiCtorImplementor>()
-            .FromConstructor(
-                o => o.ResolveParameter( p => p.ParameterType == typeof( IBar ), _ => new Implementor() ) );
+            .FromConstructor( o => o.ResolveParameter( p => p.ParameterType == typeof( IBar ), _ => new Implementor() ) );
 
         var sut = builder.Build();
 
@@ -1536,8 +1535,7 @@ public class DependencyContainerTests : DependencyTestsBase
         builder.Add<IQux>().FromType<Implementor>();
         builder.Add<Implementor>();
         builder.Add<MultiCtorImplementor>()
-            .FromConstructor(
-                o => o.ResolveParameter( p => p.ParameterType == typeof( IBar ), typeof( Implementor ) ) );
+            .FromConstructor( o => o.ResolveParameter( p => p.ParameterType == typeof( IBar ), typeof( Implementor ) ) );
 
         var sut = builder.Build();
 
@@ -1556,8 +1554,7 @@ public class DependencyContainerTests : DependencyTestsBase
         var builder = new DependencyContainerBuilder();
         builder.Add<IQux>().FromType<Implementor>();
         builder.Add<MultiCtorImplementor>()
-            .FromConstructor(
-                o => o.ResolveParameter( p => p.ParameterType == typeof( IBar ), typeof( ChainableFoo ) ) );
+            .FromConstructor( o => o.ResolveParameter( p => p.ParameterType == typeof( IBar ), typeof( ChainableFoo ) ) );
 
         var sut = builder.Build();
 
@@ -1682,7 +1679,7 @@ public class DependencyContainerTests : DependencyTestsBase
         var callback = Substitute.For<Action<object, Type, IDependencyScope>>();
         var builder = new DependencyContainerBuilder();
         builder.Add<int>().SetLifetime( DependencyLifetime.Singleton ).FromFactory( _ => 0 );
-        builder.Add<byte?>().SetLifetime( DependencyLifetime.Singleton ).FromFactory( _ => (byte?)0 );
+        builder.Add<byte?>().SetLifetime( DependencyLifetime.Singleton ).FromFactory( _ => ( byte? )0 );
 
         builder.Add<IWithText>()
             .SetLifetime( DependencyLifetime.Singleton )
@@ -1833,9 +1830,9 @@ public class DependencyContainerTests : DependencyTestsBase
     public void ResolvingRangeDependency_ShouldReturnCorrectInstance_WhenRangeIsOfNullableValueType()
     {
         var builder = new DependencyContainerBuilder();
-        builder.Add<int?>().FromFactory( _ => (int?)1 );
-        builder.Add<int?>().FromFactory( _ => (int?)2 );
-        builder.Add<int?>().FromFactory( _ => (int?)3 );
+        builder.Add<int?>().FromFactory( _ => ( int? )1 );
+        builder.Add<int?>().FromFactory( _ => ( int? )2 );
+        builder.Add<int?>().FromFactory( _ => ( int? )3 );
         var sut = builder.Build();
 
         var result = sut.ActiveScope.Locator.Resolve<IEnumerable<int?>>();

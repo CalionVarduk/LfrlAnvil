@@ -38,8 +38,7 @@ public class DateTimeExtensionsTestsData
             { new DateTime( 2021, 3, 26 ), new DateTime( 2021, 3, 26, 23, 59, 59, 999 ).AddTicks( 9999 ) },
             { new DateTime( 2021, 3, 26, 12, 0, 0 ), new DateTime( 2021, 3, 26, 23, 59, 59, 999 ).AddTicks( 9999 ) },
             {
-                new DateTime( 2021, 3, 26, 23, 59, 59, 999 ).AddTicks( 9999 ),
-                new DateTime( 2021, 3, 26, 23, 59, 59, 999 ).AddTicks( 9999 )
+                new DateTime( 2021, 3, 26, 23, 59, 59, 999 ).AddTicks( 9999 ), new DateTime( 2021, 3, 26, 23, 59, 59, 999 ).AddTicks( 9999 )
             },
         };
     }
@@ -62,41 +61,13 @@ public class DateTimeExtensionsTestsData
             { new DateTime( 2021, 3, 26, 12, 0, 0 ), DayOfWeek.Friday, new DateTime( 2021, 3, 26 ) },
             { new DateTime( 2021, 3, 26, 12, 0, 0 ), DayOfWeek.Saturday, new DateTime( 2021, 3, 20 ) },
             { new DateTime( 2021, 3, 26, 12, 0, 0 ), DayOfWeek.Sunday, new DateTime( 2021, 3, 21 ) },
-            {
-                new DateTime( 2021, 3, 26, 23, 59, 59, 999 ).AddTicks( 9999 ),
-                DayOfWeek.Monday,
-                new DateTime( 2021, 3, 22 )
-            },
-            {
-                new DateTime( 2021, 3, 26, 23, 59, 59, 999 ).AddTicks( 9999 ),
-                DayOfWeek.Tuesday,
-                new DateTime( 2021, 3, 23 )
-            },
-            {
-                new DateTime( 2021, 3, 26, 23, 59, 59, 999 ).AddTicks( 9999 ),
-                DayOfWeek.Wednesday,
-                new DateTime( 2021, 3, 24 )
-            },
-            {
-                new DateTime( 2021, 3, 26, 23, 59, 59, 999 ).AddTicks( 9999 ),
-                DayOfWeek.Thursday,
-                new DateTime( 2021, 3, 25 )
-            },
-            {
-                new DateTime( 2021, 3, 26, 23, 59, 59, 999 ).AddTicks( 9999 ),
-                DayOfWeek.Friday,
-                new DateTime( 2021, 3, 26 )
-            },
-            {
-                new DateTime( 2021, 3, 26, 23, 59, 59, 999 ).AddTicks( 9999 ),
-                DayOfWeek.Saturday,
-                new DateTime( 2021, 3, 20 )
-            },
-            {
-                new DateTime( 2021, 3, 26, 23, 59, 59, 999 ).AddTicks( 9999 ),
-                DayOfWeek.Sunday,
-                new DateTime( 2021, 3, 21 )
-            }
+            { new DateTime( 2021, 3, 26, 23, 59, 59, 999 ).AddTicks( 9999 ), DayOfWeek.Monday, new DateTime( 2021, 3, 22 ) },
+            { new DateTime( 2021, 3, 26, 23, 59, 59, 999 ).AddTicks( 9999 ), DayOfWeek.Tuesday, new DateTime( 2021, 3, 23 ) },
+            { new DateTime( 2021, 3, 26, 23, 59, 59, 999 ).AddTicks( 9999 ), DayOfWeek.Wednesday, new DateTime( 2021, 3, 24 ) },
+            { new DateTime( 2021, 3, 26, 23, 59, 59, 999 ).AddTicks( 9999 ), DayOfWeek.Thursday, new DateTime( 2021, 3, 25 ) },
+            { new DateTime( 2021, 3, 26, 23, 59, 59, 999 ).AddTicks( 9999 ), DayOfWeek.Friday, new DateTime( 2021, 3, 26 ) },
+            { new DateTime( 2021, 3, 26, 23, 59, 59, 999 ).AddTicks( 9999 ), DayOfWeek.Saturday, new DateTime( 2021, 3, 20 ) },
+            { new DateTime( 2021, 3, 26, 23, 59, 59, 999 ).AddTicks( 9999 ), DayOfWeek.Sunday, new DateTime( 2021, 3, 21 ) }
         };
     }
 
@@ -104,109 +75,53 @@ public class DateTimeExtensionsTestsData
     {
         return new TheoryData<DateTime, DayOfWeek, DateTime>
         {
+            { new DateTime( 2021, 3, 26 ), DayOfWeek.Monday, new DateTime( 2021, 3, 28, 23, 59, 59, 999 ).AddTicks( 9999 ) },
+            { new DateTime( 2021, 3, 26 ), DayOfWeek.Tuesday, new DateTime( 2021, 3, 29, 23, 59, 59, 999 ).AddTicks( 9999 ) },
+            { new DateTime( 2021, 3, 26 ), DayOfWeek.Wednesday, new DateTime( 2021, 3, 30, 23, 59, 59, 999 ).AddTicks( 9999 ) },
+            { new DateTime( 2021, 3, 26 ), DayOfWeek.Thursday, new DateTime( 2021, 3, 31, 23, 59, 59, 999 ).AddTicks( 9999 ) },
+            { new DateTime( 2021, 3, 26 ), DayOfWeek.Friday, new DateTime( 2021, 4, 1, 23, 59, 59, 999 ).AddTicks( 9999 ) },
+            { new DateTime( 2021, 3, 26 ), DayOfWeek.Saturday, new DateTime( 2021, 3, 26, 23, 59, 59, 999 ).AddTicks( 9999 ) },
+            { new DateTime( 2021, 3, 26 ), DayOfWeek.Sunday, new DateTime( 2021, 3, 27, 23, 59, 59, 999 ).AddTicks( 9999 ) },
+            { new DateTime( 2021, 3, 26, 12, 0, 0 ), DayOfWeek.Monday, new DateTime( 2021, 3, 28, 23, 59, 59, 999 ).AddTicks( 9999 ) },
+            { new DateTime( 2021, 3, 26, 12, 0, 0 ), DayOfWeek.Tuesday, new DateTime( 2021, 3, 29, 23, 59, 59, 999 ).AddTicks( 9999 ) },
             {
-                new DateTime( 2021, 3, 26 ),
-                DayOfWeek.Monday,
-                new DateTime( 2021, 3, 28, 23, 59, 59, 999 ).AddTicks( 9999 )
-            },
-            {
-                new DateTime( 2021, 3, 26 ),
-                DayOfWeek.Tuesday,
-                new DateTime( 2021, 3, 29, 23, 59, 59, 999 ).AddTicks( 9999 )
-            },
-            {
-                new DateTime( 2021, 3, 26 ),
-                DayOfWeek.Wednesday,
+                new DateTime( 2021, 3, 26, 12, 0, 0 ), DayOfWeek.Wednesday,
                 new DateTime( 2021, 3, 30, 23, 59, 59, 999 ).AddTicks( 9999 )
             },
             {
-                new DateTime( 2021, 3, 26 ),
-                DayOfWeek.Thursday,
-                new DateTime( 2021, 3, 31, 23, 59, 59, 999 ).AddTicks( 9999 )
+                new DateTime( 2021, 3, 26, 12, 0, 0 ), DayOfWeek.Thursday, new DateTime( 2021, 3, 31, 23, 59, 59, 999 ).AddTicks( 9999 )
             },
+            { new DateTime( 2021, 3, 26, 12, 0, 0 ), DayOfWeek.Friday, new DateTime( 2021, 4, 1, 23, 59, 59, 999 ).AddTicks( 9999 ) },
             {
-                new DateTime( 2021, 3, 26 ),
-                DayOfWeek.Friday,
-                new DateTime( 2021, 4, 1, 23, 59, 59, 999 ).AddTicks( 9999 )
+                new DateTime( 2021, 3, 26, 12, 0, 0 ), DayOfWeek.Saturday, new DateTime( 2021, 3, 26, 23, 59, 59, 999 ).AddTicks( 9999 )
             },
+            { new DateTime( 2021, 3, 26, 12, 0, 0 ), DayOfWeek.Sunday, new DateTime( 2021, 3, 27, 23, 59, 59, 999 ).AddTicks( 9999 ) },
             {
-                new DateTime( 2021, 3, 26 ),
-                DayOfWeek.Saturday,
-                new DateTime( 2021, 3, 26, 23, 59, 59, 999 ).AddTicks( 9999 )
-            },
-            {
-                new DateTime( 2021, 3, 26 ),
-                DayOfWeek.Sunday,
-                new DateTime( 2021, 3, 27, 23, 59, 59, 999 ).AddTicks( 9999 )
-            },
-            {
-                new DateTime( 2021, 3, 26, 12, 0, 0 ),
-                DayOfWeek.Monday,
+                new DateTime( 2021, 3, 26, 23, 59, 59, 999 ).AddTicks( 9999 ), DayOfWeek.Monday,
                 new DateTime( 2021, 3, 28, 23, 59, 59, 999 ).AddTicks( 9999 )
             },
             {
-                new DateTime( 2021, 3, 26, 12, 0, 0 ),
-                DayOfWeek.Tuesday,
+                new DateTime( 2021, 3, 26, 23, 59, 59, 999 ).AddTicks( 9999 ), DayOfWeek.Tuesday,
                 new DateTime( 2021, 3, 29, 23, 59, 59, 999 ).AddTicks( 9999 )
             },
             {
-                new DateTime( 2021, 3, 26, 12, 0, 0 ),
-                DayOfWeek.Wednesday,
+                new DateTime( 2021, 3, 26, 23, 59, 59, 999 ).AddTicks( 9999 ), DayOfWeek.Wednesday,
                 new DateTime( 2021, 3, 30, 23, 59, 59, 999 ).AddTicks( 9999 )
             },
             {
-                new DateTime( 2021, 3, 26, 12, 0, 0 ),
-                DayOfWeek.Thursday,
+                new DateTime( 2021, 3, 26, 23, 59, 59, 999 ).AddTicks( 9999 ), DayOfWeek.Thursday,
                 new DateTime( 2021, 3, 31, 23, 59, 59, 999 ).AddTicks( 9999 )
             },
             {
-                new DateTime( 2021, 3, 26, 12, 0, 0 ),
-                DayOfWeek.Friday,
+                new DateTime( 2021, 3, 26, 23, 59, 59, 999 ).AddTicks( 9999 ), DayOfWeek.Friday,
                 new DateTime( 2021, 4, 1, 23, 59, 59, 999 ).AddTicks( 9999 )
             },
             {
-                new DateTime( 2021, 3, 26, 12, 0, 0 ),
-                DayOfWeek.Saturday,
+                new DateTime( 2021, 3, 26, 23, 59, 59, 999 ).AddTicks( 9999 ), DayOfWeek.Saturday,
                 new DateTime( 2021, 3, 26, 23, 59, 59, 999 ).AddTicks( 9999 )
             },
             {
-                new DateTime( 2021, 3, 26, 12, 0, 0 ),
-                DayOfWeek.Sunday,
-                new DateTime( 2021, 3, 27, 23, 59, 59, 999 ).AddTicks( 9999 )
-            },
-            {
-                new DateTime( 2021, 3, 26, 23, 59, 59, 999 ).AddTicks( 9999 ),
-                DayOfWeek.Monday,
-                new DateTime( 2021, 3, 28, 23, 59, 59, 999 ).AddTicks( 9999 )
-            },
-            {
-                new DateTime( 2021, 3, 26, 23, 59, 59, 999 ).AddTicks( 9999 ),
-                DayOfWeek.Tuesday,
-                new DateTime( 2021, 3, 29, 23, 59, 59, 999 ).AddTicks( 9999 )
-            },
-            {
-                new DateTime( 2021, 3, 26, 23, 59, 59, 999 ).AddTicks( 9999 ),
-                DayOfWeek.Wednesday,
-                new DateTime( 2021, 3, 30, 23, 59, 59, 999 ).AddTicks( 9999 )
-            },
-            {
-                new DateTime( 2021, 3, 26, 23, 59, 59, 999 ).AddTicks( 9999 ),
-                DayOfWeek.Thursday,
-                new DateTime( 2021, 3, 31, 23, 59, 59, 999 ).AddTicks( 9999 )
-            },
-            {
-                new DateTime( 2021, 3, 26, 23, 59, 59, 999 ).AddTicks( 9999 ),
-                DayOfWeek.Friday,
-                new DateTime( 2021, 4, 1, 23, 59, 59, 999 ).AddTicks( 9999 )
-            },
-            {
-                new DateTime( 2021, 3, 26, 23, 59, 59, 999 ).AddTicks( 9999 ),
-                DayOfWeek.Saturday,
-                new DateTime( 2021, 3, 26, 23, 59, 59, 999 ).AddTicks( 9999 )
-            },
-            {
-                new DateTime( 2021, 3, 26, 23, 59, 59, 999 ).AddTicks( 9999 ),
-                DayOfWeek.Sunday,
+                new DateTime( 2021, 3, 26, 23, 59, 59, 999 ).AddTicks( 9999 ), DayOfWeek.Sunday,
                 new DateTime( 2021, 3, 27, 23, 59, 59, 999 ).AddTicks( 9999 )
             }
         };
@@ -269,63 +184,51 @@ public class DateTimeExtensionsTestsData
         return new TheoryData<DateTime, Period, DateTime>
         {
             {
-                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
-                Period.Empty,
+                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ), Period.Empty,
                 new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 )
             },
             {
-                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
-                new Period( 1, 2, 3, 4, 5, 6 ),
+                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ), new Period( 1, 2, 3, 4, 5, 6 ),
                 new DateTime( 2021, 8, 26, 13, 32, 43, 504 ).AddTicks( 6057 )
             },
             {
-                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
-                new Period( -1, -2, -3, -4, -5, -6 ),
+                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ), new Period( -1, -2, -3, -4, -5, -6 ),
                 new DateTime( 2021, 8, 26, 11, 28, 37, 496 ).AddTicks( 5945 )
             },
             {
-                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
-                new Period( 1, 2, 3, 4 ),
+                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ), new Period( 1, 2, 3, 4 ),
                 new DateTime( 2022, 11, 20, 12, 30, 40, 500 ).AddTicks( 6001 )
             },
             {
-                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
-                new Period( -1, -2, -3, -4 ),
+                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ), new Period( -1, -2, -3, -4 ),
                 new DateTime( 2020, 6, 1, 12, 30, 40, 500 ).AddTicks( 6001 )
             },
             {
-                new DateTime( 2021, 3, 31, 12, 30, 40, 500 ).AddTicks( 6001 ),
-                Period.FromMonths( 1 ),
+                new DateTime( 2021, 3, 31, 12, 30, 40, 500 ).AddTicks( 6001 ), Period.FromMonths( 1 ),
                 new DateTime( 2021, 4, 30, 12, 30, 40, 500 ).AddTicks( 6001 )
             },
             {
-                new DateTime( 2021, 3, 31, 12, 30, 40, 500 ).AddTicks( 6001 ),
-                Period.FromMonths( -1 ),
+                new DateTime( 2021, 3, 31, 12, 30, 40, 500 ).AddTicks( 6001 ), Period.FromMonths( -1 ),
                 new DateTime( 2021, 2, 28, 12, 30, 40, 500 ).AddTicks( 6001 )
             },
             {
-                new DateTime( 2021, 3, 31, 12, 30, 40, 500 ).AddTicks( 6001 ),
-                Period.FromYears( -1 ).SubtractMonths( 1 ),
+                new DateTime( 2021, 3, 31, 12, 30, 40, 500 ).AddTicks( 6001 ), Period.FromYears( -1 ).SubtractMonths( 1 ),
                 new DateTime( 2020, 2, 29, 12, 30, 40, 500 ).AddTicks( 6001 )
             },
             {
-                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
-                new Period( 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 ),
+                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ), new Period( 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 ),
                 new DateTime( 2022, 11, 20, 17, 36, 47, 508 ).AddTicks( 6101 )
             },
             {
-                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
-                new Period( 1, -2, 3, -4, 5, -6, 7, -8, 9, -10 ),
+                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ), new Period( 1, -2, 3, -4, 5, -6, 7, -8, 9, -10 ),
                 new DateTime( 2022, 7, 13, 17, 24, 47, 492 ).AddTicks( 6081 )
             },
             {
-                new DateTime( 2021, 7, 25, 11, 59, 59, 999 ).AddTicks( 9998 ),
-                Period.FromMonths( 1 ).AddDays( 1 ).AddTicks( 1 ),
+                new DateTime( 2021, 7, 25, 11, 59, 59, 999 ).AddTicks( 9998 ), Period.FromMonths( 1 ).AddDays( 1 ).AddTicks( 1 ),
                 new DateTime( 2021, 8, 26, 11, 59, 59, 999 ).AddTicks( 9999 )
             },
             {
-                new DateTime( 2021, 9, 27, 13, 0, 0 ).AddTicks( 1 ),
-                Period.FromMonths( -1 ).SubtractDays( 1 ).SubtractTicks( 1 ),
+                new DateTime( 2021, 9, 27, 13, 0, 0 ).AddTicks( 1 ), Period.FromMonths( -1 ).SubtractDays( 1 ).SubtractTicks( 1 ),
                 new DateTime( 2021, 8, 26, 13, 0, 0 )
             }
         };
@@ -446,21 +349,9 @@ public class DateTimeExtensionsTestsData
             { dt, TimeOfDay.Start, new DateTime( 2021, 8, 26 ) },
             { dt, TimeOfDay.Mid, new DateTime( 2021, 8, 26, 12, 0, 0 ) },
             { dt, TimeOfDay.End, new DateTime( 2021, 8, 26, 23, 59, 59, 999 ).AddTicks( 9999 ) },
-            {
-                dt,
-                new TimeOfDay( 12, 30, 40, 500, 600, 7 ),
-                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6007 )
-            },
-            {
-                dt,
-                new TimeOfDay( 11, 59, 59, 999, 999, 9 ),
-                new DateTime( 2021, 8, 26, 11, 59, 59, 999 ).AddTicks( 9999 )
-            },
-            {
-                dt,
-                new TimeOfDay( 13 ),
-                new DateTime( 2021, 8, 26, 13, 0, 0 )
-            }
+            { dt, new TimeOfDay( 12, 30, 40, 500, 600, 7 ), new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6007 ) },
+            { dt, new TimeOfDay( 11, 59, 59, 999, 999, 9 ), new DateTime( 2021, 8, 26, 11, 59, 59, 999 ).AddTicks( 9999 ) },
+            { dt, new TimeOfDay( 13 ), new DateTime( 2021, 8, 26, 13, 0, 0 ) }
         };
     }
 
@@ -471,93 +362,66 @@ public class DateTimeExtensionsTestsData
         {
             {
                 new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
-                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
-                PeriodUnits.All,
-                Period.Empty
+                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ), PeriodUnits.All, Period.Empty
+            },
+            {
+                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ), new DateTime( 2020, 6, 1, 7, 24, 33, 492 ).AddTicks( 5910 ),
+                PeriodUnits.All, new Period( 1, 2, 3, 4, 5, 6, 7, 8, 9, 1 )
             },
             {
                 new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
-                new DateTime( 2020, 6, 1, 7, 24, 33, 492 ).AddTicks( 5910 ),
-                PeriodUnits.All,
-                new Period( 1, 2, 3, 4, 5, 6, 7, 8, 9, 1 )
-            },
-            {
-                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
-                new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6092 ),
-                PeriodUnits.All,
+                new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6092 ), PeriodUnits.All,
                 new Period( 0, 10, 0, 5, 21, 0, 50, 49, 990, 9 )
             },
             {
                 new DateTime( 2022, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
-                new DateTime( 2020, 9, 28, 13, 31, 41, 501 ).AddTicks( 6002 ),
-                PeriodUnits.All,
+                new DateTime( 2020, 9, 28, 13, 31, 41, 501 ).AddTicks( 6002 ), PeriodUnits.All,
                 new Period( 1, 10, 3, 6, 22, 58, 58, 998, 999, 9 )
             },
             {
                 new DateTime( 2022, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
-                new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6101 ),
-                PeriodUnits.Years,
-                Period.FromYears( 1 )
+                new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6101 ), PeriodUnits.Years, Period.FromYears( 1 )
             },
             {
                 new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
-                new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6101 ),
-                PeriodUnits.Months,
-                Period.FromMonths( 10 )
+                new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6101 ), PeriodUnits.Months, Period.FromMonths( 10 )
             },
             {
                 new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
-                new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6101 ),
-                PeriodUnits.Weeks,
-                Period.FromWeeks( 44 )
+                new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6101 ), PeriodUnits.Weeks, Period.FromWeeks( 44 )
             },
             {
                 new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
-                new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6101 ),
-                PeriodUnits.Days,
-                Period.FromDays( 309 )
+                new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6101 ), PeriodUnits.Days, Period.FromDays( 309 )
             },
             {
                 new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
-                new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6101 ),
-                PeriodUnits.Hours,
-                Period.FromHours( 7437 )
+                new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6101 ), PeriodUnits.Hours, Period.FromHours( 7437 )
             },
             {
                 new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
-                new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6101 ),
-                PeriodUnits.Minutes,
-                Period.FromMinutes( 446220 )
+                new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6101 ), PeriodUnits.Minutes, Period.FromMinutes( 446220 )
             },
             {
                 new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
-                new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6101 ),
-                PeriodUnits.Seconds,
-                Period.FromSeconds( 26773250 )
+                new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6101 ), PeriodUnits.Seconds, Period.FromSeconds( 26773250 )
             },
             {
                 new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
-                new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6101 ),
-                PeriodUnits.Milliseconds,
+                new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6101 ), PeriodUnits.Milliseconds,
                 Period.FromMilliseconds( 26773250049 )
             },
             {
                 new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
-                new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6101 ),
-                PeriodUnits.Ticks,
-                Period.FromTicks( 267732500499900 )
+                new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6101 ), PeriodUnits.Ticks, Period.FromTicks( 267732500499900 )
             },
             {
                 new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
-                new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6101 ),
-                PeriodUnits.Date,
-                new Period( 0, 10, 0, 5 )
+                new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6101 ), PeriodUnits.Date, new Period( 0, 10, 0, 5 )
             },
             {
                 new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
-                new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6092 ),
-                PeriodUnits.Time,
-                new Period( 7437, 0, 50, 49, 990, 9 )
+                new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6092 ), PeriodUnits.Time, new Period( 7437, 0, 50, 49, 990, 9 )
             },
             {
                 new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
@@ -567,33 +431,25 @@ public class DateTimeExtensionsTestsData
             },
             {
                 new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
-                new DateTime( 2021, 6, 28, 13, 31, 42, 503 ).AddTicks( 6005 ),
-                PeriodUnits.Months | PeriodUnits.Weeks | PeriodUnits.Hours,
+                new DateTime( 2021, 6, 28, 13, 31, 42, 503 ).AddTicks( 6005 ), PeriodUnits.Months | PeriodUnits.Weeks | PeriodUnits.Hours,
                 Period.FromMonths( 1 ).AddWeeks( 3 ).AddHours( 166 )
             },
             {
                 new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
-                new DateTime( 2020, 6, 26, 11, 31, 42, 503 ).AddTicks( 6005 ),
-                PeriodUnits.Months | PeriodUnits.Days | PeriodUnits.Minutes,
+                new DateTime( 2020, 6, 26, 11, 31, 42, 503 ).AddTicks( 6005 ), PeriodUnits.Months | PeriodUnits.Days | PeriodUnits.Minutes,
                 Period.FromMonths( 14 ).AddMinutes( 58 )
             },
             {
-                new DateTime( 2021, 3, 31, 20, 0, 0 ),
-                new DateTime( 2021, 2, 28, 21, 0, 0 ),
-                PeriodUnits.Months | PeriodUnits.Days | PeriodUnits.Hours,
-                Period.FromMonths( 1 ).AddDays( 2 ).AddHours( 23 )
+                new DateTime( 2021, 3, 31, 20, 0, 0 ), new DateTime( 2021, 2, 28, 21, 0, 0 ),
+                PeriodUnits.Months | PeriodUnits.Days | PeriodUnits.Hours, Period.FromMonths( 1 ).AddDays( 2 ).AddHours( 23 )
             },
             {
-                new DateTime( 2024, 2, 29, 20, 0, 0 ),
-                new DateTime( 2023, 2, 28, 21, 0, 0 ),
-                PeriodUnits.Years | PeriodUnits.Days | PeriodUnits.Hours,
-                Period.FromYears( 1 ).AddHours( 23 )
+                new DateTime( 2024, 2, 29, 20, 0, 0 ), new DateTime( 2023, 2, 28, 21, 0, 0 ),
+                PeriodUnits.Years | PeriodUnits.Days | PeriodUnits.Hours, Period.FromYears( 1 ).AddHours( 23 )
             },
             {
-                new DateTime( 2021, 3, 28, 20, 0, 0 ),
-                new DateTime( 2021, 2, 28, 21, 0, 0 ),
-                PeriodUnits.Months | PeriodUnits.Days | PeriodUnits.Hours,
-                Period.FromDays( 27 ).AddHours( 23 )
+                new DateTime( 2021, 3, 28, 20, 0, 0 ), new DateTime( 2021, 2, 28, 21, 0, 0 ),
+                PeriodUnits.Months | PeriodUnits.Days | PeriodUnits.Hours, Period.FromDays( 27 ).AddHours( 23 )
             }
         };
     }
@@ -605,93 +461,66 @@ public class DateTimeExtensionsTestsData
         {
             {
                 new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
-                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
-                PeriodUnits.All,
-                Period.Empty
+                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ), PeriodUnits.All, Period.Empty
+            },
+            {
+                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ), new DateTime( 2020, 6, 1, 7, 24, 33, 492 ).AddTicks( 5910 ),
+                PeriodUnits.All, new Period( 1, 2, 3, 4, 5, 6, 7, 8, 9, 1 )
             },
             {
                 new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
-                new DateTime( 2020, 6, 1, 7, 24, 33, 492 ).AddTicks( 5910 ),
-                PeriodUnits.All,
-                new Period( 1, 2, 3, 4, 5, 6, 7, 8, 9, 1 )
-            },
-            {
-                new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
-                new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 7006 ),
-                PeriodUnits.All,
+                new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 7006 ), PeriodUnits.All,
                 new Period( 1, -2, 0, 6, -3, 1, -10, 50, -100, -5 )
             },
             {
                 new DateTime( 2022, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
-                new DateTime( 2020, 9, 28, 13, 31, 41, 501 ).AddTicks( 6012 ),
-                PeriodUnits.All,
+                new DateTime( 2020, 9, 28, 13, 31, 41, 501 ).AddTicks( 6012 ), PeriodUnits.All,
                 new Period( 2, -1, 0, -2, -1, -1, -1, -1, -1, -1 )
             },
             {
                 new DateTime( 2022, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
-                new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6101 ),
-                PeriodUnits.Years,
-                Period.FromYears( 2 )
+                new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6101 ), PeriodUnits.Years, Period.FromYears( 2 )
             },
             {
                 new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
-                new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6101 ),
-                PeriodUnits.Months,
-                Period.FromMonths( 10 )
+                new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6101 ), PeriodUnits.Months, Period.FromMonths( 10 )
             },
             {
                 new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
-                new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6101 ),
-                PeriodUnits.Weeks,
-                Period.FromWeeks( 44 )
+                new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6101 ), PeriodUnits.Weeks, Period.FromWeeks( 44 )
             },
             {
                 new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
-                new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6101 ),
-                PeriodUnits.Days,
-                Period.FromDays( 310 )
+                new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6101 ), PeriodUnits.Days, Period.FromDays( 310 )
             },
             {
                 new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
-                new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6101 ),
-                PeriodUnits.Hours,
-                Period.FromHours( 7437 )
+                new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6101 ), PeriodUnits.Hours, Period.FromHours( 7437 )
             },
             {
                 new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
-                new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6101 ),
-                PeriodUnits.Minutes,
-                Period.FromMinutes( 446221 )
+                new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6101 ), PeriodUnits.Minutes, Period.FromMinutes( 446221 )
             },
             {
                 new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
-                new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6101 ),
-                PeriodUnits.Seconds,
-                Period.FromSeconds( 26773250 )
+                new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6101 ), PeriodUnits.Seconds, Period.FromSeconds( 26773250 )
             },
             {
                 new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
-                new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6101 ),
-                PeriodUnits.Milliseconds,
+                new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6101 ), PeriodUnits.Milliseconds,
                 Period.FromMilliseconds( 26773250050 )
             },
             {
                 new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
-                new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6101 ),
-                PeriodUnits.Ticks,
-                Period.FromTicks( 267732500499900 )
+                new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6101 ), PeriodUnits.Ticks, Period.FromTicks( 267732500499900 )
             },
             {
                 new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
-                new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6101 ),
-                PeriodUnits.Date,
-                new Period( 1, -2, 0, 6 )
+                new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 6101 ), PeriodUnits.Date, new Period( 1, -2, 0, 6 )
             },
             {
                 new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
-                new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 7006 ),
-                PeriodUnits.Time,
-                new Period( 7437, 1, -10, 50, -100, -5 )
+                new DateTime( 2020, 10, 20, 15, 29, 50, 450 ).AddTicks( 7006 ), PeriodUnits.Time, new Period( 7437, 1, -10, 50, -100, -5 )
             },
             {
                 new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
@@ -701,33 +530,25 @@ public class DateTimeExtensionsTestsData
             },
             {
                 new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
-                new DateTime( 2021, 6, 28, 13, 31, 42, 503 ).AddTicks( 6005 ),
-                PeriodUnits.Months | PeriodUnits.Weeks | PeriodUnits.Hours,
+                new DateTime( 2021, 6, 28, 13, 31, 42, 503 ).AddTicks( 6005 ), PeriodUnits.Months | PeriodUnits.Weeks | PeriodUnits.Hours,
                 Period.FromMonths( 2 ).SubtractHours( 49 )
             },
             {
                 new DateTime( 2021, 8, 26, 12, 30, 40, 500 ).AddTicks( 6001 ),
-                new DateTime( 2020, 6, 26, 11, 31, 42, 503 ).AddTicks( 6005 ),
-                PeriodUnits.Months | PeriodUnits.Days | PeriodUnits.Minutes,
+                new DateTime( 2020, 6, 26, 11, 31, 42, 503 ).AddTicks( 6005 ), PeriodUnits.Months | PeriodUnits.Days | PeriodUnits.Minutes,
                 Period.FromMonths( 14 ).AddMinutes( 59 )
             },
             {
-                new DateTime( 2021, 3, 31, 20, 0, 0 ),
-                new DateTime( 2021, 2, 28, 21, 0, 0 ),
-                PeriodUnits.Months | PeriodUnits.Days | PeriodUnits.Hours,
-                Period.FromMonths( 1 ).AddDays( 3 ).AddHours( -1 )
+                new DateTime( 2021, 3, 31, 20, 0, 0 ), new DateTime( 2021, 2, 28, 21, 0, 0 ),
+                PeriodUnits.Months | PeriodUnits.Days | PeriodUnits.Hours, Period.FromMonths( 1 ).AddDays( 3 ).AddHours( -1 )
             },
             {
-                new DateTime( 2024, 2, 29, 20, 0, 0 ),
-                new DateTime( 2023, 2, 28, 21, 0, 0 ),
-                PeriodUnits.Years | PeriodUnits.Days | PeriodUnits.Hours,
-                Period.FromYears( 1 ).AddDays( 1 ).AddHours( -1 )
+                new DateTime( 2024, 2, 29, 20, 0, 0 ), new DateTime( 2023, 2, 28, 21, 0, 0 ),
+                PeriodUnits.Years | PeriodUnits.Days | PeriodUnits.Hours, Period.FromYears( 1 ).AddDays( 1 ).AddHours( -1 )
             },
             {
-                new DateTime( 2021, 3, 28, 20, 0, 0 ),
-                new DateTime( 2021, 2, 28, 21, 0, 0 ),
-                PeriodUnits.Months | PeriodUnits.Days | PeriodUnits.Hours,
-                Period.FromMonths( 1 ).AddHours( -1 )
+                new DateTime( 2021, 3, 28, 20, 0, 0 ), new DateTime( 2021, 2, 28, 21, 0, 0 ),
+                PeriodUnits.Months | PeriodUnits.Days | PeriodUnits.Hours, Period.FromMonths( 1 ).AddHours( -1 )
             }
         };
     }

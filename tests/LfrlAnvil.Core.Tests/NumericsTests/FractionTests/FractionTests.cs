@@ -138,7 +138,7 @@ public class FractionTests : TestsBase
     [InlineData( 1.5, 2, 3 )]
     public void Create_WithDecimal_ShouldReturnCorrectResult(double value, ulong denominator, long expectedNumerator)
     {
-        var sut = Fraction.Create( (decimal)value, denominator );
+        var sut = Fraction.Create( ( decimal )value, denominator );
 
         using ( new AssertionScope() )
         {
@@ -342,7 +342,7 @@ public class FractionTests : TestsBase
     [InlineData( -123, 90, -90, 123 )]
     [InlineData( -185, 80, -80, 185 )]
     [InlineData( long.MaxValue, 1, 1, long.MaxValue )]
-    [InlineData( long.MinValue, 1, -1, (ulong)long.MaxValue + 1 )]
+    [InlineData( long.MinValue, 1, -1, ( ulong )long.MaxValue + 1 )]
     [InlineData( 1, long.MaxValue, long.MaxValue, 1 )]
     [InlineData( -1, long.MaxValue, long.MinValue + 1, 1 )]
     public void Reciprocal_ShouldReturnCorrectResult(long numerator, ulong denominator, long expectedNumerator, ulong expectedDenominator)
@@ -360,7 +360,7 @@ public class FractionTests : TestsBase
     [Fact]
     public void Reciprocal_ShouldThrowOverflowException_WhenDenominatorIsTooLarge()
     {
-        var sut = new Fraction( 1, (ulong)long.MaxValue + 1 );
+        var sut = new Fraction( 1, ( ulong )long.MaxValue + 1 );
         var action = Lambda.Of( () => sut.Reciprocal() );
         action.Should().ThrowExactly<OverflowException>();
     }
@@ -502,7 +502,7 @@ public class FractionTests : TestsBase
     public void FromFixedConversionOperator_ShouldReturnCorrectResult()
     {
         var value = Fixed.CreateRaw( 1234, 5 );
-        var result = (Fraction)value;
+        var result = ( Fraction )value;
 
         using ( new AssertionScope() )
         {
@@ -515,7 +515,7 @@ public class FractionTests : TestsBase
     public void DoubleConversionOperator_ShouldReturnCorrectResult()
     {
         var sut = new Fraction( 125, 50 );
-        var result = (double)sut;
+        var result = ( double )sut;
         result.Should().Be( 2.5 );
     }
 
@@ -523,7 +523,7 @@ public class FractionTests : TestsBase
     public void DecimalConversionOperator_ShouldReturnCorrectResult()
     {
         var sut = new Fraction( 125, 50 );
-        var result = (decimal)sut;
+        var result = ( decimal )sut;
         result.Should().Be( 2.5m );
     }
 
@@ -575,7 +575,7 @@ public class FractionTests : TestsBase
     [Fact]
     public void IncrementOperator_ShouldThrowOverflowException_WhenDenominatorIsTooLarge()
     {
-        var sut = new Fraction( 123, (ulong)long.MaxValue + 1 );
+        var sut = new Fraction( 123, ( ulong )long.MaxValue + 1 );
         var action = Lambda.Of( () => ++sut );
         action.Should().ThrowExactly<OverflowException>();
     }
@@ -618,7 +618,7 @@ public class FractionTests : TestsBase
     [Fact]
     public void DecrementOperator_ShouldThrowOverflowException_WhenDenominatorIsTooLarge()
     {
-        var sut = new Fraction( 123, (ulong)long.MaxValue + 1 );
+        var sut = new Fraction( 123, ( ulong )long.MaxValue + 1 );
         var action = Lambda.Of( () => --sut );
         action.Should().ThrowExactly<OverflowException>();
     }

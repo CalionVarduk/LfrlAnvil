@@ -19,12 +19,16 @@ public partial class SqlQueryResultTests
         {
             var resultSetFields = new[]
             {
-                new SqlResultSetField( 0, "foo" ),
-                new SqlResultSetField( 1, "bar" ),
-                new SqlResultSetField( 2, "qux" )
+                new SqlResultSetField( 0, "foo" ), new SqlResultSetField( 1, "bar" ), new SqlResultSetField( 2, "qux" )
             };
 
-            var cells = new List<object?> { "foo", 3, true };
+            var cells = new List<object?>
+            {
+                "foo",
+                3,
+                true
+            };
+
             var sut = new SqlQueryResult( resultSetFields, cells ).Rows!;
 
             var result = sut.ContainsField( name );
@@ -40,12 +44,16 @@ public partial class SqlQueryResultTests
         {
             var resultSetFields = new[]
             {
-                new SqlResultSetField( 0, "foo" ),
-                new SqlResultSetField( 1, "bar" ),
-                new SqlResultSetField( 2, "qux" )
+                new SqlResultSetField( 0, "foo" ), new SqlResultSetField( 1, "bar" ), new SqlResultSetField( 2, "qux" )
             };
 
-            var cells = new List<object?> { "foo", 3, true };
+            var cells = new List<object?>
+            {
+                "foo",
+                3,
+                true
+            };
+
             var sut = new SqlQueryResult( resultSetFields, cells ).Rows!;
 
             var result = sut.GetOrdinal( name );
@@ -58,12 +66,16 @@ public partial class SqlQueryResultTests
         {
             var resultSetFields = new[]
             {
-                new SqlResultSetField( 0, "foo" ),
-                new SqlResultSetField( 1, "bar" ),
-                new SqlResultSetField( 2, "qux" )
+                new SqlResultSetField( 0, "foo" ), new SqlResultSetField( 1, "bar" ), new SqlResultSetField( 2, "qux" )
             };
 
-            var cells = new List<object?> { "foo", 3, true };
+            var cells = new List<object?>
+            {
+                "foo",
+                3,
+                true
+            };
+
             var sut = new SqlQueryResult( resultSetFields, cells ).Rows!;
 
             var action = Lambda.Of( () => sut.GetOrdinal( "x" ) );
@@ -81,12 +93,16 @@ public partial class SqlQueryResultTests
         {
             var resultSetFields = new[]
             {
-                new SqlResultSetField( 0, "foo" ),
-                new SqlResultSetField( 1, "bar" ),
-                new SqlResultSetField( 2, "qux" )
+                new SqlResultSetField( 0, "foo" ), new SqlResultSetField( 1, "bar" ), new SqlResultSetField( 2, "qux" )
             };
 
-            var cells = new List<object?> { "foo", 3, true };
+            var cells = new List<object?>
+            {
+                "foo",
+                3,
+                true
+            };
+
             var sut = new SqlQueryResult( resultSetFields, cells ).Rows!;
 
             var result = sut.TryGetOrdinal( name, out var outResult );
@@ -111,7 +127,22 @@ public partial class SqlQueryResultTests
                 new SqlResultSetField( 3, "d" )
             };
 
-            var cells = new List<object?> { "foo", 3, true, 1.0, "bar", 3, false, 2.0, "lorem", 5, false, 5.0 };
+            var cells = new List<object?>
+            {
+                "foo",
+                3,
+                true,
+                1.0,
+                "bar",
+                3,
+                false,
+                2.0,
+                "lorem",
+                5,
+                false,
+                5.0
+            };
+
             var sut = new SqlQueryResult( resultSetFields, cells ).Rows!;
 
             var action = Lambda.Of( () => sut[index] );
@@ -133,7 +164,22 @@ public partial class SqlQueryResultTests
                 new SqlResultSetField( 3, "d" )
             };
 
-            var cells = new List<object?> { "foo", 3, true, 1.0, "bar", 3, false, 2.0, "lorem", 5, false, 5.0 };
+            var cells = new List<object?>
+            {
+                "foo",
+                3,
+                true,
+                1.0,
+                "bar",
+                3,
+                false,
+                2.0,
+                "lorem",
+                5,
+                false,
+                5.0
+            };
+
             var sut = new SqlQueryResult( resultSetFields, cells ).Rows!;
 
             var result = sut[index];
@@ -156,7 +202,22 @@ public partial class SqlQueryResultTests
                 new SqlResultSetField( 3, "d" )
             };
 
-            var cells = new List<object?> { "foo", 3, true, 1.0, "bar", 3, false, 2.0, "lorem", 5, false, 5.0 };
+            var cells = new List<object?>
+            {
+                "foo",
+                3,
+                true,
+                1.0,
+                "bar",
+                3,
+                false,
+                2.0,
+                "lorem",
+                5,
+                false,
+                5.0
+            };
+
             var sut = new SqlQueryResult( resultSetFields, cells ).Rows!;
 
             sut.Should().BeSequentiallyEqualTo( sut[0], sut[1], sut[2] );

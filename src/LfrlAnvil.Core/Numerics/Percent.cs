@@ -22,13 +22,13 @@ public readonly struct Percent : IEquatable<Percent>, IComparable<Percent>, ICom
     [Pure]
     public static Percent Normalize(long value)
     {
-        return Normalize( (decimal)value );
+        return Normalize( ( decimal )value );
     }
 
     [Pure]
     public static Percent Normalize(double value)
     {
-        return Normalize( (decimal)value );
+        return Normalize( ( decimal )value );
     }
 
     [Pure]
@@ -180,7 +180,7 @@ public readonly struct Percent : IEquatable<Percent>, IComparable<Percent>, ICom
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static explicit operator double(Percent percent)
     {
-        return (double)percent.Ratio;
+        return ( double )percent.Ratio;
     }
 
     [Pure]
@@ -246,37 +246,37 @@ public readonly struct Percent : IEquatable<Percent>, IComparable<Percent>, ICom
     [Pure]
     public static double operator *(Percent left, double right)
     {
-        return (double)left.Ratio * right;
+        return ( double )left.Ratio * right;
     }
 
     [Pure]
     public static double operator *(double left, Percent right)
     {
-        return left * (double)right.Ratio;
+        return left * ( double )right.Ratio;
     }
 
     [Pure]
     public static float operator *(Percent left, float right)
     {
-        return (float)left.Ratio * right;
+        return ( float )left.Ratio * right;
     }
 
     [Pure]
     public static float operator *(float left, Percent right)
     {
-        return left * (float)right.Ratio;
+        return left * ( float )right.Ratio;
     }
 
     [Pure]
     public static long operator *(Percent left, long right)
     {
-        return (long)Math.Round( left.Ratio * right, 0, MidpointRounding.AwayFromZero );
+        return ( long )Math.Round( left.Ratio * right, 0, MidpointRounding.AwayFromZero );
     }
 
     [Pure]
     public static long operator *(long left, Percent right)
     {
-        return (long)Math.Round( left * right.Ratio, 0, MidpointRounding.AwayFromZero );
+        return ( long )Math.Round( left * right.Ratio, 0, MidpointRounding.AwayFromZero );
     }
 
     [Pure]

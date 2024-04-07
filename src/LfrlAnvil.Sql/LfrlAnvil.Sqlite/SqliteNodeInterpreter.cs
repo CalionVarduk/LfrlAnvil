@@ -430,8 +430,8 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
         if ( (Options.UpsertOptions & SqliteUpsertOptions.Supported) == SqliteUpsertOptions.Disabled )
             throw new UnrecognizedSqlNodeException( this, node );
 
-        var conflictTarget = node.ConflictTarget.Count == 0 &&
-            (Options.UpsertOptions & SqliteUpsertOptions.AllowEmptyConflictTarget) == SqliteUpsertOptions.Disabled
+        var conflictTarget = node.ConflictTarget.Count == 0
+            && (Options.UpsertOptions & SqliteUpsertOptions.AllowEmptyConflictTarget) == SqliteUpsertOptions.Disabled
                 ? ExtractUpsertConflictTargets( node )
                 : node.ConflictTarget;
 
@@ -1129,27 +1129,27 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
     [Pure]
     protected virtual bool IsValidSingleTableUpdateOrDeleteStatement(SqlDataSourceNode node, in SqlDataSourceTraits traits)
     {
-        return node.RecordSets.Count == 1 &&
-            traits.Distinct is null &&
-            traits.Aggregations.Count == 0 &&
-            traits.AggregationFilter is null &&
-            traits.Windows.Count == 0 &&
-            (Options.IsUpdateOrDeleteLimitEnabled || (traits.Ordering.Count == 0 && traits.Limit is null && traits.Offset is null)) &&
-            traits.Custom.Count == 0;
+        return node.RecordSets.Count == 1
+            && traits.Distinct is null
+            && traits.Aggregations.Count == 0
+            && traits.AggregationFilter is null
+            && traits.Windows.Count == 0
+            && (Options.IsUpdateOrDeleteLimitEnabled || (traits.Ordering.Count == 0 && traits.Limit is null && traits.Offset is null))
+            && traits.Custom.Count == 0;
     }
 
     [Pure]
     protected virtual bool IsValidUpdateFromStatement(SqlDataSourceNode node, in SqlDataSourceTraits traits)
     {
-        return Options.IsUpdateFromEnabled &&
-            node.RecordSets.Count == 2 &&
-            node.Joins[0].JoinType is SqlJoinType.Inner or SqlJoinType.Cross &&
-            traits.Distinct is null &&
-            traits.Aggregations.Count == 0 &&
-            traits.AggregationFilter is null &&
-            traits.Windows.Count == 0 &&
-            (Options.IsUpdateOrDeleteLimitEnabled || (traits.Ordering.Count == 0 && traits.Limit is null && traits.Offset is null)) &&
-            traits.Custom.Count == 0;
+        return Options.IsUpdateFromEnabled
+            && node.RecordSets.Count == 2
+            && node.Joins[0].JoinType is SqlJoinType.Inner or SqlJoinType.Cross
+            && traits.Distinct is null
+            && traits.Aggregations.Count == 0
+            && traits.AggregationFilter is null
+            && traits.Windows.Count == 0
+            && (Options.IsUpdateOrDeleteLimitEnabled || (traits.Ordering.Count == 0 && traits.Limit is null && traits.Offset is null))
+            && traits.Custom.Count == 0;
     }
 
     [Pure]

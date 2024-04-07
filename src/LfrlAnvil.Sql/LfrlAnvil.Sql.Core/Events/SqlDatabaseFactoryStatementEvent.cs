@@ -13,7 +13,8 @@ public readonly record struct SqlDatabaseFactoryStatementEvent(
     TimeSpan Timeout,
     IReadOnlyList<KeyValuePair<string, object?>> Parameters,
     SqlDatabaseFactoryStatementType Type,
-    DateTime UtcStartDate)
+    DateTime UtcStartDate
+)
 {
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]

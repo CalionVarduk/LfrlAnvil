@@ -16,12 +16,12 @@ public class ShortSequenceGeneratorTests : GenericSequenceGeneratorOfSignedTypeT
 
     protected override short Negate(short a)
     {
-        return (short)-a;
+        return ( short )-a;
     }
 
     protected sealed override short Add(short a, short b)
     {
-        return (short)(a + b);
+        return ( short )(a + b);
     }
 
     protected sealed override SequenceGeneratorBase<short> Create()

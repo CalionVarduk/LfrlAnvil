@@ -336,7 +336,7 @@ public partial class ParsedExpressionFactoryTests
 
         protected override Expression CreateUnaryExpression(Expression operand)
         {
-            var parameterAccess = (BinaryExpression)operand;
+            var parameterAccess = ( BinaryExpression )operand;
             return Expression.Add( operand, Expression.ArrayIndex( parameterAccess.Left, _index ) );
         }
     }
@@ -352,7 +352,7 @@ public partial class ParsedExpressionFactoryTests
 
         protected override Expression CreateUnaryExpression(Expression operand)
         {
-            var parameterAccess = (BinaryExpression)operand;
+            var parameterAccess = ( BinaryExpression )operand;
             return Expression.Add( operand, Expression.ArrayIndex( parameterAccess.Left, _index ) );
         }
     }

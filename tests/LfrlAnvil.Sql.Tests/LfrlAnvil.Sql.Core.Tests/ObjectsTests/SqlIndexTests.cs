@@ -43,7 +43,7 @@ public class SqlIndexTests : TestsBase
             sut.IsUnique.Should().Be( isUnique );
             sut.IsVirtual.Should().Be( isVirtual );
             sut.IsPartial.Should().BeFalse();
-            ((SqlIndex)sut).Columns.Should()
+            (( SqlIndex )sut).Columns.Should()
                 .BeSequentiallyEqualTo( new SqlIndexed<SqlColumn>( c1, OrderBy.Asc ), new SqlIndexed<SqlColumn>( c2, OrderBy.Desc ) );
 
             sut.Columns.Should()

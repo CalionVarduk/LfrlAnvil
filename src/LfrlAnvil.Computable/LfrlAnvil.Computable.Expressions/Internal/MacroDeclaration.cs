@@ -22,9 +22,9 @@ internal sealed class MacroDeclaration
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal void AddToken(IntermediateToken token)
     {
-        var result = token.Type == IntermediateTokenType.Argument &&
-            _parameterIndexes is not null &&
-            _parameterIndexes.TryGetValue( token.Symbol, out var index )
+        var result = token.Type == IntermediateTokenType.Argument
+            && _parameterIndexes is not null
+            && _parameterIndexes.TryGetValue( token.Symbol, out var index )
                 ? Token.CreateFromParameter( token, index )
                 : Token.Create( token );
 

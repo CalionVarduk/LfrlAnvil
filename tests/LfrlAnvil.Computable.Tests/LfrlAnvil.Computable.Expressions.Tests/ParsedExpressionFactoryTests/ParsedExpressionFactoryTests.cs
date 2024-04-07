@@ -38,7 +38,7 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         using ( new AssertionScope() )
         {
-            var @params = (ParsedExpressionNumberParserParams)provider.Verify().CallAt( 0 ).Exists().And.Arguments[0]!;
+            var @params = ( ParsedExpressionNumberParserParams )provider.Verify().CallAt( 0 ).Exists().And.Arguments[0]!;
             @params.Configuration.Should().BeSameAs( sut.Configuration );
             @params.ArgumentType.Should().Be( typeof( decimal ) );
             @params.ResultType.Should().Be( typeof( string ) );

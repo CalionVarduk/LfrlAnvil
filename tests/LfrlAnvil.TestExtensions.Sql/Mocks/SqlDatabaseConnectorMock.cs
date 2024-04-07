@@ -29,7 +29,7 @@ public sealed class SqlDatabaseConnectorMock : ISqlDatabaseConnector<DbConnectio
         var i = 0;
         foreach ( var e in connectionStringBuilder )
         {
-            var (key, value) = (KeyValuePair<string, object>)e;
+            var (key, value) = ( KeyValuePair<string, object> )e;
             _connectionStringEntries[i++] = KeyValuePair.Create( key, value );
         }
     }

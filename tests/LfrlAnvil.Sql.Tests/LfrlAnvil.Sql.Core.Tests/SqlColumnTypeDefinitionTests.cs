@@ -18,9 +18,9 @@ public class SqlColumnTypeDefinitionTests : TestsBase
             sut.DataType.Should().BeSameAs( SqlDataTypeMock.Text );
             sut.DefaultValue.Value.Should().BeSameAs( defaultValue );
             sut.RuntimeType.Should().Be<string>();
-            ((ISqlColumnTypeDefinition)sut).DataType.Should().BeSameAs( sut.DataType );
-            ((ISqlColumnTypeDefinition)sut).DefaultValue.Should().BeSameAs( sut.DefaultValue );
-            ((ISqlColumnTypeDefinition)sut).OutputMapping.Should().BeSameAs( sut.OutputMapping );
+            (( ISqlColumnTypeDefinition )sut).DataType.Should().BeSameAs( sut.DataType );
+            (( ISqlColumnTypeDefinition )sut).DefaultValue.Should().BeSameAs( sut.DefaultValue );
+            (( ISqlColumnTypeDefinition )sut).OutputMapping.Should().BeSameAs( sut.OutputMapping );
         }
     }
 
@@ -55,7 +55,7 @@ public class SqlColumnTypeDefinitionTests : TestsBase
         var parameter = Substitute.For<IDbDataParameter>();
         var sut = new SqlColumnTypeDefinitionMock<string>( SqlDataTypeMock.Text, string.Empty );
 
-        ((ISqlColumnTypeDefinition)sut).SetParameterInfo( parameter, Fixture.Create<bool>() );
+        (( ISqlColumnTypeDefinition )sut).SetParameterInfo( parameter, Fixture.Create<bool>() );
 
         using ( new AssertionScope() )
         {
@@ -72,7 +72,7 @@ public class SqlColumnTypeDefinitionTests : TestsBase
         var parameter = new DbParameterMock();
         var sut = new SqlColumnTypeDefinitionMock<string>( SqlDataTypeMock.Text, string.Empty );
 
-        ((ISqlColumnTypeDefinition)sut).SetParameterInfo( parameter, isNullable );
+        (( ISqlColumnTypeDefinition )sut).SetParameterInfo( parameter, isNullable );
 
         using ( new AssertionScope() )
         {

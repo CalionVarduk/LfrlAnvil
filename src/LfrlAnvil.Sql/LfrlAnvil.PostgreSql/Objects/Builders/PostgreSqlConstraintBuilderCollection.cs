@@ -84,7 +84,10 @@ public sealed class PostgreSqlConstraintBuilderCollection : SqlConstraintBuilder
         return ReinterpretCast.To<PostgreSqlForeignKeyBuilder>( base.CreateForeignKey( originIndex, referencedIndex ) );
     }
 
-    public PostgreSqlForeignKeyBuilder CreateForeignKey(string name, PostgreSqlIndexBuilder originIndex, PostgreSqlIndexBuilder referencedIndex)
+    public PostgreSqlForeignKeyBuilder CreateForeignKey(
+        string name,
+        PostgreSqlIndexBuilder originIndex,
+        PostgreSqlIndexBuilder referencedIndex)
     {
         return ReinterpretCast.To<PostgreSqlForeignKeyBuilder>( base.CreateForeignKey( name, originIndex, referencedIndex ) );
     }

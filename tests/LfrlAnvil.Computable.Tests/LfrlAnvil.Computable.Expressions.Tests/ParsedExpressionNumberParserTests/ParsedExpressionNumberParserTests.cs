@@ -31,7 +31,7 @@ public class ParsedExpressionNumberParserTests : TestsBase
         using ( new AssertionScope() )
         {
             result.Should().Be( expected is not null );
-            outResult.Should().Be( (decimal?)expected );
+            outResult.Should().Be( ( decimal? )expected );
         }
     }
 
@@ -167,7 +167,7 @@ public class ParsedExpressionNumberParserTests : TestsBase
         using ( new AssertionScope() )
         {
             result.Should().Be( expected is not null );
-            outResult.Should().Be( (BigInteger?)expected );
+            outResult.Should().Be( ( BigInteger? )expected );
         }
     }
 

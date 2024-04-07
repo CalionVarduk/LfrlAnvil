@@ -29,7 +29,7 @@ public abstract class GenericTypeMappingConfigurationTests<T1, T2, T3> : TestsBa
         using ( new AssertionScope() )
         {
             result.Should().BeSameAs( sut );
-            mappingStores.Should().BeSequentiallyEqualTo( KeyValuePair.Create( expectedKey, (Delegate)mapping ) );
+            mappingStores.Should().BeSequentiallyEqualTo( KeyValuePair.Create( expectedKey, ( Delegate )mapping ) );
         }
     }
 
@@ -52,8 +52,8 @@ public abstract class GenericTypeMappingConfigurationTests<T1, T2, T3> : TestsBa
             result.Should().BeSameAs( sut );
             mappingStores.Should()
                 .BeSequentiallyEqualTo(
-                    KeyValuePair.Create( expectedFirstKey, (Delegate)firstMapping ),
-                    KeyValuePair.Create( expectedSecondKey, (Delegate)secondMapping ) );
+                    KeyValuePair.Create( expectedFirstKey, ( Delegate )firstMapping ),
+                    KeyValuePair.Create( expectedSecondKey, ( Delegate )secondMapping ) );
         }
     }
 
@@ -73,7 +73,7 @@ public abstract class GenericTypeMappingConfigurationTests<T1, T2, T3> : TestsBa
         using ( new AssertionScope() )
         {
             result.Should().BeSameAs( sut );
-            mappingStores.Should().BeSequentiallyEqualTo( KeyValuePair.Create( expectedKey, (Delegate)secondMapping ) );
+            mappingStores.Should().BeSequentiallyEqualTo( KeyValuePair.Create( expectedKey, ( Delegate )secondMapping ) );
         }
     }
 
@@ -96,8 +96,8 @@ public abstract class GenericTypeMappingConfigurationTests<T1, T2, T3> : TestsBa
             result.Should().BeSameAs( sut );
             mappingStores.Should()
                 .BeSequentiallyEqualTo(
-                    KeyValuePair.Create( expectedFirstKey, (Delegate)firstMapping ),
-                    KeyValuePair.Create( expectedSecondKey, (Delegate)secondMapping ) );
+                    KeyValuePair.Create( expectedFirstKey, ( Delegate )firstMapping ),
+                    KeyValuePair.Create( expectedSecondKey, ( Delegate )secondMapping ) );
         }
     }
 }

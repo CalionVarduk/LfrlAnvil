@@ -180,10 +180,10 @@ public abstract class Benchmark<TState>
             var elapsedTimeWithOutliers = new AggregateStatistic<TimeSpan>(
                 Min: TimeSpan.FromTicks( minElapsedTime ),
                 Max: TimeSpan.FromTicks( maxElapsedTime ),
-                Mean: TimeSpan.FromTicks( (long)Math.Ceiling( elapsedTimeMean ) ),
-                Variance: TimeSpan.FromTicks( (long)Math.Ceiling( variance ) ),
-                StandardDeviation: TimeSpan.FromTicks( (long)Math.Ceiling( standardDeviation ) ),
-                StandardError: TimeSpan.FromTicks( (long)Math.Ceiling( standardDeviation / samplesSqrt ) ) );
+                Mean: TimeSpan.FromTicks( ( long )Math.Ceiling( elapsedTimeMean ) ),
+                Variance: TimeSpan.FromTicks( ( long )Math.Ceiling( variance ) ),
+                StandardDeviation: TimeSpan.FromTicks( ( long )Math.Ceiling( standardDeviation ) ),
+                StandardError: TimeSpan.FromTicks( ( long )Math.Ceiling( standardDeviation / samplesSqrt ) ) );
 
             minElapsedTime = long.MaxValue;
             maxElapsedTime = long.MinValue;
@@ -215,12 +215,12 @@ public abstract class Benchmark<TState>
             var elapsedTime = new AggregateStatistic<TimeSpan>(
                 Min: TimeSpan.FromTicks( minElapsedTime ),
                 Max: TimeSpan.FromTicks( maxElapsedTime ),
-                Mean: TimeSpan.FromTicks( (long)Math.Ceiling( actualElapsedTimeMean ) ),
-                Variance: TimeSpan.FromTicks( (long)Math.Ceiling( variance ) ),
-                StandardDeviation: TimeSpan.FromTicks( (long)Math.Ceiling( standardDeviation ) ),
+                Mean: TimeSpan.FromTicks( ( long )Math.Ceiling( actualElapsedTimeMean ) ),
+                Variance: TimeSpan.FromTicks( ( long )Math.Ceiling( variance ) ),
+                StandardDeviation: TimeSpan.FromTicks( ( long )Math.Ceiling( standardDeviation ) ),
                 StandardError: TimeSpan.FromTicks(
                     actualElapsedTimeSampleCount > 0
-                        ? (long)Math.Ceiling( standardDeviation / Math.Sqrt( actualElapsedTimeSampleCount ) )
+                        ? ( long )Math.Ceiling( standardDeviation / Math.Sqrt( actualElapsedTimeSampleCount ) )
                         : 0 ) );
 
             steps[i] = new BenchmarkStepInfo(

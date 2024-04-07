@@ -72,7 +72,7 @@ public sealed class EventExchange : IMutableEventExchange
     {
         if ( _publishers.TryGetValue( typeof( TEvent ), out var publisher ) )
         {
-            result = (IEventStream<TEvent>)publisher;
+            result = ( IEventStream<TEvent> )publisher;
             return true;
         }
 
@@ -114,7 +114,7 @@ public sealed class EventExchange : IMutableEventExchange
     {
         if ( _publishers.TryGetValue( typeof( TEvent ), out var publisher ) )
         {
-            result = (IEventPublisher<TEvent>)publisher;
+            result = ( IEventPublisher<TEvent> )publisher;
             return true;
         }
 

@@ -105,8 +105,8 @@ public class SqlNodeMutatorTests : TestsBase
         string expected)
     {
         var sut = new ReplaceContext(
-            Nodes( function, (SqlNodeBase?)trait?.Node ?? function ),
-            Nodes( function, (SqlNodeBase?)trait?.Replacement ?? function ),
+            Nodes( function, ( SqlNodeBase? )trait?.Node ?? function ),
+            Nodes( function, ( SqlNodeBase? )trait?.Replacement ?? function ),
             asLeaf );
 
         var result = sut.Visit( function );
@@ -211,10 +211,10 @@ public class SqlNodeMutatorTests : TestsBase
         action.Should()
             .ThrowExactly<SqlNodeMutatorException>()
             .AndMatch(
-                e => ReferenceEquals( e.Parent, parent ) &&
-                    ReferenceEquals( e.Node, node ) &&
-                    ReferenceEquals( e.Result, replacement ) &&
-                    e.ExpectedType == typeof( SqlExpressionNode ) );
+                e => ReferenceEquals( e.Parent, parent )
+                    && ReferenceEquals( e.Node, node )
+                    && ReferenceEquals( e.Result, replacement )
+                    && e.ExpectedType == typeof( SqlExpressionNode ) );
     }
 
     [Fact]
@@ -271,7 +271,14 @@ public class SqlNodeMutatorTests : TestsBase
     public void Ancestors_FindIndex_ShouldReturnCorrectResult(string name, int expected)
     {
         var parameters = new[] { SqlNode.Parameter( "a" ), SqlNode.Parameter( "b" ), SqlNode.Parameter( "c" ), SqlNode.Parameter( "d" ) };
-        var sut = new SqlNodeAncestors( new List<SqlNodeBase> { parameters[2], parameters[1], parameters[0] } );
+        var sut = new SqlNodeAncestors(
+            new List<SqlNodeBase>
+            {
+                parameters[2],
+                parameters[1],
+                parameters[0]
+            } );
+
         var node = parameters.First( p => p.Name == name );
 
         var result = sut.FindIndex( node );

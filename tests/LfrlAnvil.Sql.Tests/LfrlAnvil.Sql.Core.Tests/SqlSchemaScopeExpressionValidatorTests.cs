@@ -78,7 +78,7 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
     [Fact]
     public void VisitLiteral_ShouldDoNothing()
     {
-        _sut.VisitLiteral( (SqlLiteralNode)SqlNode.Literal( 10 ) );
+        _sut.VisitLiteral( ( SqlLiteralNode )SqlNode.Literal( 10 ) );
 
         using ( new AssertionScope() )
         {
@@ -1369,7 +1369,7 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
     [Fact]
     public void VisitIn_ShouldVisitValueAndExpressions()
     {
-        var node = (SqlInConditionNode)SqlNode.Parameter( "a" ).In( SqlNode.Parameter( "b" ), SqlNode.Parameter( "c" ) );
+        var node = ( SqlInConditionNode )SqlNode.Parameter( "a" ).In( SqlNode.Parameter( "b" ), SqlNode.Parameter( "c" ) );
         _sut.VisitIn( node );
 
         using ( new AssertionScope() )
@@ -1692,7 +1692,7 @@ public class SqlSchemaScopeExpressionValidatorTests : TestsBase
     [Fact]
     public void VisitSelectCompoundField_ShouldDoNothing()
     {
-        var node = (SqlSelectCompoundFieldNode)SqlNode.RawRecordSet( "foo" )
+        var node = ( SqlSelectCompoundFieldNode )SqlNode.RawRecordSet( "foo" )
             .ToDataSource()
             .Select( s => new[] { s.From["a"].AsSelf() } )
             .CompoundWith( SqlNode.RawRecordSet( "bar" ).ToDataSource().Select( s => new[] { s.From["a"].AsSelf() } ).ToUnionAll() )

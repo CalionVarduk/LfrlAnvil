@@ -907,8 +907,7 @@ WHERE (""common"".""foo"".""a"" = ""_{GUID}"".""ID_a_0"") AND (""common"".""foo"
                 dataSource.ToUpdate(
                     s => new[]
                     {
-                        s["f"]["b"].Assign( s["f"]["b"] + s["bar"]["b"] ),
-                        s["f"]["c"].Assign( s["f"]["c"] + SqlNode.Literal( 1 ) )
+                        s["f"]["b"].Assign( s["f"]["b"] + s["bar"]["b"] ), s["f"]["c"].Assign( s["f"]["c"] + SqlNode.Literal( 1 ) )
                     } ) );
 
             sut.Context.Sql.ToString()
@@ -943,8 +942,7 @@ WHERE ""common"".""foo"".""a"" = ""_{GUID}"".""ID_a_0"";" );
                 dataSource.ToUpdate(
                     s => new[]
                     {
-                        s["f"]["c"].Assign( s["f"]["c"] + s["bar"]["c"] ),
-                        s["f"]["d"].Assign( s["f"]["d"] + SqlNode.Literal( 1 ) )
+                        s["f"]["c"].Assign( s["f"]["c"] + s["bar"]["c"] ), s["f"]["d"].Assign( s["f"]["d"] + SqlNode.Literal( 1 ) )
                     } ) );
 
             sut.Context.Sql.ToString()

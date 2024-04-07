@@ -153,7 +153,7 @@ public class DirectedGraphEdgeTests : TestsBase
         graph.AddNode( "b", Fixture.Create<int>() );
         var sut = graph.AddEdge( "a", "b", Fixture.Create<long>() );
 
-        var result = ((IDirectedGraphEdge<string, int, long>)sut).Source;
+        var result = (( IDirectedGraphEdge<string, int, long> )sut).Source;
 
         result.Should().BeSameAs( sut.Source );
     }
@@ -166,7 +166,7 @@ public class DirectedGraphEdgeTests : TestsBase
         graph.AddNode( "b", Fixture.Create<int>() );
         var sut = graph.AddEdge( "a", "b", Fixture.Create<long>() );
 
-        var result = ((IDirectedGraphEdge<string, int, long>)sut).Target;
+        var result = (( IDirectedGraphEdge<string, int, long> )sut).Target;
 
         result.Should().BeSameAs( sut.Target );
     }

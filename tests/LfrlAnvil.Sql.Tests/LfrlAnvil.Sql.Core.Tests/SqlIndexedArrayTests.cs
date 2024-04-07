@@ -17,8 +17,8 @@ public class SqlIndexedArrayTests : TestsBase
         tableBuilder.Columns.Create( "C3" );
         var db = SqlDatabaseMock.Create( dbBuilder );
         var table = db.Schemas.Default.Objects.GetTable( "T" );
-        var c1 = new SqlIndexed<SqlColumnMock>( (SqlColumnMock)table.Columns.Get( "C1" ), OrderBy.Asc );
-        var c2 = new SqlIndexed<SqlColumnMock>( (SqlColumnMock)table.Columns.Get( "C2" ), OrderBy.Desc );
+        var c1 = new SqlIndexed<SqlColumnMock>( ( SqlColumnMock )table.Columns.Get( "C1" ), OrderBy.Asc );
+        var c2 = new SqlIndexed<SqlColumnMock>( ( SqlColumnMock )table.Columns.Get( "C2" ), OrderBy.Desc );
         var c3 = new SqlIndexed<SqlColumnMock>( null, OrderBy.Asc );
 
         var sut = SqlIndexedArray<SqlColumnMock>.From( new SqlIndexed<ISqlColumn>[] { c1, c2, c3 } );
