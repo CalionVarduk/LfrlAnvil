@@ -2,36 +2,37 @@
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using LfrlAnvil.Collections.Internal;
+using LfrlAnvil.Internal;
 
 namespace LfrlAnvil.Collections;
 
 public class SequentialHashSet<T> : ISet<T>, IReadOnlySet<T>
     where T : notnull
 {
-    private readonly Dictionary<T, LinkedListNode<T>> _map;
-    private readonly LinkedList<T> _order;
+    private readonly Dictionary<T, DoublyLinkedNode<T>> _map;
+    private DoublyLinkedNodeSequence<T> _order;
 
     public SequentialHashSet()
         : this( EqualityComparer<T>.Default ) { }
 
     public SequentialHashSet(IEqualityComparer<T> comparer)
     {
-        _map = new Dictionary<T, LinkedListNode<T>>( comparer );
-        _order = new LinkedList<T>();
+        _map = new Dictionary<T, DoublyLinkedNode<T>>( comparer );
+        _order = DoublyLinkedNodeSequence<T>.Empty;
     }
 
     public int Count => _map.Count;
     public IEqualityComparer<T> Comparer => _map.Comparer;
 
-    bool ICollection<T>.IsReadOnly => (( ICollection<KeyValuePair<T, LinkedListNode<T>>> )_map).IsReadOnly;
+    bool ICollection<T>.IsReadOnly => (( ICollection<KeyValuePair<T, DoublyLinkedNode<T>>> )_map).IsReadOnly;
 
     public bool Add(T item)
     {
-        var node = new LinkedListNode<T>( item );
+        var node = new DoublyLinkedNode<T>( item );
         if ( ! _map.TryAdd( item, node ) )
             return false;
 
-        _order.AddLast( node );
+        _order = _order.AddLast( node );
         return true;
     }
 
@@ -40,7 +41,7 @@ public class SequentialHashSet<T> : ISet<T>, IReadOnlySet<T>
         if ( ! _map.Remove( item, out var node ) )
             return false;
 
-        _order.Remove( node );
+        _order = _order.Remove( node );
         return true;
     }
 
@@ -53,7 +54,7 @@ public class SequentialHashSet<T> : ISet<T>, IReadOnlySet<T>
     public void Clear()
     {
         _map.Clear();
-        _order.Clear();
+        _order = _order.Clear();
     }
 
     public void ExceptWith(IEnumerable<T> other)
@@ -91,10 +92,10 @@ public class SequentialHashSet<T> : ISet<T>, IReadOnlySet<T>
         var otherSet = GetOtherSet( other, Comparer );
         var itemsToRemove = new List<T>();
 
-        foreach ( var item in _order )
+        foreach ( var value in _order )
         {
-            if ( ! otherSet.Contains( item ) )
-                itemsToRemove.Add( item );
+            if ( ! otherSet.Contains( value ) )
+                itemsToRemove.Add( value );
         }
 
         foreach ( var item in itemsToRemove )
@@ -178,7 +179,7 @@ public class SequentialHashSet<T> : ISet<T>, IReadOnlySet<T>
             return false;
 
         var otherSet = GetOtherSet( other, Comparer );
-        return IsSupersetOf( otherSet, _order );
+        return IsSupersetOf( otherSet, this );
     }
 
     [Pure]

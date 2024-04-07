@@ -5,22 +5,23 @@ using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Runtime.InteropServices;
 using LfrlAnvil.Collections.Internal;
+using LfrlAnvil.Internal;
 
 namespace LfrlAnvil.Collections;
 
 public class SequentialDictionary<TKey, TValue> : IDictionary<TKey, TValue>, IReadOnlyDictionary<TKey, TValue>
     where TKey : notnull
 {
-    private readonly Dictionary<TKey, LinkedListNode<KeyValuePair<TKey, TValue>>> _map;
-    private readonly LinkedList<KeyValuePair<TKey, TValue>> _order;
+    private readonly Dictionary<TKey, DoublyLinkedNode<KeyValuePair<TKey, TValue>>> _map;
+    private DoublyLinkedNodeSequence<KeyValuePair<TKey, TValue>> _order;
 
     public SequentialDictionary()
         : this( EqualityComparer<TKey>.Default ) { }
 
     public SequentialDictionary(IEqualityComparer<TKey> comparer)
     {
-        _map = new Dictionary<TKey, LinkedListNode<KeyValuePair<TKey, TValue>>>( comparer );
-        _order = new LinkedList<KeyValuePair<TKey, TValue>>();
+        _map = new Dictionary<TKey, DoublyLinkedNode<KeyValuePair<TKey, TValue>>>( comparer );
+        _order = DoublyLinkedNodeSequence<KeyValuePair<TKey, TValue>>.Empty;
     }
 
     public TValue this[TKey key]
@@ -33,30 +34,30 @@ public class SequentialDictionary<TKey, TValue> : IDictionary<TKey, TValue>, IRe
                 node.Value = KeyValuePair.Create( key, value );
             else
             {
-                node = new LinkedListNode<KeyValuePair<TKey, TValue>>( KeyValuePair.Create( key, value ) );
-                _order.AddLast( node );
+                node = new DoublyLinkedNode<KeyValuePair<TKey, TValue>>( KeyValuePair.Create( key, value ) );
+                _order = _order.AddLast( node );
             }
         }
     }
 
     public int Count => _map.Count;
-    public IEnumerable<TKey> Keys => _order.Select( static kv => kv.Key );
-    public IEnumerable<TValue> Values => _order.Select( static kv => kv.Value );
+    public IEnumerable<TKey> Keys => this.Select( static kv => kv.Key );
+    public IEnumerable<TValue> Values => this.Select( static kv => kv.Value );
     public IEqualityComparer<TKey> Comparer => _map.Comparer;
-    public KeyValuePair<TKey, TValue>? First => _order.First?.Value;
-    public KeyValuePair<TKey, TValue>? Last => _order.Last?.Value;
+    public KeyValuePair<TKey, TValue>? First => _order.Head?.Value;
+    public KeyValuePair<TKey, TValue>? Last => _order.Tail?.Value;
 
     ICollection<TKey> IDictionary<TKey, TValue>.Keys => Keys.ToList();
     ICollection<TValue> IDictionary<TKey, TValue>.Values => Values.ToList();
 
     bool ICollection<KeyValuePair<TKey, TValue>>.IsReadOnly =>
-        (( ICollection<KeyValuePair<TKey, LinkedListNode<KeyValuePair<TKey, TValue>>>> )_map).IsReadOnly;
+        (( ICollection<KeyValuePair<TKey, DoublyLinkedNode<KeyValuePair<TKey, TValue>>>> )_map).IsReadOnly;
 
     public void Add(TKey key, TValue value)
     {
-        var node = new LinkedListNode<KeyValuePair<TKey, TValue>>( KeyValuePair.Create( key, value ) );
+        var node = new DoublyLinkedNode<KeyValuePair<TKey, TValue>>( KeyValuePair.Create( key, value ) );
         _map.Add( key, node );
-        _order.AddLast( node );
+        _order = _order.AddLast( node );
     }
 
     public bool Remove(TKey key)
@@ -64,7 +65,7 @@ public class SequentialDictionary<TKey, TValue> : IDictionary<TKey, TValue>, IRe
         if ( ! _map.Remove( key, out var node ) )
             return false;
 
-        _order.Remove( node );
+        _order = _order.Remove( node );
         return true;
     }
 
@@ -73,7 +74,7 @@ public class SequentialDictionary<TKey, TValue> : IDictionary<TKey, TValue>, IRe
         if ( _map.Remove( key, out var node ) )
         {
             removed = node.Value.Value;
-            _order.Remove( node );
+            _order = _order.Remove( node );
             return true;
         }
 
@@ -102,7 +103,7 @@ public class SequentialDictionary<TKey, TValue> : IDictionary<TKey, TValue>, IRe
     public void Clear()
     {
         _map.Clear();
-        _order.Clear();
+        _order = _order.Clear();
     }
 
     [Pure]
@@ -143,7 +144,7 @@ public class SequentialDictionary<TKey, TValue> : IDictionary<TKey, TValue>, IRe
         if ( ! _map.TryGetValue( item.Key, out var node ) || ! EqualityComparer<TValue>.Default.Equals( node.Value.Value, item.Value ) )
             return false;
 
-        _order.Remove( node );
+        _order = _order.Remove( node );
         return _map.Remove( item.Key );
     }
 
