@@ -356,6 +356,20 @@ public class CacheTests : TestsBase
         }
     }
 
+    [Theory]
+    [InlineData( "foo", true )]
+    [InlineData( "bar", false )]
+    public void ContainsKey_ShouldReturnTrue_WhenKeyExists(string key, bool expected)
+    {
+        var entry = KeyValuePair.Create( "foo", 1 );
+        var sut = new Cache<string, int>( capacity: 3 );
+        sut.TryAdd( entry.Key, entry.Value );
+
+        var result = sut.ContainsKey( key );
+
+        result.Should().Be( expected );
+    }
+
     [Fact]
     public void Restart_ShouldSetExistingEntryAsNewest_WhenKeyExistsAndIsNotNewest()
     {
