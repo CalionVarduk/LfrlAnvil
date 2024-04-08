@@ -28,12 +28,27 @@
   - & file result selector & optional file result propagation strategy?
   - take a look at DirectoryLookup solution
 
+
+- DB builder: UserData property? of 'object?' type
+- allows to send data between versions
+
+
 ### Caching
 project idea:
 - move Cache-like classes from Collections project to Caching
 - Add reference to Collections(?) & Chrono
 - Add TimedCache class, that is capable of removing entries old enough when new entry is added
 - or when manual cache validation is invoked
+- UPDATE:
+  - no new projects
+  - Core gets to define ICache interface, with MaxCapacity property (or sth similar)
+  - Core gets to implement the base version, where fetched resources are changed to be the newest
+  - Chrono gets to implements 2(?) versions:
+    - one version allows to set resource lifetime globally & that's it
+    - second version allows to set individual resource lifetimes when inserting
+      - or use the global one
+      - this approach requires a heap structure
+    - both versions contain timestamp provider & Refresh() method
 
 
 ### Reactive.Scheduling

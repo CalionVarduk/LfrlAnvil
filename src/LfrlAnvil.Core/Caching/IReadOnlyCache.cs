@@ -1,8 +1,8 @@
 ﻿using System.Collections.Generic;
 
-namespace LfrlAnvil.Collections;
+namespace LfrlAnvil.Caching;
 
-public interface IReadOnlyFiniteCache<TKey, TValue> : IReadOnlyDictionary<TKey, TValue>
+public interface IReadOnlyCache<TKey, TValue> : IReadOnlyDictionary<TKey, TValue>
     where TKey : notnull
 {
     int Capacity { get; }

@@ -3,6 +3,9 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
+using System.Threading;
+using System.Threading.Tasks;
+using LfrlAnvil.Caching;
 using LfrlAnvil.Memory;
 
 namespace LfrlAnvil.Extensions;
@@ -65,5 +68,46 @@ public static class CollectionExtensions
         var index = 0;
         foreach ( var e in source )
             span[index++] = e;
+    }
+
+    public static TValue GetOrAdd<TKey, TValue>(this ICache<TKey, TValue> cache, TKey key, Func<TKey, TValue> provider)
+        where TKey : notnull
+    {
+        if ( cache.TryGetValue( key, out var value ) )
+            return value;
+
+        value = provider( key );
+        cache[key] = value;
+        return value;
+    }
+
+    public static async ValueTask<TValue> GetOrAddAsync<TKey, TValue>(
+        this ICache<TKey, TValue> cache,
+        TKey key,
+        Func<TKey, CancellationToken, ValueTask<TValue>> provider,
+        CancellationToken cancellationToken = default)
+        where TKey : notnull
+    {
+        if ( cache.TryGetValue( key, out var value ) )
+            return value;
+
+        value = await provider( key, cancellationToken );
+        cache[key] = value;
+        return value;
+    }
+
+    public static async ValueTask<TValue> GetOrAddAsync<TKey, TValue>(
+        this ICache<TKey, TValue> cache,
+        TKey key,
+        Func<TKey, CancellationToken, Task<TValue>> provider,
+        CancellationToken cancellationToken = default)
+        where TKey : notnull
+    {
+        if ( cache.TryGetValue( key, out var value ) )
+            return value;
+
+        value = await provider( key, cancellationToken );
+        cache[key] = value;
+        return value;
     }
 }
