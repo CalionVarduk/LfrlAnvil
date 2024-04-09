@@ -706,6 +706,7 @@ public class CacheTests : TestsBase
         sut.Newest.Should().Be( expected[^1] );
         sut.Keys.Should().BeSequentiallyEqualTo( expected.Select( kv => kv.Key ) );
         sut.Values.Should().BeSequentiallyEqualTo( expected.Select( kv => kv.Value ) );
+        sut.Should().BeSequentiallyEqualTo( expected );
 
         foreach ( var (key, value) in expected )
             sut.GetValueOrDefault( key ).Should().Be( value );

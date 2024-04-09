@@ -5,11 +5,10 @@ using LfrlAnvil.Chrono.Caching;
 using LfrlAnvil.Chrono.Internal;
 using LfrlAnvil.Functional;
 using LfrlAnvil.TestExtensions.FluentAssertions;
-using AssertionScope = FluentAssertions.Execution.AssertionScope;
 
 namespace LfrlAnvil.Chrono.Tests.CachingTests;
 
-public class LifetimeCacheTests : TestsBase
+public class IndividualIndividualLifetimeCacheTests : TestsBase
 {
     [Theory]
     [InlineData( 1, 1 )]
@@ -19,7 +18,7 @@ public class LifetimeCacheTests : TestsBase
     {
         var timestamps = new Timestamps();
         var lifetime = Duration.FromTicks( lifetimeTicks );
-        var sut = new LifetimeCache<string, int>( timestamps, lifetime, capacity );
+        var sut = new IndividualLifetimeCache<string, int>( timestamps, lifetime, capacity );
 
         using ( new AssertionScope() )
         {
@@ -29,7 +28,6 @@ public class LifetimeCacheTests : TestsBase
             sut.Timestamps.Should().BeSameAs( timestamps );
             sut.Comparer.Should().BeSameAs( EqualityComparer<string>.Default );
             sut.Oldest.Should().BeNull();
-            sut.Newest.Should().BeNull();
         }
     }
 
@@ -42,7 +40,7 @@ public class LifetimeCacheTests : TestsBase
         var comparer = EqualityComparerFactory<string>.Create( (a, b) => a!.Equals( b ) );
         var timestamps = new Timestamps();
         var lifetime = Duration.FromTicks( lifetimeTicks );
-        var sut = new LifetimeCache<string, int>( comparer, timestamps, lifetime, capacity );
+        var sut = new IndividualLifetimeCache<string, int>( comparer, timestamps, lifetime, capacity );
 
         using ( new AssertionScope() )
         {
@@ -52,7 +50,6 @@ public class LifetimeCacheTests : TestsBase
             sut.Timestamps.Should().BeSameAs( timestamps );
             sut.Comparer.Should().BeSameAs( comparer );
             sut.Oldest.Should().BeNull();
-            sut.Newest.Should().BeNull();
         }
     }
 
@@ -64,7 +61,7 @@ public class LifetimeCacheTests : TestsBase
         var timestamps = new Timestamps();
         var lifetime = Duration.FromTicks( 1 );
 
-        var action = Lambda.Of( () => new LifetimeCache<string, int>( timestamps, lifetime, capacity ) );
+        var action = Lambda.Of( () => new IndividualLifetimeCache<string, int>( timestamps, lifetime, capacity ) );
 
         action.Should().ThrowExactly<ArgumentOutOfRangeException>();
     }
@@ -77,7 +74,7 @@ public class LifetimeCacheTests : TestsBase
         var timestamps = new Timestamps();
         var lifetime = Duration.FromTicks( ticks );
 
-        var action = Lambda.Of( () => new LifetimeCache<string, int>( timestamps, lifetime, capacity: 1 ) );
+        var action = Lambda.Of( () => new IndividualLifetimeCache<string, int>( timestamps, lifetime, capacity: 1 ) );
 
         action.Should().ThrowExactly<ArgumentOutOfRangeException>();
     }
@@ -87,7 +84,7 @@ public class LifetimeCacheTests : TestsBase
     {
         var timestamps = new Timestamps();
         var entry = KeyValuePair.Create( "foo", 1 );
-        var sut = new LifetimeCache<string, int>( timestamps, lifetime: Duration.FromSeconds( 1 ), capacity: 3 );
+        var sut = new IndividualLifetimeCache<string, int>( timestamps, lifetime: Duration.FromSeconds( 1 ), capacity: 3 );
 
         var result = sut.TryAdd( entry.Key, entry.Value );
 
@@ -105,7 +102,7 @@ public class LifetimeCacheTests : TestsBase
         var timestamps = new Timestamps();
         var entry1 = KeyValuePair.Create( "foo", 42 );
         var entry2 = KeyValuePair.Create( entry1.Key, 1 );
-        var sut = new LifetimeCache<string, int>( timestamps, lifetime: Duration.FromSeconds( 1 ), capacity: 3 );
+        var sut = new IndividualLifetimeCache<string, int>( timestamps, lifetime: Duration.FromSeconds( 1 ), capacity: 3 );
         sut.TryAdd( entry1.Key, entry1.Value );
 
         var result = sut.TryAdd( entry2.Key, entry2.Value );
@@ -124,10 +121,12 @@ public class LifetimeCacheTests : TestsBase
         var entry1 = KeyValuePair.Create( "foo", 1 );
         var entry2 = KeyValuePair.Create( "bar", 2 );
         var entry3 = KeyValuePair.Create( "qux", 3 );
-        var sut = new LifetimeCache<string, int>( timestamps, lifetime: Duration.FromSeconds( 1 ), capacity: 3 );
+        var sut = new IndividualLifetimeCache<string, int>( timestamps, lifetime: Duration.FromSeconds( 1 ), capacity: 3 );
 
         sut.TryAdd( entry1.Key, entry1.Value );
+        timestamps.Next += Duration.FromTicks( 1 );
         sut.TryAdd( entry2.Key, entry2.Value );
+        timestamps.Next += Duration.FromTicks( 1 );
         sut.TryAdd( entry3.Key, entry3.Value );
 
         using ( new AssertionScope() )
@@ -142,16 +141,19 @@ public class LifetimeCacheTests : TestsBase
         var entry2 = KeyValuePair.Create( "bar", 2 );
         var entry3 = KeyValuePair.Create( "qux", 3 );
         var entry4 = KeyValuePair.Create( "lorem", 4 );
-        var sut = new LifetimeCache<string, int>( timestamps, lifetime: Duration.FromSeconds( 1 ), capacity: 3 );
+        var sut = new IndividualLifetimeCache<string, int>( timestamps, lifetime: Duration.FromSeconds( 1 ), capacity: 3 );
         sut.TryAdd( entry1.Key, entry1.Value );
+        timestamps.Next += Duration.FromTicks( 1 );
         sut.TryAdd( entry2.Key, entry2.Value );
+        timestamps.Next += Duration.FromTicks( 1 );
         sut.TryAdd( entry3.Key, entry3.Value );
+        timestamps.Next += Duration.FromTicks( 1 );
 
         sut.TryAdd( entry4.Key, entry4.Value );
 
         using ( new AssertionScope() )
         {
-            AssertCollection( sut, entry2, entry3, entry4 );
+            AssertCollection( sut, entry2, entry4, entry3 );
             sut.ContainsKey( entry1.Key ).Should().BeFalse();
         }
     }
@@ -163,7 +165,7 @@ public class LifetimeCacheTests : TestsBase
         var entry1 = KeyValuePair.Create( "foo", 1 );
         var entry2 = KeyValuePair.Create( "bar", 2 );
         var entry3 = KeyValuePair.Create( "qux", 3 );
-        var sut = new LifetimeCache<string, int>( timestamps, lifetime: Duration.FromSeconds( 1 ), capacity: 3 );
+        var sut = new IndividualLifetimeCache<string, int>( timestamps, lifetime: Duration.FromSeconds( 1 ), capacity: 3 );
         sut.TryAdd( entry1.Key, entry1.Value );
         sut.TryAdd( entry2.Key, entry2.Value );
         timestamps.Next += Duration.FromTicks( 1 );
@@ -182,11 +184,35 @@ public class LifetimeCacheTests : TestsBase
     }
 
     [Fact]
+    public void TryAdd_ShouldAddItemsWithCustomLifetime()
+    {
+        var timestamps = new Timestamps();
+        var entry1 = KeyValuePair.Create( "foo", 1 );
+        var entry2 = KeyValuePair.Create( "bar", 2 );
+        var entry3 = KeyValuePair.Create( "qux", 3 );
+        var sut = new IndividualLifetimeCache<string, int>( timestamps, lifetime: Duration.FromSeconds( 1 ), capacity: 3 );
+
+        sut.TryAdd( entry1.Key, entry1.Value, Duration.FromSeconds( 5 ) );
+        timestamps.Next += Duration.FromTicks( 1 );
+        sut.TryAdd( entry2.Key, entry2.Value, Duration.FromSeconds( 2 ) );
+        timestamps.Next += Duration.FromTicks( 1 );
+        sut.TryAdd( entry3.Key, entry3.Value, Duration.FromSeconds( 3 ) );
+
+        using ( new AssertionScope() )
+        {
+            sut.GetRemainingLifetime( entry1.Key ).Should().Be( Duration.FromSeconds( 5 ) - Duration.FromTicks( 2 ) );
+            sut.GetRemainingLifetime( entry2.Key ).Should().Be( Duration.FromSeconds( 2 ) - Duration.FromTicks( 1 ) );
+            sut.GetRemainingLifetime( entry3.Key ).Should().Be( Duration.FromSeconds( 3 ) );
+            AssertCollection( sut, entry2, entry1, entry3 );
+        }
+    }
+
+    [Fact]
     public void AddOrUpdate_ShouldAddFirstItemCorrectly()
     {
         var timestamps = new Timestamps();
         var entry = KeyValuePair.Create( "foo", 1 );
-        var sut = new LifetimeCache<string, int>( timestamps, lifetime: Duration.FromSeconds( 1 ), capacity: 3 );
+        var sut = new IndividualLifetimeCache<string, int>( timestamps, lifetime: Duration.FromSeconds( 1 ), capacity: 3 );
 
         var result = sut.AddOrUpdate( entry.Key, entry.Value );
 
@@ -204,7 +230,7 @@ public class LifetimeCacheTests : TestsBase
         var timestamps = new Timestamps();
         var entry1 = KeyValuePair.Create( "foo", 42 );
         var entry2 = KeyValuePair.Create( entry1.Key, 1 );
-        var sut = new LifetimeCache<string, int>( timestamps, lifetime: Duration.FromSeconds( 1 ), capacity: 3 );
+        var sut = new IndividualLifetimeCache<string, int>( timestamps, lifetime: Duration.FromSeconds( 1 ), capacity: 3 );
         sut.TryAdd( entry1.Key, entry1.Value );
         timestamps.Next += Duration.FromTicks( 1 );
 
@@ -225,7 +251,7 @@ public class LifetimeCacheTests : TestsBase
         var entry1 = KeyValuePair.Create( "foo", 1 );
         var entry2 = KeyValuePair.Create( "bar", 2 );
         var entry3 = KeyValuePair.Create( "qux", 3 );
-        var sut = new LifetimeCache<string, int>( timestamps, lifetime: Duration.FromSeconds( 1 ), capacity: 3 );
+        var sut = new IndividualLifetimeCache<string, int>( timestamps, lifetime: Duration.FromSeconds( 1 ), capacity: 3 );
 
         sut.AddOrUpdate( entry1.Key, entry1.Value );
         sut.AddOrUpdate( entry2.Key, entry2.Value );
@@ -243,16 +269,19 @@ public class LifetimeCacheTests : TestsBase
         var entry2 = KeyValuePair.Create( "bar", 2 );
         var entry3 = KeyValuePair.Create( "qux", 3 );
         var entry4 = KeyValuePair.Create( "lorem", 4 );
-        var sut = new LifetimeCache<string, int>( timestamps, lifetime: Duration.FromSeconds( 1 ), capacity: 3 );
+        var sut = new IndividualLifetimeCache<string, int>( timestamps, lifetime: Duration.FromSeconds( 1 ), capacity: 3 );
         sut.TryAdd( entry1.Key, entry1.Value );
+        timestamps.Next += Duration.FromTicks( 1 );
         sut.TryAdd( entry2.Key, entry2.Value );
+        timestamps.Next += Duration.FromTicks( 1 );
         sut.TryAdd( entry3.Key, entry3.Value );
+        timestamps.Next += Duration.FromTicks( 1 );
 
         sut.AddOrUpdate( entry4.Key, entry4.Value );
 
         using ( new AssertionScope() )
         {
-            AssertCollection( sut, entry2, entry3, entry4 );
+            AssertCollection( sut, entry2, entry4, entry3 );
             sut.ContainsKey( entry1.Key ).Should().BeFalse();
         }
     }
@@ -265,15 +294,18 @@ public class LifetimeCacheTests : TestsBase
         var entry2 = KeyValuePair.Create( "bar", 2 );
         var entry3 = KeyValuePair.Create( "qux", 3 );
         var entry4 = KeyValuePair.Create( entry1.Key, 4 );
-        var sut = new LifetimeCache<string, int>( timestamps, lifetime: Duration.FromSeconds( 1 ), capacity: 3 );
+        var sut = new IndividualLifetimeCache<string, int>( timestamps, lifetime: Duration.FromSeconds( 1 ), capacity: 3 );
         sut.TryAdd( entry1.Key, entry1.Value );
+        timestamps.Next += Duration.FromTicks( 1 );
         sut.TryAdd( entry2.Key, entry2.Value );
+        timestamps.Next += Duration.FromTicks( 1 );
         sut.TryAdd( entry3.Key, entry3.Value );
+        timestamps.Next += Duration.FromTicks( 1 );
 
         sut.AddOrUpdate( entry4.Key, entry4.Value );
 
         using ( new AssertionScope() )
-            AssertCollection( sut, entry2, entry3, entry4 );
+            AssertCollection( sut, entry2, entry4, entry3 );
     }
 
     [Fact]
@@ -283,7 +315,7 @@ public class LifetimeCacheTests : TestsBase
         var entry1 = KeyValuePair.Create( "foo", 1 );
         var entry2 = KeyValuePair.Create( "bar", 2 );
         var entry3 = KeyValuePair.Create( "qux", 3 );
-        var sut = new LifetimeCache<string, int>( timestamps, lifetime: Duration.FromSeconds( 1 ), capacity: 3 );
+        var sut = new IndividualLifetimeCache<string, int>( timestamps, lifetime: Duration.FromSeconds( 1 ), capacity: 3 );
         sut.TryAdd( entry1.Key, entry1.Value );
         sut.TryAdd( entry2.Key, entry2.Value );
         timestamps.Next += Duration.FromTicks( 1 );
@@ -302,11 +334,85 @@ public class LifetimeCacheTests : TestsBase
     }
 
     [Fact]
+    public void AddOrUpdate_ShouldAddItemsWithCustomLifetime()
+    {
+        var timestamps = new Timestamps();
+        var entry1 = KeyValuePair.Create( "foo", 1 );
+        var entry2 = KeyValuePair.Create( "bar", 2 );
+        var entry3 = KeyValuePair.Create( "qux", 3 );
+        var sut = new IndividualLifetimeCache<string, int>( timestamps, lifetime: Duration.FromSeconds( 1 ), capacity: 3 );
+
+        sut.AddOrUpdate( entry1.Key, entry1.Value, Duration.FromSeconds( 5 ) );
+        timestamps.Next += Duration.FromTicks( 1 );
+        sut.AddOrUpdate( entry2.Key, entry2.Value, Duration.FromSeconds( 2 ) );
+        timestamps.Next += Duration.FromTicks( 1 );
+        sut.AddOrUpdate( entry3.Key, entry3.Value, Duration.FromSeconds( 3 ) );
+
+        using ( new AssertionScope() )
+        {
+            sut.GetRemainingLifetime( entry1.Key ).Should().Be( Duration.FromSeconds( 5 ) - Duration.FromTicks( 2 ) );
+            sut.GetRemainingLifetime( entry2.Key ).Should().Be( Duration.FromSeconds( 2 ) - Duration.FromTicks( 1 ) );
+            sut.GetRemainingLifetime( entry3.Key ).Should().Be( Duration.FromSeconds( 3 ) );
+            AssertCollection( sut, entry2, entry1, entry3 );
+        }
+    }
+
+    [Fact]
+    public void AddOrUpdate_WithCustomShorterLifetime_ShouldUpdateExistingValueAndRestartEntryWithNewLifetime_WhenKeyAlreadyExists()
+    {
+        var timestamps = new Timestamps();
+        var entry1 = KeyValuePair.Create( "foo", 1 );
+        var entry2 = KeyValuePair.Create( "bar", 2 );
+        var entry3 = KeyValuePair.Create( "qux", 3 );
+        var entry4 = KeyValuePair.Create( entry1.Key, 4 );
+        var sut = new IndividualLifetimeCache<string, int>( timestamps, lifetime: Duration.FromSeconds( 1 ), capacity: 3 );
+        sut.TryAdd( entry1.Key, entry1.Value );
+        timestamps.Next += Duration.FromTicks( 1 );
+        sut.TryAdd( entry2.Key, entry2.Value );
+        timestamps.Next += Duration.FromTicks( 1 );
+        sut.TryAdd( entry3.Key, entry3.Value );
+        timestamps.Next += Duration.FromTicks( 1 );
+
+        sut.AddOrUpdate( entry4.Key, entry4.Value, Duration.FromMilliseconds( 500 ) );
+
+        using ( new AssertionScope() )
+        {
+            sut.GetRemainingLifetime( entry4.Key ).Should().Be( Duration.FromMilliseconds( 500 ) );
+            AssertCollection( sut, entry4, entry2, entry3 );
+        }
+    }
+
+    [Fact]
+    public void AddOrUpdate_WithCustomLongerLifetime_ShouldUpdateExistingValueAndRestartEntryWithNewLifetime_WhenKeyAlreadyExists()
+    {
+        var timestamps = new Timestamps();
+        var entry1 = KeyValuePair.Create( "foo", 1 );
+        var entry2 = KeyValuePair.Create( "bar", 2 );
+        var entry3 = KeyValuePair.Create( "qux", 3 );
+        var entry4 = KeyValuePair.Create( entry1.Key, 4 );
+        var sut = new IndividualLifetimeCache<string, int>( timestamps, lifetime: Duration.FromSeconds( 1 ), capacity: 3 );
+        sut.TryAdd( entry1.Key, entry1.Value );
+        timestamps.Next += Duration.FromTicks( 1 );
+        sut.TryAdd( entry2.Key, entry2.Value );
+        timestamps.Next += Duration.FromTicks( 1 );
+        sut.TryAdd( entry3.Key, entry3.Value );
+        timestamps.Next += Duration.FromTicks( 1 );
+
+        sut.AddOrUpdate( entry4.Key, entry4.Value, Duration.FromSeconds( 2 ) );
+
+        using ( new AssertionScope() )
+        {
+            sut.GetRemainingLifetime( entry4.Key ).Should().Be( Duration.FromSeconds( 2 ) );
+            AssertCollection( sut, entry2, entry4, entry3 );
+        }
+    }
+
+    [Fact]
     public void Indexer_Setter_ShouldAddFirstItemCorrectly()
     {
         var timestamps = new Timestamps();
         var entry = KeyValuePair.Create( "foo", 1 );
-        var sut = new LifetimeCache<string, int>( timestamps, lifetime: Duration.FromSeconds( 1 ), capacity: 3 );
+        var sut = new IndividualLifetimeCache<string, int>( timestamps, lifetime: Duration.FromSeconds( 1 ), capacity: 3 );
 
         sut[entry.Key] = entry.Value;
 
@@ -323,7 +429,7 @@ public class LifetimeCacheTests : TestsBase
         var timestamps = new Timestamps();
         var entry1 = KeyValuePair.Create( "foo", 42 );
         var entry2 = KeyValuePair.Create( entry1.Key, 1 );
-        var sut = new LifetimeCache<string, int>( timestamps, lifetime: Duration.FromSeconds( 1 ), capacity: 3 );
+        var sut = new IndividualLifetimeCache<string, int>( timestamps, lifetime: Duration.FromSeconds( 1 ), capacity: 3 );
         sut.TryAdd( entry1.Key, entry1.Value );
         timestamps.Next += Duration.FromTicks( 1 );
 
@@ -343,7 +449,7 @@ public class LifetimeCacheTests : TestsBase
         var entry1 = KeyValuePair.Create( "foo", 1 );
         var entry2 = KeyValuePair.Create( "bar", 2 );
         var entry3 = KeyValuePair.Create( "qux", 3 );
-        var sut = new LifetimeCache<string, int>( timestamps, lifetime: Duration.FromSeconds( 1 ), capacity: 3 );
+        var sut = new IndividualLifetimeCache<string, int>( timestamps, lifetime: Duration.FromSeconds( 1 ), capacity: 3 );
 
         sut[entry1.Key] = entry1.Value;
         sut[entry2.Key] = entry2.Value;
@@ -361,16 +467,19 @@ public class LifetimeCacheTests : TestsBase
         var entry2 = KeyValuePair.Create( "bar", 2 );
         var entry3 = KeyValuePair.Create( "qux", 3 );
         var entry4 = KeyValuePair.Create( "lorem", 4 );
-        var sut = new LifetimeCache<string, int>( timestamps, lifetime: Duration.FromSeconds( 1 ), capacity: 3 );
+        var sut = new IndividualLifetimeCache<string, int>( timestamps, lifetime: Duration.FromSeconds( 1 ), capacity: 3 );
         sut.TryAdd( entry1.Key, entry1.Value );
+        timestamps.Next += Duration.FromTicks( 1 );
         sut.TryAdd( entry2.Key, entry2.Value );
+        timestamps.Next += Duration.FromTicks( 1 );
         sut.TryAdd( entry3.Key, entry3.Value );
+        timestamps.Next += Duration.FromTicks( 1 );
 
         sut[entry4.Key] = entry4.Value;
 
         using ( new AssertionScope() )
         {
-            AssertCollection( sut, entry2, entry3, entry4 );
+            AssertCollection( sut, entry2, entry4, entry3 );
             sut.ContainsKey( entry1.Key ).Should().BeFalse();
         }
     }
@@ -383,15 +492,18 @@ public class LifetimeCacheTests : TestsBase
         var entry2 = KeyValuePair.Create( "bar", 2 );
         var entry3 = KeyValuePair.Create( "qux", 3 );
         var entry4 = KeyValuePair.Create( entry1.Key, 4 );
-        var sut = new LifetimeCache<string, int>( timestamps, lifetime: Duration.FromSeconds( 1 ), capacity: 3 );
+        var sut = new IndividualLifetimeCache<string, int>( timestamps, lifetime: Duration.FromSeconds( 1 ), capacity: 3 );
         sut.TryAdd( entry1.Key, entry1.Value );
+        timestamps.Next += Duration.FromTicks( 1 );
         sut.TryAdd( entry2.Key, entry2.Value );
+        timestamps.Next += Duration.FromTicks( 1 );
         sut.TryAdd( entry3.Key, entry3.Value );
+        timestamps.Next += Duration.FromTicks( 1 );
 
         sut[entry4.Key] = entry4.Value;
 
         using ( new AssertionScope() )
-            AssertCollection( sut, entry2, entry3, entry4 );
+            AssertCollection( sut, entry2, entry4, entry3 );
     }
 
     [Fact]
@@ -401,7 +513,7 @@ public class LifetimeCacheTests : TestsBase
         var entry1 = KeyValuePair.Create( "foo", 1 );
         var entry2 = KeyValuePair.Create( "bar", 2 );
         var entry3 = KeyValuePair.Create( "qux", 3 );
-        var sut = new LifetimeCache<string, int>( timestamps, lifetime: Duration.FromSeconds( 1 ), capacity: 3 );
+        var sut = new IndividualLifetimeCache<string, int>( timestamps, lifetime: Duration.FromSeconds( 1 ), capacity: 3 );
         sut.TryAdd( entry1.Key, entry1.Value );
         sut.TryAdd( entry2.Key, entry2.Value );
         timestamps.Next += Duration.FromTicks( 1 );
@@ -425,11 +537,13 @@ public class LifetimeCacheTests : TestsBase
         var entry1 = KeyValuePair.Create( "foo", 1 );
         var entry2 = KeyValuePair.Create( "bar", 2 );
         var entry3 = KeyValuePair.Create( "qux", 3 );
-        var sut = new LifetimeCache<string, int>( timestamps, lifetime: Duration.FromSeconds( 1 ), capacity: 3 );
+        var sut = new IndividualLifetimeCache<string, int>( timestamps, lifetime: Duration.FromSeconds( 1 ), capacity: 3 );
         sut.TryAdd( entry1.Key, entry1.Value );
         timestamps.Next += Duration.FromTicks( 1 );
         sut.TryAdd( entry2.Key, entry2.Value );
+        timestamps.Next += Duration.FromTicks( 1 );
         sut.TryAdd( entry3.Key, entry3.Value );
+        timestamps.Next += Duration.FromTicks( 1 );
 
         var result = sut[entry1.Key];
 
@@ -437,7 +551,7 @@ public class LifetimeCacheTests : TestsBase
         {
             result.Should().Be( entry1.Value );
             sut.GetRemainingLifetime( entry1.Key ).Should().Be( sut.Lifetime );
-            AssertCollection( sut, entry2, entry3, entry1 );
+            AssertCollection( sut, entry2, entry1, entry3 );
         }
     }
 
@@ -445,7 +559,7 @@ public class LifetimeCacheTests : TestsBase
     public void Indexer_Getter_ShouldThrowKeyNotFoundException_WhenKeyDoesNotExist()
     {
         var timestamps = new Timestamps();
-        var sut = new LifetimeCache<string, int>( timestamps, lifetime: Duration.FromSeconds( 1 ), capacity: 3 );
+        var sut = new IndividualLifetimeCache<string, int>( timestamps, lifetime: Duration.FromSeconds( 1 ), capacity: 3 );
 
         var action = Lambda.Of( () => sut["foo"] );
 
@@ -459,7 +573,7 @@ public class LifetimeCacheTests : TestsBase
         var entry1 = KeyValuePair.Create( "foo", 1 );
         var entry2 = KeyValuePair.Create( "bar", 2 );
         var entry3 = KeyValuePair.Create( "qux", 3 );
-        var sut = new LifetimeCache<string, int>( timestamps, lifetime: Duration.FromSeconds( 1 ), capacity: 3 );
+        var sut = new IndividualLifetimeCache<string, int>( timestamps, lifetime: Duration.FromSeconds( 1 ), capacity: 3 );
         sut.TryAdd( entry1.Key, entry1.Value );
         sut.TryAdd( entry2.Key, entry2.Value );
         timestamps.Next += Duration.FromTicks( 1 );
@@ -483,11 +597,13 @@ public class LifetimeCacheTests : TestsBase
         var entry1 = KeyValuePair.Create( "foo", 1 );
         var entry2 = KeyValuePair.Create( "bar", 2 );
         var entry3 = KeyValuePair.Create( "qux", 3 );
-        var sut = new LifetimeCache<string, int>( timestamps, lifetime: Duration.FromSeconds( 1 ), capacity: 3 );
+        var sut = new IndividualLifetimeCache<string, int>( timestamps, lifetime: Duration.FromSeconds( 1 ), capacity: 3 );
         sut.TryAdd( entry1.Key, entry1.Value );
         timestamps.Next += Duration.FromTicks( 1 );
         sut.TryAdd( entry2.Key, entry2.Value );
+        timestamps.Next += Duration.FromTicks( 1 );
         sut.TryAdd( entry3.Key, entry3.Value );
+        timestamps.Next += Duration.FromTicks( 1 );
 
         var result = sut.TryGetValue( entry1.Key, out var outResult );
 
@@ -496,7 +612,7 @@ public class LifetimeCacheTests : TestsBase
             result.Should().BeTrue();
             outResult.Should().Be( entry1.Value );
             sut.GetRemainingLifetime( entry1.Key ).Should().Be( sut.Lifetime );
-            AssertCollection( sut, entry2, entry3, entry1 );
+            AssertCollection( sut, entry2, entry1, entry3 );
         }
     }
 
@@ -504,7 +620,7 @@ public class LifetimeCacheTests : TestsBase
     public void TryGetValue_ShouldReturnFalse_WhenKeyDoesNotExist()
     {
         var timestamps = new Timestamps();
-        var sut = new LifetimeCache<string, int>( timestamps, lifetime: Duration.FromSeconds( 1 ), capacity: 3 );
+        var sut = new IndividualLifetimeCache<string, int>( timestamps, lifetime: Duration.FromSeconds( 1 ), capacity: 3 );
         var result = sut.TryGetValue( "foo", out var outResult );
 
         using ( new AssertionScope() )
@@ -522,7 +638,7 @@ public class LifetimeCacheTests : TestsBase
         var entry1 = KeyValuePair.Create( "foo", 1 );
         var entry2 = KeyValuePair.Create( "bar", 2 );
         var entry3 = KeyValuePair.Create( "qux", 3 );
-        var sut = new LifetimeCache<string, int>( timestamps, lifetime: Duration.FromSeconds( 1 ), capacity: 3 );
+        var sut = new IndividualLifetimeCache<string, int>( timestamps, lifetime: Duration.FromSeconds( 1 ), capacity: 3 );
         sut.TryAdd( entry1.Key, entry1.Value );
         sut.TryAdd( entry2.Key, entry2.Value );
         timestamps.Next += Duration.FromTicks( 1 );
@@ -547,7 +663,7 @@ public class LifetimeCacheTests : TestsBase
     {
         var timestamps = new Timestamps();
         var entry = KeyValuePair.Create( "foo", 1 );
-        var sut = new LifetimeCache<string, int>( timestamps, lifetime: Duration.FromSeconds( 1 ), capacity: 3 );
+        var sut = new IndividualLifetimeCache<string, int>( timestamps, lifetime: Duration.FromSeconds( 1 ), capacity: 3 );
         sut.TryAdd( entry.Key, entry.Value );
 
         var result = sut.ContainsKey( key );
@@ -560,7 +676,7 @@ public class LifetimeCacheTests : TestsBase
     {
         var timestamps = new Timestamps();
         var entry = KeyValuePair.Create( "foo", 1 );
-        var sut = new LifetimeCache<string, int>( timestamps, lifetime: Duration.FromSeconds( 1 ), capacity: 3 );
+        var sut = new IndividualLifetimeCache<string, int>( timestamps, lifetime: Duration.FromSeconds( 1 ), capacity: 3 );
         sut.TryAdd( entry.Key, entry.Value );
         timestamps.Next += sut.Lifetime;
 
@@ -585,7 +701,7 @@ public class LifetimeCacheTests : TestsBase
     {
         var timestamps = new Timestamps();
         var entry = KeyValuePair.Create( "foo", 1 );
-        var sut = new LifetimeCache<string, int>( timestamps, lifetime: Duration.FromSeconds( 1 ), capacity: 3 );
+        var sut = new IndividualLifetimeCache<string, int>( timestamps, lifetime: Duration.FromSeconds( 1 ), capacity: 3 );
         sut.TryAdd( entry.Key, entry.Value );
         timestamps.Next += Duration.FromTicks( ticksToMoveForward );
 
@@ -601,11 +717,13 @@ public class LifetimeCacheTests : TestsBase
         var entry1 = KeyValuePair.Create( "foo", 1 );
         var entry2 = KeyValuePair.Create( "bar", 2 );
         var entry3 = KeyValuePair.Create( "qux", 3 );
-        var sut = new LifetimeCache<string, int>( timestamps, lifetime: Duration.FromSeconds( 1 ), capacity: 3 );
+        var sut = new IndividualLifetimeCache<string, int>( timestamps, lifetime: Duration.FromSeconds( 1 ), capacity: 3 );
         sut.TryAdd( entry1.Key, entry1.Value );
         timestamps.Next += Duration.FromTicks( 1 );
         sut.TryAdd( entry2.Key, entry2.Value );
+        timestamps.Next += Duration.FromTicks( 1 );
         sut.TryAdd( entry3.Key, entry3.Value );
+        timestamps.Next += Duration.FromTicks( 1 );
 
         var result = sut.Restart( entry1.Key );
 
@@ -613,7 +731,7 @@ public class LifetimeCacheTests : TestsBase
         {
             result.Should().BeTrue();
             sut.GetRemainingLifetime( entry1.Key ).Should().Be( sut.Lifetime );
-            AssertCollection( sut, entry2, entry3, entry1 );
+            AssertCollection( sut, entry2, entry1, entry3 );
         }
     }
 
@@ -621,7 +739,7 @@ public class LifetimeCacheTests : TestsBase
     public void Restart_ShouldReturnFalse_WhenKeyDoesNotExist()
     {
         var timestamps = new Timestamps();
-        var sut = new LifetimeCache<string, int>( timestamps, lifetime: Duration.FromSeconds( 1 ), capacity: 3 );
+        var sut = new IndividualLifetimeCache<string, int>( timestamps, lifetime: Duration.FromSeconds( 1 ), capacity: 3 );
 
         var result = sut.Restart( "foo" );
 
@@ -639,7 +757,7 @@ public class LifetimeCacheTests : TestsBase
         var entry1 = KeyValuePair.Create( "foo", 1 );
         var entry2 = KeyValuePair.Create( "bar", 2 );
         var entry3 = KeyValuePair.Create( "qux", 3 );
-        var sut = new LifetimeCache<string, int>( timestamps, lifetime: Duration.FromSeconds( 1 ), capacity: 3 );
+        var sut = new IndividualLifetimeCache<string, int>( timestamps, lifetime: Duration.FromSeconds( 1 ), capacity: 3 );
         sut.TryAdd( entry1.Key, entry1.Value );
         sut.TryAdd( entry2.Key, entry2.Value );
         timestamps.Next += Duration.FromTicks( 1 );
@@ -660,7 +778,7 @@ public class LifetimeCacheTests : TestsBase
     public void Remove_ShouldReturnFalse_WhenKeyDoesNotExist()
     {
         var timestamps = new Timestamps();
-        var sut = new LifetimeCache<string, int>( timestamps, lifetime: Duration.FromSeconds( 1 ), capacity: 3 );
+        var sut = new IndividualLifetimeCache<string, int>( timestamps, lifetime: Duration.FromSeconds( 1 ), capacity: 3 );
 
         var result = sut.Remove( "foo" );
 
@@ -674,10 +792,13 @@ public class LifetimeCacheTests : TestsBase
         var entry1 = KeyValuePair.Create( "foo", 1 );
         var entry2 = KeyValuePair.Create( "bar", 2 );
         var entry3 = KeyValuePair.Create( "qux", 3 );
-        var sut = new LifetimeCache<string, int>( timestamps, lifetime: Duration.FromSeconds( 1 ), capacity: 3 );
+        var sut = new IndividualLifetimeCache<string, int>( timestamps, lifetime: Duration.FromSeconds( 1 ), capacity: 3 );
         sut.TryAdd( entry1.Key, entry1.Value );
+        timestamps.Next += Duration.FromTicks( 1 );
         sut.TryAdd( entry2.Key, entry2.Value );
+        timestamps.Next += Duration.FromTicks( 1 );
         sut.TryAdd( entry3.Key, entry3.Value );
+        timestamps.Next += Duration.FromTicks( 1 );
 
         var result = sut.Remove( entry1.Key );
 
@@ -695,10 +816,13 @@ public class LifetimeCacheTests : TestsBase
         var entry1 = KeyValuePair.Create( "foo", 1 );
         var entry2 = KeyValuePair.Create( "bar", 2 );
         var entry3 = KeyValuePair.Create( "qux", 3 );
-        var sut = new LifetimeCache<string, int>( timestamps, lifetime: Duration.FromSeconds( 1 ), capacity: 3 );
+        var sut = new IndividualLifetimeCache<string, int>( timestamps, lifetime: Duration.FromSeconds( 1 ), capacity: 3 );
         sut.TryAdd( entry1.Key, entry1.Value );
+        timestamps.Next += Duration.FromTicks( 1 );
         sut.TryAdd( entry2.Key, entry2.Value );
+        timestamps.Next += Duration.FromTicks( 1 );
         sut.TryAdd( entry3.Key, entry3.Value );
+        timestamps.Next += Duration.FromTicks( 1 );
 
         var result = sut.Remove( entry3.Key );
 
@@ -716,10 +840,13 @@ public class LifetimeCacheTests : TestsBase
         var entry1 = KeyValuePair.Create( "foo", 1 );
         var entry2 = KeyValuePair.Create( "bar", 2 );
         var entry3 = KeyValuePair.Create( "qux", 3 );
-        var sut = new LifetimeCache<string, int>( timestamps, lifetime: Duration.FromSeconds( 1 ), capacity: 3 );
+        var sut = new IndividualLifetimeCache<string, int>( timestamps, lifetime: Duration.FromSeconds( 1 ), capacity: 3 );
         sut.TryAdd( entry1.Key, entry1.Value );
+        timestamps.Next += Duration.FromTicks( 100 );
         sut.TryAdd( entry2.Key, entry2.Value );
-        sut.TryAdd( entry3.Key, entry3.Value );
+        timestamps.Next += Duration.FromTicks( 1 );
+        sut.TryAdd( entry3.Key, entry3.Value, sut.Lifetime - Duration.FromTicks( 50 ) );
+        timestamps.Next += Duration.FromTicks( 1 );
 
         var result = sut.Remove( entry2.Key );
 
@@ -737,7 +864,7 @@ public class LifetimeCacheTests : TestsBase
         var entry1 = KeyValuePair.Create( "foo", 1 );
         var entry2 = KeyValuePair.Create( "bar", 2 );
         var entry3 = KeyValuePair.Create( "qux", 3 );
-        var sut = new LifetimeCache<string, int>( timestamps, lifetime: Duration.FromSeconds( 1 ), capacity: 3 );
+        var sut = new IndividualLifetimeCache<string, int>( timestamps, lifetime: Duration.FromSeconds( 1 ), capacity: 3 );
         sut.TryAdd( entry1.Key, entry1.Value );
         sut.TryAdd( entry2.Key, entry2.Value );
         sut.TryAdd( entry3.Key, entry3.Value );
@@ -756,7 +883,7 @@ public class LifetimeCacheTests : TestsBase
     public void Remove_WithReturnedRemoved_ShouldReturnFalse_WhenKeyDoesNotExist()
     {
         var timestamps = new Timestamps();
-        var sut = new LifetimeCache<string, int>( timestamps, lifetime: Duration.FromSeconds( 1 ), capacity: 3 );
+        var sut = new IndividualLifetimeCache<string, int>( timestamps, lifetime: Duration.FromSeconds( 1 ), capacity: 3 );
 
         var result = sut.Remove( "foo", out var outResult );
 
@@ -774,10 +901,13 @@ public class LifetimeCacheTests : TestsBase
         var entry1 = KeyValuePair.Create( "foo", 1 );
         var entry2 = KeyValuePair.Create( "bar", 2 );
         var entry3 = KeyValuePair.Create( "qux", 3 );
-        var sut = new LifetimeCache<string, int>( timestamps, lifetime: Duration.FromSeconds( 1 ), capacity: 3 );
+        var sut = new IndividualLifetimeCache<string, int>( timestamps, lifetime: Duration.FromSeconds( 1 ), capacity: 3 );
         sut.TryAdd( entry1.Key, entry1.Value );
+        timestamps.Next += Duration.FromTicks( 1 );
         sut.TryAdd( entry2.Key, entry2.Value );
+        timestamps.Next += Duration.FromTicks( 1 );
         sut.TryAdd( entry3.Key, entry3.Value );
+        timestamps.Next += Duration.FromTicks( 1 );
 
         var result = sut.Remove( entry1.Key, out var outResult );
 
@@ -796,10 +926,13 @@ public class LifetimeCacheTests : TestsBase
         var entry1 = KeyValuePair.Create( "foo", 1 );
         var entry2 = KeyValuePair.Create( "bar", 2 );
         var entry3 = KeyValuePair.Create( "qux", 3 );
-        var sut = new LifetimeCache<string, int>( timestamps, lifetime: Duration.FromSeconds( 1 ), capacity: 3 );
+        var sut = new IndividualLifetimeCache<string, int>( timestamps, lifetime: Duration.FromSeconds( 1 ), capacity: 3 );
         sut.TryAdd( entry1.Key, entry1.Value );
+        timestamps.Next += Duration.FromTicks( 1 );
         sut.TryAdd( entry2.Key, entry2.Value );
+        timestamps.Next += Duration.FromTicks( 1 );
         sut.TryAdd( entry3.Key, entry3.Value );
+        timestamps.Next += Duration.FromTicks( 1 );
 
         var result = sut.Remove( entry3.Key, out var outResult );
 
@@ -818,10 +951,13 @@ public class LifetimeCacheTests : TestsBase
         var entry1 = KeyValuePair.Create( "foo", 1 );
         var entry2 = KeyValuePair.Create( "bar", 2 );
         var entry3 = KeyValuePair.Create( "qux", 3 );
-        var sut = new LifetimeCache<string, int>( timestamps, lifetime: Duration.FromSeconds( 1 ), capacity: 3 );
+        var sut = new IndividualLifetimeCache<string, int>( timestamps, lifetime: Duration.FromSeconds( 1 ), capacity: 3 );
         sut.TryAdd( entry1.Key, entry1.Value );
+        timestamps.Next += Duration.FromTicks( 100 );
         sut.TryAdd( entry2.Key, entry2.Value );
-        sut.TryAdd( entry3.Key, entry3.Value );
+        timestamps.Next += Duration.FromTicks( 1 );
+        sut.TryAdd( entry3.Key, entry3.Value, sut.Lifetime - Duration.FromTicks( 50 ) );
+        timestamps.Next += Duration.FromTicks( 1 );
 
         var result = sut.Remove( entry2.Key, out var outResult );
 
@@ -840,7 +976,7 @@ public class LifetimeCacheTests : TestsBase
         var entry1 = KeyValuePair.Create( "foo", 1 );
         var entry2 = KeyValuePair.Create( "bar", 2 );
         var entry3 = KeyValuePair.Create( "qux", 3 );
-        var sut = new LifetimeCache<string, int>( timestamps, lifetime: Duration.FromSeconds( 1 ), capacity: 3 );
+        var sut = new IndividualLifetimeCache<string, int>( timestamps, lifetime: Duration.FromSeconds( 1 ), capacity: 3 );
         sut.TryAdd( entry1.Key, entry1.Value );
         sut.TryAdd( entry2.Key, entry2.Value );
         sut.TryAdd( entry3.Key, entry3.Value );
@@ -863,7 +999,7 @@ public class LifetimeCacheTests : TestsBase
         var entry1 = KeyValuePair.Create( "foo", 1 );
         var entry2 = KeyValuePair.Create( "bar", 2 );
         var entry3 = KeyValuePair.Create( "qux", 3 );
-        var sut = new LifetimeCache<string, int>( timestamps, lifetime: Duration.FromSeconds( 1 ), capacity: 3 );
+        var sut = new IndividualLifetimeCache<string, int>( timestamps, lifetime: Duration.FromSeconds( 1 ), capacity: 3 );
         sut.TryAdd( entry1.Key, entry1.Value );
         sut.TryAdd( entry2.Key, entry2.Value );
         sut.TryAdd( entry3.Key, entry3.Value );
@@ -875,7 +1011,6 @@ public class LifetimeCacheTests : TestsBase
             sut.Count.Should().Be( 0 );
             sut.Should().BeEmpty();
             sut.Oldest.Should().BeNull();
-            sut.Newest.Should().BeNull();
         }
     }
 
@@ -886,7 +1021,7 @@ public class LifetimeCacheTests : TestsBase
         var entry1 = KeyValuePair.Create( "foo", 1 );
         var entry2 = KeyValuePair.Create( "bar", 2 );
         var entry3 = KeyValuePair.Create( "qux", 3 );
-        var sut = new LifetimeCache<string, int>( timestamps, lifetime: Duration.FromSeconds( 1 ), capacity: 3 );
+        var sut = new IndividualLifetimeCache<string, int>( timestamps, lifetime: Duration.FromSeconds( 1 ), capacity: 3 );
         sut.TryAdd( entry1.Key, entry1.Value );
         sut.TryAdd( entry2.Key, entry2.Value );
         timestamps.Next += Duration.FromTicks( 1 );
@@ -899,11 +1034,10 @@ public class LifetimeCacheTests : TestsBase
             AssertCollection( sut, entry3 );
     }
 
-    private static void AssertCollection(LifetimeCache<string, int> sut, params KeyValuePair<string, int>[] expected)
+    private static void AssertCollection(IndividualLifetimeCache<string, int> sut, params KeyValuePair<string, int>[] expected)
     {
         sut.Count.Should().Be( expected.Length );
         sut.Oldest.Should().Be( expected[0] );
-        sut.Newest.Should().Be( expected[^1] );
         sut.Keys.Should().BeSequentiallyEqualTo( expected.Select( kv => kv.Key ) );
         sut.Values.Should().BeSequentiallyEqualTo( expected.Select( kv => kv.Value ) );
         sut.Should().BeSequentiallyEqualTo( expected );

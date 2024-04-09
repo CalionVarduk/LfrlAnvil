@@ -1,23 +1,22 @@
 # TODO
-| Priority |       Project       |                  Title                   |                          Details                          |                Requirements                 |
-|:--------:|:-------------------:|:----------------------------------------:|:---------------------------------------------------------:|:-------------------------------------------:|
-|    1     |          -          |           Add Caching project            |                     [link](#caching)                      |                      -                      |
-|    2     |   Dependencies.*    |          Multi-threaded scopes           |        [link](#dependencies-multi-threaded-scopes)        |                      -                      |
-|    3     |          -          |           Reactive.Scheduling            |                [link](#reactivescheduling)                | [link](#dependencies-multi-threaded-scopes) |
-|    4     |    Dependencies     |            Reader/Writer Lock            |          [link](#dependencies-readerwriter-lock)          |                      -                      |
-|    5     |   Dependencies.*    |         Dependencies.AspNetCore          |             [link](#dependencies-aspnetcore)              |                      -                      |
-|    6     |        Sql.*        |          Positional parameters           |          [link](#sqlcore-positional-parameters)           |                      -                      |
-|    7     |          -          |                 Terminal                 |                     [link](#terminal)                     |                      -                      |
-|    8     |          -          |               Diagnostics                |                   [link](#diagnostics)                    |                      -                      |
-|    9     | Computable.Automata |         Add Context-free grammar         |                             -                             |                      -                      |
-|    10    |    Computable.*     |           Math/Physics structs           |          [link](#computable-mathphysics-structs)          |                      -                      |
-|    11    |        Sql.*        |        Add Microsoft SQL support         |                             -                             |                      -                      |
-|    12    |     Collections     |               Add SkipList               |                             -                             |                      -                      |
-|    13    |   Reactive.State    |     Async validator & change tracker     |  [link](#reactivestate-async-validator--change-tracker)   |                      -                      |
-|    14    |        Sql.*        |             DbBatch support              |             [link](#sqlcore-dbbatch-support)              |                      -                      |
-|    15    |      Sql.Core       |              Add JSON nodes              |              [link](#sqlcore-add-json-nodes)              |                      -                      |
-|    16    |    Dependencies     |         Generic dependency types         |      [link](#dependencies-generic-dependency-types)       |                      -                      |
-|    17    |      Sql.Core       | Add Visitor for node CLR type extraction | [link](#sqlcore-add-visitor-for-node-clr-type-extraction) |                      -                      |
+|       Project       |                  Title                   |                          Details                          |                Requirements                 |
+|:-------------------:|:----------------------------------------:|:---------------------------------------------------------:|:-------------------------------------------:|
+|   Dependencies.*    |          Multi-threaded scopes           |        [link](#dependencies-multi-threaded-scopes)        |                      -                      |
+|          -          |           Reactive.Scheduling            |                [link](#reactivescheduling)                | [link](#dependencies-multi-threaded-scopes) |
+|    Dependencies     |            Reader/Writer Lock            |          [link](#dependencies-readerwriter-lock)          |                      -                      |
+|   Dependencies.*    |         Dependencies.AspNetCore          |             [link](#dependencies-aspnetcore)              |                      -                      |
+|        Sql.*        |          Positional parameters           |          [link](#sqlcore-positional-parameters)           |                      -                      |
+|          -          |                 Terminal                 |                     [link](#terminal)                     |                      -                      |
+|          -          |               Diagnostics                |                   [link](#diagnostics)                    |                      -                      |
+| Computable.Automata |         Add Context-free grammar         |                             -                             |                      -                      |
+|    Computable.*     |           Math/Physics structs           |          [link](#computable-mathphysics-structs)          |                      -                      |
+|        Sql.*        |        Add Microsoft SQL support         |                             -                             |                      -                      |
+|     Collections     |               Add SkipList               |                             -                             |                      -                      |
+|   Reactive.State    |     Async validator & change tracker     |  [link](#reactivestate-async-validator--change-tracker)   |                      -                      |
+|        Sql.*        |             DbBatch support              |             [link](#sqlcore-dbbatch-support)              |                      -                      |
+|      Sql.Core       |              Add JSON nodes              |              [link](#sqlcore-add-json-nodes)              |                      -                      |
+|    Dependencies     |         Generic dependency types         |      [link](#dependencies-generic-dependency-types)       |                      -                      |
+|      Sql.Core       | Add Visitor for node CLR type extraction | [link](#sqlcore-add-visitor-for-node-clr-type-extraction) |                      -                      |
 
 ### Scribbles:
 - IO: directory scanning?
@@ -31,24 +30,6 @@
 
 - DB builder: UserData property? of 'object?' type
 - allows to send data between versions
-
-
-### Caching
-project idea:
-- move Cache-like classes from Collections project to Caching
-- Add reference to Collections(?) & Chrono
-- Add TimedCache class, that is capable of removing entries old enough when new entry is added
-- or when manual cache validation is invoked
-- UPDATE:
-  - no new projects
-  - Core gets to define ICache interface, with MaxCapacity property (or sth similar)
-  - Core gets to implement the base version, where fetched resources are changed to be the newest
-  - Chrono gets to implements 2(?) versions:
-    - one version allows to set resource lifetime globally & that's it
-    - second version allows to set individual resource lifetimes when inserting
-      - or use the global one
-      - this approach requires a heap structure
-    - both versions contain timestamp provider & Refresh() method
 
 
 ### Reactive.Scheduling

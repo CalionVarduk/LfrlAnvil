@@ -45,7 +45,7 @@ public sealed class LifetimeCache<TKey, TValue> : ILifetimeCache<TKey, TValue>
         {
             var now = GetCurrentTimestampAndRefresh();
             var node = _map[key];
-            node.Value = node.Value.Update( GetRemovalTimestamp( now ) );
+            node.Value = node.Value.Update( GetTimeOfRemoval( now ) );
             SetNewest( node );
             return node.Value.Value;
         }
@@ -68,7 +68,7 @@ public sealed class LifetimeCache<TKey, TValue> : ILifetimeCache<TKey, TValue>
             return false;
         }
 
-        node.Value = node.Value.Update( GetRemovalTimestamp( now ) );
+        node.Value = node.Value.Update( GetTimeOfRemoval( now ) );
         SetNewest( node );
         value = node.Value.Value;
         return true;
@@ -78,7 +78,7 @@ public sealed class LifetimeCache<TKey, TValue> : ILifetimeCache<TKey, TValue>
     public Duration GetRemainingLifetime(TKey key)
     {
         var now = GetCurrentTimestampAndRefresh();
-        return _map.TryGetValue( key, out var node ) ? node.Value.RemovalTimestamp.Subtract( now ) : Duration.Zero;
+        return _map.TryGetValue( key, out var node ) ? node.Value.TimeOfRemoval.Subtract( now ) : Duration.Zero;
     }
 
     public bool TryAdd(TKey key, TValue value)
@@ -99,7 +99,7 @@ public sealed class LifetimeCache<TKey, TValue> : ILifetimeCache<TKey, TValue>
         ref var node = ref CollectionsMarshal.GetValueRefOrAddDefault( _map, key, out var exists )!;
         if ( exists )
         {
-            node.Value = node.Value.Update( value, GetRemovalTimestamp( now ) );
+            node.Value = node.Value.Update( value, GetTimeOfRemoval( now ) );
             SetNewest( node );
             return AddOrUpdateResult.Updated;
         }
@@ -140,7 +140,7 @@ public sealed class LifetimeCache<TKey, TValue> : ILifetimeCache<TKey, TValue>
         if ( ! _map.TryGetValue( key, out var node ) )
             return false;
 
-        node.Value = node.Value.Update( GetRemovalTimestamp( now ) );
+        node.Value = node.Value.Update( GetTimeOfRemoval( now ) );
         SetNewest( node );
         return true;
     }
@@ -167,12 +167,12 @@ public sealed class LifetimeCache<TKey, TValue> : ILifetimeCache<TKey, TValue>
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private DoublyLinkedNode<Entry> CreateNode(TKey key, TValue value, Timestamp now)
     {
-        return new DoublyLinkedNode<Entry>( new Entry( key, value, GetRemovalTimestamp( now ) ) );
+        return new DoublyLinkedNode<Entry>( new Entry( key, value, GetTimeOfRemoval( now ) ) );
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private Timestamp GetRemovalTimestamp(Timestamp now)
+    private Timestamp GetTimeOfRemoval(Timestamp now)
     {
         return now.Add( Lifetime );
     }
@@ -185,7 +185,7 @@ public sealed class LifetimeCache<TKey, TValue> : ILifetimeCache<TKey, TValue>
         if ( _order.Tail is null )
             return now;
 
-        var last = _order.Tail.Value.RemovalTimestamp.Subtract( Lifetime );
+        var last = _order.Tail.Value.TimeOfRemoval.Subtract( Lifetime );
         return now < last ? last : now;
     }
 
@@ -193,7 +193,7 @@ public sealed class LifetimeCache<TKey, TValue> : ILifetimeCache<TKey, TValue>
     private void Refresh(Timestamp now)
     {
         var node = _order.Head;
-        while ( node is not null && node.Value.RemovalTimestamp <= now )
+        while ( node is not null && node.Value.TimeOfRemoval <= now )
         {
             var next = node.Next;
             _map.Remove( node.Value.Key );
@@ -228,20 +228,20 @@ public sealed class LifetimeCache<TKey, TValue> : ILifetimeCache<TKey, TValue>
         Assume.ContainsExactly( _map, Capacity );
     }
 
-    private readonly record struct Entry(TKey Key, TValue Value, Timestamp RemovalTimestamp)
+    private readonly record struct Entry(TKey Key, TValue Value, Timestamp TimeOfRemoval)
     {
         [Pure]
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        internal Entry Update(Timestamp removalTimestamp)
+        internal Entry Update(Timestamp timeOfRemoval)
         {
-            return Update( Value, removalTimestamp );
+            return Update( Value, timeOfRemoval );
         }
 
         [Pure]
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        internal Entry Update(TValue value, Timestamp removalTimestamp)
+        internal Entry Update(TValue value, Timestamp timeOfRemoval)
         {
-            return new Entry( Key, value, removalTimestamp );
+            return new Entry( Key, value, timeOfRemoval );
         }
 
         [Pure]
