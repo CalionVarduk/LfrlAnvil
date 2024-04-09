@@ -130,13 +130,14 @@ public class Heap<T> : IHeap<T>
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private void FixUp(int i)
     {
-        var p = Heap.GetParentIndex( i );
-
-        while ( i > 0 && Comparer.Compare( _items[i], _items[p] ) < 0 )
+        while ( i > 0 )
         {
+            var p = Heap.GetParentIndex( i );
+            if ( Comparer.Compare( _items[i], _items[p] ) >= 0 )
+                break;
+
             _items.SwapItems( i, p );
             i = p;
-            p = Heap.GetParentIndex( i );
         }
     }
 

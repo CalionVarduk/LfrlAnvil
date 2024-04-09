@@ -254,10 +254,9 @@ public class DictionaryHeap<TKey, TValue> : IDictionaryHeap<TKey, TValue>
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private void FixUp(int i)
     {
-        var p = Heap.GetParentIndex( i );
-
         while ( i > 0 )
         {
+            var p = Heap.GetParentIndex( i );
             var node = _items[i];
             var parentNode = _items[p];
 
@@ -267,7 +266,6 @@ public class DictionaryHeap<TKey, TValue> : IDictionaryHeap<TKey, TValue>
             _items.SwapItems( i, p );
             node.SwapIndexWith( parentNode );
             i = p;
-            p = Heap.GetParentIndex( i );
         }
     }
 
