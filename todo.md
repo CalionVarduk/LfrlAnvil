@@ -28,10 +28,6 @@
   - take a look at DirectoryLookup solution
 
 
-- DB builder: UserData property? of 'object?' type
-- allows to send data between versions
-
-
 ### Reactive.Scheduling
 project idea:
 - combines Reactive.Chrono & Reactive.Queues

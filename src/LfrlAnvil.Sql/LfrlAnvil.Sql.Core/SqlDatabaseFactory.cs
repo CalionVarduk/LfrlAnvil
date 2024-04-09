@@ -39,6 +39,7 @@ public abstract class SqlDatabaseFactory<TDatabase> : ISqlDatabaseFactory
         var connection = CreateConnection( connectionStringBuilder );
         Assume.NotEquals( connection.State, ConnectionState.Open );
         var stateChanges = new SqlDatabaseConnectionStateChanges();
+        SqlDatabaseBuilder? builder = null;
 
         try
         {
@@ -46,7 +47,7 @@ public abstract class SqlDatabaseFactory<TDatabase> : ISqlDatabaseFactory
             connection.Open();
 
             var versionHistoryName = options.VersionHistoryName ?? GetDefaultVersionHistoryName();
-            var builder = CreateDatabaseBuilder( versionHistoryName.Schema, connection );
+            builder = CreateDatabaseBuilder( versionHistoryName.Schema, connection );
             stateChanges.SetBuilder( builder );
 
             Assume.Equals( builder.Schemas.Default.Name, versionHistoryName.Schema );
@@ -168,6 +169,8 @@ public abstract class SqlDatabaseFactory<TDatabase> : ISqlDatabaseFactory
         {
             connection.Dispose();
             connection.StateChange -= stateChanges.Add;
+            if ( builder is not null )
+                builder.UserData = null;
         }
     }
 

@@ -47,6 +47,7 @@ public abstract class SqlDatabaseBuilder : SqlBuilderApi, ISqlDatabaseBuilder
         DefaultNames = defaultNames;
         Dialect = dialect;
         ServerVersion = serverVersion;
+        UserData = null;
         Changes = changes;
         Changes.SetDatabase( this );
         Schemas = schemas;
@@ -64,6 +65,7 @@ public abstract class SqlDatabaseBuilder : SqlBuilderApi, ISqlDatabaseBuilder
     public SqlDefaultObjectNameProvider DefaultNames { get; }
     public SqlSchemaBuilderCollection Schemas { get; }
     public SqlDatabaseChangeTracker Changes { get; }
+    public object? UserData { get; set; }
     internal MemorySequencePool<SqlObjectBuilder> ObjectPool { get; }
 
     internal ReadOnlySpan<Action<SqlDatabaseConnectionChangeEvent>> ConnectionChangeCallbacks =>

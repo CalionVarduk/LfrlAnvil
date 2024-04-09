@@ -1523,6 +1523,25 @@ SET
                 "[0.1] Open => Closed" );
     }
 
+    [Fact]
+    public void DatabaseBuilder_UserData_ShouldBePropagatedBetweenVersions()
+    {
+        var data = new object();
+        object? caughtData = null;
+        var sut = new SqlDatabaseFactoryMock();
+        var history = new SqlDatabaseVersionHistory(
+            SqlDatabaseVersion.Create(
+                new Version( "0.1" ),
+                db => { db.UserData = data; } ),
+            SqlDatabaseVersion.Create(
+                new Version( "0.2" ),
+                db => { caughtData = db.UserData; } ) );
+
+        sut.Create( "DataSource=testing", history, SqlCreateDatabaseOptions.Default.SetMode( SqlDatabaseCreateMode.Commit ) );
+
+        caughtData.Should().BeSameAs( data );
+    }
+
     [Pure]
     private static ResultSet CreateVersionResultSet(params SqlDatabaseVersionRecord[] records)
     {
