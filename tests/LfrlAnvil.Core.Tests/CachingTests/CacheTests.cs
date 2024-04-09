@@ -126,6 +126,29 @@ public class CacheTests : TestsBase
     }
 
     [Fact]
+    public void TryAdd_ShouldAddNewItemAndRemoveOldestItem_WhenCapacityIsExceeded_WithRemoveCallback()
+    {
+        var removed = new List<CachedItemRemovalEvent<string, int>>();
+        var entry1 = KeyValuePair.Create( "foo", 1 );
+        var entry2 = KeyValuePair.Create( "bar", 2 );
+        var entry3 = KeyValuePair.Create( "qux", 3 );
+        var entry4 = KeyValuePair.Create( "lorem", 4 );
+        var sut = new Cache<string, int>( capacity: 3, removeCallback: removed.Add );
+        sut.TryAdd( entry1.Key, entry1.Value );
+        sut.TryAdd( entry2.Key, entry2.Value );
+        sut.TryAdd( entry3.Key, entry3.Value );
+
+        sut.TryAdd( entry4.Key, entry4.Value );
+
+        using ( new AssertionScope() )
+        {
+            removed.Should().BeSequentiallyEqualTo( CachedItemRemovalEvent<string, int>.CreateRemoved( entry1.Key, entry1.Value ) );
+            AssertCollection( sut, entry2, entry3, entry4 );
+            sut.ContainsKey( entry1.Key ).Should().BeFalse();
+        }
+    }
+
+    [Fact]
     public void AddOrUpdate_ShouldAddFirstItemCorrectly()
     {
         var entry = KeyValuePair.Create( "foo", 1 );
@@ -152,6 +175,27 @@ public class CacheTests : TestsBase
 
         using ( new AssertionScope() )
         {
+            result.Should().Be( AddOrUpdateResult.Updated );
+            AssertCollection( sut, entry2 );
+        }
+    }
+
+    [Fact]
+    public void AddOrUpdate_ShouldUpdateValue_WhenKeyAlreadyExists_WithRemoveCallback()
+    {
+        var removed = new List<CachedItemRemovalEvent<string, int>>();
+        var entry1 = KeyValuePair.Create( "foo", 42 );
+        var entry2 = KeyValuePair.Create( entry1.Key, 1 );
+        var sut = new Cache<string, int>( capacity: 3, removeCallback: removed.Add );
+        sut.TryAdd( entry1.Key, entry1.Value );
+
+        var result = sut.AddOrUpdate( entry2.Key, entry2.Value );
+
+        using ( new AssertionScope() )
+        {
+            removed.Should()
+                .BeSequentiallyEqualTo( CachedItemRemovalEvent<string, int>.CreateReplaced( entry1.Key, entry1.Value, entry2.Value ) );
+
             result.Should().Be( AddOrUpdateResult.Updated );
             AssertCollection( sut, entry2 );
         }
@@ -189,6 +233,29 @@ public class CacheTests : TestsBase
 
         using ( new AssertionScope() )
         {
+            AssertCollection( sut, entry2, entry3, entry4 );
+            sut.ContainsKey( entry1.Key ).Should().BeFalse();
+        }
+    }
+
+    [Fact]
+    public void AddOrUpdate_ShouldAddNewItemAndRemoveOldestItem_WhenCapacityIsExceeded_WithRemoveCallback()
+    {
+        var removed = new List<CachedItemRemovalEvent<string, int>>();
+        var entry1 = KeyValuePair.Create( "foo", 1 );
+        var entry2 = KeyValuePair.Create( "bar", 2 );
+        var entry3 = KeyValuePair.Create( "qux", 3 );
+        var entry4 = KeyValuePair.Create( "lorem", 4 );
+        var sut = new Cache<string, int>( capacity: 3, removeCallback: removed.Add );
+        sut.TryAdd( entry1.Key, entry1.Value );
+        sut.TryAdd( entry2.Key, entry2.Value );
+        sut.TryAdd( entry3.Key, entry3.Value );
+
+        sut.AddOrUpdate( entry4.Key, entry4.Value );
+
+        using ( new AssertionScope() )
+        {
+            removed.Should().BeSequentiallyEqualTo( CachedItemRemovalEvent<string, int>.CreateRemoved( entry1.Key, entry1.Value ) );
             AssertCollection( sut, entry2, entry3, entry4 );
             sut.ContainsKey( entry1.Key ).Should().BeFalse();
         }
@@ -239,6 +306,26 @@ public class CacheTests : TestsBase
     }
 
     [Fact]
+    public void Indexer_Setter_ShouldUpdateValue_WhenKeyAlreadyExists_WithRemoveCallback()
+    {
+        var removed = new List<CachedItemRemovalEvent<string, int>>();
+        var entry1 = KeyValuePair.Create( "foo", 42 );
+        var entry2 = KeyValuePair.Create( entry1.Key, 1 );
+        var sut = new Cache<string, int>( capacity: 3, removeCallback: removed.Add );
+        sut.TryAdd( entry1.Key, entry1.Value );
+
+        sut[entry2.Key] = entry2.Value;
+
+        using ( new AssertionScope() )
+        {
+            removed.Should()
+                .BeSequentiallyEqualTo( CachedItemRemovalEvent<string, int>.CreateReplaced( entry1.Key, entry1.Value, entry2.Value ) );
+
+            AssertCollection( sut, entry2 );
+        }
+    }
+
+    [Fact]
     public void Indexer_Setter_ShouldAddItemsToFullCapacityCorrectly()
     {
         var entry1 = KeyValuePair.Create( "foo", 1 );
@@ -270,6 +357,29 @@ public class CacheTests : TestsBase
 
         using ( new AssertionScope() )
         {
+            AssertCollection( sut, entry2, entry3, entry4 );
+            sut.ContainsKey( entry1.Key ).Should().BeFalse();
+        }
+    }
+
+    [Fact]
+    public void Indexer_Setter_ShouldAddNewItemAndRemoveOldestItem_WhenCapacityIsExceeded_WithRemoveCallback()
+    {
+        var removed = new List<CachedItemRemovalEvent<string, int>>();
+        var entry1 = KeyValuePair.Create( "foo", 1 );
+        var entry2 = KeyValuePair.Create( "bar", 2 );
+        var entry3 = KeyValuePair.Create( "qux", 3 );
+        var entry4 = KeyValuePair.Create( "lorem", 4 );
+        var sut = new Cache<string, int>( capacity: 3, removeCallback: removed.Add );
+        sut.TryAdd( entry1.Key, entry1.Value );
+        sut.TryAdd( entry2.Key, entry2.Value );
+        sut.TryAdd( entry3.Key, entry3.Value );
+
+        sut[entry4.Key] = entry4.Value;
+
+        using ( new AssertionScope() )
+        {
+            removed.Should().BeSequentiallyEqualTo( CachedItemRemovalEvent<string, int>.CreateRemoved( entry1.Key, entry1.Value ) );
             AssertCollection( sut, entry2, entry3, entry4 );
             sut.ContainsKey( entry1.Key ).Should().BeFalse();
         }
@@ -472,6 +582,28 @@ public class CacheTests : TestsBase
     }
 
     [Fact]
+    public void Remove_ShouldRemoveAnyEntry_WithRemoveCallback()
+    {
+        var removed = new List<CachedItemRemovalEvent<string, int>>();
+        var entry1 = KeyValuePair.Create( "foo", 1 );
+        var entry2 = KeyValuePair.Create( "bar", 2 );
+        var entry3 = KeyValuePair.Create( "qux", 3 );
+        var sut = new Cache<string, int>( capacity: 3, removeCallback: removed.Add );
+        sut.TryAdd( entry1.Key, entry1.Value );
+        sut.TryAdd( entry2.Key, entry2.Value );
+        sut.TryAdd( entry3.Key, entry3.Value );
+
+        var result = sut.Remove( entry2.Key );
+
+        using ( new AssertionScope() )
+        {
+            removed.Should().BeSequentiallyEqualTo( CachedItemRemovalEvent<string, int>.CreateRemoved( entry2.Key, entry2.Value ) );
+            result.Should().BeTrue();
+            AssertCollection( sut, entry1, entry3 );
+        }
+    }
+
+    [Fact]
     public void Remove_WithReturnedRemoved_ShouldReturnFalse_WhenKeyDoesNotExist()
     {
         var sut = new Cache<string, int>( capacity: 3 );
@@ -549,6 +681,29 @@ public class CacheTests : TestsBase
     }
 
     [Fact]
+    public void Remove_WithReturnedRemoved_ShouldRemoveAnyEntry_WithRemoveCallback()
+    {
+        var removed = new List<CachedItemRemovalEvent<string, int>>();
+        var entry1 = KeyValuePair.Create( "foo", 1 );
+        var entry2 = KeyValuePair.Create( "bar", 2 );
+        var entry3 = KeyValuePair.Create( "qux", 3 );
+        var sut = new Cache<string, int>( capacity: 3, removeCallback: removed.Add );
+        sut.TryAdd( entry1.Key, entry1.Value );
+        sut.TryAdd( entry2.Key, entry2.Value );
+        sut.TryAdd( entry3.Key, entry3.Value );
+
+        var result = sut.Remove( entry2.Key, out var outResult );
+
+        using ( new AssertionScope() )
+        {
+            removed.Should().BeSequentiallyEqualTo( CachedItemRemovalEvent<string, int>.CreateRemoved( entry2.Key, entry2.Value ) );
+            result.Should().BeTrue();
+            outResult.Should().Be( entry2.Value );
+            AssertCollection( sut, entry1, entry3 );
+        }
+    }
+
+    [Fact]
     public void Clear_ShouldRemoveAllEntries()
     {
         var entry1 = KeyValuePair.Create( "foo", 1 );
@@ -563,6 +718,35 @@ public class CacheTests : TestsBase
 
         using ( new AssertionScope() )
         {
+            sut.Count.Should().Be( 0 );
+            sut.Should().BeEmpty();
+            sut.Oldest.Should().BeNull();
+            sut.Newest.Should().BeNull();
+        }
+    }
+
+    [Fact]
+    public void Clear_ShouldRemoveAllEntries_WithRemoveCallback()
+    {
+        var removed = new List<CachedItemRemovalEvent<string, int>>();
+        var entry1 = KeyValuePair.Create( "foo", 1 );
+        var entry2 = KeyValuePair.Create( "bar", 2 );
+        var entry3 = KeyValuePair.Create( "qux", 3 );
+        var sut = new Cache<string, int>( capacity: 3, removeCallback: removed.Add );
+        sut.TryAdd( entry1.Key, entry1.Value );
+        sut.TryAdd( entry2.Key, entry2.Value );
+        sut.TryAdd( entry3.Key, entry3.Value );
+
+        sut.Clear();
+
+        using ( new AssertionScope() )
+        {
+            removed.Should()
+                .BeSequentiallyEqualTo(
+                    CachedItemRemovalEvent<string, int>.CreateRemoved( entry1.Key, entry1.Value ),
+                    CachedItemRemovalEvent<string, int>.CreateRemoved( entry2.Key, entry2.Value ),
+                    CachedItemRemovalEvent<string, int>.CreateRemoved( entry3.Key, entry3.Value ) );
+
             sut.Count.Should().Be( 0 );
             sut.Should().BeEmpty();
             sut.Oldest.Should().BeNull();

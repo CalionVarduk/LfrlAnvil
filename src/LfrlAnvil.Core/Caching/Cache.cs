@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
@@ -15,18 +16,23 @@ public sealed class Cache<TKey, TValue> : ICache<TKey, TValue>
     private readonly Dictionary<TKey, DoublyLinkedNode<KeyValuePair<TKey, TValue>>> _map;
     private DoublyLinkedNodeSequence<KeyValuePair<TKey, TValue>> _order;
 
-    public Cache(int capacity = int.MaxValue)
-        : this( EqualityComparer<TKey>.Default, capacity ) { }
+    public Cache(int capacity = int.MaxValue, Action<CachedItemRemovalEvent<TKey, TValue>>? removeCallback = null)
+        : this( EqualityComparer<TKey>.Default, capacity, removeCallback ) { }
 
-    public Cache(IEqualityComparer<TKey> keyComparer, int capacity = int.MaxValue)
+    public Cache(
+        IEqualityComparer<TKey> keyComparer,
+        int capacity = int.MaxValue,
+        Action<CachedItemRemovalEvent<TKey, TValue>>? removeCallback = null)
     {
         Ensure.IsGreaterThan( capacity, 0 );
         Capacity = capacity;
+        RemoveCallback = removeCallback;
         _map = new Dictionary<TKey, DoublyLinkedNode<KeyValuePair<TKey, TValue>>>( keyComparer );
         _order = DoublyLinkedNodeSequence<KeyValuePair<TKey, TValue>>.Empty;
     }
 
     public int Capacity { get; }
+    public Action<CachedItemRemovalEvent<TKey, TValue>>? RemoveCallback { get; }
     public int Count => _map.Count;
     public IEqualityComparer<TKey> Comparer => _map.Comparer;
     public KeyValuePair<TKey, TValue>? Oldest => _order.Head?.Value;
@@ -80,8 +86,10 @@ public sealed class Cache<TKey, TValue> : ICache<TKey, TValue>
         ref var node = ref CollectionsMarshal.GetValueRefOrAddDefault( _map, key, out var exists )!;
         if ( exists )
         {
+            var oldValue = node.Value.Value;
             node.Value = KeyValuePair.Create( key, value );
             SetNewest( node );
+            RemoveCallback?.Invoke( CachedItemRemovalEvent<TKey, TValue>.CreateReplaced( node.Value.Key, oldValue, value ) );
             return AddOrUpdateResult.Updated;
         }
 
@@ -97,6 +105,7 @@ public sealed class Cache<TKey, TValue> : ICache<TKey, TValue>
             return false;
 
         _order = _order.Remove( node );
+        RemoveCallback?.Invoke( CachedItemRemovalEvent<TKey, TValue>.CreateRemoved( node.Value.Key, node.Value.Value ) );
         return true;
     }
 
@@ -110,6 +119,7 @@ public sealed class Cache<TKey, TValue> : ICache<TKey, TValue>
 
         _order = _order.Remove( node );
         removed = node.Value.Value;
+        RemoveCallback?.Invoke( CachedItemRemovalEvent<TKey, TValue>.CreateRemoved( node.Value.Key, node.Value.Value ) );
         return true;
     }
 
@@ -125,6 +135,12 @@ public sealed class Cache<TKey, TValue> : ICache<TKey, TValue>
     public void Clear()
     {
         _map.Clear();
+        if ( RemoveCallback is not null )
+        {
+            foreach ( var (key, value) in _order )
+                RemoveCallback( CachedItemRemovalEvent<TKey, TValue>.CreateRemoved( key, value ) );
+        }
+
         _order = _order.Clear();
     }
 
@@ -153,10 +169,12 @@ public sealed class Cache<TKey, TValue> : ICache<TKey, TValue>
         if ( _map.Count <= Capacity )
             return;
 
-        Assume.IsNotNull( _order.Head );
-        _map.Remove( _order.Head.Value.Key );
-        _order = _order.Remove( _order.Head );
+        var node = _order.Head;
+        Assume.IsNotNull( node );
+        _map.Remove( node.Value.Key );
+        _order = _order.Remove( node );
         Assume.ContainsExactly( _map, Capacity );
+        RemoveCallback?.Invoke( CachedItemRemovalEvent<TKey, TValue>.CreateRemoved( node.Value.Key, node.Value.Value ) );
     }
 
     [Pure]
