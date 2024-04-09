@@ -1,10 +1,12 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using LfrlAnvil.Caching;
 
 namespace LfrlAnvil.Chrono.Caching;
 
@@ -14,20 +16,26 @@ public sealed class IndividualLifetimeCache<TKey, TValue> : IIndividualLifetimeC
     private readonly Dictionary<TKey, Node> _map;
     private readonly List<Node> _heap;
 
-    public IndividualLifetimeCache(ITimestampProvider timestamps, Duration lifetime, int capacity = int.MaxValue)
-        : this( EqualityComparer<TKey>.Default, timestamps, lifetime, capacity ) { }
+    public IndividualLifetimeCache(
+        ITimestampProvider timestamps,
+        Duration lifetime,
+        int capacity = int.MaxValue,
+        Action<CachedItemRemovalEvent<TKey, TValue>>? removeCallback = null)
+        : this( EqualityComparer<TKey>.Default, timestamps, lifetime, capacity, removeCallback ) { }
 
     public IndividualLifetimeCache(
         IEqualityComparer<TKey> keyComparer,
         ITimestampProvider timestamps,
         Duration lifetime,
-        int capacity = int.MaxValue)
+        int capacity = int.MaxValue,
+        Action<CachedItemRemovalEvent<TKey, TValue>>? removeCallback = null)
     {
         Ensure.IsGreaterThan( capacity, 0 );
         Ensure.IsGreaterThan( lifetime, Duration.Zero );
         Capacity = capacity;
         Lifetime = lifetime;
         Timestamps = timestamps;
+        RemoveCallback = removeCallback;
         _map = new Dictionary<TKey, Node>( keyComparer );
         _heap = new List<Node>();
     }
@@ -35,6 +43,7 @@ public sealed class IndividualLifetimeCache<TKey, TValue> : IIndividualLifetimeC
     public int Capacity { get; }
     public Duration Lifetime { get; }
     public ITimestampProvider Timestamps { get; }
+    public Action<CachedItemRemovalEvent<TKey, TValue>>? RemoveCallback { get; }
     public int Count => _map.Count;
     public IEqualityComparer<TKey> Comparer => _map.Comparer;
     public KeyValuePair<TKey, TValue>? Oldest => _heap.Count > 0 ? _heap[0].ToKeyValuePair() : null;
@@ -109,9 +118,11 @@ public sealed class IndividualLifetimeCache<TKey, TValue> : IIndividualLifetimeC
         ref var node = ref CollectionsMarshal.GetValueRefOrAddDefault( _map, key, out var exists )!;
         if ( exists )
         {
+            var oldValue = node.Value;
             node.Value = value;
             node.Lifetime = lifetime;
             Restart( node, now );
+            RemoveCallback?.Invoke( CachedItemRemovalEvent<TKey, TValue>.CreateReplaced( node.Key, oldValue, value ) );
             return AddOrUpdateResult.Updated;
         }
 
@@ -128,6 +139,7 @@ public sealed class IndividualLifetimeCache<TKey, TValue> : IIndividualLifetimeC
             return false;
 
         RemoveFromHeap( node );
+        RemoveCallback?.Invoke( CachedItemRemovalEvent<TKey, TValue>.CreateRemoved( node.Key, node.Value ) );
         return true;
     }
 
@@ -142,6 +154,7 @@ public sealed class IndividualLifetimeCache<TKey, TValue> : IIndividualLifetimeC
 
         RemoveFromHeap( node );
         removed = node.Value;
+        RemoveCallback?.Invoke( CachedItemRemovalEvent<TKey, TValue>.CreateRemoved( node.Key, node.Value ) );
         return true;
     }
 
@@ -163,6 +176,12 @@ public sealed class IndividualLifetimeCache<TKey, TValue> : IIndividualLifetimeC
     public void Clear()
     {
         _map.Clear();
+        if ( RemoveCallback is not null )
+        {
+            foreach ( var n in _heap )
+                RemoveCallback( CachedItemRemovalEvent<TKey, TValue>.CreateRemoved( n.Key, n.Value ) );
+        }
+
         _heap.Clear();
     }
 
@@ -183,6 +202,7 @@ public sealed class IndividualLifetimeCache<TKey, TValue> : IIndividualLifetimeC
 
             _map.Remove( node.Key );
             PopFromHeap( node );
+            RemoveCallback?.Invoke( CachedItemRemovalEvent<TKey, TValue>.CreateRemoved( node.Key, node.Value ) );
         }
     }
 
@@ -212,6 +232,7 @@ public sealed class IndividualLifetimeCache<TKey, TValue> : IIndividualLifetimeC
         _map.Remove( node.Key );
         PopFromHeap( node );
         Assume.ContainsExactly( _map, Capacity );
+        RemoveCallback?.Invoke( CachedItemRemovalEvent<TKey, TValue>.CreateRemoved( node.Key, node.Value ) );
     }
 
     [Pure]

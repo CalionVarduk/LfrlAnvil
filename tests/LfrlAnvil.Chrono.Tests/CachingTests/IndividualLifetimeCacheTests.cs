@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Linq;
+using LfrlAnvil.Caching;
 using LfrlAnvil.Chrono.Caching;
 using LfrlAnvil.Chrono.Internal;
 using LfrlAnvil.Functional;
@@ -159,6 +160,38 @@ public class IndividualIndividualLifetimeCacheTests : TestsBase
     }
 
     [Fact]
+    public void TryAdd_ShouldAddNewItemAndRemoveItemWithShortestLifetime_WhenCapacityIsExceeded_WithRemoveCallback()
+    {
+        var removed = new List<CachedItemRemovalEvent<string, int>>();
+        var timestamps = new Timestamps();
+        var entry1 = KeyValuePair.Create( "foo", 1 );
+        var entry2 = KeyValuePair.Create( "bar", 2 );
+        var entry3 = KeyValuePair.Create( "qux", 3 );
+        var entry4 = KeyValuePair.Create( "lorem", 4 );
+        var sut = new IndividualLifetimeCache<string, int>(
+            timestamps,
+            lifetime: Duration.FromSeconds( 1 ),
+            capacity: 3,
+            removeCallback: removed.Add );
+
+        sut.TryAdd( entry1.Key, entry1.Value );
+        timestamps.Next += Duration.FromTicks( 1 );
+        sut.TryAdd( entry2.Key, entry2.Value );
+        timestamps.Next += Duration.FromTicks( 1 );
+        sut.TryAdd( entry3.Key, entry3.Value );
+        timestamps.Next += Duration.FromTicks( 1 );
+
+        sut.TryAdd( entry4.Key, entry4.Value );
+
+        using ( new AssertionScope() )
+        {
+            removed.Should().BeSequentiallyEqualTo( CachedItemRemovalEvent<string, int>.CreateRemoved( entry1.Key, entry1.Value ) );
+            AssertCollection( sut, entry2, entry4, entry3 );
+            sut.ContainsKey( entry1.Key ).Should().BeFalse();
+        }
+    }
+
+    [Fact]
     public void TryAdd_ShouldRefreshCacheBeforeAttemptingToAddItem()
     {
         var timestamps = new Timestamps();
@@ -245,6 +278,35 @@ public class IndividualIndividualLifetimeCacheTests : TestsBase
     }
 
     [Fact]
+    public void AddOrUpdate_ShouldUpdateValueAndLifetime_WhenKeyAlreadyExists_WithRemoveCallback()
+    {
+        var removed = new List<CachedItemRemovalEvent<string, int>>();
+        var timestamps = new Timestamps();
+        var entry1 = KeyValuePair.Create( "foo", 42 );
+        var entry2 = KeyValuePair.Create( entry1.Key, 1 );
+        var sut = new IndividualLifetimeCache<string, int>(
+            timestamps,
+            lifetime: Duration.FromSeconds( 1 ),
+            capacity: 3,
+            removeCallback: removed.Add );
+
+        sut.TryAdd( entry1.Key, entry1.Value );
+        timestamps.Next += Duration.FromTicks( 1 );
+
+        var result = sut.AddOrUpdate( entry2.Key, entry2.Value );
+
+        using ( new AssertionScope() )
+        {
+            removed.Should()
+                .BeSequentiallyEqualTo( CachedItemRemovalEvent<string, int>.CreateReplaced( entry1.Key, entry1.Value, entry2.Value ) );
+
+            result.Should().Be( AddOrUpdateResult.Updated );
+            sut.GetRemainingLifetime( entry2.Key ).Should().Be( sut.Lifetime );
+            AssertCollection( sut, entry2 );
+        }
+    }
+
+    [Fact]
     public void AddOrUpdate_ShouldAddItemsToFullCapacityCorrectly()
     {
         var timestamps = new Timestamps();
@@ -281,6 +343,38 @@ public class IndividualIndividualLifetimeCacheTests : TestsBase
 
         using ( new AssertionScope() )
         {
+            AssertCollection( sut, entry2, entry4, entry3 );
+            sut.ContainsKey( entry1.Key ).Should().BeFalse();
+        }
+    }
+
+    [Fact]
+    public void AddOrUpdate_ShouldAddNewItemAndRemoveItemWithShortestLifetime_WhenCapacityIsExceeded_WithRemoveCallback()
+    {
+        var removed = new List<CachedItemRemovalEvent<string, int>>();
+        var timestamps = new Timestamps();
+        var entry1 = KeyValuePair.Create( "foo", 1 );
+        var entry2 = KeyValuePair.Create( "bar", 2 );
+        var entry3 = KeyValuePair.Create( "qux", 3 );
+        var entry4 = KeyValuePair.Create( "lorem", 4 );
+        var sut = new IndividualLifetimeCache<string, int>(
+            timestamps,
+            lifetime: Duration.FromSeconds( 1 ),
+            capacity: 3,
+            removeCallback: removed.Add );
+
+        sut.TryAdd( entry1.Key, entry1.Value );
+        timestamps.Next += Duration.FromTicks( 1 );
+        sut.TryAdd( entry2.Key, entry2.Value );
+        timestamps.Next += Duration.FromTicks( 1 );
+        sut.TryAdd( entry3.Key, entry3.Value );
+        timestamps.Next += Duration.FromTicks( 1 );
+
+        sut.AddOrUpdate( entry4.Key, entry4.Value );
+
+        using ( new AssertionScope() )
+        {
+            removed.Should().BeSequentiallyEqualTo( CachedItemRemovalEvent<string, int>.CreateRemoved( entry1.Key, entry1.Value ) );
             AssertCollection( sut, entry2, entry4, entry3 );
             sut.ContainsKey( entry1.Key ).Should().BeFalse();
         }
@@ -443,6 +537,34 @@ public class IndividualIndividualLifetimeCacheTests : TestsBase
     }
 
     [Fact]
+    public void Indexer_Setter_ShouldUpdateValueAndLifetime_WhenKeyAlreadyExists_WithRemoveCallback()
+    {
+        var removed = new List<CachedItemRemovalEvent<string, int>>();
+        var timestamps = new Timestamps();
+        var entry1 = KeyValuePair.Create( "foo", 42 );
+        var entry2 = KeyValuePair.Create( entry1.Key, 1 );
+        var sut = new IndividualLifetimeCache<string, int>(
+            timestamps,
+            lifetime: Duration.FromSeconds( 1 ),
+            capacity: 3,
+            removeCallback: removed.Add );
+
+        sut.TryAdd( entry1.Key, entry1.Value );
+        timestamps.Next += Duration.FromTicks( 1 );
+
+        sut[entry2.Key] = entry2.Value;
+
+        using ( new AssertionScope() )
+        {
+            removed.Should()
+                .BeSequentiallyEqualTo( CachedItemRemovalEvent<string, int>.CreateReplaced( entry1.Key, entry1.Value, entry2.Value ) );
+
+            sut.GetRemainingLifetime( entry2.Key ).Should().Be( sut.Lifetime );
+            AssertCollection( sut, entry2 );
+        }
+    }
+
+    [Fact]
     public void Indexer_Setter_ShouldAddItemsToFullCapacityCorrectly()
     {
         var timestamps = new Timestamps();
@@ -479,6 +601,38 @@ public class IndividualIndividualLifetimeCacheTests : TestsBase
 
         using ( new AssertionScope() )
         {
+            AssertCollection( sut, entry2, entry4, entry3 );
+            sut.ContainsKey( entry1.Key ).Should().BeFalse();
+        }
+    }
+
+    [Fact]
+    public void Indexer_Setter_ShouldAddNewItemAndRemoveItemWithShortestLifetime_WhenCapacityIsExceeded_WithRemoveCallback()
+    {
+        var removed = new List<CachedItemRemovalEvent<string, int>>();
+        var timestamps = new Timestamps();
+        var entry1 = KeyValuePair.Create( "foo", 1 );
+        var entry2 = KeyValuePair.Create( "bar", 2 );
+        var entry3 = KeyValuePair.Create( "qux", 3 );
+        var entry4 = KeyValuePair.Create( "lorem", 4 );
+        var sut = new IndividualLifetimeCache<string, int>(
+            timestamps,
+            lifetime: Duration.FromSeconds( 1 ),
+            capacity: 3,
+            removeCallback: removed.Add );
+
+        sut.TryAdd( entry1.Key, entry1.Value );
+        timestamps.Next += Duration.FromTicks( 1 );
+        sut.TryAdd( entry2.Key, entry2.Value );
+        timestamps.Next += Duration.FromTicks( 1 );
+        sut.TryAdd( entry3.Key, entry3.Value );
+        timestamps.Next += Duration.FromTicks( 1 );
+
+        sut[entry4.Key] = entry4.Value;
+
+        using ( new AssertionScope() )
+        {
+            removed.Should().BeSequentiallyEqualTo( CachedItemRemovalEvent<string, int>.CreateRemoved( entry1.Key, entry1.Value ) );
             AssertCollection( sut, entry2, entry4, entry3 );
             sut.ContainsKey( entry1.Key ).Should().BeFalse();
         }
@@ -858,6 +1012,37 @@ public class IndividualIndividualLifetimeCacheTests : TestsBase
     }
 
     [Fact]
+    public void Remove_ShouldRemoveAnyEntry_WithRemoveCallback()
+    {
+        var removed = new List<CachedItemRemovalEvent<string, int>>();
+        var timestamps = new Timestamps();
+        var entry1 = KeyValuePair.Create( "foo", 1 );
+        var entry2 = KeyValuePair.Create( "bar", 2 );
+        var entry3 = KeyValuePair.Create( "qux", 3 );
+        var sut = new IndividualLifetimeCache<string, int>(
+            timestamps,
+            lifetime: Duration.FromSeconds( 1 ),
+            capacity: 3,
+            removeCallback: removed.Add );
+
+        sut.TryAdd( entry1.Key, entry1.Value );
+        timestamps.Next += Duration.FromTicks( 100 );
+        sut.TryAdd( entry2.Key, entry2.Value );
+        timestamps.Next += Duration.FromTicks( 1 );
+        sut.TryAdd( entry3.Key, entry3.Value, sut.Lifetime - Duration.FromTicks( 50 ) );
+        timestamps.Next += Duration.FromTicks( 1 );
+
+        var result = sut.Remove( entry2.Key );
+
+        using ( new AssertionScope() )
+        {
+            removed.Should().BeSequentiallyEqualTo( CachedItemRemovalEvent<string, int>.CreateRemoved( entry2.Key, entry2.Value ) );
+            result.Should().BeTrue();
+            AssertCollection( sut, entry1, entry3 );
+        }
+    }
+
+    [Fact]
     public void Remove_ShouldRefreshCacheBeforeRemovingItem()
     {
         var timestamps = new Timestamps();
@@ -970,6 +1155,38 @@ public class IndividualIndividualLifetimeCacheTests : TestsBase
     }
 
     [Fact]
+    public void Remove_WithReturnedRemoved_ShouldRemoveAnyEntry_WithRemoveCallback()
+    {
+        var removed = new List<CachedItemRemovalEvent<string, int>>();
+        var timestamps = new Timestamps();
+        var entry1 = KeyValuePair.Create( "foo", 1 );
+        var entry2 = KeyValuePair.Create( "bar", 2 );
+        var entry3 = KeyValuePair.Create( "qux", 3 );
+        var sut = new IndividualLifetimeCache<string, int>(
+            timestamps,
+            lifetime: Duration.FromSeconds( 1 ),
+            capacity: 3,
+            removeCallback: removed.Add );
+
+        sut.TryAdd( entry1.Key, entry1.Value );
+        timestamps.Next += Duration.FromTicks( 100 );
+        sut.TryAdd( entry2.Key, entry2.Value );
+        timestamps.Next += Duration.FromTicks( 1 );
+        sut.TryAdd( entry3.Key, entry3.Value, sut.Lifetime - Duration.FromTicks( 50 ) );
+        timestamps.Next += Duration.FromTicks( 1 );
+
+        var result = sut.Remove( entry2.Key, out var outResult );
+
+        using ( new AssertionScope() )
+        {
+            removed.Should().BeSequentiallyEqualTo( CachedItemRemovalEvent<string, int>.CreateRemoved( entry2.Key, entry2.Value ) );
+            result.Should().BeTrue();
+            outResult.Should().Be( entry2.Value );
+            AssertCollection( sut, entry1, entry3 );
+        }
+    }
+
+    [Fact]
     public void Remove_WithReturnedRemoved_ShouldRefreshCacheBeforeRemovingItem()
     {
         var timestamps = new Timestamps();
@@ -1015,6 +1232,40 @@ public class IndividualIndividualLifetimeCacheTests : TestsBase
     }
 
     [Fact]
+    public void Clear_ShouldRemoveAllEntries_WithRemoveCallback()
+    {
+        var removed = new List<CachedItemRemovalEvent<string, int>>();
+        var timestamps = new Timestamps();
+        var entry1 = KeyValuePair.Create( "foo", 1 );
+        var entry2 = KeyValuePair.Create( "bar", 2 );
+        var entry3 = KeyValuePair.Create( "qux", 3 );
+        var sut = new IndividualLifetimeCache<string, int>(
+            timestamps,
+            lifetime: Duration.FromSeconds( 1 ),
+            capacity: 3,
+            removeCallback: removed.Add );
+
+        sut.TryAdd( entry1.Key, entry1.Value );
+        sut.TryAdd( entry2.Key, entry2.Value );
+        sut.TryAdd( entry3.Key, entry3.Value );
+
+        sut.Clear();
+
+        using ( new AssertionScope() )
+        {
+            removed.Should()
+                .BeSequentiallyEqualTo(
+                    CachedItemRemovalEvent<string, int>.CreateRemoved( entry1.Key, entry1.Value ),
+                    CachedItemRemovalEvent<string, int>.CreateRemoved( entry2.Key, entry2.Value ),
+                    CachedItemRemovalEvent<string, int>.CreateRemoved( entry3.Key, entry3.Value ) );
+
+            sut.Count.Should().Be( 0 );
+            sut.Should().BeEmpty();
+            sut.Oldest.Should().BeNull();
+        }
+    }
+
+    [Fact]
     public void Refresh_ShouldRemoveAllExpiredEntries()
     {
         var timestamps = new Timestamps();
@@ -1032,6 +1283,39 @@ public class IndividualIndividualLifetimeCacheTests : TestsBase
 
         using ( new AssertionScope() )
             AssertCollection( sut, entry3 );
+    }
+
+    [Fact]
+    public void Refresh_ShouldRemoveAllExpiredEntries_WithRemoveCallback()
+    {
+        var removed = new List<CachedItemRemovalEvent<string, int>>();
+        var timestamps = new Timestamps();
+        var entry1 = KeyValuePair.Create( "foo", 1 );
+        var entry2 = KeyValuePair.Create( "bar", 2 );
+        var entry3 = KeyValuePair.Create( "qux", 3 );
+        var sut = new IndividualLifetimeCache<string, int>(
+            timestamps,
+            lifetime: Duration.FromSeconds( 1 ),
+            capacity: 3,
+            removeCallback: removed.Add );
+
+        sut.TryAdd( entry1.Key, entry1.Value );
+        sut.TryAdd( entry2.Key, entry2.Value );
+        timestamps.Next += Duration.FromTicks( 1 );
+        sut.TryAdd( entry3.Key, entry3.Value );
+        timestamps.Next += sut.Lifetime - Duration.FromTicks( 1 );
+
+        sut.Refresh();
+
+        using ( new AssertionScope() )
+        {
+            removed.Should()
+                .BeSequentiallyEqualTo(
+                    CachedItemRemovalEvent<string, int>.CreateRemoved( entry1.Key, entry1.Value ),
+                    CachedItemRemovalEvent<string, int>.CreateRemoved( entry2.Key, entry2.Value ) );
+
+            AssertCollection( sut, entry3 );
+        }
     }
 
     private static void AssertCollection(IndividualLifetimeCache<string, int> sut, params KeyValuePair<string, int>[] expected)
