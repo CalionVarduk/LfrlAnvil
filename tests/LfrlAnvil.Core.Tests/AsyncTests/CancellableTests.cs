@@ -1,7 +1,7 @@
 ﻿using System.Threading;
 using LfrlAnvil.Async;
 
-namespace LfrlAnvil.Tests.AsyncTests.CancellableTests;
+namespace LfrlAnvil.Tests.AsyncTests;
 
 public class CancellableTests : TestsBase
 {

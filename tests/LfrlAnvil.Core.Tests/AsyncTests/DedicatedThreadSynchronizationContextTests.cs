@@ -2,7 +2,7 @@
 using System.Threading;
 using LfrlAnvil.Async;
 
-namespace LfrlAnvil.Tests.AsyncTests.DedicatedThreadSynchronizationContextTests;
+namespace LfrlAnvil.Tests.AsyncTests;
 
 public class DedicatedThreadSynchronizationContextTests : TestsBase
 {

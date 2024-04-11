@@ -27,7 +27,7 @@ public sealed class ConcurrentReadOnlyCollection<T> : IReadOnlyCollection<T>
 
     public IEnumerator<T> GetEnumerator()
     {
-        var @lock = new DisposableLock( _sync );
+        var @lock = ExclusiveLock.Enter( _sync );
         return new Enumerator( _collection.GetEnumerator(), @lock );
     }
 
@@ -39,9 +39,9 @@ public sealed class ConcurrentReadOnlyCollection<T> : IReadOnlyCollection<T>
     private sealed class Enumerator : IEnumerator<T>
     {
         private readonly IEnumerator<T> _enumerator;
-        private DisposableLock _lock;
+        private ExclusiveLock _lock;
 
-        internal Enumerator(IEnumerator<T> enumerator, DisposableLock @lock)
+        internal Enumerator(IEnumerator<T> enumerator, ExclusiveLock @lock)
         {
             _enumerator = enumerator;
             _lock = @lock;

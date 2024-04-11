@@ -4,7 +4,7 @@ using System.Threading;
 using LfrlAnvil.Async;
 using LfrlAnvil.TestExtensions.FluentAssertions;
 
-namespace LfrlAnvil.Tests.AsyncTests.ConcurrentReadOnlyCollectionTests;
+namespace LfrlAnvil.Tests.AsyncTests;
 
 public class ConcurrentReadOnlyCollectionTests : TestsBase
 {

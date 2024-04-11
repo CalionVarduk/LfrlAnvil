@@ -2,7 +2,7 @@
 using System.Threading.Tasks;
 using LfrlAnvil.Async;
 
-namespace LfrlAnvil.Tests.AsyncTests.TaskSchedulerCaptureTests;
+namespace LfrlAnvil.Tests.AsyncTests;
 
 public class TaskSchedulerCaptureTests : TestsBase
 {

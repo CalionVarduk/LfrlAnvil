@@ -1,7 +1,7 @@
 ﻿using System.Threading;
 using LfrlAnvil.Async;
 
-namespace LfrlAnvil.Tests.AsyncTests.SynchronizationContextSwitchTests;
+namespace LfrlAnvil.Tests.AsyncTests;
 
 public class SynchronizationContextSwitchTests : TestsBase
 {
