@@ -7,19 +7,20 @@ using LfrlAnvil.Functional;
 using LfrlAnvil.TestExtensions.FluentAssertions;
 using LfrlAnvil.TestExtensions.NSubstitute;
 
-namespace LfrlAnvil.Dependencies.Tests.DependencyScopeTests;
+namespace LfrlAnvil.Dependencies.Tests;
 
 public class DependencyScopeTests : DependencyTestsBase
 {
     [Fact]
     public void ToString_ForRootScope_ShouldReturnCorrectResult()
     {
+        var threadId = Environment.CurrentManagedThreadId;
         var container = new DependencyContainerBuilder().Build();
         var sut = container.RootScope;
 
         var result = sut.ToString();
 
-        result.Should().Be( "RootDependencyScope [Level: 0]" );
+        result.Should().Be( $"RootDependencyScope [Level: 0, OriginalThreadId: {threadId}]" );
     }
 
     [Fact]
@@ -31,7 +32,7 @@ public class DependencyScopeTests : DependencyTestsBase
 
         var result = sut.ToString();
 
-        result.Should().Be( $"ChildDependencyScope [Level: 1, ThreadId: {threadId}]" );
+        result.Should().Be( $"ChildDependencyScope [Level: 1, OriginalThreadId: {threadId}]" );
     }
 
     [Fact]
@@ -44,7 +45,7 @@ public class DependencyScopeTests : DependencyTestsBase
 
         var result = sut.ToString();
 
-        result.Should().Be( $"ChildDependencyScope [Name: '{name}', Level: 1, ThreadId: {threadId}]" );
+        result.Should().Be( $"ChildDependencyScope [Name: '{name}', Level: 1, OriginalThreadId: {threadId}]" );
     }
 
     [Fact]
@@ -56,12 +57,13 @@ public class DependencyScopeTests : DependencyTestsBase
 
         var result = sut.ToString();
 
-        result.Should().Be( $"ChildDependencyScope [Level: 2, ThreadId: {threadId}]" );
+        result.Should().Be( $"ChildDependencyScope [Level: 2, OriginalThreadId: {threadId}]" );
     }
 
     [Fact]
     public void RootScope_ShouldHaveCorrectProperties()
     {
+        var threadId = Environment.CurrentManagedThreadId;
         var container = new DependencyContainerBuilder().Build();
         var sut = container.RootScope;
 
@@ -73,12 +75,12 @@ public class DependencyScopeTests : DependencyTestsBase
             sut.Locator.Key.Should().BeNull();
             sut.Locator.KeyType.Should().BeNull();
             sut.Locator.IsKeyed.Should().BeFalse();
-            sut.IsActive.Should().BeTrue();
             sut.IsDisposed.Should().BeFalse();
             sut.IsRoot.Should().BeTrue();
             sut.ParentScope.Should().BeNull();
-            sut.ThreadId.Should().BeNull();
+            sut.OriginalThreadId.Should().Be( threadId );
             sut.Name.Should().BeNull();
+            sut.GetChildren().Should().BeEmpty();
         }
     }
 
@@ -112,7 +114,7 @@ public class DependencyScopeTests : DependencyTestsBase
         var result1 = sut.GetKeyedLocator( 1 );
         var result2 = sut.GetKeyedLocator( 1 );
 
-        result1.Should().Be( result2 );
+        result1.Should().BeSameAs( result2 );
     }
 
     [Fact]
@@ -128,7 +130,7 @@ public class DependencyScopeTests : DependencyTestsBase
     }
 
     [Fact]
-    public void BeginScope_ThroughRootScope_ShouldCreateChildScopeForCurrentThreadAndMarkItAsActive()
+    public void BeginScope_ThroughRootScope_ShouldCreateChildScope()
     {
         var threadId = Environment.CurrentManagedThreadId;
         var container = new DependencyContainerBuilder().Build();
@@ -142,18 +144,18 @@ public class DependencyScopeTests : DependencyTestsBase
             sut.Locator.Key.Should().BeNull();
             sut.Locator.KeyType.Should().BeNull();
             sut.Locator.IsKeyed.Should().BeFalse();
-            sut.IsActive.Should().BeTrue();
             sut.IsDisposed.Should().BeFalse();
             sut.IsRoot.Should().BeFalse();
             sut.ParentScope.Should().BeSameAs( container.RootScope );
-            sut.ThreadId.Should().Be( threadId );
+            sut.OriginalThreadId.Should().Be( threadId );
             sut.Name.Should().BeNull();
-            container.RootScope.IsActive.Should().BeFalse();
+            container.RootScope.GetChildren().Should().BeSequentiallyEqualTo( sut );
+            sut.GetChildren().Should().BeEmpty();
         }
     }
 
     [Fact]
-    public void BeginScope_ThroughRootScope_ShouldCreateNamedChildScopeForCurrentThreadAndMarkItAsActive()
+    public void BeginScope_ThroughRootScope_ShouldCreateNamedChildScope()
     {
         var name = Fixture.Create<string>();
         var threadId = Environment.CurrentManagedThreadId;
@@ -165,18 +167,30 @@ public class DependencyScopeTests : DependencyTestsBase
             sut.Container.Should().BeSameAs( container );
             sut.Level.Should().Be( 1 );
             sut.Locator.AttachedScope.Should().BeSameAs( sut );
-            sut.IsActive.Should().BeTrue();
             sut.IsDisposed.Should().BeFalse();
             sut.IsRoot.Should().BeFalse();
             sut.ParentScope.Should().BeSameAs( container.RootScope );
-            sut.ThreadId.Should().Be( threadId );
+            sut.OriginalThreadId.Should().Be( threadId );
             sut.Name.Should().Be( name );
-            container.RootScope.IsActive.Should().BeFalse();
+            container.RootScope.GetChildren().Should().BeSequentiallyEqualTo( sut );
+            sut.GetChildren().Should().BeEmpty();
         }
     }
 
     [Fact]
-    public void BeginScope_ThroughChildScope_ShouldCreateChildScopeForCurrentThreadAndMarkItAsActive()
+    public void BeginScope_CalledMultipleTimesFromRootScope_ShouldAttachCreatedScopesAsRootScopeChildren()
+    {
+        var container = new DependencyContainerBuilder().Build();
+
+        var child1 = container.RootScope.BeginScope();
+        var child2 = container.RootScope.BeginScope();
+        var child3 = container.RootScope.BeginScope();
+
+        container.RootScope.GetChildren().Should().BeSequentiallyEqualTo( child1, child2, child3 );
+    }
+
+    [Fact]
+    public void BeginScope_ThroughChildScope_ShouldCreateChildScope()
     {
         var threadId = Environment.CurrentManagedThreadId;
         var container = new DependencyContainerBuilder().Build();
@@ -188,19 +202,18 @@ public class DependencyScopeTests : DependencyTestsBase
             sut.Container.Should().BeSameAs( container );
             sut.Level.Should().Be( 2 );
             sut.Locator.AttachedScope.Should().BeSameAs( sut );
-            sut.IsActive.Should().BeTrue();
             sut.IsDisposed.Should().BeFalse();
             sut.IsRoot.Should().BeFalse();
             sut.ParentScope.Should().BeSameAs( parent );
-            sut.ThreadId.Should().Be( threadId );
+            sut.OriginalThreadId.Should().Be( threadId );
             sut.Name.Should().BeNull();
-            parent.IsActive.Should().BeFalse();
-            container.RootScope.IsActive.Should().BeFalse();
+            parent.GetChildren().Should().BeSequentiallyEqualTo( sut );
+            sut.GetChildren().Should().BeEmpty();
         }
     }
 
     [Fact]
-    public void BeginScope_ThroughChildScope_ShouldCreateNamedChildScopeForCurrentThreadAndMarkItAsActive()
+    public void BeginScope_ThroughChildScope_ShouldCreateNamedChildScope()
     {
         var name = Fixture.Create<string>();
         var threadId = Environment.CurrentManagedThreadId;
@@ -213,14 +226,68 @@ public class DependencyScopeTests : DependencyTestsBase
             sut.Container.Should().BeSameAs( container );
             sut.Level.Should().Be( 2 );
             sut.Locator.AttachedScope.Should().BeSameAs( sut );
-            sut.IsActive.Should().BeTrue();
             sut.IsDisposed.Should().BeFalse();
             sut.IsRoot.Should().BeFalse();
             sut.ParentScope.Should().BeSameAs( parent );
-            sut.ThreadId.Should().Be( threadId );
+            sut.OriginalThreadId.Should().Be( threadId );
             sut.Name.Should().Be( name );
-            parent.IsActive.Should().BeFalse();
-            container.RootScope.IsActive.Should().BeFalse();
+            parent.GetChildren().Should().BeSequentiallyEqualTo( sut );
+            sut.GetChildren().Should().BeEmpty();
+        }
+    }
+
+    [Fact]
+    public void BeginScope_CalledMultipleTimesFromChildScope_ShouldAttachCreatedScopesAsRootScopeChildren()
+    {
+        var container = new DependencyContainerBuilder().Build();
+        var parent = container.RootScope.BeginScope();
+
+        var child1 = parent.BeginScope();
+        var child2 = parent.BeginScope();
+        var child3 = parent.BeginScope();
+
+        parent.GetChildren().Should().BeSequentiallyEqualTo( child1, child2, child3 );
+    }
+
+    [Fact]
+    public void BeginScope_ShouldCreateChildScope_WhenChildScopeHasItsOwnChildren()
+    {
+        var container = new DependencyContainerBuilder().Build();
+        var sut = container.RootScope;
+        var child = sut.BeginScope();
+        var grandchild = child.BeginScope();
+
+        var result = sut.BeginScope();
+
+        using ( new AssertionScope() )
+        {
+            sut.GetChildren().Should().BeSequentiallyEqualTo( child, result );
+            child.GetChildren().Should().BeSequentiallyEqualTo( grandchild );
+        }
+    }
+
+    [Fact]
+    public async Task BeginScope_ShouldCreateChildScope_WhenParentScopeOriginatedFromDifferentThread()
+    {
+        var context = new DedicatedThreadSynchronizationContext();
+        var taskFactory = new TaskFactory( TaskSchedulerCapture.FromSynchronizationContext( context ) );
+        var container = new DependencyContainerBuilder().Build();
+        var sut = await taskFactory.StartNew( () => container.RootScope.BeginScope() );
+        var threadId = Environment.CurrentManagedThreadId;
+
+        var result = sut.BeginScope();
+
+        using ( new AssertionScope() )
+        {
+            result.Container.Should().BeSameAs( container );
+            result.Level.Should().Be( 2 );
+            result.Locator.AttachedScope.Should().BeSameAs( result );
+            result.IsDisposed.Should().BeFalse();
+            result.IsRoot.Should().BeFalse();
+            result.ParentScope.Should().BeSameAs( sut );
+            result.OriginalThreadId.Should().Be( threadId );
+            sut.GetChildren().Should().BeSequentiallyEqualTo( result );
+            result.GetChildren().Should().BeEmpty();
         }
     }
 
@@ -237,37 +304,6 @@ public class DependencyScopeTests : DependencyTestsBase
     }
 
     [Fact]
-    public void BeginScope_ShouldThrowDependencyScopeCreationException_WhenScopeIsNotMarkedAsActive()
-    {
-        var threadId = Environment.CurrentManagedThreadId;
-        var container = new DependencyContainerBuilder().Build();
-        var sut = container.RootScope;
-        var active = sut.BeginScope();
-
-        var action = Lambda.Of( () => sut.BeginScope() );
-
-        action.Should()
-            .ThrowExactly<DependencyScopeCreationException>()
-            .AndMatch( e => e.Scope == sut && e.ExpectedScope == active && e.ThreadId == threadId );
-    }
-
-    [Fact]
-    public async Task BeginScope_ShouldThrowDependencyScopeCreationException_WhenScopeIsAttachedToAnotherThread()
-    {
-        var context = new DedicatedThreadSynchronizationContext();
-        var taskFactory = new TaskFactory( TaskSchedulerCapture.FromSynchronizationContext( context ) );
-        var container = new DependencyContainerBuilder().Build();
-        var sut = await taskFactory.StartNew( () => container.RootScope.BeginScope() );
-        var threadId = Environment.CurrentManagedThreadId;
-
-        var action = Lambda.Of( () => sut.BeginScope() );
-
-        action.Should()
-            .ThrowExactly<DependencyScopeCreationException>()
-            .AndMatch( e => e.Scope == sut && e.ExpectedScope == container.RootScope && e.ThreadId == threadId );
-    }
-
-    [Fact]
     public void BeginScope_ShouldThrowNamedDependencyScopeCreationException_WhenScopeWithProvidedNameAlreadyExists()
     {
         var name = Fixture.Create<string>();
@@ -280,78 +316,29 @@ public class DependencyScopeTests : DependencyTestsBase
     }
 
     [Fact]
-    public void UseScope_ShouldReturnNull_WhenNamedScopeDoesNotExist()
-    {
-        var container = new DependencyContainerBuilder().Build();
-        var sut = container.RootScope;
-
-        var result = sut.UseScope( Fixture.Create<string>() );
-
-        result.Should().BeNull();
-    }
-
-    [Fact]
-    public void UseScope_ShouldReturnCorrectScope_WhenNamedScopeExists()
-    {
-        var name = Fixture.Create<string>();
-        var container = new DependencyContainerBuilder().Build();
-        var sut = container.RootScope;
-        var expected = sut.BeginScope( name );
-
-        var result = sut.UseScope( name );
-
-        result.Should().BeSameAs( expected );
-    }
-
-    [Fact]
-    public void EndScope_ShouldReturnTrueAndBeEquivalentToItsDisposal_WhenScopeExists()
-    {
-        var container = new DependencyContainerBuilder().Build();
-        var sut = container.RootScope.BeginScope( "foo" );
-        var child = sut.BeginScope();
-
-        var result = container.RootScope.EndScope( "foo" );
-
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            sut.IsDisposed.Should().BeTrue();
-            child.IsDisposed.Should().BeTrue();
-        }
-    }
-
-    [Fact]
-    public void EndScope_ShouldReturnFalseAndDoNothing_WhenScopeDoesNotExist()
-    {
-        var container = new DependencyContainerBuilder().Build();
-        var sut = container.RootScope.BeginScope( "foo" );
-
-        var result = container.RootScope.EndScope( "bar" );
-
-        using ( new AssertionScope() )
-        {
-            result.Should().BeFalse();
-            sut.IsDisposed.Should().BeFalse();
-        }
-    }
-
-    [Fact]
-    public void Dispose_ShouldDisposeChildScopeAndItsDescendantsAndMarkItsParentAsActive()
+    public void Dispose_ShouldDisposeChildScopeAndItsDescendants()
     {
         var container = new DependencyContainerBuilder().Build();
         var parent = container.RootScope.BeginScope();
         var sut = parent.BeginScope();
-        var child = sut.BeginScope();
-        var grandchild = child.BeginScope();
+        var child1 = sut.BeginScope();
+        var child2 = sut.BeginScope();
+        var child3 = sut.BeginScope();
+        var grandchild1 = child1.BeginScope();
+        var grandchild2 = child1.BeginScope();
+        var grandchild3 = child3.BeginScope();
 
         sut.Dispose();
 
         using ( new AssertionScope() )
         {
             sut.IsDisposed.Should().BeTrue();
-            child.IsDisposed.Should().BeTrue();
-            grandchild.IsDisposed.Should().BeTrue();
-            parent.IsActive.Should().BeTrue();
+            child1.IsDisposed.Should().BeTrue();
+            child2.IsDisposed.Should().BeTrue();
+            child3.IsDisposed.Should().BeTrue();
+            grandchild1.IsDisposed.Should().BeTrue();
+            grandchild2.IsDisposed.Should().BeTrue();
+            grandchild3.IsDisposed.Should().BeTrue();
         }
     }
 
@@ -375,43 +362,101 @@ public class DependencyScopeTests : DependencyTestsBase
 
         sut.Dispose();
 
-        using ( new AssertionScope() )
-        {
-            sut.IsDisposed.Should().BeTrue();
-            container.RootScope.IsActive.Should().BeTrue();
-        }
+        sut.IsDisposed.Should().BeTrue();
     }
 
     [Fact]
-    public void Dispose_ShouldFreeNamesOfDisposedScopes()
+    public void Dispose_ShouldDisposeFirstChildScopeCorrectly()
     {
         var container = new DependencyContainerBuilder().Build();
-        var sut = container.RootScope.BeginScope( "foo" );
-        _ = sut.BeginScope( "bar" );
+        var parent = container.RootScope.BeginScope();
+        var sut = parent.BeginScope();
+        var child1 = sut.BeginScope();
+        var child2 = sut.BeginScope();
+        var child3 = sut.BeginScope();
 
-        sut.Dispose();
+        child1.Dispose();
 
         using ( new AssertionScope() )
         {
-            container.RootScope.UseScope( "foo" ).Should().BeNull();
-            container.RootScope.UseScope( "bar" ).Should().BeNull();
+            child1.IsDisposed.Should().BeTrue();
+            child2.IsDisposed.Should().BeFalse();
+            child3.IsDisposed.Should().BeFalse();
+            sut.GetChildren().Should().BeSequentiallyEqualTo( child2, child3 );
         }
     }
 
     [Fact]
-    public async Task Dispose_ShouldThrowDependencyScopeDisposalException_WhenScopeIsAttachedToAnotherThread()
+    public void Dispose_ShouldDisposeLastChildScopeCorrectly()
+    {
+        var container = new DependencyContainerBuilder().Build();
+        var parent = container.RootScope.BeginScope();
+        var sut = parent.BeginScope();
+        var child1 = sut.BeginScope();
+        var child2 = sut.BeginScope();
+        var child3 = sut.BeginScope();
+
+        child3.Dispose();
+
+        using ( new AssertionScope() )
+        {
+            child3.IsDisposed.Should().BeTrue();
+            child1.IsDisposed.Should().BeFalse();
+            child2.IsDisposed.Should().BeFalse();
+            sut.GetChildren().Should().BeSequentiallyEqualTo( child1, child2 );
+        }
+    }
+
+    [Fact]
+    public void Dispose_ShouldDisposeAnyChildScopeCorrectly()
+    {
+        var container = new DependencyContainerBuilder().Build();
+        var parent = container.RootScope.BeginScope();
+        var sut = parent.BeginScope();
+        var child1 = sut.BeginScope();
+        var child2 = sut.BeginScope();
+        var child3 = sut.BeginScope();
+
+        child2.Dispose();
+
+        using ( new AssertionScope() )
+        {
+            child2.IsDisposed.Should().BeTrue();
+            child1.IsDisposed.Should().BeFalse();
+            child3.IsDisposed.Should().BeFalse();
+            sut.GetChildren().Should().BeSequentiallyEqualTo( child1, child3 );
+        }
+    }
+
+    [Fact]
+    public async Task Dispose_ShouldDisposeScopeOriginatingFromAnotherThread()
     {
         var context = new DedicatedThreadSynchronizationContext();
         var taskFactory = new TaskFactory( TaskSchedulerCapture.FromSynchronizationContext( context ) );
         var container = new DependencyContainerBuilder().Build();
         var sut = await taskFactory.StartNew( () => container.RootScope.BeginScope() );
-        var threadId = Environment.CurrentManagedThreadId;
 
-        var action = Lambda.Of( () => sut.Dispose() );
+        sut.Dispose();
 
-        action.Should()
-            .ThrowExactly<DependencyScopeDisposalException>()
-            .AndMatch( e => e.Scope == sut && e.ActualThreadId == threadId );
+        sut.IsDisposed.Should().BeTrue();
+    }
+
+    [Fact]
+    public void Dispose_ShouldFreeScopeName()
+    {
+        var container = new DependencyContainerBuilder().Build();
+        var scope = container.RootScope.BeginScope( "foo" );
+
+        scope.Dispose();
+        var action = Lambda.Of( () => container.RootScope.BeginScope( "foo" ) );
+
+        using ( new AssertionScope() )
+        {
+            action.Should().NotThrow();
+            scope.IsDisposed.Should().BeTrue();
+            scope.Should().NotBeSameAs( container.TryGetScope( "foo" ) );
+            container.RootScope.GetChildren().Should().BeSequentiallyEqualTo( container.GetScope( "foo" ) );
+        }
     }
 
     [Fact]

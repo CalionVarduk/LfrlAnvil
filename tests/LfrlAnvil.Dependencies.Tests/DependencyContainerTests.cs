@@ -6,7 +6,7 @@ using LfrlAnvil.Functional;
 using LfrlAnvil.TestExtensions.FluentAssertions;
 using LfrlAnvil.TestExtensions.NSubstitute;
 
-namespace LfrlAnvil.Dependencies.Tests.DependencyContainerTests;
+namespace LfrlAnvil.Dependencies.Tests;
 
 public class DependencyContainerTests : DependencyTestsBase
 {
@@ -19,7 +19,7 @@ public class DependencyContainerTests : DependencyTestsBase
 
         var result = scope.Locator.Resolve<IDependencyContainer>();
 
-        result.Should().Be( sut );
+        result.Should().BeSameAs( sut );
     }
 
     [Fact]
@@ -31,7 +31,7 @@ public class DependencyContainerTests : DependencyTestsBase
 
         var result = scope.Locator.Resolve<IDependencyContainer>();
 
-        result.Should().Be( sut );
+        result.Should().BeSameAs( sut );
     }
 
     [Fact]
@@ -43,7 +43,7 @@ public class DependencyContainerTests : DependencyTestsBase
 
         var result = scope.Locator.Resolve<IDependencyScope>();
 
-        result.Should().Be( scope );
+        result.Should().BeSameAs( scope );
     }
 
     [Fact]
@@ -55,7 +55,7 @@ public class DependencyContainerTests : DependencyTestsBase
 
         var result = scope.Locator.Resolve<IDependencyScope>();
 
-        result.Should().Be( scope );
+        result.Should().BeSameAs( scope );
     }
 
     [Fact]
@@ -66,7 +66,7 @@ public class DependencyContainerTests : DependencyTestsBase
 
         var result = sut.RootScope.GetKeyedLocator( 1 ).Resolve<IDependencyContainer>();
 
-        result.Should().Be( sut );
+        result.Should().BeSameAs( sut );
     }
 
     [Fact]
@@ -78,7 +78,7 @@ public class DependencyContainerTests : DependencyTestsBase
 
         var result = scope.GetKeyedLocator( 1 ).Resolve<IDependencyScope>();
 
-        result.Should().Be( scope );
+        result.Should().BeSameAs( scope );
     }
 
     [Fact]
@@ -90,7 +90,7 @@ public class DependencyContainerTests : DependencyTestsBase
 
         var result = sut.RootScope.GetKeyedLocator( 1 ).Resolve<IDependencyContainer>();
 
-        result.Should().Be( sut );
+        result.Should().BeSameAs( sut );
     }
 
     [Fact]
@@ -103,7 +103,7 @@ public class DependencyContainerTests : DependencyTestsBase
 
         var result = scope.GetKeyedLocator( 1 ).Resolve<IDependencyScope>();
 
-        result.Should().Be( scope );
+        result.Should().BeSameAs( scope );
     }
 
     [Fact]
@@ -908,7 +908,7 @@ public class DependencyContainerTests : DependencyTestsBase
         builder.Add<IWithText>().SetLifetime( lifetime ).FromConstructor( ctor );
         var sut = builder.Build();
 
-        var result = sut.ActiveScope.Locator.Resolve<IWithText>();
+        var result = sut.RootScope.Locator.Resolve<IWithText>();
 
         using ( new AssertionScope() )
         {
@@ -932,7 +932,7 @@ public class DependencyContainerTests : DependencyTestsBase
         builder.GetKeyedLocator( 1 ).Add<IWithText>().SetLifetime( lifetime ).FromConstructor( ctor );
         var sut = builder.Build();
 
-        var result = sut.ActiveScope.GetKeyedLocator( 1 ).Resolve<IWithText>();
+        var result = sut.RootScope.GetKeyedLocator( 1 ).Resolve<IWithText>();
 
         using ( new AssertionScope() )
         {
@@ -950,7 +950,7 @@ public class DependencyContainerTests : DependencyTestsBase
         builder.Add<IFoo>().FromConstructor( ctor );
         var sut = builder.Build();
 
-        var result = sut.ActiveScope.Locator.Resolve<IFoo>();
+        var result = sut.RootScope.Locator.Resolve<IFoo>();
 
         result.GetType().Should().Be( typeof( Implementor ) );
     }
@@ -964,13 +964,13 @@ public class DependencyContainerTests : DependencyTestsBase
         builder.Add<IBuiltIn>().FromConstructor( ctor );
         var sut = builder.Build();
 
-        var result = sut.ActiveScope.Locator.Resolve<IBuiltIn>();
+        var result = sut.RootScope.Locator.Resolve<IBuiltIn>();
 
         using ( new AssertionScope() )
         {
             result.GetType().Should().Be( typeof( BuiltInCtorParamImplementor ) );
             result.Container.Should().BeSameAs( sut );
-            result.Scope.Should().BeSameAs( sut.ActiveScope );
+            result.Scope.Should().BeSameAs( sut.RootScope );
         }
     }
 
@@ -983,7 +983,7 @@ public class DependencyContainerTests : DependencyTestsBase
         builder.Add<IWithText>().FromConstructor( ctor );
         var sut = builder.Build();
 
-        var result = sut.ActiveScope.Locator.Resolve<IWithText>();
+        var result = sut.RootScope.Locator.Resolve<IWithText>();
 
         using ( new AssertionScope() )
         {
@@ -1003,7 +1003,7 @@ public class DependencyContainerTests : DependencyTestsBase
         builder.Add<IWithText>().FromConstructor( ctor );
         var sut = builder.Build();
 
-        var result = sut.ActiveScope.Locator.Resolve<IWithText>();
+        var result = sut.RootScope.Locator.Resolve<IWithText>();
 
         using ( new AssertionScope() )
         {
@@ -1021,7 +1021,7 @@ public class DependencyContainerTests : DependencyTestsBase
         builder.Add<IWithText>().FromConstructor( ctor );
         var sut = builder.Build();
 
-        var result = sut.ActiveScope.Locator.Resolve<IWithText>();
+        var result = sut.RootScope.Locator.Resolve<IWithText>();
 
         using ( new AssertionScope() )
         {
@@ -1041,7 +1041,7 @@ public class DependencyContainerTests : DependencyTestsBase
         builder.Add<IWithText>().FromConstructor( ctor );
         var sut = builder.Build();
 
-        var result = sut.ActiveScope.Locator.Resolve<IWithText>();
+        var result = sut.RootScope.Locator.Resolve<IWithText>();
 
         using ( new AssertionScope() )
         {
@@ -1060,7 +1060,7 @@ public class DependencyContainerTests : DependencyTestsBase
         builder.Add<IWithText>().FromConstructor( ctor, o => o.ResolveParameter( p => p.Name == "text", _ => value ) );
         var sut = builder.Build();
 
-        var result = sut.ActiveScope.Locator.Resolve<IWithText>();
+        var result = sut.RootScope.Locator.Resolve<IWithText>();
 
         using ( new AssertionScope() )
         {
@@ -1080,7 +1080,7 @@ public class DependencyContainerTests : DependencyTestsBase
         builder.Add<IWithText>().FromConstructor( ctor, o => o.ResolveParameter( p => p.Name == "text", typeof( string ) ) );
         var sut = builder.Build();
 
-        var result = sut.ActiveScope.Locator.Resolve<IWithText>();
+        var result = sut.RootScope.Locator.Resolve<IWithText>();
 
         using ( new AssertionScope() )
         {
@@ -1104,7 +1104,7 @@ public class DependencyContainerTests : DependencyTestsBase
 
         var sut = builder.Build();
 
-        var result = sut.ActiveScope.Locator.Resolve<IWithText>();
+        var result = sut.RootScope.Locator.Resolve<IWithText>();
 
         using ( new AssertionScope() )
         {
@@ -1128,7 +1128,7 @@ public class DependencyContainerTests : DependencyTestsBase
         builder.Add<IWithText>().FromConstructor( ctor );
         var sut = builder.Build();
 
-        var result = sut.ActiveScope.Locator.Resolve<IWithText>();
+        var result = sut.RootScope.Locator.Resolve<IWithText>();
 
         using ( new AssertionScope() )
         {
@@ -1150,7 +1150,7 @@ public class DependencyContainerTests : DependencyTestsBase
         builder.Add<IWithText>().FromConstructor( ctor );
         var sut = builder.Build();
 
-        var result = sut.ActiveScope.Locator.Resolve<IWithText>();
+        var result = sut.RootScope.Locator.Resolve<IWithText>();
 
         using ( new AssertionScope() )
         {
@@ -1174,7 +1174,7 @@ public class DependencyContainerTests : DependencyTestsBase
         builder.Add<IWithText>().FromConstructor( ctor );
         var sut = builder.Build();
 
-        var result = sut.ActiveScope.Locator.Resolve<IWithText>();
+        var result = sut.RootScope.Locator.Resolve<IWithText>();
 
         using ( new AssertionScope() )
         {
@@ -1198,7 +1198,7 @@ public class DependencyContainerTests : DependencyTestsBase
         builder.Add<IWithText>().FromConstructor( ctor, o => o.ResolveMember( m => m.Name.Contains( "_text" ), _ => value ) );
         var sut = builder.Build();
 
-        var result = sut.ActiveScope.Locator.Resolve<IWithText>();
+        var result = sut.RootScope.Locator.Resolve<IWithText>();
 
         using ( new AssertionScope() )
         {
@@ -1223,7 +1223,7 @@ public class DependencyContainerTests : DependencyTestsBase
         builder.Add<IWithText>().FromConstructor( ctor, o => o.ResolveMember( m => m.Name.Contains( "_text" ), typeof( string ) ) );
         var sut = builder.Build();
 
-        var result = sut.ActiveScope.Locator.Resolve<IWithText>();
+        var result = sut.RootScope.Locator.Resolve<IWithText>();
 
         using ( new AssertionScope() )
         {
@@ -1252,7 +1252,7 @@ public class DependencyContainerTests : DependencyTestsBase
 
         var sut = builder.Build();
 
-        var result = sut.ActiveScope.Locator.Resolve<IWithText>();
+        var result = sut.RootScope.Locator.Resolve<IWithText>();
 
         using ( new AssertionScope() )
         {
@@ -1270,13 +1270,13 @@ public class DependencyContainerTests : DependencyTestsBase
         builder.Add<IBuiltIn>().FromConstructor( ctor );
         var sut = builder.Build();
 
-        var result = sut.ActiveScope.Locator.Resolve<IBuiltIn>();
+        var result = sut.RootScope.Locator.Resolve<IBuiltIn>();
 
         using ( new AssertionScope() )
         {
             result.GetType().Should().Be( typeof( BuiltInCtorMemberImplementor ) );
             result.Container.Should().BeSameAs( sut );
-            result.Scope.Should().BeSameAs( sut.ActiveScope );
+            result.Scope.Should().BeSameAs( sut.RootScope );
         }
     }
 
@@ -1292,7 +1292,7 @@ public class DependencyContainerTests : DependencyTestsBase
         builder.Add<IQux>().FromFactory( _ => new Implementor() );
         var sut = builder.Build();
 
-        var result = sut.ActiveScope.Locator.Resolve<IFoo>();
+        var result = sut.RootScope.Locator.Resolve<IFoo>();
 
         using ( new AssertionScope() )
         {
@@ -1320,7 +1320,7 @@ public class DependencyContainerTests : DependencyTestsBase
         builder.Add<IQux>().FromFactory( _ => new Implementor() );
         var sut = builder.Build();
 
-        var result = sut.ActiveScope.Locator.Resolve<IFoo>();
+        var result = sut.RootScope.Locator.Resolve<IFoo>();
 
         using ( new AssertionScope() )
         {
@@ -1349,7 +1349,7 @@ public class DependencyContainerTests : DependencyTestsBase
         builder.Add<IWithText>().FromConstructor( ctor );
         var sut = builder.Build();
 
-        var result = sut.ActiveScope.Locator.Resolve<IWithText>();
+        var result = sut.RootScope.Locator.Resolve<IWithText>();
 
         using ( new AssertionScope() )
         {
@@ -1374,7 +1374,7 @@ public class DependencyContainerTests : DependencyTestsBase
 
         var sut = builder.Build();
 
-        var result = sut.ActiveScope.Locator.Resolve<IWithText>();
+        var result = sut.RootScope.Locator.Resolve<IWithText>();
 
         using ( new AssertionScope() )
         {
@@ -1396,7 +1396,7 @@ public class DependencyContainerTests : DependencyTestsBase
         builder.Add<IWithText>().FromConstructor( ctor );
         var sut = builder.Build();
 
-        var result = sut.ActiveScope.Locator.Resolve<IWithText>();
+        var result = sut.RootScope.Locator.Resolve<IWithText>();
 
         using ( new AssertionScope() )
         {
@@ -1417,7 +1417,7 @@ public class DependencyContainerTests : DependencyTestsBase
         builder.Add<IWithText>().FromConstructor( ctor );
         var sut = builder.Build();
 
-        var action = Lambda.Of( () => sut.ActiveScope.Locator.Resolve<IWithText>() );
+        var action = Lambda.Of( () => sut.RootScope.Locator.Resolve<IWithText>() );
 
         action.Should()
             .ThrowExactly<InvalidDependencyCastException>()
@@ -1436,7 +1436,7 @@ public class DependencyContainerTests : DependencyTestsBase
         builder.Add<IWithText>().FromConstructor( ctor );
         var sut = builder.Build();
 
-        var action = Lambda.Of( () => sut.ActiveScope.Locator.Resolve<IWithText>() );
+        var action = Lambda.Of( () => sut.RootScope.Locator.Resolve<IWithText>() );
 
         action.Should()
             .ThrowExactly<InvalidDependencyCastException>()
@@ -1455,7 +1455,7 @@ public class DependencyContainerTests : DependencyTestsBase
         builder.Add<IWithText>().FromConstructor( ctor );
         var sut = builder.Build();
 
-        var action = Lambda.Of( () => sut.ActiveScope.Locator.Resolve<IWithText>() );
+        var action = Lambda.Of( () => sut.RootScope.Locator.Resolve<IWithText>() );
 
         action.Should()
             .ThrowExactly<InvalidDependencyCastException>()
@@ -1470,7 +1470,7 @@ public class DependencyContainerTests : DependencyTestsBase
         builder.Add<ChainableFoo>();
         var sut = builder.Build();
 
-        var result = sut.ActiveScope.Locator.Resolve<ChainableFoo>();
+        var result = sut.RootScope.Locator.Resolve<ChainableFoo>();
 
         result.Bar.Should().BeOfType( typeof( Implementor ) );
     }
@@ -1482,7 +1482,7 @@ public class DependencyContainerTests : DependencyTestsBase
         builder.Add<MultiCtorImplementor>().FromConstructor();
         var sut = builder.Build();
 
-        var result = sut.ActiveScope.Locator.Resolve<MultiCtorImplementor>();
+        var result = sut.RootScope.Locator.Resolve<MultiCtorImplementor>();
 
         using ( new AssertionScope() )
         {
@@ -1499,7 +1499,7 @@ public class DependencyContainerTests : DependencyTestsBase
         builder.Add<MultiCtorImplementor>().FromConstructor();
         var sut = builder.Build();
 
-        var result = sut.ActiveScope.Locator.Resolve<MultiCtorImplementor>();
+        var result = sut.RootScope.Locator.Resolve<MultiCtorImplementor>();
 
         using ( new AssertionScope() )
         {
@@ -1518,7 +1518,7 @@ public class DependencyContainerTests : DependencyTestsBase
 
         var sut = builder.Build();
 
-        var result = sut.ActiveScope.Locator.Resolve<MultiCtorImplementor>();
+        var result = sut.RootScope.Locator.Resolve<MultiCtorImplementor>();
 
         using ( new AssertionScope() )
         {
@@ -1539,7 +1539,7 @@ public class DependencyContainerTests : DependencyTestsBase
 
         var sut = builder.Build();
 
-        var result = sut.ActiveScope.Locator.Resolve<MultiCtorImplementor>();
+        var result = sut.RootScope.Locator.Resolve<MultiCtorImplementor>();
 
         using ( new AssertionScope() )
         {
@@ -1558,7 +1558,7 @@ public class DependencyContainerTests : DependencyTestsBase
 
         var sut = builder.Build();
 
-        var result = sut.ActiveScope.Locator.Resolve<MultiCtorImplementor>();
+        var result = sut.RootScope.Locator.Resolve<MultiCtorImplementor>();
 
         using ( new AssertionScope() )
         {
@@ -1577,7 +1577,7 @@ public class DependencyContainerTests : DependencyTestsBase
 
         var sut = builder.Build();
 
-        var result = sut.ActiveScope.Locator.Resolve<MultiCtorImplementor>();
+        var result = sut.RootScope.Locator.Resolve<MultiCtorImplementor>();
 
         using ( new AssertionScope() )
         {
@@ -1595,7 +1595,7 @@ public class DependencyContainerTests : DependencyTestsBase
 
         var sut = builder.Build();
 
-        var result = sut.ActiveScope.Locator.Resolve<MultiCtorImplementor>();
+        var result = sut.RootScope.Locator.Resolve<MultiCtorImplementor>();
 
         using ( new AssertionScope() )
         {
@@ -1619,7 +1619,7 @@ public class DependencyContainerTests : DependencyTestsBase
 
         var sut = builder.Build();
 
-        var result = sut.ActiveScope.Locator.Resolve<SameCtorScoreImplementor>();
+        var result = sut.RootScope.Locator.Resolve<SameCtorScoreImplementor>();
 
         using ( new AssertionScope() )
         {
@@ -1640,13 +1640,13 @@ public class DependencyContainerTests : DependencyTestsBase
 
         var sut = builder.Build();
 
-        var result = sut.ActiveScope.Locator.Resolve<IFoo>();
-        _ = sut.ActiveScope.Locator.Resolve<IFoo>();
+        var result = sut.RootScope.Locator.Resolve<IFoo>();
+        _ = sut.RootScope.Locator.Resolve<IFoo>();
 
         using ( new AssertionScope() )
         {
             callback.Verify().CallCount.Should().Be( 1 );
-            callback.Verify().CallAt( 0 ).Arguments.Should().BeSequentiallyEqualTo( result, typeof( IFoo ), sut.ActiveScope );
+            callback.Verify().CallAt( 0 ).Arguments.Should().BeSequentiallyEqualTo( result, typeof( IFoo ), sut.RootScope );
         }
     }
 
@@ -1663,13 +1663,13 @@ public class DependencyContainerTests : DependencyTestsBase
 
         var sut = builder.Build();
 
-        var result = sut.ActiveScope.Locator.Resolve<IFoo>();
-        _ = sut.ActiveScope.Locator.Resolve<IFoo>();
+        var result = sut.RootScope.Locator.Resolve<IFoo>();
+        _ = sut.RootScope.Locator.Resolve<IFoo>();
 
         using ( new AssertionScope() )
         {
             callback.Verify().CallCount.Should().Be( 1 );
-            callback.Verify().CallAt( 0 ).Arguments.Should().BeSequentiallyEqualTo( result, typeof( IFoo ), sut.ActiveScope );
+            callback.Verify().CallAt( 0 ).Arguments.Should().BeSequentiallyEqualTo( result, typeof( IFoo ), sut.RootScope );
         }
     }
 
@@ -1687,13 +1687,13 @@ public class DependencyContainerTests : DependencyTestsBase
 
         var sut = builder.Build();
 
-        var result = sut.ActiveScope.Locator.Resolve<IWithText>();
-        _ = sut.ActiveScope.Locator.Resolve<IWithText>();
+        var result = sut.RootScope.Locator.Resolve<IWithText>();
+        _ = sut.RootScope.Locator.Resolve<IWithText>();
 
         using ( new AssertionScope() )
         {
             callback.Verify().CallCount.Should().Be( 1 );
-            callback.Verify().CallAt( 0 ).Arguments.Should().BeSequentiallyEqualTo( result, typeof( IWithText ), sut.ActiveScope );
+            callback.Verify().CallAt( 0 ).Arguments.Should().BeSequentiallyEqualTo( result, typeof( IWithText ), sut.RootScope );
         }
     }
 
@@ -1711,8 +1711,8 @@ public class DependencyContainerTests : DependencyTestsBase
 
         var sut = builder.Build();
 
-        _ = sut.ActiveScope.Locator.Resolve<IEnumerable<IFoo>>();
-        _ = sut.ActiveScope.Locator.Resolve<IEnumerable<IFoo>>();
+        _ = sut.RootScope.Locator.Resolve<IEnumerable<IFoo>>();
+        _ = sut.RootScope.Locator.Resolve<IEnumerable<IFoo>>();
 
         using ( new AssertionScope() )
         {
@@ -1721,12 +1721,12 @@ public class DependencyContainerTests : DependencyTestsBase
             onResolvingCallback.Verify()
                 .CallAt( 0 )
                 .Arguments.Should()
-                .BeSequentiallyEqualTo( typeof( IEnumerable<IFoo> ), sut.ActiveScope );
+                .BeSequentiallyEqualTo( typeof( IEnumerable<IFoo> ), sut.RootScope );
 
             onResolvingCallback.Verify()
                 .CallAt( 1 )
                 .Arguments.Should()
-                .BeSequentiallyEqualTo( typeof( IEnumerable<IFoo> ), sut.ActiveScope );
+                .BeSequentiallyEqualTo( typeof( IEnumerable<IFoo> ), sut.RootScope );
         }
     }
 
@@ -1734,7 +1734,7 @@ public class DependencyContainerTests : DependencyTestsBase
     public void ResolvingUnregisteredRangeDependency_ShouldReturnEmptyCollection_WhenDoingItForTheFirstTime()
     {
         var sut = new DependencyContainerBuilder().Build();
-        var result = sut.ActiveScope.Locator.Resolve<IEnumerable<IFoo>>();
+        var result = sut.RootScope.Locator.Resolve<IEnumerable<IFoo>>();
         result.Should().BeEmpty();
     }
 
@@ -1742,9 +1742,9 @@ public class DependencyContainerTests : DependencyTestsBase
     public void ResolvingUnregisteredRangeDependency_ShouldReturnEmptyCollection_WhenDoingItForTheSecondTime()
     {
         var sut = new DependencyContainerBuilder().Build();
-        var first = sut.ActiveScope.Locator.Resolve<IEnumerable<IFoo>>();
+        var first = sut.RootScope.Locator.Resolve<IEnumerable<IFoo>>();
 
-        var result = sut.ActiveScope.Locator.Resolve<IEnumerable<IFoo>>();
+        var result = sut.RootScope.Locator.Resolve<IEnumerable<IFoo>>();
 
         result.Should().BeSameAs( first );
     }
@@ -1756,7 +1756,7 @@ public class DependencyContainerTests : DependencyTestsBase
         builder.Add<RangeFoo>();
         var sut = builder.Build();
 
-        var result = sut.ActiveScope.Locator.Resolve<RangeFoo>();
+        var result = sut.RootScope.Locator.Resolve<RangeFoo>();
 
         result.Texts.Should().BeEmpty();
     }
@@ -1769,7 +1769,7 @@ public class DependencyContainerTests : DependencyTestsBase
         builder.Add<RangeFoo>();
         var sut = builder.Build();
 
-        var result = sut.ActiveScope.Locator.Resolve<RangeFoo>();
+        var result = sut.RootScope.Locator.Resolve<RangeFoo>();
 
         result.Texts.Should().BeEmpty();
     }
@@ -1781,7 +1781,7 @@ public class DependencyContainerTests : DependencyTestsBase
         builder.Add<RangeBar>();
         var sut = builder.Build();
 
-        var result = sut.ActiveScope.Locator.Resolve<RangeBar>();
+        var result = sut.RootScope.Locator.Resolve<RangeBar>();
 
         result.Texts.Should().BeEmpty();
     }
@@ -1793,7 +1793,7 @@ public class DependencyContainerTests : DependencyTestsBase
         builder.GetDependencyRange<IFoo>();
         var sut = builder.Build();
 
-        var result = sut.ActiveScope.Locator.Resolve<IEnumerable<IFoo>>();
+        var result = sut.RootScope.Locator.Resolve<IEnumerable<IFoo>>();
 
         result.Should().BeEmpty();
     }
@@ -1807,7 +1807,7 @@ public class DependencyContainerTests : DependencyTestsBase
         builder.Add<IFoo>().IncludeInRange( false ).FromType<Implementor>();
         var sut = builder.Build();
 
-        var result = sut.ActiveScope.Locator.Resolve<IEnumerable<IFoo>>();
+        var result = sut.RootScope.Locator.Resolve<IEnumerable<IFoo>>();
 
         result.Should().BeEmpty();
     }
@@ -1821,7 +1821,7 @@ public class DependencyContainerTests : DependencyTestsBase
         builder.Add<string>().FromFactory( _ => "qux" );
         var sut = builder.Build();
 
-        var result = sut.ActiveScope.Locator.Resolve<IEnumerable<string>>();
+        var result = sut.RootScope.Locator.Resolve<IEnumerable<string>>();
 
         result.Should().BeSequentiallyEqualTo( "foo", "bar", "qux" );
     }
@@ -1835,7 +1835,7 @@ public class DependencyContainerTests : DependencyTestsBase
         builder.Add<int?>().FromFactory( _ => ( int? )3 );
         var sut = builder.Build();
 
-        var result = sut.ActiveScope.Locator.Resolve<IEnumerable<int?>>();
+        var result = sut.RootScope.Locator.Resolve<IEnumerable<int?>>();
 
         result.Should().BeSequentiallyEqualTo( 1, 2, 3 );
     }
@@ -1849,7 +1849,7 @@ public class DependencyContainerTests : DependencyTestsBase
         builder.Add<int>().FromFactory( _ => 3 );
         var sut = builder.Build();
 
-        var result = sut.ActiveScope.Locator.Resolve<IEnumerable<int>>();
+        var result = sut.RootScope.Locator.Resolve<IEnumerable<int>>();
 
         result.Should().BeSequentiallyEqualTo( 1, 2, 3 );
     }
@@ -1863,7 +1863,7 @@ public class DependencyContainerTests : DependencyTestsBase
         builder.Add<string>().FromFactory( _ => "qux" );
         var sut = builder.Build();
 
-        var result = sut.ActiveScope.Locator.Resolve<string>();
+        var result = sut.RootScope.Locator.Resolve<string>();
 
         result.Should().Be( "qux" );
     }
@@ -1877,7 +1877,7 @@ public class DependencyContainerTests : DependencyTestsBase
         builder.Add<IWithText>().IncludeInRange( false ).FromType<RangeDecorator>();
         var sut = builder.Build();
 
-        var result = sut.ActiveScope.Locator.Resolve<IWithText>();
+        var result = sut.RootScope.Locator.Resolve<IWithText>();
 
         result.Text.Should().Be( "foo|bar" );
     }
@@ -1891,7 +1891,7 @@ public class DependencyContainerTests : DependencyTestsBase
         builder.Add<string>().FromFactory( _ => "qux" );
         var sut = builder.Build();
 
-        var result = sut.ActiveScope.Locator.Resolve<IEnumerable<string>>();
+        var result = sut.RootScope.Locator.Resolve<IEnumerable<string>>();
 
         result.Should().BeSequentiallyEqualTo( "bar", "qux" );
     }
@@ -1905,7 +1905,7 @@ public class DependencyContainerTests : DependencyTestsBase
         builder.Add<string>().FromFactory( _ => "qux" );
         var sut = builder.Build();
 
-        var result = sut.ActiveScope.Locator.Resolve<IEnumerable<string>>();
+        var result = sut.RootScope.Locator.Resolve<IEnumerable<string>>();
 
         result.Should().BeSequentiallyEqualTo( "foo", "qux" );
     }
@@ -1920,7 +1920,7 @@ public class DependencyContainerTests : DependencyTestsBase
         builder.Add<IEnumerable<string>>().FromFactory( _ => new[] { "lorem", "ipsum" } );
         var sut = builder.Build();
 
-        var result = sut.ActiveScope.Locator.Resolve<IEnumerable<string>>();
+        var result = sut.RootScope.Locator.Resolve<IEnumerable<string>>();
 
         result.Should().BeSequentiallyEqualTo( "lorem", "ipsum" );
     }
@@ -1934,7 +1934,7 @@ public class DependencyContainerTests : DependencyTestsBase
         builder.Add<string>().FromFactory( _ => "qux" );
         var sut = builder.Build();
 
-        var result = sut.ActiveScope.Locator.Resolve<IEnumerable<IEnumerable<string>>>();
+        var result = sut.RootScope.Locator.Resolve<IEnumerable<IEnumerable<string>>>();
 
         result.Should().BeEmpty();
     }
@@ -1947,7 +1947,7 @@ public class DependencyContainerTests : DependencyTestsBase
         builder.Add<IEnumerable<string>>().FromFactory( _ => new[] { "qux", "baz" } );
         var sut = builder.Build();
 
-        var result = sut.ActiveScope.Locator.Resolve<IEnumerable<IEnumerable<string>>>();
+        var result = sut.RootScope.Locator.Resolve<IEnumerable<IEnumerable<string>>>();
 
         result.SelectMany( t => t ).Should().BeSequentiallyEqualTo( "foo", "bar", "qux", "baz" );
     }
@@ -1962,14 +1962,58 @@ public class DependencyContainerTests : DependencyTestsBase
         builder.GetKeyedLocator( 1 ).Add<string>().FromFactory( _ => "baz" );
         var sut = builder.Build();
 
-        var result = sut.ActiveScope.Locator.Resolve<IEnumerable<string>>();
-        var keyedResult = sut.ActiveScope.GetKeyedLocator( 1 ).Resolve<IEnumerable<string>>();
+        var result = sut.RootScope.Locator.Resolve<IEnumerable<string>>();
+        var keyedResult = sut.RootScope.GetKeyedLocator( 1 ).Resolve<IEnumerable<string>>();
 
         using ( new AssertionScope() )
         {
             result.Should().BeSequentiallyEqualTo( "foo", "bar" );
             keyedResult.Should().BeSequentiallyEqualTo( "qux", "baz" );
         }
+    }
+
+    [Fact]
+    public void TryGetScope_ShouldReturnCorrectScope_WhenNameExists()
+    {
+        var sut = new DependencyContainerBuilder().Build();
+        var scope = sut.RootScope.BeginScope( "foo" );
+
+        var result = sut.TryGetScope( "foo" );
+
+        result.Should().BeSameAs( scope );
+    }
+
+    [Fact]
+    public void TryGetScope_ShouldReturnNull_WhenNameDoesNotExist()
+    {
+        var sut = new DependencyContainerBuilder().Build();
+        _ = sut.RootScope.BeginScope( "foo" );
+
+        var result = sut.TryGetScope( "bar" );
+
+        result.Should().BeNull();
+    }
+
+    [Fact]
+    public void GetScope_ShouldReturnCorrectScope_WhenNameExists()
+    {
+        var sut = new DependencyContainerBuilder().Build();
+        var scope = sut.RootScope.BeginScope( "foo" );
+
+        var result = sut.GetScope( "foo" );
+
+        result.Should().BeSameAs( scope );
+    }
+
+    [Fact]
+    public void GetScope_ShouldThrowDependencyScopeNotFoundException_WhenNameDoesNotExist()
+    {
+        var sut = new DependencyContainerBuilder().Build();
+        _ = sut.RootScope.BeginScope( "foo" );
+
+        var action = Lambda.Of( () => sut.GetScope( "bar" ) );
+
+        action.Should().ThrowExactly<DependencyScopeNotFoundException>().AndMatch( e => e.ScopeName == "bar" );
     }
 
     [Fact]
@@ -2005,30 +2049,6 @@ public class DependencyContainerTests : DependencyTestsBase
     }
 
     [Fact]
-    public void ActiveScope_ShouldBeRootScope_WhenChildScopeForCurrentThreadDoesNotExist()
-    {
-        var builder = new DependencyContainerBuilder();
-        var sut = builder.Build();
-        var expected = sut.RootScope;
-
-        var result = sut.ActiveScope;
-
-        result.Should().BeSameAs( expected );
-    }
-
-    [Fact]
-    public void ActiveScope_ShouldBeChildScopeForCurrentThread_WhenChildScopeForCurrentThreadExists()
-    {
-        var builder = new DependencyContainerBuilder();
-        var sut = builder.Build();
-        var expected = sut.RootScope.BeginScope();
-
-        var result = sut.ActiveScope;
-
-        result.Should().BeSameAs( expected );
-    }
-
-    [Fact]
     public void DependencyLocator_ResolvableTypes_ShouldReturnAllResolvableTypesWithinThatLocator()
     {
         var builder = new DependencyContainerBuilder();
@@ -2038,7 +2058,7 @@ public class DependencyContainerTests : DependencyTestsBase
         builder.GetKeyedLocator( 1 ).Add<IWithText>().FromFactory( _ => new ExplicitCtorImplementor( string.Empty ) );
         var container = builder.Build();
 
-        var sut = container.ActiveScope.Locator;
+        var sut = container.RootScope.Locator;
 
         var result = sut.ResolvableTypes;
 
@@ -2074,7 +2094,7 @@ public class DependencyContainerTests : DependencyTestsBase
 
         var container = builder.Build();
 
-        var sut = container.ActiveScope.Locator;
+        var sut = container.RootScope.Locator;
 
         var result = sut.TryGetLifetime( type );
 

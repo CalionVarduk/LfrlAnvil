@@ -23,27 +23,10 @@ internal static class Resources
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static string ScopeCannotBeginNewScopeForCurrentThread(IDependencyScope scope, IDependencyScope expected, int threadId)
-    {
-        var scopeText = GetScopeString( scope, capitalize: true );
-        var expectedText = GetScopeString( expected, capitalize: false );
-        return $"{scopeText} cannot begin new scope for thread {threadId}, expected {expectedText}.";
-    }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static string NamedScopeAlreadyExists(IDependencyScope parentScope, string name)
     {
         var scopeText = GetScopeString( parentScope, capitalize: false );
         return $"Could not begin a named scope from {scopeText} because scope with name '{name}' already exists.";
-    }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static string CannotDisposeScopeFromThisThread(IDependencyScope scope, int actualThreadId)
-    {
-        var scopeText = GetScopeString( scope, capitalize: false );
-        return $"Child {scopeText} can only be disposed by a thread that created it (current thread: {actualThreadId}).";
     }
 
     [Pure]
@@ -67,6 +50,13 @@ internal static class Resources
     internal static string MissingDependency(Type type)
     {
         return $"Dependency of type '{type.GetDebugString()}' is missing.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal static string MissingDependencyScope(string scopeName)
+    {
+        return $"Scope with name '{scopeName}' was not found.";
     }
 
     [Pure]
@@ -355,8 +345,8 @@ internal static class Resources
     private static string GetScopeString(IDependencyScope scope, bool capitalize)
     {
         if ( capitalize )
-            return scope.IsRoot ? "Scope [root]" : $"Scope [level: {scope.Level}, thread: {scope.ThreadId}]";
+            return scope.IsRoot ? "Scope [root]" : $"Scope [level: {scope.Level}, thread: {scope.OriginalThreadId}]";
 
-        return scope.IsRoot ? "scope [root]" : $"scope [level: {scope.Level}, thread: {scope.ThreadId}]";
+        return scope.IsRoot ? "scope [root]" : $"scope [level: {scope.Level}, thread: {scope.OriginalThreadId}]";
     }
 }

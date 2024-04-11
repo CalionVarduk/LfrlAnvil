@@ -1,31 +1,26 @@
 # TODO
-|       Project       |                  Title                   |                          Details                          |                Requirements                 |
-|:-------------------:|:----------------------------------------:|:---------------------------------------------------------:|:-------------------------------------------:|
-|   Dependencies.*    |          Multi-threaded scopes           |        [link](#dependencies-multi-threaded-scopes)        |                      -                      |
-|          -          |           Reactive.Scheduling            |                [link](#reactivescheduling)                | [link](#dependencies-multi-threaded-scopes) |
-|    Dependencies     |            Reader/Writer Lock            |          [link](#dependencies-readerwriter-lock)          |                      -                      |
-|   Dependencies.*    |         Dependencies.AspNetCore          |             [link](#dependencies-aspnetcore)              |                      -                      |
-|        Sql.*        |          Positional parameters           |          [link](#sqlcore-positional-parameters)           |                      -                      |
-|          -          |                 Terminal                 |                     [link](#terminal)                     |                      -                      |
-|          -          |               Diagnostics                |                   [link](#diagnostics)                    |                      -                      |
-| Computable.Automata |         Add Context-free grammar         |                             -                             |                      -                      |
-|    Computable.*     |           Math/Physics structs           |          [link](#computable-mathphysics-structs)          |                      -                      |
-|        Sql.*        |        Add Microsoft SQL support         |                             -                             |                      -                      |
-|     Collections     |               Add SkipList               |                             -                             |                      -                      |
-|   Reactive.State    |     Async validator & change tracker     |  [link](#reactivestate-async-validator--change-tracker)   |                      -                      |
-|        Sql.*        |             DbBatch support              |             [link](#sqlcore-dbbatch-support)              |                      -                      |
-|      Sql.Core       |              Add JSON nodes              |              [link](#sqlcore-add-json-nodes)              |                      -                      |
-|    Dependencies     |         Generic dependency types         |      [link](#dependencies-generic-dependency-types)       |                      -                      |
-|      Sql.Core       | Add Visitor for node CLR type extraction | [link](#sqlcore-add-visitor-for-node-clr-type-extraction) |                      -                      |
+|       Project       |                  Title                   |                          Details                          | Requirements |
+|:-------------------:|:----------------------------------------:|:---------------------------------------------------------:|:------------:|
+|    Dependencies     |            Reader/Writer Lock            |          [link](#dependencies-readerwriter-lock)          |      -       |
+|          -          |           Reactive.Scheduling            |                [link](#reactivescheduling)                |      -       |
+|   Dependencies.*    |         Dependencies.AspNetCore          |             [link](#dependencies-aspnetcore)              |      -       |
+|        Sql.*        |          Positional parameters           |          [link](#sqlcore-positional-parameters)           |      -       |
+|          -          |                 Terminal                 |                     [link](#terminal)                     |      -       |
+|          -          |               Diagnostics                |                   [link](#diagnostics)                    |      -       |
+| Computable.Automata |         Add Context-free grammar         |                             -                             |      -       |
+|    Computable.*     |           Math/Physics structs           |          [link](#computable-mathphysics-structs)          |      -       |
+|        Sql.*        |         Add support for triggers         |                 [link](#sqlcore-triggers)                 |      -       |
+|        Sql.*        |        Add Microsoft SQL support         |                             -                             |      -       |
+|     Collections     |               Add SkipList               |                             -                             |      -       |
+|   Reactive.State    |     Async validator & change tracker     |  [link](#reactivestate-async-validator--change-tracker)   |      -       |
+|        Sql.*        |             DbBatch support              |             [link](#sqlcore-dbbatch-support)              |      -       |
+|      Sql.Core       |              Add JSON nodes              |              [link](#sqlcore-add-json-nodes)              |      -       |
+|    Dependencies     |         Generic dependency types         |      [link](#dependencies-generic-dependency-types)       |      -       |
 
 ### Scribbles:
-- IO: directory scanning?
-  - a generic recursive traversal of file system tree
-  - that can spew out any type of result
-  - can limit depth etc.
-  - options could include a simple break traversal predicate
-  - & file result selector & optional file result propagation strategy?
-  - take a look at DirectoryLookup solution
+Sql:
+- source generators for queries/statements?
+- for parameter binding too, maybe?
 
 
 ### Reactive.Scheduling
@@ -56,20 +51,10 @@ project idea:
 - benchmark itself can have a 'title' property, that describes it and it can have a RunFiltered method + base IBenchmark interface
 - Micro benchmark may be split into a separate step, if done at all, focus on extracting things from Core.Diagnostics
 
-### Dependencies: Multi-threaded scopes
-- scopes & their attachment to thread may be an issue
-- when dealing with async code that after await doesn't go back to the original context (e.g. default aspnetcore)
-- and then a child scope spawn attempt is made, now all of a sudden from a parent scope attached to another thread
-- it should always be possible to create a child scope
-- parent scopes should be able to support multiple child scopes, as an implicit linked list
-- ^ child scopes will have a pointer to the 'next sibling' scope ('first' node is the last created child scope?)
-- ^ this shouldn't require a doubly linked list
-- parent scope disposal cleans up all child scopes
-- the only thing to 'work out' is attachment of created scope as the active thread scope
-- ^ this may also have to be a linked list... but now between parent-child rather than siblings
-
 ### Dependencies: Reader/Writer Lock
 - instead of 'lock', there should be a lot more reading (resolving dependencies) then writing (creating scopes)
+- this may be tricky for singleton, scoped singleton or scoped dependencies
+  - since their creation & caching needs to be thread-safe & that's a write operation
 
 ### Dependencies: Generic dependency types
 - add support for open generic constructable dependency types
@@ -94,6 +79,21 @@ ideas for other LfrlAnvil.Computable projects:
 - extract VariableValidator & VariableChangeTracker(?) to separate interfaces
 - this could potentially allow for more flexibility & for easier async validation?
 - or add a separate IAsyncVariable stack, since CancellationToken should be supported
+
+### Sql.Core: Triggers
+- add support for basic(?) triggers
+- they would accept a batch node as their body
+- body needs to be scanned for referenced db objects & proper references need to be registered
+- there would be no support for branching statements or local variables
+  - this could be worked around with raw statement nodes, but that's unsafe
+- limitation is mostly due to sqlite, that doesn't support branching
+  - however, they can have a condition, so maybe that's the way to do it?
+  - do other sql providers support conditional triggers?
+    - I guess a simple IF could be added in their case
+- sqlite has another limitation: CTEs inside triggers are not supported
+  - but that can't be helped
+- only FOR EACH ROW triggers would be supported, with BEFORE/AFTER + INSERT/UPDATE/DELETE
+- triggers could be registered as table constraints
 
 ### Sql.Core: Add JSON nodes
 Add nodes for JSON column manipulation (read value, set value etc.)

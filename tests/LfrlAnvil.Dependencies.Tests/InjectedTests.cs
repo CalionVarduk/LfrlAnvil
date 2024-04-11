@@ -1,4 +1,4 @@
-﻿namespace LfrlAnvil.Dependencies.Tests.InjectedTests;
+﻿namespace LfrlAnvil.Dependencies.Tests;
 
 public class InjectedTests : TestsBase
 {

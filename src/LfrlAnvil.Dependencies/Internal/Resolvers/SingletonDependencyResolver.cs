@@ -31,7 +31,7 @@ internal sealed class SingletonDependencyResolver : FactoryDependencyResolver
 
     internal override DependencyLifetime Lifetime => DependencyLifetime.Singleton;
 
-    protected override object CreateInternal(DependencyScope scope)
+    protected override object CreateCore(DependencyScope scope)
     {
         if ( _instance is not null )
             return _instance;

@@ -6,12 +6,10 @@ namespace LfrlAnvil.Dependencies;
 public interface IDependencyScope
 {
     [MemberNotNullWhen( false, nameof( ParentScope ) )]
-    [MemberNotNullWhen( false, nameof( ThreadId ) )]
     bool IsRoot { get; }
 
     string? Name { get; }
-    int? ThreadId { get; }
-    bool IsActive { get; }
+    int OriginalThreadId { get; }
     int Level { get; }
     bool IsDisposed { get; }
     IDependencyContainer Container { get; }
@@ -26,7 +24,5 @@ public interface IDependencyScope
     IChildDependencyScope BeginScope(string? name = null);
 
     [Pure]
-    IDependencyScope? UseScope(string name);
-
-    bool EndScope(string name);
+    IDependencyScope[] GetChildren();
 }

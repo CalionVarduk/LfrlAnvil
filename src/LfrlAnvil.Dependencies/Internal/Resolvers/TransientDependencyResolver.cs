@@ -23,7 +23,7 @@ internal sealed class TransientDependencyResolver : FactoryDependencyResolver
 
     internal override DependencyLifetime Lifetime => DependencyLifetime.Transient;
 
-    protected override object CreateInternal(DependencyScope scope)
+    protected override object CreateCore(DependencyScope scope)
     {
         Assume.IsNotNull( Factory );
         var result = Factory( scope );

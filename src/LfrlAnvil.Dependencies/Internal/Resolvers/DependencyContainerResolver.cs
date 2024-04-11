@@ -10,7 +10,7 @@ internal sealed class DependencyContainerResolver : DependencyResolver
     internal override DependencyLifetime Lifetime => DependencyLifetime.Singleton;
 
     [Pure]
-    protected override object CreateInternal(DependencyScope scope)
+    protected override object CreateCore(DependencyScope scope)
     {
         return scope.InternalContainer;
     }

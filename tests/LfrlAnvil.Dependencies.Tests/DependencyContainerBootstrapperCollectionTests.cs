@@ -2,7 +2,7 @@
 using LfrlAnvil.Functional;
 using LfrlAnvil.TestExtensions.FluentAssertions;
 
-namespace LfrlAnvil.Dependencies.Tests.DependencyContainerBootstrappingTests;
+namespace LfrlAnvil.Dependencies.Tests;
 
 public class DependencyContainerBootstrapperCollectionTests : TestsBase
 {

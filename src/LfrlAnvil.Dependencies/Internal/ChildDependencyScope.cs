@@ -4,19 +4,22 @@ namespace LfrlAnvil.Dependencies.Internal;
 
 internal sealed class ChildDependencyScope : DependencyScope, IChildDependencyScope
 {
-    internal ChildDependencyScope(DependencyContainer container, DependencyScope parentScope, int threadId, string? name)
-        : base( container, parentScope, threadId, name )
+    internal ChildDependencyScope(DependencyContainer container, DependencyScope parentScope, string? name)
+        : base( container, parentScope, name )
     {
-        Child = null;
+        PrevSibling = null;
+        NextSibling = null;
+        parentScope.AddChild( this );
     }
 
-    internal ChildDependencyScope? Child { get; set; }
+    internal ChildDependencyScope? PrevSibling { get; set; }
+    internal ChildDependencyScope? NextSibling { get; set; }
 
     [Pure]
     public override string ToString()
     {
         return Name is null
-            ? $"{nameof( ChildDependencyScope )} [{nameof( Level )}: {Level}, {nameof( ThreadId )}: {ThreadId}]"
-            : $"{nameof( ChildDependencyScope )} [{nameof( Name )}: '{Name}', {nameof( Level )}: {Level}, {nameof( ThreadId )}: {ThreadId}]";
+            ? $"{nameof( ChildDependencyScope )} [{nameof( Level )}: {Level}, {nameof( OriginalThreadId )}: {OriginalThreadId}]"
+            : $"{nameof( ChildDependencyScope )} [{nameof( Name )}: '{Name}', {nameof( Level )}: {Level}, {nameof( OriginalThreadId )}: {OriginalThreadId}]";
     }
 }

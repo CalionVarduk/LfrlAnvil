@@ -26,14 +26,14 @@ internal sealed class DependencyImplementorBuilder : IDependencyImplementorBuild
 
     public IDependencyImplementorBuilder FromConstructor(Action<IDependencyConstructorInvocationOptions>? configuration = null)
     {
-        return FromConstructorInternal( null, configuration );
+        return FromConstructorCore( null, configuration );
     }
 
     public IDependencyImplementorBuilder FromConstructor(
         ConstructorInfo info,
         Action<IDependencyConstructorInvocationOptions>? configuration = null)
     {
-        return FromConstructorInternal( info, configuration );
+        return FromConstructorCore( info, configuration );
     }
 
     public IDependencyImplementorBuilder FromType(Type type, Action<IDependencyConstructorInvocationOptions>? configuration = null)
@@ -63,7 +63,7 @@ internal sealed class DependencyImplementorBuilder : IDependencyImplementorBuild
         return this;
     }
 
-    private DependencyImplementorBuilder FromConstructorInternal(
+    private DependencyImplementorBuilder FromConstructorCore(
         ConstructorInfo? info,
         Action<IDependencyConstructorInvocationOptions>? configuration)
     {

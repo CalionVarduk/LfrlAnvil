@@ -1,7 +1,14 @@
-﻿namespace LfrlAnvil.Dependencies;
+﻿using System.Diagnostics.Contracts;
+
+namespace LfrlAnvil.Dependencies;
 
 public interface IDependencyContainer
 {
     IDependencyScope RootScope { get; }
-    IDependencyScope ActiveScope { get; }
+
+    [Pure]
+    IDependencyScope? TryGetScope(string name);
+
+    [Pure]
+    IDependencyScope GetScope(string name);
 }

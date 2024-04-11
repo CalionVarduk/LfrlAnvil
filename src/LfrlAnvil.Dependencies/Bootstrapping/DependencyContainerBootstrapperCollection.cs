@@ -23,7 +23,7 @@ public sealed class DependencyContainerBootstrapperCollection
         return this;
     }
 
-    protected override void BootstrapInternal(DependencyContainerBuilder builder)
+    protected override void BootstrapCore(DependencyContainerBuilder builder)
     {
         foreach ( var bootstrapper in _inner )
             bootstrapper.Bootstrap( builder );

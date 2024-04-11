@@ -37,7 +37,7 @@ internal abstract class DependencyResolver
 
         try
         {
-            return CreateInternal( scope );
+            return CreateCore( scope );
         }
         catch ( CircularDependencyReferenceException exc )
         {
@@ -49,7 +49,7 @@ internal abstract class DependencyResolver
         }
     }
 
-    protected abstract object CreateInternal(DependencyScope scope);
+    protected abstract object CreateCore(DependencyScope scope);
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     protected void SetupDisposalStrategy(DependencyScope scope, object instance)

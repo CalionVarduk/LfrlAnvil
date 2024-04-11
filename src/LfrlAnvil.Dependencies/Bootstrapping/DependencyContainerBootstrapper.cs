@@ -13,9 +13,9 @@ public abstract class DependencyContainerBootstrapper : IDependencyContainerBoot
         if ( Interlocked.Exchange( ref _state, 1 ) == 1 )
             throw new InvalidOperationException( Resources.BootstrapperInvokedBeforeItCouldFinish );
 
-        BootstrapInternal( builder );
+        BootstrapCore( builder );
         Interlocked.Decrement( ref _state );
     }
 
-    protected abstract void BootstrapInternal(DependencyContainerBuilder builder);
+    protected abstract void BootstrapCore(DependencyContainerBuilder builder);
 }

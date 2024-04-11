@@ -23,7 +23,7 @@ internal sealed class ScopedSingletonDependencyResolver : FactoryDependencyResol
 
     internal override DependencyLifetime Lifetime => DependencyLifetime.ScopedSingleton;
 
-    protected override object CreateInternal(DependencyScope scope)
+    protected override object CreateCore(DependencyScope scope)
     {
         if ( scope.ScopedInstancesByResolverId.TryGetValue( Id, out var result ) )
             return result;

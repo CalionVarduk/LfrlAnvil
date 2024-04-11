@@ -8,7 +8,7 @@ using LfrlAnvil.Extensions;
 using LfrlAnvil.Functional;
 using LfrlAnvil.TestExtensions.FluentAssertions;
 
-namespace LfrlAnvil.Dependencies.Tests.DependencyContainerBuilderTests;
+namespace LfrlAnvil.Dependencies.Tests;
 
 public class DependencyContainerBuilderTests : DependencyTestsBase
 {
