@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
-using System.Threading;
+using LfrlAnvil.Async;
 using LfrlAnvil.Reactive.Exceptions;
 using LfrlAnvil.Reactive.Internal;
 
@@ -12,22 +12,22 @@ public abstract class EventSource<TEvent> : IEventSource<TEvent>
 {
     private readonly List<EventSubscriber<TEvent>> _subscribers;
     private SubscriberPool _subscriberPool;
-    private volatile int _state;
+    private InterlockedBoolean _isDisposed;
 
     protected EventSource()
     {
-        _state = 0;
+        _isDisposed = new InterlockedBoolean( false );
         _subscribers = new List<EventSubscriber<TEvent>>();
         _subscriberPool = SubscriberPool.Create();
     }
 
-    public bool IsDisposed => _state == 1;
+    public bool IsDisposed => _isDisposed.Value;
     public IReadOnlyCollection<IEventSubscriber> Subscribers => _subscribers;
     public bool HasSubscribers => _subscribers.Count > 0;
 
     public void Dispose()
     {
-        if ( Interlocked.Exchange( ref _state, 1 ) == 1 )
+        if ( ! _isDisposed.WriteTrue() )
             return;
 
         var (subscribers, count) = _subscriberPool.Rent( _subscribers );
@@ -41,8 +41,8 @@ public abstract class EventSource<TEvent> : IEventSource<TEvent>
                 if ( subscriber.IsDisposed )
                     continue;
 
-                subscriber.MarkAsDisposed();
-                subscriber.Listener.OnDispose( DisposalSource.EventSource );
+                if ( subscriber.MarkAsDisposed() )
+                    subscriber.Listener.OnDispose( DisposalSource.EventSource );
             }
         }
         finally

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
-using System.Threading;
+using LfrlAnvil.Async;
 using LfrlAnvil.Reactive.Exceptions;
 
 namespace LfrlAnvil.Reactive.Exchanges;
@@ -11,19 +11,19 @@ namespace LfrlAnvil.Reactive.Exchanges;
 public sealed class EventExchange : IMutableEventExchange
 {
     private readonly Dictionary<Type, IEventPublisher> _publishers;
-    private volatile int _state;
+    private InterlockedBoolean _isDisposed;
 
     public EventExchange()
     {
         _publishers = new Dictionary<Type, IEventPublisher>();
-        _state = 0;
+        _isDisposed = new InterlockedBoolean( false );
     }
 
-    public bool IsDisposed => _state != 0;
+    public bool IsDisposed => _isDisposed.Value;
 
     public void Dispose()
     {
-        if ( Interlocked.Exchange( ref _state, 1 ) == 1 )
+        if ( ! _isDisposed.WriteTrue() )
             return;
 
         foreach ( var (_, publisher) in _publishers )

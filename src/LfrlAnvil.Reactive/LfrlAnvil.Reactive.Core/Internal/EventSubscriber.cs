@@ -1,38 +1,41 @@
 ﻿using System;
-using System.Threading;
+using LfrlAnvil.Async;
 
 namespace LfrlAnvil.Reactive.Internal;
 
 internal sealed class EventSubscriber<TEvent> : IEventSubscriber
 {
     private Action<EventSubscriber<TEvent>>? _disposer;
-    private volatile int _state;
+    private InterlockedBoolean _isDisposed;
 
     internal EventSubscriber(Action<EventSubscriber<TEvent>> disposer, IEventListener<TEvent> listener)
     {
         _disposer = disposer;
         Listener = listener;
-        _state = 0;
+        _isDisposed = new InterlockedBoolean( false );
     }
 
     internal IEventListener<TEvent> Listener { get; set; }
-    public bool IsDisposed => _state == 1;
+    public bool IsDisposed => _isDisposed.Value;
 
     public void Dispose()
     {
-        if ( Interlocked.Exchange( ref _state, 1 ) == 1 )
+        if ( ! _isDisposed.WriteTrue() )
             return;
 
-        Assume.IsNotNull( _disposer );
-        _disposer( this );
+        _disposer?.Invoke( this );
         _disposer = null;
 
         Listener.OnDispose( DisposalSource.Subscriber );
     }
 
-    internal void MarkAsDisposed()
+    internal bool MarkAsDisposed()
     {
-        Interlocked.Exchange( ref _state, 1 );
+        if ( ! _isDisposed.WriteTrue() )
+            return false;
+
         _disposer = null;
+        return true;
+
     }
 }

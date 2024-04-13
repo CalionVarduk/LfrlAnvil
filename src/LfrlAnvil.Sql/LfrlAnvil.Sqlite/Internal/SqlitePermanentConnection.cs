@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Diagnostics.CodeAnalysis;
-using System.Threading;
+using LfrlAnvil.Async;
 using LfrlAnvil.Sqlite.Exceptions;
 using Microsoft.Data.Sqlite;
 
@@ -8,14 +8,12 @@ namespace LfrlAnvil.Sqlite.Internal;
 
 internal sealed class SqlitePermanentConnection : SqliteConnection
 {
-    private const int ActiveState = 0;
-    private const int DisposedState = 1;
-    private volatile int _state;
+    private InterlockedBoolean _isDisposed;
 
     internal SqlitePermanentConnection(string connectionString)
         : base( connectionString )
     {
-        _state = ActiveState;
+        _isDisposed = new InterlockedBoolean( false );
     }
 
     [AllowNull]
@@ -33,19 +31,15 @@ internal sealed class SqlitePermanentConnection : SqliteConnection
 
     public override void Open()
     {
-        switch ( _state )
-        {
-            case ActiveState:
-                base.Open();
-                break;
-            case DisposedState:
-                throw new InvalidOperationException( Resources.ConnectionForClosedPermanentDatabaseCannotBeReopened );
-        }
+        if ( _isDisposed.Value )
+            throw new InvalidOperationException( Resources.ConnectionForClosedPermanentDatabaseCannotBeReopened );
+
+        base.Open();
     }
 
     public override void Close()
     {
-        if ( Interlocked.Exchange( ref _state, DisposedState ) == DisposedState )
+        if ( ! _isDisposed.WriteTrue() )
         {
             base.Close();
             return;

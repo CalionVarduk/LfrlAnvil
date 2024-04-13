@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Threading;
+using LfrlAnvil.Async;
 using LfrlAnvil.Exceptions;
 
 namespace LfrlAnvil;
@@ -7,26 +7,26 @@ namespace LfrlAnvil;
 public sealed class LazyDisposable<T> : IDisposable
     where T : IDisposable
 {
-    private volatile int _hasInner;
-    private volatile int _state;
+    private InterlockedBoolean _canAssign;
+    private InterlockedBoolean _isDisposed;
 
     public LazyDisposable()
     {
         Inner = default;
-        _hasInner = 0;
-        _state = 0;
+        _canAssign = new InterlockedBoolean( true );
+        _isDisposed = new InterlockedBoolean( false );
     }
 
     public T? Inner { get; private set; }
-    public bool CanAssign => _hasInner == 0;
-    public bool IsDisposed => _state != 0;
+    public bool CanAssign => _canAssign.Value;
+    public bool IsDisposed => _isDisposed.Value;
 
     public void Dispose()
     {
-        if ( Interlocked.Exchange( ref _state, 1 ) == 1 )
+        if ( ! _isDisposed.WriteTrue() )
             return;
 
-        if ( _hasInner != 0 )
+        if ( ! _canAssign.Value )
         {
             Assume.IsNotNull( Inner );
             Inner.Dispose();
@@ -35,11 +35,11 @@ public sealed class LazyDisposable<T> : IDisposable
 
     public void Assign(T inner)
     {
-        if ( Interlocked.Exchange( ref _hasInner, 1 ) == 1 )
+        if ( ! _canAssign.WriteFalse() )
             throw new LazyDisposableAssignmentException();
 
         Inner = inner;
-        if ( _state != 0 )
+        if ( _isDisposed.Value )
             Inner.Dispose();
     }
 }
