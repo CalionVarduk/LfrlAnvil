@@ -66,6 +66,12 @@ public struct InterlockedBoolean : IEquatable<InterlockedBoolean>, IComparable<I
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public bool Write(bool value)
+    {
+        return value ? WriteTrue() : WriteFalse();
+    }
+
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public bool Toggle()
     {
         return Interlocked.Increment( ref _value ).IsOdd();

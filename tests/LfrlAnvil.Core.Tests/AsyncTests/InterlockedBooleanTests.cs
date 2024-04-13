@@ -84,6 +84,23 @@ public class InterlockedBooleanTests : TestsBase
     }
 
     [Theory]
+    [InlineData( false, true, true )]
+    [InlineData( false, false, false )]
+    [InlineData( true, false, true )]
+    [InlineData( true, true, false )]
+    public void Write_ShouldUpdateValueAndReturnTrueOnlyWhenValueWasChanged(bool value, bool newValue, bool expected)
+    {
+        var sut = new InterlockedBoolean( value );
+        var result = sut.Write( newValue );
+
+        using ( new AssertionScope() )
+        {
+            result.Should().Be( expected );
+            sut.Value.Should().Be( newValue );
+        }
+    }
+
+    [Theory]
     [InlineData( true, false )]
     [InlineData( false, true )]
     public void Toggle_ShouldNegateValueAndReturnNewValue(bool value, bool expected)
