@@ -3,31 +3,25 @@ using System.Linq.Expressions;
 
 namespace LfrlAnvil.Dependencies.Internal.Resolvers;
 
-internal sealed class TransientDependencyResolver : FactoryDependencyResolver
+internal sealed class TransientDependencyResolver : DependencyResolver, IResolverFactorySource
 {
     internal TransientDependencyResolver(
         ulong id,
         Type implementorType,
         DependencyImplementorDisposalStrategy disposalStrategy,
-        Action<Type, IDependencyScope>? onResolvingCallback,
-        Func<IDependencyScope, object> factory)
-        : base( id, implementorType, disposalStrategy, onResolvingCallback, factory ) { }
-
-    internal TransientDependencyResolver(
-        ulong id,
-        Type implementorType,
-        DependencyImplementorDisposalStrategy disposalStrategy,
-        Action<Type, IDependencyScope>? onResolvingCallback,
         Expression<Func<DependencyScope, object>> expression)
-        : base( id, implementorType, disposalStrategy, onResolvingCallback, expression ) { }
+        : base( id, implementorType, disposalStrategy )
+    {
+        Factory = expression.CreateResolverFactory( this );
+    }
 
+    public Func<DependencyScope, object> Factory { get; set; }
     internal override DependencyLifetime Lifetime => DependencyLifetime.Transient;
 
-    protected override object CreateCore(DependencyScope scope)
+    internal override object Create(DependencyScope scope, Type dependencyType)
     {
-        Assume.IsNotNull( Factory );
-        var result = Factory( scope );
-        SetupDisposalStrategy( scope, result );
+        var result = InvokeFactory( Factory, scope, dependencyType );
+        this.TryRegisterTransientDisposer( result, scope );
         return result;
     }
 }

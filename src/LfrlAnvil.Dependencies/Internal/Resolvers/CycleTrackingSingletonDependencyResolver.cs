@@ -6,17 +6,30 @@ using LfrlAnvil.Exceptions;
 
 namespace LfrlAnvil.Dependencies.Internal.Resolvers;
 
-internal sealed class SingletonDependencyResolver : DependencyResolver
+internal sealed class CycleTrackingSingletonDependencyResolver : CycleTrackingDependencyResolver
 {
     private Func<DependencyScope, object>? _factory;
     private object? _instance;
 
-    internal SingletonDependencyResolver(
+    internal CycleTrackingSingletonDependencyResolver(
         ulong id,
         Type implementorType,
         DependencyImplementorDisposalStrategy disposalStrategy,
+        Action<Type, IDependencyScope>? onResolvingCallback,
+        Func<IDependencyScope, object> factory)
+        : base( id, implementorType, disposalStrategy, onResolvingCallback )
+    {
+        _instance = null;
+        _factory = factory;
+    }
+
+    internal CycleTrackingSingletonDependencyResolver(
+        ulong id,
+        Type implementorType,
+        DependencyImplementorDisposalStrategy disposalStrategy,
+        Action<Type, IDependencyScope>? onResolvingCallback,
         Expression<Func<DependencyScope, object>> expression)
-        : base( id, implementorType, disposalStrategy )
+        : base( id, implementorType, disposalStrategy, onResolvingCallback )
     {
         _instance = null;
         _factory = scope =>
@@ -31,17 +44,28 @@ internal sealed class SingletonDependencyResolver : DependencyResolver
     internal override object Create(DependencyScope scope, Type dependencyType)
     {
         var rootScope = scope.InternalContainer.InternalRootScope;
+
+        object? cached = null;
         using ( ReadLockSlim.TryEnter( rootScope.Lock, out var entered ) )
         {
             if ( ! entered || rootScope.IsDisposed )
                 ExceptionThrower.Throw( new ObjectDisposedException( Resources.ScopeIsDisposed( rootScope ) ) );
 
             if ( _instance is not null )
-                return _instance;
+                cached = _instance;
         }
 
-        using ( var @lock = UpgradeableReadLockSlim.TryEnter( rootScope.Lock, out var entered ) )
+        if ( cached is not null )
         {
+            TryInvokeOnResolvingCallbackWithCycleTracking( dependencyType, scope );
+            return cached;
+        }
+
+        using ( TrackCycles( dependencyType ) )
+        {
+            TryInvokeOnResolvingCallback( dependencyType, scope );
+
+            using var @lock = UpgradeableReadLockSlim.TryEnter( rootScope.Lock, out var entered );
             if ( ! entered || rootScope.IsDisposed )
                 ExceptionThrower.Throw( new ObjectDisposedException( Resources.ScopeIsDisposed( rootScope ) ) );
 

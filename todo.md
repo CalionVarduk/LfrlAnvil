@@ -1,21 +1,20 @@
 # TODO
-|       Project       |                  Title                   |                          Details                          | Requirements |
-|:-------------------:|:----------------------------------------:|:---------------------------------------------------------:|:------------:|
-|    Dependencies     |            Reader/Writer Lock            |          [link](#dependencies-readerwriter-lock)          |      -       |
-|          -          |           Reactive.Scheduling            |                [link](#reactivescheduling)                |      -       |
-|   Dependencies.*    |         Dependencies.AspNetCore          |             [link](#dependencies-aspnetcore)              |      -       |
-|        Sql.*        |          Positional parameters           |          [link](#sqlcore-positional-parameters)           |      -       |
-|          -          |                 Terminal                 |                     [link](#terminal)                     |      -       |
-|          -          |               Diagnostics                |                   [link](#diagnostics)                    |      -       |
-| Computable.Automata |         Add Context-free grammar         |                             -                             |      -       |
-|    Computable.*     |           Math/Physics structs           |          [link](#computable-mathphysics-structs)          |      -       |
-|        Sql.*        |         Add support for triggers         |                 [link](#sqlcore-triggers)                 |      -       |
-|        Sql.*        |        Add Microsoft SQL support         |                             -                             |      -       |
-|     Collections     |               Add SkipList               |                             -                             |      -       |
-|   Reactive.State    |     Async validator & change tracker     |  [link](#reactivestate-async-validator--change-tracker)   |      -       |
-|        Sql.*        |             DbBatch support              |             [link](#sqlcore-dbbatch-support)              |      -       |
-|      Sql.Core       |              Add JSON nodes              |              [link](#sqlcore-add-json-nodes)              |      -       |
-|    Dependencies     |         Generic dependency types         |      [link](#dependencies-generic-dependency-types)       |      -       |
+|       Project       |              Title               |                          Details                          | Requirements |
+|:-------------------:|:--------------------------------:|:---------------------------------------------------------:|:------------:|
+|          -          |       Reactive.Scheduling        |                [link](#reactivescheduling)                |      -       |
+|   Dependencies.*    |     Dependencies.AspNetCore      |             [link](#dependencies-aspnetcore)              |      -       |
+|        Sql.*        |      Positional parameters       |          [link](#sqlcore-positional-parameters)           |      -       |
+|          -          |             Terminal             |                     [link](#terminal)                     |      -       |
+|          -          |           Diagnostics            |                   [link](#diagnostics)                    |      -       |
+| Computable.Automata |     Add Context-free grammar     |                             -                             |      -       |
+|    Computable.*     |       Math/Physics structs       |          [link](#computable-mathphysics-structs)          |      -       |
+|        Sql.*        |     Add support for triggers     |                 [link](#sqlcore-triggers)                 |      -       |
+|        Sql.*        |    Add Microsoft SQL support     |                             -                             |      -       |
+|     Collections     |           Add SkipList           |                             -                             |      -       |
+|   Reactive.State    | Async validator & change tracker |  [link](#reactivestate-async-validator--change-tracker)   |      -       |
+|        Sql.*        |         DbBatch support          |             [link](#sqlcore-dbbatch-support)              |      -       |
+|      Sql.Core       |          Add JSON nodes          |              [link](#sqlcore-add-json-nodes)              |      -       |
+|    Dependencies     |     Generic dependency types     |      [link](#dependencies-generic-dependency-types)       |      -       |
 
 ### Scribbles:
 Sql:
@@ -50,11 +49,6 @@ project idea:
 - also, macro benchmark can track zero-elapsed-time samples
 - benchmark itself can have a 'title' property, that describes it and it can have a RunFiltered method + base IBenchmark interface
 - Micro benchmark may be split into a separate step, if done at all, focus on extracting things from Core.Diagnostics
-
-### Dependencies: Reader/Writer Lock
-- instead of 'lock', there should be a lot more reading (resolving dependencies) then writing (creating scopes)
-- this may be tricky for singleton, scoped singleton or scoped dependencies
-  - since their creation & caching needs to be thread-safe & that's a write operation
 
 ### Dependencies: Generic dependency types
 - add support for open generic constructable dependency types

@@ -1,22 +1,19 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics.Contracts;
-using LfrlAnvil.Dependencies.Internal.Resolvers;
 
 namespace LfrlAnvil.Dependencies.Internal;
 
 internal class DependencyLocator : IDependencyLocator
 {
-    internal DependencyLocator(DependencyScope attachedScope, Dictionary<Type, DependencyResolver> resolvers)
+    internal DependencyLocator(DependencyScope attachedScope, DependencyResolversStore resolvers)
     {
         InternalAttachedScope = attachedScope;
         Resolvers = resolvers;
     }
 
     public IDependencyScope AttachedScope => InternalAttachedScope;
-    public Type[] ResolvableTypes => InternalAttachedScope.InternalContainer.GetResolvableTypes( Resolvers );
     internal DependencyScope InternalAttachedScope { get; }
-    internal Dictionary<Type, DependencyResolver> Resolvers { get; }
+    internal DependencyResolversStore Resolvers { get; }
 
     Type? IDependencyLocator.KeyType => null;
     object? IDependencyLocator.Key => null;
@@ -30,14 +27,20 @@ internal class DependencyLocator : IDependencyLocator
     [Pure]
     public DependencyLifetime? TryGetLifetime(Type type)
     {
-        return InternalAttachedScope.InternalContainer.TryGetLifetime( Resolvers, type );
+        return Resolvers.TryGetLifetime( type );
+    }
+
+    [Pure]
+    public Type[] GetResolvableTypes()
+    {
+        return Resolvers.GetResolvableTypes();
     }
 }
 
 internal sealed class DependencyLocator<TKey> : DependencyLocator, IDependencyLocator<TKey>
     where TKey : notnull
 {
-    internal DependencyLocator(TKey key, DependencyScope attachedScope, Dictionary<Type, DependencyResolver> resolvers)
+    internal DependencyLocator(TKey key, DependencyScope attachedScope, DependencyResolversStore resolvers)
         : base( attachedScope, resolvers )
     {
         Key = key;

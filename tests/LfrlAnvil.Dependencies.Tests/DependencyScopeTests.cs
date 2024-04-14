@@ -106,6 +106,25 @@ public class DependencyScopeTests : DependencyTestsBase
     }
 
     [Fact]
+    public void GetKeyedLocator_ShouldReturnLocatorWithCorrectKey_WhenKeyTypeIsCached()
+    {
+        var container = new DependencyContainerBuilder().Build();
+        var sut = container.RootScope;
+        _ = sut.GetKeyedLocator( 1 );
+
+        var result = sut.GetKeyedLocator( 2 );
+
+        using ( new AssertionScope() )
+        {
+            result.Key.Should().Be( 2 );
+            (( IDependencyLocator )result).Key.Should().Be( 2 );
+            result.KeyType.Should().Be( typeof( int ) );
+            result.IsKeyed.Should().BeTrue();
+            result.AttachedScope.Should().BeSameAs( sut );
+        }
+    }
+
+    [Fact]
     public void GetKeyedLocator_ShouldReturnCorrectCachedLocator_WhenCalledMoreThanOnceWithTheSameKey()
     {
         var container = new DependencyContainerBuilder().Build();
@@ -339,6 +358,7 @@ public class DependencyScopeTests : DependencyTestsBase
             grandchild1.IsDisposed.Should().BeTrue();
             grandchild2.IsDisposed.Should().BeTrue();
             grandchild3.IsDisposed.Should().BeTrue();
+            sut.GetChildren().Should().BeEmpty();
         }
     }
 
@@ -354,11 +374,35 @@ public class DependencyScopeTests : DependencyTestsBase
     }
 
     [Fact]
+    public void Dispose_ShouldDoNothing_WhenScopeIsRootAndIsAlreadyDisposed()
+    {
+        var container = new DependencyContainerBuilder().Build();
+        var sut = ( IDisposable )container.RootScope;
+        sut.Dispose();
+
+        sut.Dispose();
+
+        container.RootScope.IsDisposed.Should().BeTrue();
+    }
+
+    [Fact]
     public void Dispose_ShouldDoNothing_WhenScopeIsAlreadyDisposed()
     {
         var container = new DependencyContainerBuilder().Build();
         var sut = container.RootScope.BeginScope();
         sut.Dispose();
+
+        sut.Dispose();
+
+        sut.IsDisposed.Should().BeTrue();
+    }
+
+    [Fact]
+    public void Dispose_ShouldDoNothing_WhenParentScopeIsAlreadyDisposed()
+    {
+        var container = new DependencyContainerBuilder().Build();
+        var sut = container.RootScope.BeginScope();
+        container.Dispose();
 
         sut.Dispose();
 
@@ -514,6 +558,21 @@ public class DependencyScopeTests : DependencyTestsBase
         container.Dispose();
 
         resolved.VerifyCalls().Received( x => x.Dispose(), 1 );
+    }
+
+    [Fact]
+    public void Dispose_ThroughRootScope_ShouldDisposeOwnedSingletonDisposableDependenciesResolvedByChildScope_BasedOnImplementor()
+    {
+        var builder = new DependencyContainerBuilder();
+        builder.Add<IDisposable>().SetLifetime( DependencyLifetime.Singleton ).FromType<DisposableDependency>();
+        var container = builder.Build();
+        var sut = container.RootScope.BeginScope();
+
+        var resolved = sut.Locator.Resolve<IDisposable>();
+
+        container.Dispose();
+
+        (resolved as DisposableDependency)?.IsDisposed.Should().BeTrue();
     }
 
     [Fact]

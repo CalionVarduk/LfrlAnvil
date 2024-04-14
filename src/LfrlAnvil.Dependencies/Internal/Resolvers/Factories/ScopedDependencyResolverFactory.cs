@@ -15,12 +15,18 @@ internal sealed class ScopedDependencyResolverFactory : RegisteredDependencyReso
     {
         Assume.IsNotNull( ImplementorBuilder );
 
-        return new ScopedDependencyResolver(
-            idGenerator.Generate(),
-            ImplementorBuilder.ImplementorType,
-            ImplementorBuilder.DisposalStrategy,
-            ImplementorBuilder.OnResolvingCallback,
-            expression );
+        return ImplementorBuilder.OnResolvingCallback is null && ImplementorBuilder.Constructor?.InvocationOptions.OnCreatedCallback is null
+            ? new ScopedDependencyResolver(
+                idGenerator.Generate(),
+                ImplementorBuilder.ImplementorType,
+                ImplementorBuilder.DisposalStrategy,
+                expression )
+            : new CycleTrackingScopedDependencyResolver(
+                idGenerator.Generate(),
+                ImplementorBuilder.ImplementorType,
+                ImplementorBuilder.DisposalStrategy,
+                ImplementorBuilder.OnResolvingCallback,
+                expression );
     }
 
     protected override DependencyResolver CreateFromFactory(UlongSequenceGenerator idGenerator)
@@ -28,7 +34,7 @@ internal sealed class ScopedDependencyResolverFactory : RegisteredDependencyReso
         Assume.IsNotNull( ImplementorBuilder );
         Assume.IsNotNull( ImplementorBuilder.Factory );
 
-        return new ScopedDependencyResolver(
+        return new CycleTrackingScopedDependencyResolver(
             idGenerator.Generate(),
             ImplementorBuilder.ImplementorType,
             ImplementorBuilder.DisposalStrategy,

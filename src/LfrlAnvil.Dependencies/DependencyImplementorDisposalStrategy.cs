@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
+using LfrlAnvil.Dependencies.Internal;
 
 namespace LfrlAnvil.Dependencies;
 
@@ -42,5 +43,25 @@ public readonly struct DependencyImplementorDisposalStrategy
     public static DependencyImplementorDisposalStrategy RenounceOwnership()
     {
         return new DependencyImplementorDisposalStrategy( DependencyImplementorDisposalStrategyType.RenounceOwnership, callback: null );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    internal DependencyDisposer? TryCreateDisposer(object instance)
+    {
+        switch ( Type )
+        {
+            case DependencyImplementorDisposalStrategyType.UseDisposableInterface:
+                if ( instance is IDisposable disposable )
+                    return new DependencyDisposer( disposable, callback: null );
+
+                break;
+
+            case DependencyImplementorDisposalStrategyType.UseCallback:
+                Assume.IsNotNull( Callback );
+                return new DependencyDisposer( instance, Callback );
+        }
+
+        return null;
     }
 }

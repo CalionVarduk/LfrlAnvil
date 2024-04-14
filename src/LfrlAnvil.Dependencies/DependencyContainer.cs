@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
+using LfrlAnvil.Async;
 using LfrlAnvil.Dependencies.Exceptions;
 using LfrlAnvil.Dependencies.Internal;
 using LfrlAnvil.Dependencies.Internal.Resolvers;
@@ -13,8 +13,7 @@ namespace LfrlAnvil.Dependencies;
 
 public sealed class DependencyContainer : IDisposableDependencyContainer
 {
-    private readonly object _sync = new object();
-    private readonly Dictionary<string, ChildDependencyScope> _namedScopes;
+    private readonly NamedDependencyScopeStore _namedScopes;
     private readonly UlongSequenceGenerator _idGenerator;
 
     internal DependencyContainer(
@@ -22,36 +21,28 @@ public sealed class DependencyContainer : IDisposableDependencyContainer
         Dictionary<Type, DependencyResolver> globalResolvers,
         KeyedDependencyResolversStore keyedResolversStore)
     {
-        GlobalResolvers = globalResolvers;
+        GlobalResolvers = DependencyResolversStore.Create( globalResolvers );
         KeyedResolversStore = keyedResolversStore;
         _idGenerator = idGenerator;
-        _namedScopes = new Dictionary<string, ChildDependencyScope>();
+        _namedScopes = NamedDependencyScopeStore.Create();
         InternalRootScope = new RootDependencyScope( this );
     }
 
     public IDependencyScope RootScope => InternalRootScope;
     internal RootDependencyScope InternalRootScope { get; }
-    internal Dictionary<Type, DependencyResolver> GlobalResolvers { get; }
+    internal DependencyResolversStore GlobalResolvers { get; }
     internal KeyedDependencyResolversStore KeyedResolversStore { get; }
 
     public void Dispose()
     {
-        lock ( _sync )
-        {
-            if ( InternalRootScope.IsDisposed )
-                return;
-
+        if ( ! InternalRootScope.IsDisposed )
             DisposeRootScope();
-        }
     }
 
     [Pure]
     public IDependencyScope? TryGetScope(string name)
     {
-        lock ( _sync )
-        {
-            return _namedScopes.TryGetValue( name, out var scope ) ? scope : null;
-        }
+        return _namedScopes.TryGetScope( name );
     }
 
     [Pure]
@@ -67,147 +58,102 @@ public sealed class DependencyContainer : IDisposableDependencyContainer
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal object? TryResolveDependency(DependencyLocator locator, Type dependencyType)
     {
-        lock ( _sync )
+        DependencyResolver? resolver;
+        using ( ReadLockSlim.TryEnter( locator.Resolvers.Lock, out var entered ) )
         {
-            if ( locator.InternalAttachedScope.IsDisposed )
+            if ( ! entered || locator.InternalAttachedScope.IsDisposed )
                 ExceptionThrower.Throw( new ObjectDisposedException( Resources.ScopeIsDisposed( locator.InternalAttachedScope ) ) );
 
-            return locator.Resolvers.TryGetValue( dependencyType, out var resolver )
-                ? resolver.Create( locator.InternalAttachedScope, dependencyType )
-                : TryResolveDynamicDependency( locator.Resolvers, dependencyType );
+            resolver = locator.Resolvers.TryGetResolver( dependencyType );
         }
-    }
 
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal DependencyLocator<TKey> GetOrCreateKeyedLocator<TKey>(DependencyScope scope, TKey key)
-        where TKey : notnull
-    {
-        lock ( _sync )
-        {
-            if ( scope.IsDisposed )
-                ExceptionThrower.Throw( new ObjectDisposedException( Resources.ScopeIsDisposed( scope ) ) );
-
-            return scope.InternalLocatorStore.GetOrCreate( key );
-        }
+        return resolver is not null
+            ? resolver.Create( locator.InternalAttachedScope, dependencyType )
+            : TryResolveDynamicDependency( locator, dependencyType );
     }
 
     internal ChildDependencyScope CreateChildScope(DependencyScope parentScope, string? name)
     {
-        lock ( _sync )
+        using ( WriteLockSlim.TryEnter( parentScope.Lock, out var entered ) )
         {
-            if ( parentScope.IsDisposed )
-                throw new ObjectDisposedException( Resources.ScopeIsDisposed( parentScope ) );
+            if ( ! entered || parentScope.IsDisposed )
+                ExceptionThrower.Throw( new ObjectDisposedException( Resources.ScopeIsDisposed( parentScope ) ) );
 
-            ChildDependencyScope result;
-            if ( name is null )
-                result = new ChildDependencyScope( this, parentScope, name );
-            else
-            {
-                ref var namedScope = ref CollectionsMarshal.GetValueRefOrAddDefault( _namedScopes, name, out var exists );
-                if ( exists )
-                    throw new NamedDependencyScopeCreationException( parentScope, name );
-
-                result = new ChildDependencyScope( this, parentScope, name );
-                namedScope = result;
-            }
-
+            var result = name is null ? new ChildDependencyScope( this, parentScope ) : _namedScopes.CreateScope( parentScope, name );
+            parentScope.AddChildCore( result );
             return result;
         }
     }
 
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal void DisposeScope(DependencyScope scope)
     {
-        lock ( _sync )
-        {
-            if ( scope.IsDisposed )
-                return;
-
-            if ( ReferenceEquals( scope, InternalRootScope ) )
-                DisposeRootScope();
-            else
-                DisposeChildScope( ReinterpretCast.To<ChildDependencyScope>( scope ) );
-        }
-    }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal Type[] GetResolvableTypes(Dictionary<Type, DependencyResolver> resolvers)
-    {
-        lock ( _sync )
-        {
-            Assume.ContainsAtLeast( resolvers, 1 );
-            var result = new Type[resolvers.Count];
-            resolvers.Keys.CopyTo( result, 0 );
-            return result;
-        }
-    }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal DependencyLifetime? TryGetLifetime(Dictionary<Type, DependencyResolver> resolvers, Type dependencyType)
-    {
-        lock ( _sync )
-        {
-            return resolvers.TryGetValue( dependencyType, out var resolver ) ? resolver.Lifetime : null;
-        }
-    }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal IDependencyScope[] GetScopeChildren(DependencyScope scope)
-    {
-        lock ( _sync )
-        {
-            var node = scope.FirstChild;
-            if ( node is null )
-                return Array.Empty<IDependencyScope>();
-
-            var result = new List<IDependencyScope>();
-            do
-            {
-                result.Add( node );
-                node = node.NextSibling;
-            }
-            while ( node is not null );
-
-            return result.ToArray();
-        }
-    }
-
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private void DisposeChildScope(ChildDependencyScope scope)
-    {
-        var exceptions = DisposeChildScopeCore( scope, Chain<OwnedDependencyDisposalException>.Empty );
-
-        Assume.IsNotNull( scope.InternalParentScope );
-        scope.InternalParentScope.RemoveChild( scope );
-
-        if ( exceptions.Count > 0 )
-            ExceptionThrower.Throw( new OwnedDependenciesDisposalAggregateException( scope, exceptions ) );
+        if ( ReferenceEquals( scope, InternalRootScope ) )
+            DisposeRootScope();
+        else
+            DisposeChildScope( ReinterpretCast.To<ChildDependencyScope>( scope ) );
     }
 
     private void DisposeRootScope()
     {
-        var exceptions = DisposeChildScopeRange( InternalRootScope, Chain<OwnedDependencyDisposalException>.Empty );
-        var rootExceptions = InternalRootScope.DisposeInstances();
-        exceptions = exceptions.Extend( rootExceptions );
-        InternalRootScope.MarkAsDisposed();
+        var exceptions = Chain<OwnedDependencyDisposalException>.Empty;
+        using ( WriteLockSlim.TryEnter( InternalRootScope.Lock, out var entered ) )
+        {
+            if ( ! entered || InternalRootScope.IsDisposed )
+                return;
+
+            exceptions = DisposeChildScopeRange( InternalRootScope, exceptions );
+            var rootExceptions = InternalRootScope.FinalizeDisposal();
+            exceptions = exceptions.Extend( rootExceptions );
+            GlobalResolvers.Dispose();
+            KeyedResolversStore.Dispose();
+            _namedScopes.Dispose();
+        }
+
+        InternalRootScope.Lock.DisposeGracefully();
 
         if ( exceptions.Count > 0 )
             ExceptionThrower.Throw( new OwnedDependenciesDisposalAggregateException( InternalRootScope, exceptions ) );
+    }
+
+    private void DisposeChildScope(ChildDependencyScope scope)
+    {
+        Assume.IsNotNull( scope.InternalParentScope );
+        var exceptions = Chain<OwnedDependencyDisposalException>.Empty;
+
+        using ( WriteLockSlim.TryEnter( scope.InternalParentScope.Lock, out var entered ) )
+        {
+            if ( ! entered || scope.InternalParentScope.IsDisposed )
+                return;
+
+            using ( WriteLockSlim.TryEnter( scope.Lock, out entered ) )
+            {
+                if ( ! entered || scope.IsDisposed )
+                    return;
+
+                exceptions = DisposeChildScopeCore( scope, exceptions );
+                scope.InternalParentScope.RemoveChild( scope );
+            }
+
+            scope.Lock.DisposeGracefully();
+        }
+
+        if ( exceptions.Count > 0 )
+            ExceptionThrower.Throw( new OwnedDependenciesDisposalAggregateException( scope, exceptions ) );
     }
 
     private Chain<OwnedDependencyDisposalException> DisposeChildScopeCore(
         ChildDependencyScope scope,
         Chain<OwnedDependencyDisposalException> exceptions)
     {
+        Assume.True( scope.Lock.IsWriteLockHeld );
+
         exceptions = DisposeChildScopeRange( scope, exceptions );
-        var scopeExceptions = scope.DisposeInstances();
+        var scopeExceptions = scope.FinalizeDisposal();
         exceptions = exceptions.Extend( scopeExceptions );
-        scope.MarkAsDisposed();
 
         if ( scope.Name is not null )
-            _namedScopes.Remove( scope.Name );
+            _namedScopes.RemoveScope( scope.Name );
 
         return exceptions;
     }
@@ -216,39 +162,59 @@ public sealed class DependencyContainer : IDisposableDependencyContainer
         DependencyScope parent,
         Chain<OwnedDependencyDisposalException> exceptions)
     {
+        Assume.True( parent.Lock.IsWriteLockHeld );
+
         var child = parent.FirstChild;
         while ( child is not null )
         {
-            exceptions = DisposeChildScopeCore( child, exceptions );
-            var next = child.NextSibling;
-            child.PrevSibling = null;
-            child.NextSibling = null;
+            ChildDependencyScope? next;
+            using ( WriteLockSlim.Enter( child.Lock ) )
+            {
+                Assume.False( child.IsDisposed );
+                exceptions = DisposeChildScopeCore( child, exceptions );
+                next = child.NextSibling;
+                child.PrevSibling = null;
+                child.NextSibling = null;
+            }
+
+            child.Lock.DisposeGracefully();
             child = next;
         }
 
         return exceptions;
     }
 
-    private object? TryResolveDynamicDependency(Dictionary<Type, DependencyResolver> resolvers, Type dependencyType)
+    private object? TryResolveDynamicDependency(DependencyLocator locator, Type dependencyType)
     {
-        if ( dependencyType.IsGenericType && dependencyType.GetGenericTypeDefinition() == typeof( IEnumerable<> ) )
-        {
-            var underlyingType = dependencyType.GetGenericArguments()[0];
-            var emptyArrayMethod = ExpressionBuilder.GetClosedArrayEmptyMethod( underlyingType );
-            var emptyArray = emptyArrayMethod.Invoke( null, null );
-            Assume.IsNotNull( emptyArray );
+        if ( ! dependencyType.IsGenericType || dependencyType.GetGenericTypeDefinition() != typeof( IEnumerable<> ) )
+            return null;
 
-            var resolver = new TransientDependencyResolver(
-                id: _idGenerator.Generate(),
-                implementorType: dependencyType,
-                disposalStrategy: DependencyImplementorDisposalStrategy.RenounceOwnership(),
-                onResolvingCallback: null,
-                factory: _ => emptyArray );
+        using var @lock = UpgradeableReadLockSlim.TryEnter( locator.Resolvers.Lock, out var entered );
+        if ( ! entered || locator.InternalAttachedScope.IsDisposed )
+            ExceptionThrower.Throw( new ObjectDisposedException( Resources.ScopeIsDisposed( locator.InternalAttachedScope ) ) );
 
-            resolvers.Add( dependencyType, resolver );
-            return emptyArray;
-        }
+        var resolver = locator.Resolvers.TryGetResolver( dependencyType );
+        if ( resolver is not null )
+            return resolver;
 
-        return null;
+        var underlyingType = dependencyType.GetGenericArguments()[0];
+        var emptyArrayMethod = ExpressionBuilder.GetClosedArrayEmptyMethod( underlyingType );
+        var emptyArray = emptyArrayMethod.Invoke( null, null );
+        Assume.IsNotNull( emptyArray );
+
+        var id = GenerateResolverId();
+        resolver = new EmptyRangeResolver( id, dependencyType, emptyArray );
+        using ( @lock.Upgrade() )
+            locator.Resolvers.AddResolver( dependencyType, resolver );
+
+        return emptyArray;
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    private ulong GenerateResolverId()
+    {
+        using ( ExclusiveLock.Enter( _idGenerator ) )
+            return _idGenerator.Generate();
     }
 }

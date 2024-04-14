@@ -2,12 +2,15 @@
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
+using System.Threading;
+using LfrlAnvil.Async;
 using LfrlAnvil.Dependencies.Exceptions;
 
 namespace LfrlAnvil.Dependencies.Internal;
 
 internal class DependencyScope : IDependencyScope, IDisposable
 {
+    internal readonly ReaderWriterLockSlim Lock = new ReaderWriterLockSlim( LockRecursionPolicy.SupportsRecursion );
     private int _level;
 
     protected DependencyScope(DependencyContainer container, DependencyScope? parentScope, string? name)
@@ -60,13 +63,32 @@ internal class DependencyScope : IDependencyScope, IDisposable
     [Pure]
     public IDependencyScope[] GetChildren()
     {
-        return InternalContainer.GetScopeChildren( this );
+        List<IDependencyScope> result;
+        using ( ReadLockSlim.TryEnter( Lock, out var entered ) )
+        {
+            if ( ! entered )
+                return Array.Empty<IDependencyScope>();
+
+            var node = FirstChild;
+            if ( node is null )
+                return Array.Empty<IDependencyScope>();
+
+            result = new List<IDependencyScope>();
+            do
+            {
+                result.Add( node );
+                node = node.NextSibling;
+            }
+            while ( node is not null );
+        }
+
+        return result.ToArray();
     }
 
     internal DependencyLocator<TKey> GetKeyedLocator<TKey>(TKey key)
         where TKey : notnull
     {
-        return InternalContainer.GetOrCreateKeyedLocator( this, key );
+        return InternalLocatorStore.GetOrCreate( key );
     }
 
     internal ChildDependencyScope BeginScope(string? name = null)
@@ -75,8 +97,10 @@ internal class DependencyScope : IDependencyScope, IDisposable
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal void AddChild(ChildDependencyScope child)
+    internal void AddChildCore(ChildDependencyScope child)
     {
+        Assume.True( Lock.IsWriteLockHeld );
+
         if ( LastChild is null )
         {
             FirstChild = child;
@@ -94,6 +118,9 @@ internal class DependencyScope : IDependencyScope, IDisposable
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal void RemoveChild(ChildDependencyScope child)
     {
+        Assume.True( Lock.IsWriteLockHeld );
+        Assume.True( child.Lock.IsWriteLockHeld );
+
         Assume.Equals( this, child.InternalParentScope );
         Assume.IsNotNull( FirstChild );
         Assume.IsNotNull( LastChild );
@@ -128,16 +155,9 @@ internal class DependencyScope : IDependencyScope, IDisposable
         child.NextSibling.PrevSibling = child.PrevSibling;
     }
 
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal void MarkAsDisposed()
+    internal Chain<OwnedDependencyDisposalException> FinalizeDisposal()
     {
-        FirstChild = null;
-        LastChild = null;
-        IsDisposed = true;
-    }
-
-    internal Chain<OwnedDependencyDisposalException> DisposeInstances()
-    {
+        Assume.True( Lock.IsWriteLockHeld );
         var exceptions = Chain<OwnedDependencyDisposalException>.Empty;
 
         foreach ( var disposer in InternalDisposers )
@@ -149,7 +169,10 @@ internal class DependencyScope : IDependencyScope, IDisposable
 
         InternalDisposers.Clear();
         ScopedInstancesByResolverId.Clear();
-        InternalLocatorStore.Clear();
+        InternalLocatorStore.Dispose();
+        FirstChild = null;
+        LastChild = null;
+        IsDisposed = true;
         return exceptions;
     }
 

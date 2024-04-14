@@ -1,7 +1,13 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
+using System.Threading;
+using System.Threading.Tasks;
+using LfrlAnvil.Async;
 using LfrlAnvil.Dependencies.Exceptions;
 using LfrlAnvil.Dependencies.Extensions;
+using LfrlAnvil.Dependencies.Internal;
+using LfrlAnvil.Dependencies.Internal.Resolvers;
 using LfrlAnvil.Functional;
 using LfrlAnvil.TestExtensions.FluentAssertions;
 using LfrlAnvil.TestExtensions.NSubstitute;
@@ -539,11 +545,8 @@ public class DependencyContainerTests : DependencyTestsBase
     [Fact]
     public void ResolvingTransientDependency_WithSharedImplementor_ShouldReturnNewInstanceEachTimeForAllSharingDependencies()
     {
-        var factory = Substitute.For<Func<IDependencyScope, IFoo>>();
-        factory.WithAnyArgs( _ => new Implementor() );
-
         var builder = new DependencyContainerBuilder();
-        builder.AddSharedImplementor<Implementor>().FromFactory( factory );
+        builder.AddSharedImplementor<Implementor>();
         builder.Add<IFoo>().FromSharedImplementor<Implementor>().SetLifetime( DependencyLifetime.Transient );
         builder.Add<IBar>().FromSharedImplementor<Implementor>().SetLifetime( DependencyLifetime.Transient );
 
@@ -553,21 +556,14 @@ public class DependencyContainerTests : DependencyTestsBase
         var result1 = scope.Locator.Resolve<IFoo>();
         var result2 = scope.Locator.Resolve<IBar>();
 
-        using ( new AssertionScope() )
-        {
-            factory.Verify().CallCount.Should().Be( 2 );
-            new object[] { result1, result2 }.Should().OnlyHaveUniqueItems();
-        }
+        new object[] { result1, result2 }.Should().OnlyHaveUniqueItems();
     }
 
     [Fact]
     public void ResolvingSingletonDependency_WithSharedImplementor_ShouldReturnSameInstanceEachTimeForAllSharingDependencies()
     {
-        var factory = Substitute.For<Func<IDependencyScope, Implementor>>();
-        factory.WithAnyArgs( _ => new Implementor() );
-
         var builder = new DependencyContainerBuilder();
-        builder.AddSharedImplementor<Implementor>().FromFactory( factory );
+        builder.AddSharedImplementor<Implementor>();
         builder.Add<IFoo>().FromSharedImplementor<Implementor>().SetLifetime( DependencyLifetime.Singleton );
         builder.Add<IBar>().FromSharedImplementor<Implementor>().SetLifetime( DependencyLifetime.Singleton );
 
@@ -577,22 +573,15 @@ public class DependencyContainerTests : DependencyTestsBase
         var result1 = scope.Locator.Resolve<IFoo>();
         var result2 = scope.Locator.Resolve<IBar>();
 
-        using ( new AssertionScope() )
-        {
-            factory.Verify().CallCount.Should().Be( 1 );
-            result1.Should().BeSameAs( result2 );
-        }
+        result1.Should().BeSameAs( result2 );
     }
 
     [Fact]
     public void
         ResolvingScopedSingletonDependency_WithSharedImplementor_ShouldReturnNewInstancePerScopeAndItsChildrenForAllSharingDependencies()
     {
-        var factory = Substitute.For<Func<IDependencyScope, Implementor>>();
-        factory.WithAnyArgs( _ => new Implementor() );
-
         var builder = new DependencyContainerBuilder();
-        builder.AddSharedImplementor<Implementor>().FromFactory( factory );
+        builder.AddSharedImplementor<Implementor>();
         builder.Add<IFoo>().FromSharedImplementor<Implementor>().SetLifetime( DependencyLifetime.ScopedSingleton );
         builder.Add<IBar>().FromSharedImplementor<Implementor>().SetLifetime( DependencyLifetime.ScopedSingleton );
 
@@ -601,22 +590,20 @@ public class DependencyContainerTests : DependencyTestsBase
 
         var result1 = scope.Locator.Resolve<IFoo>();
         var result2 = scope.BeginScope().Locator.Resolve<IBar>();
+        var result3 = scope.Locator.Resolve<IFoo>();
 
         using ( new AssertionScope() )
         {
-            factory.Verify().CallCount.Should().Be( 1 );
             result1.Should().BeSameAs( result2 );
+            result1.Should().BeSameAs( result3 );
         }
     }
 
     [Fact]
     public void ResolvingScopedDependency_WithSharedImplementor_ShouldReturnSameInstancePerScopeEachTimeForAllSharingDependencies()
     {
-        var factory = Substitute.For<Func<IDependencyScope, Implementor>>();
-        factory.WithAnyArgs( _ => new Implementor() );
-
         var builder = new DependencyContainerBuilder();
-        builder.AddSharedImplementor<Implementor>().FromFactory( factory );
+        builder.AddSharedImplementor<Implementor>();
         builder.Add<IFoo>().FromSharedImplementor<Implementor>().SetLifetime( DependencyLifetime.Scoped );
         builder.Add<IBar>().FromSharedImplementor<Implementor>().SetLifetime( DependencyLifetime.Scoped );
 
@@ -626,15 +613,15 @@ public class DependencyContainerTests : DependencyTestsBase
         var result1 = scope.Locator.Resolve<IFoo>();
         var result2 = scope.Locator.Resolve<IBar>();
 
-        using ( new AssertionScope() )
-        {
-            factory.Verify().CallCount.Should().Be( 1 );
-            result1.Should().BeSameAs( result2 );
-        }
+        result1.Should().BeSameAs( result2 );
     }
 
-    [Fact]
-    public void ResolvingDependency_ShouldInvokeOnResolvingCallbackEveryTime()
+    [Theory]
+    [InlineData( DependencyLifetime.Transient )]
+    [InlineData( DependencyLifetime.Scoped )]
+    [InlineData( DependencyLifetime.ScopedSingleton )]
+    [InlineData( DependencyLifetime.Singleton )]
+    public void ResolvingDependency_ShouldInvokeOnResolvingCallbackEveryTime_BasedOnFactory(DependencyLifetime lifetime)
     {
         var factory = Substitute.For<Func<IDependencyScope, Implementor>>();
         factory.WithAnyArgs( _ => new Implementor() );
@@ -642,11 +629,32 @@ public class DependencyContainerTests : DependencyTestsBase
         var onResolvingCallback = Substitute.For<Action<Type, IDependencyScope>>();
 
         var builder = new DependencyContainerBuilder();
-        builder.Add<IFoo>()
-            .SetLifetime( DependencyLifetime.Singleton )
-            .FromFactory( factory )
-            .SetOnResolvingCallback( onResolvingCallback );
+        builder.Add<IFoo>().SetLifetime( lifetime ).FromFactory( factory ).SetOnResolvingCallback( onResolvingCallback );
+        var sut = builder.Build();
+        var scope = sut.RootScope.BeginScope();
 
+        _ = scope.Locator.Resolve<IFoo>();
+        _ = scope.Locator.Resolve<IFoo>();
+
+        using ( new AssertionScope() )
+        {
+            onResolvingCallback.Verify().CallCount.Should().Be( 2 );
+            onResolvingCallback.Verify().CallAt( 0 ).Arguments.Should().BeSequentiallyEqualTo( typeof( IFoo ), scope );
+            onResolvingCallback.Verify().CallAt( 1 ).Arguments.Should().BeSequentiallyEqualTo( typeof( IFoo ), scope );
+        }
+    }
+
+    [Theory]
+    [InlineData( DependencyLifetime.Transient )]
+    [InlineData( DependencyLifetime.Scoped )]
+    [InlineData( DependencyLifetime.ScopedSingleton )]
+    [InlineData( DependencyLifetime.Singleton )]
+    public void ResolvingDependency_ShouldInvokeOnResolvingCallbackEveryTime_BasedOnImplementor(DependencyLifetime lifetime)
+    {
+        var onResolvingCallback = Substitute.For<Action<Type, IDependencyScope>>();
+
+        var builder = new DependencyContainerBuilder();
+        builder.Add<IFoo>().SetLifetime( lifetime ).FromType<Implementor>().SetOnResolvingCallback( onResolvingCallback );
         var sut = builder.Build();
         var scope = sut.RootScope.BeginScope();
 
@@ -685,6 +693,29 @@ public class DependencyContainerTests : DependencyTestsBase
             factory.Verify().CallCount.Should().Be( 2 );
             result1.Should().BeSameAs( result2 );
             result1.Should().NotBeSameAs( result3 );
+        }
+    }
+
+    [Theory]
+    [InlineData( DependencyLifetime.Scoped )]
+    [InlineData( DependencyLifetime.ScopedSingleton )]
+    public void ResolvingScopedDependency_ShouldThrowExceptionAndNotModifyScopeState_WhenInstanceFactoryThrows(DependencyLifetime lifetime)
+    {
+        var exception = new Exception();
+        var factory = Substitute.For<Func<IDependencyScope, Implementor>>();
+        factory.WithAnyArgs( _ => throw exception );
+
+        var builder = new DependencyContainerBuilder();
+        builder.Add<IFoo>().SetLifetime( lifetime ).FromFactory( factory );
+        var sut = builder.Build();
+        var scope = ( DependencyScope )sut.RootScope.BeginScope();
+
+        var action = Lambda.Of( () => scope.Locator.Resolve<IFoo>() );
+
+        using ( new AssertionScope() )
+        {
+            action.Should().Throw<Exception>().And.Should().BeSameAs( exception );
+            scope.ScopedInstancesByResolverId.Should().BeEmpty();
         }
     }
 
@@ -828,15 +859,41 @@ public class DependencyContainerTests : DependencyTestsBase
             .AndMatch( e => e.DependencyType == typeof( IFoo ) && e.ResultType == typeof( string ) );
     }
 
-    [Fact]
-    public void ResolvingDependency_ShouldThrowObjectDisposedException_WhenScopeIsDisposed()
+    [Theory]
+    [InlineData( DependencyLifetime.Transient )]
+    [InlineData( DependencyLifetime.Scoped )]
+    [InlineData( DependencyLifetime.ScopedSingleton )]
+    [InlineData( DependencyLifetime.Singleton )]
+    public void ResolvingDependency_BasedOnFactory_ShouldThrowObjectDisposedException_WhenScopeIsDisposed(DependencyLifetime lifetime)
     {
+        var factory = Substitute.For<Func<IDependencyScope, object>>();
+        factory.WithAnyArgs( _ => new Implementor() );
+
         var builder = new DependencyContainerBuilder();
+        builder.Add<IFoo>().SetLifetime( lifetime ).FromFactory( factory );
         var sut = builder.Build();
         var scope = sut.RootScope.BeginScope();
         scope.Dispose();
 
-        var action = Lambda.Of( () => scope.Locator.Resolve<IDependencyContainer>() );
+        var action = Lambda.Of( () => scope.Locator.Resolve<IFoo>() );
+
+        action.Should().ThrowExactly<ObjectDisposedException>();
+    }
+
+    [Theory]
+    [InlineData( DependencyLifetime.Transient )]
+    [InlineData( DependencyLifetime.Scoped )]
+    [InlineData( DependencyLifetime.ScopedSingleton )]
+    [InlineData( DependencyLifetime.Singleton )]
+    public void ResolvingDependency_BasedOnImplementor_ShouldThrowObjectDisposedException_WhenScopeIsDisposed(DependencyLifetime lifetime)
+    {
+        var builder = new DependencyContainerBuilder();
+        builder.Add<IFoo>().SetLifetime( lifetime ).FromType<Implementor>();
+        var sut = builder.Build();
+        var scope = sut.RootScope.BeginScope();
+        scope.Dispose();
+
+        var action = Lambda.Of( () => scope.Locator.Resolve<IFoo>() );
 
         action.Should().ThrowExactly<ObjectDisposedException>();
     }
@@ -861,9 +918,19 @@ public class DependencyContainerTests : DependencyTestsBase
                     && inner.InnerException is null );
     }
 
-    [Fact]
-    public void ResolvingDependency_ShouldThrowCircularDependencyReferenceException_WhenIndirectCircularReferenceHasBeenDetected()
+    [Theory]
+    [InlineData( typeof( Implementor ) )]
+    [InlineData( typeof( IQux ) )]
+    [InlineData( typeof( IBar ) )]
+    [InlineData( typeof( IFoo ) )]
+    public void ResolvingDependency_ShouldThrowCircularDependencyReferenceException_WhenIndirectCircularReferenceHasBeenDetected(Type type)
     {
+        var cycle = new[] { typeof( IQux ), typeof( Implementor ), typeof( IFoo ), typeof( IBar ) };
+        var index = Array.IndexOf( cycle, type );
+        var firstType = ++index >= cycle.Length ? cycle[index = 0] : cycle[index];
+        var secondType = ++index >= cycle.Length ? cycle[index = 0] : cycle[index];
+        var thirdType = ++index >= cycle.Length ? cycle[0] : cycle[index];
+
         var builder = new DependencyContainerBuilder();
         builder.Add<IQux>().FromFactory( s => s.Locator.Resolve<Implementor>() );
         builder.Add<IBar>().FromFactory( s => s.Locator.Resolve<IQux>() );
@@ -871,26 +938,183 @@ public class DependencyContainerTests : DependencyTestsBase
         builder.Add<Implementor>().FromFactory( s => s.Locator.Resolve<IFoo>() );
         var sut = builder.Build();
 
-        var action = Lambda.Of( () => sut.RootScope.Locator.Resolve<Implementor>() );
+        var action = Lambda.Of( () => sut.RootScope.Locator.Resolve( type ) );
 
         action.Should()
             .ThrowExactly<CircularDependencyReferenceException>()
             .AndMatch(
-                e => e.DependencyType == typeof( Implementor )
-                    && e.ImplementorType == typeof( Implementor )
+                e => e.DependencyType == type
+                    && e.ImplementorType == type
                     && e.InnerException is CircularDependencyReferenceException inner1
-                    && inner1.DependencyType == typeof( IFoo )
-                    && inner1.ImplementorType == typeof( IFoo )
+                    && inner1.DependencyType == firstType
+                    && inner1.ImplementorType == firstType
                     && inner1.InnerException is CircularDependencyReferenceException inner2
-                    && inner2.DependencyType == typeof( IBar )
-                    && inner2.ImplementorType == typeof( IBar )
+                    && inner2.DependencyType == secondType
+                    && inner2.ImplementorType == secondType
                     && inner2.InnerException is CircularDependencyReferenceException inner3
-                    && inner3.DependencyType == typeof( IQux )
-                    && inner3.ImplementorType == typeof( IQux )
+                    && inner3.DependencyType == thirdType
+                    && inner3.ImplementorType == thirdType
                     && inner3.InnerException is CircularDependencyReferenceException inner4
-                    && inner4.DependencyType == typeof( Implementor )
-                    && inner4.ImplementorType == typeof( Implementor )
+                    && inner4.DependencyType == type
+                    && inner4.ImplementorType == type
                     && inner4.InnerException is null );
+    }
+
+    [Theory]
+    [InlineData( typeof( IQux ) )]
+    [InlineData( typeof( IBar ) )]
+    [InlineData( typeof( IFoo ) )]
+    public void ResolvingDependency_ShouldThrowCircularDependencyReferenceException_WhenOnlyOneDependencyInCycleBasedOnFactory(Type type)
+    {
+        var builder = new DependencyContainerBuilder();
+        builder.Add<IQux>().FromFactory( s => new ChainableQux( s.Locator.Resolve<IFoo>() ) );
+        builder.Add<IBar>().FromType<ChainableBar>();
+        builder.Add<IFoo>().FromType<ChainableFoo>();
+        var sut = builder.Build();
+
+        var action = Lambda.Of( () => sut.RootScope.Locator.Resolve( type ) );
+
+        action.Should()
+            .ThrowExactly<CircularDependencyReferenceException>()
+            .AndMatch( e => e.DependencyType == type && e.ImplementorType == type && e.InnerException is not null );
+    }
+
+    [Fact]
+    public void ResolvingDependency_ShouldThrowCircularDependencyReferenceException_WhenOriginalTypeItselfIsNotPartOfCycle()
+    {
+        var builder = new DependencyContainerBuilder();
+        builder.Add<IQux>()
+            .FromFactory(
+                s =>
+                {
+                    _ = s.Locator.Resolve<IBar>();
+                    return new Implementor();
+                } );
+
+        builder.Add<IBar>().FromFactory( s => new ChainableBar( s.Locator.Resolve<IQux>() ) );
+        builder.Add<IFoo>().FromType<ChainableFoo>();
+        var sut = builder.Build();
+
+        var action = Lambda.Of( () => sut.RootScope.Locator.Resolve<IFoo>() );
+
+        action.Should()
+            .ThrowExactly<CircularDependencyReferenceException>()
+            .AndMatch(
+                e => e.DependencyType == typeof( IFoo )
+                    && e.ImplementorType == typeof( IFoo )
+                    && e.InnerException is CircularDependencyReferenceException inner1
+                    && inner1.DependencyType == typeof( IBar )
+                    && inner1.ImplementorType == typeof( IBar )
+                    && inner1.InnerException is CircularDependencyReferenceException inner2
+                    && inner2.DependencyType == typeof( IQux )
+                    && inner2.ImplementorType == typeof( IQux )
+                    && inner2.InnerException is CircularDependencyReferenceException inner3
+                    && inner3.DependencyType == typeof( IBar )
+                    && inner3.ImplementorType == typeof( IBar )
+                    && inner3.InnerException is null );
+    }
+
+    [Theory]
+    [InlineData( DependencyLifetime.Transient )]
+    [InlineData( DependencyLifetime.Scoped )]
+    [InlineData( DependencyLifetime.ScopedSingleton )]
+    [InlineData( DependencyLifetime.Singleton )]
+    public void
+        ResolvingDependency_ShouldThrowCircularDependencyReferenceException_WhenCircularReferenceHasBeenDetectedDuringOnResolvingCallback(
+            DependencyLifetime lifetime)
+    {
+        var builder = new DependencyContainerBuilder();
+        builder.Add<IFoo>()
+            .SetLifetime( lifetime )
+            .FromType<Implementor>()
+            .SetOnResolvingCallback(
+                (_, s) =>
+                {
+                    var __ = s.Locator.Resolve<IFoo>();
+                } );
+
+        var sut = builder.Build();
+
+        var action = Lambda.Of( () => sut.RootScope.Locator.Resolve<IFoo>() );
+
+        action.Should()
+            .ThrowExactly<CircularDependencyReferenceException>()
+            .AndMatch(
+                e => e.DependencyType == typeof( IFoo )
+                    && e.ImplementorType == typeof( IFoo )
+                    && e.InnerException is CircularDependencyReferenceException inner
+                    && inner.DependencyType == typeof( IFoo )
+                    && inner.ImplementorType == typeof( IFoo )
+                    && inner.InnerException is null );
+    }
+
+    [Theory]
+    [InlineData( DependencyLifetime.Scoped )]
+    [InlineData( DependencyLifetime.ScopedSingleton )]
+    [InlineData( DependencyLifetime.Singleton )]
+    public void
+        ResolvingDependency_ShouldThrowCircularDependencyReferenceException_WhenCircularReferenceHasBeenDetectedDuringOnResolvingCallbackForCachedInstances(
+            DependencyLifetime lifetime)
+    {
+        var forceCycle = false;
+        var builder = new DependencyContainerBuilder();
+        builder.Add<IFoo>()
+            .SetLifetime( lifetime )
+            .FromType<Implementor>()
+            .SetOnResolvingCallback(
+                (_, s) =>
+                {
+                    if ( forceCycle )
+                    {
+                        var __ = s.Locator.Resolve<IFoo>();
+                    }
+                    else
+                        forceCycle = true;
+                } );
+
+        var sut = builder.Build();
+
+        _ = sut.RootScope.Locator.Resolve<IFoo>();
+        var action = Lambda.Of( () => sut.RootScope.Locator.Resolve<IFoo>() );
+
+        action.Should()
+            .ThrowExactly<CircularDependencyReferenceException>()
+            .AndMatch(
+                e => e.DependencyType == typeof( IFoo )
+                    && e.ImplementorType == typeof( IFoo )
+                    && e.InnerException is CircularDependencyReferenceException inner
+                    && inner.DependencyType == typeof( IFoo )
+                    && inner.ImplementorType == typeof( IFoo )
+                    && inner.InnerException is null );
+    }
+
+    [Theory]
+    [InlineData( DependencyLifetime.Transient )]
+    [InlineData( DependencyLifetime.Scoped )]
+    [InlineData( DependencyLifetime.ScopedSingleton )]
+    [InlineData( DependencyLifetime.Singleton )]
+    public void
+        ResolvingDependency_ShouldThrowCircularDependencyReferenceException_WhenCircularReferenceHasBeenDetectedDuringOnCreatedCallback(
+            DependencyLifetime lifetime)
+    {
+        var builder = new DependencyContainerBuilder();
+        builder.Add<IFoo>()
+            .SetLifetime( lifetime )
+            .FromType<Implementor>( o => o.SetOnCreatedCallback( (_, _, s) => { _ = s.Locator.Resolve<IFoo>(); } ) );
+
+        var sut = builder.Build();
+
+        var action = Lambda.Of( () => sut.RootScope.Locator.Resolve<IFoo>() );
+
+        action.Should()
+            .ThrowExactly<CircularDependencyReferenceException>()
+            .AndMatch(
+                e => e.DependencyType == typeof( IFoo )
+                    && e.ImplementorType == typeof( IFoo )
+                    && e.InnerException is CircularDependencyReferenceException inner
+                    && inner.DependencyType == typeof( IFoo )
+                    && inner.ImplementorType == typeof( IFoo )
+                    && inner.InnerException is null );
     }
 
     [Theory]
@@ -1995,6 +2219,17 @@ public class DependencyContainerTests : DependencyTestsBase
     }
 
     [Fact]
+    public void TryGetScope_ShouldReturnNull_WhenContainerIsDisposed()
+    {
+        var sut = new DependencyContainerBuilder().Build();
+        sut.Dispose();
+
+        var result = sut.TryGetScope( "bar" );
+
+        result.Should().BeNull();
+    }
+
+    [Fact]
     public void GetScope_ShouldReturnCorrectScope_WhenNameExists()
     {
         var sut = new DependencyContainerBuilder().Build();
@@ -2049,7 +2284,7 @@ public class DependencyContainerTests : DependencyTestsBase
     }
 
     [Fact]
-    public void DependencyLocator_ResolvableTypes_ShouldReturnAllResolvableTypesWithinThatLocator()
+    public void DependencyLocator_GetResolvableTypes_ShouldReturnAllResolvableTypesWithinThatLocator()
     {
         var builder = new DependencyContainerBuilder();
         builder.Add<IFoo>().FromFactory( _ => new Implementor() );
@@ -2060,7 +2295,7 @@ public class DependencyContainerTests : DependencyTestsBase
 
         var sut = container.RootScope.Locator;
 
-        var result = sut.ResolvableTypes;
+        var result = sut.GetResolvableTypes();
 
         result.Should()
             .BeEquivalentTo(
@@ -2074,6 +2309,23 @@ public class DependencyContainerTests : DependencyTestsBase
                 typeof( IEnumerable<IQux> ) );
     }
 
+    [Fact]
+    public void DependencyLocator_GetResolvableTypes_ShouldReturnEmpty_WhenContainerIsDisposed()
+    {
+        var builder = new DependencyContainerBuilder();
+        builder.Add<IFoo>().FromFactory( _ => new Implementor() );
+        builder.Add<IBar>().FromFactory( _ => new Implementor() );
+        builder.Add<IQux>().FromFactory( _ => new Implementor() );
+        builder.GetKeyedLocator( 1 ).Add<IWithText>().FromFactory( _ => new ExplicitCtorImplementor( string.Empty ) );
+        var container = builder.Build();
+        var sut = container.RootScope.Locator;
+        container.Dispose();
+
+        var result = sut.GetResolvableTypes();
+
+        result.Should().BeEmpty();
+    }
+
     [Theory]
     [InlineData( typeof( IDependencyContainer ), DependencyLifetime.Singleton )]
     [InlineData( typeof( IDependencyScope ), DependencyLifetime.ScopedSingleton )]
@@ -2081,23 +2333,117 @@ public class DependencyContainerTests : DependencyTestsBase
     [InlineData( typeof( IBar ), DependencyLifetime.Scoped )]
     [InlineData( typeof( IQux ), DependencyLifetime.ScopedSingleton )]
     [InlineData( typeof( IWithText ), DependencyLifetime.Singleton )]
+    [InlineData( typeof( OptionalCtorParamImplementor ), DependencyLifetime.Transient )]
+    [InlineData( typeof( DefaultCtorParamImplementor ), DependencyLifetime.Scoped )]
+    [InlineData( typeof( ExplicitCtorImplementor ), DependencyLifetime.ScopedSingleton )]
+    [InlineData( typeof( FieldImplementor ), DependencyLifetime.Singleton )]
+    [InlineData( typeof( IEnumerable<int> ), DependencyLifetime.Transient )]
     [InlineData( typeof( string ), null )]
     public void DependencyLocator_TryGetLifetime_ShouldReturnCorrectResult(Type type, DependencyLifetime? expected)
     {
         var builder = new DependencyContainerBuilder();
-        builder.Add<IFoo>().SetLifetime( DependencyLifetime.Transient ).FromFactory( _ => new Implementor() );
-        builder.Add<IBar>().SetLifetime( DependencyLifetime.Scoped ).FromFactory( _ => new Implementor() );
-        builder.Add<IQux>().SetLifetime( DependencyLifetime.ScopedSingleton ).FromFactory( _ => new Implementor() );
-        builder.Add<IWithText>()
-            .SetLifetime( DependencyLifetime.Singleton )
-            .FromFactory( _ => new ExplicitCtorImplementor( string.Empty ) );
+        builder.AddSharedImplementor<Implementor>();
+        builder.AddSharedImplementor<DefaultCtorParamImplementor>();
+        builder.Add<IFoo>().SetLifetime( DependencyLifetime.Transient ).FromSharedImplementor<Implementor>();
+        builder.Add<IBar>().SetLifetime( DependencyLifetime.Scoped ).FromSharedImplementor<Implementor>();
+        builder.Add<IQux>().SetLifetime( DependencyLifetime.ScopedSingleton ).FromSharedImplementor<Implementor>();
+        builder.Add<IWithText>().SetLifetime( DependencyLifetime.Singleton ).FromSharedImplementor<DefaultCtorParamImplementor>();
+        builder.Add<OptionalCtorParamImplementor>().SetLifetime( DependencyLifetime.Transient ).FromFactory( _ => new object() );
+        builder.Add<DefaultCtorParamImplementor>().SetLifetime( DependencyLifetime.Scoped ).FromFactory( _ => new object() );
+        builder.Add<ExplicitCtorImplementor>().SetLifetime( DependencyLifetime.ScopedSingleton ).FromFactory( _ => new object() );
+        builder.Add<FieldImplementor>().SetLifetime( DependencyLifetime.Singleton ).FromFactory( _ => new object() );
 
         var container = builder.Build();
 
         var sut = container.RootScope.Locator;
+        _ = sut.Resolve<IEnumerable<int>>();
 
         var result = sut.TryGetLifetime( type );
 
         result.Should().Be( expected );
+    }
+
+    [Fact]
+    public void DependencyLocator_TryGetLifetime_ShouldReturnNull_WhenContainerIsDisposed()
+    {
+        var builder = new DependencyContainerBuilder();
+        var container = builder.Build();
+        var sut = container.RootScope.Locator;
+        container.Dispose();
+
+        var result = sut.TryGetLifetime( typeof( IDependencyContainer ) );
+
+        result.Should().BeNull();
+    }
+
+    [Fact]
+    public void LockDisposal_ShouldThrowSynchronizationLockException_WhenCurrentThreadHoldsAnyLocks()
+    {
+        var sut = new ReaderWriterLockSlim();
+        sut.EnterReadLock();
+
+        var action = Lambda.Of( () => sut.DisposeGracefully() );
+
+        action.Should().ThrowExactly<SynchronizationLockException>();
+    }
+
+    [Fact]
+    public async Task LockDisposal_WhenAnotherThreadWaitsToAcquireLock_ShouldNotThrowAndShouldWaitForAnotherThreadToAcquireLock()
+    {
+        var taskSource = new TaskCompletionSource();
+        var context1 = new DedicatedThreadSynchronizationContext();
+        var context2 = new DedicatedThreadSynchronizationContext();
+        var context3 = new DedicatedThreadSynchronizationContext();
+        var taskFactory1 = new TaskFactory( TaskSchedulerCapture.FromSynchronizationContext( context1 ) );
+        var taskFactory2 = new TaskFactory( TaskSchedulerCapture.FromSynchronizationContext( context2 ) );
+        var taskFactory3 = new TaskFactory( TaskSchedulerCapture.FromSynchronizationContext( context3 ) );
+        var sut = new ReaderWriterLockSlim();
+
+        await taskFactory3.StartNew( () => sut.EnterReadLock() );
+        _ = taskFactory2.StartNew( () => sut.EnterWriteLock() );
+        await Task.Delay( 15 );
+
+        _ = taskFactory1.StartNew(
+            () =>
+            {
+                sut.DisposeGracefully();
+                taskSource.SetResult();
+            } );
+
+        await Task.Delay( 50 );
+        await taskFactory3.StartNew( () => sut.ExitReadLock() );
+
+        await taskSource.Task;
+    }
+
+    [Fact]
+    public void Helpers_CreateResolverFactory_ShouldReturnCachedCompilationResult_WhenCalledMoreThanOnce()
+    {
+        var container = new DependencyContainerBuilder().Build();
+        var expression = Lambda.ExpressionOf( (DependencyScope _) => new object() );
+        var resolver = new ResolverFactorySource( expression );
+        var scope = container.InternalRootScope;
+
+        var firstFactory = resolver.Factory;
+        _ = firstFactory( scope );
+        var secondFactory = resolver.Factory;
+        _ = firstFactory( scope );
+        var thirdFactory = resolver.Factory;
+
+        using ( new AssertionScope() )
+        {
+            firstFactory.Should().NotBeSameAs( secondFactory );
+            secondFactory.Should().BeSameAs( thirdFactory );
+        }
+    }
+
+    private sealed class ResolverFactorySource : IResolverFactorySource
+    {
+        internal ResolverFactorySource(Expression<Func<DependencyScope, object>> expression)
+        {
+            Factory = expression.CreateResolverFactory( this );
+        }
+
+        public Func<DependencyScope, object> Factory { get; set; }
     }
 }

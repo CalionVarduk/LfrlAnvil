@@ -24,6 +24,16 @@ public abstract class DependencyTestsBase : TestsBase
         IDependencyScope Scope { get; }
     }
 
+    public class DisposableDependency : IDisposableDependency
+    {
+        public bool IsDisposed { get; private set; }
+
+        public void Dispose()
+        {
+            IsDisposed = true;
+        }
+    }
+
     public class Implementor : IFoo, IBar, IQux { }
 
     public class ChainableFoo : IFoo

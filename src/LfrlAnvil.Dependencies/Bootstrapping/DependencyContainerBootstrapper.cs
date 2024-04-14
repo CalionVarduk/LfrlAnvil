@@ -1,20 +1,25 @@
 ﻿using System;
-using System.Threading;
+using LfrlAnvil.Async;
 using LfrlAnvil.Dependencies.Exceptions;
 
 namespace LfrlAnvil.Dependencies.Bootstrapping;
 
 public abstract class DependencyContainerBootstrapper : IDependencyContainerBootstrapper<DependencyContainerBuilder>
 {
-    private volatile int _state;
+    private InterlockedBoolean _inProgress;
+
+    protected DependencyContainerBootstrapper()
+    {
+        _inProgress = new InterlockedBoolean( false );
+    }
 
     public void Bootstrap(DependencyContainerBuilder builder)
     {
-        if ( Interlocked.Exchange( ref _state, 1 ) == 1 )
+        if ( ! _inProgress.WriteTrue() )
             throw new InvalidOperationException( Resources.BootstrapperInvokedBeforeItCouldFinish );
 
         BootstrapCore( builder );
-        Interlocked.Decrement( ref _state );
+        _inProgress.WriteFalse();
     }
 
     protected abstract void BootstrapCore(DependencyContainerBuilder builder);

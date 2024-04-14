@@ -15,12 +15,18 @@ internal sealed class TransientDependencyResolverFactory : RegisteredDependencyR
     {
         Assume.IsNotNull( ImplementorBuilder );
 
-        return new TransientDependencyResolver(
-            idGenerator.Generate(),
-            ImplementorBuilder.ImplementorType,
-            ImplementorBuilder.DisposalStrategy,
-            ImplementorBuilder.OnResolvingCallback,
-            expression );
+        return ImplementorBuilder.OnResolvingCallback is null && ImplementorBuilder.Constructor?.InvocationOptions.OnCreatedCallback is null
+            ? new TransientDependencyResolver(
+                idGenerator.Generate(),
+                ImplementorBuilder.ImplementorType,
+                ImplementorBuilder.DisposalStrategy,
+                expression )
+            : new CycleTrackingTransientDependencyResolver(
+                idGenerator.Generate(),
+                ImplementorBuilder.ImplementorType,
+                ImplementorBuilder.DisposalStrategy,
+                ImplementorBuilder.OnResolvingCallback,
+                expression );
     }
 
     protected override DependencyResolver CreateFromFactory(UlongSequenceGenerator idGenerator)
@@ -28,7 +34,7 @@ internal sealed class TransientDependencyResolverFactory : RegisteredDependencyR
         Assume.IsNotNull( ImplementorBuilder );
         Assume.IsNotNull( ImplementorBuilder.Factory );
 
-        return new TransientDependencyResolver(
+        return new CycleTrackingTransientDependencyResolver(
             idGenerator.Generate(),
             ImplementorBuilder.ImplementorType,
             ImplementorBuilder.DisposalStrategy,

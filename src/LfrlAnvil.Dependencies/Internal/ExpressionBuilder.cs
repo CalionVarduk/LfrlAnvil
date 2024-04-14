@@ -17,8 +17,35 @@ internal sealed class ExpressionBuilder
 {
     private static readonly MethodInfo ArrayEmptyGenericMethod = typeof( Array ).GetMethod( nameof( Array.Empty ) )!;
 
-    private static readonly MethodInfo ResolverCreateMethod =
-        typeof( DependencyResolver ).GetMethod( nameof( DependencyResolver.Create ), BindingFlags.Instance | BindingFlags.NonPublic )!;
+    private static readonly Dictionary<Type, MethodInfo> CreateMethodsByResolverType
+        = new Dictionary<Type, MethodInfo>( capacity: 10 )
+        {
+            { typeof( DependencyContainerResolver ), Helpers.FindResolverCreateMethod( typeof( DependencyContainerResolver ) ) },
+            { typeof( DependencyScopeResolver ), Helpers.FindResolverCreateMethod( typeof( DependencyScopeResolver ) ) },
+            { typeof( TransientDependencyResolver ), Helpers.FindResolverCreateMethod( typeof( TransientDependencyResolver ) ) },
+            { typeof( ScopedDependencyResolver ), Helpers.FindResolverCreateMethod( typeof( ScopedDependencyResolver ) ) },
+            {
+                typeof( ScopedSingletonDependencyResolver ),
+                Helpers.FindResolverCreateMethod( typeof( ScopedSingletonDependencyResolver ) )
+            },
+            { typeof( SingletonDependencyResolver ), Helpers.FindResolverCreateMethod( typeof( SingletonDependencyResolver ) ) },
+            {
+                typeof( CycleTrackingTransientDependencyResolver ),
+                Helpers.FindResolverCreateMethod( typeof( CycleTrackingTransientDependencyResolver ) )
+            },
+            {
+                typeof( CycleTrackingScopedDependencyResolver ),
+                Helpers.FindResolverCreateMethod( typeof( CycleTrackingScopedDependencyResolver ) )
+            },
+            {
+                typeof( CycleTrackingScopedSingletonDependencyResolver ),
+                Helpers.FindResolverCreateMethod( typeof( CycleTrackingScopedSingletonDependencyResolver ) )
+            },
+            {
+                typeof( CycleTrackingSingletonDependencyResolver ),
+                Helpers.FindResolverCreateMethod( typeof( CycleTrackingSingletonDependencyResolver ) )
+            }
+        };
 
     private static readonly ConstructorInfo ExceptionCtor =
         typeof( InvalidDependencyCastException ).GetConstructor( new[] { typeof( Type ) } )!;
@@ -233,7 +260,7 @@ internal sealed class ExpressionBuilder
 
         return Expression.Call(
             Expression.Constant( resolver ),
-            ResolverCreateMethod,
+            CreateMethodsByResolverType[resolver.GetType()],
             ScopeParameter,
             Expression.Constant( variableType, typeof( Type ) ) );
     }

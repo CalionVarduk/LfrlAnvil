@@ -4,12 +4,11 @@ namespace LfrlAnvil.Dependencies.Internal;
 
 internal sealed class ChildDependencyScope : DependencyScope, IChildDependencyScope
 {
-    internal ChildDependencyScope(DependencyContainer container, DependencyScope parentScope, string? name)
+    internal ChildDependencyScope(DependencyContainer container, DependencyScope parentScope, string? name = null)
         : base( container, parentScope, name )
     {
         PrevSibling = null;
         NextSibling = null;
-        parentScope.AddChild( this );
     }
 
     internal ChildDependencyScope? PrevSibling { get; set; }

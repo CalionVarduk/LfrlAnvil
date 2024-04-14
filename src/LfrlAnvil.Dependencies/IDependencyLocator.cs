@@ -9,13 +9,15 @@ public interface IDependencyLocator
     Type? KeyType { get; }
     object? Key { get; }
     bool IsKeyed { get; }
-    Type[] ResolvableTypes { get; }
 
     [Pure]
     object? TryResolveUnsafe(Type type);
 
     [Pure]
     DependencyLifetime? TryGetLifetime(Type type);
+
+    [Pure]
+    Type[] GetResolvableTypes();
 }
 
 public interface IDependencyLocator<out TKey> : IDependencyLocator

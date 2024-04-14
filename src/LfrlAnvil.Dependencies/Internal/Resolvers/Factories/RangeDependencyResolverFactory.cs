@@ -137,14 +137,20 @@ internal sealed class RangeDependencyResolverFactory : DependencyResolverFactory
             Factories is not null,
             () => Assume.True( Factories!.All( f => ! f.HasState( DependencyResolverFactoryState.Invalid ) ) ) );
 
-        var resolver = new TransientDependencyResolver(
-            id: idGenerator.Generate(),
-            implementorType: ImplementorKey.Value.Type,
-            disposalStrategy: DependencyImplementorDisposalStrategy.RenounceOwnership(),
-            onResolvingCallback: OnResolvingCallback,
-            expression: CreateExpression( idGenerator ) );
+        var expression = CreateExpression( idGenerator );
 
-        return resolver;
+        return OnResolvingCallback is null
+            ? new TransientDependencyResolver(
+                idGenerator.Generate(),
+                ImplementorKey.Value.Type,
+                DependencyImplementorDisposalStrategy.RenounceOwnership(),
+                expression )
+            : new CycleTrackingTransientDependencyResolver(
+                idGenerator.Generate(),
+                ImplementorKey.Value.Type,
+                DependencyImplementorDisposalStrategy.RenounceOwnership(),
+                OnResolvingCallback,
+                expression );
     }
 
     [Pure]
