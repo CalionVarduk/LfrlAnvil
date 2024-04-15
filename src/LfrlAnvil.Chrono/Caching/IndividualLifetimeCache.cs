@@ -17,15 +17,15 @@ public sealed class IndividualLifetimeCache<TKey, TValue> : IIndividualLifetimeC
     private readonly List<Node> _heap;
 
     public IndividualLifetimeCache(
-        ITimestampProvider timestamps,
+        Timestamp startTimestamp,
         Duration lifetime,
         int capacity = int.MaxValue,
         Action<CachedItemRemovalEvent<TKey, TValue>>? removeCallback = null)
-        : this( EqualityComparer<TKey>.Default, timestamps, lifetime, capacity, removeCallback ) { }
+        : this( EqualityComparer<TKey>.Default, startTimestamp, lifetime, capacity, removeCallback ) { }
 
     public IndividualLifetimeCache(
         IEqualityComparer<TKey> keyComparer,
-        ITimestampProvider timestamps,
+        Timestamp startTimestamp,
         Duration lifetime,
         int capacity = int.MaxValue,
         Action<CachedItemRemovalEvent<TKey, TValue>>? removeCallback = null)
@@ -34,7 +34,8 @@ public sealed class IndividualLifetimeCache<TKey, TValue> : IIndividualLifetimeC
         Ensure.IsGreaterThan( lifetime, Duration.Zero );
         Capacity = capacity;
         Lifetime = lifetime;
-        Timestamps = timestamps;
+        StartTimestamp = startTimestamp;
+        CurrentTimestamp = startTimestamp;
         RemoveCallback = removeCallback;
         _map = new Dictionary<TKey, Node>( keyComparer );
         _heap = new List<Node>();
@@ -42,7 +43,8 @@ public sealed class IndividualLifetimeCache<TKey, TValue> : IIndividualLifetimeC
 
     public int Capacity { get; }
     public Duration Lifetime { get; }
-    public ITimestampProvider Timestamps { get; }
+    public Timestamp StartTimestamp { get; }
+    public Timestamp CurrentTimestamp { get; private set; }
     public Action<CachedItemRemovalEvent<TKey, TValue>>? RemoveCallback { get; }
     public int Count => _map.Count;
     public IEqualityComparer<TKey> Comparer => _map.Comparer;
@@ -54,9 +56,8 @@ public sealed class IndividualLifetimeCache<TKey, TValue> : IIndividualLifetimeC
     {
         get
         {
-            var now = GetCurrentTimestampAndRefresh();
             var node = _map[key];
-            Restart( node, now );
+            Restart( node );
             return node.Value;
         }
         set => AddOrUpdate( key, value );
@@ -65,20 +66,18 @@ public sealed class IndividualLifetimeCache<TKey, TValue> : IIndividualLifetimeC
     [Pure]
     public bool ContainsKey(TKey key)
     {
-        Refresh();
         return _map.ContainsKey( key );
     }
 
     public bool TryGetValue(TKey key, [MaybeNullWhen( false )] out TValue value)
     {
-        var now = GetCurrentTimestampAndRefresh();
         if ( ! _map.TryGetValue( key, out var node ) )
         {
             value = default;
             return false;
         }
 
-        Restart( node, now );
+        Restart( node );
         value = node.Value;
         return true;
     }
@@ -86,8 +85,7 @@ public sealed class IndividualLifetimeCache<TKey, TValue> : IIndividualLifetimeC
     [Pure]
     public Duration GetRemainingLifetime(TKey key)
     {
-        var now = GetCurrentTimestampAndRefresh();
-        return _map.TryGetValue( key, out var node ) ? node.TimeOfRemoval.Subtract( now ) : Duration.Zero;
+        return _map.TryGetValue( key, out var node ) ? node.TimeOfRemoval.Subtract( CurrentTimestamp ) : Duration.Zero;
     }
 
     public bool TryAdd(TKey key, TValue value)
@@ -97,8 +95,7 @@ public sealed class IndividualLifetimeCache<TKey, TValue> : IIndividualLifetimeC
 
     public bool TryAdd(TKey key, TValue value, Duration lifetime)
     {
-        var now = GetCurrentTimestampAndRefresh();
-        var node = CreateNode( key, value, lifetime, now );
+        var node = CreateNode( key, value, lifetime );
         if ( ! _map.TryAdd( key, node ) )
             return false;
 
@@ -114,19 +111,18 @@ public sealed class IndividualLifetimeCache<TKey, TValue> : IIndividualLifetimeC
 
     public AddOrUpdateResult AddOrUpdate(TKey key, TValue value, Duration lifetime)
     {
-        var now = GetCurrentTimestampAndRefresh();
         ref var node = ref CollectionsMarshal.GetValueRefOrAddDefault( _map, key, out var exists )!;
         if ( exists )
         {
             var oldValue = node.Value;
             node.Value = value;
             node.Lifetime = lifetime;
-            Restart( node, now );
+            Restart( node );
             RemoveCallback?.Invoke( CachedItemRemovalEvent<TKey, TValue>.CreateReplaced( node.Key, oldValue, value ) );
             return AddOrUpdateResult.Updated;
         }
 
-        node = CreateNode( key, value, lifetime, now );
+        node = CreateNode( key, value, lifetime );
         PushToHeap( node );
         CheckCapacity();
         return AddOrUpdateResult.Added;
@@ -134,7 +130,6 @@ public sealed class IndividualLifetimeCache<TKey, TValue> : IIndividualLifetimeC
 
     public bool Remove(TKey key)
     {
-        Refresh();
         if ( ! _map.Remove( key, out var node ) )
             return false;
 
@@ -145,7 +140,6 @@ public sealed class IndividualLifetimeCache<TKey, TValue> : IIndividualLifetimeC
 
     public bool Remove(TKey key, [MaybeNullWhen( false )] out TValue removed)
     {
-        Refresh();
         if ( ! _map.Remove( key, out var node ) )
         {
             removed = default;
@@ -160,17 +154,26 @@ public sealed class IndividualLifetimeCache<TKey, TValue> : IIndividualLifetimeC
 
     public bool Restart(TKey key)
     {
-        var now = GetCurrentTimestampAndRefresh();
         if ( ! _map.TryGetValue( key, out var node ) )
             return false;
 
-        Restart( node, now );
+        Restart( node );
         return true;
     }
 
-    public void Refresh()
+    public void Move(Duration delta)
     {
-        Refresh( Timestamps.GetNow() );
+        CurrentTimestamp = CurrentTimestamp.Add( delta );
+        while ( _heap.Count > 0 )
+        {
+            var node = _heap[0];
+            if ( node.TimeOfRemoval > CurrentTimestamp )
+                break;
+
+            _map.Remove( node.Key );
+            PopFromHeap( node );
+            RemoveCallback?.Invoke( CachedItemRemovalEvent<TKey, TValue>.CreateRemoved( node.Key, node.Value ) );
+        }
     }
 
     public void Clear()
@@ -192,33 +195,10 @@ public sealed class IndividualLifetimeCache<TKey, TValue> : IIndividualLifetimeC
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private void Refresh(Timestamp now)
-    {
-        while ( _heap.Count > 0 )
-        {
-            var node = _heap[0];
-            if ( node.TimeOfRemoval > now )
-                break;
-
-            _map.Remove( node.Key );
-            PopFromHeap( node );
-            RemoveCallback?.Invoke( CachedItemRemovalEvent<TKey, TValue>.CreateRemoved( node.Key, node.Value ) );
-        }
-    }
-
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private Timestamp GetCurrentTimestampAndRefresh()
-    {
-        var now = Timestamps.GetNow();
-        Refresh( now );
-        return now;
-    }
-
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private void Restart(Node node, Timestamp now)
+    private void Restart(Node node)
     {
         var oldTimeOfRemoval = node.TimeOfRemoval;
-        node.UpdateTimeOfRemoval( now );
+        node.UpdateTimeOfRemoval( CurrentTimestamp );
         FixHeapRelative( node, oldTimeOfRemoval );
     }
 
@@ -237,9 +217,9 @@ public sealed class IndividualLifetimeCache<TKey, TValue> : IIndividualLifetimeC
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private Node CreateNode(TKey key, TValue value, Duration lifetime, Timestamp now)
+    private Node CreateNode(TKey key, TValue value, Duration lifetime)
     {
-        return new Node( key, value, lifetime, now.Add( lifetime ), _heap.Count );
+        return new Node( key, value, lifetime, CurrentTimestamp.Add( lifetime ), _heap.Count );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]

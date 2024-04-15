@@ -18,15 +18,15 @@ public sealed class LifetimeCache<TKey, TValue> : ILifetimeCache<TKey, TValue>
     private DoublyLinkedNodeSequence<Entry> _order;
 
     public LifetimeCache(
-        ITimestampProvider timestamps,
+        Timestamp startTimestamp,
         Duration lifetime,
         int capacity = int.MaxValue,
         Action<CachedItemRemovalEvent<TKey, TValue>>? removeCallback = null)
-        : this( EqualityComparer<TKey>.Default, timestamps, lifetime, capacity, removeCallback ) { }
+        : this( EqualityComparer<TKey>.Default, startTimestamp, lifetime, capacity, removeCallback ) { }
 
     public LifetimeCache(
         IEqualityComparer<TKey> keyComparer,
-        ITimestampProvider timestamps,
+        Timestamp startTimestamp,
         Duration lifetime,
         int capacity = int.MaxValue,
         Action<CachedItemRemovalEvent<TKey, TValue>>? removeCallback = null)
@@ -35,7 +35,8 @@ public sealed class LifetimeCache<TKey, TValue> : ILifetimeCache<TKey, TValue>
         Ensure.IsGreaterThan( lifetime, Duration.Zero );
         Capacity = capacity;
         Lifetime = lifetime;
-        Timestamps = timestamps;
+        StartTimestamp = startTimestamp;
+        CurrentTimestamp = startTimestamp;
         RemoveCallback = removeCallback;
         _map = new Dictionary<TKey, DoublyLinkedNode<Entry>>( keyComparer );
         _order = DoublyLinkedNodeSequence<Entry>.Empty;
@@ -43,7 +44,8 @@ public sealed class LifetimeCache<TKey, TValue> : ILifetimeCache<TKey, TValue>
 
     public int Capacity { get; }
     public Duration Lifetime { get; }
-    public ITimestampProvider Timestamps { get; }
+    public Timestamp StartTimestamp { get; }
+    public Timestamp CurrentTimestamp { get; private set; }
     public Action<CachedItemRemovalEvent<TKey, TValue>>? RemoveCallback { get; }
     public int Count => _map.Count;
     public IEqualityComparer<TKey> Comparer => _map.Comparer;
@@ -56,9 +58,8 @@ public sealed class LifetimeCache<TKey, TValue> : ILifetimeCache<TKey, TValue>
     {
         get
         {
-            var now = GetCurrentTimestampAndRefresh();
             var node = _map[key];
-            node.Value = node.Value.Update( GetTimeOfRemoval( now ) );
+            node.Value = node.Value.Update( GetTimeOfRemoval() );
             SetNewest( node );
             return node.Value.Value;
         }
@@ -68,20 +69,18 @@ public sealed class LifetimeCache<TKey, TValue> : ILifetimeCache<TKey, TValue>
     [Pure]
     public bool ContainsKey(TKey key)
     {
-        Refresh();
         return _map.ContainsKey( key );
     }
 
     public bool TryGetValue(TKey key, [MaybeNullWhen( false )] out TValue value)
     {
-        var now = GetCurrentTimestampAndRefresh();
         if ( ! _map.TryGetValue( key, out var node ) )
         {
             value = default;
             return false;
         }
 
-        node.Value = node.Value.Update( GetTimeOfRemoval( now ) );
+        node.Value = node.Value.Update( GetTimeOfRemoval() );
         SetNewest( node );
         value = node.Value.Value;
         return true;
@@ -90,14 +89,12 @@ public sealed class LifetimeCache<TKey, TValue> : ILifetimeCache<TKey, TValue>
     [Pure]
     public Duration GetRemainingLifetime(TKey key)
     {
-        var now = GetCurrentTimestampAndRefresh();
-        return _map.TryGetValue( key, out var node ) ? node.Value.TimeOfRemoval.Subtract( now ) : Duration.Zero;
+        return _map.TryGetValue( key, out var node ) ? node.Value.TimeOfRemoval.Subtract( CurrentTimestamp ) : Duration.Zero;
     }
 
     public bool TryAdd(TKey key, TValue value)
     {
-        var now = GetCurrentTimestampAndRefresh();
-        var node = CreateNode( key, value, now );
+        var node = CreateNode( key, value );
         if ( ! _map.TryAdd( key, node ) )
             return false;
 
@@ -108,18 +105,17 @@ public sealed class LifetimeCache<TKey, TValue> : ILifetimeCache<TKey, TValue>
 
     public AddOrUpdateResult AddOrUpdate(TKey key, TValue value)
     {
-        var now = GetCurrentTimestampAndRefresh();
         ref var node = ref CollectionsMarshal.GetValueRefOrAddDefault( _map, key, out var exists )!;
         if ( exists )
         {
             var oldValue = node.Value.Value;
-            node.Value = node.Value.Update( value, GetTimeOfRemoval( now ) );
+            node.Value = node.Value.Update( value, GetTimeOfRemoval() );
             SetNewest( node );
             RemoveCallback?.Invoke( CachedItemRemovalEvent<TKey, TValue>.CreateReplaced( node.Value.Key, oldValue, value ) );
             return AddOrUpdateResult.Updated;
         }
 
-        node = CreateNode( key, value, now );
+        node = CreateNode( key, value );
         _order = _order.AddLast( node );
         CheckCapacity();
         return AddOrUpdateResult.Added;
@@ -127,7 +123,6 @@ public sealed class LifetimeCache<TKey, TValue> : ILifetimeCache<TKey, TValue>
 
     public bool Remove(TKey key)
     {
-        Refresh();
         if ( ! _map.Remove( key, out var node ) )
             return false;
 
@@ -138,7 +133,6 @@ public sealed class LifetimeCache<TKey, TValue> : ILifetimeCache<TKey, TValue>
 
     public bool Remove(TKey key, [MaybeNullWhen( false )] out TValue removed)
     {
-        Refresh();
         if ( ! _map.Remove( key, out var node ) )
         {
             removed = default;
@@ -153,18 +147,30 @@ public sealed class LifetimeCache<TKey, TValue> : ILifetimeCache<TKey, TValue>
 
     public bool Restart(TKey key)
     {
-        var now = GetCurrentTimestampAndRefresh();
         if ( ! _map.TryGetValue( key, out var node ) )
             return false;
 
-        node.Value = node.Value.Update( GetTimeOfRemoval( now ) );
+        node.Value = node.Value.Update( GetTimeOfRemoval() );
         SetNewest( node );
         return true;
     }
 
-    public void Refresh()
+    public void Move(Duration delta)
     {
-        Refresh( GetCurrentTimestamp() );
+        if ( delta <= Duration.Zero )
+            return;
+
+        CurrentTimestamp = CurrentTimestamp.Add( delta );
+
+        var node = _order.Head;
+        while ( node is not null && node.Value.TimeOfRemoval <= CurrentTimestamp )
+        {
+            var next = node.Next;
+            _map.Remove( node.Value.Key );
+            _order = _order.Remove( node );
+            RemoveCallback?.Invoke( CachedItemRemovalEvent<TKey, TValue>.CreateRemoved( node.Value.Key, node.Value.Value ) );
+            node = next;
+        }
     }
 
     public void Clear()
@@ -188,50 +194,16 @@ public sealed class LifetimeCache<TKey, TValue> : ILifetimeCache<TKey, TValue>
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private DoublyLinkedNode<Entry> CreateNode(TKey key, TValue value, Timestamp now)
+    private DoublyLinkedNode<Entry> CreateNode(TKey key, TValue value)
     {
-        return new DoublyLinkedNode<Entry>( new Entry( key, value, GetTimeOfRemoval( now ) ) );
+        return new DoublyLinkedNode<Entry>( new Entry( key, value, GetTimeOfRemoval() ) );
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private Timestamp GetTimeOfRemoval(Timestamp now)
+    private Timestamp GetTimeOfRemoval()
     {
-        return now.Add( Lifetime );
-    }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private Timestamp GetCurrentTimestamp()
-    {
-        var now = Timestamps.GetNow();
-        if ( _order.Tail is null )
-            return now;
-
-        var last = _order.Tail.Value.TimeOfRemoval.Subtract( Lifetime );
-        return now < last ? last : now;
-    }
-
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private void Refresh(Timestamp now)
-    {
-        var node = _order.Head;
-        while ( node is not null && node.Value.TimeOfRemoval <= now )
-        {
-            var next = node.Next;
-            _map.Remove( node.Value.Key );
-            _order = _order.Remove( node );
-            RemoveCallback?.Invoke( CachedItemRemovalEvent<TKey, TValue>.CreateRemoved( node.Value.Key, node.Value.Value ) );
-            node = next;
-        }
-    }
-
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private Timestamp GetCurrentTimestampAndRefresh()
-    {
-        var now = GetCurrentTimestamp();
-        Refresh( now );
-        return now;
+        return CurrentTimestamp.Add( Lifetime );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]

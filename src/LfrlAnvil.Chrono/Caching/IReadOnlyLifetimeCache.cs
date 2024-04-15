@@ -7,7 +7,8 @@ public interface IReadOnlyLifetimeCache<TKey, TValue> : IReadOnlyCache<TKey, TVa
     where TKey : notnull
 {
     Duration Lifetime { get; }
-    ITimestampProvider Timestamps { get; }
+    Timestamp StartTimestamp { get; }
+    Timestamp CurrentTimestamp { get; }
 
     [Pure]
     Duration GetRemainingLifetime(TKey key);
