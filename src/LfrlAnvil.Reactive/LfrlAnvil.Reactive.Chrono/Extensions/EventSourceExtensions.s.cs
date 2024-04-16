@@ -1,4 +1,5 @@
-﻿using System.Diagnostics.Contracts;
+﻿using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using LfrlAnvil.Chrono;
@@ -81,5 +82,15 @@ public static class EventSourceExtensions
     {
         var decorator = new EventListenerDelayDecorator<TEvent>( timestampProvider, delay, scheduler, spinWaitDurationHint );
         return source.Decorate( decorator );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static TimerTaskCollection<TKey> RegisterTasks<TKey>(
+        this IEventStream<WithInterval<long>> source,
+        IEnumerable<ITimerTask<TKey>> tasks)
+        where TKey : notnull
+    {
+        return new TimerTaskCollection<TKey>( source, tasks );
     }
 }
