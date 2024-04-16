@@ -7,7 +7,7 @@ using LfrlAnvil.Reactive.Chrono.Composites;
 using LfrlAnvil.TestExtensions.FluentAssertions;
 using LfrlAnvil.TestExtensions.NSubstitute;
 
-namespace LfrlAnvil.Reactive.Chrono.Tests.ReactiveTimerTests;
+namespace LfrlAnvil.Reactive.Chrono.Tests;
 
 public class ReactiveTimerTests : TestsBase
 {
@@ -357,8 +357,8 @@ public class ReactiveTimerTests : TestsBase
     [Fact]
     public async Task Start_WithDelay_ShouldReturnFalse_WhenTimerIsAlreadyRunning()
     {
-        var interval = Duration.FromTicks( 1 );
-        var delay = Duration.FromMilliseconds( 15 );
+        var interval = Duration.FromMilliseconds( 15 );
+        var delay = Duration.FromTicks( 5 );
         var timestamps = new[] { Timestamp.Zero, Timestamp.Zero + interval };
         var timestampProvider = Substitute.For<ITimestampProvider>();
         timestampProvider.GetNow().Returns( timestamps );
@@ -522,9 +522,9 @@ public class ReactiveTimerTests : TestsBase
     [Fact]
     public async Task StartAsync_WithDelay_ShouldReturnNull_WhenTimerIsAlreadyRunning()
     {
-        var interval = Duration.FromTicks( 1 );
-        var delay = Duration.FromMilliseconds( 15 );
-        var timestamps = new[] { Timestamp.Zero, Timestamp.Zero + delay };
+        var interval = Duration.FromMilliseconds( 15 );
+        var delay = Duration.FromTicks( 5 );
+        var timestamps = new[] { Timestamp.Zero, Timestamp.Zero + interval };
         var timestampProvider = Substitute.For<ITimestampProvider>();
         timestampProvider.GetNow().Returns( timestamps );
         var sut = new ReactiveTimer( timestampProvider, interval, count: 1 );

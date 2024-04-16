@@ -8,7 +8,7 @@ using LfrlAnvil.Reactive.Chrono.Internal;
 using LfrlAnvil.TestExtensions.FluentAssertions;
 using LfrlAnvil.TestExtensions.NSubstitute;
 
-namespace LfrlAnvil.Reactive.Chrono.Tests.IntervalEventSourceTests;
+namespace LfrlAnvil.Reactive.Chrono.Tests;
 
 public class IntervalEventSourceTests : TestsBase
 {

@@ -55,34 +55,34 @@ public sealed class ReactiveTimer : ConcurrentEventSource<WithInterval<long>, Ev
     public bool Start()
     {
         EnsureNotDisposed();
-        return StartInternal( Interval ) is not null;
+        return StartCore( Interval ) is not null;
     }
 
     public bool Start(Duration delay)
     {
         EnsureNotDisposed();
         Ensure.IsInRange( delay, Duration.FromTicks( 1 ), Duration.FromMilliseconds( int.MaxValue ) );
-        return StartInternal( delay ) is not null;
+        return StartCore( delay ) is not null;
     }
 
     public Task? StartAsync()
     {
         EnsureNotDisposed();
-        return StartInternal( Interval, Task.Factory );
+        return StartCore( Interval, Task.Factory );
     }
 
     public Task? StartAsync(TaskScheduler scheduler)
     {
         EnsureNotDisposed();
         var taskFactory = new TaskFactory( scheduler );
-        return StartInternal( Interval, taskFactory );
+        return StartCore( Interval, taskFactory );
     }
 
     public Task? StartAsync(Duration delay)
     {
         EnsureNotDisposed();
         Ensure.IsInRange( delay, Duration.FromTicks( 1 ), Duration.FromMilliseconds( int.MaxValue ) );
-        return StartInternal( delay, Task.Factory );
+        return StartCore( delay, Task.Factory );
     }
 
     public Task? StartAsync(TaskScheduler scheduler, Duration delay)
@@ -91,7 +91,7 @@ public sealed class ReactiveTimer : ConcurrentEventSource<WithInterval<long>, Ev
         Ensure.IsInRange( delay, Duration.FromTicks( 1 ), Duration.FromMilliseconds( int.MaxValue ) );
 
         var taskFactory = new TaskFactory( scheduler );
-        return StartInternal( delay, taskFactory );
+        return StartCore( delay, taskFactory );
     }
 
     public bool Stop()
@@ -125,7 +125,7 @@ public sealed class ReactiveTimer : ConcurrentEventSource<WithInterval<long>, Ev
         }
     }
 
-    private Task? StartInternal(Duration delay, TaskFactory? taskFactory = null)
+    private Task? StartCore(Duration delay, TaskFactory? taskFactory = null)
     {
         lock ( Sync )
         {
