@@ -17,6 +17,7 @@ internal static class Helpers
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static void DisposeGracefully(this ReaderWriterLockSlim @lock)
     {
+        var spinWait = new SpinWait();
         while ( true )
         {
             if ( @lock.IsWriteLockHeld || @lock.IsUpgradeableReadLockHeld || @lock.IsReadLockHeld )
@@ -29,7 +30,7 @@ internal static class Helpers
             }
             catch ( SynchronizationLockException )
             {
-                Thread.SpinWait( 10 );
+                spinWait.SpinOnce();
             }
         }
     }
