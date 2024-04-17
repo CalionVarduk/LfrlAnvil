@@ -103,7 +103,7 @@ internal static class Helpers
             if ( ! entered || scope.IsDisposed )
             {
                 disposer.Value.TryDispose();
-                ExceptionThrower.Throw( new ObjectDisposedException( Resources.ScopeIsDisposed( scope ) ) );
+                ExceptionThrower.Throw( new ObjectDisposedException( null, Resources.ScopeIsDisposed( scope ) ) );
             }
 
             scope.InternalDisposers.Add( disposer.Value );
@@ -119,7 +119,7 @@ internal static class Helpers
             using ( ReadLockSlim.TryEnter( scope.Lock, out var entered ) )
             {
                 if ( ! entered || scope.IsDisposed )
-                    ExceptionThrower.Throw( new ObjectDisposedException( Resources.ScopeIsDisposed( scope ) ) );
+                    ExceptionThrower.Throw( new ObjectDisposedException( null, Resources.ScopeIsDisposed( scope ) ) );
 
                 if ( scope.ScopedInstancesByResolverId.TryGetValue( resolver.Id, out var result ) )
                     return result;

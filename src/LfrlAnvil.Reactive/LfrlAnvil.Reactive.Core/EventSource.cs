@@ -98,7 +98,7 @@ public abstract class EventSource<TEvent> : IEventSource<TEvent>
     protected void EnsureNotDisposed()
     {
         if ( IsDisposed )
-            throw new ObjectDisposedException( Resources.DisposedEventSource );
+            throw new ObjectDisposedException( null, Resources.DisposedEventSource );
     }
 
     internal void RemoveSubscriber(EventSubscriber<TEvent> subscriber)

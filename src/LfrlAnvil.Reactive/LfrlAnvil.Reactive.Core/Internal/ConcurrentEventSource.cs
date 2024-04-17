@@ -51,7 +51,7 @@ public class ConcurrentEventSource<TEvent, TSource> : IEventSource<TEvent>
     protected void EnsureNotDisposed()
     {
         if ( IsDisposed )
-            throw new ObjectDisposedException( Resources.DisposedEventSource );
+            throw new ObjectDisposedException( null, Resources.DisposedEventSource );
     }
 
     [Pure]

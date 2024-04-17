@@ -62,7 +62,7 @@ public sealed class DependencyContainer : IDisposableDependencyContainer
         using ( ReadLockSlim.TryEnter( locator.Resolvers.Lock, out var entered ) )
         {
             if ( ! entered || locator.InternalAttachedScope.IsDisposed )
-                ExceptionThrower.Throw( new ObjectDisposedException( Resources.ScopeIsDisposed( locator.InternalAttachedScope ) ) );
+                ExceptionThrower.Throw( new ObjectDisposedException( null, Resources.ScopeIsDisposed( locator.InternalAttachedScope ) ) );
 
             resolver = locator.Resolvers.TryGetResolver( dependencyType );
         }
@@ -77,7 +77,7 @@ public sealed class DependencyContainer : IDisposableDependencyContainer
         using ( WriteLockSlim.TryEnter( parentScope.Lock, out var entered ) )
         {
             if ( ! entered || parentScope.IsDisposed )
-                ExceptionThrower.Throw( new ObjectDisposedException( Resources.ScopeIsDisposed( parentScope ) ) );
+                ExceptionThrower.Throw( new ObjectDisposedException( null, Resources.ScopeIsDisposed( parentScope ) ) );
 
             var result = name is null ? new ChildDependencyScope( this, parentScope ) : _namedScopes.CreateScope( parentScope, name );
             parentScope.AddChildCore( result );
@@ -191,7 +191,7 @@ public sealed class DependencyContainer : IDisposableDependencyContainer
 
         using var @lock = UpgradeableReadLockSlim.TryEnter( locator.Resolvers.Lock, out var entered );
         if ( ! entered || locator.InternalAttachedScope.IsDisposed )
-            ExceptionThrower.Throw( new ObjectDisposedException( Resources.ScopeIsDisposed( locator.InternalAttachedScope ) ) );
+            ExceptionThrower.Throw( new ObjectDisposedException( null, Resources.ScopeIsDisposed( locator.InternalAttachedScope ) ) );
 
         var resolver = locator.Resolvers.TryGetResolver( dependencyType );
         if ( resolver is not null )

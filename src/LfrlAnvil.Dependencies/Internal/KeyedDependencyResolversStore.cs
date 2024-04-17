@@ -60,7 +60,7 @@ internal readonly struct KeyedDependencyResolversStore : IDisposable
         using ( ReadLockSlim.TryEnter( container.InternalRootScope.Lock, out var entered ) )
         {
             if ( ! entered || container.InternalRootScope.IsDisposed )
-                ExceptionThrower.Throw( new ObjectDisposedException( Resources.ScopeIsDisposed( container.InternalRootScope ) ) );
+                ExceptionThrower.Throw( new ObjectDisposedException( null, Resources.ScopeIsDisposed( container.InternalRootScope ) ) );
 
             if ( _cachesByKeyType.TryGetValue( typeof( TKey ), out var outCache ) )
             {
@@ -73,7 +73,7 @@ internal readonly struct KeyedDependencyResolversStore : IDisposable
         using ( WriteLockSlim.TryEnter( container.InternalRootScope.Lock, out var entered ) )
         {
             if ( ! entered || container.InternalRootScope.IsDisposed )
-                ExceptionThrower.Throw( new ObjectDisposedException( Resources.ScopeIsDisposed( container.InternalRootScope ) ) );
+                ExceptionThrower.Throw( new ObjectDisposedException( null, Resources.ScopeIsDisposed( container.InternalRootScope ) ) );
 
             if ( cache is null )
             {

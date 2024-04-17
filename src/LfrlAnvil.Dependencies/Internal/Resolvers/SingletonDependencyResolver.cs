@@ -34,7 +34,7 @@ internal sealed class SingletonDependencyResolver : DependencyResolver
         using ( ReadLockSlim.TryEnter( rootScope.Lock, out var entered ) )
         {
             if ( ! entered || rootScope.IsDisposed )
-                ExceptionThrower.Throw( new ObjectDisposedException( Resources.ScopeIsDisposed( rootScope ) ) );
+                ExceptionThrower.Throw( new ObjectDisposedException( null, Resources.ScopeIsDisposed( rootScope ) ) );
 
             if ( _instance is not null )
                 return _instance;
@@ -43,7 +43,7 @@ internal sealed class SingletonDependencyResolver : DependencyResolver
         using ( var @lock = UpgradeableReadLockSlim.TryEnter( rootScope.Lock, out var entered ) )
         {
             if ( ! entered || rootScope.IsDisposed )
-                ExceptionThrower.Throw( new ObjectDisposedException( Resources.ScopeIsDisposed( rootScope ) ) );
+                ExceptionThrower.Throw( new ObjectDisposedException( null, Resources.ScopeIsDisposed( rootScope ) ) );
 
             if ( _instance is not null )
                 return _instance;

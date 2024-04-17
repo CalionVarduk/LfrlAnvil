@@ -49,7 +49,7 @@ internal sealed class CycleTrackingSingletonDependencyResolver : CycleTrackingDe
         using ( ReadLockSlim.TryEnter( rootScope.Lock, out var entered ) )
         {
             if ( ! entered || rootScope.IsDisposed )
-                ExceptionThrower.Throw( new ObjectDisposedException( Resources.ScopeIsDisposed( rootScope ) ) );
+                ExceptionThrower.Throw( new ObjectDisposedException( null, Resources.ScopeIsDisposed( rootScope ) ) );
 
             if ( _instance is not null )
                 cached = _instance;
@@ -67,7 +67,7 @@ internal sealed class CycleTrackingSingletonDependencyResolver : CycleTrackingDe
 
             using var @lock = UpgradeableReadLockSlim.TryEnter( rootScope.Lock, out var entered );
             if ( ! entered || rootScope.IsDisposed )
-                ExceptionThrower.Throw( new ObjectDisposedException( Resources.ScopeIsDisposed( rootScope ) ) );
+                ExceptionThrower.Throw( new ObjectDisposedException( null, Resources.ScopeIsDisposed( rootScope ) ) );
 
             if ( _instance is not null )
                 return _instance;

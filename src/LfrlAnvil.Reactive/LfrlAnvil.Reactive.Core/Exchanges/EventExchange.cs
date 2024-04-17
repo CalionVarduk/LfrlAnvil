@@ -209,7 +209,7 @@ public sealed class EventExchange : IMutableEventExchange
     public IEventPublisher<TEvent> RegisterPublisher<TEvent>(IEventPublisher<TEvent> publisher)
     {
         if ( IsDisposed )
-            throw new ObjectDisposedException( Resources.DisposedEventExchange );
+            throw new ObjectDisposedException( null, Resources.DisposedEventExchange );
 
         if ( ! _publishers.TryAdd( typeof( TEvent ), publisher ) )
             throw new EventPublisherAlreadyExistsException( typeof( TEvent ) );

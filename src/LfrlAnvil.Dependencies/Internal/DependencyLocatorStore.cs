@@ -49,7 +49,7 @@ internal readonly struct DependencyLocatorStore : IDisposable
         using ( ReadLockSlim.TryEnter( Global.InternalAttachedScope.Lock, out var entered ) )
         {
             if ( ! entered || Global.InternalAttachedScope.IsDisposed )
-                ExceptionThrower.Throw( new ObjectDisposedException( Resources.ScopeIsDisposed( Global.InternalAttachedScope ) ) );
+                ExceptionThrower.Throw( new ObjectDisposedException( null, Resources.ScopeIsDisposed( Global.InternalAttachedScope ) ) );
 
             if ( _cachesByKeyType.TryGetValue( typeof( TKey ), out var outCache ) )
             {
@@ -62,7 +62,7 @@ internal readonly struct DependencyLocatorStore : IDisposable
         using ( WriteLockSlim.TryEnter( Global.InternalAttachedScope.Lock, out var entered ) )
         {
             if ( ! entered || Global.InternalAttachedScope.IsDisposed )
-                ExceptionThrower.Throw( new ObjectDisposedException( Resources.ScopeIsDisposed( Global.InternalAttachedScope ) ) );
+                ExceptionThrower.Throw( new ObjectDisposedException( null, Resources.ScopeIsDisposed( Global.InternalAttachedScope ) ) );
 
             if ( cache is null )
             {

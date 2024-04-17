@@ -26,7 +26,7 @@ internal sealed class ScopedDependencyResolver : DependencyResolver, IResolverFa
         using ( ReadLockSlim.TryEnter( scope.Lock, out var entered ) )
         {
             if ( ! entered || scope.IsDisposed )
-                ExceptionThrower.Throw( new ObjectDisposedException( Resources.ScopeIsDisposed( scope ) ) );
+                ExceptionThrower.Throw( new ObjectDisposedException( null, Resources.ScopeIsDisposed( scope ) ) );
 
             if ( scope.ScopedInstancesByResolverId.TryGetValue( Id, out var result ) )
                 return result;
@@ -35,7 +35,7 @@ internal sealed class ScopedDependencyResolver : DependencyResolver, IResolverFa
         using ( WriteLockSlim.TryEnter( scope.Lock, out var entered ) )
         {
             if ( ! entered || scope.IsDisposed )
-                ExceptionThrower.Throw( new ObjectDisposedException( Resources.ScopeIsDisposed( scope ) ) );
+                ExceptionThrower.Throw( new ObjectDisposedException( null, Resources.ScopeIsDisposed( scope ) ) );
 
             return this.CreateScopedInstance( Factory, scope, dependencyType );
         }
