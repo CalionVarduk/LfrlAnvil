@@ -36,6 +36,7 @@ public sealed class TimerTaskCollection<TKey> : IDisposable
     public Timestamp? FirstTimestamp => _listener?.FirstTimestamp;
     public Timestamp? LastTimestamp => _listener?.LastTimestamp;
     public long EventCount => _listener?.EventCount ?? 0;
+    public IReadOnlyCollection<TKey> TaskKeys => _taskContainersByKey.Keys;
 
     public void Dispose()
     {

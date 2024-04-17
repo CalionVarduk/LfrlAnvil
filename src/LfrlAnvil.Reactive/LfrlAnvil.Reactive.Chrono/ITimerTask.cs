@@ -10,8 +10,8 @@ public interface ITimerTask : IDisposable
     int MaxEnqueuedInvocations { get; }
     int MaxConcurrentInvocations { get; }
     Timestamp? NextInvocationTimestamp { get; }
-    Task InvokeAsync(long invocationId, Timestamp invocationTimestamp, Timestamp currentTimestamp, CancellationToken cancellationToken);
-    void OnCompleted(long invocationId, Duration elapsedTime, Exception? exception, bool isCancelled);
+    Task InvokeAsync(ReactiveTaskInvocationParams parameters, CancellationToken cancellationToken);
+    void OnCompleted(ReactiveTaskCompletionParams parameters);
 }
 
 public interface ITimerTask<out TKey> : ITimerTask

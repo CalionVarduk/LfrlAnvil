@@ -27,11 +27,6 @@ public abstract class TimerTask<TKey> : ITimerTask<TKey>
 
     public virtual void Dispose() { }
 
-    public abstract Task InvokeAsync(
-        long invocationId,
-        Timestamp invocationTimestamp,
-        Timestamp currentTimestamp,
-        CancellationToken cancellationToken);
-
-    public virtual void OnCompleted(long invocationId, Duration elapsedTime, Exception? exception, bool isCancelled) { }
+    public abstract Task InvokeAsync(ReactiveTaskInvocationParams parameters, CancellationToken cancellationToken);
+    public virtual void OnCompleted(ReactiveTaskCompletionParams parameters) { }
 }

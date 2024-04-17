@@ -55,7 +55,7 @@ internal sealed class TimerTaskContainer : IDisposable
             {
                 Assume.IsNotNull( _activeTasks );
                 if ( _activeTasks.Remove( t.Id, out var entry ) )
-                    FinishInvocation( entry.InvocationNo, entry.StartTimestamp, t.Exception, t.IsCanceled );
+                    FinishInvocation( entry.Invocation, entry.StartTimestamp, t.Exception, t.IsCanceled );
 
                 if ( _awaitingInvocations is null )
                     return;
@@ -156,48 +156,49 @@ internal sealed class TimerTaskContainer : IDisposable
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private void ActivateTask(Timestamp invocationTimestamp, Timestamp currentTimestamp)
+    private void ActivateTask(Timestamp originalTimestamp, Timestamp invocationTimestamp)
     {
         Assume.IsNotNull( _owner );
         Assume.IsNotNull( _activeTasks );
 
-        _firstInvocationTimestamp ??= invocationTimestamp;
-        _lastInvocationTimestamp = invocationTimestamp;
-        var invocationId = _totalInvocations++;
+        _firstInvocationTimestamp ??= originalTimestamp;
+        _lastInvocationTimestamp = originalTimestamp;
+        var parameters = new ReactiveTaskInvocationParams( _totalInvocations++, originalTimestamp, invocationTimestamp );
 
         Task task;
         var startTimestamp = Stopwatch.GetTimestamp();
         try
         {
-            task = Source.InvokeAsync( invocationId, invocationTimestamp, currentTimestamp, _owner.CancellationTokenSource.Token );
+            task = Source.InvokeAsync( parameters, _owner.CancellationTokenSource.Token );
             if ( task.Status == TaskStatus.Created )
                 task.Start( TaskScheduler.Default );
         }
         catch ( Exception exc )
         {
-            FinishInvocation( invocationId, startTimestamp, exc, false );
+            FinishInvocation( parameters, startTimestamp, exc, false );
             return;
         }
 
         if ( task.IsCompleted )
         {
-            FinishInvocation( invocationId, startTimestamp, null, false );
+            FinishInvocation( parameters, startTimestamp, null, false );
             return;
         }
 
-        _activeTasks[task.Id] = new TaskEntry( task, invocationId, startTimestamp );
+        _activeTasks[task.Id] = new TaskEntry( task, parameters, startTimestamp );
         _maxActiveTasks = Math.Max( _maxActiveTasks, _activeTasks.Count );
         task.ContinueWith( _onActiveTaskCompleted, TaskContinuationOptions.ExecuteSynchronously );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private void FinishInvocation(long invocationNo, long startTimestamp, Exception? exception, bool isCancelled)
+    private void FinishInvocation(ReactiveTaskInvocationParams invocation, long startTimestamp, Exception? exception, bool isCancelled)
     {
         Assume.IsNotNull( _activeTasks );
         var elapsedTime = new Duration( StopwatchTimestamp.GetTimeSpan( startTimestamp, Stopwatch.GetTimestamp() ) );
         _minElapsedTime = _minElapsedTime.Min( elapsedTime );
         _maxElapsedTime = _maxElapsedTime.Max( elapsedTime );
         _averageElapsedTime += (elapsedTime - _averageElapsedTime) / (_totalInvocations - _activeTasks.Count);
+        var parameters = new ReactiveTaskCompletionParams( invocation, elapsedTime, exception, isCancelled );
 
         if ( exception is not null )
             ++_failedInvocations;
@@ -207,7 +208,7 @@ internal sealed class TimerTaskContainer : IDisposable
 
         try
         {
-            Source.OnCompleted( invocationNo, elapsedTime, exception, isCancelled );
+            Source.OnCompleted( parameters );
         }
         catch
         {
@@ -217,5 +218,5 @@ internal sealed class TimerTaskContainer : IDisposable
         }
     }
 
-    private readonly record struct TaskEntry(Task Task, long InvocationNo, long StartTimestamp);
+    private readonly record struct TaskEntry(Task Task, ReactiveTaskInvocationParams Invocation, long StartTimestamp);
 }
