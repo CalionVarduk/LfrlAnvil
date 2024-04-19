@@ -5,17 +5,13 @@ using LfrlAnvil.Chrono;
 
 namespace LfrlAnvil.Reactive.Chrono;
 
-public interface ITimerTask : IDisposable
-{
-    int MaxEnqueuedInvocations { get; }
-    int MaxConcurrentInvocations { get; }
-    Timestamp? NextInvocationTimestamp { get; }
-    Task InvokeAsync(ReactiveTaskInvocationParams parameters, CancellationToken cancellationToken);
-    void OnCompleted(ReactiveTaskCompletionParams parameters);
-}
-
-public interface ITimerTask<out TKey> : ITimerTask
+public interface ITimerTask<TKey> : IDisposable
     where TKey : notnull
 {
     TKey Key { get; }
+    int MaxEnqueuedInvocations { get; }
+    int MaxConcurrentInvocations { get; }
+    Timestamp? NextInvocationTimestamp { get; }
+    Task InvokeAsync(TimerTaskCollection<TKey> source, ReactiveTaskInvocationParams parameters, CancellationToken cancellationToken);
+    void OnCompleted(TimerTaskCollection<TKey> source, ReactiveTaskCompletionParams parameters);
 }

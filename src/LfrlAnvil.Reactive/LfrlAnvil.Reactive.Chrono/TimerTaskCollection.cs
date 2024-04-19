@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Linq;
+using System.Threading;
 using LfrlAnvil.Chrono;
 using LfrlAnvil.Reactive.Chrono.Composites;
 using LfrlAnvil.Reactive.Chrono.Internal;
@@ -11,25 +12,35 @@ namespace LfrlAnvil.Reactive.Chrono;
 public sealed class TimerTaskCollection<TKey> : IDisposable
     where TKey : notnull
 {
-    private readonly IEventSubscriber? _subscriber;
-    private readonly TimerTaskCollectionListener? _listener;
-    private readonly Dictionary<TKey, TimerTaskContainer> _taskContainersByKey;
+    internal readonly CancellationTokenSource CancellationTokenSource;
+    internal IEventSubscriber? Subscriber;
+    private readonly TimerTaskCollectionListener<TKey>? _listener;
+    private readonly Dictionary<TKey, TimerTaskContainer<TKey>> _taskContainersByKey;
 
     internal TimerTaskCollection(IEventStream<WithInterval<long>> stream, IEnumerable<ITimerTask<TKey>> tasks)
     {
-        var listener = new TimerTaskCollectionListener( tasks );
-        if ( listener.ContainsTasks )
-        {
-            _listener = listener;
-            _taskContainersByKey = listener.TaskContainers
-                .ToDictionary( static c => ReinterpretCast.To<ITimerTask<TKey>>( c.Source ).Key );
+        CancellationTokenSource = new CancellationTokenSource();
+        var taskContainers = tasks.Select( t => new TimerTaskContainer<TKey>( this, t ) ).ToArray();
 
-            _subscriber = stream.Listen( listener );
+        if ( taskContainers.Length == 0 )
+        {
+            _taskContainersByKey = new Dictionary<TKey, TimerTaskContainer<TKey>>();
+            CancellationTokenSource.Dispose();
         }
         else
         {
-            _taskContainersByKey = new Dictionary<TKey, TimerTaskContainer>();
-            listener.OnDispose( DisposalSource.Subscriber );
+            _listener = new TimerTaskCollectionListener<TKey>( this, taskContainers );
+            try
+            {
+                _taskContainersByKey = taskContainers.ToDictionary( static c => c.Key );
+                Subscriber = stream.Listen( _listener );
+            }
+            catch
+            {
+                _listener.OnDispose( DisposalSource.Subscriber );
+                _listener = null;
+                throw;
+            }
         }
     }
 
@@ -40,11 +51,11 @@ public sealed class TimerTaskCollection<TKey> : IDisposable
 
     public void Dispose()
     {
-        _subscriber?.Dispose();
+        Subscriber?.Dispose();
     }
 
     [Pure]
-    public TimerTaskStateSnapshot? TryGetTaskState(TKey key)
+    public TimerTaskStateSnapshot<TKey>? TryGetTaskState(TKey key)
     {
         return _taskContainersByKey.GetValueOrDefault( key )?.CreateStateSnapshot();
     }

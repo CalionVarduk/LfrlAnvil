@@ -16,7 +16,7 @@ public class ReactiveTaskParamsTests : TestsBase
             new ReactiveTaskInvocationParams( invocationId, originalTimestamp, invocationTimestamp ),
             elapsedTime,
             Exception: null,
-            IsCancelled: false );
+            CancellationReason: null );
 
         using ( new AssertionScope() )
         {
@@ -25,7 +25,7 @@ public class ReactiveTaskParamsTests : TestsBase
             sut.Invocation.InvocationTimestamp.Should().Be( invocationTimestamp );
             sut.ElapsedTime.Should().Be( elapsedTime );
             sut.Exception.Should().BeNull();
-            sut.IsCancelled.Should().BeFalse();
+            sut.CancellationReason.Should().BeNull();
             sut.IsFailed.Should().BeFalse();
             sut.IsSuccessful.Should().BeTrue();
         }
@@ -44,7 +44,7 @@ public class ReactiveTaskParamsTests : TestsBase
             new ReactiveTaskInvocationParams( invocationId, originalTimestamp, invocationTimestamp ),
             elapsedTime,
             Exception: exception,
-            IsCancelled: false );
+            CancellationReason: null );
 
         using ( new AssertionScope() )
         {
@@ -53,14 +53,17 @@ public class ReactiveTaskParamsTests : TestsBase
             sut.Invocation.InvocationTimestamp.Should().Be( invocationTimestamp );
             sut.ElapsedTime.Should().Be( elapsedTime );
             sut.Exception.Should().BeSameAs( exception );
-            sut.IsCancelled.Should().BeFalse();
+            sut.CancellationReason.Should().BeNull();
             sut.IsFailed.Should().BeTrue();
             sut.IsSuccessful.Should().BeFalse();
         }
     }
 
-    [Fact]
-    public void CompletionParams_Cancelled()
+    [Theory]
+    [InlineData( TaskCancellationReason.CancellationRequested )]
+    [InlineData( TaskCancellationReason.MaxQueueSizeLimit )]
+    [InlineData( TaskCancellationReason.TaskDisposed )]
+    public void CompletionParams_Cancelled(TaskCancellationReason reason)
     {
         var invocationId = Fixture.Create<long>();
         var originalTimestamp = new Timestamp( 123 );
@@ -71,7 +74,7 @@ public class ReactiveTaskParamsTests : TestsBase
             new ReactiveTaskInvocationParams( invocationId, originalTimestamp, invocationTimestamp ),
             elapsedTime,
             Exception: null,
-            IsCancelled: true );
+            CancellationReason: reason );
 
         using ( new AssertionScope() )
         {
@@ -80,7 +83,7 @@ public class ReactiveTaskParamsTests : TestsBase
             sut.Invocation.InvocationTimestamp.Should().Be( invocationTimestamp );
             sut.ElapsedTime.Should().Be( elapsedTime );
             sut.Exception.Should().BeNull();
-            sut.IsCancelled.Should().BeTrue();
+            sut.CancellationReason.Should().Be( reason );
             sut.IsFailed.Should().BeFalse();
             sut.IsSuccessful.Should().BeFalse();
         }

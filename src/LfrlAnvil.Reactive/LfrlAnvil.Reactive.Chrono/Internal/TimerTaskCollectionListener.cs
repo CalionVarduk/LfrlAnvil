@@ -1,31 +1,28 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
 using LfrlAnvil.Async;
 using LfrlAnvil.Chrono;
 using LfrlAnvil.Reactive.Chrono.Composites;
 
 namespace LfrlAnvil.Reactive.Chrono.Internal;
 
-internal sealed class TimerTaskCollectionListener : EventListener<WithInterval<long>>
+internal sealed class TimerTaskCollectionListener<TKey> : EventListener<WithInterval<long>>
+    where TKey : notnull
 {
-    internal readonly CancellationTokenSource CancellationTokenSource;
-    internal TimerTaskContainer[] TaskContainers;
+    private TimerTaskContainer<TKey>[] _taskContainers;
+    private TimerTaskCollection<TKey>? _owner;
     private Timestamp? _firstTimestamp;
     private Timestamp? _lastTimestamp;
     private long _eventCount;
 
-    internal TimerTaskCollectionListener(IEnumerable<ITimerTask> tasks)
+    internal TimerTaskCollectionListener(TimerTaskCollection<TKey> owner, TimerTaskContainer<TKey>[] taskContainers)
     {
+        Assume.IsNotEmpty( taskContainers );
         _firstTimestamp = null;
         _lastTimestamp = null;
         _eventCount = 0;
-        CancellationTokenSource = new CancellationTokenSource();
-        TaskContainers = tasks.Select( t => new TimerTaskContainer( this, t ) ).ToArray();
+        _owner = owner;
+        _taskContainers = taskContainers;
     }
-
-    internal bool ContainsTasks => TaskContainers.Length > 0;
 
     internal Timestamp? FirstTimestamp
     {
@@ -58,14 +55,14 @@ internal sealed class TimerTaskCollectionListener : EventListener<WithInterval<l
     {
         using ( ExclusiveLock.Enter( this ) )
         {
-            if ( TaskContainers.Length == 0 )
+            if ( _owner is null )
                 return;
 
             _firstTimestamp ??= @event.Timestamp;
             _lastTimestamp = @event.Timestamp;
             ++_eventCount;
 
-            foreach ( var container in TaskContainers )
+            foreach ( var container in _taskContainers )
                 container.EnqueueInvocation( @event.Timestamp );
         }
     }
@@ -74,13 +71,43 @@ internal sealed class TimerTaskCollectionListener : EventListener<WithInterval<l
     {
         using ( ExclusiveLock.Enter( this ) )
         {
-            foreach ( var container in TaskContainers )
-                container.Dispose();
+            if ( _owner is null )
+                return;
 
-            CancellationTokenSource.Cancel();
-            CancellationTokenSource.Dispose();
+            var errors = Chain<Exception>.Empty;
+            var owner = _owner;
+            _owner = null;
+            owner.Subscriber = null;
 
-            TaskContainers = Array.Empty<TimerTaskContainer>();
+            foreach ( var container in _taskContainers )
+            {
+                try
+                {
+                    container.Dispose();
+                }
+                catch ( Exception exc )
+                {
+                    errors = errors.Extend( exc );
+                }
+            }
+
+            try
+            {
+                owner.CancellationTokenSource.Cancel();
+            }
+            catch ( Exception exc )
+            {
+                errors = errors.Extend( exc );
+            }
+            finally
+            {
+                owner.CancellationTokenSource.Dispose();
+            }
+
+            _taskContainers = Array.Empty<TimerTaskContainer<TKey>>();
+
+            if ( errors.Count > 0 )
+                throw new AggregateException( errors );
         }
     }
 }

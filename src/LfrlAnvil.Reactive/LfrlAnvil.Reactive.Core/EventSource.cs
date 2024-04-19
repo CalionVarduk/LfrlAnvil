@@ -38,9 +38,6 @@ public abstract class EventSource<TEvent> : IEventSource<TEvent>
             for ( var i = 0; i < count; ++i )
             {
                 var subscriber = subscribers[i];
-                if ( subscriber.IsDisposed )
-                    continue;
-
                 if ( subscriber.MarkAsDisposed() )
                     subscriber.Listener.OnDispose( DisposalSource.EventSource );
             }
@@ -128,14 +125,18 @@ public abstract class EventSource<TEvent> : IEventSource<TEvent>
             return subscriber;
         }
 
+        _subscribers.Add( subscriber );
         if ( IsDisposed )
         {
-            subscriber.MarkAsDisposed();
-            subscriber.Listener.OnDispose( DisposalSource.EventSource );
+            if ( subscriber.MarkAsDisposed() )
+            {
+                RemoveSubscriber( subscriber );
+                subscriber.Listener.OnDispose( DisposalSource.EventSource );
+            }
+
             return subscriber;
         }
 
-        _subscribers.Add( subscriber );
         OnSubscriberAdded( subscriber, subscriber.Listener );
         return subscriber;
     }

@@ -8,11 +8,11 @@ public readonly record struct ReactiveTaskCompletionParams(
     ReactiveTaskInvocationParams Invocation,
     Duration ElapsedTime,
     Exception? Exception,
-    bool IsCancelled
+    TaskCancellationReason? CancellationReason
 )
 {
     [MemberNotNullWhen( true, nameof( Exception ) )]
     public bool IsFailed => Exception is not null;
 
-    public bool IsSuccessful => ! IsFailed && ! IsCancelled;
+    public bool IsSuccessful => ! IsFailed && CancellationReason is null;
 }

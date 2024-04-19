@@ -27,6 +27,10 @@ public abstract class TimerTask<TKey> : ITimerTask<TKey>
 
     public virtual void Dispose() { }
 
-    public abstract Task InvokeAsync(ReactiveTaskInvocationParams parameters, CancellationToken cancellationToken);
-    public virtual void OnCompleted(ReactiveTaskCompletionParams parameters) { }
+    public abstract Task InvokeAsync(
+        TimerTaskCollection<TKey> source,
+        ReactiveTaskInvocationParams parameters,
+        CancellationToken cancellationToken);
+
+    public virtual void OnCompleted(TimerTaskCollection<TKey> source, ReactiveTaskCompletionParams parameters) { }
 }
