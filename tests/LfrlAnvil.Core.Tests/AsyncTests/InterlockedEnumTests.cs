@@ -5,7 +5,7 @@ namespace LfrlAnvil.Tests.AsyncTests;
 public class InterlockedEnumTests : TestsBase
 {
     [Fact]
-    public void Default_ShouldBeFalse()
+    public void Default_ShouldBeDefaultEnum()
     {
         var sut = default( InterlockedEnum<Foo> );
         sut.Value.Should().Be( Foo.A );
