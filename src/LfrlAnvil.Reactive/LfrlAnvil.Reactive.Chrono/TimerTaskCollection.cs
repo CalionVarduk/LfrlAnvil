@@ -55,7 +55,7 @@ public sealed class TimerTaskCollection<TKey> : IDisposable
     }
 
     [Pure]
-    public TimerTaskStateSnapshot<TKey>? TryGetTaskState(TKey key)
+    public ReactiveTaskSnapshot<ITimerTask<TKey>>? TryGetTaskSnapshot(TKey key)
     {
         return _taskContainersByKey.GetValueOrDefault( key )?.CreateStateSnapshot();
     }

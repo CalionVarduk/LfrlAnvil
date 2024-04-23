@@ -2,11 +2,12 @@
 
 namespace LfrlAnvil.Reactive.Chrono;
 
-public sealed record TimerTaskStateSnapshot<TKey>(
-    ITimerTask<TKey> Task,
+public sealed record ReactiveTaskSnapshot<TTask>(
+    TTask Task,
     Timestamp? FirstInvocationTimestamp,
     Timestamp? LastInvocationTimestamp,
     long TotalInvocations,
+    long ActiveInvocations,
     long CompletedInvocations,
     long DelayedInvocations,
     long FailedInvocations,
@@ -19,7 +20,7 @@ public sealed record TimerTaskStateSnapshot<TKey>(
     Duration MaxElapsedTime,
     FloatingDuration AverageElapsedTime
 )
-    where TKey : notnull
+    where TTask : notnull
 {
-    public long SkippedInvocations => TotalInvocations - CompletedInvocations - QueuedInvocations - ActiveTasks;
+    public long SkippedInvocations => TotalInvocations - ActiveInvocations - CompletedInvocations - QueuedInvocations - ActiveTasks;
 }

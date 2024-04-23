@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -33,7 +32,7 @@ public class TimerTaskCollectionTests : TestsBase
     [Fact]
     public void RegisterTasks_ShouldReturnActiveCollection_WhenTasksAreNotEmpty()
     {
-        var tasks = new[] { TimerTask.CreateCompleted( "foo" ) };
+        var tasks = new[] { new TimerTask( "foo" ) };
         var source = new EventPublisher<WithInterval<long>>();
 
         var result = source.RegisterTasks( tasks );
@@ -45,14 +44,14 @@ public class TimerTaskCollectionTests : TestsBase
             result.LastTimestamp.Should().BeNull();
             result.EventCount.Should().Be( 0 );
             result.TaskKeys.Should().BeSequentiallyEqualTo( "foo" );
-            AssertTaskStateSnapshot( result.TryGetTaskState( "foo" ), tasks[0] );
+            AssertTaskSnapshot( result.TryGetTaskSnapshot( "foo" ), tasks[0] );
         }
     }
 
     [Fact]
     public void RegisterTasks_ShouldThrow_WhenSomeTasksShareTheSameKey()
     {
-        var tasks = new[] { TimerTask.CreateCompleted( "foo" ), TimerTask.CreateCompleted( "foo" ) };
+        var tasks = new[] { new TimerTask( "foo" ), new TimerTask( "foo" ) };
         var source = new EventPublisher<WithInterval<long>>();
 
         var action = Lambda.Of( () => source.RegisterTasks( tasks ) );
@@ -68,7 +67,7 @@ public class TimerTaskCollectionTests : TestsBase
     [Fact]
     public void RegisterTasks_ShouldDisposeAllTasks_WhenSourceIsDisposed()
     {
-        var tasks = new[] { TimerTask.CreateCompleted( "foo" ) };
+        var tasks = new[] { new TimerTask( "foo" ) };
         var source = new EventPublisher<WithInterval<long>>();
         source.Dispose();
 
@@ -91,8 +90,8 @@ public class TimerTaskCollectionTests : TestsBase
         var timestamp2 = timestamp1 + interval;
         var timestamp3 = timestamp2 + interval;
 
-        var fooTask = TimerTask.CreateCompleted( "foo" );
-        var barTask = TimerTask.CreateCompleted( "bar" );
+        var fooTask = new TimerTask( "foo" );
+        var barTask = new TimerTask( "bar" );
         var source = new EventPublisher<WithInterval<long>>();
         var sut = source.RegisterTasks( new[] { fooTask, barTask } );
 
@@ -128,16 +127,16 @@ public class TimerTaskCollectionTests : TestsBase
                     new TaskCompletion( new ReactiveTaskInvocationParams( 1, timestamp2, timestamp2 ), null, null ),
                     new TaskCompletion( new ReactiveTaskInvocationParams( 2, timestamp3, timestamp3 ), null, null ) );
 
-            AssertTaskStateSnapshot(
-                sut.TryGetTaskState( "foo" ),
+            AssertTaskSnapshot(
+                sut.TryGetTaskSnapshot( "foo" ),
                 fooTask,
                 firstInvocationTimestamp: timestamp1,
                 lastInvocationTimestamp: timestamp3,
                 totalInvocations: 3,
                 completedInvocations: 3 );
 
-            AssertTaskStateSnapshot(
-                sut.TryGetTaskState( "bar" ),
+            AssertTaskSnapshot(
+                sut.TryGetTaskSnapshot( "bar" ),
                 barTask,
                 firstInvocationTimestamp: timestamp1,
                 lastInvocationTimestamp: timestamp3,
@@ -152,7 +151,7 @@ public class TimerTaskCollectionTests : TestsBase
     public void TaskWithNextInvocationTimestamp_ShouldBeInvoked_WhenEventTimestampIsLessThanOrEqualToIt(long nextInvocationTicks)
     {
         var timestamp = new Timestamp( 123 );
-        var fooTask = TimerTask.CreateCompleted( "foo", _ => new Timestamp( nextInvocationTicks ) );
+        var fooTask = new TimerTask( "foo", nextInvocationTimestamp: new Timestamp( nextInvocationTicks ) );
         var source = new EventPublisher<WithInterval<long>>();
         var sut = source.RegisterTasks( new[] { fooTask } );
 
@@ -168,8 +167,8 @@ public class TimerTaskCollectionTests : TestsBase
             fooTask.Completions.Should()
                 .BeSequentiallyEqualTo( new TaskCompletion( new ReactiveTaskInvocationParams( 0, timestamp, timestamp ), null, null ) );
 
-            AssertTaskStateSnapshot(
-                sut.TryGetTaskState( "foo" ),
+            AssertTaskSnapshot(
+                sut.TryGetTaskSnapshot( "foo" ),
                 fooTask,
                 firstInvocationTimestamp: timestamp,
                 lastInvocationTimestamp: timestamp,
@@ -182,7 +181,7 @@ public class TimerTaskCollectionTests : TestsBase
     public void TaskWithNextInvocationTimestamp_ShouldNotBeInvoked_WhenEventTimestampIsGreaterThanIt()
     {
         var timestamp = new Timestamp( 123 );
-        var fooTask = TimerTask.CreateCompleted( "foo", _ => timestamp + Duration.FromTicks( 1 ) );
+        var fooTask = new TimerTask( "foo", nextInvocationTimestamp: timestamp + Duration.FromTicks( 1 ) );
         var source = new EventPublisher<WithInterval<long>>();
         var sut = source.RegisterTasks( new[] { fooTask } );
 
@@ -194,7 +193,7 @@ public class TimerTaskCollectionTests : TestsBase
             sut.LastTimestamp.Should().Be( timestamp );
             sut.EventCount.Should().Be( 1 );
             fooTask.Invocations.Should().BeEmpty();
-            AssertTaskStateSnapshot( sut.TryGetTaskState( "foo" ), fooTask );
+            AssertTaskSnapshot( sut.TryGetTaskSnapshot( "foo" ), fooTask );
         }
     }
 
@@ -206,24 +205,23 @@ public class TimerTaskCollectionTests : TestsBase
         var timestamp2 = timestamp1 + interval;
         var timestamp3 = timestamp2 + interval;
 
-        var taskIndex = 0;
         var taskSources = new[] { new TaskCompletionSource(), new TaskCompletionSource(), new TaskCompletionSource() };
-        var fooTask = TimerTask.CreateFromSource( "foo", _ => taskSources[taskIndex++], maxConcurrentInvocations: 3 );
+        var fooTask = new TimerTask( "foo", onInvoke: (_, _, p, _) => taskSources[p.InvocationId].Task, maxConcurrentInvocations: 3 );
         var source = new EventPublisher<WithInterval<long>>();
         var sut = source.RegisterTasks( new[] { fooTask } );
 
         PublishEvents( source, timestamp1 );
-        var snapshot1 = sut.TryGetTaskState( "foo" );
+        var snapshot1 = sut.TryGetTaskSnapshot( "foo" );
         PublishEvents( source, timestamp2 );
-        var snapshot2 = sut.TryGetTaskState( "foo" );
+        var snapshot2 = sut.TryGetTaskSnapshot( "foo" );
         taskSources[1].SetResult();
-        var snapshot3 = sut.TryGetTaskState( "foo" );
+        var snapshot3 = sut.TryGetTaskSnapshot( "foo" );
         PublishEvents( source, timestamp3 );
-        var snapshot4 = sut.TryGetTaskState( "foo" );
+        var snapshot4 = sut.TryGetTaskSnapshot( "foo" );
         taskSources[0].SetResult();
-        var snapshot5 = sut.TryGetTaskState( "foo" );
+        var snapshot5 = sut.TryGetTaskSnapshot( "foo" );
         taskSources[2].SetResult();
-        var snapshot6 = sut.TryGetTaskState( "foo" );
+        var snapshot6 = sut.TryGetTaskSnapshot( "foo" );
 
         using ( new AssertionScope() )
         {
@@ -243,7 +241,7 @@ public class TimerTaskCollectionTests : TestsBase
                     new TaskCompletion( new ReactiveTaskInvocationParams( 0, timestamp1, timestamp1 ), null, null ),
                     new TaskCompletion( new ReactiveTaskInvocationParams( 2, timestamp3, timestamp3 ), null, null ) );
 
-            AssertTaskStateSnapshot(
+            AssertTaskSnapshot(
                 snapshot1,
                 fooTask,
                 firstInvocationTimestamp: timestamp1,
@@ -252,7 +250,7 @@ public class TimerTaskCollectionTests : TestsBase
                 activeTasks: 1,
                 maxActiveTasks: 1 );
 
-            AssertTaskStateSnapshot(
+            AssertTaskSnapshot(
                 snapshot2,
                 fooTask,
                 firstInvocationTimestamp: timestamp1,
@@ -261,7 +259,7 @@ public class TimerTaskCollectionTests : TestsBase
                 activeTasks: 2,
                 maxActiveTasks: 2 );
 
-            AssertTaskStateSnapshot(
+            AssertTaskSnapshot(
                 snapshot3,
                 fooTask,
                 firstInvocationTimestamp: timestamp1,
@@ -271,7 +269,7 @@ public class TimerTaskCollectionTests : TestsBase
                 activeTasks: 1,
                 maxActiveTasks: 2 );
 
-            AssertTaskStateSnapshot(
+            AssertTaskSnapshot(
                 snapshot4,
                 fooTask,
                 firstInvocationTimestamp: timestamp1,
@@ -281,7 +279,7 @@ public class TimerTaskCollectionTests : TestsBase
                 activeTasks: 2,
                 maxActiveTasks: 2 );
 
-            AssertTaskStateSnapshot(
+            AssertTaskSnapshot(
                 snapshot5,
                 fooTask,
                 firstInvocationTimestamp: timestamp1,
@@ -291,7 +289,7 @@ public class TimerTaskCollectionTests : TestsBase
                 activeTasks: 1,
                 maxActiveTasks: 2 );
 
-            AssertTaskStateSnapshot(
+            AssertTaskSnapshot(
                 snapshot6,
                 fooTask,
                 firstInvocationTimestamp: timestamp1,
@@ -311,15 +309,14 @@ public class TimerTaskCollectionTests : TestsBase
         var timestamp3 = timestamp2 + interval;
         var timestamp4 = timestamp3 + interval;
 
-        var taskIndex = 0;
         var taskSources = new[]
         {
             new TaskCompletionSource(), new TaskCompletionSource(), new TaskCompletionSource(), new TaskCompletionSource()
         };
 
-        var fooTask = TimerTask.CreateFromSource(
+        var fooTask = new TimerTask(
             "foo",
-            _ => taskSources[taskIndex++],
+            onInvoke: (_, _, p, _) => taskSources[p.InvocationId].Task,
             maxConcurrentInvocations: 2,
             maxEnqueuedInvocations: 2 );
 
@@ -327,21 +324,21 @@ public class TimerTaskCollectionTests : TestsBase
         var sut = source.RegisterTasks( new[] { fooTask } );
 
         PublishEvents( source, timestamp1 );
-        var snapshot1 = sut.TryGetTaskState( "foo" );
+        var snapshot1 = sut.TryGetTaskSnapshot( "foo" );
         PublishEvents( source, timestamp2 );
-        var snapshot2 = sut.TryGetTaskState( "foo" );
+        var snapshot2 = sut.TryGetTaskSnapshot( "foo" );
         PublishEvents( source, timestamp3 );
-        var snapshot3 = sut.TryGetTaskState( "foo" );
+        var snapshot3 = sut.TryGetTaskSnapshot( "foo" );
         PublishEvents( source, timestamp4 );
-        var snapshot4 = sut.TryGetTaskState( "foo" );
+        var snapshot4 = sut.TryGetTaskSnapshot( "foo" );
         taskSources[1].SetResult();
-        var snapshot5 = sut.TryGetTaskState( "foo" );
+        var snapshot5 = sut.TryGetTaskSnapshot( "foo" );
         taskSources[2].SetResult();
-        var snapshot6 = sut.TryGetTaskState( "foo" );
+        var snapshot6 = sut.TryGetTaskSnapshot( "foo" );
         taskSources[0].SetResult();
-        var snapshot7 = sut.TryGetTaskState( "foo" );
+        var snapshot7 = sut.TryGetTaskSnapshot( "foo" );
         taskSources[3].SetResult();
-        var snapshot8 = sut.TryGetTaskState( "foo" );
+        var snapshot8 = sut.TryGetTaskSnapshot( "foo" );
 
         using ( new AssertionScope() )
         {
@@ -363,7 +360,12 @@ public class TimerTaskCollectionTests : TestsBase
                     new TaskCompletion( new ReactiveTaskInvocationParams( 0, timestamp1, timestamp1 ), null, null ),
                     new TaskCompletion( new ReactiveTaskInvocationParams( 3, timestamp4, timestamp4 ), null, null ) );
 
-            AssertTaskStateSnapshot(
+            fooTask.Enqueues.Should()
+                .BeSequentiallyEqualTo(
+                    new TaskEnqueue( new ReactiveTaskInvocationParams( 2, timestamp3, timestamp3 ), 0 ),
+                    new TaskEnqueue( new ReactiveTaskInvocationParams( 3, timestamp4, timestamp4 ), 1 ) );
+
+            AssertTaskSnapshot(
                 snapshot1,
                 fooTask,
                 firstInvocationTimestamp: timestamp1,
@@ -372,7 +374,7 @@ public class TimerTaskCollectionTests : TestsBase
                 activeTasks: 1,
                 maxActiveTasks: 1 );
 
-            AssertTaskStateSnapshot(
+            AssertTaskSnapshot(
                 snapshot2,
                 fooTask,
                 firstInvocationTimestamp: timestamp1,
@@ -381,7 +383,7 @@ public class TimerTaskCollectionTests : TestsBase
                 activeTasks: 2,
                 maxActiveTasks: 2 );
 
-            AssertTaskStateSnapshot(
+            AssertTaskSnapshot(
                 snapshot3,
                 fooTask,
                 firstInvocationTimestamp: timestamp1,
@@ -392,7 +394,7 @@ public class TimerTaskCollectionTests : TestsBase
                 queuedInvocations: 1,
                 maxQueuedInvocations: 1 );
 
-            AssertTaskStateSnapshot(
+            AssertTaskSnapshot(
                 snapshot4,
                 fooTask,
                 firstInvocationTimestamp: timestamp1,
@@ -403,7 +405,7 @@ public class TimerTaskCollectionTests : TestsBase
                 queuedInvocations: 2,
                 maxQueuedInvocations: 2 );
 
-            AssertTaskStateSnapshot(
+            AssertTaskSnapshot(
                 snapshot5,
                 fooTask,
                 firstInvocationTimestamp: timestamp1,
@@ -416,7 +418,7 @@ public class TimerTaskCollectionTests : TestsBase
                 maxQueuedInvocations: 2,
                 delayedInvocations: 1 );
 
-            AssertTaskStateSnapshot(
+            AssertTaskSnapshot(
                 snapshot6,
                 fooTask,
                 firstInvocationTimestamp: timestamp1,
@@ -428,7 +430,7 @@ public class TimerTaskCollectionTests : TestsBase
                 maxQueuedInvocations: 2,
                 delayedInvocations: 2 );
 
-            AssertTaskStateSnapshot(
+            AssertTaskSnapshot(
                 snapshot7,
                 fooTask,
                 firstInvocationTimestamp: timestamp1,
@@ -440,7 +442,7 @@ public class TimerTaskCollectionTests : TestsBase
                 maxQueuedInvocations: 2,
                 delayedInvocations: 2 );
 
-            AssertTaskStateSnapshot(
+            AssertTaskSnapshot(
                 snapshot8,
                 fooTask,
                 firstInvocationTimestamp: timestamp1,
@@ -461,27 +463,21 @@ public class TimerTaskCollectionTests : TestsBase
         var timestamp2 = timestamp1 + interval;
         var timestamp3 = timestamp2 + interval;
 
-        var taskIndex = 0;
         var taskSources = new[] { new TaskCompletionSource(), new TaskCompletionSource(), new TaskCompletionSource() };
-
-        var fooTask = TimerTask.CreateFromSource(
-            "foo",
-            _ => taskSources[taskIndex++],
-            maxConcurrentInvocations: 2 );
-
+        var fooTask = new TimerTask( "foo", onInvoke: (_, _, p, _) => taskSources[p.InvocationId].Task, maxConcurrentInvocations: 2 );
         var source = new EventPublisher<WithInterval<long>>();
         var sut = source.RegisterTasks( new[] { fooTask } );
 
         PublishEvents( source, timestamp1 );
-        var snapshot1 = sut.TryGetTaskState( "foo" );
+        var snapshot1 = sut.TryGetTaskSnapshot( "foo" );
         PublishEvents( source, timestamp2 );
-        var snapshot2 = sut.TryGetTaskState( "foo" );
+        var snapshot2 = sut.TryGetTaskSnapshot( "foo" );
         PublishEvents( source, timestamp3 );
-        var snapshot3 = sut.TryGetTaskState( "foo" );
+        var snapshot3 = sut.TryGetTaskSnapshot( "foo" );
         taskSources[0].SetResult();
-        var snapshot4 = sut.TryGetTaskState( "foo" );
+        var snapshot4 = sut.TryGetTaskSnapshot( "foo" );
         taskSources[1].SetResult();
-        var snapshot5 = sut.TryGetTaskState( "foo" );
+        var snapshot5 = sut.TryGetTaskSnapshot( "foo" );
 
         using ( new AssertionScope() )
         {
@@ -503,7 +499,7 @@ public class TimerTaskCollectionTests : TestsBase
                     new TaskCompletion( new ReactiveTaskInvocationParams( 0, timestamp1, timestamp1 ), null, null ),
                     new TaskCompletion( new ReactiveTaskInvocationParams( 1, timestamp2, timestamp2 ), null, null ) );
 
-            AssertTaskStateSnapshot(
+            AssertTaskSnapshot(
                 snapshot1,
                 fooTask,
                 firstInvocationTimestamp: timestamp1,
@@ -512,7 +508,7 @@ public class TimerTaskCollectionTests : TestsBase
                 activeTasks: 1,
                 maxActiveTasks: 1 );
 
-            AssertTaskStateSnapshot(
+            AssertTaskSnapshot(
                 snapshot2,
                 fooTask,
                 firstInvocationTimestamp: timestamp1,
@@ -521,7 +517,7 @@ public class TimerTaskCollectionTests : TestsBase
                 activeTasks: 2,
                 maxActiveTasks: 2 );
 
-            AssertTaskStateSnapshot(
+            AssertTaskSnapshot(
                 snapshot3,
                 fooTask,
                 firstInvocationTimestamp: timestamp1,
@@ -531,7 +527,7 @@ public class TimerTaskCollectionTests : TestsBase
                 maxActiveTasks: 2,
                 skippedInvocations: 1 );
 
-            AssertTaskStateSnapshot(
+            AssertTaskSnapshot(
                 snapshot4,
                 fooTask,
                 firstInvocationTimestamp: timestamp1,
@@ -542,7 +538,7 @@ public class TimerTaskCollectionTests : TestsBase
                 maxActiveTasks: 2,
                 skippedInvocations: 1 );
 
-            AssertTaskStateSnapshot(
+            AssertTaskSnapshot(
                 snapshot5,
                 fooTask,
                 firstInvocationTimestamp: timestamp1,
@@ -565,29 +561,24 @@ public class TimerTaskCollectionTests : TestsBase
 
         var taskIndex = 0;
         var taskSources = new[] { new TaskCompletionSource(), new TaskCompletionSource(), new TaskCompletionSource() };
-
-        var fooTask = TimerTask.CreateFromSource(
-            "foo",
-            _ => taskSources[taskIndex++],
-            maxEnqueuedInvocations: 2 );
-
+        var fooTask = new TimerTask( "foo", onInvoke: (_, _, _, _) => taskSources[taskIndex++].Task, maxEnqueuedInvocations: 2 );
         var source = new EventPublisher<WithInterval<long>>();
         var sut = source.RegisterTasks( new[] { fooTask } );
 
         PublishEvents( source, timestamp1 );
-        var snapshot1 = sut.TryGetTaskState( "foo" );
+        var snapshot1 = sut.TryGetTaskSnapshot( "foo" );
         PublishEvents( source, timestamp2 );
-        var snapshot2 = sut.TryGetTaskState( "foo" );
+        var snapshot2 = sut.TryGetTaskSnapshot( "foo" );
         PublishEvents( source, timestamp3 );
-        var snapshot3 = sut.TryGetTaskState( "foo" );
+        var snapshot3 = sut.TryGetTaskSnapshot( "foo" );
         PublishEvents( source, timestamp4 );
-        var snapshot4 = sut.TryGetTaskState( "foo" );
+        var snapshot4 = sut.TryGetTaskSnapshot( "foo" );
         taskSources[0].SetResult();
-        var snapshot5 = sut.TryGetTaskState( "foo" );
+        var snapshot5 = sut.TryGetTaskSnapshot( "foo" );
         taskSources[1].SetResult();
-        var snapshot6 = sut.TryGetTaskState( "foo" );
+        var snapshot6 = sut.TryGetTaskSnapshot( "foo" );
         taskSources[2].SetResult();
-        var snapshot7 = sut.TryGetTaskState( "foo" );
+        var snapshot7 = sut.TryGetTaskSnapshot( "foo" );
 
         using ( new AssertionScope() )
         {
@@ -611,7 +602,13 @@ public class TimerTaskCollectionTests : TestsBase
                     new TaskCompletion( new ReactiveTaskInvocationParams( 2, timestamp3, timestamp4 ), null, null ),
                     new TaskCompletion( new ReactiveTaskInvocationParams( 3, timestamp4, timestamp4 ), null, null ) );
 
-            AssertTaskStateSnapshot(
+            fooTask.Enqueues.Should()
+                .BeSequentiallyEqualTo(
+                    new TaskEnqueue( new ReactiveTaskInvocationParams( 1, timestamp2, timestamp2 ), 0 ),
+                    new TaskEnqueue( new ReactiveTaskInvocationParams( 2, timestamp3, timestamp3 ), 1 ),
+                    new TaskEnqueue( new ReactiveTaskInvocationParams( 3, timestamp4, timestamp4 ), 2 ) );
+
+            AssertTaskSnapshot(
                 snapshot1,
                 fooTask,
                 firstInvocationTimestamp: timestamp1,
@@ -620,7 +617,7 @@ public class TimerTaskCollectionTests : TestsBase
                 activeTasks: 1,
                 maxActiveTasks: 1 );
 
-            AssertTaskStateSnapshot(
+            AssertTaskSnapshot(
                 snapshot2,
                 fooTask,
                 firstInvocationTimestamp: timestamp1,
@@ -631,7 +628,7 @@ public class TimerTaskCollectionTests : TestsBase
                 queuedInvocations: 1,
                 maxQueuedInvocations: 1 );
 
-            AssertTaskStateSnapshot(
+            AssertTaskSnapshot(
                 snapshot3,
                 fooTask,
                 firstInvocationTimestamp: timestamp1,
@@ -642,7 +639,7 @@ public class TimerTaskCollectionTests : TestsBase
                 queuedInvocations: 2,
                 maxQueuedInvocations: 2 );
 
-            AssertTaskStateSnapshot(
+            AssertTaskSnapshot(
                 snapshot4,
                 fooTask,
                 firstInvocationTimestamp: timestamp1,
@@ -654,7 +651,7 @@ public class TimerTaskCollectionTests : TestsBase
                 maxQueuedInvocations: 2,
                 skippedInvocations: 1 );
 
-            AssertTaskStateSnapshot(
+            AssertTaskSnapshot(
                 snapshot5,
                 fooTask,
                 firstInvocationTimestamp: timestamp1,
@@ -668,7 +665,7 @@ public class TimerTaskCollectionTests : TestsBase
                 skippedInvocations: 1,
                 delayedInvocations: 1 );
 
-            AssertTaskStateSnapshot(
+            AssertTaskSnapshot(
                 snapshot6,
                 fooTask,
                 firstInvocationTimestamp: timestamp1,
@@ -681,7 +678,7 @@ public class TimerTaskCollectionTests : TestsBase
                 skippedInvocations: 1,
                 delayedInvocations: 2 );
 
-            AssertTaskStateSnapshot(
+            AssertTaskSnapshot(
                 snapshot7,
                 fooTask,
                 firstInvocationTimestamp: timestamp1,
@@ -696,13 +693,60 @@ public class TimerTaskCollectionTests : TestsBase
     }
 
     [Fact]
+    public void TaskEnqueueCancellation_ShouldCompleteItImmediatelyWithCancellationRequestedReason()
+    {
+        var interval = Duration.FromMilliseconds( 15 );
+        var timestamp1 = Timestamp.Zero + interval;
+        var timestamp2 = timestamp1 + interval;
+
+        var taskSources = new[] { new TaskCompletionSource(), new TaskCompletionSource() };
+        var fooTask = new TimerTask(
+            "foo",
+            onInvoke: (_, _, p, _) => taskSources[p.InvocationId].Task,
+            onEnqueue: (_, _, _, _) => false,
+            maxEnqueuedInvocations: 1 );
+
+        var source = new EventPublisher<WithInterval<long>>();
+        var sut = source.RegisterTasks( new[] { fooTask } );
+
+        PublishEvents( source, timestamp1, timestamp2 );
+        taskSources[0].SetResult();
+
+        using ( new AssertionScope() )
+        {
+            fooTask.Invocations.Should().BeSequentiallyEqualTo( new ReactiveTaskInvocationParams( 0, timestamp1, timestamp1 ) );
+
+            fooTask.Completions.Should()
+                .BeSequentiallyEqualTo(
+                    new TaskCompletion(
+                        new ReactiveTaskInvocationParams( 1, timestamp2, timestamp2 ),
+                        null,
+                        TaskCancellationReason.CancellationRequested ),
+                    new TaskCompletion( new ReactiveTaskInvocationParams( 0, timestamp1, timestamp1 ), null, null ) );
+
+            fooTask.Enqueues.Should()
+                .BeSequentiallyEqualTo( new TaskEnqueue( new ReactiveTaskInvocationParams( 1, timestamp2, timestamp2 ), 0 ) );
+
+            AssertTaskSnapshot(
+                sut.TryGetTaskSnapshot( "foo" ),
+                fooTask,
+                firstInvocationTimestamp: timestamp1,
+                lastInvocationTimestamp: timestamp2,
+                totalInvocations: 2,
+                completedInvocations: 1,
+                skippedInvocations: 1,
+                maxActiveTasks: 1 );
+        }
+    }
+
+    [Fact]
     public void ExceptionDuringTaskInvocation_ShouldBeCaughtAndHandled()
     {
         var interval = Duration.FromMilliseconds( 15 );
         var timestamp1 = Timestamp.Zero + interval;
         var exception = new Exception();
 
-        var fooTask = new TimerTask( "foo", _ => throw exception );
+        var fooTask = new TimerTask( "foo", onInvoke: (_, _, _, _) => throw exception );
         var source = new EventPublisher<WithInterval<long>>();
         var sut = source.RegisterTasks( new[] { fooTask } );
 
@@ -719,8 +763,8 @@ public class TimerTaskCollectionTests : TestsBase
                 .BeSequentiallyEqualTo(
                     new TaskCompletion( new ReactiveTaskInvocationParams( 0, timestamp1, timestamp1 ), exception, null ) );
 
-            AssertTaskStateSnapshot(
-                sut.TryGetTaskState( "foo" ),
+            AssertTaskSnapshot(
+                sut.TryGetTaskSnapshot( "foo" ),
                 fooTask,
                 firstInvocationTimestamp: timestamp1,
                 lastInvocationTimestamp: timestamp1,
@@ -738,7 +782,7 @@ public class TimerTaskCollectionTests : TestsBase
         var exception = new Exception();
 
         var taskSource = new TaskCompletionSource();
-        var fooTask = new TimerTask( "foo", _ => taskSource.Task );
+        var fooTask = new TimerTask( "foo", onInvoke: (_, _, _, _) => taskSource.Task );
         var source = new EventPublisher<WithInterval<long>>();
         var sut = source.RegisterTasks( new[] { fooTask } );
 
@@ -760,8 +804,8 @@ public class TimerTaskCollectionTests : TestsBase
             fooTask.Completions.ElementAtOrDefault( 0 ).Exception.Should().BeEquivalentTo( taskSource.Task.Exception );
             fooTask.Completions.ElementAtOrDefault( 0 ).CancellationReason.Should().BeNull();
 
-            AssertTaskStateSnapshot(
-                sut.TryGetTaskState( "foo" ),
+            AssertTaskSnapshot(
+                sut.TryGetTaskSnapshot( "foo" ),
                 fooTask,
                 firstInvocationTimestamp: timestamp1,
                 lastInvocationTimestamp: timestamp1,
@@ -779,7 +823,7 @@ public class TimerTaskCollectionTests : TestsBase
         var timestamp1 = Timestamp.Zero + interval;
         var exception = new Exception();
 
-        var fooTask = new TimerTask( "foo", _ => Task.CompletedTask, exception: exception );
+        var fooTask = new TimerTask( "foo", onComplete: (_, _, _) => throw exception );
         var source = new EventPublisher<WithInterval<long>>();
         var sut = source.RegisterTasks( new[] { fooTask } );
 
@@ -795,13 +839,61 @@ public class TimerTaskCollectionTests : TestsBase
             fooTask.Completions.Should()
                 .BeSequentiallyEqualTo( new TaskCompletion( new ReactiveTaskInvocationParams( 0, timestamp1, timestamp1 ), null, null ) );
 
-            AssertTaskStateSnapshot(
-                sut.TryGetTaskState( "foo" ),
+            AssertTaskSnapshot(
+                sut.TryGetTaskSnapshot( "foo" ),
                 fooTask,
                 firstInvocationTimestamp: timestamp1,
                 lastInvocationTimestamp: timestamp1,
                 totalInvocations: 1,
                 completedInvocations: 1 );
+        }
+    }
+
+    [Fact]
+    public void ExceptionDuringTaskEnqueue_ShouldBeCaughtAndIgnoredAndCauseInvocationToBeCancelled()
+    {
+        var interval = Duration.FromMilliseconds( 15 );
+        var timestamp1 = Timestamp.Zero + interval;
+        var timestamp2 = timestamp1 + interval;
+        var exception = new Exception();
+
+        var taskSources = new[] { new TaskCompletionSource(), new TaskCompletionSource() };
+        var fooTask = new TimerTask(
+            "foo",
+            onInvoke: (_, _, p, _) => taskSources[p.InvocationId].Task,
+            onEnqueue: (_, _, _, _) => throw exception,
+            maxEnqueuedInvocations: 1 );
+
+        var source = new EventPublisher<WithInterval<long>>();
+        var sut = source.RegisterTasks( new[] { fooTask } );
+
+        PublishEvents( source, timestamp1, timestamp2 );
+        taskSources[0].SetResult();
+
+        using ( new AssertionScope() )
+        {
+            fooTask.Invocations.Should().BeSequentiallyEqualTo( new ReactiveTaskInvocationParams( 0, timestamp1, timestamp1 ) );
+
+            fooTask.Completions.Should()
+                .BeSequentiallyEqualTo(
+                    new TaskCompletion(
+                        new ReactiveTaskInvocationParams( 1, timestamp2, timestamp2 ),
+                        null,
+                        TaskCancellationReason.CancellationRequested ),
+                    new TaskCompletion( new ReactiveTaskInvocationParams( 0, timestamp1, timestamp1 ), null, null ) );
+
+            fooTask.Enqueues.Should()
+                .BeSequentiallyEqualTo( new TaskEnqueue( new ReactiveTaskInvocationParams( 1, timestamp2, timestamp2 ), 0 ) );
+
+            AssertTaskSnapshot(
+                sut.TryGetTaskSnapshot( "foo" ),
+                fooTask,
+                firstInvocationTimestamp: timestamp1,
+                lastInvocationTimestamp: timestamp2,
+                totalInvocations: 2,
+                completedInvocations: 1,
+                skippedInvocations: 1,
+                maxActiveTasks: 1 );
         }
     }
 
@@ -812,7 +904,7 @@ public class TimerTaskCollectionTests : TestsBase
         var timestamp1 = Timestamp.Zero + interval;
 
         var taskSource = new TaskCompletionSource();
-        var fooTask = new TimerTask( "foo", _ => taskSource.Task );
+        var fooTask = new TimerTask( "foo", onInvoke: (_, _, _, _) => taskSource.Task );
         var source = new EventPublisher<WithInterval<long>>();
         var sut = source.RegisterTasks( new[] { fooTask } );
 
@@ -833,8 +925,8 @@ public class TimerTaskCollectionTests : TestsBase
                         null,
                         TaskCancellationReason.CancellationRequested ) );
 
-            AssertTaskStateSnapshot(
-                sut.TryGetTaskState( "foo" ),
+            AssertTaskSnapshot(
+                sut.TryGetTaskSnapshot( "foo" ),
                 fooTask,
                 firstInvocationTimestamp: timestamp1,
                 lastInvocationTimestamp: timestamp1,
@@ -851,7 +943,7 @@ public class TimerTaskCollectionTests : TestsBase
         var interval = Duration.FromMilliseconds( 15 );
         var timestamp1 = Timestamp.Zero + interval;
 
-        var fooTask = new TimerTask( "foo", _ => new Task( () => { } ) );
+        var fooTask = new TimerTask( "foo", onInvoke: (_, _, _, _) => new Task( () => { } ) );
         var source = new EventPublisher<WithInterval<long>>();
         var sut = source.RegisterTasks( new[] { fooTask } );
 
@@ -868,8 +960,8 @@ public class TimerTaskCollectionTests : TestsBase
             fooTask.Completions.Should()
                 .BeSequentiallyEqualTo( new TaskCompletion( new ReactiveTaskInvocationParams( 0, timestamp1, timestamp1 ), null, null ) );
 
-            AssertTaskStateSnapshot(
-                sut.TryGetTaskState( "foo" ),
+            AssertTaskSnapshot(
+                sut.TryGetTaskSnapshot( "foo" ),
                 fooTask,
                 firstInvocationTimestamp: timestamp1,
                 lastInvocationTimestamp: timestamp1,
@@ -882,7 +974,7 @@ public class TimerTaskCollectionTests : TestsBase
     [Fact]
     public void Dispose_ShouldDisposeTaskCollectionAndAllTasks()
     {
-        var tasks = new[] { TimerTask.CreateCompleted( "foo" ) };
+        var tasks = new[] { new TimerTask( "foo" ) };
         var source = new EventPublisher<WithInterval<long>>();
         var sut = source.RegisterTasks( tasks );
 
@@ -892,7 +984,7 @@ public class TimerTaskCollectionTests : TestsBase
         {
             source.HasSubscribers.Should().BeFalse();
             tasks[0].IsDisposed.Should().BeTrue();
-            AssertTaskStateSnapshot( sut.TryGetTaskState( "foo" ), tasks[0] );
+            AssertTaskSnapshot( sut.TryGetTaskSnapshot( "foo" ), tasks[0] );
         }
     }
 
@@ -906,7 +998,7 @@ public class TimerTaskCollectionTests : TestsBase
         var taskSource = new TaskCompletionSource();
         var fooTask = new TimerTask(
             "foo",
-            ct =>
+            onInvoke: (_, _, _, ct) =>
             {
                 ct.Register( () => taskSource.SetCanceled( ct ) );
                 return taskSource.Task;
@@ -938,8 +1030,8 @@ public class TimerTaskCollectionTests : TestsBase
                         null,
                         TaskCancellationReason.TaskDisposed ) );
 
-            AssertTaskStateSnapshot(
-                sut.TryGetTaskState( "foo" ),
+            AssertTaskSnapshot(
+                sut.TryGetTaskSnapshot( "foo" ),
                 fooTask,
                 firstInvocationTimestamp: timestamp1,
                 lastInvocationTimestamp: timestamp2,
@@ -959,10 +1051,10 @@ public class TimerTaskCollectionTests : TestsBase
         var timestamp = Timestamp.Zero;
         var tokenException = new Exception( "foo" );
         var disposalException = new Exception( "bar" );
-        var fooTask = new TimerTask( "foo", _ => Task.CompletedTask );
+        var fooTask = new TimerTask( "foo", onDispose: _ => throw disposalException );
         var barTask = new TimerTask(
             "bar",
-            ct =>
+            onInvoke: (_, _, _, ct) =>
             {
                 ct.Register( () => throw tokenException );
                 return Task.CompletedTask;
@@ -971,7 +1063,6 @@ public class TimerTaskCollectionTests : TestsBase
         var source = new EventPublisher<WithInterval<long>>();
         var sut = source.RegisterTasks( new[] { fooTask, barTask } );
         PublishEvents( source, timestamp );
-        fooTask.Exception = disposalException;
 
         var action = Lambda.Of( () => sut.Dispose() );
 
@@ -988,6 +1079,93 @@ public class TimerTaskCollectionTests : TestsBase
         }
     }
 
+    [Fact]
+    public void SourceDisposal_FromTaskInvocation_ShouldDisposeSourceAndFinishCurrentInvocation()
+    {
+        var timestamp = Timestamp.Zero;
+        var fooTask = new TimerTask(
+            "foo",
+            onInvoke: (_, source, _, _) =>
+            {
+                source.Dispose();
+                return new Task( () => { } );
+            } );
+
+        var source = new EventPublisher<WithInterval<long>>();
+        _ = source.RegisterTasks( new[] { fooTask } );
+        PublishEvents( source, timestamp );
+
+        using ( new AssertionScope() )
+        {
+            source.HasSubscribers.Should().BeFalse();
+            fooTask.Invocations.Should().BeSequentiallyEqualTo( new ReactiveTaskInvocationParams( 0, timestamp, timestamp ) );
+
+            fooTask.Completions.Should()
+                .BeSequentiallyEqualTo( new TaskCompletion( new ReactiveTaskInvocationParams( 0, timestamp, timestamp ), null, null ) );
+        }
+    }
+
+    [Fact]
+    public void SourceDisposal_FromTaskCompletion_ShouldDisposeSourceAndFinishCurrentInvocation()
+    {
+        var timestamp = Timestamp.Zero;
+        var fooTask = new TimerTask( "foo", onComplete: (_, source, _) => source.Dispose() );
+
+        var source = new EventPublisher<WithInterval<long>>();
+        _ = source.RegisterTasks( new[] { fooTask } );
+        PublishEvents( source, timestamp );
+
+        using ( new AssertionScope() )
+        {
+            source.HasSubscribers.Should().BeFalse();
+            fooTask.Invocations.Should().BeSequentiallyEqualTo( new ReactiveTaskInvocationParams( 0, timestamp, timestamp ) );
+
+            fooTask.Completions.Should()
+                .BeSequentiallyEqualTo( new TaskCompletion( new ReactiveTaskInvocationParams( 0, timestamp, timestamp ), null, null ) );
+        }
+    }
+
+    [Fact]
+    public void SourceDisposal_FromTaskEnqueue_ShouldDisposeSourceAndFinishCurrentInvocation()
+    {
+        var interval = Duration.FromMilliseconds( 15 );
+        var timestamp1 = Timestamp.Zero + interval;
+        var timestamp2 = timestamp1 + interval;
+
+        var taskSources = new[] { new TaskCompletionSource(), new TaskCompletionSource() };
+        var fooTask = new TimerTask(
+            "foo",
+            onInvoke: (_, _, p, _) => taskSources[p.InvocationId].Task,
+            onEnqueue: (_, source, _, _) =>
+            {
+                source.Dispose();
+                return true;
+            },
+            maxEnqueuedInvocations: 1 );
+
+        var source = new EventPublisher<WithInterval<long>>();
+        _ = source.RegisterTasks( new[] { fooTask } );
+        PublishEvents( source, timestamp1, timestamp2 );
+        taskSources[0].SetResult();
+
+        using ( new AssertionScope() )
+        {
+            source.HasSubscribers.Should().BeFalse();
+            fooTask.Invocations.Should().BeSequentiallyEqualTo( new ReactiveTaskInvocationParams( 0, timestamp1, timestamp1 ) );
+
+            fooTask.Completions.Should()
+                .BeSequentiallyEqualTo(
+                    new TaskCompletion( new ReactiveTaskInvocationParams( 0, timestamp1, timestamp1 ), null, null ),
+                    new TaskCompletion(
+                        new ReactiveTaskInvocationParams( 1, timestamp2, timestamp2 ),
+                        null,
+                        TaskCancellationReason.TaskDisposed ) );
+
+            fooTask.Enqueues.Should()
+                .BeSequentiallyEqualTo( new TaskEnqueue( new ReactiveTaskInvocationParams( 1, timestamp2, timestamp2 ), 0 ) );
+        }
+    }
+
     private static void PublishEvents(EventPublisher<WithInterval<long>> publisher, params Timestamp[] timestamps)
     {
         Timestamp? prevTs = null;
@@ -999,12 +1177,13 @@ public class TimerTaskCollectionTests : TestsBase
         }
     }
 
-    private static void AssertTaskStateSnapshot(
-        TimerTaskStateSnapshot<string>? snapshot,
+    private static void AssertTaskSnapshot(
+        ReactiveTaskSnapshot<ITimerTask<string>>? snapshot,
         TimerTask task,
         Timestamp? firstInvocationTimestamp = null,
         Timestamp? lastInvocationTimestamp = null,
         long totalInvocations = 0,
+        long activeInvocations = 0,
         long completedInvocations = 0,
         long skippedInvocations = 0,
         long delayedInvocations = 0,
@@ -1019,6 +1198,7 @@ public class TimerTaskCollectionTests : TestsBase
         (snapshot?.FirstInvocationTimestamp).Should().Be( firstInvocationTimestamp );
         (snapshot?.LastInvocationTimestamp).Should().Be( lastInvocationTimestamp );
         (snapshot?.TotalInvocations).Should().Be( totalInvocations );
+        (snapshot?.ActiveInvocations).Should().Be( activeInvocations );
         (snapshot?.CompletedInvocations).Should().Be( completedInvocations );
         (snapshot?.SkippedInvocations).Should().Be( skippedInvocations );
         (snapshot?.DelayedInvocations).Should().Be( delayedInvocations );
@@ -1044,69 +1224,46 @@ public class TimerTaskCollectionTests : TestsBase
         }
     }
 
-    private readonly record struct TaskCompletion(
-        ReactiveTaskInvocationParams Invocation,
-        Exception? Exception,
-        TaskCancellationReason? CancellationReason
-    );
-
     private sealed class TimerTask : TimerTask<string>
     {
         public TimerTask(
             string key,
-            Func<CancellationToken, Task> taskFactory,
-            Func<Timestamp?, Timestamp?>? nextInvocationTimestampFactory = null,
-            Exception? exception = null,
             int maxEnqueuedInvocations = 0,
-            int maxConcurrentInvocations = 1)
-            : base( key, null, maxEnqueuedInvocations, maxConcurrentInvocations )
+            int maxConcurrentInvocations = 1,
+            Timestamp? nextInvocationTimestamp = null,
+            Func<TimerTask, TimerTaskCollection<string>, ReactiveTaskInvocationParams, CancellationToken, Task>? onInvoke = null,
+            Action<TimerTask, TimerTaskCollection<string>, ReactiveTaskCompletionParams>? onComplete = null,
+            Func<TimerTask, TimerTaskCollection<string>, ReactiveTaskInvocationParams, int, bool>? onEnqueue = null,
+            Action<TimerTask>? onDispose = null)
+            : base( key, nextInvocationTimestamp, maxEnqueuedInvocations, maxConcurrentInvocations )
         {
             IsDisposed = false;
             Invocations = new List<ReactiveTaskInvocationParams>();
             Completions = new List<TaskCompletion>();
-            NextInvocationTimestampFactory = nextInvocationTimestampFactory;
-            TaskFactory = taskFactory;
-            Exception = exception;
-            NextInvocationTimestamp = NextInvocationTimestampFactory?.Invoke( NextInvocationTimestamp );
+            Enqueues = new List<TaskEnqueue>();
+            OnInvokeCallback = onInvoke;
+            OnCompleteCallback = onComplete;
+            OnEnqueueCallback = onEnqueue;
+            OnDisposeCallback = onDispose;
         }
 
+        public bool IsDisposed { get; private set; }
         public List<ReactiveTaskInvocationParams> Invocations { get; }
         public List<TaskCompletion> Completions { get; }
-        public Func<Timestamp?, Timestamp?>? NextInvocationTimestampFactory { get; }
-        public Func<CancellationToken, Task> TaskFactory { get; }
-        public Exception? Exception { get; set; }
-        public bool IsDisposed { get; private set; }
+        public List<TaskEnqueue> Enqueues { get; }
 
-        [Pure]
-        public static TimerTask CreateCompleted(string key, Func<Timestamp?, Timestamp?>? nextInvocationTimestampFactory = null)
-        {
-            return new TimerTask( key, _ => Task.CompletedTask, nextInvocationTimestampFactory );
-        }
+        public Func<TimerTask, TimerTaskCollection<string>, ReactiveTaskInvocationParams, CancellationToken, Task>?
+            OnInvokeCallback { get; }
 
-        [Pure]
-        public static TimerTask CreateFromSource(
-            string key,
-            Func<CancellationToken, TaskCompletionSource> source,
-            int maxEnqueuedInvocations = 0,
-            int maxConcurrentInvocations = 1,
-            Func<Timestamp?, Timestamp?>? nextInvocationTimestampFactory = null)
-        {
-            return new TimerTask(
-                key,
-                t => source( t ).Task,
-                nextInvocationTimestampFactory,
-                null,
-                maxEnqueuedInvocations,
-                maxConcurrentInvocations );
-        }
+        public Action<TimerTask, TimerTaskCollection<string>, ReactiveTaskCompletionParams>? OnCompleteCallback { get; }
+        public Func<TimerTask, TimerTaskCollection<string>, ReactiveTaskInvocationParams, int, bool>? OnEnqueueCallback { get; }
+        public Action<TimerTask>? OnDisposeCallback { get; }
 
         public override void Dispose()
         {
             base.Dispose();
             IsDisposed = true;
-
-            if ( Exception is not null )
-                throw Exception;
+            OnDisposeCallback?.Invoke( this );
         }
 
         public override Task InvokeAsync(
@@ -1114,22 +1271,30 @@ public class TimerTaskCollectionTests : TestsBase
             ReactiveTaskInvocationParams parameters,
             CancellationToken cancellationToken)
         {
-            NextInvocationTimestamp = NextInvocationTimestampFactory?.Invoke( NextInvocationTimestamp );
             Invocations.Add( parameters );
-            return TaskFactory( cancellationToken );
+            return OnInvokeCallback is null ? Task.CompletedTask : OnInvokeCallback( this, source, parameters, cancellationToken );
         }
 
         public override void OnCompleted(TimerTaskCollection<string> source, ReactiveTaskCompletionParams parameters)
         {
             base.OnCompleted( source, parameters );
             Completions.Add( new TaskCompletion( parameters.Invocation, parameters.Exception, parameters.CancellationReason ) );
+            OnCompleteCallback?.Invoke( this, source, parameters );
+        }
 
-            if ( Exception is not null )
-            {
-                var exc = Exception;
-                Exception = null;
-                throw exc;
-            }
+        public override bool OnEnqueue(TimerTaskCollection<string> source, ReactiveTaskInvocationParams parameters, int positionInQueue)
+        {
+            Enqueues.Add( new TaskEnqueue( parameters, positionInQueue ) );
+            return OnEnqueueCallback?.Invoke( this, source, parameters, positionInQueue )
+                ?? base.OnEnqueue( source, parameters, positionInQueue );
         }
     }
+
+    private readonly record struct TaskCompletion(
+        ReactiveTaskInvocationParams Invocation,
+        Exception? Exception,
+        TaskCancellationReason? CancellationReason
+    );
+
+    private readonly record struct TaskEnqueue(ReactiveTaskInvocationParams Invocation, int PositionInQueue);
 }

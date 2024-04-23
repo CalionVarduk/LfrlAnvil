@@ -33,4 +33,9 @@ public abstract class TimerTask<TKey> : ITimerTask<TKey>
         CancellationToken cancellationToken);
 
     public virtual void OnCompleted(TimerTaskCollection<TKey> source, ReactiveTaskCompletionParams parameters) { }
+
+    public virtual bool OnEnqueue(TimerTaskCollection<TKey> source, ReactiveTaskInvocationParams parameters, int positionInQueue)
+    {
+        return true;
+    }
 }

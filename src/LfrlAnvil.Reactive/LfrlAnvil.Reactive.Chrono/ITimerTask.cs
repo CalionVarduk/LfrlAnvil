@@ -14,4 +14,5 @@ public interface ITimerTask<TKey> : IDisposable
     Timestamp? NextInvocationTimestamp { get; }
     Task InvokeAsync(TimerTaskCollection<TKey> source, ReactiveTaskInvocationParams parameters, CancellationToken cancellationToken);
     void OnCompleted(TimerTaskCollection<TKey> source, ReactiveTaskCompletionParams parameters);
+    bool OnEnqueue(TimerTaskCollection<TKey> source, ReactiveTaskInvocationParams parameters, int positionInQueue);
 }

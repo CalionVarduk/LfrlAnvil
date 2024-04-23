@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
+using System.Threading;
 using System.Threading.Tasks;
 using LfrlAnvil.Async;
 using LfrlAnvil.Chrono;
@@ -11,12 +12,12 @@ using LfrlAnvil.Extensions;
 
 namespace LfrlAnvil.Reactive.Chrono.Internal;
 
-internal sealed class TimerTaskContainer<TKey> : IDisposable
+internal sealed class ScheduleTaskContainer<TKey> : IDisposable
     where TKey : notnull
 {
     private readonly Action<Task> _onActiveTaskCompleted;
-    private readonly ITimerTask<TKey> _source;
-    private TimerTaskCollection<TKey>? _owner;
+    private readonly CancellationTokenSource _cancellationTokenSource;
+    private ReactiveScheduler<TKey>? _owner;
     private Queue<KeyValuePair<long, Timestamp>>? _awaitingInvocations;
     private Dictionary<int, TaskEntry>? _activeTasks;
     private long _totalInvocations;
@@ -29,16 +30,14 @@ internal sealed class TimerTaskContainer<TKey> : IDisposable
     private long _maxActiveTasks;
     private Timestamp? _firstInvocationTimestamp;
     private Timestamp? _lastInvocationTimestamp;
-    private Timestamp? _lastOwnerTimestamp;
     private Duration _minElapsedTime;
     private Duration _maxElapsedTime;
     private FloatingDuration _averageElapsedTime;
     private bool _disposed;
 
-    internal TimerTaskContainer(TimerTaskCollection<TKey> owner, ITimerTask<TKey> source)
+    internal ScheduleTaskContainer(ReactiveScheduler<TKey> owner, IScheduleTask<TKey> source)
     {
         _owner = owner;
-        _source = source;
         _awaitingInvocations = null;
         _activeTasks = null;
         _totalInvocations = 0;
@@ -51,10 +50,12 @@ internal sealed class TimerTaskContainer<TKey> : IDisposable
         _maxActiveTasks = 0;
         _firstInvocationTimestamp = null;
         _lastInvocationTimestamp = null;
-        _lastOwnerTimestamp = null;
         _minElapsedTime = Duration.MaxValue;
         _maxElapsedTime = Duration.MinValue;
         _averageElapsedTime = FloatingDuration.Zero;
+        Source = source;
+        Key = Source.Key;
+        _cancellationTokenSource = new CancellationTokenSource();
         _disposed = false;
 
         _onActiveTaskCompleted = t =>
@@ -71,29 +72,27 @@ internal sealed class TimerTaskContainer<TKey> : IDisposable
                         t.Exception,
                         t.IsCanceled ? TaskCancellationReason.CancellationRequested : null );
 
-                var maxConcurrentInvocations = _source.MaxConcurrentInvocations;
+                var maxConcurrentInvocations = Source.MaxConcurrentInvocations;
                 while ( _activeTasks is not null
                     && _awaitingInvocations is not null
                     && _activeTasks.Count < maxConcurrentInvocations
                     && _awaitingInvocations.TryDequeue( out var invocation ) )
                 {
+                    Assume.IsNotNull( _owner );
+
                     ++_delayedInvocations;
+                    var now = _owner.Timestamps.GetNow();
                     if ( _disposed )
-                        FinishSkippedInvocation( invocation.Key, invocation.Value, TaskCancellationReason.TaskDisposed );
+                        FinishSkippedInvocation( invocation.Key, invocation.Value, now, TaskCancellationReason.TaskDisposed );
                     else
-                    {
-                        ActivateTask(
-                            new ReactiveTaskInvocationParams(
-                                invocation.Key,
-                                invocation.Value,
-                                _lastOwnerTimestamp ?? invocation.Value ) );
-                    }
+                        ActivateTask( new ReactiveTaskInvocationParams( invocation.Key, invocation.Value, now ) );
                 }
             }
         };
     }
 
-    internal TKey Key => _source.Key;
+    internal TKey Key { get; }
+    internal IScheduleTask<TKey> Source { get; }
 
     private bool HasActiveInvocations => _activeInvocations > 0
         || (_activeTasks is not null && _activeTasks.Count > 0)
@@ -108,25 +107,36 @@ internal sealed class TimerTaskContainer<TKey> : IDisposable
                 return;
 
             _disposed = true;
-            if ( ! HasActiveInvocations )
-                FinalizeDisposal();
+            var errors = Chain<Exception>.Empty;
+            try
+            {
+                _cancellationTokenSource.Cancel();
+            }
+            catch ( Exception exc )
+            {
+                errors = errors.Extend( exc );
+            }
+
+            if ( ! HasActiveInvocations && _owner is not null && _owner.TryRemoveFinishedTask( this ) )
+            {
+                var exc = FinalizeDisposal();
+                if ( exc is not null )
+                    errors = errors.Extend( exc );
+            }
+
+            if ( errors.Count > 0 )
+                throw new AggregateException( errors );
         }
     }
 
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal void EnqueueInvocation(Timestamp timestamp)
+    internal void EnqueueInvocation(Timestamp timestamp, Timestamp expectedTimestamp)
     {
         using ( ExclusiveLock.Enter( this ) )
         {
             if ( _disposed )
                 return;
 
-            _lastOwnerTimestamp = timestamp;
-            var nextInvocationTimestamp = _source.NextInvocationTimestamp;
-            if ( nextInvocationTimestamp is not null && nextInvocationTimestamp.Value > timestamp )
-                return;
-
-            var maxConcurrentInvocations = _source.MaxConcurrentInvocations;
+            var maxConcurrentInvocations = Source.MaxConcurrentInvocations;
             if ( maxConcurrentInvocations <= 0 )
                 return;
 
@@ -137,33 +147,36 @@ internal sealed class TimerTaskContainer<TKey> : IDisposable
             _activeTasks ??= new Dictionary<int, TaskEntry>();
             if ( _activeTasks.Count < maxConcurrentInvocations )
             {
-                ActivateTask( new ReactiveTaskInvocationParams( invocationId, timestamp, timestamp ) );
+                ActivateTask( new ReactiveTaskInvocationParams( invocationId, expectedTimestamp, timestamp ) );
                 return;
             }
 
-            var maxEnqueuedInvocations = _source.MaxEnqueuedInvocations;
+            var maxEnqueuedInvocations = Source.MaxEnqueuedInvocations;
             if ( maxEnqueuedInvocations <= 0 )
             {
-                FinishSkippedInvocation( invocationId, timestamp, TaskCancellationReason.MaxQueueSizeLimit );
+                FinishSkippedInvocation( invocationId, expectedTimestamp, timestamp, TaskCancellationReason.MaxQueueSizeLimit );
                 return;
             }
 
             _awaitingInvocations ??= new Queue<KeyValuePair<long, Timestamp>>();
-            var enqueue = OnEnqueue( new ReactiveTaskInvocationParams( invocationId, timestamp, timestamp ), _awaitingInvocations.Count );
+            var enqueue = OnEnqueue(
+                new ReactiveTaskInvocationParams( invocationId, expectedTimestamp, timestamp ),
+                _awaitingInvocations.Count );
+
             if ( ! enqueue )
             {
-                FinishSkippedInvocation( invocationId, timestamp, TaskCancellationReason.CancellationRequested );
+                FinishSkippedInvocation( invocationId, expectedTimestamp, timestamp, TaskCancellationReason.CancellationRequested );
                 return;
             }
 
             if ( _awaitingInvocations is null )
                 return;
 
-            _awaitingInvocations.Enqueue( KeyValuePair.Create( invocationId, timestamp ) );
+            _awaitingInvocations.Enqueue( KeyValuePair.Create( invocationId, expectedTimestamp ) );
             while ( _awaitingInvocations.Count > maxEnqueuedInvocations )
             {
                 var skipped = _awaitingInvocations.Dequeue();
-                FinishSkippedInvocation( skipped.Key, skipped.Value, TaskCancellationReason.MaxQueueSizeLimit );
+                FinishSkippedInvocation( skipped.Key, skipped.Value, timestamp, TaskCancellationReason.MaxQueueSizeLimit );
             }
 
             _maxQueuedInvocations = Math.Max( _maxQueuedInvocations, _awaitingInvocations.Count );
@@ -172,12 +185,12 @@ internal sealed class TimerTaskContainer<TKey> : IDisposable
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal ReactiveTaskSnapshot<ITimerTask<TKey>> CreateStateSnapshot()
+    internal ReactiveTaskSnapshot<IScheduleTask<TKey>> CreateStateSnapshot()
     {
         using ( ExclusiveLock.Enter( this ) )
         {
-            return new ReactiveTaskSnapshot<ITimerTask<TKey>>(
-                _source,
+            return new ReactiveTaskSnapshot<IScheduleTask<TKey>>(
+                Source,
                 _firstInvocationTimestamp,
                 _lastInvocationTimestamp,
                 _totalInvocations,
@@ -210,7 +223,7 @@ internal sealed class TimerTaskContainer<TKey> : IDisposable
             ++_activeInvocations;
             try
             {
-                task = _source.InvokeAsync( _owner, parameters, _owner.CancellationTokenSource.Token );
+                task = Source.InvokeAsync( _owner, parameters, _cancellationTokenSource.Token );
             }
             finally
             {
@@ -268,10 +281,14 @@ internal sealed class TimerTaskContainer<TKey> : IDisposable
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private void FinishSkippedInvocation(long invocationId, Timestamp originalTimestamp, TaskCancellationReason cancellationReason)
+    private void FinishSkippedInvocation(
+        long invocationId,
+        Timestamp originalTimestamp,
+        Timestamp invocationTimestamp,
+        TaskCancellationReason cancellationReason)
     {
         var parameters = new ReactiveTaskCompletionParams(
-            new ReactiveTaskInvocationParams( invocationId, originalTimestamp, _lastOwnerTimestamp ?? originalTimestamp ),
+            new ReactiveTaskInvocationParams( invocationId, originalTimestamp, invocationTimestamp ),
             Duration.Zero,
             null,
             cancellationReason );
@@ -287,16 +304,16 @@ internal sealed class TimerTaskContainer<TKey> : IDisposable
 
         try
         {
-            _source.OnCompleted( _owner, parameters );
+            Source.OnCompleted( _owner, parameters );
         }
         catch
         {
             // NOTE:
-            // silently ignore all exceptions, otherwise the whole timer task collection would get derailed
+            // silently ignore all exceptions, otherwise the whole scheduler would get derailed
             // this is by design, no exceptions should be thrown by the OnCompleted invocation
         }
 
-        if ( _disposed && ! HasActiveInvocations )
+        if ( ! HasActiveInvocations && _owner is not null && _owner.TryRemoveFinishedTask( this ) )
             FinalizeDisposal();
     }
 
@@ -308,12 +325,12 @@ internal sealed class TimerTaskContainer<TKey> : IDisposable
 
         try
         {
-            return _source.OnEnqueue( _owner, parameters, positionInQueue );
+            return Source.OnEnqueue( _owner, parameters, positionInQueue );
         }
         catch
         {
             // NOTE:
-            // silently ignore all exceptions, otherwise the whole timer task collection would get derailed
+            // silently ignore all exceptions, otherwise the whole scheduler would get derailed
             // this is by design, no exceptions should be thrown by the OnEnqueue invocation
         }
 
@@ -321,12 +338,28 @@ internal sealed class TimerTaskContainer<TKey> : IDisposable
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private void FinalizeDisposal()
+    private Exception? FinalizeDisposal()
     {
+        _disposed = true;
         _owner = null;
         _awaitingInvocations = null;
         _activeTasks = null;
-        _source.Dispose();
+
+        Exception? exception = null;
+        try
+        {
+            Source.Dispose();
+        }
+        catch ( Exception exc )
+        {
+            exception = exc;
+        }
+        finally
+        {
+            _cancellationTokenSource.Dispose();
+        }
+
+        return exception;
     }
 
     private readonly record struct TaskEntry(Task Task, ReactiveTaskInvocationParams Invocation, long StartTimestamp);
