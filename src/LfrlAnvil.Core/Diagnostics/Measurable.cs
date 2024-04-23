@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Diagnostics;
 using LfrlAnvil.Exceptions;
 
 namespace LfrlAnvil.Diagnostics;
@@ -21,33 +20,28 @@ public abstract class Measurable
             throw new InvalidOperationException( ExceptionResources.MeasurableHasAlreadyBeenInvoked );
 
         State = MeasurableState.Preparing;
-        var start = Stopwatch.GetTimestamp();
+        var stopwatch = StopwatchSlim.Create();
         Prepare();
-        var end = Stopwatch.GetTimestamp();
-        Measurement = Measurement.SetPreparation( StopwatchTimestamp.GetTimeSpan( start, end ) );
+        Measurement = Measurement.SetPreparation( stopwatch.ElapsedTime );
 
         try
         {
             State = MeasurableState.Running;
-            start = Stopwatch.GetTimestamp();
+            stopwatch = StopwatchSlim.Create();
             Run();
-            end = Stopwatch.GetTimestamp();
-            Measurement = Measurement.SetInvocation( StopwatchTimestamp.GetTimeSpan( start, end ) );
+            Measurement = Measurement.SetInvocation( stopwatch.ElapsedTime );
         }
         catch
         {
-            end = Stopwatch.GetTimestamp();
-            Measurement = Measurement.SetInvocation( StopwatchTimestamp.GetTimeSpan( start, end ) );
-
+            Measurement = Measurement.SetInvocation( stopwatch.ElapsedTime );
             throw;
         }
         finally
         {
             State = MeasurableState.TearingDown;
-            start = Stopwatch.GetTimestamp();
+            stopwatch = StopwatchSlim.Create();
             Teardown();
-            end = Stopwatch.GetTimestamp();
-            Measurement = Measurement.SetTeardown( StopwatchTimestamp.GetTimeSpan( start, end ) );
+            Measurement = Measurement.SetTeardown( stopwatch.ElapsedTime );
             State = MeasurableState.Done;
             Done();
         }

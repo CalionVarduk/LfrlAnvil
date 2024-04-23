@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using System.Threading;
@@ -68,7 +67,7 @@ internal sealed class ScheduleTaskContainer<TKey> : IDisposable
                 if ( _activeTasks.Remove( t.Id, out var entry ) )
                     FinishCompletedInvocation(
                         entry.Invocation,
-                        entry.StartTimestamp,
+                        entry.Stopwatch,
                         t.Exception,
                         t.IsCanceled ? TaskCancellationReason.CancellationRequested : null );
 
@@ -217,7 +216,7 @@ internal sealed class ScheduleTaskContainer<TKey> : IDisposable
         Assume.IsNotNull( _activeTasks );
 
         Task task;
-        var startTimestamp = Stopwatch.GetTimestamp();
+        var stopwatch = StopwatchSlim.Create();
         try
         {
             ++_activeInvocations;
@@ -235,7 +234,7 @@ internal sealed class ScheduleTaskContainer<TKey> : IDisposable
         }
         catch ( Exception exc )
         {
-            FinishCompletedInvocation( parameters, startTimestamp, exc, null );
+            FinishCompletedInvocation( parameters, stopwatch, exc, null );
             return;
         }
 
@@ -243,7 +242,7 @@ internal sealed class ScheduleTaskContainer<TKey> : IDisposable
         {
             FinishCompletedInvocation(
                 parameters,
-                startTimestamp,
+                stopwatch,
                 task.Exception,
                 task.IsCanceled ? TaskCancellationReason.CancellationRequested : null );
 
@@ -253,7 +252,7 @@ internal sealed class ScheduleTaskContainer<TKey> : IDisposable
         if ( _activeTasks is null )
             return;
 
-        _activeTasks[task.Id] = new TaskEntry( task, parameters, startTimestamp );
+        _activeTasks[task.Id] = new TaskEntry( task, parameters, stopwatch );
         _maxActiveTasks = Math.Max( _maxActiveTasks, _activeTasks.Count );
         task.ContinueWith( _onActiveTaskCompleted, TaskContinuationOptions.ExecuteSynchronously );
     }
@@ -261,11 +260,11 @@ internal sealed class ScheduleTaskContainer<TKey> : IDisposable
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private void FinishCompletedInvocation(
         ReactiveTaskInvocationParams invocation,
-        long startTimestamp,
+        StopwatchSlim stopwatch,
         Exception? exception,
         TaskCancellationReason? cancellationReason)
     {
-        var elapsedTime = new Duration( StopwatchTimestamp.GetTimeSpan( startTimestamp, Stopwatch.GetTimestamp() ) );
+        var elapsedTime = new Duration( stopwatch.ElapsedTime );
         _minElapsedTime = _minElapsedTime.Min( elapsedTime );
         _maxElapsedTime = _maxElapsedTime.Max( elapsedTime );
         _averageElapsedTime += (elapsedTime - _averageElapsedTime) / ++_completedInvocations;
@@ -362,5 +361,5 @@ internal sealed class ScheduleTaskContainer<TKey> : IDisposable
         return exception;
     }
 
-    private readonly record struct TaskEntry(Task Task, ReactiveTaskInvocationParams Invocation, long StartTimestamp);
+    private readonly record struct TaskEntry(Task Task, ReactiveTaskInvocationParams Invocation, StopwatchSlim Stopwatch);
 }

@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Diagnostics;
 using System.Runtime.CompilerServices;
 
 namespace LfrlAnvil.Diagnostics;
@@ -9,19 +8,17 @@ public static class Measure
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static TimeSpan Call(Action action)
     {
-        var start = Stopwatch.GetTimestamp();
+        var stopwatch = StopwatchSlim.Create();
         action();
-        var end = Stopwatch.GetTimestamp();
-        return StopwatchTimestamp.GetTimeSpan( start, end );
+        return stopwatch.ElapsedTime;
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static CallResult<T> Call<T>(Func<T> func)
     {
-        var start = Stopwatch.GetTimestamp();
+        var stopwatch = StopwatchSlim.Create();
         var result = func();
-        var end = Stopwatch.GetTimestamp();
-        return new CallResult<T>( result, StopwatchTimestamp.GetTimeSpan( start, end ) );
+        return new CallResult<T>( result, stopwatch.ElapsedTime );
     }
 
     public readonly record struct CallResult<T>(T Result, TimeSpan ElapsedTime);

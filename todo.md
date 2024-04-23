@@ -1,19 +1,18 @@
 # TODO
-|       Project       |              Title               |                          Details                          | Requirements |
-|:-------------------:|:--------------------------------:|:---------------------------------------------------------:|:------------:|
-|   Dependencies.*    |     Dependencies.AspNetCore      |             [link](#dependencies-aspnetcore)              |      -       |
-|        Sql.*        |      Positional parameters       |          [link](#sqlcore-positional-parameters)           |      -       |
-|          -          |             Terminal             |                     [link](#terminal)                     |      -       |
-|          -          |           Diagnostics            |                   [link](#diagnostics)                    |      -       |
-| Computable.Automata |     Add Context-free grammar     |                             -                             |      -       |
-|    Computable.*     |       Math/Physics structs       |          [link](#computable-mathphysics-structs)          |      -       |
-|        Sql.*        |     Add support for triggers     |                 [link](#sqlcore-triggers)                 |      -       |
-|        Sql.*        |    Add Microsoft SQL support     |                             -                             |      -       |
-|     Collections     |           Add SkipList           |                             -                             |      -       |
-|   Reactive.State    | Async validator & change tracker |  [link](#reactivestate-async-validator--change-tracker)   |      -       |
-|        Sql.*        |         DbBatch support          |             [link](#sqlcore-dbbatch-support)              |      -       |
-|      Sql.Core       |          Add JSON nodes          |              [link](#sqlcore-add-json-nodes)              |      -       |
-|    Dependencies     |     Generic dependency types     |      [link](#dependencies-generic-dependency-types)       |      -       |
+|       Project       |              Title               |                        Details                         |                  Requirements                  |
+|:-------------------:|:--------------------------------:|:------------------------------------------------------:|:----------------------------------------------:|
+|        Sql.*        |      Positional parameters       |         [link](#sqlcore-positional-parameters)         |                       -                        |
+|    Dependencies     |     Generic dependency types     |     [link](#dependencies-generic-dependency-types)     |                       -                        |
+|   Dependencies.*    |  Dependencies.ServiceProviders   |            [link](#dependencies-aspnetcore)            | [link](#dependencies-generic-dependency-types) |
+|          -          |             Terminal             |                   [link](#terminal)                    |                       -                        |
+| Computable.Automata |     Add Context-free grammar     |                           -                            |                       -                        |
+|    Computable.*     |       Math/Physics structs       |        [link](#computable-mathphysics-structs)         |                       -                        |
+|        Sql.*        |     Add support for triggers     |               [link](#sqlcore-triggers)                |                       -                        |
+|        Sql.*        |    Add Microsoft SQL support     |                           -                            |                       -                        |
+|     Collections     |           Add SkipList           |                           -                            |                       -                        |
+|   Reactive.State    | Async validator & change tracker | [link](#reactivestate-async-validator--change-tracker) |                       -                        |
+|        Sql.*        |         DbBatch support          |            [link](#sqlcore-dbbatch-support)            |                       -                        |
+|      Sql.Core       |          Add JSON nodes          |            [link](#sqlcore-add-json-nodes)             |                       -                        |
 
 ### Scribbles:
 Sql:
@@ -28,22 +27,14 @@ project idea:
 - write table
 - prompt, switch etc. for user interaction
 
-### Diagnostics
-project idea:
-- move most of Core.Diagnostics (except for stopwatch-related stuff & memory size) to that project
-- separate Benchmark into Macro & Micro benchmarks, macro stays pretty much the same as it is now
-- micro will attempt to calculate during warmup how many operations can it perform in order to be done in X amount of time
-- this could use a floating-point time & memory structs for tracking (related to Chrono?)
-- also, macro benchmark can track zero-elapsed-time samples
-- benchmark itself can have a 'title' property, that describes it and it can have a RunFiltered method + base IBenchmark interface
-- Micro benchmark may be split into a separate step, if done at all, focus on extracting things from Core.Diagnostics
-
 ### Dependencies: Generic dependency types
 - add support for open generic constructable dependency types
 - can use only auto-discovered ctor or explicit ctor from that open generic type or shared open generic implementor
 - each generic dependency could provide partial generic parameters resolution
-- e.g. Implementor<T, U> : IDependency<T>, T will be filled in automatically, but U cannot be resolved based on the interface alone
+- e.g. Implementor\<T, U\> : IDependency\<T\>, T will be filled in automatically, but U cannot be resolved based on the interface alone
 - the functionality could allow to provide a concrete type to use as a substitution for the U type
+- also, add methods to get type-erased keyed locators (important for ServiceProviders project)
+- also, check if open generics based on factories should be allowed
 
 ### Computable: Math/Physics structs
 ideas for other LfrlAnvil.Computable projects:
@@ -92,6 +83,7 @@ Add sql node visitor that allows to extract node's type (+ add Type to ViewDataF
 ### Dependencies: AspNetCore
 - Add adapter layer between lfrlanvil & aspnetcore service providers
 - so that lfrlanvil provider can be used as service container in aspentcore apps
+- requires possibility to register open generics
 
 ### Sql.Core: Positional parameters
 - Add support for positional parameters in parameter binder factory & in sql nodes
@@ -100,6 +92,18 @@ Add sql node visitor that allows to extract node's type (+ add Type to ViewDataF
 - parameter binder factory, along with context instance, will be able to translate the nodes
 - parameter binder factory will also contain type-erased versions of binders
 - that just accept an array of System.Object as parameter values
+- position (called Index) is 0-based, Index cannot be < 0
+- node interpreter context needs to remember the Index as well as parameter's type
+- if parameter exists in context with the same name but different Index, then make it non-positional
+- parameter binder factory, if any positional parameter exists:
+  - finds max Index => N & throws if not all indexes in \[0..N\] range are used
+  - if named parameters exist as well, then they will be added with names, AFTER all N+1 positional parameters
+- parameter binder factory options per member should allow to specify member's position...?
+- also, for generic parameter binder factory + context, there is parameter type validation (& count?)
+  - if member & context parameter do not have an index => pass
+  - if member has index but context does not => ignore index, use name
+  - if member does not have an index but context does => use index
+  - if member & context parameter have an index => they must be equal, otherwise fail
 
 ### Sql.Core: DbBatch support
 - Add support for DbBatch and its commands

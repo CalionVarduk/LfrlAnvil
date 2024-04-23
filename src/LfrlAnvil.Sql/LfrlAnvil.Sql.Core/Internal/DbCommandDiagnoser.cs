@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Data;
-using System.Diagnostics;
 using System.Threading.Tasks;
 using LfrlAnvil.Diagnostics;
 
@@ -23,7 +22,7 @@ public readonly struct DbCommandDiagnoser<TCommand, TArgs>
     public TResult Execute<TResult>(TCommand command, TArgs args, Func<TCommand, TResult> invoker)
     {
         TResult result;
-        var start = Stopwatch.GetTimestamp();
+        var stopwatch = StopwatchSlim.Create();
         BeforeExecute?.Invoke( command, args );
 
         try
@@ -32,18 +31,18 @@ public readonly struct DbCommandDiagnoser<TCommand, TArgs>
         }
         catch ( Exception exc )
         {
-            AfterExecute?.Invoke( command, args, StopwatchTimestamp.GetTimeSpan( start, Stopwatch.GetTimestamp() ), exc );
+            AfterExecute?.Invoke( command, args, stopwatch.ElapsedTime, exc );
             throw;
         }
 
-        AfterExecute?.Invoke( command, args, StopwatchTimestamp.GetTimeSpan( start, Stopwatch.GetTimestamp() ), null );
+        AfterExecute?.Invoke( command, args, stopwatch.ElapsedTime, null );
         return result;
     }
 
     public async ValueTask<TResult> ExecuteAsync<TResult>(TCommand command, TArgs args, Func<TCommand, ValueTask<TResult>> invoker)
     {
         TResult result;
-        var start = Stopwatch.GetTimestamp();
+        var stopwatch = StopwatchSlim.Create();
         BeforeExecute?.Invoke( command, args );
 
         try
@@ -52,18 +51,18 @@ public readonly struct DbCommandDiagnoser<TCommand, TArgs>
         }
         catch ( Exception exc )
         {
-            AfterExecute?.Invoke( command, args, StopwatchTimestamp.GetTimeSpan( start, Stopwatch.GetTimestamp() ), exc );
+            AfterExecute?.Invoke( command, args, stopwatch.ElapsedTime, exc );
             throw;
         }
 
-        AfterExecute?.Invoke( command, args, StopwatchTimestamp.GetTimeSpan( start, Stopwatch.GetTimestamp() ), null );
+        AfterExecute?.Invoke( command, args, stopwatch.ElapsedTime, null );
         return result;
     }
 
     public async ValueTask<TResult> ExecuteAsync<TResult>(TCommand command, TArgs args, Func<TCommand, Task<TResult>> invoker)
     {
         TResult result;
-        var start = Stopwatch.GetTimestamp();
+        var stopwatch = StopwatchSlim.Create();
         BeforeExecute?.Invoke( command, args );
 
         try
@@ -72,11 +71,11 @@ public readonly struct DbCommandDiagnoser<TCommand, TArgs>
         }
         catch ( Exception exc )
         {
-            AfterExecute?.Invoke( command, args, StopwatchTimestamp.GetTimeSpan( start, Stopwatch.GetTimestamp() ), exc );
+            AfterExecute?.Invoke( command, args, stopwatch.ElapsedTime, exc );
             throw;
         }
 
-        AfterExecute?.Invoke( command, args, StopwatchTimestamp.GetTimeSpan( start, Stopwatch.GetTimestamp() ), null );
+        AfterExecute?.Invoke( command, args, stopwatch.ElapsedTime, null );
         return result;
     }
 }

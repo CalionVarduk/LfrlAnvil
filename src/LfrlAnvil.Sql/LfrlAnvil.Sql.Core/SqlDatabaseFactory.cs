@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
-using System.Diagnostics;
 using System.Diagnostics.Contracts;
 using System.Runtime.InteropServices;
 using LfrlAnvil.Diagnostics;
@@ -335,7 +334,7 @@ public abstract class SqlDatabaseFactory<TDatabase> : ISqlDatabaseFactory
         foreach ( var version in versions.Uncommitted )
         {
             builder.Changes.Attach();
-            var start = Stopwatch.GetTimestamp();
+            var stopwatch = StopwatchSlim.Create();
 
             version.Apply( builder );
             var actions = builder.Changes.GetPendingActions();
@@ -390,7 +389,7 @@ public abstract class SqlDatabaseFactory<TDatabase> : ISqlDatabaseFactory
                     context.OnAfterVersionTransaction( builder, statementKey, connection, ref executor );
                 }
 
-                var elapsedTime = StopwatchTimestamp.GetTimeSpan( start, Stopwatch.GetTimestamp() );
+                var elapsedTime = stopwatch.ElapsedTime;
                 if ( context.PersistLastVersionHistoryRecordOnly )
                     elapsedTimes.Clear();
 
