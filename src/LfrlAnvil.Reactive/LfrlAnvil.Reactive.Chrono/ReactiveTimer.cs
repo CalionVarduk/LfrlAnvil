@@ -1,6 +1,9 @@
 ﻿using System;
+using System.Diagnostics.Contracts;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
+using LfrlAnvil.Async;
 using LfrlAnvil.Chrono;
 using LfrlAnvil.Extensions;
 using LfrlAnvil.Reactive.Chrono.Composites;
@@ -10,10 +13,7 @@ namespace LfrlAnvil.Reactive.Chrono;
 
 public sealed class ReactiveTimer : ConcurrentEventSource<WithInterval<long>, EventPublisher<WithInterval<long>>>
 {
-    public static readonly Duration DefaultSpinWaitDurationHint = Duration.FromMilliseconds( 1 );
-    private const byte StoppedState = 0;
-    private const byte RunningState = 1;
-    private const byte StoppingState = 2;
+    public static readonly Duration DefaultSpinWaitDurationHint = Duration.FromMicroseconds( 1 );
 
     private readonly ITimestampProvider _timestampProvider;
     private readonly ManualResetEventSlim _reset;
@@ -22,7 +22,7 @@ public sealed class ReactiveTimer : ConcurrentEventSource<WithInterval<long>, Ev
     private Timestamp _prevStartTimestamp;
     private Timestamp _expectedNextTimestamp;
     private long _prevIndex;
-    private byte _state;
+    private InterlockedEnum<ReactiveTimerState> _state;
 
     public ReactiveTimer(ITimestampProvider timestampProvider, Duration interval, long count = long.MaxValue)
         : this( timestampProvider, interval, DefaultSpinWaitDurationHint, count ) { }
@@ -36,7 +36,7 @@ public sealed class ReactiveTimer : ConcurrentEventSource<WithInterval<long>, Ev
 
         Interval = interval;
         Count = count;
-        _state = StoppedState;
+        _state = new InterlockedEnum<ReactiveTimerState>( ReactiveTimerState.Idle );
 
         _timestampProvider = timestampProvider;
         _reset = new ManualResetEventSlim( false );
@@ -49,61 +49,54 @@ public sealed class ReactiveTimer : ConcurrentEventSource<WithInterval<long>, Ev
 
     public Duration Interval { get; }
     public long Count { get; }
-    public bool IsRunning => _state == RunningState;
-    public bool CanBeStarted => _state == StoppedState && ! Base.IsDisposed && _prevIndex != _expectedLastIndex;
+    public ReactiveTimerState State => _state.Value;
 
     public bool Start()
     {
-        EnsureNotDisposed();
-        return StartCore( Interval ) is not null;
+        return TryStartCore( Interval ).Result == StartResult.Started;
     }
 
     public bool Start(Duration delay)
     {
-        EnsureNotDisposed();
         Ensure.IsInRange( delay, Duration.FromTicks( 1 ), Duration.FromMilliseconds( int.MaxValue ) );
-        return StartCore( delay ) is not null;
+        return TryStartCore( delay ).Result == StartResult.Started;
     }
 
-    public Task? StartAsync()
+    public Task StartAsync()
     {
-        EnsureNotDisposed();
-        return StartCore( Interval, Task.Factory );
+        var (task, result) = TryStartCore( Interval, Task.Factory );
+        return GetStartedTask( task, result );
     }
 
-    public Task? StartAsync(TaskScheduler scheduler)
+    public Task StartAsync(TaskScheduler scheduler)
     {
-        EnsureNotDisposed();
         var taskFactory = new TaskFactory( scheduler );
-        return StartCore( Interval, taskFactory );
+        var (task, result) = TryStartCore( Interval, taskFactory );
+        return GetStartedTask( task, result );
     }
 
-    public Task? StartAsync(Duration delay)
+    public Task StartAsync(Duration delay)
     {
-        EnsureNotDisposed();
         Ensure.IsInRange( delay, Duration.FromTicks( 1 ), Duration.FromMilliseconds( int.MaxValue ) );
-        return StartCore( delay, Task.Factory );
+        var (task, result) = TryStartCore( delay, Task.Factory );
+        return GetStartedTask( task, result );
     }
 
-    public Task? StartAsync(TaskScheduler scheduler, Duration delay)
+    public Task StartAsync(TaskScheduler scheduler, Duration delay)
     {
-        EnsureNotDisposed();
         Ensure.IsInRange( delay, Duration.FromTicks( 1 ), Duration.FromMilliseconds( int.MaxValue ) );
-
         var taskFactory = new TaskFactory( scheduler );
-        return StartCore( delay, taskFactory );
+        var (task, result) = TryStartCore( delay, taskFactory );
+        return GetStartedTask( task, result );
     }
 
     public bool Stop()
     {
-        EnsureNotDisposed();
-
-        lock ( Sync )
+        using ( ExclusiveLock.Enter( Sync ) )
         {
-            if ( ! IsRunning )
+            if ( ! _state.Write( ReactiveTimerState.Stopping, ReactiveTimerState.Running ) )
                 return false;
 
-            _state = StoppingState;
             _reset.Set();
             return true;
         }
@@ -111,82 +104,89 @@ public sealed class ReactiveTimer : ConcurrentEventSource<WithInterval<long>, Ev
 
     public override void Dispose()
     {
-        lock ( Sync )
-        {
-            if ( Base.IsDisposed )
-                return;
-
-            if ( IsRunning )
-                _state = StoppingState;
-
-            _reset.Set();
-            _reset.Dispose();
-            Base.Dispose();
-        }
+        using ( ExclusiveLock.Enter( Sync ) )
+            DisposeCore();
     }
 
-    private Task? StartCore(Duration delay, TaskFactory? taskFactory = null)
+    private void DisposeCore()
     {
-        lock ( Sync )
+        if ( Base.IsDisposed )
+            return;
+
+        Base.Dispose();
+        Stop();
+        _reset.Dispose();
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    private static Task GetStartedTask(Task? task, StartResult result)
+    {
+        if ( task is not null )
+            return task;
+
+        return result == StartResult.Disposed ? Task.CompletedTask : Task.FromCanceled( new CancellationToken( true ) );
+    }
+
+    private (Task? Task, StartResult Result) TryStartCore(Duration delay, TaskFactory? taskFactory = null)
+    {
+        using ( ExclusiveLock.Enter( Sync ) )
         {
-            if ( _state != StoppedState || _prevIndex == _expectedLastIndex )
-                return null;
+            if ( Base.IsDisposed || _prevIndex == _expectedLastIndex )
+                return (null, StartResult.Disposed);
+
+            if ( ! _state.Write( ReactiveTimerState.Running, ReactiveTimerState.Idle ) )
+                return (null, StartResult.AlreadyRunning);
 
             _reset.Reset();
-            _state = RunningState;
             _prevStartTimestamp = _timestampProvider.GetNow();
             _expectedNextTimestamp = _prevStartTimestamp + delay;
         }
 
         if ( taskFactory is not null )
-            return taskFactory.StartNew( RunBlockingTimer );
+            return (taskFactory.StartNew( RunBlockingTimer ), StartResult.Started);
 
         RunBlockingTimer();
-        return Task.CompletedTask;
+        return (Task.CompletedTask, StartResult.Started);
     }
 
     private void RunBlockingTimer()
     {
-        Duration initialDelay;
-
-        lock ( Sync )
+        Duration delay;
+        Timestamp expectedNextTimestamp;
+        using ( ExclusiveLock.Enter( Sync ) )
         {
-            if ( ! IsRunning )
-            {
-                _state = StoppedState;
+            if ( _state.Write( ReactiveTimerState.Idle, ReactiveTimerState.Stopping ) )
                 return;
-            }
 
-            initialDelay = Duration.Zero.Max( _expectedNextTimestamp - _prevStartTimestamp - _spinWaitDurationHint );
+            expectedNextTimestamp = _expectedNextTimestamp;
+            delay = Duration.Zero.Max( expectedNextTimestamp - _prevStartTimestamp - _spinWaitDurationHint );
         }
 
         while ( true )
         {
             try
             {
-                _reset.Wait( initialDelay );
+                _reset.Wait( delay );
             }
             catch ( ObjectDisposedException ) { }
 
-            lock ( Sync )
+            if ( _state.Write( ReactiveTimerState.Idle, ReactiveTimerState.Stopping ) )
+                break;
+
+            var timestamp = _timestampProvider.GetNow();
+            while ( timestamp < expectedNextTimestamp )
             {
-                if ( ! IsRunning )
-                {
-                    _state = StoppedState;
-                    break;
-                }
+                Thread.SpinWait( 1 );
+                timestamp = _timestampProvider.GetNow();
+            }
 
-                var timestamp = _timestampProvider.GetNow();
-                while ( timestamp < _expectedNextTimestamp )
-                {
-                    Thread.SpinWait( 1 );
-                    timestamp = _timestampProvider.GetNow();
-                }
-
+            using ( ExclusiveLock.Enter( Sync ) )
+            {
                 var interval = timestamp - _prevStartTimestamp;
                 _prevStartTimestamp = timestamp;
 
-                var offsetFromExpectedTimestamp = timestamp - _expectedNextTimestamp;
+                var offsetFromExpectedTimestamp = timestamp - expectedNextTimestamp;
                 var skippedEventCount = offsetFromExpectedTimestamp.Ticks / Interval.Ticks;
                 var eventIndex = Math.Min( _prevIndex + skippedEventCount + 1, _expectedLastIndex );
                 var nextEvent = new WithInterval<long>( eventIndex, timestamp, interval );
@@ -196,25 +196,31 @@ public sealed class ReactiveTimer : ConcurrentEventSource<WithInterval<long>, Ev
                 if ( eventIndex == _expectedLastIndex )
                 {
                     _prevIndex = eventIndex;
-                    Dispose();
+                    _state.Write( ReactiveTimerState.Idle );
+                    DisposeCore();
                     break;
                 }
 
                 var endTimestamp = _timestampProvider.GetNow();
-                var actualOffsetFromExpectedTimestamp = endTimestamp - _expectedNextTimestamp;
+                var actualOffsetFromExpectedTimestamp = endTimestamp - expectedNextTimestamp;
                 var actualSkippedEventCount = actualOffsetFromExpectedTimestamp.Ticks / Interval.Ticks;
-                _expectedNextTimestamp += new Duration( Interval.Ticks * (actualSkippedEventCount + 1) );
+                expectedNextTimestamp += new Duration( Interval.Ticks * (actualSkippedEventCount + 1) );
+                _expectedNextTimestamp = expectedNextTimestamp;
                 _prevIndex = Math.Min( eventIndex + (actualSkippedEventCount - skippedEventCount), _expectedLastIndex );
 
-                if ( ! IsRunning )
-                {
-                    _state = StoppedState;
+                if ( _state.Write( ReactiveTimerState.Idle, ReactiveTimerState.Stopping ) )
                     break;
-                }
 
-                initialDelay = Duration.Zero.Max( _expectedNextTimestamp - endTimestamp - _spinWaitDurationHint );
+                delay = Duration.Zero.Max( expectedNextTimestamp - endTimestamp - _spinWaitDurationHint );
                 _reset.Reset();
             }
         }
+    }
+
+    private enum StartResult : byte
+    {
+        Started = 0,
+        Disposed = 1,
+        AlreadyRunning = 2
     }
 }

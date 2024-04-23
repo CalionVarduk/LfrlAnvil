@@ -22,8 +22,7 @@ public class ReactiveTimerTests : TestsBase
         {
             sut.Interval.Should().Be( interval );
             sut.Count.Should().Be( long.MaxValue );
-            sut.IsRunning.Should().BeFalse();
-            sut.CanBeStarted.Should().BeTrue();
+            sut.State.Should().Be( ReactiveTimerState.Idle );
             sut.IsDisposed.Should().BeFalse();
             sut.Subscribers.Should().BeEmpty();
             sut.HasSubscribers.Should().BeFalse();
@@ -68,8 +67,7 @@ public class ReactiveTimerTests : TestsBase
         {
             sut.Interval.Should().Be( interval );
             sut.Count.Should().Be( count );
-            sut.IsRunning.Should().BeFalse();
-            sut.CanBeStarted.Should().BeTrue();
+            sut.State.Should().Be( ReactiveTimerState.Idle );
             sut.IsDisposed.Should().BeFalse();
             sut.Subscribers.Should().BeEmpty();
             sut.HasSubscribers.Should().BeFalse();
@@ -130,8 +128,7 @@ public class ReactiveTimerTests : TestsBase
         {
             sut.Interval.Should().Be( interval );
             sut.Count.Should().Be( long.MaxValue );
-            sut.IsRunning.Should().BeFalse();
-            sut.CanBeStarted.Should().BeTrue();
+            sut.State.Should().Be( ReactiveTimerState.Idle );
             sut.IsDisposed.Should().BeFalse();
             sut.Subscribers.Should().BeEmpty();
             sut.HasSubscribers.Should().BeFalse();
@@ -196,8 +193,7 @@ public class ReactiveTimerTests : TestsBase
         {
             sut.Interval.Should().Be( interval );
             sut.Count.Should().Be( count );
-            sut.IsRunning.Should().BeFalse();
-            sut.CanBeStarted.Should().BeTrue();
+            sut.State.Should().Be( ReactiveTimerState.Idle );
             sut.IsDisposed.Should().BeFalse();
             sut.Subscribers.Should().BeEmpty();
             sut.HasSubscribers.Should().BeFalse();
@@ -282,8 +278,7 @@ public class ReactiveTimerTests : TestsBase
         using ( new AssertionScope() )
         {
             result.Should().BeTrue();
-            sut.IsRunning.Should().BeFalse();
-            sut.CanBeStarted.Should().BeFalse();
+            sut.State.Should().Be( ReactiveTimerState.Idle );
             sut.IsDisposed.Should().BeTrue();
             actualEvents.Should().BeSequentiallyEqualTo( expectedEvent );
         }
@@ -298,31 +293,33 @@ public class ReactiveTimerTests : TestsBase
         timestampProvider.GetNow().Returns( timestamps );
         var sut = new ReactiveTimer( timestampProvider, interval, count: 1 );
 
-        var task = sut.StartAsync()!;
-        var isRunning = sut.IsRunning;
-        var canBeStarted = sut.CanBeStarted;
+        var task = sut.StartAsync();
+        var state = sut.State;
         var result = sut.Start();
         await task;
 
         using ( new AssertionScope() )
         {
-            isRunning.Should().BeTrue();
-            canBeStarted.Should().BeFalse();
+            state.Should().Be( ReactiveTimerState.Running );
             result.Should().BeFalse();
         }
     }
 
     [Fact]
-    public void Start_ShouldThrowObjectDisposedException_WhenTimerIsDisposed()
+    public void Start_ShouldReturnFalse_WhenTimerIsDisposed()
     {
         var timestampProvider = Substitute.For<ITimestampProvider>();
         var interval = Duration.FromTicks( Fixture.CreatePositiveInt32() );
         var sut = new ReactiveTimer( timestampProvider, interval );
         sut.Dispose();
 
-        var action = Lambda.Of( () => sut.Start() );
+        var result = sut.Start();
 
-        action.Should().ThrowExactly<ObjectDisposedException>();
+        using ( new AssertionScope() )
+        {
+            sut.State.Should().Be( ReactiveTimerState.Idle );
+            result.Should().BeFalse();
+        }
     }
 
     [Fact]
@@ -347,8 +344,7 @@ public class ReactiveTimerTests : TestsBase
         using ( new AssertionScope() )
         {
             result.Should().BeTrue();
-            sut.IsRunning.Should().BeFalse();
-            sut.CanBeStarted.Should().BeFalse();
+            sut.State.Should().Be( ReactiveTimerState.Idle );
             sut.IsDisposed.Should().BeTrue();
             actualEvents.Should().BeSequentiallyEqualTo( expectedEvent );
         }
@@ -364,16 +360,14 @@ public class ReactiveTimerTests : TestsBase
         timestampProvider.GetNow().Returns( timestamps );
         var sut = new ReactiveTimer( timestampProvider, interval, count: 1 );
 
-        var task = sut.StartAsync()!;
-        var isRunning = sut.IsRunning;
-        var canBeStarted = sut.CanBeStarted;
+        var task = sut.StartAsync();
+        var state = sut.State;
         var result = sut.Start( delay );
         await task;
 
         using ( new AssertionScope() )
         {
-            isRunning.Should().BeTrue();
-            canBeStarted.Should().BeFalse();
+            state.Should().Be( ReactiveTimerState.Running );
             result.Should().BeFalse();
         }
     }
@@ -409,7 +403,7 @@ public class ReactiveTimerTests : TestsBase
     }
 
     [Fact]
-    public void Start_WithDelay_ShouldThrowObjectDisposedException_WhenTimerIsDisposed()
+    public void Start_WithDelay_ShouldReturnFalse_WhenTimerIsDisposed()
     {
         var timestampProvider = Substitute.For<ITimestampProvider>();
         var interval = Duration.FromTicks( Fixture.CreatePositiveInt32() );
@@ -417,9 +411,13 @@ public class ReactiveTimerTests : TestsBase
         var sut = new ReactiveTimer( timestampProvider, interval );
         sut.Dispose();
 
-        var action = Lambda.Of( () => sut.Start( delay ) );
+        var result = sut.Start( delay );
 
-        action.Should().ThrowExactly<ObjectDisposedException>();
+        using ( new AssertionScope() )
+        {
+            sut.State.Should().Be( ReactiveTimerState.Idle );
+            result.Should().BeFalse();
+        }
     }
 
     [Fact]
@@ -438,22 +436,21 @@ public class ReactiveTimerTests : TestsBase
         var sut = new ReactiveTimer( timestampProvider, interval, count: 1 );
         sut.Listen( listener );
 
-        var task = sut.StartAsync()!;
-        var isRunning = sut.IsRunning;
+        var task = sut.StartAsync();
+        var state = sut.State;
         await task;
 
         using ( new AssertionScope() )
         {
-            isRunning.Should().BeTrue();
-            sut.IsRunning.Should().BeFalse();
-            sut.CanBeStarted.Should().BeFalse();
+            state.Should().Be( ReactiveTimerState.Running );
+            sut.State.Should().Be( ReactiveTimerState.Idle );
             sut.IsDisposed.Should().BeTrue();
             actualEvents.Should().BeSequentiallyEqualTo( expectedEvent );
         }
     }
 
     [Fact]
-    public async Task StartAsync_ShouldReturnNull_WhenTimerIsAlreadyRunning()
+    public async Task StartAsync_ShouldReturnCancelledTask_WhenTimerIsAlreadyRunning()
     {
         var interval = Duration.FromMilliseconds( 15 );
         var timestamps = new[] { Timestamp.Zero, Timestamp.Zero + interval };
@@ -461,31 +458,34 @@ public class ReactiveTimerTests : TestsBase
         timestampProvider.GetNow().Returns( timestamps );
         var sut = new ReactiveTimer( timestampProvider, interval, count: 1 );
 
-        var task = sut.StartAsync()!;
-        var isRunning = sut.IsRunning;
-        var canBeStarted = sut.CanBeStarted;
+        var task = sut.StartAsync();
+        var state = sut.State;
         var result = sut.StartAsync();
+        var isCancelled = result.IsCanceled;
         await task;
 
         using ( new AssertionScope() )
         {
-            isRunning.Should().BeTrue();
-            canBeStarted.Should().BeFalse();
-            result.Should().BeNull();
+            state.Should().Be( ReactiveTimerState.Running );
+            isCancelled.Should().BeTrue();
         }
     }
 
     [Fact]
-    public void StartAsync_ShouldThrowObjectDisposedException_WhenTimerIsDisposed()
+    public void StartAsync_ShouldReturnCompletedTask_WhenTimerIsDisposed()
     {
         var timestampProvider = Substitute.For<ITimestampProvider>();
         var interval = Duration.FromTicks( Fixture.CreatePositiveInt32() );
         var sut = new ReactiveTimer( timestampProvider, interval );
         sut.Dispose();
 
-        var action = Lambda.Of( () => sut.StartAsync() );
+        var result = sut.StartAsync();
 
-        action.Should().ThrowExactly<ObjectDisposedException>();
+        using ( new AssertionScope() )
+        {
+            sut.State.Should().Be( ReactiveTimerState.Idle );
+            result.IsCompleted.Should().BeTrue();
+        }
     }
 
     [Fact]
@@ -505,22 +505,21 @@ public class ReactiveTimerTests : TestsBase
         var sut = new ReactiveTimer( timestampProvider, interval, count: 1 );
         sut.Listen( listener );
 
-        var task = sut.StartAsync( delay )!;
-        var isRunning = sut.IsRunning;
+        var task = sut.StartAsync( delay );
+        var state = sut.State;
         await task;
 
         using ( new AssertionScope() )
         {
-            isRunning.Should().BeTrue();
-            sut.IsRunning.Should().BeFalse();
-            sut.CanBeStarted.Should().BeFalse();
+            state.Should().Be( ReactiveTimerState.Running );
+            sut.State.Should().Be( ReactiveTimerState.Idle );
             sut.IsDisposed.Should().BeTrue();
             actualEvents.Should().BeSequentiallyEqualTo( expectedEvent );
         }
     }
 
     [Fact]
-    public async Task StartAsync_WithDelay_ShouldReturnNull_WhenTimerIsAlreadyRunning()
+    public async Task StartAsync_WithDelay_ShouldReturnCancelledTask_WhenTimerIsAlreadyRunning()
     {
         var interval = Duration.FromMilliseconds( 15 );
         var delay = Duration.FromTicks( 5 );
@@ -529,17 +528,16 @@ public class ReactiveTimerTests : TestsBase
         timestampProvider.GetNow().Returns( timestamps );
         var sut = new ReactiveTimer( timestampProvider, interval, count: 1 );
 
-        var task = sut.StartAsync()!;
-        var isRunning = sut.IsRunning;
-        var canBeStarted = sut.CanBeStarted;
+        var task = sut.StartAsync();
+        var state = sut.State;
         var result = sut.StartAsync( delay );
+        var isCancelled = result.IsCanceled;
         await task;
 
         using ( new AssertionScope() )
         {
-            isRunning.Should().BeTrue();
-            canBeStarted.Should().BeFalse();
-            result.Should().BeNull();
+            state.Should().Be( ReactiveTimerState.Running );
+            isCancelled.Should().BeTrue();
         }
     }
 
@@ -574,7 +572,7 @@ public class ReactiveTimerTests : TestsBase
     }
 
     [Fact]
-    public void StartAsync_WithDelay_ShouldThrowObjectDisposedException_WhenTimerIsDisposed()
+    public void StartAsync_WithDelay_ShouldReturnCompletedTask_WhenTimerIsDisposed()
     {
         var timestampProvider = Substitute.For<ITimestampProvider>();
         var interval = Duration.FromTicks( Fixture.CreatePositiveInt32() );
@@ -582,9 +580,13 @@ public class ReactiveTimerTests : TestsBase
         var sut = new ReactiveTimer( timestampProvider, interval );
         sut.Dispose();
 
-        var action = Lambda.Of( () => sut.StartAsync( delay ) );
+        var result = sut.StartAsync( delay );
 
-        action.Should().ThrowExactly<ObjectDisposedException>();
+        using ( new AssertionScope() )
+        {
+            sut.State.Should().Be( ReactiveTimerState.Idle );
+            result.IsCompleted.Should().BeTrue();
+        }
     }
 
     [Fact]
@@ -604,19 +606,18 @@ public class ReactiveTimerTests : TestsBase
         var sut = new ReactiveTimer( timestampProvider, interval, count: 1 );
         sut.Listen( listener );
 
-        await sut.StartAsync( scheduler )!;
+        await sut.StartAsync( scheduler );
 
         using ( new AssertionScope() )
         {
-            sut.IsRunning.Should().BeFalse();
-            sut.CanBeStarted.Should().BeFalse();
+            sut.State.Should().Be( ReactiveTimerState.Idle );
             sut.IsDisposed.Should().BeTrue();
             actualEvents.Should().BeSequentiallyEqualTo( expectedEvent );
         }
     }
 
     [Fact]
-    public async Task StartAsync_WithScheduler_ShouldReturnNull_WhenTimerIsAlreadyRunning()
+    public async Task StartAsync_WithScheduler_ShouldReturnCancelledTask_WhenTimerIsAlreadyRunning()
     {
         var scheduler = new SynchronousTaskScheduler();
         var interval = Duration.FromMilliseconds( 15 );
@@ -625,22 +626,21 @@ public class ReactiveTimerTests : TestsBase
         timestampProvider.GetNow().Returns( timestamps );
         var sut = new ReactiveTimer( timestampProvider, interval, count: 1 );
 
-        var task = sut.StartAsync()!;
-        var isRunning = sut.IsRunning;
-        var canBeStarted = sut.CanBeStarted;
+        var task = sut.StartAsync();
+        var state = sut.State;
         var result = sut.StartAsync( scheduler );
+        var isCancelled = result.IsCanceled;
         await task;
 
         using ( new AssertionScope() )
         {
-            isRunning.Should().BeTrue();
-            canBeStarted.Should().BeFalse();
-            result.Should().BeNull();
+            state.Should().Be( ReactiveTimerState.Running );
+            isCancelled.Should().BeTrue();
         }
     }
 
     [Fact]
-    public void StartAsync_WithScheduler_ShouldThrowObjectDisposedException_WhenTimerIsDisposed()
+    public void StartAsync_WithScheduler_ShouldReturnCompletedTask_WhenTimerIsDisposed()
     {
         var scheduler = new SynchronousTaskScheduler();
         var timestampProvider = Substitute.For<ITimestampProvider>();
@@ -648,9 +648,13 @@ public class ReactiveTimerTests : TestsBase
         var sut = new ReactiveTimer( timestampProvider, interval );
         sut.Dispose();
 
-        var action = Lambda.Of( () => sut.StartAsync( scheduler ) );
+        var result = sut.StartAsync( scheduler );
 
-        action.Should().ThrowExactly<ObjectDisposedException>();
+        using ( new AssertionScope() )
+        {
+            sut.State.Should().Be( ReactiveTimerState.Idle );
+            result.IsCompleted.Should().BeTrue();
+        }
     }
 
     [Fact]
@@ -671,39 +675,37 @@ public class ReactiveTimerTests : TestsBase
         var sut = new ReactiveTimer( timestampProvider, interval, count: 1 );
         sut.Listen( listener );
 
-        await sut.StartAsync( scheduler, delay )!;
+        await sut.StartAsync( scheduler, delay );
 
         using ( new AssertionScope() )
         {
-            sut.IsRunning.Should().BeFalse();
-            sut.CanBeStarted.Should().BeFalse();
+            sut.State.Should().Be( ReactiveTimerState.Idle );
             sut.IsDisposed.Should().BeTrue();
             actualEvents.Should().BeSequentiallyEqualTo( expectedEvent );
         }
     }
 
     [Fact]
-    public async Task StartAsync_WithSchedulerAndDelay_ShouldReturnNull_WhenTimerIsAlreadyRunning()
+    public async Task StartAsync_WithSchedulerAndDelay_ShouldReturnCancelledTask_WhenTimerIsAlreadyRunning()
     {
         var scheduler = new SynchronousTaskScheduler();
-        var interval = Duration.FromTicks( 1 );
-        var delay = Duration.FromMilliseconds( 15 );
-        var timestamps = new[] { Timestamp.Zero, Timestamp.Zero + delay };
+        var interval = Duration.FromMilliseconds( 15 );
+        var delay = Duration.FromTicks( 5 );
+        var timestamps = new[] { Timestamp.Zero, Timestamp.Zero + interval };
         var timestampProvider = Substitute.For<ITimestampProvider>();
         timestampProvider.GetNow().Returns( timestamps );
         var sut = new ReactiveTimer( timestampProvider, interval, count: 1 );
 
-        var task = sut.StartAsync()!;
-        var isRunning = sut.IsRunning;
-        var canBeStarted = sut.CanBeStarted;
+        var task = sut.StartAsync();
+        var state = sut.State;
         var result = sut.StartAsync( scheduler, delay );
+        var isCancelled = result.IsCanceled;
         await task;
 
         using ( new AssertionScope() )
         {
-            isRunning.Should().BeTrue();
-            canBeStarted.Should().BeFalse();
-            result.Should().BeNull();
+            state.Should().Be( ReactiveTimerState.Running );
+            isCancelled.Should().BeTrue();
         }
     }
 
@@ -740,7 +742,7 @@ public class ReactiveTimerTests : TestsBase
     }
 
     [Fact]
-    public void StartAsync_WithSchedulerAndDelay_ShouldThrowObjectDisposedException_WhenTimerIsDisposed()
+    public void StartAsync_WithSchedulerAndDelay_ShouldReturnCompletedTask_WhenTimerIsDisposed()
     {
         var scheduler = new SynchronousTaskScheduler();
         var timestampProvider = Substitute.For<ITimestampProvider>();
@@ -749,9 +751,13 @@ public class ReactiveTimerTests : TestsBase
         var sut = new ReactiveTimer( timestampProvider, interval );
         sut.Dispose();
 
-        var action = Lambda.Of( () => sut.StartAsync( scheduler, delay ) );
+        var result = sut.StartAsync( scheduler, delay );
 
-        action.Should().ThrowExactly<ObjectDisposedException>();
+        using ( new AssertionScope() )
+        {
+            sut.State.Should().Be( ReactiveTimerState.Idle );
+            result.IsCompleted.Should().BeTrue();
+        }
     }
 
     [Fact]
@@ -783,8 +789,7 @@ public class ReactiveTimerTests : TestsBase
 
         using ( new AssertionScope() )
         {
-            sut.IsRunning.Should().BeFalse();
-            sut.CanBeStarted.Should().BeFalse();
+            sut.State.Should().Be( ReactiveTimerState.Idle );
             sut.IsDisposed.Should().BeTrue();
             actualEvents.Should().BeSequentiallyEqualTo( expectedEvents );
         }
@@ -818,8 +823,7 @@ public class ReactiveTimerTests : TestsBase
 
         using ( new AssertionScope() )
         {
-            sut.IsRunning.Should().BeFalse();
-            sut.CanBeStarted.Should().BeFalse();
+            sut.State.Should().Be( ReactiveTimerState.Idle );
             sut.IsDisposed.Should().BeTrue();
             actualEvents.Should().BeSequentiallyEqualTo( expectedEvents );
         }
@@ -850,8 +854,7 @@ public class ReactiveTimerTests : TestsBase
 
         using ( new AssertionScope() )
         {
-            sut.IsRunning.Should().BeFalse();
-            sut.CanBeStarted.Should().BeFalse();
+            sut.State.Should().Be( ReactiveTimerState.Idle );
             sut.IsDisposed.Should().BeTrue();
             actualEvents.Should().BeSequentiallyEqualTo( expectedEvents );
         }
@@ -894,8 +897,7 @@ public class ReactiveTimerTests : TestsBase
 
         using ( new AssertionScope() )
         {
-            sut.IsRunning.Should().BeFalse();
-            sut.CanBeStarted.Should().BeFalse();
+            sut.State.Should().Be( ReactiveTimerState.Idle );
             sut.IsDisposed.Should().BeTrue();
             actualEvents.Should().BeSequentiallyEqualTo( expectedEvents );
         }
@@ -938,8 +940,7 @@ public class ReactiveTimerTests : TestsBase
 
         using ( new AssertionScope() )
         {
-            sut.IsRunning.Should().BeFalse();
-            sut.CanBeStarted.Should().BeFalse();
+            sut.State.Should().Be( ReactiveTimerState.Idle );
             sut.IsDisposed.Should().BeTrue();
             actualEvents.Should().BeSequentiallyEqualTo( expectedEvents );
         }
@@ -986,8 +987,7 @@ public class ReactiveTimerTests : TestsBase
 
         using ( new AssertionScope() )
         {
-            sut.IsRunning.Should().BeFalse();
-            sut.CanBeStarted.Should().BeFalse();
+            sut.State.Should().Be( ReactiveTimerState.Idle );
             sut.IsDisposed.Should().BeTrue();
             actualEvents.Should().BeSequentiallyEqualTo( expectedEvents );
         }
@@ -1016,8 +1016,7 @@ public class ReactiveTimerTests : TestsBase
 
         using ( new AssertionScope() )
         {
-            sut.IsRunning.Should().BeFalse();
-            sut.CanBeStarted.Should().BeFalse();
+            sut.State.Should().Be( ReactiveTimerState.Idle );
             sut.IsDisposed.Should().BeTrue();
             actualEvents.Should().BeSequentiallyEqualTo( expectedEvent );
         }
@@ -1069,8 +1068,7 @@ public class ReactiveTimerTests : TestsBase
 
         using ( new AssertionScope() )
         {
-            sut.IsRunning.Should().BeFalse();
-            sut.CanBeStarted.Should().BeFalse();
+            sut.State.Should().Be( ReactiveTimerState.Idle );
             sut.IsDisposed.Should().BeTrue();
             actualEvents.Should().BeSequentiallyEqualTo( expectedEvents );
         }
@@ -1110,16 +1108,14 @@ public class ReactiveTimerTests : TestsBase
         var listener = Substitute.For<IEventListener<WithInterval<long>>>();
         var sut = new ReactiveTimer( timestampProvider, interval );
         sut.Listen( listener );
-        var task = sut.StartAsync()!;
+        var task = sut.StartAsync();
 
         sut.Dispose();
-        var canBeStarted = sut.CanBeStarted;
         await task;
 
         using ( new AssertionScope() )
         {
-            canBeStarted.Should().BeFalse();
-            sut.IsRunning.Should().BeFalse();
+            sut.State.Should().Be( ReactiveTimerState.Idle );
             listener.VerifyCalls().DidNotReceive( x => x.React( Arg.Any<WithInterval<long>>() ) );
         }
     }
@@ -1133,19 +1129,18 @@ public class ReactiveTimerTests : TestsBase
         var listener = Substitute.For<IEventListener<WithInterval<long>>>();
         var sut = new ReactiveTimer( timestampProvider, interval );
         sut.Listen( listener );
-        var task = sut.StartAsync()!;
+        var task = sut.StartAsync();
 
         await Task.Delay( 1 );
         var result = sut.Stop();
-        var isRunning = sut.IsRunning;
+        var state = sut.State;
         await task;
 
         using ( new AssertionScope() )
         {
             result.Should().BeTrue();
-            isRunning.Should().BeFalse();
-            sut.IsRunning.Should().BeFalse();
-            sut.CanBeStarted.Should().BeTrue();
+            state.Should().NotBe( ReactiveTimerState.Running );
+            sut.State.Should().Be( ReactiveTimerState.Idle );
             sut.IsDisposed.Should().BeFalse();
             listener.VerifyCalls().DidNotReceive( x => x.React( Arg.Any<WithInterval<long>>() ) );
         }
@@ -1177,7 +1172,7 @@ public class ReactiveTimerTests : TestsBase
 
         using ( new AssertionScope() )
         {
-            sut.IsRunning.Should().BeFalse();
+            sut.State.Should().Be( ReactiveTimerState.Idle );
             sut.IsDisposed.Should().BeFalse();
             actualEvents.Should().BeSequentiallyEqualTo( expectedEvent );
         }
@@ -1195,20 +1190,24 @@ public class ReactiveTimerTests : TestsBase
         using ( new AssertionScope() )
         {
             result.Should().BeFalse();
-            sut.IsRunning.Should().BeFalse();
+            sut.State.Should().Be( ReactiveTimerState.Idle );
         }
     }
 
     [Fact]
-    public void Stop_ShouldThrowObjectDisposedException_WhenTimerIsDisposed()
+    public void Stop_ShouldReturnFalse_WhenTimerIsDisposed()
     {
         var timestampProvider = Substitute.For<ITimestampProvider>();
         var interval = Duration.FromTicks( Fixture.CreatePositiveInt32() );
         var sut = new ReactiveTimer( timestampProvider, interval );
         sut.Dispose();
 
-        var action = Lambda.Of( () => sut.Stop() );
+        var result = sut.Stop();
 
-        action.Should().ThrowExactly<ObjectDisposedException>();
+        using ( new AssertionScope() )
+        {
+            result.Should().BeFalse();
+            sut.State.Should().Be( ReactiveTimerState.Idle );
+        }
     }
 }

@@ -1,7 +1,6 @@
 # TODO
 |       Project       |              Title               |                          Details                          | Requirements |
 |:-------------------:|:--------------------------------:|:---------------------------------------------------------:|:------------:|
-|          -          |       Reactive.Scheduling        |                [link](#reactivescheduling)                |      -       |
 |   Dependencies.*    |     Dependencies.AspNetCore      |             [link](#dependencies-aspnetcore)              |      -       |
 |        Sql.*        |      Positional parameters       |          [link](#sqlcore-positional-parameters)           |      -       |
 |          -          |             Terminal             |                     [link](#terminal)                     |      -       |
@@ -21,17 +20,6 @@ Sql:
 - source generators for queries/statements?
 - for parameter binding too, maybe?
 
-
-### Reactive.Scheduling
-project idea:
-- combines Reactive.Chrono & Reactive.Queues
-- contains sth like IReactiveTimerProvider, caches timers by some sort of key
-- contains TimedCache, which runs on a timer & uses an underlying reorderable queue,
-each entry can have a different lifetime
-- contains schedulers, that run on a timer & use an underlying queue,
-can they delegate event handling to a different thread?
-- may have an additional reference to the Caching project
-- its implementation may drive what Reactive.Scheduling actually consists of
 
 ### Terminal
 project idea:
