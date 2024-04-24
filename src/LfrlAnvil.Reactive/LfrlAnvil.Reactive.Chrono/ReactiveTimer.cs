@@ -181,21 +181,30 @@ public sealed class ReactiveTimer : ConcurrentEventSource<WithInterval<long>, Ev
                 timestamp = _timestampProvider.GetNow();
             }
 
+            WithInterval<long> nextEvent;
+            long skippedEventCount;
             using ( ExclusiveLock.Enter( Sync ) )
             {
                 var interval = timestamp - _prevStartTimestamp;
                 _prevStartTimestamp = timestamp;
 
                 var offsetFromExpectedTimestamp = timestamp - expectedNextTimestamp;
-                var skippedEventCount = offsetFromExpectedTimestamp.Ticks / Interval.Ticks;
+                skippedEventCount = offsetFromExpectedTimestamp.Ticks / Interval.Ticks;
                 var eventIndex = Math.Min( _prevIndex + skippedEventCount + 1, _expectedLastIndex );
-                var nextEvent = new WithInterval<long>( eventIndex, timestamp, interval );
+                nextEvent = new WithInterval<long>( eventIndex, timestamp, interval );
+            }
 
+            try
+            {
                 Base.Publish( nextEvent );
+            }
+            catch ( ObjectDisposedException ) { }
 
-                if ( eventIndex == _expectedLastIndex )
+            using ( ExclusiveLock.Enter( Sync ) )
+            {
+                if ( nextEvent.Event == _expectedLastIndex )
                 {
-                    _prevIndex = eventIndex;
+                    _prevIndex = nextEvent.Event;
                     _state.Write( ReactiveTimerState.Idle );
                     DisposeCore();
                     break;
@@ -206,7 +215,7 @@ public sealed class ReactiveTimer : ConcurrentEventSource<WithInterval<long>, Ev
                 var actualSkippedEventCount = actualOffsetFromExpectedTimestamp.Ticks / Interval.Ticks;
                 expectedNextTimestamp += new Duration( Interval.Ticks * (actualSkippedEventCount + 1) );
                 _expectedNextTimestamp = expectedNextTimestamp;
-                _prevIndex = Math.Min( eventIndex + (actualSkippedEventCount - skippedEventCount), _expectedLastIndex );
+                _prevIndex = Math.Min( nextEvent.Event + (actualSkippedEventCount - skippedEventCount), _expectedLastIndex );
 
                 if ( _state.Write( ReactiveTimerState.Idle, ReactiveTimerState.Stopping ) )
                     break;
