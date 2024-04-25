@@ -30,7 +30,7 @@ public class CounterTaskTests : TestsBase
         using ( new AssertionScope() )
         {
             sut.Limit.Should().Be( 14 );
-            sut.Count.Should().Be( count );
+            sut.Count.Should().Be( 14 );
             sut.Task.IsCompletedSuccessfully.Should().BeTrue();
         }
     }

@@ -6,13 +6,20 @@ using LfrlAnvil.Extensions;
 
 namespace LfrlAnvil.Async;
 
-public class DedicatedThreadSynchronizationContext : SynchronizationContext, IDisposable
+/// <summary>
+/// Represents a <see cref="SynchronizationContext"/> with a dedicated underlying <see cref="Thread"/>.
+/// </summary>
+public sealed class DedicatedThreadSynchronizationContext : SynchronizationContext, IDisposable
 {
     private readonly BlockingCollection<Pair<SendOrPostCallback, object?>> _queue;
     private readonly Thread _thread;
     private CultureInfo? _threadCulture;
     private CultureInfo? _threadUICulture;
 
+    /// <summary>
+    /// Creates a new <see cref="DedicatedThreadSynchronizationContext"/> instance.
+    /// </summary>
+    /// <param name="params">Optional parameters for the underlying thread.</param>
     public DedicatedThreadSynchronizationContext(ThreadParams @params = default)
     {
         _queue = new BlockingCollection<Pair<SendOrPostCallback, object?>>();
@@ -30,30 +37,59 @@ public class DedicatedThreadSynchronizationContext : SynchronizationContext, IDi
         _thread.Start( this );
     }
 
+    /// <summary>
+    /// Value indicating the scheduling priority of the underlying thread.
+    /// </summary>
     public ThreadPriority ThreadPriority { get; }
+
+    /// <summary>
+    /// Culture of the underlying thread.
+    /// </summary>
     public CultureInfo ThreadCulture => _threadCulture ?? CultureInfo.InvariantCulture;
+
+    /// <summary>
+    /// UI culture of the underlying thread.
+    /// </summary>
     public CultureInfo ThreadUICulture => _threadUICulture ?? CultureInfo.InvariantCulture;
+
+    /// <summary>
+    /// Unique identifier of the underlying thread.
+    /// </summary>
     public int ThreadId => _thread.ManagedThreadId;
+
+    /// <summary>
+    /// Name of the underlying thread.
+    /// </summary>
     public string? ThreadName => _thread.Name;
+
+    /// <summary>
+    /// Value indicating the execution status of the underlying thread.
+    /// </summary>
     public bool IsActive => _thread.IsAlive;
 
+    /// <inheritdoc />
     public void Dispose()
     {
         _queue.CompleteAdding();
         _queue.Dispose();
     }
 
+    /// <summary>
+    /// Joins current thread to the underlying thread of this synchronization context.
+    /// </summary>
     public void JoinThread()
     {
         _thread.Join();
     }
 
-    public sealed override void Post(SendOrPostCallback d, object? state)
+    /// <inheritdoc />
+    public override void Post(SendOrPostCallback d, object? state)
     {
         _queue.Add( Pair.Create( d, state ) );
     }
 
-    public sealed override void Send(SendOrPostCallback d, object? state)
+    /// <inheritdoc />
+    public override void Send(SendOrPostCallback d, object? state)
     {
         using var reset = new ManualResetEventSlim( false );
         Post( SendCallback, new SendCallbackState( d, state, reset ) );

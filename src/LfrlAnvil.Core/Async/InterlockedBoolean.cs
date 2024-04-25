@@ -6,15 +6,25 @@ using LfrlAnvil.Extensions;
 
 namespace LfrlAnvil.Async;
 
+/// <summary>
+/// A lightweight representation of an <see cref="Interlocked"/> (atomic) <see cref="Boolean"/>.
+/// </summary>
 public struct InterlockedBoolean : IEquatable<InterlockedBoolean>, IComparable<InterlockedBoolean>, IComparable
 {
     private int _value;
 
+    /// <summary>
+    /// Creates a new <see cref="InterlockedBoolean"/> instance.
+    /// </summary>
+    /// <param name="value">Initial value.</param>
     public InterlockedBoolean(bool value)
     {
         _value = value ? 1 : 0;
     }
 
+    /// <summary>
+    /// Current value.
+    /// </summary>
     public bool Value => Interlocked.Add( ref _value, 0 ).IsOdd();
 
     [Pure]
@@ -53,60 +63,113 @@ public struct InterlockedBoolean : IEquatable<InterlockedBoolean>, IComparable<I
         return Value.CompareTo( other.Value );
     }
 
+    /// <summary>
+    /// Sets <see cref="Value"/> to <b>true</b>.
+    /// </summary>
+    /// <returns><b>true</b> when value has changed, otherwise <b>false</b>.</returns>
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public bool WriteTrue()
     {
         return Interlocked.Exchange( ref _value, 1 ).IsEven();
     }
 
+    /// <summary>
+    /// Sets <see cref="Value"/> to <b>false</b>.
+    /// </summary>
+    /// <returns><b>true</b> when value has changed, otherwise <b>false</b>.</returns>
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public bool WriteFalse()
     {
         return Interlocked.Exchange( ref _value, 0 ).IsOdd();
     }
 
+    /// <summary>
+    /// Sets <see cref="Value"/> to the provided <paramref name="value"/>.
+    /// </summary>
+    /// <param name="value">Value to set.</param>
+    /// <returns><b>true</b> when value has changed, otherwise <b>false</b>.</returns>
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public bool Write(bool value)
     {
         return value ? WriteTrue() : WriteFalse();
     }
 
+    /// <summary>
+    /// Toggles (negates) the current <see cref="Value"/>.
+    /// </summary>
+    /// <returns><see cref="Value"/> after change.</returns>
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public bool Toggle()
     {
         return Interlocked.Increment( ref _value ).IsOdd();
     }
 
+    /// <summary>
+    /// Checks if <paramref name="a"/> is equal to <paramref name="b"/>.
+    /// </summary>
+    /// <param name="a">First operand.</param>
+    /// <param name="b">Second operand.</param>
+    /// <returns><b>true</b> when operands are equal, otherwise <b>false</b>.</returns>
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static bool operator ==(InterlockedBoolean a, InterlockedBoolean b)
     {
         return a.Equals( b );
     }
 
+    /// <summary>
+    /// Checks if <paramref name="a"/> is not equal to <paramref name="b"/>.
+    /// </summary>
+    /// <param name="a">First operand.</param>
+    /// <param name="b">Second operand.</param>
+    /// <returns><b>true</b> when operands are not equal, otherwise <b>false</b>.</returns>
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static bool operator !=(InterlockedBoolean a, InterlockedBoolean b)
     {
         return ! a.Equals( b );
     }
 
+    /// <summary>
+    /// Checks if <paramref name="a"/> is greater than or equal to <paramref name="b"/>.
+    /// </summary>
+    /// <param name="a">First operand.</param>
+    /// <param name="b">Second operand.</param>
+    /// <returns><b>true</b> when <paramref name="a"/> is greater than or equal to <paramref name="b"/>, otherwise <b>false</b>.</returns>
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static bool operator >=(InterlockedBoolean a, InterlockedBoolean b)
     {
         return a.CompareTo( b ) >= 0;
     }
 
+    /// <summary>
+    /// Checks if <paramref name="a"/> is less than or equal to <paramref name="b"/>.
+    /// </summary>
+    /// <param name="a">First operand.</param>
+    /// <param name="b">Second operand.</param>
+    /// <returns><b>true</b> when <paramref name="a"/> is less than or equal to <paramref name="b"/>, otherwise <b>false</b>.</returns>
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static bool operator <=(InterlockedBoolean a, InterlockedBoolean b)
     {
         return a.CompareTo( b ) <= 0;
     }
 
+    /// <summary>
+    /// Checks if <paramref name="a"/> is greater than <paramref name="b"/>.
+    /// </summary>
+    /// <param name="a">First operand.</param>
+    /// <param name="b">Second operand.</param>
+    /// <returns><b>true</b> when <paramref name="a"/> is greater than <paramref name="b"/>, otherwise <b>false</b>.</returns>
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static bool operator >(InterlockedBoolean a, InterlockedBoolean b)
     {
         return a.CompareTo( b ) > 0;
     }
 
+    /// <summary>
+    /// Checks if <paramref name="a"/> is less than <paramref name="b"/>.
+    /// </summary>
+    /// <param name="a">First operand.</param>
+    /// <param name="b">Second operand.</param>
+    /// <returns><b>true</b> when <paramref name="a"/> is less than <paramref name="b"/>, otherwise <b>false</b>.</returns>
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static bool operator <(InterlockedBoolean a, InterlockedBoolean b)
     {

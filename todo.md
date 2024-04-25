@@ -17,7 +17,8 @@
 Sql:
 - source generators for queries/statements?
 - for parameter binding too, maybe?
-- IncludedColumns for IXs? simple blocking link to SqlColumnBuilder
+- IncludedColumns for IXs? simple blocking link to SqlColumnBuilder (low priority)
+  - from implemented dialects only postgresql supports this
 
 
 ### Terminal

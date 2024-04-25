@@ -6,16 +6,27 @@ using System.Threading;
 
 namespace LfrlAnvil.Async;
 
+/// <summary>
+/// A lightweight representation of an <see cref="Interlocked"/> (atomic) <see cref="Enum"/>.
+/// </summary>
+/// /// <typeparam name="T">Enum type.</typeparam>
 public struct InterlockedEnum<T> : IEquatable<InterlockedEnum<T>>, IComparable<InterlockedEnum<T>>, IComparable
     where T : struct, Enum
 {
     private int _value;
 
+    /// <summary>
+    /// Creates a new <see cref="InterlockedEnum{T}"/> instance.
+    /// </summary>
+    /// <param name="value">Initial value.</param>
     public InterlockedEnum(T value)
     {
         _value = ( int )( object )value;
     }
 
+    /// <summary>
+    /// Current value.
+    /// </summary>
     public T Value => ( T )( object )Interlocked.Add( ref _value, 0 );
 
     [Pure]
@@ -54,60 +65,121 @@ public struct InterlockedEnum<T> : IEquatable<InterlockedEnum<T>>, IComparable<I
         return Comparer<T>.Default.Compare( Value, other.Value );
     }
 
+    /// <summary>
+    /// Sets <see cref="Value"/> to the provided <paramref name="value"/> and returns the old value.
+    /// </summary>
+    /// <param name="value">Value to set.</param>
+    /// <returns><see cref="Value"/> before the change.</returns>
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public T Exchange(T value)
     {
         return ( T )( object )Interlocked.Exchange( ref _value, ( int )( object )value );
     }
 
+    /// <summary>
+    /// Sets <see cref="Value"/> to the provided <paramref name="value"/>
+    /// only if the current <see cref="Value"/> is equal to the provided <paramref name="comparand"/>
+    /// and returns the old value.
+    /// </summary>
+    /// <param name="value">Value to set.</param>
+    /// <param name="comparand">Value used for <see cref="Value"/> comparison.</param>
+    /// <returns><see cref="Value"/> before the change.</returns>
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public T CompareExchange(T value, T comparand)
     {
         return ( T )( object )Interlocked.CompareExchange( ref _value, ( int )( object )value, ( int )( object )comparand );
     }
 
+    /// <summary>
+    /// Sets <see cref="Value"/> to the provided <paramref name="value"/>.
+    /// </summary>
+    /// <param name="value">Value to set.</param>
+    /// <returns><b>true</b> when value has changed, otherwise <b>false</b>.</returns>
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public bool Write(T value)
     {
         return ! EqualityComparer<T>.Default.Equals( Exchange( value ), value );
     }
 
+    /// <summary>
+    /// Sets <see cref="Value"/> to the provided <paramref name="value"/>
+    /// only if the current <see cref="Value"/> is equal to the provided <paramref name="expected"/>.
+    /// </summary>
+    /// <param name="value">Value to set.</param>
+    /// <param name="expected">Value used for <see cref="Value"/> comparison.</param>
+    /// <returns><b>true</b> when value has changed, otherwise <b>false</b>.</returns>
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public bool Write(T value, T expected)
     {
         return EqualityComparer<T>.Default.Equals( CompareExchange( value, expected ), expected );
     }
 
+    /// <summary>
+    /// Checks if <paramref name="a"/> is equal to <paramref name="b"/>.
+    /// </summary>
+    /// <param name="a">First operand.</param>
+    /// <param name="b">Second operand.</param>
+    /// <returns><b>true</b> when operands are equal, otherwise <b>false</b>.</returns>
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static bool operator ==(InterlockedEnum<T> a, InterlockedEnum<T> b)
     {
         return a.Equals( b );
     }
 
+    /// <summary>
+    /// Checks if <paramref name="a"/> is not equal to <paramref name="b"/>.
+    /// </summary>
+    /// <param name="a">First operand.</param>
+    /// <param name="b">Second operand.</param>
+    /// <returns><b>true</b> when operands are not equal, otherwise <b>false</b>.</returns>
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static bool operator !=(InterlockedEnum<T> a, InterlockedEnum<T> b)
     {
         return ! a.Equals( b );
     }
 
+    /// <summary>
+    /// Checks if <paramref name="a"/> is greater than or equal to <paramref name="b"/>.
+    /// </summary>
+    /// <param name="a">First operand.</param>
+    /// <param name="b">Second operand.</param>
+    /// <returns><b>true</b> when <paramref name="a"/> is greater than or equal to <paramref name="b"/>, otherwise <b>false</b>.</returns>
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static bool operator >=(InterlockedEnum<T> a, InterlockedEnum<T> b)
     {
         return a.CompareTo( b ) >= 0;
     }
 
+    /// <summary>
+    /// Checks if <paramref name="a"/> is less than or equal to <paramref name="b"/>.
+    /// </summary>
+    /// <param name="a">First operand.</param>
+    /// <param name="b">Second operand.</param>
+    /// <returns><b>true</b> when <paramref name="a"/> is less than or equal to <paramref name="b"/>, otherwise <b>false</b>.</returns>
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static bool operator <=(InterlockedEnum<T> a, InterlockedEnum<T> b)
     {
         return a.CompareTo( b ) <= 0;
     }
 
+    /// <summary>
+    /// Checks if <paramref name="a"/> is greater than <paramref name="b"/>.
+    /// </summary>
+    /// <param name="a">First operand.</param>
+    /// <param name="b">Second operand.</param>
+    /// <returns><b>true</b> when <paramref name="a"/> is greater than <paramref name="b"/>, otherwise <b>false</b>.</returns>
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static bool operator >(InterlockedEnum<T> a, InterlockedEnum<T> b)
     {
         return a.CompareTo( b ) > 0;
     }
 
+    /// <summary>
+    /// Checks if <paramref name="a"/> is less than <paramref name="b"/>.
+    /// </summary>
+    /// <param name="a">First operand.</param>
+    /// <param name="b">Second operand.</param>
+    /// <returns><b>true</b> when <paramref name="a"/> is less than <paramref name="b"/>, otherwise <b>false</b>.</returns>
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static bool operator <(InterlockedEnum<T> a, InterlockedEnum<T> b)
     {

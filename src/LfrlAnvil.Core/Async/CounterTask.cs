@@ -3,11 +3,27 @@ using System.Threading.Tasks;
 
 namespace LfrlAnvil.Async;
 
+/// <summary>
+/// An object that contains an underlying <see cref="Task"/> that gets completed once <see cref="Count"/> reaches the <see cref="Limit"/>.
+/// </summary>
 public sealed class CounterTask : IDisposable
 {
     private readonly TaskCompletionSource _source;
     private int _count;
 
+    /// <summary>
+    /// Creates a new <see cref="CounterTask"/> instance.
+    /// </summary>
+    /// <param name="limit">
+    /// An immutable value.
+    /// Once <see cref="Count"/> reaches this value, then the underlying <see cref="Task"/> will get completed.
+    /// Negative values will be replaced with <b>0</b>.
+    /// </param>
+    /// <param name="count">
+    /// Initial count.
+    /// Equal to <b>0</b> by default. If greater than or equal to <paramref name="limit"/>,
+    /// then the underlying <see cref="Task"/> wiil get completed immediately.
+    /// </param>
     public CounterTask(int limit, int count = 0)
     {
         _source = new TaskCompletionSource();
@@ -15,11 +31,20 @@ public sealed class CounterTask : IDisposable
         Limit = Math.Max( limit, 0 );
 
         if ( _count >= Limit )
+        {
+            _count = Limit;
             _source.SetResult();
+        }
     }
 
+    /// <summary>
+    /// <see cref="Count"/> limit. When <see cref="Count"/> reaches this value, then the <see cref="Task"/> will get completed.
+    /// </summary>
     public int Limit { get; }
 
+    /// <summary>
+    /// Current count. When this reaches the <see cref="Limit"/>, then the <see cref="Task"/> will get completed.
+    /// </summary>
     public int Count
     {
         get
@@ -29,8 +54,14 @@ public sealed class CounterTask : IDisposable
         }
     }
 
+    /// <summary>
+    /// Underlying task that gets completed once <see cref="Count"/> reached the <see cref="Limit"/>
+    /// or when this <see cref="CounterTask"/> gets disposed, which will cancel it instead.
+    /// </summary>
     public Task Task => _source.Task;
 
+    /// <inheritdoc />
+    /// <remarks>If the <see cref="Task"/> isn't completed yet, then it will get cancelled instead.</remarks>
     public void Dispose()
     {
         using ( ExclusiveLock.Enter( _source ) )
@@ -40,6 +71,15 @@ public sealed class CounterTask : IDisposable
         }
     }
 
+    /// <summary>
+    /// Increases the <see cref="Count"/> by <b>1</b>.
+    /// When <see cref="Count"/> reaches the <see cref="Limit"/>, then the <see cref="Task"/> gets completed.
+    /// </summary>
+    /// <returns>
+    /// <b>true</b> when the <see cref="Task"/> is already completed or when the <see cref="Count"/> reaches the <see cref="Limit"/>
+    /// and <see cref="Task"/> gets completed because of that, otherwise <b>false</b>.
+    /// </returns>
+    /// <remarks>Equivalent to <see cref="Add(int)"/> with <b>count</b> equal to <b>1</b>.</remarks>
     public bool Increment()
     {
         using ( ExclusiveLock.Enter( _source ) )
@@ -55,6 +95,15 @@ public sealed class CounterTask : IDisposable
         }
     }
 
+    /// <summary>
+    /// Increases the <see cref="Count"/> by the provided <paramref name="count"/>.
+    /// When <see cref="Count"/> reaches the <see cref="Limit"/>, then the <see cref="Task"/> gets completed.
+    /// </summary>
+    /// <param name="count">Value to increase the <see cref="Count"/> by. Negative values will be treated as <b>0</b>.</param>
+    /// <returns>
+    /// <b>true</b> when the <see cref="Task"/> is already completed or when the <see cref="Count"/> reaches the <see cref="Limit"/>
+    /// and <see cref="Task"/> gets completed because of that, otherwise <b>false</b>.
+    /// </returns>
     public bool Add(int count)
     {
         if ( count <= 0 )
