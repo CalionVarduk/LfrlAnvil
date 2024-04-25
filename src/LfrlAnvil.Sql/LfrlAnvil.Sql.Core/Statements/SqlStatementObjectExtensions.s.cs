@@ -189,7 +189,7 @@ public static class SqlStatementObjectExtensions
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static SqlParameterBinderExecutor Bind(this SqlParameterBinder binder, IEnumerable<KeyValuePair<string, object?>>? source)
+    public static SqlParameterBinderExecutor Bind(this SqlParameterBinder binder, IEnumerable<SqlParameter>? source)
     {
         return new SqlParameterBinderExecutor( binder, source );
     }

@@ -37,6 +37,16 @@ public class PostgreSqlNodeInterpreter : SqlNodeInterpreter
         Context.Sql.Append( sql );
     }
 
+    public override void VisitParameter(SqlParameterNode node)
+    {
+        if ( node.Index is not null )
+            Context.Sql.Append( '$' ).Append( node.Index.Value + 1 );
+        else
+            Context.Sql.Append( '@' ).Append( node.Name );
+
+        AddContextParameter( node );
+    }
+
     public override void VisitBitwiseXor(SqlBitwiseXorExpressionNode node)
     {
         VisitInfixBinaryOperator( node.Left, symbol: "#", node.Right );

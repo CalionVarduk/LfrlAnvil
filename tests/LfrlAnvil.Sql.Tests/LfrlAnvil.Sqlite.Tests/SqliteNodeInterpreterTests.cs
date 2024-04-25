@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Data;
+﻿using System.Data;
 using System.Diagnostics.Contracts;
 using LfrlAnvil.Functional;
 using LfrlAnvil.Sql;
@@ -34,9 +33,8 @@ public partial class SqliteNodeInterpreterTests : TestsBase
         using ( new AssertionScope() )
         {
             sut.Context.Sql.ToString().Should().Be( "foo.a + @bar" );
-            sut.Context.Parameters.Should().HaveCount( 1 );
             sut.Context.Parameters.Should()
-                .BeEquivalentTo( KeyValuePair.Create( "bar", ( TypeNullability? )TypeNullability.Create<int>() ) );
+                .BeSequentiallyEqualTo( new SqlNodeInterpreterContextParameter( "bar", TypeNullability.Create<int>(), null ) );
         }
     }
 
@@ -135,9 +133,36 @@ public partial class SqliteNodeInterpreterTests : TestsBase
         using ( new AssertionScope() )
         {
             sut.Context.Sql.ToString().Should().Be( "@a" );
-            sut.Context.Parameters.Should().HaveCount( 1 );
             sut.Context.Parameters.Should()
-                .BeEquivalentTo( KeyValuePair.Create( "a", ( TypeNullability? )TypeNullability.Create<int>() ) );
+                .BeSequentiallyEqualTo( new SqlNodeInterpreterContextParameter( "a", TypeNullability.Create<int>(), null ) );
+        }
+    }
+
+    [Fact]
+    public void Visit_ShouldInterpretPositionalParameterAsNamed()
+    {
+        var sut = CreateInterpreter();
+        sut.Visit( SqlNode.Parameter<int>( "a", index: 1 ) );
+
+        using ( new AssertionScope() )
+        {
+            sut.Context.Sql.ToString().Should().Be( "@a" );
+            sut.Context.Parameters.Should()
+                .BeSequentiallyEqualTo( new SqlNodeInterpreterContextParameter( "a", TypeNullability.Create<int>(), null ) );
+        }
+    }
+
+    [Fact]
+    public void Visit_ShouldInterpretPositionalParameter_WhenPositionalParametersAreEnabled()
+    {
+        var sut = CreateInterpreter( SqliteNodeInterpreterOptions.Default.EnablePositionalParameters() );
+        sut.Visit( SqlNode.Parameter<int>( "a", index: 0 ) );
+
+        using ( new AssertionScope() )
+        {
+            sut.Context.Sql.ToString().Should().Be( "?1" );
+            sut.Context.Parameters.Should()
+                .BeSequentiallyEqualTo( new SqlNodeInterpreterContextParameter( "a", TypeNullability.Create<int>(), Index: 0 ) );
         }
     }
 
@@ -152,7 +177,8 @@ public partial class SqliteNodeInterpreterTests : TestsBase
             sut.Context.Sql.ToString().Should().Be( "@b" );
             sut.Context.Parameters.Should().HaveCount( 1 );
             sut.Context.Parameters.Should()
-                .BeEquivalentTo( KeyValuePair.Create( "b", ( TypeNullability? )TypeNullability.Create<string>( isNullable: true ) ) );
+                .BeSequentiallyEqualTo(
+                    new SqlNodeInterpreterContextParameter( "b", TypeNullability.Create<string>( isNullable: true ), null ) );
         }
     }
 
@@ -316,9 +342,8 @@ END" );
 
         using ( new AssertionScope() )
         {
-            sut.Context.Parameters.Should().HaveCount( 1 );
             sut.Context.Parameters.Should()
-                .BeEquivalentTo( KeyValuePair.Create( "a", ( TypeNullability? )TypeNullability.Create<int>() ) );
+                .BeSequentiallyEqualTo( new SqlNodeInterpreterContextParameter( "a", TypeNullability.Create<int>(), null ) );
 
             sut.Context.Sql.ToString().Should().Be( "foo.a > @a" );
         }
@@ -756,9 +781,8 @@ LEFT JOIN qux ON qux.b = foo.b" );
 
         using ( new AssertionScope() )
         {
-            sut.Context.Parameters.Should().HaveCount( 1 );
             sut.Context.Parameters.Should()
-                .BeEquivalentTo( KeyValuePair.Create( "a", ( TypeNullability? )TypeNullability.Create<int>() ) );
+                .BeSequentiallyEqualTo( new SqlNodeInterpreterContextParameter( "a", TypeNullability.Create<int>(), null ) );
 
             sut.Context.Sql.ToString().Should().Be( "SELECT * FROM foo WHERE foo.a = @a" );
         }
@@ -802,9 +826,8 @@ LEFT JOIN qux ON qux.b = foo.b" );
 
         using ( new AssertionScope() )
         {
-            sut.Context.Parameters.Should().HaveCount( 1 );
             sut.Context.Parameters.Should()
-                .BeEquivalentTo( KeyValuePair.Create( "p", ( TypeNullability? )TypeNullability.Create<int>() ) );
+                .BeSequentiallyEqualTo( new SqlNodeInterpreterContextParameter( "p", TypeNullability.Create<int>(), null ) );
 
             sut.Context.Sql.ToString()
                 .Should()
@@ -1359,9 +1382,8 @@ VALUES (@a, 1)",
                     @"INSERT INTO foo (a, b)
 VALUES (@a, 1)" );
 
-            sut.Context.Parameters.Should().HaveCount( 1 );
             sut.Context.Parameters.Should()
-                .BeEquivalentTo( KeyValuePair.Create( "a", ( TypeNullability? )TypeNullability.Create<int>() ) );
+                .BeSequentiallyEqualTo( new SqlNodeInterpreterContextParameter( "a", TypeNullability.Create<int>(), null ) );
         }
     }
 

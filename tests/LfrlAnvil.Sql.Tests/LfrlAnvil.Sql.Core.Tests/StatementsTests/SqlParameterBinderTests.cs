@@ -14,7 +14,7 @@ public class SqlParameterBinderTests : TestsBase
         var command = new DbCommandMock();
         command.Parameters.Add( new DbParameterMock() );
         var dialect = new SqlDialect( "foo" );
-        var @delegate = Substitute.For<Action<IDbCommand, IEnumerable<KeyValuePair<string, object?>>>>();
+        var @delegate = Substitute.For<Action<IDbCommand, IEnumerable<SqlParameter>>>();
         var sut = new SqlParameterBinder( dialect, @delegate );
 
         sut.Bind( command, source: null );
@@ -33,8 +33,8 @@ public class SqlParameterBinderTests : TestsBase
     {
         var command = new DbCommandMock();
         var dialect = new SqlDialect( "foo" );
-        var @delegate = Substitute.For<Action<IDbCommand, IEnumerable<KeyValuePair<string, object?>>>>();
-        var source = new[] { KeyValuePair.Create( "a", ( object? )0 ), KeyValuePair.Create( "b", ( object? )1 ) };
+        var @delegate = Substitute.For<Action<IDbCommand, IEnumerable<SqlParameter>>>();
+        var source = new[] { SqlParameter.Named( "a", 0 ), SqlParameter.Named( "b", 1 ) };
         var sut = new SqlParameterBinder( dialect, @delegate );
 
         sut.Bind( command, source );

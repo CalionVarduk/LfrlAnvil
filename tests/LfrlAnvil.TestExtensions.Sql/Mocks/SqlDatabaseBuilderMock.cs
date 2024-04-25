@@ -8,7 +8,11 @@ namespace LfrlAnvil.TestExtensions.Sql.Mocks;
 
 public sealed class SqlDatabaseBuilderMock : SqlDatabaseBuilder
 {
-    private SqlDatabaseBuilderMock(SqlColumnTypeDefinitionProviderMock typeDefinitions, string serverVersion, string defaultSchemaName)
+    private SqlDatabaseBuilderMock(
+        SqlColumnTypeDefinitionProviderMock typeDefinitions,
+        string serverVersion,
+        string defaultSchemaName,
+        bool arePositionalParametersSupported = true)
         : base(
             SqlDialectMock.Instance,
             serverVersion,
@@ -17,7 +21,7 @@ public sealed class SqlDatabaseBuilderMock : SqlDatabaseBuilder
             typeDefinitions,
             new SqlNodeInterpreterFactoryMock(),
             new SqlQueryReaderFactoryMock( typeDefinitions ),
-            new SqlParameterBinderFactoryMock( typeDefinitions ),
+            new SqlParameterBinderFactoryMock( typeDefinitions, arePositionalParametersSupported ),
             new SqlDefaultObjectNameProvider(),
             new SqlSchemaBuilderCollectionMock(),
             new SqlDatabaseChangeTrackerMock() )

@@ -1,7 +1,6 @@
 # TODO
 |       Project       |              Title               |                        Details                         |                  Requirements                  |
 |:-------------------:|:--------------------------------:|:------------------------------------------------------:|:----------------------------------------------:|
-|        Sql.*        |      Positional parameters       |         [link](#sqlcore-positional-parameters)         |                       -                        |
 |    Dependencies     |     Generic dependency types     |     [link](#dependencies-generic-dependency-types)     |                       -                        |
 |   Dependencies.*    |  Dependencies.ServiceProviders   |            [link](#dependencies-aspnetcore)            | [link](#dependencies-generic-dependency-types) |
 |          -          |             Terminal             |                   [link](#terminal)                    |                       -                        |
@@ -18,6 +17,7 @@
 Sql:
 - source generators for queries/statements?
 - for parameter binding too, maybe?
+- IncludedColumns for IXs? simple blocking link to SqlColumnBuilder
 
 
 ### Terminal
@@ -84,26 +84,6 @@ Add sql node visitor that allows to extract node's type (+ add Type to ViewDataF
 - Add adapter layer between lfrlanvil & aspnetcore service providers
 - so that lfrlanvil provider can be used as service container in aspentcore apps
 - requires possibility to register open generics
-
-### Sql.Core: Positional parameters
-- Add support for positional parameters in parameter binder factory & in sql nodes
-- each sql parameter node will probably still require some sort of name
-- in order to identify the parameter & extract its optional position
-- parameter binder factory, along with context instance, will be able to translate the nodes
-- parameter binder factory will also contain type-erased versions of binders
-- that just accept an array of System.Object as parameter values
-- position (called Index) is 0-based, Index cannot be < 0
-- node interpreter context needs to remember the Index as well as parameter's type
-- if parameter exists in context with the same name but different Index, then make it non-positional
-- parameter binder factory, if any positional parameter exists:
-  - finds max Index => N & throws if not all indexes in \[0..N\] range are used
-  - if named parameters exist as well, then they will be added with names, AFTER all N+1 positional parameters
-- parameter binder factory options per member should allow to specify member's position...?
-- also, for generic parameter binder factory + context, there is parameter type validation (& count?)
-  - if member & context parameter do not have an index => pass
-  - if member has index but context does not => ignore index, use name
-  - if member does not have an index but context does => use index
-  - if member & context parameter have an index => they must be equal, otherwise fail
 
 ### Sql.Core: DbBatch support
 - Add support for DbBatch and its commands

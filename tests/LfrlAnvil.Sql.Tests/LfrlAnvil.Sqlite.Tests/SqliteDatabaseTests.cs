@@ -13,10 +13,12 @@ namespace LfrlAnvil.Sqlite.Tests;
 
 public class SqliteDatabaseTests : TestsBase
 {
-    [Fact]
-    public void Properties_ShouldBeCorrectlyCopiedFromBuilder()
+    [Theory]
+    [InlineData( true )]
+    [InlineData( false )]
+    public void Properties_ShouldBeCorrectlyCopiedFromBuilder(bool arePositionalParametersEnabled)
     {
-        var dbBuilder = SqliteDatabaseBuilderMock.Create();
+        var dbBuilder = SqliteDatabaseBuilderMock.Create( arePositionalParametersEnabled );
         var sut = SqliteDatabaseMock.Create( dbBuilder );
 
         using ( new AssertionScope() )
@@ -29,6 +31,7 @@ public class SqliteDatabaseTests : TestsBase
             sut.NodeInterpreters.Should().BeSameAs( dbBuilder.NodeInterpreters );
             sut.QueryReaders.Should().BeSameAs( dbBuilder.QueryReaders );
             sut.ParameterBinders.Should().BeSameAs( dbBuilder.ParameterBinders );
+            sut.ParameterBinders.SupportsPositionalParameters.Should().Be( arePositionalParametersEnabled );
             sut.Schemas.Database.Should().BeSameAs( sut );
             sut.Schemas.Count.Should().Be( 1 );
             sut.Schemas.Default.Name.Should().BeEmpty();

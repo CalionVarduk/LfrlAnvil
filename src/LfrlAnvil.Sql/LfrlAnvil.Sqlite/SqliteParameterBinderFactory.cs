@@ -5,6 +5,6 @@ namespace LfrlAnvil.Sqlite;
 
 public sealed class SqliteParameterBinderFactory : SqlParameterBinderFactory<SqliteCommand>
 {
-    internal SqliteParameterBinderFactory(SqliteColumnTypeDefinitionProvider columnTypeDefinitions)
-        : base( SqliteDialect.Instance, columnTypeDefinitions ) { }
+    internal SqliteParameterBinderFactory(SqliteColumnTypeDefinitionProvider columnTypeDefinitions, bool supportsPositionalParameters)
+        : base( SqliteDialect.Instance, columnTypeDefinitions, supportsPositionalParameters ) { }
 }

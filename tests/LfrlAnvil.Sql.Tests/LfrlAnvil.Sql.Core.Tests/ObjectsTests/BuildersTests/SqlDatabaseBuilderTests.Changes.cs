@@ -7,6 +7,7 @@ using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Extensions;
 using LfrlAnvil.Sql.Internal;
 using LfrlAnvil.Sql.Objects.Builders;
+using LfrlAnvil.Sql.Statements;
 using LfrlAnvil.TestExtensions.FluentAssertions;
 using LfrlAnvil.TestExtensions.Sql.Mocks;
 
@@ -321,7 +322,7 @@ public partial class SqlDatabaseBuilderTests
             var actionCount = sut.Database.GetPendingActionCount();
             var result = (( ISqlDatabaseChangeTracker )sut).AddParameterizedStatement(
                 SqlNode.RawStatement( statement, SqlNode.Parameter( "a" ) ),
-                new[] { KeyValuePair.Create( "a", ( object? )1 ) }.AsEnumerable() );
+                new[] { SqlParameter.Named( "a", 1 ) }.AsEnumerable() );
 
             var actions = sut.Database.GetLastPendingActions( actionCount );
 
@@ -348,7 +349,7 @@ public partial class SqlDatabaseBuilderTests
             sut.Database.Schemas.Default.Objects.CreateTable( "T" );
             var result = (( ISqlDatabaseChangeTracker )sut).AddParameterizedStatement(
                 SqlNode.RawStatement( statement, SqlNode.Parameter( "a" ) ),
-                new[] { KeyValuePair.Create( "a", ( object? )1 ) }.AsEnumerable() );
+                new[] { SqlParameter.Named( "a", 1 ) }.AsEnumerable() );
 
             var actions = sut.Database.GetLastPendingActions( actionCount );
 

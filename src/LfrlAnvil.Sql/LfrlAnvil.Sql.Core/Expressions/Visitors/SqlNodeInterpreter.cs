@@ -35,7 +35,7 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
         AppendMultilineSql( node.Sql );
 
         foreach ( var parameter in node.Parameters )
-            Context.AddParameter( parameter.Name, parameter.Type );
+            AddContextParameter( parameter );
     }
 
     public virtual void VisitRawDataField(SqlRawDataFieldNode node)
@@ -50,12 +50,7 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
     }
 
     public abstract void VisitLiteral(SqlLiteralNode node);
-
-    public virtual void VisitParameter(SqlParameterNode node)
-    {
-        Context.Sql.Append( '@' ).Append( node.Name );
-        Context.AddParameter( node.Name, node.Type );
-    }
+    public abstract void VisitParameter(SqlParameterNode node);
 
     public virtual void VisitColumn(SqlColumnNode node)
     {
@@ -266,7 +261,7 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
         AppendMultilineSql( node.Sql );
 
         foreach ( var parameter in node.Parameters )
-            Context.AddParameter( parameter.Name, parameter.Type );
+            AddContextParameter( parameter );
     }
 
     public virtual void VisitTrue(SqlTrueNode node)
@@ -543,7 +538,7 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
     public virtual void VisitRawQuery(SqlRawQueryExpressionNode node)
     {
         foreach ( var parameter in node.Parameters )
-            Context.AddParameter( parameter.Name, parameter.Type );
+            AddContextParameter( parameter );
 
         if ( Context.ChildDepth > 0 )
         {
@@ -797,7 +792,7 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
     public virtual void VisitRawStatement(SqlRawStatementNode node)
     {
         foreach ( var parameter in node.Parameters )
-            Context.AddParameter( parameter.Name, parameter.Type );
+            AddContextParameter( parameter );
 
         AppendMultilineSql( node.Sql );
     }
@@ -1295,6 +1290,11 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
         {
             _interpreter.RecordSetNameBehavior = _previous;
         }
+    }
+
+    protected virtual void AddContextParameter(SqlParameterNode node)
+    {
+        Context.AddParameter( node.Name, node.Type, node.Index );
     }
 
     protected void VisitPrefixUnaryOperator(SqlNodeBase value, string symbol)

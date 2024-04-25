@@ -6,5 +6,5 @@ namespace LfrlAnvil.PostgreSql;
 public sealed class PostgreSqlParameterBinderFactory : SqlParameterBinderFactory<NpgsqlCommand>
 {
     internal PostgreSqlParameterBinderFactory(PostgreSqlColumnTypeDefinitionProvider columnTypeDefinitions)
-        : base( PostgreSqlDialect.Instance, columnTypeDefinitions ) { }
+        : base( PostgreSqlDialect.Instance, columnTypeDefinitions, supportsPositionalParameters: true ) { }
 }

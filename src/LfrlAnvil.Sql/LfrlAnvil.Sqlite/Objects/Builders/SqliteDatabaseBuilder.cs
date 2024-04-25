@@ -23,7 +23,7 @@ public sealed class SqliteDatabaseBuilder : SqlDatabaseBuilder
             typeDefinitions,
             nodeInterpreters,
             new SqliteQueryReaderFactory( typeDefinitions ),
-            new SqliteParameterBinderFactory( typeDefinitions ),
+            new SqliteParameterBinderFactory( typeDefinitions, nodeInterpreters.Options.ArePositionalParametersEnabled ),
             defaultNames,
             new SqliteSchemaBuilderCollection(),
             new SqliteDatabaseChangeTracker() ) { }

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Diagnostics.Contracts;
 using LfrlAnvil.Sql.Expressions;
+using LfrlAnvil.Sql.Statements;
 using LfrlAnvil.Sql.Statements.Compilers;
 
 namespace LfrlAnvil.Sql.Objects.Builders;
@@ -31,7 +32,7 @@ public interface ISqlDatabaseChangeTracker
 
     ISqlDatabaseChangeTracker AddParameterizedStatement(
         ISqlStatementNode statement,
-        IEnumerable<KeyValuePair<string, object?>> parameters,
+        IEnumerable<SqlParameter> parameters,
         SqlParameterBinderCreationOptions? options = null);
 
     ISqlDatabaseChangeTracker AddParameterizedStatement<TSource>(

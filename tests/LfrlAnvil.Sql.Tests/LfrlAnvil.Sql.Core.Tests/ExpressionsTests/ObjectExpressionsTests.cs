@@ -112,6 +112,7 @@ public partial class ObjectExpressionsTests : TestsBase
             sut.NodeType.Should().Be( SqlNodeType.Parameter );
             sut.Name.Should().Be( "foo" );
             sut.Type.Should().Be( expectedType );
+            sut.Index.Should().BeNull();
             text.Should().Be( $"@foo : {expectedType}" );
         }
     }
@@ -127,6 +128,7 @@ public partial class ObjectExpressionsTests : TestsBase
             sut.NodeType.Should().Be( SqlNodeType.Parameter );
             sut.Name.Should().Be( "foo" );
             sut.Type.Should().Be( TypeNullability.Create<int>( isNullable: true ) );
+            sut.Index.Should().BeNull();
             text.Should().Be( "@foo : Nullable<System.Int32>" );
         }
     }
@@ -142,8 +144,48 @@ public partial class ObjectExpressionsTests : TestsBase
             sut.NodeType.Should().Be( SqlNodeType.Parameter );
             sut.Name.Should().Be( "foo" );
             sut.Type.Should().BeNull();
+            sut.Index.Should().BeNull();
             text.Should().Be( "@foo : ?" );
         }
+    }
+
+    [Fact]
+    public void Parameter_ShouldCreateParameterNode_WithIndex()
+    {
+        var sut = SqlNode.Parameter( "foo", index: 1 );
+        var text = sut.ToString();
+
+        using ( new AssertionScope() )
+        {
+            sut.NodeType.Should().Be( SqlNodeType.Parameter );
+            sut.Name.Should().Be( "foo" );
+            sut.Type.Should().BeNull();
+            sut.Index.Should().Be( 1 );
+            text.Should().Be( "@foo (#1) : ?" );
+        }
+    }
+
+    [Fact]
+    public void Parameter_ShouldCreateParameterNode_WithTypeAndIndex()
+    {
+        var sut = SqlNode.Parameter<int>( "foo", index: 2 );
+        var text = sut.ToString();
+
+        using ( new AssertionScope() )
+        {
+            sut.NodeType.Should().Be( SqlNodeType.Parameter );
+            sut.Name.Should().Be( "foo" );
+            sut.Type.Should().Be( TypeNullability.Create<int>() );
+            sut.Index.Should().Be( 2 );
+            text.Should().Be( "@foo (#2) : System.Int32" );
+        }
+    }
+
+    [Fact]
+    public void Parameter_ShouldThrowArgumentOutOfRangeException_WhenIndexIsLessThanZero()
+    {
+        var action = Lambda.Of( () => SqlNode.Parameter( "foo", index: -1 ) );
+        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
     }
 
     [Fact]
@@ -157,6 +199,20 @@ public partial class ObjectExpressionsTests : TestsBase
             result.ElementAtOrDefault( 0 ).Should().BeEquivalentTo( SqlNode.Parameter<int>( "foo1" ) );
             result.ElementAtOrDefault( 1 ).Should().BeEquivalentTo( SqlNode.Parameter<int>( "foo2" ) );
             result.ElementAtOrDefault( 2 ).Should().BeEquivalentTo( SqlNode.Parameter<int>( "foo3" ) );
+        }
+    }
+
+    [Fact]
+    public void ParameterRange_ShouldReturnArrayOfParameters_WhenCountIsGreaterThanZero_WithFirstIndex()
+    {
+        var result = SqlNode.ParameterRange<int>( "foo", count: 3, firstIndex: 5 );
+
+        using ( new AssertionScope() )
+        {
+            result.Should().HaveCount( 3 );
+            result.ElementAtOrDefault( 0 ).Should().BeEquivalentTo( SqlNode.Parameter<int>( "foo1", index: 5 ) );
+            result.ElementAtOrDefault( 1 ).Should().BeEquivalentTo( SqlNode.Parameter<int>( "foo2", index: 6 ) );
+            result.ElementAtOrDefault( 2 ).Should().BeEquivalentTo( SqlNode.Parameter<int>( "foo3", index: 7 ) );
         }
     }
 

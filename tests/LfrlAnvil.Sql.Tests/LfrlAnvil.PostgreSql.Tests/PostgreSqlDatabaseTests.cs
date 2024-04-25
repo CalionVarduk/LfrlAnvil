@@ -27,6 +27,7 @@ public class PostgreSqlDatabaseTests : TestsBase
             sut.NodeInterpreters.Should().BeSameAs( dbBuilder.NodeInterpreters );
             sut.QueryReaders.Should().BeSameAs( dbBuilder.QueryReaders );
             sut.ParameterBinders.Should().BeSameAs( dbBuilder.ParameterBinders );
+            sut.ParameterBinders.SupportsPositionalParameters.Should().BeTrue();
             sut.Schemas.Database.Should().BeSameAs( sut );
             sut.Schemas.Count.Should().Be( 1 );
             sut.Schemas.Default.Name.Should().Be( "public" );

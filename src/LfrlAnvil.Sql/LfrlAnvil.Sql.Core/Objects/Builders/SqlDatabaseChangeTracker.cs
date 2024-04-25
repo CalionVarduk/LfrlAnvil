@@ -134,7 +134,7 @@ public abstract class SqlDatabaseChangeTracker : ISqlDatabaseChangeTracker
 
     public SqlDatabaseChangeTracker AddParameterizedStatement(
         ISqlStatementNode statement,
-        IEnumerable<KeyValuePair<string, object?>> parameters,
+        IEnumerable<SqlParameter> parameters,
         SqlParameterBinderCreationOptions? options = null)
     {
         CompletePendingChanges();
@@ -615,7 +615,7 @@ public abstract class SqlDatabaseChangeTracker : ISqlDatabaseChangeTracker
 
     ISqlDatabaseChangeTracker ISqlDatabaseChangeTracker.AddParameterizedStatement(
         ISqlStatementNode statement,
-        IEnumerable<KeyValuePair<string, object?>> parameters,
+        IEnumerable<SqlParameter> parameters,
         SqlParameterBinderCreationOptions? options)
 
     {

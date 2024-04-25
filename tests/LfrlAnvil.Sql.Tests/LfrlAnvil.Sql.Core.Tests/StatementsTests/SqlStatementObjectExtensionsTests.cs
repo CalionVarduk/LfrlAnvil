@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Data;
+﻿using System.Data;
 using System.Linq;
 using System.Threading.Tasks;
 using LfrlAnvil.Sql.Statements;
@@ -391,7 +390,7 @@ public class SqlStatementObjectExtensionsTests : TestsBase
         var command = new DbCommandMock();
         var factory = SqlParameterBinderFactoryMock.CreateInstance();
 
-        var result = command.Parameterize( factory.Create().Bind( new[] { KeyValuePair.Create( "a", ( object? )1 ) } ) );
+        var result = command.Parameterize( factory.Create().Bind( new[] { SqlParameter.Named( "a", 1 ) } ) );
 
         using ( new AssertionScope() )
         {

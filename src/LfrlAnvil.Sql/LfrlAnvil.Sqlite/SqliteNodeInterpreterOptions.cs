@@ -17,6 +17,7 @@ public readonly struct SqliteNodeInterpreterOptions
         bool isUpdateFromDisabled,
         bool isUpdateOrDeleteLimitDisabled,
         bool isAggregateFunctionOrderingEnabled,
+        bool arePositionalParametersEnabled,
         SqliteUpsertOptions upsertOptions)
     {
         TypeDefinitions = typeDefinitions;
@@ -24,6 +25,7 @@ public readonly struct SqliteNodeInterpreterOptions
         _isUpdateFromDisabled = isUpdateFromDisabled;
         _isUpdateOrDeleteLimitDisabled = isUpdateOrDeleteLimitDisabled;
         IsAggregateFunctionOrderingEnabled = isAggregateFunctionOrderingEnabled;
+        ArePositionalParametersEnabled = arePositionalParametersEnabled;
         UpsertOptions = upsertOptions;
     }
 
@@ -31,6 +33,7 @@ public readonly struct SqliteNodeInterpreterOptions
     public bool IsStrictModeEnabled { get; }
     public SqliteUpsertOptions UpsertOptions { get; }
     public bool IsAggregateFunctionOrderingEnabled { get; }
+    public bool ArePositionalParametersEnabled { get; }
     public bool IsUpdateFromEnabled => ! _isUpdateFromDisabled;
     public bool IsUpdateOrDeleteLimitEnabled => ! _isUpdateOrDeleteLimitDisabled;
 
@@ -44,6 +47,7 @@ public readonly struct SqliteNodeInterpreterOptions
             _isUpdateFromDisabled,
             _isUpdateOrDeleteLimitDisabled,
             IsAggregateFunctionOrderingEnabled,
+            ArePositionalParametersEnabled,
             UpsertOptions );
     }
 
@@ -57,6 +61,7 @@ public readonly struct SqliteNodeInterpreterOptions
             _isUpdateFromDisabled,
             _isUpdateOrDeleteLimitDisabled,
             IsAggregateFunctionOrderingEnabled,
+            ArePositionalParametersEnabled,
             UpsertOptions );
     }
 
@@ -70,6 +75,7 @@ public readonly struct SqliteNodeInterpreterOptions
             ! enabled,
             _isUpdateOrDeleteLimitDisabled,
             IsAggregateFunctionOrderingEnabled,
+            ArePositionalParametersEnabled,
             UpsertOptions );
     }
 
@@ -83,6 +89,7 @@ public readonly struct SqliteNodeInterpreterOptions
             _isUpdateFromDisabled,
             ! enabled,
             IsAggregateFunctionOrderingEnabled,
+            ArePositionalParametersEnabled,
             UpsertOptions );
     }
 
@@ -95,6 +102,21 @@ public readonly struct SqliteNodeInterpreterOptions
             IsStrictModeEnabled,
             _isUpdateFromDisabled,
             _isUpdateOrDeleteLimitDisabled,
+            enabled,
+            ArePositionalParametersEnabled,
+            UpsertOptions );
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public SqliteNodeInterpreterOptions EnablePositionalParameters(bool enabled = true)
+    {
+        return new SqliteNodeInterpreterOptions(
+            TypeDefinitions,
+            IsStrictModeEnabled,
+            _isUpdateFromDisabled,
+            _isUpdateOrDeleteLimitDisabled,
+            IsAggregateFunctionOrderingEnabled,
             enabled,
             UpsertOptions );
     }
@@ -113,6 +135,7 @@ public readonly struct SqliteNodeInterpreterOptions
             _isUpdateFromDisabled,
             _isUpdateOrDeleteLimitDisabled,
             IsAggregateFunctionOrderingEnabled,
+            ArePositionalParametersEnabled,
             options );
     }
 }

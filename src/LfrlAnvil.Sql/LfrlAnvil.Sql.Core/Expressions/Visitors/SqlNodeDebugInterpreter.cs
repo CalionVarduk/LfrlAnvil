@@ -31,8 +31,12 @@ public sealed class SqlNodeDebugInterpreter : SqlNodeInterpreter
 
     public override void VisitParameter(SqlParameterNode node)
     {
-        base.VisitParameter( node );
+        Context.Sql.Append( '@' ).Append( node.Name );
+        if ( node.Index is not null )
+            Context.Sql.AppendSpace().Append( '(' ).Append( '#' ).Append( node.Index.Value ).Append( ')' );
+
         AppendExpressionType( node.Type );
+        AddContextParameter( node );
     }
 
     public override void VisitColumn(SqlColumnNode node)

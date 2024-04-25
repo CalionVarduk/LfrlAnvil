@@ -11,7 +11,7 @@ namespace LfrlAnvil.Sql.Expressions.Visitors;
 
 public sealed class SqlNodeInterpreterContext
 {
-    private Dictionary<string, TypeNullability?>? _parameters;
+    private Dictionary<string, SqlNodeInterpreterContextParameter>? _parameters;
 
     private SqlNodeInterpreterContext(StringBuilder sql)
     {
@@ -25,9 +25,9 @@ public sealed class SqlNodeInterpreterContext
     public int Indent { get; private set; }
     public int ChildDepth { get; private set; }
 
-    public IReadOnlyCollection<KeyValuePair<string, TypeNullability?>> Parameters =>
-        ( IReadOnlyCollection<KeyValuePair<string, TypeNullability?>>? )_parameters
-        ?? Array.Empty<KeyValuePair<string, TypeNullability?>>();
+    public IReadOnlyCollection<SqlNodeInterpreterContextParameter> Parameters =>
+        ( IReadOnlyCollection<SqlNodeInterpreterContextParameter>? )_parameters?.Values
+        ?? Array.Empty<SqlNodeInterpreterContextParameter>();
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -94,33 +94,35 @@ public sealed class SqlNodeInterpreterContext
         return Sql.Indent( Math.Max( Indent - 2, 0 ) );
     }
 
-    public void AddParameter(string name, TypeNullability? type)
+    public void AddParameter(string name, TypeNullability? type, int? index)
     {
         if ( _parameters is null )
         {
-            _parameters = new Dictionary<string, TypeNullability?>( comparer: SqlHelpers.NameComparer );
-            _parameters.Add( name, type );
+            _parameters = new Dictionary<string, SqlNodeInterpreterContextParameter>( comparer: SqlHelpers.NameComparer );
+            _parameters.Add( name, new SqlNodeInterpreterContextParameter( name, type, index ) );
             return;
         }
 
-        ref var typeRef = ref CollectionsMarshal.GetValueRefOrAddDefault( _parameters, name, out var exists );
-
+        ref var parameter = ref CollectionsMarshal.GetValueRefOrAddDefault( _parameters, name, out var exists );
         if ( ! exists )
         {
-            typeRef = type;
+            parameter = new SqlNodeInterpreterContextParameter( name, type, index );
             return;
         }
 
-        if ( typeRef != type )
-            typeRef = null;
+        if ( parameter.Type != type )
+            parameter = new SqlNodeInterpreterContextParameter( parameter.Name, null, parameter.Index );
+
+        if ( parameter.Index != index )
+            parameter = new SqlNodeInterpreterContextParameter( parameter.Name, parameter.Type, null );
     }
 
-    public bool TryGetParameterType(string name, out TypeNullability? result)
+    public bool TryGetParameter(string name, out SqlNodeInterpreterContextParameter result)
     {
         if ( _parameters is not null )
             return _parameters.TryGetValue( name, out result );
 
-        result = null;
+        result = default;
         return false;
     }
 

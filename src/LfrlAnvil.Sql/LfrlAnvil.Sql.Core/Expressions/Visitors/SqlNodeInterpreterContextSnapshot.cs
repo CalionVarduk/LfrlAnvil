@@ -20,8 +20,8 @@ public readonly struct SqlNodeInterpreterContextSnapshot
         {
             var i = 0;
             _parameters = new SqlParameterNode[parameters.Count];
-            foreach ( var (name, type) in parameters )
-                _parameters[i++] = SqlNode.Parameter( name, type );
+            foreach ( var (name, type, index) in parameters )
+                _parameters[i++] = SqlNode.Parameter( name, type, index );
         }
     }
 

@@ -45,6 +45,12 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
         Context.Sql.Append( sql );
     }
 
+    public override void VisitParameter(SqlParameterNode node)
+    {
+        Context.Sql.Append( '@' ).Append( node.Name );
+        AddContextParameter( node );
+    }
+
     public override void VisitCurrentDateFunction(SqlCurrentDateFunctionExpressionNode node)
     {
         VisitSimpleFunction( "CURRENT_DATE", node );
@@ -1020,6 +1026,11 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
     public sealed override void AppendDelimitedTemporaryObjectName(string name)
     {
         AppendDelimitedName( name );
+    }
+
+    protected override void AddContextParameter(SqlParameterNode node)
+    {
+        Context.AddParameter( node.Name, node.Type, index: null );
     }
 
     [Pure]

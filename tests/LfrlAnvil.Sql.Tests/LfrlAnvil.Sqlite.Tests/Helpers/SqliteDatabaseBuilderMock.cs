@@ -6,10 +6,10 @@ using LfrlAnvil.Sqlite.Objects.Builders;
 
 namespace LfrlAnvil.Sqlite.Tests.Helpers;
 
-internal sealed class SqliteDatabaseBuilderMock
+internal static class SqliteDatabaseBuilderMock
 {
     [Pure]
-    internal static SqliteDatabaseBuilder Create()
+    internal static SqliteDatabaseBuilder Create(bool arePositionalParametersEnabled = false)
     {
         var typeDefinitions = new SqliteColumnTypeDefinitionProviderBuilder().Build();
         var result = new SqliteDatabaseBuilder(
@@ -18,7 +18,8 @@ internal sealed class SqliteDatabaseBuilderMock
             new SqlDefaultObjectNameProvider(),
             new SqliteDataTypeProvider(),
             typeDefinitions,
-            new SqliteNodeInterpreterFactory( SqliteNodeInterpreterOptions.Default ) );
+            new SqliteNodeInterpreterFactory(
+                SqliteNodeInterpreterOptions.Default.EnablePositionalParameters( arePositionalParametersEnabled ) ) );
 
         result.Changes.SetModeAndAttach( SqlDatabaseCreateMode.DryRun );
         return result;

@@ -14,6 +14,7 @@ public class SqliteNodeInterpreterOptionsTests : TestsBase
             sut.IsUpdateFromEnabled.Should().BeTrue();
             sut.IsUpdateOrDeleteLimitEnabled.Should().BeTrue();
             sut.IsAggregateFunctionOrderingEnabled.Should().BeFalse();
+            sut.ArePositionalParametersEnabled.Should().BeFalse();
             sut.UpsertOptions.Should().Be( SqliteUpsertOptions.Supported );
         }
     }
@@ -32,6 +33,7 @@ public class SqliteNodeInterpreterOptionsTests : TestsBase
             result.IsUpdateFromEnabled.Should().Be( sut.IsUpdateFromEnabled );
             result.IsUpdateOrDeleteLimitEnabled.Should().Be( sut.IsUpdateOrDeleteLimitEnabled );
             result.IsAggregateFunctionOrderingEnabled.Should().Be( sut.IsAggregateFunctionOrderingEnabled );
+            result.ArePositionalParametersEnabled.Should().Be( sut.ArePositionalParametersEnabled );
             result.UpsertOptions.Should().Be( sut.UpsertOptions );
         }
     }
@@ -49,6 +51,7 @@ public class SqliteNodeInterpreterOptionsTests : TestsBase
             result.IsUpdateFromEnabled.Should().Be( sut.IsUpdateFromEnabled );
             result.IsUpdateOrDeleteLimitEnabled.Should().Be( sut.IsUpdateOrDeleteLimitEnabled );
             result.IsAggregateFunctionOrderingEnabled.Should().Be( sut.IsAggregateFunctionOrderingEnabled );
+            result.ArePositionalParametersEnabled.Should().Be( sut.ArePositionalParametersEnabled );
             result.UpsertOptions.Should().Be( sut.UpsertOptions );
         }
     }
@@ -68,6 +71,7 @@ public class SqliteNodeInterpreterOptionsTests : TestsBase
             result.IsUpdateFromEnabled.Should().Be( sut.IsUpdateFromEnabled );
             result.IsUpdateOrDeleteLimitEnabled.Should().Be( sut.IsUpdateOrDeleteLimitEnabled );
             result.IsAggregateFunctionOrderingEnabled.Should().Be( sut.IsAggregateFunctionOrderingEnabled );
+            result.ArePositionalParametersEnabled.Should().Be( sut.ArePositionalParametersEnabled );
             result.UpsertOptions.Should().Be( sut.UpsertOptions );
         }
     }
@@ -87,6 +91,7 @@ public class SqliteNodeInterpreterOptionsTests : TestsBase
             result.IsUpdateFromEnabled.Should().Be( enabled );
             result.IsUpdateOrDeleteLimitEnabled.Should().Be( sut.IsUpdateOrDeleteLimitEnabled );
             result.IsAggregateFunctionOrderingEnabled.Should().Be( sut.IsAggregateFunctionOrderingEnabled );
+            result.ArePositionalParametersEnabled.Should().Be( sut.ArePositionalParametersEnabled );
             result.UpsertOptions.Should().Be( sut.UpsertOptions );
         }
     }
@@ -106,6 +111,7 @@ public class SqliteNodeInterpreterOptionsTests : TestsBase
             result.IsUpdateFromEnabled.Should().Be( sut.IsUpdateFromEnabled );
             result.IsUpdateOrDeleteLimitEnabled.Should().Be( enabled );
             result.IsAggregateFunctionOrderingEnabled.Should().Be( sut.IsAggregateFunctionOrderingEnabled );
+            result.ArePositionalParametersEnabled.Should().Be( sut.ArePositionalParametersEnabled );
             result.UpsertOptions.Should().Be( sut.UpsertOptions );
         }
     }
@@ -125,6 +131,27 @@ public class SqliteNodeInterpreterOptionsTests : TestsBase
             result.IsUpdateFromEnabled.Should().Be( sut.IsUpdateFromEnabled );
             result.IsUpdateOrDeleteLimitEnabled.Should().Be( sut.IsUpdateOrDeleteLimitEnabled );
             result.IsAggregateFunctionOrderingEnabled.Should().Be( enabled );
+            result.ArePositionalParametersEnabled.Should().Be( sut.ArePositionalParametersEnabled );
+            result.UpsertOptions.Should().Be( sut.UpsertOptions );
+        }
+    }
+
+    [Theory]
+    [InlineData( true )]
+    [InlineData( false )]
+    public void EnablePositionalParameters_ShouldReturnCorrectResult(bool enabled)
+    {
+        var sut = SqliteNodeInterpreterOptions.Default;
+        var result = sut.EnablePositionalParameters( enabled );
+
+        using ( new AssertionScope() )
+        {
+            result.TypeDefinitions.Should().BeSameAs( sut.TypeDefinitions );
+            result.IsStrictModeEnabled.Should().Be( sut.IsStrictModeEnabled );
+            result.IsUpdateFromEnabled.Should().Be( sut.IsUpdateFromEnabled );
+            result.IsUpdateOrDeleteLimitEnabled.Should().Be( sut.IsUpdateOrDeleteLimitEnabled );
+            result.IsAggregateFunctionOrderingEnabled.Should().Be( sut.IsAggregateFunctionOrderingEnabled );
+            result.ArePositionalParametersEnabled.Should().Be( enabled );
             result.UpsertOptions.Should().Be( sut.UpsertOptions );
         }
     }
@@ -150,6 +177,7 @@ public class SqliteNodeInterpreterOptionsTests : TestsBase
             result.IsUpdateFromEnabled.Should().Be( sut.IsUpdateFromEnabled );
             result.IsUpdateOrDeleteLimitEnabled.Should().Be( sut.IsUpdateOrDeleteLimitEnabled );
             result.IsAggregateFunctionOrderingEnabled.Should().Be( sut.IsAggregateFunctionOrderingEnabled );
+            result.ArePositionalParametersEnabled.Should().Be( sut.ArePositionalParametersEnabled );
             result.UpsertOptions.Should().Be( expected );
         }
     }

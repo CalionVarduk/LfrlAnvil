@@ -309,6 +309,20 @@ public static class ExceptionResources
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static string InvalidPositionalParameterIndex(string name, int expectedIndex, int actualIndex)
+    {
+        return $"Found positional statement parameter '{name}' with index {actualIndex} at position {expectedIndex}.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static string ReduciblePositionalCollectionParametersAreNotSupported(string name, int index)
+    {
+        return $"Found unsupported reducible positional collection parameter '{name}' with index {index}.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static string RequiredStatementParameterIsIgnoredWhenNull(string name, Type actualType)
     {
         return $"Found nullable statement parameter '{name}' of '{actualType.GetDebugString()}' type which is ignored when value is null.";
@@ -316,11 +330,12 @@ public static class ExceptionResources
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static string MissingStatementParameter(string name, TypeNullability? type)
+    public static string MissingStatementParameter(SqlNodeInterpreterContextParameter parameter)
     {
-        return type is null
-            ? $"Found missing statement parameter '{name}'."
-            : $"Found missing statement parameter '{name}' of type '{type.Value}'.";
+        var indexText = parameter.Index is null ? string.Empty : $" (#{parameter.Index.Value})";
+        return parameter.Type is null
+            ? $"Found missing statement parameter '{parameter.Name}'{indexText}."
+            : $"Found missing statement parameter '{parameter.Name}'{indexText} of type '{parameter.Type.Value}'.";
     }
 
     [Pure]
@@ -337,7 +352,9 @@ public static class ExceptionResources
         var parameters = context.Parameters;
         var parametersText = string.Join(
             Environment.NewLine,
-            parameters.Select( (p, i) => $"{i + 1}. @{p.Key} : {p.Value?.ToString() ?? "?"}" ) );
+            parameters.Select(
+                (p, i) =>
+                    $"{i + 1}. @{p.Name}{(p.Index is not null ? $" (#{p.Index.Value})" : string.Empty)} : {p.Type?.ToString() ?? "?"}" ) );
 
         return $@"Statement
 {statement.Node}

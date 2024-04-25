@@ -6,13 +6,11 @@ using LfrlAnvil.Internal;
 
 namespace LfrlAnvil.Sql.Statements;
 
-public readonly record struct SqlParameterBinder(
-    SqlDialect Dialect,
-    Action<IDbCommand, IEnumerable<KeyValuePair<string, object?>>> Delegate
+public readonly record struct SqlParameterBinder(SqlDialect Dialect, Action<IDbCommand, IEnumerable<SqlParameter>> Delegate
 )
 {
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public void Bind(IDbCommand command, IEnumerable<KeyValuePair<string, object?>>? source = null)
+    public void Bind(IDbCommand command, IEnumerable<SqlParameter>? source = null)
     {
         if ( source is null )
             command.Parameters.Clear();

@@ -19,18 +19,24 @@ public class SqlParameterBinderFactory : ISqlParameterBinderFactory
     private readonly object _sync = new object();
     private Toolbox _toolbox;
 
-    internal SqlParameterBinderFactory(Type commandType, SqlDialect dialect, ISqlColumnTypeDefinitionProvider columnTypeDefinitions)
+    internal SqlParameterBinderFactory(
+        Type commandType,
+        SqlDialect dialect,
+        ISqlColumnTypeDefinitionProvider columnTypeDefinitions,
+        bool supportsPositionalParameters)
     {
         Assume.True( commandType.IsAssignableTo( typeof( IDbCommand ) ) );
         CommandType = commandType;
         Dialect = dialect;
         ColumnTypeDefinitions = columnTypeDefinitions;
+        SupportsPositionalParameters = supportsPositionalParameters;
         _toolbox = default;
     }
 
     public Type CommandType { get; }
     public SqlDialect Dialect { get; }
     public ISqlColumnTypeDefinitionProvider ColumnTypeDefinitions { get; }
+    public bool SupportsPositionalParameters { get; }
 
     [Pure]
     public SqlParameterBinder Create(SqlParameterBinderCreationOptions? options = null)
@@ -100,7 +106,8 @@ public class SqlParameterBinderFactory : ISqlParameterBinderFactory
         object Source,
         TypeNullability Type,
         bool IgnoreWhenNull,
-        bool IsReducibleCollection
+        bool IsReducibleCollection,
+        int? Index
     );
 
     [Pure]
@@ -156,6 +163,7 @@ public class SqlParameterBinderFactory : ISqlParameterBinderFactory
         if ( options.Context is not null )
             ValidateContext( result, options.Context );
 
+        ValidateParameterIndexes( result );
         return result;
     }
 
@@ -178,12 +186,13 @@ public class SqlParameterBinderFactory : ISqlParameterBinderFactory
             member,
             type,
             configuration.IsIgnoredWhenNull ?? ignoreNullValues,
-            reduceCollections && TypeHelpers.IsReducibleCollection( type.ActualType ) );
+            reduceCollections && TypeHelpers.IsReducibleCollection( type.ActualType ),
+            SupportsPositionalParameters ? configuration.ParameterIndex : null );
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private static StatementParameterInfo CreateStatementParameter(
+    private StatementParameterInfo CreateStatementParameter(
         SqlParameterConfiguration configuration,
         bool ignoreNullValues,
         bool reduceCollections)
@@ -196,7 +205,8 @@ public class SqlParameterBinderFactory : ISqlParameterBinderFactory
             configuration.CustomSelector,
             type,
             configuration.IsIgnoredWhenNull ?? ignoreNullValues,
-            reduceCollections && TypeHelpers.IsReducibleCollection( type.ActualType ) );
+            reduceCollections && TypeHelpers.IsReducibleCollection( type.ActualType ),
+            SupportsPositionalParameters ? configuration.ParameterIndex : null );
     }
 
     private void ValidateParameterNameDuplicates(ReadOnlySpan<StatementParameterInfo> sources)
@@ -223,28 +233,35 @@ public class SqlParameterBinderFactory : ISqlParameterBinderFactory
         throw new SqlCompilerException( Dialect, errors );
     }
 
-    private void ValidateContext(ReadOnlySpan<StatementParameterInfo> sources, SqlNodeInterpreterContext context)
+    private void ValidateContext(Span<StatementParameterInfo> sources, SqlNodeInterpreterContext context)
     {
         var existingParameters = new HashSet<string>( capacity: sources.Length, comparer: SqlHelpers.NameComparer );
         var parameterErrors = Chain<string>.Empty;
 
-        foreach ( var s in sources )
+        for ( var i = 0; i < sources.Length; ++i )
         {
+            var s = sources[i];
             existingParameters.Add( s.Name );
-            if ( ! context.TryGetParameterType( s.Name, out var parameterType ) )
+            if ( ! context.TryGetParameter( s.Name, out var parameter ) )
             {
                 var error = ExceptionResources.UnexpectedStatementParameter( s.Name, s.Type.ActualType );
                 parameterErrors = parameterErrors.Extend( error );
                 continue;
             }
 
-            if ( parameterType is null )
+            if ( SupportsPositionalParameters && s.Index != parameter.Index )
+            {
+                s = s with { Index = parameter.Index };
+                sources[i] = s;
+            }
+
+            if ( parameter.Type is null )
                 continue;
 
-            if ( (s.Type.IsNullable && ! parameterType.Value.IsNullable)
-                || ! s.Type.ActualType.IsAssignableTo( parameterType.Value.ActualType ) )
+            if ( (s.Type.IsNullable && ! parameter.Type.Value.IsNullable)
+                || ! s.Type.ActualType.IsAssignableTo( parameter.Type.Value.ActualType ) )
             {
-                var error = ExceptionResources.IncompatibleStatementParameterType( s.Name, parameterType.Value, s.Type.ActualType );
+                var error = ExceptionResources.IncompatibleStatementParameterType( s.Name, parameter.Type.Value, s.Type.ActualType );
                 parameterErrors = parameterErrors.Extend( error );
                 continue;
             }
@@ -258,10 +275,10 @@ public class SqlParameterBinderFactory : ISqlParameterBinderFactory
 
         foreach ( var p in context.Parameters )
         {
-            if ( existingParameters.Contains( p.Key ) )
+            if ( existingParameters.Contains( p.Name ) )
                 continue;
 
-            var error = ExceptionResources.MissingStatementParameter( p.Key, p.Value );
+            var error = ExceptionResources.MissingStatementParameter( p );
             parameterErrors = parameterErrors.Extend( error );
         }
 
@@ -269,9 +286,59 @@ public class SqlParameterBinderFactory : ISqlParameterBinderFactory
             throw new SqlCompilerException( Dialect, parameterErrors );
     }
 
+    private void ValidateParameterIndexes(Span<StatementParameterInfo> sources)
+    {
+        if ( ! SupportsPositionalParameters )
+            return;
+
+        var maxIndex = -1;
+        var positionalParameterCount = 0;
+        var errors = Chain<string>.Empty;
+
+        for ( var i = 0; i < sources.Length; ++i )
+        {
+            var info = sources[i];
+            if ( info.Index is null )
+                continue;
+
+            if ( info.IsReducibleCollection )
+            {
+                var error = ExceptionResources.ReduciblePositionalCollectionParametersAreNotSupported( info.Name, info.Index.Value );
+                errors = errors.Extend( error );
+            }
+
+            (sources[i], sources[positionalParameterCount]) = (sources[positionalParameterCount], sources[i]);
+            maxIndex = Math.Max( maxIndex, info.Index.Value );
+            ++positionalParameterCount;
+        }
+
+        if ( positionalParameterCount > 0 )
+        {
+            sources.Slice( 0, positionalParameterCount )
+                .Sort(
+                    static (a, b) =>
+                    {
+                        Assume.IsNotNull( a.Index );
+                        Assume.IsNotNull( b.Index );
+                        return a.Index.Value.CompareTo( b.Index.Value );
+                    } );
+
+            for ( var i = 0; i < positionalParameterCount; ++i )
+            {
+                var info = sources[i];
+                Assume.IsNotNull( info.Index );
+                if ( info.Index.Value != i )
+                    errors = errors.Extend( ExceptionResources.InvalidPositionalParameterIndex( info.Name, i, info.Index.Value ) );
+            }
+        }
+
+        if ( errors.Count > 0 )
+            throw new SqlCompilerException( Dialect, errors );
+    }
+
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private static Action<IDbCommand, IEnumerable<KeyValuePair<string, object?>>> CreateDelegateWithReducedCollections(
+    private static Action<IDbCommand, IEnumerable<SqlParameter>> CreateDelegateWithReducedCollections(
         ISqlColumnTypeDefinitionProvider typeDefinitions,
         bool ignoreNullValues)
     {
@@ -320,7 +387,7 @@ public class SqlParameterBinderFactory : ISqlParameterBinderFactory
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private static Action<IDbCommand, IEnumerable<KeyValuePair<string, object?>>> CreateDelegateWithoutReducedCollections(
+    private static Action<IDbCommand, IEnumerable<SqlParameter>> CreateDelegateWithoutReducedCollections(
         ISqlColumnTypeDefinitionProvider typeDefinitions,
         bool ignoreNullValues)
     {
@@ -369,7 +436,7 @@ public class SqlParameterBinderFactory : ISqlParameterBinderFactory
     private static void HandleNullValue(
         IDbCommand command,
         IDataParameterCollection parameters,
-        string name,
+        string? name,
         int index,
         int originalCount,
         ISqlColumnTypeDefinitionProvider typeDefinitions)
@@ -384,7 +451,7 @@ public class SqlParameterBinderFactory : ISqlParameterBinderFactory
     private static void HandleValue(
         IDbCommand command,
         IDataParameterCollection parameters,
-        string name,
+        string? name,
         object value,
         int index,
         int originalCount,
@@ -401,7 +468,7 @@ public class SqlParameterBinderFactory : ISqlParameterBinderFactory
     private static IDbDataParameter GetOrCreateParameter(
         IDbCommand command,
         IDataParameterCollection parameters,
-        string name,
+        string? name,
         int index,
         int originalCount)
     {
@@ -443,6 +510,7 @@ public class SqlParameterBinderFactory : ISqlParameterBinderFactory
         internal readonly MethodCallExpression ElementNoToStringCall;
         internal readonly MethodInfo StringConcatMethod;
         internal readonly ConditionalExpression ParameterCreation;
+        internal readonly ConstantExpression NullNameConstant;
         internal readonly ParameterExpression[] BlockParameters;
 
         private readonly Dictionary<Type, TypeDefinitionInfo> _typeDefinitions;
@@ -565,6 +633,7 @@ public class SqlParameterBinderFactory : ISqlParameterBinderFactory
                 parameterAssignmentFromIndexer,
                 parameterAssignmentFromCreateCall );
 
+            NullNameConstant = Expression.Constant( null, typeof( string ) );
             BlockParameters = new[] { command, commandParameters, parameter, originalCount, index };
         }
 
@@ -596,8 +665,13 @@ public class SqlParameterBinderFactory : ISqlParameterBinderFactory
             }
 
             return parameter.Type.IsNullable
-                ? CreateNullableScalarParameterAssignment( parameterSource, parameter.Name, parameter.IgnoreWhenNull, typeDefinitions )
-                : CreateScalarParameterAssignment( parameterSource, parameter.Name, typeDefinitions );
+                ? CreateNullableScalarParameterAssignment(
+                    parameterSource,
+                    parameter.Name,
+                    parameter.Index is not null,
+                    parameter.IgnoreWhenNull,
+                    typeDefinitions )
+                : CreateScalarParameterAssignment( parameterSource, parameter.Name, parameter.Index is not null, typeDefinitions );
         }
 
         [Pure]
@@ -676,10 +750,11 @@ public class SqlParameterBinderFactory : ISqlParameterBinderFactory
         private BlockExpression CreateNullableScalarParameterAssignment(
             Expression parameterSource,
             string name,
+            bool isPositional,
             bool ignoreWhenNull,
             ISqlColumnTypeDefinitionProvider typeDefinitions)
         {
-            var nameConst = Expression.Constant( name );
+            var nameConst = isPositional ? NullNameConstant : Expression.Constant( name );
             var variable = Expression.Variable( parameterSource.Type, $"val_{name}" );
 
             Expression[] buffer;
@@ -703,10 +778,16 @@ public class SqlParameterBinderFactory : ISqlParameterBinderFactory
         private BlockExpression CreateScalarParameterAssignment(
             Expression parameterSource,
             string name,
+            bool isPositional,
             ISqlColumnTypeDefinitionProvider typeDefinitions)
         {
             var buffer = new Expression[6];
-            AppendScalarParameterAssignmentExpressions( buffer, parameterSource, Expression.Constant( name ), typeDefinitions );
+            AppendScalarParameterAssignmentExpressions(
+                buffer,
+                parameterSource,
+                isPositional ? NullNameConstant : Expression.Constant( name ),
+                typeDefinitions );
+
             var result = Expression.Block( buffer );
             return result;
         }
@@ -867,6 +948,9 @@ public class SqlParameterBinderFactory : ISqlParameterBinderFactory
 public class SqlParameterBinderFactory<TCommand> : SqlParameterBinderFactory
     where TCommand : IDbCommand
 {
-    protected SqlParameterBinderFactory(SqlDialect dialect, ISqlColumnTypeDefinitionProvider columnTypeDefinitions)
-        : base( typeof( TCommand ), dialect, columnTypeDefinitions ) { }
+    protected SqlParameterBinderFactory(
+        SqlDialect dialect,
+        ISqlColumnTypeDefinitionProvider columnTypeDefinitions,
+        bool supportsPositionalParameters)
+        : base( typeof( TCommand ), dialect, columnTypeDefinitions, supportsPositionalParameters ) { }
 }

@@ -6,6 +6,7 @@ namespace LfrlAnvil.Sql.Statements.Compilers;
 public interface ISqlParameterBinderFactory
 {
     SqlDialect Dialect { get; }
+    bool SupportsPositionalParameters { get; }
 
     [Pure]
     SqlParameterBinder Create(SqlParameterBinderCreationOptions? options = null);

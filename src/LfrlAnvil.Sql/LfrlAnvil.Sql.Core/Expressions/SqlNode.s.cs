@@ -47,33 +47,42 @@ public static partial class SqlNode
     }
 
     [Pure]
-    public static SqlParameterNode Parameter<T>(string name, bool isNullable = false)
+    public static SqlParameterNode Parameter<T>(string name, bool isNullable = false, int? index = null)
     {
-        return Parameter( name, TypeNullability.Create( typeof( T ), isNullable ) );
+        return Parameter( name, TypeNullability.Create( typeof( T ), isNullable ), index );
     }
 
     [Pure]
-    public static SqlParameterNode Parameter(string name, TypeNullability? type = null)
+    public static SqlParameterNode Parameter(string name, TypeNullability? type = null, int? index = null)
     {
-        return new SqlParameterNode( name, type );
+        return new SqlParameterNode( name, type, index );
     }
 
     [Pure]
-    public static SqlParameterNode[] ParameterRange<T>(string name, int count, bool isNullable = false)
+    public static SqlParameterNode[] ParameterRange<T>(string name, int count, bool isNullable = false, int? firstIndex = null)
     {
-        return ParameterRange( name, count, TypeNullability.Create( typeof( T ), isNullable ) );
+        return ParameterRange( name, count, TypeNullability.Create( typeof( T ), isNullable ), firstIndex );
     }
 
     [Pure]
-    public static SqlParameterNode[] ParameterRange(string name, int count, TypeNullability? type = null)
+    public static SqlParameterNode[] ParameterRange(string name, int count, TypeNullability? type = null, int? firstIndex = null)
     {
         Ensure.IsGreaterThanOrEqualTo( count, 0 );
         if ( count == 0 )
             return Array.Empty<SqlParameterNode>();
 
         var result = new SqlParameterNode[count];
-        for ( var i = 0; i < count; ++i )
-            result[i] = Parameter( $"{name}{i + 1}", type );
+        if ( firstIndex is null )
+        {
+            for ( var i = 0; i < count; ++i )
+                result[i] = Parameter( $"{name}{i + 1}", type );
+        }
+        else
+        {
+            var index = firstIndex.Value;
+            for ( var i = 0; i < count; ++i )
+                result[i] = Parameter( $"{name}{i + 1}", type, index++ );
+        }
 
         return result;
     }

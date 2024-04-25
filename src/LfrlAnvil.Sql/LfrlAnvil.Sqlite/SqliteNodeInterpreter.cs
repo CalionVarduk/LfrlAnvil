@@ -37,6 +37,16 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
         Context.Sql.Append( sql );
     }
 
+    public override void VisitParameter(SqlParameterNode node)
+    {
+        if ( node.Index is not null && Options.ArePositionalParametersEnabled )
+            Context.Sql.Append( '?' ).Append( node.Index.Value + 1 );
+        else
+            Context.Sql.Append( '@' ).Append( node.Name );
+
+        AddContextParameter( node );
+    }
+
     public override void VisitModulo(SqlModuloExpressionNode node)
     {
         Context.Sql.Append( "MOD" ).Append( '(' );
@@ -758,6 +768,14 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
         Context.Sql.Append( BeginNameDelimiter );
         AppendSchemaObjectName( schemaName, objName );
         Context.Sql.Append( EndNameDelimiter );
+    }
+
+    protected override void AddContextParameter(SqlParameterNode node)
+    {
+        if ( Options.ArePositionalParametersEnabled )
+            base.AddContextParameter( node );
+        else
+            Context.AddParameter( node.Name, node.Type, index: null );
     }
 
     protected void AppendSchemaObjectName(string schemaName, string objName)

@@ -11,8 +11,8 @@ public class SqlParameterBinderExecutorTests : TestsBase
     [Fact]
     public void Bind_Extension_ForTypeErased_ShouldCreateCorrectExecutor()
     {
-        var @delegate = Substitute.For<Action<IDbCommand, IEnumerable<KeyValuePair<string, object?>>>>();
-        var source = Substitute.For<IEnumerable<KeyValuePair<string, object?>>>();
+        var @delegate = Substitute.For<Action<IDbCommand, IEnumerable<SqlParameter>>>();
+        var source = Substitute.For<IEnumerable<SqlParameter>>();
         var binder = new SqlParameterBinder( new SqlDialect( "foo" ), @delegate );
         var sut = binder.Bind( source );
 
@@ -27,8 +27,8 @@ public class SqlParameterBinderExecutorTests : TestsBase
     public void Execute_ForTypeErased_ShouldInvokeBinder()
     {
         var command = new DbCommandMock();
-        var @delegate = Substitute.For<Action<IDbCommand, IEnumerable<KeyValuePair<string, object?>>>>();
-        var source = new[] { KeyValuePair.Create( "a", ( object? )0 ), KeyValuePair.Create( "b", ( object? )1 ) };
+        var @delegate = Substitute.For<Action<IDbCommand, IEnumerable<SqlParameter>>>();
+        var source = new[] { SqlParameter.Named( "a", 0 ), SqlParameter.Named( "b", 1 ) };
         var binder = new SqlParameterBinder( new SqlDialect( "foo" ), @delegate );
         var sut = binder.Bind( source );
 

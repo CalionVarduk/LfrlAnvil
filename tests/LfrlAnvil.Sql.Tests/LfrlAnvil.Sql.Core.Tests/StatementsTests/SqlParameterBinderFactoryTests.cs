@@ -7,6 +7,7 @@ using LfrlAnvil.Functional;
 using LfrlAnvil.Sql.Exceptions;
 using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Expressions.Visitors;
+using LfrlAnvil.Sql.Statements;
 using LfrlAnvil.Sql.Statements.Compilers;
 using LfrlAnvil.TestExtensions.FluentAssertions;
 using LfrlAnvil.TestExtensions.Sql.Mocks;
@@ -24,7 +25,7 @@ public class SqlParameterBinderFactoryTests : TestsBase
         var sut = SqlParameterBinderFactoryMock.CreateInstance();
         var parameterBinder = sut.Create();
 
-        parameterBinder.Bind( command, Enumerable.Empty<KeyValuePair<string, object?>>() );
+        parameterBinder.Bind( command, Enumerable.Empty<SqlParameter>() );
 
         using ( new AssertionScope() )
         {
@@ -100,17 +101,15 @@ public class SqlParameterBinderFactoryTests : TestsBase
         command.Parameters.Add( p1 );
         command.Parameters.Add( p2 );
 
+        var parameters = new SqlNamedParameterCollection();
+        parameters.TryAdd( "a", 1 );
+        parameters.TryAdd( "b", "foo" );
+        parameters.TryAdd( "c", 5.0 );
+
         var sut = SqlParameterBinderFactoryMock.CreateInstance();
         var parameterBinder = sut.Create();
 
-        parameterBinder.Bind(
-            command,
-            new Dictionary<string, object?>
-            {
-                { "a", 1 },
-                { "b", "foo" },
-                { "c", 5.0 }
-            } );
+        parameterBinder.Bind( command, parameters );
 
         using ( new AssertionScope() )
         {
@@ -132,6 +131,46 @@ public class SqlParameterBinderFactoryTests : TestsBase
             command.Parameters[2].DbType.Should().Be( DbType.Double );
             command.Parameters[2].IsNullable.Should().BeFalse();
             command.Parameters[2].ParameterName.Should().Be( "c" );
+            command.Parameters[2].Value.Should().Be( 5.0 );
+        }
+    }
+
+    [Fact]
+    public void Create_TypeErased_ShouldCreateCorrectParameterBinder_WithPositionalParameters()
+    {
+        var command = new DbCommandMock();
+        var p1 = command.CreateParameter();
+        var p2 = command.CreateParameter();
+        command.Parameters.Add( p1 );
+        command.Parameters.Add( p2 );
+
+        var sut = SqlParameterBinderFactoryMock.CreateInstance();
+        var parameterBinder = sut.Create();
+
+        parameterBinder.Bind(
+            command,
+            new[] { SqlParameter.Positional( 1 ), SqlParameter.Positional( "foo" ), SqlParameter.Positional( 5.0 ) } );
+
+        using ( new AssertionScope() )
+        {
+            parameterBinder.Dialect.Should().BeSameAs( sut.Dialect );
+            command.Parameters.Should().HaveCount( 3 );
+            command.Parameters[0].Should().BeSameAs( p1 );
+            command.Parameters[0].Direction.Should().Be( ParameterDirection.Input );
+            command.Parameters[0].DbType.Should().Be( DbType.Int32 );
+            command.Parameters[0].IsNullable.Should().BeFalse();
+            command.Parameters[0].ParameterName.Should().BeNull();
+            command.Parameters[0].Value.Should().Be( 1 );
+            command.Parameters[1].Should().BeSameAs( p2 );
+            command.Parameters[1].Direction.Should().Be( ParameterDirection.Input );
+            command.Parameters[1].DbType.Should().Be( DbType.String );
+            command.Parameters[1].IsNullable.Should().BeFalse();
+            command.Parameters[1].ParameterName.Should().BeNull();
+            command.Parameters[1].Value.Should().Be( "foo" );
+            command.Parameters[2].Direction.Should().Be( ParameterDirection.Input );
+            command.Parameters[2].DbType.Should().Be( DbType.Double );
+            command.Parameters[2].IsNullable.Should().BeFalse();
+            command.Parameters[2].ParameterName.Should().BeNull();
             command.Parameters[2].Value.Should().Be( 5.0 );
         }
     }
@@ -189,7 +228,7 @@ public class SqlParameterBinderFactoryTests : TestsBase
         var sut = SqlParameterBinderFactoryMock.CreateInstance();
         var parameterBinder = sut.Create( SqlParameterBinderCreationOptions.Default.EnableCollectionReduction() );
 
-        parameterBinder.Bind( command, Enumerable.Empty<KeyValuePair<string, object?>>() );
+        parameterBinder.Bind( command, Enumerable.Empty<SqlParameter>() );
 
         using ( new AssertionScope() )
         {
@@ -459,6 +498,151 @@ public class SqlParameterBinderFactoryTests : TestsBase
         var command = new DbCommandMock();
         var sut = SqlParameterBinderFactoryMock.CreateInstance();
         var parameterBinder = sut.Create<Source>();
+
+        parameterBinder.Bind(
+            command,
+            new Source
+            {
+                A = 10,
+                B = "foo",
+                C = 5.0,
+                D = true
+            } );
+
+        using ( new AssertionScope() )
+        {
+            parameterBinder.Dialect.Should().BeSameAs( sut.Dialect );
+            command.Parameters.Should().HaveCount( 4 );
+            command.Parameters[0].Direction.Should().Be( ParameterDirection.Input );
+            command.Parameters[0].DbType.Should().Be( DbType.Int32 );
+            command.Parameters[0].IsNullable.Should().BeFalse();
+            command.Parameters[0].ParameterName.Should().Be( "A" );
+            command.Parameters[0].Value.Should().Be( 10 );
+            command.Parameters[1].Direction.Should().Be( ParameterDirection.Input );
+            command.Parameters[1].DbType.Should().Be( DbType.String );
+            command.Parameters[1].IsNullable.Should().BeFalse();
+            command.Parameters[1].ParameterName.Should().Be( "B" );
+            command.Parameters[1].Value.Should().Be( "foo" );
+            command.Parameters[2].Direction.Should().Be( ParameterDirection.Input );
+            command.Parameters[2].DbType.Should().Be( DbType.Double );
+            command.Parameters[2].IsNullable.Should().BeFalse();
+            command.Parameters[2].ParameterName.Should().Be( "C" );
+            command.Parameters[2].Value.Should().Be( 5.0 );
+            command.Parameters[3].Direction.Should().Be( ParameterDirection.Input );
+            command.Parameters[3].DbType.Should().Be( DbType.Boolean );
+            command.Parameters[3].IsNullable.Should().BeFalse();
+            command.Parameters[3].ParameterName.Should().Be( "D" );
+            command.Parameters[3].Value.Should().Be( true );
+        }
+    }
+
+    [Fact]
+    public void Create_Generic_ShouldCreateCorrectParameterBinder_WhenSourceIsProvided_WithPositionalParameters()
+    {
+        var command = new DbCommandMock();
+        var sut = SqlParameterBinderFactoryMock.CreateInstance();
+        var parameterBinder = sut.Create<Source>(
+            SqlParameterBinderCreationOptions.Default
+                .With( SqlParameterConfiguration.Positional( "A", 2 ) )
+                .With( SqlParameterConfiguration.Positional( "B", 3 ) )
+                .With( SqlParameterConfiguration.Positional( "C", 0 ) )
+                .With( SqlParameterConfiguration.Positional( "D", 1 ) ) );
+
+        parameterBinder.Bind(
+            command,
+            new Source
+            {
+                A = 10,
+                B = "foo",
+                C = 5.0,
+                D = true
+            } );
+
+        using ( new AssertionScope() )
+        {
+            parameterBinder.Dialect.Should().BeSameAs( sut.Dialect );
+            command.Parameters.Should().HaveCount( 4 );
+            command.Parameters[0].Direction.Should().Be( ParameterDirection.Input );
+            command.Parameters[0].DbType.Should().Be( DbType.Double );
+            command.Parameters[0].IsNullable.Should().BeFalse();
+            command.Parameters[0].ParameterName.Should().BeNull();
+            command.Parameters[0].Value.Should().Be( 5.0 );
+            command.Parameters[1].Direction.Should().Be( ParameterDirection.Input );
+            command.Parameters[1].DbType.Should().Be( DbType.Boolean );
+            command.Parameters[1].IsNullable.Should().BeFalse();
+            command.Parameters[1].ParameterName.Should().BeNull();
+            command.Parameters[1].Value.Should().Be( true );
+            command.Parameters[2].Direction.Should().Be( ParameterDirection.Input );
+            command.Parameters[2].DbType.Should().Be( DbType.Int32 );
+            command.Parameters[2].IsNullable.Should().BeFalse();
+            command.Parameters[2].ParameterName.Should().BeNull();
+            command.Parameters[2].Value.Should().Be( 10 );
+            command.Parameters[3].Direction.Should().Be( ParameterDirection.Input );
+            command.Parameters[3].DbType.Should().Be( DbType.String );
+            command.Parameters[3].IsNullable.Should().BeFalse();
+            command.Parameters[3].ParameterName.Should().BeNull();
+            command.Parameters[3].Value.Should().Be( "foo" );
+        }
+    }
+
+    [Fact]
+    public void Create_Generic_ShouldCreateCorrectParameterBinder_WhenSourceIsProvided_WithMixedParameters()
+    {
+        var command = new DbCommandMock();
+        var sut = SqlParameterBinderFactoryMock.CreateInstance();
+        var parameterBinder = sut.Create<Source>(
+            SqlParameterBinderCreationOptions.Default
+                .With( SqlParameterConfiguration.Positional( "B", 1 ) )
+                .With( SqlParameterConfiguration.Positional( "C", 0 ) ) );
+
+        parameterBinder.Bind(
+            command,
+            new Source
+            {
+                A = 10,
+                B = "foo",
+                C = 5.0,
+                D = true
+            } );
+
+        using ( new AssertionScope() )
+        {
+            parameterBinder.Dialect.Should().BeSameAs( sut.Dialect );
+            command.Parameters.Should().HaveCount( 4 );
+            command.Parameters[0].Direction.Should().Be( ParameterDirection.Input );
+            command.Parameters[0].DbType.Should().Be( DbType.Double );
+            command.Parameters[0].IsNullable.Should().BeFalse();
+            command.Parameters[0].ParameterName.Should().BeNull();
+            command.Parameters[0].Value.Should().Be( 5.0 );
+            command.Parameters[1].Direction.Should().Be( ParameterDirection.Input );
+            command.Parameters[1].DbType.Should().Be( DbType.String );
+            command.Parameters[1].IsNullable.Should().BeFalse();
+            command.Parameters[1].ParameterName.Should().BeNull();
+            command.Parameters[1].Value.Should().Be( "foo" );
+            command.Parameters[2].Direction.Should().Be( ParameterDirection.Input );
+            command.Parameters[2].DbType.Should().Be( DbType.Int32 );
+            command.Parameters[2].IsNullable.Should().BeFalse();
+            command.Parameters[2].ParameterName.Should().Be( "A" );
+            command.Parameters[2].Value.Should().Be( 10 );
+            command.Parameters[3].Direction.Should().Be( ParameterDirection.Input );
+            command.Parameters[3].DbType.Should().Be( DbType.Boolean );
+            command.Parameters[3].IsNullable.Should().BeFalse();
+            command.Parameters[3].ParameterName.Should().Be( "D" );
+            command.Parameters[3].Value.Should().Be( true );
+        }
+    }
+
+    [Fact]
+    public void Create_Generic_ShouldCreateCorrectParameterBinder_WhenSourceIsProvided_WithUnsupportedPositionalParameters()
+    {
+        var command = new DbCommandMock();
+        var sut = SqlParameterBinderFactoryMock.CreateInstance( arePositionalParametersSupported: false );
+        var parameterBinder = sut.Create<Source>(
+            SqlParameterBinderCreationOptions.Default
+                .With( SqlParameterConfiguration.Positional( "A", 2 ) )
+                .With( SqlParameterConfiguration.Positional( "B", 3 ) )
+                .With( SqlParameterConfiguration.Positional( "C", 0 ) )
+                .With( SqlParameterConfiguration.Positional( "D", 1 ) ) );
 
         parameterBinder.Bind(
             command,
@@ -787,6 +971,87 @@ public class SqlParameterBinderFactoryTests : TestsBase
                 .With( SqlParameterConfiguration.IgnoreMember( "D" ) ) );
 
         parameterBinder.Bind( command, new Source { A = 10 } );
+
+        using ( new AssertionScope() )
+        {
+            parameterBinder.Dialect.Should().BeSameAs( sut.Dialect );
+            command.Parameters.Should().HaveCount( 1 );
+            command.Parameters[0].Direction.Should().Be( ParameterDirection.Input );
+            command.Parameters[0].DbType.Should().Be( DbType.Int32 );
+            command.Parameters[0].IsNullable.Should().BeFalse();
+            command.Parameters[0].ParameterName.Should().Be( "A" );
+            command.Parameters[0].Value.Should().Be( 10 );
+        }
+    }
+
+    [Fact]
+    public void
+        Create_Generic_ShouldCreateCorrectParameterBinder_WhenProvidedContextContainsPositionalParameterThatExistsInSourceTypeAsNamed()
+    {
+        var command = new DbCommandMock();
+        var interpreter = new SqlNodeDebugInterpreter();
+        interpreter.Visit( SqlNode.Parameter( "a", index: 0 ) );
+
+        var sut = SqlParameterBinderFactoryMock.CreateInstance();
+        var parameterBinder = sut.Create<GenericSource<int>>( SqlParameterBinderCreationOptions.Default.SetContext( interpreter.Context ) );
+        parameterBinder.Bind( command, new GenericSource<int>( 10 ) );
+
+        using ( new AssertionScope() )
+        {
+            parameterBinder.Dialect.Should().BeSameAs( sut.Dialect );
+            command.Parameters.Should().HaveCount( 1 );
+            command.Parameters[0].Direction.Should().Be( ParameterDirection.Input );
+            command.Parameters[0].DbType.Should().Be( DbType.Int32 );
+            command.Parameters[0].IsNullable.Should().BeFalse();
+            command.Parameters[0].ParameterName.Should().BeNull();
+            command.Parameters[0].Value.Should().Be( 10 );
+        }
+    }
+
+    [Theory]
+    [InlineData( 0 )]
+    [InlineData( 1 )]
+    public void
+        Create_Generic_ShouldCreateCorrectParameterBinder_WhenProvidedContextContainsPositionalParameterThatExistsInSourceTypeAsPositional(
+            int memberIndex)
+    {
+        var command = new DbCommandMock();
+        var interpreter = new SqlNodeDebugInterpreter();
+        interpreter.Visit( SqlNode.Parameter( "a", index: 0 ) );
+
+        var sut = SqlParameterBinderFactoryMock.CreateInstance();
+        var parameterBinder = sut.Create<GenericSource<int>>(
+            SqlParameterBinderCreationOptions.Default.SetContext( interpreter.Context )
+                .With( SqlParameterConfiguration.Positional( "A", memberIndex ) ) );
+
+        parameterBinder.Bind( command, new GenericSource<int>( 10 ) );
+
+        using ( new AssertionScope() )
+        {
+            parameterBinder.Dialect.Should().BeSameAs( sut.Dialect );
+            command.Parameters.Should().HaveCount( 1 );
+            command.Parameters[0].Direction.Should().Be( ParameterDirection.Input );
+            command.Parameters[0].DbType.Should().Be( DbType.Int32 );
+            command.Parameters[0].IsNullable.Should().BeFalse();
+            command.Parameters[0].ParameterName.Should().BeNull();
+            command.Parameters[0].Value.Should().Be( 10 );
+        }
+    }
+
+    [Fact]
+    public void
+        Create_Generic_ShouldCreateCorrectParameterBinder_WhenProvidedContextContainsNamedParameterThatExistsInSourceTypeAsPositional()
+    {
+        var command = new DbCommandMock();
+        var interpreter = new SqlNodeDebugInterpreter();
+        interpreter.Visit( SqlNode.Parameter( "a" ) );
+
+        var sut = SqlParameterBinderFactoryMock.CreateInstance();
+        var parameterBinder = sut.Create<GenericSource<int>>(
+            SqlParameterBinderCreationOptions.Default.SetContext( interpreter.Context )
+                .With( SqlParameterConfiguration.Positional( "A", 1 ) ) );
+
+        parameterBinder.Bind( command, new GenericSource<int>( 10 ) );
 
         using ( new AssertionScope() )
         {
@@ -1421,6 +1686,36 @@ public class SqlParameterBinderFactoryTests : TestsBase
         action.Should().ThrowExactly<SqlCompilerException>().AndMatch( e => e.Dialect == sut.Dialect );
     }
 
+    [Fact]
+    public void CreateExpression_ShouldThrowSqlCompilerException_WhenReducibleCollectionParameterIsPositional()
+    {
+        var sut = SqlParameterBinderFactoryMock.CreateInstance();
+
+        var action = Lambda.Of(
+            () => sut.CreateExpression<GenericSource<int[]>>(
+                SqlParameterBinderCreationOptions.Default
+                    .EnableCollectionReduction()
+                    .With( SqlParameterConfiguration.Positional( "A", 0 ) ) ) );
+
+        action.Should().ThrowExactly<SqlCompilerException>().AndMatch( e => e.Dialect == sut.Dialect );
+    }
+
+    [Fact]
+    public void CreateExpression_ShouldThrowSqlCompilerException_WhenPositionalParameterIndexesAreInvalid()
+    {
+        var sut = SqlParameterBinderFactoryMock.CreateInstance();
+
+        var action = Lambda.Of(
+            () => sut.CreateExpression<Source>(
+                SqlParameterBinderCreationOptions.Default
+                    .With( SqlParameterConfiguration.Positional( "A", 2 ) )
+                    .With( SqlParameterConfiguration.Positional( "B", 5 ) )
+                    .With( SqlParameterConfiguration.Positional( "C", 2 ) )
+                    .With( SqlParameterConfiguration.Positional( "D", 0 ) ) ) );
+
+        action.Should().ThrowExactly<SqlCompilerException>().AndMatch( e => e.Dialect == sut.Dialect );
+    }
+
     public sealed class Source
     {
         public int? A { get; init; }
@@ -1458,8 +1753,8 @@ public class SqlParameterBinderFactoryTests : TestsBase
     }
 
     [Pure]
-    private static KeyValuePair<string, object?> GetParameter(string name, object? value)
+    private static SqlParameter GetParameter(string name, object? value)
     {
-        return KeyValuePair.Create( name, value );
+        return SqlParameter.Named( name, value );
     }
 }
