@@ -323,6 +323,13 @@ public static class ExceptionResources
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static string NullablePositionalParameterCannotBeIgnoredWhenNull(string name, int index)
+    {
+        return $"Found unsupported nullable positional parameter '{name}' with index {index} that is ignored when value is null.";
+    }
+
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static string RequiredStatementParameterIsIgnoredWhenNull(string name, Type actualType)
     {
         return $"Found nullable statement parameter '{name}' of '{actualType.GetDebugString()}' type which is ignored when value is null.";

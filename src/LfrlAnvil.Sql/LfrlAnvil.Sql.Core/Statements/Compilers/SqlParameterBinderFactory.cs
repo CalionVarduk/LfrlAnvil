@@ -307,6 +307,12 @@ public class SqlParameterBinderFactory : ISqlParameterBinderFactory
                 errors = errors.Extend( error );
             }
 
+            if ( info.IgnoreWhenNull && info.Type.IsNullable )
+            {
+                var error = ExceptionResources.NullablePositionalParameterCannotBeIgnoredWhenNull( info.Name, info.Index.Value );
+                errors = errors.Extend( error );
+            }
+
             (sources[i], sources[positionalParameterCount]) = (sources[positionalParameterCount], sources[i]);
             maxIndex = Math.Max( maxIndex, info.Index.Value );
             ++positionalParameterCount;

@@ -543,6 +543,7 @@ public class SqlParameterBinderFactoryTests : TestsBase
         var sut = SqlParameterBinderFactoryMock.CreateInstance();
         var parameterBinder = sut.Create<Source>(
             SqlParameterBinderCreationOptions.Default
+                .EnableIgnoringOfNullValues( false )
                 .With( SqlParameterConfiguration.Positional( "A", 2 ) )
                 .With( SqlParameterConfiguration.Positional( "B", 3 ) )
                 .With( SqlParameterConfiguration.Positional( "C", 0 ) )
@@ -592,6 +593,7 @@ public class SqlParameterBinderFactoryTests : TestsBase
         var sut = SqlParameterBinderFactoryMock.CreateInstance();
         var parameterBinder = sut.Create<Source>(
             SqlParameterBinderCreationOptions.Default
+                .EnableIgnoringOfNullValues( false )
                 .With( SqlParameterConfiguration.Positional( "B", 1 ) )
                 .With( SqlParameterConfiguration.Positional( "C", 0 ) ) );
 
@@ -993,7 +995,9 @@ public class SqlParameterBinderFactoryTests : TestsBase
         interpreter.Visit( SqlNode.Parameter( "a", index: 0 ) );
 
         var sut = SqlParameterBinderFactoryMock.CreateInstance();
-        var parameterBinder = sut.Create<GenericSource<int>>( SqlParameterBinderCreationOptions.Default.SetContext( interpreter.Context ) );
+        var parameterBinder = sut.Create<GenericSource<int>>(
+            SqlParameterBinderCreationOptions.Default.EnableIgnoringOfNullValues( false ).SetContext( interpreter.Context ) );
+
         parameterBinder.Bind( command, new GenericSource<int>( 10 ) );
 
         using ( new AssertionScope() )
@@ -1021,7 +1025,9 @@ public class SqlParameterBinderFactoryTests : TestsBase
 
         var sut = SqlParameterBinderFactoryMock.CreateInstance();
         var parameterBinder = sut.Create<GenericSource<int>>(
-            SqlParameterBinderCreationOptions.Default.SetContext( interpreter.Context )
+            SqlParameterBinderCreationOptions.Default
+                .SetContext( interpreter.Context )
+                .EnableIgnoringOfNullValues( false )
                 .With( SqlParameterConfiguration.Positional( "A", memberIndex ) ) );
 
         parameterBinder.Bind( command, new GenericSource<int>( 10 ) );
@@ -1701,7 +1707,20 @@ public class SqlParameterBinderFactoryTests : TestsBase
     }
 
     [Fact]
-    public void CreateExpression_ShouldThrowSqlCompilerException_WhenPositionalParameterIndexesAreInvalid()
+    public void CreateExpression_ShouldThrowSqlCompilerException_WhenParameterWithIgnoredNullValuesIsPositional()
+    {
+        var sut = SqlParameterBinderFactoryMock.CreateInstance();
+
+        var action = Lambda.Of(
+            () => sut.CreateExpression<GenericSource<string>>(
+                SqlParameterBinderCreationOptions.Default.With(
+                    SqlParameterConfiguration.IgnoreMemberWhenNull( "A", parameterIndex: 0 ) ) ) );
+
+        action.Should().ThrowExactly<SqlCompilerException>().AndMatch( e => e.Dialect == sut.Dialect );
+    }
+
+    [Fact]
+    public void CreateExpression_ShouldThrowSqlCompilerException_WhenNullablePositionalParameterIndexesAreInvalid()
     {
         var sut = SqlParameterBinderFactoryMock.CreateInstance();
 
