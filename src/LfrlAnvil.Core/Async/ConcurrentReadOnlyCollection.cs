@@ -28,10 +28,8 @@ public sealed class ConcurrentReadOnlyCollection<T> : IReadOnlyCollection<T>
     {
         get
         {
-            lock ( _sync )
-            {
+            using ( ExclusiveLock.Enter( _sync ) )
                 return _collection.Count;
-            }
         }
     }
 

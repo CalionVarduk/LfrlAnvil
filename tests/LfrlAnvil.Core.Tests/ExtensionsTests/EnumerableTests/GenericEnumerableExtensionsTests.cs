@@ -567,7 +567,7 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
     public void IsMaterialized_ShouldReturnTrue_WhenSourceIsMemoizedAndMaterialized()
     {
         var sut = Fixture.CreateMany<T>().Memoize();
-        var value = sut.Materialize();
+        _ = sut.Materialize();
         var result = sut.IsMaterialized();
         result.Should().BeTrue();
     }
@@ -797,6 +797,23 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
     {
         var sut = values.Select( v => new Contained<T> { Value = v } );
         var result = sut.MinMaxBy( c => c.Value );
+
+        using ( new AssertionScope() )
+        {
+            result.Min.Value.Should().Be( expectedMin );
+            result.Max.Value.Should().Be( expectedMax );
+        }
+    }
+
+    [Theory]
+    [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<T>.GetMinMaxData ) )]
+    public void MinMaxBy_WithCustomComparer_ShouldReturnCorrectResult_WhenSourceIsNotEmpty(
+        IEnumerable<T> values,
+        T expectedMin,
+        T expectedMax)
+    {
+        var sut = values.Select( v => new Contained<T> { Value = v } );
+        var result = sut.MinMaxBy( c => c.Value, Comparer<T?>.Default );
 
         using ( new AssertionScope() )
         {
@@ -1050,25 +1067,6 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
             result.FailedItems.Should().BeEquivalentTo( expectedFailed );
             result.FailedItemsSpan.ToArray().Should().BeSequentiallyEqualTo( result.FailedItems );
         }
-    }
-
-    [Fact]
-    public void ToArray_ShouldReturnEmptyArray_WhenSourceIsEmpty()
-    {
-        var sut = new List<Ref<T>>();
-        var result = sut.ToArray( r => r.Value );
-        result.Should().BeEmpty();
-    }
-
-    [Theory]
-    [InlineData( 1 )]
-    [InlineData( 2 )]
-    [InlineData( 10 )]
-    public void ToArray_ShouldReturnArrayWithCorrectElements_WhenSourceIsNotEmpty(int count)
-    {
-        var sut = Fixture.CreateMany<T>( count ).Select( Ref.Create ).ToList();
-        var result = sut.ToArray( r => r.Value );
-        result.Should().BeSequentiallyEqualTo( sut.Select( r => r.Value ) );
     }
 
     [Fact]

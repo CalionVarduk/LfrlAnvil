@@ -4,8 +4,15 @@ using LfrlAnvil.Internal;
 
 namespace LfrlAnvil.Memory;
 
+/// <summary>
+/// A lightweight collection of <see cref="RentedMemorySequence{T}"/> or <see cref="RentedMemorySequenceSpan{T}"/> segment slices.
+/// </summary>
+/// <typeparam name="T">Element type.</typeparam>
 public readonly ref struct RentedMemorySequenceSegmentCollection<T>
 {
+    /// <summary>
+    /// An empty sequence segment collection.
+    /// </summary>
     public static RentedMemorySequenceSegmentCollection<T> Empty => default;
 
     private readonly MemorySequencePool<T>.Node? _node;
@@ -28,8 +35,18 @@ public readonly ref struct RentedMemorySequenceSegmentCollection<T>
         Length = _last.Segment - _first.Segment + 1;
     }
 
+    /// <summary>
+    /// Total number of fully or partially occupied segments.
+    /// </summary>
     public int Length { get; }
 
+    /// <summary>
+    /// Gets the full or partial segment at the specified position in this sequence segment collection.
+    /// </summary>
+    /// <param name="index">The zero-based index of the segment to get.</param>
+    /// <exception cref="ArgumentOutOfRangeException">
+    /// When <paramref name="index"/> is less than <b>0</b> or greater than or equal to <see cref="Length"/>.
+    /// </exception>
     public ArraySegment<T> this[int index]
     {
         get
@@ -54,12 +71,20 @@ public readonly ref struct RentedMemorySequenceSegmentCollection<T>
         }
     }
 
+    /// <summary>
+    /// Returns a string representation of this <see cref="RentedMemorySequenceSegmentCollection{T}"/> instance.
+    /// </summary>
+    /// <returns>String representation.</returns>
     [Pure]
     public override string ToString()
     {
         return $"{nameof( RentedMemorySequenceSegmentCollection<T> )}<{typeof( T ).Name}>[{Length}]";
     }
 
+    /// <summary>
+    /// Creates a new <see cref="Array"/> instance from this sequence segment collection.
+    /// </summary>
+    /// <returns>New <see cref="Array"/> instance.</returns>
     [Pure]
     public ArraySegment<T>[] ToArray()
     {
@@ -74,12 +99,19 @@ public readonly ref struct RentedMemorySequenceSegmentCollection<T>
         return result;
     }
 
+    /// <summary>
+    /// Creates a new <see cref="Enumerator"/> instance for this sequence segment collection.
+    /// </summary>
+    /// <returns>New <see cref="Enumerator"/> instance.</returns>
     [Pure]
     public Enumerator GetEnumerator()
     {
         return new Enumerator( _node, _first, _last, Length );
     }
 
+    /// <summary>
+    /// Lightweight enumerator implementation for <see cref="RentedMemorySequenceSegmentCollection{T}"/>.
+    /// </summary>
     public ref struct Enumerator
     {
         private const byte FirstSegmentState = 0;
@@ -102,8 +134,15 @@ public readonly ref struct RentedMemorySequenceSegmentCollection<T>
             Current = ArraySegment<T>.Empty;
         }
 
+        /// <summary>
+        /// Gets the segment in the <see cref="RentedMemorySequenceSegmentCollection{T}"/> at the current position of this enumerator.
+        /// </summary>
         public ArraySegment<T> Current { get; private set; }
 
+        /// <summary>
+        /// Advances this enumerator to the next segment.
+        /// </summary>
+        /// <returns><b>true</b> when next element exists, otherwise <b>false</b>.</returns>
         public bool MoveNext()
         {
             switch ( _state )

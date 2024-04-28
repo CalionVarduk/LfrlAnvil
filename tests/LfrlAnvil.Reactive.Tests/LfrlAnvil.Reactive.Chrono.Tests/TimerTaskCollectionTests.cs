@@ -1083,17 +1083,20 @@ public class TimerTaskCollectionTests : TestsBase
     public void SourceDisposal_FromTaskInvocation_ShouldDisposeSourceAndFinishCurrentInvocation()
     {
         var timestamp = Timestamp.Zero;
+        var afterAll = new ManualResetEventSlim();
         var fooTask = new TimerTask(
             "foo",
             onInvoke: (_, source, _, _) =>
             {
                 source.Dispose();
                 return new Task( () => { } );
-            } );
+            },
+            onComplete: (_, _, _) => afterAll.Set() );
 
         var source = new EventPublisher<WithInterval<long>>();
         _ = source.RegisterTasks( new[] { fooTask } );
         PublishEvents( source, timestamp );
+        afterAll.Wait();
 
         using ( new AssertionScope() )
         {

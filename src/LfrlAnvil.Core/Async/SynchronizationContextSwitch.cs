@@ -24,6 +24,7 @@ public readonly struct SynchronizationContextSwitch : IDisposable
     /// This context will be set as current once the <see cref="Dispose()"/> method of this switch gets invoked.
     /// </summary>
     public SynchronizationContext? PreviousContext { get; }
+
     /// <summary>
     /// A <see cref="SynchronizationContext"/> instance activated by this switch.
     /// </summary>

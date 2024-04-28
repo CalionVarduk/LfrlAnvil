@@ -6,8 +6,19 @@ using System.Text;
 
 namespace LfrlAnvil.Extensions;
 
+/// <summary>
+/// Contains <see cref="FieldInfo"/> extension methods.
+/// </summary>
 public static class FieldInfoExtensions
 {
+    /// <summary>
+    /// Attempts to get the auto-property backed by the provided compiler-generated <paramref name="source"/> field.
+    /// </summary>
+    /// <param name="source">Source field.</param>
+    /// <returns>
+    /// <see cref="PropertyInfo"/> instance backed by the <paramref name="source"/> field, if it exists, otherwise <b>null</b>.
+    /// </returns>
+    /// <remarks>Backing field names are of the form <i>&lt;{PROPERTY_NAME}&gt;k__BackingField</i>.</remarks>
     [Pure]
     public static PropertyInfo? GetBackedProperty(this FieldInfo source)
     {
@@ -25,6 +36,14 @@ public static class FieldInfoExtensions
         return result;
     }
 
+    /// <summary>
+    /// Creates a string representation of the provided <paramref name="field"/>.
+    /// </summary>
+    /// <param name="field">Source field info.</param>
+    /// <param name="includeDeclaringType">
+    /// When set to <b>true</b>, then <see cref="MemberInfo.DeclaringType"/> will be included in the string. <b>false</b> by default.
+    /// </param>
+    /// <returns>String representation of the provided <paramref name="field"/>.</returns>
     [Pure]
     public static string GetDebugString(this FieldInfo field, bool includeDeclaringType = false)
     {

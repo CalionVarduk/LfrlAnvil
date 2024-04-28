@@ -2,6 +2,7 @@
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using System.Threading;
+using LfrlAnvil.Exceptions;
 
 namespace LfrlAnvil.Async;
 
@@ -26,36 +27,45 @@ public struct InterlockedInt32 : IEquatable<InterlockedInt32>, IComparable<Inter
     /// </summary>
     public int Value => Interlocked.Add( ref _value, 0 );
 
+    /// <summary>
+    /// Returns a string representation of this <see cref="InterlockedInt32"/> instance.
+    /// </summary>
+    /// <returns>String representation.</returns>
     [Pure]
     public override string ToString()
     {
         return Value.ToString();
     }
 
+    /// <inheritdoc />
     [Pure]
     public override int GetHashCode()
     {
         return Value.GetHashCode();
     }
 
+    /// <inheritdoc />
     [Pure]
     public override bool Equals(object? obj)
     {
         return obj is InterlockedInt32 b && Equals( b );
     }
 
+    /// <inheritdoc />
     [Pure]
     public int CompareTo(object? obj)
     {
-        return obj is InterlockedInt32 b ? CompareTo( b ) : 1;
+        return obj is InterlockedInt32 b ? CompareTo( b ) : throw new ArgumentException( ExceptionResources.InvalidType, nameof( obj ) );
     }
 
+    /// <inheritdoc />
     [Pure]
     public bool Equals(InterlockedInt32 other)
     {
         return Value == other.Value;
     }
 
+    /// <inheritdoc />
     [Pure]
     public int CompareTo(InterlockedInt32 other)
     {

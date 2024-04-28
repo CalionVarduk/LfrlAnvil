@@ -4,8 +4,17 @@ using System.Text;
 
 namespace LfrlAnvil.Extensions;
 
+/// <summary>
+/// Contains <see cref="PropertyInfo"/> extension methods.
+/// </summary>
 public static class PropertyInfoExtensions
 {
+    /// <summary>
+    /// Attempts to get the compiler-generated backing field for the given <paramref name="source"/> property.
+    /// </summary>
+    /// <param name="source">Source property.</param>
+    /// <returns><see cref="FieldInfo"/> instance that is the backing field for the given property, if it exists, otherwise null.</returns>
+    /// <remarks>Backing field names are of the form <i>&lt;{PROPERTY_NAME}&gt;k__BackingField</i>.</remarks>
     [Pure]
     public static FieldInfo? GetBackingField(this PropertyInfo source)
     {
@@ -17,12 +26,26 @@ public static class PropertyInfoExtensions
         return result;
     }
 
+    /// <summary>
+    /// Checks whether or not the given <paramref name="property"/> is an indexer.
+    /// </summary>
+    /// <param name="property">Property to check.</param>
+    /// <returns><b>true</b> when <paramref name="property"/> is an indexer, otherwise <b>false</b>.</returns>
+    /// <remarks>See <see cref="PropertyInfo.GetIndexParameters()"/> for more information.</remarks>
     [Pure]
     public static bool IsIndexer(this PropertyInfo property)
     {
         return property.GetIndexParameters().Length > 0;
     }
 
+    /// <summary>
+    /// Creates a string representation of the provided <paramref name="property"/>.
+    /// </summary>
+    /// <param name="property">Source property info.</param>
+    /// <param name="includeDeclaringType">
+    /// When set to <b>true</b>, then <see cref="MemberInfo.DeclaringType"/> will be included in the string. <b>false</b> by default.
+    /// </param>
+    /// <returns>String representation of the provided <paramref name="property"/>.</returns>
     [Pure]
     public static string GetDebugString(this PropertyInfo property, bool includeDeclaringType = false)
     {

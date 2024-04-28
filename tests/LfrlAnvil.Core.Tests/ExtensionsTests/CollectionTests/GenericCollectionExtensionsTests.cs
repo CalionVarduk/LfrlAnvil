@@ -115,12 +115,12 @@ public abstract class GenericCollectionExtensionsTests<T> : TestsBase
     [InlineData( 0 )]
     [InlineData( 1 )]
     [InlineData( 3 )]
-    public void ContainsBetween_ShouldReturnFalseWhenMaxCountIsLessThanMinCount(int count)
+    public void ContainsInRange_ShouldReturnFalseWhenMaxCountIsLessThanMinCount(int count)
     {
         var (max, min) = Fixture.CreateDistinctSortedCollection<int>( 2 );
         var sut = Fixture.CreateMany<T>( count ).ToList();
 
-        var result = sut.ContainsBetween( min, max );
+        var result = sut.ContainsInRange( min, max );
 
         result.Should().BeFalse();
     }
@@ -139,10 +139,10 @@ public abstract class GenericCollectionExtensionsTests<T> : TestsBase
     [InlineData( 3, 2, false )]
     [InlineData( 3, 3, true )]
     [InlineData( 3, 4, true )]
-    public void ContainsBetween_ShouldReturnCorrectResultWhenMinCountIsZero(int count, int maxCount, bool expected)
+    public void ContainsInRange_ShouldReturnCorrectResultWhenMinCountIsZero(int count, int maxCount, bool expected)
     {
         var sut = Fixture.CreateMany<T>( count ).ToList();
-        var result = sut.ContainsBetween( 0, maxCount );
+        var result = sut.ContainsInRange( 0, maxCount );
         result.Should().Be( expected );
     }
 
@@ -160,12 +160,12 @@ public abstract class GenericCollectionExtensionsTests<T> : TestsBase
     [InlineData( 3, 2, false )]
     [InlineData( 3, 3, true )]
     [InlineData( 3, 4, true )]
-    public void ContainsBetween_ShouldReturnCorrectResultWhenMinCountIsNegative(int count, int maxCount, bool expected)
+    public void ContainsInRange_ShouldReturnCorrectResultWhenMinCountIsNegative(int count, int maxCount, bool expected)
     {
         var minCount = Fixture.CreateNegativeInt32();
         var sut = Fixture.CreateMany<T>( count ).ToList();
 
-        var result = sut.ContainsBetween( minCount, maxCount );
+        var result = sut.ContainsInRange( minCount, maxCount );
 
         result.Should().Be( expected );
     }
@@ -177,10 +177,10 @@ public abstract class GenericCollectionExtensionsTests<T> : TestsBase
     [InlineData( 1, 3 )]
     [InlineData( 3, 4 )]
     [InlineData( 3, 5 )]
-    public void ContainsBetween_ShouldReturnFalseWhenSourceCountIsLessThanMinCount(int count, int minCount)
+    public void ContainsInRange_ShouldReturnFalseWhenSourceCountIsLessThanMinCount(int count, int minCount)
     {
         var sut = Fixture.CreateMany<T>( count ).ToList();
-        var result = sut.ContainsBetween( minCount, minCount + 1 );
+        var result = sut.ContainsInRange( minCount, minCount + 1 );
         result.Should().BeFalse();
     }
 
@@ -190,10 +190,10 @@ public abstract class GenericCollectionExtensionsTests<T> : TestsBase
     [InlineData( 4, 2 )]
     [InlineData( 5, 4 )]
     [InlineData( 5, 3 )]
-    public void ContainsBetween_ShouldReturnFalseWhenSourceCountIsGreaterThanMaxCount(int count, int maxCount)
+    public void ContainsInRange_ShouldReturnFalseWhenSourceCountIsGreaterThanMaxCount(int count, int maxCount)
     {
         var sut = Fixture.CreateMany<T>( count ).ToList();
-        var result = sut.ContainsBetween( maxCount - 1, maxCount );
+        var result = sut.ContainsInRange( maxCount - 1, maxCount );
         result.Should().BeFalse();
     }
 
@@ -210,10 +210,10 @@ public abstract class GenericCollectionExtensionsTests<T> : TestsBase
     [InlineData( 3, 3, 3 )]
     [InlineData( 3, 3, 4 )]
     [InlineData( 3, 3, 5 )]
-    public void ContainsBetween_ShouldReturnTrueWhenSourceCountIsBetweenMinAndMaxCount(int sourceCount, int minCount, int maxCount)
+    public void ContainsInRange_ShouldReturnTrueWhenSourceCountIsBetweenMinAndMaxCount(int sourceCount, int minCount, int maxCount)
     {
         var sut = Fixture.CreateMany<T>( sourceCount ).ToList();
-        var result = sut.ContainsBetween( minCount, maxCount );
+        var result = sut.ContainsInRange( minCount, maxCount );
         result.Should().BeTrue();
     }
 

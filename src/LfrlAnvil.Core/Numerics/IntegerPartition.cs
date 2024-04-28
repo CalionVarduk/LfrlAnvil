@@ -5,11 +5,20 @@ using System.Diagnostics.Contracts;
 
 namespace LfrlAnvil.Numerics;
 
+/// <summary>
+///A lightweight representation of an enumerable partition of an <see cref="UInt64"/> into specified fractional parts.
+/// </summary>
 public readonly struct IntegerPartition : IReadOnlyCollection<ulong>
 {
     private readonly Fraction[]? _parts;
     private readonly ulong _sumOfPartsNumerator;
 
+    /// <summary>
+    /// Creates a new <see cref="IntegerPartition"/> instance.
+    /// </summary>
+    /// <param name="value">Value to partition.</param>
+    /// <param name="parts">Fractional parts.</param>
+    /// <exception cref="ArgumentOutOfRangeException">When any fractional part is less than <b>0</b>.</exception>
     public IntegerPartition(ulong value, params Fraction[] parts)
     {
         Value = value;
@@ -37,19 +46,51 @@ public readonly struct IntegerPartition : IReadOnlyCollection<ulong>
         (Quotient, Remainder) = _sumOfPartsNumerator > 0 ? Math.DivRem( Sum, _sumOfPartsNumerator ) : (0, 0);
     }
 
+    /// <summary>
+    /// Value to partition.
+    /// </summary>
     public ulong Value { get; }
-    public ulong Sum { get; }
-    public ulong Quotient { get; }
-    public ulong Remainder { get; }
-    public int Count => Parts.Count;
-    public IReadOnlyList<Fraction> Parts => _parts ?? Array.Empty<Fraction>();
 
+    /// <summary>
+    /// Target sum which is the result of multiplication of the value to partition by the sum of all fractional parts.
+    /// Sum of all resulting partitions will be equal to this value.
+    /// </summary>
+    public ulong Sum { get; }
+
+    /// <summary>
+    /// Base value for each part.
+    /// </summary>
+    public ulong Quotient { get; }
+
+    /// <summary>
+    /// An auxiliary integer division remainder used for filling out irregularities.
+    /// </summary>
+    public ulong Remainder { get; }
+
+    /// <summary>
+    /// Number of parts.
+    /// </summary>
+    public int Count => Parts.Count;
+
+    /// <summary>
+    /// Fractional parts.
+    /// </summary>
+    public ReadOnlyArray<Fraction> Parts => _parts ?? ReadOnlyArray<Fraction>.Empty;
+
+    /// <summary>
+    /// Returns a string representation of this <see cref="IntegerPartition"/> instance.
+    /// </summary>
+    /// <returns>String representation.</returns>
     [Pure]
     public override string ToString()
     {
         return $"Partition {Value} into {Count} fraction part(s) with {Sum} sum";
     }
 
+    /// <summary>
+    /// Creates a new <see cref="Enumerator"/> instance for this partition.
+    /// </summary>
+    /// <returns>New <see cref="Enumerator"/> instance.</returns>
     [Pure]
     public Enumerator GetEnumerator()
     {
@@ -68,6 +109,9 @@ public readonly struct IntegerPartition : IReadOnlyCollection<ulong>
         return GetEnumerator();
     }
 
+    /// <summary>
+    /// Lightweight enumerator implementation for <see cref="IntegerPartition"/>.
+    /// </summary>
     public struct Enumerator : IEnumerator<ulong>
     {
         private readonly Fraction[]? _parts;
@@ -90,9 +134,12 @@ public readonly struct IntegerPartition : IReadOnlyCollection<ulong>
             _offset = 0;
         }
 
+        /// <inheritdoc />
         public ulong Current { get; private set; }
+
         object IEnumerator.Current => Current;
 
+        /// <inheritdoc />
         public bool MoveNext()
         {
             if ( unchecked( ( ulong )++_index ) >= _partCount )
@@ -108,6 +155,7 @@ public readonly struct IntegerPartition : IReadOnlyCollection<ulong>
             return true;
         }
 
+        /// <inheritdoc />
         public void Dispose() { }
 
         void IEnumerator.Reset()

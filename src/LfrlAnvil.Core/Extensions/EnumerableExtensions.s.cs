@@ -9,8 +9,17 @@ using LfrlAnvil.Internal;
 
 namespace LfrlAnvil.Extensions;
 
+/// <summary>
+/// Contains <see cref="IEnumerable{T}"/> extension methods.
+/// </summary>
 public static class EnumerableExtensions
 {
+    /// <summary>
+    /// Returns the provided <paramref name="source"/>, unless it is null, in which case returns an empty enumerable instead.
+    /// </summary>
+    /// <param name="source">Source collection.</param>
+    /// <typeparam name="T">Collection element type.</typeparam>
+    /// <returns><paramref name="source"/> if it is not null, otherwise an empty enumerable.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static IEnumerable<T> EmptyIfNull<T>(this IEnumerable<T>? source)
@@ -18,6 +27,12 @@ public static class EnumerableExtensions
         return source ?? Enumerable.Empty<T>();
     }
 
+    /// <summary>
+    /// Filters out null elements from the provided <paramref name="source"/>.
+    /// </summary>
+    /// <param name="source">Source collection.</param>
+    /// <typeparam name="T">Collection element type.</typeparam>
+    /// <returns>New <see cref="IEnumerable{T}"/> with null elements filtered out.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static IEnumerable<T> WhereNotNull<T>(this IEnumerable<T?> source)
@@ -26,6 +41,12 @@ public static class EnumerableExtensions
         return source.Where( static e => e is not null )!;
     }
 
+    /// <summary>
+    /// Filters out null elements from the provided <paramref name="source"/>.
+    /// </summary>
+    /// <param name="source">Source collection.</param>
+    /// <typeparam name="T">Collection element type.</typeparam>
+    /// <returns>New <see cref="IEnumerable{T}"/> with null elements filtered out.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static IEnumerable<T> WhereNotNull<T>(this IEnumerable<T?> source)
@@ -34,6 +55,16 @@ public static class EnumerableExtensions
         return source.Where( static e => e.HasValue ).Select( static e => e!.Value );
     }
 
+    /// <summary>
+    /// Filters out null elements from the provided <paramref name="source"/>.
+    /// </summary>
+    /// <param name="source">Source collection.</param>
+    /// <param name="comparer">Element equality comparer.</param>
+    /// <typeparam name="T">Collection element type.</typeparam>
+    /// <returns>
+    /// New <see cref="IEnumerable{T}"/> with null elements filtered out,
+    /// or <paramref name="source"/> when element type is a non-nullable value type.
+    /// </returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static IEnumerable<T> WhereNotNull<T>(this IEnumerable<T?> source, IEqualityComparer<T> comparer)
@@ -44,6 +75,12 @@ public static class EnumerableExtensions
         return source.Where( e => ! comparer.Equals( e, default ) )!;
     }
 
+    /// <summary>
+    /// Checks whether or not the provided <paramref name="source"/> contains at least one null element.
+    /// </summary>
+    /// <param name="source">Source collection.</param>
+    /// <typeparam name="T">Collection element type.</typeparam>
+    /// <returns><b>true</b> when <paramref name="source"/> contains at least one null element, otherwise <b>false</b>.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static bool ContainsNull<T>(this IEnumerable<T?> source)
@@ -52,6 +89,12 @@ public static class EnumerableExtensions
         return source.Any( static e => e is null );
     }
 
+    /// <summary>
+    /// Checks whether or not the provided <paramref name="source"/> contains at least one null element.
+    /// </summary>
+    /// <param name="source">Source collection.</param>
+    /// <typeparam name="T">Collection element type.</typeparam>
+    /// <returns><b>true</b> when <paramref name="source"/> contains at least one null element, otherwise <b>false</b>.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static bool ContainsNull<T>(this IEnumerable<T?> source)
@@ -60,6 +103,13 @@ public static class EnumerableExtensions
         return source.Any( static e => ! e.HasValue );
     }
 
+    /// <summary>
+    /// Checks whether or not the provided <paramref name="source"/> contains at least one null element.
+    /// </summary>
+    /// <param name="source">Source collection.</param>
+    /// <param name="comparer">Element equality comparer.</param>
+    /// <typeparam name="T">Collection element type.</typeparam>
+    /// <returns><b>true</b> when <paramref name="source"/> contains at least one null element, otherwise <b>false</b>.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static bool ContainsNull<T>(this IEnumerable<T> source, IEqualityComparer<T> comparer)
@@ -70,6 +120,12 @@ public static class EnumerableExtensions
         return source.Any( e => comparer.Equals( e, default ) );
     }
 
+    /// <summary>
+    /// Checks if the provided <paramref name="source"/> is null or empty.
+    /// </summary>
+    /// <param name="source">Source collection.</param>
+    /// <typeparam name="T">Collection element type.</typeparam>
+    /// <returns><b>true</b> when <paramref name="source"/> is null or empty, otherwise <b>false</b>.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static bool IsNullOrEmpty<T>([NotNullWhen( false )] this IEnumerable<T>? source)
@@ -77,6 +133,12 @@ public static class EnumerableExtensions
         return source is null || source.IsEmpty();
     }
 
+    /// <summary>
+    /// Checks if the provided <paramref name="source"/> is empty.
+    /// </summary>
+    /// <param name="source">Source collection.</param>
+    /// <typeparam name="T">Collection element type.</typeparam>
+    /// <returns><b>true</b> when <paramref name="source"/> is empty, otherwise <b>false</b>.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static bool IsEmpty<T>(this IEnumerable<T> source)
@@ -84,6 +146,13 @@ public static class EnumerableExtensions
         return ! source.Any();
     }
 
+    /// <summary>
+    /// Checks if the provided <paramref name="source"/> contains at least <paramref name="count"/> number of elements.
+    /// </summary>
+    /// <param name="source">Source collection.</param>
+    /// <param name="count">Expected minimum number of elements.</param>
+    /// <typeparam name="T">Collection element type.</typeparam>
+    /// <returns><b>true</b> when <paramref name="source"/> contains correct number of elements, otherwise <b>false</b>.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static bool ContainsAtLeast<T>(this IEnumerable<T> source, int count)
@@ -97,6 +166,13 @@ public static class EnumerableExtensions
         return source.Skip( count - 1 ).Any();
     }
 
+    /// <summary>
+    /// Checks if the provided <paramref name="source"/> contains at most <paramref name="count"/> number of elements.
+    /// </summary>
+    /// <param name="source">Source collection.</param>
+    /// <param name="count">Expected maximum number of elements.</param>
+    /// <typeparam name="T">Collection element type.</typeparam>
+    /// <returns><b>true</b> when <paramref name="source"/> contains correct number of elements, otherwise <b>false</b>.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static bool ContainsAtMost<T>(this IEnumerable<T> source, int count)
@@ -110,6 +186,15 @@ public static class EnumerableExtensions
         return ! source.Skip( count ).Any();
     }
 
+    /// <summary>
+    /// Checks if the provided <paramref name="source"/> contains between
+    /// <paramref name="minCount"/> and <paramref name="maxCount"/> number of elements.
+    /// </summary>
+    /// <param name="source">Source collection.</param>
+    /// <param name="minCount">Expected minimum number of elements.</param>
+    /// <param name="maxCount">Expected maximum number of elements.</param>
+    /// <typeparam name="T">Collection element type.</typeparam>
+    /// <returns><b>true</b> when <paramref name="source"/> contains correct number of elements, otherwise <b>false</b>.</returns>
     [Pure]
     public static bool ContainsInRange<T>(this IEnumerable<T> source, int minCount, int maxCount)
     {
@@ -139,6 +224,13 @@ public static class EnumerableExtensions
         return true;
     }
 
+    /// <summary>
+    /// Checks if the provided <paramref name="source"/> contains exactly <paramref name="count"/> number of elements.
+    /// </summary>
+    /// <param name="source">Source collection.</param>
+    /// <param name="count">Expected exact number of elements.</param>
+    /// <typeparam name="T">Collection element type.</typeparam>
+    /// <returns><b>true</b> when <paramref name="source"/> contains correct number of elements, otherwise <b>false</b>.</returns>
     [Pure]
     public static bool ContainsExactly<T>(this IEnumerable<T> source, int count)
     {
@@ -159,6 +251,12 @@ public static class EnumerableExtensions
         return counter == count;
     }
 
+    /// <summary>
+    /// Creates a new <see cref="IEnumerable{T}"/> instance that converts <paramref name="source"/> elements to <see cref="Nullable{T}"/>.
+    /// </summary>
+    /// <param name="source">Source collection.</param>
+    /// <typeparam name="T">Collection element type.</typeparam>
+    /// <returns>New <see cref="IEnumerable{T}"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static IEnumerable<T?> AsNullable<T>(this IEnumerable<T> source)
@@ -167,6 +265,14 @@ public static class EnumerableExtensions
         return source.Select( static e => ( T? )e );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="IEnumerable{T}"/> instance that contains a collection of (parent, child) pairs.
+    /// </summary>
+    /// <param name="source">Source collection.</param>
+    /// <param name="selector">Child selector.</param>
+    /// <typeparam name="T1">Source collection element (parent) type.</typeparam>
+    /// <typeparam name="T2">Child type.</typeparam>
+    /// <returns>New <see cref="IEnumerable{T}"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static IEnumerable<Pair<T1, T2>> Flatten<T1, T2>(this IEnumerable<T1> source, Func<T1, IEnumerable<T2>> selector)
@@ -174,6 +280,16 @@ public static class EnumerableExtensions
         return source.Flatten( selector, Pair.Create );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="IEnumerable{T}"/> instance that contains a collection of (parent, child) pairs mapped to the desired type.
+    /// </summary>
+    /// <param name="source">Source collection.</param>
+    /// <param name="selector">Child selector.</param>
+    /// <param name="resultMapper">Result selector.</param>
+    /// <typeparam name="T1">Source collection element (parent) type.</typeparam>
+    /// <typeparam name="T2">Child type.</typeparam>
+    /// <typeparam name="TResult">Result type.</typeparam>
+    /// <returns>New <see cref="IEnumerable{T}"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static IEnumerable<TResult> Flatten<T1, T2, TResult>(
@@ -188,6 +304,12 @@ public static class EnumerableExtensions
         }
     }
 
+    /// <summary>
+    /// Creates a new <see cref="IEnumerable{T}"/> instance that contains all elements from nested collections.
+    /// </summary>
+    /// <param name="source">Source collection.</param>
+    /// <typeparam name="T">Collection element type.</typeparam>
+    /// <returns></returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static IEnumerable<T> Flatten<T>(this IEnumerable<IEnumerable<T>> source)
@@ -195,30 +317,70 @@ public static class EnumerableExtensions
         return source.SelectMany( static x => x );
     }
 
+    /// <summary>
+    /// Attempts to find the minimum value in the provided <paramref name="source"/>
+    /// by using the <see cref="Comparer{T}.Default"/> comparer.
+    /// </summary>
+    /// <param name="source">Source collection.</param>
+    /// <param name="result"><b>out</b> parameter that contains the minimum value, if the collection is not empty.</param>
+    /// <typeparam name="T">Collection element type.</typeparam>
+    /// <returns><b>true</b> when <paramref name="source"/> is not empty, otherwise <b>false</b>.</returns>
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static bool TryMin<T>(this IEnumerable<T> source, [MaybeNullWhen( false )] out T result)
     {
         return source.TryMin( Comparer<T>.Default, out result );
     }
 
+    /// <summary>
+    /// Attempts to find the minimum value in the provided <paramref name="source"/>.
+    /// </summary>
+    /// <param name="source">Source collection.</param>
+    /// <param name="comparer">Comparer to use for element comparison.</param>
+    /// <param name="result"><b>out</b> parameter that contains the minimum value, if the collection is not empty.</param>
+    /// <typeparam name="T">Collection element type.</typeparam>
+    /// <returns><b>true</b> when <paramref name="source"/> is not empty, otherwise <b>false</b>.</returns>
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static bool TryMin<T>(this IEnumerable<T> source, IComparer<T> comparer, [MaybeNullWhen( false )] out T result)
     {
         return source.TryAggregate( (a, b) => comparer.Compare( a, b ) < 0 ? a : b, out result );
     }
 
+    /// <summary>
+    /// Attempts to find the maximum value in the provided <paramref name="source"/>
+    /// by using the <see cref="Comparer{T}.Default"/> comparer.
+    /// </summary>
+    /// <param name="source">Source collection.</param>
+    /// <param name="result"><b>out</b> parameter that contains the maximum value, if the collection is not empty.</param>
+    /// <typeparam name="T">Collection element type.</typeparam>
+    /// <returns><b>true</b> when <paramref name="source"/> is not empty, otherwise <b>false</b>.</returns>
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static bool TryMax<T>(this IEnumerable<T> source, [MaybeNullWhen( false )] out T result)
     {
         return source.TryMax( Comparer<T>.Default, out result );
     }
 
+    /// <summary>
+    /// Attempts to find the maximum value in the provided <paramref name="source"/>.
+    /// </summary>
+    /// <param name="source">Source collection.</param>
+    /// <param name="comparer">Comparer to use for element comparison.</param>
+    /// <param name="result"><b>out</b> parameter that contains the maximum value, if the collection is not empty.</param>
+    /// <typeparam name="T">Collection element type.</typeparam>
+    /// <returns><b>true</b> when <paramref name="source"/> is not empty, otherwise <b>false</b>.</returns>
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static bool TryMax<T>(this IEnumerable<T> source, IComparer<T> comparer, [MaybeNullWhen( false )] out T result)
     {
         return source.TryAggregate( (a, b) => comparer.Compare( a, b ) > 0 ? a : b, out result );
     }
 
+    /// <summary>
+    /// Finds the minimum and maximum value in the provided <paramref name="source"/>
+    /// by using the <see cref="Comparer{T}.Default"/> comparer.
+    /// </summary>
+    /// <param name="source">Source collection.</param>
+    /// <typeparam name="T">Collection element type.</typeparam>
+    /// <returns>A tuple containing the <b>Min</b> and <b>Max</b> values.</returns>
+    /// <exception cref="InvalidOperationException">When <paramref name="source"/> is empty.</exception>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static (T Min, T Max) MinMax<T>(this IEnumerable<T> source)
@@ -226,6 +388,14 @@ public static class EnumerableExtensions
         return source.MinMax( Comparer<T>.Default );
     }
 
+    /// <summary>
+    /// Finds the minimum and maximum value in the provided <paramref name="source"/>.
+    /// </summary>
+    /// <param name="source">Source collection.</param>
+    /// <param name="comparer">Comparer to use for element comparison.</param>
+    /// <typeparam name="T">Collection element type.</typeparam>
+    /// <returns>A tuple containing the <b>Min</b> and <b>Max</b> values.</returns>
+    /// <exception cref="InvalidOperationException">When <paramref name="source"/> is empty.</exception>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static (T Min, T Max) MinMax<T>(this IEnumerable<T> source, IComparer<T> comparer)
@@ -237,6 +407,13 @@ public static class EnumerableExtensions
         return result.Value;
     }
 
+    /// <summary>
+    /// Attempts to find the minimum and maximum value in the provided <paramref name="source"/>
+    /// by using the <see cref="Comparer{T}.Default"/> comparer.
+    /// </summary>
+    /// <param name="source">Source collection.</param>
+    /// <typeparam name="T">Collection element type.</typeparam>
+    /// <returns>A tuple containing the <b>Min</b> and <b>Max</b> values, or null when <paramref name="source"/> is empty.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static (T Min, T Max)? TryMinMax<T>(this IEnumerable<T> source)
@@ -244,6 +421,13 @@ public static class EnumerableExtensions
         return source.TryMinMax( Comparer<T>.Default );
     }
 
+    /// <summary>
+    /// Attempts to find the minimum and maximum value in the provided <paramref name="source"/>.
+    /// </summary>
+    /// <param name="source">Source collection.</param>
+    /// <param name="comparer">Comparer to use for element comparison.</param>
+    /// <typeparam name="T">Collection element type.</typeparam>
+    /// <returns>A tuple containing the <b>Min</b> and <b>Max</b> values, or null when <paramref name="source"/> is empty.</returns>
     [Pure]
     public static (T Min, T Max)? TryMinMax<T>(this IEnumerable<T> source, IComparer<T> comparer)
     {
@@ -268,6 +452,13 @@ public static class EnumerableExtensions
         return (min, max);
     }
 
+    /// <summary>
+    /// Checks whether or not the provided <paramref name="source"/> contains duplicated elements,
+    /// using the <see cref="EqualityComparer{T}.Default"/> equality comparer.
+    /// </summary>
+    /// <param name="source">Source collection.</param>
+    /// <typeparam name="T">Collection element type.</typeparam>
+    /// <returns><b>true</b> when <paramref name="source"/> contains at least one duplicated element, otherwise <b>false</b>.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static bool ContainsDuplicates<T>(this IEnumerable<T> source)
@@ -275,6 +466,13 @@ public static class EnumerableExtensions
         return source.ContainsDuplicates( EqualityComparer<T>.Default );
     }
 
+    /// <summary>
+    /// Checks whether or not the provided <paramref name="source"/> contains duplicated elements.
+    /// </summary>
+    /// <param name="source">Source collection.</param>
+    /// <param name="comparer">Comparer to use for element equality.</param>
+    /// <typeparam name="T">Collection element type.</typeparam>
+    /// <returns><b>true</b> when <paramref name="source"/> contains at least one duplicated element, otherwise <b>false</b>.</returns>
     [Pure]
     public static bool ContainsDuplicates<T>(this IEnumerable<T> source, IEqualityComparer<T> comparer)
     {
@@ -289,6 +487,19 @@ public static class EnumerableExtensions
         return false;
     }
 
+    /// <summary>
+    /// Creates a new <see cref="IEnumerable{T}"/> instance that contains the <paramref name="source"/>
+    /// repeated <paramref name="count"/> times.
+    /// </summary>
+    /// <param name="source">Source collection.</param>
+    /// <param name="count">Number of <paramref name="source"/> repetitions.</param>
+    /// <typeparam name="T">Collection element type.</typeparam>
+    /// <returns>
+    /// New <see cref="IEnumerable{T}"/> instance,
+    /// or empty enumerable when <paramref name="count"/> is equal to <b>0</b>,
+    /// or <paramref name="source"/> when <paramref name="count"/> is equal to <b>1</b>
+    /// .</returns>
+    /// <exception cref="ArgumentOutOfRangeException">When <paramref name="count"/> is less than <b>0</b>.</exception>
     [Pure]
     public static IEnumerable<T> Repeat<T>(this IEnumerable<T> source, int count)
     {
@@ -309,6 +520,16 @@ public static class EnumerableExtensions
         return result;
     }
 
+    /// <summary>
+    /// Materialized the provided <paramref name="source"/>.
+    /// </summary>
+    /// <param name="source">Source collection.</param>
+    /// <typeparam name="T">Collection element type.</typeparam>
+    /// <returns>
+    /// New <see cref="IEnumerable{T}"/> instance,
+    /// or <paramref name="source"/> when it is an instance of <see cref="IReadOnlyCollection{T}"/>,
+    /// or memoized value when <paramref name="source"/> is an instance of <see cref="IMemoizedCollection{T}"/>.
+    /// </returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static IReadOnlyCollection<T> Materialize<T>(this IEnumerable<T> source)
@@ -321,6 +542,15 @@ public static class EnumerableExtensions
         };
     }
 
+    /// <summary>
+    /// Memoizes the provided <paramref name="source"/>.
+    /// </summary>
+    /// <param name="source">Source collection.</param>
+    /// <typeparam name="T">Collection element type.</typeparam>
+    /// <returns>
+    /// New <see cref="IMemoizedCollection{T}"/> instance,
+    /// or <paramref name="source"/> when it is an instance of <see cref="IMemoizedCollection{T}"/>.
+    /// </returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static IMemoizedCollection<T> Memoize<T>(this IEnumerable<T> source)
@@ -328,6 +558,13 @@ public static class EnumerableExtensions
         return DynamicCast.TryTo<IMemoizedCollection<T>>( source ) ?? new MemoizedCollection<T>( source );
     }
 
+    /// <summary>
+    /// Checks whether or not the provided <paramref name="source"/> is either an instance of <see cref="IReadOnlyCollection{T}"/>
+    /// or of <see cref="IMemoizedCollection{T}"/> with <see cref="IMemoizedCollection{T}.IsMaterialized"/> set to <b>true</b>.
+    /// </summary>
+    /// <param name="source">Source collection.</param>
+    /// <typeparam name="T">Collection element type.</typeparam>
+    /// <returns><b>true</b> when <paramref name="source"/> is considered to be materialized, otherwise <b>false</b>.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static bool IsMaterialized<T>(this IEnumerable<T> source)
@@ -338,6 +575,12 @@ public static class EnumerableExtensions
         return source is IReadOnlyCollection<T>;
     }
 
+    /// <summary>
+    /// Checks whether or not the provided <paramref name="source"/> is an instance of <see cref="IMemoizedCollection{T}"/>.
+    /// </summary>
+    /// <param name="source">Source collection.</param>
+    /// <typeparam name="T">Collection element type.</typeparam>
+    /// <returns><b>true</b> when <paramref name="source"/> is considered to be memoized, otherwise <b>false</b>.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static bool IsMemoized<T>(this IEnumerable<T> source)
@@ -345,6 +588,14 @@ public static class EnumerableExtensions
         return source is IMemoizedCollection<T>;
     }
 
+    /// <summary>
+    /// Checks whether or not the two collections are considered to be equal sets,
+    /// using the <see cref="EqualityComparer{T}.Default"/> equality comparer.
+    /// </summary>
+    /// <param name="source">First collection.</param>
+    /// <param name="other">Second collection.</param>
+    /// <typeparam name="T">Element type.</typeparam>
+    /// <returns><b>true</b> when the two collections are equivalent sets, otherwise <b>false</b>.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static bool SetEquals<T>(this IEnumerable<T> source, IEnumerable<T> other)
@@ -352,6 +603,14 @@ public static class EnumerableExtensions
         return source.SetEquals( other, EqualityComparer<T>.Default );
     }
 
+    /// <summary>
+    /// Checks whether or not the two collections are considered to be equal sets.
+    /// </summary>
+    /// <param name="source">First collection.</param>
+    /// <param name="other">Second collection.</param>
+    /// <param name="comparer">Comparer to use for element comparison.</param>
+    /// <typeparam name="T">Element type.</typeparam>
+    /// <returns><b>true</b> when the two collections are equivalent sets, otherwise <b>false</b>.</returns>
     [Pure]
     public static bool SetEquals<T>(this IEnumerable<T> source, IEnumerable<T> other, IEqualityComparer<T> comparer)
     {
@@ -373,6 +632,18 @@ public static class EnumerableExtensions
         return sourceSet.Count == otherSet.Count;
     }
 
+    /// <summary>
+    /// Recursively visits an object graph, where next objects to visit are calculated by
+    /// invoking the specified <paramref name="nodeRangeSelector"/> with current object as its parameter,
+    /// starting with the given <paramref name="source"/> collection.
+    /// </summary>
+    /// <param name="source">Source collection.</param>
+    /// <param name="nodeRangeSelector">Descendant node range selector.</param>
+    /// <typeparam name="T">Collection element type.</typeparam>
+    /// <returns>
+    /// New <see cref="IEnumerable{T}"/> instance that contains all recursively visited objects, in order of traversal.
+    /// </returns>
+    /// <remarks>Objects are traversed in breadth-first order.</remarks>
     [Pure]
     public static IEnumerable<T> VisitMany<T>(this IEnumerable<T> source, Func<T, IEnumerable<T>> nodeRangeSelector)
     {
@@ -390,6 +661,19 @@ public static class EnumerableExtensions
         }
     }
 
+    /// <summary>
+    /// Recursively visits an object graph, where next objects to visit are calculated by
+    /// invoking the specified <paramref name="nodeRangeSelector"/> with current object as its parameter,
+    /// starting with the given <paramref name="source"/> collection.
+    /// </summary>
+    /// <param name="source">Source collection.</param>
+    /// <param name="nodeRangeSelector">Descendant node range selector.</param>
+    /// <param name="stopPredicate">Predicate that stops the traversal for the given sub-graph, when it returns <b>true</b>.</param>
+    /// <typeparam name="T">Collection element type.</typeparam>
+    /// <returns>
+    /// New <see cref="IEnumerable{T}"/> instance that contains all recursively visited objects, in order of traversal.
+    /// </returns>
+    /// <remarks>Objects are traversed in breadth-first order.</remarks>
     [Pure]
     public static IEnumerable<T> VisitMany<T>(
         this IEnumerable<T> source,
@@ -418,6 +702,14 @@ public static class EnumerableExtensions
         }
     }
 
+    /// <summary>
+    /// Attempts to compute an aggregation for the provided <paramref name="source"/>.
+    /// </summary>
+    /// <param name="source">Source collection.</param>
+    /// <param name="func">Aggregator delegate.</param>
+    /// <param name="result"><b>out</b> parameter that contains aggregation result, when <paramref name="source"/> is not empty.</param>
+    /// <typeparam name="T">Collection element type.</typeparam>
+    /// <returns><b>true</b> when <paramref name="source"/> is not empty, otherwise <b>false</b>.</returns>
     public static bool TryAggregate<T>(this IEnumerable<T> source, Func<T, T, T> func, [MaybeNullWhen( false )] out T result)
     {
         using var enumerator = source.GetEnumerator();
@@ -436,20 +728,53 @@ public static class EnumerableExtensions
         return true;
     }
 
+    /// <summary>
+    /// Finds elements with minimum and maximum values specified by the <paramref name="selector"/>
+    /// in the provided <paramref name="source"/> by using the <see cref="Comparer{T}.Default"/> comparer.
+    /// </summary>
+    /// <param name="source">Source collection.</param>
+    /// <param name="selector">Selector of a value to use for comparison.</param>
+    /// <typeparam name="T1">Collection element type.</typeparam>
+    /// <typeparam name="T2">Value type used for comparison.</typeparam>
+    /// <returns>A tuple containing elements with <b>Min</b> and <b>Max</b> values.</returns>
+    /// <exception cref="InvalidOperationException">When <paramref name="source"/> is empty.</exception>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static (T1 Min, T1 Max) MinMaxBy<T1, T2>(this IEnumerable<T1> source, Func<T1, T2> selector)
     {
-        return source.MinMaxBy( selector, Comparer<T2>.Default );
+        return source.MinMaxBy( selector, selector );
     }
 
+    /// <summary>
+    /// Finds elements with minimum and maximum values specified by the <paramref name="selector"/>
+    /// in the provided <paramref name="source"/>.
+    /// </summary>
+    /// <param name="source">Source collection.</param>
+    /// <param name="selector">Selector of a value to use for comparison.</param>
+    /// <param name="comparer">Comparer to use for value comparison.</param>
+    /// <typeparam name="T1">Collection element type.</typeparam>
+    /// <typeparam name="T2">Value type used for comparison.</typeparam>
+    /// <returns>A tuple containing elements with <b>Min</b> and <b>Max</b> values.</returns>
+    /// <exception cref="InvalidOperationException">When <paramref name="source"/> is empty.</exception>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static (T1 Min, T1 Max) MinMaxBy<T1, T2>(this IEnumerable<T1> source, Func<T1, T2> selector, IComparer<T2> comparer)
     {
-        return source.MinMaxBy( selector, selector );
+        return source.MinMaxBy( selector, selector, comparer, comparer );
     }
 
+    /// <summary>
+    /// Finds elements with minimum and maximum values specified by <paramref name="minSelector"/> and <paramref name="maxSelector"/>
+    /// in the provided <paramref name="source"/> by using the <see cref="Comparer{T}.Default"/> comparer.
+    /// </summary>
+    /// <param name="source">Source collection.</param>
+    /// <param name="minSelector">Selector of a minimum value to use for comparison.</param>
+    /// <param name="maxSelector">Selector of a maximum value to use for comparison.</param>
+    /// <typeparam name="T1">Collection element type.</typeparam>
+    /// <typeparam name="T2">Type used for minimum value comparison.</typeparam>
+    /// <typeparam name="T3">Type used for maximum value comparison.</typeparam>
+    /// <returns>A tuple containing elements with <b>Min</b> and <b>Max</b> values.</returns>
+    /// <exception cref="InvalidOperationException">When <paramref name="source"/> is empty.</exception>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static (T1 Min, T1 Max) MinMaxBy<T1, T2, T3>(
@@ -460,6 +785,20 @@ public static class EnumerableExtensions
         return source.MinMaxBy( minSelector, maxSelector, Comparer<T2>.Default, Comparer<T3>.Default );
     }
 
+    /// <summary>
+    /// Finds elements with minimum and maximum values specified by <paramref name="minSelector"/> and <paramref name="maxSelector"/>
+    /// in the provided <paramref name="source"/>.
+    /// </summary>
+    /// <param name="source">Source collection.</param>
+    /// <param name="minSelector">Selector of a minimum value to use for comparison.</param>
+    /// <param name="maxSelector">Selector of a maximum value to use for comparison.</param>
+    /// <param name="minComparer">Comparer to use for minimum value comparison.</param>
+    /// <param name="maxComparer">Comparer to use for maximum value comparison.</param>
+    /// <typeparam name="T1">Collection element type.</typeparam>
+    /// <typeparam name="T2">Type used for minimum value comparison.</typeparam>
+    /// <typeparam name="T3">Type used for maximum value comparison.</typeparam>
+    /// <returns>A tuple containing elements with <b>Min</b> and <b>Max</b> values.</returns>
+    /// <exception cref="InvalidOperationException">When <paramref name="source"/> is empty.</exception>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static (T1 Min, T1 Max) MinMaxBy<T1, T2, T3>(
@@ -476,12 +815,33 @@ public static class EnumerableExtensions
         return result.Value;
     }
 
+    /// <summary>
+    /// Attempts to find an element with the maximum value specified by the <paramref name="selector"/>
+    /// in the provided <paramref name="source"/> using the <see cref="Comparer{T2}.Default"/> comparer.
+    /// </summary>
+    /// <param name="source">Source collection.</param>
+    /// <param name="selector">Selector of a value to use for comparison.</param>
+    /// <param name="result"><b>out</b> parameter that contains the element with maximum value, if the collection is not empty.</param>
+    /// <typeparam name="T1">Collection element type.</typeparam>
+    /// <typeparam name="T2">Value type used for comparison.</typeparam>
+    /// <returns><b>true</b> when <paramref name="source"/> is not empty, otherwise <b>false</b>.</returns>
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static bool TryMaxBy<T1, T2>(this IEnumerable<T1> source, Func<T1, T2> selector, [MaybeNullWhen( false )] out T1 result)
     {
         return source.TryMaxBy( selector, Comparer<T2>.Default, out result );
     }
 
+    /// <summary>
+    /// Attempts to find an element with the maximum value specified by the <paramref name="selector"/>
+    /// in the provided <paramref name="source"/>.
+    /// </summary>
+    /// <param name="source">Source collection.</param>
+    /// <param name="selector">Selector of a value to use for comparison.</param>
+    /// <param name="comparer">Comparer to use for value comparison.</param>
+    /// <param name="result"><b>out</b> parameter that contains the element with maximum value, if the collection is not empty.</param>
+    /// <typeparam name="T1">Collection element type.</typeparam>
+    /// <typeparam name="T2">Value type used for comparison.</typeparam>
+    /// <returns><b>true</b> when <paramref name="source"/> is not empty, otherwise <b>false</b>.</returns>
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static bool TryMaxBy<T1, T2>(
         this IEnumerable<T1> source,
@@ -492,12 +852,33 @@ public static class EnumerableExtensions
         return source.TryAggregate( (a, b) => comparer.Compare( selector( a ), selector( b ) ) > 0 ? a : b, out result );
     }
 
+    /// <summary>
+    /// Attempts to find an element with the minimum value specified by the <paramref name="selector"/>
+    /// in the provided <paramref name="source"/> using the <see cref="Comparer{T2}.Default"/> comparer.
+    /// </summary>
+    /// <param name="source">Source collection.</param>
+    /// <param name="selector">Selector of a value to use for comparison.</param>
+    /// <param name="result"><b>out</b> parameter that contains the element with minimum value, if the collection is not empty.</param>
+    /// <typeparam name="T1">Collection element type.</typeparam>
+    /// <typeparam name="T2">Value type used for comparison.</typeparam>
+    /// <returns><b>true</b> when <paramref name="source"/> is not empty, otherwise <b>false</b>.</returns>
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static bool TryMinBy<T1, T2>(this IEnumerable<T1> source, Func<T1, T2> selector, [MaybeNullWhen( false )] out T1 result)
     {
         return source.TryMinBy( selector, Comparer<T2>.Default, out result );
     }
 
+    /// <summary>
+    /// Attempts to find an element with the minimum value specified by the <paramref name="selector"/>
+    /// in the provided <paramref name="source"/>.
+    /// </summary>
+    /// <param name="source">Source collection.</param>
+    /// <param name="selector">Selector of a value to use for comparison.</param>
+    /// <param name="comparer">Comparer to use for value comparison.</param>
+    /// <param name="result"><b>out</b> parameter that contains the element with minimum value, if the collection is not empty.</param>
+    /// <typeparam name="T1">Collection element type.</typeparam>
+    /// <typeparam name="T2">Value type used for comparison.</typeparam>
+    /// <returns><b>true</b> when <paramref name="source"/> is not empty, otherwise <b>false</b>.</returns>
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static bool TryMinBy<T1, T2>(
         this IEnumerable<T1> source,
@@ -508,6 +889,17 @@ public static class EnumerableExtensions
         return source.TryAggregate( (a, b) => comparer.Compare( selector( a ), selector( b ) ) < 0 ? a : b, out result );
     }
 
+    /// <summary>
+    /// Attempts to find elements with minimum and maximum values specified by the <paramref name="selector"/>
+    /// in the provided <paramref name="source"/> using the <see cref="Comparer{T2}.Default"/> comparer.
+    /// </summary>
+    /// <param name="source">Source collection.</param>
+    /// <param name="selector">Selector of a value to use for comparison.</param>
+    /// <typeparam name="T1">Collection element type.</typeparam>
+    /// <typeparam name="T2">Value type used for comparison.</typeparam>
+    /// <returns>
+    /// A tuple containing elements with <b>Min</b> and <b>Max</b> values, or null when <paramref name="source"/> is empty.
+    /// </returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static (T1 Min, T1 Max)? TryMinMaxBy<T1, T2>(this IEnumerable<T1> source, Func<T1, T2> selector)
@@ -515,6 +907,18 @@ public static class EnumerableExtensions
         return source.TryMinMaxBy( selector, Comparer<T2>.Default );
     }
 
+    /// <summary>
+    /// Attempts to find elements with minimum and maximum values specified by the <paramref name="selector"/>
+    /// in the provided <paramref name="source"/>.
+    /// </summary>
+    /// <param name="source">Source collection.</param>
+    /// <param name="selector">Selector of a value to use for comparison.</param>
+    /// <param name="comparer">Comparer to use for value comparison.</param>
+    /// <typeparam name="T1">Collection element type.</typeparam>
+    /// <typeparam name="T2">Value type used for comparison.</typeparam>
+    /// <returns>
+    /// A tuple containing elements with <b>Min</b> and <b>Max</b> values, or null when <paramref name="source"/> is empty.
+    /// </returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static (T1 Min, T1 Max)? TryMinMaxBy<T1, T2>(this IEnumerable<T1> source, Func<T1, T2> selector, IComparer<T2> comparer)
@@ -522,6 +926,19 @@ public static class EnumerableExtensions
         return source.TryMinMaxBy( selector, selector, comparer, comparer );
     }
 
+    /// <summary>
+    /// Attempts to find elements with minimum and maximum values specified by <paramref name="minSelector"/>
+    /// and <paramref name="maxSelector"/> in the provided <paramref name="source"/> using the <see cref="Comparer{T2}.Default"/> comparer.
+    /// </summary>
+    /// <param name="source">Source collection.</param>
+    /// <param name="minSelector">Selector of a minimum value to use for comparison.</param>
+    /// <param name="maxSelector">Selector of a maximum value to use for comparison.</param>
+    /// <typeparam name="T1">Collection element type.</typeparam>
+    /// <typeparam name="T2">Type used for minimum value comparison.</typeparam>
+    /// <typeparam name="T3">Type used for maximum value comparison.</typeparam>
+    /// <returns>
+    /// A tuple containing elements with <b>Min</b> and <b>Max</b> values, or null when <paramref name="source"/> is empty.
+    /// </returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static (T1 Min, T1 Max)? TryMinMaxBy<T1, T2, T3>(
@@ -532,6 +949,21 @@ public static class EnumerableExtensions
         return source.TryMinMaxBy( minSelector, maxSelector, Comparer<T2>.Default, Comparer<T3>.Default );
     }
 
+    /// <summary>
+    /// Attempts to find elements with minimum and maximum values specified by <paramref name="minSelector"/>
+    /// and <paramref name="maxSelector"/> in the provided <paramref name="source"/>.
+    /// </summary>
+    /// <param name="source">Source collection.</param>
+    /// <param name="minSelector">Selector of a minimum value to use for comparison.</param>
+    /// <param name="maxSelector">Selector of a maximum value to use for comparison.</param>
+    /// <param name="minComparer">Comparer to use for minimum value comparison.</param>
+    /// <param name="maxComparer">Comparer to use for maximum value comparison.</param>
+    /// <typeparam name="T1">Collection element type.</typeparam>
+    /// <typeparam name="T2">Type used for minimum value comparison.</typeparam>
+    /// <typeparam name="T3">Type used for maximum value comparison.</typeparam>
+    /// <returns>
+    /// A tuple containing elements with <b>Min</b> and <b>Max</b> values, or null when <paramref name="source"/> is empty.
+    /// </returns>
     [Pure]
     public static (T1 Min, T1 Max)? TryMinMaxBy<T1, T2, T3>(
         this IEnumerable<T1> source,
@@ -572,6 +1004,20 @@ public static class EnumerableExtensions
         return (min, max);
     }
 
+    /// <summary>
+    /// Return a new <see cref="IEnumerable{T}"/> that contains the result of performing left outer join on two collections
+    /// by using the <see cref="EqualityComparer{TKey}.Default"/> key equality comparer.
+    /// </summary>
+    /// <param name="outer">Outer collection.</param>
+    /// <param name="inner">Inner collection.</param>
+    /// <param name="outerKeySelector">Selector of outer collection element keys.</param>
+    /// <param name="innerKeySelector">Selector of inner collection element keys.</param>
+    /// <param name="resultSelector">Joined elements result selector.</param>
+    /// <typeparam name="T1">Outer collection element type.</typeparam>
+    /// <typeparam name="T2">Inner collection element type.</typeparam>
+    /// <typeparam name="TKey">Key type.</typeparam>
+    /// <typeparam name="TResult">Result type.</typeparam>
+    /// <returns>New <see cref="IEnumerable{T}"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static IEnumerable<TResult> LeftJoin<T1, T2, TKey, TResult>(
@@ -584,6 +1030,20 @@ public static class EnumerableExtensions
         return outer.LeftJoin( inner, outerKeySelector, innerKeySelector, resultSelector, EqualityComparer<TKey>.Default );
     }
 
+    /// <summary>
+    /// Return a new <see cref="IEnumerable{T}"/> that contains the result of performing left outer join on two collections.
+    /// </summary>
+    /// <param name="outer">Outer collection.</param>
+    /// <param name="inner">Inner collection.</param>
+    /// <param name="outerKeySelector">Selector of outer collection element keys.</param>
+    /// <param name="innerKeySelector">Selector of inner collection element keys.</param>
+    /// <param name="resultSelector">Joined elements result selector.</param>
+    /// <param name="keyComparer">Comparer to use for key equality comparison.</param>
+    /// <typeparam name="T1">Outer collection element type.</typeparam>
+    /// <typeparam name="T2">Inner collection element type.</typeparam>
+    /// <typeparam name="TKey">Key type.</typeparam>
+    /// <typeparam name="TResult">Result type.</typeparam>
+    /// <returns>New <see cref="IEnumerable{T}"/> instance.</returns>
     [Pure]
     public static IEnumerable<TResult> LeftJoin<T1, T2, TKey, TResult>(
         this IEnumerable<T1> outer,
@@ -619,6 +1079,20 @@ public static class EnumerableExtensions
         }
     }
 
+    /// <summary>
+    /// Return a new <see cref="IEnumerable{T}"/> that contains the result of performing full outer join on two collections
+    /// by using the <see cref="EqualityComparer{TKey}.Default"/> key equality comparer.
+    /// </summary>
+    /// <param name="outer">Outer collection.</param>
+    /// <param name="inner">Inner collection.</param>
+    /// <param name="outerKeySelector">Selector of outer collection element keys.</param>
+    /// <param name="innerKeySelector">Selector of inner collection element keys.</param>
+    /// <param name="resultSelector">Joined elements result selector.</param>
+    /// <typeparam name="T1">Outer collection element type.</typeparam>
+    /// <typeparam name="T2">Inner collection element type.</typeparam>
+    /// <typeparam name="TKey">Key type.</typeparam>
+    /// <typeparam name="TResult">Result type.</typeparam>
+    /// <returns>New <see cref="IEnumerable{T}"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static IEnumerable<TResult> FullJoin<T1, T2, TKey, TResult>(
@@ -631,6 +1105,20 @@ public static class EnumerableExtensions
         return outer.FullJoin( inner, outerKeySelector, innerKeySelector, resultSelector, EqualityComparer<TKey>.Default );
     }
 
+    /// <summary>
+    /// Return a new <see cref="IEnumerable{T}"/> that contains the result of performing full outer join on two collections.
+    /// </summary>
+    /// <param name="outer">Outer collection.</param>
+    /// <param name="inner">Inner collection.</param>
+    /// <param name="outerKeySelector">Selector of outer collection element keys.</param>
+    /// <param name="innerKeySelector">Selector of inner collection element keys.</param>
+    /// <param name="resultSelector">Joined elements result selector.</param>
+    /// <param name="keyComparer">Comparer to use for key equality comparison.</param>
+    /// <typeparam name="T1">Outer collection element type.</typeparam>
+    /// <typeparam name="T2">Inner collection element type.</typeparam>
+    /// <typeparam name="TKey">Key type.</typeparam>
+    /// <typeparam name="TResult">Result type.</typeparam>
+    /// <returns>New <see cref="IEnumerable{T}"/> instance.</returns>
     [Pure]
     public static IEnumerable<TResult> FullJoin<T1, T2, TKey, TResult>(
         this IEnumerable<T1> outer,
@@ -675,6 +1163,18 @@ public static class EnumerableExtensions
         }
     }
 
+    /// <summary>
+    /// Creates a new <see cref="IEnumerable{T}"/> instance that represents a slice, or a sub-range, of <paramref name="source"/> elements.
+    /// </summary>
+    /// <param name="source">Source collection.</param>
+    /// <param name="startIndex">Index of the first element to include in the slice.</param>
+    /// <param name="length">Length of the slice.</param>
+    /// <typeparam name="T">Collection element type.</typeparam>
+    /// <returns>
+    /// New <see cref="IEnumerable{T}"/> instance,
+    /// or an empty enumerable when <paramref name="length"/> is less than <b>1</b>
+    /// or when computed index of the last slice element is less than <b>1</b>.
+    /// </returns>
     [Pure]
     public static IEnumerable<T> Slice<T>(this IEnumerable<T> source, int startIndex, int length)
     {
@@ -693,6 +1193,13 @@ public static class EnumerableExtensions
         return SliceIterator( source, startIndex, length );
     }
 
+    /// <summary>
+    /// Checks whether or not the provided <paramref name="source"/> elements are ordered
+    /// by using the <see cref="Comparer{T}.Default"/> comparer.
+    /// </summary>
+    /// <param name="source">Source collection.</param>
+    /// <typeparam name="T">Collection element type.</typeparam>
+    /// <returns><b>true</b> when <paramref name="source"/> is ordered, otherwise <b>false</b>.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static bool IsOrdered<T>(this IEnumerable<T> source)
@@ -700,6 +1207,13 @@ public static class EnumerableExtensions
         return source.IsOrdered( Comparer<T>.Default );
     }
 
+    /// <summary>
+    /// Checks whether or not the provided <paramref name="source"/> elements are ordered.
+    /// </summary>
+    /// <param name="source">Source collection.</param>
+    /// <param name="comparer">Comparer to use for value comparison.</param>
+    /// <typeparam name="T">Collection element type.</typeparam>
+    /// <returns><b>true</b> when <paramref name="source"/> is ordered, otherwise <b>false</b>.</returns>
     [Pure]
     public static bool IsOrdered<T>(this IEnumerable<T> source, IComparer<T> comparer)
     {
@@ -722,6 +1236,15 @@ public static class EnumerableExtensions
         return true;
     }
 
+    /// <summary>
+    /// Partitions the provided <paramref name="source"/> into two groups:
+    /// elements that pass the specified <paramref name="predicate"/> and elements that fail.
+    /// </summary>
+    /// <param name="source">Source collection.</param>
+    /// <param name="predicate">Predicate to use for collection partitioning.</param>
+    /// <typeparam name="T">Collection element type.</typeparam>
+    /// <returns>New <see cref="PartitionResult{T}"/> instance.</returns>
+    /// <remarks>Partitioning creates a new materialized collection.</remarks>
     [Pure]
     public static PartitionResult<T> Partition<T>(this IEnumerable<T> source, Func<T, bool> predicate)
     {
@@ -748,13 +1271,16 @@ public static class EnumerableExtensions
         return new PartitionResult<T>( items, passedCount );
     }
 
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static TResult[] ToArray<TSource, TResult>(this IEnumerable<TSource> source, Func<TSource, TResult> selector)
-    {
-        return source.Select( selector ).ToArray();
-    }
-
+    /// <summary>
+    /// Converts provided <paramref name="source"/> to <see cref="ReadOnlyMemory{T}"/> instance.
+    /// </summary>
+    /// <param name="source">Source collection.</param>
+    /// <typeparam name="T">Collection element type.</typeparam>
+    /// <returns>New <see cref="ReadOnlyMemory{T}"/> instance.</returns>
+    /// <remarks>
+    /// New array will not be allocated when the provided <paramref name="source"/> itself is an array
+    /// or a string or an enumerable whose count can be cheaply extracted and it is empty.
+    /// </remarks>
     [Pure]
     public static ReadOnlyMemory<T> ToMemory<T>(this IEnumerable<T> source)
     {

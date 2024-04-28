@@ -54,9 +54,9 @@ public readonly struct TaskSchedulerCapture
     /// </summary>
     /// <returns>Current <see cref="TaskScheduler"/> instance.</returns>
     /// <remarks>
-    /// When <see cref="SynchronizationContext.Current"/> is not null,
-    /// then returns the result of <see cref="TaskScheduler.FromCurrentSynchronizationContext()"/> invocation,
-    /// otherwise returns <see cref="TaskScheduler"/>.<see cref="TaskScheduler.Current"/>.
+    /// When <see cref="SynchronizationContext.Current"/> synchronization context is not null,
+    /// then this method returns the result of <see cref="TaskScheduler.FromCurrentSynchronizationContext()"/> invocation,
+    /// otherwise returns <see cref="TaskScheduler.Current"/> task scheduler.
     /// </remarks>
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static TaskScheduler GetCurrentScheduler()

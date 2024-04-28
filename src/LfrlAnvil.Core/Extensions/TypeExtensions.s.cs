@@ -8,8 +8,20 @@ using System.Text;
 
 namespace LfrlAnvil.Extensions;
 
+/// <summary>
+/// Contains <see cref="Type"/> extension methods.
+/// </summary>
 public static class TypeExtensions
 {
+    /// <summary>
+    /// Checks whether or not the given <paramref name="type"/> is constructable.
+    /// </summary>
+    /// <param name="type">Type to check.</param>
+    /// <returns><b>true</b> when <paramref name="type"/> is constructable, otherwise <b>false</b>.</returns>
+    /// <remarks>
+    /// <see cref="Type"/> is considered to be constructable when it is not abstract and it is not a generic type definition
+    /// and it does not contain any generic parameters.
+    /// </remarks>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static bool IsConstructable(this Type type)
@@ -17,6 +29,12 @@ public static class TypeExtensions
         return ! type.IsAbstract && ! type.IsGenericTypeDefinition && ! type.ContainsGenericParameters;
     }
 
+    /// <summary>
+    /// Attempts to find an implementation of the specified interface in the given <paramref name="type"/>.
+    /// </summary>
+    /// <param name="type">Source type.</param>
+    /// <param name="interfaceType">Type of an interface to get an implementation for.</param>
+    /// <returns>Interface's implementation type when the given <paramref name="type"/> implements it, otherwise null.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static Type? GetImplementation(this Type type, Type interfaceType)
@@ -26,6 +44,12 @@ public static class TypeExtensions
             .FirstOrDefault( i => i == interfaceType );
     }
 
+    /// <summary>
+    /// Attempts to find an implementation of the specified interface in the given <paramref name="type"/>.
+    /// </summary>
+    /// <param name="type">Source type.</param>
+    /// <typeparam name="T">Type of an interface to get an implementation for.</typeparam>
+    /// <returns>Interface's implementation type when the given <paramref name="type"/> implements it, otherwise null.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static Type? GetImplementation<T>(this Type type)
@@ -34,6 +58,12 @@ public static class TypeExtensions
         return type.GetImplementation( typeof( T ) );
     }
 
+    /// <summary>
+    /// Checks whether or not the specified interface is implemented by the given <paramref name="type"/>.
+    /// </summary>
+    /// <param name="type">Source type.</param>
+    /// <param name="interfaceType">Type of an interface to check.</param>
+    /// <returns><b>true</b> when the given <paramref name="type"/> implements the interface, otherwise <b>false</b>.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static bool Implements(this Type type, Type interfaceType)
@@ -41,6 +71,12 @@ public static class TypeExtensions
         return type.GetImplementation( interfaceType ) is not null;
     }
 
+    /// <summary>
+    /// Checks whether or not the specified interface is implemented by the given <paramref name="type"/>.
+    /// </summary>
+    /// <param name="type">Source type.</param>
+    /// <typeparam name="T">Type of an interface to check.</typeparam>
+    /// <returns><b>true</b> when the given <paramref name="type"/> implements the interface, otherwise <b>false</b>.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static bool Implements<T>(this Type type)
@@ -49,6 +85,14 @@ public static class TypeExtensions
         return type.Implements( typeof( T ) );
     }
 
+    /// <summary>
+    /// Finds all implementations of the specified open generic interface definition in the given <paramref name="type"/>.
+    /// </summary>
+    /// <param name="type">Source type.</param>
+    /// <param name="openGenericInterfaceDefinition">Type of an open generic interface definition to get implementations for.</param>
+    /// <returns>
+    /// Collection of all implementations of the specified open generic interface definition in the given <paramref name="type"/>.
+    /// </returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static IEnumerable<Type> GetOpenGenericImplementations(this Type type, Type openGenericInterfaceDefinition)
@@ -57,6 +101,12 @@ public static class TypeExtensions
             .Where( i => i.IsGenericType && i.GetGenericTypeDefinition() == openGenericInterfaceDefinition );
     }
 
+    /// <summary>
+    /// Checks whether or not the specified open generic interface definition is implemented by the given <paramref name="type"/>.
+    /// </summary>
+    /// <param name="type">Source type.</param>
+    /// <param name="openGenericInterfaceDefinition">Type of an open generic interface definition to check.</param>
+    /// <returns><b>true</b> when the given <paramref name="type"/> implements the interface, otherwise <b>false</b>.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static bool ImplementsOpenGeneric(this Type type, Type openGenericInterfaceDefinition)
@@ -64,6 +114,11 @@ public static class TypeExtensions
         return type.GetOpenGenericImplementations( openGenericInterfaceDefinition ).Any();
     }
 
+    /// <summary>
+    /// Finds all implementations of all open generic interface definitions in the given <paramref name="type"/>.
+    /// </summary>
+    /// <param name="type">Source type.</param>
+    /// <returns>Collection of all implementations of all open generic interface definitions in the given <paramref name="type"/>.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static IEnumerable<Type> GetAllImplementedGenericDefinitions(this Type type)
@@ -74,6 +129,12 @@ public static class TypeExtensions
             .Distinct();
     }
 
+    /// <summary>
+    /// Attempts to find an extension of the specified base type in the given <paramref name="type"/>.
+    /// </summary>
+    /// <param name="type">Source type.</param>
+    /// <param name="baseType">Base type to get an extension for.</param>
+    /// <returns>Base type's extension type when the given <paramref name="type"/> extends it, otherwise null.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static Type? GetExtension(this Type type, Type baseType)
@@ -83,6 +144,12 @@ public static class TypeExtensions
             .FirstOrDefault( t => t == baseType );
     }
 
+    /// <summary>
+    /// Attempts to find an extension of the specified base type in the given <paramref name="type"/>.
+    /// </summary>
+    /// <param name="type">Source type.</param>
+    /// <typeparam name="T">Base type to get an extension for.</typeparam>
+    /// <returns>Base type's extension type when the given <paramref name="type"/> extends it, otherwise null.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static Type? GetExtension<T>(this Type type)
@@ -90,6 +157,12 @@ public static class TypeExtensions
         return type.GetExtension( typeof( T ) );
     }
 
+    /// <summary>
+    /// Checks whether or not the specified base type is extended by the given <paramref name="type"/>.
+    /// </summary>
+    /// <param name="type">Source type.</param>
+    /// <param name="baseType">Base type to check.</param>
+    /// <returns><b>true</b> when the given <paramref name="type"/> extends the base type, otherwise <b>false</b>.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static bool Extends(this Type type, Type baseType)
@@ -97,6 +170,12 @@ public static class TypeExtensions
         return type.GetExtension( baseType ) is not null;
     }
 
+    /// <summary>
+    /// Checks whether or not the specified base type is extended by the given <paramref name="type"/>.
+    /// </summary>
+    /// <param name="type">Source type.</param>
+    /// <typeparam name="T">Base type to check.</typeparam>
+    /// <returns><b>true</b> when the given <paramref name="type"/> extends the base type, otherwise <b>false</b>.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static bool Extends<T>(this Type type)
@@ -104,6 +183,14 @@ public static class TypeExtensions
         return type.Extends( typeof( T ) );
     }
 
+    /// <summary>
+    /// Attempts to find an extension of the specified open generic base type definition in the given <paramref name="type"/>.
+    /// </summary>
+    /// <param name="type">Source type.</param>
+    /// <param name="openGenericBaseTypeDefinition">Open generic base type definition to get an extension for.</param>
+    /// <returns>
+    /// Open generic base type definition's extension type when the given <paramref name="type"/> extends it, otherwise null.
+    /// </returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static Type? GetOpenGenericExtension(this Type type, Type openGenericBaseTypeDefinition)
@@ -113,6 +200,12 @@ public static class TypeExtensions
             .FirstOrDefault( t => t.IsGenericType && t.GetGenericTypeDefinition() == openGenericBaseTypeDefinition );
     }
 
+    /// <summary>
+    /// Checks whether or not the specified open generic base type definition is extended by the given <paramref name="type"/>.
+    /// </summary>
+    /// <param name="type">Source type.</param>
+    /// <param name="openGenericBaseTypeDefinition">Type of an open generic base type definition to check.</param>
+    /// <returns><b>true</b> when the given <paramref name="type"/> extends the base type, otherwise <b>false</b>.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static bool ExtendsOpenGeneric(this Type type, Type openGenericBaseTypeDefinition)
@@ -120,6 +213,11 @@ public static class TypeExtensions
         return type.GetOpenGenericExtension( openGenericBaseTypeDefinition ) is not null;
     }
 
+    /// <summary>
+    /// Finds all extensions of all open generic base type definitions in the given <paramref name="type"/>.
+    /// </summary>
+    /// <param name="type">Source type.</param>
+    /// <returns>Collection of all extensions of all open generic base type definitions in the given <paramref name="type"/>.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static IEnumerable<Type> GetAllExtendedGenericDefinitions(this Type type)
@@ -131,6 +229,16 @@ public static class TypeExtensions
             .Distinct();
     }
 
+    /// <summary>
+    /// Attempts to find the first non-null member returned by the specified <paramref name="memberSelector"/>
+    /// in the given <paramref name="type"/> or in all of its ancestors.
+    /// </summary>
+    /// <param name="type">Source type.</param>
+    /// <param name="memberSelector">
+    /// Member selector invoked for the given <paramref name="type"/> or for all of its ancestors, until it returns a non-null result.
+    /// </param>
+    /// <typeparam name="T">Member type.</typeparam>
+    /// <returns>Found member, if it exists, otherwise null.</returns>
     [Pure]
     public static T? FindMember<T>(this Type type, Func<Type, T?> memberSelector)
         where T : class
@@ -157,6 +265,11 @@ public static class TypeExtensions
         return null;
     }
 
+    /// <summary>
+    /// Creates a string representation of the provided <paramref name="type"/>.
+    /// </summary>
+    /// <param name="type">Source type.</param>
+    /// <returns>String representation of the provided <paramref name="type"/>.</returns>
     [Pure]
     public static string GetDebugString(this Type type)
     {

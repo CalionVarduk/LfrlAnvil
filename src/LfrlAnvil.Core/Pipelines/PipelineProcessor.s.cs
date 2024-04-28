@@ -4,8 +4,18 @@ using System.Runtime.CompilerServices;
 
 namespace LfrlAnvil.Pipelines;
 
+/// <summary>
+/// Creates instances of <see cref="IPipelineProcessor{TArgs,TResult}"/> type.
+/// </summary>
 public static class PipelineProcessor
 {
+    /// <summary>
+    /// Creates a new <see cref="IPipelineProcessor{TArgs,TResult}"/> instance from a delegate.
+    /// </summary>
+    /// <param name="action">Processor's action.</param>
+    /// <typeparam name="TArgs">Type of pipeline's input arguments.</typeparam>
+    /// <typeparam name="TResult">Type of pipeline's result.</typeparam>
+    /// <returns>New <see cref="IPipelineProcessor{TArgs,TResult}"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static IPipelineProcessor<TArgs, TResult> Create<TArgs, TResult>(Action<PipelineContext<TArgs, TResult>> action)

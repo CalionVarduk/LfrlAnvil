@@ -5,8 +5,19 @@ using System.Text;
 
 namespace LfrlAnvil.Extensions;
 
+/// <summary>
+/// Contains <see cref="MethodInfo"/> extension methods.
+/// </summary>
 public static class MethodInfoExtensions
 {
+    /// <summary>
+    /// Creates a string representation of the provided <paramref name="method"/>.
+    /// </summary>
+    /// <param name="method">Source method info.</param>
+    /// <param name="includeDeclaringType">
+    /// When set to <b>true</b>, then <see cref="MemberInfo.DeclaringType"/> will be included in the string. <b>false</b> by default.
+    /// </param>
+    /// <returns>String representation of the provided <paramref name="method"/>.</returns>
     [Pure]
     public static string GetDebugString(this MethodInfo method, bool includeDeclaringType = false)
     {

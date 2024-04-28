@@ -30,6 +30,10 @@ public readonly struct Cancellable<T>
     /// </summary>
     public CancellationToken Token { get; }
 
+    /// <summary>
+    /// Returns a string representation of this <see cref="Cancellable{T}"/> instance.
+    /// </summary>
+    /// <returns>String representation.</returns>
     [Pure]
     public override string ToString()
     {

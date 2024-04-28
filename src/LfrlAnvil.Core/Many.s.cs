@@ -1,23 +1,24 @@
 ﻿using System;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
-using LfrlAnvil.Internal;
 
 namespace LfrlAnvil;
 
+/// <summary>
+/// Creates collections.
+/// </summary>
 public static class Many
 {
+    /// <summary>
+    /// Returns provided range of <paramref name="values"/> as an <see cref="Array"/>.
+    /// </summary>
+    /// <param name="values">Range of values.</param>
+    /// <typeparam name="T">Value type.</typeparam>
+    /// <returns><paramref name="values"/>.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static Many<T> Create<T>(params T[] values)
+    public static T[] Create<T>(params T[] values)
     {
-        return new Many<T>( values );
-    }
-
-    [Pure]
-    public static Type? GetUnderlyingType(Type? type)
-    {
-        var result = UnderlyingType.GetForType( type, typeof( Many<> ) );
-        return result.Length == 0 ? null : result[0];
+        return values;
     }
 }

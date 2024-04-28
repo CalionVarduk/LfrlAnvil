@@ -8,18 +8,34 @@ using LfrlAnvil.Extensions;
 
 namespace LfrlAnvil;
 
+/// <summary>
+/// A lightweight representation of a generic collection of ranges of values.
+/// </summary>
+/// <typeparam name="T">Value type.</typeparam>
 public readonly struct BoundsRange<T> : IReadOnlyList<Bounds<T>>, IEquatable<BoundsRange<T>>
     where T : IComparable<T>
 {
+    /// <summary>
+    /// Represents an empty collection of ranges.
+    /// </summary>
     public static readonly BoundsRange<T> Empty = new BoundsRange<T>( Array.Empty<T>() );
 
     private readonly T[]? _values;
 
+    /// <summary>
+    /// Creates a new <see cref="BoundsRange{T}"/> instance from a single <see cref="Bounds{T}"/> instance.
+    /// </summary>
+    /// <param name="value">Single range.</param>
     public BoundsRange(Bounds<T> value)
     {
         _values = new[] { value.Min, value.Max };
     }
 
+    /// <summary>
+    /// Creates a new <see cref="BoundsRange{T}"/> instance from a collection of <see cref="Bounds{T}"/> instances.
+    /// </summary>
+    /// <param name="range">Collection of ranges.</param>
+    /// <exception cref="ArgumentException">When <paramref name="range"/> is not ordered.</exception>
     public BoundsRange(IEnumerable<Bounds<T>> range)
     {
         _values = ExtractAndValidateValues( range );
@@ -30,6 +46,13 @@ public readonly struct BoundsRange<T> : IReadOnlyList<Bounds<T>>, IEquatable<Bou
         _values = values;
     }
 
+    /// <summary>
+    /// Gets a single <see cref="Bounds{T}"/> range at the specified 0-based position.
+    /// </summary>
+    /// <param name="index">0-based range position.</param>
+    /// <exception cref="IndexOutOfRangeException">
+    /// When <paramref name="index"/> is less than <b>0</b> or greater than or equal to <see cref="Count"/>.
+    /// </exception>
     public Bounds<T> this[int index]
     {
         get
@@ -39,10 +62,17 @@ public readonly struct BoundsRange<T> : IReadOnlyList<Bounds<T>>, IEquatable<Bou
         }
     }
 
+    /// <summary>
+    /// Specifies the number of ranges in this collection.
+    /// </summary>
     public int Count => InternalValues.Length >> 1;
 
     private T[] InternalValues => _values ?? Array.Empty<T>();
 
+    /// <summary>
+    /// Returns a string representation of this <see cref="BoundsRange{T}"/> instance.
+    /// </summary>
+    /// <returns>String representation.</returns>
     [Pure]
     public override string ToString()
     {
@@ -50,24 +80,31 @@ public readonly struct BoundsRange<T> : IReadOnlyList<Bounds<T>>, IEquatable<Bou
         return $"{nameof( BoundsRange )}({rangeText})";
     }
 
+    /// <inheritdoc />
     [Pure]
     public override int GetHashCode()
     {
         return Hash.Default.AddRange( InternalValues ).Value;
     }
 
+    /// <inheritdoc />
     [Pure]
     public override bool Equals(object? obj)
     {
         return obj is BoundsRange<T> r && Equals( r );
     }
 
+    /// <inheritdoc />
     [Pure]
     public bool Equals(BoundsRange<T> other)
     {
         return InternalValues.SequenceEqual( other.InternalValues );
     }
 
+    /// <summary>
+    /// Attempts to create a new <see cref="Bounds{T}"/> instance by extracting the minimum and maximum values from this collection.
+    /// </summary>
+    /// <returns>New <see cref="Bounds{T}"/> instance or null when this collection is empty.</returns>
     [Pure]
     public Bounds<T>? Flatten()
     {
@@ -78,6 +115,16 @@ public readonly struct BoundsRange<T> : IReadOnlyList<Bounds<T>>, IEquatable<Bou
         return new Bounds<T>( (values[0], values[^1]) );
     }
 
+    /// <summary>
+    /// Attempts to find a 0-based position of <see cref="Bounds{T}"/> from this collection
+    /// that contains the provided <paramref name="value"/>.
+    /// </summary>
+    /// <param name="value">Value to check.</param>
+    /// <returns>
+    /// 0-based position of <see cref="Bounds{T}"/> that contains the provided <paramref name="value"/>,
+    /// otherwise the result will be negative and will be equal to the bitwise complement of an index of the nearest <see cref="Bounds{T}"/>
+    /// whose <see cref="Bounds{T}.Min"/> is larger than the provided <paramref name="value"/>.
+    /// </returns>
     [Pure]
     public int FindBoundsIndex(T value)
     {
@@ -95,6 +142,14 @@ public readonly struct BoundsRange<T> : IReadOnlyList<Bounds<T>>, IEquatable<Bou
         return index.IsOdd() ? index >> 1 : ~(index >> 1);
     }
 
+    /// <summary>
+    /// Attempts to find <see cref="Bounds{T}"/> from this collection that contains the provided <paramref name="value"/>.
+    /// </summary>
+    /// <param name="value">Value to check.</param>
+    /// <returns>
+    /// <see cref="Bounds{T}"/> from this collection that contains the provided <paramref name="value"/>
+    /// or null when <paramref name="value"/> is not contained by this collection.
+    /// </returns>
     [Pure]
     public Bounds<T>? FindBounds(T value)
     {
@@ -116,6 +171,11 @@ public readonly struct BoundsRange<T> : IReadOnlyList<Bounds<T>>, IEquatable<Bou
         return new Bounds<T>( (values[index - 1], values[index]) );
     }
 
+    /// <summary>
+    /// Checks whether or not this collection contains the provided <paramref name="value"/>.
+    /// </summary>
+    /// <param name="value">Value to check.</param>
+    /// <returns><b>true</b> when this collection contains the provided <paramref name="value"/>, otherwise <b>false</b>.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public bool Contains(T value)
@@ -123,6 +183,11 @@ public readonly struct BoundsRange<T> : IReadOnlyList<Bounds<T>>, IEquatable<Bou
         return FindBoundsIndex( value ) >= 0;
     }
 
+    /// <summary>
+    /// Checks whether or not this collection contains the provided <paramref name="value"/> range.
+    /// </summary>
+    /// <param name="value">Range to check.</param>
+    /// <returns><b>true</b> when this collection contains the provided <paramref name="value"/> range, otherwise <b>false</b>.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public bool Contains(Bounds<T> value)
@@ -131,6 +196,13 @@ public readonly struct BoundsRange<T> : IReadOnlyList<Bounds<T>>, IEquatable<Bou
         return minIndex >= 0 && FindBoundsIndex( value.Max ) == minIndex;
     }
 
+    /// <summary>
+    /// Checks whether or not this collection contains the provided <paramref name="other"/> collection of ranges.
+    /// </summary>
+    /// <param name="other">Collection of ranges to check.</param>
+    /// <returns>
+    /// <b>true</b> when this collection contains the provided <paramref name="other"/> collection of ranges, otherwise <b>false</b>.
+    /// </returns>
     [Pure]
     public bool Contains(BoundsRange<T> other)
     {
@@ -191,6 +263,13 @@ public readonly struct BoundsRange<T> : IReadOnlyList<Bounds<T>>, IEquatable<Bou
         return true;
     }
 
+    /// <summary>
+    /// Checks whether or not this collection intersects with the provided <paramref name="value"/> range.
+    /// </summary>
+    /// <param name="value">Range to check.</param>
+    /// <returns>
+    /// <b>true</b> when this collection intersects with the provided <paramref name="value"/> range, otherwise <b>false</b>.
+    /// </returns>
     [Pure]
     public bool Intersects(Bounds<T> value)
     {
@@ -205,6 +284,13 @@ public readonly struct BoundsRange<T> : IReadOnlyList<Bounds<T>>, IEquatable<Bou
         return minIndex != maxIndex;
     }
 
+    /// <summary>
+    /// Checks whether or not this collection intersects with the provided <paramref name="other"/> collection of ranges.
+    /// </summary>
+    /// <param name="other">Collection of ranges to check.</param>
+    /// <returns>
+    /// <b>true</b> when this collection intersects with the provided <paramref name="other"/> collection of ranges, otherwise <b>false</b>.
+    /// </returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public bool Intersects(BoundsRange<T> other)
@@ -252,6 +338,11 @@ public readonly struct BoundsRange<T> : IReadOnlyList<Bounds<T>>, IEquatable<Bou
         return false;
     }
 
+    /// <summary>
+    /// Attempts to extract an intersection between this collection of ranges and the provided <paramref name="value"/> range.
+    /// </summary>
+    /// <param name="value">Range to check.</param>
+    /// <returns>New <see cref="BoundsRange{T}"/> instance or <see cref="Empty"/> when the ranges do not intersect.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public BoundsRange<T> GetIntersection(Bounds<T> value)
@@ -259,6 +350,14 @@ public readonly struct BoundsRange<T> : IReadOnlyList<Bounds<T>>, IEquatable<Bou
         return GetIntersection( new BoundsRange<T>( value ) );
     }
 
+    /// <summary>
+    /// Attempts to extract an intersection between this collection of ranges
+    /// and the provided <paramref name="other"/> collection of ranges.
+    /// </summary>
+    /// <param name="other">Collection of ranges to check.</param>
+    /// <returns>
+    /// New <see cref="BoundsRange{T}"/> instance or <see cref="Empty"/> when the two collections of ranges do not intersect.
+    /// </returns>
     [Pure]
     public BoundsRange<T> GetIntersection(BoundsRange<T> other)
     {
@@ -341,6 +440,11 @@ public readonly struct BoundsRange<T> : IReadOnlyList<Bounds<T>>, IEquatable<Bou
         return CreateFromBuffer( resultBuffer );
     }
 
+    /// <summary>
+    /// Merges this collection of ranges with the provided <paramref name="value"/> range.
+    /// </summary>
+    /// <param name="value">Range to merge.</param>
+    /// <returns>New <see cref="BoundsRange{T}"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public BoundsRange<T> MergeWith(Bounds<T> value)
@@ -348,6 +452,11 @@ public readonly struct BoundsRange<T> : IReadOnlyList<Bounds<T>>, IEquatable<Bou
         return MergeWith( new BoundsRange<T>( value ) );
     }
 
+    /// <summary>
+    /// Merges this collection of ranges with the provided <paramref name="other"/> collections of ranges.
+    /// </summary>
+    /// <param name="other">Collections of ranges to merge.</param>
+    /// <returns>New <see cref="BoundsRange{T}"/> instance.</returns>
     [Pure]
     public BoundsRange<T> MergeWith(BoundsRange<T> other)
     {
@@ -482,6 +591,11 @@ public readonly struct BoundsRange<T> : IReadOnlyList<Bounds<T>>, IEquatable<Bou
         return CreateFromBuffer( resultBuffer );
     }
 
+    /// <summary>
+    /// Removes the provided <paramref name="value"/> range from this collection of ranges.
+    /// </summary>
+    /// <param name="value">Range to remove.</param>
+    /// <returns>New <see cref="BoundsRange{T}"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public BoundsRange<T> Remove(Bounds<T> value)
@@ -489,6 +603,11 @@ public readonly struct BoundsRange<T> : IReadOnlyList<Bounds<T>>, IEquatable<Bou
         return Remove( new BoundsRange<T>( value ) );
     }
 
+    /// <summary>
+    /// Removes the provided <paramref name="other"/> collection of ranges from this collection of ranges.
+    /// </summary>
+    /// <param name="other">Collections of ranges to remove.</param>
+    /// <returns>New <see cref="BoundsRange{T}"/> instance.</returns>
     [Pure]
     public BoundsRange<T> Remove(BoundsRange<T> other)
     {
@@ -643,6 +762,10 @@ public readonly struct BoundsRange<T> : IReadOnlyList<Bounds<T>>, IEquatable<Bou
         return CreateFromBuffer( resultBuffer );
     }
 
+    /// <summary>
+    /// Complements this collection of ranges within its own minimum and maximum range of values.
+    /// </summary>
+    /// <returns>New <see cref="BoundsRange{T}"/> instance or <see cref="Empty"/> when this collection of ranges is empty.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public BoundsRange<T> Complement()
@@ -651,6 +774,11 @@ public readonly struct BoundsRange<T> : IReadOnlyList<Bounds<T>>, IEquatable<Bou
         return container is null ? Empty : Complement( new BoundsRange<T>( container.Value ) );
     }
 
+    /// <summary>
+    /// Complements this collection of ranges within the provided <paramref name="container"/> range.
+    /// </summary>
+    /// <param name="container">Range to complement this collection of ranges in.</param>
+    /// <returns>New <see cref="BoundsRange{T}"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public BoundsRange<T> Complement(Bounds<T> container)
@@ -658,6 +786,11 @@ public readonly struct BoundsRange<T> : IReadOnlyList<Bounds<T>>, IEquatable<Bou
         return Complement( new BoundsRange<T>( container ) );
     }
 
+    /// <summary>
+    /// Complements this collection of ranges within the provided <paramref name="container"/> collection of ranges.
+    /// </summary>
+    /// <param name="container">Collection of ranges to complement this collection of ranges in.</param>
+    /// <returns>New <see cref="BoundsRange{T}"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public BoundsRange<T> Complement(BoundsRange<T> container)
@@ -665,6 +798,14 @@ public readonly struct BoundsRange<T> : IReadOnlyList<Bounds<T>>, IEquatable<Bou
         return container.Remove( this );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="BoundsRange{T}"/> instance by invoking the provided <paramref name="normalizePredicate"/>
+    /// on each pair of (previous-bounds-maximum, current-bounds-minimum): when the predicate returns <b>true</b>,
+    /// then [previous-bounds-minimum, previous-bounds-maximum] and [current-bounds-minimum, current-bounds-maximum]
+    /// will be merged together into a single [previous-minimum, current-maximum] range.
+    /// </summary>
+    /// <param name="normalizePredicate">Normalization predicate.</param>
+    /// <returns>New <see cref="BoundsRange{T}"/> instance.</returns>
     [Pure]
     public BoundsRange<T> Normalize(Func<T, T, bool> normalizePredicate)
     {
@@ -696,6 +837,7 @@ public readonly struct BoundsRange<T> : IReadOnlyList<Bounds<T>>, IEquatable<Bou
         return CreateFromBuffer( buffer );
     }
 
+    /// <inheritdoc />
     [Pure]
     public IEnumerator<Bounds<T>> GetEnumerator()
     {
@@ -704,6 +846,12 @@ public readonly struct BoundsRange<T> : IReadOnlyList<Bounds<T>>, IEquatable<Bou
             yield return new Bounds<T>( (values[i], values[i + 1]) );
     }
 
+    /// <summary>
+    /// Checks if <paramref name="a"/> is equal to <paramref name="b"/>.
+    /// </summary>
+    /// <param name="a">First operand.</param>
+    /// <param name="b">Second operand.</param>
+    /// <returns><b>true</b> when operands are equal, otherwise <b>false</b>.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static bool operator ==(BoundsRange<T> a, BoundsRange<T> b)
@@ -711,17 +859,17 @@ public readonly struct BoundsRange<T> : IReadOnlyList<Bounds<T>>, IEquatable<Bou
         return a.Equals( b );
     }
 
+    /// <summary>
+    /// Checks if <paramref name="a"/> is not equal to <paramref name="b"/>.
+    /// </summary>
+    /// <param name="a">First operand.</param>
+    /// <param name="b">Second operand.</param>
+    /// <returns><b>true</b> when operands are not equal, otherwise <b>false</b>.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static bool operator !=(BoundsRange<T> a, BoundsRange<T> b)
     {
         return ! a.Equals( b );
-    }
-
-    [Pure]
-    IEnumerator IEnumerable.GetEnumerator()
-    {
-        return GetEnumerator();
     }
 
     [Pure]
@@ -735,7 +883,7 @@ public readonly struct BoundsRange<T> : IReadOnlyList<Bounds<T>>, IEquatable<Bou
             if ( ! enumerator.MoveNext() )
                 return Array.Empty<T>();
 
-            buffer = new List<T>();
+            buffer = range.TryGetNonEnumeratedCount( out var count ) ? new List<T>( capacity: count << 1 ) : new List<T>();
             var next = enumerator.Current;
 
             buffer.Add( next.Min );
@@ -804,10 +952,16 @@ public readonly struct BoundsRange<T> : IReadOnlyList<Bounds<T>>, IEquatable<Bou
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static BoundsRange<T> CreateFromBuffer(List<T> buffer)
+    private static BoundsRange<T> CreateFromBuffer(List<T> buffer)
     {
         return buffer.Count == 0
             ? Empty
             : new BoundsRange<T>( CreateDataFromBuffer( buffer ) );
+    }
+
+    [Pure]
+    IEnumerator IEnumerable.GetEnumerator()
+    {
+        return GetEnumerator();
     }
 }

@@ -213,7 +213,7 @@ public readonly struct Maybe<T> : IEquatable<Maybe<T>>, IReadOnlyCollection<T>
     [Pure]
     IEnumerator<T> IEnumerable<T>.GetEnumerator()
     {
-        return (HasValue ? One.Create( Value ) : Enumerable.Empty<T>()).GetEnumerator();
+        return (HasValue ? Ref.Create( Value ) : Enumerable.Empty<T>()).GetEnumerator();
     }
 
     [Pure]

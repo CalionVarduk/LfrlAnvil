@@ -6,20 +6,40 @@ using System.Runtime.CompilerServices;
 
 namespace LfrlAnvil;
 
+/// <summary>
+/// A lightweight generic read-only container for an <see cref="Array"/>.
+/// </summary>
+/// <typeparam name="T"></typeparam>
 public readonly struct ReadOnlyArray<T> : IReadOnlyList<T>
 {
+    /// <summary>
+    /// Represents a empty read-only <see cref="Array"/>.
+    /// </summary>
     public static readonly ReadOnlyArray<T> Empty = new ReadOnlyArray<T>( Array.Empty<T>() );
 
     private readonly T[] _source;
 
+    /// <summary>
+    /// Creates a new <see cref="ReadOnlyArray{T}"/> instance.
+    /// </summary>
+    /// <param name="source">Underlying <see cref="Array"/>.</param>
     public ReadOnlyArray(T[] source)
     {
         _source = source;
     }
 
+    /// <inheritdoc />
     public int Count => _source.Length;
+
+    /// <inheritdoc />
     public T this[int index] => _source[index];
 
+    /// <summary>
+    /// Creates a new <see cref="ReadOnlyArray{T}"/> instance.
+    /// </summary>
+    /// <param name="source">Underlying array.</param>
+    /// <typeparam name="TSource">Array element type convertible to read-only array's element type.</typeparam>
+    /// <returns>New <see cref="ReadOnlyArray{T}"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static ReadOnlyArray<T> From<TSource>(TSource[] source)
@@ -28,6 +48,12 @@ public readonly struct ReadOnlyArray<T> : IReadOnlyList<T>
         return new ReadOnlyArray<T>( source );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="ReadOnlyArray{T}"/> instance.
+    /// </summary>
+    /// <param name="source">Other read-only array.</param>
+    /// <typeparam name="TSource">Array element type convertible to read-only array's element type.</typeparam>
+    /// <returns>New <see cref="ReadOnlyArray{T}"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static ReadOnlyArray<T> From<TSource>(ReadOnlyArray<TSource> source)
@@ -36,6 +62,10 @@ public readonly struct ReadOnlyArray<T> : IReadOnlyList<T>
         return From( source._source );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="ReadOnlyMemory{T}"/> instance from this <see cref="ReadOnlyArray{T}"/>.
+    /// </summary>
+    /// <returns>New <see cref="ReadOnlyMemory{T}"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public ReadOnlyMemory<T> AsMemory()
@@ -43,6 +73,10 @@ public readonly struct ReadOnlyArray<T> : IReadOnlyList<T>
         return _source;
     }
 
+    /// <summary>
+    /// Creates a new <see cref="ReadOnlySpan{T}"/> instance from this <see cref="ReadOnlyArray{T}"/>.
+    /// </summary>
+    /// <returns>New <see cref="ReadOnlySpan{T}"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public ReadOnlySpan<T> AsSpan()
@@ -50,6 +84,10 @@ public readonly struct ReadOnlyArray<T> : IReadOnlyList<T>
         return _source;
     }
 
+    /// <summary>
+    /// Returns the underlying array.
+    /// </summary>
+    /// <returns>The underlying array.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public IReadOnlyList<T> GetUnderlyingArray()
@@ -57,6 +95,10 @@ public readonly struct ReadOnlyArray<T> : IReadOnlyList<T>
         return _source;
     }
 
+    /// <summary>
+    /// Creates a new <see cref="Enumerator"/> instance for this sequence.
+    /// </summary>
+    /// <returns>New <see cref="Enumerator"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public Enumerator GetEnumerator()
@@ -64,6 +106,11 @@ public readonly struct ReadOnlyArray<T> : IReadOnlyList<T>
         return new Enumerator( _source );
     }
 
+    /// <summary>
+    /// Converts the provided <paramref name="source"/> to <see cref="ReadOnlyArray{T}"/>.
+    /// </summary>
+    /// <param name="source">Underlying array.</param>
+    /// <returns>New <see cref="ReadOnlyArray{T}"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static implicit operator ReadOnlyArray<T>(T[] source)
@@ -71,6 +118,9 @@ public readonly struct ReadOnlyArray<T> : IReadOnlyList<T>
         return new ReadOnlyArray<T>( source );
     }
 
+    /// <summary>
+    /// Lightweight enumerator implementation for <see cref="ReadOnlyArray{T}"/>.
+    /// </summary>
     public struct Enumerator : IEnumerator<T>
     {
         private readonly T[] _source;
@@ -82,9 +132,12 @@ public readonly struct ReadOnlyArray<T> : IReadOnlyList<T>
             _index = -1;
         }
 
+        /// <inheritdoc />
         public T Current => _source[_index];
+
         object? IEnumerator.Current => Current;
 
+        /// <inheritdoc />
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public bool MoveNext()
         {
@@ -96,6 +149,7 @@ public readonly struct ReadOnlyArray<T> : IReadOnlyList<T>
             return true;
         }
 
+        /// <inheritdoc />
         public void Dispose() { }
 
         void IEnumerator.Reset()

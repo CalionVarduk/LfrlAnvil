@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using System.Threading;
+using LfrlAnvil.Exceptions;
 
 namespace LfrlAnvil.Async;
 
@@ -29,36 +30,45 @@ public struct InterlockedEnum<T> : IEquatable<InterlockedEnum<T>>, IComparable<I
     /// </summary>
     public T Value => ( T )( object )Interlocked.Add( ref _value, 0 );
 
+    /// <summary>
+    /// Returns a string representation of this <see cref="InterlockedEnum{T}"/> instance.
+    /// </summary>
+    /// <returns>String representation.</returns>
     [Pure]
     public override string ToString()
     {
         return Value.ToString();
     }
 
+    /// <inheritdoc />
     [Pure]
     public override int GetHashCode()
     {
         return EqualityComparer<T>.Default.GetHashCode( Value );
     }
 
+    /// <inheritdoc />
     [Pure]
     public override bool Equals(object? obj)
     {
         return obj is InterlockedEnum<T> b && Equals( b );
     }
 
+    /// <inheritdoc />
     [Pure]
     public int CompareTo(object? obj)
     {
-        return obj is InterlockedEnum<T> b ? CompareTo( b ) : 1;
+        return obj is InterlockedEnum<T> b ? CompareTo( b ) : throw new ArgumentException( ExceptionResources.InvalidType, nameof( obj ) );
     }
 
+    /// <inheritdoc />
     [Pure]
     public bool Equals(InterlockedEnum<T> other)
     {
         return EqualityComparer<T>.Default.Equals( Value, other.Value );
     }
 
+    /// <inheritdoc />
     [Pure]
     public int CompareTo(InterlockedEnum<T> other)
     {

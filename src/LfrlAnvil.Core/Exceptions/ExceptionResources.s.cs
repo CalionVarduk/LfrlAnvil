@@ -5,13 +5,19 @@ using LfrlAnvil.Extensions;
 
 namespace LfrlAnvil.Exceptions;
 
+/// <summary>
+/// Contains helper methods for generating exception messages.
+/// </summary>
 public static class ExceptionResources
 {
+#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
+
     public const string DividedByZero = "Attempted to divide by zero.";
     public const string SequenceContainsNoElements = "Sequence contains no elements.";
     public const string NonStaticMethodRequiresTarget = "Non-static method requires a target.";
     public const string AssumedCodeToBeUnreachable = "Assumed the code to be unreachable.";
     public const string FixedSizeCollection = "Collection was of a fixed size.";
+    public const string InvalidType = "Invalid type.";
 
     internal const string FailedToGenerateNextValue = "Failed to generate next value.";
     internal const string ExpectedIndexToBeZero = "Expected index to be equal to 0.";

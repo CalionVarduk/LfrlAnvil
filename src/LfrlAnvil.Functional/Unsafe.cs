@@ -296,7 +296,7 @@ public readonly struct Unsafe<T> : IUnsafe, IEquatable<Unsafe<T>>, IReadOnlyColl
     [Pure]
     IEnumerator<T> IEnumerable<T>.GetEnumerator()
     {
-        return (IsOk ? One.Create( Value ) : Enumerable.Empty<T>()).GetEnumerator();
+        return (IsOk ? Ref.Create( Value ) : Enumerable.Empty<T>()).GetEnumerator();
     }
 
     [Pure]

@@ -9,8 +9,15 @@ using LfrlAnvil.Internal;
 
 namespace LfrlAnvil.Memory;
 
+/// <summary>
+/// Represents a pool of <see cref="RentedMemorySequence{T}"/> instances.
+/// </summary>
+/// <typeparam name="T">Element type.</typeparam>
 public class MemorySequencePool<T>
 {
+    /// <summary>
+    /// A lightweight <see cref="MemorySequencePool{T}"/> state report container.
+    /// </summary>
     public readonly struct ReportInfo
     {
         private readonly MemorySequencePool<T>? _pool;
@@ -20,10 +27,24 @@ public class MemorySequencePool<T>
             _pool = pool;
         }
 
+        /// <summary>
+        /// Total number of allocated pool segments.
+        /// </summary>
         public int AllocatedSegments => _pool?._segments.Length ?? 0;
+
+        /// <summary>
+        /// Number of active pool segments.
+        /// </summary>
         public int ActiveSegments => (_pool?._tailNode?.LastIndex.Segment ?? -1) + 1;
+
+        /// <summary>
+        /// Number of cached underlying pool nodes.
+        /// </summary>
         public int CachedNodes => _pool?._nodeCache.Length ?? 0;
 
+        /// <summary>
+        /// Number of active underlying pool nodes.
+        /// </summary>
         public int ActiveNodes
         {
             get
@@ -40,8 +61,14 @@ public class MemorySequencePool<T>
             }
         }
 
+        /// <summary>
+        /// Number of fragmented underlying pool nodes.
+        /// </summary>
         public int FragmentedNodes => _pool?._fragmentationHeap.Length ?? 0;
 
+        /// <summary>
+        /// Number of active elements.
+        /// </summary>
         public int ActiveElements
         {
             get
@@ -51,6 +78,9 @@ public class MemorySequencePool<T>
             }
         }
 
+        /// <summary>
+        /// Number of fragmented elements.
+        /// </summary>
         public int FragmentedElements
         {
             get
@@ -67,6 +97,10 @@ public class MemorySequencePool<T>
             }
         }
 
+        /// <summary>
+        /// Creates a new <see cref="IEnumerable{T}"/> instance that contains sizes of all fragmented underlying pool nodes.
+        /// </summary>
+        /// <returns>New <see cref="IEnumerable{T}"/> instance.</returns>
         [Pure]
         public IEnumerable<int> GetFragmentedNodeSizes()
         {
@@ -75,6 +109,10 @@ public class MemorySequencePool<T>
                 yield return _pool!._fragmentationHeap.Get( i ).Length;
         }
 
+        /// <summary>
+        /// Creates a new <see cref="IEnumerable{T}"/> instance that contains all currently rented memory sequences.
+        /// </summary>
+        /// <returns>New <see cref="IEnumerable{T}"/> instance.</returns>
         [Pure]
         public IEnumerable<RentedMemorySequence<T>> GetRentedNodes()
         {
@@ -105,6 +143,13 @@ public class MemorySequencePool<T>
     private Buffer<Node> _fragmentationHeap;
     private Buffer<T[]> _segments;
 
+    /// <summary>
+    /// Creates a new <see cref="MemorySequencePool{T}"/> instance.
+    /// </summary>
+    /// <param name="minSegmentLength">Minimum single pool segment length. The actual value will be rounded up to a power of two.</param>
+    /// <exception cref="ArgumentOutOfRangeException">
+    /// When <paramref name="minSegmentLength"/> is less than <b>1</b> or greater than <b>2^30</b>.
+    /// </exception>
     public MemorySequencePool(int minSegmentLength)
     {
         Ensure.IsGreaterThan( minSegmentLength, 0 );
@@ -120,21 +165,50 @@ public class MemorySequencePool<T>
         _segments = Buffer<T[]>.Create();
     }
 
+    /// <summary>
+    /// Specifies whether or not this pool clears the contents of memory sequences that get returned to the pool.
+    /// </summary>
     public bool ClearReturnedSequences { get; set; }
+
+    /// <summary>
+    /// Length of a single pool segment.
+    /// </summary>
     public int SegmentLength { get; }
+
+    /// <summary>
+    /// Creates a new <see cref="ReportInfo"/> instance.
+    /// </summary>
     public ReportInfo Report => new ReportInfo( this );
 
+    /// <summary>
+    /// Creates a new <see cref="RentedMemorySequence{T}"/> instance from this pool.
+    /// </summary>
+    /// <param name="length">Size of the rented sequence.</param>
+    /// <returns>
+    /// New <see cref="RentedMemorySequence{T}"/> instance,
+    /// or <see cref="RentedMemorySequence{T}.Empty"/> when <paramref name="length"/> is less than <b>1</b>.
+    /// </returns>
+    /// <remarks>This method attempts to reuse fragmented segments.</remarks>
     public RentedMemorySequence<T> Rent(int length)
     {
         return length <= 0 ? RentedMemorySequence<T>.Empty : new RentedMemorySequence<T>( RentNode( length ) );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="RentedMemorySequence{T}"/> instance from this pool.
+    /// </summary>
+    /// <param name="length">Initial size of the rented sequence. Equal to <b>0</b> by default.</param>
+    /// <returns>New <see cref="RentedMemorySequence{T}"/> instance.</returns>
+    /// <remarks>This method always uses or allocates segments at the tail of the pool.</remarks>
     public RentedMemorySequence<T> GreedyRent(int length = 0)
     {
         length = Math.Max( length, 0 );
         return new RentedMemorySequence<T>( AllocateAtTail( length ) );
     }
 
+    /// <summary>
+    /// Attempts to deallocate unused segments at the tail of this pool.
+    /// </summary>
     public void TrimExcess()
     {
         var cachedTailSegmentCount = _segments.Length;

@@ -1,5 +1,4 @@
-﻿using LfrlAnvil.Exceptions;
-using LfrlAnvil.Functional;
+﻿using LfrlAnvil.Functional;
 using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Tests.LazyDisposableTests;
@@ -55,7 +54,7 @@ public class LazyDisposableTests : TestsBase
     }
 
     [Fact]
-    public void Assign_ShouldThrowLazyDisposableAssignmentException_WhenInnerDisposableIsNotNull()
+    public void Assign_ShouldThrowInvalidOperationException_WhenInnerDisposableIsNotNull()
     {
         var inner = Substitute.For<IDisposable>();
         var sut = new LazyDisposable<IDisposable>();
@@ -63,7 +62,7 @@ public class LazyDisposableTests : TestsBase
 
         var action = Lambda.Of( () => sut.Assign( inner ) );
 
-        action.Should().ThrowExactly<LazyDisposableAssignmentException>();
+        action.Should().ThrowExactly<InvalidOperationException>();
     }
 
     [Fact]

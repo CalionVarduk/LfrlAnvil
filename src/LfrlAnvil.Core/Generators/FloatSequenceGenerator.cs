@@ -2,24 +2,49 @@
 
 namespace LfrlAnvil.Generators;
 
+/// <summary>
+/// Represents <see cref="Single"/> sequence generator of values within specified range.
+/// </summary>
 public class FloatSequenceGenerator : SequenceGeneratorBase<float>
 {
+    /// <summary>
+    /// Creates a new <see cref="FloatSequenceGenerator"/> instance that starts with <b>0</b>,
+    /// with <see cref="SequenceGeneratorBase{T}.Step"/> equal to <b>1</b>
+    /// and with greatest possible <see cref="SequenceGeneratorBase{T}.Bounds"/>.
+    /// </summary>
     public FloatSequenceGenerator()
         : this( start: 0 ) { }
 
-    public FloatSequenceGenerator(float start)
-        : this( start, step: 1 ) { }
-
-    public FloatSequenceGenerator(float start, float step)
+    /// <summary>
+    /// Creates a new <see cref="FloatSequenceGenerator"/> instance with greatest possible <see cref="SequenceGeneratorBase{T}.Bounds"/>.
+    /// </summary>
+    /// <param name="start">Next value to generate.</param>
+    /// <param name="step">Difference between two consecutively generated values. Equal to <b>1</b> by default.</param>
+    /// <exception cref="ArgumentException">
+    /// When <paramref name="step"/> is equal to <b>0</b> or any of the values is not a finite number.
+    /// </exception>
+    public FloatSequenceGenerator(float start, float step = 1)
         : this( new Bounds<float>( float.MinValue, float.MaxValue ), start, step ) { }
 
+    /// <summary>
+    /// Creates a new <see cref="FloatSequenceGenerator"/> instance that starts with
+    /// minimum possible value defined by <paramref name="bounds"/>, with <see cref="SequenceGeneratorBase{T}.Step"/> equal to <b>1</b>.
+    /// </summary>
+    /// <param name="bounds">Range of values that can be generated.</param>
     public FloatSequenceGenerator(Bounds<float> bounds)
         : this( bounds, start: bounds.Min ) { }
 
-    public FloatSequenceGenerator(Bounds<float> bounds, float start)
-        : this( bounds, start, step: 1 ) { }
-
-    public FloatSequenceGenerator(Bounds<float> bounds, float start, float step)
+    /// <summary>
+    /// Creates a new <see cref="FloatSequenceGenerator"/> instance.
+    /// </summary>
+    /// <param name="bounds">Range of values that can be generated.</param>
+    /// <param name="start">Next value to generate.</param>
+    /// <param name="step">Difference between two consecutively generated values. Equal to <b>1</b> by default.</param>
+    /// <exception cref="ArgumentOutOfRangeException">When <paramref name="bounds"/> do not contain <paramref name="start"/>.</exception>
+    /// <exception cref="ArgumentException">
+    /// When <paramref name="step"/> is equal to <b>0</b> or any of the values is not a finite number.
+    /// </exception>
+    public FloatSequenceGenerator(Bounds<float> bounds, float start, float step = 1)
         : base( bounds, start, step )
     {
         Ensure.False( float.IsNaN( bounds.Min ) );
@@ -34,6 +59,7 @@ public class FloatSequenceGenerator : SequenceGeneratorBase<float>
         Ensure.NotEquals( step, 0 );
     }
 
+    /// <inheritdoc />
     protected sealed override float AddStep(float value)
     {
         var result = value + Step;

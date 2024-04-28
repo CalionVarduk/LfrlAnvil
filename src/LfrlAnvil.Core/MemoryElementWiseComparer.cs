@@ -6,8 +6,10 @@ using LfrlAnvil.Internal;
 
 namespace LfrlAnvil;
 
+/// <inheritdoc />
 public sealed class MemoryElementWiseComparer<T> : IEqualityComparer<ReadOnlyMemory<T>>
 {
+    /// <inheritdoc />
     [Pure]
     public bool Equals(ReadOnlyMemory<T> x, ReadOnlyMemory<T> y)
     {
@@ -26,6 +28,7 @@ public sealed class MemoryElementWiseComparer<T> : IEqualityComparer<ReadOnlyMem
         return true;
     }
 
+    /// <inheritdoc />
     [Pure]
     public int GetHashCode(ReadOnlyMemory<T> obj)
     {

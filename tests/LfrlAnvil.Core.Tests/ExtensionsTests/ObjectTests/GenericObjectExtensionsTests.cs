@@ -10,10 +10,10 @@ public abstract class GenericObjectExtensionsTests<T> : TestsBase
     where T : notnull
 {
     [Fact]
-    public void ToOne_ShouldReturnCorrectResult()
+    public void ToRef_ShouldReturnCorrectResult()
     {
         var value = Fixture.Create<T>();
-        var sut = value.ToOne();
+        var sut = value.ToRef();
         sut.Value.Should().Be( value );
     }
 

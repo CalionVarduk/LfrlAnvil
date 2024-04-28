@@ -7,13 +7,24 @@ using LfrlAnvil.Exceptions;
 
 namespace LfrlAnvil;
 
+/// <summary>
+/// A lightweight representation of a sequence of linked nodes with values.
+/// </summary>
+/// <typeparam name="T">Value type.</typeparam>
 public readonly struct Chain<T> : IReadOnlyCollection<T>
 {
+    /// <summary>
+    /// Represents an empty sequence.
+    /// </summary>
     public static readonly Chain<T> Empty = new Chain<T>();
 
     private readonly HeadNode? _head;
     private readonly Node? _tail;
 
+    /// <summary>
+    /// Creates a new <see cref="Chain{T}"/> instance from a single value.
+    /// </summary>
+    /// <param name="value">Single value.</param>
     public Chain(T value)
     {
         _head = new HeadNode( value );
@@ -21,6 +32,10 @@ public readonly struct Chain<T> : IReadOnlyCollection<T>
         Count = 1;
     }
 
+    /// <summary>
+    /// Creates a new <see cref="Chain{T}"/> instance from a collection of values.
+    /// </summary>
+    /// <param name="values">Collection of values.</param>
     public Chain(IEnumerable<T> values)
     {
         using var enumerator = values.GetEnumerator();
@@ -44,6 +59,10 @@ public readonly struct Chain<T> : IReadOnlyCollection<T>
         }
     }
 
+    /// <summary>
+    /// Creates a new <see cref="Chain{T}"/> instance from another <see cref="Chain{T}"/> instance.
+    /// </summary>
+    /// <param name="other"><see cref="Chain{T}"/> instance to copy.</param>
     public Chain(Chain<T> other)
     {
         if ( other._head is null )
@@ -76,10 +95,27 @@ public readonly struct Chain<T> : IReadOnlyCollection<T>
         Count = count;
     }
 
+    /// <inheritdoc />
     public int Count { get; }
+
+    /// <summary>
+    /// Specifies whether or not new values can be appended to this sequence.
+    /// <see cref="Chain{T}"/> is considered extendable when it hasn't been attached to the end of another sequence
+    /// and no value has been added after its last node.
+    /// </summary>
     public bool IsExtendable => _head is null || (! _head.HasPrev && _tail!.Next is null);
+
+    /// <summary>
+    /// Specifies whether or not this sequence has been attached to the end of another sequence.
+    /// </summary>
     public bool IsAttached => _head is not null && _head.HasPrev;
 
+    /// <summary>
+    /// Adds the provided <paramref name="value"/> to the end of this sequence.
+    /// </summary>
+    /// <param name="value">Value to add.</param>
+    /// <returns>New <see cref="Chain{T}"/> instance.</returns>
+    /// <exception cref="InvalidOperationException">When this sequence is not extendable.</exception>
     [Pure]
     public Chain<T> Extend(T value)
     {
@@ -102,6 +138,12 @@ public readonly struct Chain<T> : IReadOnlyCollection<T>
         return new Chain<T>( _head, node, Count + 1 );
     }
 
+    /// <summary>
+    /// Adds the provided collection of <paramref name="values"/> to the end of this sequence.
+    /// </summary>
+    /// <param name="values">Collection of values to add.</param>
+    /// <returns>New <see cref="Chain{T}"/> instance.</returns>
+    /// <exception cref="InvalidOperationException">When this sequence is not extendable.</exception>
     [Pure]
     public Chain<T> Extend(IEnumerable<T> values)
     {
@@ -145,6 +187,13 @@ public readonly struct Chain<T> : IReadOnlyCollection<T>
         return new Chain<T>( head, tail, count );
     }
 
+    /// <summary>
+    /// Attaches the provided <paramref name="other"/> to the end of this sequence.
+    /// </summary>
+    /// <param name="other">Sequence to attach.</param>
+    /// <returns>New <see cref="Chain{T}"/> instance.</returns>
+    /// <exception cref="InvalidOperationException">When this sequence is not extendable.</exception>
+    /// <remarks>This method does not allocate memory.</remarks>
     [Pure]
     public Chain<T> Extend(Chain<T> other)
     {
@@ -168,6 +217,10 @@ public readonly struct Chain<T> : IReadOnlyCollection<T>
         return new Chain<T>( _head, other._tail, Count + other.Count );
     }
 
+    /// <summary>
+    /// Returns an extendable version of this <see cref="Chain{T}"/> instance.
+    /// </summary>
+    /// <returns>This <see cref="Chain{T}"/> instance or its copy when it's not extendable.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public Chain<T> ToExtendable()
@@ -175,24 +228,19 @@ public readonly struct Chain<T> : IReadOnlyCollection<T>
         return IsExtendable ? this : new Chain<T>( this );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="Enumerator"/> instance for this sequence.
+    /// </summary>
+    /// <returns>New <see cref="Enumerator"/> instance.</returns>
     [Pure]
     public Enumerator GetEnumerator()
     {
         return new Enumerator( _head, Count );
     }
 
-    [Pure]
-    IEnumerator<T> IEnumerable<T>.GetEnumerator()
-    {
-        return GetEnumerator();
-    }
-
-    [Pure]
-    IEnumerator IEnumerable.GetEnumerator()
-    {
-        return GetEnumerator();
-    }
-
+    /// <summary>
+    /// Lightweight enumerator implementation for <see cref="Chain{T}"/>.
+    /// </summary>
     public struct Enumerator : IEnumerator<T>
     {
         private Node? _node;
@@ -208,9 +256,12 @@ public readonly struct Chain<T> : IReadOnlyCollection<T>
             _index = -1;
         }
 
+        /// <inheritdoc />
         public T Current => _node!.Value;
+
         object IEnumerator.Current => Current!;
 
+        /// <inheritdoc />
         public bool MoveNext()
         {
             if ( ++_index == _count )
@@ -221,9 +272,10 @@ public readonly struct Chain<T> : IReadOnlyCollection<T>
             return true;
         }
 
+        /// <inheritdoc />
         public void Dispose() { }
 
-        public void Reset()
+        void IEnumerator.Reset()
         {
             _node = _next = _head;
             _index = -1;
@@ -257,5 +309,17 @@ public readonly struct Chain<T> : IReadOnlyCollection<T>
         }
 
         internal bool HasPrev { get; set; }
+    }
+
+    [Pure]
+    IEnumerator<T> IEnumerable<T>.GetEnumerator()
+    {
+        return GetEnumerator();
+    }
+
+    [Pure]
+    IEnumerator IEnumerable.GetEnumerator()
+    {
+        return GetEnumerator();
     }
 }

@@ -1,28 +1,52 @@
-﻿namespace LfrlAnvil.Generators;
+﻿using System;
 
+namespace LfrlAnvil.Generators;
+
+/// <summary>
+/// Represents <see cref="Decimal"/> sequence generator of values within specified range.
+/// </summary>
 public class DecimalSequenceGenerator : SequenceGeneratorBase<decimal>
 {
+    /// <summary>
+    /// Creates a new <see cref="DecimalSequenceGenerator"/> instance that starts with <b>0</b>,
+    /// with <see cref="SequenceGeneratorBase{T}.Step"/> equal to <b>1</b>
+    /// and with greatest possible <see cref="SequenceGeneratorBase{T}.Bounds"/>.
+    /// </summary>
     public DecimalSequenceGenerator()
         : this( start: 0 ) { }
 
-    public DecimalSequenceGenerator(decimal start)
-        : this( start, step: 1 ) { }
-
-    public DecimalSequenceGenerator(decimal start, decimal step)
+    /// <summary>
+    /// Creates a new <see cref="DecimalSequenceGenerator"/> instance with greatest possible <see cref="SequenceGeneratorBase{T}.Bounds"/>.
+    /// </summary>
+    /// <param name="start">Next value to generate.</param>
+    /// <param name="step">Difference between two consecutively generated values. Equal to <b>1</b> by default.</param>
+    /// <exception cref="ArgumentException">When <paramref name="step"/> is equal to <b>0</b>.</exception>
+    public DecimalSequenceGenerator(decimal start, decimal step = 1)
         : this( new Bounds<decimal>( decimal.MinValue, decimal.MaxValue ), start, step ) { }
 
+    /// <summary>
+    /// Creates a new <see cref="DecimalSequenceGenerator"/> instance that starts with
+    /// minimum possible value defined by <paramref name="bounds"/>, with <see cref="SequenceGeneratorBase{T}.Step"/> equal to <b>1</b>.
+    /// </summary>
+    /// <param name="bounds">Range of values that can be generated.</param>
     public DecimalSequenceGenerator(Bounds<decimal> bounds)
         : this( bounds, start: bounds.Min ) { }
 
-    public DecimalSequenceGenerator(Bounds<decimal> bounds, decimal start)
-        : this( bounds, start, step: 1 ) { }
-
-    public DecimalSequenceGenerator(Bounds<decimal> bounds, decimal start, decimal step)
+    /// <summary>
+    /// Creates a new <see cref="DecimalSequenceGenerator"/> instance.
+    /// </summary>
+    /// <param name="bounds">Range of values that can be generated.</param>
+    /// <param name="start">Next value to generate.</param>
+    /// <param name="step">Difference between two consecutively generated values. Equal to <b>1</b> by default.</param>
+    /// <exception cref="ArgumentOutOfRangeException">When <paramref name="bounds"/> do not contain <paramref name="start"/>.</exception>
+    /// <exception cref="ArgumentException">When <paramref name="step"/> is equal to <b>0</b>.</exception>
+    public DecimalSequenceGenerator(Bounds<decimal> bounds, decimal start, decimal step = 1)
         : base( bounds, start, step )
     {
         Ensure.NotEquals( step, 0 );
     }
 
+    /// <inheritdoc />
     protected sealed override decimal AddStep(decimal value)
     {
         return value + Step;

@@ -239,7 +239,7 @@ public readonly struct TypeCast<TSource, TDestination> : ITypeCast<TDestination>
     [Pure]
     IEnumerator<TDestination> IEnumerable<TDestination>.GetEnumerator()
     {
-        return (IsValid ? One.Create( Result ) : Enumerable.Empty<TDestination>()).GetEnumerator();
+        return (IsValid ? Ref.Create( Result ) : Enumerable.Empty<TDestination>()).GetEnumerator();
     }
 
     [Pure]
