@@ -3,5 +3,13 @@
     <PropertyGroup>
         <PackageTags>LfrlAnvil Requests</PackageTags>
     </PropertyGroup>
+
+    <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+      <DocumentationFile>bin\Debug\LfrlAnvil.Requests.xml</DocumentationFile>
+    </PropertyGroup>
+
+    <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+      <DocumentationFile>bin\Release\LfrlAnvil.Requests.xml</DocumentationFile>
+    </PropertyGroup>
     
 </Project>

@@ -1,4 +1,4 @@
-﻿namespace LfrlAnvil.Requests.Tests.RequestHandlerFactoryTests;
+﻿namespace LfrlAnvil.Requests.Tests;
 
 public class RequestHandlerFactoryTests : TestsBase
 {

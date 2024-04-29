@@ -3,7 +3,7 @@ using LfrlAnvil.Functional;
 using LfrlAnvil.Requests.Exceptions;
 using LfrlAnvil.TestExtensions.FluentAssertions;
 
-namespace LfrlAnvil.Requests.Tests.RequestDispatcherTests;
+namespace LfrlAnvil.Requests.Tests;
 
 public class RequestDispatcherTests : TestsBase
 {
