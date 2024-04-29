@@ -1,6 +1,6 @@
 ﻿using LfrlAnvil.TestExtensions.Attributes;
 
-namespace LfrlAnvil.Identifiers.Tests.IdentifierTests;
+namespace LfrlAnvil.Identifiers.Tests;
 
 [TestClass( typeof( IdentifierTestsData ) )]
 public class IdentifierTests : TestsBase

@@ -1,6 +1,6 @@
 ﻿using LfrlAnvil.Chrono;
 
-namespace LfrlAnvil.Identifiers.Tests.IdentifierGeneratorTests;
+namespace LfrlAnvil.Identifiers.Tests;
 
 public class IdentifierGeneratorTestsData
 {

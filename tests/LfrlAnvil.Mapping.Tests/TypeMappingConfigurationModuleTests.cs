@@ -3,7 +3,7 @@ using LfrlAnvil.Functional;
 using LfrlAnvil.Mapping.Exceptions;
 using LfrlAnvil.TestExtensions.FluentAssertions;
 
-namespace LfrlAnvil.Mapping.Tests.TypeMappingConfigurationModuleTests;
+namespace LfrlAnvil.Mapping.Tests;
 
 public class TypeMappingConfigurationModuleTests : TestsBase
 {

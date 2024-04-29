@@ -6,18 +6,36 @@ using LfrlAnvil.Mapping.Internal;
 
 namespace LfrlAnvil.Mapping;
 
+/// <summary>
+/// Represents a collection of <see cref="ITypeMappingConfiguration"/> instances.
+/// </summary>
 public class TypeMappingConfigurationModule : ITypeMappingConfiguration
 {
     private readonly List<ITypeMappingConfiguration> _configurations;
 
+    /// <summary>
+    /// Creates a new <see cref="TypeMappingConfigurationModule"/> instance without any sub-modules.
+    /// </summary>
     public TypeMappingConfigurationModule()
     {
         _configurations = new List<ITypeMappingConfiguration>();
         Parent = null;
     }
 
+    /// <summary>
+    /// Parent of this module.
+    /// </summary>
     public TypeMappingConfigurationModule? Parent { get; private set; }
 
+    /// <summary>
+    /// Adds <paramref name="configuration"/> to this module.
+    /// </summary>
+    /// <param name="configuration">Configuration instance to add.</param>
+    /// <returns><b>this</b>.</returns>
+    /// <exception cref="InvalidTypeMappingSubmoduleConfigurationException">
+    /// When <paramref name="configuration"/> is of <see cref="TypeMappingConfigurationModule"/> type and it has already been assigned
+    /// to another module or a cyclic reference between modules has been detected.
+    /// </exception>
     public TypeMappingConfigurationModule Configure(ITypeMappingConfiguration configuration)
     {
         if ( configuration is TypeMappingConfigurationModule module )
@@ -38,12 +56,17 @@ public class TypeMappingConfigurationModule : ITypeMappingConfiguration
         return this;
     }
 
+    /// <inheritdoc />
     [Pure]
     public IEnumerable<KeyValuePair<TypeMappingKey, TypeMappingStore>> GetMappingStores()
     {
         return _configurations.SelectMany( static c => c.GetMappingStores() );
     }
 
+    /// <summary>
+    /// Returns all sub-modules of this module.
+    /// </summary>
+    /// <returns>All <see cref="TypeMappingConfigurationModule"/> instances whose <see cref="Parent"/> is this module.</returns>
     [Pure]
     public IEnumerable<TypeMappingConfigurationModule> GetSubmodules()
     {

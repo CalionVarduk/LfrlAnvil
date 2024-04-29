@@ -7,7 +7,7 @@ using LfrlAnvil.Identifiers.Exceptions;
 using LfrlAnvil.TestExtensions.Attributes;
 using LfrlAnvil.TestExtensions.NSubstitute;
 
-namespace LfrlAnvil.Identifiers.Tests.IdentifierGeneratorTests;
+namespace LfrlAnvil.Identifiers.Tests;
 
 [TestClass( typeof( IdentifierGeneratorTestsData ) )]
 public class IdentifierGeneratorTests : TestsBase

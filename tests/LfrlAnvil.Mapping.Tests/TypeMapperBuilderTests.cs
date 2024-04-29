@@ -1,7 +1,7 @@
 ﻿using LfrlAnvil.Mapping.Internal;
 using LfrlAnvil.TestExtensions.FluentAssertions;
 
-namespace LfrlAnvil.Mapping.Tests.TypeMapperBuilderTests;
+namespace LfrlAnvil.Mapping.Tests;
 
 public class TypeMapperBuilderTests : TestsBase
 {

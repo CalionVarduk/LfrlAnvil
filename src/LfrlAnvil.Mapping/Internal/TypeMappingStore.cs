@@ -4,6 +4,9 @@ using System.Runtime.CompilerServices;
 
 namespace LfrlAnvil.Mapping.Internal;
 
+/// <summary>
+/// Represents a container for delegates used for type mapping.
+/// </summary>
 public readonly struct TypeMappingStore
 {
     private TypeMappingStore(Delegate fastDelegate, Delegate slowDelegate)
@@ -12,9 +15,25 @@ public readonly struct TypeMappingStore
         SlowDelegate = slowDelegate;
     }
 
+    /// <summary>
+    /// Fast delegate. Used when both source and destination types are known.
+    /// </summary>
     public Delegate FastDelegate { get; }
+
+    /// <summary>
+    /// Slow delegate. Used when either source or destination type is unknown.
+    /// </summary>
     public Delegate SlowDelegate { get; }
 
+    /// <summary>
+    /// Returns the <see cref="FastDelegate"/>.
+    /// </summary>
+    /// <typeparam name="TSource">Source type.</typeparam>
+    /// <typeparam name="TDestination">Destination type.</typeparam>
+    /// <returns><see cref="FastDelegate"/>.</returns>
+    /// <exception cref="InvalidCastException">
+    /// When <see cref="FastDelegate"/> is not a <typeparamref name="TSource"/> => <typeparamref name="TDestination"/> mapping definition.
+    /// </exception>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public Func<TSource, ITypeMapper, TDestination> GetDelegate<TSource, TDestination>()
@@ -22,6 +41,14 @@ public readonly struct TypeMappingStore
         return ( Func<TSource, ITypeMapper, TDestination> )FastDelegate;
     }
 
+    /// <summary>
+    /// Returns the <see cref="SlowDelegate"/>.
+    /// </summary>
+    /// <typeparam name="TDestination">Destination type.</typeparam>
+    /// <returns><see cref="SlowDelegate"/>.</returns>
+    /// <exception cref="InvalidCastException">
+    /// When <see cref="SlowDelegate"/> is not an <see cref="Object"/> => <typeparamref name="TDestination"/> mapping definition.
+    /// </exception>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public Func<object, ITypeMapper, TDestination> GetDelegate<TDestination>()
@@ -29,6 +56,13 @@ public readonly struct TypeMappingStore
         return ( Func<object, ITypeMapper, TDestination> )SlowDelegate;
     }
 
+    /// <summary>
+    /// Returns the <see cref="SlowDelegate"/>.
+    /// </summary>
+    /// <returns><see cref="SlowDelegate"/>.</returns>
+    /// <exception cref="InvalidCastException">
+    /// When <see cref="SlowDelegate"/> is not an <see cref="Object"/> => <see cref="Object"/> mapping definition.
+    /// </exception>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public Func<object, ITypeMapper, object> GetDelegate()

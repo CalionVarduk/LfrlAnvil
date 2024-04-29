@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace LfrlAnvil.Identifiers.Tests.IdentifierTests;
+namespace LfrlAnvil.Identifiers.Tests;
 
 public class IdentifierTestsData
 {

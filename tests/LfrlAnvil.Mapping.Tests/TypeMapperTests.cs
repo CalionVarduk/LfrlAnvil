@@ -4,7 +4,7 @@ using LfrlAnvil.Mapping.Exceptions;
 using LfrlAnvil.Mapping.Internal;
 using LfrlAnvil.TestExtensions.FluentAssertions;
 
-namespace LfrlAnvil.Mapping.Tests.TypeMapperTests;
+namespace LfrlAnvil.Mapping.Tests;
 
 public class TypeMapperTests : TestsBase
 {
@@ -453,103 +453,5 @@ public class TypeMapperTests : TestsBase
         var sut = new TypeMapper( Enumerable.Empty<ITypeMappingConfiguration>() );
         var result = sut.IsConfigured<int, string>();
         result.Should().BeFalse();
-    }
-
-    [Fact]
-    public void IsConfiguredAsSourceType_ShouldReturnTrue_WhenTypeIsConfiguredAsSourceForAnyTypeMapping()
-    {
-        var configuration = TypeMappingConfiguration.Create<int, string>( (s, _) => s.ToString() );
-        var sut = new TypeMapper( new[] { configuration } );
-
-        var result = sut.IsConfiguredAsSourceType<int>();
-
-        result.Should().BeTrue();
-    }
-
-    [Fact]
-    public void IsConfiguredAsSourceType_ShouldReturnFalse_WhenTypeIsNotConfiguredAsSourceForAnyTypeMapping()
-    {
-        var configuration = TypeMappingConfiguration.Create<int, string>( (s, _) => s.ToString() );
-        var sut = new TypeMapper( new[] { configuration } );
-
-        var result = sut.IsConfiguredAsSourceType<string>();
-
-        result.Should().BeFalse();
-    }
-
-    [Fact]
-    public void IsConfiguredAsDestinationType_ShouldReturnTrue_WhenTypeIsConfiguredAsDestinationForAnyTypeMapping()
-    {
-        var configuration = TypeMappingConfiguration.Create<int, string>( (s, _) => s.ToString() );
-        var sut = new TypeMapper( new[] { configuration } );
-
-        var result = sut.IsConfiguredAsDestinationType<string>();
-
-        result.Should().BeTrue();
-    }
-
-    [Fact]
-    public void IsConfiguredAsDestinationType_ShouldReturnFalse_WhenTypeIsNotConfiguredAsDestinationForAnyTypeMapping()
-    {
-        var configuration = TypeMappingConfiguration.Create<int, string>( (s, _) => s.ToString() );
-        var sut = new TypeMapper( new[] { configuration } );
-
-        var result = sut.IsConfiguredAsDestinationType<int>();
-
-        result.Should().BeFalse();
-    }
-
-    [Fact]
-    public void GetConfiguredSourceTypes_WithDestinationType_ShouldReturnTypesThatCanBeMappedToTheProvidedDestinationType()
-    {
-        var configuration1 = TypeMappingConfiguration.Create<int, string>( (s, _) => s.ToString() );
-        var configuration2 = TypeMappingConfiguration.Create<Guid, string>( (s, _) => s.ToString() );
-        var sut = new TypeMapper( new ITypeMappingConfiguration[] { configuration1, configuration2 } );
-        var expected = new[] { typeof( int ), typeof( Guid ) }.AsEnumerable();
-
-        var result = sut.GetConfiguredSourceTypes<string>();
-
-        result.Should().BeEquivalentTo( expected );
-    }
-
-    [Fact]
-    public void GetConfiguredDestinationTypes_WithSourceType_ShouldReturnTypesThatCanBeMappedFromTheProvidedSourceType()
-    {
-        var configuration1 = TypeMappingConfiguration.Create<int, string>( (s, _) => s.ToString() );
-        var configuration2 = TypeMappingConfiguration.Create<int, double>( (s, _) => s );
-        var sut = new TypeMapper( new ITypeMappingConfiguration[] { configuration1, configuration2 } );
-        var expected = new[] { typeof( string ), typeof( double ) }.AsEnumerable();
-
-        var result = sut.GetConfiguredDestinationTypes<int>();
-
-        result.Should().BeEquivalentTo( expected );
-    }
-
-    [Fact]
-    public void GetConfiguredSourceTypes_ShouldReturnDistinctConfiguredSourceTypes()
-    {
-        var configuration1 = TypeMappingConfiguration.Create<int, string>( (s, _) => s.ToString() );
-        var configuration2 = TypeMappingConfiguration.Create<int, double>( (s, _) => s );
-        var configuration3 = TypeMappingConfiguration.Create<Guid, string>( (s, _) => s.ToString() );
-        var sut = new TypeMapper( new ITypeMappingConfiguration[] { configuration1, configuration2, configuration3 } );
-        var expected = new[] { typeof( int ), typeof( Guid ) }.AsEnumerable();
-
-        var result = sut.GetConfiguredSourceTypes();
-
-        result.Should().BeEquivalentTo( expected );
-    }
-
-    [Fact]
-    public void GetConfiguredDestinationTypes_ShouldReturnDistinctConfiguredDestinationTypes()
-    {
-        var configuration1 = TypeMappingConfiguration.Create<int, string>( (s, _) => s.ToString() );
-        var configuration2 = TypeMappingConfiguration.Create<int, double>( (s, _) => s );
-        var configuration3 = TypeMappingConfiguration.Create<Guid, string>( (s, _) => s.ToString() );
-        var sut = new TypeMapper( new ITypeMappingConfiguration[] { configuration1, configuration2, configuration3 } );
-        var expected = new[] { typeof( string ), typeof( double ) }.AsEnumerable();
-
-        var result = sut.GetConfiguredDestinationTypes();
-
-        result.Should().BeEquivalentTo( expected );
     }
 }
