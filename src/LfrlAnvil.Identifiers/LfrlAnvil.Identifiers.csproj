@@ -3,6 +3,14 @@
     <PropertyGroup>
         <PackageTags>LfrlAnvil Identifiers</PackageTags>
     </PropertyGroup>
+
+    <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+      <DocumentationFile>bin\Debug\LfrlAnvil.Identifiers.xml</DocumentationFile>
+    </PropertyGroup>
+
+    <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+      <DocumentationFile>bin\Release\LfrlAnvil.Identifiers.xml</DocumentationFile>
+    </PropertyGroup>
     
     <ItemGroup>
         <ProjectReference Include="..\LfrlAnvil.Chrono\LfrlAnvil.Chrono.csproj" />

@@ -84,7 +84,7 @@ public class IdentifierGeneratorTests : TestsBase
         var startTimestamp = new Timestamp( -1 );
         var timestampProvider = GetTimestampProviderMock( startTimestamp );
 
-        var action = Lambda.Of( () => new IdentifierGenerator( timestampProvider, new IdentifierGeneratorParams() ) );
+        var action = Lambda.Of( () => new IdentifierGenerator( timestampProvider ) );
 
         action.Should().ThrowExactly<ArgumentOutOfRangeException>();
     }
@@ -104,17 +104,6 @@ public class IdentifierGeneratorTests : TestsBase
     public void Ctor_WithParams_ShouldThrowArgumentOutOfRangeException_WhenTimeEpsilonIsZero()
     {
         var @params = new IdentifierGeneratorParams { TimeEpsilon = Duration.Zero };
-        var timestampProvider = GetTimestampProviderMock( Timestamp.Zero );
-
-        var action = Lambda.Of( () => new IdentifierGenerator( timestampProvider, @params ) );
-
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
-    }
-
-    [Fact]
-    public void Ctor_WithParams_ShouldThrowArgumentOutOfRangeException_WhenTimeEpsilonIsLargerThanThreeMs()
-    {
-        var @params = new IdentifierGeneratorParams { TimeEpsilon = Duration.FromMilliseconds( 3 ).AddTicks( 1 ) };
         var timestampProvider = GetTimestampProviderMock( Timestamp.Zero );
 
         var action = Lambda.Of( () => new IdentifierGenerator( timestampProvider, @params ) );
