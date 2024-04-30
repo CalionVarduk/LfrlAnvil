@@ -1,7 +1,7 @@
 ﻿using System.Globalization;
 using System.Text;
 
-namespace LfrlAnvil.Validation.Tests.ValidationMessageFormatterTests;
+namespace LfrlAnvil.Validation.Tests;
 
 public class ValidationMessageFormatterTests : TestsBase
 {

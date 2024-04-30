@@ -6,14 +6,18 @@ using LfrlAnvil.Extensions;
 
 namespace LfrlAnvil.Validation;
 
+/// <inheritdoc />
 public abstract class ValidationMessageFormatter<TResource> : IValidationMessageFormatter<TResource>
 {
+    /// <inheritdoc />
     [Pure]
     public abstract string GetResourceTemplate(TResource resource, IFormatProvider? formatProvider);
 
+    /// <inheritdoc />
     [Pure]
     public abstract ValidationMessageFormatterArgs GetArgs(IFormatProvider? formatProvider);
 
+    /// <inheritdoc />
     [return: NotNullIfNotNull( "builder" )]
     public StringBuilder? Format(
         StringBuilder? builder,
@@ -49,6 +53,12 @@ public abstract class ValidationMessageFormatter<TResource> : IValidationMessage
         return builder;
     }
 
+    /// <summary>
+    /// Appends a message index to the provided <paramref name="builder"/>.
+    /// </summary>
+    /// <param name="builder">String builder.</param>
+    /// <param name="index">Message index to append.</param>
+    /// <param name="formatProvider">Optional format provider.</param>
     protected virtual void AppendIndex(StringBuilder builder, int index, IFormatProvider? formatProvider)
     {
         builder.Append( index ).Append( '.' ).Append( ' ' );

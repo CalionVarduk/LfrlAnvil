@@ -3,15 +3,28 @@ using System.Diagnostics.Contracts;
 
 namespace LfrlAnvil.Validation.Validators;
 
+/// <summary>
+/// Represents a generic object validator for a collection of elements where each element is validated separately.
+/// </summary>
+/// <typeparam name="T">Element type.</typeparam>
+/// <typeparam name="TElementResult">Element result type.</typeparam>
 public sealed class ForEachValidator<T, TElementResult> : IValidator<IReadOnlyCollection<T>, ElementValidatorResult<T, TElementResult>>
 {
+    /// <summary>
+    /// Creates a new <see cref="ForEachValidator{T,TElementResult}"/> instance.
+    /// </summary>
+    /// <param name="elementValidator">Underlying element validator.</param>
     public ForEachValidator(IValidator<T, TElementResult> elementValidator)
     {
         ElementValidator = elementValidator;
     }
 
+    /// <summary>
+    /// Underlying element validator.
+    /// </summary>
     public IValidator<T, TElementResult> ElementValidator { get; }
 
+    /// <inheritdoc />
     [Pure]
     public Chain<ElementValidatorResult<T, TElementResult>> Validate(IReadOnlyCollection<T> obj)
     {

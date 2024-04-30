@@ -1,6 +1,6 @@
 ﻿using LfrlAnvil.TestExtensions.FluentAssertions;
 
-namespace LfrlAnvil.Validation.Tests.ValidationMessageTests;
+namespace LfrlAnvil.Validation.Tests;
 
 public class ValidationMessageTests : TestsBase
 {
