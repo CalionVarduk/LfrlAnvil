@@ -1,8 +1,8 @@
 ﻿using System.Collections.Generic;
 
-namespace LfrlAnvil.Functional.Tests.UnsafeTests;
+namespace LfrlAnvil.Functional.Tests.ErraticTests;
 
-public class GenericUnsafeTestsData<T>
+public class GenericErraticTestsData<T>
 {
     public static TheoryData<object, bool, object, bool, bool> CreateEqualsTestData(IFixture fixture)
     {

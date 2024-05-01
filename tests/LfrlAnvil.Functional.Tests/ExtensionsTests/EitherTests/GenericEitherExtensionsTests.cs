@@ -34,13 +34,13 @@ public abstract class GenericEitherExtensionsTests<T1, T2> : TestsBase
     }
 
     [Fact]
-    public void ToUnsafe_ShouldReturnOk_WhenHasFirst()
+    public void ToErratic_ShouldReturnOk_WhenHasFirst()
     {
         var value = Fixture.Create<T1>();
 
         var sut = ( Either<T1, Exception> )value;
 
-        var result = sut.ToUnsafe();
+        var result = sut.ToErratic();
 
         using ( new AssertionScope() )
         {
@@ -50,13 +50,13 @@ public abstract class GenericEitherExtensionsTests<T1, T2> : TestsBase
     }
 
     [Fact]
-    public void ToUnsafe_ShouldReturnWithError_WhenHasSecond()
+    public void ToErratic_ShouldReturnWithError_WhenHasSecond()
     {
         var error = new Exception();
 
         var sut = ( Either<T1, Exception> )error;
 
-        var result = sut.ToUnsafe();
+        var result = sut.ToErratic();
 
         using ( new AssertionScope() )
         {

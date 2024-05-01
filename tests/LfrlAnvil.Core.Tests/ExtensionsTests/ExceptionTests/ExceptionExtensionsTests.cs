@@ -8,10 +8,10 @@ public class ExceptionExtensionsTests : TestsBase
     [Fact]
     public void Rethrow_ShouldThrowExceptionWithOriginalStackTrace()
     {
-        var exception = Unsafe.Try( () => throw new Exception() ).GetError();
+        var exception = Erratic.Try( () => throw new Exception() ).GetError();
         var originalStackTrace = exception.StackTrace!.Split( Environment.NewLine );
 
-        var result = Unsafe.Try( () => { exception.Rethrow(); } );
+        var result = Erratic.Try( () => { exception.Rethrow(); } );
 
         using ( new AssertionScope() )
         {

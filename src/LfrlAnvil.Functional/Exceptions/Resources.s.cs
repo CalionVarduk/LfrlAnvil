@@ -22,16 +22,16 @@ internal static class Resources
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static string MissingUnsafeValue<T>()
+    internal static string MissingErraticValue<T>()
     {
-        return $"{GetUnsafeName<T>()} instance doesn't contain a {nameof( Unsafe<T>.Value )}.";
+        return $"{GetErraticName<T>()} instance doesn't contain a {nameof( Erratic<T>.Value )}.";
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    internal static string MissingUnsafeError<T>()
+    internal static string MissingErraticError<T>()
     {
-        return $"{GetUnsafeName<T>()} instance doesn't contain an {nameof( Unsafe<T>.Error )}.";
+        return $"{GetErraticName<T>()} instance doesn't contain an {nameof( Erratic<T>.Error )}.";
     }
 
     [Pure]
@@ -59,9 +59,9 @@ internal static class Resources
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private static string GetUnsafeName<T>()
+    private static string GetErraticName<T>()
     {
-        return $"{nameof( Unsafe )}<{typeof( T ).GetDebugString()}>";
+        return $"{nameof( Erratic )}<{typeof( T ).GetDebugString()}>";
     }
 
     [Pure]

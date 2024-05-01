@@ -1,11 +1,11 @@
-﻿namespace LfrlAnvil.Functional.Tests.UnsafeTests;
+﻿namespace LfrlAnvil.Functional.Tests.ErraticTests;
 
-public class UnsafeStaticTests : TestsBase
+public class ErraticStaticTests : TestsBase
 {
     [Fact]
     public void GetUnderlyingType_ShouldReturnNull_WhenTypeIsNull()
     {
-        var result = Unsafe.GetUnderlyingType( null );
+        var result = Erratic.GetUnderlyingType( null );
 
         result.Should().BeNull();
     }
@@ -16,18 +16,18 @@ public class UnsafeStaticTests : TestsBase
     [InlineData( typeof( IEquatable<> ) )]
     public void GetUnderlyingType_ShouldReturnNull_WhenTypeIsIncorrect(Type type)
     {
-        var result = Unsafe.GetUnderlyingType( type );
+        var result = Erratic.GetUnderlyingType( type );
 
         result.Should().BeNull();
     }
 
     [Theory]
-    [InlineData( typeof( Unsafe<int> ), typeof( int ) )]
-    [InlineData( typeof( Unsafe<decimal> ), typeof( decimal ) )]
-    [InlineData( typeof( Unsafe<double> ), typeof( double ) )]
+    [InlineData( typeof( Erratic<int> ), typeof( int ) )]
+    [InlineData( typeof( Erratic<decimal> ), typeof( decimal ) )]
+    [InlineData( typeof( Erratic<double> ), typeof( double ) )]
     public void GetUnderlyingType_ShouldReturnCorrectType_WhenTypeIsCorrect(Type type, Type expected)
     {
-        var result = Unsafe.GetUnderlyingType( type );
+        var result = Erratic.GetUnderlyingType( type );
 
         result.Should().Be( expected );
     }
@@ -35,9 +35,9 @@ public class UnsafeStaticTests : TestsBase
     [Fact]
     public void GetUnderlyingType_ShouldReturnCorrectType_WhenTypeIsCorrectAndOpen()
     {
-        var expected = typeof( Unsafe<> ).GetGenericArguments()[0];
+        var expected = typeof( Erratic<> ).GetGenericArguments()[0];
 
-        var result = Unsafe.GetUnderlyingType( typeof( Unsafe<> ) );
+        var result = Erratic.GetUnderlyingType( typeof( Erratic<> ) );
 
         result.Should().Be( expected );
     }

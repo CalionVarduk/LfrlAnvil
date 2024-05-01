@@ -28,11 +28,11 @@ public abstract class GenericObjectExtensionsTests<T> : TestsBase
     }
 
     [Fact]
-    public void ToUnsafe_WithValue_ShouldReturnCorrectResult()
+    public void ToErratic_WithValue_ShouldReturnCorrectResult()
     {
         var value = Fixture.CreateNotDefault<T>();
 
-        var sut = value.ToUnsafe();
+        var sut = value.ToErratic();
 
         using ( new AssertionScope() )
         {
@@ -42,11 +42,11 @@ public abstract class GenericObjectExtensionsTests<T> : TestsBase
     }
 
     [Fact]
-    public void ToUnsafe_WithException_ShouldReturnCorrectResult()
+    public void ToErratic_WithException_ShouldReturnCorrectResult()
     {
         var error = new Exception();
 
-        var sut = error.ToUnsafe();
+        var sut = error.ToErratic();
 
         using ( new AssertionScope() )
         {

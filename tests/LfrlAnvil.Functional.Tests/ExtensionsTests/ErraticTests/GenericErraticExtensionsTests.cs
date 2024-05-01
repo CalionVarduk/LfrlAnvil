@@ -1,8 +1,8 @@
 ﻿using LfrlAnvil.Functional.Extensions;
 
-namespace LfrlAnvil.Functional.Tests.ExtensionsTests.UnsafeTests;
+namespace LfrlAnvil.Functional.Tests.ExtensionsTests.ErraticTests;
 
-public abstract class GenericUnsafeExtensionsTests<T> : TestsBase
+public abstract class GenericErraticExtensionsTests<T> : TestsBase
     where T : notnull
 {
     [Fact]
@@ -10,7 +10,7 @@ public abstract class GenericUnsafeExtensionsTests<T> : TestsBase
     {
         var value = Fixture.CreateNotDefault<T>();
 
-        var sut = ( Unsafe<T> )value;
+        var sut = ( Erratic<T> )value;
 
         var result = sut.ToMaybe();
 
@@ -26,7 +26,7 @@ public abstract class GenericUnsafeExtensionsTests<T> : TestsBase
     {
         var error = new Exception();
 
-        var sut = ( Unsafe<T> )error;
+        var sut = ( Erratic<T> )error;
 
         var result = sut.ToMaybe();
 
@@ -38,7 +38,7 @@ public abstract class GenericUnsafeExtensionsTests<T> : TestsBase
     {
         var value = Fixture.Create<T>();
 
-        var sut = ( Unsafe<T> )value;
+        var sut = ( Erratic<T> )value;
 
         var result = sut.ToEither();
 
@@ -54,7 +54,7 @@ public abstract class GenericUnsafeExtensionsTests<T> : TestsBase
     {
         var error = new Exception();
 
-        var sut = ( Unsafe<T> )error;
+        var sut = ( Erratic<T> )error;
 
         var result = sut.ToEither();
 
@@ -70,7 +70,7 @@ public abstract class GenericUnsafeExtensionsTests<T> : TestsBase
     {
         var error = new Exception();
 
-        var sut = ( Unsafe<Unsafe<T>> )error;
+        var sut = ( Erratic<Erratic<T>> )error;
 
         var result = sut.Reduce();
 
@@ -85,9 +85,9 @@ public abstract class GenericUnsafeExtensionsTests<T> : TestsBase
     public void Reduce_ShouldReturnCorrectResult_WhenHasUnderlyingError()
     {
         var error = new Exception();
-        var underlying = ( Unsafe<T> )error;
+        var underlying = ( Erratic<T> )error;
 
-        var sut = ( Unsafe<Unsafe<T>> )underlying;
+        var sut = ( Erratic<Erratic<T>> )underlying;
 
         var result = sut.Reduce();
 
@@ -102,9 +102,9 @@ public abstract class GenericUnsafeExtensionsTests<T> : TestsBase
     public void Reduce_ShouldReturnCorrectResult_WhenHasUnderlyingValue()
     {
         var value = Fixture.Create<T>();
-        var underlying = ( Unsafe<T> )value;
+        var underlying = ( Erratic<T> )value;
 
-        var sut = ( Unsafe<Unsafe<T>> )underlying;
+        var sut = ( Erratic<Erratic<T>> )underlying;
 
         var result = sut.Reduce();
 

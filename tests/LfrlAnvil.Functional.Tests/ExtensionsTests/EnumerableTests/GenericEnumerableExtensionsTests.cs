@@ -66,10 +66,10 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
     }
 
     [Fact]
-    public void SelectValues_WithUnsafe_ShouldFilterOutErrorElements()
+    public void SelectValues_WithErratic_ShouldFilterOutErrorElements()
     {
         var expected = Fixture.CreateMany<T>().ToList();
-        var sut = expected.Select( e => e.ToUnsafe() ).Prepend( new Exception().ToUnsafe<T>() ).Append( new Exception().ToUnsafe<T>() );
+        var sut = expected.Select( e => e.ToErratic() ).Prepend( new Exception().ToErratic<T>() ).Append( new Exception().ToErratic<T>() );
 
         var result = sut.SelectValues();
 
@@ -86,9 +86,9 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
             new Exception()
         };
 
-        var sut = expected.Select( e => e.ToUnsafe<T>() )
-            .Prepend( Fixture.Create<T>().ToUnsafe() )
-            .Append( Fixture.Create<T>().ToUnsafe() );
+        var sut = expected.Select( e => e.ToErratic<T>() )
+            .Prepend( Fixture.Create<T>().ToErratic() )
+            .Append( Fixture.Create<T>().ToErratic() );
 
         var result = sut.SelectErrors();
 
@@ -96,7 +96,7 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
     }
 
     [Fact]
-    public void Partition_WithUnsafe_ShouldReturnResultWithValueAndErrorElementsSplitBetweenCorrectCollections()
+    public void Partition_WithErratic_ShouldReturnResultWithValueAndErrorElementsSplitBetweenCorrectCollections()
     {
         var expectedValues = Fixture.CreateMany<T>().ToList();
         var expectedErrors = new List<Exception>
@@ -106,7 +106,7 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
             new Exception()
         };
 
-        var sut = expectedValues.Select( e => e.ToUnsafe() ).Concat( expectedErrors.Select( e => e.ToUnsafe<T>() ) );
+        var sut = expectedValues.Select( e => e.ToErratic() ).Concat( expectedErrors.Select( e => e.ToErratic<T>() ) );
 
         var (values, errors) = sut.Partition();
 
