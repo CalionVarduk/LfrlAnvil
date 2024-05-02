@@ -8,6 +8,7 @@ using LfrlAnvil.Collections.Internal;
 
 namespace LfrlAnvil.Collections;
 
+/// <inheritdoc />
 public class TwoWayDictionary<T1, T2> : ITwoWayDictionary<T1, T2>
     where T1 : notnull
     where T2 : notnull
@@ -15,26 +16,45 @@ public class TwoWayDictionary<T1, T2> : ITwoWayDictionary<T1, T2>
     private readonly Dictionary<T1, T2> _forward;
     private readonly Dictionary<T2, T1> _reverse;
 
+    /// <summary>
+    /// Creates a new empty <see cref="TwoWayDictionary{T1,T2}"/> instance
+    /// with <see cref="EqualityComparer{T}.Default"/> forward and reverse comparer.
+    /// </summary>
     public TwoWayDictionary()
     {
         _forward = new Dictionary<T1, T2>();
         _reverse = new Dictionary<T2, T1>();
     }
 
+    /// <summary>
+    /// Creates a new empty <see cref="TwoWayDictionary{T1,T2}"/> instance.
+    /// </summary>
+    /// <param name="forwardComparer">Forward key equality comparer.</param>
+    /// <param name="reverseComparer">Reverse key equality comparer.</param>
     public TwoWayDictionary(IEqualityComparer<T1> forwardComparer, IEqualityComparer<T2> reverseComparer)
     {
         _forward = new Dictionary<T1, T2>( forwardComparer );
         _reverse = new Dictionary<T2, T1>( reverseComparer );
     }
 
+    /// <inheritdoc cref="ITwoWayDictionary{T1,T2}.Count" />
     public int Count => _forward.Count;
+
+    /// <inheritdoc />
     public IReadOnlyDictionary<T1, T2> Forward => _forward;
+
+    /// <inheritdoc />
     public IReadOnlyDictionary<T2, T1> Reverse => _reverse;
+
+    /// <inheritdoc />
     public IEqualityComparer<T1> ForwardComparer => _forward.Comparer;
+
+    /// <inheritdoc />
     public IEqualityComparer<T2> ReverseComparer => _reverse.Comparer;
 
     bool ICollection<Pair<T1, T2>>.IsReadOnly => (( ICollection<KeyValuePair<T1, T2>> )_forward).IsReadOnly;
 
+    /// <inheritdoc />
     public bool TryAdd(T1 first, T2 second)
     {
         if ( _forward.ContainsKey( first ) || _reverse.ContainsKey( second ) )
@@ -45,6 +65,7 @@ public class TwoWayDictionary<T1, T2> : ITwoWayDictionary<T1, T2>
         return true;
     }
 
+    /// <inheritdoc />
     public void Add(T1 first, T2 second)
     {
         Ensure.False( _forward.ContainsKey( first ), Resources.KeyExistenceInForwardDictionary );
@@ -53,6 +74,7 @@ public class TwoWayDictionary<T1, T2> : ITwoWayDictionary<T1, T2>
         _reverse.Add( second, first );
     }
 
+    /// <inheritdoc />
     public bool TryUpdateForward(T1 first, T2 second)
     {
         if ( _reverse.ContainsKey( second ) )
@@ -67,6 +89,7 @@ public class TwoWayDictionary<T1, T2> : ITwoWayDictionary<T1, T2>
         return true;
     }
 
+    /// <inheritdoc />
     public void UpdateForward(T1 first, T2 second)
     {
         Ensure.False( _reverse.ContainsKey( second ), Resources.KeyExistenceInReverseDictionary );
@@ -76,6 +99,7 @@ public class TwoWayDictionary<T1, T2> : ITwoWayDictionary<T1, T2>
         _reverse.Add( second, first );
     }
 
+    /// <inheritdoc />
     public bool TryUpdateReverse(T2 second, T1 first)
     {
         if ( _forward.ContainsKey( first ) )
@@ -90,6 +114,7 @@ public class TwoWayDictionary<T1, T2> : ITwoWayDictionary<T1, T2>
         return true;
     }
 
+    /// <inheritdoc />
     public void UpdateReverse(T2 second, T1 first)
     {
         Ensure.False( _forward.ContainsKey( first ), Resources.KeyExistenceInForwardDictionary );
@@ -99,16 +124,19 @@ public class TwoWayDictionary<T1, T2> : ITwoWayDictionary<T1, T2>
         _forward.Add( first, second );
     }
 
+    /// <inheritdoc />
     public bool RemoveForward(T1 value)
     {
         return RemoveForward( value, out _ );
     }
 
+    /// <inheritdoc />
     public bool RemoveReverse(T2 value)
     {
         return RemoveReverse( value, out _ );
     }
 
+    /// <inheritdoc />
     public bool RemoveForward(T1 value, [MaybeNullWhen( false )] out T2 second)
     {
         if ( ! _forward.Remove( value, out second ) )
@@ -118,6 +146,7 @@ public class TwoWayDictionary<T1, T2> : ITwoWayDictionary<T1, T2>
         return true;
     }
 
+    /// <inheritdoc />
     public bool RemoveReverse(T2 value, [MaybeNullWhen( false )] out T1 first)
     {
         if ( ! _reverse.Remove( value, out first ) )
@@ -127,24 +156,28 @@ public class TwoWayDictionary<T1, T2> : ITwoWayDictionary<T1, T2>
         return true;
     }
 
+    /// <inheritdoc />
     public void Clear()
     {
         _forward.Clear();
         _reverse.Clear();
     }
 
+    /// <inheritdoc />
     [Pure]
     public bool Contains(T1 first, T2 second)
     {
         return _forward.TryGetValue( first, out var existingSecond ) && _reverse.Comparer.Equals( existingSecond, second );
     }
 
+    /// <inheritdoc />
     [Pure]
     public bool Contains(Pair<T1, T2> item)
     {
         return Contains( item.First, item.Second );
     }
 
+    /// <inheritdoc />
     [Pure]
     public IEnumerator<Pair<T1, T2>> GetEnumerator()
     {

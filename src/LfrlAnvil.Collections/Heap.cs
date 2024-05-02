@@ -8,22 +8,39 @@ using LfrlAnvil.Extensions;
 
 namespace LfrlAnvil.Collections;
 
+/// <inheritdoc />
 public class Heap<T> : IHeap<T>
 {
     private readonly List<T> _items;
 
+    /// <summary>
+    /// Creates a new empty <see cref="Heap{T}"/> instance with <see cref="Comparer{T}.Default"/> comparer.
+    /// </summary>
     public Heap()
         : this( Comparer<T>.Default ) { }
 
+    /// <summary>
+    /// Creates a new empty <see cref="Heap{T}"/> instance.
+    /// </summary>
+    /// <param name="comparer">Comparer to use.</param>
     public Heap(IComparer<T> comparer)
     {
         Comparer = comparer;
         _items = new List<T>();
     }
 
+    /// <summary>
+    /// Creates a new <see cref="Heap{T}"/> instance with <see cref="Comparer{T}.Default"/> comparer.
+    /// </summary>
+    /// <param name="collection">Initial collection of entries.</param>
     public Heap(IEnumerable<T> collection)
         : this( collection, Comparer<T>.Default ) { }
 
+    /// <summary>
+    /// Creates a new <see cref="Heap{T}"/> instance.
+    /// </summary>
+    /// <param name="collection">Initial collection of entries.</param>
+    /// <param name="comparer">Comparer to use.</param>
     public Heap(IEnumerable<T> collection, IComparer<T> comparer)
     {
         Comparer = comparer;
@@ -33,16 +50,23 @@ public class Heap<T> : IHeap<T>
             FixDown( i );
     }
 
+    /// <inheritdoc />
     public IComparer<T> Comparer { get; }
+
+    /// <inheritdoc />
     public T this[int index] => _items[index];
+
+    /// <inheritdoc />
     public int Count => _items.Count;
 
+    /// <inheritdoc />
     public void Add(T item)
     {
         _items.Add( item );
         FixUp( _items.Count - 1 );
     }
 
+    /// <inheritdoc />
     public T Extract()
     {
         var result = Peek();
@@ -50,6 +74,7 @@ public class Heap<T> : IHeap<T>
         return result;
     }
 
+    /// <inheritdoc />
     public bool TryExtract([MaybeNullWhen( false )] out T result)
     {
         if ( _items.Count == 0 )
@@ -62,12 +87,14 @@ public class Heap<T> : IHeap<T>
         return true;
     }
 
+    /// <inheritdoc />
     [Pure]
     public T Peek()
     {
         return _items[0];
     }
 
+    /// <inheritdoc />
     public bool TryPeek([MaybeNullWhen( false )] out T result)
     {
         if ( _items.Count == 0 )
@@ -80,6 +107,7 @@ public class Heap<T> : IHeap<T>
         return true;
     }
 
+    /// <inheritdoc />
     public void Pop()
     {
         _items[0] = _items[^1];
@@ -87,6 +115,7 @@ public class Heap<T> : IHeap<T>
         FixDown( 0 );
     }
 
+    /// <inheritdoc />
     public bool TryPop()
     {
         if ( _items.Count == 0 )
@@ -96,6 +125,7 @@ public class Heap<T> : IHeap<T>
         return true;
     }
 
+    /// <inheritdoc />
     public T Replace(T item)
     {
         var result = Peek();
@@ -104,6 +134,7 @@ public class Heap<T> : IHeap<T>
         return result;
     }
 
+    /// <inheritdoc />
     public bool TryReplace(T item, [MaybeNullWhen( false )] out T replaced)
     {
         if ( _items.Count == 0 )
@@ -116,11 +147,13 @@ public class Heap<T> : IHeap<T>
         return true;
     }
 
+    /// <inheritdoc />
     public void Clear()
     {
         _items.Clear();
     }
 
+    /// <inheritdoc />
     [Pure]
     public IEnumerator<T> GetEnumerator()
     {

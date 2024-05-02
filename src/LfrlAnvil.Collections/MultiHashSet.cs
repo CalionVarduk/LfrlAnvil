@@ -9,25 +9,41 @@ using LfrlAnvil.Extensions;
 
 namespace LfrlAnvil.Collections;
 
+/// <inheritdoc />
 public class MultiHashSet<T> : IMultiSet<T>
     where T : notnull
 {
     private readonly Dictionary<T, int> _map;
 
+    /// <summary>
+    /// Creates a new empty <see cref="MultiHashSet{T}"/> instance with <see cref="EqualityComparer{T}.Default"/> comparer.
+    /// </summary>
     public MultiHashSet()
         : this( EqualityComparer<T>.Default ) { }
 
+    /// <summary>
+    /// Creates a new empty <see cref="MultiHashSet{T}"/> instance.
+    /// </summary>
+    /// <param name="comparer">Element comparer.</param>
     public MultiHashSet(IEqualityComparer<T> comparer)
     {
         _map = new Dictionary<T, int>( comparer );
         FullCount = 0;
     }
 
+    /// <inheritdoc />
     public long FullCount { get; private set; }
+
+    /// <inheritdoc cref="IMultiSet{T}.Count" />
     public int Count => _map.Count;
+
+    /// <inheritdoc />
     public IEqualityComparer<T> Comparer => _map.Comparer;
+
+    /// <inheritdoc />
     public IEnumerable<T> DistinctItems => _map.Keys;
 
+    /// <inheritdoc />
     public IEnumerable<T> Items
     {
         get
@@ -45,30 +61,35 @@ public class MultiHashSet<T> : IMultiSet<T>
 
     bool ICollection<Pair<T, int>>.IsReadOnly => false;
 
+    /// <inheritdoc />
     [Pure]
     public bool Contains(T item)
     {
         return _map.ContainsKey( item );
     }
 
+    /// <inheritdoc />
     [Pure]
     public bool Contains(T item, int multiplicity)
     {
         return GetMultiplicity( item ) >= multiplicity;
     }
 
+    /// <inheritdoc cref="ICollection{T}.Contains(T)" />
     [Pure]
     public bool Contains(Pair<T, int> item)
     {
         return Contains( item.First, item.Second );
     }
 
+    /// <inheritdoc />
     [Pure]
     public int GetMultiplicity(T item)
     {
         return _map.GetValueOrDefault( item );
     }
 
+    /// <inheritdoc />
     public int SetMultiplicity(T item, int value)
     {
         Ensure.IsGreaterThanOrEqualTo( value, 0 );
@@ -95,28 +116,33 @@ public class MultiHashSet<T> : IMultiSet<T>
         return 0;
     }
 
+    /// <inheritdoc />
     public int Add(T item)
     {
         return AddImpl( item, 1 );
     }
 
+    /// <inheritdoc />
     public int AddMany(T item, int count)
     {
         Ensure.IsGreaterThan( count, 0 );
         return AddImpl( item, count );
     }
 
+    /// <inheritdoc />
     public int Remove(T item)
     {
         return RemoveImpl( item, 1 );
     }
 
+    /// <inheritdoc />
     public int RemoveMany(T item, int count)
     {
         Ensure.IsGreaterThan( count, 0 );
         return RemoveImpl( item, count );
     }
 
+    /// <inheritdoc />
     public int RemoveAll(T item)
     {
         if ( ! _map.TryGetValue( item, out var multiplicity ) )
@@ -125,12 +151,14 @@ public class MultiHashSet<T> : IMultiSet<T>
         return RemoveAllImpl( item, multiplicity );
     }
 
+    /// <inheritdoc />
     public void Clear()
     {
         _map.Clear();
         FullCount = 0;
     }
 
+    /// <inheritdoc />
     public void ExceptWith(IEnumerable<Pair<T, int>> other)
     {
         if ( ReferenceEquals( this, other ) )
@@ -148,6 +176,7 @@ public class MultiHashSet<T> : IMultiSet<T>
         }
     }
 
+    /// <inheritdoc />
     public void UnionWith(IEnumerable<Pair<T, int>> other)
     {
         if ( ReferenceEquals( this, other ) )
@@ -172,6 +201,7 @@ public class MultiHashSet<T> : IMultiSet<T>
         }
     }
 
+    /// <inheritdoc />
     public void IntersectWith(IEnumerable<Pair<T, int>> other)
     {
         if ( Count == 0 || ReferenceEquals( this, other ) )
@@ -209,6 +239,7 @@ public class MultiHashSet<T> : IMultiSet<T>
         }
     }
 
+    /// <inheritdoc />
     public void SymmetricExceptWith(IEnumerable<Pair<T, int>> other)
     {
         if ( ReferenceEquals( this, other ) )
@@ -243,6 +274,7 @@ public class MultiHashSet<T> : IMultiSet<T>
         }
     }
 
+    /// <inheritdoc cref="IMultiSet{T}.Overlaps(IEnumerable{Pair{T,int}})" />
     [Pure]
     public bool Overlaps(IEnumerable<Pair<T, int>> other)
     {
@@ -261,6 +293,7 @@ public class MultiHashSet<T> : IMultiSet<T>
         return false;
     }
 
+    /// <inheritdoc cref="IMultiSet{T}.SetEquals(IEnumerable{Pair{T,int}})" />
     [Pure]
     public bool SetEquals(IEnumerable<Pair<T, int>> other)
     {
@@ -281,6 +314,7 @@ public class MultiHashSet<T> : IMultiSet<T>
         return true;
     }
 
+    /// <inheritdoc cref="IMultiSet{T}.IsSupersetOf(IEnumerable{Pair{T,int}})" />
     [Pure]
     public bool IsSupersetOf(IEnumerable<Pair<T, int>> other)
     {
@@ -301,6 +335,7 @@ public class MultiHashSet<T> : IMultiSet<T>
         return true;
     }
 
+    /// <inheritdoc cref="IMultiSet{T}.IsProperSupersetOf(IEnumerable{Pair{T,int}})" />
     [Pure]
     public bool IsProperSupersetOf(IEnumerable<Pair<T, int>> other)
     {
@@ -328,18 +363,21 @@ public class MultiHashSet<T> : IMultiSet<T>
         return equalMultiplicityCount < Count;
     }
 
+    /// <inheritdoc cref="IMultiSet{T}.IsSubsetOf(IEnumerable{Pair{T,int}})" />
     [Pure]
     public bool IsSubsetOf(IEnumerable<Pair<T, int>> other)
     {
         return GetOtherSet( other, Comparer ).IsSupersetOf( this );
     }
 
+    /// <inheritdoc cref="IMultiSet{T}.IsProperSubsetOf(IEnumerable{Pair{T,int}})" />
     [Pure]
     public bool IsProperSubsetOf(IEnumerable<Pair<T, int>> other)
     {
         return GetOtherSet( other, Comparer ).IsProperSupersetOf( this );
     }
 
+    /// <inheritdoc />
     [Pure]
     public IEnumerator<Pair<T, int>> GetEnumerator()
     {

@@ -4,11 +4,17 @@ using System.Runtime.CompilerServices;
 
 namespace LfrlAnvil.Collections;
 
+/// <inheritdoc />
 public sealed class TreeDictionaryNode<TKey, TValue> : ITreeDictionaryNode<TKey, TValue>
     where TKey : notnull
 {
     private List<TreeDictionaryNode<TKey, TValue>> _children;
 
+    /// <summary>
+    /// Creates a new <see cref="TreeDictionaryNode{TKey,TValue}"/> instance.
+    /// </summary>
+    /// <param name="key">Node's key.</param>
+    /// <param name="value">Node's value.</param>
     public TreeDictionaryNode(TKey key, TValue value)
     {
         Key = key;
@@ -16,10 +22,21 @@ public sealed class TreeDictionaryNode<TKey, TValue> : ITreeDictionaryNode<TKey,
         _children = new List<TreeDictionaryNode<TKey, TValue>>();
     }
 
+    /// <inheritdoc />
     public TKey Key { get; }
+
+    /// <inheritdoc />
     public TValue Value { get; set; }
+
+    /// <inheritdoc cref="ITreeDictionaryNode{TKey,TValue}.Parent" />
     public TreeDictionaryNode<TKey, TValue>? Parent { get; private set; }
+
+    /// <summary>
+    /// Associated <see cref="TreeDictionary{TKey,TValue}"/> instance with this node.
+    /// </summary>
     public TreeDictionary<TKey, TValue>? Tree { get; private set; }
+
+    /// <inheritdoc cref="ITreeDictionaryNode{TKey,TValue}.Children" />
     public IReadOnlyList<TreeDictionaryNode<TKey, TValue>> Children => _children;
 
     ITreeDictionaryNode<TKey, TValue>? ITreeDictionaryNode<TKey, TValue>.Parent => Parent;
@@ -27,6 +44,10 @@ public sealed class TreeDictionaryNode<TKey, TValue> : ITreeDictionaryNode<TKey,
     ITreeNode<TValue>? ITreeNode<TValue>.Parent => Parent;
     IReadOnlyList<ITreeNode<TValue>> ITreeNode<TValue>.Children => _children;
 
+    /// <summary>
+    /// Returns a string representation of this <see cref="TreeDictionaryNode{TKey,TValue}"/> instance.
+    /// </summary>
+    /// <returns>String representation.</returns>
     [Pure]
     public override string ToString()
     {

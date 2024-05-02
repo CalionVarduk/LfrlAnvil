@@ -9,28 +9,45 @@ using LfrlAnvil.Collections.Internal;
 
 namespace LfrlAnvil.Collections;
 
+/// <inheritdoc />
 public class MultiDictionary<TKey, TValue> : IMultiDictionary<TKey, TValue>
     where TKey : notnull
 {
     private readonly Dictionary<TKey, ValuesCollection> _map;
 
+    /// <summary>
+    /// Creates a new empty <see cref="MultiDictionary{TKey,TValue}"/> instance
+    /// with <see cref="EqualityComparer{T}.Default"/> key comparer.
+    /// </summary>
     public MultiDictionary()
         : this( EqualityComparer<TKey>.Default ) { }
 
+    /// <summary>
+    /// Creates a new empty <see cref="MultiDictionary{TKey,TValue}"/> instance.
+    /// </summary>
+    /// <param name="comparer">Key equality comparer.</param>
     public MultiDictionary(IEqualityComparer<TKey> comparer)
     {
         _map = new Dictionary<TKey, ValuesCollection>( comparer );
     }
 
+    /// <inheritdoc cref="IMultiDictionary{TKey,TValue}.this" />
     public IReadOnlyList<TValue> this[TKey key]
     {
         get => _map.TryGetValue( key, out var result ) ? result : Array.Empty<TValue>();
         set => SetRange( key, value );
     }
 
+    /// <inheritdoc cref="IMultiDictionary{TKey,TValue}.Count" />
     public int Count => _map.Count;
+
+    /// <inheritdoc />
     public IEqualityComparer<TKey> Comparer => _map.Comparer;
+
+    /// <inheritdoc cref="IMultiDictionary{TKey,TValue}.Keys" />
     public IReadOnlyCollection<TKey> Keys => _map.Keys;
+
+    /// <inheritdoc cref="IMultiDictionary{TKey,TValue}.Values" />
     public IReadOnlyCollection<IReadOnlyList<TValue>> Values => _map.Values;
 
     IEnumerable<TValue> ILookup<TKey, TValue>.this[TKey key] => this[key];
@@ -44,18 +61,21 @@ public class MultiDictionary<TKey, TValue> : IMultiDictionary<TKey, TValue>
     bool ICollection<KeyValuePair<TKey, IReadOnlyList<TValue>>>.IsReadOnly =>
         (( ICollection<KeyValuePair<TKey, ValuesCollection>> )_map).IsReadOnly;
 
+    /// <inheritdoc cref="IMultiDictionary{TKey,TValue}.ContainsKey(TKey)" />
     [Pure]
     public bool ContainsKey(TKey key)
     {
         return _map.ContainsKey( key );
     }
 
+    /// <inheritdoc />
     [Pure]
     public int GetCount(TKey key)
     {
         return _map.TryGetValue( key, out var list ) ? list.Count : 0;
     }
 
+    /// <inheritdoc cref="IMultiDictionary{TKey,TValue}.TryGetValue(TKey,out IReadOnlyList{TValue})" />
     public bool TryGetValue(TKey key, [MaybeNullWhen( false )] out IReadOnlyList<TValue> value)
     {
         if ( _map.TryGetValue( key, out var list ) )
@@ -68,6 +88,7 @@ public class MultiDictionary<TKey, TValue> : IMultiDictionary<TKey, TValue>
         return false;
     }
 
+    /// <inheritdoc />
     public void Add(TKey key, TValue value)
     {
         ref var list = ref CollectionsMarshal.GetValueRefOrAddDefault( _map, key, out var exists )!;
@@ -77,6 +98,7 @@ public class MultiDictionary<TKey, TValue> : IMultiDictionary<TKey, TValue>
         list.Add( value );
     }
 
+    /// <inheritdoc />
     public void AddRange(TKey key, IEnumerable<TValue> values)
     {
         using var enumerator = values.GetEnumerator();
@@ -92,6 +114,7 @@ public class MultiDictionary<TKey, TValue> : IMultiDictionary<TKey, TValue>
             list.Add( enumerator.Current );
     }
 
+    /// <inheritdoc />
     public void SetRange(TKey key, IEnumerable<TValue> values)
     {
         using var enumerator = values.GetEnumerator();
@@ -112,11 +135,13 @@ public class MultiDictionary<TKey, TValue> : IMultiDictionary<TKey, TValue>
             list.Add( enumerator.Current );
     }
 
+    /// <inheritdoc />
     public IReadOnlyList<TValue> Remove(TKey key)
     {
         return _map.Remove( key, out var list ) ? list : Array.Empty<TValue>();
     }
 
+    /// <inheritdoc />
     public bool Remove(TKey key, TValue value)
     {
         if ( ! _map.TryGetValue( key, out var list ) )
@@ -129,6 +154,7 @@ public class MultiDictionary<TKey, TValue> : IMultiDictionary<TKey, TValue>
         return removed;
     }
 
+    /// <inheritdoc />
     public bool RemoveAt(TKey key, int index)
     {
         if ( ! _map.TryGetValue( key, out var list ) )
@@ -141,6 +167,7 @@ public class MultiDictionary<TKey, TValue> : IMultiDictionary<TKey, TValue>
         return true;
     }
 
+    /// <inheritdoc />
     public bool RemoveRange(TKey key, int index, int count)
     {
         if ( ! _map.TryGetValue( key, out var list ) )
@@ -153,6 +180,7 @@ public class MultiDictionary<TKey, TValue> : IMultiDictionary<TKey, TValue>
         return true;
     }
 
+    /// <inheritdoc />
     public int RemoveAll(TKey key, Predicate<TValue> predicate)
     {
         if ( ! _map.TryGetValue( key, out var list ) )
@@ -165,11 +193,13 @@ public class MultiDictionary<TKey, TValue> : IMultiDictionary<TKey, TValue>
         return removed;
     }
 
+    /// <inheritdoc />
     public void Clear()
     {
         _map.Clear();
     }
 
+    /// <inheritdoc cref="IEnumerable{T}.GetEnumerator()" />
     [Pure]
     public IEnumerator<KeyValuePair<TKey, IReadOnlyList<TValue>>> GetEnumerator()
     {

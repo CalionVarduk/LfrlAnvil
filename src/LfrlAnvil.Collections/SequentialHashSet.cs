@@ -6,26 +6,43 @@ using LfrlAnvil.Internal;
 
 namespace LfrlAnvil.Collections;
 
+/// <summary>
+/// Represents a generic set of elements whose insertion order is preserved.
+/// </summary>
+/// <typeparam name="T">Element type.</typeparam>
 public class SequentialHashSet<T> : ISet<T>, IReadOnlySet<T>
     where T : notnull
 {
     private readonly Dictionary<T, DoublyLinkedNode<T>> _map;
     private DoublyLinkedNodeSequence<T> _order;
 
+    /// <summary>
+    /// Creates a new empty <see cref="SequentialHashSet{T}"/> instance with <see cref="Comparer{T}.Default"/> comparer.
+    /// </summary>
     public SequentialHashSet()
         : this( EqualityComparer<T>.Default ) { }
 
+    /// <summary>
+    /// Creates a new empty <see cref="SequentialHashSet{T}"/> instance.
+    /// </summary>
+    /// <param name="comparer">Element comparer.</param>
     public SequentialHashSet(IEqualityComparer<T> comparer)
     {
         _map = new Dictionary<T, DoublyLinkedNode<T>>( comparer );
         _order = DoublyLinkedNodeSequence<T>.Empty;
     }
 
+    /// <inheritdoc cref="ICollection{T}.Count" />
     public int Count => _map.Count;
+
+    /// <summary>
+    /// Element comparer.
+    /// </summary>
     public IEqualityComparer<T> Comparer => _map.Comparer;
 
     bool ICollection<T>.IsReadOnly => (( ICollection<KeyValuePair<T, DoublyLinkedNode<T>>> )_map).IsReadOnly;
 
+    /// <inheritdoc />
     public bool Add(T item)
     {
         var node = new DoublyLinkedNode<T>( item );
@@ -36,6 +53,7 @@ public class SequentialHashSet<T> : ISet<T>, IReadOnlySet<T>
         return true;
     }
 
+    /// <inheritdoc />
     public bool Remove(T item)
     {
         if ( ! _map.Remove( item, out var node ) )
@@ -45,18 +63,21 @@ public class SequentialHashSet<T> : ISet<T>, IReadOnlySet<T>
         return true;
     }
 
+    /// <inheritdoc cref="ICollection{T}.Contains(T)" />
     [Pure]
     public bool Contains(T item)
     {
         return _map.ContainsKey( item );
     }
 
+    /// <inheritdoc />
     public void Clear()
     {
         _map.Clear();
         _order = _order.Clear();
     }
 
+    /// <inheritdoc />
     public void ExceptWith(IEnumerable<T> other)
     {
         if ( ReferenceEquals( this, other ) )
@@ -69,6 +90,7 @@ public class SequentialHashSet<T> : ISet<T>, IReadOnlySet<T>
             Remove( item );
     }
 
+    /// <inheritdoc />
     public void UnionWith(IEnumerable<T> other)
     {
         if ( ReferenceEquals( this, other ) )
@@ -78,6 +100,7 @@ public class SequentialHashSet<T> : ISet<T>, IReadOnlySet<T>
             Add( item );
     }
 
+    /// <inheritdoc />
     public void IntersectWith(IEnumerable<T> other)
     {
         if ( Count == 0 || ReferenceEquals( this, other ) )
@@ -102,6 +125,7 @@ public class SequentialHashSet<T> : ISet<T>, IReadOnlySet<T>
             Remove( item );
     }
 
+    /// <inheritdoc />
     public void SymmetricExceptWith(IEnumerable<T> other)
     {
         if ( ReferenceEquals( this, other ) )
@@ -117,6 +141,7 @@ public class SequentialHashSet<T> : ISet<T>, IReadOnlySet<T>
         }
     }
 
+    /// <inheritdoc cref="ISet{T}.Overlaps(IEnumerable{T})" />
     [Pure]
     public bool Overlaps(IEnumerable<T> other)
     {
@@ -132,6 +157,7 @@ public class SequentialHashSet<T> : ISet<T>, IReadOnlySet<T>
         return false;
     }
 
+    /// <inheritdoc cref="ISet{T}.SetEquals(IEnumerable{T})" />
     [Pure]
     public bool SetEquals(IEnumerable<T> other)
     {
@@ -157,18 +183,21 @@ public class SequentialHashSet<T> : ISet<T>, IReadOnlySet<T>
         return Count == otherSet.Count;
     }
 
+    /// <inheritdoc cref="ISet{T}.IsSupersetOf(IEnumerable{T})" />
     [Pure]
     public bool IsSupersetOf(IEnumerable<T> other)
     {
         return ReferenceEquals( this, other ) || IsSupersetOf( this, other );
     }
 
+    /// <inheritdoc cref="ISet{T}.IsProperSupersetOf(IEnumerable{T})" />
     [Pure]
     public bool IsProperSupersetOf(IEnumerable<T> other)
     {
         return Count > 0 && ! ReferenceEquals( this, other ) && IsProperSupersetOf( this, other, Comparer );
     }
 
+    /// <inheritdoc cref="ISet{T}.IsSubsetOf(IEnumerable{T})" />
     [Pure]
     public bool IsSubsetOf(IEnumerable<T> other)
     {
@@ -182,6 +211,7 @@ public class SequentialHashSet<T> : ISet<T>, IReadOnlySet<T>
         return IsSupersetOf( otherSet, this );
     }
 
+    /// <inheritdoc cref="ISet{T}.IsProperSubsetOf(IEnumerable{T})" />
     [Pure]
     public bool IsProperSubsetOf(IEnumerable<T> other)
     {
@@ -201,6 +231,7 @@ public class SequentialHashSet<T> : ISet<T>, IReadOnlySet<T>
         return IsProperSupersetOf( otherSet, this );
     }
 
+    /// <inheritdoc />
     [Pure]
     public IEnumerator<T> GetEnumerator()
     {

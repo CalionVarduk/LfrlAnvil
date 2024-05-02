@@ -9,15 +9,25 @@ using LfrlAnvil.Extensions;
 
 namespace LfrlAnvil.Collections;
 
+/// <inheritdoc />
 public class DictionaryHeap<TKey, TValue> : IDictionaryHeap<TKey, TValue>
     where TKey : notnull
 {
     private readonly List<DictionaryHeapNode<TKey, TValue>> _items;
     private readonly Dictionary<TKey, DictionaryHeapNode<TKey, TValue>> _map;
 
+    /// <summary>
+    /// Creates a new empty <see cref="DictionaryHeap{TKey,TValue}"/> instance with <see cref="EqualityComparer{T}.Default"/> key comparer
+    /// and <see cref="Comparer{T}.Default"/> entry comparer.
+    /// </summary>
     public DictionaryHeap()
         : this( EqualityComparer<TKey>.Default, Comparer<TValue>.Default ) { }
 
+    /// <summary>
+    /// Creates a new empty <see cref="DictionaryHeap{TKey,TValue}"/> instance.
+    /// </summary>
+    /// <param name="keyComparer">Key equality comparer.</param>
+    /// <param name="comparer">Entry comparer.</param>
     public DictionaryHeap(IEqualityComparer<TKey> keyComparer, IComparer<TValue> comparer)
     {
         Comparer = comparer;
@@ -25,9 +35,20 @@ public class DictionaryHeap<TKey, TValue> : IDictionaryHeap<TKey, TValue>
         _map = new Dictionary<TKey, DictionaryHeapNode<TKey, TValue>>( keyComparer );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="DictionaryHeap{TKey,TValue}"/> instance with <see cref="EqualityComparer{T}.Default"/> key comparer
+    /// and <see cref="Comparer{T}.Default"/> entry comparer.
+    /// </summary>
+    /// <param name="collection">Initial collection of entries.</param>
     public DictionaryHeap(IEnumerable<KeyValuePair<TKey, TValue>> collection)
         : this( collection, EqualityComparer<TKey>.Default, Comparer<TValue>.Default ) { }
 
+    /// <summary>
+    /// Creates a new <see cref="DictionaryHeap{TKey,TValue}"/> instance.
+    /// </summary>
+    /// <param name="collection">Initial collection of entries.</param>
+    /// <param name="keyComparer">Key equality comparer.</param>
+    /// <param name="comparer">Entry comparer.</param>
     public DictionaryHeap(
         IEnumerable<KeyValuePair<TKey, TValue>> collection,
         IEqualityComparer<TKey> keyComparer,
@@ -48,29 +69,40 @@ public class DictionaryHeap<TKey, TValue> : IDictionaryHeap<TKey, TValue>
             FixDown( i );
     }
 
+    /// <inheritdoc />
     public IComparer<TValue> Comparer { get; }
+
+    /// <inheritdoc />
     public IEqualityComparer<TKey> KeyComparer => _map.Comparer;
+
+    /// <inheritdoc />
     public TValue this[int index] => _items[index].Value;
+
+    /// <inheritdoc />
     public int Count => _items.Count;
 
+    /// <inheritdoc />
     [Pure]
     public TKey GetKey(int index)
     {
         return _items[index].Key;
     }
 
+    /// <inheritdoc />
     [Pure]
     public bool ContainsKey(TKey key)
     {
         return _map.ContainsKey( key );
     }
 
+    /// <inheritdoc />
     [Pure]
     public TValue GetValue(TKey key)
     {
         return _map[key].Value;
     }
 
+    /// <inheritdoc />
     public bool TryGetValue(TKey key, [MaybeNullWhen( false )] out TValue result)
     {
         if ( _map.TryGetValue( key, out var node ) )
@@ -83,12 +115,14 @@ public class DictionaryHeap<TKey, TValue> : IDictionaryHeap<TKey, TValue>
         return false;
     }
 
+    /// <inheritdoc />
     [Pure]
     public TValue Peek()
     {
         return _items[0].Value;
     }
 
+    /// <inheritdoc />
     public bool TryPeek([MaybeNullWhen( false )] out TValue result)
     {
         if ( _items.Count == 0 )
@@ -101,6 +135,7 @@ public class DictionaryHeap<TKey, TValue> : IDictionaryHeap<TKey, TValue>
         return true;
     }
 
+    /// <inheritdoc />
     public TValue Extract()
     {
         var result = Peek();
@@ -108,6 +143,7 @@ public class DictionaryHeap<TKey, TValue> : IDictionaryHeap<TKey, TValue>
         return result;
     }
 
+    /// <inheritdoc />
     public bool TryExtract([MaybeNullWhen( false )] out TValue result)
     {
         if ( _items.Count == 0 )
@@ -120,6 +156,7 @@ public class DictionaryHeap<TKey, TValue> : IDictionaryHeap<TKey, TValue>
         return true;
     }
 
+    /// <inheritdoc />
     public void Add(TKey key, TValue value)
     {
         var node = CreateNode( key, value );
@@ -128,6 +165,7 @@ public class DictionaryHeap<TKey, TValue> : IDictionaryHeap<TKey, TValue>
         FixUp( _items.Count - 1 );
     }
 
+    /// <inheritdoc />
     public bool TryAdd(TKey key, TValue value)
     {
         var node = CreateNode( key, value );
@@ -139,6 +177,7 @@ public class DictionaryHeap<TKey, TValue> : IDictionaryHeap<TKey, TValue>
         return true;
     }
 
+    /// <inheritdoc />
     public TValue Remove(TKey key)
     {
         if ( ! TryRemove( key, out var removed ) )
@@ -147,6 +186,7 @@ public class DictionaryHeap<TKey, TValue> : IDictionaryHeap<TKey, TValue>
         return removed;
     }
 
+    /// <inheritdoc />
     public bool TryRemove(TKey key, [MaybeNullWhen( false )] out TValue removed)
     {
         if ( ! _map.Remove( key, out var node ) )
@@ -167,6 +207,7 @@ public class DictionaryHeap<TKey, TValue> : IDictionaryHeap<TKey, TValue>
         return true;
     }
 
+    /// <inheritdoc />
     public void Pop()
     {
         var nodeToPop = _items[0];
@@ -178,6 +219,7 @@ public class DictionaryHeap<TKey, TValue> : IDictionaryHeap<TKey, TValue>
         FixDown( 0 );
     }
 
+    /// <inheritdoc />
     public bool TryPop()
     {
         if ( _items.Count == 0 )
@@ -187,12 +229,14 @@ public class DictionaryHeap<TKey, TValue> : IDictionaryHeap<TKey, TValue>
         return true;
     }
 
+    /// <inheritdoc />
     public TValue Replace(TKey key, TValue value)
     {
         var node = _map[key];
         return Replace( node, value );
     }
 
+    /// <inheritdoc />
     public bool TryReplace(TKey key, TValue value, [MaybeNullWhen( false )] out TValue replaced)
     {
         if ( _map.TryGetValue( key, out var node ) )
@@ -205,6 +249,7 @@ public class DictionaryHeap<TKey, TValue> : IDictionaryHeap<TKey, TValue>
         return false;
     }
 
+    /// <inheritdoc />
     public TValue AddOrReplace(TKey key, TValue value)
     {
         if ( _map.TryGetValue( key, out var node ) )
@@ -214,12 +259,14 @@ public class DictionaryHeap<TKey, TValue> : IDictionaryHeap<TKey, TValue>
         return value;
     }
 
+    /// <inheritdoc />
     public void Clear()
     {
         _items.Clear();
         _map.Clear();
     }
 
+    /// <inheritdoc />
     [Pure]
     public IEnumerator<TValue> GetEnumerator()
     {

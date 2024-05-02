@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Linq;
@@ -6,11 +7,17 @@ using LfrlAnvil.Extensions;
 
 namespace LfrlAnvil.Collections;
 
+/// <inheritdoc />
 public class Ring<T> : IRing<T>
 {
     private int _writeIndex;
     private readonly T?[] _items;
 
+    /// <summary>
+    /// Creates a new <see cref="Ring{T}"/> instance.
+    /// </summary>
+    /// <param name="count">Number of elements.</param>
+    /// <exception cref="ArgumentOutOfRangeException">When <paramref name="count"/> is less than <b>1</b>.</exception>
     public Ring(int count)
     {
         Ensure.IsGreaterThan( count, 0 );
@@ -18,6 +25,11 @@ public class Ring<T> : IRing<T>
         _writeIndex = 0;
     }
 
+    /// <summary>
+    /// Creates a new <see cref="Ring{T}"/> instance from the provided collection.
+    /// </summary>
+    /// <param name="range">Initial collection of elements.</param>
+    /// <exception cref="ArgumentOutOfRangeException">When collection is empty.</exception>
     public Ring(IEnumerable<T?> range)
     {
         _items = range.ToArray();
@@ -25,35 +37,46 @@ public class Ring<T> : IRing<T>
         _writeIndex = 0;
     }
 
+    /// <summary>
+    /// Creates a new <see cref="Ring{T}"/> instance from the provided collection.
+    /// </summary>
+    /// <param name="range">Initial collection of elements.</param>
+    /// <exception cref="ArgumentOutOfRangeException">When collection is empty.</exception>
     public Ring(params T?[] range)
         : this( range.AsEnumerable() ) { }
 
+    /// <inheritdoc cref="IRing{T}.this" />
     public T? this[int index]
     {
         get => _items[index];
         set => _items[index] = value;
     }
 
+    /// <inheritdoc />
     public int Count => _items.Length;
 
+    /// <inheritdoc cref="IRing{T}.WriteIndex" />
     public int WriteIndex
     {
         get => _writeIndex;
         set => _writeIndex = GetWrappedIndex( value );
     }
 
+    /// <inheritdoc />
     [Pure]
     public int GetWrappedIndex(int index)
     {
         return index.EuclidModulo( _items.Length );
     }
 
+    /// <inheritdoc />
     [Pure]
     public int GetWriteIndex(int offset)
     {
         return GetWrappedIndex( _writeIndex + offset );
     }
 
+    /// <inheritdoc />
     public void SetNext(T item)
     {
         _items[_writeIndex] = item;
@@ -62,6 +85,7 @@ public class Ring<T> : IRing<T>
             _writeIndex = 0;
     }
 
+    /// <inheritdoc />
     public void Clear()
     {
         for ( var i = 0; i < _items.Length; ++i )
@@ -70,6 +94,7 @@ public class Ring<T> : IRing<T>
         _writeIndex = 0;
     }
 
+    /// <inheritdoc />
     [Pure]
     public IEnumerable<T?> Read(int readIndex)
     {
@@ -79,6 +104,10 @@ public class Ring<T> : IRing<T>
             yield return enumerator.Current;
     }
 
+    /// <summary>
+    /// Creates a new <see cref="Enumerator"/> instance for this ring.
+    /// </summary>
+    /// <returns>New <see cref="Enumerator"/> instance.</returns>
     [Pure]
     public Enumerator GetEnumerator()
     {
@@ -97,6 +126,9 @@ public class Ring<T> : IRing<T>
         return GetEnumerator();
     }
 
+    /// <summary>
+    /// Lightweight enumerator implementation for <see cref="Ring{T}"/>.
+    /// </summary>
     public struct Enumerator : IEnumerator<T?>
     {
         private int _index;
@@ -110,11 +142,15 @@ public class Ring<T> : IRing<T>
             _stepsLeft = _items.Length;
         }
 
+        /// <inheritdoc />
         public T? Current => _items[_index];
+
         object? IEnumerator.Current => Current;
 
+        /// <inheritdoc />
         public void Dispose() { }
 
+        /// <inheritdoc />
         public bool MoveNext()
         {
             if ( _stepsLeft <= 0 )

@@ -12,21 +12,30 @@ using LfrlAnvil.Extensions;
 
 namespace LfrlAnvil.Collections;
 
+/// <inheritdoc />
 public class TreeDictionary<TKey, TValue> : ITreeDictionary<TKey, TValue>
     where TKey : notnull
 {
     private readonly Dictionary<TKey, TreeDictionaryNode<TKey, TValue>> _map;
     private TreeDictionaryNode<TKey, TValue>? _root;
 
+    /// <summary>
+    /// Creates a new empty <see cref="TreeDictionary{TKey,TValue}"/> instance with <see cref="EqualityComparer{T}.Default"/> key comparer.
+    /// </summary>
     public TreeDictionary()
         : this( EqualityComparer<TKey>.Default ) { }
 
+    /// <summary>
+    /// Creates a new empty <see cref="TreeDictionary{TKey,TValue}"/> instance.
+    /// </summary>
+    /// <param name="comparer">Key equality comparer.</param>
     public TreeDictionary(IEqualityComparer<TKey> comparer)
     {
         _map = new Dictionary<TKey, TreeDictionaryNode<TKey, TValue>>( comparer );
         _root = null;
     }
 
+    /// <inheritdoc cref="ITreeDictionary{TKey,TValue}.this" />
     public TValue this[TKey key]
     {
         get => _map[key].Value;
@@ -42,11 +51,22 @@ public class TreeDictionary<TKey, TValue> : ITreeDictionary<TKey, TValue>
         }
     }
 
+    /// <inheritdoc cref="IReadOnlyTreeDictionary{TKey,TValue}.Root" />
     public TreeDictionaryNode<TKey, TValue>? Root => _root;
+
+    /// <inheritdoc cref="IReadOnlyCollection{T}.Count" />
     public int Count => _map.Count;
+
+    /// <inheritdoc />
     public IEqualityComparer<TKey> Comparer => _map.Comparer;
+
+    /// <inheritdoc cref="ITreeDictionary{TKey,TValue}.Keys" />
     public IEnumerable<TKey> Keys => _map.Keys;
+
+    /// <inheritdoc cref="ITreeDictionary{TKey,TValue}.Values" />
     public IEnumerable<TValue> Values => _map.Select( static kv => kv.Value.Value );
+
+    /// <inheritdoc cref="IReadOnlyTreeDictionary{TKey,TValue}.Nodes" />
     public IEnumerable<TreeDictionaryNode<TKey, TValue>> Nodes => (Root?.VisitManyWithSelf( static n => n.Children )).EmptyIfNull();
 
     ITreeDictionaryNode<TKey, TValue>? IReadOnlyTreeDictionary<TKey, TValue>.Root => Root;
@@ -58,6 +78,7 @@ public class TreeDictionary<TKey, TValue> : ITreeDictionary<TKey, TValue>
     bool ICollection<KeyValuePair<TKey, TValue>>.IsReadOnly =>
         (( ICollection<KeyValuePair<TKey, TreeDictionaryNode<TKey, TValue>>> )_map).IsReadOnly;
 
+    /// <inheritdoc cref="ITreeDictionary{TKey,TValue}.SetRoot(TKey,TValue)" />
     public TreeDictionaryNode<TKey, TValue> SetRoot(TKey key, TValue value)
     {
         var node = new TreeDictionaryNode<TKey, TValue>( key, value );
@@ -65,12 +86,14 @@ public class TreeDictionary<TKey, TValue> : ITreeDictionary<TKey, TValue>
         return node;
     }
 
+    /// <inheritdoc cref="ITreeDictionary{TKey,TValue}.SetRoot(ITreeDictionaryNode{TKey,TValue})" />
     public void SetRoot(TreeDictionaryNode<TKey, TValue> node)
     {
         AssertNewNode( node );
         SetRootImpl( node );
     }
 
+    /// <inheritdoc cref="ITreeDictionary{TKey,TValue}.Add(TKey,TValue)" />
     public TreeDictionaryNode<TKey, TValue> Add(TKey key, TValue value)
     {
         var node = new TreeDictionaryNode<TKey, TValue>( key, value );
@@ -78,12 +101,14 @@ public class TreeDictionary<TKey, TValue> : ITreeDictionary<TKey, TValue>
         return node;
     }
 
+    /// <inheritdoc cref="ITreeDictionary{TKey,TValue}.Add(ITreeDictionaryNode{TKey,TValue})" />
     public void Add(TreeDictionaryNode<TKey, TValue> node)
     {
         AssertNewNode( node );
         AddImpl( node );
     }
 
+    /// <inheritdoc cref="ITreeDictionary{TKey,TValue}.AddTo(TKey,TKey,TValue)" />
     public TreeDictionaryNode<TKey, TValue> AddTo(TKey parentKey, TKey key, TValue value)
     {
         var parentNode = _map[parentKey];
@@ -92,6 +117,7 @@ public class TreeDictionary<TKey, TValue> : ITreeDictionary<TKey, TValue>
         return node;
     }
 
+    /// <inheritdoc cref="ITreeDictionary{TKey,TValue}.AddTo(TKey,ITreeDictionaryNode{TKey,TValue})" />
     public void AddTo(TKey parentKey, TreeDictionaryNode<TKey, TValue> node)
     {
         AssertNewNode( node );
@@ -99,6 +125,7 @@ public class TreeDictionary<TKey, TValue> : ITreeDictionary<TKey, TValue>
         AddToImpl( parentNode, node );
     }
 
+    /// <inheritdoc cref="ITreeDictionary{TKey,TValue}.AddTo(ITreeDictionaryNode{TKey,TValue},TKey,TValue)" />
     public TreeDictionaryNode<TKey, TValue> AddTo(TreeDictionaryNode<TKey, TValue> parent, TKey key, TValue value)
     {
         AssertNode( parent );
@@ -107,6 +134,7 @@ public class TreeDictionary<TKey, TValue> : ITreeDictionary<TKey, TValue>
         return node;
     }
 
+    /// <inheritdoc cref="ITreeDictionary{TKey,TValue}.AddTo(ITreeDictionaryNode{TKey,TValue},ITreeDictionaryNode{TKey,TValue})" />
     public void AddTo(TreeDictionaryNode<TKey, TValue> parent, TreeDictionaryNode<TKey, TValue> node)
     {
         AssertNode( parent );
@@ -114,17 +142,20 @@ public class TreeDictionary<TKey, TValue> : ITreeDictionary<TKey, TValue>
         AddToImpl( parent, node );
     }
 
+    /// <inheritdoc cref="ITreeDictionary{TKey,TValue}.AddSubtree(ITreeDictionaryNode{TKey,TValue})" />
     public TreeDictionaryNode<TKey, TValue> AddSubtree(ITreeDictionaryNode<TKey, TValue> node)
     {
         return AddSubtreeToImpl( null, node );
     }
 
+    /// <inheritdoc cref="ITreeDictionary{TKey,TValue}.AddSubtreeTo(TKey,ITreeDictionaryNode{TKey,TValue})" />
     public TreeDictionaryNode<TKey, TValue> AddSubtreeTo(TKey parentKey, ITreeDictionaryNode<TKey, TValue> node)
     {
         var parentNode = _map[parentKey];
         return AddSubtreeToImpl( parentNode, node );
     }
 
+    /// <inheritdoc cref="ITreeDictionary{TKey,TValue}.AddSubtreeTo(ITreeDictionaryNode{TKey,TValue},ITreeDictionaryNode{TKey,TValue})" />
     public TreeDictionaryNode<TKey, TValue> AddSubtreeTo(
         TreeDictionaryNode<TKey, TValue> parent,
         ITreeDictionaryNode<TKey, TValue> node)
@@ -133,17 +164,25 @@ public class TreeDictionary<TKey, TValue> : ITreeDictionary<TKey, TValue>
         return AddSubtreeToImpl( parent, node );
     }
 
+    /// <inheritdoc />
+    /// <remarks>
+    /// When the removed node is the root node, then its first child becomes the new root node
+    /// and the following children become that new root node's children,
+    /// otherwise removed node's children become its parent's children.
+    /// </remarks>
     public bool Remove(TKey key)
     {
         return RemoveImpl( key ) is not null;
     }
 
+    /// <inheritdoc cref="ITreeDictionary{TKey,TValue}.Remove(ITreeDictionaryNode{TKey,TValue})" />
     public void Remove(TreeDictionaryNode<TKey, TValue> node)
     {
         AssertNode( node );
         Remove( node.Key );
     }
 
+    /// <inheritdoc />
     public bool Remove(TKey key, [MaybeNullWhen( false )] out TValue removed)
     {
         var node = RemoveImpl( key );
@@ -157,17 +196,20 @@ public class TreeDictionary<TKey, TValue> : ITreeDictionary<TKey, TValue>
         return true;
     }
 
+    /// <inheritdoc />
     public int RemoveSubtree(TKey key)
     {
         return RemoveSubtreeImpl( key );
     }
 
+    /// <inheritdoc cref="ITreeDictionary{TKey,TValue}.RemoveSubtree(ITreeDictionaryNode{TKey,TValue})" />
     public int RemoveSubtree(TreeDictionaryNode<TKey, TValue> node)
     {
         AssertNode( node );
         return RemoveSubtreeImpl( node.Key );
     }
 
+    /// <inheritdoc />
     public void Swap(TKey firstKey, TKey secondKey)
     {
         var firstNode = _map[firstKey];
@@ -175,6 +217,7 @@ public class TreeDictionary<TKey, TValue> : ITreeDictionary<TKey, TValue>
         SwapImpl( firstNode, secondNode );
     }
 
+    /// <inheritdoc cref="ITreeDictionary{TKey,TValue}.Swap(ITreeDictionaryNode{TKey,TValue},ITreeDictionaryNode{TKey,TValue})" />
     public void Swap(TreeDictionaryNode<TKey, TValue> firstNode, TreeDictionaryNode<TKey, TValue> secondNode)
     {
         AssertNode( firstNode );
@@ -182,6 +225,7 @@ public class TreeDictionary<TKey, TValue> : ITreeDictionary<TKey, TValue>
         SwapImpl( firstNode, secondNode );
     }
 
+    /// <inheritdoc cref="ITreeDictionary{TKey,TValue}.MoveTo(TKey,TKey)" />
     public TreeDictionaryNode<TKey, TValue> MoveTo(TKey parentKey, TKey key)
     {
         var parentNode = _map[parentKey];
@@ -190,6 +234,7 @@ public class TreeDictionary<TKey, TValue> : ITreeDictionary<TKey, TValue>
         return node;
     }
 
+    /// <inheritdoc cref="ITreeDictionary{TKey,TValue}.MoveTo(TKey,ITreeDictionaryNode{TKey,TValue})" />
     public void MoveTo(TKey parentKey, TreeDictionaryNode<TKey, TValue> node)
     {
         AssertNode( node );
@@ -197,6 +242,7 @@ public class TreeDictionary<TKey, TValue> : ITreeDictionary<TKey, TValue>
         MoveToImpl( parentNode, node );
     }
 
+    /// <inheritdoc cref="ITreeDictionary{TKey,TValue}.MoveTo(ITreeDictionaryNode{TKey,TValue},TKey)" />
     public TreeDictionaryNode<TKey, TValue> MoveTo(TreeDictionaryNode<TKey, TValue> parent, TKey key)
     {
         AssertNode( parent );
@@ -205,6 +251,7 @@ public class TreeDictionary<TKey, TValue> : ITreeDictionary<TKey, TValue>
         return node;
     }
 
+    /// <inheritdoc cref="ITreeDictionary{TKey,TValue}.MoveTo(ITreeDictionaryNode{TKey,TValue},ITreeDictionaryNode{TKey,TValue})" />
     public void MoveTo(TreeDictionaryNode<TKey, TValue> parent, TreeDictionaryNode<TKey, TValue> node)
     {
         AssertNode( parent );
@@ -212,6 +259,7 @@ public class TreeDictionary<TKey, TValue> : ITreeDictionary<TKey, TValue>
         MoveToImpl( parent, node );
     }
 
+    /// <inheritdoc cref="ITreeDictionary{TKey,TValue}.MoveSubtreeTo(TKey,TKey)" />
     public TreeDictionaryNode<TKey, TValue> MoveSubtreeTo(TKey parentKey, TKey key)
     {
         var parentNode = _map[parentKey];
@@ -220,6 +268,7 @@ public class TreeDictionary<TKey, TValue> : ITreeDictionary<TKey, TValue>
         return node;
     }
 
+    /// <inheritdoc cref="ITreeDictionary{TKey,TValue}.MoveSubtreeTo(TKey,ITreeDictionaryNode{TKey,TValue})" />
     public void MoveSubtreeTo(TKey parentKey, TreeDictionaryNode<TKey, TValue> node)
     {
         AssertNode( node );
@@ -227,6 +276,7 @@ public class TreeDictionary<TKey, TValue> : ITreeDictionary<TKey, TValue>
         MoveSubtreeToImpl( parentNode, node );
     }
 
+    /// <inheritdoc cref="ITreeDictionary{TKey,TValue}.MoveSubtreeTo(ITreeDictionaryNode{TKey,TValue},TKey)" />
     public TreeDictionaryNode<TKey, TValue> MoveSubtreeTo(TreeDictionaryNode<TKey, TValue> parent, TKey key)
     {
         AssertNode( parent );
@@ -235,6 +285,7 @@ public class TreeDictionary<TKey, TValue> : ITreeDictionary<TKey, TValue>
         return node;
     }
 
+    /// <inheritdoc cref="ITreeDictionary{TKey,TValue}.MoveSubtreeTo(ITreeDictionaryNode{TKey,TValue},ITreeDictionaryNode{TKey,TValue})" />
     public void MoveSubtreeTo(TreeDictionaryNode<TKey, TValue> parent, TreeDictionaryNode<TKey, TValue> node)
     {
         AssertNode( parent );
@@ -242,6 +293,7 @@ public class TreeDictionary<TKey, TValue> : ITreeDictionary<TKey, TValue>
         MoveSubtreeToImpl( parent, node );
     }
 
+    /// <inheritdoc />
     public void Clear()
     {
         foreach ( var (_, node) in _map )
@@ -251,6 +303,7 @@ public class TreeDictionary<TKey, TValue> : ITreeDictionary<TKey, TValue>
         _root = null;
     }
 
+    /// <inheritdoc cref="IReadOnlyTreeDictionary{TKey,TValue}.CreateSubtree(TKey)" />
     [Pure]
     public TreeDictionary<TKey, TValue> CreateSubtree(TKey key)
     {
@@ -259,18 +312,21 @@ public class TreeDictionary<TKey, TValue> : ITreeDictionary<TKey, TValue>
             : new TreeDictionary<TKey, TValue>( Comparer );
     }
 
+    /// <inheritdoc cref="IReadOnlyTreeDictionary{TKey,TValue}.GetNode(TKey)" />
     [Pure]
     public TreeDictionaryNode<TKey, TValue>? GetNode(TKey key)
     {
         return _map.GetValueOrDefault( key );
     }
 
+    /// <inheritdoc cref="ITreeDictionary{TKey,TValue}.ContainsKey(TKey)" />
     [Pure]
     public bool ContainsKey(TKey key)
     {
         return _map.ContainsKey( key );
     }
 
+    /// <inheritdoc />
     public bool TryGetValue(TKey key, [MaybeNullWhen( false )] out TValue result)
     {
         if ( _map.TryGetValue( key, out var node ) )
@@ -283,6 +339,7 @@ public class TreeDictionary<TKey, TValue> : ITreeDictionary<TKey, TValue>
         return false;
     }
 
+    /// <inheritdoc />
     [Pure]
     public IEnumerator<KeyValuePair<TKey, TValue>> GetEnumerator()
     {

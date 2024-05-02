@@ -7,6 +7,7 @@ using LfrlAnvil.Exceptions;
 
 namespace LfrlAnvil.Collections;
 
+/// <inheritdoc />
 public sealed class DirectedGraphEdge<TKey, TNodeValue, TEdgeValue> : IDirectedGraphEdge<TKey, TNodeValue, TEdgeValue>
     where TKey : notnull
 {
@@ -25,20 +26,37 @@ public sealed class DirectedGraphEdge<TKey, TNodeValue, TEdgeValue> : IDirectedG
         Direction = direction;
     }
 
+    /// <inheritdoc />
     public TEdgeValue Value { get; set; }
+
+    /// <inheritdoc />
     public GraphDirection Direction { get; private set; }
+
+    /// <inheritdoc cref="IDirectedGraphEdge{TKey,TNodeValue,TEdgeValue}.Source" />
     public DirectedGraphNode<TKey, TNodeValue, TEdgeValue> Source { get; }
+
+    /// <inheritdoc cref="IDirectedGraphEdge{TKey,TNodeValue,TEdgeValue}.Target" />
     public DirectedGraphNode<TKey, TNodeValue, TEdgeValue> Target { get; }
 
     IDirectedGraphNode<TKey, TNodeValue, TEdgeValue> IDirectedGraphEdge<TKey, TNodeValue, TEdgeValue>.Source => Source;
     IDirectedGraphNode<TKey, TNodeValue, TEdgeValue> IDirectedGraphEdge<TKey, TNodeValue, TEdgeValue>.Target => Target;
 
+    /// <summary>
+    /// Returns a string representation of this <see cref="DirectedGraphEdge{TKey,TNodeValue,TEdgeValue}"/> instance.
+    /// </summary>
+    /// <returns>String representation.</returns>
     [Pure]
     public override string ToString()
     {
         return DirectedGraphEdgeInfo<TKey, TNodeValue, TEdgeValue>.ForSource( this ).ToString();
     }
 
+    /// <summary>
+    /// Changes this edge's <see cref="Direction"/>.
+    /// </summary>
+    /// <param name="direction">New direction.</param>
+    /// <exception cref="InvalidOperationException">When this edge has been removed.</exception>
+    /// <exception cref="ArgumentException">When <paramref name="direction"/> is equal to <see cref="GraphDirection.None"/>.</exception>
     public void ChangeDirection(GraphDirection direction)
     {
         AssertNotRemoved();
@@ -51,6 +69,10 @@ public sealed class DirectedGraphEdge<TKey, TNodeValue, TEdgeValue> : IDirectedG
             Direction = direction;
     }
 
+    /// <summary>
+    /// Removes this edge from the associated <see cref="DirectedGraph{TKey,TNodeValue,TEdgeValue}"/> instance.
+    /// </summary>
+    /// <exception cref="InvalidOperationException">When this edge has already been removed.</exception>
     public void Remove()
     {
         AssertNotRemoved();
