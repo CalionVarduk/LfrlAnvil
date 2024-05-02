@@ -5,8 +5,16 @@ using LfrlAnvil.Chrono.Internal;
 
 namespace LfrlAnvil.Chrono.Extensions;
 
+/// <summary>
+/// Contains <see cref="DateTime"/> extension methods.
+/// </summary>
 public static class DateTimeExtensions
 {
+    /// <summary>
+    /// Gets <see cref="IsoMonthOfYear"/> from the provided <paramref name="dt"/>.
+    /// </summary>
+    /// <param name="dt">Source date time.</param>
+    /// <returns>New <see cref="IsoMonthOfYear"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static IsoMonthOfYear GetMonthOfYear(this DateTime dt)
@@ -14,6 +22,11 @@ public static class DateTimeExtensions
         return ( IsoMonthOfYear )dt.Month;
     }
 
+    /// <summary>
+    /// Gets <see cref="IsoDayOfWeek"/> from the provided <paramref name="dt"/>.
+    /// </summary>
+    /// <param name="dt">Source date time.</param>
+    /// <returns>New <see cref="IsoDayOfWeek"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static IsoDayOfWeek GetDayOfWeek(this DateTime dt)
@@ -21,6 +34,11 @@ public static class DateTimeExtensions
         return dt.DayOfWeek.ToIso();
     }
 
+    /// <summary>
+    /// Gets the start of the day from the provided <paramref name="dt"/>.
+    /// </summary>
+    /// <param name="dt">Source date time.</param>
+    /// <returns>New <see cref="DateTime"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static DateTime GetStartOfDay(this DateTime dt)
@@ -28,6 +46,11 @@ public static class DateTimeExtensions
         return dt.Date;
     }
 
+    /// <summary>
+    /// Gets the end of the day from the provided <paramref name="dt"/>.
+    /// </summary>
+    /// <param name="dt">Source date time.</param>
+    /// <returns>New <see cref="DateTime"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static DateTime GetEndOfDay(this DateTime dt)
@@ -35,6 +58,12 @@ public static class DateTimeExtensions
         return dt.Date.AddDays( 1 ).AddTicks( -1 );
     }
 
+    /// <summary>
+    /// Gets the start of the week from the provided <paramref name="dt"/>.
+    /// </summary>
+    /// <param name="dt">Source date time.</param>
+    /// <param name="weekStart">First day of the week.</param>
+    /// <returns>New <see cref="DateTime"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static DateTime GetStartOfWeek(this DateTime dt, DayOfWeek weekStart)
@@ -46,6 +75,12 @@ public static class DateTimeExtensions
         return (dayDelta > 0 ? dt.AddDays( -dayDelta ) : dt).GetStartOfDay();
     }
 
+    /// <summary>
+    /// Gets the end of the week from the provided <paramref name="dt"/>.
+    /// </summary>
+    /// <param name="dt">Source date time.</param>
+    /// <param name="weekStart">First day of the week.</param>
+    /// <returns>New <see cref="DateTime"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static DateTime GetEndOfWeek(this DateTime dt, DayOfWeek weekStart)
@@ -59,6 +94,11 @@ public static class DateTimeExtensions
         return (dayDelta > 0 ? dt.AddDays( dayDelta ) : dt).GetEndOfDay();
     }
 
+    /// <summary>
+    /// Gets the start of the month from the provided <paramref name="dt"/>.
+    /// </summary>
+    /// <param name="dt">Source date time.</param>
+    /// <returns>New <see cref="DateTime"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static DateTime GetStartOfMonth(this DateTime dt)
@@ -66,6 +106,11 @@ public static class DateTimeExtensions
         return new DateTime( dt.Year, dt.Month, 1 );
     }
 
+    /// <summary>
+    /// Gets the end of the month from the provided <paramref name="dt"/>.
+    /// </summary>
+    /// <param name="dt">Source date time.</param>
+    /// <returns>New <see cref="DateTime"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static DateTime GetEndOfMonth(this DateTime dt)
@@ -74,6 +119,11 @@ public static class DateTimeExtensions
         return new DateTime( dt.Year, dt.Month, daysInMonth ).GetEndOfDay();
     }
 
+    /// <summary>
+    /// Gets the start of the year from the provided <paramref name="dt"/>.
+    /// </summary>
+    /// <param name="dt">Source date time.</param>
+    /// <returns>New <see cref="DateTime"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static DateTime GetStartOfYear(this DateTime dt)
@@ -81,6 +131,11 @@ public static class DateTimeExtensions
         return new DateTime( dt.Year, ( int )IsoMonthOfYear.January, 1 );
     }
 
+    /// <summary>
+    /// Gets the end of the year from the provided <paramref name="dt"/>.
+    /// </summary>
+    /// <param name="dt">Source date time.</param>
+    /// <returns>New <see cref="DateTime"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static DateTime GetEndOfYear(this DateTime dt)
@@ -88,6 +143,12 @@ public static class DateTimeExtensions
         return new DateTime( dt.Year, ( int )IsoMonthOfYear.December, ChronoConstants.DaysInDecember ).GetEndOfDay();
     }
 
+    /// <summary>
+    /// Creates a new <see cref="DateTime"/> instance by adding the provided <paramref name="period"/> to the source <paramref name="dt"/>.
+    /// </summary>
+    /// <param name="dt">Source date time.</param>
+    /// <param name="period"><see cref="Period"/> to add.</param>
+    /// <returns>New <see cref="DateTime"/> instance.</returns>
     [Pure]
     public static DateTime Add(this DateTime dt, Period period)
     {
@@ -110,6 +171,13 @@ public static class DateTimeExtensions
         return result;
     }
 
+    /// <summary>
+    /// Creates a new <see cref="DateTime"/> instance by subtracting the provided <paramref name="period"/>
+    /// from the source <paramref name="dt"/>.
+    /// </summary>
+    /// <param name="dt">Source date time.</param>
+    /// <param name="period"><see cref="Period"/> to subtract.</param>
+    /// <returns>New <see cref="DateTime"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static DateTime Subtract(this DateTime dt, Period period)
@@ -117,6 +185,14 @@ public static class DateTimeExtensions
         return dt.Add( -period );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="DateTime"/> instance by setting the <see cref="DateTime.Year"/>
+    /// component in the provided <paramref name="dt"/>.
+    /// </summary>
+    /// <param name="dt">Source date time.</param>
+    /// <param name="year">Year to set.</param>
+    /// <returns>New <see cref="DateTime"/> instance.</returns>
+    /// <exception cref="ArgumentOutOfRangeException">When <paramref name="year"/> is not valid.</exception>
     [Pure]
     public static DateTime SetYear(this DateTime dt, int year)
     {
@@ -127,6 +203,13 @@ public static class DateTimeExtensions
             dt.Kind );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="DateTime"/> instance by setting the <see cref="DateTime.Month"/>
+    /// component in the provided <paramref name="dt"/>.
+    /// </summary>
+    /// <param name="dt">Source date time.</param>
+    /// <param name="month">Month to set.</param>
+    /// <returns>New <see cref="DateTime"/> instance.</returns>
     [Pure]
     public static DateTime SetMonth(this DateTime dt, IsoMonthOfYear month)
     {
@@ -137,6 +220,14 @@ public static class DateTimeExtensions
             dt.Kind );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="DateTime"/> instance by setting the <see cref="DateTime.Day"/> of month
+    /// component in the provided <paramref name="dt"/>.
+    /// </summary>
+    /// <param name="dt">Source date time.</param>
+    /// <param name="day">Day of month to set.</param>
+    /// <returns>New <see cref="DateTime"/> instance.</returns>
+    /// <exception cref="ArgumentOutOfRangeException">When <paramref name="day"/> is not valid for the current month.</exception>
     [Pure]
     public static DateTime SetDayOfMonth(this DateTime dt, int day)
     {
@@ -145,6 +236,14 @@ public static class DateTimeExtensions
             dt.Kind );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="DateTime"/> instance by setting the <see cref="DateTime.DayOfYear"/>
+    /// component in the provided <paramref name="dt"/>.
+    /// </summary>
+    /// <param name="dt">Source date time.</param>
+    /// <param name="day">Day of year to set.</param>
+    /// <returns>New <see cref="DateTime"/> instance.</returns>
+    /// <exception cref="ArgumentOutOfRangeException">When <paramref name="day"/> is not valid for the current year.</exception>
     [Pure]
     public static DateTime SetDayOfYear(this DateTime dt, int day)
     {
@@ -160,6 +259,13 @@ public static class DateTimeExtensions
             dt.Kind );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="DateTime"/> instance by setting the <see cref="DateTime.TimeOfDay"/>
+    /// component in the provided <paramref name="dt"/>.
+    /// </summary>
+    /// <param name="dt">Source date time.</param>
+    /// <param name="timeOfDay">Time of day to set.</param>
+    /// <returns>New <see cref="DateTime"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static DateTime SetTimeOfDay(this DateTime dt, TimeOfDay timeOfDay)
@@ -167,6 +273,14 @@ public static class DateTimeExtensions
         return dt.GetStartOfDay().Add( ( TimeSpan )timeOfDay );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="Period"/> instance by calculating a difference between the provided <paramref name="start"/>
+    /// and <paramref name="end"/> <see cref="DateTime"/> instances, using the specified <paramref name="units"/>.
+    /// </summary>
+    /// <param name="end">End date time.</param>
+    /// <param name="start">Start date time.</param>
+    /// <param name="units"><see cref="PeriodUnits"/> to include in the calculated difference.</param>
+    /// <returns>New <see cref="Period"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static Period GetPeriodOffset(this DateTime end, DateTime start, PeriodUnits units)
@@ -176,6 +290,15 @@ public static class DateTimeExtensions
             : PeriodOffsetCalculator.GetPeriodOffset( start, end, units );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="Period"/> instance by calculating a difference between the provided <paramref name="start"/>
+    /// and <paramref name="end"/> <see cref="DateTime"/> instances, using the specified <paramref name="units"/>.
+    /// </summary>
+    /// <param name="end">End date time.</param>
+    /// <param name="start">Start date time.</param>
+    /// <param name="units"><see cref="PeriodUnits"/> to include in the calculated difference.</param>
+    /// <returns>New <see cref="Period"/> instance.</returns>
+    /// <remarks>Greedy <see cref="Period"/> may contain components with negative values.</remarks>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static Period GetGreedyPeriodOffset(this DateTime end, DateTime start, PeriodUnits units)

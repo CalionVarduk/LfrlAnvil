@@ -3,8 +3,10 @@ using LfrlAnvil.Generators;
 
 namespace LfrlAnvil.Chrono.Internal;
 
+/// <inheritdoc />
 public abstract class TimestampProviderBase : ITimestampProvider
 {
+    /// <inheritdoc />
     public abstract Timestamp GetNow();
 
     [Pure]

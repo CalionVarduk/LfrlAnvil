@@ -36,6 +36,7 @@ internal static class ZonedDateTimeBounds
             } );
     }
 
+    [Pure]
     internal static (ZonedDateTime SecondToLastEnd, ZonedDateTime LastStart)? TryGetLastBounds(ZonedDateTime end)
     {
         var oppositeEnd = end.GetOppositeAmbiguousDateTime();
@@ -52,6 +53,7 @@ internal static class ZonedDateTimeBounds
         return (oppositeEnd.Value, lastStart);
     }
 
+    [Pure]
     internal static (ZonedDateTime FirstEnd, ZonedDateTime SecondStart)? TryGetFirstBounds(ZonedDateTime start)
     {
         var oppositeStart = start.GetOppositeAmbiguousDateTime();

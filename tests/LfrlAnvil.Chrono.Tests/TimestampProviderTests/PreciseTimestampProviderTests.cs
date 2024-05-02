@@ -9,7 +9,6 @@ public class PreciseTimestampProviderTests : TestsBase
     [InlineData( 0 )]
     [InlineData( -1 )]
     [InlineData( -2 )]
-    [InlineData( ChronoConstants.DaysInYear * ChronoConstants.TicksPerStandardDay )]
     public void Ctor_ShouldThrowArgumentOutOfRangeException_WhenPrecisionResetTimeoutIsInvalid(long value)
     {
         var action = Lambda.Of( () => new PreciseTimestampProvider( Duration.FromTicks( value ) ) );

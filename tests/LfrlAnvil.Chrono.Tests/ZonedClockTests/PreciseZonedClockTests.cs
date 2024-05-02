@@ -33,7 +33,6 @@ public class PreciseZonedClockTests : TestsBase
     [InlineData( 0 )]
     [InlineData( -1 )]
     [InlineData( -2 )]
-    [InlineData( ChronoConstants.DaysInYear * ChronoConstants.TicksPerStandardDay )]
     public void Ctor_ShouldThrowArgumentOutOfRangeException_WhenPrecisionResetTimeoutIsInvalid(long value)
     {
         var timeZone = TimeZoneFactory.CreateRandom( Fixture );

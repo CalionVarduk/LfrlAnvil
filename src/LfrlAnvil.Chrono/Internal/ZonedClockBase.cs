@@ -4,15 +4,22 @@ using LfrlAnvil.Generators;
 
 namespace LfrlAnvil.Chrono.Internal;
 
+/// <inheritdoc />
 public abstract class ZonedClockBase : IZonedClock
 {
+    /// <summary>
+    /// Creates a new <see cref="ZonedClockBase"/> instance.
+    /// </summary>
+    /// <param name="timeZone">Time zone of this clock.</param>
     protected ZonedClockBase(TimeZoneInfo timeZone)
     {
         TimeZone = timeZone;
     }
 
+    /// <inheritdoc />
     public TimeZoneInfo TimeZone { get; }
 
+    /// <inheritdoc />
     public abstract ZonedDateTime GetNow();
 
     [Pure]

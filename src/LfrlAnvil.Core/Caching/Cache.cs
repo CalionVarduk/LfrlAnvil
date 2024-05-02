@@ -23,6 +23,7 @@ public sealed class Cache<TKey, TValue> : ICache<TKey, TValue>
     /// </summary>
     /// <param name="capacity">An optional maximum capacity. Equal to <see cref="Int32.MaxValue"/> by default.</param>
     /// <param name="removeCallback">An optional callback which gets invoked every time an entry is removed from this cache.</param>
+    /// <exception cref="ArgumentOutOfRangeException">When <paramref name="capacity"/> is less than <b>1</b>.</exception>
     public Cache(int capacity = int.MaxValue, Action<CachedItemRemovalEvent<TKey, TValue>>? removeCallback = null)
         : this( EqualityComparer<TKey>.Default, capacity, removeCallback ) { }
 
@@ -32,6 +33,7 @@ public sealed class Cache<TKey, TValue> : ICache<TKey, TValue>
     /// <param name="keyComparer">Custom key equality comparer.</param>
     /// <param name="capacity">An optional maximum capacity. Equal to <see cref="Int32.MaxValue"/> by default.</param>
     /// <param name="removeCallback">An optional callback which gets invoked every time an entry is removed from this cache.</param>
+    /// <exception cref="ArgumentOutOfRangeException">When <paramref name="capacity"/> is less than <b>1</b>.</exception>
     public Cache(
         IEqualityComparer<TKey> keyComparer,
         int capacity = int.MaxValue,

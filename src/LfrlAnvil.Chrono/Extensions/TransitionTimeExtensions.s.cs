@@ -4,8 +4,18 @@ using System.Runtime.CompilerServices;
 
 namespace LfrlAnvil.Chrono.Extensions;
 
+/// <summary>
+/// Contains <see cref="TimeZoneInfo.TransitionTime"/> extension methods.
+/// </summary>
 public static class TransitionTimeExtensions
 {
+    /// <summary>
+    /// Creates a new <see cref="DateTime"/> instance from the provided <see cref="TimeZoneInfo.TransitionTime"/>
+    /// for the given <paramref name="year"/>, that represents the start of the transition time.
+    /// </summary>
+    /// <param name="transitionTime">Source transition time.</param>
+    /// <param name="year">Year for which to generate a <see cref="DateTime"/> instance.</param>
+    /// <returns>New <see cref="DateTime"/> instance.</returns>
     [Pure]
     public static DateTime ToDateTime(this TimeZoneInfo.TransitionTime transitionTime, int year)
     {

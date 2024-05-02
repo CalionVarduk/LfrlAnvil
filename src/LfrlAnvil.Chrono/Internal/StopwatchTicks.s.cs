@@ -10,12 +10,7 @@ internal static class StopwatchTicks
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     internal static long GetStopwatchTicksOrThrow(Duration duration, [CallerArgumentExpression( "duration" )] string paramName = "")
     {
-        Ensure.IsInExclusiveRange(
-            duration,
-            Duration.Zero,
-            Duration.FromTicks( ChronoConstants.DaysInYear * ChronoConstants.TicksPerStandardDay ),
-            paramName );
-
+        Ensure.IsGreaterThan( duration, Duration.Zero, paramName );
         return StopwatchTimestamp.GetStopwatchTicks( duration.Ticks );
     }
 }

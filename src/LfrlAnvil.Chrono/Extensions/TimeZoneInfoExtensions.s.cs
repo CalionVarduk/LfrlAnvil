@@ -3,8 +3,16 @@ using System.Diagnostics.Contracts;
 
 namespace LfrlAnvil.Chrono.Extensions;
 
+/// <summary>
+/// Contains <see cref="TimeZoneInfo"/> extension methods.
+/// </summary>
 public static class TimeZoneInfoExtensions
 {
+    /// <summary>
+    /// Gets <see cref="DateTimeKind"/> associated with the specified <paramref name="timeZone"/>.
+    /// </summary>
+    /// <param name="timeZone">Source time zone.</param>
+    /// <returns><see cref="DateTimeKind"/> associated with the specified <paramref name="timeZone"/>.</returns>
     [Pure]
     public static DateTimeKind GetDateTimeKind(this TimeZoneInfo timeZone)
     {
@@ -17,6 +25,15 @@ public static class TimeZoneInfoExtensions
         return DateTimeKind.Unspecified;
     }
 
+    /// <summary>
+    /// Attempts to find the first <see cref="TimeZoneInfo.AdjustmentRule"/> instance that applies to the given <paramref name="dateTime"/>.
+    /// </summary>
+    /// <param name="timeZone">Source time zone.</param>
+    /// <param name="dateTime">Target date time.</param>
+    /// <returns>
+    /// First <see cref="TimeZoneInfo.AdjustmentRule"/> instance that applies to the given <paramref name="dateTime"/>
+    /// or null when none exists.
+    /// </returns>
     [Pure]
     public static TimeZoneInfo.AdjustmentRule? GetActiveAdjustmentRule(this TimeZoneInfo timeZone, DateTime dateTime)
     {
@@ -33,6 +50,16 @@ public static class TimeZoneInfoExtensions
         return null;
     }
 
+    /// <summary>
+    /// Attempts to find the 0-based index of the first <see cref="TimeZoneInfo.AdjustmentRule"/> instance
+    /// that applies to the given <paramref name="dateTime"/>.
+    /// </summary>
+    /// <param name="timeZone">Source time zone.</param>
+    /// <param name="dateTime">Target date time.</param>
+    /// <returns>
+    /// 0-based index of the first <see cref="TimeZoneInfo.AdjustmentRule"/> instance that applies to the given <paramref name="dateTime"/>
+    /// or <b>-1</b> when none exists.
+    /// </returns>
     [Pure]
     public static int GetActiveAdjustmentRuleIndex(this TimeZoneInfo timeZone, DateTime dateTime)
     {
@@ -49,6 +76,16 @@ public static class TimeZoneInfoExtensions
         return -1;
     }
 
+    /// <summary>
+    /// Attempts to find a range of invalid <see cref="DateTime"/> instances defined by the provided <paramref name="timeZone"/>
+    /// that contains the given <paramref name="dateTime"/>.
+    /// </summary>
+    /// <param name="timeZone">Source time zone.</param>
+    /// <param name="dateTime">Target date time.</param>
+    /// <returns>
+    /// Range of invalid <see cref="DateTime"/> instances defined by the provided <paramref name="timeZone"/>
+    /// that contains the given <paramref name="dateTime"/> or null, when <paramref name="dateTime"/> is valid.
+    /// </returns>
     [Pure]
     public static Bounds<DateTime>? GetContainingInvalidityRange(this TimeZoneInfo timeZone, DateTime dateTime)
     {
@@ -64,7 +101,7 @@ public static class TimeZoneInfoExtensions
         if ( dateTime >= transitionDateTime.Start && dateTime < transitionDateTime.End )
             return Bounds.Create( transitionDateTime.Start, transitionDateTime.End.AddTicks( -1 ) );
 
-        // NOTE: this doesn't seem to  be correct, since activeRule may actually no longer be active in the previous year (or the rule may be floating)
+        // NOTE: this doesn't seem to be correct, since activeRule may actually no longer be active in the previous year (or the rule may be floating)
         // however, this implementation corresponds to .NET's private GetIsInvalidTime method's body:
         // https://github.com/microsoft/referencesource/blob/5697c29004a34d80acdaf5742d7e699022c64ecd/mscorlib/system/timezoneinfo.cs#L1745
         // the main goal of GetContainingInvalidityRange extension is to correspond 1-to-1 to TimeZoneInfo.IsInvalidTime method's result
@@ -73,6 +110,16 @@ public static class TimeZoneInfoExtensions
         return Bounds.Create( transitionDateTime.Start, transitionDateTime.End.AddTicks( -1 ) );
     }
 
+    /// <summary>
+    /// Attempts to find a range of ambiguous <see cref="DateTime"/> instances defined by the provided <paramref name="timeZone"/>
+    /// that contains the given <paramref name="dateTime"/>.
+    /// </summary>
+    /// <param name="timeZone">Source time zone.</param>
+    /// <param name="dateTime">Target date time.</param>
+    /// <returns>
+    /// Range of ambiguous <see cref="DateTime"/> instances defined by the provided <paramref name="timeZone"/>
+    /// that contains the given <paramref name="dateTime"/> or null, when <paramref name="dateTime"/> is not ambiguous.
+    /// </returns>
     [Pure]
     public static Bounds<DateTime>? GetContainingAmbiguityRange(this TimeZoneInfo timeZone, DateTime dateTime)
     {
@@ -88,7 +135,7 @@ public static class TimeZoneInfoExtensions
         if ( dateTime >= transitionDateTime.Start && dateTime < transitionDateTime.End )
             return Bounds.Create( transitionDateTime.Start, transitionDateTime.End.AddTicks( -1 ) );
 
-        // NOTE: this doesn't seem to  be correct, since activeRule may actually no longer be active in the next year (or the rule may be floating)
+        // NOTE: this doesn't seem to be correct, since activeRule may actually no longer be active in the next year (or the rule may be floating)
         // however, this implementation corresponds to .NET's private GetIsAmbiguousTime method's body:
         // https://github.com/microsoft/referencesource/blob/5697c29004a34d80acdaf5742d7e699022c64ecd/mscorlib/system/timezoneinfo.cs#L1681
         // the main goal of GetContainingAmbiguityRange extension is to correspond 1-to-1 to TimeZoneInfo.IsAmbiguousTime method's result

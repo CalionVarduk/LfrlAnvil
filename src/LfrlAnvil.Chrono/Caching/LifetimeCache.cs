@@ -11,12 +11,24 @@ using LfrlAnvil.Internal;
 
 namespace LfrlAnvil.Chrono.Caching;
 
+/// <inheritdoc />
 public sealed class LifetimeCache<TKey, TValue> : ILifetimeCache<TKey, TValue>
     where TKey : notnull
 {
     private readonly Dictionary<TKey, DoublyLinkedNode<Entry>> _map;
     private DoublyLinkedNodeSequence<Entry> _order;
 
+    /// <summary>
+    /// Creates a new <see cref="LifetimeCache{TKey,TValue}"/> instance that uses
+    /// the <see cref="EqualityComparer{T}.Default"/> key comparer.
+    /// </summary>
+    /// <param name="startTimestamp"><see cref="Timestamp"/> of the creation of this cache.</param>
+    /// <param name="lifetime">Lifetime of added entries.</param>
+    /// <param name="capacity">An optional maximum capacity. Equal to <see cref="Int32.MaxValue"/> by default.</param>
+    /// <param name="removeCallback">An optional callback which gets invoked every time an entry is removed from this cache.</param>
+    /// <exception cref="ArgumentOutOfRangeException">
+    /// When <paramref name="capacity"/> is less than <b>1</b> or when <paramref name="lifetime"/> is less than <b>1 tick</b>.
+    /// </exception>
     public LifetimeCache(
         Timestamp startTimestamp,
         Duration lifetime,
@@ -24,6 +36,17 @@ public sealed class LifetimeCache<TKey, TValue> : ILifetimeCache<TKey, TValue>
         Action<CachedItemRemovalEvent<TKey, TValue>>? removeCallback = null)
         : this( EqualityComparer<TKey>.Default, startTimestamp, lifetime, capacity, removeCallback ) { }
 
+    /// <summary>
+    /// Creates a new <see cref="LifetimeCache{TKey,TValue}"/> instance.
+    /// </summary>
+    /// <param name="keyComparer">Custom key equality comparer.</param>
+    /// <param name="startTimestamp"><see cref="Timestamp"/> of the creation of this cache.</param>
+    /// <param name="lifetime">Lifetime of added entries.</param>
+    /// <param name="capacity">An optional maximum capacity. Equal to <see cref="Int32.MaxValue"/> by default.</param>
+    /// <param name="removeCallback">An optional callback which gets invoked every time an entry is removed from this cache.</param>
+    /// <exception cref="ArgumentOutOfRangeException">
+    /// When <paramref name="capacity"/> is less than <b>1</b> or when <paramref name="lifetime"/> is less than <b>1 tick</b>.
+    /// </exception>
     public LifetimeCache(
         IEqualityComparer<TKey> keyComparer,
         Timestamp startTimestamp,
@@ -42,18 +65,44 @@ public sealed class LifetimeCache<TKey, TValue> : ILifetimeCache<TKey, TValue>
         _order = DoublyLinkedNodeSequence<Entry>.Empty;
     }
 
+    /// <inheritdoc />
     public int Capacity { get; }
+
+    /// <inheritdoc />
     public Duration Lifetime { get; }
+
+    /// <inheritdoc />
     public Timestamp StartTimestamp { get; }
+
+    /// <inheritdoc />
     public Timestamp CurrentTimestamp { get; private set; }
+
+    /// <summary>
+    /// An optional callback which gets invoked every time an entry is removed from this cache.
+    /// </summary>
     public Action<CachedItemRemovalEvent<TKey, TValue>>? RemoveCallback { get; }
+
+    /// <inheritdoc />
     public int Count => _map.Count;
+
+    /// <inheritdoc />
     public IEqualityComparer<TKey> Comparer => _map.Comparer;
+
+    /// <inheritdoc />
     public KeyValuePair<TKey, TValue>? Oldest => _order.Head?.Value.ToKeyValuePair();
+
+    /// <summary>
+    /// Currently newest cache entry.
+    /// </summary>
     public KeyValuePair<TKey, TValue>? Newest => _order.Tail?.Value.ToKeyValuePair();
+
+    /// <inheritdoc />
     public IEnumerable<TKey> Keys => this.Select( static kv => kv.Key );
+
+    /// <inheritdoc />
     public IEnumerable<TValue> Values => this.Select( static kv => kv.Value );
 
+    /// <inheritdoc cref="ICache{TKey,TValue}.this" />
     public TValue this[TKey key]
     {
         get
@@ -66,12 +115,14 @@ public sealed class LifetimeCache<TKey, TValue> : ILifetimeCache<TKey, TValue>
         set => AddOrUpdate( key, value );
     }
 
+    /// <inheritdoc />
     [Pure]
     public bool ContainsKey(TKey key)
     {
         return _map.ContainsKey( key );
     }
 
+    /// <inheritdoc />
     public bool TryGetValue(TKey key, [MaybeNullWhen( false )] out TValue value)
     {
         if ( ! _map.TryGetValue( key, out var node ) )
@@ -86,12 +137,14 @@ public sealed class LifetimeCache<TKey, TValue> : ILifetimeCache<TKey, TValue>
         return true;
     }
 
+    /// <inheritdoc />
     [Pure]
     public Duration GetRemainingLifetime(TKey key)
     {
         return _map.TryGetValue( key, out var node ) ? node.Value.TimeOfRemoval.Subtract( CurrentTimestamp ) : Duration.Zero;
     }
 
+    /// <inheritdoc />
     public bool TryAdd(TKey key, TValue value)
     {
         var node = CreateNode( key, value );
@@ -103,6 +156,7 @@ public sealed class LifetimeCache<TKey, TValue> : ILifetimeCache<TKey, TValue>
         return true;
     }
 
+    /// <inheritdoc />
     public AddOrUpdateResult AddOrUpdate(TKey key, TValue value)
     {
         ref var node = ref CollectionsMarshal.GetValueRefOrAddDefault( _map, key, out var exists )!;
@@ -121,6 +175,7 @@ public sealed class LifetimeCache<TKey, TValue> : ILifetimeCache<TKey, TValue>
         return AddOrUpdateResult.Added;
     }
 
+    /// <inheritdoc />
     public bool Remove(TKey key)
     {
         if ( ! _map.Remove( key, out var node ) )
@@ -131,6 +186,7 @@ public sealed class LifetimeCache<TKey, TValue> : ILifetimeCache<TKey, TValue>
         return true;
     }
 
+    /// <inheritdoc />
     public bool Remove(TKey key, [MaybeNullWhen( false )] out TValue removed)
     {
         if ( ! _map.Remove( key, out var node ) )
@@ -145,6 +201,7 @@ public sealed class LifetimeCache<TKey, TValue> : ILifetimeCache<TKey, TValue>
         return true;
     }
 
+    /// <inheritdoc />
     public bool Restart(TKey key)
     {
         if ( ! _map.TryGetValue( key, out var node ) )
@@ -155,6 +212,7 @@ public sealed class LifetimeCache<TKey, TValue> : ILifetimeCache<TKey, TValue>
         return true;
     }
 
+    /// <inheritdoc />
     public void Move(Duration delta)
     {
         if ( delta <= Duration.Zero )
@@ -173,6 +231,7 @@ public sealed class LifetimeCache<TKey, TValue> : ILifetimeCache<TKey, TValue>
         }
     }
 
+    /// <inheritdoc />
     public void Clear()
     {
         _map.Clear();
@@ -185,6 +244,7 @@ public sealed class LifetimeCache<TKey, TValue> : ILifetimeCache<TKey, TValue>
         _order = _order.Clear();
     }
 
+    /// <inheritdoc />
     [Pure]
     public IEnumerator<KeyValuePair<TKey, TValue>> GetEnumerator()
     {

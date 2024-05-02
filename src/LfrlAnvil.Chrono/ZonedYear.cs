@@ -4,9 +4,13 @@ using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using LfrlAnvil.Chrono.Extensions;
 using LfrlAnvil.Chrono.Internal;
+using LfrlAnvil.Exceptions;
 
 namespace LfrlAnvil.Chrono;
 
+/// <summary>
+/// Represents a year with time zone.
+/// </summary>
 public readonly struct ZonedYear : IEquatable<ZonedYear>, IComparable<ZonedYear>, IComparable
 {
     private readonly ZonedDateTime? _end;
@@ -19,16 +23,57 @@ public readonly struct ZonedYear : IEquatable<ZonedYear>, IComparable<ZonedYear>
         _duration = duration;
     }
 
+    /// <summary>
+    /// Start of this year.
+    /// </summary>
     public ZonedDateTime Start { get; }
+
+    /// <summary>
+    /// End of this year.
+    /// </summary>
     public ZonedDateTime End => _end ?? ZonedDateTime.CreateUtc( DateTime.UnixEpoch.GetEndOfYear() );
+
+    /// <summary>
+    /// Year component.
+    /// </summary>
     public int Year => Start.Year;
+
+    /// <summary>
+    /// Specifies whether or not this year is a leap year.
+    /// </summary>
     public bool IsLeap => DateTime.IsLeapYear( Year );
+
+    /// <summary>
+    /// Number of days in this year.
+    /// </summary>
     public int DayCount => IsLeap ? ChronoConstants.DaysInLeapYear : ChronoConstants.DaysInYear;
+
+    /// <summary>
+    /// Time zone of this year.
+    /// </summary>
     public TimeZoneInfo TimeZone => Start.TimeZone;
+
+    /// <summary>
+    /// <see cref="Chrono.Duration"/> of this year.
+    /// </summary>
     public Duration Duration => _duration ?? Duration.FromHours( ChronoConstants.HoursPerStandardDay * ChronoConstants.DaysInYear );
+
+    /// <summary>
+    /// Checks whether or not the <see cref="TimeZone"/> is UTC.
+    /// </summary>
     public bool IsUtc => Start.IsUtc;
+
+    /// <summary>
+    /// Checks whether or not the <see cref="TimeZone"/> is local.
+    /// </summary>
     public bool IsLocal => Start.IsLocal;
 
+    /// <summary>
+    /// Creates a new <see cref="ZonedYear"/> instance.
+    /// </summary>
+    /// <param name="dateTime">Date time contained by the result.</param>
+    /// <param name="timeZone">Target time zone.</param>
+    /// <returns>New <see cref="ZonedYear"/> instance.</returns>
     [Pure]
     public static ZonedYear Create(DateTime dateTime, TimeZoneInfo timeZone)
     {
@@ -42,6 +87,11 @@ public readonly struct ZonedYear : IEquatable<ZonedYear>, IComparable<ZonedYear>
         return new ZonedYear( start, end, duration );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="ZonedYear"/> instance.
+    /// </summary>
+    /// <param name="dateTime">Date time contained by the result.</param>
+    /// <returns>New <see cref="ZonedYear"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static ZonedYear Create(ZonedDateTime dateTime)
@@ -49,6 +99,11 @@ public readonly struct ZonedYear : IEquatable<ZonedYear>, IComparable<ZonedYear>
         return Create( dateTime.Value, dateTime.TimeZone );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="ZonedYear"/> instance.
+    /// </summary>
+    /// <param name="day">Day contained by the result.</param>
+    /// <returns>New <see cref="ZonedYear"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static ZonedYear Create(ZonedDay day)
@@ -56,6 +111,11 @@ public readonly struct ZonedYear : IEquatable<ZonedYear>, IComparable<ZonedYear>
         return Create( day.Start.Value, day.TimeZone );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="ZonedYear"/> instance.
+    /// </summary>
+    /// <param name="month">Month contained by the result.</param>
+    /// <returns>New <see cref="ZonedYear"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static ZonedYear Create(ZonedMonth month)
@@ -63,6 +123,13 @@ public readonly struct ZonedYear : IEquatable<ZonedYear>, IComparable<ZonedYear>
         return Create( month.Start.Value, month.TimeZone );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="ZonedYear"/> instance.
+    /// </summary>
+    /// <param name="year">Year component.</param>
+    /// <param name="timeZone">Target time zone.</param>
+    /// <returns>New <see cref="ZonedYear"/> instance.</returns>
+    /// <exception cref="ArgumentOutOfRangeException">When <paramref name="year"/> is not valid.</exception>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static ZonedYear Create(int year, TimeZoneInfo timeZone)
@@ -70,6 +137,11 @@ public readonly struct ZonedYear : IEquatable<ZonedYear>, IComparable<ZonedYear>
         return Create( new DateTime( year, ( int )IsoMonthOfYear.January, 1 ), timeZone );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="ZonedYear"/> instance in <see cref="TimeZoneInfo.Utc"/> time zone.
+    /// </summary>
+    /// <param name="timestamp">Timestamp contained by the result.</param>
+    /// <returns>New <see cref="ZonedYear"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static ZonedYear CreateUtc(Timestamp timestamp)
@@ -77,6 +149,11 @@ public readonly struct ZonedYear : IEquatable<ZonedYear>, IComparable<ZonedYear>
         return CreateUtc( timestamp.UtcValue );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="ZonedYear"/> instance in <see cref="TimeZoneInfo.Utc"/> time zone.
+    /// </summary>
+    /// <param name="utcDateTime">Date time contained by the result.</param>
+    /// <returns>New <see cref="ZonedYear"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static ZonedYear CreateUtc(DateTime utcDateTime)
@@ -86,6 +163,12 @@ public readonly struct ZonedYear : IEquatable<ZonedYear>, IComparable<ZonedYear>
         return new ZonedYear( start, end, end.GetDurationOffset( start ).AddTicks( 1 ) );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="ZonedYear"/> instance in <see cref="TimeZoneInfo.Utc"/> time zone.
+    /// </summary>
+    /// <param name="year">Year component.</param>
+    /// <returns>New <see cref="ZonedYear"/> instance.</returns>
+    /// <exception cref="ArgumentOutOfRangeException">When <paramref name="year"/> is not valid.</exception>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static ZonedYear CreateUtc(int year)
@@ -93,6 +176,11 @@ public readonly struct ZonedYear : IEquatable<ZonedYear>, IComparable<ZonedYear>
         return CreateUtc( new DateTime( year, ( int )IsoMonthOfYear.January, 1 ) );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="ZonedYear"/> instance in <see cref="TimeZoneInfo.Local"/> time zone.
+    /// </summary>
+    /// <param name="localDateTime">Date time contained by the result.</param>
+    /// <returns>New <see cref="ZonedYear"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static ZonedYear CreateLocal(DateTime localDateTime)
@@ -100,6 +188,12 @@ public readonly struct ZonedYear : IEquatable<ZonedYear>, IComparable<ZonedYear>
         return Create( localDateTime, TimeZoneInfo.Local );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="ZonedYear"/> instance in <see cref="TimeZoneInfo.Local"/> time zone.
+    /// </summary>
+    /// <param name="year">Year component.</param>
+    /// <returns>New <see cref="ZonedYear"/> instance.</returns>
+    /// <exception cref="ArgumentOutOfRangeException">When <paramref name="year"/> is not valid.</exception>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static ZonedYear CreateLocal(int year)
@@ -107,6 +201,10 @@ public readonly struct ZonedYear : IEquatable<ZonedYear>, IComparable<ZonedYear>
         return Create( new DateTime( year, ( int )IsoMonthOfYear.January, 1 ), TimeZoneInfo.Local );
     }
 
+    /// <summary>
+    /// Returns a string representation of this <see cref="ZonedYear"/> instance.
+    /// </summary>
+    /// <returns>String representation.</returns>
     [Pure]
     public override string ToString()
     {
@@ -119,36 +217,46 @@ public readonly struct ZonedYear : IEquatable<ZonedYear>, IComparable<ZonedYear>
         return $"{yearText} {utcOffsetText} ({TimeZone.Id})";
     }
 
+    /// <inheritdoc />
     [Pure]
     public override int GetHashCode()
     {
         return Hash.Default.Add( Start.Timestamp ).Add( End.Timestamp ).Add( TimeZone.Id ).Value;
     }
 
+    /// <inheritdoc />
     [Pure]
     public override bool Equals(object? obj)
     {
         return obj is ZonedYear d && Equals( d );
     }
 
+    /// <inheritdoc />
     [Pure]
     public bool Equals(ZonedYear other)
     {
         return Start.Equals( other.Start );
     }
 
+    /// <inheritdoc />
     [Pure]
     public int CompareTo(object? obj)
     {
-        return obj is ZonedYear d ? CompareTo( d ) : 1;
+        return obj is ZonedYear d ? CompareTo( d ) : throw new ArgumentException( ExceptionResources.InvalidType, nameof( obj ) );
     }
 
+    /// <inheritdoc />
     [Pure]
     public int CompareTo(ZonedYear other)
     {
         return Start.CompareTo( other.Start );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="ZonedYear"/> in the <paramref name="targetTimeZone"/> from this instance.
+    /// </summary>
+    /// <param name="targetTimeZone">Target time zone.</param>
+    /// <returns>New <see cref="ZonedYear"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public ZonedYear ToTimeZone(TimeZoneInfo targetTimeZone)
@@ -156,6 +264,10 @@ public readonly struct ZonedYear : IEquatable<ZonedYear>, IComparable<ZonedYear>
         return Create( Start.Value, targetTimeZone );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="ZonedYear"/> in <see cref="TimeZoneInfo.Utc"/> time zone from this instance.
+    /// </summary>
+    /// <returns>New <see cref="ZonedYear"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public ZonedYear ToUtcTimeZone()
@@ -163,6 +275,10 @@ public readonly struct ZonedYear : IEquatable<ZonedYear>, IComparable<ZonedYear>
         return CreateUtc( Start.Value );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="ZonedYear"/> in <see cref="TimeZoneInfo.Local"/> time zone from this instance.
+    /// </summary>
+    /// <returns>New <see cref="ZonedYear"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public ZonedYear ToLocalTimeZone()
@@ -170,6 +286,11 @@ public readonly struct ZonedYear : IEquatable<ZonedYear>, IComparable<ZonedYear>
         return ToTimeZone( TimeZoneInfo.Local );
     }
 
+    /// <summary>
+    /// Checks whether or not the provided <paramref name="dateTime"/> belongs to this year.
+    /// </summary>
+    /// <param name="dateTime">Date time to check.</param>
+    /// <returns><b>true</b> when the provided <paramref name="dateTime"/> belongs to this year, otherwise <b>false</b>.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public bool Contains(ZonedDateTime dateTime)
@@ -178,6 +299,11 @@ public readonly struct ZonedYear : IEquatable<ZonedYear>, IComparable<ZonedYear>
         return start.Value.Year == dateTime.ToTimeZone( start.TimeZone ).Year;
     }
 
+    /// <summary>
+    /// Checks whether or not the provided <paramref name="day"/> belongs to this year.
+    /// </summary>
+    /// <param name="day">Day to check.</param>
+    /// <returns><b>true</b> when the provided <paramref name="day"/> belongs to this year, otherwise <b>false</b>.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public bool Contains(ZonedDay day)
@@ -185,6 +311,11 @@ public readonly struct ZonedYear : IEquatable<ZonedYear>, IComparable<ZonedYear>
         return Contains( day.Start ) && (ReferenceEquals( TimeZone, day.TimeZone ) || Contains( day.End ));
     }
 
+    /// <summary>
+    /// Checks whether or not the provided <paramref name="month"/> belongs to this year.
+    /// </summary>
+    /// <param name="month">Month to check.</param>
+    /// <returns><b>true</b> when the provided <paramref name="month"/> belongs to this year, otherwise <b>false</b>.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public bool Contains(ZonedMonth month)
@@ -192,6 +323,10 @@ public readonly struct ZonedYear : IEquatable<ZonedYear>, IComparable<ZonedYear>
         return Contains( month.Start ) && (ReferenceEquals( TimeZone, month.TimeZone ) || Contains( month.End ));
     }
 
+    /// <summary>
+    /// Creates a new <see cref="ZonedYear"/> instance by calculating the next year.
+    /// </summary>
+    /// <returns>New <see cref="ZonedYear"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public ZonedYear GetNext()
@@ -199,6 +334,10 @@ public readonly struct ZonedYear : IEquatable<ZonedYear>, IComparable<ZonedYear>
         return AddYears( 1 );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="ZonedYear"/> instance by calculating the previous year.
+    /// </summary>
+    /// <returns>New <see cref="ZonedYear"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public ZonedYear GetPrevious()
@@ -206,6 +345,11 @@ public readonly struct ZonedYear : IEquatable<ZonedYear>, IComparable<ZonedYear>
         return AddYears( -1 );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="ZonedYear"/> instance by adding provided number of years to this instance.
+    /// </summary>
+    /// <param name="years">Number of years to add.</param>
+    /// <returns>New <see cref="ZonedYear"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public ZonedYear AddYears(int years)
@@ -215,6 +359,11 @@ public readonly struct ZonedYear : IEquatable<ZonedYear>, IComparable<ZonedYear>
         return Create( value, start.TimeZone );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="ZonedYear"/> instance by adding <paramref name="value"/> to this instance.
+    /// </summary>
+    /// <param name="value"><see cref="Period"/> to add.</param>
+    /// <returns>New <see cref="ZonedYear"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public ZonedYear Add(Period value)
@@ -224,6 +373,11 @@ public readonly struct ZonedYear : IEquatable<ZonedYear>, IComparable<ZonedYear>
         return Create( dateTime, start.TimeZone );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="ZonedYear"/> instance by subtracting provided number of years from this instance.
+    /// </summary>
+    /// <param name="years">Number of years to subtract.</param>
+    /// <returns>New <see cref="ZonedYear"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public ZonedYear SubtractYears(int years)
@@ -231,6 +385,11 @@ public readonly struct ZonedYear : IEquatable<ZonedYear>, IComparable<ZonedYear>
         return AddYears( -years );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="ZonedYear"/> instance by subtracting <paramref name="value"/> from this instance.
+    /// </summary>
+    /// <param name="value"><see cref="Period"/> to subtract.</param>
+    /// <returns>New <see cref="ZonedYear"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public ZonedYear Subtract(Period value)
@@ -238,6 +397,14 @@ public readonly struct ZonedYear : IEquatable<ZonedYear>, IComparable<ZonedYear>
         return Add( -value );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="Period"/> instance by calculating a difference between this instance and
+    /// the <paramref name="start"/> instance, where this instance is treated as the end of the range,
+    /// using the specified <paramref name="units"/>.
+    /// </summary>
+    /// <param name="start">Start year.</param>
+    /// <param name="units"><see cref="PeriodUnits"/> to include in the calculated difference.</param>
+    /// <returns>New <see cref="Period"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public Period GetPeriodOffset(ZonedYear start, PeriodUnits units)
@@ -245,6 +412,15 @@ public readonly struct ZonedYear : IEquatable<ZonedYear>, IComparable<ZonedYear>
         return Start.GetPeriodOffset( start.Start, units );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="Period"/> instance by calculating a difference between this instance and
+    /// the <paramref name="start"/> instance, where this instance is treated as the end of the range,
+    /// using the specified <paramref name="units"/>.
+    /// </summary>
+    /// <param name="start">Start year.</param>
+    /// <param name="units"><see cref="PeriodUnits"/> to include in the calculated difference.</param>
+    /// <returns>New <see cref="Period"/> instance.</returns>
+    /// <remarks>Greedy <see cref="Period"/> may contain components with negative values.</remarks>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public Period GetGreedyPeriodOffset(ZonedYear start, PeriodUnits units)
@@ -252,6 +428,11 @@ public readonly struct ZonedYear : IEquatable<ZonedYear>, IComparable<ZonedYear>
         return Start.GetGreedyPeriodOffset( start.Start, units );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="ZonedMonth"/> instance that represents the specified <paramref name="month"/> of this year.
+    /// </summary>
+    /// <param name="month">Month to get.</param>
+    /// <returns>New <see cref="ZonedMonth"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public ZonedMonth GetMonth(IsoMonthOfYear month)
@@ -260,6 +441,10 @@ public readonly struct ZonedYear : IEquatable<ZonedYear>, IComparable<ZonedYear>
         return ZonedMonth.Create( start.Year, month, start.TimeZone );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="ZonedMonth"/> instance that represents <see cref="IsoMonthOfYear.January"/> of this year.
+    /// </summary>
+    /// <returns>New <see cref="ZonedMonth"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public ZonedMonth GetJanuary()
@@ -267,6 +452,10 @@ public readonly struct ZonedYear : IEquatable<ZonedYear>, IComparable<ZonedYear>
         return GetMonth( IsoMonthOfYear.January );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="ZonedMonth"/> instance that represents <see cref="IsoMonthOfYear.February"/> of this year.
+    /// </summary>
+    /// <returns>New <see cref="ZonedMonth"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public ZonedMonth GetFebruary()
@@ -274,6 +463,10 @@ public readonly struct ZonedYear : IEquatable<ZonedYear>, IComparable<ZonedYear>
         return GetMonth( IsoMonthOfYear.February );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="ZonedMonth"/> instance that represents <see cref="IsoMonthOfYear.March"/> of this year.
+    /// </summary>
+    /// <returns>New <see cref="ZonedMonth"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public ZonedMonth GetMarch()
@@ -281,6 +474,10 @@ public readonly struct ZonedYear : IEquatable<ZonedYear>, IComparable<ZonedYear>
         return GetMonth( IsoMonthOfYear.March );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="ZonedMonth"/> instance that represents <see cref="IsoMonthOfYear.April"/> of this year.
+    /// </summary>
+    /// <returns>New <see cref="ZonedMonth"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public ZonedMonth GetApril()
@@ -288,6 +485,10 @@ public readonly struct ZonedYear : IEquatable<ZonedYear>, IComparable<ZonedYear>
         return GetMonth( IsoMonthOfYear.April );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="ZonedMonth"/> instance that represents <see cref="IsoMonthOfYear.May"/> of this year.
+    /// </summary>
+    /// <returns>New <see cref="ZonedMonth"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public ZonedMonth GetMay()
@@ -295,6 +496,10 @@ public readonly struct ZonedYear : IEquatable<ZonedYear>, IComparable<ZonedYear>
         return GetMonth( IsoMonthOfYear.May );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="ZonedMonth"/> instance that represents <see cref="IsoMonthOfYear.June"/> of this year.
+    /// </summary>
+    /// <returns>New <see cref="ZonedMonth"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public ZonedMonth GetJune()
@@ -302,6 +507,10 @@ public readonly struct ZonedYear : IEquatable<ZonedYear>, IComparable<ZonedYear>
         return GetMonth( IsoMonthOfYear.June );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="ZonedMonth"/> instance that represents <see cref="IsoMonthOfYear.July"/> of this year.
+    /// </summary>
+    /// <returns>New <see cref="ZonedMonth"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public ZonedMonth GetJuly()
@@ -309,6 +518,10 @@ public readonly struct ZonedYear : IEquatable<ZonedYear>, IComparable<ZonedYear>
         return GetMonth( IsoMonthOfYear.July );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="ZonedMonth"/> instance that represents <see cref="IsoMonthOfYear.August"/> of this year.
+    /// </summary>
+    /// <returns>New <see cref="ZonedMonth"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public ZonedMonth GetAugust()
@@ -316,6 +529,10 @@ public readonly struct ZonedYear : IEquatable<ZonedYear>, IComparable<ZonedYear>
         return GetMonth( IsoMonthOfYear.August );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="ZonedMonth"/> instance that represents <see cref="IsoMonthOfYear.September"/> of this year.
+    /// </summary>
+    /// <returns>New <see cref="ZonedMonth"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public ZonedMonth GetSeptember()
@@ -323,6 +540,10 @@ public readonly struct ZonedYear : IEquatable<ZonedYear>, IComparable<ZonedYear>
         return GetMonth( IsoMonthOfYear.September );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="ZonedMonth"/> instance that represents <see cref="IsoMonthOfYear.October"/> of this year.
+    /// </summary>
+    /// <returns>New <see cref="ZonedMonth"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public ZonedMonth GetOctober()
@@ -330,6 +551,10 @@ public readonly struct ZonedYear : IEquatable<ZonedYear>, IComparable<ZonedYear>
         return GetMonth( IsoMonthOfYear.October );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="ZonedMonth"/> instance that represents <see cref="IsoMonthOfYear.November"/> of this year.
+    /// </summary>
+    /// <returns>New <see cref="ZonedMonth"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public ZonedMonth GetNovember()
@@ -337,6 +562,10 @@ public readonly struct ZonedYear : IEquatable<ZonedYear>, IComparable<ZonedYear>
         return GetMonth( IsoMonthOfYear.November );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="ZonedMonth"/> instance that represents <see cref="IsoMonthOfYear.December"/> of this year.
+    /// </summary>
+    /// <returns>New <see cref="ZonedMonth"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public ZonedMonth GetDecember()
@@ -344,6 +573,12 @@ public readonly struct ZonedYear : IEquatable<ZonedYear>, IComparable<ZonedYear>
         return GetMonth( IsoMonthOfYear.December );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="ZonedDay"/> instance that represents the specified <paramref name="dayOfYear"/> of this year.
+    /// </summary>
+    /// <param name="dayOfYear">Day of this year to get.</param>
+    /// <returns>New <see cref="ZonedDay"/> instance.</returns>
+    /// <exception cref="ArgumentOutOfRangeException">When <paramref name="dayOfYear"/> is not valid.</exception>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public ZonedDay GetDayOfYear(int dayOfYear)
@@ -353,6 +588,11 @@ public readonly struct ZonedYear : IEquatable<ZonedYear>, IComparable<ZonedYear>
         return ZonedDay.Create( value, start.TimeZone );
     }
 
+    /// <summary>
+    /// Attempts to create a new <see cref="ZonedDay"/> instance that represents the specified <paramref name="dayOfYear"/> of this year.
+    /// </summary>
+    /// <param name="dayOfYear">Day of this year to get.</param>
+    /// <returns>New <see cref="ZonedDay"/> instance or null when <paramref name="dayOfYear"/> is not valid.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public ZonedDay? TryGetDayOfYear(int dayOfYear)
@@ -370,6 +610,13 @@ public readonly struct ZonedYear : IEquatable<ZonedYear>, IComparable<ZonedYear>
         return ZonedDay.Create( value, start.TimeZone );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="ZonedWeek"/> instance that represents the specified <paramref name="weekOfYear"/> of this year.
+    /// </summary>
+    /// <param name="weekOfYear">Week of this year to get.</param>
+    /// <param name="weekStart">First day of the week. Equal to <see cref="IsoDayOfWeek.Monday"/> by default.</param>
+    /// <returns>New <see cref="ZonedWeek"/> instance.</returns>
+    /// <exception cref="ArgumentOutOfRangeException">When <paramref name="weekOfYear"/> is not valid.</exception>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public ZonedWeek GetWeekOfYear(int weekOfYear, IsoDayOfWeek weekStart = IsoDayOfWeek.Monday)
@@ -377,6 +624,13 @@ public readonly struct ZonedYear : IEquatable<ZonedYear>, IComparable<ZonedYear>
         return ZonedWeek.Create( Year, weekOfYear, TimeZone, weekStart );
     }
 
+    /// <summary>
+    /// Attempts to create a new <see cref="ZonedWeek"/> instance
+    /// that represents the specified <paramref name="weekOfYear"/> of this year.
+    /// </summary>
+    /// <param name="weekOfYear">Week of this year to get.</param>
+    /// <param name="weekStart">First day of the week. Equal to <see cref="IsoDayOfWeek.Monday"/> by default.</param>
+    /// <returns>New <see cref="ZonedWeek"/> instance or null when <paramref name="weekOfYear"/> is not valid.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public ZonedWeek? TryGetWeekOfYear(int weekOfYear, IsoDayOfWeek weekStart = IsoDayOfWeek.Monday)
@@ -384,6 +638,11 @@ public readonly struct ZonedYear : IEquatable<ZonedYear>, IComparable<ZonedYear>
         return ZonedWeek.TryCreate( Year, weekOfYear, TimeZone, weekStart );
     }
 
+    /// <summary>
+    /// Calculates the number of weeks in this year.
+    /// </summary>
+    /// <param name="weekStart">First day of the week. Equal to <see cref="IsoDayOfWeek.Monday"/> by default.</param>
+    /// <returns>Number of weeks in this year.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public int GetWeekCount(IsoDayOfWeek weekStart = IsoDayOfWeek.Monday)
@@ -392,6 +651,11 @@ public readonly struct ZonedYear : IEquatable<ZonedYear>, IComparable<ZonedYear>
         return WeekCalculator.GetWeekCountInYear( Year, weekStart.ToBcl() );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="IEnumerable{T}"/> instance that contains all weeks of this year in order.
+    /// </summary>
+    /// <param name="weekStart">First day of the week. Equal to <see cref="IsoDayOfWeek.Monday"/> by default.</param>
+    /// <returns>New <see cref="IEnumerable{T}"/> instance.</returns>
     [Pure]
     public IEnumerable<ZonedWeek> GetAllWeeks(IsoDayOfWeek weekStart = IsoDayOfWeek.Monday)
     {
@@ -399,6 +663,10 @@ public readonly struct ZonedYear : IEquatable<ZonedYear>, IComparable<ZonedYear>
         return GetAllWeeksImpl( weekCount, weekStart );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="IEnumerable{T}"/> instance that contains all months of this year in order.
+    /// </summary>
+    /// <returns>New <see cref="IEnumerable{T}"/> instance.</returns>
     [Pure]
     public IEnumerable<ZonedMonth> GetAllMonths()
     {
@@ -410,6 +678,10 @@ public readonly struct ZonedYear : IEquatable<ZonedYear>, IComparable<ZonedYear>
             yield return ZonedMonth.Create( year, ( IsoMonthOfYear )month, timeZone );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="IEnumerable{T}"/> instance that contains all days of this year in order.
+    /// </summary>
+    /// <returns>New <see cref="IEnumerable{T}"/> instance.</returns>
     [Pure]
     public IEnumerable<ZonedDay> GetAllDays()
     {
@@ -455,6 +727,10 @@ public readonly struct ZonedYear : IEquatable<ZonedYear>, IComparable<ZonedYear>
             yield return ZonedDay.Create( new DateTime( year, ( int )IsoMonthOfYear.December, day ), timeZone );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="Bounds{T}"/> instance from this instance's <see cref="Start"/> and <see cref="End"/>.
+    /// </summary>
+    /// <returns>New <see cref="Bounds{T}"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public Bounds<ZonedDateTime> ToBounds()
@@ -462,6 +738,11 @@ public readonly struct ZonedYear : IEquatable<ZonedYear>, IComparable<ZonedYear>
         return Bounds.Create( Start, End );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="BoundsRange{T}"/> instance from this instance's <see cref="Start"/> and <see cref="End"/>
+    /// including any overlapping ambiguity.
+    /// </summary>
+    /// <returns>New <see cref="BoundsRange{T}"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public BoundsRange<ZonedDateTime> ToCheckedBounds()
@@ -469,6 +750,12 @@ public readonly struct ZonedYear : IEquatable<ZonedYear>, IComparable<ZonedYear>
         return ZonedDateTimeBounds.CreateChecked( Start, End );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="ZonedYear"/> instance by adding <paramref name="a"/> and <paramref name="b"/> together.
+    /// </summary>
+    /// <param name="a">First operand.</param>
+    /// <param name="b">Second operand.</param>
+    /// <returns>New <see cref="ZonedYear"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static ZonedYear operator +(ZonedYear a, Period b)
@@ -476,6 +763,12 @@ public readonly struct ZonedYear : IEquatable<ZonedYear>, IComparable<ZonedYear>
         return a.Add( b );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="ZonedYear"/> instance by subtracting <paramref name="b"/> from <paramref name="a"/>.
+    /// </summary>
+    /// <param name="a">First operand.</param>
+    /// <param name="b">Second operand.</param>
+    /// <returns>New <see cref="ZonedYear"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static ZonedYear operator -(ZonedYear a, Period b)
@@ -483,6 +776,12 @@ public readonly struct ZonedYear : IEquatable<ZonedYear>, IComparable<ZonedYear>
         return a.Subtract( b );
     }
 
+    /// <summary>
+    /// Checks if <paramref name="a"/> is equal to <paramref name="b"/>.
+    /// </summary>
+    /// <param name="a">First operand.</param>
+    /// <param name="b">Second operand.</param>
+    /// <returns><b>true</b> when operands are equal, otherwise <b>false</b>.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static bool operator ==(ZonedYear a, ZonedYear b)
@@ -490,6 +789,12 @@ public readonly struct ZonedYear : IEquatable<ZonedYear>, IComparable<ZonedYear>
         return a.Equals( b );
     }
 
+    /// <summary>
+    /// Checks if <paramref name="a"/> is not equal to <paramref name="b"/>.
+    /// </summary>
+    /// <param name="a">First operand.</param>
+    /// <param name="b">Second operand.</param>
+    /// <returns><b>true</b> when operands are not equal, otherwise <b>false</b>.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static bool operator !=(ZonedYear a, ZonedYear b)
@@ -497,6 +802,12 @@ public readonly struct ZonedYear : IEquatable<ZonedYear>, IComparable<ZonedYear>
         return ! a.Equals( b );
     }
 
+    /// <summary>
+    /// Checks if <paramref name="a"/> is greater than <paramref name="b"/>.
+    /// </summary>
+    /// <param name="a">First operand.</param>
+    /// <param name="b">Second operand.</param>
+    /// <returns><b>true</b> when <paramref name="a"/> is greater than <paramref name="b"/>, otherwise <b>false</b>.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static bool operator >(ZonedYear a, ZonedYear b)
@@ -504,6 +815,12 @@ public readonly struct ZonedYear : IEquatable<ZonedYear>, IComparable<ZonedYear>
         return a.CompareTo( b ) > 0;
     }
 
+    /// <summary>
+    /// Checks if <paramref name="a"/> is less than or equal to <paramref name="b"/>.
+    /// </summary>
+    /// <param name="a">First operand.</param>
+    /// <param name="b">Second operand.</param>
+    /// <returns><b>true</b> when <paramref name="a"/> is less than or equal to <paramref name="b"/>, otherwise <b>false</b>.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static bool operator <=(ZonedYear a, ZonedYear b)
@@ -511,6 +828,12 @@ public readonly struct ZonedYear : IEquatable<ZonedYear>, IComparable<ZonedYear>
         return a.CompareTo( b ) <= 0;
     }
 
+    /// <summary>
+    /// Checks if <paramref name="a"/> is less than <paramref name="b"/>.
+    /// </summary>
+    /// <param name="a">First operand.</param>
+    /// <param name="b">Second operand.</param>
+    /// <returns><b>true</b> when <paramref name="a"/> is less than <paramref name="b"/>, otherwise <b>false</b>.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static bool operator <(ZonedYear a, ZonedYear b)
@@ -518,6 +841,12 @@ public readonly struct ZonedYear : IEquatable<ZonedYear>, IComparable<ZonedYear>
         return a.CompareTo( b ) < 0;
     }
 
+    /// <summary>
+    /// Checks if <paramref name="a"/> is greater than or equal to <paramref name="b"/>.
+    /// </summary>
+    /// <param name="a">First operand.</param>
+    /// <param name="b">Second operand.</param>
+    /// <returns><b>true</b> when <paramref name="a"/> is greater than or equal to <paramref name="b"/>, otherwise <b>false</b>.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static bool operator >=(ZonedYear a, ZonedYear b)

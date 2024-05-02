@@ -4,15 +4,22 @@ using LfrlAnvil.Generators;
 
 namespace LfrlAnvil.Chrono.Internal;
 
+/// <inheritdoc />
 public abstract class DateTimeProviderBase : IDateTimeProvider
 {
+    /// <summary>
+    /// Creates a new <see cref="DateTimeProviderBase"/> instance.
+    /// </summary>
+    /// <param name="kind">Specifies the resulting <see cref="DateTimeKind"/> of created instances.</param>
     protected DateTimeProviderBase(DateTimeKind kind)
     {
         Kind = kind;
     }
 
+    /// <inheritdoc />
     public DateTimeKind Kind { get; }
 
+    /// <inheritdoc />
     public abstract DateTime GetNow();
 
     [Pure]

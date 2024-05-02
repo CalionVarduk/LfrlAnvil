@@ -7,18 +7,45 @@ using LfrlAnvil.Numerics;
 
 namespace LfrlAnvil.Chrono;
 
+/// <summary>
+/// Represents a duration in time, or elapsed time, or a difference between two timestamps.
+/// </summary>
 public readonly struct Duration : IEquatable<Duration>, IComparable<Duration>, IComparable
 {
+    /// <summary>
+    /// Specifies the <see cref="Duration"/> of <b>0</b> length.
+    /// </summary>
     public static readonly Duration Zero = new Duration( 0 );
+
+    /// <summary>
+    /// Specifies maximum possible <see cref="Duration"/>.
+    /// </summary>
     public static readonly Duration MinValue = new Duration( long.MinValue );
+
+    /// <summary>
+    /// Specifies minimum possible <see cref="Duration"/>.
+    /// </summary>
     public static readonly Duration MaxValue = new Duration( long.MaxValue );
 
+    /// <summary>
+    /// Creates a new <see cref="Duration"/> instance.
+    /// </summary>
+    /// <param name="ticks">Number of ticks.</param>
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public Duration(long ticks)
     {
         Ticks = ticks;
     }
 
+    /// <summary>
+    /// Creates a new <see cref="Duration"/> instance.
+    /// </summary>
+    /// <param name="hours">Number of hours.</param>
+    /// <param name="minutes">Number of minutes.</param>
+    /// <param name="seconds">Number of seconds.</param>
+    /// <param name="milliseconds">Number of milliseconds.</param>
+    /// <param name="microseconds">Number of microseconds.</param>
+    /// <param name="ticks">Number of ticks.</param>
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public Duration(int hours, int minutes, int seconds = 0, int milliseconds = 0, int microseconds = 0, int ticks = 0)
         : this(
@@ -29,27 +56,99 @@ public readonly struct Duration : IEquatable<Duration>, IComparable<Duration>, I
             + microseconds * ChronoConstants.TicksPerMicrosecond
             + ticks ) { }
 
+    /// <summary>
+    /// Creates a new <see cref="Duration"/> instance.
+    /// </summary>
+    /// <param name="timeSpan">Source <see cref="TimeSpan"/>.</param>
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public Duration(TimeSpan timeSpan)
         : this( timeSpan.Ticks ) { }
 
+    /// <summary>
+    /// Total number of ticks. One tick is equivalent to 100 nanoseconds.
+    /// </summary>
     public long Ticks { get; }
+
+    /// <summary>
+    /// Total number of full microseconds.
+    /// </summary>
     public long FullMicroseconds => Ticks / ChronoConstants.TicksPerMicrosecond;
+
+    /// <summary>
+    /// Total number of full milliseconds.
+    /// </summary>
     public long FullMilliseconds => Ticks / ChronoConstants.TicksPerMillisecond;
+
+    /// <summary>
+    /// Total number of full seconds.
+    /// </summary>
     public long FullSeconds => Ticks / ChronoConstants.TicksPerSecond;
+
+    /// <summary>
+    /// Total number of full minutes.
+    /// </summary>
     public long FullMinutes => Ticks / ChronoConstants.TicksPerMinute;
+
+    /// <summary>
+    /// Total number of full hours.
+    /// </summary>
     public long FullHours => Ticks / ChronoConstants.TicksPerHour;
+
+    /// <summary>
+    /// Number of ticks in the microsecond component.
+    /// </summary>
     public int TicksInMicrosecond => ( int )(Ticks % ChronoConstants.TicksPerMicrosecond);
+
+    /// <summary>
+    /// Number of microseconds in the millisecond component.
+    /// </summary>
     public int MicrosecondsInMillisecond => ( int )(FullMicroseconds % ChronoConstants.MicrosecondsPerMillisecond);
+
+    /// <summary>
+    /// Number of milliseconds in the second component.
+    /// </summary>
     public int MillisecondsInSecond => ( int )(FullMilliseconds % ChronoConstants.MillisecondsPerSecond);
+
+    /// <summary>
+    /// Number of seconds in the minute component.
+    /// </summary>
     public int SecondsInMinute => ( int )(FullSeconds % ChronoConstants.SecondsPerMinute);
+
+    /// <summary>
+    /// Number of minutes in the hour component.
+    /// </summary>
     public int MinutesInHour => ( int )(FullMinutes % ChronoConstants.MinutesPerHour);
+
+    /// <summary>
+    /// Total number of microseconds.
+    /// </summary>
     public double TotalMicroseconds => ( double )Ticks / ChronoConstants.TicksPerMicrosecond;
+
+    /// <summary>
+    /// Total number of milliseconds.
+    /// </summary>
     public double TotalMilliseconds => ( double )Ticks / ChronoConstants.TicksPerMillisecond;
+
+    /// <summary>
+    /// Total number of seconds.
+    /// </summary>
     public double TotalSeconds => ( double )Ticks / ChronoConstants.TicksPerSecond;
+
+    /// <summary>
+    /// Total number of minutes.
+    /// </summary>
     public double TotalMinutes => ( double )Ticks / ChronoConstants.TicksPerMinute;
+
+    /// <summary>
+    /// Total number of hours.
+    /// </summary>
     public double TotalHours => ( double )Ticks / ChronoConstants.TicksPerHour;
 
+    /// <summary>
+    /// Creates a new <see cref="Duration"/> instance.
+    /// </summary>
+    /// <param name="ticks">Number of ticks.</param>
+    /// <returns>New <see cref="Duration"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static Duration FromTicks(long ticks)
@@ -57,6 +156,11 @@ public readonly struct Duration : IEquatable<Duration>, IComparable<Duration>, I
         return new Duration( ticks );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="Duration"/> instance.
+    /// </summary>
+    /// <param name="microseconds">Number of microseconds.</param>
+    /// <returns>New <see cref="Duration"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static Duration FromMicroseconds(double microseconds)
@@ -64,6 +168,11 @@ public readonly struct Duration : IEquatable<Duration>, IComparable<Duration>, I
         return new Duration( ( long )Math.Round( microseconds * ChronoConstants.TicksPerMicrosecond, MidpointRounding.AwayFromZero ) );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="Duration"/> instance.
+    /// </summary>
+    /// <param name="microseconds">Number of microseconds.</param>
+    /// <returns>New <see cref="Duration"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static Duration FromMicroseconds(long microseconds)
@@ -71,6 +180,11 @@ public readonly struct Duration : IEquatable<Duration>, IComparable<Duration>, I
         return new Duration( microseconds * ChronoConstants.TicksPerMicrosecond );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="Duration"/> instance.
+    /// </summary>
+    /// <param name="milliseconds">Number of milliseconds.</param>
+    /// <returns>New <see cref="Duration"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static Duration FromMilliseconds(double milliseconds)
@@ -78,6 +192,11 @@ public readonly struct Duration : IEquatable<Duration>, IComparable<Duration>, I
         return new Duration( ( long )Math.Round( milliseconds * ChronoConstants.TicksPerMillisecond, MidpointRounding.AwayFromZero ) );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="Duration"/> instance.
+    /// </summary>
+    /// <param name="milliseconds">Number of milliseconds.</param>
+    /// <returns>New <see cref="Duration"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static Duration FromMilliseconds(long milliseconds)
@@ -85,6 +204,11 @@ public readonly struct Duration : IEquatable<Duration>, IComparable<Duration>, I
         return new Duration( milliseconds * ChronoConstants.TicksPerMillisecond );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="Duration"/> instance.
+    /// </summary>
+    /// <param name="seconds">Number of seconds.</param>
+    /// <returns>New <see cref="Duration"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static Duration FromSeconds(double seconds)
@@ -92,6 +216,11 @@ public readonly struct Duration : IEquatable<Duration>, IComparable<Duration>, I
         return new Duration( ( long )Math.Round( seconds * ChronoConstants.TicksPerSecond, MidpointRounding.AwayFromZero ) );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="Duration"/> instance.
+    /// </summary>
+    /// <param name="seconds">Number of seconds.</param>
+    /// <returns>New <see cref="Duration"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static Duration FromSeconds(long seconds)
@@ -99,6 +228,11 @@ public readonly struct Duration : IEquatable<Duration>, IComparable<Duration>, I
         return new Duration( seconds * ChronoConstants.TicksPerSecond );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="Duration"/> instance.
+    /// </summary>
+    /// <param name="minutes">Number of minutes.</param>
+    /// <returns>New <see cref="Duration"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static Duration FromMinutes(double minutes)
@@ -106,6 +240,11 @@ public readonly struct Duration : IEquatable<Duration>, IComparable<Duration>, I
         return new Duration( ( long )Math.Round( minutes * ChronoConstants.TicksPerMinute, MidpointRounding.AwayFromZero ) );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="Duration"/> instance.
+    /// </summary>
+    /// <param name="minutes">Number of minutes.</param>
+    /// <returns>New <see cref="Duration"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static Duration FromMinutes(long minutes)
@@ -113,6 +252,11 @@ public readonly struct Duration : IEquatable<Duration>, IComparable<Duration>, I
         return new Duration( minutes * ChronoConstants.TicksPerMinute );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="Duration"/> instance.
+    /// </summary>
+    /// <param name="hours">Number of hours.</param>
+    /// <returns>New <see cref="Duration"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static Duration FromHours(double hours)
@@ -120,6 +264,11 @@ public readonly struct Duration : IEquatable<Duration>, IComparable<Duration>, I
         return new Duration( ( long )Math.Round( hours * ChronoConstants.TicksPerHour, MidpointRounding.AwayFromZero ) );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="Duration"/> instance.
+    /// </summary>
+    /// <param name="hours">Number of hours.</param>
+    /// <returns>New <see cref="Duration"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static Duration FromHours(long hours)
@@ -127,12 +276,17 @@ public readonly struct Duration : IEquatable<Duration>, IComparable<Duration>, I
         return new Duration( hours * ChronoConstants.TicksPerHour );
     }
 
+    /// <summary>
+    /// Returns a string representation of this <see cref="Duration"/> instance.
+    /// </summary>
+    /// <returns>String representation.</returns>
     [Pure]
     public override string ToString()
     {
         return $"{(( decimal )TotalSeconds).ToString( CultureInfo.InvariantCulture )} second(s)";
     }
 
+    /// <inheritdoc />
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public override int GetHashCode()
@@ -140,12 +294,14 @@ public readonly struct Duration : IEquatable<Duration>, IComparable<Duration>, I
         return Ticks.GetHashCode();
     }
 
+    /// <inheritdoc />
     [Pure]
     public override bool Equals(object? obj)
     {
         return obj is Duration d && Equals( d );
     }
 
+    /// <inheritdoc />
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public bool Equals(Duration other)
@@ -153,12 +309,14 @@ public readonly struct Duration : IEquatable<Duration>, IComparable<Duration>, I
         return Ticks.Equals( other.Ticks );
     }
 
+    /// <inheritdoc />
     [Pure]
     public int CompareTo(object? obj)
     {
-        return obj is Duration d ? CompareTo( d ) : 1;
+        return obj is Duration d ? CompareTo( d ) : throw new ArgumentException( ExceptionResources.InvalidType, nameof( obj ) );
     }
 
+    /// <inheritdoc />
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public int CompareTo(Duration other)
@@ -166,6 +324,10 @@ public readonly struct Duration : IEquatable<Duration>, IComparable<Duration>, I
         return Ticks.CompareTo( other.Ticks );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="Duration"/> instance by negating this instance.
+    /// </summary>
+    /// <returns>New <see cref="Duration"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public Duration Negate()
@@ -173,6 +335,10 @@ public readonly struct Duration : IEquatable<Duration>, IComparable<Duration>, I
         return new Duration( -Ticks );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="Duration"/> instance by calculating an absolute value from this instance.
+    /// </summary>
+    /// <returns>New <see cref="Duration"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public Duration Abs()
@@ -180,6 +346,11 @@ public readonly struct Duration : IEquatable<Duration>, IComparable<Duration>, I
         return new Duration( Math.Abs( Ticks ) );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="Duration"/> instance by adding <paramref name="other"/> to this instance.
+    /// </summary>
+    /// <param name="other">Other instance to add.</param>
+    /// <returns>New <see cref="Duration"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public Duration Add(Duration other)
@@ -187,6 +358,11 @@ public readonly struct Duration : IEquatable<Duration>, IComparable<Duration>, I
         return AddTicks( other.Ticks );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="Duration"/> instance by adding the specified number of <paramref name="ticks"/>.
+    /// </summary>
+    /// <param name="ticks">Ticks to add.</param>
+    /// <returns>New <see cref="Duration"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public Duration AddTicks(long ticks)
@@ -194,6 +370,11 @@ public readonly struct Duration : IEquatable<Duration>, IComparable<Duration>, I
         return new Duration( Ticks + ticks );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="Duration"/> instance by adding the specified number of <paramref name="microseconds"/>.
+    /// </summary>
+    /// <param name="microseconds">Microseconds to add.</param>
+    /// <returns>New <see cref="Duration"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public Duration AddMicroseconds(double microseconds)
@@ -201,6 +382,11 @@ public readonly struct Duration : IEquatable<Duration>, IComparable<Duration>, I
         return AddTicks( ( long )Math.Round( microseconds * ChronoConstants.TicksPerMicrosecond, MidpointRounding.AwayFromZero ) );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="Duration"/> instance by adding the specified number of <paramref name="microseconds"/>.
+    /// </summary>
+    /// <param name="microseconds">Microseconds to add.</param>
+    /// <returns>New <see cref="Duration"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public Duration AddMicroseconds(long microseconds)
@@ -208,6 +394,11 @@ public readonly struct Duration : IEquatable<Duration>, IComparable<Duration>, I
         return AddTicks( microseconds * ChronoConstants.TicksPerMicrosecond );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="Duration"/> instance by adding the specified number of <paramref name="milliseconds"/>.
+    /// </summary>
+    /// <param name="milliseconds">Milliseconds to add.</param>
+    /// <returns>New <see cref="Duration"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public Duration AddMilliseconds(double milliseconds)
@@ -215,6 +406,11 @@ public readonly struct Duration : IEquatable<Duration>, IComparable<Duration>, I
         return AddTicks( ( long )Math.Round( milliseconds * ChronoConstants.TicksPerMillisecond, MidpointRounding.AwayFromZero ) );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="Duration"/> instance by adding the specified number of <paramref name="milliseconds"/>.
+    /// </summary>
+    /// <param name="milliseconds">Milliseconds to add.</param>
+    /// <returns>New <see cref="Duration"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public Duration AddMilliseconds(long milliseconds)
@@ -222,6 +418,11 @@ public readonly struct Duration : IEquatable<Duration>, IComparable<Duration>, I
         return AddTicks( milliseconds * ChronoConstants.TicksPerMillisecond );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="Duration"/> instance by adding the specified number of <paramref name="seconds"/>.
+    /// </summary>
+    /// <param name="seconds">Seconds to add.</param>
+    /// <returns>New <see cref="Duration"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public Duration AddSeconds(double seconds)
@@ -229,6 +430,11 @@ public readonly struct Duration : IEquatable<Duration>, IComparable<Duration>, I
         return AddTicks( ( long )Math.Round( seconds * ChronoConstants.TicksPerSecond, MidpointRounding.AwayFromZero ) );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="Duration"/> instance by adding the specified number of <paramref name="seconds"/>.
+    /// </summary>
+    /// <param name="seconds">Seconds to add.</param>
+    /// <returns>New <see cref="Duration"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public Duration AddSeconds(long seconds)
@@ -236,6 +442,11 @@ public readonly struct Duration : IEquatable<Duration>, IComparable<Duration>, I
         return AddTicks( seconds * ChronoConstants.TicksPerSecond );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="Duration"/> instance by adding the specified number of <paramref name="minutes"/>.
+    /// </summary>
+    /// <param name="minutes">Minutes to add.</param>
+    /// <returns>New <see cref="Duration"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public Duration AddMinutes(double minutes)
@@ -243,6 +454,11 @@ public readonly struct Duration : IEquatable<Duration>, IComparable<Duration>, I
         return AddTicks( ( long )Math.Round( minutes * ChronoConstants.TicksPerMinute, MidpointRounding.AwayFromZero ) );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="Duration"/> instance by adding the specified number of <paramref name="minutes"/>.
+    /// </summary>
+    /// <param name="minutes">Minutes to add.</param>
+    /// <returns>New <see cref="Duration"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public Duration AddMinutes(long minutes)
@@ -250,6 +466,11 @@ public readonly struct Duration : IEquatable<Duration>, IComparable<Duration>, I
         return AddTicks( minutes * ChronoConstants.TicksPerMinute );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="Duration"/> instance by adding the specified number of <paramref name="hours"/>.
+    /// </summary>
+    /// <param name="hours">Hours to add.</param>
+    /// <returns>New <see cref="Duration"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public Duration AddHours(double hours)
@@ -257,6 +478,11 @@ public readonly struct Duration : IEquatable<Duration>, IComparable<Duration>, I
         return AddTicks( ( long )Math.Round( hours * ChronoConstants.TicksPerHour, MidpointRounding.AwayFromZero ) );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="Duration"/> instance by adding the specified number of <paramref name="hours"/>.
+    /// </summary>
+    /// <param name="hours">Hours to add.</param>
+    /// <returns>New <see cref="Duration"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public Duration AddHours(long hours)
@@ -264,6 +490,11 @@ public readonly struct Duration : IEquatable<Duration>, IComparable<Duration>, I
         return AddTicks( hours * ChronoConstants.TicksPerHour );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="Duration"/> instance by subtracting <paramref name="other"/> from this instance.
+    /// </summary>
+    /// <param name="other">Other instance to subtract.</param>
+    /// <returns>New <see cref="Duration"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public Duration Subtract(Duration other)
@@ -271,6 +502,11 @@ public readonly struct Duration : IEquatable<Duration>, IComparable<Duration>, I
         return SubtractTicks( other.Ticks );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="Duration"/> instance by subtracting the specified number of <paramref name="ticks"/>.
+    /// </summary>
+    /// <param name="ticks">Ticks to subtract.</param>
+    /// <returns>New <see cref="Duration"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public Duration SubtractTicks(long ticks)
@@ -278,6 +514,11 @@ public readonly struct Duration : IEquatable<Duration>, IComparable<Duration>, I
         return AddTicks( -ticks );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="Duration"/> instance by subtracting the specified number of <paramref name="microseconds"/>.
+    /// </summary>
+    /// <param name="microseconds">Microseconds to subtract.</param>
+    /// <returns>New <see cref="Duration"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public Duration SubtractMicroseconds(double microseconds)
@@ -285,6 +526,11 @@ public readonly struct Duration : IEquatable<Duration>, IComparable<Duration>, I
         return SubtractTicks( ( long )Math.Round( microseconds * ChronoConstants.TicksPerMicrosecond, MidpointRounding.AwayFromZero ) );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="Duration"/> instance by subtracting the specified number of <paramref name="microseconds"/>.
+    /// </summary>
+    /// <param name="microseconds">Microseconds to subtract.</param>
+    /// <returns>New <see cref="Duration"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public Duration SubtractMicroseconds(long microseconds)
@@ -292,6 +538,11 @@ public readonly struct Duration : IEquatable<Duration>, IComparable<Duration>, I
         return SubtractTicks( microseconds * ChronoConstants.TicksPerMicrosecond );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="Duration"/> instance by subtracting the specified number of <paramref name="milliseconds"/>.
+    /// </summary>
+    /// <param name="milliseconds">Milliseconds to subtract.</param>
+    /// <returns>New <see cref="Duration"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public Duration SubtractMilliseconds(double milliseconds)
@@ -299,6 +550,11 @@ public readonly struct Duration : IEquatable<Duration>, IComparable<Duration>, I
         return SubtractTicks( ( long )Math.Round( milliseconds * ChronoConstants.TicksPerMillisecond, MidpointRounding.AwayFromZero ) );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="Duration"/> instance by subtracting the specified number of <paramref name="milliseconds"/>.
+    /// </summary>
+    /// <param name="milliseconds">Milliseconds to subtract.</param>
+    /// <returns>New <see cref="Duration"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public Duration SubtractMilliseconds(long milliseconds)
@@ -306,6 +562,11 @@ public readonly struct Duration : IEquatable<Duration>, IComparable<Duration>, I
         return SubtractTicks( milliseconds * ChronoConstants.TicksPerMillisecond );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="Duration"/> instance by subtracting the specified number of <paramref name="seconds"/>.
+    /// </summary>
+    /// <param name="seconds">Seconds to subtract.</param>
+    /// <returns>New <see cref="Duration"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public Duration SubtractSeconds(double seconds)
@@ -313,6 +574,11 @@ public readonly struct Duration : IEquatable<Duration>, IComparable<Duration>, I
         return SubtractTicks( ( long )Math.Round( seconds * ChronoConstants.TicksPerSecond, MidpointRounding.AwayFromZero ) );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="Duration"/> instance by subtracting the specified number of <paramref name="seconds"/>.
+    /// </summary>
+    /// <param name="seconds">Seconds to subtract.</param>
+    /// <returns>New <see cref="Duration"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public Duration SubtractSeconds(long seconds)
@@ -320,6 +586,11 @@ public readonly struct Duration : IEquatable<Duration>, IComparable<Duration>, I
         return SubtractTicks( seconds * ChronoConstants.TicksPerSecond );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="Duration"/> instance by subtracting the specified number of <paramref name="minutes"/>.
+    /// </summary>
+    /// <param name="minutes">Minutes to subtract.</param>
+    /// <returns>New <see cref="Duration"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public Duration SubtractMinutes(double minutes)
@@ -327,6 +598,11 @@ public readonly struct Duration : IEquatable<Duration>, IComparable<Duration>, I
         return SubtractTicks( ( long )Math.Round( minutes * ChronoConstants.TicksPerMinute, MidpointRounding.AwayFromZero ) );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="Duration"/> instance by subtracting the specified number of <paramref name="minutes"/>.
+    /// </summary>
+    /// <param name="minutes">Minutes to subtract.</param>
+    /// <returns>New <see cref="Duration"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public Duration SubtractMinutes(long minutes)
@@ -334,6 +610,11 @@ public readonly struct Duration : IEquatable<Duration>, IComparable<Duration>, I
         return SubtractTicks( minutes * ChronoConstants.TicksPerMinute );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="Duration"/> instance by subtracting the specified number of <paramref name="hours"/>.
+    /// </summary>
+    /// <param name="hours">Hours to subtract.</param>
+    /// <returns>New <see cref="Duration"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public Duration SubtractHours(double hours)
@@ -341,6 +622,11 @@ public readonly struct Duration : IEquatable<Duration>, IComparable<Duration>, I
         return SubtractTicks( ( long )Math.Round( hours * ChronoConstants.TicksPerHour, MidpointRounding.AwayFromZero ) );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="Duration"/> instance by subtracting the specified number of <paramref name="hours"/>.
+    /// </summary>
+    /// <param name="hours">Hours to subtract.</param>
+    /// <returns>New <see cref="Duration"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public Duration SubtractHours(long hours)
@@ -348,6 +634,11 @@ public readonly struct Duration : IEquatable<Duration>, IComparable<Duration>, I
         return SubtractTicks( hours * ChronoConstants.TicksPerHour );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="Duration"/> instance by multiplying this instance by the provided <paramref name="percent"/>.
+    /// </summary>
+    /// <param name="percent">Percent to multiply by.</param>
+    /// <returns>New <see cref="Duration"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public Duration Multiply(Percent percent)
@@ -355,6 +646,11 @@ public readonly struct Duration : IEquatable<Duration>, IComparable<Duration>, I
         return new Duration( Ticks * percent );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="Duration"/> instance by multiplying this instance by the provided <paramref name="multiplier"/>.
+    /// </summary>
+    /// <param name="multiplier">Value to multiply by.</param>
+    /// <returns>New <see cref="Duration"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public Duration Multiply(double multiplier)
@@ -362,6 +658,12 @@ public readonly struct Duration : IEquatable<Duration>, IComparable<Duration>, I
         return FromTicks( ( long )Math.Round( Ticks * multiplier, MidpointRounding.AwayFromZero ) );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="Duration"/> instance by dividing this instance by the provided <paramref name="divisor"/>.
+    /// </summary>
+    /// <param name="divisor">Value to divide by.</param>
+    /// <returns>New <see cref="Duration"/> instance.</returns>
+    /// <exception cref="DivideByZeroException">When <paramref name="divisor"/> is equal to <b>0</b>.</exception>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public Duration Divide(double divisor)
@@ -372,6 +674,10 @@ public readonly struct Duration : IEquatable<Duration>, IComparable<Duration>, I
         return FromTicks( ( long )Math.Round( Ticks / divisor, MidpointRounding.AwayFromZero ) );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="Duration"/> instance by truncating this instance to microseconds.
+    /// </summary>
+    /// <returns>New <see cref="Duration"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public Duration TrimToMicrosecond()
@@ -379,6 +685,10 @@ public readonly struct Duration : IEquatable<Duration>, IComparable<Duration>, I
         return SubtractTicks( Ticks % ChronoConstants.TicksPerMicrosecond );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="Duration"/> instance by truncating this instance to milliseconds.
+    /// </summary>
+    /// <returns>New <see cref="Duration"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public Duration TrimToMillisecond()
@@ -386,6 +696,10 @@ public readonly struct Duration : IEquatable<Duration>, IComparable<Duration>, I
         return SubtractTicks( Ticks % ChronoConstants.TicksPerMillisecond );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="Duration"/> instance by truncating this instance to seconds.
+    /// </summary>
+    /// <returns>New <see cref="Duration"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public Duration TrimToSecond()
@@ -393,6 +707,10 @@ public readonly struct Duration : IEquatable<Duration>, IComparable<Duration>, I
         return SubtractTicks( Ticks % ChronoConstants.TicksPerSecond );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="Duration"/> instance by truncating this instance to minutes.
+    /// </summary>
+    /// <returns>New <see cref="Duration"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public Duration TrimToMinute()
@@ -400,6 +718,10 @@ public readonly struct Duration : IEquatable<Duration>, IComparable<Duration>, I
         return SubtractTicks( Ticks % ChronoConstants.TicksPerMinute );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="Duration"/> instance by truncating this instance to hours.
+    /// </summary>
+    /// <returns>New <see cref="Duration"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public Duration TrimToHour()
@@ -407,6 +729,12 @@ public readonly struct Duration : IEquatable<Duration>, IComparable<Duration>, I
         return SubtractTicks( Ticks % ChronoConstants.TicksPerHour );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="Duration"/> instance by setting the number of ticks in the microsecond component.
+    /// </summary>
+    /// <param name="value">New value.</param>
+    /// <returns>New <see cref="Duration"/> instance.</returns>
+    /// <exception cref="ArgumentOutOfRangeException">When <paramref name="value"/> is not in a valid range.</exception>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public Duration SetTicksInMicrosecond(int value)
@@ -419,6 +747,12 @@ public readonly struct Duration : IEquatable<Duration>, IComparable<Duration>, I
         };
     }
 
+    /// <summary>
+    /// Creates a new <see cref="Duration"/> instance by setting the number of microseconds in the millisecond component.
+    /// </summary>
+    /// <param name="value">New value.</param>
+    /// <returns>New <see cref="Duration"/> instance.</returns>
+    /// <exception cref="ArgumentOutOfRangeException">When <paramref name="value"/> is not in a valid range.</exception>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public Duration SetMicrosecondsInMillisecond(int value)
@@ -431,6 +765,12 @@ public readonly struct Duration : IEquatable<Duration>, IComparable<Duration>, I
         };
     }
 
+    /// <summary>
+    /// Creates a new <see cref="Duration"/> instance by setting the number of milliseconds in the second component.
+    /// </summary>
+    /// <param name="value">New value.</param>
+    /// <returns>New <see cref="Duration"/> instance.</returns>
+    /// <exception cref="ArgumentOutOfRangeException">When <paramref name="value"/> is not in a valid range.</exception>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public Duration SetMillisecondsInSecond(int value)
@@ -443,6 +783,12 @@ public readonly struct Duration : IEquatable<Duration>, IComparable<Duration>, I
         };
     }
 
+    /// <summary>
+    /// Creates a new <see cref="Duration"/> instance by setting the number of seconds in the minute component.
+    /// </summary>
+    /// <param name="value">New value.</param>
+    /// <returns>New <see cref="Duration"/> instance.</returns>
+    /// <exception cref="ArgumentOutOfRangeException">When <paramref name="value"/> is not in a valid range.</exception>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public Duration SetSecondsInMinute(int value)
@@ -455,6 +801,12 @@ public readonly struct Duration : IEquatable<Duration>, IComparable<Duration>, I
         };
     }
 
+    /// <summary>
+    /// Creates a new <see cref="Duration"/> instance by setting the number of minutes in the hour component.
+    /// </summary>
+    /// <param name="value">New value.</param>
+    /// <returns>New <see cref="Duration"/> instance.</returns>
+    /// <exception cref="ArgumentOutOfRangeException">When <paramref name="value"/> is not in a valid range.</exception>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public Duration SetMinutesInHour(int value)
@@ -467,6 +819,11 @@ public readonly struct Duration : IEquatable<Duration>, IComparable<Duration>, I
         };
     }
 
+    /// <summary>
+    /// Creates a new <see cref="Duration"/> instance by setting the number of hours.
+    /// </summary>
+    /// <param name="value">New value.</param>
+    /// <returns>New <see cref="Duration"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public Duration SetHours(long value)
@@ -479,6 +836,11 @@ public readonly struct Duration : IEquatable<Duration>, IComparable<Duration>, I
         };
     }
 
+    /// <summary>
+    /// Coverts the provided duration to <see cref="TimeSpan"/>.
+    /// </summary>
+    /// <param name="d">Value to convert.</param>
+    /// <returns>New <see cref="TimeSpan"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static implicit operator TimeSpan(Duration d)
@@ -486,6 +848,11 @@ public readonly struct Duration : IEquatable<Duration>, IComparable<Duration>, I
         return TimeSpan.FromTicks( d.Ticks );
     }
 
+    /// <summary>
+    /// Coverts the provided duration to <see cref="FloatingDuration"/>.
+    /// </summary>
+    /// <param name="d">Value to convert.</param>
+    /// <returns>New <see cref="FloatingDuration"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static implicit operator FloatingDuration(Duration d)
@@ -493,6 +860,11 @@ public readonly struct Duration : IEquatable<Duration>, IComparable<Duration>, I
         return FloatingDuration.FromTicks( d.Ticks );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="Duration"/> instance by negating the provided <paramref name="a"/>.
+    /// </summary>
+    /// <param name="a">Operand.</param>
+    /// <returns>New <see cref="Duration"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static Duration operator -(Duration a)
@@ -500,6 +872,12 @@ public readonly struct Duration : IEquatable<Duration>, IComparable<Duration>, I
         return a.Negate();
     }
 
+    /// <summary>
+    /// Creates a new <see cref="Duration"/> instance by adding <paramref name="a"/> and <paramref name="b"/> together.
+    /// </summary>
+    /// <param name="a">First operand.</param>
+    /// <param name="b">Second operand.</param>
+    /// <returns>New <see cref="Duration"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static Duration operator +(Duration a, Duration b)
@@ -507,6 +885,12 @@ public readonly struct Duration : IEquatable<Duration>, IComparable<Duration>, I
         return a.Add( b );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="Duration"/> instance by subtracting <paramref name="b"/> from <paramref name="a"/>.
+    /// </summary>
+    /// <param name="a">First operand.</param>
+    /// <param name="b">Second operand.</param>
+    /// <returns>New <see cref="Duration"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static Duration operator -(Duration a, Duration b)
@@ -514,6 +898,12 @@ public readonly struct Duration : IEquatable<Duration>, IComparable<Duration>, I
         return a.Subtract( b );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="Duration"/> instance by multiplying <paramref name="a"/> and <paramref name="b"/> together.
+    /// </summary>
+    /// <param name="a">First operand.</param>
+    /// <param name="b">Second operand.</param>
+    /// <returns>New <see cref="Duration"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static Duration operator *(Duration a, double b)
@@ -521,6 +911,13 @@ public readonly struct Duration : IEquatable<Duration>, IComparable<Duration>, I
         return a.Multiply( b );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="Duration"/> instance by dividing <paramref name="a"/> by <paramref name="b"/>.
+    /// </summary>
+    /// <param name="a">First operand.</param>
+    /// <param name="b">Second operand.</param>
+    /// <returns>New <see cref="Duration"/> instance.</returns>
+    /// <exception cref="DivideByZeroException">When <paramref name="b"/> is equal to <b>0</b>.</exception>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static Duration operator /(Duration a, double b)
@@ -528,18 +925,36 @@ public readonly struct Duration : IEquatable<Duration>, IComparable<Duration>, I
         return a.Divide( b );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="Duration"/> instance by multiplying <paramref name="a"/> and <paramref name="b"/> together.
+    /// </summary>
+    /// <param name="a">First operand.</param>
+    /// <param name="b">Second operand.</param>
+    /// <returns>New <see cref="Duration"/> instance.</returns>
     [Pure]
-    public static Duration operator *(Duration left, Percent right)
+    public static Duration operator *(Duration a, Percent b)
     {
-        return left.Multiply( right );
+        return a.Multiply( b );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="Duration"/> instance by multiplying <paramref name="a"/> and <paramref name="b"/> together.
+    /// </summary>
+    /// <param name="a">First operand.</param>
+    /// <param name="b">Second operand.</param>
+    /// <returns>New <see cref="Duration"/> instance.</returns>
     [Pure]
-    public static Duration operator *(Percent left, Duration right)
+    public static Duration operator *(Percent a, Duration b)
     {
-        return right.Multiply( left );
+        return b.Multiply( a );
     }
 
+    /// <summary>
+    /// Checks if <paramref name="a"/> is equal to <paramref name="b"/>.
+    /// </summary>
+    /// <param name="a">First operand.</param>
+    /// <param name="b">Second operand.</param>
+    /// <returns><b>true</b> when operands are equal, otherwise <b>false</b>.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static bool operator ==(Duration a, Duration b)
@@ -547,6 +962,12 @@ public readonly struct Duration : IEquatable<Duration>, IComparable<Duration>, I
         return a.Equals( b );
     }
 
+    /// <summary>
+    /// Checks if <paramref name="a"/> is not equal to <paramref name="b"/>.
+    /// </summary>
+    /// <param name="a">First operand.</param>
+    /// <param name="b">Second operand.</param>
+    /// <returns><b>true</b> when operands are not equal, otherwise <b>false</b>.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static bool operator !=(Duration a, Duration b)
@@ -554,6 +975,12 @@ public readonly struct Duration : IEquatable<Duration>, IComparable<Duration>, I
         return ! a.Equals( b );
     }
 
+    /// <summary>
+    /// Checks if <paramref name="a"/> is greater than <paramref name="b"/>.
+    /// </summary>
+    /// <param name="a">First operand.</param>
+    /// <param name="b">Second operand.</param>
+    /// <returns><b>true</b> when <paramref name="a"/> is greater than <paramref name="b"/>, otherwise <b>false</b>.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static bool operator >(Duration a, Duration b)
@@ -561,6 +988,12 @@ public readonly struct Duration : IEquatable<Duration>, IComparable<Duration>, I
         return a.CompareTo( b ) > 0;
     }
 
+    /// <summary>
+    /// Checks if <paramref name="a"/> is less than or equal to <paramref name="b"/>.
+    /// </summary>
+    /// <param name="a">First operand.</param>
+    /// <param name="b">Second operand.</param>
+    /// <returns><b>true</b> when <paramref name="a"/> is less than or equal to <paramref name="b"/>, otherwise <b>false</b>.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static bool operator <=(Duration a, Duration b)
@@ -568,6 +1001,12 @@ public readonly struct Duration : IEquatable<Duration>, IComparable<Duration>, I
         return a.CompareTo( b ) <= 0;
     }
 
+    /// <summary>
+    /// Checks if <paramref name="a"/> is less than <paramref name="b"/>.
+    /// </summary>
+    /// <param name="a">First operand.</param>
+    /// <param name="b">Second operand.</param>
+    /// <returns><b>true</b> when <paramref name="a"/> is less than <paramref name="b"/>, otherwise <b>false</b>.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static bool operator <(Duration a, Duration b)
@@ -575,6 +1014,12 @@ public readonly struct Duration : IEquatable<Duration>, IComparable<Duration>, I
         return a.CompareTo( b ) < 0;
     }
 
+    /// <summary>
+    /// Checks if <paramref name="a"/> is greater than or equal to <paramref name="b"/>.
+    /// </summary>
+    /// <param name="a">First operand.</param>
+    /// <param name="b">Second operand.</param>
+    /// <returns><b>true</b> when <paramref name="a"/> is greater than or equal to <paramref name="b"/>, otherwise <b>false</b>.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static bool operator >=(Duration a, Duration b)

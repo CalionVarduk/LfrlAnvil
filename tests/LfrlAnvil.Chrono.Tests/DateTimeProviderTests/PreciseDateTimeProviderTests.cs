@@ -23,7 +23,6 @@ public class PreciseDateTimeProviderTests : TestsBase
     [InlineData( 0 )]
     [InlineData( -1 )]
     [InlineData( -2 )]
-    [InlineData( ChronoConstants.DaysInYear * ChronoConstants.TicksPerStandardDay )]
     public void Ctor_ForUtc_ShouldThrowArgumentOutOfRangeException_WhenPrecisionResetTimeoutIsInvalid(long value)
     {
         var action = Lambda.Of( () => new PreciseUtcDateTimeProvider( Duration.FromTicks( value ) ) );
@@ -34,7 +33,6 @@ public class PreciseDateTimeProviderTests : TestsBase
     [InlineData( 0 )]
     [InlineData( -1 )]
     [InlineData( -2 )]
-    [InlineData( ChronoConstants.DaysInYear * ChronoConstants.TicksPerStandardDay )]
     public void Ctor_ForLocal_ShouldThrowArgumentOutOfRangeException_WhenPrecisionResetTimeoutIsInvalid(long value)
     {
         var action = Lambda.Of( () => new PreciseLocalDateTimeProvider( Duration.FromTicks( value ) ) );

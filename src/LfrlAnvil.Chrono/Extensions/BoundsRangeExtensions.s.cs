@@ -5,8 +5,18 @@ using System.Runtime.CompilerServices;
 
 namespace LfrlAnvil.Chrono.Extensions;
 
+/// <summary>
+/// Contains <see cref="BoundsRange{T}"/> extension methods.
+/// </summary>
 public static class BoundsRangeExtensions
 {
+    /// <summary>
+    /// Creates a new <see cref="BoundsRange{T}"/> instance by merging neighbouring bounds together when <see cref="Bounds{T}.Max"/>
+    /// of the first bounds and <see cref="Bounds{T}.Min"/> of the second bounds differ by <b>1 tick</b>.
+    /// </summary>
+    /// <param name="source">Source bounds range.</param>
+    /// <returns>New <see cref="BoundsRange{T}"/> instance.</returns>
+    /// <remarks>See <see cref="BoundsRange{T}.Normalize(Func{T,T,Boolean})"/> for more information.</remarks>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static BoundsRange<DateTime> Normalize(this BoundsRange<DateTime> source)
@@ -14,6 +24,11 @@ public static class BoundsRangeExtensions
         return source.Normalize( static (a, b) => a + TimeSpan.FromTicks( 1 ) == b );
     }
 
+    /// <summary>
+    /// Calculates the total <see cref="TimeSpan"/> of the provided <paramref name="source"/>.
+    /// </summary>
+    /// <param name="source">Source bounds range.</param>
+    /// <returns>New <see cref="TimeSpan"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static TimeSpan GetTimeSpan(this BoundsRange<DateTime> source)
@@ -21,6 +36,14 @@ public static class BoundsRangeExtensions
         return source.Aggregate( TimeSpan.Zero, static (a, b) => a + b.GetTimeSpan() );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="BoundsRange{T}"/> instance by merging neighbouring bounds together when
+    /// <see cref="ZonedDateTime.Timestamp"/> of <see cref="Bounds{T}.Max"/> of the first bounds and
+    /// <see cref="ZonedDateTime.Timestamp"/> of <see cref="Bounds{T}.Min"/> of the second bounds differ by <b>1 tick</b>.
+    /// </summary>
+    /// <param name="source">Source bounds range.</param>
+    /// <returns>New <see cref="BoundsRange{T}"/> instance.</returns>
+    /// <remarks>See <see cref="BoundsRange{T}.Normalize(Func{T,T,Boolean})"/> for more information.</remarks>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static BoundsRange<ZonedDateTime> Normalize(this BoundsRange<ZonedDateTime> source)
@@ -28,6 +51,11 @@ public static class BoundsRangeExtensions
         return source.Normalize( static (a, b) => a.Timestamp.Add( Duration.FromTicks( 1 ) ) == b.Timestamp );
     }
 
+    /// <summary>
+    /// Calculates the total <see cref="Duration"/> of the provided <paramref name="source"/>.
+    /// </summary>
+    /// <param name="source">Source bounds range.</param>
+    /// <returns>New <see cref="Duration"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static Duration GetDuration(this BoundsRange<ZonedDateTime> source)
@@ -35,6 +63,15 @@ public static class BoundsRangeExtensions
         return source.Aggregate( Duration.Zero, static (a, b) => a + b.GetDuration() );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="BoundsRange{T}"/> instance by merging neighbouring bounds together when
+    /// <see cref="ZonedDateTime.Timestamp"/> of <see cref="ZonedDay.End"/> of <see cref="Bounds{T}.Max"/> of the first bounds and
+    /// <see cref="ZonedDateTime.Timestamp"/> of <see cref="ZonedDay.Start"/> of <see cref="Bounds{T}.Min"/> of the second bounds
+    /// differ by <b>1 tick</b>.
+    /// </summary>
+    /// <param name="source">Source bounds range.</param>
+    /// <returns>New <see cref="BoundsRange{T}"/> instance.</returns>
+    /// <remarks>See <see cref="BoundsRange{T}.Normalize(Func{T,T,Boolean})"/> for more information.</remarks>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static BoundsRange<ZonedDay> Normalize(this BoundsRange<ZonedDay> source)
