@@ -9,64 +9,81 @@ using LfrlAnvil.Generators;
 
 namespace LfrlAnvil.Dependencies;
 
+/// <inheritdoc />
 public class DependencyContainerBuilder : IDependencyContainerBuilder
 {
     private readonly DependencyLocatorBuilderStore _locatorBuilderStore;
 
+    /// <summary>
+    /// Creates a new empty <see cref="DependencyContainerBuilder"/> instance.
+    /// </summary>
     public DependencyContainerBuilder()
     {
         _locatorBuilderStore = DependencyLocatorBuilderStore.Create();
         Configuration = new DependencyContainerConfigurationBuilder();
     }
 
+    /// <inheritdoc />
     public IDependencyContainerConfigurationBuilder Configuration { get; }
+
+    /// <inheritdoc />
     public DependencyLifetime DefaultLifetime => _locatorBuilderStore.Global.DefaultLifetime;
+
+    /// <inheritdoc />
     public DependencyImplementorDisposalStrategy DefaultDisposalStrategy => _locatorBuilderStore.Global.DefaultDisposalStrategy;
 
     Type? IDependencyLocatorBuilder.KeyType => (( IDependencyLocatorBuilder )_locatorBuilderStore.Global).KeyType;
     object? IDependencyLocatorBuilder.Key => (( IDependencyLocatorBuilder )_locatorBuilderStore.Global).Key;
     bool IDependencyLocatorBuilder.IsKeyed => (( IDependencyLocatorBuilder )_locatorBuilderStore.Global).IsKeyed;
 
+    /// <inheritdoc />
     public IDependencyImplementorBuilder AddSharedImplementor(Type type)
     {
         return _locatorBuilderStore.Global.AddSharedImplementor( type );
     }
 
+    /// <inheritdoc />
     public IDependencyBuilder Add(Type type)
     {
         return _locatorBuilderStore.Global.Add( type );
     }
 
+    /// <inheritdoc cref="IDependencyContainerBuilder.SetDefaultLifetime(DependencyLifetime)" />
     public DependencyContainerBuilder SetDefaultLifetime(DependencyLifetime lifetime)
     {
         _locatorBuilderStore.Global.SetDefaultLifetime( lifetime );
         return this;
     }
 
+    /// <inheritdoc cref="IDependencyContainerBuilder.SetDefaultDisposalStrategy(DependencyImplementorDisposalStrategy)" />
     public DependencyContainerBuilder SetDefaultDisposalStrategy(DependencyImplementorDisposalStrategy strategy)
     {
         _locatorBuilderStore.Global.SetDefaultDisposalStrategy( strategy );
         return this;
     }
 
+    /// <inheritdoc />
     [Pure]
     public IDependencyImplementorBuilder? TryGetSharedImplementor(Type type)
     {
         return _locatorBuilderStore.Global.TryGetSharedImplementor( type );
     }
 
+    /// <inheritdoc />
     [Pure]
     public IDependencyRangeBuilder GetDependencyRange(Type type)
     {
         return _locatorBuilderStore.Global.GetDependencyRange( type );
     }
 
+    /// <inheritdoc />
     public IDependencyLocatorBuilder<TKey> GetKeyedLocator<TKey>(TKey key)
         where TKey : notnull
     {
         return _locatorBuilderStore.GetOrAddKeyed( key );
     }
 
+    /// <inheritdoc cref="IDependencyContainerBuilder.TryBuild()" />
     [Pure]
     public DependencyContainerBuildResult<DependencyContainer> TryBuild()
     {

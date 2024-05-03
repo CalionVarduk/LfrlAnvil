@@ -11,6 +11,7 @@ using LfrlAnvil.Generators;
 
 namespace LfrlAnvil.Dependencies;
 
+/// <inheritdoc />
 public sealed class DependencyContainer : IDisposableDependencyContainer
 {
     private readonly NamedDependencyScopeStore _namedScopes;
@@ -28,23 +29,29 @@ public sealed class DependencyContainer : IDisposableDependencyContainer
         InternalRootScope = new RootDependencyScope( this );
     }
 
+    /// <inheritdoc />
     public IDependencyScope RootScope => InternalRootScope;
+
     internal RootDependencyScope InternalRootScope { get; }
     internal DependencyResolversStore GlobalResolvers { get; }
     internal KeyedDependencyResolversStore KeyedResolversStore { get; }
 
+    /// <inheritdoc />
+    /// <remarks>Disposes the <see cref="RootScope"/>.</remarks>
     public void Dispose()
     {
         if ( ! InternalRootScope.IsDisposed )
             DisposeRootScope();
     }
 
+    /// <inheritdoc />
     [Pure]
     public IDependencyScope? TryGetScope(string name)
     {
         return _namedScopes.TryGetScope( name );
     }
 
+    /// <inheritdoc />
     [Pure]
     public IDependencyScope GetScope(string name)
     {

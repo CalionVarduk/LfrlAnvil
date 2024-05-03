@@ -5,6 +5,9 @@ using LfrlAnvil.Dependencies.Internal;
 
 namespace LfrlAnvil.Dependencies;
 
+/// <summary>
+/// Represents a descriptor of dependency implementor's automatic disposal strategy.
+/// </summary>
 public readonly struct DependencyImplementorDisposalStrategy
 {
     private DependencyImplementorDisposalStrategy(DependencyImplementorDisposalStrategyType type, Action<object>? callback)
@@ -13,15 +16,33 @@ public readonly struct DependencyImplementorDisposalStrategy
         Callback = callback;
     }
 
+    /// <summary>
+    /// Specifies the type of this disposal strategy.
+    /// </summary>
     public DependencyImplementorDisposalStrategyType Type { get; }
+
+    /// <summary>
+    /// Specifies the optional disposal callback for <see cref="DependencyImplementorDisposalStrategyType.UseCallback"/> <see cref="Type"/>.
+    /// </summary>
     public Action<object>? Callback { get; }
 
+    /// <summary>
+    /// Returns a string representation of this <see cref="DependencyImplementorDisposalStrategy"/> instance.
+    /// </summary>
+    /// <returns>String representation.</returns>
     [Pure]
     public override string ToString()
     {
         return Type.ToString();
     }
 
+    /// <summary>
+    /// Creates a new <see cref="DependencyImplementorDisposalStrategy"/> instance
+    /// with <see cref="DependencyImplementorDisposalStrategyType.UseDisposableInterface"/> type.
+    /// This is the default automatic disposal strategy that invokes the <see cref="IDisposable.Dispose()"/> method if an object
+    /// implements the <see cref="IDisposable"/> interface.
+    /// </summary>
+    /// <returns>New <see cref="DependencyImplementorDisposalStrategy"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static DependencyImplementorDisposalStrategy UseDisposableInterface()
@@ -31,6 +52,12 @@ public readonly struct DependencyImplementorDisposalStrategy
             callback: null );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="DependencyImplementorDisposalStrategy"/> instance
+    /// with <see cref="DependencyImplementorDisposalStrategyType.UseCallback"/> and custom <paramref name="callback"/>.
+    /// </summary>
+    /// <param name="callback">Custom disposal callback.</param>
+    /// <returns>New <see cref="DependencyImplementorDisposalStrategy"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static DependencyImplementorDisposalStrategy UseCallback(Action<object> callback)
@@ -38,6 +65,12 @@ public readonly struct DependencyImplementorDisposalStrategy
         return new DependencyImplementorDisposalStrategy( DependencyImplementorDisposalStrategyType.UseCallback, callback );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="DependencyImplementorDisposalStrategy"/> instance
+    /// with <see cref="DependencyImplementorDisposalStrategyType.RenounceOwnership"/>.
+    /// This strategy disables the automatic disposal.
+    /// </summary>
+    /// <returns>New <see cref="DependencyImplementorDisposalStrategy"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static DependencyImplementorDisposalStrategy RenounceOwnership()
