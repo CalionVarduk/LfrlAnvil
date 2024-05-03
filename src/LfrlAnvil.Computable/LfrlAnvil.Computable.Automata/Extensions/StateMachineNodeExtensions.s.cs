@@ -5,8 +5,21 @@ using System.Runtime.CompilerServices;
 
 namespace LfrlAnvil.Computable.Automata.Extensions;
 
+/// <summary>
+/// Contains <see cref="IStateMachineNode{TState,TInput,TResult}"/> extension methods.
+/// </summary>
 public static class StateMachineNodeExtensions
 {
+    /// <summary>
+    /// Checks whether or not the provided <paramref name="node"/> is of <see cref="StateMachineNodeType.Accept"/> type.
+    /// </summary>
+    /// <param name="node">Node to check.</param>
+    /// <typeparam name="TState">State type.</typeparam>
+    /// <typeparam name="TInput">Input type.</typeparam>
+    /// <typeparam name="TResult">Result type.</typeparam>
+    /// <returns>
+    /// <b>true</b> when <paramref name="node"/> is an <see cref="StateMachineNodeType.Accept"/> node, otherwise <b>false</b>.
+    /// </returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static bool IsAccept<TState, TInput, TResult>(this IStateMachineNode<TState, TInput, TResult> node)
@@ -16,6 +29,16 @@ public static class StateMachineNodeExtensions
         return (node.Type & StateMachineNodeType.Accept) != StateMachineNodeType.Default;
     }
 
+    /// <summary>
+    /// Checks whether or not the provided <paramref name="node"/> is of <see cref="StateMachineNodeType.Initial"/> type.
+    /// </summary>
+    /// <param name="node">Node to check.</param>
+    /// <typeparam name="TState">State type.</typeparam>
+    /// <typeparam name="TInput">Input type.</typeparam>
+    /// <typeparam name="TResult">Result type.</typeparam>
+    /// <returns>
+    /// <b>true</b> when <paramref name="node"/> is an <see cref="StateMachineNodeType.Initial"/> node, otherwise <b>false</b>.
+    /// </returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static bool IsInitial<TState, TInput, TResult>(this IStateMachineNode<TState, TInput, TResult> node)
@@ -25,6 +48,16 @@ public static class StateMachineNodeExtensions
         return (node.Type & StateMachineNodeType.Initial) != StateMachineNodeType.Default;
     }
 
+    /// <summary>
+    /// Checks whether or not the provided <paramref name="node"/> is of <see cref="StateMachineNodeType.Dead"/> type.
+    /// </summary>
+    /// <param name="node">Node to check.</param>
+    /// <typeparam name="TState">State type.</typeparam>
+    /// <typeparam name="TInput">Input type.</typeparam>
+    /// <typeparam name="TResult">Result type.</typeparam>
+    /// <returns>
+    /// <b>true</b> when <paramref name="node"/> is an <see cref="StateMachineNodeType.Dead"/> node, otherwise <b>false</b>.
+    /// </returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static bool IsDead<TState, TInput, TResult>(this IStateMachineNode<TState, TInput, TResult> node)
@@ -34,6 +67,16 @@ public static class StateMachineNodeExtensions
         return (node.Type & StateMachineNodeType.Dead) != StateMachineNodeType.Default;
     }
 
+    /// <summary>
+    /// Checks whether or not the provided <paramref name="node"/> contains any transitions.
+    /// </summary>
+    /// <param name="node">Node to check.</param>
+    /// <typeparam name="TState">State type.</typeparam>
+    /// <typeparam name="TInput">Input type.</typeparam>
+    /// <typeparam name="TResult">Result type.</typeparam>
+    /// <returns>
+    /// <b>true</b> when <paramref name="node"/> contains at least one transition, otherwise <b>false</b>.
+    /// </returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static bool CanTransition<TState, TInput, TResult>(this IStateMachineNode<TState, TInput, TResult> node)
@@ -43,6 +86,17 @@ public static class StateMachineNodeExtensions
         return node.Transitions.Count > 0;
     }
 
+    /// <summary>
+    /// Checks whether or not the provided <paramref name="node"/> contains transition with the provided identifier.
+    /// </summary>
+    /// <param name="node">Node to check.</param>
+    /// <param name="input">Transition identifier to check.</param>
+    /// <typeparam name="TState">State type.</typeparam>
+    /// <typeparam name="TInput">Input type.</typeparam>
+    /// <typeparam name="TResult">Result type.</typeparam>
+    /// <returns>
+    /// <b>true</b> when <paramref name="node"/> contains the provided transition, otherwise <b>false</b>.
+    /// </returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static bool CanTransition<TState, TInput, TResult>(this IStateMachineNode<TState, TInput, TResult> node, TInput input)

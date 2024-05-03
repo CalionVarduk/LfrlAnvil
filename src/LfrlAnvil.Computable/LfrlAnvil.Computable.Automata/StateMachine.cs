@@ -1,10 +1,12 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using LfrlAnvil.Computable.Automata.Exceptions;
 using LfrlAnvil.Computable.Automata.Internal;
 
 namespace LfrlAnvil.Computable.Automata;
 
+/// <inheritdoc />
 public sealed class StateMachine<TState, TInput, TResult> : IStateMachine<TState, TInput, TResult>
     where TState : notnull
     where TInput : notnull
@@ -25,38 +27,53 @@ public sealed class StateMachine<TState, TInput, TResult> : IStateMachine<TState
         Optimization = optimization;
     }
 
+    /// <inheritdoc />
     public IStateMachineNode<TState, TInput, TResult> InitialState { get; }
+
+    /// <inheritdoc />
     public IEqualityComparer<TInput> InputComparer { get; }
+
+    /// <inheritdoc />
     public TResult DefaultResult { get; }
+
+    /// <inheritdoc />
     public StateMachineOptimization Optimization { get; }
 
+    /// <inheritdoc />
     public IReadOnlyDictionary<TState, IStateMachineNode<TState, TInput, TResult>> States => _states;
+
+    /// <inheritdoc />
     public IEqualityComparer<TState> StateComparer => _states.Comparer;
 
+    /// <inheritdoc cref="IStateMachine{TState,TInput,TResult}.CreateInstance()" />
     [Pure]
     public StateMachineInstance<TState, TInput, TResult> CreateInstance()
     {
         return new StateMachineInstance<TState, TInput, TResult>( this, InitialState );
     }
 
+    /// <inheritdoc cref="IStateMachine{TState,TInput,TResult}.CreateInstance(TState)" />
     [Pure]
     public StateMachineInstance<TState, TInput, TResult> CreateInstance(TState initialState)
     {
         return new StateMachineInstance<TState, TInput, TResult>( this, GetInitialStateNodeOrThrow( initialState ) );
     }
 
+    /// <inheritdoc cref="IStateMachine{TState,TInput,TResult}.CreateInstanceWithSubject(Object)" />
     [Pure]
     public StateMachineInstance<TState, TInput, TResult> CreateInstanceWithSubject(object subject)
     {
         return new StateMachineInstance<TState, TInput, TResult>( this, InitialState, subject );
     }
 
+    /// <inheritdoc cref="IStateMachine{TState,TInput,TResult}.CreateInstanceWithSubject(TState,Object)" />
     [Pure]
     public StateMachineInstance<TState, TInput, TResult> CreateInstanceWithSubject(TState initialState, object subject)
     {
         return new StateMachineInstance<TState, TInput, TResult>( this, GetInitialStateNodeOrThrow( initialState ), subject );
     }
 
+    /// <inheritdoc cref="IStateMachine{TState,TInput,TResult}.WithOptimization(StateMachineOptimizationParams{TState})" />
     [Pure]
     public StateMachine<TState, TInput, TResult> WithOptimization(StateMachineOptimizationParams<TState> optimization)
     {

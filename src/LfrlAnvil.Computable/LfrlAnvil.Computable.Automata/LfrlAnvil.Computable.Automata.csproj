@@ -4,6 +4,14 @@
         <PackageTags>LfrlAnvil Computable State</PackageTags>
     </PropertyGroup>
 
+    <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+      <DocumentationFile>bin\Debug\LfrlAnvil.Computable.Automata.xml</DocumentationFile>
+    </PropertyGroup>
+
+    <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+      <DocumentationFile>bin\Release\LfrlAnvil.Computable.Automata.xml</DocumentationFile>
+    </PropertyGroup>
+
     <ItemGroup>
       <ProjectReference Include="..\..\LfrlAnvil.Core\LfrlAnvil.Core.csproj" />
     </ItemGroup>

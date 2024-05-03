@@ -3,6 +3,7 @@ using LfrlAnvil.Computable.Automata.Exceptions;
 
 namespace LfrlAnvil.Computable.Automata;
 
+/// <inheritdoc />
 public sealed class StateMachineInstance<TState, TInput, TResult> : IStateMachineInstance<TState, TInput, TResult>
     where TState : notnull
     where TInput : notnull
@@ -24,11 +25,18 @@ public sealed class StateMachineInstance<TState, TInput, TResult> : IStateMachin
         Subject = subject;
     }
 
+    /// <inheritdoc />
     public object Subject { get; }
+
+    /// <inheritdoc cref="IStateMachineInstance{TState,TInput,TResult}.Machine" />
     public StateMachine<TState, TInput, TResult> Machine { get; }
+
+    /// <inheritdoc />
     public IStateMachineNode<TState, TInput, TResult> CurrentState { get; private set; }
+
     IStateMachine<TState, TInput, TResult> IStateMachineInstance<TState, TInput, TResult>.Machine => Machine;
 
+    /// <inheritdoc />
     public bool TryTransition(TInput input, [MaybeNullWhen( false )] out TResult result)
     {
         if ( ! CurrentState.Transitions.TryGetValue( input, out var transition ) )
@@ -48,6 +56,7 @@ public sealed class StateMachineInstance<TState, TInput, TResult> : IStateMachin
         return true;
     }
 
+    /// <inheritdoc />
     public TResult Transition(TInput input)
     {
         if ( ! TryTransition( input, out var result ) )

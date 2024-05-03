@@ -4,8 +4,19 @@ using System.Runtime.CompilerServices;
 
 namespace LfrlAnvil.Computable.Automata;
 
+/// <summary>
+/// Creates instances of <see cref="IStateTransitionHandler{TState,TInput,TResult}"/> type.
+/// </summary>
 public static class StateTransitionHandler
 {
+    /// <summary>
+    /// Creates a new <see cref="IStateTransitionHandler{TState,TInput,TResult}"/> instance.
+    /// </summary>
+    /// <param name="func">Handler's delegate.</param>
+    /// <typeparam name="TState">State type.</typeparam>
+    /// <typeparam name="TInput">Input type.</typeparam>
+    /// <typeparam name="TResult">Result type.</typeparam>
+    /// <returns>New <see cref="IStateTransitionHandler{TState,TInput,TResult}"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static IStateTransitionHandler<TState, TInput, TResult> Create<TState, TInput, TResult>(
