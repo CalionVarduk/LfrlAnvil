@@ -6,38 +6,71 @@ using System.Numerics;
 
 namespace LfrlAnvil.Computable.Expressions.Internal;
 
+/// <summary>
+/// Creates instances of <see cref="IParsedExpressionNumberParser"/> type.
+/// </summary>
 public static class ParsedExpressionNumberParser
 {
+    /// <summary>
+    /// Creates a new <see cref="IParsedExpressionNumberParser"/> instance for <see cref="Decimal"/> type.
+    /// </summary>
+    /// <param name="configuration">Underlying configuration.</param>
+    /// <returns>New <see cref="IParsedExpressionNumberParser"/> instance.</returns>
     [Pure]
     public static IParsedExpressionNumberParser CreateDefaultDecimal(ParsedExpressionFactoryInternalConfiguration configuration)
     {
         return new DecimalParser( configuration.NumberFormatProvider, configuration.NumberStyles );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="IParsedExpressionNumberParser"/> instance for <see cref="Double"/> type.
+    /// </summary>
+    /// <param name="configuration">Underlying configuration.</param>
+    /// <returns>New <see cref="IParsedExpressionNumberParser"/> instance.</returns>
     [Pure]
     public static IParsedExpressionNumberParser CreateDefaultDouble(ParsedExpressionFactoryInternalConfiguration configuration)
     {
         return new DoubleParser( configuration.NumberFormatProvider, configuration.NumberStyles );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="IParsedExpressionNumberParser"/> instance for <see cref="Single"/> type.
+    /// </summary>
+    /// <param name="configuration">Underlying configuration.</param>
+    /// <returns>New <see cref="IParsedExpressionNumberParser"/> instance.</returns>
     [Pure]
     public static IParsedExpressionNumberParser CreateDefaultFloat(ParsedExpressionFactoryInternalConfiguration configuration)
     {
         return new FloatParser( configuration.NumberFormatProvider, configuration.NumberStyles );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="IParsedExpressionNumberParser"/> instance for <see cref="BigInteger"/> type.
+    /// </summary>
+    /// <param name="configuration">Underlying configuration.</param>
+    /// <returns>New <see cref="IParsedExpressionNumberParser"/> instance.</returns>
     [Pure]
     public static IParsedExpressionNumberParser CreateDefaultBigInteger(ParsedExpressionFactoryInternalConfiguration configuration)
     {
         return new BigIntegerParser( configuration.NumberFormatProvider, configuration.NumberStyles );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="IParsedExpressionNumberParser"/> instance for <see cref="Int64"/> type.
+    /// </summary>
+    /// <param name="configuration">Underlying configuration.</param>
+    /// <returns>New <see cref="IParsedExpressionNumberParser"/> instance.</returns>
     [Pure]
     public static IParsedExpressionNumberParser CreateDefaultInt64(ParsedExpressionFactoryInternalConfiguration configuration)
     {
         return new Int64Parser( configuration.NumberFormatProvider, configuration.NumberStyles );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="IParsedExpressionNumberParser"/> instance for <see cref="Int32"/> type.
+    /// </summary>
+    /// <param name="configuration">Underlying configuration.</param>
+    /// <returns>New <see cref="IParsedExpressionNumberParser"/> instance.</returns>
     [Pure]
     public static IParsedExpressionNumberParser CreateDefaultInt32(ParsedExpressionFactoryInternalConfiguration configuration)
     {

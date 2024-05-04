@@ -1,7 +1,12 @@
 ﻿namespace LfrlAnvil.Computable.Expressions.Errors;
 
+/// <summary>
+/// Represents a type of an error that occurred during <see cref="IParsedExpression{TArg,TResult}"/> creation.
+/// </summary>
 public enum ParsedExpressionBuilderErrorType : byte
 {
+#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
+
     Error = 0,
     UnexpectedOperand = 1,
     UnexpectedDelegateParameterName = 2,

@@ -3,8 +3,12 @@ using System.Linq.Expressions;
 
 namespace LfrlAnvil.Computable.Expressions.Constructs.Boolean;
 
+/// <summary>
+/// Represents a <see cref="Boolean"/> binary bitwise and operator construct.
+/// </summary>
 public sealed class ParsedExpressionBitwiseAndBooleanOperator : ParsedExpressionBinaryOperator<bool>
 {
+    /// <inheritdoc />
     [Pure]
     protected override Expression? TryCreateFromTwoConstants(ConstantExpression left, ConstantExpression right)
     {
@@ -13,6 +17,7 @@ public sealed class ParsedExpressionBitwiseAndBooleanOperator : ParsedExpression
             : null;
     }
 
+    /// <inheritdoc />
     [Pure]
     protected override Expression? TryCreateFromOneConstant(ConstantExpression left, Expression right)
     {
@@ -22,6 +27,7 @@ public sealed class ParsedExpressionBitwiseAndBooleanOperator : ParsedExpression
         return leftValue ? right : left;
     }
 
+    /// <inheritdoc />
     [Pure]
     protected override Expression? TryCreateFromOneConstant(Expression left, ConstantExpression right)
     {
@@ -31,6 +37,7 @@ public sealed class ParsedExpressionBitwiseAndBooleanOperator : ParsedExpression
         return rightValue ? left : right;
     }
 
+    /// <inheritdoc />
     [Pure]
     protected override Expression CreateBinaryExpression(Expression left, Expression right)
     {

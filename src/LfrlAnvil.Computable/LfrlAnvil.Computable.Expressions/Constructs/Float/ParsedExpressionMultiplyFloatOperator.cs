@@ -3,8 +3,12 @@ using System.Linq.Expressions;
 
 namespace LfrlAnvil.Computable.Expressions.Constructs.Float;
 
+/// <summary>
+/// Represents a <see cref="float"/> binary multiply operator construct.
+/// </summary>
 public sealed class ParsedExpressionMultiplyFloatOperator : ParsedExpressionBinaryOperator<float>
 {
+    /// <inheritdoc />
     [Pure]
     protected override Expression? TryCreateFromTwoConstants(ConstantExpression left, ConstantExpression right)
     {
@@ -13,18 +17,21 @@ public sealed class ParsedExpressionMultiplyFloatOperator : ParsedExpressionBina
             : null;
     }
 
+    /// <inheritdoc />
     [Pure]
     protected override Expression? TryCreateFromOneConstant(ConstantExpression left, Expression right)
     {
         return TryCreateFromOneConstantInternal( right, left );
     }
 
+    /// <inheritdoc />
     [Pure]
     protected override Expression? TryCreateFromOneConstant(Expression left, ConstantExpression right)
     {
         return TryCreateFromOneConstantInternal( left, right );
     }
 
+    /// <inheritdoc />
     [Pure]
     protected override Expression CreateBinaryExpression(Expression left, Expression right)
     {

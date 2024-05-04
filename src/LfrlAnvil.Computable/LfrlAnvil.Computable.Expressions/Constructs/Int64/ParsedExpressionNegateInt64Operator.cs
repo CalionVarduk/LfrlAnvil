@@ -3,8 +3,12 @@ using System.Linq.Expressions;
 
 namespace LfrlAnvil.Computable.Expressions.Constructs.Int64;
 
+/// <summary>
+/// Represents a <see cref="Int64"/> unary negate operator construct.
+/// </summary>
 public sealed class ParsedExpressionNegateInt64Operator : ParsedExpressionUnaryOperator<long>
 {
+    /// <inheritdoc />
     [Pure]
     protected override Expression? TryCreateFromConstant(ConstantExpression operand)
     {
@@ -13,6 +17,7 @@ public sealed class ParsedExpressionNegateInt64Operator : ParsedExpressionUnaryO
             : null;
     }
 
+    /// <inheritdoc />
     [Pure]
     protected override Expression CreateUnaryExpression(Expression operand)
     {

@@ -6,17 +6,25 @@ using LfrlAnvil.Computable.Expressions.Internal;
 
 namespace LfrlAnvil.Computable.Expressions.Constructs.String;
 
+/// <summary>
+/// Represents a <see cref="Boolean"/> to <see cref="String"/> type converter construct.
+/// </summary>
 public sealed class ParsedExpressionBooleanToStringTypeConverter : ParsedExpressionTypeConverter<string, bool>
 {
     private readonly MethodInfo _toString;
     private readonly ConstantExpression _formatProvider;
 
+    /// <summary>
+    /// Creates a new <see cref="ParsedExpressionBooleanToStringTypeConverter"/> instance.
+    /// </summary>
+    /// <param name="formatProvider">Optional format provider. Equal to null by default.</param>
     public ParsedExpressionBooleanToStringTypeConverter(IFormatProvider? formatProvider = null)
     {
         _formatProvider = Expression.Constant( formatProvider, typeof( IFormatProvider ) );
         _toString = MemberInfoLocator.FindToStringWithFormatProviderMethod( typeof( bool ) );
     }
 
+    /// <inheritdoc />
     [Pure]
     protected override Expression? TryCreateFromConstant(ConstantExpression operand)
     {
@@ -25,6 +33,7 @@ public sealed class ParsedExpressionBooleanToStringTypeConverter : ParsedExpress
             : null;
     }
 
+    /// <inheritdoc />
     [Pure]
     protected override Expression CreateConversionExpression(Expression operand)
     {

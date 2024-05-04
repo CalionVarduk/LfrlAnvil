@@ -6,17 +6,25 @@ using LfrlAnvil.Computable.Expressions.Internal;
 
 namespace LfrlAnvil.Computable.Expressions.Constructs.String;
 
+/// <summary>
+/// Represents a <see cref="Single"/> to <see cref="String"/> type converter construct.
+/// </summary>
 public sealed class ParsedExpressionFloatToStringTypeConverter : ParsedExpressionTypeConverter<string, float>
 {
     private readonly MethodInfo _toString;
     private readonly ConstantExpression _formatProvider;
 
+    /// <summary>
+    /// Creates a new <see cref="ParsedExpressionFloatToStringTypeConverter"/> instance.
+    /// </summary>
+    /// <param name="formatProvider">Optional format provider. Equal to null by default.</param>
     public ParsedExpressionFloatToStringTypeConverter(IFormatProvider? formatProvider = null)
     {
         _formatProvider = Expression.Constant( formatProvider, typeof( IFormatProvider ) );
         _toString = MemberInfoLocator.FindToStringWithFormatProviderMethod( typeof( float ) );
     }
 
+    /// <inheritdoc />
     [Pure]
     protected override Expression? TryCreateFromConstant(ConstantExpression operand)
     {
@@ -25,6 +33,7 @@ public sealed class ParsedExpressionFloatToStringTypeConverter : ParsedExpressio
             : null;
     }
 
+    /// <inheritdoc />
     [Pure]
     protected override Expression CreateConversionExpression(Expression operand)
     {

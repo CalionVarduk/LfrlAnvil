@@ -10,17 +10,24 @@ using LfrlAnvil.Computable.Expressions.Internal;
 
 namespace LfrlAnvil.Computable.Expressions.Constructs.Variadic;
 
+/// <summary>
+/// Represents a switch construct.
+/// </summary>
 public sealed class ParsedExpressionSwitch : ParsedExpressionVariadicFunction
 {
     private readonly ConstructorInfo _exceptionCtor;
     private readonly ConstantExpression _defaultBodyThrowFormat;
 
+    /// <summary>
+    /// Creates a new <see cref="ParsedExpressionSwitch"/> instance.
+    /// </summary>
     public ParsedExpressionSwitch()
     {
         _exceptionCtor = MemberInfoLocator.FindInvocationExceptionCtor();
         _defaultBodyThrowFormat = Expression.Constant( Resources.SwitchValueWasNotHandledByAnyCaseFormat );
     }
 
+    /// <inheritdoc />
     [Pure]
     protected internal override Expression Process(IReadOnlyList<Expression> parameters)
     {

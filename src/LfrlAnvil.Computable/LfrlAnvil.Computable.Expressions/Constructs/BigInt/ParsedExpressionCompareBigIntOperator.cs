@@ -6,10 +6,16 @@ using LfrlAnvil.Computable.Expressions.Internal;
 
 namespace LfrlAnvil.Computable.Expressions.Constructs.BigInt;
 
+/// <summary>
+/// Represents a <see cref="BigInteger"/> binary compare operator construct.
+/// </summary>
 public sealed class ParsedExpressionCompareBigIntOperator : ParsedExpressionBinaryOperator<BigInteger>
 {
     private readonly MethodInfo _compareTo;
 
+    /// <summary>
+    /// Creates a new <see cref="ParsedExpressionCompareBigIntOperator"/> instance.
+    /// </summary>
     public ParsedExpressionCompareBigIntOperator()
     {
         _compareTo = MemberInfoLocator.FindCompareToMethod(
@@ -18,6 +24,7 @@ public sealed class ParsedExpressionCompareBigIntOperator : ParsedExpressionBina
             typeof( ParsedExpressionCompareBigIntOperator ) );
     }
 
+    /// <inheritdoc />
     [Pure]
     protected override Expression? TryCreateFromTwoConstants(ConstantExpression left, ConstantExpression right)
     {
@@ -26,6 +33,7 @@ public sealed class ParsedExpressionCompareBigIntOperator : ParsedExpressionBina
             : null;
     }
 
+    /// <inheritdoc />
     [Pure]
     protected override Expression CreateBinaryExpression(Expression left, Expression right)
     {

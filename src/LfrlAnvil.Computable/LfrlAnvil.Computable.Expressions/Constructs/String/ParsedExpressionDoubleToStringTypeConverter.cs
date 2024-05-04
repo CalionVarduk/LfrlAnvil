@@ -6,17 +6,25 @@ using LfrlAnvil.Computable.Expressions.Internal;
 
 namespace LfrlAnvil.Computable.Expressions.Constructs.String;
 
+/// <summary>
+/// Represents a <see cref="Double"/> to <see cref="String"/> type converter construct.
+/// </summary>
 public sealed class ParsedExpressionDoubleToStringTypeConverter : ParsedExpressionTypeConverter<string, double>
 {
     private readonly MethodInfo _toString;
     private readonly ConstantExpression _formatProvider;
 
+    /// <summary>
+    /// Creates a new <see cref="ParsedExpressionDoubleToStringTypeConverter"/> instance.
+    /// </summary>
+    /// <param name="formatProvider">Optional format provider. Equal to null by default.</param>
     public ParsedExpressionDoubleToStringTypeConverter(IFormatProvider? formatProvider = null)
     {
         _formatProvider = Expression.Constant( formatProvider, typeof( IFormatProvider ) );
         _toString = MemberInfoLocator.FindToStringWithFormatProviderMethod( typeof( double ) );
     }
 
+    /// <inheritdoc />
     [Pure]
     protected override Expression? TryCreateFromConstant(ConstantExpression operand)
     {
@@ -25,6 +33,7 @@ public sealed class ParsedExpressionDoubleToStringTypeConverter : ParsedExpressi
             : null;
     }
 
+    /// <inheritdoc />
     [Pure]
     protected override Expression CreateConversionExpression(Expression operand)
     {

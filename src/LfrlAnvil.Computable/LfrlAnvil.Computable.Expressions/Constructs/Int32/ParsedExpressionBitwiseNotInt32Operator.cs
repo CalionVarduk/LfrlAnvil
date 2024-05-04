@@ -3,8 +3,12 @@ using System.Linq.Expressions;
 
 namespace LfrlAnvil.Computable.Expressions.Constructs.Int32;
 
+/// <summary>
+/// Represents a <see cref="Int32"/> unary bitwise not operator construct.
+/// </summary>
 public sealed class ParsedExpressionBitwiseNotInt32Operator : ParsedExpressionUnaryOperator<int>
 {
+    /// <inheritdoc />
     [Pure]
     protected override Expression? TryCreateFromConstant(ConstantExpression operand)
     {
@@ -13,6 +17,7 @@ public sealed class ParsedExpressionBitwiseNotInt32Operator : ParsedExpressionUn
             : null;
     }
 
+    /// <inheritdoc />
     [Pure]
     protected override Expression CreateUnaryExpression(Expression operand)
     {

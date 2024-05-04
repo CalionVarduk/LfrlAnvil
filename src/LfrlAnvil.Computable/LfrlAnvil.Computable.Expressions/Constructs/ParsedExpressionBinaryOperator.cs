@@ -6,6 +6,9 @@ using LfrlAnvil.Extensions;
 
 namespace LfrlAnvil.Computable.Expressions.Constructs;
 
+/// <summary>
+/// Represents a binary operator construct.
+/// </summary>
 public abstract class ParsedExpressionBinaryOperator
 {
     [Pure]
@@ -15,24 +18,48 @@ public abstract class ParsedExpressionBinaryOperator
         return result;
     }
 
+    /// <summary>
+    /// Attempts to create an expression from two constants.
+    /// </summary>
+    /// <param name="left">Left constant argument.</param>
+    /// <param name="right">Right constant argument.</param>
+    /// <returns>New <see cref="Expression"/> or null when it could not be created.</returns>
     [Pure]
     protected virtual Expression? TryCreateFromTwoConstants(ConstantExpression left, ConstantExpression right)
     {
         return null;
     }
 
+    /// <summary>
+    /// Attempts to create an expression from one constant.
+    /// </summary>
+    /// <param name="left">Left constant argument.</param>
+    /// <param name="right">Right argument.</param>
+    /// <returns>New <see cref="Expression"/> or null when it could not be created.</returns>
     [Pure]
     protected virtual Expression? TryCreateFromOneConstant(ConstantExpression left, Expression right)
     {
         return null;
     }
 
+    /// <summary>
+    /// Attempts to create an expression from one constant.
+    /// </summary>
+    /// <param name="left">Left argument.</param>
+    /// <param name="right">Right constant argument.</param>
+    /// <returns>New <see cref="Expression"/> or null when it could not be created.</returns>
     [Pure]
     protected virtual Expression? TryCreateFromOneConstant(Expression left, ConstantExpression right)
     {
         return null;
     }
 
+    /// <summary>
+    /// Creates an expression.
+    /// </summary>
+    /// <param name="left">Left argument.</param>
+    /// <param name="right">Right argument.</param>
+    /// <returns>New <see cref="Expression"/>.</returns>
     [Pure]
     protected abstract Expression CreateBinaryExpression(Expression left, Expression right);
 
@@ -55,27 +82,60 @@ public abstract class ParsedExpressionBinaryOperator
     }
 }
 
+/// <summary>
+/// Represents a binary operator construct.
+/// </summary>
+/// <typeparam name="TLeftArg">Left argument's type.</typeparam>
+/// <typeparam name="TRightArg">Right argument's type.</typeparam>
 public abstract class ParsedExpressionBinaryOperator<TLeftArg, TRightArg> : ParsedExpressionTypedBinaryOperator
 {
+    /// <summary>
+    /// Creates a new <see cref="ParsedExpressionBinaryOperator{TLeftArg,TRightArg}"/> instance.
+    /// </summary>
     protected ParsedExpressionBinaryOperator()
         : base( typeof( TLeftArg ), typeof( TRightArg ) ) { }
 
+    /// <summary>
+    /// Attempts to extract a constant value of a left argument.
+    /// </summary>
+    /// <param name="expression">Source constant expression.</param>
+    /// <param name="result"><b>out</b> parameter that returns the underlying value.</param>
+    /// <returns><b>true</b> if value was extracted successfully, otherwise <b>false</b>.</returns>
     protected static bool TryGetLeftArgumentValue(ConstantExpression expression, [MaybeNullWhen( false )] out TLeftArg result)
     {
         return expression.TryGetValue( out result );
     }
 
+    /// <summary>
+    /// Attempts to extract a constant value of a right argument.
+    /// </summary>
+    /// <param name="expression">Source constant expression.</param>
+    /// <param name="result"><b>out</b> parameter that returns the underlying value.</param>
+    /// <returns><b>true</b> if value was extracted successfully, otherwise <b>false</b>.</returns>
     protected static bool TryGetRightArgumentValue(ConstantExpression expression, [MaybeNullWhen( false )] out TRightArg result)
     {
         return expression.TryGetValue( out result );
     }
 }
 
+/// <summary>
+/// Represents a binary operator construct.
+/// </summary>
+/// <typeparam name="TArg">Argument's type.</typeparam>
 public abstract class ParsedExpressionBinaryOperator<TArg> : ParsedExpressionTypedBinaryOperator
 {
+    /// <summary>
+    /// Creates a new <see cref="ParsedExpressionBinaryOperator{TArg}"/> instance.
+    /// </summary>
     protected ParsedExpressionBinaryOperator()
         : base( typeof( TArg ), typeof( TArg ) ) { }
 
+    /// <summary>
+    /// Attempts to extract a constant value of an argument.
+    /// </summary>
+    /// <param name="expression">Source constant expression.</param>
+    /// <param name="result"><b>out</b> parameter that returns the underlying value.</param>
+    /// <returns><b>true</b> if value was extracted successfully, otherwise <b>false</b>.</returns>
     protected static bool TryGetArgumentValue(ConstantExpression expression, [MaybeNullWhen( false )] out TArg result)
     {
         return expression.TryGetValue( out result );

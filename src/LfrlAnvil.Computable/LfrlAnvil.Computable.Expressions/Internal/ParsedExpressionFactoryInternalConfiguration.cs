@@ -10,6 +10,9 @@ using LfrlAnvil.Computable.Expressions.Exceptions;
 
 namespace LfrlAnvil.Computable.Expressions.Internal;
 
+/// <summary>
+/// Represents an internal <see cref="IParsedExpressionFactory"/> configuration.
+/// </summary>
 public sealed class ParsedExpressionFactoryInternalConfiguration : IParsedExpressionFactoryConfiguration
 {
     internal ParsedExpressionFactoryInternalConfiguration(
@@ -44,22 +47,62 @@ public sealed class ParsedExpressionFactoryInternalConfiguration : IParsedExpres
         NumberFormatProvider = new FormatProvider( this );
     }
 
+    /// <inheritdoc />
     public char DecimalPoint { get; }
+
+    /// <inheritdoc />
     public char IntegerDigitSeparator { get; }
+
+    /// <inheritdoc />
     public string ScientificNotationExponents { get; }
+
+    /// <inheritdoc />
     public bool AllowNonIntegerNumbers { get; }
+
+    /// <inheritdoc />
     public bool AllowScientificNotation { get; }
+
+    /// <inheritdoc />
     public char StringDelimiter { get; }
+
+    /// <inheritdoc />
     public bool ConvertResultToOutputTypeAutomatically { get; }
+
+    /// <inheritdoc />
     public bool AllowNonPublicMemberAccess { get; }
+
+    /// <inheritdoc />
     public bool IgnoreMemberNameCase { get; }
+
+    /// <inheritdoc />
     public bool PostponeStaticInlineDelegateCompilation { get; }
+
+    /// <inheritdoc />
     public bool DiscardUnusedArguments { get; }
+
+    /// <summary>
+    /// Represents used <see cref="NumberStyles"/> by this configuration.
+    /// </summary>
     public NumberStyles NumberStyles { get; }
+
+    /// <summary>
+    /// Represents used <see cref="BindingFlags"/> by this configuration used for locating members.
+    /// </summary>
     public BindingFlags MemberBindingFlags { get; }
+
+    /// <summary>
+    /// Underlying <see cref="IFormatProvider"/> instance.
+    /// </summary>
     public IFormatProvider NumberFormatProvider { get; }
+
     internal IReadOnlyDictionary<StringSegment, ConstructTokenDefinition> Constructs { get; }
 
+    /// <summary>
+    /// Attempts to find a range of all valid fields and properties for the provided type with a given name.
+    /// </summary>
+    /// <param name="type">Target type.</param>
+    /// <param name="name">Member name.</param>
+    /// <returns><see cref="MemberInfo"/> range of all valid fields and properties.</returns>
     [Pure]
     public MemberInfo[] FindTypeFieldsAndProperties(Type type, string name)
     {
@@ -67,6 +110,12 @@ public sealed class ParsedExpressionFactoryInternalConfiguration : IParsedExpres
         return result;
     }
 
+    /// <summary>
+    /// Attempts to find a <see cref="MemberInfo"/> that represents an indexer for the provided type and parameter types.
+    /// </summary>
+    /// <param name="type">Target type.</param>
+    /// <param name="parameterTypes">Target parameter types.</param>
+    /// <returns><see cref="MemberInfo"/> or null when it was not found.</returns>
     [Pure]
     public MemberInfo? TryFindTypeIndexer(Type type, Type[] parameterTypes)
     {
@@ -74,6 +123,12 @@ public sealed class ParsedExpressionFactoryInternalConfiguration : IParsedExpres
         return result;
     }
 
+    /// <summary>
+    /// Attempts to find a <see cref="ConstructorInfo"/> for the provided type and parameter types.
+    /// </summary>
+    /// <param name="type">Target type.</param>
+    /// <param name="parameterTypes">Target parameter types.</param>
+    /// <returns><see cref="ConstructorInfo"/> or null when it was not found.</returns>
     [Pure]
     public ConstructorInfo? TryFindTypeCtor(Type type, Type[] parameterTypes)
     {
@@ -81,6 +136,13 @@ public sealed class ParsedExpressionFactoryInternalConfiguration : IParsedExpres
         return result;
     }
 
+    /// <summary>
+    /// Attempts to find a range of all valid methods for the provided type with a given name and parameter types.
+    /// </summary>
+    /// <param name="type">Target type.</param>
+    /// <param name="name">Member name.</param>
+    ///  <param name="parameterTypes">Target parameter types.</param>
+    /// <returns><see cref="MethodInfo"/> range of all valid methods.</returns>
     [Pure]
     public MethodInfo[] FindTypeMethods(Type type, string name, Type[] parameterTypes)
     {
@@ -93,6 +155,11 @@ public sealed class ParsedExpressionFactoryInternalConfiguration : IParsedExpres
         return result;
     }
 
+    /// <summary>
+    /// Creates a <see cref="MemberFilter"/> from this configuration and the given symbol.
+    /// </summary>
+    /// <param name="symbol">Symbol to filter by.</param>
+    /// <returns>New <see cref="MemberFilter"/> instance.</returns>
     [Pure]
     public MemberFilter GetAccessibleMemberFilter(StringSegment symbol)
     {

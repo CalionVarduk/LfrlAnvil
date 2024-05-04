@@ -3,8 +3,12 @@ using System.Linq.Expressions;
 
 namespace LfrlAnvil.Computable.Expressions.Constructs.String;
 
+/// <summary>
+/// Represents a <see cref="String"/> binary not equal to operator construct.
+/// </summary>
 public sealed class ParsedExpressionNotEqualToStringOperator : ParsedExpressionBinaryOperator<string>
 {
+    /// <inheritdoc />
     [Pure]
     protected override Expression? TryCreateFromTwoConstants(ConstantExpression left, ConstantExpression right)
     {
@@ -13,6 +17,7 @@ public sealed class ParsedExpressionNotEqualToStringOperator : ParsedExpressionB
             : null;
     }
 
+    /// <inheritdoc />
     [Pure]
     protected override Expression CreateBinaryExpression(Expression left, Expression right)
     {

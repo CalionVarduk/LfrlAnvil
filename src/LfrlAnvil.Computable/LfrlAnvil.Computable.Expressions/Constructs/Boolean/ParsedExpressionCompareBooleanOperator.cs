@@ -5,10 +5,16 @@ using LfrlAnvil.Computable.Expressions.Internal;
 
 namespace LfrlAnvil.Computable.Expressions.Constructs.Boolean;
 
+/// <summary>
+/// Represents a <see cref="Boolean"/> binary compare operator construct.
+/// </summary>
 public sealed class ParsedExpressionCompareBooleanOperator : ParsedExpressionBinaryOperator<bool>
 {
     private readonly MethodInfo _compareTo;
 
+    /// <summary>
+    /// Creates a new <see cref="ParsedExpressionCompareBooleanOperator"/> instance.
+    /// </summary>
     public ParsedExpressionCompareBooleanOperator()
     {
         _compareTo = MemberInfoLocator.FindCompareToMethod(
@@ -17,6 +23,7 @@ public sealed class ParsedExpressionCompareBooleanOperator : ParsedExpressionBin
             typeof( ParsedExpressionCompareBooleanOperator ) );
     }
 
+    /// <inheritdoc />
     [Pure]
     protected override Expression? TryCreateFromTwoConstants(ConstantExpression left, ConstantExpression right)
     {
@@ -25,6 +32,7 @@ public sealed class ParsedExpressionCompareBooleanOperator : ParsedExpressionBin
             : null;
     }
 
+    /// <inheritdoc />
     [Pure]
     protected override Expression CreateBinaryExpression(Expression left, Expression right)
     {

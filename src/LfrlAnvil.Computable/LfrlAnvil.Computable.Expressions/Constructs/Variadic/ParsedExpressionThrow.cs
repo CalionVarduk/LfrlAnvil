@@ -9,15 +9,23 @@ using LfrlAnvil.Computable.Expressions.Internal;
 
 namespace LfrlAnvil.Computable.Expressions.Constructs.Variadic;
 
+/// <summary>
+/// Represents a throw exception construct.
+/// </summary>
+/// <remarks>Throws <see cref="ParsedExpressionInvocationException"/> exceptions.</remarks>
 public sealed class ParsedExpressionThrow : ParsedExpressionVariadicFunction
 {
     private readonly ConstructorInfo _exceptionCtor;
 
+    /// <summary>
+    /// Creates a new <see cref="ParsedExpressionThrow"/> instance.
+    /// </summary>
     public ParsedExpressionThrow()
     {
         _exceptionCtor = MemberInfoLocator.FindInvocationExceptionCtor();
     }
 
+    /// <inheritdoc />
     [Pure]
     protected internal override Expression Process(IReadOnlyList<Expression> parameters)
     {

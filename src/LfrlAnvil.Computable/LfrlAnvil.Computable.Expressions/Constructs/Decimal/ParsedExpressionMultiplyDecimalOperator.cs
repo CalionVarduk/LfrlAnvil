@@ -3,8 +3,12 @@ using System.Linq.Expressions;
 
 namespace LfrlAnvil.Computable.Expressions.Constructs.Decimal;
 
+/// <summary>
+/// Represents a <see cref="Decimal"/> binary multiply operator construct.
+/// </summary>
 public sealed class ParsedExpressionMultiplyDecimalOperator : ParsedExpressionBinaryOperator<decimal>
 {
+    /// <inheritdoc />
     [Pure]
     protected override Expression? TryCreateFromTwoConstants(ConstantExpression left, ConstantExpression right)
     {
@@ -13,18 +17,21 @@ public sealed class ParsedExpressionMultiplyDecimalOperator : ParsedExpressionBi
             : null;
     }
 
+    /// <inheritdoc />
     [Pure]
     protected override Expression? TryCreateFromOneConstant(ConstantExpression left, Expression right)
     {
         return TryCreateFromOneConstantInternal( right, left );
     }
 
+    /// <inheritdoc />
     [Pure]
     protected override Expression? TryCreateFromOneConstant(Expression left, ConstantExpression right)
     {
         return TryCreateFromOneConstantInternal( left, right );
     }
 
+    /// <inheritdoc />
     [Pure]
     protected override Expression CreateBinaryExpression(Expression left, Expression right)
     {

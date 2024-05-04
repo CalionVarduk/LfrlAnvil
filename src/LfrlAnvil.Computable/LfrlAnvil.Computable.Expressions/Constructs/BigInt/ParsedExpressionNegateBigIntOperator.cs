@@ -4,8 +4,12 @@ using System.Numerics;
 
 namespace LfrlAnvil.Computable.Expressions.Constructs.BigInt;
 
+/// <summary>
+/// Represents a <see cref="BigInteger"/> unary negate operator construct.
+/// </summary>
 public sealed class ParsedExpressionNegateBigIntOperator : ParsedExpressionUnaryOperator<BigInteger>
 {
+    /// <inheritdoc />
     [Pure]
     protected override Expression? TryCreateFromConstant(ConstantExpression operand)
     {
@@ -14,6 +18,7 @@ public sealed class ParsedExpressionNegateBigIntOperator : ParsedExpressionUnary
             : null;
     }
 
+    /// <inheritdoc />
     [Pure]
     protected override Expression CreateUnaryExpression(Expression operand)
     {

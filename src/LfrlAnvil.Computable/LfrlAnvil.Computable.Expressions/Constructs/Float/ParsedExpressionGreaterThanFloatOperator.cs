@@ -3,8 +3,12 @@ using System.Linq.Expressions;
 
 namespace LfrlAnvil.Computable.Expressions.Constructs.Float;
 
+/// <summary>
+/// Represents a <see cref="float"/> binary greater than operator construct.
+/// </summary>
 public sealed class ParsedExpressionGreaterThanFloatOperator : ParsedExpressionBinaryOperator<float>
 {
+    /// <inheritdoc />
     [Pure]
     protected override Expression? TryCreateFromTwoConstants(ConstantExpression left, ConstantExpression right)
     {
@@ -13,6 +17,7 @@ public sealed class ParsedExpressionGreaterThanFloatOperator : ParsedExpressionB
             : null;
     }
 
+    /// <inheritdoc />
     [Pure]
     protected override Expression CreateBinaryExpression(Expression left, Expression right)
     {

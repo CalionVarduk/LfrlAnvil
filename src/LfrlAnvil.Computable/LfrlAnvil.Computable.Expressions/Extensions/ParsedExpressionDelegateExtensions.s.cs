@@ -7,8 +7,18 @@ using LfrlAnvil.Computable.Expressions.Exceptions;
 
 namespace LfrlAnvil.Computable.Expressions.Extensions;
 
+/// <summary>
+/// Contains <see cref="IParsedExpressionDelegate{TArg,TResult}"/> extension methods.
+/// </summary>
 public static class ParsedExpressionDelegateExtensions
 {
+    /// <summary>
+    /// Creates a new <see cref="ParsedExpressionBufferedDelegate{TArg,TResult}"/> instance.
+    /// </summary>
+    /// <param name="source">Underlying delegate.</param>
+    /// <typeparam name="TArg">Argument type.</typeparam>
+    /// <typeparam name="TResult">Result type.</typeparam>
+    /// <returns>New <see cref="ParsedExpressionBufferedDelegate{TArg,TResult}"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static ParsedExpressionBufferedDelegate<TArg, TResult> ToBuffered<TArg, TResult>(
@@ -17,6 +27,15 @@ public static class ParsedExpressionDelegateExtensions
         return new ParsedExpressionBufferedDelegate<TArg, TResult>( source );
     }
 
+    /// <summary>
+    /// Creates a new buffer of argument values for the provided delegate.
+    /// </summary>
+    /// <param name="source">Source delegate.</param>
+    /// <param name="arguments">Collection of (name, value) pairs that represents arguments and values to set for them.</param>
+    /// <typeparam name="TArg">Argument type.</typeparam>
+    /// <typeparam name="TResult">Result type.</typeparam>
+    /// <returns>New buffer of argument values.</returns>
+    /// <exception cref="InvalidParsedExpressionArgumentsException">When at least one argument does not exist.</exception>
     [Pure]
     public static TArg?[] MapArguments<TArg, TResult>(
         this IParsedExpressionDelegate<TArg, TResult> source,
@@ -28,6 +47,15 @@ public static class ParsedExpressionDelegateExtensions
         return buffer;
     }
 
+    /// <summary>
+    /// Creates a new buffer of argument values for the provided delegate.
+    /// </summary>
+    /// <param name="source">Source delegate.</param>
+    /// <param name="arguments">Collection of (name, value) pairs that represents arguments and values to set for them.</param>
+    /// <typeparam name="TArg">Argument type.</typeparam>
+    /// <typeparam name="TResult">Result type.</typeparam>
+    /// <returns>New buffer of argument values.</returns>
+    /// <exception cref="InvalidParsedExpressionArgumentsException">When at least one argument does not exist.</exception>
     [Pure]
     public static TArg?[] MapArguments<TArg, TResult>(
         this IParsedExpressionDelegate<TArg, TResult> source,
@@ -36,6 +64,15 @@ public static class ParsedExpressionDelegateExtensions
         return source.MapArguments( arguments.AsEnumerable() );
     }
 
+    /// <summary>
+    /// Creates a new buffer of argument values for the provided delegate.
+    /// </summary>
+    /// <param name="source">Source delegate.</param>
+    /// <param name="arguments">Collection of (name, value) pairs that represents arguments and values to set for them.</param>
+    /// <typeparam name="TArg">Argument type.</typeparam>
+    /// <typeparam name="TResult">Result type.</typeparam>
+    /// <returns>New buffer of argument values.</returns>
+    /// <exception cref="InvalidParsedExpressionArgumentsException">When at least one argument does not exist.</exception>
     [Pure]
     public static TArg?[] MapArguments<TArg, TResult>(
         this IParsedExpressionDelegate<TArg, TResult> source,
@@ -47,6 +84,15 @@ public static class ParsedExpressionDelegateExtensions
         return buffer;
     }
 
+    /// <summary>
+    /// Creates a new buffer of argument values for the provided delegate.
+    /// </summary>
+    /// <param name="source">Source delegate.</param>
+    /// <param name="arguments">Collection of (name, value) pairs that represents arguments and values to set for them.</param>
+    /// <typeparam name="TArg">Argument type.</typeparam>
+    /// <typeparam name="TResult">Result type.</typeparam>
+    /// <returns>New buffer of argument values.</returns>
+    /// <exception cref="InvalidParsedExpressionArgumentsException">When at least one argument does not exist.</exception>
     [Pure]
     public static TArg?[] MapArguments<TArg, TResult>(
         this IParsedExpressionDelegate<TArg, TResult> source,
@@ -55,6 +101,19 @@ public static class ParsedExpressionDelegateExtensions
         return source.MapArguments( arguments.AsEnumerable() );
     }
 
+    /// <summary>
+    /// Populates the provided buffer of argument values for the provided delegate.
+    /// </summary>
+    /// <param name="source">Source delegate.</param>
+    /// <param name="buffer">Target buffer of argument values.</param>
+    /// <param name="arguments">Collection of (name, value) pairs that represents arguments and values to set for them.</param>
+    /// <typeparam name="TArg">Argument type.</typeparam>
+    /// <typeparam name="TResult">Result type.</typeparam>
+    /// <returns>New buffer of argument values.</returns>
+    /// <exception cref="InvalidParsedExpressionArgumentsException">When at least one argument does not exist.</exception>
+    /// <exception cref="ParsedExpressionArgumentBufferTooSmallException">
+    /// When the provided <paramref name="buffer"/> is too small.
+    /// </exception>
     public static void MapArguments<TArg, TResult>(
         this IParsedExpressionDelegate<TArg, TResult> source,
         TArg?[] buffer,
@@ -63,6 +122,19 @@ public static class ParsedExpressionDelegateExtensions
         MapArguments( source, buffer, arguments.Select( static kv => KeyValuePair.Create( ( StringSegment )kv.Key, kv.Value ) ) );
     }
 
+    /// <summary>
+    /// Populates the provided buffer of argument values for the provided delegate.
+    /// </summary>
+    /// <param name="source">Source delegate.</param>
+    /// <param name="buffer">Target buffer of argument values.</param>
+    /// <param name="arguments">Collection of (name, value) pairs that represents arguments and values to set for them.</param>
+    /// <typeparam name="TArg">Argument type.</typeparam>
+    /// <typeparam name="TResult">Result type.</typeparam>
+    /// <returns>New buffer of argument values.</returns>
+    /// <exception cref="InvalidParsedExpressionArgumentsException">When at least one argument does not exist.</exception>
+    /// <exception cref="ParsedExpressionArgumentBufferTooSmallException">
+    /// When the provided <paramref name="buffer"/> is too small.
+    /// </exception>
     public static void MapArguments<TArg, TResult>(
         this IParsedExpressionDelegate<TArg, TResult> source,
         TArg?[] buffer,
@@ -71,6 +143,19 @@ public static class ParsedExpressionDelegateExtensions
         source.MapArguments( buffer, arguments.AsEnumerable() );
     }
 
+    /// <summary>
+    /// Populates the provided buffer of argument values for the provided delegate.
+    /// </summary>
+    /// <param name="source">Source delegate.</param>
+    /// <param name="buffer">Target buffer of argument values.</param>
+    /// <param name="arguments">Collection of (name, value) pairs that represents arguments and values to set for them.</param>
+    /// <typeparam name="TArg">Argument type.</typeparam>
+    /// <typeparam name="TResult">Result type.</typeparam>
+    /// <returns>New buffer of argument values.</returns>
+    /// <exception cref="InvalidParsedExpressionArgumentsException">When at least one argument does not exist.</exception>
+    /// <exception cref="ParsedExpressionArgumentBufferTooSmallException">
+    /// When the provided <paramref name="buffer"/> is too small.
+    /// </exception>
     public static void MapArguments<TArg, TResult>(
         this IParsedExpressionDelegate<TArg, TResult> source,
         TArg?[] buffer,
@@ -101,6 +186,19 @@ public static class ParsedExpressionDelegateExtensions
             throw new InvalidParsedExpressionArgumentsException( invalidArgumentNames, nameof( arguments ) );
     }
 
+    /// <summary>
+    /// Populates the provided buffer of argument values for the provided delegate.
+    /// </summary>
+    /// <param name="source">Source delegate.</param>
+    /// <param name="buffer">Target buffer of argument values.</param>
+    /// <param name="arguments">Collection of (name, value) pairs that represents arguments and values to set for them.</param>
+    /// <typeparam name="TArg">Argument type.</typeparam>
+    /// <typeparam name="TResult">Result type.</typeparam>
+    /// <returns>New buffer of argument values.</returns>
+    /// <exception cref="InvalidParsedExpressionArgumentsException">When at least one argument does not exist.</exception>
+    /// <exception cref="ParsedExpressionArgumentBufferTooSmallException">
+    /// When the provided <paramref name="buffer"/> is too small.
+    /// </exception>
     public static void MapArguments<TArg, TResult>(
         this IParsedExpressionDelegate<TArg, TResult> source,
         TArg?[] buffer,

@@ -2,8 +2,13 @@
 
 namespace LfrlAnvil.Computable.Expressions.Constructs;
 
+/// <summary>
+/// Contains default symbols and precedences of constructs.
+/// </summary>
 public static class ParsedExpressionConstructDefaults
 {
+#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
+
     public const string AddSymbol = "+";
     public const string SubtractSymbol = "-";
     public const string MultiplySymbol = "*";

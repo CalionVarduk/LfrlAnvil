@@ -5,8 +5,12 @@ using System.Linq.Expressions;
 
 namespace LfrlAnvil.Computable.Expressions.Constructs.Variadic;
 
+/// <summary>
+/// Represents a switch case construct.
+/// </summary>
 public sealed class ParsedExpressionSwitchCase : ParsedExpressionVariadicFunction
 {
+    /// <inheritdoc />
     [Pure]
     protected internal override Expression Process(IReadOnlyList<Expression> parameters)
     {

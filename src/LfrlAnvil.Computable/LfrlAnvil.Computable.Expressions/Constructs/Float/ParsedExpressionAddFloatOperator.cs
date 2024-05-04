@@ -3,8 +3,12 @@ using System.Linq.Expressions;
 
 namespace LfrlAnvil.Computable.Expressions.Constructs.Float;
 
+/// <summary>
+/// Represents a <see cref="float"/> binary add operator construct.
+/// </summary>
 public sealed class ParsedExpressionAddFloatOperator : ParsedExpressionBinaryOperator<float>
 {
+    /// <inheritdoc />
     [Pure]
     protected override Expression? TryCreateFromTwoConstants(ConstantExpression left, ConstantExpression right)
     {
@@ -13,6 +17,7 @@ public sealed class ParsedExpressionAddFloatOperator : ParsedExpressionBinaryOpe
             : null;
     }
 
+    /// <inheritdoc />
     [Pure]
     protected override Expression? TryCreateFromOneConstant(ConstantExpression left, Expression right)
     {
@@ -21,6 +26,7 @@ public sealed class ParsedExpressionAddFloatOperator : ParsedExpressionBinaryOpe
             : null;
     }
 
+    /// <inheritdoc />
     [Pure]
     protected override Expression? TryCreateFromOneConstant(Expression left, ConstantExpression right)
     {
@@ -29,6 +35,7 @@ public sealed class ParsedExpressionAddFloatOperator : ParsedExpressionBinaryOpe
             : null;
     }
 
+    /// <inheritdoc />
     [Pure]
     protected override Expression CreateBinaryExpression(Expression left, Expression right)
     {

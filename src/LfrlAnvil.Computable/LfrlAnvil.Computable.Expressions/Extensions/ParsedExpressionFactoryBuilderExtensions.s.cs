@@ -17,8 +17,20 @@ using LfrlAnvil.Extensions;
 
 namespace LfrlAnvil.Computable.Expressions.Extensions;
 
+/// <summary>
+/// Contains <see cref="ParsedExpressionFactoryBuilder"/> extension methods.
+/// </summary>
 public static class ParsedExpressionFactoryBuilderExtensions
 {
+    /// <summary>
+    /// Adds default generic arithmetic operator constructs with precedences to the provided <paramref name="builder"/>.
+    /// </summary>
+    /// <param name="builder">Source builder.</param>
+    /// <returns><paramref name="builder"/>.</returns>
+    /// <remarks>
+    /// Operators include binary add (+), binary subtract (-), binary multiply (*), binary divide (/), binary modulo (mod)
+    /// and prefix unary negate (-).
+    /// </remarks>
     public static ParsedExpressionFactoryBuilder AddGenericArithmeticOperators(this ParsedExpressionFactoryBuilder builder)
     {
         return builder
@@ -48,6 +60,15 @@ public static class ParsedExpressionFactoryBuilderExtensions
                 ParsedExpressionConstructDefaults.NegatePrecedence );
     }
 
+    /// <summary>
+    /// Adds default generic bitwise operator constructs with precedences to the provided <paramref name="builder"/>.
+    /// </summary>
+    /// <param name="builder">Source builder.</param>
+    /// <returns><paramref name="builder"/>.</returns>
+    /// <remarks>
+    /// Operators include binary and (&amp;), binary or (|), binary xor (^), binary left shift (&lt;&lt;), binary right shift (&gt;&gt;)
+    /// and prefix unary not (~).
+    /// </remarks>
     public static ParsedExpressionFactoryBuilder AddGenericBitwiseOperators(this ParsedExpressionFactoryBuilder builder)
     {
         return builder
@@ -77,6 +98,16 @@ public static class ParsedExpressionFactoryBuilderExtensions
                 ParsedExpressionConstructDefaults.BitwiseNotPrecedence );
     }
 
+    /// <summary>
+    /// Adds default generic logical operator constructs with precedences to the provided <paramref name="builder"/>.
+    /// </summary>
+    /// <param name="builder">Source builder.</param>
+    /// <returns><paramref name="builder"/>.</returns>
+    /// <remarks>
+    /// Operators include binary null-coalesce (??), binary equal to (==), binary not equal to (!=), binary greater than (&gt;),
+    /// binary less than (&lt;), binary greater than or equal to (&gt;=), binary less than or equal to (&lt;=)
+    /// and binary compare (&lt;=&gt;).
+    /// </remarks>
     public static ParsedExpressionFactoryBuilder AddGenericLogicalOperators(this ParsedExpressionFactoryBuilder builder)
     {
         return builder
@@ -118,6 +149,12 @@ public static class ParsedExpressionFactoryBuilderExtensions
                 ParsedExpressionConstructDefaults.ComparePrecedence );
     }
 
+    /// <summary>
+    /// Adds default <see cref="Boolean"/> bitwise operator constructs with precedences to the provided <paramref name="builder"/>.
+    /// </summary>
+    /// <param name="builder">Source builder.</param>
+    /// <returns><paramref name="builder"/>.</returns>
+    /// <remarks>Operators include binary and (&amp;), binary or (|) and binary xor (^).</remarks>
     public static ParsedExpressionFactoryBuilder AddBooleanBitwiseOperators(this ParsedExpressionFactoryBuilder builder)
     {
         return builder
@@ -135,6 +172,15 @@ public static class ParsedExpressionFactoryBuilderExtensions
                 ParsedExpressionConstructDefaults.BitwiseXorPrecedence );
     }
 
+    /// <summary>
+    /// Adds default <see cref="Boolean"/> logical operator constructs with precedences to the provided <paramref name="builder"/>.
+    /// </summary>
+    /// <param name="builder">Source builder.</param>
+    /// <returns><paramref name="builder"/>.</returns>
+    /// <remarks>
+    /// Operators include binary equal to (==), binary not equal to (!=), binary compare (&lt;=&gt;), binary logical and (and),
+    /// binary logical or (or) and prefix unary logical not (not).
+    /// </remarks>
     public static ParsedExpressionFactoryBuilder AddBooleanLogicalOperators(this ParsedExpressionFactoryBuilder builder)
     {
         return builder
@@ -164,6 +210,12 @@ public static class ParsedExpressionFactoryBuilderExtensions
                 ParsedExpressionConstructDefaults.NotPrecedence );
     }
 
+    /// <summary>
+    /// Adds default <see cref="Boolean"/> type definition to the provided <paramref name="builder"/>.
+    /// </summary>
+    /// <param name="builder">Source builder.</param>
+    /// <param name="specializedConverters">Collection of specialized type converters.</param>
+    /// <returns><paramref name="builder"/>.</returns>
     public static ParsedExpressionFactoryBuilder AddBooleanTypeDefinition(
         this ParsedExpressionFactoryBuilder builder,
         IEnumerable<ParsedExpressionTypeConverter> specializedConverters)
@@ -171,6 +223,13 @@ public static class ParsedExpressionFactoryBuilderExtensions
         return builder.AddBooleanTypeDefinition( ParsedExpressionConstructDefaults.BooleanTypeSymbols, specializedConverters );
     }
 
+    /// <summary>
+    /// Adds default <see cref="Boolean"/> type definition to the provided <paramref name="builder"/>.
+    /// </summary>
+    /// <param name="builder">Source builder.</param>
+    /// <param name="symbols">Symbols to use.</param>
+    /// <param name="specializedConverters">Collection of specialized type converters.</param>
+    /// <returns><paramref name="builder"/>.</returns>
     public static ParsedExpressionFactoryBuilder AddBooleanTypeDefinition(
         this ParsedExpressionFactoryBuilder builder,
         ParsedExpressionTypeDefinitionSymbols symbols,
@@ -179,6 +238,12 @@ public static class ParsedExpressionFactoryBuilderExtensions
         return AddTypeDefinition( builder, symbols, new ParsedExpressionTypeConverter<bool>(), specializedConverters );
     }
 
+    /// <summary>
+    /// Adds default <see cref="Boolean"/> type definition to the provided <paramref name="builder"/>.
+    /// </summary>
+    /// <param name="builder">Source builder.</param>
+    /// <param name="specializedConverters">Collection of specialized type converters.</param>
+    /// <returns><paramref name="builder"/>.</returns>
     public static ParsedExpressionFactoryBuilder AddBooleanTypeDefinition(
         this ParsedExpressionFactoryBuilder builder,
         params ParsedExpressionTypeConverter[] specializedConverters)
@@ -186,6 +251,13 @@ public static class ParsedExpressionFactoryBuilderExtensions
         return builder.AddBooleanTypeDefinition( specializedConverters.AsEnumerable() );
     }
 
+    /// <summary>
+    /// Adds default <see cref="Boolean"/> type definition to the provided <paramref name="builder"/>.
+    /// </summary>
+    /// <param name="builder">Source builder.</param>
+    /// <param name="symbols">Symbols to use.</param>
+    /// <param name="specializedConverters">Collection of specialized type converters.</param>
+    /// <returns><paramref name="builder"/>.</returns>
     public static ParsedExpressionFactoryBuilder AddBooleanTypeDefinition(
         this ParsedExpressionFactoryBuilder builder,
         ParsedExpressionTypeDefinitionSymbols symbols,
@@ -194,6 +266,15 @@ public static class ParsedExpressionFactoryBuilderExtensions
         return builder.AddBooleanTypeDefinition( symbols, specializedConverters.AsEnumerable() );
     }
 
+    /// <summary>
+    /// Adds default <see cref="Decimal"/> arithmetic operator constructs with precedences to the provided <paramref name="builder"/>.
+    /// </summary>
+    /// <param name="builder">Source builder.</param>
+    /// <returns><paramref name="builder"/>.</returns>
+    /// <remarks>
+    /// Operators include binary add (+), binary subtract (-), binary multiply (*), binary divide (/), binary modulo (mod)
+    /// and prefix unary negate (-).
+    /// </remarks>
     public static ParsedExpressionFactoryBuilder AddDecimalArithmeticOperators(this ParsedExpressionFactoryBuilder builder)
     {
         return builder
@@ -223,6 +304,16 @@ public static class ParsedExpressionFactoryBuilderExtensions
                 ParsedExpressionConstructDefaults.NegatePrecedence );
     }
 
+    /// <summary>
+    /// Adds default <see cref="Decimal"/> logical operator constructs with precedences to the provided <paramref name="builder"/>.
+    /// </summary>
+    /// <param name="builder">Source builder.</param>
+    /// <returns><paramref name="builder"/>.</returns>
+    /// <remarks>
+    /// Operators include binary equal to (==), binary not equal to (!=), binary greater than (&gt;),
+    /// binary less than (&lt;), binary greater than or equal to (&gt;=), binary less than or equal to (&lt;=)
+    /// and binary compare (&lt;=&gt;).
+    /// </remarks>
     public static ParsedExpressionFactoryBuilder AddDecimalLogicalOperators(this ParsedExpressionFactoryBuilder builder)
     {
         return builder
@@ -260,6 +351,12 @@ public static class ParsedExpressionFactoryBuilderExtensions
                 ParsedExpressionConstructDefaults.ComparePrecedence );
     }
 
+    /// <summary>
+    /// Adds default <see cref="Decimal"/> type definition to the provided <paramref name="builder"/>.
+    /// </summary>
+    /// <param name="builder">Source builder.</param>
+    /// <param name="specializedConverters">Collection of specialized type converters.</param>
+    /// <returns><paramref name="builder"/>.</returns>
     public static ParsedExpressionFactoryBuilder AddDecimalTypeDefinition(
         this ParsedExpressionFactoryBuilder builder,
         IEnumerable<ParsedExpressionTypeConverter> specializedConverters)
@@ -267,6 +364,13 @@ public static class ParsedExpressionFactoryBuilderExtensions
         return builder.AddDecimalTypeDefinition( ParsedExpressionConstructDefaults.DecimalTypeSymbols, specializedConverters );
     }
 
+    /// <summary>
+    /// Adds default <see cref="Decimal"/> type definition to the provided <paramref name="builder"/>.
+    /// </summary>
+    /// <param name="builder">Source builder.</param>
+    /// <param name="symbols">Symbols to use.</param>
+    /// <param name="specializedConverters">Collection of specialized type converters.</param>
+    /// <returns><paramref name="builder"/>.</returns>
     public static ParsedExpressionFactoryBuilder AddDecimalTypeDefinition(
         this ParsedExpressionFactoryBuilder builder,
         ParsedExpressionTypeDefinitionSymbols symbols,
@@ -275,6 +379,12 @@ public static class ParsedExpressionFactoryBuilderExtensions
         return AddTypeDefinition( builder, symbols, new ParsedExpressionTypeConverter<decimal>(), specializedConverters );
     }
 
+    /// <summary>
+    /// Adds default <see cref="Decimal"/> type definition to the provided <paramref name="builder"/>.
+    /// </summary>
+    /// <param name="builder">Source builder.</param>
+    /// <param name="specializedConverters">Collection of specialized type converters.</param>
+    /// <returns><paramref name="builder"/>.</returns>
     public static ParsedExpressionFactoryBuilder AddDecimalTypeDefinition(
         this ParsedExpressionFactoryBuilder builder,
         params ParsedExpressionTypeConverter[] specializedConverters)
@@ -282,6 +392,13 @@ public static class ParsedExpressionFactoryBuilderExtensions
         return builder.AddDecimalTypeDefinition( specializedConverters.AsEnumerable() );
     }
 
+    /// <summary>
+    /// Adds default <see cref="Decimal"/> type definition to the provided <paramref name="builder"/>.
+    /// </summary>
+    /// <param name="builder">Source builder.</param>
+    /// <param name="symbols">Symbols to use.</param>
+    /// <param name="specializedConverters">Collection of specialized type converters.</param>
+    /// <returns><paramref name="builder"/>.</returns>
     public static ParsedExpressionFactoryBuilder AddDecimalTypeDefinition(
         this ParsedExpressionFactoryBuilder builder,
         ParsedExpressionTypeDefinitionSymbols symbols,
@@ -290,6 +407,15 @@ public static class ParsedExpressionFactoryBuilderExtensions
         return builder.AddDecimalTypeDefinition( symbols, specializedConverters.AsEnumerable() );
     }
 
+    /// <summary>
+    /// Adds default <see cref="Double"/> arithmetic operator constructs with precedences to the provided <paramref name="builder"/>.
+    /// </summary>
+    /// <param name="builder">Source builder.</param>
+    /// <returns><paramref name="builder"/>.</returns>
+    /// <remarks>
+    /// Operators include binary add (+), binary subtract (-), binary multiply (*), binary divide (/), binary modulo (mod)
+    /// and prefix unary negate (-).
+    /// </remarks>
     public static ParsedExpressionFactoryBuilder AddDoubleArithmeticOperators(this ParsedExpressionFactoryBuilder builder)
     {
         return builder
@@ -319,6 +445,16 @@ public static class ParsedExpressionFactoryBuilderExtensions
                 ParsedExpressionConstructDefaults.NegatePrecedence );
     }
 
+    /// <summary>
+    /// Adds default <see cref="Double"/> logical operator constructs with precedences to the provided <paramref name="builder"/>.
+    /// </summary>
+    /// <param name="builder">Source builder.</param>
+    /// <returns><paramref name="builder"/>.</returns>
+    /// <remarks>
+    /// Operators include binary equal to (==), binary not equal to (!=), binary greater than (&gt;),
+    /// binary less than (&lt;), binary greater than or equal to (&gt;=), binary less than or equal to (&lt;=)
+    /// and binary compare (&lt;=&gt;).
+    /// </remarks>
     public static ParsedExpressionFactoryBuilder AddDoubleLogicalOperators(this ParsedExpressionFactoryBuilder builder)
     {
         return builder
@@ -356,6 +492,12 @@ public static class ParsedExpressionFactoryBuilderExtensions
                 ParsedExpressionConstructDefaults.ComparePrecedence );
     }
 
+    /// <summary>
+    /// Adds default <see cref="Double"/> type definition to the provided <paramref name="builder"/>.
+    /// </summary>
+    /// <param name="builder">Source builder.</param>
+    /// <param name="specializedConverters">Collection of specialized type converters.</param>
+    /// <returns><paramref name="builder"/>.</returns>
     public static ParsedExpressionFactoryBuilder AddDoubleTypeDefinition(
         this ParsedExpressionFactoryBuilder builder,
         IEnumerable<ParsedExpressionTypeConverter> specializedConverters)
@@ -363,6 +505,13 @@ public static class ParsedExpressionFactoryBuilderExtensions
         return builder.AddDoubleTypeDefinition( ParsedExpressionConstructDefaults.DoubleTypeSymbols, specializedConverters );
     }
 
+    /// <summary>
+    /// Adds default <see cref="Double"/> type definition to the provided <paramref name="builder"/>.
+    /// </summary>
+    /// <param name="builder">Source builder.</param>
+    /// <param name="symbols">Symbols to use.</param>
+    /// <param name="specializedConverters">Collection of specialized type converters.</param>
+    /// <returns><paramref name="builder"/>.</returns>
     public static ParsedExpressionFactoryBuilder AddDoubleTypeDefinition(
         this ParsedExpressionFactoryBuilder builder,
         ParsedExpressionTypeDefinitionSymbols symbols,
@@ -371,6 +520,12 @@ public static class ParsedExpressionFactoryBuilderExtensions
         return AddTypeDefinition( builder, symbols, new ParsedExpressionTypeConverter<double>(), specializedConverters );
     }
 
+    /// <summary>
+    /// Adds default <see cref="Double"/> type definition to the provided <paramref name="builder"/>.
+    /// </summary>
+    /// <param name="builder">Source builder.</param>
+    /// <param name="specializedConverters">Collection of specialized type converters.</param>
+    /// <returns><paramref name="builder"/>.</returns>
     public static ParsedExpressionFactoryBuilder AddDoubleTypeDefinition(
         this ParsedExpressionFactoryBuilder builder,
         params ParsedExpressionTypeConverter[] specializedConverters)
@@ -378,6 +533,13 @@ public static class ParsedExpressionFactoryBuilderExtensions
         return builder.AddDoubleTypeDefinition( specializedConverters.AsEnumerable() );
     }
 
+    /// <summary>
+    /// Adds default <see cref="Double"/> type definition to the provided <paramref name="builder"/>.
+    /// </summary>
+    /// <param name="builder">Source builder.</param>
+    /// <param name="symbols">Symbols to use.</param>
+    /// <param name="specializedConverters">Collection of specialized type converters.</param>
+    /// <returns><paramref name="builder"/>.</returns>
     public static ParsedExpressionFactoryBuilder AddDoubleTypeDefinition(
         this ParsedExpressionFactoryBuilder builder,
         ParsedExpressionTypeDefinitionSymbols symbols,
@@ -386,6 +548,15 @@ public static class ParsedExpressionFactoryBuilderExtensions
         return builder.AddDoubleTypeDefinition( symbols, specializedConverters.AsEnumerable() );
     }
 
+    /// <summary>
+    /// Adds default <see cref="Single"/> arithmetic operator constructs with precedences to the provided <paramref name="builder"/>.
+    /// </summary>
+    /// <param name="builder">Source builder.</param>
+    /// <returns><paramref name="builder"/>.</returns>
+    /// <remarks>
+    /// Operators include binary add (+), binary subtract (-), binary multiply (*), binary divide (/), binary modulo (mod)
+    /// and prefix unary negate (-).
+    /// </remarks>
     public static ParsedExpressionFactoryBuilder AddFloatArithmeticOperators(this ParsedExpressionFactoryBuilder builder)
     {
         return builder
@@ -415,6 +586,16 @@ public static class ParsedExpressionFactoryBuilderExtensions
                 ParsedExpressionConstructDefaults.NegatePrecedence );
     }
 
+    /// <summary>
+    /// Adds default <see cref="Single"/> logical operator constructs with precedences to the provided <paramref name="builder"/>.
+    /// </summary>
+    /// <param name="builder">Source builder.</param>
+    /// <returns><paramref name="builder"/>.</returns>
+    /// <remarks>
+    /// Operators include binary equal to (==), binary not equal to (!=), binary greater than (&gt;),
+    /// binary less than (&lt;), binary greater than or equal to (&gt;=), binary less than or equal to (&lt;=)
+    /// and binary compare (&lt;=&gt;).
+    /// </remarks>
     public static ParsedExpressionFactoryBuilder AddFloatLogicalOperators(this ParsedExpressionFactoryBuilder builder)
     {
         return builder
@@ -452,6 +633,12 @@ public static class ParsedExpressionFactoryBuilderExtensions
                 ParsedExpressionConstructDefaults.ComparePrecedence );
     }
 
+    /// <summary>
+    /// Adds default <see cref="Single"/> type definition to the provided <paramref name="builder"/>.
+    /// </summary>
+    /// <param name="builder">Source builder.</param>
+    /// <param name="specializedConverters">Collection of specialized type converters.</param>
+    /// <returns><paramref name="builder"/>.</returns>
     public static ParsedExpressionFactoryBuilder AddFloatTypeDefinition(
         this ParsedExpressionFactoryBuilder builder,
         IEnumerable<ParsedExpressionTypeConverter> specializedConverters)
@@ -459,6 +646,13 @@ public static class ParsedExpressionFactoryBuilderExtensions
         return builder.AddFloatTypeDefinition( ParsedExpressionConstructDefaults.FloatTypeSymbols, specializedConverters );
     }
 
+    /// <summary>
+    /// Adds default <see cref="Single"/> type definition to the provided <paramref name="builder"/>.
+    /// </summary>
+    /// <param name="builder">Source builder.</param>
+    /// <param name="symbols">Symbols to use.</param>
+    /// <param name="specializedConverters">Collection of specialized type converters.</param>
+    /// <returns><paramref name="builder"/>.</returns>
     public static ParsedExpressionFactoryBuilder AddFloatTypeDefinition(
         this ParsedExpressionFactoryBuilder builder,
         ParsedExpressionTypeDefinitionSymbols symbols,
@@ -467,6 +661,12 @@ public static class ParsedExpressionFactoryBuilderExtensions
         return AddTypeDefinition( builder, symbols, new ParsedExpressionTypeConverter<float>(), specializedConverters );
     }
 
+    /// <summary>
+    /// Adds default <see cref="Single"/> type definition to the provided <paramref name="builder"/>.
+    /// </summary>
+    /// <param name="builder">Source builder.</param>
+    /// <param name="specializedConverters">Collection of specialized type converters.</param>
+    /// <returns><paramref name="builder"/>.</returns>
     public static ParsedExpressionFactoryBuilder AddFloatTypeDefinition(
         this ParsedExpressionFactoryBuilder builder,
         params ParsedExpressionTypeConverter[] specializedConverters)
@@ -474,6 +674,13 @@ public static class ParsedExpressionFactoryBuilderExtensions
         return builder.AddFloatTypeDefinition( specializedConverters.AsEnumerable() );
     }
 
+    /// <summary>
+    /// Adds default <see cref="Single"/> type definition to the provided <paramref name="builder"/>.
+    /// </summary>
+    /// <param name="builder">Source builder.</param>
+    /// <param name="symbols">Symbols to use.</param>
+    /// <param name="specializedConverters">Collection of specialized type converters.</param>
+    /// <returns><paramref name="builder"/>.</returns>
     public static ParsedExpressionFactoryBuilder AddFloatTypeDefinition(
         this ParsedExpressionFactoryBuilder builder,
         ParsedExpressionTypeDefinitionSymbols symbols,
@@ -482,6 +689,15 @@ public static class ParsedExpressionFactoryBuilderExtensions
         return builder.AddFloatTypeDefinition( symbols, specializedConverters.AsEnumerable() );
     }
 
+    /// <summary>
+    /// Adds default <see cref="Int32"/> arithmetic operator constructs with precedences to the provided <paramref name="builder"/>.
+    /// </summary>
+    /// <param name="builder">Source builder.</param>
+    /// <returns><paramref name="builder"/>.</returns>
+    /// <remarks>
+    /// Operators include binary add (+), binary subtract (-), binary multiply (*), binary divide (/), binary modulo (mod)
+    /// and prefix unary negate (-).
+    /// </remarks>
     public static ParsedExpressionFactoryBuilder AddInt32ArithmeticOperators(this ParsedExpressionFactoryBuilder builder)
     {
         return builder
@@ -511,6 +727,15 @@ public static class ParsedExpressionFactoryBuilderExtensions
                 ParsedExpressionConstructDefaults.NegatePrecedence );
     }
 
+    /// <summary>
+    /// Adds default <see cref="Int32"/> bitwise operator constructs with precedences to the provided <paramref name="builder"/>.
+    /// </summary>
+    /// <param name="builder">Source builder.</param>
+    /// <returns><paramref name="builder"/>.</returns>
+    /// <remarks>
+    /// Operators include binary and (&amp;), binary or (|), binary xor (^), binary left shift (&lt;&lt;), binary right shift (&gt;&gt;)
+    /// and prefix unary not (~).
+    /// </remarks>
     public static ParsedExpressionFactoryBuilder AddInt32BitwiseOperators(this ParsedExpressionFactoryBuilder builder)
     {
         return builder
@@ -544,6 +769,16 @@ public static class ParsedExpressionFactoryBuilderExtensions
                 ParsedExpressionConstructDefaults.BitwiseNotPrecedence );
     }
 
+    /// <summary>
+    /// Adds default <see cref="Int32"/> logical operator constructs with precedences to the provided <paramref name="builder"/>.
+    /// </summary>
+    /// <param name="builder">Source builder.</param>
+    /// <returns><paramref name="builder"/>.</returns>
+    /// <remarks>
+    /// Operators include binary equal to (==), binary not equal to (!=), binary greater than (&gt;),
+    /// binary less than (&lt;), binary greater than or equal to (&gt;=), binary less than or equal to (&lt;=)
+    /// and binary compare (&lt;=&gt;).
+    /// </remarks>
     public static ParsedExpressionFactoryBuilder AddInt32LogicalOperators(this ParsedExpressionFactoryBuilder builder)
     {
         return builder
@@ -581,6 +816,12 @@ public static class ParsedExpressionFactoryBuilderExtensions
                 ParsedExpressionConstructDefaults.ComparePrecedence );
     }
 
+    /// <summary>
+    /// Adds default <see cref="Int32"/> type definition to the provided <paramref name="builder"/>.
+    /// </summary>
+    /// <param name="builder">Source builder.</param>
+    /// <param name="specializedConverters">Collection of specialized type converters.</param>
+    /// <returns><paramref name="builder"/>.</returns>
     public static ParsedExpressionFactoryBuilder AddInt32TypeDefinition(
         this ParsedExpressionFactoryBuilder builder,
         IEnumerable<ParsedExpressionTypeConverter> specializedConverters)
@@ -588,6 +829,13 @@ public static class ParsedExpressionFactoryBuilderExtensions
         return builder.AddInt32TypeDefinition( ParsedExpressionConstructDefaults.Int32TypeSymbols, specializedConverters );
     }
 
+    /// <summary>
+    /// Adds default <see cref="Int32"/> type definition to the provided <paramref name="builder"/>.
+    /// </summary>
+    /// <param name="builder">Source builder.</param>
+    /// <param name="symbols">Symbols to use.</param>
+    /// <param name="specializedConverters">Collection of specialized type converters.</param>
+    /// <returns><paramref name="builder"/>.</returns>
     public static ParsedExpressionFactoryBuilder AddInt32TypeDefinition(
         this ParsedExpressionFactoryBuilder builder,
         ParsedExpressionTypeDefinitionSymbols symbols,
@@ -596,6 +844,12 @@ public static class ParsedExpressionFactoryBuilderExtensions
         return AddTypeDefinition( builder, symbols, new ParsedExpressionTypeConverter<int>(), specializedConverters );
     }
 
+    /// <summary>
+    /// Adds default <see cref="Int32"/> type definition to the provided <paramref name="builder"/>.
+    /// </summary>
+    /// <param name="builder">Source builder.</param>
+    /// <param name="specializedConverters">Collection of specialized type converters.</param>
+    /// <returns><paramref name="builder"/>.</returns>
     public static ParsedExpressionFactoryBuilder AddInt32TypeDefinition(
         this ParsedExpressionFactoryBuilder builder,
         params ParsedExpressionTypeConverter[] specializedConverters)
@@ -603,6 +857,13 @@ public static class ParsedExpressionFactoryBuilderExtensions
         return builder.AddInt32TypeDefinition( specializedConverters.AsEnumerable() );
     }
 
+    /// <summary>
+    /// Adds default <see cref="Int32"/> type definition to the provided <paramref name="builder"/>.
+    /// </summary>
+    /// <param name="builder">Source builder.</param>
+    /// <param name="symbols">Symbols to use.</param>
+    /// <param name="specializedConverters">Collection of specialized type converters.</param>
+    /// <returns><paramref name="builder"/>.</returns>
     public static ParsedExpressionFactoryBuilder AddInt32TypeDefinition(
         this ParsedExpressionFactoryBuilder builder,
         ParsedExpressionTypeDefinitionSymbols symbols,
@@ -611,6 +872,15 @@ public static class ParsedExpressionFactoryBuilderExtensions
         return builder.AddInt32TypeDefinition( symbols, specializedConverters.AsEnumerable() );
     }
 
+    /// <summary>
+    /// Adds default <see cref="Int64"/> arithmetic operator constructs with precedences to the provided <paramref name="builder"/>.
+    /// </summary>
+    /// <param name="builder">Source builder.</param>
+    /// <returns><paramref name="builder"/>.</returns>
+    /// <remarks>
+    /// Operators include binary add (+), binary subtract (-), binary multiply (*), binary divide (/), binary modulo (mod)
+    /// and prefix unary negate (-).
+    /// </remarks>
     public static ParsedExpressionFactoryBuilder AddInt64ArithmeticOperators(this ParsedExpressionFactoryBuilder builder)
     {
         return builder
@@ -640,6 +910,15 @@ public static class ParsedExpressionFactoryBuilderExtensions
                 ParsedExpressionConstructDefaults.NegatePrecedence );
     }
 
+    /// <summary>
+    /// Adds default <see cref="Int64"/> bitwise operator constructs with precedences to the provided <paramref name="builder"/>.
+    /// </summary>
+    /// <param name="builder">Source builder.</param>
+    /// <returns><paramref name="builder"/>.</returns>
+    /// <remarks>
+    /// Operators include binary and (&amp;), binary or (|), binary xor (^), binary left shift (&lt;&lt;), binary right shift (&gt;&gt;)
+    /// and prefix unary not (~).
+    /// </remarks>
     public static ParsedExpressionFactoryBuilder AddInt64BitwiseOperators(this ParsedExpressionFactoryBuilder builder)
     {
         return builder
@@ -673,6 +952,16 @@ public static class ParsedExpressionFactoryBuilderExtensions
                 ParsedExpressionConstructDefaults.BitwiseNotPrecedence );
     }
 
+    /// <summary>
+    /// Adds default <see cref="Int64"/> logical operator constructs with precedences to the provided <paramref name="builder"/>.
+    /// </summary>
+    /// <param name="builder">Source builder.</param>
+    /// <returns><paramref name="builder"/>.</returns>
+    /// <remarks>
+    /// Operators include binary equal to (==), binary not equal to (!=), binary greater than (&gt;),
+    /// binary less than (&lt;), binary greater than or equal to (&gt;=), binary less than or equal to (&lt;=)
+    /// and binary compare (&lt;=&gt;).
+    /// </remarks>
     public static ParsedExpressionFactoryBuilder AddInt64LogicalOperators(this ParsedExpressionFactoryBuilder builder)
     {
         return builder
@@ -710,6 +999,12 @@ public static class ParsedExpressionFactoryBuilderExtensions
                 ParsedExpressionConstructDefaults.ComparePrecedence );
     }
 
+    /// <summary>
+    /// Adds default <see cref="Int64"/> type definition to the provided <paramref name="builder"/>.
+    /// </summary>
+    /// <param name="builder">Source builder.</param>
+    /// <param name="specializedConverters">Collection of specialized type converters.</param>
+    /// <returns><paramref name="builder"/>.</returns>
     public static ParsedExpressionFactoryBuilder AddInt64TypeDefinition(
         this ParsedExpressionFactoryBuilder builder,
         IEnumerable<ParsedExpressionTypeConverter> specializedConverters)
@@ -717,6 +1012,13 @@ public static class ParsedExpressionFactoryBuilderExtensions
         return builder.AddInt64TypeDefinition( ParsedExpressionConstructDefaults.Int64TypeSymbols, specializedConverters );
     }
 
+    /// <summary>
+    /// Adds default <see cref="Int64"/> type definition to the provided <paramref name="builder"/>.
+    /// </summary>
+    /// <param name="builder">Source builder.</param>
+    /// <param name="symbols">Symbols to use.</param>
+    /// <param name="specializedConverters">Collection of specialized type converters.</param>
+    /// <returns><paramref name="builder"/>.</returns>
     public static ParsedExpressionFactoryBuilder AddInt64TypeDefinition(
         this ParsedExpressionFactoryBuilder builder,
         ParsedExpressionTypeDefinitionSymbols symbols,
@@ -725,6 +1027,12 @@ public static class ParsedExpressionFactoryBuilderExtensions
         return AddTypeDefinition( builder, symbols, new ParsedExpressionTypeConverter<long>(), specializedConverters );
     }
 
+    /// <summary>
+    /// Adds default <see cref="Int64"/> type definition to the provided <paramref name="builder"/>.
+    /// </summary>
+    /// <param name="builder">Source builder.</param>
+    /// <param name="specializedConverters">Collection of specialized type converters.</param>
+    /// <returns><paramref name="builder"/>.</returns>
     public static ParsedExpressionFactoryBuilder AddInt64TypeDefinition(
         this ParsedExpressionFactoryBuilder builder,
         params ParsedExpressionTypeConverter[] specializedConverters)
@@ -732,6 +1040,13 @@ public static class ParsedExpressionFactoryBuilderExtensions
         return builder.AddInt64TypeDefinition( specializedConverters.AsEnumerable() );
     }
 
+    /// <summary>
+    /// Adds default <see cref="Int64"/> type definition to the provided <paramref name="builder"/>.
+    /// </summary>
+    /// <param name="builder">Source builder.</param>
+    /// <param name="symbols">Symbols to use.</param>
+    /// <param name="specializedConverters">Collection of specialized type converters.</param>
+    /// <returns><paramref name="builder"/>.</returns>
     public static ParsedExpressionFactoryBuilder AddInt64TypeDefinition(
         this ParsedExpressionFactoryBuilder builder,
         ParsedExpressionTypeDefinitionSymbols symbols,
@@ -740,6 +1055,15 @@ public static class ParsedExpressionFactoryBuilderExtensions
         return builder.AddInt64TypeDefinition( symbols, specializedConverters.AsEnumerable() );
     }
 
+    /// <summary>
+    /// Adds default <see cref="BigInteger"/> arithmetic operator constructs with precedences to the provided <paramref name="builder"/>.
+    /// </summary>
+    /// <param name="builder">Source builder.</param>
+    /// <returns><paramref name="builder"/>.</returns>
+    /// <remarks>
+    /// Operators include binary add (+), binary subtract (-), binary multiply (*), binary divide (/), binary modulo (mod)
+    /// and prefix unary negate (-).
+    /// </remarks>
     public static ParsedExpressionFactoryBuilder AddBigIntArithmeticOperators(this ParsedExpressionFactoryBuilder builder)
     {
         return builder
@@ -769,6 +1093,15 @@ public static class ParsedExpressionFactoryBuilderExtensions
                 ParsedExpressionConstructDefaults.NegatePrecedence );
     }
 
+    /// <summary>
+    /// Adds default <see cref="BigInteger"/> bitwise operator constructs with precedences to the provided <paramref name="builder"/>.
+    /// </summary>
+    /// <param name="builder">Source builder.</param>
+    /// <returns><paramref name="builder"/>.</returns>
+    /// <remarks>
+    /// Operators include binary and (&amp;), binary or (|), binary xor (^), binary left shift (&lt;&lt;), binary right shift (&gt;&gt;)
+    /// and prefix unary not (~).
+    /// </remarks>
     public static ParsedExpressionFactoryBuilder AddBigIntBitwiseOperators(this ParsedExpressionFactoryBuilder builder)
     {
         return builder
@@ -802,6 +1135,16 @@ public static class ParsedExpressionFactoryBuilderExtensions
                 ParsedExpressionConstructDefaults.BitwiseNotPrecedence );
     }
 
+    /// <summary>
+    /// Adds default <see cref="BigInteger"/> logical operator constructs with precedences to the provided <paramref name="builder"/>.
+    /// </summary>
+    /// <param name="builder">Source builder.</param>
+    /// <returns><paramref name="builder"/>.</returns>
+    /// <remarks>
+    /// Operators include binary equal to (==), binary not equal to (!=), binary greater than (&gt;),
+    /// binary less than (&lt;), binary greater than or equal to (&gt;=), binary less than or equal to (&lt;=)
+    /// and binary compare (&lt;=&gt;).
+    /// </remarks>
     public static ParsedExpressionFactoryBuilder AddBigIntLogicalOperators(this ParsedExpressionFactoryBuilder builder)
     {
         return builder
@@ -839,6 +1182,12 @@ public static class ParsedExpressionFactoryBuilderExtensions
                 ParsedExpressionConstructDefaults.ComparePrecedence );
     }
 
+    /// <summary>
+    /// Adds default <see cref="BigInteger"/> type definition to the provided <paramref name="builder"/>.
+    /// </summary>
+    /// <param name="builder">Source builder.</param>
+    /// <param name="specializedConverters">Collection of specialized type converters.</param>
+    /// <returns><paramref name="builder"/>.</returns>
     public static ParsedExpressionFactoryBuilder AddBigIntTypeDefinition(
         this ParsedExpressionFactoryBuilder builder,
         IEnumerable<ParsedExpressionTypeConverter> specializedConverters)
@@ -846,6 +1195,13 @@ public static class ParsedExpressionFactoryBuilderExtensions
         return builder.AddBigIntTypeDefinition( ParsedExpressionConstructDefaults.BigIntTypeSymbols, specializedConverters );
     }
 
+    /// <summary>
+    /// Adds default <see cref="BigInteger"/> type definition to the provided <paramref name="builder"/>.
+    /// </summary>
+    /// <param name="builder">Source builder.</param>
+    /// <param name="symbols">Symbols to use.</param>
+    /// <param name="specializedConverters">Collection of specialized type converters.</param>
+    /// <returns><paramref name="builder"/>.</returns>
     public static ParsedExpressionFactoryBuilder AddBigIntTypeDefinition(
         this ParsedExpressionFactoryBuilder builder,
         ParsedExpressionTypeDefinitionSymbols symbols,
@@ -854,6 +1210,12 @@ public static class ParsedExpressionFactoryBuilderExtensions
         return AddTypeDefinition( builder, symbols, new ParsedExpressionTypeConverter<BigInteger>(), specializedConverters );
     }
 
+    /// <summary>
+    /// Adds default <see cref="BigInteger"/> type definition to the provided <paramref name="builder"/>.
+    /// </summary>
+    /// <param name="builder">Source builder.</param>
+    /// <param name="specializedConverters">Collection of specialized type converters.</param>
+    /// <returns><paramref name="builder"/>.</returns>
     public static ParsedExpressionFactoryBuilder AddBigIntTypeDefinition(
         this ParsedExpressionFactoryBuilder builder,
         params ParsedExpressionTypeConverter[] specializedConverters)
@@ -861,6 +1223,13 @@ public static class ParsedExpressionFactoryBuilderExtensions
         return builder.AddBigIntTypeDefinition( specializedConverters.AsEnumerable() );
     }
 
+    /// <summary>
+    /// Adds default <see cref="BigInteger"/> type definition to the provided <paramref name="builder"/>.
+    /// </summary>
+    /// <param name="builder">Source builder.</param>
+    /// <param name="symbols">Symbols to use.</param>
+    /// <param name="specializedConverters">Collection of specialized type converters.</param>
+    /// <returns><paramref name="builder"/>.</returns>
     public static ParsedExpressionFactoryBuilder AddBigIntTypeDefinition(
         this ParsedExpressionFactoryBuilder builder,
         ParsedExpressionTypeDefinitionSymbols symbols,
@@ -869,6 +1238,12 @@ public static class ParsedExpressionFactoryBuilderExtensions
         return builder.AddBigIntTypeDefinition( symbols, specializedConverters.AsEnumerable() );
     }
 
+    /// <summary>
+    /// Adds default <see cref="String"/> arithmetic operator constructs with precedences to the provided <paramref name="builder"/>.
+    /// </summary>
+    /// <param name="builder">Source builder.</param>
+    /// <returns><paramref name="builder"/>.</returns>
+    /// <remarks>Operators include binary add (+).</remarks>
     public static ParsedExpressionFactoryBuilder AddStringArithmeticOperators(this ParsedExpressionFactoryBuilder builder)
     {
         return builder
@@ -876,6 +1251,14 @@ public static class ParsedExpressionFactoryBuilderExtensions
             .SetBinaryOperatorPrecedence( ParsedExpressionConstructDefaults.AddSymbol, ParsedExpressionConstructDefaults.AddPrecedence );
     }
 
+    /// <summary>
+    /// Adds default <see cref="String"/> logical operator constructs with precedences to the provided <paramref name="builder"/>.
+    /// </summary>
+    /// <param name="builder">Source builder.</param>
+    /// <returns><paramref name="builder"/>.</returns>
+    /// <remarks>
+    /// Operators include binary equal to (==), binary not equal to (!=) and binary compare (&lt;=&gt;).
+    /// </remarks>
     public static ParsedExpressionFactoryBuilder AddStringLogicalOperators(this ParsedExpressionFactoryBuilder builder)
     {
         return builder
@@ -893,6 +1276,12 @@ public static class ParsedExpressionFactoryBuilderExtensions
                 ParsedExpressionConstructDefaults.ComparePrecedence );
     }
 
+    /// <summary>
+    /// Adds default <see cref="String"/> type definition to the provided <paramref name="builder"/>.
+    /// </summary>
+    /// <param name="builder">Source builder.</param>
+    /// <param name="specializedConverters">Collection of specialized type converters.</param>
+    /// <returns><paramref name="builder"/>.</returns>
     public static ParsedExpressionFactoryBuilder AddStringTypeDefinition(
         this ParsedExpressionFactoryBuilder builder,
         IEnumerable<ParsedExpressionTypeConverter> specializedConverters)
@@ -900,6 +1289,13 @@ public static class ParsedExpressionFactoryBuilderExtensions
         return builder.AddStringTypeDefinition( ParsedExpressionConstructDefaults.StringTypeSymbols, specializedConverters );
     }
 
+    /// <summary>
+    /// Adds default <see cref="String"/> type definition to the provided <paramref name="builder"/>.
+    /// </summary>
+    /// <param name="builder">Source builder.</param>
+    /// <param name="symbols">Symbols to use.</param>
+    /// <param name="specializedConverters">Collection of specialized type converters.</param>
+    /// <returns><paramref name="builder"/>.</returns>
     public static ParsedExpressionFactoryBuilder AddStringTypeDefinition(
         this ParsedExpressionFactoryBuilder builder,
         ParsedExpressionTypeDefinitionSymbols symbols,
@@ -908,6 +1304,12 @@ public static class ParsedExpressionFactoryBuilderExtensions
         return AddTypeDefinition( builder, symbols, new ParsedExpressionToStringTypeConverter(), specializedConverters );
     }
 
+    /// <summary>
+    /// Adds default <see cref="String"/> type definition to the provided <paramref name="builder"/>.
+    /// </summary>
+    /// <param name="builder">Source builder.</param>
+    /// <param name="specializedConverters">Collection of specialized type converters.</param>
+    /// <returns><paramref name="builder"/>.</returns>
     public static ParsedExpressionFactoryBuilder AddStringTypeDefinition(
         this ParsedExpressionFactoryBuilder builder,
         params ParsedExpressionTypeConverter[] specializedConverters)
@@ -915,6 +1317,13 @@ public static class ParsedExpressionFactoryBuilderExtensions
         return builder.AddStringTypeDefinition( specializedConverters.AsEnumerable() );
     }
 
+    /// <summary>
+    /// Adds default <see cref="String"/> type definition to the provided <paramref name="builder"/>.
+    /// </summary>
+    /// <param name="builder">Source builder.</param>
+    /// <param name="symbols">Symbols to use.</param>
+    /// <param name="specializedConverters">Collection of specialized type converters.</param>
+    /// <returns><paramref name="builder"/>.</returns>
     public static ParsedExpressionFactoryBuilder AddStringTypeDefinition(
         this ParsedExpressionFactoryBuilder builder,
         ParsedExpressionTypeDefinitionSymbols symbols,
@@ -923,6 +1332,13 @@ public static class ParsedExpressionFactoryBuilderExtensions
         return builder.AddStringTypeDefinition( symbols, specializedConverters.AsEnumerable() );
     }
 
+    /// <summary>
+    /// Adds default branching variadic function constructs.
+    /// </summary>
+    /// <param name="builder">Source builder.</param>
+    /// <param name="symbols">Optional custom symbols.</param>
+    /// <returns><paramref name="builder"/>.</returns>
+    /// <remarks>Constructs include <b>if</b>, <b>switch-case</b>, <b>switch</b> and <b>throw</b> functions.</remarks>
     public static ParsedExpressionFactoryBuilder AddBranchingVariadicFunctions(
         this ParsedExpressionFactoryBuilder builder,
         ParsedExpressionBranchingVariadicFunctionSymbols symbols = default)
@@ -934,6 +1350,12 @@ public static class ParsedExpressionFactoryBuilderExtensions
             .AddVariadicFunction( symbols.Throw, new ParsedExpressionThrow() );
     }
 
+    /// <summary>
+    /// Adds missing default unary construct precedences.
+    /// </summary>
+    /// <param name="builder">Source builder.</param>
+    /// <param name="defaultPrecedence">Default unary construct precedence. Equal to <b>1</b> by default.</param>
+    /// <returns><paramref name="builder"/>.</returns>
     public static ParsedExpressionFactoryBuilder AddDefaultUnaryConstructPrecedences(
         this ParsedExpressionFactoryBuilder builder,
         int defaultPrecedence = ParsedExpressionConstructDefaults.DefaultUnaryPrecedence)

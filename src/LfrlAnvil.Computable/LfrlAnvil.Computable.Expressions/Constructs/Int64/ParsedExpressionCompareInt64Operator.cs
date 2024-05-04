@@ -5,10 +5,16 @@ using LfrlAnvil.Computable.Expressions.Internal;
 
 namespace LfrlAnvil.Computable.Expressions.Constructs.Int64;
 
+/// <summary>
+/// Represents a <see cref="Int64"/> binary compare operator construct.
+/// </summary>
 public sealed class ParsedExpressionCompareInt64Operator : ParsedExpressionBinaryOperator<long>
 {
     private readonly MethodInfo _compareTo;
 
+    /// <summary>
+    /// Creates a new <see cref="ParsedExpressionCompareInt64Operator"/> instance.
+    /// </summary>
     public ParsedExpressionCompareInt64Operator()
     {
         _compareTo = MemberInfoLocator.FindCompareToMethod(
@@ -17,6 +23,7 @@ public sealed class ParsedExpressionCompareInt64Operator : ParsedExpressionBinar
             typeof( ParsedExpressionCompareInt64Operator ) );
     }
 
+    /// <inheritdoc />
     [Pure]
     protected override Expression? TryCreateFromTwoConstants(ConstantExpression left, ConstantExpression right)
     {
@@ -25,6 +32,7 @@ public sealed class ParsedExpressionCompareInt64Operator : ParsedExpressionBinar
             : null;
     }
 
+    /// <inheritdoc />
     [Pure]
     protected override Expression CreateBinaryExpression(Expression left, Expression right)
     {

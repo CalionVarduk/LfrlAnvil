@@ -3,8 +3,12 @@ using System.Linq.Expressions;
 
 namespace LfrlAnvil.Computable.Expressions.Constructs.Int32;
 
+/// <summary>
+/// Represents a <see cref="Int32"/> binary equal to operator construct.
+/// </summary>
 public sealed class ParsedExpressionEqualToInt32Operator : ParsedExpressionBinaryOperator<int>
 {
+    /// <inheritdoc />
     [Pure]
     protected override Expression? TryCreateFromTwoConstants(ConstantExpression left, ConstantExpression right)
     {
@@ -13,6 +17,7 @@ public sealed class ParsedExpressionEqualToInt32Operator : ParsedExpressionBinar
             : null;
     }
 
+    /// <inheritdoc />
     [Pure]
     protected override Expression CreateBinaryExpression(Expression left, Expression right)
     {

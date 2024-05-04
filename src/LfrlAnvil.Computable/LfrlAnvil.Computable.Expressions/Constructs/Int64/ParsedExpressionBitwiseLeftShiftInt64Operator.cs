@@ -4,8 +4,12 @@ using LfrlAnvil.Extensions;
 
 namespace LfrlAnvil.Computable.Expressions.Constructs.Int64;
 
+/// <summary>
+/// Represents a <see cref="Int64"/> binary bitwise left shift operator construct.
+/// </summary>
 public sealed class ParsedExpressionBitwiseLeftShiftInt64Operator : ParsedExpressionBinaryOperator<long, int>
 {
+    /// <inheritdoc />
     [Pure]
     protected override Expression? TryCreateFromTwoConstants(ConstantExpression left, ConstantExpression right)
     {
@@ -14,6 +18,7 @@ public sealed class ParsedExpressionBitwiseLeftShiftInt64Operator : ParsedExpres
             : null;
     }
 
+    /// <inheritdoc />
     [Pure]
     protected override Expression? TryCreateFromOneConstant(ConstantExpression left, Expression right)
     {
@@ -22,6 +27,7 @@ public sealed class ParsedExpressionBitwiseLeftShiftInt64Operator : ParsedExpres
             : null;
     }
 
+    /// <inheritdoc />
     [Pure]
     protected override Expression? TryCreateFromOneConstant(Expression left, ConstantExpression right)
     {
@@ -32,6 +38,7 @@ public sealed class ParsedExpressionBitwiseLeftShiftInt64Operator : ParsedExpres
         return rightValue == 0 ? left : null;
     }
 
+    /// <inheritdoc />
     [Pure]
     protected override Expression CreateBinaryExpression(Expression left, Expression right)
     {

@@ -8,8 +8,14 @@ using LfrlAnvil.Computable.Expressions.Internal;
 
 namespace LfrlAnvil.Computable.Expressions.Errors;
 
+/// <summary>
+/// Represents an error that occurred during <see cref="IParsedExpression{TArg,TResult}"/> creation.
+/// </summary>
 public class ParsedExpressionBuilderError
 {
+    /// <summary>
+    /// Creates a new <see cref="ParsedExpressionBuilderError"/> instance with <see cref="ParsedExpressionBuilderErrorType.Error"/> type.
+    /// </summary>
     public ParsedExpressionBuilderError()
         : this( ParsedExpressionBuilderErrorType.Error ) { }
 
@@ -19,9 +25,20 @@ public class ParsedExpressionBuilderError
         Type = type;
     }
 
+    /// <summary>
+    /// Error's type.
+    /// </summary>
     public ParsedExpressionBuilderErrorType Type { get; }
+
+    /// <summary>
+    /// Input's token associated with this error.
+    /// </summary>
     public StringSegment? Token { get; }
 
+    /// <summary>
+    /// Returns a string representation of this <see cref="ParsedExpressionBuilderError"/> instance.
+    /// </summary>
+    /// <returns>String representation.</returns>
     [Pure]
     public override string ToString()
     {

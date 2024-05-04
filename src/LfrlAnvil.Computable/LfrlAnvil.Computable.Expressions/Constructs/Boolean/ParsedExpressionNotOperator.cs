@@ -3,8 +3,12 @@ using System.Linq.Expressions;
 
 namespace LfrlAnvil.Computable.Expressions.Constructs.Boolean;
 
+/// <summary>
+/// Represents a <see cref="Boolean"/> unary logical not operator construct.
+/// </summary>
 public sealed class ParsedExpressionNotOperator : ParsedExpressionUnaryOperator<bool>
 {
+    /// <inheritdoc />
     [Pure]
     protected override Expression? TryCreateFromConstant(ConstantExpression operand)
     {
@@ -13,6 +17,7 @@ public sealed class ParsedExpressionNotOperator : ParsedExpressionUnaryOperator<
             : null;
     }
 
+    /// <inheritdoc />
     [Pure]
     protected override Expression CreateUnaryExpression(Expression operand)
     {

@@ -6,8 +6,12 @@ using LfrlAnvil.Exceptions;
 
 namespace LfrlAnvil.Computable.Expressions.Constructs.BigInt;
 
+/// <summary>
+/// Represents a <see cref="BigInteger"/> binary divide operator construct.
+/// </summary>
 public sealed class ParsedExpressionDivideBigIntOperator : ParsedExpressionBinaryOperator<BigInteger>
 {
+    /// <inheritdoc />
     [Pure]
     protected override Expression? TryCreateFromTwoConstants(ConstantExpression left, ConstantExpression right)
     {
@@ -16,6 +20,7 @@ public sealed class ParsedExpressionDivideBigIntOperator : ParsedExpressionBinar
             : null;
     }
 
+    /// <inheritdoc />
     [Pure]
     protected override Expression? TryCreateFromOneConstant(Expression left, ConstantExpression right)
     {
@@ -34,6 +39,7 @@ public sealed class ParsedExpressionDivideBigIntOperator : ParsedExpressionBinar
         return null;
     }
 
+    /// <inheritdoc />
     [Pure]
     protected override Expression CreateBinaryExpression(Expression left, Expression right)
     {

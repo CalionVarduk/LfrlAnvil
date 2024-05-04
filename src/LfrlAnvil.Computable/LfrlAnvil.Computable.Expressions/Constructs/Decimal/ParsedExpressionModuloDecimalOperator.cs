@@ -5,8 +5,12 @@ using LfrlAnvil.Exceptions;
 
 namespace LfrlAnvil.Computable.Expressions.Constructs.Decimal;
 
+/// <summary>
+/// Represents a <see cref="Decimal"/> binary modulo operator construct.
+/// </summary>
 public sealed class ParsedExpressionModuloDecimalOperator : ParsedExpressionBinaryOperator<decimal>
 {
+    /// <inheritdoc />
     [Pure]
     protected override Expression? TryCreateFromTwoConstants(ConstantExpression left, ConstantExpression right)
     {
@@ -15,6 +19,7 @@ public sealed class ParsedExpressionModuloDecimalOperator : ParsedExpressionBina
             : null;
     }
 
+    /// <inheritdoc />
     [Pure]
     protected override Expression? TryCreateFromOneConstant(Expression left, ConstantExpression right)
     {
@@ -27,6 +32,7 @@ public sealed class ParsedExpressionModuloDecimalOperator : ParsedExpressionBina
         return null;
     }
 
+    /// <inheritdoc />
     [Pure]
     protected override Expression CreateBinaryExpression(Expression left, Expression right)
     {

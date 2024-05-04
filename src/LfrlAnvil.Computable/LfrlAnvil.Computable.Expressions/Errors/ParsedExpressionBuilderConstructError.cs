@@ -4,6 +4,10 @@ using LfrlAnvil.Extensions;
 
 namespace LfrlAnvil.Computable.Expressions.Errors;
 
+/// <summary>
+/// Represents an error that occurred during <see cref="IParsedExpression{TArg,TResult}"/> creation
+/// due to an exception thrown by a construct.
+/// </summary>
 public sealed class ParsedExpressionBuilderConstructError : ParsedExpressionBuilderError
 {
     internal ParsedExpressionBuilderConstructError(
@@ -17,9 +21,20 @@ public sealed class ParsedExpressionBuilderConstructError : ParsedExpressionBuil
         Exception = exception;
     }
 
+    /// <summary>
+    /// Construct that has thrown the <see cref="Exception"/>.
+    /// </summary>
     public object Construct { get; }
+
+    /// <summary>
+    /// Thrown exception.
+    /// </summary>
     public Exception? Exception { get; }
 
+    /// <summary>
+    /// Returns a string representation of this <see cref="ParsedExpressionBuilderConstructError"/> instance.
+    /// </summary>
+    /// <returns>String representation.</returns>
     [Pure]
     public override string ToString()
     {

@@ -5,8 +5,12 @@ using LfrlAnvil.Exceptions;
 
 namespace LfrlAnvil.Computable.Expressions.Constructs.Int64;
 
+/// <summary>
+/// Represents a <see cref="Int64"/> binary divide operator construct.
+/// </summary>
 public sealed class ParsedExpressionDivideInt64Operator : ParsedExpressionBinaryOperator<long>
 {
+    /// <inheritdoc />
     [Pure]
     protected override Expression? TryCreateFromTwoConstants(ConstantExpression left, ConstantExpression right)
     {
@@ -15,6 +19,7 @@ public sealed class ParsedExpressionDivideInt64Operator : ParsedExpressionBinary
             : null;
     }
 
+    /// <inheritdoc />
     [Pure]
     protected override Expression? TryCreateFromOneConstant(Expression left, ConstantExpression right)
     {
@@ -33,6 +38,7 @@ public sealed class ParsedExpressionDivideInt64Operator : ParsedExpressionBinary
         return null;
     }
 
+    /// <inheritdoc />
     [Pure]
     protected override Expression CreateBinaryExpression(Expression left, Expression right)
     {

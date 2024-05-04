@@ -8,10 +8,21 @@ using LfrlAnvil.Computable.Expressions.Internal;
 
 namespace LfrlAnvil.Computable.Expressions.Constructs.Variadic;
 
+/// <summary>
+/// Represents an indexer call construct.
+/// </summary>
 public sealed class ParsedExpressionIndexerCall : ParsedExpressionVariadicFunction
 {
     private readonly ParsedExpressionFactoryInternalConfiguration _configuration;
 
+    /// <summary>
+    /// Creates a new <see cref="ParsedExpressionIndexerCall"/> instance.
+    /// </summary>
+    /// <param name="configuration">Underlying configuration.</param>
+    /// <param name="foldConstantsWhenPossible">
+    /// Specifies whether or not indexer invocations with all parameters being constant and target being constant
+    /// should be resolved immediately as constant expression. Equal to <b>true</b> by default.
+    /// </param>
     public ParsedExpressionIndexerCall(
         ParsedExpressionFactoryInternalConfiguration configuration,
         bool foldConstantsWhenPossible = true)
@@ -20,8 +31,13 @@ public sealed class ParsedExpressionIndexerCall : ParsedExpressionVariadicFuncti
         FoldConstantsWhenPossible = foldConstantsWhenPossible;
     }
 
+    /// <summary>
+    /// Specifies whether or not indexer invocations with all parameters being constant and target being constant
+    /// should be resolved immediately as constant expression.
+    /// </summary>
     public bool FoldConstantsWhenPossible { get; }
 
+    /// <inheritdoc />
     [Pure]
     protected internal override Expression Process(IReadOnlyList<Expression> parameters)
     {

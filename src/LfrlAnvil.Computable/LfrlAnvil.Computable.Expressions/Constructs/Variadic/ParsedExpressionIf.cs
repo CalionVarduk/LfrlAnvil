@@ -8,8 +8,12 @@ using LfrlAnvil.Computable.Expressions.Internal;
 
 namespace LfrlAnvil.Computable.Expressions.Constructs.Variadic;
 
+/// <summary>
+/// Represents an if-then-else construct.
+/// </summary>
 public sealed class ParsedExpressionIf : ParsedExpressionVariadicFunction
 {
+    /// <inheritdoc />
     [Pure]
     protected internal override Expression Process(IReadOnlyList<Expression> parameters)
     {

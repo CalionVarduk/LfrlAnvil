@@ -6,8 +6,12 @@ using LfrlAnvil.Exceptions;
 
 namespace LfrlAnvil.Computable.Expressions.Constructs.BigInt;
 
+/// <summary>
+/// Represents a <see cref="BigInteger"/> binary modulo operator construct.
+/// </summary>
 public sealed class ParsedExpressionModuloBigIntOperator : ParsedExpressionBinaryOperator<BigInteger>
 {
+    /// <inheritdoc />
     [Pure]
     protected override Expression? TryCreateFromTwoConstants(ConstantExpression left, ConstantExpression right)
     {
@@ -16,6 +20,7 @@ public sealed class ParsedExpressionModuloBigIntOperator : ParsedExpressionBinar
             : null;
     }
 
+    /// <inheritdoc />
     [Pure]
     protected override Expression? TryCreateFromOneConstant(Expression left, ConstantExpression right)
     {
@@ -31,6 +36,7 @@ public sealed class ParsedExpressionModuloBigIntOperator : ParsedExpressionBinar
         return null;
     }
 
+    /// <inheritdoc />
     [Pure]
     protected override Expression CreateBinaryExpression(Expression left, Expression right)
     {

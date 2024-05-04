@@ -9,6 +9,9 @@ using LfrlAnvil.Computable.Expressions.Internal;
 
 namespace LfrlAnvil.Computable.Expressions;
 
+/// <summary>
+/// Represents a builder of <see cref="IParsedExpressionFactory"/> instances.
+/// </summary>
 public sealed class ParsedExpressionFactoryBuilder
 {
     private readonly List<(StringSegment Symbol, ParsedExpressionConstructType Type, object Construct)> _constructs;
@@ -22,6 +25,9 @@ public sealed class ParsedExpressionFactoryBuilder
     private Func<ParsedExpressionFactoryInternalConfiguration, ParsedExpressionVariadicFunction>? _makeArrayProvider;
     private Func<ParsedExpressionFactoryInternalConfiguration, ParsedExpressionVariadicFunction>? _invokeProvider;
 
+    /// <summary>
+    /// Creates a new <see cref="ParsedExpressionFactoryBuilder"/> instance.
+    /// </summary>
     public ParsedExpressionFactoryBuilder()
     {
         _constructs = new List<(StringSegment, ParsedExpressionConstructType, object)>();
@@ -36,24 +42,44 @@ public sealed class ParsedExpressionFactoryBuilder
         _invokeProvider = null;
     }
 
+    /// <summary>
+    /// Sets the <see cref="IParsedExpressionFactoryConfiguration"/> instance to default value.
+    /// </summary>
+    /// <returns><b>this</b>.</returns>
+    /// <remarks>See <see cref="ParsedExpressionFactoryDefaultConfiguration"/> for more information.</remarks>
     public ParsedExpressionFactoryBuilder SetDefaultConfiguration()
     {
         _configuration = null;
         return this;
     }
 
+    /// <summary>
+    /// Sets the <see cref="IParsedExpressionFactoryConfiguration"/> instance to the provided value.
+    /// </summary>
+    /// <param name="configuration">Value to set.</param>
+    /// <returns><b>this</b>.</returns>
     public ParsedExpressionFactoryBuilder SetConfiguration(IParsedExpressionFactoryConfiguration configuration)
     {
         _configuration = configuration;
         return this;
     }
 
+    /// <summary>
+    /// Sets the <see cref="IParsedExpressionNumberParser"/> provider instance to default value.
+    /// </summary>
+    /// <returns><b>this</b>.</returns>
+    /// <remarks>Default provider will parse all numbers as <see cref="Decimal"/> type.</remarks>
     public ParsedExpressionFactoryBuilder SetDefaultNumberParserProvider()
     {
         _numberParserProvider = null;
         return this;
     }
 
+    /// <summary>
+    /// Sets the <see cref="IParsedExpressionNumberParser"/> provider instance to the provided value.
+    /// </summary>
+    /// <returns><b>this</b>.</returns>
+    /// <param name="numberParserProvider">Value to set.</param>
     public ParsedExpressionFactoryBuilder SetNumberParserProvider(
         Func<ParsedExpressionNumberParserParams, IParsedExpressionNumberParser> numberParserProvider)
     {
@@ -61,12 +87,22 @@ public sealed class ParsedExpressionFactoryBuilder
         return this;
     }
 
+    /// <summary>
+    /// Sets the member access provider instance to default value.
+    /// </summary>
+    /// <returns><b>this</b>.</returns>
+    /// <remarks>Default provider will use the <see cref="ParsedExpressionMemberAccess"/> construct.</remarks>
     public ParsedExpressionFactoryBuilder SetDefaultMemberAccessProvider()
     {
         _memberAccessProvider = null;
         return this;
     }
 
+    /// <summary>
+    /// Sets the member access provider instance to the provided value.
+    /// </summary>
+    /// <param name="memberAccessProvider">Value to set.</param>
+    /// <returns><b>this</b>.</returns>
     public ParsedExpressionFactoryBuilder SetMemberAccessProvider(
         Func<ParsedExpressionFactoryInternalConfiguration, ParsedExpressionVariadicFunction> memberAccessProvider)
     {
@@ -74,12 +110,22 @@ public sealed class ParsedExpressionFactoryBuilder
         return this;
     }
 
+    /// <summary>
+    /// Sets the indexer call provider instance to default value.
+    /// </summary>
+    /// <returns><b>this</b>.</returns>
+    /// <remarks>Default provider will use the <see cref="ParsedExpressionIndexerCall"/> construct.</remarks>
     public ParsedExpressionFactoryBuilder SetDefaultIndexerCallProvider()
     {
         _indexerCallProvider = null;
         return this;
     }
 
+    /// <summary>
+    /// Sets the indexer call provider instance to the provided value.
+    /// </summary>
+    /// <param name="indexerCallProvider">Value to set.</param>
+    /// <returns><b>this</b>.</returns>
     public ParsedExpressionFactoryBuilder SetIndexerCallProvider(
         Func<ParsedExpressionFactoryInternalConfiguration, ParsedExpressionVariadicFunction> indexerCallProvider)
     {
@@ -87,12 +133,22 @@ public sealed class ParsedExpressionFactoryBuilder
         return this;
     }
 
+    /// <summary>
+    /// Sets the method call provider instance to default value.
+    /// </summary>
+    /// <returns><b>this</b>.</returns>
+    /// <remarks>Default provider will use the <see cref="ParsedExpressionMethodCall"/> construct.</remarks>
     public ParsedExpressionFactoryBuilder SetDefaultMethodCallProvider()
     {
         _methodCallProvider = null;
         return this;
     }
 
+    /// <summary>
+    /// Sets the method call provider instance to the provided value.
+    /// </summary>
+    /// <param name="methodCallProvider">Value to set.</param>
+    /// <returns><b>this</b>.</returns>
     public ParsedExpressionFactoryBuilder SetMethodCallProvider(
         Func<ParsedExpressionFactoryInternalConfiguration, ParsedExpressionVariadicFunction> methodCallProvider)
     {
@@ -100,12 +156,22 @@ public sealed class ParsedExpressionFactoryBuilder
         return this;
     }
 
+    /// <summary>
+    /// Sets the constructor call provider instance to default value.
+    /// </summary>
+    /// <returns><b>this</b>.</returns>
+    /// <remarks>Default provider will use the <see cref="ParsedExpressionConstructorCall"/> construct.</remarks>
     public ParsedExpressionFactoryBuilder SetDefaultCtorCallProvider()
     {
         _ctorCallProvider = null;
         return this;
     }
 
+    /// <summary>
+    /// Sets the constructor call provider instance to the provided value.
+    /// </summary>
+    /// <param name="ctorCallProvider">Value to set.</param>
+    /// <returns><b>this</b>.</returns>
     public ParsedExpressionFactoryBuilder SetCtorCallProvider(
         Func<ParsedExpressionFactoryInternalConfiguration, ParsedExpressionVariadicFunction> ctorCallProvider)
     {
@@ -113,12 +179,22 @@ public sealed class ParsedExpressionFactoryBuilder
         return this;
     }
 
+    /// <summary>
+    /// Sets the make array provider instance to default value.
+    /// </summary>
+    /// <returns><b>this</b>.</returns>
+    /// <remarks>Default provider will use the <see cref="ParsedExpressionMakeArray"/> construct.</remarks>
     public ParsedExpressionFactoryBuilder SetDefaultMakeArrayProvider()
     {
         _makeArrayProvider = null;
         return this;
     }
 
+    /// <summary>
+    /// Sets the make array provider instance to the provided value.
+    /// </summary>
+    /// <param name="makeArrayProvider">Value to set.</param>
+    /// <returns><b>this</b>.</returns>
     public ParsedExpressionFactoryBuilder SetMakeArrayProvider(
         Func<ParsedExpressionFactoryInternalConfiguration, ParsedExpressionVariadicFunction> makeArrayProvider)
     {
@@ -126,12 +202,22 @@ public sealed class ParsedExpressionFactoryBuilder
         return this;
     }
 
+    /// <summary>
+    /// Sets the invoke provider instance to default value.
+    /// </summary>
+    /// <returns><b>this</b>.</returns>
+    /// <remarks>Default provider will use the <see cref="ParsedExpressionInvoke"/> construct.</remarks>
     public ParsedExpressionFactoryBuilder SetDefaultInvokeProvider()
     {
         _invokeProvider = null;
         return this;
     }
 
+    /// <summary>
+    /// Sets the invoke provider instance to the provided value.
+    /// </summary>
+    /// <param name="invokeProvider">Value to set.</param>
+    /// <returns><b>this</b>.</returns>
     public ParsedExpressionFactoryBuilder SetInvokeProvider(
         Func<ParsedExpressionFactoryInternalConfiguration, ParsedExpressionVariadicFunction> invokeProvider)
     {
@@ -139,137 +225,255 @@ public sealed class ParsedExpressionFactoryBuilder
         return this;
     }
 
+    /// <summary>
+    /// Adds a binary operator construct.
+    /// </summary>
+    /// <param name="symbol">Construct's symbol.</param>
+    /// <param name="operator">Operator to add.</param>
+    /// <returns><b>this</b>.</returns>
     public ParsedExpressionFactoryBuilder AddBinaryOperator(StringSegment symbol, ParsedExpressionBinaryOperator @operator)
     {
         _constructs.Add( (symbol, ParsedExpressionConstructType.BinaryOperator, @operator) );
         return this;
     }
 
+    /// <summary>
+    /// Adds a prefix unary operator construct.
+    /// </summary>
+    /// <param name="symbol">Construct's symbol.</param>
+    /// <param name="operator">Operator to add.</param>
+    /// <returns><b>this</b>.</returns>
     public ParsedExpressionFactoryBuilder AddPrefixUnaryOperator(StringSegment symbol, ParsedExpressionUnaryOperator @operator)
     {
         _constructs.Add( (symbol, ParsedExpressionConstructType.PrefixUnaryOperator, @operator) );
         return this;
     }
 
+    /// <summary>
+    /// Adds a postfix unary operator construct.
+    /// </summary>
+    /// <param name="symbol">Construct's symbol.</param>
+    /// <param name="operator">Operator to add.</param>
+    /// <returns><b>this</b>.</returns>
     public ParsedExpressionFactoryBuilder AddPostfixUnaryOperator(StringSegment symbol, ParsedExpressionUnaryOperator @operator)
     {
         _constructs.Add( (symbol, ParsedExpressionConstructType.PostfixUnaryOperator, @operator) );
         return this;
     }
 
+    /// <summary>
+    /// Adds a prefix type converter construct.
+    /// </summary>
+    /// <param name="symbol">Construct's symbol.</param>
+    /// <param name="converter">Converter to add.</param>
+    /// <returns><b>this</b>.</returns>
     public ParsedExpressionFactoryBuilder AddPrefixTypeConverter(StringSegment symbol, ParsedExpressionTypeConverter converter)
     {
         _constructs.Add( (symbol, ParsedExpressionConstructType.PrefixTypeConverter, converter) );
         return this;
     }
 
+    /// <summary>
+    /// Adds a postfix type converter construct.
+    /// </summary>
+    /// <param name="symbol">Construct's symbol.</param>
+    /// <param name="converter">Converter to add.</param>
+    /// <returns><b>this</b>.</returns>
     public ParsedExpressionFactoryBuilder AddPostfixTypeConverter(StringSegment symbol, ParsedExpressionTypeConverter converter)
     {
         _constructs.Add( (symbol, ParsedExpressionConstructType.PostfixTypeConverter, converter) );
         return this;
     }
 
+    /// <summary>
+    /// Adds a constant construct.
+    /// </summary>
+    /// <param name="symbol">Construct's symbol.</param>
+    /// <param name="constant">Constant to add.</param>
+    /// <returns><b>this</b>.</returns>
     public ParsedExpressionFactoryBuilder AddConstant(StringSegment symbol, ParsedExpressionConstant constant)
     {
         _constructs.Add( (symbol, ParsedExpressionConstructType.Constant, constant) );
         return this;
     }
 
+    /// <summary>
+    /// Adds a type declaration construct.
+    /// </summary>
+    /// <param name="name">Construct's symbol.</param>
+    /// <typeparam name="T">Type to add.</typeparam>
+    /// <returns><b>this</b>.</returns>
     public ParsedExpressionFactoryBuilder AddTypeDeclaration<T>(StringSegment name)
     {
         return AddTypeDeclaration( name, typeof( T ) );
     }
 
+    /// <summary>
+    /// Adds a type declaration construct.
+    /// </summary>
+    /// <param name="name">Construct's symbol.</param>
+    /// <param name="type">Type to add.</param>
+    /// <returns><b>this</b>.</returns>
     public ParsedExpressionFactoryBuilder AddTypeDeclaration(StringSegment name, Type type)
     {
         _constructs.Add( (name, ParsedExpressionConstructType.TypeDeclaration, type) );
         return this;
     }
 
+    /// <summary>
+    /// Adds a function construct.
+    /// </summary>
+    /// <param name="symbol">Construct's symbol.</param>
+    /// <param name="function">Function to add.</param>
+    /// <returns><b>this</b>.</returns>
     public ParsedExpressionFactoryBuilder AddFunction(StringSegment symbol, ParsedExpressionFunction function)
     {
         _constructs.Add( (symbol, ParsedExpressionConstructType.Function, function) );
         return this;
     }
 
+    /// <summary>
+    /// Adds a variadic function construct.
+    /// </summary>
+    /// <param name="symbol">Construct's symbol.</param>
+    /// <param name="function">Function to add.</param>
+    /// <returns><b>this</b>.</returns>
     public ParsedExpressionFactoryBuilder AddVariadicFunction(StringSegment symbol, ParsedExpressionVariadicFunction function)
     {
         _constructs.Add( (symbol, ParsedExpressionConstructType.VariadicFunction, function) );
         return this;
     }
 
+    /// <summary>
+    /// Sets binary operator's precedence.
+    /// </summary>
+    /// <param name="symbol">Construct's symbol.</param>
+    /// <param name="precedence">Precedence value to set.</param>
+    /// <returns><b>this</b>.</returns>
     public ParsedExpressionFactoryBuilder SetBinaryOperatorPrecedence(StringSegment symbol, int precedence)
     {
         _precedences[(symbol, ParsedExpressionConstructType.BinaryOperator)] = precedence;
         return this;
     }
 
+    /// <summary>
+    /// Sets prefix unary construct's precedence.
+    /// </summary>
+    /// <param name="symbol">Construct's symbol.</param>
+    /// <param name="precedence">Precedence value to set.</param>
+    /// <returns><b>this</b>.</returns>
     public ParsedExpressionFactoryBuilder SetPrefixUnaryConstructPrecedence(StringSegment symbol, int precedence)
     {
         _precedences[(symbol, ParsedExpressionConstructType.PrefixUnaryConstruct)] = precedence;
         return this;
     }
 
+    /// <summary>
+    /// Sets postfix unary construct's precedence.
+    /// </summary>
+    /// <param name="symbol">Construct's symbol.</param>
+    /// <param name="precedence">Precedence value to set.</param>
+    /// <returns><b>this</b>.</returns>
     public ParsedExpressionFactoryBuilder SetPostfixUnaryConstructPrecedence(StringSegment symbol, int precedence)
     {
         _precedences[(symbol, ParsedExpressionConstructType.PostfixUnaryConstruct)] = precedence;
         return this;
     }
 
+    /// <summary>
+    /// Returns the current <see cref="IParsedExpressionFactoryConfiguration"/> instance.
+    /// </summary>
+    /// <returns>Current <see cref="IParsedExpressionFactoryConfiguration"/> instance.</returns>
     [Pure]
     public IParsedExpressionFactoryConfiguration? GetConfiguration()
     {
         return _configuration;
     }
 
+    /// <summary>
+    /// Returns the current <see cref="IParsedExpressionNumberParser"/> provider instance.
+    /// </summary>
+    /// <returns>Current <see cref="IParsedExpressionNumberParser"/> provider instance.</returns>
     [Pure]
     public Func<ParsedExpressionNumberParserParams, IParsedExpressionNumberParser>? GetNumberParserProvider()
     {
         return _numberParserProvider;
     }
 
+    /// <summary>
+    /// Returns the current member access provider instance.
+    /// </summary>
+    /// <returns>Current member access provider instance.</returns>
     [Pure]
     public Func<ParsedExpressionFactoryInternalConfiguration, ParsedExpressionVariadicFunction>? GetMemberAccessProvider()
     {
         return _memberAccessProvider;
     }
 
+    /// <summary>
+    /// Returns the current indexer call provider instance.
+    /// </summary>
+    /// <returns>Current indexer call provider instance.</returns>
     [Pure]
     public Func<ParsedExpressionFactoryInternalConfiguration, ParsedExpressionVariadicFunction>? GetIndexerCallProvider()
     {
         return _indexerCallProvider;
     }
 
+    /// <summary>
+    /// Returns the current method call provider instance.
+    /// </summary>
+    /// <returns>Current method call provider instance.</returns>
     [Pure]
     public Func<ParsedExpressionFactoryInternalConfiguration, ParsedExpressionVariadicFunction>? GetMethodCallProvider()
     {
         return _methodCallProvider;
     }
 
+    /// <summary>
+    /// Returns the current constructor call provider instance.
+    /// </summary>
+    /// <returns>Current constructor call provider instance.</returns>
     [Pure]
     public Func<ParsedExpressionFactoryInternalConfiguration, ParsedExpressionVariadicFunction>? GetCtorCallProvider()
     {
         return _ctorCallProvider;
     }
 
+    /// <summary>
+    /// Returns the current make array provider instance.
+    /// </summary>
+    /// <returns>Current make array provider instance.</returns>
     [Pure]
     public Func<ParsedExpressionFactoryInternalConfiguration, ParsedExpressionVariadicFunction>? GetMakeArrayProvider()
     {
         return _makeArrayProvider;
     }
 
+    /// <summary>
+    /// Returns the current invoke provider instance.
+    /// </summary>
+    /// <returns>Current invoke provider instance.</returns>
     [Pure]
     public Func<ParsedExpressionFactoryInternalConfiguration, ParsedExpressionVariadicFunction>? GetInvokeProvider()
     {
         return _invokeProvider;
     }
 
+    /// <summary>
+    /// Creates a new <see cref="IEnumerable{T}"/> instance that contains information about all registered constructs.
+    /// </summary>
+    /// <returns>New <see cref="IEnumerable{T}"/> instance.</returns>
     [Pure]
     public IEnumerable<ParsedExpressionConstructInfo> GetConstructs()
     {
         return _constructs.Select( x => new ParsedExpressionConstructInfo( x.Symbol, x.Type, x.Construct ) );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="IEnumerable{T}"/> instance that contains information about all registered binary operator precedences.
+    /// </summary>
+    /// <returns>New <see cref="IEnumerable{T}"/> instance.</returns>
     [Pure]
     public IEnumerable<KeyValuePair<StringSegment, int>> GetBinaryOperatorPrecedences()
     {
@@ -278,6 +482,11 @@ public sealed class ParsedExpressionFactoryBuilder
             .Select( kv => KeyValuePair.Create( kv.Key.Symbol, kv.Value ) );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="IEnumerable{T}"/> instance that contains information about
+    /// all registered prefix unary construct precedences.
+    /// </summary>
+    /// <returns>New <see cref="IEnumerable{T}"/> instance.</returns>
     [Pure]
     public IEnumerable<KeyValuePair<StringSegment, int>> GetPrefixUnaryConstructPrecedences()
     {
@@ -286,6 +495,11 @@ public sealed class ParsedExpressionFactoryBuilder
             .Select( kv => KeyValuePair.Create( kv.Key.Symbol, kv.Value ) );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="IEnumerable{T}"/> instance that contains information about
+    /// all registered postfix unary construct precedences.
+    /// </summary>
+    /// <returns>New <see cref="IEnumerable{T}"/> instance.</returns>
     [Pure]
     public IEnumerable<KeyValuePair<StringSegment, int>> GetPostfixUnaryConstructPrecedences()
     {
@@ -294,6 +508,11 @@ public sealed class ParsedExpressionFactoryBuilder
             .Select( kv => KeyValuePair.Create( kv.Key.Symbol, kv.Value ) );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="ParsedExpressionFactory"/> instance.
+    /// </summary>
+    /// <returns>New <see cref="ParsedExpressionFactory"/> instance.</returns>
+    /// <exception cref="ParsedExpressionFactoryBuilderException">When configuration is invalid.</exception>
     [Pure]
     public ParsedExpressionFactory Build()
     {

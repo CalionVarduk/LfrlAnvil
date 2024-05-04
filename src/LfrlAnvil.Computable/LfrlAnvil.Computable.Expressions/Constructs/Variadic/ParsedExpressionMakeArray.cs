@@ -6,8 +6,12 @@ using LfrlAnvil.Computable.Expressions.Internal;
 
 namespace LfrlAnvil.Computable.Expressions.Constructs.Variadic;
 
+/// <summary>
+/// Represents an array creation construct.
+/// </summary>
 public sealed class ParsedExpressionMakeArray : ParsedExpressionVariadicFunction
 {
+    /// <inheritdoc />
     [Pure]
     protected internal override Expression Process(IReadOnlyList<Expression> parameters)
     {

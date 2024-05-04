@@ -10,6 +10,7 @@ using LfrlAnvil.Computable.Expressions.Internal;
 
 namespace LfrlAnvil.Computable.Expressions;
 
+/// <inheritdoc />
 public sealed class ParsedExpressionFactory : IParsedExpressionFactory
 {
     private readonly ParsedExpressionFactoryInternalConfiguration _configuration;
@@ -23,14 +24,17 @@ public sealed class ParsedExpressionFactory : IParsedExpressionFactory
         _numberParserProvider = numberParserProvider;
     }
 
+    /// <inheritdoc />
     public IParsedExpressionFactoryConfiguration Configuration => _configuration;
 
+    /// <inheritdoc />
     [Pure]
     public IEnumerable<StringSegment> GetConstructSymbols()
     {
         return _configuration.Constructs.Select( kv => kv.Key );
     }
 
+    /// <inheritdoc />
     [Pure]
     public ParsedExpressionConstructType GetConstructType(StringSegment symbol)
     {
@@ -39,12 +43,14 @@ public sealed class ParsedExpressionFactory : IParsedExpressionFactory
             : ParsedExpressionConstructType.None;
     }
 
+    /// <inheritdoc />
     [Pure]
     public Type? GetGenericBinaryOperatorType(StringSegment symbol)
     {
         return _configuration.Constructs.GetValueOrDefault( symbol )?.BinaryOperators.GenericConstruct?.GetType();
     }
 
+    /// <inheritdoc />
     [Pure]
     public IEnumerable<ParsedExpressionBinaryOperatorInfo> GetSpecializedBinaryOperators(StringSegment symbol)
     {
@@ -54,6 +60,7 @@ public sealed class ParsedExpressionFactory : IParsedExpressionFactory
             ?? Enumerable.Empty<ParsedExpressionBinaryOperatorInfo>();
     }
 
+    /// <inheritdoc />
     [Pure]
     public Type? GetGenericPrefixUnaryConstructType(StringSegment symbol)
     {
@@ -62,6 +69,7 @@ public sealed class ParsedExpressionFactory : IParsedExpressionFactory
             : null;
     }
 
+    /// <inheritdoc />
     [Pure]
     public IEnumerable<ParsedExpressionUnaryConstructInfo> GetSpecializedPrefixUnaryConstructs(StringSegment symbol)
     {
@@ -76,6 +84,7 @@ public sealed class ParsedExpressionFactory : IParsedExpressionFactory
             : Enumerable.Empty<ParsedExpressionUnaryConstructInfo>();
     }
 
+    /// <inheritdoc />
     [Pure]
     public Type? GetGenericPostfixUnaryConstructType(StringSegment symbol)
     {
@@ -84,6 +93,7 @@ public sealed class ParsedExpressionFactory : IParsedExpressionFactory
             : null;
     }
 
+    /// <inheritdoc />
     [Pure]
     public IEnumerable<ParsedExpressionUnaryConstructInfo> GetSpecializedPostfixUnaryConstructs(StringSegment symbol)
     {
@@ -98,6 +108,7 @@ public sealed class ParsedExpressionFactory : IParsedExpressionFactory
             : Enumerable.Empty<ParsedExpressionUnaryConstructInfo>();
     }
 
+    /// <inheritdoc />
     [Pure]
     public Type? GetTypeConverterTargetType(StringSegment symbol)
     {
@@ -106,18 +117,21 @@ public sealed class ParsedExpressionFactory : IParsedExpressionFactory
             : null;
     }
 
+    /// <inheritdoc />
     [Pure]
     public Type? GetTypeDeclarationType(StringSegment symbol)
     {
         return _configuration.Constructs.GetValueOrDefault( symbol )?.TypeDeclaration;
     }
 
+    /// <inheritdoc />
     [Pure]
     public ConstantExpression? GetConstantExpression(StringSegment symbol)
     {
         return _configuration.Constructs.GetValueOrDefault( symbol )?.Constant;
     }
 
+    /// <inheritdoc />
     [Pure]
     public IEnumerable<LambdaExpression> GetFunctionExpressions(StringSegment symbol)
     {
@@ -126,12 +140,14 @@ public sealed class ParsedExpressionFactory : IParsedExpressionFactory
             ?? Enumerable.Empty<LambdaExpression>();
     }
 
+    /// <inheritdoc />
     [Pure]
     public Type? GetVariadicFunctionType(StringSegment symbol)
     {
         return _configuration.Constructs.GetValueOrDefault( symbol )?.VariadicFunction?.GetType();
     }
 
+    /// <inheritdoc />
     [Pure]
     public int? GetBinaryOperatorPrecedence(StringSegment symbol)
     {
@@ -139,6 +155,7 @@ public sealed class ParsedExpressionFactory : IParsedExpressionFactory
         return constructs?.IsEmpty == false ? constructs.Precedence : null;
     }
 
+    /// <inheritdoc />
     [Pure]
     public int? GetPrefixUnaryConstructPrecedence(StringSegment symbol)
     {
@@ -152,6 +169,7 @@ public sealed class ParsedExpressionFactory : IParsedExpressionFactory
         return definition.PrefixUnaryOperators.Precedence;
     }
 
+    /// <inheritdoc />
     [Pure]
     public int? GetPostfixUnaryConstructPrecedence(StringSegment symbol)
     {
@@ -165,6 +183,7 @@ public sealed class ParsedExpressionFactory : IParsedExpressionFactory
         return definition.PostfixUnaryOperators.Precedence;
     }
 
+    /// <inheritdoc cref="IParsedExpressionFactory.Create{TArg,TResult}(String)" />
     [Pure]
     public ParsedExpression<TArg, TResult> Create<TArg, TResult>(string input)
     {
@@ -174,6 +193,7 @@ public sealed class ParsedExpressionFactory : IParsedExpressionFactory
         throw new ParsedExpressionCreationException( input, errors );
     }
 
+    /// <inheritdoc cref="IParsedExpressionFactory.TryCreate{TArg,TResult}(String,out IParsedExpression{TArg,TResult},out Chain{ParsedExpressionBuilderError})" />
     public bool TryCreate<TArg, TResult>(
         string input,
         [MaybeNullWhen( false )] out ParsedExpression<TArg, TResult> result,

@@ -5,8 +5,12 @@ using LfrlAnvil.Exceptions;
 
 namespace LfrlAnvil.Computable.Expressions.Constructs.Int64;
 
+/// <summary>
+/// Represents a <see cref="Int64"/> binary modulo operator construct.
+/// </summary>
 public sealed class ParsedExpressionModuloInt64Operator : ParsedExpressionBinaryOperator<long>
 {
+    /// <inheritdoc />
     [Pure]
     protected override Expression? TryCreateFromTwoConstants(ConstantExpression left, ConstantExpression right)
     {
@@ -15,6 +19,7 @@ public sealed class ParsedExpressionModuloInt64Operator : ParsedExpressionBinary
             : null;
     }
 
+    /// <inheritdoc />
     [Pure]
     protected override Expression? TryCreateFromOneConstant(Expression left, ConstantExpression right)
     {
@@ -30,6 +35,7 @@ public sealed class ParsedExpressionModuloInt64Operator : ParsedExpressionBinary
         return null;
     }
 
+    /// <inheritdoc />
     [Pure]
     protected override Expression CreateBinaryExpression(Expression left, Expression right)
     {

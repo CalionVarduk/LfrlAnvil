@@ -1,9 +1,16 @@
-﻿using System.Diagnostics.Contracts;
+﻿using System;
+using System.Diagnostics.Contracts;
 
 namespace LfrlAnvil.Computable.Expressions.Extensions;
 
+/// <summary>
+/// Represents that identify elements of a type definition construct.
+/// </summary>
 public readonly struct ParsedExpressionTypeDefinitionSymbols
 {
+    /// <summary>
+    /// Default <see cref="ParsedExpressionTypeDefinitionSymbols"/> instance.
+    /// </summary>
     public static readonly ParsedExpressionTypeDefinitionSymbols Empty = new ParsedExpressionTypeDefinitionSymbols();
 
     private readonly bool _isPrefixTypeConverterDisabled;
@@ -29,11 +36,30 @@ public readonly struct ParsedExpressionTypeDefinitionSymbols
         _customConstant = customConstant;
     }
 
+    /// <summary>
+    /// Symbol to use as an identifier of the type and a name of its constructor.
+    /// </summary>
     public StringSegment Name => _name ?? StringSegment.Empty;
+
+    /// <summary>
+    /// Symbol to use for prefix type converter. Equal to <see cref="Name"/> wrapped in square brackets by default.
+    /// </summary>
     public StringSegment? PrefixTypeConverter => _customPrefixTypeConverter ?? GetDefaultPrefixTypeConverter();
+
+    /// <summary>
+    /// Optional symbol to use for postfix type converter.
+    /// </summary>
     public StringSegment? PostfixTypeConverter => _postfixTypeConverter;
+
+    /// <summary>
+    /// Symbol to use for a constant of <see cref="Type"/> type. Equal to an uppercase <see cref="Name"/> by default.
+    /// </summary>
     public StringSegment? Constant => _customConstant ?? GetDefaultConstant();
 
+    /// <summary>
+    /// Returns a string representation of this <see cref="ParsedExpressionTypeDefinitionSymbols"/> instance.
+    /// </summary>
+    /// <returns>String representation.</returns>
     [Pure]
     public override string ToString()
     {
@@ -46,6 +72,11 @@ public readonly struct ParsedExpressionTypeDefinitionSymbols
         return $"{nameof( Name )}: '{Name}'{prefixText}{postfixText}{constantText}";
     }
 
+    /// <summary>
+    /// Creates a new <see cref="ParsedExpressionTypeDefinitionSymbols"/> instance with changed <see cref="Name"/> symbol.
+    /// </summary>
+    /// <param name="name"><see cref="Name"/> symbol to set.</param>
+    /// <returns>New <see cref="ParsedExpressionTypeDefinitionSymbols"/> instance.</returns>
     [Pure]
     public ParsedExpressionTypeDefinitionSymbols SetName(StringSegment name)
     {
@@ -58,6 +89,11 @@ public readonly struct ParsedExpressionTypeDefinitionSymbols
             _customConstant );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="ParsedExpressionTypeDefinitionSymbols"/> instance with changed <see cref="PrefixTypeConverter"/> symbol.
+    /// </summary>
+    /// <param name="symbol"><see cref="PrefixTypeConverter"/> symbol to set.</param>
+    /// <returns>New <see cref="ParsedExpressionTypeDefinitionSymbols"/> instance.</returns>
     [Pure]
     public ParsedExpressionTypeDefinitionSymbols SetPrefixTypeConverter(StringSegment symbol)
     {
@@ -70,6 +106,10 @@ public readonly struct ParsedExpressionTypeDefinitionSymbols
             _customConstant );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="ParsedExpressionTypeDefinitionSymbols"/> instance with default <see cref="PrefixTypeConverter"/> symbol.
+    /// </summary>
+    /// <returns>New <see cref="ParsedExpressionTypeDefinitionSymbols"/> instance.</returns>
     [Pure]
     public ParsedExpressionTypeDefinitionSymbols SetDefaultPrefixTypeConverter()
     {
@@ -82,6 +122,10 @@ public readonly struct ParsedExpressionTypeDefinitionSymbols
             _customConstant );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="ParsedExpressionTypeDefinitionSymbols"/> instance with disabled <see cref="PrefixTypeConverter"/> symbol.
+    /// </summary>
+    /// <returns>New <see cref="ParsedExpressionTypeDefinitionSymbols"/> instance.</returns>
     [Pure]
     public ParsedExpressionTypeDefinitionSymbols DisablePrefixTypeConverter()
     {
@@ -94,6 +138,11 @@ public readonly struct ParsedExpressionTypeDefinitionSymbols
             _customConstant );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="ParsedExpressionTypeDefinitionSymbols"/> instance with changed <see cref="PostfixTypeConverter"/> symbol.
+    /// </summary>
+    /// <param name="symbol"><see cref="PostfixTypeConverter"/> symbol to set.</param>
+    /// <returns>New <see cref="ParsedExpressionTypeDefinitionSymbols"/> instance.</returns>
     [Pure]
     public ParsedExpressionTypeDefinitionSymbols SetPostfixTypeConverter(StringSegment symbol)
     {
@@ -106,6 +155,10 @@ public readonly struct ParsedExpressionTypeDefinitionSymbols
             _customConstant );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="ParsedExpressionTypeDefinitionSymbols"/> instance with disabled <see cref="PostfixTypeConverter"/> symbol.
+    /// </summary>
+    /// <returns>New <see cref="ParsedExpressionTypeDefinitionSymbols"/> instance.</returns>
     [Pure]
     public ParsedExpressionTypeDefinitionSymbols DisablePostfixTypeConverter()
     {
@@ -118,6 +171,11 @@ public readonly struct ParsedExpressionTypeDefinitionSymbols
             _customConstant );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="ParsedExpressionTypeDefinitionSymbols"/> instance with changed <see cref="Constant"/> symbol.
+    /// </summary>
+    /// <param name="symbol"><see cref="Constant"/> symbol to set.</param>
+    /// <returns>New <see cref="ParsedExpressionTypeDefinitionSymbols"/> instance.</returns>
     [Pure]
     public ParsedExpressionTypeDefinitionSymbols SetConstant(StringSegment symbol)
     {
@@ -130,6 +188,10 @@ public readonly struct ParsedExpressionTypeDefinitionSymbols
             symbol );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="ParsedExpressionTypeDefinitionSymbols"/> instance with default <see cref="Constant"/> symbol.
+    /// </summary>
+    /// <returns>New <see cref="ParsedExpressionTypeDefinitionSymbols"/> instance.</returns>
     [Pure]
     public ParsedExpressionTypeDefinitionSymbols SetDefaultConstant()
     {
@@ -142,6 +204,10 @@ public readonly struct ParsedExpressionTypeDefinitionSymbols
             customConstant: null );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="ParsedExpressionTypeDefinitionSymbols"/> instance with disabled <see cref="Constant"/> symbol.
+    /// </summary>
+    /// <returns>New <see cref="ParsedExpressionTypeDefinitionSymbols"/> instance.</returns>
     [Pure]
     public ParsedExpressionTypeDefinitionSymbols DisableConstant()
     {

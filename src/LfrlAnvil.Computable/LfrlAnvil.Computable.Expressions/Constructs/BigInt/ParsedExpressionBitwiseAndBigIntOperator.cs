@@ -4,8 +4,12 @@ using System.Numerics;
 
 namespace LfrlAnvil.Computable.Expressions.Constructs.BigInt;
 
+/// <summary>
+/// Represents a <see cref="BigInteger"/> binary bitwise and operator construct.
+/// </summary>
 public sealed class ParsedExpressionBitwiseAndBigIntOperator : ParsedExpressionBinaryOperator<BigInteger>
 {
+    /// <inheritdoc />
     [Pure]
     protected override Expression? TryCreateFromTwoConstants(ConstantExpression left, ConstantExpression right)
     {
@@ -14,6 +18,7 @@ public sealed class ParsedExpressionBitwiseAndBigIntOperator : ParsedExpressionB
             : null;
     }
 
+    /// <inheritdoc />
     [Pure]
     protected override Expression? TryCreateFromOneConstant(ConstantExpression left, Expression right)
     {
@@ -22,6 +27,7 @@ public sealed class ParsedExpressionBitwiseAndBigIntOperator : ParsedExpressionB
             : null;
     }
 
+    /// <inheritdoc />
     [Pure]
     protected override Expression? TryCreateFromOneConstant(Expression left, ConstantExpression right)
     {
@@ -30,6 +36,7 @@ public sealed class ParsedExpressionBitwiseAndBigIntOperator : ParsedExpressionB
             : null;
     }
 
+    /// <inheritdoc />
     [Pure]
     protected override Expression CreateBinaryExpression(Expression left, Expression right)
     {

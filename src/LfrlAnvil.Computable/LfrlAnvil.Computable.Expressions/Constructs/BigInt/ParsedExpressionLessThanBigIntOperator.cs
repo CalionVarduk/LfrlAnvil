@@ -4,8 +4,12 @@ using System.Numerics;
 
 namespace LfrlAnvil.Computable.Expressions.Constructs.BigInt;
 
+/// <summary>
+/// Represents a <see cref="BigInteger"/> binary less than operator construct.
+/// </summary>
 public sealed class ParsedExpressionLessThanBigIntOperator : ParsedExpressionBinaryOperator<BigInteger>
 {
+    /// <inheritdoc />
     [Pure]
     protected override Expression? TryCreateFromTwoConstants(ConstantExpression left, ConstantExpression right)
     {
@@ -14,6 +18,7 @@ public sealed class ParsedExpressionLessThanBigIntOperator : ParsedExpressionBin
             : null;
     }
 
+    /// <inheritdoc />
     [Pure]
     protected override Expression CreateBinaryExpression(Expression left, Expression right)
     {
