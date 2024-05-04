@@ -4,17 +4,28 @@ using System.Diagnostics.Contracts;
 
 namespace LfrlAnvil.Reactive.Decorators;
 
+/// <summary>
+/// Notifies the decorated event listener with distinct emitted events, excluding duplicates.
+/// </summary>
+/// <typeparam name="TEvent">Event type.</typeparam>
+/// <typeparam name="TKey">Event's key type.</typeparam>
 public sealed class EventListenerDistinctDecorator<TEvent, TKey> : IEventListenerDecorator<TEvent, TEvent>
 {
     private readonly Func<TEvent, TKey> _keySelector;
     private readonly IEqualityComparer<TKey> _equalityComparer;
 
+    /// <summary>
+    /// Creates a new <see cref="EventListenerDistinctDecorator{TEvent,TKey}"/> instance.
+    /// </summary>
+    /// <param name="keySelector">Event key selector.</param>
+    /// <param name="equalityComparer">Key equality comparer.</param>
     public EventListenerDistinctDecorator(Func<TEvent, TKey> keySelector, IEqualityComparer<TKey> equalityComparer)
     {
         _keySelector = keySelector;
         _equalityComparer = equalityComparer;
     }
 
+    /// <inheritdoc />
     [Pure]
     public IEventListener<TEvent> Decorate(IEventListener<TEvent> listener, IEventSubscriber _)
     {

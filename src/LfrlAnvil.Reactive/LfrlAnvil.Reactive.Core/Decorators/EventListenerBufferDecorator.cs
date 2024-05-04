@@ -3,16 +3,27 @@ using System.Diagnostics.Contracts;
 
 namespace LfrlAnvil.Reactive.Decorators;
 
+/// <summary>
+/// Buffers emitted events until the buffer gets fully filled and then notifies the decorated event listener with that buffer,
+/// and then repeats the process.
+/// </summary>
+/// <typeparam name="TEvent">Event type.</typeparam>
 public sealed class EventListenerBufferDecorator<TEvent> : IEventListenerDecorator<TEvent, ReadOnlyMemory<TEvent>>
 {
     private readonly int _bufferLength;
 
+    /// <summary>
+    /// Creates a new <see cref="EventListenerBufferDecorator{TEvent}"/> instance.
+    /// </summary>
+    /// <param name="bufferLength">Size of the underlying buffer.</param>
+    /// <exception cref="ArgumentOutOfRangeException">When <paramref name="bufferLength"/> is less than <b>1</b>.</exception>
     public EventListenerBufferDecorator(int bufferLength)
     {
         Ensure.IsGreaterThan( bufferLength, 0 );
         _bufferLength = bufferLength;
     }
 
+    /// <inheritdoc />
     [Pure]
     public IEventListener<TEvent> Decorate(IEventListener<ReadOnlyMemory<TEvent>> listener, IEventSubscriber _)
     {

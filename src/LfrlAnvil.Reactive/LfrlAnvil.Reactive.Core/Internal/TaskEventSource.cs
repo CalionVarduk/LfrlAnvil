@@ -6,6 +6,13 @@ using LfrlAnvil.Reactive.Composites;
 
 namespace LfrlAnvil.Reactive.Internal;
 
+/// <summary>
+/// Represents a generic disposable event source that can be listened to,
+/// that notifies its listeners with a single event when the created <see cref="Task{TResult}"/> completes,
+/// and then disposes the listener. When an event subscriber gets disposed before the task completes,
+/// then the underlying <see cref="CancellationTokenSource"/> will request cancellation.
+/// </summary>
+/// <typeparam name="TEvent">Event type.</typeparam>
 public sealed class TaskEventSource<TEvent> : EventSource<FromTask<TEvent>>
 {
     private readonly Func<CancellationToken, Task<TEvent>> _taskFactory;
@@ -19,6 +26,7 @@ public sealed class TaskEventSource<TEvent> : EventSource<FromTask<TEvent>>
         _schedulerCapture = schedulerCapture;
     }
 
+    /// <inheritdoc />
     protected override IEventListener<FromTask<TEvent>> OverrideListener(
         IEventSubscriber subscriber,
         IEventListener<FromTask<TEvent>> listener)

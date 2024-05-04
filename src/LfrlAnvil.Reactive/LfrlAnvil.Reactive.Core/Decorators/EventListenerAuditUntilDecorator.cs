@@ -3,15 +3,27 @@ using System.Runtime.CompilerServices;
 
 namespace LfrlAnvil.Reactive.Decorators;
 
+/// <summary>
+/// Creates a new target event stream subscription on each emitted event, unless an active one already exists,
+/// and keeps updating the last emitted event until the target stream emits its own event, which then notifies the decorated
+/// event listener with the stored event, drops the target event stream subscription and repeats the process.
+/// </summary>
+/// <typeparam name="TEvent">Event type.</typeparam>
+/// <typeparam name="TTargetEvent">Target event type.</typeparam>
 public sealed class EventListenerAuditUntilDecorator<TEvent, TTargetEvent> : IEventListenerDecorator<TEvent, TEvent>
 {
     private readonly IEventStream<TTargetEvent> _target;
 
+    /// <summary>
+    /// Creates a new <see cref="EventListenerAuditUntilDecorator{TEvent,TTargetEvent}"/> instance.
+    /// </summary>
+    /// <param name="target">Target event stream to wait for before emitting the last emitted event.</param>
     public EventListenerAuditUntilDecorator(IEventStream<TTargetEvent> target)
     {
         _target = target;
     }
 
+    /// <inheritdoc />
     [Pure]
     public IEventListener<TEvent> Decorate(IEventListener<TEvent> listener, IEventSubscriber subscriber)
     {

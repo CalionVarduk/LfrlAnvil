@@ -3,15 +3,24 @@ using System.Linq;
 
 namespace LfrlAnvil.Reactive.Decorators;
 
+/// <summary>
+/// Appends a collection of values to notify the decorated event listener sequentially with once the listener gets disposed.
+/// </summary>
+/// <typeparam name="TEvent">Event type.</typeparam>
 public sealed class EventListenerAppendDecorator<TEvent> : IEventListenerDecorator<TEvent, TEvent>
 {
     private readonly TEvent[] _values;
 
+    /// <summary>
+    /// Creates a new <see cref="EventListenerAppendDecorator{TEvent}"/> instance.
+    /// </summary>
+    /// <param name="values">Collection of values to append.</param>
     public EventListenerAppendDecorator(IEnumerable<TEvent> values)
     {
         _values = values.ToArray();
     }
 
+    /// <inheritdoc />
     public IEventListener<TEvent> Decorate(IEventListener<TEvent> listener, IEventSubscriber subscriber)
     {
         return _values.Length == 0 ? listener : new EventListener( listener, _values );

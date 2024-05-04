@@ -2,8 +2,13 @@
 
 namespace LfrlAnvil.Reactive.Decorators;
 
+/// <summary>
+/// Notifies the decorated event listener with the last emitted event, unless no events have been emitted.
+/// </summary>
+/// <typeparam name="TEvent">Event type.</typeparam>
 public class EventListenerLastDecorator<TEvent> : IEventListenerDecorator<TEvent, TEvent>
 {
+    /// <inheritdoc />
     public IEventListener<TEvent> Decorate(IEventListener<TEvent> listener, IEventSubscriber _)
     {
         return new EventListener( listener );

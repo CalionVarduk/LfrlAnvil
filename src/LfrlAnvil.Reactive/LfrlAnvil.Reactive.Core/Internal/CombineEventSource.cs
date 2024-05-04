@@ -5,6 +5,14 @@ using System.Runtime.CompilerServices;
 
 namespace LfrlAnvil.Reactive.Internal;
 
+/// <summary>
+/// Represents a generic disposable event source that can be listened to,
+/// that notifies its listeners when any of the inner event streams publishes an event, with a sequence of last events published
+/// by inner event streams. First event will be published once all inner event streams publish at least one event.
+/// Event listeners will be disposed when all inner event streams get disposed or when the first event has not been published yet
+/// and any of the inner streams gets disposed.
+/// </summary>
+/// <typeparam name="TEvent">Event type.</typeparam>
 public sealed class CombineEventSource<TEvent> : EventSource<ReadOnlyMemory<TEvent>>
 {
     private readonly IEventStream<TEvent>[] _streams;
@@ -14,12 +22,14 @@ public sealed class CombineEventSource<TEvent> : EventSource<ReadOnlyMemory<TEve
         _streams = streams.ToArray();
     }
 
+    /// <inheritdoc />
     protected override void OnDispose()
     {
         base.OnDispose();
         Array.Clear( _streams, 0, _streams.Length );
     }
 
+    /// <inheritdoc />
     protected override IEventListener<ReadOnlyMemory<TEvent>> OverrideListener(
         IEventSubscriber subscriber,
         IEventListener<ReadOnlyMemory<TEvent>> listener)

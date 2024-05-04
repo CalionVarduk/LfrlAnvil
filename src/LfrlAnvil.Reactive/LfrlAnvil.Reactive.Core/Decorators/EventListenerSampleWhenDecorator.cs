@@ -4,15 +4,26 @@ using LfrlAnvil.Reactive.Composites;
 
 namespace LfrlAnvil.Reactive.Decorators;
 
+/// <summary>
+/// Notifies the decorated event listener with the last emitted event when the target event stream publishes its own event,
+/// unless no event has been emitted in the meantime.
+/// </summary>
+/// <typeparam name="TEvent">Event type.</typeparam>
+/// <typeparam name="TTargetEvent">Target event type.</typeparam>
 public sealed class EventListenerSampleWhenDecorator<TEvent, TTargetEvent> : IEventListenerDecorator<TEvent, TEvent>
 {
     private readonly IEventStream<TTargetEvent> _target;
 
+    /// <summary>
+    /// Creates a new <see cref="EventListenerSampleWhenDecorator{TEvent,TTargetEvent}"/> instance.
+    /// </summary>
+    /// <param name="target">Target event stream to wait for before emitting the last stored event.</param>
     public EventListenerSampleWhenDecorator(IEventStream<TTargetEvent> target)
     {
         _target = target;
     }
 
+    /// <inheritdoc />
     [Pure]
     public IEventListener<TEvent> Decorate(IEventListener<TEvent> listener, IEventSubscriber subscriber)
     {

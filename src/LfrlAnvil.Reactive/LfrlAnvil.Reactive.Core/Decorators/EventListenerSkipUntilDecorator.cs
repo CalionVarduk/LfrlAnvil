@@ -2,15 +2,26 @@
 
 namespace LfrlAnvil.Reactive.Decorators;
 
+/// <summary>
+/// Skips events at the beginning of the sequence until the target event stream emits its own event,
+/// before starting to notify the decorated event listener.
+/// </summary>
+/// <typeparam name="TEvent">Event type.</typeparam>
+/// <typeparam name="TTargetEvent">Target event type.</typeparam>
 public sealed class EventListenerSkipUntilDecorator<TEvent, TTargetEvent> : IEventListenerDecorator<TEvent, TEvent>
 {
     private readonly IEventStream<TTargetEvent> _target;
 
+    /// <summary>
+    /// Creates a new <see cref="EventListenerSkipUntilDecorator{TEvent,TTargetEvent}"/> instance.
+    /// </summary>
+    /// <param name="target">Target event stream to wait for before starting to notify the decorated event listener.</param>
     public EventListenerSkipUntilDecorator(IEventStream<TTargetEvent> target)
     {
         _target = target;
     }
 
+    /// <inheritdoc />
     public IEventListener<TEvent> Decorate(IEventListener<TEvent> listener, IEventSubscriber _)
     {
         return new EventListener( listener, _target );
@@ -65,6 +76,8 @@ public sealed class EventListenerSkipUntilDecorator<TEvent, TTargetEvent> : IEve
 
         public override void OnDispose(DisposalSource _)
         {
+            Assume.IsNotNull( _sourceListener );
+            _sourceListener.OnTargetEvent();
             _sourceListener = null;
         }
     }

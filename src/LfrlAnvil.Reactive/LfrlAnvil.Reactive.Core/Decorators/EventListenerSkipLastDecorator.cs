@@ -3,15 +3,25 @@ using System.Diagnostics.Contracts;
 
 namespace LfrlAnvil.Reactive.Decorators;
 
+/// <summary>
+/// Skips the specified number of events at the end of the sequence. The decorated event listener will be notified with
+/// a sequence of non-skipped events during its disposal.
+/// </summary>
+/// <typeparam name="TEvent">Event type.</typeparam>
 public class EventListenerSkipLastDecorator<TEvent> : IEventListenerDecorator<TEvent, TEvent>
 {
     private readonly int _count;
 
+    /// <summary>
+    /// Creates a new <see cref="EventListenerSkipLastDecorator{TEvent}"/> instance.
+    /// </summary>
+    /// <param name="count">Number of events at the end of the sequence to skip.</param>
     public EventListenerSkipLastDecorator(int count)
     {
         _count = count;
     }
 
+    /// <inheritdoc />
     [Pure]
     public IEventListener<TEvent> Decorate(IEventListener<TEvent> listener, IEventSubscriber _)
     {

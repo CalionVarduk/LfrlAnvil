@@ -6,6 +6,12 @@ using LfrlAnvil.Reactive.Decorators;
 
 namespace LfrlAnvil.Reactive.Internal;
 
+/// <summary>
+/// Represents a generic disposable event source that can be listened to,
+/// that notifies its listeners once all inner event sources are disposed, with a sequence of last inner event source events,
+/// and then disposes the listener.
+/// </summary>
+/// <typeparam name="TEvent">Event type.</typeparam>
 public sealed class WhenAllEventSource<TEvent> : EventSource<ReadOnlyMemory<TEvent?>>
 {
     private readonly IEventStream<TEvent>[] _streams;
@@ -16,12 +22,14 @@ public sealed class WhenAllEventSource<TEvent> : EventSource<ReadOnlyMemory<TEve
         _streams = streams.Select( s => s.Decorate( lastDecorator ) ).ToArray();
     }
 
+    /// <inheritdoc />
     protected override void OnDispose()
     {
         base.OnDispose();
         Array.Clear( _streams, 0, _streams.Length );
     }
 
+    /// <inheritdoc />
     protected override IEventListener<ReadOnlyMemory<TEvent?>> OverrideListener(
         IEventSubscriber subscriber,
         IEventListener<ReadOnlyMemory<TEvent?>> listener)

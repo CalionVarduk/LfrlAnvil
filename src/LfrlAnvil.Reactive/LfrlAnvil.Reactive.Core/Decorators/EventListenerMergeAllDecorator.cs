@@ -1,18 +1,32 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 
 namespace LfrlAnvil.Reactive.Decorators;
 
+/// <summary>
+/// Subscribes to all emitted inner event streams, unless the number of maximum concurrently active inner event streams is reached,
+/// in which case subsequent inner event streams are moved to a queue. If an inner event stream is disposed,
+/// then an enqueued inner stream is dequeued and becomes active. The decorated event listener is notified with all events
+/// emitted by all active inner streams.
+/// </summary>
+/// <typeparam name="TEvent">Inner event type.</typeparam>
 public sealed class EventListenerMergeAllDecorator<TEvent> : IEventListenerDecorator<IEventStream<TEvent>, TEvent>
 {
     private readonly int _maxConcurrency;
 
+    /// <summary>
+    /// Creates a new <see cref="EventListenerMergeAllDecorator{TEvent}"/> instance.
+    /// </summary>
+    /// <param name="maxConcurrency">Maximum number of concurrently active inner event streams.</param>
+    /// <exception cref="ArgumentOutOfRangeException">When <paramref name="maxConcurrency"/> is less than <b>1</b>.</exception>
     public EventListenerMergeAllDecorator(int maxConcurrency)
     {
         Ensure.IsGreaterThan( maxConcurrency, 0 );
         _maxConcurrency = maxConcurrency;
     }
 
+    /// <inheritdoc />
     public IEventListener<IEventStream<TEvent>> Decorate(IEventListener<TEvent> listener, IEventSubscriber subscriber)
     {
         return new EventListener( listener, subscriber, _maxConcurrency );

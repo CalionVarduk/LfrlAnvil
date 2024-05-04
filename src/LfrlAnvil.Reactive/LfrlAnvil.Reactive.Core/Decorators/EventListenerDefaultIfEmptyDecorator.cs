@@ -2,15 +2,25 @@
 
 namespace LfrlAnvil.Reactive.Decorators;
 
+/// <summary>
+/// Specifies the default value to notify the decorated event listener with when listener gets disposed,
+/// but only when no events have been emitted.
+/// </summary>
+/// <typeparam name="TEvent"></typeparam>
 public sealed class EventListenerDefaultIfEmptyDecorator<TEvent> : IEventListenerDecorator<TEvent, TEvent>
 {
     private readonly TEvent _defaultValue;
 
+    /// <summary>
+    /// Creates a new <see cref="EventListenerDefaultIfEmptyDecorator{TEvent}"/> instance.
+    /// </summary>
+    /// <param name="defaultValue">Default value.</param>
     public EventListenerDefaultIfEmptyDecorator(TEvent defaultValue)
     {
         _defaultValue = defaultValue;
     }
 
+    /// <inheritdoc />
     [Pure]
     public IEventListener<TEvent> Decorate(IEventListener<TEvent> listener, IEventSubscriber _)
     {

@@ -2,15 +2,26 @@
 
 namespace LfrlAnvil.Reactive.Decorators;
 
+/// <summary>
+/// Notifies the decorated event listener only with events emitted at the beginning of the sequence
+/// until the target event stream emits its own event, before disposing the subscriber.
+/// </summary>
+/// <typeparam name="TEvent">Event type.</typeparam>
+/// <typeparam name="TTargetEvent">Target event type.</typeparam>
 public sealed class EventListenerTakeUntilDecorator<TEvent, TTargetEvent> : IEventListenerDecorator<TEvent, TEvent>
 {
     private readonly IEventStream<TTargetEvent> _target;
 
+    /// <summary>
+    /// Creates a new <see cref="EventListenerTakeUntilDecorator{TEvent,TTargetEvent}"/> instance.
+    /// </summary>
+    /// <param name="target">Target event stream to wait for before disposing the subscriber.</param>
     public EventListenerTakeUntilDecorator(IEventStream<TTargetEvent> target)
     {
         _target = target;
     }
 
+    /// <inheritdoc />
     public IEventListener<TEvent> Decorate(IEventListener<TEvent> listener, IEventSubscriber subscriber)
     {
         return new EventListener( listener, subscriber, _target );

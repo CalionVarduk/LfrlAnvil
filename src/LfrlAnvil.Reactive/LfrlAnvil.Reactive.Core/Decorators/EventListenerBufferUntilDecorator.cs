@@ -5,15 +5,26 @@ using LfrlAnvil.Reactive.Internal;
 
 namespace LfrlAnvil.Reactive.Decorators;
 
+/// <summary>
+/// Buffers emitted events and notifies the decorated event listener with that buffer once the target event stream emits its own event,
+/// which then repeats the process.
+/// </summary>
+/// <typeparam name="TEvent">Event type.</typeparam>
+/// <typeparam name="TTargetEvent">Target event type.</typeparam>
 public sealed class EventListenerBufferUntilDecorator<TEvent, TTargetEvent> : IEventListenerDecorator<TEvent, ReadOnlyMemory<TEvent>>
 {
     private readonly IEventStream<TTargetEvent> _target;
 
+    /// <summary>
+    /// Creates a new <see cref="EventListenerBufferUntilDecorator{TEvent,TTargetEvent}"/> instance.
+    /// </summary>
+    /// <param name="target">Target event stream to wait for before emitting the underlying buffer.</param>
     public EventListenerBufferUntilDecorator(IEventStream<TTargetEvent> target)
     {
         _target = target;
     }
 
+    /// <inheritdoc />
     [Pure]
     public IEventListener<TEvent> Decorate(IEventListener<ReadOnlyMemory<TEvent>> listener, IEventSubscriber subscriber)
     {

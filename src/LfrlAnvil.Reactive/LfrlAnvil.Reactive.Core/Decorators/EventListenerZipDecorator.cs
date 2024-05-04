@@ -4,17 +4,30 @@ using System.Diagnostics.Contracts;
 
 namespace LfrlAnvil.Reactive.Decorators;
 
+/// <summary>
+/// Notifies the decorated event listener with the result of (source, target) pair mapping, where source and target event
+/// are at the same position in a sequence of emitted events by their respective emitters.
+/// </summary>
+/// <typeparam name="TEvent">Event type.</typeparam>
+/// <typeparam name="TTargetEvent">Target event type.</typeparam>
+/// <typeparam name="TNextEvent">Next event type.</typeparam>
 public sealed class EventListenerZipDecorator<TEvent, TTargetEvent, TNextEvent> : IEventListenerDecorator<TEvent, TNextEvent>
 {
     private readonly IEventStream<TTargetEvent> _target;
     private readonly Func<TEvent, TTargetEvent, TNextEvent> _selector;
 
+    /// <summary>
+    /// Creates a new <see cref="EventListenerZipDecorator{TEvent,TTargetEvent,TNextEvent}"/> instance.
+    /// </summary>
+    /// <param name="target">Target event stream.</param>
+    /// <param name="selector">Next event selector.</param>
     public EventListenerZipDecorator(IEventStream<TTargetEvent> target, Func<TEvent, TTargetEvent, TNextEvent> selector)
     {
         _target = target;
         _selector = selector;
     }
 
+    /// <inheritdoc />
     [Pure]
     public IEventListener<TEvent> Decorate(IEventListener<TNextEvent> listener, IEventSubscriber subscriber)
     {

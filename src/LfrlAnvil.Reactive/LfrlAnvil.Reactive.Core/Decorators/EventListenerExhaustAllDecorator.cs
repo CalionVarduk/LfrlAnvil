@@ -2,8 +2,14 @@
 
 namespace LfrlAnvil.Reactive.Decorators;
 
+/// <summary>
+/// Subscribes to the first emitted inner event stream and ignores all subsequent emitted inner event streams
+/// until the active one is disposed. The decorated event listener is notified with all events emitted by the active inner stream.
+/// </summary>
+/// <typeparam name="TEvent">Inner event type.</typeparam>
 public sealed class EventListenerExhaustAllDecorator<TEvent> : IEventListenerDecorator<IEventStream<TEvent>, TEvent>
 {
+    /// <inheritdoc />
     public IEventListener<IEventStream<TEvent>> Decorate(IEventListener<TEvent> listener, IEventSubscriber _)
     {
         return new EventListener( listener );

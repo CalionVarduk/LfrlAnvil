@@ -2,15 +2,25 @@
 
 namespace LfrlAnvil.Reactive.Decorators;
 
+/// <summary>
+/// Notifies the decorated event listener only with the specified number of events emitted at the beginning of the sequence,
+/// before disposing the subscriber.
+/// </summary>
+/// <typeparam name="TEvent">Event type.</typeparam>
 public class EventListenerTakeDecorator<TEvent> : IEventListenerDecorator<TEvent, TEvent>
 {
     private readonly int _count;
 
+    /// <summary>
+    /// Creates a new <see cref="EventListenerTakeDecorator{TEvent}"/> instance.
+    /// </summary>
+    /// <param name="count">Number of events at the beginning of the sequence to take.</param>
     public EventListenerTakeDecorator(int count)
     {
         _count = Math.Max( count, 0 );
     }
 
+    /// <inheritdoc />
     public IEventListener<TEvent> Decorate(IEventListener<TEvent> listener, IEventSubscriber subscriber)
     {
         return new EventListener( listener, subscriber, _count );

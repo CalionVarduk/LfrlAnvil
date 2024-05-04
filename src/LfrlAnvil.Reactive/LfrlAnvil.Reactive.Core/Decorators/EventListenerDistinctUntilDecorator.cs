@@ -5,12 +5,25 @@ using System.Runtime.CompilerServices;
 
 namespace LfrlAnvil.Reactive.Decorators;
 
+/// <summary>
+/// Notifies the decorated event listener with distinct emitted events, excluding duplicates, until the target event stream
+/// emits its own event, which causes the underlying distinct keys tracker to be reset.
+/// </summary>
+/// <typeparam name="TEvent">Event type.</typeparam>
+/// <typeparam name="TKey">Event's key type.</typeparam>
+/// <typeparam name="TTargetEvent">Target event type.</typeparam>
 public sealed class EventListenerDistinctUntilDecorator<TEvent, TKey, TTargetEvent> : IEventListenerDecorator<TEvent, TEvent>
 {
     private readonly Func<TEvent, TKey> _keySelector;
     private readonly IEqualityComparer<TKey> _equalityComparer;
     private readonly IEventStream<TTargetEvent> _target;
 
+    /// <summary>
+    /// Creates a new <see cref="EventListenerDistinctUntilDecorator{TEvent,TKey,TTargetEvent}"/> instance.
+    /// </summary>
+    /// <param name="keySelector">Event key selector.</param>
+    /// <param name="equalityComparer">Key equality comparer.</param>
+    /// <param name="target">Target event stream whose events cause the underlying distinct keys tracker to be reset.</param>
     public EventListenerDistinctUntilDecorator(
         Func<TEvent, TKey> keySelector,
         IEqualityComparer<TKey> equalityComparer,
@@ -21,6 +34,7 @@ public sealed class EventListenerDistinctUntilDecorator<TEvent, TKey, TTargetEve
         _target = target;
     }
 
+    /// <inheritdoc />
     [Pure]
     public IEventListener<TEvent> Decorate(IEventListener<TEvent> listener, IEventSubscriber _)
     {

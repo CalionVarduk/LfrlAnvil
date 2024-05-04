@@ -62,19 +62,20 @@ public class EventListenerThrottleUntilDecoratorTests : TestsBase
     }
 
     [Fact]
-    public void Decorate_ShouldCreateListenerThatOnReactAddsNewSubscriberToTarget()
+    public void Decorate_ShouldCreateListenerThatOnReactAddsNewSubscriberToTargetAndEmitsEvent()
     {
+        var sourceEvent = 1;
         var target = new EventPublisher<string>();
         var next = Substitute.For<IEventListener<int>>();
         var subscriber = Substitute.For<IEventSubscriber>();
         var sut = new EventListenerThrottleUntilDecorator<int, string>( target );
         var listener = sut.Decorate( next, subscriber );
 
-        listener.React( Fixture.Create<int>() );
+        listener.React( sourceEvent );
 
         using ( new AssertionScope() )
         {
-            next.VerifyCalls().DidNotReceive( x => x.React( Arg.Any<int>() ) );
+            next.VerifyCalls().Received( x => x.React( sourceEvent ), 1 );
             subscriber.VerifyCalls().DidNotReceive( x => x.Dispose() );
             target.Subscribers.Should().HaveCount( 1 );
         }
@@ -178,7 +179,7 @@ public class EventListenerThrottleUntilDecoratorTests : TestsBase
 
         using ( new AssertionScope() )
         {
-            next.VerifyCalls().DidNotReceive( x => x.React( sourceEvent ) );
+            next.VerifyCalls().Received( x => x.React( sourceEvent ), 1 );
             subscriber.VerifyCalls().Received( x => x.Dispose() );
             target.HasSubscribers.Should().BeFalse();
         }

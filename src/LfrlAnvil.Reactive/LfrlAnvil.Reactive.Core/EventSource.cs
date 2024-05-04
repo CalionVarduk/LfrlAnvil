@@ -3,17 +3,22 @@ using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using LfrlAnvil.Async;
+using LfrlAnvil.Exceptions;
 using LfrlAnvil.Reactive.Exceptions;
 using LfrlAnvil.Reactive.Internal;
 
 namespace LfrlAnvil.Reactive;
 
+/// <inheritdoc />
 public abstract class EventSource<TEvent> : IEventSource<TEvent>
 {
     private readonly List<EventSubscriber<TEvent>> _subscribers;
     private SubscriberPool _subscriberPool;
     private InterlockedBoolean _isDisposed;
 
+    /// <summary>
+    /// Creates a new <see cref="EventSource{TEvent}"/> instance.
+    /// </summary>
     protected EventSource()
     {
         _isDisposed = new InterlockedBoolean( false );
@@ -21,10 +26,16 @@ public abstract class EventSource<TEvent> : IEventSource<TEvent>
         _subscriberPool = SubscriberPool.Create();
     }
 
+    /// <inheritdoc />
     public bool IsDisposed => _isDisposed.Value;
+
+    /// <inheritdoc />
     public IReadOnlyCollection<IEventSubscriber> Subscribers => _subscribers;
+
+    /// <inheritdoc />
     public bool HasSubscribers => _subscribers.Count > 0;
 
+    /// <inheritdoc />
     public void Dispose()
     {
         if ( ! _isDisposed.WriteTrue() )
@@ -50,25 +61,42 @@ public abstract class EventSource<TEvent> : IEventSource<TEvent>
         OnDispose();
     }
 
+    /// <inheritdoc />
     public IEventSubscriber Listen(IEventListener<TEvent> listener)
     {
         var subscriber = new EventSubscriber<TEvent>( RemoveSubscriber, listener );
         return ListenInternal( subscriber );
     }
 
+    /// <inheritdoc />
     [Pure]
     public IEventStream<TNextEvent> Decorate<TNextEvent>(IEventListenerDecorator<TEvent, TNextEvent> decorator)
     {
         return new DecoratedEventSource<TEvent, TNextEvent>( this, decorator );
     }
 
+    /// <summary>
+    /// Allows to react to attachment of a new event subscriber.
+    /// </summary>
+    /// <param name="subscriber">Attached event subscriber.</param>
+    /// <param name="listener">Event listener attached to the event subscriber.</param>
     protected virtual void OnSubscriberAdded(IEventSubscriber subscriber, IEventListener<TEvent> listener) { }
 
+    /// <summary>
+    /// Allows to override the event listener.
+    /// </summary>
+    /// <param name="subscriber">Event subscriber.</param>
+    /// <param name="listener">Event listener to override.</param>
+    /// <returns><see cref="IEventListener{TEvent}"/> instance.</returns>
     protected virtual IEventListener<TEvent> OverrideListener(IEventSubscriber subscriber, IEventListener<TEvent> listener)
     {
         return listener;
     }
 
+    /// <summary>
+    /// Allows to notify all current event listeners that an event has occurred.
+    /// </summary>
+    /// <param name="event">Event to notify with.</param>
     protected void NotifyListeners(TEvent @event)
     {
         var (subscribers, count) = _subscriberPool.Rent( _subscribers );
@@ -90,12 +118,19 @@ public abstract class EventSource<TEvent> : IEventSource<TEvent>
         }
     }
 
+    /// <summary>
+    /// Allows to provide custom disposal implementation.
+    /// </summary>
     protected virtual void OnDispose() { }
 
+    /// <summary>
+    /// Throws an exception when this event source has been disposed.
+    /// </summary>
+    /// <exception cref="ObjectDisposedException">When this event source has been disposed.</exception>
     protected void EnsureNotDisposed()
     {
         if ( IsDisposed )
-            throw new ObjectDisposedException( null, Resources.DisposedEventSource );
+            ExceptionThrower.Throw( new ObjectDisposedException( null, Resources.DisposedEventSource ) );
     }
 
     internal void RemoveSubscriber(EventSubscriber<TEvent> subscriber)

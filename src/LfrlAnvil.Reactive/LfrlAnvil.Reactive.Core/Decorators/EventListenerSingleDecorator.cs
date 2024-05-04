@@ -2,8 +2,13 @@
 
 namespace LfrlAnvil.Reactive.Decorators;
 
+/// <summary>
+/// Notifies the decorated event listener with the first emitted event, unless more events have been emitted.
+/// </summary>
+/// <typeparam name="TEvent">Event type.</typeparam>
 public class EventListenerSingleDecorator<TEvent> : IEventListenerDecorator<TEvent, TEvent>
 {
+    /// <inheritdoc />
     public IEventListener<TEvent> Decorate(IEventListener<TEvent> listener, IEventSubscriber subscriber)
     {
         return new EventListener( listener, subscriber );

@@ -2,6 +2,7 @@
 using LfrlAnvil.Functional;
 using LfrlAnvil.Reactive.Exceptions;
 using LfrlAnvil.Reactive.Exchanges;
+using LfrlAnvil.Reactive.Extensions;
 using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Reactive.Tests.ExchangesTests.EventExchangesTests;

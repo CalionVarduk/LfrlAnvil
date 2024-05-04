@@ -7,18 +7,30 @@ using LfrlAnvil.Reactive.Internal;
 
 namespace LfrlAnvil.Reactive.Decorators;
 
+/// <summary>
+/// Groups emitted events by their keys and notifies the decorated event listener with an <see cref="EventGrouping{TKey,TEvent}"/>
+/// instance to which the emitted event belongs to.
+/// </summary>
+/// <typeparam name="TEvent">Event type.</typeparam>
+/// <typeparam name="TKey">Event's key type.</typeparam>
 public sealed class EventListenerGroupByDecorator<TEvent, TKey> : IEventListenerDecorator<TEvent, EventGrouping<TKey, TEvent>>
     where TKey : notnull
 {
     private readonly Func<TEvent, TKey> _keySelector;
     private readonly IEqualityComparer<TKey> _equalityComparer;
 
+    /// <summary>
+    /// Creates a new <see cref="EventListenerGroupByDecorator{TEvent,TKey}"/> instance.
+    /// </summary>
+    /// <param name="keySelector">Event's key selector.</param>
+    /// <param name="equalityComparer">Key equality comparer.</param>
     public EventListenerGroupByDecorator(Func<TEvent, TKey> keySelector, IEqualityComparer<TKey> equalityComparer)
     {
         _keySelector = keySelector;
         _equalityComparer = equalityComparer;
     }
 
+    /// <inheritdoc />
     [Pure]
     public IEventListener<TEvent> Decorate(IEventListener<EventGrouping<TKey, TEvent>> listener, IEventSubscriber _)
     {

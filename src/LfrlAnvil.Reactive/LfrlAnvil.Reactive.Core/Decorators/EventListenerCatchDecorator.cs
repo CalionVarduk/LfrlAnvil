@@ -2,16 +2,26 @@
 
 namespace LfrlAnvil.Reactive.Decorators;
 
+/// <summary>
+/// Catches exceptions thrown by decorated event listener reactions and emits them by invoking the provided delegate.
+/// </summary>
+/// <typeparam name="TEvent">Event type.</typeparam>
+/// <typeparam name="TException">Exception type.</typeparam>
 public sealed class EventListenerCatchDecorator<TEvent, TException> : IEventListenerDecorator<TEvent, TEvent>
     where TException : Exception
 {
     private readonly Action<TException> _onError;
 
+    /// <summary>
+    /// Creates a new <see cref="EventListenerCatchDecorator{TEvent,TException}"/> instance.
+    /// </summary>
+    /// <param name="onError">Delegate to invoke once an exception is thrown by the decorated event listener.</param>
     public EventListenerCatchDecorator(Action<TException> onError)
     {
         _onError = onError;
     }
 
+    /// <inheritdoc />
     public IEventListener<TEvent> Decorate(IEventListener<TEvent> listener, IEventSubscriber subscriber)
     {
         return new EventListener( listener, _onError );

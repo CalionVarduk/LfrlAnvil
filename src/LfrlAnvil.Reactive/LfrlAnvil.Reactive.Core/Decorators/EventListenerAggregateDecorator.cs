@@ -4,23 +4,37 @@ using LfrlAnvil.Reactive.Composites;
 
 namespace LfrlAnvil.Reactive.Decorators;
 
+/// <summary>
+/// Aggregates emitted events and notifies the decorated event listener with the result of aggregation on each event.
+/// </summary>
+/// <typeparam name="TEvent">Event type.</typeparam>
 public sealed class EventListenerAggregateDecorator<TEvent> : IEventListenerDecorator<TEvent, TEvent>
 {
     private readonly Optional<TEvent> _seed;
     private readonly Func<TEvent, TEvent, TEvent> _func;
 
+    /// <summary>
+    /// Creates a new <see cref="EventListenerAggregateDecorator{TEvent}"/> instance.
+    /// </summary>
+    /// <param name="func">Aggregator delegate.</param>
     public EventListenerAggregateDecorator(Func<TEvent, TEvent, TEvent> func)
     {
         _seed = Optional<TEvent>.Empty;
         _func = func;
     }
 
+    /// <summary>
+    /// Creates a new <see cref="EventListenerAggregateDecorator{TEvent}"/> instance.
+    /// </summary>
+    /// <param name="func">Aggregator delegate.</param>
+    /// <param name="seed">Initial event to publish immediately.</param>
     public EventListenerAggregateDecorator(Func<TEvent, TEvent, TEvent> func, TEvent seed)
     {
         _seed = new Optional<TEvent>( seed );
         _func = func;
     }
 
+    /// <inheritdoc />
     [Pure]
     public IEventListener<TEvent> Decorate(IEventListener<TEvent> listener, IEventSubscriber _)
     {

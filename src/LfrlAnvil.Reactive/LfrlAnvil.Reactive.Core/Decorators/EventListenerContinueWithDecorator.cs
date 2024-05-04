@@ -4,15 +4,26 @@ using LfrlAnvil.Reactive.Composites;
 
 namespace LfrlAnvil.Reactive.Decorators;
 
+/// <summary>
+/// Invokes the provided continuation factory delegate with the last emitted event as the parameter and attaches
+/// the decorated event listener to the result of that invocation.
+/// </summary>
+/// <typeparam name="TEvent">Event type.</typeparam>
+/// <typeparam name="TNextEvent">Next event type.</typeparam>
 public sealed class EventListenerContinueWithDecorator<TEvent, TNextEvent> : IEventListenerDecorator<TEvent, TNextEvent>
 {
     private readonly Func<TEvent, IEventStream<TNextEvent>> _continuationFactory;
 
+    /// <summary>
+    /// Creates a new <see cref="EventListenerContinueWithDecorator{TEvent,TNextEvent}"/> instance.
+    /// </summary>
+    /// <param name="continuationFactory">Delegate that creates the continuation event stream based on the last emitted event.</param>
     public EventListenerContinueWithDecorator(Func<TEvent, IEventStream<TNextEvent>> continuationFactory)
     {
         _continuationFactory = continuationFactory;
     }
 
+    /// <inheritdoc />
     [Pure]
     public IEventListener<TEvent> Decorate(IEventListener<TNextEvent> listener, IEventSubscriber _)
     {
