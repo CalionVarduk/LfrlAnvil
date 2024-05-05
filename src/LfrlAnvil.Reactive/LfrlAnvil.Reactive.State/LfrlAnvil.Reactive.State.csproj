@@ -4,6 +4,14 @@
         <PackageTags>LfrlAnvil Reactive State</PackageTags>
     </PropertyGroup>
 
+    <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+      <DocumentationFile>bin\Debug\LfrlAnvil.Reactive.State.xml</DocumentationFile>
+    </PropertyGroup>
+
+    <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+      <DocumentationFile>bin\Release\LfrlAnvil.Reactive.State.xml</DocumentationFile>
+    </PropertyGroup>
+
     <ItemGroup>
         <ProjectReference Include="..\..\LfrlAnvil.Validation\LfrlAnvil.Validation.csproj" />
         <ProjectReference Include="..\LfrlAnvil.Reactive.Core\LfrlAnvil.Reactive.Core.csproj" />

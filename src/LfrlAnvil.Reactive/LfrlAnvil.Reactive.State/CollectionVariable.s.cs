@@ -6,10 +6,27 @@ using LfrlAnvil.Validation;
 
 namespace LfrlAnvil.Reactive.State;
 
+/// <summary>
+/// Creates instances of <see cref="CollectionVariable{TKey,TElement,TValidationResult}"/> type.
+/// </summary>
 public static class CollectionVariable
 {
+    /// <summary>
+    /// Creates instances of <see cref="CollectionVariable{TKey,TElement,TValidationResult}"/> type without validators.
+    /// </summary>
+    /// <typeparam name="TValidationResult">Validation result type.</typeparam>
     public static class WithoutValidators<TValidationResult>
     {
+        /// <summary>
+        /// Creates a new <see cref="CollectionVariable{TKey,TElement,TValidationResult}"/> instance.
+        /// </summary>
+        /// <param name="initialElements">Initial collection of elements.</param>
+        /// <param name="keySelector">Element's key selector.</param>
+        /// <param name="keyComparer">Element key equality comparer.</param>
+        /// <param name="elementComparer">Element equality comparer.</param>
+        /// <typeparam name="TKey">Key type.</typeparam>
+        /// <typeparam name="TElement">Element type.</typeparam>
+        /// <returns>New <see cref="CollectionVariable{TKey,TElement,TValidationResult}"/> instance.</returns>
         [Pure]
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public static CollectionVariable<TKey, TElement, TValidationResult> Create<TKey, TElement>(
@@ -33,6 +50,17 @@ public static class CollectionVariable
                 elementValidator );
         }
 
+        /// <summary>
+        /// Creates a new <see cref="CollectionVariable{TKey,TElement,TValidationResult}"/> instance.
+        /// </summary>
+        /// <param name="initialElements">Initial collection of elements.</param>
+        /// <param name="elements">Current collection of elements.</param>
+        /// <param name="keySelector">Element's key selector.</param>
+        /// <param name="keyComparer">Element key equality comparer.</param>
+        /// <param name="elementComparer">Element equality comparer.</param>
+        /// <typeparam name="TKey">Key type.</typeparam>
+        /// <typeparam name="TElement">Element type.</typeparam>
+        /// <returns>New <see cref="CollectionVariable{TKey,TElement,TValidationResult}"/> instance.</returns>
         [Pure]
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public static CollectionVariable<TKey, TElement, TValidationResult> Create<TKey, TElement>(
@@ -59,6 +87,21 @@ public static class CollectionVariable
         }
     }
 
+    /// <summary>
+    /// Creates a new <see cref="CollectionVariable{TKey,TElement,TValidationResult}"/> instance.
+    /// </summary>
+    /// <param name="initialElements">Initial collection of elements.</param>
+    /// <param name="keySelector">Element's key selector.</param>
+    /// <param name="keyComparer">Element key equality comparer.</param>
+    /// <param name="elementComparer">Element equality comparer.</param>
+    /// <param name="errorsValidator">Collection of elements validator that marks result as errors.</param>
+    /// <param name="warningsValidator">Collection of elements validator that marks result as warnings.</param>
+    /// <param name="elementErrorsValidator">Element validator that marks result as errors.</param>
+    /// <param name="elementWarningsValidator">Element validator that marks result as warnings.</param>
+    /// <typeparam name="TKey">Key type.</typeparam>
+    /// <typeparam name="TElement">Element type.</typeparam>
+    /// <typeparam name="TValidationResult">Validation result type.</typeparam>
+    /// <returns>New <see cref="CollectionVariable{TKey,TElement,TValidationResult}"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static CollectionVariable<TKey, TElement, TValidationResult> Create<TKey, TElement, TValidationResult>(
@@ -84,6 +127,22 @@ public static class CollectionVariable
             elementWarningsValidator );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="CollectionVariable{TKey,TElement,TValidationResult}"/> instance.
+    /// </summary>
+    /// <param name="initialElements">Initial collection of elements.</param>
+    /// <param name="elements">Current collection of elements.</param>
+    /// <param name="keySelector">Element's key selector.</param>
+    /// <param name="keyComparer">Element key equality comparer.</param>
+    /// <param name="elementComparer">Element equality comparer.</param>
+    /// <param name="errorsValidator">Collection of elements validator that marks result as errors.</param>
+    /// <param name="warningsValidator">Collection of elements validator that marks result as warnings.</param>
+    /// <param name="elementErrorsValidator">Element validator that marks result as errors.</param>
+    /// <param name="elementWarningsValidator">Element validator that marks result as warnings.</param>
+    /// <typeparam name="TKey">Key type.</typeparam>
+    /// <typeparam name="TElement">Element type.</typeparam>
+    /// <typeparam name="TValidationResult">Validation result type.</typeparam>
+    /// <returns>New <see cref="CollectionVariable{TKey,TElement,TValidationResult}"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static CollectionVariable<TKey, TElement, TValidationResult> Create<TKey, TElement, TValidationResult>(

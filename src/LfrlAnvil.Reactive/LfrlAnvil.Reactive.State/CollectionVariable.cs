@@ -12,6 +12,7 @@ using LfrlAnvil.Validation;
 
 namespace LfrlAnvil.Reactive.State;
 
+/// <inheritdoc cref="ICollectionVariable{TKey,TElement,TValidationResult}" />
 public class CollectionVariable<TKey, TElement, TValidationResult>
     : VariableNode, ICollectionVariable<TKey, TElement, TValidationResult>, IMutableVariableNode, IDisposable
     where TKey : notnull
@@ -22,6 +23,17 @@ public class CollectionVariable<TKey, TElement, TValidationResult>
     private ElementsCollection _elements;
     private VariableState _state;
 
+    /// <summary>
+    /// Creates a new <see cref="CollectionVariable{TKey,TElement,TValidationResult}"/> instance.
+    /// </summary>
+    /// <param name="initialElements">Initial collection of elements.</param>
+    /// <param name="keySelector">Element's key selector.</param>
+    /// <param name="keyComparer">Element key equality comparer.</param>
+    /// <param name="elementComparer">Element equality comparer.</param>
+    /// <param name="errorsValidator">Collection of elements validator that marks result as errors.</param>
+    /// <param name="warningsValidator">Collection of elements validator that marks result as warnings.</param>
+    /// <param name="elementErrorsValidator">Element validator that marks result as errors.</param>
+    /// <param name="elementWarningsValidator">Element validator that marks result as warnings.</param>
     public CollectionVariable(
         IEnumerable<TElement> initialElements,
         Func<TElement, TKey> keySelector,
@@ -56,6 +68,18 @@ public class CollectionVariable<TKey, TElement, TValidationResult>
         _onValidate = new EventPublisher<CollectionVariableValidationEvent<TKey, TElement, TValidationResult>>();
     }
 
+    /// <summary>
+    /// Creates a new <see cref="CollectionVariable{TKey,TElement,TValidationResult}"/> instance.
+    /// </summary>
+    /// <param name="initialElements">Initial collection of elements.</param>
+    /// <param name="elements">Current collection of elements.</param>
+    /// <param name="keySelector">Element's key selector.</param>
+    /// <param name="keyComparer">Element key equality comparer.</param>
+    /// <param name="elementComparer">Element equality comparer.</param>
+    /// <param name="errorsValidator">Collection of elements validator that marks result as errors.</param>
+    /// <param name="warningsValidator">Collection of elements validator that marks result as warnings.</param>
+    /// <param name="elementErrorsValidator">Element validator that marks result as errors.</param>
+    /// <param name="elementWarningsValidator">Element validator that marks result as warnings.</param>
     public CollectionVariable(
         IEnumerable<TElement> initialElements,
         IEnumerable<TElement> elements,
@@ -93,15 +117,34 @@ public class CollectionVariable<TKey, TElement, TValidationResult>
         _onValidate = new EventPublisher<CollectionVariableValidationEvent<TKey, TElement, TValidationResult>>();
     }
 
+    /// <inheritdoc />
     public Func<TElement, TKey> KeySelector { get; }
+
+    /// <inheritdoc />
     public Chain<TValidationResult> Errors { get; private set; }
+
+    /// <inheritdoc />
     public Chain<TValidationResult> Warnings { get; private set; }
+
+    /// <inheritdoc />
     public IValidator<ICollectionVariableElements<TKey, TElement, TValidationResult>, TValidationResult> ErrorsValidator { get; }
+
+    /// <inheritdoc />
     public IValidator<ICollectionVariableElements<TKey, TElement, TValidationResult>, TValidationResult> WarningsValidator { get; }
+
+    /// <inheritdoc />
     public IReadOnlyDictionary<TKey, TElement> InitialElements { get; private set; }
+
+    /// <inheritdoc />
     public ICollectionVariableElements<TKey, TElement, TValidationResult> Elements => _elements;
+
+    /// <inheritdoc />
     public sealed override VariableState State => _state;
+
+    /// <inheritdoc cref="IReadOnlyCollectionVariable{TKey,TElement,TValidationResult}.OnChange" />
     public sealed override IEventStream<CollectionVariableChangeEvent<TKey, TElement, TValidationResult>> OnChange => _onChange;
+
+    /// <inheritdoc cref="IReadOnlyCollectionVariable{TKey,TElement,TValidationResult}.OnValidate" />
     public sealed override IEventStream<CollectionVariableValidationEvent<TKey, TElement, TValidationResult>> OnValidate => _onValidate;
 
     ICollectionVariableElements<TKey, TElement> IReadOnlyCollectionVariable<TKey, TElement>.Elements => _elements;
@@ -117,12 +160,17 @@ public class CollectionVariable<TKey, TElement, TValidationResult>
     IEventStream<ICollectionVariableChangeEvent> IReadOnlyCollectionVariable.OnChange => _onChange;
     IEventStream<ICollectionVariableValidationEvent> IReadOnlyCollectionVariable.OnValidate => _onValidate;
 
+    /// <summary>
+    /// Returns a string representation of this <see cref="CollectionVariable{TKey,TElement,TValidationResult}"/> instance.
+    /// </summary>
+    /// <returns>String representation.</returns>
     [Pure]
     public override string ToString()
     {
         return $"{nameof( Elements )}: {_elements.Count}, {nameof( State )}: {_state}";
     }
 
+    /// <inheritdoc />
     public virtual void Dispose()
     {
         _state |= VariableState.ReadOnly | VariableState.Disposed;
@@ -130,6 +178,7 @@ public class CollectionVariable<TKey, TElement, TValidationResult>
         _onValidate.Dispose();
     }
 
+    /// <inheritdoc />
     public VariableChangeResult TryChange(IEnumerable<TElement> elements)
     {
         if ( (_state & VariableState.ReadOnly) != VariableState.Default )
@@ -143,6 +192,7 @@ public class CollectionVariable<TKey, TElement, TValidationResult>
         return VariableChangeResult.Changed;
     }
 
+    /// <inheritdoc />
     public VariableChangeResult Change(IEnumerable<TElement> elements)
     {
         if ( (_state & VariableState.ReadOnly) != VariableState.Default )
@@ -156,6 +206,7 @@ public class CollectionVariable<TKey, TElement, TValidationResult>
         return VariableChangeResult.Changed;
     }
 
+    /// <inheritdoc />
     public VariableChangeResult Add(TElement element)
     {
         if ( (_state & VariableState.ReadOnly) != VariableState.Default )
@@ -170,6 +221,7 @@ public class CollectionVariable<TKey, TElement, TValidationResult>
         return VariableChangeResult.Changed;
     }
 
+    /// <inheritdoc />
     public VariableChangeResult Add(IEnumerable<TElement> elements)
     {
         if ( (_state & VariableState.ReadOnly) != VariableState.Default )
@@ -193,6 +245,7 @@ public class CollectionVariable<TKey, TElement, TValidationResult>
         return VariableChangeResult.Changed;
     }
 
+    /// <inheritdoc />
     public VariableChangeResult TryReplace(TElement element)
     {
         if ( (_state & VariableState.ReadOnly) != VariableState.Default )
@@ -207,6 +260,7 @@ public class CollectionVariable<TKey, TElement, TValidationResult>
         return VariableChangeResult.Changed;
     }
 
+    /// <inheritdoc />
     public VariableChangeResult TryReplace(IEnumerable<TElement> elements)
     {
         if ( (_state & VariableState.ReadOnly) != VariableState.Default )
@@ -230,6 +284,7 @@ public class CollectionVariable<TKey, TElement, TValidationResult>
         return VariableChangeResult.Changed;
     }
 
+    /// <inheritdoc />
     public VariableChangeResult Replace(TElement element)
     {
         if ( (_state & VariableState.ReadOnly) != VariableState.Default )
@@ -244,6 +299,7 @@ public class CollectionVariable<TKey, TElement, TValidationResult>
         return VariableChangeResult.Changed;
     }
 
+    /// <inheritdoc />
     public VariableChangeResult Replace(IEnumerable<TElement> elements)
     {
         if ( (_state & VariableState.ReadOnly) != VariableState.Default )
@@ -267,6 +323,7 @@ public class CollectionVariable<TKey, TElement, TValidationResult>
         return VariableChangeResult.Changed;
     }
 
+    /// <inheritdoc />
     public VariableChangeResult AddOrTryReplace(TElement element)
     {
         if ( (_state & VariableState.ReadOnly) != VariableState.Default )
@@ -290,6 +347,7 @@ public class CollectionVariable<TKey, TElement, TValidationResult>
         return VariableChangeResult.Changed;
     }
 
+    /// <inheritdoc />
     public VariableChangeResult AddOrTryReplace(IEnumerable<TElement> elements)
     {
         if ( (_state & VariableState.ReadOnly) != VariableState.Default )
@@ -303,6 +361,7 @@ public class CollectionVariable<TKey, TElement, TValidationResult>
         return VariableChangeResult.Changed;
     }
 
+    /// <inheritdoc />
     public VariableChangeResult AddOrReplace(TElement element)
     {
         if ( (_state & VariableState.ReadOnly) != VariableState.Default )
@@ -326,6 +385,7 @@ public class CollectionVariable<TKey, TElement, TValidationResult>
         return VariableChangeResult.Changed;
     }
 
+    /// <inheritdoc />
     public VariableChangeResult AddOrReplace(IEnumerable<TElement> elements)
     {
         if ( (_state & VariableState.ReadOnly) != VariableState.Default )
@@ -339,6 +399,7 @@ public class CollectionVariable<TKey, TElement, TValidationResult>
         return VariableChangeResult.Changed;
     }
 
+    /// <inheritdoc />
     public VariableChangeResult Remove(TKey key)
     {
         if ( (_state & VariableState.ReadOnly) != VariableState.Default )
@@ -352,6 +413,7 @@ public class CollectionVariable<TKey, TElement, TValidationResult>
         return VariableChangeResult.Changed;
     }
 
+    /// <inheritdoc />
     public VariableChangeResult Remove(IEnumerable<TKey> keys)
     {
         if ( (_state & VariableState.ReadOnly) != VariableState.Default )
@@ -375,16 +437,19 @@ public class CollectionVariable<TKey, TElement, TValidationResult>
         return VariableChangeResult.Changed;
     }
 
+    /// <inheritdoc />
     public VariableChangeResult Clear()
     {
         return Change( Array.Empty<TElement>() );
     }
 
+    /// <inheritdoc cref="IMutableVariableNode.Refresh()" />
     public void Refresh()
     {
         Refresh( _elements.Elements.Keys );
     }
 
+    /// <inheritdoc />
     public void Refresh(TKey key)
     {
         if ( (_state & VariableState.Disposed) != VariableState.Default )
@@ -397,6 +462,7 @@ public class CollectionVariable<TKey, TElement, TValidationResult>
         UpdateAndPublishRefreshmentEvents( elementSnapshot );
     }
 
+    /// <inheritdoc />
     public void Refresh(IEnumerable<TKey> keys)
     {
         if ( (_state & VariableState.Disposed) != VariableState.Default )
@@ -422,11 +488,13 @@ public class CollectionVariable<TKey, TElement, TValidationResult>
         UpdateAndPublishRefreshmentEvents( elementSnapshots );
     }
 
+    /// <inheritdoc cref="IMutableVariableNode.RefreshValidation()" />
     public void RefreshValidation()
     {
         RefreshValidation( _elements.Elements.Keys );
     }
 
+    /// <inheritdoc />
     public void RefreshValidation(TKey key)
     {
         if ( (_state & VariableState.Disposed) != VariableState.Default )
@@ -439,6 +507,7 @@ public class CollectionVariable<TKey, TElement, TValidationResult>
         RefreshValidationAndPublishEvent( elementSnapshot );
     }
 
+    /// <inheritdoc />
     public void RefreshValidation(IEnumerable<TKey> keys)
     {
         if ( (_state & VariableState.Disposed) != VariableState.Default )
@@ -464,11 +533,13 @@ public class CollectionVariable<TKey, TElement, TValidationResult>
         RefreshValidationAndPublishEvent( elementSnapshots );
     }
 
+    /// <inheritdoc cref="IMutableVariableNode.ClearValidation()" />
     public void ClearValidation()
     {
         ClearValidation( _elements.Elements.Keys );
     }
 
+    /// <inheritdoc />
     public void ClearValidation(TKey key)
     {
         if ( (_state & VariableState.Disposed) != VariableState.Default )
@@ -481,6 +552,7 @@ public class CollectionVariable<TKey, TElement, TValidationResult>
         ClearValidationAndPublishEvent( elementSnapshot );
     }
 
+    /// <inheritdoc />
     public void ClearValidation(IEnumerable<TKey> keys)
     {
         if ( (_state & VariableState.Disposed) != VariableState.Default )
@@ -506,6 +578,10 @@ public class CollectionVariable<TKey, TElement, TValidationResult>
         ClearValidationAndPublishEvent( elementSnapshots );
     }
 
+    /// <summary>
+    /// Removes all errors and warnings from this variable and resets <see cref="InitialElements"/> and <see cref="Elements"/>.
+    /// </summary>
+    /// <param name="initialElements">Initial elements to set.</param>
     public void Reset(IEnumerable<TElement> initialElements)
     {
         if ( (_state & VariableState.Disposed) != VariableState.Default )
@@ -522,6 +598,11 @@ public class CollectionVariable<TKey, TElement, TValidationResult>
         ResetAndPublishEvents( newInitialElements, newElements );
     }
 
+    /// <summary>
+    /// Removes all errors and warnings from this variable and resets <see cref="InitialElements"/> and <see cref="Elements"/>.
+    /// </summary>
+    /// <param name="initialElements">Initial elements to set.</param>
+    /// <param name="elements">Elements to set.</param>
     public void Reset(IEnumerable<TElement> initialElements, IEnumerable<TElement> elements)
     {
         if ( (_state & VariableState.Disposed) != VariableState.Default )
@@ -540,6 +621,10 @@ public class CollectionVariable<TKey, TElement, TValidationResult>
         ResetAndPublishEvents( newInitialElements, newElements );
     }
 
+    /// <summary>
+    /// Changes the read-only state of this variable.
+    /// </summary>
+    /// <param name="enabled">Specifies whether or not the read-only state should be enabled.</param>
     public void SetReadOnly(bool enabled)
     {
         if ( (_state & VariableState.Disposed) != VariableState.Default )
@@ -563,36 +648,61 @@ public class CollectionVariable<TKey, TElement, TValidationResult>
         OnPublishChangeEvent( changeEvent );
     }
 
+    /// <inheritdoc />
     [Pure]
     public override IEnumerable<IVariableNode> GetChildren()
     {
         return Array.Empty<IVariableNode>();
     }
 
+    /// <summary>
+    /// Performs optional element addition validation.
+    /// </summary>
+    /// <param name="element">Element to add.</param>
+    /// <returns><b>true</b> to continue element addition, otherwise <b>false</b>.</returns>
     [Pure]
     protected virtual bool ContinueElementAddition(TElement element)
     {
         return true;
     }
 
+    /// <summary>
+    /// Performs optional element removal validation.
+    /// </summary>
+    /// <param name="element">Element to remove.</param>
+    /// <returns><b>true</b> to continue element removal, otherwise <b>false</b>.</returns>
     [Pure]
     protected virtual bool ContinueElementRemoval(TElement element)
     {
         return true;
     }
 
+    /// <summary>
+    /// Performs optional element replacement validation.
+    /// </summary>
+    /// <param name="element">Element to replace.</param>
+    /// <param name="replacement">Element's replacement.</param>
+    /// <returns><b>true</b> to continue element replacement, otherwise <b>false</b>.</returns>
     [Pure]
     protected virtual bool ContinueElementReplacement(TElement element, TElement replacement)
     {
         return true;
     }
 
+    /// <summary>
+    /// Allows to modify collection of elements to set.
+    /// </summary>
+    /// <param name="elements">Elements to set.</param>
+    /// <returns>Elements to actually set.</returns>
     [Pure]
     protected virtual IEnumerable<TElement> ModifyChangeInput(IEnumerable<TElement> elements)
     {
         return elements;
     }
 
+    /// <summary>
+    /// Updates errors, warnings and state of this variable.
+    /// </summary>
     protected virtual void Update()
     {
         Errors = ErrorsValidator.Validate( _elements );
@@ -603,16 +713,28 @@ public class CollectionVariable<TKey, TElement, TValidationResult>
         _state |= VariableState.Dirty;
     }
 
+    /// <summary>
+    /// Updates state of this variable due to read-only state change.
+    /// </summary>
+    /// <param name="enabled">Specifies whether or not the read-only state should be enabled.</param>
     protected virtual void UpdateReadOnly(bool enabled)
     {
         _state = CreateState( _state, VariableState.ReadOnly, enabled );
     }
 
+    /// <summary>
+    /// Emits the provided change <paramref name="event"/>.
+    /// </summary>
+    /// <param name="event">Event to publish.</param>
     protected virtual void OnPublishChangeEvent(CollectionVariableChangeEvent<TKey, TElement, TValidationResult> @event)
     {
         _onChange.Publish( @event );
     }
 
+    /// <summary>
+    /// Emits the provided validation <paramref name="event"/>.
+    /// </summary>
+    /// <param name="event">Event to publish.</param>
     protected virtual void OnPublishValidationEvent(CollectionVariableValidationEvent<TKey, TElement, TValidationResult> @event)
     {
         _onValidate.Publish( @event );

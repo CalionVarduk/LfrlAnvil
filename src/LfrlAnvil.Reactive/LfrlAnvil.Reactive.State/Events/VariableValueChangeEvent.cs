@@ -2,8 +2,16 @@
 
 namespace LfrlAnvil.Reactive.State.Events;
 
+/// <inheritdoc />
 public class VariableValueChangeEvent<TValue, TValidationResult> : IVariableValueChangeEvent<TValue>
 {
+    /// <summary>
+    /// Creates a new <see cref="VariableValueChangeEvent{TValue,TValidationResult}"/> instance.
+    /// </summary>
+    /// <param name="variable">Variable node that emitted this event.</param>
+    /// <param name="previousValue">Value before the change.</param>
+    /// <param name="previousState">Value after the change.</param>
+    /// <param name="source">Specifies the source of this value change.</param>
     public VariableValueChangeEvent(
         IReadOnlyVariable<TValue, TValidationResult> variable,
         TValue previousValue,
@@ -18,11 +26,22 @@ public class VariableValueChangeEvent<TValue, TValidationResult> : IVariableValu
         Source = source;
     }
 
+    /// <inheritdoc cref="IVariableValueChangeEvent{TValue}.Variable" />
     public IReadOnlyVariable<TValue, TValidationResult> Variable { get; }
+
+    /// <inheritdoc />
     public VariableState PreviousState { get; }
+
+    /// <inheritdoc />
     public VariableState NewState { get; }
+
+    /// <inheritdoc />
     public TValue PreviousValue { get; }
+
+    /// <inheritdoc />
     public TValue NewValue { get; }
+
+    /// <inheritdoc />
     public VariableChangeSource Source { get; }
 
     IReadOnlyVariable<TValue> IVariableValueChangeEvent<TValue>.Variable => Variable;

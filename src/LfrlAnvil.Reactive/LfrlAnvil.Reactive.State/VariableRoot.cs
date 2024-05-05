@@ -10,6 +10,7 @@ using LfrlAnvil.Reactive.State.Internal;
 
 namespace LfrlAnvil.Reactive.State;
 
+/// <inheritdoc cref="IVariableRoot{TKey}" />
 public abstract class VariableRoot<TKey> : VariableNode, IVariableRoot<TKey>, IMutableVariableNode, IDisposable
     where TKey : notnull
 {
@@ -18,9 +19,16 @@ public abstract class VariableRoot<TKey> : VariableNode, IVariableRoot<TKey>, IM
     private readonly EventPublisher<VariableRootValidationEvent<TKey>> _onValidate;
     private VariableState _state;
 
+    /// <summary>
+    /// Creates a new <see cref="VariableRoot{TKey}"/> instance with <see cref="EqualityComparer{T}.Default"/> node's key equality comparer.
+    /// </summary>
     protected VariableRoot()
         : this( EqualityComparer<TKey>.Default ) { }
 
+    /// <summary>
+    /// Creates a new <see cref="VariableRoot{TKey}"/> instance.
+    /// </summary>
+    /// <param name="comparer">Node's key equality comparer.</param>
     protected VariableRoot(IEqualityComparer<TKey> comparer)
     {
         _nodes = new NodeCollection( comparer );
@@ -29,9 +37,16 @@ public abstract class VariableRoot<TKey> : VariableNode, IVariableRoot<TKey>, IM
         _state = VariableState.ReadOnly;
     }
 
+    /// <inheritdoc />
     public sealed override VariableState State => _state;
+
+    /// <inheritdoc />
     public IVariableNodeCollection<TKey> Nodes => _nodes;
+
+    /// <inheritdoc />
     public sealed override IEventStream<VariableRootChangeEvent<TKey>> OnChange => _onChange;
+
+    /// <inheritdoc />
     public sealed override IEventStream<VariableRootValidationEvent<TKey>> OnValidate => _onValidate;
 
     IEventStream<IVariableRootEvent<TKey>> IReadOnlyVariableRoot<TKey>.OnChange => _onChange;
@@ -44,12 +59,17 @@ public abstract class VariableRoot<TKey> : VariableNode, IVariableRoot<TKey>, IM
     IEventStream<IVariableNodeEvent> IVariableNode.OnChange => _onChange;
     IEventStream<IVariableNodeEvent> IVariableNode.OnValidate => _onValidate;
 
+    /// <summary>
+    /// Returns a string representation of this <see cref="VariableRoot{TKey}"/> instance.
+    /// </summary>
+    /// <returns>String representation.</returns>
     [Pure]
     public override string ToString()
     {
         return $"{nameof( Nodes )}: {_nodes.Count}, {nameof( State )}: {_state}";
     }
 
+    /// <inheritdoc />
     public virtual void Dispose()
     {
         if ( (_state & VariableState.Disposed) != VariableState.Default )
@@ -67,6 +87,7 @@ public abstract class VariableRoot<TKey> : VariableNode, IVariableRoot<TKey>, IM
         _onValidate.Dispose();
     }
 
+    /// <inheritdoc cref="IMutableVariableNode.Refresh()" />
     public void Refresh()
     {
         if ( (_state & VariableState.Disposed) != VariableState.Default )
@@ -79,6 +100,7 @@ public abstract class VariableRoot<TKey> : VariableNode, IVariableRoot<TKey>, IM
         }
     }
 
+    /// <inheritdoc cref="IMutableVariableNode.RefreshValidation()" />
     public void RefreshValidation()
     {
         if ( (_state & VariableState.Disposed) != VariableState.Default )
@@ -91,6 +113,7 @@ public abstract class VariableRoot<TKey> : VariableNode, IVariableRoot<TKey>, IM
         }
     }
 
+    /// <inheritdoc cref="IMutableVariableNode.ClearValidation()" />
     public void ClearValidation()
     {
         if ( (_state & VariableState.Disposed) != VariableState.Default )
@@ -103,6 +126,10 @@ public abstract class VariableRoot<TKey> : VariableNode, IVariableRoot<TKey>, IM
         }
     }
 
+    /// <summary>
+    /// Changes the read-only state of this variable.
+    /// </summary>
+    /// <param name="enabled">Specifies whether or not the read-only state should be enabled.</param>
     public void SetReadOnly(bool enabled)
     {
         if ( (_state & VariableState.Disposed) != VariableState.Default )
@@ -115,22 +142,44 @@ public abstract class VariableRoot<TKey> : VariableNode, IVariableRoot<TKey>, IM
         }
     }
 
+    /// <inheritdoc />
     [Pure]
     public override IEnumerable<IVariableNode> GetChildren()
     {
         return _nodes.Values;
     }
 
+    /// <summary>
+    /// Emits the provided change <paramref name="event"/>.
+    /// </summary>
+    /// <param name="event">Event to publish.</param>
     protected virtual void OnPublishChangeEvent(VariableRootChangeEvent<TKey> @event)
     {
         _onChange.Publish( @event );
     }
 
+    /// <summary>
+    /// Emits the provided validation <paramref name="event"/>.
+    /// </summary>
+    /// <param name="event">Event to publish.</param>
     protected virtual void OnPublishValidationEvent(VariableRootValidationEvent<TKey> @event)
     {
         _onValidate.Publish( @event );
     }
 
+    /// <summary>
+    /// Registers the provided <paramref name="node"/> in this root's <see cref="Nodes"/> collection.
+    /// </summary>
+    /// <param name="key">Key to register the node under.</param>
+    /// <param name="node">Node to register.</param>
+    /// <typeparam name="TNode">Node type.</typeparam>
+    /// <returns><paramref name="node"/>.</returns>
+    /// <exception cref="VariableNodeRegistrationException">
+    /// When this is disposed or has a parent
+    /// or when <paramref name="node"/> is disposed or has a parent
+    /// or when this and <paramref name="node"/> are the same.
+    /// </exception>
+    /// <exception cref="ArgumentException">When <paramref name="key"/> already exists.</exception>
     protected TNode RegisterNode<TNode>(TKey key, TNode node)
         where TNode : VariableNode
     {

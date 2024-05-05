@@ -12,6 +12,7 @@ using LfrlAnvil.Validation;
 
 namespace LfrlAnvil.Reactive.State;
 
+/// <inheritdoc cref="ICollectionVariableRoot{TKey,TElement,TValidationResult}" />
 public class CollectionVariableRoot<TKey, TElement, TValidationResult>
     : VariableNode, ICollectionVariableRoot<TKey, TElement, TValidationResult>, IMutableVariableNode, IDisposable
     where TKey : notnull
@@ -22,6 +23,14 @@ public class CollectionVariableRoot<TKey, TElement, TValidationResult>
     private CollectionVariableRootElements<TKey, TElement> _elements;
     private VariableState _state;
 
+    /// <summary>
+    /// Creates a new <see cref="CollectionVariableRoot{TKey,TElement,TValidationResult}"/> instance.
+    /// </summary>
+    /// <param name="elements">Initial collection of elements.</param>
+    /// <param name="keySelector">Element's key selector.</param>
+    /// <param name="keyComparer">Element key equality comparer.</param>
+    /// <param name="errorsValidator">Collection of elements validator that marks result as errors.</param>
+    /// <param name="warningsValidator">Collection of elements validator that marks result as warnings.</param>
     public CollectionVariableRoot(
         IEnumerable<TElement> elements,
         Func<TElement, TKey> keySelector,
@@ -46,6 +55,15 @@ public class CollectionVariableRoot<TKey, TElement, TValidationResult>
             SetupElementEvents( key, element );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="CollectionVariableRoot{TKey,TElement,TValidationResult}"/> instance.
+    /// </summary>
+    /// <param name="elements">Initial collection of elements.</param>
+    /// <param name="elementChanges">Element changes that define the collection of current elements.</param>
+    /// <param name="keySelector">Element's key selector.</param>
+    /// <param name="keyComparer">Element key equality comparer.</param>
+    /// <param name="errorsValidator">Collection of elements validator that marks result as errors.</param>
+    /// <param name="warningsValidator">Collection of elements validator that marks result as warnings.</param>
     public CollectionVariableRoot(
         IEnumerable<TElement> elements,
         CollectionVariableRootChanges<TKey, TElement> elementChanges,
@@ -71,15 +89,34 @@ public class CollectionVariableRoot<TKey, TElement, TValidationResult>
             SetupElementEvents( key, element );
     }
 
+    /// <inheritdoc />
     public Func<TElement, TKey> KeySelector { get; }
+
+    /// <inheritdoc />
     public Chain<TValidationResult> Errors { get; private set; }
+
+    /// <inheritdoc />
     public Chain<TValidationResult> Warnings { get; private set; }
+
+    /// <inheritdoc />
     public IValidator<ICollectionVariableRootElements<TKey, TElement>, TValidationResult> ErrorsValidator { get; }
+
+    /// <inheritdoc />
     public IValidator<ICollectionVariableRootElements<TKey, TElement>, TValidationResult> WarningsValidator { get; }
+
+    /// <inheritdoc />
     public IReadOnlyDictionary<TKey, TElement> InitialElements { get; private set; }
+
+    /// <inheritdoc />
     public ICollectionVariableRootElements<TKey, TElement> Elements => _elements;
+
+    /// <inheritdoc cref="IReadOnlyCollectionVariableRoot{TKey,TElement,TValidationResult}.OnChange" />
     public sealed override IEventStream<CollectionVariableRootChangeEvent<TKey, TElement, TValidationResult>> OnChange => _onChange;
+
+    /// <inheritdoc cref="IReadOnlyCollectionVariableRoot{TKey,TElement,TValidationResult}.OnValidate" />
     public sealed override IEventStream<CollectionVariableRootValidationEvent<TKey, TElement, TValidationResult>> OnValidate => _onValidate;
+
+    /// <inheritdoc />
     public sealed override VariableState State => _state;
 
     IEventStream<ICollectionVariableRootChangeEvent<TKey, TElement>> IReadOnlyCollectionVariableRoot<TKey, TElement>.OnChange => _onChange;
@@ -94,12 +131,17 @@ public class CollectionVariableRoot<TKey, TElement, TValidationResult>
     IEventStream<ICollectionVariableRootChangeEvent> IReadOnlyCollectionVariableRoot.OnChange => _onChange;
     IEventStream<ICollectionVariableRootValidationEvent> IReadOnlyCollectionVariableRoot.OnValidate => _onValidate;
 
+    /// <summary>
+    /// Returns a string representation of this <see cref="CollectionVariableRoot{TKey,TElement,TValidationResult}"/> instance.
+    /// </summary>
+    /// <returns>String representation.</returns>
     [Pure]
     public override string ToString()
     {
         return $"{nameof( Elements )}: {_elements.Count}, {nameof( State )}: {_state}";
     }
 
+    /// <inheritdoc />
     public virtual void Dispose()
     {
         if ( (_state & VariableState.Disposed) != VariableState.Default )
@@ -111,6 +153,7 @@ public class CollectionVariableRoot<TKey, TElement, TValidationResult>
         _onValidate.Dispose();
     }
 
+    /// <inheritdoc />
     public VariableChangeResult Change(CollectionVariableRootChanges<TKey, TElement> changes)
     {
         if ( (_state & VariableState.ReadOnly) != VariableState.Default )
@@ -124,6 +167,7 @@ public class CollectionVariableRoot<TKey, TElement, TValidationResult>
         return VariableChangeResult.Changed;
     }
 
+    /// <inheritdoc />
     public VariableChangeResult Add(TElement element)
     {
         if ( (_state & VariableState.ReadOnly) != VariableState.Default )
@@ -147,6 +191,7 @@ public class CollectionVariableRoot<TKey, TElement, TValidationResult>
         return VariableChangeResult.Changed;
     }
 
+    /// <inheritdoc />
     public VariableChangeResult Add(IEnumerable<TElement> elements)
     {
         if ( (_state & VariableState.ReadOnly) != VariableState.Default )
@@ -182,6 +227,7 @@ public class CollectionVariableRoot<TKey, TElement, TValidationResult>
         return VariableChangeResult.Changed;
     }
 
+    /// <inheritdoc />
     public VariableChangeResult Restore(TKey key)
     {
         if ( (_state & VariableState.ReadOnly) != VariableState.Default )
@@ -203,6 +249,7 @@ public class CollectionVariableRoot<TKey, TElement, TValidationResult>
         return VariableChangeResult.Changed;
     }
 
+    /// <inheritdoc />
     public VariableChangeResult Restore(IEnumerable<TKey> keys)
     {
         if ( (_state & VariableState.ReadOnly) != VariableState.Default )
@@ -237,6 +284,7 @@ public class CollectionVariableRoot<TKey, TElement, TValidationResult>
         return VariableChangeResult.Changed;
     }
 
+    /// <inheritdoc />
     public VariableChangeResult Remove(TKey key)
     {
         if ( (_state & VariableState.ReadOnly) != VariableState.Default )
@@ -257,6 +305,7 @@ public class CollectionVariableRoot<TKey, TElement, TValidationResult>
         return VariableChangeResult.Changed;
     }
 
+    /// <inheritdoc />
     public VariableChangeResult Remove(IEnumerable<TKey> keys)
     {
         if ( (_state & VariableState.ReadOnly) != VariableState.Default )
@@ -286,11 +335,13 @@ public class CollectionVariableRoot<TKey, TElement, TValidationResult>
         return VariableChangeResult.Changed;
     }
 
+    /// <inheritdoc />
     public VariableChangeResult Clear()
     {
         return Change( new CollectionVariableRootChanges<TKey, TElement>( Array.Empty<TElement>(), Array.Empty<TKey>() ) );
     }
 
+    /// <inheritdoc cref="IMutableVariableNode.Refresh()" />
     public void Refresh()
     {
         if ( (_state & VariableState.Disposed) != VariableState.Default )
@@ -309,6 +360,7 @@ public class CollectionVariableRoot<TKey, TElement, TValidationResult>
             changeSource: VariableChangeSource.Refresh );
     }
 
+    /// <inheritdoc cref="IMutableVariableNode.RefreshValidation()" />
     public void RefreshValidation()
     {
         if ( (_state & VariableState.Disposed) != VariableState.Default )
@@ -340,6 +392,7 @@ public class CollectionVariableRoot<TKey, TElement, TValidationResult>
         OnPublishValidationEvent( validationEvent );
     }
 
+    /// <inheritdoc cref="IMutableVariableNode.ClearValidation()" />
     public void ClearValidation()
     {
         if ( (_state & VariableState.Disposed) != VariableState.Default )
@@ -374,6 +427,10 @@ public class CollectionVariableRoot<TKey, TElement, TValidationResult>
         OnPublishValidationEvent( validationEvent );
     }
 
+    /// <summary>
+    /// Changes the read-only state of this variable.
+    /// </summary>
+    /// <param name="enabled">Specifies whether or not the read-only state should be enabled.</param>
     public void SetReadOnly(bool enabled)
     {
         if ( (_state & VariableState.Disposed) != VariableState.Default )
@@ -396,6 +453,10 @@ public class CollectionVariableRoot<TKey, TElement, TValidationResult>
         OnPublishChangeEvent( changeEvent );
     }
 
+    /// <summary>
+    /// Removes all errors and warnings from this variable and resets <see cref="InitialElements"/> and <see cref="Elements"/>.
+    /// </summary>
+    /// <param name="elements">Initial elements to set.</param>
     public void Reset(IEnumerable<TElement> elements)
     {
         if ( (_state & VariableState.Disposed) != VariableState.Default )
@@ -407,6 +468,11 @@ public class CollectionVariableRoot<TKey, TElement, TValidationResult>
         ResetAndPublishEvents( newInitialElements, newElements );
     }
 
+    /// <summary>
+    /// Removes all errors and warnings from this variable and resets <see cref="InitialElements"/> and <see cref="Elements"/>.
+    /// </summary>
+    /// <param name="elements">Initial elements to set.</param>
+    /// <param name="elementChanges">Element changes that define the collection of current elements.</param>
     public void Reset(IEnumerable<TElement> elements, CollectionVariableRootChanges<TKey, TElement> elementChanges)
     {
         if ( (_state & VariableState.Disposed) != VariableState.Default )
@@ -418,36 +484,60 @@ public class CollectionVariableRoot<TKey, TElement, TValidationResult>
         ResetAndPublishEvents( newInitialElements, newElements );
     }
 
+    /// <inheritdoc />
     [Pure]
     public override IEnumerable<IVariableNode> GetChildren()
     {
         return _elements.Owned.Values;
     }
 
+    /// <summary>
+    /// Performs optional element addition validation.
+    /// </summary>
+    /// <param name="element">Element to add.</param>
+    /// <returns><b>true</b> to continue element addition, otherwise <b>false</b>.</returns>
     [Pure]
     protected virtual bool ContinueElementAddition(TElement element)
     {
         return true;
     }
 
+    /// <summary>
+    /// Performs optional element removal validation.
+    /// </summary>
+    /// <param name="element">Element to remove.</param>
+    /// <returns><b>true</b> to continue element removal, otherwise <b>false</b>.</returns>
     [Pure]
     protected virtual bool ContinueElementRemoval(TElement element)
     {
         return true;
     }
 
+    /// <summary>
+    /// Performs optional element restoration validation.
+    /// </summary>
+    /// <param name="element">Element to restore.</param>
+    /// <returns><b>true</b> to continue element restoration, otherwise <b>false</b>.</returns>
     [Pure]
     protected virtual bool ContinueElementRestoration(TElement element)
     {
         return true;
     }
 
+    /// <summary>
+    /// Allows to modify element changes that define the collection of current elements.
+    /// </summary>
+    /// <param name="changes">Element changes that define the collection of current elements.</param>
+    /// <returns>Actual element changes to perform.</returns>
     [Pure]
     protected virtual CollectionVariableRootChanges<TKey, TElement> ModifyChangeInput(CollectionVariableRootChanges<TKey, TElement> changes)
     {
         return changes;
     }
 
+    /// <summary>
+    /// Updates errors, warnings and state of this variable.
+    /// </summary>
     protected virtual void Update()
     {
         Errors = ErrorsValidator.Validate( _elements );
@@ -463,16 +553,28 @@ public class CollectionVariableRoot<TKey, TElement, TValidationResult>
         _state |= VariableState.Dirty;
     }
 
+    /// <summary>
+    /// Updates state of this variable due to read-only state change.
+    /// </summary>
+    /// <param name="enabled">Specifies whether or not the read-only state should be enabled.</param>
     protected virtual void UpdateReadOnly(bool enabled)
     {
         _state = CreateState( _state, VariableState.ReadOnly, enabled );
     }
 
+    /// <summary>
+    /// Emits the provided change <paramref name="event"/>.
+    /// </summary>
+    /// <param name="event">Event to publish.</param>
     protected virtual void OnPublishChangeEvent(CollectionVariableRootChangeEvent<TKey, TElement, TValidationResult> @event)
     {
         _onChange.Publish( @event );
     }
 
+    /// <summary>
+    /// Emits the provided validation <paramref name="event"/>.
+    /// </summary>
+    /// <param name="event">Event to publish.</param>
     protected virtual void OnPublishValidationEvent(CollectionVariableRootValidationEvent<TKey, TElement, TValidationResult> @event)
     {
         _onValidate.Publish( @event );
