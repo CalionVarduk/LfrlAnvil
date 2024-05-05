@@ -3,6 +3,14 @@
     <PropertyGroup>
         <PackageTags>LfrlAnvil Reactive Queues</PackageTags>
     </PropertyGroup>
+
+    <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+      <DocumentationFile>bin\Debug\LfrlAnvil.Reactive.Queues.xml</DocumentationFile>
+    </PropertyGroup>
+
+    <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+      <DocumentationFile>bin\Release\LfrlAnvil.Reactive.Queues.xml</DocumentationFile>
+    </PropertyGroup>
     
     <ItemGroup>
         <ProjectReference Include="..\..\LfrlAnvil.Collections\LfrlAnvil.Collections.csproj" />
