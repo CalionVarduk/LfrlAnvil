@@ -11,8 +11,14 @@ using LfrlAnvil.Reactive.Internal;
 
 namespace LfrlAnvil.Reactive.Chrono;
 
+/// <summary>
+/// Represents a disposable timer that can be listened to.
+/// </summary>
 public sealed class ReactiveTimer : ConcurrentEventSource<WithInterval<long>, EventPublisher<WithInterval<long>>>
 {
+    /// <summary>
+    /// Specifies the default <see cref="SpinWait"/> duration hint. Equal to <b>1 microsecond</b>.
+    /// </summary>
     public static readonly Duration DefaultSpinWaitDurationHint = Duration.FromMicroseconds( 1 );
 
     private readonly ITimestampProvider _timestampProvider;
@@ -24,9 +30,31 @@ public sealed class ReactiveTimer : ConcurrentEventSource<WithInterval<long>, Ev
     private long _prevIndex;
     private InterlockedEnum<ReactiveTimerState> _state;
 
+    /// <summary>
+    /// Creates a new <see cref="ReactiveTimer"/> instance.
+    /// </summary>
+    /// <param name="timestampProvider">Timestamp provider used for time tracking.</param>
+    /// <param name="interval">Interval between subsequent timer events.</param>
+    /// <param name="count">Number of events this timer will emit in total. Equal to <see cref="Int64.MaxValue"/> by default.</param>
+    /// <exception cref="ArgumentOutOfRangeException">
+    /// When <paramref name="count"/> is less than <b>1</b>
+    /// or when <paramref name="interval"/> is less than <b>1 tick</b> or greater than <see cref="Int32.MaxValue"/> milliseconds.
+    /// </exception>
     public ReactiveTimer(ITimestampProvider timestampProvider, Duration interval, long count = long.MaxValue)
         : this( timestampProvider, interval, DefaultSpinWaitDurationHint, count ) { }
 
+    /// <summary>
+    /// Creates a new <see cref="ReactiveTimer"/> instance.
+    /// </summary>
+    /// <param name="timestampProvider">Timestamp provider used for time tracking.</param>
+    /// <param name="interval">Interval between subsequent timer events.</param>
+    /// <param name="spinWaitDurationHint"><see cref="SpinWait"/> duration hint for this timer.</param>
+    /// <param name="count">Number of events this timer will emit in total. Equal to <see cref="Int64.MaxValue"/> by default.</param>
+    /// <exception cref="ArgumentOutOfRangeException">
+    /// When <paramref name="count"/> is less than <b>1</b>
+    /// or when <paramref name="interval"/> is less than <b>1 tick</b> or greater than <see cref="Int32.MaxValue"/> milliseconds
+    /// or when <paramref name="spinWaitDurationHint"/> is less than <b>0</b>.
+    /// </exception>
     public ReactiveTimer(ITimestampProvider timestampProvider, Duration interval, Duration spinWaitDurationHint, long count = long.MaxValue)
         : base( new EventPublisher<WithInterval<long>>() )
     {
@@ -47,27 +75,67 @@ public sealed class ReactiveTimer : ConcurrentEventSource<WithInterval<long>, Ev
         _prevIndex = -1;
     }
 
+    /// <summary>
+    /// Interval between subsequent timer events.
+    /// </summary>
     public Duration Interval { get; }
+
+    /// <summary>
+    /// Number of events this timer will emit in total.
+    /// </summary>
     public long Count { get; }
+
+    /// <summary>
+    /// Specifies the current state of this timer.
+    /// </summary>
     public ReactiveTimerState State => _state.Value;
 
+    /// <summary>
+    /// Attempts to start this timer synchronously.
+    /// </summary>
+    /// <returns><b>true</b> when timer was started, otherwise <b>false</b>.</returns>
     public bool Start()
     {
         return TryStartCore( Interval ).Result == StartResult.Started;
     }
 
+    /// <summary>
+    /// Attempts to start this timer synchronously with an initial <paramref name="delay"/>.
+    /// </summary>
+    /// <param name="delay">Time that must elapse before emitting the first event.</param>
+    /// <returns><b>true</b> when timer was started, otherwise <b>false</b>.</returns>
+    /// <exception cref="ArgumentOutOfRangeException">
+    /// When <paramref name="delay"/> is less than <b>1 tick</b> or greater than <see cref="Int32.MaxValue"/> milliseconds.
+    /// </exception>
     public bool Start(Duration delay)
     {
         Ensure.IsInRange( delay, Duration.FromTicks( 1 ), Duration.FromMilliseconds( int.MaxValue ) );
         return TryStartCore( delay ).Result == StartResult.Started;
     }
 
+    /// <summary>
+    /// Attempts to start this timer asynchronously.
+    /// </summary>
+    /// <returns>
+    /// New <see cref="Task"/> instance that completes when this timer is done or is stopped
+    /// or <see cref="Task.CompletedTask"/> when this timer has been disposed
+    /// or cancelled <see cref="Task"/> when this timer is already running.
+    /// </returns>
     public Task StartAsync()
     {
         var (task, result) = TryStartCore( Interval, Task.Factory );
         return GetStartedTask( task, result );
     }
 
+    /// <summary>
+    /// Attempts to start this timer asynchronously.
+    /// </summary>
+    /// <param name="scheduler">Task scheduler.</param>
+    /// <returns>
+    /// New <see cref="Task"/> instance that completes when this timer is done or is stopped
+    /// or <see cref="Task.CompletedTask"/> when this timer has been disposed
+    /// or cancelled <see cref="Task"/> when this timer is already running.
+    /// </returns>
     public Task StartAsync(TaskScheduler scheduler)
     {
         var taskFactory = new TaskFactory( scheduler );
@@ -75,6 +143,18 @@ public sealed class ReactiveTimer : ConcurrentEventSource<WithInterval<long>, Ev
         return GetStartedTask( task, result );
     }
 
+    /// <summary>
+    /// Attempts to start this timer asynchronously with an initial <paramref name="delay"/>.
+    /// </summary>
+    /// <param name="delay">Time that must elapse before emitting the first event.</param>
+    /// <returns>
+    /// New <see cref="Task"/> instance that completes when this timer is done or is stopped
+    /// or <see cref="Task.CompletedTask"/> when this timer has been disposed
+    /// or cancelled <see cref="Task"/> when this timer is already running.
+    /// </returns>
+    /// <exception cref="ArgumentOutOfRangeException">
+    /// When <paramref name="delay"/> is less than <b>1 tick</b> or greater than <see cref="Int32.MaxValue"/> milliseconds.
+    /// </exception>
     public Task StartAsync(Duration delay)
     {
         Ensure.IsInRange( delay, Duration.FromTicks( 1 ), Duration.FromMilliseconds( int.MaxValue ) );
@@ -82,6 +162,19 @@ public sealed class ReactiveTimer : ConcurrentEventSource<WithInterval<long>, Ev
         return GetStartedTask( task, result );
     }
 
+    /// <summary>
+    /// Attempts to start this timer asynchronously with an initial <paramref name="delay"/>.
+    /// </summary>
+    /// <param name="scheduler">Task scheduler.</param>
+    /// <param name="delay">Time that must elapse before emitting the first event.</param>
+    /// <returns>
+    /// New <see cref="Task"/> instance that completes when this timer is done or is stopped
+    /// or <see cref="Task.CompletedTask"/> when this timer has been disposed
+    /// or cancelled <see cref="Task"/> when this timer is already running.
+    /// </returns>
+    /// <exception cref="ArgumentOutOfRangeException">
+    /// When <paramref name="delay"/> is less than <b>1 tick</b> or greater than <see cref="Int32.MaxValue"/> milliseconds.
+    /// </exception>
     public Task StartAsync(TaskScheduler scheduler, Duration delay)
     {
         Ensure.IsInRange( delay, Duration.FromTicks( 1 ), Duration.FromMilliseconds( int.MaxValue ) );
@@ -90,6 +183,10 @@ public sealed class ReactiveTimer : ConcurrentEventSource<WithInterval<long>, Ev
         return GetStartedTask( task, result );
     }
 
+    /// <summary>
+    /// Attempts to stop this timer.
+    /// </summary>
+    /// <returns><b>true</b> when timer was marked for stopping, otherwise <b>false</b>.</returns>
     public bool Stop()
     {
         using ( ExclusiveLock.Enter( Sync ) )
@@ -102,6 +199,7 @@ public sealed class ReactiveTimer : ConcurrentEventSource<WithInterval<long>, Ev
         }
     }
 
+    /// <inheritdoc />
     public override void Dispose()
     {
         using ( ExclusiveLock.Enter( Sync ) )

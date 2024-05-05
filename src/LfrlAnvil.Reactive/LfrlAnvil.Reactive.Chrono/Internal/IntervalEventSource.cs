@@ -4,6 +4,10 @@ using LfrlAnvil.Reactive.Chrono.Composites;
 
 namespace LfrlAnvil.Reactive.Chrono.Internal;
 
+/// <summary>
+/// Represents a disposable event source that can be listened to,
+/// that notifies its listeners with events published by an underlying <see cref="ReactiveTimer"/> created per listener.
+/// </summary>
 public sealed class IntervalEventSource : EventSource<WithInterval<long>>
 {
     private readonly ITimestampProvider _timestampProvider;
@@ -30,6 +34,7 @@ public sealed class IntervalEventSource : EventSource<WithInterval<long>>
         _count = count;
     }
 
+    /// <inheritdoc />
     protected override IEventListener<WithInterval<long>> OverrideListener(
         IEventSubscriber subscriber,
         IEventListener<WithInterval<long>> listener)

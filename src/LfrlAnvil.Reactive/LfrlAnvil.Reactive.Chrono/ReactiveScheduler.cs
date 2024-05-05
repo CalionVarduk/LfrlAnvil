@@ -12,6 +12,7 @@ using LfrlAnvil.Reactive.Chrono.Internal;
 
 namespace LfrlAnvil.Reactive.Chrono;
 
+/// <inheritdoc />
 public class ReactiveScheduler<TKey> : IReactiveScheduler<TKey>
     where TKey : notnull
 {
@@ -20,6 +21,21 @@ public class ReactiveScheduler<TKey> : IReactiveScheduler<TKey>
     private InterlockedEnum<ReactiveSchedulerState> _state;
     private Timestamp _nextEventTimestamp;
 
+    /// <summary>
+    /// Creates a new empty <see cref="ReactiveScheduler{TKey}"/> instance.
+    /// </summary>
+    /// <param name="timestamps"><see cref="ITimestampProvider"/> instance used for time tracking.</param>
+    /// <param name="keyComparer">Key equality comparer. Equal to <see cref="EqualityComparer{T}.Default"/> by default.</param>
+    /// <param name="defaultInterval">
+    /// Maximum <see cref="Duration"/> to hang the underlying time tracking mechanism for. Equal to <b>1 hour</b> by default.
+    /// </param>
+    /// <param name="spinWaitDurationHint">
+    /// <see cref="SpinWait"/> duration hint for the underlying time tracking mechanism. Equal to <b>1 microsecond</b> by default.
+    /// </param>
+    /// <exception cref="ArgumentOutOfRangeException">
+    /// When <paramref name="defaultInterval"/> is less than <b>1 tick</b> or greater than <see cref="Int32.MaxValue"/> milliseconds
+    /// or when <paramref name="spinWaitDurationHint"/> is less than <b>0</b>.
+    /// </exception>
     public ReactiveScheduler(
         ITimestampProvider timestamps,
         IEqualityComparer<TKey>? keyComparer = null,
@@ -46,13 +62,25 @@ public class ReactiveScheduler<TKey> : IReactiveScheduler<TKey>
         StartTimestamp = Timestamps.GetNow();
     }
 
+    /// <inheritdoc />
     public Timestamp StartTimestamp { get; }
+
+    /// <inheritdoc />
     public Duration DefaultInterval { get; }
+
+    /// <inheritdoc />
     public Duration SpinWaitDurationHint { get; }
+
+    /// <inheritdoc />
     public ITimestampProvider Timestamps { get; }
+
+    /// <inheritdoc />
     public IEqualityComparer<TKey> KeyComparer => _queue.KeyComparer;
+
+    /// <inheritdoc />
     public ReactiveSchedulerState State => _state.Value;
 
+    /// <inheritdoc />
     public IReadOnlyCollection<TKey> TaskKeys
     {
         get
@@ -72,6 +100,7 @@ public class ReactiveScheduler<TKey> : IReactiveScheduler<TKey>
         }
     }
 
+    /// <inheritdoc />
     public void Dispose()
     {
         List<ReactiveSchedulerEntry<TKey>>? toRemove = null;
@@ -99,6 +128,7 @@ public class ReactiveScheduler<TKey> : IReactiveScheduler<TKey>
         RemoveAll( toRemove );
     }
 
+    /// <inheritdoc />
     [Pure]
     public ScheduleTaskState<TKey>? TryGetTaskState(TKey key)
     {
@@ -117,12 +147,14 @@ public class ReactiveScheduler<TKey> : IReactiveScheduler<TKey>
             entry.IsDisposed );
     }
 
+    /// <inheritdoc />
     public void Start()
     {
         if ( _state.Write( ReactiveSchedulerState.Running, ReactiveSchedulerState.Created ) )
             RunCore();
     }
 
+    /// <inheritdoc />
     public Task StartAsync(TaskScheduler? scheduler = null)
     {
         if ( ! _state.Write( ReactiveSchedulerState.Running, ReactiveSchedulerState.Created ) )
@@ -132,21 +164,127 @@ public class ReactiveScheduler<TKey> : IReactiveScheduler<TKey>
         return taskFactory.StartNew( RunCore );
     }
 
+    /// <inheritdoc />
     public bool Schedule(IScheduleTask<TKey> task, Timestamp timestamp)
     {
         return TrySchedule( task, timestamp, Duration.Zero, 1 );
     }
 
+    /// <inheritdoc />
     public bool Schedule(IScheduleTask<TKey> task, Timestamp firstTimestamp, Duration interval, int repetitions)
     {
         Ensure.IsGreaterThan( interval, Duration.Zero );
         return repetitions > 0 && TrySchedule( task, firstTimestamp, interval, repetitions );
     }
 
+    /// <inheritdoc />
     public bool ScheduleInfinite(IScheduleTask<TKey> task, Timestamp firstTimestamp, Duration interval)
     {
         Ensure.IsGreaterThan( interval, Duration.Zero );
         return TrySchedule( task, firstTimestamp, interval, -1 );
+    }
+
+    /// <inheritdoc />
+    public bool SetInterval(TKey key, Duration interval)
+    {
+        Ensure.IsGreaterThan( interval, Duration.Zero );
+        using ( AcquireScheduleLock() )
+        {
+            if ( ! TryGetMutableEntry( key, out var entry ) )
+                return false;
+
+            if ( interval != entry.Interval )
+            {
+                entry = new ReactiveSchedulerEntry<TKey>( entry.Container, entry.Timestamp, interval, entry.Repetitions );
+                _queue.Replace( key, entry );
+            }
+
+            return true;
+        }
+    }
+
+    /// <inheritdoc />
+    public bool SetRepetitions(TKey key, int repetitions)
+    {
+        Ensure.IsGreaterThan( repetitions, 0 );
+        using ( AcquireScheduleLock() )
+        {
+            if ( ! TryGetMutableEntry( key, out var entry ) )
+                return false;
+
+            if ( repetitions != entry.Repetitions )
+            {
+                entry = new ReactiveSchedulerEntry<TKey>( entry.Container, entry.Timestamp, entry.Interval, repetitions );
+                _queue.Replace( key, entry );
+            }
+
+            return true;
+        }
+    }
+
+    /// <inheritdoc />
+    public bool MakeInfinite(TKey key)
+    {
+        using ( AcquireScheduleLock() )
+        {
+            if ( ! TryGetMutableEntry( key, out var entry ) )
+                return false;
+
+            if ( ! entry.IsInfinite )
+            {
+                entry = new ReactiveSchedulerEntry<TKey>( entry.Container, entry.Timestamp, entry.Interval, -1 );
+                _queue.Replace( key, entry );
+            }
+
+            return true;
+        }
+    }
+
+    /// <inheritdoc />
+    public bool SetNextTimestamp(TKey key, Timestamp timestamp)
+    {
+        using ( AcquireScheduleLock() )
+        {
+            if ( ! TryGetMutableEntry( key, out var entry ) )
+                return false;
+
+            if ( timestamp != entry.Timestamp )
+            {
+                entry = new ReactiveSchedulerEntry<TKey>( entry.Container, timestamp, entry.Interval, entry.Repetitions );
+                _queue.Replace( key, entry );
+                if ( _nextEventTimestamp > timestamp )
+                    _reset.Set();
+            }
+
+            return true;
+        }
+    }
+
+    /// <inheritdoc />
+    public bool Remove(TKey key)
+    {
+        ReactiveSchedulerEntry<TKey> entry;
+        using ( AcquireScheduleLock() )
+        {
+            if ( ! _queue.TryGetValue( key, out entry ) )
+                return false;
+
+            if ( ! entry.IsDisposed )
+                _queue.Replace( key, entry.AsDisposed() );
+        }
+
+        entry.Container.Dispose();
+        return true;
+    }
+
+    /// <inheritdoc />
+    public void Clear()
+    {
+        List<ReactiveSchedulerEntry<TKey>>? toRemove = null;
+        using ( AcquireScheduleLock() )
+            DisposeAll( ref toRemove );
+
+        RemoveAll( toRemove );
     }
 
     private bool TrySchedule(IScheduleTask<TKey> task, Timestamp timestamp, Duration interval, int repetitions)
@@ -183,78 +321,6 @@ public class ReactiveScheduler<TKey> : IReactiveScheduler<TKey>
         }
     }
 
-    public bool SetInterval(TKey key, Duration interval)
-    {
-        Ensure.IsGreaterThan( interval, Duration.Zero );
-        using ( AcquireScheduleLock() )
-        {
-            if ( ! TryGetMutableEntry( key, out var entry ) )
-                return false;
-
-            if ( interval != entry.Interval )
-            {
-                entry = new ReactiveSchedulerEntry<TKey>( entry.Container, entry.Timestamp, interval, entry.Repetitions );
-                _queue.Replace( key, entry );
-            }
-
-            return true;
-        }
-    }
-
-    public bool SetRepetitions(TKey key, int repetitions)
-    {
-        Ensure.IsGreaterThan( repetitions, 0 );
-        using ( AcquireScheduleLock() )
-        {
-            if ( ! TryGetMutableEntry( key, out var entry ) )
-                return false;
-
-            if ( repetitions != entry.Repetitions )
-            {
-                entry = new ReactiveSchedulerEntry<TKey>( entry.Container, entry.Timestamp, entry.Interval, repetitions );
-                _queue.Replace( key, entry );
-            }
-
-            return true;
-        }
-    }
-
-    public bool MakeInfinite(TKey key)
-    {
-        using ( AcquireScheduleLock() )
-        {
-            if ( ! TryGetMutableEntry( key, out var entry ) )
-                return false;
-
-            if ( ! entry.IsInfinite )
-            {
-                entry = new ReactiveSchedulerEntry<TKey>( entry.Container, entry.Timestamp, entry.Interval, -1 );
-                _queue.Replace( key, entry );
-            }
-
-            return true;
-        }
-    }
-
-    public bool SetNextTimestamp(TKey key, Timestamp timestamp)
-    {
-        using ( AcquireScheduleLock() )
-        {
-            if ( ! TryGetMutableEntry( key, out var entry ) )
-                return false;
-
-            if ( timestamp != entry.Timestamp )
-            {
-                entry = new ReactiveSchedulerEntry<TKey>( entry.Container, timestamp, entry.Interval, entry.Repetitions );
-                _queue.Replace( key, entry );
-                if ( _nextEventTimestamp > timestamp )
-                    _reset.Set();
-            }
-
-            return true;
-        }
-    }
-
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private bool TryGetMutableEntry(TKey key, out ReactiveSchedulerEntry<TKey> result)
     {
@@ -269,31 +335,6 @@ public class ReactiveScheduler<TKey> : IReactiveScheduler<TKey>
 
         result = entry;
         return true;
-    }
-
-    public bool Remove(TKey key)
-    {
-        ReactiveSchedulerEntry<TKey> entry;
-        using ( AcquireScheduleLock() )
-        {
-            if ( ! _queue.TryGetValue( key, out entry ) )
-                return false;
-
-            if ( ! entry.IsDisposed )
-                _queue.Replace( key, entry.AsDisposed() );
-        }
-
-        entry.Container.Dispose();
-        return true;
-    }
-
-    public void Clear()
-    {
-        List<ReactiveSchedulerEntry<TKey>>? toRemove = null;
-        using ( AcquireScheduleLock() )
-            DisposeAll( ref toRemove );
-
-        RemoveAll( toRemove );
     }
 
     private void DisposeAll(ref List<ReactiveSchedulerEntry<TKey>>? toRemove)

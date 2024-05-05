@@ -1,4 +1,6 @@
-﻿using System.Runtime.CompilerServices;
+﻿using System;
+using System.Runtime.CompilerServices;
+using System.Threading;
 using System.Threading.Tasks;
 using LfrlAnvil.Chrono;
 using LfrlAnvil.Reactive.Chrono.Composites;
@@ -6,6 +8,10 @@ using LfrlAnvil.Reactive.Chrono.Internal;
 
 namespace LfrlAnvil.Reactive.Chrono.Decorators;
 
+/// <summary>
+/// Notifies decorated event listener with delayed emitted events.
+/// </summary>
+/// <typeparam name="TEvent">Event type.</typeparam>
 public sealed class EventListenerDelayDecorator<TEvent> : IEventListenerDecorator<TEvent, WithInterval<TEvent>>
 {
     private readonly ITimestampProvider _timestampProvider;
@@ -13,6 +19,17 @@ public sealed class EventListenerDelayDecorator<TEvent> : IEventListenerDecorato
     private readonly TaskScheduler? _scheduler;
     private readonly Duration _spinWaitDurationHint;
 
+    /// <summary>
+    /// Creates a new <see cref="EventListenerDelayDecorator{TEvent}"/> instance,
+    /// </summary>
+    /// <param name="timestampProvider">Timestamp provider to use for time tracking.</param>
+    /// <param name="delay">Event delay.</param>
+    /// <param name="scheduler">Optional task scheduler.</param>
+    /// <param name="spinWaitDurationHint"><see cref="SpinWait"/> duration hint for the underlying timer.</param>
+    /// <exception cref="ArgumentOutOfRangeException">
+    /// When <paramref name="delay"/> is less than <b>1 tick</b> or greater than <see cref="Int32.MaxValue"/> milliseconds
+    /// or when <paramref name="spinWaitDurationHint"/> is less than <b>0</b>.
+    /// </exception>
     public EventListenerDelayDecorator(
         ITimestampProvider timestampProvider,
         Duration delay,
@@ -28,6 +45,7 @@ public sealed class EventListenerDelayDecorator<TEvent> : IEventListenerDecorato
         _spinWaitDurationHint = spinWaitDurationHint;
     }
 
+    /// <inheritdoc />
     public IEventListener<TEvent> Decorate(IEventListener<WithInterval<TEvent>> listener, IEventSubscriber subscriber)
     {
         var timeout = new IntervalEventSource( _timestampProvider, _delay, _scheduler, _spinWaitDurationHint, count: 1 );

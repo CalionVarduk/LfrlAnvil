@@ -4,15 +4,24 @@ using LfrlAnvil.Reactive.Chrono.Composites;
 
 namespace LfrlAnvil.Reactive.Chrono.Decorators;
 
+/// <summary>
+/// Notifies the decorated event listener with <see cref="WithZonedDateTime{TEvent}"/>.
+/// </summary>
+/// <typeparam name="TEvent">Event type.</typeparam>
 public sealed class EventListenerWithZonedDateTimeDecorator<TEvent> : IEventListenerDecorator<TEvent, WithZonedDateTime<TEvent>>
 {
     private readonly IZonedClock _clock;
 
+    /// <summary>
+    /// Creates a new <see cref="EventListenerWithTimestampDecorator{TEvent}"/> instance.
+    /// </summary>
+    /// <param name="clock">Clock to use for time tracking.</param>
     public EventListenerWithZonedDateTimeDecorator(IZonedClock clock)
     {
         _clock = clock;
     }
 
+    /// <inheritdoc />
     [Pure]
     public IEventListener<TEvent> Decorate(IEventListener<WithZonedDateTime<TEvent>> listener, IEventSubscriber _)
     {

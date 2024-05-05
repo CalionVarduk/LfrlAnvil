@@ -4,15 +4,25 @@ using LfrlAnvil.Reactive.Chrono.Composites;
 
 namespace LfrlAnvil.Reactive.Chrono.Decorators;
 
+/// <summary>
+/// Notifies the decorated event listener with <see cref="WithInterval{TEvent}"/> whose intervals are calculated from the current
+/// and last emitted event's timestamps. First event's interval is equal to <b>-1 tick</b>.
+/// </summary>
+/// <typeparam name="TEvent">Event type.</typeparam>
 public sealed class EventListenerWithIntervalDecorator<TEvent> : IEventListenerDecorator<TEvent, WithInterval<TEvent>>
 {
     private readonly ITimestampProvider _timestampProvider;
 
+    /// <summary>
+    /// Creates a new <see cref="EventListenerWithIntervalDecorator{TEvent}"/> instance.
+    /// </summary>
+    /// <param name="timestampProvider">Timestamp provider to use for time tracking.</param>
     public EventListenerWithIntervalDecorator(ITimestampProvider timestampProvider)
     {
         _timestampProvider = timestampProvider;
     }
 
+    /// <inheritdoc />
     [Pure]
     public IEventListener<TEvent> Decorate(IEventListener<WithInterval<TEvent>> listener, IEventSubscriber _)
     {

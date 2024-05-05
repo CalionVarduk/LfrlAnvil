@@ -3,6 +3,14 @@
     <PropertyGroup>
         <PackageTags>LfrlAnvil Reactive Chrono</PackageTags>
     </PropertyGroup>
+
+    <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+      <DocumentationFile>bin\Debug\LfrlAnvil.Reactive.Chrono.xml</DocumentationFile>
+    </PropertyGroup>
+
+    <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+      <DocumentationFile>bin\Release\LfrlAnvil.Reactive.Chrono.xml</DocumentationFile>
+    </PropertyGroup>
     
     <ItemGroup>
         <ProjectReference Include="..\..\LfrlAnvil.Chrono\LfrlAnvil.Chrono.csproj" />

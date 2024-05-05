@@ -4,15 +4,24 @@ using LfrlAnvil.Reactive.Chrono.Composites;
 
 namespace LfrlAnvil.Reactive.Chrono.Decorators;
 
+/// <summary>
+/// Notifies the decorated event listener with <see cref="WithTimestamp{TEvent}"/>.
+/// </summary>
+/// <typeparam name="TEvent">Event type.</typeparam>
 public sealed class EventListenerWithTimestampDecorator<TEvent> : IEventListenerDecorator<TEvent, WithTimestamp<TEvent>>
 {
     private readonly ITimestampProvider _timestampProvider;
 
+    /// <summary>
+    /// Creates a new <see cref="EventListenerWithTimestampDecorator{TEvent}"/> instance.
+    /// </summary>
+    /// <param name="timestampProvider">Timestamp provider to use for time tracking.</param>
     public EventListenerWithTimestampDecorator(ITimestampProvider timestampProvider)
     {
         _timestampProvider = timestampProvider;
     }
 
+    /// <inheritdoc />
     [Pure]
     public IEventListener<TEvent> Decorate(IEventListener<WithTimestamp<TEvent>> listener, IEventSubscriber _)
     {
