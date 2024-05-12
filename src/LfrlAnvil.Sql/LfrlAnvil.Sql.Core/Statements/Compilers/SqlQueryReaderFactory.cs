@@ -18,6 +18,7 @@ using LfrlAnvil.Sql.Internal;
 
 namespace LfrlAnvil.Sql.Statements.Compilers;
 
+/// <inheritdoc />
 public class SqlQueryReaderFactory : ISqlQueryReaderFactory
 {
     private readonly object _sync = new object();
@@ -39,11 +40,23 @@ public class SqlQueryReaderFactory : ISqlQueryReaderFactory
         SupportsAsync = DataReaderType.IsAssignableTo( typeof( DbDataReader ) );
     }
 
+    /// <inheritdoc />
     public bool SupportsAsync { get; }
+
+    /// <summary>
+    /// Specifies the DB data reader type.
+    /// </summary>
     public Type DataReaderType { get; }
+
+    /// <inheritdoc />
     public SqlDialect Dialect { get; }
+
+    /// <summary>
+    /// Specifies <see cref="ISqlColumnTypeDefinitionProvider"/> instance attached to this factory.
+    /// </summary>
     public ISqlColumnTypeDefinitionProvider ColumnTypeDefinitions { get; }
 
+    /// <inheritdoc />
     [Pure]
     public SqlQueryReader Create(SqlQueryReaderCreationOptions? options = null)
     {
@@ -54,6 +67,7 @@ public class SqlQueryReaderFactory : ISqlQueryReaderFactory
                 : ReadRows );
     }
 
+    /// <inheritdoc />
     [Pure]
     public SqlAsyncQueryReader CreateAsync(SqlQueryReaderCreationOptions? options = null)
     {
@@ -64,6 +78,7 @@ public class SqlQueryReaderFactory : ISqlQueryReaderFactory
                 : ReadRowsAsync );
     }
 
+    /// <inheritdoc />
     [Pure]
     public SqlQueryReaderExpression CreateExpression(Type rowType, SqlQueryReaderCreationOptions? options = null)
     {
@@ -87,6 +102,7 @@ public class SqlQueryReaderFactory : ISqlQueryReaderFactory
         return new SqlQueryReaderExpression( Dialect, rowType, lambda );
     }
 
+    /// <inheritdoc />
     [Pure]
     public SqlAsyncQueryReaderExpression CreateAsyncExpression(Type rowType, SqlQueryReaderCreationOptions? options = null)
     {
@@ -110,18 +126,21 @@ public class SqlQueryReaderFactory : ISqlQueryReaderFactory
         return new SqlAsyncQueryReaderExpression( Dialect, rowType, expression );
     }
 
+    /// <inheritdoc />
     [Pure]
     public SqlScalarQueryReader CreateScalar()
     {
         return new SqlScalarQueryReader( Dialect, ReadScalar );
     }
 
+    /// <inheritdoc />
     [Pure]
     public SqlAsyncScalarQueryReader CreateAsyncScalar()
     {
         return new SqlAsyncScalarQueryReader( Dialect, ReadScalarAsync );
     }
 
+    /// <inheritdoc />
     [Pure]
     public SqlScalarQueryReaderExpression CreateScalarExpression(Type resultType, bool isNullable = false)
     {
@@ -140,6 +159,7 @@ public class SqlQueryReaderFactory : ISqlQueryReaderFactory
         return new SqlScalarQueryReaderExpression( Dialect, resultType, lambda );
     }
 
+    /// <inheritdoc />
     [Pure]
     public SqlAsyncScalarQueryReaderExpression CreateAsyncScalarExpression(Type resultType, bool isNullable = false)
     {
@@ -1332,9 +1352,20 @@ public class SqlQueryReaderFactory : ISqlQueryReaderFactory
     }
 }
 
+/// <summary>
+/// Represents a factory of delegates used by query reader expression instances.
+/// </summary>
+/// <typeparam name="TDataReader">DB data reader type.</typeparam>
 public class SqlQueryReaderFactory<TDataReader> : SqlQueryReaderFactory
     where TDataReader : IDataReader
 {
+    /// <summary>
+    /// Creates a new <see cref="SqlQueryReaderFactory{TDataReader}"/> instance.
+    /// </summary>
+    /// <param name="dialect">SQL dialect that this factory is associated with.</param>
+    /// <param name="columnTypeDefinitions">
+    /// Specifies <see cref="ISqlColumnTypeDefinitionProvider"/> instance attached to this factory.
+    /// </param>
     protected SqlQueryReaderFactory(SqlDialect dialect, ISqlColumnTypeDefinitionProvider columnTypeDefinitions)
         : base( typeof( TDataReader ), dialect, columnTypeDefinitions ) { }
 }

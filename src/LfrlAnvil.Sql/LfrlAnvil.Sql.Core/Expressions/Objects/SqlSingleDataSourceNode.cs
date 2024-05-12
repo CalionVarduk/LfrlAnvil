@@ -6,6 +6,10 @@ using LfrlAnvil.Sql.Expressions.Traits;
 
 namespace LfrlAnvil.Sql.Expressions.Objects;
 
+/// <summary>
+/// Represents an SQL syntax tree node that defines a single data source from a single <see cref="SqlRecordSetNode"/> instance.
+/// </summary>
+/// <typeparam name="TRecordSetNode">SQL record set node type.</typeparam>
 public sealed class SqlSingleDataSourceNode<TRecordSetNode> : SqlDataSourceNode
     where TRecordSetNode : SqlRecordSetNode
 {
@@ -23,25 +27,35 @@ public sealed class SqlSingleDataSourceNode<TRecordSetNode> : SqlDataSourceNode
         _from = @base._from;
     }
 
+    /// <inheritdoc />
     public override TRecordSetNode From => _from[0];
-    public override ReadOnlyArray<SqlDataSourceJoinOnNode> Joins => ReadOnlyArray<SqlDataSourceJoinOnNode>.Empty;
-    public override IReadOnlyCollection<SqlRecordSetNode> RecordSets => _from;
-    public new TRecordSetNode this[string name] => GetRecordSet( name );
 
+    /// <inheritdoc />
+    public override ReadOnlyArray<SqlDataSourceJoinOnNode> Joins => ReadOnlyArray<SqlDataSourceJoinOnNode>.Empty;
+
+    /// <inheritdoc />
+    public override IReadOnlyCollection<SqlRecordSetNode> RecordSets => _from;
+
+    /// <inheritdoc cref="SqlDataSourceNode.this[string]" />
+    public new TRecordSetNode this[string identifier] => GetRecordSet( identifier );
+
+    /// <inheritdoc />
     [Pure]
-    public override TRecordSetNode GetRecordSet(string name)
+    public override TRecordSetNode GetRecordSet(string identifier)
     {
-        return name.Equals( From.Identifier, StringComparison.OrdinalIgnoreCase )
+        return identifier.Equals( From.Identifier, StringComparison.OrdinalIgnoreCase )
             ? From
-            : throw new KeyNotFoundException( ExceptionResources.GivenRecordSetWasNotPresentInDataSource( name ) );
+            : throw new KeyNotFoundException( ExceptionResources.GivenRecordSetWasNotPresentInDataSource( identifier ) );
     }
 
+    /// <inheritdoc />
     [Pure]
     public override SqlSingleDataSourceNode<TRecordSetNode> AddTrait(SqlTraitNode trait)
     {
         return SetTraits( Traits.ToExtendable().Extend( trait ) );
     }
 
+    /// <inheritdoc />
     [Pure]
     public override SqlSingleDataSourceNode<TRecordSetNode> SetTraits(Chain<SqlTraitNode> traits)
     {

@@ -6,6 +6,9 @@ using LfrlAnvil.Sql.Internal;
 
 namespace LfrlAnvil.Sql.Expressions;
 
+/// <summary>
+/// Represents an SQL syntax tree expression node that defines a compound query expression.
+/// </summary>
 public sealed class SqlCompoundQueryExpressionNode : SqlExtendableQueryExpressionNode
 {
     private ReadOnlyArray<SqlSelectNode>? _selection;
@@ -29,16 +32,27 @@ public sealed class SqlCompoundQueryExpressionNode : SqlExtendableQueryExpressio
         _selection = @base._selection;
     }
 
+    /// <summary>
+    /// First underlying query.
+    /// </summary>
     public SqlQueryExpressionNode FirstQuery { get; }
+
+    /// <summary>
+    /// Collection of queries that sequentially follow after the <see cref="FirstQuery"/>.
+    /// </summary>
     public ReadOnlyArray<SqlCompoundQueryComponentNode> FollowingQueries { get; }
+
+    /// <inheritdoc />
     public override ReadOnlyArray<SqlSelectNode> Selection => _selection ??= CreateSelection();
 
+    /// <inheritdoc />
     [Pure]
     public override SqlCompoundQueryExpressionNode AddTrait(SqlTraitNode trait)
     {
         return SetTraits( Traits.ToExtendable().Extend( trait ) );
     }
 
+    /// <inheritdoc />
     [Pure]
     public override SqlCompoundQueryExpressionNode SetTraits(Chain<SqlTraitNode> traits)
     {

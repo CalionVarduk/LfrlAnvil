@@ -19,16 +19,26 @@ using LfrlAnvil.Sql.Versioning;
 
 namespace LfrlAnvil.Sql;
 
+/// <summary>
+/// Represents a factory of SQL databases.
+/// </summary>
+/// <typeparam name="TDatabase">SQL database type.</typeparam>
 public abstract class SqlDatabaseFactory<TDatabase> : ISqlDatabaseFactory
     where TDatabase : SqlDatabase
 {
+    /// <summary>
+    /// Creates a new <see cref="SqlDatabaseFactory{TDatabase}"/> instance.
+    /// </summary>
+    /// <param name="dialect"></param>
     protected SqlDatabaseFactory(SqlDialect dialect)
     {
         Dialect = dialect;
     }
 
+    /// <inheritdoc />
     public SqlDialect Dialect { get; }
 
+    /// <inheritdoc cref="ISqlDatabaseFactory.Create(String,SqlDatabaseVersionHistory,SqlCreateDatabaseOptions)" />
     public SqlCreateDatabaseResult<TDatabase> Create(
         string connectionString,
         SqlDatabaseVersionHistory versionHistory,
@@ -173,15 +183,45 @@ public abstract class SqlDatabaseFactory<TDatabase> : ISqlDatabaseFactory
         }
     }
 
+    /// <summary>
+    /// Creates a new <see cref="DbConnectionStringBuilder"/> instance.
+    /// </summary>
+    /// <param name="connectionString">Connection string.</param>
+    /// <returns>New <see cref="DbConnectionStringBuilder"/> instance.</returns>
     [Pure]
     protected abstract DbConnectionStringBuilder CreateConnectionStringBuilder(string connectionString);
 
+    /// <summary>
+    /// Creates a new unopened <see cref="DbConnection"/> instance.
+    /// </summary>
+    /// <param name="connectionString">Connection string builder.</param>
+    /// <returns>New <see cref="DbConnection"/> instance.</returns>
     [Pure]
     protected abstract DbConnection CreateConnection(DbConnectionStringBuilder connectionString);
 
+    /// <summary>
+    /// Creates a new <see cref="SqlDatabaseBuilder"/> instance.
+    /// </summary>
+    /// <param name="defaultSchemaName">
+    /// Initial name of the <see cref="ISqlSchemaBuilderCollection.Default"/> schema. Version history table will belong to this schema.
+    /// </param>
+    /// <param name="connection">Opened connection to the database.</param>
+    /// <returns>New <see cref="SqlDatabaseBuilder"/> instance.</returns>
     [Pure]
     protected abstract SqlDatabaseBuilder CreateDatabaseBuilder(string defaultSchemaName, DbConnection connection);
 
+    /// <summary>
+    /// Creates a new <see cref="SqlDatabase"/> instance.
+    /// </summary>
+    /// <param name="builder">Source database builder.</param>
+    /// <param name="connectionString">Connection string builder.</param>
+    /// <param name="connection">Opened connection to the database.</param>
+    /// <param name="eventHandler">Collection of <see cref="SqlDatabaseConnectionChangeEvent"/> callbacks.</param>
+    /// <param name="versionHistoryRecordsQuery">
+    /// Query reader's executor capable of reading metadata of all versions applied to the database.
+    /// </param>
+    /// <param name="version">Current version of the database.</param>
+    /// <returns>New <see cref="SqlDatabase"/> instance.</returns>
     protected abstract TDatabase CreateDatabase(
         SqlDatabaseBuilder builder,
         DbConnectionStringBuilder connectionString,
@@ -190,15 +230,37 @@ public abstract class SqlDatabaseFactory<TDatabase> : ISqlDatabaseFactory
         SqlQueryReaderExecutor<SqlDatabaseVersionRecord> versionHistoryRecordsQuery,
         Version version);
 
+    /// <summary>
+    /// Creates a new <see cref="SqlSchemaObjectName"/> instance that represents default version history table name.
+    /// </summary>
+    /// <returns>New <see cref="SqlSchemaObjectName"/> instance.</returns>
     [Pure]
     protected abstract SqlSchemaObjectName GetDefaultVersionHistoryName();
 
+    /// <summary>
+    /// Finalizes DB connection preparations. This method is invoked right before version history table initialization.
+    /// </summary>
+    /// <param name="connectionString">Connection string builder.</param>
+    /// <param name="connection">Opened connection to the database.</param>
+    /// <param name="nodeInterpreter"><see cref="SqlNodeInterpreter"/> instance.</param>
+    /// <param name="executor">Decorator for executing SQL statements on the database.</param>
     protected virtual void FinalizeConnectionPreparations(
         DbConnectionStringBuilder connectionString,
         DbConnection connection,
         SqlNodeInterpreter nodeInterpreter,
         ref SqlDatabaseFactoryStatementExecutor executor) { }
 
+    /// <summary>
+    /// Checks whether or not the version history table should be attached as a change
+    /// from which an SQL statement should be created and executed.
+    /// </summary>
+    /// <param name="changeTracker">Database builder's change tracker.</param>
+    /// <param name="versionHistoryTableName">Name of the version history table.</param>
+    /// <param name="nodeInterpreter"><see cref="SqlNodeInterpreter"/> instance.</param>
+    /// <param name="connection">Opened connection to the database.</param>
+    /// <param name="executor">Decorator for executing SQL statements on the database.</param>
+    /// <returns><b>true</b> when version history table should be created in the database, otherwise <b>false</b>.</returns>
+    /// <remarks>This method can also be used for registering other common database objects.</remarks>
     protected abstract bool GetChangeTrackerAttachmentForVersionHistoryTableInit(
         SqlDatabaseChangeTracker changeTracker,
         SqlSchemaObjectName versionHistoryTableName,
@@ -206,6 +268,22 @@ public abstract class SqlDatabaseFactory<TDatabase> : ISqlDatabaseFactory
         DbConnection connection,
         ref SqlDatabaseFactoryStatementExecutor executor);
 
+    /// <summary>
+    /// Initializes the version history table builder.
+    /// </summary>
+    /// <param name="builder">Version history table builder.</param>
+    /// <remarks>
+    /// By default, this method adds the following columns:
+    /// <list type="bullet">
+    /// <item><description>VersionMajor (<see cref="int"/>)</description></item>
+    /// <item><description>VersionMinor (<see cref="int"/>)</description></item>
+    /// <item><description>VersionBuild (nullable <see cref="int"/>)</description></item>
+    /// <item><description>VersionRevision (nullable <see cref="int"/>)</description></item>
+    /// <item><description>Description (<see cref="string"/>)</description></item>
+    /// <item><description>CommitDateUtc (<see cref="DateTime"/>)</description></item>
+    /// <item><description>CommitDurationInTicks (<see cref="long"/>)</description></item>
+    /// </list>
+    /// </remarks>
     protected virtual void VersionHistoryTableBuilderInit(SqlTableBuilder builder)
     {
         var intType = builder.Database.TypeDefinitions.GetByType<int>();
@@ -219,6 +297,11 @@ public abstract class SqlDatabaseFactory<TDatabase> : ISqlDatabaseFactory
         columns.Create( SqlHelpers.VersionHistoryCommitDurationInTicksName ).SetType<long>();
     }
 
+    /// <summary>
+    /// Creates a delegate capable of reading metadata of all versions applied to this database.
+    /// </summary>
+    /// <param name="queryReaders">Query reader factory.</param>
+    /// <returns>Delegate capable of reading metadata of all versions applied to this database.</returns>
     [Pure]
     protected virtual Func<IDataReader, SqlQueryReaderOptions, SqlQueryResult<SqlDatabaseVersionRecord>>
         GetVersionHistoryRecordsQueryDelegate(SqlQueryReaderFactory queryReaders)
@@ -268,6 +351,12 @@ public abstract class SqlDatabaseFactory<TDatabase> : ISqlDatabaseFactory
         };
     }
 
+    /// <summary>
+    /// Creates a new <see cref="SqlDatabaseCommitVersionsContext"/> instance, used for managing application of versions to the database.
+    /// </summary>
+    /// <param name="parameterBinders">Parameter binder factory.</param>
+    /// <param name="options">DB creation options.</param>
+    /// <returns>New <see cref="SqlDatabaseCommitVersionsContext"/> instance.</returns>
     [Pure]
     protected virtual SqlDatabaseCommitVersionsContext CreateCommitVersionsContext(
         SqlParameterBinderFactory parameterBinders,
@@ -276,6 +365,11 @@ public abstract class SqlDatabaseFactory<TDatabase> : ISqlDatabaseFactory
         return new SqlDatabaseCommitVersionsContext();
     }
 
+    /// <summary>
+    /// Allows to react to an unexpected exception.
+    /// </summary>
+    /// <param name="exception">Thrown exception.</param>
+    /// <param name="connection">Opened connection to the database.</param>
     protected virtual void OnUncaughtException(Exception exception, DbConnection connection) { }
 
     private static void ApplyCommittedVersions(

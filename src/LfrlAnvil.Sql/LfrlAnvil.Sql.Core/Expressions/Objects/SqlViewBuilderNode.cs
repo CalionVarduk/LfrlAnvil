@@ -7,6 +7,9 @@ using LfrlAnvil.Sql.Objects.Builders;
 
 namespace LfrlAnvil.Sql.Expressions.Objects;
 
+/// <summary>
+/// Represents an SQL syntax tree node that defines a single record set based on an <see cref="ISqlViewBuilder"/> instance.
+/// </summary>
 public sealed class SqlViewBuilderNode : SqlRecordSetNode
 {
     private readonly FieldCollection _fields;
@@ -18,40 +21,53 @@ public sealed class SqlViewBuilderNode : SqlRecordSetNode
         _fields = new FieldCollection( this );
     }
 
+    /// <summary>
+    /// Underlying <see cref="ISqlViewBuilder"/> instance.
+    /// </summary>
     public ISqlViewBuilder View { get; }
+
+    /// <inheritdoc />
     public override SqlRecordSetInfo Info => View.Info;
+
+    /// <inheritdoc cref="SqlRecordSetNode.this[string]" />
     public new SqlQueryDataFieldNode this[string fieldName] => GetField( fieldName );
 
+    /// <inheritdoc />
     [Pure]
     public override IReadOnlyCollection<SqlQueryDataFieldNode> GetKnownFields()
     {
         return _fields;
     }
 
+    /// <inheritdoc />
     [Pure]
     public override SqlViewBuilderNode As(string alias)
     {
         return new SqlViewBuilderNode( View, alias, IsOptional );
     }
 
+    /// <inheritdoc />
     [Pure]
     public override SqlViewBuilderNode AsSelf()
     {
         return new SqlViewBuilderNode( View, alias: null, IsOptional );
     }
 
+    /// <inheritdoc />
     [Pure]
     public override SqlDataFieldNode GetUnsafeField(string name)
     {
         return ( SqlDataFieldNode? )_fields.TryGet( name ) ?? new SqlRawDataFieldNode( this, name, type: null );
     }
 
+    /// <inheritdoc />
     [Pure]
     public override SqlQueryDataFieldNode GetField(string name)
     {
         return _fields.Get( name );
     }
 
+    /// <inheritdoc />
     [Pure]
     public override SqlViewBuilderNode MarkAsOptional(bool optional = true)
     {

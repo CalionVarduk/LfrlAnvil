@@ -2,9 +2,12 @@
 
 namespace LfrlAnvil.Sql.Expressions;
 
+/// <summary>
+/// Represents an SQL syntax tree node that defines a table column.
+/// </summary>
 public class SqlColumnDefinitionNode : SqlNodeBase
 {
-    protected internal SqlColumnDefinitionNode(
+    internal SqlColumnDefinitionNode(
         string name,
         TypeNullability type,
         SqlExpressionNode? defaultValue,
@@ -18,7 +21,7 @@ public class SqlColumnDefinitionNode : SqlNodeBase
         Computation = computation;
     }
 
-    protected internal SqlColumnDefinitionNode(
+    internal SqlColumnDefinitionNode(
         string name,
         ISqlColumnTypeDefinition typeDefinition,
         bool isNullable,
@@ -33,9 +36,28 @@ public class SqlColumnDefinitionNode : SqlNodeBase
         Computation = computation;
     }
 
+    /// <summary>
+    /// Column's name.
+    /// </summary>
     public string Name { get; }
+
+    /// <summary>
+    /// Column's runtime type.
+    /// </summary>
     public TypeNullability Type { get; }
+
+    /// <summary>
+    /// Optional <see cref="ISqlColumnTypeDefinition"/> instance that defines this column's type.
+    /// </summary>
     public ISqlColumnTypeDefinition? TypeDefinition { get; }
+
+    /// <summary>
+    /// Column's optional default value.
+    /// </summary>
     public SqlExpressionNode? DefaultValue { get; }
+
+    /// <summary>
+    /// Column's optional computation.
+    /// </summary>
     public SqlColumnComputation? Computation { get; }
 }

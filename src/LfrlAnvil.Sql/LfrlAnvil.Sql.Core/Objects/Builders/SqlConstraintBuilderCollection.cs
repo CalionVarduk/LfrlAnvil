@@ -9,12 +9,16 @@ using LfrlAnvil.Sql.Internal;
 
 namespace LfrlAnvil.Sql.Objects.Builders;
 
+/// <inheritdoc cref="ISqlConstraintBuilderCollection" />
 public abstract class SqlConstraintBuilderCollection : SqlBuilderApi, ISqlConstraintBuilderCollection
 {
     private readonly Dictionary<string, SqlConstraintBuilder> _map;
     private SqlTableBuilder? _table;
     private SqlPrimaryKeyBuilder? _primaryKey;
 
+    /// <summary>
+    /// Creates a new empty <see cref="SqlConstraintBuilderCollection"/> instance.
+    /// </summary>
     protected SqlConstraintBuilderCollection()
     {
         _table = null;
@@ -22,6 +26,7 @@ public abstract class SqlConstraintBuilderCollection : SqlBuilderApi, ISqlConstr
         _map = new Dictionary<string, SqlConstraintBuilder>( SqlHelpers.NameComparer );
     }
 
+    /// <inheritdoc cref="ISqlConstraintBuilderCollection.Table" />
     public SqlTableBuilder Table
     {
         get
@@ -31,28 +36,33 @@ public abstract class SqlConstraintBuilderCollection : SqlBuilderApi, ISqlConstr
         }
     }
 
+    /// <inheritdoc />
     public int Count => _map.Count;
 
     ISqlTableBuilder ISqlConstraintBuilderCollection.Table => Table;
 
+    /// <inheritdoc />
     [Pure]
     public bool Contains(string name)
     {
         return _map.ContainsKey( name );
     }
 
+    /// <inheritdoc cref="ISqlConstraintBuilderCollection.Get(string)" />
     [Pure]
     public SqlConstraintBuilder Get(string name)
     {
         return _map[name];
     }
 
+    /// <inheritdoc cref="ISqlConstraintBuilderCollection.TryGet(string)" />
     [Pure]
     public SqlConstraintBuilder? TryGet(string name)
     {
         return _map.GetValueOrDefault( name );
     }
 
+    /// <inheritdoc cref="ISqlConstraintBuilderCollection.GetPrimaryKey()" />
     [Pure]
     public SqlPrimaryKeyBuilder GetPrimaryKey()
     {
@@ -60,53 +70,62 @@ public abstract class SqlConstraintBuilderCollection : SqlBuilderApi, ISqlConstr
             ?? throw SqlHelpers.CreateObjectBuilderException( Table.Database, ExceptionResources.PrimaryKeyIsMissing( Table ) );
     }
 
+    /// <inheritdoc cref="ISqlConstraintBuilderCollection.TryGetPrimaryKey()" />
     [Pure]
     public SqlPrimaryKeyBuilder? TryGetPrimaryKey()
     {
         return _primaryKey;
     }
 
+    /// <inheritdoc cref="ISqlConstraintBuilderCollection.GetIndex(string)" />
     [Pure]
     public SqlIndexBuilder GetIndex(string name)
     {
         return GetTypedObject<SqlIndexBuilder>( name, SqlObjectType.Index );
     }
 
+    /// <inheritdoc cref="ISqlConstraintBuilderCollection.TryGetIndex(string)" />
     [Pure]
     public SqlIndexBuilder? TryGetIndex(string name)
     {
         return TryGetTypedObject<SqlIndexBuilder>( name, SqlObjectType.Index );
     }
 
+    /// <inheritdoc cref="ISqlConstraintBuilderCollection.GetForeignKey(string)" />
     [Pure]
     public SqlForeignKeyBuilder GetForeignKey(string name)
     {
         return GetTypedObject<SqlForeignKeyBuilder>( name, SqlObjectType.ForeignKey );
     }
 
+    /// <inheritdoc cref="ISqlConstraintBuilderCollection.TryGetForeignKey(string)" />
     [Pure]
     public SqlForeignKeyBuilder? TryGetForeignKey(string name)
     {
         return TryGetTypedObject<SqlForeignKeyBuilder>( name, SqlObjectType.ForeignKey );
     }
 
+    /// <inheritdoc cref="ISqlConstraintBuilderCollection.GetCheck(string)" />
     [Pure]
     public SqlCheckBuilder GetCheck(string name)
     {
         return GetTypedObject<SqlCheckBuilder>( name, SqlObjectType.Check );
     }
 
+    /// <inheritdoc cref="ISqlConstraintBuilderCollection.TryGetCheck(string)" />
     [Pure]
     public SqlCheckBuilder? TryGetCheck(string name)
     {
         return TryGetTypedObject<SqlCheckBuilder>( name, SqlObjectType.Check );
     }
 
+    /// <inheritdoc cref="ISqlConstraintBuilderCollection.SetPrimaryKey(ISqlIndexBuilder)" />
     public SqlPrimaryKeyBuilder SetPrimaryKey(SqlIndexBuilder index)
     {
         return SetPrimaryKey( SqlHelpers.GetDefaultPrimaryKeyName( Table ), index );
     }
 
+    /// <inheritdoc cref="ISqlConstraintBuilderCollection.SetPrimaryKey(string,ISqlIndexBuilder)" />
     public SqlPrimaryKeyBuilder SetPrimaryKey(string name, SqlIndexBuilder index)
     {
         Table.ThrowIfRemoved();
@@ -121,6 +140,7 @@ public abstract class SqlConstraintBuilderCollection : SqlBuilderApi, ISqlConstr
         return _primaryKey;
     }
 
+    /// <inheritdoc cref="ISqlConstraintBuilderCollection.CreateIndex(ReadOnlyArray{SqlOrderByNode},bool)" />
     public SqlIndexBuilder CreateIndex(ReadOnlyArray<SqlOrderByNode> columns, bool isUnique = false)
     {
         return CreateIndex(
@@ -129,6 +149,7 @@ public abstract class SqlConstraintBuilderCollection : SqlBuilderApi, ISqlConstr
             isUnique );
     }
 
+    /// <inheritdoc cref="ISqlConstraintBuilderCollection.CreateIndex(string,ReadOnlyArray{SqlOrderByNode},bool)" />
     public SqlIndexBuilder CreateIndex(string name, ReadOnlyArray<SqlOrderByNode> columns, bool isUnique = false)
     {
         Table.ThrowIfRemoved();
@@ -138,11 +159,13 @@ public abstract class SqlConstraintBuilderCollection : SqlBuilderApi, ISqlConstr
         return result;
     }
 
+    /// <inheritdoc cref="ISqlConstraintBuilderCollection.CreateForeignKey(ISqlIndexBuilder,ISqlIndexBuilder)" />
     public SqlForeignKeyBuilder CreateForeignKey(SqlIndexBuilder originIndex, SqlIndexBuilder referencedIndex)
     {
         return CreateForeignKey( SqlHelpers.GetDefaultForeignKeyName( originIndex, referencedIndex ), originIndex, referencedIndex );
     }
 
+    /// <inheritdoc cref="ISqlConstraintBuilderCollection.CreateForeignKey(string,ISqlIndexBuilder,ISqlIndexBuilder)" />
     public SqlForeignKeyBuilder CreateForeignKey(string name, SqlIndexBuilder originIndex, SqlIndexBuilder referencedIndex)
     {
         Table.ThrowIfRemoved();
@@ -152,11 +175,13 @@ public abstract class SqlConstraintBuilderCollection : SqlBuilderApi, ISqlConstr
         return result;
     }
 
+    /// <inheritdoc cref="ISqlConstraintBuilderCollection.CreateCheck(SqlConditionNode)" />
     public SqlCheckBuilder CreateCheck(SqlConditionNode condition)
     {
         return CreateCheck( SqlHelpers.GetDefaultCheckName( Table ), condition );
     }
 
+    /// <inheritdoc cref="ISqlConstraintBuilderCollection.CreateCheck(string,SqlConditionNode)" />
     public SqlCheckBuilder CreateCheck(string name, SqlConditionNode condition)
     {
         Table.ThrowIfRemoved();
@@ -166,6 +191,7 @@ public abstract class SqlConstraintBuilderCollection : SqlBuilderApi, ISqlConstr
         return result;
     }
 
+    /// <inheritdoc />
     public bool Remove(string name)
     {
         if ( ! _map.TryGetValue( name, out var obj ) || ! obj.CanRemove )
@@ -176,27 +202,47 @@ public abstract class SqlConstraintBuilderCollection : SqlBuilderApi, ISqlConstr
         return true;
     }
 
+    /// <summary>
+    /// Creates a new <see cref="SqlObjectBuilderEnumerator{T}"/> instance for this collection.
+    /// </summary>
+    /// <returns>New <see cref="SqlObjectBuilderEnumerator{T}"/> instance.</returns>
     [Pure]
     public SqlObjectBuilderEnumerator<SqlConstraintBuilder> GetEnumerator()
     {
         return new SqlObjectBuilderEnumerator<SqlConstraintBuilder>( _map );
     }
 
+    /// <summary>
+    /// Callback invoked just after the <paramref name="index"/> creation has been processed.
+    /// </summary>
+    /// <param name="index">Created index.</param>
     protected virtual void AfterCreateIndex(SqlIndexBuilder index)
     {
         AddCreation( Table, index );
     }
 
+    /// <summary>
+    /// Callback invoked just after the <paramref name="primaryKey"/> creation has been processed.
+    /// </summary>
+    /// <param name="primaryKey">Created primary key.</param>
     protected virtual void AfterCreatePrimaryKey(SqlPrimaryKeyBuilder primaryKey)
     {
         AddCreation( Table, primaryKey );
     }
 
+    /// <summary>
+    /// Callback invoked just after the <paramref name="foreignKey"/> creation has been processed.
+    /// </summary>
+    /// <param name="foreignKey">Created foreign key.</param>
     protected virtual void AfterCreateForeignKey(SqlForeignKeyBuilder foreignKey)
     {
         AddCreation( Table, foreignKey );
     }
 
+    /// <summary>
+    /// Callback invoked just after the <paramref name="check"/> creation has been processed.
+    /// </summary>
+    /// <param name="check">Created check.</param>
     protected virtual void AfterCreateCheck(SqlCheckBuilder check)
     {
         AddCreation( Table, check );

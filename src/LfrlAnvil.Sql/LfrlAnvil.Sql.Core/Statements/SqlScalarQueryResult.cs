@@ -7,37 +7,61 @@ using LfrlAnvil.Sql.Exceptions;
 
 namespace LfrlAnvil.Sql.Statements;
 
+/// <summary>
+/// Represents a type-erased scalar query reader result.
+/// </summary>
 public readonly struct SqlScalarQueryResult : IEquatable<SqlScalarQueryResult>
 {
+    /// <summary>
+    /// Represents a result without a <see cref="Value"/>.
+    /// </summary>
     public static readonly SqlScalarQueryResult Empty = new SqlScalarQueryResult();
 
+    /// <summary>
+    /// Creates a new <see cref="SqlScalarQueryResult"/> instance with a <see cref="Value"/>.
+    /// </summary>
+    /// <param name="value">Underlying value.</param>
     public SqlScalarQueryResult(object? value)
     {
         HasValue = true;
         Value = value;
     }
 
+    /// <summary>
+    /// Specifies whether or not any value was read.
+    /// </summary>
     public bool HasValue { get; }
+
+    /// <summary>
+    /// Underlying value.
+    /// </summary>
     public object? Value { get; }
 
+    /// <summary>
+    /// Returns a string representation of this <see cref="SqlScalarQueryResult"/> instance.
+    /// </summary>
+    /// <returns>String representation.</returns>
     [Pure]
     public override string ToString()
     {
         return HasValue ? $"{nameof( Value )}({Value})" : $"{nameof( Empty )}()";
     }
 
+    /// <inheritdoc />
     [Pure]
     public override int GetHashCode()
     {
         return HashCode.Combine( HasValue, Value );
     }
 
+    /// <inheritdoc />
     [Pure]
     public override bool Equals(object? obj)
     {
         return obj is SqlScalarQueryResult r && Equals( r );
     }
 
+    /// <inheritdoc />
     [Pure]
     public bool Equals(SqlScalarQueryResult other)
     {
@@ -47,6 +71,11 @@ public readonly struct SqlScalarQueryResult : IEquatable<SqlScalarQueryResult>
         return other.HasValue && Equals( Value, other.Value );
     }
 
+    /// <summary>
+    /// Returns the underlying value.
+    /// </summary>
+    /// <returns><see cref="Value"/>.</returns>
+    /// <exception cref="InvalidOperationException">When <see cref="HasValue"/> is equal to <b>false</b>.</exception>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public object? GetValue()
@@ -54,6 +83,11 @@ public readonly struct SqlScalarQueryResult : IEquatable<SqlScalarQueryResult>
         return HasValue ? Value : throw new InvalidOperationException( ExceptionResources.ScalarResultDoesNotHaveValue );
     }
 
+    /// <summary>
+    ///Returns the underlying value if it exists, otherwise returns the provided <paramref name="default"/> value.
+    /// </summary>
+    /// <param name="default">Default value.</param>
+    /// <returns><see cref="Value"/> if it exists, otherwise provided <paramref name="default"/> value.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public object? GetValueOrDefault(object? @default)
@@ -61,32 +95,66 @@ public readonly struct SqlScalarQueryResult : IEquatable<SqlScalarQueryResult>
         return HasValue ? Value : @default;
     }
 
+    /// <summary>
+    /// Checks if <paramref name="a"/> is equal to <paramref name="b"/>.
+    /// </summary>
+    /// <param name="a">First operand.</param>
+    /// <param name="b">Second operand.</param>
+    /// <returns><b>true</b> when operands are equal, otherwise <b>false</b>.</returns>
     [Pure]
-    public static bool operator ==(SqlScalarQueryResult left, SqlScalarQueryResult right)
+    public static bool operator ==(SqlScalarQueryResult a, SqlScalarQueryResult b)
     {
-        return left.Equals( right );
+        return a.Equals( b );
     }
 
+    /// <summary>
+    /// Checks if <paramref name="a"/> is not equal to <paramref name="b"/>.
+    /// </summary>
+    /// <param name="a">First operand.</param>
+    /// <param name="b">Second operand.</param>
+    /// <returns><b>true</b> when operands are not equal, otherwise <b>false</b>.</returns>
     [Pure]
-    public static bool operator !=(SqlScalarQueryResult left, SqlScalarQueryResult right)
+    public static bool operator !=(SqlScalarQueryResult a, SqlScalarQueryResult b)
     {
-        return ! left.Equals( right );
+        return ! a.Equals( b );
     }
 }
 
+/// <summary>
+/// Represents a generic scalar query reader result.
+/// </summary>
+/// <typeparam name="T">Value type.</typeparam>
 public readonly struct SqlScalarQueryResult<T> : IEquatable<SqlScalarQueryResult<T>>
 {
+    /// <summary>
+    /// Represents a result without a <see cref="Value"/>.
+    /// </summary>
     public static readonly SqlScalarQueryResult<T> Empty = new SqlScalarQueryResult<T>();
 
+    /// <summary>
+    /// Creates a new <see cref="SqlScalarQueryResult{T}"/> instance with a <see cref="Value"/>.
+    /// </summary>
+    /// <param name="value">Underlying value.</param>
     public SqlScalarQueryResult(T? value)
     {
         HasValue = true;
         Value = value;
     }
 
+    /// <summary>
+    /// Specifies whether or not any value was read.
+    /// </summary>
     public bool HasValue { get; }
+
+    /// <summary>
+    /// Underlying value.
+    /// </summary>
     public T? Value { get; }
 
+    /// <summary>
+    /// Returns a string representation of this <see cref="SqlScalarQueryResult{T}"/> instance.
+    /// </summary>
+    /// <returns>String representation.</returns>
     [Pure]
     public override string ToString()
     {
@@ -94,18 +162,21 @@ public readonly struct SqlScalarQueryResult<T> : IEquatable<SqlScalarQueryResult
         return HasValue ? $"{nameof( Value )}<{typeText}>({Value})" : $"{nameof( Empty )}<{typeText}>()";
     }
 
+    /// <inheritdoc />
     [Pure]
     public override int GetHashCode()
     {
         return HashCode.Combine( HasValue, Value );
     }
 
+    /// <inheritdoc />
     [Pure]
     public override bool Equals(object? obj)
     {
         return obj is SqlScalarQueryResult<T> r && Equals( r );
     }
 
+    /// <inheritdoc />
     [Pure]
     public bool Equals(SqlScalarQueryResult<T> other)
     {
@@ -115,6 +186,11 @@ public readonly struct SqlScalarQueryResult<T> : IEquatable<SqlScalarQueryResult
         return other.HasValue && Generic<T>.AreEqual( Value, other.Value );
     }
 
+    /// <summary>
+    /// Returns the underlying value.
+    /// </summary>
+    /// <returns><see cref="Value"/>.</returns>
+    /// <exception cref="InvalidOperationException">When <see cref="HasValue"/> is equal to <b>false</b>.</exception>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public T? GetValue()
@@ -122,6 +198,11 @@ public readonly struct SqlScalarQueryResult<T> : IEquatable<SqlScalarQueryResult
         return HasValue ? Value : throw new InvalidOperationException( ExceptionResources.ScalarResultDoesNotHaveValue );
     }
 
+    /// <summary>
+    ///Returns the underlying value if it exists, otherwise returns the provided <paramref name="default"/> value.
+    /// </summary>
+    /// <param name="default">Default value.</param>
+    /// <returns><see cref="Value"/> if it exists, otherwise provided <paramref name="default"/> value.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public T? GetValueOrDefault(T? @default)
@@ -129,15 +210,27 @@ public readonly struct SqlScalarQueryResult<T> : IEquatable<SqlScalarQueryResult
         return HasValue ? Value : @default;
     }
 
+    /// <summary>
+    /// Checks if <paramref name="a"/> is equal to <paramref name="b"/>.
+    /// </summary>
+    /// <param name="a">First operand.</param>
+    /// <param name="b">Second operand.</param>
+    /// <returns><b>true</b> when operands are equal, otherwise <b>false</b>.</returns>
     [Pure]
-    public static bool operator ==(SqlScalarQueryResult<T> left, SqlScalarQueryResult<T> right)
+    public static bool operator ==(SqlScalarQueryResult<T> a, SqlScalarQueryResult<T> b)
     {
-        return left.Equals( right );
+        return a.Equals( b );
     }
 
+    /// <summary>
+    /// Checks if <paramref name="a"/> is not equal to <paramref name="b"/>.
+    /// </summary>
+    /// <param name="a">First operand.</param>
+    /// <param name="b">Second operand.</param>
+    /// <returns><b>true</b> when operands are not equal, otherwise <b>false</b>.</returns>
     [Pure]
-    public static bool operator !=(SqlScalarQueryResult<T> left, SqlScalarQueryResult<T> right)
+    public static bool operator !=(SqlScalarQueryResult<T> a, SqlScalarQueryResult<T> b)
     {
-        return ! left.Equals( right );
+        return ! a.Equals( b );
     }
 }

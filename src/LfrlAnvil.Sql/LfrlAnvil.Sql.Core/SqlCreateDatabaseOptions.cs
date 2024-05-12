@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -7,14 +8,40 @@ using LfrlAnvil.Sql.Events;
 
 namespace LfrlAnvil.Sql;
 
+/// <summary>
+/// Specifies available <see cref="ISqlDatabase"/> creation options.
+/// </summary>
 public readonly record struct SqlCreateDatabaseOptions
 {
+    /// <summary>
+    /// Represents default options.
+    /// </summary>
     public static readonly SqlCreateDatabaseOptions Default = new SqlCreateDatabaseOptions();
 
+    /// <summary>
+    /// <see cref="SqlDatabaseCreateMode"/> value that specifies the mode.
+    /// </summary>
     public readonly SqlDatabaseCreateMode Mode;
+
+    /// <summary>
+    /// Specifies the name of the table that stores information about applied versions.
+    /// </summary>
     public readonly SqlSchemaObjectName? VersionHistoryName;
+
+    /// <summary>
+    /// <see cref="SqlDatabaseVersionHistoryMode"/> value that specifies which versions should be inserted into the version history table.
+    /// </summary>
     public readonly SqlDatabaseVersionHistoryMode VersionHistoryPersistenceMode;
+
+    /// <summary>
+    /// <see cref="SqlDatabaseVersionHistoryMode"/> value that specifies which version history records
+    /// should be read in order to verify and find the next version to be applied.
+    /// </summary>
     public readonly SqlDatabaseVersionHistoryMode VersionHistoryQueryMode;
+
+    /// <summary>
+    /// Specifies <see cref="IDbCommand"/> timeout for statements ran by the database factory.
+    /// </summary>
     public readonly TimeSpan? CommandTimeout;
 
     private readonly List<ISqlDatabaseFactoryStatementListener>? _statementListeners;
@@ -37,6 +64,10 @@ public readonly record struct SqlCreateDatabaseOptions
         _statementListenerCount = statementListeners?.Count ?? 0;
     }
 
+    /// <summary>
+    /// Returns a collection of registered <see cref="ISqlDatabaseFactoryStatementListener"/> instances.
+    /// </summary>
+    /// <returns>Collection of registered <see cref="ISqlDatabaseFactoryStatementListener"/> instances.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public ReadOnlySpan<ISqlDatabaseFactoryStatementListener> GetStatementListeners()
@@ -44,6 +75,11 @@ public readonly record struct SqlCreateDatabaseOptions
         return CollectionsMarshal.AsSpan( _statementListeners ).Slice( 0, _statementListenerCount );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="SqlCreateDatabaseOptions"/> instance with changed <see cref="Mode"/>.
+    /// </summary>
+    /// <param name="mode">Value to set.</param>
+    /// <returns>New <see cref="SqlCreateDatabaseOptions"/> instance.</returns>
     [Pure]
     public SqlCreateDatabaseOptions SetMode(SqlDatabaseCreateMode mode)
     {
@@ -57,6 +93,11 @@ public readonly record struct SqlCreateDatabaseOptions
             _statementListeners );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="SqlCreateDatabaseOptions"/> instance with changed <see cref="VersionHistoryName"/>.
+    /// </summary>
+    /// <param name="name">Value to set.</param>
+    /// <returns>New <see cref="SqlCreateDatabaseOptions"/> instance.</returns>
     [Pure]
     public SqlCreateDatabaseOptions SetVersionHistoryName(SqlSchemaObjectName? name)
     {
@@ -69,6 +110,11 @@ public readonly record struct SqlCreateDatabaseOptions
             _statementListeners );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="SqlCreateDatabaseOptions"/> instance with changed <see cref="VersionHistoryPersistenceMode"/>.
+    /// </summary>
+    /// <param name="mode">Value to set.</param>
+    /// <returns>New <see cref="SqlCreateDatabaseOptions"/> instance.</returns>
     [Pure]
     public SqlCreateDatabaseOptions SetVersionHistoryPersistenceMode(SqlDatabaseVersionHistoryMode mode)
     {
@@ -76,6 +122,11 @@ public readonly record struct SqlCreateDatabaseOptions
         return new SqlCreateDatabaseOptions( Mode, VersionHistoryName, mode, VersionHistoryQueryMode, CommandTimeout, _statementListeners );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="SqlCreateDatabaseOptions"/> instance with changed <see cref="VersionHistoryQueryMode"/>.
+    /// </summary>
+    /// <param name="mode">Value to set.</param>
+    /// <returns>New <see cref="SqlCreateDatabaseOptions"/> instance.</returns>
     [Pure]
     public SqlCreateDatabaseOptions SetVersionHistoryQueryMode(SqlDatabaseVersionHistoryMode mode)
     {
@@ -89,6 +140,11 @@ public readonly record struct SqlCreateDatabaseOptions
             _statementListeners );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="SqlCreateDatabaseOptions"/> instance with changed <see cref="CommandTimeout"/>.
+    /// </summary>
+    /// <param name="timeout">Value to set.</param>
+    /// <returns>New <see cref="SqlCreateDatabaseOptions"/> instance.</returns>
     [Pure]
     public SqlCreateDatabaseOptions SetCommandTimeout(TimeSpan? timeout)
     {
@@ -101,6 +157,12 @@ public readonly record struct SqlCreateDatabaseOptions
             _statementListeners );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="SqlCreateDatabaseOptions"/> instance
+    /// with added <see cref="ISqlDatabaseFactoryStatementListener"/> instance.
+    /// </summary>
+    /// <param name="listener">Listener to add.</param>
+    /// <returns>New <see cref="SqlCreateDatabaseOptions"/> instance.</returns>
     [Pure]
     public SqlCreateDatabaseOptions AddStatementListener(ISqlDatabaseFactoryStatementListener listener)
     {

@@ -9,9 +9,13 @@ using LfrlAnvil.Sql.Events;
 using LfrlAnvil.Sql.Expressions;
 using LfrlAnvil.Sql.Expressions.Visitors;
 using LfrlAnvil.Sql.Objects.Builders;
+using LfrlAnvil.Sql.Versioning;
 
 namespace LfrlAnvil.Sql.Internal;
 
+/// <summary>
+/// Represents an object used for managing application of versions to the database.
+/// </summary>
 public class SqlDatabaseCommitVersionsContext : IDisposable
 {
     private readonly Dictionary<string, SqlColumnTypeDefinition> _versionHistoryColumnTypes;
@@ -19,6 +23,9 @@ public class SqlDatabaseCommitVersionsContext : IDisposable
     private DbCommand? _updateVersionHistoryRecordCommand;
     private DbCommand? _deleteAllVersionHistoryRecordsCommand;
 
+    /// <summary>
+    /// Creates a new <see cref="SqlDatabaseCommitVersionsContext"/> instance.
+    /// </summary>
     protected internal SqlDatabaseCommitVersionsContext()
     {
         _versionHistoryColumnTypes = new Dictionary<string, SqlColumnTypeDefinition>( comparer: SqlHelpers.NameComparer );
@@ -29,6 +36,7 @@ public class SqlDatabaseCommitVersionsContext : IDisposable
 
     internal bool PersistLastVersionHistoryRecordOnly => _deleteAllVersionHistoryRecordsCommand is not null;
 
+    /// <inhertidoc />
     public virtual void Dispose()
     {
         _insertVersionHistoryRecordCommand?.Dispose();
@@ -36,16 +44,40 @@ public class SqlDatabaseCommitVersionsContext : IDisposable
         _deleteAllVersionHistoryRecordsCommand?.Dispose();
     }
 
+    /// <summary>
+    /// Callback invoked just before the processing of all versions to apply starts.
+    /// </summary>
+    /// <param name="builder">SQL database builder.</param>
+    /// <param name="connection">Opened connection to the database.</param>
+    /// <param name="executor">Decorator for executing SQL statements on the database.</param>
     protected internal virtual void OnBeforeVersionRangeApplication(
         SqlDatabaseBuilder builder,
         DbConnection connection,
         ref SqlDatabaseFactoryStatementExecutor executor) { }
 
+    /// <summary>
+    /// Callback invoked just after the processing of all versions to apply has finished.
+    /// </summary>
+    /// <param name="builder">SQL database builder.</param>
+    /// <param name="connection">Opened connection to the database.</param>
+    /// <param name="executor">Decorator for executing SQL statements on the database.</param>
     protected internal virtual void OnAfterVersionRangeApplication(
         SqlDatabaseBuilder builder,
         DbConnection connection,
         ref SqlDatabaseFactoryStatementExecutor executor) { }
 
+    /// <summary>
+    /// Callback invoked just before a DB transaction for a single applied version is created.
+    /// </summary>
+    /// <param name="builder">SQL database builder.</param>
+    /// <param name="key">
+    /// <see cref="SqlDatabaseFactoryStatementKey"/> instance that identifies the last SQL statement of the applied version.
+    /// </param>
+    /// <param name="connection">Opened connection to the database.</param>
+    /// <param name="executor">Decorator for executing SQL statements on the database.</param>
+    /// <returns>
+    /// <see cref="SqlDatabaseFactoryStatementKey"/> instance that identifies the last ran SQL statement of the applied version.
+    /// </returns>
     protected internal virtual SqlDatabaseFactoryStatementKey OnBeforeVersionTransaction(
         SqlDatabaseBuilder builder,
         SqlDatabaseFactoryStatementKey key,
@@ -55,15 +87,33 @@ public class SqlDatabaseCommitVersionsContext : IDisposable
         return key;
     }
 
-    protected internal virtual SqlDatabaseFactoryStatementKey OnAfterVersionTransaction(
+    /// <summary>
+    /// Callback invoked just after a DB transaction for a single applied version is committed.
+    /// </summary>
+    /// <param name="builder">SQL database builder.</param>
+    /// <param name="key">
+    /// <see cref="SqlDatabaseFactoryStatementKey"/> instance that identifies the last SQL statement of the applied version.
+    /// </param>
+    /// <param name="connection">Opened connection to the database.</param>
+    /// <param name="executor">Decorator for executing SQL statements on the database.</param>
+    protected internal virtual void OnAfterVersionTransaction(
         SqlDatabaseBuilder builder,
         SqlDatabaseFactoryStatementKey key,
         DbConnection connection,
-        ref SqlDatabaseFactoryStatementExecutor executor)
-    {
-        return key;
-    }
+        ref SqlDatabaseFactoryStatementExecutor executor) { }
 
+    /// <summary>
+    /// Callback invoked just before a range of SQL statements prepared for a single applied version is executed.
+    /// </summary>
+    /// <param name="builder">SQL database builder.</param>
+    /// <param name="key">
+    /// <see cref="SqlDatabaseFactoryStatementKey"/> instance that identifies the last SQL statement of the applied version.
+    /// </param>
+    /// <param name="command">DB command that will execute all statements.</param>
+    /// <param name="executor">Decorator for executing SQL statements on the database.</param>
+    /// <returns>
+    /// <see cref="SqlDatabaseFactoryStatementKey"/> instance that identifies the last ran SQL statement of the applied version.
+    /// </returns>
     protected internal virtual SqlDatabaseFactoryStatementKey OnBeforeVersionActionRangeExecution(
         SqlDatabaseBuilder builder,
         SqlDatabaseFactoryStatementKey key,
@@ -73,6 +123,18 @@ public class SqlDatabaseCommitVersionsContext : IDisposable
         return key;
     }
 
+    /// <summary>
+    /// Callback invoked just after a range of SQL statements prepared for a single applied version has been executed.
+    /// </summary>
+    /// <param name="builder">SQL database builder.</param>
+    /// <param name="key">
+    /// <see cref="SqlDatabaseFactoryStatementKey"/> instance that identifies the last SQL statement of the applied version.
+    /// </param>
+    /// <param name="command">DB command that executed all statements.</param>
+    /// <param name="executor">Decorator for executing SQL statements on the database.</param>
+    /// <returns>
+    /// <see cref="SqlDatabaseFactoryStatementKey"/> instance that identifies the last ran SQL statement of the applied version.
+    /// </returns>
     protected internal virtual SqlDatabaseFactoryStatementKey OnAfterVersionActionRangeExecution(
         SqlDatabaseBuilder builder,
         SqlDatabaseFactoryStatementKey key,
@@ -82,6 +144,12 @@ public class SqlDatabaseCommitVersionsContext : IDisposable
         return key;
     }
 
+    /// <summary>
+    /// Prepares a DB command responsible for inserting a single record into the version history table.
+    /// </summary>
+    /// <param name="command">DB command to prepare.</param>
+    /// <param name="table">SQL table builder for the version history table.</param>
+    /// <param name="nodeInterpreter">SQL node interpreter instance.</param>
     protected virtual void PrepareInsertVersionHistoryRecordCommand(
         DbCommand command,
         SqlTableBuilder table,
@@ -137,6 +205,12 @@ public class SqlDatabaseCommitVersionsContext : IDisposable
         AddCommandParameter( command, cCommitDateUtc );
     }
 
+    /// <summary>
+    /// Prepares a DB command responsible for removing all records from the version history table.
+    /// </summary>
+    /// <param name="command">DB command to prepare.</param>
+    /// <param name="table">SQL table builder for the version history table.</param>
+    /// <param name="nodeInterpreter">SQL node interpreter instance.</param>
     protected virtual void PrepareDeleteAllVersionHistoryRecordsCommand(
         DbCommand command,
         SqlTableBuilder table,
@@ -147,6 +221,12 @@ public class SqlDatabaseCommitVersionsContext : IDisposable
         command.CommandText = nodeInterpreter.Context.Sql.AppendSemicolon().ToString();
     }
 
+    /// <summary>
+    /// Prepares a DB command responsible for updating a single record in the version history table.
+    /// </summary>
+    /// <param name="command">DB command to prepare.</param>
+    /// <param name="table">SQL table builder for the version history table.</param>
+    /// <param name="nodeInterpreter">SQL node interpreter instance.</param>
     protected virtual void PrepareUpdateVersionHistoryRecordCommand(
         DbCommand command,
         SqlTableBuilder table,
@@ -171,7 +251,13 @@ public class SqlDatabaseCommitVersionsContext : IDisposable
         AddCommandParameter( command, cCommitDurationInTicks );
     }
 
-    protected virtual void SetUpdateVersionHistoryRecordsCommandParameters(
+    /// <summary>
+    /// Prepares values of DB parameters of a command responsible for updating a single record in the version history table.
+    /// </summary>
+    /// <param name="parameters">Collection of DB parameters.</param>
+    /// <param name="ordinal"><see cref="SqlDatabaseVersionRecord.Ordinal"/> of the record to update.</param>
+    /// <param name="elapsedTime">Specifies the time it took to fully apply the version to the database.</param>
+    protected virtual void SetUpdateVersionHistoryRecordCommandParameters(
         DbParameterCollection parameters,
         int ordinal,
         TimeSpan elapsedTime)
@@ -187,6 +273,13 @@ public class SqlDatabaseCommitVersionsContext : IDisposable
         pCommitDurationInTicks.Value = pCommitDurationInTicksType.TryToParameterValue( elapsedTime.Ticks );
     }
 
+    /// <summary>
+    /// Prepares values of DB parameters of a command responsible for inserting a single record into the version history table.
+    /// </summary>
+    /// <param name="parameters">Collection of DB parameters.</param>
+    /// <param name="ordinal"><see cref="SqlDatabaseVersionRecord.Ordinal"/> of the record to insert.</param>
+    /// <param name="version">Identifier of the applied version.</param>
+    /// <param name="description">Description of the applied version.</param>
     protected virtual void SetInsertVersionHistoryRecordCommandParameters(
         DbParameterCollection parameters,
         int ordinal,
@@ -219,6 +312,14 @@ public class SqlDatabaseCommitVersionsContext : IDisposable
         pCommitDateUtc.Value = pCommitDateUtcType.TryToParameterValue( DateTime.UtcNow );
     }
 
+    /// <summary>
+    /// Returns an <see cref="SqlColumnTypeDefinition"/> of a version history table's column with the provided <paramref name="name"/>.
+    /// </summary>
+    /// <param name="name">Name of the column.</param>
+    /// <returns>
+    /// <see cref="SqlColumnTypeDefinition"/> of a version history table's column with the provided <paramref name="name"/>.
+    /// </returns>
+    /// <exception cref="KeyNotFoundException">When version history table column with the provided name does not exist.</exception>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     protected SqlColumnTypeDefinition GetVersionHistoryColumnType(string name)
@@ -226,6 +327,11 @@ public class SqlDatabaseCommitVersionsContext : IDisposable
         return _versionHistoryColumnTypes[name];
     }
 
+    /// <summary>
+    /// Adds a DB parameter to the provided <paramref name="command"/> based on the <paramref name="column"/> definition.
+    /// </summary>
+    /// <param name="command">DB command to add a DB parameter to.</param>
+    /// <param name="column">SQL column builder to use for initializing the DB parameter.</param>
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     protected static void AddCommandParameter(DbCommand command, SqlColumnBuilder column)
     {
@@ -372,7 +478,7 @@ public class SqlDatabaseCommitVersionsContext : IDisposable
 
             foreach ( var (ordinal, elapsedTime) in elapsedTimes )
             {
-                SetUpdateVersionHistoryRecordsCommandParameters( _updateVersionHistoryRecordCommand.Parameters, ordinal, elapsedTime );
+                SetUpdateVersionHistoryRecordCommandParameters( _updateVersionHistoryRecordCommand.Parameters, ordinal, elapsedTime );
                 executor.ExecuteForVersionHistory( _updateVersionHistoryRecordCommand, SqlHelpers.ExecuteNonQueryDelegate );
             }
 

@@ -4,8 +4,17 @@ using System.Runtime.CompilerServices;
 
 namespace LfrlAnvil.Sql.Events;
 
+/// <summary>
+/// Creates instances of <see cref="ISqlDatabaseFactoryStatementListener"/> type.
+/// </summary>
 public static class SqlDatabaseFactoryStatementListener
 {
+    /// <summary>
+    /// Creates a new <see cref="ISqlDatabaseFactoryStatementListener"/> instance.
+    /// </summary>
+    /// <param name="onBefore">Delegate invoked just before an SQL statement execution starts.</param>
+    /// <param name="onAfter">Delegate invoked just after an SQL statement execution has finished.</param>
+    /// <returns>New <see cref="ISqlDatabaseFactoryStatementListener"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static ISqlDatabaseFactoryStatementListener Create(

@@ -8,12 +8,16 @@ using LfrlAnvil.Sql.Internal;
 
 namespace LfrlAnvil.Sql.Objects.Builders;
 
+/// <inheritdoc cref="ISqlSchemaBuilderCollection" />
 public abstract class SqlSchemaBuilderCollection : SqlBuilderApi, ISqlSchemaBuilderCollection
 {
     private readonly Dictionary<string, SqlSchemaBuilder> _map;
     private SqlDatabaseBuilder? _database;
     private SqlSchemaBuilder? _default;
 
+    /// <summary>
+    /// Creates a new empty <see cref="SqlSchemaBuilderCollection"/> instance.
+    /// </summary>
     protected SqlSchemaBuilderCollection()
     {
         _database = null;
@@ -21,6 +25,7 @@ public abstract class SqlSchemaBuilderCollection : SqlBuilderApi, ISqlSchemaBuil
         _map = new Dictionary<string, SqlSchemaBuilder>( SqlHelpers.NameComparer );
     }
 
+    /// <inheritdoc cref="ISqlSchemaBuilderCollection.Database" />
     public SqlDatabaseBuilder Database
     {
         get
@@ -30,6 +35,7 @@ public abstract class SqlSchemaBuilderCollection : SqlBuilderApi, ISqlSchemaBuil
         }
     }
 
+    /// <inheritdoc cref="ISqlSchemaBuilderCollection.Default" />
     public SqlSchemaBuilder Default
     {
         get
@@ -39,29 +45,34 @@ public abstract class SqlSchemaBuilderCollection : SqlBuilderApi, ISqlSchemaBuil
         }
     }
 
+    /// <inheritdoc />
     public int Count => _map.Count;
 
     ISqlSchemaBuilder ISqlSchemaBuilderCollection.Default => Default;
     ISqlDatabaseBuilder ISqlSchemaBuilderCollection.Database => Database;
 
+    /// <inheritdoc />
     [Pure]
     public bool Contains(string name)
     {
         return _map.ContainsKey( name );
     }
 
+    /// <inheritdoc cref="ISqlSchemaBuilderCollection.Get(string)" />
     [Pure]
     public SqlSchemaBuilder Get(string name)
     {
         return _map[name];
     }
 
+    /// <inheritdoc cref="ISqlSchemaBuilderCollection.TryGet(string)" />
     [Pure]
     public SqlSchemaBuilder? TryGet(string name)
     {
         return _map.GetValueOrDefault( name );
     }
 
+    /// <inheritdoc cref="ISqlSchemaBuilderCollection.Create(string)" />
     public SqlSchemaBuilder Create(string name)
     {
         Database.ThrowIfNameIsInvalid( SqlObjectType.Schema, name );
@@ -75,6 +86,7 @@ public abstract class SqlSchemaBuilderCollection : SqlBuilderApi, ISqlSchemaBuil
         return schema;
     }
 
+    /// <inheritdoc cref="ISqlSchemaBuilderCollection.GetOrCreate(string)" />
     public SqlSchemaBuilder GetOrCreate(string name)
     {
         Database.ThrowIfNameIsInvalid( SqlObjectType.Schema, name );
@@ -88,6 +100,7 @@ public abstract class SqlSchemaBuilderCollection : SqlBuilderApi, ISqlSchemaBuil
         return schema;
     }
 
+    /// <inheritdoc />
     public bool Remove(string name)
     {
         if ( ! _map.TryGetValue( name, out var schema ) || ! schema.CanRemove )
@@ -99,14 +112,27 @@ public abstract class SqlSchemaBuilderCollection : SqlBuilderApi, ISqlSchemaBuil
         return true;
     }
 
+    /// <summary>
+    /// Creates a new <see cref="SqlObjectBuilderEnumerator{T}"/> instance for this collection.
+    /// </summary>
+    /// <returns>New <see cref="SqlObjectBuilderEnumerator{T}"/> instance.</returns>
     [Pure]
     public SqlObjectBuilderEnumerator<SqlSchemaBuilder> GetEnumerator()
     {
         return new SqlObjectBuilderEnumerator<SqlSchemaBuilder>( _map );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="SqlSchemaBuilder"/> instance.
+    /// </summary>
+    /// <param name="name">Schema's name.</param>
+    /// <returns>New <see cref="SqlSchemaBuilder"/> instance.</returns>
     protected abstract SqlSchemaBuilder CreateSchemaBuilder(string name);
 
+    /// <summary>
+    /// Callback invoked just after the <paramref name="schema"/> creation has been processed.
+    /// </summary>
+    /// <param name="schema">Created schema.</param>
     protected virtual void AfterCreateSchema(SqlSchemaBuilder schema)
     {
         AddCreation( schema, schema );

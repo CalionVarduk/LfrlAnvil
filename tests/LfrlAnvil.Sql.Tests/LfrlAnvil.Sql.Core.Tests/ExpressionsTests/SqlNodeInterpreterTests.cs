@@ -18,7 +18,7 @@ public class SqlNodeInterpreterTests : TestsBase
         {
             sut.BeginNameDelimiter.Should().Be( '[' );
             sut.EndNameDelimiter.Should().Be( ']' );
-            sut.RecordSetNameBehavior.Should().BeNull();
+            sut.RecordSetNodeBehavior.Should().BeNull();
         }
     }
 
@@ -243,13 +243,13 @@ public class SqlNodeInterpreterTests : TestsBase
         var set = SqlNode.RawRecordSet( "foo" );
         var sut = new SqlNodeDebugInterpreter();
 
-        SqlNodeInterpreter.RecordSetNameBehaviorRule? rule;
+        SqlNodeInterpreter.RecordSetNodeBehaviorRule? rule;
         using ( sut.TempIgnoreRecordSet( set ) )
-            rule = sut.RecordSetNameBehavior;
+            rule = sut.RecordSetNodeBehavior;
 
         using ( new AssertionScope() )
         {
-            sut.RecordSetNameBehavior.Should().BeNull();
+            sut.RecordSetNodeBehavior.Should().BeNull();
             rule.Should().NotBeNull();
             (rule?.Node).Should().BeSameAs( set );
             (rule?.ReplacementNode).Should().BeNull();
@@ -263,13 +263,13 @@ public class SqlNodeInterpreterTests : TestsBase
         var replacement = SqlNode.RawRecordSet( "bar" );
         var sut = new SqlNodeDebugInterpreter();
 
-        SqlNodeInterpreter.RecordSetNameBehaviorRule? rule;
+        SqlNodeInterpreter.RecordSetNodeBehaviorRule? rule;
         using ( sut.TempReplaceRecordSet( set, replacement ) )
-            rule = sut.RecordSetNameBehavior;
+            rule = sut.RecordSetNodeBehavior;
 
         using ( new AssertionScope() )
         {
-            sut.RecordSetNameBehavior.Should().BeNull();
+            sut.RecordSetNodeBehavior.Should().BeNull();
             rule.Should().NotBeNull();
             (rule?.Node).Should().BeSameAs( set );
             (rule?.ReplacementNode).Should().BeSameAs( replacement );
@@ -281,13 +281,13 @@ public class SqlNodeInterpreterTests : TestsBase
     {
         var sut = new SqlNodeDebugInterpreter();
 
-        SqlNodeInterpreter.RecordSetNameBehaviorRule? rule;
+        SqlNodeInterpreter.RecordSetNodeBehaviorRule? rule;
         using ( sut.TempIgnoreAllRecordSets() )
-            rule = sut.RecordSetNameBehavior;
+            rule = sut.RecordSetNodeBehavior;
 
         using ( new AssertionScope() )
         {
-            sut.RecordSetNameBehavior.Should().BeNull();
+            sut.RecordSetNodeBehavior.Should().BeNull();
             rule.Should().NotBeNull();
             (rule?.Node).Should().BeNull();
             (rule?.ReplacementNode).Should().BeNull();
@@ -299,15 +299,15 @@ public class SqlNodeInterpreterTests : TestsBase
     {
         var sut = new SqlNodeDebugInterpreter();
         _ = sut.TempIgnoreAllRecordSets();
-        var previous = sut.RecordSetNameBehavior;
+        var previous = sut.RecordSetNodeBehavior;
 
-        SqlNodeInterpreter.RecordSetNameBehaviorRule? rule;
+        SqlNodeInterpreter.RecordSetNodeBehaviorRule? rule;
         using ( sut.TempIncludeAllRecordSets() )
-            rule = sut.RecordSetNameBehavior;
+            rule = sut.RecordSetNodeBehavior;
 
         using ( new AssertionScope() )
         {
-            sut.RecordSetNameBehavior.Should().BeEquivalentTo( previous );
+            sut.RecordSetNodeBehavior.Should().BeEquivalentTo( previous );
             rule.Should().BeNull();
             (rule?.ReplacementNode).Should().BeNull();
         }

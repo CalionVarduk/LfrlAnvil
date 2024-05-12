@@ -6,6 +6,10 @@ using LfrlAnvil.Sql.Objects;
 
 namespace LfrlAnvil.Sql.Internal;
 
+/// <summary>
+/// Represents a lightweight enumerator of a collection of <see cref="SqlObject"/> instances.
+/// </summary>
+/// <typeparam name="T">SQL object type.</typeparam>
 public struct SqlObjectEnumerator<T> : IEnumerator<T>
     where T : SqlObject
 {
@@ -16,9 +20,16 @@ public struct SqlObjectEnumerator<T> : IEnumerator<T>
         _enumerator = source.Values.GetEnumerator();
     }
 
+    /// <inheritdoc />
     public T Current => _enumerator.Current;
+
     object IEnumerator.Current => Current;
 
+    /// <summary>
+    /// Creates a new <see cref="SqlObjectEnumerator{T,TDestination}"/> instance.
+    /// </summary>
+    /// <typeparam name="TDestination">Destination SQL object type.</typeparam>
+    /// <returns>New <see cref="SqlObjectEnumerator{T,TDestination}"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public SqlObjectEnumerator<T, TDestination> UnsafeReinterpretAs<TDestination>()
@@ -27,11 +38,13 @@ public struct SqlObjectEnumerator<T> : IEnumerator<T>
         return new SqlObjectEnumerator<T, TDestination>( _enumerator );
     }
 
+    /// <inheritdoc />
     public void Dispose()
     {
         _enumerator.Dispose();
     }
 
+    /// <inheritdoc />
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public bool MoveNext()
     {
@@ -44,6 +57,11 @@ public struct SqlObjectEnumerator<T> : IEnumerator<T>
     }
 }
 
+/// <summary>
+/// Represents a lightweight enumerator of a collection of <see cref="SqlObject"/> instances.
+/// </summary>
+/// <typeparam name="TSource">Source SQL object type.</typeparam>
+/// <typeparam name="TDestination">Destination SQL object type.</typeparam>
 public struct SqlObjectEnumerator<TSource, TDestination> : IEnumerator<TDestination>
     where TSource : SqlObject
     where TDestination : TSource
@@ -55,14 +73,18 @@ public struct SqlObjectEnumerator<TSource, TDestination> : IEnumerator<TDestinat
         _enumerator = enumerator;
     }
 
+    /// <inheritdoc />
     public TDestination Current => ReinterpretCast.To<TDestination>( _enumerator.Current );
+
     object IEnumerator.Current => Current;
 
+    /// <inheritdoc />
     public void Dispose()
     {
         _enumerator.Dispose();
     }
 
+    /// <inheritdoc />
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public bool MoveNext()
     {

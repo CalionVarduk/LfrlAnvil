@@ -9,8 +9,19 @@ using LfrlAnvil.Sql.Versioning;
 
 namespace LfrlAnvil.Sql.Objects;
 
+/// <inheritdoc />
 public abstract class SqlDatabase : ISqlDatabase
 {
+    /// <summary>
+    /// Creates a new <see cref="SqlDatabase"/> instance.
+    /// </summary>
+    /// <param name="builder">Source builder.</param>
+    /// <param name="schemas">Collection of schemas defined in this database.</param>
+    /// <param name="connector">Connector object that can be used to connect to this database.</param>
+    /// <param name="version">Current version of this database.</param>
+    /// <param name="versionRecordsQuery">
+    /// Query reader's executor capable of reading metadata of all versions applied to this database.
+    /// </param>
     protected SqlDatabase(
         SqlDatabaseBuilder builder,
         SqlSchemaCollection schemas,
@@ -33,16 +44,37 @@ public abstract class SqlDatabase : ISqlDatabase
         TypeDefinitions.Lock();
     }
 
+    /// <inheritdoc />
     public SqlDialect Dialect { get; }
+
+    /// <inheritdoc />
     public Version Version { get; }
+
+    /// <inheritdoc />
     public string ServerVersion { get; }
+
+    /// <inheritdoc />
     public ISqlDataTypeProvider DataTypes { get; }
+
+    /// <inheritdoc cref="ISqlDatabase.TypeDefinitions" />
     public SqlColumnTypeDefinitionProvider TypeDefinitions { get; }
+
+    /// <inheritdoc />
     public ISqlNodeInterpreterFactory NodeInterpreters { get; }
+
+    /// <inheritdoc cref="ISqlDatabase.QueryReaders" />
     public SqlQueryReaderFactory QueryReaders { get; }
+
+    /// <inheritdoc cref="ISqlDatabase.ParameterBinders" />
     public SqlParameterBinderFactory ParameterBinders { get; }
+
+    /// <inheritdoc cref="ISqlDatabase.Schemas" />
     public SqlSchemaCollection Schemas { get; }
+
+    /// <inheritdoc />
     public SqlQueryReaderExecutor<SqlDatabaseVersionRecord> VersionRecordsQuery { get; }
+
+    /// <inheritdoc cref="ISqlDatabase.Connector" />
     public ISqlDatabaseConnector<DbConnection> Connector { get; }
 
     ISqlSchemaCollection ISqlDatabase.Schemas => Schemas;
@@ -51,8 +83,10 @@ public abstract class SqlDatabase : ISqlDatabase
     ISqlParameterBinderFactory ISqlDatabase.ParameterBinders => ParameterBinders;
     ISqlDatabaseConnector ISqlDatabase.Connector => Connector;
 
+    /// <inheritdoc />
     public virtual void Dispose() { }
 
+    /// <inheritdoc />
     [Pure]
     public SqlDatabaseVersionRecord[] GetRegisteredVersions()
     {

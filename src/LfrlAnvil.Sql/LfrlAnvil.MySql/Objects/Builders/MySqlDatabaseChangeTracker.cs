@@ -212,7 +212,7 @@ public sealed class MySqlDatabaseChangeTracker : SqlDatabaseChangeTracker
         ValidateTable( table );
 
         var interpreter = CreateNodeInterpreter();
-        var createTable = table.ToCreateNode( includeForeignKeys: false, sortGeneratedColumns: true );
+        var createTable = table.ToCreateNode( includeForeignKeys: false, sortComputedColumns: true );
         interpreter.VisitCreateTable( createTable );
         AppendSqlCommandEnd( interpreter );
 

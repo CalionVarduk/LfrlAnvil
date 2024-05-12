@@ -8,14 +8,17 @@ using System.Text;
 using LfrlAnvil.Exceptions;
 using LfrlAnvil.Memory;
 using LfrlAnvil.Sql.Exceptions;
-using LfrlAnvil.Sql.Objects;
 using LfrlAnvil.Sql.Objects.Builders;
 using ExceptionResources = LfrlAnvil.Sql.Exceptions.ExceptionResources;
 
 namespace LfrlAnvil.Sql.Internal;
 
+/// <summary>
+/// Contains various SQL helpers.
+/// </summary>
 public static class SqlHelpers
 {
+#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
     public const string VersionHistoryName = "__VersionHistory";
     public const string VersionHistoryOrdinalName = "Ordinal";
     public const string VersionHistoryVersionMajorName = "VersionMajor";
@@ -44,13 +47,34 @@ public static class SqlHelpers
     public const char TextDelimiter = '\'';
     public const char BlobMarker = 'X';
     public const int StackallocThreshold = 64;
+#pragma warning restore CS1591 // Missing XML comment for publicly visible type or member
+
+    /// <summary>
+    /// SQL object name comparer. Equivalent to <see cref="StringComparer.OrdinalIgnoreCase"/>.
+    /// </summary>
     public static readonly StringComparer NameComparer = StringComparer.OrdinalIgnoreCase;
+
+    /// <summary>
+    /// Non-query <see cref="IDbCommand"/> executor delegate.
+    /// </summary>
     public static readonly Func<IDbCommand, int> ExecuteNonQueryDelegate = static cmd => cmd.ExecuteNonQuery();
+
+    /// <summary>
+    /// Scalar <see cref="IDbCommand"/> executor delegate that returns <see cref="Boolean"/> value.
+    /// </summary>
     public static readonly Func<IDbCommand, bool> ExecuteBoolScalarDelegate = static cmd => Convert.ToBoolean( cmd.ExecuteScalar() );
 
+    /// <summary>
+    /// Default creator of <see cref="ISqlDefaultObjectNameProvider"/> instances.
+    /// </summary>
     public static readonly SqlDefaultObjectNameProviderCreator<SqlDefaultObjectNameProvider> DefaultNamesCreator =
         static (_, _) => new SqlDefaultObjectNameProvider();
 
+    /// <summary>
+    /// Converts <paramref name="value"/> to a DB literal.
+    /// </summary>
+    /// <param name="value">Value to convert.</param>
+    /// <returns><b>"1"</b> when <paramref name="value"/> is equal to <b>true</b>, otherwise <b>"0"</b>.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static string GetDbLiteral(bool value)
@@ -58,6 +82,11 @@ public static class SqlHelpers
         return value ? "1" : "0";
     }
 
+    /// <summary>
+    /// Converts <paramref name="value"/> to a DB literal.
+    /// </summary>
+    /// <param name="value">Value to convert.</param>
+    /// <returns><see cref="String"/> representation of the provided <paramref name="value"/>.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static string GetDbLiteral(long value)
@@ -65,6 +94,11 @@ public static class SqlHelpers
         return value.ToString( CultureInfo.InvariantCulture );
     }
 
+    /// <summary>
+    /// Converts <paramref name="value"/> to a DB literal.
+    /// </summary>
+    /// <param name="value">Value to convert.</param>
+    /// <returns><see cref="String"/> representation of the provided <paramref name="value"/>.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static string GetDbLiteral(ulong value)
@@ -72,6 +106,11 @@ public static class SqlHelpers
         return value.ToString( CultureInfo.InvariantCulture );
     }
 
+    /// <summary>
+    /// Converts <paramref name="value"/> to a DB literal.
+    /// </summary>
+    /// <param name="value">Value to convert.</param>
+    /// <returns><see cref="String"/> representation of the provided <paramref name="value"/>.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static string GetDbLiteral(double value)
@@ -80,6 +119,11 @@ public static class SqlHelpers
         return IsFloatingPoint( result ) ? result : $"{result}.0";
     }
 
+    /// <summary>
+    /// Converts <paramref name="value"/> to a DB literal.
+    /// </summary>
+    /// <param name="value">Value to convert.</param>
+    /// <returns><see cref="String"/> representation of the provided <paramref name="value"/>.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static string GetDbLiteral(float value)
@@ -88,6 +132,11 @@ public static class SqlHelpers
         return IsFloatingPoint( result ) ? result : $"{result}.0";
     }
 
+    /// <summary>
+    /// Converts <paramref name="value"/> to a DB literal.
+    /// </summary>
+    /// <param name="value">Value to convert.</param>
+    /// <returns><see cref="String"/> representation of the provided <paramref name="value"/>.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static string GetDbLiteral(decimal value)
@@ -95,6 +144,11 @@ public static class SqlHelpers
         return value.ToString( DecimalFormat, CultureInfo.InvariantCulture );
     }
 
+    /// <summary>
+    /// Converts <paramref name="value"/> to a DB literal.
+    /// </summary>
+    /// <param name="value">Value to convert.</param>
+    /// <returns><see cref="String"/> representation of the provided <paramref name="value"/>.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static string GetDbLiteral(char value)
@@ -102,6 +156,12 @@ public static class SqlHelpers
         return $"{TextDelimiter}{value}{TextDelimiter}";
     }
 
+    /// <summary>
+    /// Converts <paramref name="value"/> to a DB literal.
+    /// </summary>
+    /// <param name="value">Value to convert.</param>
+    /// <returns><see cref="String"/> representation of the provided <paramref name="value"/>.</returns>
+    /// <remarks>Escapes <see cref="TextDelimiter"/> occurrences.</remarks>
     [Pure]
     public static string GetDbLiteral(ReadOnlySpan<char> value)
     {
@@ -148,6 +208,11 @@ public static class SqlHelpers
         }
     }
 
+    /// <summary>
+    /// Converts <paramref name="value"/> to a DB literal.
+    /// </summary>
+    /// <param name="value">Value to convert.</param>
+    /// <returns><see cref="String"/> representation of the provided <paramref name="value"/>.</returns>
     [Pure]
     public static string GetDbLiteral(ReadOnlySpan<byte> value)
     {
@@ -179,12 +244,32 @@ public static class SqlHelpers
         }
     }
 
+    /// <summary>
+    /// Returns the full name of an SQL object.
+    /// </summary>
+    /// <param name="schemaName">SQL schema name.</param>
+    /// <param name="name">SQL object name.</param>
+    /// <param name="separator">Name separator. Equal to <b>.</b> by default.</param>
+    /// <returns>Full SQL object name.</returns>
     [Pure]
     public static string GetFullName(string schemaName, string name, char separator = '.')
     {
         return schemaName.Length > 0 ? $"{schemaName}{separator}{name}" : name;
     }
 
+    /// <summary>
+    /// Returns the full name of an SQL field.
+    /// </summary>
+    /// <param name="schemaName">SQL schema name.</param>
+    /// <param name="recordSetName">SQL record set name.</param>
+    /// <param name="name">SQL field name.</param>
+    /// <param name="firstSeparator">
+    /// <paramref name="schemaName"/> and <paramref name="recordSetName"/> separator. Equal to <b>.</b> by default.
+    /// </param>
+    /// <param name="secondSeparator">
+    /// <paramref name="recordSetName"/> and <paramref name="name"/> separator. Equal to <b>.</b> by default.
+    /// </param>
+    /// <returns>Full SQL field name.</returns>
     [Pure]
     public static string GetFullName(
         string schemaName,
@@ -198,12 +283,23 @@ public static class SqlHelpers
             : $"{recordSetName}{secondSeparator}{name}";
     }
 
+    /// <summary>
+    /// Creates a default primary key constraint name.
+    /// </summary>
+    /// <param name="table"><see cref="ISqlTableBuilder"/> that the primary key belongs to.</param>
+    /// <returns>Default primary key constraint name.</returns>
     [Pure]
     public static string GetDefaultPrimaryKeyName(ISqlTableBuilder table)
     {
         return $"PK_{table.Name}";
     }
 
+    /// <summary>
+    /// Creates a default foreign key constraint name.
+    /// </summary>
+    /// <param name="originIndex"><see cref="ISqlIndexBuilder"/> from which the foreign key originates.</param>
+    /// <param name="referencedIndex"><see cref="ISqlIndexBuilder"/> which the foreign key references.</param>
+    /// <returns>Default foreign key constraint name.</returns>
     [Pure]
     public static string GetDefaultForeignKeyName(ISqlIndexBuilder originIndex, ISqlIndexBuilder referencedIndex)
     {
@@ -230,12 +326,24 @@ public static class SqlHelpers
         return builder.ToString();
     }
 
+    /// <summary>
+    /// Creates a default check constraint name.
+    /// </summary>
+    /// <param name="table"><see cref="ISqlTableBuilder"/> that the check belongs to.</param>
+    /// <returns>Default check constraint name.</returns>
     [Pure]
     public static string GetDefaultCheckName(ISqlTableBuilder table)
     {
         return $"CHK_{table.Name}_{Guid.NewGuid():N}";
     }
 
+    /// <summary>
+    /// Creates a default index constraint name.
+    /// </summary>
+    /// <param name="table"><see cref="ISqlTableBuilder"/> that the index belongs to.</param>
+    /// <param name="columns">Collection of columns that belong to the index.</param>
+    /// <param name="isUnique">Specifies whether or not the index is unique.</param>
+    /// <returns>Default index constraint name.</returns>
     [Pure]
     public static string GetDefaultIndexName(ISqlTableBuilder table, SqlIndexBuilderColumns<ISqlColumnBuilder> columns, bool isUnique)
     {
@@ -263,6 +371,16 @@ public static class SqlHelpers
         return builder.ToString();
     }
 
+    /// <summary>
+    /// Validates index constraint columns.
+    /// </summary>
+    /// <param name="table"><see cref="SqlTableBuilder"/> that the index belongs to.</param>
+    /// <param name="columns">Collection of columns that belong to the index.</param>
+    /// <param name="isUnique">Specifies whether or not the index is unique.</param>
+    /// <exception cref="SqlObjectBuilderException">When index columns are not considered valid.</exception>
+    /// <remarks>
+    /// Index must contain at least one column and columns must be distinct. When index is unique, then it cannot contain expressions.
+    /// </remarks>
     public static void AssertIndexColumns(SqlTableBuilder table, SqlIndexBuilderColumns<SqlColumnBuilder> columns, bool isUnique)
     {
         if ( columns.Expressions.Count == 0 )
@@ -303,6 +421,15 @@ public static class SqlHelpers
             throw CreateObjectBuilderException( table.Database, errors );
     }
 
+    /// <summary>
+    /// Validates primary key constraint.
+    /// </summary>
+    /// <param name="table"><see cref="SqlTableBuilder"/> that the primary key belongs to.</param>
+    /// <param name="index"><see cref="SqlIndexBuilder"/> that is the underlying index of the primary key.</param>
+    /// <exception cref="SqlObjectBuilderException">When primary key is not considered valid.</exception>
+    /// <remarks>
+    /// Underlying index must be unique and cannot be partial. It also cannot contain nullable columns or columns that are generated.
+    /// </remarks>
     public static void AssertPrimaryKey(SqlTableBuilder table, SqlIndexBuilder index)
     {
         var errors = Chain<string>.Empty;
@@ -343,6 +470,19 @@ public static class SqlHelpers
             throw CreateObjectBuilderException( table.Database, errors );
     }
 
+    /// <summary>
+    /// Validates foreign key constraint.
+    /// </summary>
+    /// <param name="table"><see cref="SqlTableBuilder"/> that the foreign key belongs to.</param>
+    /// <param name="originIndex"><see cref="SqlIndexBuilder"/> from which the foreign key originates.</param>
+    /// <param name="referencedIndex"><see cref="SqlIndexBuilder"/> which the foreign key references.</param>
+    /// <exception cref="SqlObjectBuilderException">When foreign key is not considered valid.</exception>
+    /// <remarks>
+    /// Indexes must not be the same.
+    /// Origin index cannot contain expressions.
+    /// Referenced index must be unique and cannot be partial, and cannot contain nullable or generated columns.
+    /// Both origin and referenced index must contain the same number of columns and their runtime types must be sequentially equal.
+    /// </remarks>
     public static void AssertForeignKey(SqlTableBuilder table, SqlIndexBuilder originIndex, SqlIndexBuilder referencedIndex)
     {
         var errors = Chain<string>.Empty;
@@ -420,6 +560,14 @@ public static class SqlHelpers
             throw CreateObjectBuilderException( table.Database, errors );
     }
 
+    /// <summary>
+    /// Type casts the provided object to the desired type.
+    /// </summary>
+    /// <param name="database">SQL database builder with which the object is associated.</param>
+    /// <param name="obj">Object to cast.</param>
+    /// <typeparam name="T">Desired type.</typeparam>
+    /// <returns><paramref name="obj"/> cast to the desired type.</returns>
+    /// <exception cref="SqlObjectCastException">When <paramref name="obj"/> is not of the desired type.</exception>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static T CastOrThrow<T>(ISqlDatabaseBuilder database, object obj)
@@ -427,6 +575,14 @@ public static class SqlHelpers
         return CastOrThrow<T>( database.Dialect, obj );
     }
 
+    /// <summary>
+    /// Type casts the provided object to the desired type.
+    /// </summary>
+    /// <param name="dialect">SQL dialect with which the object is associated.</param>
+    /// <param name="obj">Object to cast.</param>
+    /// <typeparam name="T">Desired type.</typeparam>
+    /// <returns><paramref name="obj"/> cast to the desired type.</returns>
+    /// <exception cref="SqlObjectCastException">When <paramref name="obj"/> is not of the desired type.</exception>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static T CastOrThrow<T>(SqlDialect dialect, object obj)
@@ -438,6 +594,12 @@ public static class SqlHelpers
         return default!;
     }
 
+    /// <summary>
+    /// Creates a new <see cref="SqlObjectBuilderException"/> instance.
+    /// </summary>
+    /// <param name="database">Source SQL database builder.</param>
+    /// <param name="error">Error message.</param>
+    /// <returns>New <see cref="SqlObjectBuilderException"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static SqlObjectBuilderException CreateObjectBuilderException(ISqlDatabaseBuilder database, string error)
@@ -445,6 +607,12 @@ public static class SqlHelpers
         return CreateObjectBuilderException( database, Chain.Create( error ) );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="SqlObjectBuilderException"/> instance.
+    /// </summary>
+    /// <param name="database">Source SQL database builder.</param>
+    /// <param name="errors">Collection of error messages.</param>
+    /// <returns>New <see cref="SqlObjectBuilderException"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static SqlObjectBuilderException CreateObjectBuilderException(ISqlDatabaseBuilder database, Chain<string> errors)
@@ -452,6 +620,13 @@ public static class SqlHelpers
         return new SqlObjectBuilderException( database.Dialect, errors );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="SqlObjectCastException"/> instance.
+    /// </summary>
+    /// <param name="database">Source SQL database builder.</param>
+    /// <param name="expected">Expected object type.</param>
+    /// <param name="actual">Actual object type.</param>
+    /// <returns>New <see cref="SqlObjectCastException"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static SqlObjectCastException CreateObjectCastException(ISqlDatabaseBuilder database, Type expected, Type actual)
@@ -459,6 +634,13 @@ public static class SqlHelpers
         return new SqlObjectCastException( database.Dialect, expected, actual );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="SqlObjectCastException"/> instance.
+    /// </summary>
+    /// <param name="database">Source SQL database.</param>
+    /// <param name="expected">Expected object type.</param>
+    /// <param name="actual">Actual object type.</param>
+    /// <returns>New <see cref="SqlObjectCastException"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static SqlObjectCastException CreateObjectCastException(ISqlDatabase database, Type expected, Type actual)
@@ -466,6 +648,14 @@ public static class SqlHelpers
         return new SqlObjectCastException( database.Dialect, expected, actual );
     }
 
+    /// <summary>
+    /// Extracts <see cref="SqlObjectBuilder.ReferencingObjects"/> from the provided <paramref name="obj"/>, on order of their creation.
+    /// </summary>
+    /// <param name="obj"><see cref="SqlObjectBuilder"/> instance to extract references from.</param>
+    /// <param name="filter">
+    /// Optional SQL object builder reference filter. References that return <b>false</b> will be ignored. Equal to null by default.
+    /// </param>
+    /// <returns>New <see cref="RentedMemorySequence{T}"/> instance.</returns>
     public static RentedMemorySequence<SqlObjectBuilder> GetReferencingObjectsInOrderOfCreation(
         SqlObjectBuilder obj,
         Func<SqlObjectBuilderReference<SqlObjectBuilder>, bool>? filter = null)

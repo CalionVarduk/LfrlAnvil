@@ -14,8 +14,13 @@ using LfrlAnvil.Sql.Versioning;
 
 namespace LfrlAnvil.Sql.Exceptions;
 
+/// <summary>
+/// Contains helper methods for generating exception messages.
+/// </summary>
 public static class ExceptionResources
 {
+#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
+
     public const string DefaultSchemaCannotBeRemoved = "Default schema cannot be removed.";
     public const string CommonSchemaCannotBeRemoved = "Common schema cannot be removed.";
     public const string IndexMustHaveAtLeastOneColumn = "Index must have at least one column.";

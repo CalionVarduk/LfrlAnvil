@@ -4,6 +4,9 @@ using LfrlAnvil.Sql.Internal;
 
 namespace LfrlAnvil.Sql.Expressions.Objects;
 
+/// <summary>
+/// Represents an SQL syntax tree node that defines a single record set based on an <see cref="SqlCreateTableNode"/> instance.
+/// </summary>
 public sealed class SqlNewTableNode : SqlRecordSetNode
 {
     private Dictionary<string, SqlRawDataFieldNode>? _columns;
@@ -15,10 +18,18 @@ public sealed class SqlNewTableNode : SqlRecordSetNode
         _columns = null;
     }
 
+    /// <summary>
+    /// Underlying <see cref="SqlCreateTableNode"/> instance.
+    /// </summary>
     public SqlCreateTableNode CreationNode { get; }
+
+    /// <inheritdoc />
     public override SqlRecordSetInfo Info => CreationNode.Info;
+
+    /// <inheritdoc cref="SqlRecordSetNode.this[string]" />
     public new SqlRawDataFieldNode this[string fieldName] => GetField( fieldName );
 
+    /// <inheritdoc />
     [Pure]
     public override IReadOnlyCollection<SqlRawDataFieldNode> GetKnownFields()
     {
@@ -26,18 +37,21 @@ public sealed class SqlNewTableNode : SqlRecordSetNode
         return _columns.Values;
     }
 
+    /// <inheritdoc />
     [Pure]
     public override SqlNewTableNode As(string alias)
     {
         return new SqlNewTableNode( CreationNode, alias, IsOptional );
     }
 
+    /// <inheritdoc />
     [Pure]
     public override SqlNewTableNode AsSelf()
     {
         return new SqlNewTableNode( CreationNode, alias: null, IsOptional );
     }
 
+    /// <inheritdoc />
     [Pure]
     public override SqlDataFieldNode GetUnsafeField(string name)
     {
@@ -45,6 +59,7 @@ public sealed class SqlNewTableNode : SqlRecordSetNode
         return _columns.TryGetValue( name, out var column ) ? column : new SqlRawDataFieldNode( this, name, type: null );
     }
 
+    /// <inheritdoc />
     [Pure]
     public override SqlRawDataFieldNode GetField(string name)
     {
@@ -52,6 +67,7 @@ public sealed class SqlNewTableNode : SqlRecordSetNode
         return _columns[name];
     }
 
+    /// <inheritdoc />
     [Pure]
     public override SqlNewTableNode MarkAsOptional(bool optional = true)
     {

@@ -2,6 +2,7 @@
 using System.Runtime.CompilerServices;
 using LfrlAnvil.Sql.Internal;
 using LfrlAnvil.Sql.Objects;
+using LfrlAnvil.Sql.Objects.Builders;
 
 namespace LfrlAnvil.Sqlite;
 

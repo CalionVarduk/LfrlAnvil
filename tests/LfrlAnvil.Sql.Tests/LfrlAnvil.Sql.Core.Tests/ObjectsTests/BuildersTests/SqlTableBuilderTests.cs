@@ -463,7 +463,7 @@ public partial class SqlTableBuilderTests : TestsBase
         var c1 = sut.Columns.Create( "C1" );
         var c2 = sut.Columns.Create( "C2" );
 
-        var result = sut.ToCreateNode( sortGeneratedColumns: true );
+        var result = sut.ToCreateNode( sortComputedColumns: true );
 
         using ( new AssertionScope() )
         {
@@ -484,7 +484,7 @@ public partial class SqlTableBuilderTests : TestsBase
         var c3 = sut.Columns.Create( "C3" );
         c2.SetComputation( SqlColumnComputation.Virtual( c1.Node + SqlNode.Literal( 1 ) ) );
 
-        var result = sut.ToCreateNode( sortGeneratedColumns: true );
+        var result = sut.ToCreateNode( sortComputedColumns: true );
 
         using ( new AssertionScope() )
         {
@@ -509,7 +509,7 @@ public partial class SqlTableBuilderTests : TestsBase
         c2.SetComputation( SqlColumnComputation.Stored( c4.Node * SqlNode.Literal( 2 ) ) );
         c3.SetComputation( SqlColumnComputation.Stored( c4.Node + c2.Node ) );
 
-        var result = sut.ToCreateNode( sortGeneratedColumns: true );
+        var result = sut.ToCreateNode( sortComputedColumns: true );
 
         using ( new AssertionScope() )
         {

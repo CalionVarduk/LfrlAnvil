@@ -3,6 +3,10 @@ using LfrlAnvil.Sql.Objects.Builders;
 
 namespace LfrlAnvil.Sql.Expressions.Objects;
 
+/// <summary>
+/// Represents an SQL syntax tree expression node that defines a single data field of a record set
+/// based on an <see cref="ISqlColumnBuilder"/> instance.
+/// </summary>
 public sealed class SqlColumnBuilderNode : SqlDataFieldNode
 {
     private readonly bool _isOptional;
@@ -14,10 +18,20 @@ public sealed class SqlColumnBuilderNode : SqlDataFieldNode
         _isOptional = isOptional;
     }
 
+    /// <summary>
+    /// Underlying <see cref="ISqlColumnBuilder"/> instance.
+    /// </summary>
     public ISqlColumnBuilder Value { get; }
+
+    /// <summary>
+    /// Runtime type of this data field.
+    /// </summary>
     public TypeNullability Type => TypeNullability.Create( Value.TypeDefinition.RuntimeType, _isOptional || Value.IsNullable );
+
+    /// <inheritdoc />
     public override string Name => Value.Name;
 
+    /// <inheritdoc />
     [Pure]
     public override SqlColumnBuilderNode ReplaceRecordSet(SqlRecordSetNode recordSet)
     {

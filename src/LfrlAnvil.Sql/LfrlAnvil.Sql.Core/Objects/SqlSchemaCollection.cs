@@ -8,12 +8,17 @@ using LfrlAnvil.Sql.Objects.Builders;
 
 namespace LfrlAnvil.Sql.Objects;
 
+/// <inheritdoc />
 public abstract class SqlSchemaCollection : ISqlSchemaCollection
 {
     private readonly Dictionary<string, SqlSchema> _map;
     private SqlDatabase? _database;
     private SqlSchema? _default;
 
+    /// <summary>
+    /// Creates a new <see cref="SqlSchemaCollection"/> instance.
+    /// </summary>
+    /// <param name="source">Source collection.</param>
     protected SqlSchemaCollection(SqlSchemaBuilderCollection source)
     {
         _map = new Dictionary<string, SqlSchema>( capacity: source.Count, comparer: SqlHelpers.NameComparer );
@@ -21,8 +26,10 @@ public abstract class SqlSchemaCollection : ISqlSchemaCollection
         _default = null;
     }
 
+    /// <inheritdoc />
     public int Count => _map.Count;
 
+    /// <inheritdoc cref="ISqlSchemaCollection.Database" />
     public SqlDatabase Database
     {
         get
@@ -32,6 +39,7 @@ public abstract class SqlSchemaCollection : ISqlSchemaCollection
         }
     }
 
+    /// <inheritdoc cref="ISqlSchemaCollection.Default" />
     public SqlSchema Default
     {
         get
@@ -44,24 +52,31 @@ public abstract class SqlSchemaCollection : ISqlSchemaCollection
     ISqlDatabase ISqlSchemaCollection.Database => Database;
     ISqlSchema ISqlSchemaCollection.Default => Default;
 
+    /// <inheritdoc />
     [Pure]
     public bool Contains(string name)
     {
         return _map.ContainsKey( name );
     }
 
+    /// <inheritdoc cref="ISqlSchemaCollection.Get(string)" />
     [Pure]
     public SqlSchema Get(string name)
     {
         return _map[name];
     }
 
+    /// <inheritdoc cref="ISqlSchemaCollection.TryGet(string)" />
     [Pure]
     public SqlSchema? TryGet(string name)
     {
         return _map.GetValueOrDefault( name );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="SqlObjectEnumerator{T}"/> instance for this collection.
+    /// </summary>
+    /// <returns>New <see cref="SqlObjectEnumerator{T}"/> instance.</returns>
     [Pure]
     public SqlObjectEnumerator<SqlSchema> GetEnumerator()
     {
@@ -126,9 +141,21 @@ public abstract class SqlSchemaCollection : ISqlSchemaCollection
         }
     }
 
+    /// <summary>
+    /// Creates a new <see cref="SqlSchema"/> instance.
+    /// </summary>
+    /// <param name="builder">Source schema builder.</param>
+    /// <returns>New <see cref="SqlSchema"/> instance.</returns>
     [Pure]
     protected abstract SqlSchema CreateSchema(SqlSchemaBuilder builder);
 
+    /// <summary>
+    /// Extracts an <see cref="SqlSchemaBuilder"/> instance
+    /// from an <see cref="SqlObjectType.Unknown"/> <see cref="SqlObjectBuilder"/> instance.
+    /// </summary>
+    /// <param name="builder">Source builder.</param>
+    /// <returns>Extracted <see cref="SqlSchemaBuilder"/> instance.</returns>
+    /// <exception cref="NotSupportedException">This method is not supported by default.</exception>
     [Pure]
     protected virtual SqlSchemaBuilder GetSchemaFromUnknown(SqlObjectBuilder builder)
     {

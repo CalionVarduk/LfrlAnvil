@@ -3,6 +3,9 @@ using System.Diagnostics.Contracts;
 
 namespace LfrlAnvil.Sql.Expressions.Objects;
 
+/// <summary>
+/// Represents an SQL syntax tree node that defines a single record set based on an <see cref="SqlQueryExpressionNode"/> instance.
+/// </summary>
 public sealed class SqlQueryRecordSetNode : SqlRecordSetNode
 {
     private readonly SqlRecordSetInfo _info;
@@ -16,9 +19,17 @@ public sealed class SqlQueryRecordSetNode : SqlRecordSetNode
         _fields = null;
     }
 
+    /// <summary>
+    /// Underlying <see cref="SqlQueryExpressionNode"/> instance.
+    /// </summary>
     public SqlQueryExpressionNode Query { get; }
+
+    /// <inheritdoc />
     public override SqlRecordSetInfo Info => _info;
 
+    /// <summary>
+    /// Alias of this record set.
+    /// </summary>
     public new string Alias
     {
         get
@@ -28,8 +39,10 @@ public sealed class SqlQueryRecordSetNode : SqlRecordSetNode
         }
     }
 
+    /// <inheritdoc cref="SqlRecordSetNode.this[string]" />
     public new SqlQueryDataFieldNode this[string fieldName] => GetField( fieldName );
 
+    /// <inheritdoc />
     [Pure]
     public override IReadOnlyCollection<SqlQueryDataFieldNode> GetKnownFields()
     {
@@ -37,6 +50,7 @@ public sealed class SqlQueryRecordSetNode : SqlRecordSetNode
         return _fields.Values;
     }
 
+    /// <inheritdoc />
     [Pure]
     public override SqlDataFieldNode GetUnsafeField(string name)
     {
@@ -44,6 +58,7 @@ public sealed class SqlQueryRecordSetNode : SqlRecordSetNode
         return _fields.TryGetValue( name, out var field ) ? field : new SqlRawDataFieldNode( this, name, type: null );
     }
 
+    /// <inheritdoc />
     [Pure]
     public override SqlQueryDataFieldNode GetField(string name)
     {
@@ -51,18 +66,21 @@ public sealed class SqlQueryRecordSetNode : SqlRecordSetNode
         return _fields[name];
     }
 
+    /// <inheritdoc />
     [Pure]
     public override SqlQueryRecordSetNode As(string alias)
     {
         return new SqlQueryRecordSetNode( Query, alias, IsOptional );
     }
 
+    /// <inheritdoc />
     [Pure]
     public override SqlQueryRecordSetNode AsSelf()
     {
         return this;
     }
 
+    /// <inheritdoc />
     [Pure]
     public override SqlQueryRecordSetNode MarkAsOptional(bool optional = true)
     {

@@ -9,15 +9,26 @@ using System.Threading.Tasks;
 
 namespace LfrlAnvil.Sql.Statements;
 
+/// <summary>
+/// Represents an asynchronous lightweight <see cref="IDataReader"/> container with multiple result sets.
+/// </summary>
 public readonly struct SqlAsyncMultiDataReader : IDisposable, IAsyncDisposable
 {
+    /// <summary>
+    /// Creates a new <see cref="SqlAsyncMultiDataReader"/> instance.
+    /// </summary>
+    /// <param name="reader">Underlying data reader.</param>
     public SqlAsyncMultiDataReader(IDataReader reader)
     {
         Reader = ( DbDataReader )reader;
     }
 
+    /// <summary>
+    /// Underlying data reader.
+    /// </summary>
     public DbDataReader Reader { get; }
 
+    /// <inheritdoc />
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public void Dispose()
     {
@@ -25,6 +36,7 @@ public readonly struct SqlAsyncMultiDataReader : IDisposable, IAsyncDisposable
             Reader.Dispose();
     }
 
+    /// <inheritdoc />
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public async ValueTask DisposeAsync()
     {
@@ -32,6 +44,12 @@ public readonly struct SqlAsyncMultiDataReader : IDisposable, IAsyncDisposable
             await Reader.DisposeAsync().ConfigureAwait( false );
     }
 
+    /// <summary>
+    /// Reads all record sets asynchronously.
+    /// </summary>
+    /// <param name="reader">Asynchronous query reader.</param>
+    /// <param name="cancellationToken">Optional <see cref="CancellationToken"/>.</param>
+    /// <returns><see cref="ValueTask{TResult}"/> that returns all record sets.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public async ValueTask<List<SqlQueryResult>> ReadAllAsync(SqlAsyncQueryReader reader, CancellationToken cancellationToken = default)
@@ -43,6 +61,13 @@ public readonly struct SqlAsyncMultiDataReader : IDisposable, IAsyncDisposable
         return result;
     }
 
+    /// <summary>
+    /// Reads the next record set asynchronously.
+    /// </summary>
+    /// <param name="reader">Asynchronous query reader.</param>
+    /// <param name="options">Query reader options.</param>
+    /// <param name="cancellationToken">Optional <see cref="CancellationToken"/>.</param>
+    /// <returns><see cref="ValueTask{TResult}"/> that returns the next record set.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public async ValueTask<SqlQueryResult> ReadAsync(
@@ -57,6 +82,14 @@ public readonly struct SqlAsyncMultiDataReader : IDisposable, IAsyncDisposable
         return result;
     }
 
+    /// <summary>
+    /// Reads the next record set asynchronously.
+    /// </summary>
+    /// <param name="reader">Asynchronous query reader.</param>
+    /// <param name="options">Query reader options.</param>
+    /// <param name="cancellationToken">Optional <see cref="CancellationToken"/>.</param>
+    /// <typeparam name="TRow">Row type.</typeparam>
+    /// <returns><see cref="ValueTask{TResult}"/> that returns the next record set.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public async ValueTask<SqlQueryResult<TRow>> ReadAsync<TRow>(
@@ -72,6 +105,12 @@ public readonly struct SqlAsyncMultiDataReader : IDisposable, IAsyncDisposable
         return result;
     }
 
+    /// <summary>
+    /// Reads the next scalar asynchronously.
+    /// </summary>
+    /// <param name="reader">Asynchronous scalar query reader.</param>
+    /// <param name="cancellationToken">Optional <see cref="CancellationToken"/>.</param>
+    /// <returns><see cref="ValueTask{TResult}"/> that returns the next scalar.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public async ValueTask<SqlScalarQueryResult> ReadAsync(SqlAsyncScalarQueryReader reader, CancellationToken cancellationToken = default)
@@ -83,6 +122,13 @@ public readonly struct SqlAsyncMultiDataReader : IDisposable, IAsyncDisposable
         return result;
     }
 
+    /// <summary>
+    /// Reads the next scalar asynchronously.
+    /// </summary>
+    /// <param name="reader">Asynchronous scalar query reader.</param>
+    /// <param name="cancellationToken">Optional <see cref="CancellationToken"/>.</param>
+    /// <typeparam name="T">Scalar type.</typeparam>
+    /// <returns><see cref="ValueTask{TResult}"/> that returns the next scalar.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public async ValueTask<SqlScalarQueryResult<T>> ReadAsync<T>(
@@ -96,6 +142,12 @@ public readonly struct SqlAsyncMultiDataReader : IDisposable, IAsyncDisposable
         return result;
     }
 
+    /// <summary>
+    /// Invokes the provided asynchronous delegate on the underlying <see cref="Reader"/>.
+    /// </summary>
+    /// <param name="reader">Asynchronous delegate to invoke.</param>
+    /// <param name="cancellationToken">Optional <see cref="CancellationToken"/>.</param>
+    /// <returns><see cref="ValueTask{TResult}"/> that returns the result of invocation of the delegate.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public async ValueTask<TResult> ReadAsync<TResult>(
@@ -109,6 +161,12 @@ public readonly struct SqlAsyncMultiDataReader : IDisposable, IAsyncDisposable
         return result;
     }
 
+    /// <summary>
+    /// Invokes the provided asynchronous delegate on the underlying <see cref="Reader"/>.
+    /// </summary>
+    /// <param name="reader">Asynchronous delegate to invoke.</param>
+    /// <param name="cancellationToken">Optional <see cref="CancellationToken"/>.</param>
+    /// <returns><see cref="ValueTask{TResult}"/> that returns the result of invocation of the delegate.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public async ValueTask<TResult> ReadAsync<TResult>(

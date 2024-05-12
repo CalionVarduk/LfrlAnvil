@@ -7,6 +7,11 @@ using LfrlAnvil.Sql.Versioning;
 
 namespace LfrlAnvil.Sql.Internal;
 
+/// <summary>
+/// Represents an executor of SQL statements ran by <see cref="ISqlDatabaseFactory"/> instances.
+/// Objects of this type invoke all <see cref="ISqlDatabaseFactoryStatementListener"/> instances
+/// specified in <see cref="SqlCreateDatabaseOptions"/>.
+/// </summary>
 public struct SqlDatabaseFactoryStatementExecutor
 {
     private readonly DbCommandDiagnoser<DbCommand, SqlDatabaseFactoryStatementEvent> _diagnoser;
@@ -30,8 +35,20 @@ public struct SqlDatabaseFactoryStatementExecutor
         }
     }
 
+    /// <summary>
+    /// Optional explicit <see cref="DbCommand.CommandTimeout"/>.
+    /// </summary>
     public TimeSpan? CommandTimeout { get; }
 
+    /// <summary>
+    /// Executes provided <see cref="DbCommand"/> synchronously.
+    /// </summary>
+    /// <param name="command">Command to execute.</param>
+    /// <param name="key"><see cref="SqlDatabaseFactoryStatementKey"/> instance that identifies this SQL statement.</param>
+    /// <param name="type"><see cref="SqlDatabaseFactoryStatementType"/> instance that specifies the type of this SQL statement.</param>
+    /// <param name="invoker">Delegate that invokes the provided <paramref name="command"/> and returns the result.</param>
+    /// <typeparam name="T">Result type.</typeparam>
+    /// <returns>Result of the invocation.</returns>
     public T Execute<T>(
         DbCommand command,
         SqlDatabaseFactoryStatementKey key,
@@ -42,6 +59,13 @@ public struct SqlDatabaseFactoryStatementExecutor
             return InvokeCommand( command, invoker, key, type );
     }
 
+    /// <summary>
+    /// Executes provided <see cref="DbCommand"/> synchronously.
+    /// </summary>
+    /// <param name="command">Command to execute.</param>
+    /// <param name="key"><see cref="SqlDatabaseFactoryStatementKey"/> instance that identifies this SQL statement.</param>
+    /// <param name="type"><see cref="SqlDatabaseFactoryStatementType"/> instance that specifies the type of this SQL statement.</param>
+    /// <param name="action"><see cref="SqlDatabaseBuilderCommandAction"/> instance that contains this SQL statement's definition.</param>
     public void Execute(
         DbCommand command,
         SqlDatabaseFactoryStatementKey key,
@@ -55,6 +79,17 @@ public struct SqlDatabaseFactoryStatementExecutor
         }
     }
 
+    /// <summary>
+    /// Executes provided <see cref="DbCommand"/> synchronously.
+    /// </summary>
+    /// <param name="command">Command to execute.</param>
+    /// <param name="invoker">Delegate that invokes the provided <paramref name="command"/> and returns the result.</param>
+    /// <param name="type">
+    /// <see cref="SqlDatabaseFactoryStatementType"/> instance that specifies the type of this SQL statement.
+    /// Equal to <see cref="SqlDatabaseFactoryStatementType.VersionHistory"/> by default.
+    /// </param>
+    /// <typeparam name="T">Result type.</typeparam>
+    /// <returns>Result of the invocation.</returns>
     public T ExecuteForVersionHistory<T>(
         DbCommand command,
         Func<DbCommand, T> invoker,
@@ -64,6 +99,15 @@ public struct SqlDatabaseFactoryStatementExecutor
             return InvokeVersionHistoryCommand( command, invoker, type );
     }
 
+    /// <summary>
+    /// Executes provided <see cref="DbCommand"/> synchronously.
+    /// </summary>
+    /// <param name="command">Command to execute.</param>
+    /// <param name="action"><see cref="SqlDatabaseBuilderCommandAction"/> instance that contains this SQL statement's definition.</param>
+    /// <param name="type">
+    /// <see cref="SqlDatabaseFactoryStatementType"/> instance that specifies the type of this SQL statement.
+    /// Equal to <see cref="SqlDatabaseFactoryStatementType.VersionHistory"/> by default.
+    /// </param>
     public void ExecuteForVersionHistory(
         DbCommand command,
         SqlDatabaseBuilderCommandAction action,

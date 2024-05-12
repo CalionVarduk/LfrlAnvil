@@ -8,11 +8,16 @@ using LfrlAnvil.Sql.Internal;
 
 namespace LfrlAnvil.Sql.Objects.Builders;
 
+/// <inheritdoc cref="ISqlColumnBuilderCollection" />
 public abstract class SqlColumnBuilderCollection : SqlBuilderApi, ISqlColumnBuilderCollection
 {
     private readonly Dictionary<string, SqlColumnBuilder> _map;
     private SqlTableBuilder? _table;
 
+    /// <summary>
+    /// Creates a new empty <see cref="SqlColumnBuilderCollection"/> instance.
+    /// </summary>
+    /// <param name="defaultTypeDefinition">Specifies the default <see cref="SqlColumnTypeDefinition"/> of newly created columns.</param>
     protected SqlColumnBuilderCollection(SqlColumnTypeDefinition defaultTypeDefinition)
     {
         _table = null;
@@ -20,6 +25,7 @@ public abstract class SqlColumnBuilderCollection : SqlBuilderApi, ISqlColumnBuil
         DefaultTypeDefinition = defaultTypeDefinition;
     }
 
+    /// <inheritdoc cref="ISqlColumnBuilderCollection.Table" />
     public SqlTableBuilder Table
     {
         get
@@ -29,12 +35,16 @@ public abstract class SqlColumnBuilderCollection : SqlBuilderApi, ISqlColumnBuil
         }
     }
 
+    /// <inheritdoc cref="ISqlColumnBuilderCollection.DefaultTypeDefinition" />
     public SqlColumnTypeDefinition DefaultTypeDefinition { get; private set; }
+
+    /// <inheritdoc />
     public int Count => _map.Count;
 
     ISqlTableBuilder ISqlColumnBuilderCollection.Table => Table;
     ISqlColumnTypeDefinition ISqlColumnBuilderCollection.DefaultTypeDefinition => DefaultTypeDefinition;
 
+    /// <inheritdoc cref="ISqlColumnBuilderCollection.SetDefaultTypeDefinition(ISqlColumnTypeDefinition)" />
     public SqlColumnBuilderCollection SetDefaultTypeDefinition(SqlColumnTypeDefinition definition)
     {
         Table.ThrowIfRemoved();
@@ -45,24 +55,28 @@ public abstract class SqlColumnBuilderCollection : SqlBuilderApi, ISqlColumnBuil
         return this;
     }
 
+    /// <inheritdoc />
     [Pure]
     public bool Contains(string name)
     {
         return _map.ContainsKey( name );
     }
 
+    /// <inheritdoc cref="ISqlColumnBuilderCollection.Get(string)" />
     [Pure]
     public SqlColumnBuilder Get(string name)
     {
         return _map[name];
     }
 
+    /// <inheritdoc cref="ISqlColumnBuilderCollection.TryGet(string)" />
     [Pure]
     public SqlColumnBuilder? TryGet(string name)
     {
         return _map.GetValueOrDefault( name );
     }
 
+    /// <inheritdoc cref="ISqlColumnBuilderCollection.Create(string)" />
     public SqlColumnBuilder Create(string name)
     {
         Table.ThrowIfRemoved();
@@ -77,6 +91,7 @@ public abstract class SqlColumnBuilderCollection : SqlBuilderApi, ISqlColumnBuil
         return column;
     }
 
+    /// <inheritdoc cref="ISqlColumnBuilderCollection.GetOrCreate(string)" />
     public SqlColumnBuilder GetOrCreate(string name)
     {
         Table.ThrowIfRemoved();
@@ -91,6 +106,7 @@ public abstract class SqlColumnBuilderCollection : SqlBuilderApi, ISqlColumnBuil
         return column;
     }
 
+    /// <inheritdoc />
     public bool Remove(string name)
     {
         if ( ! _map.TryGetValue( name, out var column ) || ! column.CanRemove )
@@ -101,14 +117,27 @@ public abstract class SqlColumnBuilderCollection : SqlBuilderApi, ISqlColumnBuil
         return true;
     }
 
+    /// <summary>
+    /// Creates a new <see cref="SqlObjectBuilderEnumerator{T}"/> instance for this collection.
+    /// </summary>
+    /// <returns>New <see cref="SqlObjectBuilderEnumerator{T}"/> instance.</returns>
     [Pure]
     public SqlObjectBuilderEnumerator<SqlColumnBuilder> GetEnumerator()
     {
         return new SqlObjectBuilderEnumerator<SqlColumnBuilder>( _map );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="SqlColumnBuilder"/> instance.
+    /// </summary>
+    /// <param name="name">Column's name.</param>
+    /// <returns>New <see cref="SqlColumnBuilder"/> instance.</returns>
     protected abstract SqlColumnBuilder CreateColumnBuilder(string name);
 
+    /// <summary>
+    /// Callback invoked just after the <paramref name="column"/> creation has been processed.
+    /// </summary>
+    /// <param name="column">Created column.</param>
     protected virtual void AfterCreateColumn(SqlColumnBuilder column)
     {
         AddCreation( Table, column );

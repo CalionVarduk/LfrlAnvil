@@ -8,6 +8,9 @@ using LfrlAnvil.Sql.Exceptions;
 
 namespace LfrlAnvil.Sql.Statements.Compilers;
 
+/// <summary>
+/// Represents an explicit row member configuration for <see cref="ISqlQueryReaderFactory"/>.
+/// </summary>
 public readonly struct SqlQueryMemberConfiguration
 {
     private SqlQueryMemberConfiguration(string memberName, string? sourceFieldName, LambdaExpression? customMapping)
@@ -17,13 +20,41 @@ public readonly struct SqlQueryMemberConfiguration
         CustomMapping = customMapping;
     }
 
+    /// <summary>
+    /// Row type's field or property name.
+    /// </summary>
     public string MemberName { get; }
+
+    /// <summary>
+    /// Name of the source field to read a value from.
+    /// </summary>
     public string? SourceFieldName { get; }
+
+    /// <summary>
+    /// Custom value mapping from source to row type's member.
+    /// </summary>
     public LambdaExpression? CustomMapping { get; }
+
+    /// <summary>
+    /// Specifies whether or not the associated row type member should be completely ignored.
+    /// </summary>
     public bool IsIgnored => SourceFieldName is null && CustomMapping is null;
+
+    /// <summary>
+    /// Source data reader type from the <see cref="CustomMapping"/>.
+    /// </summary>
     public Type? CustomMappingDataReaderType => CustomMapping?.Parameters[0].Type.GetGenericArguments()[0];
+
+    /// <summary>
+    /// Value type from the <see cref="CustomMapping"/>.
+    /// </summary>
     public Type? CustomMappingMemberType => CustomMapping?.Body.Type;
 
+    /// <summary>
+    /// Creates a new <see cref="SqlQueryMemberConfiguration"/> instance that causes the provided row type member to be ignored.
+    /// </summary>
+    /// <param name="memberName">Row type's field or property name.</param>
+    /// <returns>New <see cref="SqlQueryMemberConfiguration"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static SqlQueryMemberConfiguration Ignore(string memberName)
@@ -31,6 +62,13 @@ public readonly struct SqlQueryMemberConfiguration
         return new SqlQueryMemberConfiguration( memberName, null, null );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="SqlQueryMemberConfiguration"/> instance that causes the provided row type member's value to be read
+    /// from another source field.
+    /// </summary>
+    /// <param name="memberName">Row type's field or property name.</param>
+    /// <param name="sourceFieldName">Name of the source field to read a value from..</param>
+    /// <returns>New <see cref="SqlQueryMemberConfiguration"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static SqlQueryMemberConfiguration From(string memberName, string sourceFieldName)
@@ -38,6 +76,18 @@ public readonly struct SqlQueryMemberConfiguration
         return new SqlQueryMemberConfiguration( memberName, sourceFieldName, null );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="SqlQueryMemberConfiguration"/> instance that causes the provided row type member's value to be read
+    /// from a custom expression.
+    /// </summary>
+    /// <param name="memberName">Row type's field or property name.</param>
+    /// <param name="mapping">Custom value mapping from source to row type's member.</param>
+    /// <typeparam name="TDataRecord">Source DB data record type.</typeparam>
+    /// <typeparam name="TMemberType">Row member type.</typeparam>
+    /// <returns>New <see cref="SqlQueryMemberConfiguration"/> instance.</returns>
+    /// <exception cref="SqlCompilerConfigurationException">
+    /// When any field name used in <see cref="ISqlDataRecordFacade{TDataRecord}"/> method calls could not be resolved as a constant value.
+    /// </exception>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static SqlQueryMemberConfiguration From<TDataRecord, TMemberType>(
@@ -58,6 +108,17 @@ public readonly struct SqlQueryMemberConfiguration
         return new SqlQueryMemberConfiguration( memberName, null, processedMapping );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="SqlQueryMemberConfiguration"/> instance that causes the provided row type member's value to be read
+    /// from a custom expression.
+    /// </summary>
+    /// <param name="memberName">Row type's field or property name.</param>
+    /// <param name="mapping">Custom value mapping from source to row type's member.</param>
+    /// <typeparam name="T">Row member type.</typeparam>
+    /// <returns>New <see cref="SqlQueryMemberConfiguration"/> instance.</returns>
+    /// <exception cref="SqlCompilerConfigurationException">
+    /// When any field name used in <see cref="ISqlDataRecordFacade{TDataRecord}"/> method calls could not be resolved as a constant value.
+    /// </exception>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static SqlQueryMemberConfiguration From<T>(string memberName, Expression<Func<ISqlDataRecordFacade<IDataRecord>, T>> mapping)

@@ -6,11 +6,19 @@ using LfrlAnvil.Sql.Internal;
 
 namespace LfrlAnvil.Sql.Objects.Builders;
 
+/// <inheritdoc cref="ISqlTableBuilder" />
 public abstract class SqlTableBuilder : SqlObjectBuilder, ISqlTableBuilder
 {
     private SqlRecordSetInfo? _info;
     private SqlTableBuilderNode? _node;
 
+    /// <summary>
+    /// Creates a new <see cref="SqlTableBuilder"/> instance.
+    /// </summary>
+    /// <param name="schema">Schema that this table belongs to.</param>
+    /// <param name="name">Object's name.</param>
+    /// <param name="columns">Collection of columns that belong to this table.</param>
+    /// <param name="constraints">Collection of constraints that belong to this table.</param>
     protected SqlTableBuilder(
         SqlSchemaBuilder schema,
         string name,
@@ -27,28 +35,43 @@ public abstract class SqlTableBuilder : SqlObjectBuilder, ISqlTableBuilder
         Constraints.SetTable( this );
     }
 
+    /// <inheritdoc cref="ISqlTableBuilder.Schema" />
     public SqlSchemaBuilder Schema { get; }
+
+    /// <inheritdoc cref="ISqlTableBuilder.Columns" />
     public SqlColumnBuilderCollection Columns { get; }
+
+    /// <inheritdoc cref="ISqlTableBuilder.Constraints" />
     public SqlConstraintBuilderCollection Constraints { get; }
+
+    /// <inheritdoc />
     public SqlRecordSetInfo Info => _info ??= SqlRecordSetInfo.Create( Schema.Name, Name );
+
+    /// <inheritdoc />
     public SqlTableBuilderNode Node => _node ??= SqlNode.Table( this );
 
     ISqlSchemaBuilder ISqlTableBuilder.Schema => Schema;
     ISqlColumnBuilderCollection ISqlTableBuilder.Columns => Columns;
     ISqlConstraintBuilderCollection ISqlTableBuilder.Constraints => Constraints;
 
+    /// <summary>
+    /// Returns a string representation of this <see cref="SqlTableBuilder"/> instance.
+    /// </summary>
+    /// <returns>String representation.</returns>
     [Pure]
     public override string ToString()
     {
         return $"[{Type}] {SqlHelpers.GetFullName( Schema.Name, Name )}";
     }
 
+    /// <inheritdoc cref="SqlObjectBuilder.SetName(string)" />
     public new SqlTableBuilder SetName(string name)
     {
         base.SetName( name );
         return this;
     }
 
+    /// <inheritdoc />
     protected override SqlPropertyChange<string> BeforeNameChange(string newValue)
     {
         var change = base.BeforeNameChange( newValue );
@@ -59,12 +82,14 @@ public abstract class SqlTableBuilder : SqlObjectBuilder, ISqlTableBuilder
         return change;
     }
 
+    /// <inheritdoc />
     protected override void AfterNameChange(string originalValue)
     {
         ResetInfoCache();
         AddNameChange( this, this, originalValue );
     }
 
+    /// <inheritdoc />
     protected override void BeforeRemove()
     {
         base.BeforeRemove();
@@ -73,11 +98,13 @@ public abstract class SqlTableBuilder : SqlObjectBuilder, ISqlTableBuilder
         RemoveFromCollection( Schema.Objects, this );
     }
 
+    /// <inheritdoc />
     protected override void AfterRemove()
     {
         AddRemoval( this, this );
     }
 
+    /// <inheritdoc />
     protected override void QuickRemoveCore()
     {
         base.QuickRemoveCore();
@@ -85,6 +112,9 @@ public abstract class SqlTableBuilder : SqlObjectBuilder, ISqlTableBuilder
         QuickRemoveColumns();
     }
 
+    /// <summary>
+    /// Removes all <see cref="Columns"/> from this table. This is a version for the <see cref="QuickRemoveCore()"/> method.
+    /// </summary>
     protected void QuickRemoveColumns()
     {
         foreach ( var column in Columns )
@@ -93,6 +123,9 @@ public abstract class SqlTableBuilder : SqlObjectBuilder, ISqlTableBuilder
         ClearCollection( Columns );
     }
 
+    /// <summary>
+    /// Removes all <see cref="Constraints"/> from this table. This is a version for the <see cref="QuickRemoveCore()"/> method.
+    /// </summary>
     protected void QuickRemoveConstraints()
     {
         foreach ( var constraint in Constraints )

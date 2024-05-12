@@ -14,6 +14,7 @@ using LfrlAnvil.Sql.Internal;
 
 namespace LfrlAnvil.Sql.Statements.Compilers;
 
+/// <inheritdoc />
 public class SqlParameterBinderFactory : ISqlParameterBinderFactory
 {
     private readonly object _sync = new object();
@@ -33,11 +34,23 @@ public class SqlParameterBinderFactory : ISqlParameterBinderFactory
         _toolbox = default;
     }
 
+    /// <summary>
+    /// Specifies the DB command type.
+    /// </summary>
     public Type CommandType { get; }
+
+    /// <inheritdoc />
     public SqlDialect Dialect { get; }
+
+    /// <summary>
+    /// Specifies <see cref="ISqlColumnTypeDefinitionProvider"/> instance attached to this factory.
+    /// </summary>
     public ISqlColumnTypeDefinitionProvider ColumnTypeDefinitions { get; }
+
+    /// <inheritdoc />
     public bool SupportsPositionalParameters { get; }
 
+    /// <inheritdoc />
     [Pure]
     public SqlParameterBinder Create(SqlParameterBinderCreationOptions? options = null)
     {
@@ -50,6 +63,7 @@ public class SqlParameterBinderFactory : ISqlParameterBinderFactory
         return new SqlParameterBinder( Dialect, @delegate );
     }
 
+    /// <inheritdoc />
     [Pure]
     public SqlParameterBinderExpression CreateExpression(Type sourceType, SqlParameterBinderCreationOptions? options = null)
     {
@@ -951,9 +965,21 @@ public class SqlParameterBinderFactory : ISqlParameterBinderFactory
     }
 }
 
+/// <summary>
+/// Represents a factory of delegates used by <see cref="SqlParameterBinderExpression"/> instances.
+/// </summary>
+/// <typeparam name="TCommand">DB command type.</typeparam>
 public class SqlParameterBinderFactory<TCommand> : SqlParameterBinderFactory
     where TCommand : IDbCommand
 {
+    /// <summary>
+    /// Creates a new <see cref="SqlParameterBinderFactory{TCommand}"/> instance.
+    /// </summary>
+    /// <param name="dialect">SQL dialect that this factory is associated with.</param>
+    /// <param name="columnTypeDefinitions">
+    /// Specifies <see cref="ISqlColumnTypeDefinitionProvider"/> instance attached to this factory.
+    /// </param>
+    /// <param name="supportsPositionalParameters">Specifies whether or not this factory supports positional parameters.</param>
     protected SqlParameterBinderFactory(
         SqlDialect dialect,
         ISqlColumnTypeDefinitionProvider columnTypeDefinitions,

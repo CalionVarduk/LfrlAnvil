@@ -19,9 +19,9 @@ public sealed class SqlDataSourceNodeMock : SqlDataSourceNode
     public override ReadOnlyArray<SqlDataSourceJoinOnNode> Joins => ReadOnlyArray<SqlDataSourceJoinOnNode>.Empty;
     public override IReadOnlyCollection<SqlRecordSetNode> RecordSets => _from;
 
-    public override SqlRecordSetNode GetRecordSet(string name)
+    public override SqlRecordSetNode GetRecordSet(string identifier)
     {
-        return string.Equals( From.Identifier, name, StringComparison.OrdinalIgnoreCase ) ? From : throw new Exception();
+        return string.Equals( From.Identifier, identifier, StringComparison.OrdinalIgnoreCase ) ? From : throw new Exception();
     }
 
     public override SqlDataSourceNode SetTraits(Chain<SqlTraitNode> traits)

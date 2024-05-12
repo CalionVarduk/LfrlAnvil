@@ -2,6 +2,9 @@
 
 namespace LfrlAnvil.Sql.Expressions;
 
+/// <summary>
+/// Represents an SQL syntax tree select node that defines a query selection of all <see cref="RecordSet"/> fields.
+/// </summary>
 public sealed class SqlSelectRecordSetNode : SqlSelectNode
 {
     internal SqlSelectRecordSetNode(SqlRecordSetNode recordSet)
@@ -10,6 +13,9 @@ public sealed class SqlSelectRecordSetNode : SqlSelectNode
         RecordSet = recordSet;
     }
 
+    /// <summary>
+    /// Single record set to select all data fields from.
+    /// </summary>
     public SqlRecordSetNode RecordSet { get; }
 
     internal override void VisitExpressions(ISqlSelectNodeExpressionVisitor visitor)

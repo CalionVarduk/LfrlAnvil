@@ -9,8 +9,16 @@ using LfrlAnvil.Sql.Expressions.Traits;
 
 namespace LfrlAnvil.Sql.Expressions.Visitors;
 
+/// <summary>
+/// Contains various extension methods related to the <see cref="ISqlNodeVisitor"/> type.
+/// </summary>
 public static class SqlNodeVisitorExtensions
 {
+    /// <summary>
+    /// Visits an <see cref="SqlNodeBase"/>.
+    /// </summary>
+    /// <param name="visitor">Source visitor.</param>
+    /// <param name="node">Node to visit.</param>
     public static void Visit(this ISqlNodeVisitor visitor, SqlNodeBase node)
     {
         switch ( node.NodeType )
@@ -441,6 +449,11 @@ public static class SqlNodeVisitorExtensions
         }
     }
 
+    /// <summary>
+    /// Visits an <see cref="SqlFunctionExpressionNode"/>.
+    /// </summary>
+    /// <param name="visitor">Source visitor.</param>
+    /// <param name="node">Node to visit.</param>
     public static void VisitFunction(this ISqlNodeVisitor visitor, SqlFunctionExpressionNode node)
     {
         switch ( node.FunctionType )
@@ -595,6 +608,11 @@ public static class SqlNodeVisitorExtensions
         }
     }
 
+    /// <summary>
+    /// Visits an <see cref="SqlAggregateFunctionExpressionNode"/>.
+    /// </summary>
+    /// <param name="visitor">Source visitor.</param>
+    /// <param name="node">Node to visit.</param>
     public static void VisitAggregateFunction(this ISqlNodeVisitor visitor, SqlAggregateFunctionExpressionNode node)
     {
         switch ( node.FunctionType )
@@ -675,12 +693,23 @@ public static class SqlNodeVisitorExtensions
         }
     }
 
+    /// <summary>
+    /// Interprets the provided <paramref name="node"/>.
+    /// </summary>
+    /// <param name="interpreter">Source interpreter.</param>
+    /// <param name="node">SQL node to interpret.</param>
+    /// <returns><see cref="SqlNodeInterpreter.Context"/> of the <paramref name="interpreter"/>.</returns>
     public static SqlNodeInterpreterContext Interpret(this SqlNodeInterpreter interpreter, SqlNodeBase node)
     {
         interpreter.Visit( node );
         return interpreter.Context;
     }
 
+    /// <summary>
+    /// Creates a new <see cref="SqlNodeInterpreter"/> instance with a default context.
+    /// </summary>
+    /// <param name="factory">Source factory.</param>
+    /// <returns>New <see cref="SqlNodeInterpreter"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static SqlNodeInterpreter Create(this ISqlNodeInterpreterFactory factory)

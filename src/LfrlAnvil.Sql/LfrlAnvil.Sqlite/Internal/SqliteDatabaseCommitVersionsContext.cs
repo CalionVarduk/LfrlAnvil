@@ -135,19 +135,18 @@ internal sealed class SqliteDatabaseCommitVersionsContext : SqlDatabaseCommitVer
         return key;
     }
 
-    protected override SqlDatabaseFactoryStatementKey OnAfterVersionTransaction(
+    protected override void OnAfterVersionTransaction(
         SqlDatabaseBuilder builder,
         SqlDatabaseFactoryStatementKey key,
         DbConnection connection,
         ref SqlDatabaseFactoryStatementExecutor executor)
     {
-        key = base.OnAfterVersionTransaction( builder, key, connection, ref executor );
+        base.OnAfterVersionTransaction( builder, key, connection, ref executor );
         if ( ! _isPragmaSwapped || _restorePragmaCommand is null )
-            return key;
+            return;
 
         key = key.NextOrdinal();
         executor.Execute( _restorePragmaCommand, key, SqlDatabaseFactoryStatementType.Other, SqlHelpers.ExecuteNonQueryDelegate );
         _isPragmaSwapped = false;
-        return key;
     }
 }

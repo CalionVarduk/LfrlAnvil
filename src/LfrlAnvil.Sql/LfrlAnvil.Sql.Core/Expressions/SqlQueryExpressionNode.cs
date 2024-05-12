@@ -8,15 +8,26 @@ using LfrlAnvil.Sql.Internal;
 
 namespace LfrlAnvil.Sql.Expressions;
 
+/// <summary>
+/// Represents an SQL syntax tree expression node that defines a query expression.
+/// </summary>
 public abstract class SqlQueryExpressionNode : SqlExpressionNode, ISqlStatementNode
 {
     internal SqlQueryExpressionNode(SqlNodeType nodeType)
         : base( nodeType ) { }
 
+    /// <summary>
+    /// Collection of expressions to include in this query's selection.
+    /// </summary>
     public abstract ReadOnlyArray<SqlSelectNode> Selection { get; }
+
     SqlNodeBase ISqlStatementNode.Node => this;
     int ISqlStatementNode.QueryCount => 1;
 
+    /// <summary>
+    /// Invokes the provided <paramref name="callback"/> for each known data field in this query.
+    /// </summary>
+    /// <param name="callback">Callback to invoke.</param>
     public virtual void ReduceKnownDataFieldExpressions(Action<KeyValuePair<string, KnownDataFieldInfo>> callback)
     {
         var visitor = new DataFieldInfoVisitor( callback );
@@ -27,6 +38,13 @@ public abstract class SqlQueryExpressionNode : SqlExpressionNode, ISqlStatementN
         }
     }
 
+    /// <summary>
+    /// Extracts a collection of <see cref="SqlQueryDataFieldNode"/> instances for all known data fields, identifier by field name.
+    /// </summary>
+    /// <param name="recordSet">Record set to attach to all created data field nodes.</param>
+    /// <returns>
+    /// New collection of <see cref="SqlQueryDataFieldNode"/> instances for all known data fields, identifier by field name.
+    /// </returns>
     [Pure]
     protected internal virtual Dictionary<string, SqlQueryDataFieldNode> ExtractKnownDataFields(SqlRecordSetNode recordSet)
     {
@@ -40,6 +58,10 @@ public abstract class SqlQueryExpressionNode : SqlExpressionNode, ISqlStatementN
         return visitor.DataFields;
     }
 
+    /// <summary>
+    /// Calculates the number of known data fields selected by this query.
+    /// </summary>
+    /// <returns>Number of known data fields selected by this query.</returns>
     [Pure]
     protected internal virtual int ExtractKnownDataFieldCount()
     {
@@ -50,6 +72,10 @@ public abstract class SqlQueryExpressionNode : SqlExpressionNode, ISqlStatementN
         return counter.Count;
     }
 
+    /// <summary>
+    /// Attempts to find a known data field by the provided <paramref name="name"/>.
+    /// </summary>
+    /// <returns>Found <see cref="KnownDataFieldInfo"/> instance or null when data field was not found.</returns>
     [Pure]
     protected internal virtual KnownDataFieldInfo? TryFindKnownDataFieldInfo(string name)
     {
@@ -63,6 +89,11 @@ public abstract class SqlQueryExpressionNode : SqlExpressionNode, ISqlStatementN
         return finder.FoundInfo;
     }
 
+    /// <summary>
+    /// Represents a known data field that exists in an <see cref="SqlQueryExpressionNode"/>.
+    /// </summary>
+    /// <param name="Selection">Source selection.</param>
+    /// <param name="Expression">Expression associated with this data field.</param>
     public readonly record struct KnownDataFieldInfo(SqlSelectNode Selection, SqlExpressionNode? Expression);
 
     private sealed class DataFieldVisitor : ISqlSelectNodeExpressionVisitor

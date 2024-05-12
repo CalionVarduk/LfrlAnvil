@@ -5,6 +5,10 @@ using System.Runtime.CompilerServices;
 
 namespace LfrlAnvil.Sql.Objects.Builders;
 
+/// <summary>
+/// Represents an array of <see cref="ISqlObjectBuilder"/> instances.
+/// </summary>
+/// <typeparam name="T">SQL object builder type.</typeparam>
 public readonly struct SqlObjectBuilderArray<T> : IReadOnlyList<T>
     where T : class, ISqlObjectBuilder
 {
@@ -15,9 +19,19 @@ public readonly struct SqlObjectBuilderArray<T> : IReadOnlyList<T>
         _source = source;
     }
 
+    /// <inheritdoc />
     public int Count => _source.Count;
+
+    /// <inheritdoc />
     public T this[int index] => ReinterpretCast.To<T>( _source[index] );
 
+    /// <summary>
+    /// Creates a new <see cref="SqlObjectBuilderArray{T}"/> instance.
+    /// </summary>
+    /// <param name="source">Source collection.</param>
+    /// <typeparam name="TSource">Source SQL object builder type.</typeparam>
+    /// <returns>New <see cref="SqlObjectBuilderArray{T}"/> instance.</returns>
+    /// <remarks>Be careful while using this method, because it does not actually validate the type's correctness.</remarks>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static SqlObjectBuilderArray<T> From<TSource>(ReadOnlyArray<TSource> source)
@@ -26,6 +40,12 @@ public readonly struct SqlObjectBuilderArray<T> : IReadOnlyList<T>
         return new SqlObjectBuilderArray<T>( ReadOnlyArray<SqlObjectBuilder>.From( source ) );
     }
 
+    /// <summary>
+    /// Converts this instance to another type that implements the <see cref="ISqlObjectBuilder"/> interface.
+    /// </summary>
+    /// <typeparam name="TDestination">SQL object builder type to convert to.</typeparam>
+    /// <returns>New <see cref="SqlObjectBuilderArray{T}"/> instance.</returns>
+    /// <remarks>Be careful while using this method, because it does not actually validate the type's correctness.</remarks>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public SqlObjectBuilderArray<TDestination> UnsafeReinterpretAs<TDestination>()
@@ -34,6 +54,10 @@ public readonly struct SqlObjectBuilderArray<T> : IReadOnlyList<T>
         return new SqlObjectBuilderArray<TDestination>( _source );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="Enumerator"/> instance for this array.
+    /// </summary>
+    /// <returns>New <see cref="Enumerator"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public Enumerator GetEnumerator()
@@ -41,6 +65,9 @@ public readonly struct SqlObjectBuilderArray<T> : IReadOnlyList<T>
         return new Enumerator( _source );
     }
 
+    /// <summary>
+    /// Lightweight enumerator implementation for <see cref="SqlObjectBuilderArray{T}"/>.
+    /// </summary>
     public struct Enumerator : IEnumerator<T>
     {
         private ReadOnlyArray<SqlObjectBuilder>.Enumerator _source;
@@ -50,15 +77,19 @@ public readonly struct SqlObjectBuilderArray<T> : IReadOnlyList<T>
             _source = source.GetEnumerator();
         }
 
+        /// <inheritdoc />
         public T Current => ReinterpretCast.To<T>( _source.Current );
+
         object IEnumerator.Current => Current;
 
+        /// <inheritdoc />
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public bool MoveNext()
         {
             return _source.MoveNext();
         }
 
+        /// <inheritdoc />
         public void Dispose()
         {
             _source.Dispose();

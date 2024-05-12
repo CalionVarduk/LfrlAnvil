@@ -6,15 +6,38 @@ using LfrlAnvil.Sql.Exceptions;
 
 namespace LfrlAnvil.Sql.Versioning;
 
+/// <summary>
+/// Represents a sequential history of all database versions.
+/// </summary>
 public class SqlDatabaseVersionHistory
 {
+    /// <summary>
+    /// Represents an identifier of the initial <b>0.0</b> version.
+    /// </summary>
     public static readonly Version InitialVersion = new Version();
 
     private readonly ISqlDatabaseVersion[] _versions;
 
+    /// <summary>
+    /// Creates a new <see cref="SqlDatabaseVersionHistory"/> instance.
+    /// </summary>
+    /// <param name="versions">Sequential collection of all database versions.</param>
+    /// <exception cref="SqlDatabaseVersionHistoryException">
+    /// When first version's identifier is equal to <see cref="InitialVersion"/>
+    /// or when versions are not ordered in ascending order by their <see cref="ISqlDatabaseVersion.Value"/>.
+    /// </exception>
     public SqlDatabaseVersionHistory(IEnumerable<ISqlDatabaseVersion> versions)
         : this( versions.ToArray() ) { }
 
+    /// <summary>
+    /// Creates a new <see cref="SqlDatabaseVersionHistory"/> instance.
+    /// </summary>
+    /// <param name="versions">Sequential collection of all database versions.</param>
+    /// <exception cref="SqlDatabaseVersionHistoryException">
+    /// When first version's identifier is equal to <see cref="InitialVersion"/>
+    /// or when versions are not ordered in ascending order by their <see cref="ISqlDatabaseVersion.Value"/>
+    /// or when version identifiers are not unique.
+    /// </exception>
     public SqlDatabaseVersionHistory(params ISqlDatabaseVersion[] versions)
     {
         _versions = versions;
@@ -40,8 +63,19 @@ public class SqlDatabaseVersionHistory
             throw new SqlDatabaseVersionHistoryException( errors );
     }
 
+    /// <summary>
+    /// Sequential collection of all database versions.
+    /// </summary>
     public ReadOnlySpan<ISqlDatabaseVersion> Versions => _versions;
 
+    /// <summary>
+    /// Compares this DB version history to a sequence of versions applied to the database.
+    /// </summary>
+    /// <param name="records">Sequence of versions applied to the database.</param>
+    /// <returns>New <see cref="DatabaseComparisonResult"/> instance.</returns>
+    /// <exception cref="SqlDatabaseVersionHistoryException">
+    /// When there is any discrepancy between this DB version history and the provided sequence of versions applied to the database.
+    /// </exception>
     [Pure]
     public DatabaseComparisonResult CompareToDatabase(ReadOnlySpan<SqlDatabaseVersionRecord> records)
     {
@@ -94,6 +128,10 @@ public class SqlDatabaseVersionHistory
         return new DatabaseComparisonResult( _versions, committedVersionCount, dbVersion, lastOrdinal + 1 );
     }
 
+    /// <summary>
+    /// Represents a result of comparison of an <see cref="SqlDatabaseVersionHistory"/> instance
+    /// with a sequence of versions already applied to the database.
+    /// </summary>
     public readonly struct DatabaseComparisonResult
     {
         private readonly ISqlDatabaseVersion[] _allVersions;
@@ -112,9 +150,24 @@ public class SqlDatabaseVersionHistory
             NextOrdinal = nextOrdinal;
         }
 
+        /// <summary>
+        /// Collection of all versions applied to the database.
+        /// </summary>
         public ReadOnlySpan<ISqlDatabaseVersion> Committed => _allVersions.AsSpan( 0, _committedVersionCount );
+
+        /// <summary>
+        /// Collection of all versions that haven't been applied to the database yet.
+        /// </summary>
         public ReadOnlySpan<ISqlDatabaseVersion> Uncommitted => _allVersions.AsSpan( _committedVersionCount );
+
+        /// <summary>
+        /// Specifies the identifier of the last applied version to the database.
+        /// </summary>
         public Version Current { get; }
+
+        /// <summary>
+        /// Specifies the <see cref="SqlDatabaseVersionRecord.Ordinal"/> value of the next version to be applied to the database.
+        /// </summary>
         public int NextOrdinal { get; }
     }
 

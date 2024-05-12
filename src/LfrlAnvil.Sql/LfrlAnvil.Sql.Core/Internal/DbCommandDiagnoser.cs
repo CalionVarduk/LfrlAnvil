@@ -5,9 +5,19 @@ using LfrlAnvil.Diagnostics;
 
 namespace LfrlAnvil.Sql.Internal;
 
+/// <summary>
+/// Represents an object capable of diagnosing SQL statements invoked through <see cref="IDbCommand"/> instances.
+/// </summary>
+/// <typeparam name="TCommand"><see cref="IDbCommand"/> type.</typeparam>
+/// <typeparam name="TArgs">Delegate argument type.</typeparam>
 public readonly struct DbCommandDiagnoser<TCommand, TArgs>
     where TCommand : IDbCommand
 {
+    /// <summary>
+    /// Creates a new <see cref="DbCommandDiagnoser{TCommand,TArgs}"/> instance.
+    /// </summary>
+    /// <param name="beforeExecute">Optional delegate invoked just before an SQL statement execution starts.</param>
+    /// <param name="afterExecute">Optional delegate invoked just after an SQL statement execution has finished.</param>
     public DbCommandDiagnoser(
         Action<TCommand, TArgs>? beforeExecute = null,
         Action<TCommand, TArgs, TimeSpan, Exception?>? afterExecute = null)
@@ -16,9 +26,24 @@ public readonly struct DbCommandDiagnoser<TCommand, TArgs>
         AfterExecute = afterExecute;
     }
 
+    /// <summary>
+    /// Optional delegate invoked just before an SQL statement execution starts.
+    /// </summary>
     public Action<TCommand, TArgs>? BeforeExecute { get; }
+
+    /// <summary>
+    /// Optional delegate invoked just after an SQL statement execution has finished.
+    /// </summary>
     public Action<TCommand, TArgs, TimeSpan, Exception?>? AfterExecute { get; }
 
+    /// <summary>
+    /// Executes provided <see cref="IDbCommand"/> synchronously.
+    /// </summary>
+    /// <param name="command">Command to execute.</param>
+    /// <param name="args"><see cref="BeforeExecute"/>/<see cref="AfterExecute"/> delegate arguments.</param>
+    /// <param name="invoker">Delegate that invokes the provided <paramref name="command"/> and returns the result.</param>
+    /// <typeparam name="TResult">Result type.</typeparam>
+    /// <returns>Result of the invocation.</returns>
     public TResult Execute<TResult>(TCommand command, TArgs args, Func<TCommand, TResult> invoker)
     {
         TResult result;
@@ -39,6 +64,14 @@ public readonly struct DbCommandDiagnoser<TCommand, TArgs>
         return result;
     }
 
+    /// <summary>
+    /// Executes provided <see cref="IDbCommand"/> asynchronously.
+    /// </summary>
+    /// <param name="command">Command to execute.</param>
+    /// <param name="args"><see cref="BeforeExecute"/>/<see cref="AfterExecute"/> delegate arguments.</param>
+    /// <param name="invoker">Delegate that invokes the provided <paramref name="command"/> and returns the result.</param>
+    /// <typeparam name="TResult">Result type.</typeparam>
+    /// <returns><see cref="ValueTask{TResult}"/> that returns the result of the invocation.</returns>
     public async ValueTask<TResult> ExecuteAsync<TResult>(TCommand command, TArgs args, Func<TCommand, ValueTask<TResult>> invoker)
     {
         TResult result;
@@ -59,6 +92,14 @@ public readonly struct DbCommandDiagnoser<TCommand, TArgs>
         return result;
     }
 
+    /// <summary>
+    /// Executes provided <see cref="IDbCommand"/> asynchronously.
+    /// </summary>
+    /// <param name="command">Command to execute.</param>
+    /// <param name="args"><see cref="BeforeExecute"/>/<see cref="AfterExecute"/> delegate arguments.</param>
+    /// <param name="invoker">Delegate that invokes the provided <paramref name="command"/> and returns the result.</param>
+    /// <typeparam name="TResult">Result type.</typeparam>
+    /// <returns><see cref="ValueTask{TResult}"/> that returns the result of the invocation.</returns>
     public async ValueTask<TResult> ExecuteAsync<TResult>(TCommand command, TArgs args, Func<TCommand, Task<TResult>> invoker)
     {
         TResult result;

@@ -2,10 +2,14 @@
 using System.Data;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
+using LfrlAnvil.Sql.Internal;
 using LfrlAnvil.Sql.Statements;
 
 namespace LfrlAnvil.Sql.Objects.Builders;
 
+/// <summary>
+/// Represents a definition of an SQL statement to be ran by an <see cref="ISqlDatabaseFactory"/>.
+/// </summary>
 public readonly struct SqlDatabaseBuilderCommandAction
 {
     private static readonly Func<IDbCommand, object?> DefaultOnExecute = static cmd =>
@@ -26,11 +30,31 @@ public readonly struct SqlDatabaseBuilderCommandAction
         Timeout = timeout;
     }
 
+    /// <summary>
+    /// Underlying SQL statement.
+    /// </summary>
     public string? Sql { get; }
+
+    /// <summary>
+    /// Delegate that prepares the <see cref="IDbCommand"/>. Can be used to e.g. prepare a collection of parameters.
+    /// </summary>
     public Action<IDbCommand>? OnCommandSetup { get; }
+
+    /// <summary>
+    /// Delegate that executes the <see cref="IDbCommand"/>.
+    /// </summary>
     public Func<IDbCommand, object?> OnExecute { get; }
+
+    /// <summary>
+    /// Optional custom <see cref="IDbCommand.CommandTimeout"/>.
+    /// Overrides <see cref="SqlDatabaseFactoryStatementExecutor.CommandTimeout"/> if not null.
+    /// </summary>
     public TimeSpan? Timeout { get; }
 
+    /// <summary>
+    /// Returns a string representation of this <see cref="SqlDatabaseBuilderCommandAction"/> instance.
+    /// </summary>
+    /// <returns>String representation.</returns>
     [Pure]
     public override string ToString()
     {
@@ -41,12 +65,25 @@ public readonly struct SqlDatabaseBuilderCommandAction
         return $"{header}{Environment.NewLine}{Sql}";
     }
 
+    /// <summary>
+    /// Creates a new <see cref="SqlDatabaseBuilderCommandAction"/> instance.
+    /// </summary>
+    /// <param name="sql">Underlying SQL statement.</param>
+    /// <param name="timeout">Optional custom <see cref="IDbCommand.CommandTimeout"/>. Equal to null by default.</param>
+    /// <returns>New <see cref="SqlDatabaseBuilderCommandAction"/> instance.</returns>
     [Pure]
     public static SqlDatabaseBuilderCommandAction CreateSql(string sql, TimeSpan? timeout = null)
     {
         return new SqlDatabaseBuilderCommandAction( sql, onCommandSetup: null, DefaultOnExecute, timeout );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="SqlDatabaseBuilderCommandAction"/> instance with bound parameters.
+    /// </summary>
+    /// <param name="sql">Underlying SQL statement.</param>
+    /// <param name="boundParameters"><see cref="SqlParameterBinderExecutor"/> instance that represents parameters to bind.</param>
+    /// <param name="timeout">Optional custom <see cref="IDbCommand.CommandTimeout"/>. Equal to null by default.</param>
+    /// <returns>New <see cref="SqlDatabaseBuilderCommandAction"/> instance.</returns>
     [Pure]
     public static SqlDatabaseBuilderCommandAction CreateSql(
         string sql,
@@ -56,6 +93,14 @@ public readonly struct SqlDatabaseBuilderCommandAction
         return new SqlDatabaseBuilderCommandAction( sql, boundParameters.Execute, DefaultOnExecute, timeout );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="SqlDatabaseBuilderCommandAction"/> instance with bound parameters.
+    /// </summary>
+    /// <param name="sql">Underlying SQL statement.</param>
+    /// <param name="boundParameters"><see cref="SqlParameterBinderExecutor"/> instance that represents parameters to bind.</param>
+    /// <param name="timeout">Optional custom <see cref="IDbCommand.CommandTimeout"/>. Equal to null by default.</param>
+    /// <typeparam name="T">Parameter source type.</typeparam>
+    /// <returns>New <see cref="SqlDatabaseBuilderCommandAction"/> instance.</returns>
     [Pure]
     public static SqlDatabaseBuilderCommandAction CreateSql<T>(
         string sql,
@@ -66,6 +111,16 @@ public readonly struct SqlDatabaseBuilderCommandAction
         return new SqlDatabaseBuilderCommandAction( sql, boundParameters.Execute, DefaultOnExecute, timeout );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="SqlDatabaseBuilderCommandAction"/> instance with custom execution.
+    /// </summary>
+    /// <param name="onExecute">Custom delegate that executes the <see cref="IDbCommand"/>.</param>
+    /// <param name="onCommandSetup">
+    /// Optional delegate that prepares the <see cref="IDbCommand"/>. Can be used to e.g. prepare a collection of parameters.
+    /// Equal to null by default.
+    /// </param>
+    /// <param name="timeout">Optional custom <see cref="IDbCommand.CommandTimeout"/>. Equal to null by default.</param>
+    /// <returns>New <see cref="SqlDatabaseBuilderCommandAction"/> instance.</returns>
     [Pure]
     public static SqlDatabaseBuilderCommandAction CreateCustom(
         Action<IDbCommand> onExecute,

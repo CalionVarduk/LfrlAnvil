@@ -5,6 +5,9 @@ using LfrlAnvil.Sql.Objects;
 
 namespace LfrlAnvil.Sql.Expressions.Objects;
 
+/// <summary>
+/// Represents an SQL syntax tree node that defines a single record set based on an <see cref="ISqlView"/> instance.
+/// </summary>
 public sealed class SqlViewNode : SqlRecordSetNode
 {
     private Dictionary<string, SqlViewDataFieldNode>? _fields;
@@ -16,10 +19,18 @@ public sealed class SqlViewNode : SqlRecordSetNode
         _fields = null;
     }
 
+    /// <summary>
+    /// Underlying <see cref="ISqlView"/> instance.
+    /// </summary>
     public ISqlView View { get; }
+
+    /// <inheritdoc />
     public override SqlRecordSetInfo Info => View.Info;
+
+    /// <inheritdoc cref="SqlRecordSetNode.this[string]" />
     public new SqlViewDataFieldNode this[string fieldName] => GetField( fieldName );
 
+    /// <inheritdoc />
     [Pure]
     public override IReadOnlyCollection<SqlViewDataFieldNode> GetKnownFields()
     {
@@ -27,18 +38,21 @@ public sealed class SqlViewNode : SqlRecordSetNode
         return _fields.Values;
     }
 
+    /// <inheritdoc />
     [Pure]
     public override SqlViewNode As(string alias)
     {
         return new SqlViewNode( View, alias, IsOptional );
     }
 
+    /// <inheritdoc />
     [Pure]
     public override SqlViewNode AsSelf()
     {
         return new SqlViewNode( View, alias: null, IsOptional );
     }
 
+    /// <inheritdoc />
     [Pure]
     public override SqlDataFieldNode GetUnsafeField(string name)
     {
@@ -46,6 +60,7 @@ public sealed class SqlViewNode : SqlRecordSetNode
         return _fields.TryGetValue( name, out var column ) ? column : new SqlRawDataFieldNode( this, name, type: null );
     }
 
+    /// <inheritdoc />
     [Pure]
     public override SqlViewDataFieldNode GetField(string name)
     {
@@ -53,6 +68,7 @@ public sealed class SqlViewNode : SqlRecordSetNode
         return _fields[name];
     }
 
+    /// <inheritdoc />
     [Pure]
     public override SqlViewNode MarkAsOptional(bool optional = true)
     {

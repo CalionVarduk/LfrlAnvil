@@ -5,6 +5,10 @@ using LfrlAnvil.Sql.Objects.Builders;
 
 namespace LfrlAnvil.Sql.Internal;
 
+/// <summary>
+/// Represents a set of named <see cref="SqlObjectBuilder"/> instances.
+/// </summary>
+/// <typeparam name="T">SQL object builder type.</typeparam>
 public readonly struct SqlDatabaseNamedObjectsSet<T>
     where T : SqlObjectBuilder
 {
@@ -15,8 +19,15 @@ public readonly struct SqlDatabaseNamedObjectsSet<T>
         _map = map;
     }
 
+    /// <summary>
+    /// Number of elements in this set.
+    /// </summary>
     public int Count => _map.Count;
 
+    /// <summary>
+    /// Creates a new empty <see cref="SqlDatabaseNamedObjectsSet{T}"/> instance.
+    /// </summary>
+    /// <returns>New <see cref="SqlDatabaseNamedObjectsSet{T}"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static SqlDatabaseNamedObjectsSet<T> Create()
@@ -24,18 +35,34 @@ public readonly struct SqlDatabaseNamedObjectsSet<T>
         return new SqlDatabaseNamedObjectsSet<T>( new Dictionary<string, T>( SqlHelpers.NameComparer ) );
     }
 
+    /// <summary>
+    /// Attempts to add the provided <paramref name="obj"/> to this set.
+    /// </summary>
+    /// <param name="name">Name of the object.</param>
+    /// <param name="obj">Object to add.</param>
+    /// <returns><b>true</b> when object was added, otherwise <b>false</b>.</returns>
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public bool Add(string name, T obj)
     {
         return _map.TryAdd( name, obj );
     }
 
+    /// <summary>
+    /// Attempts to remove an object by its <paramref name="name"/> from this set.
+    /// </summary>
+    /// <param name="name">Name of the object to remove.</param>
+    /// <returns>Removed object or null when it does not exist.</returns>
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public T? Remove(string name)
     {
         return _map.Remove( name, out var removed ) ? removed : null;
     }
 
+    /// <summary>
+    /// Attempts to retrieve an object associated with the provided <paramref name="name"/> from this set.
+    /// </summary>
+    /// <param name="name">Name of the object to retrieve.</param>
+    /// <returns>Existing object or null when it does not exist.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public T? TryGetObject(string name)
@@ -43,12 +70,19 @@ public readonly struct SqlDatabaseNamedObjectsSet<T>
         return _map.GetValueOrDefault( name );
     }
 
+    /// <summary>
+    /// Removes all objects from this set.
+    /// </summary>
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public void Clear()
     {
         _map.Clear();
     }
 
+    /// <summary>
+    /// Creates a new enumerator for this set.
+    /// </summary>
+    /// <returns>New enumerator.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public Enumerator GetEnumerator()
@@ -56,6 +90,9 @@ public readonly struct SqlDatabaseNamedObjectsSet<T>
         return new Enumerator( _map );
     }
 
+    /// <summary>
+    /// Lightweight enumerator implementation for <see cref="SqlDatabaseNamedObjectsSet{T}"/>.
+    /// </summary>
     public struct Enumerator
     {
         private Dictionary<string, T>.Enumerator _base;
@@ -65,6 +102,9 @@ public readonly struct SqlDatabaseNamedObjectsSet<T>
             _base = map.GetEnumerator();
         }
 
+        /// <summary>
+        /// Gets the element at the current position of this enumerator.
+        /// </summary>
         public SqlNamedObject<T> Current
         {
             get
@@ -74,6 +114,10 @@ public readonly struct SqlDatabaseNamedObjectsSet<T>
             }
         }
 
+        /// <summary>
+        /// Advances this enumerator to the next element.
+        /// </summary>
+        /// <returns><b>true</b> when next element exists, otherwise <b>false</b>.</returns>
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public bool MoveNext()
         {

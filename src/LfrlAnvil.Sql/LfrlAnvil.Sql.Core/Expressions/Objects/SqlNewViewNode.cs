@@ -3,6 +3,9 @@ using System.Diagnostics.Contracts;
 
 namespace LfrlAnvil.Sql.Expressions.Objects;
 
+/// <summary>
+/// Represents an SQL syntax tree node that defines a single record set based on an <see cref="SqlCreateViewNode"/> instance.
+/// </summary>
 public sealed class SqlNewViewNode : SqlRecordSetNode
 {
     private Dictionary<string, SqlQueryDataFieldNode>? _fields;
@@ -14,10 +17,18 @@ public sealed class SqlNewViewNode : SqlRecordSetNode
         _fields = null;
     }
 
+    /// <summary>
+    /// Underlying <see cref="SqlCreateViewNode"/> instance.
+    /// </summary>
     public SqlCreateViewNode CreationNode { get; }
+
+    /// <inheritdoc />
     public override SqlRecordSetInfo Info => CreationNode.Info;
+
+    /// <inheritdoc cref="SqlRecordSetNode.this[string]" />
     public new SqlQueryDataFieldNode this[string fieldName] => GetField( fieldName );
 
+    /// <inheritdoc />
     [Pure]
     public override IReadOnlyCollection<SqlQueryDataFieldNode> GetKnownFields()
     {
@@ -25,18 +36,21 @@ public sealed class SqlNewViewNode : SqlRecordSetNode
         return _fields.Values;
     }
 
+    /// <inheritdoc />
     [Pure]
     public override SqlNewViewNode As(string alias)
     {
         return new SqlNewViewNode( CreationNode, alias, IsOptional );
     }
 
+    /// <inheritdoc />
     [Pure]
     public override SqlNewViewNode AsSelf()
     {
         return new SqlNewViewNode( CreationNode, alias: null, IsOptional );
     }
 
+    /// <inheritdoc />
     [Pure]
     public override SqlDataFieldNode GetUnsafeField(string name)
     {
@@ -44,6 +58,7 @@ public sealed class SqlNewViewNode : SqlRecordSetNode
         return _fields.TryGetValue( name, out var column ) ? column : new SqlRawDataFieldNode( this, name, type: null );
     }
 
+    /// <inheritdoc />
     [Pure]
     public override SqlQueryDataFieldNode GetField(string name)
     {
@@ -51,6 +66,7 @@ public sealed class SqlNewViewNode : SqlRecordSetNode
         return _fields[name];
     }
 
+    /// <inheritdoc />
     [Pure]
     public override SqlNewViewNode MarkAsOptional(bool optional = true)
     {

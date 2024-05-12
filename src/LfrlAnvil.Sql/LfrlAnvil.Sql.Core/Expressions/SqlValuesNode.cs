@@ -5,6 +5,9 @@ using System.Runtime.InteropServices;
 
 namespace LfrlAnvil.Sql.Expressions;
 
+/// <summary>
+/// Represents an SQL syntax tree node that defines a 1-dimensional or 2-dimensional collection of values to insert.
+/// </summary>
 public sealed class SqlValuesNode : SqlNodeBase
 {
     private readonly Array _expressions;
@@ -27,9 +30,21 @@ public sealed class SqlValuesNode : SqlNodeBase
         ColumnCount = expressions.Length;
     }
 
+    /// <summary>
+    /// Number of rows.
+    /// </summary>
     public int RowCount { get; }
+
+    /// <summary>
+    /// Number of columns.
+    /// </summary>
     public int ColumnCount { get; }
 
+    /// <summary>
+    /// Gets a collection of values associated with a row at the specified 0-based <paramref name="rowIndex"/>.
+    /// </summary>
+    /// <param name="rowIndex">Index of the row to get.</param>
+    /// <exception cref="ArgumentOutOfRangeException">When <paramref name="rowIndex"/> is out of bounds.</exception>
     public ReadOnlySpan<SqlExpressionNode> this[int rowIndex]
     {
         get

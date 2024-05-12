@@ -7,6 +7,10 @@ using LfrlAnvil.Sql.Internal;
 
 namespace LfrlAnvil.Sql.Objects.Builders;
 
+/// <summary>
+/// Represents a collection of <see cref="SqlObjectBuilderReference{T}"/> instances.
+/// </summary>
+/// <typeparam name="T">SQL object builder type.</typeparam>
 public readonly struct SqlObjectBuilderReferenceCollection<T> : IReadOnlyCollection<SqlObjectBuilderReference<T>>
     where T : class, ISqlObjectBuilder
 {
@@ -17,8 +21,14 @@ public readonly struct SqlObjectBuilderReferenceCollection<T> : IReadOnlyCollect
         _object = obj;
     }
 
+    /// <inheritdoc />
     public int Count => _object.ReferencedTargets?.Count ?? 0;
 
+    /// <summary>
+    /// Checks whether or not the provided <paramref name="source"/> exists in this collection.
+    /// </summary>
+    /// <param name="source">Source to check.</param>
+    /// <returns><b>true</b> when <paramref name="source"/> exists, otherwise <b>false</b>.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public bool Contains(SqlObjectBuilderReferenceSource<T> source)
@@ -26,6 +36,12 @@ public readonly struct SqlObjectBuilderReferenceCollection<T> : IReadOnlyCollect
         return _object.ReferencedTargets?.ContainsKey( source.UnsafeReinterpretAs<SqlObjectBuilder>() ) ?? false;
     }
 
+    /// <summary>
+    /// Returns an <see cref="SqlObjectBuilderReference{T}"/> instance associated with the provided <paramref name="source"/>.
+    /// </summary>
+    /// <param name="source">Source to return an <see cref="SqlObjectBuilderReference{T}"/> instance for.</param>
+    /// <returns><see cref="SqlObjectBuilderReference{T}"/> instance associated with the provided <paramref name="source"/>.</returns>
+    /// <exception cref="SqlObjectBuilderException">When <paramref name="source"/> does not exist.</exception>
     [Pure]
     public SqlObjectBuilderReference<T> GetReference(SqlObjectBuilderReferenceSource<T> source)
     {
@@ -33,6 +49,14 @@ public readonly struct SqlObjectBuilderReferenceCollection<T> : IReadOnlyCollect
             ?? throw SqlHelpers.CreateObjectBuilderException( source.Object.Database, ExceptionResources.ReferenceDoesNotExist( source ) );
     }
 
+    /// <summary>
+    /// Attempts to return an <see cref="SqlObjectBuilderReference{T}"/> instance associated with the provided <paramref name="source"/>.
+    /// </summary>
+    /// <param name="source">Source to return an <see cref="SqlObjectBuilderReference{T}"/> instance for.</param>
+    /// <returns>
+    /// <see cref="SqlObjectBuilderReference{T}"/> instance associated with the provided <paramref name="source"/>
+    /// or null when it does not exist.
+    /// </returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public SqlObjectBuilderReference<T>? TryGetReference(SqlObjectBuilderReferenceSource<T> source)
@@ -44,6 +68,12 @@ public readonly struct SqlObjectBuilderReferenceCollection<T> : IReadOnlyCollect
             : null;
     }
 
+    /// <summary>
+    /// Converts this instance to another type that implements the <see cref="ISqlObjectBuilder"/> interface.
+    /// </summary>
+    /// <typeparam name="TDestination">SQL object builder type to convert to.</typeparam>
+    /// <returns>New <see cref="SqlObjectBuilderReferenceCollection{T}"/> instance.</returns>
+    /// <remarks>Be careful while using this method, because it does not actually validate the type's correctness.</remarks>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public SqlObjectBuilderReferenceCollection<TDestination> UnsafeReinterpretAs<TDestination>()
@@ -52,6 +82,10 @@ public readonly struct SqlObjectBuilderReferenceCollection<T> : IReadOnlyCollect
         return new SqlObjectBuilderReferenceCollection<TDestination>( _object );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="Enumerator"/> instance for this collection.
+    /// </summary>
+    /// <returns>New <see cref="Enumerator"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public Enumerator GetEnumerator()
@@ -59,6 +93,11 @@ public readonly struct SqlObjectBuilderReferenceCollection<T> : IReadOnlyCollect
         return new Enumerator( _object );
     }
 
+    /// <summary>
+    /// Converts <paramref name="source"/> to the base <see cref="ISqlObjectBuilder"/> type.
+    /// </summary>
+    /// <param name="source">Source to convert.</param>
+    /// <returns>New <see cref="SqlObjectBuilderReferenceCollection{T}"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static implicit operator SqlObjectBuilderReferenceCollection<ISqlObjectBuilder>(SqlObjectBuilderReferenceCollection<T> source)
@@ -66,6 +105,9 @@ public readonly struct SqlObjectBuilderReferenceCollection<T> : IReadOnlyCollect
         return new SqlObjectBuilderReferenceCollection<ISqlObjectBuilder>( source._object );
     }
 
+    /// <summary>
+    /// Lightweight enumerator implementation for <see cref="SqlObjectBuilderReferenceCollection{T}"/>.
+    /// </summary>
     public struct Enumerator : IEnumerator<SqlObjectBuilderReference<T>>
     {
         private readonly bool _isEmpty;
@@ -85,6 +127,7 @@ public readonly struct SqlObjectBuilderReferenceCollection<T> : IReadOnlyCollect
             }
         }
 
+        /// <inheritdoc />
         public SqlObjectBuilderReference<T> Current
         {
             get
@@ -97,12 +140,14 @@ public readonly struct SqlObjectBuilderReferenceCollection<T> : IReadOnlyCollect
 
         object IEnumerator.Current => Current;
 
+        /// <inheritdoc />
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public bool MoveNext()
         {
             return ! _isEmpty && _enumerator.MoveNext();
         }
 
+        /// <inheritdoc />
         public void Dispose()
         {
             if ( ! _isEmpty )

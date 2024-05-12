@@ -6,6 +6,13 @@ using LfrlAnvil.Internal;
 
 namespace LfrlAnvil.Sql;
 
+/// <summary>
+/// Represents a generic definition of a column type.
+/// </summary>
+/// <typeparam name="TEnum">Underlying .NET <see cref="Enum"/> type.</typeparam>
+/// <typeparam name="TUnderlying">.NET type of the underlying value of <typeparamref name="TEnum"/> type.</typeparam>
+/// <typeparam name="TDataRecord">DB data record type.</typeparam>
+/// <typeparam name="TParameter">DB parameter type.</typeparam>
 public abstract class SqlColumnTypeEnumDefinition<TEnum, TUnderlying, TDataRecord, TParameter>
     : SqlColumnTypeDefinition<TEnum, TDataRecord, TParameter>
     where TEnum : struct, Enum
@@ -15,18 +22,24 @@ public abstract class SqlColumnTypeEnumDefinition<TEnum, TUnderlying, TDataRecor
 {
     private readonly SqlColumnTypeDefinition<TUnderlying, TDataRecord, TParameter> _base;
 
+    /// <summary>
+    /// Creates a new <see cref="SqlColumnTypeEnumDefinition{TEnum,TUnderlying,TDataRecord,TParameter}"/> instance.
+    /// </summary>
+    /// <param name="base">Column type definition associated with the underlying type.</param>
     protected SqlColumnTypeEnumDefinition(SqlColumnTypeDefinition<TUnderlying, TDataRecord, TParameter> @base)
         : base( @base.DataType, FindDefaultValue(), CreateOutputExpression( @base.OutputMapping ) )
     {
         _base = @base;
     }
 
+    /// <inheritdoc />
     [Pure]
     public override string ToDbLiteral(TEnum value)
     {
         return _base.ToDbLiteral( ( TUnderlying )( object )value );
     }
 
+    /// <inheritdoc />
     [Pure]
     public override object ToParameterValue(TEnum value)
     {

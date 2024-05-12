@@ -5,6 +5,10 @@ using LfrlAnvil.Sql.Expressions.Objects;
 
 namespace LfrlAnvil.Sql.Expressions.Persistence;
 
+/// <summary>
+/// Represents an SQL syntax tree statement node that defines an insertion of new records to a table
+/// or update of existing records in that table.
+/// </summary>
 public sealed class SqlUpsertNode : SqlNodeBase, ISqlStatementNode
 {
     internal SqlUpsertNode(
@@ -39,12 +43,39 @@ public sealed class SqlUpsertNode : SqlNodeBase, ISqlStatementNode
         UpdateAssignments = updateAssignments( RecordSet, UpdateSource ).ToArray();
     }
 
+    /// <summary>
+    /// Source of records to be inserted or updated.
+    /// </summary>
+    /// <remarks>This can either be an <see cref="SqlValuesNode"/> or an <see cref="SqlQueryExpressionNode"/>.</remarks>
     public SqlNodeBase Source { get; }
+
+    /// <summary>
+    /// Table to upsert into.
+    /// </summary>
     public SqlRecordSetNode RecordSet { get; }
+
+    /// <summary>
+    /// Source of records excluded from the insertion part of this upsert due to them already existing in the table.
+    /// </summary>
+    /// <remarks>This record set can be used in the update part of an upsert statement.</remarks>
     public SqlInternalRecordSetNode UpdateSource { get; }
+
+    /// <summary>
+    /// Collection of <see cref="RecordSet"/> data fields that the insertion part of this upsert refers to.
+    /// </summary>
     public ReadOnlyArray<SqlDataFieldNode> InsertDataFields { get; }
+
+    /// <summary>
+    /// Collection of value assignments that the update part of this upsert refers to.
+    /// </summary>
     public ReadOnlyArray<SqlValueAssignmentNode> UpdateAssignments { get; }
+
+    /// <summary>
+    /// Collection of data fields from the table that define the insertion conflict target.
+    /// </summary>
+    /// <remarks>Empty conflict target may cause the table's primary key to be used instead.</remarks>
     public ReadOnlyArray<SqlDataFieldNode> ConflictTarget { get; }
+
     SqlNodeBase ISqlStatementNode.Node => this;
     int ISqlStatementNode.QueryCount => 0;
 }

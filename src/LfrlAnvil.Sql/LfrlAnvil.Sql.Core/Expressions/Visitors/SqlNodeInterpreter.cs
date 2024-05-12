@@ -14,22 +14,50 @@ using LfrlAnvil.Sql.Expressions.Traits;
 
 namespace LfrlAnvil.Sql.Expressions.Visitors;
 
+/// <summary>
+/// Represents an object capable of recursive traversal over an SQL syntax tree and translating that tree into an SQL statement.
+/// </summary>
+/// <remarks>
+/// SQL nodes that cannot be handled by an <see cref="SqlNodeInterpreter"/> instance may cause it to throw an exception of
+/// <see cref="SqlNodeVisitorException"/> or <see cref="UnrecognizedSqlNodeException"/> type.
+/// </remarks>
 public abstract class SqlNodeInterpreter : ISqlNodeVisitor
 {
+    /// <summary>
+    /// Specifies the beginning name delimiter symbol.
+    /// </summary>
     public readonly char BeginNameDelimiter;
+
+    /// <summary>
+    /// Specifies the ending name delimiter symbol.
+    /// </summary>
     public readonly char EndNameDelimiter;
 
+    /// <summary>
+    /// Creates a new <see cref="SqlNodeInterpreter"/> instance.
+    /// </summary>
+    /// <param name="context">Underlying <see cref="SqlNodeInterpreterContext"/> instance.</param>
+    /// <param name="beginNameDelimiter"></param>
+    /// <param name="endNameDelimiter"></param>
     protected SqlNodeInterpreter(SqlNodeInterpreterContext context, char beginNameDelimiter, char endNameDelimiter)
     {
         Context = context;
         BeginNameDelimiter = beginNameDelimiter;
         EndNameDelimiter = endNameDelimiter;
-        RecordSetNameBehavior = null;
+        RecordSetNodeBehavior = null;
     }
 
+    /// <summary>
+    /// Underlying <see cref="SqlNodeInterpreterContext"/> instance.
+    /// </summary>
     public SqlNodeInterpreterContext Context { get; }
-    public RecordSetNameBehaviorRule? RecordSetNameBehavior { get; private set; }
 
+    /// <summary>
+    /// Specifies the current <see cref="RecordSetNodeBehaviorRule"/> instance.
+    /// </summary>
+    public RecordSetNodeBehaviorRule? RecordSetNodeBehavior { get; private set; }
+
+    /// <inheritdoc />
     public virtual void VisitRawExpression(SqlRawExpressionNode node)
     {
         AppendMultilineSql( node.Sql );
@@ -38,109 +66,132 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
             AddContextParameter( parameter );
     }
 
+    /// <inheritdoc />
     public virtual void VisitRawDataField(SqlRawDataFieldNode node)
     {
-        TryAppendDataFieldRecordSetNameBasedOnNameBehavior( node );
+        TryAppendDataFieldRecordSetNameBasedOnNodeBehavior( node );
         AppendDelimitedName( node.Name );
     }
 
+    /// <inheritdoc />
     public virtual void VisitNull(SqlNullNode node)
     {
         Context.Sql.Append( "NULL" );
     }
 
+    /// <inheritdoc />
     public abstract void VisitLiteral(SqlLiteralNode node);
+
+    /// <inheritdoc />
     public abstract void VisitParameter(SqlParameterNode node);
 
+    /// <inheritdoc />
     public virtual void VisitColumn(SqlColumnNode node)
     {
-        TryAppendDataFieldRecordSetNameBasedOnNameBehavior( node );
+        TryAppendDataFieldRecordSetNameBasedOnNodeBehavior( node );
         AppendDelimitedName( node.Name );
     }
 
+    /// <inheritdoc />
     public virtual void VisitColumnBuilder(SqlColumnBuilderNode node)
     {
-        TryAppendDataFieldRecordSetNameBasedOnNameBehavior( node );
+        TryAppendDataFieldRecordSetNameBasedOnNodeBehavior( node );
         AppendDelimitedName( node.Name );
     }
 
+    /// <inheritdoc />
     public virtual void VisitQueryDataField(SqlQueryDataFieldNode node)
     {
-        TryAppendDataFieldRecordSetNameBasedOnNameBehavior( node );
+        TryAppendDataFieldRecordSetNameBasedOnNodeBehavior( node );
         AppendDelimitedName( node.Name );
     }
 
+    /// <inheritdoc />
     public virtual void VisitViewDataField(SqlViewDataFieldNode node)
     {
-        TryAppendDataFieldRecordSetNameBasedOnNameBehavior( node );
+        TryAppendDataFieldRecordSetNameBasedOnNodeBehavior( node );
         AppendDelimitedName( node.Name );
     }
 
+    /// <inheritdoc />
     public virtual void VisitNegate(SqlNegateExpressionNode node)
     {
         VisitPrefixUnaryOperator( node.Value, symbol: "-" );
     }
 
+    /// <inheritdoc />
     public virtual void VisitAdd(SqlAddExpressionNode node)
     {
         VisitInfixBinaryOperator( node.Left, symbol: "+", node.Right );
     }
 
+    /// <inheritdoc />
     public virtual void VisitConcat(SqlConcatExpressionNode node)
     {
         VisitInfixBinaryOperator( node.Left, symbol: "||", node.Right );
     }
 
+    /// <inheritdoc />
     public virtual void VisitSubtract(SqlSubtractExpressionNode node)
     {
         VisitInfixBinaryOperator( node.Left, symbol: "-", node.Right );
     }
 
+    /// <inheritdoc />
     public virtual void VisitMultiply(SqlMultiplyExpressionNode node)
     {
         VisitInfixBinaryOperator( node.Left, symbol: "*", node.Right );
     }
 
+    /// <inheritdoc />
     public virtual void VisitDivide(SqlDivideExpressionNode node)
     {
         VisitInfixBinaryOperator( node.Left, symbol: "/", node.Right );
     }
 
+    /// <inheritdoc />
     public virtual void VisitModulo(SqlModuloExpressionNode node)
     {
         VisitInfixBinaryOperator( node.Left, symbol: "%", node.Right );
     }
 
+    /// <inheritdoc />
     public virtual void VisitBitwiseNot(SqlBitwiseNotExpressionNode node)
     {
         VisitPrefixUnaryOperator( node.Value, symbol: "~" );
     }
 
+    /// <inheritdoc />
     public virtual void VisitBitwiseAnd(SqlBitwiseAndExpressionNode node)
     {
         VisitInfixBinaryOperator( node.Left, symbol: "&", node.Right );
     }
 
+    /// <inheritdoc />
     public virtual void VisitBitwiseOr(SqlBitwiseOrExpressionNode node)
     {
         VisitInfixBinaryOperator( node.Left, symbol: "|", node.Right );
     }
 
+    /// <inheritdoc />
     public virtual void VisitBitwiseXor(SqlBitwiseXorExpressionNode node)
     {
         VisitInfixBinaryOperator( node.Left, symbol: "^", node.Right );
     }
 
+    /// <inheritdoc />
     public virtual void VisitBitwiseLeftShift(SqlBitwiseLeftShiftExpressionNode node)
     {
         VisitInfixBinaryOperator( node.Left, symbol: "<<", node.Right );
     }
 
+    /// <inheritdoc />
     public virtual void VisitBitwiseRightShift(SqlBitwiseRightShiftExpressionNode node)
     {
         VisitInfixBinaryOperator( node.Left, symbol: ">>", node.Right );
     }
 
+    /// <inheritdoc />
     public virtual void VisitSwitchCase(SqlSwitchCaseNode node)
     {
         Context.Sql.Append( "WHEN" ).AppendSpace();
@@ -153,6 +204,7 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
         }
     }
 
+    /// <inheritdoc />
     public virtual void VisitSwitch(SqlSwitchExpressionNode node)
     {
         var isChild = Context.ChildDepth > 0;
@@ -179,12 +231,14 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
             Context.AppendShortIndent();
     }
 
+    /// <inheritdoc />
     public virtual void VisitNamedFunction(SqlNamedFunctionExpressionNode node)
     {
         AppendDelimitedSchemaObjectName( node.Name );
         VisitFunctionArguments( node.Arguments );
     }
 
+    /// <inheritdoc />
     public virtual void VisitCoalesceFunction(SqlCoalesceFunctionExpressionNode node)
     {
         if ( node.Arguments.Count == 1 )
@@ -193,69 +247,174 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
             VisitSimpleFunction( "COALESCE", node );
     }
 
+    /// <inheritdoc />
     public abstract void VisitCurrentDateFunction(SqlCurrentDateFunctionExpressionNode node);
+
+    /// <inheritdoc />
     public abstract void VisitCurrentTimeFunction(SqlCurrentTimeFunctionExpressionNode node);
+
+    /// <inheritdoc />
     public abstract void VisitCurrentDateTimeFunction(SqlCurrentDateTimeFunctionExpressionNode node);
+
+    /// <inheritdoc />
     public abstract void VisitCurrentUtcDateTimeFunction(SqlCurrentUtcDateTimeFunctionExpressionNode node);
+
+    /// <inheritdoc />
     public abstract void VisitCurrentTimestampFunction(SqlCurrentTimestampFunctionExpressionNode node);
+
+    /// <inheritdoc />
     public abstract void VisitExtractDateFunction(SqlExtractDateFunctionExpressionNode node);
+
+    /// <inheritdoc />
     public abstract void VisitExtractTimeOfDayFunction(SqlExtractTimeOfDayFunctionExpressionNode node);
+
+    /// <inheritdoc />
     public abstract void VisitExtractDayFunction(SqlExtractDayFunctionExpressionNode node);
+
+    /// <inheritdoc />
     public abstract void VisitExtractTemporalUnitFunction(SqlExtractTemporalUnitFunctionExpressionNode node);
+
+    /// <inheritdoc />
     public abstract void VisitTemporalAddFunction(SqlTemporalAddFunctionExpressionNode node);
+
+    /// <inheritdoc />
     public abstract void VisitTemporalDiffFunction(SqlTemporalDiffFunctionExpressionNode node);
+
+    /// <inheritdoc />
     public abstract void VisitNewGuidFunction(SqlNewGuidFunctionExpressionNode node);
+
+    /// <inheritdoc />
     public abstract void VisitLengthFunction(SqlLengthFunctionExpressionNode node);
+
+    /// <inheritdoc />
     public abstract void VisitByteLengthFunction(SqlByteLengthFunctionExpressionNode node);
+
+    /// <inheritdoc />
     public abstract void VisitToLowerFunction(SqlToLowerFunctionExpressionNode node);
+
+    /// <inheritdoc />
     public abstract void VisitToUpperFunction(SqlToUpperFunctionExpressionNode node);
+
+    /// <inheritdoc />
     public abstract void VisitTrimStartFunction(SqlTrimStartFunctionExpressionNode node);
+
+    /// <inheritdoc />
     public abstract void VisitTrimEndFunction(SqlTrimEndFunctionExpressionNode node);
+
+    /// <inheritdoc />
     public abstract void VisitTrimFunction(SqlTrimFunctionExpressionNode node);
+
+    /// <inheritdoc />
     public abstract void VisitSubstringFunction(SqlSubstringFunctionExpressionNode node);
+
+    /// <inheritdoc />
     public abstract void VisitReplaceFunction(SqlReplaceFunctionExpressionNode node);
+
+    /// <inheritdoc />
     public abstract void VisitReverseFunction(SqlReverseFunctionExpressionNode node);
+
+    /// <inheritdoc />
     public abstract void VisitIndexOfFunction(SqlIndexOfFunctionExpressionNode node);
+
+    /// <inheritdoc />
     public abstract void VisitLastIndexOfFunction(SqlLastIndexOfFunctionExpressionNode node);
+
+    /// <inheritdoc />
     public abstract void VisitSignFunction(SqlSignFunctionExpressionNode node);
+
+    /// <inheritdoc />
     public abstract void VisitAbsFunction(SqlAbsFunctionExpressionNode node);
+
+    /// <inheritdoc />
     public abstract void VisitCeilingFunction(SqlCeilingFunctionExpressionNode node);
+
+    /// <inheritdoc />
     public abstract void VisitFloorFunction(SqlFloorFunctionExpressionNode node);
+
+    /// <inheritdoc />
     public abstract void VisitTruncateFunction(SqlTruncateFunctionExpressionNode node);
+
+    /// <inheritdoc />
     public abstract void VisitRoundFunction(SqlRoundFunctionExpressionNode node);
+
+    /// <inheritdoc />
     public abstract void VisitPowerFunction(SqlPowerFunctionExpressionNode node);
+
+    /// <inheritdoc />
     public abstract void VisitSquareRootFunction(SqlSquareRootFunctionExpressionNode node);
+
+    /// <inheritdoc />
     public abstract void VisitMinFunction(SqlMinFunctionExpressionNode node);
+
+    /// <inheritdoc />
     public abstract void VisitMaxFunction(SqlMaxFunctionExpressionNode node);
 
+    /// <inheritdoc />
+    /// <inheritdoc />
     public virtual void VisitCustomFunction(SqlFunctionExpressionNode node)
     {
         throw new UnrecognizedSqlNodeException( this, node );
     }
 
+    /// <inheritdoc />
     public abstract void VisitNamedAggregateFunction(SqlNamedAggregateFunctionExpressionNode node);
+
+    /// <inheritdoc />
     public abstract void VisitMinAggregateFunction(SqlMinAggregateFunctionExpressionNode node);
+
+    /// <inheritdoc />
     public abstract void VisitMaxAggregateFunction(SqlMaxAggregateFunctionExpressionNode node);
+
+    /// <inheritdoc />
     public abstract void VisitAverageAggregateFunction(SqlAverageAggregateFunctionExpressionNode node);
+
+    /// <inheritdoc />
     public abstract void VisitSumAggregateFunction(SqlSumAggregateFunctionExpressionNode node);
+
+    /// <inheritdoc />
     public abstract void VisitCountAggregateFunction(SqlCountAggregateFunctionExpressionNode node);
+
+    /// <inheritdoc />
     public abstract void VisitStringConcatAggregateFunction(SqlStringConcatAggregateFunctionExpressionNode node);
+
+    /// <inheritdoc />
     public abstract void VisitRowNumberWindowFunction(SqlRowNumberWindowFunctionExpressionNode node);
+
+    /// <inheritdoc />
     public abstract void VisitRankWindowFunction(SqlRankWindowFunctionExpressionNode node);
+
+    /// <inheritdoc />
     public abstract void VisitDenseRankWindowFunction(SqlDenseRankWindowFunctionExpressionNode node);
+
+    /// <inheritdoc />
     public abstract void VisitCumulativeDistributionWindowFunction(SqlCumulativeDistributionWindowFunctionExpressionNode node);
+
+    /// <inheritdoc />
     public abstract void VisitNTileWindowFunction(SqlNTileWindowFunctionExpressionNode node);
+
+    /// <inheritdoc />
     public abstract void VisitLagWindowFunction(SqlLagWindowFunctionExpressionNode node);
+
+    /// <inheritdoc />
     public abstract void VisitLeadWindowFunction(SqlLeadWindowFunctionExpressionNode node);
+
+    /// <inheritdoc />
     public abstract void VisitFirstValueWindowFunction(SqlFirstValueWindowFunctionExpressionNode node);
+
+    /// <inheritdoc />
     public abstract void VisitLastValueWindowFunction(SqlLastValueWindowFunctionExpressionNode node);
+
+    /// <inheritdoc />
     public abstract void VisitNthValueWindowFunction(SqlNthValueWindowFunctionExpressionNode node);
 
+    /// <inheritdoc />
+    /// <inheritdoc />
     public virtual void VisitCustomAggregateFunction(SqlAggregateFunctionExpressionNode node)
     {
         throw new UnrecognizedSqlNodeException( this, node );
     }
 
+    /// <inheritdoc />
     public virtual void VisitRawCondition(SqlRawConditionNode node)
     {
         AppendMultilineSql( node.Sql );
@@ -264,16 +423,19 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
             AddContextParameter( parameter );
     }
 
+    /// <inheritdoc />
     public virtual void VisitTrue(SqlTrueNode node)
     {
         Context.Sql.Append( "TRUE" );
     }
 
+    /// <inheritdoc />
     public virtual void VisitFalse(SqlFalseNode node)
     {
         Context.Sql.Append( "FALSE" );
     }
 
+    /// <inheritdoc />
     public virtual void VisitEqualTo(SqlEqualToConditionNode node)
     {
         if ( node.Right.NodeType == SqlNodeType.Null )
@@ -286,6 +448,7 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
             VisitInfixBinaryOperator( node.Left, symbol: "=", node.Right );
     }
 
+    /// <inheritdoc />
     public virtual void VisitNotEqualTo(SqlNotEqualToConditionNode node)
     {
         if ( node.Right.NodeType == SqlNodeType.Null )
@@ -298,41 +461,49 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
             VisitInfixBinaryOperator( node.Left, symbol: "<>", node.Right );
     }
 
+    /// <inheritdoc />
     public virtual void VisitGreaterThan(SqlGreaterThanConditionNode node)
     {
         VisitInfixBinaryOperator( node.Left, symbol: ">", node.Right );
     }
 
+    /// <inheritdoc />
     public virtual void VisitLessThan(SqlLessThanConditionNode node)
     {
         VisitInfixBinaryOperator( node.Left, symbol: "<", node.Right );
     }
 
+    /// <inheritdoc />
     public virtual void VisitGreaterThanOrEqualTo(SqlGreaterThanOrEqualToConditionNode node)
     {
         VisitInfixBinaryOperator( node.Left, symbol: ">=", node.Right );
     }
 
+    /// <inheritdoc />
     public virtual void VisitLessThanOrEqualTo(SqlLessThanOrEqualToConditionNode node)
     {
         VisitInfixBinaryOperator( node.Left, symbol: "<=", node.Right );
     }
 
+    /// <inheritdoc />
     public virtual void VisitAnd(SqlAndConditionNode node)
     {
         VisitInfixBinaryOperator( node.Left, symbol: "AND", node.Right );
     }
 
+    /// <inheritdoc />
     public virtual void VisitOr(SqlOrConditionNode node)
     {
         VisitInfixBinaryOperator( node.Left, symbol: "OR", node.Right );
     }
 
+    /// <inheritdoc />
     public virtual void VisitConditionValue(SqlConditionValueNode node)
     {
         this.Visit( node.Condition );
     }
 
+    /// <inheritdoc />
     public virtual void VisitBetween(SqlBetweenConditionNode node)
     {
         VisitChild( node.Value );
@@ -348,6 +519,7 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
         VisitChild( node.Max );
     }
 
+    /// <inheritdoc />
     public virtual void VisitExists(SqlExistsConditionNode node)
     {
         if ( node.IsNegated )
@@ -357,6 +529,7 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
         VisitChild( node.Query );
     }
 
+    /// <inheritdoc />
     public virtual void VisitLike(SqlLikeConditionNode node)
     {
         VisitChild( node.Value );
@@ -376,6 +549,7 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
         }
     }
 
+    /// <inheritdoc />
     public virtual void VisitIn(SqlInConditionNode node)
     {
         VisitChild( node.Value );
@@ -395,6 +569,7 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
         Context.Sql.ShrinkBy( 2 ).Append( ')' );
     }
 
+    /// <inheritdoc />
     public virtual void VisitInQuery(SqlInQueryConditionNode node)
     {
         VisitChild( node.Value );
@@ -407,6 +582,7 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
         VisitChild( node.Query );
     }
 
+    /// <inheritdoc />
     public virtual void VisitRawRecordSet(SqlRawRecordSetNode node)
     {
         if ( node.IsInfoRaw )
@@ -417,60 +593,70 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
         AppendDelimitedAlias( node.Alias );
     }
 
+    /// <inheritdoc />
     public virtual void VisitNamedFunctionRecordSet(SqlNamedFunctionRecordSetNode node)
     {
         VisitNamedFunction( node.Function );
         AppendDelimitedAlias( node.Alias );
     }
 
+    /// <inheritdoc />
     public virtual void VisitTable(SqlTableNode node)
     {
         AppendDelimitedSchemaObjectName( node.Table.Info.Name );
         AppendDelimitedAlias( node.Alias );
     }
 
+    /// <inheritdoc />
     public virtual void VisitTableBuilder(SqlTableBuilderNode node)
     {
         AppendDelimitedSchemaObjectName( node.Table.Info.Name );
         AppendDelimitedAlias( node.Alias );
     }
 
+    /// <inheritdoc />
     public virtual void VisitView(SqlViewNode node)
     {
         AppendDelimitedSchemaObjectName( node.View.Info.Name );
         AppendDelimitedAlias( node.Alias );
     }
 
+    /// <inheritdoc />
     public virtual void VisitViewBuilder(SqlViewBuilderNode node)
     {
         AppendDelimitedSchemaObjectName( node.View.Info.Name );
         AppendDelimitedAlias( node.Alias );
     }
 
+    /// <inheritdoc />
     public virtual void VisitQueryRecordSet(SqlQueryRecordSetNode node)
     {
         VisitChild( node.Query );
         AppendDelimitedAlias( node.Alias );
     }
 
+    /// <inheritdoc />
     public virtual void VisitCommonTableExpressionRecordSet(SqlCommonTableExpressionRecordSetNode node)
     {
         AppendDelimitedName( node.CommonTableExpression.Name );
         AppendDelimitedAlias( node.Alias );
     }
 
+    /// <inheritdoc />
     public virtual void VisitNewTable(SqlNewTableNode node)
     {
         AppendDelimitedRecordSetInfo( node.CreationNode.Info );
         AppendDelimitedAlias( node.Alias );
     }
 
+    /// <inheritdoc />
     public virtual void VisitNewView(SqlNewViewNode node)
     {
         AppendDelimitedRecordSetInfo( node.CreationNode.Info );
         AppendDelimitedAlias( node.Alias );
     }
 
+    /// <inheritdoc />
     public virtual void VisitJoinOn(SqlDataSourceJoinOnNode node)
     {
         var joinType = node.JoinType switch
@@ -485,6 +671,7 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
         AppendJoin( joinType, node );
     }
 
+    /// <inheritdoc />
     public virtual void VisitDataSource(SqlDataSourceNode node)
     {
         if ( node is SqlDummyDataSourceNode )
@@ -500,6 +687,7 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
         }
     }
 
+    /// <inheritdoc />
     public virtual void VisitSelectField(SqlSelectFieldNode node)
     {
         if ( node.Alias is not null )
@@ -511,22 +699,26 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
             this.Visit( node.Expression );
     }
 
+    /// <inheritdoc />
     public virtual void VisitSelectCompoundField(SqlSelectCompoundFieldNode node)
     {
         AppendDelimitedName( node.Name );
     }
 
+    /// <inheritdoc />
     public virtual void VisitSelectRecordSet(SqlSelectRecordSetNode node)
     {
         AppendDelimitedRecordSetName( node.RecordSet );
         Context.Sql.AppendDot().Append( '*' );
     }
 
+    /// <inheritdoc />
     public virtual void VisitSelectAll(SqlSelectAllNode node)
     {
         Context.Sql.Append( '*' );
     }
 
+    /// <inheritdoc />
     public virtual void VisitSelectExpression(SqlSelectExpressionNode node)
     {
         if ( node.Selection.NodeType == SqlNodeType.SelectField )
@@ -535,6 +727,7 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
             this.Visit( node.Selection );
     }
 
+    /// <inheritdoc />
     public virtual void VisitRawQuery(SqlRawQueryExpressionNode node)
     {
         foreach ( var parameter in node.Parameters )
@@ -550,6 +743,7 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
             AppendMultilineSql( node.Sql );
     }
 
+    /// <inheritdoc />
     public virtual void VisitDataSourceQuery(SqlDataSourceQueryExpressionNode node)
     {
         var isChild = Context.ChildDepth > 0;
@@ -566,6 +760,7 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
             Context.AppendShortIndent();
     }
 
+    /// <inheritdoc />
     public virtual void VisitCompoundQuery(SqlCompoundQueryExpressionNode node)
     {
         var isChild = Context.ChildDepth > 0;
@@ -581,6 +776,7 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
             Context.AppendShortIndent();
     }
 
+    /// <inheritdoc />
     public virtual void VisitCompoundQueryComponent(SqlCompoundQueryComponentNode node)
     {
         var operatorText = node.Operator switch
@@ -596,17 +792,20 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
         this.Visit( node.Query );
     }
 
+    /// <inheritdoc />
     public virtual void VisitDistinctTrait(SqlDistinctTraitNode node)
     {
         Context.Sql.Append( "DISTINCT" );
     }
 
+    /// <inheritdoc />
     public virtual void VisitFilterTrait(SqlFilterTraitNode node)
     {
         Context.Sql.Append( "WHERE" ).AppendSpace();
         this.Visit( node.Filter );
     }
 
+    /// <inheritdoc />
     public virtual void VisitAggregationTrait(SqlAggregationTraitNode node)
     {
         Context.Sql.Append( "GROUP BY" );
@@ -623,12 +822,14 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
         Context.Sql.ShrinkBy( 2 );
     }
 
+    /// <inheritdoc />
     public virtual void VisitAggregationFilterTrait(SqlAggregationFilterTraitNode node)
     {
         Context.Sql.Append( "HAVING" ).AppendSpace();
         this.Visit( node.Filter );
     }
 
+    /// <inheritdoc />
     public virtual void VisitSortTrait(SqlSortTraitNode node)
     {
         Context.Sql.Append( "ORDER BY" );
@@ -645,9 +846,13 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
         Context.Sql.ShrinkBy( 2 );
     }
 
+    /// <inheritdoc />
     public abstract void VisitLimitTrait(SqlLimitTraitNode node);
+
+    /// <inheritdoc />
     public abstract void VisitOffsetTrait(SqlOffsetTraitNode node);
 
+    /// <inheritdoc />
     public virtual void VisitCommonTableExpressionTrait(SqlCommonTableExpressionTraitNode node)
     {
         Context.Sql.Append( "WITH" );
@@ -668,6 +873,7 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
         Context.Sql.ShrinkBy( Environment.NewLine.Length + Context.Indent + 1 );
     }
 
+    /// <inheritdoc />
     public virtual void VisitWindowDefinitionTrait(SqlWindowDefinitionTraitNode node)
     {
         Context.Sql.Append( "WINDOW" );
@@ -688,18 +894,21 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
         }
     }
 
+    /// <inheritdoc />
     public virtual void VisitWindowTrait(SqlWindowTraitNode node)
     {
         Context.Sql.Append( "OVER" ).AppendSpace();
         AppendDelimitedName( node.Definition.Name );
     }
 
+    /// <inheritdoc />
     public virtual void VisitOrderBy(SqlOrderByNode node)
     {
         VisitChild( node.Expression );
         Context.Sql.AppendSpace().Append( node.Ordering.Name );
     }
 
+    /// <inheritdoc />
     public virtual void VisitCommonTableExpression(SqlCommonTableExpressionNode node)
     {
         AppendDelimitedName( node.Name );
@@ -707,6 +916,7 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
         VisitChild( node.Query );
     }
 
+    /// <inheritdoc />
     public virtual void VisitWindowDefinition(SqlWindowDefinitionNode node)
     {
         AppendDelimitedName( node.Name );
@@ -750,6 +960,7 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
         Context.Sql.Append( ')' );
     }
 
+    /// <inheritdoc />
     public void VisitWindowFrame(SqlWindowFrameNode node)
     {
         switch ( node.FrameType )
@@ -766,8 +977,10 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
         }
     }
 
+    /// <inheritdoc />
     public abstract void VisitTypeCast(SqlTypeCastExpressionNode node);
 
+    /// <inheritdoc />
     public virtual void VisitValues(SqlValuesNode node)
     {
         Context.Sql.Append( "VALUES" );
@@ -789,6 +1002,7 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
         Context.Sql.ShrinkBy( 1 );
     }
 
+    /// <inheritdoc />
     public virtual void VisitRawStatement(SqlRawStatementNode node)
     {
         foreach ( var parameter in node.Parameters )
@@ -797,10 +1011,16 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
         AppendMultilineSql( node.Sql );
     }
 
+    /// <inheritdoc />
     public abstract void VisitInsertInto(SqlInsertIntoNode node);
+
+    /// <inheritdoc />
     public abstract void VisitUpdate(SqlUpdateNode node);
+
+    /// <inheritdoc />
     public abstract void VisitUpsert(SqlUpsertNode node);
 
+    /// <inheritdoc />
     public virtual void VisitValueAssignment(SqlValueAssignmentNode node)
     {
         AppendDelimitedName( node.DataField.Name );
@@ -808,29 +1028,60 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
         VisitChild( node.Value );
     }
 
+    /// <inheritdoc />
     public abstract void VisitDeleteFrom(SqlDeleteFromNode node);
 
+    /// <inheritdoc />
     public virtual void VisitTruncate(SqlTruncateNode node)
     {
         Context.Sql.Append( "TRUNCATE" ).AppendSpace().Append( "TABLE" ).AppendSpace();
         AppendDelimitedRecordSetName( node.Table );
     }
 
+    /// <inheritdoc />
     public abstract void VisitColumnDefinition(SqlColumnDefinitionNode node);
+
+    /// <inheritdoc />
     public abstract void VisitPrimaryKeyDefinition(SqlPrimaryKeyDefinitionNode node);
+
+    /// <inheritdoc />
     public abstract void VisitForeignKeyDefinition(SqlForeignKeyDefinitionNode node);
+
+    /// <inheritdoc />
     public abstract void VisitCheckDefinition(SqlCheckDefinitionNode node);
+
+    /// <inheritdoc />
     public abstract void VisitCreateTable(SqlCreateTableNode node);
+
+    /// <inheritdoc />
     public abstract void VisitCreateView(SqlCreateViewNode node);
+
+    /// <inheritdoc />
     public abstract void VisitCreateIndex(SqlCreateIndexNode node);
+
+    /// <inheritdoc />
     public abstract void VisitRenameTable(SqlRenameTableNode node);
+
+    /// <inheritdoc />
     public abstract void VisitRenameColumn(SqlRenameColumnNode node);
+
+    /// <inheritdoc />
     public abstract void VisitAddColumn(SqlAddColumnNode node);
+
+    /// <inheritdoc />
     public abstract void VisitDropColumn(SqlDropColumnNode node);
+
+    /// <inheritdoc />
     public abstract void VisitDropTable(SqlDropTableNode node);
+
+    /// <inheritdoc />
     public abstract void VisitDropView(SqlDropViewNode node);
+
+    /// <inheritdoc />
     public abstract void VisitDropIndex(SqlDropIndexNode node);
 
+    /// <inheritdoc />
+    /// <inheritdoc />
     public virtual void VisitStatementBatch(SqlStatementBatchNode node)
     {
         if ( node.Statements.Count == 0 )
@@ -849,23 +1100,31 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
         Context.Sql.ShrinkBy( (Environment.NewLine.Length << 1) + Context.Indent );
     }
 
+    /// <inheritdoc />
     public abstract void VisitBeginTransaction(SqlBeginTransactionNode node);
 
+    /// <inheritdoc />
     public virtual void VisitCommitTransaction(SqlCommitTransactionNode node)
     {
         Context.Sql.Append( "COMMIT" );
     }
 
+    /// <inheritdoc />
     public virtual void VisitRollbackTransaction(SqlRollbackTransactionNode node)
     {
         Context.Sql.Append( "ROLLBACK" );
     }
 
+    /// <inheritdoc />
     public virtual void VisitCustom(SqlNodeBase node)
     {
         throw new UnrecognizedSqlNodeException( this, node );
     }
 
+    /// <summary>
+    /// Appends delimited name of the provided record set to <see cref="Context"/>.
+    /// </summary>
+    /// <param name="node">Record set whose name should be appended.</param>
     public virtual void AppendDelimitedRecordSetName(SqlRecordSetNode node)
     {
         if ( node.IsAliased )
@@ -883,11 +1142,19 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
         AppendDelimitedRecordSetInfo( node.Info );
     }
 
+    /// <summary>
+    /// Appends delimited name to <see cref="Context"/>.
+    /// </summary>
+    /// <param name="name">Name to append.</param>
     public void AppendDelimitedName(string name)
     {
         Context.Sql.Append( BeginNameDelimiter ).Append( name ).Append( EndNameDelimiter );
     }
 
+    /// <summary>
+    /// Appends delimited alias to <see cref="Context"/>.
+    /// </summary>
+    /// <param name="alias">Alias to append.</param>
     public void AppendDelimitedAlias(string? alias)
     {
         if ( alias is null )
@@ -897,18 +1164,31 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
         AppendDelimitedName( alias );
     }
 
+    /// <summary>
+    /// Appends delimited name of a temporary SQL object to <see cref="Context"/>.
+    /// </summary>
+    /// <param name="name">Name to append.</param>
     public virtual void AppendDelimitedTemporaryObjectName(string name)
     {
         Context.Sql.Append( "TEMP" ).AppendDot();
         AppendDelimitedName( name );
     }
 
+    /// <summary>
+    /// Appends delimited schema object's name to <see cref="Context"/>.
+    /// </summary>
+    /// <param name="name">Name to append.</param>
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public void AppendDelimitedSchemaObjectName(SqlSchemaObjectName name)
     {
         AppendDelimitedSchemaObjectName( name.Schema, name.Object );
     }
 
+    /// <summary>
+    /// Appends delimited schema object's name to <see cref="Context"/>.
+    /// </summary>
+    /// <param name="schemaName">Schema name to append.</param>
+    /// <param name="objName">Object name to append.</param>
     public virtual void AppendDelimitedSchemaObjectName(string schemaName, string objName)
     {
         if ( schemaName.Length > 0 )
@@ -920,6 +1200,10 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
         AppendDelimitedName( objName );
     }
 
+    /// <summary>
+    /// Appends delimited <see cref="SqlRecordSetInfo"/> to <see cref="Context"/>.
+    /// </summary>
+    /// <param name="info"><see cref="SqlRecordSetInfo"/> to append.</param>
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public void AppendDelimitedRecordSetInfo(SqlRecordSetInfo info)
     {
@@ -929,6 +1213,11 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
             AppendDelimitedSchemaObjectName( info.Name );
     }
 
+    /// <summary>
+    /// Appends delimited data field's name to <see cref="Context"/>.
+    /// </summary>
+    /// <param name="recordSet">Record set name to append.</param>
+    /// <param name="name">Data field name to append.</param>
     public void AppendDelimitedDataFieldName(SqlRecordSetInfo recordSet, string name)
     {
         AppendDelimitedRecordSetInfo( recordSet );
@@ -936,6 +1225,11 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
         AppendDelimitedName( name );
     }
 
+    /// <summary>
+    /// Appends raw, potentially multiline, <paramref name="sql"/> to <see cref="Context"/>
+    /// while respecting its current <see cref="SqlNodeInterpreterContext.Indent"/>.
+    /// </summary>
+    /// <param name="sql">Raw sql to append.</param>
     public void AppendMultilineSql(ReadOnlySpan<char> sql)
     {
         if ( Context.Indent <= 0 )
@@ -960,6 +1254,10 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
         }
     }
 
+    /// <summary>
+    /// Visits an <see cref="SqlNodeBase"/> as a child node.
+    /// </summary>
+    /// <param name="node">Node to visit.</param>
     public void VisitChild(SqlNodeBase node)
     {
         if ( DoesChildNodeRequireParentheses( node ) )
@@ -968,6 +1266,11 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
             this.Visit( node );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="SqlDataSourceTraits"/> instance.
+    /// </summary>
+    /// <param name="traits">Collection of traits to parse.</param>
+    /// <returns>New <see cref="SqlDataSourceTraits"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static SqlDataSourceTraits ExtractDataSourceTraits(Chain<SqlTraitNode> traits)
@@ -975,6 +1278,12 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
         return ExtractDataSourceTraits( default, traits );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="SqlDataSourceTraits"/> instance.
+    /// </summary>
+    /// <param name="base"><see cref="SqlDataSourceTraits"/> instance to extend.</param>
+    /// <param name="traits">Collection of traits to parse.</param>
+    /// <returns>New <see cref="SqlDataSourceTraits"/> instance.</returns>
     [Pure]
     public static SqlDataSourceTraits ExtractDataSourceTraits(SqlDataSourceTraits @base, Chain<SqlTraitNode> traits)
     {
@@ -1090,6 +1399,11 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
             custom );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="SqlQueryTraits"/> instance.
+    /// </summary>
+    /// <param name="traits">Collection of traits to parse.</param>
+    /// <returns>New <see cref="SqlQueryTraits"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static SqlQueryTraits ExtractQueryTraits(Chain<SqlTraitNode> traits)
@@ -1097,6 +1411,12 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
         return ExtractQueryTraits( default, traits );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="SqlQueryTraits"/> instance.
+    /// </summary>
+    /// <param name="base"><see cref="SqlQueryTraits"/> instance to extend.</param>
+    /// <param name="traits">Collection of traits to parse.</param>
+    /// <returns>New <see cref="SqlQueryTraits"/> instance.</returns>
     [Pure]
     public static SqlQueryTraits ExtractQueryTraits(SqlQueryTraits @base, Chain<SqlTraitNode> traits)
     {
@@ -1151,6 +1471,11 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
         return new SqlQueryTraits( commonTableExpressions, containsRecursiveCommonTableExpression, ordering, limit, offset, custom );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="SqlAggregateFunctionTraits"/> instance.
+    /// </summary>
+    /// <param name="traits">Collection of traits to parse.</param>
+    /// <returns>New <see cref="SqlAggregateFunctionTraits"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static SqlAggregateFunctionTraits ExtractAggregateFunctionTraits(Chain<SqlTraitNode> traits)
@@ -1158,6 +1483,12 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
         return ExtractAggregateFunctionTraits( default, traits );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="SqlAggregateFunctionTraits"/> instance.
+    /// </summary>
+    /// <param name="base"><see cref="SqlAggregateFunctionTraits"/> instance to extend.</param>
+    /// <param name="traits">Collection of traits to parse.</param>
+    /// <returns>New <see cref="SqlAggregateFunctionTraits"/> instance.</returns>
     [Pure]
     public static SqlAggregateFunctionTraits ExtractAggregateFunctionTraits(SqlAggregateFunctionTraits @base, Chain<SqlTraitNode> traits)
     {
@@ -1212,6 +1543,12 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
         return new SqlAggregateFunctionTraits( distinct, filter, window, ordering, custom );
     }
 
+    /// <summary>
+    /// Filters a collection of traits with the provided <paramref name="predicate"/>.
+    /// </summary>
+    /// <param name="traits">Source collection of traits.</param>
+    /// <param name="predicate">Filtering predicate. Traits that cause this predicate to return <b>false</b> will be filtered out.</param>
+    /// <returns>New collection of traits.</returns>
     [Pure]
     public static Chain<SqlTraitNode> FilterTraits(Chain<SqlTraitNode> traits, Func<SqlTraitNode, bool> predicate)
     {
@@ -1225,45 +1562,87 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
         return result;
     }
 
+    /// <summary>
+    /// Updates the <see cref="RecordSetNodeBehavior"/> to ignore all occurrences of the provided record set
+    /// and returns a new <see cref="TemporaryRecordSetNodeBehaviorRuleChange"/> instance.
+    /// </summary>
+    /// <param name="node">Record set to ignore.</param>
+    /// <returns>New <see cref="TemporaryRecordSetNodeBehaviorRuleChange"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public TemporaryRecordSetNameBehaviorRuleChange TempIgnoreRecordSet(SqlRecordSetNode node)
+    public TemporaryRecordSetNodeBehaviorRuleChange TempIgnoreRecordSet(SqlRecordSetNode node)
     {
-        return new TemporaryRecordSetNameBehaviorRuleChange( this, new RecordSetNameBehaviorRule( node, null ) );
+        return new TemporaryRecordSetNodeBehaviorRuleChange( this, new RecordSetNodeBehaviorRule( node, null ) );
     }
 
+    /// <summary>
+    /// Updates the <see cref="RecordSetNodeBehavior"/> to replace all occurrences of the provided record set with another
+    /// and returns a new <see cref="TemporaryRecordSetNodeBehaviorRuleChange"/> instance.
+    /// </summary>
+    /// <param name="node">Record set to replace.</param>
+    /// <param name="replacementNode">Replacement record set.</param>
+    /// <returns>New <see cref="TemporaryRecordSetNodeBehaviorRuleChange"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public TemporaryRecordSetNameBehaviorRuleChange TempReplaceRecordSet(SqlRecordSetNode node, SqlRecordSetNode replacementNode)
+    public TemporaryRecordSetNodeBehaviorRuleChange TempReplaceRecordSet(SqlRecordSetNode node, SqlRecordSetNode replacementNode)
     {
-        return new TemporaryRecordSetNameBehaviorRuleChange( this, new RecordSetNameBehaviorRule( node, replacementNode ) );
+        return new TemporaryRecordSetNodeBehaviorRuleChange( this, new RecordSetNodeBehaviorRule( node, replacementNode ) );
     }
 
+    /// <summary>
+    /// Updates the <see cref="RecordSetNodeBehavior"/> to ignore all occurrences of all record sets
+    /// and returns a new <see cref="TemporaryRecordSetNodeBehaviorRuleChange"/> instance.
+    /// </summary>
+    /// <returns>New <see cref="TemporaryRecordSetNodeBehaviorRuleChange"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public TemporaryRecordSetNameBehaviorRuleChange TempIgnoreAllRecordSets()
+    public TemporaryRecordSetNodeBehaviorRuleChange TempIgnoreAllRecordSets()
     {
-        return new TemporaryRecordSetNameBehaviorRuleChange( this, new RecordSetNameBehaviorRule( null, null ) );
+        return new TemporaryRecordSetNodeBehaviorRuleChange( this, new RecordSetNodeBehaviorRule( null, null ) );
     }
 
+    /// <summary>
+    /// Updates the <see cref="RecordSetNodeBehavior"/> to include all occurrences of all record sets as they are
+    /// and returns a new <see cref="TemporaryRecordSetNodeBehaviorRuleChange"/> instance.
+    /// </summary>
+    /// <returns>New <see cref="TemporaryRecordSetNodeBehaviorRuleChange"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public TemporaryRecordSetNameBehaviorRuleChange TempIncludeAllRecordSets()
+    public TemporaryRecordSetNodeBehaviorRuleChange TempIncludeAllRecordSets()
     {
-        return new TemporaryRecordSetNameBehaviorRuleChange( this, null );
+        return new TemporaryRecordSetNodeBehaviorRuleChange( this, null );
     }
 
-    public readonly struct RecordSetNameBehaviorRule
+    /// <summary>
+    /// Represents a custom rule for handling specific <see cref="SqlRecordSetNode"/> instances.
+    /// </summary>
+    public readonly struct RecordSetNodeBehaviorRule
     {
+        /// <summary>
+        /// <see cref="SqlRecordSetNode"/> to replace. When this property is null, then all record sets will be replaced.
+        /// </summary>
         public readonly SqlRecordSetNode? Node;
+
+        /// <summary>
+        /// Replacement <see cref="SqlRecordSetNode"/>. Null replacement means that replaced record sets will be ignored.
+        /// </summary>
         public readonly SqlRecordSetNode? ReplacementNode;
 
-        internal RecordSetNameBehaviorRule(SqlRecordSetNode? node, SqlRecordSetNode? replacementNode)
+        internal RecordSetNodeBehaviorRule(SqlRecordSetNode? node, SqlRecordSetNode? replacementNode)
         {
             Node = node;
             ReplacementNode = replacementNode;
         }
 
+        /// <summary>
+        /// Returns the <see cref="ReplacementNode"/> when the provided <paramref name="recordSet"/>
+        /// and the current <see cref="Node"/> match.
+        /// </summary>
+        /// <param name="recordSet">Record set to check.</param>
+        /// <returns>
+        /// The <see cref="ReplacementNode"/> when the provided <paramref name="recordSet"/> and the current <see cref="Node"/> match,
+        /// otherwise the provided <paramref name="recordSet"/>.
+        /// </returns>
         [Pure]
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public SqlRecordSetNode? GetRecordSet(SqlRecordSetNode recordSet)
@@ -1272,37 +1651,57 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
         }
     }
 
-    public readonly struct TemporaryRecordSetNameBehaviorRuleChange : IDisposable
+    /// <summary>
+    /// Represents a temporary disposable <see cref="RecordSetNodeBehaviorRule"/> change.
+    /// </summary>
+    public readonly struct TemporaryRecordSetNodeBehaviorRuleChange : IDisposable
     {
-        private readonly RecordSetNameBehaviorRule? _previous;
+        private readonly RecordSetNodeBehaviorRule? _previous;
         private readonly SqlNodeInterpreter _interpreter;
 
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        internal TemporaryRecordSetNameBehaviorRuleChange(SqlNodeInterpreter interpreter, RecordSetNameBehaviorRule? rule)
+        internal TemporaryRecordSetNodeBehaviorRuleChange(SqlNodeInterpreter interpreter, RecordSetNodeBehaviorRule? rule)
         {
             _interpreter = interpreter;
-            _previous = interpreter.RecordSetNameBehavior;
-            interpreter.RecordSetNameBehavior = rule;
+            _previous = interpreter.RecordSetNodeBehavior;
+            interpreter.RecordSetNodeBehavior = rule;
         }
 
+        /// <inheritdoc />
+        /// <remarks>Brings back the previous <see cref="SqlNodeInterpreter.RecordSetNodeBehavior"/>.</remarks>
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public void Dispose()
         {
-            _interpreter.RecordSetNameBehavior = _previous;
+            _interpreter.RecordSetNodeBehavior = _previous;
         }
     }
 
+    /// <summary>
+    /// Registers an SQL parameter in the <see cref="Context"/>.
+    /// </summary>
+    /// <param name="node">SQL parameter node to register.</param>
     protected virtual void AddContextParameter(SqlParameterNode node)
     {
         Context.AddParameter( node.Name, node.Type, node.Index );
     }
 
+    /// <summary>
+    /// Visits a prefix unary operator SQL node.
+    /// </summary>
+    /// <param name="value">Operand node.</param>
+    /// <param name="symbol">Operator's symbol.</param>
     protected void VisitPrefixUnaryOperator(SqlNodeBase value, string symbol)
     {
         Context.Sql.Append( symbol );
         VisitChildWrappedInParentheses( value );
     }
 
+    /// <summary>
+    /// Visits an infix binary operator SQL node.
+    /// </summary>
+    /// <param name="left">Left operand node.</param>
+    /// <param name="symbol">Operator's symbol.</param>
+    /// <param name="right">Right operand node.</param>
     protected void VisitInfixBinaryOperator(SqlNodeBase left, string symbol, SqlNodeBase right)
     {
         VisitChild( left );
@@ -1310,6 +1709,10 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
         VisitChild( right );
     }
 
+    /// <summary>
+    /// Visits a child SQL node wrapped in parentheses.
+    /// </summary>
+    /// <param name="node">Node to visit.</param>
     protected void VisitChildWrappedInParentheses(SqlNodeBase node)
     {
         Context.Sql.Append( '(' );
@@ -1321,11 +1724,16 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
         Context.Sql.Append( ')' );
     }
 
-    protected void TryAppendDataFieldRecordSetNameBasedOnNameBehavior(SqlDataFieldNode node)
+    /// <summary>
+    /// Attempts to append provided data field's record set's name to <see cref="Context"/>,
+    /// based on the current <see cref="RecordSetNodeBehavior"/> rule.
+    /// </summary>
+    /// <param name="node">SQL data field node.</param>
+    protected void TryAppendDataFieldRecordSetNameBasedOnNodeBehavior(SqlDataFieldNode node)
     {
         var recordSet = node.RecordSet;
-        if ( RecordSetNameBehavior is not null )
-            recordSet = RecordSetNameBehavior.Value.GetRecordSet( recordSet );
+        if ( RecordSetNodeBehavior is not null )
+            recordSet = RecordSetNodeBehavior.Value.GetRecordSet( recordSet );
 
         if ( recordSet is null )
             return;
@@ -1334,12 +1742,21 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
         Context.Sql.AppendDot();
     }
 
+    /// <summary>
+    /// Visits a simple SQL function node.
+    /// </summary>
+    /// <param name="functionName">Name of the function.</param>
+    /// <param name="node">SQL function expression node.</param>
     protected void VisitSimpleFunction(string functionName, SqlFunctionExpressionNode node)
     {
         Context.Sql.Append( functionName );
         VisitFunctionArguments( node.Arguments );
     }
 
+    /// <summary>
+    /// Sequentially visits all arguments of a simple SQL function node.
+    /// </summary>
+    /// <param name="arguments">Collection of arguments to visit.</param>
     protected void VisitFunctionArguments(ReadOnlyArray<SqlExpressionNode> arguments)
     {
         Context.Sql.Append( '(' );
@@ -1361,6 +1778,11 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
         Context.Sql.Append( ')' );
     }
 
+    /// <summary>
+    /// Appends an SQL join statement to <see cref="Context"/>.
+    /// </summary>
+    /// <param name="joinType">Join operation type.</param>
+    /// <param name="node">SQL data source join node.</param>
     protected void AppendJoin(string joinType, SqlDataSourceJoinOnNode node)
     {
         Context.Sql.Append( joinType ).AppendSpace().Append( "JOIN" ).AppendSpace();
@@ -1373,6 +1795,11 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
         this.Visit( node.OnExpression );
     }
 
+    /// <summary>
+    /// Visits <see cref="SqlQueryExpressionNode.Selection"/> of the provided <paramref name="node"/>, including any relevant traits.
+    /// </summary>
+    /// <param name="node">SQL data source query expression node.</param>
+    /// <param name="traits">Collection of traits.</param>
     protected virtual void VisitDataSourceQuerySelection(SqlDataSourceQueryExpressionNode node, in SqlDataSourceTraits traits)
     {
         Context.Sql.Append( "SELECT" );
@@ -1392,6 +1819,13 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
         Context.AppendIndent();
     }
 
+    /// <summary>
+    /// Visits <see cref="SqlCompoundQueryExpressionNode.FirstQuery"/> and
+    /// <see cref="SqlCompoundQueryExpressionNode.FollowingQueries"/> of the provided <paramref name="node"/>,
+    /// including any relevant traits.
+    /// </summary>
+    /// <param name="node">SQL compound query expression node.</param>
+    /// <param name="traits">Collection of traits.</param>
     protected virtual void VisitCompoundQueryComponents(SqlCompoundQueryExpressionNode node, in SqlQueryTraits traits)
     {
         this.Visit( node.FirstQuery );
@@ -1402,11 +1836,20 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
         }
     }
 
+    /// <summary>
+    /// Visits a part of an insert into SQL statement that includes the record set and its data fields.
+    /// </summary>
+    /// <param name="node">Source node.</param>
     protected void VisitInsertIntoFields(SqlInsertIntoNode node)
     {
         VisitInsertIntoFields( node.RecordSet, node.DataFields );
     }
 
+    /// <summary>
+    /// Visits a part of an insert into SQL statement that includes the record set and its data fields.
+    /// </summary>
+    /// <param name="recordSet">Target table.</param>
+    /// <param name="dataFields">Collection of data fields that this insertion refers to.</param>
     protected void VisitInsertIntoFields(SqlRecordSetNode recordSet, ReadOnlyArray<SqlDataFieldNode> dataFields)
     {
         Context.Sql.Append( "INSERT INTO" ).AppendSpace();
@@ -1427,11 +1870,19 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
         Context.Sql.Append( ')' );
     }
 
+    /// <summary>
+    /// Visits all relevant SQL data source traits that should be at the beginning of an SQL statement.
+    /// </summary>
+    /// <param name="traits">Collection of traits.</param>
     protected virtual void VisitDataSourceBeforeTraits(in SqlDataSourceTraits traits)
     {
         VisitOptionalCommonTableExpressionRange( traits.CommonTableExpressions, traits.ContainsRecursiveCommonTableExpression );
     }
 
+    /// <summary>
+    /// Visits all relevant SQL data source traits that should be at the end of an SQL statement.
+    /// </summary>
+    /// <param name="traits">Collection of traits.</param>
     protected virtual void VisitDataSourceAfterTraits(in SqlDataSourceTraits traits)
     {
         VisitOptionalFilterCondition( traits.Filter );
@@ -1441,16 +1892,28 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
         VisitOptionalOrderingRange( traits.Ordering );
     }
 
+    /// <summary>
+    /// Visits all relevant SQL query traits that should be at the beginning of an SQL statement.
+    /// </summary>
+    /// <param name="traits">Collection of traits.</param>
     protected virtual void VisitQueryBeforeTraits(in SqlQueryTraits traits)
     {
         VisitOptionalCommonTableExpressionRange( traits.CommonTableExpressions, traits.ContainsRecursiveCommonTableExpression );
     }
 
+    /// <summary>
+    /// Visits all relevant SQL query traits that should be at the end of an SQL statement.
+    /// </summary>
+    /// <param name="traits">Collection of traits.</param>
     protected virtual void VisitQueryAfterTraits(in SqlQueryTraits traits)
     {
         VisitOptionalOrderingRange( traits.Ordering );
     }
 
+    /// <summary>
+    /// Visits an <see cref="SqlWindowFrameNode"/> with <see cref="SqlWindowFrameType.Rows"/> type.
+    /// </summary>
+    /// <param name="node">Node to visit.</param>
     protected virtual void VisitRowsWindowFrame(SqlWindowFrameNode node)
     {
         Context.Sql.Append( "ROWS" ).AppendSpace().Append( "BETWEEN" ).AppendSpace();
@@ -1459,6 +1922,10 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
         AppendWindowFrameBoundary( node.End );
     }
 
+    /// <summary>
+    /// Visits an <see cref="SqlWindowFrameNode"/> with <see cref="SqlWindowFrameType.Range"/> type.
+    /// </summary>
+    /// <param name="node">Node to visit.</param>
     protected virtual void VisitRangeWindowFrame(SqlWindowFrameNode node)
     {
         Context.Sql.Append( "RANGE" ).AppendSpace().Append( "BETWEEN" ).AppendSpace();
@@ -1467,6 +1934,10 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
         AppendWindowFrameBoundary( node.End );
     }
 
+    /// <summary>
+    /// Appends an SQL window frame boundary to <see cref="Context"/>.
+    /// </summary>
+    /// <param name="boundary">Boundary to append.</param>
     protected virtual void AppendWindowFrameBoundary(SqlWindowFrameBoundary boundary)
     {
         switch ( boundary.Direction )
@@ -1495,11 +1966,21 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
         }
     }
 
+    /// <summary>
+    /// Visits an <see cref="SqlWindowFrameNode"/> with <see cref="SqlWindowFrameType.Custom"/> type.
+    /// </summary>
+    /// <param name="node">Node to visit.</param>
+    /// <exception cref="UnrecognizedSqlNodeException">Custom window frames are not supported by default.</exception>
     protected virtual void VisitCustomWindowFrame(SqlWindowFrameNode node)
     {
         throw new UnrecognizedSqlNodeException( this, node );
     }
 
+    /// <summary>
+    /// Visits an optional collection of <see cref="SqlCommonTableExpressionNode"/> instances.
+    /// </summary>
+    /// <param name="commonTableExpressions">Collection of nodes to visit.</param>
+    /// <param name="addRecursiveKeyword">Specifies whether or not any of the common table expressions to visit is recursive.</param>
     protected void VisitOptionalCommonTableExpressionRange(
         Chain<ReadOnlyArray<SqlCommonTableExpressionNode>> commonTableExpressions,
         bool addRecursiveKeyword)
@@ -1525,6 +2006,10 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
         Context.AppendIndent();
     }
 
+    /// <summary>
+    /// Visits an optional <see cref="SqlDistinctTraitNode"/>.
+    /// </summary>
+    /// <param name="distinct">Node to visit.</param>
     protected void VisitOptionalDistinctMarker(SqlDistinctTraitNode? distinct)
     {
         if ( distinct is null )
@@ -1534,6 +2019,10 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
         VisitDistinctTrait( distinct );
     }
 
+    /// <summary>
+    /// Visits an optional <see cref="SqlConditionNode"/> filter.
+    /// </summary>
+    /// <param name="filter">Node to visit.</param>
     protected void VisitOptionalFilterCondition(SqlConditionNode? filter)
     {
         if ( filter is null )
@@ -1543,6 +2032,10 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
         this.Visit( filter );
     }
 
+    /// <summary>
+    /// Visits an optional collection of aggregating <see cref="SqlExpressionNode"/> instances.
+    /// </summary>
+    /// <param name="aggregations">Collection of nodes to visit.</param>
     protected void VisitOptionalAggregationRange(Chain<ReadOnlyArray<SqlExpressionNode>> aggregations)
     {
         if ( aggregations.Count == 0 )
@@ -1562,6 +2055,10 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
         Context.Sql.ShrinkBy( 2 );
     }
 
+    /// <summary>
+    /// Visits an optional <see cref="SqlConditionNode"/> aggregation filter.
+    /// </summary>
+    /// <param name="filter">Node to visit.</param>
     protected void VisitOptionalAggregationFilterCondition(SqlConditionNode? filter)
     {
         if ( filter is null )
@@ -1571,6 +2068,10 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
         this.Visit( filter );
     }
 
+    /// <summary>
+    /// Visits an optional collection of <see cref="SqlWindowDefinitionNode"/> instances.
+    /// </summary>
+    /// <param name="windows">Collection of nodes to visit.</param>
     protected void VisitOptionalWindowRange(Chain<ReadOnlyArray<SqlWindowDefinitionNode>> windows)
     {
         if ( windows.Count == 0 )
@@ -1593,6 +2094,10 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
         }
     }
 
+    /// <summary>
+    /// Visits an optional collection of ordering <see cref="SqlOrderByNode"/> instances.
+    /// </summary>
+    /// <param name="ordering">Collection of nodes to visit.</param>
     protected void VisitOptionalOrderingRange(Chain<ReadOnlyArray<SqlOrderByNode>> ordering)
     {
         if ( ordering.Count == 0 )
@@ -1612,6 +2117,10 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
         Context.Sql.ShrinkBy( 2 );
     }
 
+    /// <summary>
+    /// Visits a collection of ordering <see cref="SqlValueAssignmentNode"/> instances.
+    /// </summary>
+    /// <param name="assignments">Collection of nodes to visit.</param>
     protected void VisitUpdateAssignmentRange(ReadOnlyArray<SqlValueAssignmentNode> assignments)
     {
         Context.Sql.AppendSpace().Append( "SET" );
@@ -1632,9 +2141,21 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
         }
     }
 
+    /// <summary>
+    /// Specifies whether or not the provided <paramref name="node"/> should be interpreted as a child node.
+    /// </summary>
+    /// <param name="node">Node to check.</param>
+    /// <returns><b>true</b> when node should be interpreted as a child node, otherwise <b>false</b>.</returns>
+    /// <remarks>
+    /// See <see cref="VisitChild(SqlNodeBase)"/> and <see cref="VisitChildWrappedInParentheses(SqlNodeBase)"/> for more information.
+    /// </remarks>
     [Pure]
     protected abstract bool DoesChildNodeRequireParentheses(SqlNodeBase node);
 
+    /// <summary>
+    /// Visits components of an <see cref="SqlCreateTableNode"/>.
+    /// </summary>
+    /// <param name="node">Node to visit.</param>
     protected void VisitCreateTableDefinition(SqlCreateTableNode node)
     {
         using ( Context.TempIndentIncrease() )
@@ -1672,16 +2193,20 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
         }
     }
 
+    /// <summary>
+    /// Creates a complex <see cref="SqlDeleteFromNode"/> or <see cref="SqlUpdateNode"/> filter expression,
+    /// that uses sub-queries for filtering records that should be modified, for a data source that does not represent a valid SQL
+    /// statement on its own.
+    /// </summary>
+    /// <param name="targetInfo"><see cref="ChangeTargetInfo"/> instance associated with the operation.</param>
+    /// <param name="dataSource">
+    /// <see cref="SqlDataSourceNode"/> instance attached to <see cref="SqlDeleteFromNode"/> or <see cref="SqlUpdateNode"/>.
+    /// </param>
+    /// <returns>New <see cref="SqlFilterTraitNode"/> instance.</returns>
     [Pure]
     protected static SqlFilterTraitNode CreateComplexDeleteOrUpdateFilter(ChangeTargetInfo targetInfo, SqlDataSourceNode dataSource)
     {
-        var traits = Chain<SqlTraitNode>.Empty;
-        foreach ( var trait in dataSource.Traits )
-        {
-            if ( trait.NodeType != SqlNodeType.CommonTableExpressionTrait )
-                traits = traits.Extend( trait );
-        }
-
+        var traits = RemoveCommonTableExpressionTraits( dataSource.Traits );
         var pkBaseColumnNode = targetInfo.BaseTarget.GetUnsafeField( targetInfo.IdentityColumnNames[0] );
         var pkColumnNode = targetInfo.Target.GetUnsafeField( targetInfo.IdentityColumnNames[0] );
 
@@ -1704,6 +2229,16 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
         return SqlNode.FilterTrait( dataSource.Exists(), isConjunction: true );
     }
 
+    /// <summary>
+    /// Creates a simplified version of an <see cref="SqlUpdateNode"/> that does not represent a valid SQL statement on its own,
+    /// by using a common table expression that the update target joins to.
+    /// </summary>
+    /// <param name="targetInfo"><see cref="ChangeTargetInfo"/> instance associated with the operation.</param>
+    /// <param name="node">Source update node.</param>
+    /// <param name="updateAssignmentsVisitor">
+    /// Optional <see cref="ComplexUpdateAssignmentsVisitor"/> that contains information about complex value assignments.
+    /// </param>
+    /// <returns>New <see cref="SqlUpdateNode"/> instance.</returns>
     [Pure]
     protected static SqlUpdateNode CreateSimplifiedUpdateFrom(
         ChangeTargetInfo targetInfo,
@@ -1748,6 +2283,13 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
         return targetInfo.BaseTarget.Join( cteDataSource.From.InnerOn( pkFilter ) ).SetTraits( updateTraits ).ToUpdate( assignments );
     }
 
+    /// <summary>
+    /// Creates a simplified version of an <see cref="SqlDeleteFromNode"/> that does not represent a valid SQL statement on its own,
+    /// by using a common table expression that the delete target joins to.
+    /// </summary>
+    /// <param name="targetInfo"><see cref="ChangeTargetInfo"/> instance associated with the operation.</param>
+    /// <param name="node">Source delete node.</param>
+    /// <returns>New <see cref="SqlDeleteFromNode"/> instance.</returns>
     [Pure]
     protected static SqlDeleteFromNode CreateSimplifiedDeleteFrom(ChangeTargetInfo targetInfo, SqlDeleteFromNode node)
     {
@@ -1763,6 +2305,14 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
         return targetInfo.BaseTarget.Join( cteDataSource.From.InnerOn( pkFilter ) ).SetTraits( deleteTraits ).ToDeleteFrom();
     }
 
+    /// <summary>
+    /// Creates two new collections of traits be separating traits of <see cref="SqlNodeType.CommonTableExpressionTrait"/> type.
+    /// </summary>
+    /// <param name="traits">Source collection of traits.</param>
+    /// <returns>
+    /// A tuple whose first element is a collection of traits of only <see cref="SqlNodeType.CommonTableExpressionTrait"/> type
+    /// and whose second element is a collection of traits without traits of <see cref="SqlNodeType.CommonTableExpressionTrait"/> type.
+    /// </returns>
     [Pure]
     protected static (Chain<SqlTraitNode> CommonTableExpressions, Chain<SqlTraitNode> Other) SeparateCommonTableExpressionTraits(
         Chain<SqlTraitNode> traits)
@@ -1780,6 +2330,11 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
         return (cte, other);
     }
 
+    /// <summary>
+    /// Creates a new collection of traits be excluding traits of <see cref="SqlNodeType.CommonTableExpressionTrait"/> type.
+    /// </summary>
+    /// <param name="traits">Source collection of traits.</param>
+    /// <returns>New collection of traits.</returns>
     [Pure]
     protected static Chain<SqlTraitNode> RemoveCommonTableExpressionTraits(Chain<SqlTraitNode> traits)
     {
@@ -1793,6 +2348,11 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
         return result;
     }
 
+    /// <summary>
+    /// Extracts names of columns that are part of the provided table's primary key constraint.
+    /// </summary>
+    /// <param name="node">Table to process.</param>
+    /// <returns>Collection of names of columns that are part of the provided table's primary key constraint.</returns>
     [Pure]
     protected static string[] ExtractIdentityColumnNames(SqlTableNode node)
     {
@@ -1808,6 +2368,17 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
         return identityColumnNames;
     }
 
+    /// <summary>
+    /// Attempts to extract names of columns that are part of the provided table's primary key constraint.
+    /// </summary>
+    /// <param name="node">Table to process.</param>
+    /// <returns>
+    /// Collection of names of columns that are part of the provided table's primary key constraint or null when the extraction has failed.
+    /// </returns>
+    /// <remarks>
+    /// If table does not currently have a primary key, then all of its columns will be extracted.
+    /// Extraction will fail when table does not have any columns.
+    /// </remarks>
     [Pure]
     protected static string[]? TryExtractIdentityColumnNames(SqlTableBuilderNode node)
     {
@@ -1841,6 +2412,18 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
         return identityColumnNames;
     }
 
+    /// <summary>
+    /// Attempts to extract names of columns that are part of the provided table's primary key constraint.
+    /// </summary>
+    /// <param name="node">Table to process.</param>
+    /// <returns>
+    /// Collection of names of columns that are part of the provided table's primary key constraint or null when the extraction has failed.
+    /// </returns>
+    /// <remarks>
+    /// If table does not currently have a primary key, then all of its columns will be extracted.
+    /// Extraction will fail when table does not have any columns or when its primary key does not have any columns,
+    /// or any of primary key's columns is not a data field.
+    /// </remarks>
     [Pure]
     protected static string[]? TryExtractIdentityColumnNames(SqlNewTableNode node)
     {
@@ -1877,6 +2460,11 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
         return identityColumnNames;
     }
 
+    /// <summary>
+    /// Creates a new <see cref="ChangeTargetInfo"/> instance.
+    /// </summary>
+    /// <param name="node">Target of the change.</param>
+    /// <returns>New <see cref="ChangeTargetInfo"/> instance.</returns>
     [Pure]
     protected static ChangeTargetInfo ExtractTableDeleteOrUpdateInfo(SqlTableNode node)
     {
@@ -1884,6 +2472,15 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
         return new ChangeTargetInfo( node, node.MarkAsOptional( false ).AsSelf(), identityColumnNames );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="ChangeTargetInfo"/> instance.
+    /// </summary>
+    /// <param name="node">Source delete node.</param>
+    /// <param name="target">Target of the change.</param>
+    /// <returns>New <see cref="ChangeTargetInfo"/> instance.</returns>
+    /// <exception cref="SqlNodeVisitorException">
+    /// When identity columns from the <paramref name="target"/> could not be extracted.
+    /// </exception>
     [Pure]
     protected ChangeTargetInfo ExtractTableBuilderDeleteInfo(SqlDeleteFromNode node, SqlTableBuilderNode target)
     {
@@ -1894,6 +2491,15 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
         return new ChangeTargetInfo( target, target.MarkAsOptional( false ).AsSelf(), identityColumnNames );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="ChangeTargetInfo"/> instance.
+    /// </summary>
+    /// <param name="node">Source update node.</param>
+    /// <param name="target">Target of the change.</param>
+    /// <returns>New <see cref="ChangeTargetInfo"/> instance.</returns>
+    /// <exception cref="SqlNodeVisitorException">
+    /// When identity columns from the <paramref name="target"/> could not be extracted.
+    /// </exception>
     [Pure]
     protected ChangeTargetInfo ExtractTableBuilderUpdateInfo(SqlUpdateNode node, SqlTableBuilderNode target)
     {
@@ -1904,6 +2510,15 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
         return new ChangeTargetInfo( target, target.MarkAsOptional( false ).AsSelf(), identityColumnNames );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="ChangeTargetInfo"/> instance.
+    /// </summary>
+    /// <param name="node">Source delete node.</param>
+    /// <param name="target">Target of the change.</param>
+    /// <returns>New <see cref="ChangeTargetInfo"/> instance.</returns>
+    /// <exception cref="SqlNodeVisitorException">
+    /// When identity columns from the <paramref name="target"/> could not be extracted.
+    /// </exception>
     [Pure]
     protected ChangeTargetInfo ExtractNewTableDeleteInfo(
         SqlDeleteFromNode node,
@@ -1916,6 +2531,15 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
         return new ChangeTargetInfo( target, target.MarkAsOptional( false ).AsSelf(), identityColumnNames );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="ChangeTargetInfo"/> instance.
+    /// </summary>
+    /// <param name="node">Source update node.</param>
+    /// <param name="target">Target of the change.</param>
+    /// <returns>New <see cref="ChangeTargetInfo"/> instance.</returns>
+    /// <exception cref="SqlNodeVisitorException">
+    /// When identity columns from the <paramref name="target"/> could not be extracted.
+    /// </exception>
     [Pure]
     protected ChangeTargetInfo ExtractNewTableUpdateInfo(SqlUpdateNode node, SqlNewTableNode target)
     {
@@ -1926,6 +2550,14 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
         return new ChangeTargetInfo( target, target.MarkAsOptional( false ).AsSelf(), identityColumnNames );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="ChangeTargetInfo"/> instance.
+    /// </summary>
+    /// <param name="node">Source delete node.</param>
+    /// <returns>New <see cref="ChangeTargetInfo"/> instance.</returns>
+    /// <exception cref="SqlNodeVisitorException">
+    /// When identity columns from the delete target could not be extracted or delete target is not aliased.
+    /// </exception>
     [Pure]
     protected ChangeTargetInfo ExtractTargetInfo(SqlDeleteFromNode node)
     {
@@ -1944,6 +2576,14 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
         return info;
     }
 
+    /// <summary>
+    /// Creates a new <see cref="ChangeTargetInfo"/> instance.
+    /// </summary>
+    /// <param name="node">Source update node.</param>
+    /// <returns>New <see cref="ChangeTargetInfo"/> instance.</returns>
+    /// <exception cref="SqlNodeVisitorException">
+    /// When identity columns from the update target could not be extracted or update target is not aliased.
+    /// </exception>
     [Pure]
     protected ChangeTargetInfo ExtractTargetInfo(SqlUpdateNode node)
     {
@@ -1962,6 +2602,14 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
         return info;
     }
 
+    /// <summary>
+    /// Extracts a collection of data field nodes that define a default conflict target for an <see cref="SqlUpsertNode"/>.
+    /// </summary>
+    /// <param name="node">Source upsert node.</param>
+    /// <returns>
+    /// Collection of <see cref="SqlDataFieldNode"/> instances that define the conflict target for the provided <paramref name="node"/>.
+    /// </returns>
+    /// <exception cref="SqlNodeVisitorException">When identity columns from the upsert target could not be extracted.</exception>
     [Pure]
     protected SqlDataFieldNode[] ExtractUpsertConflictTargets(SqlUpsertNode node)
     {
@@ -1984,6 +2632,12 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
         return result;
     }
 
+    /// <summary>
+    /// Creates a new <see cref="ComplexUpdateAssignmentsVisitor"/> instance or returns null when <see cref="SqlUpdateNode.DataSource"/>
+    /// of the provided <paramref name="node"/> does not contain any joins.
+    /// </summary>
+    /// <param name="node">Source update node.</param>
+    /// <returns>New <see cref="ComplexUpdateAssignmentsVisitor"/> instance or null.</returns>
     [Pure]
     protected static ComplexUpdateAssignmentsVisitor? CreateUpdateAssignmentsVisitor(SqlUpdateNode node)
     {
@@ -1995,8 +2649,18 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
         return result;
     }
 
+    /// <summary>
+    /// Represents an information about a record set that will be replaced with its base, non-aliased version.
+    /// </summary>
+    /// <param name="Target">Target of the change.</param>
+    /// <param name="BaseTarget">Base, non-aliased version of the target.</param>
+    /// <param name="IdentityColumnNames">Collection of target's identity column names.</param>
     protected readonly record struct ChangeTargetInfo(SqlRecordSetNode Target, SqlRecordSetNode BaseTarget, string[] IdentityColumnNames);
 
+    /// <summary>
+    /// Represents an <see cref="SqlNodeVisitor"/> that extracts information from a collection of <see cref="SqlValueAssignmentNode"/>
+    /// instances about data fields whose assigned expressions contain data fields from joined record sets.
+    /// </summary>
     protected sealed class ComplexUpdateAssignmentsVisitor : SqlNodeVisitor
     {
         private readonly SqlRecordSetNode[] _joinedRecordSets;
@@ -2016,6 +2680,10 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
             _nextAssignmentIndex = 0;
         }
 
+        /// <summary>
+        /// Checks whether or not this visitor has found at least one complex value assignment.
+        /// </summary>
+        /// <returns><b>true</b> when at least one complex assignment has been found, otherwise <b>false</b>.</returns>
         [Pure]
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public bool ContainsComplexAssignments()
@@ -2023,6 +2691,10 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
             return _indexesOfComplexAssignments is not null;
         }
 
+        /// <summary>
+        /// Returns a collection of 0-based indexes of all complex value assignments.
+        /// </summary>
+        /// <returns>Collection of 0-based indexes of all complex value assignments.</returns>
         [Pure]
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public ReadOnlySpan<int> GetIndexesOfComplexAssignments()
@@ -2030,31 +2702,37 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
             return CollectionsMarshal.AsSpan( _indexesOfComplexAssignments );
         }
 
+        /// <inheritdoc />
         public override void VisitRawDataField(SqlRawDataFieldNode node)
         {
             VisitDataField( node );
         }
 
+        /// <inheritdoc />
         public override void VisitColumn(SqlColumnNode node)
         {
             VisitDataField( node );
         }
 
+        /// <inheritdoc />
         public override void VisitColumnBuilder(SqlColumnBuilderNode node)
         {
             VisitDataField( node );
         }
 
+        /// <inheritdoc />
         public override void VisitQueryDataField(SqlQueryDataFieldNode node)
         {
             VisitDataField( node );
         }
 
+        /// <inheritdoc />
         public override void VisitViewDataField(SqlViewDataFieldNode node)
         {
             VisitDataField( node );
         }
 
+        /// <inheritdoc />
         public override void VisitCustom(SqlNodeBase node)
         {
             if ( node is SqlDataFieldNode dataField )

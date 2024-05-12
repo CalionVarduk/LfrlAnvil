@@ -10,8 +10,17 @@ using LfrlAnvil.Sql.Expressions.Traits;
 
 namespace LfrlAnvil.Sql.Expressions;
 
+/// <summary>
+/// Contains <see cref="SqlDataSourceNode"/> extension methods.
+/// </summary>
 public static class SqlDataSourceNodeExtensions
 {
+    /// <summary>
+    /// Decorates the provided SQL data source node with an <see cref="SqlDistinctTraitNode"/>.
+    /// </summary>
+    /// <param name="node">Data source node to decorate.</param>
+    /// <typeparam name="TDataSourceNode">SQL data source node type.</typeparam>
+    /// <returns>Decorated SQL data source node.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static TDataSourceNode Distinct<TDataSourceNode>(this TDataSourceNode node)
@@ -20,6 +29,14 @@ public static class SqlDataSourceNodeExtensions
         return ( TDataSourceNode )node.AddTrait( SqlNode.DistinctTrait() );
     }
 
+    /// <summary>
+    /// Decorates the provided SQL data source node with an <see cref="SqlFilterTraitNode"/>
+    /// with <see cref="SqlFilterTraitNode.IsConjunction"/> set to <b>true</b>.
+    /// </summary>
+    /// <param name="node">Data source node to decorate.</param>
+    /// <param name="filter">Underlying predicate provider.</param>
+    /// <typeparam name="TDataSourceNode">SQL data source node type.</typeparam>
+    /// <returns>Decorated SQL data source node.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static TDataSourceNode AndWhere<TDataSourceNode>(this TDataSourceNode node, Func<TDataSourceNode, SqlConditionNode> filter)
@@ -28,6 +45,14 @@ public static class SqlDataSourceNodeExtensions
         return node.AndWhere( filter( node ) );
     }
 
+    /// <summary>
+    /// Decorates the provided SQL data source node with an <see cref="SqlFilterTraitNode"/>
+    /// with <see cref="SqlFilterTraitNode.IsConjunction"/> set to <b>true</b>.
+    /// </summary>
+    /// <param name="node">Data source node to decorate.</param>
+    /// <param name="filter">Underlying predicate.</param>
+    /// <typeparam name="TDataSourceNode">SQL data source node type.</typeparam>
+    /// <returns>Decorated SQL data source node.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static TDataSourceNode AndWhere<TDataSourceNode>(this TDataSourceNode node, SqlConditionNode filter)
@@ -36,6 +61,14 @@ public static class SqlDataSourceNodeExtensions
         return ( TDataSourceNode )node.AddTrait( SqlNode.FilterTrait( filter, isConjunction: true ) );
     }
 
+    /// <summary>
+    /// Decorates the provided SQL data source node with an <see cref="SqlFilterTraitNode"/>
+    /// with <see cref="SqlFilterTraitNode.IsConjunction"/> set to <b>false</b>.
+    /// </summary>
+    /// <param name="node">Data source node to decorate.</param>
+    /// <param name="filter">Underlying predicate provider.</param>
+    /// <typeparam name="TDataSourceNode">SQL data source node type.</typeparam>
+    /// <returns>Decorated SQL data source node.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static TDataSourceNode OrWhere<TDataSourceNode>(this TDataSourceNode node, Func<TDataSourceNode, SqlConditionNode> filter)
@@ -44,6 +77,14 @@ public static class SqlDataSourceNodeExtensions
         return node.OrWhere( filter( node ) );
     }
 
+    /// <summary>
+    /// Decorates the provided SQL data source node with an <see cref="SqlFilterTraitNode"/>
+    /// with <see cref="SqlFilterTraitNode.IsConjunction"/> set to <b>false</b>.
+    /// </summary>
+    /// <param name="node">Data source node to decorate.</param>
+    /// <param name="filter">Underlying predicate.</param>
+    /// <typeparam name="TDataSourceNode">SQL data source node type.</typeparam>
+    /// <returns>Decorated SQL data source node.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static TDataSourceNode OrWhere<TDataSourceNode>(this TDataSourceNode node, SqlConditionNode filter)
@@ -52,6 +93,13 @@ public static class SqlDataSourceNodeExtensions
         return ( TDataSourceNode )node.AddTrait( SqlNode.FilterTrait( filter, isConjunction: false ) );
     }
 
+    /// <summary>
+    /// Decorates the provided SQL data source node with an <see cref="SqlAggregationTraitNode"/>.
+    /// </summary>
+    /// <param name="node">Data source node to decorate.</param>
+    /// <param name="expressions">Provider of collection of expressions to aggregate by.</param>
+    /// <typeparam name="TDataSourceNode">SQL data source node type.</typeparam>
+    /// <returns>Decorated SQL data source node.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static TDataSourceNode GroupBy<TDataSourceNode>(
@@ -62,6 +110,13 @@ public static class SqlDataSourceNodeExtensions
         return node.GroupBy( expressions( node ) );
     }
 
+    /// <summary>
+    /// Decorates the provided SQL data source node with an <see cref="SqlAggregationTraitNode"/>.
+    /// </summary>
+    /// <param name="node">Data source node to decorate.</param>
+    /// <param name="expressions">Collection of expressions to aggregate by.</param>
+    /// <typeparam name="TDataSourceNode">SQL data source node type.</typeparam>
+    /// <returns>Decorated SQL data source node.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static TDataSourceNode GroupBy<TDataSourceNode>(this TDataSourceNode node, IEnumerable<SqlExpressionNode> expressions)
@@ -70,6 +125,13 @@ public static class SqlDataSourceNodeExtensions
         return node.GroupBy( expressions.ToArray() );
     }
 
+    /// <summary>
+    /// Decorates the provided SQL data source node with an <see cref="SqlAggregationTraitNode"/>.
+    /// </summary>
+    /// <param name="node">Data source node to decorate.</param>
+    /// <param name="expressions">Collection of expressions to aggregate by.</param>
+    /// <typeparam name="TDataSourceNode">SQL data source node type.</typeparam>
+    /// <returns>Decorated SQL data source node.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static TDataSourceNode GroupBy<TDataSourceNode>(this TDataSourceNode node, params SqlExpressionNode[] expressions)
@@ -78,6 +140,14 @@ public static class SqlDataSourceNodeExtensions
         return expressions.Length == 0 ? node : ( TDataSourceNode )node.AddTrait( SqlNode.AggregationTrait( expressions ) );
     }
 
+    /// <summary>
+    /// Decorates the provided SQL data source node with an <see cref="SqlAggregationFilterTraitNode"/>
+    /// with <see cref="SqlAggregationFilterTraitNode.IsConjunction"/> set to <b>true</b>.
+    /// </summary>
+    /// <param name="node">Data source node to decorate.</param>
+    /// <param name="filter">Underlying predicate provider.</param>
+    /// <typeparam name="TDataSourceNode">SQL data source node type.</typeparam>
+    /// <returns>Decorated SQL data source node.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static TDataSourceNode AndHaving<TDataSourceNode>(this TDataSourceNode node, Func<TDataSourceNode, SqlConditionNode> filter)
@@ -86,6 +156,14 @@ public static class SqlDataSourceNodeExtensions
         return node.AndHaving( filter( node ) );
     }
 
+    /// <summary>
+    /// Decorates the provided SQL data source node with an <see cref="SqlAggregationFilterTraitNode"/>
+    /// with <see cref="SqlAggregationFilterTraitNode.IsConjunction"/> set to <b>true</b>.
+    /// </summary>
+    /// <param name="node">Data source node to decorate.</param>
+    /// <param name="filter">Underlying predicate.</param>
+    /// <typeparam name="TDataSourceNode">SQL data source node type.</typeparam>
+    /// <returns>Decorated SQL data source node.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static TDataSourceNode AndHaving<TDataSourceNode>(this TDataSourceNode node, SqlConditionNode filter)
@@ -94,6 +172,14 @@ public static class SqlDataSourceNodeExtensions
         return ( TDataSourceNode )node.AddTrait( SqlNode.AggregationFilterTrait( filter, isConjunction: true ) );
     }
 
+    /// <summary>
+    /// Decorates the provided SQL data source node with an <see cref="SqlAggregationFilterTraitNode"/>
+    /// with <see cref="SqlAggregationFilterTraitNode.IsConjunction"/> set to <b>false</b>.
+    /// </summary>
+    /// <param name="node">Data source node to decorate.</param>
+    /// <param name="filter">Underlying predicate provider.</param>
+    /// <typeparam name="TDataSourceNode">SQL data source node type.</typeparam>
+    /// <returns>Decorated SQL data source node.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static TDataSourceNode OrHaving<TDataSourceNode>(this TDataSourceNode node, Func<TDataSourceNode, SqlConditionNode> filter)
@@ -102,6 +188,14 @@ public static class SqlDataSourceNodeExtensions
         return node.OrHaving( filter( node ) );
     }
 
+    /// <summary>
+    /// Decorates the provided SQL data source node with an <see cref="SqlAggregationFilterTraitNode"/>
+    /// with <see cref="SqlAggregationFilterTraitNode.IsConjunction"/> set to <b>false</b>.
+    /// </summary>
+    /// <param name="node">Data source node to decorate.</param>
+    /// <param name="filter">Underlying predicate.</param>
+    /// <typeparam name="TDataSourceNode">SQL data source node type.</typeparam>
+    /// <returns>Decorated SQL data source node.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static TDataSourceNode OrHaving<TDataSourceNode>(this TDataSourceNode node, SqlConditionNode filter)
@@ -110,6 +204,13 @@ public static class SqlDataSourceNodeExtensions
         return ( TDataSourceNode )node.AddTrait( SqlNode.AggregationFilterTrait( filter, isConjunction: false ) );
     }
 
+    /// <summary>
+    /// Decorates the provided SQL data source node with an <see cref="SqlWindowDefinitionTraitNode"/>.
+    /// </summary>
+    /// <param name="node">Data source node to decorate.</param>
+    /// <param name="windows">Provider of collection of window definitions.</param>
+    /// <typeparam name="TDataSourceNode">SQL data source node type.</typeparam>
+    /// <returns>Decorated SQL data source node.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static TDataSourceNode Window<TDataSourceNode>(
@@ -120,6 +221,13 @@ public static class SqlDataSourceNodeExtensions
         return node.Window( windows( node ) );
     }
 
+    /// <summary>
+    /// Decorates the provided SQL data source node with an <see cref="SqlWindowDefinitionTraitNode"/>.
+    /// </summary>
+    /// <param name="node">Data source node to decorate.</param>
+    /// <param name="windows">Collection of window definitions.</param>
+    /// <typeparam name="TDataSourceNode">SQL data source node type.</typeparam>
+    /// <returns>Decorated SQL data source node.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static TDataSourceNode Window<TDataSourceNode>(this TDataSourceNode node, IEnumerable<SqlWindowDefinitionNode> windows)
@@ -128,6 +236,13 @@ public static class SqlDataSourceNodeExtensions
         return node.Window( windows.ToArray() );
     }
 
+    /// <summary>
+    /// Decorates the provided SQL data source node with an <see cref="SqlWindowDefinitionTraitNode"/>.
+    /// </summary>
+    /// <param name="node">Data source node to decorate.</param>
+    /// <param name="windows">Collection of window definitions.</param>
+    /// <typeparam name="TDataSourceNode">SQL data source node type.</typeparam>
+    /// <returns>Decorated SQL data source node.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static TDataSourceNode Window<TDataSourceNode>(this TDataSourceNode node, params SqlWindowDefinitionNode[] windows)
@@ -136,6 +251,13 @@ public static class SqlDataSourceNodeExtensions
         return windows.Length == 0 ? node : ( TDataSourceNode )node.AddTrait( SqlNode.WindowDefinitionTrait( windows ) );
     }
 
+    /// <summary>
+    /// Decorates the provided SQL data source node with an <see cref="SqlSortTraitNode"/>.
+    /// </summary>
+    /// <param name="node">Data source node to decorate.</param>
+    /// <param name="ordering">Provider of collection of ordering definitions.</param>
+    /// <typeparam name="TDataSourceNode">SQL data source node type.</typeparam>
+    /// <returns>Decorated SQL data source node.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static TDataSourceNode OrderBy<TDataSourceNode>(
@@ -146,6 +268,13 @@ public static class SqlDataSourceNodeExtensions
         return node.OrderBy( ordering( node ) );
     }
 
+    /// <summary>
+    /// Decorates the provided SQL data source node with an <see cref="SqlSortTraitNode"/>.
+    /// </summary>
+    /// <param name="node">Data source node to decorate.</param>
+    /// <param name="ordering">Collection of ordering definitions.</param>
+    /// <typeparam name="TDataSourceNode">SQL data source node type.</typeparam>
+    /// <returns>Decorated SQL data source node.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static TDataSourceNode OrderBy<TDataSourceNode>(this TDataSourceNode node, IEnumerable<SqlOrderByNode> ordering)
@@ -154,6 +283,13 @@ public static class SqlDataSourceNodeExtensions
         return node.OrderBy( ordering.ToArray() );
     }
 
+    /// <summary>
+    /// Decorates the provided SQL data source node with an <see cref="SqlSortTraitNode"/>.
+    /// </summary>
+    /// <param name="node">Data source node to decorate.</param>
+    /// <param name="ordering">Collection of ordering definitions.</param>
+    /// <typeparam name="TDataSourceNode">SQL data source node type.</typeparam>
+    /// <returns>Decorated SQL data source node.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static TDataSourceNode OrderBy<TDataSourceNode>(this TDataSourceNode node, params SqlOrderByNode[] ordering)
@@ -162,6 +298,13 @@ public static class SqlDataSourceNodeExtensions
         return ordering.Length == 0 ? node : ( TDataSourceNode )node.AddTrait( SqlNode.SortTrait( ordering ) );
     }
 
+    /// <summary>
+    /// Decorates the provided SQL data source node with an <see cref="SqlCommonTableExpressionTraitNode"/>.
+    /// </summary>
+    /// <param name="node">Data source node to decorate.</param>
+    /// <param name="commonTableExpressions">Provider of collection of common table expressions.</param>
+    /// <typeparam name="TDataSourceNode">SQL data source node type.</typeparam>
+    /// <returns>Decorated SQL data source node.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static TDataSourceNode With<TDataSourceNode>(
@@ -172,6 +315,13 @@ public static class SqlDataSourceNodeExtensions
         return node.With( commonTableExpressions( node ) );
     }
 
+    /// <summary>
+    /// Decorates the provided SQL data source node with an <see cref="SqlCommonTableExpressionTraitNode"/>.
+    /// </summary>
+    /// <param name="node">Data source node to decorate.</param>
+    /// <param name="commonTableExpressions">Collection of common table expressions.</param>
+    /// <typeparam name="TDataSourceNode">SQL data source node type.</typeparam>
+    /// <returns>Decorated SQL data source node.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static TDataSourceNode With<TDataSourceNode>(
@@ -182,6 +332,13 @@ public static class SqlDataSourceNodeExtensions
         return node.With( commonTableExpressions.ToArray() );
     }
 
+    /// <summary>
+    /// Decorates the provided SQL data source node with an <see cref="SqlCommonTableExpressionTraitNode"/>.
+    /// </summary>
+    /// <param name="node">Data source node to decorate.</param>
+    /// <param name="commonTableExpressions">Collection of common table expressions.</param>
+    /// <typeparam name="TDataSourceNode">SQL data source node type.</typeparam>
+    /// <returns>Decorated SQL data source node.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static TDataSourceNode With<TDataSourceNode>(
@@ -194,6 +351,13 @@ public static class SqlDataSourceNodeExtensions
             : ( TDataSourceNode )node.AddTrait( SqlNode.CommonTableExpressionTrait( commonTableExpressions ) );
     }
 
+    /// <summary>
+    /// Decorates the provided SQL data source node with an <see cref="SqlLimitTraitNode"/>.
+    /// </summary>
+    /// <param name="node">Data source node to decorate.</param>
+    /// <param name="value">Underlying value.</param>
+    /// <typeparam name="TDataSourceNode">SQL data source node type.</typeparam>
+    /// <returns>Decorated SQL data source node.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static TDataSourceNode Limit<TDataSourceNode>(this TDataSourceNode node, SqlExpressionNode value)
@@ -202,6 +366,13 @@ public static class SqlDataSourceNodeExtensions
         return ( TDataSourceNode )node.AddTrait( SqlNode.LimitTrait( value ) );
     }
 
+    /// <summary>
+    /// Decorates the provided SQL data source node with an <see cref="SqlOffsetTraitNode"/>.
+    /// </summary>
+    /// <param name="node">Data source node to decorate.</param>
+    /// <param name="value">Underlying value.</param>
+    /// <typeparam name="TDataSourceNode">SQL data source node type.</typeparam>
+    /// <returns>Decorated SQL data source node.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static TDataSourceNode Offset<TDataSourceNode>(this TDataSourceNode node, SqlExpressionNode value)
@@ -210,6 +381,11 @@ public static class SqlDataSourceNodeExtensions
         return ( TDataSourceNode )node.AddTrait( SqlNode.OffsetTrait( value ) );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="SqlSelectAllNode"/> instance.
+    /// </summary>
+    /// <param name="node">Data source to select all data fields from.</param>
+    /// <returns>New <see cref="SqlSelectAllNode"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static SqlSelectAllNode GetAll(this SqlDataSourceNode node)
@@ -217,6 +393,13 @@ public static class SqlDataSourceNodeExtensions
         return SqlNode.SelectAll( node );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="SqlDataSourceQueryExpressionNode{TDataSourceNode}"/> instance.
+    /// </summary>
+    /// <param name="node">Underlying data source.</param>
+    /// <param name="selector">Provider of collection of expressions to include in this query's selection.</param>
+    /// <typeparam name="TDataSourceNode">SQL data source node type.</typeparam>
+    /// <returns>New <see cref="SqlDataSourceQueryExpressionNode{TDataSourceNode}"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static SqlDataSourceQueryExpressionNode<TDataSourceNode> Select<TDataSourceNode>(
@@ -227,6 +410,13 @@ public static class SqlDataSourceNodeExtensions
         return node.Select( selector( node ) );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="SqlDataSourceQueryExpressionNode{TDataSourceNode}"/> instance.
+    /// </summary>
+    /// <param name="node">Underlying data source.</param>
+    /// <param name="selection">Collection of expressions to include in this query's selection.</param>
+    /// <typeparam name="TDataSourceNode">SQL data source node type.</typeparam>
+    /// <returns>New <see cref="SqlDataSourceQueryExpressionNode{TDataSourceNode}"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static SqlDataSourceQueryExpressionNode<TDataSourceNode> Select<TDataSourceNode>(
@@ -237,6 +427,13 @@ public static class SqlDataSourceNodeExtensions
         return node.Select( selection.ToArray() );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="SqlDataSourceQueryExpressionNode{TDataSourceNode}"/> instance.
+    /// </summary>
+    /// <param name="node">Underlying data source.</param>
+    /// <param name="selection">Collection of expressions to include in this query's selection.</param>
+    /// <typeparam name="TDataSourceNode">SQL data source node type.</typeparam>
+    /// <returns>New <see cref="SqlDataSourceQueryExpressionNode{TDataSourceNode}"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static SqlDataSourceQueryExpressionNode<TDataSourceNode> Select<TDataSourceNode>(
@@ -247,6 +444,11 @@ public static class SqlDataSourceNodeExtensions
         return SqlNode.Query( node, selection );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="SqlExistsConditionNode"/> instance.
+    /// </summary>
+    /// <param name="node">Data source of the sub-query to check.</param>
+    /// <returns>New <see cref="SqlExistsConditionNode"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static SqlExistsConditionNode Exists(this SqlDataSourceNode node)
@@ -254,6 +456,11 @@ public static class SqlDataSourceNodeExtensions
         return node.Select( node.GetAll() ).Exists();
     }
 
+    /// <summary>
+    /// Creates a new negated <see cref="SqlExistsConditionNode"/> instance.
+    /// </summary>
+    /// <param name="node">Data source of the sub-query to check.</param>
+    /// <returns>New negated <see cref="SqlExistsConditionNode"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static SqlExistsConditionNode NotExists(this SqlDataSourceNode node)
@@ -261,6 +468,11 @@ public static class SqlDataSourceNodeExtensions
         return node.Select( node.GetAll() ).NotExists();
     }
 
+    /// <summary>
+    /// Creates a new <see cref="SqlDeleteFromNode"/> instance.
+    /// </summary>
+    /// <param name="node">Data source that defines records to be deleted.</param>
+    /// <returns>New <see cref="SqlDeleteFromNode"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static SqlDeleteFromNode ToDeleteFrom(this SqlDataSourceNode node)
@@ -268,6 +480,12 @@ public static class SqlDataSourceNodeExtensions
         return SqlNode.DeleteFrom( node );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="SqlUpdateNode"/> instance.
+    /// </summary>
+    /// <param name="node">Data source that defines records to be updated.</param>
+    /// <param name="assignments">Provider of collection of value assignments that this update refers to.</param>
+    /// <returns>New <see cref="SqlUpdateNode"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static SqlUpdateNode ToUpdate<TDataSourceNode>(
@@ -278,107 +496,16 @@ public static class SqlDataSourceNodeExtensions
         return node.ToUpdate( assignments( node ).ToArray() );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="SqlUpdateNode"/> instance.
+    /// </summary>
+    /// <param name="node">Data source that defines records to be updated.</param>
+    /// <param name="assignments">Collection of value assignments that this update refers to.</param>
+    /// <returns>New <see cref="SqlUpdateNode"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static SqlUpdateNode ToUpdate(this SqlDataSourceNode node, params SqlValueAssignmentNode[] assignments)
     {
         return SqlNode.Update( node, assignments );
-    }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static SqlInsertIntoNode ToInsertInto<TRecordSetNode>(
-        this SqlQueryExpressionNode node,
-        TRecordSetNode recordSet,
-        Func<TRecordSetNode, IEnumerable<SqlDataFieldNode>> dataFields)
-        where TRecordSetNode : SqlRecordSetNode
-    {
-        return node.ToInsertInto( recordSet, dataFields( recordSet ).ToArray() );
-    }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static SqlInsertIntoNode ToInsertInto(
-        this SqlQueryExpressionNode node,
-        SqlRecordSetNode recordSet,
-        params SqlDataFieldNode[] dataFields)
-    {
-        return SqlNode.InsertInto( node, recordSet, dataFields );
-    }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static SqlInsertIntoNode ToInsertInto<TRecordSetNode>(
-        this SqlValuesNode node,
-        TRecordSetNode recordSet,
-        Func<TRecordSetNode, IEnumerable<SqlDataFieldNode>> dataFields)
-        where TRecordSetNode : SqlRecordSetNode
-    {
-        return node.ToInsertInto( recordSet, dataFields( recordSet ).ToArray() );
-    }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static SqlInsertIntoNode ToInsertInto(this SqlValuesNode node, SqlRecordSetNode recordSet, params SqlDataFieldNode[] dataFields)
-    {
-        return SqlNode.InsertInto( node, recordSet, dataFields );
-    }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static SqlUpsertNode ToUpsert<TRecordSetNode>(
-        this SqlQueryExpressionNode node,
-        TRecordSetNode recordSet,
-        Func<TRecordSetNode, IEnumerable<SqlDataFieldNode>> insertDataFields,
-        Func<TRecordSetNode, SqlInternalRecordSetNode, IEnumerable<SqlValueAssignmentNode>> updateAssignments,
-        Func<TRecordSetNode, IEnumerable<SqlDataFieldNode>>? conflictTarget = null)
-        where TRecordSetNode : SqlRecordSetNode
-    {
-        return node.ToUpsert(
-            recordSet,
-            insertDataFields( recordSet ).ToArray(),
-            (r, i) => updateAssignments( ReinterpretCast.To<TRecordSetNode>( r ), i ),
-            conflictTarget?.Invoke( recordSet ).ToArray() ?? ( ReadOnlyArray<SqlDataFieldNode>? )null );
-    }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static SqlUpsertNode ToUpsert(
-        this SqlQueryExpressionNode node,
-        SqlRecordSetNode recordSet,
-        ReadOnlyArray<SqlDataFieldNode> insertDataFields,
-        Func<SqlRecordSetNode, SqlInternalRecordSetNode, IEnumerable<SqlValueAssignmentNode>> updateAssignments,
-        ReadOnlyArray<SqlDataFieldNode>? conflictTarget = null)
-    {
-        return SqlNode.Upsert( node, recordSet, insertDataFields, updateAssignments, conflictTarget );
-    }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static SqlUpsertNode ToUpsert<TRecordSetNode>(
-        this SqlValuesNode node,
-        TRecordSetNode recordSet,
-        Func<TRecordSetNode, IEnumerable<SqlDataFieldNode>> insertDataFields,
-        Func<TRecordSetNode, SqlInternalRecordSetNode, IEnumerable<SqlValueAssignmentNode>> updateAssignments,
-        Func<TRecordSetNode, IEnumerable<SqlDataFieldNode>>? conflictTarget = null)
-        where TRecordSetNode : SqlRecordSetNode
-    {
-        return node.ToUpsert(
-            recordSet,
-            insertDataFields( recordSet ).ToArray(),
-            (r, i) => updateAssignments( ReinterpretCast.To<TRecordSetNode>( r ), i ),
-            conflictTarget?.Invoke( recordSet ).ToArray() ?? ( ReadOnlyArray<SqlDataFieldNode>? )null );
-    }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static SqlUpsertNode ToUpsert(
-        this SqlValuesNode node,
-        SqlRecordSetNode recordSet,
-        ReadOnlyArray<SqlDataFieldNode> insertDataFields,
-        Func<SqlRecordSetNode, SqlInternalRecordSetNode, IEnumerable<SqlValueAssignmentNode>> updateAssignments,
-        ReadOnlyArray<SqlDataFieldNode>? conflictTarget = null)
-    {
-        return SqlNode.Upsert( node, recordSet, insertDataFields, updateAssignments, conflictTarget );
     }
 }

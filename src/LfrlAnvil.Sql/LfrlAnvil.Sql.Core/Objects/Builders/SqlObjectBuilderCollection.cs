@@ -12,17 +12,22 @@ using LfrlAnvil.Sql.Internal;
 
 namespace LfrlAnvil.Sql.Objects.Builders;
 
+/// <inheritdoc cref="ISqlObjectBuilderCollection" />
 public abstract class SqlObjectBuilderCollection : SqlBuilderApi, ISqlObjectBuilderCollection
 {
     private readonly Dictionary<string, SqlObjectBuilder> _map;
     private SqlSchemaBuilder? _schema;
 
+    /// <summary>
+    /// Creates a new empty <see cref="SqlObjectBuilderCollection"/> instance.
+    /// </summary>
     protected SqlObjectBuilderCollection()
     {
         _schema = null;
         _map = new Dictionary<string, SqlObjectBuilder>( SqlHelpers.NameComparer );
     }
 
+    /// <inheritdoc cref="ISqlObjectBuilderCollection.Schema" />
     public SqlSchemaBuilder Schema
     {
         get
@@ -32,100 +37,117 @@ public abstract class SqlObjectBuilderCollection : SqlBuilderApi, ISqlObjectBuil
         }
     }
 
+    /// <inheritdoc />
     public int Count => _map.Count;
 
     ISqlSchemaBuilder ISqlObjectBuilderCollection.Schema => Schema;
 
+    /// <inheritdoc />
     [Pure]
     public bool Contains(string name)
     {
         return _map.ContainsKey( name );
     }
 
+    /// <inheritdoc cref="ISqlObjectBuilderCollection.Get(string)" />
     [Pure]
     public SqlObjectBuilder Get(string name)
     {
         return _map[name];
     }
 
+    /// <inheritdoc cref="ISqlObjectBuilderCollection.TryGet(string)" />
     [Pure]
     public SqlObjectBuilder? TryGet(string name)
     {
         return _map.GetValueOrDefault( name );
     }
 
+    /// <inheritdoc cref="ISqlObjectBuilderCollection.GetTable(string)" />
     [Pure]
     public SqlTableBuilder GetTable(string name)
     {
         return GetTypedObject<SqlTableBuilder>( name, SqlObjectType.Table );
     }
 
+    /// <inheritdoc cref="ISqlObjectBuilderCollection.TryGetTable(string)" />
     [Pure]
     public SqlTableBuilder? TryGetTable(string name)
     {
         return TryGetTypedObject<SqlTableBuilder>( name, SqlObjectType.Table );
     }
 
+    /// <inheritdoc cref="ISqlObjectBuilderCollection.GetIndex(string)" />
     [Pure]
     public SqlIndexBuilder GetIndex(string name)
     {
         return GetTypedObject<SqlIndexBuilder>( name, SqlObjectType.Index );
     }
 
+    /// <inheritdoc cref="ISqlObjectBuilderCollection.TryGetIndex(string)" />
     [Pure]
     public SqlIndexBuilder? TryGetIndex(string name)
     {
         return TryGetTypedObject<SqlIndexBuilder>( name, SqlObjectType.Index );
     }
 
+    /// <inheritdoc cref="ISqlObjectBuilderCollection.GetPrimaryKey(string)" />
     [Pure]
     public SqlPrimaryKeyBuilder GetPrimaryKey(string name)
     {
         return GetTypedObject<SqlPrimaryKeyBuilder>( name, SqlObjectType.PrimaryKey );
     }
 
+    /// <inheritdoc cref="ISqlObjectBuilderCollection.TryGetPrimaryKey(string)" />
     [Pure]
     public SqlPrimaryKeyBuilder? TryGetPrimaryKey(string name)
     {
         return TryGetTypedObject<SqlPrimaryKeyBuilder>( name, SqlObjectType.PrimaryKey );
     }
 
+    /// <inheritdoc cref="ISqlObjectBuilderCollection.GetForeignKey(string)" />
     [Pure]
     public SqlForeignKeyBuilder GetForeignKey(string name)
     {
         return GetTypedObject<SqlForeignKeyBuilder>( name, SqlObjectType.ForeignKey );
     }
 
+    /// <inheritdoc cref="ISqlObjectBuilderCollection.TryGetForeignKey(string)" />
     [Pure]
     public SqlForeignKeyBuilder? TryGetForeignKey(string name)
     {
         return TryGetTypedObject<SqlForeignKeyBuilder>( name, SqlObjectType.ForeignKey );
     }
 
+    /// <inheritdoc cref="ISqlObjectBuilderCollection.GetCheck(string)" />
     [Pure]
     public SqlCheckBuilder GetCheck(string name)
     {
         return GetTypedObject<SqlCheckBuilder>( name, SqlObjectType.Check );
     }
 
+    /// <inheritdoc cref="ISqlObjectBuilderCollection.TryGetCheck(string)" />
     [Pure]
     public SqlCheckBuilder? TryGetCheck(string name)
     {
         return TryGetTypedObject<SqlCheckBuilder>( name, SqlObjectType.Check );
     }
 
+    /// <inheritdoc cref="ISqlObjectBuilderCollection.GetView(string)" />
     [Pure]
     public SqlViewBuilder GetView(string name)
     {
         return GetTypedObject<SqlViewBuilder>( name, SqlObjectType.View );
     }
 
+    /// <inheritdoc cref="ISqlObjectBuilderCollection.TryGetView(string)" />
     [Pure]
     public SqlViewBuilder? TryGetView(string name)
     {
         return TryGetTypedObject<SqlViewBuilder>( name, SqlObjectType.View );
     }
 
+    /// <inheritdoc cref="ISqlObjectBuilderCollection.CreateTable(string)" />
     public SqlTableBuilder CreateTable(string name)
     {
         Schema.ThrowIfRemoved();
@@ -142,6 +164,7 @@ public abstract class SqlObjectBuilderCollection : SqlBuilderApi, ISqlObjectBuil
         return table;
     }
 
+    /// <inheritdoc cref="ISqlObjectBuilderCollection.GetOrCreateTable(string)" />
     public SqlTableBuilder GetOrCreateTable(string name)
     {
         Schema.ThrowIfRemoved();
@@ -163,6 +186,7 @@ public abstract class SqlObjectBuilderCollection : SqlBuilderApi, ISqlObjectBuil
         return table;
     }
 
+    /// <inheritdoc cref="ISqlObjectBuilderCollection.CreateView(string,SqlQueryExpressionNode)" />
     public SqlViewBuilder CreateView(string name, SqlQueryExpressionNode source)
     {
         Schema.ThrowIfRemoved();
@@ -186,6 +210,7 @@ public abstract class SqlObjectBuilderCollection : SqlBuilderApi, ISqlObjectBuil
         return view;
     }
 
+    /// <inheritdoc />
     public bool Remove(string name)
     {
         if ( ! _map.TryGetValue( name, out var obj ) || ! obj.CanRemove )
@@ -196,29 +221,64 @@ public abstract class SqlObjectBuilderCollection : SqlBuilderApi, ISqlObjectBuil
         return true;
     }
 
+    /// <summary>
+    /// Creates a new <see cref="SqlObjectBuilderEnumerator{T}"/> instance for this collection.
+    /// </summary>
+    /// <returns>New <see cref="SqlObjectBuilderEnumerator{T}"/> instance.</returns>
     [Pure]
     public SqlObjectBuilderEnumerator<SqlObjectBuilder> GetEnumerator()
     {
         return new SqlObjectBuilderEnumerator<SqlObjectBuilder>( _map );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="SqlTableBuilder"/> instance.
+    /// </summary>
+    /// <param name="name">Table's name.</param>
+    /// <returns>New <see cref="SqlTableBuilder"/> instance</returns>
     protected abstract SqlTableBuilder CreateTableBuilder(string name);
 
+    /// <summary>
+    /// Callback invoked just after the <paramref name="table"/> creation has been processed.
+    /// </summary>
+    /// <param name="table">Created table.</param>
     protected virtual void AfterCreateTable(SqlTableBuilder table)
     {
         AddCreation( table, table );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="SqlViewBuilder"/> instance.
+    /// </summary>
+    /// <param name="name">View's name.</param>
+    /// <param name="source">Underlying source query expression that defines this view.</param>
+    /// <param name="referencedObjects">
+    /// Collection of objects (tables, views and columns) referenced by this view's <see cref="SqlViewBuilder.Source"/>.
+    /// </param>
+    /// <returns>New <see cref="SqlViewBuilder"/> instance</returns>
     protected abstract SqlViewBuilder CreateViewBuilder(
         string name,
         SqlQueryExpressionNode source,
         ReadOnlyArray<SqlObjectBuilder> referencedObjects);
 
+    /// <summary>
+    /// Callback invoked just after the <paramref name="view"/> creation has been processed.
+    /// </summary>
+    /// <param name="view">Created view.</param>
     protected virtual void AfterCreateView(SqlViewBuilder view)
     {
         AddCreation( view, view );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="SqlIndexBuilder"/> instance.
+    /// </summary>
+    /// <param name="table">Table that this index is attached to.</param>
+    /// <param name="name">Index's name.</param>
+    /// <param name="columns">Collection of columns that define this index.</param>
+    /// <param name="isUnique">Specifies whether or not this index is unique.</param>
+    /// <param name="referencedColumns">Collection of columns referenced by this index's <see cref="SqlIndexBuilder.Columns"/>.</param>
+    /// <returns>New <see cref="SqlIndexBuilder"/> instance.</returns>
     protected abstract SqlIndexBuilder CreateIndexBuilder(
         SqlTableBuilder table,
         string name,
@@ -226,19 +286,50 @@ public abstract class SqlObjectBuilderCollection : SqlBuilderApi, ISqlObjectBuil
         bool isUnique,
         ReadOnlyArray<SqlColumnBuilder> referencedColumns);
 
+    /// <summary>
+    /// Creates a new <see cref="SqlPrimaryKeyBuilder"/> instance.
+    /// </summary>
+    /// <param name="name">Primary key's name.</param>
+    /// <param name="index">Underlying index that defines this primary key.</param>
+    /// <returns>New <see cref="SqlPrimaryKeyBuilder"/> instance.</returns>
     protected abstract SqlPrimaryKeyBuilder CreatePrimaryKeyBuilder(string name, SqlIndexBuilder index);
 
+    /// <summary>
+    /// Creates a new <see cref="SqlForeignKeyBuilder"/> instance.
+    /// </summary>
+    /// <param name="name">Foreign key's name.</param>
+    /// <param name="originIndex">SQL index that this foreign key originates from.</param>
+    /// <param name="referencedIndex">SQL index referenced by this foreign key.</param>
+    /// <returns>New <see cref="SqlForeignKeyBuilder"/> instance.</returns>
     protected abstract SqlForeignKeyBuilder CreateForeignKeyBuilder(
         string name,
         SqlIndexBuilder originIndex,
         SqlIndexBuilder referencedIndex);
 
+    /// <summary>
+    /// Creates a new <see cref="SqlCheckBuilder"/> instance.
+    /// </summary>
+    /// <param name="table">Table that this check is attached to.</param>
+    /// <param name="name">Check's name.</param>
+    /// <param name="condition">Underlying condition of this check constraint.</param>
+    /// <param name="referencedColumns">Collection of columns referenced by this check constraint.</param>
+    /// <returns>New <see cref="SqlCheckBuilder"/> instance.</returns>
     protected abstract SqlCheckBuilder CreateCheckBuilder(
         SqlTableBuilder table,
         string name,
         SqlConditionNode condition,
         ReadOnlyArray<SqlColumnBuilder> referencedColumns);
 
+    /// <summary>
+    /// Throws an exception when an index's columns are not valid.
+    /// </summary>
+    /// <param name="table"><see cref="SqlTableBuilder"/> that the index belongs to.</param>
+    /// <param name="columns">Collection of columns that belong to the index.</param>
+    /// <param name="isUnique">Specifies whether or not the index is unique.</param>
+    /// <exception cref="SqlObjectBuilderException">When index columns are not considered valid.</exception>
+    /// <remarks>
+    /// See <see cref="SqlHelpers.AssertIndexColumns(SqlTableBuilder,SqlIndexBuilderColumns{SqlColumnBuilder},bool)"/> for more information.
+    /// </remarks>
     protected virtual void ThrowIfIndexColumnsAreInvalid(
         SqlTableBuilder table,
         SqlIndexBuilderColumns<SqlColumnBuilder> columns,
@@ -247,34 +338,74 @@ public abstract class SqlObjectBuilderCollection : SqlBuilderApi, ISqlObjectBuil
         SqlHelpers.AssertIndexColumns( table, columns, isUnique );
     }
 
+    /// <summary>
+    /// Throws an exception when a primary key is not valid.
+    /// </summary>
+    /// <param name="table"><see cref="SqlTableBuilder"/> that the primary key belongs to.</param>
+    /// <param name="index"><see cref="SqlIndexBuilder"/> that is the underlying index of the primary key.</param>
+    /// <exception cref="SqlObjectBuilderException">When primary key is not considered valid.</exception>
+    /// <remarks>See <see cref="SqlHelpers.AssertPrimaryKey(SqlTableBuilder,SqlIndexBuilder)"/> for more information.</remarks>
     protected virtual void ThrowIfPrimaryKeyIsInvalid(SqlTableBuilder table, SqlIndexBuilder index)
     {
         SqlHelpers.AssertPrimaryKey( table, index );
     }
 
+    /// <summary>
+    /// Throws an exception when a foreign key is not valid.
+    /// </summary>
+    /// <param name="table"><see cref="SqlTableBuilder"/> that the foreign key belongs to.</param>
+    /// <param name="originIndex"><see cref="SqlIndexBuilder"/> from which the foreign key originates.</param>
+    /// <param name="referencedIndex"><see cref="SqlIndexBuilder"/> which the foreign key references.</param>
+    /// <exception cref="SqlObjectBuilderException">When foreign key is not considered valid.</exception>
+    /// <remarks>
+    /// See <see cref="SqlHelpers.AssertForeignKey(SqlTableBuilder,SqlIndexBuilder,SqlIndexBuilder)"/> for more information.
+    /// </remarks>
     protected virtual void ThrowIfForeignKeyIsInvalid(SqlTableBuilder table, SqlIndexBuilder originIndex, SqlIndexBuilder referencedIndex)
     {
         SqlHelpers.AssertForeignKey( table, originIndex, referencedIndex );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="SqlTableScopeExpressionValidator"/> used for check constraint's
+    /// <see cref="SqlCheckBuilder.Condition"/> validation.
+    /// </summary>
+    /// <returns>New <see cref="SqlTableScopeExpressionValidator"/> instance.</returns>
     [Pure]
     protected virtual SqlTableScopeExpressionValidator CreateCheckConditionValidator(SqlTableBuilder table)
     {
         return new SqlTableScopeExpressionValidator( table );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="SqlTableScopeExpressionValidator"/> used for index constraint's
+    /// <see cref="SqlIndexBuilder.Columns"/> expressions validation.
+    /// </summary>
+    /// <returns>New <see cref="SqlTableScopeExpressionValidator"/> instance.</returns>
     [Pure]
     protected virtual SqlTableScopeExpressionValidator CreateIndexColumnExpressionValidator(SqlTableBuilder table)
     {
         return new SqlTableScopeExpressionValidator( table );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="SqlSchemaScopeExpressionValidator"/> used for view's <see cref="SqlViewBuilder.Source"/> validation.
+    /// </summary>
+    /// <returns>New <see cref="SqlSchemaScopeExpressionValidator"/> instance.</returns>
     [Pure]
     protected virtual SqlSchemaScopeExpressionValidator CreateViewSourceValidator()
     {
         return new SqlSchemaScopeExpressionValidator( Schema );
     }
 
+    /// <summary>
+    /// Checks whether or not an existing object can be replaced with a new primary key.
+    /// </summary>
+    /// <param name="obj">Existing object to check.</param>
+    /// <param name="oldPrimaryKey">Primary key to replace.</param>
+    /// <returns>
+    /// <b>true</b> when <paramref name="obj"/> is <paramref name="oldPrimaryKey"/>
+    /// or is and index with its primary key being <paramref name="oldPrimaryKey"/>, otherwise <b>false</b>.
+    /// </returns>
     [Pure]
     protected static bool CanReplaceWithPrimaryKey(SqlObjectBuilder obj, SqlPrimaryKeyBuilder? oldPrimaryKey)
     {

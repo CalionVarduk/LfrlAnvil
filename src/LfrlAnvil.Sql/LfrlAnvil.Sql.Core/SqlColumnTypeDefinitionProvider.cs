@@ -7,14 +7,23 @@ using LfrlAnvil.Sql.Exceptions;
 
 namespace LfrlAnvil.Sql;
 
+/// <inheritdoc />
 public abstract class SqlColumnTypeDefinitionProvider : ISqlColumnTypeDefinitionProvider
 {
     private static readonly MethodInfo CreateEnumTypeDefinitionGenericMethod = typeof( SqlColumnTypeDefinitionProvider )
         .GetMethod( nameof( CreateEnumTypeDefinition ), BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.DeclaredOnly )!;
 
     private readonly Dictionary<Type, SqlColumnTypeDefinition> _definitionsByType;
+
+    /// <summary>
+    /// Specifies that new registrations are disabled for this provider.
+    /// </summary>
     protected bool IsLocked;
 
+    /// <summary>
+    /// Creates a new <see cref="SqlColumnTypeDefinitionProvider"/> instance.
+    /// </summary>
+    /// <param name="builder">Source builder.</param>
     protected SqlColumnTypeDefinitionProvider(SqlColumnTypeDefinitionProviderBuilder builder)
     {
         Dialect = builder.Dialect;
@@ -22,23 +31,28 @@ public abstract class SqlColumnTypeDefinitionProvider : ISqlColumnTypeDefinition
         IsLocked = false;
     }
 
+    /// <inheritdoc />
     public SqlDialect Dialect { get; }
 
+    /// <inheritdoc cref="ISqlColumnTypeDefinitionProvider.GetTypeDefinitions()" />
     [Pure]
     public IReadOnlyCollection<SqlColumnTypeDefinition> GetTypeDefinitions()
     {
         return _definitionsByType.Values;
     }
 
+    /// <inheritdoc cref="ISqlColumnTypeDefinitionProvider.GetDataTypeDefinitions()" />
     [Pure]
     public abstract IReadOnlyCollection<SqlColumnTypeDefinition> GetDataTypeDefinitions();
 
+    /// <inheritdoc cref="ISqlColumnTypeDefinitionProvider.GetByType(Type)" />
     [Pure]
     public SqlColumnTypeDefinition GetByType(Type type)
     {
         return TryGetByType( type ) ?? throw new KeyNotFoundException( ExceptionResources.MissingColumnTypeDefinition( type ) );
     }
 
+    /// <inheritdoc cref="ISqlColumnTypeDefinitionProvider.TryGetByType(Type)" />
     [Pure]
     public SqlColumnTypeDefinition? TryGetByType(Type type)
     {
@@ -72,12 +86,45 @@ public abstract class SqlColumnTypeDefinitionProvider : ISqlColumnTypeDefinition
         return definition;
     }
 
+    /// <inheritdoc />
+    [Pure]
+    public bool Contains(ISqlColumnTypeDefinition definition)
+    {
+        var byType = TryGetByType( definition.RuntimeType );
+        if ( ReferenceEquals( definition, byType ) )
+            return true;
+
+        var byDataType = GetByDataType( definition.DataType );
+        return ReferenceEquals( definition, byDataType );
+    }
+
+    /// <inheritdoc cref="ISqlColumnTypeDefinitionProvider.GetByDataType(ISqlDataType)" />
+    [Pure]
+    public abstract SqlColumnTypeDefinition GetByDataType(ISqlDataType type);
+
+    /// <summary>
+    /// Creates a new <see cref="SqlColumnTypeDefinition{T}"/> instance
+    /// for the <typeparamref name="TEnum"/> type with <typeparamref name="TUnderlying"/> type.
+    /// </summary>
+    /// <param name="underlyingTypeDefinition">Column type definition associated with the underlying type.</param>
+    /// <typeparam name="TEnum"><see cref="Enum"/> type.</typeparam>
+    /// <typeparam name="TUnderlying">Type of the underlying value of <typeparamref name="TEnum"/> type.</typeparam>
+    /// <returns>New <see cref="SqlColumnTypeDefinition{T}"/> instance.</returns>
     [Pure]
     protected abstract SqlColumnTypeDefinition<TEnum> CreateEnumTypeDefinition<TEnum, TUnderlying>(
         SqlColumnTypeDefinition<TUnderlying> underlyingTypeDefinition)
         where TEnum : struct, Enum
         where TUnderlying : unmanaged;
 
+    /// <summary>
+    /// Attempts to create a new <see cref="SqlColumnTypeDefinition"/> instance
+    /// associated with the provided <paramref name="type"/> to dynamically register.
+    /// </summary>
+    /// <param name="type">Type to register.</param>
+    /// <returns>
+    /// New <see cref="SqlColumnTypeDefinition"/>
+    /// or null when column type definition for the provided <paramref name="type"/> should not be dynamically registered.
+    /// </returns>
     [Pure]
     protected virtual SqlColumnTypeDefinition? TryCreateUnknownTypeDefinition(Type type)
     {
@@ -90,20 +137,11 @@ public abstract class SqlColumnTypeDefinitionProvider : ISqlColumnTypeDefinition
         IsLocked = true;
     }
 
-    [Pure]
-    public bool Contains(ISqlColumnTypeDefinition definition)
-    {
-        var byType = TryGetByType( definition.RuntimeType );
-        if ( ReferenceEquals( definition, byType ) )
-            return true;
-
-        var byDataType = GetByDataType( definition.DataType );
-        return ReferenceEquals( definition, byDataType );
-    }
-
-    [Pure]
-    public abstract SqlColumnTypeDefinition GetByDataType(ISqlDataType type);
-
+    /// <summary>
+    /// Attempts to add a new column type definition.
+    /// </summary>
+    /// <param name="definition">Definition to add.</param>
+    /// <returns><b>true</b> when definition was added, otherwise <b>false</b>.</returns>
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     protected bool TryAddDefinition(SqlColumnTypeDefinition definition)
     {

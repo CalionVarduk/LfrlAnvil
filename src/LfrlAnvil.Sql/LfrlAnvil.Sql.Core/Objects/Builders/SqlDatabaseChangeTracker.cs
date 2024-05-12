@@ -14,10 +14,13 @@ using LfrlAnvil.Sql.Statements.Compilers;
 
 namespace LfrlAnvil.Sql.Objects.Builders;
 
+/// <inheritdoc />
 public abstract class SqlDatabaseChangeTracker : ISqlDatabaseChangeTracker
 {
-    protected internal const byte IsDetachedBit = 1 << 0;
-    protected internal const byte ModeMask = (1 << 8) - 2;
+    private const byte IsDetachedBit = 1 << 3;
+    private const byte NoChangesBit = 1 << 2;
+    private const byte WriteModeMask = IsDetachedBit - 1;
+    private const byte ReadModeMask = NoChangesBit - 1;
 
     private List<SqlDatabaseBuilderCommandAction>? _pendingActions;
     private Dictionary<ChangeKey, ChangePayload>? _activeChanges;
@@ -26,6 +29,9 @@ public abstract class SqlDatabaseChangeTracker : ISqlDatabaseChangeTracker
     private SqlDatabaseChangeAggregator? _changeAggregator;
     private byte _mode;
 
+    /// <summary>
+    /// Creates a new <see cref="SqlDatabaseChangeTracker"/> instance.
+    /// </summary>
     protected SqlDatabaseChangeTracker()
     {
         ActiveObjectExistenceState = SqlObjectExistenceState.Unchanged;
@@ -36,9 +42,10 @@ public abstract class SqlDatabaseChangeTracker : ISqlDatabaseChangeTracker
         _database = null;
         _interpreterContext = null;
         _changeAggregator = null;
-        _mode = 0;
+        _mode = NoChangesBit;
     }
 
+    /// <inheritdoc cref="ISqlDatabaseChangeTracker.Database" />
     public SqlDatabaseBuilder Database
     {
         get
@@ -48,22 +55,38 @@ public abstract class SqlDatabaseChangeTracker : ISqlDatabaseChangeTracker
         }
     }
 
+    /// <inheritdoc cref="ISqlDatabaseChangeTracker.ActiveObject" />
     public SqlObjectBuilder? ActiveObject { get; private set; }
+
+    /// <inheritdoc />
     public SqlObjectExistenceState ActiveObjectExistenceState { get; private set; }
+
+    /// <inheritdoc />
     public TimeSpan? ActionTimeout { get; private set; }
-    public SqlDatabaseCreateMode Mode => ( SqlDatabaseCreateMode )((_mode & ModeMask) >> 1);
+
+    /// <inheritdoc />
+    public SqlDatabaseCreateMode Mode => ( SqlDatabaseCreateMode )(_mode & ReadModeMask);
+
+    /// <inheritdoc />
     public bool IsAttached => (_mode & IsDetachedBit) == 0;
-    public bool IsActive => _mode > 0 && IsAttached;
+
+    /// <summary>
+    /// Specifies whether or not this change tracker will register changes.
+    /// </summary>
+    /// <remarks>See <see cref="IsAttached"/> and <see cref="Mode"/> for more information.</remarks>
+    public bool IsActive => _mode <= ReadModeMask;
 
     ISqlObjectBuilder? ISqlDatabaseChangeTracker.ActiveObject => ActiveObject;
     ISqlDatabaseBuilder ISqlDatabaseChangeTracker.Database => Database;
 
+    /// <inheritdoc />
     public ReadOnlySpan<SqlDatabaseBuilderCommandAction> GetPendingActions()
     {
         CompletePendingChanges();
         return CollectionsMarshal.AsSpan( _pendingActions );
     }
 
+    /// <inheritdoc cref="ISqlDatabaseChangeTracker.GetExistenceState(ISqlObjectBuilder)" />
     [Pure]
     public SqlObjectExistenceState GetExistenceState(SqlObjectBuilder target)
     {
@@ -75,6 +98,7 @@ public abstract class SqlDatabaseChangeTracker : ISqlDatabaseChangeTracker
         return Equals( entry.OriginalValue, Boxed.True ) ? SqlObjectExistenceState.Created : SqlObjectExistenceState.Removed;
     }
 
+    /// <inheritdoc cref="ISqlDatabaseChangeTracker.ContainsChange(ISqlObjectBuilder,SqlObjectChangeDescriptor)" />
     [Pure]
     public bool ContainsChange(SqlObjectBuilder target, SqlObjectChangeDescriptor descriptor)
     {
@@ -82,6 +106,7 @@ public abstract class SqlDatabaseChangeTracker : ISqlDatabaseChangeTracker
         return _activeChanges is not null && _activeChanges.ContainsKey( changeKey );
     }
 
+    /// <inheritdoc cref="ISqlDatabaseChangeTracker.TryGetOriginalValue(ISqlObjectBuilder,SqlObjectChangeDescriptor,out object)" />
     public bool TryGetOriginalValue(SqlObjectBuilder target, SqlObjectChangeDescriptor descriptor, out object? result)
     {
         var changeKey = new ChangeKey( target.Id, descriptor );
@@ -96,6 +121,7 @@ public abstract class SqlDatabaseChangeTracker : ISqlDatabaseChangeTracker
         return true;
     }
 
+    /// <inheritdoc cref="ISqlDatabaseChangeTracker.AddAction(Action{IDbCommand},Action{IDbCommand})" />
     public SqlDatabaseChangeTracker AddAction(Action<IDbCommand> action, Action<IDbCommand>? setup = null)
     {
         CompletePendingChanges();
@@ -105,6 +131,7 @@ public abstract class SqlDatabaseChangeTracker : ISqlDatabaseChangeTracker
         return this;
     }
 
+    /// <inheritdoc cref="ISqlDatabaseChangeTracker.AddStatement(ISqlStatementNode)" />
     public SqlDatabaseChangeTracker AddStatement(ISqlStatementNode statement)
     {
         CompletePendingChanges();
@@ -132,6 +159,7 @@ public abstract class SqlDatabaseChangeTracker : ISqlDatabaseChangeTracker
         return this;
     }
 
+    /// <inheritdoc cref="ISqlDatabaseChangeTracker.AddParameterizedStatement(ISqlStatementNode,IEnumerable{SqlParameter},SqlParameterBinderCreationOptions?)" />
     public SqlDatabaseChangeTracker AddParameterizedStatement(
         ISqlStatementNode statement,
         IEnumerable<SqlParameter> parameters,
@@ -161,6 +189,7 @@ public abstract class SqlDatabaseChangeTracker : ISqlDatabaseChangeTracker
         return this;
     }
 
+    /// <inheritdoc cref="ISqlDatabaseChangeTracker.AddParameterizedStatement{TSource}(ISqlStatementNode,TSource,SqlParameterBinderCreationOptions?)" />
     public SqlDatabaseChangeTracker AddParameterizedStatement<TSource>(
         ISqlStatementNode statement,
         TSource parameters,
@@ -191,6 +220,7 @@ public abstract class SqlDatabaseChangeTracker : ISqlDatabaseChangeTracker
         return this;
     }
 
+    /// <inheritdoc cref="ISqlDatabaseChangeTracker.Attach(Boolean)" />
     public SqlDatabaseChangeTracker Attach(bool enabled = true)
     {
         if ( IsAttached == enabled )
@@ -198,7 +228,7 @@ public abstract class SqlDatabaseChangeTracker : ISqlDatabaseChangeTracker
 
         if ( enabled )
         {
-            _mode &= ModeMask;
+            _mode &= WriteModeMask;
             return this;
         }
 
@@ -207,6 +237,7 @@ public abstract class SqlDatabaseChangeTracker : ISqlDatabaseChangeTracker
         return this;
     }
 
+    /// <inheritdoc cref="ISqlDatabaseChangeTracker.CompletePendingChanges()" />
     public SqlDatabaseChangeTracker CompletePendingChanges()
     {
         if ( ActiveObject is null )
@@ -234,72 +265,142 @@ public abstract class SqlDatabaseChangeTracker : ISqlDatabaseChangeTracker
         return this;
     }
 
+    /// <inheritdoc cref="ISqlDatabaseChangeTracker.SetActionTimeout(TimeSpan?)" />
     public SqlDatabaseChangeTracker SetActionTimeout(TimeSpan? value)
     {
         ActionTimeout = value;
         return this;
     }
 
+    /// <summary>
+    /// Callback for registration of object's <see cref="SqlObjectBuilder.IsRemoved"/> property change.
+    /// </summary>
+    /// <param name="activeObject"><see cref="ActiveObject"/> for which the change should be registered.</param>
+    /// <param name="target">Created or removed object.</param>
     protected virtual void AddIsRemovedChange(SqlObjectBuilder activeObject, SqlObjectBuilder target)
     {
         AddChange( activeObject, target, SqlObjectChangeDescriptor.IsRemoved, ! target.IsRemoved, target.IsRemoved );
     }
 
+    /// <summary>
+    /// Callback for registration of object's <see cref="SqlObjectBuilder.Name"/> property change.
+    /// </summary>
+    /// <param name="activeObject"><see cref="ActiveObject"/> for which the change should be registered.</param>
+    /// <param name="target">Renamed object.</param>
+    /// <param name="originalValue">Object's <see cref="SqlObjectBuilder.Name"/> before the change.</param>
     protected virtual void AddNameChange(SqlObjectBuilder activeObject, SqlObjectBuilder target, string originalValue)
     {
         AddChange( activeObject, target, SqlObjectChangeDescriptor.Name, originalValue, target.Name );
     }
 
+    /// <summary>
+    /// Callback for registration of column's <see cref="SqlColumnBuilder.IsNullable"/> property change.
+    /// </summary>
+    /// <param name="target">Modified column.</param>
     protected virtual void AddIsNullableChange(SqlColumnBuilder target)
     {
         AddChange( target.Table, target, SqlObjectChangeDescriptor.IsNullable, ! target.IsNullable, target.IsNullable );
     }
 
+    /// <summary>
+    /// Callback for registration of <see cref="ISqlDataType"/> of column's <see cref="SqlColumnBuilder.TypeDefinition"/> property change.
+    /// </summary>
+    /// <param name="target">Modified column.</param>
+    /// <param name="originalValue">
+    /// <see cref="ISqlDataType"/> of column's <see cref="SqlColumnBuilder.TypeDefinition"/> before the change.
+    /// </param>
     protected virtual void AddDataTypeChange(SqlColumnBuilder target, ISqlDataType originalValue)
     {
         AddChange( target.Table, target, SqlObjectChangeDescriptor.DataType, originalValue, target.TypeDefinition.DataType );
     }
 
+    /// <summary>
+    /// Callback for registration of column's <see cref="SqlColumnBuilder.DefaultValue"/> property change.
+    /// </summary>
+    /// <param name="target">Modified column.</param>
+    /// <param name="originalValue">Column's <see cref="SqlColumnBuilder.DefaultValue"/> before the change.</param>
     protected virtual void AddDefaultValueChange(SqlColumnBuilder target, SqlExpressionNode? originalValue)
     {
         AddChange( target.Table, target, SqlObjectChangeDescriptor.DefaultValue, originalValue, target.DefaultValue );
     }
 
+    /// <summary>
+    /// Callback for registration of column's <see cref="SqlColumnBuilder.Computation"/> property change.
+    /// </summary>
+    /// <param name="target">Modified column.</param>
+    /// <param name="originalValue">Column's <see cref="SqlColumnBuilder.Computation"/> before the change.</param>
     protected virtual void AddComputationChange(SqlColumnBuilder target, SqlColumnComputation? originalValue)
     {
         AddChange( target.Table, target, SqlObjectChangeDescriptor.Computation, originalValue, target.Computation );
     }
 
+    /// <summary>
+    /// Callback for registration of index's <see cref="SqlIndexBuilder.IsUnique"/> property change.
+    /// </summary>
+    /// <param name="target">Modified index.</param>
     protected virtual void AddIsUniqueChange(SqlIndexBuilder target)
     {
         AddChange( target.Table, target, SqlObjectChangeDescriptor.IsUnique, ! target.IsUnique, target.IsUnique );
     }
 
+    /// <summary>
+    /// Callback for registration of index's <see cref="SqlIndexBuilder.IsVirtual"/> property change.
+    /// </summary>
+    /// <param name="target">Modified index.</param>
     protected virtual void AddIsVirtualChange(SqlIndexBuilder target)
     {
         AddChange( target.Table, target, SqlObjectChangeDescriptor.IsVirtual, ! target.IsVirtual, target.IsVirtual );
     }
 
+    /// <summary>
+    /// Callback for registration of index's <see cref="SqlIndexBuilder.Filter"/> property change.
+    /// </summary>
+    /// <param name="target">Modified index.</param>
+    /// <param name="originalValue">Index's <see cref="SqlIndexBuilder.Filter"/> before the change.</param>
     protected virtual void AddFilterChange(SqlIndexBuilder target, SqlConditionNode? originalValue)
     {
         AddChange( target.Table, target, SqlObjectChangeDescriptor.Filter, originalValue, target.Filter );
     }
 
+    /// <summary>
+    /// Callback for registration of index's <see cref="SqlIndexBuilder.PrimaryKey"/> property change.
+    /// </summary>
+    /// <param name="target">Modified index.</param>
+    /// <param name="originalValue">Index's <see cref="SqlIndexBuilder.PrimaryKey"/> before the change.</param>
     protected virtual void AddPrimaryKeyChange(SqlIndexBuilder target, SqlPrimaryKeyBuilder? originalValue)
     {
         AddChange( target.Table, target, SqlObjectChangeDescriptor.PrimaryKey, originalValue, target.PrimaryKey );
     }
 
+    /// <summary>
+    /// Callback for registration of foreign key's <see cref="SqlForeignKeyBuilder.OnDeleteBehavior"/> property change.
+    /// </summary>
+    /// <param name="target">Modified foreign key.</param>
+    /// <param name="originalValue">Foreign key's <see cref="SqlForeignKeyBuilder.OnDeleteBehavior"/> before the change.</param>
     protected virtual void AddOnDeleteBehaviorChange(SqlForeignKeyBuilder target, ReferenceBehavior originalValue)
     {
         AddChange( target.Table, target, SqlObjectChangeDescriptor.OnDeleteBehavior, originalValue, target.OnDeleteBehavior );
     }
 
+    /// <summary>
+    /// Callback for registration of foreign key's <see cref="SqlForeignKeyBuilder.OnUpdateBehavior"/> property change.
+    /// </summary>
+    /// <param name="target">Modified foreign key.</param>
+    /// <param name="originalValue">Foreign key's <see cref="SqlForeignKeyBuilder.OnUpdateBehavior"/> before the change.</param>
     protected virtual void AddOnUpdateBehaviorChange(SqlForeignKeyBuilder target, ReferenceBehavior originalValue)
     {
         AddChange( target.Table, target, SqlObjectChangeDescriptor.OnUpdateBehavior, originalValue, target.OnUpdateBehavior );
     }
 
+    /// <summary>
+    /// Registers a change.
+    /// </summary>
+    /// <param name="activeObject"><see cref="ActiveObject"/> for which the change should be registered.</param>
+    /// <param name="target">Target object.</param>
+    /// <param name="descriptor">Changed property descriptor.</param>
+    /// <param name="originalValue">Value of the changed property before the change.</param>
+    /// <param name="newValue">New value of the changed property.</param>
+    /// <typeparam name="T">Property type.</typeparam>
     protected void AddChange<T>(
         SqlObjectBuilder activeObject,
         SqlObjectBuilder target,
@@ -345,37 +446,80 @@ public abstract class SqlDatabaseChangeTracker : ISqlDatabaseChangeTracker
             _activeChanges.Remove( changeKey );
     }
 
+    /// <summary>
+    /// Callback for completing pending changes for a created <see cref="ActiveObject"/>.
+    /// </summary>
+    /// <param name="obj">Created <see cref="ActiveObject"/>.</param>
     protected abstract void CompletePendingCreateObjectChanges(SqlObjectBuilder obj);
+
+    /// <summary>
+    /// Callback for completing pending changes for a removed <see cref="ActiveObject"/>.
+    /// </summary>
+    /// <param name="obj">Removed <see cref="ActiveObject"/>.</param>
     protected abstract void CompletePendingRemoveObjectChanges(SqlObjectBuilder obj);
+
+    /// <summary>
+    /// Callback for completing pending changes for a modified <see cref="ActiveObject"/>.
+    /// </summary>
+    /// <param name="obj">Modified <see cref="ActiveObject"/>.</param>
+    /// <param name="changeAggregator">
+    /// <see cref="SqlDatabaseChangeAggregator"/> populated with all <see cref="ActiveObject"/> changes.
+    /// </param>
     protected abstract void CompletePendingAlterObjectChanges(SqlObjectBuilder obj, SqlDatabaseChangeAggregator changeAggregator);
 
+    /// <summary>
+    /// Creates a new empty <see cref="SqlDatabaseChangeAggregator"/> instance.
+    /// </summary>
+    /// <returns>New <see cref="SqlDatabaseChangeAggregator"/> instance.</returns>
+    /// <remarks>This method should only be invoked once, the first time an aggregator is required.</remarks>
     [Pure]
     protected abstract SqlDatabaseChangeAggregator CreateAlterObjectChangeAggregator();
 
+    /// <summary>
+    /// Creates a new empty <see cref="SqlDatabaseChangeAggregator"/> instance or returns a cached instance.
+    /// </summary>
+    /// <returns>New <see cref="SqlDatabaseChangeAggregator"/> or cached instance.</returns>
+    /// <remarks>See <see cref="CreateAlterObjectChangeAggregator()"/> for method that creates a new instance.</remarks>
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     protected SqlDatabaseChangeAggregator GetOrCreateAlterObjectChangeAggregator()
     {
         return _changeAggregator ??= CreateAlterObjectChangeAggregator();
     }
 
+    /// <summary>
+    /// Creates a new <see cref="SqlNodeInterpreter"/> instance.
+    /// </summary>
+    /// <returns>New <see cref="SqlNodeInterpreter"/> instance.</returns>
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     protected SqlNodeInterpreter CreateNodeInterpreter()
     {
         return Database.NodeInterpreters.Create( GetNodeInterpreterContext() );
     }
 
+    /// <summary>
+    /// Creates a new empty <see cref="SqlNodeInterpreterContext"/> instance or returns a cached instance.
+    /// </summary>
+    /// <returns>New <see cref="SqlNodeInterpreterContext"/> or cached instance.</returns>
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     protected SqlNodeInterpreterContext GetNodeInterpreterContext()
     {
         return _interpreterContext ??= SqlNodeInterpreterContext.Create( capacity: 2048 );
     }
 
+    /// <summary>
+    /// Registers a pending <see cref="SqlDatabaseBuilderCommandAction"/> from the provided <paramref name="sql"/> statement.
+    /// </summary>
+    /// <param name="sql">Pending SQL statement to add.</param>
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     protected void AddSqlAction(string sql)
     {
         AddAction( SqlDatabaseBuilderCommandAction.CreateSql( sql, ActionTimeout ) );
     }
 
+    /// <summary>
+    /// Registers a pending <see cref="SqlDatabaseBuilderCommandAction"/>.
+    /// </summary>
+    /// <param name="action">Pending action to add.</param>
     protected void AddAction(SqlDatabaseBuilderCommandAction action)
     {
         Assume.True( IsActive );
@@ -383,16 +527,16 @@ public abstract class SqlDatabaseChangeTracker : ISqlDatabaseChangeTracker
         _pendingActions.Add( action );
     }
 
-    protected void CompletePendingAlterObjectChanges(SqlObjectBuilder obj)
+    /// <summary>
+    /// Sets <see cref="Mode"/> and marks this change tracker as attached.
+    /// </summary>
+    /// <param name="mode">Mode to set.</param>
+    /// <remarks>Internal use only.</remarks>
+    protected internal void SetModeAndAttach(SqlDatabaseCreateMode mode)
     {
-        Assume.IsNotNull( _activeChanges );
-
-        var changeAggregator = GetOrCreateAlterObjectChangeAggregator();
-        foreach ( var (key, payload) in _activeChanges )
-            changeAggregator.Add( payload.Target, key.Descriptor, payload.OriginalValue );
-
-        CompletePendingAlterObjectChanges( obj, changeAggregator );
-        changeAggregator.Clear();
+        Assume.IsDefined( mode );
+        Assume.IsNull( ActiveObject );
+        _mode = mode == SqlDatabaseCreateMode.NoChanges ? NoChangesBit : ( byte )mode;
     }
 
     internal void Created(SqlObjectBuilder activeObject, SqlObjectBuilder target)
@@ -505,16 +649,21 @@ public abstract class SqlDatabaseChangeTracker : ISqlDatabaseChangeTracker
         _database = database;
     }
 
-    protected internal void SetModeAndAttach(SqlDatabaseCreateMode mode)
-    {
-        Assume.IsDefined( mode );
-        Assume.IsNull( ActiveObject );
-        _mode = ( byte )(( int )mode << 1);
-    }
-
     internal void ClearPendingActions()
     {
         _pendingActions?.Clear();
+    }
+
+    private void CompletePendingAlterObjectChanges(SqlObjectBuilder obj)
+    {
+        Assume.IsNotNull( _activeChanges );
+
+        var changeAggregator = GetOrCreateAlterObjectChangeAggregator();
+        foreach ( var (key, payload) in _activeChanges )
+            changeAggregator.Add( payload.Target, key.Descriptor, payload.OriginalValue );
+
+        CompletePendingAlterObjectChanges( obj, changeAggregator );
+        changeAggregator.Clear();
     }
 
     private void HandleIsRemovedChange(SqlObjectBuilder target, bool isRemoved)

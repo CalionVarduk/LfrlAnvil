@@ -1,5 +1,8 @@
 ﻿namespace LfrlAnvil.Sql.Expressions.Arithmetic;
 
+/// <summary>
+/// Represents an SQL syntax tree expression node that defines a unary arithmetic negate operation.
+/// </summary>
 public sealed class SqlNegateExpressionNode : SqlExpressionNode
 {
     internal SqlNegateExpressionNode(SqlExpressionNode value)
@@ -8,5 +11,8 @@ public sealed class SqlNegateExpressionNode : SqlExpressionNode
         Value = value;
     }
 
+    /// <summary>
+    /// Operand.
+    /// </summary>
     public SqlExpressionNode Value { get; }
 }

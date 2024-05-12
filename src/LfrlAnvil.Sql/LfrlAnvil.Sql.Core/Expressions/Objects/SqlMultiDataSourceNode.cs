@@ -7,10 +7,20 @@ using LfrlAnvil.Sql.Internal;
 
 namespace LfrlAnvil.Sql.Expressions.Objects;
 
+/// <summary>
+/// Represents an SQL syntax tree node that defines a single data source from potentially many <see cref="SqlRecordSetNode"/> instances.
+/// </summary>
 public class SqlMultiDataSourceNode : SqlDataSourceNode
 {
     private readonly Dictionary<string, SqlRecordSetNode> _recordSets;
 
+    /// <summary>
+    /// Creates a new <see cref="SqlMultiDataSourceNode"/> instance.
+    /// </summary>
+    /// <param name="from">First <see cref="SqlRecordSetNode"/> instance from which this data source's definition begins.</param>
+    /// <param name="joins">
+    /// Sequential collection of all <see cref="SqlDataSourceJoinOnNode"/> instances that define this data source.
+    /// </param>
     protected internal SqlMultiDataSourceNode(SqlRecordSetNode from, SqlDataSourceJoinOnNode[] joins)
         : base( Chain<SqlTraitNode>.Empty )
     {
@@ -27,6 +37,14 @@ public class SqlMultiDataSourceNode : SqlDataSourceNode
         Joins = joins;
     }
 
+    /// <summary>
+    /// Creates a new <see cref="SqlMultiDataSourceNode"/> instance.
+    /// </summary>
+    /// <param name="from">First <see cref="SqlRecordSetNode"/> instance from which this data source's definition begins.</param>
+    /// <param name="definitions">
+    /// Sequential collection of all <see cref="SqlJoinDefinition"/> instances
+    /// that define this data source's <see cref="SqlDataSourceNode.Joins"/>.
+    /// </param>
     protected internal SqlMultiDataSourceNode(SqlRecordSetNode from, SqlJoinDefinition[] definitions)
         : base( Chain<SqlTraitNode>.Empty )
     {
@@ -126,6 +144,11 @@ public class SqlMultiDataSourceNode : SqlDataSourceNode
         Joins = joins;
     }
 
+    /// <summary>
+    /// Creates a new <see cref="SqlMultiDataSourceNode"/> instance.
+    /// </summary>
+    /// <param name="base">Source <see cref="SqlMultiDataSourceNode"/> instance.</param>
+    /// <param name="traits">Collection of decorating traits.</param>
     protected SqlMultiDataSourceNode(SqlMultiDataSourceNode @base, Chain<SqlTraitNode> traits)
         : base( traits )
     {
@@ -134,22 +157,30 @@ public class SqlMultiDataSourceNode : SqlDataSourceNode
         _recordSets = @base._recordSets;
     }
 
+    /// <inheritdoc />
     public sealed override SqlRecordSetNode From { get; }
+
+    /// <inheritdoc />
     public sealed override ReadOnlyArray<SqlDataSourceJoinOnNode> Joins { get; }
+
+    /// <inheritdoc />
     public sealed override IReadOnlyCollection<SqlRecordSetNode> RecordSets => _recordSets.Values;
 
+    /// <inheritdoc />
     [Pure]
-    public sealed override SqlRecordSetNode GetRecordSet(string name)
+    public sealed override SqlRecordSetNode GetRecordSet(string identifier)
     {
-        return _recordSets[name];
+        return _recordSets[identifier];
     }
 
+    /// <inheritdoc />
     [Pure]
     public override SqlMultiDataSourceNode AddTrait(SqlTraitNode trait)
     {
         return SetTraits( Traits.ToExtendable().Extend( trait ) );
     }
 
+    /// <inheritdoc />
     [Pure]
     public override SqlMultiDataSourceNode SetTraits(Chain<SqlTraitNode> traits)
     {
