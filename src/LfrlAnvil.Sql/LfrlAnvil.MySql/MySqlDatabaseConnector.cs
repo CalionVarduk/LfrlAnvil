@@ -12,6 +12,8 @@ using MySqlConnector;
 
 namespace LfrlAnvil.MySql;
 
+/// <inheritdoc cref="ISqlDatabaseConnector" />
+/// <remarks><see cref="MySqlDialect"/> implementation.</remarks>
 public sealed class MySqlDatabaseConnector : ISqlDatabaseConnector<MySqlConnection>, ISqlDatabaseConnector<DbConnection>
 {
     private readonly string _connectionString;
@@ -27,6 +29,7 @@ public sealed class MySqlDatabaseConnector : ISqlDatabaseConnector<MySqlConnecti
         _eventHandler = eventHandler;
     }
 
+    /// <inheritdoc cref="ISqlDatabaseConnector{TConnection}.Database" />
     public MySqlDatabase Database
     {
         get
@@ -40,6 +43,7 @@ public sealed class MySqlDatabaseConnector : ISqlDatabaseConnector<MySqlConnecti
     SqlDatabase ISqlDatabaseConnector<DbConnection>.Database => Database;
     ISqlDatabase ISqlDatabaseConnector.Database => Database;
 
+    /// <inheritdoc />
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public MySqlConnection Connect()
@@ -49,6 +53,7 @@ public sealed class MySqlDatabaseConnector : ISqlDatabaseConnector<MySqlConnecti
         return connection;
     }
 
+    /// <inheritdoc />
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public MySqlConnection Connect(string options)
@@ -59,6 +64,7 @@ public sealed class MySqlDatabaseConnector : ISqlDatabaseConnector<MySqlConnecti
         return connection;
     }
 
+    /// <inheritdoc />
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public async ValueTask<MySqlConnection> ConnectAsync(CancellationToken cancellationToken = default)
@@ -68,6 +74,7 @@ public sealed class MySqlDatabaseConnector : ISqlDatabaseConnector<MySqlConnecti
         return connection;
     }
 
+    /// <inheritdoc />
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public async ValueTask<MySqlConnection> ConnectAsync(string options, CancellationToken cancellationToken = default)

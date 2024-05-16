@@ -2118,7 +2118,7 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
     }
 
     /// <summary>
-    /// Visits a collection of ordering <see cref="SqlValueAssignmentNode"/> instances.
+    /// Visits a collection of <see cref="SqlValueAssignmentNode"/> instances.
     /// </summary>
     /// <param name="assignments">Collection of nodes to visit.</param>
     protected void VisitUpdateAssignmentRange(ReadOnlyArray<SqlValueAssignmentNode> assignments)

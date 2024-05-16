@@ -19,12 +19,21 @@ using MySqlConnector;
 
 namespace LfrlAnvil.MySql;
 
+/// <inheritdoc />
+/// <remarks><see cref="MySqlDialect"/> implementation.</remarks>
 public class MySqlNodeInterpreter : SqlNodeInterpreter
 {
     private const string MaxLimit = "18446744073709551615";
     private readonly string? _indexPrefixLength;
     private SqlRecordSetNode? _upsertUpdateSourceReplacement;
 
+    /// <summary>
+    /// Creates a new <see cref="MySqlNodeInterpreter"/> instance.
+    /// </summary>
+    /// <param name="options">
+    /// <see cref="MySqlNodeInterpreterOptions"/> instance associated with this interpreter that defines its behavior.
+    /// </param>
+    /// <param name="context">Underlying <see cref="SqlNodeInterpreterContext"/> instance.</param>
     public MySqlNodeInterpreter(MySqlNodeInterpreterOptions options, SqlNodeInterpreterContext context)
         : base( context, beginNameDelimiter: '`', endNameDelimiter: '`' )
     {
@@ -35,42 +44,60 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
         _indexPrefixLength = Options.IndexPrefixLength?.ToString( CultureInfo.InvariantCulture );
     }
 
+    /// <summary>
+    /// <see cref="MySqlNodeInterpreterOptions"/> instance associated with this interpreter that defines its behavior.
+    /// </summary>
     public MySqlNodeInterpreterOptions Options { get; }
+
+    /// <summary>
+    /// <see cref="MySqlColumnTypeDefinitionProvider"/> instance associated with this interpreter.
+    /// </summary>
     public MySqlColumnTypeDefinitionProvider TypeDefinitions { get; }
+
+    /// <summary>
+    /// Name of the common DB schema.
+    /// </summary>
     public string CommonSchemaName { get; }
 
+    /// <inheritdoc />
     public override void VisitLiteral(SqlLiteralNode node)
     {
         var sql = node.GetSql( TypeDefinitions );
         Context.Sql.Append( sql );
     }
 
+    /// <inheritdoc />
     public override void VisitParameter(SqlParameterNode node)
     {
         Context.Sql.Append( '@' ).Append( node.Name );
         AddContextParameter( node );
     }
 
+    /// <inheritdoc />
     public override void VisitCurrentDateFunction(SqlCurrentDateFunctionExpressionNode node)
     {
         VisitSimpleFunction( "CURRENT_DATE", node );
     }
 
+    /// <inheritdoc />
     public override void VisitCurrentTimeFunction(SqlCurrentTimeFunctionExpressionNode node)
     {
         Context.Sql.Append( "CURRENT_TIME" ).Append( '(' ).Append( '6' ).Append( ')' );
     }
 
+    /// <inheritdoc />
     public override void VisitCurrentDateTimeFunction(SqlCurrentDateTimeFunctionExpressionNode node)
     {
         Context.Sql.Append( "NOW" ).Append( '(' ).Append( '6' ).Append( ')' );
     }
 
+    /// <inheritdoc />
     public override void VisitCurrentUtcDateTimeFunction(SqlCurrentUtcDateTimeFunctionExpressionNode node)
     {
         Context.Sql.Append( "UTC_TIMESTAMP" ).Append( '(' ).Append( '6' ).Append( ')' );
     }
 
+    /// <inheritdoc />
     public override void VisitCurrentTimestampFunction(SqlCurrentTimestampFunctionExpressionNode node)
     {
         Context.Sql.Append( "CAST" ).Append( '(' ).Append( "UNIX_TIMESTAMP" ).Append( '(' );
@@ -79,16 +106,19 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
         Context.Sql.AppendSpace().Append( "AS" ).AppendSpace().Append( "SIGNED" ).Append( ')' );
     }
 
+    /// <inheritdoc />
     public override void VisitExtractDateFunction(SqlExtractDateFunctionExpressionNode node)
     {
         VisitSimpleFunction( "DATE", node );
     }
 
+    /// <inheritdoc />
     public override void VisitExtractTimeOfDayFunction(SqlExtractTimeOfDayFunctionExpressionNode node)
     {
         VisitSimpleFunction( "TIME", node );
     }
 
+    /// <inheritdoc />
     public override void VisitExtractDayFunction(SqlExtractDayFunctionExpressionNode node)
     {
         switch ( node.Unit )
@@ -107,6 +137,7 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
         }
     }
 
+    /// <inheritdoc />
     public override void VisitExtractTemporalUnitFunction(SqlExtractTemporalUnitFunctionExpressionNode node)
     {
         switch ( node.Unit )
@@ -155,6 +186,7 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
         }
     }
 
+    /// <inheritdoc />
     public override void VisitTemporalAddFunction(SqlTemporalAddFunctionExpressionNode node)
     {
         switch ( node.Unit )
@@ -201,6 +233,7 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
         }
     }
 
+    /// <inheritdoc />
     public override void VisitTemporalDiffFunction(SqlTemporalDiffFunctionExpressionNode node)
     {
         switch ( node.Unit )
@@ -245,32 +278,38 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
         }
     }
 
+    /// <inheritdoc />
     public override void VisitNewGuidFunction(SqlNewGuidFunctionExpressionNode node)
     {
         AppendDelimitedSchemaObjectName( SqlSchemaObjectName.Create( CommonSchemaName, MySqlHelpers.GuidFunctionName ) );
         VisitFunctionArguments( node.Arguments );
     }
 
+    /// <inheritdoc />
     public override void VisitLengthFunction(SqlLengthFunctionExpressionNode node)
     {
         VisitSimpleFunction( "CHAR_LENGTH", node );
     }
 
+    /// <inheritdoc />
     public override void VisitByteLengthFunction(SqlByteLengthFunctionExpressionNode node)
     {
         VisitSimpleFunction( "LENGTH", node );
     }
 
+    /// <inheritdoc />
     public override void VisitToLowerFunction(SqlToLowerFunctionExpressionNode node)
     {
         VisitSimpleFunction( "LOWER", node );
     }
 
+    /// <inheritdoc />
     public override void VisitToUpperFunction(SqlToUpperFunctionExpressionNode node)
     {
         VisitSimpleFunction( "UPPER", node );
     }
 
+    /// <inheritdoc />
     public override void VisitTrimStartFunction(SqlTrimStartFunctionExpressionNode node)
     {
         if ( node.Arguments.Count == 1 )
@@ -286,6 +325,7 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
         }
     }
 
+    /// <inheritdoc />
     public override void VisitTrimEndFunction(SqlTrimEndFunctionExpressionNode node)
     {
         if ( node.Arguments.Count == 1 )
@@ -301,6 +341,7 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
         }
     }
 
+    /// <inheritdoc />
     public override void VisitTrimFunction(SqlTrimFunctionExpressionNode node)
     {
         if ( node.Arguments.Count == 1 )
@@ -316,26 +357,31 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
         }
     }
 
+    /// <inheritdoc />
     public override void VisitSubstringFunction(SqlSubstringFunctionExpressionNode node)
     {
         VisitSimpleFunction( "SUBSTRING", node );
     }
 
+    /// <inheritdoc />
     public override void VisitReplaceFunction(SqlReplaceFunctionExpressionNode node)
     {
         VisitSimpleFunction( "REPLACE", node );
     }
 
+    /// <inheritdoc />
     public override void VisitReverseFunction(SqlReverseFunctionExpressionNode node)
     {
         VisitSimpleFunction( "REVERSE", node );
     }
 
+    /// <inheritdoc />
     public override void VisitIndexOfFunction(SqlIndexOfFunctionExpressionNode node)
     {
         VisitSimpleFunction( "INSTR", node );
     }
 
+    /// <inheritdoc />
     public override void VisitLastIndexOfFunction(SqlLastIndexOfFunctionExpressionNode node)
     {
         var args = node.Arguments;
@@ -356,26 +402,31 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
         Context.Sql.Append( ')', repeatCount: 2 );
     }
 
+    /// <inheritdoc />
     public override void VisitSignFunction(SqlSignFunctionExpressionNode node)
     {
         VisitSimpleFunction( "SIGN", node );
     }
 
+    /// <inheritdoc />
     public override void VisitAbsFunction(SqlAbsFunctionExpressionNode node)
     {
         VisitSimpleFunction( "ABS", node );
     }
 
+    /// <inheritdoc />
     public override void VisitCeilingFunction(SqlCeilingFunctionExpressionNode node)
     {
         VisitSimpleFunction( "CEIL", node );
     }
 
+    /// <inheritdoc />
     public override void VisitFloorFunction(SqlFloorFunctionExpressionNode node)
     {
         VisitSimpleFunction( "FLOOR", node );
     }
 
+    /// <inheritdoc />
     public override void VisitTruncateFunction(SqlTruncateFunctionExpressionNode node)
     {
         if ( node.Arguments.Count == 1 )
@@ -388,21 +439,25 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
             VisitSimpleFunction( "TRUNCATE", node );
     }
 
+    /// <inheritdoc />
     public override void VisitRoundFunction(SqlRoundFunctionExpressionNode node)
     {
         VisitSimpleFunction( "ROUND", node );
     }
 
+    /// <inheritdoc />
     public override void VisitPowerFunction(SqlPowerFunctionExpressionNode node)
     {
         VisitSimpleFunction( "POW", node );
     }
 
+    /// <inheritdoc />
     public override void VisitSquareRootFunction(SqlSquareRootFunctionExpressionNode node)
     {
         VisitSimpleFunction( "SQRT", node );
     }
 
+    /// <inheritdoc />
     public override void VisitMinFunction(SqlMinFunctionExpressionNode node)
     {
         if ( node.Arguments.Count == 1 )
@@ -411,6 +466,7 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
             VisitSimpleFunction( "LEAST", node );
     }
 
+    /// <inheritdoc />
     public override void VisitMaxFunction(SqlMaxFunctionExpressionNode node)
     {
         if ( node.Arguments.Count == 1 )
@@ -419,6 +475,7 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
             VisitSimpleFunction( "GREATEST", node );
     }
 
+    /// <inheritdoc />
     public override void VisitNamedAggregateFunction(SqlNamedAggregateFunctionExpressionNode node)
     {
         var traits = ExtractAggregateFunctionTraits( node.Traits );
@@ -426,31 +483,37 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
         VisitAggregateFunctionArgumentsAndTraits( node.Arguments, traits );
     }
 
+    /// <inheritdoc />
     public override void VisitMinAggregateFunction(SqlMinAggregateFunctionExpressionNode node)
     {
         VisitSimpleAggregateFunction( "MIN", node );
     }
 
+    /// <inheritdoc />
     public override void VisitMaxAggregateFunction(SqlMaxAggregateFunctionExpressionNode node)
     {
         VisitSimpleAggregateFunction( "MAX", node );
     }
 
+    /// <inheritdoc />
     public override void VisitAverageAggregateFunction(SqlAverageAggregateFunctionExpressionNode node)
     {
         VisitSimpleAggregateFunction( "AVG", node );
     }
 
+    /// <inheritdoc />
     public override void VisitSumAggregateFunction(SqlSumAggregateFunctionExpressionNode node)
     {
         VisitSimpleAggregateFunction( "SUM", node );
     }
 
+    /// <inheritdoc />
     public override void VisitCountAggregateFunction(SqlCountAggregateFunctionExpressionNode node)
     {
         VisitSimpleAggregateFunction( "COUNT", node );
     }
 
+    /// <inheritdoc />
     public override void VisitStringConcatAggregateFunction(SqlStringConcatAggregateFunctionExpressionNode node)
     {
         var traits = ExtractAggregateFunctionTraits( node.Traits );
@@ -507,56 +570,67 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
         }
     }
 
+    /// <inheritdoc />
     public override void VisitRowNumberWindowFunction(SqlRowNumberWindowFunctionExpressionNode node)
     {
         VisitSimpleAggregateFunction( "ROW_NUMBER", node );
     }
 
+    /// <inheritdoc />
     public override void VisitRankWindowFunction(SqlRankWindowFunctionExpressionNode node)
     {
         VisitSimpleAggregateFunction( "RANK", node );
     }
 
+    /// <inheritdoc />
     public override void VisitDenseRankWindowFunction(SqlDenseRankWindowFunctionExpressionNode node)
     {
         VisitSimpleAggregateFunction( "DENSE_RANK", node );
     }
 
+    /// <inheritdoc />
     public override void VisitCumulativeDistributionWindowFunction(SqlCumulativeDistributionWindowFunctionExpressionNode node)
     {
         VisitSimpleAggregateFunction( "CUME_DIST", node );
     }
 
+    /// <inheritdoc />
     public override void VisitNTileWindowFunction(SqlNTileWindowFunctionExpressionNode node)
     {
         VisitSimpleAggregateFunction( "NTILE", node );
     }
 
+    /// <inheritdoc />
     public override void VisitLagWindowFunction(SqlLagWindowFunctionExpressionNode node)
     {
         VisitSimpleAggregateFunction( "LAG", node );
     }
 
+    /// <inheritdoc />
     public override void VisitLeadWindowFunction(SqlLeadWindowFunctionExpressionNode node)
     {
         VisitSimpleAggregateFunction( "LEAD", node );
     }
 
+    /// <inheritdoc />
     public override void VisitFirstValueWindowFunction(SqlFirstValueWindowFunctionExpressionNode node)
     {
         VisitSimpleAggregateFunction( "FIRST_VALUE", node );
     }
 
+    /// <inheritdoc />
     public override void VisitLastValueWindowFunction(SqlLastValueWindowFunctionExpressionNode node)
     {
         VisitSimpleAggregateFunction( "LAST_VALUE", node );
     }
 
+    /// <inheritdoc />
     public override void VisitNthValueWindowFunction(SqlNthValueWindowFunctionExpressionNode node)
     {
         VisitSimpleAggregateFunction( "NTH_VALUE", node );
     }
 
+    /// <inheritdoc />
     public override void VisitJoinOn(SqlDataSourceJoinOnNode node)
     {
         var joinType = node.JoinType switch
@@ -571,18 +645,21 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
         AppendJoin( joinType, node );
     }
 
+    /// <inheritdoc />
     public override void VisitLimitTrait(SqlLimitTraitNode node)
     {
         Context.Sql.Append( "LIMIT" ).AppendSpace();
         VisitChild( node.Value );
     }
 
+    /// <inheritdoc />
     public override void VisitOffsetTrait(SqlOffsetTraitNode node)
     {
         Context.Sql.Append( "OFFSET" ).AppendSpace();
         VisitChild( node.Value );
     }
 
+    /// <inheritdoc />
     public override void VisitTypeCast(SqlTypeCastExpressionNode node)
     {
         const string signed = "SIGNED";
@@ -642,6 +719,7 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
         }
     }
 
+    /// <inheritdoc />
     public sealed override void VisitInsertInto(SqlInsertIntoNode node)
     {
         switch ( node.Source.NodeType )
@@ -664,6 +742,7 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
         }
     }
 
+    /// <inheritdoc />
     public sealed override void VisitUpdate(SqlUpdateNode node)
     {
         var traits = ExtractDataSourceTraits( node.DataSource.Traits );
@@ -689,6 +768,7 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
         VisitSimplifiedUpdateWithMultiTable( node, targetInfo, in traits );
     }
 
+    /// <inheritdoc />
     public sealed override void VisitUpsert(SqlUpsertNode node)
     {
         switch ( node.Source.NodeType )
@@ -716,6 +796,7 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
         }
     }
 
+    /// <inheritdoc />
     public sealed override void VisitDeleteFrom(SqlDeleteFromNode node)
     {
         var traits = ExtractDataSourceTraits( node.DataSource.Traits );
@@ -740,6 +821,7 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
         VisitDeleteFromWithMultiTable( node, traits );
     }
 
+    /// <inheritdoc />
     public override void VisitColumnDefinition(SqlColumnDefinitionNode node)
     {
         var typeDefinition = node.TypeDefinition ?? TypeDefinitions.GetByType( node.Type.UnderlyingType );
@@ -772,6 +854,7 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
         }
     }
 
+    /// <inheritdoc />
     public override void VisitPrimaryKeyDefinition(SqlPrimaryKeyDefinitionNode node)
     {
         Context.Sql.Append( "CONSTRAINT" ).AppendSpace();
@@ -792,6 +875,7 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
         Context.Sql.Append( ')' );
     }
 
+    /// <inheritdoc />
     public override void VisitForeignKeyDefinition(SqlForeignKeyDefinitionNode node)
     {
         Context.Sql.Append( "CONSTRAINT" ).AppendSpace();
@@ -829,6 +913,7 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
         Context.Sql.Append( "ON" ).AppendSpace().Append( "UPDATE" ).AppendSpace().Append( node.OnUpdateBehavior.Name );
     }
 
+    /// <inheritdoc />
     public override void VisitCheckDefinition(SqlCheckDefinitionNode node)
     {
         Context.Sql.Append( "CONSTRAINT" ).AppendSpace();
@@ -837,6 +922,7 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
         VisitChildWrappedInParentheses( node.Condition );
     }
 
+    /// <inheritdoc />
     public override void VisitCreateTable(SqlCreateTableNode node)
     {
         using ( TempIgnoreAllRecordSets() )
@@ -856,6 +942,7 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
         }
     }
 
+    /// <inheritdoc />
     public override void VisitCreateView(SqlCreateViewNode node)
     {
         if ( node.Info.IsTemporary && Options.AreTemporaryViewsForbidden )
@@ -872,6 +959,7 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
         this.Visit( node.Source );
     }
 
+    /// <inheritdoc />
     public override void VisitCreateIndex(SqlCreateIndexNode node)
     {
         using ( TempIgnoreAllRecordSets() )
@@ -917,6 +1005,7 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
         }
     }
 
+    /// <inheritdoc />
     public override void VisitRenameTable(SqlRenameTableNode node)
     {
         Context.Sql.Append( "ALTER" ).AppendSpace().Append( "TABLE" ).AppendSpace();
@@ -925,6 +1014,7 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
         AppendDelimitedSchemaObjectName( node.NewName );
     }
 
+    /// <inheritdoc />
     public override void VisitRenameColumn(SqlRenameColumnNode node)
     {
         Context.Sql.Append( "ALTER" ).AppendSpace().Append( "TABLE" ).AppendSpace();
@@ -935,6 +1025,7 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
         AppendDelimitedName( node.NewName );
     }
 
+    /// <inheritdoc />
     public override void VisitAddColumn(SqlAddColumnNode node)
     {
         Context.Sql.Append( "ALTER" ).AppendSpace().Append( "TABLE" ).AppendSpace();
@@ -943,6 +1034,7 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
         VisitColumnDefinition( node.Definition );
     }
 
+    /// <inheritdoc />
     public override void VisitDropColumn(SqlDropColumnNode node)
     {
         Context.Sql.Append( "ALTER" ).AppendSpace().Append( "TABLE" ).AppendSpace();
@@ -951,6 +1043,7 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
         AppendDelimitedName( node.Name );
     }
 
+    /// <inheritdoc />
     public override void VisitDropTable(SqlDropTableNode node)
     {
         Context.Sql.Append( "DROP" ).AppendSpace();
@@ -964,6 +1057,7 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
         AppendDelimitedSchemaObjectName( node.Table.Name );
     }
 
+    /// <inheritdoc />
     public override void VisitDropView(SqlDropViewNode node)
     {
         if ( node.View.IsTemporary && Options.AreTemporaryViewsForbidden )
@@ -976,6 +1070,7 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
         AppendDelimitedSchemaObjectName( node.View.Name );
     }
 
+    /// <inheritdoc />
     public override void VisitDropIndex(SqlDropIndexNode node)
     {
         if ( node.IfExists )
@@ -1004,6 +1099,7 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
         }
     }
 
+    /// <inheritdoc />
     public override void VisitBeginTransaction(SqlBeginTransactionNode node)
     {
         var isolationLevel = node.IsolationLevel switch
@@ -1023,16 +1119,19 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
             Context.Sql.AppendSpace().Append( "WITH" ).AppendSpace().Append( "CONSISTENT" ).AppendSpace().Append( "SNAPSHOT" );
     }
 
+    /// <inheritdoc />
     public sealed override void AppendDelimitedTemporaryObjectName(string name)
     {
         AppendDelimitedName( name );
     }
 
+    /// <inheritdoc />
     protected override void AddContextParameter(SqlParameterNode node)
     {
         Context.AddParameter( node.Name, node.Type, index: null );
     }
 
+    /// <inheritdoc />
     [Pure]
     protected override bool DoesChildNodeRequireParentheses(SqlNodeBase node)
     {
@@ -1081,6 +1180,11 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
         return true;
     }
 
+    /// <summary>
+    /// Visits a simple SQL aggregate function node.
+    /// </summary>
+    /// <param name="functionName">Name of the aggregate function.</param>
+    /// <param name="node">SQL aggregate function expression node.</param>
     protected void VisitSimpleAggregateFunction(string functionName, SqlAggregateFunctionExpressionNode node)
     {
         var traits = ExtractAggregateFunctionTraits( node.Traits );
@@ -1088,6 +1192,11 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
         VisitAggregateFunctionArgumentsAndTraits( node.Arguments, traits );
     }
 
+    /// <summary>
+    /// Sequentially visits all arguments and traits of a simple SQL aggregate function node.
+    /// </summary>
+    /// <param name="arguments">Collection of arguments to visit.</param>
+    /// <param name="traits">Collection of traits to visit.</param>
     protected void VisitAggregateFunctionArgumentsAndTraits(ReadOnlyArray<SqlExpressionNode> arguments, SqlAggregateFunctionTraits traits)
     {
         Context.Sql.Append( '(' );
@@ -1136,6 +1245,11 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
         }
     }
 
+    /// <summary>
+    /// Visits optional <see cref="SqlExpressionNode"/> values representing <paramref name="limit"/> and <paramref name="offset"/>.
+    /// </summary>
+    /// <param name="limit">Limit value to visit.</param>
+    /// <param name="offset">Offset value to visit.</param>
     protected void VisitOptionalLimitAndOffsetExpressions(SqlExpressionNode? limit, SqlExpressionNode? offset)
     {
         if ( limit is not null )
@@ -1160,6 +1274,10 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
         VisitChild( offset );
     }
 
+    /// <summary>
+    /// Visits an <see cref="SqlOrderByNode"/> as part of an index.
+    /// </summary>
+    /// <param name="node">Node to visit.</param>
     protected virtual void VisitIndexedExpression(SqlOrderByNode node)
     {
         if ( node.Expression is SqlDataFieldNode dataField )
@@ -1187,6 +1305,11 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
         Context.Sql.AppendSpace().Append( node.Ordering.Name );
     }
 
+    /// <summary>
+    /// Checks whether or not the provided <paramref name="dataType"/> is a text or a blob type.
+    /// </summary>
+    /// <param name="dataType">Data type to check.</param>
+    /// <returns><b>true</b> when <paramref name="dataType"/> is a text or a blob type, otherwise <b>false</b>.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     protected static bool IsTextOrBlobType(MySqlDataType dataType)
@@ -1201,6 +1324,11 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
             or MySqlDbType.LongBlob;
     }
 
+    /// <summary>
+    /// Visits an <see cref="SqlInsertIntoNode"/> with source of <see cref="SqlDataSourceQueryExpressionNode"/> type.
+    /// </summary>
+    /// <param name="node">Insert into node to visit.</param>
+    /// <param name="query">Source query.</param>
     protected virtual void VisitInsertIntoFromDataSourceQuery(SqlInsertIntoNode node, SqlDataSourceQueryExpressionNode query)
     {
         Assume.Equals( node.Source, query );
@@ -1214,6 +1342,11 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
         VisitDataSourceAfterTraits( in traits );
     }
 
+    /// <summary>
+    /// Visits an <see cref="SqlInsertIntoNode"/> with source of <see cref="SqlCompoundQueryExpressionNode"/> type.
+    /// </summary>
+    /// <param name="node">Insert into node to visit.</param>
+    /// <param name="query">Source query.</param>
     protected virtual void VisitInsertIntoFromCompoundQuery(SqlInsertIntoNode node, SqlCompoundQueryExpressionNode query)
     {
         Assume.Equals( node.Source, query );
@@ -1226,6 +1359,10 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
         VisitQueryAfterTraits( in traits );
     }
 
+    /// <summary>
+    /// Visits an <see cref="SqlInsertIntoNode"/> with source of non-query type.
+    /// </summary>
+    /// <param name="node">Insert into node to visit.</param>
     protected virtual void VisitInsertIntoFromGenericSource(SqlInsertIntoNode node)
     {
         VisitInsertIntoFields( node );
@@ -1233,6 +1370,12 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
         this.Visit( node.Source );
     }
 
+    /// <summary>
+    /// Visits an <see cref="SqlUpdateNode"/> with a single record set.
+    /// </summary>
+    /// <param name="node">Update node to visit.</param>
+    /// <param name="traits">Collection of traits.</param>
+    /// <remarks>See <see cref="IsValidSingleTableUpdateStatement"/> for more information.</remarks>
     protected virtual void VisitUpdateWithSingleTable(SqlUpdateNode node, in SqlDataSourceTraits traits)
     {
         VisitDataSourceBeforeTraits( in traits );
@@ -1242,6 +1385,12 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
         VisitDataSourceAfterTraits( in traits );
     }
 
+    /// <summary>
+    /// Visits an <see cref="SqlUpdateNode"/> with multiple record sets.
+    /// </summary>
+    /// <param name="node">Update node to visit.</param>
+    /// <param name="traits">Collection of traits.</param>
+    /// <remarks>See <see cref="IsValidMultiTableUpdateStatement"/> for more information.</remarks>
     protected virtual void VisitUpdateWithMultiTable(SqlUpdateNode node, in SqlDataSourceTraits traits)
     {
         VisitDataSourceBeforeTraits( in traits );
@@ -1258,6 +1407,12 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
         VisitDataSourceAfterTraits( in traits );
     }
 
+    /// <summary>
+    /// Visits an <see cref="SqlUpdateNode"/> statement simplified from a complex data source.
+    /// </summary>
+    /// <param name="node">Update node to visit.</param>
+    /// <param name="targetInfo"><see cref="SqlNodeInterpreter.ChangeTargetInfo"/> instance associated with the operation.</param>
+    /// <param name="traits">Collection of traits.</param>
     protected virtual void VisitSimplifiedUpdateWithMultiTable(
         SqlUpdateNode node,
         ChangeTargetInfo targetInfo,
@@ -1279,6 +1434,11 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
         VisitDataSourceAfterTraits( in traits );
     }
 
+    /// <summary>
+    /// Visits an <see cref="SqlUpsertNode"/> with source of <see cref="SqlDataSourceQueryExpressionNode"/> type.
+    /// </summary>
+    /// <param name="node">Upsert node to visit.</param>
+    /// <param name="query">Source query.</param>
     protected virtual void VisitUpsertFromDataSourceQuery(SqlUpsertNode node, SqlDataSourceQueryExpressionNode query)
     {
         Assume.Equals( node.Source, query );
@@ -1302,6 +1462,11 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
         AppendUpsertOnDuplicateKey( node );
     }
 
+    /// <summary>
+    /// Visits an <see cref="SqlUpsertNode"/> with source of <see cref="SqlCompoundQueryExpressionNode"/> type.
+    /// </summary>
+    /// <param name="node">Upsert node to visit.</param>
+    /// <param name="query">Source query.</param>
     protected virtual void VisitUpsertFromCompoundQuery(SqlUpsertNode node, SqlCompoundQueryExpressionNode query)
     {
         Assume.Equals( node.Source, query );
@@ -1324,6 +1489,11 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
         AppendUpsertOnDuplicateKey( node );
     }
 
+    /// <summary>
+    /// Visits an <see cref="SqlUpsertNode"/> with source of <see cref="SqlRawQueryExpressionNode"/> type.
+    /// </summary>
+    /// <param name="node">Upsert node to visit.</param>
+    /// <param name="query">Source query.</param>
     protected virtual void VisitUpsertFromRawQuery(SqlUpsertNode node, SqlRawQueryExpressionNode query)
     {
         Assume.Equals( node.Source, query );
@@ -1341,6 +1511,10 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
         AppendUpsertOnDuplicateKey( node );
     }
 
+    /// <summary>
+    /// Visits an <see cref="SqlUpsertNode"/> with source of non-query type.
+    /// </summary>
+    /// <param name="node">Upsert node to visit.</param>
     protected virtual void VisitUpsertFromGenericSource(SqlUpsertNode node)
     {
         VisitInsertIntoFields( node.RecordSet, node.InsertDataFields );
@@ -1351,6 +1525,11 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
         AppendUpsertOnDuplicateKey( node );
     }
 
+    /// <summary>
+    /// Appends an SQL upsert's value source's alias to <see cref="SqlNodeInterpreter.Context"/>.
+    /// </summary>
+    /// <param name="node">Source upsert node.</param>
+    /// <param name="includeFieldNames">Specifies whether or not all field names should be included.</param>
     protected void AppendUpsertSourceAlias(SqlUpsertNode node, bool includeFieldNames)
     {
         Context.Sql.Append( "AS" ).AppendSpace();
@@ -1373,6 +1552,10 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
         Context.Sql.Append( ')' );
     }
 
+    /// <summary>
+    /// Appends an SQL upsert's <b>ON DUPLICATE KEY UPDATE</b> part to <see cref="SqlNodeInterpreter.Context"/>.
+    /// </summary>
+    /// <param name="node">SQL upsert node.</param>
     protected void AppendUpsertOnDuplicateKey(SqlUpsertNode node)
     {
         Context.AppendIndent().Append( "ON" ).AppendSpace().Append( "DUPLICATE" ).AppendSpace();
@@ -1398,6 +1581,12 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
         }
     }
 
+    /// <summary>
+    /// Visits an <see cref="SqlDeleteFromNode"/> with a single record set.
+    /// </summary>
+    /// <param name="node">Delete from node to visit.</param>
+    /// <param name="traits">Collection of traits.</param>
+    /// <remarks>See <see cref="IsValidSingleTableDeleteStatement"/> for more information.</remarks>
     protected virtual void VisitDeleteFromWithSingleTable(SqlDeleteFromNode node, in SqlDataSourceTraits traits)
     {
         VisitDataSourceBeforeTraits( in traits );
@@ -1406,6 +1595,12 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
         VisitDataSourceAfterTraits( in traits );
     }
 
+    /// <summary>
+    /// Visits an <see cref="SqlDeleteFromNode"/> with multiple record sets.
+    /// </summary>
+    /// <param name="node">Delete from node to visit.</param>
+    /// <param name="traits">Collection of traits.</param>
+    /// <remarks>See <see cref="IsValidMultiTableDeleteStatement"/> for more information.</remarks>
     protected virtual void VisitDeleteFromWithMultiTable(SqlDeleteFromNode node, in SqlDataSourceTraits traits)
     {
         VisitDataSourceBeforeTraits( in traits );
@@ -1416,18 +1611,25 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
         VisitDataSourceAfterTraits( in traits );
     }
 
+    /// <inheritdoc />
     protected override void VisitDataSourceAfterTraits(in SqlDataSourceTraits traits)
     {
         base.VisitDataSourceAfterTraits( in traits );
         VisitOptionalLimitAndOffsetExpressions( traits.Limit, traits.Offset );
     }
 
+    /// <inheritdoc />
     protected override void VisitQueryAfterTraits(in SqlQueryTraits traits)
     {
         base.VisitQueryAfterTraits( in traits );
         VisitOptionalLimitAndOffsetExpressions( traits.Limit, traits.Offset );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="SqlDataSourceTraits"/> without common table expressions.
+    /// </summary>
+    /// <param name="traits">Source traits.</param>
+    /// <returns>New <see cref="SqlDataSourceTraits"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     protected static SqlDataSourceTraits RemoveCommonTableExpressions(in SqlDataSourceTraits traits)
@@ -1439,6 +1641,11 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
         };
     }
 
+    /// <summary>
+    /// Creates a new <see cref="SqlQueryTraits"/> without common table expressions.
+    /// </summary>
+    /// <param name="traits">Source traits.</param>
+    /// <returns>New <see cref="SqlQueryTraits"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     protected static SqlQueryTraits RemoveCommonTableExpressions(in SqlQueryTraits traits)
@@ -1450,6 +1657,16 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
         };
     }
 
+    /// <summary>
+    /// Checks whether or not a data source of an <see cref="SqlDeleteFromNode"/> is considered valid for a single record set version.
+    /// </summary>
+    /// <param name="node">Data source node to check.</param>
+    /// <param name="traits">Collection of traits.</param>
+    /// <returns><b>true</b> when data source is considered valid, otherwise <b>false</b>.</returns>
+    /// <remarks>
+    /// By default, data source is considered to be valid when it contains a single non-aliased record set. In addition,
+    /// it may only be decorated with common table expressions, a filter, sorting and a limit value.
+    /// </remarks>
     [Pure]
     protected virtual bool IsValidSingleTableDeleteStatement(SqlDataSourceNode node, in SqlDataSourceTraits traits)
     {
@@ -1463,6 +1680,16 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
             && traits.Custom.Count == 0;
     }
 
+    /// <summary>
+    /// Checks whether or not a data source of an <see cref="SqlDeleteFromNode"/> is considered valid
+    /// for a version with multiple record sets.
+    /// </summary>
+    /// <param name="node">Data source node to check.</param>
+    /// <param name="traits">Collection of traits.</param>
+    /// <returns><b>true</b> when data source is considered valid, otherwise <b>false</b>.</returns>
+    /// <remarks>
+    /// By default, data source can only be decorated with common table expressions and a filter in order to be considered valid.
+    /// </remarks>
     [Pure]
     protected virtual bool IsValidMultiTableDeleteStatement(SqlDataSourceNode node, in SqlDataSourceTraits traits)
     {
@@ -1476,6 +1703,16 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
             && traits.Custom.Count == 0;
     }
 
+    /// <summary>
+    /// Checks whether or not a data source of an <see cref="SqlUpdateNode"/> is considered valid for a single record set version.
+    /// </summary>
+    /// <param name="node">Data source node to check.</param>
+    /// <param name="traits">Collection of traits.</param>
+    /// <returns><b>true</b> when data source is considered valid, otherwise <b>false</b>.</returns>
+    /// <remarks>
+    /// By default, data source is considered to be valid when it contains a single record set. In addition,
+    /// it may only be decorated with common table expressions, a filter, sorting and a limit value.
+    /// </remarks>
     [Pure]
     protected virtual bool IsValidSingleTableUpdateStatement(SqlDataSourceNode node, in SqlDataSourceTraits traits)
     {
@@ -1488,6 +1725,15 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
             && traits.Custom.Count == 0;
     }
 
+    /// <summary>
+    /// Checks whether or not a data source of an <see cref="SqlUpdateNode"/> is considered valid for a version with multiple record sets.
+    /// </summary>
+    /// <param name="node">Data source node to check.</param>
+    /// <param name="traits">Collection of traits.</param>
+    /// <returns><b>true</b> when data source is considered valid, otherwise <b>false</b>.</returns>
+    /// <remarks>
+    /// By default, data source can only be decorated with common table expressions and a filter in order to be considered valid.
+    /// </remarks>
     [Pure]
     protected virtual bool IsValidMultiTableUpdateStatement(SqlDataSourceNode node, in SqlDataSourceTraits traits)
     {
@@ -1501,6 +1747,10 @@ public class MySqlNodeInterpreter : SqlNodeInterpreter
             && traits.Custom.Count == 0;
     }
 
+    /// <summary>
+    /// Visits a collection of ordering <see cref="SqlValueAssignmentNode"/> instances for update nodes with multiple record sets.
+    /// </summary>
+    /// <param name="assignments">Collection of nodes to visit.</param>
     protected void VisitMultiUpdateAssignmentRange(ReadOnlyArray<SqlValueAssignmentNode> assignments)
     {
         Context.Sql.AppendSpace().Append( "SET" );

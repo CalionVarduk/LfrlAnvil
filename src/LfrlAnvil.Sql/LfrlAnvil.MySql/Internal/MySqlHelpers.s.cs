@@ -11,16 +11,31 @@ using MySqlConnector;
 
 namespace LfrlAnvil.MySql.Internal;
 
-internal static class MySqlHelpers
+/// <summary>
+/// Contains various MySQL helpers.
+/// </summary>
+public static class MySqlHelpers
 {
-    public static readonly SqlSchemaObjectName DefaultVersionHistoryName = SqlSchemaObjectName.Create( "common", "__VersionHistory" );
+#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
     public const string GuidFunctionName = "GUID";
     public const string DropIndexIfExistsProcedureName = "_DROP_INDEX_IF_EXISTS";
     public const string DateFormatQuoted = $"DATE{SqlHelpers.DateFormatQuoted}";
     public const string TimeFormatQuoted = $@"TI\ME{SqlHelpers.TimeFormatMicrosecondQuoted}";
     public const string DefaultUpdateSourceAlias = "new";
     public const int DefaultIndexPrefixLength = 500;
+#pragma warning restore CS1591 // Missing XML comment for publicly visible type or member
 
+    /// <summary>
+    /// Default version history table name.
+    /// </summary>
+    public static readonly SqlSchemaObjectName DefaultVersionHistoryName = SqlSchemaObjectName.Create( "common", "__VersionHistory" );
+
+    /// <summary>
+    /// Extracts a collection of <see cref="SqlConnectionStringEntry"/> instances
+    /// from the provided <see cref="MySqlConnectionStringBuilder"/>.
+    /// </summary>
+    /// <param name="builder">Source connection string builder.</param>
+    /// <returns>New collection of <see cref="SqlConnectionStringEntry"/> instances.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static SqlConnectionStringEntry[] ExtractConnectionStringEntries(MySqlConnectionStringBuilder builder)
@@ -36,6 +51,13 @@ internal static class MySqlHelpers
         return result;
     }
 
+    /// <summary>
+    /// Extends the provided collection of <see cref="SqlConnectionStringEntry"/> instances with a partial connection string,
+    /// potentially overriding entries with their <see cref="SqlConnectionStringEntry.IsMutable"/> equal to <b>true</b>.
+    /// </summary>
+    /// <param name="entries">Connection string entries to extend.</param>
+    /// <param name="options">Connection string options to apply to the extended collection.</param>
+    /// <returns>New connection string.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static string ExtendConnectionString(ReadOnlyArray<SqlConnectionStringEntry> entries, string options)
@@ -50,6 +72,15 @@ internal static class MySqlHelpers
         return builder.ToString();
     }
 
+    /// <summary>
+    /// Specifies whether or not the provided <paramref name="key"/> of a connection string entry is considered to be mutable.
+    /// </summary>
+    /// <param name="key">Key to check.</param>
+    /// <returns><b>true</b> when <paramref name="key"/> is mutable, otherwise <b>false</b>.</returns>
+    /// <remarks>
+    /// Mutable connection string entries can be changed in the
+    /// <see cref="ExtendConnectionString(ReadOnlyArray{SqlConnectionStringEntry},string)"/> method invocation.
+    /// </remarks>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static bool IsMutableConnectionStringKey(string key)
@@ -70,6 +101,12 @@ internal static class MySqlHelpers
             && ! key.Equals( "NoBackslashEscapes", StringComparison.OrdinalIgnoreCase );
     }
 
+    /// <summary>
+    /// Returns an alias of a value source of <b>UPSERT</b> statements.
+    /// </summary>
+    /// <param name="options"><see cref="MySqlNodeInterpreterOptions"/> instance to use as base.</param>
+    /// <returns>Alias of a value source of <b>UPSERT</b> statements.</returns>
+    /// <remarks>See <see cref="MySqlNodeInterpreterOptions.UpsertSourceAlias"/> for more information.</remarks>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static string GetUpdateSourceAlias(MySqlNodeInterpreterOptions options)
@@ -77,33 +114,33 @@ internal static class MySqlHelpers
         return string.IsNullOrEmpty( options.UpsertSourceAlias ) ? DefaultUpdateSourceAlias : options.UpsertSourceAlias;
     }
 
-    public static void AppendAlterTableHeader(SqlNodeInterpreter interpreter, SqlRecordSetInfo info)
+    internal static void AppendAlterTableHeader(SqlNodeInterpreter interpreter, SqlRecordSetInfo info)
     {
         interpreter.Context.Sql.Append( "ALTER" ).AppendSpace().Append( "TABLE" ).AppendSpace();
         interpreter.AppendDelimitedRecordSetInfo( info );
     }
 
-    public static void AppendAlterTableDropForeignKey(SqlNodeInterpreter interpreter, string name)
+    internal static void AppendAlterTableDropForeignKey(SqlNodeInterpreter interpreter, string name)
     {
         interpreter.Context.AppendIndent().Append( "DROP" ).AppendSpace().Append( "FOREIGN" ).AppendSpace().Append( "KEY" ).AppendSpace();
         interpreter.AppendDelimitedName( name );
         interpreter.Context.Sql.AppendComma();
     }
 
-    public static void AppendAlterTableDropPrimaryKey(SqlNodeInterpreter interpreter)
+    internal static void AppendAlterTableDropPrimaryKey(SqlNodeInterpreter interpreter)
     {
         interpreter.Context.AppendIndent();
         interpreter.Context.Sql.Append( "DROP" ).AppendSpace().Append( "PRIMARY" ).AppendSpace().Append( "KEY" ).AppendComma();
     }
 
-    public static void AppendAlterTableDropCheck(SqlNodeInterpreter interpreter, string name)
+    internal static void AppendAlterTableDropCheck(SqlNodeInterpreter interpreter, string name)
     {
         interpreter.Context.AppendIndent().Append( "DROP" ).AppendSpace().Append( "CHECK" ).AppendSpace();
         interpreter.AppendDelimitedName( name );
         interpreter.Context.Sql.AppendComma();
     }
 
-    public static void AppendAlterTableRenameIndex(SqlNodeInterpreter interpreter, string originalName, string name)
+    internal static void AppendAlterTableRenameIndex(SqlNodeInterpreter interpreter, string originalName, string name)
     {
         interpreter.Context.AppendIndent();
         interpreter.Context.Sql.Append( "RENAME" ).AppendSpace().Append( "INDEX" ).AppendSpace();
@@ -113,14 +150,14 @@ internal static class MySqlHelpers
         interpreter.Context.Sql.AppendComma();
     }
 
-    public static void AppendAlterTableDropColumn(SqlNodeInterpreter interpreter, string name)
+    internal static void AppendAlterTableDropColumn(SqlNodeInterpreter interpreter, string name)
     {
         interpreter.Context.AppendIndent().Append( "DROP" ).AppendSpace().Append( "COLUMN" ).AppendSpace();
         interpreter.AppendDelimitedName( name );
         interpreter.Context.Sql.AppendComma();
     }
 
-    public static void AppendAlterTableChangeColumn(SqlNodeInterpreter interpreter, string originalName, SqlColumnDefinitionNode column)
+    internal static void AppendAlterTableChangeColumn(SqlNodeInterpreter interpreter, string originalName, SqlColumnDefinitionNode column)
     {
         interpreter.Context.AppendIndent().Append( "CHANGE" ).AppendSpace().Append( "COLUMN" ).AppendSpace();
         interpreter.AppendDelimitedName( originalName );
@@ -129,35 +166,35 @@ internal static class MySqlHelpers
         interpreter.Context.Sql.AppendComma();
     }
 
-    public static void AppendAlterTableAddColumn(SqlNodeInterpreter interpreter, SqlColumnDefinitionNode column)
+    internal static void AppendAlterTableAddColumn(SqlNodeInterpreter interpreter, SqlColumnDefinitionNode column)
     {
         interpreter.Context.AppendIndent().Append( "ADD" ).AppendSpace().Append( "COLUMN" ).AppendSpace();
         interpreter.VisitColumnDefinition( column );
         interpreter.Context.Sql.AppendComma();
     }
 
-    public static void AppendAlterTableAddPrimaryKey(SqlNodeInterpreter interpreter, SqlPrimaryKeyDefinitionNode primaryKey)
+    internal static void AppendAlterTableAddPrimaryKey(SqlNodeInterpreter interpreter, SqlPrimaryKeyDefinitionNode primaryKey)
     {
         interpreter.Context.AppendIndent().Append( "ADD" ).AppendSpace();
         interpreter.VisitPrimaryKeyDefinition( primaryKey );
         interpreter.Context.Sql.AppendComma();
     }
 
-    public static void AppendAlterTableAddCheck(SqlNodeInterpreter interpreter, SqlCheckDefinitionNode check)
+    internal static void AppendAlterTableAddCheck(SqlNodeInterpreter interpreter, SqlCheckDefinitionNode check)
     {
         interpreter.Context.AppendIndent().Append( "ADD" ).AppendSpace();
         interpreter.VisitCheckDefinition( check );
         interpreter.Context.Sql.AppendComma();
     }
 
-    public static void AppendAlterTableAddForeignKey(SqlNodeInterpreter interpreter, SqlForeignKeyDefinitionNode foreignKey)
+    internal static void AppendAlterTableAddForeignKey(SqlNodeInterpreter interpreter, SqlForeignKeyDefinitionNode foreignKey)
     {
         interpreter.Context.AppendIndent().Append( "ADD" ).AppendSpace();
         interpreter.VisitForeignKeyDefinition( foreignKey );
         interpreter.Context.Sql.AppendComma();
     }
 
-    public static void AppendCreateSchema(
+    internal static void AppendCreateSchema(
         SqlNodeInterpreter interpreter,
         string name,
         string? characterSetName,
@@ -188,13 +225,13 @@ internal static class MySqlHelpers
         }
     }
 
-    public static void AppendDropSchema(SqlNodeInterpreter interpreter, string name)
+    internal static void AppendDropSchema(SqlNodeInterpreter interpreter, string name)
     {
         interpreter.Context.Sql.Append( "DROP" ).AppendSpace().Append( "SCHEMA" ).AppendSpace();
         interpreter.AppendDelimitedName( name );
     }
 
-    public static void AppendCreateGuidFunction(SqlNodeInterpreter interpreter, string schemaName)
+    internal static void AppendCreateGuidFunction(SqlNodeInterpreter interpreter, string schemaName)
     {
         interpreter.Context.Sql.Append( "CREATE" ).AppendSpace().Append( "FUNCTION" ).AppendSpace();
         interpreter.AppendDelimitedSchemaObjectName( schemaName, GuidFunctionName );
@@ -232,7 +269,7 @@ internal static class MySqlHelpers
         interpreter.Context.AppendIndent().Append( "END" );
     }
 
-    public static void AppendCreateDropIndexIfExistsProcedure(SqlNodeInterpreter interpreter, string schemaName)
+    internal static void AppendCreateDropIndexIfExistsProcedure(SqlNodeInterpreter interpreter, string schemaName)
     {
         const string pSchemaName = "schema_name";
         const string pTableName = "table_name";

@@ -8,6 +8,8 @@ using MySqlConnector;
 
 namespace LfrlAnvil.MySql;
 
+/// <inheritdoc />
+/// <remarks><see cref="MySqlDialect"/> implementation.</remarks>
 public sealed class MySqlColumnTypeDefinitionProvider : SqlColumnTypeDefinitionProvider
 {
     private readonly MySqlColumnTypeDefinitionDecimal _defaultDecimal;
@@ -28,12 +30,14 @@ public sealed class MySqlColumnTypeDefinitionProvider : SqlColumnTypeDefinitionP
         TryAddDefinition( _defaultObject );
     }
 
+    /// <inheritdoc />
     [Pure]
     public override IReadOnlyCollection<SqlColumnTypeDefinition> GetDataTypeDefinitions()
     {
         return _defaultDefinitionsByTypeName.Values;
     }
 
+    /// <inheritdoc cref="GetByDataType(ISqlDataType)" />
     [Pure]
     public SqlColumnTypeDefinition GetByDataType(MySqlDataType dataType)
     {
@@ -80,6 +84,7 @@ public sealed class MySqlColumnTypeDefinitionProvider : SqlColumnTypeDefinitionP
         return _defaultObject;
     }
 
+    /// <inheritdoc />
     [Pure]
     [EditorBrowsable( EditorBrowsableState.Never )]
     public override SqlColumnTypeDefinition GetByDataType(ISqlDataType type)
@@ -87,6 +92,7 @@ public sealed class MySqlColumnTypeDefinitionProvider : SqlColumnTypeDefinitionP
         return GetByDataType( SqlHelpers.CastOrThrow<MySqlDataType>( Dialect, type ) );
     }
 
+    /// <inheritdoc />
     [Pure]
     protected override SqlColumnTypeDefinition<TEnum> CreateEnumTypeDefinition<TEnum, TUnderlying>(
         SqlColumnTypeDefinition<TUnderlying> underlyingTypeDefinition)

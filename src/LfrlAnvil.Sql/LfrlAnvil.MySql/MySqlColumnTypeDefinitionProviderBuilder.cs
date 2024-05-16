@@ -6,6 +6,8 @@ using LfrlAnvil.Sql.Internal;
 
 namespace LfrlAnvil.MySql;
 
+/// <inheritdoc />
+/// <remarks><see cref="MySqlDialect"/> implementation.</remarks>
 public class MySqlColumnTypeDefinitionProviderBuilder : SqlColumnTypeDefinitionProviderBuilder
 {
     internal readonly MySqlColumnTypeDefinitionBool DefaultBool;
@@ -30,6 +32,9 @@ public class MySqlColumnTypeDefinitionProviderBuilder : SqlColumnTypeDefinitionP
     internal readonly MySqlColumnTypeDefinitionTimeOnly DefaultTime;
     internal readonly MySqlColumnTypeDefinitionDateTime DefaultDateTime;
 
+    /// <summary>
+    /// Creates a new <see cref="MySqlColumnTypeDefinitionProviderBuilder"/> instance.
+    /// </summary>
     public MySqlColumnTypeDefinitionProviderBuilder()
         : base( MySqlDialect.Instance )
     {
@@ -79,12 +84,14 @@ public class MySqlColumnTypeDefinitionProviderBuilder : SqlColumnTypeDefinitionP
         AddOrUpdate( new MySqlColumnTypeDefinitionGuid() );
     }
 
+    /// <inheritdoc cref="SqlColumnTypeDefinitionProviderBuilder.Register(SqlColumnTypeDefinition)" />
     public new MySqlColumnTypeDefinitionProviderBuilder Register(SqlColumnTypeDefinition definition)
     {
         base.Register( definition );
         return this;
     }
 
+    /// <inheritdoc />
     [Pure]
     public sealed override MySqlColumnTypeDefinitionProvider Build()
     {

@@ -14,7 +14,7 @@ public class SqliteColumnTypeDefinitionProviderBuilder : SqlColumnTypeDefinition
     internal readonly SqliteColumnTypeDefinitionByteArray DefaultBlob;
 
     /// <summary>
-    /// Creates a new empty <see cref="SqliteColumnTypeDefinitionProviderBuilder"/> instance.
+    /// Creates a new <see cref="SqliteColumnTypeDefinitionProviderBuilder"/> instance.
     /// </summary>
     public SqliteColumnTypeDefinitionProviderBuilder()
         : base( SqliteDialect.Instance )

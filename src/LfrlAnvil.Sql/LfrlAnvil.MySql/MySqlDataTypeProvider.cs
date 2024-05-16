@@ -3,102 +3,120 @@ using LfrlAnvil.Sql;
 
 namespace LfrlAnvil.MySql;
 
+/// <inheritdoc />
+/// <remarks><see cref="MySqlDialect"/> implementation.</remarks>
 public sealed class MySqlDataTypeProvider : ISqlDataTypeProvider
 {
     internal static readonly MySqlDataType Guid = MySqlDataType.CreateBinary( 16 );
 
     internal MySqlDataTypeProvider() { }
 
+    /// <inheritdoc cref="ISqlDataTypeProvider.GetBool()" />
     [Pure]
     public MySqlDataType GetBool()
     {
         return MySqlDataType.Bool;
     }
 
+    /// <inheritdoc cref="ISqlDataTypeProvider.GetInt8()" />
     [Pure]
     public MySqlDataType GetInt8()
     {
         return MySqlDataType.TinyInt;
     }
 
+    /// <inheritdoc cref="ISqlDataTypeProvider.GetInt16()" />
     [Pure]
     public MySqlDataType GetInt16()
     {
         return MySqlDataType.SmallInt;
     }
 
+    /// <inheritdoc cref="ISqlDataTypeProvider.GetInt32()" />
     [Pure]
     public MySqlDataType GetInt32()
     {
         return MySqlDataType.Int;
     }
 
+    /// <inheritdoc cref="ISqlDataTypeProvider.GetInt64()" />
     [Pure]
     public MySqlDataType GetInt64()
     {
         return MySqlDataType.BigInt;
     }
 
+    /// <inheritdoc cref="ISqlDataTypeProvider.GetUInt8()" />
     [Pure]
     public MySqlDataType GetUInt8()
     {
         return MySqlDataType.UnsignedTinyInt;
     }
 
+    /// <inheritdoc cref="ISqlDataTypeProvider.GetUInt16()" />
     [Pure]
     public MySqlDataType GetUInt16()
     {
         return MySqlDataType.UnsignedSmallInt;
     }
 
+    /// <inheritdoc cref="ISqlDataTypeProvider.GetUInt32()" />
     [Pure]
     public MySqlDataType GetUInt32()
     {
         return MySqlDataType.UnsignedInt;
     }
 
+    /// <inheritdoc cref="ISqlDataTypeProvider.GetUInt64()" />
     [Pure]
     public MySqlDataType GetUInt64()
     {
         return MySqlDataType.UnsignedBigInt;
     }
 
+    /// <inheritdoc cref="ISqlDataTypeProvider.GetFloat()" />
     [Pure]
     public MySqlDataType GetFloat()
     {
         return MySqlDataType.Float;
     }
 
+    /// <inheritdoc cref="ISqlDataTypeProvider.GetDouble()" />
     [Pure]
     public MySqlDataType GetDouble()
     {
         return MySqlDataType.Double;
     }
 
+    /// <inheritdoc cref="ISqlDataTypeProvider.GetDecimal()" />
     [Pure]
     public MySqlDataType GetDecimal()
     {
         return MySqlDataType.Decimal;
     }
 
+    /// <inheritdoc cref="ISqlDataTypeProvider.GetDecimal(int,int)" />
     [Pure]
     public MySqlDataType GetDecimal(int precision, int scale)
     {
         return MySqlDataType.CreateDecimal( precision, scale );
     }
 
+    /// <inheritdoc cref="ISqlDataTypeProvider.GetGuid()" />
     [Pure]
     public MySqlDataType GetGuid()
     {
         return Guid;
     }
 
+    /// <inheritdoc cref="ISqlDataTypeProvider.GetString()" />
     [Pure]
     public MySqlDataType GetString()
     {
         return MySqlDataType.VarChar;
     }
 
+    /// <inheritdoc cref="ISqlDataTypeProvider.GetString(int)" />
     [Pure]
     public MySqlDataType GetString(int maxLength)
     {
@@ -107,12 +125,14 @@ public sealed class MySqlDataTypeProvider : ISqlDataTypeProvider
             : MySqlDataType.Text;
     }
 
+    /// <inheritdoc cref="ISqlDataTypeProvider.GetFixedString()" />
     [Pure]
     public MySqlDataType GetFixedString()
     {
         return MySqlDataType.Char;
     }
 
+    /// <inheritdoc cref="ISqlDataTypeProvider.GetFixedString(int)" />
     [Pure]
     public MySqlDataType GetFixedString(int length)
     {
@@ -121,48 +141,56 @@ public sealed class MySqlDataTypeProvider : ISqlDataTypeProvider
             : GetString( length );
     }
 
+    /// <inheritdoc cref="ISqlDataTypeProvider.GetTimestamp()" />
     [Pure]
     public MySqlDataType GetTimestamp()
     {
         return MySqlDataType.BigInt;
     }
 
+    /// <inheritdoc cref="ISqlDataTypeProvider.GetUtcDateTime()" />
     [Pure]
     public MySqlDataType GetUtcDateTime()
     {
         return MySqlDataType.DateTime;
     }
 
+    /// <inheritdoc cref="ISqlDataTypeProvider.GetDateTime()" />
     [Pure]
     public MySqlDataType GetDateTime()
     {
         return MySqlDataType.DateTime;
     }
 
+    /// <inheritdoc cref="ISqlDataTypeProvider.GetTimeSpan()" />
     [Pure]
     public MySqlDataType GetTimeSpan()
     {
         return MySqlDataType.BigInt;
     }
 
+    /// <inheritdoc cref="ISqlDataTypeProvider.GetDate()" />
     [Pure]
     public MySqlDataType GetDate()
     {
         return MySqlDataType.Date;
     }
 
+    /// <inheritdoc cref="ISqlDataTypeProvider.GetTime()" />
     [Pure]
     public MySqlDataType GetTime()
     {
         return MySqlDataType.Time;
     }
 
+    /// <inheritdoc cref="ISqlDataTypeProvider.GetBinary()" />
     [Pure]
     public MySqlDataType GetBinary()
     {
         return MySqlDataType.VarBinary;
     }
 
+    /// <inheritdoc cref="ISqlDataTypeProvider.GetBinary(int)" />
     [Pure]
     public MySqlDataType GetBinary(int maxLength)
     {
@@ -171,12 +199,14 @@ public sealed class MySqlDataTypeProvider : ISqlDataTypeProvider
             : MySqlDataType.Blob;
     }
 
+    /// <inheritdoc cref="ISqlDataTypeProvider.GetFixedBinary()" />
     [Pure]
     public MySqlDataType GetFixedBinary()
     {
         return MySqlDataType.Binary;
     }
 
+    /// <inheritdoc cref="ISqlDataTypeProvider.GetFixedBinary(int)" />
     [Pure]
     public MySqlDataType GetFixedBinary(int length)
     {

@@ -16,12 +16,16 @@ using ExceptionResources = LfrlAnvil.Sql.Exceptions.ExceptionResources;
 
 namespace LfrlAnvil.MySql.Objects.Builders;
 
+/// <inheritdoc />
+/// <remarks><see cref="MySqlDialect"/> implementation.</remarks>
 public sealed class MySqlDatabaseChangeTracker : SqlDatabaseChangeTracker
 {
     internal MySqlDatabaseChangeTracker() { }
 
+    /// <inheritdoc cref="SqlDatabaseChangeTracker.Database" />
     public new MySqlDatabaseBuilder Database => ReinterpretCast.To<MySqlDatabaseBuilder>( base.Database );
 
+    /// <inheritdoc />
     protected override void AddNameChange(SqlObjectBuilder activeObject, SqlObjectBuilder target, string originalValue)
     {
         if ( target.Type != SqlObjectType.Schema )
@@ -36,6 +40,7 @@ public sealed class MySqlDatabaseChangeTracker : SqlDatabaseChangeTracker
         AddRenameSchemaActions( schema, originalValue );
     }
 
+    /// <inheritdoc />
     protected override void AddIsRemovedChange(SqlObjectBuilder activeObject, SqlObjectBuilder target)
     {
         if ( target.Type != SqlObjectType.Schema )
@@ -53,6 +58,7 @@ public sealed class MySqlDatabaseChangeTracker : SqlDatabaseChangeTracker
             AddCreateSchemaAction( schema.Name );
     }
 
+    /// <inheritdoc />
     protected override void CompletePendingCreateObjectChanges(SqlObjectBuilder obj)
     {
         switch ( obj.Type )
@@ -68,6 +74,7 @@ public sealed class MySqlDatabaseChangeTracker : SqlDatabaseChangeTracker
         Assume.Unreachable();
     }
 
+    /// <inheritdoc />
     protected override void CompletePendingRemoveObjectChanges(SqlObjectBuilder obj)
     {
         switch ( obj.Type )
@@ -83,6 +90,7 @@ public sealed class MySqlDatabaseChangeTracker : SqlDatabaseChangeTracker
         Assume.Unreachable();
     }
 
+    /// <inheritdoc />
     protected override void CompletePendingAlterObjectChanges(SqlObjectBuilder obj, SqlDatabaseChangeAggregator changeAggregator)
     {
         var aggregator = ReinterpretCast.To<MySqlDatabaseChangeAggregator>( changeAggregator );
@@ -99,6 +107,7 @@ public sealed class MySqlDatabaseChangeTracker : SqlDatabaseChangeTracker
         Assume.Unreachable();
     }
 
+    /// <inheritdoc />
     [Pure]
     protected override SqlDatabaseChangeAggregator CreateAlterObjectChangeAggregator()
     {

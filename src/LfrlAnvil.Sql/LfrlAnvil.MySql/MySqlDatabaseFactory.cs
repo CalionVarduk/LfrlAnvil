@@ -18,16 +18,30 @@ using MySqlConnector;
 
 namespace LfrlAnvil.MySql;
 
+/// <summary>
+/// Represents a factory of SQL databases.
+/// </summary>
+/// <remarks><see cref="MySqlDialect"/> implementation.</remarks>
 public sealed class MySqlDatabaseFactory : SqlDatabaseFactory<MySqlDatabase>
 {
+    /// <summary>
+    /// Creates a new <see cref="MySqlDatabaseFactory"/> instance.
+    /// </summary>
+    /// <param name="options">
+    /// Optional <see cref="MySqlDatabaseFactoryOptions"/>. Equal to <see cref="MySqlDatabaseFactoryOptions.Default"/> by default.
+    /// </param>
     public MySqlDatabaseFactory(MySqlDatabaseFactoryOptions? options = null)
         : base( MySqlDialect.Instance )
     {
         Options = options ?? MySqlDatabaseFactoryOptions.Default;
     }
 
+    /// <summary>
+    /// <see cref="MySqlDatabaseFactoryOptions"/> instance associated with this factory that contains DB creation options.
+    /// </summary>
     public MySqlDatabaseFactoryOptions Options { get; }
 
+    /// <inheritdoc />
     [Pure]
     protected override MySqlConnectionStringBuilder CreateConnectionStringBuilder(string connectionString)
     {
@@ -40,6 +54,7 @@ public sealed class MySqlDatabaseFactory : SqlDatabaseFactory<MySqlDatabase>
         };
     }
 
+    /// <inheritdoc />
     [Pure]
     protected override MySqlConnection CreateConnection(DbConnectionStringBuilder connectionString)
     {
@@ -47,6 +62,7 @@ public sealed class MySqlDatabaseFactory : SqlDatabaseFactory<MySqlDatabase>
         return new MySqlConnection( mySqlConnectionString.ToString() );
     }
 
+    /// <inheritdoc />
     [Pure]
     protected override MySqlDatabaseBuilder CreateDatabaseBuilder(string defaultSchemaName, DbConnection connection)
     {
@@ -72,6 +88,7 @@ public sealed class MySqlDatabaseFactory : SqlDatabaseFactory<MySqlDatabase>
         return result;
     }
 
+    /// <inheritdoc />
     protected override MySqlDatabase CreateDatabase(
         SqlDatabaseBuilder builder,
         DbConnectionStringBuilder connectionString,
@@ -158,6 +175,7 @@ public sealed class MySqlDatabaseFactory : SqlDatabaseFactory<MySqlDatabase>
         return true;
     }
 
+    /// <inheritdoc />
     protected override bool GetChangeTrackerAttachmentForVersionHistoryTableInit(
         SqlDatabaseChangeTracker changeTracker,
         SqlSchemaObjectName versionHistoryTableName,
@@ -194,12 +212,14 @@ public sealed class MySqlDatabaseFactory : SqlDatabaseFactory<MySqlDatabase>
         return ! exists;
     }
 
+    /// <inheritdoc />
     [Pure]
     protected override SqlSchemaObjectName GetDefaultVersionHistoryName()
     {
         return MySqlHelpers.DefaultVersionHistoryName;
     }
 
+    /// <inheritdoc />
     protected override SqlDatabaseCommitVersionsContext CreateCommitVersionsContext(
         SqlParameterBinderFactory parameterBinders,
         SqlCreateDatabaseOptions options)
@@ -207,6 +227,7 @@ public sealed class MySqlDatabaseFactory : SqlDatabaseFactory<MySqlDatabase>
         return new MySqlDatabaseCommitVersionsContext();
     }
 
+    /// <inheritdoc />
     protected override void VersionHistoryTableBuilderInit(SqlTableBuilder builder)
     {
         var intType = builder.Database.TypeDefinitions.GetByType<int>();
@@ -220,6 +241,7 @@ public sealed class MySqlDatabaseFactory : SqlDatabaseFactory<MySqlDatabase>
         columns.Create( SqlHelpers.VersionHistoryCommitDurationInTicksName ).SetType<long>();
     }
 
+    /// <inheritdoc />
     protected override Func<IDataReader, SqlQueryReaderOptions, SqlQueryResult<SqlDatabaseVersionRecord>>
         GetVersionHistoryRecordsQueryDelegate(SqlQueryReaderFactory queryReaders)
     {
