@@ -16,10 +16,19 @@ using LfrlAnvil.Sqlite.Internal;
 
 namespace LfrlAnvil.Sqlite;
 
+/// <inheritdoc />
+/// <remarks><see cref="SqliteDialect"/> implementation.</remarks>
 public class SqliteNodeInterpreter : SqlNodeInterpreter
 {
     private SqlRecordSetNode? _upsertUpdateSourceReplacement;
 
+    /// <summary>
+    /// Creates a new <see cref="SqliteNodeInterpreter"/> instance.
+    /// </summary>
+    /// <param name="options">
+    /// <see cref="SqliteNodeInterpreterOptions"/> instance associated with this interpreter that defines its behavior.
+    /// </param>
+    /// <param name="context">Underlying <see cref="SqlNodeInterpreterContext"/> instance.</param>
     public SqliteNodeInterpreter(SqliteNodeInterpreterOptions options, SqlNodeInterpreterContext context)
         : base( context, beginNameDelimiter: '"', endNameDelimiter: '"' )
     {
@@ -28,15 +37,24 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
         TypeDefinitions = Options.TypeDefinitions ?? new SqliteColumnTypeDefinitionProviderBuilder().Build();
     }
 
+    /// <summary>
+    /// <see cref="SqliteNodeInterpreterOptions"/> instance associated with this interpreter that defines its behavior.
+    /// </summary>
     public SqliteNodeInterpreterOptions Options { get; }
+
+    /// <summary>
+    /// <see cref="SqliteColumnTypeDefinitionProvider"/> instance associated with this interpreter.
+    /// </summary>
     public SqliteColumnTypeDefinitionProvider TypeDefinitions { get; }
 
+    /// <inheritdoc />
     public override void VisitLiteral(SqlLiteralNode node)
     {
         var sql = node.GetSql( TypeDefinitions );
         Context.Sql.Append( sql );
     }
 
+    /// <inheritdoc />
     public override void VisitParameter(SqlParameterNode node)
     {
         if ( node.Index is not null && Options.ArePositionalParametersEnabled )
@@ -47,6 +65,7 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
         AddContextParameter( node );
     }
 
+    /// <inheritdoc />
     public override void VisitModulo(SqlModuloExpressionNode node)
     {
         Context.Sql.Append( "MOD" ).Append( '(' );
@@ -56,6 +75,7 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
         Context.Sql.Append( ')' );
     }
 
+    /// <inheritdoc />
     public override void VisitBitwiseXor(SqlBitwiseXorExpressionNode node)
     {
         Context.Sql.Append( '(' );
@@ -69,41 +89,49 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
         Context.Sql.Append( ')' );
     }
 
+    /// <inheritdoc />
     public override void VisitCurrentDateFunction(SqlCurrentDateFunctionExpressionNode node)
     {
         VisitSimpleFunction( "GET_CURRENT_DATE", node );
     }
 
+    /// <inheritdoc />
     public override void VisitCurrentTimeFunction(SqlCurrentTimeFunctionExpressionNode node)
     {
         VisitSimpleFunction( "GET_CURRENT_TIME", node );
     }
 
+    /// <inheritdoc />
     public override void VisitCurrentDateTimeFunction(SqlCurrentDateTimeFunctionExpressionNode node)
     {
         VisitSimpleFunction( "GET_CURRENT_DATETIME", node );
     }
 
+    /// <inheritdoc />
     public override void VisitCurrentUtcDateTimeFunction(SqlCurrentUtcDateTimeFunctionExpressionNode node)
     {
         VisitSimpleFunction( "GET_CURRENT_UTC_DATETIME", node );
     }
 
+    /// <inheritdoc />
     public override void VisitCurrentTimestampFunction(SqlCurrentTimestampFunctionExpressionNode node)
     {
         VisitSimpleFunction( "GET_CURRENT_TIMESTAMP", node );
     }
 
+    /// <inheritdoc />
     public override void VisitExtractDateFunction(SqlExtractDateFunctionExpressionNode node)
     {
         VisitSimpleFunction( "DATE", node );
     }
 
+    /// <inheritdoc />
     public override void VisitExtractTimeOfDayFunction(SqlExtractTimeOfDayFunctionExpressionNode node)
     {
         VisitSimpleFunction( "TIME_OF_DAY", node );
     }
 
+    /// <inheritdoc />
     public override void VisitExtractDayFunction(SqlExtractDayFunctionExpressionNode node)
     {
         var unit = node.Unit switch
@@ -118,6 +146,7 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
         Context.Sql.Append( ')' );
     }
 
+    /// <inheritdoc />
     public override void VisitExtractTemporalUnitFunction(SqlExtractTemporalUnitFunctionExpressionNode node)
     {
         var unit = SqliteHelpers.GetDbTemporalUnit( node.Unit );
@@ -126,6 +155,7 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
         Context.Sql.Append( ')' );
     }
 
+    /// <inheritdoc />
     public override void VisitTemporalAddFunction(SqlTemporalAddFunctionExpressionNode node)
     {
         var unit = SqliteHelpers.GetDbTemporalUnit( node.Unit );
@@ -136,6 +166,7 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
         Context.Sql.Append( ')' );
     }
 
+    /// <inheritdoc />
     public override void VisitTemporalDiffFunction(SqlTemporalDiffFunctionExpressionNode node)
     {
         var unit = SqliteHelpers.GetDbTemporalUnit( node.Unit );
@@ -146,111 +177,133 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
         Context.Sql.Append( ')' );
     }
 
+    /// <inheritdoc />
     public override void VisitNewGuidFunction(SqlNewGuidFunctionExpressionNode node)
     {
         VisitSimpleFunction( "NEW_GUID", node );
     }
 
+    /// <inheritdoc />
     public override void VisitLengthFunction(SqlLengthFunctionExpressionNode node)
     {
         VisitSimpleFunction( "LENGTH", node );
     }
 
+    /// <inheritdoc />
     public override void VisitByteLengthFunction(SqlByteLengthFunctionExpressionNode node)
     {
         VisitSimpleFunction( "OCTET_LENGTH", node );
     }
 
+    /// <inheritdoc />
     public override void VisitToLowerFunction(SqlToLowerFunctionExpressionNode node)
     {
         VisitSimpleFunction( "TO_LOWER", node );
     }
 
+    /// <inheritdoc />
     public override void VisitToUpperFunction(SqlToUpperFunctionExpressionNode node)
     {
         VisitSimpleFunction( "TO_UPPER", node );
     }
 
+    /// <inheritdoc />
     public override void VisitTrimStartFunction(SqlTrimStartFunctionExpressionNode node)
     {
         VisitSimpleFunction( "LTRIM", node );
     }
 
+    /// <inheritdoc />
     public override void VisitTrimEndFunction(SqlTrimEndFunctionExpressionNode node)
     {
         VisitSimpleFunction( "RTRIM", node );
     }
 
+    /// <inheritdoc />
     public override void VisitTrimFunction(SqlTrimFunctionExpressionNode node)
     {
         VisitSimpleFunction( "TRIM", node );
     }
 
+    /// <inheritdoc />
     public override void VisitSubstringFunction(SqlSubstringFunctionExpressionNode node)
     {
         VisitSimpleFunction( "SUBSTR", node );
     }
 
+    /// <inheritdoc />
     public override void VisitReplaceFunction(SqlReplaceFunctionExpressionNode node)
     {
         VisitSimpleFunction( "REPLACE", node );
     }
 
+    /// <inheritdoc />
     public override void VisitReverseFunction(SqlReverseFunctionExpressionNode node)
     {
         VisitSimpleFunction( "REVERSE", node );
     }
 
+    /// <inheritdoc />
     public override void VisitIndexOfFunction(SqlIndexOfFunctionExpressionNode node)
     {
         VisitSimpleFunction( "INSTR", node );
     }
 
+    /// <inheritdoc />
     public override void VisitLastIndexOfFunction(SqlLastIndexOfFunctionExpressionNode node)
     {
         VisitSimpleFunction( "INSTR_LAST", node );
     }
 
+    /// <inheritdoc />
     public override void VisitSignFunction(SqlSignFunctionExpressionNode node)
     {
         VisitSimpleFunction( "SIGN", node );
     }
 
+    /// <inheritdoc />
     public override void VisitAbsFunction(SqlAbsFunctionExpressionNode node)
     {
         VisitSimpleFunction( "ABS", node );
     }
 
+    /// <inheritdoc />
     public override void VisitCeilingFunction(SqlCeilingFunctionExpressionNode node)
     {
         VisitSimpleFunction( "CEIL", node );
     }
 
+    /// <inheritdoc />
     public override void VisitFloorFunction(SqlFloorFunctionExpressionNode node)
     {
         VisitSimpleFunction( "FLOOR", node );
     }
 
+    /// <inheritdoc />
     public override void VisitTruncateFunction(SqlTruncateFunctionExpressionNode node)
     {
         VisitSimpleFunction( node.Arguments.Count == 1 ? "TRUNC" : "TRUNC2", node );
     }
 
+    /// <inheritdoc />
     public override void VisitRoundFunction(SqlRoundFunctionExpressionNode node)
     {
         VisitSimpleFunction( "ROUND", node );
     }
 
+    /// <inheritdoc />
     public override void VisitPowerFunction(SqlPowerFunctionExpressionNode node)
     {
         VisitSimpleFunction( "POW", node );
     }
 
+    /// <inheritdoc />
     public override void VisitSquareRootFunction(SqlSquareRootFunctionExpressionNode node)
     {
         VisitSimpleFunction( "SQRT", node );
     }
 
+    /// <inheritdoc />
     public override void VisitMinFunction(SqlMinFunctionExpressionNode node)
     {
         if ( node.Arguments.Count == 1 )
@@ -259,6 +312,7 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
             VisitSimpleFunction( "MIN", node );
     }
 
+    /// <inheritdoc />
     public override void VisitMaxFunction(SqlMaxFunctionExpressionNode node)
     {
         if ( node.Arguments.Count == 1 )
@@ -267,6 +321,7 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
             VisitSimpleFunction( "MAX", node );
     }
 
+    /// <inheritdoc />
     public override void VisitNamedAggregateFunction(SqlNamedAggregateFunctionExpressionNode node)
     {
         var traits = ExtractAggregateFunctionTraits( node.Traits );
@@ -274,98 +329,117 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
         VisitAggregateFunctionArgumentsAndTraits( node.Arguments, traits );
     }
 
+    /// <inheritdoc />
     public override void VisitMinAggregateFunction(SqlMinAggregateFunctionExpressionNode node)
     {
         VisitSimpleAggregateFunction( "MIN", node );
     }
 
+    /// <inheritdoc />
     public override void VisitMaxAggregateFunction(SqlMaxAggregateFunctionExpressionNode node)
     {
         VisitSimpleAggregateFunction( "MAX", node );
     }
 
+    /// <inheritdoc />
     public override void VisitAverageAggregateFunction(SqlAverageAggregateFunctionExpressionNode node)
     {
         VisitSimpleAggregateFunction( "AVG", node );
     }
 
+    /// <inheritdoc />
     public override void VisitSumAggregateFunction(SqlSumAggregateFunctionExpressionNode node)
     {
         VisitSimpleAggregateFunction( "SUM", node );
     }
 
+    /// <inheritdoc />
     public override void VisitCountAggregateFunction(SqlCountAggregateFunctionExpressionNode node)
     {
         VisitSimpleAggregateFunction( "COUNT", node );
     }
 
+    /// <inheritdoc />
     public override void VisitStringConcatAggregateFunction(SqlStringConcatAggregateFunctionExpressionNode node)
     {
         VisitSimpleAggregateFunction( "GROUP_CONCAT", node );
     }
 
+    /// <inheritdoc />
     public override void VisitRowNumberWindowFunction(SqlRowNumberWindowFunctionExpressionNode node)
     {
         VisitSimpleAggregateFunction( "ROW_NUMBER", node );
     }
 
+    /// <inheritdoc />
     public override void VisitRankWindowFunction(SqlRankWindowFunctionExpressionNode node)
     {
         VisitSimpleAggregateFunction( "RANK", node );
     }
 
+    /// <inheritdoc />
     public override void VisitDenseRankWindowFunction(SqlDenseRankWindowFunctionExpressionNode node)
     {
         VisitSimpleAggregateFunction( "DENSE_RANK", node );
     }
 
+    /// <inheritdoc />
     public override void VisitCumulativeDistributionWindowFunction(SqlCumulativeDistributionWindowFunctionExpressionNode node)
     {
         VisitSimpleAggregateFunction( "CUME_DIST", node );
     }
 
+    /// <inheritdoc />
     public override void VisitNTileWindowFunction(SqlNTileWindowFunctionExpressionNode node)
     {
         VisitSimpleAggregateFunction( "NTILE", node );
     }
 
+    /// <inheritdoc />
     public override void VisitLagWindowFunction(SqlLagWindowFunctionExpressionNode node)
     {
         VisitSimpleAggregateFunction( "LAG", node );
     }
 
+    /// <inheritdoc />
     public override void VisitLeadWindowFunction(SqlLeadWindowFunctionExpressionNode node)
     {
         VisitSimpleAggregateFunction( "LEAD", node );
     }
 
+    /// <inheritdoc />
     public override void VisitFirstValueWindowFunction(SqlFirstValueWindowFunctionExpressionNode node)
     {
         VisitSimpleAggregateFunction( "FIRST_VALUE", node );
     }
 
+    /// <inheritdoc />
     public override void VisitLastValueWindowFunction(SqlLastValueWindowFunctionExpressionNode node)
     {
         VisitSimpleAggregateFunction( "LAST_VALUE", node );
     }
 
+    /// <inheritdoc />
     public override void VisitNthValueWindowFunction(SqlNthValueWindowFunctionExpressionNode node)
     {
         VisitSimpleAggregateFunction( "NTH_VALUE", node );
     }
 
+    /// <inheritdoc />
     public override void VisitLimitTrait(SqlLimitTraitNode node)
     {
         Context.Sql.Append( "LIMIT" ).AppendSpace();
         VisitChild( node.Value );
     }
 
+    /// <inheritdoc />
     public override void VisitOffsetTrait(SqlOffsetTraitNode node)
     {
         Context.Sql.Append( "OFFSET" ).AppendSpace();
         VisitChild( node.Value );
     }
 
+    /// <inheritdoc />
     public override void VisitTypeCast(SqlTypeCastExpressionNode node)
     {
         Context.Sql.Append( "CAST" ).Append( '(' );
@@ -376,6 +450,7 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
         Context.Sql.Append( typeDefinition.DataType.Name ).Append( ')' );
     }
 
+    /// <inheritdoc />
     public sealed override void VisitInsertInto(SqlInsertIntoNode node)
     {
         switch ( node.Source.NodeType )
@@ -398,6 +473,7 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
         }
     }
 
+    /// <inheritdoc />
     public sealed override void VisitUpdate(SqlUpdateNode node)
     {
         var traits = ExtractDataSourceTraits( node.DataSource.Traits );
@@ -435,6 +511,7 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
         VisitUpdateWithComplexDataSourceAndComplexAssignments( node, targetInfo, updateVisitor.GetIndexesOfComplexAssignments() );
     }
 
+    /// <inheritdoc />
     public sealed override void VisitUpsert(SqlUpsertNode node)
     {
         if ( (Options.UpsertOptions & SqliteUpsertOptions.Supported) == SqliteUpsertOptions.Disabled )
@@ -465,6 +542,7 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
         }
     }
 
+    /// <inheritdoc />
     public sealed override void VisitDeleteFrom(SqlDeleteFromNode node)
     {
         var traits = ExtractDataSourceTraits( node.DataSource.Traits );
@@ -479,6 +557,7 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
         VisitDeleteFromWithComplexDataSource( node, targetInfo, in traits );
     }
 
+    /// <inheritdoc />
     public override void VisitTruncate(SqlTruncateNode node)
     {
         Context.Sql.Append( "DELETE" ).AppendSpace().Append( "FROM" ).AppendSpace();
@@ -502,6 +581,7 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
         Context.Sql.Append( '\'' );
     }
 
+    /// <inheritdoc />
     public override void VisitColumnDefinition(SqlColumnDefinitionNode node)
     {
         var typeDefinition = node.TypeDefinition ?? TypeDefinitions.GetByType( node.Type.UnderlyingType );
@@ -526,6 +606,7 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
         }
     }
 
+    /// <inheritdoc />
     public override void VisitPrimaryKeyDefinition(SqlPrimaryKeyDefinitionNode node)
     {
         Context.Sql.Append( "CONSTRAINT" ).AppendSpace();
@@ -546,6 +627,7 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
         Context.Sql.Append( ')' );
     }
 
+    /// <inheritdoc />
     public override void VisitForeignKeyDefinition(SqlForeignKeyDefinitionNode node)
     {
         Context.Sql.Append( "CONSTRAINT" ).AppendSpace();
@@ -583,6 +665,7 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
         Context.Sql.Append( "ON" ).AppendSpace().Append( "UPDATE" ).AppendSpace().Append( node.OnUpdateBehavior.Name );
     }
 
+    /// <inheritdoc />
     public override void VisitCheckDefinition(SqlCheckDefinitionNode node)
     {
         Context.Sql.Append( "CONSTRAINT" ).AppendSpace();
@@ -591,6 +674,7 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
         VisitChildWrappedInParentheses( node.Condition );
     }
 
+    /// <inheritdoc />
     public override void VisitCreateTable(SqlCreateTableNode node)
     {
         using ( TempIgnoreAllRecordSets() )
@@ -609,6 +693,7 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
         }
     }
 
+    /// <inheritdoc />
     public override void VisitCreateView(SqlCreateViewNode node)
     {
         if ( node.ReplaceIfExists )
@@ -625,6 +710,7 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
         this.Visit( node.Source );
     }
 
+    /// <inheritdoc />
     public override void VisitCreateIndex(SqlCreateIndexNode node)
     {
         using ( TempIgnoreAllRecordSets() )
@@ -679,6 +765,7 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
         }
     }
 
+    /// <inheritdoc />
     public override void VisitRenameTable(SqlRenameTableNode node)
     {
         Context.Sql.Append( "ALTER" ).AppendSpace().Append( "TABLE" ).AppendSpace();
@@ -687,6 +774,7 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
         AppendDelimitedSchemaObjectName( node.NewName );
     }
 
+    /// <inheritdoc />
     public override void VisitRenameColumn(SqlRenameColumnNode node)
     {
         Context.Sql.Append( "ALTER" ).AppendSpace().Append( "TABLE" ).AppendSpace();
@@ -697,6 +785,7 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
         AppendDelimitedName( node.NewName );
     }
 
+    /// <inheritdoc />
     public override void VisitAddColumn(SqlAddColumnNode node)
     {
         Context.Sql.Append( "ALTER" ).AppendSpace().Append( "TABLE" ).AppendSpace();
@@ -705,6 +794,7 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
         VisitColumnDefinition( node.Definition );
     }
 
+    /// <inheritdoc />
     public override void VisitDropColumn(SqlDropColumnNode node)
     {
         Context.Sql.Append( "ALTER" ).AppendSpace().Append( "TABLE" ).AppendSpace();
@@ -713,6 +803,7 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
         AppendDelimitedName( node.Name );
     }
 
+    /// <inheritdoc />
     public override void VisitDropTable(SqlDropTableNode node)
     {
         Context.Sql.Append( "DROP" ).AppendSpace().Append( "TABLE" ).AppendSpace();
@@ -722,6 +813,7 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
         AppendDelimitedRecordSetInfo( node.Table );
     }
 
+    /// <inheritdoc />
     public override void VisitDropView(SqlDropViewNode node)
     {
         Context.Sql.Append( "DROP" ).AppendSpace().Append( "VIEW" ).AppendSpace();
@@ -731,6 +823,7 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
         AppendDelimitedRecordSetInfo( node.View );
     }
 
+    /// <inheritdoc />
     public override void VisitDropIndex(SqlDropIndexNode node)
     {
         Context.Sql.Append( "DROP" ).AppendSpace().Append( "INDEX" ).AppendSpace();
@@ -743,6 +836,7 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
             AppendDelimitedSchemaObjectName( node.Name );
     }
 
+    /// <inheritdoc />
     public override void VisitBeginTransaction(SqlBeginTransactionNode node)
     {
         if ( node.IsolationLevel == IsolationLevel.ReadUncommitted )
@@ -757,12 +851,14 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
         }
     }
 
+    /// <inheritdoc />
     public sealed override void AppendDelimitedTemporaryObjectName(string name)
     {
         Context.Sql.Append( "temp" ).AppendDot();
         AppendDelimitedName( name );
     }
 
+    /// <inheritdoc />
     public sealed override void AppendDelimitedSchemaObjectName(string schemaName, string objName)
     {
         Context.Sql.Append( BeginNameDelimiter );
@@ -770,6 +866,7 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
         Context.Sql.Append( EndNameDelimiter );
     }
 
+    /// <inheritdoc />
     protected override void AddContextParameter(SqlParameterNode node)
     {
         if ( Options.ArePositionalParametersEnabled )
@@ -778,6 +875,11 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
             Context.AddParameter( node.Name, node.Type, index: null );
     }
 
+    /// <summary>
+    /// Appends schema object's name to <see cref="SqlNodeInterpreter.Context"/>.
+    /// </summary>
+    /// <param name="schemaName">Schema name to append.</param>
+    /// <param name="objName">Object name to append.</param>
     protected void AppendSchemaObjectName(string schemaName, string objName)
     {
         if ( schemaName.Length > 0 )
@@ -786,6 +888,7 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
         Context.Sql.Append( objName );
     }
 
+    /// <inheritdoc />
     [Pure]
     protected override bool DoesChildNodeRequireParentheses(SqlNodeBase node)
     {
@@ -825,6 +928,11 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
         return true;
     }
 
+    /// <summary>
+    /// Visits a simple SQL aggregate function node.
+    /// </summary>
+    /// <param name="functionName">Name of the aggregate function.</param>
+    /// <param name="node">SQL aggregate function expression node.</param>
     protected void VisitSimpleAggregateFunction(string functionName, SqlAggregateFunctionExpressionNode node)
     {
         var traits = ExtractAggregateFunctionTraits( node.Traits );
@@ -832,6 +940,11 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
         VisitAggregateFunctionArgumentsAndTraits( node.Arguments, traits );
     }
 
+    /// <summary>
+    /// Sequentially visits all arguments and traits of a simple SQL aggregate function node.
+    /// </summary>
+    /// <param name="arguments">Collection of arguments to visit.</param>
+    /// <param name="traits">Collection of traits to visit.</param>
     protected void VisitAggregateFunctionArgumentsAndTraits(ReadOnlyArray<SqlExpressionNode> arguments, SqlAggregateFunctionTraits traits)
     {
         Context.Sql.Append( '(' );
@@ -890,6 +1003,11 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
         }
     }
 
+    /// <summary>
+    /// Visits optional <see cref="SqlExpressionNode"/> values representing <paramref name="limit"/> and <paramref name="offset"/>.
+    /// </summary>
+    /// <param name="limit">Limit value to visit.</param>
+    /// <param name="offset">Offset value to visit.</param>
     protected void VisitOptionalLimitAndOffsetExpressions(SqlExpressionNode? limit, SqlExpressionNode? offset)
     {
         if ( limit is not null )
@@ -914,6 +1032,11 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
         VisitChild( offset );
     }
 
+    /// <summary>
+    /// Visits an <see cref="SqlInsertIntoNode"/> with source of <see cref="SqlDataSourceQueryExpressionNode"/> type.
+    /// </summary>
+    /// <param name="node">Insert into node to visit.</param>
+    /// <param name="query">Source query.</param>
     protected virtual void VisitInsertIntoFromDataSourceQuery(SqlInsertIntoNode node, SqlDataSourceQueryExpressionNode query)
     {
         Assume.Equals( node.Source, query );
@@ -926,6 +1049,11 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
         VisitDataSourceAfterTraits( in traits );
     }
 
+    /// <summary>
+    /// Visits an <see cref="SqlInsertIntoNode"/> with source of <see cref="SqlCompoundQueryExpressionNode"/> type.
+    /// </summary>
+    /// <param name="node">Insert into node to visit.</param>
+    /// <param name="query">Source query.</param>
     protected virtual void VisitInsertIntoFromCompoundQuery(SqlInsertIntoNode node, SqlCompoundQueryExpressionNode query)
     {
         Assume.Equals( node.Source, query );
@@ -937,6 +1065,10 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
         VisitQueryAfterTraits( in traits );
     }
 
+    /// <summary>
+    /// Visits an <see cref="SqlInsertIntoNode"/> with source of non-query type.
+    /// </summary>
+    /// <param name="node">Insert into node to visit.</param>
     protected virtual void VisitInsertIntoFromGenericSource(SqlInsertIntoNode node)
     {
         VisitInsertIntoFields( node );
@@ -944,6 +1076,12 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
         this.Visit( node.Source );
     }
 
+    /// <summary>
+    /// Visits an <see cref="SqlUpdateNode"/> with a simple data source.
+    /// </summary>
+    /// <param name="node">Update node to visit.</param>
+    /// <param name="traits">Collection of traits.</param>
+    /// <remarks>See <see cref="IsValidSingleTableUpdateOrDeleteStatement"/> for more information.</remarks>
     protected virtual void VisitUpdateWithSimpleDataSource(SqlUpdateNode node, in SqlDataSourceTraits traits)
     {
         VisitDataSourceBeforeTraits( in traits );
@@ -953,6 +1091,12 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
         VisitDataSourceAfterTraits( in traits );
     }
 
+    /// <summary>
+    /// Visits an <see cref="SqlUpdateNode"/> using an <b>UPDATE FROM</b> statement.
+    /// </summary>
+    /// <param name="node">Update node to visit.</param>
+    /// <param name="traits">Collection of traits.</param>
+    /// <remarks>See <see cref="IsValidUpdateFromStatement"/> for more information.</remarks>
     protected virtual void VisitUpdateFrom(SqlUpdateNode node, in SqlDataSourceTraits traits)
     {
         Assume.ContainsExactly( node.DataSource.Joins, 1 );
@@ -978,6 +1122,13 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
         }
     }
 
+    /// <summary>
+    /// Visits an <see cref="SqlUpdateNode"/> using an <b>UPDATE FROM</b> statement simplified
+    /// from a complex data source with complex value assignments.
+    /// </summary>
+    /// <param name="node">Update node to visit.</param>
+    /// <param name="targetInfo"><see cref="SqlNodeInterpreter.ChangeTargetInfo"/> instance associated with the operation.</param>
+    /// <param name="traits">Collection of traits.</param>
     protected virtual void VisitSimplifiedUpdateFrom(SqlUpdateNode node, ChangeTargetInfo targetInfo, in SqlDataSourceTraits traits)
     {
         Assume.ContainsExactly( node.DataSource.Joins, 1 );
@@ -1000,6 +1151,12 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
         VisitDataSourceAfterTraits( in traitsWithJoinFilter );
     }
 
+    /// <summary>
+    /// Visits an <see cref="SqlUpdateNode"/> with a complex data source with simple value assignments.
+    /// </summary>
+    /// <param name="node">Update node to visit.</param>
+    /// <param name="targetInfo"><see cref="SqlNodeInterpreter.ChangeTargetInfo"/> instance associated with the operation.</param>
+    /// <param name="traits">Collection of traits.</param>
     protected virtual void VisitUpdateWithComplexDataSourceAndSimpleAssignments(
         SqlUpdateNode node,
         ChangeTargetInfo targetInfo,
@@ -1017,6 +1174,12 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
         VisitFilterTrait( filter );
     }
 
+    /// <summary>
+    /// Visits an <see cref="SqlUpdateNode"/> simplified from a complex data source with complex value assignments.
+    /// </summary>
+    /// <param name="node">Update node to visit.</param>
+    /// <param name="targetInfo"><see cref="SqlNodeInterpreter.ChangeTargetInfo"/> instance associated with the operation.</param>
+    /// <param name="indexesOfComplexAssignments">Collection of 0-based indexes of all complex value assignments.</param>
     protected virtual void VisitUpdateWithComplexDataSourceAndComplexAssignments(
         SqlUpdateNode node,
         ChangeTargetInfo targetInfo,
@@ -1036,6 +1199,12 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
         VisitDataSourceAfterTraits( in traits );
     }
 
+    /// <summary>
+    /// Visits an <see cref="SqlUpsertNode"/> with source of <see cref="SqlDataSourceQueryExpressionNode"/> type.
+    /// </summary>
+    /// <param name="node">Upsert node to visit.</param>
+    /// <param name="conflictTarget">Collection of data fields from the table that define the insertion conflict target.</param>
+    /// <param name="query">Source query.</param>
     protected virtual void VisitUpsertFromDataSourceQuery(
         SqlUpsertNode node,
         ReadOnlyArray<SqlDataFieldNode> conflictTarget,
@@ -1055,6 +1224,12 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
         AppendUpsertOnConflict( node, conflictTarget );
     }
 
+    /// <summary>
+    /// Visits an <see cref="SqlUpsertNode"/> with source of <see cref="SqlCompoundQueryExpressionNode"/> type.
+    /// </summary>
+    /// <param name="node">Upsert node to visit.</param>
+    /// <param name="conflictTarget">Collection of data fields from the table that define the insertion conflict target.</param>
+    /// <param name="query">Source query.</param>
     protected virtual void VisitUpsertFromCompoundQuery(
         SqlUpsertNode node,
         ReadOnlyArray<SqlDataFieldNode> conflictTarget,
@@ -1080,6 +1255,11 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
         AppendUpsertOnConflict( node, conflictTarget );
     }
 
+    /// <summary>
+    /// Visits an <see cref="SqlUpsertNode"/> with source of non-query type.
+    /// </summary>
+    /// <param name="node">Upsert node to visit.</param>
+    /// <param name="conflictTarget">Collection of data fields from the table that define the insertion conflict target.</param>
     protected virtual void VisitUpsertFromGenericSource(SqlUpsertNode node, ReadOnlyArray<SqlDataFieldNode> conflictTarget)
     {
         VisitInsertIntoFields( node.RecordSet, node.InsertDataFields );
@@ -1088,6 +1268,11 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
         AppendUpsertOnConflict( node, conflictTarget );
     }
 
+    /// <summary>
+    /// Appends an SQL upsert's conflict target to <see cref="SqlNodeInterpreter.Context"/>.
+    /// </summary>
+    /// <param name="node">SQL upsert node.</param>
+    /// <param name="conflictTarget">Conflict target to append.</param>
     protected void AppendUpsertOnConflict(SqlUpsertNode node, ReadOnlyArray<SqlDataFieldNode> conflictTarget)
     {
         Context.AppendIndent().Append( "ON" ).AppendSpace().Append( "CONFLICT" ).AppendSpace();
@@ -1110,6 +1295,12 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
             VisitUpdateAssignmentRange( node.UpdateAssignments );
     }
 
+    /// <summary>
+    /// Visits an <see cref="SqlDeleteFromNode"/> with a simple data source.
+    /// </summary>
+    /// <param name="node">Delete from node to visit.</param>
+    /// <param name="traits">Collection of traits.</param>
+    /// <remarks>See <see cref="IsValidSingleTableUpdateOrDeleteStatement"/> for more information.</remarks>
     protected virtual void VisitDeleteFromWithSimpleDataSource(SqlDeleteFromNode node, in SqlDataSourceTraits traits)
     {
         VisitDataSourceBeforeTraits( in traits );
@@ -1118,6 +1309,12 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
         VisitDataSourceAfterTraits( in traits );
     }
 
+    /// <summary>
+    /// Visits an <see cref="SqlDeleteFromNode"/> with a complex data source.
+    /// </summary>
+    /// <param name="node">Delete from node to visit.</param>
+    /// <param name="targetInfo"><see cref="SqlNodeInterpreter.ChangeTargetInfo"/> instance associated with the operation.</param>
+    /// <param name="traits">Collection of traits.</param>
     protected virtual void VisitDeleteFromWithComplexDataSource(
         SqlDeleteFromNode node,
         ChangeTargetInfo targetInfo,
@@ -1132,18 +1329,31 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
         VisitFilterTrait( filter );
     }
 
+    /// <inheritdoc />
     protected override void VisitDataSourceAfterTraits(in SqlDataSourceTraits traits)
     {
         base.VisitDataSourceAfterTraits( in traits );
         VisitOptionalLimitAndOffsetExpressions( traits.Limit, traits.Offset );
     }
 
+    /// <inheritdoc />
     protected override void VisitQueryAfterTraits(in SqlQueryTraits traits)
     {
         base.VisitQueryAfterTraits( in traits );
         VisitOptionalLimitAndOffsetExpressions( traits.Limit, traits.Offset );
     }
 
+    /// <summary>
+    /// Checks whether or not a data source of an <see cref="SqlUpdateNode"/> or <see cref="SqlDeleteFromNode"/> is considered simple.
+    /// </summary>
+    /// <param name="node">Data source node to check.</param>
+    /// <param name="traits">Collection of traits.</param>
+    /// <returns><b>true</b> when data source is considered valid, otherwise <b>false</b>.</returns>
+    /// <remarks>
+    /// By default, data source is considered to be simple when it contains a single record set. In addition, it may only be decorated
+    /// with common table expressions and a filter. Sorting, limit and offset traits are allowed as well,
+    /// unless the <see cref="SqliteNodeInterpreterOptions.IsUpdateOrDeleteLimitEnabled"/> setting of the <see cref="Options"/> is disabled.
+    /// </remarks>
     [Pure]
     protected virtual bool IsValidSingleTableUpdateOrDeleteStatement(SqlDataSourceNode node, in SqlDataSourceTraits traits)
     {
@@ -1156,6 +1366,19 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
             && traits.Custom.Count == 0;
     }
 
+    /// <summary>
+    /// Checks whether or not a data source of an <see cref="SqlUpdateNode"/> is considered valid for an <b>UPDATE FROM</b> statement.
+    /// </summary>
+    /// <param name="node">Data source node to check.</param>
+    /// <param name="traits">Collection of traits.</param>
+    /// <returns><b>true</b> when data source is considered valid, otherwise <b>false</b>.</returns>
+    /// <remarks>
+    /// By default, <see cref="SqliteNodeInterpreterOptions.IsUpdateFromEnabled"/> setting of the <see cref="Options"/> must be enabled.
+    /// Then, data source is considered to be valid when it contains exactly two record sets, and only with <see cref="SqlJoinType.Inner"/>
+    /// or <see cref="SqlJoinType.Cross"/> join. In addition, it may only be decorated with common table expressions and a filter.
+    /// Sorting, limit and offset traits are allowed as well,
+    /// unless the <see cref="SqliteNodeInterpreterOptions.IsUpdateOrDeleteLimitEnabled"/> setting of the <see cref="Options"/> is disabled.
+    /// </remarks>
     [Pure]
     protected virtual bool IsValidUpdateFromStatement(SqlDataSourceNode node, in SqlDataSourceTraits traits)
     {
@@ -1170,6 +1393,13 @@ public class SqliteNodeInterpreter : SqlNodeInterpreter
             && traits.Custom.Count == 0;
     }
 
+    /// <summary>
+    /// Creates a simplified version of an <see cref="SqlUpdateNode"/> with a complex data source and complex value assignments.
+    /// </summary>
+    /// <param name="targetInfo"><see cref="SqlNodeInterpreter.ChangeTargetInfo"/> instance associated with the operation.</param>
+    /// <param name="node">Source update node.</param>
+    /// <param name="indexesOfComplexAssignments">Collection of 0-based indexes of all complex value assignments.</param>
+    /// <returns>New <see cref="SqlUpdateNode"/> instance.</returns>
     [Pure]
     protected static SqlUpdateNode CreateSimplifiedUpdateWithComplexAssignments(
         ChangeTargetInfo targetInfo,

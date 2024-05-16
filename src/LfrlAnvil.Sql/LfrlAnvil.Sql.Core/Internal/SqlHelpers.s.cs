@@ -65,7 +65,7 @@ public static class SqlHelpers
     public static readonly Func<IDbCommand, bool> ExecuteBoolScalarDelegate = static cmd => Convert.ToBoolean( cmd.ExecuteScalar() );
 
     /// <summary>
-    /// Default creator of <see cref="ISqlDefaultObjectNameProvider"/> instances.
+    /// Default creator of <see cref="SqlDefaultObjectNameProvider"/> instances.
     /// </summary>
     public static readonly SqlDefaultObjectNameProviderCreator<SqlDefaultObjectNameProvider> DefaultNamesCreator =
         static (_, _) => new SqlDefaultObjectNameProvider();

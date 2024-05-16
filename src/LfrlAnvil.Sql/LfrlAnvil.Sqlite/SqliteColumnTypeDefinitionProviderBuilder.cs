@@ -4,6 +4,8 @@ using LfrlAnvil.Sqlite.Internal.TypeDefinitions;
 
 namespace LfrlAnvil.Sqlite;
 
+/// <inheritdoc />
+/// <remarks><see cref="SqliteDialect"/> implementation.</remarks>
 public class SqliteColumnTypeDefinitionProviderBuilder : SqlColumnTypeDefinitionProviderBuilder
 {
     internal readonly SqliteColumnTypeDefinitionInt64 DefaultInteger;
@@ -11,6 +13,9 @@ public class SqliteColumnTypeDefinitionProviderBuilder : SqlColumnTypeDefinition
     internal readonly SqliteColumnTypeDefinitionString DefaultText;
     internal readonly SqliteColumnTypeDefinitionByteArray DefaultBlob;
 
+    /// <summary>
+    /// Creates a new empty <see cref="SqliteColumnTypeDefinitionProviderBuilder"/> instance.
+    /// </summary>
     public SqliteColumnTypeDefinitionProviderBuilder()
         : base( SqliteDialect.Instance )
     {
@@ -43,12 +48,14 @@ public class SqliteColumnTypeDefinitionProviderBuilder : SqlColumnTypeDefinition
         AddOrUpdate( new SqliteColumnTypeDefinitionGuid() );
     }
 
+    /// <inheritdoc cref="SqlColumnTypeDefinitionProviderBuilder.Register(SqlColumnTypeDefinition)" />
     public new SqliteColumnTypeDefinitionProviderBuilder Register(SqlColumnTypeDefinition definition)
     {
         base.Register( definition );
         return this;
     }
 
+    /// <inheritdoc />
     [Pure]
     public sealed override SqliteColumnTypeDefinitionProvider Build()
     {

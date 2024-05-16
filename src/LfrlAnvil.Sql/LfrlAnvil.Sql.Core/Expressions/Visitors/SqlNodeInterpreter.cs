@@ -37,8 +37,8 @@ public abstract class SqlNodeInterpreter : ISqlNodeVisitor
     /// Creates a new <see cref="SqlNodeInterpreter"/> instance.
     /// </summary>
     /// <param name="context">Underlying <see cref="SqlNodeInterpreterContext"/> instance.</param>
-    /// <param name="beginNameDelimiter"></param>
-    /// <param name="endNameDelimiter"></param>
+    /// <param name="beginNameDelimiter">Specifies the beginning name delimiter symbol.</param>
+    /// <param name="endNameDelimiter">Specifies the ending name delimiter symbol.</param>
     protected SqlNodeInterpreter(SqlNodeInterpreterContext context, char beginNameDelimiter, char endNameDelimiter)
     {
         Context = context;

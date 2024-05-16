@@ -7,7 +7,7 @@ using LfrlAnvil.Internal;
 namespace LfrlAnvil.Sql;
 
 /// <summary>
-/// Represents a generic definition of a column type.
+/// Represents a generic definition of an <see cref="Enum"/> column type.
 /// </summary>
 /// <typeparam name="TEnum">Underlying .NET <see cref="Enum"/> type.</typeparam>
 /// <typeparam name="TUnderlying">.NET type of the underlying value of <typeparamref name="TEnum"/> type.</typeparam>

@@ -8,6 +8,8 @@ using LfrlAnvil.Sqlite.Internal.TypeDefinitions;
 
 namespace LfrlAnvil.Sqlite;
 
+/// <inheritdoc />
+/// <remarks><see cref="SqliteDialect"/> implementation.</remarks>
 public sealed class SqliteColumnTypeDefinitionProvider : SqlColumnTypeDefinitionProvider
 {
     private readonly ReadOnlyArray<SqlColumnTypeDefinition> _defaultDefinitions;
@@ -24,12 +26,14 @@ public sealed class SqliteColumnTypeDefinitionProvider : SqlColumnTypeDefinition
         TryAddDefinition( defaultAny );
     }
 
+    /// <inheritdoc />
     [Pure]
     public override IReadOnlyCollection<SqlColumnTypeDefinition> GetDataTypeDefinitions()
     {
         return _defaultDefinitions.GetUnderlyingArray();
     }
 
+    /// <inheritdoc cref="GetByDataType(ISqlDataType)" />
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public SqlColumnTypeDefinition GetByDataType(SqliteDataType type)
@@ -38,6 +42,7 @@ public sealed class SqliteColumnTypeDefinitionProvider : SqlColumnTypeDefinition
         return _defaultDefinitions[index];
     }
 
+    /// <inheritdoc />
     [Pure]
     [EditorBrowsable( EditorBrowsableState.Never )]
     public override SqlColumnTypeDefinition GetByDataType(ISqlDataType type)
@@ -45,6 +50,7 @@ public sealed class SqliteColumnTypeDefinitionProvider : SqlColumnTypeDefinition
         return GetByDataType( SqlHelpers.CastOrThrow<SqliteDataType>( Dialect, type ) );
     }
 
+    /// <inheritdoc />
     [Pure]
     protected override SqlColumnTypeDefinition<TEnum> CreateEnumTypeDefinition<TEnum, TUnderlying>(
         SqlColumnTypeDefinition<TUnderlying> underlyingTypeDefinition)

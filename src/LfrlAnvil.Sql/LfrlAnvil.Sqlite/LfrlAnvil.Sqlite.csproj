@@ -4,6 +4,14 @@
         <PackageTags>LfrlAnvil Sql Sqlite</PackageTags>
     </PropertyGroup>
 
+    <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+      <DocumentationFile>bin\Debug\LfrlAnvil.Sqlite.xml</DocumentationFile>
+    </PropertyGroup>
+
+    <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+      <DebugSymbols>true</DebugSymbols>
+    </PropertyGroup>
+
     <ItemGroup>
         <ProjectReference Include="..\LfrlAnvil.Sql.Core\LfrlAnvil.Sql.Core.csproj" />
     </ItemGroup>

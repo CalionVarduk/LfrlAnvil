@@ -1,10 +1,19 @@
 ﻿using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
+using LfrlAnvil.Sql.Expressions.Persistence;
+using LfrlAnvil.Sql.Expressions.Traits;
+using Microsoft.Data.Sqlite;
 
 namespace LfrlAnvil.Sqlite;
 
+/// <summary>
+/// Represents available options for <see cref="SqliteNodeInterpreter"/>.
+/// </summary>
 public readonly struct SqliteNodeInterpreterOptions
 {
+    /// <summary>
+    /// Represents default options.
+    /// </summary>
     public static readonly SqliteNodeInterpreterOptions Default = new SqliteNodeInterpreterOptions()
         .SetUpsertOptions( SqliteUpsertOptions.Supported );
 
@@ -29,14 +38,52 @@ public readonly struct SqliteNodeInterpreterOptions
         UpsertOptions = upsertOptions;
     }
 
+    /// <summary>
+    /// Specifies custom <see cref="SqliteColumnTypeDefinitionProvider"/>.
+    /// </summary>
+    /// <remarks>
+    /// Default <see cref="SqliteColumnTypeDefinitionProvider"/> instance built by <see cref="SqliteColumnTypeDefinitionProviderBuilder"/>
+    /// will be used when this is null.
+    /// </remarks>
     public SqliteColumnTypeDefinitionProvider? TypeDefinitions { get; }
+
+    /// <summary>
+    /// Specifies whether or not the <b>STRICT</b> mode is enabled for table creation.
+    /// </summary>
     public bool IsStrictModeEnabled { get; }
+
+    /// <summary>
+    /// Specifies <see cref="SqliteUpsertOptions"/> that defines interpreter's behavior during <see cref="SqlUpsertNode"/> interpretation.
+    /// </summary>
     public SqliteUpsertOptions UpsertOptions { get; }
+
+    /// <summary>
+    /// Specifies whether or not <see cref="SqlSortTraitNode"/> instances that decorate aggregate function nodes
+    /// should be included or ignored.
+    /// </summary>
     public bool IsAggregateFunctionOrderingEnabled { get; }
+
+    /// <summary>
+    /// Specifies whether or not positional <see cref="SqliteParameter"/> instances are enabled.
+    /// </summary>
     public bool ArePositionalParametersEnabled { get; }
+
+    /// <summary>
+    /// Specifies whether or not the <b>UPDATE FROM</b> syntax is supported.
+    /// </summary>
     public bool IsUpdateFromEnabled => ! _isUpdateFromDisabled;
+
+    /// <summary>
+    /// Specifies whether or not the <b>ORDER BY</b>, <b>LIMIT</b> and <b>OFFSET</b> clauses are enabled
+    /// for <b>UPDATE</b> and <b>DELETE</b> statements.
+    /// </summary>
     public bool IsUpdateOrDeleteLimitEnabled => ! _isUpdateOrDeleteLimitDisabled;
 
+    /// <summary>
+    /// Creates a new <see cref="SqliteNodeInterpreterOptions"/> instance with changed <see cref="TypeDefinitions"/>.
+    /// </summary>
+    /// <param name="typeDefinitions">Value to set.</param>
+    /// <returns>New <see cref="SqliteNodeInterpreterOptions"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public SqliteNodeInterpreterOptions SetTypeDefinitions(SqliteColumnTypeDefinitionProvider? typeDefinitions)
@@ -51,6 +98,11 @@ public readonly struct SqliteNodeInterpreterOptions
             UpsertOptions );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="SqliteNodeInterpreterOptions"/> instance with changed <see cref="IsStrictModeEnabled"/>.
+    /// </summary>
+    /// <param name="enabled">Value to set. Equal to <b>true</b> by default.</param>
+    /// <returns>New <see cref="SqliteNodeInterpreterOptions"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public SqliteNodeInterpreterOptions EnableStrictMode(bool enabled = true)
@@ -65,6 +117,11 @@ public readonly struct SqliteNodeInterpreterOptions
             UpsertOptions );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="SqliteNodeInterpreterOptions"/> instance with changed <see cref="IsUpdateFromEnabled"/>.
+    /// </summary>
+    /// <param name="enabled">Value to set. Equal to <b>true</b> by default.</param>
+    /// <returns>New <see cref="SqliteNodeInterpreterOptions"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public SqliteNodeInterpreterOptions EnableUpdateFrom(bool enabled = true)
@@ -79,6 +136,11 @@ public readonly struct SqliteNodeInterpreterOptions
             UpsertOptions );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="SqliteNodeInterpreterOptions"/> instance with changed <see cref="IsUpdateOrDeleteLimitEnabled"/>.
+    /// </summary>
+    /// <param name="enabled">Value to set. Equal to <b>true</b> by default.</param>
+    /// <returns>New <see cref="SqliteNodeInterpreterOptions"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public SqliteNodeInterpreterOptions EnableUpdateOrDeleteLimit(bool enabled = true)
@@ -93,6 +155,11 @@ public readonly struct SqliteNodeInterpreterOptions
             UpsertOptions );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="SqliteNodeInterpreterOptions"/> instance with changed <see cref="IsAggregateFunctionOrderingEnabled"/>.
+    /// </summary>
+    /// <param name="enabled">Value to set. Equal to <b>true</b> by default.</param>
+    /// <returns>New <see cref="SqliteNodeInterpreterOptions"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public SqliteNodeInterpreterOptions EnableAggregateFunctionOrdering(bool enabled = true)
@@ -107,6 +174,11 @@ public readonly struct SqliteNodeInterpreterOptions
             UpsertOptions );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="SqliteNodeInterpreterOptions"/> instance with changed <see cref="ArePositionalParametersEnabled"/>.
+    /// </summary>
+    /// <param name="enabled">Value to set. Equal to <b>true</b> by default.</param>
+    /// <returns>New <see cref="SqliteNodeInterpreterOptions"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public SqliteNodeInterpreterOptions EnablePositionalParameters(bool enabled = true)
@@ -121,6 +193,11 @@ public readonly struct SqliteNodeInterpreterOptions
             UpsertOptions );
     }
 
+    /// <summary>
+    /// Creates a new <see cref="SqliteNodeInterpreterOptions"/> instance with changed <see cref="UpsertOptions"/>.
+    /// </summary>
+    /// <param name="options">Value to set.</param>
+    /// <returns>New <see cref="SqliteNodeInterpreterOptions"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public SqliteNodeInterpreterOptions SetUpsertOptions(SqliteUpsertOptions options)

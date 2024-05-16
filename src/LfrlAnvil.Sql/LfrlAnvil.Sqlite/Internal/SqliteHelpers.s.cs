@@ -11,9 +11,17 @@ using Microsoft.Data.Sqlite;
 
 namespace LfrlAnvil.Sqlite.Internal;
 
+/// <summary>
+/// Contains various SQLite helpers.
+/// </summary>
 public static class SqliteHelpers
 {
+    /// <summary>
+    /// Name of the in-memory data source in SQLite connection string.
+    /// </summary>
     public const string MemoryDataSource = ":memory:";
+
+#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
     public const long TemporalYearUnit = 0;
     public const long TemporalMonthUnit = 1;
     public const long TemporalWeekOfYearUnit = 2;
@@ -29,8 +37,19 @@ public static class SqliteHelpers
     public const string UpsertExcludedRecordSetName = "EXCLUDED";
     public const string DecimalFormatNegative = $"-{SqlHelpers.DecimalFormat}";
     public const string DecimalFormatNegativeQuoted = $@"\'{DecimalFormatNegative}\'";
+#pragma warning restore CS1591 // Missing XML comment for publicly visible type or member
+
+    /// <summary>
+    /// Default version history table name.
+    /// </summary>
     public static readonly SqlSchemaObjectName DefaultVersionHistoryName = SqlSchemaObjectName.Create( SqlHelpers.VersionHistoryName );
 
+    /// <summary>
+    /// Extracts a collection of <see cref="SqlConnectionStringEntry"/> instances
+    /// from the provided <see cref="SqliteConnectionStringBuilder"/>.
+    /// </summary>
+    /// <param name="builder">Source connection string builder.</param>
+    /// <returns>New collection of <see cref="SqlConnectionStringEntry"/> instances.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static SqlConnectionStringEntry[] ExtractConnectionStringEntries(SqliteConnectionStringBuilder builder)
@@ -46,6 +65,13 @@ public static class SqliteHelpers
         return result;
     }
 
+    /// <summary>
+    /// Extends the provided collection of <see cref="SqlConnectionStringEntry"/> instances with a partial connection string,
+    /// potentially overriding entries with their <see cref="SqlConnectionStringEntry.IsMutable"/> equal to <b>true</b>.
+    /// </summary>
+    /// <param name="entries">Connection string entries to extend.</param>
+    /// <param name="options">Connection string options to apply to the extended collection.</param>
+    /// <returns>New connection string.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static string ExtendConnectionString(ReadOnlyArray<SqlConnectionStringEntry> entries, string options)
@@ -60,6 +86,15 @@ public static class SqliteHelpers
         return builder.ToString();
     }
 
+    /// <summary>
+    /// Specifies whether or not the provided <paramref name="key"/> of a connection string entry is considered to be mutable.
+    /// </summary>
+    /// <param name="key">Key to check.</param>
+    /// <returns><b>true</b> when <paramref name="key"/> is mutable, otherwise <b>false</b>.</returns>
+    /// <remarks>
+    /// Mutable connection string entries can be changed in the
+    /// <see cref="ExtendConnectionString(ReadOnlyArray{SqlConnectionStringEntry},string)"/> method invocation.
+    /// </remarks>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static bool IsMutableConnectionStringKey(string key)
@@ -69,6 +104,11 @@ public static class SqliteHelpers
             && ! key.Equals( "Filename", StringComparison.OrdinalIgnoreCase );
     }
 
+    /// <summary>
+    /// Converts <paramref name="value"/> to a DB literal.
+    /// </summary>
+    /// <param name="value">Value to convert.</param>
+    /// <returns><see cref="String"/> representation of the provided <paramref name="value"/>.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static string GetDbLiteral(decimal value)
@@ -78,6 +118,12 @@ public static class SqliteHelpers
             : (-value).ToString( DecimalFormatNegativeQuoted, CultureInfo.InvariantCulture );
     }
 
+    /// <summary>
+    /// Returns the full name of an SQL object.
+    /// </summary>
+    /// <param name="schemaName">SQL schema name.</param>
+    /// <param name="name">SQL object name.</param>
+    /// <returns>Full SQL object name.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static string GetFullName(string schemaName, string name)
@@ -85,6 +131,13 @@ public static class SqliteHelpers
         return SqlHelpers.GetFullName( schemaName, name, separator: '_' );
     }
 
+    /// <summary>
+    /// Returns the full name of an SQL field.
+    /// </summary>
+    /// <param name="schemaName">SQL schema name.</param>
+    /// <param name="recordSetName">SQL record set name.</param>
+    /// <param name="name">SQL field name.</param>
+    /// <returns>Full SQL field name.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static string GetFullName(string schemaName, string recordSetName, string name)
@@ -92,6 +145,11 @@ public static class SqliteHelpers
         return SqlHelpers.GetFullName( schemaName, recordSetName, name, firstSeparator: '_' );
     }
 
+    /// <summary>
+    /// Returns an encoding of the provided <paramref name="unit"/> for use in custom DB functions.
+    /// </summary>
+    /// <param name="unit">Unit to encode.</param>
+    /// <returns>Encoded unit.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static long GetDbTemporalUnit(SqlTemporalUnit unit)
@@ -112,78 +170,117 @@ public static class SqliteHelpers
         };
     }
 
+    /// <summary>
+    /// Custom implementation of a DB function for <see cref="SqlCurrentDateFunctionExpressionNode"/>.
+    /// </summary>
     [Pure]
     public static string DbGetCurrentDate()
     {
         return DateTime.Now.ToString( SqlHelpers.DateFormat, CultureInfo.InvariantCulture );
     }
 
+    /// <summary>
+    /// Custom implementation of a DB function for <see cref="SqlCurrentTimeFunctionExpressionNode"/>.
+    /// </summary>
     [Pure]
     public static string DbGetCurrentTime()
     {
         return DateTime.Now.ToString( SqlHelpers.TimeFormatTick, CultureInfo.InvariantCulture );
     }
 
+    /// <summary>
+    /// Custom implementation of a DB function for <see cref="SqlCurrentDateTimeFunctionExpressionNode"/>.
+    /// </summary>
     [Pure]
     public static string DbGetCurrentDateTime()
     {
         return DateTime.Now.ToString( SqlHelpers.DateTimeFormatTick, CultureInfo.InvariantCulture );
     }
 
+    /// <summary>
+    /// Custom implementation of a DB function for <see cref="SqlCurrentUtcDateTimeFunctionExpressionNode"/>.
+    /// </summary>
     [Pure]
     public static string DbGetCurrentUtcDateTime()
     {
         return DateTime.UtcNow.ToString( SqlHelpers.DateTimeFormatTick, CultureInfo.InvariantCulture );
     }
 
+    /// <summary>
+    /// Custom implementation of a DB function for <see cref="SqlCurrentTimestampFunctionExpressionNode"/>.
+    /// </summary>
     [Pure]
     public static long DbGetCurrentTimestamp()
     {
         return DateTime.UtcNow.Ticks;
     }
 
+    /// <summary>
+    /// Custom implementation of a DB function for <see cref="SqlNewGuidFunctionExpressionNode"/>.
+    /// </summary>
     [Pure]
     public static byte[] DbNewGuid()
     {
         return Guid.NewGuid().ToByteArray();
     }
 
+    /// <summary>
+    /// Custom implementation of a DB function for <see cref="SqlToLowerFunctionExpressionNode"/>.
+    /// </summary>
     [Pure]
     public static string? DbToLower(string? s)
     {
         return s?.ToLowerInvariant();
     }
 
+    /// <summary>
+    /// Custom implementation of a DB function for <see cref="SqlToUpperFunctionExpressionNode"/>.
+    /// </summary>
     [Pure]
     public static string? DbToUpper(string? s)
     {
         return s?.ToUpperInvariant();
     }
 
+    /// <summary>
+    /// Custom implementation of a DB function for <see cref="SqlLastIndexOfFunctionExpressionNode"/>.
+    /// </summary>
     [Pure]
     public static long? DbInstrLast(string? s, string? v)
     {
         return s is not null && v is not null ? s.LastIndexOf( v, StringComparison.Ordinal ) + 1 : null;
     }
 
+    /// <summary>
+    /// Custom implementation of a DB function for <see cref="SqlReverseFunctionExpressionNode"/>.
+    /// </summary>
     [Pure]
     public static string? DbReverse(string? s)
     {
         return s?.Reverse();
     }
 
+    /// <summary>
+    /// Custom implementation of a DB function for <see cref="SqlTruncateFunctionExpressionNode"/> with <b>2</b> parameters.
+    /// </summary>
     [Pure]
     public static double? DbTrunc2(double? d, int? p)
     {
         return d is not null ? Math.Round( d.Value, p ?? 0, MidpointRounding.ToZero ) : null;
     }
 
+    /// <summary>
+    /// Custom implementation of a DB function for <see cref="SqlExtractTimeOfDayFunctionExpressionNode"/>.
+    /// </summary>
     [Pure]
     public static string? DbTimeOfDay(string? s)
     {
         return TryParseDateTime( s )?.ToString( SqlHelpers.TimeFormatTick, CultureInfo.InvariantCulture );
     }
 
+    /// <summary>
+    /// Custom implementation of a DB function for <see cref="SqlExtractTemporalUnitFunctionExpressionNode"/>.
+    /// </summary>
     [Pure]
     public static long? DbExtractTemporal(long? u, string? s)
     {
@@ -208,6 +305,9 @@ public static class SqliteHelpers
         };
     }
 
+    /// <summary>
+    /// Custom implementation of a DB function for <see cref="SqlTemporalAddFunctionExpressionNode"/>.
+    /// </summary>
     [Pure]
     public static string? DbTemporalAdd(long? u, long? v, string? s)
     {
@@ -230,6 +330,9 @@ public static class SqliteHelpers
         };
     }
 
+    /// <summary>
+    /// Custom implementation of a DB function for <see cref="SqlTemporalDiffFunctionExpressionNode"/>.
+    /// </summary>
     [Pure]
     public static long? DbTemporalDiff(long? u, string? l, string? r)
     {

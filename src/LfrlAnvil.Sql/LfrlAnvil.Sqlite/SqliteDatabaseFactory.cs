@@ -18,22 +18,37 @@ using Microsoft.Data.Sqlite;
 
 namespace LfrlAnvil.Sqlite;
 
+/// <summary>
+/// Represents a factory of SQL databases.
+/// </summary>
+/// <remarks><see cref="SqliteDialect"/> implementation.</remarks>
 public sealed class SqliteDatabaseFactory : SqlDatabaseFactory<SqliteDatabase>
 {
+    /// <summary>
+    /// Creates a new <see cref="SqliteDatabaseFactory"/> instance.
+    /// </summary>
+    /// <param name="options">
+    /// Optional <see cref="SqliteDatabaseFactoryOptions"/>. Equal to <see cref="SqliteDatabaseFactoryOptions.Default"/> by default.
+    /// </param>
     public SqliteDatabaseFactory(SqliteDatabaseFactoryOptions? options = null)
         : base( SqliteDialect.Instance )
     {
         Options = options ?? SqliteDatabaseFactoryOptions.Default;
     }
 
+    /// <summary>
+    /// <see cref="SqliteDatabaseFactoryOptions"/> instance associated with this factory that contains DB creation options.
+    /// </summary>
     public SqliteDatabaseFactoryOptions Options { get; }
 
+    /// <inheritdoc />
     [Pure]
     protected override SqliteConnectionStringBuilder CreateConnectionStringBuilder(string connectionString)
     {
         return new SqliteConnectionStringBuilder( connectionString );
     }
 
+    /// <inheritdoc />
     [Pure]
     protected override SqliteConnection CreateConnection(DbConnectionStringBuilder connectionString)
     {
@@ -43,6 +58,7 @@ public sealed class SqliteDatabaseFactory : SqlDatabaseFactory<SqliteDatabase>
             : new SqliteConnection( sqliteConnectionString.ToString() );
     }
 
+    /// <inheritdoc />
     [Pure]
     protected override SqliteDatabaseBuilder CreateDatabaseBuilder(string defaultSchemaName, DbConnection connection)
     {
@@ -64,6 +80,7 @@ public sealed class SqliteDatabaseFactory : SqlDatabaseFactory<SqliteDatabase>
         return result;
     }
 
+    /// <inheritdoc />
     protected override SqliteDatabase CreateDatabase(
         SqlDatabaseBuilder builder,
         DbConnectionStringBuilder connectionString,
@@ -91,12 +108,14 @@ public sealed class SqliteDatabaseFactory : SqlDatabaseFactory<SqliteDatabase>
                 version );
     }
 
+    /// <inheritdoc />
     [Pure]
     protected override SqlSchemaObjectName GetDefaultVersionHistoryName()
     {
         return SqliteHelpers.DefaultVersionHistoryName;
     }
 
+    /// <inheritdoc />
     protected override bool GetChangeTrackerAttachmentForVersionHistoryTableInit(
         SqlDatabaseChangeTracker changeTracker,
         SqlSchemaObjectName versionHistoryTableName,
@@ -130,6 +149,7 @@ public sealed class SqliteDatabaseFactory : SqlDatabaseFactory<SqliteDatabase>
         return ! exists;
     }
 
+    /// <inheritdoc />
     protected override void OnUncaughtException(Exception exception, DbConnection connection)
     {
         base.OnUncaughtException( exception, connection );
@@ -137,6 +157,7 @@ public sealed class SqliteDatabaseFactory : SqlDatabaseFactory<SqliteDatabase>
             connection.Close();
     }
 
+    /// <inheritdoc />
     protected override SqlDatabaseCommitVersionsContext CreateCommitVersionsContext(
         SqlParameterBinderFactory parameterBinders,
         SqlCreateDatabaseOptions options)

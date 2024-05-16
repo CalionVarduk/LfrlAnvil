@@ -18,6 +18,8 @@ using ExceptionResources = LfrlAnvil.Sql.Exceptions.ExceptionResources;
 
 namespace LfrlAnvil.Sqlite.Objects.Builders;
 
+/// <inheritdoc />
+/// <remarks><see cref="SqliteDialect"/> implementation.</remarks>
 public sealed class SqliteDatabaseChangeTracker : SqlDatabaseChangeTracker
 {
     private Dictionary<ulong, SqliteTableBuilder>? _modifiedTables;
@@ -27,9 +29,16 @@ public sealed class SqliteDatabaseChangeTracker : SqlDatabaseChangeTracker
         _modifiedTables = null;
     }
 
+    /// <inheritdoc cref="SqlDatabaseChangeTracker.Database" />
     public new SqliteDatabaseBuilder Database => ReinterpretCast.To<SqliteDatabaseBuilder>( base.Database );
+
+    /// <summary>
+    /// Collection of SQL table builders that are currently marked as created or modified.
+    /// </summary>
+    /// <remarks>See <see cref="SqliteDatabaseFactoryOptions.AreForeignKeyChecksDisabled"/> for what such tables are used for.</remarks>
     public IReadOnlyCollection<SqliteTableBuilder> ModifiedTables => (_modifiedTables?.Values).EmptyIfNull();
 
+    /// <inheritdoc />
     protected override void AddNameChange(SqlObjectBuilder activeObject, SqlObjectBuilder target, string originalValue)
     {
         if ( target.Type != SqlObjectType.Schema )
@@ -45,6 +54,7 @@ public sealed class SqliteDatabaseChangeTracker : SqlDatabaseChangeTracker
             AddRenameSchemaActions( schema, originalValue );
     }
 
+    /// <inheritdoc />
     protected override void AddIsRemovedChange(SqlObjectBuilder activeObject, SqlObjectBuilder target)
     {
         if ( target.Type != SqlObjectType.Schema )
@@ -60,6 +70,7 @@ public sealed class SqliteDatabaseChangeTracker : SqlDatabaseChangeTracker
         AddRemoveSchemaActions( ReinterpretCast.To<SqliteSchemaBuilder>( target ) );
     }
 
+    /// <inheritdoc />
     protected override void CompletePendingCreateObjectChanges(SqlObjectBuilder obj)
     {
         switch ( obj.Type )
@@ -75,6 +86,7 @@ public sealed class SqliteDatabaseChangeTracker : SqlDatabaseChangeTracker
         Assume.Unreachable();
     }
 
+    /// <inheritdoc />
     protected override void CompletePendingRemoveObjectChanges(SqlObjectBuilder obj)
     {
         switch ( obj.Type )
@@ -90,6 +102,7 @@ public sealed class SqliteDatabaseChangeTracker : SqlDatabaseChangeTracker
         Assume.Unreachable();
     }
 
+    /// <inheritdoc />
     protected override void CompletePendingAlterObjectChanges(SqlObjectBuilder obj, SqlDatabaseChangeAggregator changeAggregator)
     {
         var aggregator = ReinterpretCast.To<SqliteDatabaseChangeAggregator>( changeAggregator );
@@ -106,6 +119,7 @@ public sealed class SqliteDatabaseChangeTracker : SqlDatabaseChangeTracker
         Assume.Unreachable();
     }
 
+    /// <inheritdoc />
     [Pure]
     protected override SqlDatabaseChangeAggregator CreateAlterObjectChangeAggregator()
     {

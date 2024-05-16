@@ -174,6 +174,7 @@ public static class SqlObjectExtensions
     /// </summary>
     /// <param name="column">Source column.</param>
     /// <param name="value">Value to set.</param>
+    /// <typeparam name="T">Value type.</typeparam>
     /// <returns><paramref name="column"/>.</returns>
     /// <exception cref="SqlObjectBuilderException">When default value cannot be changed.</exception>
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -188,6 +189,7 @@ public static class SqlObjectExtensions
     /// </summary>
     /// <param name="column">Source column.</param>
     /// <param name="value">Value to set.</param>
+    /// <typeparam name="T">Value type.</typeparam>
     /// <returns><paramref name="column"/>.</returns>
     /// <exception cref="SqlObjectBuilderException">When default value cannot be changed.</exception>
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
