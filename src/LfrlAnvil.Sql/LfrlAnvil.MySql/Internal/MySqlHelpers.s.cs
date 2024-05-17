@@ -28,7 +28,8 @@ public static class MySqlHelpers
     /// <summary>
     /// Default version history table name.
     /// </summary>
-    public static readonly SqlSchemaObjectName DefaultVersionHistoryName = SqlSchemaObjectName.Create( "common", "__VersionHistory" );
+    public static readonly SqlSchemaObjectName DefaultVersionHistoryName
+        = SqlSchemaObjectName.Create( "common", SqlHelpers.VersionHistoryName );
 
     /// <summary>
     /// Extracts a collection of <see cref="SqlConnectionStringEntry"/> instances

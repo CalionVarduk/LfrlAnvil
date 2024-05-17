@@ -17,12 +17,16 @@ using ExceptionResources = LfrlAnvil.Sql.Exceptions.ExceptionResources;
 
 namespace LfrlAnvil.PostgreSql.Objects.Builders;
 
+/// <inheritdoc />
+/// <remarks><see cref="PostgreSqlDialect"/> implementation.</remarks>
 public sealed class PostgreSqlDatabaseChangeTracker : SqlDatabaseChangeTracker
 {
     internal PostgreSqlDatabaseChangeTracker() { }
 
+    /// <inheritdoc cref="SqlDatabaseChangeTracker.Database" />
     public new PostgreSqlDatabaseBuilder Database => ReinterpretCast.To<PostgreSqlDatabaseBuilder>( base.Database );
 
+    /// <inheritdoc />
     protected override void AddNameChange(SqlObjectBuilder activeObject, SqlObjectBuilder target, string originalValue)
     {
         if ( target.Type != SqlObjectType.Schema )
@@ -39,6 +43,7 @@ public sealed class PostgreSqlDatabaseChangeTracker : SqlDatabaseChangeTracker
         AddSqlAction( sql );
     }
 
+    /// <inheritdoc />
     protected override void AddIsRemovedChange(SqlObjectBuilder activeObject, SqlObjectBuilder target)
     {
         if ( target.Type != SqlObjectType.Schema )
@@ -56,6 +61,7 @@ public sealed class PostgreSqlDatabaseChangeTracker : SqlDatabaseChangeTracker
             AddCreateSchemaAction( schema.Name );
     }
 
+    /// <inheritdoc />
     protected override void CompletePendingCreateObjectChanges(SqlObjectBuilder obj)
     {
         switch ( obj.Type )
@@ -71,6 +77,7 @@ public sealed class PostgreSqlDatabaseChangeTracker : SqlDatabaseChangeTracker
         Assume.Unreachable();
     }
 
+    /// <inheritdoc />
     protected override void CompletePendingRemoveObjectChanges(SqlObjectBuilder obj)
     {
         switch ( obj.Type )
@@ -86,6 +93,7 @@ public sealed class PostgreSqlDatabaseChangeTracker : SqlDatabaseChangeTracker
         Assume.Unreachable();
     }
 
+    /// <inheritdoc />
     protected override void CompletePendingAlterObjectChanges(SqlObjectBuilder obj, SqlDatabaseChangeAggregator changeAggregator)
     {
         var aggregator = ReinterpretCast.To<PostgreSqlDatabaseChangeAggregator>( changeAggregator );
@@ -102,6 +110,7 @@ public sealed class PostgreSqlDatabaseChangeTracker : SqlDatabaseChangeTracker
         Assume.Unreachable();
     }
 
+    /// <inheritdoc />
     [Pure]
     protected override SqlDatabaseChangeAggregator CreateAlterObjectChangeAggregator()
     {

@@ -19,16 +19,30 @@ using Npgsql;
 
 namespace LfrlAnvil.PostgreSql;
 
+/// <summary>
+/// Represents a factory of SQL databases.
+/// </summary>
+/// <remarks><see cref="PostgreSqlDialect"/> implementation.</remarks>
 public sealed class PostgreSqlDatabaseFactory : SqlDatabaseFactory<PostgreSqlDatabase>
 {
+    /// <summary>
+    /// Creates a new <see cref="PostgreSqlDatabaseFactory"/> instance.
+    /// </summary>
+    /// <param name="options">
+    /// Optional <see cref="PostgreSqlDatabaseFactoryOptions"/>. Equal to <see cref="PostgreSqlDatabaseFactoryOptions.Default"/> by default.
+    /// </param>
     public PostgreSqlDatabaseFactory(PostgreSqlDatabaseFactoryOptions? options = null)
         : base( PostgreSqlDialect.Instance )
     {
         Options = options ?? PostgreSqlDatabaseFactoryOptions.Default;
     }
 
+    /// <summary>
+    /// <see cref="PostgreSqlDatabaseFactoryOptions"/> instance associated with this factory that contains DB creation options.
+    /// </summary>
     public PostgreSqlDatabaseFactoryOptions Options { get; }
 
+    /// <inheritdoc />
     [Pure]
     protected override NpgsqlConnectionStringBuilder CreateConnectionStringBuilder(string connectionString)
     {
@@ -39,6 +53,7 @@ public sealed class PostgreSqlDatabaseFactory : SqlDatabaseFactory<PostgreSqlDat
         return result;
     }
 
+    /// <inheritdoc />
     [Pure]
     protected override NpgsqlConnection CreateConnection(DbConnectionStringBuilder connectionString)
     {
@@ -50,6 +65,7 @@ public sealed class PostgreSqlDatabaseFactory : SqlDatabaseFactory<PostgreSqlDat
         return result;
     }
 
+    /// <inheritdoc />
     protected override PostgreSqlDatabaseBuilder CreateDatabaseBuilder(string defaultSchemaName, DbConnection connection)
     {
         var serverVersion = connection.ServerVersion;
@@ -71,6 +87,7 @@ public sealed class PostgreSqlDatabaseFactory : SqlDatabaseFactory<PostgreSqlDat
         return result;
     }
 
+    /// <inheritdoc />
     protected override PostgreSqlDatabase CreateDatabase(
         SqlDatabaseBuilder builder,
         DbConnectionStringBuilder connectionString,
@@ -86,6 +103,7 @@ public sealed class PostgreSqlDatabaseFactory : SqlDatabaseFactory<PostgreSqlDat
             versionHistoryRecordsQuery );
     }
 
+    /// <inheritdoc />
     protected override void FinalizeConnectionPreparations(
         DbConnectionStringBuilder connectionString,
         DbConnection connection,
@@ -165,6 +183,7 @@ public sealed class PostgreSqlDatabaseFactory : SqlDatabaseFactory<PostgreSqlDat
         return false;
     }
 
+    /// <inheritdoc />
     protected override bool GetChangeTrackerAttachmentForVersionHistoryTableInit(
         SqlDatabaseChangeTracker changeTracker,
         SqlSchemaObjectName versionHistoryTableName,
@@ -208,12 +227,14 @@ public sealed class PostgreSqlDatabaseFactory : SqlDatabaseFactory<PostgreSqlDat
         return ! exists;
     }
 
+    /// <inheritdoc />
     [Pure]
     protected override SqlSchemaObjectName GetDefaultVersionHistoryName()
     {
         return PostgreSqlHelpers.DefaultVersionHistoryName;
     }
 
+    /// <inheritdoc />
     protected override void VersionHistoryTableBuilderInit(SqlTableBuilder builder)
     {
         var intType = builder.Database.TypeDefinitions.GetByType<int>();

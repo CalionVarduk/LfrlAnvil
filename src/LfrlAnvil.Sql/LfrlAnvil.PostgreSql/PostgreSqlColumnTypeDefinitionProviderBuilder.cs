@@ -6,6 +6,8 @@ using LfrlAnvil.Sql.Internal;
 
 namespace LfrlAnvil.PostgreSql;
 
+/// <inheritdoc />
+/// <remarks><see cref="PostgreSqlDialect"/> implementation.</remarks>
 public class PostgreSqlColumnTypeDefinitionProviderBuilder : SqlColumnTypeDefinitionProviderBuilder
 {
     internal readonly PostgreSqlColumnTypeDefinitionBool DefaultBoolean;
@@ -23,6 +25,9 @@ public class PostgreSqlColumnTypeDefinitionProviderBuilder : SqlColumnTypeDefini
     internal readonly PostgreSqlColumnTypeDefinitionDateTime DefaultTimestamp;
     internal readonly PostgreSqlColumnTypeDefinitionUtcDateTime DefaultTimestampTz;
 
+    /// <summary>
+    /// Creates a new <see cref="PostgreSqlColumnTypeDefinitionProviderBuilder"/> instance.
+    /// </summary>
     public PostgreSqlColumnTypeDefinitionProviderBuilder()
         : base( PostgreSqlDialect.Instance )
     {
@@ -65,12 +70,14 @@ public class PostgreSqlColumnTypeDefinitionProviderBuilder : SqlColumnTypeDefini
         AddOrUpdate( new PostgreSqlColumnTypeDefinitionUInt64() );
     }
 
+    /// <inheritdoc cref="SqlColumnTypeDefinitionProviderBuilder.Register(SqlColumnTypeDefinition)" />
     public new PostgreSqlColumnTypeDefinitionProviderBuilder Register(SqlColumnTypeDefinition definition)
     {
         base.Register( definition );
         return this;
     }
 
+    /// <inheritdoc />
     [Pure]
     public sealed override PostgreSqlColumnTypeDefinitionProvider Build()
     {

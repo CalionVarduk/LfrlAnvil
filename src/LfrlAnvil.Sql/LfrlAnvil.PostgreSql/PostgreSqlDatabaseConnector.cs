@@ -12,6 +12,8 @@ using Npgsql;
 
 namespace LfrlAnvil.PostgreSql;
 
+/// <inheritdoc cref="ISqlDatabaseConnector" />
+/// <remarks><see cref="PostgreSqlDialect"/> implementation.</remarks>
 public sealed class PostgreSqlDatabaseConnector : ISqlDatabaseConnector<NpgsqlConnection>, ISqlDatabaseConnector<DbConnection>
 {
     private readonly string _connectionString;
@@ -27,6 +29,7 @@ public sealed class PostgreSqlDatabaseConnector : ISqlDatabaseConnector<NpgsqlCo
         _eventHandler = eventHandler;
     }
 
+    /// <inheritdoc cref="ISqlDatabaseConnector{TConnection}.Database" />
     public PostgreSqlDatabase Database
     {
         get
@@ -40,6 +43,7 @@ public sealed class PostgreSqlDatabaseConnector : ISqlDatabaseConnector<NpgsqlCo
     SqlDatabase ISqlDatabaseConnector<DbConnection>.Database => Database;
     ISqlDatabase ISqlDatabaseConnector.Database => Database;
 
+    /// <inheritdoc />
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public NpgsqlConnection Connect()
@@ -49,6 +53,7 @@ public sealed class PostgreSqlDatabaseConnector : ISqlDatabaseConnector<NpgsqlCo
         return connection;
     }
 
+    /// <inheritdoc />
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public NpgsqlConnection Connect(string options)
@@ -59,6 +64,7 @@ public sealed class PostgreSqlDatabaseConnector : ISqlDatabaseConnector<NpgsqlCo
         return connection;
     }
 
+    /// <inheritdoc />
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public async ValueTask<NpgsqlConnection> ConnectAsync(CancellationToken cancellationToken = default)
@@ -68,6 +74,7 @@ public sealed class PostgreSqlDatabaseConnector : ISqlDatabaseConnector<NpgsqlCo
         return connection;
     }
 
+    /// <inheritdoc />
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public async ValueTask<NpgsqlConnection> ConnectAsync(string options, CancellationToken cancellationToken = default)

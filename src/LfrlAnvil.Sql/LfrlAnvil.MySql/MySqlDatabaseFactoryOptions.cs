@@ -7,7 +7,7 @@ using LfrlAnvil.Sql.Objects.Builders;
 namespace LfrlAnvil.MySql;
 
 /// <summary>
-/// Represents available options for creating SQLite database objects through <see cref="MySqlDatabaseFactory"/>.
+/// Represents available options for creating MySQL database objects through <see cref="MySqlDatabaseFactory"/>.
 /// </summary>
 public readonly struct MySqlDatabaseFactoryOptions
 {

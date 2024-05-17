@@ -8,6 +8,8 @@ using NpgsqlTypes;
 
 namespace LfrlAnvil.PostgreSql;
 
+/// <inheritdoc />
+/// <remarks><see cref="PostgreSqlDialect"/> implementation.</remarks>
 public sealed class PostgreSqlColumnTypeDefinitionProvider : SqlColumnTypeDefinitionProvider
 {
     private readonly PostgreSqlColumnTypeDefinitionDecimal _defaultDecimal;
@@ -26,12 +28,14 @@ public sealed class PostgreSqlColumnTypeDefinitionProvider : SqlColumnTypeDefini
         TryAddDefinition( _defaultObject );
     }
 
+    /// <inheritdoc />
     [Pure]
     public override IReadOnlyCollection<SqlColumnTypeDefinition> GetDataTypeDefinitions()
     {
         return _defaultDefinitionsByTypeName.Values;
     }
 
+    /// <inheritdoc cref="GetByDataType(ISqlDataType)" />
     [Pure]
     public SqlColumnTypeDefinition GetByDataType(PostgreSqlDataType dataType)
     {
@@ -62,6 +66,7 @@ public sealed class PostgreSqlColumnTypeDefinitionProvider : SqlColumnTypeDefini
         return _defaultObject;
     }
 
+    /// <inheritdoc />
     [Pure]
     [EditorBrowsable( EditorBrowsableState.Never )]
     public override SqlColumnTypeDefinition GetByDataType(ISqlDataType type)
@@ -69,6 +74,7 @@ public sealed class PostgreSqlColumnTypeDefinitionProvider : SqlColumnTypeDefini
         return GetByDataType( SqlHelpers.CastOrThrow<PostgreSqlDataType>( Dialect, type ) );
     }
 
+    /// <inheritdoc />
     [Pure]
     protected override SqlColumnTypeDefinition<TEnum> CreateEnumTypeDefinition<TEnum, TUnderlying>(
         SqlColumnTypeDefinition<TUnderlying> underlyingTypeDefinition)

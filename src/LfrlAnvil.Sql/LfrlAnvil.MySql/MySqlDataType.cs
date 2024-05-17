@@ -103,7 +103,7 @@ public sealed class MySqlDataType : ISqlDataType, IEquatable<MySqlDataType>, ICo
         new[] { new SqlDataTypeParameter( "LENGTH", Bounds.Create( 0, 255 ) ) } );
 
     /// <summary>
-    /// Represents the <b>VARCHAR</b> type with default <b>65535</b> length.
+    /// Represents the <b>VARCHAR</b> type with default <b>65535</b> maximum length.
     /// </summary>
     public static readonly MySqlDataType VarChar = new MySqlDataType(
         "VARCHAR(65535)",
@@ -113,7 +113,7 @@ public sealed class MySqlDataType : ISqlDataType, IEquatable<MySqlDataType>, ICo
         new[] { new SqlDataTypeParameter( "MAX_LENGTH", Bounds.Create( 0, 65535 ) ) } );
 
     /// <summary>
-    /// Represents the <b>VARBINARY</b> type with default <b>65535</b> length.
+    /// Represents the <b>VARBINARY</b> type with default <b>65535</b> maximum length.
     /// </summary>
     public static readonly MySqlDataType VarBinary = new MySqlDataType(
         "VARBINARY(65535)",

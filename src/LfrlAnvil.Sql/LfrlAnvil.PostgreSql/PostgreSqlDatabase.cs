@@ -7,6 +7,8 @@ using LfrlAnvil.Sql.Versioning;
 
 namespace LfrlAnvil.PostgreSql;
 
+/// <inheritdoc />
+/// <remarks><see cref="PostgreSqlDialect"/> implementation.</remarks>
 public sealed class PostgreSqlDatabase : SqlDatabase
 {
     internal PostgreSqlDatabase(
@@ -19,19 +21,27 @@ public sealed class PostgreSqlDatabase : SqlDatabase
         connector.SetDatabase( this );
     }
 
+    /// <inheritdoc cref="SqlDatabase.Schemas" />
     public new PostgreSqlSchemaCollection Schemas => ReinterpretCast.To<PostgreSqlSchemaCollection>( base.Schemas );
+
+    /// <inheritdoc cref="SqlDatabase.DataTypes" />
     public new PostgreSqlDataTypeProvider DataTypes => ReinterpretCast.To<PostgreSqlDataTypeProvider>( base.DataTypes );
 
+    /// <inheritdoc cref="SqlDatabase.TypeDefinitions" />
     public new PostgreSqlColumnTypeDefinitionProvider TypeDefinitions =>
         ReinterpretCast.To<PostgreSqlColumnTypeDefinitionProvider>( base.TypeDefinitions );
 
+    /// <inheritdoc cref="SqlDatabase.NodeInterpreters" />
     public new PostgreSqlNodeInterpreterFactory NodeInterpreters =>
         ReinterpretCast.To<PostgreSqlNodeInterpreterFactory>( base.NodeInterpreters );
 
+    /// <inheritdoc cref="SqlDatabase.QueryReaders" />
     public new PostgreSqlQueryReaderFactory QueryReaders => ReinterpretCast.To<PostgreSqlQueryReaderFactory>( base.QueryReaders );
 
+    /// <inheritdoc cref="SqlDatabase.ParameterBinders" />
     public new PostgreSqlParameterBinderFactory ParameterBinders =>
         ReinterpretCast.To<PostgreSqlParameterBinderFactory>( base.ParameterBinders );
 
+    /// <inheritdoc cref="SqlDatabase.Connector" />
     public new PostgreSqlDatabaseConnector Connector => ReinterpretCast.To<PostgreSqlDatabaseConnector>( base.Connector );
 }

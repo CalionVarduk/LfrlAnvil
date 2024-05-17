@@ -49,7 +49,7 @@ public sealed class MySqlDatabaseBuilder : SqlDatabaseBuilder
     public string CommonSchemaName { get; }
 
     /// <summary>
-    /// Specifies how partial indexes should be resolved by DB factory.
+    /// Specifies how partial indexes should be resolved.
     /// </summary>
     public SqlOptionalFunctionalityResolution IndexFilterResolution { get; }
 

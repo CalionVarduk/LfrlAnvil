@@ -3,172 +3,202 @@ using LfrlAnvil.Sql;
 
 namespace LfrlAnvil.PostgreSql;
 
+/// <inheritdoc />
+/// <remarks><see cref="PostgreSqlDialect"/> implementation.</remarks>
 public sealed class PostgreSqlDataTypeProvider : ISqlDataTypeProvider
 {
     internal PostgreSqlDataTypeProvider() { }
 
+    /// <inheritdoc cref="ISqlDataTypeProvider.GetBool()" />
     [Pure]
     public PostgreSqlDataType GetBool()
     {
         return PostgreSqlDataType.Boolean;
     }
 
+    /// <inheritdoc cref="ISqlDataTypeProvider.GetInt8()" />
     [Pure]
     public PostgreSqlDataType GetInt8()
     {
         return PostgreSqlDataType.Int2;
     }
 
+    /// <inheritdoc cref="ISqlDataTypeProvider.GetInt16()" />
     [Pure]
     public PostgreSqlDataType GetInt16()
     {
         return PostgreSqlDataType.Int2;
     }
 
+    /// <inheritdoc cref="ISqlDataTypeProvider.GetInt32()" />
     [Pure]
     public PostgreSqlDataType GetInt32()
     {
         return PostgreSqlDataType.Int4;
     }
 
+    /// <inheritdoc cref="ISqlDataTypeProvider.GetInt64()" />
     [Pure]
     public PostgreSqlDataType GetInt64()
     {
         return PostgreSqlDataType.Int8;
     }
 
+    /// <inheritdoc cref="ISqlDataTypeProvider.GetUInt8()" />
     [Pure]
     public PostgreSqlDataType GetUInt8()
     {
         return PostgreSqlDataType.Int2;
     }
 
+    /// <inheritdoc cref="ISqlDataTypeProvider.GetUInt16()" />
     [Pure]
     public PostgreSqlDataType GetUInt16()
     {
         return PostgreSqlDataType.Int4;
     }
 
+    /// <inheritdoc cref="ISqlDataTypeProvider.GetUInt32()" />
     [Pure]
     public PostgreSqlDataType GetUInt32()
     {
         return PostgreSqlDataType.Int8;
     }
 
+    /// <inheritdoc cref="ISqlDataTypeProvider.GetUInt64()" />
     [Pure]
     public PostgreSqlDataType GetUInt64()
     {
         return PostgreSqlDataType.Int8;
     }
 
+    /// <inheritdoc cref="ISqlDataTypeProvider.GetFloat()" />
     [Pure]
     public PostgreSqlDataType GetFloat()
     {
         return PostgreSqlDataType.Float4;
     }
 
+    /// <inheritdoc cref="ISqlDataTypeProvider.GetDouble()" />
     [Pure]
     public PostgreSqlDataType GetDouble()
     {
         return PostgreSqlDataType.Float8;
     }
 
+    /// <inheritdoc cref="ISqlDataTypeProvider.GetDecimal()" />
     [Pure]
     public PostgreSqlDataType GetDecimal()
     {
         return PostgreSqlDataType.Decimal;
     }
 
+    /// <inheritdoc cref="ISqlDataTypeProvider.GetDecimal(int,int)" />
     [Pure]
     public PostgreSqlDataType GetDecimal(int precision, int scale)
     {
         return PostgreSqlDataType.CreateDecimal( precision, scale );
     }
 
+    /// <inheritdoc cref="ISqlDataTypeProvider.GetGuid()" />
     [Pure]
     public PostgreSqlDataType GetGuid()
     {
         return PostgreSqlDataType.Uuid;
     }
 
+    /// <inheritdoc cref="ISqlDataTypeProvider.GetString()" />
     [Pure]
     public PostgreSqlDataType GetString()
     {
         return PostgreSqlDataType.VarChar;
     }
 
+    /// <inheritdoc cref="ISqlDataTypeProvider.GetString(int)" />
     [Pure]
     public PostgreSqlDataType GetString(int maxLength)
     {
         return PostgreSqlDataType.CreateVarChar( maxLength );
     }
 
+    /// <inheritdoc cref="ISqlDataTypeProvider.GetFixedString()" />
     [Pure]
     public PostgreSqlDataType GetFixedString()
     {
         return PostgreSqlDataType.VarChar;
     }
 
+    /// <inheritdoc cref="ISqlDataTypeProvider.GetFixedString(int)" />
     [Pure]
     public PostgreSqlDataType GetFixedString(int length)
     {
         return PostgreSqlDataType.CreateVarChar( length );
     }
 
+    /// <inheritdoc cref="ISqlDataTypeProvider.GetTimestamp()" />
     [Pure]
     public PostgreSqlDataType GetTimestamp()
     {
         return PostgreSqlDataType.Int8;
     }
 
+    /// <inheritdoc cref="ISqlDataTypeProvider.GetUtcDateTime()" />
     [Pure]
     public PostgreSqlDataType GetUtcDateTime()
     {
         return PostgreSqlDataType.TimestampTz;
     }
 
+    /// <inheritdoc cref="ISqlDataTypeProvider.GetDateTime()" />
     [Pure]
     public PostgreSqlDataType GetDateTime()
     {
         return PostgreSqlDataType.Timestamp;
     }
 
+    /// <inheritdoc cref="ISqlDataTypeProvider.GetTimeSpan()" />
     [Pure]
     public PostgreSqlDataType GetTimeSpan()
     {
         return PostgreSqlDataType.Int8;
     }
 
+    /// <inheritdoc cref="ISqlDataTypeProvider.GetDate()" />
     [Pure]
     public PostgreSqlDataType GetDate()
     {
         return PostgreSqlDataType.Date;
     }
 
+    /// <inheritdoc cref="ISqlDataTypeProvider.GetTime()" />
     [Pure]
     public PostgreSqlDataType GetTime()
     {
         return PostgreSqlDataType.Time;
     }
 
+    /// <inheritdoc cref="ISqlDataTypeProvider.GetBinary()" />
     [Pure]
     public PostgreSqlDataType GetBinary()
     {
         return PostgreSqlDataType.Bytea;
     }
 
+    /// <inheritdoc cref="ISqlDataTypeProvider.GetBinary(int)" />
     [Pure]
     public PostgreSqlDataType GetBinary(int maxLength)
     {
         return PostgreSqlDataType.Bytea;
     }
 
+    /// <inheritdoc cref="ISqlDataTypeProvider.GetFixedBinary()" />
     [Pure]
     public PostgreSqlDataType GetFixedBinary()
     {
         return PostgreSqlDataType.Bytea;
     }
 
+    /// <inheritdoc cref="ISqlDataTypeProvider.GetFixedBinary(int)" />
     [Pure]
     public PostgreSqlDataType GetFixedBinary(int length)
     {

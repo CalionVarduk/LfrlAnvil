@@ -4,6 +4,14 @@
         <PackageTags>LfrlAnvil Sql PostgreSql</PackageTags>
     </PropertyGroup>
 
+    <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+      <DocumentationFile>bin\Debug\LfrlAnvil.PostgreSql.xml</DocumentationFile>
+    </PropertyGroup>
+
+    <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+      <DocumentationFile>bin\Release\LfrlAnvil.PostgreSql.xml</DocumentationFile>
+    </PropertyGroup>
+
     <ItemGroup>
         <ProjectReference Include="..\LfrlAnvil.Sql.Core\LfrlAnvil.Sql.Core.csproj" />
     </ItemGroup>

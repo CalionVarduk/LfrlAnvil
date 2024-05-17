@@ -12,8 +12,12 @@ using Npgsql;
 
 namespace LfrlAnvil.PostgreSql.Internal;
 
+/// <summary>
+/// Contains various PostgreSQL helpers.
+/// </summary>
 public static class PostgreSqlHelpers
 {
+#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
     public const string ByteaMarker = "\\x";
     public const string ByteaTypeCast = "::BYTEA";
     public const string EmptyByteaLiteral = $"'{ByteaMarker}'{ByteaTypeCast}";
@@ -22,10 +26,19 @@ public static class PostgreSqlHelpers
     public const string TimestampFormatQuoted = $@"TI\MESTA\MP{SqlHelpers.DateTimeFormatMicrosecondQuoted}";
     public const string TimestampTzFormatQuoted = $@"TI\MESTA\MPTZ{SqlHelpers.DateTimeFormatMicrosecondQuoted}";
     public const string UpsertExcludedRecordSetName = "EXCLUDED";
-
+#pragma warning restore CS1591 // Missing XML comment for publicly visible type or member
+    /// <summary>
+    /// Default version history table name.
+    /// </summary>
     public static readonly SqlSchemaObjectName DefaultVersionHistoryName =
         SqlSchemaObjectName.Create( "public", SqlHelpers.VersionHistoryName );
 
+    /// <summary>
+    /// Extracts a collection of <see cref="SqlConnectionStringEntry"/> instances
+    /// from the provided <see cref="NpgsqlConnectionStringBuilder"/>.
+    /// </summary>
+    /// <param name="builder">Source connection string builder.</param>
+    /// <returns>New collection of <see cref="SqlConnectionStringEntry"/> instances.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static SqlConnectionStringEntry[] ExtractConnectionStringEntries(NpgsqlConnectionStringBuilder builder)
@@ -41,6 +54,13 @@ public static class PostgreSqlHelpers
         return result;
     }
 
+    /// <summary>
+    /// Extends the provided collection of <see cref="SqlConnectionStringEntry"/> instances with a partial connection string,
+    /// potentially overriding entries with their <see cref="SqlConnectionStringEntry.IsMutable"/> equal to <b>true</b>.
+    /// </summary>
+    /// <param name="entries">Connection string entries to extend.</param>
+    /// <param name="options">Connection string options to apply to the extended collection.</param>
+    /// <returns>New connection string.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static string ExtendConnectionString(ReadOnlyArray<SqlConnectionStringEntry> entries, string options)
@@ -55,6 +75,15 @@ public static class PostgreSqlHelpers
         return builder.ToString();
     }
 
+    /// <summary>
+    /// Specifies whether or not the provided <paramref name="key"/> of a connection string entry is considered to be mutable.
+    /// </summary>
+    /// <param name="key">Key to check.</param>
+    /// <returns><b>true</b> when <paramref name="key"/> is mutable, otherwise <b>false</b>.</returns>
+    /// <remarks>
+    /// Mutable connection string entries can be changed in the
+    /// <see cref="ExtendConnectionString(ReadOnlyArray{SqlConnectionStringEntry},string)"/> method invocation.
+    /// </remarks>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static bool IsMutableConnectionStringKey(string key)
@@ -66,6 +95,11 @@ public static class PostgreSqlHelpers
             && ! key.Equals( "DB", StringComparison.OrdinalIgnoreCase );
     }
 
+    /// <summary>
+    /// Converts <paramref name="value"/> to a DB literal.
+    /// </summary>
+    /// <param name="value">Value to convert.</param>
+    /// <returns><see cref="String"/> representation of the provided <paramref name="value"/>.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static string GetDbLiteral(bool value)
@@ -73,6 +107,11 @@ public static class PostgreSqlHelpers
         return value ? "1::BOOLEAN" : "0::BOOLEAN";
     }
 
+    /// <summary>
+    /// Converts <paramref name="value"/> to a DB literal.
+    /// </summary>
+    /// <param name="value">Value to convert.</param>
+    /// <returns><see cref="String"/> representation of the provided <paramref name="value"/>.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     public static string GetDbLiteral(Guid value)
@@ -80,6 +119,11 @@ public static class PostgreSqlHelpers
         return $"'{value}'";
     }
 
+    /// <summary>
+    /// Converts <paramref name="value"/> to a DB literal.
+    /// </summary>
+    /// <param name="value">Value to convert.</param>
+    /// <returns><see cref="String"/> representation of the provided <paramref name="value"/>.</returns>
     [Pure]
     public static string GetDbLiteral(ReadOnlySpan<byte> value)
     {
@@ -113,7 +157,7 @@ public static class PostgreSqlHelpers
         }
     }
 
-    public static void AppendCreateDatabase(
+    internal static void AppendCreateDatabase(
         SqlNodeInterpreter interpreter,
         string name,
         string? encodingName,
@@ -142,13 +186,13 @@ public static class PostgreSqlHelpers
         }
     }
 
-    public static void AppendCreateSchema(SqlNodeInterpreter interpreter, string name)
+    internal static void AppendCreateSchema(SqlNodeInterpreter interpreter, string name)
     {
         interpreter.Context.Sql.Append( "CREATE" ).AppendSpace().Append( "SCHEMA" ).AppendSpace();
         interpreter.AppendDelimitedName( name );
     }
 
-    public static void AppendRenameSchema(SqlNodeInterpreter interpreter, string oldName, string newName)
+    internal static void AppendRenameSchema(SqlNodeInterpreter interpreter, string oldName, string newName)
     {
         interpreter.Context.Sql.Append( "ALTER" ).AppendSpace().Append( "SCHEMA" ).AppendSpace();
         interpreter.AppendDelimitedName( oldName );
@@ -156,14 +200,14 @@ public static class PostgreSqlHelpers
         interpreter.AppendDelimitedName( newName );
     }
 
-    public static void AppendDropSchema(SqlNodeInterpreter interpreter, string name)
+    internal static void AppendDropSchema(SqlNodeInterpreter interpreter, string name)
     {
         interpreter.Context.Sql.Append( "DROP" ).AppendSpace().Append( "SCHEMA" ).AppendSpace();
         interpreter.AppendDelimitedName( name );
         interpreter.Context.Sql.AppendSpace().Append( "CASCADE" );
     }
 
-    public static void AppendRenameView(SqlNodeInterpreter interpreter, SqlSchemaObjectName oldName, string newName)
+    internal static void AppendRenameView(SqlNodeInterpreter interpreter, SqlSchemaObjectName oldName, string newName)
     {
         interpreter.Context.Sql.Append( "ALTER" ).AppendSpace().Append( "VIEW" ).AppendSpace();
         interpreter.AppendDelimitedSchemaObjectName( oldName );
@@ -171,20 +215,20 @@ public static class PostgreSqlHelpers
         interpreter.AppendDelimitedName( newName );
     }
 
-    public static void AppendAlterTableHeader(SqlNodeInterpreter interpreter, SqlRecordSetInfo info)
+    internal static void AppendAlterTableHeader(SqlNodeInterpreter interpreter, SqlRecordSetInfo info)
     {
         interpreter.Context.Sql.Append( "ALTER" ).AppendSpace().Append( "TABLE" ).AppendSpace();
         interpreter.AppendDelimitedRecordSetInfo( info );
     }
 
-    public static void AppendAlterTableDropConstraint(SqlNodeInterpreter interpreter, string name)
+    internal static void AppendAlterTableDropConstraint(SqlNodeInterpreter interpreter, string name)
     {
         interpreter.Context.AppendIndent().Append( "DROP" ).AppendSpace().Append( "CONSTRAINT" ).AppendSpace();
         interpreter.AppendDelimitedName( name );
         interpreter.Context.Sql.AppendComma();
     }
 
-    public static void AppendRenameIndex(SqlNodeInterpreter interpreter, SqlSchemaObjectName oldName, string newName)
+    internal static void AppendRenameIndex(SqlNodeInterpreter interpreter, SqlSchemaObjectName oldName, string newName)
     {
         interpreter.Context.Sql.Append( "ALTER" ).AppendSpace().Append( "INDEX" ).AppendSpace();
         interpreter.AppendDelimitedSchemaObjectName( oldName );
@@ -192,7 +236,7 @@ public static class PostgreSqlHelpers
         interpreter.AppendDelimitedName( newName );
     }
 
-    public static void AppendRenameConstraint(SqlNodeInterpreter interpreter, SqlRecordSetInfo table, string oldName, string newName)
+    internal static void AppendRenameConstraint(SqlNodeInterpreter interpreter, SqlRecordSetInfo table, string oldName, string newName)
     {
         AppendAlterTableHeader( interpreter, table );
         using ( interpreter.Context.TempIndentIncrease() )
@@ -204,63 +248,63 @@ public static class PostgreSqlHelpers
         }
     }
 
-    public static void AppendAlterTableAddPrimaryKey(SqlNodeInterpreter interpreter, SqlPrimaryKeyDefinitionNode primaryKey)
+    internal static void AppendAlterTableAddPrimaryKey(SqlNodeInterpreter interpreter, SqlPrimaryKeyDefinitionNode primaryKey)
     {
         interpreter.Context.AppendIndent().Append( "ADD" ).AppendSpace();
         interpreter.VisitPrimaryKeyDefinition( primaryKey );
         interpreter.Context.Sql.AppendComma();
     }
 
-    public static void AppendAlterTableAddCheck(SqlNodeInterpreter interpreter, SqlCheckDefinitionNode check)
+    internal static void AppendAlterTableAddCheck(SqlNodeInterpreter interpreter, SqlCheckDefinitionNode check)
     {
         interpreter.Context.AppendIndent().Append( "ADD" ).AppendSpace();
         interpreter.VisitCheckDefinition( check );
         interpreter.Context.Sql.AppendComma();
     }
 
-    public static void AppendAlterTableAddForeignKey(SqlNodeInterpreter interpreter, SqlForeignKeyDefinitionNode foreignKey)
+    internal static void AppendAlterTableAddForeignKey(SqlNodeInterpreter interpreter, SqlForeignKeyDefinitionNode foreignKey)
     {
         interpreter.Context.AppendIndent().Append( "ADD" ).AppendSpace();
         interpreter.VisitForeignKeyDefinition( foreignKey );
         interpreter.Context.Sql.AppendComma();
     }
 
-    public static void AppendAlterTableDropColumn(SqlNodeInterpreter interpreter, string name)
+    internal static void AppendAlterTableDropColumn(SqlNodeInterpreter interpreter, string name)
     {
         interpreter.Context.AppendIndent().Append( "DROP" ).AppendSpace().Append( "COLUMN" ).AppendSpace();
         interpreter.AppendDelimitedName( name );
         interpreter.Context.Sql.AppendComma();
     }
 
-    public static void AppendAlterTableAddColumn(SqlNodeInterpreter interpreter, SqlColumnDefinitionNode column)
+    internal static void AppendAlterTableAddColumn(SqlNodeInterpreter interpreter, SqlColumnDefinitionNode column)
     {
         interpreter.Context.AppendIndent().Append( "ADD" ).AppendSpace().Append( "COLUMN" ).AppendSpace();
         interpreter.VisitColumnDefinition( column );
         interpreter.Context.Sql.AppendComma();
     }
 
-    public static void AppendAlterTableDropColumnExpression(SqlNodeInterpreter interpreter, string name)
+    internal static void AppendAlterTableDropColumnExpression(SqlNodeInterpreter interpreter, string name)
     {
         interpreter.Context.AppendIndent().Append( "ALTER" ).AppendSpace().Append( "COLUMN" ).AppendSpace();
         interpreter.AppendDelimitedName( name );
         interpreter.Context.Sql.AppendSpace().Append( "DROP" ).AppendSpace().Append( "EXPRESSION" ).AppendComma();
     }
 
-    public static void AppendAlterTableSetColumnNotNull(SqlNodeInterpreter interpreter, string name)
+    internal static void AppendAlterTableSetColumnNotNull(SqlNodeInterpreter interpreter, string name)
     {
         interpreter.Context.AppendIndent().Append( "ALTER" ).AppendSpace().Append( "COLUMN" ).AppendSpace();
         interpreter.AppendDelimitedName( name );
         interpreter.Context.Sql.AppendSpace().Append( "SET" ).AppendSpace().Append( "NOT" ).AppendSpace().Append( "NULL" ).AppendComma();
     }
 
-    public static void AppendAlterTableDropColumnNotNull(SqlNodeInterpreter interpreter, string name)
+    internal static void AppendAlterTableDropColumnNotNull(SqlNodeInterpreter interpreter, string name)
     {
         interpreter.Context.AppendIndent().Append( "ALTER" ).AppendSpace().Append( "COLUMN" ).AppendSpace();
         interpreter.AppendDelimitedName( name );
         interpreter.Context.Sql.AppendSpace().Append( "DROP" ).AppendSpace().Append( "NOT" ).AppendSpace().Append( "NULL" ).AppendComma();
     }
 
-    public static void AppendAlterTableSetColumnDataType(SqlNodeInterpreter interpreter, string name, ISqlDataType dataType)
+    internal static void AppendAlterTableSetColumnDataType(SqlNodeInterpreter interpreter, string name, ISqlDataType dataType)
     {
         interpreter.Context.AppendIndent().Append( "ALTER" ).AppendSpace().Append( "COLUMN" ).AppendSpace();
         interpreter.AppendDelimitedName( name );
@@ -268,14 +312,14 @@ public static class PostgreSqlHelpers
         interpreter.Context.Sql.Append( dataType.Name ).AppendComma();
     }
 
-    public static void AppendAlterTableDropColumnDefault(SqlNodeInterpreter interpreter, string name)
+    internal static void AppendAlterTableDropColumnDefault(SqlNodeInterpreter interpreter, string name)
     {
         interpreter.Context.AppendIndent().Append( "ALTER" ).AppendSpace().Append( "COLUMN" ).AppendSpace();
         interpreter.AppendDelimitedName( name );
         interpreter.Context.Sql.AppendSpace().Append( "DROP" ).AppendSpace().Append( "DEFAULT" ).AppendComma();
     }
 
-    public static void AppendAlterTableSetColumnDefault(SqlNodeInterpreter interpreter, string name, SqlExpressionNode value)
+    internal static void AppendAlterTableSetColumnDefault(SqlNodeInterpreter interpreter, string name, SqlExpressionNode value)
     {
         interpreter.Context.AppendIndent().Append( "ALTER" ).AppendSpace().Append( "COLUMN" ).AppendSpace();
         interpreter.AppendDelimitedName( name );
