@@ -124,6 +124,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "scripts", "scripts", "{714B0706-1D2C-4C61-BC4E-093942C18885}"
 	ProjectSection(SolutionItems) = preProject
 		scripts\build.cake = scripts\build.cake
+		.github\workflows\dotnet.yml = .github\workflows\dotnet.yml
 	EndProjectSection
 EndProject
 Global

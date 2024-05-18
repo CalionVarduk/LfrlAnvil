@@ -1,0 +1,29 @@
+name: Build
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '7.x'
+
+    - name: Install Cake tool
+      run: dotnet tool install --global Cake.Tool --version 4.0.0
+
+    - name: Install dependencies
+      run: dotnet restore
+
+    - name: Run build script
+      run: dotnet cake ./scripts/build.cake --target="Publish" --publish-output="publish"
