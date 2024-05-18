@@ -1,19 +1,20 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <PackageTags>LfrlAnvil Validation</PackageTags>
+        <PackageTags>LfrlAnvil Validation;LfrlAnvil;Validation</PackageTags>
+        <Description>todo</Description>
     </PropertyGroup>
 
     <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
-      <DocumentationFile>bin\Debug\LfrlAnvil.Validation.xml</DocumentationFile>
+        <DocumentationFile>bin\Debug\LfrlAnvil.Validation.xml</DocumentationFile>
     </PropertyGroup>
 
     <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
-      <DocumentationFile>bin\Release\LfrlAnvil.Validation.xml</DocumentationFile>
+        <DocumentationFile>bin\Release\LfrlAnvil.Validation.xml</DocumentationFile>
     </PropertyGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\LfrlAnvil.Core\LfrlAnvil.Core.csproj" />
+        <ProjectReference Include="..\LfrlAnvil.Core\LfrlAnvil.Core.csproj"/>
     </ItemGroup>
 
 </Project>

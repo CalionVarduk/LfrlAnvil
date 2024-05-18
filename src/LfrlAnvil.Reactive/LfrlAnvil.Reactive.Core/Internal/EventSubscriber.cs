@@ -36,6 +36,5 @@ internal sealed class EventSubscriber<TEvent> : IEventSubscriber
 
         _disposer = null;
         return true;
-
     }
 }

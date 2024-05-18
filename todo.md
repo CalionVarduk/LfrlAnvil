@@ -3,10 +3,10 @@
 |:-------------------:|:--------------------------------:|:------------------------------------------------------:|:----------------------------------------------:|
 |    Dependencies     |     Generic dependency types     |     [link](#dependencies-generic-dependency-types)     |                       -                        |
 |   Dependencies.*    |  Dependencies.ServiceProviders   |            [link](#dependencies-aspnetcore)            | [link](#dependencies-generic-dependency-types) |
-|          -          |             Terminal             |                   [link](#terminal)                    |                       -                        |
-| Computable.Automata |     Add Context-free grammar     |                           -                            |                       -                        |
 |    Computable.*     |       Math/Physics structs       |        [link](#computable-mathphysics-structs)         |                       -                        |
 |        Sql.*        |     Add support for triggers     |               [link](#sqlcore-triggers)                |                       -                        |
+|          -          |             Terminal             |                   [link](#terminal)                    |                       -                        |
+| Computable.Automata |     Add Context-free grammar     |                           -                            |                       -                        |
 |        Sql.*        |    Add Microsoft SQL support     |                           -                            |                       -                        |
 |     Collections     |           Add SkipList           |                           -                            |                       -                        |
 |   Reactive.State    | Async validator & change tracker | [link](#reactivestate-async-validator--change-tracker) |                       -                        |

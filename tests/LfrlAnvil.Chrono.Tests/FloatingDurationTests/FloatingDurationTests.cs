@@ -243,7 +243,7 @@ public class FloatingDurationTests : TestsBase
 
     [Theory]
     [MethodData( nameof( FloatingDurationTestsData.GetTicksData ) )]
-    public void FromTicks_ShouldReturnCorrectResult(long ticks)
+    public void FromTicks_ShouldReturnCorrectResult(decimal ticks)
     {
         var sut = FloatingDuration.FromTicks( ticks );
         sut.Ticks.Should().Be( ticks );

@@ -1,7 +1,6 @@
 ﻿using LfrlAnvil.PostgreSql.Extensions;
 using LfrlAnvil.Sql;
 using LfrlAnvil.Sql.Internal;
-using LfrlAnvil.Sql.Objects;
 using LfrlAnvil.Sql.Objects.Builders;
 using LfrlAnvil.TestExtensions.FluentAssertions;
 

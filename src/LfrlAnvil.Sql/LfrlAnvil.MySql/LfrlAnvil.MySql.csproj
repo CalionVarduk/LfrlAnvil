@@ -1,23 +1,24 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <PackageTags>LfrlAnvil Sql MySql</PackageTags>
+        <PackageTags>LfrlAnvil Sql MySql;LfrlAnvil;Sql;MySql</PackageTags>
+        <Description>todo</Description>
     </PropertyGroup>
 
     <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
-      <DocumentationFile>bin\Debug\LfrlAnvil.MySql.xml</DocumentationFile>
+        <DocumentationFile>bin\Debug\LfrlAnvil.MySql.xml</DocumentationFile>
     </PropertyGroup>
 
     <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
-      <DocumentationFile>bin\Release\LfrlAnvil.MySql.xml</DocumentationFile>
+        <DocumentationFile>bin\Release\LfrlAnvil.MySql.xml</DocumentationFile>
     </PropertyGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\LfrlAnvil.Sql.Core\LfrlAnvil.Sql.Core.csproj" />
+        <ProjectReference Include="..\LfrlAnvil.Sql.Core\LfrlAnvil.Sql.Core.csproj"/>
     </ItemGroup>
 
     <ItemGroup>
-      <PackageReference Include="MySqlConnector" Version="2.3.1" />
+        <PackageReference Include="MySqlConnector" Version="2.3.1"/>
     </ItemGroup>
 
 </Project>

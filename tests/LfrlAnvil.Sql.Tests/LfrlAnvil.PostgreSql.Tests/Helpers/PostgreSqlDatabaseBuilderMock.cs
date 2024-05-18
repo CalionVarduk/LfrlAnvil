@@ -2,7 +2,6 @@
 using LfrlAnvil.PostgreSql.Internal;
 using LfrlAnvil.PostgreSql.Objects.Builders;
 using LfrlAnvil.Sql;
-using LfrlAnvil.Sql.Objects;
 using LfrlAnvil.Sql.Objects.Builders;
 
 namespace LfrlAnvil.PostgreSql.Tests.Helpers;

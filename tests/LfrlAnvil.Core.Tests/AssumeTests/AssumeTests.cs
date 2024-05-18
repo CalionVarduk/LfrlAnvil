@@ -6,8 +6,12 @@ namespace LfrlAnvil.Tests.AssumeTests;
 
 public class AssumeTests : TestsBase
 {
+#if DEBUG
     [Fact]
     [Conditional( "DEBUG" )]
+#else
+    [Fact(Skip = "debug-only")]
+#endif
     public void IsNull_ForRefType_ShouldPass_WhenParamIsNull()
     {
         string? param = null;
@@ -15,8 +19,12 @@ public class AssumeTests : TestsBase
         action.Should().NotThrow();
     }
 
+#if DEBUG
     [Fact]
     [Conditional( "DEBUG" )]
+#else
+    [Fact(Skip = "debug-only")]
+#endif
     public void IsNull_ForRefType_ShouldFail_WhenParamIsNotNull()
     {
         var param = Fixture.Create<string>();
@@ -24,8 +32,12 @@ public class AssumeTests : TestsBase
         action.Should().Throw<Exception>();
     }
 
+#if DEBUG
     [Fact]
     [Conditional( "DEBUG" )]
+#else
+    [Fact(Skip = "debug-only")]
+#endif
     public void IsNull_ForNullableStructType_ShouldPass_WhenParamIsNull()
     {
         int? param = null;
@@ -33,8 +45,12 @@ public class AssumeTests : TestsBase
         action.Should().NotThrow();
     }
 
+#if DEBUG
     [Fact]
     [Conditional( "DEBUG" )]
+#else
+    [Fact(Skip = "debug-only")]
+#endif
     public void IsNull_ForNullableStructType_ShouldFail_WhenParamIsNotNull()
     {
         var param = Fixture.CreateNullable<int>();
@@ -42,8 +58,12 @@ public class AssumeTests : TestsBase
         action.Should().Throw<Exception>();
     }
 
+#if DEBUG
     [Fact]
     [Conditional( "DEBUG" )]
+#else
+    [Fact(Skip = "debug-only")]
+#endif
     public void IsNotNull_ForRefType_ShouldPass_WhenParamIsNotNull()
     {
         var param = Fixture.Create<string>();
@@ -51,8 +71,12 @@ public class AssumeTests : TestsBase
         action.Should().NotThrow();
     }
 
+#if DEBUG
     [Fact]
     [Conditional( "DEBUG" )]
+#else
+    [Fact(Skip = "debug-only")]
+#endif
     public void IsNotNull_ForRefType_ShouldFail_WhenParamIsNull()
     {
         string? param = null;
@@ -60,8 +84,12 @@ public class AssumeTests : TestsBase
         action.Should().Throw<Exception>();
     }
 
+#if DEBUG
     [Fact]
     [Conditional( "DEBUG" )]
+#else
+    [Fact(Skip = "debug-only")]
+#endif
     public void IsNotNull_ForNullableStructType_ShouldPass_WhenParamIsNotNull()
     {
         var param = Fixture.CreateNullable<int>();
@@ -69,8 +97,12 @@ public class AssumeTests : TestsBase
         action.Should().NotThrow();
     }
 
+#if DEBUG
     [Fact]
     [Conditional( "DEBUG" )]
+#else
+    [Fact(Skip = "debug-only")]
+#endif
     public void IsNotNull_ForNullableStructType_ShouldFail_WhenParamIsNull()
     {
         int? param = null;
@@ -78,8 +110,12 @@ public class AssumeTests : TestsBase
         action.Should().Throw<Exception>();
     }
 
+#if DEBUG
     [Theory]
     [Conditional( "DEBUG" )]
+#else
+    [Theory(Skip = "debug-only")]
+#endif
     [InlineData( TestEnum.Foo )]
     [InlineData( TestEnum.Bar )]
     public void IsDefined_ShouldPass_WhenParamIsDefined(TestEnum param)
@@ -88,8 +124,12 @@ public class AssumeTests : TestsBase
         action.Should().NotThrow();
     }
 
+#if DEBUG
     [Theory]
     [Conditional( "DEBUG" )]
+#else
+    [Theory(Skip = "debug-only")]
+#endif
     [InlineData( -1 )]
     [InlineData( ( int )TestEnum.Bar + 1 )]
     public void IsDefined_ShouldFail_WhenParamIsNotDefined(int param)
@@ -98,8 +138,12 @@ public class AssumeTests : TestsBase
         action.Should().Throw<Exception>();
     }
 
+#if DEBUG
     [Fact]
     [Conditional( "DEBUG" )]
+#else
+    [Fact(Skip = "debug-only")]
+#endif
     public void Equals_ShouldPass_WhenParamIsEqualToValue()
     {
         var param = Fixture.Create<int>();
@@ -107,8 +151,12 @@ public class AssumeTests : TestsBase
         action.Should().NotThrow();
     }
 
+#if DEBUG
     [Fact]
     [Conditional( "DEBUG" )]
+#else
+    [Fact(Skip = "debug-only")]
+#endif
     public void Equals_ShouldFail_WhenParamIsNotEqualToValue()
     {
         var (param, value) = Fixture.CreateDistinctCollection<int>( count: 2 );
@@ -116,8 +164,12 @@ public class AssumeTests : TestsBase
         action.Should().Throw<Exception>();
     }
 
+#if DEBUG
     [Fact]
     [Conditional( "DEBUG" )]
+#else
+    [Fact(Skip = "debug-only")]
+#endif
     public void NotEquals_ShouldPass_WhenParamIsNotEqualToValue()
     {
         var (param, value) = Fixture.CreateDistinctCollection<int>( count: 2 );
@@ -125,8 +177,12 @@ public class AssumeTests : TestsBase
         action.Should().NotThrow();
     }
 
+#if DEBUG
     [Fact]
     [Conditional( "DEBUG" )]
+#else
+    [Fact(Skip = "debug-only")]
+#endif
     public void NotEquals_ShouldFail_WhenParamIsEqualToValue()
     {
         var param = Fixture.Create<int>();
@@ -134,8 +190,12 @@ public class AssumeTests : TestsBase
         action.Should().Throw<Exception>();
     }
 
+#if DEBUG
     [Fact]
     [Conditional( "DEBUG" )]
+#else
+    [Fact(Skip = "debug-only")]
+#endif
     public void IsGreaterThan_ShouldPass_WhenParamIsGreaterThanValue()
     {
         var (value, param) = Fixture.CreateDistinctSortedCollection<int>( count: 2 );
@@ -143,8 +203,12 @@ public class AssumeTests : TestsBase
         action.Should().NotThrow();
     }
 
+#if DEBUG
     [Fact]
     [Conditional( "DEBUG" )]
+#else
+    [Fact(Skip = "debug-only")]
+#endif
     public void IsGreaterThan_ShouldFail_WhenParamIsEqualToValue()
     {
         var param = Fixture.Create<int>();
@@ -152,8 +216,12 @@ public class AssumeTests : TestsBase
         action.Should().Throw<Exception>();
     }
 
+#if DEBUG
     [Fact]
     [Conditional( "DEBUG" )]
+#else
+    [Fact(Skip = "debug-only")]
+#endif
     public void IsGreaterThan_ShouldFail_WhenParamIsLessThanValue()
     {
         var (param, value) = Fixture.CreateDistinctSortedCollection<int>( count: 2 );
@@ -161,8 +229,12 @@ public class AssumeTests : TestsBase
         action.Should().Throw<Exception>();
     }
 
+#if DEBUG
     [Fact]
     [Conditional( "DEBUG" )]
+#else
+    [Fact(Skip = "debug-only")]
+#endif
     public void IsGreaterThanOrEqualTo_ShouldPass_WhenParamIsGreaterThanValue()
     {
         var (value, param) = Fixture.CreateDistinctSortedCollection<int>( count: 2 );
@@ -170,8 +242,12 @@ public class AssumeTests : TestsBase
         action.Should().NotThrow();
     }
 
+#if DEBUG
     [Fact]
     [Conditional( "DEBUG" )]
+#else
+    [Fact(Skip = "debug-only")]
+#endif
     public void IsGreaterThanOrEqualTo_ShouldPass_WhenParamIsEqualToValue()
     {
         var param = Fixture.Create<int>();
@@ -179,8 +255,12 @@ public class AssumeTests : TestsBase
         action.Should().NotThrow();
     }
 
+#if DEBUG
     [Fact]
     [Conditional( "DEBUG" )]
+#else
+    [Fact(Skip = "debug-only")]
+#endif
     public void IsGreaterThanOrEqualTo_ShouldFail_WhenParamIsLessThanValue()
     {
         var (param, value) = Fixture.CreateDistinctSortedCollection<int>( count: 2 );
@@ -188,8 +268,12 @@ public class AssumeTests : TestsBase
         action.Should().Throw<Exception>();
     }
 
+#if DEBUG
     [Fact]
     [Conditional( "DEBUG" )]
+#else
+    [Fact(Skip = "debug-only")]
+#endif
     public void IsLessThan_ShouldPass_WhenParamIsLessThanValue()
     {
         var (param, value) = Fixture.CreateDistinctSortedCollection<int>( count: 2 );
@@ -197,8 +281,12 @@ public class AssumeTests : TestsBase
         action.Should().NotThrow();
     }
 
+#if DEBUG
     [Fact]
     [Conditional( "DEBUG" )]
+#else
+    [Fact(Skip = "debug-only")]
+#endif
     public void IsLessThan_ShouldFail_WhenParamIsEqualToValue()
     {
         var param = Fixture.Create<int>();
@@ -206,8 +294,12 @@ public class AssumeTests : TestsBase
         action.Should().Throw<Exception>();
     }
 
+#if DEBUG
     [Fact]
     [Conditional( "DEBUG" )]
+#else
+    [Fact(Skip = "debug-only")]
+#endif
     public void IsLessThan_ShouldFail_WhenParamIsGreaterThanValue()
     {
         var (value, param) = Fixture.CreateDistinctSortedCollection<int>( count: 2 );
@@ -215,8 +307,12 @@ public class AssumeTests : TestsBase
         action.Should().Throw<Exception>();
     }
 
+#if DEBUG
     [Fact]
     [Conditional( "DEBUG" )]
+#else
+    [Fact(Skip = "debug-only")]
+#endif
     public void IsLessThanOrEqualTo_ShouldPass_WhenParamIsLessThanValue()
     {
         var (param, value) = Fixture.CreateDistinctSortedCollection<int>( count: 2 );
@@ -224,8 +320,12 @@ public class AssumeTests : TestsBase
         action.Should().NotThrow();
     }
 
+#if DEBUG
     [Fact]
     [Conditional( "DEBUG" )]
+#else
+    [Fact(Skip = "debug-only")]
+#endif
     public void IsLessThanOrEqualTo_ShouldPass_WhenParamIsEqualToValue()
     {
         var param = Fixture.Create<int>();
@@ -233,8 +333,12 @@ public class AssumeTests : TestsBase
         action.Should().NotThrow();
     }
 
+#if DEBUG
     [Fact]
     [Conditional( "DEBUG" )]
+#else
+    [Fact(Skip = "debug-only")]
+#endif
     public void IsLessThanOrEqualTo_ShouldFail_WhenParamIsGreaterThanValue()
     {
         var (value, param) = Fixture.CreateDistinctSortedCollection<int>( count: 2 );
@@ -242,8 +346,12 @@ public class AssumeTests : TestsBase
         action.Should().Throw<Exception>();
     }
 
+#if DEBUG
     [Fact]
     [Conditional( "DEBUG" )]
+#else
+    [Fact(Skip = "debug-only")]
+#endif
     public void IsInRange_ShouldPass_WhenParamIsBetweenMinAndMax()
     {
         var (min, param, max) = Fixture.CreateDistinctSortedCollection<int>( count: 3 );
@@ -251,8 +359,12 @@ public class AssumeTests : TestsBase
         action.Should().NotThrow();
     }
 
+#if DEBUG
     [Fact]
     [Conditional( "DEBUG" )]
+#else
+    [Fact(Skip = "debug-only")]
+#endif
     public void IsInRange_ShouldPass_WhenParamIsEqualToMin()
     {
         var (param, max) = Fixture.CreateDistinctSortedCollection<int>( count: 3 );
@@ -260,8 +372,12 @@ public class AssumeTests : TestsBase
         action.Should().NotThrow();
     }
 
+#if DEBUG
     [Fact]
     [Conditional( "DEBUG" )]
+#else
+    [Fact(Skip = "debug-only")]
+#endif
     public void IsInRange_ShouldPass_WhenParamIsEqualToMax()
     {
         var (min, param) = Fixture.CreateDistinctSortedCollection<int>( count: 3 );
@@ -269,8 +385,12 @@ public class AssumeTests : TestsBase
         action.Should().NotThrow();
     }
 
+#if DEBUG
     [Fact]
     [Conditional( "DEBUG" )]
+#else
+    [Fact(Skip = "debug-only")]
+#endif
     public void IsInRange_ShouldFail_WhenParamIsLessThanMin()
     {
         var (param, min, max) = Fixture.CreateDistinctSortedCollection<int>( count: 3 );
@@ -278,8 +398,12 @@ public class AssumeTests : TestsBase
         action.Should().Throw<Exception>();
     }
 
+#if DEBUG
     [Fact]
     [Conditional( "DEBUG" )]
+#else
+    [Fact(Skip = "debug-only")]
+#endif
     public void IsInRange_ShouldFail_WhenParamIsGreaterThanMin()
     {
         var (min, max, param) = Fixture.CreateDistinctSortedCollection<int>( count: 3 );
@@ -287,8 +411,12 @@ public class AssumeTests : TestsBase
         action.Should().Throw<Exception>();
     }
 
+#if DEBUG
     [Fact]
     [Conditional( "DEBUG" )]
+#else
+    [Fact(Skip = "debug-only")]
+#endif
     public void IsNotInRange_ShouldFail_WhenParamIsBetweenMinAndMax()
     {
         var (min, param, max) = Fixture.CreateDistinctSortedCollection<int>( count: 3 );
@@ -296,8 +424,12 @@ public class AssumeTests : TestsBase
         action.Should().Throw<Exception>();
     }
 
+#if DEBUG
     [Fact]
     [Conditional( "DEBUG" )]
+#else
+    [Fact(Skip = "debug-only")]
+#endif
     public void IsNotInRange_ShouldFail_WhenParamIsEqualToMin()
     {
         var (param, max) = Fixture.CreateDistinctSortedCollection<int>( count: 3 );
@@ -305,8 +437,12 @@ public class AssumeTests : TestsBase
         action.Should().Throw<Exception>();
     }
 
+#if DEBUG
     [Fact]
     [Conditional( "DEBUG" )]
+#else
+    [Fact(Skip = "debug-only")]
+#endif
     public void IsNotInRange_ShouldFail_WhenParamIsEqualToMax()
     {
         var (min, param) = Fixture.CreateDistinctSortedCollection<int>( count: 3 );
@@ -314,8 +450,12 @@ public class AssumeTests : TestsBase
         action.Should().Throw<Exception>();
     }
 
+#if DEBUG
     [Fact]
     [Conditional( "DEBUG" )]
+#else
+    [Fact(Skip = "debug-only")]
+#endif
     public void IsNotInRange_ShouldPass_WhenParamIsLessThanMin()
     {
         var (param, min, max) = Fixture.CreateDistinctSortedCollection<int>( count: 3 );
@@ -323,8 +463,12 @@ public class AssumeTests : TestsBase
         action.Should().NotThrow();
     }
 
+#if DEBUG
     [Fact]
     [Conditional( "DEBUG" )]
+#else
+    [Fact(Skip = "debug-only")]
+#endif
     public void IsNotInRange_ShouldPass_WhenParamIsGreaterThanMin()
     {
         var (min, max, param) = Fixture.CreateDistinctSortedCollection<int>( count: 3 );
@@ -332,8 +476,12 @@ public class AssumeTests : TestsBase
         action.Should().NotThrow();
     }
 
+#if DEBUG
     [Fact]
     [Conditional( "DEBUG" )]
+#else
+    [Fact(Skip = "debug-only")]
+#endif
     public void IsInExclusiveRange_ShouldPass_WhenParamIsBetweenMinAndMax()
     {
         var (min, param, max) = Fixture.CreateDistinctSortedCollection<int>( count: 3 );
@@ -341,8 +489,12 @@ public class AssumeTests : TestsBase
         action.Should().NotThrow();
     }
 
+#if DEBUG
     [Fact]
     [Conditional( "DEBUG" )]
+#else
+    [Fact(Skip = "debug-only")]
+#endif
     public void IsInExclusiveRange_ShouldFail_WhenParamIsEqualToMin()
     {
         var (param, max) = Fixture.CreateDistinctSortedCollection<int>( count: 3 );
@@ -350,8 +502,12 @@ public class AssumeTests : TestsBase
         action.Should().Throw<Exception>();
     }
 
+#if DEBUG
     [Fact]
     [Conditional( "DEBUG" )]
+#else
+    [Fact(Skip = "debug-only")]
+#endif
     public void IsInExclusiveRange_ShouldFail_WhenParamIsEqualToMax()
     {
         var (min, param) = Fixture.CreateDistinctSortedCollection<int>( count: 3 );
@@ -359,8 +515,12 @@ public class AssumeTests : TestsBase
         action.Should().Throw<Exception>();
     }
 
+#if DEBUG
     [Fact]
     [Conditional( "DEBUG" )]
+#else
+    [Fact(Skip = "debug-only")]
+#endif
     public void IsInExclusiveRange_ShouldFail_WhenParamIsLessThanMin()
     {
         var (param, min, max) = Fixture.CreateDistinctSortedCollection<int>( count: 3 );
@@ -368,8 +528,12 @@ public class AssumeTests : TestsBase
         action.Should().Throw<Exception>();
     }
 
+#if DEBUG
     [Fact]
     [Conditional( "DEBUG" )]
+#else
+    [Fact(Skip = "debug-only")]
+#endif
     public void IsInExclusiveRange_ShouldFail_WhenParamIsGreaterThanMin()
     {
         var (min, max, param) = Fixture.CreateDistinctSortedCollection<int>( count: 3 );
@@ -377,8 +541,12 @@ public class AssumeTests : TestsBase
         action.Should().Throw<Exception>();
     }
 
+#if DEBUG
     [Fact]
     [Conditional( "DEBUG" )]
+#else
+    [Fact(Skip = "debug-only")]
+#endif
     public void IsNotInExclusiveRange_ShouldFail_WhenParamIsBetweenMinAndMax()
     {
         var (min, param, max) = Fixture.CreateDistinctSortedCollection<int>( count: 3 );
@@ -386,8 +554,12 @@ public class AssumeTests : TestsBase
         action.Should().Throw<Exception>();
     }
 
+#if DEBUG
     [Fact]
     [Conditional( "DEBUG" )]
+#else
+    [Fact(Skip = "debug-only")]
+#endif
     public void IsNotInExclusiveRange_ShouldPass_WhenParamIsEqualToMin()
     {
         var (param, max) = Fixture.CreateDistinctSortedCollection<int>( count: 3 );
@@ -395,8 +567,12 @@ public class AssumeTests : TestsBase
         action.Should().NotThrow();
     }
 
+#if DEBUG
     [Fact]
     [Conditional( "DEBUG" )]
+#else
+    [Fact(Skip = "debug-only")]
+#endif
     public void IsNotInExclusiveRange_ShouldPass_WhenParamIsEqualToMax()
     {
         var (min, param) = Fixture.CreateDistinctSortedCollection<int>( count: 3 );
@@ -404,8 +580,12 @@ public class AssumeTests : TestsBase
         action.Should().NotThrow();
     }
 
+#if DEBUG
     [Fact]
     [Conditional( "DEBUG" )]
+#else
+    [Fact(Skip = "debug-only")]
+#endif
     public void IsNotInExclusiveRange_ShouldPass_WhenParamIsLessThanMin()
     {
         var (param, min, max) = Fixture.CreateDistinctSortedCollection<int>( count: 3 );
@@ -413,8 +593,12 @@ public class AssumeTests : TestsBase
         action.Should().NotThrow();
     }
 
+#if DEBUG
     [Fact]
     [Conditional( "DEBUG" )]
+#else
+    [Fact(Skip = "debug-only")]
+#endif
     public void IsNotInExclusiveRange_ShouldPass_WhenParamIsGreaterThanMin()
     {
         var (min, max, param) = Fixture.CreateDistinctSortedCollection<int>( count: 3 );
@@ -422,8 +606,12 @@ public class AssumeTests : TestsBase
         action.Should().NotThrow();
     }
 
+#if DEBUG
     [Fact]
     [Conditional( "DEBUG" )]
+#else
+    [Fact(Skip = "debug-only")]
+#endif
     public void IsEmpty_ShouldPass_WhenParamIsEmpty()
     {
         var param = string.Empty;
@@ -431,8 +619,12 @@ public class AssumeTests : TestsBase
         action.Should().NotThrow();
     }
 
+#if DEBUG
     [Fact]
     [Conditional( "DEBUG" )]
+#else
+    [Fact(Skip = "debug-only")]
+#endif
     public void IsEmpty_ShouldFail_WhenParamIsNotEmpty()
     {
         var param = Fixture.Create<string>();
@@ -440,8 +632,12 @@ public class AssumeTests : TestsBase
         action.Should().Throw<Exception>();
     }
 
+#if DEBUG
     [Fact]
     [Conditional( "DEBUG" )]
+#else
+    [Fact(Skip = "debug-only")]
+#endif
     public void IsNotEmpty_ShouldFail_WhenParamIsEmpty()
     {
         var param = string.Empty;
@@ -449,8 +645,12 @@ public class AssumeTests : TestsBase
         action.Should().Throw<Exception>();
     }
 
+#if DEBUG
     [Fact]
     [Conditional( "DEBUG" )]
+#else
+    [Fact(Skip = "debug-only")]
+#endif
     public void IsNotEmpty_ShouldPass_WhenParamIsNotEmpty()
     {
         var param = Fixture.Create<string>();
@@ -458,8 +658,12 @@ public class AssumeTests : TestsBase
         action.Should().NotThrow();
     }
 
+#if DEBUG
     [Theory]
     [Conditional( "DEBUG" )]
+#else
+    [Theory(Skip = "debug-only")]
+#endif
     [InlineData( -1 )]
     [InlineData( 0 )]
     [InlineData( 1 )]
@@ -472,8 +676,12 @@ public class AssumeTests : TestsBase
         action.Should().NotThrow();
     }
 
+#if DEBUG
     [Theory]
     [Conditional( "DEBUG" )]
+#else
+    [Theory(Skip = "debug-only")]
+#endif
     [InlineData( 4 )]
     [InlineData( 5 )]
     public void ContainsAtLeast_ShouldFail_WhenParamDoesNotContainEnoughElements(int count)
@@ -483,8 +691,12 @@ public class AssumeTests : TestsBase
         action.Should().Throw<Exception>();
     }
 
+#if DEBUG
     [Theory]
     [Conditional( "DEBUG" )]
+#else
+    [Theory(Skip = "debug-only")]
+#endif
     [InlineData( -1 )]
     [InlineData( 0 )]
     [InlineData( 1 )]
@@ -496,8 +708,12 @@ public class AssumeTests : TestsBase
         action.Should().Throw<Exception>();
     }
 
+#if DEBUG
     [Theory]
     [Conditional( "DEBUG" )]
+#else
+    [Theory(Skip = "debug-only")]
+#endif
     [InlineData( 3 )]
     [InlineData( 4 )]
     [InlineData( 5 )]
@@ -508,8 +724,12 @@ public class AssumeTests : TestsBase
         action.Should().NotThrow();
     }
 
+#if DEBUG
     [Theory]
     [Conditional( "DEBUG" )]
+#else
+    [Theory(Skip = "debug-only")]
+#endif
     [InlineData( -1, 3 )]
     [InlineData( 0, 3 )]
     [InlineData( 1, 3 )]
@@ -527,8 +747,12 @@ public class AssumeTests : TestsBase
         action.Should().NotThrow();
     }
 
+#if DEBUG
     [Theory]
     [Conditional( "DEBUG" )]
+#else
+    [Theory(Skip = "debug-only")]
+#endif
     [InlineData( -1, 2 )]
     [InlineData( 0, 2 )]
     [InlineData( 1, 2 )]
@@ -543,8 +767,12 @@ public class AssumeTests : TestsBase
         action.Should().Throw<Exception>();
     }
 
+#if DEBUG
     [Fact]
     [Conditional( "DEBUG" )]
+#else
+    [Fact(Skip = "debug-only")]
+#endif
     public void ContainsExactly_ShouldPass_WhenParamContainsExactAmountOfElements()
     {
         var param = Fixture.CreateMany<int>( count: 3 );
@@ -552,8 +780,12 @@ public class AssumeTests : TestsBase
         action.Should().NotThrow();
     }
 
+#if DEBUG
     [Theory]
     [Conditional( "DEBUG" )]
+#else
+    [Theory(Skip = "debug-only")]
+#endif
     [InlineData( 1 )]
     [InlineData( 2 )]
     [InlineData( 4 )]
@@ -565,72 +797,108 @@ public class AssumeTests : TestsBase
         action.Should().Throw<Exception>();
     }
 
+#if DEBUG
     [Fact]
     [Conditional( "DEBUG" )]
+#else
+    [Fact(Skip = "debug-only")]
+#endif
     public void Unreachable_ShouldFail()
     {
         var action = Lambda.Of( () => Assume.Unreachable() );
         action.Should().Throw<Exception>();
     }
 
+#if DEBUG
     [Fact]
     [Conditional( "DEBUG" )]
+#else
+    [Fact(Skip = "debug-only")]
+#endif
     public void True_ShouldPass_WhenConditionIsTrue()
     {
         var action = Lambda.Of( () => Assume.True( true, string.Empty ) );
         action.Should().NotThrow();
     }
 
+#if DEBUG
     [Fact]
     [Conditional( "DEBUG" )]
+#else
+    [Fact(Skip = "debug-only")]
+#endif
     public void True_ShouldFail_WhenConditionIsFalse()
     {
         var action = Lambda.Of( () => Assume.True( false, string.Empty ) );
         action.Should().Throw<Exception>();
     }
 
+#if DEBUG
     [Fact]
     [Conditional( "DEBUG" )]
+#else
+    [Fact(Skip = "debug-only")]
+#endif
     public void False_ShouldPass_WhenConditionIsFalse()
     {
         var action = Lambda.Of( () => Assume.False( false, string.Empty ) );
         action.Should().NotThrow();
     }
 
+#if DEBUG
     [Fact]
     [Conditional( "DEBUG" )]
+#else
+    [Fact(Skip = "debug-only")]
+#endif
     public void False_ShouldFail_WhenConditionIsTrue()
     {
         var action = Lambda.Of( () => Assume.False( true, string.Empty ) );
         action.Should().Throw<Exception>();
     }
 
+#if DEBUG
     [Fact]
     [Conditional( "DEBUG" )]
+#else
+    [Fact(Skip = "debug-only")]
+#endif
     public void Conditional_ShouldPass_WhenConditionIsFalse()
     {
         var action = Lambda.Of( () => Assume.Conditional( false, () => Assume.True( false, string.Empty ) ) );
         action.Should().NotThrow();
     }
 
+#if DEBUG
     [Fact]
     [Conditional( "DEBUG" )]
+#else
+    [Fact(Skip = "debug-only")]
+#endif
     public void Conditional_ShouldPass_WhenConditionIsTrueAndAssumptionPasses()
     {
         var action = Lambda.Of( () => Assume.Conditional( true, () => Assume.True( true, string.Empty ) ) );
         action.Should().NotThrow();
     }
 
+#if DEBUG
     [Fact]
     [Conditional( "DEBUG" )]
+#else
+    [Fact(Skip = "debug-only")]
+#endif
     public void Conditional_ShouldFail_WhenConditionIsTrueAndAssumptionFails()
     {
         var action = Lambda.Of( () => Assume.Conditional( true, () => Assume.True( false, string.Empty ) ) );
         action.Should().Throw<Exception>();
     }
 
+#if DEBUG
     [Fact]
     [Conditional( "DEBUG" )]
+#else
+    [Fact(Skip = "debug-only")]
+#endif
     public void Conditional_WithTwoParameters_ShouldPass_WhenConditionIsFalseAndIfFalseAssumptionPasses()
     {
         var action = Lambda.Of(
@@ -639,8 +907,12 @@ public class AssumeTests : TestsBase
         action.Should().NotThrow();
     }
 
+#if DEBUG
     [Fact]
     [Conditional( "DEBUG" )]
+#else
+    [Fact(Skip = "debug-only")]
+#endif
     public void Conditional_WithTwoParameters_ShouldFail_WhenConditionIsFalseAndIfFalseAssumptionFails()
     {
         var action = Lambda.Of(
@@ -649,8 +921,12 @@ public class AssumeTests : TestsBase
         action.Should().Throw<Exception>();
     }
 
+#if DEBUG
     [Fact]
     [Conditional( "DEBUG" )]
+#else
+    [Fact(Skip = "debug-only")]
+#endif
     public void Conditional_WithTwoParameters_ShouldPass_WhenConditionIsTrueAndIfTrueAssumptionPasses()
     {
         var action = Lambda.Of(
@@ -659,8 +935,12 @@ public class AssumeTests : TestsBase
         action.Should().NotThrow();
     }
 
+#if DEBUG
     [Fact]
     [Conditional( "DEBUG" )]
+#else
+    [Fact(Skip = "debug-only")]
+#endif
     public void Conditional_WithTwoParameters_ShouldFail_WhenConditionIsTrueAndIfTrueAssumptionFails()
     {
         var action = Lambda.Of(

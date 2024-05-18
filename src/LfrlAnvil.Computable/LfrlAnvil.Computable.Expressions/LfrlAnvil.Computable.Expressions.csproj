@@ -1,19 +1,20 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <PackageTags>LfrlAnvil Computable Expressions</PackageTags>
+        <PackageTags>LfrlAnvil Computable Expressions;LfrlAnvil;Computable;Expressions</PackageTags>
+        <Description>todo</Description>
     </PropertyGroup>
 
     <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
-      <DocumentationFile>bin\Debug\LfrlAnvil.Computable.Expressions.xml</DocumentationFile>
+        <DocumentationFile>bin\Debug\LfrlAnvil.Computable.Expressions.xml</DocumentationFile>
     </PropertyGroup>
 
     <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
-      <DocumentationFile>bin\Release\LfrlAnvil.Computable.Expressions.xml</DocumentationFile>
+        <DocumentationFile>bin\Release\LfrlAnvil.Computable.Expressions.xml</DocumentationFile>
     </PropertyGroup>
-    
+
     <ItemGroup>
-      <ProjectReference Include="..\..\LfrlAnvil.Core\LfrlAnvil.Core.csproj" />
+        <ProjectReference Include="..\..\LfrlAnvil.Core\LfrlAnvil.Core.csproj"/>
     </ItemGroup>
 
 </Project>

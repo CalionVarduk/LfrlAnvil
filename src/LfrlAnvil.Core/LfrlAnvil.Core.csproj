@@ -1,16 +1,17 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <PackageTags>LfrlAnvil Core</PackageTags>
+        <PackageTags>LfrlAnvil Core;LfrlAnvil</PackageTags>
+        <Description>todo</Description>
         <RootNamespace>LfrlAnvil</RootNamespace>
     </PropertyGroup>
 
     <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
-      <DocumentationFile>bin\Debug\LfrlAnvil.Core.xml</DocumentationFile>
+        <DocumentationFile>bin\Debug\LfrlAnvil.Core.xml</DocumentationFile>
     </PropertyGroup>
 
     <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
-      <DocumentationFile>bin\Release\LfrlAnvil.Core.xml</DocumentationFile>
+        <DocumentationFile>bin\Release\LfrlAnvil.Core.xml</DocumentationFile>
     </PropertyGroup>
 
 </Project>

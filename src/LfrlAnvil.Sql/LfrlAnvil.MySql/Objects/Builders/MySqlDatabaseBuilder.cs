@@ -40,6 +40,7 @@ public sealed class MySqlDatabaseBuilder : SqlDatabaseBuilder
         CollationName = collationName;
         IsEncryptionEnabled = isEncryptionEnabled;
     }
+
     /// <summary>
     /// Name of the common schema.
     /// </summary>

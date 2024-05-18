@@ -1,20 +1,21 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <PackageTags>LfrlAnvil Reactive State</PackageTags>
+        <PackageTags>LfrlAnvil Reactive State;LfrlAnvil;Reactive;State</PackageTags>
+        <Description>todo</Description>
     </PropertyGroup>
 
     <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
-      <DocumentationFile>bin\Debug\LfrlAnvil.Reactive.State.xml</DocumentationFile>
+        <DocumentationFile>bin\Debug\LfrlAnvil.Reactive.State.xml</DocumentationFile>
     </PropertyGroup>
 
     <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
-      <DocumentationFile>bin\Release\LfrlAnvil.Reactive.State.xml</DocumentationFile>
+        <DocumentationFile>bin\Release\LfrlAnvil.Reactive.State.xml</DocumentationFile>
     </PropertyGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\..\LfrlAnvil.Validation\LfrlAnvil.Validation.csproj" />
-        <ProjectReference Include="..\LfrlAnvil.Reactive.Core\LfrlAnvil.Reactive.Core.csproj" />
+        <ProjectReference Include="..\..\LfrlAnvil.Validation\LfrlAnvil.Validation.csproj"/>
+        <ProjectReference Include="..\LfrlAnvil.Reactive.Core\LfrlAnvil.Reactive.Core.csproj"/>
     </ItemGroup>
 
 </Project>

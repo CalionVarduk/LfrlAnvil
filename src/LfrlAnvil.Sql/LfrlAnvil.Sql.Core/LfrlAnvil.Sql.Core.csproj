@@ -1,20 +1,21 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <PackageTags>LfrlAnvil Sql Core</PackageTags>
+        <PackageTags>LfrlAnvil Sql Core;LfrlAnvil;Sql</PackageTags>
+        <Description>todo</Description>
         <RootNamespace>LfrlAnvil.Sql</RootNamespace>
     </PropertyGroup>
 
     <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
-      <DocumentationFile>bin\Debug\LfrlAnvil.Sql.Core.xml</DocumentationFile>
+        <DocumentationFile>bin\Debug\LfrlAnvil.Sql.Core.xml</DocumentationFile>
     </PropertyGroup>
 
     <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
-      <DocumentationFile>bin\Release\LfrlAnvil.Sql.Core.xml</DocumentationFile>
+        <DocumentationFile>bin\Release\LfrlAnvil.Sql.Core.xml</DocumentationFile>
     </PropertyGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\..\LfrlAnvil.Core\LfrlAnvil.Core.csproj" />
+        <ProjectReference Include="..\..\LfrlAnvil.Core\LfrlAnvil.Core.csproj"/>
     </ItemGroup>
 
 </Project>

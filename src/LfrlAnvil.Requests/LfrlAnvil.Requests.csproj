@@ -1,15 +1,16 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <PackageTags>LfrlAnvil Requests</PackageTags>
+        <PackageTags>LfrlAnvil Requests;LfrlAnvil;Requests</PackageTags>
+        <Description>todo</Description>
     </PropertyGroup>
 
     <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
-      <DocumentationFile>bin\Debug\LfrlAnvil.Requests.xml</DocumentationFile>
+        <DocumentationFile>bin\Debug\LfrlAnvil.Requests.xml</DocumentationFile>
     </PropertyGroup>
 
     <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
-      <DocumentationFile>bin\Release\LfrlAnvil.Requests.xml</DocumentationFile>
+        <DocumentationFile>bin\Release\LfrlAnvil.Requests.xml</DocumentationFile>
     </PropertyGroup>
-    
+
 </Project>

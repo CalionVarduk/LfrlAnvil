@@ -2,7 +2,6 @@
 using LfrlAnvil.MySql.Internal;
 using LfrlAnvil.MySql.Objects.Builders;
 using LfrlAnvil.Sql;
-using LfrlAnvil.Sql.Objects;
 using LfrlAnvil.Sql.Objects.Builders;
 
 namespace LfrlAnvil.MySql.Tests.Helpers;

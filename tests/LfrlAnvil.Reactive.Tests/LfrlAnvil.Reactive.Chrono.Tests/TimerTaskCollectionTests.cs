@@ -938,17 +938,18 @@ public class TimerTaskCollectionTests : TestsBase
     }
 
     [Fact]
-    public async Task TaskInCreatedState_ShouldBeStartedAutomatically()
+    public void TaskInCreatedState_ShouldBeStartedAutomatically()
     {
         var interval = Duration.FromMilliseconds( 15 );
         var timestamp1 = Timestamp.Zero + interval;
 
-        var fooTask = new TimerTask( "foo", onInvoke: (_, _, _, _) => new Task( () => { } ) );
+        var after = new ManualResetEventSlim();
+        var fooTask = new TimerTask( "foo", onInvoke: (_, _, _, _) => new Task( () => { } ), onComplete: (_, _, _) => after.Set() );
         var source = new EventPublisher<WithInterval<long>>();
         var sut = source.RegisterTasks( new[] { fooTask } );
 
         PublishEvents( source, timestamp1 );
-        await Task.Delay( 1 );
+        after.Wait();
 
         using ( new AssertionScope() )
         {

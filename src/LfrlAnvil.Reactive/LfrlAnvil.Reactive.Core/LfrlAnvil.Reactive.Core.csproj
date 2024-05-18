@@ -1,20 +1,21 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <PackageTags>LfrlAnvil Reactive Core</PackageTags>
+        <PackageTags>LfrlAnvil Reactive Core;LfrlAnvil;Reactive</PackageTags>
+        <Description>todo</Description>
         <RootNamespace>LfrlAnvil.Reactive</RootNamespace>
     </PropertyGroup>
 
     <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
-      <DocumentationFile>bin\Debug\LfrlAnvil.Reactive.Core.xml</DocumentationFile>
+        <DocumentationFile>bin\Debug\LfrlAnvil.Reactive.Core.xml</DocumentationFile>
     </PropertyGroup>
 
     <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
-      <DocumentationFile>bin\Release\LfrlAnvil.Reactive.Core.xml</DocumentationFile>
+        <DocumentationFile>bin\Release\LfrlAnvil.Reactive.Core.xml</DocumentationFile>
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\..\LfrlAnvil.Core\LfrlAnvil.Core.csproj" />
+        <ProjectReference Include="..\..\LfrlAnvil.Core\LfrlAnvil.Core.csproj"/>
     </ItemGroup>
-    
+
 </Project>
