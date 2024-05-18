@@ -5,12 +5,12 @@ VisualStudioVersion = 15.0.28307.1433
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{DA5FF8FC-7936-4469-94B0-34EF8455EE5D}"
 	ProjectSection(SolutionItems) = preProject
-		src\Directory.build.props = src\Directory.build.props
+		src\Directory.Build.props = src\Directory.Build.props
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{09DABFA2-E13A-419B-9EEC-11A014E1243C}"
 	ProjectSection(SolutionItems) = preProject
-		tests\Directory.build.props = tests\Directory.build.props
+		tests\Directory.Build.props = tests\Directory.Build.props
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "benchmarks", "benchmarks", "{834C7885-FD66-44D4-A5ED-240E37BED6BD}"
@@ -105,7 +105,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LfrlAnvil.Sql.Core.Tests", 
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "external", "external", "{285A905E-AE07-496C-8A34-1D812B4A236A}"
 	ProjectSection(SolutionItems) = preProject
-		Directory.build.props = Directory.build.props
+		Directory.Build.props = Directory.Build.props
 		todo.md = todo.md
 		readme.md = readme.md
 		LICENSE = LICENSE
