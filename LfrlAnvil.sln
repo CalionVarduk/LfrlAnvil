@@ -108,6 +108,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "external", "external", "{28
 		Directory.build.props = Directory.build.props
 		todo.md = todo.md
 		readme.md = readme.md
+		LICENSE = LICENSE
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LfrlAnvil.MySql", "src\LfrlAnvil.Sql\LfrlAnvil.MySql\LfrlAnvil.MySql.csproj", "{2F38DCB8-8304-48E7-B3D6-3A5ACD4B5A96}"
