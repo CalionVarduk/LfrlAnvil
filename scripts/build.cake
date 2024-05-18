@@ -136,27 +136,25 @@ Task("Push")
     var packages = GetFiles(System.IO.Path.Combine(nugetDir, "*.nupkg"));
     foreach (var package in packages)
     {
-        Information("Package {0}", package.FullPath);
-//        var settings = new NuGetPushSettings
-//        {
-//            Source = nugetSource,
-//            ApiKey = nugetApiKey,
-//            SkipDuplicate = true
-//        };
-//        NuGetPush(package.FullPath, settings);
+        var settings = new NuGetPushSettings
+        {
+            Source = nugetSource,
+            ApiKey = nugetApiKey,
+            SkipDuplicate = true
+        };
+        NuGetPush(package.FullPath, settings);
     }
 
     var symbolPackages = GetFiles(System.IO.Path.Combine(nugetDir, "*.snupkg"));
     foreach (var package in symbolPackages)
     {
-        Information("Package {0}", package.FullPath);
-//        var settings = new NuGetPushSettings
-//        {
-//            Source = nugetSource,
-//            ApiKey = nugetApiKey,
-//            SkipDuplicate = true
-//        };
-//        NuGetPush(package.FullPath, settings);
+        var settings = new NuGetPushSettings
+        {
+            Source = nugetSource,
+            ApiKey = nugetApiKey,
+            SkipDuplicate = true
+        };
+        NuGetPush(package.FullPath, settings);
     }
 });
 
