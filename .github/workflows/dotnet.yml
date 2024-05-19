@@ -34,16 +34,16 @@ jobs:
       - name: Run build script
         run: dotnet cake ./scripts/build.cake --target="Publish" --publish-output="publish" --cover-tests=true
 
-      - name: Upload build artifacts
-        if: success()
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-artifacts
-          path: ./publish
-
       - name: Publish test coverage report
         uses: coverallsapp/github-action@v2
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           file: .coverlet/coverage.info
           format: lcov
+
+      - name: Upload build artifacts
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-artifacts
+          path: ./publish

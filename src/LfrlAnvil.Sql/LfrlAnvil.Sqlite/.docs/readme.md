@@ -1,4 +1,4 @@
-﻿([root](https://github.com/CalionVarduk/LfrlAnvil))
+﻿([root](https://github.com/CalionVarduk/LfrlAnvil/blob/main/readme.md))
 [![NuGet Badge](https://buildstats.info/nuget/LfrlAnvil.Sqlite)](https://www.nuget.org/packages/LfrlAnvil.Sqlite/)
 
 # [LfrlAnvil.Sqlite](https://github.com/CalionVarduk/LfrlAnvil/tree/main/src/LfrlAnvil.Sql/LfrlAnvil.Sqlite)
