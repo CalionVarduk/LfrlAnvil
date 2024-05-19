@@ -578,7 +578,7 @@ public class ReactiveSchedulerTests : TestsBase
     }
 
     [Fact]
-    public async Task AllTaskModifications_ShouldReturnFalse_WhenTaskHasBeenRemoved()
+    public void AllTaskModifications_ShouldReturnFalse_WhenTaskHasBeenRemoved()
     {
         var invocationOrder = new InvocationOrder( InvocationContinuation.Deferred( 0 ) );
         var timestamps = new Timestamps( Timestamp.Zero, new Timestamp( 123 ) );
@@ -589,7 +589,7 @@ public class ReactiveSchedulerTests : TestsBase
             onDispose: _ => invocationOrder.EndAction() );
 
         sut.Schedule( task, new Timestamp( 123 ) );
-        var schedule = sut.StartAsync();
+        sut.StartAsync();
 
         invocationOrder.WaitForStart();
         var state1 = sut.TryGetTaskState( "foo" );
@@ -604,7 +604,7 @@ public class ReactiveSchedulerTests : TestsBase
         invocationOrder.Continue( 0 );
         invocationOrder.WaitForEnd();
         sut.Dispose();
-        await schedule;
+        invocationOrder.CancelTimeout();
 
         using ( new AssertionScope() )
         {
@@ -660,14 +660,14 @@ public class ReactiveSchedulerTests : TestsBase
             onComplete: (_, scheduler, _) => state3 = scheduler.TryGetTaskState( "foo" ),
             onDispose: _ => invocationOrder.EndAction() );
 
-        var schedule = sut.StartAsync();
+        _ = sut.StartAsync();
         await Task.Delay( 1 );
         sut.Schedule( task, new Timestamp( 123 ) );
         timestamps.Move( Duration.FromTicks( 123 ) );
         invocationOrder.Continue( 0 );
         invocationOrder.WaitForEnd();
         sut.Dispose();
-        await schedule;
+        invocationOrder.CancelTimeout();
 
         using ( new AssertionScope() )
         {
@@ -721,14 +721,14 @@ public class ReactiveSchedulerTests : TestsBase
             onDispose: _ => invocationOrder.EndAction() );
 
         sut.Schedule( task, new Timestamp( Duration.FromHours( 1 ).Ticks ) );
-        var schedule = sut.StartAsync();
+        _ = sut.StartAsync();
         await Task.Delay( 1 );
         sut.SetNextTimestamp( "foo", new Timestamp( 123 ) );
         timestamps.Move( Duration.FromTicks( 123 ) );
         invocationOrder.Continue( 0 );
         invocationOrder.WaitForEnd();
         sut.Dispose();
-        await schedule;
+        invocationOrder.CancelTimeout();
 
         using ( new AssertionScope() )
         {
@@ -774,13 +774,14 @@ public class ReactiveSchedulerTests : TestsBase
             } );
 
         sut.Schedule( task, new Timestamp( 123 ) );
-        _ = sut.StartAsync();
+        sut.StartAsync();
         invocationOrder.WaitForStart();
         var state1 = sut.TryGetTaskState( "foo" );
         var result = sut.Remove( "foo" );
         var state2 = sut.TryGetTaskState( "foo" );
         invocationOrder.Continue( 0 );
         invocationOrder.WaitForEnd();
+        invocationOrder.CancelTimeout();
 
         using ( new AssertionScope() )
         {
@@ -844,7 +845,7 @@ public class ReactiveSchedulerTests : TestsBase
 
         sut.Schedule( fooTask, new Timestamp( 123 ) );
         sut.Schedule( barTask, new Timestamp( 246 ) );
-        _ = sut.StartAsync();
+        sut.StartAsync();
 
         invocationOrder.WaitForStart();
         var fooState1 = sut.TryGetTaskState( "foo" );
@@ -854,6 +855,7 @@ public class ReactiveSchedulerTests : TestsBase
         var barState2 = sut.TryGetTaskState( "bar" );
         invocationOrder.Continue( 0 );
         invocationOrder.WaitForEnd();
+        invocationOrder.CancelTimeout();
 
         using ( new AssertionScope() )
         {
@@ -1132,6 +1134,7 @@ public class ReactiveSchedulerTests : TestsBase
         invocationOrder.Continue( 0 );
         invocationOrder.WaitForEnd();
         await schedule;
+        invocationOrder.CancelTimeout();
 
         using ( new AssertionScope() )
         {
@@ -1192,7 +1195,7 @@ public class ReactiveSchedulerTests : TestsBase
     }
 
     [Fact]
-    public async Task MultipleConcurrentTaskInvocations_ShouldBeTrackedCorrectly()
+    public void MultipleConcurrentTaskInvocations_ShouldBeTrackedCorrectly()
     {
         var invocationOrder = new InvocationOrder(
             InvocationContinuation.Deferred( 2 ),
@@ -1219,10 +1222,10 @@ public class ReactiveSchedulerTests : TestsBase
 
         var sut = new ReactiveScheduler<string>( timestamps );
         sut.Schedule( fooTask, new Timestamp( 123 ), interval, 3 );
-        var schedule = sut.StartAsync();
+        sut.StartAsync();
         invocationOrder.WaitForEnd();
         sut.Dispose();
-        await schedule;
+        invocationOrder.CancelTimeout();
 
         using ( new AssertionScope() )
         {
@@ -1285,12 +1288,12 @@ public class ReactiveSchedulerTests : TestsBase
 
         var sut = new ReactiveScheduler<string>( timestamps );
         sut.Schedule( fooTask, new Timestamp( 123 ), Duration.FromTicks( 123 ), 4 );
-        var schedule = sut.StartAsync();
+        _ = sut.StartAsync();
         await invocationOrder.WaitForManual();
         invocationOrder.Continue( 1 );
         invocationOrder.WaitForEnd();
         sut.Dispose();
-        await schedule;
+        invocationOrder.CancelTimeout();
 
         using ( new AssertionScope() )
         {
@@ -1329,8 +1332,7 @@ public class ReactiveSchedulerTests : TestsBase
     }
 
     [Fact]
-    public async Task
-        MultipleConcurrentTaskInvocations_ShouldBeTrackedCorrectly_WhenMaxConcurrentInvocationsHasBeenReachedWithDisabledQueue()
+    public void MultipleConcurrentTaskInvocations_ShouldBeTrackedCorrectly_WhenMaxConcurrentInvocationsHasBeenReachedWithDisabledQueue()
     {
         var invocationOrder = new InvocationOrder(
             InvocationContinuation.Deferred( 1 ),
@@ -1357,10 +1359,10 @@ public class ReactiveSchedulerTests : TestsBase
 
         var sut = new ReactiveScheduler<string>( timestamps );
         sut.Schedule( fooTask, new Timestamp( 123 ), Duration.FromTicks( 123 ), 3 );
-        var schedule = sut.StartAsync();
+        sut.StartAsync();
         invocationOrder.WaitForEnd();
         sut.Dispose();
-        await schedule;
+        invocationOrder.CancelTimeout();
 
         using ( new AssertionScope() )
         {
@@ -1393,7 +1395,7 @@ public class ReactiveSchedulerTests : TestsBase
     }
 
     [Fact]
-    public async Task SingleConcurrentTaskInvocations_ShouldBeTrackedCorrectly_WithLimitedQueue()
+    public void SingleConcurrentTaskInvocations_ShouldBeTrackedCorrectly_WithLimitedQueue()
     {
         var invocationOrder = new InvocationOrder(
             InvocationContinuation.Deferred( 2 ),
@@ -1421,10 +1423,10 @@ public class ReactiveSchedulerTests : TestsBase
 
         var sut = new ReactiveScheduler<string>( timestamps );
         sut.Schedule( fooTask, new Timestamp( 123 ), Duration.FromTicks( 123 ), 4 );
-        var schedule = sut.StartAsync();
+        sut.StartAsync();
         invocationOrder.WaitForEnd();
         sut.Dispose();
-        await schedule;
+        invocationOrder.CancelTimeout();
 
         using ( new AssertionScope() )
         {
@@ -1467,7 +1469,7 @@ public class ReactiveSchedulerTests : TestsBase
     }
 
     [Fact]
-    public async Task TaskEnqueueCancellation_ShouldCompleteItImmediatelyWithCancellationRequestedReason()
+    public void TaskEnqueueCancellation_ShouldCompleteItImmediatelyWithCancellationRequestedReason()
     {
         var invocationOrder = new InvocationOrder( InvocationContinuation.Immediate( 1 ), InvocationContinuation.Deferred( 0 ) );
         var interval = Duration.FromTicks( 123 );
@@ -1491,10 +1493,10 @@ public class ReactiveSchedulerTests : TestsBase
 
         var sut = new ReactiveScheduler<string>( timestamps );
         sut.Schedule( fooTask, new Timestamp( 123 ), interval, 2 );
-        var schedule = sut.StartAsync();
+        sut.StartAsync();
         invocationOrder.WaitForEnd();
         sut.Dispose();
-        await schedule;
+        invocationOrder.CancelTimeout();
 
         using ( new AssertionScope() )
         {
@@ -1528,7 +1530,7 @@ public class ReactiveSchedulerTests : TestsBase
     }
 
     [Fact]
-    public async Task ExceptionDuringTaskInvocation_ShouldBeCaughtAndHandled()
+    public void ExceptionDuringTaskInvocation_ShouldBeCaughtAndHandled()
     {
         var exception = new Exception();
         var invocationOrder = new InvocationOrder();
@@ -1542,10 +1544,10 @@ public class ReactiveSchedulerTests : TestsBase
 
         var sut = new ReactiveScheduler<string>( timestamps );
         sut.Schedule( fooTask, new Timestamp( 123 ) );
-        var schedule = sut.StartAsync();
+        sut.StartAsync();
         invocationOrder.WaitForEnd();
         sut.Dispose();
-        await schedule;
+        invocationOrder.CancelTimeout();
 
         using ( new AssertionScope() )
         {
@@ -1573,7 +1575,7 @@ public class ReactiveSchedulerTests : TestsBase
     }
 
     [Fact]
-    public async Task ExceptionDuringTaskProcessing_ShouldBeCaughtAndHandled()
+    public void ExceptionDuringTaskProcessing_ShouldBeCaughtAndHandled()
     {
         var exception = new Exception();
         var invocationOrder = new InvocationOrder( InvocationContinuation.Immediate( 0 ) );
@@ -1587,10 +1589,10 @@ public class ReactiveSchedulerTests : TestsBase
 
         var sut = new ReactiveScheduler<string>( timestamps );
         sut.Schedule( fooTask, new Timestamp( 123 ) );
-        var schedule = sut.StartAsync();
+        sut.StartAsync();
         invocationOrder.WaitForEnd();
         sut.Dispose();
-        await schedule;
+        invocationOrder.CancelTimeout();
 
         using ( new AssertionScope() )
         {
@@ -1624,7 +1626,7 @@ public class ReactiveSchedulerTests : TestsBase
     }
 
     [Fact]
-    public async Task ExceptionDuringTaskCompletion_ShouldBeCaughtAndIgnored()
+    public void ExceptionDuringTaskCompletion_ShouldBeCaughtAndIgnored()
     {
         var exception = new Exception();
         var invocationOrder = new InvocationOrder( InvocationContinuation.Immediate( 0 ) );
@@ -1642,10 +1644,10 @@ public class ReactiveSchedulerTests : TestsBase
 
         var sut = new ReactiveScheduler<string>( timestamps );
         sut.Schedule( fooTask, new Timestamp( 123 ) );
-        var schedule = sut.StartAsync();
+        sut.StartAsync();
         invocationOrder.WaitForEnd();
         sut.Dispose();
-        await schedule;
+        invocationOrder.CancelTimeout();
 
         using ( new AssertionScope() )
         {
@@ -1670,7 +1672,7 @@ public class ReactiveSchedulerTests : TestsBase
     }
 
     [Fact]
-    public async Task ExceptionDuringTaskEnqueue_ShouldBeCaughtAndIgnoredAndCauseInvocationToBeCancelled()
+    public void ExceptionDuringTaskEnqueue_ShouldBeCaughtAndIgnoredAndCauseInvocationToBeCancelled()
     {
         var exception = new Exception();
         var invocationOrder = new InvocationOrder( InvocationContinuation.Immediate( 1 ), InvocationContinuation.Deferred( 0 ) );
@@ -1694,10 +1696,10 @@ public class ReactiveSchedulerTests : TestsBase
 
         var sut = new ReactiveScheduler<string>( timestamps );
         sut.Schedule( fooTask, new Timestamp( 123 ), Duration.FromTicks( 123 ), 2 );
-        var schedule = sut.StartAsync();
+        sut.StartAsync();
         invocationOrder.WaitForEnd();
         sut.Dispose();
-        await schedule;
+        invocationOrder.CancelTimeout();
 
         using ( new AssertionScope() )
         {
@@ -1749,12 +1751,12 @@ public class ReactiveSchedulerTests : TestsBase
 
         var sut = new ReactiveScheduler<string>( timestamps );
         sut.Schedule( fooTask, new Timestamp( 123 ) );
-        var schedule = sut.StartAsync();
+        _ = sut.StartAsync();
         await invocationOrder.WaitForManual();
         taskSource.SetCanceled();
         invocationOrder.WaitForEnd();
         sut.Dispose();
-        await schedule;
+        invocationOrder.CancelTimeout();
 
         using ( new AssertionScope() )
         {
@@ -1783,7 +1785,7 @@ public class ReactiveSchedulerTests : TestsBase
     }
 
     [Fact]
-    public async Task TaskInCreatedState_ShouldBeStartedAutomatically()
+    public void TaskInCreatedState_ShouldBeStartedAutomatically()
     {
         var invocationOrder = new InvocationOrder();
         var timestamps = new Timestamps( Timestamp.Zero, new Timestamp( 123 ) );
@@ -1796,10 +1798,10 @@ public class ReactiveSchedulerTests : TestsBase
 
         var sut = new ReactiveScheduler<string>( timestamps );
         sut.Schedule( fooTask, new Timestamp( 123 ) );
-        var schedule = sut.StartAsync();
+        sut.StartAsync();
         invocationOrder.WaitForEnd();
         sut.Dispose();
-        await schedule;
+        invocationOrder.CancelTimeout();
 
         using ( new AssertionScope() )
         {
@@ -1824,7 +1826,7 @@ public class ReactiveSchedulerTests : TestsBase
     }
 
     [Fact]
-    public async Task SynchronousTask_ShouldBeInvokedCorrectly()
+    public void SynchronousTask_ShouldBeInvokedCorrectly()
     {
         var invocationOrder = new InvocationOrder();
         var timestamps = new Timestamps( Timestamp.Zero, new Timestamp( 123 ) );
@@ -1836,10 +1838,10 @@ public class ReactiveSchedulerTests : TestsBase
 
         var sut = new ReactiveScheduler<string>( timestamps );
         sut.Schedule( fooTask, new Timestamp( 123 ) );
-        var schedule = sut.StartAsync();
+        sut.StartAsync();
         invocationOrder.WaitForEnd();
         sut.Dispose();
-        await schedule;
+        invocationOrder.CancelTimeout();
 
         using ( new AssertionScope() )
         {
@@ -1879,8 +1881,9 @@ public class ReactiveSchedulerTests : TestsBase
 
         var sut = new ReactiveScheduler<string>( timestamps );
         sut.Schedule( fooTask, new Timestamp( 123 ), Duration.FromHours( 1 ), 2 );
-        _ = sut.StartAsync();
+        sut.StartAsync();
         invocationOrder.WaitForEnd();
+        invocationOrder.CancelTimeout();
 
         var action = Lambda.Of( () => sut.Remove( "foo" ) );
 
@@ -1915,13 +1918,13 @@ public class ReactiveSchedulerTests : TestsBase
 
         var sut = new ReactiveScheduler<string>( timestamps );
         sut.Schedule( fooTask, new Timestamp( 123 ), interval, 3 );
-        var schedule = sut.StartAsync();
+        _ = sut.StartAsync();
         await invocationOrder.WaitForManual();
         sut.Remove( "foo" );
         invocationOrder.Continue( 0 );
         invocationOrder.WaitForEnd();
         sut.Dispose();
-        await schedule;
+        invocationOrder.CancelTimeout();
 
         using ( new AssertionScope() )
         {
@@ -1969,14 +1972,14 @@ public class ReactiveSchedulerTests : TestsBase
 
         var sut = new ReactiveScheduler<string>( timestamps );
         sut.Schedule( fooTask, new Timestamp( 123 ) );
-        var schedule = sut.StartAsync();
+        _ = sut.StartAsync();
         await invocationOrder.WaitForManual();
         timestamps.Move( interval );
         await invocationOrder.WaitForManual();
         timestamps.Move( interval );
         invocationOrder.WaitForEnd();
         sut.Dispose();
-        await schedule;
+        invocationOrder.CancelTimeout();
 
         using ( new AssertionScope() )
         {
@@ -2046,6 +2049,7 @@ public class ReactiveSchedulerTests : TestsBase
         var schedule = sut.StartAsync();
         invocationOrder.WaitForEnd();
         await schedule;
+        invocationOrder.CancelTimeout();
 
         using ( new AssertionScope() )
         {
@@ -2078,6 +2082,7 @@ public class ReactiveSchedulerTests : TestsBase
         var schedule = sut.StartAsync();
         invocationOrder.WaitForEnd();
         await schedule;
+        invocationOrder.CancelTimeout();
 
         using ( new AssertionScope() )
         {
@@ -2118,6 +2123,7 @@ public class ReactiveSchedulerTests : TestsBase
         invocationOrder.WaitForEnd();
         sut.Dispose();
         await schedule;
+        invocationOrder.CancelTimeout();
 
         using ( new AssertionScope() )
         {
@@ -2157,6 +2163,7 @@ public class ReactiveSchedulerTests : TestsBase
         var schedule = sut.StartAsync();
         invocationOrder.WaitForEnd();
         await schedule;
+        invocationOrder.CancelTimeout();
 
         using ( new AssertionScope() )
         {
@@ -2190,6 +2197,7 @@ public class ReactiveSchedulerTests : TestsBase
         invocationOrder.WaitForEnd();
         sut.Dispose();
         await schedule;
+        invocationOrder.CancelTimeout();
 
         using ( new AssertionScope() )
         {
@@ -2223,6 +2231,7 @@ public class ReactiveSchedulerTests : TestsBase
         invocationOrder.WaitForEnd();
         sut.Dispose();
         await schedule;
+        invocationOrder.CancelTimeout();
 
         using ( new AssertionScope() )
         {
@@ -2263,6 +2272,7 @@ public class ReactiveSchedulerTests : TestsBase
         invocationOrder.WaitForEnd();
         sut.Dispose();
         await schedule;
+        invocationOrder.CancelTimeout();
 
         using ( new AssertionScope() )
         {
@@ -2331,9 +2341,10 @@ public class ReactiveSchedulerTests : TestsBase
         sut.Schedule( fooTask, new Timestamp( 123 ), Duration.FromTicks( 42 ), 2 );
         sut.Schedule( barTask, new Timestamp( 150 ) );
         sut.ScheduleInfinite( quxTask, new Timestamp( 50 ), Duration.FromTicks( 150 ) );
-        _ = sut.StartAsync();
+        sut.StartAsync();
         timestamps.AddValues( new Timestamp( 50 ) );
         invocationOrder.WaitForEnd();
+        invocationOrder.CancelTimeout();
 
         invocations.Should()
             .BeSequentiallyEqualTo(
@@ -2498,6 +2509,8 @@ public class ReactiveSchedulerTests : TestsBase
 
     private sealed class InvocationOrder
     {
+        private readonly CancellationTokenSource _cancellationTokenSource;
+        private readonly Task _timeout;
         private readonly InvocationContinuation[] _continuations;
         private readonly ManualResetEventSlim[] _resetEvents;
         private readonly ManualResetEventSlim _manual;
@@ -2505,6 +2518,7 @@ public class ReactiveSchedulerTests : TestsBase
         private readonly ManualResetEventSlim _end;
         private readonly int _actions;
         private InterlockedInt32 _actionCount;
+        private InterlockedBoolean _isDone;
 
         public InvocationOrder(params InvocationContinuation[] continuations)
             : this( 1, continuations ) { }
@@ -2513,6 +2527,7 @@ public class ReactiveSchedulerTests : TestsBase
         {
             _actions = actions;
             _actionCount = new InterlockedInt32( 0 );
+            _isDone = new InterlockedBoolean( false );
             _continuations = continuations;
             _resetEvents = new ManualResetEventSlim[continuations.Length];
             for ( var i = 0; i < _resetEvents.Length; ++i )
@@ -2521,31 +2536,58 @@ public class ReactiveSchedulerTests : TestsBase
             _manual = new ManualResetEventSlim();
             _start = new ManualResetEventSlim();
             _end = new ManualResetEventSlim();
+
+            _cancellationTokenSource = new CancellationTokenSource();
+            _timeout = Task.Run(
+                async () =>
+                {
+                    await Task.Delay( TimeSpan.FromSeconds( 10 ), _cancellationTokenSource.Token );
+                    _cancellationTokenSource.Token.ThrowIfCancellationRequested();
+                    _isDone.WriteTrue();
+                    _manual.Set();
+                    _start.Set();
+                    _end.Set();
+                    foreach ( var e in _resetEvents )
+                        e.Set();
+                },
+                _cancellationTokenSource.Token );
+        }
+
+        public void CancelTimeout()
+        {
+            if ( _isDone.WriteTrue() )
+                _cancellationTokenSource.Cancel();
         }
 
         public void Start()
         {
-            _start.Set();
+            if ( ! _isDone.Value )
+                _start.Set();
         }
 
         public void EndAction()
         {
-            if ( _actionCount.Increment() >= _actions )
+            if ( ! _isDone.Value && _actionCount.Increment() >= _actions )
                 _end.Set();
         }
 
         public void WaitForStart()
         {
-            _start.Wait();
+            if ( ! _isDone.Value )
+                _start.Wait();
         }
 
         public void WaitForEnd()
         {
-            _end.Wait();
+            if ( ! _isDone.Value )
+                _end.Wait();
         }
 
         public async Task WaitForManual()
         {
+            if ( _isDone.Value )
+                return;
+
             _manual.Wait();
             _manual.Reset();
             await Task.Delay( 15 );
@@ -2553,17 +2595,20 @@ public class ReactiveSchedulerTests : TestsBase
 
         public void ContinueManual()
         {
-            _manual.Set();
+            if ( ! _isDone.Value )
+                _manual.Set();
         }
 
         public void Continue(long invocationId)
         {
-            _resetEvents[invocationId].Set();
+            if ( ! _isDone.Value )
+                _resetEvents[invocationId].Set();
         }
 
         public void WaitFor(long invocationId)
         {
-            _resetEvents[invocationId].Wait();
+            if ( ! _isDone.Value )
+                _resetEvents[invocationId].Wait();
         }
 
         public Task OnInvoke(long invocationId, bool autoStart = true, Action? callback = null)

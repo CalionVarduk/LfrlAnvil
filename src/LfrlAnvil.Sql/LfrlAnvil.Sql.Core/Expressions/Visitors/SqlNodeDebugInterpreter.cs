@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics.Contracts;
+using System.Globalization;
 using LfrlAnvil.Extensions;
 using LfrlAnvil.Sql.Expressions.Functions;
 using LfrlAnvil.Sql.Expressions.Logical;
@@ -42,7 +43,13 @@ public sealed class SqlNodeDebugInterpreter : SqlNodeInterpreter
     /// <inheritdoc />
     public override void VisitLiteral(SqlLiteralNode node)
     {
-        Context.Sql.Append( '"' ).Append( node.GetValue() ).Append( '"' );
+        var value = node.GetValue();
+
+        Context.Sql
+            .Append( '"' )
+            .Append( (value as IConvertible)?.ToString( CultureInfo.InvariantCulture ) ?? value.ToString() )
+            .Append( '"' );
+
         AppendExpressionType( node.Type );
     }
 

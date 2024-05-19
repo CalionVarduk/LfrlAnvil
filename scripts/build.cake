@@ -82,8 +82,7 @@ Task("Test")
     var settings = new DotNetTestSettings
     {
         NoBuild = true,
-        Configuration = configuration,
-        MSBuildSettings = new DotNetMSBuildSettings { MaxCpuCount = 1 }
+        Configuration = configuration
     };
     foreach (var project in testProjects)
         DotNetTest(project.FullPath, settings);

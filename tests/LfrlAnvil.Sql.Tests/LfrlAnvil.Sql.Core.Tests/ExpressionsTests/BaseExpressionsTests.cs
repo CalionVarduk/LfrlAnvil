@@ -1003,7 +1003,7 @@ VALUES
                     @"CREATE TABLE [foo].[bar] (
   [x] : System.Int32,
   [y] : Nullable<System.String>,
-  [z] : System.Double DEFAULT (""10,5"" : System.Double),
+  [z] : System.Double DEFAULT (""10.5"" : System.Double),
   [a] : System.String GENERATED (""foo"" : System.String) VIRTUAL,
   [b] : Nullable<System.String> GENERATED (""bar"" : System.String) STORED,
   PRIMARY KEY [PK_foobar] (([foo].[bar].[x] : System.Int32) ASC),

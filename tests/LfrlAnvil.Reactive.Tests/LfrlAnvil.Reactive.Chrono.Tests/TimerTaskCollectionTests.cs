@@ -944,12 +944,23 @@ public class TimerTaskCollectionTests : TestsBase
         var timestamp1 = Timestamp.Zero + interval;
 
         var after = new ManualResetEventSlim();
+        var cancellationTokenSource = new CancellationTokenSource();
+        _ = Task.Run(
+            async () =>
+            {
+                await Task.Delay( TimeSpan.FromSeconds( 10 ), cancellationTokenSource.Token );
+                cancellationTokenSource.Token.ThrowIfCancellationRequested();
+                after.Set();
+            },
+            cancellationTokenSource.Token );
+
         var fooTask = new TimerTask( "foo", onInvoke: (_, _, _, _) => new Task( () => { } ), onComplete: (_, _, _) => after.Set() );
         var source = new EventPublisher<WithInterval<long>>();
         var sut = source.RegisterTasks( new[] { fooTask } );
 
         PublishEvents( source, timestamp1 );
         after.Wait();
+        cancellationTokenSource.Cancel();
 
         using ( new AssertionScope() )
         {
@@ -1085,6 +1096,16 @@ public class TimerTaskCollectionTests : TestsBase
     {
         var timestamp = Timestamp.Zero;
         var afterAll = new ManualResetEventSlim();
+        var cancellationTokenSource = new CancellationTokenSource();
+        _ = Task.Run(
+            async () =>
+            {
+                await Task.Delay( TimeSpan.FromSeconds( 10 ), cancellationTokenSource.Token );
+                cancellationTokenSource.Token.ThrowIfCancellationRequested();
+                afterAll.Set();
+            },
+            cancellationTokenSource.Token );
+
         var fooTask = new TimerTask(
             "foo",
             onInvoke: (_, source, _, _) =>
@@ -1098,6 +1119,7 @@ public class TimerTaskCollectionTests : TestsBase
         _ = source.RegisterTasks( new[] { fooTask } );
         PublishEvents( source, timestamp );
         afterAll.Wait();
+        cancellationTokenSource.Cancel();
 
         using ( new AssertionScope() )
         {
