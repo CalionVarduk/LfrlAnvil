@@ -18,7 +18,6 @@ namespace LfrlAnvil.Identifiers;
 /// </remarks>
 public sealed class IdentifierGenerator : IIdentifierGenerator
 {
-    private readonly ulong _highValueOffset;
     private readonly ulong _maxHighValue;
 
     /// <summary>
@@ -51,8 +50,7 @@ public sealed class IdentifierGenerator : IIdentifierGenerator
         LowValueOverflowStrategy = @params.LowValueOverflowStrategy;
 
         LastLowValue = LowValueBounds.Min - 1;
-        _highValueOffset = ConvertToHighValue( StartTimestamp.Subtract( BaseTimestamp ), timeEpsilon );
-        LastHighValue = _highValueOffset;
+        LastHighValue = ConvertToHighValue( StartTimestamp.Subtract( BaseTimestamp ), timeEpsilon );
 
         var maxPossibleHighValueOffset = ConvertTimestamp( new Timestamp( DateTime.MaxValue ), timeEpsilon ).Subtract( BaseTimestamp );
         var maxExpectedHighValueOffset = ConvertToDuration( Identifier.MaxHighValue - 1, timeEpsilon );
@@ -278,8 +276,8 @@ public sealed class IdentifierGenerator : IIdentifierGenerator
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private ulong GetCurrentHighValue()
     {
-        var elapsedTime = Timestamps.GetNow() - StartTimestamp;
-        return _highValueOffset + ConvertToHighValue( elapsedTime, TimeEpsilon );
+        var elapsedTime = Timestamps.GetNow() - BaseTimestamp;
+        return ConvertToHighValue( elapsedTime, TimeEpsilon );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]

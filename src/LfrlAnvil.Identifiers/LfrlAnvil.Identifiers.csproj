@@ -2,7 +2,7 @@
 
     <PropertyGroup>
         <PackageTags>LfrlAnvil Identifiers;LfrlAnvil;Identifiers</PackageTags>
-        <Description>todo</Description>
+        <Description>This project contains a generator of sequential 64-bit identifiers based on a timestamp.</Description>
     </PropertyGroup>
 
     <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
