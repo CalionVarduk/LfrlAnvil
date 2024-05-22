@@ -2,7 +2,7 @@
 
     <PropertyGroup>
         <PackageTags>LfrlAnvil Mapping;LfrlAnvil;Mapping</PackageTags>
-        <Description>todo</Description>
+        <Description>This project contains an object mapper, as well as a builder of such a mapper.</Description>
     </PropertyGroup>
 
     <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
