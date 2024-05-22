@@ -2,7 +2,7 @@
 
     <PropertyGroup>
         <PackageTags>LfrlAnvil Requests;LfrlAnvil;Requests</PackageTags>
-        <Description>todo</Description>
+        <Description>This project contains an intermediate request dispatcher, as well as a factory of request handlers.</Description>
     </PropertyGroup>
 
     <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
