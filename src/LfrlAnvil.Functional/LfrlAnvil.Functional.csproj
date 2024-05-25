@@ -2,7 +2,7 @@
 
     <PropertyGroup>
         <PackageTags>LfrlAnvil Functional;LfrlAnvil;Functional</PackageTags>
-        <Description>todo</Description>
+        <Description>This project contains a few functional programming functionalities.</Description>
     </PropertyGroup>
 
     <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
