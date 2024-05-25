@@ -2,7 +2,7 @@
 
     <PropertyGroup>
         <PackageTags>LfrlAnvil Collections;LfrlAnvil;Collections</PackageTags>
-        <Description>todo</Description>
+        <Description>This project contains a few additional collections and data structures.</Description>
     </PropertyGroup>
 
     <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
