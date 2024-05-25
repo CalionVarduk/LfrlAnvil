@@ -13,7 +13,7 @@ public readonly struct ValidationMessage<TResource>
     /// </summary>
     /// <param name="resource">Resource.</param>
     /// <param name="parameters">Optional range of parameters.</param>
-    public ValidationMessage(TResource resource, params object?[] parameters)
+    public ValidationMessage(TResource resource, params object?[]? parameters)
     {
         Resource = resource;
         Parameters = parameters;
@@ -27,7 +27,7 @@ public readonly struct ValidationMessage<TResource>
     /// <summary>
     /// Optional range of parameters.
     /// </summary>
-    public object?[] Parameters { get; }
+    public object?[]? Parameters { get; }
 
     /// <summary>
     /// Returns a string representation of this <see cref="ValidationMessage{TResource}"/> instance.
@@ -36,6 +36,6 @@ public readonly struct ValidationMessage<TResource>
     [Pure]
     public override string ToString()
     {
-        return $"{nameof( Resource )}: '{Resource}', {nameof( Parameters )}: {Parameters.Length}";
+        return $"{nameof( Resource )}: '{Resource}', {nameof( Parameters )}: {Parameters?.Length ?? 0}";
     }
 }

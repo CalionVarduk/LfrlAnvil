@@ -17,7 +17,7 @@ public abstract class ValidatorTestsBase : TestsBase
             for ( var i = 0; i < count; ++i )
             {
                 actual[i].Resource.Should().BeEquivalentTo( expected[i].Resource );
-                actual[i].Parameters.Should().BeSequentiallyEqualTo( expected[i].Parameters );
+                actual[i].Parameters.Should().BeSequentiallyEqualTo( expected[i].Parameters ?? Array.Empty<object?>() );
             }
         }
     }

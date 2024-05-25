@@ -7,7 +7,7 @@ namespace LfrlAnvil.Validation.Validators;
 /// <summary>
 /// Represents a formatted validation result created from a sequence of generic <see cref="ValidationMessage{TResource}"/> instances.
 /// </summary>
-/// <typeparam name="TResource"></typeparam>
+/// <typeparam name="TResource">Resource type.</typeparam>
 public readonly struct FormattedValidatorResult<TResource>
 {
     private readonly string? _result;

@@ -4,19 +4,19 @@ using System.Diagnostics.Contracts;
 namespace LfrlAnvil.Validation.Validators;
 
 /// <summary>
-/// Represents a generic object validator that selects a member to validate.
+/// Represents a generic object validator that selects a value to validate.
 /// </summary>
 /// <typeparam name="T">Object type.</typeparam>
-/// <typeparam name="TMember">Object's member type.</typeparam>
+/// <typeparam name="TMember">Validated value type.</typeparam>
 /// <typeparam name="TResult">Result type.</typeparam>
-public sealed class MemberValidator<T, TMember, TResult> : IValidator<T, TResult>
+public sealed class SelectorValidator<T, TMember, TResult> : IValidator<T, TResult>
 {
     /// <summary>
-    /// Creates a new <see cref="MemberValidator{T,TMember,TResult}"/> instance.
+    /// Creates a new <see cref="SelectorValidator{T,TMember,TResult}"/> instance.
     /// </summary>
     /// <param name="validator">Underlying validator.</param>
-    /// <param name="memberSelector">Member selector.</param>
-    public MemberValidator(IValidator<TMember, TResult> validator, Func<T, TMember> memberSelector)
+    /// <param name="memberSelector">Validated value selector.</param>
+    public SelectorValidator(IValidator<TMember, TResult> validator, Func<T, TMember> memberSelector)
     {
         Validator = validator;
         MemberSelector = memberSelector;
@@ -28,7 +28,7 @@ public sealed class MemberValidator<T, TMember, TResult> : IValidator<T, TResult
     public IValidator<TMember, TResult> Validator { get; }
 
     /// <summary>
-    /// Member selector.
+    /// Validated value selector.
     /// </summary>
     public Func<T, TMember> MemberSelector { get; }
 

@@ -27,21 +27,21 @@ public static class ValidatorExtensions
     }
 
     /// <summary>
-    /// Creates a new <see cref="MemberValidator{T,TMember,TResult}"/> instance.
+    /// Creates a new <see cref="SelectorValidator{T,TMember,TResult}"/> instance.
     /// </summary>
     /// <param name="validator">Underlying validator.</param>
-    /// <param name="memberSelector">Member selector.</param>
-    /// <typeparam name="T">Object type.</typeparam>
-    /// <typeparam name="TTarget">Object's member type.</typeparam>
+    /// <param name="selector">Validated value selector.</param>
+    /// <typeparam name="T">Validated value type.</typeparam>
+    /// <typeparam name="TTarget">Object type.</typeparam>
     /// <typeparam name="TResult">Result type.</typeparam>
-    /// <returns>New <see cref="MemberValidator{T,TMember,TResult}"/> instance.</returns>
+    /// <returns>New <see cref="SelectorValidator{T,TMember,TResult}"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static IValidator<TTarget, TResult> ForMember<T, TTarget, TResult>(
+    public static IValidator<TTarget, TResult> For<T, TTarget, TResult>(
         this IValidator<T, TResult> validator,
-        Func<TTarget, T> memberSelector)
+        Func<TTarget, T> selector)
     {
-        return new MemberValidator<TTarget, T, TResult>( validator, memberSelector );
+        return new SelectorValidator<TTarget, T, TResult>( validator, selector );
     }
 
     /// <summary>

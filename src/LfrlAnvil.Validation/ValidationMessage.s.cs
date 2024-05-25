@@ -19,7 +19,7 @@ public static class ValidationMessage
     /// <returns>New <see cref="ValidationMessage{TResource}"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    public static ValidationMessage<TResource> Create<TResource>(TResource resource, params object?[] parameters)
+    public static ValidationMessage<TResource> Create<TResource>(TResource resource, params object?[]? parameters)
     {
         return new ValidationMessage<TResource>( resource, parameters );
     }

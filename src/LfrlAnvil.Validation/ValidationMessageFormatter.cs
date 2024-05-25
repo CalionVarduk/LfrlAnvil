@@ -44,7 +44,7 @@ public abstract class ValidationMessageFormatter<TResource> : IValidationMessage
                 AppendIndex( builder, index++, formatProvider );
 
             builder.Append( args.PrefixEach );
-            builder.AppendFormat( formatProvider, template, message.Parameters );
+            builder.AppendFormat( formatProvider, template, message.Parameters ?? Array.Empty<object?>() );
             builder.Append( args.PostfixEach );
             builder.Append( separator );
         }

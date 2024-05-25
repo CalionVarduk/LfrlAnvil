@@ -2,7 +2,7 @@
 
     <PropertyGroup>
         <PackageTags>LfrlAnvil Validation;LfrlAnvil;Validation</PackageTags>
-        <Description>todo</Description>
+        <Description>This project contains definitions of various composable validators, as well as validation message formatters.</Description>
     </PropertyGroup>
 
     <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
