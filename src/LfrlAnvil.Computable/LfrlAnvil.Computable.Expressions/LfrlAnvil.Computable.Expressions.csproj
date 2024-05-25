@@ -2,7 +2,7 @@
 
     <PropertyGroup>
         <PackageTags>LfrlAnvil Computable Expressions;LfrlAnvil;Computable;Expressions</PackageTags>
-        <Description>todo</Description>
+        <Description>This project contains a parser of string expressions that can be compiled to invocable delegates.</Description>
     </PropertyGroup>
 
     <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
