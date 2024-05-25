@@ -2,7 +2,7 @@
 
     <PropertyGroup>
         <PackageTags>LfrlAnvil Sql MySql;LfrlAnvil;Sql;MySql</PackageTags>
-        <Description>todo</Description>
+        <Description>This project is an implementation of the LfrlAnvil.Sql.Core for MySql.</Description>
     </PropertyGroup>
 
     <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">

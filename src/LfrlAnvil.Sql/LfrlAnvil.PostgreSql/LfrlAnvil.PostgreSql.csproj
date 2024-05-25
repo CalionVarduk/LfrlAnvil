@@ -2,7 +2,7 @@
 
     <PropertyGroup>
         <PackageTags>LfrlAnvil Sql PostgreSql;LfrlAnvil;Sql;PostgreSql</PackageTags>
-        <Description>todo</Description>
+        <Description>This project is an implementation of the LfrlAnvil.Sql.Core for PostgreSql.</Description>
     </PropertyGroup>
 
     <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">

@@ -2,7 +2,7 @@
 
     <PropertyGroup>
         <PackageTags>LfrlAnvil Sql Sqlite;LfrlAnvil;Sql;Sqlite</PackageTags>
-        <Description>todo</Description>
+        <Description>This project is an implementation of the LfrlAnvil.Sql.Core for Sqlite.</Description>
     </PropertyGroup>
 
     <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">

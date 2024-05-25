@@ -3,4 +3,8 @@
 
 # [LfrlAnvil.Sqlite](https://github.com/CalionVarduk/LfrlAnvil/tree/main/src/LfrlAnvil.Sql/LfrlAnvil.Sqlite)
 
-Todo.
+This project is an implementation
+of the [LfrlAnvil.Sql.Core](https://github.com/CalionVarduk/LfrlAnvil/blob/main/src/LfrlAnvil.Sql/LfrlAnvil.Sql.Core/.docs/readme.md)
+for [Sqlite](https://www.sqlite.org/).
+
+Uses [Microsoft.Data.Sqlite](https://www.nuget.org/packages/Microsoft.Data.Sqlite) for interfacing with DB.
