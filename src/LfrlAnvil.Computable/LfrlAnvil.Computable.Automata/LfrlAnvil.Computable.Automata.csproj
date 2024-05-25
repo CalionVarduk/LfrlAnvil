@@ -2,7 +2,7 @@
 
     <PropertyGroup>
         <PackageTags>LfrlAnvil Computable Automata;LfrlAnvil;Computable;Automata</PackageTags>
-        <Description>todo</Description>
+        <Description>This project contains structures and algorithms related to the automata theory.</Description>
     </PropertyGroup>
 
     <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
