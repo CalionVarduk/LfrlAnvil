@@ -2,7 +2,7 @@
 
     <PropertyGroup>
         <PackageTags>LfrlAnvil Sql Core;LfrlAnvil;Sql</PackageTags>
-        <Description>todo</Description>
+        <Description>This project contains core functionalities related to SQL.</Description>
         <RootNamespace>LfrlAnvil.Sql</RootNamespace>
     </PropertyGroup>
 
