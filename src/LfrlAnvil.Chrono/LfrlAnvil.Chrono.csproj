@@ -2,7 +2,7 @@
 
     <PropertyGroup>
         <PackageTags>LfrlAnvil Chrono;LfrlAnvil;Chrono</PackageTags>
-        <Description>todo</Description>
+        <Description>This project contains functionalities related to date and time, as well as timezones.</Description>
     </PropertyGroup>
 
     <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
