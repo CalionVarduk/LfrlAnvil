@@ -2,7 +2,7 @@
 
     <PropertyGroup>
         <PackageTags>LfrlAnvil Dependencies Injection;LfrlAnvil;Dependencies;Injection</PackageTags>
-        <Description>todo</Description>
+        <Description>This project contains an implementation of an IoC container.</Description>
     </PropertyGroup>
 
     <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
