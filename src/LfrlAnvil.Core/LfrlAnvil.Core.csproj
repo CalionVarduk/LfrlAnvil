@@ -2,7 +2,7 @@
 
     <PropertyGroup>
         <PackageTags>LfrlAnvil Core;LfrlAnvil</PackageTags>
-        <Description>todo</Description>
+        <Description>This project contains a bunch of lightweight core functionalities, used by other LfrlAnvil projects.</Description>
         <RootNamespace>LfrlAnvil</RootNamespace>
     </PropertyGroup>
 
