@@ -181,18 +181,6 @@ Task("Push")
         };
         NuGetPush(package.FullPath, settings);
     }
-
-    var symbolPackages = GetFiles(System.IO.Path.Combine(nugetDir, "*.snupkg"));
-    foreach (var package in symbolPackages)
-    {
-        var settings = new NuGetPushSettings
-        {
-            Source = nugetSource,
-            ApiKey = nugetApiKey,
-            SkipDuplicate = true
-        };
-        NuGetPush(package.FullPath, settings);
-    }
 });
 
 //////////////////////////////////////////////////////////////////////
