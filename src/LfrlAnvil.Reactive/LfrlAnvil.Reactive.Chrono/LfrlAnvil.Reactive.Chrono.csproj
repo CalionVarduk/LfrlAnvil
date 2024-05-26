@@ -2,7 +2,7 @@
 
     <PropertyGroup>
         <PackageTags>LfrlAnvil Reactive Chrono;LfrlAnvil;Reactive;Chrono</PackageTags>
-        <Description>todo</Description>
+        <Description>This project contains a few functionalities related to timers and schedulers.</Description>
     </PropertyGroup>
 
     <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
