@@ -1,4 +1,5 @@
 #tool "dotnet:?package=GitVersion.Tool&version=5.12.0"
+#tool "nuget:?package=NuGet.CommandLine&version=5.9.1"
 
 //////////////////////////////////////////////////////////////////////
 // ARGUMENTS
