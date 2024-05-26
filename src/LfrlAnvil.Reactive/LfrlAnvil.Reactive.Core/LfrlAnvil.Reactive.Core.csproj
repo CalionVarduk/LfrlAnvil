@@ -2,7 +2,7 @@
 
     <PropertyGroup>
         <PackageTags>LfrlAnvil Reactive Core;LfrlAnvil;Reactive</PackageTags>
-        <Description>todo</Description>
+        <Description>This project contains a few reactive programming functionalities.</Description>
         <RootNamespace>LfrlAnvil.Reactive</RootNamespace>
     </PropertyGroup>
 
