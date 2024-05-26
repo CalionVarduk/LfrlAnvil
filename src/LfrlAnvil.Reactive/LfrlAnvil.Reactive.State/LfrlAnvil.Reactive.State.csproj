@@ -2,7 +2,7 @@
 
     <PropertyGroup>
         <PackageTags>LfrlAnvil Reactive State;LfrlAnvil;Reactive;State</PackageTags>
-        <Description>todo</Description>
+        <Description>This project contains a few functionalities related to state management.</Description>
     </PropertyGroup>
 
     <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
