@@ -2,7 +2,7 @@
 
     <PropertyGroup>
         <PackageTags>LfrlAnvil Reactive Queues;LfrlAnvil;Reactive;Queues</PackageTags>
-        <Description>todo</Description>
+        <Description>This project contains a few functionalities related to event queues.</Description>
     </PropertyGroup>
 
     <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
