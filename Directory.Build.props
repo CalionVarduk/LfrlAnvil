@@ -4,6 +4,9 @@
         <Title>$(AssemblyName)</Title>
         <Authors>Łukasz Furlepa</Authors>
         <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+        <PackageProjectUrl>https://github.com/CalionVarduk/LfrlAnvil</PackageProjectUrl>
+        <RepositoryUrl>https://github.com/CalionVarduk/LfrlAnvil</RepositoryUrl>
+        <RepositoryType>git</RepositoryType>
         <TargetFramework>net7.0</TargetFramework>
         <LangVersion>11</LangVersion>
         <Nullable>enable</Nullable>

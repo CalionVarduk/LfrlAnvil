@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <PackageTags>LfrlAnvil Validation;LfrlAnvil;Validation</PackageTags>
+        <PackageTags>LfrlAnvil;Validation</PackageTags>
         <Description>This project contains definitions of various composable validators, as well as validation message formatters.</Description>
     </PropertyGroup>
 

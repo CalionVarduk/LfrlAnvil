@@ -3,7 +3,7 @@ using LfrlAnvil.Sql;
 
 namespace LfrlAnvil.PostgreSql;
 
-/// <inheritdoc />
+/// <inheritdoc cref="ISqlDataTypeProvider" />
 /// <remarks><see cref="PostgreSqlDialect"/> implementation.</remarks>
 public sealed class PostgreSqlDataTypeProvider : ISqlDataTypeProvider
 {

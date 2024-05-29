@@ -3,7 +3,7 @@ using LfrlAnvil.Generators;
 
 namespace LfrlAnvil.Chrono.Internal;
 
-/// <inheritdoc />
+/// <inheritdoc cref="ITimestampProvider" />
 public abstract class TimestampProviderBase : ITimestampProvider
 {
     /// <inheritdoc />

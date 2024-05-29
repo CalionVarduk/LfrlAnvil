@@ -6,7 +6,7 @@ using LfrlAnvil.Sql.Objects.Builders;
 
 namespace LfrlAnvil.Sql.Objects;
 
-/// <inheritdoc />
+/// <inheritdoc cref="ISqlColumnCollection" />
 public abstract class SqlColumnCollection : ISqlColumnCollection
 {
     private readonly Dictionary<string, SqlColumn> _map;

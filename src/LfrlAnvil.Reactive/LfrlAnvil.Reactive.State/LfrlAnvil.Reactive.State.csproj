@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <PackageTags>LfrlAnvil Reactive State;LfrlAnvil;Reactive;State</PackageTags>
+        <PackageTags>LfrlAnvil;Reactive;State</PackageTags>
         <Description>This project contains a few functionalities related to state management.</Description>
     </PropertyGroup>
 

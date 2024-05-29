@@ -2,7 +2,10 @@
 
 namespace LfrlAnvil.Reactive.State.Events;
 
-/// <inheritdoc />
+/// <summary>
+/// Represents a generic validation event emitted by an <see cref="IReadOnlyVariableRoot{TKey}"/>.
+/// </summary>
+/// <typeparam name="TKey">Child node's key type.</typeparam>
 public class VariableRootValidationEvent<TKey> : IVariableRootEvent<TKey>
     where TKey : notnull
 {

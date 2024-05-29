@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <PackageTags>LfrlAnvil Dependencies Injection;LfrlAnvil;Dependencies;Injection</PackageTags>
+        <PackageTags>LfrlAnvil;Dependencies;Injection</PackageTags>
         <Description>This project contains an implementation of an IoC container.</Description>
     </PropertyGroup>
 

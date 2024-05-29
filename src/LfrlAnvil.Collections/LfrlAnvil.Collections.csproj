@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <PackageTags>LfrlAnvil Collections;LfrlAnvil;Collections</PackageTags>
+        <PackageTags>LfrlAnvil;Collections</PackageTags>
         <Description>This project contains a few additional collections and data structures.</Description>
     </PropertyGroup>
 

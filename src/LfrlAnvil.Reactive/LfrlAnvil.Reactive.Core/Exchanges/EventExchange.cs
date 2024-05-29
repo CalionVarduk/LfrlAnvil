@@ -8,7 +8,7 @@ using LfrlAnvil.Reactive.Exceptions;
 
 namespace LfrlAnvil.Reactive.Exchanges;
 
-/// <inheritdoc />
+/// <inheritdoc cref="IMutableEventExchange" />
 public sealed class EventExchange : IMutableEventExchange
 {
     private readonly Dictionary<Type, IEventPublisher> _publishers;

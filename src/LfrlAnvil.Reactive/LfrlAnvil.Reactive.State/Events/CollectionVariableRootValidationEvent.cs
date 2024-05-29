@@ -4,7 +4,12 @@ using LfrlAnvil.Reactive.State.Internal;
 
 namespace LfrlAnvil.Reactive.State.Events;
 
-/// <inheritdoc />
+/// <summary>
+/// Represents a generic variable change event emitted by an <see cref="IReadOnlyCollectionVariableRoot{TKey,TElement,TValidationResult}"/>.
+/// </summary>
+/// <typeparam name="TKey">Key type.</typeparam>
+/// <typeparam name="TElement">Element type.</typeparam>
+/// <typeparam name="TValidationResult">Validation result type.</typeparam>
 public class CollectionVariableRootValidationEvent<TKey, TElement, TValidationResult>
     : ICollectionVariableRootValidationEvent<TValidationResult>
     where TKey : notnull

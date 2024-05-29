@@ -3,7 +3,7 @@ using System.Diagnostics.Contracts;
 
 namespace LfrlAnvil.Mapping;
 
-/// <inheritdoc />
+/// <inheritdoc cref="ITypeMapperBuilder" />
 public class TypeMapperBuilder : ITypeMapperBuilder
 {
     private readonly List<ITypeMappingConfiguration> _configurations;

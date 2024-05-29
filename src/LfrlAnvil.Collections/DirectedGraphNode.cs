@@ -11,7 +11,7 @@ using LfrlAnvil.Exceptions;
 
 namespace LfrlAnvil.Collections;
 
-/// <inheritdoc />
+/// <inheritdoc cref="IDirectedGraphNode{TKey,TNodeValue,TEdgeValue}" />
 public sealed class DirectedGraphNode<TKey, TNodeValue, TEdgeValue> : IDirectedGraphNode<TKey, TNodeValue, TEdgeValue>
     where TKey : notnull
 {

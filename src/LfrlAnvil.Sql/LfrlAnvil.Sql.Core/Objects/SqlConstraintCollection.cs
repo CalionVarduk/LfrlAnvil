@@ -6,7 +6,7 @@ using LfrlAnvil.Sql.Objects.Builders;
 
 namespace LfrlAnvil.Sql.Objects;
 
-/// <inheritdoc />
+/// <inheritdoc cref="ISqlConstraintCollection" />
 public abstract class SqlConstraintCollection : ISqlConstraintCollection
 {
     private readonly Dictionary<string, SqlConstraint> _map;

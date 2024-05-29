@@ -6,7 +6,7 @@ using LfrlAnvil.Extensions;
 
 namespace LfrlAnvil.Validation;
 
-/// <inheritdoc />
+/// <inheritdoc cref="IValidationMessageFormatter{TResource}" />
 public abstract class ValidationMessageFormatter<TResource> : IValidationMessageFormatter<TResource>
 {
     /// <inheritdoc />

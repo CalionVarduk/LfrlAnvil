@@ -8,7 +8,7 @@ using LfrlAnvil.Reactive.Queues.Internal;
 
 namespace LfrlAnvil.Reactive.Queues;
 
-/// <inheritdoc />
+/// <inheritdoc cref="IMutableReorderableEventQueue{TEvent,TPoint,TPointDelta}" />
 public abstract class ReorderableEventQueueBase<TEvent, TPoint, TPointDelta>
     : IMutableReorderableEventQueue<TEvent, TPoint, TPointDelta>
     where TEvent : notnull

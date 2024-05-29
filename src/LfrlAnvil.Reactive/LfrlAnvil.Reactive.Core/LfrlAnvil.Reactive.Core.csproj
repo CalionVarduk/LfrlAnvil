@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <PackageTags>LfrlAnvil Reactive Core;LfrlAnvil;Reactive</PackageTags>
+        <PackageTags>LfrlAnvil;Reactive</PackageTags>
         <Description>This project contains a few reactive programming functionalities.</Description>
         <RootNamespace>LfrlAnvil.Reactive</RootNamespace>
     </PropertyGroup>

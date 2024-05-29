@@ -7,7 +7,7 @@ using LfrlAnvil.Sql.Exceptions;
 
 namespace LfrlAnvil.Sql;
 
-/// <inheritdoc />
+/// <inheritdoc cref="ISqlColumnTypeDefinitionProvider" />
 public abstract class SqlColumnTypeDefinitionProvider : ISqlColumnTypeDefinitionProvider
 {
     private static readonly MethodInfo CreateEnumTypeDefinitionGenericMethod = typeof( SqlColumnTypeDefinitionProvider )

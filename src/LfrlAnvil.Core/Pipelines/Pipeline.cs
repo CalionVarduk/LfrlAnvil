@@ -3,7 +3,7 @@ using System.Linq;
 
 namespace LfrlAnvil.Pipelines;
 
-/// <inheritdoc />
+/// <inheritdoc cref="IPipeline{TArg,TResult}" />
 public class Pipeline<TArgs, TResult> : IPipeline<TArgs, TResult>
 {
     private readonly IPipelineProcessor<TArgs, TResult>[] _processors;

@@ -4,7 +4,7 @@ using LfrlAnvil.Exceptions;
 
 namespace LfrlAnvil.Generators;
 
-/// <inheritdoc />
+/// <inheritdoc cref="ISequenceGenerator{T}" />
 public abstract class SequenceGeneratorBase<T> : ISequenceGenerator<T>
     where T : IComparable<T>
 {

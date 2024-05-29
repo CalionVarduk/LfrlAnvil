@@ -7,7 +7,7 @@ using LfrlAnvil.Extensions;
 
 namespace LfrlAnvil.Collections;
 
-/// <inheritdoc />
+/// <inheritdoc cref="IRing{T}" />
 public class Ring<T> : IRing<T>
 {
     private int _writeIndex;

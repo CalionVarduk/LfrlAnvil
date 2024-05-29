@@ -4,6 +4,7 @@
 
     <PropertyGroup>
         <PackageId>$(AssemblyName)</PackageId>
+        <Product>$(AssemblyName)</Product>
         <PackageReadmeFile>readme.md</PackageReadmeFile>
     </PropertyGroup>
 

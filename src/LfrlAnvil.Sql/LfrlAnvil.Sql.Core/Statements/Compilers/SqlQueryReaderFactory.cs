@@ -18,7 +18,7 @@ using LfrlAnvil.Sql.Internal;
 
 namespace LfrlAnvil.Sql.Statements.Compilers;
 
-/// <inheritdoc />
+/// <inheritdoc cref="ISqlQueryReaderFactory" />
 public class SqlQueryReaderFactory : ISqlQueryReaderFactory
 {
     private readonly object _sync = new object();

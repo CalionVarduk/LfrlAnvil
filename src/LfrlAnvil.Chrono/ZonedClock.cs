@@ -5,7 +5,7 @@ using LfrlAnvil.Chrono.Internal;
 
 namespace LfrlAnvil.Chrono;
 
-/// <inheritdoc />
+/// <inheritdoc cref="ZonedClockBase" />
 public sealed class ZonedClock : ZonedClockBase
 {
     /// <summary>

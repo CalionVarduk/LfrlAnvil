@@ -9,7 +9,7 @@ using LfrlAnvil.Sql.Expressions.Objects;
 
 namespace LfrlAnvil.Sql;
 
-/// <inheritdoc />
+/// <inheritdoc cref="ISqlColumnTypeDefinition" />
 public abstract class SqlColumnTypeDefinition : ISqlColumnTypeDefinition
 {
     internal SqlColumnTypeDefinition(ISqlDataType dataType, SqlLiteralNode defaultValue, LambdaExpression outputMapping)

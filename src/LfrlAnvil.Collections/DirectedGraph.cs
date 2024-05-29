@@ -6,7 +6,7 @@ using LfrlAnvil.Collections.Internal;
 
 namespace LfrlAnvil.Collections;
 
-/// <inheritdoc />
+/// <inheritdoc cref="IDirectedGraph{TKey,TNodeValue,TEdgeValue}" />
 public class DirectedGraph<TKey, TNodeValue, TEdgeValue> : IDirectedGraph<TKey, TNodeValue, TEdgeValue>
     where TKey : notnull
 {

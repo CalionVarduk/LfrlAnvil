@@ -3,7 +3,7 @@ using System.Diagnostics.Contracts;
 
 namespace LfrlAnvil.Pipelines;
 
-/// <inheritdoc />
+/// <inheritdoc cref="IPipelineBuilder{TArg,TResult}" />
 public class PipelineBuilder<TArgs, TResult> : IPipelineBuilder<TArgs, TResult>
 {
     private readonly List<IPipelineProcessor<TArgs, TResult>> _processors;

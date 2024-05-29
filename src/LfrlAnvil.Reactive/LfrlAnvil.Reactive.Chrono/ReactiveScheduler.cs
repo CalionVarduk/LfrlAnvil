@@ -12,7 +12,7 @@ using LfrlAnvil.Reactive.Chrono.Internal;
 
 namespace LfrlAnvil.Reactive.Chrono;
 
-/// <inheritdoc />
+/// <inheritdoc cref="IReactiveScheduler{TKey}" />
 public class ReactiveScheduler<TKey> : IReactiveScheduler<TKey>
     where TKey : notnull
 {

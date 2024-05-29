@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <PackageTags>LfrlAnvil Requests;LfrlAnvil;Requests</PackageTags>
+        <PackageTags>LfrlAnvil;Requests</PackageTags>
         <Description>This project contains an intermediate request dispatcher, as well as a factory of request handlers.</Description>
     </PropertyGroup>
 

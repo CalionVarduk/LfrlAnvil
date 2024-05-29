@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <PackageTags>LfrlAnvil Chrono;LfrlAnvil;Chrono</PackageTags>
+        <PackageTags>LfrlAnvil;Chrono</PackageTags>
         <Description>This project contains functionalities related to date and time, as well as timezones.</Description>
     </PropertyGroup>
 

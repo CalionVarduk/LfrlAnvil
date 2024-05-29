@@ -12,7 +12,7 @@ using LfrlAnvil.Extensions;
 
 namespace LfrlAnvil.Collections;
 
-/// <inheritdoc />
+/// <inheritdoc cref="ITreeDictionary{TKey,TValue}" />
 public class TreeDictionary<TKey, TValue> : ITreeDictionary<TKey, TValue>
     where TKey : notnull
 {

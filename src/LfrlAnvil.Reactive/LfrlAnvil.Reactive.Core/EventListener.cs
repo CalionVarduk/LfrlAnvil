@@ -2,7 +2,7 @@
 
 namespace LfrlAnvil.Reactive;
 
-/// <inheritdoc />
+/// <inheritdoc cref="IEventListener{TEvent}" />
 public abstract class EventListener<TEvent> : IEventListener<TEvent>
 {
     /// <summary>

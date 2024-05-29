@@ -14,7 +14,7 @@ using LfrlAnvil.Sql.Internal;
 
 namespace LfrlAnvil.Sql.Statements.Compilers;
 
-/// <inheritdoc />
+/// <inheritdoc cref="ISqlParameterBinderFactory" />
 public class SqlParameterBinderFactory : ISqlParameterBinderFactory
 {
     private readonly object _sync = new object();

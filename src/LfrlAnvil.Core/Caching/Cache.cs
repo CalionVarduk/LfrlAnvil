@@ -10,7 +10,7 @@ using LfrlAnvil.Internal;
 
 namespace LfrlAnvil.Caching;
 
-/// <inheritdoc />
+/// <inheritdoc cref="ICache{TKey,TValue}" />
 /// <remarks>New entries added to this cache are added as <see cref="Newest"/>.</remarks>
 public sealed class Cache<TKey, TValue> : ICache<TKey, TValue>
     where TKey : notnull

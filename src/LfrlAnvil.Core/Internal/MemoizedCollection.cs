@@ -7,7 +7,7 @@ using LfrlAnvil.Extensions;
 
 namespace LfrlAnvil.Internal;
 
-/// <inheritdoc />
+/// <inheritdoc cref="IMemoizedCollection{T}" />
 public sealed class MemoizedCollection<T> : IMemoizedCollection<T>
 {
     /// <summary>

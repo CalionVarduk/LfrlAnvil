@@ -5,7 +5,7 @@ using LfrlAnvil.Sql.Internal;
 
 namespace LfrlAnvil.Sql;
 
-/// <inheritdoc />
+/// <inheritdoc cref="ISqlColumnTypeDefinitionProviderBuilder" />
 public abstract class SqlColumnTypeDefinitionProviderBuilder : ISqlColumnTypeDefinitionProviderBuilder
 {
     internal readonly Dictionary<Type, SqlColumnTypeDefinition> Definitions;

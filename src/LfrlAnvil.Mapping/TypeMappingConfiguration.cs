@@ -5,7 +5,7 @@ using LfrlAnvil.Mapping.Internal;
 
 namespace LfrlAnvil.Mapping;
 
-/// <inheritdoc />
+/// <inheritdoc cref="ITypeMappingConfiguration" />
 public partial class TypeMappingConfiguration : ITypeMappingConfiguration
 {
     private readonly Dictionary<TypeMappingKey, TypeMappingStore> _stores;

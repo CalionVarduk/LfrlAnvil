@@ -3,7 +3,7 @@ using LfrlAnvil.Sql;
 
 namespace LfrlAnvil.Sqlite;
 
-/// <inheritdoc />
+/// <inheritdoc cref="ISqlDataTypeProvider" />
 /// <remarks><see cref="SqliteDialect"/> implementation.</remarks>
 public sealed class SqliteDataTypeProvider : ISqlDataTypeProvider
 {

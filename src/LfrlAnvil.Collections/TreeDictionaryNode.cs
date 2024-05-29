@@ -4,7 +4,7 @@ using System.Runtime.CompilerServices;
 
 namespace LfrlAnvil.Collections;
 
-/// <inheritdoc />
+/// <inheritdoc cref="ITreeDictionaryNode{TKey,TValue}" />
 public sealed class TreeDictionaryNode<TKey, TValue> : ITreeDictionaryNode<TKey, TValue>
     where TKey : notnull
 {

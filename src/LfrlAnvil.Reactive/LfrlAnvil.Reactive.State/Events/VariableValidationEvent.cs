@@ -3,7 +3,11 @@ using System.Collections;
 
 namespace LfrlAnvil.Reactive.State.Events;
 
-/// <inheritdoc />
+/// <summary>
+/// Represents a generic validation event emitted by an <see cref="IReadOnlyVariable{TValue,TValidationResult}"/>.
+/// </summary>
+/// <typeparam name="TValue">Value type.</typeparam>
+/// <typeparam name="TValidationResult">Variable's validation result type.</typeparam>
 public class VariableValidationEvent<TValue, TValidationResult> : IVariableValidationEvent<TValidationResult>
 {
     /// <summary>

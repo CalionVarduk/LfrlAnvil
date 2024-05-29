@@ -4,7 +4,7 @@ using LfrlAnvil.Computable.Expressions.Exceptions;
 
 namespace LfrlAnvil.Computable.Expressions;
 
-/// <inheritdoc />
+/// <inheritdoc cref="IParsedExpressionDelegate{TArg,TResult}" />
 public sealed class ParsedExpressionDelegate<TArg, TResult> : IParsedExpressionDelegate<TArg, TResult>
 {
     internal ParsedExpressionDelegate(Func<TArg?[], TResult> @delegate, ParsedExpressionUnboundArguments arguments)

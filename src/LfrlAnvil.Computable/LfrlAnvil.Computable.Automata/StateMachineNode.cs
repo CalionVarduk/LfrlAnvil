@@ -3,7 +3,7 @@ using System.Diagnostics.Contracts;
 
 namespace LfrlAnvil.Computable.Automata;
 
-/// <inheritdoc />
+/// <inheritdoc cref="IStateMachineNode{TState,TInput,TResult}" />
 public sealed class StateMachineNode<TState, TInput, TResult> : IStateMachineNode<TState, TInput, TResult>
     where TState : notnull
     where TInput : notnull

@@ -4,7 +4,7 @@ using LfrlAnvil.Generators;
 
 namespace LfrlAnvil.Chrono.Internal;
 
-/// <inheritdoc />
+/// <inheritdoc cref="IDateTimeProvider" />
 public abstract class DateTimeProviderBase : IDateTimeProvider
 {
     /// <summary>

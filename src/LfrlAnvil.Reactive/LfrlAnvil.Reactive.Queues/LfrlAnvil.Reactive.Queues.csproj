@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <PackageTags>LfrlAnvil Reactive Queues;LfrlAnvil;Reactive;Queues</PackageTags>
+        <PackageTags>LfrlAnvil;Reactive;Queues</PackageTags>
         <Description>This project contains a few functionalities related to event queues.</Description>
     </PropertyGroup>
 

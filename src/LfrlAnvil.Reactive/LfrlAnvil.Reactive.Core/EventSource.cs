@@ -9,7 +9,7 @@ using LfrlAnvil.Reactive.Internal;
 
 namespace LfrlAnvil.Reactive;
 
-/// <inheritdoc />
+/// <inheritdoc cref="IEventSource{TEvent}" />
 public abstract class EventSource<TEvent> : IEventSource<TEvent>
 {
     private readonly List<EventSubscriber<TEvent>> _subscribers;

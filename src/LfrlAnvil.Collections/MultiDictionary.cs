@@ -9,7 +9,7 @@ using LfrlAnvil.Collections.Internal;
 
 namespace LfrlAnvil.Collections;
 
-/// <inheritdoc />
+/// <inheritdoc cref="IMultiDictionary{TKey,TValue}" />
 public class MultiDictionary<TKey, TValue> : IMultiDictionary<TKey, TValue>
     where TKey : notnull
 {

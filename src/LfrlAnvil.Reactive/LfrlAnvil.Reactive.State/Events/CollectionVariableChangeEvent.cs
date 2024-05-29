@@ -4,7 +4,7 @@ using System.Collections.Generic;
 namespace LfrlAnvil.Reactive.State.Events;
 
 /// <summary>
-/// Represents a generic variable change event emitted by an <see cref="IReadOnlyCollectionVariable{TKey,TElement}"/>.
+/// Represents a generic variable change event emitted by an <see cref="IReadOnlyCollectionVariable{TKey,TElement,TValidationResult}"/>.
 /// </summary>
 /// <typeparam name="TKey">Key type.</typeparam>
 /// <typeparam name="TElement">Element type.</typeparam>

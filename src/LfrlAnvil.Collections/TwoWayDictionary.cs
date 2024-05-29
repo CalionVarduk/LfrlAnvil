@@ -8,7 +8,7 @@ using LfrlAnvil.Collections.Internal;
 
 namespace LfrlAnvil.Collections;
 
-/// <inheritdoc />
+/// <inheritdoc cref="ITwoWayDictionary{T1,T2}" />
 public class TwoWayDictionary<T1, T2> : ITwoWayDictionary<T1, T2>
     where T1 : notnull
     where T2 : notnull
@@ -40,10 +40,14 @@ public class TwoWayDictionary<T1, T2> : ITwoWayDictionary<T1, T2>
     /// <inheritdoc cref="ITwoWayDictionary{T1,T2}.Count" />
     public int Count => _forward.Count;
 
-    /// <inheritdoc />
+    /// <summary>
+    /// Represents the <typeparamref name="T1"/> => <typeparamref name="T2"/> read-only dictionary.
+    /// </summary>
     public IReadOnlyDictionary<T1, T2> Forward => _forward;
 
-    /// <inheritdoc />
+    /// <summary>
+    /// Represents the <typeparamref name="T2"/> => <typeparamref name="T1"/> read-only dictionary.
+    /// </summary>
     public IReadOnlyDictionary<T2, T1> Reverse => _reverse;
 
     /// <inheritdoc />

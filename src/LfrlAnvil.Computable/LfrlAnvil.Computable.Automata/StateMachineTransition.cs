@@ -2,7 +2,7 @@
 
 namespace LfrlAnvil.Computable.Automata;
 
-/// <inheritdoc />
+/// <inheritdoc cref="IStateMachineTransition{TState,TInput,TResult}" />
 public sealed class StateMachineTransition<TState, TInput, TResult> : IStateMachineTransition<TState, TInput, TResult>
     where TState : notnull
     where TInput : notnull

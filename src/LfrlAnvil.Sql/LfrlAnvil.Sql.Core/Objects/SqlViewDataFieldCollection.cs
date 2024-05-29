@@ -6,7 +6,7 @@ using LfrlAnvil.Sql.Internal;
 
 namespace LfrlAnvil.Sql.Objects;
 
-/// <inheritdoc />
+/// <inheritdoc cref="ISqlViewDataFieldCollection" />
 public abstract class SqlViewDataFieldCollection : ISqlViewDataFieldCollection
 {
     private readonly Dictionary<string, SqlViewDataField> _map;

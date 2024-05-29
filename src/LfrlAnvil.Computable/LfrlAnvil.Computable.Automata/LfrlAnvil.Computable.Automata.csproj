@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <PackageTags>LfrlAnvil Computable Automata;LfrlAnvil;Computable;Automata</PackageTags>
+        <PackageTags>LfrlAnvil;Computable;Automata</PackageTags>
         <Description>This project contains structures and algorithms related to the automata theory.</Description>
     </PropertyGroup>
 

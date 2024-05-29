@@ -14,7 +14,7 @@ using LfrlAnvil.Sql.Statements.Compilers;
 
 namespace LfrlAnvil.Sql.Objects.Builders;
 
-/// <inheritdoc />
+/// <inheritdoc cref="ISqlDatabaseChangeTracker" />
 public abstract class SqlDatabaseChangeTracker : ISqlDatabaseChangeTracker
 {
     private const byte IsDetachedBit = 1 << 3;

@@ -7,7 +7,7 @@ using LfrlAnvil.Sql.Expressions.Traits;
 
 namespace LfrlAnvil.Sql.Expressions.Visitors;
 
-/// <inheritdoc />
+/// <inheritdoc cref="ISqlNodeVisitor" />
 public abstract class SqlNodeVisitor : ISqlNodeVisitor
 {
     /// <inheritdoc />

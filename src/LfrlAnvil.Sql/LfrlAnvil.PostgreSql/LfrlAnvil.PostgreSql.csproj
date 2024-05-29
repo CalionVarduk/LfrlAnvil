@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <PackageTags>LfrlAnvil Sql PostgreSql;LfrlAnvil;Sql;PostgreSql</PackageTags>
+        <PackageTags>LfrlAnvil;Sql;PostgreSql</PackageTags>
         <Description>This project is an implementation of the LfrlAnvil.Sql.Core for PostgreSql.</Description>
     </PropertyGroup>
 

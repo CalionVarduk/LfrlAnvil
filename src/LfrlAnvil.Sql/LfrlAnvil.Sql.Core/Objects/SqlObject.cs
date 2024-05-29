@@ -3,7 +3,7 @@ using LfrlAnvil.Sql.Objects.Builders;
 
 namespace LfrlAnvil.Sql.Objects;
 
-/// <inheritdoc />
+/// <inheritdoc cref="ISqlObject" />
 public abstract class SqlObject : ISqlObject
 {
     /// <summary>

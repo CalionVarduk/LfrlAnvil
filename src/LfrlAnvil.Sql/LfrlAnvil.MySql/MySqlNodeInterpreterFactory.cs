@@ -3,7 +3,7 @@ using LfrlAnvil.Sql.Expressions.Visitors;
 
 namespace LfrlAnvil.MySql;
 
-/// <inheritdoc />
+/// <inheritdoc cref="ISqlNodeInterpreterFactory" />
 /// <remarks><see cref="MySqlDialect"/> implementation.</remarks>
 public class MySqlNodeInterpreterFactory : ISqlNodeInterpreterFactory
 {

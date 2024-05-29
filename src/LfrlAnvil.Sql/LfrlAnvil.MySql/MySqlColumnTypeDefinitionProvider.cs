@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics.Contracts;
 using LfrlAnvil.MySql.Internal.TypeDefinitions;
@@ -92,7 +93,14 @@ public sealed class MySqlColumnTypeDefinitionProvider : SqlColumnTypeDefinitionP
         return GetByDataType( SqlHelpers.CastOrThrow<MySqlDataType>( Dialect, type ) );
     }
 
-    /// <inheritdoc />
+    /// <summary>
+    /// Creates a new <see cref="SqlColumnTypeDefinition{T}"/> instance
+    /// for the <typeparamref name="TEnum"/> type with <typeparamref name="TUnderlying"/> type.
+    /// </summary>
+    /// <param name="underlyingTypeDefinition">Column type definition associated with the underlying type.</param>
+    /// <typeparam name="TEnum"><see cref="Enum"/> type.</typeparam>
+    /// <typeparam name="TUnderlying">Type of the underlying value of <typeparamref name="TEnum"/> type.</typeparam>
+    /// <returns>New <see cref="SqlColumnTypeDefinition{T}"/> instance.</returns>
     [Pure]
     protected override SqlColumnTypeDefinition<TEnum> CreateEnumTypeDefinition<TEnum, TUnderlying>(
         SqlColumnTypeDefinition<TUnderlying> underlyingTypeDefinition)

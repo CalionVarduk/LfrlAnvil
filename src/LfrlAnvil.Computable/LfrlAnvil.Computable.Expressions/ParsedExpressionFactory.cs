@@ -10,7 +10,7 @@ using LfrlAnvil.Computable.Expressions.Internal;
 
 namespace LfrlAnvil.Computable.Expressions;
 
-/// <inheritdoc />
+/// <inheritdoc cref="IParsedExpressionFactory" />
 public sealed class ParsedExpressionFactory : IParsedExpressionFactory
 {
     private readonly ParsedExpressionFactoryInternalConfiguration _configuration;

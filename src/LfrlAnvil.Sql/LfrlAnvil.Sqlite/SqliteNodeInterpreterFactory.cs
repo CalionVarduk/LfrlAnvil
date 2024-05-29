@@ -3,7 +3,7 @@ using LfrlAnvil.Sql.Expressions.Visitors;
 
 namespace LfrlAnvil.Sqlite;
 
-/// <inheritdoc />
+/// <inheritdoc cref="ISqlNodeInterpreterFactory" />
 /// <remarks><see cref="SqliteDialect"/> implementation.</remarks>
 public class SqliteNodeInterpreterFactory : ISqlNodeInterpreterFactory
 {

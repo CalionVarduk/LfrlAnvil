@@ -9,7 +9,7 @@ using LfrlAnvil.Sql.Versioning;
 
 namespace LfrlAnvil.Sql.Objects;
 
-/// <inheritdoc />
+/// <inheritdoc cref="ISqlDatabase" />
 public abstract class SqlDatabase : ISqlDatabase
 {
     /// <summary>

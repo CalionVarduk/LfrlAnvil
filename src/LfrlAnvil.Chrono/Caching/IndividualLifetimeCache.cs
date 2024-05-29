@@ -10,7 +10,7 @@ using LfrlAnvil.Caching;
 
 namespace LfrlAnvil.Chrono.Caching;
 
-/// <inheritdoc />
+/// <inheritdoc cref="IIndividualLifetimeCache{TKey,TValue}" />
 public sealed class IndividualLifetimeCache<TKey, TValue> : IIndividualLifetimeCache<TKey, TValue>
     where TKey : notnull
 {

@@ -7,7 +7,7 @@ using LfrlAnvil.Exceptions;
 
 namespace LfrlAnvil.Collections;
 
-/// <inheritdoc />
+/// <inheritdoc cref="IDirectedGraphEdge{TKey,TNodeValue,TEdgeValue}" />
 public sealed class DirectedGraphEdge<TKey, TNodeValue, TEdgeValue> : IDirectedGraphEdge<TKey, TNodeValue, TEdgeValue>
     where TKey : notnull
 {

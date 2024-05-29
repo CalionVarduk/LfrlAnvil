@@ -6,7 +6,7 @@ using LfrlAnvil.Computable.Automata.Internal;
 
 namespace LfrlAnvil.Computable.Automata;
 
-/// <inheritdoc />
+/// <inheritdoc cref="IStateMachine{TState,TInput,TResult}" />
 public sealed class StateMachine<TState, TInput, TResult> : IStateMachine<TState, TInput, TResult>
     where TState : notnull
     where TInput : notnull

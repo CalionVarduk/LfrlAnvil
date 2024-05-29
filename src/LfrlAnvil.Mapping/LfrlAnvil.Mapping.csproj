@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <PackageTags>LfrlAnvil Mapping;LfrlAnvil;Mapping</PackageTags>
+        <PackageTags>LfrlAnvil;Mapping</PackageTags>
         <Description>This project contains an object mapper, as well as a builder of such a mapper.</Description>
     </PropertyGroup>
 

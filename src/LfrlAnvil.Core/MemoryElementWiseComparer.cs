@@ -6,7 +6,10 @@ using LfrlAnvil.Internal;
 
 namespace LfrlAnvil;
 
-/// <inheritdoc />
+/// <summary>
+/// Defines methods to support the comparison of <see cref="ReadOnlyMemory{T}"/> objects for equality.
+/// </summary>
+/// <typeparam name="T">Element type.</typeparam>
 public sealed class MemoryElementWiseComparer<T> : IEqualityComparer<ReadOnlyMemory<T>>
 {
     /// <inheritdoc />

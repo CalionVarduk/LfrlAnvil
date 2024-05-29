@@ -3,7 +3,7 @@ using LfrlAnvil.Sql.Expressions.Visitors;
 
 namespace LfrlAnvil.PostgreSql;
 
-/// <inheritdoc />
+/// <inheritdoc cref="ISqlNodeInterpreterFactory" />
 /// <remarks><see cref="PostgreSqlDialect"/> implementation.</remarks>
 public class PostgreSqlNodeInterpreterFactory : ISqlNodeInterpreterFactory
 {

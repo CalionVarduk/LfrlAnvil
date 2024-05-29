@@ -5,7 +5,7 @@ using LfrlAnvil.Chrono;
 
 namespace LfrlAnvil.Reactive.Chrono;
 
-/// <inheritdoc />
+/// <inheritdoc cref="ITimerTask{TKey}" />
 public abstract class TimerTask<TKey> : ITimerTask<TKey>
     where TKey : notnull
 {

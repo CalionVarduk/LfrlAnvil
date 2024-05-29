@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <PackageTags>LfrlAnvil Sql Sqlite;LfrlAnvil;Sql;Sqlite</PackageTags>
+        <PackageTags>LfrlAnvil;Sql;Sqlite</PackageTags>
         <Description>This project is an implementation of the LfrlAnvil.Sql.Core for Sqlite.</Description>
     </PropertyGroup>
 

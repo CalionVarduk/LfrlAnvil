@@ -9,7 +9,7 @@ using LfrlAnvil.Generators;
 
 namespace LfrlAnvil.Dependencies;
 
-/// <inheritdoc />
+/// <inheritdoc cref="IDependencyContainerBuilder" />
 public class DependencyContainerBuilder : IDependencyContainerBuilder
 {
     private readonly DependencyLocatorBuilderStore _locatorBuilderStore;

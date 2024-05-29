@@ -10,7 +10,7 @@ using LfrlAnvil.Identifiers.Exceptions;
 
 namespace LfrlAnvil.Identifiers;
 
-/// <inheritdoc />
+/// <inheritdoc cref="IIdentifierGenerator" />
 /// <remarks>
 /// Generators use the <see cref="Identifier.High"/> value as a representation of the time slice during which an <see cref="Identifier"/>
 /// has been created and the <see cref="Identifier.Low"/> value as a sequential number unique within a single <see cref="Identifier.High"/>

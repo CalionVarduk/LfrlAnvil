@@ -4,7 +4,7 @@ using LfrlAnvil.Reactive.State.Internal;
 
 namespace LfrlAnvil.Reactive.State.Events;
 
-/// <inheritdoc />
+/// <inheritdoc cref="ICollectionVariableRootChangeEvent{TKey,TElement}" />
 public class CollectionVariableRootChangeEvent<TKey, TElement, TValidationResult> : ICollectionVariableRootChangeEvent<TKey, TElement>
     where TKey : notnull
     where TElement : VariableNode

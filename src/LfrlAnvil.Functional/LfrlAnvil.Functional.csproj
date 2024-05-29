@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <PackageTags>LfrlAnvil Functional;LfrlAnvil;Functional</PackageTags>
+        <PackageTags>LfrlAnvil;Functional</PackageTags>
         <Description>This project contains a few functional programming functionalities.</Description>
     </PropertyGroup>
 

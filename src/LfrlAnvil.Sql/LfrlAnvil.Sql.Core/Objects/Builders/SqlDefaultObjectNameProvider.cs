@@ -3,7 +3,7 @@ using LfrlAnvil.Sql.Internal;
 
 namespace LfrlAnvil.Sql.Objects.Builders;
 
-/// <inheritdoc />
+/// <inheritdoc cref="ISqlDefaultObjectNameProvider" />
 public class SqlDefaultObjectNameProvider : ISqlDefaultObjectNameProvider
 {
     /// <inheritdoc />

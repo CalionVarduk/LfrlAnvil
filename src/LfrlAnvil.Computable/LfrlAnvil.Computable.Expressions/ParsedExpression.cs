@@ -11,7 +11,7 @@ using LfrlAnvil.Extensions;
 
 namespace LfrlAnvil.Computable.Expressions;
 
-/// <inheritdoc />
+/// <inheritdoc cref="IParsedExpression{TArg,TResult}" />
 public sealed class ParsedExpression<TArg, TResult> : IParsedExpression<TArg, TResult>
 {
     private readonly ParsedExpressionFactory _factory;

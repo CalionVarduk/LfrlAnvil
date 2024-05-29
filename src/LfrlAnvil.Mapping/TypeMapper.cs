@@ -7,7 +7,7 @@ using LfrlAnvil.Mapping.Internal;
 
 namespace LfrlAnvil.Mapping;
 
-/// <inheritdoc />
+/// <inheritdoc cref="ITypeMapper" />
 public sealed class TypeMapper : ITypeMapper
 {
     private readonly Dictionary<TypeMappingKey, TypeMappingStore> _stores;
@@ -20,7 +20,18 @@ public sealed class TypeMapper : ITypeMapper
             _stores[key] = value;
     }
 
-    /// <inheritdoc />
+    /// <summary>
+    /// Attempts to map the provided <paramref name="source"/> of <typeparamref name="TSource"/> type
+    /// to the desired <typeparamref name="TDestination"/> type.
+    /// </summary>
+    /// <param name="source">Source object.</param>
+    /// <param name="result">
+    /// <b>out</b> parameter that returns <paramref name="source"/> mapped to the <typeparamref name="TDestination"/> type
+    /// if mapping was successful.
+    /// </param>
+    /// <typeparam name="TSource">Source object type.</typeparam>
+    /// <typeparam name="TDestination">Desired destination type.</typeparam>
+    /// <returns><b>true</b> when mapping was successful, otherwise <b>false</b>.</returns>
     public bool TryMap<TSource, TDestination>(TSource source, [MaybeNullWhen( false )] out TDestination result)
     {
         var key = new TypeMappingKey( typeof( TSource ), typeof( TDestination ) );
@@ -35,7 +46,16 @@ public sealed class TypeMapper : ITypeMapper
         return true;
     }
 
-    /// <inheritdoc />
+    /// <summary>
+    /// Attempts to map the provided <paramref name="source"/> to the desired <typeparamref name="TDestination"/> type.
+    /// </summary>
+    /// <param name="source">Source object.</param>
+    /// <param name="result">
+    /// <b>out</b> parameter that returns <paramref name="source"/> mapped to the <typeparamref name="TDestination"/> type
+    /// if mapping was successful.
+    /// </param>
+    /// <typeparam name="TDestination">Desired destination type.</typeparam>
+    /// <returns><b>true</b> when mapping was successful, otherwise <b>false</b>.</returns>
     public bool TryMap<TDestination>(object source, [MaybeNullWhen( false )] out TDestination result)
     {
         var key = new TypeMappingKey( source.GetType(), typeof( TDestination ) );
@@ -65,7 +85,18 @@ public sealed class TypeMapper : ITypeMapper
         return true;
     }
 
-    /// <inheritdoc />
+    /// <summary>
+    /// Attempts to map the provided <paramref name="source"/> collection with elements of <typeparamref name="TSource"/> type
+    /// to a collection with elements of the desired <typeparamref name="TDestination"/> type.
+    /// </summary>
+    /// <param name="source">Source collection.</param>
+    /// <param name="result">
+    /// <b>out</b> parameter that returns <paramref name="source"/> collection mapped to collection with elements
+    /// of the <typeparamref name="TDestination"/> type if mapping was successful.
+    /// </param>
+    /// <typeparam name="TSource">Source collection's element type.</typeparam>
+    /// <typeparam name="TDestination">Desired destination collection's element type.</typeparam>
+    /// <returns><b>true</b> when mapping was successful, otherwise <b>false</b>.</returns>
     public bool TryMapMany<TSource, TDestination>(
         IEnumerable<TSource> source,
         [MaybeNullWhen( false )] out IEnumerable<TDestination> result)

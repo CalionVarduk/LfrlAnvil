@@ -8,7 +8,7 @@ using LfrlAnvil.Reactive.Queues.Internal;
 
 namespace LfrlAnvil.Reactive.Queues;
 
-/// <inheritdoc />
+/// <inheritdoc cref="IMutableEventQueue{TEvent,TPoint,TPointDelta}" />
 public abstract class EventQueueBase<TEvent, TPoint, TPointDelta> : IMutableEventQueue<TEvent, TPoint, TPointDelta>
 {
     private readonly Heap<EnqueuedEvent<TEvent, TPoint, TPointDelta>> _events;

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace LfrlAnvil.Requests;
 
-/// <inheritdoc />
+/// <inheritdoc cref="IRequestHandlerFactory" />
 public sealed class RequestHandlerFactory : IRequestHandlerFactory
 {
     private readonly Dictionary<Type, Delegate> _factories;

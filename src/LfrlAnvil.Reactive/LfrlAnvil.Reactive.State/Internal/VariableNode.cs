@@ -6,7 +6,7 @@ using LfrlAnvil.Reactive.State.Events;
 
 namespace LfrlAnvil.Reactive.State.Internal;
 
-/// <inheritdoc />
+/// <inheritdoc cref="IVariableNode" />
 public abstract class VariableNode : IVariableNode
 {
     /// <summary>

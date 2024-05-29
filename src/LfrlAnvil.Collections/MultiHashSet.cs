@@ -9,7 +9,7 @@ using LfrlAnvil.Extensions;
 
 namespace LfrlAnvil.Collections;
 
-/// <inheritdoc />
+/// <inheritdoc cref="IMultiSet{T}" />
 public class MultiHashSet<T> : IMultiSet<T>
     where T : notnull
 {

@@ -3,7 +3,7 @@ using LfrlAnvil.Computable.Automata.Exceptions;
 
 namespace LfrlAnvil.Computable.Automata;
 
-/// <inheritdoc />
+/// <inheritdoc cref="IStateMachineInstance{TState,TInput,TResult}" />
 public sealed class StateMachineInstance<TState, TInput, TResult> : IStateMachineInstance<TState, TInput, TResult>
     where TState : notnull
     where TInput : notnull

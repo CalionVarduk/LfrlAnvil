@@ -9,7 +9,7 @@ using LfrlAnvil.Sql.Objects.Builders;
 
 namespace LfrlAnvil.Sql.Objects;
 
-/// <inheritdoc />
+/// <inheritdoc cref="ISqlObjectCollection" />
 public abstract class SqlObjectCollection : ISqlObjectCollection
 {
     private readonly Dictionary<string, SqlObject> _map;

@@ -3,7 +3,7 @@
 namespace LfrlAnvil.Reactive.State.Events;
 
 /// <summary>
-/// Represents a type-erased value change event emitted by an <see cref="IReadOnlyVariableRoot"/>.
+/// Represents a type-erased event emitted by an <see cref="IReadOnlyVariableRoot"/>.
 /// </summary>
 public interface IVariableRootEvent : IVariableNodeEvent
 {
@@ -29,7 +29,7 @@ public interface IVariableRootEvent : IVariableNodeEvent
 }
 
 /// <summary>
-/// Represents a generic value change event emitted by an <see cref="IReadOnlyVariableRoot{TKey}"/>.
+/// Represents a generic event emitted by an <see cref="IReadOnlyVariableRoot{TKey}"/>.
 /// </summary>
 /// <typeparam name="TKey">Child node's key type.</typeparam>
 public interface IVariableRootEvent<TKey> : IVariableRootEvent

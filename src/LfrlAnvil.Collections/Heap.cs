@@ -8,7 +8,7 @@ using LfrlAnvil.Extensions;
 
 namespace LfrlAnvil.Collections;
 
-/// <inheritdoc />
+/// <inheritdoc cref="IHeap{T}" />
 public class Heap<T> : IHeap<T>
 {
     private readonly List<T> _items;

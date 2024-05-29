@@ -11,7 +11,7 @@ using LfrlAnvil.Generators;
 
 namespace LfrlAnvil.Dependencies;
 
-/// <inheritdoc />
+/// <inheritdoc cref="IDisposableDependencyContainer" />
 public sealed class DependencyContainer : IDisposableDependencyContainer
 {
     private readonly NamedDependencyScopeStore _namedScopes;

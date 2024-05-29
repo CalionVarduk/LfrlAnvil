@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <PackageTags>LfrlAnvil Sql MySql;LfrlAnvil;Sql;MySql</PackageTags>
+        <PackageTags>LfrlAnvil;Sql;MySql</PackageTags>
         <Description>This project is an implementation of the LfrlAnvil.Sql.Core for MySql.</Description>
     </PropertyGroup>
 

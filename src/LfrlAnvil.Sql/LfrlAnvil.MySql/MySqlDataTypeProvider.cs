@@ -3,7 +3,7 @@ using LfrlAnvil.Sql;
 
 namespace LfrlAnvil.MySql;
 
-/// <inheritdoc />
+/// <inheritdoc cref="ISqlDataTypeProvider" />
 /// <remarks><see cref="MySqlDialect"/> implementation.</remarks>
 public sealed class MySqlDataTypeProvider : ISqlDataTypeProvider
 {

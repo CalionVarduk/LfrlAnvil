@@ -2,7 +2,11 @@
 
 namespace LfrlAnvil.Reactive.State.Events;
 
-/// <inheritdoc />
+/// <summary>
+/// Represents a generic value change event emitted by an <see cref="IReadOnlyVariable{TValue,TValidationResult}"/>.
+/// </summary>
+/// <typeparam name="TValue">Variable's value type.</typeparam>
+/// <typeparam name="TValidationResult">Variable's validation result type.</typeparam>
 public class VariableValueChangeEvent<TValue, TValidationResult> : IVariableValueChangeEvent<TValue>
 {
     /// <summary>

@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 
 namespace LfrlAnvil.Reactive.Chrono;
 
-/// <inheritdoc />
+/// <inheritdoc cref="IScheduleTask{TKey}" />
 public abstract class ScheduleTask<TKey> : IScheduleTask<TKey>
     where TKey : notnull
 {

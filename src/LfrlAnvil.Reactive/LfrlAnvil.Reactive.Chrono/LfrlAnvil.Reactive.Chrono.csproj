@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <PackageTags>LfrlAnvil Reactive Chrono;LfrlAnvil;Reactive;Chrono</PackageTags>
+        <PackageTags>LfrlAnvil;Reactive;Chrono</PackageTags>
         <Description>This project contains a few functionalities related to timers and schedulers.</Description>
     </PropertyGroup>
 

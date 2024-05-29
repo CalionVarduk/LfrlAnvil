@@ -5,7 +5,7 @@ using LfrlAnvil.Chrono.Internal;
 
 namespace LfrlAnvil.Chrono;
 
-/// <inheritdoc />
+/// <inheritdoc cref="TimestampProviderBase" />
 public sealed class TimestampProvider : TimestampProviderBase
 {
     /// <inheritdoc />

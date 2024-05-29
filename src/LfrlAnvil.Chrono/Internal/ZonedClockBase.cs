@@ -4,7 +4,7 @@ using LfrlAnvil.Generators;
 
 namespace LfrlAnvil.Chrono.Internal;
 
-/// <inheritdoc />
+/// <inheritdoc cref="IZonedClock" />
 public abstract class ZonedClockBase : IZonedClock
 {
     /// <summary>

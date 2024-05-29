@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <PackageTags>LfrlAnvil Identifiers;LfrlAnvil;Identifiers</PackageTags>
+        <PackageTags>LfrlAnvil;Identifiers</PackageTags>
         <Description>This project contains a generator of sequential 64-bit identifiers based on a timestamp.</Description>
     </PropertyGroup>
 

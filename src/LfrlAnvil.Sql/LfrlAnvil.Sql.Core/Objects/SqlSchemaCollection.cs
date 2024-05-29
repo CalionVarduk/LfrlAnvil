@@ -8,7 +8,7 @@ using LfrlAnvil.Sql.Objects.Builders;
 
 namespace LfrlAnvil.Sql.Objects;
 
-/// <inheritdoc />
+/// <inheritdoc cref="ISqlSchemaCollection" />
 public abstract class SqlSchemaCollection : ISqlSchemaCollection
 {
     private readonly Dictionary<string, SqlSchema> _map;

@@ -9,7 +9,7 @@ using LfrlAnvil.Extensions;
 
 namespace LfrlAnvil.Collections;
 
-/// <inheritdoc />
+/// <inheritdoc cref="IDictionaryHeap{TKey,TValue}" />
 public class DictionaryHeap<TKey, TValue> : IDictionaryHeap<TKey, TValue>
     where TKey : notnull
 {
