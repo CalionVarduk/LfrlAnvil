@@ -5,6 +5,7 @@ on:
     branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
+  workflow_dispatch:
 
 jobs:
   build:
@@ -41,9 +42,7 @@ jobs:
           file: .coverlet/coverage.info
           format: lcov
 
-      - name: Upload build artifacts
-        if: success()
+      - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: build-artifacts
           path: ./publish
