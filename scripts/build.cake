@@ -1,6 +1,8 @@
 #tool "dotnet:?package=GitVersion.Tool&version=5.12.0"
 #tool "nuget:?package=NuGet.CommandLine&version=5.9.1"
 
+#load "projects.cake"
+
 //////////////////////////////////////////////////////////////////////
 // ARGUMENTS
 //////////////////////////////////////////////////////////////////////
@@ -17,14 +19,15 @@ var version = GitVersion(new GitVersionSettings()).NuGetVersion;
 // PREPARATION
 //////////////////////////////////////////////////////////////////////
 
-var rootDir = System.IO.Path.GetFullPath(System.IO.Path.Combine(Environment.CurrentDirectory, ".."));
 var binDirs = System.IO.Path.Combine(rootDir, "**", "bin", configuration);
 var objDirs = System.IO.Path.Combine(rootDir, "**", "obj", configuration);
 var publishDir = publishOutput.Length > 0 ? System.IO.Path.Combine(rootDir, publishOutput) : "";
 var nugetDir = System.IO.Path.Combine(rootDir, nugetOutput);
-var solution = System.IO.Path.Combine(rootDir, "LfrlAnvil.sln");
-var projects = GetFiles(System.IO.Path.Combine(rootDir, "src", "**", "*.csproj")).ToArray();
-var testProjects = GetFiles(System.IO.Path.Combine(rootDir, "tests", "**", "*.Tests.csproj")).ToArray();
+
+var testProjects = GetFiles(System.IO.Path.Combine(rootDir, "tests", "**", "*.Tests.csproj"))
+    .OrderBy(static p => p.FullPath)
+    .ToArray();
+
 var coverletOutput = System.IO.Path.Combine(rootDir, ".coverlet", "coverage.json");
 var coverletDir = coverletOutput.Substring(0, coverletOutput.Length - "coverage.json".Length);
 if (coverletDir.EndsWith("\\") && !coverletDir.EndsWith("\\\\"))
