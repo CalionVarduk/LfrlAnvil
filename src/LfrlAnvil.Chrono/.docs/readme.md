@@ -7,6 +7,10 @@ This project contains functionalities related to date & time, as well as timezon
 Most of them work directly on dotnet's [DateTime](https://learn.microsoft.com/en-us/dotnet/api/system.datetime?view=net-7.0)
 and [TimeZoneInfo](https://learn.microsoft.com/en-us/dotnet/api/system.timezoneinfo?view=net-7.0) types.
 
+### Documentation
+
+Technical documentation can be found [here](https://calionvarduk.github.io/LfrlAnvil/api/LfrlAnvil.Chrono/LfrlAnvil.Chrono.html).
+
 ### Examples
 
 Following are a few examples of date & time structures:

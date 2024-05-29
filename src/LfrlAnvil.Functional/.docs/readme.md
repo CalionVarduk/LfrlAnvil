@@ -5,6 +5,10 @@
 
 This project contains a few functional programming functionalities.
 
+### Documentation
+
+Technical documentation can be found [here](https://calionvarduk.github.io/LfrlAnvil/api/LfrlAnvil.Functional/LfrlAnvil.Functional.html).
+
 ### Examples
 
 Following is an example of a `Maybe` (or `Option`) monad:

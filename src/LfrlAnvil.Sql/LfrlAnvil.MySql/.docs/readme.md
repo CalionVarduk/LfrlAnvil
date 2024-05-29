@@ -8,3 +8,7 @@ of the [LfrlAnvil.Sql.Core](https://github.com/CalionVarduk/LfrlAnvil/blob/main/
 for [MySql](https://www.mysql.com/).
 
 Uses [MySqlConnector](https://www.nuget.org/packages/MySqlConnector) for interfacing with DB.
+
+### Documentation
+
+Technical documentation can be found [here](https://calionvarduk.github.io/LfrlAnvil/api/LfrlAnvil.MySql/LfrlAnvil.MySql.html).

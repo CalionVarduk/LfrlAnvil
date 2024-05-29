@@ -5,6 +5,10 @@
 
 This project contains a parser of string expressions that can be compiled to invocable delegates.
 
+### Documentation
+
+Technical documentation can be found [here](https://calionvarduk.github.io/LfrlAnvil/api/LfrlAnvil.Computable.Expressions/LfrlAnvil.Computable.Expressions.html).
+
 ### Examples
 
 Following contains an example of a parser configuration, as well as creation,

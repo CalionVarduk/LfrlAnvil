@@ -5,6 +5,10 @@
 
 This project contains structures and algorithms related to the automata theory.
 
+### Documentation
+
+Technical documentation can be found [here](https://calionvarduk.github.io/LfrlAnvil/api/LfrlAnvil.Computable.Automata/LfrlAnvil.Computable.Automata.html).
+
 ### Examples
 
 Following is an example of a deterministic finite state machine (FSM):

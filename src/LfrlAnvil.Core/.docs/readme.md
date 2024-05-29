@@ -5,6 +5,10 @@
 
 This project contains a bunch of lightweight core functionalities, used by other `LfrlAnvil` projects.
 
+### Documentation
+
+Technical documentation can be found [here](https://calionvarduk.github.io/LfrlAnvil/api/LfrlAnvil.Core/LfrlAnvil.html).
+
 ### Examples
 
 Following are examples of some of the more interesting functionalities:

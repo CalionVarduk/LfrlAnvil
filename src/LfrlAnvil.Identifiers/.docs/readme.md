@@ -5,6 +5,10 @@
 
 This project contains a generator of sequential 64-bit identifiers based on a timestamp.
 
+### Documentation
+
+Technical documentation can be found [here](https://calionvarduk.github.io/LfrlAnvil/api/LfrlAnvil.Identifiers/LfrlAnvil.Identifiers.html).
+
 ### Examples
 
 Following is an example of the simplest way to create a generator and generate a single identifier from it:

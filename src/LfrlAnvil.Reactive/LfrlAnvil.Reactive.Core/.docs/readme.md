@@ -5,6 +5,10 @@
 
 This project contains a few reactive programming functionalities.
 
+### Documentation
+
+Technical documentation can be found [here](https://calionvarduk.github.io/LfrlAnvil/api/LfrlAnvil.Reactive.Core/LfrlAnvil.Reactive.html).
+
 ### Examples
 
 Following is an example of an event publisher usage:

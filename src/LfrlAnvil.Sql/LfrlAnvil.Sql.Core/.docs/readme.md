@@ -11,6 +11,10 @@ This project contains core functionalities related to SQL, such as:
 - Database schema versioning,
 - Support for multiple SQL dialect implementations.
 
+### Documentation
+
+Technical documentation can be found [here](https://calionvarduk.github.io/LfrlAnvil/api/LfrlAnvil.Sql.Core/LfrlAnvil.Sql.html).
+
 ### Examples
 
 Following is an example of an SQL statement syntax tree creation:

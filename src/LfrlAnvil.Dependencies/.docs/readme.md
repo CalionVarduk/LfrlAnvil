@@ -5,6 +5,10 @@
 
 This project contains an implementation of an IoC container.
 
+### Documentation
+
+Technical documentation can be found [here](https://calionvarduk.github.io/LfrlAnvil/api/LfrlAnvil.Dependencies/LfrlAnvil.Dependencies.html).
+
 ### Examples
 
 Following are a few examples of how to create a container and how to resolve dependencies:

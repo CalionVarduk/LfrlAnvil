@@ -10,7 +10,11 @@ that at some point I thought would be fun to (re)implement with as little "exter
 Obviously, there is a lot of "reinventing the wheel" and potentially weird tinkering happening here,
 but the point of this project isn't necessarily to add anything new to the table.
 
-Following is the list of individual projects, in no particular order
+### Documentation
+
+Technical documentation can be found [here](https://calionvarduk.github.io/LfrlAnvil/index.html).
+
+Following is the list of all individual projects, in no particular order
 (click on the links to see their respective readme files):
 - [LfrlAnvil.Core](./src/LfrlAnvil.Core/.docs/readme.md)
 - [LfrlAnvil.Chrono](./src/LfrlAnvil.Chrono/.docs/readme.md)

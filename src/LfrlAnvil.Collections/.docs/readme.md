@@ -6,6 +6,10 @@
 This project contains a few additional collections and data structures.
 Some of them include different dictionary and set variations (e.g. multi-dictionary and multi-set) as well as heaps and graphs.
 
+### Documentation
+
+Technical documentation can be found [here](https://calionvarduk.github.io/LfrlAnvil/api/LfrlAnvil.Collections/LfrlAnvil.Collections.html).
+
 ### Examples
 
 This section contains examples of some of the more interesting data structures.

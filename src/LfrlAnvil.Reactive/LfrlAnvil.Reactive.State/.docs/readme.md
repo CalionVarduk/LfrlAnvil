@@ -5,6 +5,10 @@
 
 This project contains a few functionalities related to state management.
 
+### Documentation
+
+Technical documentation can be found [here](https://calionvarduk.github.io/LfrlAnvil/api/LfrlAnvil.Reactive.State/LfrlAnvil.Reactive.State.html).
+
 ### Examples
 
 Following is an example of a `string` variable:

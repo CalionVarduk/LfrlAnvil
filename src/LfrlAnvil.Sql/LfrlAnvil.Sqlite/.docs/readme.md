@@ -8,3 +8,7 @@ of the [LfrlAnvil.Sql.Core](https://github.com/CalionVarduk/LfrlAnvil/blob/main/
 for [Sqlite](https://www.sqlite.org/).
 
 Uses [Microsoft.Data.Sqlite](https://www.nuget.org/packages/Microsoft.Data.Sqlite) for interfacing with DB.
+
+### Documentation
+
+Technical documentation can be found [here](https://calionvarduk.github.io/LfrlAnvil/api/LfrlAnvil.Sqlite/LfrlAnvil.Sqlite.html).

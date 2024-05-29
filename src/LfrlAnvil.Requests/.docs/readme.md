@@ -5,6 +5,10 @@
 
 This project contains an intermediate request dispatcher, as well as a factory of request handlers.
 
+### Documentation
+
+Technical documentation can be found [here](https://calionvarduk.github.io/LfrlAnvil/api/LfrlAnvil.Requests/LfrlAnvil.Requests.html).
+
 ### Examples
 
 Following is an example of how to define a request type, how to create a handler of such requests and how to dispatch a request:

@@ -5,6 +5,10 @@
 
 This project contains an object mapper, as well as a builder of such a mapper.
 
+### Documentation
+
+Technical documentation can be found [here](https://calionvarduk.github.io/LfrlAnvil/api/LfrlAnvil.Mapping/LfrlAnvil.Mapping.html).
+
 ### Examples
 
 Following is an example of an implementation of a class that defines object mappings:

@@ -5,6 +5,10 @@
 
 This project contains a few functionalities related to timers and schedulers.
 
+### Documentation
+
+Technical documentation can be found [here](https://calionvarduk.github.io/LfrlAnvil/api/LfrlAnvil.Reactive.Chrono/LfrlAnvil.Reactive.Chrono.html).
+
 ### Examples
 
 Following is an example of a timer that emits events:

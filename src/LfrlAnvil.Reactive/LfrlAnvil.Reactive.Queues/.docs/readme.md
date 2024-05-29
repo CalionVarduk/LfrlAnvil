@@ -5,6 +5,10 @@
 
 This project contains a few functionalities related to event queues.
 
+### Documentation
+
+Technical documentation can be found [here](https://calionvarduk.github.io/LfrlAnvil/api/LfrlAnvil.Reactive.Queues/LfrlAnvil.Reactive.Queues.html).
+
 ### Examples
 
 Following is an example of an event queue:

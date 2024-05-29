@@ -5,6 +5,10 @@
 
 This project contains definitions of various composable validators, as well as validation message formatters.
 
+### Documentation
+
+Technical documentation can be found [here](https://calionvarduk.github.io/LfrlAnvil/api/LfrlAnvil.Validation/LfrlAnvil.Validation.html).
+
 ### Examples
 
 Following are examples of a few chosen formattable validators:
