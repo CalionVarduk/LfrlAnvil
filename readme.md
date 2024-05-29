@@ -1,4 +1,4 @@
-[![Build](https://github.com/CalionVarduk/LfrlAnvil/actions/workflows/dotnet.yml/badge.svg)](https://github.com/CalionVarduk/LfrlAnvil/actions/workflows/dotnet.yml)
+[![Build](https://github.com/CalionVarduk/LfrlAnvil/actions/workflows/build.yml/badge.svg)](https://github.com/CalionVarduk/LfrlAnvil/actions/workflows/build.yml)
 [![Coverage Status](https://coveralls.io/repos/github/CalionVarduk/LfrlAnvil/badge.svg)](https://coveralls.io/github/CalionVarduk/LfrlAnvil)
 
 # [LfrlAnvil](https://github.com/CalionVarduk/LfrlAnvil)
