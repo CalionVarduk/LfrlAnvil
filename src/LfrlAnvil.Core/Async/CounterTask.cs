@@ -26,7 +26,7 @@ public sealed class CounterTask : IDisposable
     /// </param>
     public CounterTask(int limit, int count = 0)
     {
-        _source = new TaskCompletionSource();
+        _source = new TaskCompletionSource( TaskCreationOptions.RunContinuationsAsynchronously );
         _count = count;
         Limit = Math.Max( limit, 0 );
 

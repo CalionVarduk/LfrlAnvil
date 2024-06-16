@@ -1203,7 +1203,7 @@ public static class EventStreamExtensions
     /// <returns>New <see cref="Task{TResult}"/> instance.</returns>
     public static Task<TEvent?> ToTask<TEvent>(this IEventStream<TEvent> source, CancellationToken cancellationToken)
     {
-        var completionSource = new TaskCompletionSource<TEvent?>();
+        var completionSource = new TaskCompletionSource<TEvent?>( TaskCreationOptions.RunContinuationsAsynchronously );
         if ( cancellationToken.IsCancellationRequested )
         {
             completionSource.SetCanceled( cancellationToken );
