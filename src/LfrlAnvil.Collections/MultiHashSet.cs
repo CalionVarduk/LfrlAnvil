@@ -228,7 +228,7 @@ public class MultiHashSet<T> : IMultiSet<T>
         }
 
         var otherSet = GetOtherSet( other, Comparer );
-        var itemsToUpdate = new List<(T Item, int OldMultiplicity, int NewMultiplicity)>();
+        var itemsToUpdate = ListSlim<(T Item, int OldMultiplicity, int NewMultiplicity)>.Create();
 
         foreach ( var (item, multiplicity) in _map )
         {

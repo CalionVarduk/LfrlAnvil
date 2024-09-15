@@ -127,7 +127,7 @@ public class SequentialHashSet<T> : ISet<T>, IReadOnlySet<T>
         }
 
         var otherSet = GetOtherSet( other, Comparer );
-        var itemsToRemove = new List<T>();
+        var itemsToRemove = ListSlim<T>.Create();
 
         foreach ( var value in _order )
         {

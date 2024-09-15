@@ -117,7 +117,7 @@ public class ReactiveScheduler<TKey> : IReactiveScheduler<TKey>
     /// <inheritdoc />
     public void Dispose()
     {
-        List<ReactiveSchedulerEntry<TKey>>? toRemove = null;
+        var toRemove = ListSlim<ReactiveSchedulerEntry<TKey>>.Create();
         if ( _state.Write( ReactiveSchedulerState.Disposed, ReactiveSchedulerState.Created ) )
         {
             using ( AcquireScheduleLock() )
@@ -294,7 +294,7 @@ public class ReactiveScheduler<TKey> : IReactiveScheduler<TKey>
     /// <inheritdoc />
     public void Clear()
     {
-        List<ReactiveSchedulerEntry<TKey>>? toRemove = null;
+        ListSlim<ReactiveSchedulerEntry<TKey>> toRemove = ListSlim<ReactiveSchedulerEntry<TKey>>.Create();
         using ( AcquireScheduleLock() )
             DisposeAll( ref toRemove );
 
@@ -351,27 +351,29 @@ public class ReactiveScheduler<TKey> : IReactiveScheduler<TKey>
         return true;
     }
 
-    private void DisposeAll(ref List<ReactiveSchedulerEntry<TKey>>? toRemove)
+    private void DisposeAll(ref ListSlim<ReactiveSchedulerEntry<TKey>> toRemove)
     {
         foreach ( var entry in _queue )
         {
             if ( entry.IsDisposed )
                 continue;
 
-            toRemove ??= new List<ReactiveSchedulerEntry<TKey>>( capacity: _queue.Count );
+            if ( toRemove.Capacity == 0 )
+                toRemove.ResetCapacity( _queue.Count );
+
             toRemove.Add( entry );
         }
 
-        if ( toRemove is null )
+        if ( toRemove.IsEmpty )
             return;
 
         foreach ( var entry in toRemove )
             _queue.Replace( entry.Container.Key, entry.AsDisposed() );
     }
 
-    private void RemoveAll(List<ReactiveSchedulerEntry<TKey>>? toRemove)
+    private void RemoveAll(ListSlim<ReactiveSchedulerEntry<TKey>> toRemove)
     {
-        if ( toRemove is null )
+        if ( toRemove.IsEmpty )
             return;
 
         var errors = Chain<Exception>.Empty;
@@ -430,7 +432,7 @@ public class ReactiveScheduler<TKey> : IReactiveScheduler<TKey>
 
     private void RunCore()
     {
-        var eventBuffer = new List<ReactiveSchedulerEntry<TKey>>();
+        var eventBuffer = ListSlim<ReactiveSchedulerEntry<TKey>>.Create();
 
         Duration delay;
         Timestamp timestamp;

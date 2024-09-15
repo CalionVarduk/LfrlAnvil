@@ -242,6 +242,60 @@ public class StackSlimTests : TestsBase
     }
 
     [Fact]
+    public void TryPop_ShouldDoNothing_WhenStackIsEmpty()
+    {
+        var sut = StackSlim<string>.Create();
+
+        var result = sut.TryPop( out var outResult );
+
+        using ( new AssertionScope() )
+        {
+            outResult.Should().BeNull();
+            result.Should().BeFalse();
+            sut.Count.Should().Be( 0 );
+            sut.Capacity.Should().Be( 0 );
+            sut.IsEmpty.Should().BeTrue();
+        }
+    }
+
+    [Fact]
+    public void TryPop_ShouldRemoveOnlyItemFromStack()
+    {
+        var sut = StackSlim<string>.Create();
+        sut.Push( "foo" );
+
+        var result = sut.TryPop( out var outResult );
+
+        using ( new AssertionScope() )
+        {
+            outResult.Should().Be( "foo" );
+            result.Should().BeTrue();
+            sut.Count.Should().Be( 0 );
+            sut.Capacity.Should().Be( 4 );
+            sut.IsEmpty.Should().BeTrue();
+        }
+    }
+
+    [Fact]
+    public void TryPop_ShouldRemoveTopItemFromStack()
+    {
+        var sut = StackSlim<string>.Create();
+        sut.PushRange( new[] { "x1", "x2", "x3" } );
+
+        var result = sut.TryPop( out var outResult );
+
+        using ( new AssertionScope() )
+        {
+            outResult.Should().Be( "x3" );
+            result.Should().BeTrue();
+            sut.Count.Should().Be( 2 );
+            sut.Capacity.Should().Be( 4 );
+            sut.IsEmpty.Should().BeFalse();
+            sut.Top().Should().Be( "x2" );
+        }
+    }
+
+    [Fact]
     public void PopRange_ShouldDoNothing_WhenStackIsEmpty()
     {
         var sut = StackSlim<string>.Create();

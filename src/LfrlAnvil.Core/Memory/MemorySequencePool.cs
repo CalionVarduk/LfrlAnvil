@@ -44,7 +44,7 @@ public class MemorySequencePool<T>
         /// <summary>
         /// Total number of allocated pool segments.
         /// </summary>
-        public int AllocatedSegments => _pool?._segments.Length ?? 0;
+        public int AllocatedSegments => _pool?._segments.Count ?? 0;
 
         /// <summary>
         /// Number of active pool segments.
@@ -54,7 +54,7 @@ public class MemorySequencePool<T>
         /// <summary>
         /// Number of cached underlying pool nodes.
         /// </summary>
-        public int CachedNodes => _pool?._nodeCache.Length ?? 0;
+        public int CachedNodes => _pool?._nodeCache.Count ?? 0;
 
         /// <summary>
         /// Number of active underlying pool nodes.
@@ -78,7 +78,7 @@ public class MemorySequencePool<T>
         /// <summary>
         /// Number of fragmented underlying pool nodes.
         /// </summary>
-        public int FragmentedNodes => _pool?._fragmentationHeap.Length ?? 0;
+        public int FragmentedNodes => _pool?._fragmentationHeap.Count ?? 0;
 
         /// <summary>
         /// Number of active elements.
@@ -100,12 +100,12 @@ public class MemorySequencePool<T>
             get
             {
                 var count = 0;
-                var fragmentationHeapLength = _pool?._fragmentationHeap.Length ?? 0;
+                var fragmentationHeapLength = _pool?._fragmentationHeap.Count ?? 0;
                 if ( fragmentationHeapLength == 0 )
                     return count;
 
                 for ( var i = 0; i < fragmentationHeapLength; ++i )
-                    count += _pool!._fragmentationHeap.Get( i ).Length;
+                    count += _pool!._fragmentationHeap[i].Length;
 
                 return count;
             }
@@ -118,9 +118,9 @@ public class MemorySequencePool<T>
         [Pure]
         public IEnumerable<int> GetFragmentedNodeSizes()
         {
-            var fragmentationHeapLength = _pool?._fragmentationHeap.Length ?? 0;
+            var fragmentationHeapLength = _pool?._fragmentationHeap.Count ?? 0;
             for ( var i = 0; i < fragmentationHeapLength; ++i )
-                yield return _pool!._fragmentationHeap.Get( i ).Length;
+                yield return _pool!._fragmentationHeap[i].Length;
         }
 
         /// <summary>
@@ -149,13 +149,11 @@ public class MemorySequencePool<T>
         }
     }
 
-    private const int DefaultBufferSize = 7;
-
     private readonly int _segmentLengthLog2;
     private Node? _tailNode;
-    private Buffer<Node> _nodeCache;
-    private Buffer<Node> _fragmentationHeap;
-    private Buffer<T[]> _segments;
+    private StackSlim<Node> _nodeCache;
+    private ListSlim<Node> _fragmentationHeap;
+    private ListSlim<T[]> _segments;
 
     /// <summary>
     /// Creates a new <see cref="MemorySequencePool{T}"/> instance.
@@ -174,9 +172,9 @@ public class MemorySequencePool<T>
         ClearReturnedSequences = true;
 
         _tailNode = null;
-        _nodeCache = Buffer<Node>.Create();
-        _fragmentationHeap = Buffer<Node>.Create();
-        _segments = Buffer<T[]>.Create();
+        _nodeCache = StackSlim<Node>.Create();
+        _fragmentationHeap = ListSlim<Node>.Create();
+        _segments = ListSlim<T[]>.Create();
     }
 
     /// <summary>
@@ -225,13 +223,15 @@ public class MemorySequencePool<T>
     /// </summary>
     public void TrimExcess()
     {
-        var cachedTailSegmentCount = _segments.Length;
+        var cachedTailSegmentCount = _segments.Count;
         if ( _tailNode is not null )
             cachedTailSegmentCount -= _tailNode.LastIndex.Segment + 1;
 
-        _segments = _segments.PopMany( cachedTailSegmentCount ).TrimExcess();
-        _fragmentationHeap = _fragmentationHeap.TrimExcess();
-        _nodeCache = _nodeCache.Clear().TrimExcess();
+        _segments.RemoveLastRange( cachedTailSegmentCount );
+        _segments.ResetCapacity();
+        _fragmentationHeap.ResetCapacity();
+        _nodeCache.Clear();
+        _nodeCache.ResetCapacity();
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -239,9 +239,9 @@ public class MemorySequencePool<T>
     {
         Assume.IsGreaterThan( length, 0 );
 
-        if ( _fragmentationHeap.Length > 0 )
+        if ( _fragmentationHeap.Count > 0 )
         {
-            var largestNode = _fragmentationHeap.Get( 0 );
+            var largestNode = _fragmentationHeap.First();
             if ( largestNode.Length >= length )
                 return AllocateAtLargestFragmentedNode( largestNode, length );
         }
@@ -272,7 +272,7 @@ public class MemorySequencePool<T>
 
     private Node AllocateAtLargestFragmentedNode(Node node, int length)
     {
-        Assume.Equals( node, _fragmentationHeap.Get( 0 ) );
+        Assume.Equals( node, _fragmentationHeap.First() );
         Assume.IsLessThanOrEqualTo( length, node.Length );
 
         if ( node.Length == length )
@@ -291,9 +291,9 @@ public class MemorySequencePool<T>
     {
         Assume.IsNotNull( _tailNode );
 
-        var segmentsToAllocate = lastSegmentIndex - _segments.Length + 1;
+        var segmentsToAllocate = lastSegmentIndex - _segments.Count + 1;
         for ( var i = 0; i < segmentsToAllocate; ++i )
-            _segments = _segments.Push( new T[SegmentLength] );
+            _segments.Add( new T[SegmentLength] );
     }
 
     private void AddToFragmentationHeap(Node node)
@@ -301,40 +301,45 @@ public class MemorySequencePool<T>
         Assume.IsGreaterThan( node.Length, 0 );
         Assume.Equals( node.FragmentationIndex, Node.InactiveFragmentationIndex );
 
-        node.UpdateFragmentationIndex( _fragmentationHeap.Length );
-        _fragmentationHeap = _fragmentationHeap.Push( node );
+        node.UpdateFragmentationIndex( _fragmentationHeap.Count );
+        _fragmentationHeap.Add( node );
         FixUpFragmentationHeap( node );
     }
 
     private void PopFromFragmentationHeap()
     {
-        if ( _fragmentationHeap.Length == 1 )
+        if ( _fragmentationHeap.Count == 1 )
         {
-            _fragmentationHeap = _fragmentationHeap.Pop();
+            _fragmentationHeap.RemoveLast();
             return;
         }
 
-        var last = _fragmentationHeap.Last();
-        _fragmentationHeap.Set( 0, last );
+        ref var first = ref _fragmentationHeap.First();
+        var last = Unsafe.Add( ref first, _fragmentationHeap.Count - 1 );
+        first = last;
         last.UpdateFragmentationIndex( 0 );
-        _fragmentationHeap = _fragmentationHeap.Pop();
+        _fragmentationHeap.RemoveLast();
         FixDownFragmentationHeap( last );
     }
 
     private void RemoveFromFragmentationHeap(Node node)
     {
-        var last = _fragmentationHeap.Last();
+        ref var first = ref _fragmentationHeap.First();
+        var last = Unsafe.Add( ref first, _fragmentationHeap.Count - 1 );
+
         if ( ReferenceEquals( node, last ) )
         {
             node.DeactivateFragmentationIndex();
-            _fragmentationHeap = _fragmentationHeap.Pop();
+            _fragmentationHeap.RemoveLast();
             return;
         }
 
-        _fragmentationHeap.Set( node.FragmentationIndex, last );
+        ref var target = ref Unsafe.Add( ref first, node.FragmentationIndex );
+        target = last;
+
         last.UpdateFragmentationIndex( node.FragmentationIndex );
         node.DeactivateFragmentationIndex();
-        _fragmentationHeap = _fragmentationHeap.Pop();
+        _fragmentationHeap.RemoveLast();
         FixRelativeFragmentationHeap( last, node.Length );
     }
 
@@ -342,15 +347,20 @@ public class MemorySequencePool<T>
     {
         Assume.IsGreaterThanOrEqualTo( node.FragmentationIndex, 0 );
         var p = (node.FragmentationIndex - 1) >> 1;
+        ref var first = ref _fragmentationHeap.First();
 
         while ( node.FragmentationIndex > 0 )
         {
-            var parent = _fragmentationHeap.Get( p );
+            var parent = Unsafe.Add( ref first, p );
             if ( node.Length <= parent.Length )
                 break;
 
-            _fragmentationHeap.Set( node.FragmentationIndex, parent );
-            _fragmentationHeap.Set( parent.FragmentationIndex, node );
+            ref var target = ref Unsafe.Add( ref first, node.FragmentationIndex )!;
+            target = parent;
+
+            target = ref Unsafe.Add( ref first, parent.FragmentationIndex )!;
+            target = node;
+
             node.SwapFragmentationIndex( parent );
             p = (p - 1) >> 1;
         }
@@ -360,16 +370,17 @@ public class MemorySequencePool<T>
     {
         Assume.IsGreaterThanOrEqualTo( node.FragmentationIndex, 0 );
         var l = (node.FragmentationIndex << 1) + 1;
+        ref var first = ref _fragmentationHeap.First();
 
-        while ( l < _fragmentationHeap.Length )
+        while ( l < _fragmentationHeap.Count )
         {
-            var child = _fragmentationHeap.Get( l );
+            var child = Unsafe.Add( ref first, l );
             var nodeToSwap = node.Length < child.Length ? child : node;
 
             var r = l + 1;
-            if ( r < _fragmentationHeap.Length )
+            if ( r < _fragmentationHeap.Count )
             {
-                child = _fragmentationHeap.Get( r );
+                child = Unsafe.Add( ref first, r );
                 if ( nodeToSwap.Length < child.Length )
                     nodeToSwap = child;
             }
@@ -377,8 +388,12 @@ public class MemorySequencePool<T>
             if ( ReferenceEquals( node, nodeToSwap ) )
                 break;
 
-            _fragmentationHeap.Set( node.FragmentationIndex, nodeToSwap );
-            _fragmentationHeap.Set( nodeToSwap.FragmentationIndex, node );
+            ref var target = ref Unsafe.Add( ref first, node.FragmentationIndex )!;
+            target = nodeToSwap;
+
+            target = ref Unsafe.Add( ref first, nodeToSwap.FragmentationIndex )!;
+            target = node;
+
             node.SwapFragmentationIndex( nodeToSwap );
             l = (node.FragmentationIndex << 1) + 1;
         }
@@ -475,7 +490,8 @@ public class MemorySequencePool<T>
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         internal T[] GetAbsoluteSegment(int index)
         {
-            return Pool._segments.Get( index );
+            ref var first = ref Pool._segments.First();
+            return Unsafe.Add( ref first, index );
         }
 
         [Pure]
@@ -690,11 +706,8 @@ public class MemorySequencePool<T>
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         private static Node GetOrCreateNode(MemorySequencePool<T> pool)
         {
-            if ( pool._nodeCache.Length == 0 )
+            if ( ! pool._nodeCache.TryPop( out var node ) )
                 return new Node( pool );
-
-            var node = pool._nodeCache.Last();
-            pool._nodeCache = pool._nodeCache.Pop();
 
             Assume.Equals( node.FragmentationIndex, CachedFragmentationIndex );
             Assume.Equals( node.Length, 0 );
@@ -966,7 +979,7 @@ public class MemorySequencePool<T>
             Assume.IsNull( Prev );
             Assume.IsNull( Next );
 
-            Pool._nodeCache = Pool._nodeCache.Push( this );
+            Pool._nodeCache.Push( this );
             if ( Pool.ClearReturnedSequences )
                 ClearSegments();
 
@@ -1021,100 +1034,6 @@ public class MemorySequencePool<T>
             var expected = OffsetFirstIndex( Length - 1 );
             Assume.Equals( LastIndex.Segment, expected.Segment );
             Assume.Equals( LastIndex.Element, expected.Element );
-        }
-    }
-
-    private readonly struct Buffer<TElement>
-    {
-        internal readonly TElement?[] Data;
-        internal readonly int Length;
-
-        private Buffer(TElement?[] data, int length)
-        {
-            Data = data;
-            Length = length;
-        }
-
-        [Pure]
-        internal static Buffer<TElement> Create()
-        {
-            return new Buffer<TElement>( new TElement?[DefaultBufferSize], 0 );
-        }
-
-        [Pure]
-        [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        internal TElement Get(int index)
-        {
-            Assume.IsInRange( index, 0, Length - 1 );
-            return Data[index]!;
-        }
-
-        [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        internal void Set(int index, TElement element)
-        {
-            Assume.IsInRange( index, 0, Length - 1 );
-            Data[index] = element;
-        }
-
-        [Pure]
-        [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        internal TElement Last()
-        {
-            Assume.IsGreaterThan( Length, 0 );
-            return Data[Length - 1]!;
-        }
-
-        [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        internal Buffer<TElement> Pop()
-        {
-            Assume.IsGreaterThan( Length, 0 );
-            var nextLength = Length - 1;
-            Data[nextLength] = default;
-            return new Buffer<TElement>( Data, nextLength );
-        }
-
-        [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        internal Buffer<TElement> PopMany(int count)
-        {
-            Assume.IsGreaterThanOrEqualTo( count, 0 );
-            Assume.IsLessThanOrEqualTo( count, Length );
-
-            var length = Length - count;
-            if ( length != Length )
-                Array.Clear( Data, length, count );
-
-            return new Buffer<TElement>( Data, length );
-        }
-
-        [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        internal Buffer<TElement> Push(TElement element)
-        {
-            var data = Data;
-            if ( Length == Data.Length )
-                Array.Resize( ref data, checked( (Data.Length << 1) + 1 ) );
-
-            data[Length] = element;
-            return new Buffer<TElement>( data, Length + 1 );
-        }
-
-        [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        internal Buffer<TElement> Clear()
-        {
-            if ( Length > 0 )
-                Array.Clear( Data, 0, Length );
-
-            return new Buffer<TElement>( Data, 0 );
-        }
-
-        [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        internal Buffer<TElement> TrimExcess()
-        {
-            var capacity = 1U << BitOperations.Log2( BitOperations.RoundUpToPowerOf2( unchecked( ( uint )Length ) ) );
-            capacity = Math.Max( (capacity == Length ? capacity << 1 : capacity) - 1, DefaultBufferSize );
-
-            var data = Data;
-            Array.Resize( ref data, unchecked( ( int )capacity ) );
-            return new Buffer<TElement>( data, Length );
         }
     }
 }

@@ -17,7 +17,6 @@ using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Runtime.InteropServices;
 using LfrlAnvil.Reactive.Composites;
-using LfrlAnvil.Reactive.Internal;
 
 namespace LfrlAnvil.Reactive.Decorators;
 
@@ -54,7 +53,7 @@ public sealed class EventListenerGroupByDecorator<TEvent, TKey> : IEventListener
     private sealed class EventListener : DecoratedEventListener<TEvent, EventGrouping<TKey, TEvent>>
     {
         private readonly Func<TEvent, TKey> _keySelector;
-        private readonly Dictionary<TKey, GrowingBuffer<TEvent>> _groups;
+        private readonly Dictionary<TKey, ListSlim<TEvent>> _groups;
 
         internal EventListener(
             IEventListener<EventGrouping<TKey, TEvent>> next,
@@ -63,16 +62,16 @@ public sealed class EventListenerGroupByDecorator<TEvent, TKey> : IEventListener
             : base( next )
         {
             _keySelector = keySelector;
-            _groups = new Dictionary<TKey, GrowingBuffer<TEvent>>( equalityComparer );
+            _groups = new Dictionary<TKey, ListSlim<TEvent>>( equalityComparer );
         }
 
         public override void React(TEvent @event)
         {
             var key = _keySelector( @event );
 
-            ref var group = ref CollectionsMarshal.GetValueRefOrAddDefault( _groups, key, out var exists )!;
+            ref var group = ref CollectionsMarshal.GetValueRefOrAddDefault( _groups, key, out var exists );
             if ( ! exists )
-                group = new GrowingBuffer<TEvent>();
+                group = ListSlim<TEvent>.Create();
 
             group.Add( @event );
 

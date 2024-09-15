@@ -15,7 +15,6 @@
 using System;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
-using LfrlAnvil.Reactive.Internal;
 
 namespace LfrlAnvil.Reactive.Decorators;
 
@@ -49,7 +48,7 @@ public sealed class EventListenerBufferUntilDecorator<TEvent, TTargetEvent> : IE
     {
         private readonly IEventSubscriber _targetSubscriber;
         private readonly IEventSubscriber _subscriber;
-        private readonly GrowingBuffer<TEvent> _buffer;
+        private ListSlim<TEvent> _buffer;
 
         internal EventListener(
             IEventListener<ReadOnlyMemory<TEvent>> next,
@@ -58,7 +57,7 @@ public sealed class EventListenerBufferUntilDecorator<TEvent, TTargetEvent> : IE
             : base( next )
         {
             _subscriber = subscriber;
-            _buffer = new GrowingBuffer<TEvent>();
+            _buffer = ListSlim<TEvent>.Create();
             var targetListener = new TargetEventListener( this );
             _targetSubscriber = target.Listen( targetListener );
         }
@@ -72,6 +71,7 @@ public sealed class EventListenerBufferUntilDecorator<TEvent, TTargetEvent> : IE
         {
             _targetSubscriber.Dispose();
             _buffer.Clear();
+            _buffer.ResetCapacity();
 
             base.OnDispose( source );
         }
@@ -80,7 +80,7 @@ public sealed class EventListenerBufferUntilDecorator<TEvent, TTargetEvent> : IE
         internal void OnTargetEvent()
         {
             Next.React( _buffer.AsMemory() );
-            _buffer.RemoveAll();
+            _buffer.Clear();
         }
 
         [MethodImpl( MethodImplOptions.AggressiveInlining )]

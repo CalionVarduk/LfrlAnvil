@@ -661,11 +661,15 @@ public static class EnumerableExtensions
     [Pure]
     public static IEnumerable<T> VisitMany<T>(this IEnumerable<T> source, Func<T, IEnumerable<T>> nodeRangeSelector)
     {
-        var nodesToVisit = new Queue<T>( source );
+        var nodesToVisit = source.TryGetNonEnumeratedCount( out var count )
+            ? QueueSlim<T>.Create( minCapacity: count )
+            : QueueSlim<T>.Create();
 
-        while ( nodesToVisit.Count > 0 )
+        foreach ( var e in source )
+            nodesToVisit.Enqueue( e );
+
+        while ( nodesToVisit.TryDequeue( out var parent ) )
         {
-            var parent = nodesToVisit.Dequeue();
             var nodes = nodeRangeSelector( parent );
 
             foreach ( var n in nodes )
@@ -694,12 +698,15 @@ public static class EnumerableExtensions
         Func<T, IEnumerable<T>> nodeRangeSelector,
         Func<T, bool> stopPredicate)
     {
-        var nodesToVisit = new Queue<T>( source );
+        var nodesToVisit = source.TryGetNonEnumeratedCount( out var count )
+            ? QueueSlim<T>.Create( minCapacity: count )
+            : QueueSlim<T>.Create();
 
-        while ( nodesToVisit.Count > 0 )
+        foreach ( var e in source )
+            nodesToVisit.Enqueue( e );
+
+        while ( nodesToVisit.TryDequeue( out var parent ) )
         {
-            var parent = nodesToVisit.Dequeue();
-
             if ( stopPredicate( parent ) )
             {
                 yield return parent;

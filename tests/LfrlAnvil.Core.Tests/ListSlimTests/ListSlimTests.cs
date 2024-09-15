@@ -54,6 +54,7 @@ public class ListSlimTests : TestsBase
             sut.Capacity.Should().Be( 4 );
             sut.IsEmpty.Should().BeFalse();
             sut.AsSpan().ToArray().Should().BeSequentiallyEqualTo( "foo" );
+            sut.First().Should().Be( "foo" );
         }
     }
 
@@ -71,6 +72,7 @@ public class ListSlimTests : TestsBase
             sut.Capacity.Should().Be( 4 );
             sut.IsEmpty.Should().BeFalse();
             sut.AsSpan().ToArray().Should().BeSequentiallyEqualTo( "x1", "x2", "x3" );
+            sut.First().Should().Be( "x1" );
         }
     }
 

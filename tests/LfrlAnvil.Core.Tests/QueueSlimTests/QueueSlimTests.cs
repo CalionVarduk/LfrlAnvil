@@ -550,6 +550,130 @@ public class QueueSlimTests : TestsBase
     }
 
     [Fact]
+    public void TryDequeue_ShouldDoNothing_WhenQueueIsEmpty()
+    {
+        var sut = QueueSlim<string>.Create();
+
+        var result = sut.TryDequeue( out var outResult );
+
+        using ( new AssertionScope() )
+        {
+            outResult.Should().BeNull();
+            result.Should().BeFalse();
+            sut.Count.Should().Be( 0 );
+            sut.Capacity.Should().Be( 0 );
+            sut.IsEmpty.Should().BeTrue();
+        }
+    }
+
+    [Fact]
+    public void TryDequeue_ShouldRemoveOnlyItemFromQueue()
+    {
+        var sut = QueueSlim<string>.Create();
+        sut.Enqueue( "foo" );
+
+        var result = sut.TryDequeue( out var outResult );
+
+        using ( new AssertionScope() )
+        {
+            outResult.Should().Be( "foo" );
+            result.Should().BeTrue();
+            sut.Count.Should().Be( 0 );
+            sut.Capacity.Should().Be( 4 );
+            sut.IsEmpty.Should().BeTrue();
+        }
+    }
+
+    [Fact]
+    public void TryDequeue_ShouldRemoveFirstItemFromQueue()
+    {
+        var sut = QueueSlim<string>.Create();
+        sut.EnqueueRange( new[] { "x1", "x2", "x3" } );
+
+        var result = sut.TryDequeue( out var outResult );
+
+        using ( new AssertionScope() )
+        {
+            outResult.Should().Be( "x1" );
+            result.Should().BeTrue();
+            sut.Count.Should().Be( 2 );
+            sut.Capacity.Should().Be( 4 );
+            sut.IsEmpty.Should().BeFalse();
+            sut.First().Should().Be( "x2" );
+            sut.Last().Should().Be( "x3" );
+        }
+    }
+
+    [Fact]
+    public void TryDequeue_ShouldRemoveFirstItemFromQueue_Wrapped()
+    {
+        var sut = QueueSlim<string>.Create( minCapacity: 4 );
+        sut.EnqueueRange( new[] { "x1", "x2", "x3", "x4" } );
+        sut.Dequeue();
+        sut.Dequeue();
+        sut.Enqueue( "x5" );
+
+        var result = sut.TryDequeue( out var outResult );
+
+        using ( new AssertionScope() )
+        {
+            outResult.Should().Be( "x3" );
+            result.Should().BeTrue();
+            sut.Count.Should().Be( 2 );
+            sut.Capacity.Should().Be( 4 );
+            sut.IsEmpty.Should().BeFalse();
+            sut.First().Should().Be( "x4" );
+            sut.Last().Should().Be( "x5" );
+        }
+    }
+
+    [Fact]
+    public void TryDequeue_ShouldRemoveFirstItemFromQueue_WrappedAtFullCapacity()
+    {
+        var sut = QueueSlim<string>.Create( minCapacity: 4 );
+        sut.EnqueueRange( new[] { "x1", "x2", "x3", "x4" } );
+        sut.Dequeue();
+        sut.Enqueue( "x5" );
+
+        var result = sut.TryDequeue( out var outResult );
+
+        using ( new AssertionScope() )
+        {
+            outResult.Should().Be( "x2" );
+            result.Should().BeTrue();
+            sut.Count.Should().Be( 3 );
+            sut.Capacity.Should().Be( 4 );
+            sut.IsEmpty.Should().BeFalse();
+            sut.First().Should().Be( "x3" );
+            sut.Last().Should().Be( "x5" );
+        }
+    }
+
+    [Fact]
+    public void TryDequeue_ShouldRemoveFirstItemFromQueue_Wrapped_WhenRemovalUnwraps()
+    {
+        var sut = QueueSlim<string>.Create( minCapacity: 4 );
+        sut.EnqueueRange( new[] { "x1", "x2", "x3", "x4" } );
+        sut.Dequeue();
+        sut.Dequeue();
+        sut.Dequeue();
+        sut.Enqueue( "x5" );
+
+        var result = sut.TryDequeue( out var outResult );
+
+        using ( new AssertionScope() )
+        {
+            outResult.Should().Be( "x4" );
+            result.Should().BeTrue();
+            sut.Count.Should().Be( 1 );
+            sut.Capacity.Should().Be( 4 );
+            sut.IsEmpty.Should().BeFalse();
+            sut.First().Should().Be( "x5" );
+            sut.Last().Should().Be( "x5" );
+        }
+    }
+
+    [Fact]
     public void DequeueRange_ShouldDoNothing_WhenQueueIsEmpty()
     {
         var sut = QueueSlim<string>.Create();

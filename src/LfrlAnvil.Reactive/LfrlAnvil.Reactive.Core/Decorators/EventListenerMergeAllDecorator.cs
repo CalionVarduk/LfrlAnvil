@@ -48,15 +48,15 @@ public sealed class EventListenerMergeAllDecorator<TEvent> : IEventListenerDecor
 
     private sealed class EventListener : DecoratedEventListener<IEventStream<TEvent>, TEvent>
     {
-        private readonly Queue<IEventStream<TEvent>> _streamQueue;
         private readonly LinkedList<IEventSubscriber?> _innerSubscribers;
         private readonly IEventSubscriber _subscriber;
         private readonly int _maxConcurrency;
+        private QueueSlim<IEventStream<TEvent>> _streamQueue;
 
         internal EventListener(IEventListener<TEvent> next, IEventSubscriber subscriber, int maxConcurrency)
             : base( next )
         {
-            _streamQueue = new Queue<IEventStream<TEvent>>();
+            _streamQueue = QueueSlim<IEventStream<TEvent>>.Create();
             _innerSubscribers = new LinkedList<IEventSubscriber?>();
             _subscriber = subscriber;
             _maxConcurrency = maxConcurrency;
@@ -80,7 +80,7 @@ public sealed class EventListenerMergeAllDecorator<TEvent> : IEventListenerDecor
 
             _innerSubscribers.Clear();
             _streamQueue.Clear();
-            _streamQueue.TrimExcess();
+            _streamQueue.ResetCapacity();
 
             base.OnDispose( source );
         }
@@ -97,7 +97,6 @@ public sealed class EventListenerMergeAllDecorator<TEvent> : IEventListenerDecor
                 return;
 
             _innerSubscribers.Remove( node );
-
             if ( _streamQueue.TryDequeue( out var stream ) )
                 StartListeningToNextInnerStream( stream );
         }

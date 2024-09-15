@@ -102,6 +102,18 @@ public struct ListSlim<T>
     }
 
     /// <summary>
+    /// Returns a reference to the first element.
+    /// </summary>
+    /// <returns>Reference to the first element.</returns>
+    /// <remarks>May return an invalid reference, when this list is empty.</remarks>
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public ref T First()
+    {
+        return ref MemoryMarshal.GetArrayDataReference( _items );
+    }
+
+    /// <summary>
     /// Adds <paramref name="item"/> to the end of this list.
     /// </summary>
     /// <param name="item">Item to add.</param>

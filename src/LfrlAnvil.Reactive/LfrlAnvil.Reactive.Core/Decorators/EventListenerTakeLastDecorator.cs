@@ -13,7 +13,6 @@
 // limitations under the License.
 
 using System;
-using System.Collections.Generic;
 
 namespace LfrlAnvil.Reactive.Decorators;
 
@@ -42,13 +41,13 @@ public class EventListenerTakeLastDecorator<TEvent> : IEventListenerDecorator<TE
 
     private sealed class EventListener : DecoratedEventListener<TEvent, TEvent>
     {
-        private readonly Queue<TEvent> _last;
         private readonly int _count;
+        private QueueSlim<TEvent> _last;
 
         internal EventListener(IEventListener<TEvent> next, IEventSubscriber subscriber, int count)
             : base( next )
         {
-            _last = new Queue<TEvent>();
+            _last = QueueSlim<TEvent>.Create();
             _count = count;
 
             if ( _count == 0 )
@@ -68,7 +67,7 @@ public class EventListenerTakeLastDecorator<TEvent> : IEventListenerDecorator<TE
             while ( _last.TryDequeue( out var @event ) )
                 Next.React( @event );
 
-            _last.TrimExcess();
+            _last.ResetCapacity();
 
             base.OnDispose( source );
         }

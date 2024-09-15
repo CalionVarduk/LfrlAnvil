@@ -13,7 +13,6 @@
 // limitations under the License.
 
 using System;
-using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 
 namespace LfrlAnvil.Reactive.Decorators;
@@ -50,11 +49,11 @@ public sealed class EventListenerZipDecorator<TEvent, TTargetEvent, TNextEvent> 
 
     private sealed class EventListener : DecoratedEventListener<TEvent, TNextEvent>
     {
-        private readonly Queue<TEvent> _sourceEvents;
-        private readonly Queue<TTargetEvent> _targetEvents;
         private readonly IEventSubscriber _subscriber;
         private readonly IEventSubscriber _targetSubscriber;
         private readonly Func<TEvent, TTargetEvent, TNextEvent> _selector;
+        private QueueSlim<TEvent> _sourceEvents;
+        private QueueSlim<TTargetEvent> _targetEvents;
 
         internal EventListener(
             IEventListener<TNextEvent> next,
@@ -63,10 +62,10 @@ public sealed class EventListenerZipDecorator<TEvent, TTargetEvent, TNextEvent> 
             Func<TEvent, TTargetEvent, TNextEvent> selector)
             : base( next )
         {
-            _sourceEvents = new Queue<TEvent>();
-            _targetEvents = new Queue<TTargetEvent>();
             _subscriber = subscriber;
             _selector = selector;
+            _sourceEvents = QueueSlim<TEvent>.Create();
+            _targetEvents = QueueSlim<TTargetEvent>.Create();
 
             _targetSubscriber = target.Listen(
                 Reactive.EventListener.Create<TTargetEvent>(
@@ -98,9 +97,9 @@ public sealed class EventListenerZipDecorator<TEvent, TTargetEvent, TNextEvent> 
         {
             _targetSubscriber.Dispose();
             _sourceEvents.Clear();
-            _sourceEvents.TrimExcess();
+            _sourceEvents.ResetCapacity();
             _targetEvents.Clear();
-            _targetEvents.TrimExcess();
+            _targetEvents.ResetCapacity();
 
             base.OnDispose( source );
         }

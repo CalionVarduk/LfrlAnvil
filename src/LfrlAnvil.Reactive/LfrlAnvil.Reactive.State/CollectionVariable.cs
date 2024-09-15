@@ -19,7 +19,6 @@ using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 using LfrlAnvil.Reactive.State.Events;
 using LfrlAnvil.Reactive.State.Internal;
 using LfrlAnvil.Validation;
@@ -242,10 +241,10 @@ public class CollectionVariable<TKey, TElement, TValidationResult>
             return VariableChangeResult.ReadOnly;
 
         var elementsToAdd = FindElementsToAdd( elements );
-        if ( elementsToAdd is null )
+        if ( elementsToAdd.IsEmpty )
             return VariableChangeResult.NotChanged;
 
-        var spanOfElementsToAdd = CollectionsMarshal.AsSpan( elementsToAdd );
+        var spanOfElementsToAdd = elementsToAdd.AsSpan();
         var elementSnapshots = new CollectionVariableElementSnapshot<TElement, TValidationResult>[spanOfElementsToAdd.Length];
 
         for ( var i = 0; i < spanOfElementsToAdd.Length; ++i )
@@ -281,10 +280,10 @@ public class CollectionVariable<TKey, TElement, TValidationResult>
             return VariableChangeResult.ReadOnly;
 
         var elementsToReplace = FindElementsToTryReplace( elements );
-        if ( elementsToReplace is null )
+        if ( elementsToReplace.IsEmpty )
             return VariableChangeResult.NotChanged;
 
-        var spanOfElementsToReplace = CollectionsMarshal.AsSpan( elementsToReplace );
+        var spanOfElementsToReplace = elementsToReplace.AsSpan();
         var elementSnapshots = new CollectionVariableReplacedElementSnapshot<TElement, TValidationResult>[spanOfElementsToReplace.Length];
 
         for ( var i = 0; i < spanOfElementsToReplace.Length; ++i )
@@ -320,10 +319,10 @@ public class CollectionVariable<TKey, TElement, TValidationResult>
             return VariableChangeResult.ReadOnly;
 
         var elementsToReplace = FindElementsToReplace( elements );
-        if ( elementsToReplace is null )
+        if ( elementsToReplace.IsEmpty )
             return VariableChangeResult.NotChanged;
 
-        var spanOfElementsToReplace = CollectionsMarshal.AsSpan( elementsToReplace );
+        var spanOfElementsToReplace = elementsToReplace.AsSpan();
         var elementSnapshots = new CollectionVariableReplacedElementSnapshot<TElement, TValidationResult>[spanOfElementsToReplace.Length];
 
         for ( var i = 0; i < spanOfElementsToReplace.Length; ++i )
@@ -434,10 +433,10 @@ public class CollectionVariable<TKey, TElement, TValidationResult>
             return VariableChangeResult.ReadOnly;
 
         var elementsToRemove = FindElementsToRemove( keys );
-        if ( elementsToRemove is null )
+        if ( elementsToRemove.IsEmpty )
             return VariableChangeResult.NotChanged;
 
-        var spanOfElementsToRemove = CollectionsMarshal.AsSpan( elementsToRemove );
+        var spanOfElementsToRemove = elementsToRemove.AsSpan();
         var elementSnapshots = new CollectionVariableElementSnapshot<TElement, TValidationResult>[spanOfElementsToRemove.Length];
 
         for ( var i = 0; i < spanOfElementsToRemove.Length; ++i )
@@ -483,13 +482,13 @@ public class CollectionVariable<TKey, TElement, TValidationResult>
             return;
 
         var elementsToRefresh = FindElementsToRefresh( keys );
-        if ( elementsToRefresh is null )
+        if ( elementsToRefresh.IsEmpty )
         {
             RefreshValidationAndPublishEvent( Array.Empty<CollectionVariableElementSnapshot<TElement, TValidationResult>>() );
             return;
         }
 
-        var spanOfElementsToRefresh = CollectionsMarshal.AsSpan( elementsToRefresh );
+        var spanOfElementsToRefresh = elementsToRefresh.AsSpan();
         var elementSnapshots = new CollectionVariableElementSnapshot<TElement, TValidationResult>[spanOfElementsToRefresh.Length];
 
         for ( var i = 0; i < spanOfElementsToRefresh.Length; ++i )
@@ -528,13 +527,13 @@ public class CollectionVariable<TKey, TElement, TValidationResult>
             return;
 
         var elementsToRefresh = FindElementsToRefresh( keys );
-        if ( elementsToRefresh is null )
+        if ( elementsToRefresh.IsEmpty )
         {
             RefreshValidationAndPublishEvent( Array.Empty<CollectionVariableElementSnapshot<TElement, TValidationResult>>() );
             return;
         }
 
-        var spanOfElementsToRefresh = CollectionsMarshal.AsSpan( elementsToRefresh );
+        var spanOfElementsToRefresh = elementsToRefresh.AsSpan();
         var elementSnapshots = new CollectionVariableElementSnapshot<TElement, TValidationResult>[spanOfElementsToRefresh.Length];
 
         for ( var i = 0; i < spanOfElementsToRefresh.Length; ++i )
@@ -573,13 +572,13 @@ public class CollectionVariable<TKey, TElement, TValidationResult>
             return;
 
         var elementsToClear = FindElementsToClearValidation( keys );
-        if ( elementsToClear is null )
+        if ( elementsToClear.IsEmpty )
         {
             ClearValidationAndPublishEvent( Array.Empty<CollectionVariableElementSnapshot<TElement, TValidationResult>>() );
             return;
         }
 
-        var spanOfElementsToClear = CollectionsMarshal.AsSpan( elementsToClear );
+        var spanOfElementsToClear = elementsToClear.AsSpan();
         var elementSnapshots = new CollectionVariableElementSnapshot<TElement, TValidationResult>[spanOfElementsToClear.Length];
 
         for ( var i = 0; i < spanOfElementsToClear.Length; ++i )
@@ -888,14 +887,15 @@ public class CollectionVariable<TKey, TElement, TValidationResult>
     }
 
     [Pure]
-    private List<(TKey Key, TElement Element)>? FindElementsToAdd(IEnumerable<TElement> elements)
+    private ListSlim<(TKey Key, TElement Element)> FindElementsToAdd(IEnumerable<TElement> elements)
     {
         using var enumerator = elements.GetEnumerator();
         if ( ! TryFindFirstElementToAdd( enumerator, out var key, out var element ) )
-            return null;
+            return ListSlim<(TKey Key, TElement Element)>.Create();
 
         var handledKeys = new HashSet<TKey>( _elements.KeyComparer ) { key };
-        var result = new List<(TKey, TElement)> { (key, element) };
+        var result = ListSlim<(TKey, TElement)>.Create( minCapacity: 1 );
+        result.Add( (key, element) );
 
         while ( enumerator.MoveNext() )
         {
@@ -938,14 +938,15 @@ public class CollectionVariable<TKey, TElement, TValidationResult>
     }
 
     [Pure]
-    private List<(TKey Key, TElement Element)>? FindElementsToRemove(IEnumerable<TKey> keys)
+    private ListSlim<(TKey Key, TElement Element)> FindElementsToRemove(IEnumerable<TKey> keys)
     {
         using var enumerator = keys.GetEnumerator();
         if ( ! TryFindFirstElementToRemove( enumerator, out var key, out var element ) )
-            return null;
+            return ListSlim<(TKey Key, TElement Element)>.Create();
 
         var handledKeys = new HashSet<TKey>( _elements.KeyComparer ) { key };
-        var result = new List<(TKey, TElement)> { (key, element) };
+        var result = ListSlim<(TKey, TElement)>.Create( minCapacity: 1 );
+        result.Add( (key, element) );
 
         while ( enumerator.MoveNext() )
         {
@@ -991,14 +992,15 @@ public class CollectionVariable<TKey, TElement, TValidationResult>
     }
 
     [Pure]
-    private List<(TKey Key, TElement Element, TElement ReplacedElement)>? FindElementsToReplace(IEnumerable<TElement> elements)
+    private ListSlim<(TKey Key, TElement Element, TElement ReplacedElement)> FindElementsToReplace(IEnumerable<TElement> elements)
     {
         using var enumerator = elements.GetEnumerator();
         if ( ! TryFindFirstElementToReplace( enumerator, out var key, out var element, out var replacedElement ) )
-            return null;
+            return ListSlim<(TKey Key, TElement Element, TElement ReplacedElement)>.Create();
 
         var handledKeys = new HashSet<TKey>( _elements.KeyComparer ) { key };
-        var result = new List<(TKey, TElement, TElement)> { (key, element, replacedElement) };
+        var result = ListSlim<(TKey, TElement, TElement)>.Create( minCapacity: 1 );
+        result.Add( (key, element, replacedElement) );
 
         while ( enumerator.MoveNext() )
         {
@@ -1045,14 +1047,15 @@ public class CollectionVariable<TKey, TElement, TValidationResult>
     }
 
     [Pure]
-    private List<(TKey Key, TElement Element, TElement ReplacedElement)>? FindElementsToTryReplace(IEnumerable<TElement> elements)
+    private ListSlim<(TKey Key, TElement Element, TElement ReplacedElement)> FindElementsToTryReplace(IEnumerable<TElement> elements)
     {
         using var enumerator = elements.GetEnumerator();
         if ( ! TryFindFirstElementToTryReplace( enumerator, out var key, out var element, out var replacedElement ) )
-            return null;
+            return ListSlim<(TKey Key, TElement Element, TElement ReplacedElement)>.Create();
 
         var handledKeys = new HashSet<TKey>( _elements.KeyComparer ) { key };
-        var result = new List<(TKey, TElement, TElement)> { (key, element, replacedElement) };
+        var result = ListSlim<(TKey, TElement, TElement)>.Create( minCapacity: 1 );
+        result.Add( (key, element, replacedElement) );
 
         while ( enumerator.MoveNext() )
         {
@@ -1282,14 +1285,15 @@ public class CollectionVariable<TKey, TElement, TValidationResult>
     }
 
     [Pure]
-    private List<(TKey Key, TElement Element)>? FindElementsToRefresh(IEnumerable<TKey> keys)
+    private ListSlim<(TKey Key, TElement Element)> FindElementsToRefresh(IEnumerable<TKey> keys)
     {
         using var enumerator = keys.GetEnumerator();
         if ( ! TryFindFirstElementToRefresh( enumerator, out var key, out var element ) )
-            return null;
+            return ListSlim<(TKey Key, TElement Element)>.Create();
 
         var handledKeys = new HashSet<TKey>( _elements.KeyComparer ) { key };
-        var result = new List<(TKey, TElement)> { (key, element) };
+        var result = ListSlim<(TKey, TElement)>.Create( minCapacity: 1 );
+        result.Add( (key, element) );
 
         while ( enumerator.MoveNext() )
         {
@@ -1331,14 +1335,15 @@ public class CollectionVariable<TKey, TElement, TValidationResult>
     }
 
     [Pure]
-    private List<(TKey Key, TElement Element)>? FindElementsToClearValidation(IEnumerable<TKey> keys)
+    private ListSlim<(TKey Key, TElement Element)> FindElementsToClearValidation(IEnumerable<TKey> keys)
     {
         using var enumerator = keys.GetEnumerator();
         if ( ! TryFindFirstElementToClearValidation( enumerator, out var key, out var element ) )
-            return null;
+            return ListSlim<(TKey Key, TElement Element)>.Create();
 
         var handledKeys = new HashSet<TKey>( _elements.KeyComparer ) { key };
-        var result = new List<(TKey, TElement)> { (key, element) };
+        var result = ListSlim<(TKey, TElement)>.Create( minCapacity: 1 );
+        result.Add( (key, element) );
 
         while ( enumerator.MoveNext() )
         {
@@ -1675,7 +1680,7 @@ public class CollectionVariable<TKey, TElement, TValidationResult>
 
     private void UpdateAndPublishEvents(ChangesDto changes, VariableChangeSource changeSource)
     {
-        var spanOfElementsToChange = CollectionsMarshal.AsSpan( changes.Elements );
+        var spanOfElementsToChange = changes.Elements.AsSpan();
         var elementSnapshots = new CollectionVariableElementSnapshot<TElement, TValidationResult>[spanOfElementsToChange.Length];
 
         var addIndex = 0;
@@ -1734,10 +1739,10 @@ public class CollectionVariable<TKey, TElement, TValidationResult>
     }
 
     [Pure]
-    private List<(ElementChangeType ChangeType, CollectionVariableElementSnapshot<TElement, TValidationResult> Snapshot)>
+    private ListSlim<(ElementChangeType ChangeType, CollectionVariableElementSnapshot<TElement, TValidationResult> Snapshot)>
         GetResetElementChanges(ElementsCollection newElements)
     {
-        var result = new List<(ElementChangeType, CollectionVariableElementSnapshot<TElement, TValidationResult>)>();
+        var result = ListSlim<(ElementChangeType, CollectionVariableElementSnapshot<TElement, TValidationResult>)>.Create();
 
         foreach ( var (key, element) in newElements.Elements )
         {
@@ -1799,7 +1804,7 @@ public class CollectionVariable<TKey, TElement, TValidationResult>
     {
         var changes = GetResetElementChanges( elements );
 
-        var spanOfChanges = CollectionsMarshal.AsSpan( changes );
+        var spanOfChanges = changes.AsSpan();
         var elementSnapshots = spanOfChanges.Length == 0
             ? Array.Empty<CollectionVariableElementSnapshot<TElement, TValidationResult>>()
             : new CollectionVariableElementSnapshot<TElement, TValidationResult>[spanOfChanges.Length];
@@ -2181,7 +2186,7 @@ public class CollectionVariable<TKey, TElement, TValidationResult>
 
     private struct ChangesDto
     {
-        internal readonly List<ElementChangeDto> Elements;
+        internal ListSlim<ElementChangeDto> Elements;
         internal int ToAddCount;
         internal int ToReplaceCount;
         internal int ToRemoveCount;
@@ -2193,7 +2198,7 @@ public class CollectionVariable<TKey, TElement, TValidationResult>
             ToReplaceCount = 0;
             ToRemoveCount = 0;
             ToRefreshCount = 0;
-            Elements = new List<ElementChangeDto>();
+            Elements = ListSlim<ElementChangeDto>.Create();
             Add( changeDto );
         }
 

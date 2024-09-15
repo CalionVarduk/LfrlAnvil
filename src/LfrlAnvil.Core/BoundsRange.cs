@@ -18,6 +18,7 @@ using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using LfrlAnvil.Extensions;
 
 namespace LfrlAnvil;
@@ -393,7 +394,7 @@ public readonly struct BoundsRange<T> : IReadOnlyList<Bounds<T>>, IEquatable<Bou
         var i = minIndex;
         var j = otherMinIndex;
 
-        var resultBuffer = new List<T>();
+        var resultBuffer = ListSlim<T>.Create();
 
         while ( i < end && j < otherEnd )
         {
@@ -505,7 +506,7 @@ public readonly struct BoundsRange<T> : IReadOnlyList<Bounds<T>>, IEquatable<Bou
         var i = 0;
         var j = 0;
 
-        var resultBuffer = new List<T>();
+        var resultBuffer = ListSlim<T>.Create();
 
         while ( i < minIndex )
         {
@@ -643,7 +644,7 @@ public readonly struct BoundsRange<T> : IReadOnlyList<Bounds<T>>, IEquatable<Bou
         var i = 0;
         var j = otherMinIndex;
 
-        var resultBuffer = new List<T>();
+        var resultBuffer = ListSlim<T>.Create();
 
         while ( i < minIndex )
         {
@@ -827,11 +828,9 @@ public readonly struct BoundsRange<T> : IReadOnlyList<Bounds<T>>, IEquatable<Bou
         if ( values.Length <= 2 )
             return this;
 
-        var buffer = new List<T>
-        {
-            values[0],
-            values[1]
-        };
+        var buffer = ListSlim<T>.Create( minCapacity: 2 );
+        buffer.Add( values[0] );
+        buffer.Add( values[1] );
 
         for ( var i = 2; i < values.Length; i += 2 )
         {
@@ -920,7 +919,7 @@ public readonly struct BoundsRange<T> : IReadOnlyList<Bounds<T>>, IEquatable<Bou
         }
 
         Ensure.IsOrdered( buffer, nameof( range ) );
-        return CreateDataFromBuffer( buffer );
+        return CreateDataFromBuffer( CollectionsMarshal.AsSpan( buffer ) );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -957,20 +956,20 @@ public readonly struct BoundsRange<T> : IReadOnlyList<Bounds<T>>, IEquatable<Bou
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private static T[] CreateDataFromBuffer(List<T> buffer)
+    private static T[] CreateDataFromBuffer(ReadOnlySpan<T> buffer)
     {
-        var result = new T[buffer.Count];
-        buffer.CopyTo( result, 0 );
+        var result = new T[buffer.Length];
+        buffer.CopyTo( result );
         return result;
     }
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private static BoundsRange<T> CreateFromBuffer(List<T> buffer)
+    private static BoundsRange<T> CreateFromBuffer(ListSlim<T> buffer)
     {
         return buffer.Count == 0
             ? Empty
-            : new BoundsRange<T>( CreateDataFromBuffer( buffer ) );
+            : new BoundsRange<T>( CreateDataFromBuffer( buffer.AsSpan() ) );
     }
 
     [Pure]

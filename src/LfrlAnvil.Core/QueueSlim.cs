@@ -13,6 +13,7 @@
 // limitations under the License.
 
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
 using System.Numerics;
 using System.Runtime.CompilerServices;
@@ -312,6 +313,38 @@ public struct QueueSlim<T>
             return true;
         }
 
+        return false;
+    }
+
+    /// <summary>
+    /// Attempts to remove and return the first item from this queue.
+    /// </summary>
+    /// <param name="item"><b>out</b> parameter that returns the removed first item.</param>
+    /// <returns><b>true</b> when queue was not empty and first item was removed, otherwise <b>false</b>.</returns>
+    public bool TryDequeue([MaybeNullWhen( false )] out T item)
+    {
+        if ( _firstIndex < _endIndex )
+        {
+            item = _items[_firstIndex];
+            _items[_firstIndex++] = default!;
+            if ( _firstIndex == _endIndex )
+                _firstIndex = _endIndex = 0;
+
+            return true;
+        }
+
+        if ( _firstIndex >= _endIndex && ! IsEmpty )
+        {
+            Assume.IsGreaterThan( Count, 1 );
+            item = _items[_firstIndex];
+            _items[_firstIndex++] = default!;
+            if ( _firstIndex == _items.Length )
+                _firstIndex = 0;
+
+            return true;
+        }
+
+        item = default;
         return false;
     }
 

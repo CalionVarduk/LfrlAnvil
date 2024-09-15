@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 
 namespace LfrlAnvil.Reactive.Decorators;
@@ -44,13 +43,13 @@ public class EventListenerSkipLastDecorator<TEvent> : IEventListenerDecorator<TE
 
     private sealed class EventListener : DecoratedEventListener<TEvent, TEvent>
     {
-        private readonly List<TEvent> _buffer;
         private readonly int _count;
+        private ListSlim<TEvent> _buffer;
 
         internal EventListener(IEventListener<TEvent> next, int count)
             : base( next )
         {
-            _buffer = new List<TEvent>();
+            _buffer = ListSlim<TEvent>.Create();
             _count = count;
         }
 
@@ -66,7 +65,7 @@ public class EventListenerSkipLastDecorator<TEvent> : IEventListenerDecorator<TE
                 Next.React( _buffer[i] );
 
             _buffer.Clear();
-            _buffer.TrimExcess();
+            _buffer.ResetCapacity();
 
             base.OnDispose( source );
         }

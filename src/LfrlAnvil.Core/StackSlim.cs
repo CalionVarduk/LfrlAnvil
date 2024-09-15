@@ -13,6 +13,7 @@
 // limitations under the License.
 
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
 using System.Numerics;
 using System.Runtime.CompilerServices;
@@ -172,6 +173,25 @@ public struct StackSlim<T>
             return false;
 
         _items[^Count--] = default!;
+        return true;
+    }
+
+    /// <summary>
+    /// Attempts to remove and return the top item from this stack.
+    /// </summary>
+    /// <param name="item"><b>out</b> parameter that returns the removed top item.</param>
+    /// <returns><b>true</b> when stack was not empty and top item was removed, otherwise <b>false</b>.</returns>
+    public bool TryPop([MaybeNullWhen( false )] out T item)
+    {
+        if ( Count == 0 )
+        {
+            item = default;
+            return false;
+        }
+
+        var index = _items.Length - Count--;
+        item = _items[index];
+        _items[index] = default!;
         return true;
     }
 

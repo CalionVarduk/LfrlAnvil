@@ -74,20 +74,20 @@ public sealed class DirectedGraphNode<TKey, TNodeValue, TEdgeValue> : IDirectedG
 
         var invertedDirection = direction.Invert();
         var reachedKeys = new HashSet<TKey>( Graph.KeyComparer );
-        var nodes = new Queue<DirectedGraphNode<TKey, TNodeValue, TEdgeValue>>();
-        AddReachableNodesToQueue( this, nodes, reachedKeys, direction, invertedDirection );
+        var nodes = QueueSlim<DirectedGraphNode<TKey, TNodeValue, TEdgeValue>>.Create();
+        AddReachableNodesToQueue( this, ref nodes, reachedKeys, direction, invertedDirection );
 
         while ( nodes.TryDequeue( out var node ) )
         {
             yield return node;
 
-            AddReachableNodesToQueue( node, nodes, reachedKeys, direction, invertedDirection );
+            AddReachableNodesToQueue( node, ref nodes, reachedKeys, direction, invertedDirection );
         }
 
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         static void AddReachableNodesToQueue(
             DirectedGraphNode<TKey, TNodeValue, TEdgeValue> node,
-            Queue<DirectedGraphNode<TKey, TNodeValue, TEdgeValue>> queue,
+            ref QueueSlim<DirectedGraphNode<TKey, TNodeValue, TEdgeValue>> queue,
             HashSet<TKey> reached,
             GraphDirection direction,
             GraphDirection invertedDirection)
@@ -327,7 +327,7 @@ public sealed class DirectedGraphNode<TKey, TNodeValue, TEdgeValue> : IDirectedG
         }
 
         var invertedDirection = direction.Invert();
-        var keysToRemove = new List<TKey>();
+        var keysToRemove = ListSlim<TKey>.Create();
 
         foreach ( var (key, edge) in _edges )
         {
