@@ -93,6 +93,16 @@ public struct StackSlim<T>
     }
 
     /// <summary>
+    /// Creates a new <see cref="ReadOnlySpan{T}"/> instance that represents a view of this stack.
+    /// </summary>
+    /// <returns>New <see cref="ReadOnlySpan{T}"/> instance.</returns>
+    [Pure]
+    public ReadOnlySpan<T> AsSpan()
+    {
+        return _items.AsSpan( _items.Length - Count );
+    }
+
+    /// <summary>
     /// Returns a reference to the element at the top of this stack.
     /// </summary>
     /// <returns>Reference to the top element.</returns>

@@ -535,6 +535,25 @@ public class StackSlimTests : TestsBase
         result.ToArray().Should().BeSequentiallyEqualTo( "x4", "x3", "x2", "x1" );
     }
 
+    [Fact]
+    public void AsSpan_ShouldReturnEmpty_WhenStackIsEmpty()
+    {
+        var sut = StackSlim<string>.Create( minCapacity: 4 );
+        var result = sut.AsSpan();
+        result.ToArray().Should().BeEmpty();
+    }
+
+    [Fact]
+    public void AsSpan_ShouldReturnCorrectResult()
+    {
+        var sut = StackSlim<string>.Create( minCapacity: 4 );
+        sut.PushRange( new[] { "x1", "x2", "x3", "x4" } );
+
+        var result = sut.AsSpan();
+
+        result.ToArray().Should().BeSequentiallyEqualTo( "x4", "x3", "x2", "x1" );
+    }
+
     [Theory]
     [InlineData( 0, "x4" )]
     [InlineData( 1, "x3" )]
