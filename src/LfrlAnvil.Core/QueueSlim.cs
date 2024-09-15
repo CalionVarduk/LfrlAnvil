@@ -106,7 +106,7 @@ public struct QueueSlim<T>
     /// <summary>
     /// Creates a new empty <see cref="QueueSlim{T}"/> instance.
     /// </summary>
-    /// <param name="minCapacity">Minimum <see cref="Capacity"/> of the created queue. Equal to <b>0</b> by default.</param>
+    /// <param name="minCapacity">Minimum initial <see cref="Capacity"/> of the created queue. Equal to <b>0</b> by default.</param>
     /// <returns>New <see cref="QueueSlim{T}"/> instance.</returns>
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]

@@ -1215,7 +1215,7 @@ public class QueueSlimTests : TestsBase
     [Theory]
     [InlineData( -1 )]
     [InlineData( 4 )]
-    public void Indexer_ShouldThrowArgumentOutOfRangeException_WhenIndexIsOutOfRange_WrappedAtFullCapacitu(int index)
+    public void Indexer_ShouldThrowArgumentOutOfRangeException_WhenIndexIsOutOfRange_WrappedAtFullCapacity(int index)
     {
         var sut = QueueSlim<string>.Create();
         sut.EnqueueRange( new[] { "x1", "x2", "x3", "x4" } );
