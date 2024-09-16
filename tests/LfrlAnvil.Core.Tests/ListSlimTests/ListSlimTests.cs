@@ -13,6 +13,7 @@
 // limitations under the License.
 
 using System.Collections.Generic;
+using System.Linq;
 using LfrlAnvil.Functional;
 using LfrlAnvil.TestExtensions.FluentAssertions;
 
@@ -38,6 +39,36 @@ public class ListSlimTests : TestsBase
             sut.IsEmpty.Should().BeTrue();
             sut.Capacity.Should().Be( expectedCapacity );
             sut.AsSpan().ToArray().Should().BeEmpty();
+        }
+    }
+
+    [Fact]
+    public void Create_ShouldCopyElementsFromMaterializedSource()
+    {
+        var source = new[] { "x1", "x2", "x3", "x4", "x5" };
+        var sut = ListSlim<string>.Create( source );
+
+        using ( new AssertionScope() )
+        {
+            sut.Count.Should().Be( 5 );
+            sut.IsEmpty.Should().BeFalse();
+            sut.Capacity.Should().Be( 8 );
+            sut.AsSpan().ToArray().Should().BeSequentiallyEqualTo( "x1", "x2", "x3", "x4", "x5" );
+        }
+    }
+
+    [Fact]
+    public void Create_ShouldCopyElementsFromNonMaterializedSource()
+    {
+        var source = new[] { "x1", "x2", "x3", "x4", "x5", "x6", "x7" }.Where( (_, i) => i > 0 && i < 6 );
+        var sut = ListSlim<string>.Create( source, minCapacity: 16 );
+
+        using ( new AssertionScope() )
+        {
+            sut.Count.Should().Be( 5 );
+            sut.IsEmpty.Should().BeFalse();
+            sut.Capacity.Should().Be( 16 );
+            sut.AsSpan().ToArray().Should().BeSequentiallyEqualTo( "x2", "x3", "x4", "x5", "x6" );
         }
     }
 

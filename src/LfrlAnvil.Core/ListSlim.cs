@@ -13,7 +13,9 @@
 // limitations under the License.
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics.Contracts;
+using System.Linq;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -79,6 +81,31 @@ public struct ListSlim<T>
     public static ListSlim<T> Create(int minCapacity = 0)
     {
         return new ListSlim<T>( minCapacity );
+    }
+
+    /// <summary>
+    /// Creates a new <see cref="ListSlim{T}"/> instance that contains all elements from <paramref name="source"/>.
+    /// </summary>
+    /// <param name="source">Source collection of elements.</param>
+    /// <param name="minCapacity">Minimum initial <see cref="Capacity"/> of the created list. Equal to <b>0</b> by default.</param>
+    /// <returns>New <see cref="ListSlim{T}"/> instance.</returns>
+    [Pure]
+    public static ListSlim<T> Create(IEnumerable<T> source, int minCapacity = 0)
+    {
+        var result = Create( Math.Max( source.TryGetNonEnumeratedCount( out var count ) ? count : 0, minCapacity ) );
+
+        if ( source is ICollection<T> coll )
+        {
+            coll.CopyTo( result._items, 0 );
+            result.Count = count;
+        }
+        else
+        {
+            foreach ( var e in source )
+                result.Add( e );
+        }
+
+        return result;
     }
 
     /// <summary>
