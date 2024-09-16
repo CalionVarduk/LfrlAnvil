@@ -16,16 +16,14 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
-using System.Linq;
 using System.Runtime.CompilerServices;
-using LfrlAnvil.Extensions;
 
 namespace LfrlAnvil.Collections;
 
 /// <inheritdoc cref="IHeap{T}" />
 public class Heap<T> : IHeap<T>
 {
-    private readonly List<T> _items;
+    private ListSlim<T> _items;
 
     /// <summary>
     /// Creates a new empty <see cref="Heap{T}"/> instance with <see cref="Comparer{T}.Default"/> comparer.
@@ -40,7 +38,7 @@ public class Heap<T> : IHeap<T>
     public Heap(IComparer<T> comparer)
     {
         Comparer = comparer;
-        _items = new List<T>();
+        _items = ListSlim<T>.Create();
     }
 
     /// <summary>
@@ -58,7 +56,7 @@ public class Heap<T> : IHeap<T>
     public Heap(IEnumerable<T> collection, IComparer<T> comparer)
     {
         Comparer = comparer;
-        _items = collection.ToList();
+        _items = ListSlim<T>.Create( collection );
 
         for ( var i = (_items.Count - 1) >> 1; i >= 0; --i )
             FixDown( i );
@@ -91,7 +89,7 @@ public class Heap<T> : IHeap<T>
     /// <inheritdoc />
     public bool TryExtract([MaybeNullWhen( false )] out T result)
     {
-        if ( _items.Count == 0 )
+        if ( _items.IsEmpty )
         {
             result = default;
             return false;
@@ -111,7 +109,7 @@ public class Heap<T> : IHeap<T>
     /// <inheritdoc />
     public bool TryPeek([MaybeNullWhen( false )] out T result)
     {
-        if ( _items.Count == 0 )
+        if ( _items.IsEmpty )
         {
             result = default;
             return false;
@@ -132,7 +130,7 @@ public class Heap<T> : IHeap<T>
     /// <inheritdoc />
     public bool TryPop()
     {
-        if ( _items.Count == 0 )
+        if ( _items.IsEmpty )
             return false;
 
         Pop();
@@ -151,7 +149,7 @@ public class Heap<T> : IHeap<T>
     /// <inheritdoc />
     public bool TryReplace(T item, [MaybeNullWhen( false )] out T replaced)
     {
-        if ( _items.Count == 0 )
+        if ( _items.IsEmpty )
         {
             replaced = default;
             return false;
@@ -167,23 +165,66 @@ public class Heap<T> : IHeap<T>
         _items.Clear();
     }
 
-    /// <inheritdoc />
+    /// <summary>
+    /// Creates a new <see cref="Enumerator"/> instance for this heap.
+    /// </summary>
+    /// <returns>New <see cref="Enumerator"/> instance.</returns>
     [Pure]
-    public IEnumerator<T> GetEnumerator()
+    public Enumerator GetEnumerator()
     {
-        return _items.GetEnumerator();
+        return new Enumerator( _items );
+    }
+
+    /// <summary>
+    /// Lightweight enumerator implementation for <see cref="Heap{T}"/>.
+    /// </summary>
+    public struct Enumerator : IEnumerator<T>
+    {
+        private readonly ListSlim<T> _items;
+        private int _index;
+
+        internal Enumerator(ListSlim<T> items)
+        {
+            _items = items;
+            _index = -1;
+        }
+
+        /// <inheritdoc />
+        public T Current => _items[_index];
+
+        object? IEnumerator.Current => Current;
+
+        /// <inheritdoc />
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public bool MoveNext()
+        {
+            return ++_index < _items.Count;
+        }
+
+        /// <inheritdoc />
+        public void Dispose() { }
+
+        void IEnumerator.Reset()
+        {
+            _index = -1;
+        }
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private void FixUp(int i)
     {
+        ref var first = ref _items.First();
+
         while ( i > 0 )
         {
             var p = Heap.GetParentIndex( i );
-            if ( Comparer.Compare( _items[i], _items[p] ) >= 0 )
+            ref var item = ref Unsafe.Add( ref first, i )!;
+            ref var parent = ref Unsafe.Add( ref first, p )!;
+
+            if ( Comparer.Compare( item, parent ) >= 0 )
                 break;
 
-            _items.SwapItems( i, p );
+            (item, parent) = (parent, item);
             i = p;
         }
     }
@@ -191,23 +232,45 @@ public class Heap<T> : IHeap<T>
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private void FixDown(int i)
     {
+        ref var first = ref _items.First();
         var l = Heap.GetLeftChildIndex( i );
 
         while ( l < _items.Count )
         {
+            ref var item = ref Unsafe.Add( ref first, i )!;
+            ref var target = ref Unsafe.Add( ref first, l )!;
+
+            var t = l;
+            if ( Comparer.Compare( item, target ) < 0 )
+            {
+                t = i;
+                target = ref item;
+            }
+
             var r = l + 1;
-            var m = Comparer.Compare( _items[l], _items[i] ) < 0 ? l : i;
+            if ( r < _items.Count )
+            {
+                ref var right = ref Unsafe.Add( ref first, r )!;
+                if ( Comparer.Compare( right, target ) < 0 )
+                {
+                    t = r;
+                    target = ref right;
+                }
+            }
 
-            if ( r < _items.Count && Comparer.Compare( _items[r], _items[m] ) < 0 )
-                m = r;
-
-            if ( m == i )
+            if ( i == t )
                 break;
 
-            _items.SwapItems( i, m );
-            i = m;
+            (item, target) = (target, item);
+            i = t;
             l = Heap.GetLeftChildIndex( i );
         }
+    }
+
+    [Pure]
+    IEnumerator<T> IEnumerable<T>.GetEnumerator()
+    {
+        return GetEnumerator();
     }
 
     [Pure]
