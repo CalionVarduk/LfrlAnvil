@@ -15,10 +15,10 @@
 using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
-using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using LfrlAnvil.Extensions;
+using LfrlAnvil.Internal;
 
 namespace LfrlAnvil;
 
@@ -28,16 +28,11 @@ namespace LfrlAnvil;
 /// <typeparam name="T">Element type.</typeparam>
 public struct StackSlim<T>
 {
-    /// <summary>
-    /// Minimum capacity for non-empty stacks. Equal to <b>4</b>.
-    /// </summary>
-    public const int MinCapacity = 1 << 2;
-
     private T[] _items;
 
     private StackSlim(int minCapacity)
     {
-        _items = minCapacity <= 0 ? Array.Empty<T>() : new T[GetCapacity( minCapacity )];
+        _items = minCapacity <= 0 ? Array.Empty<T>() : new T[Buffers.GetCapacity( minCapacity )];
         Count = 0;
     }
 
@@ -121,15 +116,17 @@ public struct StackSlim<T>
     /// <param name="item">Item to add.</param>
     public void Push(T item)
     {
-        var nextCount = checked( Count + 1 );
         if ( Count == _items.Length )
         {
+            var nextCount = checked( Count + 1 );
             var prevItems = _items;
-            _items = new T[GetCapacity( nextCount )];
+            _items = new T[Buffers.GetCapacity( nextCount )];
             prevItems.AsSpan().CopyTo( _items.AsSpan( _items.Length - Count ) );
+            Count = nextCount;
         }
+        else
+            ++Count;
 
-        Count = nextCount;
         _items[^Count] = item;
     }
 
@@ -147,7 +144,7 @@ public struct StackSlim<T>
         if ( _items.Length < nextCount )
         {
             var prevItems = _items;
-            _items = new T[GetCapacity( nextCount )];
+            _items = new T[Buffers.GetCapacity( nextCount )];
             prevItems.AsSpan( prevItems.Length - Count ).CopyTo( _items.AsSpan( _items.Length - Count ) );
         }
 
@@ -249,7 +246,7 @@ public struct StackSlim<T>
         if ( minCapacity < count )
             minCapacity = count;
 
-        var capacity = GetCapacity( minCapacity );
+        var capacity = Buffers.GetCapacity( minCapacity );
         if ( capacity == _items.Length )
             return;
 
@@ -266,16 +263,5 @@ public struct StackSlim<T>
     public ReadOnlySpan<T>.Enumerator GetEnumerator()
     {
         return AsMemory().GetEnumerator();
-    }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private static int GetCapacity(int minCapacity)
-    {
-        if ( minCapacity <= MinCapacity )
-            minCapacity = MinCapacity;
-
-        var result = BitOperations.RoundUpToPowerOf2( unchecked( ( uint )minCapacity ) );
-        return result > int.MaxValue ? int.MaxValue : unchecked( ( int )result );
     }
 }

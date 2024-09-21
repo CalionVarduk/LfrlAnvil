@@ -16,9 +16,9 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Linq;
-using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using LfrlAnvil.Internal;
 
 namespace LfrlAnvil;
 
@@ -28,16 +28,11 @@ namespace LfrlAnvil;
 /// <typeparam name="T">Element type.</typeparam>
 public struct ListSlim<T>
 {
-    /// <summary>
-    /// Minimum capacity for non-empty lists. Equal to <b>4</b>.
-    /// </summary>
-    public const int MinCapacity = 1 << 2;
-
     private T[] _items;
 
     private ListSlim(int minCapacity)
     {
-        _items = minCapacity <= 0 ? Array.Empty<T>() : new T[GetCapacity( minCapacity )];
+        _items = minCapacity <= 0 ? Array.Empty<T>() : new T[Buffers.GetCapacity( minCapacity )];
         Count = 0;
     }
 
@@ -146,16 +141,17 @@ public struct ListSlim<T>
     /// <param name="item">Item to add.</param>
     public void Add(T item)
     {
-        var nextCount = checked( Count + 1 );
         if ( Count == _items.Length )
         {
+            var nextCount = checked( Count + 1 );
             var prevItems = _items;
-            _items = new T[GetCapacity( nextCount )];
+            _items = new T[Buffers.GetCapacity( nextCount )];
             prevItems.AsSpan().CopyTo( _items );
+            _items[Count] = item;
+            Count = nextCount;
         }
-
-        _items[Count] = item;
-        Count = nextCount;
+        else
+            _items[Count++] = item;
     }
 
     /// <summary>
@@ -172,7 +168,7 @@ public struct ListSlim<T>
         if ( _items.Length < nextCount )
         {
             var prevItems = _items;
-            _items = new T[GetCapacity( nextCount )];
+            _items = new T[Buffers.GetCapacity( nextCount )];
             prevItems.AsSpan( 0, Count ).CopyTo( _items );
         }
 
@@ -190,19 +186,21 @@ public struct ListSlim<T>
     {
         Ensure.IsInRange( index, 0, Count );
 
-        var nextCount = checked( Count + 1 );
         if ( Count == _items.Length )
         {
+            Count = checked( Count + 1 );
             var prevItems = _items;
-            _items = new T[GetCapacity( nextCount )];
+            _items = new T[Buffers.GetCapacity( Count )];
             prevItems.AsSpan( 0, index ).CopyTo( _items );
             prevItems.AsSpan( index ).CopyTo( _items.AsSpan( index + 1 ) );
         }
         else
+        {
             _items.AsSpan( index, Count - index ).CopyTo( _items.AsSpan( index + 1 ) );
+            ++Count;
+        }
 
         _items[index] = item;
-        Count = nextCount;
     }
 
     /// <summary>
@@ -222,7 +220,7 @@ public struct ListSlim<T>
         if ( _items.Length < nextCount )
         {
             var prevItems = _items;
-            _items = new T[GetCapacity( nextCount )];
+            _items = new T[Buffers.GetCapacity( nextCount )];
             prevItems.AsSpan( 0, index ).CopyTo( _items );
             prevItems.AsSpan( index ).CopyTo( _items.AsSpan( index + items.Length ) );
         }
@@ -334,7 +332,7 @@ public struct ListSlim<T>
         if ( minCapacity < count )
             minCapacity = count;
 
-        var capacity = GetCapacity( minCapacity );
+        var capacity = Buffers.GetCapacity( minCapacity );
         if ( capacity == _items.Length )
             return;
 
@@ -351,16 +349,5 @@ public struct ListSlim<T>
     public Span<T>.Enumerator GetEnumerator()
     {
         return AsSpan().GetEnumerator();
-    }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private static int GetCapacity(int minCapacity)
-    {
-        if ( minCapacity <= MinCapacity )
-            minCapacity = MinCapacity;
-
-        var result = BitOperations.RoundUpToPowerOf2( unchecked( ( uint )minCapacity ) );
-        return result > int.MaxValue ? int.MaxValue : unchecked( ( int )result );
     }
 }

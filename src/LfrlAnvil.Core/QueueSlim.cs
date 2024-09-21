@@ -15,9 +15,9 @@
 using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
-using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using LfrlAnvil.Internal;
 
 namespace LfrlAnvil;
 
@@ -27,18 +27,13 @@ namespace LfrlAnvil;
 /// <typeparam name="T">Element type.</typeparam>
 public struct QueueSlim<T>
 {
-    /// <summary>
-    /// Minimum capacity for non-empty queues. Equal to <b>4</b>.
-    /// </summary>
-    public const int MinCapacity = 1 << 2;
-
     private T[] _items;
     private int _firstIndex;
     private int _endIndex;
 
     private QueueSlim(int minCapacity)
     {
-        _items = minCapacity <= 0 ? Array.Empty<T>() : new T[GetCapacity( minCapacity )];
+        _items = minCapacity <= 0 ? Array.Empty<T>() : new T[Buffers.GetCapacity( minCapacity )];
         _firstIndex = _endIndex = 0;
     }
 
@@ -174,7 +169,7 @@ public struct QueueSlim<T>
             else
             {
                 var prevItems = _items;
-                _items = new T[GetCapacity( checked( _items.Length + 1 ) )];
+                _items = new T[Buffers.GetCapacity( checked( _items.Length + 1 ) )];
                 prevItems.CopyTo( _items.AsSpan() );
                 _items[_endIndex++] = item;
             }
@@ -184,7 +179,7 @@ public struct QueueSlim<T>
         else if ( IsEmpty )
         {
             if ( _items.Length == 0 )
-                _items = new T[GetCapacity( MinCapacity )];
+                _items = new T[Buffers.GetCapacity( Buffers.MinCapacity )];
 
             _items[_endIndex++] = item;
         }
@@ -193,7 +188,7 @@ public struct QueueSlim<T>
             Assume.Equals( Count, _items.Length );
             var prevItems = _items;
             var nextCount = checked( _items.Length + 1 );
-            _items = new T[GetCapacity( nextCount )];
+            _items = new T[Buffers.GetCapacity( nextCount )];
             var firstSlice = prevItems.AsSpan( _firstIndex );
             firstSlice.CopyTo( _items );
             prevItems.AsSpan( 0, _endIndex ).CopyTo( _items.AsSpan( firstSlice.Length ) );
@@ -236,7 +231,7 @@ public struct QueueSlim<T>
             {
                 var prevItems = _items;
                 var nextCount = checked( count + items.Length );
-                _items = new T[GetCapacity( nextCount )];
+                _items = new T[Buffers.GetCapacity( nextCount )];
                 prevItems.AsSpan( _firstIndex, count ).CopyTo( _items );
                 items.CopyTo( _items.AsSpan( count ) );
                 _firstIndex = 0;
@@ -256,7 +251,7 @@ public struct QueueSlim<T>
             {
                 var prevItems = _items;
                 var nextCount = checked( count + items.Length );
-                _items = new T[GetCapacity( nextCount )];
+                _items = new T[Buffers.GetCapacity( nextCount )];
                 var firstSlice = prevItems.AsSpan( _firstIndex );
                 firstSlice.CopyTo( _items );
                 prevItems.AsSpan( 0, _endIndex ).CopyTo( _items.AsSpan( firstSlice.Length ) );
@@ -268,7 +263,7 @@ public struct QueueSlim<T>
         else if ( IsEmpty )
         {
             if ( _items.Length < items.Length )
-                _items = new T[GetCapacity( items.Length )];
+                _items = new T[Buffers.GetCapacity( items.Length )];
 
             items.CopyTo( _items );
             _endIndex = items.Length;
@@ -278,7 +273,7 @@ public struct QueueSlim<T>
             Assume.Equals( Count, _items.Length );
             var prevItems = _items;
             var nextCount = checked( _items.Length + items.Length );
-            _items = new T[GetCapacity( nextCount )];
+            _items = new T[Buffers.GetCapacity( nextCount )];
             var firstSlice = prevItems.AsSpan( _firstIndex );
             firstSlice.CopyTo( _items );
             prevItems.AsSpan( 0, _endIndex ).CopyTo( _items.AsSpan( firstSlice.Length ) );
@@ -448,7 +443,7 @@ public struct QueueSlim<T>
         if ( minCapacity < count )
             minCapacity = count;
 
-        var capacity = GetCapacity( minCapacity );
+        var capacity = Buffers.GetCapacity( minCapacity );
         if ( capacity == _items.Length )
             return;
 
@@ -487,16 +482,5 @@ public struct QueueSlim<T>
             result = unchecked( result - ( uint )_items.Length );
 
         return unchecked( ( int )result );
-    }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private static int GetCapacity(int minCapacity)
-    {
-        if ( minCapacity <= MinCapacity )
-            minCapacity = MinCapacity;
-
-        var result = BitOperations.RoundUpToPowerOf2( unchecked( ( uint )minCapacity ) );
-        return result > int.MaxValue ? int.MaxValue : unchecked( ( int )result );
     }
 }
