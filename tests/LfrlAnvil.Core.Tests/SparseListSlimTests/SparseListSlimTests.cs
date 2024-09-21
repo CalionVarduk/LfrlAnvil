@@ -311,6 +311,46 @@ public class SparseListSlimTests : TestsBase
     }
 
     [Fact]
+    public void GetRefOrAddDefault_ShouldAddItemToNonEmptyList_WhenIndexIsNotOccupiedAndEqualToOne()
+    {
+        var sut = SparseListSlim<string>.Create();
+        sut.Add( "x1" );
+
+        ref var result = ref sut.GetRefOrAddDefault( 1, out _ )!;
+        result = "x2";
+
+        using ( new AssertionScope() )
+        {
+            sut.Count.Should().Be( 2 );
+            sut.Capacity.Should().Be( 4 );
+            AssertFirst( sut, 0, "x1" );
+            AssertLast( sut, 1, "x2" );
+            AssertEnumerator( sut, (0, "x1"), (1, "x2") );
+            AssertSequenceEnumerator( sut, (0, "x1"), (1, "x2") );
+        }
+    }
+
+    [Fact]
+    public void GetRefOrAddDefault_ShouldAddItemToEmptyList_WhenIndexIsNotOccupiedAndEqualToOne()
+    {
+        var sut = SparseListSlim<string>.Create();
+
+        ref var result = ref sut.GetRefOrAddDefault( 1, out _ )!;
+        result = "x2";
+        sut.Add( "x3" );
+
+        using ( new AssertionScope() )
+        {
+            sut.Count.Should().Be( 2 );
+            sut.Capacity.Should().Be( 4 );
+            AssertFirst( sut, 1, "x2" );
+            AssertLast( sut, 0, "x3" );
+            AssertEnumerator( sut, (1, "x2"), (0, "x3") );
+            AssertSequenceEnumerator( sut, (0, "x3"), (1, "x2") );
+        }
+    }
+
+    [Fact]
     public void GetRefOrAddDefault_ShouldThrowArgumentOutOfRangeException_WhenIndexIsLessThanZero()
     {
         var sut = SparseListSlim<string>.Create();
