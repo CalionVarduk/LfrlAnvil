@@ -18,8 +18,6 @@ using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Runtime.CompilerServices;
-using LfrlAnvil.Collections.Internal;
-using LfrlAnvil.Extensions;
 
 namespace LfrlAnvil.Collections;
 
@@ -27,8 +25,9 @@ namespace LfrlAnvil.Collections;
 public class DictionaryHeap<TKey, TValue> : IDictionaryHeap<TKey, TValue>
     where TKey : notnull
 {
-    private readonly List<DictionaryHeapNode<TKey, TValue>> _items;
-    private readonly Dictionary<TKey, DictionaryHeapNode<TKey, TValue>> _map;
+    private readonly Dictionary<TKey, int> _keyIndexMap;
+    private SparseListSlim<int> _keyIndexes;
+    private ListSlim<Entry> _items;
 
     /// <summary>
     /// Creates a new empty <see cref="DictionaryHeap{TKey,TValue}"/> instance with <see cref="EqualityComparer{T}.Default"/> key comparer
@@ -45,8 +44,9 @@ public class DictionaryHeap<TKey, TValue> : IDictionaryHeap<TKey, TValue>
     public DictionaryHeap(IEqualityComparer<TKey> keyComparer, IComparer<TValue> comparer)
     {
         Comparer = comparer;
-        _items = new List<DictionaryHeapNode<TKey, TValue>>();
-        _map = new Dictionary<TKey, DictionaryHeapNode<TKey, TValue>>( keyComparer );
+        _keyIndexMap = new Dictionary<TKey, int>( keyComparer );
+        _keyIndexes = SparseListSlim<int>.Create();
+        _items = ListSlim<Entry>.Create();
     }
 
     /// <summary>
@@ -69,14 +69,16 @@ public class DictionaryHeap<TKey, TValue> : IDictionaryHeap<TKey, TValue>
         IComparer<TValue> comparer)
     {
         Comparer = comparer;
-        _items = new List<DictionaryHeapNode<TKey, TValue>>();
-        _map = new Dictionary<TKey, DictionaryHeapNode<TKey, TValue>>( keyComparer );
+        var capacity = collection.TryGetNonEnumeratedCount( out var count ) ? count : 0;
+        _keyIndexMap = new Dictionary<TKey, int>( capacity, keyComparer );
+        _keyIndexes = SparseListSlim<int>.Create( capacity );
+        _items = ListSlim<Entry>.Create( capacity );
 
         foreach ( var (key, value) in collection )
         {
-            var node = CreateNode( key, value );
-            _map.Add( key, node );
-            _items.Add( node );
+            var keyIndex = _keyIndexes.Add( _items.Count );
+            _keyIndexMap.Add( key, keyIndex );
+            _items.Add( new Entry( keyIndex, key, value ) );
         }
 
         for ( var i = (_items.Count - 1) >> 1; i >= 0; --i )
@@ -87,7 +89,7 @@ public class DictionaryHeap<TKey, TValue> : IDictionaryHeap<TKey, TValue>
     public IComparer<TValue> Comparer { get; }
 
     /// <inheritdoc />
-    public IEqualityComparer<TKey> KeyComparer => _map.Comparer;
+    public IEqualityComparer<TKey> KeyComparer => _keyIndexMap.Comparer;
 
     /// <inheritdoc />
     public TValue this[int index] => _items[index].Value;
@@ -104,24 +106,35 @@ public class DictionaryHeap<TKey, TValue> : IDictionaryHeap<TKey, TValue>
 
     /// <inheritdoc />
     [Pure]
+    public int GetIndex(TKey key)
+    {
+        var keyIndex = _keyIndexMap[key];
+        return _keyIndexes[keyIndex];
+    }
+
+    /// <inheritdoc />
+    [Pure]
     public bool ContainsKey(TKey key)
     {
-        return _map.ContainsKey( key );
+        return _keyIndexMap.ContainsKey( key );
     }
 
     /// <inheritdoc />
     [Pure]
     public TValue GetValue(TKey key)
     {
-        return _map[key].Value;
+        var keyIndex = _keyIndexMap[key];
+        var position = _keyIndexes[keyIndex];
+        return _items[position].Value;
     }
 
     /// <inheritdoc />
     public bool TryGetValue(TKey key, [MaybeNullWhen( false )] out TValue result)
     {
-        if ( _map.TryGetValue( key, out var node ) )
+        if ( _keyIndexMap.TryGetValue( key, out var keyIndex ) )
         {
-            result = node.Value;
+            var position = _keyIndexes[keyIndex];
+            result = _items[position].Value;
             return true;
         }
 
@@ -139,7 +152,7 @@ public class DictionaryHeap<TKey, TValue> : IDictionaryHeap<TKey, TValue>
     /// <inheritdoc />
     public bool TryPeek([MaybeNullWhen( false )] out TValue result)
     {
-        if ( _items.Count == 0 )
+        if ( _items.IsEmpty )
         {
             result = default;
             return false;
@@ -160,7 +173,7 @@ public class DictionaryHeap<TKey, TValue> : IDictionaryHeap<TKey, TValue>
     /// <inheritdoc />
     public bool TryExtract([MaybeNullWhen( false )] out TValue result)
     {
-        if ( _items.Count == 0 )
+        if ( _items.IsEmpty )
         {
             result = default;
             return false;
@@ -173,21 +186,37 @@ public class DictionaryHeap<TKey, TValue> : IDictionaryHeap<TKey, TValue>
     /// <inheritdoc />
     public void Add(TKey key, TValue value)
     {
-        var node = CreateNode( key, value );
-        _map.Add( key, node );
-        _items.Add( node );
-        FixUp( _items.Count - 1 );
+        var position = _items.Count;
+        var keyIndex = _keyIndexes.Add( position );
+
+        try
+        {
+            _keyIndexMap.Add( key, keyIndex );
+        }
+        catch
+        {
+            _keyIndexes.Remove( keyIndex );
+            throw;
+        }
+
+        _items.Add( new Entry( keyIndex, key, value ) );
+        FixUp( position );
     }
 
     /// <inheritdoc />
     public bool TryAdd(TKey key, TValue value)
     {
-        var node = CreateNode( key, value );
-        if ( ! _map.TryAdd( key, node ) )
-            return false;
+        var position = _items.Count;
+        var keyIndex = _keyIndexes.Add( position );
 
-        _items.Add( node );
-        FixUp( _items.Count - 1 );
+        if ( ! _keyIndexMap.TryAdd( key, keyIndex ) )
+        {
+            _keyIndexes.Remove( keyIndex );
+            return false;
+        }
+
+        _items.Add( new Entry( keyIndex, key, value ) );
+        FixUp( position );
         return true;
     }
 
@@ -203,40 +232,44 @@ public class DictionaryHeap<TKey, TValue> : IDictionaryHeap<TKey, TValue>
     /// <inheritdoc />
     public bool TryRemove(TKey key, [MaybeNullWhen( false )] out TValue removed)
     {
-        if ( ! _map.Remove( key, out var node ) )
+        if ( ! _keyIndexMap.Remove( key, out var keyIndex ) )
         {
             removed = default;
             return false;
         }
 
-        var lastNode = _items[^1];
-        _items[node.Index] = lastNode;
-        lastNode.AssignIndexFrom( node );
+        var position = _keyIndexes[keyIndex];
+        ref var entry = ref _items[position];
+        ref var last = ref _items[^1];
+        removed = entry.Value;
+        entry = last;
+        _keyIndexes[entry.KeyIndex] = position;
+        _keyIndexes.Remove( keyIndex );
         _items.RemoveLast();
 
-        if ( node.Index < _items.Count )
-            FixRelative( lastNode, node.Value );
+        if ( position < _items.Count )
+            FixRelative( position, entry.Value, removed );
 
-        removed = node.Value;
         return true;
     }
 
     /// <inheritdoc />
     public void Pop()
     {
-        var nodeToPop = _items[0];
-        var lastNode = _items[^1];
-        _items[0] = lastNode;
-        lastNode.AssignIndexFrom( nodeToPop );
+        ref var removed = ref _items[0];
+        ref var last = ref _items[^1];
+        _keyIndexes[last.KeyIndex] = _keyIndexes[removed.KeyIndex];
+        _keyIndexes.Remove( removed.KeyIndex );
+        _keyIndexMap.Remove( removed.Key );
+        removed = last;
         _items.RemoveLast();
-        _map.Remove( nodeToPop.Key );
         FixDown( 0 );
     }
 
     /// <inheritdoc />
     public bool TryPop()
     {
-        if ( _items.Count == 0 )
+        if ( _items.IsEmpty )
             return false;
 
         Pop();
@@ -246,16 +279,16 @@ public class DictionaryHeap<TKey, TValue> : IDictionaryHeap<TKey, TValue>
     /// <inheritdoc />
     public TValue Replace(TKey key, TValue value)
     {
-        var node = _map[key];
-        return Replace( node, value );
+        var keyIndex = _keyIndexMap[key];
+        return Replace( keyIndex, value );
     }
 
     /// <inheritdoc />
     public bool TryReplace(TKey key, TValue value, [MaybeNullWhen( false )] out TValue replaced)
     {
-        if ( _map.TryGetValue( key, out var node ) )
+        if ( _keyIndexMap.TryGetValue( key, out var keyIndex ) )
         {
-            replaced = Replace( node, value );
+            replaced = Replace( keyIndex, value );
             return true;
         }
 
@@ -266,8 +299,8 @@ public class DictionaryHeap<TKey, TValue> : IDictionaryHeap<TKey, TValue>
     /// <inheritdoc />
     public TValue AddOrReplace(TKey key, TValue value)
     {
-        if ( _map.TryGetValue( key, out var node ) )
-            return Replace( node, value );
+        if ( _keyIndexMap.TryGetValue( key, out var keyIndex ) )
+            return Replace( keyIndex, value );
 
         Add( key, value );
         return value;
@@ -276,56 +309,93 @@ public class DictionaryHeap<TKey, TValue> : IDictionaryHeap<TKey, TValue>
     /// <inheritdoc />
     public void Clear()
     {
+        _keyIndexMap.Clear();
+        _keyIndexes.Clear();
         _items.Clear();
-        _map.Clear();
     }
 
-    /// <inheritdoc />
+    /// <summary>
+    /// Creates a new <see cref="Enumerator"/> instance for this heap.
+    /// </summary>
+    /// <returns>New <see cref="Enumerator"/> instance.</returns>
     [Pure]
-    public IEnumerator<TValue> GetEnumerator()
+    public Enumerator GetEnumerator()
     {
-        return _items.Select( static n => n.Value ).GetEnumerator();
+        return new Enumerator( _items );
     }
 
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private DictionaryHeapNode<TKey, TValue> CreateNode(TKey key, TValue value)
+    /// <summary>
+    /// Lightweight enumerator implementation for <see cref="DictionaryHeap{TKey,TValue}"/>.
+    /// </summary>
+    public struct Enumerator : IEnumerator<TValue>
     {
-        return new DictionaryHeapNode<TKey, TValue>( key, value, _items.Count );
+        private readonly ListSlim<Entry> _items;
+        private int _index;
+
+        internal Enumerator(ListSlim<Entry> items)
+        {
+            _items = items;
+            _index = -1;
+        }
+
+        /// <inheritdoc />
+        public TValue Current => _items[_index].Value;
+
+        object? IEnumerator.Current => Current;
+
+        /// <inheritdoc />
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public bool MoveNext()
+        {
+            return ++_index < _items.Count;
+        }
+
+        /// <inheritdoc />
+        public void Dispose() { }
+
+        void IEnumerator.Reset()
+        {
+            _index = -1;
+        }
     }
 
+    internal readonly record struct Entry(int KeyIndex, TKey Key, TValue Value);
+
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private TValue Replace(DictionaryHeapNode<TKey, TValue> node, TValue value)
+    private TValue Replace(int keyIndex, TValue value)
     {
-        var oldValue = node.Value;
-        node.Value = value;
-        FixRelative( node, oldValue );
+        var position = _keyIndexes[keyIndex];
+        ref var entry = ref _items[position];
+        var oldValue = entry.Value;
+        entry = new Entry( keyIndex, entry.Key, value );
+        FixRelative( position, value, oldValue );
         return oldValue;
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private void FixRelative(DictionaryHeapNode<TKey, TValue> node, TValue oldValue)
+    private void FixRelative(int position, TValue value, TValue oldValue)
     {
-        if ( Comparer.Compare( oldValue, node.Value ) < 0 )
-            FixDown( node.Index );
+        if ( Comparer.Compare( oldValue, value ) < 0 )
+            FixDown( position );
         else
-            FixUp( node.Index );
+            FixUp( position );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private void FixUp(int i)
     {
+        ref var first = ref _items.First();
         while ( i > 0 )
         {
             var p = Heap.GetParentIndex( i );
-            var node = _items[i];
-            var parentNode = _items[p];
+            ref var item = ref Unsafe.Add( ref first, i );
+            ref var parent = ref Unsafe.Add( ref first, p );
 
-            if ( Comparer.Compare( node.Value, parentNode.Value ) >= 0 )
+            if ( Comparer.Compare( item.Value, parent.Value ) >= 0 )
                 break;
 
-            _items.SwapItems( i, p );
-            node.SwapIndexWith( parentNode );
+            (item, parent) = (parent, item);
+            SwapIndexes( ref item, ref parent );
             i = p;
         }
     }
@@ -333,31 +403,55 @@ public class DictionaryHeap<TKey, TValue> : IDictionaryHeap<TKey, TValue>
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private void FixDown(int i)
     {
+        ref var first = ref _items.First();
         var l = Heap.GetLeftChildIndex( i );
 
         while ( l < _items.Count )
         {
-            var node = _items[i];
-            var leftChildNode = _items[l];
+            ref var item = ref Unsafe.Add( ref first, i );
+            ref var target = ref Unsafe.Add( ref first, l );
 
-            var r = l + 1;
-            var nodeToSwap = Comparer.Compare( leftChildNode.Value, node.Value ) < 0 ? leftChildNode : node;
-
-            if ( r < _items.Count )
+            var t = l;
+            if ( Comparer.Compare( item.Value, target.Value ) < 0 )
             {
-                var rightChildNode = _items[r];
-                if ( Comparer.Compare( rightChildNode.Value, nodeToSwap.Value ) < 0 )
-                    nodeToSwap = rightChildNode;
+                t = i;
+                target = ref item;
             }
 
-            if ( ReferenceEquals( node, nodeToSwap ) )
+            var r = l + 1;
+            if ( r < _items.Count )
+            {
+                ref var right = ref Unsafe.Add( ref first, r );
+                if ( Comparer.Compare( right.Value, target.Value ) < 0 )
+                {
+                    t = r;
+                    target = ref right;
+                }
+            }
+
+            if ( i == t )
                 break;
 
-            _items.SwapItems( i, nodeToSwap.Index );
-            node.SwapIndexWith( nodeToSwap );
-            i = node.Index;
+            (item, target) = (target, item);
+            SwapIndexes( ref item, ref target );
+            i = t;
             l = Heap.GetLeftChildIndex( i );
         }
+    }
+
+    private void SwapIndexes(ref Entry a, ref Entry b)
+    {
+        ref var keyA = ref _keyIndexes[a.KeyIndex];
+        Assume.False( Unsafe.IsNullRef( ref keyA ) );
+        ref var keyB = ref _keyIndexes[b.KeyIndex];
+        Assume.False( Unsafe.IsNullRef( ref keyB ) );
+        (keyA, keyB) = (keyB, keyA);
+    }
+
+    [Pure]
+    IEnumerator<TValue> IEnumerable<TValue>.GetEnumerator()
+    {
+        return GetEnumerator();
     }
 
     [Pure]

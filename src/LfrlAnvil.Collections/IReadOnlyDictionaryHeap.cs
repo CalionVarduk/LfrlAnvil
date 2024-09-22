@@ -43,6 +43,15 @@ public interface IReadOnlyDictionaryHeap<TKey, TValue> : IReadOnlyHeap<TValue>
     TKey GetKey(int index);
 
     /// <summary>
+    /// Returns the 0-based position of an entry associated with the specified <paramref name="key"/>.
+    /// </summary>
+    /// <param name="key">Key to get an index for.</param>
+    /// <returns>0-based position of an entry associated with the specified <paramref name="key"/>.</returns>
+    /// <exception cref="KeyNotFoundException">When <paramref name="key"/> does not exist in this heap.</exception>
+    [Pure]
+    int GetIndex(TKey key);
+
+    /// <summary>
     /// Checks whether or not an entry with the specified <paramref name="key"/> exists in this heap.
     /// </summary>
     /// <param name="key">Key to check.</param>

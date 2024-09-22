@@ -430,6 +430,24 @@ public abstract class GenericDictionaryHeapTests<TKey, TValue> : TestsBase
     }
 
     [Fact]
+    public void Remove_ShouldRemoveLastItemAndReturnIt()
+    {
+        var key = Fixture.Create<TKey>();
+        var item = Fixture.Create<TValue>();
+
+        var sut = new DictionaryHeap<TKey, TValue>( new[] { KeyValuePair.Create( key, item ) } );
+
+        var result = sut.Remove( key );
+
+        using ( new AssertionScope() )
+        {
+            result.Should().Be( item );
+            sut.Count.Should().Be( 0 );
+            sut.ContainsKey( key ).Should().BeFalse();
+        }
+    }
+
+    [Fact]
     public void Remove_ShouldRemoveMiddleItemAndReturnIt_WhenRemovedItemIsLessThanLastItem()
     {
         var index = 2;
@@ -967,6 +985,32 @@ public abstract class GenericDictionaryHeapTests<TKey, TValue> : TestsBase
         var result = sut.GetKey( index );
 
         result.Should().Be( keys[index] );
+    }
+
+    [Fact]
+    public void GetIndex_ShouldThrowKeyNotFoundException_WhenKeyDoesNotExist()
+    {
+        var keys = Fixture.CreateDistinctCollection<TKey>( 4 );
+        var items = Fixture.CreateMany<TValue>( 3 );
+
+        var sut = new DictionaryHeap<TKey, TValue>( keys.Take( 3 ).Zip( items, KeyValuePair.Create ) );
+
+        var action = Lambda.Of( () => sut.GetIndex( keys[3] ) );
+
+        action.Should().ThrowExactly<KeyNotFoundException>();
+    }
+
+    [Fact]
+    public void GetIndex_ShouldReturnCorrectResult_WhenItemWithKeyExists()
+    {
+        var keys = Fixture.CreateDistinctCollection<TKey>( 3 );
+        var items = Fixture.CreateDistinctSortedCollection<TValue>( 3 );
+
+        var sut = new DictionaryHeap<TKey, TValue>( keys.Zip( items, KeyValuePair.Create ) );
+
+        var result = sut.GetIndex( keys[1] );
+
+        result.Should().Be( 1 );
     }
 
     [Fact]
