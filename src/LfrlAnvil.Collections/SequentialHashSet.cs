@@ -15,8 +15,8 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
+using System.Runtime.InteropServices;
 using LfrlAnvil.Collections.Internal;
-using LfrlAnvil.Internal;
 
 namespace LfrlAnvil.Collections;
 
@@ -27,8 +27,8 @@ namespace LfrlAnvil.Collections;
 public class SequentialHashSet<T> : ISet<T>, IReadOnlySet<T>
     where T : notnull
 {
-    private readonly Dictionary<T, DoublyLinkedNode<T>> _map;
-    private DoublyLinkedNodeSequence<T> _order;
+    private readonly Dictionary<T, int> _indexMap;
+    private SparseListSlim<T> _order;
 
     /// <summary>
     /// Creates a new empty <see cref="SequentialHashSet{T}"/> instance with <see cref="Comparer{T}.Default"/> comparer.
@@ -42,38 +42,38 @@ public class SequentialHashSet<T> : ISet<T>, IReadOnlySet<T>
     /// <param name="comparer">Element comparer.</param>
     public SequentialHashSet(IEqualityComparer<T> comparer)
     {
-        _map = new Dictionary<T, DoublyLinkedNode<T>>( comparer );
-        _order = DoublyLinkedNodeSequence<T>.Empty;
+        _indexMap = new Dictionary<T, int>( comparer );
+        _order = SparseListSlim<T>.Create();
     }
 
     /// <inheritdoc cref="ICollection{T}.Count" />
-    public int Count => _map.Count;
+    public int Count => _indexMap.Count;
 
     /// <summary>
     /// Element comparer.
     /// </summary>
-    public IEqualityComparer<T> Comparer => _map.Comparer;
+    public IEqualityComparer<T> Comparer => _indexMap.Comparer;
 
-    bool ICollection<T>.IsReadOnly => (( ICollection<KeyValuePair<T, DoublyLinkedNode<T>>> )_map).IsReadOnly;
+    bool ICollection<T>.IsReadOnly => (( ICollection<KeyValuePair<T, int>> )_indexMap).IsReadOnly;
 
     /// <inheritdoc />
     public bool Add(T item)
     {
-        var node = new DoublyLinkedNode<T>( item );
-        if ( ! _map.TryAdd( item, node ) )
+        ref var index = ref CollectionsMarshal.GetValueRefOrAddDefault( _indexMap, item, out var exists );
+        if ( exists )
             return false;
 
-        _order = _order.AddLast( node );
+        index = _order.Add( item );
         return true;
     }
 
     /// <inheritdoc />
     public bool Remove(T item)
     {
-        if ( ! _map.Remove( item, out var node ) )
+        if ( ! _indexMap.Remove( item, out var index ) )
             return false;
 
-        _order = _order.Remove( node );
+        _order.Remove( index );
         return true;
     }
 
@@ -81,14 +81,14 @@ public class SequentialHashSet<T> : ISet<T>, IReadOnlySet<T>
     [Pure]
     public bool Contains(T item)
     {
-        return _map.ContainsKey( item );
+        return _indexMap.ContainsKey( item );
     }
 
     /// <inheritdoc />
     public void Clear()
     {
-        _map.Clear();
-        _order = _order.Clear();
+        _indexMap.Clear();
+        _order.Clear();
     }
 
     /// <inheritdoc />
@@ -129,7 +129,7 @@ public class SequentialHashSet<T> : ISet<T>, IReadOnlySet<T>
         var otherSet = GetOtherSet( other, Comparer );
         var itemsToRemove = ListSlim<T>.Create();
 
-        foreach ( var value in _order )
+        foreach ( var (_, value) in _order )
         {
             if ( ! otherSet.Contains( value ) )
                 itemsToRemove.Add( value );
@@ -245,11 +245,14 @@ public class SequentialHashSet<T> : ISet<T>, IReadOnlySet<T>
         return IsProperSupersetOf( otherSet, this );
     }
 
-    /// <inheritdoc />
+    /// <summary>
+    /// Creates a new <see cref="SparseListSlimNodeEnumerator{T}"/> instance for this hash set.
+    /// </summary>
+    /// <returns>New <see cref="SparseListSlimNodeEnumerator{T}"/> instance.</returns>
     [Pure]
-    public IEnumerator<T> GetEnumerator()
+    public SparseListSlimNodeEnumerator<T> GetEnumerator()
     {
-        return _order.GetEnumerator();
+        return new SparseListSlimNodeEnumerator<T>( _order );
     }
 
     [Pure]
@@ -314,6 +317,12 @@ public class SequentialHashSet<T> : ISet<T>, IReadOnlySet<T>
         }
 
         return set.Count == other.Count;
+    }
+
+    [Pure]
+    IEnumerator<T> IEnumerable<T>.GetEnumerator()
+    {
+        return GetEnumerator();
     }
 
     [Pure]

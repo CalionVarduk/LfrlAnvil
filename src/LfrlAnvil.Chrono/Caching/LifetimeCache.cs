@@ -21,7 +21,6 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using LfrlAnvil.Caching;
-using LfrlAnvil.Internal;
 
 namespace LfrlAnvil.Chrono.Caching;
 
@@ -29,8 +28,8 @@ namespace LfrlAnvil.Chrono.Caching;
 public sealed class LifetimeCache<TKey, TValue> : ILifetimeCache<TKey, TValue>
     where TKey : notnull
 {
-    private readonly Dictionary<TKey, DoublyLinkedNode<Entry>> _map;
-    private DoublyLinkedNodeSequence<Entry> _order;
+    private readonly Dictionary<TKey, int> _keyIndexMap;
+    private SparseListSlim<Entry> _order;
 
     /// <summary>
     /// Creates a new <see cref="LifetimeCache{TKey,TValue}"/> instance that uses
@@ -75,8 +74,8 @@ public sealed class LifetimeCache<TKey, TValue> : ILifetimeCache<TKey, TValue>
         StartTimestamp = startTimestamp;
         CurrentTimestamp = startTimestamp;
         RemoveCallback = removeCallback;
-        _map = new Dictionary<TKey, DoublyLinkedNode<Entry>>( keyComparer );
-        _order = DoublyLinkedNodeSequence<Entry>.Empty;
+        _keyIndexMap = new Dictionary<TKey, int>( keyComparer );
+        _order = SparseListSlim<Entry>.Create();
     }
 
     /// <inheritdoc />
@@ -97,18 +96,18 @@ public sealed class LifetimeCache<TKey, TValue> : ILifetimeCache<TKey, TValue>
     public Action<CachedItemRemovalEvent<TKey, TValue>>? RemoveCallback { get; }
 
     /// <inheritdoc />
-    public int Count => _map.Count;
+    public int Count => _keyIndexMap.Count;
 
     /// <inheritdoc />
-    public IEqualityComparer<TKey> Comparer => _map.Comparer;
+    public IEqualityComparer<TKey> Comparer => _keyIndexMap.Comparer;
 
     /// <inheritdoc />
-    public KeyValuePair<TKey, TValue>? Oldest => _order.Head?.Value.ToKeyValuePair();
+    public KeyValuePair<TKey, TValue>? Oldest => _order.First?.Value.ToKeyValuePair();
 
     /// <summary>
     /// Currently newest cache entry.
     /// </summary>
-    public KeyValuePair<TKey, TValue>? Newest => _order.Tail?.Value.ToKeyValuePair();
+    public KeyValuePair<TKey, TValue>? Newest => _order.Last?.Value.ToKeyValuePair();
 
     /// <inheritdoc />
     public IEnumerable<TKey> Keys => this.Select( static kv => kv.Key );
@@ -121,10 +120,11 @@ public sealed class LifetimeCache<TKey, TValue> : ILifetimeCache<TKey, TValue>
     {
         get
         {
-            var node = _map[key];
-            node.Value = node.Value.Update( GetTimeOfRemoval() );
-            SetNewest( node );
-            return node.Value.Value;
+            var index = _keyIndexMap[key];
+            ref var entry = ref _order[index];
+            entry = entry.Update( GetTimeOfRemoval() );
+            SetNewest( index, entry );
+            return entry.Value;
         }
         set => AddOrUpdate( key, value );
     }
@@ -133,21 +133,22 @@ public sealed class LifetimeCache<TKey, TValue> : ILifetimeCache<TKey, TValue>
     [Pure]
     public bool ContainsKey(TKey key)
     {
-        return _map.ContainsKey( key );
+        return _keyIndexMap.ContainsKey( key );
     }
 
     /// <inheritdoc />
     public bool TryGetValue(TKey key, [MaybeNullWhen( false )] out TValue value)
     {
-        if ( ! _map.TryGetValue( key, out var node ) )
+        if ( ! _keyIndexMap.TryGetValue( key, out var index ) )
         {
             value = default;
             return false;
         }
 
-        node.Value = node.Value.Update( GetTimeOfRemoval() );
-        SetNewest( node );
-        value = node.Value.Value;
+        ref var entry = ref _order[index];
+        entry = entry.Update( GetTimeOfRemoval() );
+        SetNewest( index, entry );
+        value = entry.Value;
         return true;
     }
 
@@ -155,17 +156,21 @@ public sealed class LifetimeCache<TKey, TValue> : ILifetimeCache<TKey, TValue>
     [Pure]
     public Duration GetRemainingLifetime(TKey key)
     {
-        return _map.TryGetValue( key, out var node ) ? node.Value.TimeOfRemoval.Subtract( CurrentTimestamp ) : Duration.Zero;
+        if ( ! _keyIndexMap.TryGetValue( key, out var index ) )
+            return Duration.Zero;
+
+        ref var entry = ref _order[index];
+        return entry.TimeOfRemoval.Subtract( CurrentTimestamp );
     }
 
     /// <inheritdoc />
     public bool TryAdd(TKey key, TValue value)
     {
-        var node = CreateNode( key, value );
-        if ( ! _map.TryAdd( key, node ) )
+        ref var index = ref CollectionsMarshal.GetValueRefOrAddDefault( _keyIndexMap, key, out var exists );
+        if ( exists )
             return false;
 
-        _order = _order.AddLast( node );
+        index = _order.Add( new Entry( key, value, GetTimeOfRemoval() ) );
         CheckCapacity();
         return true;
     }
@@ -173,18 +178,18 @@ public sealed class LifetimeCache<TKey, TValue> : ILifetimeCache<TKey, TValue>
     /// <inheritdoc />
     public AddOrUpdateResult AddOrUpdate(TKey key, TValue value)
     {
-        ref var node = ref CollectionsMarshal.GetValueRefOrAddDefault( _map, key, out var exists )!;
+        ref var index = ref CollectionsMarshal.GetValueRefOrAddDefault( _keyIndexMap, key, out var exists );
         if ( exists )
         {
-            var oldValue = node.Value.Value;
-            node.Value = node.Value.Update( value, GetTimeOfRemoval() );
-            SetNewest( node );
-            RemoveCallback?.Invoke( CachedItemRemovalEvent<TKey, TValue>.CreateReplaced( node.Value.Key, oldValue, value ) );
+            ref var entry = ref _order[index];
+            var oldValue = entry.Value;
+            entry = entry.Update( value, GetTimeOfRemoval() );
+            SetNewest( index, entry );
+            RemoveCallback?.Invoke( CachedItemRemovalEvent<TKey, TValue>.CreateReplaced( entry.Key, oldValue, value ) );
             return AddOrUpdateResult.Updated;
         }
 
-        node = CreateNode( key, value );
-        _order = _order.AddLast( node );
+        index = _order.Add( new Entry( key, value, GetTimeOfRemoval() ) );
         CheckCapacity();
         return AddOrUpdateResult.Added;
     }
@@ -192,37 +197,40 @@ public sealed class LifetimeCache<TKey, TValue> : ILifetimeCache<TKey, TValue>
     /// <inheritdoc />
     public bool Remove(TKey key)
     {
-        if ( ! _map.Remove( key, out var node ) )
+        if ( ! _keyIndexMap.Remove( key, out var index ) )
             return false;
 
-        _order = _order.Remove( node );
-        RemoveCallback?.Invoke( CachedItemRemovalEvent<TKey, TValue>.CreateRemoved( node.Value.Key, node.Value.Value ) );
+        var entry = _order[index];
+        _order.Remove( index );
+        RemoveCallback?.Invoke( CachedItemRemovalEvent<TKey, TValue>.CreateRemoved( entry.Key, entry.Value ) );
         return true;
     }
 
     /// <inheritdoc />
     public bool Remove(TKey key, [MaybeNullWhen( false )] out TValue removed)
     {
-        if ( ! _map.Remove( key, out var node ) )
+        if ( ! _keyIndexMap.Remove( key, out var index ) )
         {
             removed = default;
             return false;
         }
 
-        _order = _order.Remove( node );
-        removed = node.Value.Value;
-        RemoveCallback?.Invoke( CachedItemRemovalEvent<TKey, TValue>.CreateRemoved( node.Value.Key, node.Value.Value ) );
+        var entry = _order[index];
+        _order.Remove( index );
+        removed = entry.Value;
+        RemoveCallback?.Invoke( CachedItemRemovalEvent<TKey, TValue>.CreateRemoved( entry.Key, entry.Value ) );
         return true;
     }
 
     /// <inheritdoc />
     public bool Restart(TKey key)
     {
-        if ( ! _map.TryGetValue( key, out var node ) )
+        if ( ! _keyIndexMap.TryGetValue( key, out var index ) )
             return false;
 
-        node.Value = node.Value.Update( GetTimeOfRemoval() );
-        SetNewest( node );
+        ref var entry = ref _order[index];
+        entry = entry.Update( GetTimeOfRemoval() );
+        SetNewest( index, entry );
         return true;
     }
 
@@ -234,13 +242,14 @@ public sealed class LifetimeCache<TKey, TValue> : ILifetimeCache<TKey, TValue>
 
         CurrentTimestamp = CurrentTimestamp.Add( delta );
 
-        var node = _order.Head;
-        while ( node is not null && node.Value.TimeOfRemoval <= CurrentTimestamp )
+        var node = _order.First;
+        while ( node is not null && node.Value.Value.TimeOfRemoval <= CurrentTimestamp )
         {
-            var next = node.Next;
-            _map.Remove( node.Value.Key );
-            _order = _order.Remove( node );
-            RemoveCallback?.Invoke( CachedItemRemovalEvent<TKey, TValue>.CreateRemoved( node.Value.Key, node.Value.Value ) );
+            var next = node.Value.Next;
+            var entry = node.Value.Value;
+            _keyIndexMap.Remove( entry.Key );
+            _order.Remove( node.Value.Index );
+            RemoveCallback?.Invoke( CachedItemRemovalEvent<TKey, TValue>.CreateRemoved( entry.Key, entry.Value ) );
             node = next;
         }
     }
@@ -248,29 +257,60 @@ public sealed class LifetimeCache<TKey, TValue> : ILifetimeCache<TKey, TValue>
     /// <inheritdoc />
     public void Clear()
     {
-        _map.Clear();
+        _keyIndexMap.Clear();
         if ( RemoveCallback is not null )
         {
-            foreach ( var e in _order )
+            foreach ( var (_, e) in _order )
                 RemoveCallback( CachedItemRemovalEvent<TKey, TValue>.CreateRemoved( e.Key, e.Value ) );
         }
 
-        _order = _order.Clear();
+        _order.Clear();
     }
 
-    /// <inheritdoc />
+    /// <summary>
+    /// Creates a new <see cref="Enumerator"/> instance for this cache.
+    /// </summary>
+    /// <returns>New <see cref="Enumerator"/> instance.</returns>
     [Pure]
-    public IEnumerator<KeyValuePair<TKey, TValue>> GetEnumerator()
+    public Enumerator GetEnumerator()
     {
-        foreach ( var entry in _order )
-            yield return entry.ToKeyValuePair();
+        return new Enumerator( _order );
     }
 
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private DoublyLinkedNode<Entry> CreateNode(TKey key, TValue value)
+    /// <summary>
+    /// Lightweight enumerator implementation for <see cref="LifetimeCache{TKey,TValue}"/>.
+    /// </summary>
+    public struct Enumerator : IEnumerator<KeyValuePair<TKey, TValue>>
     {
-        return new DoublyLinkedNode<Entry>( new Entry( key, value, GetTimeOfRemoval() ) );
+        private SparseListSlimNodeEnumerator<Entry> _internal;
+
+        internal Enumerator(SparseListSlim<Entry> items)
+        {
+            _internal = new SparseListSlimNodeEnumerator<Entry>( items );
+        }
+
+        /// <inheritdoc />
+        public KeyValuePair<TKey, TValue> Current => _internal.Current.ToKeyValuePair();
+
+        object IEnumerator.Current => Current;
+
+        /// <inheritdoc />
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        public bool MoveNext()
+        {
+            return _internal.MoveNext();
+        }
+
+        /// <inheritdoc />
+        public void Dispose()
+        {
+            _internal.Dispose();
+        }
+
+        void IEnumerator.Reset()
+        {
+            (( IEnumerator )_internal).Reset();
+        }
     }
 
     [Pure]
@@ -281,26 +321,29 @@ public sealed class LifetimeCache<TKey, TValue> : ILifetimeCache<TKey, TValue>
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private void SetNewest(DoublyLinkedNode<Entry> node)
+    private void SetNewest(int index, Entry entry)
     {
-        _order = _order.Remove( node ).AddLast( node );
+        _order.Remove( index );
+        _order.Add( entry );
+        Assume.Equals( index, _order.Last?.Index ?? -1 );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private void CheckCapacity()
     {
-        if ( _map.Count <= Capacity )
+        if ( _keyIndexMap.Count <= Capacity )
             return;
 
-        var node = _order.Head;
+        var node = _order.First;
         Assume.IsNotNull( node );
-        _map.Remove( node.Value.Key );
-        _order = _order.Remove( node );
-        Assume.ContainsExactly( _map, Capacity );
-        RemoveCallback?.Invoke( CachedItemRemovalEvent<TKey, TValue>.CreateRemoved( node.Value.Key, node.Value.Value ) );
+        var entry = node.Value.Value;
+        _keyIndexMap.Remove( entry.Key );
+        _order.Remove( node.Value.Index );
+        Assume.ContainsExactly( _keyIndexMap, Capacity );
+        RemoveCallback?.Invoke( CachedItemRemovalEvent<TKey, TValue>.CreateRemoved( entry.Key, entry.Value ) );
     }
 
-    private readonly record struct Entry(TKey Key, TValue Value, Timestamp TimeOfRemoval)
+    internal readonly record struct Entry(TKey Key, TValue Value, Timestamp TimeOfRemoval)
     {
         [Pure]
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -322,6 +365,12 @@ public sealed class LifetimeCache<TKey, TValue> : ILifetimeCache<TKey, TValue>
         {
             return KeyValuePair.Create( Key, Value );
         }
+    }
+
+    [Pure]
+    IEnumerator<KeyValuePair<TKey, TValue>> IEnumerable<KeyValuePair<TKey, TValue>>.GetEnumerator()
+    {
+        return GetEnumerator();
     }
 
     [Pure]

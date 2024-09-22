@@ -19,7 +19,6 @@ using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Runtime.InteropServices;
 using LfrlAnvil.Collections.Internal;
-using LfrlAnvil.Internal;
 
 namespace LfrlAnvil.Collections;
 
@@ -31,8 +30,8 @@ namespace LfrlAnvil.Collections;
 public class SequentialDictionary<TKey, TValue> : IDictionary<TKey, TValue>, IReadOnlyDictionary<TKey, TValue>
     where TKey : notnull
 {
-    private readonly Dictionary<TKey, DoublyLinkedNode<KeyValuePair<TKey, TValue>>> _map;
-    private DoublyLinkedNodeSequence<KeyValuePair<TKey, TValue>> _order;
+    private readonly Dictionary<TKey, int> _keyIndexMap;
+    private SparseListSlim<KeyValuePair<TKey, TValue>> _order;
 
     /// <summary>
     /// Creates a new empty <see cref="SequentialDictionary{TKey,TValue}"/> instance
@@ -47,29 +46,33 @@ public class SequentialDictionary<TKey, TValue> : IDictionary<TKey, TValue>, IRe
     /// <param name="comparer">Key equality comparer.</param>
     public SequentialDictionary(IEqualityComparer<TKey> comparer)
     {
-        _map = new Dictionary<TKey, DoublyLinkedNode<KeyValuePair<TKey, TValue>>>( comparer );
-        _order = DoublyLinkedNodeSequence<KeyValuePair<TKey, TValue>>.Empty;
+        _keyIndexMap = new Dictionary<TKey, int>( comparer );
+        _order = SparseListSlim<KeyValuePair<TKey, TValue>>.Create();
     }
 
     /// <inheritdoc cref="IDictionary{TKey,TValue}.this" />
     public TValue this[TKey key]
     {
-        get => _map[key].Value.Value;
+        get
+        {
+            var index = _keyIndexMap[key];
+            return _order[index].Value;
+        }
         set
         {
-            ref var node = ref CollectionsMarshal.GetValueRefOrAddDefault( _map, key, out var exists )!;
+            ref var index = ref CollectionsMarshal.GetValueRefOrAddDefault( _keyIndexMap, key, out var exists );
             if ( exists )
-                node.Value = KeyValuePair.Create( key, value );
-            else
             {
-                node = new DoublyLinkedNode<KeyValuePair<TKey, TValue>>( KeyValuePair.Create( key, value ) );
-                _order = _order.AddLast( node );
+                ref var entry = ref _order[index];
+                entry = KeyValuePair.Create( key, value );
             }
+            else
+                index = _order.Add( KeyValuePair.Create( key, value ) );
         }
     }
 
     /// <inheritdoc cref="ICollection{T}.Count" />
-    public int Count => _map.Count;
+    public int Count => _keyIndexMap.Count;
 
     /// <inheritdoc />
     public IEnumerable<TKey> Keys => this.Select( static kv => kv.Key );
@@ -80,39 +83,45 @@ public class SequentialDictionary<TKey, TValue> : IDictionary<TKey, TValue>, IRe
     /// <summary>
     /// Key equality comparer.
     /// </summary>
-    public IEqualityComparer<TKey> Comparer => _map.Comparer;
+    public IEqualityComparer<TKey> Comparer => _keyIndexMap.Comparer;
 
     /// <summary>
     /// First entry in order of insertion.
     /// </summary>
-    public KeyValuePair<TKey, TValue>? First => _order.Head?.Value;
+    public KeyValuePair<TKey, TValue>? First => _order.First?.Value;
 
     /// <summary>
     /// Last entry in order of insertion.
     /// </summary>
-    public KeyValuePair<TKey, TValue>? Last => _order.Tail?.Value;
+    public KeyValuePair<TKey, TValue>? Last => _order.Last?.Value;
 
     ICollection<TKey> IDictionary<TKey, TValue>.Keys => Keys.ToList();
     ICollection<TValue> IDictionary<TKey, TValue>.Values => Values.ToList();
-
-    bool ICollection<KeyValuePair<TKey, TValue>>.IsReadOnly =>
-        (( ICollection<KeyValuePair<TKey, DoublyLinkedNode<KeyValuePair<TKey, TValue>>>> )_map).IsReadOnly;
+    bool ICollection<KeyValuePair<TKey, TValue>>.IsReadOnly => (( ICollection<KeyValuePair<TKey, int>> )_keyIndexMap).IsReadOnly;
 
     /// <inheritdoc />
     public void Add(TKey key, TValue value)
     {
-        var node = new DoublyLinkedNode<KeyValuePair<TKey, TValue>>( KeyValuePair.Create( key, value ) );
-        _map.Add( key, node );
-        _order = _order.AddLast( node );
+        var entry = KeyValuePair.Create( key, value );
+        var index = _order.Add( entry );
+        try
+        {
+            _keyIndexMap.Add( key, index );
+        }
+        catch
+        {
+            _order.Remove( index );
+            throw;
+        }
     }
 
     /// <inheritdoc />
     public bool Remove(TKey key)
     {
-        if ( ! _map.Remove( key, out var node ) )
+        if ( ! _keyIndexMap.Remove( key, out var index ) )
             return false;
 
-        _order = _order.Remove( node );
+        _order.Remove( index );
         return true;
     }
 
@@ -124,10 +133,11 @@ public class SequentialDictionary<TKey, TValue> : IDictionary<TKey, TValue>, IRe
     /// <returns><b>true</b> when entry was removed, otherwise <b>false</b>.</returns>
     public bool Remove(TKey key, [MaybeNullWhen( false )] out TValue removed)
     {
-        if ( _map.Remove( key, out var node ) )
+        if ( _keyIndexMap.Remove( key, out var index ) )
         {
-            removed = node.Value.Value;
-            _order = _order.Remove( node );
+            ref var entry = ref _order[index];
+            removed = entry.Value;
+            _order.Remove( index );
             return true;
         }
 
@@ -139,15 +149,16 @@ public class SequentialDictionary<TKey, TValue> : IDictionary<TKey, TValue>, IRe
     [Pure]
     public bool ContainsKey(TKey key)
     {
-        return _map.ContainsKey( key );
+        return _keyIndexMap.ContainsKey( key );
     }
 
     /// <inheritdoc cref="IDictionary{TKey,TValue}.TryGetValue(TKey,out TValue)" />
     public bool TryGetValue(TKey key, [MaybeNullWhen( false )] out TValue result)
     {
-        if ( _map.TryGetValue( key, out var node ) )
+        if ( _keyIndexMap.TryGetValue( key, out var index ) )
         {
-            result = node.Value.Value;
+            ref var entry = ref _order[index];
+            result = entry.Value;
             return true;
         }
 
@@ -158,15 +169,24 @@ public class SequentialDictionary<TKey, TValue> : IDictionary<TKey, TValue>, IRe
     /// <inheritdoc />
     public void Clear()
     {
-        _map.Clear();
-        _order = _order.Clear();
+        _keyIndexMap.Clear();
+        _order.Clear();
     }
 
-    /// <inheritdoc />
+    /// <summary>
+    /// Creates a new <see cref="SparseListSlimNodeEnumerator{T}"/> instance for this dictionary.
+    /// </summary>
+    /// <returns>New <see cref="SparseListSlimNodeEnumerator{T}"/> instance.</returns>
     [Pure]
-    public IEnumerator<KeyValuePair<TKey, TValue>> GetEnumerator()
+    public SparseListSlimNodeEnumerator<KeyValuePair<TKey, TValue>> GetEnumerator()
     {
-        return _order.GetEnumerator();
+        return new SparseListSlimNodeEnumerator<KeyValuePair<TKey, TValue>>( _order );
+    }
+
+    [Pure]
+    IEnumerator<KeyValuePair<TKey, TValue>> IEnumerable<KeyValuePair<TKey, TValue>>.GetEnumerator()
+    {
+        return GetEnumerator();
     }
 
     [Pure]
@@ -188,7 +208,11 @@ public class SequentialDictionary<TKey, TValue> : IDictionary<TKey, TValue>, IRe
     [Pure]
     bool ICollection<KeyValuePair<TKey, TValue>>.Contains(KeyValuePair<TKey, TValue> item)
     {
-        return _map.TryGetValue( item.Key, out var node ) && EqualityComparer<TValue>.Default.Equals( node.Value.Value, item.Value );
+        if ( ! _keyIndexMap.TryGetValue( item.Key, out var index ) )
+            return false;
+
+        ref var entry = ref _order[index];
+        return EqualityComparer<TValue>.Default.Equals( entry.Value, item.Value );
     }
 
     void ICollection<KeyValuePair<TKey, TValue>>.Add(KeyValuePair<TKey, TValue> item)
@@ -198,11 +222,15 @@ public class SequentialDictionary<TKey, TValue> : IDictionary<TKey, TValue>, IRe
 
     bool ICollection<KeyValuePair<TKey, TValue>>.Remove(KeyValuePair<TKey, TValue> item)
     {
-        if ( ! _map.TryGetValue( item.Key, out var node ) || ! EqualityComparer<TValue>.Default.Equals( node.Value.Value, item.Value ) )
+        if ( ! _keyIndexMap.TryGetValue( item.Key, out var index ) )
             return false;
 
-        _order = _order.Remove( node );
-        return _map.Remove( item.Key );
+        ref var entry = ref _order[index];
+        if ( ! EqualityComparer<TValue>.Default.Equals( entry.Value, item.Value ) )
+            return false;
+
+        _order.Remove( index );
+        return _keyIndexMap.Remove( item.Key );
     }
 
     void ICollection<KeyValuePair<TKey, TValue>>.CopyTo(KeyValuePair<TKey, TValue>[] array, int arrayIndex)
