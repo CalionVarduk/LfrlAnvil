@@ -75,6 +75,18 @@ public readonly struct QueueSlimMemory<T>
     }
 
     /// <summary>
+    /// Creates a new <see cref="QueueSlimMemory{T}"/> instance from the provided region of memory.
+    /// </summary>
+    /// <param name="items">Source range of elements.</param>
+    /// <returns>New <see cref="QueueSlimMemory{T}"/> instance.</returns>
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static QueueSlimMemory<T> From(ReadOnlyMemory<T> items)
+    {
+        return new QueueSlimMemory<T>( items, ReadOnlyMemory<T>.Empty );
+    }
+
+    /// <summary>
     /// Forms a slice out of this view, beginning at a specified position and continuing to its end.
     /// </summary>
     /// <param name="startIndex">The index at which to begin this slice.</param>

@@ -34,6 +34,21 @@ public class QueueSlimMemoryTests : TestsBase
     }
 
     [Fact]
+    public void From_ShouldCreateCorrectResult()
+    {
+        var items = new[] { "x1", "x2", "x3" };
+
+        var sut = QueueSlimMemory<string>.From( items );
+
+        using ( new AssertionScope() )
+        {
+            sut.First.ToArray().Should().BeSequentiallyEqualTo( items );
+            sut.Second.ToArray().Should().BeEmpty();
+            sut.Length.Should().Be( items.Length );
+        }
+    }
+
+    [Fact]
     public void Slice_WithLength_ShouldReturnCorrectResult()
     {
         var queue = QueueSlim<string>.Create( minCapacity: 4 );
