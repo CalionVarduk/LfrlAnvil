@@ -692,7 +692,7 @@ public readonly struct FloatingDuration : IEquatable<FloatingDuration>, ICompara
     }
 
     /// <summary>
-    /// Coverts the provided floating duration to <see cref="TimeSpan"/>.
+    /// Converts the provided floating duration to <see cref="TimeSpan"/>.
     /// </summary>
     /// <param name="d">Value to convert.</param>
     /// <returns>New <see cref="TimeSpan"/> instance.</returns>
@@ -704,7 +704,7 @@ public readonly struct FloatingDuration : IEquatable<FloatingDuration>, ICompara
     }
 
     /// <summary>
-    /// Coverts the provided floating duration to <see cref="Duration"/>.
+    /// Converts the provided floating duration to <see cref="Duration"/>.
     /// </summary>
     /// <param name="d">Value to convert.</param>
     /// <returns>New <see cref="Duration"/> instance.</returns>

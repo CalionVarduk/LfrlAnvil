@@ -141,7 +141,7 @@ public readonly struct Timestamp : IEquatable<Timestamp>, IComparable<Timestamp>
     }
 
     /// <summary>
-    /// Coverts the provided duration to <see cref="DateTime"/>.
+    /// Converts the provided duration to <see cref="DateTime"/>.
     /// </summary>
     /// <param name="source">Value to convert.</param>
     /// <returns><see cref="UtcValue"/>.</returns>

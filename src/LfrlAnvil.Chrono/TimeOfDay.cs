@@ -331,7 +331,7 @@ public readonly struct TimeOfDay : IEquatable<TimeOfDay>, IComparable<TimeOfDay>
     }
 
     /// <summary>
-    /// Coverts the provided time of day to <see cref="TimeSpan"/>.
+    /// Converts the provided time of day to <see cref="TimeSpan"/>.
     /// </summary>
     /// <param name="t">Value to convert.</param>
     /// <returns>New <see cref="TimeSpan"/> instance.</returns>
@@ -343,7 +343,7 @@ public readonly struct TimeOfDay : IEquatable<TimeOfDay>, IComparable<TimeOfDay>
     }
 
     /// <summary>
-    /// Coverts the provided time of day to <see cref="Duration"/>.
+    /// Converts the provided time of day to <see cref="Duration"/>.
     /// </summary>
     /// <param name="t">Value to convert.</param>
     /// <returns>New <see cref="Duration"/> instance.</returns>

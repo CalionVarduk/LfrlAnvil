@@ -642,7 +642,7 @@ public readonly struct ZonedDateTime : IEquatable<ZonedDateTime>, IComparable<Zo
     }
 
     /// <summary>
-    /// Coverts the provided <paramref name="source"/> to <see cref="DateTime"/>.
+    /// Converts the provided <paramref name="source"/> to <see cref="DateTime"/>.
     /// </summary>
     /// <param name="source">Value to convert.</param>
     /// <returns><see cref="Value"/>.</returns>
@@ -654,7 +654,7 @@ public readonly struct ZonedDateTime : IEquatable<ZonedDateTime>, IComparable<Zo
     }
 
     /// <summary>
-    /// Coverts the provided <paramref name="source"/> to <see cref="Chrono.Timestamp"/>.
+    /// Converts the provided <paramref name="source"/> to <see cref="Chrono.Timestamp"/>.
     /// </summary>
     /// <param name="source">Value to convert.</param>
     /// <returns><see cref="Timestamp"/>.</returns>

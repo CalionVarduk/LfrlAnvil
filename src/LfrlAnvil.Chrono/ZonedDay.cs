@@ -591,7 +591,7 @@ public readonly struct ZonedDay : IEquatable<ZonedDay>, IComparable<ZonedDay>, I
     }
 
     /// <summary>
-    /// Coverts the provided <paramref name="source"/> to <see cref="ZonedDateTime"/>.
+    /// Converts the provided <paramref name="source"/> to <see cref="ZonedDateTime"/>.
     /// </summary>
     /// <param name="source">Value to convert.</param>
     /// <returns><see cref="Start"/>.</returns>
@@ -603,7 +603,7 @@ public readonly struct ZonedDay : IEquatable<ZonedDay>, IComparable<ZonedDay>, I
     }
 
     /// <summary>
-    /// Coverts the provided <paramref name="source"/> to <see cref="DateTime"/>.
+    /// Converts the provided <paramref name="source"/> to <see cref="DateTime"/>.
     /// </summary>
     /// <param name="source">Value to convert.</param>
     /// <returns><see cref="ZonedDateTime.Value"/> of <see cref="Start"/>.</returns>

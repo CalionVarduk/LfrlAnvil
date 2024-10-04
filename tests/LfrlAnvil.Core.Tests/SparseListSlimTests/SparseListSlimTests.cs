@@ -143,6 +143,29 @@ public class SparseListSlimTests : TestsBase
     }
 
     [Fact]
+    public void AddDefault_ShouldAddItemWithDefaultValue()
+    {
+        var sut = SparseListSlim<string>.Create();
+        sut.Add( "x1" );
+        sut.Add( "x2" );
+
+        ref var result = ref sut.AddDefault( out var index );
+        result = "x3";
+
+        using ( new AssertionScope() )
+        {
+            index.Should().Be( 2 );
+            sut.Count.Should().Be( 3 );
+            sut.Capacity.Should().Be( 4 );
+            sut.IsEmpty.Should().BeFalse();
+            AssertFirst( sut, 0, "x1" );
+            AssertLast( sut, 2, "x3" );
+            AssertEnumerator( sut, (0, "x1"), (1, "x2"), (2, "x3") );
+            AssertSequenceEnumerator( sut, (0, "x1"), (1, "x2"), (2, "x3") );
+        }
+    }
+
+    [Fact]
     public void Add_ShouldAddItemsToEmptyListAtCorrectPositions_AfterRemoval()
     {
         var sut = SparseListSlim<string>.Create();

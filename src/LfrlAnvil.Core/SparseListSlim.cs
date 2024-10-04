@@ -28,18 +28,16 @@ namespace LfrlAnvil;
 /// <typeparam name="T">Element type.</typeparam>
 public struct SparseListSlim<T>
 {
-    private const int Null = int.MaxValue;
-
     private Entry[] _items;
-    private int _freeListHead;
-    private int _freeListTail;
-    private int _occupiedListHead;
-    private int _occupiedListTail;
+    private NullableIndex _freeListHead;
+    private NullableIndex _freeListTail;
+    private NullableIndex _occupiedListHead;
+    private NullableIndex _occupiedListTail;
 
     private SparseListSlim(int minCapacity)
     {
         _items = minCapacity > 0 ? new Entry[Buffers.GetCapacity( minCapacity )] : Array.Empty<Entry>();
-        _freeListHead = _freeListTail = _occupiedListHead = _occupiedListTail = Null;
+        _freeListHead = _freeListTail = _occupiedListHead = _occupiedListTail = NullableIndex.Null;
     }
 
     /// <summary>
@@ -65,12 +63,12 @@ public struct SparseListSlim<T>
     /// <summary>
     /// Gets the <see cref="Node"/> that contains the oldest element in this list.
     /// </summary>
-    public Node? First => _occupiedListHead == Null ? null : new Node( _items, _occupiedListHead );
+    public Node? First => _occupiedListHead.HasValue ? new Node( _items, _occupiedListHead.Value ) : null;
 
     /// <summary>
     /// Gets the <see cref="Node"/> that contains the newest element in this list.
     /// </summary>
-    public Node? Last => _occupiedListTail == Null ? null : new Node( _items, _occupiedListTail );
+    public Node? Last => _occupiedListTail.HasValue ? new Node( _items, _occupiedListTail.Value ) : null;
 
     /// <summary>
     /// Gets a reference to an element at the given index, or null reference, when element at the given index does not exist.
@@ -111,9 +109,20 @@ public struct SparseListSlim<T>
     public int Add(T item)
     {
         int result;
-        if ( _freeListTail == Null )
+        if ( _freeListTail.HasValue )
         {
-            Assume.Equals( _freeListHead, Null );
+            Assume.IsLessThan( Count, _items.Length );
+            Assume.True( _freeListHead.HasValue );
+
+            ++Count;
+            result = _freeListTail.Value;
+            ref var entry = ref PopFreeListTail();
+            entry.MakeOccupied( _occupiedListTail, NullableIndex.Null );
+            entry.Value = item;
+        }
+        else
+        {
+            Assume.False( _freeListHead.HasValue );
 
             result = Count;
             if ( Count == _items.Length )
@@ -129,21 +138,21 @@ public struct SparseListSlim<T>
             Assume.True( _items[result].IsUnused );
             _items[result] = new Entry( item, _occupiedListTail );
         }
-        else
-        {
-            Assume.IsLessThan( Count, _items.Length );
-            Assume.IsGreaterThanOrEqualTo( _freeListHead, 0 );
-            Assume.NotEquals( _freeListHead, Null );
-
-            ++Count;
-            result = _freeListTail;
-            ref var entry = ref PopFreeListTail();
-            entry.MakeOccupied( _occupiedListTail, Null );
-            entry.Value = item;
-        }
 
         SetOccupiedListTail( result );
         return result;
+    }
+
+    /// <summary>
+    /// Adds an element with default value to the tail of this list and returns its reference.
+    /// </summary>
+    /// <param name="index"><b>out</b> parameter that returns a zero-based index at which the added element exists.</param>
+    /// <returns>Reference to the added element.</returns>
+    public ref T? AddDefault(out int index)
+    {
+        index = Add( default! );
+        ref var entry = ref GetEntryRef( index );
+        return ref entry.Value!;
     }
 
     /// <summary>
@@ -202,7 +211,7 @@ public struct SparseListSlim<T>
             RemoveFromFreeList( index, ref entry );
 
         ++Count;
-        entry.MakeOccupied( _occupiedListTail, Null );
+        entry.MakeOccupied( _occupiedListTail, NullableIndex.Null );
 
         SetOccupiedListTail( index );
         return ref entry.Value!;
@@ -289,11 +298,11 @@ public struct SparseListSlim<T>
     /// </summary>
     public void Clear()
     {
-        if ( _occupiedListTail == Null && _freeListTail == Null )
+        if ( ! _occupiedListTail.HasValue && ! _freeListTail.HasValue )
             return;
 
         _items.AsSpan().Clear();
-        _occupiedListHead = _occupiedListTail = _freeListHead = _freeListTail = Null;
+        _occupiedListHead = _occupiedListTail = _freeListHead = _freeListTail = NullableIndex.Null;
         Count = 0;
     }
 
@@ -305,7 +314,7 @@ public struct SparseListSlim<T>
     {
         if ( IsEmpty && minCapacity <= 0 )
         {
-            _freeListHead = _freeListTail = Null;
+            _freeListHead = _freeListTail = NullableIndex.Null;
             _items = Array.Empty<Entry>();
             return;
         }
@@ -326,9 +335,9 @@ public struct SparseListSlim<T>
             return;
         }
 
-        if ( _freeListTail == Null )
+        if ( ! _freeListTail.HasValue )
         {
-            Assume.Equals( _freeListHead, Null );
+            Assume.False( _freeListHead.HasValue );
             _items = new Entry[capacity];
             prevItems.AsSpan( 0, Count ).CopyTo( _items );
             return;
@@ -368,13 +377,13 @@ public struct SparseListSlim<T>
     public ref struct Enumerator
     {
         private readonly ref Entry _first;
-        private int _current;
-        private int _next;
+        private NullableIndex _current;
+        private NullableIndex _next;
 
-        internal Enumerator(Entry[] items, int head)
+        internal Enumerator(Entry[] items, NullableIndex head)
         {
             _first = ref MemoryMarshal.GetArrayDataReference( items );
-            _current = Null;
+            _current = NullableIndex.Null;
             _next = head;
         }
 
@@ -386,7 +395,7 @@ public struct SparseListSlim<T>
             get
             {
                 ref var entry = ref GetEntryRef( _current );
-                return KeyValuePair.Create( _current, entry.Value );
+                return KeyValuePair.Create( _current.Value, entry.Value );
             }
         }
 
@@ -397,9 +406,9 @@ public struct SparseListSlim<T>
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
         public bool MoveNext()
         {
-            if ( _next == Null )
+            if ( ! _next.HasValue )
             {
-                _current = Null;
+                _current = NullableIndex.Null;
                 return false;
             }
 
@@ -411,9 +420,9 @@ public struct SparseListSlim<T>
 
         [Pure]
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        private ref Entry GetEntryRef(int index)
+        private ref Entry GetEntryRef(NullableIndex index)
         {
-            return ref Unsafe.Add( ref _first, index );
+            return ref Unsafe.Add( ref _first, index.Value );
         }
     }
 
@@ -539,7 +548,7 @@ public struct SparseListSlim<T>
             {
                 ref var entry = ref GetEntryRef();
                 var index = entry.Prev;
-                return index == Null ? null : new Node( _items, index );
+                return index.HasValue ? new Node( _items, index.Value ) : null;
             }
         }
 
@@ -552,7 +561,7 @@ public struct SparseListSlim<T>
             {
                 ref var entry = ref GetEntryRef();
                 var index = entry.Next;
-                return index == Null ? null : new Node( _items, index );
+                return index.HasValue ? new Node( _items, index.Value ) : null;
             }
         }
 
@@ -582,33 +591,43 @@ public struct SparseListSlim<T>
 
         private ulong _flags;
 
-        internal Entry(T value, int prev = Null)
+        internal Entry(T value, NullableIndex prev)
         {
             Value = value;
-            MakeOccupied( prev, Null );
+            MakeOccupied( prev, NullableIndex.Null );
         }
 
         internal T Value;
         internal bool IsUnused => _flags == 0;
         internal bool IsInFreeList => (_flags & TypeMask) == FreeListMarker;
         internal bool IsInOccupiedList => (_flags & TypeMask) == OccupiedListMarker;
-        internal int Prev => unchecked( ( int )(_flags >> 31) & int.MaxValue );
-        internal int Next => unchecked( ( int )_flags & int.MaxValue );
+        internal NullableIndex Prev => NullableIndex.CreateUnsafe( unchecked( ( int )(_flags >> 31) & NullableIndex.NullValue ) );
+        internal NullableIndex Next => NullableIndex.CreateUnsafe( unchecked( ( int )_flags & NullableIndex.NullValue ) );
 
-        [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        internal void MakeOccupied(int prev, int next)
+        [Pure]
+        public override string ToString()
         {
-            Assume.IsGreaterThanOrEqualTo( prev, 0 );
-            Assume.IsGreaterThanOrEqualTo( next, 0 );
-            _flags = unchecked( ( uint )next | (( ulong )prev << 31) | OccupiedListMarker );
+            return IsUnused
+                ? "(unused)"
+                : IsInFreeList
+                    ? $"(free) Prev: {Prev}, Next: {Next}"
+                    : $"Value: {Value}, Prev: {Prev}, Next: {Next}";
         }
 
         [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        internal void MakeFree(int prev, int next)
+        internal void MakeOccupied(NullableIndex prev, NullableIndex next)
         {
-            Assume.IsGreaterThanOrEqualTo( prev, 0 );
-            Assume.IsGreaterThanOrEqualTo( next, 0 );
-            _flags = unchecked( ( uint )next | (( ulong )prev << 31) | FreeListMarker );
+            Assume.IsGreaterThanOrEqualTo( prev.Value, 0 );
+            Assume.IsGreaterThanOrEqualTo( next.Value, 0 );
+            _flags = unchecked( ( uint )next.Value | (( ulong )prev.Value << 31) | OccupiedListMarker );
+        }
+
+        [MethodImpl( MethodImplOptions.AggressiveInlining )]
+        internal void MakeFree(NullableIndex prev, NullableIndex next)
+        {
+            Assume.IsGreaterThanOrEqualTo( prev.Value, 0 );
+            Assume.IsGreaterThanOrEqualTo( next.Value, 0 );
+            _flags = unchecked( ( uint )next.Value | (( ulong )prev.Value << 31) | FreeListMarker );
         }
     }
 
@@ -625,22 +644,22 @@ public struct SparseListSlim<T>
     private void Remove(int index, ref Entry entry)
     {
         RemoveFromOccupiedList( index, ref entry );
-        entry.MakeFree( _freeListTail, Null );
+        entry.MakeFree( _freeListTail, NullableIndex.Null );
         entry.Value = default!;
         --Count;
 
-        if ( _freeListTail == Null )
+        var i = NullableIndex.Create( index );
+        if ( _freeListTail.HasValue )
         {
-            Assume.Equals( _freeListHead, Null );
-            _freeListHead = _freeListTail = index;
+            Assume.True( _freeListHead.HasValue );
+            ref var tail = ref GetFreeListTail();
+            tail.MakeFree( tail.Prev, i );
+            _freeListTail = i;
         }
         else
         {
-            Assume.IsGreaterThanOrEqualTo( _freeListHead, 0 );
-            Assume.NotEquals( _freeListHead, Null );
-            ref var tail = ref GetFreeListTail();
-            tail.MakeFree( tail.Prev, index );
-            _freeListTail = index;
+            Assume.False( _freeListHead.HasValue );
+            _freeListHead = _freeListTail = i;
         }
     }
 
@@ -657,26 +676,26 @@ public struct SparseListSlim<T>
             return;
 
         --index;
-        if ( _freeListTail == Null )
+        if ( _freeListTail.HasValue )
+            tail = ref GetFreeListTail();
+        else
         {
-            Assume.Equals( _freeListHead, Null );
-            left.MakeFree( Null, Null );
+            Assume.False( _freeListHead.HasValue );
+            left.MakeFree( NullableIndex.Null, NullableIndex.Null );
             tail = ref left;
             left = ref Unsafe.Subtract( ref left, 1 );
-            _freeListHead = _freeListTail = index--;
+            _freeListHead = _freeListTail = NullableIndex.Create( index-- );
             if ( index < 0 || ! left.IsUnused )
                 return;
         }
-        else
-            tail = ref GetFreeListTail();
 
         do
         {
-            left.MakeFree( _freeListTail, Null );
-            tail.MakeFree( tail.Prev, index );
+            left.MakeFree( _freeListTail, NullableIndex.Null );
+            _freeListTail = NullableIndex.Create( index-- );
+            tail.MakeFree( tail.Prev, _freeListTail );
             tail = ref left;
             left = ref Unsafe.Subtract( ref left, 1 );
-            _freeListTail = index--;
         }
         while ( index >= 0 && left.IsUnused );
     }
@@ -684,7 +703,7 @@ public struct SparseListSlim<T>
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private void RebuildFreeList(int endIndex)
     {
-        _freeListHead = _freeListTail = Null;
+        _freeListHead = _freeListTail = NullableIndex.Null;
         var remaining = endIndex - Count;
         if ( remaining <= 0 )
             return;
@@ -700,8 +719,8 @@ public struct SparseListSlim<T>
             ++index;
         }
 
-        entry.MakeFree( Null, Null );
-        _freeListHead = _freeListTail = index;
+        entry.MakeFree( NullableIndex.Null, NullableIndex.Null );
+        _freeListHead = _freeListTail = NullableIndex.Create( index );
         --remaining;
 
         while ( remaining > 0 )
@@ -713,10 +732,10 @@ public struct SparseListSlim<T>
             if ( ! entry.IsInFreeList )
                 continue;
 
-            entry.MakeFree( Null, _freeListHead );
-            ref var head = ref Unsafe.Add( ref first, _freeListHead );
-            head.MakeFree( index, head.Next );
-            _freeListHead = index;
+            entry.MakeFree( NullableIndex.Null, _freeListHead );
+            ref var head = ref Unsafe.Add( ref first, _freeListHead.Value );
+            _freeListHead = NullableIndex.Create( index );
+            head.MakeFree( _freeListHead, head.Next );
             --remaining;
         }
     }
@@ -726,7 +745,7 @@ public struct SparseListSlim<T>
     private int FindMaxOccupiedIndex()
     {
         var result = -1;
-        if ( _occupiedListHead == Null )
+        if ( ! _occupiedListHead.HasValue )
             return result;
 
         var next = _occupiedListHead;
@@ -734,12 +753,12 @@ public struct SparseListSlim<T>
         do
         {
             if ( result < next )
-                result = next;
+                result = next.Value;
 
-            ref var entry = ref Unsafe.Add( ref first, next );
+            ref var entry = ref Unsafe.Add( ref first, next.Value );
             next = entry.Next;
         }
-        while ( next != Null );
+        while ( next.HasValue );
 
         return result;
     }
@@ -747,75 +766,74 @@ public struct SparseListSlim<T>
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private void SetOccupiedListTail(int index)
     {
-        if ( _occupiedListTail == Null )
+        if ( ! _occupiedListTail.HasValue )
         {
             Assume.Equals( Count, 1 );
-            Assume.Equals( _occupiedListHead, Null );
-            _occupiedListHead = _occupiedListTail = index;
+            Assume.False( _occupiedListHead.HasValue );
+            _occupiedListHead = _occupiedListTail = NullableIndex.Create( index );
             return;
         }
 
         Assume.IsGreaterThan( Count, 1 );
-        Assume.IsGreaterThanOrEqualTo( _occupiedListHead, 0 );
-        Assume.NotEquals( _occupiedListHead, Null );
+        Assume.True( _occupiedListHead.HasValue );
 
-        ref var tail = ref GetEntryRef( _occupiedListTail );
+        ref var tail = ref GetEntryRef( _occupiedListTail.Value );
         Assume.True( tail.IsInOccupiedList );
-        Assume.Equals( tail.Next, Null );
-        tail.MakeOccupied( tail.Prev, index );
-        _occupiedListTail = index;
+        Assume.Equals( tail.Next, NullableIndex.Null );
+        _occupiedListTail = NullableIndex.Create( index );
+        tail.MakeOccupied( tail.Prev, _occupiedListTail );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private void RemoveFromOccupiedList(int index, ref Entry entry)
     {
         Assume.True( entry.IsInOccupiedList );
-        Assume.NotEquals( _occupiedListHead, Null );
-        Assume.NotEquals( _occupiedListTail, Null );
+        Assume.True( _occupiedListHead.HasValue );
+        Assume.True( _occupiedListTail.HasValue );
 
         var prev = entry.Prev;
         var next = entry.Next;
 
-        if ( index == _occupiedListHead )
+        if ( index == _occupiedListHead.Value )
         {
-            if ( index == _occupiedListTail )
+            if ( index == _occupiedListTail.Value )
             {
                 Assume.Equals( Count, 1 );
-                Assume.Equals( prev, Null );
-                Assume.Equals( next, Null );
-                _occupiedListHead = _occupiedListTail = Null;
+                Assume.False( prev.HasValue );
+                Assume.False( next.HasValue );
+                _occupiedListHead = _occupiedListTail = NullableIndex.Null;
             }
             else
             {
                 Assume.IsGreaterThan( Count, 1 );
-                ref var nextEntry = ref GetEntryRef( next );
+                ref var nextEntry = ref GetEntryRef( next.Value );
                 Assume.True( nextEntry.IsInOccupiedList );
-                Assume.Equals( nextEntry.Prev, index );
-                nextEntry.MakeOccupied( Null, nextEntry.Next );
+                Assume.Equals( nextEntry.Prev.Value, index );
+                nextEntry.MakeOccupied( NullableIndex.Null, nextEntry.Next );
                 _occupiedListHead = next;
             }
         }
         else
         {
             Assume.IsGreaterThan( Count, 1 );
-            if ( index == _occupiedListTail )
+            if ( index == _occupiedListTail.Value )
             {
-                ref var prevEntry = ref GetEntryRef( prev );
+                ref var prevEntry = ref GetEntryRef( prev.Value );
                 Assume.True( prevEntry.IsInOccupiedList );
-                Assume.Equals( prevEntry.Next, index );
-                prevEntry.MakeOccupied( prevEntry.Prev, Null );
+                Assume.Equals( prevEntry.Next.Value, index );
+                prevEntry.MakeOccupied( prevEntry.Prev, NullableIndex.Null );
                 _occupiedListTail = prev;
             }
             else
             {
-                ref var prevEntry = ref GetEntryRef( prev );
+                ref var prevEntry = ref GetEntryRef( prev.Value );
                 Assume.True( prevEntry.IsInOccupiedList );
-                Assume.Equals( prevEntry.Next, index );
+                Assume.Equals( prevEntry.Next.Value, index );
                 prevEntry.MakeOccupied( prevEntry.Prev, next );
 
-                ref var nextEntry = ref GetEntryRef( next );
+                ref var nextEntry = ref GetEntryRef( next.Value );
                 Assume.True( nextEntry.IsInOccupiedList );
-                Assume.Equals( nextEntry.Prev, index );
+                Assume.Equals( nextEntry.Prev.Value, index );
                 nextEntry.MakeOccupied( prev, nextEntry.Next );
             }
         }
@@ -825,9 +843,9 @@ public struct SparseListSlim<T>
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private ref Entry GetFreeListTail()
     {
-        ref var entry = ref GetEntryRef( _freeListTail );
+        ref var entry = ref GetEntryRef( _freeListTail.Value );
         Assume.True( entry.IsInFreeList );
-        Assume.Equals( entry.Next, Null );
+        Assume.False( entry.Next.HasValue );
         return ref entry;
     }
 
@@ -837,19 +855,19 @@ public struct SparseListSlim<T>
         ref var tail = ref GetFreeListTail();
         var prev = tail.Prev;
 
-        if ( prev == Null )
+        if ( prev.HasValue )
         {
-            Assume.Equals( _freeListHead, _freeListTail );
-            _freeListTail = _freeListHead = Null;
+            Assume.NotEquals( _freeListHead, _freeListTail );
+            ref var entry = ref GetEntryRef( prev.Value );
+            Assume.True( entry.IsInFreeList );
+            Assume.Equals( entry.Next, _freeListTail );
+            entry.MakeFree( entry.Prev, NullableIndex.Null );
+            _freeListTail = prev;
         }
         else
         {
-            Assume.NotEquals( _freeListHead, _freeListTail );
-            ref var entry = ref GetEntryRef( prev );
-            Assume.True( entry.IsInFreeList );
-            Assume.Equals( entry.Next, _freeListTail );
-            entry.MakeFree( entry.Prev, Null );
-            _freeListTail = prev;
+            Assume.Equals( _freeListHead, _freeListTail );
+            _freeListTail = _freeListHead = NullableIndex.Null;
         }
 
         return ref tail;
@@ -859,49 +877,49 @@ public struct SparseListSlim<T>
     private void RemoveFromFreeList(int index, ref Entry entry)
     {
         Assume.True( entry.IsInFreeList );
-        Assume.NotEquals( _freeListHead, Null );
-        Assume.NotEquals( _freeListTail, Null );
+        Assume.True( _freeListHead.HasValue );
+        Assume.True( _freeListTail.HasValue );
 
         var prev = entry.Prev;
         var next = entry.Next;
 
-        if ( index == _freeListHead )
+        if ( index == _freeListHead.Value )
         {
-            if ( index == _freeListTail )
+            if ( index == _freeListTail.Value )
             {
-                Assume.Equals( prev, Null );
-                Assume.Equals( next, Null );
-                _freeListHead = _freeListTail = Null;
+                Assume.False( prev.HasValue );
+                Assume.False( next.HasValue );
+                _freeListHead = _freeListTail = NullableIndex.Null;
             }
             else
             {
-                ref var nextEntry = ref GetEntryRef( next );
+                ref var nextEntry = ref GetEntryRef( next.Value );
                 Assume.True( nextEntry.IsInFreeList );
-                Assume.Equals( nextEntry.Prev, index );
-                nextEntry.MakeFree( Null, nextEntry.Next );
+                Assume.Equals( nextEntry.Prev.Value, index );
+                nextEntry.MakeFree( NullableIndex.Null, nextEntry.Next );
                 _freeListHead = next;
             }
         }
         else
         {
-            if ( index == _freeListTail )
+            if ( index == _freeListTail.Value )
             {
-                ref var prevEntry = ref GetEntryRef( prev );
+                ref var prevEntry = ref GetEntryRef( prev.Value );
                 Assume.True( prevEntry.IsInFreeList );
-                Assume.Equals( prevEntry.Next, index );
-                prevEntry.MakeFree( prevEntry.Prev, Null );
+                Assume.Equals( prevEntry.Next.Value, index );
+                prevEntry.MakeFree( prevEntry.Prev, NullableIndex.Null );
                 _freeListTail = prev;
             }
             else
             {
-                ref var prevEntry = ref GetEntryRef( prev );
+                ref var prevEntry = ref GetEntryRef( prev.Value );
                 Assume.True( prevEntry.IsInFreeList );
-                Assume.Equals( prevEntry.Next, index );
+                Assume.Equals( prevEntry.Next.Value, index );
                 prevEntry.MakeFree( prevEntry.Prev, next );
 
-                ref var nextEntry = ref GetEntryRef( next );
+                ref var nextEntry = ref GetEntryRef( next.Value );
                 Assume.True( nextEntry.IsInFreeList );
-                Assume.Equals( nextEntry.Prev, index );
+                Assume.Equals( nextEntry.Prev.Value, index );
                 nextEntry.MakeFree( prev, nextEntry.Next );
             }
         }
