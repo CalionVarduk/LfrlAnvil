@@ -246,13 +246,13 @@ public class SequentialHashSet<T> : ISet<T>, IReadOnlySet<T>
     }
 
     /// <summary>
-    /// Creates a new <see cref="SparseListSlimNodeEnumerator{T}"/> instance for this hash set.
+    /// Creates a new <see cref="LinkedListSlimNodeEnumerator{T}"/> instance for this hash set.
     /// </summary>
-    /// <returns>New <see cref="SparseListSlimNodeEnumerator{T}"/> instance.</returns>
+    /// <returns>New <see cref="LinkedListSlimNodeEnumerator{T}"/> instance.</returns>
     [Pure]
-    public SparseListSlimNodeEnumerator<T> GetEnumerator()
+    public LinkedListSlimNodeEnumerator<T> GetEnumerator()
     {
-        return new SparseListSlimNodeEnumerator<T>( _order );
+        return new LinkedListSlimNodeEnumerator<T>( _order.First );
     }
 
     [Pure]

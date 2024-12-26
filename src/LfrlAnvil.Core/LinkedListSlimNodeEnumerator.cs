@@ -19,22 +19,22 @@ using System.Runtime.CompilerServices;
 namespace LfrlAnvil;
 
 /// <summary>
-/// Lightweight enumerator implementation for <see cref="SparseListSlim{T}"/>
-/// that internally uses <see cref="SparseListSlim{T}.Node"/> instances to enumerate the list.
+/// Lightweight enumerator implementation for slim linked lists
+/// that internally uses <see cref="LinkedListSlimNode{T}"/> instances to enumerate the list.
 /// </summary>
-public struct SparseListSlimNodeEnumerator<T> : IEnumerator<T>
+public struct LinkedListSlimNodeEnumerator<T> : IEnumerator<T>
 {
-    private readonly SparseListSlim<T>.Node? _head;
-    private SparseListSlim<T>.Node? _current;
-    private SparseListSlim<T>.Node? _next;
+    private readonly LinkedListSlimNode<T>? _head;
+    private LinkedListSlimNode<T>? _current;
+    private LinkedListSlimNode<T>? _next;
 
     /// <summary>
-    /// Creates a new <see cref="SparseListSlimNodeEnumerator{T}"/> instance.
+    /// Creates a new <see cref="LinkedListSlimNodeEnumerator{T}"/> instance.
     /// </summary>
-    /// <param name="items">Source <see cref="SparseListSlim{T}"/> instance to enumerate.</param>
-    public SparseListSlimNodeEnumerator(SparseListSlim<T> items)
+    /// <param name="head">Head <see cref="LinkedListSlimNode{T}"/> instance to start enumerating from.</param>
+    public LinkedListSlimNodeEnumerator(LinkedListSlimNode<T>? head)
     {
-        _head = items.First;
+        _head = head;
         _current = null;
         _next = _head;
     }

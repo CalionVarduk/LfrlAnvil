@@ -28,7 +28,7 @@ namespace LfrlAnvil;
 /// <typeparam name="T">Element type.</typeparam>
 public struct SparseListSlim<T>
 {
-    private Entry[] _items;
+    private LinkedEntry<T>[] _items;
     private NullableIndex _freeListHead;
     private NullableIndex _freeListTail;
     private NullableIndex _occupiedListHead;
@@ -36,7 +36,7 @@ public struct SparseListSlim<T>
 
     private SparseListSlim(int minCapacity)
     {
-        _items = minCapacity > 0 ? new Entry[Buffers.GetCapacity( minCapacity )] : Array.Empty<Entry>();
+        _items = minCapacity > 0 ? new LinkedEntry<T>[Buffers.GetCapacity( minCapacity )] : Array.Empty<LinkedEntry<T>>();
         _freeListHead = _freeListTail = _occupiedListHead = _occupiedListTail = NullableIndex.Null;
     }
 
@@ -61,14 +61,14 @@ public struct SparseListSlim<T>
     public Sequence Sequential => new Sequence( _items, Count );
 
     /// <summary>
-    /// Gets the <see cref="Node"/> that contains the oldest element in this list.
+    /// Gets the <see cref="LinkedListSlimNode{T}"/> that contains the oldest element in this list.
     /// </summary>
-    public Node? First => _occupiedListHead.HasValue ? new Node( _items, _occupiedListHead.Value ) : null;
+    public LinkedListSlimNode<T>? First => _occupiedListHead.HasValue ? new LinkedListSlimNode<T>( _items, _occupiedListHead.Value ) : null;
 
     /// <summary>
-    /// Gets the <see cref="Node"/> that contains the newest element in this list.
+    /// Gets the <see cref="LinkedListSlimNode{T}"/> that contains the newest element in this list.
     /// </summary>
-    public Node? Last => _occupiedListTail.HasValue ? new Node( _items, _occupiedListTail.Value ) : null;
+    public LinkedListSlimNode<T>? Last => _occupiedListTail.HasValue ? new LinkedListSlimNode<T>( _items, _occupiedListTail.Value ) : null;
 
     /// <summary>
     /// Gets a reference to an element at the given index, or null reference, when element at the given index does not exist.
@@ -129,14 +129,16 @@ public struct SparseListSlim<T>
             {
                 Count = checked( Count + 1 );
                 var prevItems = _items;
-                _items = new Entry[Buffers.GetCapacity( Count )];
+                _items = new LinkedEntry<T>[Buffers.GetCapacity( Count )];
                 prevItems.AsSpan().CopyTo( _items );
             }
             else
                 ++Count;
 
             Assume.True( _items[result].IsUnused );
-            _items[result] = new Entry( item, _occupiedListTail );
+            ref var entry = ref GetEntryRef( result );
+            entry.MakeOccupied( _occupiedListTail, NullableIndex.Null );
+            entry.Value = item;
         }
 
         SetOccupiedListTail( result );
@@ -193,7 +195,7 @@ public struct SparseListSlim<T>
         {
             var capacity = Buffers.GetCapacity( checked( index + 1 ) );
             var prevItems = _items;
-            _items = new Entry[capacity];
+            _items = new LinkedEntry<T>[capacity];
             prevItems.AsSpan().CopyTo( _items );
         }
 
@@ -277,20 +279,21 @@ public struct SparseListSlim<T>
     }
 
     /// <summary>
-    /// Attempts to get a <see cref="Node"/> that contains an item, that exists at the specified position.
+    /// Attempts to get a <see cref="LinkedListSlimNode{T}"/> that contains an item, that exists at the specified position.
     /// </summary>
-    /// <param name="index">Zero-based index of an item to get a <see cref="Node"/> for.</param>
+    /// <param name="index">Zero-based index of an item to get a <see cref="LinkedListSlimNode{T}"/> for.</param>
     /// <returns>
-    /// <see cref="Node"/> instance that contains an item at the specified position, or <b>null</b>, when an item does not exist.
+    /// <see cref="LinkedListSlimNode{T}"/> instance that contains an item at the specified position,
+    /// or <b>null</b>, when an item does not exist.
     /// </returns>
     [Pure]
-    public Node? GetNode(int index)
+    public LinkedListSlimNode<T>? GetNode(int index)
     {
         if ( index < 0 || index >= _items.Length )
             return null;
 
         ref var entry = ref GetEntryRef( index );
-        return entry.IsInOccupiedList ? new Node( _items, index ) : null;
+        return entry.IsInOccupiedList ? new LinkedListSlimNode<T>( _items, index ) : null;
     }
 
     /// <summary>
@@ -312,118 +315,20 @@ public struct SparseListSlim<T>
     /// <param name="minCapacity">Minimum desired <see cref="Capacity"/> of this list. Equal to <b>0</b> by default.</param>
     public void ResetCapacity(int minCapacity = 0)
     {
-        if ( IsEmpty && minCapacity <= 0 )
-        {
-            _freeListHead = _freeListTail = NullableIndex.Null;
-            _items = Array.Empty<Entry>();
-            return;
-        }
-
-        var count = Count;
-        if ( minCapacity < count )
-            minCapacity = count;
-
-        var capacity = Buffers.GetCapacity( minCapacity );
-        if ( capacity == _items.Length )
-            return;
-
-        var prevItems = _items;
-        if ( capacity > _items.Length )
-        {
-            _items = new Entry[capacity];
-            prevItems.AsSpan().CopyTo( _items );
-            return;
-        }
-
-        if ( ! _freeListTail.HasValue )
-        {
-            Assume.False( _freeListHead.HasValue );
-            _items = new Entry[capacity];
-            prevItems.AsSpan( 0, Count ).CopyTo( _items );
-            return;
-        }
-
-        var endIndex = FindMaxOccupiedIndex() + 1;
-        if ( endIndex > minCapacity )
-        {
-            capacity = Buffers.GetCapacity( endIndex );
-            if ( capacity == _items.Length )
-                return;
-        }
-
-        Assume.IsGreaterThanOrEqualTo( endIndex, Count );
-        Assume.IsLessThan( capacity, _items.Length );
-        _items = new Entry[capacity];
-        prevItems.AsSpan( 0, endIndex ).CopyTo( _items );
-        RebuildFreeList( endIndex );
+        Buffers.ResetLinkedListCapacity( ref _items, ref _freeListHead, ref _freeListTail, _occupiedListHead, Count, minCapacity );
     }
 
     /// <summary>
-    /// Creates a new <see cref="Enumerator"/> instance for this list.
+    /// Creates a new <see cref="LinkedListSlimEnumerator{T}"/> instance for this list.
     /// </summary>
-    /// <returns>New <see cref="Enumerator"/> instance.</returns>
+    /// <returns>New <see cref="LinkedListSlimEnumerator{T}"/> instance.</returns>
     /// <remarks>
     /// This allows to enumerate over <see cref="SparseListSlim{T}"/> instances in the order of item addition.
     /// See <see cref="Sequential"/> for the ability to enumerate in index order instead.
     /// </remarks>
-    public Enumerator GetEnumerator()
+    public LinkedListSlimEnumerator<T> GetEnumerator()
     {
-        return new Enumerator( _items, _occupiedListHead );
-    }
-
-    /// <summary>
-    /// Lightweight enumerator implementation for <see cref="SparseListSlim{T}"/>.
-    /// </summary>
-    public ref struct Enumerator
-    {
-        private readonly ref Entry _first;
-        private NullableIndex _current;
-        private NullableIndex _next;
-
-        internal Enumerator(Entry[] items, NullableIndex head)
-        {
-            _first = ref MemoryMarshal.GetArrayDataReference( items );
-            _current = NullableIndex.Null;
-            _next = head;
-        }
-
-        /// <summary>
-        /// Gets an element in the view, along with its index, at the current position of the enumerator.
-        /// </summary>
-        public KeyValuePair<int, T> Current
-        {
-            get
-            {
-                ref var entry = ref GetEntryRef( _current );
-                return KeyValuePair.Create( _current.Value, entry.Value );
-            }
-        }
-
-        /// <summary>
-        /// Advances the enumerator to the next element of the collection.
-        /// </summary>
-        /// <returns><b>true</b> if the enumerator was successfully advanced to the next element, otherwise <b>false</b>.</returns>
-        [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        public bool MoveNext()
-        {
-            if ( ! _next.HasValue )
-            {
-                _current = NullableIndex.Null;
-                return false;
-            }
-
-            ref var entry = ref GetEntryRef( _next );
-            _current = _next;
-            _next = entry.Next;
-            return true;
-        }
-
-        [Pure]
-        [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        private ref Entry GetEntryRef(NullableIndex index)
-        {
-            return ref Unsafe.Add( ref _first, index.Value );
-        }
+        return new LinkedListSlimEnumerator<T>( _items, _occupiedListHead );
     }
 
     /// <summary>
@@ -432,10 +337,10 @@ public struct SparseListSlim<T>
     /// </summary>
     public readonly ref struct Sequence
     {
-        private readonly ref Entry _first;
+        private readonly ref LinkedEntry<T> _first;
         private readonly int _count;
 
-        internal Sequence(Entry[] items, int count)
+        internal Sequence(LinkedEntry<T>[] items, int count)
         {
             _first = ref MemoryMarshal.GetArrayDataReference( items );
             _count = count;
@@ -455,7 +360,7 @@ public struct SparseListSlim<T>
         /// </summary>
         public ref struct Enumerator
         {
-            private readonly ref Entry _first;
+            private readonly ref LinkedEntry<T> _first;
             private int _remaining;
             private int _current;
 
@@ -502,138 +407,16 @@ public struct SparseListSlim<T>
 
             [Pure]
             [MethodImpl( MethodImplOptions.AggressiveInlining )]
-            private ref Entry GetEntryRef(int index)
+            private ref LinkedEntry<T> GetEntryRef(int index)
             {
                 return ref Unsafe.Add( ref _first, index );
             }
         }
     }
 
-    /// <summary>
-    /// Represents a single element node that belongs to a <see cref="SparseListSlim{T}"/> instance.
-    /// </summary>
-    public readonly struct Node
-    {
-        private readonly Entry[] _items;
-
-        internal Node(Entry[] items, int index)
-        {
-            _items = items;
-            Index = index;
-        }
-
-        /// <summary>
-        /// Specifies the zero-based index at which this node can be found in its parent list.
-        /// </summary>
-        public int Index { get; }
-
-        /// <summary>
-        /// Gets a reference to this node's element.
-        /// </summary>
-        public ref T Value
-        {
-            get
-            {
-                ref var entry = ref GetEntryRef();
-                return ref entry.Value;
-            }
-        }
-
-        /// <summary>
-        /// Gets a predecessor node or null, if this node is the first node in its parent list.
-        /// </summary>
-        public Node? Prev
-        {
-            get
-            {
-                ref var entry = ref GetEntryRef();
-                var index = entry.Prev;
-                return index.HasValue ? new Node( _items, index.Value ) : null;
-            }
-        }
-
-        /// <summary>
-        /// Gets a successor node or null, if this node is the last node in its parent list.
-        /// </summary>
-        public Node? Next
-        {
-            get
-            {
-                ref var entry = ref GetEntryRef();
-                var index = entry.Next;
-                return index.HasValue ? new Node( _items, index.Value ) : null;
-            }
-        }
-
-        /// <inheritdoc />
-        [Pure]
-        public override string ToString()
-        {
-            return $"[{Index}]: {Value}";
-        }
-
-        [Pure]
-        [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        private ref Entry GetEntryRef()
-        {
-            ref var first = ref MemoryMarshal.GetArrayDataReference( _items );
-            ref var entry = ref Unsafe.Add( ref first, Index );
-            Assume.True( entry.IsInOccupiedList );
-            return ref entry;
-        }
-    }
-
-    internal struct Entry
-    {
-        private const ulong TypeMask = 3UL << 62;
-        private const ulong FreeListMarker = 2UL << 62;
-        private const ulong OccupiedListMarker = 1UL << 62;
-
-        private ulong _flags;
-
-        internal Entry(T value, NullableIndex prev)
-        {
-            Value = value;
-            MakeOccupied( prev, NullableIndex.Null );
-        }
-
-        internal T Value;
-        internal bool IsUnused => _flags == 0;
-        internal bool IsInFreeList => (_flags & TypeMask) == FreeListMarker;
-        internal bool IsInOccupiedList => (_flags & TypeMask) == OccupiedListMarker;
-        internal NullableIndex Prev => NullableIndex.CreateUnsafe( unchecked( ( int )(_flags >> 31) & NullableIndex.NullValue ) );
-        internal NullableIndex Next => NullableIndex.CreateUnsafe( unchecked( ( int )_flags & NullableIndex.NullValue ) );
-
-        [Pure]
-        public override string ToString()
-        {
-            return IsUnused
-                ? "(unused)"
-                : IsInFreeList
-                    ? $"(free) Prev: {Prev}, Next: {Next}"
-                    : $"Value: {Value}, Prev: {Prev}, Next: {Next}";
-        }
-
-        [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        internal void MakeOccupied(NullableIndex prev, NullableIndex next)
-        {
-            Assume.IsGreaterThanOrEqualTo( prev.Value, 0 );
-            Assume.IsGreaterThanOrEqualTo( next.Value, 0 );
-            _flags = unchecked( ( uint )next.Value | (( ulong )prev.Value << 31) | OccupiedListMarker );
-        }
-
-        [MethodImpl( MethodImplOptions.AggressiveInlining )]
-        internal void MakeFree(NullableIndex prev, NullableIndex next)
-        {
-            Assume.IsGreaterThanOrEqualTo( prev.Value, 0 );
-            Assume.IsGreaterThanOrEqualTo( next.Value, 0 );
-            _flags = unchecked( ( uint )next.Value | (( ulong )prev.Value << 31) | FreeListMarker );
-        }
-    }
-
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private ref Entry GetEntryRef(int index)
+    private ref LinkedEntry<T> GetEntryRef(int index)
     {
         Assume.IsInRange( index, 0, _items.Length - 1 );
         ref var first = ref MemoryMarshal.GetArrayDataReference( _items );
@@ -641,7 +424,7 @@ public struct SparseListSlim<T>
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private void Remove(int index, ref Entry entry)
+    private void Remove(int index, ref LinkedEntry<T> entry)
     {
         RemoveFromOccupiedList( index, ref entry );
         entry.MakeFree( _freeListTail, NullableIndex.Null );
@@ -664,7 +447,7 @@ public struct SparseListSlim<T>
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private void MovePrecedingUnusedEntriesToFreeList(int index, ref Entry entry)
+    private void MovePrecedingUnusedEntriesToFreeList(int index, ref LinkedEntry<T> entry)
     {
         Assume.True( entry.IsUnused );
         if ( index <= 0 )
@@ -701,69 +484,6 @@ public struct SparseListSlim<T>
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private void RebuildFreeList(int endIndex)
-    {
-        _freeListHead = _freeListTail = NullableIndex.Null;
-        var remaining = endIndex - Count;
-        if ( remaining <= 0 )
-            return;
-
-        var index = 0;
-        ref var first = ref MemoryMarshal.GetArrayDataReference( _items );
-        ref var entry = ref first;
-
-        while ( ! entry.IsInFreeList )
-        {
-            Assume.IsLessThan( index, endIndex );
-            entry = ref Unsafe.Add( ref entry, 1 );
-            ++index;
-        }
-
-        entry.MakeFree( NullableIndex.Null, NullableIndex.Null );
-        _freeListHead = _freeListTail = NullableIndex.Create( index );
-        --remaining;
-
-        while ( remaining > 0 )
-        {
-            Assume.IsLessThan( index, endIndex );
-            entry = ref Unsafe.Add( ref entry, 1 );
-            ++index;
-
-            if ( ! entry.IsInFreeList )
-                continue;
-
-            entry.MakeFree( NullableIndex.Null, _freeListHead );
-            ref var head = ref Unsafe.Add( ref first, _freeListHead.Value );
-            _freeListHead = NullableIndex.Create( index );
-            head.MakeFree( _freeListHead, head.Next );
-            --remaining;
-        }
-    }
-
-    [Pure]
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private int FindMaxOccupiedIndex()
-    {
-        var result = -1;
-        if ( ! _occupiedListHead.HasValue )
-            return result;
-
-        var next = _occupiedListHead;
-        ref var first = ref MemoryMarshal.GetArrayDataReference( _items );
-        do
-        {
-            if ( result < next )
-                result = next.Value;
-
-            ref var entry = ref Unsafe.Add( ref first, next.Value );
-            next = entry.Next;
-        }
-        while ( next.HasValue );
-
-        return result;
-    }
-
-    [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private void SetOccupiedListTail(int index)
     {
         if ( ! _occupiedListTail.HasValue )
@@ -785,7 +505,7 @@ public struct SparseListSlim<T>
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private void RemoveFromOccupiedList(int index, ref Entry entry)
+    private void RemoveFromOccupiedList(int index, ref LinkedEntry<T> entry)
     {
         Assume.True( entry.IsInOccupiedList );
         Assume.True( _occupiedListHead.HasValue );
@@ -841,7 +561,7 @@ public struct SparseListSlim<T>
 
     [Pure]
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private ref Entry GetFreeListTail()
+    private ref LinkedEntry<T> GetFreeListTail()
     {
         ref var entry = ref GetEntryRef( _freeListTail.Value );
         Assume.True( entry.IsInFreeList );
@@ -850,7 +570,7 @@ public struct SparseListSlim<T>
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private ref Entry PopFreeListTail()
+    private ref LinkedEntry<T> PopFreeListTail()
     {
         ref var tail = ref GetFreeListTail();
         var prev = tail.Prev;
@@ -874,7 +594,7 @@ public struct SparseListSlim<T>
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
-    private void RemoveFromFreeList(int index, ref Entry entry)
+    private void RemoveFromFreeList(int index, ref LinkedEntry<T> entry)
     {
         Assume.True( entry.IsInFreeList );
         Assume.True( _freeListHead.HasValue );

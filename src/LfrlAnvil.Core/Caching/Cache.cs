@@ -215,13 +215,13 @@ public sealed class Cache<TKey, TValue> : ICache<TKey, TValue>
     }
 
     /// <summary>
-    /// Creates a new <see cref="SparseListSlimNodeEnumerator{T}"/> instance for this cache.
+    /// Creates a new <see cref="LinkedListSlimNodeEnumerator{T}"/> instance for this cache.
     /// </summary>
-    /// <returns>New <see cref="SparseListSlimNodeEnumerator{T}"/> instance.</returns>
+    /// <returns>New <see cref="LinkedListSlimNodeEnumerator{T}"/> instance.</returns>
     [Pure]
-    public SparseListSlimNodeEnumerator<KeyValuePair<TKey, TValue>> GetEnumerator()
+    public LinkedListSlimNodeEnumerator<KeyValuePair<TKey, TValue>> GetEnumerator()
     {
-        return new SparseListSlimNodeEnumerator<KeyValuePair<TKey, TValue>>( _order );
+        return new LinkedListSlimNodeEnumerator<KeyValuePair<TKey, TValue>>( _order.First );
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]

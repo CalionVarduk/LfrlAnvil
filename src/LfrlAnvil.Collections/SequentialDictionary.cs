@@ -174,13 +174,13 @@ public class SequentialDictionary<TKey, TValue> : IDictionary<TKey, TValue>, IRe
     }
 
     /// <summary>
-    /// Creates a new <see cref="SparseListSlimNodeEnumerator{T}"/> instance for this dictionary.
+    /// Creates a new <see cref="LinkedListSlimNodeEnumerator{T}"/> instance for this dictionary.
     /// </summary>
-    /// <returns>New <see cref="SparseListSlimNodeEnumerator{T}"/> instance.</returns>
+    /// <returns>New <see cref="LinkedListSlimNodeEnumerator{T}"/> instance.</returns>
     [Pure]
-    public SparseListSlimNodeEnumerator<KeyValuePair<TKey, TValue>> GetEnumerator()
+    public LinkedListSlimNodeEnumerator<KeyValuePair<TKey, TValue>> GetEnumerator()
     {
-        return new SparseListSlimNodeEnumerator<KeyValuePair<TKey, TValue>>( _order );
+        return new LinkedListSlimNodeEnumerator<KeyValuePair<TKey, TValue>>( _order.First );
     }
 
     [Pure]

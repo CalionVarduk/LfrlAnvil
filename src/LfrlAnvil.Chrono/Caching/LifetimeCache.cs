@@ -282,11 +282,11 @@ public sealed class LifetimeCache<TKey, TValue> : ILifetimeCache<TKey, TValue>
     /// </summary>
     public struct Enumerator : IEnumerator<KeyValuePair<TKey, TValue>>
     {
-        private SparseListSlimNodeEnumerator<Entry> _internal;
+        private LinkedListSlimNodeEnumerator<Entry> _internal;
 
         internal Enumerator(SparseListSlim<Entry> items)
         {
-            _internal = new SparseListSlimNodeEnumerator<Entry>( items );
+            _internal = new LinkedListSlimNodeEnumerator<Entry>( items.First );
         }
 
         /// <inheritdoc />
