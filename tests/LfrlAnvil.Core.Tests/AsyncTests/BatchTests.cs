@@ -700,6 +700,7 @@ public class BatchTests : TestsBase
         sut.AddRange( new[] { "e1", "e2", "e3", "e4", "e5" }.AsSpan() );
         await taskSource.Task;
         sut.OnProcessAsyncCallback = null;
+        await Task.Delay( 15 );
         await sut.DisposeAsync();
 
         using ( new AssertionScope() )
