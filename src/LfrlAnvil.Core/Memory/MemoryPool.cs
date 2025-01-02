@@ -49,10 +49,10 @@ public sealed class MemoryPool<T>
         {
             get
             {
-                if ( _pool is null || ! _pool._tailNode.HasValue )
+                if ( _pool is null || ! _pool._activeListTail.HasValue )
                     return 0;
 
-                ref var tail = ref _pool.GetNodeRef( _pool._tailNode.Value );
+                ref var tail = ref _pool.GetNodeRef( _pool._activeListTail.Value );
                 return tail.SegmentIndex + 1;
             }
         }
@@ -168,7 +168,7 @@ public sealed class MemoryPool<T>
                 {
                     _pool = pool;
                     _nextInactiveTailSegmentIndex = 0;
-                    _nextNode = pool._tailNode;
+                    _nextNode = pool._activeListTail;
                     _readingNodes = true;
                 }
 
@@ -222,10 +222,10 @@ public sealed class MemoryPool<T>
                 private bool MoveActiveTailSegmentEnd()
                 {
                     Assume.IsNotNull( _pool );
-                    if ( ! _pool._tailNode.HasValue )
+                    if ( ! _pool._activeListTail.HasValue )
                         return false;
 
-                    ref var tailNode = ref _pool.GetNodeRef( _pool._tailNode.Value );
+                    ref var tailNode = ref _pool.GetNodeRef( _pool._activeListTail.Value );
                     var endIndex = tailNode.EndIndex;
                     var segment = _pool._segments[tailNode.SegmentIndex];
                     _nextInactiveTailSegmentIndex = tailNode.SegmentIndex + 1;
@@ -491,7 +491,7 @@ public sealed class MemoryPool<T>
     private ListSlim<int> _fragmentationHeap;
     private ListSlim<T[]> _segments;
     private NullableIndex _freeListTail;
-    private NullableIndex _tailNode;
+    private NullableIndex _activeListTail;
 
     /// <summary>
     /// Creates a new <see cref="MemoryPool{T}"/> instance.
@@ -503,7 +503,7 @@ public sealed class MemoryPool<T>
         _nodes = ListSlim<Node>.Create();
         _fragmentationHeap = ListSlim<int>.Create();
         _segments = ListSlim<T[]>.Create();
-        _freeListTail = _tailNode = NullableIndex.Null;
+        _freeListTail = _activeListTail = NullableIndex.Null;
     }
 
     /// <summary>
@@ -557,7 +557,7 @@ public sealed class MemoryPool<T>
     /// </summary>
     public void TrimExcess()
     {
-        if ( _tailNode.HasValue )
+        if ( _activeListTail.HasValue )
         {
             TrimExcessWithTailNode();
             return;
@@ -684,7 +684,7 @@ public sealed class MemoryPool<T>
         node.Length = length;
         if ( ! node.Next.HasValue )
         {
-            Assume.Equals( nodeId, _tailNode.Value );
+            Assume.Equals( nodeId, _activeListTail.Value );
             return;
         }
 
@@ -724,7 +724,7 @@ public sealed class MemoryPool<T>
         var added = length - node.Length;
         if ( ! node.Next.HasValue )
         {
-            Assume.Equals( nodeId, _tailNode.Value );
+            Assume.Equals( nodeId, _activeListTail.Value );
             var remaining = segment.Length - endIndex;
             if ( added <= remaining )
             {
@@ -804,10 +804,10 @@ public sealed class MemoryPool<T>
             next.Prev = NullableIndex.Create( id );
         }
 
-        if ( _tailNode.Value == nodeId )
-            _tailNode = NullableIndex.Create( id );
-        else if ( _tailNode.Value == id )
-            _tailNode = NullableIndex.Create( nodeId );
+        if ( _activeListTail.Value == nodeId )
+            _activeListTail = NullableIndex.Create( id );
+        else if ( _activeListTail.Value == id )
+            _activeListTail = NullableIndex.Create( nodeId );
 
         Release( id, clear );
     }
@@ -815,7 +815,7 @@ public sealed class MemoryPool<T>
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private void ReleaseTailNode(int id, ref Node node)
     {
-        Assume.Equals( id, _tailNode.Value );
+        Assume.Equals( id, _activeListTail.Value );
 
         var prevId = node.Prev;
         DeactivateNode( id, ref node );
@@ -829,7 +829,7 @@ public sealed class MemoryPool<T>
 
             if ( ! fragmentationIndex.HasValue )
             {
-                _tailNode = prevId;
+                _activeListTail = prevId;
                 return;
             }
 
@@ -838,7 +838,7 @@ public sealed class MemoryPool<T>
             DeactivateNode( nodeId, ref prev );
         }
 
-        _tailNode = NullableIndex.Null;
+        _activeListTail = NullableIndex.Null;
     }
 
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
@@ -925,7 +925,7 @@ public sealed class MemoryPool<T>
     [MethodImpl( MethodImplOptions.AggressiveInlining )]
     private void TrimExcessWithTailNode()
     {
-        ref var tail = ref GetNodeRef( _tailNode.Value );
+        ref var tail = ref GetNodeRef( _activeListTail.Value );
         _segments.RemoveLastRange( _segments.Count - tail.SegmentIndex - 1 );
 
         _segments.ResetCapacity();
@@ -1090,12 +1090,12 @@ public sealed class MemoryPool<T>
             var segmentIndex = FindFittingLargeTailSegmentIndex( -1, length );
             ref var node = ref AddDefaultNode( out id );
             node.MakeActive( segmentIndex, 0, length );
-            node.Prev = _tailNode;
+            node.Prev = _activeListTail;
             node.Next = NullableIndex.Null;
 
-            if ( _tailNode.HasValue )
+            if ( _activeListTail.HasValue )
             {
-                ref var tailNode = ref GetNodeRef( _tailNode.Value );
+                ref var tailNode = ref GetNodeRef( _activeListTail.Value );
                 tailNode.Next = NullableIndex.Create( id );
             }
         }
@@ -1107,7 +1107,7 @@ public sealed class MemoryPool<T>
     private int AllocateNextNodeAtTail(int length)
     {
         int id;
-        ref var tail = ref GetNodeRef( _tailNode.Value );
+        ref var tail = ref GetNodeRef( _activeListTail.Value );
         var tailSegment = GetSegment( tail.SegmentIndex );
         var endIndex = tail.EndIndex;
         var remaining = tailSegment.Length - endIndex;
@@ -1115,10 +1115,10 @@ public sealed class MemoryPool<T>
         if ( length <= remaining )
         {
             ref var node = ref AddDefaultNode( out id );
-            tail = ref GetNodeRef( _tailNode.Value );
+            tail = ref GetNodeRef( _activeListTail.Value );
 
             node.MakeActive( tail.SegmentIndex, endIndex, length );
-            node.Prev = _tailNode;
+            node.Prev = _activeListTail;
             node.Next = NullableIndex.Null;
             tail.Next = NullableIndex.Create( id );
         }
@@ -1139,11 +1139,11 @@ public sealed class MemoryPool<T>
             {
                 var heapIndex = _fragmentationHeap.Count;
                 ref var freeNode = ref AddDefaultNode( out var freeId );
-                tail = ref GetNodeRef( _tailNode.Value );
+                tail = ref GetNodeRef( _activeListTail.Value );
                 node = ref GetNodeRef( id );
 
                 freeNode.MakeActive( tail.SegmentIndex, endIndex, remaining );
-                freeNode.Prev = _tailNode;
+                freeNode.Prev = _activeListTail;
                 freeNode.Next = NullableIndex.Create( id );
                 node.Prev = NullableIndex.Create( freeId );
                 tail.Next = node.Prev;
@@ -1154,14 +1154,14 @@ public sealed class MemoryPool<T>
             }
             else
             {
-                tail = ref GetNodeRef( _tailNode.Value );
+                tail = ref GetNodeRef( _activeListTail.Value );
                 tail.Next = NullableIndex.Create( id );
-                node.Prev = _tailNode;
+                node.Prev = _activeListTail;
             }
         }
         else
         {
-            var oldTailId = _tailNode;
+            var oldTailId = _activeListTail;
             var segmentIndex = FindFittingLargeTailSegmentIndex( tail.SegmentIndex, length );
             ref var node = ref AddDefaultNode( out id );
             node.MakeActive( segmentIndex, 0, length );
@@ -1171,10 +1171,10 @@ public sealed class MemoryPool<T>
             {
                 var heapIndex = _fragmentationHeap.Count;
                 ref var freeNode = ref AddDefaultNode( out var freeId );
-                tail = ref GetNodeRef( _tailNode.Value );
+                tail = ref GetNodeRef( _activeListTail.Value );
                 node = ref GetNodeRef( id );
 
-                if ( oldTailId.Value != _tailNode.Value )
+                if ( oldTailId.Value != _activeListTail.Value )
                 {
                     ref var oldTail = ref GetNodeRef( oldTailId.Value );
                     freeNode.MakeActive( oldTail.SegmentIndex, endIndex, remaining );
@@ -1184,13 +1184,13 @@ public sealed class MemoryPool<T>
                     ref var next = ref GetNodeRef( oldTail.Next.Value );
                     next.Prev = NullableIndex.Create( freeId );
                     oldTail.Next = next.Prev;
-                    node.Prev = _tailNode;
+                    node.Prev = _activeListTail;
                     tail.Next = NullableIndex.Create( id );
                 }
                 else
                 {
                     freeNode.MakeActive( tail.SegmentIndex, endIndex, remaining );
-                    freeNode.Prev = _tailNode;
+                    freeNode.Prev = _activeListTail;
                     freeNode.Next = NullableIndex.Create( id );
                     node.Prev = NullableIndex.Create( freeId );
                     tail.Next = node.Prev;
@@ -1202,9 +1202,9 @@ public sealed class MemoryPool<T>
             }
             else
             {
-                tail = ref GetNodeRef( _tailNode.Value );
+                tail = ref GetNodeRef( _activeListTail.Value );
                 tail.Next = NullableIndex.Create( id );
-                node.Prev = _tailNode;
+                node.Prev = _activeListTail;
             }
         }
 
@@ -1214,8 +1214,8 @@ public sealed class MemoryPool<T>
     private int AllocateAtTail(int length)
     {
         Assume.IsGreaterThan( length, 0 );
-        var id = _tailNode.HasValue ? AllocateNextNodeAtTail( length ) : AllocateFirstNodeAtTail( length );
-        _tailNode = NullableIndex.Create( id );
+        var id = _activeListTail.HasValue ? AllocateNextNodeAtTail( length ) : AllocateFirstNodeAtTail( length );
+        _activeListTail = NullableIndex.Create( id );
         return id;
     }
 
@@ -1236,7 +1236,7 @@ public sealed class MemoryPool<T>
             node.Next = NullableIndex.Null;
             node.SetFragmentationIndex( heapIndex );
 
-            if ( ! _tailNode.HasValue )
+            if ( ! _activeListTail.HasValue )
             {
                 Assume.True( _fragmentationHeap.IsEmpty );
                 node.Prev = NullableIndex.Null;
@@ -1244,14 +1244,14 @@ public sealed class MemoryPool<T>
             }
             else
             {
-                ref var prev = ref GetNodeRef( _tailNode.Value );
+                ref var prev = ref GetNodeRef( _activeListTail.Value );
                 prev.Next = NullableIndex.Create( id );
-                node.Prev = _tailNode;
+                node.Prev = _activeListTail;
                 _fragmentationHeap.Add( id );
                 FixUpFragmentationHeap( heapIndex );
             }
 
-            _tailNode = NullableIndex.Create( id );
+            _activeListTail = NullableIndex.Create( id );
             ++index;
         }
 
