@@ -136,10 +136,14 @@ Task("PrepareIndex")
     Information("'{0}' file read.", sourceReadmeFile);
 
     Information("Creating '{0}' file...", destIndexFile);
-    var indexRegex = new System.Text.RegularExpressions.Regex("(\\(\\./[^)]+\\))|(\"\\./[^\"]+\")");
+    var indexRegex = new System.Text.RegularExpressions.Regex("\\(\\./[^)]+\\)");
     var destIndex = indexRegex.Replace(
         sourceReadme,
         static match => match.Value.Replace("./", "https://github.com/CalionVarduk/LfrlAnvil/blob/main/"));
+
+    destIndex = destIndex.Replace(
+        "<img src=\"./assets/logo.png\" alt=\"logo\" height=\"80\"/>",
+        "<img src=\"logo.png\" alt=\"logo\" height=\"80\" width=\"80\"/>");
 
     System.IO.File.AppendAllText(destIndexFile, destIndex);
     Information("'{0}' file created.", destIndexFile);
