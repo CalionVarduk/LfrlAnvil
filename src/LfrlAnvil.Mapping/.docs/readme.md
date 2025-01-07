@@ -1,7 +1,7 @@
 ﻿([root](https://github.com/CalionVarduk/LfrlAnvil/blob/main/readme.md))
 [![NuGet Badge](https://buildstats.info/nuget/LfrlAnvil.Mapping)](https://www.nuget.org/packages/LfrlAnvil.Mapping/)
 
-# [LfrlAnvil.Mapping](https://github.com/CalionVarduk/LfrlAnvil/tree/main/src/LfrlAnvil.Mapping)
+# [<img src="../../../assets/logo.png" alt="logo" height="80"/>](../../../assets/logo.png) [LfrlAnvil.Mapping](https://github.com/CalionVarduk/LfrlAnvil/tree/main/src/LfrlAnvil.Mapping)
 
 This project contains an object mapper, as well as a builder of such a mapper.
 

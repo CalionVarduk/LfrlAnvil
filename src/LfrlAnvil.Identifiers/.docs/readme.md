@@ -1,7 +1,7 @@
 ﻿([root](https://github.com/CalionVarduk/LfrlAnvil/blob/main/readme.md))
 [![NuGet Badge](https://buildstats.info/nuget/LfrlAnvil.Identifiers)](https://www.nuget.org/packages/LfrlAnvil.Identifiers/)
 
-# [LfrlAnvil.Identifiers](https://github.com/CalionVarduk/LfrlAnvil/tree/main/src/LfrlAnvil.Identifiers)
+# [<img src="../../../assets/logo.png" alt="logo" height="80"/>](../../../assets/logo.png) [LfrlAnvil.Identifiers](https://github.com/CalionVarduk/LfrlAnvil/tree/main/src/LfrlAnvil.Identifiers)
 
 This project contains a generator of sequential 64-bit identifiers based on a timestamp.
 

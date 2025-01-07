@@ -1,7 +1,7 @@
 ﻿([root](https://github.com/CalionVarduk/LfrlAnvil/blob/main/readme.md))
 [![NuGet Badge](https://buildstats.info/nuget/LfrlAnvil.MySql)](https://www.nuget.org/packages/LfrlAnvil.MySql/)
 
-# [LfrlAnvil.MySql](https://github.com/CalionVarduk/LfrlAnvil/tree/main/src/LfrlAnvil.Sql/LfrlAnvil.MySql)
+# [<img src="../../../../assets/logo.png" alt="logo" height="80"/>](../../../../assets/logo.png) [LfrlAnvil.MySql](https://github.com/CalionVarduk/LfrlAnvil/tree/main/src/LfrlAnvil.Sql/LfrlAnvil.MySql)
 
 This project is an implementation
 of the [LfrlAnvil.Sql.Core](https://github.com/CalionVarduk/LfrlAnvil/blob/main/src/LfrlAnvil.Sql/LfrlAnvil.Sql.Core/.docs/readme.md)

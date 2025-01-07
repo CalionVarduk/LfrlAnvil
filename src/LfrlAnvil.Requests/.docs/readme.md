@@ -1,7 +1,7 @@
 ﻿([root](https://github.com/CalionVarduk/LfrlAnvil/blob/main/readme.md))
 [![NuGet Badge](https://buildstats.info/nuget/LfrlAnvil.Requests)](https://www.nuget.org/packages/LfrlAnvil.Requests/)
 
-# [LfrlAnvil.Requests](https://github.com/CalionVarduk/LfrlAnvil/tree/main/src/LfrlAnvil.Requests)
+# [<img src="../../../assets/logo.png" alt="logo" height="80"/>](../../../assets/logo.png) [LfrlAnvil.Requests](https://github.com/CalionVarduk/LfrlAnvil/tree/main/src/LfrlAnvil.Requests)
 
 This project contains an intermediate request dispatcher, as well as a factory of request handlers.
 

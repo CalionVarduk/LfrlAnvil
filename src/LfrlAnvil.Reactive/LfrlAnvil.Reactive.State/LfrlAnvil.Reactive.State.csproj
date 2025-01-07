@@ -18,4 +18,12 @@
         <ProjectReference Include="..\LfrlAnvil.Reactive.Core\LfrlAnvil.Reactive.Core.csproj"/>
     </ItemGroup>
 
+    <ItemGroup>
+        <None Include="..\..\..\assets\logo-small.png">
+            <Pack>true</Pack>
+            <Visible>false</Visible>
+            <PackagePath>\</PackagePath>
+        </None>
+    </ItemGroup>
+
 </Project>

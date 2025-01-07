@@ -1,7 +1,7 @@
 ﻿([root](https://github.com/CalionVarduk/LfrlAnvil/blob/main/readme.md))
 [![NuGet Badge](https://buildstats.info/nuget/LfrlAnvil.Chrono)](https://www.nuget.org/packages/LfrlAnvil.Chrono/)
 
-# [LfrlAnvil.Chrono](https://github.com/CalionVarduk/LfrlAnvil/tree/main/src/LfrlAnvil.Chrono)
+# [<img src="../../../assets/logo.png" alt="logo" height="80"/>](../../../assets/logo.png) [LfrlAnvil.Chrono](https://github.com/CalionVarduk/LfrlAnvil/tree/main/src/LfrlAnvil.Chrono)
 
 This project contains functionalities related to date & time, as well as timezones.
 Most of them work directly on dotnet's [DateTime](https://learn.microsoft.com/en-us/dotnet/api/system.datetime?view=net-7.0)

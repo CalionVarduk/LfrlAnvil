@@ -1,7 +1,7 @@
 ﻿([root](https://github.com/CalionVarduk/LfrlAnvil/blob/main/readme.md))
 [![NuGet Badge](https://buildstats.info/nuget/LfrlAnvil.Functional)](https://www.nuget.org/packages/LfrlAnvil.Functional/)
 
-# [LfrlAnvil.Functional](https://github.com/CalionVarduk/LfrlAnvil/tree/main/src/LfrlAnvil.Functional)
+# [<img src="../../../assets/logo.png" alt="logo" height="80"/>](../../../assets/logo.png) [LfrlAnvil.Functional](https://github.com/CalionVarduk/LfrlAnvil/tree/main/src/LfrlAnvil.Functional)
 
 This project contains a few functional programming functionalities.
 

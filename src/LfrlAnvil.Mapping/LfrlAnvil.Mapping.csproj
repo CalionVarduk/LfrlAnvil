@@ -13,4 +13,12 @@
         <DocumentationFile>bin\Release\LfrlAnvil.Mapping.xml</DocumentationFile>
     </PropertyGroup>
 
+    <ItemGroup>
+        <None Include="..\..\assets\logo-small.png">
+            <Pack>true</Pack>
+            <Visible>false</Visible>
+            <PackagePath>\</PackagePath>
+        </None>
+    </ItemGroup>
+
 </Project>

@@ -1,7 +1,7 @@
 ﻿([root](https://github.com/CalionVarduk/LfrlAnvil/blob/main/readme.md))
 [![NuGet Badge](https://buildstats.info/nuget/LfrlAnvil.Computable.Expressions)](https://www.nuget.org/packages/LfrlAnvil.Computable.Expressions/)
 
-# [LfrlAnvil.Computable.Expressions](https://github.com/CalionVarduk/LfrlAnvil/tree/main/src/LfrlAnvil.Computable/LfrlAnvil.Computable.Expressions)
+# [<img src="../../../../assets/logo.png" alt="logo" height="80"/>](../../../../assets/logo.png) [LfrlAnvil.Computable.Expressions](https://github.com/CalionVarduk/LfrlAnvil/tree/main/src/LfrlAnvil.Computable/LfrlAnvil.Computable.Expressions)
 
 This project contains a parser of string expressions that can be compiled to invocable delegates.
 

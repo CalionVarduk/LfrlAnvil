@@ -75,6 +75,7 @@ Task("PrepareJson")
                 _appName = "LfrlAnvil",
                 _appTitle = "LfrlAnvil",
                 _enableSearch = true,
+                _disableContribution = true,
                 pdf = false
             }
         }

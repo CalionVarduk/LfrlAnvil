@@ -1,7 +1,7 @@
 ﻿([root](https://github.com/CalionVarduk/LfrlAnvil/blob/main/readme.md))
 [![NuGet Badge](https://buildstats.info/nuget/LfrlAnvil.Core)](https://www.nuget.org/packages/LfrlAnvil.Core/)
 
-# [LfrlAnvil.Core](https://github.com/CalionVarduk/LfrlAnvil/tree/main/src/LfrlAnvil.Core)
+# [<img src="../../../assets/logo.png" alt="logo" height="80"/>](../../../assets/logo.png) [LfrlAnvil.Core](https://github.com/CalionVarduk/LfrlAnvil/tree/main/src/LfrlAnvil.Core)
 
 This project contains a bunch of lightweight core functionalities, used by other `LfrlAnvil` projects.
 

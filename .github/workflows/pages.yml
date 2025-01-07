@@ -32,7 +32,7 @@ jobs:
         with:
           dotnet-version: '8.x'
 
-      - run: dotnet tool install --global docfx --version 2.75.3
+      - run: dotnet tool install --global docfx --version 2.78.2
 
       - name: Install Cake tool
         run: dotnet tool install --global Cake.Tool --version 4.0.0
@@ -44,6 +44,9 @@ jobs:
         run: dotnet cake ./scripts/docfx.cake
 
       - run: docfx .docfx/docfx.json
+
+      - name: Run docfx-logo script
+        run: dotnet cake ./scripts/docfx-logo.cake
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3

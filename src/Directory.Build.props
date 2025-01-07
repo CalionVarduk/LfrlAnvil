@@ -1,11 +1,12 @@
 <Project>
 
-    <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))"/>
+    <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))" />
 
     <PropertyGroup>
         <PackageId>$(AssemblyName)</PackageId>
         <Product>$(AssemblyName)</Product>
         <PackageReadmeFile>readme.md</PackageReadmeFile>
+        <PackageIcon>logo-small.png</PackageIcon>
     </PropertyGroup>
 
     <ItemGroup>

@@ -1,7 +1,7 @@
 ﻿([root](https://github.com/CalionVarduk/LfrlAnvil/blob/main/readme.md))
 [![NuGet Badge](https://buildstats.info/nuget/LfrlAnvil.Collections)](https://www.nuget.org/packages/LfrlAnvil.Collections/)
 
-# [LfrlAnvil.Collections](https://github.com/CalionVarduk/LfrlAnvil/tree/main/src/LfrlAnvil.Collections)
+# [<img src="../../../assets/logo.png" alt="logo" height="80"/>](../../../assets/logo.png) [LfrlAnvil.Collections](https://github.com/CalionVarduk/LfrlAnvil/tree/main/src/LfrlAnvil.Collections)
 
 This project contains a few additional collections and data structures.
 Some of them include different dictionary and set variations (e.g. multi-dictionary and multi-set) as well as heaps and graphs.
