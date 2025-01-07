@@ -1,7 +1,7 @@
 [![Build](https://github.com/CalionVarduk/LfrlAnvil/actions/workflows/build.yml/badge.svg)](https://github.com/CalionVarduk/LfrlAnvil/actions/workflows/build.yml)
 [![Coverage Status](https://coveralls.io/repos/github/CalionVarduk/LfrlAnvil/badge.svg)](https://coveralls.io/github/CalionVarduk/LfrlAnvil)
 
-# [<img src="assets/logo.png" alt="logo" height="80"/>](./assets/logo.png) [LfrlAnvil](https://github.com/CalionVarduk/LfrlAnvil)
+# [<img src="./assets/logo.png" alt="logo" height="80"/>](./assets/logo.png) [LfrlAnvil](https://github.com/CalionVarduk/LfrlAnvil)
 
 This dotnet solution is a side project of mine (that I work on in spare time to keep myself occupied)
 that contains a bunch of bits and bobs and thing-a-ma-jigs accumulated over time,
@@ -42,4 +42,4 @@ Following is the list of all individual projects, in no particular order
 There's also the [TODO](./todo.md) file that contains chaotic scribbles about more doodads that I may or may not work on in the future.
 I might at some point convert that into a proper list of GitHub issues.
 
-<sub><sup>[Logo](assets/logo.png) by [The Sleeping Forest](https://thesleepingforest.wixsite.com/main).</sup></sub>
+<sub><sup>[Logo](./assets/logo.png) by [The Sleeping Forest](https://thesleepingforest.wixsite.com/main).</sup></sub>

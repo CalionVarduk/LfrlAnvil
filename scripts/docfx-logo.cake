@@ -2,7 +2,7 @@
 // ARGUMENTS
 //////////////////////////////////////////////////////////////////////
 
-var target = Argument("target", "FixIndex");
+var target = Argument("target", "FixHtml");
 
 //////////////////////////////////////////////////////////////////////
 // PREPARATION
@@ -33,40 +33,44 @@ Task("CopyLogo")
     CopyFile(sourceLogoPath, logoPath);
 });
 
-Task("FixIndex")
+Task("FixHtml")
     .IsDependentOn("CopyLogo")
     .Does(() =>
 {
-    var indexPath = System.IO.Path.Combine(siteDir, "index.html");
-
-    var i = 0;
-    var lines = System.IO.File.ReadAllLines(indexPath);
-
-    for (; i < lines.Length; ++i)
+    var htmlFiles = GetFiles(System.IO.Path.Combine(siteDir, "**", "*.html"));
+    foreach (var file in htmlFiles)
     {
-        var line = lines[i];
-        if (!line.Contains("<link rel=\"icon\" href=\"favicon.ico\">"))
-            continue;
+        var lines = System.IO.File.ReadAllLines(file.FullPath);
 
-        lines[i] = line.Replace("<link rel=\"icon\" href=\"favicon.ico\">", "<link rel=\"icon\" href=\"logo.png\">");
-        ++i;
-        break;
+        var i = 0;
+        for (; i < lines.Length; ++i)
+        {
+            var line = lines[i];
+            if (!line.Contains("<link rel=\"icon\""))
+                continue;
+
+            lines[i] = line.Replace("favicon.ico", "logo.png");
+            ++i;
+            break;
+        }
+
+        for (; i < lines.Length; ++i)
+        {
+            var line = lines[i];
+            if (!line.Contains("<img id=\"logo\""))
+                continue;
+
+            lines[i] = line
+                .Replace(" class=\"svg\"", string.Empty)
+                .Replace("logo.svg", "logo.png")
+                .Replace(">", " style=\"height:51px;padding-right:1rem\">");
+
+            break;
+        }
+
+        System.IO.File.WriteAllLines(file.FullPath, lines);
+        Information("File '{0}' fixed.", file.FullPath);
     }
-
-    for (; i < lines.Length; ++i)
-    {
-        var line = lines[i];
-        if (!line.Contains("<img id=\"logo\" class=\"svg\" src=\"logo.svg\" alt=\"LfrlAnvil\">"))
-            continue;
-
-        lines[i] = line.Replace(
-            "<img id=\"logo\" class=\"svg\" src=\"logo.svg\" alt=\"LfrlAnvil\">",
-            "<img id=\"logo\" src=\"logo.png\" alt=\"LfrlAnvil\" style=\"height:51px;padding-right:1rem\">");
-
-        break;
-    }
-
-    System.IO.File.WriteAllLines(indexPath, lines);
 });
 
 //////////////////////////////////////////////////////////////////////
