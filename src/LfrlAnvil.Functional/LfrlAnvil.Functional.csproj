@@ -5,14 +5,6 @@
         <Description>This project contains a few functional programming functionalities.</Description>
     </PropertyGroup>
 
-    <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
-        <DocumentationFile>bin\Debug\LfrlAnvil.Functional.xml</DocumentationFile>
-    </PropertyGroup>
-
-    <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
-        <DocumentationFile>bin\Release\LfrlAnvil.Functional.xml</DocumentationFile>
-    </PropertyGroup>
-
     <ItemGroup>
         <ProjectReference Include="..\LfrlAnvil.Core\LfrlAnvil.Core.csproj"/>
     </ItemGroup>

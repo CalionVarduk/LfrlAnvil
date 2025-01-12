@@ -5,14 +5,6 @@
         <Description>This project contains definitions of various composable validators, as well as validation message formatters.</Description>
     </PropertyGroup>
 
-    <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
-        <DocumentationFile>bin\Debug\LfrlAnvil.Validation.xml</DocumentationFile>
-    </PropertyGroup>
-
-    <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
-        <DocumentationFile>bin\Release\LfrlAnvil.Validation.xml</DocumentationFile>
-    </PropertyGroup>
-
     <ItemGroup>
         <ProjectReference Include="..\LfrlAnvil.Core\LfrlAnvil.Core.csproj"/>
     </ItemGroup>

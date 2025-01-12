@@ -5,14 +5,6 @@
         <Description>This project contains an intermediate request dispatcher, as well as a factory of request handlers.</Description>
     </PropertyGroup>
 
-    <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
-        <DocumentationFile>bin\Debug\LfrlAnvil.Requests.xml</DocumentationFile>
-    </PropertyGroup>
-
-    <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
-        <DocumentationFile>bin\Release\LfrlAnvil.Requests.xml</DocumentationFile>
-    </PropertyGroup>
-
     <ItemGroup>
         <None Include="..\..\assets\logo-small.png">
             <Pack>true</Pack>

@@ -6,14 +6,6 @@
         <RootNamespace>LfrlAnvil</RootNamespace>
     </PropertyGroup>
 
-    <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
-        <DocumentationFile>bin\Debug\LfrlAnvil.Core.xml</DocumentationFile>
-    </PropertyGroup>
-
-    <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
-        <DocumentationFile>bin\Release\LfrlAnvil.Core.xml</DocumentationFile>
-    </PropertyGroup>
-
     <ItemGroup>
         <None Include="..\..\assets\logo-small.png">
             <Pack>true</Pack>
