@@ -316,4 +316,22 @@ public static class ObjectExtensions
     {
         return source.CompareTo( other ) <= 0 ? (source, other) : (other, source);
     }
+
+    /// <summary>
+    /// Attempts to dispose the provided object.
+    /// </summary>
+    /// <param name="obj">Object to dispose.</param>
+    /// <returns><see cref="Result"/> instance that specifies whether or not the disposal operation was successful.</returns>
+    public static Result TryDispose(this IDisposable obj)
+    {
+        try
+        {
+            obj.Dispose();
+            return Result.Valid;
+        }
+        catch ( Exception exc )
+        {
+            return Result.Error( exc );
+        }
+    }
 }
