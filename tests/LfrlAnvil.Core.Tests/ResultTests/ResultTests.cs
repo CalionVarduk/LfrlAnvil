@@ -131,6 +131,25 @@ public class ResultTests : TestsBase
     }
 
     [Fact]
+    public void GetValueOrThrow_ShouldReturnValue_WhenGenericExceptionIsNull()
+    {
+        var value = Fixture.Create<string>();
+        var sut = Result.Create( value );
+        var result = sut.GetValueOrThrow();
+        result.Should().BeSameAs( sut.Value );
+    }
+
+    [Fact]
+    public void GetValueOrThrow_ShouldThrow_WhenGenericExceptionIsNotNull()
+    {
+        var value = Fixture.Create<string>();
+        var exception = new Exception( "foo" );
+        var sut = Result.Error( exception, value );
+        var action = Lambda.Of( () => sut.GetValueOrThrow() );
+        action.Should().Throw<Exception>().And.Should().BeSameAs( exception );
+    }
+
+    [Fact]
     public void ResultConversionOperator_ShouldReturnValid_WhenExceptionIsNull()
     {
         var value = Fixture.Create<string>();

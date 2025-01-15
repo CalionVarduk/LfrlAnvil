@@ -134,6 +134,18 @@ public readonly struct Result<T>
     }
 
     /// <summary>
+    /// Returns <see cref="Value"/> if <see cref="Exception"/> is null, otherwise rethrows the <see cref="Exception"/>.
+    /// </summary>
+    /// <returns>Underlying <see cref="Value"/>.</returns>
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public T? GetValueOrThrow()
+    {
+        ThrowIfError();
+        return Value;
+    }
+
+    /// <summary>
     /// Converts provided <paramref name="value"/> to <see cref="Result"/>.
     /// </summary>
     /// <param name="value">Object to convert.</param>

@@ -25,7 +25,7 @@ namespace LfrlAnvil.Memory;
 public readonly struct MemoryPoolToken<T> : IDisposable
 {
     /// <summary>
-    /// An empty sequence.
+    /// An empty token.
     /// </summary>
     public static MemoryPoolToken<T> Empty => new MemoryPoolToken<T>( null, 0, false );
 
