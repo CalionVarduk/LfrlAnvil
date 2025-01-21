@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2025 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -296,6 +296,24 @@ public static class ObjectExtensions
         where T : IComparable<T>
     {
         return source.CompareTo( other ) <= 0 ? other : source;
+    }
+
+    /// <summary>
+    /// Clamps the value to the provided [<paramref cref="min"/>, <paramref cref="max"/>] range.
+    /// </summary>
+    /// <param name="source">Value to clamp.</param>
+    /// <param name="min">Min value.</param>
+    /// <param name="max">Max value.</param>
+    /// <returns>Clamped <paramref name="source"/>.</returns>
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static T Clamp<T>(this T source, T min, T max)
+        where T : IComparable<T>
+    {
+        if ( source.CompareTo( min ) <= 0 )
+            return min;
+
+        return source.CompareTo( max ) >= 0 ? max : source;
     }
 
     /// <summary>

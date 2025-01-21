@@ -54,6 +54,30 @@ public abstract class GenericObjectExtensionsOfComparableTypeTests<T> : GenericO
     }
 
     [Fact]
+    public void Clamp_ShouldReturnMin_WhenSourceIsLesser()
+    {
+        var (sut, min, max) = Fixture.CreateDistinctSortedCollection<T>( 3 );
+        var result = sut.Clamp( min, max );
+        result.Should().Be( min );
+    }
+
+    [Fact]
+    public void Clamp_ShouldReturnMax_WhenSourceIsGreater()
+    {
+        var (min, max, sut) = Fixture.CreateDistinctSortedCollection<T>( 3 );
+        var result = sut.Clamp( min, max );
+        result.Should().Be( max );
+    }
+
+    [Fact]
+    public void Clamp_ShouldReturnSource_WhenSourceIsGreaterThanMinAndLesserThanMax()
+    {
+        var (min, sut, max) = Fixture.CreateDistinctSortedCollection<T>( 3 );
+        var result = sut.Clamp( min, max );
+        result.Should().Be( sut );
+    }
+
+    [Fact]
     public void MinMax_ShouldReturnSourceAsMinAndOtherAsMax_WhenBothValuesAreEqual()
     {
         var sut = Fixture.CreateNotDefault<T>();
