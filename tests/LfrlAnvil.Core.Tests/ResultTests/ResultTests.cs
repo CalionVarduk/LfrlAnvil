@@ -150,6 +150,22 @@ public class ResultTests : TestsBase
     }
 
     [Fact]
+    public void ResultConversionOperator_FromException_ShouldReturnError()
+    {
+        var exception = new Exception( "foo" );
+        var result = ( Result )exception;
+        result.Exception.Should().BeSameAs( exception );
+    }
+
+    [Fact]
+    public void ResultConversionOperator_FromException_ShouldReturnErrorForGeneric()
+    {
+        var exception = new Exception( "foo" );
+        var result = ( Result<string> )exception;
+        result.Exception.Should().BeSameAs( exception );
+    }
+
+    [Fact]
     public void ResultConversionOperator_ShouldReturnValid_WhenExceptionIsNull()
     {
         var value = Fixture.Create<string>();
@@ -166,5 +182,21 @@ public class ResultTests : TestsBase
         var sut = Result.Error( exception, value );
         var result = ( Result )sut;
         result.Exception.Should().BeSameAs( exception );
+    }
+
+    [Fact]
+    public void Deconstruct_ShouldReturnCorrectResult()
+    {
+        var value = Fixture.Create<string>();
+        var exception = new Exception( "foo" );
+        var sut = Result.Error( exception, value );
+
+        var (outValue, outException) = sut;
+
+        using ( new AssertionScope() )
+        {
+            outValue.Should().BeSameAs( value );
+            outException.Should().BeSameAs( exception );
+        }
     }
 }

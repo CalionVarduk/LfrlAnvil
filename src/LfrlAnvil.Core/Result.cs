@@ -93,6 +93,18 @@ public readonly struct Result
     {
         Exception?.Rethrow();
     }
+
+    /// <summary>
+    /// Converts provided <paramref name="exception"/> to <see cref="Result"/>.
+    /// </summary>
+    /// <param name="exception">Exception from which to create an error result.</param>
+    /// <returns>New <see cref="Result"/> instance.</returns>
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static implicit operator Result(Exception exception)
+    {
+        return Error( exception );
+    }
 }
 
 /// <summary>
@@ -155,5 +167,29 @@ public readonly struct Result<T>
     public static implicit operator Result(Result<T> value)
     {
         return new Result( value.Exception );
+    }
+
+    /// <summary>
+    /// Converts provided <paramref name="exception"/> to <see cref="Result{T}"/>.
+    /// </summary>
+    /// <param name="exception">Exception from which to create an error result.</param>
+    /// <returns>New <see cref="Result{T}"/> instance.</returns>
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static implicit operator Result<T>(Exception exception)
+    {
+        return Result.Error<T>( exception );
+    }
+
+    /// <summary>
+    /// Deconstruct this <see cref="Result{T}"/> instance.
+    /// </summary>
+    /// <param name="value"><b>out</b> parameter that returns <see cref="Value"/>.</param>
+    /// <param name="exception"><b>out</b> parameter that returns <see cref="Exception"/>.</param>
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public void Deconstruct(out T? value, out Exception? exception)
+    {
+        value = Value;
+        exception = Exception;
     }
 }
