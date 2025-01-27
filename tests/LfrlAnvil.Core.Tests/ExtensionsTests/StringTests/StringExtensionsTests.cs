@@ -1,4 +1,5 @@
-﻿using LfrlAnvil.Extensions;
+﻿using System.Text;
+using LfrlAnvil.Extensions;
 using LfrlAnvil.Functional;
 
 namespace LfrlAnvil.Tests.ExtensionsTests.StringTests;
@@ -103,5 +104,29 @@ public class StringExtensionsTests : TestsBase
     {
         var result = sut.Reverse();
         result.Should().Be( expected );
+    }
+
+    [Fact]
+    public void Decode_ShouldReturnCorrectString_WhenBytesIsValid()
+    {
+        var bytes = new byte[] { 66, 97, 114 };
+        var result = Encoding.UTF8.Decode( bytes );
+        using ( new AssertionScope() )
+        {
+            result.Exception.Should().BeNull();
+            result.Value.Should().Be( "Bar" );
+        }
+    }
+
+    [Fact]
+    public void Decode_ShouldReturnInvalidResult_WhenBytesAreInvalid()
+    {
+        var sut = ( Encoding )Encoding.Unicode.Clone();
+        sut.DecoderFallback = new DecoderExceptionFallback();
+
+        var bytes = new byte[] { 216, 0, 65 };
+        var result = sut.Decode( bytes );
+
+        result.Exception.Should().NotBeNull();
     }
 }

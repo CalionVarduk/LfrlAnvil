@@ -1,4 +1,4 @@
-﻿// Copyright 2024 Łukasz Furlepa
+﻿// Copyright 2024-2025 Łukasz Furlepa
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@ using System;
 using System.Diagnostics.Contracts;
 using System.Globalization;
 using System.Runtime.CompilerServices;
+using System.Text;
 
 namespace LfrlAnvil.Extensions;
 
@@ -81,5 +82,25 @@ public static class StringExtensions
         while ( sourceSpan.Length > 0 );
 
         return new string( buffer );
+    }
+
+    /// <summary>
+    /// Attempts to decode all the bytes in the specified byte span into a string.
+    /// </summary>
+    /// <param name="encoding"><see cref="System.Text.Encoding"/> used for decoding the byte span.</param>
+    /// <param name="bytes">A byte span to decode to a string.</param>
+    /// <returns><see cref="Result{T}"/> that contains decoded string, when operation was successful.</returns>
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static Result<string> Decode(this Encoding encoding, ReadOnlySpan<byte> bytes)
+    {
+        try
+        {
+            return Result.Create( encoding.GetString( bytes ) );
+        }
+        catch ( Exception exc )
+        {
+            return exc;
+        }
     }
 }
