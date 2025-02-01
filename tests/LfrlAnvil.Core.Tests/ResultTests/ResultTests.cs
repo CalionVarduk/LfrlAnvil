@@ -166,6 +166,19 @@ public class ResultTests : TestsBase
     }
 
     [Fact]
+    public void ResultConversionOperator_FromValue_ShouldReturnOkForGeneric()
+    {
+        var value = Fixture.Create<string>();
+        var result = ( Result<string> )value;
+
+        using ( new AssertionScope() )
+        {
+            result.Exception.Should().BeNull();
+            result.Value.Should().BeSameAs( value );
+        }
+    }
+
+    [Fact]
     public void ResultConversionOperator_ShouldReturnValid_WhenExceptionIsNull()
     {
         var value = Fixture.Create<string>();

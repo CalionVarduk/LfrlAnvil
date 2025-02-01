@@ -96,7 +96,7 @@ public static class StringExtensions
     {
         try
         {
-            return Result.Create( encoding.GetString( bytes ) );
+            return encoding.GetString( bytes );
         }
         catch ( Exception exc )
         {

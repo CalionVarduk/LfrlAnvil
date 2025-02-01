@@ -83,7 +83,7 @@ public readonly struct EncodeableText
         try
         {
             var byteCount = encoding.GetByteCount( value.Span );
-            return Result.Create( new EncodeableText( encoding, value, byteCount ) );
+            return new EncodeableText( encoding, value, byteCount );
         }
         catch ( Exception exc )
         {

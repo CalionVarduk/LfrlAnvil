@@ -182,6 +182,18 @@ public readonly struct Result<T>
     }
 
     /// <summary>
+    /// Converts provided <paramref name="value"/> to <see cref="Result{T}"/>.
+    /// </summary>
+    /// <param name="value">Value associated with the result.</param>
+    /// <returns>New <see cref="Result{T}"/> instance.</returns>
+    [Pure]
+    [MethodImpl( MethodImplOptions.AggressiveInlining )]
+    public static implicit operator Result<T>(T? value)
+    {
+        return Result.Create( value );
+    }
+
+    /// <summary>
     /// Deconstruct this <see cref="Result{T}"/> instance.
     /// </summary>
     /// <param name="value"><b>out</b> parameter that returns <see cref="Value"/>.</param>
