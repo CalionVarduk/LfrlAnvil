@@ -1,0 +1,26 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <PackageTags>LfrlAnvil;MessageBroker;Client</PackageTags>
+        <Description>This project contains client-side message broker implementation.</Description>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\LfrlAnvil.Chrono\LfrlAnvil.Chrono.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
+            <_Parameter1>LfrlAnvil.MessageBroker.Core.Tests</_Parameter1>
+        </AssemblyAttribute>
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Include="..\..\..\assets\logo-small.png">
+            <Pack>true</Pack>
+            <Visible>false</Visible>
+            <PackagePath>\</PackagePath>
+        </None>
+    </ItemGroup>
+
+</Project>

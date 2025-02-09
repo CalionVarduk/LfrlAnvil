@@ -1,34 +1,205 @@
 # TODO
-|       Project       |              Title               |                        Details                         |                  Requirements                  |
-|:-------------------:|:--------------------------------:|:------------------------------------------------------:|:----------------------------------------------:|
-|    Dependencies     |     Generic dependency types     |     [link](#dependencies-generic-dependency-types)     |                       -                        |
-|   Dependencies.*    |  Dependencies.ServiceProviders   |            [link](#dependencies-aspnetcore)            | [link](#dependencies-generic-dependency-types) |
-|    Computable.*     |       Math/Physics structs       |        [link](#computable-mathphysics-structs)         |                       -                        |
-|        Sql.*        |     Add support for triggers     |               [link](#sqlcore-triggers)                |                       -                        |
-|          -          |             Terminal             |                   [link](#terminal)                    |                       -                        |
-| Computable.Automata |     Add Context-free grammar     |                           -                            |                       -                        |
-|        Sql.*        |    Add Microsoft SQL support     |                           -                            |                       -                        |
-|     Collections     |           Add SkipList           |                           -                            |                       -                        |
-|   Reactive.State    | Async validator & change tracker | [link](#reactivestate-async-validator--change-tracker) |                       -                        |
-|        Sql.*        |         DbBatch support          |            [link](#sqlcore-dbbatch-support)            |                       -                        |
-|      Sql.Core       |          Add JSON nodes          |            [link](#sqlcore-add-json-nodes)             |                       -                        |
+
+|       Project       |              Title               |                        Details                         |                    Requirements                    |
+|:-------------------:|:--------------------------------:|:------------------------------------------------------:|:--------------------------------------------------:|
+|   MessageBroker.*   |      Channels & Subscribers      |      [link](#messagebroker-channels--subscribers)      |                         -                          |
+|   MessageBroker.*   |             Messages             |            [link](#messagebroker-messages)             |    [link](#messagebroker-channels--subscribers)    |
+|   MessageBroker.*   |   Max Packet Length & Batching   |   [link](#messagebroker-max-packet-length--batching)   |          [link](#messagebroker-messages)           |
+|   MessageBroker.*   |            Permanence            |           [link](#messagebroker-permanence)            | [link](#messagebroker-max-packet-length--batching) |
+|   MessageBroker.*   |      Request-Reply Channel       |      [link](#messagebroker-request-reply-channel)      |         [link](#messagebroker-permanence)          |
+|   MessageBroker.*   |        Subscriber Filter         |        [link](#messagebroker-subscriber-filter)        |    [link](#messagebroker-request-reply-channel)    |
+|   MessageBroker.*   |        Server Maintenance        |       [link](#messagebroker-server-maintenance)        |      [link](#messagebroker-subscriber-filter)      |
+|    Dependencies     |     Generic dependency types     |     [link](#dependencies-generic-dependency-types)     |                         -                          |
+|   Dependencies.*    |  Dependencies.ServiceProviders   |            [link](#dependencies-aspnetcore)            |   [link](#dependencies-generic-dependency-types)   |
+|    Computable.*     |       Math/Physics structs       |        [link](#computable-mathphysics-structs)         |                         -                          |
+|        Sql.*        |     Add support for triggers     |               [link](#sqlcore-triggers)                |                         -                          |
+|          -          |             Terminal             |                   [link](#terminal)                    |                         -                          |
+| Computable.Automata |     Add Context-free grammar     |                           -                            |                         -                          |
+|        Sql.*        |    Add Microsoft SQL support     |                           -                            |                         -                          |
+|     Collections     |           Add SkipList           |                           -                            |                         -                          |
+|   Reactive.State    | Async validator & change tracker | [link](#reactivestate-async-validator--change-tracker) |                         -                          |
+|        Sql.*        |         DbBatch support          |            [link](#sqlcore-dbbatch-support)            |                         -                          |
+|      Sql.Core       |          Add JSON nodes          |            [link](#sqlcore-add-json-nodes)             |                         -                          |
 
 ### Scribbles:
+
+Tests:
+
+- remove FluentAssertions
+- add assertions to TestExtensions, they need to throw XunitException
+- include assertion scopes
+
+License headers:
+- create custom cake script
+
 Sql:
+
 - source generators for queries/statements?
 - for parameter binding too, maybe?
 - IncludedColumns for IXs? simple blocking link to SqlColumnBuilder (low priority)
-  - from implemented dialects only postgresql supports this
-
+    - from implemented dialects only postgresql supports this
 
 ### Terminal
+
 project idea:
+
 - contains extensions to System.Console
 - write colored fore/back-ground (with temp IDisposable swapper)
 - write table
 - prompt, switch etc. for user interaction
 
+### MessageBroker: Channels & Subscribers
+
+- Add possibility to register a channel
+    - channels can be related to multiple clients, which will be treated as publishers
+    - channels have a name & server-side generated id
+- Add possibility to subscribe to a channel
+    - channels can have multiple subscribers
+    - subscriber key is a (channel-id, client-id) tuple
+    - creating subscriber allows to set a flag to create channel if it does not exist (disabled by default)
+- channels & subscribers can be queried by clients
+    - by name
+    - by id
+
+### MessageBroker: Messages
+
+- Add possibility for a client to publish a message to a channel
+    - messages must be propagated to all channel subscribers
+        - each message header contains a msg-id (unique within channel), a timestamp (moved-to-channel), client(publisher)-id
+    - it must be relatively safe, no loss of data etc.:
+        - client sends message
+            - \[stage 2\] client can limit target clients by providing their ids, by default all subscribed clients are notified
+        - server moves message to channel's storage
+        - server immediately responds with ack/nack (ack contains message id)
+        - server propagates message from channel to all subscribers (channel's task loop)
+        - \[stage 2\] subscriber moves message to un-acked messages collection
+        - subscriber notifies remote client's task loop that there is message to send
+        - remote client sends message to client
+        - client receives message and is notified of it through it's local subscription instance
+        - \[stage 2\] client needs to respond with ack/nack (not immediately)
+            - message headers get additional re-send-no (starts from 0) & re-delivery-no (starts from 0) fields
+            - ack notifies the server that message was processed & removes it from waiting-for-ack messages collection
+            - nack notifies the serve that message processing failed in a controlled manner
+                - subscribers can configure max re-send count & max re-delivery count & default re-send delay
+                - nack can specify whether or not to re-send the message (if subscriber allows), true by default
+                - nack can specify custom re-send delay
+                - \[stage 3\] nack can specify to skip dead letter
+        - \[stage 2\] if client doesn't respond in time (5 minutes by default? configurable):
+            - server attempts to re-deliver the message, as long as subscriber's max re-delivery allows
+        - \[stage 3\] messages that reached max re-send or re-delivery count are moved by the server to subscriber's dead letter collection
+            - it can be queried by client-side subscriber instances (fetching dequeues from dead-letter permanently)
+            - should be possible to configure max number of dead-letter entries (either channel or subscriber config)
+    - note on server's lack of ack/nack to client's message send:
+        - if this is due to client's disposal, then client could instead wait for server's responses before fully disposing
+            - in this state, client must be seen as disposed to new consumers (no sending of messages etc.)
+        - otherwise, it's up to the client to handle this properly
+            - there is a chance that server handled the message correctly & just failed to respond to client in time
+            - client won't know about it, which may lead to it either rolling back some sort of transaction
+            - or sending the same message more than once
+            - IT'S ON THE CLIENT TO HANDLE THIS SCENARIO, IF IT CAN EVEN OCCUR
+                - it would be a sign of server/client misconfiguration or overwhelmed server
+                - response times can be tracked (& would probably have a real impact on client's performance, if very long)
+                - and client should be able to react accordingly before a disaster happens
+            - it's more important to NOT LOSE messages rather than making sure they are unique
+- server should be allowed to send messages to any channel or subscriber
+- minor tweak: buffer pool token disposal isn't wrapped in try/catch (do it just in case)
+
+### MessageBroker: Max Packet Length & Batching
+
+- Add internal limit to single TCP packet's length (configurable, min 16KB, server defines acceptable range)
+    - data that exceeds the limit will be chunked accordingly
+    - data must be handled atomically by both client and server (impacts ack/nack)
+        - (server-side) store in some sort of temp file with managed lifetime
+        - (client-side) if client is configured to ignore large packet buffering:
+            - then read all chunks from stream and move them to a single large buffer, then notify
+            - otherwise, notify on the fly, with additional chunk-no & chunk-count & total-size info in subscriber event header
+                - basically, moves the responsibility to the consumer, but becomes more complex to handle (every msg needs to be checked)
+- packets queued up for sending will be batched together, as long as batch's length does not exceed packed size limit
+    - max messages-in-single-batch-count can be configured (unlimited by default) or even disabled, send only, reading does not care
+    - message readers must be prepared to handle batch packets (preserve message order)
+- server's handshake request handling must verify incoming packet length
+    - the same applies to create channel, subscriber etc. requests
+
+### MessageBroker: Permanence
+
+- Clients, channels & subscribers can be configured as permanent
+- uses sqlite under the hood (no other option, for now)
+- Permanent subscribers:
+    - preserve id
+    - on-dispose, any unsent messages are persisted in db
+    - on-dispose, any un-acked messages are persisted in db before unsent, with re-delivery count increased (if allowed)
+    - on-dispose, dead-letter are persisted in db
+    - subscriber can configure max in-memory message queue size (min 2?)
+        - if that size is exceeded, then all following messages will be persisted in db immediately
+        - this will lower memory usage but will negatively impact performance
+        - when half(?) of entries get dequeued, then db-persisted entries will be moved to memory (with respect to max size)
+    - possibility to configure TTL for dead-letter
+    - on-reactivate, data should be loaded from db
+- Permanent channels:
+    - preserve id
+    - on-dispose, any non-propagated messages to subscribers are persisted in db
+        - should messages published by clients that specify this channel as non-permanent be persisted? I'm leaning towards: no, they should
+          not
+    - on-dispose, all info about permanent subscribers should be persisted in db
+    - similar to subscribers, configurable max in-memory queue size
+    - on-reactivate, subscribers & data should be loaded from db
+    - messages pushed to non-active permanent subscribers should be stored in their db (with some form of batching)
+    - large object temp files need to be handled correctly
+- Permanent clients:
+    - preserve id
+- channels need to track their permanence with relation to all linked clients & subscribers
+    - different clients may specify different permanence for the same channel
+    - if at least one client specifies the channel as permanent, then it stays permanent
+    - if at least one subscriber is permanent, then it also stays permanent
+- non-permanent client can only create non-permanent channel
+- non-permanent client can be linked to existing permanent channel
+- non-permanent client can only create non-permanent subscriber
+- non-permanent client can detach from channel
+    - may cause the channel to be deleted when no other client or subscriber is linked to it
+- permanent client can create any channel
+- permanent client can make existing non-permanent channel permanent
+- permanent client can detach from channel
+    - channel will be completely removed only when all permanent clients linked to it detach with that flag enabled
+    - also, all subscribers must be deleted as well
+- permanent client can create any subscriber
+- any client can explicitly detach from any channel
+    - severs the link between the client and the channel
+    - if channel is no longer linked to any other channel & subscriber, then it will be removed
+    - if channel is linked to clients that only specify it as non-permanent, then it will become non-permanent, if it wasn't already (all
+      subscribers must also be non-permanent)
+- any client can explicitly delete any subscriber
+- permanent clients can create permanent subscribers to non-permanent channels
+    - this will convert the channel to permanent
+- reactivating permanent client as non-permanent will make it non-permanent
+    - this will also modify all channel links and subscribers related to that client to non-permanent
+    - however, all persisted data will be processed as if permanent (until the connection is dropped, then data will also be dropped)
+
+### MessageBroker: Request-Reply Channel
+
+- Add support
+- can have multiple subscribers, which all must respond
+- cannot be made permanent
+- its subscribers also cannot be permanent
+
+### MessageBroker: Subscriber Filter
+
+- allow clients to configure a filter on a subscriber
+- filter will be ran on the server-side
+- only applies to pub-sub channel subscriptions
+- filter is provided in string format
+- server compiles the filter into a delegate
+    - delegate only accepts a single parameter of some sort of context type
+    - which contains all the necessary info about the message
+    - it should also allow to read binary message data
+
+### MessageBroker: Server Maintenance
+
+- allow the server to disconnect clients
+- delete channels
+- delete subscribers
+
 ### Dependencies: Generic dependency types
+
 - add support for open generic constructable dependency types
 - can use only auto-discovered ctor or explicit ctor from that open generic type or shared open generic implementor
 - each generic dependency could provide partial generic parameters resolution
@@ -38,67 +209,77 @@ project idea:
 - also, check if open generics based on factories should be allowed
 
 ### Computable: Math/Physics structs
+
 ideas for other LfrlAnvil.Computable projects:
+
 - Complex struct
 - Structures representing values with units
-  - values can be generic (.NET7 static interface members would be very useful, so that the structures can have math operators)
-  - units can be convertible if they belong to the same 'category'
-  - e.g. weight units ('t', 'kg', 'g' etc.)
-  - there could be a base interface for units IUnitCategory with properties 'Symbol' & 'ConversionRatio'
-  - WeightUnit class would implement IUnitCategory & declare static readonly fields like Ton, Kilogram, Gram etc. (basically a smart enum)
-  - this could actually be implemented for decimal type, for now
-  - and when the decision is made to move to .NET7, then add support for generic value types
+    - values can be generic (.NET7 static interface members would be very useful, so that the structures can have math operators)
+    - units can be convertible if they belong to the same 'category'
+    - e.g. weight units ('t', 'kg', 'g' etc.)
+    - there could be a base interface for units IUnitCategory with properties 'Symbol' & 'ConversionRatio'
+    - WeightUnit class would implement IUnitCategory & declare static readonly fields like Ton, Kilogram, Gram etc. (basically a smart enum)
+    - this could actually be implemented for decimal type, for now
+    - and when the decision is made to move to .NET7, then add support for generic value types
 
 ### Reactive.State: Async validator & change tracker
+
 - extract VariableValidator & VariableChangeTracker(?) to separate interfaces
 - this could potentially allow for more flexibility & for easier async validation?
 - or add a separate IAsyncVariable stack, since CancellationToken should be supported
 
 ### Sql.Core: Triggers
+
 - add support for basic(?) triggers
 - they would accept a batch node as their body
 - body needs to be scanned for referenced db objects & proper references need to be registered
 - there would be no support for branching statements or local variables
-  - this could be worked around with raw statement nodes, but that's unsafe
+    - this could be worked around with raw statement nodes, but that's unsafe
 - limitation is mostly due to sqlite, that doesn't support branching
-  - however, they can have a condition, so maybe that's the way to do it?
-  - do other sql providers support conditional triggers?
-    - I guess a simple IF could be added in their case
+    - however, they can have a condition, so maybe that's the way to do it?
+    - do other sql providers support conditional triggers?
+        - I guess a simple IF could be added in their case
 - sqlite has another limitation: CTEs inside triggers are not supported
-  - but that can't be helped
+    - but that can't be helped
 - only FOR EACH ROW triggers would be supported, with BEFORE/AFTER + INSERT/UPDATE/DELETE
 - triggers could be registered as table constraints
 
 ### Sql.Core: Add JSON nodes
+
 Add nodes for JSON column manipulation (read value, set value etc.)
+
 - this heavily depends on all sql providers' support for json
 
 ### Sql.Core: Add Visitor for node CLR type extraction
+
 Add sql node visitor that allows to extract node's type (+ add Type to ViewDataField)
+
 - this is a LOT of work, since every dialect needs to define its own visitor
 - and those visitors must handle all node types
 - not sure how necessary it is to have this functionality, since any visitor usage is expensive
 - and it requires intimate knowledge of each db type system
-  - type systems have to be basically re-implemented in those visitors which feels redundant
+    - type systems have to be basically re-implemented in those visitors which feels redundant
 
 ### Dependencies: AspNetCore
+
 - Add adapter layer between lfrlanvil & aspnetcore service providers
 - so that lfrlanvil provider can be used as service container in aspentcore apps
 - requires possibility to register open generics
 
 ### Sql.Core: DbBatch support
+
 - Add support for DbBatch and its commands
 - Awkward to implement, since there is no shared interface between DbCommand & DbBatchCommand
 - statement/query execution can be done already, with a trivial bit of boiler-plate
 - same situation with multi reading: DbBatch allows to create a reader, which can be linked to multi reader
 - DbBatchCommand parameters are an issue:
-  - param binder factory spews out delegates that accept IDbCommand instances
-  - support for DbBatch would require either accepting IDataParameterCollection instance as a binder argument
-    - which leads to an issue: how to create an actual parameter instance?
-    - methods for parameter creation can only be found in commands, not parameter collections
-    - an alternative would be to somehow scan the generic DbConnection type
-    - in order to find correct DbParameter type? seems finicky, but there may not be a better way to do this
-  - or a separate factory method would need to be created, that supports DbBatchCommand instances
+    - param binder factory spews out delegates that accept IDbCommand instances
+    - support for DbBatch would require either accepting IDataParameterCollection instance as a binder argument
+        - which leads to an issue: how to create an actual parameter instance?
+        - methods for parameter creation can only be found in commands, not parameter collections
+        - an alternative would be to somehow scan the generic DbConnection type
+        - in order to find correct DbParameter type? seems finicky, but there may not be a better way to do this
+    - or a separate factory method would need to be created, that supports DbBatchCommand instances
 - another minor issue: how to share parameter instances between multiple DbBatchCommand instances
 - that belong to the same DbBatch? dealing with that may be a micro-optimization, but it may "add up"
 - maybe a separate binder factory method for the whole DbBatch...?

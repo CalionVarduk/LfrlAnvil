@@ -1,0 +1,98 @@
+﻿using System.Net;
+using System.Threading.Tasks;
+using LfrlAnvil.Chrono;
+using LfrlAnvil.MessageBroker.Client;
+using LfrlAnvil.MessageBroker.Client.Events;
+using LfrlAnvil.MessageBroker.Client.Exceptions;
+using LfrlAnvil.MessageBroker.Server;
+
+namespace LfrlAnvil.MessageBroker.Core.Tests;
+
+public class ConnectionTests : TestsBase
+{
+    [Fact]
+    public async Task ClientAndServer_ShouldExchangePingsWhenIdle_AfterExchangingHandshake()
+    {
+        var pingResponseCount = 0;
+        var endSource = new SafeTaskCompletionSource();
+
+        await using var server = new MessageBrokerServer(
+            () => new TimestampProvider(),
+            new IPEndPoint( IPAddress.Loopback, 0 ),
+            MessageBrokerServerOptions.Default.SetHandshakeTimeout( Duration.FromSeconds( 1 ) ) );
+
+        await server.StartAsync();
+
+        await using var client = new MessageBrokerClient(
+            new TimestampProvider(),
+            server.LocalEndPoint,
+            "test",
+            MessageBrokerClientOptions.Default
+                .SetConnectionTimeout( Duration.FromSeconds( 1 ) )
+                .SetDesiredMessageTimeout( Duration.FromSeconds( 1 ) )
+                .SetDesiredPingInterval( Duration.FromSeconds( 0.2 ) )
+                .SetEventHandler(
+                    e =>
+                    {
+                        if ( e.Type == MessageBrokerClientEventType.MessageAccepted
+                            && e.GetClientEndpoint() == MessageBrokerClientEndpoint.PingResponse
+                            && ++pingResponseCount == 2 )
+                            endSource.Complete();
+                    } ) );
+
+        await client.StartAsync();
+        await endSource.Task;
+        var remoteClient = server.Clients.TryGetById( 1 );
+
+        using ( new AssertionScope() )
+        {
+            remoteClient.Should().NotBeNull();
+            if ( remoteClient is null )
+                return;
+
+            client.Id.Should().Be( remoteClient.Id );
+            client.Name.Should().Be( remoteClient.Name );
+            client.MessageTimeout.Should().Be( remoteClient.MessageTimeout );
+            client.PingInterval.Should().Be( remoteClient.PingInterval );
+        }
+    }
+
+    [Fact]
+    public async Task Server_ShouldRejectClientHandshake_WhenNameAlreadyExists()
+    {
+        await using var server = new MessageBrokerServer(
+            () => new TimestampProvider(),
+            new IPEndPoint( IPAddress.Loopback, 0 ),
+            MessageBrokerServerOptions.Default.SetHandshakeTimeout( Duration.FromSeconds( 1 ) ) );
+
+        await server.StartAsync();
+
+        await using var client1 = new MessageBrokerClient(
+            new TimestampProvider(),
+            server.LocalEndPoint,
+            "test",
+            MessageBrokerClientOptions.Default
+                .SetConnectionTimeout( Duration.FromSeconds( 1 ) )
+                .SetDesiredMessageTimeout( Duration.FromSeconds( 1 ) )
+                .SetDesiredPingInterval( Duration.FromSeconds( 10 ) ) );
+
+        await client1.StartAsync();
+
+        await using var client2 = new MessageBrokerClient(
+            new TimestampProvider(),
+            server.LocalEndPoint,
+            "test",
+            MessageBrokerClientOptions.Default
+                .SetConnectionTimeout( Duration.FromSeconds( 1 ) )
+                .SetDesiredMessageTimeout( Duration.FromSeconds( 1 ) )
+                .SetDesiredPingInterval( Duration.FromSeconds( 10 ) ) );
+
+        var result = await client2.StartAsync();
+
+        using ( new AssertionScope() )
+        {
+            server.Clients.Count.Should().Be( 1 );
+            result.Exception.Should().BeOfType<MessageBrokerClientRequestException>();
+        }
+    }
+}
