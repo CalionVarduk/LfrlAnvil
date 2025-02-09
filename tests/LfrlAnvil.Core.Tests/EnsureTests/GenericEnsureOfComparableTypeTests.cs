@@ -18,14 +18,14 @@ public abstract class GenericEnsureOfComparableTypeTests<T> : GenericEnsureTests
     [Fact]
     public void Equals_ShouldThrowArgumentException_WhenParamIsNotEqualToValue()
     {
-        var (param, value) = Fixture.CreateDistinctCollection<T>( 2 );
+        var (param, value) = Fixture.CreateManyDistinct<T>( count: 2 );
         ShouldThrowArgumentException( () => Ensure.Equals( param, value ) );
     }
 
     [Fact]
     public void NotEquals_ShouldPass_WhenParamIsNotEqualToValue()
     {
-        var (param, value) = Fixture.CreateDistinctCollection<T>( 2 );
+        var (param, value) = Fixture.CreateManyDistinct<T>( count: 2 );
         ShouldPass( () => Ensure.NotEquals( param, value ) );
     }
 
@@ -39,14 +39,14 @@ public abstract class GenericEnsureOfComparableTypeTests<T> : GenericEnsureTests
     [Fact]
     public void IsGreaterThan_ShouldPass_WhenParamIsGreaterThanValue()
     {
-        var (value, param) = Fixture.CreateDistinctSortedCollection<T>( 2 );
+        var (value, param) = Fixture.CreateManyDistinctSorted<T>( count: 2 );
         ShouldPass( () => Ensure.IsGreaterThan( param, value ) );
     }
 
     [Fact]
     public void IsGreaterThan_ShouldThrowArgumentOutOfRangeException_WhenParamIsLessThanValue()
     {
-        var (param, value) = Fixture.CreateDistinctSortedCollection<T>( 2 );
+        var (param, value) = Fixture.CreateManyDistinctSorted<T>( count: 2 );
         ShouldThrowExactly<ArgumentOutOfRangeException>( () => Ensure.IsGreaterThan( param, value ) );
     }
 
@@ -60,7 +60,7 @@ public abstract class GenericEnsureOfComparableTypeTests<T> : GenericEnsureTests
     [Fact]
     public void IsGreaterThanOrEqualTo_ShouldPass_WhenParamIsGreaterThanValue()
     {
-        var (value, param) = Fixture.CreateDistinctSortedCollection<T>( 2 );
+        var (value, param) = Fixture.CreateManyDistinctSorted<T>( count: 2 );
         ShouldPass( () => Ensure.IsGreaterThanOrEqualTo( param, value ) );
     }
 
@@ -74,21 +74,21 @@ public abstract class GenericEnsureOfComparableTypeTests<T> : GenericEnsureTests
     [Fact]
     public void IsGreaterThanOrEqualTo_ShouldThrowArgumentOutOfRangeException_WhenParamIsLessThanValue()
     {
-        var (param, value) = Fixture.CreateDistinctSortedCollection<T>( 2 );
+        var (param, value) = Fixture.CreateManyDistinctSorted<T>( count: 2 );
         ShouldThrowExactly<ArgumentOutOfRangeException>( () => Ensure.IsGreaterThanOrEqualTo( param, value ) );
     }
 
     [Fact]
     public void IsLessThan_ShouldPass_WhenParamIsLessThanValue()
     {
-        var (param, value) = Fixture.CreateDistinctSortedCollection<T>( 2 );
+        var (param, value) = Fixture.CreateManyDistinctSorted<T>( count: 2 );
         ShouldPass( () => Ensure.IsLessThan( param, value ) );
     }
 
     [Fact]
     public void IsLessThan_ShouldThrowArgumentOutOfRangeException_WhenParamIsGreaterThanValue()
     {
-        var (value, param) = Fixture.CreateDistinctSortedCollection<T>( 2 );
+        var (value, param) = Fixture.CreateManyDistinctSorted<T>( count: 2 );
         ShouldThrowExactly<ArgumentOutOfRangeException>( () => Ensure.IsLessThan( param, value ) );
     }
 
@@ -102,7 +102,7 @@ public abstract class GenericEnsureOfComparableTypeTests<T> : GenericEnsureTests
     [Fact]
     public void IsLessThanOrEqualTo_ShouldPass_WhenParamIsLessThanValue()
     {
-        var (param, value) = Fixture.CreateDistinctSortedCollection<T>( 2 );
+        var (param, value) = Fixture.CreateManyDistinctSorted<T>( count: 2 );
         ShouldPass( () => Ensure.IsLessThanOrEqualTo( param, value ) );
     }
 
@@ -116,28 +116,28 @@ public abstract class GenericEnsureOfComparableTypeTests<T> : GenericEnsureTests
     [Fact]
     public void IsLessThanOrEqualTo_ShouldThrowArgumentOutOfRangeException_WhenParamIsGreaterThanValue()
     {
-        var (value, param) = Fixture.CreateDistinctSortedCollection<T>( 2 );
+        var (value, param) = Fixture.CreateManyDistinctSorted<T>( count: 2 );
         ShouldThrowExactly<ArgumentOutOfRangeException>( () => Ensure.IsLessThanOrEqualTo( param, value ) );
     }
 
     [Fact]
     public void IsInRange_ShouldPass_WhenParamIsBetweenTwoDistinctValues()
     {
-        var (min, param, max) = Fixture.CreateDistinctSortedCollection<T>( 3 );
+        var (min, param, max) = Fixture.CreateManyDistinctSorted<T>( count: 3 );
         ShouldPass( () => Ensure.IsInRange( param, min, max ) );
     }
 
     [Fact]
     public void IsInRange_ShouldPass_WhenParamIsEqualToMinValue()
     {
-        var (param, max) = Fixture.CreateDistinctSortedCollection<T>( 2 );
+        var (param, max) = Fixture.CreateManyDistinctSorted<T>( count: 2 );
         ShouldPass( () => Ensure.IsInRange( param, param, max ) );
     }
 
     [Fact]
     public void IsInRange_ShouldPass_WhenParamIsEqualToMaxValue()
     {
-        var (min, param) = Fixture.CreateDistinctSortedCollection<T>( 2 );
+        var (min, param) = Fixture.CreateManyDistinctSorted<T>( count: 2 );
         ShouldPass( () => Ensure.IsInRange( param, min, param ) );
     }
 
@@ -151,14 +151,14 @@ public abstract class GenericEnsureOfComparableTypeTests<T> : GenericEnsureTests
     [Fact]
     public void IsInRange_ShouldThrowArgumentOutOfRangeException_WhenParamIsLessThanMinValue()
     {
-        var (param, min, max) = Fixture.CreateDistinctSortedCollection<T>( 3 );
+        var (param, min, max) = Fixture.CreateManyDistinctSorted<T>( count: 3 );
         ShouldThrowExactly<ArgumentOutOfRangeException>( () => Ensure.IsInRange( param, min, max ) );
     }
 
     [Fact]
     public void IsInRange_ShouldThrowArgumentOutOfRangeException_WhenParamIsGreaterThanMaxValue()
     {
-        var (min, max, param) = Fixture.CreateDistinctSortedCollection<T>( 3 );
+        var (min, max, param) = Fixture.CreateManyDistinctSorted<T>( count: 3 );
         ShouldThrowExactly<ArgumentOutOfRangeException>( () => Ensure.IsInRange( param, min, max ) );
     }
 
@@ -166,21 +166,21 @@ public abstract class GenericEnsureOfComparableTypeTests<T> : GenericEnsureTests
     public void IsInRange_ShouldThrowArgumentOutOfRangeException_WhenMinIsGreaterThanMax()
     {
         var param = Fixture.CreateNotDefault<T>();
-        var (max, min) = Fixture.CreateDistinctSortedCollection<T>( 2 );
+        var (max, min) = Fixture.CreateManyDistinctSorted<T>( count: 2 );
         ShouldThrowExactly<ArgumentOutOfRangeException>( () => Ensure.IsInRange( param, min, max ) );
     }
 
     [Fact]
     public void IsNotInRange_ShouldPass_WhenParamIsLessThanMinValue()
     {
-        var (param, min, max) = Fixture.CreateDistinctSortedCollection<T>( 3 );
+        var (param, min, max) = Fixture.CreateManyDistinctSorted<T>( count: 3 );
         ShouldPass( () => Ensure.IsNotInRange( param, min, max ) );
     }
 
     [Fact]
     public void IsNotInRange_ShouldPass_WhenParamIsGreaterThanMaxValue()
     {
-        var (min, max, param) = Fixture.CreateDistinctSortedCollection<T>( 3 );
+        var (min, max, param) = Fixture.CreateManyDistinctSorted<T>( count: 3 );
         ShouldPass( () => Ensure.IsNotInRange( param, min, max ) );
     }
 
@@ -188,28 +188,28 @@ public abstract class GenericEnsureOfComparableTypeTests<T> : GenericEnsureTests
     public void IsNotInRange_ShouldPass_WhenMinIsGreaterThanMax()
     {
         var param = Fixture.CreateNotDefault<T>();
-        var (max, min) = Fixture.CreateDistinctSortedCollection<T>( 2 );
+        var (max, min) = Fixture.CreateManyDistinctSorted<T>( count: 2 );
         ShouldPass( () => Ensure.IsNotInRange( param, min, max ) );
     }
 
     [Fact]
     public void IsNotInRange_ShouldThrowArgumentOutOfRangeException_WhenParamIsBetweenTwoDistinctValues()
     {
-        var (min, param, max) = Fixture.CreateDistinctSortedCollection<T>( 3 );
+        var (min, param, max) = Fixture.CreateManyDistinctSorted<T>( count: 3 );
         ShouldThrowExactly<ArgumentOutOfRangeException>( () => Ensure.IsNotInRange( param, min, max ) );
     }
 
     [Fact]
     public void IsNotInRange_ShouldThrowArgumentOutOfRangeException_WhenParamIsEqualToMinValue()
     {
-        var (param, max) = Fixture.CreateDistinctSortedCollection<T>( 2 );
+        var (param, max) = Fixture.CreateManyDistinctSorted<T>( count: 2 );
         ShouldThrowExactly<ArgumentOutOfRangeException>( () => Ensure.IsNotInRange( param, param, max ) );
     }
 
     [Fact]
     public void IsNotInRange_ShouldThrowArgumentOutOfRangeException_WhenParamIsEqualToMaxValue()
     {
-        var (min, param) = Fixture.CreateDistinctSortedCollection<T>( 2 );
+        var (min, param) = Fixture.CreateManyDistinctSorted<T>( count: 2 );
         ShouldThrowExactly<ArgumentOutOfRangeException>( () => Ensure.IsNotInRange( param, min, param ) );
     }
 
@@ -223,21 +223,21 @@ public abstract class GenericEnsureOfComparableTypeTests<T> : GenericEnsureTests
     [Fact]
     public void IsInExclusiveRange_ShouldPass_WhenParamIsBetweenTwoDistinctValues()
     {
-        var (min, param, max) = Fixture.CreateDistinctSortedCollection<T>( 3 );
+        var (min, param, max) = Fixture.CreateManyDistinctSorted<T>( count: 3 );
         ShouldPass( () => Ensure.IsInExclusiveRange( param, min, max ) );
     }
 
     [Fact]
     public void IsInExclusiveRange_ShouldThrowArgumentOutOfRangeException_WhenParamIsEqualToMinValue()
     {
-        var (param, max) = Fixture.CreateDistinctSortedCollection<T>( 2 );
+        var (param, max) = Fixture.CreateManyDistinctSorted<T>( count: 2 );
         ShouldThrowExactly<ArgumentOutOfRangeException>( () => Ensure.IsInExclusiveRange( param, param, max ) );
     }
 
     [Fact]
     public void IsInExclusiveRange_ShouldThrowArgumentOutOfRangeException_WhenParamIsEqualToMaxValue()
     {
-        var (min, param) = Fixture.CreateDistinctSortedCollection<T>( 2 );
+        var (min, param) = Fixture.CreateManyDistinctSorted<T>( count: 2 );
         ShouldThrowExactly<ArgumentOutOfRangeException>( () => Ensure.IsInExclusiveRange( param, min, param ) );
     }
 
@@ -251,14 +251,14 @@ public abstract class GenericEnsureOfComparableTypeTests<T> : GenericEnsureTests
     [Fact]
     public void IsInExclusiveRange_ShouldThrowArgumentOutOfRangeException_WhenParamIsLessThanMinValue()
     {
-        var (param, min, max) = Fixture.CreateDistinctSortedCollection<T>( 3 );
+        var (param, min, max) = Fixture.CreateManyDistinctSorted<T>( count: 3 );
         ShouldThrowExactly<ArgumentOutOfRangeException>( () => Ensure.IsInExclusiveRange( param, min, max ) );
     }
 
     [Fact]
     public void IsInExclusiveRange_ShouldThrowArgumentOutOfRangeException_WhenParamIsGreaterThanMaxValue()
     {
-        var (min, max, param) = Fixture.CreateDistinctSortedCollection<T>( 3 );
+        var (min, max, param) = Fixture.CreateManyDistinctSorted<T>( count: 3 );
         ShouldThrowExactly<ArgumentOutOfRangeException>( () => Ensure.IsInExclusiveRange( param, min, max ) );
     }
 
@@ -266,21 +266,21 @@ public abstract class GenericEnsureOfComparableTypeTests<T> : GenericEnsureTests
     public void IsInExclusiveRange_ShouldThrowArgumentOutOfRangeException_WhenMinIsGreaterThanMax()
     {
         var param = Fixture.CreateNotDefault<T>();
-        var (max, min) = Fixture.CreateDistinctSortedCollection<T>( 2 );
+        var (max, min) = Fixture.CreateManyDistinctSorted<T>( count: 2 );
         ShouldThrowExactly<ArgumentOutOfRangeException>( () => Ensure.IsInExclusiveRange( param, min, max ) );
     }
 
     [Fact]
     public void IsNotInExclusiveRange_ShouldPass_WhenParamIsLessThanMinValue()
     {
-        var (param, min, max) = Fixture.CreateDistinctSortedCollection<T>( 3 );
+        var (param, min, max) = Fixture.CreateManyDistinctSorted<T>( count: 3 );
         ShouldPass( () => Ensure.IsNotInExclusiveRange( param, min, max ) );
     }
 
     [Fact]
     public void IsNotInExclusiveRange_ShouldPass_WhenParamIsGreaterThanMaxValue()
     {
-        var (min, max, param) = Fixture.CreateDistinctSortedCollection<T>( 3 );
+        var (min, max, param) = Fixture.CreateManyDistinctSorted<T>( count: 3 );
         ShouldPass( () => Ensure.IsNotInExclusiveRange( param, min, max ) );
     }
 
@@ -288,21 +288,21 @@ public abstract class GenericEnsureOfComparableTypeTests<T> : GenericEnsureTests
     public void IsNotInExclusiveRange_ShouldPass_WhenMinIsGreaterThanMax()
     {
         var param = Fixture.CreateNotDefault<T>();
-        var (max, min) = Fixture.CreateDistinctSortedCollection<T>( 2 );
+        var (max, min) = Fixture.CreateManyDistinctSorted<T>( count: 2 );
         ShouldPass( () => Ensure.IsNotInExclusiveRange( param, min, max ) );
     }
 
     [Fact]
     public void IsNotInExclusiveRange_ShouldPass_WhenParamIsEqualToMinValue()
     {
-        var (param, max) = Fixture.CreateDistinctSortedCollection<T>( 2 );
+        var (param, max) = Fixture.CreateManyDistinctSorted<T>( count: 2 );
         ShouldPass( () => Ensure.IsNotInExclusiveRange( param, param, max ) );
     }
 
     [Fact]
     public void IsNotInExclusiveRange_ShouldPass_WhenParamIsEqualToMaxValue()
     {
-        var (min, param) = Fixture.CreateDistinctSortedCollection<T>( 2 );
+        var (min, param) = Fixture.CreateManyDistinctSorted<T>( count: 2 );
         ShouldPass( () => Ensure.IsNotInExclusiveRange( param, min, param ) );
     }
 
@@ -316,7 +316,7 @@ public abstract class GenericEnsureOfComparableTypeTests<T> : GenericEnsureTests
     [Fact]
     public void IsNotInExclusiveRange_ShouldThrowArgumentOutOfRangeException_WhenParamIsBetweenTwoDistinctValues()
     {
-        var (min, param, max) = Fixture.CreateDistinctSortedCollection<T>( 3 );
+        var (min, param, max) = Fixture.CreateManyDistinctSorted<T>( count: 3 );
         ShouldThrowExactly<ArgumentOutOfRangeException>( () => Ensure.IsNotInExclusiveRange( param, min, max ) );
     }
 
@@ -362,7 +362,7 @@ public abstract class GenericEnsureOfComparableTypeTests<T> : GenericEnsureTests
     [Fact]
     public void IsOrdered_ShouldPass_ForCollectionWithOneElement()
     {
-        var param = Fixture.CreateMany<T>( 1 );
+        var param = Fixture.CreateMany<T>( count: 1 );
         ShouldPass( () => Ensure.IsOrdered( param ) );
     }
 

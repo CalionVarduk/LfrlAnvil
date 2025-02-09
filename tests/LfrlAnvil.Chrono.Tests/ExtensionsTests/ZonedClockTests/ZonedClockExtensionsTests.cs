@@ -129,7 +129,7 @@ public class ZonedClockExtensionsTests : TestsBase
     public void Freeze_ShouldReturnCorrectResult()
     {
         var timeZone = TimeZoneFactory.CreateRandom( Fixture );
-        var (first, second) = Fixture.CreateDistinctCollection<int>( count: 2 );
+        var (first, second) = Fixture.CreateManyDistinct<int>( count: 2 );
         var sut = GetMockedClock( timeZone, first, second );
 
         var frozen = sut.Freeze();

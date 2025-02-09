@@ -53,8 +53,8 @@ public abstract class GenericMultiDictionaryTests<TKey, TValue> : TestsBase
     [Fact]
     public void Add_ShouldAddNewItemToNonEmptyDictionaryCorrectly_WhenKeyDoesntExist()
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( count: 2 );
-        var values = Fixture.CreateDistinctCollection<TValue>( count: 2 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 2 );
+        var values = Fixture.CreateManyDistinct<TValue>( count: 2 );
         var sut = new MultiDictionary<TKey, TValue>();
         sut.Add( keys[0], values[0] );
 
@@ -71,7 +71,7 @@ public abstract class GenericMultiDictionaryTests<TKey, TValue> : TestsBase
     public void Add_ShouldAddNewItemToNonEmptyDictionaryCorrectly_WhenKeyExists()
     {
         var key = Fixture.Create<TKey>();
-        var values = Fixture.CreateDistinctCollection<TValue>( count: 2 );
+        var values = Fixture.CreateManyDistinct<TValue>( count: 2 );
         var sut = new MultiDictionary<TKey, TValue>();
         sut.Add( key, values[0] );
 
@@ -88,7 +88,7 @@ public abstract class GenericMultiDictionaryTests<TKey, TValue> : TestsBase
     public void AddRange_ShouldAddNewItemsToEmptyDictionaryCorrectly()
     {
         var key = Fixture.Create<TKey>();
-        var values = Fixture.CreateDistinctCollection<TValue>( count: 3 );
+        var values = Fixture.CreateManyDistinct<TValue>( count: 3 );
         var sut = new MultiDictionary<TKey, TValue>();
 
         sut.AddRange( key, values );
@@ -103,8 +103,8 @@ public abstract class GenericMultiDictionaryTests<TKey, TValue> : TestsBase
     [Fact]
     public void AddRange_ShouldAddNewItemsToNonEmptyDictionaryCorrectly_WhenKeyDoesntExist()
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( count: 2 );
-        var allValues = Fixture.CreateDistinctCollection<TValue>( count: 4 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 2 );
+        var allValues = Fixture.CreateManyDistinct<TValue>( count: 4 );
         var values = allValues.Skip( 1 ).ToList();
         var sut = new MultiDictionary<TKey, TValue>();
         sut.Add( keys[0], allValues[0] );
@@ -122,7 +122,7 @@ public abstract class GenericMultiDictionaryTests<TKey, TValue> : TestsBase
     public void AddRange_ShouldAddNewItemsToNonEmptyDictionaryCorrectly_WhenKeyExists()
     {
         var key = Fixture.Create<TKey>();
-        var allValues = Fixture.CreateDistinctCollection<TValue>( count: 4 );
+        var allValues = Fixture.CreateManyDistinct<TValue>( count: 4 );
         var values = allValues.Skip( 1 ).ToList();
         var sut = new MultiDictionary<TKey, TValue>();
         sut.Add( key, allValues[0] );
@@ -156,7 +156,7 @@ public abstract class GenericMultiDictionaryTests<TKey, TValue> : TestsBase
     public void SetRange_ShouldAddNewItemsToEmptyDictionaryCorrectly()
     {
         var key = Fixture.Create<TKey>();
-        var values = Fixture.CreateDistinctCollection<TValue>( count: 3 );
+        var values = Fixture.CreateManyDistinct<TValue>( count: 3 );
         var sut = new MultiDictionary<TKey, TValue>();
 
         sut.SetRange( key, values );
@@ -171,8 +171,8 @@ public abstract class GenericMultiDictionaryTests<TKey, TValue> : TestsBase
     [Fact]
     public void SetRange_ShouldAddNewItemsToNonEmptyDictionaryCorrectly_WhenKeyDoesntExist()
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( count: 2 );
-        var allValues = Fixture.CreateDistinctCollection<TValue>( count: 4 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 2 );
+        var allValues = Fixture.CreateManyDistinct<TValue>( count: 4 );
         var values = allValues.Skip( 1 ).ToList();
         var sut = new MultiDictionary<TKey, TValue>();
         sut.Add( keys[0], allValues[0] );
@@ -190,7 +190,7 @@ public abstract class GenericMultiDictionaryTests<TKey, TValue> : TestsBase
     public void SetRange_ShouldReplaceExistingItemsInNonEmptyDictionaryCorrectly_WhenKeyExists()
     {
         var key = Fixture.Create<TKey>();
-        var allValues = Fixture.CreateDistinctCollection<TValue>( count: 4 );
+        var allValues = Fixture.CreateManyDistinct<TValue>( count: 4 );
         var values = allValues.Skip( 1 ).ToList();
         var sut = new MultiDictionary<TKey, TValue>();
         sut.Add( key, allValues[0] );
@@ -237,7 +237,7 @@ public abstract class GenericMultiDictionaryTests<TKey, TValue> : TestsBase
     public void Remove_ShouldReturnTrueAndRemoveExistingItems_WhenDictionaryHasOneKey()
     {
         var key = Fixture.Create<TKey>();
-        var values = Fixture.CreateDistinctCollection<TValue>( count: 3 );
+        var values = Fixture.CreateManyDistinct<TValue>( count: 3 );
         var sut = new MultiDictionary<TKey, TValue>();
         sut.AddRange( key, values );
 
@@ -253,8 +253,8 @@ public abstract class GenericMultiDictionaryTests<TKey, TValue> : TestsBase
     [Fact]
     public void Remove_ShouldReturnTrueAndRemoveCorrectExistingItems()
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( count: 2 );
-        var values = Fixture.CreateDistinctCollection<TValue>( count: 4 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 2 );
+        var values = Fixture.CreateManyDistinct<TValue>( count: 4 );
         var sut = new MultiDictionary<TKey, TValue>();
         sut.AddRange( keys[0], values.Take( 2 ) );
         sut.AddRange( keys[1], values.Skip( 2 ) );
@@ -285,7 +285,7 @@ public abstract class GenericMultiDictionaryTests<TKey, TValue> : TestsBase
     public void Remove_WithValue_ShouldReturnTrueAndRemoveExistingItem_WhenKeyAndItemExist()
     {
         var key = Fixture.Create<TKey>();
-        var values = Fixture.CreateDistinctCollection<TValue>( count: 3 );
+        var values = Fixture.CreateManyDistinct<TValue>( count: 3 );
         var sut = new MultiDictionary<TKey, TValue>();
         sut.AddRange( key, values );
 
@@ -302,7 +302,7 @@ public abstract class GenericMultiDictionaryTests<TKey, TValue> : TestsBase
     public void Remove_WithValue_ShouldReturnFalse_WhenItemDoesNotExist()
     {
         var key = Fixture.Create<TKey>();
-        var values = Fixture.CreateDistinctCollection<TValue>( count: 3 );
+        var values = Fixture.CreateManyDistinct<TValue>( count: 3 );
         var sut = new MultiDictionary<TKey, TValue>();
         sut.AddRange( key, values.Take( 2 ) );
 
@@ -347,7 +347,7 @@ public abstract class GenericMultiDictionaryTests<TKey, TValue> : TestsBase
     public void RemoveAt_ShouldReturnTrueAndRemoveExistingItem_WhenKeyAndIndexExist()
     {
         var key = Fixture.Create<TKey>();
-        var values = Fixture.CreateDistinctCollection<TValue>( count: 3 );
+        var values = Fixture.CreateManyDistinct<TValue>( count: 3 );
         var sut = new MultiDictionary<TKey, TValue>();
         sut.AddRange( key, values );
 
@@ -383,7 +383,7 @@ public abstract class GenericMultiDictionaryTests<TKey, TValue> : TestsBase
     public void RemoveAt_ShouldThrowArgumentOutOfRangeException_WhenIndexDoesNotExist(int index)
     {
         var key = Fixture.Create<TKey>();
-        var values = Fixture.CreateDistinctCollection<TValue>( count: 3 );
+        var values = Fixture.CreateManyDistinct<TValue>( count: 3 );
         var sut = new MultiDictionary<TKey, TValue>();
         sut.AddRange( key, values );
 
@@ -407,7 +407,7 @@ public abstract class GenericMultiDictionaryTests<TKey, TValue> : TestsBase
     public void RemoveRange_ShouldReturnTrueAndRemoveExistingItems_WhenKeyAndRangeExist()
     {
         var key = Fixture.Create<TKey>();
-        var values = Fixture.CreateDistinctCollection<TValue>( count: 4 );
+        var values = Fixture.CreateManyDistinct<TValue>( count: 4 );
         var sut = new MultiDictionary<TKey, TValue>();
         sut.AddRange( key, values );
 
@@ -424,7 +424,7 @@ public abstract class GenericMultiDictionaryTests<TKey, TValue> : TestsBase
     public void RemoveRange_ShouldReturnTrueAndRemoveKey_WhenRangeExistsAndAllListItemsAreRemoved()
     {
         var key = Fixture.Create<TKey>();
-        var values = Fixture.CreateDistinctCollection<TValue>( count: 3 );
+        var values = Fixture.CreateManyDistinct<TValue>( count: 3 );
         var sut = new MultiDictionary<TKey, TValue>();
         sut.AddRange( key, values );
 
@@ -443,7 +443,7 @@ public abstract class GenericMultiDictionaryTests<TKey, TValue> : TestsBase
     public void RemoveRange_ShouldThrowArgumentOutOfRangeException_WhenIndexOrCountIsNegative(int index, int count)
     {
         var key = Fixture.Create<TKey>();
-        var values = Fixture.CreateDistinctCollection<TValue>( count: 3 );
+        var values = Fixture.CreateManyDistinct<TValue>( count: 3 );
         var sut = new MultiDictionary<TKey, TValue>();
         sut.AddRange( key, values );
 
@@ -459,7 +459,7 @@ public abstract class GenericMultiDictionaryTests<TKey, TValue> : TestsBase
     public void RemoveRange_ShouldThrowArgumentException_WhenIndexAndCountDenoteInvalidRange(int index, int count)
     {
         var key = Fixture.Create<TKey>();
-        var values = Fixture.CreateDistinctCollection<TValue>( count: 3 );
+        var values = Fixture.CreateManyDistinct<TValue>( count: 3 );
         var sut = new MultiDictionary<TKey, TValue>();
         sut.AddRange( key, values );
 
@@ -483,7 +483,7 @@ public abstract class GenericMultiDictionaryTests<TKey, TValue> : TestsBase
     public void RemoveAll_ShouldReturnAmountOfRemovedItems_WhenKeyExistsAndPredicateFindsItemsToRemove()
     {
         var key = Fixture.Create<TKey>();
-        var values = Fixture.CreateDistinctCollection<TValue>( count: 3 );
+        var values = Fixture.CreateManyDistinct<TValue>( count: 3 );
         var sut = new MultiDictionary<TKey, TValue>();
         sut.AddRange( key, values );
 
@@ -500,7 +500,7 @@ public abstract class GenericMultiDictionaryTests<TKey, TValue> : TestsBase
     public void RemoveAll_ShouldReturnZero_WhenPredicateDoesNotFindItemsToRemove()
     {
         var key = Fixture.Create<TKey>();
-        var values = Fixture.CreateDistinctCollection<TValue>( count: 3 );
+        var values = Fixture.CreateManyDistinct<TValue>( count: 3 );
         var sut = new MultiDictionary<TKey, TValue>();
         sut.AddRange( key, values );
 
@@ -517,7 +517,7 @@ public abstract class GenericMultiDictionaryTests<TKey, TValue> : TestsBase
     public void RemoveAll_ShouldReturnAmountOfRemovedItemsAndRemoveKey_WhenAllListItemsPassThePredicate()
     {
         var key = Fixture.Create<TKey>();
-        var values = Fixture.CreateDistinctCollection<TValue>( count: 3 );
+        var values = Fixture.CreateManyDistinct<TValue>( count: 3 );
         var sut = new MultiDictionary<TKey, TValue>();
         sut.AddRange( key, values );
 
@@ -534,7 +534,7 @@ public abstract class GenericMultiDictionaryTests<TKey, TValue> : TestsBase
     public void TryGetValue_ShouldReturnTrueAndCorrectResult_WhenKeyExists()
     {
         var key = Fixture.Create<TKey>();
-        var values = Fixture.CreateDistinctCollection<TValue>( count: 3 );
+        var values = Fixture.CreateManyDistinct<TValue>( count: 3 );
         var sut = new MultiDictionary<TKey, TValue>();
         sut.AddRange( key, values );
 
@@ -566,7 +566,7 @@ public abstract class GenericMultiDictionaryTests<TKey, TValue> : TestsBase
     public void GetCount_ShouldReturnCorrectResult_WhenKeyExists()
     {
         var key = Fixture.Create<TKey>();
-        var values = Fixture.CreateDistinctCollection<TValue>( count: 3 );
+        var values = Fixture.CreateManyDistinct<TValue>( count: 3 );
         var sut = new MultiDictionary<TKey, TValue>();
         sut.AddRange( key, values );
 
@@ -589,8 +589,8 @@ public abstract class GenericMultiDictionaryTests<TKey, TValue> : TestsBase
     [Fact]
     public void Clear_ShouldRemoveAllItems()
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( count: 3 );
-        var values = Fixture.CreateDistinctCollection<TValue>( count: 3 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 3 );
+        var values = Fixture.CreateManyDistinct<TValue>( count: 3 );
         var sut = new MultiDictionary<TKey, TValue>();
 
         foreach ( var (k, v) in keys.Zip( values ) )
@@ -616,7 +616,7 @@ public abstract class GenericMultiDictionaryTests<TKey, TValue> : TestsBase
     public void IndexerSet_ShouldAddNewItemsToEmptyDictionaryCorrectly()
     {
         var key = Fixture.Create<TKey>();
-        var values = Fixture.CreateDistinctCollection<TValue>( count: 3 );
+        var values = Fixture.CreateManyDistinct<TValue>( count: 3 );
         var sut = new MultiDictionary<TKey, TValue>();
 
         sut[key] = values;
@@ -631,8 +631,8 @@ public abstract class GenericMultiDictionaryTests<TKey, TValue> : TestsBase
     [Fact]
     public void IndexerSet_ShouldAddNewItemsToNonEmptyDictionaryCorrectly_WhenKeyDoesntExist()
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( count: 2 );
-        var allValues = Fixture.CreateDistinctCollection<TValue>( count: 4 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 2 );
+        var allValues = Fixture.CreateManyDistinct<TValue>( count: 4 );
         var values = allValues.Skip( 1 ).ToList();
         var sut = new MultiDictionary<TKey, TValue>();
         sut.Add( keys[0], allValues[0] );
@@ -650,7 +650,7 @@ public abstract class GenericMultiDictionaryTests<TKey, TValue> : TestsBase
     public void IndexerSet_ShouldReplaceExistingItemsInNonEmptyDictionaryCorrectly_WhenKeyExists()
     {
         var key = Fixture.Create<TKey>();
-        var allValues = Fixture.CreateDistinctCollection<TValue>( count: 4 );
+        var allValues = Fixture.CreateManyDistinct<TValue>( count: 4 );
         var values = allValues.Skip( 1 ).ToList();
         var sut = new MultiDictionary<TKey, TValue>();
         sut.Add( key, allValues[0] );
@@ -685,8 +685,8 @@ public abstract class GenericMultiDictionaryTests<TKey, TValue> : TestsBase
     [Fact]
     public void GetEnumerator_ShouldReturnCorrectResult()
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( count: 3 );
-        var values = Fixture.CreateDistinctCollection<TValue>( count: 3 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 3 );
+        var values = Fixture.CreateManyDistinct<TValue>( count: 3 );
         var sut = new MultiDictionary<TKey, TValue>();
 
         foreach ( var (k, v) in keys.Zip( values ) )
@@ -706,8 +706,8 @@ public abstract class GenericMultiDictionaryTests<TKey, TValue> : TestsBase
     [Fact]
     public void Keys_ShouldReturnCorrectResult()
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( count: 3 );
-        var values = Fixture.CreateDistinctCollection<TValue>( count: 3 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 3 );
+        var values = Fixture.CreateManyDistinct<TValue>( count: 3 );
         var sut = new MultiDictionary<TKey, TValue>();
 
         foreach ( var (k, v) in keys.Zip( values ) )
@@ -725,8 +725,8 @@ public abstract class GenericMultiDictionaryTests<TKey, TValue> : TestsBase
     [Fact]
     public void Values_ShouldReturnCorrectResult()
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( count: 3 );
-        var values = Fixture.CreateDistinctCollection<TValue>( count: 3 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 3 );
+        var values = Fixture.CreateManyDistinct<TValue>( count: 3 );
         var sut = new MultiDictionary<TKey, TValue>();
 
         foreach ( var (k, v) in keys.Zip( values ) )
@@ -756,7 +756,7 @@ public abstract class GenericMultiDictionaryTests<TKey, TValue> : TestsBase
     public void ILookup_IndexerGet_ShouldReturnCorrectCollection_WhenKeyExists()
     {
         var key = Fixture.Create<TKey>();
-        var values = Fixture.CreateDistinctCollection<TValue>( count: 3 );
+        var values = Fixture.CreateManyDistinct<TValue>( count: 3 );
         var source = new MultiDictionary<TKey, TValue>();
         source.AddRange( key, values );
         ILookup<TKey, TValue> sut = source;
@@ -781,7 +781,7 @@ public abstract class GenericMultiDictionaryTests<TKey, TValue> : TestsBase
     public void ILookup_Contains_ShouldReturnTrue_WhenKeyExists()
     {
         var key = Fixture.Create<TKey>();
-        var values = Fixture.CreateDistinctCollection<TValue>( count: 3 );
+        var values = Fixture.CreateManyDistinct<TValue>( count: 3 );
         var source = new MultiDictionary<TKey, TValue>();
         source.AddRange( key, values );
         ILookup<TKey, TValue> sut = source;
@@ -794,8 +794,8 @@ public abstract class GenericMultiDictionaryTests<TKey, TValue> : TestsBase
     [Fact]
     public void ILookup_GetEnumerator_ShouldReturnCorrectResult()
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( count: 3 );
-        var values = Fixture.CreateDistinctCollection<TValue>( count: 3 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 3 );
+        var values = Fixture.CreateManyDistinct<TValue>( count: 3 );
         var sut = new MultiDictionary<TKey, TValue>();
 
         foreach ( var (k, v) in keys.Zip( values ) )
@@ -815,8 +815,8 @@ public abstract class GenericMultiDictionaryTests<TKey, TValue> : TestsBase
     [Fact]
     public void IDictionaryKeys_ShouldReturnCorrectResult()
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( 3 );
-        var values = Fixture.CreateDistinctCollection<TValue>( 3 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 3 );
+        var values = Fixture.CreateManyDistinct<TValue>( count: 3 );
         var source = new MultiDictionary<TKey, TValue>();
         IDictionary<TKey, IReadOnlyList<TValue>> sut = source;
         source.Add( keys[0], values[0] );
@@ -831,8 +831,8 @@ public abstract class GenericMultiDictionaryTests<TKey, TValue> : TestsBase
     [Fact]
     public void IDictionaryValues_ShouldReturnCorrectResult()
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( 3 );
-        var values = Fixture.CreateDistinctCollection<TValue>( 3 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 3 );
+        var values = Fixture.CreateManyDistinct<TValue>( count: 3 );
         var source = new MultiDictionary<TKey, TValue>();
         IDictionary<TKey, IReadOnlyList<TValue>> sut = source;
         source.Add( keys[0], values[0] );
@@ -847,8 +847,8 @@ public abstract class GenericMultiDictionaryTests<TKey, TValue> : TestsBase
     [Fact]
     public void IReadOnlyDictionaryKeys_ShouldReturnCorrectResult()
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( 3 );
-        var values = Fixture.CreateDistinctCollection<TValue>( 3 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 3 );
+        var values = Fixture.CreateManyDistinct<TValue>( count: 3 );
         var source = new MultiDictionary<TKey, TValue>();
         IReadOnlyDictionary<TKey, IReadOnlyList<TValue>> sut = source;
         source.Add( keys[0], values[0] );
@@ -863,8 +863,8 @@ public abstract class GenericMultiDictionaryTests<TKey, TValue> : TestsBase
     [Fact]
     public void IReadOnlyDictionaryValues_ShouldReturnCorrectResult()
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( 3 );
-        var values = Fixture.CreateDistinctCollection<TValue>( 3 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 3 );
+        var values = Fixture.CreateManyDistinct<TValue>( count: 3 );
         var source = new MultiDictionary<TKey, TValue>();
         IReadOnlyDictionary<TKey, IReadOnlyList<TValue>> sut = source;
         source.Add( keys[0], values[0] );
@@ -880,7 +880,7 @@ public abstract class GenericMultiDictionaryTests<TKey, TValue> : TestsBase
     public void IDictionaryAdd_ShouldBeEquivalentToAddRange()
     {
         var key = Fixture.Create<TKey>();
-        var allValues = Fixture.CreateDistinctCollection<TValue>( count: 4 );
+        var allValues = Fixture.CreateManyDistinct<TValue>( count: 4 );
         var values = allValues.Skip( 1 ).ToList();
         var source = new MultiDictionary<TKey, TValue>();
         IDictionary<TKey, IReadOnlyList<TValue>> sut = source;
@@ -898,8 +898,8 @@ public abstract class GenericMultiDictionaryTests<TKey, TValue> : TestsBase
     [Fact]
     public void IDictionaryRemove_ShouldBeEquivalentToRemove()
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( count: 2 );
-        var values = Fixture.CreateDistinctCollection<TValue>( count: 4 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 2 );
+        var values = Fixture.CreateManyDistinct<TValue>( count: 4 );
         var source = new MultiDictionary<TKey, TValue>();
         IDictionary<TKey, IReadOnlyList<TValue>> sut = source;
         source.AddRange( keys[0], values.Take( 2 ) );
@@ -919,7 +919,7 @@ public abstract class GenericMultiDictionaryTests<TKey, TValue> : TestsBase
     public void ICollectionAdd_ShouldBeEquivalentToAddRange()
     {
         var key = Fixture.Create<TKey>();
-        var allValues = Fixture.CreateDistinctCollection<TValue>( count: 4 );
+        var allValues = Fixture.CreateManyDistinct<TValue>( count: 4 );
         var values = allValues.Skip( 1 ).ToList();
         var source = new MultiDictionary<TKey, TValue>();
         ICollection<KeyValuePair<TKey, IReadOnlyList<TValue>>> sut = source;
@@ -937,8 +937,8 @@ public abstract class GenericMultiDictionaryTests<TKey, TValue> : TestsBase
     [Fact]
     public void ICollectionRemove_ShouldBeEquivalentToRemoveAll_AndReturnTrueIfAtLeastOneElementWasRemoved()
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( count: 2 );
-        var values = Fixture.CreateDistinctCollection<TValue>( count: 6 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 2 );
+        var values = Fixture.CreateManyDistinct<TValue>( count: 6 );
         var source = new MultiDictionary<TKey, TValue>();
         ICollection<KeyValuePair<TKey, IReadOnlyList<TValue>>> sut = source;
         source.AddRange( keys[0], values.Take( 3 ) );
@@ -958,7 +958,7 @@ public abstract class GenericMultiDictionaryTests<TKey, TValue> : TestsBase
     public void ICollectionContains_ShouldReturnFalse_WhenAnyElementDoesNotExistInValuesUnderTheSpecifiedKey()
     {
         var key = Fixture.Create<TKey>();
-        var values = Fixture.CreateDistinctCollection<TValue>( count: 4 );
+        var values = ( IReadOnlyList<TValue> )Fixture.CreateManyDistinct<TValue>( count: 4 );
         var source = new MultiDictionary<TKey, TValue>();
         ICollection<KeyValuePair<TKey, IReadOnlyList<TValue>>> sut = source;
         source.AddRange( key, values.Take( 3 ) );
@@ -972,7 +972,7 @@ public abstract class GenericMultiDictionaryTests<TKey, TValue> : TestsBase
     public void ICollectionContains_ShouldReturnTrue_WhenAllElementsExistInValuesUnderTheSpecifiedKey()
     {
         var key = Fixture.Create<TKey>();
-        var values = Fixture.CreateDistinctCollection<TValue>( count: 3 );
+        var values = Fixture.CreateManyDistinct<TValue>( count: 3 );
         var source = new MultiDictionary<TKey, TValue>();
         ICollection<KeyValuePair<TKey, IReadOnlyList<TValue>>> sut = source;
         source.AddRange( key, values );

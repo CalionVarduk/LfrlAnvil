@@ -143,7 +143,7 @@ public abstract class GenericWhenAnyEventSourceTests<TEvent> : TestsBase
     [Fact]
     public void Listen_ShouldEmitOnlyOnceAnyInnerStreamEmitsWithResultContainingTheirFirstEventWithCorrectIndex()
     {
-        var values = Fixture.CreateDistinctCollection<TEvent>( count: 6 );
+        var values = Fixture.CreateManyDistinct<TEvent>( count: 6 );
         var firstStreamValues = new[] { values[0], values[1] };
         var secondStreamValues = new[] { values[2], values[3] };
         var thirdStreamValues = new[] { values[4], values[5] };
@@ -181,7 +181,7 @@ public abstract class GenericWhenAnyEventSourceTests<TEvent> : TestsBase
     [Fact]
     public void Listen_ShouldEmitOnlyOnceFirstInnerStreamImmediatelyEmitsWithResultContainingTheirFirstEventWithCorrectIndex()
     {
-        var values = Fixture.CreateDistinctCollection<TEvent>( count: 6 );
+        var values = Fixture.CreateManyDistinct<TEvent>( count: 6 );
         var firstStreamValues = new[] { values[0], values[1] };
         var secondStreamValues = new[] { values[2], values[3] };
         var thirdStreamValues = new[] { values[4], values[5] };
@@ -219,7 +219,7 @@ public abstract class GenericWhenAnyEventSourceTests<TEvent> : TestsBase
     [Fact]
     public void WhenAny_ThenListen_ShouldEmitOnlyOnceAnyInnerStreamEmitsWithResultContainingTheirFirstEventWithCorrectIndex()
     {
-        var values = Fixture.CreateDistinctCollection<TEvent>( count: 6 );
+        var values = Fixture.CreateManyDistinct<TEvent>( count: 6 );
         var firstStreamValues = new[] { values[0], values[1] };
         var secondStreamValues = new[] { values[2], values[3] };
         var thirdStreamValues = new[] { values[4], values[5] };

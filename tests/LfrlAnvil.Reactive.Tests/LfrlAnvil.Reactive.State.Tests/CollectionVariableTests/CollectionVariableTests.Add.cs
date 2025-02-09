@@ -12,7 +12,7 @@ public partial class CollectionVariableTests
     [Fact]
     public void Add_ShouldAddNewElementAndUpdateChangedFlag_WhenNewElementDoesNotExist()
     {
-        var (initialElement, element) = Fixture.CreateDistinctCollection<TestElement>( count: 2 );
+        var (initialElement, element) = Fixture.CreateManyDistinct<TestElement>( count: 2 );
         var keySelector = Lambda.Of( (TestElement e) => e.Key );
         var sut = CollectionVariable.WithoutValidators<string>.Create( new[] { initialElement }, keySelector );
 
@@ -72,9 +72,9 @@ public partial class CollectionVariableTests
     [Fact]
     public void Add_ShouldUpdateErrorsAndWarnings_WhenNewElementIsAdded()
     {
-        var (initialElement, element) = Fixture.CreateDistinctCollection<TestElement>( count: 2 );
+        var (initialElement, element) = Fixture.CreateManyDistinct<TestElement>( count: 2 );
         var keySelector = Lambda.Of( (TestElement e) => e.Key );
-        var (error, warning, elementError, elementWarning) = Fixture.CreateDistinctCollection<string>( count: 4 );
+        var (error, warning, elementError, elementWarning) = Fixture.CreateManyDistinct<string>( count: 4 );
         var errorsValidator = Validators<string>.Fail<ICollectionVariableElements<int, TestElement, string>>( error );
         var warningsValidator = Validators<string>.Fail<ICollectionVariableElements<int, TestElement, string>>( warning );
         var elementErrorsValidator = Validators<string>.Fail<TestElement>( elementError );
@@ -214,7 +214,7 @@ public partial class CollectionVariableTests
     public void Add_ShouldAddInitialElementCorrectlyAfterItWasRemoved_WithChangedFlag()
     {
         var key = Fixture.Create<int>();
-        var (oldValue, value) = Fixture.CreateDistinctCollection<string>( count: 2 );
+        var (oldValue, value) = Fixture.CreateManyDistinct<string>( count: 2 );
         var initialElement = new TestElement( key, oldValue );
         var element = new TestElement( key, value );
         var keySelector = Lambda.Of( (TestElement e) => e.Key );
@@ -326,7 +326,7 @@ public partial class CollectionVariableTests
     [Fact]
     public void Add_WithRange_ShouldFilterElementsToAddCorrectlyAndAddOnlyThoseThatDoNotExistAndDoNotRepeat()
     {
-        var allElements = Fixture.CreateDistinctCollection<TestElement>( count: 5 );
+        var allElements = Fixture.CreateManyDistinct<TestElement>( count: 5 );
         var initialElements = new[] { allElements[0], allElements[1], allElements[2] };
         var elements = new[]
         {

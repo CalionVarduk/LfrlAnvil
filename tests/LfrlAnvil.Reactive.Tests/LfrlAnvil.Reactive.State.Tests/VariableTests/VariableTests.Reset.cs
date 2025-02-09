@@ -10,8 +10,8 @@ public partial class VariableTests
     [Fact]
     public void Reset_ShouldUpdateInitialValueAndValueAndResetFlagsAndValidation_WhenNewInitialValueIsNotEqualToNewValue()
     {
-        var (initialValue, value, newInitialValue, newValue) = Fixture.CreateDistinctCollection<int>( count: 4 );
-        var (error, warning) = Fixture.CreateDistinctCollection<string>( count: 2 );
+        var (initialValue, value, newInitialValue, newValue) = Fixture.CreateManyDistinct<int>( count: 4 );
+        var (error, warning) = Fixture.CreateManyDistinct<string>( count: 2 );
         var errorsValidator = Validators<string>.Fail<int>( error );
         var warningsValidator = Validators<string>.Fail<int>( warning );
         var sut = Variable.Create( initialValue, value, errorsValidator: errorsValidator, warningsValidator: warningsValidator );
@@ -61,8 +61,8 @@ public partial class VariableTests
     [Fact]
     public void Reset_ShouldUpdateInitialValueAndValueAndResetFlagsAndValidation_WhenNewInitialValueIsEqualToNewValue()
     {
-        var (initialValue, value, newValue) = Fixture.CreateDistinctCollection<int>( count: 3 );
-        var (error, warning) = Fixture.CreateDistinctCollection<string>( count: 2 );
+        var (initialValue, value, newValue) = Fixture.CreateManyDistinct<int>( count: 3 );
+        var (error, warning) = Fixture.CreateManyDistinct<string>( count: 2 );
         var errorsValidator = Validators<string>.Fail<int>( error );
         var warningsValidator = Validators<string>.Fail<int>( warning );
         var sut = Variable.Create( initialValue, value, errorsValidator: errorsValidator, warningsValidator: warningsValidator );
@@ -112,7 +112,7 @@ public partial class VariableTests
     [Fact]
     public void Reset_ShouldPreserveReadOnlyFlag_WhenItIsEnabled()
     {
-        var (initialValue, value, newValue) = Fixture.CreateDistinctCollection<int>( count: 3 );
+        var (initialValue, value, newValue) = Fixture.CreateManyDistinct<int>( count: 3 );
         var sut = Variable.WithoutValidators<string>.Create( initialValue, value );
         sut.SetReadOnly( true );
 
@@ -129,7 +129,7 @@ public partial class VariableTests
     [Fact]
     public void Reset_ShouldDoNothing_WhenVariableIsDisposed()
     {
-        var (value, newInitialValue, newValue) = Fixture.CreateDistinctCollection<int>( count: 3 );
+        var (value, newInitialValue, newValue) = Fixture.CreateManyDistinct<int>( count: 3 );
         var sut = Variable.WithoutValidators<string>.Create( value );
 
         var onChangeEvents = new List<VariableValueChangeEvent<int, string>>();

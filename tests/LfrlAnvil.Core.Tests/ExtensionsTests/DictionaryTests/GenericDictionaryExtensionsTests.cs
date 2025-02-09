@@ -37,7 +37,7 @@ public abstract class GenericDictionaryExtensionsTests<TKey, TValue> : TestsBase
     public void GetOrAdd_ShouldReturnExistingValue()
     {
         var key = Fixture.Create<TKey>();
-        var (value, providedValue) = Fixture.CreateDistinctCollection<TValue>( 2 );
+        var (value, providedValue) = Fixture.CreateManyDistinct<TValue>( count: 2 );
         var sut = new Dictionary<TKey, TValue> { { key, value } };
 
         var result = sut.GetOrAdd( key, () => providedValue );
@@ -65,7 +65,7 @@ public abstract class GenericDictionaryExtensionsTests<TKey, TValue> : TestsBase
     public void GetOrAdd_WithLazy_ShouldReturnExistingValue()
     {
         var key = Fixture.Create<TKey>();
-        var (value, providedValue) = Fixture.CreateDistinctCollection<TValue>( 2 );
+        var (value, providedValue) = Fixture.CreateManyDistinct<TValue>( count: 2 );
         var sut = new Dictionary<TKey, TValue> { { key, value } };
 
         var result = sut.GetOrAdd( key, new Lazy<TValue>( () => providedValue ) );
@@ -109,7 +109,7 @@ public abstract class GenericDictionaryExtensionsTests<TKey, TValue> : TestsBase
     public void AddOrUpdate_ShouldUpdateValue_WhenKeyExists()
     {
         var key = Fixture.Create<TKey>();
-        var (oldValue, newValue) = Fixture.CreateDistinctCollection<TValue>( 2 );
+        var (oldValue, newValue) = Fixture.CreateManyDistinct<TValue>( count: 2 );
         var sut = new Dictionary<TKey, TValue> { { key, oldValue } };
 
         var result = sut.AddOrUpdate( key, newValue );
@@ -141,7 +141,7 @@ public abstract class GenericDictionaryExtensionsTests<TKey, TValue> : TestsBase
     public void TryUpdate_ShouldReturnTrue_WhenKeyExists()
     {
         var key = Fixture.Create<TKey>();
-        var (oldValue, newValue) = Fixture.CreateDistinctCollection<TValue>( 2 );
+        var (oldValue, newValue) = Fixture.CreateManyDistinct<TValue>( count: 2 );
         var sut = new Dictionary<TKey, TValue> { { key, oldValue } };
 
         var result = sut.TryUpdate( key, newValue );

@@ -9,7 +9,7 @@ public abstract class GenericComparerExtensionsTests<T> : TestsBase
     [Fact]
     public void Invert_ShouldReturnComparerThatReturnsNegatedBaseComparisonResult()
     {
-        var (lo, hi) = Fixture.CreateDistinctSortedCollection<T>( 2 );
+        var (lo, hi) = Fixture.CreateManyDistinctSorted<T>( count: 2 );
         var sut = Comparer<T>.Default;
 
         var result = sut.Invert();

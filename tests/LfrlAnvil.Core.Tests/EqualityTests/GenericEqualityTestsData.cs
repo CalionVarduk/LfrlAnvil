@@ -4,9 +4,9 @@ namespace LfrlAnvil.Tests.EqualityTests;
 
 public class GenericEqualityTestsData<T>
 {
-    public static TheoryData<T, T, bool> CreateCtorTestData(IFixture fixture)
+    public static TheoryData<T, T, bool> CreateCtorTestData(Fixture fixture)
     {
-        var (_1, _2) = fixture.CreateDistinctCollection<T>( 2 );
+        var (_1, _2) = fixture.CreateManyDistinct<T>( count: 2 );
 
         return new TheoryData<T, T, bool>
         {
@@ -15,9 +15,9 @@ public class GenericEqualityTestsData<T>
         };
     }
 
-    public static TheoryData<T, T, T, T, bool> CreateEqualsTestData(IFixture fixture)
+    public static TheoryData<T, T, T, T, bool> CreateEqualsTestData(Fixture fixture)
     {
-        var (_1, _2, _3, _4) = fixture.CreateDistinctCollection<T>( 4 );
+        var (_1, _2, _3, _4) = fixture.CreateManyDistinct<T>( count: 4 );
 
         return new TheoryData<T, T, T, T, bool>
         {
@@ -28,14 +28,14 @@ public class GenericEqualityTestsData<T>
         };
     }
 
-    public static IEnumerable<object?[]> CreateNotEqualsTestData(IFixture fixture)
+    public static IEnumerable<object?[]> CreateNotEqualsTestData(Fixture fixture)
     {
         return CreateEqualsTestData( fixture ).ConvertResult( (bool r) => ! r );
     }
 
-    public static TheoryData<T, T> CreateConversionOperatorTestData(IFixture fixture)
+    public static TheoryData<T, T> CreateConversionOperatorTestData(Fixture fixture)
     {
-        var (_1, _2) = fixture.CreateDistinctCollection<T>( 2 );
+        var (_1, _2) = fixture.CreateManyDistinct<T>( count: 2 );
 
         return new TheoryData<T, T>
         {

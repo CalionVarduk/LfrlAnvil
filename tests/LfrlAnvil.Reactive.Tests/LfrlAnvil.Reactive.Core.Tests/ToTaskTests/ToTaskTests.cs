@@ -72,7 +72,7 @@ public class ToTaskTests : TestsBase
     [Fact]
     public async Task ToTaskExtension_ShouldReturnTaskThatRunsToCompletionWithLastEvent_WhenSourcePublishesEventsAndDisposes()
     {
-        var values = Fixture.CreateDistinctCollection<int>( count: 3 );
+        var values = Fixture.CreateManyDistinct<int>( count: 3 );
         var expectedResult = values[^1];
         var source = new EventPublisher<int>();
         var task = source.ToTask( CancellationToken.None );
@@ -109,7 +109,7 @@ public class ToTaskTests : TestsBase
     [Fact]
     public async Task ToTaskExtension_ShouldReturnTaskThatRunsToCompletionWithLastEvent_WhenSourcePublishesEventsAndSubscriberDisposes()
     {
-        var values = Fixture.CreateDistinctCollection<int>( count: 3 );
+        var values = Fixture.CreateManyDistinct<int>( count: 3 );
         var expectedResult = values[^1];
         var source = new EventPublisher<int>();
         var task = source.ToTask( CancellationToken.None );

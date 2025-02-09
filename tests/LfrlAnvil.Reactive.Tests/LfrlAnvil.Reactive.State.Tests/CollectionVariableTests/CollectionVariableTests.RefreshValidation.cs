@@ -14,7 +14,7 @@ public partial class CollectionVariableTests
     {
         var element = Fixture.Create<TestElement>();
         var keySelector = Lambda.Of( (TestElement e) => e.Key );
-        var (error, warning, elementError, elementWarning) = Fixture.CreateDistinctCollection<string>( count: 4 );
+        var (error, warning, elementError, elementWarning) = Fixture.CreateManyDistinct<string>( count: 4 );
         var errorsValidator = Validators<string>.Fail<ICollectionVariableElements<int, TestElement, string>>( error );
         var warningsValidator = Validators<string>.Fail<ICollectionVariableElements<int, TestElement, string>>( warning );
         var elementErrorsValidator = Validators<string>.Fail<TestElement>( elementError );
@@ -61,9 +61,9 @@ public partial class CollectionVariableTests
     [Fact]
     public void RefreshValidation_WithKey_ShouldDoNothing_WhenKeyDoesNotExist()
     {
-        var (element, other) = Fixture.CreateDistinctCollection<TestElement>( count: 2 );
+        var (element, other) = Fixture.CreateManyDistinct<TestElement>( count: 2 );
         var keySelector = Lambda.Of( (TestElement e) => e.Key );
-        var (error, warning, elementError, elementWarning) = Fixture.CreateDistinctCollection<string>( count: 4 );
+        var (error, warning, elementError, elementWarning) = Fixture.CreateManyDistinct<string>( count: 4 );
         var errorsValidator = Validators<string>.Fail<ICollectionVariableElements<int, TestElement, string>>( error );
         var warningsValidator = Validators<string>.Fail<ICollectionVariableElements<int, TestElement, string>>( warning );
         var elementErrorsValidator = Validators<string>.Fail<TestElement>( elementError );
@@ -89,7 +89,7 @@ public partial class CollectionVariableTests
     {
         var element = Fixture.Create<TestElement>();
         var keySelector = Lambda.Of( (TestElement e) => e.Key );
-        var (error, warning, elementError, elementWarning) = Fixture.CreateDistinctCollection<string>( count: 4 );
+        var (error, warning, elementError, elementWarning) = Fixture.CreateManyDistinct<string>( count: 4 );
         var errorsValidator = Validators<string>.Fail<ICollectionVariableElements<int, TestElement, string>>( error );
         var warningsValidator = Validators<string>.Fail<ICollectionVariableElements<int, TestElement, string>>( warning );
         var elementErrorsValidator = Validators<string>.Fail<TestElement>( elementError );
@@ -115,9 +115,9 @@ public partial class CollectionVariableTests
     [Fact]
     public void RefreshValidation_WithKeyRange_ShouldUpdateElementsAndCollectionValidationWithoutDuplicates()
     {
-        var (element, otherElement, nonExistingElement) = Fixture.CreateDistinctCollection<TestElement>( count: 3 );
+        var (element, otherElement, nonExistingElement) = Fixture.CreateManyDistinct<TestElement>( count: 3 );
         var keySelector = Lambda.Of( (TestElement e) => e.Key );
-        var (error, warning, elementError, elementWarning) = Fixture.CreateDistinctCollection<string>( count: 4 );
+        var (error, warning, elementError, elementWarning) = Fixture.CreateManyDistinct<string>( count: 4 );
         var errorsValidator = Validators<string>.Fail<ICollectionVariableElements<int, TestElement, string>>( error );
         var warningsValidator = Validators<string>.Fail<ICollectionVariableElements<int, TestElement, string>>( warning );
         var elementErrorsValidator = Validators<string>.Fail<TestElement>( elementError );
@@ -161,7 +161,7 @@ public partial class CollectionVariableTests
     {
         var element = Fixture.Create<TestElement>();
         var keySelector = Lambda.Of( (TestElement e) => e.Key );
-        var (error, warning, elementError, elementWarning) = Fixture.CreateDistinctCollection<string>( count: 4 );
+        var (error, warning, elementError, elementWarning) = Fixture.CreateManyDistinct<string>( count: 4 );
         var errorsValidator = Validators<string>.Fail<ICollectionVariableElements<int, TestElement, string>>( error );
         var warningsValidator = Validators<string>.Fail<ICollectionVariableElements<int, TestElement, string>>( warning );
         var elementErrorsValidator = Validators<string>.Fail<TestElement>( elementError );
@@ -202,9 +202,9 @@ public partial class CollectionVariableTests
     [Fact]
     public void RefreshValidation_WithKeyRange_ShouldUpdateCollectionValidation_WhenNoneOfTheKeysExist()
     {
-        var (element, other1, other2) = Fixture.CreateDistinctCollection<TestElement>( count: 3 );
+        var (element, other1, other2) = Fixture.CreateManyDistinct<TestElement>( count: 3 );
         var keySelector = Lambda.Of( (TestElement e) => e.Key );
-        var (error, warning, elementError, elementWarning) = Fixture.CreateDistinctCollection<string>( count: 4 );
+        var (error, warning, elementError, elementWarning) = Fixture.CreateManyDistinct<string>( count: 4 );
         var errorsValidator = Validators<string>.Fail<ICollectionVariableElements<int, TestElement, string>>( error );
         var warningsValidator = Validators<string>.Fail<ICollectionVariableElements<int, TestElement, string>>( warning );
         var elementErrorsValidator = Validators<string>.Fail<TestElement>( elementError );
@@ -245,9 +245,9 @@ public partial class CollectionVariableTests
     [Fact]
     public void RefreshValidation_WithKeyRange_ShouldUpdateElementsAndCollectionValidation_WhenFirstKeyDoesNotExist()
     {
-        var (element, otherElement, nonExistingElement) = Fixture.CreateDistinctCollection<TestElement>( count: 3 );
+        var (element, otherElement, nonExistingElement) = Fixture.CreateManyDistinct<TestElement>( count: 3 );
         var keySelector = Lambda.Of( (TestElement e) => e.Key );
-        var (error, warning, elementError, elementWarning) = Fixture.CreateDistinctCollection<string>( count: 4 );
+        var (error, warning, elementError, elementWarning) = Fixture.CreateManyDistinct<string>( count: 4 );
         var errorsValidator = Validators<string>.Fail<ICollectionVariableElements<int, TestElement, string>>( error );
         var warningsValidator = Validators<string>.Fail<ICollectionVariableElements<int, TestElement, string>>( warning );
         var elementErrorsValidator = Validators<string>.Fail<TestElement>( elementError );
@@ -290,7 +290,7 @@ public partial class CollectionVariableTests
     {
         var element = Fixture.Create<TestElement>();
         var keySelector = Lambda.Of( (TestElement e) => e.Key );
-        var (error, warning, elementError, elementWarning) = Fixture.CreateDistinctCollection<string>( count: 4 );
+        var (error, warning, elementError, elementWarning) = Fixture.CreateManyDistinct<string>( count: 4 );
         var errorsValidator = Validators<string>.Fail<ICollectionVariableElements<int, TestElement, string>>( error );
         var warningsValidator = Validators<string>.Fail<ICollectionVariableElements<int, TestElement, string>>( warning );
         var elementErrorsValidator = Validators<string>.Fail<TestElement>( elementError );
@@ -316,9 +316,9 @@ public partial class CollectionVariableTests
     [Fact]
     public void RefreshValidation_ShouldUpdateAllElementsAndCollectionValidation()
     {
-        var (element, otherElement) = Fixture.CreateDistinctCollection<TestElement>( count: 2 );
+        var (element, otherElement) = Fixture.CreateManyDistinct<TestElement>( count: 2 );
         var keySelector = Lambda.Of( (TestElement e) => e.Key );
-        var (error, warning, elementError, elementWarning) = Fixture.CreateDistinctCollection<string>( count: 4 );
+        var (error, warning, elementError, elementWarning) = Fixture.CreateManyDistinct<string>( count: 4 );
         var errorsValidator = Validators<string>.Fail<ICollectionVariableElements<int, TestElement, string>>( error );
         var warningsValidator = Validators<string>.Fail<ICollectionVariableElements<int, TestElement, string>>( warning );
         var elementErrorsValidator = Validators<string>.Fail<TestElement>( elementError );

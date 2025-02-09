@@ -4,7 +4,7 @@ namespace LfrlAnvil.Chrono.Tests.TimestampTests;
 
 public class TimestampTestsData
 {
-    public static TheoryData<long, DateTime> GetTicksCtorData(IFixture fixture)
+    public static TheoryData<long, DateTime> GetTicksCtorData(Fixture fixture)
     {
         return new TheoryData<long, DateTime>
         {
@@ -16,7 +16,7 @@ public class TimestampTestsData
         };
     }
 
-    public static TheoryData<DateTime, long> GetUtcDateTimeCtorData(IFixture fixture)
+    public static TheoryData<DateTime, long> GetUtcDateTimeCtorData(Fixture fixture)
     {
         return new TheoryData<DateTime, long>
         {
@@ -28,7 +28,7 @@ public class TimestampTestsData
         };
     }
 
-    public static TheoryData<long, long, bool> GetEqualsData(IFixture fixture)
+    public static TheoryData<long, long, bool> GetEqualsData(Fixture fixture)
     {
         return new TheoryData<long, long, bool>
         {
@@ -37,7 +37,7 @@ public class TimestampTestsData
         };
     }
 
-    public static TheoryData<long, long, int> GetCompareToData(IFixture fixture)
+    public static TheoryData<long, long, int> GetCompareToData(Fixture fixture)
     {
         return new TheoryData<long, long, int>
         {
@@ -47,7 +47,7 @@ public class TimestampTestsData
         };
     }
 
-    public static TheoryData<long, long, long> GetAddData(IFixture fixture)
+    public static TheoryData<long, long, long> GetAddData(Fixture fixture)
     {
         return new TheoryData<long, long, long>
         {
@@ -61,7 +61,7 @@ public class TimestampTestsData
         };
     }
 
-    public static TheoryData<long, long, long> GetSubtractData(IFixture fixture)
+    public static TheoryData<long, long, long> GetSubtractData(Fixture fixture)
     {
         return new TheoryData<long, long, long>
         {
@@ -75,27 +75,27 @@ public class TimestampTestsData
         };
     }
 
-    public static IEnumerable<object?[]> GetNotEqualsData(IFixture fixture)
+    public static IEnumerable<object?[]> GetNotEqualsData(Fixture fixture)
     {
         return GetEqualsData( fixture ).ConvertResult( (bool r) => ! r );
     }
 
-    public static IEnumerable<object?[]> GetGreaterThanComparisonData(IFixture fixture)
+    public static IEnumerable<object?[]> GetGreaterThanComparisonData(Fixture fixture)
     {
         return GetCompareToData( fixture ).ConvertResult( (int r) => r > 0 );
     }
 
-    public static IEnumerable<object?[]> GetGreaterThanOrEqualToComparisonData(IFixture fixture)
+    public static IEnumerable<object?[]> GetGreaterThanOrEqualToComparisonData(Fixture fixture)
     {
         return GetCompareToData( fixture ).ConvertResult( (int r) => r >= 0 );
     }
 
-    public static IEnumerable<object?[]> GetLessThanComparisonData(IFixture fixture)
+    public static IEnumerable<object?[]> GetLessThanComparisonData(Fixture fixture)
     {
         return GetCompareToData( fixture ).ConvertResult( (int r) => r < 0 );
     }
 
-    public static IEnumerable<object?[]> GetLessThanOrEqualToComparisonData(IFixture fixture)
+    public static IEnumerable<object?[]> GetLessThanOrEqualToComparisonData(Fixture fixture)
     {
         return GetCompareToData( fixture ).ConvertResult( (int r) => r <= 0 );
     }

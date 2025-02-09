@@ -8,6 +8,12 @@ namespace LfrlAnvil.Reactive.Queues.Tests.ReorderableQueueEventSourceTests;
 public abstract class GenericReorderableQueueEventSourceTests<TEvent> : TestsBase
     where TEvent : notnull
 {
+    protected GenericReorderableQueueEventSourceTests()
+    {
+        Fixture.Customize<long>( (_, _) => _ => Random.Shared.Next( 0, int.MaxValue ) );
+        Fixture.Customize<int>( (_, _) => _ => Random.Shared.Next( 0, byte.MaxValue ) );
+    }
+
     [Fact]
     public void Ctor_ShouldCreateWithCorrectQueue()
     {
@@ -28,10 +34,10 @@ public abstract class GenericReorderableQueueEventSourceTests<TEvent> : TestsBas
     public void Move_ShouldMoveUnderlyingQueueAndDequeueAndEmitAllPendingEvents()
     {
         var (queueStartPoint, firstDequeuePoint, secondDequeuePoint, thirdDequeuePoint) =
-            Fixture.CreateDistinctSortedCollection<long>( count: 4 );
+            Fixture.CreateManyDistinctSorted<long>( count: 4 );
 
-        var (firstDelta, secondDelta, thirdDelta) = Fixture.CreateDistinctCollection<int>( count: 3 );
-        var (firstEvent, secondEvent, thirdEvent) = Fixture.CreateDistinctCollection<TEvent>( count: 3 );
+        var (firstDelta, secondDelta, thirdDelta) = Fixture.CreateManyDistinct<int>( count: 3 );
+        var (firstEvent, secondEvent, thirdEvent) = Fixture.CreateManyDistinct<TEvent>( count: 3 );
         var delta = ( int )(thirdDequeuePoint - queueStartPoint);
 
         var receivedEvents = new List<FromQueue<TEvent, long, int>>();

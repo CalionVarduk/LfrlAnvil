@@ -7,6 +7,11 @@ namespace LfrlAnvil.Reactive.State.Tests.CollectionVariableRootTests;
 
 public class StaticCollectionVariableRootTests : TestsBase
 {
+    public StaticCollectionVariableRootTests()
+    {
+        Fixture.Customize<VariableMock>( (_, _) => f => new VariableMock( f.Create<int>(), f.Create<string>() ) );
+    }
+
     [Fact]
     public void Create_WithoutValidators_ShouldReturnCorrectVariable()
     {

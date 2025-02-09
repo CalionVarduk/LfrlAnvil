@@ -1,4 +1,5 @@
-﻿using System.Threading;
+﻿using System.Linq;
+using System.Threading;
 using LfrlAnvil.Functional;
 using LfrlAnvil.Reactive.Exceptions;
 using LfrlAnvil.Reactive.Extensions;
@@ -58,7 +59,7 @@ public class ConcurrentEventPublisherTests : TestsBase
     [Fact]
     public void IEventPublisherPublish_ShouldThrowInvalidArgumentTypeException_WhenEventIsNotOfCorrectType()
     {
-        var @event = Fixture.Create<int[]>();
+        var @event = Fixture.CreateMany<int>().ToArray();
         var @base = new EventPublisher<int>();
         IEventPublisher sut = new ConcurrentEventPublisher<int, EventPublisher<int>>( @base );
 

@@ -56,8 +56,8 @@ public class DirectedGraphTests : TestsBase
     [Fact]
     public void AddNode_ShouldAddAnotherNodeWithDifferentKey()
     {
-        var (otherKey, key) = Fixture.CreateDistinctCollection<string>( count: 2 );
-        var (otherValue, value) = Fixture.CreateDistinctCollection<int>( count: 2 );
+        var (otherKey, key) = Fixture.CreateManyDistinct<string>( count: 2 );
+        var (otherValue, value) = Fixture.CreateManyDistinct<int>( count: 2 );
         var sut = new DirectedGraph<string, int, long>();
         var first = sut.AddNode( otherKey, otherValue );
 
@@ -78,7 +78,7 @@ public class DirectedGraphTests : TestsBase
     public void AddNode_ShouldThrowArgumentException_WhenKeyAlreadyExists()
     {
         var key = Fixture.Create<string>();
-        var (otherValue, value) = Fixture.CreateDistinctCollection<int>( count: 2 );
+        var (otherValue, value) = Fixture.CreateManyDistinct<int>( count: 2 );
         var sut = new DirectedGraph<string, int, long>();
         sut.AddNode( key, value );
 
@@ -111,8 +111,8 @@ public class DirectedGraphTests : TestsBase
     [Fact]
     public void TryAddNode_ShouldAddAnotherNodeWithDifferentKey()
     {
-        var (otherKey, key) = Fixture.CreateDistinctCollection<string>( count: 2 );
-        var (otherValue, value) = Fixture.CreateDistinctCollection<int>( count: 2 );
+        var (otherKey, key) = Fixture.CreateManyDistinct<string>( count: 2 );
+        var (otherValue, value) = Fixture.CreateManyDistinct<int>( count: 2 );
         var sut = new DirectedGraph<string, int, long>();
         var first = sut.AddNode( otherKey, otherValue );
 
@@ -135,7 +135,7 @@ public class DirectedGraphTests : TestsBase
     public void TryAddNode_ShouldDoNothing_WhenKeyAlreadyExists()
     {
         var key = Fixture.Create<string>();
-        var (otherValue, value) = Fixture.CreateDistinctCollection<int>( count: 2 );
+        var (otherValue, value) = Fixture.CreateManyDistinct<int>( count: 2 );
         var sut = new DirectedGraph<string, int, long>();
         var first = sut.AddNode( key, value );
 
@@ -174,7 +174,7 @@ public class DirectedGraphTests : TestsBase
     public void GetOrAddNode_ShouldReturnExistingNode_WhenKeyAlreadyExists()
     {
         var key = Fixture.Create<string>();
-        var (otherValue, value) = Fixture.CreateDistinctCollection<int>( count: 2 );
+        var (otherValue, value) = Fixture.CreateManyDistinct<int>( count: 2 );
         var sut = new DirectedGraph<string, int, long>();
         var first = sut.AddNode( key, value );
 
@@ -525,7 +525,7 @@ public class DirectedGraphTests : TestsBase
     [Fact]
     public void ContainsEdge_ShouldReturnFalse_WhenEdgeDoesNotExist()
     {
-        var (key1, key2) = Fixture.CreateDistinctCollection<string>( count: 2 );
+        var (key1, key2) = Fixture.CreateManyDistinct<string>( count: 2 );
         var sut = new DirectedGraph<string, int, long>();
         sut.AddNode( key1, Fixture.Create<int>() );
         sut.AddNode( key2, Fixture.Create<int>() );
@@ -538,7 +538,7 @@ public class DirectedGraphTests : TestsBase
     [Fact]
     public void ContainsEdge_ShouldReturnTrue_WhenEdgeExistsAndEdgeSourceIsFirst()
     {
-        var (key1, key2) = Fixture.CreateDistinctCollection<string>( count: 2 );
+        var (key1, key2) = Fixture.CreateManyDistinct<string>( count: 2 );
         var sut = new DirectedGraph<string, int, long>();
         sut.AddNode( key1, Fixture.Create<int>() );
         sut.AddNode( key2, Fixture.Create<int>() );
@@ -552,7 +552,7 @@ public class DirectedGraphTests : TestsBase
     [Fact]
     public void ContainsEdge_ShouldReturnTrue_WhenEdgeExistsAndEdgeTargetIsFirst()
     {
-        var (key1, key2) = Fixture.CreateDistinctCollection<string>( count: 2 );
+        var (key1, key2) = Fixture.CreateManyDistinct<string>( count: 2 );
         var sut = new DirectedGraph<string, int, long>();
         sut.AddNode( key1, Fixture.Create<int>() );
         sut.AddNode( key2, Fixture.Create<int>() );
@@ -566,7 +566,7 @@ public class DirectedGraphTests : TestsBase
     [Fact]
     public void Contains_WithEdge_ShouldReturnFalse_WhenEdgeBelongsToDifferentGraph()
     {
-        var (key1, key2) = Fixture.CreateDistinctCollection<string>( count: 2 );
+        var (key1, key2) = Fixture.CreateManyDistinct<string>( count: 2 );
         var other = new DirectedGraph<string, int, long>();
         other.AddNode( key1, Fixture.Create<int>() );
         other.AddNode( key2, Fixture.Create<int>() );
@@ -584,7 +584,7 @@ public class DirectedGraphTests : TestsBase
     [Fact]
     public void Contains_WithEdge_ShouldReturnTrue_WhenEdgeBelongsToTheGraph()
     {
-        var (key1, key2) = Fixture.CreateDistinctCollection<string>( count: 2 );
+        var (key1, key2) = Fixture.CreateManyDistinct<string>( count: 2 );
         var sut = new DirectedGraph<string, int, long>();
         sut.AddNode( key1, Fixture.Create<int>() );
         sut.AddNode( key2, Fixture.Create<int>() );
@@ -598,7 +598,7 @@ public class DirectedGraphTests : TestsBase
     [Fact]
     public void Contains_WithEdge_ShouldReturnFalse_WhenEdgeHasBeenRemovedFromTheGraph()
     {
-        var (key1, key2) = Fixture.CreateDistinctCollection<string>( count: 2 );
+        var (key1, key2) = Fixture.CreateManyDistinct<string>( count: 2 );
         var sut = new DirectedGraph<string, int, long>();
         sut.AddNode( key1, Fixture.Create<int>() );
         sut.AddNode( key2, Fixture.Create<int>() );
@@ -613,7 +613,7 @@ public class DirectedGraphTests : TestsBase
     [Fact]
     public void Contains_WithAbstractEdge_ShouldReturnFalse_WhenEdgeBelongsToDifferentGraph()
     {
-        var (key1, key2) = Fixture.CreateDistinctCollection<string>( count: 2 );
+        var (key1, key2) = Fixture.CreateManyDistinct<string>( count: 2 );
         var other = new DirectedGraph<string, int, long>();
         other.AddNode( key1, Fixture.Create<int>() );
         other.AddNode( key2, Fixture.Create<int>() );
@@ -642,7 +642,7 @@ public class DirectedGraphTests : TestsBase
     [Fact]
     public void Contains_WithAbstractEdge_ShouldReturnTrue_WhenEdgeBelongsToTheGraph()
     {
-        var (key1, key2) = Fixture.CreateDistinctCollection<string>( count: 2 );
+        var (key1, key2) = Fixture.CreateManyDistinct<string>( count: 2 );
         var sut = new DirectedGraph<string, int, long>();
         sut.AddNode( key1, Fixture.Create<int>() );
         sut.AddNode( key2, Fixture.Create<int>() );
@@ -656,7 +656,7 @@ public class DirectedGraphTests : TestsBase
     [Fact]
     public void Contains_WithAbstractEdge_ShouldReturnFalse_WhenEdgeHasBeenRemovedFromTheGraph()
     {
-        var (key1, key2) = Fixture.CreateDistinctCollection<string>( count: 2 );
+        var (key1, key2) = Fixture.CreateManyDistinct<string>( count: 2 );
         var sut = new DirectedGraph<string, int, long>();
         sut.AddNode( key1, Fixture.Create<int>() );
         sut.AddNode( key2, Fixture.Create<int>() );
@@ -695,7 +695,7 @@ public class DirectedGraphTests : TestsBase
     [Fact]
     public void GetEdge_ShouldThrowKeyNotFoundException_WhenEdgeDoesNotExist()
     {
-        var (key1, key2) = Fixture.CreateDistinctCollection<string>( count: 2 );
+        var (key1, key2) = Fixture.CreateManyDistinct<string>( count: 2 );
         var sut = new DirectedGraph<string, int, long>();
         sut.AddNode( key1, Fixture.Create<int>() );
         sut.AddNode( key2, Fixture.Create<int>() );
@@ -708,7 +708,7 @@ public class DirectedGraphTests : TestsBase
     [Fact]
     public void GetEdge_ShouldReturnCorrectEdge_WhenEdgeExistsAndSourceKeyIsFirst()
     {
-        var (key1, key2) = Fixture.CreateDistinctCollection<string>( count: 2 );
+        var (key1, key2) = Fixture.CreateManyDistinct<string>( count: 2 );
         var sut = new DirectedGraph<string, int, long>();
         sut.AddNode( key1, Fixture.Create<int>() );
         sut.AddNode( key2, Fixture.Create<int>() );
@@ -722,7 +722,7 @@ public class DirectedGraphTests : TestsBase
     [Fact]
     public void GetEdge_ShouldReturnCorrectEdge_WhenEdgeExistsAndTargetKeyIsFirst()
     {
-        var (key1, key2) = Fixture.CreateDistinctCollection<string>( count: 2 );
+        var (key1, key2) = Fixture.CreateManyDistinct<string>( count: 2 );
         var sut = new DirectedGraph<string, int, long>();
         sut.AddNode( key1, Fixture.Create<int>() );
         sut.AddNode( key2, Fixture.Create<int>() );
@@ -768,7 +768,7 @@ public class DirectedGraphTests : TestsBase
     [Fact]
     public void TryGetEdge_ShouldReturnFalse_WhenEdgeDoesNotExist()
     {
-        var (key1, key2) = Fixture.CreateDistinctCollection<string>( count: 2 );
+        var (key1, key2) = Fixture.CreateManyDistinct<string>( count: 2 );
         var sut = new DirectedGraph<string, int, long>();
         sut.AddNode( key1, Fixture.Create<int>() );
         sut.AddNode( key2, Fixture.Create<int>() );
@@ -785,7 +785,7 @@ public class DirectedGraphTests : TestsBase
     [Fact]
     public void TryGetEdge_ShouldReturnCorrectEdge_WhenEdgeExistsAndSourceKeyIsFirst()
     {
-        var (key1, key2) = Fixture.CreateDistinctCollection<string>( count: 2 );
+        var (key1, key2) = Fixture.CreateManyDistinct<string>( count: 2 );
         var sut = new DirectedGraph<string, int, long>();
         sut.AddNode( key1, Fixture.Create<int>() );
         sut.AddNode( key2, Fixture.Create<int>() );
@@ -803,7 +803,7 @@ public class DirectedGraphTests : TestsBase
     [Fact]
     public void TryGetEdge_ShouldReturnCorrectEdge_WhenEdgeExistsAndTargetKeyIsFirst()
     {
-        var (key1, key2) = Fixture.CreateDistinctCollection<string>( count: 2 );
+        var (key1, key2) = Fixture.CreateManyDistinct<string>( count: 2 );
         var sut = new DirectedGraph<string, int, long>();
         sut.AddNode( key1, Fixture.Create<int>() );
         sut.AddNode( key2, Fixture.Create<int>() );
@@ -880,7 +880,7 @@ public class DirectedGraphTests : TestsBase
     [Fact]
     public void RemoveNode_WithOutValue_ShouldReturnTrueAndRemoveNodeAndAssociatedEdges_WhenKeyExists()
     {
-        var values = Fixture.CreateDistinctCollection<int>( count: 3 );
+        var values = Fixture.CreateManyDistinct<int>( count: 3 );
         var sut = new DirectedGraph<string, int, long>();
         var a = sut.AddNode( "a", values[0] );
         var b = sut.AddNode( "b", values[1] );
@@ -939,7 +939,7 @@ public class DirectedGraphTests : TestsBase
     [Fact]
     public void Remove_WithNode_ShouldReturnTrueAndRemoveNodeAndAssociatedEdges_WhenNodeBelongsToTheGraph()
     {
-        var values = Fixture.CreateDistinctCollection<int>( count: 3 );
+        var values = Fixture.CreateManyDistinct<int>( count: 3 );
         var sut = new DirectedGraph<string, int, long>();
         var a = sut.AddNode( "a", values[0] );
         var b = sut.AddNode( "b", values[1] );
@@ -1008,7 +1008,7 @@ public class DirectedGraphTests : TestsBase
     [Fact]
     public void Remove_WithAbstractNode_ShouldReturnTrueAndRemoveNodeAndAssociatedEdges_WhenNodeBelongsToTheGraph()
     {
-        var values = Fixture.CreateDistinctCollection<int>( count: 3 );
+        var values = Fixture.CreateManyDistinct<int>( count: 3 );
         var sut = new DirectedGraph<string, int, long>();
         IDirectedGraphNode<string, int, long> a = sut.AddNode( "a", values[0] );
         var b = sut.AddNode( "b", values[1] );
@@ -1061,7 +1061,7 @@ public class DirectedGraphTests : TestsBase
     [Fact]
     public void RemoveEdge_ShouldReturnFalse_WhenEdgeDoesNotExist()
     {
-        var (key1, key2) = Fixture.CreateDistinctCollection<string>( count: 2 );
+        var (key1, key2) = Fixture.CreateManyDistinct<string>( count: 2 );
         var sut = new DirectedGraph<string, int, long>();
         sut.AddNode( key1, Fixture.Create<int>() );
         sut.AddNode( key2, Fixture.Create<int>() );
@@ -1092,7 +1092,7 @@ public class DirectedGraphTests : TestsBase
     [Fact]
     public void RemoveEdge_ShouldReturnTrueAndRemoveEdge_WhenEdgeExistsAndSourceKeyIsFirst()
     {
-        var (key1, key2) = Fixture.CreateDistinctCollection<string>( count: 2 );
+        var (key1, key2) = Fixture.CreateManyDistinct<string>( count: 2 );
         var sut = new DirectedGraph<string, int, long>();
         var source = sut.AddNode( key1, Fixture.Create<int>() );
         var target = sut.AddNode( key2, Fixture.Create<int>() );
@@ -1112,7 +1112,7 @@ public class DirectedGraphTests : TestsBase
     [Fact]
     public void RemoveEdge_ShouldReturnTrueAndRemoveEdge_WhenEdgeExistsAndTargetKeyIsFirst()
     {
-        var (key1, key2) = Fixture.CreateDistinctCollection<string>( count: 2 );
+        var (key1, key2) = Fixture.CreateManyDistinct<string>( count: 2 );
         var sut = new DirectedGraph<string, int, long>();
         var source = sut.AddNode( key1, Fixture.Create<int>() );
         var target = sut.AddNode( key2, Fixture.Create<int>() );
@@ -1164,7 +1164,7 @@ public class DirectedGraphTests : TestsBase
     [Fact]
     public void RemoveEdge_WithOutResult_ShouldReturnFalse_WhenEdgeDoesNotExist()
     {
-        var (key1, key2) = Fixture.CreateDistinctCollection<string>( count: 2 );
+        var (key1, key2) = Fixture.CreateManyDistinct<string>( count: 2 );
         var sut = new DirectedGraph<string, int, long>();
         sut.AddNode( key1, Fixture.Create<int>() );
         sut.AddNode( key2, Fixture.Create<int>() );
@@ -1200,7 +1200,7 @@ public class DirectedGraphTests : TestsBase
     [Fact]
     public void RemoveEdge_WithOutResult_ShouldReturnTrueAndRemoveEdge_WhenEdgeExistsAndSourceKeyIsFirst()
     {
-        var (key1, key2) = Fixture.CreateDistinctCollection<string>( count: 2 );
+        var (key1, key2) = Fixture.CreateManyDistinct<string>( count: 2 );
         var sut = new DirectedGraph<string, int, long>();
         var source = sut.AddNode( key1, Fixture.Create<int>() );
         var target = sut.AddNode( key2, Fixture.Create<int>() );
@@ -1221,7 +1221,7 @@ public class DirectedGraphTests : TestsBase
     [Fact]
     public void RemoveEdge_WithOutResult_ShouldReturnTrueAndRemoveEdge_WhenEdgeExistsAndTargetKeyIsFirst()
     {
-        var (key1, key2) = Fixture.CreateDistinctCollection<string>( count: 2 );
+        var (key1, key2) = Fixture.CreateManyDistinct<string>( count: 2 );
         var sut = new DirectedGraph<string, int, long>();
         var source = sut.AddNode( key1, Fixture.Create<int>() );
         var target = sut.AddNode( key2, Fixture.Create<int>() );

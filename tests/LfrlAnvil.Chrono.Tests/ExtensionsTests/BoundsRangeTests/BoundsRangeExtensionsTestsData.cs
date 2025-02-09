@@ -4,7 +4,7 @@ namespace LfrlAnvil.Chrono.Tests.ExtensionsTests.BoundsRangeTests;
 
 public class BoundsRangeExtensionsTestsData
 {
-    public static TheoryData<IEnumerable<(DateTime Min, DateTime Max)>, TimeSpan> GetGetTimeSpanData(IFixture fixture)
+    public static TheoryData<IEnumerable<(DateTime Min, DateTime Max)>, TimeSpan> GetGetTimeSpanData(Fixture fixture)
     {
         var dt1 = new DateTime( 2021, 8, 26 );
         var dt2 = new DateTime( 2021, 8, 27, 12, 34, 56, 789 ).AddTicks( 9876 );
@@ -19,7 +19,7 @@ public class BoundsRangeExtensionsTestsData
         };
     }
 
-    public static TheoryData<IEnumerable<(DateTime Min, DateTime Max)>, Duration> GetGetDurationData(IFixture fixture)
+    public static TheoryData<IEnumerable<(DateTime Min, DateTime Max)>, Duration> GetGetDurationData(Fixture fixture)
     {
         var dt1 = new DateTime( 2021, 8, 26 );
         var dt2 = new DateTime( 2021, 8, 27, 12, 34, 56, 789 ).AddTicks( 9876 );

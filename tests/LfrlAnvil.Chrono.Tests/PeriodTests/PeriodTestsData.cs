@@ -4,7 +4,7 @@ namespace LfrlAnvil.Chrono.Tests.PeriodTests;
 
 public class PeriodTestsData
 {
-    public static TheoryData<int, int, int, int, PeriodUnits> GetCtorWithDateData(IFixture fixture)
+    public static TheoryData<int, int, int, int, PeriodUnits> GetCtorWithDateData(Fixture fixture)
     {
         return new TheoryData<int, int, int, int, PeriodUnits>
         {
@@ -29,7 +29,7 @@ public class PeriodTestsData
         };
     }
 
-    public static TheoryData<int, int, int, int, int, int, PeriodUnits> GetCtorWithTimeData(IFixture fixture)
+    public static TheoryData<int, int, int, int, int, int, PeriodUnits> GetCtorWithTimeData(Fixture fixture)
     {
         return new TheoryData<int, int, int, int, int, int, PeriodUnits>
         {
@@ -66,7 +66,7 @@ public class PeriodTestsData
             (int Years, int Months, int Weeks, int Days),
             (int Hours, int Minutes, int Seconds, int Milliseconds, int Microseconds, int Ticks),
             PeriodUnits>
-        GetCtorWithFullData(IFixture fixture)
+        GetCtorWithFullData(Fixture fixture)
     {
         return new TheoryData<(int, int, int, int), (int, int, int, int, int, int), PeriodUnits>
         {
@@ -98,7 +98,7 @@ public class PeriodTestsData
         };
     }
 
-    public static TheoryData<TimeSpan, int, int, int, int, int, int, int, PeriodUnits> GetCtorWithTimeSpanData(IFixture fixture)
+    public static TheoryData<TimeSpan, int, int, int, int, int, int, int, PeriodUnits> GetCtorWithTimeSpanData(Fixture fixture)
     {
         var day = TimeSpan.FromDays( 1 );
         var hour = TimeSpan.FromHours( 1 );
@@ -139,7 +139,7 @@ public class PeriodTestsData
             (int Years, int Months, int Weeks, int Days),
             (int Hours, int Minutes, int Seconds, int Milliseconds, int Microseconds, int Ticks),
             string>
-        GetToStringData(IFixture fixture)
+        GetToStringData(Fixture fixture)
     {
         return new TheoryData<(int, int, int, int), (int, int, int, int, int, int), string>
         {
@@ -170,7 +170,7 @@ public class PeriodTestsData
             (int Years, int Months, int Weeks, int Days),
             (int Hours, int Minutes, int Seconds, int Milliseconds, int Microseconds, int Ticks),
             bool>
-        GetEqualsData(IFixture fixture)
+        GetEqualsData(Fixture fixture)
     {
         return new TheoryData<(int, int, int, int), (int, int, int, int, int, int), (int, int, int, int), (int, int, int, int, int, int),
             bool>
@@ -197,7 +197,7 @@ public class PeriodTestsData
             (int Hours, int Minutes, int Seconds, int Milliseconds, int Microseconds, int Ticks),
             (int Years, int Months, int Weeks, int Days),
             (int Hours, int Minutes, int Seconds, int Milliseconds, int Microseconds, int Ticks)>
-        GetAddData(IFixture fixture)
+        GetAddData(Fixture fixture)
     {
         return new TheoryData<
             (int, int, int, int), (int, int, int, int, int, int),
@@ -227,7 +227,7 @@ public class PeriodTestsData
             (int Hours, int Minutes, int Seconds, int Milliseconds, int Microseconds, int Ticks),
             (int Years, int Months, int Weeks, int Days),
             (int Hours, int Minutes, int Seconds, int Milliseconds, int Microseconds, int Ticks)>
-        GetSubtractData(IFixture fixture)
+        GetSubtractData(Fixture fixture)
     {
         return new TheoryData<
             (int, int, int, int), (int, int, int, int, int, int),
@@ -258,7 +258,7 @@ public class PeriodTestsData
             PeriodUnits,
             (int Years, int Months, int Weeks, int Days),
             (int Hours, int Minutes, int Seconds, int Milliseconds, int Microseconds, int Ticks)>
-        GetSetData(IFixture fixture)
+        GetSetData(Fixture fixture)
     {
         var date1 = (1, 2, 3, 4);
         var time1 = (5, 6, 7, 8, 9, 10);
@@ -293,7 +293,7 @@ public class PeriodTestsData
             (int Hours, int Minutes, int Seconds, int Milliseconds, int Microseconds, int Ticks),
             (int Years, int Months, int Weeks, int Days),
             (int Hours, int Minutes, int Seconds, int Milliseconds, int Microseconds, int Ticks)>
-        GetAbsData(IFixture fixture)
+        GetAbsData(Fixture fixture)
     {
         var date = (1, 2, 3, 4);
         var time = (5, 6, 7, 8, 9, 10);
@@ -317,7 +317,7 @@ public class PeriodTestsData
             PeriodUnits,
             (int Years, int Months, int Weeks, int Days),
             (int Hours, int Minutes, int Seconds, int Milliseconds, int Microseconds, int Ticks)>
-        GetSkipData(IFixture fixture)
+        GetSkipData(Fixture fixture)
     {
         var date = (1, 2, 3, 4);
         var time = (5, 6, 7, 8, 9, 10);
@@ -350,7 +350,7 @@ public class PeriodTestsData
             PeriodUnits,
             (int Years, int Months, int Weeks, int Days),
             (int Hours, int Minutes, int Seconds, int Milliseconds, int Microseconds, int Ticks)>
-        GetTakeData(IFixture fixture)
+        GetTakeData(Fixture fixture)
     {
         var date = (1, 2, 3, 4);
         var time = (5, 6, 7, 8, 9, 10);
@@ -377,7 +377,7 @@ public class PeriodTestsData
         };
     }
 
-    public static IEnumerable<object?[]> GetNotEqualsData(IFixture fixture)
+    public static IEnumerable<object?[]> GetNotEqualsData(Fixture fixture)
     {
         return GetEqualsData( fixture ).ConvertResult( (bool r) => ! r );
     }

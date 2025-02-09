@@ -16,9 +16,9 @@ public class IntervalEventSourceTests : TestsBase
     public void Ctor_ShouldCreateEventSourceWithoutSubscriptions()
     {
         var scheduler = new SynchronousTaskScheduler();
-        var interval = Duration.FromTicks( Fixture.CreatePositiveInt32() );
+        var interval = Duration.FromTicks( Fixture.Create<int>( x => x > 0 ) );
         var spinWaitDurationHint = Duration.FromTicks( Fixture.Create<uint>() );
-        var count = Fixture.CreatePositiveInt32();
+        var count = Fixture.Create<int>( x => x > 0 );
         var timestampProvider = Substitute.For<ITimestampProvider>();
         var sut = new IntervalEventSource( timestampProvider, interval, scheduler, spinWaitDurationHint, count );
 
@@ -38,7 +38,7 @@ public class IntervalEventSourceTests : TestsBase
         var scheduler = new SynchronousTaskScheduler();
         var interval = Duration.FromTicks( ticks );
         var spinWaitDurationHint = Duration.FromTicks( Fixture.Create<uint>() );
-        var count = Fixture.CreatePositiveInt32();
+        var count = Fixture.Create<int>( x => x > 0 );
         var timestampProvider = Substitute.For<ITimestampProvider>();
 
         var action = Lambda.Of( () => new IntervalEventSource( timestampProvider, interval, scheduler, spinWaitDurationHint, count ) );
@@ -54,7 +54,7 @@ public class IntervalEventSourceTests : TestsBase
         var scheduler = new SynchronousTaskScheduler();
         var interval = Duration.FromMilliseconds( ms );
         var spinWaitDurationHint = Duration.FromTicks( Fixture.Create<uint>() );
-        var count = Fixture.CreatePositiveInt32();
+        var count = Fixture.Create<int>( x => x > 0 );
         var timestampProvider = Substitute.For<ITimestampProvider>();
 
         var action = Lambda.Of( () => new IntervalEventSource( timestampProvider, interval, scheduler, spinWaitDurationHint, count ) );
@@ -66,9 +66,9 @@ public class IntervalEventSourceTests : TestsBase
     public void Ctor_ShouldThrowArgumentOutOfRangeException_WhenSpinWaitDurationHintIsLessThanZero()
     {
         var scheduler = new SynchronousTaskScheduler();
-        var interval = Duration.FromTicks( Fixture.CreatePositiveInt32() );
+        var interval = Duration.FromTicks( Fixture.Create<int>( x => x > 0 ) );
         var spinWaitDurationHint = Duration.FromTicks( -1 );
-        var count = Fixture.CreatePositiveInt32();
+        var count = Fixture.Create<int>( x => x > 0 );
         var timestampProvider = Substitute.For<ITimestampProvider>();
 
         var action = Lambda.Of( () => new IntervalEventSource( timestampProvider, interval, scheduler, spinWaitDurationHint, count ) );
@@ -82,7 +82,7 @@ public class IntervalEventSourceTests : TestsBase
     public void Ctor_ShouldThrowArgumentOutOfRangeException_WhenCountIsLessThanOne(long count)
     {
         var scheduler = new SynchronousTaskScheduler();
-        var interval = Duration.FromTicks( Fixture.CreatePositiveInt32() );
+        var interval = Duration.FromTicks( Fixture.Create<int>( x => x > 0 ) );
         var spinWaitDurationHint = Duration.FromTicks( Fixture.Create<uint>() );
         var timestampProvider = Substitute.For<ITimestampProvider>();
 
@@ -96,9 +96,9 @@ public class IntervalEventSourceTests : TestsBase
     {
         var listener = Substitute.For<IEventListener<WithInterval<long>>>();
         var scheduler = new SynchronousTaskScheduler();
-        var interval = Duration.FromTicks( Fixture.CreatePositiveInt32() );
+        var interval = Duration.FromTicks( Fixture.Create<int>( x => x > 0 ) );
         var spinWaitDurationHint = Duration.FromTicks( Fixture.Create<uint>() );
-        var count = Fixture.CreatePositiveInt32();
+        var count = Fixture.Create<int>( x => x > 0 );
         var timestampProvider = Substitute.For<ITimestampProvider>();
         var sut = new IntervalEventSource( timestampProvider, interval, scheduler, spinWaitDurationHint, count );
         sut.Dispose();
@@ -117,7 +117,7 @@ public class IntervalEventSourceTests : TestsBase
     {
         var listener = Substitute.For<IEventListener<WithInterval<long>>>();
         var interval = Duration.FromSeconds( 1 );
-        var count = Fixture.CreatePositiveInt32();
+        var count = Fixture.Create<int>( x => x > 0 );
         var timestampProvider = Substitute.For<ITimestampProvider>();
         timestampProvider.GetNow().Returns( Timestamp.Zero );
         var sut = new IntervalEventSource(

@@ -4,9 +4,9 @@ namespace LfrlAnvil.Functional.Tests.ExtensionsTests.EnumerableTests;
 
 public class GenericEnumerableExtensionsTestsData<T>
 {
-    public static TheoryData<IEnumerable<T>, T> GetTryMinData(IFixture fixture)
+    public static TheoryData<IEnumerable<T>, T> GetTryMinData(Fixture fixture)
     {
-        var (_1, _2, _3) = fixture.CreateDistinctSortedCollection<T>( 3 );
+        var (_1, _2, _3) = fixture.CreateManyDistinctSorted<T>( count: 3 );
 
         return new TheoryData<IEnumerable<T>, T>
         {
@@ -22,9 +22,9 @@ public class GenericEnumerableExtensionsTestsData<T>
         };
     }
 
-    public static TheoryData<IEnumerable<T>, T> GetTryMaxData(IFixture fixture)
+    public static TheoryData<IEnumerable<T>, T> GetTryMaxData(Fixture fixture)
     {
-        var (_1, _2, _3) = fixture.CreateDistinctSortedCollection<T>( 3 );
+        var (_1, _2, _3) = fixture.CreateManyDistinctSorted<T>( count: 3 );
 
         return new TheoryData<IEnumerable<T>, T>
         {
@@ -40,9 +40,9 @@ public class GenericEnumerableExtensionsTestsData<T>
         };
     }
 
-    public static TheoryData<IReadOnlyList<T>, int> GetTryElementAtWithTooLargeIndexData(IFixture fixture)
+    public static TheoryData<IReadOnlyList<T>, int> GetTryElementAtWithTooLargeIndexData(Fixture fixture)
     {
-        var (_1, _2, _3) = fixture.CreateDistinctCollection<T>( 3 );
+        var (_1, _2, _3) = fixture.CreateManyDistinct<T>( count: 3 );
 
         return new TheoryData<IReadOnlyList<T>, int>
         {
@@ -53,9 +53,9 @@ public class GenericEnumerableExtensionsTestsData<T>
         };
     }
 
-    public static TheoryData<IReadOnlyList<T>, int, T> GetTryElementAtData(IFixture fixture)
+    public static TheoryData<IReadOnlyList<T>, int, T> GetTryElementAtData(Fixture fixture)
     {
-        var (_1, _2, _3) = fixture.CreateDistinctCollection<T>( 3 );
+        var (_1, _2, _3) = fixture.CreateManyDistinct<T>( count: 3 );
 
         return new TheoryData<IReadOnlyList<T>, int, T>
         {

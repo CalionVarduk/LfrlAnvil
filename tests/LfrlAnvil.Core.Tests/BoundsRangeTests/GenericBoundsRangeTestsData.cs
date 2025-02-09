@@ -5,9 +5,9 @@ namespace LfrlAnvil.Tests.BoundsRangeTests;
 public class GenericBoundsRangeTestsData<T>
     where T : IComparable<T>
 {
-    public static TheoryData<IEnumerable<Bounds<T>>, string> GetToStringData(IFixture fixture)
+    public static TheoryData<IEnumerable<Bounds<T>>, string> GetToStringData(Fixture fixture)
     {
-        var (a, b, c, d) = fixture.CreateDistinctSortedCollection<T>( 4 );
+        var (a, b, c, d) = fixture.CreateManyDistinctSorted<T>( count: 4 );
 
         return new TheoryData<IEnumerable<Bounds<T>>, string>
         {
@@ -18,9 +18,9 @@ public class GenericBoundsRangeTestsData<T>
         };
     }
 
-    public static TheoryData<IEnumerable<Bounds<T>>> GetGetHashCodeData(IFixture fixture)
+    public static TheoryData<IEnumerable<Bounds<T>>> GetGetHashCodeData(Fixture fixture)
     {
-        var (a, b, c, d) = fixture.CreateDistinctSortedCollection<T>( 4 );
+        var (a, b, c, d) = fixture.CreateManyDistinctSorted<T>( count: 4 );
 
         return new TheoryData<IEnumerable<Bounds<T>>>
         {
@@ -31,9 +31,9 @@ public class GenericBoundsRangeTestsData<T>
         };
     }
 
-    public static TheoryData<IEnumerable<Bounds<T>>, IEnumerable<Bounds<T>>, bool> GetEqualsData(IFixture fixture)
+    public static TheoryData<IEnumerable<Bounds<T>>, IEnumerable<Bounds<T>>, bool> GetEqualsData(Fixture fixture)
     {
-        var (a, b, c, d, e, f) = fixture.CreateDistinctSortedCollection<T>( 6 );
+        var (a, b, c, d, e, f) = fixture.CreateManyDistinctSorted<T>( count: 6 );
 
         return new TheoryData<IEnumerable<Bounds<T>>, IEnumerable<Bounds<T>>, bool>
         {
@@ -45,9 +45,9 @@ public class GenericBoundsRangeTestsData<T>
         };
     }
 
-    public static TheoryData<IEnumerable<Bounds<T>>, T, int> GetFindBoundsIndexData(IFixture fixture)
+    public static TheoryData<IEnumerable<Bounds<T>>, T, int> GetFindBoundsIndexData(Fixture fixture)
     {
-        var data = fixture.CreateDistinctSortedCollection<T>( 13 );
+        var data = fixture.CreateManyDistinctSorted<T>( count: 13 );
         var (a, b, c, d, e, f, g, h, i, j, k, l, m) = (
             data[0], data[1], data[2], data[3], data[4], data[5], data[6], data[7], data[8], data[9], data[10], data[11], data[12]);
 
@@ -72,9 +72,9 @@ public class GenericBoundsRangeTestsData<T>
         };
     }
 
-    public static TheoryData<IEnumerable<Bounds<T>>, T, Bounds<T>?> GetFindBoundsData(IFixture fixture)
+    public static TheoryData<IEnumerable<Bounds<T>>, T, Bounds<T>?> GetFindBoundsData(Fixture fixture)
     {
-        var data = fixture.CreateDistinctSortedCollection<T>( 13 );
+        var data = fixture.CreateManyDistinctSorted<T>( count: 13 );
         var (a, b, c, d, e, f, g, h, i, j, k, l, m) = (
             data[0], data[1], data[2], data[3], data[4], data[5], data[6], data[7], data[8], data[9], data[10], data[11], data[12]);
 
@@ -99,9 +99,9 @@ public class GenericBoundsRangeTestsData<T>
         };
     }
 
-    public static TheoryData<IEnumerable<Bounds<T>>, T, bool> GetContainsWithSingleValueData(IFixture fixture)
+    public static TheoryData<IEnumerable<Bounds<T>>, T, bool> GetContainsWithSingleValueData(Fixture fixture)
     {
-        var data = fixture.CreateDistinctSortedCollection<T>( 13 );
+        var data = fixture.CreateManyDistinctSorted<T>( count: 13 );
         var (a, b, c, d, e, f, g, h, i, j, k, l, m) = (
             data[0], data[1], data[2], data[3], data[4], data[5], data[6], data[7], data[8], data[9], data[10], data[11], data[12]);
 
@@ -126,9 +126,9 @@ public class GenericBoundsRangeTestsData<T>
         };
     }
 
-    public static TheoryData<IEnumerable<Bounds<T>>, Bounds<T>, bool> GetContainsWithBoundsData(IFixture fixture)
+    public static TheoryData<IEnumerable<Bounds<T>>, Bounds<T>, bool> GetContainsWithBoundsData(Fixture fixture)
     {
-        var data = fixture.CreateDistinctSortedCollection<T>( 14 );
+        var data = fixture.CreateManyDistinctSorted<T>( count: 14 );
         var (a, b, c, d, e, f, g, h, i, j, k, l, m, n) = (
             data[0], data[1], data[2], data[3], data[4], data[5], data[6], data[7], data[8], data[9], data[10], data[11], data[12],
             data[13]);
@@ -246,9 +246,9 @@ public class GenericBoundsRangeTestsData<T>
         };
     }
 
-    public static TheoryData<IEnumerable<Bounds<T>>, IEnumerable<Bounds<T>>, bool> GetContainsData(IFixture fixture)
+    public static TheoryData<IEnumerable<Bounds<T>>, IEnumerable<Bounds<T>>, bool> GetContainsData(Fixture fixture)
     {
-        var data = fixture.CreateDistinctSortedCollection<T>( 14 );
+        var data = fixture.CreateManyDistinctSorted<T>( count: 14 );
         var (a, b, c, d, e, f, g, h, i, j, k, l, m, n) = (
             data[0], data[1], data[2], data[3], data[4], data[5], data[6], data[7], data[8], data[9], data[10], data[11], data[12],
             data[13]);
@@ -302,9 +302,9 @@ public class GenericBoundsRangeTestsData<T>
         };
     }
 
-    public static TheoryData<IEnumerable<Bounds<T>>, Bounds<T>, bool> GetIntersectsWithBoundsData(IFixture fixture)
+    public static TheoryData<IEnumerable<Bounds<T>>, Bounds<T>, bool> GetIntersectsWithBoundsData(Fixture fixture)
     {
-        var data = fixture.CreateDistinctSortedCollection<T>( 14 );
+        var data = fixture.CreateManyDistinctSorted<T>( count: 14 );
         var (a, b, c, d, e, f, g, h, i, j, k, l, m, n) = (
             data[0], data[1], data[2], data[3], data[4], data[5], data[6], data[7], data[8], data[9], data[10], data[11], data[12],
             data[13]);
@@ -422,9 +422,9 @@ public class GenericBoundsRangeTestsData<T>
         };
     }
 
-    public static TheoryData<IEnumerable<Bounds<T>>, IEnumerable<Bounds<T>>, bool> GetIntersectsData(IFixture fixture)
+    public static TheoryData<IEnumerable<Bounds<T>>, IEnumerable<Bounds<T>>, bool> GetIntersectsData(Fixture fixture)
     {
-        var data = fixture.CreateDistinctSortedCollection<T>( 14 );
+        var data = fixture.CreateManyDistinctSorted<T>( count: 14 );
         var (a, b, c, d, e, f, g, h, i, j, k, l, m, n) = (
             data[0], data[1], data[2], data[3], data[4], data[5], data[6], data[7], data[8], data[9], data[10], data[11], data[12],
             data[13]);
@@ -479,9 +479,9 @@ public class GenericBoundsRangeTestsData<T>
     }
 
     public static TheoryData<IEnumerable<Bounds<T>>, Bounds<T>, IEnumerable<Bounds<T>>> GetGetIntersectionWithBoundsData(
-        IFixture fixture)
+        Fixture fixture)
     {
-        var data = fixture.CreateDistinctSortedCollection<T>( 14 );
+        var data = fixture.CreateManyDistinctSorted<T>( count: 14 );
         var (a, b, c, d, e, f, g, h, i, j, k, l, m, n) = (
             data[0], data[1], data[2], data[3], data[4], data[5], data[6], data[7], data[8], data[9], data[10], data[11], data[12],
             data[13]);
@@ -518,9 +518,9 @@ public class GenericBoundsRangeTestsData<T>
     }
 
     public static TheoryData<IEnumerable<Bounds<T>>, IEnumerable<Bounds<T>>, IEnumerable<Bounds<T>>> GetGetIntersectionData(
-        IFixture fixture)
+        Fixture fixture)
     {
-        var data = fixture.CreateDistinctSortedCollection<T>( 14 );
+        var data = fixture.CreateManyDistinctSorted<T>( count: 14 );
         var (a, b, c, d, e, f, g, h, i, j, k, l, m, n) = (
             data[0], data[1], data[2], data[3], data[4], data[5], data[6], data[7], data[8], data[9], data[10], data[11], data[12],
             data[13]);
@@ -583,9 +583,9 @@ public class GenericBoundsRangeTestsData<T>
         };
     }
 
-    public static TheoryData<IEnumerable<Bounds<T>>, Bounds<T>, IEnumerable<Bounds<T>>> GetMergeWithWithBoundsData(IFixture fixture)
+    public static TheoryData<IEnumerable<Bounds<T>>, Bounds<T>, IEnumerable<Bounds<T>>> GetMergeWithWithBoundsData(Fixture fixture)
     {
-        var data = fixture.CreateDistinctSortedCollection<T>( 14 );
+        var data = fixture.CreateManyDistinctSorted<T>( count: 14 );
         var (a, b, c, d, e, f, g, h, i, j, k, l, m, n) = (
             data[0], data[1], data[2], data[3], data[4], data[5], data[6], data[7], data[8], data[9], data[10], data[11], data[12],
             data[13]);
@@ -618,9 +618,9 @@ public class GenericBoundsRangeTestsData<T>
         };
     }
 
-    public static TheoryData<IEnumerable<Bounds<T>>, IEnumerable<Bounds<T>>, IEnumerable<Bounds<T>>> GetMergeWithData(IFixture fixture)
+    public static TheoryData<IEnumerable<Bounds<T>>, IEnumerable<Bounds<T>>, IEnumerable<Bounds<T>>> GetMergeWithData(Fixture fixture)
     {
-        var data = fixture.CreateDistinctSortedCollection<T>( 14 );
+        var data = fixture.CreateManyDistinctSorted<T>( count: 14 );
         var (a, b, c, d, e, f, g, h, i, j, k, l, m, n) = (
             data[0], data[1], data[2], data[3], data[4], data[5], data[6], data[7], data[8], data[9], data[10], data[11], data[12],
             data[13]);
@@ -695,9 +695,9 @@ public class GenericBoundsRangeTestsData<T>
         };
     }
 
-    public static TheoryData<IEnumerable<Bounds<T>>, Bounds<T>, IEnumerable<Bounds<T>>> GetRemoveWithBoundsData(IFixture fixture)
+    public static TheoryData<IEnumerable<Bounds<T>>, Bounds<T>, IEnumerable<Bounds<T>>> GetRemoveWithBoundsData(Fixture fixture)
     {
-        var data = fixture.CreateDistinctSortedCollection<T>( 14 );
+        var data = fixture.CreateManyDistinctSorted<T>( count: 14 );
         var (a, b, c, d, e, f, g, h, i, j, k, l, m, n) = (
             data[0], data[1], data[2], data[3], data[4], data[5], data[6], data[7], data[8], data[9], data[10], data[11], data[12],
             data[13]);
@@ -730,9 +730,9 @@ public class GenericBoundsRangeTestsData<T>
         };
     }
 
-    public static TheoryData<IEnumerable<Bounds<T>>, IEnumerable<Bounds<T>>, IEnumerable<Bounds<T>>> GetRemoveData(IFixture fixture)
+    public static TheoryData<IEnumerable<Bounds<T>>, IEnumerable<Bounds<T>>, IEnumerable<Bounds<T>>> GetRemoveData(Fixture fixture)
     {
-        var data = fixture.CreateDistinctSortedCollection<T>( 14 );
+        var data = fixture.CreateManyDistinctSorted<T>( count: 14 );
         var (a, b, c, d, e, f, g, h, i, j, k, l, m, n) = (
             data[0], data[1], data[2], data[3], data[4], data[5], data[6], data[7], data[8], data[9], data[10], data[11], data[12],
             data[13]);
@@ -792,9 +792,9 @@ public class GenericBoundsRangeTestsData<T>
         };
     }
 
-    public static TheoryData<IEnumerable<Bounds<T>>, IEnumerable<Bounds<T>>> GetComplementData(IFixture fixture)
+    public static TheoryData<IEnumerable<Bounds<T>>, IEnumerable<Bounds<T>>> GetComplementData(Fixture fixture)
     {
-        var data = fixture.CreateDistinctSortedCollection<T>( 8 );
+        var data = fixture.CreateManyDistinctSorted<T>( count: 8 );
         var (a, b, c, d, e, f, g, h) = (data[0], data[1], data[2], data[3], data[4], data[5], data[6], data[7]);
 
         return new TheoryData<IEnumerable<Bounds<T>>, IEnumerable<Bounds<T>>>
@@ -811,9 +811,9 @@ public class GenericBoundsRangeTestsData<T>
         };
     }
 
-    public static TheoryData<IEnumerable<Bounds<T>>, Bounds<T>, IEnumerable<Bounds<T>>> GetComplementWithBoundsData(IFixture fixture)
+    public static TheoryData<IEnumerable<Bounds<T>>, Bounds<T>, IEnumerable<Bounds<T>>> GetComplementWithBoundsData(Fixture fixture)
     {
-        var data = fixture.CreateDistinctSortedCollection<T>( 14 );
+        var data = fixture.CreateManyDistinctSorted<T>( count: 14 );
         var (a, b, c, d, e, f, g, h, i, j, k, l, m, n) = (
             data[0], data[1], data[2], data[3], data[4], data[5], data[6], data[7], data[8], data[9], data[10], data[11], data[12],
             data[13]);
@@ -850,9 +850,9 @@ public class GenericBoundsRangeTestsData<T>
     }
 
     public static TheoryData<IEnumerable<Bounds<T>>, IEnumerable<Bounds<T>>, IEnumerable<Bounds<T>>> GetComplementWithRangeData(
-        IFixture fixture)
+        Fixture fixture)
     {
-        var data = fixture.CreateDistinctSortedCollection<T>( 14 );
+        var data = fixture.CreateManyDistinctSorted<T>( count: 14 );
         var (a, b, c, d, e, f, g, h, i, j, k, l, m, n) = (
             data[0], data[1], data[2], data[3], data[4], data[5], data[6], data[7], data[8], data[9], data[10], data[11], data[12],
             data[13]);
@@ -915,7 +915,7 @@ public class GenericBoundsRangeTestsData<T>
         };
     }
 
-    public static IEnumerable<object?[]> GetNotEqualsData(IFixture fixture)
+    public static IEnumerable<object?[]> GetNotEqualsData(Fixture fixture)
     {
         return GetEqualsData( fixture ).ConvertResult( (bool r) => ! r );
     }

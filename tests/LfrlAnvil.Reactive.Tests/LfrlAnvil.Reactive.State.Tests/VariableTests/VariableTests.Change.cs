@@ -10,7 +10,7 @@ public partial class VariableTests
     [Fact]
     public void Change_ShouldUpdateValueAndChangedFlag_WhenNewValueIsNotEqualToCurrentValue()
     {
-        var (value, changeValue) = Fixture.CreateDistinctCollection<int>( count: 2 );
+        var (value, changeValue) = Fixture.CreateManyDistinct<int>( count: 2 );
         var sut = Variable.WithoutValidators<string>.Create( value );
 
         var onChangeEvents = new List<VariableValueChangeEvent<int, string>>();
@@ -154,7 +154,7 @@ public partial class VariableTests
     [Fact]
     public void Change_ShouldDoNothing_WhenStateContainsReadOnlyFlag()
     {
-        var (value, changeValue) = Fixture.CreateDistinctCollection<int>( count: 2 );
+        var (value, changeValue) = Fixture.CreateManyDistinct<int>( count: 2 );
         var sut = Variable.WithoutValidators<string>.Create( value );
         sut.SetReadOnly( true );
 

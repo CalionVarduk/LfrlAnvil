@@ -8,7 +8,7 @@ public class PairExtensionsOfInt32AndInt32Tests : GenericPairExtensionsTests<int
     [Fact]
     public void AsEnumerable_ShouldReturnCorrectResult_WhenNonNullable()
     {
-        var (first, second) = Fixture.CreateDistinctCollection<int>( 2 );
+        var (first, second) = Fixture.CreateManyDistinct<int>( count: 2 );
         var sut = Pair.Create( first, second );
 
         var result = sut.AsEnumerable();
@@ -19,7 +19,7 @@ public class PairExtensionsOfInt32AndInt32Tests : GenericPairExtensionsTests<int
     [Fact]
     public void AsEnumerable_ShouldReturnCorrectResult_WhenSecondIsNullableWithValue()
     {
-        var (first, second) = Fixture.CreateDistinctCollection<int>( 2 );
+        var (first, second) = Fixture.CreateManyDistinct<int>( count: 2 );
         var sut = Pair.Create( first, ( int? )second );
 
         var result = sut.AsEnumerable();
@@ -41,7 +41,7 @@ public class PairExtensionsOfInt32AndInt32Tests : GenericPairExtensionsTests<int
     [Fact]
     public void AsEnumerable_ShouldReturnCorrectResult_WhenFirstIsNullableWithValue()
     {
-        var (first, second) = Fixture.CreateDistinctCollection<int>( 2 );
+        var (first, second) = Fixture.CreateManyDistinct<int>( count: 2 );
         var sut = Pair.Create( ( int? )first, second );
 
         var result = sut.AsEnumerable();
@@ -63,7 +63,7 @@ public class PairExtensionsOfInt32AndInt32Tests : GenericPairExtensionsTests<int
     [Fact]
     public void AsEnumerable_ShouldReturnCorrectResult_WhenNullableWithBothValues()
     {
-        var (first, second) = Fixture.CreateDistinctCollection<int>( 2 );
+        var (first, second) = Fixture.CreateManyDistinct<int>( count: 2 );
         var sut = Pair.Create( ( int? )first, ( int? )second );
 
         var result = sut.AsEnumerable();

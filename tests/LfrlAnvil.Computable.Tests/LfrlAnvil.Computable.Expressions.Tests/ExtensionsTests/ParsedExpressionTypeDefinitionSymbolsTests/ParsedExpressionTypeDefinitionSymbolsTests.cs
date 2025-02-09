@@ -181,7 +181,7 @@ public class ParsedExpressionTypeDefinitionSymbolsTests : TestsBase
     [Fact]
     public void SetName_ShouldUpdateNameOnly_WhenPrefixTypeConverterAndConstantAreSetToCustomValues()
     {
-        var (name, prefixSymbol, constant) = Fixture.CreateDistinctCollection<string>( count: 3 );
+        var (name, prefixSymbol, constant) = Fixture.CreateManyDistinct<string>( count: 3 );
         var sut = new ParsedExpressionTypeDefinitionSymbols()
             .SetPrefixTypeConverter( prefixSymbol )
             .SetConstant( constant )
@@ -217,7 +217,7 @@ public class ParsedExpressionTypeDefinitionSymbolsTests : TestsBase
     [Fact]
     public void SetDefaultPrefixTypeConverter_ShouldUpdatePrefixTypeConverter_WhenPrefixTypeConverterIsSetToCustomValue()
     {
-        var (name, prefixSymbol) = Fixture.CreateDistinctCollection<string>( count: 2 );
+        var (name, prefixSymbol) = Fixture.CreateManyDistinct<string>( count: 2 );
         var sut = new ParsedExpressionTypeDefinitionSymbols()
             .SetName( name )
             .SetPrefixTypeConverter( prefixSymbol )
@@ -349,7 +349,7 @@ public class ParsedExpressionTypeDefinitionSymbolsTests : TestsBase
     [Fact]
     public void SetDefaultConstant_ShouldUpdateConstant_WhenConstantIsSetToCustomValue()
     {
-        var (name, constant) = Fixture.CreateDistinctCollection<string>( count: 2 );
+        var (name, constant) = Fixture.CreateManyDistinct<string>( count: 2 );
         var sut = new ParsedExpressionTypeDefinitionSymbols()
             .SetName( name )
             .SetConstant( constant )

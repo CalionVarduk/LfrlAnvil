@@ -5,7 +5,7 @@ namespace LfrlAnvil.Computable.Expressions.Tests.ExpressionTokenizerTests;
 
 public class ExpressionTokenizerTestsData
 {
-    public static TheoryData<string> GetWhiteSpaceInputData(IFixture fixture)
+    public static TheoryData<string> GetWhiteSpaceInputData(Fixture fixture)
     {
         return new TheoryData<string>
         {
@@ -16,7 +16,7 @@ public class ExpressionTokenizerTestsData
         };
     }
 
-    public static TheoryData<string> GetStringOnlyData(IFixture fixture)
+    public static TheoryData<string> GetStringOnlyData(Fixture fixture)
     {
         return new TheoryData<string>
         {
@@ -28,7 +28,7 @@ public class ExpressionTokenizerTestsData
         };
     }
 
-    public static TheoryData<string, string> GetStartsWithStringData(IFixture fixture)
+    public static TheoryData<string, string> GetStartsWithStringData(Fixture fixture)
     {
         return new TheoryData<string, string>
         {
@@ -38,7 +38,7 @@ public class ExpressionTokenizerTestsData
         };
     }
 
-    public static TheoryData<string> GetNumberOnlyData(IFixture fixture)
+    public static TheoryData<string> GetNumberOnlyData(Fixture fixture)
     {
         return new TheoryData<string>
         {
@@ -60,7 +60,7 @@ public class ExpressionTokenizerTestsData
         };
     }
 
-    public static TheoryData<string, string> GetStartsWithNumberData(IFixture fixture)
+    public static TheoryData<string, string> GetStartsWithNumberData(Fixture fixture)
     {
         return new TheoryData<string, string>
         {
@@ -99,7 +99,7 @@ public class ExpressionTokenizerTestsData
         };
     }
 
-    public static TheoryData<string> GetBooleanOnlyData(IFixture fixture)
+    public static TheoryData<string> GetBooleanOnlyData(Fixture fixture)
     {
         return new TheoryData<string>
         {
@@ -112,7 +112,7 @@ public class ExpressionTokenizerTestsData
         };
     }
 
-    public static TheoryData<string, string> GetStartsWithBooleanData(IFixture fixture)
+    public static TheoryData<string, string> GetStartsWithBooleanData(Fixture fixture)
     {
         return new TheoryData<string, string>
         {
@@ -133,7 +133,7 @@ public class ExpressionTokenizerTestsData
         };
     }
 
-    public static TheoryData<string> GetArgumentOnlyData(IFixture fixture)
+    public static TheoryData<string> GetArgumentOnlyData(Fixture fixture)
     {
         return new TheoryData<string>
         {
@@ -145,7 +145,7 @@ public class ExpressionTokenizerTestsData
         };
     }
 
-    public static TheoryData<string, string> GetStartsWithArgumentData(IFixture fixture)
+    public static TheoryData<string, string> GetStartsWithArgumentData(Fixture fixture)
     {
         return new TheoryData<string, string>
         {
@@ -159,7 +159,7 @@ public class ExpressionTokenizerTestsData
         };
     }
 
-    public static TheoryData<string, IEnumerable<string>, IEnumerable<Token>> GetComplexInputData(IFixture fixture)
+    public static TheoryData<string, IEnumerable<string>, IEnumerable<Token>> GetComplexInputData(Fixture fixture)
     {
         var noTokens = Array.Empty<string>();
         return new TheoryData<string, IEnumerable<string>, IEnumerable<Token>>

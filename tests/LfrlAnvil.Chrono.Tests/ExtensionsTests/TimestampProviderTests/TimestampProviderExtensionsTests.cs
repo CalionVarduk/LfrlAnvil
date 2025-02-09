@@ -96,7 +96,7 @@ public class TimestampProviderExtensionsTests : TestsBase
     [Fact]
     public void Freeze_ShouldReturnCorrectResult()
     {
-        var (first, second) = Fixture.CreateDistinctCollection<int>( count: 2 );
+        var (first, second) = Fixture.CreateManyDistinct<int>( count: 2 );
         var sut = GetMockedProvider( first, second );
 
         var frozen = sut.Freeze();

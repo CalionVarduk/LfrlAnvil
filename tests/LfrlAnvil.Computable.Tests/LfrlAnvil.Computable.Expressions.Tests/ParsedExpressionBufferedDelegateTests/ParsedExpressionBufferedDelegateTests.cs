@@ -34,7 +34,7 @@ public class ParsedExpressionBufferedDelegateTests : TestsBase
     [Fact]
     public void SetArgumentValue_WithIndexKey_ShouldUpdateUnderlyingBufferCorrectly()
     {
-        var (aValue, bValue) = Fixture.CreateDistinctCollection<decimal>( count: 2 );
+        var (aValue, bValue) = Fixture.CreateManyDistinct<decimal>( count: 2 );
 
         var input = "a + b";
         var builder = new ParsedExpressionFactoryBuilder()
@@ -60,7 +60,7 @@ public class ParsedExpressionBufferedDelegateTests : TestsBase
     [Fact]
     public void SetArgumentValue_ShouldUpdateUnderlyingBufferCorrectly()
     {
-        var (aValue, bValue) = Fixture.CreateDistinctCollection<decimal>( count: 2 );
+        var (aValue, bValue) = Fixture.CreateManyDistinct<decimal>( count: 2 );
 
         var input = "a + b";
         var builder = new ParsedExpressionFactoryBuilder()
@@ -195,7 +195,7 @@ public class ParsedExpressionBufferedDelegateTests : TestsBase
     [Fact]
     public void Invoke_ShouldInvokeBaseDelegateWithBufferedArgumentValues()
     {
-        var (aValue, bValue) = Fixture.CreateDistinctCollection<decimal>( count: 2 );
+        var (aValue, bValue) = Fixture.CreateManyDistinct<decimal>( count: 2 );
         var expected = aValue + bValue;
 
         var input = "a + b";

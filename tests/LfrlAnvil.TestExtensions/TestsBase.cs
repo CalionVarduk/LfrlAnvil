@@ -2,10 +2,12 @@
 
 public abstract class TestsBase
 {
-    protected readonly IFixture Fixture = new Fixture();
+    private Fixture? _fixture;
 
-    protected ArrangedTest<TTestData> Arrange<TTestData>(Func<TTestData> testDataProvider)
+    protected TestsBase(Fixture? fixture = null)
     {
-        return new ArrangedTest<TTestData>( testDataProvider );
+        _fixture = fixture;
     }
+
+    protected Fixture Fixture => _fixture ??= new Fixture();
 }

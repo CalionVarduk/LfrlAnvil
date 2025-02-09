@@ -4,7 +4,7 @@ namespace LfrlAnvil.Identifiers.Tests;
 
 public class IdentifierGeneratorTestsData
 {
-    public static TheoryData<Timestamp, Timestamp, ulong> GetCtorData(IFixture fixture)
+    public static TheoryData<Timestamp, Timestamp, ulong> GetCtorData(Fixture fixture)
     {
         return new TheoryData<Timestamp, Timestamp, ulong>
         {
@@ -19,7 +19,7 @@ public class IdentifierGeneratorTestsData
     }
 
     public static TheoryData<IdentifierGeneratorParams, Timestamp, Timestamp, Timestamp, Timestamp, ulong, int> GetCtorWithParamsData(
-        IFixture fixture)
+        Fixture fixture)
     {
         return new TheoryData<IdentifierGeneratorParams, Timestamp, Timestamp, Timestamp, Timestamp, ulong, int>
         {
@@ -117,7 +117,7 @@ public class IdentifierGeneratorTestsData
     }
 
     public static TheoryData<IdentifierGeneratorParams, Timestamp, Identifier> GetGenerateFirstTimeForTheCurrentHighValueData(
-        IFixture fixture)
+        Fixture fixture)
     {
         return new TheoryData<IdentifierGeneratorParams, Timestamp, Identifier>
         {
@@ -203,7 +203,7 @@ public class IdentifierGeneratorTestsData
 
     public static TheoryData<IdentifierGeneratorParams, Timestamp, int, Identifier>
         GetGenerateNextTimeForTheCurrentHighValueWithoutExceedingLowValueBoundsData(
-            IFixture fixture)
+            Fixture fixture)
     {
         return new TheoryData<IdentifierGeneratorParams, Timestamp, int, Identifier>
         {
@@ -379,7 +379,7 @@ public class IdentifierGeneratorTestsData
     }
 
     public static TheoryData<Bounds<ushort>, Timestamp, Identifier>
-        GetGenerateNextTimeForTheFutureHighValueData(IFixture fixture)
+        GetGenerateNextTimeForTheFutureHighValueData(Fixture fixture)
     {
         return new TheoryData<Bounds<ushort>, Timestamp, Identifier>
         {
@@ -397,7 +397,7 @@ public class IdentifierGeneratorTestsData
     }
 
     public static TheoryData<IdentifierGeneratorParams, Timestamp, Timestamp, Identifier>
-        GetGenerateNextTimeForTheCurrentHighValueAndExceedingLowValueBoundsData(IFixture fixture)
+        GetGenerateNextTimeForTheCurrentHighValueAndExceedingLowValueBoundsData(Fixture fixture)
     {
         return new TheoryData<IdentifierGeneratorParams, Timestamp, Timestamp, Identifier>
         {
@@ -570,7 +570,7 @@ public class IdentifierGeneratorTestsData
     }
 
     public static TheoryData<IdentifierGeneratorParams, Timestamp>
-        GetGenerateNextTimeForTheCurrentMaxHighValueAndExceedingLowValueBoundsData(IFixture fixture)
+        GetGenerateNextTimeForTheCurrentMaxHighValueAndExceedingLowValueBoundsData(Fixture fixture)
     {
         return new TheoryData<IdentifierGeneratorParams, Timestamp>
         {
@@ -739,7 +739,7 @@ public class IdentifierGeneratorTestsData
         };
     }
 
-    public static TheoryData<IdentifierGeneratorParams, Identifier, Timestamp> GetGetTimestampData(IFixture fixture)
+    public static TheoryData<IdentifierGeneratorParams, Identifier, Timestamp> GetGetTimestampData(Fixture fixture)
     {
         return new TheoryData<IdentifierGeneratorParams, Identifier, Timestamp>
         {
@@ -829,7 +829,7 @@ public class IdentifierGeneratorTestsData
         };
     }
 
-    public static TheoryData<IdentifierGeneratorParams, Duration, ulong> GetCalculateThroughputData(IFixture fixture)
+    public static TheoryData<IdentifierGeneratorParams, Duration, ulong> GetCalculateThroughputData(Fixture fixture)
     {
         return new TheoryData<IdentifierGeneratorParams, Duration, ulong>
         {
@@ -932,7 +932,7 @@ public class IdentifierGeneratorTestsData
     }
 
     public static TheoryData<IdentifierGeneratorParams, Timestamp, Identifier, Timestamp>
-        GetStateUpdateGenerateNextTimeForTheCurrentHighValueAndExceedingLowValueBoundsData(IFixture fixture)
+        GetStateUpdateGenerateNextTimeForTheCurrentHighValueAndExceedingLowValueBoundsData(Fixture fixture)
     {
         return new TheoryData<IdentifierGeneratorParams, Timestamp, Identifier, Timestamp>
         {
@@ -966,7 +966,7 @@ public class IdentifierGeneratorTestsData
         };
     }
 
-    public static TheoryData<Bounds<ushort>, int> GetLowValuesLeftAtTheStartOfHighValueData(IFixture fixture)
+    public static TheoryData<Bounds<ushort>, int> GetLowValuesLeftAtTheStartOfHighValueData(Fixture fixture)
     {
         return new TheoryData<Bounds<ushort>, int>
         {
@@ -976,7 +976,7 @@ public class IdentifierGeneratorTestsData
         };
     }
 
-    public static TheoryData<Bounds<ushort>, int, int> GetLowValuesLeftAtTheInstantOfLastIdentifierGenerationData(IFixture fixture)
+    public static TheoryData<Bounds<ushort>, int, int> GetLowValuesLeftAtTheInstantOfLastIdentifierGenerationData(Fixture fixture)
     {
         return new TheoryData<Bounds<ushort>, int, int>
         {
@@ -991,7 +991,7 @@ public class IdentifierGeneratorTestsData
     }
 
     public static TheoryData<IdentifierGeneratorParams, Timestamp, ulong> GetHighValuesLeftAtTheInstantOfGeneratorConstructionData(
-        IFixture fixture)
+        Fixture fixture)
     {
         return new TheoryData<IdentifierGeneratorParams, Timestamp, ulong>
         {
@@ -1031,7 +1031,7 @@ public class IdentifierGeneratorTestsData
     }
 
     public static TheoryData<IdentifierGeneratorParams, Timestamp, int, ulong>
-        GetHighValuesLeftAtTheInstantOfLastIdentifierGenerationData(IFixture fixture)
+        GetHighValuesLeftAtTheInstantOfLastIdentifierGenerationData(Fixture fixture)
     {
         return new TheoryData<IdentifierGeneratorParams, Timestamp, int, ulong>
         {
@@ -1064,7 +1064,7 @@ public class IdentifierGeneratorTestsData
         };
     }
 
-    public static TheoryData<IdentifierGeneratorParams, Timestamp, ulong> GetHighValuesLeftInTheFutureData(IFixture fixture)
+    public static TheoryData<IdentifierGeneratorParams, Timestamp, ulong> GetHighValuesLeftInTheFutureData(Fixture fixture)
     {
         return new TheoryData<IdentifierGeneratorParams, Timestamp, ulong>
         {
@@ -1101,7 +1101,7 @@ public class IdentifierGeneratorTestsData
     }
 
     public static TheoryData<IdentifierGeneratorParams, Timestamp, ulong> GetValuesLeftAtTheInstantOfGeneratorConstructionData(
-        IFixture fixture)
+        Fixture fixture)
     {
         return new TheoryData<IdentifierGeneratorParams, Timestamp, ulong>
         {
@@ -1204,7 +1204,7 @@ public class IdentifierGeneratorTestsData
     }
 
     public static TheoryData<IdentifierGeneratorParams, Timestamp, int, ulong> GetValuesLeftAtTheInstantOfLastIdentifierGenerationData(
-        IFixture fixture)
+        Fixture fixture)
     {
         return new TheoryData<IdentifierGeneratorParams, Timestamp, int, ulong>
         {
@@ -1249,7 +1249,7 @@ public class IdentifierGeneratorTestsData
         };
     }
 
-    public static TheoryData<IdentifierGeneratorParams, Timestamp, ulong> GetValuesLeftInTheFutureData(IFixture fixture)
+    public static TheoryData<IdentifierGeneratorParams, Timestamp, ulong> GetValuesLeftInTheFutureData(Fixture fixture)
     {
         return new TheoryData<IdentifierGeneratorParams, Timestamp, ulong>
         {

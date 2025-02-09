@@ -53,7 +53,7 @@ public class AssumeTests : TestsBase
 #endif
     public void IsNull_ForNullableStructType_ShouldFail_WhenParamIsNotNull()
     {
-        var param = Fixture.CreateNullable<int>();
+        var param = Fixture.Create<int?>();
         var action = Lambda.Of( () => Assume.IsNull( param ) );
         action.Should().Throw<Exception>();
     }
@@ -92,7 +92,7 @@ public class AssumeTests : TestsBase
 #endif
     public void IsNotNull_ForNullableStructType_ShouldPass_WhenParamIsNotNull()
     {
-        var param = Fixture.CreateNullable<int>();
+        var param = Fixture.Create<int?>();
         var action = Lambda.Of( () => Assume.IsNotNull( param ) );
         action.Should().NotThrow();
     }
@@ -159,7 +159,7 @@ public class AssumeTests : TestsBase
 #endif
     public void Equals_ShouldFail_WhenParamIsNotEqualToValue()
     {
-        var (param, value) = Fixture.CreateDistinctCollection<int>( count: 2 );
+        var (param, value) = Fixture.CreateManyDistinct<int>( count: 2 );
         var action = Lambda.Of( () => Assume.Equals( param, value ) );
         action.Should().Throw<Exception>();
     }
@@ -172,7 +172,7 @@ public class AssumeTests : TestsBase
 #endif
     public void NotEquals_ShouldPass_WhenParamIsNotEqualToValue()
     {
-        var (param, value) = Fixture.CreateDistinctCollection<int>( count: 2 );
+        var (param, value) = Fixture.CreateManyDistinct<int>( count: 2 );
         var action = Lambda.Of( () => Assume.NotEquals( param, value ) );
         action.Should().NotThrow();
     }
@@ -198,7 +198,7 @@ public class AssumeTests : TestsBase
 #endif
     public void IsGreaterThan_ShouldPass_WhenParamIsGreaterThanValue()
     {
-        var (value, param) = Fixture.CreateDistinctSortedCollection<int>( count: 2 );
+        var (value, param) = Fixture.CreateManyDistinctSorted<int>( count: 2 );
         var action = Lambda.Of( () => Assume.IsGreaterThan( param, value ) );
         action.Should().NotThrow();
     }
@@ -224,7 +224,7 @@ public class AssumeTests : TestsBase
 #endif
     public void IsGreaterThan_ShouldFail_WhenParamIsLessThanValue()
     {
-        var (param, value) = Fixture.CreateDistinctSortedCollection<int>( count: 2 );
+        var (param, value) = Fixture.CreateManyDistinctSorted<int>( count: 2 );
         var action = Lambda.Of( () => Assume.IsGreaterThan( param, value ) );
         action.Should().Throw<Exception>();
     }
@@ -237,7 +237,7 @@ public class AssumeTests : TestsBase
 #endif
     public void IsGreaterThanOrEqualTo_ShouldPass_WhenParamIsGreaterThanValue()
     {
-        var (value, param) = Fixture.CreateDistinctSortedCollection<int>( count: 2 );
+        var (value, param) = Fixture.CreateManyDistinctSorted<int>( count: 2 );
         var action = Lambda.Of( () => Assume.IsGreaterThanOrEqualTo( param, value ) );
         action.Should().NotThrow();
     }
@@ -263,7 +263,7 @@ public class AssumeTests : TestsBase
 #endif
     public void IsGreaterThanOrEqualTo_ShouldFail_WhenParamIsLessThanValue()
     {
-        var (param, value) = Fixture.CreateDistinctSortedCollection<int>( count: 2 );
+        var (param, value) = Fixture.CreateManyDistinctSorted<int>( count: 2 );
         var action = Lambda.Of( () => Assume.IsGreaterThanOrEqualTo( param, value ) );
         action.Should().Throw<Exception>();
     }
@@ -276,7 +276,7 @@ public class AssumeTests : TestsBase
 #endif
     public void IsLessThan_ShouldPass_WhenParamIsLessThanValue()
     {
-        var (param, value) = Fixture.CreateDistinctSortedCollection<int>( count: 2 );
+        var (param, value) = Fixture.CreateManyDistinctSorted<int>( count: 2 );
         var action = Lambda.Of( () => Assume.IsLessThan( param, value ) );
         action.Should().NotThrow();
     }
@@ -302,7 +302,7 @@ public class AssumeTests : TestsBase
 #endif
     public void IsLessThan_ShouldFail_WhenParamIsGreaterThanValue()
     {
-        var (value, param) = Fixture.CreateDistinctSortedCollection<int>( count: 2 );
+        var (value, param) = Fixture.CreateManyDistinctSorted<int>( count: 2 );
         var action = Lambda.Of( () => Assume.IsLessThan( param, value ) );
         action.Should().Throw<Exception>();
     }
@@ -315,7 +315,7 @@ public class AssumeTests : TestsBase
 #endif
     public void IsLessThanOrEqualTo_ShouldPass_WhenParamIsLessThanValue()
     {
-        var (param, value) = Fixture.CreateDistinctSortedCollection<int>( count: 2 );
+        var (param, value) = Fixture.CreateManyDistinctSorted<int>( count: 2 );
         var action = Lambda.Of( () => Assume.IsLessThanOrEqualTo( param, value ) );
         action.Should().NotThrow();
     }
@@ -341,7 +341,7 @@ public class AssumeTests : TestsBase
 #endif
     public void IsLessThanOrEqualTo_ShouldFail_WhenParamIsGreaterThanValue()
     {
-        var (value, param) = Fixture.CreateDistinctSortedCollection<int>( count: 2 );
+        var (value, param) = Fixture.CreateManyDistinctSorted<int>( count: 2 );
         var action = Lambda.Of( () => Assume.IsLessThanOrEqualTo( param, value ) );
         action.Should().Throw<Exception>();
     }
@@ -354,7 +354,7 @@ public class AssumeTests : TestsBase
 #endif
     public void IsInRange_ShouldPass_WhenParamIsBetweenMinAndMax()
     {
-        var (min, param, max) = Fixture.CreateDistinctSortedCollection<int>( count: 3 );
+        var (min, param, max) = Fixture.CreateManyDistinctSorted<int>( count: 3 );
         var action = Lambda.Of( () => Assume.IsInRange( param, min, max ) );
         action.Should().NotThrow();
     }
@@ -367,7 +367,7 @@ public class AssumeTests : TestsBase
 #endif
     public void IsInRange_ShouldPass_WhenParamIsEqualToMin()
     {
-        var (param, max) = Fixture.CreateDistinctSortedCollection<int>( count: 3 );
+        var (param, max) = Fixture.CreateManyDistinctSorted<int>( count: 3 );
         var action = Lambda.Of( () => Assume.IsInRange( param, param, max ) );
         action.Should().NotThrow();
     }
@@ -380,7 +380,7 @@ public class AssumeTests : TestsBase
 #endif
     public void IsInRange_ShouldPass_WhenParamIsEqualToMax()
     {
-        var (min, param) = Fixture.CreateDistinctSortedCollection<int>( count: 3 );
+        var (min, param) = Fixture.CreateManyDistinctSorted<int>( count: 3 );
         var action = Lambda.Of( () => Assume.IsInRange( param, min, param ) );
         action.Should().NotThrow();
     }
@@ -393,7 +393,7 @@ public class AssumeTests : TestsBase
 #endif
     public void IsInRange_ShouldFail_WhenParamIsLessThanMin()
     {
-        var (param, min, max) = Fixture.CreateDistinctSortedCollection<int>( count: 3 );
+        var (param, min, max) = Fixture.CreateManyDistinctSorted<int>( count: 3 );
         var action = Lambda.Of( () => Assume.IsInRange( param, min, max ) );
         action.Should().Throw<Exception>();
     }
@@ -406,7 +406,7 @@ public class AssumeTests : TestsBase
 #endif
     public void IsInRange_ShouldFail_WhenParamIsGreaterThanMin()
     {
-        var (min, max, param) = Fixture.CreateDistinctSortedCollection<int>( count: 3 );
+        var (min, max, param) = Fixture.CreateManyDistinctSorted<int>( count: 3 );
         var action = Lambda.Of( () => Assume.IsInRange( param, min, max ) );
         action.Should().Throw<Exception>();
     }
@@ -419,7 +419,7 @@ public class AssumeTests : TestsBase
 #endif
     public void IsNotInRange_ShouldFail_WhenParamIsBetweenMinAndMax()
     {
-        var (min, param, max) = Fixture.CreateDistinctSortedCollection<int>( count: 3 );
+        var (min, param, max) = Fixture.CreateManyDistinctSorted<int>( count: 3 );
         var action = Lambda.Of( () => Assume.IsNotInRange( param, min, max ) );
         action.Should().Throw<Exception>();
     }
@@ -432,7 +432,7 @@ public class AssumeTests : TestsBase
 #endif
     public void IsNotInRange_ShouldFail_WhenParamIsEqualToMin()
     {
-        var (param, max) = Fixture.CreateDistinctSortedCollection<int>( count: 3 );
+        var (param, max) = Fixture.CreateManyDistinctSorted<int>( count: 3 );
         var action = Lambda.Of( () => Assume.IsNotInRange( param, param, max ) );
         action.Should().Throw<Exception>();
     }
@@ -445,7 +445,7 @@ public class AssumeTests : TestsBase
 #endif
     public void IsNotInRange_ShouldFail_WhenParamIsEqualToMax()
     {
-        var (min, param) = Fixture.CreateDistinctSortedCollection<int>( count: 3 );
+        var (min, param) = Fixture.CreateManyDistinctSorted<int>( count: 3 );
         var action = Lambda.Of( () => Assume.IsNotInRange( param, min, param ) );
         action.Should().Throw<Exception>();
     }
@@ -458,7 +458,7 @@ public class AssumeTests : TestsBase
 #endif
     public void IsNotInRange_ShouldPass_WhenParamIsLessThanMin()
     {
-        var (param, min, max) = Fixture.CreateDistinctSortedCollection<int>( count: 3 );
+        var (param, min, max) = Fixture.CreateManyDistinctSorted<int>( count: 3 );
         var action = Lambda.Of( () => Assume.IsNotInRange( param, min, max ) );
         action.Should().NotThrow();
     }
@@ -471,7 +471,7 @@ public class AssumeTests : TestsBase
 #endif
     public void IsNotInRange_ShouldPass_WhenParamIsGreaterThanMin()
     {
-        var (min, max, param) = Fixture.CreateDistinctSortedCollection<int>( count: 3 );
+        var (min, max, param) = Fixture.CreateManyDistinctSorted<int>( count: 3 );
         var action = Lambda.Of( () => Assume.IsNotInRange( param, min, max ) );
         action.Should().NotThrow();
     }
@@ -484,7 +484,7 @@ public class AssumeTests : TestsBase
 #endif
     public void IsInExclusiveRange_ShouldPass_WhenParamIsBetweenMinAndMax()
     {
-        var (min, param, max) = Fixture.CreateDistinctSortedCollection<int>( count: 3 );
+        var (min, param, max) = Fixture.CreateManyDistinctSorted<int>( count: 3 );
         var action = Lambda.Of( () => Assume.IsInExclusiveRange( param, min, max ) );
         action.Should().NotThrow();
     }
@@ -497,7 +497,7 @@ public class AssumeTests : TestsBase
 #endif
     public void IsInExclusiveRange_ShouldFail_WhenParamIsEqualToMin()
     {
-        var (param, max) = Fixture.CreateDistinctSortedCollection<int>( count: 3 );
+        var (param, max) = Fixture.CreateManyDistinctSorted<int>( count: 3 );
         var action = Lambda.Of( () => Assume.IsInExclusiveRange( param, param, max ) );
         action.Should().Throw<Exception>();
     }
@@ -510,7 +510,7 @@ public class AssumeTests : TestsBase
 #endif
     public void IsInExclusiveRange_ShouldFail_WhenParamIsEqualToMax()
     {
-        var (min, param) = Fixture.CreateDistinctSortedCollection<int>( count: 3 );
+        var (min, param) = Fixture.CreateManyDistinctSorted<int>( count: 3 );
         var action = Lambda.Of( () => Assume.IsInExclusiveRange( param, min, param ) );
         action.Should().Throw<Exception>();
     }
@@ -523,7 +523,7 @@ public class AssumeTests : TestsBase
 #endif
     public void IsInExclusiveRange_ShouldFail_WhenParamIsLessThanMin()
     {
-        var (param, min, max) = Fixture.CreateDistinctSortedCollection<int>( count: 3 );
+        var (param, min, max) = Fixture.CreateManyDistinctSorted<int>( count: 3 );
         var action = Lambda.Of( () => Assume.IsInExclusiveRange( param, min, max ) );
         action.Should().Throw<Exception>();
     }
@@ -536,7 +536,7 @@ public class AssumeTests : TestsBase
 #endif
     public void IsInExclusiveRange_ShouldFail_WhenParamIsGreaterThanMin()
     {
-        var (min, max, param) = Fixture.CreateDistinctSortedCollection<int>( count: 3 );
+        var (min, max, param) = Fixture.CreateManyDistinctSorted<int>( count: 3 );
         var action = Lambda.Of( () => Assume.IsInExclusiveRange( param, min, max ) );
         action.Should().Throw<Exception>();
     }
@@ -549,7 +549,7 @@ public class AssumeTests : TestsBase
 #endif
     public void IsNotInExclusiveRange_ShouldFail_WhenParamIsBetweenMinAndMax()
     {
-        var (min, param, max) = Fixture.CreateDistinctSortedCollection<int>( count: 3 );
+        var (min, param, max) = Fixture.CreateManyDistinctSorted<int>( count: 3 );
         var action = Lambda.Of( () => Assume.IsNotInExclusiveRange( param, min, max ) );
         action.Should().Throw<Exception>();
     }
@@ -562,7 +562,7 @@ public class AssumeTests : TestsBase
 #endif
     public void IsNotInExclusiveRange_ShouldPass_WhenParamIsEqualToMin()
     {
-        var (param, max) = Fixture.CreateDistinctSortedCollection<int>( count: 3 );
+        var (param, max) = Fixture.CreateManyDistinctSorted<int>( count: 3 );
         var action = Lambda.Of( () => Assume.IsNotInExclusiveRange( param, param, max ) );
         action.Should().NotThrow();
     }
@@ -575,7 +575,7 @@ public class AssumeTests : TestsBase
 #endif
     public void IsNotInExclusiveRange_ShouldPass_WhenParamIsEqualToMax()
     {
-        var (min, param) = Fixture.CreateDistinctSortedCollection<int>( count: 3 );
+        var (min, param) = Fixture.CreateManyDistinctSorted<int>( count: 3 );
         var action = Lambda.Of( () => Assume.IsNotInExclusiveRange( param, min, param ) );
         action.Should().NotThrow();
     }
@@ -588,7 +588,7 @@ public class AssumeTests : TestsBase
 #endif
     public void IsNotInExclusiveRange_ShouldPass_WhenParamIsLessThanMin()
     {
-        var (param, min, max) = Fixture.CreateDistinctSortedCollection<int>( count: 3 );
+        var (param, min, max) = Fixture.CreateManyDistinctSorted<int>( count: 3 );
         var action = Lambda.Of( () => Assume.IsNotInExclusiveRange( param, min, max ) );
         action.Should().NotThrow();
     }
@@ -601,7 +601,7 @@ public class AssumeTests : TestsBase
 #endif
     public void IsNotInExclusiveRange_ShouldPass_WhenParamIsGreaterThanMin()
     {
-        var (min, max, param) = Fixture.CreateDistinctSortedCollection<int>( count: 3 );
+        var (min, max, param) = Fixture.CreateManyDistinctSorted<int>( count: 3 );
         var action = Lambda.Of( () => Assume.IsNotInExclusiveRange( param, min, max ) );
         action.Should().NotThrow();
     }

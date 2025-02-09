@@ -53,7 +53,7 @@ public abstract class GenericSequentialHashSetTests<T> : GenericCollectionTestsB
     [Fact]
     public void Add_ShouldReturnTrueAndAddNewItem_WhenSetInNotEmpty()
     {
-        var items = Fixture.CreateDistinctCollection<T>( 2 );
+        var items = Fixture.CreateManyDistinct<T>( count: 2 );
         var sut = new SequentialHashSet<T> { items[0] };
 
         var result = sut.Add( items[1] );
@@ -110,7 +110,7 @@ public abstract class GenericSequentialHashSetTests<T> : GenericCollectionTestsB
     [Fact]
     public void Remove_ShouldReturnTrueAndRemoveCorrectExistingItem()
     {
-        var items = Fixture.CreateDistinctCollection<T>( 2 );
+        var items = Fixture.CreateManyDistinct<T>( count: 2 );
         var sut = new SequentialHashSet<T>
         {
             items[0],
@@ -152,7 +152,7 @@ public abstract class GenericSequentialHashSetTests<T> : GenericCollectionTestsB
     [Fact]
     public void Clear_ShouldRemoveAllItems()
     {
-        var items = Fixture.CreateDistinctCollection<T>( 3 );
+        var items = Fixture.CreateManyDistinct<T>( count: 3 );
         var sut = new SequentialHashSet<T>();
 
         foreach ( var item in items )
@@ -166,7 +166,7 @@ public abstract class GenericSequentialHashSetTests<T> : GenericCollectionTestsB
     [Fact]
     public void ExceptWith_ShouldClearSet_WhenAppliedToSelf()
     {
-        var items = Fixture.CreateDistinctCollection<T>( 3 );
+        var items = Fixture.CreateManyDistinct<T>( count: 3 );
         var sut = new SequentialHashSet<T>();
         foreach ( var item in items )
             sut.Add( item );
@@ -192,7 +192,7 @@ public abstract class GenericSequentialHashSetTests<T> : GenericCollectionTestsB
     [Fact]
     public void UnionWith_ShouldDoNothing_WhenAppliedToSelf()
     {
-        var items = Fixture.CreateDistinctCollection<T>( 3 );
+        var items = Fixture.CreateManyDistinct<T>( count: 3 );
         var sut = new SequentialHashSet<T>();
         foreach ( var item in items )
             sut.Add( item );
@@ -218,7 +218,7 @@ public abstract class GenericSequentialHashSetTests<T> : GenericCollectionTestsB
     [Fact]
     public void IntersectWith_ShouldDoNothing_WhenAppliedToSelf()
     {
-        var items = Fixture.CreateDistinctCollection<T>( 3 );
+        var items = Fixture.CreateManyDistinct<T>( count: 3 );
         var sut = new SequentialHashSet<T>();
         foreach ( var item in items )
             sut.Add( item );
@@ -282,7 +282,7 @@ public abstract class GenericSequentialHashSetTests<T> : GenericCollectionTestsB
     [Fact]
     public void SymmetricExceptWith_ShouldClearSet_WhenAppliedToSelf()
     {
-        var items = Fixture.CreateDistinctCollection<T>( 3 );
+        var items = Fixture.CreateManyDistinct<T>( count: 3 );
         var sut = new SequentialHashSet<T>();
         foreach ( var item in items )
             sut.Add( item );
@@ -308,7 +308,7 @@ public abstract class GenericSequentialHashSetTests<T> : GenericCollectionTestsB
     [Fact]
     public void Overlaps_ShouldReturnTrue_WhenAppliedToSelf()
     {
-        var items = Fixture.CreateDistinctCollection<T>( 3 );
+        var items = Fixture.CreateManyDistinct<T>( count: 3 );
         var sut = new SequentialHashSet<T>();
         foreach ( var item in items )
             sut.Add( item );
@@ -334,7 +334,7 @@ public abstract class GenericSequentialHashSetTests<T> : GenericCollectionTestsB
     [Fact]
     public void SetEquals_ShouldReturnTrue_WhenAppliedToSelf()
     {
-        var items = Fixture.CreateDistinctCollection<T>( 3 );
+        var items = Fixture.CreateManyDistinct<T>( count: 3 );
         var sut = new SequentialHashSet<T>();
         foreach ( var item in items )
             sut.Add( item );
@@ -395,7 +395,7 @@ public abstract class GenericSequentialHashSetTests<T> : GenericCollectionTestsB
     [Fact]
     public void IsSupersetOf_ShouldReturnTrue_WhenAppliedToSelf()
     {
-        var items = Fixture.CreateDistinctCollection<T>( 3 );
+        var items = Fixture.CreateManyDistinct<T>( count: 3 );
         var sut = new SequentialHashSet<T>();
         foreach ( var item in items )
             sut.Add( item );
@@ -421,7 +421,7 @@ public abstract class GenericSequentialHashSetTests<T> : GenericCollectionTestsB
     [Fact]
     public void IsProperSupersetOf_ShouldReturnFalse_WhenAppliedToSelf()
     {
-        var items = Fixture.CreateDistinctCollection<T>( 3 );
+        var items = Fixture.CreateManyDistinct<T>( count: 3 );
         var sut = new SequentialHashSet<T>();
         foreach ( var item in items )
             sut.Add( item );
@@ -447,7 +447,7 @@ public abstract class GenericSequentialHashSetTests<T> : GenericCollectionTestsB
     [Fact]
     public void IsSubsetOf_ShouldReturnTrue_WhenAppliedToSelf()
     {
-        var items = Fixture.CreateDistinctCollection<T>( 3 );
+        var items = Fixture.CreateManyDistinct<T>( count: 3 );
         var sut = new SequentialHashSet<T>();
         foreach ( var item in items )
             sut.Add( item );
@@ -508,7 +508,7 @@ public abstract class GenericSequentialHashSetTests<T> : GenericCollectionTestsB
     [Fact]
     public void IsProperSubsetOf_ShouldReturnFalse_WhenAppliedToSelf()
     {
-        var items = Fixture.CreateDistinctCollection<T>( 3 );
+        var items = Fixture.CreateManyDistinct<T>( count: 3 );
         var sut = new SequentialHashSet<T>();
         foreach ( var item in items )
             sut.Add( item );
@@ -569,7 +569,7 @@ public abstract class GenericSequentialHashSetTests<T> : GenericCollectionTestsB
     [Fact]
     public void GetEnumerator_ShouldReturnCorrectAndOrderedResult()
     {
-        var items = Fixture.CreateDistinctCollection<T>( 10 );
+        var items = Fixture.CreateManyDistinct<T>( count: 10 );
 
         var initialItems = items.Take( 7 );
         var itemsToRemove = new[] { items[0], items[2], items[6] };

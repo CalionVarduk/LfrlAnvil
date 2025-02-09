@@ -98,7 +98,7 @@ public abstract class GenericWhenAllEventSourceTests<TEvent> : TestsBase
     [Fact]
     public void Listen_ShouldEmitOnlyOnceEveryInnerStreamDisposesWithResultContainingTheirLastEventsInOrder()
     {
-        var values = Fixture.CreateDistinctCollection<TEvent>( count: 6 );
+        var values = Fixture.CreateManyDistinct<TEvent>( count: 6 );
         var firstStreamValues = new[] { values[0], values[1] };
         var secondStreamValues = new[] { values[2], values[3] };
         var thirdStreamValues = new[] { values[4], values[5] };
@@ -139,7 +139,7 @@ public abstract class GenericWhenAllEventSourceTests<TEvent> : TestsBase
     [Fact]
     public void Listen_ShouldEmitPartialResultContainingDefaultEventForInnerStreamThatDidNotEmitAnyEvent_WhenEventSourceIsDisposed()
     {
-        var values = Fixture.CreateDistinctCollection<TEvent>( count: 4 );
+        var values = Fixture.CreateManyDistinct<TEvent>( count: 4 );
         var firstStreamValues = new[] { values[0], values[1] };
         var thirdStreamValues = new[] { values[2], values[3] };
         var expectedResult = new[] { firstStreamValues[^1], default, thirdStreamValues[^1] };
@@ -177,7 +177,7 @@ public abstract class GenericWhenAllEventSourceTests<TEvent> : TestsBase
     [Fact]
     public void Listen_ShouldEmitPartialResultContainingLastEventsFromInnerStreams_WhenEventSourceIsDisposed()
     {
-        var values = Fixture.CreateDistinctCollection<TEvent>( count: 6 );
+        var values = Fixture.CreateManyDistinct<TEvent>( count: 6 );
         var firstStreamValues = new[] { values[0], values[1] };
         var secondStreamValues = new[] { values[2], values[3] };
         var thirdStreamValues = new[] { values[4], values[5] };
@@ -217,7 +217,7 @@ public abstract class GenericWhenAllEventSourceTests<TEvent> : TestsBase
     [Fact]
     public void WhenAll_ThenListen_ShouldEmitOnlyOnceEveryInnerStreamDisposesWithResultContainingTheirLastEventsInOrder()
     {
-        var values = Fixture.CreateDistinctCollection<TEvent>( count: 6 );
+        var values = Fixture.CreateManyDistinct<TEvent>( count: 6 );
         var firstStreamValues = new[] { values[0], values[1] };
         var secondStreamValues = new[] { values[2], values[3] };
         var thirdStreamValues = new[] { values[4], values[5] };

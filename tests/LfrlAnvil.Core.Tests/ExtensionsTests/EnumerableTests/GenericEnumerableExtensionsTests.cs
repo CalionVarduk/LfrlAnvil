@@ -112,7 +112,7 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
     [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<T>.GetContainsInRangeForMaxCountLessThanMinCountData ) )]
     public void ContainsInRange_ShouldReturnFalse_WhenMaxCountIsLessThanMinCount(int count)
     {
-        var (max, min) = Fixture.CreateDistinctSortedCollection<int>( 2 );
+        var (max, min) = Fixture.CreateManyDistinctSorted<int>( count: 2 );
         var sut = Fixture.CreateMany<T>( count );
 
         var result = sut.ContainsInRange( min, max );
@@ -124,7 +124,7 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
     [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<T>.GetContainsInRangeForMaxCountLessThanMinCountData ) )]
     public void ContainsInRange_WithMaterializedSource_ShouldReturnFalse_WhenMaxCountIsLessThanMinCount(int count)
     {
-        var (max, min) = Fixture.CreateDistinctSortedCollection<int>( 2 );
+        var (max, min) = Fixture.CreateManyDistinctSorted<int>( count: 2 );
         var sut = Fixture.CreateMany<T>( count ).ToList().AsEnumerable();
 
         var result = sut.ContainsInRange( min, max );
@@ -154,7 +154,7 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
     [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<T>.GetContainsInRangeForNegativeMinCountData ) )]
     public void ContainsInRange_ShouldReturnCorrectResult_WhenMinCountIsNegative(int count, int maxCount, bool expected)
     {
-        var minCount = Fixture.CreateNegativeInt32();
+        var minCount = -Fixture.Create<int>( x => x > 0 );
         var sut = Fixture.CreateMany<T>( count );
 
         var result = sut.ContainsInRange( minCount, maxCount );
@@ -169,7 +169,7 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
         int maxCount,
         bool expected)
     {
-        var minCount = Fixture.CreateNegativeInt32();
+        var minCount = -Fixture.Create<int>( x => x > 0 );
         var sut = Fixture.CreateMany<T>( count ).ToList().AsEnumerable();
 
         var result = sut.ContainsInRange( minCount, maxCount );
@@ -238,7 +238,7 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
     [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<T>.GetContainsExactlyForNegativeCountData ) )]
     public void ContainsExactly_ShouldReturnFalse_WhenCountIsNegative(int sourceCount)
     {
-        var count = Fixture.CreateNegativeInt32();
+        var count = -Fixture.Create<int>( x => x > 0 );
         var sut = Fixture.CreateMany<T>( sourceCount );
 
         var result = sut.ContainsExactly( count );
@@ -250,7 +250,7 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
     [GenericMethodData( nameof( GenericEnumerableExtensionsTestsData<T>.GetContainsExactlyForNegativeCountData ) )]
     public void ContainsExactly_WithMaterializedSource_ShouldReturnFalse_WhenCountIsNegative(int sourceCount)
     {
-        var count = Fixture.CreateNegativeInt32();
+        var count = -Fixture.Create<int>( x => x > 0 );
         var sut = Fixture.CreateMany<T>( sourceCount ).ToList().AsEnumerable();
 
         var result = sut.ContainsExactly( count );
@@ -291,7 +291,7 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
     [Fact]
     public void Flatten_WithoutParameters_ShouldReturnCorrectResult()
     {
-        var expected = Fixture.CreateDistinctCollection<T>( count: 9 );
+        var expected = Fixture.CreateManyDistinct<T>( count: 9 );
         var sut = new[] { expected.Take( 3 ), expected.Skip( 3 ).Take( 3 ), expected.Skip( 6 ) };
         var result = sut.Flatten();
         result.Should().BeSequentiallyEqualTo( expected );
@@ -413,7 +413,7 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
     [Fact]
     public void Repeat_ShouldThrowArgumentOutOfRangeException_WhenCountIsNegative()
     {
-        var count = Fixture.CreateNegativeInt32();
+        var count = -Fixture.Create<int>( x => x > 0 );
         var sut = Fixture.CreateMany<T>();
 
         var action = Lambda.Of( () => sut.Repeat( count ) );
@@ -550,7 +550,7 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
     [Fact]
     public void IsMaterialized_ShouldReturnFalse_WhenSourceIsNotReadOnlyCollection()
     {
-        var sut = Fixture.CreateMany<T>();
+        var sut = Fixture.CreateMany<T>().Select( x => x );
         var result = sut.IsMaterialized();
         result.Should().BeFalse();
     }
@@ -646,7 +646,7 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
     [Fact]
     public void VisitMany_ShouldReturnResultAccordingToBreadthFirstTraversal()
     {
-        var expected = Fixture.CreateMany<T>( 10 ).ToList();
+        var expected = Fixture.CreateMany<T>( count: 10 ).ToList();
 
         var sut = new[]
         {
@@ -702,7 +702,7 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
     [Fact]
     public void VisitMany_WithStopPredicate_ShouldReturnResultAccordingToBreadthFirstTraversal()
     {
-        var sourceOfValues = Fixture.CreateDistinctCollection<T>( 10 ).ToList();
+        var sourceOfValues = Fixture.CreateManyDistinct<T>( count: 10 ).ToList();
         var valuesToStopAt = new HashSet<T>
         {
             sourceOfValues[0],
@@ -932,7 +932,7 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
     [Fact]
     public void LeftJoin_ShouldReturnCorrectResult()
     {
-        var values = Fixture.CreateDistinctCollection<T>( 5 );
+        var values = Fixture.CreateManyDistinct<T>( count: 5 );
 
         var sut = new[] { values[0], values[1], values[2], values[1], values[3], values[0] }
             .Select( v => new Contained<T> { Value = v } )
@@ -966,7 +966,7 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
     [Fact]
     public void FullJoin_ShouldReturnCorrectResult()
     {
-        var values = Fixture.CreateDistinctCollection<T>( 5 );
+        var values = Fixture.CreateManyDistinct<T>( count: 5 );
 
         var sut = new[] { values[0], values[1], values[2], values[1], values[3], values[0] }
             .Select( v => new Contained<T> { Value = v } )
@@ -1017,7 +1017,7 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
     [Fact]
     public void IsOrdered_ShouldReturnTrue_WhenSourceContainsOnlyOneElement()
     {
-        var sut = Fixture.CreateMany<T>( 1 );
+        var sut = Fixture.CreateMany<T>( count: 1 );
         var result = sut.IsOrdered();
         result.Should().BeTrue();
     }
@@ -1049,7 +1049,7 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
     [Fact]
     public void Partition_ShouldReturnResultWithPassedContainingElementsThatReturnedTrueInPredicate_AndFailedContainingOtherElements()
     {
-        var sut = Fixture.CreateDistinctCollection<T>( count: 10 );
+        var sut = Fixture.CreateManyDistinct<T>( count: 10 );
         var expectedPassed = new[] { sut[0], sut[2], sut[4], sut[6], sut[8] };
         var expectedFailed = new[] { sut[1], sut[3], sut[5], sut[7], sut[9] };
 
@@ -1058,7 +1058,7 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
 
         using ( new AssertionScope() )
         {
-            result.Items.Should().HaveCount( sut.Count );
+            result.Items.Should().HaveCount( sut.Length );
             result.Items.Should().BeEquivalentTo( sut );
             result.PassedItems.Should().HaveCount( expectedPassed.Length );
             result.PassedItems.Should().BeEquivalentTo( expectedPassed );

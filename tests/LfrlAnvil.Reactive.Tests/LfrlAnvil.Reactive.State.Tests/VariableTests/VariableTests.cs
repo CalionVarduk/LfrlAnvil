@@ -10,7 +10,7 @@ public partial class VariableTests : TestsBase
     [Fact]
     public void ToString_ShouldReturnInformationAboutValueAndState()
     {
-        var (initialValue, value) = Fixture.CreateDistinctCollection<int>( count: 2 );
+        var (initialValue, value) = Fixture.CreateManyDistinct<int>( count: 2 );
         var expected = $"Value: '{value}', State: Changed, ReadOnly";
         var sut = Variable.WithoutValidators<string>.Create( initialValue, value );
         sut.SetReadOnly( true );
@@ -23,7 +23,7 @@ public partial class VariableTests : TestsBase
     [Fact]
     public void Dispose_ShouldDisposeUnderlyingOnChangeAndOnValidateEventPublishersAndAddReadOnlyAndDisposedState()
     {
-        var (initialValue, value) = Fixture.CreateDistinctCollection<int>( count: 2 );
+        var (initialValue, value) = Fixture.CreateManyDistinct<int>( count: 2 );
         var sut = Variable.WithoutValidators<string>.Create( initialValue, value );
 
         var onChange = sut.OnChange.Listen( Substitute.For<IEventListener<VariableValueChangeEvent<int, string>>>() );
@@ -43,7 +43,7 @@ public partial class VariableTests : TestsBase
     public void Refresh_ShouldUpdateChangedFlagAndErrorsAndWarningsForCurrentValue()
     {
         var value = new List<int>();
-        var (error, warning) = Fixture.CreateDistinctCollection<string>( count: 2 );
+        var (error, warning) = Fixture.CreateManyDistinct<string>( count: 2 );
         var comparer = EqualityComparerFactory<List<int>>.Create( (a, b) => a?.Count == b?.Count );
         var errorsValidator = Validators<string>.Empty<int>( error );
         var warningsValidator = Validators<string>.Empty<int>( warning );
@@ -158,7 +158,7 @@ public partial class VariableTests : TestsBase
     public void RefreshValidation_ShouldUpdateErrorsAndWarningsForCurrentValue()
     {
         var value = Fixture.Create<int>();
-        var (error, warning) = Fixture.CreateDistinctCollection<string>( count: 2 );
+        var (error, warning) = Fixture.CreateManyDistinct<string>( count: 2 );
         var errorsValidator = Validators<string>.Fail<int>( error );
         var warningsValidator = Validators<string>.Fail<int>( warning );
         var sut = Variable.Create( value, errorsValidator: errorsValidator, warningsValidator: warningsValidator );
@@ -192,7 +192,7 @@ public partial class VariableTests : TestsBase
     public void RefreshValidation_ShouldUpdateErrorsAndWarningsForCurrentValue_EvenWhenReadOnlyFlagIsSet()
     {
         var value = Fixture.Create<int>();
-        var (error, warning) = Fixture.CreateDistinctCollection<string>( count: 2 );
+        var (error, warning) = Fixture.CreateManyDistinct<string>( count: 2 );
         var errorsValidator = Validators<string>.Fail<int>( error );
         var warningsValidator = Validators<string>.Fail<int>( warning );
         var sut = Variable.Create( value, errorsValidator: errorsValidator, warningsValidator: warningsValidator );
@@ -249,7 +249,7 @@ public partial class VariableTests : TestsBase
     public void ClearValidation_ShouldResetErrorsAndWarningsToEmpty_WhenVariableHasAnyErrorsOrWarnings()
     {
         var value = Fixture.Create<int>();
-        var (error, warning) = Fixture.CreateDistinctCollection<string>( count: 2 );
+        var (error, warning) = Fixture.CreateManyDistinct<string>( count: 2 );
         var errorsValidator = Validators<string>.Fail<int>( error );
         var warningsValidator = Validators<string>.Fail<int>( warning );
         var sut = Variable.Create( value, errorsValidator: errorsValidator, warningsValidator: warningsValidator );

@@ -4,7 +4,7 @@ namespace LfrlAnvil.Chrono.Tests.DurationTests;
 
 public class DurationTestsData
 {
-    public static TheoryData<long> GetTicksData(IFixture fixture)
+    public static TheoryData<long> GetTicksData(Fixture fixture)
     {
         return new TheoryData<long>
         {
@@ -14,7 +14,7 @@ public class DurationTestsData
         };
     }
 
-    public static TheoryData<int, int, int, int, int, int, long> GetCtorWithTicksPrecisionData(IFixture fixture)
+    public static TheoryData<int, int, int, int, int, int, long> GetCtorWithTicksPrecisionData(Fixture fixture)
     {
         return new TheoryData<int, int, int, int, int, int, long>
         {
@@ -24,7 +24,7 @@ public class DurationTestsData
         };
     }
 
-    public static TheoryData<TimeSpan> GetCtorWithTimeSpanData(IFixture fixture)
+    public static TheoryData<TimeSpan> GetCtorWithTimeSpanData(Fixture fixture)
     {
         return new TheoryData<TimeSpan>
         {
@@ -36,7 +36,7 @@ public class DurationTestsData
         };
     }
 
-    public static TheoryData<int, int, long> GetFullMicrosecondsData(IFixture fixture)
+    public static TheoryData<int, int, long> GetFullMicrosecondsData(Fixture fixture)
     {
         return new TheoryData<int, int, long>
         {
@@ -51,7 +51,7 @@ public class DurationTestsData
         };
     }
 
-    public static TheoryData<int, int, int, long> GetFullMillisecondsData(IFixture fixture)
+    public static TheoryData<int, int, int, long> GetFullMillisecondsData(Fixture fixture)
     {
         return new TheoryData<int, int, int, long>
         {
@@ -66,7 +66,7 @@ public class DurationTestsData
         };
     }
 
-    public static TheoryData<int, int, int, int, long> GetFullSecondsData(IFixture fixture)
+    public static TheoryData<int, int, int, int, long> GetFullSecondsData(Fixture fixture)
     {
         return new TheoryData<int, int, int, int, long>
         {
@@ -81,7 +81,7 @@ public class DurationTestsData
         };
     }
 
-    public static TheoryData<int, int, int, int, int, long> GetFullMinutesData(IFixture fixture)
+    public static TheoryData<int, int, int, int, int, long> GetFullMinutesData(Fixture fixture)
     {
         return new TheoryData<int, int, int, int, int, long>
         {
@@ -96,7 +96,7 @@ public class DurationTestsData
         };
     }
 
-    public static TheoryData<int, int, int, int, int, int, long> GetFullHoursData(IFixture fixture)
+    public static TheoryData<int, int, int, int, int, int, long> GetFullHoursData(Fixture fixture)
     {
         return new TheoryData<int, int, int, int, int, int, long>
         {
@@ -111,7 +111,7 @@ public class DurationTestsData
         };
     }
 
-    public static TheoryData<int, int, int> GetTicksInMicrosecondData(IFixture fixture)
+    public static TheoryData<int, int, int> GetTicksInMicrosecondData(Fixture fixture)
     {
         return new TheoryData<int, int, int>
         {
@@ -126,7 +126,7 @@ public class DurationTestsData
         };
     }
 
-    public static TheoryData<int, int, int, int> GetMicrosecondsInMillisecondData(IFixture fixture)
+    public static TheoryData<int, int, int, int> GetMicrosecondsInMillisecondData(Fixture fixture)
     {
         return new TheoryData<int, int, int, int>
         {
@@ -141,7 +141,7 @@ public class DurationTestsData
         };
     }
 
-    public static TheoryData<int, int, int, int, int> GetMillisecondsInSecondData(IFixture fixture)
+    public static TheoryData<int, int, int, int, int> GetMillisecondsInSecondData(Fixture fixture)
     {
         return new TheoryData<int, int, int, int, int>
         {
@@ -156,7 +156,7 @@ public class DurationTestsData
         };
     }
 
-    public static TheoryData<int, int, int, int, int, int> GetSecondsInMinuteData(IFixture fixture)
+    public static TheoryData<int, int, int, int, int, int> GetSecondsInMinuteData(Fixture fixture)
     {
         return new TheoryData<int, int, int, int, int, int>
         {
@@ -171,7 +171,7 @@ public class DurationTestsData
         };
     }
 
-    public static TheoryData<int, int, int, int, int, int, int> GetMinutesInHourData(IFixture fixture)
+    public static TheoryData<int, int, int, int, int, int, int> GetMinutesInHourData(Fixture fixture)
     {
         return new TheoryData<int, int, int, int, int, int, int>
         {
@@ -186,7 +186,7 @@ public class DurationTestsData
         };
     }
 
-    public static TheoryData<int, int, double> GetTotalMicrosecondsData(IFixture fixture)
+    public static TheoryData<int, int, double> GetTotalMicrosecondsData(Fixture fixture)
     {
         return new TheoryData<int, int, double>
         {
@@ -201,7 +201,7 @@ public class DurationTestsData
         };
     }
 
-    public static TheoryData<int, int, int, double> GetTotalMillisecondsData(IFixture fixture)
+    public static TheoryData<int, int, int, double> GetTotalMillisecondsData(Fixture fixture)
     {
         return new TheoryData<int, int, int, double>
         {
@@ -216,7 +216,7 @@ public class DurationTestsData
         };
     }
 
-    public static TheoryData<int, int, int, int, double> GetTotalSecondsData(IFixture fixture)
+    public static TheoryData<int, int, int, int, double> GetTotalSecondsData(Fixture fixture)
     {
         return new TheoryData<int, int, int, int, double>
         {
@@ -231,7 +231,7 @@ public class DurationTestsData
         };
     }
 
-    public static TheoryData<int, int, int, int, int, double> GetTotalMinutesData(IFixture fixture)
+    public static TheoryData<int, int, int, int, int, double> GetTotalMinutesData(Fixture fixture)
     {
         return new TheoryData<int, int, int, int, int, double>
         {
@@ -246,7 +246,7 @@ public class DurationTestsData
         };
     }
 
-    public static TheoryData<int, int, int, int, int, int, double> GetTotalHoursData(IFixture fixture)
+    public static TheoryData<int, int, int, int, int, int, double> GetTotalHoursData(Fixture fixture)
     {
         return new TheoryData<int, int, int, int, int, int, double>
         {
@@ -261,7 +261,7 @@ public class DurationTestsData
         };
     }
 
-    public static TheoryData<double, long> GetFromMicrosecondsWithDoubleData(IFixture fixture)
+    public static TheoryData<double, long> GetFromMicrosecondsWithDoubleData(Fixture fixture)
     {
         return new TheoryData<double, long>
         {
@@ -278,7 +278,7 @@ public class DurationTestsData
         };
     }
 
-    public static TheoryData<long, long> GetFromMicrosecondsWithLongData(IFixture fixture)
+    public static TheoryData<long, long> GetFromMicrosecondsWithLongData(Fixture fixture)
     {
         return new TheoryData<long, long>
         {
@@ -293,7 +293,7 @@ public class DurationTestsData
         };
     }
 
-    public static TheoryData<double, long> GetFromMillisecondsWithDoubleData(IFixture fixture)
+    public static TheoryData<double, long> GetFromMillisecondsWithDoubleData(Fixture fixture)
     {
         return new TheoryData<double, long>
         {
@@ -310,7 +310,7 @@ public class DurationTestsData
         };
     }
 
-    public static TheoryData<long, long> GetFromMillisecondsWithLongData(IFixture fixture)
+    public static TheoryData<long, long> GetFromMillisecondsWithLongData(Fixture fixture)
     {
         return new TheoryData<long, long>
         {
@@ -325,7 +325,7 @@ public class DurationTestsData
         };
     }
 
-    public static TheoryData<double, long> GetFromSecondsWithDoubleData(IFixture fixture)
+    public static TheoryData<double, long> GetFromSecondsWithDoubleData(Fixture fixture)
     {
         return new TheoryData<double, long>
         {
@@ -342,7 +342,7 @@ public class DurationTestsData
         };
     }
 
-    public static TheoryData<long, long> GetFromSecondsWithLongData(IFixture fixture)
+    public static TheoryData<long, long> GetFromSecondsWithLongData(Fixture fixture)
     {
         return new TheoryData<long, long>
         {
@@ -357,7 +357,7 @@ public class DurationTestsData
         };
     }
 
-    public static TheoryData<double, long> GetFromMinutesWithDoubleData(IFixture fixture)
+    public static TheoryData<double, long> GetFromMinutesWithDoubleData(Fixture fixture)
     {
         return new TheoryData<double, long>
         {
@@ -374,7 +374,7 @@ public class DurationTestsData
         };
     }
 
-    public static TheoryData<long, long> GetFromMinutesWithLongData(IFixture fixture)
+    public static TheoryData<long, long> GetFromMinutesWithLongData(Fixture fixture)
     {
         return new TheoryData<long, long>
         {
@@ -389,7 +389,7 @@ public class DurationTestsData
         };
     }
 
-    public static TheoryData<double, long> GetFromHoursWithDoubleData(IFixture fixture)
+    public static TheoryData<double, long> GetFromHoursWithDoubleData(Fixture fixture)
     {
         return new TheoryData<double, long>
         {
@@ -406,7 +406,7 @@ public class DurationTestsData
         };
     }
 
-    public static TheoryData<long, long> GetFromHoursWithLongData(IFixture fixture)
+    public static TheoryData<long, long> GetFromHoursWithLongData(Fixture fixture)
     {
         return new TheoryData<long, long>
         {
@@ -421,7 +421,7 @@ public class DurationTestsData
         };
     }
 
-    public static TheoryData<long, string> GetToStringData(IFixture fixture)
+    public static TheoryData<long, string> GetToStringData(Fixture fixture)
     {
         return new TheoryData<long, string>
         {
@@ -434,7 +434,7 @@ public class DurationTestsData
         };
     }
 
-    public static TheoryData<long, long, bool> GetEqualsData(IFixture fixture)
+    public static TheoryData<long, long, bool> GetEqualsData(Fixture fixture)
     {
         return new TheoryData<long, long, bool>
         {
@@ -447,12 +447,12 @@ public class DurationTestsData
         };
     }
 
-    public static IEnumerable<object?[]> GetNotEqualsData(IFixture fixture)
+    public static IEnumerable<object?[]> GetNotEqualsData(Fixture fixture)
     {
         return GetEqualsData( fixture ).ConvertResult( (bool r) => ! r );
     }
 
-    public static TheoryData<long, long, int> GetCompareToData(IFixture fixture)
+    public static TheoryData<long, long, int> GetCompareToData(Fixture fixture)
     {
         return new TheoryData<long, long, int>
         {
@@ -466,27 +466,27 @@ public class DurationTestsData
         };
     }
 
-    public static IEnumerable<object?[]> GetGreaterThanComparisonData(IFixture fixture)
+    public static IEnumerable<object?[]> GetGreaterThanComparisonData(Fixture fixture)
     {
         return GetCompareToData( fixture ).ConvertResult( (int r) => r > 0 );
     }
 
-    public static IEnumerable<object?[]> GetGreaterThanOrEqualToComparisonData(IFixture fixture)
+    public static IEnumerable<object?[]> GetGreaterThanOrEqualToComparisonData(Fixture fixture)
     {
         return GetCompareToData( fixture ).ConvertResult( (int r) => r >= 0 );
     }
 
-    public static IEnumerable<object?[]> GetLessThanComparisonData(IFixture fixture)
+    public static IEnumerable<object?[]> GetLessThanComparisonData(Fixture fixture)
     {
         return GetCompareToData( fixture ).ConvertResult( (int r) => r < 0 );
     }
 
-    public static IEnumerable<object?[]> GetLessThanOrEqualToComparisonData(IFixture fixture)
+    public static IEnumerable<object?[]> GetLessThanOrEqualToComparisonData(Fixture fixture)
     {
         return GetCompareToData( fixture ).ConvertResult( (int r) => r <= 0 );
     }
 
-    public static TheoryData<long, long> GetNegateData(IFixture fixture)
+    public static TheoryData<long, long> GetNegateData(Fixture fixture)
     {
         return new TheoryData<long, long>
         {
@@ -496,7 +496,7 @@ public class DurationTestsData
         };
     }
 
-    public static TheoryData<long, long> GetAbsData(IFixture fixture)
+    public static TheoryData<long, long> GetAbsData(Fixture fixture)
     {
         return new TheoryData<long, long>
         {
@@ -508,7 +508,7 @@ public class DurationTestsData
         };
     }
 
-    public static TheoryData<long, long, long> GetAddTicksData(IFixture fixture)
+    public static TheoryData<long, long, long> GetAddTicksData(Fixture fixture)
     {
         return new TheoryData<long, long, long>
         {
@@ -520,7 +520,7 @@ public class DurationTestsData
         };
     }
 
-    public static TheoryData<long, double, long> GetAddMicrosecondsWithDoubleData(IFixture fixture)
+    public static TheoryData<long, double, long> GetAddMicrosecondsWithDoubleData(Fixture fixture)
     {
         return new TheoryData<long, double, long>
         {
@@ -536,7 +536,7 @@ public class DurationTestsData
         };
     }
 
-    public static TheoryData<long, long, long> GetAddMicrosecondsWithLongData(IFixture fixture)
+    public static TheoryData<long, long, long> GetAddMicrosecondsWithLongData(Fixture fixture)
     {
         return new TheoryData<long, long, long>
         {
@@ -548,7 +548,7 @@ public class DurationTestsData
         };
     }
 
-    public static TheoryData<long, double, long> GetAddMillisecondsWithDoubleData(IFixture fixture)
+    public static TheoryData<long, double, long> GetAddMillisecondsWithDoubleData(Fixture fixture)
     {
         return new TheoryData<long, double, long>
         {
@@ -564,7 +564,7 @@ public class DurationTestsData
         };
     }
 
-    public static TheoryData<long, long, long> GetAddMillisecondsWithLongData(IFixture fixture)
+    public static TheoryData<long, long, long> GetAddMillisecondsWithLongData(Fixture fixture)
     {
         return new TheoryData<long, long, long>
         {
@@ -576,7 +576,7 @@ public class DurationTestsData
         };
     }
 
-    public static TheoryData<long, double, long> GetAddSecondsWithDoubleData(IFixture fixture)
+    public static TheoryData<long, double, long> GetAddSecondsWithDoubleData(Fixture fixture)
     {
         return new TheoryData<long, double, long>
         {
@@ -592,7 +592,7 @@ public class DurationTestsData
         };
     }
 
-    public static TheoryData<long, long, long> GetAddSecondsWithLongData(IFixture fixture)
+    public static TheoryData<long, long, long> GetAddSecondsWithLongData(Fixture fixture)
     {
         return new TheoryData<long, long, long>
         {
@@ -604,7 +604,7 @@ public class DurationTestsData
         };
     }
 
-    public static TheoryData<long, double, long> GetAddMinutesWithDoubleData(IFixture fixture)
+    public static TheoryData<long, double, long> GetAddMinutesWithDoubleData(Fixture fixture)
     {
         return new TheoryData<long, double, long>
         {
@@ -620,7 +620,7 @@ public class DurationTestsData
         };
     }
 
-    public static TheoryData<long, long, long> GetAddMinutesWithLongData(IFixture fixture)
+    public static TheoryData<long, long, long> GetAddMinutesWithLongData(Fixture fixture)
     {
         return new TheoryData<long, long, long>
         {
@@ -632,7 +632,7 @@ public class DurationTestsData
         };
     }
 
-    public static TheoryData<long, double, long> GetAddHoursWithDoubleData(IFixture fixture)
+    public static TheoryData<long, double, long> GetAddHoursWithDoubleData(Fixture fixture)
     {
         return new TheoryData<long, double, long>
         {
@@ -648,7 +648,7 @@ public class DurationTestsData
         };
     }
 
-    public static TheoryData<long, long, long> GetAddHoursWithLongData(IFixture fixture)
+    public static TheoryData<long, long, long> GetAddHoursWithLongData(Fixture fixture)
     {
         return new TheoryData<long, long, long>
         {
@@ -660,7 +660,7 @@ public class DurationTestsData
         };
     }
 
-    public static TheoryData<long, long, long> GetSubtractTicksData(IFixture fixture)
+    public static TheoryData<long, long, long> GetSubtractTicksData(Fixture fixture)
     {
         return new TheoryData<long, long, long>
         {
@@ -672,7 +672,7 @@ public class DurationTestsData
         };
     }
 
-    public static TheoryData<long, double, long> GetSubtractMicrosecondsWithDoubleData(IFixture fixture)
+    public static TheoryData<long, double, long> GetSubtractMicrosecondsWithDoubleData(Fixture fixture)
     {
         return new TheoryData<long, double, long>
         {
@@ -688,7 +688,7 @@ public class DurationTestsData
         };
     }
 
-    public static TheoryData<long, long, long> GetSubtractMicrosecondsWithLongData(IFixture fixture)
+    public static TheoryData<long, long, long> GetSubtractMicrosecondsWithLongData(Fixture fixture)
     {
         return new TheoryData<long, long, long>
         {
@@ -700,7 +700,7 @@ public class DurationTestsData
         };
     }
 
-    public static TheoryData<long, double, long> GetSubtractMillisecondsWithDoubleData(IFixture fixture)
+    public static TheoryData<long, double, long> GetSubtractMillisecondsWithDoubleData(Fixture fixture)
     {
         return new TheoryData<long, double, long>
         {
@@ -716,7 +716,7 @@ public class DurationTestsData
         };
     }
 
-    public static TheoryData<long, long, long> GetSubtractMillisecondsWithLongData(IFixture fixture)
+    public static TheoryData<long, long, long> GetSubtractMillisecondsWithLongData(Fixture fixture)
     {
         return new TheoryData<long, long, long>
         {
@@ -728,7 +728,7 @@ public class DurationTestsData
         };
     }
 
-    public static TheoryData<long, double, long> GetSubtractSecondsWithDoubleData(IFixture fixture)
+    public static TheoryData<long, double, long> GetSubtractSecondsWithDoubleData(Fixture fixture)
     {
         return new TheoryData<long, double, long>
         {
@@ -744,7 +744,7 @@ public class DurationTestsData
         };
     }
 
-    public static TheoryData<long, long, long> GetSubtractSecondsWithLongData(IFixture fixture)
+    public static TheoryData<long, long, long> GetSubtractSecondsWithLongData(Fixture fixture)
     {
         return new TheoryData<long, long, long>
         {
@@ -756,7 +756,7 @@ public class DurationTestsData
         };
     }
 
-    public static TheoryData<long, double, long> GetSubtractMinutesWithDoubleData(IFixture fixture)
+    public static TheoryData<long, double, long> GetSubtractMinutesWithDoubleData(Fixture fixture)
     {
         return new TheoryData<long, double, long>
         {
@@ -772,7 +772,7 @@ public class DurationTestsData
         };
     }
 
-    public static TheoryData<long, long, long> GetSubtractMinutesWithLongData(IFixture fixture)
+    public static TheoryData<long, long, long> GetSubtractMinutesWithLongData(Fixture fixture)
     {
         return new TheoryData<long, long, long>
         {
@@ -784,7 +784,7 @@ public class DurationTestsData
         };
     }
 
-    public static TheoryData<long, double, long> GetSubtractHoursWithDoubleData(IFixture fixture)
+    public static TheoryData<long, double, long> GetSubtractHoursWithDoubleData(Fixture fixture)
     {
         return new TheoryData<long, double, long>
         {
@@ -800,7 +800,7 @@ public class DurationTestsData
         };
     }
 
-    public static TheoryData<long, long, long> GetSubtractHoursWithLongData(IFixture fixture)
+    public static TheoryData<long, long, long> GetSubtractHoursWithLongData(Fixture fixture)
     {
         return new TheoryData<long, long, long>
         {
@@ -812,7 +812,7 @@ public class DurationTestsData
         };
     }
 
-    public static TheoryData<long, double, long> GetMultiplyData(IFixture fixture)
+    public static TheoryData<long, double, long> GetMultiplyData(Fixture fixture)
     {
         return new TheoryData<long, double, long>
         {
@@ -832,7 +832,7 @@ public class DurationTestsData
         };
     }
 
-    public static TheoryData<long, double, long> GetDivideData(IFixture fixture)
+    public static TheoryData<long, double, long> GetDivideData(Fixture fixture)
     {
         return new TheoryData<long, double, long>
         {
@@ -850,7 +850,7 @@ public class DurationTestsData
         };
     }
 
-    public static TheoryData<long, long> GetTrimToMicrosecondData(IFixture fixture)
+    public static TheoryData<long, long> GetTrimToMicrosecondData(Fixture fixture)
     {
         return new TheoryData<long, long>
         {
@@ -868,7 +868,7 @@ public class DurationTestsData
         };
     }
 
-    public static TheoryData<long, long> GetTrimToMillisecondData(IFixture fixture)
+    public static TheoryData<long, long> GetTrimToMillisecondData(Fixture fixture)
     {
         return new TheoryData<long, long>
         {
@@ -886,7 +886,7 @@ public class DurationTestsData
         };
     }
 
-    public static TheoryData<long, long> GetTrimToSecondData(IFixture fixture)
+    public static TheoryData<long, long> GetTrimToSecondData(Fixture fixture)
     {
         return new TheoryData<long, long>
         {
@@ -904,7 +904,7 @@ public class DurationTestsData
         };
     }
 
-    public static TheoryData<long, long> GetTrimToMinuteData(IFixture fixture)
+    public static TheoryData<long, long> GetTrimToMinuteData(Fixture fixture)
     {
         return new TheoryData<long, long>
         {
@@ -922,7 +922,7 @@ public class DurationTestsData
         };
     }
 
-    public static TheoryData<long, long> GetTrimToHourData(IFixture fixture)
+    public static TheoryData<long, long> GetTrimToHourData(Fixture fixture)
     {
         return new TheoryData<long, long>
         {
@@ -940,7 +940,7 @@ public class DurationTestsData
         };
     }
 
-    public static TheoryData<long, int> GetSetTicksInMicrosecondThrowData(IFixture fixture)
+    public static TheoryData<long, int> GetSetTicksInMicrosecondThrowData(Fixture fixture)
     {
         return new TheoryData<long, int>
         {
@@ -963,7 +963,7 @@ public class DurationTestsData
         };
     }
 
-    public static TheoryData<long, int, long> GetSetTicksInMicrosecondData(IFixture fixture)
+    public static TheoryData<long, int, long> GetSetTicksInMicrosecondData(Fixture fixture)
     {
         return new TheoryData<long, int, long>
         {
@@ -983,7 +983,7 @@ public class DurationTestsData
         };
     }
 
-    public static TheoryData<long, int> GetSetMicrosecondsInMillisecondThrowData(IFixture fixture)
+    public static TheoryData<long, int> GetSetMicrosecondsInMillisecondThrowData(Fixture fixture)
     {
         return new TheoryData<long, int>
         {
@@ -1006,7 +1006,7 @@ public class DurationTestsData
         };
     }
 
-    public static TheoryData<long, int, long> GetSetMicrosecondsInMillisecondData(IFixture fixture)
+    public static TheoryData<long, int, long> GetSetMicrosecondsInMillisecondData(Fixture fixture)
     {
         return new TheoryData<long, int, long>
         {
@@ -1026,7 +1026,7 @@ public class DurationTestsData
         };
     }
 
-    public static TheoryData<long, int> GetSetMillisecondsInSecondThrowData(IFixture fixture)
+    public static TheoryData<long, int> GetSetMillisecondsInSecondThrowData(Fixture fixture)
     {
         return new TheoryData<long, int>
         {
@@ -1049,7 +1049,7 @@ public class DurationTestsData
         };
     }
 
-    public static TheoryData<long, int, long> GetSetMillisecondsInSecondData(IFixture fixture)
+    public static TheoryData<long, int, long> GetSetMillisecondsInSecondData(Fixture fixture)
     {
         return new TheoryData<long, int, long>
         {
@@ -1069,7 +1069,7 @@ public class DurationTestsData
         };
     }
 
-    public static TheoryData<long, int> GetSetSecondsInMinuteThrowData(IFixture fixture)
+    public static TheoryData<long, int> GetSetSecondsInMinuteThrowData(Fixture fixture)
     {
         return new TheoryData<long, int>
         {
@@ -1092,7 +1092,7 @@ public class DurationTestsData
         };
     }
 
-    public static TheoryData<long, int, long> GetSetSecondsInMinuteData(IFixture fixture)
+    public static TheoryData<long, int, long> GetSetSecondsInMinuteData(Fixture fixture)
     {
         return new TheoryData<long, int, long>
         {
@@ -1112,7 +1112,7 @@ public class DurationTestsData
         };
     }
 
-    public static TheoryData<long, int> GetSetMinutesInHourThrowData(IFixture fixture)
+    public static TheoryData<long, int> GetSetMinutesInHourThrowData(Fixture fixture)
     {
         return new TheoryData<long, int>
         {
@@ -1135,7 +1135,7 @@ public class DurationTestsData
         };
     }
 
-    public static TheoryData<long, int, long> GetSetMinutesInHourData(IFixture fixture)
+    public static TheoryData<long, int, long> GetSetMinutesInHourData(Fixture fixture)
     {
         return new TheoryData<long, int, long>
         {
@@ -1155,7 +1155,7 @@ public class DurationTestsData
         };
     }
 
-    public static TheoryData<long, int> GetSetHoursThrowData(IFixture fixture)
+    public static TheoryData<long, int> GetSetHoursThrowData(Fixture fixture)
     {
         return new TheoryData<long, int>
         {
@@ -1166,7 +1166,7 @@ public class DurationTestsData
         };
     }
 
-    public static TheoryData<long, int, long> GetSetHoursData(IFixture fixture)
+    public static TheoryData<long, int, long> GetSetHoursData(Fixture fixture)
     {
         return new TheoryData<long, int, long>
         {

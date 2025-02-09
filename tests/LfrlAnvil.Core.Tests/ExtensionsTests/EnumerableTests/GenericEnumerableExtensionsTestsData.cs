@@ -6,7 +6,7 @@ namespace LfrlAnvil.Tests.ExtensionsTests.EnumerableTests;
 
 public class GenericEnumerableExtensionsTestsData<T>
 {
-    public static TheoryData<int> GetIsEmptyData(IFixture fixture)
+    public static TheoryData<int> GetIsEmptyData(Fixture fixture)
     {
         return new TheoryData<int>
         {
@@ -15,7 +15,7 @@ public class GenericEnumerableExtensionsTestsData<T>
         };
     }
 
-    public static TheoryData<int, int, bool> GetContainsAtLeastData(IFixture fixture)
+    public static TheoryData<int, int, bool> GetContainsAtLeastData(Fixture fixture)
     {
         return new TheoryData<int, int, bool>
         {
@@ -35,7 +35,7 @@ public class GenericEnumerableExtensionsTestsData<T>
         };
     }
 
-    public static TheoryData<int, int, bool> GetContainsAtMostData(IFixture fixture)
+    public static TheoryData<int, int, bool> GetContainsAtMostData(Fixture fixture)
     {
         return new TheoryData<int, int, bool>
         {
@@ -55,7 +55,7 @@ public class GenericEnumerableExtensionsTestsData<T>
         };
     }
 
-    public static TheoryData<int> GetContainsInRangeForMaxCountLessThanMinCountData(IFixture fixture)
+    public static TheoryData<int> GetContainsInRangeForMaxCountLessThanMinCountData(Fixture fixture)
     {
         return new TheoryData<int>
         {
@@ -65,7 +65,7 @@ public class GenericEnumerableExtensionsTestsData<T>
         };
     }
 
-    public static TheoryData<int, int, bool> GetContainsInRangeForZeroMinCountData(IFixture fixture)
+    public static TheoryData<int, int, bool> GetContainsInRangeForZeroMinCountData(Fixture fixture)
     {
         return new TheoryData<int, int, bool>
         {
@@ -85,7 +85,7 @@ public class GenericEnumerableExtensionsTestsData<T>
         };
     }
 
-    public static TheoryData<int, int, bool> GetContainsInRangeForNegativeMinCountData(IFixture fixture)
+    public static TheoryData<int, int, bool> GetContainsInRangeForNegativeMinCountData(Fixture fixture)
     {
         return new TheoryData<int, int, bool>
         {
@@ -105,7 +105,7 @@ public class GenericEnumerableExtensionsTestsData<T>
         };
     }
 
-    public static TheoryData<int, int> GetContainsInRangeForCountLessThanMinCountData(IFixture fixture)
+    public static TheoryData<int, int> GetContainsInRangeForCountLessThanMinCountData(Fixture fixture)
     {
         return new TheoryData<int, int>
         {
@@ -118,7 +118,7 @@ public class GenericEnumerableExtensionsTestsData<T>
         };
     }
 
-    public static TheoryData<int, int> GetContainsInRangeForCountGreaterThanMaxCountData(IFixture fixture)
+    public static TheoryData<int, int> GetContainsInRangeForCountGreaterThanMaxCountData(Fixture fixture)
     {
         return new TheoryData<int, int>
         {
@@ -130,7 +130,7 @@ public class GenericEnumerableExtensionsTestsData<T>
         };
     }
 
-    public static TheoryData<int, int, int> GetContainsInRangeForCountBetweenMinAndMaxData(IFixture fixture)
+    public static TheoryData<int, int, int> GetContainsInRangeForCountBetweenMinAndMaxData(Fixture fixture)
     {
         return new TheoryData<int, int, int>
         {
@@ -149,7 +149,7 @@ public class GenericEnumerableExtensionsTestsData<T>
         };
     }
 
-    public static TheoryData<int> GetContainsExactlyForNegativeCountData(IFixture fixture)
+    public static TheoryData<int> GetContainsExactlyForNegativeCountData(Fixture fixture)
     {
         return new TheoryData<int>
         {
@@ -159,7 +159,7 @@ public class GenericEnumerableExtensionsTestsData<T>
         };
     }
 
-    public static TheoryData<int, int, bool> GetContainsExactlyForNonNegativeCountData(IFixture fixture)
+    public static TheoryData<int, int, bool> GetContainsExactlyForNonNegativeCountData(Fixture fixture)
     {
         return new TheoryData<int, int, bool>
         {
@@ -174,9 +174,9 @@ public class GenericEnumerableExtensionsTestsData<T>
         };
     }
 
-    public static TheoryData<IReadOnlyList<Pair<T, IEnumerable<T>>>, IEnumerable<Pair<T, T>>> GetFlattenData(IFixture fixture)
+    public static TheoryData<IReadOnlyList<Pair<T, IEnumerable<T>>>, IEnumerable<Pair<T, T>>> GetFlattenData(Fixture fixture)
     {
-        var (_1, _2, _3) = fixture.CreateDistinctCollection<T>( 3 );
+        var (_1, _2, _3) = fixture.CreateManyDistinct<T>( count: 3 );
 
         return new TheoryData<IReadOnlyList<Pair<T, IEnumerable<T>>>, IEnumerable<Pair<T, T>>>
         {
@@ -189,9 +189,9 @@ public class GenericEnumerableExtensionsTestsData<T>
         };
     }
 
-    public static TheoryData<IEnumerable<T>, T> GetMinData(IFixture fixture)
+    public static TheoryData<IEnumerable<T>, T> GetMinData(Fixture fixture)
     {
-        var (_1, _2, _3) = fixture.CreateDistinctSortedCollection<T>( 3 );
+        var (_1, _2, _3) = fixture.CreateManyDistinctSorted<T>( count: 3 );
 
         return new TheoryData<IEnumerable<T>, T>
         {
@@ -207,9 +207,9 @@ public class GenericEnumerableExtensionsTestsData<T>
         };
     }
 
-    public static TheoryData<IEnumerable<T>, T> GetMaxData(IFixture fixture)
+    public static TheoryData<IEnumerable<T>, T> GetMaxData(Fixture fixture)
     {
-        var (_1, _2, _3) = fixture.CreateDistinctSortedCollection<T>( 3 );
+        var (_1, _2, _3) = fixture.CreateManyDistinctSorted<T>( count: 3 );
 
         return new TheoryData<IEnumerable<T>, T>
         {
@@ -225,9 +225,9 @@ public class GenericEnumerableExtensionsTestsData<T>
         };
     }
 
-    public static TheoryData<IEnumerable<T>, T, T> GetMinMaxData(IFixture fixture)
+    public static TheoryData<IEnumerable<T>, T, T> GetMinMaxData(Fixture fixture)
     {
-        var (_1, _2, _3) = fixture.CreateDistinctSortedCollection<T>( 3 );
+        var (_1, _2, _3) = fixture.CreateManyDistinctSorted<T>( count: 3 );
 
         return new TheoryData<IEnumerable<T>, T, T>
         {
@@ -243,9 +243,9 @@ public class GenericEnumerableExtensionsTestsData<T>
         };
     }
 
-    public static TheoryData<IEnumerable<T>, bool> GetContainsDuplicatesData(IFixture fixture)
+    public static TheoryData<IEnumerable<T>, bool> GetContainsDuplicatesData(Fixture fixture)
     {
-        var (_1, _2, _3) = fixture.CreateDistinctCollection<T>( 3 );
+        var (_1, _2, _3) = fixture.CreateManyDistinct<T>( count: 3 );
 
         return new TheoryData<IEnumerable<T>, bool>
         {
@@ -262,7 +262,7 @@ public class GenericEnumerableExtensionsTestsData<T>
         };
     }
 
-    public static TheoryData<int> GetRepeatForZeroOrOneCountData(IFixture fixture)
+    public static TheoryData<int> GetRepeatForZeroOrOneCountData(Fixture fixture)
     {
         return new TheoryData<int>
         {
@@ -272,9 +272,9 @@ public class GenericEnumerableExtensionsTestsData<T>
         };
     }
 
-    public static TheoryData<IEnumerable<T>, int, IEnumerable<T>> GetRepeatForCountGreaterThanOneData(IFixture fixture)
+    public static TheoryData<IEnumerable<T>, int, IEnumerable<T>> GetRepeatForCountGreaterThanOneData(Fixture fixture)
     {
-        var (_1, _2, _3) = fixture.CreateDistinctCollection<T>( 3 );
+        var (_1, _2, _3) = fixture.CreateManyDistinct<T>( count: 3 );
 
         return new TheoryData<IEnumerable<T>, int, IEnumerable<T>>
         {
@@ -287,7 +287,7 @@ public class GenericEnumerableExtensionsTestsData<T>
         };
     }
 
-    public static TheoryData<int> GetRepeatForMemoizationWithCountGreaterThanOneData(IFixture fixture)
+    public static TheoryData<int> GetRepeatForMemoizationWithCountGreaterThanOneData(Fixture fixture)
     {
         return new TheoryData<int>
         {
@@ -297,7 +297,7 @@ public class GenericEnumerableExtensionsTestsData<T>
         };
     }
 
-    public static TheoryData<int, int> GetMemoizeData(IFixture fixture)
+    public static TheoryData<int, int> GetMemoizeData(Fixture fixture)
     {
         return new TheoryData<int, int>
         {
@@ -316,9 +316,9 @@ public class GenericEnumerableExtensionsTestsData<T>
         };
     }
 
-    public static TheoryData<IEnumerable<T>, IEnumerable<T>, bool> GetSetEqualsData(IFixture fixture)
+    public static TheoryData<IEnumerable<T>, IEnumerable<T>, bool> GetSetEqualsData(Fixture fixture)
     {
-        var (_1, _2, _3) = fixture.CreateDistinctCollection<T>( 3 );
+        var (_1, _2, _3) = fixture.CreateManyDistinct<T>( count: 3 );
 
         return new TheoryData<IEnumerable<T>, IEnumerable<T>, bool>
         {
@@ -348,9 +348,9 @@ public class GenericEnumerableExtensionsTestsData<T>
         };
     }
 
-    public static TheoryData<IEnumerable<T>, int, int, T[]> GetSliceData(IFixture fixture)
+    public static TheoryData<IEnumerable<T>, int, int, T[]> GetSliceData(Fixture fixture)
     {
-        var items = fixture.CreateDistinctCollection<T>( count: 3 );
+        var items = fixture.CreateManyDistinct<T>( count: 3 );
         var (_1, _2, _3) = items;
 
         return new TheoryData<IEnumerable<T>, int, int, T[]>
@@ -389,9 +389,9 @@ public class GenericEnumerableExtensionsTestsData<T>
         };
     }
 
-    public static TheoryData<IEnumerable<T>, bool> GetIsOrderedData(IFixture fixture)
+    public static TheoryData<IEnumerable<T>, bool> GetIsOrderedData(Fixture fixture)
     {
-        var (_1, _2, _3) = fixture.CreateDistinctSortedCollection<T>( 3 );
+        var (_1, _2, _3) = fixture.CreateManyDistinctSorted<T>( count: 3 );
 
         return new TheoryData<IEnumerable<T>, bool>
         {

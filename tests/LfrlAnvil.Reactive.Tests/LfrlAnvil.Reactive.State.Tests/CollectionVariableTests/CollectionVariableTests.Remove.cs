@@ -74,7 +74,7 @@ public partial class CollectionVariableTests
     {
         var element = Fixture.Create<TestElement>();
         var keySelector = Lambda.Of( (TestElement e) => e.Key );
-        var (error, warning, elementError, elementWarning) = Fixture.CreateDistinctCollection<string>( count: 4 );
+        var (error, warning, elementError, elementWarning) = Fixture.CreateManyDistinct<string>( count: 4 );
         var errorsValidator = Validators<string>.Fail<ICollectionVariableElements<int, TestElement, string>>( error );
         var warningsValidator = Validators<string>.Fail<ICollectionVariableElements<int, TestElement, string>>( warning );
         var elementErrorsValidator = Validators<string>.Fail<TestElement>( elementError );
@@ -209,7 +209,7 @@ public partial class CollectionVariableTests
     [Fact]
     public void Remove_WithRange_ShouldFilterKeysToRemoveCorrectlyAndRemoveOnlyThoseThatExistAndDoNotRepeat()
     {
-        var allElements = Fixture.CreateDistinctCollection<TestElement>( count: 4 );
+        var allElements = Fixture.CreateManyDistinct<TestElement>( count: 4 );
         var initialElements = new[] { allElements[0], allElements[1] };
         var keys = new[]
         {

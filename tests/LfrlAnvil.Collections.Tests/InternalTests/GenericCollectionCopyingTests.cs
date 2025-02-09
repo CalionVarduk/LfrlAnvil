@@ -9,7 +9,7 @@ public abstract class GenericCollectionCopyingTests<T> : TestsBase
     [Fact]
     public void CopyTo_ShouldCopyAllItemsToArrayAtValidIndex()
     {
-        var allItems = Fixture.CreateDistinctCollection<T>( 4 );
+        var allItems = Fixture.CreateManyDistinct<T>( count: 4 );
         var items = allItems.Take( 3 ).ToList();
         var arrayItem = allItems[^1];
 
@@ -23,7 +23,7 @@ public abstract class GenericCollectionCopyingTests<T> : TestsBase
     [Fact]
     public void CopyTo_ShouldCopyItemsToArrayAtValidIndexAndNotExceedArrayLength()
     {
-        var allItems = Fixture.CreateDistinctCollection<T>( 4 );
+        var allItems = Fixture.CreateManyDistinct<T>( count: 4 );
         var items = allItems.Take( 3 ).ToList();
         var arrayItem = allItems[^1];
 
@@ -37,7 +37,7 @@ public abstract class GenericCollectionCopyingTests<T> : TestsBase
     [Fact]
     public void CopyTo_ShouldCopyItemsToArrayWithValidOffset_WhenIndexIsNegative()
     {
-        var allItems = Fixture.CreateDistinctCollection<T>( 4 );
+        var allItems = Fixture.CreateManyDistinct<T>( count: 4 );
         var items = allItems.Take( 3 ).ToList();
         var arrayItem = allItems[^1];
 
@@ -51,7 +51,7 @@ public abstract class GenericCollectionCopyingTests<T> : TestsBase
     [Fact]
     public void CopyTo_ShouldCopyItemsToArrayWithValidOffset_WhenIndexIsNegativeAndArrayIsTooSmall()
     {
-        var allItems = Fixture.CreateDistinctCollection<T>( 6 );
+        var allItems = Fixture.CreateManyDistinct<T>( count: 6 );
         var items = allItems.Take( 5 ).ToList();
         var arrayItem = allItems[^1];
 
@@ -67,7 +67,7 @@ public abstract class GenericCollectionCopyingTests<T> : TestsBase
     [InlineData( -3 )]
     public void CopyTo_ShouldDoNothing_WhenIndexIsOutOfBounds(int arrayIndex)
     {
-        var allItems = Fixture.CreateDistinctCollection<T>( 4 );
+        var allItems = Fixture.CreateManyDistinct<T>( count: 4 );
         var items = allItems.Take( 3 ).ToList();
         var arrayItem = allItems[^1];
 

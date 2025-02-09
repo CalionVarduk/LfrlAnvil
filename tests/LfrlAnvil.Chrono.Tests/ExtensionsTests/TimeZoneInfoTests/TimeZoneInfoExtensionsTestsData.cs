@@ -7,9 +7,9 @@ public class TimeZoneInfoExtensionsTestsData
 {
     public static TheoryData<DateTime, IEnumerable<(DateTime Start, DateTime End)>>
         GetGetActiveAdjustmentRuleWithNullResultData(
-            IFixture fixture)
+            Fixture fixture)
     {
-        var (a, b, c, d, e) = fixture.CreateDistinctSortedCollection<DateTime>( count: 5 );
+        var (a, b, c, d, e) = fixture.CreateManyDistinctSorted<DateTime>( count: 5 );
 
         return new TheoryData<DateTime, IEnumerable<(DateTime, DateTime)>>
         {
@@ -27,7 +27,7 @@ public class TimeZoneInfoExtensionsTestsData
             IEnumerable<(DateTime Start, DateTime End)>,
             (DateTime Start, DateTime End)>
         GetGetActiveAdjustmentRuleData(
-            IFixture fixture)
+            Fixture fixture)
     {
         var baseDt = fixture.Create<DateTime>().Date;
         var (a, b, c, d, e) = (baseDt.AddDays( -2 ), baseDt.AddDays( -1 ), baseDt, baseDt.AddDays( 1 ), baseDt.AddDays( 2 ));
@@ -47,7 +47,7 @@ public class TimeZoneInfoExtensionsTestsData
             IEnumerable<(DateTime Start, DateTime End)>,
             int>
         GetGetActiveAdjustmentRuleIndexData(
-            IFixture fixture)
+            Fixture fixture)
     {
         var baseDt = fixture.Create<DateTime>().Date;
         var (a, b, c, d, e) = (baseDt.AddDays( -2 ), baseDt.AddDays( -1 ), baseDt, baseDt.AddDays( 1 ), baseDt.AddDays( 2 ));
@@ -64,7 +64,7 @@ public class TimeZoneInfoExtensionsTestsData
 
     public static TheoryData<TimeZoneInfo, DateTime, (DateTime Start, DateTime End)?>
         GetGetContainingInvalidityRangeData(
-            IFixture fixture)
+            Fixture fixture)
     {
         var simpleTimeZone = TimeZoneFactory.Create(
             utcOffsetInHours: 1.0,
@@ -156,7 +156,7 @@ public class TimeZoneInfoExtensionsTestsData
 
     public static TheoryData<TimeZoneInfo, DateTime, (DateTime Start, DateTime End)?>
         GetGetContainingAmbiguityRangeData(
-            IFixture fixture)
+            Fixture fixture)
     {
         var simpleTimeZone = TimeZoneFactory.Create(
             utcOffsetInHours: 1.0,

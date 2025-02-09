@@ -488,7 +488,7 @@ public class ZonedWeekTests : TestsBase
     public void CreateUtc_WithWeekOfYear_ShouldReturnCorrectWeekInUtc(IsoDayOfWeek weekStart)
     {
         var year = Fixture.Create<DateTime>().Year;
-        var weekOfYear = Fixture.CreatePositiveInt32() % 50 + 1;
+        var weekOfYear = Fixture.Create<int>( x => x > 0 ) % 50 + 1;
         var expected = ZonedWeek.Create( year, weekOfYear, TimeZoneInfo.Utc, weekStart );
 
         var result = ZonedWeek.CreateUtc( year, weekOfYear, weekStart );
@@ -507,7 +507,7 @@ public class ZonedWeekTests : TestsBase
     public void TryCreateUtc_WithWeekOfYear_ShouldReturnCorrectWeekInUtc(IsoDayOfWeek weekStart)
     {
         var year = Fixture.Create<DateTime>().Year;
-        var weekOfYear = Fixture.CreatePositiveInt32() % 50 + 1;
+        var weekOfYear = Fixture.Create<int>( x => x > 0 ) % 50 + 1;
         var expected = ZonedWeek.Create( year, weekOfYear, TimeZoneInfo.Utc, weekStart );
 
         var result = ZonedWeek.TryCreateUtc( year, weekOfYear, weekStart );
@@ -544,7 +544,7 @@ public class ZonedWeekTests : TestsBase
     public void CreateLocal_WithWeekOfYear_ShouldReturnCorrectWeekInLocal(IsoDayOfWeek weekStart)
     {
         var year = Fixture.Create<DateTime>().Year;
-        var weekOfYear = Fixture.CreatePositiveInt32() % 50 + 1;
+        var weekOfYear = Fixture.Create<int>( x => x > 0 ) % 50 + 1;
         var expected = ZonedWeek.Create( year, weekOfYear, TimeZoneInfo.Local, weekStart );
 
         var result = ZonedWeek.CreateLocal( year, weekOfYear, weekStart );
@@ -563,7 +563,7 @@ public class ZonedWeekTests : TestsBase
     public void TryCreateLocal_WithWeekOfYear_ShouldReturnCorrectWeekInLocal(IsoDayOfWeek weekStart)
     {
         var year = Fixture.Create<DateTime>().Year;
-        var weekOfYear = Fixture.CreatePositiveInt32() % 50 + 1;
+        var weekOfYear = Fixture.Create<int>( x => x > 0 ) % 50 + 1;
         var expected = ZonedWeek.Create( year, weekOfYear, TimeZoneInfo.Local, weekStart );
 
         var result = ZonedWeek.TryCreateLocal( year, weekOfYear, weekStart );
@@ -896,8 +896,8 @@ public class ZonedWeekTests : TestsBase
     {
         var year = Fixture.Create<DateTime>().Year;
         var timeZone = TimeZoneFactory.CreateRandom( Fixture );
-        var oldWeekOfYear = Fixture.CreatePositiveInt32() % 50 + 1;
-        var newWeekOfYear = Fixture.CreatePositiveInt32() % 50 + 1;
+        var oldWeekOfYear = Fixture.Create<int>( x => x > 0 ) % 50 + 1;
+        var newWeekOfYear = Fixture.Create<int>( x => x > 0 ) % 50 + 1;
         var sut = ZonedWeek.Create( year, oldWeekOfYear, timeZone, weekStart );
         var expected = ZonedWeek.Create( year, newWeekOfYear, timeZone, weekStart );
 
@@ -918,8 +918,8 @@ public class ZonedWeekTests : TestsBase
     {
         var year = Fixture.Create<DateTime>().Year;
         var timeZone = TimeZoneFactory.CreateRandom( Fixture );
-        var oldWeekOfYear = Fixture.CreatePositiveInt32() % 50 + 1;
-        var newWeekOfYear = Fixture.CreatePositiveInt32() % 50 + 1;
+        var oldWeekOfYear = Fixture.Create<int>( x => x > 0 ) % 50 + 1;
+        var newWeekOfYear = Fixture.Create<int>( x => x > 0 ) % 50 + 1;
         var sut = ZonedWeek.Create( year, oldWeekOfYear, timeZone, weekStart );
         var expected = ZonedWeek.Create( year, newWeekOfYear, timeZone, weekStart );
 

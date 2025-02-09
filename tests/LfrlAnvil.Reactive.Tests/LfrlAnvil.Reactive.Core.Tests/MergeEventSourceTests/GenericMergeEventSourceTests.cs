@@ -157,7 +157,7 @@ public abstract class GenericMergeEventSourceTests<TEvent> : TestsBase
     [Fact]
     public void Listen_ShouldCreateActiveSubscriberThatEmitsOnlyFirstInnerStreamEvents_WithMaxConcurrencyEqualToOne()
     {
-        var values = Fixture.CreateDistinctCollection<TEvent>( count: 6 );
+        var values = Fixture.CreateManyDistinct<TEvent>( count: 6 );
         var firstStreamValues = new[] { values[0], values[1] };
         var secondStreamValues = new[] { values[2], values[3] };
         var thirdStreamValues = new[] { values[4], values[5] };
@@ -195,7 +195,7 @@ public abstract class GenericMergeEventSourceTests<TEvent> : TestsBase
     [Fact]
     public void Listen_ShouldCreateActiveSubscriberThatEmitsOnlyFirstOrSecondInnerStreamEvents_WithMaxConcurrencyEqualToTwo()
     {
-        var values = Fixture.CreateDistinctCollection<TEvent>( count: 6 );
+        var values = Fixture.CreateManyDistinct<TEvent>( count: 6 );
         var firstStreamValues = new[] { values[0], values[1] };
         var secondStreamValues = new[] { values[2], values[3] };
         var thirdStreamValues = new[] { values[4], values[5] };
@@ -232,7 +232,7 @@ public abstract class GenericMergeEventSourceTests<TEvent> : TestsBase
     [Fact]
     public void Listen_ShouldCreateActiveSubscriberThatEmitsAllInnerStreamEvents_WithMaxConcurrencyEqualToMax()
     {
-        var values = Fixture.CreateDistinctCollection<TEvent>( count: 6 );
+        var values = Fixture.CreateManyDistinct<TEvent>( count: 6 );
         var firstStreamValues = new[] { values[0], values[1] };
         var secondStreamValues = new[] { values[2], values[3] };
         var thirdStreamValues = new[] { values[4], values[5] };
@@ -277,7 +277,7 @@ public abstract class GenericMergeEventSourceTests<TEvent> : TestsBase
     public void
         Listen_ShouldCreateActiveSubscriberThatStartsListeningToNextStream_WhenActiveStreamDisposes_WithMaxConcurrencyEqualToOne()
     {
-        var values = Fixture.CreateDistinctCollection<TEvent>( count: 6 );
+        var values = Fixture.CreateManyDistinct<TEvent>( count: 6 );
         var firstStreamValues = new[] { values[0], values[1] };
         var secondStreamValues = new[] { values[2], values[3] };
         var thirdStreamValues = new[] { values[4], values[5] };
@@ -320,7 +320,7 @@ public abstract class GenericMergeEventSourceTests<TEvent> : TestsBase
     public void
         Listen_ShouldCreateActiveSubscriberThatStartsListeningToNextStream_WhenActiveStreamDisposes_WithMaxConcurrencyEqualToTwo()
     {
-        var values = Fixture.CreateDistinctCollection<TEvent>( count: 6 );
+        var values = Fixture.CreateManyDistinct<TEvent>( count: 6 );
         var firstStreamValues = new[] { values[0], values[1] };
         var secondStreamValues = new[] { values[2], values[3] };
         var thirdStreamValues = new[] { values[4], values[5] };
@@ -472,7 +472,7 @@ public abstract class GenericMergeEventSourceTests<TEvent> : TestsBase
     [Fact]
     public void Merge_ThenListen_ShouldCreateActiveSubscriberThatEmitsAllInnerStreamEvents()
     {
-        var values = Fixture.CreateDistinctCollection<TEvent>( count: 6 );
+        var values = Fixture.CreateManyDistinct<TEvent>( count: 6 );
         var firstStreamValues = new[] { values[0], values[1] };
         var secondStreamValues = new[] { values[2], values[3] };
         var thirdStreamValues = new[] { values[4], values[5] };
@@ -516,7 +516,7 @@ public abstract class GenericMergeEventSourceTests<TEvent> : TestsBase
     [Fact]
     public void Concat_ThenListen_ShouldCreateActiveSubscriberThatStartsListeningToNextStream_WhenActiveStreamDisposes()
     {
-        var values = Fixture.CreateDistinctCollection<TEvent>( count: 6 );
+        var values = Fixture.CreateManyDistinct<TEvent>( count: 6 );
         var firstStreamValues = new[] { values[0], values[1] };
         var secondStreamValues = new[] { values[2], values[3] };
         var thirdStreamValues = new[] { values[4], values[5] };

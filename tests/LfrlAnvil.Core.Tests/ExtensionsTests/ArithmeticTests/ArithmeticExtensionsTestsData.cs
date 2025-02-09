@@ -4,7 +4,7 @@ namespace LfrlAnvil.Tests.ExtensionsTests.ArithmeticTests;
 
 public class ArithmeticExtensionsTestsData
 {
-    public static TheoryData<float, float, float> GetEuclidModuloFloatData(IFixture fixture)
+    public static TheoryData<float, float, float> GetEuclidModuloFloatData(Fixture fixture)
     {
         var result = new TheoryData<float, float, float>();
         foreach ( var (a, b, r) in GetEuclidModuloRealData() )
@@ -13,7 +13,7 @@ public class ArithmeticExtensionsTestsData
         return result;
     }
 
-    public static TheoryData<double, double, double> GetEuclidModuloDoubleData(IFixture fixture)
+    public static TheoryData<double, double, double> GetEuclidModuloDoubleData(Fixture fixture)
     {
         var result = new TheoryData<double, double, double>();
         foreach ( var (a, b, r) in GetEuclidModuloRealData() )
@@ -22,7 +22,7 @@ public class ArithmeticExtensionsTestsData
         return result;
     }
 
-    public static TheoryData<decimal, decimal, decimal> GetEuclidModuloDecimalData(IFixture fixture)
+    public static TheoryData<decimal, decimal, decimal> GetEuclidModuloDecimalData(Fixture fixture)
     {
         var result = new TheoryData<decimal, decimal, decimal>();
         foreach ( var (a, b, r) in GetEuclidModuloRealData() )
@@ -31,7 +31,7 @@ public class ArithmeticExtensionsTestsData
         return result;
     }
 
-    public static TheoryData<ulong, ulong, ulong> GetEuclidModuloUint64Data(IFixture fixture)
+    public static TheoryData<ulong, ulong, ulong> GetEuclidModuloUint64Data(Fixture fixture)
     {
         var result = new TheoryData<ulong, ulong, ulong>();
         foreach ( var (a, b, r) in GetEuclidModuloUnsignedIntData() )
@@ -40,7 +40,7 @@ public class ArithmeticExtensionsTestsData
         return result;
     }
 
-    public static TheoryData<long, long, long> GetEuclidModuloInt64Data(IFixture fixture)
+    public static TheoryData<long, long, long> GetEuclidModuloInt64Data(Fixture fixture)
     {
         var result = new TheoryData<long, long, long>();
         foreach ( var (a, b, r) in GetEuclidModuloSignedIntData() )
@@ -49,7 +49,7 @@ public class ArithmeticExtensionsTestsData
         return result;
     }
 
-    public static TheoryData<uint, uint, uint> GetEuclidModuloUint32Data(IFixture fixture)
+    public static TheoryData<uint, uint, uint> GetEuclidModuloUint32Data(Fixture fixture)
     {
         var result = new TheoryData<uint, uint, uint>();
         foreach ( var (a, b, r) in GetEuclidModuloUnsignedIntData() )
@@ -58,7 +58,7 @@ public class ArithmeticExtensionsTestsData
         return result;
     }
 
-    public static TheoryData<int, int, int> GetEuclidModuloInt32Data(IFixture fixture)
+    public static TheoryData<int, int, int> GetEuclidModuloInt32Data(Fixture fixture)
     {
         var result = new TheoryData<int, int, int>();
         foreach ( var (a, b, r) in GetEuclidModuloSignedIntData() )
@@ -67,7 +67,7 @@ public class ArithmeticExtensionsTestsData
         return result;
     }
 
-    public static TheoryData<ushort, ushort, ushort> GetEuclidModuloUint16Data(IFixture fixture)
+    public static TheoryData<ushort, ushort, ushort> GetEuclidModuloUint16Data(Fixture fixture)
     {
         var result = new TheoryData<ushort, ushort, ushort>();
         foreach ( var (a, b, r) in GetEuclidModuloUnsignedIntData() )
@@ -76,7 +76,7 @@ public class ArithmeticExtensionsTestsData
         return result;
     }
 
-    public static TheoryData<short, short, short> GetEuclidModuloInt16Data(IFixture fixture)
+    public static TheoryData<short, short, short> GetEuclidModuloInt16Data(Fixture fixture)
     {
         var result = new TheoryData<short, short, short>();
         foreach ( var (a, b, r) in GetEuclidModuloSignedIntData() )
@@ -85,7 +85,7 @@ public class ArithmeticExtensionsTestsData
         return result;
     }
 
-    public static TheoryData<byte, byte, byte> GetEuclidModuloUint8Data(IFixture fixture)
+    public static TheoryData<byte, byte, byte> GetEuclidModuloUint8Data(Fixture fixture)
     {
         var result = new TheoryData<byte, byte, byte>();
         foreach ( var (a, b, r) in GetEuclidModuloUnsignedIntData() )
@@ -94,7 +94,7 @@ public class ArithmeticExtensionsTestsData
         return result;
     }
 
-    public static TheoryData<sbyte, sbyte, sbyte> GetEuclidModuloInt8Data(IFixture fixture)
+    public static TheoryData<sbyte, sbyte, sbyte> GetEuclidModuloInt8Data(Fixture fixture)
     {
         var result = new TheoryData<sbyte, sbyte, sbyte>();
         foreach ( var (a, b, r) in GetEuclidModuloSignedIntData() )
@@ -103,7 +103,7 @@ public class ArithmeticExtensionsTestsData
         return result;
     }
 
-    public static TheoryData<ulong, bool> GetIsEvenUint64Data(IFixture fixture)
+    public static TheoryData<ulong, bool> GetIsEvenUint64Data(Fixture fixture)
     {
         var result = new TheoryData<ulong, bool>();
         foreach ( var (x, r) in GetIsEvenUnsignedIntData() )
@@ -112,7 +112,7 @@ public class ArithmeticExtensionsTestsData
         return result;
     }
 
-    public static TheoryData<ulong, bool> GetIsOddUint64Data(IFixture fixture)
+    public static TheoryData<ulong, bool> GetIsOddUint64Data(Fixture fixture)
     {
         var result = new TheoryData<ulong, bool>();
         foreach ( var (x, r) in GetIsEvenUnsignedIntData() )
@@ -121,7 +121,7 @@ public class ArithmeticExtensionsTestsData
         return result;
     }
 
-    public static TheoryData<long, bool> GetIsEvenInt64Data(IFixture fixture)
+    public static TheoryData<long, bool> GetIsEvenInt64Data(Fixture fixture)
     {
         var result = new TheoryData<long, bool>();
         foreach ( var (x, r) in GetIsEvenSignedIntData() )
@@ -130,7 +130,7 @@ public class ArithmeticExtensionsTestsData
         return result;
     }
 
-    public static TheoryData<long, bool> GetIsOddInt64Data(IFixture fixture)
+    public static TheoryData<long, bool> GetIsOddInt64Data(Fixture fixture)
     {
         var result = new TheoryData<long, bool>();
         foreach ( var (x, r) in GetIsEvenSignedIntData() )
@@ -139,7 +139,7 @@ public class ArithmeticExtensionsTestsData
         return result;
     }
 
-    public static TheoryData<uint, bool> GetIsEvenUint32Data(IFixture fixture)
+    public static TheoryData<uint, bool> GetIsEvenUint32Data(Fixture fixture)
     {
         var result = new TheoryData<uint, bool>();
         foreach ( var (x, r) in GetIsEvenUnsignedIntData() )
@@ -148,7 +148,7 @@ public class ArithmeticExtensionsTestsData
         return result;
     }
 
-    public static TheoryData<uint, bool> GetIsOddUint32Data(IFixture fixture)
+    public static TheoryData<uint, bool> GetIsOddUint32Data(Fixture fixture)
     {
         var result = new TheoryData<uint, bool>();
         foreach ( var (x, r) in GetIsEvenUnsignedIntData() )
@@ -157,7 +157,7 @@ public class ArithmeticExtensionsTestsData
         return result;
     }
 
-    public static TheoryData<int, bool> GetIsEvenInt32Data(IFixture fixture)
+    public static TheoryData<int, bool> GetIsEvenInt32Data(Fixture fixture)
     {
         var result = new TheoryData<int, bool>();
         foreach ( var (x, r) in GetIsEvenSignedIntData() )
@@ -166,7 +166,7 @@ public class ArithmeticExtensionsTestsData
         return result;
     }
 
-    public static TheoryData<int, bool> GetIsOddInt32Data(IFixture fixture)
+    public static TheoryData<int, bool> GetIsOddInt32Data(Fixture fixture)
     {
         var result = new TheoryData<int, bool>();
         foreach ( var (x, r) in GetIsEvenSignedIntData() )
@@ -175,7 +175,7 @@ public class ArithmeticExtensionsTestsData
         return result;
     }
 
-    public static TheoryData<ushort, bool> GetIsEvenUint16Data(IFixture fixture)
+    public static TheoryData<ushort, bool> GetIsEvenUint16Data(Fixture fixture)
     {
         var result = new TheoryData<ushort, bool>();
         foreach ( var (x, r) in GetIsEvenUnsignedIntData() )
@@ -184,7 +184,7 @@ public class ArithmeticExtensionsTestsData
         return result;
     }
 
-    public static TheoryData<ushort, bool> GetIsOddUint16Data(IFixture fixture)
+    public static TheoryData<ushort, bool> GetIsOddUint16Data(Fixture fixture)
     {
         var result = new TheoryData<ushort, bool>();
         foreach ( var (x, r) in GetIsEvenUnsignedIntData() )
@@ -193,7 +193,7 @@ public class ArithmeticExtensionsTestsData
         return result;
     }
 
-    public static TheoryData<short, bool> GetIsEvenInt16Data(IFixture fixture)
+    public static TheoryData<short, bool> GetIsEvenInt16Data(Fixture fixture)
     {
         var result = new TheoryData<short, bool>();
         foreach ( var (x, r) in GetIsEvenSignedIntData() )
@@ -202,7 +202,7 @@ public class ArithmeticExtensionsTestsData
         return result;
     }
 
-    public static TheoryData<short, bool> GetIsOddInt16Data(IFixture fixture)
+    public static TheoryData<short, bool> GetIsOddInt16Data(Fixture fixture)
     {
         var result = new TheoryData<short, bool>();
         foreach ( var (x, r) in GetIsEvenSignedIntData() )
@@ -211,7 +211,7 @@ public class ArithmeticExtensionsTestsData
         return result;
     }
 
-    public static TheoryData<byte, bool> GetIsEvenUint8Data(IFixture fixture)
+    public static TheoryData<byte, bool> GetIsEvenUint8Data(Fixture fixture)
     {
         var result = new TheoryData<byte, bool>();
         foreach ( var (x, r) in GetIsEvenUnsignedIntData() )
@@ -220,7 +220,7 @@ public class ArithmeticExtensionsTestsData
         return result;
     }
 
-    public static TheoryData<byte, bool> GetIsOddUint8Data(IFixture fixture)
+    public static TheoryData<byte, bool> GetIsOddUint8Data(Fixture fixture)
     {
         var result = new TheoryData<byte, bool>();
         foreach ( var (x, r) in GetIsEvenUnsignedIntData() )
@@ -229,7 +229,7 @@ public class ArithmeticExtensionsTestsData
         return result;
     }
 
-    public static TheoryData<sbyte, bool> GetIsEvenInt8Data(IFixture fixture)
+    public static TheoryData<sbyte, bool> GetIsEvenInt8Data(Fixture fixture)
     {
         var result = new TheoryData<sbyte, bool>();
         foreach ( var (x, r) in GetIsEvenSignedIntData() )
@@ -238,7 +238,7 @@ public class ArithmeticExtensionsTestsData
         return result;
     }
 
-    public static TheoryData<sbyte, bool> GetIsOddInt8Data(IFixture fixture)
+    public static TheoryData<sbyte, bool> GetIsOddInt8Data(Fixture fixture)
     {
         var result = new TheoryData<sbyte, bool>();
         foreach ( var (x, r) in GetIsEvenSignedIntData() )

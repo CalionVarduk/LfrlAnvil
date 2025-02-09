@@ -161,7 +161,7 @@ public abstract class GenericEventPublisherTests<TEvent> : TestsBase
     [Fact]
     public void Publish_ShouldListenerCorrectAmountOfTimes_WhenListenerCausesThePublisherToPublish()
     {
-        var (firstEvent, secondEvent) = Fixture.CreateDistinctCollection<TEvent>( count: 2 );
+        var (firstEvent, secondEvent) = Fixture.CreateManyDistinct<TEvent>( count: 2 );
         var sut = new EventPublisher<TEvent>();
         var listener1 = EventListener.Create(
             (TEvent e) =>
@@ -303,7 +303,7 @@ public abstract class GenericEventPublisherTests<TEvent> : TestsBase
     [Fact]
     public void IEventPublisherPublish_ShouldThrowInvalidArgumentTypeException_WhenEventIsNotOfCorrectType()
     {
-        var @event = Fixture.Create<TEvent[]>();
+        var @event = Fixture.CreateMany<TEvent>().ToArray();
         IEventPublisher sut = new EventPublisher<TEvent>();
 
         var action = Lambda.Of( () => sut.Publish( @event ) );

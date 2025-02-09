@@ -7,6 +7,12 @@ namespace LfrlAnvil.Reactive.Queues.Tests.EventQueueTests;
 
 public abstract class GenericEventQueueTests<TEvent> : TestsBase
 {
+    protected GenericEventQueueTests()
+    {
+        Fixture.Customize<long>( (_, _) => _ => Random.Shared.Next( 0, int.MaxValue ) );
+        Fixture.Customize<int>( (_, _) => _ => Random.Shared.Next( 0, byte.MaxValue ) );
+    }
+
     [Theory]
     [InlineData( -1 )]
     [InlineData( 0 )]
@@ -67,7 +73,7 @@ public abstract class GenericEventQueueTests<TEvent> : TestsBase
     [Fact]
     public void Enqueue_ShouldAddAnotherEventWithPointEqualToCurrentQueuePointPlusDelta()
     {
-        var (first, @event) = Fixture.CreateDistinctCollection<TEvent>( count: 2 );
+        var (first, @event) = Fixture.CreateManyDistinct<TEvent>( count: 2 );
         var queueStartPoint = Fixture.Create<long>();
         var (firstDelta, eventDelta) = Fixture.CreateMany<int>( count: 2 ).ToList();
         var expectedEventDequeuePoint = queueStartPoint + eventDelta;
@@ -112,7 +118,7 @@ public abstract class GenericEventQueueTests<TEvent> : TestsBase
     [Fact]
     public void EnqueueAt_ShouldAddAnotherEvent()
     {
-        var (first, @event) = Fixture.CreateDistinctCollection<TEvent>( count: 2 );
+        var (first, @event) = Fixture.CreateManyDistinct<TEvent>( count: 2 );
         var (firstDequeuePoint, eventDequeuePoint) = Fixture.CreateMany<long>( count: 2 ).ToList();
         var sut = new MockEventQueue( Fixture.Create<long>() );
         var firstEvent = sut.EnqueueAt( first, firstDequeuePoint );
@@ -137,7 +143,7 @@ public abstract class GenericEventQueueTests<TEvent> : TestsBase
         var @event = Fixture.Create<TEvent>();
         var queueStartPoint = Fixture.Create<long>();
         var delta = Fixture.Create<int>();
-        var repetitions = Fixture.CreatePositiveInt32();
+        var repetitions = Fixture.Create<int>( x => x > 0 );
         var expectedDequeuePoint = queueStartPoint + delta;
         var sut = new MockEventQueue( queueStartPoint );
 
@@ -158,10 +164,10 @@ public abstract class GenericEventQueueTests<TEvent> : TestsBase
     [Fact]
     public void Enqueue_WithRepetitions_ShouldAddAnotherEventWithPointEqualToCurrentQueuePointPlusDelta()
     {
-        var (first, @event) = Fixture.CreateDistinctCollection<TEvent>( count: 2 );
+        var (first, @event) = Fixture.CreateManyDistinct<TEvent>( count: 2 );
         var queueStartPoint = Fixture.Create<long>();
         var (firstDelta, eventDelta) = Fixture.CreateMany<int>( count: 2 ).ToList();
-        var (firstRepetitions, eventRepetitions) = (Fixture.CreatePositiveInt32(), Fixture.CreatePositiveInt32());
+        var (firstRepetitions, eventRepetitions) = (Fixture.Create<int>( x => x > 0 ), Fixture.Create<int>( x => x > 0 ));
         var expectedEventDequeuePoint = queueStartPoint + eventDelta;
         var sut = new MockEventQueue( queueStartPoint );
         var firstEvent = sut.Enqueue( first, firstDelta, firstRepetitions );
@@ -196,7 +202,7 @@ public abstract class GenericEventQueueTests<TEvent> : TestsBase
         var @event = Fixture.Create<TEvent>();
         var dequeuePoint = Fixture.Create<long>();
         var delta = Fixture.Create<int>();
-        var repetitions = Fixture.CreatePositiveInt32();
+        var repetitions = Fixture.Create<int>( x => x > 0 );
         var sut = new MockEventQueue( Fixture.Create<long>() );
 
         var result = sut.EnqueueAt( @event, dequeuePoint, delta, repetitions );
@@ -216,11 +222,11 @@ public abstract class GenericEventQueueTests<TEvent> : TestsBase
     [Fact]
     public void EnqueueAt_WithRepetitions_ShouldAddAnotherEvent()
     {
-        var (first, @event) = Fixture.CreateDistinctCollection<TEvent>( count: 2 );
+        var (first, @event) = Fixture.CreateManyDistinct<TEvent>( count: 2 );
         var queueStartPoint = Fixture.Create<long>();
         var (firstDequeuePoint, eventDequeuePoint) = Fixture.CreateMany<long>( count: 2 ).ToList();
         var (firstDelta, eventDelta) = Fixture.CreateMany<int>( count: 2 ).ToList();
-        var (firstRepetitions, eventRepetitions) = (Fixture.CreatePositiveInt32(), Fixture.CreatePositiveInt32());
+        var (firstRepetitions, eventRepetitions) = (Fixture.Create<int>( x => x > 0 ), Fixture.Create<int>( x => x > 0 ));
         var sut = new MockEventQueue( queueStartPoint );
         var firstEvent = sut.EnqueueAt( first, firstDequeuePoint, firstDelta, firstRepetitions );
 
@@ -276,7 +282,7 @@ public abstract class GenericEventQueueTests<TEvent> : TestsBase
     [Fact]
     public void EnqueueInfinite_ShouldAddAnotherEventWithPointEqualToCurrentQueuePointPlusDelta()
     {
-        var (first, @event) = Fixture.CreateDistinctCollection<TEvent>( count: 2 );
+        var (first, @event) = Fixture.CreateManyDistinct<TEvent>( count: 2 );
         var queueStartPoint = Fixture.Create<long>();
         var (firstDelta, eventDelta) = Fixture.CreateMany<int>( count: 2 ).ToList();
         var expectedEventDequeuePoint = queueStartPoint + eventDelta;
@@ -322,7 +328,7 @@ public abstract class GenericEventQueueTests<TEvent> : TestsBase
     [Fact]
     public void EnqueueInfiniteAt_ShouldAddAnotherEvent()
     {
-        var (first, @event) = Fixture.CreateDistinctCollection<TEvent>( count: 2 );
+        var (first, @event) = Fixture.CreateManyDistinct<TEvent>( count: 2 );
         var queueStartPoint = Fixture.Create<long>();
         var (firstDequeuePoint, eventDequeuePoint) = Fixture.CreateMany<long>( count: 2 ).ToList();
         var (firstDelta, eventDelta) = Fixture.CreateMany<int>( count: 2 ).ToList();
@@ -383,7 +389,7 @@ public abstract class GenericEventQueueTests<TEvent> : TestsBase
     [Fact]
     public void Dequeue_ShouldReturnNull_WhenNextEventPointIsLargerThanCurrentQueuePoint()
     {
-        var (queueStartPoint, eventDequeuePoint) = Fixture.CreateDistinctSortedCollection<long>( count: 2 );
+        var (queueStartPoint, eventDequeuePoint) = Fixture.CreateManyDistinctSorted<long>( count: 2 );
         var sut = new MockEventQueue( queueStartPoint );
         sut.EnqueueAt( Fixture.Create<TEvent>(), eventDequeuePoint );
 
@@ -396,7 +402,7 @@ public abstract class GenericEventQueueTests<TEvent> : TestsBase
     public void Dequeue_ShouldReturnNextEventAndRemoveIt_WhenNextEventPointIsLessThanOrEqualToCurrentQueuePointAndIsSingle()
     {
         var @event = Fixture.Create<TEvent>();
-        var (eventDequeuePoint, queueStartPoint) = Fixture.CreateDistinctSortedCollection<long>( count: 2 );
+        var (eventDequeuePoint, queueStartPoint) = Fixture.CreateManyDistinctSorted<long>( count: 2 );
         var sut = new MockEventQueue( queueStartPoint );
         sut.EnqueueAt( @event, eventDequeuePoint );
 
@@ -423,7 +429,7 @@ public abstract class GenericEventQueueTests<TEvent> : TestsBase
     public void Dequeue_ShouldReturnNextEventAndRemoveIt_WhenNextEventPointIsLessThanOrEqualToCurrentQueuePointAndHasOneRepetition()
     {
         var @event = Fixture.Create<TEvent>();
-        var (eventDequeuePoint, queueStartPoint) = Fixture.CreateDistinctSortedCollection<long>( count: 2 );
+        var (eventDequeuePoint, queueStartPoint) = Fixture.CreateManyDistinctSorted<long>( count: 2 );
         var delta = Fixture.Create<int>();
         var sut = new MockEventQueue( queueStartPoint );
         sut.EnqueueAt( @event, eventDequeuePoint, delta, repetitions: 1 );
@@ -452,9 +458,9 @@ public abstract class GenericEventQueueTests<TEvent> : TestsBase
         Dequeue_ShouldReturnNextEventAndReinsertIt_WhenNextEventPointIsLessThanOrEqualToCurrentQueuePointAndHasMoreThanOneRepetition()
     {
         var @event = Fixture.Create<TEvent>();
-        var (eventDequeuePoint, queueStartPoint) = Fixture.CreateDistinctSortedCollection<long>( count: 2 );
+        var (eventDequeuePoint, queueStartPoint) = Fixture.CreateManyDistinctSorted<long>( count: 2 );
         var delta = Fixture.Create<int>();
-        var repetitions = Fixture.CreatePositiveInt32() + 1;
+        var repetitions = Fixture.Create<int>( x => x > 0 ) + 1;
         var expectedNewDequeuePoint = eventDequeuePoint + delta;
         var sut = new MockEventQueue( queueStartPoint );
         sut.EnqueueAt( @event, eventDequeuePoint, delta, repetitions );
@@ -491,7 +497,7 @@ public abstract class GenericEventQueueTests<TEvent> : TestsBase
     public void Dequeue_ShouldReturnNextEventAndReinsertIt_WhenNextEventPointIsLessThanOrEqualToCurrentQueuePointAndIsInfinite()
     {
         var @event = Fixture.Create<TEvent>();
-        var (eventDequeuePoint, queueStartPoint) = Fixture.CreateDistinctSortedCollection<long>( count: 2 );
+        var (eventDequeuePoint, queueStartPoint) = Fixture.CreateManyDistinctSorted<long>( count: 2 );
         var delta = Fixture.Create<int>();
         var expectedNewDequeuePoint = eventDequeuePoint + delta;
         var sut = new MockEventQueue( queueStartPoint );
@@ -528,8 +534,8 @@ public abstract class GenericEventQueueTests<TEvent> : TestsBase
     [Fact]
     public void Dequeue_ShouldReturnEventsInAnOrderedWayUsingTheirDequeuePoints()
     {
-        var events = Fixture.CreateDistinctCollection<TEvent>( count: 10 );
-        var firstDequeuePoints = Fixture.CreateDistinctCollection<long>( count: 10 );
+        var events = Fixture.CreateManyDistinct<TEvent>( count: 10 );
+        var firstDequeuePoints = Fixture.CreateManyDistinct<long>( count: 10 );
         var eventsWithDequeuePoints = events.Zip( firstDequeuePoints ).ToList();
         var allOrderedEventsWithDequeuePoints = eventsWithDequeuePoints.OrderBy( x => x.Second ).ToList();
 
@@ -562,8 +568,8 @@ public abstract class GenericEventQueueTests<TEvent> : TestsBase
     [Fact]
     public void GetNext_ShouldReturnCorrectEnqueuedEvent_WhenQueueIsNotEmptyAndNextEventDequeuePointIsGreaterThanCurrentQueuePoint()
     {
-        var (expectedEvent, otherEvent) = Fixture.CreateDistinctCollection<TEvent>( count: 2 );
-        var (queuePoint, expectedPoint, otherPoint) = Fixture.CreateDistinctSortedCollection<long>( count: 3 );
+        var (expectedEvent, otherEvent) = Fixture.CreateManyDistinct<TEvent>( count: 2 );
+        var (queuePoint, expectedPoint, otherPoint) = Fixture.CreateManyDistinctSorted<long>( count: 3 );
         var sut = new MockEventQueue( queuePoint );
         var expected = sut.EnqueueAt( expectedEvent, expectedPoint );
         sut.EnqueueAt( otherEvent, otherPoint );
@@ -576,8 +582,8 @@ public abstract class GenericEventQueueTests<TEvent> : TestsBase
     [Fact]
     public void GetNext_ShouldReturnCorrectEnqueuedEvent_WhenQueueIsNotEmptyAndNextEventDequeuePointIsLessThanCurrentQueuePoint()
     {
-        var (expectedEvent, otherEvent) = Fixture.CreateDistinctCollection<TEvent>( count: 2 );
-        var (expectedPoint, queuePoint, otherPoint) = Fixture.CreateDistinctSortedCollection<long>( count: 3 );
+        var (expectedEvent, otherEvent) = Fixture.CreateManyDistinct<TEvent>( count: 2 );
+        var (expectedPoint, queuePoint, otherPoint) = Fixture.CreateManyDistinctSorted<long>( count: 3 );
         var sut = new MockEventQueue( queuePoint );
         var expected = sut.EnqueueAt( expectedEvent, expectedPoint );
         sut.EnqueueAt( otherEvent, otherPoint );
@@ -590,8 +596,8 @@ public abstract class GenericEventQueueTests<TEvent> : TestsBase
     [Fact]
     public void GetNext_ShouldReturnCorrectEnqueuedEvent_WhenQueueIsNotEmptyAndNextEventDequeuePointIsEqualToCurrentQueuePoint()
     {
-        var (expectedEvent, otherEvent) = Fixture.CreateDistinctCollection<TEvent>( count: 2 );
-        var (queuePoint, otherPoint) = Fixture.CreateDistinctSortedCollection<long>( count: 2 );
+        var (expectedEvent, otherEvent) = Fixture.CreateManyDistinct<TEvent>( count: 2 );
+        var (queuePoint, otherPoint) = Fixture.CreateManyDistinctSorted<long>( count: 2 );
         var sut = new MockEventQueue( queuePoint );
         var expected = sut.EnqueueAt( expectedEvent, queuePoint );
         sut.EnqueueAt( otherEvent, otherPoint );
@@ -605,7 +611,7 @@ public abstract class GenericEventQueueTests<TEvent> : TestsBase
     public void GetEvents_ShouldNotIncludeAnEventWhoseDequeuePointExceedsEndPoint()
     {
         var @event = Fixture.Create<TEvent>();
-        var (endPoint, dequeuePoint) = Fixture.CreateDistinctSortedCollection<long>( count: 2 );
+        var (endPoint, dequeuePoint) = Fixture.CreateManyDistinctSorted<long>( count: 2 );
         var sut = new MockEventQueue( Fixture.Create<long>() );
         sut.EnqueueAt( @event, dequeuePoint );
 
@@ -618,7 +624,7 @@ public abstract class GenericEventQueueTests<TEvent> : TestsBase
     public void GetEvents_ShouldIncludeASingleEventWhoseDequeuePointDoesNotExceedEndPoint()
     {
         var @event = Fixture.Create<TEvent>();
-        var (dequeuePoint, endPoint) = Fixture.CreateDistinctSortedCollection<long>( count: 2 );
+        var (dequeuePoint, endPoint) = Fixture.CreateManyDistinctSorted<long>( count: 2 );
         var sut = new MockEventQueue( Fixture.Create<long>() );
         sut.EnqueueAt( @event, dequeuePoint );
 
@@ -641,8 +647,8 @@ public abstract class GenericEventQueueTests<TEvent> : TestsBase
     {
         var @event = Fixture.Create<TEvent>();
         var dequeuePoint = Fixture.Create<long>();
-        var delta = Fixture.CreatePositiveInt32();
-        var repetitions = Fixture.CreatePositiveInt32();
+        var delta = Fixture.Create<int>( x => x > 0 );
+        var repetitions = Fixture.Create<int>( x => x > 0 );
         var endPoint = dequeuePoint + delta * (repetitions - 1);
         var expected = new[]
         {
@@ -682,8 +688,8 @@ public abstract class GenericEventQueueTests<TEvent> : TestsBase
     {
         var @event = Fixture.Create<TEvent>();
         var dequeuePoint = Fixture.Create<long>();
-        var delta = Fixture.CreatePositiveInt32();
-        var repetitions = Fixture.CreatePositiveInt32() + 3;
+        var delta = Fixture.Create<int>( x => x > 0 );
+        var repetitions = Fixture.Create<int>( x => x > 0 ) + 3;
         var endPoint = dequeuePoint + delta * 2;
         var expected = new[]
         {
@@ -726,7 +732,7 @@ public abstract class GenericEventQueueTests<TEvent> : TestsBase
     {
         var @event = Fixture.Create<TEvent>();
         var dequeuePoint = Fixture.Create<long>();
-        var delta = Fixture.CreatePositiveInt32();
+        var delta = Fixture.Create<int>( x => x > 0 );
         var endPoint = dequeuePoint + delta * 2;
         var expected = new[]
         {
@@ -767,8 +773,8 @@ public abstract class GenericEventQueueTests<TEvent> : TestsBase
     [Fact]
     public void GetEvents_ShouldReturnEventsWhoseDequeuePointsDoNotExceedEndPointInAnUnorderedWay()
     {
-        var events = Fixture.CreateDistinctCollection<TEvent>( count: 10 );
-        var firstDequeuePoints = Fixture.CreateDistinctCollection<long>( count: 10 );
+        var events = Fixture.CreateManyDistinct<TEvent>( count: 10 );
+        var firstDequeuePoints = Fixture.CreateManyDistinct<long>( count: 10 );
         var eventsWithDequeuePoints = events.Zip( firstDequeuePoints ).ToList();
         var expectedResult = eventsWithDequeuePoints.Select(
             x => new

@@ -4,9 +4,9 @@ namespace LfrlAnvil.Functional.Tests.ErraticTests;
 
 public class GenericErraticTestsData<T>
 {
-    public static TheoryData<object, bool, object, bool, bool> CreateEqualsTestData(IFixture fixture)
+    public static TheoryData<object, bool, object, bool, bool> CreateEqualsTestData(Fixture fixture)
     {
-        var (_11, _12) = fixture.CreateDistinctCollection<T>( 2 );
+        var (_11, _12) = fixture.CreateManyDistinct<T>( count: 2 );
         var (e1, e2) = (new Exception(), new Exception());
 
         return new TheoryData<object, bool, object, bool, bool>
@@ -20,7 +20,7 @@ public class GenericErraticTestsData<T>
         };
     }
 
-    public static IEnumerable<object?[]> CreateNotEqualsTestData(IFixture fixture)
+    public static IEnumerable<object?[]> CreateNotEqualsTestData(Fixture fixture)
     {
         return CreateEqualsTestData( fixture ).ConvertResult( (bool r) => ! r );
     }

@@ -11,7 +11,7 @@ public abstract class GenericGeneratorExtensionsTests<T> : TestsBase
     [Fact]
     public void ToEnumerable_ShouldReturnResultThatYieldsUntilGeneratorFailsToGenerateNextValue()
     {
-        var expected = Fixture.CreateDistinctCollection<T>( 10 ).ToArray();
+        var expected = Fixture.CreateManyDistinct<T>( count: 10 ).ToArray();
         var generator = CreateGeneratorMock( expected );
 
         var result = generator.ToEnumerable().ToArray();
@@ -30,7 +30,7 @@ public abstract class GenericGeneratorExtensionsTests<T> : TestsBase
     [Fact]
     public void IGeneratorToEnumerable_ShouldReturnResultThatYieldsUntilGeneratorFailsToGenerateNextValue()
     {
-        var expected = Fixture.CreateDistinctCollection<T>( 10 ).ToArray();
+        var expected = Fixture.CreateManyDistinct<T>( count: 10 ).ToArray();
         IGenerator generator = CreateGeneratorMock( expected );
 
         var result = generator.ToEnumerable().Cast<T>().ToArray();

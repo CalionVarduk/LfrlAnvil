@@ -9,7 +9,7 @@ public partial class VariableTests
     [Fact]
     public void Ctor_ShouldReturnCorrectResult()
     {
-        var (initialValue, value) = Fixture.CreateDistinctCollection<int>( count: 2 );
+        var (initialValue, value) = Fixture.CreateManyDistinct<int>( count: 2 );
         var comparer = EqualityComparerFactory<int>.Create( (a, b) => a == b );
         var errorsValidator = Substitute.For<IValidator<int, string>>();
         var warningsValidator = Substitute.For<IValidator<int, string>>();
@@ -46,7 +46,7 @@ public partial class VariableTests
     [Fact]
     public void Ctor_ShouldReturnCorrectResult_WithDefaultParameters()
     {
-        var (initialValue, value) = Fixture.CreateDistinctCollection<int>( count: 2 );
+        var (initialValue, value) = Fixture.CreateManyDistinct<int>( count: 2 );
         var sut = new Variable<int, string>( initialValue, value );
 
         using ( new AssertionScope() )

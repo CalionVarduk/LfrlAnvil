@@ -8,6 +8,11 @@ namespace LfrlAnvil.Reactive.State.Tests.CollectionVariableRootTests;
 
 public partial class CollectionVariableRootTests : TestsBase
 {
+    public CollectionVariableRootTests()
+    {
+        Fixture.Customize<VariableMock>( (_, _) => f => new VariableMock( f.Create<int>(), f.Create<string>() ) );
+    }
+
     [Fact]
     public void ToString_ShouldReturnInformationAboutElementCountAndState()
     {

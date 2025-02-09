@@ -23,7 +23,7 @@ public class ConcurrentHistoryEventPublisherTests : TestsBase
     [Fact]
     public void History_ShouldBeEquivalentToBaseEventPublisherHistory()
     {
-        var events = Fixture.CreateDistinctCollection<int>( count: 3 );
+        var events = Fixture.CreateManyDistinct<int>( count: 3 );
         var @base = new HistoryEventPublisher<int>( capacity: 3 );
         foreach ( var e in events )
             @base.Publish( e );
@@ -36,7 +36,7 @@ public class ConcurrentHistoryEventPublisherTests : TestsBase
     [Fact]
     public void ClearHistory_ShouldCallBaseEventPublisherClearHistory()
     {
-        var events = Fixture.CreateDistinctCollection<int>( count: 3 );
+        var events = Fixture.CreateManyDistinct<int>( count: 3 );
         var @base = new HistoryEventPublisher<int>( capacity: 3 );
         foreach ( var e in events )
             @base.Publish( e );

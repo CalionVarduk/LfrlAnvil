@@ -26,7 +26,7 @@ public class ParsedExpressionDelegateTests : TestsBase
     [Fact]
     public void Invoke_ShouldReturnCorrectResult()
     {
-        var (aValue, bValue) = Fixture.CreateDistinctCollection<decimal>( count: 2 );
+        var (aValue, bValue) = Fixture.CreateManyDistinct<decimal>( count: 2 );
         var expected = aValue + bValue;
 
         var input = "a + b";

@@ -4,9 +4,9 @@ namespace LfrlAnvil.Collections.Tests.SequentialHashSetTests;
 
 public class GenericSequentialHashSetTestsData<T>
 {
-    public static TheoryData<IEnumerable<T>, IEnumerable<T>, IEnumerable<T>> GetExceptWithData(IFixture fixture)
+    public static TheoryData<IEnumerable<T>, IEnumerable<T>, IEnumerable<T>> GetExceptWithData(Fixture fixture)
     {
-        var (a, b, c, d, e, f) = fixture.CreateDistinctCollection<T>( 6 );
+        var (a, b, c, d, e, f) = fixture.CreateManyDistinct<T>( count: 6 );
 
         return new TheoryData<IEnumerable<T>, IEnumerable<T>, IEnumerable<T>>
         {
@@ -21,9 +21,9 @@ public class GenericSequentialHashSetTestsData<T>
         };
     }
 
-    public static TheoryData<IEnumerable<T>, IEnumerable<T>, IEnumerable<T>> GetUnionWithData(IFixture fixture)
+    public static TheoryData<IEnumerable<T>, IEnumerable<T>, IEnumerable<T>> GetUnionWithData(Fixture fixture)
     {
-        var (a, b, c, d, e, f) = fixture.CreateDistinctCollection<T>( 6 );
+        var (a, b, c, d, e, f) = fixture.CreateManyDistinct<T>( count: 6 );
 
         return new TheoryData<IEnumerable<T>, IEnumerable<T>, IEnumerable<T>>
         {
@@ -38,9 +38,9 @@ public class GenericSequentialHashSetTestsData<T>
         };
     }
 
-    public static TheoryData<IEnumerable<T>, IEnumerable<T>, IEnumerable<T>> GetIntersectWithData(IFixture fixture)
+    public static TheoryData<IEnumerable<T>, IEnumerable<T>, IEnumerable<T>> GetIntersectWithData(Fixture fixture)
     {
-        var (a, b, c, d, e, f) = fixture.CreateDistinctCollection<T>( 6 );
+        var (a, b, c, d, e, f) = fixture.CreateManyDistinct<T>( count: 6 );
 
         return new TheoryData<IEnumerable<T>, IEnumerable<T>, IEnumerable<T>>
         {
@@ -55,9 +55,9 @@ public class GenericSequentialHashSetTestsData<T>
         };
     }
 
-    public static TheoryData<IEnumerable<T>, IEnumerable<T>, IEnumerable<T>> GetSymmetricExceptWithData(IFixture fixture)
+    public static TheoryData<IEnumerable<T>, IEnumerable<T>, IEnumerable<T>> GetSymmetricExceptWithData(Fixture fixture)
     {
-        var (a, b, c, d, e, f) = fixture.CreateDistinctCollection<T>( 6 );
+        var (a, b, c, d, e, f) = fixture.CreateManyDistinct<T>( count: 6 );
 
         return new TheoryData<IEnumerable<T>, IEnumerable<T>, IEnumerable<T>>
         {
@@ -72,9 +72,9 @@ public class GenericSequentialHashSetTestsData<T>
         };
     }
 
-    public static TheoryData<IEnumerable<T>, IEnumerable<T>, bool> GetOverlapsData(IFixture fixture)
+    public static TheoryData<IEnumerable<T>, IEnumerable<T>, bool> GetOverlapsData(Fixture fixture)
     {
-        var (a, b, c, d, e, f) = fixture.CreateDistinctCollection<T>( 6 );
+        var (a, b, c, d, e, f) = fixture.CreateManyDistinct<T>( count: 6 );
 
         return new TheoryData<IEnumerable<T>, IEnumerable<T>, bool>
         {
@@ -89,9 +89,9 @@ public class GenericSequentialHashSetTestsData<T>
         };
     }
 
-    public static TheoryData<IEnumerable<T>, IEnumerable<T>, bool> GetSetEqualsData(IFixture fixture)
+    public static TheoryData<IEnumerable<T>, IEnumerable<T>, bool> GetSetEqualsData(Fixture fixture)
     {
-        var (a, b, c, d, e, f) = fixture.CreateDistinctCollection<T>( 6 );
+        var (a, b, c, d, e, f) = fixture.CreateManyDistinct<T>( count: 6 );
 
         return new TheoryData<IEnumerable<T>, IEnumerable<T>, bool>
         {
@@ -106,9 +106,9 @@ public class GenericSequentialHashSetTestsData<T>
         };
     }
 
-    public static TheoryData<IEnumerable<T>, IEnumerable<T>, bool> GetIsSupersetOfData(IFixture fixture)
+    public static TheoryData<IEnumerable<T>, IEnumerable<T>, bool> GetIsSupersetOfData(Fixture fixture)
     {
-        var (a, b, c, d, e, f) = fixture.CreateDistinctCollection<T>( 6 );
+        var (a, b, c, d, e, f) = fixture.CreateManyDistinct<T>( count: 6 );
 
         return new TheoryData<IEnumerable<T>, IEnumerable<T>, bool>
         {
@@ -123,9 +123,9 @@ public class GenericSequentialHashSetTestsData<T>
         };
     }
 
-    public static TheoryData<IEnumerable<T>, IEnumerable<T>, bool> GetIsProperSupersetOfData(IFixture fixture)
+    public static TheoryData<IEnumerable<T>, IEnumerable<T>, bool> GetIsProperSupersetOfData(Fixture fixture)
     {
-        var (a, b, c, d, e, f) = fixture.CreateDistinctCollection<T>( 6 );
+        var (a, b, c, d, e, f) = fixture.CreateManyDistinct<T>( count: 6 );
 
         return new TheoryData<IEnumerable<T>, IEnumerable<T>, bool>
         {
@@ -140,9 +140,9 @@ public class GenericSequentialHashSetTestsData<T>
         };
     }
 
-    public static TheoryData<IEnumerable<T>, IEnumerable<T>, bool> GetIsSubsetOfData(IFixture fixture)
+    public static TheoryData<IEnumerable<T>, IEnumerable<T>, bool> GetIsSubsetOfData(Fixture fixture)
     {
-        var (a, b, c, d, e, f) = fixture.CreateDistinctCollection<T>( 6 );
+        var (a, b, c, d, e, f) = fixture.CreateManyDistinct<T>( count: 6 );
 
         return new TheoryData<IEnumerable<T>, IEnumerable<T>, bool>
         {
@@ -157,9 +157,9 @@ public class GenericSequentialHashSetTestsData<T>
         };
     }
 
-    public static TheoryData<IEnumerable<T>, IEnumerable<T>, bool> GetIsProperSubsetOfData(IFixture fixture)
+    public static TheoryData<IEnumerable<T>, IEnumerable<T>, bool> GetIsProperSubsetOfData(Fixture fixture)
     {
-        var (a, b, c, d, e, f) = fixture.CreateDistinctCollection<T>( 6 );
+        var (a, b, c, d, e, f) = fixture.CreateManyDistinct<T>( count: 6 );
 
         return new TheoryData<IEnumerable<T>, IEnumerable<T>, bool>
         {

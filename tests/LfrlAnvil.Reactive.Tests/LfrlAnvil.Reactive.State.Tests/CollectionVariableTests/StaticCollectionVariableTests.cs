@@ -10,7 +10,7 @@ public class StaticCollectionVariableTests : TestsBase
     [Fact]
     public void Create_WithoutValidators_ShouldReturnCorrectVariable()
     {
-        var allElements = Fixture.CreateDistinctCollection<int>( count: 6 );
+        var allElements = Fixture.CreateManyDistinct<int>( count: 6 );
         var initialElements = allElements.Take( 3 ).ToList();
         var elements = allElements.Skip( 3 ).ToList();
         var keySelector = Lambda.Of( (int e) => e );
@@ -44,7 +44,7 @@ public class StaticCollectionVariableTests : TestsBase
     [Fact]
     public void Create_WithoutValidatorsAndWithInitialElementsOnly_ShouldReturnCorrectVariable()
     {
-        var initialElements = Fixture.CreateDistinctCollection<int>( count: 3 );
+        var initialElements = Fixture.CreateManyDistinct<int>( count: 3 );
         var keySelector = Lambda.Of( (int e) => e );
         var keyComparer = EqualityComparerFactory<int>.Create( (a, b) => a == b );
         var elementComparer = EqualityComparerFactory<int>.Create( (a, b) => a == b );
@@ -71,7 +71,7 @@ public class StaticCollectionVariableTests : TestsBase
     [Fact]
     public void Create_ShouldReturnCorrectVariable()
     {
-        var allElements = Fixture.CreateDistinctCollection<int>( count: 6 );
+        var allElements = Fixture.CreateManyDistinct<int>( count: 6 );
         var initialElements = allElements.Take( 3 ).ToList();
         var elements = allElements.Skip( 3 ).ToList();
         var keySelector = Lambda.Of( (int e) => e );
@@ -113,7 +113,7 @@ public class StaticCollectionVariableTests : TestsBase
     [Fact]
     public void Create_WithInitialElementsOnly_ShouldReturnCorrectVariable()
     {
-        var initialElements = Fixture.CreateDistinctCollection<int>( count: 3 );
+        var initialElements = Fixture.CreateManyDistinct<int>( count: 3 );
         var keySelector = Lambda.Of( (int e) => e );
         var keyComparer = EqualityComparerFactory<int>.Create( (a, b) => a == b );
         var elementComparer = EqualityComparerFactory<int>.Create( (a, b) => a == b );

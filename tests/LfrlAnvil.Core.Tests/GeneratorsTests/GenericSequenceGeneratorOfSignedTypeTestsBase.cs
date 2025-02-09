@@ -9,7 +9,7 @@ public abstract class GenericSequenceGeneratorOfSignedTypeTestsBase<T> : Generic
     [Fact]
     public void Generate_ShouldThrowValueGenerationException_WhenNextValueIsLessThanMin()
     {
-        var (min, max) = Fixture.CreateDistinctSortedCollection<T>( 2 );
+        var (min, max) = Fixture.CreateManyDistinctSorted<T>( count: 2 );
         var step = Negate( GetDefaultStep() );
         var sut = Create( Bounds.Create( min, max ), min, step );
         sut.Generate();
@@ -35,7 +35,7 @@ public abstract class GenericSequenceGeneratorOfSignedTypeTestsBase<T> : Generic
     [Fact]
     public void TryGenerate_ShouldReturnFalse_WhenNextValueIsLessThanMin()
     {
-        var (min, max) = Fixture.CreateDistinctSortedCollection<T>( 2 );
+        var (min, max) = Fixture.CreateManyDistinctSorted<T>( count: 2 );
         var step = Negate( GetDefaultStep() );
         var sut = Create( Bounds.Create( min, max ), min, step );
         sut.Generate();

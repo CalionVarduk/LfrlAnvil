@@ -4,7 +4,7 @@ namespace LfrlAnvil.Identifiers.Tests;
 
 public class IdentifierTestsData
 {
-    public static TheoryData<ulong, ulong, ushort> GetCtorWithValueData(IFixture fixture)
+    public static TheoryData<ulong, ulong, ushort> GetCtorWithValueData(Fixture fixture)
     {
         return new TheoryData<ulong, ulong, ushort>
         {
@@ -19,7 +19,7 @@ public class IdentifierTestsData
         };
     }
 
-    public static TheoryData<ulong, ushort, ulong> GetCtorWithHighAndLowData(IFixture fixture)
+    public static TheoryData<ulong, ushort, ulong> GetCtorWithHighAndLowData(Fixture fixture)
     {
         return new TheoryData<ulong, ushort, ulong>
         {
@@ -34,7 +34,7 @@ public class IdentifierTestsData
         };
     }
 
-    public static TheoryData<ulong, string> GetToStringData(IFixture fixture)
+    public static TheoryData<ulong, string> GetToStringData(Fixture fixture)
     {
         return new TheoryData<ulong, string>
         {
@@ -45,9 +45,9 @@ public class IdentifierTestsData
         };
     }
 
-    public static TheoryData<ulong, ulong, bool> GetEqualsData(IFixture fixture)
+    public static TheoryData<ulong, ulong, bool> GetEqualsData(Fixture fixture)
     {
-        var (a, b) = fixture.CreateDistinctCollection<ulong>( 2 );
+        var (a, b) = fixture.CreateManyDistinct<ulong>( count: 2 );
 
         return new TheoryData<ulong, ulong, bool>
         {
@@ -57,9 +57,9 @@ public class IdentifierTestsData
         };
     }
 
-    public static TheoryData<ulong, ulong, int> GetCompareToData(IFixture fixture)
+    public static TheoryData<ulong, ulong, int> GetCompareToData(Fixture fixture)
     {
-        var (a, b) = fixture.CreateDistinctSortedCollection<ulong>( 2 );
+        var (a, b) = fixture.CreateManyDistinctSorted<ulong>( count: 2 );
 
         return new TheoryData<ulong, ulong, int>
         {
@@ -69,27 +69,27 @@ public class IdentifierTestsData
         };
     }
 
-    public static IEnumerable<object?[]> GetNotEqualsData(IFixture fixture)
+    public static IEnumerable<object?[]> GetNotEqualsData(Fixture fixture)
     {
         return GetEqualsData( fixture ).ConvertResult( (bool r) => ! r );
     }
 
-    public static IEnumerable<object?[]> CreateGreaterThanComparisonTestData(IFixture fixture)
+    public static IEnumerable<object?[]> CreateGreaterThanComparisonTestData(Fixture fixture)
     {
         return GetCompareToData( fixture ).ConvertResult( (int r) => r > 0 );
     }
 
-    public static IEnumerable<object?[]> CreateGreaterThanOrEqualToComparisonTestData(IFixture fixture)
+    public static IEnumerable<object?[]> CreateGreaterThanOrEqualToComparisonTestData(Fixture fixture)
     {
         return GetCompareToData( fixture ).ConvertResult( (int r) => r >= 0 );
     }
 
-    public static IEnumerable<object?[]> CreateLessThanComparisonTestData(IFixture fixture)
+    public static IEnumerable<object?[]> CreateLessThanComparisonTestData(Fixture fixture)
     {
         return GetCompareToData( fixture ).ConvertResult( (int r) => r < 0 );
     }
 
-    public static IEnumerable<object?[]> CreateLessThanOrEqualToComparisonTestData(IFixture fixture)
+    public static IEnumerable<object?[]> CreateLessThanOrEqualToComparisonTestData(Fixture fixture)
     {
         return GetCompareToData( fixture ).ConvertResult( (int r) => r <= 0 );
     }

@@ -20,7 +20,7 @@ public partial class CollectionVariableTests
         // 6: added => not found
         // 7: not found => initial
 
-        var allElements = Fixture.CreateDistinctCollection<TestElement>( count: 8 );
+        var allElements = Fixture.CreateManyDistinct<TestElement>( count: 8 );
         var initialElements = new[] { allElements[0], allElements[1], allElements[2], allElements[3], allElements[4] };
         var elements = new[]
         {
@@ -111,7 +111,7 @@ public partial class CollectionVariableTests
     [Fact]
     public void Reset_ShouldUpdateCollectionCorrectlyAndResetValidationAndDirtyState()
     {
-        var allElements = Fixture.CreateDistinctCollection<TestElement>( count: 10 );
+        var allElements = Fixture.CreateManyDistinct<TestElement>( count: 10 );
         var initialElements = new[] { allElements[0], allElements[1], allElements[2], allElements[3], allElements[4], allElements[5] };
         var elements = new[]
         {
@@ -189,7 +189,7 @@ public partial class CollectionVariableTests
     [Fact]
     public void Reset_ShouldDoNothing_WhenVariableIsDisposed()
     {
-        var (element, addedElement) = Fixture.CreateDistinctCollection<TestElement>( count: 2 );
+        var (element, addedElement) = Fixture.CreateManyDistinct<TestElement>( count: 2 );
         var keySelector = Lambda.Of( (TestElement e) => e.Key );
         var sut = CollectionVariable.WithoutValidators<string>.Create( Array.Empty<TestElement>(), keySelector );
 

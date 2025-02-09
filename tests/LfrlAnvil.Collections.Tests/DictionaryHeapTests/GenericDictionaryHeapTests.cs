@@ -39,8 +39,8 @@ public abstract class GenericDictionaryHeapTests<TKey, TValue> : TestsBase
     [Fact]
     public void Ctor_ShouldCreateCorrectHeapWithDistinctItems()
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( 20 );
-        var items = Fixture.CreateDistinctCollection<TValue>( 20 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 20 );
+        var items = Fixture.CreateManyDistinct<TValue>( count: 20 );
 
         var sut = new DictionaryHeap<TKey, TValue>( keys.Zip( items, KeyValuePair.Create ) );
 
@@ -56,8 +56,8 @@ public abstract class GenericDictionaryHeapTests<TKey, TValue> : TestsBase
     [Fact]
     public void Ctor_ShouldCreateCorrectHeapWithRepeatingItems()
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( 20 );
-        var distinctItems = Fixture.CreateDistinctCollection<TValue>( 5 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 20 );
+        var distinctItems = Fixture.CreateManyDistinct<TValue>( count: 5 );
         var items = distinctItems.SelectMany( i => new[] { i, i, i, i } ).ToList();
 
         var sut = new DictionaryHeap<TKey, TValue>( keys.Zip( items, KeyValuePair.Create ) );
@@ -76,8 +76,8 @@ public abstract class GenericDictionaryHeapTests<TKey, TValue> : TestsBase
     {
         var keyComparer = EqualityComparerFactory<TKey>.Create( (a, b) => a is null ? b is null : a.Equals( b ) );
         var comparer = Comparer<TValue>.Create( (a, b) => a!.GetHashCode().CompareTo( b!.GetHashCode() ) );
-        var keys = Fixture.CreateDistinctCollection<TKey>( 20 );
-        var items = Fixture.CreateDistinctCollection<TValue>( 20 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 20 );
+        var items = Fixture.CreateManyDistinct<TValue>( count: 20 );
 
         var sut = new DictionaryHeap<TKey, TValue>( keys.Zip( items, KeyValuePair.Create ), keyComparer, comparer );
 
@@ -93,9 +93,9 @@ public abstract class GenericDictionaryHeapTests<TKey, TValue> : TestsBase
     [Fact]
     public void Ctor_ShouldThrowArgumentException_WhenKeysAreNotDistinct()
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( 19 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 19 ).ToList();
         keys = keys.Append( keys[0] ).ToList();
-        var items = Fixture.CreateDistinctCollection<TValue>( 20 );
+        var items = Fixture.CreateManyDistinct<TValue>( count: 20 );
 
         var action = Lambda.Of( () => new DictionaryHeap<TKey, TValue>( keys.Zip( items, KeyValuePair.Create ) ) );
 
@@ -123,8 +123,8 @@ public abstract class GenericDictionaryHeapTests<TKey, TValue> : TestsBase
     [Fact]
     public void Add_ShouldAddNewItemOnTop_WhenNewItemIsLessThanExistingItem()
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( 2 );
-        var (item, other) = Fixture.CreateDistinctSortedCollection<TValue>( 2 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 2 );
+        var (item, other) = Fixture.CreateManyDistinctSorted<TValue>( count: 2 );
 
         var sut = new DictionaryHeap<TKey, TValue>( new[] { KeyValuePair.Create( keys[0], other ) } );
 
@@ -136,8 +136,8 @@ public abstract class GenericDictionaryHeapTests<TKey, TValue> : TestsBase
     [Fact]
     public void Add_ShouldAddNewItemAsLeftChild_WhenNewItemIsGreaterThanSoleExistingItem()
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( 2 );
-        var (other, item) = Fixture.CreateDistinctSortedCollection<TValue>( 2 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 2 );
+        var (other, item) = Fixture.CreateManyDistinctSorted<TValue>( count: 2 );
 
         var sut = new DictionaryHeap<TKey, TValue>( new[] { KeyValuePair.Create( keys[0], other ) } );
 
@@ -149,8 +149,8 @@ public abstract class GenericDictionaryHeapTests<TKey, TValue> : TestsBase
     [Fact]
     public void Add_ShouldAddNewItemAsRightChild_WhenNewItemIsGreaterThanExistingItem_AndLeftChildExists()
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( 3 );
-        var (other, item, left) = Fixture.CreateDistinctSortedCollection<TValue>( 3 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 3 );
+        var (other, item, left) = Fixture.CreateManyDistinctSorted<TValue>( count: 3 );
 
         var sut = new DictionaryHeap<TKey, TValue>( new[] { KeyValuePair.Create( keys[0], other ), KeyValuePair.Create( keys[1], left ) } );
 
@@ -163,7 +163,7 @@ public abstract class GenericDictionaryHeapTests<TKey, TValue> : TestsBase
     public void Add_ShouldThrowArgumentException_WhenKeyAlreadyExists()
     {
         var key = Fixture.Create<TKey>();
-        var (item, other) = Fixture.CreateDistinctCollection<TValue>( 2 );
+        var (item, other) = Fixture.CreateManyDistinct<TValue>( count: 2 );
         var sut = new DictionaryHeap<TKey, TValue>( new[] { KeyValuePair.Create( key, other ) } );
 
         var action = Lambda.Of( () => sut.Add( key, item ) );
@@ -174,8 +174,8 @@ public abstract class GenericDictionaryHeapTests<TKey, TValue> : TestsBase
     [Fact]
     public void Add_ShouldSatisfyHeapInvariant()
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( 20 );
-        var items = Fixture.CreateMany<TValue>( 20 ).ToList();
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 20 );
+        var items = Fixture.CreateMany<TValue>( count: 20 ).ToList();
 
         var sut = new DictionaryHeap<TKey, TValue>();
 
@@ -211,8 +211,8 @@ public abstract class GenericDictionaryHeapTests<TKey, TValue> : TestsBase
     [Fact]
     public void TryAdd_ShouldAddNewItemOnTop_WhenNewItemIsLessThanExistingItem()
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( 2 );
-        var (item, other) = Fixture.CreateDistinctSortedCollection<TValue>( 2 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 2 );
+        var (item, other) = Fixture.CreateManyDistinctSorted<TValue>( count: 2 );
 
         var sut = new DictionaryHeap<TKey, TValue>( new[] { KeyValuePair.Create( keys[0], other ) } );
 
@@ -228,8 +228,8 @@ public abstract class GenericDictionaryHeapTests<TKey, TValue> : TestsBase
     [Fact]
     public void TryAdd_ShouldAddNewItemAsLeftChild_WhenNewItemIsGreaterThanSoleExistingItem()
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( 2 );
-        var (other, item) = Fixture.CreateDistinctSortedCollection<TValue>( 2 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 2 );
+        var (other, item) = Fixture.CreateManyDistinctSorted<TValue>( count: 2 );
 
         var sut = new DictionaryHeap<TKey, TValue>( new[] { KeyValuePair.Create( keys[0], other ) } );
 
@@ -245,8 +245,8 @@ public abstract class GenericDictionaryHeapTests<TKey, TValue> : TestsBase
     [Fact]
     public void TryAdd_ShouldAddNewItemAsRightChild_WhenNewItemIsGreaterThanExistingItem_AndLeftChildExists()
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( 3 );
-        var (other, item, left) = Fixture.CreateDistinctSortedCollection<TValue>( 3 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 3 );
+        var (other, item, left) = Fixture.CreateManyDistinctSorted<TValue>( count: 3 );
 
         var sut = new DictionaryHeap<TKey, TValue>( new[] { KeyValuePair.Create( keys[0], other ), KeyValuePair.Create( keys[1], left ) } );
 
@@ -263,7 +263,7 @@ public abstract class GenericDictionaryHeapTests<TKey, TValue> : TestsBase
     public void TryAdd_ReturnFalse_WhenKeyAlreadyExists()
     {
         var key = Fixture.Create<TKey>();
-        var (item, other) = Fixture.CreateDistinctCollection<TValue>( 2 );
+        var (item, other) = Fixture.CreateManyDistinct<TValue>( count: 2 );
         var sut = new DictionaryHeap<TKey, TValue>( new[] { KeyValuePair.Create( key, other ) } );
 
         var result = sut.TryAdd( key, item );
@@ -278,8 +278,8 @@ public abstract class GenericDictionaryHeapTests<TKey, TValue> : TestsBase
     [Fact]
     public void TryAdd_ShouldSatisfyHeapInvariant()
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( 20 );
-        var items = Fixture.CreateMany<TValue>( 20 ).ToList();
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 20 );
+        var items = Fixture.CreateMany<TValue>( count: 20 ).ToList();
 
         var sut = new DictionaryHeap<TKey, TValue>();
 
@@ -335,8 +335,8 @@ public abstract class GenericDictionaryHeapTests<TKey, TValue> : TestsBase
     [Fact]
     public void TryPeek_ShouldReturnCorrectResultAndNotModifyHeap()
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( 10 );
-        var items = Fixture.CreateDistinctSortedCollection<TValue>( 10 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 10 );
+        var items = Fixture.CreateManyDistinctSorted<TValue>( count: 10 );
         var expected = items[0];
 
         var sut = new DictionaryHeap<TKey, TValue>( keys.Zip( items, KeyValuePair.Create ) );
@@ -396,8 +396,8 @@ public abstract class GenericDictionaryHeapTests<TKey, TValue> : TestsBase
     [Fact]
     public void TryExtract_ShouldSatisfyHeapInvariant()
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( 20 );
-        var items = Fixture.CreateDistinctCollection<TValue>( 20 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 20 );
+        var items = Fixture.CreateManyDistinct<TValue>( count: 20 );
 
         var sut = new DictionaryHeap<TKey, TValue>( keys.Zip( items, KeyValuePair.Create ) );
         var expectedKey = sut.GetKey( 0 );
@@ -419,7 +419,7 @@ public abstract class GenericDictionaryHeapTests<TKey, TValue> : TestsBase
     [Fact]
     public void Remove_ShouldThrowKeyNotFoundException_WhenItemWithKeyDoesNotExist()
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( 2 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 2 );
         var item = Fixture.Create<TValue>();
 
         var sut = new DictionaryHeap<TKey, TValue>( new[] { KeyValuePair.Create( keys[0], item ) } );
@@ -451,8 +451,8 @@ public abstract class GenericDictionaryHeapTests<TKey, TValue> : TestsBase
     public void Remove_ShouldRemoveMiddleItemAndReturnIt_WhenRemovedItemIsLessThanLastItem()
     {
         var index = 2;
-        var keys = Fixture.CreateDistinctCollection<TKey>( 7 );
-        var items = Fixture.CreateDistinctSortedCollection<TValue>( 7 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 7 );
+        var items = Fixture.CreateManyDistinctSorted<TValue>( count: 7 );
         var expected = items.Take( index ).Concat( items.Skip( index + 1 ) );
 
         var sut = new DictionaryHeap<TKey, TValue>( keys.Zip( items, KeyValuePair.Create ) );
@@ -472,8 +472,8 @@ public abstract class GenericDictionaryHeapTests<TKey, TValue> : TestsBase
     public void Remove_ShouldRemoveMiddleItemAndReturnIt_WhenRemovedItemIsGreaterThanLastItem()
     {
         var index = 3;
-        var keys = Fixture.CreateDistinctCollection<TKey>( 7 );
-        var sortedItems = Fixture.CreateDistinctSortedCollection<TValue>( 7 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 7 );
+        var sortedItems = Fixture.CreateManyDistinctSorted<TValue>( count: 7 );
         var items = new List<TValue>
         {
             sortedItems[0],
@@ -511,8 +511,8 @@ public abstract class GenericDictionaryHeapTests<TKey, TValue> : TestsBase
     [InlineData( 19 )]
     public void Remove_ShouldSatisfyHeapInvariant(int index)
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( 20 );
-        var items = Fixture.CreateDistinctCollection<TValue>( 20 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 20 );
+        var items = Fixture.CreateManyDistinct<TValue>( count: 20 );
         var expected = items.Take( index ).Concat( items.Skip( index + 1 ) );
 
         var sut = new DictionaryHeap<TKey, TValue>( keys.Zip( items, KeyValuePair.Create ) );
@@ -531,7 +531,7 @@ public abstract class GenericDictionaryHeapTests<TKey, TValue> : TestsBase
     [Fact]
     public void TryRemove_ShouldReturnFalse_WhenItemWithKeyDoesNotExist()
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( 2 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 2 );
         var item = Fixture.Create<TValue>();
 
         var sut = new DictionaryHeap<TKey, TValue>( new[] { KeyValuePair.Create( keys[0], item ) } );
@@ -549,8 +549,8 @@ public abstract class GenericDictionaryHeapTests<TKey, TValue> : TestsBase
     public void TryRemove_ShouldRemoveMiddleItemAndReturnIt_WhenRemovedItemIsLessThanLastItem()
     {
         var index = 2;
-        var keys = Fixture.CreateDistinctCollection<TKey>( 7 );
-        var items = Fixture.CreateDistinctSortedCollection<TValue>( 7 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 7 );
+        var items = Fixture.CreateManyDistinctSorted<TValue>( count: 7 );
         var expected = items.Take( index ).Concat( items.Skip( index + 1 ) );
 
         var sut = new DictionaryHeap<TKey, TValue>( keys.Zip( items, KeyValuePair.Create ) );
@@ -571,8 +571,8 @@ public abstract class GenericDictionaryHeapTests<TKey, TValue> : TestsBase
     public void TryRemove_ShouldRemoveMiddleItemAndReturnIt_WhenRemovedItemIsGreaterThanLastItem()
     {
         var index = 3;
-        var keys = Fixture.CreateDistinctCollection<TKey>( 7 );
-        var sortedItems = Fixture.CreateDistinctSortedCollection<TValue>( 7 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 7 );
+        var sortedItems = Fixture.CreateManyDistinctSorted<TValue>( count: 7 );
         var items = new List<TValue>
         {
             sortedItems[0],
@@ -611,8 +611,8 @@ public abstract class GenericDictionaryHeapTests<TKey, TValue> : TestsBase
     [InlineData( 19 )]
     public void TryRemove_ShouldSatisfyHeapInvariant(int index)
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( 20 );
-        var items = Fixture.CreateDistinctCollection<TValue>( 20 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 20 );
+        var items = Fixture.CreateManyDistinct<TValue>( count: 20 );
         var expected = items.Take( index ).Concat( items.Skip( index + 1 ) );
 
         var sut = new DictionaryHeap<TKey, TValue>( keys.Zip( items, KeyValuePair.Create ) );
@@ -668,8 +668,8 @@ public abstract class GenericDictionaryHeapTests<TKey, TValue> : TestsBase
     [Fact]
     public void TryPop_ShouldSatisfyHeapInvariant()
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( 20 );
-        var items = Fixture.CreateDistinctCollection<TValue>( 20 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 20 );
+        var items = Fixture.CreateManyDistinct<TValue>( count: 20 );
 
         var sut = new DictionaryHeap<TKey, TValue>( keys.Zip( items, KeyValuePair.Create ) );
         var expectedKey = sut.GetKey( 0 );
@@ -690,7 +690,7 @@ public abstract class GenericDictionaryHeapTests<TKey, TValue> : TestsBase
     [Fact]
     public void Replace_ShouldThrowKeyNotFoundException_WhenItemWithKeyDoesNotExist()
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( 2 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 2 );
         var item = Fixture.Create<TValue>();
 
         var sut = new DictionaryHeap<TKey, TValue>( new[] { KeyValuePair.Create( keys[0], item ) } );
@@ -704,8 +704,8 @@ public abstract class GenericDictionaryHeapTests<TKey, TValue> : TestsBase
     public void Replace_ShouldReplaceMiddleItemAndReturnIt_WhenOldValueIsLessThanNewValue()
     {
         var index = 3;
-        var keys = Fixture.CreateDistinctCollection<TKey>( 7 );
-        var allItems = Fixture.CreateDistinctSortedCollection<TValue>( 8 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 7 );
+        var allItems = Fixture.CreateManyDistinctSorted<TValue>( count: 8 );
         var items = allItems.SkipLast( 1 ).ToList();
         var newValue = allItems[^1];
         var expected = items.Take( index ).Concat( items.Skip( index + 1 ) ).Append( newValue );
@@ -728,8 +728,8 @@ public abstract class GenericDictionaryHeapTests<TKey, TValue> : TestsBase
     public void Replace_ShouldRemoveMiddleItemAndReturnIt_WhenRemovedItemIsLessThanLastItem()
     {
         var index = 3;
-        var keys = Fixture.CreateDistinctCollection<TKey>( 7 );
-        var allItems = Fixture.CreateDistinctSortedCollection<TValue>( 8 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 7 );
+        var allItems = Fixture.CreateManyDistinctSorted<TValue>( count: 8 );
         var items = allItems.Skip( 1 ).ToList();
         var newValue = allItems[0];
         var expected = items.Take( index ).Concat( items.Skip( index + 1 ) ).Append( newValue );
@@ -759,8 +759,8 @@ public abstract class GenericDictionaryHeapTests<TKey, TValue> : TestsBase
     [InlineData( 19 )]
     public void Replace_ShouldSatisfyHeapInvariant(int index)
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( 20 );
-        var allItems = Fixture.CreateDistinctCollection<TValue>( 21 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 20 );
+        var allItems = Fixture.CreateManyDistinct<TValue>( count: 21 );
         var items = allItems.SkipLast( 1 ).ToList();
         var newValue = allItems[^1];
         var expected = items.Take( index ).Concat( items.Skip( index + 1 ) ).Append( newValue );
@@ -782,7 +782,7 @@ public abstract class GenericDictionaryHeapTests<TKey, TValue> : TestsBase
     [Fact]
     public void TryReplace_ShouldReturnFalse_WhenItemWithKeyDoesNotExist()
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( 2 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 2 );
         var item = Fixture.Create<TValue>();
 
         var sut = new DictionaryHeap<TKey, TValue>( new[] { KeyValuePair.Create( keys[0], item ) } );
@@ -800,8 +800,8 @@ public abstract class GenericDictionaryHeapTests<TKey, TValue> : TestsBase
     public void TryReplace_ShouldReplaceMiddleItemAndReturnIt_WhenOldValueIsLessThanNewValue()
     {
         var index = 3;
-        var keys = Fixture.CreateDistinctCollection<TKey>( 7 );
-        var allItems = Fixture.CreateDistinctSortedCollection<TValue>( 8 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 7 );
+        var allItems = Fixture.CreateManyDistinctSorted<TValue>( count: 8 );
         var items = allItems.SkipLast( 1 ).ToList();
         var newValue = allItems[^1];
         var expected = items.Take( index ).Concat( items.Skip( index + 1 ) ).Append( newValue );
@@ -825,8 +825,8 @@ public abstract class GenericDictionaryHeapTests<TKey, TValue> : TestsBase
     public void TryReplace_ShouldRemoveMiddleItemAndReturnIt_WhenRemovedItemIsLessThanLastItem()
     {
         var index = 3;
-        var keys = Fixture.CreateDistinctCollection<TKey>( 7 );
-        var allItems = Fixture.CreateDistinctSortedCollection<TValue>( 8 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 7 );
+        var allItems = Fixture.CreateManyDistinctSorted<TValue>( count: 8 );
         var items = allItems.Skip( 1 ).ToList();
         var newValue = allItems[0];
         var expected = items.Take( index ).Concat( items.Skip( index + 1 ) ).Append( newValue );
@@ -857,8 +857,8 @@ public abstract class GenericDictionaryHeapTests<TKey, TValue> : TestsBase
     [InlineData( 19 )]
     public void TryReplace_ShouldSatisfyHeapInvariant(int index)
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( 20 );
-        var allItems = Fixture.CreateDistinctCollection<TValue>( 21 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 20 );
+        var allItems = Fixture.CreateManyDistinct<TValue>( count: 21 );
         var items = allItems.SkipLast( 1 ).ToList();
         var newValue = allItems[^1];
         var expected = items.Take( index ).Concat( items.Skip( index + 1 ) ).Append( newValue );
@@ -881,8 +881,8 @@ public abstract class GenericDictionaryHeapTests<TKey, TValue> : TestsBase
     [Fact]
     public void AddOrReplace_ShouldAddNewItemAndReturnIt_WhenKeyDoesNotExist()
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( 2 );
-        var (value, other) = Fixture.CreateDistinctCollection<TValue>( 2 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 2 );
+        var (value, other) = Fixture.CreateManyDistinct<TValue>( count: 2 );
 
         var sut = new DictionaryHeap<TKey, TValue>( new[] { KeyValuePair.Create( keys[0], other ) } );
 
@@ -899,7 +899,7 @@ public abstract class GenericDictionaryHeapTests<TKey, TValue> : TestsBase
     public void AddOrReplace_ShouldReplaceExistingItemAndReturnOldValue_WhenKeyExists()
     {
         var key = Fixture.Create<TKey>();
-        var (value, other) = Fixture.CreateDistinctCollection<TValue>( 2 );
+        var (value, other) = Fixture.CreateManyDistinct<TValue>( count: 2 );
 
         var sut = new DictionaryHeap<TKey, TValue>( new[] { KeyValuePair.Create( key, other ) } );
 
@@ -915,8 +915,8 @@ public abstract class GenericDictionaryHeapTests<TKey, TValue> : TestsBase
     [Fact]
     public void Clear_ShouldRemoveAllItems()
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( 10 );
-        var items = Fixture.CreateMany<TValue>( 10 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 10 );
+        var items = Fixture.CreateMany<TValue>( count: 10 );
 
         var sut = new DictionaryHeap<TKey, TValue>( keys.Zip( items, KeyValuePair.Create ) );
 
@@ -930,8 +930,8 @@ public abstract class GenericDictionaryHeapTests<TKey, TValue> : TestsBase
     [InlineData( 3 )]
     public void IndexerGet_ShouldThrowArgumentOutOfRangeException_WhenIndexIsOutOfBounds(int index)
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( 3 );
-        var items = Fixture.CreateMany<TValue>( 3 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 3 );
+        var items = Fixture.CreateMany<TValue>( count: 3 );
 
         var sut = new DictionaryHeap<TKey, TValue>( keys.Zip( items, KeyValuePair.Create ) );
 
@@ -946,8 +946,8 @@ public abstract class GenericDictionaryHeapTests<TKey, TValue> : TestsBase
     [InlineData( 2 )]
     public void IndexerGet_ShouldReturnCorrectResult(int index)
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( 3 );
-        var items = Fixture.CreateDistinctSortedCollection<TValue>( 3 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 3 );
+        var items = Fixture.CreateManyDistinctSorted<TValue>( count: 3 );
 
         var sut = new DictionaryHeap<TKey, TValue>( keys.Zip( items, KeyValuePair.Create ) );
 
@@ -961,8 +961,8 @@ public abstract class GenericDictionaryHeapTests<TKey, TValue> : TestsBase
     [InlineData( 3 )]
     public void GetKey_ShouldThrowArgumentOutOfRangeException_WhenIndexIsOutOfBounds(int index)
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( 3 );
-        var items = Fixture.CreateMany<TValue>( 3 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 3 );
+        var items = Fixture.CreateMany<TValue>( count: 3 );
 
         var sut = new DictionaryHeap<TKey, TValue>( keys.Zip( items, KeyValuePair.Create ) );
 
@@ -977,8 +977,8 @@ public abstract class GenericDictionaryHeapTests<TKey, TValue> : TestsBase
     [InlineData( 2 )]
     public void GetKey_ShouldReturnCorrectResult(int index)
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( 3 );
-        var items = Fixture.CreateDistinctSortedCollection<TValue>( 3 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 3 );
+        var items = Fixture.CreateManyDistinctSorted<TValue>( count: 3 );
 
         var sut = new DictionaryHeap<TKey, TValue>( keys.Zip( items, KeyValuePair.Create ) );
 
@@ -990,8 +990,8 @@ public abstract class GenericDictionaryHeapTests<TKey, TValue> : TestsBase
     [Fact]
     public void GetIndex_ShouldThrowKeyNotFoundException_WhenKeyDoesNotExist()
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( 4 );
-        var items = Fixture.CreateMany<TValue>( 3 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 4 );
+        var items = Fixture.CreateMany<TValue>( count: 3 );
 
         var sut = new DictionaryHeap<TKey, TValue>( keys.Take( 3 ).Zip( items, KeyValuePair.Create ) );
 
@@ -1003,8 +1003,8 @@ public abstract class GenericDictionaryHeapTests<TKey, TValue> : TestsBase
     [Fact]
     public void GetIndex_ShouldReturnCorrectResult_WhenItemWithKeyExists()
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( 3 );
-        var items = Fixture.CreateDistinctSortedCollection<TValue>( 3 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 3 );
+        var items = Fixture.CreateManyDistinctSorted<TValue>( count: 3 );
 
         var sut = new DictionaryHeap<TKey, TValue>( keys.Zip( items, KeyValuePair.Create ) );
 
@@ -1029,7 +1029,7 @@ public abstract class GenericDictionaryHeapTests<TKey, TValue> : TestsBase
     [Fact]
     public void ContainsKey_ShouldReturnFalse_WhenItemWithKeyDoesNotExist()
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( 2 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 2 );
         var item = Fixture.Create<TValue>();
 
         var sut = new DictionaryHeap<TKey, TValue>( new[] { KeyValuePair.Create( keys[0], item ) } );
@@ -1055,7 +1055,7 @@ public abstract class GenericDictionaryHeapTests<TKey, TValue> : TestsBase
     [Fact]
     public void GetValue_ShouldThrowKeyNotFoundException_WhenItemWithKeyDoesNotExist()
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( 2 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 2 );
         var item = Fixture.Create<TValue>();
 
         var sut = new DictionaryHeap<TKey, TValue>( new[] { KeyValuePair.Create( keys[0], item ) } );
@@ -1085,7 +1085,7 @@ public abstract class GenericDictionaryHeapTests<TKey, TValue> : TestsBase
     [Fact]
     public void TryGetValue_ShouldReturnFalse_WhenItemWithKeyDoesNotExist()
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( 2 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 2 );
         var item = Fixture.Create<TValue>();
 
         var sut = new DictionaryHeap<TKey, TValue>( new[] { KeyValuePair.Create( keys[0], item ) } );

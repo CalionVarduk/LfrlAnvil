@@ -11,7 +11,7 @@ public partial class CollectionVariableTests
     [Fact]
     public void Change_ShouldUpdateElementsWithNewCollection()
     {
-        var allElements = Fixture.CreateDistinctCollection<TestElement>( count: 7 );
+        var allElements = Fixture.CreateManyDistinct<TestElement>( count: 7 );
         var initialElements = new[] { allElements[0], allElements[1], allElements[2], allElements[3], allElements[4] };
         var elements = new[]
         {
@@ -75,7 +75,7 @@ public partial class CollectionVariableTests
     [Fact]
     public void Change_ShouldRemoveAllElements_WhenCurrentElementsAreNotEmptyAndNewElementsAreEmpty()
     {
-        var elements = Fixture.CreateDistinctCollection<TestElement>( count: 2 );
+        var elements = Fixture.CreateManyDistinct<TestElement>( count: 2 );
         var keySelector = Lambda.Of( (TestElement e) => e.Key );
         var sut = CollectionVariable.WithoutValidators<string>.Create( elements, keySelector );
 

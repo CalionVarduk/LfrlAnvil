@@ -1884,6 +1884,7 @@ public class ReactiveSchedulerTests : TestsBase
         sut.StartAsync();
         invocationOrder.WaitForEnd();
         invocationOrder.CancelTimeout();
+        Thread.Sleep( 15 );
 
         var action = Lambda.Of( () => sut.Remove( "foo" ) );
 

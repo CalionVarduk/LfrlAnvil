@@ -7,7 +7,7 @@ public class DirectedGraphEdgeTests : TestsBase
     [Fact]
     public void ValueSet_ShouldUpdateValue()
     {
-        var (oldValue, newValue) = Fixture.CreateDistinctCollection<int>( count: 2 );
+        var (oldValue, newValue) = Fixture.CreateManyDistinct<int>( count: 2 );
         var graph = new DirectedGraph<string, int, long>();
         graph.AddNode( "a", oldValue );
         var sut = graph.AddEdge( "a", "a", oldValue );

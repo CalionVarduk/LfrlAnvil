@@ -35,7 +35,7 @@ public abstract class GenericHeapTests<T> : TestsBase
     [Fact]
     public void Ctor_ShouldCreateCorrectHeapWithDistinctItems()
     {
-        var items = Fixture.CreateDistinctCollection<T>( 20 );
+        var items = Fixture.CreateManyDistinct<T>( count: 20 );
 
         var sut = new Heap<T>( items );
 
@@ -50,7 +50,7 @@ public abstract class GenericHeapTests<T> : TestsBase
     [Fact]
     public void Ctor_ShouldCreateCorrectHeapWithRepeatingItems()
     {
-        var distinctItems = Fixture.CreateDistinctCollection<T>( 5 );
+        var distinctItems = Fixture.CreateManyDistinct<T>( count: 5 );
         var items = distinctItems.SelectMany( i => new[] { i, i, i, i } ).ToList();
 
         var sut = new Heap<T>( items );
@@ -67,7 +67,7 @@ public abstract class GenericHeapTests<T> : TestsBase
     public void Ctor_ShouldCreateCorrectHeapWithItems_WithExplicitComparer()
     {
         var comparer = Comparer<T>.Create( (a, b) => a!.GetHashCode().CompareTo( b!.GetHashCode() ) );
-        var items = Fixture.CreateDistinctCollection<T>( 20 );
+        var items = Fixture.CreateManyDistinct<T>( count: 20 );
 
         var sut = new Heap<T>( items, comparer );
 
@@ -98,7 +98,7 @@ public abstract class GenericHeapTests<T> : TestsBase
     [Fact]
     public void Add_ShouldAddNewItemOnTop_WhenNewItemIsLessThanExistingItem()
     {
-        var (item, other) = Fixture.CreateDistinctSortedCollection<T>( 2 );
+        var (item, other) = Fixture.CreateManyDistinctSorted<T>( count: 2 );
 
         var sut = new Heap<T>( new[] { other } );
 
@@ -110,7 +110,7 @@ public abstract class GenericHeapTests<T> : TestsBase
     [Fact]
     public void Add_ShouldAddNewItemAsLeftChild_WhenNewItemIsGreaterThanSoleExistingItem()
     {
-        var (other, item) = Fixture.CreateDistinctSortedCollection<T>( 2 );
+        var (other, item) = Fixture.CreateManyDistinctSorted<T>( count: 2 );
 
         var sut = new Heap<T>( new[] { other } );
 
@@ -122,7 +122,7 @@ public abstract class GenericHeapTests<T> : TestsBase
     [Fact]
     public void Add_ShouldAddNewItemAsRightChild_WhenNewItemIsGreaterThanExistingItem_AndLeftChildExists()
     {
-        var (other, item, left) = Fixture.CreateDistinctSortedCollection<T>( 3 );
+        var (other, item, left) = Fixture.CreateManyDistinctSorted<T>( count: 3 );
 
         var sut = new Heap<T>( new[] { other, left } );
 
@@ -134,7 +134,7 @@ public abstract class GenericHeapTests<T> : TestsBase
     [Fact]
     public void Add_ShouldSatisfyHeapInvariant()
     {
-        var items = Fixture.CreateMany<T>( 20 ).ToList();
+        var items = Fixture.CreateMany<T>( count: 20 ).ToList();
 
         var sut = new Heap<T>();
 
@@ -189,7 +189,7 @@ public abstract class GenericHeapTests<T> : TestsBase
     [Fact]
     public void TryPeek_ShouldReturnCorrectResultAndNotModifyHeap()
     {
-        var items = Fixture.CreateDistinctSortedCollection<T>( 10 );
+        var items = Fixture.CreateManyDistinctSorted<T>( count: 10 );
         var expected = items[0];
 
         var sut = new Heap<T>( items );
@@ -247,7 +247,7 @@ public abstract class GenericHeapTests<T> : TestsBase
     [Fact]
     public void TryExtract_ShouldSatisfyHeapInvariant()
     {
-        var items = Fixture.CreateDistinctCollection<T>( 20 );
+        var items = Fixture.CreateManyDistinct<T>( count: 20 );
 
         var sut = new Heap<T>( items );
         var expectedExtracted = sut[0];
@@ -301,7 +301,7 @@ public abstract class GenericHeapTests<T> : TestsBase
     [Fact]
     public void TryPop_ShouldSatisfyHeapInvariant()
     {
-        var items = Fixture.CreateDistinctCollection<T>( 20 );
+        var items = Fixture.CreateManyDistinct<T>( count: 20 );
 
         var sut = new Heap<T>( items );
         var expectedExtracted = sut[0];
@@ -347,7 +347,7 @@ public abstract class GenericHeapTests<T> : TestsBase
     [Fact]
     public void TryReplace_ShouldReturnTrueAndReplaceTopItem()
     {
-        var (oldItem, newItem) = Fixture.CreateDistinctCollection<T>( 2 );
+        var (oldItem, newItem) = Fixture.CreateManyDistinct<T>( count: 2 );
 
         var sut = new Heap<T>( new[] { oldItem } );
 
@@ -364,7 +364,7 @@ public abstract class GenericHeapTests<T> : TestsBase
     [Fact]
     public void TryReplace_ShouldSatisfyHeapInvariant()
     {
-        var allItems = Fixture.CreateDistinctCollection<T>( 21 );
+        var allItems = Fixture.CreateManyDistinct<T>( count: 21 );
 
         var newItem = allItems[^1];
         var items = allItems.Take( 20 ).ToList();
@@ -387,7 +387,7 @@ public abstract class GenericHeapTests<T> : TestsBase
     [Fact]
     public void Clear_ShouldRemoveAllItems()
     {
-        var items = Fixture.CreateMany<T>( 10 );
+        var items = Fixture.CreateMany<T>( count: 10 );
 
         var sut = new Heap<T>( items );
 
@@ -401,7 +401,7 @@ public abstract class GenericHeapTests<T> : TestsBase
     [InlineData( 3 )]
     public void IndexerGet_ShouldThrowArgumentOutOfRangeException_WhenIndexIsOutOfBounds(int index)
     {
-        var items = Fixture.CreateMany<T>( 3 );
+        var items = Fixture.CreateMany<T>( count: 3 );
 
         var sut = new Heap<T>( items );
 
@@ -416,7 +416,7 @@ public abstract class GenericHeapTests<T> : TestsBase
     [InlineData( 2 )]
     public void IndexerGet_ShouldReturnCorrectResult(int index)
     {
-        var items = Fixture.CreateDistinctSortedCollection<T>( 3 );
+        var items = Fixture.CreateManyDistinctSorted<T>( count: 3 );
 
         var sut = new Heap<T>
         {

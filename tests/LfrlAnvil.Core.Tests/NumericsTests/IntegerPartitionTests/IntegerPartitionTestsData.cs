@@ -4,7 +4,7 @@ namespace LfrlAnvil.Tests.NumericsTests.IntegerPartitionTests;
 
 public class IntegerPartitionTestsData
 {
-    public static TheoryData<ulong, int, ulong[]> GetFixedData(IFixture fixture)
+    public static TheoryData<ulong, int, ulong[]> GetFixedData(Fixture fixture)
     {
         return new TheoryData<ulong, int, ulong[]>
         {
@@ -19,7 +19,7 @@ public class IntegerPartitionTestsData
         };
     }
 
-    public static TheoryData<ulong, Fraction[], ulong[]> GetFractionData(IFixture fixture)
+    public static TheoryData<ulong, Fraction[], ulong[]> GetFractionData(Fixture fixture)
     {
         return new TheoryData<ulong, Fraction[], ulong[]>
         {

@@ -8,6 +8,11 @@ namespace LfrlAnvil.Tests.NumericsTests.FixedTests;
 [TestClass( typeof( FixedTestsData ) )]
 public class FixedTests : TestsBase
 {
+    public FixedTests()
+    {
+        Fixture.Customize<long>( (_, _) => _ => Random.Shared.NextInt64( 0, int.MaxValue ) );
+    }
+
     [Fact]
     public void Zero_ShouldReturnCorrectResult()
     {

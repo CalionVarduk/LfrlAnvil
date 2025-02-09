@@ -14,7 +14,7 @@ namespace LfrlAnvil.Sql.Tests.ExpressionsTests;
 
 public class SqlNodeMutatorTestsData
 {
-    public static TheoryData<SqlNodeBase, bool, string> GetReplacementData(IFixture fixture)
+    public static TheoryData<SqlNodeBase, bool, string> GetReplacementData(Fixture fixture)
     {
         var leafResult = "(\"1\" : System.Int32) + (\"2\" : System.Int32)";
         var nodeResult = "(\"1\" : System.Int32) + (\"foo\" : System.String)";
@@ -220,7 +220,7 @@ public class SqlNodeMutatorTestsData
         return result;
     }
 
-    public static TheoryData<SqlNodeBase, SqlNodeBase?, bool> GetLeafNodesData(IFixture fixture)
+    public static TheoryData<SqlNodeBase, SqlNodeBase?, bool> GetLeafNodesData(Fixture fixture)
     {
         var arg = SqlNode.Parameter( "a" );
         var trait = SqlNode.DistinctTrait();
@@ -283,7 +283,7 @@ public class SqlNodeMutatorTestsData
         return result;
     }
 
-    public static TheoryData<SqlDataFieldNode, SqlRecordSetNode?, bool, string> GetDataFieldsData(IFixture fixture)
+    public static TheoryData<SqlDataFieldNode, SqlRecordSetNode?, bool, string> GetDataFieldsData(Fixture fixture)
     {
         var replacement = SqlNode.RawRecordSet( "replaced" );
         var data = new (SqlDataFieldNode, string)[]
@@ -309,7 +309,7 @@ public class SqlNodeMutatorTestsData
     }
 
     public static TheoryData<SqlNodeBase, (SqlNodeBase, SqlNodeBase)?, bool, string> GetOperatorsData(
-        IFixture fixture)
+        Fixture fixture)
     {
         var arg1 = SqlNode.Parameter( "a" );
         var arg2 = SqlNode.Parameter( "b" );
@@ -439,7 +439,7 @@ public class SqlNodeMutatorTestsData
         }
     }
 
-    public static TheoryData<SqlExpressionNode, (SqlExpressionNode, SqlExpressionNode)?, bool, string> GetFunctionsData(IFixture fixture)
+    public static TheoryData<SqlExpressionNode, (SqlExpressionNode, SqlExpressionNode)?, bool, string> GetFunctionsData(Fixture fixture)
     {
         var arg1 = SqlNode.Parameter( "a" );
         var arg2 = SqlNode.Parameter( "b" );
@@ -612,7 +612,7 @@ public class SqlNodeMutatorTestsData
     }
 
     public static TheoryData<SqlAggregateFunctionExpressionNode, (SqlTraitNode, SqlTraitNode)?, bool, string>
-        GetAggregateFunctionTraitsData(IFixture fixture)
+        GetAggregateFunctionTraitsData(Fixture fixture)
     {
         var arg1 = SqlNode.Parameter( "a" );
         var arg2 = SqlNode.Parameter( "b" );
@@ -714,7 +714,7 @@ public class SqlNodeMutatorTestsData
         }
     }
 
-    public static TheoryData<SqlDataSourceNode, (SqlNodeBase, SqlNodeBase)?, bool, string> GetDataSourcesData(IFixture fixture)
+    public static TheoryData<SqlDataSourceNode, (SqlNodeBase, SqlNodeBase)?, bool, string> GetDataSourcesData(Fixture fixture)
     {
         var set1 = SqlNode.RawRecordSet( "a" );
         var set2 = SqlNode.RawRecordSet( "b" );
@@ -845,7 +845,7 @@ public class SqlNodeMutatorTestsData
         }
     }
 
-    public static TheoryData<SqlQueryExpressionNode, (SqlNodeBase, SqlNodeBase)?, bool, string> GetQueriesData(IFixture fixture)
+    public static TheoryData<SqlQueryExpressionNode, (SqlNodeBase, SqlNodeBase)?, bool, string> GetQueriesData(Fixture fixture)
     {
         var dataSource = SqlNode.RawRecordSet( "a" ).ToDataSource();
         var field1 = dataSource.From["x"].AsSelf();
@@ -1005,7 +1005,7 @@ public class SqlNodeMutatorTestsData
         }
     }
 
-    public static TheoryData<SqlNodeBase, (SqlNodeBase, SqlNodeBase)?, bool, string> GetDataModificationsData(IFixture fixture)
+    public static TheoryData<SqlNodeBase, (SqlNodeBase, SqlNodeBase)?, bool, string> GetDataModificationsData(Fixture fixture)
     {
         var values = SqlNode.Values( SqlNode.Parameter( "a" ), SqlNode.Parameter( "b" ) );
         var query = SqlNode.RawQuery( "SELECT * FROM foo" );
@@ -1302,7 +1302,7 @@ public class SqlNodeMutatorTestsData
         }
     }
 
-    public static TheoryData<SqlNodeBase, (SqlNodeBase, SqlNodeBase)?, bool, string> GetSchemaModificationsData(IFixture fixture)
+    public static TheoryData<SqlNodeBase, (SqlNodeBase, SqlNodeBase)?, bool, string> GetSchemaModificationsData(Fixture fixture)
     {
         var expr1 = SqlNode.Parameter( "a" );
         var expr2 = SqlNode.Parameter( "b" );
@@ -1511,7 +1511,7 @@ public class SqlNodeMutatorTestsData
         }
     }
 
-    public static TheoryData<SqlNodeBase, (SqlNodeBase, SqlNodeBase)?, bool, string> GetMiscData(IFixture fixture)
+    public static TheoryData<SqlNodeBase, (SqlNodeBase, SqlNodeBase)?, bool, string> GetMiscData(Fixture fixture)
     {
         var expr1 = SqlNode.Parameter( "a" );
         var expr2 = SqlNode.Parameter( "b" );

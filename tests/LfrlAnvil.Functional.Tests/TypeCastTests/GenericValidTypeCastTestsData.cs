@@ -5,9 +5,9 @@ namespace LfrlAnvil.Functional.Tests.TypeCastTests;
 public class GenericValidTypeCastTestsData<TSource, TDestination>
     where TSource : TDestination
 {
-    public static TheoryData<object?, object?, bool> CreateEqualsTestData(IFixture fixture)
+    public static TheoryData<object?, object?, bool> CreateEqualsTestData(Fixture fixture)
     {
-        var (_1, _2) = fixture.CreateDistinctCollection<TSource>( 2 );
+        var (_1, _2) = fixture.CreateManyDistinct<TSource>( count: 2 );
 
         return new TheoryData<object?, object?, bool>
         {
@@ -18,7 +18,7 @@ public class GenericValidTypeCastTestsData<TSource, TDestination>
         };
     }
 
-    public static IEnumerable<object?[]> CreateNotEqualsTestData(IFixture fixture)
+    public static IEnumerable<object?[]> CreateNotEqualsTestData(Fixture fixture)
     {
         return CreateEqualsTestData( fixture ).ConvertResult( (bool r) => ! r );
     }

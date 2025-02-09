@@ -81,7 +81,7 @@ public abstract class GenericObjectExtensionsTests<T> : TestsBase
     [Fact]
     public void Mutate_ShouldReturnCorrectResult()
     {
-        var (value, newValue) = Fixture.CreateDistinctCollection<T>( 2 );
+        var (value, newValue) = Fixture.CreateManyDistinct<T>( count: 2 );
 
         var sut = value.Mutate( newValue );
 

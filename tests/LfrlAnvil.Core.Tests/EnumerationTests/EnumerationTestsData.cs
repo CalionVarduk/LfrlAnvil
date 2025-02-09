@@ -5,7 +5,7 @@ namespace LfrlAnvil.Tests.EnumerationTests;
 
 public class EnumerationTestsData
 {
-    public static TheoryData<ValidEnum, ValidEnum, int> GetCompareToData(IFixture fixture)
+    public static TheoryData<ValidEnum, ValidEnum, int> GetCompareToData(Fixture fixture)
     {
         return new TheoryData<ValidEnum, ValidEnum, int>
         {
@@ -15,12 +15,12 @@ public class EnumerationTestsData
         };
     }
 
-    public static IEnumerable<object?[]> GetEqualsData(IFixture fixture)
+    public static IEnumerable<object?[]> GetEqualsData(Fixture fixture)
     {
         return GetCompareToData( fixture ).ConvertResult( (int r) => r == 0 );
     }
 
-    public static IEnumerable<object?[]> GetEqualityOperatorData(IFixture fixture)
+    public static IEnumerable<object?[]> GetEqualityOperatorData(Fixture fixture)
     {
         var @base = GetCompareToData( fixture ).ConvertResult( (int r) => r == 0 );
         return new TheoryData<ValidEnum?, ValidEnum?, bool>
@@ -32,7 +32,7 @@ public class EnumerationTestsData
             .Concat( @base );
     }
 
-    public static IEnumerable<object?[]> GetInequalityOperatorData(IFixture fixture)
+    public static IEnumerable<object?[]> GetInequalityOperatorData(Fixture fixture)
     {
         var @base = GetCompareToData( fixture ).ConvertResult( (int r) => r != 0 );
         return new TheoryData<ValidEnum?, ValidEnum?, bool>
@@ -44,7 +44,7 @@ public class EnumerationTestsData
             .Concat( @base );
     }
 
-    public static IEnumerable<object?[]> GetGreaterThanOrEqualToOperatorData(IFixture fixture)
+    public static IEnumerable<object?[]> GetGreaterThanOrEqualToOperatorData(Fixture fixture)
     {
         var @base = GetCompareToData( fixture ).ConvertResult( (int r) => r >= 0 );
         return new TheoryData<ValidEnum?, ValidEnum?, bool>
@@ -56,7 +56,7 @@ public class EnumerationTestsData
             .Concat( @base );
     }
 
-    public static IEnumerable<object?[]> GetGreaterThanOperatorData(IFixture fixture)
+    public static IEnumerable<object?[]> GetGreaterThanOperatorData(Fixture fixture)
     {
         var @base = GetCompareToData( fixture ).ConvertResult( (int r) => r > 0 );
         return new TheoryData<ValidEnum?, ValidEnum?, bool>
@@ -68,7 +68,7 @@ public class EnumerationTestsData
             .Concat( @base );
     }
 
-    public static IEnumerable<object?[]> GetLessThanOrEqualToOperatorData(IFixture fixture)
+    public static IEnumerable<object?[]> GetLessThanOrEqualToOperatorData(Fixture fixture)
     {
         var @base = GetCompareToData( fixture ).ConvertResult( (int r) => r <= 0 );
         return new TheoryData<ValidEnum?, ValidEnum?, bool>
@@ -80,7 +80,7 @@ public class EnumerationTestsData
             .Concat( @base );
     }
 
-    public static IEnumerable<object?[]> GetLessThanOperatorData(IFixture fixture)
+    public static IEnumerable<object?[]> GetLessThanOperatorData(Fixture fixture)
     {
         var @base = GetCompareToData( fixture ).ConvertResult( (int r) => r < 0 );
         return new TheoryData<ValidEnum?, ValidEnum?, bool>

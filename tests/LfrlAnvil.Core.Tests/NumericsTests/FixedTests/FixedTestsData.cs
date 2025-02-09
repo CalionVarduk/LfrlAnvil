@@ -4,7 +4,7 @@ namespace LfrlAnvil.Tests.NumericsTests.FixedTests;
 
 public class FixedTestsData
 {
-    public static TheoryData<long, byte> GetCreateRawData(IFixture fixture)
+    public static TheoryData<long, byte> GetCreateRawData(Fixture fixture)
     {
         return new TheoryData<long, byte>
         {
@@ -19,7 +19,7 @@ public class FixedTestsData
         };
     }
 
-    public static TheoryData<long, byte, long> GetCreateWithInt64Data(IFixture fixture)
+    public static TheoryData<long, byte, long> GetCreateWithInt64Data(Fixture fixture)
     {
         return new TheoryData<long, byte, long>
         {
@@ -45,7 +45,7 @@ public class FixedTestsData
         };
     }
 
-    public static TheoryData<decimal, byte, long> GetCreateWithDecimalData(IFixture fixture)
+    public static TheoryData<decimal, byte, long> GetCreateWithDecimalData(Fixture fixture)
     {
         return new TheoryData<decimal, byte, long>
         {
@@ -72,7 +72,7 @@ public class FixedTestsData
         };
     }
 
-    public static TheoryData<double, byte, long> GetCreateWithDoubleData(IFixture fixture)
+    public static TheoryData<double, byte, long> GetCreateWithDoubleData(Fixture fixture)
     {
         return new TheoryData<double, byte, long>
         {
@@ -99,7 +99,7 @@ public class FixedTestsData
         };
     }
 
-    public static TheoryData<decimal, byte, int, long> GetRoundData(IFixture fixture)
+    public static TheoryData<decimal, byte, int, long> GetRoundData(Fixture fixture)
     {
         return new TheoryData<decimal, byte, int, long>
         {
@@ -138,7 +138,7 @@ public class FixedTestsData
         };
     }
 
-    public static TheoryData<decimal, byte, long> GetFloorData(IFixture fixture)
+    public static TheoryData<decimal, byte, long> GetFloorData(Fixture fixture)
     {
         return new TheoryData<decimal, byte, long>
         {
@@ -166,7 +166,7 @@ public class FixedTestsData
         };
     }
 
-    public static TheoryData<decimal, byte, long> GetCeilingData(IFixture fixture)
+    public static TheoryData<decimal, byte, long> GetCeilingData(Fixture fixture)
     {
         return new TheoryData<decimal, byte, long>
         {
@@ -194,7 +194,7 @@ public class FixedTestsData
         };
     }
 
-    public static TheoryData<long, byte, long, byte, int> GetCompareToData(IFixture fixture)
+    public static TheoryData<long, byte, long, byte, int> GetCompareToData(Fixture fixture)
     {
         return new TheoryData<long, byte, long, byte, int>
         {
@@ -257,32 +257,32 @@ public class FixedTestsData
         };
     }
 
-    public static IEnumerable<object?[]> GetEqualsData(IFixture fixture)
+    public static IEnumerable<object?[]> GetEqualsData(Fixture fixture)
     {
         return GetCompareToData( fixture ).ConvertResult( (int cmp) => cmp == 0 );
     }
 
-    public static IEnumerable<object?[]> GetNotEqualsData(IFixture fixture)
+    public static IEnumerable<object?[]> GetNotEqualsData(Fixture fixture)
     {
         return GetCompareToData( fixture ).ConvertResult( (int cmp) => cmp != 0 );
     }
 
-    public static IEnumerable<object?[]> GetLessThanData(IFixture fixture)
+    public static IEnumerable<object?[]> GetLessThanData(Fixture fixture)
     {
         return GetCompareToData( fixture ).ConvertResult( (int cmp) => cmp < 0 );
     }
 
-    public static IEnumerable<object?[]> GetLessThanOrEqualToData(IFixture fixture)
+    public static IEnumerable<object?[]> GetLessThanOrEqualToData(Fixture fixture)
     {
         return GetCompareToData( fixture ).ConvertResult( (int cmp) => cmp <= 0 );
     }
 
-    public static IEnumerable<object?[]> GetGreaterThanData(IFixture fixture)
+    public static IEnumerable<object?[]> GetGreaterThanData(Fixture fixture)
     {
         return GetCompareToData( fixture ).ConvertResult( (int cmp) => cmp > 0 );
     }
 
-    public static IEnumerable<object?[]> GetGreaterThanOrEqualToData(IFixture fixture)
+    public static IEnumerable<object?[]> GetGreaterThanOrEqualToData(Fixture fixture)
     {
         return GetCompareToData( fixture ).ConvertResult( (int cmp) => cmp >= 0 );
     }

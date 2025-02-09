@@ -27,8 +27,8 @@ public class DedicatedThreadSynchronizationContextTests : TestsBase
     {
         var @params = new ThreadParams
         {
-            Culture = Fixture.Create<CultureInfo>(),
-            UICulture = Fixture.Create<CultureInfo>(),
+            Culture = CultureInfo.InvariantCulture,
+            UICulture = CultureInfo.CurrentCulture,
             Name = Fixture.Create<string>(),
             Priority = Fixture.Create<ThreadPriority>()
         };

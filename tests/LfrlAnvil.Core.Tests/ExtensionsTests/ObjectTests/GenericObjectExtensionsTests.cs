@@ -56,7 +56,7 @@ public abstract class GenericObjectExtensionsTests<T> : TestsBase
     [Fact]
     public void Visit_ShouldReturnResultFromTopToBottom()
     {
-        var values = Fixture.CreateMany<T>( 3 ).ToList();
+        var values = Fixture.CreateMany<T>( count: 3 ).ToList();
         var expected = values.Skip( 1 );
 
         var sut = new VisitNode
@@ -77,7 +77,7 @@ public abstract class GenericObjectExtensionsTests<T> : TestsBase
     [Fact]
     public void VisitMany_ShouldReturnResultAccordingToBreadthFirstTraversal()
     {
-        var values = Fixture.CreateMany<T>( 11 ).ToList();
+        var values = Fixture.CreateMany<T>( count: 11 ).ToList();
         var expected = values.Skip( 1 );
 
         var children = new[]
@@ -132,7 +132,7 @@ public abstract class GenericObjectExtensionsTests<T> : TestsBase
     [Fact]
     public void VisitMany_WithStopPredicate_ShouldReturnResultAccordingToBreadthFirstTraversal()
     {
-        var values = Fixture.CreateDistinctCollection<T>( 11 ).ToList();
+        var values = Fixture.CreateManyDistinct<T>( count: 11 ).ToList();
         var valuesToStopAt = new HashSet<T>
         {
             values[1],
@@ -193,7 +193,7 @@ public abstract class GenericObjectExtensionsTests<T> : TestsBase
     [Fact]
     public void VisitMany_WithStopPredicate_ShouldReturnEmpty_WhenPredicateStopsImmediately()
     {
-        var values = Fixture.CreateDistinctCollection<T>( 4 ).ToList();
+        var values = Fixture.CreateManyDistinct<T>( count: 4 ).ToList();
         var children = values.Skip( 1 ).Select( v => new VisitManyNode { Value = v } );
 
         var sut = new VisitManyNode
@@ -218,7 +218,7 @@ public abstract class GenericObjectExtensionsTests<T> : TestsBase
     [Fact]
     public void VisitWithSelf_ShouldReturnResultFromTopToBottom_IncludingTheTargetAsRoot()
     {
-        var values = Fixture.CreateMany<T>( 3 ).ToList();
+        var values = Fixture.CreateMany<T>( count: 3 ).ToList();
 
         var sut = new VisitNode
         {
@@ -238,7 +238,7 @@ public abstract class GenericObjectExtensionsTests<T> : TestsBase
     [Fact]
     public void VisitManyWithSelf_ShouldReturnResultAccordingToBreadthFirstTraversal_IncludingTheTargetAsRoot()
     {
-        var values = Fixture.CreateMany<T>( 11 ).ToList();
+        var values = Fixture.CreateMany<T>( count: 11 ).ToList();
 
         var children = new[]
         {
@@ -292,7 +292,7 @@ public abstract class GenericObjectExtensionsTests<T> : TestsBase
     [Fact]
     public void VisitManyWithSelf_WithStopPredicate_ShouldReturnResultAccordingToBreadthFirstTraversal()
     {
-        var values = Fixture.CreateDistinctCollection<T>( 11 ).ToList();
+        var values = Fixture.CreateManyDistinct<T>( count: 11 ).ToList();
         var valuesToStopAt = new HashSet<T>
         {
             values[1],
@@ -353,7 +353,7 @@ public abstract class GenericObjectExtensionsTests<T> : TestsBase
     [Fact]
     public void VisitManyWithSelf_WithStopPredicate_ShouldReturnOnlySource_WhenPredicateStopsImmediately()
     {
-        var values = Fixture.CreateDistinctCollection<T>( 4 ).ToList();
+        var values = Fixture.CreateManyDistinct<T>( count: 4 ).ToList();
         var children = values.Skip( 1 ).Select( v => new VisitManyNode { Value = v } );
 
         var sut = new VisitManyNode

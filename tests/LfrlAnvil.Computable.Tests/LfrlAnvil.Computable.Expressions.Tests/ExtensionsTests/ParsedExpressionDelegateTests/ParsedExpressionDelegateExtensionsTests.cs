@@ -13,7 +13,7 @@ public class ParsedExpressionDelegateExtensionsTests : TestsBase
     [Fact]
     public void MapArguments_WithStringKey_ShouldReturnCorrectlyPopulatedArray()
     {
-        var (aValue, bValue, dValue) = Fixture.CreateDistinctCollection<decimal>( count: 3 );
+        var (aValue, bValue, dValue) = Fixture.CreateManyDistinct<decimal>( count: 3 );
 
         var input = "a + b + c + d";
         var builder = new ParsedExpressionFactoryBuilder()
@@ -35,7 +35,7 @@ public class ParsedExpressionDelegateExtensionsTests : TestsBase
     [Fact]
     public void MapArguments_WithStringSegmentKey_ShouldReturnCorrectlyPopulatedArray()
     {
-        var (aValue, bValue, dValue) = Fixture.CreateDistinctCollection<decimal>( count: 3 );
+        var (aValue, bValue, dValue) = Fixture.CreateManyDistinct<decimal>( count: 3 );
 
         var input = "a + b + c + d";
         var builder = new ParsedExpressionFactoryBuilder()
@@ -57,7 +57,7 @@ public class ParsedExpressionDelegateExtensionsTests : TestsBase
     [Fact]
     public void MapArguments_WithStringKeyAndCustomBuffer_ShouldCorrectlyPopulateProvidedArray()
     {
-        var (aValue, bValue, dValue) = Fixture.CreateDistinctCollection<decimal>( count: 3 );
+        var (aValue, bValue, dValue) = Fixture.CreateManyDistinct<decimal>( count: 3 );
 
         var input = "a + b + c + d";
         var buffer = new decimal[4];
@@ -81,7 +81,7 @@ public class ParsedExpressionDelegateExtensionsTests : TestsBase
     [Fact]
     public void MapArguments_WithStringSegmentKeyAndCustomBuffer_ShouldCorrectlyPopulateProvidedArray()
     {
-        var (aValue, bValue, dValue) = Fixture.CreateDistinctCollection<decimal>( count: 3 );
+        var (aValue, bValue, dValue) = Fixture.CreateManyDistinct<decimal>( count: 3 );
 
         var input = "a + b + c + d";
         var buffer = new decimal[4];
@@ -105,8 +105,8 @@ public class ParsedExpressionDelegateExtensionsTests : TestsBase
     [Fact]
     public void MapArguments_WithCustomBuffer_ShouldCorrectlyPopulateProvidedArray_EvenWhenBufferIsLargerThanNeeded()
     {
-        var (aValue, bValue, dValue) = Fixture.CreateDistinctCollection<decimal>( count: 3 );
-        var buffer = Fixture.CreateDistinctCollection<decimal>( count: 6 ).ToArray();
+        var (aValue, bValue, dValue) = Fixture.CreateManyDistinct<decimal>( count: 3 );
+        var buffer = Fixture.CreateManyDistinct<decimal>( count: 6 ).ToArray();
         var oldThirdValue = buffer[2];
         var oldFifthValue = buffer[4];
         var oldSixthValue = buffer[5];
@@ -132,7 +132,7 @@ public class ParsedExpressionDelegateExtensionsTests : TestsBase
     [Fact]
     public void MapArguments_WithCustomBuffer_ShouldDoNothing_WhenDelegateDoesNotHaveAnyArguments()
     {
-        var buffer = Fixture.CreateDistinctCollection<decimal>( count: 3 ).ToArray();
+        var buffer = Fixture.CreateManyDistinct<decimal>( count: 3 ).ToArray();
         var oldFirstValue = buffer[0];
         var oldSecondValue = buffer[1];
         var oldThirdValue = buffer[2];

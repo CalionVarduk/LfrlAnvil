@@ -8,7 +8,7 @@ public class VariableNodeExtensionsTests : TestsBase
     [Fact]
     public void IsChanged_ShouldReturnTrue_WhenStateHasChangedFlag()
     {
-        var (value, newValue) = Fixture.CreateDistinctCollection<int>( count: 2 );
+        var (value, newValue) = Fixture.CreateManyDistinct<int>( count: 2 );
         var node = Variable.WithoutValidators<string>.Create( value, newValue );
 
         var result = node.IsChanged();

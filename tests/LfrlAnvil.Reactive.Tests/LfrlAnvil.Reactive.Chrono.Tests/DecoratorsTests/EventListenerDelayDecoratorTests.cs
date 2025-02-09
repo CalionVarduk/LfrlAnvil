@@ -14,7 +14,7 @@ public class EventListenerDelayDecoratorTests : TestsBase
     public void Decorate_ShouldNotDisposeTheSubscriber()
     {
         var scheduler = TaskScheduler.Current;
-        var delay = Duration.FromTicks( Fixture.CreatePositiveInt32() );
+        var delay = Duration.FromTicks( Fixture.Create<int>( x => x > 0 ) );
         var spinWaitDurationHint = Duration.FromTicks( Fixture.Create<uint>() );
         var timestampProvider = Substitute.For<ITimestampProvider>();
         var next = Substitute.For<IEventListener<WithInterval<int>>>();
@@ -92,7 +92,7 @@ public class EventListenerDelayDecoratorTests : TestsBase
     public void Decorate_ShouldCreateListenerWhoseOnDisposeCallsNextOnDispose(DisposalSource source)
     {
         var scheduler = TaskScheduler.Current;
-        var delay = Duration.FromTicks( Fixture.CreatePositiveInt32() );
+        var delay = Duration.FromTicks( Fixture.Create<int>( x => x > 0 ) );
         var spinWaitDurationHint = Duration.FromTicks( Fixture.Create<uint>() );
         var timestampProvider = Substitute.For<ITimestampProvider>();
         var next = Substitute.For<IEventListener<WithInterval<int>>>();

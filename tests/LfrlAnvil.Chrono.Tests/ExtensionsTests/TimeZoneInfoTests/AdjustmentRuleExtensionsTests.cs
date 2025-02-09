@@ -7,7 +7,7 @@ public class AdjustmentRuleExtensionsTests : TestsBase
     [Fact]
     public void GetTransitionTimeWithInvalidity_ShouldReturnStartTime_WhenDaylightDeltaIsPositive()
     {
-        var deltaInHours = Fixture.CreatePositiveInt32() % 12 + 1;
+        var deltaInHours = Fixture.Create<int>( x => x > 0 ) % 12 + 1;
         var sut = CreateRule( deltaInHours );
 
         var result = sut.GetTransitionTimeWithInvalidity();
@@ -18,7 +18,7 @@ public class AdjustmentRuleExtensionsTests : TestsBase
     [Fact]
     public void GetTransitionTimeWithInvalidity_ShouldReturnEndTime_WhenDaylightDeltaIsNegative()
     {
-        var deltaInHours = Fixture.CreateNegativeInt32() % 12 - 1;
+        var deltaInHours = -Fixture.Create<int>( x => x > 0 ) % 12 - 1;
         var sut = CreateRule( deltaInHours );
 
         var result = sut.GetTransitionTimeWithInvalidity();
@@ -29,7 +29,7 @@ public class AdjustmentRuleExtensionsTests : TestsBase
     [Fact]
     public void GetTransitionTimeWithAmbiguity_ShouldReturnEndTime_WhenDaylightDeltaIsPositive()
     {
-        var deltaInHours = Fixture.CreatePositiveInt32() % 12 + 1;
+        var deltaInHours = Fixture.Create<int>( x => x > 0 ) % 12 + 1;
         var sut = CreateRule( deltaInHours );
 
         var result = sut.GetTransitionTimeWithAmbiguity();
@@ -40,7 +40,7 @@ public class AdjustmentRuleExtensionsTests : TestsBase
     [Fact]
     public void GetTransitionTimeWithAmbiguity_ShouldReturnStartTime_WhenDaylightDeltaIsNegative()
     {
-        var deltaInHours = Fixture.CreateNegativeInt32() % 12 - 1;
+        var deltaInHours = -Fixture.Create<int>( x => x > 0 ) % 12 - 1;
         var sut = CreateRule( deltaInHours );
 
         var result = sut.GetTransitionTimeWithAmbiguity();

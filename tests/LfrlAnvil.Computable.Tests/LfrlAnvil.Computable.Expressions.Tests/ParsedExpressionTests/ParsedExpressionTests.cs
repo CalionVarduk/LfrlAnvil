@@ -77,7 +77,7 @@ public class ParsedExpressionTests : TestsBase
     [Fact]
     public void BindArguments_WithStringKey_ShouldBindExpressionArgumentsCorrectly()
     {
-        var (bValue, cValue, eValue) = Fixture.CreateDistinctCollection<decimal>( count: 3 );
+        var (bValue, cValue, eValue) = Fixture.CreateManyDistinct<decimal>( count: 3 );
 
         var input = "a + b + c + d + e";
         var builder = new ParsedExpressionFactoryBuilder()
@@ -110,7 +110,7 @@ public class ParsedExpressionTests : TestsBase
     [Fact]
     public void BindArguments_WithStringSegmentKey_ShouldBindExpressionArgumentsCorrectly()
     {
-        var (bValue, cValue, eValue) = Fixture.CreateDistinctCollection<decimal>( count: 3 );
+        var (bValue, cValue, eValue) = Fixture.CreateManyDistinct<decimal>( count: 3 );
 
         var input = "a + b + c + d + e";
         var builder = new ParsedExpressionFactoryBuilder()
@@ -143,7 +143,7 @@ public class ParsedExpressionTests : TestsBase
     [Fact]
     public void BindArguments_WithIndexKey_ShouldBindExpressionArgumentsCorrectly()
     {
-        var (bValue, cValue, eValue) = Fixture.CreateDistinctCollection<decimal>( count: 3 );
+        var (bValue, cValue, eValue) = Fixture.CreateManyDistinct<decimal>( count: 3 );
 
         var input = "a + b + c + d + e";
         var builder = new ParsedExpressionFactoryBuilder()
@@ -210,7 +210,7 @@ public class ParsedExpressionTests : TestsBase
     [Fact]
     public void BindArguments_CalledInChain_ShouldBindExpressionArgumentsCorrectly()
     {
-        var (bValue, cValue, eValue) = Fixture.CreateDistinctCollection<decimal>( count: 3 );
+        var (bValue, cValue, eValue) = Fixture.CreateManyDistinct<decimal>( count: 3 );
 
         var input = "a + b + c + d + e";
         var builder = new ParsedExpressionFactoryBuilder()
@@ -296,7 +296,7 @@ public class ParsedExpressionTests : TestsBase
     public void
         BindArguments_ShouldThrowMathExpressionArgumentBindingException_WhenAnyArgumentToBindDoesNotExistInUnboundArgumentsCollection()
     {
-        var (bValue, cValue, fValue) = Fixture.CreateDistinctCollection<decimal>( count: 3 );
+        var (bValue, cValue, fValue) = Fixture.CreateManyDistinct<decimal>( count: 3 );
 
         var input = "a + b + c + d + e";
         var builder = new ParsedExpressionFactoryBuilder()
@@ -334,7 +334,7 @@ public class ParsedExpressionTests : TestsBase
     [Fact]
     public void BindArguments_ShouldCreateExpressionThatCompilesToCorrectDelegate()
     {
-        var (aValue, bValue, cValue, dValue, eValue) = Fixture.CreateDistinctCollection<decimal>( count: 5 );
+        var (aValue, bValue, cValue, dValue, eValue) = Fixture.CreateManyDistinct<decimal>( count: 5 );
 
         var input = "a + b + c + d + e";
         var builder = new ParsedExpressionFactoryBuilder()
@@ -361,7 +361,7 @@ public class ParsedExpressionTests : TestsBase
     [Fact]
     public void IMathExpressionBindArguments_WithEnumerableStringKey_ShouldBeEquivalentToBindArguments()
     {
-        var (aValue, bValue) = Fixture.CreateDistinctCollection<decimal>( count: 2 );
+        var (aValue, bValue) = Fixture.CreateManyDistinct<decimal>( count: 2 );
         var expected = aValue + bValue;
 
         var input = "a + b";
@@ -382,7 +382,7 @@ public class ParsedExpressionTests : TestsBase
     [Fact]
     public void IMathExpressionBindArguments_WithParamsStringKey_ShouldBeEquivalentToBindArguments()
     {
-        var (aValue, bValue) = Fixture.CreateDistinctCollection<decimal>( count: 2 );
+        var (aValue, bValue) = Fixture.CreateManyDistinct<decimal>( count: 2 );
         var expected = aValue + bValue;
 
         var input = "a + b";
@@ -403,7 +403,7 @@ public class ParsedExpressionTests : TestsBase
     [Fact]
     public void IMathExpressionBindArguments_WithEnumerableStringSegmentKey_ShouldBeEquivalentToBindArguments()
     {
-        var (aValue, bValue) = Fixture.CreateDistinctCollection<decimal>( count: 2 );
+        var (aValue, bValue) = Fixture.CreateManyDistinct<decimal>( count: 2 );
         var expected = aValue + bValue;
 
         var input = "a + b";
@@ -424,7 +424,7 @@ public class ParsedExpressionTests : TestsBase
     [Fact]
     public void IMathExpressionBindArguments_WithParamsStringSegmentKey_ShouldBeEquivalentToBindArguments()
     {
-        var (aValue, bValue) = Fixture.CreateDistinctCollection<decimal>( count: 2 );
+        var (aValue, bValue) = Fixture.CreateManyDistinct<decimal>( count: 2 );
         var expected = aValue + bValue;
 
         var input = "a + b";
@@ -445,7 +445,7 @@ public class ParsedExpressionTests : TestsBase
     [Fact]
     public void IMathExpressionBindArguments_WithEnumerableIndexKey_ShouldBeEquivalentToBindArguments()
     {
-        var (aValue, bValue) = Fixture.CreateDistinctCollection<decimal>( count: 2 );
+        var (aValue, bValue) = Fixture.CreateManyDistinct<decimal>( count: 2 );
         var expected = aValue + bValue;
 
         var input = "a + b";
@@ -466,7 +466,7 @@ public class ParsedExpressionTests : TestsBase
     [Fact]
     public void IMathExpressionBindArguments_WithParamsIndexKey_ShouldBeEquivalentToBindArguments()
     {
-        var (aValue, bValue) = Fixture.CreateDistinctCollection<decimal>( count: 2 );
+        var (aValue, bValue) = Fixture.CreateManyDistinct<decimal>( count: 2 );
         var expected = aValue + bValue;
 
         var input = "a + b";

@@ -4,7 +4,7 @@ namespace LfrlAnvil.Tests.EnsureTests;
 
 public class GenericEnsureTestsData<T>
 {
-    public static TheoryData<int> GetContainsAtLeastPassData(IFixture fixture)
+    public static TheoryData<int> GetContainsAtLeastPassData(Fixture fixture)
     {
         return new TheoryData<int>
         {
@@ -16,7 +16,7 @@ public class GenericEnsureTestsData<T>
         };
     }
 
-    public static TheoryData<int> GetContainsAtLeastThrowData(IFixture fixture)
+    public static TheoryData<int> GetContainsAtLeastThrowData(Fixture fixture)
     {
         return new TheoryData<int>
         {
@@ -25,7 +25,7 @@ public class GenericEnsureTestsData<T>
         };
     }
 
-    public static TheoryData<int> GetContainsAtMostPassData(IFixture fixture)
+    public static TheoryData<int> GetContainsAtMostPassData(Fixture fixture)
     {
         return new TheoryData<int>
         {
@@ -35,7 +35,7 @@ public class GenericEnsureTestsData<T>
         };
     }
 
-    public static TheoryData<int> GetContainsAtMostThrowData(IFixture fixture)
+    public static TheoryData<int> GetContainsAtMostThrowData(Fixture fixture)
     {
         return new TheoryData<int>
         {
@@ -46,7 +46,7 @@ public class GenericEnsureTestsData<T>
         };
     }
 
-    public static TheoryData<int> GetContainsExactlyThrowData(IFixture fixture)
+    public static TheoryData<int> GetContainsExactlyThrowData(Fixture fixture)
     {
         return new TheoryData<int>
         {
@@ -55,7 +55,7 @@ public class GenericEnsureTestsData<T>
         };
     }
 
-    public static TheoryData<int, int> GetContainsInRangePassData(IFixture fixture)
+    public static TheoryData<int, int> GetContainsInRangePassData(Fixture fixture)
     {
         return new TheoryData<int, int>
         {
@@ -72,7 +72,7 @@ public class GenericEnsureTestsData<T>
         };
     }
 
-    public static TheoryData<int, int> GetContainsInRangeThrowData(IFixture fixture)
+    public static TheoryData<int, int> GetContainsInRangeThrowData(Fixture fixture)
     {
         return new TheoryData<int, int>
         {
@@ -86,9 +86,9 @@ public class GenericEnsureTestsData<T>
         };
     }
 
-    public static TheoryData<IEnumerable<T>> GetIsOrderedPassData(IFixture fixture)
+    public static TheoryData<IEnumerable<T>> GetIsOrderedPassData(Fixture fixture)
     {
-        var (_1, _2, _3) = fixture.CreateDistinctSortedCollection<T>( 3 );
+        var (_1, _2, _3) = fixture.CreateManyDistinctSorted<T>( count: 3 );
 
         return new TheoryData<IEnumerable<T>>
         {
@@ -100,9 +100,9 @@ public class GenericEnsureTestsData<T>
         };
     }
 
-    public static TheoryData<IEnumerable<T>> GetIsOrderedThrowData(IFixture fixture)
+    public static TheoryData<IEnumerable<T>> GetIsOrderedThrowData(Fixture fixture)
     {
-        var (_1, _2, _3) = fixture.CreateDistinctSortedCollection<T>( 3 );
+        var (_1, _2, _3) = fixture.CreateManyDistinctSorted<T>( count: 3 );
 
         return new TheoryData<IEnumerable<T>>
         {

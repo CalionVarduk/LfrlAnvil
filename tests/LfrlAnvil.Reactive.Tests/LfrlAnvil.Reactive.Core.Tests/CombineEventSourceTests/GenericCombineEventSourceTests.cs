@@ -96,7 +96,7 @@ public abstract class GenericCombineEventSourceTests<TEvent> : TestsBase
     [Fact]
     public void Listen_ShouldCreateActiveSubscriberThatDoesNotEmitAnything_UntilAllInnerStreamsEmitAtLeastOnce()
     {
-        var values = Fixture.CreateDistinctCollection<TEvent>( count: 4 );
+        var values = Fixture.CreateManyDistinct<TEvent>( count: 4 );
         var firstStreamValues = new[] { values[0], values[1] };
         var thirdStreamValues = new[] { values[2], values[3] };
 
@@ -153,7 +153,7 @@ public abstract class GenericCombineEventSourceTests<TEvent> : TestsBase
     public void
         Listen_ShouldCreateActiveSubscriberThatDisposes_WhenAtLeastOneInnerStreamDisposesAndNotAllInnerStreamsEmittedAtLeastOnce()
     {
-        var values = Fixture.CreateDistinctCollection<TEvent>( count: 4 );
+        var values = Fixture.CreateManyDistinct<TEvent>( count: 4 );
         var firstStreamValues = new[] { values[0], values[1] };
         var thirdStreamValues = new[] { values[2], values[3] };
 
@@ -187,7 +187,7 @@ public abstract class GenericCombineEventSourceTests<TEvent> : TestsBase
     [Fact]
     public void Listen_ShouldEmitEventContainingLastInnerStreamEventsEveryTimeInnerStreamEmits_WhenAllInnerStreamsEmittedAtLeastOnce()
     {
-        var values = Fixture.CreateDistinctCollection<TEvent>( count: 9 );
+        var values = Fixture.CreateManyDistinct<TEvent>( count: 9 );
         var firstStreamValues = new[] { values[0], values[1], values[2] };
         var secondStreamValues = new[] { values[3], values[4], values[5] };
         var thirdStreamValues = new[] { values[6], values[7], values[8] };
@@ -238,7 +238,7 @@ public abstract class GenericCombineEventSourceTests<TEvent> : TestsBase
     public void
         Listen_ShouldCreateActiveSubscriberThatDoesNotDispose_WhenAllInnerStreamsEmittedAtLeastOnceAndNotAllInnerStreamsDispose()
     {
-        var values = Fixture.CreateDistinctCollection<TEvent>( count: 4 );
+        var values = Fixture.CreateManyDistinct<TEvent>( count: 4 );
         var firstStream = new EventPublisher<TEvent>();
         var secondStream = new EventPublisher<TEvent>();
         var thirdStream = new EventPublisher<TEvent>();
@@ -276,7 +276,7 @@ public abstract class GenericCombineEventSourceTests<TEvent> : TestsBase
     public void
         Listen_ShouldCreateActiveSubscriberThatDisposes_WhenAllInnerStreamsEmittedAtLeastOnceAndAllInnerStreamsDispose()
     {
-        var values = Fixture.CreateDistinctCollection<TEvent>( count: 3 );
+        var values = Fixture.CreateManyDistinct<TEvent>( count: 3 );
         var firstStream = new EventPublisher<TEvent>();
         var secondStream = new EventPublisher<TEvent>();
         var thirdStream = new EventPublisher<TEvent>();
@@ -309,7 +309,7 @@ public abstract class GenericCombineEventSourceTests<TEvent> : TestsBase
     public void
         Combine_ThenListen_ShouldEmitEventContainingLastInnerStreamEventsEveryTimeInnerStreamEmits_WhenAllInnerStreamsEmittedAtLeastOnce()
     {
-        var values = Fixture.CreateDistinctCollection<TEvent>( count: 9 );
+        var values = Fixture.CreateManyDistinct<TEvent>( count: 9 );
         var firstStreamValues = new[] { values[0], values[1], values[2] };
         var secondStreamValues = new[] { values[3], values[4], values[5] };
         var thirdStreamValues = new[] { values[6], values[7], values[8] };

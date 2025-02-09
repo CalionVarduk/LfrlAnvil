@@ -70,7 +70,7 @@ public abstract class GenericMaybeExtensionsTests<T> : TestsBase
     [Fact]
     public void MatchWith_ShouldCallBothDelegate_WhenBothHaveValue()
     {
-        var (value, otherValue, returnedValue) = Fixture.CreateDistinctCollection<T>( 3 );
+        var (value, otherValue, returnedValue) = Fixture.CreateManyDistinct<T>( count: 3 );
 
         var bothDelegate = Substitute.For<Func<T, T, T>>().WithAnyArgs( _ => returnedValue );
         var firstDelegate = Substitute.For<Func<T, T>>().WithAnyArgs( i => i.ArgAt<T>( 0 ) );
@@ -95,7 +95,7 @@ public abstract class GenericMaybeExtensionsTests<T> : TestsBase
     [Fact]
     public void MatchWith_ShouldCallFirstDelegate_WhenOnlyFirstHasValue()
     {
-        var (value, returnedValue) = Fixture.CreateDistinctCollection<T>( 2 );
+        var (value, returnedValue) = Fixture.CreateManyDistinct<T>( count: 2 );
 
         var bothDelegate = Substitute.For<Func<T, T, T>>().WithAnyArgs( i => i.ArgAt<T>( 0 ) );
         var firstDelegate = Substitute.For<Func<T, T>>().WithAnyArgs( _ => returnedValue );
@@ -120,7 +120,7 @@ public abstract class GenericMaybeExtensionsTests<T> : TestsBase
     [Fact]
     public void MatchWith_ShouldCallSecondDelegate_WhenOnlySecondHasValue()
     {
-        var (otherValue, returnedValue) = Fixture.CreateDistinctCollection<T>( 2 );
+        var (otherValue, returnedValue) = Fixture.CreateManyDistinct<T>( count: 2 );
 
         var bothDelegate = Substitute.For<Func<T, T, T>>().WithAnyArgs( i => i.ArgAt<T>( 0 ) );
         var firstDelegate = Substitute.For<Func<T, T>>().WithAnyArgs( i => i.ArgAt<T>( 0 ) );
@@ -170,7 +170,7 @@ public abstract class GenericMaybeExtensionsTests<T> : TestsBase
     [Fact]
     public void MatchWith_WithAction_ShouldCallBothDelegate_WhenBothHaveValue()
     {
-        var (value, otherValue) = Fixture.CreateDistinctCollection<T>( 2 );
+        var (value, otherValue) = Fixture.CreateManyDistinct<T>( count: 2 );
 
         var bothDelegate = Substitute.For<Action<T, T>>();
         var firstDelegate = Substitute.For<Action<T>>();

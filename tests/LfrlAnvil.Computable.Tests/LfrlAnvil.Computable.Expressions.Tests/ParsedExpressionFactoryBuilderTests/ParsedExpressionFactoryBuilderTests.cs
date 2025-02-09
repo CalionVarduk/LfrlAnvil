@@ -1042,7 +1042,7 @@ public class ParsedExpressionFactoryBuilderTests : TestsBase
     public void Build_ShouldReturnValidFactory_WhenBuilderHasOneOfEachConstructsWithPrecedence()
     {
         var (operatorSymbol, typeConverterSymbol, constantSymbol, typeDeclarationSymbol, functionSymbol, variadicFunctionSymbol) =
-            Fixture.CreateDistinctCollection<string>( count: 6 ).Select( s => $"_{s}" ).ToList();
+            Fixture.CreateManyDistinct<string>( count: 6 ).Select( s => $"_{s}" ).ToList();
 
         var precedence = Fixture.Create<int>();
         var sut = new ParsedExpressionFactoryBuilder()

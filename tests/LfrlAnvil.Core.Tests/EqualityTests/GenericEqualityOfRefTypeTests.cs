@@ -22,7 +22,7 @@ public abstract class GenericEqualityOfRefTypeTests<T> : GenericEqualityTests<T>
                 } );
     }
 
-    public static IEnumerable<object?[]> CreateCtorNullTestData(IFixture fixture)
+    public static IEnumerable<object?[]> CreateCtorNullTestData(Fixture fixture)
     {
         var result = new List<object?[]>();
         var value = fixture.CreateNotDefault<T>();

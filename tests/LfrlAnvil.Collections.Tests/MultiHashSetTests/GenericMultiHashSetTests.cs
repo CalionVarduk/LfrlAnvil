@@ -12,7 +12,7 @@ public abstract class GenericMultiHashSetTests<T> : GenericCollectionTestsBase<P
 {
     protected GenericMultiHashSetTests()
     {
-        Fixture.Customize<Pair<T, int>>( c => c.FromFactory( () => Pair.Create( Fixture.Create<T>(), 1 ) ) );
+        Fixture.Customize<Pair<T, int>>( (_, _) => f => Pair.Create( f.Create<T>(), 1 ) );
     }
 
     [Fact]
@@ -55,7 +55,7 @@ public abstract class GenericMultiHashSetTests<T> : GenericCollectionTestsBase<P
     [Fact]
     public void Add_ShouldAddNewItemWithMultiplicityEqualToOne_WhenOtherItemExists()
     {
-        var (other, item) = Fixture.CreateDistinctCollection<T>( 2 );
+        var (other, item) = Fixture.CreateManyDistinct<T>( count: 2 );
 
         var sut = new MultiHashSet<T> { other };
 
@@ -89,7 +89,7 @@ public abstract class GenericMultiHashSetTests<T> : GenericCollectionTestsBase<P
     [Fact]
     public void Add_ShouldIncreaseMultiplicityOfExistingItemByOne_WhenOtherItemExists()
     {
-        var (other, item) = Fixture.CreateDistinctCollection<T>( 2 );
+        var (other, item) = Fixture.CreateManyDistinct<T>( count: 2 );
 
         var sut = new MultiHashSet<T>
         {
@@ -151,7 +151,7 @@ public abstract class GenericMultiHashSetTests<T> : GenericCollectionTestsBase<P
     [InlineData( 3 )]
     public void AddMany_ShouldAddNewItemWithMultiplicityEqualToCount_WhenOtherItemExists(int count)
     {
-        var (other, item) = Fixture.CreateDistinctCollection<T>( 2 );
+        var (other, item) = Fixture.CreateManyDistinct<T>( count: 2 );
 
         var sut = new MultiHashSet<T> { other };
 
@@ -191,7 +191,7 @@ public abstract class GenericMultiHashSetTests<T> : GenericCollectionTestsBase<P
     [InlineData( 3 )]
     public void AddMany_ShouldIncreaseMultiplicityOfExistingItemByCount_WhenOtherItemExists(int count)
     {
-        var (other, item) = Fixture.CreateDistinctCollection<T>( 2 );
+        var (other, item) = Fixture.CreateManyDistinct<T>( count: 2 );
 
         var sut = new MultiHashSet<T>
         {
@@ -387,7 +387,7 @@ public abstract class GenericMultiHashSetTests<T> : GenericCollectionTestsBase<P
     [Fact]
     public void Clear_ShouldRemoveAllItems()
     {
-        var items = Fixture.CreateDistinctCollection<T>( 3 );
+        var items = Fixture.CreateManyDistinct<T>( count: 3 );
 
         var sut = new MultiHashSet<T>();
 
@@ -406,7 +406,7 @@ public abstract class GenericMultiHashSetTests<T> : GenericCollectionTestsBase<P
     [Fact]
     public void ExceptWith_ShouldClearSet_WhenAppliedToSelf()
     {
-        var items = Fixture.CreateDistinctCollection<T>( 3 ).Select( (x, i) => Pair.Create( x, i + 1 ) ).ToList();
+        var items = Fixture.CreateManyDistinct<T>( count: 3 ).Select( (x, i) => Pair.Create( x, i + 1 ) ).ToList();
         var sut = new MultiHashSet<T>();
         foreach ( var (item, multiplicity) in items )
             sut.AddMany( item, multiplicity );
@@ -435,7 +435,7 @@ public abstract class GenericMultiHashSetTests<T> : GenericCollectionTestsBase<P
     [Fact]
     public void UnionWith_ShouldDoNothing_WhenAppliedToSelf()
     {
-        var items = Fixture.CreateDistinctCollection<T>( 3 ).Select( (x, i) => Pair.Create( x, i + 1 ) ).ToList();
+        var items = Fixture.CreateManyDistinct<T>( count: 3 ).Select( (x, i) => Pair.Create( x, i + 1 ) ).ToList();
         var sut = new MultiHashSet<T>();
         foreach ( var (item, multiplicity) in items )
             sut.AddMany( item, multiplicity );
@@ -464,7 +464,7 @@ public abstract class GenericMultiHashSetTests<T> : GenericCollectionTestsBase<P
     [Fact]
     public void IntersectWith_ShouldDoNothing_WhenAppliedToSelf()
     {
-        var items = Fixture.CreateDistinctCollection<T>( 3 ).Select( (x, i) => Pair.Create( x, i + 1 ) ).ToList();
+        var items = Fixture.CreateManyDistinct<T>( count: 3 ).Select( (x, i) => Pair.Create( x, i + 1 ) ).ToList();
         var sut = new MultiHashSet<T>();
         foreach ( var (item, multiplicity) in items )
             sut.AddMany( item, multiplicity );
@@ -513,7 +513,7 @@ public abstract class GenericMultiHashSetTests<T> : GenericCollectionTestsBase<P
     [Fact]
     public void SymmetricExceptWith_ShouldClearSet_WhenAppliedToSelf()
     {
-        var items = Fixture.CreateDistinctCollection<T>( 3 ).Select( (x, i) => Pair.Create( x, i + 1 ) ).ToList();
+        var items = Fixture.CreateManyDistinct<T>( count: 3 ).Select( (x, i) => Pair.Create( x, i + 1 ) ).ToList();
         var sut = new MultiHashSet<T>();
         foreach ( var (item, multiplicity) in items )
             sut.AddMany( item, multiplicity );
@@ -542,7 +542,7 @@ public abstract class GenericMultiHashSetTests<T> : GenericCollectionTestsBase<P
     [Fact]
     public void Overlaps_ShouldReturnTrue_WhenAppliedToSelf()
     {
-        var items = Fixture.CreateDistinctCollection<T>( 3 ).Select( (x, i) => Pair.Create( x, i + 1 ) ).ToList();
+        var items = Fixture.CreateManyDistinct<T>( count: 3 ).Select( (x, i) => Pair.Create( x, i + 1 ) ).ToList();
         var sut = new MultiHashSet<T>();
         foreach ( var (item, multiplicity) in items )
             sut.AddMany( item, multiplicity );
@@ -568,7 +568,7 @@ public abstract class GenericMultiHashSetTests<T> : GenericCollectionTestsBase<P
     [Fact]
     public void SetEquals_ShouldReturnTrue_WhenAppliedToSelf()
     {
-        var items = Fixture.CreateDistinctCollection<T>( 3 ).Select( (x, i) => Pair.Create( x, i + 1 ) ).ToList();
+        var items = Fixture.CreateManyDistinct<T>( count: 3 ).Select( (x, i) => Pair.Create( x, i + 1 ) ).ToList();
         var sut = new MultiHashSet<T>();
         foreach ( var (item, multiplicity) in items )
             sut.AddMany( item, multiplicity );
@@ -614,7 +614,7 @@ public abstract class GenericMultiHashSetTests<T> : GenericCollectionTestsBase<P
     [Fact]
     public void IsSupersetOf_ShouldReturnTrue_WhenAppliedToSelf()
     {
-        var items = Fixture.CreateDistinctCollection<T>( 3 ).Select( (x, i) => Pair.Create( x, i + 1 ) ).ToList();
+        var items = Fixture.CreateManyDistinct<T>( count: 3 ).Select( (x, i) => Pair.Create( x, i + 1 ) ).ToList();
         var sut = new MultiHashSet<T>();
         foreach ( var (item, multiplicity) in items )
             sut.AddMany( item, multiplicity );
@@ -660,7 +660,7 @@ public abstract class GenericMultiHashSetTests<T> : GenericCollectionTestsBase<P
     [Fact]
     public void IsProperSupersetOf_ShouldReturnFalse_WhenAppliedToSelf()
     {
-        var items = Fixture.CreateDistinctCollection<T>( 3 ).Select( (x, i) => Pair.Create( x, i + 1 ) ).ToList();
+        var items = Fixture.CreateManyDistinct<T>( count: 3 ).Select( (x, i) => Pair.Create( x, i + 1 ) ).ToList();
         var sut = new MultiHashSet<T>();
         foreach ( var (item, multiplicity) in items )
             sut.AddMany( item, multiplicity );
@@ -709,7 +709,7 @@ public abstract class GenericMultiHashSetTests<T> : GenericCollectionTestsBase<P
     [Fact]
     public void IsSubsetOf_ShouldReturnTrue_WhenAppliedToSelf()
     {
-        var items = Fixture.CreateDistinctCollection<T>( 3 ).Select( (x, i) => Pair.Create( x, i + 1 ) ).ToList();
+        var items = Fixture.CreateManyDistinct<T>( count: 3 ).Select( (x, i) => Pair.Create( x, i + 1 ) ).ToList();
         var sut = new MultiHashSet<T>();
         foreach ( var (item, multiplicity) in items )
             sut.AddMany( item, multiplicity );
@@ -755,7 +755,7 @@ public abstract class GenericMultiHashSetTests<T> : GenericCollectionTestsBase<P
     [Fact]
     public void IsProperSubsetOf_ShouldReturnFalse_WhenAppliedToSelf()
     {
-        var items = Fixture.CreateDistinctCollection<T>( 3 ).Select( (x, i) => Pair.Create( x, i + 1 ) ).ToList();
+        var items = Fixture.CreateManyDistinct<T>( count: 3 ).Select( (x, i) => Pair.Create( x, i + 1 ) ).ToList();
         var sut = new MultiHashSet<T>();
         foreach ( var (item, multiplicity) in items )
             sut.AddMany( item, multiplicity );
@@ -1022,11 +1022,11 @@ public abstract class GenericMultiHashSetTests<T> : GenericCollectionTestsBase<P
     [Fact]
     public void DistinctItems_ShouldReturnCorrectResult()
     {
-        var items = Fixture.CreateDistinctCollection<T>( 3 );
+        var items = Fixture.CreateManyDistinct<T>( count: 3 );
 
         var sut = new MultiHashSet<T>();
 
-        for ( var i = 0; i < items.Count; ++i )
+        for ( var i = 0; i < items.Length; ++i )
             sut.AddMany( items[i], i + 1 );
 
         sut.DistinctItems.Should().BeEquivalentTo( items );
@@ -1035,13 +1035,13 @@ public abstract class GenericMultiHashSetTests<T> : GenericCollectionTestsBase<P
     [Fact]
     public void Items_ShouldReturnCorrectResult()
     {
-        var items = Fixture.CreateDistinctCollection<T>( 3 );
+        var items = Fixture.CreateManyDistinct<T>( count: 3 );
 
         var expected = new[] { items[0], items[1], items[1], items[2], items[2], items[2] };
 
         var sut = new MultiHashSet<T>();
 
-        for ( var i = 0; i < items.Count; ++i )
+        for ( var i = 0; i < items.Length; ++i )
             sut.AddMany( items[i], i + 1 );
 
         sut.Items.Should().BeEquivalentTo( expected );
@@ -1050,13 +1050,13 @@ public abstract class GenericMultiHashSetTests<T> : GenericCollectionTestsBase<P
     [Fact]
     public void GetEnumerator_ShouldReturnCorrectResult()
     {
-        var items = Fixture.CreateDistinctCollection<T>( 3 );
+        var items = Fixture.CreateManyDistinct<T>( count: 3 );
         var expected = new[] { Pair.Create( items[0], 1 ), Pair.Create( items[1], 2 ), Pair.Create( items[2], 3 ) }
             .AsEnumerable();
 
         var sut = new MultiHashSet<T>();
 
-        for ( var i = 0; i < items.Count; ++i )
+        for ( var i = 0; i < items.Length; ++i )
             sut.AddMany( items[i], i + 1 );
 
         sut.Should().BeEquivalentTo( expected );

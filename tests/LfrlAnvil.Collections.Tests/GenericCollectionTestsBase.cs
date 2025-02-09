@@ -68,7 +68,7 @@ public abstract class GenericCollectionTestsBase<T> : TestsBase
     [Fact]
     public void ICollectionCopyTo_ShouldCopyItemsCorrectly()
     {
-        var items = Fixture.CreateDistinctCollection<T>( 3 );
+        var items = Fixture.CreateManyDistinct<T>( count: 3 );
         var sut = CreateEmptyCollection();
         sut.Add( items[0] );
         sut.Add( items[1] );

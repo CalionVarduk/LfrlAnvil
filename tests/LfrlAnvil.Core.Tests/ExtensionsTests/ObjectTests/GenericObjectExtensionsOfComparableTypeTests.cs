@@ -16,7 +16,7 @@ public abstract class GenericObjectExtensionsOfComparableTypeTests<T> : GenericO
     [Fact]
     public void Min_ShouldReturnSource_WhenSourceIsLesser()
     {
-        var (sut, other) = Fixture.CreateDistinctSortedCollection<T>( 2 );
+        var (sut, other) = Fixture.CreateManyDistinctSorted<T>( count: 2 );
         var result = sut.Min( other );
         result.Should().Be( sut );
     }
@@ -24,7 +24,7 @@ public abstract class GenericObjectExtensionsOfComparableTypeTests<T> : GenericO
     [Fact]
     public void Min_ShouldReturnOther_WhenSourceIsGreater()
     {
-        var (other, sut) = Fixture.CreateDistinctSortedCollection<T>( 2 );
+        var (other, sut) = Fixture.CreateManyDistinctSorted<T>( count: 2 );
         var result = sut.Min( other );
         result.Should().Be( other );
     }
@@ -40,7 +40,7 @@ public abstract class GenericObjectExtensionsOfComparableTypeTests<T> : GenericO
     [Fact]
     public void Max_ShouldReturnSource_WhenSourceIsGreater()
     {
-        var (other, sut) = Fixture.CreateDistinctSortedCollection<T>( 2 );
+        var (other, sut) = Fixture.CreateManyDistinctSorted<T>( count: 2 );
         var result = sut.Max( other );
         result.Should().Be( sut );
     }
@@ -48,7 +48,7 @@ public abstract class GenericObjectExtensionsOfComparableTypeTests<T> : GenericO
     [Fact]
     public void Max_ShouldReturnOther_WhenSourceIsLesser()
     {
-        var (sut, other) = Fixture.CreateDistinctSortedCollection<T>( 2 );
+        var (sut, other) = Fixture.CreateManyDistinctSorted<T>( count: 2 );
         var result = sut.Max( other );
         result.Should().Be( other );
     }
@@ -56,7 +56,7 @@ public abstract class GenericObjectExtensionsOfComparableTypeTests<T> : GenericO
     [Fact]
     public void Clamp_ShouldReturnMin_WhenSourceIsLesser()
     {
-        var (sut, min, max) = Fixture.CreateDistinctSortedCollection<T>( 3 );
+        var (sut, min, max) = Fixture.CreateManyDistinctSorted<T>( count: 3 );
         var result = sut.Clamp( min, max );
         result.Should().Be( min );
     }
@@ -64,7 +64,7 @@ public abstract class GenericObjectExtensionsOfComparableTypeTests<T> : GenericO
     [Fact]
     public void Clamp_ShouldReturnMax_WhenSourceIsGreater()
     {
-        var (min, max, sut) = Fixture.CreateDistinctSortedCollection<T>( 3 );
+        var (min, max, sut) = Fixture.CreateManyDistinctSorted<T>( count: 3 );
         var result = sut.Clamp( min, max );
         result.Should().Be( max );
     }
@@ -72,7 +72,7 @@ public abstract class GenericObjectExtensionsOfComparableTypeTests<T> : GenericO
     [Fact]
     public void Clamp_ShouldReturnSource_WhenSourceIsGreaterThanMinAndLesserThanMax()
     {
-        var (min, sut, max) = Fixture.CreateDistinctSortedCollection<T>( 3 );
+        var (min, sut, max) = Fixture.CreateManyDistinctSorted<T>( count: 3 );
         var result = sut.Clamp( min, max );
         result.Should().Be( sut );
     }
@@ -88,7 +88,7 @@ public abstract class GenericObjectExtensionsOfComparableTypeTests<T> : GenericO
     [Fact]
     public void MinMax_ShouldReturnOtherAsMinAndSourceAsMax_WhenSourceIsGreater()
     {
-        var (other, sut) = Fixture.CreateDistinctSortedCollection<T>( 2 );
+        var (other, sut) = Fixture.CreateManyDistinctSorted<T>( count: 2 );
         var result = sut.MinMax( other );
         result.Should().Be( (other, sut) );
     }
@@ -96,7 +96,7 @@ public abstract class GenericObjectExtensionsOfComparableTypeTests<T> : GenericO
     [Fact]
     public void MinMax_ShouldReturnSourceAsMinAndOtherAsMax_WhenSourceIsLesser()
     {
-        var (sut, other) = Fixture.CreateDistinctSortedCollection<T>( 2 );
+        var (sut, other) = Fixture.CreateManyDistinctSorted<T>( count: 2 );
         var result = sut.MinMax( other );
         result.Should().Be( (sut, other) );
     }

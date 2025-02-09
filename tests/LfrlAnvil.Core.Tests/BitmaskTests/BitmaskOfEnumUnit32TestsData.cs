@@ -13,7 +13,7 @@ public enum TestEnumUInt32 : uint
 
 public class BitmaskOfEnumUnit32TestsData
 {
-    public static TheoryData<uint, TestEnumUInt32> GetSanitizeData(IFixture fixture)
+    public static TheoryData<uint, TestEnumUInt32> GetSanitizeData(Fixture fixture)
     {
         return new TheoryData<uint, TestEnumUInt32>
         {

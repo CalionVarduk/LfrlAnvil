@@ -26,7 +26,7 @@ public class ConcurrentEventHandlerSourceTests : TestsBase
     {
         var target = new Target();
         var sender = new object();
-        var values = Fixture.CreateDistinctCollection<int>( count: 3 );
+        var values = Fixture.CreateManyDistinct<int>( count: 3 );
         var actualValues = new List<WithSender<int>>();
         var sut = new ConcurrentEventHandlerSource<int>( h => target.Handler += h, h => target.Handler -= h );
         var listener = EventListener.Create<WithSender<int>>( actualValues.Add );
@@ -76,7 +76,7 @@ public class ConcurrentEventHandlerSourceTests : TestsBase
     {
         var target = new Target();
         var sender = new object();
-        var values = Fixture.CreateDistinctCollection<int>( count: 3 );
+        var values = Fixture.CreateManyDistinct<int>( count: 3 );
         var actualValues = new List<WithSender<int>>();
         var sut = EventSource.ConcurrentFromEvent<int>( h => target.Handler += h, h => target.Handler -= h );
         var listener = EventListener.Create<WithSender<int>>( actualValues.Add );

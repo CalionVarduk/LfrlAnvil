@@ -58,8 +58,8 @@ public abstract class GenericSequentialDictionaryTests<TKey, TValue> : GenericDi
     [Fact]
     public void Add_ShouldAddNewItemToNonEmptyDictionaryCorrectly()
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( 2 );
-        var values = Fixture.CreateDistinctCollection<TValue>( 2 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 2 );
+        var values = Fixture.CreateManyDistinct<TValue>( count: 2 );
         var sut = new SequentialDictionary<TKey, TValue> { { keys[0], values[0] } };
 
         sut.Add( keys[1], values[1] );
@@ -77,7 +77,7 @@ public abstract class GenericSequentialDictionaryTests<TKey, TValue> : GenericDi
     public void Add_ShouldThrowArgumentException_WhenKeyAlreadyExists()
     {
         var key = Fixture.Create<TKey>();
-        var values = Fixture.CreateDistinctCollection<TValue>( 2 );
+        var values = Fixture.CreateManyDistinct<TValue>( count: 2 );
         var sut = new SequentialDictionary<TKey, TValue> { { key, values[0] } };
 
         var action = Lambda.Of( () => sut.Add( key, values[1] ) );
@@ -117,8 +117,8 @@ public abstract class GenericSequentialDictionaryTests<TKey, TValue> : GenericDi
     [Fact]
     public void Remove_ShouldReturnTrueAndRemoveCorrectExistingItem()
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( 2 );
-        var values = Fixture.CreateDistinctCollection<TValue>( 2 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 2 );
+        var values = Fixture.CreateManyDistinct<TValue>( count: 2 );
         var sut = new SequentialDictionary<TKey, TValue>
         {
             { keys[0], values[0] },
@@ -174,8 +174,8 @@ public abstract class GenericSequentialDictionaryTests<TKey, TValue> : GenericDi
     [Fact]
     public void Remove_WithRemoved_ShouldReturnTrueAndRemoveCorrectExistingItem()
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( 2 );
-        var values = Fixture.CreateDistinctCollection<TValue>( 2 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 2 );
+        var values = Fixture.CreateManyDistinct<TValue>( count: 2 );
         var sut = new SequentialDictionary<TKey, TValue>
         {
             { keys[0], values[0] },
@@ -229,8 +229,8 @@ public abstract class GenericSequentialDictionaryTests<TKey, TValue> : GenericDi
     [Fact]
     public void Clear_ShouldRemoveAllItems()
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( 3 );
-        var values = Fixture.CreateDistinctCollection<TValue>( 3 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 3 );
+        var values = Fixture.CreateManyDistinct<TValue>( count: 3 );
         var sut = new SequentialDictionary<TKey, TValue>();
 
         foreach ( var (k, v) in keys.Zip( values ) )
@@ -249,8 +249,8 @@ public abstract class GenericSequentialDictionaryTests<TKey, TValue> : GenericDi
     [Fact]
     public void GetEnumerator_ShouldReturnCorrectAndOrderedResult()
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( 10 );
-        var values = Fixture.CreateDistinctCollection<TValue>( 10 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 10 );
+        var values = Fixture.CreateManyDistinct<TValue>( count: 10 );
 
         var initialItems = keys.Zip( values, KeyValuePair.Create ).Take( 7 );
         var keysToRemove = new[] { keys[0], keys[2], keys[6] };
@@ -267,8 +267,8 @@ public abstract class GenericSequentialDictionaryTests<TKey, TValue> : GenericDi
     [Fact]
     public void Keys_ShouldReturnCorrectAndOrderedResult()
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( 10 );
-        var values = Fixture.CreateDistinctCollection<TValue>( 10 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 10 );
+        var values = Fixture.CreateManyDistinct<TValue>( count: 10 );
 
         var initialItems = keys.Zip( values, KeyValuePair.Create ).Take( 7 );
         var keysToRemove = new[] { keys[0], keys[2], keys[6] };
@@ -286,8 +286,8 @@ public abstract class GenericSequentialDictionaryTests<TKey, TValue> : GenericDi
     [Fact]
     public void Values_ShouldReturnCorrectAndOrderedResult()
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( 10 );
-        var values = Fixture.CreateDistinctCollection<TValue>( 10 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 10 );
+        var values = Fixture.CreateManyDistinct<TValue>( count: 10 );
 
         var initialItems = keys.Zip( values, KeyValuePair.Create ).Take( 7 );
         var keysToRemove = new[] { keys[0], keys[2], keys[6] };
@@ -323,8 +323,8 @@ public abstract class GenericSequentialDictionaryTests<TKey, TValue> : GenericDi
     [Fact]
     public void IndexerSet_ShouldAddNewItemToNonEmptyDictionaryCorrectly()
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( 2 );
-        var values = Fixture.CreateDistinctCollection<TValue>( 2 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 2 );
+        var values = Fixture.CreateManyDistinct<TValue>( count: 2 );
         var sut = new SequentialDictionary<TKey, TValue> { { keys[0], values[0] } };
 
         sut[keys[1]] = values[1];
@@ -342,7 +342,7 @@ public abstract class GenericSequentialDictionaryTests<TKey, TValue> : GenericDi
     public void IndexerSet_ShouldReplaceExistingItemCorrectly()
     {
         var key = Fixture.Create<TKey>();
-        var values = Fixture.CreateDistinctCollection<TValue>( 2 );
+        var values = Fixture.CreateManyDistinct<TValue>( count: 2 );
         var sut = new SequentialDictionary<TKey, TValue> { { key, values[0] } };
 
         sut[key] = values[1];
@@ -359,8 +359,8 @@ public abstract class GenericSequentialDictionaryTests<TKey, TValue> : GenericDi
     [Fact]
     public void IndexerSet_ShouldNotChangeOrderOfItems_WhenReplacing()
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( 10 );
-        var values = Fixture.CreateDistinctCollection<TValue>( 11 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 10 );
+        var values = Fixture.CreateManyDistinct<TValue>( count: 11 );
 
         var initialItems = keys.Zip( values, KeyValuePair.Create ).Take( 7 );
         var keysToRemove = new[] { keys[0], keys[2], keys[6] };

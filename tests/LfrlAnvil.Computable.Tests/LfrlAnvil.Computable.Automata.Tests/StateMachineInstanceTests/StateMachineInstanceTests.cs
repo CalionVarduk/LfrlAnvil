@@ -11,7 +11,7 @@ public class StateMachineInstanceTests : TestsBase
     {
         var (a, b) = ("a", "b");
         var input = Fixture.Create<int>();
-        var (expectedResult, defaultResult) = Fixture.CreateDistinctCollection<string>( count: 2 );
+        var (expectedResult, defaultResult) = Fixture.CreateManyDistinct<string>( count: 2 );
 
         var handler = Substitute.For<IStateTransitionHandler<string, int, string>>();
         handler.Handle( Arg.Any<StateTransitionHandlerArgs<string, int, string>>() ).Returns( expectedResult );
@@ -43,7 +43,7 @@ public class StateMachineInstanceTests : TestsBase
     {
         var (a, b) = ("a", "b");
         var input = Fixture.Create<int>();
-        var (expectedResult, defaultResult) = Fixture.CreateDistinctCollection<string>( count: 2 );
+        var (expectedResult, defaultResult) = Fixture.CreateManyDistinct<string>( count: 2 );
         var subject = new object();
 
         var handler = Substitute.For<IStateTransitionHandler<string, int, string>>();

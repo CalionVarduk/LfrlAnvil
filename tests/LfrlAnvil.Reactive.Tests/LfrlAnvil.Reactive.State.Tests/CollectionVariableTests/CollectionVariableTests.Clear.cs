@@ -11,7 +11,7 @@ public partial class CollectionVariableTests
     [Fact]
     public void Clear_ShouldRemoveAllElements_WhenCurrentElementsAreNotEmptyAndNewElementsAreEmpty()
     {
-        var elements = Fixture.CreateDistinctCollection<TestElement>( count: 2 );
+        var elements = Fixture.CreateManyDistinct<TestElement>( count: 2 );
         var keySelector = Lambda.Of( (TestElement e) => e.Key );
         var sut = CollectionVariable.WithoutValidators<string>.Create( elements, keySelector );
 

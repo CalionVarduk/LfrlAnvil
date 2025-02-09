@@ -65,7 +65,7 @@ public class TimeMeasurementTests : TestsBase
     [Fact]
     public void SetPreparation_ShouldUpdatePreparationPropertyOnly()
     {
-        var (oldPreparation, newPreparation, invocation, teardown) = Fixture.CreateDistinctCollection<TimeSpan>( count: 4 );
+        var (oldPreparation, newPreparation, invocation, teardown) = Fixture.CreateManyDistinct<TimeSpan>( count: 4 );
         var sut = new TimeMeasurement( oldPreparation, invocation, teardown );
 
         var result = sut.SetPreparation( newPreparation );
@@ -81,7 +81,7 @@ public class TimeMeasurementTests : TestsBase
     [Fact]
     public void SetInvocation_ShouldUpdateInvocationPropertyOnly()
     {
-        var (preparation, oldInvocation, newInvocation, teardown) = Fixture.CreateDistinctCollection<TimeSpan>( count: 4 );
+        var (preparation, oldInvocation, newInvocation, teardown) = Fixture.CreateManyDistinct<TimeSpan>( count: 4 );
         var sut = new TimeMeasurement( preparation, oldInvocation, teardown );
 
         var result = sut.SetInvocation( newInvocation );
@@ -97,7 +97,7 @@ public class TimeMeasurementTests : TestsBase
     [Fact]
     public void SetTeardown_ShouldUpdateTeardownPropertyOnly()
     {
-        var (preparation, invocation, oldTeardown, newTeardown) = Fixture.CreateDistinctCollection<TimeSpan>( count: 4 );
+        var (preparation, invocation, oldTeardown, newTeardown) = Fixture.CreateManyDistinct<TimeSpan>( count: 4 );
         var sut = new TimeMeasurement( preparation, invocation, oldTeardown );
 
         var result = sut.SetTeardown( newTeardown );

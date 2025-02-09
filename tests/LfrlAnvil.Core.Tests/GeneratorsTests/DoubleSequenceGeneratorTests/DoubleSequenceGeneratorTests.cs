@@ -65,7 +65,7 @@ public class DoubleSequenceGeneratorTests : GenericSequenceGeneratorOfSignedType
     [InlineData( double.PositiveInfinity )]
     public void Ctor_WithBoundsAndStart_ShouldThrowArgumentException_WhenMinIsNotFinite(double min)
     {
-        var (start, max) = Fixture.CreateDistinctSortedCollection<double>( 2 );
+        var (start, max) = Fixture.CreateManyDistinctSorted<double>( count: 2 );
         var action = Lambda.Of( () => Create( Bounds.Create( min, max ), start ) );
         action.Should().ThrowExactly<ArgumentException>();
     }
@@ -76,7 +76,7 @@ public class DoubleSequenceGeneratorTests : GenericSequenceGeneratorOfSignedType
     [InlineData( double.PositiveInfinity )]
     public void Ctor_WithBoundsAndStart_ShouldThrowArgumentException_WhenMaxIsNotFinite(double max)
     {
-        var (min, start) = Fixture.CreateDistinctSortedCollection<double>( 2 );
+        var (min, start) = Fixture.CreateManyDistinctSorted<double>( count: 2 );
         var action = Lambda.Of( () => Create( Bounds.Create( min, max ), start ) );
         action.Should().ThrowExactly<ArgumentException>();
     }
@@ -87,7 +87,7 @@ public class DoubleSequenceGeneratorTests : GenericSequenceGeneratorOfSignedType
     [InlineData( double.PositiveInfinity )]
     public void Ctor_WithBoundsAndStart_ShouldThrowArgumentOutOfRangeException_WhenStartIsNotFinite(double start)
     {
-        var (min, max) = Fixture.CreateDistinctSortedCollection<double>( 2 );
+        var (min, max) = Fixture.CreateManyDistinctSorted<double>( count: 2 );
         var action = Lambda.Of( () => Create( Bounds.Create( min, max ), start ) );
         action.Should().ThrowExactly<ArgumentOutOfRangeException>();
     }
@@ -98,7 +98,7 @@ public class DoubleSequenceGeneratorTests : GenericSequenceGeneratorOfSignedType
     [InlineData( double.PositiveInfinity )]
     public void Ctor_WithBoundsAndStartAndStep_ShouldThrowArgumentException_WhenMinIsNotFinite(double min)
     {
-        var (start, max) = Fixture.CreateDistinctSortedCollection<double>( 2 );
+        var (start, max) = Fixture.CreateManyDistinctSorted<double>( count: 2 );
         var step = GetDefaultStep();
 
         var action = Lambda.Of( () => Create( Bounds.Create( min, max ), start, step ) );
@@ -112,7 +112,7 @@ public class DoubleSequenceGeneratorTests : GenericSequenceGeneratorOfSignedType
     [InlineData( double.PositiveInfinity )]
     public void Ctor_WithBoundsAndStartAndStep_ShouldThrowArgumentException_WhenMaxIsNotFinite(double max)
     {
-        var (min, start) = Fixture.CreateDistinctSortedCollection<double>( 2 );
+        var (min, start) = Fixture.CreateManyDistinctSorted<double>( count: 2 );
         var step = GetDefaultStep();
 
         var action = Lambda.Of( () => Create( Bounds.Create( min, max ), start, step ) );
@@ -126,7 +126,7 @@ public class DoubleSequenceGeneratorTests : GenericSequenceGeneratorOfSignedType
     [InlineData( double.PositiveInfinity )]
     public void Ctor_WithBoundsAndStartAndStep_ShouldThrowArgumentOutOfRangeException_WhenStartIsNotFinite(double start)
     {
-        var (min, max) = Fixture.CreateDistinctSortedCollection<double>( 2 );
+        var (min, max) = Fixture.CreateManyDistinctSorted<double>( count: 2 );
         var step = GetDefaultStep();
 
         var action = Lambda.Of( () => Create( Bounds.Create( min, max ), start, step ) );
@@ -140,7 +140,7 @@ public class DoubleSequenceGeneratorTests : GenericSequenceGeneratorOfSignedType
     [InlineData( double.PositiveInfinity )]
     public void Ctor_WithBoundsAndStartAndStep_ShouldThrowArgumentException_WhenStepIsNotFinite(double step)
     {
-        var (min, start, max) = Fixture.CreateDistinctSortedCollection<double>( 3 );
+        var (min, start, max) = Fixture.CreateManyDistinctSorted<double>( count: 3 );
         var action = Lambda.Of( () => Create( Bounds.Create( min, max ), start, step ) );
         action.Should().ThrowExactly<ArgumentException>();
     }

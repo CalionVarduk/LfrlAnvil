@@ -4,10 +4,10 @@ namespace LfrlAnvil.Functional.Tests.EitherTests;
 
 public class GenericEitherTestsData<T1, T2>
 {
-    public static TheoryData<object, bool, object, bool, bool> CreateEqualsTestData(IFixture fixture)
+    public static TheoryData<object, bool, object, bool, bool> CreateEqualsTestData(Fixture fixture)
     {
-        var (_11, _12) = fixture.CreateDistinctCollection<T1>( 2 );
-        var (_21, _22) = fixture.CreateDistinctCollection<T2>( 2 );
+        var (_11, _12) = fixture.CreateManyDistinct<T1>( count: 2 );
+        var (_21, _22) = fixture.CreateManyDistinct<T2>( count: 2 );
 
         return new TheoryData<object, bool, object, bool, bool>
         {
@@ -20,7 +20,7 @@ public class GenericEitherTestsData<T1, T2>
         };
     }
 
-    public static IEnumerable<object?[]> CreateNotEqualsTestData(IFixture fixture)
+    public static IEnumerable<object?[]> CreateNotEqualsTestData(Fixture fixture)
     {
         return CreateEqualsTestData( fixture ).ConvertResult( (bool r) => ! r );
     }

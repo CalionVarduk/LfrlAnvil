@@ -47,7 +47,7 @@ public abstract class GenericEventListenerTests<TEvent> : TestsBase
     [Fact]
     public void IListenerReact_ShouldThrowInvalidArgumentTypeException_WhenEventIsNotOfCorrectType()
     {
-        var @event = Fixture.Create<Invalid>();
+        var @event = new Invalid { Event = Fixture.Create<TEvent>() };
         IEventListener sut = Substitute.For<EventListener<TEvent>>();
 
         var action = Lambda.Of( () => sut.React( @event ) );

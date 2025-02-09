@@ -7,10 +7,15 @@ namespace LfrlAnvil.Reactive.State.Tests.CollectionVariableTests;
 
 public partial class CollectionVariableTests : TestsBase
 {
+    public CollectionVariableTests()
+    {
+        Fixture.Customize<TestElement>( (_, _) => f => new TestElement( f.Create<int>() ) );
+    }
+
     [Fact]
     public void ToString_ShouldReturnInformationAboutElementCountAndState()
     {
-        var (initialValue, value) = Fixture.CreateDistinctCollection<TestElement>( count: 2 );
+        var (initialValue, value) = Fixture.CreateManyDistinct<TestElement>( count: 2 );
         var expected = "Elements: 1, State: Changed, ReadOnly";
         var keySelector = Lambda.Of( (TestElement e) => e.Key );
         var sut = CollectionVariable.WithoutValidators<string>.Create( new[] { initialValue }, new[] { value }, keySelector );
@@ -24,7 +29,7 @@ public partial class CollectionVariableTests : TestsBase
     [Fact]
     public void Dispose_ShouldDisposeUnderlyingOnChangeAndOnValidateEventPublishersAndAddReadOnlyAndDisposedState()
     {
-        var (initialValue, value) = Fixture.CreateDistinctCollection<TestElement>( count: 2 );
+        var (initialValue, value) = Fixture.CreateManyDistinct<TestElement>( count: 2 );
         var keySelector = Lambda.Of( (TestElement e) => e.Key );
         var sut = CollectionVariable.WithoutValidators<string>.Create( new[] { initialValue }, new[] { value }, keySelector );
 

@@ -25,7 +25,7 @@ public abstract class GenericEventHandlerSourceTests<TEvent> : TestsBase
     {
         var target = new Target();
         var sender = new object();
-        var values = Fixture.CreateDistinctCollection<TEvent>( count: 3 );
+        var values = Fixture.CreateManyDistinct<TEvent>( count: 3 );
         var actualValues = new List<WithSender<TEvent>>();
         var sut = new EventHandlerSource<TEvent>( h => target.Handler += h, h => target.Handler -= h );
         var listener = EventListener.Create<WithSender<TEvent>>( actualValues.Add );
@@ -58,7 +58,7 @@ public abstract class GenericEventHandlerSourceTests<TEvent> : TestsBase
     {
         var target = new Target();
         var sender = new object();
-        var values = Fixture.CreateDistinctCollection<TEvent>( count: 3 );
+        var values = Fixture.CreateManyDistinct<TEvent>( count: 3 );
         var actualValues = new List<WithSender<TEvent>>();
         var sut = EventSource.FromEvent<TEvent>( h => target.Handler += h, h => target.Handler -= h );
         var listener = EventListener.Create<WithSender<TEvent>>( actualValues.Add );

@@ -262,7 +262,7 @@ public abstract class GenericTreeDictionaryNodeExtensionsTests<TKey, TValue> : T
     [Fact]
     public void CreateTree_ShouldReturnCorrectResult_WhenNodeIsLinkedToTree()
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( 7 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 7 );
         var comparer = EqualityComparerFactory<TKey>.Create( (a, b) => a!.Equals( b ) );
         var tree = new TreeDictionary<TKey, TValue>( comparer );
         var a = new TreeDictionaryNode<TKey, TValue>( keys[0], Fixture.Create<TValue>() );

@@ -5,9 +5,9 @@ namespace LfrlAnvil.Tests.ExtensionsTests.ListTests;
 
 public class GenericListExtensionsTestsData<T>
 {
-    public static TheoryData<IList<T>, int, int, IReadOnlyList<T>> CreateSwapItemsTestData(IFixture fixture)
+    public static TheoryData<IList<T>, int, int, IReadOnlyList<T>> CreateSwapItemsTestData(Fixture fixture)
     {
-        var source = fixture.CreateDistinctCollection<T>( 3 );
+        var source = fixture.CreateManyDistinct<T>( count: 3 );
 
         return new TheoryData<IList<T>, int, int, IReadOnlyList<T>>
         {

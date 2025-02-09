@@ -68,8 +68,8 @@ public partial class VariableRootTests : TestsBase
     [Fact]
     public void Refresh_ShouldRefreshForAllRegisteredNodes()
     {
-        var (key1, key2, key3, key4) = Fixture.CreateDistinctCollection<string>( count: 4 );
-        var (value1, value2, value3) = Fixture.CreateDistinctCollection<int>( count: 3 );
+        var (key1, key2, key3, key4) = Fixture.CreateManyDistinct<string>( count: 4 );
+        var (value1, value2, value3) = Fixture.CreateManyDistinct<int>( count: 3 );
         var variable1 = Variable.WithoutValidators<string>.Create( value1 );
         var variable2 = Variable.WithoutValidators<string>.Create( value2 );
         var variable3 = Variable.WithoutValidators<string>.Create( value3 );
@@ -117,8 +117,8 @@ public partial class VariableRootTests : TestsBase
     [Fact]
     public void RefreshValidation_ShouldRefreshValidationForAllRegisteredNodes()
     {
-        var (key1, key2, key3, key4) = Fixture.CreateDistinctCollection<string>( count: 4 );
-        var (value1, value2, value3) = Fixture.CreateDistinctCollection<int>( count: 3 );
+        var (key1, key2, key3, key4) = Fixture.CreateManyDistinct<string>( count: 4 );
+        var (value1, value2, value3) = Fixture.CreateManyDistinct<int>( count: 3 );
         var validator = Validators<string>.Fail<int>( Fixture.Create<string>() );
         var variable1 = Variable.Create( value1, errorsValidator: validator, warningsValidator: validator );
         var variable2 = Variable.Create( value2, errorsValidator: validator, warningsValidator: validator );
@@ -167,8 +167,8 @@ public partial class VariableRootTests : TestsBase
     [Fact]
     public void ClearValidation_ShouldClearValidationForAllRegisteredNodes()
     {
-        var (key1, key2, key3, key4) = Fixture.CreateDistinctCollection<string>( count: 4 );
-        var (value1, value2, value3) = Fixture.CreateDistinctCollection<int>( count: 3 );
+        var (key1, key2, key3, key4) = Fixture.CreateManyDistinct<string>( count: 4 );
+        var (value1, value2, value3) = Fixture.CreateManyDistinct<int>( count: 3 );
         var validator = Validators<string>.Fail<int>( Fixture.Create<string>() );
         var variable1 = Variable.Create( value1, errorsValidator: validator, warningsValidator: validator );
         var variable2 = Variable.Create( value2, errorsValidator: validator, warningsValidator: validator );
@@ -223,8 +223,8 @@ public partial class VariableRootTests : TestsBase
     [InlineData( false )]
     public void SetReadOnly_ShouldSetReadOnlyForAllRegisteredNodes(bool enabled)
     {
-        var (key1, key2, key3, key4) = Fixture.CreateDistinctCollection<string>( count: 4 );
-        var (value1, value2, value3) = Fixture.CreateDistinctCollection<int>( count: 3 );
+        var (key1, key2, key3, key4) = Fixture.CreateManyDistinct<string>( count: 4 );
+        var (value1, value2, value3) = Fixture.CreateManyDistinct<int>( count: 3 );
         var variable1 = Variable.WithoutValidators<string>.Create( value1 );
         var variable2 = Variable.WithoutValidators<string>.Create( value2 );
         var variable3 = Variable.WithoutValidators<string>.Create( value3 );
@@ -260,7 +260,7 @@ public partial class VariableRootTests : TestsBase
     [InlineData( false )]
     public void SetReadOnly_ShouldDoNothing_WhenRootIsAlreadyDisposed(bool enabled)
     {
-        var (key1, key2) = Fixture.CreateDistinctCollection<string>( count: 2 );
+        var (key1, key2) = Fixture.CreateManyDistinct<string>( count: 2 );
         var value = Fixture.Create<int>();
         var variable1 = Variable.WithoutValidators<string>.Create( value );
         var variable2 = Variable.WithoutValidators<string>.Create( value );
@@ -278,8 +278,8 @@ public partial class VariableRootTests : TestsBase
     [Fact]
     public void Dispose_ShouldDisposeAllRegisteredNodesAndAddDisposedState()
     {
-        var (key1, key2, key3, key4) = Fixture.CreateDistinctCollection<string>( count: 4 );
-        var (value1, value2, value3) = Fixture.CreateDistinctCollection<int>( count: 3 );
+        var (key1, key2, key3, key4) = Fixture.CreateManyDistinct<string>( count: 4 );
+        var (value1, value2, value3) = Fixture.CreateManyDistinct<int>( count: 3 );
         var variable1 = Variable.WithoutValidators<string>.Create( value1 );
         var variable2 = Variable.WithoutValidators<string>.Create( value2 );
         var variable3 = Variable.WithoutValidators<string>.Create( value3 );

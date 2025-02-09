@@ -2,7 +2,7 @@
 
 public class DateTimeExtensionsTestsData
 {
-    public static TheoryData<int, IsoMonthOfYear> GetGetMonthOfYearData(IFixture fixture)
+    public static TheoryData<int, IsoMonthOfYear> GetGetMonthOfYearData(Fixture fixture)
     {
         return new TheoryData<int, IsoMonthOfYear>
         {
@@ -21,7 +21,7 @@ public class DateTimeExtensionsTestsData
         };
     }
 
-    public static TheoryData<DateTime, DateTime> GetGetStartOfDayData(IFixture fixture)
+    public static TheoryData<DateTime, DateTime> GetGetStartOfDayData(Fixture fixture)
     {
         return new TheoryData<DateTime, DateTime>
         {
@@ -31,7 +31,7 @@ public class DateTimeExtensionsTestsData
         };
     }
 
-    public static TheoryData<DateTime, DateTime> GetGetEndOfDayData(IFixture fixture)
+    public static TheoryData<DateTime, DateTime> GetGetEndOfDayData(Fixture fixture)
     {
         return new TheoryData<DateTime, DateTime>
         {
@@ -43,7 +43,7 @@ public class DateTimeExtensionsTestsData
         };
     }
 
-    public static TheoryData<DateTime, DayOfWeek, DateTime> GetGetStartOfWeekData(IFixture fixture)
+    public static TheoryData<DateTime, DayOfWeek, DateTime> GetGetStartOfWeekData(Fixture fixture)
     {
         return new TheoryData<DateTime, DayOfWeek, DateTime>
         {
@@ -71,7 +71,7 @@ public class DateTimeExtensionsTestsData
         };
     }
 
-    public static TheoryData<DateTime, DayOfWeek, DateTime> GetGetEndOfWeekData(IFixture fixture)
+    public static TheoryData<DateTime, DayOfWeek, DateTime> GetGetEndOfWeekData(Fixture fixture)
     {
         return new TheoryData<DateTime, DayOfWeek, DateTime>
         {
@@ -127,7 +127,7 @@ public class DateTimeExtensionsTestsData
         };
     }
 
-    public static TheoryData<DateTime, DateTime> GetGetStartOfMonthData(IFixture fixture)
+    public static TheoryData<DateTime, DateTime> GetGetStartOfMonthData(Fixture fixture)
     {
         return new TheoryData<DateTime, DateTime>
         {
@@ -140,7 +140,7 @@ public class DateTimeExtensionsTestsData
         };
     }
 
-    public static TheoryData<DateTime, DateTime> GetGetEndOfMonthData(IFixture fixture)
+    public static TheoryData<DateTime, DateTime> GetGetEndOfMonthData(Fixture fixture)
     {
         return new TheoryData<DateTime, DateTime>
         {
@@ -156,7 +156,7 @@ public class DateTimeExtensionsTestsData
         };
     }
 
-    public static TheoryData<DateTime, DateTime> GetGetStartOfYearData(IFixture fixture)
+    public static TheoryData<DateTime, DateTime> GetGetStartOfYearData(Fixture fixture)
     {
         return new TheoryData<DateTime, DateTime>
         {
@@ -166,7 +166,7 @@ public class DateTimeExtensionsTestsData
         };
     }
 
-    public static TheoryData<DateTime, DateTime> GetGetEndOfYearData(IFixture fixture)
+    public static TheoryData<DateTime, DateTime> GetGetEndOfYearData(Fixture fixture)
     {
         return new TheoryData<DateTime, DateTime>
         {
@@ -179,7 +179,7 @@ public class DateTimeExtensionsTestsData
         };
     }
 
-    public static TheoryData<DateTime, Period, DateTime> GetAddData(IFixture fixture)
+    public static TheoryData<DateTime, Period, DateTime> GetAddData(Fixture fixture)
     {
         return new TheoryData<DateTime, Period, DateTime>
         {
@@ -234,7 +234,7 @@ public class DateTimeExtensionsTestsData
         };
     }
 
-    public static TheoryData<DateTime, int, DateTime> GetSetYearData(IFixture fixture)
+    public static TheoryData<DateTime, int, DateTime> GetSetYearData(Fixture fixture)
     {
         return new TheoryData<DateTime, int, DateTime>
         {
@@ -247,7 +247,7 @@ public class DateTimeExtensionsTestsData
         };
     }
 
-    public static TheoryData<DateTime, int> GetSetYearThrowData(IFixture fixture)
+    public static TheoryData<DateTime, int> GetSetYearThrowData(Fixture fixture)
     {
         return new TheoryData<DateTime, int>
         {
@@ -256,7 +256,7 @@ public class DateTimeExtensionsTestsData
         };
     }
 
-    public static TheoryData<DateTime, IsoMonthOfYear, DateTime> GetSetMonthData(IFixture fixture)
+    public static TheoryData<DateTime, IsoMonthOfYear, DateTime> GetSetMonthData(Fixture fixture)
     {
         return new TheoryData<DateTime, IsoMonthOfYear, DateTime>
         {
@@ -271,7 +271,7 @@ public class DateTimeExtensionsTestsData
         };
     }
 
-    public static TheoryData<DateTime, int, DateTime> GetSetDayOfMonthData(IFixture fixture)
+    public static TheoryData<DateTime, int, DateTime> GetSetDayOfMonthData(Fixture fixture)
     {
         return new TheoryData<DateTime, int, DateTime>
         {
@@ -283,7 +283,7 @@ public class DateTimeExtensionsTestsData
         };
     }
 
-    public static TheoryData<DateTime, int> GetSetDayOfMonthThrowData(IFixture fixture)
+    public static TheoryData<DateTime, int> GetSetDayOfMonthThrowData(Fixture fixture)
     {
         return new TheoryData<DateTime, int>
         {
@@ -315,7 +315,7 @@ public class DateTimeExtensionsTestsData
         };
     }
 
-    public static TheoryData<DateTime, int, DateTime> GetSetDayOfYearData(IFixture fixture)
+    public static TheoryData<DateTime, int, DateTime> GetSetDayOfYearData(Fixture fixture)
     {
         return new TheoryData<DateTime, int, DateTime>
         {
@@ -330,7 +330,7 @@ public class DateTimeExtensionsTestsData
         };
     }
 
-    public static TheoryData<DateTime, int> GetSetDayOfYearThrowData(IFixture fixture)
+    public static TheoryData<DateTime, int> GetSetDayOfYearThrowData(Fixture fixture)
     {
         return new TheoryData<DateTime, int>
         {
@@ -340,7 +340,7 @@ public class DateTimeExtensionsTestsData
         };
     }
 
-    public static TheoryData<DateTime, TimeOfDay, DateTime> GetSetTimeOfDayData(IFixture fixture)
+    public static TheoryData<DateTime, TimeOfDay, DateTime> GetSetTimeOfDayData(Fixture fixture)
     {
         var dt = new DateTime( 2021, 8, 26, 17, 18, 19, 234 ).AddTicks( 5678 );
 
@@ -356,7 +356,7 @@ public class DateTimeExtensionsTestsData
     }
 
     public static TheoryData<DateTime, DateTime, PeriodUnits, Period> GetGetPeriodOffsetData(
-        IFixture fixture)
+        Fixture fixture)
     {
         return new TheoryData<DateTime, DateTime, PeriodUnits, Period>
         {
@@ -455,7 +455,7 @@ public class DateTimeExtensionsTestsData
     }
 
     public static TheoryData<DateTime, DateTime, PeriodUnits, Period> GetGetGreedyPeriodOffsetData(
-        IFixture fixture)
+        Fixture fixture)
     {
         return new TheoryData<DateTime, DateTime, PeriodUnits, Period>
         {

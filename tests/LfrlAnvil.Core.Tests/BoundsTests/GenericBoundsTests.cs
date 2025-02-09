@@ -10,7 +10,7 @@ public abstract class GenericBoundsTests<T> : TestsBase
     [Fact]
     public void Create_ShouldCreateCorrectBounds()
     {
-        var (min, max) = Fixture.CreateDistinctSortedCollection<T>( 2 );
+        var (min, max) = Fixture.CreateManyDistinctSorted<T>( count: 2 );
 
         var sut = Bounds.Create( min, max );
 
@@ -26,7 +26,7 @@ public abstract class GenericBoundsTests<T> : TestsBase
     [Fact]
     public void Ctor_ShouldCreateWithDistinctMinAndMax()
     {
-        var (min, max) = Fixture.CreateDistinctSortedCollection<T>( 2 );
+        var (min, max) = Fixture.CreateManyDistinctSorted<T>( count: 2 );
 
         var sut = new Bounds<T>( min, max );
 
@@ -58,7 +58,7 @@ public abstract class GenericBoundsTests<T> : TestsBase
     [Fact]
     public void Ctor_ShouldThrowArgumentException_WhenMinIsGreaterThanMax()
     {
-        var (max, min) = Fixture.CreateDistinctSortedCollection<T>( 2 );
+        var (max, min) = Fixture.CreateManyDistinctSorted<T>( count: 2 );
         var action = Lambda.Of( () => new Bounds<T>( min, max ) );
         action.Should().ThrowExactly<ArgumentException>();
     }
@@ -66,7 +66,7 @@ public abstract class GenericBoundsTests<T> : TestsBase
     [Fact]
     public void SetMin_ShouldReturnBoundsWithNewMinAndOldMax()
     {
-        var (min, newMin, max) = Fixture.CreateDistinctSortedCollection<T>( 3 );
+        var (min, newMin, max) = Fixture.CreateManyDistinctSorted<T>( count: 3 );
         var sut = new Bounds<T>( min, max );
 
         var result = sut.SetMin( newMin );
@@ -83,7 +83,7 @@ public abstract class GenericBoundsTests<T> : TestsBase
     [Fact]
     public void SetMax_ShouldReturnBoundsWithOldMinAndNewMax()
     {
-        var (min, max, newMax) = Fixture.CreateDistinctSortedCollection<T>( 3 );
+        var (min, max, newMax) = Fixture.CreateManyDistinctSorted<T>( count: 3 );
         var sut = new Bounds<T>( min, max );
 
         var result = sut.SetMax( newMax );
@@ -100,7 +100,7 @@ public abstract class GenericBoundsTests<T> : TestsBase
     [Fact]
     public void GetHashCode_ShouldReturnMixOfMinAndMax()
     {
-        var (min, max) = Fixture.CreateDistinctSortedCollection<T>( 2 );
+        var (min, max) = Fixture.CreateManyDistinctSorted<T>( count: 2 );
 
         var sut = new Bounds<T>( min, max );
         var expected = Hash.Default.Add( min ).Add( max ).Value;

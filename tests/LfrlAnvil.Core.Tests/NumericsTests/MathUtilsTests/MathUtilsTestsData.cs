@@ -4,7 +4,7 @@ namespace LfrlAnvil.Tests.NumericsTests.MathUtilsTests;
 
 public class MathUtilsTestsData
 {
-    public static TheoryData<ulong, ulong, ulong> GetGcdData(IFixture fixture)
+    public static TheoryData<ulong, ulong, ulong> GetGcdData(Fixture fixture)
     {
         return new TheoryData<ulong, ulong, ulong>
         {
@@ -20,7 +20,7 @@ public class MathUtilsTestsData
         };
     }
 
-    public static TheoryData<ulong, ulong, ulong> GetLcmData(IFixture fixture)
+    public static TheoryData<ulong, ulong, ulong> GetLcmData(Fixture fixture)
     {
         return new TheoryData<ulong, ulong, ulong>
         {
@@ -35,7 +35,7 @@ public class MathUtilsTestsData
         };
     }
 
-    public static TheoryData<Percent[], Fraction, Fraction[]> GetConvertToFractionsData(IFixture fixture)
+    public static TheoryData<Percent[], Fraction, Fraction[]> GetConvertToFractionsData(Fixture fixture)
     {
         return new TheoryData<Percent[], Fraction, Fraction[]>
         {

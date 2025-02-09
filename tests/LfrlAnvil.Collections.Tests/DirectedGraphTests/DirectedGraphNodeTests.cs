@@ -9,7 +9,7 @@ public class DirectedGraphNodeTests : TestsBase
     [Fact]
     public void ValueSet_ShouldUpdateValue()
     {
-        var (oldValue, newValue) = Fixture.CreateDistinctCollection<int>( count: 2 );
+        var (oldValue, newValue) = Fixture.CreateManyDistinct<int>( count: 2 );
         var graph = new DirectedGraph<string, int, long>();
         var sut = graph.AddNode( "a", oldValue );
 

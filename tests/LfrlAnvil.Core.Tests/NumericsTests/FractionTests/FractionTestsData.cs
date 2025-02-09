@@ -4,7 +4,7 @@ namespace LfrlAnvil.Tests.NumericsTests.FractionTests;
 
 public class FractionTestsData
 {
-    public static TheoryData<long, ulong, long, ulong, int> GetCompareToData(IFixture fixture)
+    public static TheoryData<long, ulong, long, ulong, int> GetCompareToData(Fixture fixture)
     {
         return new TheoryData<long, ulong, long, ulong, int>
         {
@@ -67,32 +67,32 @@ public class FractionTestsData
         };
     }
 
-    public static IEnumerable<object?[]> GetEqualsData(IFixture fixture)
+    public static IEnumerable<object?[]> GetEqualsData(Fixture fixture)
     {
         return GetCompareToData( fixture ).ConvertResult( (int cmp) => cmp == 0 );
     }
 
-    public static IEnumerable<object?[]> GetNotEqualsData(IFixture fixture)
+    public static IEnumerable<object?[]> GetNotEqualsData(Fixture fixture)
     {
         return GetCompareToData( fixture ).ConvertResult( (int cmp) => cmp != 0 );
     }
 
-    public static IEnumerable<object?[]> GetLessThanData(IFixture fixture)
+    public static IEnumerable<object?[]> GetLessThanData(Fixture fixture)
     {
         return GetCompareToData( fixture ).ConvertResult( (int cmp) => cmp < 0 );
     }
 
-    public static IEnumerable<object?[]> GetLessThanOrEqualToData(IFixture fixture)
+    public static IEnumerable<object?[]> GetLessThanOrEqualToData(Fixture fixture)
     {
         return GetCompareToData( fixture ).ConvertResult( (int cmp) => cmp <= 0 );
     }
 
-    public static IEnumerable<object?[]> GetGreaterThanData(IFixture fixture)
+    public static IEnumerable<object?[]> GetGreaterThanData(Fixture fixture)
     {
         return GetCompareToData( fixture ).ConvertResult( (int cmp) => cmp > 0 );
     }
 
-    public static IEnumerable<object?[]> GetGreaterThanOrEqualToData(IFixture fixture)
+    public static IEnumerable<object?[]> GetGreaterThanOrEqualToData(Fixture fixture)
     {
         return GetCompareToData( fixture ).ConvertResult( (int cmp) => cmp >= 0 );
     }

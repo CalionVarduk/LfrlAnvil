@@ -5,11 +5,16 @@ namespace LfrlAnvil.Collections.Tests;
 public abstract class GenericDictionaryTestsBase<TKey, TValue> : GenericCollectionTestsBase<KeyValuePair<TKey, TValue>>
     where TKey : notnull
 {
+    protected GenericDictionaryTestsBase()
+    {
+        Fixture.Customize<KeyValuePair<TKey, TValue>>( (_, _) => f => KeyValuePair.Create( f.Create<TKey>(), f.Create<TValue>() ) );
+    }
+
     [Fact]
     public void IDictionaryKeys_ShouldReturnCorrectResult()
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( 3 );
-        var values = Fixture.CreateDistinctCollection<TValue>( 3 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 3 );
+        var values = Fixture.CreateManyDistinct<TValue>( count: 3 );
         var sut = CreateEmptyDictionary();
         sut.Add( keys[0], values[0] );
         sut.Add( keys[1], values[1] );
@@ -23,8 +28,8 @@ public abstract class GenericDictionaryTestsBase<TKey, TValue> : GenericCollecti
     [Fact]
     public void IDictionaryValues_ShouldReturnCorrectResult()
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( 3 );
-        var values = Fixture.CreateDistinctCollection<TValue>( 3 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 3 );
+        var values = Fixture.CreateManyDistinct<TValue>( count: 3 );
         var sut = CreateEmptyDictionary();
         sut.Add( keys[0], values[0] );
         sut.Add( keys[1], values[1] );
@@ -38,8 +43,8 @@ public abstract class GenericDictionaryTestsBase<TKey, TValue> : GenericCollecti
     [Fact]
     public void IReadOnlyDictionaryKeys_ShouldReturnCorrectResult()
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( 3 );
-        var values = Fixture.CreateDistinctCollection<TValue>( 3 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 3 );
+        var values = Fixture.CreateManyDistinct<TValue>( count: 3 );
         var sut = CreateEmptyDictionary();
         sut.Add( keys[0], values[0] );
         sut.Add( keys[1], values[1] );
@@ -53,8 +58,8 @@ public abstract class GenericDictionaryTestsBase<TKey, TValue> : GenericCollecti
     [Fact]
     public void IReadOnlyDictionaryValues_ShouldReturnCorrectResult()
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( 3 );
-        var values = Fixture.CreateDistinctCollection<TValue>( 3 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 3 );
+        var values = Fixture.CreateManyDistinct<TValue>( count: 3 );
         var sut = CreateEmptyDictionary();
         sut.Add( keys[0], values[0] );
         sut.Add( keys[1], values[1] );
@@ -193,7 +198,7 @@ public abstract class GenericDictionaryTestsBase<TKey, TValue> : GenericCollecti
     public void ICollectionRemove_ShouldReturnFalse_WhenKeyExistsButValueDoesNot()
     {
         var key = Fixture.Create<TKey>();
-        var values = Fixture.CreateDistinctCollection<TValue>( 2 );
+        var values = Fixture.CreateManyDistinct<TValue>( count: 2 );
         var sut = CreateEmptyDictionary();
         sut.Add( key, values[0] );
 
@@ -227,7 +232,7 @@ public abstract class GenericDictionaryTestsBase<TKey, TValue> : GenericCollecti
     public void ICollectionContains_ShouldReturnFalse_WhenKeyExistsButValueDoesNot()
     {
         var key = Fixture.Create<TKey>();
-        var values = Fixture.CreateDistinctCollection<TValue>( 2 );
+        var values = Fixture.CreateManyDistinct<TValue>( count: 2 );
         var sut = CreateEmptyDictionary();
         sut.Add( key, values[0] );
 

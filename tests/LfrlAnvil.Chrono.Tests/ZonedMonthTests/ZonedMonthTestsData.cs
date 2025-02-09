@@ -4,7 +4,7 @@ namespace LfrlAnvil.Chrono.Tests.ZonedMonthTests;
 
 public class ZonedMonthTestsData
 {
-    public static TheoryData<DateTime, TimeZoneInfo, int> GetCreateData(IFixture fixture)
+    public static TheoryData<DateTime, TimeZoneInfo, int> GetCreateData(Fixture fixture)
     {
         var timeZone = TimeZoneFactory.CreateRandom( fixture );
 
@@ -39,7 +39,7 @@ public class ZonedMonthTestsData
         };
     }
 
-    public static TheoryData<DateTime, TimeZoneInfo, int, Duration> GetCreateWithContainedInvalidityRangeData(IFixture fixture)
+    public static TheoryData<DateTime, TimeZoneInfo, int, Duration> GetCreateWithContainedInvalidityRangeData(Fixture fixture)
     {
         var positiveTimeZone = TimeZoneFactory.Create(
             utcOffsetInHours: 1,
@@ -67,7 +67,7 @@ public class ZonedMonthTestsData
         };
     }
 
-    public static TheoryData<DateTime, TimeZoneInfo, int, Duration> GetCreateWithContainedAmbiguityRangeData(IFixture fixture)
+    public static TheoryData<DateTime, TimeZoneInfo, int, Duration> GetCreateWithContainedAmbiguityRangeData(Fixture fixture)
     {
         var positiveTimeZone = TimeZoneFactory.Create(
             utcOffsetInHours: 1,
@@ -96,7 +96,7 @@ public class ZonedMonthTestsData
     }
 
     public static TheoryData<DateTime, TimeZoneInfo, DateTime, int, Duration>
-        GetCreateWithInvalidStartTimeData(IFixture fixture)
+        GetCreateWithInvalidStartTimeData(Fixture fixture)
     {
         var positiveTimeZone1 = TimeZoneFactory.Create(
             utcOffsetInHours: 1,
@@ -182,7 +182,7 @@ public class ZonedMonthTestsData
     }
 
     public static TheoryData<DateTime, TimeZoneInfo, DateTime, int, Duration>
-        GetCreateWithInvalidEndTimeData(IFixture fixture)
+        GetCreateWithInvalidEndTimeData(Fixture fixture)
     {
         var positiveTimeZone1 = TimeZoneFactory.Create(
             utcOffsetInHours: 1,
@@ -274,7 +274,7 @@ public class ZonedMonthTestsData
     }
 
     public static TheoryData<DateTime, TimeZoneInfo, bool, int, Duration>
-        GetCreateWithAmbiguousStartTimeData(IFixture fixture)
+        GetCreateWithAmbiguousStartTimeData(Fixture fixture)
     {
         var positiveTimeZone1 = TimeZoneFactory.Create(
             utcOffsetInHours: 1,
@@ -342,7 +342,7 @@ public class ZonedMonthTestsData
     }
 
     public static TheoryData<DateTime, TimeZoneInfo, bool, int, Duration>
-        GetCreateWithAmbiguousEndTimeData(IFixture fixture)
+        GetCreateWithAmbiguousEndTimeData(Fixture fixture)
     {
         var positiveTimeZone1 = TimeZoneFactory.Create(
             utcOffsetInHours: 1,
@@ -410,7 +410,7 @@ public class ZonedMonthTestsData
     }
 
     public static TheoryData<DateTime, TimeZoneInfo, DateTime, bool, int, Duration>
-        GetCreateWithInvalidStartTimeAndAmbiguousEndTimeData(IFixture fixture)
+        GetCreateWithInvalidStartTimeAndAmbiguousEndTimeData(Fixture fixture)
     {
         var positiveTimeZone1 = TimeZoneFactory.Create(
             utcOffsetInHours: 1,
@@ -475,7 +475,7 @@ public class ZonedMonthTestsData
     }
 
     public static TheoryData<DateTime, TimeZoneInfo, DateTime, bool, int, Duration>
-        GetCreateWithAmbiguousStartTimeAndInvalidEndTimeData(IFixture fixture)
+        GetCreateWithAmbiguousStartTimeAndInvalidEndTimeData(Fixture fixture)
     {
         var positiveTimeZone1 = TimeZoneFactory.Create(
             utcOffsetInHours: 1,
@@ -546,7 +546,7 @@ public class ZonedMonthTestsData
     }
 
     public static TheoryData<DateTime, TimeZoneInfo, int, Duration> GetCreateWithContainedInvalidityAndAmbiguityRangesData(
-        IFixture fixture)
+        Fixture fixture)
     {
         var timeZone1 = TimeZoneFactory.Create(
             utcOffsetInHours: 1,
@@ -583,7 +583,7 @@ public class ZonedMonthTestsData
         };
     }
 
-    public static TheoryData<DateTime, TimeZoneInfo, string> GetToStringData(IFixture fixture)
+    public static TheoryData<DateTime, TimeZoneInfo, string> GetToStringData(Fixture fixture)
     {
         var tz1 = TimeZoneFactory.Create(
             utcOffsetInHours: 3,
@@ -612,7 +612,7 @@ public class ZonedMonthTestsData
         };
     }
 
-    public static TheoryData<DateTime, TimeZoneInfo, DateTime, TimeZoneInfo, bool> GetEqualsData(IFixture fixture)
+    public static TheoryData<DateTime, TimeZoneInfo, DateTime, TimeZoneInfo, bool> GetEqualsData(Fixture fixture)
     {
         var (dt1, dt2) = (new DateTime( 2021, 8, 1 ), new DateTime( 2021, 9, 1 ));
         var (tz1, tz2) = (TimeZoneFactory.Create( 3 ), TimeZoneFactory.Create( 5 ));
@@ -627,7 +627,7 @@ public class ZonedMonthTestsData
         };
     }
 
-    public static TheoryData<DateTime, TimeZoneInfo, DateTime, TimeZoneInfo, int> GetCompareToData(IFixture fixture)
+    public static TheoryData<DateTime, TimeZoneInfo, DateTime, TimeZoneInfo, int> GetCompareToData(Fixture fixture)
     {
         var (dt1, dt2) = (new DateTime( 2021, 8, 1 ), new DateTime( 2021, 9, 1 ));
         var (tz1, tz2, tz3) = (
@@ -651,7 +651,7 @@ public class ZonedMonthTestsData
         };
     }
 
-    public static TheoryData<DateTime, TimeZoneInfo, DateTime, TimeZoneInfo, bool> GetContainsData(IFixture fixture)
+    public static TheoryData<DateTime, TimeZoneInfo, DateTime, TimeZoneInfo, bool> GetContainsData(Fixture fixture)
     {
         var month = new DateTime( 2021, 8, 1 );
         var tz1 = TimeZoneFactory.Create( 1 );
@@ -670,7 +670,7 @@ public class ZonedMonthTestsData
         };
     }
 
-    public static TheoryData<DateTime, TimeZoneInfo, DateTime, bool, bool> GetContainsWithAmbiguousStartOrEndData(IFixture fixture)
+    public static TheoryData<DateTime, TimeZoneInfo, DateTime, bool, bool> GetContainsWithAmbiguousStartOrEndData(Fixture fixture)
     {
         var month = new DateTime( 2021, 8, 1 );
 
@@ -703,7 +703,7 @@ public class ZonedMonthTestsData
         };
     }
 
-    public static TheoryData<DateTime, TimeZoneInfo, DateTime, TimeZoneInfo, bool> GetContainsWithZonedDayData(IFixture fixture)
+    public static TheoryData<DateTime, TimeZoneInfo, DateTime, TimeZoneInfo, bool> GetContainsWithZonedDayData(Fixture fixture)
     {
         var month = new DateTime( 2021, 8, 1 );
         var tz1 = TimeZoneFactory.Create( 1 );
@@ -722,7 +722,7 @@ public class ZonedMonthTestsData
         };
     }
 
-    public static TheoryData<DateTime, TimeZoneInfo, int, DateTime> GetAddMonthsData(IFixture fixture)
+    public static TheoryData<DateTime, TimeZoneInfo, int, DateTime> GetAddMonthsData(Fixture fixture)
     {
         var month = new DateTime( 2021, 8, 1 );
         var timeZone = TimeZoneFactory.Create( 1 );
@@ -737,7 +737,7 @@ public class ZonedMonthTestsData
         };
     }
 
-    public static TheoryData<DateTime, TimeZoneInfo, Period, DateTime> GetAddData(IFixture fixture)
+    public static TheoryData<DateTime, TimeZoneInfo, Period, DateTime> GetAddData(Fixture fixture)
     {
         var month = new DateTime( 2021, 8, 1 );
         var timeZone = TimeZoneFactory.Create( 1 );
@@ -778,7 +778,7 @@ public class ZonedMonthTestsData
         };
     }
 
-    public static TheoryData<DateTime, TimeZoneInfo, DateTime, TimeZoneInfo, PeriodUnits> GetGetPeriodOffsetData(IFixture fixture)
+    public static TheoryData<DateTime, TimeZoneInfo, DateTime, TimeZoneInfo, PeriodUnits> GetGetPeriodOffsetData(Fixture fixture)
     {
         var month = new DateTime( 2021, 8, 1 );
         var otherMonth = new DateTime( 2019, 10, 1 );
@@ -801,7 +801,7 @@ public class ZonedMonthTestsData
         };
     }
 
-    public static TheoryData<DateTime, TimeZoneInfo, DateTime, TimeZoneInfo, PeriodUnits> GetGetGreedyPeriodOffsetData(IFixture fixture)
+    public static TheoryData<DateTime, TimeZoneInfo, DateTime, TimeZoneInfo, PeriodUnits> GetGetGreedyPeriodOffsetData(Fixture fixture)
     {
         var month = new DateTime( 2021, 8, 1 );
         var otherMonth = new DateTime( 2019, 10, 1 );
@@ -824,7 +824,7 @@ public class ZonedMonthTestsData
         };
     }
 
-    public static TheoryData<DateTime, TimeZoneInfo, int, DateTime> GetSetYearData(IFixture fixture)
+    public static TheoryData<DateTime, TimeZoneInfo, int, DateTime> GetSetYearData(Fixture fixture)
     {
         var timeZone = TimeZoneFactory.Create( 1 );
         var timeZoneWithInvalidity = TimeZoneFactory.Create(
@@ -846,7 +846,7 @@ public class ZonedMonthTestsData
         };
     }
 
-    public static TheoryData<DateTime, TimeZoneInfo, int> GetSetYearThrowData(IFixture fixture)
+    public static TheoryData<DateTime, TimeZoneInfo, int> GetSetYearThrowData(Fixture fixture)
     {
         var timeZone = TimeZoneFactory.Create( 1 );
 
@@ -857,7 +857,7 @@ public class ZonedMonthTestsData
         };
     }
 
-    public static TheoryData<DateTime, TimeZoneInfo, IsoMonthOfYear, DateTime> GetSetMonthData(IFixture fixture)
+    public static TheoryData<DateTime, TimeZoneInfo, IsoMonthOfYear, DateTime> GetSetMonthData(Fixture fixture)
     {
         var timeZone = TimeZoneFactory.Create( 1 );
         var timeZoneWithInvalidity = TimeZoneFactory.Create(
@@ -879,7 +879,7 @@ public class ZonedMonthTestsData
         };
     }
 
-    public static TheoryData<DateTime, TimeZoneInfo, int, DateTime> GetGetDayOfMonthData(IFixture fixture)
+    public static TheoryData<DateTime, TimeZoneInfo, int, DateTime> GetGetDayOfMonthData(Fixture fixture)
     {
         var timeZone = TimeZoneFactory.CreateRandom( fixture );
 
@@ -925,7 +925,7 @@ public class ZonedMonthTestsData
         };
     }
 
-    public static TheoryData<DateTime, TimeZoneInfo, int> GetGetDayOfMonthThrowData(IFixture fixture)
+    public static TheoryData<DateTime, TimeZoneInfo, int> GetGetDayOfMonthThrowData(Fixture fixture)
     {
         var timeZone = TimeZoneFactory.CreateRandom( fixture );
 
@@ -949,7 +949,7 @@ public class ZonedMonthTestsData
         };
     }
 
-    public static TheoryData<DateTime, TimeZoneInfo, IsoDayOfWeek, int, DateTime> GetGetWeekOfMonthData(IFixture fixture)
+    public static TheoryData<DateTime, TimeZoneInfo, IsoDayOfWeek, int, DateTime> GetGetWeekOfMonthData(Fixture fixture)
     {
         var timeZone = TimeZoneFactory.CreateRandom( fixture );
 
@@ -984,7 +984,7 @@ public class ZonedMonthTestsData
         };
     }
 
-    public static TheoryData<DateTime, TimeZoneInfo, IsoDayOfWeek, int> GetGetWeekOfMonthThrowData(IFixture fixture)
+    public static TheoryData<DateTime, TimeZoneInfo, IsoDayOfWeek, int> GetGetWeekOfMonthThrowData(Fixture fixture)
     {
         var timeZone = TimeZoneFactory.CreateRandom( fixture );
 
@@ -1023,7 +1023,7 @@ public class ZonedMonthTestsData
         };
     }
 
-    public static TheoryData<DateTime, TimeZoneInfo, int> GetGetAllDaysData(IFixture fixture)
+    public static TheoryData<DateTime, TimeZoneInfo, int> GetGetAllDaysData(Fixture fixture)
     {
         var timeZone = TimeZoneFactory.CreateRandom( fixture );
 
@@ -1045,7 +1045,7 @@ public class ZonedMonthTestsData
         };
     }
 
-    public static TheoryData<DateTime, TimeZoneInfo, IsoDayOfWeek, int> GetGetWeekCountData(IFixture fixture)
+    public static TheoryData<DateTime, TimeZoneInfo, IsoDayOfWeek, int> GetGetWeekCountData(Fixture fixture)
     {
         var timeZone = TimeZoneFactory.CreateRandom( fixture );
 
@@ -1082,32 +1082,32 @@ public class ZonedMonthTestsData
         };
     }
 
-    public static TheoryData<DateTime, TimeZoneInfo, IsoDayOfWeek, int> GetGetAllWeeksData(IFixture fixture)
+    public static TheoryData<DateTime, TimeZoneInfo, IsoDayOfWeek, int> GetGetAllWeeksData(Fixture fixture)
     {
         return GetGetWeekCountData( fixture );
     }
 
-    public static IEnumerable<object?[]> GetNotEqualsData(IFixture fixture)
+    public static IEnumerable<object?[]> GetNotEqualsData(Fixture fixture)
     {
         return GetEqualsData( fixture ).ConvertResult( (bool r) => ! r );
     }
 
-    public static IEnumerable<object?[]> GetGreaterThanComparisonData(IFixture fixture)
+    public static IEnumerable<object?[]> GetGreaterThanComparisonData(Fixture fixture)
     {
         return GetCompareToData( fixture ).ConvertResult( (int r) => r > 0 );
     }
 
-    public static IEnumerable<object?[]> GetGreaterThanOrEqualToComparisonData(IFixture fixture)
+    public static IEnumerable<object?[]> GetGreaterThanOrEqualToComparisonData(Fixture fixture)
     {
         return GetCompareToData( fixture ).ConvertResult( (int r) => r >= 0 );
     }
 
-    public static IEnumerable<object?[]> GetLessThanComparisonData(IFixture fixture)
+    public static IEnumerable<object?[]> GetLessThanComparisonData(Fixture fixture)
     {
         return GetCompareToData( fixture ).ConvertResult( (int r) => r < 0 );
     }
 
-    public static IEnumerable<object?[]> GetLessThanOrEqualToComparisonData(IFixture fixture)
+    public static IEnumerable<object?[]> GetLessThanOrEqualToComparisonData(Fixture fixture)
     {
         return GetCompareToData( fixture ).ConvertResult( (int r) => r <= 0 );
     }

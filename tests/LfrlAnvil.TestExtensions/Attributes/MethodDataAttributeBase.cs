@@ -8,10 +8,10 @@ namespace LfrlAnvil.TestExtensions.Attributes;
 [AttributeUsage( AttributeTargets.Method )]
 public abstract class MethodDataAttributeBase : MemberDataAttributeBase
 {
-    protected MethodDataAttributeBase(string memberName, IFixture fixture, params object[] parameters)
+    protected MethodDataAttributeBase(string memberName, Fixture fixture, params object[] parameters)
         : base( memberName, CreateParameters( fixture, parameters ) ) { }
 
-    public IFixture Fixture => ( IFixture )Parameters[0];
+    public Fixture Fixture => ( Fixture )Parameters[0];
 
     public sealed override IEnumerable<object[]?>? GetData(MethodInfo testMethod)
     {
@@ -77,7 +77,7 @@ public abstract class MethodDataAttributeBase : MemberDataAttributeBase
         return method is null ? null : () => method.Invoke( null, Parameters );
     }
 
-    private static object[] CreateParameters(IFixture fixture, object[]? parameters)
+    private static object[] CreateParameters(Fixture fixture, object[]? parameters)
     {
         parameters ??= Array.Empty<object>();
         var result = new object[parameters.Length + 1];

@@ -18,7 +18,7 @@ internal static class TimeZoneFactory
             standardDisplayName: id );
     }
 
-    internal static TimeZoneInfo CreateRandom(IFixture fixture, string? idSuffix = null)
+    internal static TimeZoneInfo CreateRandom(Fixture fixture, string? idSuffix = null)
     {
         return Create( CreateRandomOffset( fixture ), idSuffix );
     }
@@ -114,7 +114,7 @@ internal static class TimeZoneFactory
             dayOfWeek: day );
     }
 
-    internal static double CreateRandomOffset(IFixture fixture, double absMax = 14.0)
+    internal static double CreateRandomOffset(Fixture fixture, double absMax = 14.0)
     {
         var utcOffsetInHours = fixture.Create<int>() % (( int )absMax * 4) / 4.0;
         var negate = fixture.Create<bool>();

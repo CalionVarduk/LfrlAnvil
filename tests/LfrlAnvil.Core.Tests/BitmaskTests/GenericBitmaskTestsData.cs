@@ -6,9 +6,9 @@ namespace LfrlAnvil.Tests.BitmaskTests;
 public class GenericBitmaskTestsData<T>
     where T : struct, IConvertible, IComparable
 {
-    public static TheoryData<T, T, bool> GetEqualsData(IFixture fixture)
+    public static TheoryData<T, T, bool> GetEqualsData(Fixture fixture)
     {
-        var (_1, _2) = fixture.CreateDistinctCollection<T>( 2 );
+        var (_1, _2) = fixture.CreateManyDistinct<T>( count: 2 );
 
         return new TheoryData<T, T, bool>
         {
@@ -17,14 +17,14 @@ public class GenericBitmaskTestsData<T>
         };
     }
 
-    public static IEnumerable<object?[]> GetNotEqualsData(IFixture fixture)
+    public static IEnumerable<object?[]> GetNotEqualsData(Fixture fixture)
     {
         return GetEqualsData( fixture ).ConvertResult( (bool r) => ! r );
     }
 
-    public static TheoryData<T, T, int> GetCompareToData(IFixture fixture)
+    public static TheoryData<T, T, int> GetCompareToData(Fixture fixture)
     {
-        var (_1, _2) = fixture.CreateDistinctSortedCollection<T>( 2 );
+        var (_1, _2) = fixture.CreateManyDistinctSorted<T>( count: 2 );
 
         return new TheoryData<T, T, int>
         {
@@ -34,27 +34,27 @@ public class GenericBitmaskTestsData<T>
         };
     }
 
-    public static IEnumerable<object?[]> CreateGreaterThanComparisonTestData(IFixture fixture)
+    public static IEnumerable<object?[]> CreateGreaterThanComparisonTestData(Fixture fixture)
     {
         return GetCompareToData( fixture ).ConvertResult( (int r) => r > 0 );
     }
 
-    public static IEnumerable<object?[]> CreateGreaterThanOrEqualToComparisonTestData(IFixture fixture)
+    public static IEnumerable<object?[]> CreateGreaterThanOrEqualToComparisonTestData(Fixture fixture)
     {
         return GetCompareToData( fixture ).ConvertResult( (int r) => r >= 0 );
     }
 
-    public static IEnumerable<object?[]> CreateLessThanComparisonTestData(IFixture fixture)
+    public static IEnumerable<object?[]> CreateLessThanComparisonTestData(Fixture fixture)
     {
         return GetCompareToData( fixture ).ConvertResult( (int r) => r < 0 );
     }
 
-    public static IEnumerable<object?[]> CreateLessThanOrEqualToComparisonTestData(IFixture fixture)
+    public static IEnumerable<object?[]> CreateLessThanOrEqualToComparisonTestData(Fixture fixture)
     {
         return GetCompareToData( fixture ).ConvertResult( (int r) => r <= 0 );
     }
 
-    public static TheoryData<T, T, bool> GetContainsAnyData(IFixture fixture)
+    public static TheoryData<T, T, bool> GetContainsAnyData(Fixture fixture)
     {
         return new TheoryData<T, T, bool>
         {
@@ -73,7 +73,7 @@ public class GenericBitmaskTestsData<T>
         };
     }
 
-    public static TheoryData<T, T, bool> GetContainsAllData(IFixture fixture)
+    public static TheoryData<T, T, bool> GetContainsAllData(Fixture fixture)
     {
         return new TheoryData<T, T, bool>
         {
@@ -92,7 +92,7 @@ public class GenericBitmaskTestsData<T>
         };
     }
 
-    public static TheoryData<T, int, bool> GetContainsBitData(IFixture fixture)
+    public static TheoryData<T, int, bool> GetContainsBitData(Fixture fixture)
     {
         var maxBitIndex = Bitmask<T>.BitCount - 1;
         var maxValue = 1UL << maxBitIndex;
@@ -122,7 +122,7 @@ public class GenericBitmaskTestsData<T>
         };
     }
 
-    public static TheoryData<T, T, T> GetSetData(IFixture fixture)
+    public static TheoryData<T, T, T> GetSetData(Fixture fixture)
     {
         return new TheoryData<T, T, T>
         {
@@ -141,7 +141,7 @@ public class GenericBitmaskTestsData<T>
         };
     }
 
-    public static TheoryData<T, int, T> GetSetBitData(IFixture fixture)
+    public static TheoryData<T, int, T> GetSetBitData(Fixture fixture)
     {
         var maxBitIndex = Bitmask<T>.BitCount - 1;
         var maxValue = 1UL << maxBitIndex;
@@ -171,7 +171,7 @@ public class GenericBitmaskTestsData<T>
         };
     }
 
-    public static TheoryData<T, T, T> GetUnsetData(IFixture fixture)
+    public static TheoryData<T, T, T> GetUnsetData(Fixture fixture)
     {
         return new TheoryData<T, T, T>
         {
@@ -190,7 +190,7 @@ public class GenericBitmaskTestsData<T>
         };
     }
 
-    public static TheoryData<T, int, T> GetUnsetBitData(IFixture fixture)
+    public static TheoryData<T, int, T> GetUnsetBitData(Fixture fixture)
     {
         var maxBitIndex = Bitmask<T>.BitCount - 1;
         var maxValue = 1UL << maxBitIndex;
@@ -220,7 +220,7 @@ public class GenericBitmaskTestsData<T>
         };
     }
 
-    public static TheoryData<T, T, T> GetIntersectData(IFixture fixture)
+    public static TheoryData<T, T, T> GetIntersectData(Fixture fixture)
     {
         return new TheoryData<T, T, T>
         {
@@ -239,7 +239,7 @@ public class GenericBitmaskTestsData<T>
         };
     }
 
-    public static TheoryData<T, T, T> GetAlternateData(IFixture fixture)
+    public static TheoryData<T, T, T> GetAlternateData(Fixture fixture)
     {
         return new TheoryData<T, T, T>
         {
@@ -258,7 +258,7 @@ public class GenericBitmaskTestsData<T>
         };
     }
 
-    public static TheoryData<T, T> GetNegateData(IFixture fixture)
+    public static TheoryData<T, T> GetNegateData(Fixture fixture)
     {
         var maxBitIndex = Bitmask<T>.BitCount - 1;
         var maxValue = ((1UL << maxBitIndex) - 1) | 1UL << maxBitIndex;
@@ -276,7 +276,7 @@ public class GenericBitmaskTestsData<T>
         };
     }
 
-    public static TheoryData<T, int> GetCountData(IFixture fixture)
+    public static TheoryData<T, int> GetCountData(Fixture fixture)
     {
         return new TheoryData<T, int>
         {
@@ -288,7 +288,7 @@ public class GenericBitmaskTestsData<T>
         };
     }
 
-    public static TheoryData<T, IEnumerable<T>> GetEnumeratorData(IFixture fixture)
+    public static TheoryData<T, IEnumerable<T>> GetEnumeratorData(Fixture fixture)
     {
         return new TheoryData<T, IEnumerable<T>>
         {

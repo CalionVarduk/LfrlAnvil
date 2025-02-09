@@ -2,7 +2,7 @@
 
 public class ParsedExpressionFactoryTestsData
 {
-    public static TheoryData<string, decimal> GetArgumentOnlyData(IFixture fixture)
+    public static TheoryData<string, decimal> GetArgumentOnlyData(Fixture fixture)
     {
         return new TheoryData<string, decimal>
         {
@@ -18,7 +18,7 @@ public class ParsedExpressionFactoryTestsData
         };
     }
 
-    public static TheoryData<string> GetOperandFollowedByOperandData(IFixture fixture)
+    public static TheoryData<string> GetOperandFollowedByOperandData(Fixture fixture)
     {
         return new TheoryData<string>
         {
@@ -60,7 +60,7 @@ public class ParsedExpressionFactoryTestsData
         };
     }
 
-    public static TheoryData<string> GetOperandFollowedByFunctionData(IFixture fixture)
+    public static TheoryData<string> GetOperandFollowedByFunctionData(Fixture fixture)
     {
         return new TheoryData<string>
         {
@@ -74,7 +74,7 @@ public class ParsedExpressionFactoryTestsData
         };
     }
 
-    public static TheoryData<string> GetOperandFollowedByPrefixUnaryOperatorData(IFixture fixture)
+    public static TheoryData<string> GetOperandFollowedByPrefixUnaryOperatorData(Fixture fixture)
     {
         return new TheoryData<string>
         {
@@ -88,7 +88,7 @@ public class ParsedExpressionFactoryTestsData
         };
     }
 
-    public static TheoryData<string> GetOperandFollowedByPrefixTypeConverterData(IFixture fixture)
+    public static TheoryData<string> GetOperandFollowedByPrefixTypeConverterData(Fixture fixture)
     {
         return new TheoryData<string>
         {
@@ -102,7 +102,7 @@ public class ParsedExpressionFactoryTestsData
         };
     }
 
-    public static TheoryData<string> GetOperandFollowedByOpenParenthesisData(IFixture fixture)
+    public static TheoryData<string> GetOperandFollowedByOpenParenthesisData(Fixture fixture)
     {
         return new TheoryData<string>
         {
@@ -116,7 +116,7 @@ public class ParsedExpressionFactoryTestsData
         };
     }
 
-    public static TheoryData<string> GetOperandFollowedByTypeDeclarationData(IFixture fixture)
+    public static TheoryData<string> GetOperandFollowedByTypeDeclarationData(Fixture fixture)
     {
         return new TheoryData<string>
         {
@@ -130,7 +130,7 @@ public class ParsedExpressionFactoryTestsData
         };
     }
 
-    public static TheoryData<string> GetClosedParenthesisDoesNotHaveCorrespondingOpenParenthesisData(IFixture fixture)
+    public static TheoryData<string> GetClosedParenthesisDoesNotHaveCorrespondingOpenParenthesisData(Fixture fixture)
     {
         return new TheoryData<string>
         {
@@ -185,7 +185,7 @@ public class ParsedExpressionFactoryTestsData
         };
     }
 
-    public static TheoryData<string> GetPrefixUnaryConstructIsFollowedByAnotherConstructData(IFixture fixture)
+    public static TheoryData<string> GetPrefixUnaryConstructIsFollowedByAnotherConstructData(Fixture fixture)
     {
         return new TheoryData<string>
         {
@@ -202,7 +202,7 @@ public class ParsedExpressionFactoryTestsData
         };
     }
 
-    public static TheoryData<string, string[], string> GetMockedSimpleExpressionData(IFixture fixture)
+    public static TheoryData<string, string[], string> GetMockedSimpleExpressionData(Fixture fixture)
     {
         return new TheoryData<string, string[], string>
         {
@@ -582,7 +582,7 @@ public class ParsedExpressionFactoryTestsData
         };
     }
 
-    public static TheoryData<string, string> GetMockedExpressionWithDifferencesInPrecedenceData(IFixture fixture)
+    public static TheoryData<string, string> GetMockedExpressionWithDifferencesInPrecedenceData(Fixture fixture)
     {
         return new TheoryData<string, string>
         {
@@ -675,7 +675,7 @@ public class ParsedExpressionFactoryTestsData
         };
     }
 
-    public static TheoryData<string, string[], string> GetMockedExpressionWithOperatorAmbiguityData(IFixture fixture)
+    public static TheoryData<string, string[], string> GetMockedExpressionWithOperatorAmbiguityData(Fixture fixture)
     {
         //  PRE  BIN  POS
         //   ^
@@ -1474,7 +1474,7 @@ public class ParsedExpressionFactoryTestsData
         };
     }
 
-    public static TheoryData<string, string> GetCorrectBinaryOperatorSpecializationsData(IFixture fixture)
+    public static TheoryData<string, string> GetCorrectBinaryOperatorSpecializationsData(Fixture fixture)
     {
         return new TheoryData<string, string>
         {
@@ -1485,7 +1485,7 @@ public class ParsedExpressionFactoryTestsData
         };
     }
 
-    public static TheoryData<string, string> GetCorrectPrefixUnaryOperatorSpecializationsData(IFixture fixture)
+    public static TheoryData<string, string> GetCorrectPrefixUnaryOperatorSpecializationsData(Fixture fixture)
     {
         return new TheoryData<string, string>
         {
@@ -1494,7 +1494,7 @@ public class ParsedExpressionFactoryTestsData
         };
     }
 
-    public static TheoryData<string, string> GetCorrectPrefixTypeConverterSpecializationsData(IFixture fixture)
+    public static TheoryData<string, string> GetCorrectPrefixTypeConverterSpecializationsData(Fixture fixture)
     {
         return new TheoryData<string, string>
         {
@@ -1503,7 +1503,7 @@ public class ParsedExpressionFactoryTestsData
         };
     }
 
-    public static TheoryData<string, string> GetCorrectPostfixUnaryOperatorSpecializationsData(IFixture fixture)
+    public static TheoryData<string, string> GetCorrectPostfixUnaryOperatorSpecializationsData(Fixture fixture)
     {
         return new TheoryData<string, string>
         {
@@ -1512,7 +1512,7 @@ public class ParsedExpressionFactoryTestsData
         };
     }
 
-    public static TheoryData<string, string> GetCorrectPostfixTypeConverterSpecializationsData(IFixture fixture)
+    public static TheoryData<string, string> GetCorrectPostfixTypeConverterSpecializationsData(Fixture fixture)
     {
         return new TheoryData<string, string>
         {
@@ -1521,7 +1521,7 @@ public class ParsedExpressionFactoryTestsData
         };
     }
 
-    public static TheoryData<string, string> GetExpressionContainsFunctionData(IFixture fixture)
+    public static TheoryData<string, string> GetExpressionContainsFunctionData(Fixture fixture)
     {
         return new TheoryData<string, string>
         {
@@ -1533,7 +1533,7 @@ public class ParsedExpressionFactoryTestsData
         };
     }
 
-    public static TheoryData<string, string> GetPostfixUnaryOperatorAmbiguityIsResolvedInFunctionParametersData(IFixture fixture)
+    public static TheoryData<string, string> GetPostfixUnaryOperatorAmbiguityIsResolvedInFunctionParametersData(Fixture fixture)
     {
         return new TheoryData<string, string>
         {
@@ -1543,7 +1543,7 @@ public class ParsedExpressionFactoryTestsData
         };
     }
 
-    public static TheoryData<string, string> GetExpressionContainsVariadicFunctionData(IFixture fixture)
+    public static TheoryData<string, string> GetExpressionContainsVariadicFunctionData(Fixture fixture)
     {
         return new TheoryData<string, string>
         {
@@ -1554,7 +1554,7 @@ public class ParsedExpressionFactoryTestsData
         };
     }
 
-    public static TheoryData<string, string[], string[]> GetExpressionContainsInlineArrayData(IFixture fixture)
+    public static TheoryData<string, string[], string[]> GetExpressionContainsInlineArrayData(Fixture fixture)
     {
         return new TheoryData<string, string[], string[]>
         {
@@ -1565,7 +1565,7 @@ public class ParsedExpressionFactoryTestsData
         };
     }
 
-    public static TheoryData<string, string[]> GetPostfixUnaryOperatorAmbiguityIsResolvedInInlineArrayElementsData(IFixture fixture)
+    public static TheoryData<string, string[]> GetPostfixUnaryOperatorAmbiguityIsResolvedInInlineArrayElementsData(Fixture fixture)
     {
         return new TheoryData<string, string[]>
         {
@@ -1575,7 +1575,7 @@ public class ParsedExpressionFactoryTestsData
         };
     }
 
-    public static TheoryData<string, int> GetDelegateNestedInStaticDelegateCapturesManyParametersData(IFixture fixture)
+    public static TheoryData<string, int> GetDelegateNestedInStaticDelegateCapturesManyParametersData(Fixture fixture)
     {
         return new TheoryData<string, int>
         {
@@ -1636,7 +1636,7 @@ public class ParsedExpressionFactoryTestsData
         };
     }
 
-    public static TheoryData<string, int> GetDelegateNestedInNonStaticDelegateCapturesManyParametersData(IFixture fixture)
+    public static TheoryData<string, int> GetDelegateNestedInNonStaticDelegateCapturesManyParametersData(Fixture fixture)
     {
         return new TheoryData<string, int>
         {
@@ -1693,7 +1693,7 @@ public class ParsedExpressionFactoryTestsData
         };
     }
 
-    public static TheoryData<string, int, string> GetExpressionContainsArrayIndexerData(IFixture fixture)
+    public static TheoryData<string, int, string> GetExpressionContainsArrayIndexerData(Fixture fixture)
     {
         return new TheoryData<string, int, string>
         {
@@ -1702,7 +1702,7 @@ public class ParsedExpressionFactoryTestsData
         };
     }
 
-    public static TheoryData<string, int> GetExpressionContainsObjectIndexerData(IFixture fixture)
+    public static TheoryData<string, int> GetExpressionContainsObjectIndexerData(Fixture fixture)
     {
         return new TheoryData<string, int>
         {

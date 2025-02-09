@@ -44,7 +44,7 @@ public class StateMachineBuilderTests : TestsBase
     [Fact]
     public void SetDefaultResult_ShouldUpdateDefaultResult()
     {
-        var (oldValue, value) = Fixture.CreateDistinctCollection<string>( count: 2 );
+        var (oldValue, value) = Fixture.CreateManyDistinct<string>( count: 2 );
         var sut = new StateMachineBuilder<string, int, string>( oldValue );
 
         var result = sut.SetDefaultResult( value );
@@ -98,7 +98,7 @@ public class StateMachineBuilderTests : TestsBase
     [Fact]
     public void AddTransition_ShouldAddNewTransition_WhenSourceAndDestinationStatesDoNotExist()
     {
-        var (source, destination) = Fixture.CreateDistinctCollection<string>( count: 2 );
+        var (source, destination) = Fixture.CreateManyDistinct<string>( count: 2 );
         var input = Fixture.Create<int>();
         var expectedStates = new[]
         {
@@ -124,7 +124,7 @@ public class StateMachineBuilderTests : TestsBase
     [Fact]
     public void AddTransition_ShouldAddNewTransition_WhenSourceStateExistsAndDestinationStateDoesNotExist()
     {
-        var (source, destination) = Fixture.CreateDistinctCollection<string>( count: 2 );
+        var (source, destination) = Fixture.CreateManyDistinct<string>( count: 2 );
         var input = Fixture.Create<int>();
         var expectedStates = new[]
         {
@@ -150,7 +150,7 @@ public class StateMachineBuilderTests : TestsBase
     [Fact]
     public void AddTransition_ShouldAddNewTransition_WhenSourceStateDoesNotExistAndDestinationStateExists()
     {
-        var (source, destination) = Fixture.CreateDistinctCollection<string>( count: 2 );
+        var (source, destination) = Fixture.CreateManyDistinct<string>( count: 2 );
         var input = Fixture.Create<int>();
         var expectedStates = new[]
         {
@@ -176,7 +176,7 @@ public class StateMachineBuilderTests : TestsBase
     [Fact]
     public void AddTransition_ShouldAddNewTransition_WhenSourceAndDestinationStatesExist()
     {
-        var (source, destination) = Fixture.CreateDistinctCollection<string>( count: 2 );
+        var (source, destination) = Fixture.CreateManyDistinct<string>( count: 2 );
         var input = Fixture.Create<int>();
         var expectedStates = new[]
         {
@@ -203,8 +203,8 @@ public class StateMachineBuilderTests : TestsBase
     [Fact]
     public void AddTransition_ShouldAddNewTransition_WhenSourceStateAlreadyHasOtherTransition()
     {
-        var (source, destination, existingDestination) = Fixture.CreateDistinctCollection<string>( count: 3 );
-        var (input, existingInput) = Fixture.CreateDistinctCollection<int>( count: 2 );
+        var (source, destination, existingDestination) = Fixture.CreateManyDistinct<string>( count: 3 );
+        var (input, existingInput) = Fixture.CreateManyDistinct<int>( count: 2 );
         var expectedStates = new[]
         {
             KeyValuePair.Create( source, StateMachineNodeType.Default ),
@@ -254,7 +254,7 @@ public class StateMachineBuilderTests : TestsBase
     [Fact]
     public void AddTransition_ShouldThrowStateMachineTransitionException_WhenTransitionFromSourceStateWithProvidedInputAlreadyExists()
     {
-        var (source, destination, otherDestination) = Fixture.CreateDistinctCollection<string>( count: 3 );
+        var (source, destination, otherDestination) = Fixture.CreateManyDistinct<string>( count: 3 );
         var input = Fixture.Create<int>();
 
         var sut = new StateMachineBuilder<string, int, string>( Fixture.Create<string>() );
@@ -493,7 +493,7 @@ public class StateMachineBuilderTests : TestsBase
     [Fact]
     public void MarkAsDefault_ShouldReplaceActiveInitialState_WhenOtherStateIsMarkedAsInitial()
     {
-        var (state, other) = Fixture.CreateDistinctCollection<string>( count: 2 );
+        var (state, other) = Fixture.CreateManyDistinct<string>( count: 2 );
         var expectedStates = new[]
         {
             KeyValuePair.Create( state, StateMachineNodeType.Initial ), KeyValuePair.Create( other, StateMachineNodeType.Default )

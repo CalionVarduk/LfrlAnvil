@@ -756,7 +756,7 @@ public class ZonedYearTests : TestsBase
     public void GetWeekOfYear_ShouldBeEquivalentToToZonedWeekCreate(IsoDayOfWeek weekStart)
     {
         var dateTime = Fixture.Create<DateTime>();
-        var weekOfYear = Fixture.CreatePositiveInt32() % 50 + 1;
+        var weekOfYear = Fixture.Create<int>( x => x > 0 ) % 50 + 1;
         var timeZone = TimeZoneFactory.CreateRandom( Fixture );
         var sut = ZonedYear.Create( dateTime, timeZone );
         var expected = ZonedWeek.Create( dateTime.Year, weekOfYear, timeZone, weekStart );
@@ -777,7 +777,7 @@ public class ZonedYearTests : TestsBase
     public void TryGetWeekOfYear_ShouldBeEquivalentToToZonedWeekCreate(IsoDayOfWeek weekStart)
     {
         var dateTime = Fixture.Create<DateTime>();
-        var weekOfYear = Fixture.CreatePositiveInt32() % 50 + 1;
+        var weekOfYear = Fixture.Create<int>( x => x > 0 ) % 50 + 1;
         var timeZone = TimeZoneFactory.CreateRandom( Fixture );
         var sut = ZonedYear.Create( dateTime, timeZone );
         var expected = ZonedWeek.Create( dateTime.Year, weekOfYear, timeZone, weekStart );

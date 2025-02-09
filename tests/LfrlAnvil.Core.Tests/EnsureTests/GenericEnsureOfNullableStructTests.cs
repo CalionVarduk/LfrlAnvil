@@ -21,7 +21,7 @@ public abstract class GenericEnsureOfNullableStructTests<T> : GenericEnsureTests
     [Fact]
     public void IsNull_ShouldThrowArgumentException_WhenParamIsNotNull()
     {
-        var param = Fixture.CreateNullable<T>();
+        var param = Fixture.Create<T?>();
         ShouldThrowArgumentException( () => Ensure.IsNull( param ) );
     }
 
@@ -34,7 +34,7 @@ public abstract class GenericEnsureOfNullableStructTests<T> : GenericEnsureTests
     [Fact]
     public void IsNotNull_ShouldPass_WhenParamIsNotNull()
     {
-        var param = Fixture.CreateNullable<T>();
+        var param = Fixture.Create<T?>();
         ShouldPass( () => Ensure.IsNotNull( param ) );
     }
 
@@ -60,42 +60,42 @@ public abstract class GenericEnsureOfNullableStructTests<T> : GenericEnsureTests
     [Fact]
     public void IsDefault_ShouldThrowArgumentException_WhenParamHasDefaultUnderlyingValue()
     {
-        var param = Fixture.CreateDefaultNullable<T>();
+        var param = ( T? )Fixture.CreateDefault<T>();
         ShouldThrowArgumentException( () => Ensure.IsDefault( param ) );
     }
 
     [Fact]
     public void IsNotDefault_ShouldPass_WhenParamHasDefaultUnderlyingValue()
     {
-        var param = Fixture.CreateDefaultNullable<T>();
+        var param = ( T? )Fixture.CreateDefault<T>();
         ShouldPass( () => Ensure.IsNotDefault( param ) );
     }
 
     [Fact]
     public void IsOfType_ShouldThrowArgumentException_WhenUnderlyingValueIsNotNull()
     {
-        var param = Fixture.CreateNullable<T>()!;
+        var param = Fixture.Create<T?>()!;
         ShouldThrowArgumentException( () => Ensure.IsOfType<T?>( param ) );
     }
 
     [Fact]
     public void IsOfType_ShouldPass_WhenUnderlyingValueIsNotNullAndWithComparisonToUnderlyingType()
     {
-        var param = Fixture.CreateNullable<T>()!;
+        var param = Fixture.Create<T?>()!;
         ShouldPass( () => Ensure.IsOfType<T>( param ) );
     }
 
     [Fact]
     public void IsNotOfType_ShouldPass_WhenUnderlyingValueIsNotNull()
     {
-        var param = Fixture.CreateNullable<T>()!;
+        var param = Fixture.Create<T?>()!;
         ShouldPass( () => Ensure.IsNotOfType<T?>( param ) );
     }
 
     [Fact]
     public void IsNotOfType_ShouldThrowArgumentException_WhenUnderlyingValueIsNotNullAndWithComparisonToUnderlyingType()
     {
-        var param = Fixture.CreateNullable<T>()!;
+        var param = Fixture.Create<T?>()!;
         ShouldThrowArgumentException( () => Ensure.IsNotOfType<T>( param ) );
     }
 

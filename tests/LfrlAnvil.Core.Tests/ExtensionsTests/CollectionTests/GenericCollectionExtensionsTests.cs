@@ -117,7 +117,7 @@ public abstract class GenericCollectionExtensionsTests<T> : TestsBase
     [InlineData( 3 )]
     public void ContainsInRange_ShouldReturnFalseWhenMaxCountIsLessThanMinCount(int count)
     {
-        var (max, min) = Fixture.CreateDistinctSortedCollection<int>( 2 );
+        var (max, min) = Fixture.CreateManyDistinctSorted<int>( count: 2 );
         var sut = Fixture.CreateMany<T>( count ).ToList();
 
         var result = sut.ContainsInRange( min, max );
@@ -162,7 +162,7 @@ public abstract class GenericCollectionExtensionsTests<T> : TestsBase
     [InlineData( 3, 4, true )]
     public void ContainsInRange_ShouldReturnCorrectResultWhenMinCountIsNegative(int count, int maxCount, bool expected)
     {
-        var minCount = Fixture.CreateNegativeInt32();
+        var minCount = -Fixture.Create<int>( x => x > 0 );
         var sut = Fixture.CreateMany<T>( count ).ToList();
 
         var result = sut.ContainsInRange( minCount, maxCount );
@@ -223,7 +223,7 @@ public abstract class GenericCollectionExtensionsTests<T> : TestsBase
     [InlineData( 3 )]
     public void ContainsExactly_ShouldReturnFalseWhenCountIsNegative(int sourceCount)
     {
-        var count = Fixture.CreateNegativeInt32();
+        var count = -Fixture.Create<int>( x => x > 0 );
         var sut = Fixture.CreateMany<T>( sourceCount ).ToList();
 
         var result = sut.ContainsExactly( count );
@@ -262,7 +262,7 @@ public abstract class GenericCollectionExtensionsTests<T> : TestsBase
     [Fact]
     public void CopyTo_ShouldCopyElementsFromSourceToSpan_WhenSpanIsLargerThanSource()
     {
-        var elements = Fixture.CreateDistinctCollection<T>( count: 4 );
+        var elements = Fixture.CreateManyDistinct<T>( count: 4 );
         var pool = new MemorySequencePool<T>( 8 );
         var span = pool.Rent( 4 );
         span[^1] = elements[^1];

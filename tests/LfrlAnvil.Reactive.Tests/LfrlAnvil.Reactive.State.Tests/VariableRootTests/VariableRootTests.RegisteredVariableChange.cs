@@ -10,7 +10,7 @@ public partial class VariableRootTests
     public void RegisteredVariableChange_ShouldBeListenedToByRoot_WhenVariableBecomesChangedAndDirty()
     {
         var key = Fixture.Create<string>();
-        var (value, newValue) = Fixture.CreateDistinctCollection<int>( count: 2 );
+        var (value, newValue) = Fixture.CreateManyDistinct<int>( count: 2 );
         var variable = Variable.WithoutValidators<string>.Create( value );
         var sut = new VariableRootMock();
         sut.ExposedRegisterNode( key, variable );
@@ -191,7 +191,7 @@ public partial class VariableRootTests
     [Fact]
     public void RegisteredVariableChange_ShouldBeListenedToByRoot_WhenOneOfVariablesBecomesReadOnly()
     {
-        var (key1, key2) = Fixture.CreateDistinctCollection<string>( count: 2 );
+        var (key1, key2) = Fixture.CreateManyDistinct<string>( count: 2 );
         var value = Fixture.Create<int>();
         var variable1 = Variable.WithoutValidators<string>.Create( value );
         var variable2 = Variable.WithoutValidators<string>.Create( value );
@@ -216,7 +216,7 @@ public partial class VariableRootTests
     public void RegisteredVariableChange_ShouldBeListenedToByRoot_WhenVariableStopsBeingChanged()
     {
         var key = Fixture.Create<string>();
-        var (value, newValue) = Fixture.CreateDistinctCollection<int>( count: 2 );
+        var (value, newValue) = Fixture.CreateManyDistinct<int>( count: 2 );
         var variable = Variable.WithoutValidators<string>.Create( value );
         variable.Change( newValue );
         var sut = new VariableRootMock();
@@ -337,8 +337,8 @@ public partial class VariableRootTests
     [Fact]
     public void RegisteredVariableChange_ShouldBeListenedToByRoot_WhenOneOfVariablesStopsBeingChanged()
     {
-        var (key1, key2) = Fixture.CreateDistinctCollection<string>( count: 2 );
-        var (value, newValue) = Fixture.CreateDistinctCollection<int>( count: 2 );
+        var (key1, key2) = Fixture.CreateManyDistinct<string>( count: 2 );
+        var (value, newValue) = Fixture.CreateManyDistinct<int>( count: 2 );
         var variable1 = Variable.WithoutValidators<string>.Create( value, newValue );
         var variable2 = Variable.WithoutValidators<string>.Create( value, newValue );
         var sut = new VariableRootMock();
@@ -362,7 +362,7 @@ public partial class VariableRootTests
     public void RegisteredVariableChange_ShouldBeListenedToByRoot_WhenOneOfVariablesStopsBeingInvalid()
     {
         var enableValidator = true;
-        var (key1, key2) = Fixture.CreateDistinctCollection<string>( count: 2 );
+        var (key1, key2) = Fixture.CreateManyDistinct<string>( count: 2 );
         var value = Fixture.Create<int>();
         var errorsValidator = Validators<string>.IfTrue( _ => enableValidator, Validators<string>.Fail<int>( Fixture.Create<string>() ) );
         var variable1 = Variable.Create( value, errorsValidator: errorsValidator );
@@ -391,7 +391,7 @@ public partial class VariableRootTests
     public void RegisteredVariableChange_ShouldBeListenedToByRoot_WhenOneOfVariablesStopsBeingWarning()
     {
         var enableValidator = true;
-        var (key1, key2) = Fixture.CreateDistinctCollection<string>( count: 2 );
+        var (key1, key2) = Fixture.CreateManyDistinct<string>( count: 2 );
         var value = Fixture.Create<int>();
         var errorsValidator = Validators<string>.Pass<int>();
         var warningsValidator = Validators<string>.IfTrue( _ => enableValidator, Validators<string>.Fail<int>( Fixture.Create<string>() ) );
@@ -420,7 +420,7 @@ public partial class VariableRootTests
     [Fact]
     public void RegisteredVariableChange_ShouldBeListenedToByRoot_WhenOneOfVariablesStopsBeingReadOnly()
     {
-        var (key1, key2) = Fixture.CreateDistinctCollection<string>( count: 2 );
+        var (key1, key2) = Fixture.CreateManyDistinct<string>( count: 2 );
         var value = Fixture.Create<int>();
         var variable1 = Variable.WithoutValidators<string>.Create( value );
         variable1.SetReadOnly( true );

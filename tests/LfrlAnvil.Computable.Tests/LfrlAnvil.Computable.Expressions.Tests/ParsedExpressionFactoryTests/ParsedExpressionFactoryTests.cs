@@ -48,7 +48,7 @@ public partial class ParsedExpressionFactoryTests : TestsBase
     [Fact]
     public void Create_ShouldReturnExpressionWithCorrectArgumentIndexes()
     {
-        var (aValue, bValue, cValue, dValue) = Fixture.CreateDistinctCollection<decimal>( count: 4 );
+        var (aValue, bValue, cValue, dValue) = Fixture.CreateManyDistinct<decimal>( count: 4 );
         var expected = aValue + bValue + cValue + aValue + cValue + dValue + bValue;
 
         var input = "a + b + c + a + c + d + b";
@@ -1979,7 +1979,7 @@ public partial class ParsedExpressionFactoryTests : TestsBase
     [Fact]
     public void Create_ShouldReturnExpressionWithCorrectArgumentIndexes_WhenArgumentsAreUsedAsFunctionParameters()
     {
-        var (aValue, bValue, cValue, dValue) = Fixture.CreateDistinctCollection<decimal>( count: 4 );
+        var (aValue, bValue, cValue, dValue) = Fixture.CreateManyDistinct<decimal>( count: 4 );
         var expected = aValue + bValue + cValue + bValue + dValue + dValue + cValue;
         var input = "a + b + foo( c , b , d ) + d + c";
 
@@ -7204,7 +7204,7 @@ a + b + c + d + e + f + g + h + i + j ) ( 'a' , 'b' , 'c' , 'd' , 'e' , 'f' , 'g
     [Fact]
     public void Create_ShouldNotRemoveIndexersFromNonParameterExpressionArray_WhenTryingToRemoveUnusedArguments()
     {
-        var (aValue, externalValue) = Fixture.CreateDistinctCollection<int>( count: 2 );
+        var (aValue, externalValue) = Fixture.CreateManyDistinct<int>( count: 2 );
         var expected = aValue + externalValue;
 
         var input = "a + external_at 0";
@@ -7235,7 +7235,7 @@ a + b + c + d + e + f + g + h + i + j ) ( 'a' , 'b' , 'c' , 'd' , 'e' , 'f' , 'g
     [InlineData( 2 )]
     public void Create_ShouldIgnoreParameterArrayIndexesThatAreOutOfRange_WhenTryingToRemoveUnusedArguments(int index)
     {
-        var (aValue, bValue) = Fixture.CreateDistinctCollection<int>( count: 2 );
+        var (aValue, bValue) = Fixture.CreateManyDistinct<int>( count: 2 );
 
         var input = "a + external_parameter_accessor b";
         var builder = new ParsedExpressionFactoryBuilder()
@@ -7263,7 +7263,7 @@ a + b + c + d + e + f + g + h + i + j ) ( 'a' , 'b' , 'c' , 'd' , 'e' , 'f' , 'g
     [Fact]
     public void Create_ShouldIgnoreParameterArrayIndexesThatAreNotConstant_WhenTryingToRemoveUnusedArguments()
     {
-        var (aValue, bValue, cValue) = Fixture.CreateDistinctCollection<int>( count: 3 );
+        var (aValue, bValue, cValue) = Fixture.CreateManyDistinct<int>( count: 3 );
         var expected = aValue + bValue + bValue + cValue;
 
         var input = "a + external_parameter_accessor b + c";

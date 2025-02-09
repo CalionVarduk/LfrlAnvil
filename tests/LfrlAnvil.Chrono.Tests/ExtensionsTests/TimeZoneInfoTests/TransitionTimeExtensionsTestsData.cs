@@ -2,7 +2,7 @@
 
 public class TransitionTimeExtensionsTestsData
 {
-    public static TheoryData<DateTime, int, DateTime> GetToDateTimeWithFixedTimeData(IFixture fixture)
+    public static TheoryData<DateTime, int, DateTime> GetToDateTimeWithFixedTimeData(Fixture fixture)
     {
         return new TheoryData<DateTime, int, DateTime>
         {
@@ -14,7 +14,7 @@ public class TransitionTimeExtensionsTestsData
     }
 
     public static TheoryData<TimeSpan, int, int, DayOfWeek, int, DateTime> GetToDateTimeWithFloatingTimeData(
-        IFixture fixture)
+        Fixture fixture)
     {
         var timeOfDay = new TimeSpan( 0, 12, 30, 40, 500 );
         var year = 2021;

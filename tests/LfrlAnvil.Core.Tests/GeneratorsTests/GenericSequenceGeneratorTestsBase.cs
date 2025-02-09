@@ -75,7 +75,7 @@ public abstract class GenericSequenceGeneratorTestsBase<T> : TestsBase
     [Fact]
     public void Ctor_WithBounds_ShouldReturnCorrectResult()
     {
-        var (min, max) = Fixture.CreateDistinctSortedCollection<T>( 2 );
+        var (min, max) = Fixture.CreateManyDistinctSorted<T>( count: 2 );
         var expectedBounds = Bounds.Create( min, max );
         var expectedStep = GetDefaultStep();
 
@@ -93,7 +93,7 @@ public abstract class GenericSequenceGeneratorTestsBase<T> : TestsBase
     [Fact]
     public void Ctor_WithBoundsAndStart_ShouldReturnCorrectResult_WhenStartIsExclusivelyContainedInBounds()
     {
-        var (min, start, max) = Fixture.CreateDistinctSortedCollection<T>( 3 );
+        var (min, start, max) = Fixture.CreateManyDistinctSorted<T>( count: 3 );
         var expectedBounds = Bounds.Create( min, max );
         var expectedStep = GetDefaultStep();
 
@@ -111,7 +111,7 @@ public abstract class GenericSequenceGeneratorTestsBase<T> : TestsBase
     [Fact]
     public void Ctor_WithBoundsAndStart_ShouldReturnCorrectResult_WhenStartIsEqualToMin()
     {
-        var (min, max) = Fixture.CreateDistinctSortedCollection<T>( 2 );
+        var (min, max) = Fixture.CreateManyDistinctSorted<T>( count: 2 );
         var expectedBounds = Bounds.Create( min, max );
         var expectedStep = GetDefaultStep();
 
@@ -129,7 +129,7 @@ public abstract class GenericSequenceGeneratorTestsBase<T> : TestsBase
     [Fact]
     public void Ctor_WithBoundsAndStart_ShouldReturnCorrectResult_WhenStartIsEqualToMax()
     {
-        var (min, max) = Fixture.CreateDistinctSortedCollection<T>( 2 );
+        var (min, max) = Fixture.CreateManyDistinctSorted<T>( count: 2 );
         var expectedBounds = Bounds.Create( min, max );
         var expectedStep = GetDefaultStep();
 
@@ -147,7 +147,7 @@ public abstract class GenericSequenceGeneratorTestsBase<T> : TestsBase
     [Fact]
     public void Ctor_WithBoundsAndStart_ShouldThrowArgumentOutOfRangeException_WhenStartIsLessThanMin()
     {
-        var (start, min, max) = Fixture.CreateDistinctSortedCollection<T>( 3 );
+        var (start, min, max) = Fixture.CreateManyDistinctSorted<T>( count: 3 );
         var expectedBounds = Bounds.Create( min, max );
 
         var action = Lambda.Of( () => Create( expectedBounds, start ) );
@@ -158,7 +158,7 @@ public abstract class GenericSequenceGeneratorTestsBase<T> : TestsBase
     [Fact]
     public void Ctor_WithBoundsAndStart_ShouldThrowArgumentOutOfRangeException_WhenStartIsGreaterThanMax()
     {
-        var (min, max, start) = Fixture.CreateDistinctSortedCollection<T>( 3 );
+        var (min, max, start) = Fixture.CreateManyDistinctSorted<T>( count: 3 );
         var expectedBounds = Bounds.Create( min, max );
 
         var action = Lambda.Of( () => Create( expectedBounds, start ) );
@@ -169,7 +169,7 @@ public abstract class GenericSequenceGeneratorTestsBase<T> : TestsBase
     [Fact]
     public void Ctor_WithBoundsAndStartAndStep_ShouldReturnCorrectResult_WhenStartIsExclusivelyContainedInBounds()
     {
-        var (min, start, max) = Fixture.CreateDistinctSortedCollection<T>( 3 );
+        var (min, start, max) = Fixture.CreateManyDistinctSorted<T>( count: 3 );
         var expectedBounds = Bounds.Create( min, max );
         var expectedStep = Fixture.CreateNotDefault<T>();
 
@@ -187,7 +187,7 @@ public abstract class GenericSequenceGeneratorTestsBase<T> : TestsBase
     [Fact]
     public void Ctor_WithBoundsAndStartAndStep_ShouldReturnCorrectResult_WhenStartIsEqualToMin()
     {
-        var (min, max) = Fixture.CreateDistinctSortedCollection<T>( 2 );
+        var (min, max) = Fixture.CreateManyDistinctSorted<T>( count: 2 );
         var expectedBounds = Bounds.Create( min, max );
         var expectedStep = Fixture.CreateNotDefault<T>();
 
@@ -205,7 +205,7 @@ public abstract class GenericSequenceGeneratorTestsBase<T> : TestsBase
     [Fact]
     public void Ctor_WithBoundsAndStartAndStep_ShouldReturnCorrectResult_WhenStartIsEqualToMax()
     {
-        var (min, max) = Fixture.CreateDistinctSortedCollection<T>( 2 );
+        var (min, max) = Fixture.CreateManyDistinctSorted<T>( count: 2 );
         var expectedBounds = Bounds.Create( min, max );
         var expectedStep = Fixture.CreateNotDefault<T>();
 
@@ -223,7 +223,7 @@ public abstract class GenericSequenceGeneratorTestsBase<T> : TestsBase
     [Fact]
     public void Ctor_WithBoundsAndStartAndStep_ShouldThrowArgumentOutOfRangeException_WhenStartIsLessThanMin()
     {
-        var (start, min, max) = Fixture.CreateDistinctSortedCollection<T>( 3 );
+        var (start, min, max) = Fixture.CreateManyDistinctSorted<T>( count: 3 );
         var expectedBounds = Bounds.Create( min, max );
         var expectedStep = Fixture.CreateNotDefault<T>();
 
@@ -235,7 +235,7 @@ public abstract class GenericSequenceGeneratorTestsBase<T> : TestsBase
     [Fact]
     public void Ctor_WithBoundsAndStartAndStep_ShouldThrowArgumentOutOfRangeException_WhenStartIsGreaterThanMax()
     {
-        var (min, max, start) = Fixture.CreateDistinctSortedCollection<T>( 3 );
+        var (min, max, start) = Fixture.CreateManyDistinctSorted<T>( count: 3 );
         var expectedBounds = Bounds.Create( min, max );
         var expectedStep = Fixture.CreateNotDefault<T>();
 
@@ -247,7 +247,7 @@ public abstract class GenericSequenceGeneratorTestsBase<T> : TestsBase
     [Fact]
     public void Ctor_WithBoundsAndStartAndStep_ShouldThrowArgumentException_WhenStepIsInvalid()
     {
-        var (min, start, max) = Fixture.CreateDistinctSortedCollection<T>( 3 );
+        var (min, start, max) = Fixture.CreateManyDistinctSorted<T>( count: 3 );
         var expectedBounds = Bounds.Create( min, max );
         var expectedStep = Fixture.CreateDefault<T>();
 
@@ -259,7 +259,7 @@ public abstract class GenericSequenceGeneratorTestsBase<T> : TestsBase
     [Fact]
     public void Reset_ShouldChangeNextGeneratedValue_WhenStartIsExclusivelyContainedInBounds()
     {
-        var (min, start, max) = Fixture.CreateDistinctSortedCollection<T>( 3 );
+        var (min, start, max) = Fixture.CreateManyDistinctSorted<T>( count: 3 );
         var sut = Create( Bounds.Create( min, max ) );
 
         sut.Reset( start );
@@ -271,7 +271,7 @@ public abstract class GenericSequenceGeneratorTestsBase<T> : TestsBase
     [Fact]
     public void Reset_ShouldChangeNextGeneratedValue_WhenStartIsEqualToMin()
     {
-        var (min, max) = Fixture.CreateDistinctSortedCollection<T>( 2 );
+        var (min, max) = Fixture.CreateManyDistinctSorted<T>( count: 2 );
         var sut = Create( Bounds.Create( min, max ), max );
 
         sut.Reset( min );
@@ -283,7 +283,7 @@ public abstract class GenericSequenceGeneratorTestsBase<T> : TestsBase
     [Fact]
     public void Reset_ShouldChangeNextGeneratedValue_WhenStartIsEqualToMax()
     {
-        var (min, max) = Fixture.CreateDistinctSortedCollection<T>( 2 );
+        var (min, max) = Fixture.CreateManyDistinctSorted<T>( count: 2 );
         var sut = Create( Bounds.Create( min, max ) );
 
         sut.Reset( max );
@@ -295,7 +295,7 @@ public abstract class GenericSequenceGeneratorTestsBase<T> : TestsBase
     [Fact]
     public void Reset_ShouldThrowArgumentOutOfRangeException_WhenStartIsLessThanMin()
     {
-        var (start, min, max) = Fixture.CreateDistinctSortedCollection<T>( 3 );
+        var (start, min, max) = Fixture.CreateManyDistinctSorted<T>( count: 3 );
         var sut = Create( Bounds.Create( min, max ) );
 
         var action = Lambda.Of( () => sut.Reset( start ) );
@@ -306,7 +306,7 @@ public abstract class GenericSequenceGeneratorTestsBase<T> : TestsBase
     [Fact]
     public void Reset_ShouldThrowArgumentOutOfRangeException_WhenStartIsGreaterThanMax()
     {
-        var (min, max, start) = Fixture.CreateDistinctSortedCollection<T>( 3 );
+        var (min, max, start) = Fixture.CreateManyDistinctSorted<T>( count: 3 );
         var sut = Create( Bounds.Create( min, max ) );
 
         var action = Lambda.Of( () => sut.Reset( start ) );
@@ -331,7 +331,7 @@ public abstract class GenericSequenceGeneratorTestsBase<T> : TestsBase
     [Fact]
     public void Generate_ShouldThrowValueGenerationException_WhenNextValueIsGreaterThanMax()
     {
-        var (min, max) = Fixture.CreateDistinctSortedCollection<T>( 2 );
+        var (min, max) = Fixture.CreateManyDistinctSorted<T>( count: 2 );
         var step = GetDefaultStep();
         var sut = Create( Bounds.Create( min, max ), max, step );
         sut.Generate();
@@ -374,7 +374,7 @@ public abstract class GenericSequenceGeneratorTestsBase<T> : TestsBase
     [Fact]
     public void TryGenerate_ShouldReturnFalse_WhenNextValueIsGreaterThanMax()
     {
-        var (min, max) = Fixture.CreateDistinctSortedCollection<T>( 2 );
+        var (min, max) = Fixture.CreateManyDistinctSorted<T>( count: 2 );
         var step = GetDefaultStep();
         var sut = Create( Bounds.Create( min, max ), max, step );
         sut.Generate();

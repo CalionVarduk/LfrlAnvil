@@ -5,9 +5,9 @@ namespace LfrlAnvil.Tests.BoundsTests;
 public class GenericBoundsTestsData<T>
     where T : IComparable<T>
 {
-    public static TheoryData<T, T, T, T, bool> GetEqualsData(IFixture fixture)
+    public static TheoryData<T, T, T, T, bool> GetEqualsData(Fixture fixture)
     {
-        var (_1, _2, _3, _4) = fixture.CreateDistinctSortedCollection<T>( 4 );
+        var (_1, _2, _3, _4) = fixture.CreateManyDistinctSorted<T>( count: 4 );
 
         return new TheoryData<T, T, T, T, bool>
         {
@@ -18,14 +18,14 @@ public class GenericBoundsTestsData<T>
         };
     }
 
-    public static IEnumerable<object?[]> GetNotEqualsData(IFixture fixture)
+    public static IEnumerable<object?[]> GetNotEqualsData(Fixture fixture)
     {
         return GetEqualsData( fixture ).ConvertResult( (bool r) => ! r );
     }
 
-    public static TheoryData<T, T, T, T> GetClampData(IFixture fixture)
+    public static TheoryData<T, T, T, T> GetClampData(Fixture fixture)
     {
-        var (_1, _2, _3) = fixture.CreateDistinctSortedCollection<T>( 3 );
+        var (_1, _2, _3) = fixture.CreateManyDistinctSorted<T>( count: 3 );
 
         return new TheoryData<T, T, T, T>
         {
@@ -37,9 +37,9 @@ public class GenericBoundsTestsData<T>
         };
     }
 
-    public static TheoryData<T, T, T, bool> GetContainsData(IFixture fixture)
+    public static TheoryData<T, T, T, bool> GetContainsData(Fixture fixture)
     {
-        var (_1, _2, _3) = fixture.CreateDistinctSortedCollection<T>( 3 );
+        var (_1, _2, _3) = fixture.CreateManyDistinctSorted<T>( count: 3 );
 
         return new TheoryData<T, T, T, bool>
         {
@@ -51,9 +51,9 @@ public class GenericBoundsTestsData<T>
         };
     }
 
-    public static TheoryData<T, T, T, bool> GetContainsExclusivelyData(IFixture fixture)
+    public static TheoryData<T, T, T, bool> GetContainsExclusivelyData(Fixture fixture)
     {
-        var (_1, _2, _3) = fixture.CreateDistinctSortedCollection<T>( 3 );
+        var (_1, _2, _3) = fixture.CreateManyDistinctSorted<T>( count: 3 );
 
         return new TheoryData<T, T, T, bool>
         {
@@ -65,9 +65,9 @@ public class GenericBoundsTestsData<T>
         };
     }
 
-    public static TheoryData<T, T, T, T, bool> GetContainsForBoundsData(IFixture fixture)
+    public static TheoryData<T, T, T, T, bool> GetContainsForBoundsData(Fixture fixture)
     {
-        var (_1, _2, _3, _4) = fixture.CreateDistinctSortedCollection<T>( 4 );
+        var (_1, _2, _3, _4) = fixture.CreateManyDistinctSorted<T>( count: 4 );
 
         return new TheoryData<T, T, T, T, bool>
         {
@@ -86,9 +86,9 @@ public class GenericBoundsTestsData<T>
         };
     }
 
-    public static TheoryData<T, T, T, T, bool> GetContainsExclusivelyForBoundsData(IFixture fixture)
+    public static TheoryData<T, T, T, T, bool> GetContainsExclusivelyForBoundsData(Fixture fixture)
     {
-        var (_1, _2, _3, _4) = fixture.CreateDistinctSortedCollection<T>( 4 );
+        var (_1, _2, _3, _4) = fixture.CreateManyDistinctSorted<T>( count: 4 );
 
         return new TheoryData<T, T, T, T, bool>
         {
@@ -107,9 +107,9 @@ public class GenericBoundsTestsData<T>
         };
     }
 
-    public static TheoryData<T, T, T, T, bool> GetIntersectsForBoundsData(IFixture fixture)
+    public static TheoryData<T, T, T, T, bool> GetIntersectsForBoundsData(Fixture fixture)
     {
-        var (_1, _2, _3, _4) = fixture.CreateDistinctSortedCollection<T>( 4 );
+        var (_1, _2, _3, _4) = fixture.CreateManyDistinctSorted<T>( count: 4 );
 
         return new TheoryData<T, T, T, T, bool>
         {
@@ -128,9 +128,9 @@ public class GenericBoundsTestsData<T>
         };
     }
 
-    public static TheoryData<T, T, T, T, Bounds<T>?> GetIntersectionData(IFixture fixture)
+    public static TheoryData<T, T, T, T, Bounds<T>?> GetIntersectionData(Fixture fixture)
     {
-        var (_1, _2, _3, _4) = fixture.CreateDistinctSortedCollection<T>( 4 );
+        var (_1, _2, _3, _4) = fixture.CreateManyDistinctSorted<T>( count: 4 );
 
         return new TheoryData<T, T, T, T, Bounds<T>?>
         {
@@ -149,9 +149,9 @@ public class GenericBoundsTestsData<T>
         };
     }
 
-    public static TheoryData<T, T, T, T, Bounds<T>?> GetMergeWithData(IFixture fixture)
+    public static TheoryData<T, T, T, T, Bounds<T>?> GetMergeWithData(Fixture fixture)
     {
-        var (_1, _2, _3, _4) = fixture.CreateDistinctSortedCollection<T>( 4 );
+        var (_1, _2, _3, _4) = fixture.CreateManyDistinctSorted<T>( count: 4 );
 
         return new TheoryData<T, T, T, T, Bounds<T>?>
         {
@@ -169,9 +169,9 @@ public class GenericBoundsTestsData<T>
         };
     }
 
-    public static TheoryData<T, T, T, Bounds<T>, Bounds<T>?> GetSplitAtData(IFixture fixture)
+    public static TheoryData<T, T, T, Bounds<T>, Bounds<T>?> GetSplitAtData(Fixture fixture)
     {
-        var (_1, _2, _3) = fixture.CreateDistinctSortedCollection<T>( 3 );
+        var (_1, _2, _3) = fixture.CreateManyDistinctSorted<T>( count: 3 );
 
         return new TheoryData<T, T, T, Bounds<T>, Bounds<T>?>
         {
@@ -184,9 +184,9 @@ public class GenericBoundsTestsData<T>
         };
     }
 
-    public static TheoryData<T, T, T, T, Bounds<T>?, Bounds<T>?> GetRemoveData(IFixture fixture)
+    public static TheoryData<T, T, T, T, Bounds<T>?, Bounds<T>?> GetRemoveData(Fixture fixture)
     {
-        var (_1, _2, _3, _4) = fixture.CreateDistinctSortedCollection<T>( 4 );
+        var (_1, _2, _3, _4) = fixture.CreateManyDistinctSorted<T>( count: 4 );
 
         return new TheoryData<T, T, T, T, Bounds<T>?, Bounds<T>?>
         {

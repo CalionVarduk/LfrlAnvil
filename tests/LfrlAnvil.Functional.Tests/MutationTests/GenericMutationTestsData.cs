@@ -4,9 +4,9 @@ namespace LfrlAnvil.Functional.Tests.MutationTests;
 
 public class GenericMutationTestsData<T>
 {
-    public static TheoryData<T, T, T, T, bool> CreateEqualsTestData(IFixture fixture)
+    public static TheoryData<T, T, T, T, bool> CreateEqualsTestData(Fixture fixture)
     {
-        var (old1, old2, new1, new2) = fixture.CreateDistinctCollection<T>( 4 );
+        var (old1, old2, new1, new2) = fixture.CreateManyDistinct<T>( count: 4 );
 
         return new TheoryData<T, T, T, T, bool>
         {
@@ -17,7 +17,7 @@ public class GenericMutationTestsData<T>
         };
     }
 
-    public static IEnumerable<object?[]> CreateNotEqualsTestData(IFixture fixture)
+    public static IEnumerable<object?[]> CreateNotEqualsTestData(Fixture fixture)
     {
         return CreateEqualsTestData( fixture ).ConvertResult( (bool r) => ! r );
     }

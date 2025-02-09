@@ -7,7 +7,7 @@ public class FixedSequenceGeneratorTests : GenericSequenceGeneratorOfSignedTypeT
 {
     public FixedSequenceGeneratorTests()
     {
-        Fixture.Customize<Fixed>( c => c.FromFactory( () => Fixed.Create( Fixture.Create<long>() ) ) );
+        Fixture.Customize<Fixed>( (_, _) => f => Fixed.Create( f.Create<long>() ) );
     }
 
     protected sealed override Bounds<Fixed> GetDefaultBounds()

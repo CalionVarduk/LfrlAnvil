@@ -9,7 +9,7 @@ public abstract class GenericBoundsExtensionsTests<T> : TestsBase
     [Fact]
     public void AsEnumerable_ShouldReturnResultWithMinAndMax()
     {
-        var (min, max) = Fixture.CreateDistinctSortedCollection<T>( 2 );
+        var (min, max) = Fixture.CreateManyDistinctSorted<T>( count: 2 );
         var sut = Bounds.Create( min, max );
 
         var result = sut.AsEnumerable();

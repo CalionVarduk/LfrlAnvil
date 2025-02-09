@@ -96,8 +96,8 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     private void SetRoot_ShouldAddNewNodeAsRootCorrectly_WhenDictionaryHasRoot_Impl(
         Func<TreeDictionary<TKey, TValue>, TKey, TValue, TreeDictionaryNode<TKey, TValue>> setRoot)
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( 2 );
-        var values = Fixture.CreateDistinctCollection<TValue>( 2 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 2 );
+        var values = Fixture.CreateManyDistinct<TValue>( count: 2 );
         var sut = new TreeDictionary<TKey, TValue>();
         var oldRoot = sut.SetRoot( keys[0], values[0] );
 
@@ -137,7 +137,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
         Action<TreeDictionary<TKey, TValue>, TKey, TValue, ThrowResultInterceptor> setRoot)
     {
         var key = Fixture.Create<TKey>();
-        var values = Fixture.CreateDistinctCollection<TValue>( 2 );
+        var values = Fixture.CreateManyDistinct<TValue>( count: 2 );
         var sut = new TreeDictionary<TKey, TValue>();
         var root = sut.SetRoot( key, values[0] );
         var intercept = new ThrowResultInterceptor();
@@ -231,8 +231,8 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     private void Add_ShouldAddNewNodeAsRootChildCorrectly_WhenDictionaryHasRoot_Impl(
         Func<TreeDictionary<TKey, TValue>, TKey, TValue, TreeDictionaryNode<TKey, TValue>> add)
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( 2 );
-        var values = Fixture.CreateDistinctCollection<TValue>( 2 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 2 );
+        var values = Fixture.CreateManyDistinct<TValue>( count: 2 );
         var sut = new TreeDictionary<TKey, TValue>();
         var root = sut.SetRoot( keys[0], values[0] );
 
@@ -271,7 +271,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
         Action<TreeDictionary<TKey, TValue>, TKey, TValue, ThrowResultInterceptor> add)
     {
         var key = Fixture.Create<TKey>();
-        var values = Fixture.CreateDistinctCollection<TValue>( 2 );
+        var values = Fixture.CreateManyDistinct<TValue>( count: 2 );
         var sut = new TreeDictionary<TKey, TValue>();
         var root = sut.SetRoot( key, values[0] );
         var intercept = new ThrowResultInterceptor();
@@ -343,8 +343,8 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     private void AddTo_ShouldAddNewNodeCorrectly_WhenParentDoesNotHaveAnyChildren_Impl(
         Func<TreeDictionary<TKey, TValue>, TreeDictionaryNode<TKey, TValue>, TKey, TValue, TreeDictionaryNode<TKey, TValue>> addTo)
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( 3 );
-        var values = Fixture.CreateDistinctCollection<TValue>( 3 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 3 );
+        var values = Fixture.CreateManyDistinct<TValue>( count: 3 );
         var sut = new TreeDictionary<TKey, TValue>();
         var root = sut.Add( keys[0], values[0] );
         var parent = sut.Add( keys[1], values[1] );
@@ -403,8 +403,8 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     private void AddTo_ShouldAddNewNodeCorrectly_WhenParentHasOtherChild_Impl(
         Func<TreeDictionary<TKey, TValue>, TreeDictionaryNode<TKey, TValue>, TKey, TValue, TreeDictionaryNode<TKey, TValue>> addTo)
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( 4 );
-        var values = Fixture.CreateDistinctCollection<TValue>( 4 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 4 );
+        var values = Fixture.CreateManyDistinct<TValue>( count: 4 );
         var sut = new TreeDictionary<TKey, TValue>();
         var root = sut.Add( keys[0], values[0] );
         var parent = sut.Add( keys[1], values[1] );
@@ -464,7 +464,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
         Action<TreeDictionary<TKey, TValue>, TreeDictionaryNode<TKey, TValue>, TKey, TValue, ThrowResultInterceptor> addTo)
     {
         var key = Fixture.Create<TKey>();
-        var values = Fixture.CreateDistinctCollection<TValue>( 2 );
+        var values = Fixture.CreateManyDistinct<TValue>( count: 2 );
         var sut = new TreeDictionary<TKey, TValue>();
         var root = sut.SetRoot( key, values[0] );
         var intercept = new ThrowResultInterceptor();
@@ -487,7 +487,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     [Fact]
     public void AddTo_ShouldThrowKeyNotFoundException_WhenParentKeyDoesntExist()
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( 2 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 2 );
         var value = Fixture.Create<TValue>();
         var sut = new TreeDictionary<TKey, TValue>();
 
@@ -499,7 +499,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     [Fact]
     public void AddTo_WithNode_ShouldThrowKeyNotFoundException_WhenParentKeyDoesntExist()
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( 2 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 2 );
         var value = Fixture.Create<TValue>();
         var sut = new TreeDictionary<TKey, TValue>();
         var node = new TreeDictionaryNode<TKey, TValue>( keys[1], value );
@@ -512,8 +512,8 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     [Fact]
     public void AddTo_WithNode_ShouldThrowInvalidOperationException_WhenNodeIsAlreadyLinkedToAnyTree()
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( 2 );
-        var values = Fixture.CreateDistinctCollection<TValue>( 2 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 2 );
+        var values = Fixture.CreateManyDistinct<TValue>( count: 2 );
         var sut = new TreeDictionary<TKey, TValue>();
         var parent = sut.Add( keys[0], values[0] );
         var node = sut.Add( keys[1], values[1] );
@@ -526,8 +526,8 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     [Fact]
     public void AddTo_WithParentNode_ShouldThrowInvalidOperationException_WhenParentBelongsToDifferentTree()
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( 2 );
-        var values = Fixture.CreateDistinctCollection<TValue>( 2 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 2 );
+        var values = Fixture.CreateManyDistinct<TValue>( count: 2 );
         var other = new TreeDictionary<TKey, TValue>();
         var sut = new TreeDictionary<TKey, TValue> { { keys[0], values[0] } };
         var parent = other.SetRoot( keys[0], values[0] );
@@ -540,8 +540,8 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     [Fact]
     public void AddTo_WithParentNode_ShouldThrowInvalidOperationException_WhenParentIsNotLinkedToAnyTree()
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( 2 );
-        var values = Fixture.CreateDistinctCollection<TValue>( 2 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 2 );
+        var values = Fixture.CreateManyDistinct<TValue>( count: 2 );
         var sut = new TreeDictionary<TKey, TValue> { { keys[0], values[0] } };
         var parent = new TreeDictionaryNode<TKey, TValue>( keys[0], values[0] );
 
@@ -553,8 +553,8 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     [Fact]
     public void AddTo_WithParentNodeAndNewNode_ShouldThrowInvalidOperationException_WhenParentBelongsToDifferentTree()
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( 2 );
-        var values = Fixture.CreateDistinctCollection<TValue>( 2 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 2 );
+        var values = Fixture.CreateManyDistinct<TValue>( count: 2 );
         var other = new TreeDictionary<TKey, TValue>();
         var sut = new TreeDictionary<TKey, TValue> { { keys[0], values[0] } };
         var parent = other.SetRoot( keys[0], values[0] );
@@ -568,8 +568,8 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     [Fact]
     public void AddTo_WithParentNodeAndNewNode_ShouldThrowInvalidOperationException_WhenParentIsNotLinkedToAnyTree()
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( 2 );
-        var values = Fixture.CreateDistinctCollection<TValue>( 2 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 2 );
+        var values = Fixture.CreateManyDistinct<TValue>( count: 2 );
         var sut = new TreeDictionary<TKey, TValue> { { keys[0], values[0] } };
         var parent = new TreeDictionaryNode<TKey, TValue>( keys[0], values[0] );
         var node = new TreeDictionaryNode<TKey, TValue>( keys[1], values[1] );
@@ -582,8 +582,8 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     [Fact]
     public void AddTo_WithParentNodeAndNewNode_ShouldThrowInvalidOperationException_WhenNodeIsAlreadyLinkedToAnyTree()
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( 2 );
-        var values = Fixture.CreateDistinctCollection<TValue>( 2 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 2 );
+        var values = Fixture.CreateManyDistinct<TValue>( count: 2 );
         var sut = new TreeDictionary<TKey, TValue>();
         var parent = sut.Add( keys[0], values[0] );
         var node = sut.Add( keys[1], values[1] );
@@ -596,8 +596,8 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     [Fact]
     public void AddSubtree_ShouldAddNodesAsRoot_WhenDictionaryIsEmpty()
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( 3 );
-        var values = Fixture.CreateDistinctCollection<TValue>( 3 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 3 );
+        var values = Fixture.CreateManyDistinct<TValue>( count: 3 );
         var sut = new TreeDictionary<TKey, TValue>();
         var subtree = new TreeDictionary<TKey, TValue>
         {
@@ -634,8 +634,8 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     [Fact]
     public void AddSubtree_ShouldAddNodesAsChildOfRoot_WhenDictionaryHasNodes()
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( 6 );
-        var values = Fixture.CreateDistinctCollection<TValue>( 6 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 6 );
+        var values = Fixture.CreateManyDistinct<TValue>( count: 6 );
         var sut = new TreeDictionary<TKey, TValue>();
         var a = sut.Add( keys[0], values[0] );
         var b = sut.Add( keys[1], values[1] );
@@ -698,8 +698,8 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     private void AddSubtree_ShouldAddNodesCorrectly_WhenSubtreeKeysAreNotUniqueDueToDifferentComparers_Impl(
         Func<TreeDictionary<TKey, TValue>, TreeDictionaryNode<TKey, TValue>, TreeDictionaryNode<TKey, TValue>> addSubtree)
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( 4 );
-        var values = Fixture.CreateDistinctCollection<TValue>( 4 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 4 );
+        var values = Fixture.CreateManyDistinct<TValue>( count: 4 );
 
         var comparer = EqualityComparerFactory<TKey>.Create(
             (a, b) => ((a!.Equals( keys[1] ) || a.Equals( keys[2] )) && (b!.Equals( keys[1] ) || b.Equals( keys[2] ))) || a.Equals( b ),
@@ -751,8 +751,8 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
         Func<TreeDictionary<TKey, TValue>, TreeDictionaryNode<TKey, TValue>, TreeDictionaryNode<TKey, TValue>,
             TreeDictionaryNode<TKey, TValue>> addSubtreeTo)
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( 6 );
-        var values = Fixture.CreateDistinctCollection<TValue>( 6 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 6 );
+        var values = Fixture.CreateManyDistinct<TValue>( count: 6 );
         var sut = new TreeDictionary<TKey, TValue>();
         var a = sut.Add( keys[0], values[0] );
         var b = sut.Add( keys[1], values[1] );
@@ -813,8 +813,8 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     private void AddSubtree_ShouldThrowInvalidOperationException_WhenNodeBelongsToTree_Impl(
         Action<TreeDictionary<TKey, TValue>, TreeDictionaryNode<TKey, TValue>, TreeDictionaryNode<TKey, TValue>> addSubtree)
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( 2 );
-        var values = Fixture.CreateDistinctCollection<TValue>( 2 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 2 );
+        var values = Fixture.CreateManyDistinct<TValue>( count: 2 );
         var sut = new TreeDictionary<TKey, TValue>();
         var parent = sut.SetRoot( keys[0], values[0] );
         var node = sut.AddTo( parent, keys[1], values[1] );
@@ -845,8 +845,8 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     private void AddSubtree_ShouldThrowArgumentException_WhenTreeContainsAnyOfSubtreeKeys_Impl(
         Action<TreeDictionary<TKey, TValue>, TreeDictionaryNode<TKey, TValue>, TreeDictionaryNode<TKey, TValue>> addSubtree)
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( 5 );
-        var values = Fixture.CreateDistinctCollection<TValue>( 5 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 5 );
+        var values = Fixture.CreateManyDistinct<TValue>( count: 5 );
         var sut = new TreeDictionary<TKey, TValue>
         {
             { keys[0], values[0] },
@@ -871,7 +871,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     [Fact]
     public void AddSubtreeTo_ShouldThrowKeyNotFoundException_WhenParentKeyDoesntExist()
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( 2 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 2 );
         var value = Fixture.Create<TValue>();
         var sut = new TreeDictionary<TKey, TValue>();
         var subtree = new TreeDictionary<TKey, TValue> { { keys[1], value } };
@@ -884,8 +884,8 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     [Fact]
     public void AddSubtreeTo_WithParentNode_ShouldThrowInvalidOperationException_WhenParentBelongsToDifferentTree()
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( 2 );
-        var values = Fixture.CreateDistinctCollection<TValue>( 2 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 2 );
+        var values = Fixture.CreateManyDistinct<TValue>( count: 2 );
         var other = new TreeDictionary<TKey, TValue>();
         var sut = new TreeDictionary<TKey, TValue> { { keys[0], values[0] } };
         var parent = other.SetRoot( keys[0], values[0] );
@@ -899,8 +899,8 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     [Fact]
     public void AddSubtreeTo_WithParentNode_ShouldThrowInvalidOperationException_WhenParentNodeIsNotLinkedToAnyTree()
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( 2 );
-        var values = Fixture.CreateDistinctCollection<TValue>( 2 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 2 );
+        var values = Fixture.CreateManyDistinct<TValue>( count: 2 );
         var sut = new TreeDictionary<TKey, TValue>();
         var parent = new TreeDictionaryNode<TKey, TValue>( keys[0], values[0] );
         var subtree = new TreeDictionary<TKey, TValue> { { keys[1], values[1] } };
@@ -1021,8 +1021,8 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     private void Remove_ShouldReturnTrueAndRemoveCorrectExistingItem_WhenRemovingRoot_Impl(
         Func<TreeDictionary<TKey, TValue>, TreeDictionaryNode<TKey, TValue>, (bool Result, TValue? Removed)> remove)
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( 3 );
-        var values = Fixture.CreateDistinctCollection<TValue>( 3 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 3 );
+        var values = Fixture.CreateManyDistinct<TValue>( count: 3 );
         var sut = new TreeDictionary<TKey, TValue>();
         var root = sut.SetRoot( keys[0], values[0] );
         var firstChild = sut.AddTo( root, keys[1], values[1] );
@@ -1074,8 +1074,8 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     private void Remove_ShouldReturnTrueAndRemoveCorrectExistingItem_WhenRemovingNonRootNode_Impl(
         Func<TreeDictionary<TKey, TValue>, TreeDictionaryNode<TKey, TValue>, (bool Result, TValue? Removed)> remove)
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( 5 );
-        var values = Fixture.CreateDistinctCollection<TValue>( 5 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 5 );
+        var values = Fixture.CreateManyDistinct<TValue>( count: 5 );
         var sut = new TreeDictionary<TKey, TValue>();
         var root = sut.SetRoot( keys[0], values[0] );
         var node = sut.AddTo( root, keys[1], values[1] );
@@ -1142,8 +1142,8 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     private void RemoveSubtree_ShouldReturnCountAndRemoveAllNodes_WhenRemovingRoot_Impl(
         Func<TreeDictionary<TKey, TValue>, int> removeSubtree)
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( 3 );
-        var values = Fixture.CreateDistinctCollection<TValue>( 3 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 3 );
+        var values = Fixture.CreateManyDistinct<TValue>( count: 3 );
         var sut = new TreeDictionary<TKey, TValue>
         {
             { keys[0], values[0] },
@@ -1181,8 +1181,8 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     private void RemoveSubtree_ShouldReturnCorrectResultAndRemoveCorrectNodes_WhenNotRemovingRoot_Impl(
         Func<TreeDictionary<TKey, TValue>, TreeDictionaryNode<TKey, TValue>, int> removeSubtree)
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( 6 );
-        var values = Fixture.CreateDistinctCollection<TValue>( 6 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 6 );
+        var values = Fixture.CreateManyDistinct<TValue>( count: 6 );
         var sut = new TreeDictionary<TKey, TValue>();
         var a = sut.SetRoot( keys[0], values[0] );
         var b = sut.AddTo( a, keys[1], values[1] );
@@ -1222,7 +1222,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     [Fact]
     public void RemoveSubtree_ShouldReturnZeroAndDoNothing_WhenKeyDoesntExist()
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( 2 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 2 );
         var value = Fixture.Create<TValue>();
         var sut = new TreeDictionary<TKey, TValue> { { keys[0], value } };
 
@@ -1273,8 +1273,8 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     private void Swap_ShouldDoNothing_WhenKeysAreEqual_Impl(
         Action<TreeDictionary<TKey, TValue>, TreeDictionaryNode<TKey, TValue>, TreeDictionaryNode<TKey, TValue>> swap)
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( 2 );
-        var values = Fixture.CreateDistinctCollection<TValue>( 2 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 2 );
+        var values = Fixture.CreateManyDistinct<TValue>( count: 2 );
         var sut = new TreeDictionary<TKey, TValue>();
         var a = sut.SetRoot( keys[0], values[0] );
         var b = sut.AddTo( a, keys[1], values[1] );
@@ -1303,8 +1303,8 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     private void Swap_ShouldSwapNodesFromTheSameParentCorrectly_Impl(
         Action<TreeDictionary<TKey, TValue>, TreeDictionaryNode<TKey, TValue>, TreeDictionaryNode<TKey, TValue>> swap)
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( 5 );
-        var values = Fixture.CreateDistinctCollection<TValue>( 5 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 5 );
+        var values = Fixture.CreateManyDistinct<TValue>( count: 5 );
         var sut = new TreeDictionary<TKey, TValue>();
         var a = sut.SetRoot( keys[0], values[0] );
         var b = sut.AddTo( a, keys[1], values[1] );
@@ -1340,8 +1340,8 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     private void Swap_ShouldSwapNodesCorrectly_WhenFirstNodeIsRootAndSecondNodeIsDirectRootChild_Impl(
         Action<TreeDictionary<TKey, TValue>, TreeDictionaryNode<TKey, TValue>, TreeDictionaryNode<TKey, TValue>> swap)
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( 4 );
-        var values = Fixture.CreateDistinctCollection<TValue>( 4 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 4 );
+        var values = Fixture.CreateManyDistinct<TValue>( count: 4 );
         var sut = new TreeDictionary<TKey, TValue>();
         var a = sut.SetRoot( keys[0], values[0] );
         var b = sut.AddTo( a, keys[1], values[1] );
@@ -1376,8 +1376,8 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     private void Swap_ShouldSwapNodesCorrectly_WhenFirstNodeIsDirectRootChildAndSecondNodeIsRoot_Impl(
         Action<TreeDictionary<TKey, TValue>, TreeDictionaryNode<TKey, TValue>, TreeDictionaryNode<TKey, TValue>> swap)
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( 4 );
-        var values = Fixture.CreateDistinctCollection<TValue>( 4 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 4 );
+        var values = Fixture.CreateManyDistinct<TValue>( count: 4 );
         var sut = new TreeDictionary<TKey, TValue>();
         var a = sut.SetRoot( keys[0], values[0] );
         var b = sut.AddTo( a, keys[1], values[1] );
@@ -1413,8 +1413,8 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     private void Swap_ShouldSwapNodesCorrectly_WhenFirstNodeIsRootAndSecondNodeIsIndirectRootDescendant_Impl(
         Action<TreeDictionary<TKey, TValue>, TreeDictionaryNode<TKey, TValue>, TreeDictionaryNode<TKey, TValue>> swap)
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( 6 );
-        var values = Fixture.CreateDistinctCollection<TValue>( 6 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 6 );
+        var values = Fixture.CreateManyDistinct<TValue>( count: 6 );
         var sut = new TreeDictionary<TKey, TValue>();
         var a = sut.SetRoot( keys[0], values[0] );
         var b = sut.AddTo( a, keys[1], values[1] );
@@ -1454,8 +1454,8 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     private void Swap_ShouldSwapNodesCorrectly_WhenFirstNodeIsIndirectRootDescendantAndSecondNodeIsRoot_Impl(
         Action<TreeDictionary<TKey, TValue>, TreeDictionaryNode<TKey, TValue>, TreeDictionaryNode<TKey, TValue>> swap)
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( 6 );
-        var values = Fixture.CreateDistinctCollection<TValue>( 6 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 6 );
+        var values = Fixture.CreateManyDistinct<TValue>( count: 6 );
         var sut = new TreeDictionary<TKey, TValue>();
         var a = sut.SetRoot( keys[0], values[0] );
         var b = sut.AddTo( a, keys[1], values[1] );
@@ -1494,8 +1494,8 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     private void Swap_ShouldSwapNodesCorrectly_WhenFirstIsParentOfSecond_Impl(
         Action<TreeDictionary<TKey, TValue>, TreeDictionaryNode<TKey, TValue>, TreeDictionaryNode<TKey, TValue>> swap)
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( 6 );
-        var values = Fixture.CreateDistinctCollection<TValue>( 6 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 6 );
+        var values = Fixture.CreateManyDistinct<TValue>( count: 6 );
         var sut = new TreeDictionary<TKey, TValue>();
         var a = sut.SetRoot( keys[0], values[0] );
         var b = sut.AddTo( a, keys[1], values[1] );
@@ -1534,8 +1534,8 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     private void Swap_ShouldSwapNodesCorrectly_WhenSecondIsParentOfFirst_Impl(
         Action<TreeDictionary<TKey, TValue>, TreeDictionaryNode<TKey, TValue>, TreeDictionaryNode<TKey, TValue>> swap)
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( 6 );
-        var values = Fixture.CreateDistinctCollection<TValue>( 6 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 6 );
+        var values = Fixture.CreateManyDistinct<TValue>( count: 6 );
         var sut = new TreeDictionary<TKey, TValue>();
         var a = sut.SetRoot( keys[0], values[0] );
         var b = sut.AddTo( a, keys[1], values[1] );
@@ -1574,8 +1574,8 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     private void Swap_ShouldSwapNodesCorrectly_WhenFirstIsIndirectAncestorOfSecond_Impl(
         Action<TreeDictionary<TKey, TValue>, TreeDictionaryNode<TKey, TValue>, TreeDictionaryNode<TKey, TValue>> swap)
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( 7 );
-        var values = Fixture.CreateDistinctCollection<TValue>( 7 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 7 );
+        var values = Fixture.CreateManyDistinct<TValue>( count: 7 );
         var sut = new TreeDictionary<TKey, TValue>();
         var a = sut.SetRoot( keys[0], values[0] );
         var b = sut.AddTo( a, keys[1], values[1] );
@@ -1616,8 +1616,8 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     private void Swap_ShouldSwapNodesCorrectly_WhenSecondIsIndirectAncestorOfFirst_Impl(
         Action<TreeDictionary<TKey, TValue>, TreeDictionaryNode<TKey, TValue>, TreeDictionaryNode<TKey, TValue>> swap)
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( 7 );
-        var values = Fixture.CreateDistinctCollection<TValue>( 7 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 7 );
+        var values = Fixture.CreateManyDistinct<TValue>( count: 7 );
         var sut = new TreeDictionary<TKey, TValue>();
         var a = sut.SetRoot( keys[0], values[0] );
         var b = sut.AddTo( a, keys[1], values[1] );
@@ -1658,8 +1658,8 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     private void Swap_ShouldSwapNodesCorrectly_WhenFirstAndSecondAreNotDirectlyRelated_Impl(
         Action<TreeDictionary<TKey, TValue>, TreeDictionaryNode<TKey, TValue>, TreeDictionaryNode<TKey, TValue>> swap)
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( 9 );
-        var values = Fixture.CreateDistinctCollection<TValue>( 9 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 9 );
+        var values = Fixture.CreateManyDistinct<TValue>( count: 9 );
         var sut = new TreeDictionary<TKey, TValue>();
         var a = sut.SetRoot( keys[0], values[0] );
         var b = sut.AddTo( a, keys[1], values[1] );
@@ -1692,7 +1692,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     [Fact]
     public void Swap_ShouldThrowKeyNotFoundException_WhenFirstKeyDoesntExist()
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( 2 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 2 );
         var value = Fixture.Create<TValue>();
         var sut = new TreeDictionary<TKey, TValue> { { keys[0], value } };
 
@@ -1704,7 +1704,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     [Fact]
     public void Swap_ShouldThrowKeyNotFoundException_WhenSecondKeyDoesntExist()
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( 2 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 2 );
         var value = Fixture.Create<TValue>();
         var sut = new TreeDictionary<TKey, TValue> { { keys[0], value } };
 
@@ -1805,8 +1805,8 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
         Func<TreeDictionary<TKey, TValue>, TreeDictionaryNode<TKey, TValue>, TreeDictionaryNode<TKey, TValue>,
             TreeDictionaryNode<TKey, TValue>> moveTo)
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( 2 );
-        var values = Fixture.CreateDistinctCollection<TValue>( 2 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 2 );
+        var values = Fixture.CreateManyDistinct<TValue>( count: 2 );
         var sut = new TreeDictionary<TKey, TValue>();
         var a = sut.SetRoot( keys[0], values[0] );
         var b = sut.AddTo( a, keys[1], values[1] );
@@ -1859,8 +1859,8 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
         Func<TreeDictionary<TKey, TValue>, TreeDictionaryNode<TKey, TValue>, TreeDictionaryNode<TKey, TValue>,
             TreeDictionaryNode<TKey, TValue>> moveTo)
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( 6 );
-        var values = Fixture.CreateDistinctCollection<TValue>( 6 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 6 );
+        var values = Fixture.CreateManyDistinct<TValue>( count: 6 );
         var sut = new TreeDictionary<TKey, TValue>();
         var a = sut.SetRoot( keys[0], values[0] );
         var b = sut.AddTo( a, keys[1], values[1] );
@@ -1922,8 +1922,8 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
         Func<TreeDictionary<TKey, TValue>, TreeDictionaryNode<TKey, TValue>, TreeDictionaryNode<TKey, TValue>,
             TreeDictionaryNode<TKey, TValue>> moveTo)
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( 6 );
-        var values = Fixture.CreateDistinctCollection<TValue>( 6 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 6 );
+        var values = Fixture.CreateManyDistinct<TValue>( count: 6 );
         var sut = new TreeDictionary<TKey, TValue>();
         var a = sut.SetRoot( keys[0], values[0] );
         var b = sut.AddTo( a, keys[1], values[1] );
@@ -1985,8 +1985,8 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
         Func<TreeDictionary<TKey, TValue>, TreeDictionaryNode<TKey, TValue>, TreeDictionaryNode<TKey, TValue>,
             TreeDictionaryNode<TKey, TValue>> moveTo)
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( 6 );
-        var values = Fixture.CreateDistinctCollection<TValue>( 6 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 6 );
+        var values = Fixture.CreateManyDistinct<TValue>( count: 6 );
         var sut = new TreeDictionary<TKey, TValue>();
         var a = sut.SetRoot( keys[0], values[0] );
         var b = sut.AddTo( a, keys[1], values[1] );
@@ -2048,8 +2048,8 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
         Func<TreeDictionary<TKey, TValue>, TreeDictionaryNode<TKey, TValue>, TreeDictionaryNode<TKey, TValue>,
             TreeDictionaryNode<TKey, TValue>> moveTo)
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( 7 );
-        var values = Fixture.CreateDistinctCollection<TValue>( 7 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 7 );
+        var values = Fixture.CreateManyDistinct<TValue>( count: 7 );
         var sut = new TreeDictionary<TKey, TValue>();
         var a = sut.SetRoot( keys[0], values[0] );
         var b = sut.AddTo( a, keys[1], values[1] );
@@ -2113,8 +2113,8 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
         Func<TreeDictionary<TKey, TValue>, TreeDictionaryNode<TKey, TValue>, TreeDictionaryNode<TKey, TValue>,
             TreeDictionaryNode<TKey, TValue>> moveTo)
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( 7 );
-        var values = Fixture.CreateDistinctCollection<TValue>( 7 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 7 );
+        var values = Fixture.CreateManyDistinct<TValue>( count: 7 );
         var sut = new TreeDictionary<TKey, TValue>();
         var a = sut.SetRoot( keys[0], values[0] );
         var b = sut.AddTo( a, keys[1], values[1] );
@@ -2178,8 +2178,8 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
         Func<TreeDictionary<TKey, TValue>, TreeDictionaryNode<TKey, TValue>, TreeDictionaryNode<TKey, TValue>,
             TreeDictionaryNode<TKey, TValue>> moveTo)
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( 8 );
-        var values = Fixture.CreateDistinctCollection<TValue>( 8 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 8 );
+        var values = Fixture.CreateManyDistinct<TValue>( count: 8 );
         var sut = new TreeDictionary<TKey, TValue>();
         var a = sut.SetRoot( keys[0], values[0] );
         var b = sut.AddTo( a, keys[1], values[1] );
@@ -2245,8 +2245,8 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
         Func<TreeDictionary<TKey, TValue>, TreeDictionaryNode<TKey, TValue>, TreeDictionaryNode<TKey, TValue>,
             TreeDictionaryNode<TKey, TValue>> moveTo)
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( 8 );
-        var values = Fixture.CreateDistinctCollection<TValue>( 8 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 8 );
+        var values = Fixture.CreateManyDistinct<TValue>( count: 8 );
         var sut = new TreeDictionary<TKey, TValue>();
         var a = sut.SetRoot( keys[0], values[0] );
         var b = sut.AddTo( a, keys[1], values[1] );
@@ -2312,8 +2312,8 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
         Func<TreeDictionary<TKey, TValue>, TreeDictionaryNode<TKey, TValue>, TreeDictionaryNode<TKey, TValue>,
             TreeDictionaryNode<TKey, TValue>> moveTo)
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( 9 );
-        var values = Fixture.CreateDistinctCollection<TValue>( 9 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 9 );
+        var values = Fixture.CreateManyDistinct<TValue>( count: 9 );
         var sut = new TreeDictionary<TKey, TValue>();
         var a = sut.SetRoot( keys[0], values[0] );
         var b = sut.AddTo( a, keys[1], values[1] );
@@ -2382,7 +2382,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     [Fact]
     public void MoveTo_ShouldThrowKeyNotFoundException_WhenKeyDoesntExist()
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( 2 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 2 );
         var value = Fixture.Create<TValue>();
         var sut = new TreeDictionary<TKey, TValue> { { keys[0], value } };
 
@@ -2394,7 +2394,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     [Fact]
     public void MoveTo_ShouldThrowKeyNotFoundException_WhenParentKeyDoesntExist()
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( 2 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 2 );
         var value = Fixture.Create<TValue>();
         var sut = new TreeDictionary<TKey, TValue> { { keys[0], value } };
 
@@ -2433,7 +2433,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     [Fact]
     public void MoveTo_WithNode_ShouldThrowKeyNotFoundException_WhenParentKeyDoesntExist()
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( 2 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 2 );
         var value = Fixture.Create<TValue>();
         var sut = new TreeDictionary<TKey, TValue> { { keys[0], value } };
 
@@ -2472,7 +2472,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     [Fact]
     public void MoveTo_WithParentNode_ShouldThrowKeyNotFoundException_WhenKeyDoesntExist()
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( 2 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 2 );
         var value = Fixture.Create<TValue>();
         var sut = new TreeDictionary<TKey, TValue> { { keys[0], value } };
 
@@ -2573,8 +2573,8 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
         Func<TreeDictionary<TKey, TValue>, TreeDictionaryNode<TKey, TValue>, TreeDictionaryNode<TKey, TValue>,
             TreeDictionaryNode<TKey, TValue>> moveSubtreeTo)
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( 3 );
-        var values = Fixture.CreateDistinctCollection<TValue>( 3 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 3 );
+        var values = Fixture.CreateManyDistinct<TValue>( count: 3 );
         var sut = new TreeDictionary<TKey, TValue>();
         var a = sut.SetRoot( keys[0], values[0] );
         var b = sut.AddTo( a, keys[1], values[1] );
@@ -2630,8 +2630,8 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
         Func<TreeDictionary<TKey, TValue>, TreeDictionaryNode<TKey, TValue>, TreeDictionaryNode<TKey, TValue>,
             TreeDictionaryNode<TKey, TValue>> moveSubtreeTo)
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( 9 );
-        var values = Fixture.CreateDistinctCollection<TValue>( 9 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 9 );
+        var values = Fixture.CreateManyDistinct<TValue>( count: 9 );
         var sut = new TreeDictionary<TKey, TValue>();
         var a = sut.SetRoot( keys[0], values[0] );
         var b = sut.AddTo( a, keys[1], values[1] );
@@ -2701,8 +2701,8 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
         Func<TreeDictionary<TKey, TValue>, TreeDictionaryNode<TKey, TValue>, TreeDictionaryNode<TKey, TValue>,
             TreeDictionaryNode<TKey, TValue>> moveSubtreeTo)
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( 9 );
-        var values = Fixture.CreateDistinctCollection<TValue>( 9 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 9 );
+        var values = Fixture.CreateManyDistinct<TValue>( count: 9 );
         var sut = new TreeDictionary<TKey, TValue>();
         var a = sut.SetRoot( keys[0], values[0] );
         var b = sut.AddTo( a, keys[1], values[1] );
@@ -2805,8 +2805,8 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     private void MoveSubtreeTo_ShouldThrowInvalidOperationException_WhenNodeIsRootAndParentIsRootChild_Impl(
         Action<TreeDictionary<TKey, TValue>, TreeDictionaryNode<TKey, TValue>, TreeDictionaryNode<TKey, TValue>> moveSubtreeTo)
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( 2 );
-        var values = Fixture.CreateDistinctCollection<TValue>( 2 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 2 );
+        var values = Fixture.CreateManyDistinct<TValue>( count: 2 );
         var sut = new TreeDictionary<TKey, TValue>();
         var a = sut.SetRoot( keys[0], values[0] );
         var b = sut.AddTo( a, keys[1], values[1] );
@@ -2849,8 +2849,8 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     private void MoveSubtreeTo_ShouldThrowInvalidOperationException_WhenNodeIsRootAndParentIsIndirectDescendant_Impl(
         Action<TreeDictionary<TKey, TValue>, TreeDictionaryNode<TKey, TValue>, TreeDictionaryNode<TKey, TValue>> moveSubtreeTo)
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( 3 );
-        var values = Fixture.CreateDistinctCollection<TValue>( 3 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 3 );
+        var values = Fixture.CreateManyDistinct<TValue>( count: 3 );
         var sut = new TreeDictionary<TKey, TValue>();
         var a = sut.SetRoot( keys[0], values[0] );
         var b = sut.AddTo( a, keys[1], values[1] );
@@ -2892,8 +2892,8 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     private void MoveSubtreeTo_ShouldThrowInvalidOperationException_WhenParentIsNodesChild_Impl(
         Action<TreeDictionary<TKey, TValue>, TreeDictionaryNode<TKey, TValue>, TreeDictionaryNode<TKey, TValue>> moveSubtreeTo)
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( 3 );
-        var values = Fixture.CreateDistinctCollection<TValue>( 3 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 3 );
+        var values = Fixture.CreateManyDistinct<TValue>( count: 3 );
         var sut = new TreeDictionary<TKey, TValue>();
         var a = sut.SetRoot( keys[0], values[0] );
         var b = sut.AddTo( a, keys[1], values[1] );
@@ -2937,8 +2937,8 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     private void MoveSubtreeTo_ShouldThrowInvalidOperationException_WhenParentIsNodesIndirectDescendant_Impl(
         Action<TreeDictionary<TKey, TValue>, TreeDictionaryNode<TKey, TValue>, TreeDictionaryNode<TKey, TValue>> moveSubtreeTo)
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( 4 );
-        var values = Fixture.CreateDistinctCollection<TValue>( 4 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 4 );
+        var values = Fixture.CreateManyDistinct<TValue>( count: 4 );
         var sut = new TreeDictionary<TKey, TValue>();
         var a = sut.SetRoot( keys[0], values[0] );
         var b = sut.AddTo( a, keys[1], values[1] );
@@ -2953,7 +2953,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     [Fact]
     public void MoveSubtreeTo_ShouldThrowKeyNotFoundException_WhenKeyDoesntExist()
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( 2 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 2 );
         var value = Fixture.Create<TValue>();
         var sut = new TreeDictionary<TKey, TValue> { { keys[0], value } };
 
@@ -2965,7 +2965,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     [Fact]
     public void MoveSubtreeTo_ShouldThrowKeyNotFoundException_WhenParentKeyDoesntExist()
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( 2 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 2 );
         var value = Fixture.Create<TValue>();
         var sut = new TreeDictionary<TKey, TValue> { { keys[0], value } };
 
@@ -3004,7 +3004,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     [Fact]
     public void MoveSubtreeTo_WithNode_ShouldThrowKeyNotFoundException_WhenParentKeyDoesntExist()
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( 2 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 2 );
         var value = Fixture.Create<TValue>();
         var sut = new TreeDictionary<TKey, TValue> { { keys[0], value } };
 
@@ -3043,7 +3043,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     [Fact]
     public void MoveSubtreeTo_WithParentNode_ShouldThrowKeyNotFoundException_WhenKeyDoesntExist()
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( 2 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 2 );
         var value = Fixture.Create<TValue>();
         var sut = new TreeDictionary<TKey, TValue> { { keys[0], value } };
 
@@ -3109,8 +3109,8 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     [Fact]
     public void Clear_ShouldRemoveAllItemsAndClearAllNodes()
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( 5 );
-        var values = Fixture.CreateDistinctCollection<TValue>( 5 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 5 );
+        var values = Fixture.CreateManyDistinct<TValue>( count: 5 );
         var sut = new TreeDictionary<TKey, TValue>();
         sut.SetRoot( keys[0], values[0] );
         sut.AddTo( keys[0], keys[1], values[1] );
@@ -3135,7 +3135,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     [Fact]
     public void CreateSubtree_ShouldReturnEmpty_WhenKeyDoesntExist()
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( 2 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 2 );
         var value = Fixture.Create<TValue>();
         var sut = new TreeDictionary<TKey, TValue> { { keys[0], value } };
 
@@ -3152,8 +3152,8 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     [Fact]
     public void CreateSubtree_ShouldReturnCorrectResult_WhenKeyExists()
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( 5 );
-        var values = Fixture.CreateDistinctCollection<TValue>( 5 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 5 );
+        var values = Fixture.CreateManyDistinct<TValue>( count: 5 );
         var sut = new TreeDictionary<TKey, TValue>();
         var a = sut.SetRoot( keys[0], values[0] );
         var b = sut.AddTo( a, keys[1], values[1] );
@@ -3246,8 +3246,8 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     [Fact]
     public void GetEnumerator_ShouldReturnCorrectResult()
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( 3 );
-        var values = Fixture.CreateDistinctCollection<TValue>( 3 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 3 );
+        var values = Fixture.CreateManyDistinct<TValue>( count: 3 );
         var expected = keys.Zip( values, KeyValuePair.Create ).ToList();
         var sut = new TreeDictionary<TKey, TValue>();
 
@@ -3285,8 +3285,8 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     [Fact]
     public void IndexerSet_ShouldAddNewNodeAsRootChildCorrectly_WhenDictionaryHasRoot()
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( 2 );
-        var values = Fixture.CreateDistinctCollection<TValue>( 2 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 2 );
+        var values = Fixture.CreateManyDistinct<TValue>( count: 2 );
         var sut = new TreeDictionary<TKey, TValue>();
         var root = sut.SetRoot( keys[0], values[0] );
 
@@ -3309,7 +3309,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     public void IndexerSet_ShouldReplaceExistingItemCorrectly()
     {
         var key = Fixture.Create<TKey>();
-        var values = Fixture.CreateDistinctCollection<TValue>( 2 );
+        var values = Fixture.CreateManyDistinct<TValue>( count: 2 );
         var sut = new TreeDictionary<TKey, TValue>();
         var node = sut.SetRoot( key, values[0] );
 
@@ -3330,8 +3330,8 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     [Fact]
     public void Keys_ShouldReturnCorrectResult()
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( 3 );
-        var values = Fixture.CreateDistinctCollection<TValue>( 3 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 3 );
+        var values = Fixture.CreateManyDistinct<TValue>( count: 3 );
         var sut = new TreeDictionary<TKey, TValue>();
 
         foreach ( var (k, v) in keys.Zip( values ) )
@@ -3345,8 +3345,8 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     [Fact]
     public void Values_ShouldReturnCorrectResult()
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( 3 );
-        var values = Fixture.CreateDistinctCollection<TValue>( 3 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 3 );
+        var values = Fixture.CreateManyDistinct<TValue>( count: 3 );
         var sut = new TreeDictionary<TKey, TValue>();
 
         foreach ( var (k, v) in keys.Zip( values ) )
@@ -3368,8 +3368,8 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     [Fact]
     public void Nodes_ShouldReturnCorrectResultAccordingToBreadthFirstTraversal()
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( 10 );
-        var values = Fixture.CreateDistinctCollection<TValue>( 10 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 10 );
+        var values = Fixture.CreateManyDistinct<TValue>( count: 10 );
         var sut = new TreeDictionary<TKey, TValue>();
 
         var a = sut.SetRoot( keys[0], values[0] );
@@ -3467,8 +3467,8 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     [Fact]
     public void ITreeDictionaryAdd_ShouldBeEquivalentToAdd()
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( 2 );
-        var values = Fixture.CreateDistinctCollection<TValue>( 2 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 2 );
+        var values = Fixture.CreateManyDistinct<TValue>( count: 2 );
         var sut = new TreeDictionary<TKey, TValue> { { keys[0], values[0] } };
 
         var result = (( ITreeDictionary<TKey, TValue> )sut).Add( keys[1], values[1] );
@@ -3479,8 +3479,8 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     [Fact]
     public void ITreeDictionaryAdd_WithNode_ShouldBeEquivalentToAdd()
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( 2 );
-        var values = Fixture.CreateDistinctCollection<TValue>( 2 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 2 );
+        var values = Fixture.CreateManyDistinct<TValue>( count: 2 );
         var sut = new TreeDictionary<TKey, TValue> { { keys[0], values[0] } };
         var node = new TreeDictionaryNode<TKey, TValue>( keys[1], values[1] );
 
@@ -3503,8 +3503,8 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     [Fact]
     public void ITreeDictionaryAddTo_ShouldBeEquivalentToAddTo()
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( 2 );
-        var values = Fixture.CreateDistinctCollection<TValue>( 2 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 2 );
+        var values = Fixture.CreateManyDistinct<TValue>( count: 2 );
         var sut = new TreeDictionary<TKey, TValue> { { keys[0], values[0] } };
 
         var result = (( ITreeDictionary<TKey, TValue> )sut).AddTo( keys[0], keys[1], values[1] );
@@ -3515,8 +3515,8 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     [Fact]
     public void ITreeDictionaryAddTo_WithNode_ShouldBeEquivalentToAddTo()
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( 2 );
-        var values = Fixture.CreateDistinctCollection<TValue>( 2 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 2 );
+        var values = Fixture.CreateManyDistinct<TValue>( count: 2 );
         var sut = new TreeDictionary<TKey, TValue> { { keys[0], values[0] } };
         var node = new TreeDictionaryNode<TKey, TValue>( keys[1], values[1] );
 
@@ -3541,8 +3541,8 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     [Fact]
     public void ITreeDictionaryAddTo_WithParentNode_ShouldBeEquivalentToAddTo()
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( 2 );
-        var values = Fixture.CreateDistinctCollection<TValue>( 2 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 2 );
+        var values = Fixture.CreateManyDistinct<TValue>( count: 2 );
         var sut = new TreeDictionary<TKey, TValue> { { keys[0], values[0] } };
 
         var result = (( ITreeDictionary<TKey, TValue> )sut).AddTo( sut.Root!, keys[1], values[1] );
@@ -3553,8 +3553,8 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     [Fact]
     public void ITreeDictionaryAddTo_WithParentNode_ShouldThrowArgumentException_WhenParentNodeIsOfInvalidType()
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( 2 );
-        var values = Fixture.CreateDistinctCollection<TValue>( 2 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 2 );
+        var values = Fixture.CreateManyDistinct<TValue>( count: 2 );
         var sut = new TreeDictionary<TKey, TValue> { { keys[0], values[0] } };
         var parent = Substitute.For<ITreeDictionaryNode<TKey, TValue>>();
 
@@ -3566,8 +3566,8 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     [Fact]
     public void ITreeDictionaryAddTo_WithParentNodeAndNewNode_ShouldBeEquivalentToAddTo()
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( 2 );
-        var values = Fixture.CreateDistinctCollection<TValue>( 2 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 2 );
+        var values = Fixture.CreateManyDistinct<TValue>( count: 2 );
         var sut = new TreeDictionary<TKey, TValue> { { keys[0], values[0] } };
         var node = new TreeDictionaryNode<TKey, TValue>( keys[1], values[1] );
 
@@ -3579,8 +3579,8 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     [Fact]
     public void ITreeDictionaryAddTo_WithParentNodeAndNewNode_ShouldThrowArgumentException_WhenParentNodeIsOfInvalidType()
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( 2 );
-        var values = Fixture.CreateDistinctCollection<TValue>( 2 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 2 );
+        var values = Fixture.CreateManyDistinct<TValue>( count: 2 );
         var sut = new TreeDictionary<TKey, TValue> { { keys[0], values[0] } };
         var parent = Substitute.For<ITreeDictionaryNode<TKey, TValue>>();
         var node = new TreeDictionaryNode<TKey, TValue>( keys[1], values[1] );
@@ -3619,8 +3619,8 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     [Fact]
     public void ITreeDictionaryAddSubtreeTo_ShouldBeEquivalentToAddSubtreeTo()
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( 2 );
-        var values = Fixture.CreateDistinctCollection<TValue>( 2 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 2 );
+        var values = Fixture.CreateManyDistinct<TValue>( count: 2 );
         var sut = new TreeDictionary<TKey, TValue> { { keys[0], values[0] } };
         var subtree = new TreeDictionary<TKey, TValue> { { keys[1], values[1] } };
 
@@ -3632,8 +3632,8 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     [Fact]
     public void ITreeDictionaryAddSubtreeTo_WithNode_ShouldBeEquivalentToAddSubtreeTo()
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( 2 );
-        var values = Fixture.CreateDistinctCollection<TValue>( 2 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 2 );
+        var values = Fixture.CreateManyDistinct<TValue>( count: 2 );
         var sut = new TreeDictionary<TKey, TValue> { { keys[0], values[0] } };
         var subtree = new TreeDictionary<TKey, TValue> { { keys[1], values[1] } };
 
@@ -3709,8 +3709,8 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     [Fact]
     public void ITreeDictionarySwap_WithNodes_ShouldBeEquivalentToSwap()
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( 2 );
-        var values = Fixture.CreateDistinctCollection<TValue>( 2 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 2 );
+        var values = Fixture.CreateManyDistinct<TValue>( count: 2 );
         var sut = new TreeDictionary<TKey, TValue>();
         var a = sut.Add( keys[0], values[0] );
         var b = sut.Add( keys[1], values[1] );
@@ -3754,8 +3754,8 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     [Fact]
     public void ITreeDictionaryMoveTo_ShouldBeEquivalentToMoveTo()
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( 2 );
-        var values = Fixture.CreateDistinctCollection<TValue>( 2 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 2 );
+        var values = Fixture.CreateManyDistinct<TValue>( count: 2 );
         var sut = new TreeDictionary<TKey, TValue>();
         var a = sut.Add( keys[0], values[0] );
         var b = sut.Add( keys[1], values[1] );
@@ -3774,8 +3774,8 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     [Fact]
     public void ITreeDictionaryMoveTo_WithNode_ShouldBeEquivalentToMoveTo()
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( 2 );
-        var values = Fixture.CreateDistinctCollection<TValue>( 2 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 2 );
+        var values = Fixture.CreateManyDistinct<TValue>( count: 2 );
         var sut = new TreeDictionary<TKey, TValue>();
         var a = sut.Add( keys[0], values[0] );
         var b = sut.Add( keys[1], values[1] );
@@ -3806,8 +3806,8 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     [Fact]
     public void ITreeDictionaryMoveTo_WithParentNode_ShouldBeEquivalentToMoveTo()
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( 2 );
-        var values = Fixture.CreateDistinctCollection<TValue>( 2 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 2 );
+        var values = Fixture.CreateManyDistinct<TValue>( count: 2 );
         var sut = new TreeDictionary<TKey, TValue>();
         var a = sut.Add( keys[0], values[0] );
         var b = sut.Add( keys[1], values[1] );
@@ -3839,8 +3839,8 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     [Fact]
     public void ITreeDictionaryMoveTo_WithParentNodeAndTargetNode_ShouldBeEquivalentToMoveTo()
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( 2 );
-        var values = Fixture.CreateDistinctCollection<TValue>( 2 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 2 );
+        var values = Fixture.CreateManyDistinct<TValue>( count: 2 );
         var sut = new TreeDictionary<TKey, TValue>();
         var a = sut.Add( keys[0], values[0] );
         var b = sut.Add( keys[1], values[1] );
@@ -3884,8 +3884,8 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     [Fact]
     public void ITreeDictionaryMoveSubtreeTo_ShouldBeEquivalentToMoveTo()
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( 3 );
-        var values = Fixture.CreateDistinctCollection<TValue>( 3 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 3 );
+        var values = Fixture.CreateManyDistinct<TValue>( count: 3 );
         var sut = new TreeDictionary<TKey, TValue>();
         var a = sut.Add( keys[0], values[0] );
         var b = sut.Add( keys[1], values[1] );
@@ -3906,8 +3906,8 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     [Fact]
     public void ITreeDictionaryMoveSubtreeTo_WithNode_ShouldBeEquivalentToMoveTo()
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( 3 );
-        var values = Fixture.CreateDistinctCollection<TValue>( 3 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 3 );
+        var values = Fixture.CreateManyDistinct<TValue>( count: 3 );
         var sut = new TreeDictionary<TKey, TValue>();
         var a = sut.Add( keys[0], values[0] );
         var b = sut.Add( keys[1], values[1] );
@@ -3940,8 +3940,8 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     [Fact]
     public void ITreeDictionaryMoveSubtreeTo_WithParentNode_ShouldBeEquivalentToMoveTo()
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( 3 );
-        var values = Fixture.CreateDistinctCollection<TValue>( 3 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 3 );
+        var values = Fixture.CreateManyDistinct<TValue>( count: 3 );
         var sut = new TreeDictionary<TKey, TValue>();
         var a = sut.Add( keys[0], values[0] );
         var b = sut.Add( keys[1], values[1] );
@@ -3975,8 +3975,8 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     [Fact]
     public void ITreeDictionaryMoveSubtreeTo_WithParentNodeAndTargetNode_ShouldBeEquivalentToMoveTo()
     {
-        var keys = Fixture.CreateDistinctCollection<TKey>( 3 );
-        var values = Fixture.CreateDistinctCollection<TValue>( 3 );
+        var keys = Fixture.CreateManyDistinct<TKey>( count: 3 );
+        var values = Fixture.CreateManyDistinct<TValue>( count: 3 );
         var sut = new TreeDictionary<TKey, TValue>();
         var a = sut.Add( keys[0], values[0] );
         var b = sut.Add( keys[1], values[1] );

@@ -25,7 +25,7 @@ public abstract class GenericMutationTests<T> : TestsBase
     [Fact]
     public void Create_ShouldCreateCorrectResult_WhenValuesAreDifferent()
     {
-        var (oldValue, value) = Fixture.CreateDistinctCollection<T>( 2 );
+        var (oldValue, value) = Fixture.CreateManyDistinct<T>( count: 2 );
 
         var sut = Mutation.Create( oldValue, value );
 
@@ -55,7 +55,7 @@ public abstract class GenericMutationTests<T> : TestsBase
     [Fact]
     public void Ctor_ShouldCreateCorrectResult_WhenValuesAreDifferent()
     {
-        var (oldValue, value) = Fixture.CreateDistinctCollection<T>( 2 );
+        var (oldValue, value) = Fixture.CreateManyDistinct<T>( count: 2 );
 
         var sut = new Mutation<T>( oldValue, value );
 
@@ -85,7 +85,7 @@ public abstract class GenericMutationTests<T> : TestsBase
     [Fact]
     public void GetHashCode_ShouldCreateCorrectResult()
     {
-        var (oldValue, value) = Fixture.CreateMany<T>( 2 ).ToList();
+        var (oldValue, value) = Fixture.CreateMany<T>( count: 2 ).ToList();
         var expected = Hash.Default.Add( oldValue ).Add( value ).Value;
         var sut = new Mutation<T>( oldValue, value );
 
@@ -109,7 +109,7 @@ public abstract class GenericMutationTests<T> : TestsBase
     [Fact]
     public void Mutate_ShouldReturnCorrectResult()
     {
-        var (oldValue, value, newValue) = Fixture.CreateDistinctCollection<T>( 3 );
+        var (oldValue, value, newValue) = Fixture.CreateManyDistinct<T>( count: 3 );
         var sut = new Mutation<T>( oldValue, value );
 
         var result = sut.Mutate( newValue );
@@ -124,7 +124,7 @@ public abstract class GenericMutationTests<T> : TestsBase
     [Fact]
     public void Replace_ShouldReturnCorrectResult()
     {
-        var (oldValue, value, newValue) = Fixture.CreateDistinctCollection<T>( 3 );
+        var (oldValue, value, newValue) = Fixture.CreateManyDistinct<T>( count: 3 );
         var sut = new Mutation<T>( oldValue, value );
 
         var result = sut.Replace( newValue );
@@ -139,7 +139,7 @@ public abstract class GenericMutationTests<T> : TestsBase
     [Fact]
     public void Revert_ShouldReturnCorrectResult()
     {
-        var (oldValue, value) = Fixture.CreateDistinctCollection<T>( 2 );
+        var (oldValue, value) = Fixture.CreateManyDistinct<T>( count: 2 );
         var sut = new Mutation<T>( oldValue, value );
 
         var result = sut.Revert();
@@ -154,7 +154,7 @@ public abstract class GenericMutationTests<T> : TestsBase
     [Fact]
     public void Swap_ShouldReturnCorrectResult()
     {
-        var (oldValue, value) = Fixture.CreateDistinctCollection<T>( 2 );
+        var (oldValue, value) = Fixture.CreateManyDistinct<T>( count: 2 );
         var sut = new Mutation<T>( oldValue, value );
 
         var result = sut.Swap();
@@ -169,8 +169,8 @@ public abstract class GenericMutationTests<T> : TestsBase
     [Fact]
     public void Bind_ShouldCallChangedDelegate_WhenValueHasChanged()
     {
-        var (oldValue, value) = Fixture.CreateDistinctCollection<T>( 2 );
-        var (returnedOldValue, returnedValue) = Fixture.CreateDistinctCollection<T>( 2 );
+        var (oldValue, value) = Fixture.CreateManyDistinct<T>( count: 2 );
+        var (returnedOldValue, returnedValue) = Fixture.CreateManyDistinct<T>( count: 2 );
         var changedDelegate = Substitute.For<Func<(T, T), Mutation<T>>>()
             .WithAnyArgs( _ => new Mutation<T>( returnedOldValue, returnedValue ) );
 
@@ -208,8 +208,8 @@ public abstract class GenericMutationTests<T> : TestsBase
     [Fact]
     public void Bind_WithUnchanged_ShouldCallChangedDelegate_WhenValueHasChanged()
     {
-        var (oldValue, value) = Fixture.CreateDistinctCollection<T>( 2 );
-        var (returnedOldValue, returnedValue) = Fixture.CreateDistinctCollection<T>( 2 );
+        var (oldValue, value) = Fixture.CreateManyDistinct<T>( count: 2 );
+        var (returnedOldValue, returnedValue) = Fixture.CreateManyDistinct<T>( count: 2 );
 
         var changedDelegate = Substitute.For<Func<(T, T), Mutation<T>>>()
             .WithAnyArgs( _ => new Mutation<T>( returnedOldValue, returnedValue ) );
@@ -234,7 +234,7 @@ public abstract class GenericMutationTests<T> : TestsBase
     public void Bind_WithUnchanged_ShouldCallUnchangedDelegate_WhenValueHasNotChanged()
     {
         var value = Fixture.Create<T>();
-        var (returnedOldValue, returnedValue) = Fixture.CreateDistinctCollection<T>( 2 );
+        var (returnedOldValue, returnedValue) = Fixture.CreateManyDistinct<T>( count: 2 );
 
         var changedDelegate = Substitute.For<Func<(T, T), Mutation<T>>>()
             .WithAnyArgs( i => new Mutation<T>( i.ArgAt<(T, T)>( 0 ).Item1, i.ArgAt<(T, T)>( 0 ).Item2 ) );
@@ -258,7 +258,7 @@ public abstract class GenericMutationTests<T> : TestsBase
     [Fact]
     public void Match_ShouldCallChangedDelegate_WhenValueHasChanged()
     {
-        var (oldValue, value) = Fixture.CreateDistinctCollection<T>( 2 );
+        var (oldValue, value) = Fixture.CreateManyDistinct<T>( count: 2 );
         var returnedValue = Fixture.Create<T>();
         var changedDelegate = Substitute.For<Func<(T, T), T>>().WithAnyArgs( _ => returnedValue );
         var unchangedDelegate = Substitute.For<Func<T, T>>().WithAnyArgs( i => i.ArgAt<T>( 0 ) );
@@ -298,7 +298,7 @@ public abstract class GenericMutationTests<T> : TestsBase
     [Fact]
     public void Match_WithAction_ShouldCallChangedDelegate_WhenValueHasChanged()
     {
-        var (oldValue, value) = Fixture.CreateDistinctCollection<T>( 2 );
+        var (oldValue, value) = Fixture.CreateManyDistinct<T>( count: 2 );
         var changedDelegate = Substitute.For<Action<(T, T)>>();
         var unchangedDelegate = Substitute.For<Action<T>>();
 
@@ -334,7 +334,7 @@ public abstract class GenericMutationTests<T> : TestsBase
     [Fact]
     public void IfChanged_ShouldCallChangedDelegate_WhenValueHasChanged()
     {
-        var (oldValue, value) = Fixture.CreateDistinctCollection<T>( 2 );
+        var (oldValue, value) = Fixture.CreateManyDistinct<T>( count: 2 );
         var returnedValue = Fixture.Create<T>();
         var changedDelegate = Substitute.For<Func<(T, T), T>>().WithAnyArgs( _ => returnedValue );
 
@@ -369,7 +369,7 @@ public abstract class GenericMutationTests<T> : TestsBase
     [Fact]
     public void IfChanged_WithAction_ShouldCallChangedDelegate_WhenValueHasChanged()
     {
-        var (oldValue, value) = Fixture.CreateDistinctCollection<T>( 2 );
+        var (oldValue, value) = Fixture.CreateManyDistinct<T>( count: 2 );
         var changedDelegate = Substitute.For<Action<(T, T)>>();
 
         var sut = new Mutation<T>( oldValue, value );
@@ -395,7 +395,7 @@ public abstract class GenericMutationTests<T> : TestsBase
     [Fact]
     public void IfChangedOrDefault_ShouldCallChangedDelegate_WhenValueHasChanged()
     {
-        var (oldValue, value) = Fixture.CreateDistinctCollection<T>( 2 );
+        var (oldValue, value) = Fixture.CreateManyDistinct<T>( count: 2 );
         var returnedValue = Fixture.Create<T>();
         var changedDelegate = Substitute.For<Func<(T, T), T>>().WithAnyArgs( _ => returnedValue );
 
@@ -430,7 +430,7 @@ public abstract class GenericMutationTests<T> : TestsBase
     [Fact]
     public void IfChangedOrDefault_WithValue_ShouldCallChangedDelegate_WhenValueHasChanged()
     {
-        var (oldValue, value) = Fixture.CreateDistinctCollection<T>( 2 );
+        var (oldValue, value) = Fixture.CreateManyDistinct<T>( count: 2 );
         var returnedValue = Fixture.Create<T>();
         var changedDelegate = Substitute.For<Func<(T, T), T>>().WithAnyArgs( _ => returnedValue );
 
@@ -484,7 +484,7 @@ public abstract class GenericMutationTests<T> : TestsBase
     [Fact]
     public void IfUnchanged_ShouldReturnNone_WhenValueHasChanged()
     {
-        var (oldValue, value) = Fixture.CreateDistinctCollection<T>( 2 );
+        var (oldValue, value) = Fixture.CreateManyDistinct<T>( count: 2 );
         var unchangedDelegate = Substitute.For<Func<T, T>>().WithAnyArgs( i => i.ArgAt<T>( 0 ) );
 
         var sut = new Mutation<T>( oldValue, value );
@@ -514,7 +514,7 @@ public abstract class GenericMutationTests<T> : TestsBase
     [Fact]
     public void IfUnchanged_WithAction_ShouldDoNothing_WhenValueHasChanged()
     {
-        var (oldValue, value) = Fixture.CreateDistinctCollection<T>( 2 );
+        var (oldValue, value) = Fixture.CreateManyDistinct<T>( count: 2 );
         var unchangedDelegate = Substitute.For<Action<T>>();
 
         var sut = new Mutation<T>( oldValue, value );
@@ -545,7 +545,7 @@ public abstract class GenericMutationTests<T> : TestsBase
     [Fact]
     public void IfUnchangedOrDefault_ShouldReturnDefault_WhenValueHasChanged()
     {
-        var (oldValue, value) = Fixture.CreateDistinctCollection<T>( 2 );
+        var (oldValue, value) = Fixture.CreateManyDistinct<T>( count: 2 );
         var unchangedDelegate = Substitute.For<Func<T, T>>().WithAnyArgs( i => i.ArgAt<T>( 0 ) );
 
         var sut = new Mutation<T>( oldValue, value );
@@ -581,7 +581,7 @@ public abstract class GenericMutationTests<T> : TestsBase
     public void IfUnchangedOrDefault_WithValue_ShouldReturnDefault_WhenValueHasChanged()
     {
         var defaultValue = Fixture.CreateNotDefault<T>();
-        var (oldValue, value) = Fixture.CreateDistinctCollection<T>( 2 );
+        var (oldValue, value) = Fixture.CreateManyDistinct<T>( count: 2 );
         var unchangedDelegate = Substitute.For<Func<T, T>>().WithAnyArgs( i => i.ArgAt<T>( 0 ) );
 
         var sut = new Mutation<T>( oldValue, value );
@@ -598,7 +598,7 @@ public abstract class GenericMutationTests<T> : TestsBase
     [Fact]
     public void TConversionOperator_ShouldReturnCorrectResult()
     {
-        var (oldValue, value) = Fixture.CreateDistinctCollection<T>( 2 );
+        var (oldValue, value) = Fixture.CreateManyDistinct<T>( count: 2 );
         var sut = new Mutation<T>( oldValue, value );
 
         var result = ( T )sut;

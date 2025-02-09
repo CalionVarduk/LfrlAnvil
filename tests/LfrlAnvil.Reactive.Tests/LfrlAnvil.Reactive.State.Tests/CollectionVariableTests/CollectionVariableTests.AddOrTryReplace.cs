@@ -13,7 +13,7 @@ public partial class CollectionVariableTests
     public void AddOrTryReplace_ShouldReplaceExistingElementAndUpdateChangedFlag_WhenElementExistsAndNewValueIsNotEqualToOldValue()
     {
         var key = Fixture.Create<int>();
-        var (oldValue, value) = Fixture.CreateDistinctCollection<string>( count: 2 );
+        var (oldValue, value) = Fixture.CreateManyDistinct<string>( count: 2 );
         var initialElement = new TestElement( key, oldValue );
         var element = new TestElement( key, value );
         var keySelector = Lambda.Of( (TestElement e) => e.Key );
@@ -103,11 +103,11 @@ public partial class CollectionVariableTests
     public void AddOrTryReplace_ShouldUpdateErrorsAndWarnings_WhenElementIsReplaced()
     {
         var key = Fixture.Create<int>();
-        var (oldValue, value) = Fixture.CreateDistinctCollection<string>( count: 2 );
+        var (oldValue, value) = Fixture.CreateManyDistinct<string>( count: 2 );
         var initialElement = new TestElement( key, oldValue );
         var element = new TestElement( key, value );
         var keySelector = Lambda.Of( (TestElement e) => e.Key );
-        var (error, warning, elementError, elementWarning) = Fixture.CreateDistinctCollection<string>( count: 4 );
+        var (error, warning, elementError, elementWarning) = Fixture.CreateManyDistinct<string>( count: 4 );
         var errorsValidator = Validators<string>.Fail<ICollectionVariableElements<int, TestElement, string>>( error );
         var warningsValidator = Validators<string>.Fail<ICollectionVariableElements<int, TestElement, string>>( warning );
         var elementErrorsValidator = Validators<string>.Fail<TestElement>( elementError );
@@ -189,7 +189,7 @@ public partial class CollectionVariableTests
     public void AddOrTryReplace_ShouldUpdateNonInitialAddedElementCorrectly()
     {
         var key = Fixture.Create<int>();
-        var (oldValue, value) = Fixture.CreateDistinctCollection<string>( count: 2 );
+        var (oldValue, value) = Fixture.CreateManyDistinct<string>( count: 2 );
         var oldElement = new TestElement( key, oldValue );
         var element = new TestElement( key, value );
         var keySelector = Lambda.Of( (TestElement e) => e.Key );
@@ -251,7 +251,7 @@ public partial class CollectionVariableTests
     [Fact]
     public void AddOrTryReplace_ShouldAddNewElementAndUpdateChangedFlag_WhenNewElementDoesNotExist()
     {
-        var (initialElement, element) = Fixture.CreateDistinctCollection<TestElement>( count: 2 );
+        var (initialElement, element) = Fixture.CreateManyDistinct<TestElement>( count: 2 );
         var keySelector = Lambda.Of( (TestElement e) => e.Key );
         var sut = CollectionVariable.WithoutValidators<string>.Create( new[] { initialElement }, keySelector );
 
@@ -312,7 +312,7 @@ public partial class CollectionVariableTests
     public void AddOrTryReplace_ShouldDoNothing_WhenStateContainsReadOnlyFlag()
     {
         var key = Fixture.Create<int>();
-        var (oldValue, value) = Fixture.CreateDistinctCollection<string>( count: 2 );
+        var (oldValue, value) = Fixture.CreateManyDistinct<string>( count: 2 );
         var oldElement = new TestElement( key, oldValue );
         var element = new TestElement( key, value );
         var keySelector = Lambda.Of( (TestElement e) => e.Key );
@@ -341,7 +341,7 @@ public partial class CollectionVariableTests
     public void
         AddOrTryReplace_WithRange_ShouldFilterElementsToAddOrReplaceCorrectlyAndReplaceOnlyThoseThatAreDifferentFromExistingElementAndDoNotRepeat()
     {
-        var allElements = Fixture.CreateDistinctCollection<TestElement>( count: 8 );
+        var allElements = Fixture.CreateManyDistinct<TestElement>( count: 8 );
         var initialElements = new[] { allElements[0], allElements[1], allElements[2], allElements[3] };
         var elements = new[]
         {
@@ -421,7 +421,7 @@ public partial class CollectionVariableTests
     public void AddOrTryReplace_WithRange_ShouldReplaceSingleElementCorrectly_WhenItExists()
     {
         var key = Fixture.Create<int>();
-        var (oldValue, value) = Fixture.CreateDistinctCollection<string>( count: 2 );
+        var (oldValue, value) = Fixture.CreateManyDistinct<string>( count: 2 );
         var initialElement = new TestElement( key, oldValue );
         var element = new TestElement( key, value );
         var keySelector = Lambda.Of( (TestElement e) => e.Key );
@@ -481,7 +481,7 @@ public partial class CollectionVariableTests
     [Fact]
     public void AddOrTryReplace_WithRange_ShouldAddOrReplaceSecondElement_WhenFirstElementHasBlockedAdditionOrRemoval()
     {
-        var allElements = Fixture.CreateDistinctCollection<TestElement>( count: 2 );
+        var allElements = Fixture.CreateManyDistinct<TestElement>( count: 2 );
         var sut = new CollectionVariableMock( allElements.Take( 1 ), new[] { allElements[0].Key } );
 
         var onChangeEvents = new List<CollectionVariableChangeEvent<int, TestElement, string>>();
@@ -508,7 +508,7 @@ public partial class CollectionVariableTests
     [Fact]
     public void AddOrTryReplace_WithRange_ShouldDoNothing_WhenAllElementsHaveBlockedAdditionOrReplacement()
     {
-        var allElements = Fixture.CreateDistinctCollection<TestElement>( count: 2 );
+        var allElements = Fixture.CreateManyDistinct<TestElement>( count: 2 );
         var sut = new CollectionVariableMock( allElements.Take( 1 ), allElements.Select( e => e.Key ) );
 
         var onChangeEvents = new List<CollectionVariableChangeEvent<int, TestElement, string>>();
@@ -558,7 +558,7 @@ public partial class CollectionVariableTests
     public void AddOrTryReplace_WithRange_ShouldDoNothing_WhenStateContainsReadOnlyFlag()
     {
         var key = Fixture.Create<int>();
-        var (oldValue, value) = Fixture.CreateDistinctCollection<string>( count: 2 );
+        var (oldValue, value) = Fixture.CreateManyDistinct<string>( count: 2 );
         var initialElement = new TestElement( key, oldValue );
         var element = new TestElement( key, value );
         var keySelector = Lambda.Of( (TestElement e) => e.Key );

@@ -177,7 +177,7 @@ public abstract class GenericBoundsRangeTests<T> : TestsBase
     [Fact]
     public void Flatten_ShouldReturnCorrectResult_WhenRangeIsNotEmpty()
     {
-        var (a, b, c, d) = Fixture.CreateDistinctSortedCollection<T>( 4 );
+        var (a, b, c, d) = Fixture.CreateManyDistinctSorted<T>( count: 4 );
         var bounds1 = Bounds.Create( a, b );
         var bounds2 = Bounds.Create( c, d );
         var sut = new BoundsRange<T>( new[] { bounds1, bounds2 } );
@@ -372,7 +372,7 @@ public abstract class GenericBoundsRangeTests<T> : TestsBase
     [Fact]
     public void Normalize_ShouldReturnTarget_WhenTargetContainsOnlyOneItem()
     {
-        var (min, max) = Fixture.CreateDistinctSortedCollection<T>( count: 2 );
+        var (min, max) = Fixture.CreateManyDistinctSorted<T>( count: 2 );
         var item = Bounds.Create( min, max );
         var sut = new BoundsRange<T>( item );
 
@@ -410,7 +410,7 @@ public abstract class GenericBoundsRangeTests<T> : TestsBase
 
     private void Factory_WithBounds_ShouldReturnCorrectResult(Func<Bounds<T>, BoundsRange<T>> factory)
     {
-        var (min, max) = Fixture.CreateDistinctSortedCollection<T>( 2 );
+        var (min, max) = Fixture.CreateManyDistinctSorted<T>( count: 2 );
         var bounds = Bounds.Create( min, max );
 
         var result = factory( bounds );
@@ -446,7 +446,7 @@ public abstract class GenericBoundsRangeTests<T> : TestsBase
     private void Factory_WithRange_ShouldReturnCorrectResult_WhenRangeHasOneElement(
         Func<IEnumerable<Bounds<T>>, BoundsRange<T>> factory)
     {
-        var (min, max) = Fixture.CreateDistinctSortedCollection<T>( 2 );
+        var (min, max) = Fixture.CreateManyDistinctSorted<T>( count: 2 );
         var bounds = Bounds.Create( min, max );
         var range = new[] { bounds };
 
@@ -494,7 +494,7 @@ public abstract class GenericBoundsRangeTests<T> : TestsBase
     private void Factory_WithRange_ShouldReturnCorrectResult_WhenAllValuesAreUnique(
         Func<IEnumerable<Bounds<T>>, BoundsRange<T>> factory)
     {
-        var (min1, max1, min2, max2, min3, max3) = Fixture.CreateDistinctSortedCollection<T>( 6 );
+        var (min1, max1, min2, max2, min3, max3) = Fixture.CreateManyDistinctSorted<T>( count: 6 );
         var bounds1 = Bounds.Create( min1, max1 );
         var bounds2 = Bounds.Create( min2, max2 );
         var bounds3 = Bounds.Create( min3, max3 );
@@ -514,7 +514,7 @@ public abstract class GenericBoundsRangeTests<T> : TestsBase
     private void Factory_WithRange_ShouldReturnCorrectResult_WhenSomeValuesAreRedundant(
         Func<IEnumerable<Bounds<T>>, BoundsRange<T>> factory)
     {
-        var (a, b, c, d) = Fixture.CreateDistinctSortedCollection<T>( 4 );
+        var (a, b, c, d) = Fixture.CreateManyDistinctSorted<T>( count: 4 );
         var bounds1 = Bounds.Create( a, b );
         var bounds2 = Bounds.Create( b, c );
         var bounds3 = Bounds.Create( d, d );
@@ -533,7 +533,7 @@ public abstract class GenericBoundsRangeTests<T> : TestsBase
     private void Factory_WithRange_ShouldThrowArgumentException_WhenBoundsAreNotOrdered(
         Func<IEnumerable<Bounds<T>>, BoundsRange<T>> factory)
     {
-        var (min2, max2, min1, max1) = Fixture.CreateDistinctSortedCollection<T>( 4 );
+        var (min2, max2, min1, max1) = Fixture.CreateManyDistinctSorted<T>( count: 4 );
         var bounds1 = Bounds.Create( min1, max1 );
         var bounds2 = Bounds.Create( min2, max2 );
         var range = new[] { bounds1, bounds2 };

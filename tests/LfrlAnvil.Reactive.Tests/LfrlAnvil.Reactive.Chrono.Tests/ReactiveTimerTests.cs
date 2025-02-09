@@ -14,7 +14,7 @@ public class ReactiveTimerTests : TestsBase
     [Fact]
     public void Ctor_WithTimestampProviderAndInterval_ShouldCreateCorrectTimer()
     {
-        var interval = Duration.FromTicks( Fixture.CreatePositiveInt32() );
+        var interval = Duration.FromTicks( Fixture.Create<int>( x => x > 0 ) );
         var timestampProvider = Substitute.For<ITimestampProvider>();
         var sut = new ReactiveTimer( timestampProvider, interval );
 
@@ -58,8 +58,8 @@ public class ReactiveTimerTests : TestsBase
     [Fact]
     public void Ctor_WithTimestampProviderAndIntervalAndCount_ShouldCreateCorrectTimer()
     {
-        var interval = Duration.FromTicks( Fixture.CreatePositiveInt32() );
-        var count = Fixture.CreatePositiveInt32();
+        var interval = Duration.FromTicks( Fixture.Create<int>( x => x > 0 ) );
+        var count = Fixture.Create<int>( x => x > 0 );
         var timestampProvider = Substitute.For<ITimestampProvider>();
         var sut = new ReactiveTimer( timestampProvider, interval, count );
 
@@ -81,7 +81,7 @@ public class ReactiveTimerTests : TestsBase
         long ticks)
     {
         var interval = Duration.FromTicks( ticks );
-        var count = Fixture.CreatePositiveInt32();
+        var count = Fixture.Create<int>( x => x > 0 );
         var timestampProvider = Substitute.For<ITimestampProvider>();
 
         var action = Lambda.Of( () => new ReactiveTimer( timestampProvider, interval, count ) );
@@ -95,7 +95,7 @@ public class ReactiveTimerTests : TestsBase
     public void Ctor_WithTimestampProviderAndIntervalAndCount_ShouldThrowArgumentOutOfRangeException_WhenIntervalIsTooLarge(long ms)
     {
         var interval = Duration.FromMilliseconds( ms );
-        var count = Fixture.CreatePositiveInt32();
+        var count = Fixture.Create<int>( x => x > 0 );
         var timestampProvider = Substitute.For<ITimestampProvider>();
 
         var action = Lambda.Of( () => new ReactiveTimer( timestampProvider, interval, count ) );
@@ -108,7 +108,7 @@ public class ReactiveTimerTests : TestsBase
     [InlineData( 0 )]
     public void Ctor_WithTimestampProviderAndIntervalAndCount_ShouldThrowArgumentOutOfRangeException_WhenCountIsLessThanOne(long count)
     {
-        var interval = Duration.FromTicks( Fixture.CreatePositiveInt32() );
+        var interval = Duration.FromTicks( Fixture.Create<int>( x => x > 0 ) );
         var timestampProvider = Substitute.For<ITimestampProvider>();
 
         var action = Lambda.Of( () => new ReactiveTimer( timestampProvider, interval, count ) );
@@ -119,7 +119,7 @@ public class ReactiveTimerTests : TestsBase
     [Fact]
     public void Ctor_WithTimestampProviderAndIntervalAndSpinWaitDurationHint_ShouldCreateCorrectTimer()
     {
-        var interval = Duration.FromTicks( Fixture.CreatePositiveInt32() );
+        var interval = Duration.FromTicks( Fixture.Create<int>( x => x > 0 ) );
         var spinWaitDurationHint = Duration.FromTicks( Fixture.Create<uint>() );
         var timestampProvider = Substitute.For<ITimestampProvider>();
         var sut = new ReactiveTimer( timestampProvider, interval, spinWaitDurationHint );
@@ -171,7 +171,7 @@ public class ReactiveTimerTests : TestsBase
     public void
         Ctor_WithTimestampProviderAndIntervalAndSpinWaitDurationHint_ShouldThrowArgumentOutOfRangeException_WhenSpinWaitDurationHintIsLessThanZero()
     {
-        var interval = Duration.FromTicks( Fixture.CreatePositiveInt32() );
+        var interval = Duration.FromTicks( Fixture.Create<int>( x => x > 0 ) );
         var spinWaitDurationHint = Duration.FromTicks( -1 );
         var timestampProvider = Substitute.For<ITimestampProvider>();
 
@@ -183,9 +183,9 @@ public class ReactiveTimerTests : TestsBase
     [Fact]
     public void Ctor_WithAllProperties_ShouldCreateCorrectTimer()
     {
-        var interval = Duration.FromTicks( Fixture.CreatePositiveInt32() );
+        var interval = Duration.FromTicks( Fixture.Create<int>( x => x > 0 ) );
         var spinWaitDurationHint = Duration.FromTicks( Fixture.Create<uint>() );
-        var count = Fixture.CreatePositiveInt32();
+        var count = Fixture.Create<int>( x => x > 0 );
         var timestampProvider = Substitute.For<ITimestampProvider>();
         var sut = new ReactiveTimer( timestampProvider, interval, spinWaitDurationHint, count );
 
@@ -207,7 +207,7 @@ public class ReactiveTimerTests : TestsBase
     {
         var interval = Duration.FromTicks( ticks );
         var spinWaitDurationHint = Duration.FromTicks( Fixture.Create<uint>() );
-        var count = Fixture.CreatePositiveInt32();
+        var count = Fixture.Create<int>( x => x > 0 );
         var timestampProvider = Substitute.For<ITimestampProvider>();
 
         var action = Lambda.Of( () => new ReactiveTimer( timestampProvider, interval, spinWaitDurationHint, count ) );
@@ -222,7 +222,7 @@ public class ReactiveTimerTests : TestsBase
     {
         var interval = Duration.FromMilliseconds( ms );
         var spinWaitDurationHint = Duration.FromTicks( Fixture.Create<uint>() );
-        var count = Fixture.CreatePositiveInt32();
+        var count = Fixture.Create<int>( x => x > 0 );
         var timestampProvider = Substitute.For<ITimestampProvider>();
 
         var action = Lambda.Of( () => new ReactiveTimer( timestampProvider, interval, spinWaitDurationHint, count ) );
@@ -233,9 +233,9 @@ public class ReactiveTimerTests : TestsBase
     [Fact]
     public void Ctor_WithAllProperties_ShouldThrowArgumentOutOfRangeException_WhenSpinWaitDurationHintIsLessThanZero()
     {
-        var interval = Duration.FromTicks( Fixture.CreatePositiveInt32() );
+        var interval = Duration.FromTicks( Fixture.Create<int>( x => x > 0 ) );
         var spinWaitDurationHint = Duration.FromTicks( -1 );
-        var count = Fixture.CreatePositiveInt32();
+        var count = Fixture.Create<int>( x => x > 0 );
         var timestampProvider = Substitute.For<ITimestampProvider>();
 
         var action = Lambda.Of( () => new ReactiveTimer( timestampProvider, interval, spinWaitDurationHint, count ) );
@@ -248,7 +248,7 @@ public class ReactiveTimerTests : TestsBase
     [InlineData( 0 )]
     public void Ctor_WithAllProperties_ShouldThrowArgumentOutOfRangeException_WhenCountIsLessThanOne(long count)
     {
-        var interval = Duration.FromTicks( Fixture.CreatePositiveInt32() );
+        var interval = Duration.FromTicks( Fixture.Create<int>( x => x > 0 ) );
         var spinWaitDurationHint = Duration.FromTicks( Fixture.Create<uint>() );
         var timestampProvider = Substitute.For<ITimestampProvider>();
 
@@ -309,7 +309,7 @@ public class ReactiveTimerTests : TestsBase
     public void Start_ShouldReturnFalse_WhenTimerIsDisposed()
     {
         var timestampProvider = Substitute.For<ITimestampProvider>();
-        var interval = Duration.FromTicks( Fixture.CreatePositiveInt32() );
+        var interval = Duration.FromTicks( Fixture.Create<int>( x => x > 0 ) );
         var sut = new ReactiveTimer( timestampProvider, interval );
         sut.Dispose();
 
@@ -378,7 +378,7 @@ public class ReactiveTimerTests : TestsBase
     public void Start_WithDelay_ShouldThrowArgumentOutOfRangeException_WhenDelayIsLessThanOne(long ticks)
     {
         var timestampProvider = Substitute.For<ITimestampProvider>();
-        var interval = Duration.FromTicks( Fixture.CreatePositiveInt32() );
+        var interval = Duration.FromTicks( Fixture.Create<int>( x => x > 0 ) );
         var delay = Duration.FromTicks( ticks );
         var sut = new ReactiveTimer( timestampProvider, interval );
 
@@ -393,7 +393,7 @@ public class ReactiveTimerTests : TestsBase
     public void Start_WithDelay_ShouldThrowArgumentOutOfRangeException_WhenDelayIsTooLarge(long ms)
     {
         var timestampProvider = Substitute.For<ITimestampProvider>();
-        var interval = Duration.FromTicks( Fixture.CreatePositiveInt32() );
+        var interval = Duration.FromTicks( Fixture.Create<int>( x => x > 0 ) );
         var delay = Duration.FromMilliseconds( ms );
         var sut = new ReactiveTimer( timestampProvider, interval );
 
@@ -406,8 +406,8 @@ public class ReactiveTimerTests : TestsBase
     public void Start_WithDelay_ShouldReturnFalse_WhenTimerIsDisposed()
     {
         var timestampProvider = Substitute.For<ITimestampProvider>();
-        var interval = Duration.FromTicks( Fixture.CreatePositiveInt32() );
-        var delay = Duration.FromTicks( Fixture.CreatePositiveInt32() );
+        var interval = Duration.FromTicks( Fixture.Create<int>( x => x > 0 ) );
+        var delay = Duration.FromTicks( Fixture.Create<int>( x => x > 0 ) );
         var sut = new ReactiveTimer( timestampProvider, interval );
         sut.Dispose();
 
@@ -475,7 +475,7 @@ public class ReactiveTimerTests : TestsBase
     public void StartAsync_ShouldReturnCompletedTask_WhenTimerIsDisposed()
     {
         var timestampProvider = Substitute.For<ITimestampProvider>();
-        var interval = Duration.FromTicks( Fixture.CreatePositiveInt32() );
+        var interval = Duration.FromTicks( Fixture.Create<int>( x => x > 0 ) );
         var sut = new ReactiveTimer( timestampProvider, interval );
         sut.Dispose();
 
@@ -547,7 +547,7 @@ public class ReactiveTimerTests : TestsBase
     public void StartAsync_WithDelay_ShouldThrowArgumentOutOfRangeException_WhenDelayIsLessThanOne(long ticks)
     {
         var timestampProvider = Substitute.For<ITimestampProvider>();
-        var interval = Duration.FromTicks( Fixture.CreatePositiveInt32() );
+        var interval = Duration.FromTicks( Fixture.Create<int>( x => x > 0 ) );
         var delay = Duration.FromTicks( ticks );
         var sut = new ReactiveTimer( timestampProvider, interval );
 
@@ -562,7 +562,7 @@ public class ReactiveTimerTests : TestsBase
     public void StartAsync_WithDelay_ShouldThrowArgumentOutOfRangeException_WhenDelayIsTooLarge(long ms)
     {
         var timestampProvider = Substitute.For<ITimestampProvider>();
-        var interval = Duration.FromTicks( Fixture.CreatePositiveInt32() );
+        var interval = Duration.FromTicks( Fixture.Create<int>( x => x > 0 ) );
         var delay = Duration.FromMilliseconds( ms );
         var sut = new ReactiveTimer( timestampProvider, interval );
 
@@ -575,8 +575,8 @@ public class ReactiveTimerTests : TestsBase
     public void StartAsync_WithDelay_ShouldReturnCompletedTask_WhenTimerIsDisposed()
     {
         var timestampProvider = Substitute.For<ITimestampProvider>();
-        var interval = Duration.FromTicks( Fixture.CreatePositiveInt32() );
-        var delay = Duration.FromTicks( Fixture.CreatePositiveInt32() );
+        var interval = Duration.FromTicks( Fixture.Create<int>( x => x > 0 ) );
+        var delay = Duration.FromTicks( Fixture.Create<int>( x => x > 0 ) );
         var sut = new ReactiveTimer( timestampProvider, interval );
         sut.Dispose();
 
@@ -644,7 +644,7 @@ public class ReactiveTimerTests : TestsBase
     {
         var scheduler = new SynchronousTaskScheduler();
         var timestampProvider = Substitute.For<ITimestampProvider>();
-        var interval = Duration.FromTicks( Fixture.CreatePositiveInt32() );
+        var interval = Duration.FromTicks( Fixture.Create<int>( x => x > 0 ) );
         var sut = new ReactiveTimer( timestampProvider, interval );
         sut.Dispose();
 
@@ -716,7 +716,7 @@ public class ReactiveTimerTests : TestsBase
     {
         var scheduler = new SynchronousTaskScheduler();
         var timestampProvider = Substitute.For<ITimestampProvider>();
-        var interval = Duration.FromTicks( Fixture.CreatePositiveInt32() );
+        var interval = Duration.FromTicks( Fixture.Create<int>( x => x > 0 ) );
         var delay = Duration.FromTicks( ticks );
         var sut = new ReactiveTimer( timestampProvider, interval );
 
@@ -732,7 +732,7 @@ public class ReactiveTimerTests : TestsBase
     {
         var scheduler = new SynchronousTaskScheduler();
         var timestampProvider = Substitute.For<ITimestampProvider>();
-        var interval = Duration.FromTicks( Fixture.CreatePositiveInt32() );
+        var interval = Duration.FromTicks( Fixture.Create<int>( x => x > 0 ) );
         var delay = Duration.FromMilliseconds( ms );
         var sut = new ReactiveTimer( timestampProvider, interval );
 
@@ -746,8 +746,8 @@ public class ReactiveTimerTests : TestsBase
     {
         var scheduler = new SynchronousTaskScheduler();
         var timestampProvider = Substitute.For<ITimestampProvider>();
-        var interval = Duration.FromTicks( Fixture.CreatePositiveInt32() );
-        var delay = Duration.FromTicks( Fixture.CreatePositiveInt32() );
+        var interval = Duration.FromTicks( Fixture.Create<int>( x => x > 0 ) );
+        var delay = Duration.FromTicks( Fixture.Create<int>( x => x > 0 ) );
         var sut = new ReactiveTimer( timestampProvider, interval );
         sut.Dispose();
 
@@ -1078,7 +1078,7 @@ public class ReactiveTimerTests : TestsBase
     public void Dispose_ShouldMarkTimerAsDisposed()
     {
         var timestampProvider = Substitute.For<ITimestampProvider>();
-        var interval = Duration.FromTicks( Fixture.CreatePositiveInt32() );
+        var interval = Duration.FromTicks( Fixture.Create<int>( x => x > 0 ) );
         var sut = new ReactiveTimer( timestampProvider, interval );
 
         sut.Dispose();
@@ -1090,7 +1090,7 @@ public class ReactiveTimerTests : TestsBase
     public void Dispose_ShouldDoNothing_WhenTimerIsAlreadyDisposed()
     {
         var timestampProvider = Substitute.For<ITimestampProvider>();
-        var interval = Duration.FromTicks( Fixture.CreatePositiveInt32() );
+        var interval = Duration.FromTicks( Fixture.Create<int>( x => x > 0 ) );
         var sut = new ReactiveTimer( timestampProvider, interval );
         sut.Dispose();
 
@@ -1182,7 +1182,7 @@ public class ReactiveTimerTests : TestsBase
     public void Stop_ShouldDoNothing_WhenTimerIsNotRunning()
     {
         var timestampProvider = Substitute.For<ITimestampProvider>();
-        var interval = Duration.FromTicks( Fixture.CreatePositiveInt32() );
+        var interval = Duration.FromTicks( Fixture.Create<int>( x => x > 0 ) );
         var sut = new ReactiveTimer( timestampProvider, interval );
 
         var result = sut.Stop();
@@ -1198,7 +1198,7 @@ public class ReactiveTimerTests : TestsBase
     public void Stop_ShouldReturnFalse_WhenTimerIsDisposed()
     {
         var timestampProvider = Substitute.For<ITimestampProvider>();
-        var interval = Duration.FromTicks( Fixture.CreatePositiveInt32() );
+        var interval = Duration.FromTicks( Fixture.Create<int>( x => x > 0 ) );
         var sut = new ReactiveTimer( timestampProvider, interval );
         sut.Dispose();
 

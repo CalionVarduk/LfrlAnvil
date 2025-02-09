@@ -104,7 +104,7 @@ public abstract class GenericEnsureOfRefTypeTests<T> : GenericEnsureOfComparable
     [Fact]
     public void RefEquals_ShouldThrowArgumentException_WhenParamsDontReferenceTheSameObject()
     {
-        var (param, value) = Fixture.CreateDistinctCollection<T>( 2 );
+        var (param, value) = Fixture.CreateManyDistinct<T>( count: 2 );
         ShouldThrowArgumentException( () => Ensure.RefEquals( param, value ) );
     }
 
@@ -141,7 +141,7 @@ public abstract class GenericEnsureOfRefTypeTests<T> : GenericEnsureOfComparable
     [Fact]
     public void NotRefEquals_ShouldPass_WhenParamsDontReferenceTheSameObject()
     {
-        var (param, value) = Fixture.CreateDistinctCollection<T>( 2 );
+        var (param, value) = Fixture.CreateManyDistinct<T>( count: 2 );
         ShouldPass( () => Ensure.NotRefEquals( param, value ) );
     }
 

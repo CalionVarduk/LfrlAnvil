@@ -8,6 +8,11 @@ public abstract class GenericTwoWayDictionaryTests<T1, T2> : GenericCollectionTe
     where T1 : notnull
     where T2 : notnull
 {
+    protected GenericTwoWayDictionaryTests()
+    {
+        Fixture.Customize<Pair<T1, T2>>( (_, _) => f => Pair.Create( f.Create<T1>(), f.Create<T2>() ) );
+    }
+
     [Fact]
     public void Ctor_ShouldCreateEmptyTwoWayDictionary()
     {
@@ -41,7 +46,7 @@ public abstract class GenericTwoWayDictionaryTests<T1, T2> : GenericCollectionTe
     public void TryAdd_ShouldReturnFalseAndDoNothing_WhenFirstAlreadyExists()
     {
         var first = Fixture.Create<T1>();
-        var (oldSecond, newSecond) = Fixture.CreateDistinctCollection<T2>( 2 );
+        var (oldSecond, newSecond) = Fixture.CreateManyDistinct<T2>( count: 2 );
 
         var sut = new TwoWayDictionary<T1, T2> { { first, oldSecond } };
 
@@ -59,7 +64,7 @@ public abstract class GenericTwoWayDictionaryTests<T1, T2> : GenericCollectionTe
     [Fact]
     public void TryAdd_ShouldReturnFalseAndDoNothing_WhenSecondAlreadyExists()
     {
-        var (oldFirst, newFirst) = Fixture.CreateDistinctCollection<T1>( 2 );
+        var (oldFirst, newFirst) = Fixture.CreateManyDistinct<T1>( count: 2 );
         var second = Fixture.Create<T2>();
 
         var sut = new TwoWayDictionary<T1, T2> { { oldFirst, second } };
@@ -97,8 +102,8 @@ public abstract class GenericTwoWayDictionaryTests<T1, T2> : GenericCollectionTe
     [Fact]
     public void TryAdd_ShouldReturnTrueAndAddNewValues_WhenFirstAndSecondDontExist()
     {
-        var (first, otherFirst) = Fixture.CreateDistinctCollection<T1>( 2 );
-        var (second, otherSecond) = Fixture.CreateDistinctCollection<T2>( 2 );
+        var (first, otherFirst) = Fixture.CreateManyDistinct<T1>( count: 2 );
+        var (second, otherSecond) = Fixture.CreateManyDistinct<T2>( count: 2 );
 
         var sut = new TwoWayDictionary<T1, T2> { { otherFirst, otherSecond } };
 
@@ -119,7 +124,7 @@ public abstract class GenericTwoWayDictionaryTests<T1, T2> : GenericCollectionTe
     public void Add_ShouldThrowArgumentException_WhenFirstAlreadyExists()
     {
         var first = Fixture.Create<T1>();
-        var (oldSecond, newSecond) = Fixture.CreateDistinctCollection<T2>( 2 );
+        var (oldSecond, newSecond) = Fixture.CreateManyDistinct<T2>( count: 2 );
 
         var sut = new TwoWayDictionary<T1, T2> { { first, oldSecond } };
 
@@ -137,7 +142,7 @@ public abstract class GenericTwoWayDictionaryTests<T1, T2> : GenericCollectionTe
     [Fact]
     public void Add_ShouldThrowArgumentException_WhenSecondAlreadyExists()
     {
-        var (oldFirst, newFirst) = Fixture.CreateDistinctCollection<T1>( 2 );
+        var (oldFirst, newFirst) = Fixture.CreateManyDistinct<T1>( count: 2 );
         var second = Fixture.Create<T2>();
 
         var sut = new TwoWayDictionary<T1, T2> { { oldFirst, second } };
@@ -174,8 +179,8 @@ public abstract class GenericTwoWayDictionaryTests<T1, T2> : GenericCollectionTe
     [Fact]
     public void Add_ShouldAddNewValues_WhenFirstAndSecondDontExist()
     {
-        var (first, otherFirst) = Fixture.CreateDistinctCollection<T1>( 2 );
-        var (second, otherSecond) = Fixture.CreateDistinctCollection<T2>( 2 );
+        var (first, otherFirst) = Fixture.CreateManyDistinct<T1>( count: 2 );
+        var (second, otherSecond) = Fixture.CreateManyDistinct<T2>( count: 2 );
 
         var sut = new TwoWayDictionary<T1, T2> { { otherFirst, otherSecond } };
 
@@ -194,7 +199,7 @@ public abstract class GenericTwoWayDictionaryTests<T1, T2> : GenericCollectionTe
     [Fact]
     public void TryUpdateForward_ShouldReturnFalseAndDoNothing_WhenSecondAlreadyExists()
     {
-        var (first1, first2) = Fixture.CreateDistinctCollection<T1>( 2 );
+        var (first1, first2) = Fixture.CreateManyDistinct<T1>( count: 2 );
         var second = Fixture.Create<T2>();
 
         var sut = new TwoWayDictionary<T1, T2> { { first1, second } };
@@ -231,7 +236,7 @@ public abstract class GenericTwoWayDictionaryTests<T1, T2> : GenericCollectionTe
     public void TryUpdateForward_ShouldReturnTrueAndUpdate_WhenFirstExistsAndSecondDoesntExist()
     {
         var first = Fixture.Create<T1>();
-        var (second1, second2) = Fixture.CreateDistinctCollection<T2>( 2 );
+        var (second1, second2) = Fixture.CreateManyDistinct<T2>( count: 2 );
 
         var sut = new TwoWayDictionary<T1, T2> { { first, second1 } };
 
@@ -250,7 +255,7 @@ public abstract class GenericTwoWayDictionaryTests<T1, T2> : GenericCollectionTe
     [Fact]
     public void UpdateForward_ShouldThrowArgumentException_WhenSecondAlreadyExists()
     {
-        var (first1, first2) = Fixture.CreateDistinctCollection<T1>( 2 );
+        var (first1, first2) = Fixture.CreateManyDistinct<T1>( count: 2 );
         var second = Fixture.Create<T2>();
 
         var sut = new TwoWayDictionary<T1, T2> { { first1, second } };
@@ -287,7 +292,7 @@ public abstract class GenericTwoWayDictionaryTests<T1, T2> : GenericCollectionTe
     public void UpdateForward_ShouldUpdate_WhenFirstExistsAndSecondDoesntExist()
     {
         var first = Fixture.Create<T1>();
-        var (second1, second2) = Fixture.CreateDistinctCollection<T2>( 2 );
+        var (second1, second2) = Fixture.CreateManyDistinct<T2>( count: 2 );
 
         var sut = new TwoWayDictionary<T1, T2> { { first, second1 } };
 
@@ -306,7 +311,7 @@ public abstract class GenericTwoWayDictionaryTests<T1, T2> : GenericCollectionTe
     public void TryUpdateReverse_ShouldReturnFalseAndDoNothing_WhenFirstAlreadyExists()
     {
         var first = Fixture.Create<T1>();
-        var (second1, second2) = Fixture.CreateDistinctCollection<T2>( 2 );
+        var (second1, second2) = Fixture.CreateManyDistinct<T2>( count: 2 );
 
         var sut = new TwoWayDictionary<T1, T2> { { first, second1 } };
 
@@ -341,7 +346,7 @@ public abstract class GenericTwoWayDictionaryTests<T1, T2> : GenericCollectionTe
     [Fact]
     public void TryUpdateReverse_ShouldReturnTrueAndUpdate_WhenSecondExistsAndFirstDoesntExist()
     {
-        var (first1, first2) = Fixture.CreateDistinctCollection<T1>( 2 );
+        var (first1, first2) = Fixture.CreateManyDistinct<T1>( count: 2 );
         var second = Fixture.Create<T2>();
 
         var sut = new TwoWayDictionary<T1, T2> { { first1, second } };
@@ -362,7 +367,7 @@ public abstract class GenericTwoWayDictionaryTests<T1, T2> : GenericCollectionTe
     public void UpdateReverse_ShouldThrowArgumentException_WhenFirstAlreadyExists()
     {
         var first = Fixture.Create<T1>();
-        var (second1, second2) = Fixture.CreateDistinctCollection<T2>( 2 );
+        var (second1, second2) = Fixture.CreateManyDistinct<T2>( count: 2 );
 
         var sut = new TwoWayDictionary<T1, T2> { { first, second1 } };
 
@@ -397,7 +402,7 @@ public abstract class GenericTwoWayDictionaryTests<T1, T2> : GenericCollectionTe
     [Fact]
     public void UpdateReverse_ShouldUpdate_WhenSecondExistsAndFirstDoesntExist()
     {
-        var (first1, first2) = Fixture.CreateDistinctCollection<T1>( 2 );
+        var (first1, first2) = Fixture.CreateManyDistinct<T1>( count: 2 );
         var second = Fixture.Create<T2>();
 
         var sut = new TwoWayDictionary<T1, T2> { { first1, second } };
@@ -542,8 +547,8 @@ public abstract class GenericTwoWayDictionaryTests<T1, T2> : GenericCollectionTe
     [Fact]
     public void Clear_ShouldRemoveAll()
     {
-        var (first1, first2, first3) = Fixture.CreateDistinctCollection<T1>( 3 );
-        var (second1, second2, second3) = Fixture.CreateDistinctCollection<T2>( 3 );
+        var (first1, first2, first3) = Fixture.CreateManyDistinct<T1>( count: 3 );
+        var (second1, second2, second3) = Fixture.CreateManyDistinct<T2>( count: 3 );
 
         var sut = new TwoWayDictionary<T1, T2>
         {
@@ -574,7 +579,7 @@ public abstract class GenericTwoWayDictionaryTests<T1, T2> : GenericCollectionTe
     public void Contains_ShouldReturnFalse_WhenFirstExistsButIsNotLinkedWithSecond()
     {
         var first = Fixture.Create<T1>();
-        var (second1, second2) = Fixture.CreateDistinctCollection<T2>( 2 );
+        var (second1, second2) = Fixture.CreateManyDistinct<T2>( count: 2 );
 
         var sut = new TwoWayDictionary<T1, T2> { { first, second1 } };
 
@@ -586,7 +591,7 @@ public abstract class GenericTwoWayDictionaryTests<T1, T2> : GenericCollectionTe
     [Fact]
     public void Contains_ShouldReturnFalse_WhenSecondExistsButIsNotLinkedWithFirst()
     {
-        var (first1, first2) = Fixture.CreateDistinctCollection<T1>( 2 );
+        var (first1, first2) = Fixture.CreateManyDistinct<T1>( count: 2 );
         var second = Fixture.Create<T2>();
 
         var sut = new TwoWayDictionary<T1, T2> { { first1, second } };
@@ -626,7 +631,7 @@ public abstract class GenericTwoWayDictionaryTests<T1, T2> : GenericCollectionTe
     public void Contains_WithPair_ShouldReturnFalse_WhenFirstExistsButIsNotLinkedWithSecond()
     {
         var first = Fixture.Create<T1>();
-        var (second1, second2) = Fixture.CreateDistinctCollection<T2>( 2 );
+        var (second1, second2) = Fixture.CreateManyDistinct<T2>( count: 2 );
 
         var sut = new TwoWayDictionary<T1, T2> { { first, second1 } };
 
@@ -638,7 +643,7 @@ public abstract class GenericTwoWayDictionaryTests<T1, T2> : GenericCollectionTe
     [Fact]
     public void Contains_WithPair_ShouldReturnFalse_WhenSecondExistsButIsNotLinkedWithFirst()
     {
-        var (first1, first2) = Fixture.CreateDistinctCollection<T1>( 2 );
+        var (first1, first2) = Fixture.CreateManyDistinct<T1>( count: 2 );
         var second = Fixture.Create<T2>();
 
         var sut = new TwoWayDictionary<T1, T2> { { first1, second } };
@@ -664,8 +669,8 @@ public abstract class GenericTwoWayDictionaryTests<T1, T2> : GenericCollectionTe
     [Fact]
     public void GetEnumerator_ShouldReturnCorrectResult()
     {
-        var (first1, first2, first3) = Fixture.CreateDistinctCollection<T1>( 3 );
-        var (second1, second2, second3) = Fixture.CreateDistinctCollection<T2>( 3 );
+        var (first1, first2, first3) = Fixture.CreateManyDistinct<T1>( count: 3 );
+        var (second1, second2, second3) = Fixture.CreateManyDistinct<T2>( count: 3 );
 
         var expected
             = new[] { Pair.Create( first1, second1 ), Pair.Create( first2, second2 ), Pair.Create( first3, second3 ) }.AsEnumerable();
@@ -684,7 +689,7 @@ public abstract class GenericTwoWayDictionaryTests<T1, T2> : GenericCollectionTe
     public void ICollectionRemove_ShouldReturnFalseAndDoNothing_WhenFirstExistsButIsNotLinkedWithSecond()
     {
         var first = Fixture.Create<T1>();
-        var (second1, second2) = Fixture.CreateDistinctCollection<T2>( 2 );
+        var (second1, second2) = Fixture.CreateManyDistinct<T2>( count: 2 );
 
         var dictionary = new TwoWayDictionary<T1, T2> { { first, second1 } };
         var sut = ( ICollection<Pair<T1, T2>> )dictionary;
@@ -697,7 +702,7 @@ public abstract class GenericTwoWayDictionaryTests<T1, T2> : GenericCollectionTe
     [Fact]
     public void ICollectionRemove_ShouldReturnFalseAndDoNothing_WhenSecondExistsButIsNotLinkedWithFirst()
     {
-        var (first1, first2) = Fixture.CreateDistinctCollection<T1>( 2 );
+        var (first1, first2) = Fixture.CreateManyDistinct<T1>( count: 2 );
         var second = Fixture.Create<T2>();
 
         var dictionary = new TwoWayDictionary<T1, T2> { { first1, second } };

@@ -4,10 +4,10 @@ namespace LfrlAnvil.Functional.Tests.MaybeTests;
 
 public class GenericMaybeTestsData<T>
 {
-    public static TheoryData<T?, bool, T?, bool, bool> CreateEqualsTestData(IFixture fixture)
+    public static TheoryData<T?, bool, T?, bool, bool> CreateEqualsTestData(Fixture fixture)
     {
         var _0 = default( T );
-        var (_1, _2) = fixture.CreateDistinctCollection<T>( 2 );
+        var (_1, _2) = fixture.CreateManyDistinct<T>( count: 2 );
 
         return new TheoryData<T?, bool, T?, bool, bool>
         {
@@ -19,7 +19,7 @@ public class GenericMaybeTestsData<T>
         };
     }
 
-    public static IEnumerable<object?[]> CreateNotEqualsTestData(IFixture fixture)
+    public static IEnumerable<object?[]> CreateNotEqualsTestData(Fixture fixture)
     {
         return CreateEqualsTestData( fixture ).ConvertResult( (bool r) => ! r );
     }

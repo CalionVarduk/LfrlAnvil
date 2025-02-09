@@ -39,7 +39,7 @@ public class NullValidatorTests : ValidatorTestsBase
     [Fact]
     public void Validate_ShouldReturnChainWithFailure_WhenObjectIsNotNull_ForNullableStructType()
     {
-        var value = Fixture.CreateNullable<int>();
+        var value = Fixture.Create<int?>();
         var resource = Fixture.Create<string>();
         var sut = FormattableValidators<string>.Null<int?>( resource );
 

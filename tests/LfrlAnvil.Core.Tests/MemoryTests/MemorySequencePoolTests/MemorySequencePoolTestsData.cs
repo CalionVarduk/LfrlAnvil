@@ -2,7 +2,7 @@
 
 public class MemorySequencePoolTestsData
 {
-    public static TheoryData<int, int, int[]> GetFirstSequenceData(IFixture fixture)
+    public static TheoryData<int, int, int[]> GetFirstSequenceData(Fixture fixture)
     {
         return new TheoryData<int, int, int[]>
         {
@@ -21,7 +21,7 @@ public class MemorySequencePoolTestsData
         };
     }
 
-    public static TheoryData<int, int, int, int[]> GetSecondSequenceData(IFixture fixture)
+    public static TheoryData<int, int, int, int[]> GetSecondSequenceData(Fixture fixture)
     {
         return new TheoryData<int, int, int, int[]>
         {
@@ -45,7 +45,7 @@ public class MemorySequencePoolTestsData
         };
     }
 
-    public static TheoryData<int, int, int, int> GetReuseReturnedTailSequenceData(IFixture fixture)
+    public static TheoryData<int, int, int, int> GetReuseReturnedTailSequenceData(Fixture fixture)
     {
         return new TheoryData<int, int, int, int>
         {

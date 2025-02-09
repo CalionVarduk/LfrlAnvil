@@ -11,7 +11,7 @@ public abstract class GenericEnumerableExtensionsOfNotNullTypeTests<T> : TestsBa
     [Fact]
     public void ToMultiHashSet_ShouldReturnCorrectResult()
     {
-        var distinctItems = Fixture.CreateDistinctCollection<T>( 5 );
+        var distinctItems = Fixture.CreateManyDistinct<T>( count: 5 );
         var items = distinctItems.SelectMany( i => new[] { i, i, i, i } ).ToList();
         var expected = distinctItems.Select( i => Pair.Create( i, 4 ) ).ToList();
 
@@ -23,7 +23,7 @@ public abstract class GenericEnumerableExtensionsOfNotNullTypeTests<T> : TestsBa
     [Fact]
     public void ToMultiDictionary_WithKeySelector_ShouldReturnCorrectResult()
     {
-        var items = Fixture.CreateDistinctCollection<T>( 5 ).Select( i => new Value<T>( i ) ).ToList();
+        var items = Fixture.CreateManyDistinct<T>( count: 5 ).Select( i => new Value<T>( i ) ).ToList();
         items = items.Concat( items ).ToList();
         var expected = items.Select( i => KeyValuePair.Create( i.Val, i ) );
 
@@ -38,7 +38,7 @@ public abstract class GenericEnumerableExtensionsOfNotNullTypeTests<T> : TestsBa
     [Fact]
     public void ToMultiDictionary_WithKeyAndValueSelectors_ShouldReturnCorrectResult()
     {
-        var items = Fixture.CreateDistinctCollection<T>( 5 ).Select( i => new Value<T>( i ) ).ToList();
+        var items = Fixture.CreateManyDistinct<T>( count: 5 ).Select( i => new Value<T>( i ) ).ToList();
         items = items.Concat( items ).ToList();
         var expected = items.Select( i => KeyValuePair.Create( i.Val, i ) );
 
@@ -53,7 +53,7 @@ public abstract class GenericEnumerableExtensionsOfNotNullTypeTests<T> : TestsBa
     [Fact]
     public void ToMultiDictionary_FromKeyValuePairs_ShouldReturnCorrectResult()
     {
-        var items = Fixture.CreateDistinctCollection<T>( 5 ).Select( i => new Value<T>( i ) ).ToList();
+        var items = Fixture.CreateManyDistinct<T>( count: 5 ).Select( i => new Value<T>( i ) ).ToList();
         items = items.Concat( items ).ToList();
         var expected = items.Select( i => KeyValuePair.Create( i.Val, i ) ).ToList();
 
@@ -68,7 +68,7 @@ public abstract class GenericEnumerableExtensionsOfNotNullTypeTests<T> : TestsBa
     [Fact]
     public void ToMultiDictionary_FromGroupings_ShouldReturnCorrectResult()
     {
-        var items = Fixture.CreateDistinctCollection<T>( 5 ).Select( i => new Value<T>( i ) ).ToList();
+        var items = Fixture.CreateManyDistinct<T>( count: 5 ).Select( i => new Value<T>( i ) ).ToList();
         items = items.Concat( items ).ToList();
         var expected = items.Select( i => KeyValuePair.Create( i.Val, i ) ).ToList();
         var groupings = items.ToLookup( i => i.Val );
@@ -84,7 +84,7 @@ public abstract class GenericEnumerableExtensionsOfNotNullTypeTests<T> : TestsBa
     [Fact]
     public void ToSequentialHashSet_ShouldReturnCorrectResult()
     {
-        var items = Fixture.CreateDistinctCollection<T>( 5 );
+        var items = Fixture.CreateManyDistinct<T>( count: 5 );
         var result = items.ToSequentialHashSet();
         result.Should().BeSequentiallyEqualTo( items );
     }
@@ -92,7 +92,7 @@ public abstract class GenericEnumerableExtensionsOfNotNullTypeTests<T> : TestsBa
     [Fact]
     public void ToSequentialDictionary_ShouldReturnCorrectResult()
     {
-        var items = Fixture.CreateDistinctCollection<T>( 5 ).Select( i => new Value<T>( i ) ).ToList();
+        var items = Fixture.CreateManyDistinct<T>( count: 5 ).Select( i => new Value<T>( i ) ).ToList();
         var expected = items.Select( i => KeyValuePair.Create( i.Val, i ) );
 
         var result = items.ToSequentialDictionary( i => i.Val );
@@ -103,7 +103,7 @@ public abstract class GenericEnumerableExtensionsOfNotNullTypeTests<T> : TestsBa
     [Fact]
     public void ToSequentialDictionary_ShouldReturnCorrectResult_WithValueSelector()
     {
-        var items = Fixture.CreateDistinctCollection<T>( 5 );
+        var items = Fixture.CreateManyDistinct<T>( count: 5 );
         var expected = items.Select( i => KeyValuePair.Create( i, new Value<T>( i ) ) );
 
         var result = items.ToSequentialDictionary( i => i, i => new Value<T>( i ) );

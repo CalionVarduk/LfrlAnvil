@@ -2,7 +2,7 @@
 
 public class BoundsExtensionsTestsData
 {
-    public static TheoryData<DateTime, DateTime, TimeSpan> GetGetTimeSpanData(IFixture fixture)
+    public static TheoryData<DateTime, DateTime, TimeSpan> GetGetTimeSpanData(Fixture fixture)
     {
         var dt1 = new DateTime( 2021, 8, 26 );
         var dt2 = new DateTime( 2021, 8, 27, 12, 34, 56, 789 ).AddTicks( 9876 );
@@ -16,7 +16,7 @@ public class BoundsExtensionsTestsData
         };
     }
 
-    public static TheoryData<DateTime, DateTime, PeriodUnits, Period> GetGetPeriodData(IFixture fixture)
+    public static TheoryData<DateTime, DateTime, PeriodUnits, Period> GetGetPeriodData(Fixture fixture)
     {
         var dt1 = new DateTime( 2021, 8, 26 );
         var dt2 = new DateTime( 2021, 10, 17, 12, 34, 56, 789 ).AddTicks( 9876 );
@@ -34,7 +34,7 @@ public class BoundsExtensionsTestsData
         };
     }
 
-    public static TheoryData<DateTime, DateTime, PeriodUnits, Period> GetGetGreedyPeriodData(IFixture fixture)
+    public static TheoryData<DateTime, DateTime, PeriodUnits, Period> GetGetGreedyPeriodData(Fixture fixture)
     {
         var dt1 = new DateTime( 2021, 8, 26 );
         var dt2 = new DateTime( 2021, 10, 17, 12, 34, 56, 789 ).AddTicks( 9876 );
@@ -52,7 +52,7 @@ public class BoundsExtensionsTestsData
         };
     }
 
-    public static TheoryData<DateTime, DateTime, Duration> GetGetDurationData(IFixture fixture)
+    public static TheoryData<DateTime, DateTime, Duration> GetGetDurationData(Fixture fixture)
     {
         var dt1 = new DateTime( 2021, 8, 26 );
         var dt2 = new DateTime( 2021, 8, 27, 12, 34, 56, 789 ).AddTicks( 9876 );
@@ -66,7 +66,7 @@ public class BoundsExtensionsTestsData
         };
     }
 
-    public static TheoryData<DateTime, DateTime, PeriodUnits, Period> GetGetPeriodWithZonedDayData(IFixture fixture)
+    public static TheoryData<DateTime, DateTime, PeriodUnits, Period> GetGetPeriodWithZonedDayData(Fixture fixture)
     {
         var dt1 = new DateTime( 2021, 8, 26 );
         var dt2 = new DateTime( 2021, 10, 17 );
@@ -84,7 +84,7 @@ public class BoundsExtensionsTestsData
         };
     }
 
-    public static TheoryData<DateTime, DateTime, PeriodUnits, Period> GetGetGreedyPeriodWithZonedDayData(IFixture fixture)
+    public static TheoryData<DateTime, DateTime, PeriodUnits, Period> GetGetGreedyPeriodWithZonedDayData(Fixture fixture)
     {
         var dt1 = new DateTime( 2021, 8, 26 );
         var dt2 = new DateTime( 2021, 10, 17 );

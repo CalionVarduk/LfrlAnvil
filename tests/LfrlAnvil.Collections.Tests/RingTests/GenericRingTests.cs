@@ -43,7 +43,7 @@ public abstract class GenericRingTests<T> : TestsBase
     [Fact]
     public void Ctor_ShouldCreateWithCorrectItems()
     {
-        var items = Fixture.CreateDistinctCollection<T>( 3 );
+        var items = Fixture.CreateManyDistinct<T>( count: 3 );
         var sut = new Ring<T>( items[0], items[1], items[2] );
         sut.Should().BeEquivalentTo( items );
     }
@@ -184,7 +184,7 @@ public abstract class GenericRingTests<T> : TestsBase
     [InlineData( 2 )]
     public void Clear_ShouldResetItemsAndWriteIndex(int writeIndex)
     {
-        var items = Fixture.CreateDistinctCollection<T>( 3 );
+        var items = Fixture.CreateManyDistinct<T>( count: 3 );
 
         var sut = new Ring<T>( items ) { WriteIndex = writeIndex };
 
@@ -211,7 +211,7 @@ public abstract class GenericRingTests<T> : TestsBase
     [InlineData( 6 )]
     public void Read_ShouldReturnCorrectResult(int readIndex)
     {
-        var items = Fixture.CreateDistinctCollection<T>( 3 );
+        var items = Fixture.CreateManyDistinct<T>( count: 3 );
         var expected = new[]
         {
             items[(0 + readIndex).EuclidModulo( 3 )], items[(1 + readIndex).EuclidModulo( 3 )], items[(2 + readIndex).EuclidModulo( 3 )]
@@ -229,7 +229,7 @@ public abstract class GenericRingTests<T> : TestsBase
     [InlineData( 2 )]
     public void GetEnumerator_ShouldReturnCorrectResult(int writeIndex)
     {
-        var items = Fixture.CreateDistinctCollection<T>( 3 );
+        var items = Fixture.CreateManyDistinct<T>( count: 3 );
         var expected
             = new[] { items[(0 + writeIndex) % 3], items[(1 + writeIndex) % 3], items[(2 + writeIndex) % 3] }.Select( x => ( T? )x );
 
@@ -253,7 +253,7 @@ public abstract class GenericRingTests<T> : TestsBase
     [InlineData( 2, 3 )]
     public void RingEnumeratorReset_ShouldResetEnumeratorCorrectly(int startIndex, int iterationCount)
     {
-        var items = Fixture.CreateDistinctCollection<T>( 3 ).ToArray();
+        var items = Fixture.CreateManyDistinct<T>( count: 3 ).ToArray();
 
         var ring = new Ring<T>( items ) { WriteIndex = startIndex };
         IEnumerator sut = ring.GetEnumerator();

@@ -23,7 +23,7 @@ public abstract class GenericListExtensionsTests<T> : TestsBase
     [InlineData( 5 )]
     public void RemoveLast_ShouldRemoveLastItem(int count)
     {
-        IList<T> sut = Fixture.CreateDistinctCollection<T>( count ).ToList();
+        IList<T> sut = Fixture.CreateManyDistinct<T>( count ).ToList();
         var expected = sut.Take( count - 1 );
 
         sut.RemoveLast();
