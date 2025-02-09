@@ -29,9 +29,6 @@ Tests:
 - add assertions to TestExtensions, they need to throw XunitException
 - include assertion scopes
 
-License headers:
-- create custom cake script
-
 Sql:
 
 - source generators for queries/statements?

@@ -130,6 +130,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "scripts", "scripts", "{714B
 		scripts\projects.cake = scripts\projects.cake
 		.github\workflows\pages.yml = .github\workflows\pages.yml
 		scripts\docfx-logo.cake = scripts\docfx-logo.cake
+		scripts\license-headers.cake = scripts\license-headers.cake
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "assets", "assets", "{9B6212C8-F089-4145-AA0B-3C9E718E3B0A}"
