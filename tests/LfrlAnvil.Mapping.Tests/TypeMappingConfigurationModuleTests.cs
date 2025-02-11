@@ -1,7 +1,6 @@
 ﻿using System.Linq;
 using LfrlAnvil.Functional;
 using LfrlAnvil.Mapping.Exceptions;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Mapping.Tests;
 
@@ -12,12 +11,11 @@ public class TypeMappingConfigurationModuleTests : TestsBase
     {
         var sut = new TypeMappingConfigurationModule();
 
-        using ( new AssertionScope() )
-        {
-            sut.Parent.Should().BeNull();
-            sut.GetSubmodules().Should().BeEmpty();
-            sut.GetMappingStores().Should().BeEmpty();
-        }
+        Assertion.All(
+                sut.Parent.TestNull(),
+                sut.GetSubmodules().TestEmpty(),
+                sut.GetMappingStores().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -30,12 +28,11 @@ public class TypeMappingConfigurationModuleTests : TestsBase
 
         var result = sut.Configure( configuration );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            sut.GetSubmodules().Should().BeEmpty();
-            sut.GetMappingStores().Should().BeSequentiallyEqualTo( expectedStores );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.GetSubmodules().TestEmpty(),
+                sut.GetMappingStores().TestSequence( expectedStores ) )
+            .Go();
     }
 
     [Fact]
@@ -50,12 +47,11 @@ public class TypeMappingConfigurationModuleTests : TestsBase
 
         var result = sut.Configure( secondConfiguration );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            sut.GetSubmodules().Should().BeEmpty();
-            sut.GetMappingStores().Should().BeSequentiallyEqualTo( expectedStores );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.GetSubmodules().TestEmpty(),
+                sut.GetMappingStores().TestSequence( expectedStores ) )
+            .Go();
     }
 
     [Fact]
@@ -69,13 +65,12 @@ public class TypeMappingConfigurationModuleTests : TestsBase
 
         var result = sut.Configure( module );
 
-        using ( new AssertionScope() )
-        {
-            module.Parent.Should().Be( sut );
-            result.Should().BeSameAs( sut );
-            sut.GetSubmodules().Should().BeSequentiallyEqualTo( module );
-            sut.GetMappingStores().Should().BeSequentiallyEqualTo( expectedStores );
-        }
+        Assertion.All(
+                module.Parent.TestEquals( sut ),
+                result.TestRefEquals( sut ),
+                sut.GetSubmodules().TestSequence( [ module ] ),
+                sut.GetMappingStores().TestSequence( expectedStores ) )
+            .Go();
     }
 
     [Fact]
@@ -92,13 +87,12 @@ public class TypeMappingConfigurationModuleTests : TestsBase
 
         var result = sut.Configure( secondModule );
 
-        using ( new AssertionScope() )
-        {
-            secondModule.Parent.Should().Be( sut );
-            result.Should().BeSameAs( sut );
-            sut.GetSubmodules().Should().BeSequentiallyEqualTo( firstModule, secondModule );
-            sut.GetMappingStores().Should().BeSequentiallyEqualTo( expectedStores );
-        }
+        Assertion.All(
+                secondModule.Parent.TestEquals( sut ),
+                result.TestRefEquals( sut ),
+                sut.GetSubmodules().TestSequence( [ firstModule, secondModule ] ),
+                sut.GetMappingStores().TestSequence( expectedStores ) )
+            .Go();
     }
 
     [Fact]
@@ -106,7 +100,7 @@ public class TypeMappingConfigurationModuleTests : TestsBase
     {
         var sut = new TypeMappingConfigurationModule();
         var action = Lambda.Of( () => sut.Configure( sut ) );
-        action.Should().ThrowExactly<InvalidTypeMappingSubmoduleConfigurationException>();
+        action.Test( exc => exc.TestType().Exact<InvalidTypeMappingSubmoduleConfigurationException>() ).Go();
     }
 
     [Fact]
@@ -118,7 +112,7 @@ public class TypeMappingConfigurationModuleTests : TestsBase
 
         var action = Lambda.Of( () => sut.Configure( other ) );
 
-        action.Should().ThrowExactly<InvalidTypeMappingSubmoduleConfigurationException>();
+        action.Test( exc => exc.TestType().Exact<InvalidTypeMappingSubmoduleConfigurationException>() ).Go();
     }
 
     [Fact]
@@ -130,7 +124,7 @@ public class TypeMappingConfigurationModuleTests : TestsBase
 
         var action = Lambda.Of( () => sut.Configure( other ) );
 
-        action.Should().ThrowExactly<InvalidTypeMappingSubmoduleConfigurationException>();
+        action.Test( exc => exc.TestType().Exact<InvalidTypeMappingSubmoduleConfigurationException>() ).Go();
     }
 
     [Fact]
@@ -144,6 +138,6 @@ public class TypeMappingConfigurationModuleTests : TestsBase
 
         var action = Lambda.Of( () => sut.Configure( root ) );
 
-        action.Should().ThrowExactly<InvalidTypeMappingSubmoduleConfigurationException>();
+        action.Test( exc => exc.TestType().Exact<InvalidTypeMappingSubmoduleConfigurationException>() ).Go();
     }
 }

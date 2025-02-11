@@ -2,7 +2,6 @@
 using System.Linq;
 using LfrlAnvil.Functional;
 using LfrlAnvil.Mapping.Internal;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Mapping.Tests.TypeMappingConfigurationTests;
 
@@ -12,7 +11,7 @@ public abstract class GenericTypeMappingConfigurationTests<T1, T2, T3> : TestsBa
     public void Ctor_ShouldCreateEmptyConfiguration()
     {
         var sut = new TypeMappingConfiguration();
-        sut.GetMappingStores().Should().BeEmpty();
+        sut.GetMappingStores().TestEmpty().Go();
     }
 
     [Fact]
@@ -26,11 +25,10 @@ public abstract class GenericTypeMappingConfigurationTests<T1, T2, T3> : TestsBa
         var result = sut.Configure( mapping );
         var mappingStores = sut.GetMappingStores().Select( kv => KeyValuePair.Create( kv.Key, kv.Value.FastDelegate ) );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            mappingStores.Should().BeSequentiallyEqualTo( KeyValuePair.Create( expectedKey, ( Delegate )mapping ) );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                mappingStores.TestSequence( [ KeyValuePair.Create( expectedKey, ( Delegate )mapping ) ] ) )
+            .Go();
     }
 
     [Fact]
@@ -47,14 +45,14 @@ public abstract class GenericTypeMappingConfigurationTests<T1, T2, T3> : TestsBa
         var result = sut.Configure( secondMapping );
         var mappingStores = sut.GetMappingStores().Select( kv => KeyValuePair.Create( kv.Key, kv.Value.FastDelegate ) );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            mappingStores.Should()
-                .BeSequentiallyEqualTo(
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                mappingStores.TestSequence(
+                [
                     KeyValuePair.Create( expectedFirstKey, ( Delegate )firstMapping ),
-                    KeyValuePair.Create( expectedSecondKey, ( Delegate )secondMapping ) );
-        }
+                    KeyValuePair.Create( expectedSecondKey, ( Delegate )secondMapping )
+                ] ) )
+            .Go();
     }
 
     [Fact]
@@ -70,11 +68,10 @@ public abstract class GenericTypeMappingConfigurationTests<T1, T2, T3> : TestsBa
         var result = sut.Configure( secondMapping );
         var mappingStores = sut.GetMappingStores().Select( kv => KeyValuePair.Create( kv.Key, kv.Value.FastDelegate ) );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            mappingStores.Should().BeSequentiallyEqualTo( KeyValuePair.Create( expectedKey, ( Delegate )secondMapping ) );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                mappingStores.TestSequence( [ KeyValuePair.Create( expectedKey, ( Delegate )secondMapping ) ] ) )
+            .Go();
     }
 
     [Fact]
@@ -91,13 +88,13 @@ public abstract class GenericTypeMappingConfigurationTests<T1, T2, T3> : TestsBa
         var result = sut.Configure( secondMapping );
         var mappingStores = sut.GetMappingStores().Select( kv => KeyValuePair.Create( kv.Key, kv.Value.FastDelegate ) );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            mappingStores.Should()
-                .BeSequentiallyEqualTo(
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                mappingStores.TestSequence(
+                [
                     KeyValuePair.Create( expectedFirstKey, ( Delegate )firstMapping ),
-                    KeyValuePair.Create( expectedSecondKey, ( Delegate )secondMapping ) );
-        }
+                    KeyValuePair.Create( expectedSecondKey, ( Delegate )secondMapping )
+                ] ) )
+            .Go();
     }
 }

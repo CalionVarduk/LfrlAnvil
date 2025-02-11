@@ -2,7 +2,6 @@
 using System.Linq;
 using LfrlAnvil.Functional;
 using LfrlAnvil.Mapping.Internal;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Mapping.Tests.SingleTypeMappingConfigurationTests;
 
@@ -17,12 +16,11 @@ public abstract class GenericSingleTypeMappingConfigurationTests<TSource, TDesti
         var sut = TypeMappingConfiguration.Create( mapping );
         var mappingStores = sut.GetMappingStores().Select( kv => KeyValuePair.Create( kv.Key, kv.Value.FastDelegate ) );
 
-        using ( new AssertionScope() )
-        {
-            sut.SourceType.Should().Be( typeof( TSource ) );
-            sut.DestinationType.Should().Be( typeof( TDestination ) );
-            mappingStores.Should().BeSequentiallyEqualTo( KeyValuePair.Create( expectedKey, ( Delegate )mapping ) );
-        }
+        Assertion.All(
+                sut.SourceType.TestEquals( typeof( TSource ) ),
+                sut.DestinationType.TestEquals( typeof( TDestination ) ),
+                mappingStores.TestSequence( [ KeyValuePair.Create( expectedKey, ( Delegate )mapping ) ] ) )
+            .Go();
     }
 
     [Fact]
@@ -30,12 +28,11 @@ public abstract class GenericSingleTypeMappingConfigurationTests<TSource, TDesti
     {
         var sut = new SingleTypeMappingConfiguration<TSource, TDestination>();
 
-        using ( new AssertionScope() )
-        {
-            sut.SourceType.Should().Be( typeof( TSource ) );
-            sut.DestinationType.Should().Be( typeof( TDestination ) );
-            sut.GetMappingStores().Should().BeEmpty();
-        }
+        Assertion.All(
+                sut.SourceType.TestEquals( typeof( TSource ) ),
+                sut.DestinationType.TestEquals( typeof( TDestination ) ),
+                sut.GetMappingStores().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -47,12 +44,11 @@ public abstract class GenericSingleTypeMappingConfigurationTests<TSource, TDesti
         var sut = new SingleTypeMappingConfiguration<TSource, TDestination>( mapping );
         var mappingStores = sut.GetMappingStores().Select( kv => KeyValuePair.Create( kv.Key, kv.Value.FastDelegate ) );
 
-        using ( new AssertionScope() )
-        {
-            sut.SourceType.Should().Be( typeof( TSource ) );
-            sut.DestinationType.Should().Be( typeof( TDestination ) );
-            mappingStores.Should().BeSequentiallyEqualTo( KeyValuePair.Create( expectedKey, ( Delegate )mapping ) );
-        }
+        Assertion.All(
+                sut.SourceType.TestEquals( typeof( TSource ) ),
+                sut.DestinationType.TestEquals( typeof( TDestination ) ),
+                mappingStores.TestSequence( [ KeyValuePair.Create( expectedKey, ( Delegate )mapping ) ] ) )
+            .Go();
     }
 
     [Fact]
@@ -65,11 +61,10 @@ public abstract class GenericSingleTypeMappingConfigurationTests<TSource, TDesti
         var result = sut.Configure( mapping );
         var mappingStores = sut.GetMappingStores().Select( kv => KeyValuePair.Create( kv.Key, kv.Value.FastDelegate ) );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            mappingStores.Should().BeSequentiallyEqualTo( KeyValuePair.Create( expectedKey, ( Delegate )mapping ) );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                mappingStores.TestSequence( [ KeyValuePair.Create( expectedKey, ( Delegate )mapping ) ] ) )
+            .Go();
     }
 
     [Fact]
@@ -83,10 +78,9 @@ public abstract class GenericSingleTypeMappingConfigurationTests<TSource, TDesti
         var result = sut.Configure( mapping );
         var mappingStores = sut.GetMappingStores().Select( kv => KeyValuePair.Create( kv.Key, kv.Value.FastDelegate ) );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            mappingStores.Should().BeSequentiallyEqualTo( KeyValuePair.Create( expectedKey, ( Delegate )mapping ) );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                mappingStores.TestSequence( [ KeyValuePair.Create( expectedKey, ( Delegate )mapping ) ] ) )
+            .Go();
     }
 }

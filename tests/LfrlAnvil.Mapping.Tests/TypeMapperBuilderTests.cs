@@ -1,5 +1,4 @@
 ﻿using LfrlAnvil.Mapping.Internal;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Mapping.Tests;
 
@@ -9,7 +8,7 @@ public class TypeMapperBuilderTests : TestsBase
     public void Ctor_ShouldCreateEmptyBuilder()
     {
         var sut = new TypeMapperBuilder();
-        sut.GetConfigurations().Should().BeEmpty();
+        sut.GetConfigurations().TestEmpty().Go();
     }
 
     [Fact]
@@ -20,11 +19,10 @@ public class TypeMapperBuilderTests : TestsBase
 
         var result = sut.Configure( configuration );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            sut.GetConfigurations().Should().BeSequentiallyEqualTo( configuration );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.GetConfigurations().TestSequence( [ configuration ] ) )
+            .Go();
     }
 
     [Fact]
@@ -37,11 +35,10 @@ public class TypeMapperBuilderTests : TestsBase
 
         var result = sut.Configure( configuration2 );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            sut.GetConfigurations().Should().BeSequentiallyEqualTo( configuration1, configuration2 );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.GetConfigurations().TestSequence( [ configuration1, configuration2 ] ) )
+            .Go();
     }
 
     [Fact]
@@ -54,11 +51,10 @@ public class TypeMapperBuilderTests : TestsBase
 
         var result = sut.Configure( configuration1, configuration2, configuration3 );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            sut.GetConfigurations().Should().BeSequentiallyEqualTo( configuration1, configuration2, configuration3 );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.GetConfigurations().TestSequence( [ configuration1, configuration2, configuration3 ] ) )
+            .Go();
     }
 
     [Fact]
@@ -78,10 +74,9 @@ public class TypeMapperBuilderTests : TestsBase
 
         var result = sut.Build();
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeOfType<TypeMapper>();
-            result.GetConfiguredMappings().Should().BeEquivalentTo( expectedKeys );
-        }
+        Assertion.All(
+                result.TestType().AssignableTo<TypeMapper>(),
+                result.GetConfiguredMappings().TestSetEqual( expectedKeys ) )
+            .Go();
     }
 }

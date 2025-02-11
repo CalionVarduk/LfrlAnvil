@@ -2,7 +2,6 @@
 using LfrlAnvil.Functional;
 using LfrlAnvil.Mapping.Exceptions;
 using LfrlAnvil.Mapping.Internal;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Mapping.Tests;
 
@@ -12,7 +11,7 @@ public class TypeMapperTests : TestsBase
     public void Ctor_ShouldReturnCorrectResult_WhenConfigurationsIsEmpty()
     {
         var sut = new TypeMapper( Enumerable.Empty<ITypeMappingConfiguration>() );
-        sut.GetConfiguredMappings().Should().BeEmpty();
+        sut.GetConfiguredMappings().TestEmpty().Go();
     }
 
     [Fact]
@@ -22,19 +21,17 @@ public class TypeMapperTests : TestsBase
         var expectedKey = new TypeMappingKey( configuration.SourceType, configuration.DestinationType );
         var sut = new TypeMapper( new[] { configuration } );
 
-        sut.GetConfiguredMappings().Should().BeEquivalentTo( new[] { expectedKey } );
+        sut.GetConfiguredMappings().TestSetEqual( [ expectedKey ] ).Go();
     }
 
     [Fact]
     public void Ctor_ShouldReturnCorrectResult_WhenConfigurationContainsManyDistinctElements()
     {
         var configuration1 = TypeMappingConfiguration.Create<string, int>( (_, _) => default );
-        var configuration2 = new SourceTypeMappingConfiguration<int>()
-            .Configure( (_, _) => string.Empty )
+        var configuration2 = new SourceTypeMappingConfiguration<int>().Configure( (_, _) => string.Empty )
             .Configure( (_, _) => Guid.Empty );
 
-        var configuration3 = new DestinationTypeMappingConfiguration<Guid>()
-            .Configure<string>( (_, _) => Guid.Empty )
+        var configuration3 = new DestinationTypeMappingConfiguration<Guid>().Configure<string>( (_, _) => Guid.Empty )
             .Configure<decimal>( (_, _) => Guid.Empty );
 
         var expectedKeys = new[]
@@ -48,7 +45,7 @@ public class TypeMapperTests : TestsBase
 
         var sut = new TypeMapper( new ITypeMappingConfiguration[] { configuration1, configuration2, configuration3 } );
 
-        sut.GetConfiguredMappings().Should().BeEquivalentTo( expectedKeys );
+        sut.GetConfiguredMappings().TestSetEqual( expectedKeys ).Go();
     }
 
     [Fact]
@@ -66,7 +63,7 @@ public class TypeMapperTests : TestsBase
 
         var sut = new TypeMapper( new ITypeMappingConfiguration[] { configuration1, configuration2, configuration3 } );
 
-        sut.GetConfiguredMappings().Should().BeEquivalentTo( expectedKeys );
+        sut.GetConfiguredMappings().TestSetEqual( expectedKeys ).Go();
     }
 
     [Fact]
@@ -78,7 +75,7 @@ public class TypeMapperTests : TestsBase
 
         var result = sut.Map<int, bool>( 0 );
 
-        result.Should().BeTrue();
+        result.TestTrue().Go();
     }
 
     [Fact]
@@ -89,7 +86,7 @@ public class TypeMapperTests : TestsBase
 
         var result = sut.Map<int, string>( 1234 );
 
-        result.Should().Be( "1234" );
+        result.TestEquals( "1234" ).Go();
     }
 
     [Fact]
@@ -99,9 +96,7 @@ public class TypeMapperTests : TestsBase
 
         var action = Lambda.Of( () => sut.Map<int, string>( 1234 ) );
 
-        action.Should()
-            .ThrowExactly<UndefinedTypeMappingException>()
-            .AndMatch( e => e.SourceType == typeof( int ) && e.DestinationType == typeof( string ) );
+        action.Test( exc => exc.TestType().Exact<UndefinedTypeMappingException>() ).Go();
     }
 
     [Fact]
@@ -112,11 +107,10 @@ public class TypeMapperTests : TestsBase
 
         var result = sut.TryMap<int, string>( 1234, out var outResult );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            outResult.Should().Be( "1234" );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                outResult.TestEquals( "1234" ) )
+            .Go();
     }
 
     [Fact]
@@ -126,11 +120,10 @@ public class TypeMapperTests : TestsBase
 
         var result = sut.TryMap<int, string>( 1234, out var outResult );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeFalse();
-            outResult.Should().Be( default );
-        }
+        Assertion.All(
+                result.TestFalse(),
+                outResult.TestEquals( default ) )
+            .Go();
     }
 
     [Fact]
@@ -141,7 +134,7 @@ public class TypeMapperTests : TestsBase
 
         var result = sut.Map<string>( 1234 );
 
-        result.Should().Be( "1234" );
+        result.TestEquals( "1234" ).Go();
     }
 
     [Fact]
@@ -151,9 +144,7 @@ public class TypeMapperTests : TestsBase
 
         var action = Lambda.Of( () => sut.Map<string>( 1234 ) );
 
-        action.Should()
-            .ThrowExactly<UndefinedTypeMappingException>()
-            .AndMatch( e => e.SourceType == typeof( int ) && e.DestinationType == typeof( string ) );
+        action.Test( exc => exc.TestType().Exact<UndefinedTypeMappingException>() ).Go();
     }
 
     [Fact]
@@ -164,11 +155,10 @@ public class TypeMapperTests : TestsBase
 
         var result = sut.TryMap<string>( 1234, out var outResult );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            outResult.Should().Be( "1234" );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                outResult.TestEquals( "1234" ) )
+            .Go();
     }
 
     [Fact]
@@ -178,11 +168,10 @@ public class TypeMapperTests : TestsBase
 
         var result = sut.TryMap<string>( 1234, out var outResult );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeFalse();
-            outResult.Should().Be( default );
-        }
+        Assertion.All(
+                result.TestFalse(),
+                outResult.TestEquals( default ) )
+            .Go();
     }
 
     [Fact]
@@ -193,11 +182,10 @@ public class TypeMapperTests : TestsBase
 
         var result = sut.Map( 1234 );
 
-        using ( new AssertionScope() )
-        {
-            result.Source.Should().Be( 1234 );
-            result.TypeMapper.Should().BeSameAs( sut );
-        }
+        Assertion.All(
+                result.Source.TestEquals( 1234 ),
+                result.TypeMapper.TestRefEquals( sut ) )
+            .Go();
     }
 
     [Fact]
@@ -208,7 +196,7 @@ public class TypeMapperTests : TestsBase
 
         var result = sut.Map( 1234 ).To<string>();
 
-        result.Should().Be( "1234" );
+        result.TestEquals( "1234" ).Go();
     }
 
     [Fact]
@@ -218,9 +206,7 @@ public class TypeMapperTests : TestsBase
 
         var action = Lambda.Of( () => sut.Map( 1234 ).To<string>() );
 
-        action.Should()
-            .ThrowExactly<UndefinedTypeMappingException>()
-            .AndMatch( e => e.SourceType == typeof( int ) && e.DestinationType == typeof( string ) );
+        action.Test( exc => exc.TestType().Exact<UndefinedTypeMappingException>() ).Go();
     }
 
     [Fact]
@@ -231,11 +217,10 @@ public class TypeMapperTests : TestsBase
 
         var result = sut.Map( 1234 ).TryTo<string>( out var outResult );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            outResult.Should().Be( "1234" );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                outResult.TestEquals( "1234" ) )
+            .Go();
     }
 
     [Fact]
@@ -245,11 +230,10 @@ public class TypeMapperTests : TestsBase
 
         var result = sut.Map( 1234 ).TryTo<string>( out var outResult );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeFalse();
-            outResult.Should().Be( default );
-        }
+        Assertion.All(
+                result.TestFalse(),
+                outResult.TestEquals( default ) )
+            .Go();
     }
 
     [Fact]
@@ -260,7 +244,7 @@ public class TypeMapperTests : TestsBase
 
         var result = sut.Map( typeof( string ), 1234 );
 
-        result.Should().Be( "1234" );
+        result.TestEquals( "1234" ).Go();
     }
 
     [Fact]
@@ -270,9 +254,7 @@ public class TypeMapperTests : TestsBase
 
         var action = Lambda.Of( () => sut.Map( typeof( string ), 1234 ) );
 
-        action.Should()
-            .ThrowExactly<UndefinedTypeMappingException>()
-            .AndMatch( e => e.SourceType == typeof( int ) && e.DestinationType == typeof( string ) );
+        action.Test( exc => exc.TestType().Exact<UndefinedTypeMappingException>() ).Go();
     }
 
     [Fact]
@@ -283,11 +265,10 @@ public class TypeMapperTests : TestsBase
 
         var result = sut.TryMap( typeof( string ), 1234, out var outResult );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            outResult.Should().Be( "1234" );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                outResult.TestEquals( "1234" ) )
+            .Go();
     }
 
     [Fact]
@@ -297,11 +278,10 @@ public class TypeMapperTests : TestsBase
 
         var result = sut.TryMap( typeof( string ), 1234, out var outResult );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeFalse();
-            outResult.Should().BeNull();
-        }
+        Assertion.All(
+                result.TestFalse(),
+                outResult.TestNull() )
+            .Go();
     }
 
     [Fact]
@@ -314,7 +294,7 @@ public class TypeMapperTests : TestsBase
 
         var result = sut.MapMany<int, string>( source );
 
-        result.Should().BeSequentiallyEqualTo( expected );
+        result.TestSequence( expected ).Go();
     }
 
     [Fact]
@@ -325,9 +305,7 @@ public class TypeMapperTests : TestsBase
 
         var action = Lambda.Of( () => sut.MapMany<int, string>( source ) );
 
-        action.Should()
-            .ThrowExactly<UndefinedTypeMappingException>()
-            .AndMatch( e => e.SourceType == typeof( int ) && e.DestinationType == typeof( string ) );
+        action.Test( exc => exc.TestType().Exact<UndefinedTypeMappingException>() ).Go();
     }
 
     [Fact]
@@ -340,11 +318,11 @@ public class TypeMapperTests : TestsBase
 
         var result = sut.TryMapMany<int, string>( source, out var outResult );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            outResult.Should().BeSequentiallyEqualTo( expected );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                outResult.TestNotNull(),
+                outResult.TestIf().NotNull( r => r.TestSequence( expected ) ) )
+            .Go();
     }
 
     [Fact]
@@ -355,11 +333,10 @@ public class TypeMapperTests : TestsBase
 
         var result = sut.TryMapMany<int, string>( source, out var outResult );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeFalse();
-            outResult.Should().BeNull();
-        }
+        Assertion.All(
+                result.TestFalse(),
+                outResult.TestNull() )
+            .Go();
     }
 
     [Fact]
@@ -371,11 +348,10 @@ public class TypeMapperTests : TestsBase
 
         var result = sut.MapMany( source );
 
-        using ( new AssertionScope() )
-        {
-            result.Source.Should().BeSameAs( source );
-            result.TypeMapper.Should().Be( sut );
-        }
+        Assertion.All(
+                result.Source.TestRefEquals( source ),
+                result.TypeMapper.TestEquals( sut ) )
+            .Go();
     }
 
     [Fact]
@@ -388,7 +364,7 @@ public class TypeMapperTests : TestsBase
 
         var result = sut.MapMany( source ).To<string>();
 
-        result.Should().BeSequentiallyEqualTo( expected );
+        result.TestSequence( expected ).Go();
     }
 
     [Fact]
@@ -399,9 +375,7 @@ public class TypeMapperTests : TestsBase
 
         var action = Lambda.Of( () => sut.MapMany( source ).To<string>() );
 
-        action.Should()
-            .ThrowExactly<UndefinedTypeMappingException>()
-            .AndMatch( e => e.SourceType == typeof( int ) && e.DestinationType == typeof( string ) );
+        action.Test( exc => exc.TestType().Exact<UndefinedTypeMappingException>() ).Go();
     }
 
     [Fact]
@@ -414,11 +388,11 @@ public class TypeMapperTests : TestsBase
 
         var result = sut.MapMany( source ).TryTo<string>( out var outResult );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            outResult.Should().BeSequentiallyEqualTo( expected );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                outResult.TestNotNull(),
+                outResult.TestIf().NotNull( r => r.TestSequence( expected ) ) )
+            .Go();
     }
 
     [Fact]
@@ -429,11 +403,10 @@ public class TypeMapperTests : TestsBase
 
         var result = sut.MapMany( source ).TryTo<string>( out var outResult );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeFalse();
-            outResult.Should().BeNull();
-        }
+        Assertion.All(
+                result.TestFalse(),
+                outResult.TestNull() )
+            .Go();
     }
 
     [Fact]
@@ -444,7 +417,7 @@ public class TypeMapperTests : TestsBase
 
         var result = sut.IsConfigured<int, string>();
 
-        result.Should().BeTrue();
+        result.TestTrue().Go();
     }
 
     [Fact]
@@ -452,6 +425,6 @@ public class TypeMapperTests : TestsBase
     {
         var sut = new TypeMapper( Enumerable.Empty<ITypeMappingConfiguration>() );
         var result = sut.IsConfigured<int, string>();
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 }
