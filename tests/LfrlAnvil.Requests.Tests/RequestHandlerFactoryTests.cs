@@ -7,7 +7,7 @@ public class RequestHandlerFactoryTests : TestsBase
     {
         var sut = new RequestHandlerFactory();
         var result = sut.TryCreate<TestRequestClass, int>();
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Fact]
@@ -18,19 +18,18 @@ public class RequestHandlerFactoryTests : TestsBase
 
         var result = sut.TryCreate<TestRequestClass, int>();
 
-        result.Should().BeSameAs( expected );
+        result.TestRefEquals( expected ).Go();
     }
 
     [Fact]
     public void TryCreate_ShouldUseLatestFactory_WhenFactoryHasBeenRegisteredMoreThanOnce()
     {
         var expected = Substitute.For<IRequestHandler<TestRequestClass, int>>();
-        var sut = new RequestHandlerFactory()
-            .Register( () => Substitute.For<IRequestHandler<TestRequestClass, int>>() )
+        var sut = new RequestHandlerFactory().Register( () => Substitute.For<IRequestHandler<TestRequestClass, int>>() )
             .Register( () => expected );
 
         var result = sut.TryCreate<TestRequestClass, int>();
 
-        result.Should().BeSameAs( expected );
+        result.TestRefEquals( expected ).Go();
     }
 }

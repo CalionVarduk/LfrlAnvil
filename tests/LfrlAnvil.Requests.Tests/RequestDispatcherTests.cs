@@ -1,7 +1,6 @@
 ﻿using System.Threading.Tasks;
 using LfrlAnvil.Functional;
 using LfrlAnvil.Requests.Exceptions;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Requests.Tests;
 
@@ -22,7 +21,7 @@ public class RequestDispatcherTests : TestsBase
 
         var result = sut.Dispatch( request );
 
-        result.Should().Be( expectedResult );
+        result.TestEquals( expectedResult ).Go();
     }
 
     [Fact]
@@ -34,7 +33,7 @@ public class RequestDispatcherTests : TestsBase
 
         var action = Lambda.Of( () => sut.Dispatch( new TestRequestClass() ) );
 
-        action.Should().ThrowExactly<MissingRequestHandlerException>().AndMatch( e => e.RequestType == typeof( TestRequestClass ) );
+        action.Test( exc => exc.TestType().Exact<MissingRequestHandlerException>() ).Go();
     }
 
     [Fact]
@@ -45,9 +44,7 @@ public class RequestDispatcherTests : TestsBase
 
         var action = Lambda.Of( () => sut.Dispatch( new InvalidTestRequestClass() ) );
 
-        action.Should()
-            .ThrowExactly<InvalidRequestTypeException>()
-            .AndMatch( e => e.RequestType == typeof( InvalidTestRequestClass ) && e.ExpectedType == typeof( TestRequestClass ) );
+        action.Test( exc => exc.TestType().Exact<InvalidRequestTypeException>() ).Go();
     }
 
     [Fact]
@@ -65,7 +62,7 @@ public class RequestDispatcherTests : TestsBase
 
         var result = sut.Dispatch<TestRequestStruct, int>( request );
 
-        result.Should().Be( expectedResult );
+        result.TestEquals( expectedResult ).Go();
     }
 
     [Fact]
@@ -76,7 +73,7 @@ public class RequestDispatcherTests : TestsBase
         var sut = new RequestDispatcher( factory );
 
         var action = Lambda.Of( () => sut.Dispatch<TestRequestStruct, int>( new TestRequestStruct() ) );
-        action.Should().ThrowExactly<MissingRequestHandlerException>().AndMatch( e => e.RequestType == typeof( TestRequestStruct ) );
+        action.Test( exc => exc.TestType().Exact<MissingRequestHandlerException>() ).Go();
     }
 
     [Fact]
@@ -94,11 +91,10 @@ public class RequestDispatcherTests : TestsBase
 
         var result = sut.TryDispatch( request, out var outResult );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            outResult.Should().Be( expectedResult );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                outResult.TestEquals( expectedResult ) )
+            .Go();
     }
 
     [Fact]
@@ -110,11 +106,10 @@ public class RequestDispatcherTests : TestsBase
 
         var result = sut.TryDispatch( new TestRequestClass(), out var outResult );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeFalse();
-            outResult.Should().Be( default );
-        }
+        Assertion.All(
+                result.TestFalse(),
+                outResult.TestEquals( default ) )
+            .Go();
     }
 
     [Fact]
@@ -125,9 +120,7 @@ public class RequestDispatcherTests : TestsBase
 
         var action = Lambda.Of( () => sut.TryDispatch( new InvalidTestRequestClass(), out _ ) );
 
-        action.Should()
-            .ThrowExactly<InvalidRequestTypeException>()
-            .AndMatch( e => e.RequestType == typeof( InvalidTestRequestClass ) && e.ExpectedType == typeof( TestRequestClass ) );
+        action.Test( exc => exc.TestType().Exact<InvalidRequestTypeException>() ).Go();
     }
 
     [Fact]
@@ -145,11 +138,10 @@ public class RequestDispatcherTests : TestsBase
 
         var result = sut.TryDispatch( request, out int outResult );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            outResult.Should().Be( expectedResult );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                outResult.TestEquals( expectedResult ) )
+            .Go();
     }
 
     [Fact]
@@ -161,11 +153,10 @@ public class RequestDispatcherTests : TestsBase
 
         var result = sut.TryDispatch( new TestRequestStruct(), out int outResult );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeFalse();
-            outResult.Should().Be( default );
-        }
+        Assertion.All(
+                result.TestFalse(),
+                outResult.TestEquals( default ) )
+            .Go();
     }
 
     [Fact]
@@ -183,7 +174,7 @@ public class RequestDispatcherTests : TestsBase
 
         var result = await sut.Dispatch( request );
 
-        result.Should().Be( expectedResult );
+        result.TestEquals( expectedResult ).Go();
     }
 
     [Fact]
@@ -201,7 +192,7 @@ public class RequestDispatcherTests : TestsBase
 
         var result = await sut.Dispatch( request );
 
-        result.Should().Be( expectedResult );
+        result.TestEquals( expectedResult ).Go();
     }
 
     [Fact]
@@ -219,7 +210,7 @@ public class RequestDispatcherTests : TestsBase
 
         var result = await sut.Dispatch<TestAsyncTaskRequestStruct, Task<int>>( request );
 
-        result.Should().Be( expectedResult );
+        result.TestEquals( expectedResult ).Go();
     }
 
     [Fact]
@@ -237,6 +228,6 @@ public class RequestDispatcherTests : TestsBase
 
         var result = await sut.Dispatch<TestAsyncValueTaskRequestStruct, ValueTask<int>>( request );
 
-        result.Should().Be( expectedResult );
+        result.TestEquals( expectedResult ).Go();
     }
 }
