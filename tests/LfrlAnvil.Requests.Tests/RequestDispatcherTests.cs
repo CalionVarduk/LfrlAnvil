@@ -33,7 +33,11 @@ public class RequestDispatcherTests : TestsBase
 
         var action = Lambda.Of( () => sut.Dispatch( new TestRequestClass() ) );
 
-        action.Test( exc => exc.TestType().Exact<MissingRequestHandlerException>() ).Go();
+        action.Test(
+                exc => Assertion.All(
+                    exc.TestType().Exact<MissingRequestHandlerException>(),
+                    exc.TestIf().OfType<MissingRequestHandlerException>( e => e.RequestType.TestEquals( typeof( TestRequestClass ) ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -44,7 +48,15 @@ public class RequestDispatcherTests : TestsBase
 
         var action = Lambda.Of( () => sut.Dispatch( new InvalidTestRequestClass() ) );
 
-        action.Test( exc => exc.TestType().Exact<InvalidRequestTypeException>() ).Go();
+        action.Test(
+                exc => Assertion.All(
+                    exc.TestType().Exact<InvalidRequestTypeException>(),
+                    exc.TestIf()
+                        .OfType<InvalidRequestTypeException>(
+                            e => Assertion.All(
+                                e.RequestType.TestEquals( typeof( InvalidTestRequestClass ) ),
+                                e.ExpectedType.TestEquals( typeof( TestRequestClass ) ) ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -73,7 +85,12 @@ public class RequestDispatcherTests : TestsBase
         var sut = new RequestDispatcher( factory );
 
         var action = Lambda.Of( () => sut.Dispatch<TestRequestStruct, int>( new TestRequestStruct() ) );
-        action.Test( exc => exc.TestType().Exact<MissingRequestHandlerException>() ).Go();
+
+        action.Test(
+                exc => Assertion.All(
+                    exc.TestType().Exact<MissingRequestHandlerException>(),
+                    exc.TestIf().OfType<MissingRequestHandlerException>( e => e.RequestType.TestEquals( typeof( TestRequestStruct ) ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -120,7 +137,15 @@ public class RequestDispatcherTests : TestsBase
 
         var action = Lambda.Of( () => sut.TryDispatch( new InvalidTestRequestClass(), out _ ) );
 
-        action.Test( exc => exc.TestType().Exact<InvalidRequestTypeException>() ).Go();
+        action.Test(
+                exc => Assertion.All(
+                    exc.TestType().Exact<InvalidRequestTypeException>(),
+                    exc.TestIf()
+                        .OfType<InvalidRequestTypeException>(
+                            e => Assertion.All(
+                                e.RequestType.TestEquals( typeof( InvalidTestRequestClass ) ),
+                                e.ExpectedType.TestEquals( typeof( TestRequestClass ) ) ) ) ) )
+            .Go();
     }
 
     [Fact]

@@ -2,7 +2,7 @@
 
 internal sealed class RefEqualsAssertion<T> : Assertion
 {
-    internal RefEqualsAssertion(string context, T subject, T value, bool expected)
+    internal RefEqualsAssertion(string context, T subject, object? value, bool expected)
         : base( context )
     {
         Subject = subject;
@@ -11,7 +11,7 @@ internal sealed class RefEqualsAssertion<T> : Assertion
     }
 
     internal T Subject { get; }
-    internal T Value { get; }
+    internal object? Value { get; }
     internal bool Expected { get; }
 
     public override void Go()

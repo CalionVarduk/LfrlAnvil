@@ -147,14 +147,14 @@ public static class AssertionExtensions
     }
 
     [Pure]
-    public static Assertion TestRefEquals<T>(this T? subject, T? value, [CallerArgumentExpression( "subject" )] string context = "")
+    public static Assertion TestRefEquals<T>(this T? subject, object? value, [CallerArgumentExpression( "subject" )] string context = "")
         where T : class
     {
         return new RefEqualsAssertion<T?>( context, subject, value, expected: true );
     }
 
     [Pure]
-    public static Assertion TestNotRefEquals<T>(this T? subject, T? value, [CallerArgumentExpression( "subject" )] string context = "")
+    public static Assertion TestNotRefEquals<T>(this T? subject, object? value, [CallerArgumentExpression( "subject" )] string context = "")
         where T : class
     {
         return new RefEqualsAssertion<T?>( context, subject, value, expected: false );

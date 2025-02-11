@@ -96,7 +96,15 @@ public class TypeMapperTests : TestsBase
 
         var action = Lambda.Of( () => sut.Map<int, string>( 1234 ) );
 
-        action.Test( exc => exc.TestType().Exact<UndefinedTypeMappingException>() ).Go();
+        action.Test(
+                exc => Assertion.All(
+                    exc.TestType().Exact<UndefinedTypeMappingException>(),
+                    exc.TestIf()
+                        .OfType<UndefinedTypeMappingException>(
+                            e => Assertion.All(
+                                e.SourceType.TestEquals( typeof( int ) ),
+                                e.DestinationType.TestEquals( typeof( string ) ) ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -144,7 +152,15 @@ public class TypeMapperTests : TestsBase
 
         var action = Lambda.Of( () => sut.Map<string>( 1234 ) );
 
-        action.Test( exc => exc.TestType().Exact<UndefinedTypeMappingException>() ).Go();
+        action.Test(
+                exc => Assertion.All(
+                    exc.TestType().Exact<UndefinedTypeMappingException>(),
+                    exc.TestIf()
+                        .OfType<UndefinedTypeMappingException>(
+                            e => Assertion.All(
+                                e.SourceType.TestEquals( typeof( int ) ),
+                                e.DestinationType.TestEquals( typeof( string ) ) ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -206,7 +222,15 @@ public class TypeMapperTests : TestsBase
 
         var action = Lambda.Of( () => sut.Map( 1234 ).To<string>() );
 
-        action.Test( exc => exc.TestType().Exact<UndefinedTypeMappingException>() ).Go();
+        action.Test(
+                exc => Assertion.All(
+                    exc.TestType().Exact<UndefinedTypeMappingException>(),
+                    exc.TestIf()
+                        .OfType<UndefinedTypeMappingException>(
+                            e => Assertion.All(
+                                e.SourceType.TestEquals( typeof( int ) ),
+                                e.DestinationType.TestEquals( typeof( string ) ) ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -254,7 +278,15 @@ public class TypeMapperTests : TestsBase
 
         var action = Lambda.Of( () => sut.Map( typeof( string ), 1234 ) );
 
-        action.Test( exc => exc.TestType().Exact<UndefinedTypeMappingException>() ).Go();
+        action.Test(
+                exc => Assertion.All(
+                    exc.TestType().Exact<UndefinedTypeMappingException>(),
+                    exc.TestIf()
+                        .OfType<UndefinedTypeMappingException>(
+                            e => Assertion.All(
+                                e.SourceType.TestEquals( typeof( int ) ),
+                                e.DestinationType.TestEquals( typeof( string ) ) ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -305,7 +337,15 @@ public class TypeMapperTests : TestsBase
 
         var action = Lambda.Of( () => sut.MapMany<int, string>( source ) );
 
-        action.Test( exc => exc.TestType().Exact<UndefinedTypeMappingException>() ).Go();
+        action.Test(
+                exc => Assertion.All(
+                    exc.TestType().Exact<UndefinedTypeMappingException>(),
+                    exc.TestIf()
+                        .OfType<UndefinedTypeMappingException>(
+                            e => Assertion.All(
+                                e.SourceType.TestEquals( typeof( int ) ),
+                                e.DestinationType.TestEquals( typeof( string ) ) ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -375,7 +415,15 @@ public class TypeMapperTests : TestsBase
 
         var action = Lambda.Of( () => sut.MapMany( source ).To<string>() );
 
-        action.Test( exc => exc.TestType().Exact<UndefinedTypeMappingException>() ).Go();
+        action.Test(
+                exc => Assertion.All(
+                    exc.TestType().Exact<UndefinedTypeMappingException>(),
+                    exc.TestIf()
+                        .OfType<UndefinedTypeMappingException>(
+                            e => Assertion.All(
+                                e.SourceType.TestEquals( typeof( int ) ),
+                                e.DestinationType.TestEquals( typeof( string ) ) ) ) ) )
+            .Go();
     }
 
     [Fact]

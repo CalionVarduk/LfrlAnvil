@@ -50,7 +50,7 @@ public class ResultTests : TestsBase
         var exception = new Exception( "foo" );
         var sut = Result.Error( exception );
         var action = Lambda.Of( () => sut.ThrowIfError() );
-        action.Test( exc => exc.TestType().AssignableTo<Exception>() ).Go();
+        action.Test( exc => exc.TestRefEquals( exception ) ).Go();
     }
 
     [Fact]
@@ -125,7 +125,7 @@ public class ResultTests : TestsBase
         var exception = new Exception( "foo" );
         var sut = Result.Error( exception, value );
         var action = Lambda.Of( () => sut.ThrowIfError() );
-        action.Test( exc => exc.TestType().AssignableTo<Exception>() ).Go();
+        action.Test( exc => exc.TestRefEquals( exception ) ).Go();
     }
 
     [Fact]
@@ -144,7 +144,7 @@ public class ResultTests : TestsBase
         var exception = new Exception( "foo" );
         var sut = Result.Error( exception, value );
         var action = Lambda.Of( () => sut.GetValueOrThrow() );
-        action.Test( exc => exc.TestType().AssignableTo<Exception>() ).Go();
+        action.Test( exc => exc.TestRefEquals( exception ) ).Go();
     }
 
     [Fact]

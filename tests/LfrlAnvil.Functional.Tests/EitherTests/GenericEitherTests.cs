@@ -761,7 +761,11 @@ public abstract class GenericEitherTests<T1, T2> : TestsBase
 
         var action = Lambda.Of( () => ( T1 )sut );
 
-        action.Test( exc => exc.TestType().Exact<ValueAccessException>() ).Go();
+        action.Test(
+                exc => Assertion.All(
+                    exc.TestType().Exact<ValueAccessException>(),
+                    exc.TestIf().OfType<ValueAccessException>( e => e.MemberName.TestEquals( nameof( Either<T1, T2>.First ) ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -783,7 +787,11 @@ public abstract class GenericEitherTests<T1, T2> : TestsBase
 
         var action = Lambda.Of( () => ( T2 )sut );
 
-        action.Test( exc => exc.TestType().Exact<ValueAccessException>() ).Go();
+        action.Test(
+                exc => Assertion.All(
+                    exc.TestType().Exact<ValueAccessException>(),
+                    exc.TestIf().OfType<ValueAccessException>( e => e.MemberName.TestEquals( nameof( Either<T1, T2>.Second ) ) ) ) )
+            .Go();
     }
 
     [Theory]

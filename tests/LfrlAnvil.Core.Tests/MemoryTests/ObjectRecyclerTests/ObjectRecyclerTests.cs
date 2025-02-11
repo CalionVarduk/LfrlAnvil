@@ -167,6 +167,7 @@ public class ObjectRecyclerTests : TestsBase
         action.Test(
                 exc => Assertion.All(
                     exc.TestType().Exact<AggregateException>(),
+                    exc.TestIf().OfType<AggregateException>( e => e.InnerExceptions.TestSequence( [ exc1, exc2 ] ) ),
                     sut.ObjectCount.TestEquals( 0 ),
                     sut.ActiveObjectCount.TestEquals( 0 ),
                     first.ToString().TestEquals( "(disposed)" ),
@@ -395,6 +396,7 @@ public class ObjectRecyclerTests : TestsBase
         action.Test(
                 exc => Assertion.All(
                     exc.TestType().Exact<AggregateException>(),
+                    exc.TestIf().OfType<AggregateException>( e => e.InnerExceptions.TestSequence( [ exc1, exc2 ] ) ),
                     sut.ObjectCount.TestEquals( 2 ),
                     sut.ActiveObjectCount.TestEquals( 2 ),
                     objA.Freed.TestFalse(),

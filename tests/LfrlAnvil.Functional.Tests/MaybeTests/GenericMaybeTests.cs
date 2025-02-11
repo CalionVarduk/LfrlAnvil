@@ -93,7 +93,11 @@ public abstract class GenericMaybeTests<T> : TestsBase
     {
         var sut = Maybe<T>.None;
         var action = Lambda.Of( () => sut.GetValue() );
-        action.Test( exc => exc.TestType().Exact<ValueAccessException>() ).Go();
+        action.Test(
+                exc => Assertion.All(
+                    exc.TestType().Exact<ValueAccessException>(),
+                    exc.TestIf().OfType<ValueAccessException>( e => e.MemberName.TestEquals( nameof( Maybe<T>.Value ) ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -563,7 +567,11 @@ public abstract class GenericMaybeTests<T> : TestsBase
     {
         var sut = Maybe<T>.None;
         var action = Lambda.Of( () => ( T )sut );
-        action.Test( exc => exc.TestType().Exact<ValueAccessException>() ).Go();
+        action.Test(
+                exc => Assertion.All(
+                    exc.TestType().Exact<ValueAccessException>(),
+                    exc.TestIf().OfType<ValueAccessException>( e => e.MemberName.TestEquals( nameof( Maybe<T>.Value ) ) ) ) )
+            .Go();
     }
 
     [Theory]
