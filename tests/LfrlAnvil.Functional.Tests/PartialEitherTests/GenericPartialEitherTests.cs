@@ -7,7 +7,7 @@ public abstract class GenericPartialEitherTests<T1, T2> : TestsBase
     {
         var value = Fixture.Create<T1>();
         var sut = new PartialEither<T1>( value );
-        sut.Value.Should().Be( value );
+        sut.Value.TestEquals( value ).Go();
     }
 
     [Fact]
@@ -18,11 +18,10 @@ public abstract class GenericPartialEitherTests<T1, T2> : TestsBase
         var sut = new PartialEither<T1>( value );
         var result = sut.WithFirst<T2>();
 
-        using ( new AssertionScope() )
-        {
-            result.HasFirst.Should().BeFalse();
-            result.Second.Should().Be( value );
-        }
+        Assertion.All(
+                result.HasFirst.TestFalse(),
+                result.Second.TestEquals( value ) )
+            .Go();
     }
 
     [Fact]
@@ -33,10 +32,9 @@ public abstract class GenericPartialEitherTests<T1, T2> : TestsBase
         var sut = new PartialEither<T1>( value );
         var result = sut.WithSecond<T2>();
 
-        using ( new AssertionScope() )
-        {
-            result.HasFirst.Should().BeTrue();
-            result.First.Should().Be( value );
-        }
+        Assertion.All(
+                result.HasFirst.TestTrue(),
+                result.First.TestEquals( value ) )
+            .Go();
     }
 }

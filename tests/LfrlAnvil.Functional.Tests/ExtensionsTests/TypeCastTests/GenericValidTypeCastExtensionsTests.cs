@@ -15,10 +15,9 @@ public abstract class GenericValidTypeCastExtensionsTests<TSource, TDestination>
 
         var result = sut.ToMaybe();
 
-        using ( new AssertionScope() )
-        {
-            result.HasValue.Should().BeTrue();
-            result.Value.Should().Be( value );
-        }
+        Assertion.All(
+                result.HasValue.TestTrue(),
+                result.Value.TestEquals( value ) )
+            .Go();
     }
 }

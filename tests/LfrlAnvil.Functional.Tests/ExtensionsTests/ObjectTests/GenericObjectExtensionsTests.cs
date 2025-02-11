@@ -12,11 +12,10 @@ public abstract class GenericObjectExtensionsTests<T> : TestsBase
 
         var sut = value.ToMaybe();
 
-        using ( new AssertionScope() )
-        {
-            sut.HasValue.Should().BeTrue();
-            sut.Value.Should().Be( value );
-        }
+        Assertion.All(
+                sut.HasValue.TestTrue(),
+                sut.Value.TestEquals( value ) )
+            .Go();
     }
 
     [Fact]
@@ -24,7 +23,7 @@ public abstract class GenericObjectExtensionsTests<T> : TestsBase
     {
         var value = Fixture.CreateNotDefault<T>();
         var sut = value.ToEither();
-        sut.Value.Should().Be( value );
+        sut.Value.TestEquals( value ).Go();
     }
 
     [Fact]
@@ -34,11 +33,10 @@ public abstract class GenericObjectExtensionsTests<T> : TestsBase
 
         var sut = value.ToErratic();
 
-        using ( new AssertionScope() )
-        {
-            sut.IsOk.Should().BeTrue();
-            sut.Value.Should().Be( value );
-        }
+        Assertion.All(
+                sut.IsOk.TestTrue(),
+                sut.Value.TestEquals( value ) )
+            .Go();
     }
 
     [Fact]
@@ -48,11 +46,10 @@ public abstract class GenericObjectExtensionsTests<T> : TestsBase
 
         var sut = error.ToErratic();
 
-        using ( new AssertionScope() )
-        {
-            sut.HasError.Should().BeTrue();
-            sut.Error.Should().Be( error );
-        }
+        Assertion.All(
+                sut.HasError.TestTrue(),
+                sut.Error.TestEquals( error ) )
+            .Go();
     }
 
     [Fact]
@@ -60,7 +57,7 @@ public abstract class GenericObjectExtensionsTests<T> : TestsBase
     {
         var value = Fixture.Create<T>();
         var sut = value.TypeCast();
-        sut.Value.Should().Be( value );
+        sut.Value.TestEquals( value ).Go();
     }
 
     [Fact]
@@ -70,12 +67,11 @@ public abstract class GenericObjectExtensionsTests<T> : TestsBase
 
         var sut = value.ToMutation();
 
-        using ( new AssertionScope() )
-        {
-            sut.OldValue.Should().Be( value );
-            sut.Value.Should().Be( value );
-            sut.HasChanged.Should().BeFalse();
-        }
+        Assertion.All(
+                sut.OldValue.TestEquals( value ),
+                sut.Value.TestEquals( value ),
+                sut.HasChanged.TestFalse() )
+            .Go();
     }
 
     [Fact]
@@ -85,11 +81,10 @@ public abstract class GenericObjectExtensionsTests<T> : TestsBase
 
         var sut = value.Mutate( newValue );
 
-        using ( new AssertionScope() )
-        {
-            sut.OldValue.Should().Be( value );
-            sut.Value.Should().Be( newValue );
-            sut.HasChanged.Should().BeTrue();
-        }
+        Assertion.All(
+                sut.OldValue.TestEquals( value ),
+                sut.Value.TestEquals( newValue ),
+                sut.HasChanged.TestTrue() )
+            .Go();
     }
 }

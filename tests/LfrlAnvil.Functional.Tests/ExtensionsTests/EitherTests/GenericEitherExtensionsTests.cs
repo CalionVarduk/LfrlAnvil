@@ -14,11 +14,10 @@ public abstract class GenericEitherExtensionsTests<T1, T2> : TestsBase
 
         var result = sut.ToMaybe();
 
-        using ( new AssertionScope() )
-        {
-            result.HasValue.Should().BeTrue();
-            result.Value.Should().Be( value );
-        }
+        Assertion.All(
+                result.HasValue.TestTrue(),
+                result.Value.TestEquals( value ) )
+            .Go();
     }
 
     [Fact]
@@ -30,7 +29,7 @@ public abstract class GenericEitherExtensionsTests<T1, T2> : TestsBase
 
         var result = sut.ToMaybe();
 
-        result.HasValue.Should().BeFalse();
+        result.HasValue.TestFalse().Go();
     }
 
     [Fact]
@@ -42,11 +41,10 @@ public abstract class GenericEitherExtensionsTests<T1, T2> : TestsBase
 
         var result = sut.ToErratic();
 
-        using ( new AssertionScope() )
-        {
-            result.IsOk.Should().BeTrue();
-            result.Value.Should().Be( value );
-        }
+        Assertion.All(
+                result.IsOk.TestTrue(),
+                result.Value.TestEquals( value ) )
+            .Go();
     }
 
     [Fact]
@@ -58,11 +56,10 @@ public abstract class GenericEitherExtensionsTests<T1, T2> : TestsBase
 
         var result = sut.ToErratic();
 
-        using ( new AssertionScope() )
-        {
-            result.HasError.Should().BeTrue();
-            result.Error.Should().Be( error );
-        }
+        Assertion.All(
+                result.HasError.TestTrue(),
+                result.Error.TestEquals( error ) )
+            .Go();
     }
 
     [Fact]
@@ -74,11 +71,10 @@ public abstract class GenericEitherExtensionsTests<T1, T2> : TestsBase
 
         var result = sut.Reduce();
 
-        using ( new AssertionScope() )
-        {
-            result.HasFirst.Should().BeTrue();
-            result.First.Should().Be( value );
-        }
+        Assertion.All(
+                result.HasFirst.TestTrue(),
+                result.First.TestEquals( value ) )
+            .Go();
     }
 
     [Fact]
@@ -90,11 +86,10 @@ public abstract class GenericEitherExtensionsTests<T1, T2> : TestsBase
 
         var result = sut.Reduce();
 
-        using ( new AssertionScope() )
-        {
-            result.HasSecond.Should().BeTrue();
-            result.Second.Should().Be( value );
-        }
+        Assertion.All(
+                result.HasSecond.TestTrue(),
+                result.Second.TestEquals( value ) )
+            .Go();
     }
 
     [Fact]
@@ -106,11 +101,10 @@ public abstract class GenericEitherExtensionsTests<T1, T2> : TestsBase
 
         var result = sut.Reduce();
 
-        using ( new AssertionScope() )
-        {
-            result.HasFirst.Should().BeTrue();
-            result.First.Should().Be( value );
-        }
+        Assertion.All(
+                result.HasFirst.TestTrue(),
+                result.First.TestEquals( value ) )
+            .Go();
     }
 
     [Fact]
@@ -122,11 +116,10 @@ public abstract class GenericEitherExtensionsTests<T1, T2> : TestsBase
 
         var result = sut.Reduce();
 
-        using ( new AssertionScope() )
-        {
-            result.HasSecond.Should().BeTrue();
-            result.Second.Should().Be( value );
-        }
+        Assertion.All(
+                result.HasSecond.TestTrue(),
+                result.Second.TestEquals( value ) )
+            .Go();
     }
 
     [Fact]
@@ -138,11 +131,10 @@ public abstract class GenericEitherExtensionsTests<T1, T2> : TestsBase
 
         var result = sut.Reduce();
 
-        using ( new AssertionScope() )
-        {
-            result.HasFirst.Should().BeTrue();
-            result.First.Should().Be( value );
-        }
+        Assertion.All(
+                result.HasFirst.TestTrue(),
+                result.First.TestEquals( value ) )
+            .Go();
     }
 
     [Fact]
@@ -154,11 +146,10 @@ public abstract class GenericEitherExtensionsTests<T1, T2> : TestsBase
 
         var result = sut.Reduce();
 
-        using ( new AssertionScope() )
-        {
-            result.HasSecond.Should().BeTrue();
-            result.Second.Should().Be( value );
-        }
+        Assertion.All(
+                result.HasSecond.TestTrue(),
+                result.Second.TestEquals( value ) )
+            .Go();
     }
 
     [Fact]
@@ -169,11 +160,10 @@ public abstract class GenericEitherExtensionsTests<T1, T2> : TestsBase
 
         var result = sut.Reduce();
 
-        using ( new AssertionScope() )
-        {
-            result.HasFirst.Should().BeTrue();
-            result.First.Should().Be( value );
-        }
+        Assertion.All(
+                result.HasFirst.TestTrue(),
+                result.First.TestEquals( value ) )
+            .Go();
     }
 
     [Fact]
@@ -185,11 +175,10 @@ public abstract class GenericEitherExtensionsTests<T1, T2> : TestsBase
 
         var result = sut.Reduce();
 
-        using ( new AssertionScope() )
-        {
-            result.HasFirst.Should().BeTrue();
-            result.First.Should().Be( value );
-        }
+        Assertion.All(
+                result.HasFirst.TestTrue(),
+                result.First.TestEquals( value ) )
+            .Go();
     }
 
     [Fact]
@@ -201,11 +190,10 @@ public abstract class GenericEitherExtensionsTests<T1, T2> : TestsBase
 
         var result = sut.Reduce();
 
-        using ( new AssertionScope() )
-        {
-            result.HasSecond.Should().BeTrue();
-            result.Second.Should().Be( value );
-        }
+        Assertion.All(
+                result.HasSecond.TestTrue(),
+                result.Second.TestEquals( value ) )
+            .Go();
     }
 
     [Fact]
@@ -216,11 +204,10 @@ public abstract class GenericEitherExtensionsTests<T1, T2> : TestsBase
 
         var result = sut.Reduce();
 
-        using ( new AssertionScope() )
-        {
-            result.HasSecond.Should().BeTrue();
-            result.Second.Should().Be( value );
-        }
+        Assertion.All(
+                result.HasSecond.TestTrue(),
+                result.Second.TestEquals( value ) )
+            .Go();
     }
 
     [Fact]
@@ -231,11 +218,10 @@ public abstract class GenericEitherExtensionsTests<T1, T2> : TestsBase
 
         var result = sut.Reduce();
 
-        using ( new AssertionScope() )
-        {
-            result.HasFirst.Should().BeTrue();
-            result.First.Should().Be( value );
-        }
+        Assertion.All(
+                result.HasFirst.TestTrue(),
+                result.First.TestEquals( value ) )
+            .Go();
     }
 
     [Fact]
@@ -247,11 +233,10 @@ public abstract class GenericEitherExtensionsTests<T1, T2> : TestsBase
 
         var result = sut.Reduce();
 
-        using ( new AssertionScope() )
-        {
-            result.HasFirst.Should().BeTrue();
-            result.First.Should().Be( value );
-        }
+        Assertion.All(
+                result.HasFirst.TestTrue(),
+                result.First.TestEquals( value ) )
+            .Go();
     }
 
     [Fact]
@@ -263,11 +248,10 @@ public abstract class GenericEitherExtensionsTests<T1, T2> : TestsBase
 
         var result = sut.Reduce();
 
-        using ( new AssertionScope() )
-        {
-            result.HasSecond.Should().BeTrue();
-            result.Second.Should().Be( value );
-        }
+        Assertion.All(
+                result.HasSecond.TestTrue(),
+                result.Second.TestEquals( value ) )
+            .Go();
     }
 
     [Fact]
@@ -278,11 +262,10 @@ public abstract class GenericEitherExtensionsTests<T1, T2> : TestsBase
 
         var result = sut.Reduce();
 
-        using ( new AssertionScope() )
-        {
-            result.HasSecond.Should().BeTrue();
-            result.Second.Should().Be( value );
-        }
+        Assertion.All(
+                result.HasSecond.TestTrue(),
+                result.Second.TestEquals( value ) )
+            .Go();
     }
 
     [Fact]
@@ -294,11 +277,10 @@ public abstract class GenericEitherExtensionsTests<T1, T2> : TestsBase
 
         var result = sut.Reduce();
 
-        using ( new AssertionScope() )
-        {
-            result.HasFirst.Should().BeTrue();
-            result.First.Should().Be( value );
-        }
+        Assertion.All(
+                result.HasFirst.TestTrue(),
+                result.First.TestEquals( value ) )
+            .Go();
     }
 
     [Fact]
@@ -310,10 +292,9 @@ public abstract class GenericEitherExtensionsTests<T1, T2> : TestsBase
 
         var result = sut.Reduce();
 
-        using ( new AssertionScope() )
-        {
-            result.HasSecond.Should().BeTrue();
-            result.Second.Should().Be( value );
-        }
+        Assertion.All(
+                result.HasSecond.TestTrue(),
+                result.Second.TestEquals( value ) )
+            .Go();
     }
 }

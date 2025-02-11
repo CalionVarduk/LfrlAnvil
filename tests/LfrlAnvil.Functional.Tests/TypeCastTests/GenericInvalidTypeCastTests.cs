@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using LfrlAnvil.Functional.Exceptions;
 using LfrlAnvil.TestExtensions.Attributes;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 using LfrlAnvil.TestExtensions.NSubstitute;
 
 namespace LfrlAnvil.Functional.Tests.TypeCastTests;
@@ -19,7 +19,7 @@ public abstract class GenericInvalidTypeCastTests<TSource, TDestination> : Gener
 
         var result = a.Equals( b );
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -30,9 +30,7 @@ public abstract class GenericInvalidTypeCastTests<TSource, TDestination> : Gener
 
         var action = Lambda.Of( () => sut.GetResult() );
 
-        action.Should()
-            .ThrowExactly<ValueAccessException>()
-            .AndMatch( e => e.MemberName == nameof( TypeCast<TSource, TDestination>.Result ) );
+        action.Test( exc => exc.TestType().Exact<ValueAccessException>() ).Go();
     }
 
     [Fact]
@@ -43,7 +41,7 @@ public abstract class GenericInvalidTypeCastTests<TSource, TDestination> : Gener
 
         var result = sut.GetResultOrDefault();
 
-        result.Should().Be( default( TDestination ) );
+        result.TestEquals( default ).Go();
     }
 
     [Fact]
@@ -55,7 +53,7 @@ public abstract class GenericInvalidTypeCastTests<TSource, TDestination> : Gener
 
         var result = sut.GetResultOrDefault( defaultValue );
 
-        result.Should().Be( defaultValue );
+        result.TestEquals( defaultValue ).Go();
     }
 
     [Fact]
@@ -68,11 +66,10 @@ public abstract class GenericInvalidTypeCastTests<TSource, TDestination> : Gener
 
         var result = sut.Bind( validDelegate );
 
-        using ( new AssertionScope() )
-        {
-            validDelegate.Verify().CallCount.Should().Be( 0 );
-            result.IsInvalid.Should().BeTrue();
-        }
+        Assertion.All(
+                validDelegate.CallCount().TestEquals( 0 ),
+                result.IsInvalid.TestTrue() )
+            .Go();
     }
 
     [Fact]
@@ -89,12 +86,12 @@ public abstract class GenericInvalidTypeCastTests<TSource, TDestination> : Gener
 
         var result = sut.Bind( validDelegate, invalidDelegate );
 
-        using ( new AssertionScope() )
-        {
-            validDelegate.Verify().CallCount.Should().Be( 0 );
-            invalidDelegate.Verify().CallAt( 0 ).Exists().And.ArgAt( 0 ).Should().Be( value );
-            result.IsValid.Should().BeFalse();
-        }
+        Assertion.All(
+                validDelegate.CallCount().TestEquals( 0 ),
+                invalidDelegate.CallAt( 0 ).Exists.TestTrue(),
+                invalidDelegate.CallAt( 0 ).Arguments.FirstOrDefault().TestEquals( value ),
+                result.IsValid.TestFalse() )
+            .Go();
     }
 
     [Fact]
@@ -109,12 +106,12 @@ public abstract class GenericInvalidTypeCastTests<TSource, TDestination> : Gener
 
         var result = sut.Match( validDelegate, invalidDelegate );
 
-        using ( new AssertionScope() )
-        {
-            validDelegate.Verify().CallCount.Should().Be( 0 );
-            invalidDelegate.Verify().CallAt( 0 ).Exists().And.ArgAt( 0 ).Should().Be( value );
-            result.Should().Be( returnedValue );
-        }
+        Assertion.All(
+                validDelegate.CallCount().TestEquals( 0 ),
+                invalidDelegate.CallAt( 0 ).Exists.TestTrue(),
+                invalidDelegate.CallAt( 0 ).Arguments.FirstOrDefault().TestEquals( value ),
+                result.TestEquals( returnedValue ) )
+            .Go();
     }
 
     [Fact]
@@ -128,11 +125,11 @@ public abstract class GenericInvalidTypeCastTests<TSource, TDestination> : Gener
 
         sut.Match( validDelegate, invalidDelegate );
 
-        using ( new AssertionScope() )
-        {
-            validDelegate.Verify().CallCount.Should().Be( 0 );
-            invalidDelegate.Verify().CallAt( 0 ).Exists().And.ArgAt( 0 ).Should().Be( value );
-        }
+        Assertion.All(
+                validDelegate.CallCount().TestEquals( 0 ),
+                invalidDelegate.CallAt( 0 ).Exists.TestTrue(),
+                invalidDelegate.CallAt( 0 ).Arguments.FirstOrDefault().TestEquals( value ) )
+            .Go();
     }
 
     [Fact]
@@ -145,11 +142,10 @@ public abstract class GenericInvalidTypeCastTests<TSource, TDestination> : Gener
 
         var result = sut.IfValid( validDelegate );
 
-        using ( new AssertionScope() )
-        {
-            validDelegate.Verify().CallCount.Should().Be( 0 );
-            result.HasValue.Should().BeFalse();
-        }
+        Assertion.All(
+                validDelegate.CallCount().TestEquals( 0 ),
+                result.HasValue.TestFalse() )
+            .Go();
     }
 
     [Fact]
@@ -162,7 +158,7 @@ public abstract class GenericInvalidTypeCastTests<TSource, TDestination> : Gener
 
         sut.IfValid( validDelegate );
 
-        validDelegate.Verify().CallCount.Should().Be( 0 );
+        validDelegate.CallCount().TestEquals( 0 ).Go();
     }
 
     [Fact]
@@ -175,11 +171,10 @@ public abstract class GenericInvalidTypeCastTests<TSource, TDestination> : Gener
 
         var result = sut.IfValidOrDefault( validDelegate );
 
-        using ( new AssertionScope() )
-        {
-            validDelegate.Verify().CallCount.Should().Be( 0 );
-            result.Should().Be( default( TDestination ) );
-        }
+        Assertion.All(
+                validDelegate.CallCount().TestEquals( 0 ),
+                result.TestEquals( default ) )
+            .Go();
     }
 
     [Fact]
@@ -193,11 +188,10 @@ public abstract class GenericInvalidTypeCastTests<TSource, TDestination> : Gener
 
         var result = sut.IfValidOrDefault( validDelegate, defaultValue );
 
-        using ( new AssertionScope() )
-        {
-            validDelegate.Verify().CallCount.Should().Be( 0 );
-            result.Should().Be( defaultValue );
-        }
+        Assertion.All(
+                validDelegate.CallCount().TestEquals( 0 ),
+                result.TestEquals( defaultValue ) )
+            .Go();
     }
 
     [Fact]
@@ -211,11 +205,11 @@ public abstract class GenericInvalidTypeCastTests<TSource, TDestination> : Gener
 
         var result = sut.IfInvalid( invalidDelegate );
 
-        using ( new AssertionScope() )
-        {
-            invalidDelegate.Verify().CallAt( 0 ).Exists().And.ArgAt( 0 ).Should().Be( value );
-            result.Value.Should().Be( returnedValue );
-        }
+        Assertion.All(
+                invalidDelegate.CallAt( 0 ).Exists.TestTrue(),
+                invalidDelegate.CallAt( 0 ).Arguments.FirstOrDefault().TestEquals( value ),
+                result.Value.TestEquals( returnedValue ) )
+            .Go();
     }
 
     [Fact]
@@ -228,7 +222,10 @@ public abstract class GenericInvalidTypeCastTests<TSource, TDestination> : Gener
 
         sut.IfInvalid( invalidDelegate );
 
-        invalidDelegate.Verify().CallAt( 0 ).Exists().And.ArgAt( 0 ).Should().Be( value );
+        Assertion.All(
+                invalidDelegate.CallAt( 0 ).Exists.TestTrue(),
+                invalidDelegate.CallAt( 0 ).Arguments.FirstOrDefault().TestEquals( value ) )
+            .Go();
     }
 
     [Fact]
@@ -242,11 +239,11 @@ public abstract class GenericInvalidTypeCastTests<TSource, TDestination> : Gener
 
         var result = sut.IfInvalidOrDefault( invalidDelegate );
 
-        using ( new AssertionScope() )
-        {
-            invalidDelegate.Verify().CallAt( 0 ).Exists().And.ArgAt( 0 ).Should().Be( value );
-            result.Should().Be( returnedValue );
-        }
+        Assertion.All(
+                invalidDelegate.CallAt( 0 ).Exists.TestTrue(),
+                invalidDelegate.CallAt( 0 ).Arguments.FirstOrDefault().TestEquals( value ),
+                result.TestEquals( returnedValue ) )
+            .Go();
     }
 
     [Fact]
@@ -260,11 +257,11 @@ public abstract class GenericInvalidTypeCastTests<TSource, TDestination> : Gener
 
         var result = sut.IfInvalidOrDefault( invalidDelegate, Fixture.CreateNotDefault<TDestination>() );
 
-        using ( new AssertionScope() )
-        {
-            invalidDelegate.Verify().CallAt( 0 ).Exists().And.ArgAt( 0 ).Should().Be( value );
-            result.Should().Be( returnedValue );
-        }
+        Assertion.All(
+                invalidDelegate.CallAt( 0 ).Exists.TestTrue(),
+                invalidDelegate.CallAt( 0 ).Arguments.FirstOrDefault().TestEquals( value ),
+                result.TestEquals( returnedValue ) )
+            .Go();
     }
 
     [Fact]
@@ -274,13 +271,12 @@ public abstract class GenericInvalidTypeCastTests<TSource, TDestination> : Gener
 
         var result = ( TypeCast<TSource, TDestination> )value;
 
-        using ( new AssertionScope() )
-        {
-            result.IsValid.Should().BeFalse();
-            result.IsInvalid.Should().BeTrue();
-            result.Source.Should().Be( value );
-            result.Result.Should().Be( default( TDestination ) );
-        }
+        Assertion.All(
+                result.IsValid.TestFalse(),
+                result.IsInvalid.TestTrue(),
+                result.Source.TestEquals( value ),
+                result.Result.TestEquals( default ) )
+            .Go();
     }
 
     [Fact]
@@ -291,13 +287,12 @@ public abstract class GenericInvalidTypeCastTests<TSource, TDestination> : Gener
 
         var result = ( TypeCast<TSource, TDestination> )partial;
 
-        using ( new AssertionScope() )
-        {
-            result.IsValid.Should().BeFalse();
-            result.IsInvalid.Should().BeTrue();
-            result.Source.Should().Be( value );
-            result.Result.Should().Be( default( TDestination ) );
-        }
+        Assertion.All(
+                result.IsValid.TestFalse(),
+                result.IsInvalid.TestTrue(),
+                result.Source.TestEquals( value ),
+                result.Result.TestEquals( default ) )
+            .Go();
     }
 
     [Fact]
@@ -308,9 +303,7 @@ public abstract class GenericInvalidTypeCastTests<TSource, TDestination> : Gener
 
         var action = Lambda.Of( () => ( TDestination )sut );
 
-        action.Should()
-            .ThrowExactly<ValueAccessException>()
-            .AndMatch( e => e.MemberName == nameof( TypeCast<TSource, TDestination>.Result ) );
+        action.Test( exc => exc.TestType().Exact<ValueAccessException>() ).Go();
     }
 
     [Theory]
@@ -322,7 +315,7 @@ public abstract class GenericInvalidTypeCastTests<TSource, TDestination> : Gener
 
         var result = a == b;
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -334,7 +327,7 @@ public abstract class GenericInvalidTypeCastTests<TSource, TDestination> : Gener
 
         var result = a != b;
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -347,7 +340,7 @@ public abstract class GenericInvalidTypeCastTests<TSource, TDestination> : Gener
 
         var result = collection.Count;
 
-        result.Should().Be( 0 );
+        result.TestEquals( 0 ).Go();
     }
 
     [Fact]
@@ -355,6 +348,6 @@ public abstract class GenericInvalidTypeCastTests<TSource, TDestination> : Gener
     {
         var value = Fixture.Create<TSource>();
         var sut = ( TypeCast<TSource, TDestination> )value;
-        sut.Should().BeEmpty();
+        sut.TestEmpty().Go();
     }
 }

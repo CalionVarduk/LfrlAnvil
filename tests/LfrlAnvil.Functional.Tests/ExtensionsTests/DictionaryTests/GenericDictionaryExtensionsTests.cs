@@ -15,7 +15,7 @@ public abstract class GenericDictionaryExtensionsTests<TKey, TValue> : TestsBase
 
         var result = sut.TryGetValue( key );
 
-        result.HasValue.Should().BeFalse();
+        result.HasValue.TestFalse().Go();
     }
 
     [Fact]
@@ -27,7 +27,7 @@ public abstract class GenericDictionaryExtensionsTests<TKey, TValue> : TestsBase
 
         var result = sut.TryGetValue( key );
 
-        result.Value.Should().Be( value );
+        result.Value.TestEquals( value ).Go();
     }
 
     [Fact]
@@ -38,7 +38,7 @@ public abstract class GenericDictionaryExtensionsTests<TKey, TValue> : TestsBase
 
         var result = sut.TryRemove( key );
 
-        result.HasValue.Should().BeFalse();
+        result.HasValue.TestFalse().Go();
     }
 
     [Fact]
@@ -50,10 +50,9 @@ public abstract class GenericDictionaryExtensionsTests<TKey, TValue> : TestsBase
 
         var result = sut.TryRemove( key );
 
-        using ( new AssertionScope() )
-        {
-            result.Value.Should().Be( value );
-            sut.Should().HaveCount( 0 );
-        }
+        Assertion.All(
+                result.Value.TestEquals( value ),
+                sut.Count.TestEquals( 0 ) )
+            .Go();
     }
 }

@@ -13,6 +13,6 @@ public abstract class GenericEitherExtensionsOfRefTypeTests<T1, T2> : GenericEit
 
         var result = sut.ToMaybe();
 
-        result.HasValue.Should().BeFalse();
+        result.HasValue.TestFalse().Go();
     }
 }

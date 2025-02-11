@@ -2,7 +2,6 @@
 using System.Linq.Expressions;
 using LfrlAnvil.Functional.Delegates;
 using LfrlAnvil.Functional.Extensions;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Functional.Tests.ExtensionsTests.LambdaTests;
 
@@ -14,7 +13,7 @@ public abstract class GenericLambdaTests<T1, T2, T3, T4, T5, T6, T7, TReturn> : 
     {
         Action action = () => { };
         var result = action.TryInvoke();
-        result.IsOk.Should().BeTrue();
+        result.IsOk.TestTrue().Go();
     }
 
     [Fact]
@@ -25,11 +24,10 @@ public abstract class GenericLambdaTests<T1, T2, T3, T4, T5, T6, T7, TReturn> : 
 
         var result = action.TryInvoke();
 
-        using ( new AssertionScope() )
-        {
-            result.HasError.Should().BeTrue();
-            result.Error.Should().Be( error );
-        }
+        Assertion.All(
+                result.HasError.TestTrue(),
+                result.Error.TestEquals( error ) )
+            .Go();
     }
 
     [Fact]
@@ -40,11 +38,10 @@ public abstract class GenericLambdaTests<T1, T2, T3, T4, T5, T6, T7, TReturn> : 
 
         var result = action.TryInvoke();
 
-        using ( new AssertionScope() )
-        {
-            result.IsOk.Should().BeTrue();
-            result.Value.Should().Be( value );
-        }
+        Assertion.All(
+                result.IsOk.TestTrue(),
+                result.Value.TestEquals( value ) )
+            .Go();
     }
 
     [Fact]
@@ -55,11 +52,10 @@ public abstract class GenericLambdaTests<T1, T2, T3, T4, T5, T6, T7, TReturn> : 
 
         var result = action.TryInvoke();
 
-        using ( new AssertionScope() )
-        {
-            result.HasError.Should().BeTrue();
-            result.Error.Should().Be( error );
-        }
+        Assertion.All(
+                result.HasError.TestTrue(),
+                result.Error.TestEquals( error ) )
+            .Go();
     }
 
     [Fact]
@@ -70,7 +66,7 @@ public abstract class GenericLambdaTests<T1, T2, T3, T4, T5, T6, T7, TReturn> : 
 
         sut();
 
-        action.Verify().CallCount.Should().Be( 1 );
+        action.CallCount().TestEquals( 1 ).Go();
     }
 
     [Fact]
@@ -82,7 +78,7 @@ public abstract class GenericLambdaTests<T1, T2, T3, T4, T5, T6, T7, TReturn> : 
 
         sut( a1 );
 
-        action.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( a1 );
+        Assertion.All( action.CallAt( 0 ).Exists.TestTrue(), action.CallAt( 0 ).Arguments.TestSequence( [ a1 ] ) ).Go();
     }
 
     [Fact]
@@ -95,7 +91,7 @@ public abstract class GenericLambdaTests<T1, T2, T3, T4, T5, T6, T7, TReturn> : 
 
         sut( a1, a2 );
 
-        action.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( a1, a2 );
+        Assertion.All( action.CallAt( 0 ).Exists.TestTrue(), action.CallAt( 0 ).Arguments.TestSequence( [ a1, a2 ] ) ).Go();
     }
 
     [Fact]
@@ -109,7 +105,7 @@ public abstract class GenericLambdaTests<T1, T2, T3, T4, T5, T6, T7, TReturn> : 
 
         sut( a1, a2, a3 );
 
-        action.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( a1, a2, a3 );
+        Assertion.All( action.CallAt( 0 ).Exists.TestTrue(), action.CallAt( 0 ).Arguments.TestSequence( [ a1, a2, a3 ] ) ).Go();
     }
 
     [Fact]
@@ -124,7 +120,7 @@ public abstract class GenericLambdaTests<T1, T2, T3, T4, T5, T6, T7, TReturn> : 
 
         sut( a1, a2, a3, a4 );
 
-        action.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( a1, a2, a3, a4 );
+        Assertion.All( action.CallAt( 0 ).Exists.TestTrue(), action.CallAt( 0 ).Arguments.TestSequence( [ a1, a2, a3, a4 ] ) ).Go();
     }
 
     [Fact]
@@ -140,7 +136,7 @@ public abstract class GenericLambdaTests<T1, T2, T3, T4, T5, T6, T7, TReturn> : 
 
         sut( a1, a2, a3, a4, a5 );
 
-        action.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( a1, a2, a3, a4, a5 );
+        Assertion.All( action.CallAt( 0 ).Exists.TestTrue(), action.CallAt( 0 ).Arguments.TestSequence( [ a1, a2, a3, a4, a5 ] ) ).Go();
     }
 
     [Fact]
@@ -157,7 +153,7 @@ public abstract class GenericLambdaTests<T1, T2, T3, T4, T5, T6, T7, TReturn> : 
 
         sut( a1, a2, a3, a4, a5, a6 );
 
-        action.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( a1, a2, a3, a4, a5, a6 );
+        Assertion.All( action.CallAt( 0 ).Exists.TestTrue(), action.CallAt( 0 ).Arguments.TestSequence( [ a1, a2, a3, a4, a5, a6 ] ) ).Go();
     }
 
     [Fact]
@@ -175,7 +171,8 @@ public abstract class GenericLambdaTests<T1, T2, T3, T4, T5, T6, T7, TReturn> : 
 
         sut( a1, a2, a3, a4, a5, a6, a7 );
 
-        action.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( a1, a2, a3, a4, a5, a6, a7 );
+        Assertion.All( action.CallAt( 0 ).Exists.TestTrue(), action.CallAt( 0 ).Arguments.TestSequence( [ a1, a2, a3, a4, a5, a6, a7 ] ) )
+            .Go();
     }
 
     [Fact]
@@ -186,7 +183,7 @@ public abstract class GenericLambdaTests<T1, T2, T3, T4, T5, T6, T7, TReturn> : 
 
         sut();
 
-        func.Verify().CallCount.Should().Be( 1 );
+        func.CallCount().TestEquals( 1 ).Go();
     }
 
     [Fact]
@@ -198,7 +195,7 @@ public abstract class GenericLambdaTests<T1, T2, T3, T4, T5, T6, T7, TReturn> : 
 
         sut( a1 );
 
-        func.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( a1 );
+        Assertion.All( func.CallAt( 0 ).Exists.TestTrue(), func.CallAt( 0 ).Arguments.TestSequence( [ a1 ] ) ).Go();
     }
 
     [Fact]
@@ -211,7 +208,7 @@ public abstract class GenericLambdaTests<T1, T2, T3, T4, T5, T6, T7, TReturn> : 
 
         sut( a1, a2 );
 
-        func.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( a1, a2 );
+        Assertion.All( func.CallAt( 0 ).Exists.TestTrue(), func.CallAt( 0 ).Arguments.TestSequence( [ a1, a2 ] ) ).Go();
     }
 
     [Fact]
@@ -225,7 +222,7 @@ public abstract class GenericLambdaTests<T1, T2, T3, T4, T5, T6, T7, TReturn> : 
 
         sut( a1, a2, a3 );
 
-        func.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( a1, a2, a3 );
+        Assertion.All( func.CallAt( 0 ).Exists.TestTrue(), func.CallAt( 0 ).Arguments.TestSequence( [ a1, a2, a3 ] ) ).Go();
     }
 
     [Fact]
@@ -240,7 +237,7 @@ public abstract class GenericLambdaTests<T1, T2, T3, T4, T5, T6, T7, TReturn> : 
 
         sut( a1, a2, a3, a4 );
 
-        func.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( a1, a2, a3, a4 );
+        Assertion.All( func.CallAt( 0 ).Exists.TestTrue(), func.CallAt( 0 ).Arguments.TestSequence( [ a1, a2, a3, a4 ] ) ).Go();
     }
 
     [Fact]
@@ -256,7 +253,7 @@ public abstract class GenericLambdaTests<T1, T2, T3, T4, T5, T6, T7, TReturn> : 
 
         sut( a1, a2, a3, a4, a5 );
 
-        func.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( a1, a2, a3, a4, a5 );
+        Assertion.All( func.CallAt( 0 ).Exists.TestTrue(), func.CallAt( 0 ).Arguments.TestSequence( [ a1, a2, a3, a4, a5 ] ) ).Go();
     }
 
     [Fact]
@@ -273,7 +270,7 @@ public abstract class GenericLambdaTests<T1, T2, T3, T4, T5, T6, T7, TReturn> : 
 
         sut( a1, a2, a3, a4, a5, a6 );
 
-        func.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( a1, a2, a3, a4, a5, a6 );
+        Assertion.All( func.CallAt( 0 ).Exists.TestTrue(), func.CallAt( 0 ).Arguments.TestSequence( [ a1, a2, a3, a4, a5, a6 ] ) ).Go();
     }
 
     [Fact]
@@ -291,7 +288,7 @@ public abstract class GenericLambdaTests<T1, T2, T3, T4, T5, T6, T7, TReturn> : 
 
         sut( a1, a2, a3, a4, a5, a6, a7 );
 
-        func.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( a1, a2, a3, a4, a5, a6, a7 );
+        Assertion.All( func.CallAt( 0 ).Exists.TestTrue(), func.CallAt( 0 ).Arguments.TestSequence( [ a1, a2, a3, a4, a5, a6, a7 ] ) ).Go();
     }
 
     [Fact]
@@ -304,11 +301,10 @@ public abstract class GenericLambdaTests<T1, T2, T3, T4, T5, T6, T7, TReturn> : 
 
         var result = sut();
 
-        using ( new AssertionScope() )
-        {
-            func.Verify().CallCount.Should().Be( 1 );
-            result.HasValue.Should().BeFalse();
-        }
+        Assertion.All(
+                func.CallCount().TestEquals( 1 ),
+                result.HasValue.TestFalse() )
+            .Go();
     }
 
     [Fact]
@@ -328,11 +324,10 @@ public abstract class GenericLambdaTests<T1, T2, T3, T4, T5, T6, T7, TReturn> : 
 
         var result = sut();
 
-        using ( new AssertionScope() )
-        {
-            func.Verify().CallCount.Should().Be( 1 );
-            result.Value.Should().Be( expected );
-        }
+        Assertion.All(
+                func.CallCount().TestEquals( 1 ),
+                result.Value.TestEquals( expected ) )
+            .Go();
     }
 
     [Fact]
@@ -346,11 +341,11 @@ public abstract class GenericLambdaTests<T1, T2, T3, T4, T5, T6, T7, TReturn> : 
 
         var result = sut( a1 );
 
-        using ( new AssertionScope() )
-        {
-            func.Verify().CallAt( 0 ).Exists().And.Arguments.SkipLast( 1 ).Should().BeSequentiallyEqualTo( a1 );
-            result.HasValue.Should().BeFalse();
-        }
+        Assertion.All(
+                func.CallAt( 0 ).Exists.TestTrue(),
+                func.CallAt( 0 ).Arguments.SkipLast( 1 ).TestSequence( [ a1 ] ),
+                result.HasValue.TestFalse() )
+            .Go();
     }
 
     [Fact]
@@ -371,11 +366,11 @@ public abstract class GenericLambdaTests<T1, T2, T3, T4, T5, T6, T7, TReturn> : 
 
         var result = sut( a1 );
 
-        using ( new AssertionScope() )
-        {
-            func.Verify().CallAt( 0 ).Exists().And.Arguments.SkipLast( 1 ).Should().BeSequentiallyEqualTo( a1 );
-            result.Value.Should().Be( expected );
-        }
+        Assertion.All(
+                func.CallAt( 0 ).Exists.TestTrue(),
+                func.CallAt( 0 ).Arguments.SkipLast( 1 ).TestSequence( [ a1 ] ),
+                result.Value.TestEquals( expected ) )
+            .Go();
     }
 
     [Fact]
@@ -390,11 +385,11 @@ public abstract class GenericLambdaTests<T1, T2, T3, T4, T5, T6, T7, TReturn> : 
 
         var result = sut( a1, a2 );
 
-        using ( new AssertionScope() )
-        {
-            func.Verify().CallAt( 0 ).Exists().And.Arguments.SkipLast( 1 ).Should().BeSequentiallyEqualTo( a1, a2 );
-            result.HasValue.Should().BeFalse();
-        }
+        Assertion.All(
+                func.CallAt( 0 ).Exists.TestTrue(),
+                func.CallAt( 0 ).Arguments.SkipLast( 1 ).TestSequence( [ a1, a2 ] ),
+                result.HasValue.TestFalse() )
+            .Go();
     }
 
     [Fact]
@@ -416,11 +411,11 @@ public abstract class GenericLambdaTests<T1, T2, T3, T4, T5, T6, T7, TReturn> : 
 
         var result = sut( a1, a2 );
 
-        using ( new AssertionScope() )
-        {
-            func.Verify().CallAt( 0 ).Exists().And.Arguments.SkipLast( 1 ).Should().BeSequentiallyEqualTo( a1, a2 );
-            result.Value.Should().Be( expected );
-        }
+        Assertion.All(
+                func.CallAt( 0 ).Exists.TestTrue(),
+                func.CallAt( 0 ).Arguments.SkipLast( 1 ).TestSequence( [ a1, a2 ] ),
+                result.Value.TestEquals( expected ) )
+            .Go();
     }
 
     [Fact]
@@ -436,11 +431,11 @@ public abstract class GenericLambdaTests<T1, T2, T3, T4, T5, T6, T7, TReturn> : 
 
         var result = sut( a1, a2, a3 );
 
-        using ( new AssertionScope() )
-        {
-            func.Verify().CallAt( 0 ).Exists().And.Arguments.SkipLast( 1 ).Should().BeSequentiallyEqualTo( a1, a2, a3 );
-            result.HasValue.Should().BeFalse();
-        }
+        Assertion.All(
+                func.CallAt( 0 ).Exists.TestTrue(),
+                func.CallAt( 0 ).Arguments.SkipLast( 1 ).TestSequence( [ a1, a2, a3 ] ),
+                result.HasValue.TestFalse() )
+            .Go();
     }
 
     [Fact]
@@ -463,11 +458,11 @@ public abstract class GenericLambdaTests<T1, T2, T3, T4, T5, T6, T7, TReturn> : 
 
         var result = sut( a1, a2, a3 );
 
-        using ( new AssertionScope() )
-        {
-            func.Verify().CallAt( 0 ).Exists().And.Arguments.SkipLast( 1 ).Should().BeSequentiallyEqualTo( a1, a2, a3 );
-            result.Value.Should().Be( expected );
-        }
+        Assertion.All(
+                func.CallAt( 0 ).Exists.TestTrue(),
+                func.CallAt( 0 ).Arguments.SkipLast( 1 ).TestSequence( [ a1, a2, a3 ] ),
+                result.Value.TestEquals( expected ) )
+            .Go();
     }
 
     [Fact]
@@ -478,7 +473,7 @@ public abstract class GenericLambdaTests<T1, T2, T3, T4, T5, T6, T7, TReturn> : 
 
         var result = sut( value );
 
-        result.Should().Be( value );
+        result.TestEquals( value ).Go();
     }
 
     [Fact]
@@ -486,7 +481,7 @@ public abstract class GenericLambdaTests<T1, T2, T3, T4, T5, T6, T7, TReturn> : 
     {
         var sut = Substitute.For<Func<TReturn>>();
         var result = Lambda.Of( sut );
-        result.Should().BeSameAs( sut );
+        result.TestRefEquals( sut ).Go();
     }
 
     [Fact]
@@ -494,7 +489,7 @@ public abstract class GenericLambdaTests<T1, T2, T3, T4, T5, T6, T7, TReturn> : 
     {
         var sut = Substitute.For<Func<T1, TReturn>>();
         var result = Lambda.Of( sut );
-        result.Should().BeSameAs( sut );
+        result.TestRefEquals( sut ).Go();
     }
 
     [Fact]
@@ -502,7 +497,7 @@ public abstract class GenericLambdaTests<T1, T2, T3, T4, T5, T6, T7, TReturn> : 
     {
         var sut = Substitute.For<Func<T1, T2, TReturn>>();
         var result = Lambda.Of( sut );
-        result.Should().BeSameAs( sut );
+        result.TestRefEquals( sut ).Go();
     }
 
     [Fact]
@@ -510,7 +505,7 @@ public abstract class GenericLambdaTests<T1, T2, T3, T4, T5, T6, T7, TReturn> : 
     {
         var sut = Substitute.For<Func<T1, T2, T3, TReturn>>();
         var result = Lambda.Of( sut );
-        result.Should().BeSameAs( sut );
+        result.TestRefEquals( sut ).Go();
     }
 
     [Fact]
@@ -518,7 +513,7 @@ public abstract class GenericLambdaTests<T1, T2, T3, T4, T5, T6, T7, TReturn> : 
     {
         var sut = Substitute.For<Func<T1, T2, T3, T4, TReturn>>();
         var result = Lambda.Of( sut );
-        result.Should().BeSameAs( sut );
+        result.TestRefEquals( sut ).Go();
     }
 
     [Fact]
@@ -526,7 +521,7 @@ public abstract class GenericLambdaTests<T1, T2, T3, T4, T5, T6, T7, TReturn> : 
     {
         var sut = Substitute.For<Func<T1, T2, T3, T4, T5, TReturn>>();
         var result = Lambda.Of( sut );
-        result.Should().BeSameAs( sut );
+        result.TestRefEquals( sut ).Go();
     }
 
     [Fact]
@@ -534,7 +529,7 @@ public abstract class GenericLambdaTests<T1, T2, T3, T4, T5, T6, T7, TReturn> : 
     {
         var sut = Substitute.For<Func<T1, T2, T3, T4, T5, T6, TReturn>>();
         var result = Lambda.Of( sut );
-        result.Should().BeSameAs( sut );
+        result.TestRefEquals( sut ).Go();
     }
 
     [Fact]
@@ -542,7 +537,7 @@ public abstract class GenericLambdaTests<T1, T2, T3, T4, T5, T6, T7, TReturn> : 
     {
         var sut = Substitute.For<Func<T1, T2, T3, T4, T5, T6, T7, TReturn>>();
         var result = Lambda.Of( sut );
-        result.Should().BeSameAs( sut );
+        result.TestRefEquals( sut ).Go();
     }
 
     [Fact]
@@ -550,7 +545,7 @@ public abstract class GenericLambdaTests<T1, T2, T3, T4, T5, T6, T7, TReturn> : 
     {
         var sut = Substitute.For<Action>();
         var result = Lambda.Of( sut );
-        result.Should().BeSameAs( sut );
+        result.TestRefEquals( sut ).Go();
     }
 
     [Fact]
@@ -558,7 +553,7 @@ public abstract class GenericLambdaTests<T1, T2, T3, T4, T5, T6, T7, TReturn> : 
     {
         var sut = Substitute.For<Action<T1>>();
         var result = Lambda.Of( sut );
-        result.Should().BeSameAs( sut );
+        result.TestRefEquals( sut ).Go();
     }
 
     [Fact]
@@ -566,7 +561,7 @@ public abstract class GenericLambdaTests<T1, T2, T3, T4, T5, T6, T7, TReturn> : 
     {
         var sut = Substitute.For<Action<T1, T2>>();
         var result = Lambda.Of( sut );
-        result.Should().BeSameAs( sut );
+        result.TestRefEquals( sut ).Go();
     }
 
     [Fact]
@@ -574,7 +569,7 @@ public abstract class GenericLambdaTests<T1, T2, T3, T4, T5, T6, T7, TReturn> : 
     {
         var sut = Substitute.For<Action<T1, T2, T3>>();
         var result = Lambda.Of( sut );
-        result.Should().BeSameAs( sut );
+        result.TestRefEquals( sut ).Go();
     }
 
     [Fact]
@@ -582,7 +577,7 @@ public abstract class GenericLambdaTests<T1, T2, T3, T4, T5, T6, T7, TReturn> : 
     {
         var sut = Substitute.For<Action<T1, T2, T3, T4>>();
         var result = Lambda.Of( sut );
-        result.Should().BeSameAs( sut );
+        result.TestRefEquals( sut ).Go();
     }
 
     [Fact]
@@ -590,7 +585,7 @@ public abstract class GenericLambdaTests<T1, T2, T3, T4, T5, T6, T7, TReturn> : 
     {
         var sut = Substitute.For<Action<T1, T2, T3, T4, T5>>();
         var result = Lambda.Of( sut );
-        result.Should().BeSameAs( sut );
+        result.TestRefEquals( sut ).Go();
     }
 
     [Fact]
@@ -598,7 +593,7 @@ public abstract class GenericLambdaTests<T1, T2, T3, T4, T5, T6, T7, TReturn> : 
     {
         var sut = Substitute.For<Action<T1, T2, T3, T4, T5, T6>>();
         var result = Lambda.Of( sut );
-        result.Should().BeSameAs( sut );
+        result.TestRefEquals( sut ).Go();
     }
 
     [Fact]
@@ -606,7 +601,7 @@ public abstract class GenericLambdaTests<T1, T2, T3, T4, T5, T6, T7, TReturn> : 
     {
         var sut = Substitute.For<Action<T1, T2, T3, T4, T5, T6, T7>>();
         var result = Lambda.Of( sut );
-        result.Should().BeSameAs( sut );
+        result.TestRefEquals( sut ).Go();
     }
 
     [Fact]
@@ -614,7 +609,7 @@ public abstract class GenericLambdaTests<T1, T2, T3, T4, T5, T6, T7, TReturn> : 
     {
         var sut = Substitute.For<OutFunc<TReturn>>();
         var result = Lambda.Of( sut );
-        result.Should().BeSameAs( sut );
+        result.TestRefEquals( sut ).Go();
     }
 
     [Fact]
@@ -622,7 +617,7 @@ public abstract class GenericLambdaTests<T1, T2, T3, T4, T5, T6, T7, TReturn> : 
     {
         var sut = Substitute.For<OutFunc<T1, TReturn>>();
         var result = Lambda.Of( sut );
-        result.Should().BeSameAs( sut );
+        result.TestRefEquals( sut ).Go();
     }
 
     [Fact]
@@ -630,7 +625,7 @@ public abstract class GenericLambdaTests<T1, T2, T3, T4, T5, T6, T7, TReturn> : 
     {
         var sut = Substitute.For<OutFunc<T1, T2, TReturn>>();
         var result = Lambda.Of( sut );
-        result.Should().BeSameAs( sut );
+        result.TestRefEquals( sut ).Go();
     }
 
     [Fact]
@@ -638,7 +633,7 @@ public abstract class GenericLambdaTests<T1, T2, T3, T4, T5, T6, T7, TReturn> : 
     {
         var sut = Substitute.For<OutFunc<T1, T2, T3, TReturn>>();
         var result = Lambda.Of( sut );
-        result.Should().BeSameAs( sut );
+        result.TestRefEquals( sut ).Go();
     }
 
     [Fact]
@@ -646,7 +641,7 @@ public abstract class GenericLambdaTests<T1, T2, T3, T4, T5, T6, T7, TReturn> : 
     {
         Expression<Func<TReturn>> sut = () => Fixture.Create<TReturn>();
         var result = Lambda.ExpressionOf( sut );
-        result.Should().BeSameAs( sut );
+        result.TestRefEquals( sut ).Go();
     }
 
     [Fact]
@@ -654,7 +649,7 @@ public abstract class GenericLambdaTests<T1, T2, T3, T4, T5, T6, T7, TReturn> : 
     {
         Expression<Func<T1, TReturn>> sut = _ => Fixture.Create<TReturn>();
         var result = Lambda.ExpressionOf( sut );
-        result.Should().BeSameAs( sut );
+        result.TestRefEquals( sut ).Go();
     }
 
     [Fact]
@@ -662,7 +657,7 @@ public abstract class GenericLambdaTests<T1, T2, T3, T4, T5, T6, T7, TReturn> : 
     {
         Expression<Func<T1, T2, TReturn>> sut = (_, _) => Fixture.Create<TReturn>();
         var result = Lambda.ExpressionOf( sut );
-        result.Should().BeSameAs( sut );
+        result.TestRefEquals( sut ).Go();
     }
 
     [Fact]
@@ -670,7 +665,7 @@ public abstract class GenericLambdaTests<T1, T2, T3, T4, T5, T6, T7, TReturn> : 
     {
         Expression<Func<T1, T2, T3, TReturn>> sut = (_, _, _) => Fixture.Create<TReturn>();
         var result = Lambda.ExpressionOf( sut );
-        result.Should().BeSameAs( sut );
+        result.TestRefEquals( sut ).Go();
     }
 
     [Fact]
@@ -678,7 +673,7 @@ public abstract class GenericLambdaTests<T1, T2, T3, T4, T5, T6, T7, TReturn> : 
     {
         Expression<Func<T1, T2, T3, T4, TReturn>> sut = (_, _, _, _) => Fixture.Create<TReturn>();
         var result = Lambda.ExpressionOf( sut );
-        result.Should().BeSameAs( sut );
+        result.TestRefEquals( sut ).Go();
     }
 
     [Fact]
@@ -686,7 +681,7 @@ public abstract class GenericLambdaTests<T1, T2, T3, T4, T5, T6, T7, TReturn> : 
     {
         Expression<Func<T1, T2, T3, T4, T5, TReturn>> sut = (_, _, _, _, _) => Fixture.Create<TReturn>();
         var result = Lambda.ExpressionOf( sut );
-        result.Should().BeSameAs( sut );
+        result.TestRefEquals( sut ).Go();
     }
 
     [Fact]
@@ -694,7 +689,7 @@ public abstract class GenericLambdaTests<T1, T2, T3, T4, T5, T6, T7, TReturn> : 
     {
         Expression<Func<T1, T2, T3, T4, T5, T6, TReturn>> sut = (_, _, _, _, _, _) => Fixture.Create<TReturn>();
         var result = Lambda.ExpressionOf( sut );
-        result.Should().BeSameAs( sut );
+        result.TestRefEquals( sut ).Go();
     }
 
     [Fact]
@@ -702,6 +697,6 @@ public abstract class GenericLambdaTests<T1, T2, T3, T4, T5, T6, T7, TReturn> : 
     {
         Expression<Func<T1, T2, T3, T4, T5, T6, T7, TReturn>> sut = (_, _, _, _, _, _, _) => Fixture.Create<TReturn>();
         var result = Lambda.ExpressionOf( sut );
-        result.Should().BeSameAs( sut );
+        result.TestRefEquals( sut ).Go();
     }
 }

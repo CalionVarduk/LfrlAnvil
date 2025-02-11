@@ -16,11 +16,10 @@ public abstract class GenericMutationExtensionsTests<T> : TestsBase
 
         var result = sut.Reduce();
 
-        using ( new AssertionScope() )
-        {
-            result.OldValue.Should().Be( oldestValue );
-            result.Value.Should().Be( newestValue );
-            result.HasChanged.Should().BeTrue();
-        }
+        Assertion.All(
+                result.OldValue.TestEquals( oldestValue ),
+                result.Value.TestEquals( newestValue ),
+                result.HasChanged.TestTrue() )
+            .Go();
     }
 }

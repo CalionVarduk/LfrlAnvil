@@ -1,5 +1,5 @@
-﻿using LfrlAnvil.Functional.Extensions;
-using LfrlAnvil.TestExtensions.FluentAssertions;
+﻿using System.Linq;
+using LfrlAnvil.Functional.Extensions;
 using LfrlAnvil.TestExtensions.NSubstitute;
 
 namespace LfrlAnvil.Functional.Tests.ExtensionsTests.MaybeTests;
@@ -15,11 +15,10 @@ public abstract class GenericMaybeExtensionsTests<T> : TestsBase
 
         var result = sut.ToEither();
 
-        using ( new AssertionScope() )
-        {
-            result.HasFirst.Should().BeTrue();
-            result.First.Should().Be( value );
-        }
+        Assertion.All(
+                result.HasFirst.TestTrue(),
+                result.First.TestEquals( value ) )
+            .Go();
     }
 
     [Fact]
@@ -27,7 +26,7 @@ public abstract class GenericMaybeExtensionsTests<T> : TestsBase
     {
         Maybe<T> sut = Maybe.None;
         var result = sut.ToEither();
-        result.HasFirst.Should().BeFalse();
+        result.HasFirst.TestFalse().Go();
     }
 
     [Fact]
@@ -35,7 +34,7 @@ public abstract class GenericMaybeExtensionsTests<T> : TestsBase
     {
         var sut = Maybe<Maybe<T>>.None;
         var result = sut.Reduce();
-        result.HasValue.Should().BeFalse();
+        result.HasValue.TestFalse().Go();
     }
 
     [Fact]
@@ -48,11 +47,10 @@ public abstract class GenericMaybeExtensionsTests<T> : TestsBase
 
         var result = sut.Reduce();
 
-        using ( new AssertionScope() )
-        {
-            result.HasValue.Should().BeTrue();
-            result.Value.Should().Be( value );
-        }
+        Assertion.All(
+                result.HasValue.TestTrue(),
+                result.Value.TestEquals( value ) )
+            .Go();
     }
 
     [Fact]
@@ -64,7 +62,7 @@ public abstract class GenericMaybeExtensionsTests<T> : TestsBase
 
         var result = sut.Reduce();
 
-        result.HasValue.Should().BeFalse();
+        result.HasValue.TestFalse().Go();
     }
 
     [Fact]
@@ -82,14 +80,14 @@ public abstract class GenericMaybeExtensionsTests<T> : TestsBase
 
         var result = sut.MatchWith( other, bothDelegate, firstDelegate, secondDelegate, noneDelegate );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( returnedValue );
-            bothDelegate.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( value, otherValue );
-            firstDelegate.Verify().CallCount.Should().Be( 0 );
-            secondDelegate.Verify().CallCount.Should().Be( 0 );
-            noneDelegate.Verify().CallCount.Should().Be( 0 );
-        }
+        Assertion.All(
+                result.TestEquals( returnedValue ),
+                bothDelegate.CallAt( 0 ).Exists.TestTrue(),
+                bothDelegate.CallAt( 0 ).Arguments.TestSequence( [ value, otherValue ] ),
+                firstDelegate.CallCount().TestEquals( 0 ),
+                secondDelegate.CallCount().TestEquals( 0 ),
+                noneDelegate.CallCount().TestEquals( 0 ) )
+            .Go();
     }
 
     [Fact]
@@ -107,14 +105,14 @@ public abstract class GenericMaybeExtensionsTests<T> : TestsBase
 
         var result = sut.MatchWith( other, bothDelegate, firstDelegate, secondDelegate, noneDelegate );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( returnedValue );
-            bothDelegate.Verify().CallCount.Should().Be( 0 );
-            firstDelegate.Verify().CallAt( 0 ).Exists().And.ArgAt( 0 ).Should().Be( value );
-            secondDelegate.Verify().CallCount.Should().Be( 0 );
-            noneDelegate.Verify().CallCount.Should().Be( 0 );
-        }
+        Assertion.All(
+                result.TestEquals( returnedValue ),
+                bothDelegate.CallCount().TestEquals( 0 ),
+                firstDelegate.CallAt( 0 ).Exists.TestTrue(),
+                firstDelegate.CallAt( 0 ).Arguments.FirstOrDefault().TestEquals( value ),
+                secondDelegate.CallCount().TestEquals( 0 ),
+                noneDelegate.CallCount().TestEquals( 0 ) )
+            .Go();
     }
 
     [Fact]
@@ -132,14 +130,14 @@ public abstract class GenericMaybeExtensionsTests<T> : TestsBase
 
         var result = sut.MatchWith( other, bothDelegate, firstDelegate, secondDelegate, noneDelegate );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( returnedValue );
-            bothDelegate.Verify().CallCount.Should().Be( 0 );
-            firstDelegate.Verify().CallCount.Should().Be( 0 );
-            secondDelegate.Verify().CallAt( 0 ).Exists().And.ArgAt( 0 ).Should().Be( otherValue );
-            noneDelegate.Verify().CallCount.Should().Be( 0 );
-        }
+        Assertion.All(
+                result.TestEquals( returnedValue ),
+                bothDelegate.CallCount().TestEquals( 0 ),
+                firstDelegate.CallCount().TestEquals( 0 ),
+                secondDelegate.CallAt( 0 ).Exists.TestTrue(),
+                secondDelegate.CallAt( 0 ).Arguments.FirstOrDefault().TestEquals( otherValue ),
+                noneDelegate.CallCount().TestEquals( 0 ) )
+            .Go();
     }
 
     [Fact]
@@ -157,14 +155,13 @@ public abstract class GenericMaybeExtensionsTests<T> : TestsBase
 
         var result = sut.MatchWith( other, bothDelegate, firstDelegate, secondDelegate, noneDelegate );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( returnedValue );
-            bothDelegate.Verify().CallCount.Should().Be( 0 );
-            firstDelegate.Verify().CallCount.Should().Be( 0 );
-            secondDelegate.Verify().CallCount.Should().Be( 0 );
-            noneDelegate.Verify().CallCount.Should().Be( 1 );
-        }
+        Assertion.All(
+                result.TestEquals( returnedValue ),
+                bothDelegate.CallCount().TestEquals( 0 ),
+                firstDelegate.CallCount().TestEquals( 0 ),
+                secondDelegate.CallCount().TestEquals( 0 ),
+                noneDelegate.CallCount().TestEquals( 1 ) )
+            .Go();
     }
 
     [Fact]
@@ -182,13 +179,13 @@ public abstract class GenericMaybeExtensionsTests<T> : TestsBase
 
         sut.MatchWith( other, bothDelegate, firstDelegate, secondDelegate, noneDelegate );
 
-        using ( new AssertionScope() )
-        {
-            bothDelegate.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( value, otherValue );
-            firstDelegate.Verify().CallCount.Should().Be( 0 );
-            secondDelegate.Verify().CallCount.Should().Be( 0 );
-            noneDelegate.Verify().CallCount.Should().Be( 0 );
-        }
+        Assertion.All(
+                bothDelegate.CallAt( 0 ).Exists.TestTrue(),
+                bothDelegate.CallAt( 0 ).Arguments.TestSequence( [ value, otherValue ] ),
+                firstDelegate.CallCount().TestEquals( 0 ),
+                secondDelegate.CallCount().TestEquals( 0 ),
+                noneDelegate.CallCount().TestEquals( 0 ) )
+            .Go();
     }
 
     [Fact]
@@ -206,13 +203,13 @@ public abstract class GenericMaybeExtensionsTests<T> : TestsBase
 
         sut.MatchWith( other, bothDelegate, firstDelegate, secondDelegate, noneDelegate );
 
-        using ( new AssertionScope() )
-        {
-            bothDelegate.Verify().CallCount.Should().Be( 0 );
-            firstDelegate.Verify().CallAt( 0 ).Exists().And.ArgAt( 0 ).Should().Be( value );
-            secondDelegate.Verify().CallCount.Should().Be( 0 );
-            noneDelegate.Verify().CallCount.Should().Be( 0 );
-        }
+        Assertion.All(
+                bothDelegate.CallCount().TestEquals( 0 ),
+                firstDelegate.CallAt( 0 ).Exists.TestTrue(),
+                firstDelegate.CallAt( 0 ).Arguments.FirstOrDefault().TestEquals( value ),
+                secondDelegate.CallCount().TestEquals( 0 ),
+                noneDelegate.CallCount().TestEquals( 0 ) )
+            .Go();
     }
 
     [Fact]
@@ -230,13 +227,13 @@ public abstract class GenericMaybeExtensionsTests<T> : TestsBase
 
         sut.MatchWith( other, bothDelegate, firstDelegate, secondDelegate, noneDelegate );
 
-        using ( new AssertionScope() )
-        {
-            bothDelegate.Verify().CallCount.Should().Be( 0 );
-            firstDelegate.Verify().CallCount.Should().Be( 0 );
-            secondDelegate.Verify().CallAt( 0 ).Exists().And.ArgAt( 0 ).Should().Be( otherValue );
-            noneDelegate.Verify().CallCount.Should().Be( 0 );
-        }
+        Assertion.All(
+                bothDelegate.CallCount().TestEquals( 0 ),
+                firstDelegate.CallCount().TestEquals( 0 ),
+                secondDelegate.CallAt( 0 ).Exists.TestTrue(),
+                secondDelegate.CallAt( 0 ).Arguments.FirstOrDefault().TestEquals( otherValue ),
+                noneDelegate.CallCount().TestEquals( 0 ) )
+            .Go();
     }
 
     [Fact]
@@ -252,12 +249,11 @@ public abstract class GenericMaybeExtensionsTests<T> : TestsBase
 
         sut.MatchWith( other, bothDelegate, firstDelegate, secondDelegate, noneDelegate );
 
-        using ( new AssertionScope() )
-        {
-            bothDelegate.Verify().CallCount.Should().Be( 0 );
-            firstDelegate.Verify().CallCount.Should().Be( 0 );
-            secondDelegate.Verify().CallCount.Should().Be( 0 );
-            noneDelegate.Verify().CallCount.Should().Be( 1 );
-        }
+        Assertion.All(
+                bothDelegate.CallCount().TestEquals( 0 ),
+                firstDelegate.CallCount().TestEquals( 0 ),
+                secondDelegate.CallCount().TestEquals( 0 ),
+                noneDelegate.CallCount().TestEquals( 1 ) )
+            .Go();
     }
 }

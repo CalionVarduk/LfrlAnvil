@@ -10,6 +10,6 @@ public abstract class GenericObjectExtensionsOfRefTypeTests<T> : GenericObjectEx
     {
         var value = default( T );
         var sut = value.ToMaybe();
-        sut.HasValue.Should().BeFalse();
+        sut.HasValue.TestFalse().Go();
     }
 }

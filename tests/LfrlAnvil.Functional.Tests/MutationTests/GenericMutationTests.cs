@@ -1,6 +1,5 @@
 ﻿using System.Linq;
 using LfrlAnvil.TestExtensions.Attributes;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 using LfrlAnvil.TestExtensions.NSubstitute;
 
 namespace LfrlAnvil.Functional.Tests.MutationTests;
@@ -14,12 +13,11 @@ public abstract class GenericMutationTests<T> : TestsBase
     {
         var sut = Mutation<T>.Empty;
 
-        using ( new AssertionScope() )
-        {
-            sut.OldValue.Should().Be( default( T ) );
-            sut.Value.Should().Be( default( T ) );
-            sut.HasChanged.Should().BeFalse();
-        }
+        Assertion.All(
+                sut.OldValue.TestEquals( default ),
+                sut.Value.TestEquals( default ),
+                sut.HasChanged.TestFalse() )
+            .Go();
     }
 
     [Fact]
@@ -29,12 +27,11 @@ public abstract class GenericMutationTests<T> : TestsBase
 
         var sut = Mutation.Create( oldValue, value );
 
-        using ( new AssertionScope() )
-        {
-            sut.OldValue.Should().Be( oldValue );
-            sut.Value.Should().Be( value );
-            sut.HasChanged.Should().BeTrue();
-        }
+        Assertion.All(
+                sut.OldValue.TestEquals( oldValue ),
+                sut.Value.TestEquals( value ),
+                sut.HasChanged.TestTrue() )
+            .Go();
     }
 
     [Fact]
@@ -44,12 +41,11 @@ public abstract class GenericMutationTests<T> : TestsBase
 
         var sut = Mutation.Create( value, value );
 
-        using ( new AssertionScope() )
-        {
-            sut.OldValue.Should().Be( value );
-            sut.Value.Should().Be( value );
-            sut.HasChanged.Should().BeFalse();
-        }
+        Assertion.All(
+                sut.OldValue.TestEquals( value ),
+                sut.Value.TestEquals( value ),
+                sut.HasChanged.TestFalse() )
+            .Go();
     }
 
     [Fact]
@@ -59,12 +55,11 @@ public abstract class GenericMutationTests<T> : TestsBase
 
         var sut = new Mutation<T>( oldValue, value );
 
-        using ( new AssertionScope() )
-        {
-            sut.OldValue.Should().Be( oldValue );
-            sut.Value.Should().Be( value );
-            sut.HasChanged.Should().BeTrue();
-        }
+        Assertion.All(
+                sut.OldValue.TestEquals( oldValue ),
+                sut.Value.TestEquals( value ),
+                sut.HasChanged.TestTrue() )
+            .Go();
     }
 
     [Fact]
@@ -74,12 +69,11 @@ public abstract class GenericMutationTests<T> : TestsBase
 
         var sut = new Mutation<T>( value, value );
 
-        using ( new AssertionScope() )
-        {
-            sut.OldValue.Should().Be( value );
-            sut.Value.Should().Be( value );
-            sut.HasChanged.Should().BeFalse();
-        }
+        Assertion.All(
+                sut.OldValue.TestEquals( value ),
+                sut.Value.TestEquals( value ),
+                sut.HasChanged.TestFalse() )
+            .Go();
     }
 
     [Fact]
@@ -91,7 +85,7 @@ public abstract class GenericMutationTests<T> : TestsBase
 
         var result = sut.GetHashCode();
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -103,7 +97,7 @@ public abstract class GenericMutationTests<T> : TestsBase
 
         var result = a.Equals( b );
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -114,11 +108,10 @@ public abstract class GenericMutationTests<T> : TestsBase
 
         var result = sut.Mutate( newValue );
 
-        using ( new AssertionScope() )
-        {
-            result.OldValue.Should().Be( value );
-            result.Value.Should().Be( newValue );
-        }
+        Assertion.All(
+                result.OldValue.TestEquals( value ),
+                result.Value.TestEquals( newValue ) )
+            .Go();
     }
 
     [Fact]
@@ -129,11 +122,10 @@ public abstract class GenericMutationTests<T> : TestsBase
 
         var result = sut.Replace( newValue );
 
-        using ( new AssertionScope() )
-        {
-            result.OldValue.Should().Be( oldValue );
-            result.Value.Should().Be( newValue );
-        }
+        Assertion.All(
+                result.OldValue.TestEquals( oldValue ),
+                result.Value.TestEquals( newValue ) )
+            .Go();
     }
 
     [Fact]
@@ -144,11 +136,10 @@ public abstract class GenericMutationTests<T> : TestsBase
 
         var result = sut.Revert();
 
-        using ( new AssertionScope() )
-        {
-            result.OldValue.Should().Be( oldValue );
-            result.Value.Should().Be( oldValue );
-        }
+        Assertion.All(
+                result.OldValue.TestEquals( oldValue ),
+                result.Value.TestEquals( oldValue ) )
+            .Go();
     }
 
     [Fact]
@@ -159,11 +150,10 @@ public abstract class GenericMutationTests<T> : TestsBase
 
         var result = sut.Swap();
 
-        using ( new AssertionScope() )
-        {
-            result.OldValue.Should().Be( value );
-            result.Value.Should().Be( oldValue );
-        }
+        Assertion.All(
+                result.OldValue.TestEquals( value ),
+                result.Value.TestEquals( oldValue ) )
+            .Go();
     }
 
     [Fact]
@@ -178,12 +168,12 @@ public abstract class GenericMutationTests<T> : TestsBase
 
         var result = sut.Bind( changedDelegate );
 
-        using ( new AssertionScope() )
-        {
-            result.OldValue.Should().Be( returnedOldValue );
-            result.Value.Should().Be( returnedValue );
-            changedDelegate.Verify().CallAt( 0 ).Exists().And.ArgAt( 0 ).Should().Be( (oldValue, value) );
-        }
+        Assertion.All(
+                result.OldValue.TestEquals( returnedOldValue ),
+                result.Value.TestEquals( returnedValue ),
+                changedDelegate.CallAt( 0 ).Exists.TestTrue(),
+                changedDelegate.CallAt( 0 ).Arguments.FirstOrDefault().TestEquals( (oldValue, value) ) )
+            .Go();
     }
 
     [Fact]
@@ -197,12 +187,11 @@ public abstract class GenericMutationTests<T> : TestsBase
 
         var result = sut.Bind( changedDelegate );
 
-        using ( new AssertionScope() )
-        {
-            result.OldValue.Should().Be( default( T ) );
-            result.Value.Should().Be( default( T ) );
-            changedDelegate.Verify().CallCount.Should().Be( 0 );
-        }
+        Assertion.All(
+                result.OldValue.TestEquals( default ),
+                result.Value.TestEquals( default ),
+                changedDelegate.CallCount().TestEquals( 0 ) )
+            .Go();
     }
 
     [Fact]
@@ -221,13 +210,13 @@ public abstract class GenericMutationTests<T> : TestsBase
 
         var result = sut.Bind( changedDelegate, unchangedDelegate );
 
-        using ( new AssertionScope() )
-        {
-            result.OldValue.Should().Be( returnedOldValue );
-            result.Value.Should().Be( returnedValue );
-            changedDelegate.Verify().CallAt( 0 ).Exists().And.ArgAt( 0 ).Should().Be( (oldValue, value) );
-            unchangedDelegate.Verify().CallCount.Should().Be( 0 );
-        }
+        Assertion.All(
+                result.OldValue.TestEquals( returnedOldValue ),
+                result.Value.TestEquals( returnedValue ),
+                changedDelegate.CallAt( 0 ).Exists.TestTrue(),
+                changedDelegate.CallAt( 0 ).Arguments.FirstOrDefault().TestEquals( (oldValue, value) ),
+                unchangedDelegate.CallCount().TestEquals( 0 ) )
+            .Go();
     }
 
     [Fact]
@@ -246,13 +235,13 @@ public abstract class GenericMutationTests<T> : TestsBase
 
         var result = sut.Bind( changedDelegate, unchangedDelegate );
 
-        using ( new AssertionScope() )
-        {
-            result.OldValue.Should().Be( returnedOldValue );
-            result.Value.Should().Be( returnedValue );
-            changedDelegate.Verify().CallCount.Should().Be( 0 );
-            unchangedDelegate.Verify().CallAt( 0 ).Exists().And.ArgAt( 0 ).Should().Be( value );
-        }
+        Assertion.All(
+                result.OldValue.TestEquals( returnedOldValue ),
+                result.Value.TestEquals( returnedValue ),
+                changedDelegate.CallCount().TestEquals( 0 ),
+                unchangedDelegate.CallAt( 0 ).Exists.TestTrue(),
+                unchangedDelegate.CallAt( 0 ).Arguments.FirstOrDefault().TestEquals( value ) )
+            .Go();
     }
 
     [Fact]
@@ -267,12 +256,12 @@ public abstract class GenericMutationTests<T> : TestsBase
 
         var result = sut.Match( changedDelegate, unchangedDelegate );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( returnedValue );
-            changedDelegate.Verify().CallAt( 0 ).Exists().And.ArgAt( 0 ).Should().Be( (oldValue, value) );
-            unchangedDelegate.Verify().CallCount.Should().Be( 0 );
-        }
+        Assertion.All(
+                result.TestEquals( returnedValue ),
+                changedDelegate.CallAt( 0 ).Exists.TestTrue(),
+                changedDelegate.CallAt( 0 ).Arguments.FirstOrDefault().TestEquals( (oldValue, value) ),
+                unchangedDelegate.CallCount().TestEquals( 0 ) )
+            .Go();
     }
 
     [Fact]
@@ -287,12 +276,12 @@ public abstract class GenericMutationTests<T> : TestsBase
 
         var result = sut.Match( changedDelegate, unchangedDelegate );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( returnedValue );
-            changedDelegate.Verify().CallCount.Should().Be( 0 );
-            unchangedDelegate.Verify().CallAt( 0 ).Exists().And.ArgAt( 0 ).Should().Be( value );
-        }
+        Assertion.All(
+                result.TestEquals( returnedValue ),
+                changedDelegate.CallCount().TestEquals( 0 ),
+                unchangedDelegate.CallAt( 0 ).Exists.TestTrue(),
+                unchangedDelegate.CallAt( 0 ).Arguments.FirstOrDefault().TestEquals( value ) )
+            .Go();
     }
 
     [Fact]
@@ -306,11 +295,11 @@ public abstract class GenericMutationTests<T> : TestsBase
 
         sut.Match( changedDelegate, unchangedDelegate );
 
-        using ( new AssertionScope() )
-        {
-            changedDelegate.Verify().CallAt( 0 ).Exists().And.ArgAt( 0 ).Should().Be( (oldValue, value) );
-            unchangedDelegate.Verify().CallCount.Should().Be( 0 );
-        }
+        Assertion.All(
+                changedDelegate.CallAt( 0 ).Exists.TestTrue(),
+                changedDelegate.CallAt( 0 ).Arguments.FirstOrDefault().TestEquals( (oldValue, value) ),
+                unchangedDelegate.CallCount().TestEquals( 0 ) )
+            .Go();
     }
 
     [Fact]
@@ -324,11 +313,11 @@ public abstract class GenericMutationTests<T> : TestsBase
 
         sut.Match( changedDelegate, unchangedDelegate );
 
-        using ( new AssertionScope() )
-        {
-            changedDelegate.Verify().CallCount.Should().Be( 0 );
-            unchangedDelegate.Verify().CallAt( 0 ).Exists().And.ArgAt( 0 ).Should().Be( value );
-        }
+        Assertion.All(
+                changedDelegate.CallCount().TestEquals( 0 ),
+                unchangedDelegate.CallAt( 0 ).Exists.TestTrue(),
+                unchangedDelegate.CallAt( 0 ).Arguments.FirstOrDefault().TestEquals( value ) )
+            .Go();
     }
 
     [Fact]
@@ -342,11 +331,11 @@ public abstract class GenericMutationTests<T> : TestsBase
 
         var result = sut.IfChanged( changedDelegate );
 
-        using ( new AssertionScope() )
-        {
-            result.Value.Should().Be( returnedValue );
-            changedDelegate.Verify().CallAt( 0 ).Exists().And.ArgAt( 0 ).Should().Be( (oldValue, value) );
-        }
+        Assertion.All(
+                result.Value.TestEquals( returnedValue ),
+                changedDelegate.CallAt( 0 ).Exists.TestTrue(),
+                changedDelegate.CallAt( 0 ).Arguments.FirstOrDefault().TestEquals( (oldValue, value) ) )
+            .Go();
     }
 
     [Fact]
@@ -359,11 +348,10 @@ public abstract class GenericMutationTests<T> : TestsBase
 
         var result = sut.IfChanged( changedDelegate );
 
-        using ( new AssertionScope() )
-        {
-            result.HasValue.Should().BeFalse();
-            changedDelegate.Verify().CallCount.Should().Be( 0 );
-        }
+        Assertion.All(
+                result.HasValue.TestFalse(),
+                changedDelegate.CallCount().TestEquals( 0 ) )
+            .Go();
     }
 
     [Fact]
@@ -376,7 +364,10 @@ public abstract class GenericMutationTests<T> : TestsBase
 
         sut.IfChanged( changedDelegate );
 
-        changedDelegate.Verify().CallAt( 0 ).Exists().And.ArgAt( 0 ).Should().Be( (oldValue, value) );
+        Assertion.All(
+                changedDelegate.CallAt( 0 ).Exists.TestTrue(),
+                changedDelegate.CallAt( 0 ).Arguments.FirstOrDefault().TestEquals( (oldValue, value) ) )
+            .Go();
     }
 
     [Fact]
@@ -389,7 +380,7 @@ public abstract class GenericMutationTests<T> : TestsBase
 
         sut.IfChanged( changedDelegate );
 
-        changedDelegate.Verify().CallCount.Should().Be( 0 );
+        changedDelegate.CallCount().TestEquals( 0 ).Go();
     }
 
     [Fact]
@@ -403,11 +394,11 @@ public abstract class GenericMutationTests<T> : TestsBase
 
         var result = sut.IfChangedOrDefault( changedDelegate );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( returnedValue );
-            changedDelegate.Verify().CallAt( 0 ).Exists().And.ArgAt( 0 ).Should().Be( (oldValue, value) );
-        }
+        Assertion.All(
+                result.TestEquals( returnedValue ),
+                changedDelegate.CallAt( 0 ).Exists.TestTrue(),
+                changedDelegate.CallAt( 0 ).Arguments.FirstOrDefault().TestEquals( (oldValue, value) ) )
+            .Go();
     }
 
     [Fact]
@@ -420,11 +411,10 @@ public abstract class GenericMutationTests<T> : TestsBase
 
         var result = sut.IfChangedOrDefault( changedDelegate );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( default( T ) );
-            changedDelegate.Verify().CallCount.Should().Be( 0 );
-        }
+        Assertion.All(
+                result.TestEquals( default ),
+                changedDelegate.CallCount().TestEquals( 0 ) )
+            .Go();
     }
 
     [Fact]
@@ -438,11 +428,11 @@ public abstract class GenericMutationTests<T> : TestsBase
 
         var result = sut.IfChangedOrDefault( changedDelegate, Fixture.CreateNotDefault<T>() );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( returnedValue );
-            changedDelegate.Verify().CallAt( 0 ).Exists().And.ArgAt( 0 ).Should().Be( (oldValue, value) );
-        }
+        Assertion.All(
+                result.TestEquals( returnedValue ),
+                changedDelegate.CallAt( 0 ).Exists.TestTrue(),
+                changedDelegate.CallAt( 0 ).Arguments.FirstOrDefault().TestEquals( (oldValue, value) ) )
+            .Go();
     }
 
     [Fact]
@@ -456,11 +446,10 @@ public abstract class GenericMutationTests<T> : TestsBase
 
         var result = sut.IfChangedOrDefault( changedDelegate, defaultValue );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( defaultValue );
-            changedDelegate.Verify().CallCount.Should().Be( 0 );
-        }
+        Assertion.All(
+                result.TestEquals( defaultValue ),
+                changedDelegate.CallCount().TestEquals( 0 ) )
+            .Go();
     }
 
     [Fact]
@@ -474,11 +463,11 @@ public abstract class GenericMutationTests<T> : TestsBase
 
         var result = sut.IfUnchanged( unchangedDelegate );
 
-        using ( new AssertionScope() )
-        {
-            result.Value.Should().Be( returnedValue );
-            unchangedDelegate.Verify().CallAt( 0 ).Exists().And.ArgAt( 0 ).Should().Be( value );
-        }
+        Assertion.All(
+                result.Value.TestEquals( returnedValue ),
+                unchangedDelegate.CallAt( 0 ).Exists.TestTrue(),
+                unchangedDelegate.CallAt( 0 ).Arguments.FirstOrDefault().TestEquals( value ) )
+            .Go();
     }
 
     [Fact]
@@ -491,11 +480,10 @@ public abstract class GenericMutationTests<T> : TestsBase
 
         var result = sut.IfUnchanged( unchangedDelegate );
 
-        using ( new AssertionScope() )
-        {
-            result.HasValue.Should().BeFalse();
-            unchangedDelegate.Verify().CallCount.Should().Be( 0 );
-        }
+        Assertion.All(
+                result.HasValue.TestFalse(),
+                unchangedDelegate.CallCount().TestEquals( 0 ) )
+            .Go();
     }
 
     [Fact]
@@ -508,7 +496,10 @@ public abstract class GenericMutationTests<T> : TestsBase
 
         sut.IfUnchanged( unchangedDelegate );
 
-        unchangedDelegate.Verify().CallAt( 0 ).Exists().And.ArgAt( 0 ).Should().Be( value );
+        Assertion.All(
+                unchangedDelegate.CallAt( 0 ).Exists.TestTrue(),
+                unchangedDelegate.CallAt( 0 ).Arguments.FirstOrDefault().TestEquals( value ) )
+            .Go();
     }
 
     [Fact]
@@ -521,7 +512,7 @@ public abstract class GenericMutationTests<T> : TestsBase
 
         sut.IfUnchanged( unchangedDelegate );
 
-        unchangedDelegate.Verify().CallCount.Should().Be( 0 );
+        unchangedDelegate.CallCount().TestEquals( 0 ).Go();
     }
 
     [Fact]
@@ -535,11 +526,11 @@ public abstract class GenericMutationTests<T> : TestsBase
 
         var result = sut.IfUnchangedOrDefault( unchangedDelegate );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( returnedValue );
-            unchangedDelegate.Verify().CallAt( 0 ).Exists().And.ArgAt( 0 ).Should().Be( value );
-        }
+        Assertion.All(
+                result.TestEquals( returnedValue ),
+                unchangedDelegate.CallAt( 0 ).Exists.TestTrue(),
+                unchangedDelegate.CallAt( 0 ).Arguments.FirstOrDefault().TestEquals( value ) )
+            .Go();
     }
 
     [Fact]
@@ -552,11 +543,10 @@ public abstract class GenericMutationTests<T> : TestsBase
 
         var result = sut.IfUnchangedOrDefault( unchangedDelegate );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( default( T ) );
-            unchangedDelegate.Verify().CallCount.Should().Be( 0 );
-        }
+        Assertion.All(
+                result.TestEquals( default ),
+                unchangedDelegate.CallCount().TestEquals( 0 ) )
+            .Go();
     }
 
     [Fact]
@@ -570,11 +560,11 @@ public abstract class GenericMutationTests<T> : TestsBase
 
         var result = sut.IfUnchangedOrDefault( unchangedDelegate, Fixture.CreateNotDefault<T>() );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( returnedValue );
-            unchangedDelegate.Verify().CallAt( 0 ).Exists().And.ArgAt( 0 ).Should().Be( value );
-        }
+        Assertion.All(
+                result.TestEquals( returnedValue ),
+                unchangedDelegate.CallAt( 0 ).Exists.TestTrue(),
+                unchangedDelegate.CallAt( 0 ).Arguments.FirstOrDefault().TestEquals( value ) )
+            .Go();
     }
 
     [Fact]
@@ -588,11 +578,10 @@ public abstract class GenericMutationTests<T> : TestsBase
 
         var result = sut.IfUnchangedOrDefault( unchangedDelegate, defaultValue );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( defaultValue );
-            unchangedDelegate.Verify().CallCount.Should().Be( 0 );
-        }
+        Assertion.All(
+                result.TestEquals( defaultValue ),
+                unchangedDelegate.CallCount().TestEquals( 0 ) )
+            .Go();
     }
 
     [Fact]
@@ -603,7 +592,7 @@ public abstract class GenericMutationTests<T> : TestsBase
 
         var result = ( T )sut;
 
-        result.Should().Be( value );
+        result.TestEquals( value ).Go();
     }
 
     [Fact]
@@ -611,12 +600,11 @@ public abstract class GenericMutationTests<T> : TestsBase
     {
         var result = ( Mutation<T> )Nil.Instance;
 
-        using ( new AssertionScope() )
-        {
-            result.OldValue.Should().Be( default( T ) );
-            result.Value.Should().Be( default( T ) );
-            result.HasChanged.Should().BeFalse();
-        }
+        Assertion.All(
+                result.OldValue.TestEquals( default ),
+                result.Value.TestEquals( default ),
+                result.HasChanged.TestFalse() )
+            .Go();
     }
 
     [Theory]
@@ -628,7 +616,7 @@ public abstract class GenericMutationTests<T> : TestsBase
 
         var result = a == b;
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -640,6 +628,6 @@ public abstract class GenericMutationTests<T> : TestsBase
 
         var result = a != b;
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 }

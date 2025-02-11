@@ -7,13 +7,12 @@ public abstract class GenericTypeCastTests<TSource, TDestination> : TestsBase
     {
         var sut = TypeCast<TSource, TDestination>.Empty;
 
-        using ( new AssertionScope() )
-        {
-            sut.IsValid.Should().BeFalse();
-            sut.IsInvalid.Should().BeTrue();
-            sut.Source.Should().Be( default( TSource ) );
-            sut.Result.Should().Be( default( TDestination ) );
-        }
+        Assertion.All(
+                sut.IsValid.TestFalse(),
+                sut.IsInvalid.TestTrue(),
+                sut.Source.TestEquals( default ),
+                sut.Result.TestEquals( default ) )
+            .Go();
     }
 
     [Fact]
@@ -25,7 +24,7 @@ public abstract class GenericTypeCastTests<TSource, TDestination> : TestsBase
 
         var result = sut.GetHashCode();
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -33,13 +32,12 @@ public abstract class GenericTypeCastTests<TSource, TDestination> : TestsBase
     {
         var result = ( TypeCast<TSource, TDestination> )Nil.Instance;
 
-        using ( new AssertionScope() )
-        {
-            result.IsValid.Should().BeFalse();
-            result.IsInvalid.Should().BeTrue();
-            result.Source.Should().Be( default( TSource ) );
-            result.Result.Should().Be( default( TDestination ) );
-        }
+        Assertion.All(
+                result.IsValid.TestFalse(),
+                result.IsInvalid.TestTrue(),
+                result.Source.TestEquals( default ),
+                result.Result.TestEquals( default ) )
+            .Go();
     }
 
     [Fact]
@@ -51,6 +49,6 @@ public abstract class GenericTypeCastTests<TSource, TDestination> : TestsBase
 
         var result = sut.Source;
 
-        result.Should().Be( value );
+        result.TestEquals( value ).Go();
     }
 }

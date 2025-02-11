@@ -940,7 +940,7 @@ public static class AssertionExtensions
     }
 
     [Pure]
-    public static object CallAt<TDelegate>(this TDelegate @delegate, int index)
+    public static DelegateCall CallAt<TDelegate>(this TDelegate @delegate, int index)
         where TDelegate : Delegate
     {
         return new DelegateCall( @delegate.ReceivedCalls().ElementAtOrDefault( index ) );

@@ -14,6 +14,6 @@ public abstract class GenericInvalidTypeCastExtensionsTests<TSource, TDestinatio
 
         var result = sut.ToMaybe();
 
-        result.HasValue.Should().BeFalse();
+        result.HasValue.TestFalse().Go();
     }
 }

@@ -7,7 +7,7 @@ public class NilTests : TestsBase
     {
         var sut = Nil.Instance;
         var result = sut.GetHashCode();
-        result.Should().Be( 0 );
+        result.TestEquals( 0 ).Go();
     }
 
     [Fact]
@@ -16,7 +16,7 @@ public class NilTests : TestsBase
         var a = Nil.Instance;
         var b = Nil.Instance;
         var result = a.Equals( b );
-        result.Should().BeTrue();
+        result.TestTrue().Go();
     }
 
     [Fact]
@@ -25,7 +25,7 @@ public class NilTests : TestsBase
         var a = Nil.Instance;
         var b = Nil.Instance;
         var result = a.CompareTo( b );
-        result.Should().Be( 0 );
+        result.TestEquals( 0 ).Go();
     }
 
     [Fact]
@@ -34,7 +34,7 @@ public class NilTests : TestsBase
         var a = Nil.Instance;
         var b = Nil.Instance;
         var result = a == b;
-        result.Should().BeTrue();
+        result.TestTrue().Go();
     }
 
     [Fact]
@@ -43,7 +43,7 @@ public class NilTests : TestsBase
         var a = Nil.Instance;
         var b = Nil.Instance;
         var result = a != b;
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Fact]
@@ -52,7 +52,7 @@ public class NilTests : TestsBase
         var a = Nil.Instance;
         var b = Nil.Instance;
         var result = a <= b;
-        result.Should().BeTrue();
+        result.TestTrue().Go();
     }
 
     [Fact]
@@ -61,7 +61,7 @@ public class NilTests : TestsBase
         var a = Nil.Instance;
         var b = Nil.Instance;
         var result = a > b;
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Fact]
@@ -70,7 +70,7 @@ public class NilTests : TestsBase
         var a = Nil.Instance;
         var b = Nil.Instance;
         var result = a >= b;
-        result.Should().BeTrue();
+        result.TestTrue().Go();
     }
 
     [Fact]
@@ -79,6 +79,6 @@ public class NilTests : TestsBase
         var a = Nil.Instance;
         var b = Nil.Instance;
         var result = a < b;
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 }

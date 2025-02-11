@@ -7,7 +7,7 @@ public class MaybeStaticTests : TestsBase
     {
         var result = Maybe.GetUnderlyingType( null );
 
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Theory]
@@ -18,7 +18,7 @@ public class MaybeStaticTests : TestsBase
     {
         var result = Maybe.GetUnderlyingType( type );
 
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Theory]
@@ -29,7 +29,7 @@ public class MaybeStaticTests : TestsBase
     {
         var result = Maybe.GetUnderlyingType( type );
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -39,6 +39,6 @@ public class MaybeStaticTests : TestsBase
 
         var result = Maybe.GetUnderlyingType( typeof( Maybe<> ) );
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 }

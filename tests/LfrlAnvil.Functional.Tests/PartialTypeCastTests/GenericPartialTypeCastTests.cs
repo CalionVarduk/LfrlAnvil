@@ -7,6 +7,6 @@ public abstract class GenericPartialTypeCastTests<TSource> : TestsBase
     {
         var value = Fixture.Create<TSource>();
         var sut = new PartialTypeCast<TSource>( value );
-        sut.Value.Should().Be( value );
+        sut.Value.TestEquals( value ).Go();
     }
 }

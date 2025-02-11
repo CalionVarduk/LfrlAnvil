@@ -1,6 +1,5 @@
 ﻿using System.Threading.Tasks;
 using LfrlAnvil.Functional.Extensions;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Functional.Tests.ExtensionsTests.TaskTests;
 
@@ -13,11 +12,10 @@ public class TaskExtensionsTests : TestsBase
 
         var result = await Task.Run( action ).ToNil();
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( Nil.Instance );
-            action.Verify().CallCount.Should().Be( 1 );
-        }
+        Assertion.All(
+                result.TestEquals( Nil.Instance ),
+                action.CallCount().TestEquals( 1 ) )
+            .Go();
     }
 
     [Fact]
@@ -27,11 +25,10 @@ public class TaskExtensionsTests : TestsBase
 
         var result = await new ValueTask( Task.Run( action ) ).ToNil();
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( Nil.Instance );
-            action.Verify().CallCount.Should().Be( 1 );
-        }
+        Assertion.All(
+                result.TestEquals( Nil.Instance ),
+                action.CallCount().TestEquals( 1 ) )
+            .Go();
     }
 
     [Fact]
@@ -39,7 +36,7 @@ public class TaskExtensionsTests : TestsBase
     {
         var func = Substitute.For<Func<int>>();
         await Task.Run( func ).IgnoreResult();
-        func.Verify().CallCount.Should().Be( 1 );
+        func.CallCount().TestEquals( 1 ).Go();
     }
 
     [Fact]
@@ -47,6 +44,6 @@ public class TaskExtensionsTests : TestsBase
     {
         var func = Substitute.For<Func<int>>();
         await new ValueTask<int>( Task.Run( func ) ).IgnoreResult();
-        func.Verify().CallCount.Should().Be( 1 );
+        func.CallCount().TestEquals( 1 ).Go();
     }
 }

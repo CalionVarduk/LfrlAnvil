@@ -7,7 +7,7 @@ public class ErraticStaticTests : TestsBase
     {
         var result = Erratic.GetUnderlyingType( null );
 
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Theory]
@@ -18,7 +18,7 @@ public class ErraticStaticTests : TestsBase
     {
         var result = Erratic.GetUnderlyingType( type );
 
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Theory]
@@ -29,7 +29,7 @@ public class ErraticStaticTests : TestsBase
     {
         var result = Erratic.GetUnderlyingType( type );
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -39,6 +39,6 @@ public class ErraticStaticTests : TestsBase
 
         var result = Erratic.GetUnderlyingType( typeof( Erratic<> ) );
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 }

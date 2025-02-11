@@ -2,7 +2,6 @@
 using System.Linq;
 using LfrlAnvil.Functional.Extensions;
 using LfrlAnvil.TestExtensions.Attributes;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Functional.Tests.ExtensionsTests.EnumerableTests;
 
@@ -18,7 +17,7 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
 
         var result = sut.SelectValues();
 
-        result.Should().BeSequentiallyEqualTo( expected );
+        result.TestSequence( expected ).Go();
     }
 
     [Fact]
@@ -31,7 +30,7 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
 
         var result = sut.SelectFirst();
 
-        result.Should().BeSequentiallyEqualTo( expected );
+        result.TestSequence( expected ).Go();
     }
 
     [Fact]
@@ -44,7 +43,7 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
 
         var result = sut.SelectSecond();
 
-        result.Should().BeSequentiallyEqualTo( expected );
+        result.TestSequence( expected ).Go();
     }
 
     [Fact]
@@ -58,11 +57,10 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
 
         var (first, second) = sut.Partition();
 
-        using ( new AssertionScope() )
-        {
-            first.Should().BeSequentiallyEqualTo( expectedFirst );
-            second.Should().BeSequentiallyEqualTo( expectedSecond );
-        }
+        Assertion.All(
+                first.TestSequence( expectedFirst ),
+                second.TestSequence( expectedSecond ) )
+            .Go();
     }
 
     [Fact]
@@ -73,7 +71,7 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
 
         var result = sut.SelectValues();
 
-        result.Should().BeSequentiallyEqualTo( expected );
+        result.TestSequence( expected ).Go();
     }
 
     [Fact]
@@ -92,7 +90,7 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
 
         var result = sut.SelectErrors();
 
-        result.Should().BeSequentiallyEqualTo( expected );
+        result.TestSequence( expected ).Go();
     }
 
     [Fact]
@@ -110,11 +108,10 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
 
         var (values, errors) = sut.Partition();
 
-        using ( new AssertionScope() )
-        {
-            values.Should().BeSequentiallyEqualTo( expectedValues );
-            errors.Should().BeSequentiallyEqualTo( expectedErrors );
-        }
+        Assertion.All(
+                values.TestSequence( expectedValues ),
+                errors.TestSequence( expectedErrors ) )
+            .Go();
     }
 
     [Fact]
@@ -122,7 +119,7 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
     {
         var sut = Enumerable.Empty<T>();
         var result = sut.TryMin();
-        result.HasValue.Should().BeFalse();
+        result.HasValue.TestFalse().Go();
     }
 
     [Theory]
@@ -130,7 +127,7 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
     public void TryMin_ShouldReturnWithValue_WhenSourceIsNotEmpty(IEnumerable<T> sut, T expected)
     {
         var result = sut.TryMin();
-        result.Value.Should().Be( expected );
+        result.Value.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -138,7 +135,7 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
     {
         var sut = Enumerable.Empty<T>();
         var result = sut.TryMax();
-        result.HasValue.Should().BeFalse();
+        result.HasValue.TestFalse().Go();
     }
 
     [Theory]
@@ -146,7 +143,7 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
     public void TryMax_ShouldReturnWithValue_WhenSourceIsNotEmpty(IEnumerable<T> sut, T expected)
     {
         var result = sut.TryMax();
-        result.Value.Should().Be( expected );
+        result.Value.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -154,7 +151,7 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
     {
         var sut = Enumerable.Empty<T>();
         var result = sut.TryAggregate( (_, c) => c );
-        result.HasValue.Should().BeFalse();
+        result.HasValue.TestFalse().Go();
     }
 
     [Fact]
@@ -165,7 +162,7 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
 
         var result = sut.TryAggregate( (_, c) => c );
 
-        result.Value.Should().Be( expected );
+        result.Value.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -173,7 +170,7 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
     {
         var sut = Enumerable.Empty<Contained<T>>();
         var result = sut.TryMaxBy( c => c.Value );
-        result.HasValue.Should().BeFalse();
+        result.HasValue.TestFalse().Go();
     }
 
     [Theory]
@@ -182,7 +179,7 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
     {
         var sut = values.Select( v => new Contained<T> { Value = v } );
         var result = sut.TryMaxBy( c => c.Value );
-        result.Value!.Value.Should().Be( expected );
+        result.Value!.Value.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -190,7 +187,7 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
     {
         var sut = Enumerable.Empty<Contained<T>>();
         var result = sut.TryMinBy( c => c.Value );
-        result.HasValue.Should().BeFalse();
+        result.HasValue.TestFalse().Go();
     }
 
     [Theory]
@@ -199,7 +196,7 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
     {
         var sut = values.Select( v => new Contained<T> { Value = v } );
         var result = sut.TryMinBy( c => c.Value );
-        result.Value!.Value.Should().Be( expected );
+        result.Value!.Value.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -207,7 +204,7 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
     {
         var sut = new List<T>();
         var result = sut.TryFirst();
-        result.HasValue.Should().BeFalse();
+        result.HasValue.TestFalse().Go();
     }
 
     [Fact]
@@ -218,7 +215,7 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
 
         var result = sut.TryFirst();
 
-        result.Value.Should().Be( expected );
+        result.Value.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -229,7 +226,7 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
 
         var result = sut.TryFirst();
 
-        result.Value.Should().Be( expected );
+        result.Value.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -237,7 +234,7 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
     {
         var sut = Enumerable.Empty<T>();
         var result = sut.TryFirst();
-        result.HasValue.Should().BeFalse();
+        result.HasValue.TestFalse().Go();
     }
 
     [Fact]
@@ -248,7 +245,7 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
 
         var result = sut.TryFirst();
 
-        result.Value.Should().Be( expected );
+        result.Value.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -259,7 +256,7 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
 
         var result = sut.TryFirst();
 
-        result.Value.Should().Be( expected );
+        result.Value.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -267,7 +264,7 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
     {
         var sut = new List<T>();
         var result = sut.TryLast();
-        result.HasValue.Should().BeFalse();
+        result.HasValue.TestFalse().Go();
     }
 
     [Fact]
@@ -278,7 +275,7 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
 
         var result = sut.TryLast();
 
-        result.Value.Should().Be( expected );
+        result.Value.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -289,7 +286,7 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
 
         var result = sut.TryLast();
 
-        result.Value.Should().Be( expected );
+        result.Value.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -297,7 +294,7 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
     {
         var sut = Enumerable.Empty<T>();
         var result = sut.TryLast();
-        result.HasValue.Should().BeFalse();
+        result.HasValue.TestFalse().Go();
     }
 
     [Fact]
@@ -308,7 +305,7 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
 
         var result = sut.TryLast();
 
-        result.Value.Should().Be( expected );
+        result.Value.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -319,7 +316,7 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
 
         var result = sut.TryLast();
 
-        result.Value.Should().Be( expected );
+        result.Value.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -327,7 +324,7 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
     {
         var sut = new List<T>();
         var result = sut.TrySingle();
-        result.HasValue.Should().BeFalse();
+        result.HasValue.TestFalse().Go();
     }
 
     [Fact]
@@ -338,7 +335,7 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
 
         var result = sut.TrySingle();
 
-        result.Value.Should().Be( expected );
+        result.Value.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -346,7 +343,7 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
     {
         var sut = Fixture.CreateMany<T>().ToList();
         var result = sut.TrySingle();
-        result.HasValue.Should().BeFalse();
+        result.HasValue.TestFalse().Go();
     }
 
     [Fact]
@@ -354,7 +351,7 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
     {
         var sut = Enumerable.Empty<T>();
         var result = sut.TrySingle();
-        result.HasValue.Should().BeFalse();
+        result.HasValue.TestFalse().Go();
     }
 
     [Fact]
@@ -365,7 +362,7 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
 
         var result = sut.TrySingle();
 
-        result.Value.Should().Be( expected );
+        result.Value.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -373,7 +370,7 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
     {
         var sut = Fixture.CreateMany<T>().Select( x => x );
         var result = sut.TrySingle();
-        result.HasValue.Should().BeFalse();
+        result.HasValue.TestFalse().Go();
     }
 
     [Fact]
@@ -381,7 +378,7 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
     {
         var sut = Fixture.CreateMany<T>();
         var result = sut.TryElementAt( -1 );
-        result.HasValue.Should().BeFalse();
+        result.HasValue.TestFalse().Go();
     }
 
     [Theory]
@@ -391,7 +388,7 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
         int index)
     {
         var result = sut.TryElementAt( index );
-        result.HasValue.Should().BeFalse();
+        result.HasValue.TestFalse().Go();
     }
 
     [Theory]
@@ -402,7 +399,7 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
         T expected)
     {
         var result = sut.TryElementAt( index );
-        result.Value.Should().Be( expected );
+        result.Value.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -413,7 +410,7 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
     {
         sut = sut.Select( x => x );
         var result = sut.TryElementAt( index );
-        result.HasValue.Should().BeFalse();
+        result.HasValue.TestFalse().Go();
     }
 
     [Theory]
@@ -425,6 +422,6 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
     {
         sut = sut.Select( x => x );
         var result = sut.TryElementAt( index );
-        result.Value.Should().Be( expected );
+        result.Value.TestEquals( expected ).Go();
     }
 }

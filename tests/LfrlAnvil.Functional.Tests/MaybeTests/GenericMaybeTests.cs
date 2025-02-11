@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using LfrlAnvil.Functional.Exceptions;
 using LfrlAnvil.TestExtensions.Attributes;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 using LfrlAnvil.TestExtensions.NSubstitute;
 
 namespace LfrlAnvil.Functional.Tests.MaybeTests;
@@ -15,11 +15,10 @@ public abstract class GenericMaybeTests<T> : TestsBase
     {
         var sut = Maybe<T>.None;
 
-        using ( new AssertionScope() )
-        {
-            sut.HasValue.Should().BeFalse();
-            sut.Value.Should().Be( default( T ) );
-        }
+        Assertion.All(
+                sut.HasValue.TestFalse(),
+                sut.Value.TestEquals( default ) )
+            .Go();
     }
 
     [Fact]
@@ -27,11 +26,10 @@ public abstract class GenericMaybeTests<T> : TestsBase
     {
         var sut = ( Maybe<T> )Maybe.None;
 
-        using ( new AssertionScope() )
-        {
-            sut.HasValue.Should().BeFalse();
-            sut.Value.Should().Be( default( T ) );
-        }
+        Assertion.All(
+                sut.HasValue.TestFalse(),
+                sut.Value.TestEquals( default ) )
+            .Go();
     }
 
     [Fact]
@@ -40,11 +38,10 @@ public abstract class GenericMaybeTests<T> : TestsBase
         var value = Fixture.CreateNotDefault<T>();
         var sut = Maybe.Some( value );
 
-        using ( new AssertionScope() )
-        {
-            sut.HasValue.Should().BeTrue();
-            sut.Value.Should().Be( value );
-        }
+        Assertion.All(
+                sut.HasValue.TestTrue(),
+                sut.Value.TestEquals( value ) )
+            .Go();
     }
 
     [Fact]
@@ -55,7 +52,7 @@ public abstract class GenericMaybeTests<T> : TestsBase
 
         var result = sut.GetHashCode();
 
-        result.Should().Be( value.GetHashCode() );
+        result.TestEquals( value.GetHashCode() ).Go();
     }
 
     [Fact]
@@ -65,7 +62,7 @@ public abstract class GenericMaybeTests<T> : TestsBase
 
         var result = sut.GetHashCode();
 
-        result.Should().Be( 0 );
+        result.TestEquals( 0 ).Go();
     }
 
     [Theory]
@@ -77,7 +74,7 @@ public abstract class GenericMaybeTests<T> : TestsBase
 
         var result = a.Equals( b );
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -88,7 +85,7 @@ public abstract class GenericMaybeTests<T> : TestsBase
 
         var result = sut.GetValue();
 
-        result.Should().Be( value );
+        result.TestEquals( value ).Go();
     }
 
     [Fact]
@@ -96,7 +93,7 @@ public abstract class GenericMaybeTests<T> : TestsBase
     {
         var sut = Maybe<T>.None;
         var action = Lambda.Of( () => sut.GetValue() );
-        action.Should().ThrowExactly<ValueAccessException>().AndMatch( e => e.MemberName == nameof( Maybe<T>.Value ) );
+        action.Test( exc => exc.TestType().Exact<ValueAccessException>() ).Go();
     }
 
     [Fact]
@@ -107,7 +104,7 @@ public abstract class GenericMaybeTests<T> : TestsBase
 
         var result = sut.GetValueOrDefault();
 
-        result.Should().Be( value );
+        result.TestEquals( value ).Go();
     }
 
     [Fact]
@@ -115,7 +112,7 @@ public abstract class GenericMaybeTests<T> : TestsBase
     {
         var sut = Maybe<T>.None;
         var result = sut.GetValueOrDefault();
-        result.Should().Be( default( T ) );
+        result.TestEquals( default ).Go();
     }
 
     [Fact]
@@ -126,7 +123,7 @@ public abstract class GenericMaybeTests<T> : TestsBase
 
         var result = sut.GetValueOrDefault( Fixture.CreateNotDefault<T>() );
 
-        result.Should().Be( value );
+        result.TestEquals( value ).Go();
     }
 
     [Fact]
@@ -137,7 +134,7 @@ public abstract class GenericMaybeTests<T> : TestsBase
 
         var result = sut.GetValueOrDefault( defaultValue );
 
-        result.Should().Be( defaultValue );
+        result.TestEquals( defaultValue ).Go();
     }
 
     [Fact]
@@ -151,11 +148,11 @@ public abstract class GenericMaybeTests<T> : TestsBase
 
         var result = sut.Bind( some: someDelegate );
 
-        using ( new AssertionScope() )
-        {
-            someDelegate.Verify().CallAt( 0 ).Exists().And.ArgAt( 0 ).Should().Be( value );
-            result.Value.Should().Be( returnedValue );
-        }
+        Assertion.All(
+                someDelegate.CallAt( 0 ).Exists.TestTrue(),
+                someDelegate.CallAt( 0 ).Arguments.FirstOrDefault().TestEquals( value ),
+                result.Value.TestEquals( returnedValue ) )
+            .Go();
     }
 
     [Fact]
@@ -167,11 +164,10 @@ public abstract class GenericMaybeTests<T> : TestsBase
 
         var result = sut.Bind( some: someDelegate );
 
-        using ( new AssertionScope() )
-        {
-            someDelegate.Verify().CallCount.Should().Be( 0 );
-            result.HasValue.Should().BeFalse();
-        }
+        Assertion.All(
+                someDelegate.CallCount().TestEquals( 0 ),
+                result.HasValue.TestFalse() )
+            .Go();
     }
 
     [Fact]
@@ -184,16 +180,14 @@ public abstract class GenericMaybeTests<T> : TestsBase
 
         var sut = Maybe.Some( value );
 
-        var result = sut.Bind(
-            some: someDelegate,
-            none: noneDelegate );
+        var result = sut.Bind( some: someDelegate, none: noneDelegate );
 
-        using ( new AssertionScope() )
-        {
-            someDelegate.Verify().CallAt( 0 ).Exists().And.ArgAt( 0 ).Should().Be( value );
-            noneDelegate.Verify().CallCount.Should().Be( 0 );
-            result.Value.Should().Be( returnedValue );
-        }
+        Assertion.All(
+                someDelegate.CallAt( 0 ).Exists.TestTrue(),
+                someDelegate.CallAt( 0 ).Arguments.FirstOrDefault().TestEquals( value ),
+                noneDelegate.CallCount().TestEquals( 0 ),
+                result.Value.TestEquals( returnedValue ) )
+            .Go();
     }
 
     [Fact]
@@ -205,16 +199,13 @@ public abstract class GenericMaybeTests<T> : TestsBase
 
         var sut = Maybe<T>.None;
 
-        var result = sut.Bind(
-            some: someDelegate,
-            none: noneDelegate );
+        var result = sut.Bind( some: someDelegate, none: noneDelegate );
 
-        using ( new AssertionScope() )
-        {
-            someDelegate.Verify().CallCount.Should().Be( 0 );
-            noneDelegate.Verify().CallCount.Should().Be( 1 );
-            result.Value.Should().Be( returnedValue );
-        }
+        Assertion.All(
+                someDelegate.CallCount().TestEquals( 0 ),
+                noneDelegate.CallCount().TestEquals( 1 ),
+                result.Value.TestEquals( returnedValue ) )
+            .Go();
     }
 
     [Fact]
@@ -227,16 +218,14 @@ public abstract class GenericMaybeTests<T> : TestsBase
 
         var sut = Maybe.Some( value );
 
-        var result = sut.Match(
-            some: someDelegate,
-            none: noneDelegate );
+        var result = sut.Match( some: someDelegate, none: noneDelegate );
 
-        using ( new AssertionScope() )
-        {
-            someDelegate.Verify().CallAt( 0 ).Exists().And.ArgAt( 0 ).Should().Be( value );
-            noneDelegate.Verify().CallCount.Should().Be( 0 );
-            result.Should().Be( returnedValue );
-        }
+        Assertion.All(
+                someDelegate.CallAt( 0 ).Exists.TestTrue(),
+                someDelegate.CallAt( 0 ).Arguments.FirstOrDefault().TestEquals( value ),
+                noneDelegate.CallCount().TestEquals( 0 ),
+                result.TestEquals( returnedValue ) )
+            .Go();
     }
 
     [Fact]
@@ -248,16 +237,13 @@ public abstract class GenericMaybeTests<T> : TestsBase
 
         var sut = Maybe<T>.None;
 
-        var result = sut.Match(
-            some: someDelegate,
-            none: noneDelegate );
+        var result = sut.Match( some: someDelegate, none: noneDelegate );
 
-        using ( new AssertionScope() )
-        {
-            someDelegate.Verify().CallCount.Should().Be( 0 );
-            noneDelegate.Verify().CallCount.Should().Be( 1 );
-            result.Should().Be( returnedValue );
-        }
+        Assertion.All(
+                someDelegate.CallCount().TestEquals( 0 ),
+                noneDelegate.CallCount().TestEquals( 1 ),
+                result.TestEquals( returnedValue ) )
+            .Go();
     }
 
     [Fact]
@@ -269,15 +255,13 @@ public abstract class GenericMaybeTests<T> : TestsBase
 
         var sut = Maybe.Some( value );
 
-        sut.Match(
-            some: someDelegate,
-            none: noneDelegate );
+        sut.Match( some: someDelegate, none: noneDelegate );
 
-        using ( new AssertionScope() )
-        {
-            someDelegate.Verify().CallAt( 0 ).Exists().And.ArgAt( 0 ).Should().Be( value );
-            noneDelegate.Verify().CallCount.Should().Be( 0 );
-        }
+        Assertion.All(
+                someDelegate.CallAt( 0 ).Exists.TestTrue(),
+                someDelegate.CallAt( 0 ).Arguments.FirstOrDefault().TestEquals( value ),
+                noneDelegate.CallCount().TestEquals( 0 ) )
+            .Go();
     }
 
     [Fact]
@@ -288,15 +272,12 @@ public abstract class GenericMaybeTests<T> : TestsBase
 
         var sut = Maybe<T>.None;
 
-        sut.Match(
-            some: someDelegate,
-            none: noneDelegate );
+        sut.Match( some: someDelegate, none: noneDelegate );
 
-        using ( new AssertionScope() )
-        {
-            someDelegate.Verify().CallCount.Should().Be( 0 );
-            noneDelegate.Verify().CallCount.Should().Be( 1 );
-        }
+        Assertion.All(
+                someDelegate.CallCount().TestEquals( 0 ),
+                noneDelegate.CallCount().TestEquals( 1 ) )
+            .Go();
     }
 
     [Fact]
@@ -310,11 +291,11 @@ public abstract class GenericMaybeTests<T> : TestsBase
 
         var result = sut.IfSome( someDelegate );
 
-        using ( new AssertionScope() )
-        {
-            someDelegate.Verify().CallAt( 0 ).Exists().And.ArgAt( 0 ).Should().Be( value );
-            result.Value.Should().Be( returnedValue );
-        }
+        Assertion.All(
+                someDelegate.CallAt( 0 ).Exists.TestTrue(),
+                someDelegate.CallAt( 0 ).Arguments.FirstOrDefault().TestEquals( value ),
+                result.Value.TestEquals( returnedValue ) )
+            .Go();
     }
 
     [Fact]
@@ -326,11 +307,10 @@ public abstract class GenericMaybeTests<T> : TestsBase
 
         var result = sut.IfSome( someDelegate );
 
-        using ( new AssertionScope() )
-        {
-            someDelegate.Verify().CallCount.Should().Be( 0 );
-            result.HasValue.Should().BeFalse();
-        }
+        Assertion.All(
+                someDelegate.CallCount().TestEquals( 0 ),
+                result.HasValue.TestFalse() )
+            .Go();
     }
 
     [Fact]
@@ -343,7 +323,10 @@ public abstract class GenericMaybeTests<T> : TestsBase
 
         sut.IfSome( someDelegate );
 
-        someDelegate.Verify().CallAt( 0 ).Exists().And.ArgAt( 0 ).Should().Be( value );
+        Assertion.All(
+                someDelegate.CallAt( 0 ).Exists.TestTrue(),
+                someDelegate.CallAt( 0 ).Arguments.FirstOrDefault().TestEquals( value ) )
+            .Go();
     }
 
     [Fact]
@@ -355,7 +338,7 @@ public abstract class GenericMaybeTests<T> : TestsBase
 
         sut.IfSome( someDelegate );
 
-        someDelegate.Verify().CallCount.Should().Be( 0 );
+        someDelegate.CallCount().TestEquals( 0 ).Go();
     }
 
     [Fact]
@@ -369,11 +352,11 @@ public abstract class GenericMaybeTests<T> : TestsBase
 
         var result = sut.IfSomeOrDefault( someDelegate );
 
-        using ( new AssertionScope() )
-        {
-            someDelegate.Verify().CallAt( 0 ).Exists().And.ArgAt( 0 ).Should().Be( value );
-            result.Should().Be( returnedValue );
-        }
+        Assertion.All(
+                someDelegate.CallAt( 0 ).Exists.TestTrue(),
+                someDelegate.CallAt( 0 ).Arguments.FirstOrDefault().TestEquals( value ),
+                result.TestEquals( returnedValue ) )
+            .Go();
     }
 
     [Fact]
@@ -385,11 +368,10 @@ public abstract class GenericMaybeTests<T> : TestsBase
 
         var result = sut.IfSomeOrDefault( someDelegate );
 
-        using ( new AssertionScope() )
-        {
-            someDelegate.Verify().CallCount.Should().Be( 0 );
-            result.Should().Be( default( T ) );
-        }
+        Assertion.All(
+                someDelegate.CallCount().TestEquals( 0 ),
+                result.TestEquals( default ) )
+            .Go();
     }
 
     [Fact]
@@ -403,11 +385,11 @@ public abstract class GenericMaybeTests<T> : TestsBase
 
         var result = sut.IfSomeOrDefault( someDelegate, Fixture.CreateNotDefault<T>() );
 
-        using ( new AssertionScope() )
-        {
-            someDelegate.Verify().CallAt( 0 ).Exists().And.ArgAt( 0 ).Should().Be( value );
-            result.Should().Be( returnedValue );
-        }
+        Assertion.All(
+                someDelegate.CallAt( 0 ).Exists.TestTrue(),
+                someDelegate.CallAt( 0 ).Arguments.FirstOrDefault().TestEquals( value ),
+                result.TestEquals( returnedValue ) )
+            .Go();
     }
 
     [Fact]
@@ -420,11 +402,10 @@ public abstract class GenericMaybeTests<T> : TestsBase
 
         var result = sut.IfSomeOrDefault( someDelegate, defaultValue );
 
-        using ( new AssertionScope() )
-        {
-            someDelegate.Verify().CallCount.Should().Be( 0 );
-            result.Should().Be( defaultValue );
-        }
+        Assertion.All(
+                someDelegate.CallCount().TestEquals( 0 ),
+                result.TestEquals( defaultValue ) )
+            .Go();
     }
 
     [Fact]
@@ -437,11 +418,10 @@ public abstract class GenericMaybeTests<T> : TestsBase
 
         var result = sut.IfNone( noneDelegate );
 
-        using ( new AssertionScope() )
-        {
-            noneDelegate.Verify().CallCount.Should().Be( 1 );
-            result.Value.Should().Be( returnedValue );
-        }
+        Assertion.All(
+                noneDelegate.CallCount().TestEquals( 1 ),
+                result.Value.TestEquals( returnedValue ) )
+            .Go();
     }
 
     [Fact]
@@ -454,11 +434,10 @@ public abstract class GenericMaybeTests<T> : TestsBase
 
         var result = sut.IfNone( noneDelegate );
 
-        using ( new AssertionScope() )
-        {
-            noneDelegate.Verify().CallCount.Should().Be( 0 );
-            result.HasValue.Should().BeFalse();
-        }
+        Assertion.All(
+                noneDelegate.CallCount().TestEquals( 0 ),
+                result.HasValue.TestFalse() )
+            .Go();
     }
 
     [Fact]
@@ -470,7 +449,7 @@ public abstract class GenericMaybeTests<T> : TestsBase
 
         sut.IfNone( noneDelegate );
 
-        noneDelegate.Verify().CallCount.Should().Be( 1 );
+        noneDelegate.CallCount().TestEquals( 1 ).Go();
     }
 
     [Fact]
@@ -483,7 +462,7 @@ public abstract class GenericMaybeTests<T> : TestsBase
 
         sut.IfNone( noneDelegate );
 
-        noneDelegate.Verify().CallCount.Should().Be( 0 );
+        noneDelegate.CallCount().TestEquals( 0 ).Go();
     }
 
     [Fact]
@@ -495,11 +474,10 @@ public abstract class GenericMaybeTests<T> : TestsBase
 
         var result = sut.IfNoneOrDefault( noneDelegate );
 
-        using ( new AssertionScope() )
-        {
-            noneDelegate.Verify().CallCount.Should().Be( 1 );
-            result.Should().Be( returnedValue );
-        }
+        Assertion.All(
+                noneDelegate.CallCount().TestEquals( 1 ),
+                result.TestEquals( returnedValue ) )
+            .Go();
     }
 
     [Fact]
@@ -511,11 +489,10 @@ public abstract class GenericMaybeTests<T> : TestsBase
 
         var result = sut.IfNoneOrDefault( noneDelegate );
 
-        using ( new AssertionScope() )
-        {
-            noneDelegate.Verify().CallCount.Should().Be( 0 );
-            result.Should().Be( default( T ) );
-        }
+        Assertion.All(
+                noneDelegate.CallCount().TestEquals( 0 ),
+                result.TestEquals( default ) )
+            .Go();
     }
 
     [Fact]
@@ -527,11 +504,10 @@ public abstract class GenericMaybeTests<T> : TestsBase
 
         var result = sut.IfNoneOrDefault( noneDelegate, Fixture.CreateNotDefault<T>() );
 
-        using ( new AssertionScope() )
-        {
-            noneDelegate.Verify().CallCount.Should().Be( 1 );
-            result.Should().Be( returnedValue );
-        }
+        Assertion.All(
+                noneDelegate.CallCount().TestEquals( 1 ),
+                result.TestEquals( returnedValue ) )
+            .Go();
     }
 
     [Fact]
@@ -544,11 +520,10 @@ public abstract class GenericMaybeTests<T> : TestsBase
 
         var result = sut.IfNoneOrDefault( noneDelegate, defaultValue );
 
-        using ( new AssertionScope() )
-        {
-            noneDelegate.Verify().CallCount.Should().Be( 0 );
-            result.Should().Be( defaultValue );
-        }
+        Assertion.All(
+                noneDelegate.CallCount().TestEquals( 0 ),
+                result.TestEquals( defaultValue ) )
+            .Go();
     }
 
     [Fact]
@@ -558,18 +533,17 @@ public abstract class GenericMaybeTests<T> : TestsBase
 
         var sut = ( Maybe<T> )value;
 
-        using ( new AssertionScope() )
-        {
-            sut.HasValue.Should().BeTrue();
-            sut.Value.Should().Be( value );
-        }
+        Assertion.All(
+                sut.HasValue.TestTrue(),
+                sut.Value.TestEquals( value ) )
+            .Go();
     }
 
     [Fact]
     public void MaybeConversionOperator_FromNil_ReturnNone()
     {
         var sut = ( Maybe<T> )Nil.Instance;
-        sut.HasValue.Should().BeFalse();
+        sut.HasValue.TestFalse().Go();
     }
 
     [Fact]
@@ -581,7 +555,7 @@ public abstract class GenericMaybeTests<T> : TestsBase
 
         var result = ( T )sut;
 
-        result.Should().Be( value );
+        result.TestEquals( value ).Go();
     }
 
     [Fact]
@@ -589,7 +563,7 @@ public abstract class GenericMaybeTests<T> : TestsBase
     {
         var sut = Maybe<T>.None;
         var action = Lambda.Of( () => ( T )sut );
-        action.Should().ThrowExactly<ValueAccessException>().AndMatch( e => e.MemberName == nameof( Maybe<T>.Value ) );
+        action.Test( exc => exc.TestType().Exact<ValueAccessException>() ).Go();
     }
 
     [Theory]
@@ -601,7 +575,7 @@ public abstract class GenericMaybeTests<T> : TestsBase
 
         var result = a == b;
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -613,7 +587,7 @@ public abstract class GenericMaybeTests<T> : TestsBase
 
         var result = a != b;
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -626,7 +600,7 @@ public abstract class GenericMaybeTests<T> : TestsBase
 
         var result = collection.Count;
 
-        result.Should().Be( 1 );
+        result.TestEquals( 1 ).Go();
     }
 
     [Fact]
@@ -637,7 +611,7 @@ public abstract class GenericMaybeTests<T> : TestsBase
 
         var result = collection.Count;
 
-        result.Should().Be( 0 );
+        result.TestEquals( 0 ).Go();
     }
 
     [Fact]
@@ -645,13 +619,13 @@ public abstract class GenericMaybeTests<T> : TestsBase
     {
         var value = Fixture.CreateNotDefault<T>();
         var sut = Maybe.Some( value );
-        sut.Should().BeSequentiallyEqualTo( value );
+        sut.TestSequence( [ value ] ).Go();
     }
 
     [Fact]
     public void IEnumerableGetEnumerator_ShouldReturnEmptyEnumerator_WhenDoesntHaveValue()
     {
         var sut = Maybe<T>.None;
-        sut.Should().BeEmpty();
+        sut.TestEmpty().Go();
     }
 }

@@ -7,13 +7,13 @@ public abstract class GenericMaybeOfRefTypeTests<T> : GenericMaybeTests<T>
     public void Some_ShouldThrowArgumentNullException_WhenParameterIsNull()
     {
         var action = Lambda.Of( () => Maybe.Some<T>( null ) );
-        action.Should().ThrowExactly<ArgumentNullException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentNullException>() ).Go();
     }
 
     [Fact]
     public void MaybeConversionOperator_FromT_ShouldReturnNone_WhenParameterIsNull()
     {
         var sut = ( Maybe<T> )null;
-        sut.HasValue.Should().BeFalse();
+        sut.HasValue.TestFalse().Go();
     }
 }

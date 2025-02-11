@@ -12,12 +12,11 @@ public abstract class GenericValidPartialTypeCastTests<TSource, TDestination> : 
 
         var result = sut.To<TDestination>();
 
-        using ( new AssertionScope() )
-        {
-            result.IsValid.Should().BeTrue();
-            result.IsInvalid.Should().BeFalse();
-            result.Source.Should().Be( value );
-            result.Result.Should().Be( value );
-        }
+        Assertion.All(
+                result.IsValid.TestTrue(),
+                result.IsInvalid.TestFalse(),
+                result.Source.TestEquals( value ),
+                result.Result.TestEquals( value ) )
+            .Go();
     }
 }

@@ -13,6 +13,6 @@ public abstract class GenericErraticExtensionsOfRefTypeTests<T> : GenericErratic
 
         var result = sut.ToMaybe();
 
-        result.HasValue.Should().BeFalse();
+        result.HasValue.TestFalse().Go();
     }
 }

@@ -7,7 +7,7 @@ public class TypeCastStaticTests : TestsBase
     {
         var result = TypeCast.GetUnderlyingSourceType( null );
 
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Theory]
@@ -18,7 +18,7 @@ public class TypeCastStaticTests : TestsBase
     {
         var result = TypeCast.GetUnderlyingSourceType( type );
 
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Theory]
@@ -29,7 +29,7 @@ public class TypeCastStaticTests : TestsBase
     {
         var result = TypeCast.GetUnderlyingSourceType( type );
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -39,7 +39,7 @@ public class TypeCastStaticTests : TestsBase
 
         var result = TypeCast.GetUnderlyingSourceType( typeof( TypeCast<,> ) );
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -47,7 +47,7 @@ public class TypeCastStaticTests : TestsBase
     {
         var result = TypeCast.GetUnderlyingDestinationType( null );
 
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Theory]
@@ -58,7 +58,7 @@ public class TypeCastStaticTests : TestsBase
     {
         var result = TypeCast.GetUnderlyingDestinationType( type );
 
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Theory]
@@ -69,7 +69,7 @@ public class TypeCastStaticTests : TestsBase
     {
         var result = TypeCast.GetUnderlyingDestinationType( type );
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -79,7 +79,7 @@ public class TypeCastStaticTests : TestsBase
 
         var result = TypeCast.GetUnderlyingDestinationType( typeof( TypeCast<,> ) );
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -87,7 +87,7 @@ public class TypeCastStaticTests : TestsBase
     {
         var result = TypeCast.GetUnderlyingTypes( null );
 
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Theory]
@@ -98,7 +98,7 @@ public class TypeCastStaticTests : TestsBase
     {
         var result = TypeCast.GetUnderlyingTypes( type );
 
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Theory]
@@ -109,7 +109,7 @@ public class TypeCastStaticTests : TestsBase
     {
         var result = TypeCast.GetUnderlyingTypes( type );
 
-        result.Should().BeEquivalentTo( new Pair<Type, Type>( expectedFirst, expectedSecond ) );
+        result.TestEquals( new Pair<Type, Type>( expectedFirst, expectedSecond ) ).Go();
     }
 
     [Fact]
@@ -119,6 +119,6 @@ public class TypeCastStaticTests : TestsBase
 
         var result = TypeCast.GetUnderlyingTypes( typeof( TypeCast<,> ) );
 
-        result.Should().BeEquivalentTo( new Pair<Type, Type>( expected[0], expected[1] ) );
+        result.TestEquals( new Pair<Type, Type>( expected[0], expected[1] ) ).Go();
     }
 }

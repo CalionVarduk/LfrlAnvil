@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using LfrlAnvil.Functional.Exceptions;
 using LfrlAnvil.TestExtensions.Attributes;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 using LfrlAnvil.TestExtensions.NSubstitute;
 
 namespace LfrlAnvil.Functional.Tests.ErraticTests;
@@ -22,11 +22,10 @@ public abstract class GenericErraticTests<T> : TestsBase
 
         var result = Erratic.Try( Action );
 
-        using ( new AssertionScope() )
-        {
-            result.IsOk.Should().BeTrue();
-            result.Value.Should().Be( value );
-        }
+        Assertion.All(
+                result.IsOk.TestTrue(),
+                result.Value.TestEquals( value ) )
+            .Go();
     }
 
     [Fact]
@@ -41,11 +40,10 @@ public abstract class GenericErraticTests<T> : TestsBase
 
         var result = Erratic.Try( Action );
 
-        using ( new AssertionScope() )
-        {
-            result.HasError.Should().BeTrue();
-            result.Error.Should().Be( error );
-        }
+        Assertion.All(
+                result.HasError.TestTrue(),
+                result.Error.TestEquals( error ) )
+            .Go();
     }
 
     [Fact]
@@ -53,13 +51,12 @@ public abstract class GenericErraticTests<T> : TestsBase
     {
         var sut = Erratic<T>.Empty;
 
-        using ( new AssertionScope() )
-        {
-            sut.IsOk.Should().BeTrue();
-            sut.HasError.Should().BeFalse();
-            sut.Value.Should().Be( default( T ) );
-            sut.Error.Should().BeNull();
-        }
+        Assertion.All(
+                sut.IsOk.TestTrue(),
+                sut.HasError.TestFalse(),
+                sut.Value.TestEquals( default ),
+                sut.Error.TestNull() )
+            .Go();
     }
 
     [Fact]
@@ -71,7 +68,7 @@ public abstract class GenericErraticTests<T> : TestsBase
 
         var result = sut.GetHashCode();
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -83,7 +80,7 @@ public abstract class GenericErraticTests<T> : TestsBase
 
         var result = sut.GetHashCode();
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -95,7 +92,7 @@ public abstract class GenericErraticTests<T> : TestsBase
 
         var result = a.Equals( b );
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -106,7 +103,7 @@ public abstract class GenericErraticTests<T> : TestsBase
 
         var result = sut.GetValue();
 
-        result.Should().Be( value );
+        result.TestEquals( value ).Go();
     }
 
     [Fact]
@@ -117,7 +114,7 @@ public abstract class GenericErraticTests<T> : TestsBase
 
         var action = Lambda.Of( () => sut.GetValue() );
 
-        action.Should().ThrowExactly<ValueAccessException>().AndMatch( e => e.MemberName == nameof( Erratic<T>.Value ) );
+        action.Test( exc => exc.TestType().Exact<ValueAccessException>() ).Go();
     }
 
     [Fact]
@@ -128,7 +125,7 @@ public abstract class GenericErraticTests<T> : TestsBase
 
         var result = sut.GetValueOrDefault();
 
-        result.Should().Be( value );
+        result.TestEquals( value ).Go();
     }
 
     [Fact]
@@ -139,7 +136,7 @@ public abstract class GenericErraticTests<T> : TestsBase
 
         var result = sut.GetValueOrDefault();
 
-        result.Should().Be( default( T ) );
+        result.TestEquals( default( T ) ).Go();
     }
 
     [Fact]
@@ -150,7 +147,7 @@ public abstract class GenericErraticTests<T> : TestsBase
 
         var result = sut.GetValueOrDefault( Fixture.CreateNotDefault<T>() );
 
-        result.Should().Be( value );
+        result.TestEquals( value ).Go();
     }
 
     [Fact]
@@ -162,7 +159,7 @@ public abstract class GenericErraticTests<T> : TestsBase
 
         var result = sut.GetValueOrDefault( defaultValue );
 
-        result.Should().Be( defaultValue );
+        result.TestEquals( defaultValue ).Go();
     }
 
     [Fact]
@@ -173,7 +170,7 @@ public abstract class GenericErraticTests<T> : TestsBase
 
         var result = sut.GetError();
 
-        result.Should().Be( error );
+        result.TestEquals( error ).Go();
     }
 
     [Fact]
@@ -184,7 +181,7 @@ public abstract class GenericErraticTests<T> : TestsBase
 
         var action = Lambda.Of( () => sut.GetError() );
 
-        action.Should().ThrowExactly<ValueAccessException>().AndMatch( e => e.MemberName == nameof( Erratic<T>.Error ) );
+        action.Test( exc => exc.TestType().Exact<ValueAccessException>() ).Go();
     }
 
     [Fact]
@@ -195,7 +192,7 @@ public abstract class GenericErraticTests<T> : TestsBase
 
         var result = sut.GetErrorOrDefault();
 
-        result.Should().Be( error );
+        result.TestEquals( error ).Go();
     }
 
     [Fact]
@@ -206,7 +203,7 @@ public abstract class GenericErraticTests<T> : TestsBase
 
         var result = sut.GetErrorOrDefault();
 
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Fact]
@@ -220,12 +217,12 @@ public abstract class GenericErraticTests<T> : TestsBase
 
         var result = sut.Bind( okDelegate );
 
-        using ( new AssertionScope() )
-        {
-            okDelegate.Verify().CallAt( 0 ).Exists().And.ArgAt( 0 ).Should().Be( value );
-            result.IsOk.Should().BeTrue();
-            result.Value.Should().Be( returnedValue );
-        }
+        Assertion.All(
+                okDelegate.CallAt( 0 ).Exists.TestTrue(),
+                okDelegate.CallAt( 0 ).Arguments.FirstOrDefault().TestEquals( value ),
+                result.IsOk.TestTrue(),
+                result.Value.TestEquals( returnedValue ) )
+            .Go();
     }
 
     [Fact]
@@ -238,12 +235,11 @@ public abstract class GenericErraticTests<T> : TestsBase
 
         var result = sut.Bind( okDelegate );
 
-        using ( new AssertionScope() )
-        {
-            okDelegate.Verify().CallCount.Should().Be( 0 );
-            result.HasError.Should().BeTrue();
-            result.Error.Should().Be( error );
-        }
+        Assertion.All(
+                okDelegate.CallCount().TestEquals( 0 ),
+                result.HasError.TestTrue(),
+                result.Error.TestEquals( error ) )
+            .Go();
     }
 
     [Fact]
@@ -258,13 +254,13 @@ public abstract class GenericErraticTests<T> : TestsBase
 
         var result = sut.Bind( okDelegate, errorDelegate );
 
-        using ( new AssertionScope() )
-        {
-            okDelegate.Verify().CallAt( 0 ).Exists().And.ArgAt( 0 ).Should().Be( value );
-            errorDelegate.Verify().CallCount.Should().Be( 0 );
-            result.IsOk.Should().BeTrue();
-            result.Value.Should().Be( returnedValue );
-        }
+        Assertion.All(
+                okDelegate.CallAt( 0 ).Exists.TestTrue(),
+                okDelegate.CallAt( 0 ).Arguments.FirstOrDefault().TestEquals( value ),
+                errorDelegate.CallCount().TestEquals( 0 ),
+                result.IsOk.TestTrue(),
+                result.Value.TestEquals( returnedValue ) )
+            .Go();
     }
 
     [Fact]
@@ -279,13 +275,13 @@ public abstract class GenericErraticTests<T> : TestsBase
 
         var result = sut.Bind( okDelegate, errorDelegate );
 
-        using ( new AssertionScope() )
-        {
-            okDelegate.Verify().CallCount.Should().Be( 0 );
-            errorDelegate.Verify().CallAt( 0 ).Exists().And.ArgAt( 0 ).Should().Be( error );
-            result.IsOk.Should().BeTrue();
-            result.Value.Should().Be( returnedValue );
-        }
+        Assertion.All(
+                okDelegate.CallCount().TestEquals( 0 ),
+                errorDelegate.CallAt( 0 ).Exists.TestTrue(),
+                errorDelegate.CallAt( 0 ).Arguments.FirstOrDefault().TestEquals( error ),
+                result.IsOk.TestTrue(),
+                result.Value.TestEquals( returnedValue ) )
+            .Go();
     }
 
     [Fact]
@@ -300,12 +296,12 @@ public abstract class GenericErraticTests<T> : TestsBase
 
         var result = sut.Match( okDelegate, errorDelegate );
 
-        using ( new AssertionScope() )
-        {
-            okDelegate.Verify().CallAt( 0 ).Exists().And.ArgAt( 0 ).Should().Be( value );
-            errorDelegate.Verify().CallCount.Should().Be( 0 );
-            result.Should().Be( returnedValue );
-        }
+        Assertion.All(
+                okDelegate.CallAt( 0 ).Exists.TestTrue(),
+                okDelegate.CallAt( 0 ).Arguments.FirstOrDefault().TestEquals( value ),
+                errorDelegate.CallCount().TestEquals( 0 ),
+                result.TestEquals( returnedValue ) )
+            .Go();
     }
 
     [Fact]
@@ -320,12 +316,12 @@ public abstract class GenericErraticTests<T> : TestsBase
 
         var result = sut.Match( okDelegate, errorDelegate );
 
-        using ( new AssertionScope() )
-        {
-            okDelegate.Verify().CallCount.Should().Be( 0 );
-            errorDelegate.Verify().CallAt( 0 ).Exists().And.ArgAt( 0 ).Should().Be( error );
-            result.Should().Be( returnedValue );
-        }
+        Assertion.All(
+                okDelegate.CallCount().TestEquals( 0 ),
+                errorDelegate.CallAt( 0 ).Exists.TestTrue(),
+                errorDelegate.CallAt( 0 ).Arguments.FirstOrDefault().TestEquals( error ),
+                result.TestEquals( returnedValue ) )
+            .Go();
     }
 
     [Fact]
@@ -339,11 +335,11 @@ public abstract class GenericErraticTests<T> : TestsBase
 
         sut.Match( okDelegate, errorDelegate );
 
-        using ( new AssertionScope() )
-        {
-            okDelegate.Verify().CallAt( 0 ).Exists().And.ArgAt( 0 ).Should().Be( value );
-            errorDelegate.Verify().CallCount.Should().Be( 0 );
-        }
+        Assertion.All(
+                okDelegate.CallAt( 0 ).Exists.TestTrue(),
+                okDelegate.CallAt( 0 ).Arguments.FirstOrDefault().TestEquals( value ),
+                errorDelegate.CallCount().TestEquals( 0 ) )
+            .Go();
     }
 
     [Fact]
@@ -357,11 +353,11 @@ public abstract class GenericErraticTests<T> : TestsBase
 
         sut.Match( okDelegate, errorDelegate );
 
-        using ( new AssertionScope() )
-        {
-            okDelegate.Verify().CallCount.Should().Be( 0 );
-            errorDelegate.Verify().CallAt( 0 ).Exists().And.ArgAt( 0 ).Should().Be( error );
-        }
+        Assertion.All(
+                okDelegate.CallCount().TestEquals( 0 ),
+                errorDelegate.CallAt( 0 ).Exists.TestTrue(),
+                errorDelegate.CallAt( 0 ).Arguments.FirstOrDefault().TestEquals( error ) )
+            .Go();
     }
 
     [Fact]
@@ -375,11 +371,11 @@ public abstract class GenericErraticTests<T> : TestsBase
 
         var result = sut.IfOk( okDelegate );
 
-        using ( new AssertionScope() )
-        {
-            okDelegate.Verify().CallAt( 0 ).Exists().And.ArgAt( 0 ).Should().Be( value );
-            result.Value.Should().Be( returnedValue );
-        }
+        Assertion.All(
+                okDelegate.CallAt( 0 ).Exists.TestTrue(),
+                okDelegate.CallAt( 0 ).Arguments.FirstOrDefault().TestEquals( value ),
+                result.Value.TestEquals( returnedValue ) )
+            .Go();
     }
 
     [Fact]
@@ -392,11 +388,10 @@ public abstract class GenericErraticTests<T> : TestsBase
 
         var result = sut.IfOk( okDelegate );
 
-        using ( new AssertionScope() )
-        {
-            okDelegate.Verify().CallCount.Should().Be( 0 );
-            result.HasValue.Should().BeFalse();
-        }
+        Assertion.All(
+                okDelegate.CallCount().TestEquals( 0 ),
+                result.HasValue.TestFalse() )
+            .Go();
     }
 
     [Fact]
@@ -409,7 +404,10 @@ public abstract class GenericErraticTests<T> : TestsBase
 
         sut.IfOk( okDelegate );
 
-        okDelegate.Verify().CallAt( 0 ).Exists().And.ArgAt( 0 ).Should().Be( value );
+        Assertion.All(
+                okDelegate.CallAt( 0 ).Exists.TestTrue(),
+                okDelegate.CallAt( 0 ).Arguments.FirstOrDefault().TestEquals( value ) )
+            .Go();
     }
 
     [Fact]
@@ -422,7 +420,7 @@ public abstract class GenericErraticTests<T> : TestsBase
 
         sut.IfOk( okDelegate );
 
-        okDelegate.Verify().CallCount.Should().Be( 0 );
+        okDelegate.CallCount().TestEquals( 0 ).Go();
     }
 
     [Fact]
@@ -436,11 +434,11 @@ public abstract class GenericErraticTests<T> : TestsBase
 
         var result = sut.IfOkOrDefault( okDelegate );
 
-        using ( new AssertionScope() )
-        {
-            okDelegate.Verify().CallAt( 0 ).Exists().And.ArgAt( 0 ).Should().Be( value );
-            result.Should().Be( returnedValue );
-        }
+        Assertion.All(
+                okDelegate.CallAt( 0 ).Exists.TestTrue(),
+                okDelegate.CallAt( 0 ).Arguments.FirstOrDefault().TestEquals( value ),
+                result.TestEquals( returnedValue ) )
+            .Go();
     }
 
     [Fact]
@@ -453,11 +451,10 @@ public abstract class GenericErraticTests<T> : TestsBase
 
         var result = sut.IfOkOrDefault( okDelegate );
 
-        using ( new AssertionScope() )
-        {
-            okDelegate.Verify().CallCount.Should().Be( 0 );
-            result.Should().Be( default( T ) );
-        }
+        Assertion.All(
+                okDelegate.CallCount().TestEquals( 0 ),
+                result.TestEquals( default ) )
+            .Go();
     }
 
     [Fact]
@@ -471,11 +468,11 @@ public abstract class GenericErraticTests<T> : TestsBase
 
         var result = sut.IfOkOrDefault( okDelegate, Fixture.CreateNotDefault<T>() );
 
-        using ( new AssertionScope() )
-        {
-            okDelegate.Verify().CallAt( 0 ).Exists().And.ArgAt( 0 ).Should().Be( value );
-            result.Should().Be( returnedValue );
-        }
+        Assertion.All(
+                okDelegate.CallAt( 0 ).Exists.TestTrue(),
+                okDelegate.CallAt( 0 ).Arguments.FirstOrDefault().TestEquals( value ),
+                result.TestEquals( returnedValue ) )
+            .Go();
     }
 
     [Fact]
@@ -489,11 +486,10 @@ public abstract class GenericErraticTests<T> : TestsBase
 
         var result = sut.IfOkOrDefault( okDelegate, defaultValue );
 
-        using ( new AssertionScope() )
-        {
-            okDelegate.Verify().CallCount.Should().Be( 0 );
-            result.Should().Be( defaultValue );
-        }
+        Assertion.All(
+                okDelegate.CallCount().TestEquals( 0 ),
+                result.TestEquals( defaultValue ) )
+            .Go();
     }
 
     [Fact]
@@ -507,11 +503,11 @@ public abstract class GenericErraticTests<T> : TestsBase
 
         var result = sut.IfError( errorDelegate );
 
-        using ( new AssertionScope() )
-        {
-            errorDelegate.Verify().CallAt( 0 ).Exists().And.ArgAt( 0 ).Should().Be( error );
-            result.Value.Should().Be( returnedValue );
-        }
+        Assertion.All(
+                errorDelegate.CallAt( 0 ).Exists.TestTrue(),
+                errorDelegate.CallAt( 0 ).Arguments.FirstOrDefault().TestEquals( error ),
+                result.Value.TestEquals( returnedValue ) )
+            .Go();
     }
 
     [Fact]
@@ -524,11 +520,10 @@ public abstract class GenericErraticTests<T> : TestsBase
 
         var result = sut.IfError( errorDelegate );
 
-        using ( new AssertionScope() )
-        {
-            errorDelegate.Verify().CallCount.Should().Be( 0 );
-            result.HasValue.Should().BeFalse();
-        }
+        Assertion.All(
+                errorDelegate.CallCount().TestEquals( 0 ),
+                result.HasValue.TestFalse() )
+            .Go();
     }
 
     [Fact]
@@ -541,7 +536,10 @@ public abstract class GenericErraticTests<T> : TestsBase
 
         sut.IfError( errorDelegate );
 
-        errorDelegate.Verify().CallAt( 0 ).Exists().And.ArgAt( 0 ).Should().Be( error );
+        Assertion.All(
+                errorDelegate.CallAt( 0 ).Exists.TestTrue(),
+                errorDelegate.CallAt( 0 ).Arguments.FirstOrDefault().TestEquals( error ) )
+            .Go();
     }
 
     [Fact]
@@ -554,7 +552,7 @@ public abstract class GenericErraticTests<T> : TestsBase
 
         sut.IfError( errorDelegate );
 
-        errorDelegate.Verify().CallCount.Should().Be( 0 );
+        errorDelegate.CallCount().TestEquals( 0 ).Go();
     }
 
     [Fact]
@@ -568,11 +566,11 @@ public abstract class GenericErraticTests<T> : TestsBase
 
         var result = sut.IfErrorOrDefault( errorDelegate );
 
-        using ( new AssertionScope() )
-        {
-            errorDelegate.Verify().CallAt( 0 ).Exists().And.ArgAt( 0 ).Should().Be( error );
-            result.Should().Be( returnedValue );
-        }
+        Assertion.All(
+                errorDelegate.CallAt( 0 ).Exists.TestTrue(),
+                errorDelegate.CallAt( 0 ).Arguments.FirstOrDefault().TestEquals( error ),
+                result.TestEquals( returnedValue ) )
+            .Go();
     }
 
     [Fact]
@@ -585,11 +583,10 @@ public abstract class GenericErraticTests<T> : TestsBase
 
         var result = sut.IfErrorOrDefault( errorDelegate );
 
-        using ( new AssertionScope() )
-        {
-            errorDelegate.Verify().CallCount.Should().Be( 0 );
-            result.Should().Be( default( T ) );
-        }
+        Assertion.All(
+                errorDelegate.CallCount().TestEquals( 0 ),
+                result.TestEquals( default ) )
+            .Go();
     }
 
     [Fact]
@@ -603,11 +600,11 @@ public abstract class GenericErraticTests<T> : TestsBase
 
         var result = sut.IfErrorOrDefault( errorDelegate, Fixture.CreateNotDefault<T>() );
 
-        using ( new AssertionScope() )
-        {
-            errorDelegate.Verify().CallAt( 0 ).Exists().And.ArgAt( 0 ).Should().Be( error );
-            result.Should().Be( returnedValue );
-        }
+        Assertion.All(
+                errorDelegate.CallAt( 0 ).Exists.TestTrue(),
+                errorDelegate.CallAt( 0 ).Arguments.FirstOrDefault().TestEquals( error ),
+                result.TestEquals( returnedValue ) )
+            .Go();
     }
 
     [Fact]
@@ -621,11 +618,10 @@ public abstract class GenericErraticTests<T> : TestsBase
 
         var result = sut.IfErrorOrDefault( errorDelegate, defaultValue );
 
-        using ( new AssertionScope() )
-        {
-            errorDelegate.Verify().CallCount.Should().Be( 0 );
-            result.Should().Be( defaultValue );
-        }
+        Assertion.All(
+                errorDelegate.CallCount().TestEquals( 0 ),
+                result.TestEquals( defaultValue ) )
+            .Go();
     }
 
     [Fact]
@@ -635,11 +631,10 @@ public abstract class GenericErraticTests<T> : TestsBase
 
         var result = ( Erratic<T> )value;
 
-        using ( new AssertionScope() )
-        {
-            result.IsOk.Should().BeTrue();
-            result.Value.Should().Be( value );
-        }
+        Assertion.All(
+                result.IsOk.TestTrue(),
+                result.Value.TestEquals( value ) )
+            .Go();
     }
 
     [Fact]
@@ -649,11 +644,10 @@ public abstract class GenericErraticTests<T> : TestsBase
 
         var result = ( Erratic<T> )error;
 
-        using ( new AssertionScope() )
-        {
-            result.HasError.Should().BeTrue();
-            result.Error.Should().Be( error );
-        }
+        Assertion.All(
+                result.HasError.TestTrue(),
+                result.Error.TestEquals( error ) )
+            .Go();
     }
 
     [Fact]
@@ -665,11 +659,10 @@ public abstract class GenericErraticTests<T> : TestsBase
 
         var result = ( Either<T, Exception> )sut;
 
-        using ( new AssertionScope() )
-        {
-            result.HasFirst.Should().BeTrue();
-            result.First.Should().Be( value );
-        }
+        Assertion.All(
+                result.HasFirst.TestTrue(),
+                result.First.TestEquals( value ) )
+            .Go();
     }
 
     [Fact]
@@ -681,11 +674,10 @@ public abstract class GenericErraticTests<T> : TestsBase
 
         var result = ( Either<T, Exception> )sut;
 
-        using ( new AssertionScope() )
-        {
-            result.HasSecond.Should().BeTrue();
-            result.Second.Should().Be( error );
-        }
+        Assertion.All(
+                result.HasSecond.TestTrue(),
+                result.Second.TestEquals( error ) )
+            .Go();
     }
 
     [Fact]
@@ -697,11 +689,10 @@ public abstract class GenericErraticTests<T> : TestsBase
 
         var result = ( Erratic<T> )sut;
 
-        using ( new AssertionScope() )
-        {
-            result.IsOk.Should().BeTrue();
-            result.Value.Should().Be( value );
-        }
+        Assertion.All(
+                result.IsOk.TestTrue(),
+                result.Value.TestEquals( value ) )
+            .Go();
     }
 
     [Fact]
@@ -713,11 +704,10 @@ public abstract class GenericErraticTests<T> : TestsBase
 
         var result = ( Erratic<T> )sut;
 
-        using ( new AssertionScope() )
-        {
-            result.HasError.Should().BeTrue();
-            result.Error.Should().Be( error );
-        }
+        Assertion.All(
+                result.HasError.TestTrue(),
+                result.Error.TestEquals( error ) )
+            .Go();
     }
 
     [Fact]
@@ -725,13 +715,12 @@ public abstract class GenericErraticTests<T> : TestsBase
     {
         var result = ( Erratic<T> )Nil.Instance;
 
-        using ( new AssertionScope() )
-        {
-            result.IsOk.Should().BeTrue();
-            result.HasError.Should().BeFalse();
-            result.Value.Should().Be( default( T ) );
-            result.Error.Should().BeNull();
-        }
+        Assertion.All(
+                result.IsOk.TestTrue(),
+                result.HasError.TestFalse(),
+                result.Value.TestEquals( default ),
+                result.Error.TestNull() )
+            .Go();
     }
 
     [Fact]
@@ -742,7 +731,7 @@ public abstract class GenericErraticTests<T> : TestsBase
 
         var result = ( T )sut;
 
-        result.Should().Be( value );
+        result.TestEquals( value ).Go();
     }
 
     [Fact]
@@ -753,7 +742,7 @@ public abstract class GenericErraticTests<T> : TestsBase
 
         var action = Lambda.Of( () => ( T )sut );
 
-        action.Should().ThrowExactly<ValueAccessException>().AndMatch( e => e.MemberName == nameof( Erratic<T>.Value ) );
+        action.Test( exc => exc.TestType().Exact<ValueAccessException>() ).Go();
     }
 
     [Fact]
@@ -764,7 +753,7 @@ public abstract class GenericErraticTests<T> : TestsBase
 
         var result = ( Exception )sut;
 
-        result.Should().Be( error );
+        result.TestEquals( error ).Go();
     }
 
     [Fact]
@@ -775,7 +764,7 @@ public abstract class GenericErraticTests<T> : TestsBase
 
         var action = Lambda.Of( () => ( Exception )sut );
 
-        action.Should().ThrowExactly<ValueAccessException>().AndMatch( e => e.MemberName == nameof( Erratic<T>.Error ) );
+        action.Test( exc => exc.TestType().Exact<ValueAccessException>() ).Go();
     }
 
     [Theory]
@@ -787,7 +776,7 @@ public abstract class GenericErraticTests<T> : TestsBase
 
         var result = a == b;
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -799,7 +788,7 @@ public abstract class GenericErraticTests<T> : TestsBase
 
         var result = a != b;
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -812,7 +801,7 @@ public abstract class GenericErraticTests<T> : TestsBase
 
         var result = collection.Count;
 
-        result.Should().Be( 1 );
+        result.TestEquals( 1 ).Go();
     }
 
     [Fact]
@@ -825,7 +814,7 @@ public abstract class GenericErraticTests<T> : TestsBase
 
         var result = collection.Count;
 
-        result.Should().Be( 0 );
+        result.TestEquals( 0 ).Go();
     }
 
     [Fact]
@@ -833,7 +822,7 @@ public abstract class GenericErraticTests<T> : TestsBase
     {
         var value = Fixture.CreateNotDefault<T>();
         var sut = ( Erratic<T> )value;
-        sut.Should().BeSequentiallyEqualTo( value );
+        sut.TestSequence( [ value ] ).Go();
     }
 
     [Fact]
@@ -841,6 +830,6 @@ public abstract class GenericErraticTests<T> : TestsBase
     {
         var error = new Exception();
         var sut = ( Erratic<T> )error;
-        sut.Should().BeEmpty();
+        sut.TestEmpty().Go();
     }
 }

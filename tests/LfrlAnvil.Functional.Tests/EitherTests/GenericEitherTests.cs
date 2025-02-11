@@ -1,6 +1,6 @@
-﻿using LfrlAnvil.Functional.Exceptions;
+﻿using System.Linq;
+using LfrlAnvil.Functional.Exceptions;
 using LfrlAnvil.TestExtensions.Attributes;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 using LfrlAnvil.TestExtensions.NSubstitute;
 
 namespace LfrlAnvil.Functional.Tests.EitherTests;
@@ -15,13 +15,12 @@ public abstract class GenericEitherTests<T1, T2> : TestsBase
     {
         var sut = Either<T1, T2>.Empty;
 
-        using ( new AssertionScope() )
-        {
-            sut.HasFirst.Should().BeFalse();
-            sut.HasSecond.Should().BeTrue();
-            sut.First.Should().Be( default( T1 ) );
-            sut.Second.Should().Be( default( T2 ) );
-        }
+        Assertion.All(
+                sut.HasFirst.TestFalse(),
+                sut.HasSecond.TestTrue(),
+                sut.First.TestEquals( default ),
+                sut.Second.TestEquals( default ) )
+            .Go();
     }
 
     [Fact]
@@ -33,7 +32,7 @@ public abstract class GenericEitherTests<T1, T2> : TestsBase
 
         var result = sut.GetHashCode();
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -45,7 +44,7 @@ public abstract class GenericEitherTests<T1, T2> : TestsBase
 
         var result = sut.GetHashCode();
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -57,7 +56,7 @@ public abstract class GenericEitherTests<T1, T2> : TestsBase
 
         var result = a.Equals( b );
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -68,7 +67,7 @@ public abstract class GenericEitherTests<T1, T2> : TestsBase
 
         var result = sut.GetFirst();
 
-        result.Should().Be( value );
+        result.TestEquals( value ).Go();
     }
 
     [Fact]
@@ -79,7 +78,7 @@ public abstract class GenericEitherTests<T1, T2> : TestsBase
 
         var action = Lambda.Of( () => sut.GetFirst() );
 
-        action.Should().ThrowExactly<ValueAccessException>().AndMatch( e => e.MemberName == nameof( Either<T1, T2>.First ) );
+        action.Test( exc => exc.TestType().Exact<ValueAccessException>() ).Go();
     }
 
     [Fact]
@@ -90,7 +89,7 @@ public abstract class GenericEitherTests<T1, T2> : TestsBase
 
         var result = sut.GetFirstOrDefault();
 
-        result.Should().Be( value );
+        result.TestEquals( value ).Go();
     }
 
     [Fact]
@@ -101,7 +100,7 @@ public abstract class GenericEitherTests<T1, T2> : TestsBase
 
         var result = sut.GetFirstOrDefault();
 
-        result.Should().Be( default( T1 ) );
+        result.TestEquals( default ).Go();
     }
 
     [Fact]
@@ -112,7 +111,7 @@ public abstract class GenericEitherTests<T1, T2> : TestsBase
 
         var result = sut.GetFirstOrDefault( Fixture.CreateNotDefault<T1>() );
 
-        result.Should().Be( value );
+        result.TestEquals( value ).Go();
     }
 
     [Fact]
@@ -124,7 +123,7 @@ public abstract class GenericEitherTests<T1, T2> : TestsBase
 
         var result = sut.GetFirstOrDefault( defaultValue );
 
-        result.Should().Be( defaultValue );
+        result.TestEquals( defaultValue ).Go();
     }
 
     [Fact]
@@ -135,7 +134,7 @@ public abstract class GenericEitherTests<T1, T2> : TestsBase
 
         var result = sut.GetSecond();
 
-        result.Should().Be( value );
+        result.TestEquals( value ).Go();
     }
 
     [Fact]
@@ -146,7 +145,7 @@ public abstract class GenericEitherTests<T1, T2> : TestsBase
 
         var action = Lambda.Of( () => sut.GetSecond() );
 
-        action.Should().ThrowExactly<ValueAccessException>().AndMatch( e => e.MemberName == nameof( Either<T1, T2>.Second ) );
+        action.Test( exc => exc.TestType().Exact<ValueAccessException>() ).Go();
     }
 
     [Fact]
@@ -157,7 +156,7 @@ public abstract class GenericEitherTests<T1, T2> : TestsBase
 
         var result = sut.GetSecondOrDefault();
 
-        result.Should().Be( value );
+        result.TestEquals( value ).Go();
     }
 
     [Fact]
@@ -168,7 +167,7 @@ public abstract class GenericEitherTests<T1, T2> : TestsBase
 
         var result = sut.GetSecondOrDefault();
 
-        result.Should().Be( default( T2 ) );
+        result.TestEquals( default ).Go();
     }
 
     [Fact]
@@ -179,7 +178,7 @@ public abstract class GenericEitherTests<T1, T2> : TestsBase
 
         var result = sut.GetSecondOrDefault( Fixture.CreateNotDefault<T2>() );
 
-        result.Should().Be( value );
+        result.TestEquals( value ).Go();
     }
 
     [Fact]
@@ -191,7 +190,7 @@ public abstract class GenericEitherTests<T1, T2> : TestsBase
 
         var result = sut.GetSecondOrDefault( defaultValue );
 
-        result.Should().Be( defaultValue );
+        result.TestEquals( defaultValue ).Go();
     }
 
     [Fact]
@@ -202,11 +201,10 @@ public abstract class GenericEitherTests<T1, T2> : TestsBase
 
         var result = sut.Swap();
 
-        using ( new AssertionScope() )
-        {
-            result.HasSecond.Should().BeTrue();
-            result.Second.Should().Be( value );
-        }
+        Assertion.All(
+                result.HasSecond.TestTrue(),
+                result.Second.TestEquals( value ) )
+            .Go();
     }
 
     [Fact]
@@ -217,11 +215,10 @@ public abstract class GenericEitherTests<T1, T2> : TestsBase
 
         var result = sut.Swap();
 
-        using ( new AssertionScope() )
-        {
-            result.HasFirst.Should().BeTrue();
-            result.First.Should().Be( value );
-        }
+        Assertion.All(
+                result.HasFirst.TestTrue(),
+                result.First.TestEquals( value ) )
+            .Go();
     }
 
     [Fact]
@@ -235,12 +232,12 @@ public abstract class GenericEitherTests<T1, T2> : TestsBase
 
         var result = sut.Bind( firstDelegate );
 
-        using ( new AssertionScope() )
-        {
-            firstDelegate.Verify().CallAt( 0 ).Exists().And.ArgAt( 0 ).Should().Be( value );
-            result.HasFirst.Should().BeTrue();
-            result.First.Should().Be( returnedValue );
-        }
+        Assertion.All(
+                firstDelegate.CallAt( 0 ).Exists.TestTrue(),
+                firstDelegate.CallAt( 0 ).Arguments.FirstOrDefault().TestEquals( value ),
+                result.HasFirst.TestTrue(),
+                result.First.TestEquals( returnedValue ) )
+            .Go();
     }
 
     [Fact]
@@ -253,12 +250,11 @@ public abstract class GenericEitherTests<T1, T2> : TestsBase
 
         var result = sut.Bind( firstDelegate );
 
-        using ( new AssertionScope() )
-        {
-            firstDelegate.Verify().CallCount.Should().Be( 0 );
-            result.HasSecond.Should().BeTrue();
-            result.Second.Should().Be( value );
-        }
+        Assertion.All(
+                firstDelegate.CallCount().TestEquals( 0 ),
+                result.HasSecond.TestTrue(),
+                result.Second.TestEquals( value ) )
+            .Go();
     }
 
     [Fact]
@@ -272,12 +268,12 @@ public abstract class GenericEitherTests<T1, T2> : TestsBase
 
         var result = sut.BindSecond( secondDelegate );
 
-        using ( new AssertionScope() )
-        {
-            secondDelegate.Verify().CallAt( 0 ).Exists().And.ArgAt( 0 ).Should().Be( value );
-            result.HasSecond.Should().BeTrue();
-            result.Second.Should().Be( returnedValue );
-        }
+        Assertion.All(
+                secondDelegate.CallAt( 0 ).Exists.TestTrue(),
+                secondDelegate.CallAt( 0 ).Arguments.FirstOrDefault().TestEquals( value ),
+                result.HasSecond.TestTrue(),
+                result.Second.TestEquals( returnedValue ) )
+            .Go();
     }
 
     [Fact]
@@ -290,12 +286,11 @@ public abstract class GenericEitherTests<T1, T2> : TestsBase
 
         var result = sut.BindSecond( secondDelegate );
 
-        using ( new AssertionScope() )
-        {
-            secondDelegate.Verify().CallCount.Should().Be( 0 );
-            result.HasFirst.Should().BeTrue();
-            result.First.Should().Be( value );
-        }
+        Assertion.All(
+                secondDelegate.CallCount().TestEquals( 0 ),
+                result.HasFirst.TestTrue(),
+                result.First.TestEquals( value ) )
+            .Go();
     }
 
     [Fact]
@@ -310,13 +305,13 @@ public abstract class GenericEitherTests<T1, T2> : TestsBase
 
         var result = sut.Bind( first: firstDelegate, second: secondDelegate );
 
-        using ( new AssertionScope() )
-        {
-            firstDelegate.Verify().CallAt( 0 ).Exists().And.ArgAt( 0 ).Should().Be( value );
-            secondDelegate.Verify().CallCount.Should().Be( 0 );
-            result.HasFirst.Should().BeTrue();
-            result.First.Should().Be( returnedValue );
-        }
+        Assertion.All(
+                firstDelegate.CallAt( 0 ).Exists.TestTrue(),
+                firstDelegate.CallAt( 0 ).Arguments.FirstOrDefault().TestEquals( value ),
+                secondDelegate.CallCount().TestEquals( 0 ),
+                result.HasFirst.TestTrue(),
+                result.First.TestEquals( returnedValue ) )
+            .Go();
     }
 
     [Fact]
@@ -331,13 +326,13 @@ public abstract class GenericEitherTests<T1, T2> : TestsBase
 
         var result = sut.Bind( first: firstDelegate, second: secondDelegate );
 
-        using ( new AssertionScope() )
-        {
-            firstDelegate.Verify().CallCount.Should().Be( 0 );
-            secondDelegate.Verify().CallAt( 0 ).Exists().And.ArgAt( 0 ).Should().Be( value );
-            result.HasSecond.Should().BeTrue();
-            result.Second.Should().Be( returnedValue );
-        }
+        Assertion.All(
+                firstDelegate.CallCount().TestEquals( 0 ),
+                secondDelegate.CallAt( 0 ).Exists.TestTrue(),
+                secondDelegate.CallAt( 0 ).Arguments.FirstOrDefault().TestEquals( value ),
+                result.HasSecond.TestTrue(),
+                result.Second.TestEquals( returnedValue ) )
+            .Go();
     }
 
     [Fact]
@@ -352,12 +347,12 @@ public abstract class GenericEitherTests<T1, T2> : TestsBase
 
         var result = sut.Match( first: firstDelegate, second: secondDelegate );
 
-        using ( new AssertionScope() )
-        {
-            firstDelegate.Verify().CallAt( 0 ).Exists().And.ArgAt( 0 ).Should().Be( value );
-            secondDelegate.Verify().CallCount.Should().Be( 0 );
-            result.Should().Be( returnedValue );
-        }
+        Assertion.All(
+                firstDelegate.CallAt( 0 ).Exists.TestTrue(),
+                firstDelegate.CallAt( 0 ).Arguments.FirstOrDefault().TestEquals( value ),
+                secondDelegate.CallCount().TestEquals( 0 ),
+                result.TestEquals( returnedValue ) )
+            .Go();
     }
 
     [Fact]
@@ -372,12 +367,12 @@ public abstract class GenericEitherTests<T1, T2> : TestsBase
 
         var result = sut.Match( first: firstDelegate, second: secondDelegate );
 
-        using ( new AssertionScope() )
-        {
-            firstDelegate.Verify().CallCount.Should().Be( 0 );
-            secondDelegate.Verify().CallAt( 0 ).Exists().And.ArgAt( 0 ).Should().Be( value );
-            result.Should().Be( returnedValue );
-        }
+        Assertion.All(
+                firstDelegate.CallCount().TestEquals( 0 ),
+                secondDelegate.CallAt( 0 ).Exists.TestTrue(),
+                secondDelegate.CallAt( 0 ).Arguments.FirstOrDefault().TestEquals( value ),
+                result.TestEquals( returnedValue ) )
+            .Go();
     }
 
     [Fact]
@@ -391,11 +386,11 @@ public abstract class GenericEitherTests<T1, T2> : TestsBase
 
         sut.Match( first: firstDelegate, second: secondDelegate );
 
-        using ( new AssertionScope() )
-        {
-            firstDelegate.Verify().CallAt( 0 ).Exists().And.ArgAt( 0 ).Should().Be( value );
-            secondDelegate.Verify().CallCount.Should().Be( 0 );
-        }
+        Assertion.All(
+                firstDelegate.CallAt( 0 ).Exists.TestTrue(),
+                firstDelegate.CallAt( 0 ).Arguments.FirstOrDefault().TestEquals( value ),
+                secondDelegate.CallCount().TestEquals( 0 ) )
+            .Go();
     }
 
     [Fact]
@@ -409,11 +404,11 @@ public abstract class GenericEitherTests<T1, T2> : TestsBase
 
         sut.Match( first: firstDelegate, second: secondDelegate );
 
-        using ( new AssertionScope() )
-        {
-            firstDelegate.Verify().CallCount.Should().Be( 0 );
-            secondDelegate.Verify().CallAt( 0 ).Exists().And.ArgAt( 0 ).Should().Be( value );
-        }
+        Assertion.All(
+                firstDelegate.CallCount().TestEquals( 0 ),
+                secondDelegate.CallAt( 0 ).Exists.TestTrue(),
+                secondDelegate.CallAt( 0 ).Arguments.FirstOrDefault().TestEquals( value ) )
+            .Go();
     }
 
     [Fact]
@@ -427,11 +422,11 @@ public abstract class GenericEitherTests<T1, T2> : TestsBase
 
         var result = sut.IfFirst( firstDelegate );
 
-        using ( new AssertionScope() )
-        {
-            firstDelegate.Verify().CallAt( 0 ).Exists().And.ArgAt( 0 ).Should().Be( value );
-            result.Value.Should().Be( returnedValue );
-        }
+        Assertion.All(
+                firstDelegate.CallAt( 0 ).Exists.TestTrue(),
+                firstDelegate.CallAt( 0 ).Arguments.FirstOrDefault().TestEquals( value ),
+                result.Value.TestEquals( returnedValue ) )
+            .Go();
     }
 
     [Fact]
@@ -444,11 +439,10 @@ public abstract class GenericEitherTests<T1, T2> : TestsBase
 
         var result = sut.IfFirst( firstDelegate );
 
-        using ( new AssertionScope() )
-        {
-            firstDelegate.Verify().CallCount.Should().Be( 0 );
-            result.HasValue.Should().BeFalse();
-        }
+        Assertion.All(
+                firstDelegate.CallCount().TestEquals( 0 ),
+                result.HasValue.TestFalse() )
+            .Go();
     }
 
     [Fact]
@@ -461,7 +455,10 @@ public abstract class GenericEitherTests<T1, T2> : TestsBase
 
         sut.IfFirst( firstDelegate );
 
-        firstDelegate.Verify().CallAt( 0 ).Exists().And.ArgAt( 0 ).Should().Be( value );
+        Assertion.All(
+                firstDelegate.CallAt( 0 ).Exists.TestTrue(),
+                firstDelegate.CallAt( 0 ).Arguments.FirstOrDefault().TestEquals( value ) )
+            .Go();
     }
 
     [Fact]
@@ -474,7 +471,7 @@ public abstract class GenericEitherTests<T1, T2> : TestsBase
 
         sut.IfFirst( firstDelegate );
 
-        firstDelegate.Verify().CallCount.Should().Be( 0 );
+        firstDelegate.CallCount().TestEquals( 0 ).Go();
     }
 
     [Fact]
@@ -488,11 +485,11 @@ public abstract class GenericEitherTests<T1, T2> : TestsBase
 
         var result = sut.IfFirstOrDefault( firstDelegate );
 
-        using ( new AssertionScope() )
-        {
-            firstDelegate.Verify().CallAt( 0 ).Exists().And.ArgAt( 0 ).Should().Be( value );
-            result.Should().Be( returnedValue );
-        }
+        Assertion.All(
+                firstDelegate.CallAt( 0 ).Exists.TestTrue(),
+                firstDelegate.CallAt( 0 ).Arguments.FirstOrDefault().TestEquals( value ),
+                result.TestEquals( returnedValue ) )
+            .Go();
     }
 
     [Fact]
@@ -505,11 +502,10 @@ public abstract class GenericEitherTests<T1, T2> : TestsBase
 
         var result = sut.IfFirstOrDefault( firstDelegate );
 
-        using ( new AssertionScope() )
-        {
-            firstDelegate.Verify().CallCount.Should().Be( 0 );
-            result.Should().Be( default( T1 ) );
-        }
+        Assertion.All(
+                firstDelegate.CallCount().TestEquals( 0 ),
+                result.TestEquals( default ) )
+            .Go();
     }
 
     [Fact]
@@ -523,11 +519,11 @@ public abstract class GenericEitherTests<T1, T2> : TestsBase
 
         var result = sut.IfFirstOrDefault( firstDelegate, Fixture.CreateNotDefault<T1>() );
 
-        using ( new AssertionScope() )
-        {
-            firstDelegate.Verify().CallAt( 0 ).Exists().And.ArgAt( 0 ).Should().Be( value );
-            result.Should().Be( returnedValue );
-        }
+        Assertion.All(
+                firstDelegate.CallAt( 0 ).Exists.TestTrue(),
+                firstDelegate.CallAt( 0 ).Arguments.FirstOrDefault().TestEquals( value ),
+                result.TestEquals( returnedValue ) )
+            .Go();
     }
 
     [Fact]
@@ -541,11 +537,10 @@ public abstract class GenericEitherTests<T1, T2> : TestsBase
 
         var result = sut.IfFirstOrDefault( firstDelegate, defaultValue );
 
-        using ( new AssertionScope() )
-        {
-            firstDelegate.Verify().CallCount.Should().Be( 0 );
-            result.Should().Be( defaultValue );
-        }
+        Assertion.All(
+                firstDelegate.CallCount().TestEquals( 0 ),
+                result.TestEquals( defaultValue ) )
+            .Go();
     }
 
     [Fact]
@@ -559,11 +554,11 @@ public abstract class GenericEitherTests<T1, T2> : TestsBase
 
         var result = sut.IfSecond( secondDelegate );
 
-        using ( new AssertionScope() )
-        {
-            secondDelegate.Verify().CallAt( 0 ).Exists().And.ArgAt( 0 ).Should().Be( value );
-            result.Value.Should().Be( returnedValue );
-        }
+        Assertion.All(
+                secondDelegate.CallAt( 0 ).Exists.TestTrue(),
+                secondDelegate.CallAt( 0 ).Arguments.FirstOrDefault().TestEquals( value ),
+                result.Value.TestEquals( returnedValue ) )
+            .Go();
     }
 
     [Fact]
@@ -576,11 +571,10 @@ public abstract class GenericEitherTests<T1, T2> : TestsBase
 
         var result = sut.IfSecond( secondDelegate );
 
-        using ( new AssertionScope() )
-        {
-            secondDelegate.Verify().CallCount.Should().Be( 0 );
-            result.HasValue.Should().BeFalse();
-        }
+        Assertion.All(
+                secondDelegate.CallCount().TestEquals( 0 ),
+                result.HasValue.TestFalse() )
+            .Go();
     }
 
     [Fact]
@@ -593,7 +587,10 @@ public abstract class GenericEitherTests<T1, T2> : TestsBase
 
         sut.IfSecond( secondDelegate );
 
-        secondDelegate.Verify().CallAt( 0 ).Exists().And.ArgAt( 0 ).Should().Be( value );
+        Assertion.All(
+                secondDelegate.CallAt( 0 ).Exists.TestTrue(),
+                secondDelegate.CallAt( 0 ).Arguments.FirstOrDefault().TestEquals( value ) )
+            .Go();
     }
 
     [Fact]
@@ -606,7 +603,7 @@ public abstract class GenericEitherTests<T1, T2> : TestsBase
 
         sut.IfSecond( secondDelegate );
 
-        secondDelegate.Verify().CallCount.Should().Be( 0 );
+        secondDelegate.CallCount().TestEquals( 0 ).Go();
     }
 
     [Fact]
@@ -620,11 +617,11 @@ public abstract class GenericEitherTests<T1, T2> : TestsBase
 
         var result = sut.IfSecondOrDefault( secondDelegate );
 
-        using ( new AssertionScope() )
-        {
-            secondDelegate.Verify().CallAt( 0 ).Exists().And.ArgAt( 0 ).Should().Be( value );
-            result.Should().Be( returnedValue );
-        }
+        Assertion.All(
+                secondDelegate.CallAt( 0 ).Exists.TestTrue(),
+                secondDelegate.CallAt( 0 ).Arguments.FirstOrDefault().TestEquals( value ),
+                result.TestEquals( returnedValue ) )
+            .Go();
     }
 
     [Fact]
@@ -637,11 +634,10 @@ public abstract class GenericEitherTests<T1, T2> : TestsBase
 
         var result = sut.IfSecondOrDefault( secondDelegate );
 
-        using ( new AssertionScope() )
-        {
-            secondDelegate.Verify().CallCount.Should().Be( 0 );
-            result.Should().Be( default( T2 ) );
-        }
+        Assertion.All(
+                secondDelegate.CallCount().TestEquals( 0 ),
+                result.TestEquals( default ) )
+            .Go();
     }
 
     [Fact]
@@ -655,11 +651,11 @@ public abstract class GenericEitherTests<T1, T2> : TestsBase
 
         var result = sut.IfSecondOrDefault( secondDelegate, Fixture.CreateNotDefault<T2>() );
 
-        using ( new AssertionScope() )
-        {
-            secondDelegate.Verify().CallAt( 0 ).Exists().And.ArgAt( 0 ).Should().Be( value );
-            result.Should().Be( returnedValue );
-        }
+        Assertion.All(
+                secondDelegate.CallAt( 0 ).Exists.TestTrue(),
+                secondDelegate.CallAt( 0 ).Arguments.FirstOrDefault().TestEquals( value ),
+                result.TestEquals( returnedValue ) )
+            .Go();
     }
 
     [Fact]
@@ -673,11 +669,10 @@ public abstract class GenericEitherTests<T1, T2> : TestsBase
 
         var result = sut.IfSecondOrDefault( secondDelegate, defaultValue );
 
-        using ( new AssertionScope() )
-        {
-            secondDelegate.Verify().CallCount.Should().Be( 0 );
-            result.Should().Be( defaultValue );
-        }
+        Assertion.All(
+                secondDelegate.CallCount().TestEquals( 0 ),
+                result.TestEquals( defaultValue ) )
+            .Go();
     }
 
     [Fact]
@@ -687,11 +682,10 @@ public abstract class GenericEitherTests<T1, T2> : TestsBase
 
         var result = ( Either<T1, T2> )value;
 
-        using ( new AssertionScope() )
-        {
-            result.HasFirst.Should().BeTrue();
-            result.First.Should().Be( value );
-        }
+        Assertion.All(
+                result.HasFirst.TestTrue(),
+                result.First.TestEquals( value ) )
+            .Go();
     }
 
     [Fact]
@@ -701,11 +695,10 @@ public abstract class GenericEitherTests<T1, T2> : TestsBase
 
         var result = ( Either<T1, T2> )value;
 
-        using ( new AssertionScope() )
-        {
-            result.HasSecond.Should().BeTrue();
-            result.Second.Should().Be( value );
-        }
+        Assertion.All(
+                result.HasSecond.TestTrue(),
+                result.Second.TestEquals( value ) )
+            .Go();
     }
 
     [Fact]
@@ -716,11 +709,10 @@ public abstract class GenericEitherTests<T1, T2> : TestsBase
 
         var result = ( Either<T1, T2> )partial;
 
-        using ( new AssertionScope() )
-        {
-            result.HasFirst.Should().BeTrue();
-            result.First.Should().Be( value );
-        }
+        Assertion.All(
+                result.HasFirst.TestTrue(),
+                result.First.TestEquals( value ) )
+            .Go();
     }
 
     [Fact]
@@ -731,11 +723,10 @@ public abstract class GenericEitherTests<T1, T2> : TestsBase
 
         var result = ( Either<T1, T2> )partial;
 
-        using ( new AssertionScope() )
-        {
-            result.HasSecond.Should().BeTrue();
-            result.Second.Should().Be( value );
-        }
+        Assertion.All(
+                result.HasSecond.TestTrue(),
+                result.Second.TestEquals( value ) )
+            .Go();
     }
 
     [Fact]
@@ -743,13 +734,12 @@ public abstract class GenericEitherTests<T1, T2> : TestsBase
     {
         var result = ( Either<T1, T2> )Nil.Instance;
 
-        using ( new AssertionScope() )
-        {
-            result.HasFirst.Should().BeFalse();
-            result.HasSecond.Should().BeTrue();
-            result.First.Should().Be( default( T1 ) );
-            result.Second.Should().Be( default( T2 ) );
-        }
+        Assertion.All(
+                result.HasFirst.TestFalse(),
+                result.HasSecond.TestTrue(),
+                result.First.TestEquals( default ),
+                result.Second.TestEquals( default ) )
+            .Go();
     }
 
     [Fact]
@@ -760,7 +750,7 @@ public abstract class GenericEitherTests<T1, T2> : TestsBase
 
         var result = ( T1 )sut;
 
-        result.Should().Be( value );
+        result.TestEquals( value ).Go();
     }
 
     [Fact]
@@ -771,7 +761,7 @@ public abstract class GenericEitherTests<T1, T2> : TestsBase
 
         var action = Lambda.Of( () => ( T1 )sut );
 
-        action.Should().ThrowExactly<ValueAccessException>().AndMatch( e => e.MemberName == nameof( Either<T1, T2>.First ) );
+        action.Test( exc => exc.TestType().Exact<ValueAccessException>() ).Go();
     }
 
     [Fact]
@@ -782,7 +772,7 @@ public abstract class GenericEitherTests<T1, T2> : TestsBase
 
         var result = ( T2 )sut;
 
-        result.Should().Be( value );
+        result.TestEquals( value ).Go();
     }
 
     [Fact]
@@ -793,7 +783,7 @@ public abstract class GenericEitherTests<T1, T2> : TestsBase
 
         var action = Lambda.Of( () => ( T2 )sut );
 
-        action.Should().ThrowExactly<ValueAccessException>().AndMatch( e => e.MemberName == nameof( Either<T1, T2>.Second ) );
+        action.Test( exc => exc.TestType().Exact<ValueAccessException>() ).Go();
     }
 
     [Theory]
@@ -805,7 +795,7 @@ public abstract class GenericEitherTests<T1, T2> : TestsBase
 
         var result = a == b;
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -822,6 +812,6 @@ public abstract class GenericEitherTests<T1, T2> : TestsBase
 
         var result = a != b;
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 }
