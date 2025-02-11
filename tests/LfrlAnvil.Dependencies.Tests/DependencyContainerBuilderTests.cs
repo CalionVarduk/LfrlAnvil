@@ -6,7 +6,6 @@ using LfrlAnvil.Dependencies.Extensions;
 using LfrlAnvil.Dependencies.Internal;
 using LfrlAnvil.Extensions;
 using LfrlAnvil.Functional;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Dependencies.Tests;
 
@@ -16,15 +15,15 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
     public void Ctor_ShouldCreateWithDefaultTransientLifetimeAndUseDisposableInterfaceStrategy()
     {
         var sut = new DependencyContainerBuilder();
-        sut.DefaultLifetime.Should().Be( DependencyLifetime.Transient );
-        sut.DefaultDisposalStrategy.Type.Should().Be( DependencyImplementorDisposalStrategyType.UseDisposableInterface );
-        sut.DefaultDisposalStrategy.Callback.Should().BeNull();
-        sut.Configuration.InjectablePropertyType.Should().BeSameAs( typeof( Injected<> ) );
-        sut.Configuration.OptionalDependencyAttributeType.Should().BeSameAs( typeof( OptionalDependencyAttribute ) );
-        sut.Configuration.TreatCaptiveDependenciesAsErrors.Should().BeFalse();
-        (( IDependencyLocatorBuilder )sut).KeyType.Should().BeNull();
-        (( IDependencyLocatorBuilder )sut).Key.Should().BeNull();
-        (( IDependencyLocatorBuilder )sut).IsKeyed.Should().BeFalse();
+        sut.DefaultLifetime.TestEquals( DependencyLifetime.Transient ).Go();
+        sut.DefaultDisposalStrategy.Type.TestEquals( DependencyImplementorDisposalStrategyType.UseDisposableInterface ).Go();
+        sut.DefaultDisposalStrategy.Callback.TestNull().Go();
+        sut.Configuration.InjectablePropertyType.TestRefEquals( typeof( Injected<> ) ).Go();
+        sut.Configuration.OptionalDependencyAttributeType.TestRefEquals( typeof( OptionalDependencyAttribute ) ).Go();
+        sut.Configuration.TreatCaptiveDependenciesAsErrors.TestFalse().Go();
+        (( IDependencyLocatorBuilder )sut).KeyType.TestNull().Go();
+        (( IDependencyLocatorBuilder )sut).Key.TestNull().Go();
+        (( IDependencyLocatorBuilder )sut).IsKeyed.TestFalse().Go();
     }
 
     [Theory]
@@ -39,12 +38,11 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
         var result = sut.SetDefaultLifetime( lifetime );
         var dependency = sut.Add<Implementor>();
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            sut.DefaultLifetime.Should().Be( lifetime );
-            dependency.Lifetime.Should().Be( sut.DefaultLifetime );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.DefaultLifetime.TestEquals( lifetime ),
+                dependency.Lifetime.TestEquals( sut.DefaultLifetime ) )
+            .Go();
     }
 
     [Fact]
@@ -52,7 +50,7 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
     {
         var sut = new DependencyContainerBuilder();
         var action = Lambda.Of( () => { sut.SetDefaultLifetime( ( DependencyLifetime )4 ); } );
-        action.Should().ThrowExactly<ArgumentException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentException>() ).Go();
     }
 
     [Fact]
@@ -65,14 +63,13 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
         var implementor = sut.Add<Implementor>().FromFactory( _ => new object() );
         var sharedImplementor = sut.AddSharedImplementor<Implementor>();
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            sut.DefaultDisposalStrategy.Type.Should().Be( DependencyImplementorDisposalStrategyType.UseDisposableInterface );
-            sut.DefaultDisposalStrategy.Callback.Should().BeNull();
-            implementor.DisposalStrategy.Should().BeEquivalentTo( sut.DefaultDisposalStrategy );
-            sharedImplementor.DisposalStrategy.Should().BeEquivalentTo( sut.DefaultDisposalStrategy );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.DefaultDisposalStrategy.Type.TestEquals( DependencyImplementorDisposalStrategyType.UseDisposableInterface ),
+                sut.DefaultDisposalStrategy.Callback.TestNull(),
+                implementor.DisposalStrategy.TestEquals( sut.DefaultDisposalStrategy ),
+                sharedImplementor.DisposalStrategy.TestEquals( sut.DefaultDisposalStrategy ) )
+            .Go();
     }
 
     [Fact]
@@ -84,14 +81,13 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
         var implementor = sut.Add<Implementor>().FromFactory( _ => new object() );
         var sharedImplementor = sut.AddSharedImplementor<Implementor>();
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            sut.DefaultDisposalStrategy.Type.Should().Be( DependencyImplementorDisposalStrategyType.RenounceOwnership );
-            sut.DefaultDisposalStrategy.Callback.Should().BeNull();
-            implementor.DisposalStrategy.Should().BeEquivalentTo( sut.DefaultDisposalStrategy );
-            sharedImplementor.DisposalStrategy.Should().BeEquivalentTo( sut.DefaultDisposalStrategy );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.DefaultDisposalStrategy.Type.TestEquals( DependencyImplementorDisposalStrategyType.RenounceOwnership ),
+                sut.DefaultDisposalStrategy.Callback.TestNull(),
+                implementor.DisposalStrategy.TestEquals( sut.DefaultDisposalStrategy ),
+                sharedImplementor.DisposalStrategy.TestEquals( sut.DefaultDisposalStrategy ) )
+            .Go();
     }
 
     [Fact]
@@ -104,14 +100,13 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
         var implementor = sut.Add<Implementor>().FromFactory( _ => new object() );
         var sharedImplementor = sut.AddSharedImplementor<Implementor>();
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            sut.DefaultDisposalStrategy.Type.Should().Be( DependencyImplementorDisposalStrategyType.UseCallback );
-            sut.DefaultDisposalStrategy.Callback.Should().BeSameAs( callback );
-            implementor.DisposalStrategy.Should().BeEquivalentTo( sut.DefaultDisposalStrategy );
-            sharedImplementor.DisposalStrategy.Should().BeEquivalentTo( sut.DefaultDisposalStrategy );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.DefaultDisposalStrategy.Type.TestEquals( DependencyImplementorDisposalStrategyType.UseCallback ),
+                sut.DefaultDisposalStrategy.Callback.TestRefEquals( callback ),
+                implementor.DisposalStrategy.TestEquals( sut.DefaultDisposalStrategy ),
+                sharedImplementor.DisposalStrategy.TestEquals( sut.DefaultDisposalStrategy ) )
+            .Go();
     }
 
     [Theory]
@@ -124,11 +119,10 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
 
         var result = sut.Configuration.SetInjectablePropertyType( type );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut.Configuration );
-            sut.Configuration.InjectablePropertyType.Should().BeSameAs( type );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut.Configuration ),
+                sut.Configuration.InjectablePropertyType.TestRefEquals( type ) )
+            .Go();
     }
 
     [Theory]
@@ -143,7 +137,7 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
     {
         var sut = new DependencyContainerBuilder();
         var action = Lambda.Of( () => sut.Configuration.SetInjectablePropertyType( type ) );
-        action.Should().ThrowExactly<DependencyContainerBuilderConfigurationException>();
+        action.Test( exc => exc.TestType().Exact<DependencyContainerBuilderConfigurationException>() ).Go();
     }
 
     [Theory]
@@ -156,11 +150,10 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
 
         var result = sut.Configuration.SetOptionalDependencyAttributeType( type );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut.Configuration );
-            sut.Configuration.OptionalDependencyAttributeType.Should().BeSameAs( type );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut.Configuration ),
+                sut.Configuration.OptionalDependencyAttributeType.TestRefEquals( type ) )
+            .Go();
     }
 
     [Theory]
@@ -174,7 +167,7 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
     {
         var sut = new DependencyContainerBuilder();
         var action = Lambda.Of( () => sut.Configuration.SetOptionalDependencyAttributeType( type ) );
-        action.Should().ThrowExactly<DependencyContainerBuilderConfigurationException>();
+        action.Test( exc => exc.TestType().Exact<DependencyContainerBuilderConfigurationException>() ).Go();
     }
 
     [Theory]
@@ -186,11 +179,10 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
 
         var result = sut.Configuration.EnableTreatingCaptiveDependenciesAsErrors( enabled );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut.Configuration );
-            sut.Configuration.TreatCaptiveDependenciesAsErrors.Should().Be( enabled );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut.Configuration ),
+                sut.Configuration.TreatCaptiveDependenciesAsErrors.TestEquals( enabled ) )
+            .Go();
     }
 
     [Theory]
@@ -202,13 +194,12 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
         var sut = new DependencyContainerBuilder();
         var result = sut.GetKeyedLocator( key );
 
-        using ( new AssertionScope() )
-        {
-            result.Key.Should().Be( key );
-            (( IDependencyLocatorBuilder )result).Key.Should().Be( key );
-            result.KeyType.Should().Be( typeof( int ) );
-            result.IsKeyed.Should().BeTrue();
-        }
+        Assertion.All(
+                result.Key.TestEquals( key ),
+                (( IDependencyLocatorBuilder )result).Key.TestEquals( key ),
+                result.KeyType.TestEquals( typeof( int ) ),
+                result.IsKeyed.TestTrue() )
+            .Go();
     }
 
     [Fact]
@@ -219,7 +210,7 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
         var result1 = sut.GetKeyedLocator( 1 );
         var result2 = sut.GetKeyedLocator( 1 );
 
-        result1.Should().Be( result2 );
+        result1.TestEquals( result2 ).Go();
     }
 
     [Fact]
@@ -229,14 +220,13 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
 
         var result = sut.Add( typeof( IFoo ) );
 
-        using ( new AssertionScope() )
-        {
-            result.DependencyType.Should().Be( typeof( IFoo ) );
-            result.Lifetime.Should().Be( sut.DefaultLifetime );
-            result.Implementor.Should().BeNull();
-            result.SharedImplementorKey.Should().BeNull();
-            result.IsIncludedInRange.Should().BeTrue();
-        }
+        Assertion.All(
+                result.DependencyType.TestEquals( typeof( IFoo ) ),
+                result.Lifetime.TestEquals( sut.DefaultLifetime ),
+                result.Implementor.TestNull(),
+                result.SharedImplementorKey.TestNull(),
+                result.IsIncludedInRange.TestTrue() )
+            .Go();
     }
 
     [Fact]
@@ -249,17 +239,16 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
 
         var result = builder.FromFactory( factory );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( builder.Implementor );
-            builder.SharedImplementorKey.Should().BeNull();
-            result.ImplementorType.Should().Be( typeof( IFoo ) );
-            result.Constructor.Should().BeNull();
-            result.Factory.Should().BeSameAs( factory );
-            result.DisposalStrategy.Type.Should().Be( DependencyImplementorDisposalStrategyType.UseDisposableInterface );
-            result.DisposalStrategy.Callback.Should().BeNull();
-            result.OnResolvingCallback.Should().BeNull();
-        }
+        Assertion.All(
+                result.TestRefEquals( builder.Implementor ),
+                builder.SharedImplementorKey.TestNull(),
+                result.ImplementorType.TestEquals( typeof( IFoo ) ),
+                result.Constructor.TestNull(),
+                result.Factory.TestRefEquals( factory ),
+                result.DisposalStrategy.Type.TestEquals( DependencyImplementorDisposalStrategyType.UseDisposableInterface ),
+                result.DisposalStrategy.Callback.TestNull(),
+                result.OnResolvingCallback.TestNull() )
+            .Go();
     }
 
     [Fact]
@@ -271,25 +260,24 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
 
         var result = builder.FromConstructor();
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( builder.Implementor );
-            builder.SharedImplementorKey.Should().BeNull();
-            result.ImplementorType.Should().Be( typeof( IFoo ) );
-            result.Factory.Should().BeNull();
-            result.DisposalStrategy.Type.Should().Be( DependencyImplementorDisposalStrategyType.UseDisposableInterface );
-            result.DisposalStrategy.Callback.Should().BeNull();
-            result.OnResolvingCallback.Should().BeNull();
-            result.Constructor.Should().NotBeNull();
-            if ( result.Constructor is null )
-                return;
-
-            result.Constructor.Info.Should().BeNull();
-            result.Constructor.Type.Should().BeNull();
-            result.Constructor.InvocationOptions.OnCreatedCallback.Should().BeNull();
-            result.Constructor.InvocationOptions.ParameterResolutions.Should().BeEmpty();
-            result.Constructor.InvocationOptions.MemberResolutions.Should().BeEmpty();
-        }
+        Assertion.All(
+                result.TestRefEquals( builder.Implementor ),
+                builder.SharedImplementorKey.TestNull(),
+                result.ImplementorType.TestEquals( typeof( IFoo ) ),
+                result.Factory.TestNull(),
+                result.DisposalStrategy.Type.TestEquals( DependencyImplementorDisposalStrategyType.UseDisposableInterface ),
+                result.DisposalStrategy.Callback.TestNull(),
+                result.OnResolvingCallback.TestNull(),
+                result.Constructor.TestNotNull(),
+                result.Constructor.TestIf()
+                    .NotNull(
+                        c => Assertion.All(
+                            c.Info.TestNull(),
+                            c.Type.TestNull(),
+                            c.InvocationOptions.OnCreatedCallback.TestNull(),
+                            c.InvocationOptions.ParameterResolutions.TestEmpty(),
+                            c.InvocationOptions.MemberResolutions.TestEmpty() ) ) )
+            .Go();
     }
 
     [Fact]
@@ -302,25 +290,24 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
 
         var result = builder.FromConstructor( o => o.SetOnCreatedCallback( onCreatedCallback ) );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( builder.Implementor );
-            builder.SharedImplementorKey.Should().BeNull();
-            result.ImplementorType.Should().Be( typeof( IFoo ) );
-            result.Factory.Should().BeNull();
-            result.DisposalStrategy.Type.Should().Be( DependencyImplementorDisposalStrategyType.UseDisposableInterface );
-            result.DisposalStrategy.Callback.Should().BeNull();
-            result.OnResolvingCallback.Should().BeNull();
-            result.Constructor.Should().NotBeNull();
-            if ( result.Constructor is null )
-                return;
-
-            result.Constructor.Info.Should().BeNull();
-            result.Constructor.Type.Should().BeNull();
-            result.Constructor.InvocationOptions.OnCreatedCallback.Should().BeSameAs( onCreatedCallback );
-            result.Constructor.InvocationOptions.ParameterResolutions.Should().BeEmpty();
-            result.Constructor.InvocationOptions.MemberResolutions.Should().BeEmpty();
-        }
+        Assertion.All(
+                result.TestRefEquals( builder.Implementor ),
+                builder.SharedImplementorKey.TestNull(),
+                result.ImplementorType.TestEquals( typeof( IFoo ) ),
+                result.Factory.TestNull(),
+                result.DisposalStrategy.Type.TestEquals( DependencyImplementorDisposalStrategyType.UseDisposableInterface ),
+                result.DisposalStrategy.Callback.TestNull(),
+                result.OnResolvingCallback.TestNull(),
+                result.Constructor.TestNotNull(),
+                result.Constructor.TestIf()
+                    .NotNull(
+                        c => Assertion.All(
+                            c.Info.TestNull(),
+                            c.Type.TestNull(),
+                            c.InvocationOptions.OnCreatedCallback.TestRefEquals( onCreatedCallback ),
+                            c.InvocationOptions.ParameterResolutions.TestEmpty(),
+                            c.InvocationOptions.MemberResolutions.TestEmpty() ) ) )
+            .Go();
     }
 
     [Fact]
@@ -333,25 +320,24 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
 
         var result = builder.FromConstructor( ctor );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( builder.Implementor );
-            builder.SharedImplementorKey.Should().BeNull();
-            result.ImplementorType.Should().Be( typeof( IFoo ) );
-            result.Factory.Should().BeNull();
-            result.DisposalStrategy.Type.Should().Be( DependencyImplementorDisposalStrategyType.UseDisposableInterface );
-            result.DisposalStrategy.Callback.Should().BeNull();
-            result.OnResolvingCallback.Should().BeNull();
-            result.Constructor.Should().NotBeNull();
-            if ( result.Constructor is null )
-                return;
-
-            result.Constructor.Info.Should().BeSameAs( ctor );
-            result.Constructor.Type.Should().BeSameAs( ctor.DeclaringType );
-            result.Constructor.InvocationOptions.OnCreatedCallback.Should().BeNull();
-            result.Constructor.InvocationOptions.ParameterResolutions.Should().BeEmpty();
-            result.Constructor.InvocationOptions.MemberResolutions.Should().BeEmpty();
-        }
+        Assertion.All(
+                result.TestRefEquals( builder.Implementor ),
+                builder.SharedImplementorKey.TestNull(),
+                result.ImplementorType.TestEquals( typeof( IFoo ) ),
+                result.Factory.TestNull(),
+                result.DisposalStrategy.Type.TestEquals( DependencyImplementorDisposalStrategyType.UseDisposableInterface ),
+                result.DisposalStrategy.Callback.TestNull(),
+                result.OnResolvingCallback.TestNull(),
+                result.Constructor.TestNotNull(),
+                result.Constructor.TestIf()
+                    .NotNull(
+                        c => Assertion.All(
+                            c.Info.TestRefEquals( ctor ),
+                            c.Type.TestRefEquals( ctor.DeclaringType ),
+                            c.InvocationOptions.OnCreatedCallback.TestNull(),
+                            c.InvocationOptions.ParameterResolutions.TestEmpty(),
+                            c.InvocationOptions.MemberResolutions.TestEmpty() ) ) )
+            .Go();
     }
 
     [Fact]
@@ -365,25 +351,24 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
 
         var result = builder.FromConstructor( ctor, o => o.SetOnCreatedCallback( onCreatedCallback ) );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( builder.Implementor );
-            builder.SharedImplementorKey.Should().BeNull();
-            result.ImplementorType.Should().Be( typeof( IFoo ) );
-            result.Factory.Should().BeNull();
-            result.DisposalStrategy.Type.Should().Be( DependencyImplementorDisposalStrategyType.UseDisposableInterface );
-            result.DisposalStrategy.Callback.Should().BeNull();
-            result.OnResolvingCallback.Should().BeNull();
-            result.Constructor.Should().NotBeNull();
-            if ( result.Constructor is null )
-                return;
-
-            result.Constructor.Info.Should().BeSameAs( ctor );
-            result.Constructor.Type.Should().BeSameAs( ctor.DeclaringType );
-            result.Constructor.InvocationOptions.OnCreatedCallback.Should().BeSameAs( onCreatedCallback );
-            result.Constructor.InvocationOptions.ParameterResolutions.Should().BeEmpty();
-            result.Constructor.InvocationOptions.MemberResolutions.Should().BeEmpty();
-        }
+        Assertion.All(
+                result.TestRefEquals( builder.Implementor ),
+                builder.SharedImplementorKey.TestNull(),
+                result.ImplementorType.TestEquals( typeof( IFoo ) ),
+                result.Factory.TestNull(),
+                result.DisposalStrategy.Type.TestEquals( DependencyImplementorDisposalStrategyType.UseDisposableInterface ),
+                result.DisposalStrategy.Callback.TestNull(),
+                result.OnResolvingCallback.TestNull(),
+                result.Constructor.TestNotNull(),
+                result.Constructor.TestIf()
+                    .NotNull(
+                        c => Assertion.All(
+                            c.Info.TestRefEquals( ctor ),
+                            c.Type.TestRefEquals( ctor.DeclaringType ),
+                            c.InvocationOptions.OnCreatedCallback.TestRefEquals( onCreatedCallback ),
+                            c.InvocationOptions.ParameterResolutions.TestEmpty(),
+                            c.InvocationOptions.MemberResolutions.TestEmpty() ) ) )
+            .Go();
     }
 
     [Fact]
@@ -396,25 +381,24 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
 
         var result = builder.FromConstructor( ctor );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( builder.Implementor );
-            builder.SharedImplementorKey.Should().BeNull();
-            result.ImplementorType.Should().Be( typeof( IFoo ) );
-            result.Factory.Should().BeNull();
-            result.DisposalStrategy.Type.Should().Be( DependencyImplementorDisposalStrategyType.UseDisposableInterface );
-            result.DisposalStrategy.Callback.Should().BeNull();
-            result.OnResolvingCallback.Should().BeNull();
-            result.Constructor.Should().NotBeNull();
-            if ( result.Constructor is null )
-                return;
-
-            result.Constructor.Info.Should().BeSameAs( ctor );
-            result.Constructor.Type.Should().BeSameAs( ctor.DeclaringType );
-            result.Constructor.InvocationOptions.OnCreatedCallback.Should().BeNull();
-            result.Constructor.InvocationOptions.ParameterResolutions.Should().BeEmpty();
-            result.Constructor.InvocationOptions.MemberResolutions.Should().BeEmpty();
-        }
+        Assertion.All(
+                result.TestRefEquals( builder.Implementor ),
+                builder.SharedImplementorKey.TestNull(),
+                result.ImplementorType.TestEquals( typeof( IFoo ) ),
+                result.Factory.TestNull(),
+                result.DisposalStrategy.Type.TestEquals( DependencyImplementorDisposalStrategyType.UseDisposableInterface ),
+                result.DisposalStrategy.Callback.TestNull(),
+                result.OnResolvingCallback.TestNull(),
+                result.Constructor.TestNotNull(),
+                result.Constructor.TestIf()
+                    .NotNull(
+                        c => Assertion.All(
+                            c.Info.TestRefEquals( ctor ),
+                            c.Type.TestRefEquals( ctor.DeclaringType ),
+                            c.InvocationOptions.OnCreatedCallback.TestNull(),
+                            c.InvocationOptions.ParameterResolutions.TestEmpty(),
+                            c.InvocationOptions.MemberResolutions.TestEmpty() ) ) )
+            .Go();
     }
 
     [Fact]
@@ -425,25 +409,24 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
 
         var result = builder.FromType( typeof( Implementor ) );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( builder.Implementor );
-            builder.SharedImplementorKey.Should().BeNull();
-            result.ImplementorType.Should().Be( typeof( IFoo ) );
-            result.Factory.Should().BeNull();
-            result.DisposalStrategy.Type.Should().Be( DependencyImplementorDisposalStrategyType.UseDisposableInterface );
-            result.DisposalStrategy.Callback.Should().BeNull();
-            result.OnResolvingCallback.Should().BeNull();
-            result.Constructor.Should().NotBeNull();
-            if ( result.Constructor is null )
-                return;
-
-            result.Constructor.Info.Should().BeNull();
-            result.Constructor.Type.Should().BeSameAs( typeof( Implementor ) );
-            result.Constructor.InvocationOptions.OnCreatedCallback.Should().BeNull();
-            result.Constructor.InvocationOptions.ParameterResolutions.Should().BeEmpty();
-            result.Constructor.InvocationOptions.MemberResolutions.Should().BeEmpty();
-        }
+        Assertion.All(
+                result.TestRefEquals( builder.Implementor ),
+                builder.SharedImplementorKey.TestNull(),
+                result.ImplementorType.TestEquals( typeof( IFoo ) ),
+                result.Factory.TestNull(),
+                result.DisposalStrategy.Type.TestEquals( DependencyImplementorDisposalStrategyType.UseDisposableInterface ),
+                result.DisposalStrategy.Callback.TestNull(),
+                result.OnResolvingCallback.TestNull(),
+                result.Constructor.TestNotNull(),
+                result.Constructor.TestIf()
+                    .NotNull(
+                        c => Assertion.All(
+                            c.Info.TestNull(),
+                            c.Type.TestRefEquals( typeof( Implementor ) ),
+                            c.InvocationOptions.OnCreatedCallback.TestNull(),
+                            c.InvocationOptions.ParameterResolutions.TestEmpty(),
+                            c.InvocationOptions.MemberResolutions.TestEmpty() ) ) )
+            .Go();
     }
 
     [Fact]
@@ -455,25 +438,24 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
 
         var result = builder.FromType( typeof( Implementor ), o => o.SetOnCreatedCallback( onCreatedCallback ) );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( builder.Implementor );
-            builder.SharedImplementorKey.Should().BeNull();
-            result.ImplementorType.Should().Be( typeof( IFoo ) );
-            result.Factory.Should().BeNull();
-            result.DisposalStrategy.Type.Should().Be( DependencyImplementorDisposalStrategyType.UseDisposableInterface );
-            result.DisposalStrategy.Callback.Should().BeNull();
-            result.OnResolvingCallback.Should().BeNull();
-            result.Constructor.Should().NotBeNull();
-            if ( result.Constructor is null )
-                return;
-
-            result.Constructor.Info.Should().BeNull();
-            result.Constructor.Type.Should().BeSameAs( typeof( Implementor ) );
-            result.Constructor.InvocationOptions.OnCreatedCallback.Should().BeSameAs( onCreatedCallback );
-            result.Constructor.InvocationOptions.ParameterResolutions.Should().BeEmpty();
-            result.Constructor.InvocationOptions.MemberResolutions.Should().BeEmpty();
-        }
+        Assertion.All(
+                result.TestRefEquals( builder.Implementor ),
+                builder.SharedImplementorKey.TestNull(),
+                result.ImplementorType.TestEquals( typeof( IFoo ) ),
+                result.Factory.TestNull(),
+                result.DisposalStrategy.Type.TestEquals( DependencyImplementorDisposalStrategyType.UseDisposableInterface ),
+                result.DisposalStrategy.Callback.TestNull(),
+                result.OnResolvingCallback.TestNull(),
+                result.Constructor.TestNotNull(),
+                result.Constructor.TestIf()
+                    .NotNull(
+                        c => Assertion.All(
+                            c.Info.TestNull(),
+                            c.Type.TestRefEquals( typeof( Implementor ) ),
+                            c.InvocationOptions.OnCreatedCallback.TestRefEquals( onCreatedCallback ),
+                            c.InvocationOptions.ParameterResolutions.TestEmpty(),
+                            c.InvocationOptions.MemberResolutions.TestEmpty() ) ) )
+            .Go();
     }
 
     [Theory]
@@ -488,11 +470,10 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
 
         var result = builder.SetLifetime( lifetime );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( builder );
-            result.Lifetime.Should().Be( lifetime );
-        }
+        Assertion.All(
+                result.TestRefEquals( builder ),
+                result.Lifetime.TestEquals( lifetime ) )
+            .Go();
     }
 
     [Fact]
@@ -503,7 +484,7 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
 
         var action = Lambda.Of( () => { builder.SetLifetime( ( DependencyLifetime )4 ); } );
 
-        action.Should().ThrowExactly<ArgumentException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentException>() ).Go();
     }
 
     [Theory]
@@ -516,11 +497,10 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
 
         var result = builder.IncludeInRange( included );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( builder );
-            result.IsIncludedInRange.Should().Be( included );
-        }
+        Assertion.All(
+                result.TestRefEquals( builder ),
+                result.IsIncludedInRange.TestEquals( included ) )
+            .Go();
     }
 
     [Fact]
@@ -533,19 +513,18 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
 
         var result = builder.FromSharedImplementor( typeof( Implementor ) );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( builder );
-            result.Implementor.Should().BeNull();
-            result.SharedImplementorKey.Should().NotBeNull();
-            if ( result.SharedImplementorKey is null )
-                return;
-
-            result.SharedImplementorKey.Type.Should().Be( typeof( Implementor ) );
-            result.SharedImplementorKey.Key.Should().BeNull();
-            result.SharedImplementorKey.KeyType.Should().BeNull();
-            result.SharedImplementorKey.IsKeyed.Should().BeFalse();
-        }
+        Assertion.All(
+                result.TestRefEquals( builder ),
+                result.Implementor.TestNull(),
+                result.SharedImplementorKey.TestNotNull(),
+                result.SharedImplementorKey.TestIf()
+                    .NotNull(
+                        k => Assertion.All(
+                            k.Type.TestEquals( typeof( Implementor ) ),
+                            k.Key.TestNull(),
+                            k.KeyType.TestNull(),
+                            k.IsKeyed.TestFalse() ) ) )
+            .Go();
     }
 
     [Fact]
@@ -558,19 +537,18 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
 
         var result = builder.FromSharedImplementor<Implementor>( o => o.Keyed( 1 ) );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( builder );
-            result.Implementor.Should().BeNull();
-            result.SharedImplementorKey.Should().NotBeNull();
-            if ( result.SharedImplementorKey is null )
-                return;
-
-            result.SharedImplementorKey.Type.Should().Be( typeof( Implementor ) );
-            result.SharedImplementorKey.Key.Should().Be( 1 );
-            result.SharedImplementorKey.KeyType.Should().Be( typeof( int ) );
-            result.SharedImplementorKey.IsKeyed.Should().BeTrue();
-        }
+        Assertion.All(
+                result.TestRefEquals( builder ),
+                result.Implementor.TestNull(),
+                result.SharedImplementorKey.TestNotNull(),
+                result.SharedImplementorKey.TestIf()
+                    .NotNull(
+                        k => Assertion.All(
+                            k.Type.TestEquals( typeof( Implementor ) ),
+                            k.Key.TestEquals( 1 ),
+                            k.KeyType.TestEquals( typeof( int ) ),
+                            k.IsKeyed.TestTrue() ) ) )
+            .Go();
     }
 
     [Fact]
@@ -583,19 +561,18 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
 
         var result = builder.FromSharedImplementor( typeof( Implementor ) );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( builder );
-            result.Implementor.Should().BeNull();
-            result.SharedImplementorKey.Should().NotBeNull();
-            if ( result.SharedImplementorKey is null )
-                return;
-
-            result.SharedImplementorKey.Type.Should().Be( typeof( Implementor ) );
-            result.SharedImplementorKey.Key.Should().Be( 1 );
-            result.SharedImplementorKey.KeyType.Should().Be( typeof( int ) );
-            result.SharedImplementorKey.IsKeyed.Should().BeTrue();
-        }
+        Assertion.All(
+                result.TestRefEquals( builder ),
+                result.Implementor.TestNull(),
+                result.SharedImplementorKey.TestNotNull(),
+                result.SharedImplementorKey.TestIf()
+                    .NotNull(
+                        k => Assertion.All(
+                            k.Type.TestEquals( typeof( Implementor ) ),
+                            k.Key.TestEquals( 1 ),
+                            k.KeyType.TestEquals( typeof( int ) ),
+                            k.IsKeyed.TestTrue() ) ) )
+            .Go();
     }
 
     [Fact]
@@ -608,19 +585,18 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
 
         var result = builder.FromSharedImplementor<Implementor>( o => o.NotKeyed() );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( builder );
-            result.Implementor.Should().BeNull();
-            result.SharedImplementorKey.Should().NotBeNull();
-            if ( result.SharedImplementorKey is null )
-                return;
-
-            result.SharedImplementorKey.Type.Should().Be( typeof( Implementor ) );
-            result.SharedImplementorKey.Key.Should().BeNull();
-            result.SharedImplementorKey.KeyType.Should().BeNull();
-            result.SharedImplementorKey.IsKeyed.Should().BeFalse();
-        }
+        Assertion.All(
+                result.TestRefEquals( builder ),
+                result.Implementor.TestNull(),
+                result.SharedImplementorKey.TestNotNull(),
+                result.SharedImplementorKey.TestIf()
+                    .NotNull(
+                        k => Assertion.All(
+                            k.Type.TestEquals( typeof( Implementor ) ),
+                            k.Key.TestNull(),
+                            k.KeyType.TestNull(),
+                            k.IsKeyed.TestFalse() ) ) )
+            .Go();
     }
 
     [Fact]
@@ -630,14 +606,13 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
 
         var result = sut.AddSharedImplementor( typeof( Implementor ) );
 
-        using ( new AssertionScope() )
-        {
-            result.ImplementorType.Should().Be( typeof( Implementor ) );
-            result.Factory.Should().BeNull();
-            result.DisposalStrategy.Type.Should().Be( DependencyImplementorDisposalStrategyType.UseDisposableInterface );
-            result.DisposalStrategy.Callback.Should().BeNull();
-            result.OnResolvingCallback.Should().BeNull();
-        }
+        Assertion.All(
+                result.ImplementorType.TestEquals( typeof( Implementor ) ),
+                result.Factory.TestNull(),
+                result.DisposalStrategy.Type.TestEquals( DependencyImplementorDisposalStrategyType.UseDisposableInterface ),
+                result.DisposalStrategy.Callback.TestNull(),
+                result.OnResolvingCallback.TestNull() )
+            .Go();
     }
 
     [Fact]
@@ -648,7 +623,7 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
 
         var result = sut.AddSharedImplementor( typeof( Implementor ) );
 
-        result.Should().BeSameAs( expected );
+        result.TestRefEquals( expected ).Go();
     }
 
     [Fact]
@@ -660,13 +635,12 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
 
         var result = builder.FromFactory( factory );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( builder );
-            result.ImplementorType.Should().Be( typeof( Implementor ) );
-            result.Factory.Should().BeSameAs( factory );
-            result.Constructor.Should().BeNull();
-        }
+        Assertion.All(
+                result.TestRefEquals( builder ),
+                result.ImplementorType.TestEquals( typeof( Implementor ) ),
+                result.Factory.TestRefEquals( factory ),
+                result.Constructor.TestNull() )
+            .Go();
     }
 
     [Fact]
@@ -677,21 +651,20 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
 
         var result = builder.FromConstructor();
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( builder );
-            result.ImplementorType.Should().Be( typeof( Implementor ) );
-            result.Factory.Should().BeNull();
-            result.Constructor.Should().NotBeNull();
-            if ( result.Constructor is null )
-                return;
-
-            result.Constructor.Info.Should().BeNull();
-            result.Constructor.Type.Should().BeNull();
-            result.Constructor.InvocationOptions.OnCreatedCallback.Should().BeNull();
-            result.Constructor.InvocationOptions.ParameterResolutions.Should().BeEmpty();
-            result.Constructor.InvocationOptions.MemberResolutions.Should().BeEmpty();
-        }
+        Assertion.All(
+                result.TestRefEquals( builder ),
+                result.ImplementorType.TestEquals( typeof( Implementor ) ),
+                result.Factory.TestNull(),
+                result.Constructor.TestNotNull(),
+                result.Constructor.TestIf()
+                    .NotNull(
+                        c => Assertion.All(
+                            c.Info.TestNull(),
+                            c.Type.TestNull(),
+                            c.InvocationOptions.OnCreatedCallback.TestNull(),
+                            c.InvocationOptions.ParameterResolutions.TestEmpty(),
+                            c.InvocationOptions.MemberResolutions.TestEmpty() ) ) )
+            .Go();
     }
 
     [Fact]
@@ -703,21 +676,20 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
 
         var result = builder.FromConstructor( o => o.SetOnCreatedCallback( onCreatedCallback ) );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( builder );
-            result.ImplementorType.Should().Be( typeof( Implementor ) );
-            result.Factory.Should().BeNull();
-            result.Constructor.Should().NotBeNull();
-            if ( result.Constructor is null )
-                return;
-
-            result.Constructor.Info.Should().BeNull();
-            result.Constructor.Type.Should().BeNull();
-            result.Constructor.InvocationOptions.OnCreatedCallback.Should().BeSameAs( onCreatedCallback );
-            result.Constructor.InvocationOptions.ParameterResolutions.Should().BeEmpty();
-            result.Constructor.InvocationOptions.MemberResolutions.Should().BeEmpty();
-        }
+        Assertion.All(
+                result.TestRefEquals( builder ),
+                result.ImplementorType.TestEquals( typeof( Implementor ) ),
+                result.Factory.TestNull(),
+                result.Constructor.TestNotNull(),
+                result.Constructor.TestIf()
+                    .NotNull(
+                        c => Assertion.All(
+                            c.Info.TestNull(),
+                            c.Type.TestNull(),
+                            c.InvocationOptions.OnCreatedCallback.TestRefEquals( onCreatedCallback ),
+                            c.InvocationOptions.ParameterResolutions.TestEmpty(),
+                            c.InvocationOptions.MemberResolutions.TestEmpty() ) ) )
+            .Go();
     }
 
     [Fact]
@@ -729,21 +701,20 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
 
         var result = builder.FromConstructor( ctor );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( builder );
-            result.ImplementorType.Should().Be( typeof( Implementor ) );
-            result.Factory.Should().BeNull();
-            result.Constructor.Should().NotBeNull();
-            if ( result.Constructor is null )
-                return;
-
-            result.Constructor.Info.Should().BeSameAs( ctor );
-            result.Constructor.Type.Should().BeSameAs( ctor.DeclaringType );
-            result.Constructor.InvocationOptions.OnCreatedCallback.Should().BeNull();
-            result.Constructor.InvocationOptions.ParameterResolutions.Should().BeEmpty();
-            result.Constructor.InvocationOptions.MemberResolutions.Should().BeEmpty();
-        }
+        Assertion.All(
+                result.TestRefEquals( builder ),
+                result.ImplementorType.TestEquals( typeof( Implementor ) ),
+                result.Factory.TestNull(),
+                result.Constructor.TestNotNull(),
+                result.Constructor.TestIf()
+                    .NotNull(
+                        c => Assertion.All(
+                            c.Info.TestRefEquals( ctor ),
+                            c.Type.TestRefEquals( ctor.DeclaringType ),
+                            c.InvocationOptions.OnCreatedCallback.TestNull(),
+                            c.InvocationOptions.ParameterResolutions.TestEmpty(),
+                            c.InvocationOptions.MemberResolutions.TestEmpty() ) ) )
+            .Go();
     }
 
     [Fact]
@@ -756,21 +727,20 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
 
         var result = builder.FromConstructor( ctor, o => o.SetOnCreatedCallback( onCreatedCallback ) );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( builder );
-            result.ImplementorType.Should().Be( typeof( Implementor ) );
-            result.Factory.Should().BeNull();
-            result.Constructor.Should().NotBeNull();
-            if ( result.Constructor is null )
-                return;
-
-            result.Constructor.Info.Should().BeSameAs( ctor );
-            result.Constructor.Type.Should().BeSameAs( ctor.DeclaringType );
-            result.Constructor.InvocationOptions.OnCreatedCallback.Should().BeSameAs( onCreatedCallback );
-            result.Constructor.InvocationOptions.ParameterResolutions.Should().BeEmpty();
-            result.Constructor.InvocationOptions.MemberResolutions.Should().BeEmpty();
-        }
+        Assertion.All(
+                result.TestRefEquals( builder ),
+                result.ImplementorType.TestEquals( typeof( Implementor ) ),
+                result.Factory.TestNull(),
+                result.Constructor.TestNotNull(),
+                result.Constructor.TestIf()
+                    .NotNull(
+                        c => Assertion.All(
+                            c.Info.TestRefEquals( ctor ),
+                            c.Type.TestRefEquals( ctor.DeclaringType ),
+                            c.InvocationOptions.OnCreatedCallback.TestRefEquals( onCreatedCallback ),
+                            c.InvocationOptions.ParameterResolutions.TestEmpty(),
+                            c.InvocationOptions.MemberResolutions.TestEmpty() ) ) )
+            .Go();
     }
 
     [Fact]
@@ -785,32 +755,27 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
         var result = builder.FromConstructor(
             o => o.ResolveParameter( predicate1, factory ).ResolveParameter( predicate2, typeof( IFoo ), i => i.Keyed( 1 ) ) );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( builder );
-            result.ImplementorType.Should().Be( typeof( Implementor ) );
-            result.Factory.Should().BeNull();
-            result.Constructor.Should().NotBeNull();
-            if ( result.Constructor is null )
-                return;
-
-            result.Constructor.Info.Should().BeNull();
-            result.Constructor.Type.Should().BeNull();
-            result.Constructor.InvocationOptions.OnCreatedCallback.Should().BeNull();
-            result.Constructor.InvocationOptions.MemberResolutions.Should().BeEmpty();
-            result.Constructor.InvocationOptions.ParameterResolutions.Should().HaveCount( 2 );
-
-            result.Constructor.InvocationOptions.ParameterResolutions.ElementAtOrDefault( 0 )
-                .Should()
-                .BeEquivalentTo( InjectableDependencyResolution<ParameterInfo>.FromFactory( predicate1, factory ) );
-
-            result.Constructor.InvocationOptions.ParameterResolutions.ElementAtOrDefault( 1 )
-                .Should()
-                .BeEquivalentTo(
-                    InjectableDependencyResolution<ParameterInfo>.FromImplementorKey(
-                        predicate2,
-                        new DependencyKey<int>( typeof( IFoo ), 1 ) ) );
-        }
+        Assertion.All(
+                result.TestRefEquals( builder ),
+                result.ImplementorType.TestEquals( typeof( Implementor ) ),
+                result.Factory.TestNull(),
+                result.Constructor.TestNotNull(),
+                result.Constructor.TestIf()
+                    .NotNull(
+                        c => Assertion.All(
+                            c.Info.TestNull(),
+                            c.Type.TestNull(),
+                            c.InvocationOptions.OnCreatedCallback.TestNull(),
+                            c.InvocationOptions.MemberResolutions.TestEmpty(),
+                            c.InvocationOptions.ParameterResolutions.Count.TestEquals( 2 ),
+                            c.InvocationOptions.ParameterResolutions.ElementAtOrDefault( 0 )
+                                .TestEquals( InjectableDependencyResolution<ParameterInfo>.FromFactory( predicate1, factory ) ),
+                            c.InvocationOptions.ParameterResolutions.ElementAtOrDefault( 1 )
+                                .TestEquals(
+                                    InjectableDependencyResolution<ParameterInfo>.FromImplementorKey(
+                                        predicate2,
+                                        new DependencyKey<int>( typeof( IFoo ), 1 ) ) ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -825,32 +790,27 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
         var result = builder.FromConstructor(
             o => o.ResolveMember( predicate1, factory ).ResolveMember( predicate2, typeof( IFoo ), i => i.Keyed( 1 ) ) );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( builder );
-            result.ImplementorType.Should().Be( typeof( Implementor ) );
-            result.Factory.Should().BeNull();
-            result.Constructor.Should().NotBeNull();
-            if ( result.Constructor is null )
-                return;
-
-            result.Constructor.Info.Should().BeNull();
-            result.Constructor.Type.Should().BeNull();
-            result.Constructor.InvocationOptions.OnCreatedCallback.Should().BeNull();
-            result.Constructor.InvocationOptions.ParameterResolutions.Should().BeEmpty();
-            result.Constructor.InvocationOptions.MemberResolutions.Should().HaveCount( 2 );
-
-            result.Constructor.InvocationOptions.MemberResolutions.ElementAtOrDefault( 0 )
-                .Should()
-                .BeEquivalentTo( InjectableDependencyResolution<MemberInfo>.FromFactory( predicate1, factory ) );
-
-            result.Constructor.InvocationOptions.MemberResolutions.ElementAtOrDefault( 1 )
-                .Should()
-                .BeEquivalentTo(
-                    InjectableDependencyResolution<MemberInfo>.FromImplementorKey(
-                        predicate2,
-                        new DependencyKey<int>( typeof( IFoo ), 1 ) ) );
-        }
+        Assertion.All(
+                result.TestRefEquals( builder ),
+                result.ImplementorType.TestEquals( typeof( Implementor ) ),
+                result.Factory.TestNull(),
+                result.Constructor.TestNotNull(),
+                result.Constructor.TestIf()
+                    .NotNull(
+                        c => Assertion.All(
+                            c.Info.TestNull(),
+                            c.Type.TestNull(),
+                            c.InvocationOptions.OnCreatedCallback.TestNull(),
+                            c.InvocationOptions.ParameterResolutions.TestEmpty(),
+                            c.InvocationOptions.MemberResolutions.Count.TestEquals( 2 ),
+                            c.InvocationOptions.MemberResolutions.ElementAtOrDefault( 0 )
+                                .TestEquals( InjectableDependencyResolution<MemberInfo>.FromFactory( predicate1, factory ) ),
+                            c.InvocationOptions.MemberResolutions.ElementAtOrDefault( 1 )
+                                .TestEquals(
+                                    InjectableDependencyResolution<MemberInfo>.FromImplementorKey(
+                                        predicate2,
+                                        new DependencyKey<int>( typeof( IFoo ), 1 ) ) ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -863,21 +823,20 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
         var result = builder.FromConstructor(
             o => o.ResolveParameter( predicate, typeof( IFoo ) ).ResolveMember( _ => true, typeof( IFoo ) ).ClearParameterResolutions() );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( builder );
-            result.ImplementorType.Should().Be( typeof( Implementor ) );
-            result.Factory.Should().BeNull();
-            result.Constructor.Should().NotBeNull();
-            if ( result.Constructor is null )
-                return;
-
-            result.Constructor.Info.Should().BeNull();
-            result.Constructor.Type.Should().BeNull();
-            result.Constructor.InvocationOptions.OnCreatedCallback.Should().BeNull();
-            result.Constructor.InvocationOptions.ParameterResolutions.Should().BeEmpty();
-            result.Constructor.InvocationOptions.MemberResolutions.Should().HaveCount( 1 );
-        }
+        Assertion.All(
+                result.TestRefEquals( builder ),
+                result.ImplementorType.TestEquals( typeof( Implementor ) ),
+                result.Factory.TestNull(),
+                result.Constructor.TestNotNull(),
+                result.Constructor.TestIf()
+                    .NotNull(
+                        c => Assertion.All(
+                            c.Info.TestNull(),
+                            c.Type.TestNull(),
+                            c.InvocationOptions.OnCreatedCallback.TestNull(),
+                            c.InvocationOptions.ParameterResolutions.TestEmpty(),
+                            c.InvocationOptions.MemberResolutions.Count.TestEquals( 1 ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -890,21 +849,20 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
         var result = builder.FromConstructor(
             o => o.ResolveParameter( _ => true, typeof( IFoo ) ).ResolveMember( predicate, typeof( IFoo ) ).ClearMemberResolutions() );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( builder );
-            result.ImplementorType.Should().Be( typeof( Implementor ) );
-            result.Factory.Should().BeNull();
-            result.Constructor.Should().NotBeNull();
-            if ( result.Constructor is null )
-                return;
-
-            result.Constructor.Info.Should().BeNull();
-            result.Constructor.Type.Should().BeNull();
-            result.Constructor.InvocationOptions.OnCreatedCallback.Should().BeNull();
-            result.Constructor.InvocationOptions.ParameterResolutions.Should().HaveCount( 1 );
-            result.Constructor.InvocationOptions.MemberResolutions.Should().BeEmpty();
-        }
+        Assertion.All(
+                result.TestRefEquals( builder ),
+                result.ImplementorType.TestEquals( typeof( Implementor ) ),
+                result.Factory.TestNull(),
+                result.Constructor.TestNotNull(),
+                result.Constructor.TestIf()
+                    .NotNull(
+                        c => Assertion.All(
+                            c.Info.TestNull(),
+                            c.Type.TestNull(),
+                            c.InvocationOptions.OnCreatedCallback.TestNull(),
+                            c.InvocationOptions.ParameterResolutions.Count.TestEquals( 1 ),
+                            c.InvocationOptions.MemberResolutions.TestEmpty() ) ) )
+            .Go();
     }
 
     [Fact]
@@ -915,21 +873,20 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
 
         var result = builder.FromType( typeof( Implementor ) );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( builder );
-            result.ImplementorType.Should().Be( typeof( IFoo ) );
-            result.Factory.Should().BeNull();
-            result.Constructor.Should().NotBeNull();
-            if ( result.Constructor is null )
-                return;
-
-            result.Constructor.Info.Should().BeNull();
-            result.Constructor.Type.Should().BeSameAs( typeof( Implementor ) );
-            result.Constructor.InvocationOptions.OnCreatedCallback.Should().BeNull();
-            result.Constructor.InvocationOptions.ParameterResolutions.Should().BeEmpty();
-            result.Constructor.InvocationOptions.MemberResolutions.Should().BeEmpty();
-        }
+        Assertion.All(
+                result.TestRefEquals( builder ),
+                result.ImplementorType.TestEquals( typeof( IFoo ) ),
+                result.Factory.TestNull(),
+                result.Constructor.TestNotNull(),
+                result.Constructor.TestIf()
+                    .NotNull(
+                        c => Assertion.All(
+                            c.Info.TestNull(),
+                            c.Type.TestRefEquals( typeof( Implementor ) ),
+                            c.InvocationOptions.OnCreatedCallback.TestNull(),
+                            c.InvocationOptions.ParameterResolutions.TestEmpty(),
+                            c.InvocationOptions.MemberResolutions.TestEmpty() ) ) )
+            .Go();
     }
 
     [Fact]
@@ -941,21 +898,20 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
 
         var result = builder.FromType( typeof( Implementor ), o => o.SetOnCreatedCallback( onCreatedCallback ) );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( builder );
-            result.ImplementorType.Should().Be( typeof( IFoo ) );
-            result.Factory.Should().BeNull();
-            result.Constructor.Should().NotBeNull();
-            if ( result.Constructor is null )
-                return;
-
-            result.Constructor.Info.Should().BeNull();
-            result.Constructor.Type.Should().BeSameAs( typeof( Implementor ) );
-            result.Constructor.InvocationOptions.OnCreatedCallback.Should().BeSameAs( onCreatedCallback );
-            result.Constructor.InvocationOptions.ParameterResolutions.Should().BeEmpty();
-            result.Constructor.InvocationOptions.MemberResolutions.Should().BeEmpty();
-        }
+        Assertion.All(
+                result.TestRefEquals( builder ),
+                result.ImplementorType.TestEquals( typeof( IFoo ) ),
+                result.Factory.TestNull(),
+                result.Constructor.TestNotNull(),
+                result.Constructor.TestIf()
+                    .NotNull(
+                        c => Assertion.All(
+                            c.Info.TestNull(),
+                            c.Type.TestRefEquals( typeof( Implementor ) ),
+                            c.InvocationOptions.OnCreatedCallback.TestRefEquals( onCreatedCallback ),
+                            c.InvocationOptions.ParameterResolutions.TestEmpty(),
+                            c.InvocationOptions.MemberResolutions.TestEmpty() ) ) )
+            .Go();
     }
 
     [Fact]
@@ -966,12 +922,11 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
 
         var result = builder.SetDisposalStrategy( DependencyImplementorDisposalStrategy.UseDisposableInterface() );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( builder );
-            result.DisposalStrategy.Type.Should().Be( DependencyImplementorDisposalStrategyType.UseDisposableInterface );
-            result.DisposalStrategy.Callback.Should().BeNull();
-        }
+        Assertion.All(
+                result.TestRefEquals( builder ),
+                result.DisposalStrategy.Type.TestEquals( DependencyImplementorDisposalStrategyType.UseDisposableInterface ),
+                result.DisposalStrategy.Callback.TestNull() )
+            .Go();
     }
 
     [Fact]
@@ -982,12 +937,11 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
 
         var result = builder.SetDisposalStrategy( DependencyImplementorDisposalStrategy.RenounceOwnership() );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( builder );
-            result.DisposalStrategy.Type.Should().Be( DependencyImplementorDisposalStrategyType.RenounceOwnership );
-            result.DisposalStrategy.Callback.Should().BeNull();
-        }
+        Assertion.All(
+                result.TestRefEquals( builder ),
+                result.DisposalStrategy.Type.TestEquals( DependencyImplementorDisposalStrategyType.RenounceOwnership ),
+                result.DisposalStrategy.Callback.TestNull() )
+            .Go();
     }
 
     [Fact]
@@ -999,12 +953,11 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
 
         var result = builder.SetDisposalStrategy( DependencyImplementorDisposalStrategy.UseCallback( callback ) );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( builder );
-            result.DisposalStrategy.Type.Should().Be( DependencyImplementorDisposalStrategyType.UseCallback );
-            result.DisposalStrategy.Callback.Should().BeSameAs( callback );
-        }
+        Assertion.All(
+                result.TestRefEquals( builder ),
+                result.DisposalStrategy.Type.TestEquals( DependencyImplementorDisposalStrategyType.UseCallback ),
+                result.DisposalStrategy.Callback.TestRefEquals( callback ) )
+            .Go();
     }
 
     [Fact]
@@ -1012,7 +965,11 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
     {
         var sut = new DependencyContainerBuilder();
         var action = Lambda.Of( () => sut.AddSharedImplementor( typeof( IList<> ) ) );
-        action.Should().ThrowExactly<InvalidTypeRegistrationException>().AndMatch( e => e.Type == typeof( IList<> ) );
+        action.Test(
+                exc => Assertion.All(
+                    exc.TestType().Exact<InvalidTypeRegistrationException>(),
+                    exc.TestIf().OfType<InvalidTypeRegistrationException>( e => e.Type.TestEquals( typeof( IList<> ) ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -1021,7 +978,11 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
         var sut = new DependencyContainerBuilder();
         var type = typeof( List<> ).GetOpenGenericImplementations( typeof( IList<> ) ).Single();
         var action = Lambda.Of( () => sut.AddSharedImplementor( type ) );
-        action.Should().ThrowExactly<InvalidTypeRegistrationException>().AndMatch( e => e.Type == type );
+        action.Test(
+                exc => Assertion.All(
+                    exc.TestType().Exact<InvalidTypeRegistrationException>(),
+                    exc.TestIf().OfType<InvalidTypeRegistrationException>( e => e.Type.TestEquals( type ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -1031,12 +992,11 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
 
         var result = sut.GetDependencyRange( typeof( IFoo ) );
 
-        using ( new AssertionScope() )
-        {
-            result.DependencyType.Should().Be( typeof( IFoo ) );
-            result.Elements.Should().BeEmpty();
-            result.TryGetLast().Should().BeNull();
-        }
+        Assertion.All(
+                result.DependencyType.TestEquals( typeof( IFoo ) ),
+                result.Elements.TestEmpty(),
+                result.TryGetLast().TestNull() )
+            .Go();
     }
 
     [Fact]
@@ -1048,14 +1008,13 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
 
         var result = sut.GetDependencyRange( typeof( IFoo ) );
 
-        using ( new AssertionScope() )
-        {
-            result.DependencyType.Should().Be( typeof( IFoo ) );
-            result.Elements.Should().BeSequentiallyEqualTo( expected1, expected2 );
-            result.TryGetLast().Should().BeSameAs( expected2 );
-            expected1.RangeBuilder.Should().BeSameAs( result );
-            expected2.RangeBuilder.Should().BeSameAs( result );
-        }
+        Assertion.All(
+                result.DependencyType.TestEquals( typeof( IFoo ) ),
+                result.Elements.TestSequence( [ expected1, expected2 ] ),
+                result.TryGetLast().TestRefEquals( expected2 ),
+                expected1.RangeBuilder.TestRefEquals( result ),
+                expected2.RangeBuilder.TestRefEquals( result ) )
+            .Go();
     }
 
     [Fact]
@@ -1066,7 +1025,7 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
 
         var result = sut.GetDependencyRange<IFoo>().SetOnResolvingCallback( callback );
 
-        result.OnResolvingCallback.Should().BeSameAs( callback );
+        result.OnResolvingCallback.TestRefEquals( callback ).Go();
     }
 
     [Fact]
@@ -1074,7 +1033,11 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
     {
         var sut = new DependencyContainerBuilder();
         var action = Lambda.Of( () => sut.GetDependencyRange( typeof( IList<> ) ) );
-        action.Should().ThrowExactly<InvalidTypeRegistrationException>().AndMatch( e => e.Type == typeof( IList<> ) );
+        action.Test(
+                exc => Assertion.All(
+                    exc.TestType().Exact<InvalidTypeRegistrationException>(),
+                    exc.TestIf().OfType<InvalidTypeRegistrationException>( e => e.Type.TestEquals( typeof( IList<> ) ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -1083,7 +1046,11 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
         var sut = new DependencyContainerBuilder();
         var type = typeof( List<> ).GetOpenGenericImplementations( typeof( IList<> ) ).Single();
         var action = Lambda.Of( () => sut.GetDependencyRange( type ) );
-        action.Should().ThrowExactly<InvalidTypeRegistrationException>().AndMatch( e => e.Type == type );
+        action.Test(
+                exc => Assertion.All(
+                    exc.TestType().Exact<InvalidTypeRegistrationException>(),
+                    exc.TestIf().OfType<InvalidTypeRegistrationException>( e => e.Type.TestEquals( type ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -1091,7 +1058,7 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
     {
         var sut = new DependencyContainerBuilder();
         var result = sut.TryGetSharedImplementor( typeof( Implementor ) );
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Fact]
@@ -1102,7 +1069,7 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
 
         var result = sut.TryGetSharedImplementor( typeof( Implementor ) );
 
-        result.Should().BeSameAs( expected );
+        result.TestRefEquals( expected ).Go();
     }
 
     [Fact]
@@ -1113,19 +1080,14 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
 
         var result = sut.TryBuild();
 
-        using ( new AssertionScope() )
-        {
-            result.IsOk.Should().BeFalse();
-            result.Container.Should().BeNull();
-            result.Messages.Should().HaveCount( 1 );
-            if ( result.Messages.Count < 1 )
-                return;
-
-            var message = result.Messages.First();
-            message.ImplementorKey.Should().Be( ImplementorKey.Create( new DependencyKey( typeof( IFoo ) ) ) );
-            message.Warnings.Should().BeEmpty();
-            message.Errors.Should().HaveCount( 1 );
-        }
+        Assertion.All(
+                result.IsOk.TestFalse(),
+                result.Container.TestNull(),
+                result.Messages.Count.TestEquals( 1 ),
+                result.Messages.FirstOrDefault().ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IFoo ) ) ) ),
+                result.Messages.FirstOrDefault().Warnings.TestEmpty(),
+                result.Messages.FirstOrDefault().Errors.Count.TestEquals( 1 ) )
+            .Go();
     }
 
     [Fact]
@@ -1136,19 +1098,14 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
 
         var result = sut.TryBuild();
 
-        using ( new AssertionScope() )
-        {
-            result.IsOk.Should().BeFalse();
-            result.Container.Should().BeNull();
-            result.Messages.Should().HaveCount( 1 );
-            if ( result.Messages.Count < 1 )
-                return;
-
-            var message = result.Messages.First();
-            message.ImplementorKey.Should().Be( ImplementorKey.Create( new DependencyKey( typeof( IFoo ) ) ) );
-            message.Warnings.Should().BeEmpty();
-            message.Errors.Should().HaveCount( 1 );
-        }
+        Assertion.All(
+                result.IsOk.TestFalse(),
+                result.Container.TestNull(),
+                result.Messages.Count.TestEquals( 1 ),
+                result.Messages.FirstOrDefault().ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IFoo ) ) ) ),
+                result.Messages.FirstOrDefault().Warnings.TestEmpty(),
+                result.Messages.FirstOrDefault().Errors.Count.TestEquals( 1 ) )
+            .Go();
     }
 
     [Fact]
@@ -1160,19 +1117,14 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
 
         var result = sut.TryBuild();
 
-        using ( new AssertionScope() )
-        {
-            result.IsOk.Should().BeFalse();
-            result.Container.Should().BeNull();
-            result.Messages.Should().HaveCount( 1 );
-            if ( result.Messages.Count < 1 )
-                return;
-
-            var message = result.Messages.First();
-            message.ImplementorKey.Should().Be( ImplementorKey.Create( new DependencyKey( typeof( IFoo ) ) ) );
-            message.Warnings.Should().BeEmpty();
-            message.Errors.Should().HaveCount( 1 );
-        }
+        Assertion.All(
+                result.IsOk.TestFalse(),
+                result.Container.TestNull(),
+                result.Messages.Count.TestEquals( 1 ),
+                result.Messages.FirstOrDefault().ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IFoo ) ) ) ),
+                result.Messages.FirstOrDefault().Warnings.TestEmpty(),
+                result.Messages.FirstOrDefault().Errors.Count.TestEquals( 1 ) )
+            .Go();
     }
 
     [Fact]
@@ -1185,19 +1137,15 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
 
         var result = sut.TryBuild();
 
-        using ( new AssertionScope() )
-        {
-            result.IsOk.Should().BeFalse();
-            result.Container.Should().BeNull();
-            result.Messages.Should().HaveCount( 1 );
-            if ( result.Messages.Count < 1 )
-                return;
-
-            var message = result.Messages.First();
-            message.ImplementorKey.Should().Be( ImplementorKey.Create( new DependencyKey( typeof( IWithText ) ) ) );
-            message.Warnings.Should().BeEmpty();
-            message.Errors.Should().HaveCount( 1 );
-        }
+        Assertion.All(
+                result.IsOk.TestFalse(),
+                result.Container.TestNull(),
+                result.Messages.Count.TestEquals( 1 ),
+                result.Messages.FirstOrDefault()
+                    .ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IWithText ) ) ) ),
+                result.Messages.FirstOrDefault().Warnings.TestEmpty(),
+                result.Messages.FirstOrDefault().Errors.Count.TestEquals( 1 ) )
+            .Go();
     }
 
     [Fact]
@@ -1210,19 +1158,15 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
 
         var result = sut.TryBuild();
 
-        using ( new AssertionScope() )
-        {
-            result.IsOk.Should().BeFalse();
-            result.Container.Should().BeNull();
-            result.Messages.Should().HaveCount( 1 );
-            if ( result.Messages.Count < 1 )
-                return;
-
-            var message = result.Messages.First();
-            message.ImplementorKey.Should().Be( ImplementorKey.Create( new DependencyKey( typeof( IWithText ) ) ) );
-            message.Warnings.Should().BeEmpty();
-            message.Errors.Should().HaveCount( 1 );
-        }
+        Assertion.All(
+                result.IsOk.TestFalse(),
+                result.Container.TestNull(),
+                result.Messages.Count.TestEquals( 1 ),
+                result.Messages.FirstOrDefault()
+                    .ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IWithText ) ) ) ),
+                result.Messages.FirstOrDefault().Warnings.TestEmpty(),
+                result.Messages.FirstOrDefault().Errors.Count.TestEquals( 1 ) )
+            .Go();
     }
 
     [Fact]
@@ -1241,19 +1185,15 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
 
         var result = sut.TryBuild();
 
-        using ( new AssertionScope() )
-        {
-            result.IsOk.Should().BeTrue();
-            result.Container.Should().NotBeNull();
-            result.Messages.Should().HaveCount( 1 );
-            if ( result.Messages.Count < 1 )
-                return;
-
-            var message = result.Messages.First();
-            message.ImplementorKey.Should().Be( ImplementorKey.Create( new DependencyKey( typeof( IWithText ) ) ) );
-            message.Warnings.Should().HaveCount( 2 );
-            message.Errors.Should().BeEmpty();
-        }
+        Assertion.All(
+                result.IsOk.TestTrue(),
+                result.Container.TestNotNull(),
+                result.Messages.Count.TestEquals( 1 ),
+                result.Messages.FirstOrDefault()
+                    .ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IWithText ) ) ) ),
+                result.Messages.FirstOrDefault().Warnings.Count.TestEquals( 2 ),
+                result.Messages.FirstOrDefault().Errors.TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -1265,26 +1205,19 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
         sut.Add<int>().FromFactory( _ => 0 );
         sut.Add<string>().FromFactory( _ => string.Empty );
         sut.Add<IWithText>()
-            .FromConstructor(
-                ctor,
-                o => o.ResolveParameter( _ => true, typeof( string ) )
-                    .ResolveMember( _ => true, typeof( int ) ) );
+            .FromConstructor( ctor, o => o.ResolveParameter( _ => true, typeof( string ) ).ResolveMember( _ => true, typeof( int ) ) );
 
         var result = sut.TryBuild();
 
-        using ( new AssertionScope() )
-        {
-            result.IsOk.Should().BeFalse();
-            result.Container.Should().BeNull();
-            result.Messages.Should().HaveCount( 1 );
-            if ( result.Messages.Count < 1 )
-                return;
-
-            var message = result.Messages.First();
-            message.ImplementorKey.Should().Be( ImplementorKey.Create( new DependencyKey( typeof( IWithText ) ) ) );
-            message.Warnings.Should().BeEmpty();
-            message.Errors.Should().HaveCount( 2 );
-        }
+        Assertion.All(
+                result.IsOk.TestFalse(),
+                result.Container.TestNull(),
+                result.Messages.Count.TestEquals( 1 ),
+                result.Messages.FirstOrDefault()
+                    .ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IWithText ) ) ) ),
+                result.Messages.FirstOrDefault().Warnings.TestEmpty(),
+                result.Messages.FirstOrDefault().Errors.Count.TestEquals( 2 ) )
+            .Go();
     }
 
     [Fact]
@@ -1297,19 +1230,14 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
 
         var result = sut.TryBuild();
 
-        using ( new AssertionScope() )
-        {
-            result.IsOk.Should().BeFalse();
-            result.Container.Should().BeNull();
-            result.Messages.Should().HaveCount( 1 );
-            if ( result.Messages.Count < 1 )
-                return;
-
-            var message = result.Messages.First();
-            message.ImplementorKey.Should().Be( ImplementorKey.Create( new DependencyKey( typeof( IFoo ) ) ) );
-            message.Warnings.Should().BeEmpty();
-            message.Errors.Should().HaveCount( 1 );
-        }
+        Assertion.All(
+                result.IsOk.TestFalse(),
+                result.Container.TestNull(),
+                result.Messages.Count.TestEquals( 1 ),
+                result.Messages.FirstOrDefault().ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IFoo ) ) ) ),
+                result.Messages.FirstOrDefault().Warnings.TestEmpty(),
+                result.Messages.FirstOrDefault().Errors.Count.TestEquals( 1 ) )
+            .Go();
     }
 
     [Fact]
@@ -1322,19 +1250,14 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
 
         var result = sut.TryBuild();
 
-        using ( new AssertionScope() )
-        {
-            result.IsOk.Should().BeFalse();
-            result.Container.Should().BeNull();
-            result.Messages.Should().HaveCount( 1 );
-            if ( result.Messages.Count < 1 )
-                return;
-
-            var message = result.Messages.First();
-            message.ImplementorKey.Should().Be( ImplementorKey.Create( new DependencyKey( typeof( IFoo ) ) ) );
-            message.Warnings.Should().BeEmpty();
-            message.Errors.Should().HaveCount( 1 );
-        }
+        Assertion.All(
+                result.IsOk.TestFalse(),
+                result.Container.TestNull(),
+                result.Messages.Count.TestEquals( 1 ),
+                result.Messages.FirstOrDefault().ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IFoo ) ) ) ),
+                result.Messages.FirstOrDefault().Warnings.TestEmpty(),
+                result.Messages.FirstOrDefault().Errors.Count.TestEquals( 1 ) )
+            .Go();
     }
 
     [Fact]
@@ -1345,19 +1268,14 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
 
         var result = sut.TryBuild();
 
-        using ( new AssertionScope() )
-        {
-            result.IsOk.Should().BeFalse();
-            result.Container.Should().BeNull();
-            result.Messages.Should().HaveCount( 1 );
-            if ( result.Messages.Count < 1 )
-                return;
-
-            var message = result.Messages.First();
-            message.ImplementorKey.Should().Be( ImplementorKey.Create( new DependencyKey( typeof( IFoo ) ) ) );
-            message.Warnings.Should().BeEmpty();
-            message.Errors.Should().HaveCount( 1 );
-        }
+        Assertion.All(
+                result.IsOk.TestFalse(),
+                result.Container.TestNull(),
+                result.Messages.Count.TestEquals( 1 ),
+                result.Messages.FirstOrDefault().ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IFoo ) ) ) ),
+                result.Messages.FirstOrDefault().Warnings.TestEmpty(),
+                result.Messages.FirstOrDefault().Errors.Count.TestEquals( 1 ) )
+            .Go();
     }
 
     [Fact]
@@ -1368,19 +1286,14 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
 
         var result = sut.TryBuild();
 
-        using ( new AssertionScope() )
-        {
-            result.IsOk.Should().BeFalse();
-            result.Container.Should().BeNull();
-            result.Messages.Should().HaveCount( 1 );
-            if ( result.Messages.Count < 1 )
-                return;
-
-            var message = result.Messages.First();
-            message.ImplementorKey.Should().Be( ImplementorKey.Create( new DependencyKey( typeof( IFoo ) ) ) );
-            message.Warnings.Should().BeEmpty();
-            message.Errors.Should().HaveCount( 1 );
-        }
+        Assertion.All(
+                result.IsOk.TestFalse(),
+                result.Container.TestNull(),
+                result.Messages.Count.TestEquals( 1 ),
+                result.Messages.FirstOrDefault().ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IFoo ) ) ) ),
+                result.Messages.FirstOrDefault().Warnings.TestEmpty(),
+                result.Messages.FirstOrDefault().Errors.Count.TestEquals( 1 ) )
+            .Go();
     }
 
     [Fact]
@@ -1391,19 +1304,15 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
 
         var result = sut.TryBuild();
 
-        using ( new AssertionScope() )
-        {
-            result.IsOk.Should().BeFalse();
-            result.Container.Should().BeNull();
-            result.Messages.Should().HaveCount( 1 );
-            if ( result.Messages.Count < 1 )
-                return;
-
-            var message = result.Messages.First();
-            message.ImplementorKey.Should().Be( ImplementorKey.Create( new DependencyKey( typeof( ChainableFoo ) ) ) );
-            message.Warnings.Should().BeEmpty();
-            message.Errors.Should().HaveCount( 1 );
-        }
+        Assertion.All(
+                result.IsOk.TestFalse(),
+                result.Container.TestNull(),
+                result.Messages.Count.TestEquals( 1 ),
+                result.Messages.FirstOrDefault()
+                    .ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( ChainableFoo ) ) ) ),
+                result.Messages.FirstOrDefault().Warnings.TestEmpty(),
+                result.Messages.FirstOrDefault().Errors.Count.TestEquals( 1 ) )
+            .Go();
     }
 
     [Fact]
@@ -1414,19 +1323,14 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
 
         var result = sut.TryBuild();
 
-        using ( new AssertionScope() )
-        {
-            result.IsOk.Should().BeFalse();
-            result.Container.Should().BeNull();
-            result.Messages.Should().HaveCount( 1 );
-            if ( result.Messages.Count < 1 )
-                return;
-
-            var message = result.Messages.First();
-            message.ImplementorKey.Should().Be( ImplementorKey.Create( new DependencyKey( typeof( IFoo ) ) ) );
-            message.Warnings.Should().BeEmpty();
-            message.Errors.Should().HaveCount( 1 );
-        }
+        Assertion.All(
+                result.IsOk.TestFalse(),
+                result.Container.TestNull(),
+                result.Messages.Count.TestEquals( 1 ),
+                result.Messages.FirstOrDefault().ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IFoo ) ) ) ),
+                result.Messages.FirstOrDefault().Warnings.TestEmpty(),
+                result.Messages.FirstOrDefault().Errors.Count.TestEquals( 1 ) )
+            .Go();
     }
 
     [Theory]
@@ -1439,19 +1343,14 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
 
         var result = sut.TryBuild();
 
-        using ( new AssertionScope() )
-        {
-            result.IsOk.Should().BeFalse();
-            result.Container.Should().BeNull();
-            result.Messages.Should().HaveCount( 1 );
-            if ( result.Messages.Count < 1 )
-                return;
-
-            var message = result.Messages.First();
-            message.ImplementorKey.Should().Be( ImplementorKey.Create( new DependencyKey( dependencyType ) ) );
-            message.Warnings.Should().BeEmpty();
-            message.Errors.Should().HaveCount( 1 );
-        }
+        Assertion.All(
+                result.IsOk.TestFalse(),
+                result.Container.TestNull(),
+                result.Messages.Count.TestEquals( 1 ),
+                result.Messages.FirstOrDefault().ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( dependencyType ) ) ),
+                result.Messages.FirstOrDefault().Warnings.TestEmpty(),
+                result.Messages.FirstOrDefault().Errors.Count.TestEquals( 1 ) )
+            .Go();
     }
 
     [Theory]
@@ -1464,19 +1363,14 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
 
         var result = sut.TryBuild();
 
-        using ( new AssertionScope() )
-        {
-            result.IsOk.Should().BeFalse();
-            result.Container.Should().BeNull();
-            result.Messages.Should().HaveCount( 1 );
-            if ( result.Messages.Count < 1 )
-                return;
-
-            var message = result.Messages.First();
-            message.ImplementorKey.Should().Be( ImplementorKey.Create( new DependencyKey( typeof( IFoo ) ) ) );
-            message.Warnings.Should().BeEmpty();
-            message.Errors.Should().HaveCount( 1 );
-        }
+        Assertion.All(
+                result.IsOk.TestFalse(),
+                result.Container.TestNull(),
+                result.Messages.Count.TestEquals( 1 ),
+                result.Messages.FirstOrDefault().ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IFoo ) ) ) ),
+                result.Messages.FirstOrDefault().Warnings.TestEmpty(),
+                result.Messages.FirstOrDefault().Errors.Count.TestEquals( 1 ) )
+            .Go();
     }
 
     [Fact]
@@ -1491,19 +1385,15 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
 
         var result = sut.TryBuild();
 
-        using ( new AssertionScope() )
-        {
-            result.IsOk.Should().BeFalse();
-            result.Container.Should().BeNull();
-            result.Messages.Should().HaveCount( 1 );
-            if ( result.Messages.Count < 1 )
-                return;
-
-            var message = result.Messages.First();
-            message.ImplementorKey.Should().Be( ImplementorKey.CreateShared( new DependencyKey( typeof( Implementor ) ) ) );
-            message.Warnings.Should().BeEmpty();
-            message.Errors.Should().HaveCount( 1 );
-        }
+        Assertion.All(
+                result.IsOk.TestFalse(),
+                result.Container.TestNull(),
+                result.Messages.Count.TestEquals( 1 ),
+                result.Messages.FirstOrDefault()
+                    .ImplementorKey.TestEquals( ImplementorKey.CreateShared( new DependencyKey( typeof( Implementor ) ) ) ),
+                result.Messages.FirstOrDefault().Warnings.TestEmpty(),
+                result.Messages.FirstOrDefault().Errors.Count.TestEquals( 1 ) )
+            .Go();
     }
 
     [Fact]
@@ -1516,19 +1406,14 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
 
         var result = sut.TryBuild();
 
-        using ( new AssertionScope() )
-        {
-            result.IsOk.Should().BeFalse();
-            result.Container.Should().BeNull();
-            result.Messages.Should().HaveCount( 1 );
-            if ( result.Messages.Count < 1 )
-                return;
-
-            var message = result.Messages.First();
-            message.ImplementorKey.Should().Be( ImplementorKey.Create( new DependencyKey( typeof( IFoo ) ) ) );
-            message.Warnings.Should().BeEmpty();
-            message.Errors.Should().HaveCount( 1 );
-        }
+        Assertion.All(
+                result.IsOk.TestFalse(),
+                result.Container.TestNull(),
+                result.Messages.Count.TestEquals( 1 ),
+                result.Messages.FirstOrDefault().ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IFoo ) ) ) ),
+                result.Messages.FirstOrDefault().Warnings.TestEmpty(),
+                result.Messages.FirstOrDefault().Errors.Count.TestEquals( 1 ) )
+            .Go();
     }
 
     [Fact]
@@ -1545,19 +1430,14 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
 
         var result = sut.TryBuild();
 
-        using ( new AssertionScope() )
-        {
-            result.IsOk.Should().BeFalse();
-            result.Container.Should().BeNull();
-            result.Messages.Should().HaveCount( 1 );
-            if ( result.Messages.Count < 1 )
-                return;
-
-            var message = result.Messages.First();
-            message.ImplementorKey.Should().Be( ImplementorKey.Create( new DependencyKey( typeof( IFoo ) ) ) );
-            message.Warnings.Should().BeEmpty();
-            message.Errors.Should().HaveCount( 1 );
-        }
+        Assertion.All(
+                result.IsOk.TestFalse(),
+                result.Container.TestNull(),
+                result.Messages.Count.TestEquals( 1 ),
+                result.Messages.FirstOrDefault().ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IFoo ) ) ) ),
+                result.Messages.FirstOrDefault().Warnings.TestEmpty(),
+                result.Messages.FirstOrDefault().Errors.Count.TestEquals( 1 ) )
+            .Go();
     }
 
     [Fact]
@@ -1574,19 +1454,14 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
 
         var result = sut.TryBuild();
 
-        using ( new AssertionScope() )
-        {
-            result.IsOk.Should().BeFalse();
-            result.Container.Should().BeNull();
-            result.Messages.Should().HaveCount( 1 );
-            if ( result.Messages.Count < 1 )
-                return;
-
-            var message = result.Messages.First();
-            message.ImplementorKey.Should().Be( ImplementorKey.Create( new DependencyKey( typeof( IFoo ) ) ) );
-            message.Warnings.Should().BeEmpty();
-            message.Errors.Should().HaveCount( 1 );
-        }
+        Assertion.All(
+                result.IsOk.TestFalse(),
+                result.Container.TestNull(),
+                result.Messages.Count.TestEquals( 1 ),
+                result.Messages.FirstOrDefault().ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IFoo ) ) ) ),
+                result.Messages.FirstOrDefault().Warnings.TestEmpty(),
+                result.Messages.FirstOrDefault().Errors.Count.TestEquals( 1 ) )
+            .Go();
     }
 
     [Fact]
@@ -1603,19 +1478,14 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
 
         var result = sut.TryBuild();
 
-        using ( new AssertionScope() )
-        {
-            result.IsOk.Should().BeFalse();
-            result.Container.Should().BeNull();
-            result.Messages.Should().HaveCount( 1 );
-            if ( result.Messages.Count < 1 )
-                return;
-
-            var message = result.Messages.First();
-            message.ImplementorKey.Should().Be( ImplementorKey.Create( new DependencyKey( typeof( IFoo ) ) ) );
-            message.Warnings.Should().BeEmpty();
-            message.Errors.Should().HaveCount( 1 );
-        }
+        Assertion.All(
+                result.IsOk.TestFalse(),
+                result.Container.TestNull(),
+                result.Messages.Count.TestEquals( 1 ),
+                result.Messages.FirstOrDefault().ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IFoo ) ) ) ),
+                result.Messages.FirstOrDefault().Warnings.TestEmpty(),
+                result.Messages.FirstOrDefault().Errors.Count.TestEquals( 1 ) )
+            .Go();
     }
 
     [Fact]
@@ -1628,19 +1498,15 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
 
         var result = sut.TryBuild();
 
-        using ( new AssertionScope() )
-        {
-            result.IsOk.Should().BeFalse();
-            result.Container.Should().BeNull();
-            result.Messages.Should().HaveCount( 1 );
-            if ( result.Messages.Count < 1 )
-                return;
-
-            var message = result.Messages.First();
-            message.ImplementorKey.Should().Be( ImplementorKey.Create( new DependencyKey( typeof( IWithText ) ) ) );
-            message.Warnings.Should().BeEmpty();
-            message.Errors.Should().HaveCount( 1 );
-        }
+        Assertion.All(
+                result.IsOk.TestFalse(),
+                result.Container.TestNull(),
+                result.Messages.Count.TestEquals( 1 ),
+                result.Messages.FirstOrDefault()
+                    .ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IWithText ) ) ) ),
+                result.Messages.FirstOrDefault().Warnings.TestEmpty(),
+                result.Messages.FirstOrDefault().Errors.Count.TestEquals( 1 ) )
+            .Go();
     }
 
     [Fact]
@@ -1653,10 +1519,7 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
         var textCtor = typeof( DecoratorWithText ).GetConstructors().First();
 
         var sut = new DependencyContainerBuilder();
-        sut.Add<IFoo>()
-            .FromConstructor(
-                fooCtor,
-                o => o.ResolveParameter( p => p.Name == "otherBar", typeof( IBar ), c => c.Keyed( 1 ) ) );
+        sut.Add<IFoo>().FromConstructor( fooCtor, o => o.ResolveParameter( p => p.Name == "otherBar", typeof( IBar ), c => c.Keyed( 1 ) ) );
 
         sut.Add<IBar>().FromConstructor( barCtor );
         sut.Add<IQux>().FromConstructor( quxCtor );
@@ -1670,24 +1533,18 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
 
         var result = sut.TryBuild();
 
-        using ( new AssertionScope() )
-        {
-            result.IsOk.Should().BeFalse();
-            result.Container.Should().BeNull();
-            result.Messages.Should().HaveCount( 2 );
-            if ( result.Messages.Count < 2 )
-                return;
-
-            var message = result.Messages.First();
-            message.ImplementorKey.Should().Be( ImplementorKey.Create( new DependencyKey( typeof( IFoo ) ) ) );
-            message.Warnings.Should().BeEmpty();
-            message.Errors.Should().HaveCount( 2 );
-
-            message = result.Messages.ElementAt( 1 );
-            message.ImplementorKey.Should().Be( ImplementorKey.Create( new DependencyKey( typeof( IWithText ) ) ) );
-            message.Warnings.Should().BeEmpty();
-            message.Errors.Should().HaveCount( 1 );
-        }
+        Assertion.All(
+                result.IsOk.TestFalse(),
+                result.Container.TestNull(),
+                result.Messages.Count.TestEquals( 2 ),
+                result.Messages.FirstOrDefault().ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IFoo ) ) ) ),
+                result.Messages.FirstOrDefault().Warnings.TestEmpty(),
+                result.Messages.FirstOrDefault().Errors.Count.TestEquals( 2 ),
+                result.Messages.LastOrDefault()
+                    .ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IWithText ) ) ) ),
+                result.Messages.LastOrDefault().Warnings.TestEmpty(),
+                result.Messages.LastOrDefault().Errors.Count.TestEquals( 1 ) )
+            .Go();
     }
 
     [Theory]
@@ -1713,12 +1570,11 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
 
         var result = sut.TryBuild();
 
-        using ( new AssertionScope() )
-        {
-            result.IsOk.Should().BeTrue();
-            result.Container.Should().NotBeNull();
-            result.Messages.Should().BeEmpty();
-        }
+        Assertion.All(
+                result.IsOk.TestTrue(),
+                result.Container.TestNotNull(),
+                result.Messages.TestEmpty() )
+            .Go();
     }
 
     [Theory]
@@ -1741,19 +1597,15 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
 
         var result = sut.TryBuild();
 
-        using ( new AssertionScope() )
-        {
-            result.IsOk.Should().BeTrue();
-            result.Container.Should().NotBeNull();
-            result.Messages.Should().HaveCount( 1 );
-            if ( result.Messages.Count < 1 )
-                return;
-
-            var message = result.Messages.First();
-            message.ImplementorKey.Should().Be( ImplementorKey.Create( new DependencyKey( typeof( IWithText ) ) ) );
-            message.Warnings.Should().HaveCount( 1 );
-            message.Errors.Should().BeEmpty();
-        }
+        Assertion.All(
+                result.IsOk.TestTrue(),
+                result.Container.TestNotNull(),
+                result.Messages.Count.TestEquals( 1 ),
+                result.Messages.FirstOrDefault()
+                    .ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IWithText ) ) ) ),
+                result.Messages.FirstOrDefault().Warnings.Count.TestEquals( 1 ),
+                result.Messages.FirstOrDefault().Errors.TestEmpty() )
+            .Go();
     }
 
     [Theory]
@@ -1776,19 +1628,15 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
 
         var result = sut.TryBuild();
 
-        using ( new AssertionScope() )
-        {
-            result.IsOk.Should().BeFalse();
-            result.Container.Should().BeNull();
-            result.Messages.Should().HaveCount( 1 );
-            if ( result.Messages.Count < 1 )
-                return;
-
-            var message = result.Messages.First();
-            message.ImplementorKey.Should().Be( ImplementorKey.Create( new DependencyKey( typeof( IWithText ) ) ) );
-            message.Warnings.Should().BeEmpty();
-            message.Errors.Should().HaveCount( 1 );
-        }
+        Assertion.All(
+                result.IsOk.TestFalse(),
+                result.Container.TestNull(),
+                result.Messages.Count.TestEquals( 1 ),
+                result.Messages.FirstOrDefault()
+                    .ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IWithText ) ) ) ),
+                result.Messages.FirstOrDefault().Warnings.TestEmpty(),
+                result.Messages.FirstOrDefault().Errors.Count.TestEquals( 1 ) )
+            .Go();
     }
 
     [Fact]
@@ -1802,19 +1650,15 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
 
         var result = sut.TryBuild();
 
-        using ( new AssertionScope() )
-        {
-            result.IsOk.Should().BeFalse();
-            result.Container.Should().BeNull();
-            result.Messages.Should().HaveCount( 1 );
-            if ( result.Messages.Count < 1 )
-                return;
-
-            var message = result.Messages.First();
-            message.ImplementorKey.Should().Be( ImplementorKey.Create( new DependencyKey( typeof( IFoo ) ), 0 ) );
-            message.Warnings.Should().BeEmpty();
-            message.Errors.Should().HaveCount( 2 );
-        }
+        Assertion.All(
+                result.IsOk.TestFalse(),
+                result.Container.TestNull(),
+                result.Messages.Count.TestEquals( 1 ),
+                result.Messages.FirstOrDefault()
+                    .ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IFoo ) ), 0 ) ),
+                result.Messages.FirstOrDefault().Warnings.TestEmpty(),
+                result.Messages.FirstOrDefault().Errors.Count.TestEquals( 2 ) )
+            .Go();
     }
 
     [Fact]
@@ -1827,19 +1671,15 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
 
         var result = sut.TryBuild();
 
-        using ( new AssertionScope() )
-        {
-            result.IsOk.Should().BeFalse();
-            result.Container.Should().BeNull();
-            result.Messages.Should().HaveCount( 1 );
-            if ( result.Messages.Count < 1 )
-                return;
-
-            var message = result.Messages.First();
-            message.ImplementorKey.Should().Be( ImplementorKey.Create( new DependencyKey( typeof( IFoo ) ), 1 ) );
-            message.Warnings.Should().BeEmpty();
-            message.Errors.Should().HaveCount( 1 );
-        }
+        Assertion.All(
+                result.IsOk.TestFalse(),
+                result.Container.TestNull(),
+                result.Messages.Count.TestEquals( 1 ),
+                result.Messages.FirstOrDefault()
+                    .ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IFoo ) ), 1 ) ),
+                result.Messages.FirstOrDefault().Warnings.TestEmpty(),
+                result.Messages.FirstOrDefault().Errors.Count.TestEquals( 1 ) )
+            .Go();
     }
 
     [Theory]
@@ -1862,19 +1702,14 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
 
         var result = sut.TryBuild();
 
-        using ( new AssertionScope() )
-        {
-            result.IsOk.Should().BeTrue();
-            result.Container.Should().NotBeNull();
-            result.Messages.Should().HaveCount( 1 );
-            if ( result.Messages.Count < 1 )
-                return;
-
-            var message = result.Messages.First();
-            message.ImplementorKey.Should().Be( ImplementorKey.Create( new DependencyKey( typeof( IFoo ) ) ) );
-            message.Warnings.Should().HaveCount( 1 );
-            message.Errors.Should().BeEmpty();
-        }
+        Assertion.All(
+                result.IsOk.TestTrue(),
+                result.Container.TestNotNull(),
+                result.Messages.Count.TestEquals( 1 ),
+                result.Messages.FirstOrDefault().ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IFoo ) ) ) ),
+                result.Messages.FirstOrDefault().Warnings.Count.TestEquals( 1 ),
+                result.Messages.FirstOrDefault().Errors.TestEmpty() )
+            .Go();
     }
 
     [Theory]
@@ -1897,19 +1732,14 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
 
         var result = sut.TryBuild();
 
-        using ( new AssertionScope() )
-        {
-            result.IsOk.Should().BeFalse();
-            result.Container.Should().BeNull();
-            result.Messages.Should().HaveCount( 1 );
-            if ( result.Messages.Count < 1 )
-                return;
-
-            var message = result.Messages.First();
-            message.ImplementorKey.Should().Be( ImplementorKey.Create( new DependencyKey( typeof( IFoo ) ) ) );
-            message.Warnings.Should().BeEmpty();
-            message.Errors.Should().HaveCount( 1 );
-        }
+        Assertion.All(
+                result.IsOk.TestFalse(),
+                result.Container.TestNull(),
+                result.Messages.Count.TestEquals( 1 ),
+                result.Messages.FirstOrDefault().ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IFoo ) ) ) ),
+                result.Messages.FirstOrDefault().Warnings.TestEmpty(),
+                result.Messages.FirstOrDefault().Errors.Count.TestEquals( 1 ) )
+            .Go();
     }
 
     [Fact]
@@ -1922,29 +1752,23 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
 
         var result = sut.TryBuild();
 
-        using ( new AssertionScope() )
-        {
-            result.IsOk.Should().BeFalse();
-            result.Container.Should().BeNull();
-            result.Messages.Should().HaveCount( 3 );
-            if ( result.Messages.Count < 3 )
-                return;
-
-            var firstMessage = result.Messages.First();
-            firstMessage.ImplementorKey.Should().Be( ImplementorKey.Create( new DependencyKey( typeof( IWithText ) ) ) );
-            firstMessage.Warnings.Should().BeEmpty();
-            firstMessage.Errors.Should().HaveCount( 3 );
-
-            var secondMessage = result.Messages.ElementAt( 1 );
-            secondMessage.ImplementorKey.Should().Be( ImplementorKey.Create( new DependencyKey( typeof( IWithText ) ), 0 ) );
-            secondMessage.Warnings.Should().BeEmpty();
-            secondMessage.Errors.Should().HaveCount( 2 );
-
-            var thirdMessage = result.Messages.Last();
-            thirdMessage.ImplementorKey.Should().Be( ImplementorKey.Create( new DependencyKey( typeof( IWithText ) ), 1 ) );
-            thirdMessage.Warnings.Should().BeEmpty();
-            thirdMessage.Errors.Should().HaveCount( 1 );
-        }
+        Assertion.All(
+                result.IsOk.TestFalse(),
+                result.Container.TestNull(),
+                result.Messages.Count.TestEquals( 3 ),
+                result.Messages.FirstOrDefault()
+                    .ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IWithText ) ) ) ),
+                result.Messages.FirstOrDefault().Warnings.TestEmpty(),
+                result.Messages.FirstOrDefault().Errors.Count.TestEquals( 3 ),
+                result.Messages.ElementAtOrDefault( 1 )
+                    .ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IWithText ) ), 0 ) ),
+                result.Messages.ElementAtOrDefault( 1 ).Warnings.TestEmpty(),
+                result.Messages.ElementAtOrDefault( 1 ).Errors.Count.TestEquals( 2 ),
+                result.Messages.LastOrDefault()
+                    .ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IWithText ) ), 1 ) ),
+                result.Messages.LastOrDefault().Warnings.TestEmpty(),
+                result.Messages.LastOrDefault().Errors.Count.TestEquals( 1 ) )
+            .Go();
     }
 
     [Fact]
@@ -1959,24 +1783,18 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
 
         var result = sut.TryBuild();
 
-        using ( new AssertionScope() )
-        {
-            result.IsOk.Should().BeFalse();
-            result.Container.Should().BeNull();
-            result.Messages.Should().HaveCount( 2 );
-            if ( result.Messages.Count < 2 )
-                return;
-
-            var firstMessage = result.Messages.First();
-            firstMessage.ImplementorKey.Should().Be( ImplementorKey.Create( new DependencyKey( typeof( IFoo ) ) ) );
-            firstMessage.Warnings.Should().BeEmpty();
-            firstMessage.Errors.Should().HaveCount( 1 );
-
-            var secondMessage = result.Messages.Last();
-            secondMessage.ImplementorKey.Should().Be( ImplementorKey.Create( new DependencyKey( typeof( IWithText ) ), 0 ) );
-            secondMessage.Warnings.Should().BeEmpty();
-            secondMessage.Errors.Should().HaveCount( 1 );
-        }
+        Assertion.All(
+                result.IsOk.TestFalse(),
+                result.Container.TestNull(),
+                result.Messages.Count.TestEquals( 2 ),
+                result.Messages.FirstOrDefault().ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IFoo ) ) ) ),
+                result.Messages.FirstOrDefault().Warnings.TestEmpty(),
+                result.Messages.FirstOrDefault().Errors.Count.TestEquals( 1 ),
+                result.Messages.LastOrDefault()
+                    .ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IWithText ) ), 0 ) ),
+                result.Messages.LastOrDefault().Warnings.TestEmpty(),
+                result.Messages.LastOrDefault().Errors.Count.TestEquals( 1 ) )
+            .Go();
     }
 
     [Fact]
@@ -1988,9 +1806,13 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
 
         var action = Lambda.Of( () => sut.Build() );
 
-        action.Should()
-            .ThrowExactly<DependencyContainerBuildException>()
-            .AndMatch( e => e.Messages.SelectMany( m => m.Errors ).Any() );
+        action.Test(
+                exc => Assertion.All(
+                    exc.TestType().Exact<DependencyContainerBuildException>(),
+                    exc.TestIf()
+                        .OfType<DependencyContainerBuildException>(
+                            e => e.Messages.SelectMany( m => m.Errors ).Count().TestGreaterThan( 0 ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -2006,9 +1828,13 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
 
         var action = Lambda.Of( () => sut.Build() );
 
-        action.Should()
-            .ThrowExactly<DependencyContainerBuildException>()
-            .AndMatch( e => e.Messages.SelectMany( m => m.Errors ).Any() );
+        action.Test(
+                exc => Assertion.All(
+                    exc.TestType().Exact<DependencyContainerBuildException>(),
+                    exc.TestIf()
+                        .OfType<DependencyContainerBuildException>(
+                            e => e.Messages.SelectMany( m => m.Errors ).Count().TestGreaterThan( 0 ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -2016,7 +1842,7 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
     {
         IDependencyContainerBuilder sut = new DependencyContainerBuilder();
         var result = sut.Build();
-        result.Should().BeOfType<DependencyContainer>();
+        result.TestType().AssignableTo<DependencyContainer>().Go();
     }
 
     [Fact]
@@ -2026,11 +1852,10 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
 
         var result = sut.SetDefaultLifetime( DependencyLifetime.Singleton );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            result.DefaultLifetime.Should().Be( DependencyLifetime.Singleton );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                result.DefaultLifetime.TestEquals( DependencyLifetime.Singleton ) )
+            .Go();
     }
 
     [Fact]
@@ -2040,12 +1865,11 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
 
         var result = sut.SetDefaultDisposalStrategy( DependencyImplementorDisposalStrategy.RenounceOwnership() );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            result.DefaultDisposalStrategy.Type.Should().Be( DependencyImplementorDisposalStrategyType.RenounceOwnership );
-            result.DefaultDisposalStrategy.Callback.Should().BeNull();
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                result.DefaultDisposalStrategy.Type.TestEquals( DependencyImplementorDisposalStrategyType.RenounceOwnership ),
+                result.DefaultDisposalStrategy.Callback.TestNull() )
+            .Go();
     }
 }
 

@@ -7,7 +7,7 @@ public class InjectedTests : TestsBase
     {
         var instance = Fixture.Create<string>();
         var sut = new Injected<string>( instance );
-        sut.Instance.Should().BeSameAs( instance );
+        sut.Instance.TestRefEquals( instance ).Go();
     }
 
     [Fact]
@@ -19,7 +19,7 @@ public class InjectedTests : TestsBase
 
         var result = sut.ToString();
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -27,7 +27,7 @@ public class InjectedTests : TestsBase
     {
         var instance = Fixture.Create<string>();
         var sut = Injected.Create( instance );
-        sut.Instance.Should().BeSameAs( instance );
+        sut.Instance.TestRefEquals( instance ).Go();
     }
 
     [Fact]
@@ -35,7 +35,7 @@ public class InjectedTests : TestsBase
     {
         var result = Injected.GetUnderlyingType( null );
 
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Theory]
@@ -46,7 +46,7 @@ public class InjectedTests : TestsBase
     {
         var result = Injected.GetUnderlyingType( type );
 
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Theory]
@@ -57,7 +57,7 @@ public class InjectedTests : TestsBase
     {
         var result = Injected.GetUnderlyingType( type );
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -67,6 +67,6 @@ public class InjectedTests : TestsBase
 
         var result = Injected.GetUnderlyingType( typeof( Injected<> ) );
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 }

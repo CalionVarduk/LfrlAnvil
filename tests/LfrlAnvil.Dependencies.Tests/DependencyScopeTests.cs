@@ -4,7 +4,6 @@ using LfrlAnvil.Async;
 using LfrlAnvil.Dependencies.Exceptions;
 using LfrlAnvil.Dependencies.Extensions;
 using LfrlAnvil.Functional;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 using LfrlAnvil.TestExtensions.NSubstitute;
 
 namespace LfrlAnvil.Dependencies.Tests;
@@ -20,7 +19,7 @@ public class DependencyScopeTests : DependencyTestsBase
 
         var result = sut.ToString();
 
-        result.Should().Be( $"RootDependencyScope [Level: 0, OriginalThreadId: {threadId}]" );
+        result.TestEquals( $"RootDependencyScope [Level: 0, OriginalThreadId: {threadId}]" ).Go();
     }
 
     [Fact]
@@ -32,7 +31,7 @@ public class DependencyScopeTests : DependencyTestsBase
 
         var result = sut.ToString();
 
-        result.Should().Be( $"ChildDependencyScope [Level: 1, OriginalThreadId: {threadId}]" );
+        result.TestEquals( $"ChildDependencyScope [Level: 1, OriginalThreadId: {threadId}]" ).Go();
     }
 
     [Fact]
@@ -45,7 +44,7 @@ public class DependencyScopeTests : DependencyTestsBase
 
         var result = sut.ToString();
 
-        result.Should().Be( $"ChildDependencyScope [Name: '{name}', Level: 1, OriginalThreadId: {threadId}]" );
+        result.TestEquals( $"ChildDependencyScope [Name: '{name}', Level: 1, OriginalThreadId: {threadId}]" ).Go();
     }
 
     [Fact]
@@ -57,7 +56,7 @@ public class DependencyScopeTests : DependencyTestsBase
 
         var result = sut.ToString();
 
-        result.Should().Be( $"ChildDependencyScope [Level: 2, OriginalThreadId: {threadId}]" );
+        result.TestEquals( $"ChildDependencyScope [Level: 2, OriginalThreadId: {threadId}]" ).Go();
     }
 
     [Fact]
@@ -67,21 +66,20 @@ public class DependencyScopeTests : DependencyTestsBase
         var container = new DependencyContainerBuilder().Build();
         var sut = container.RootScope;
 
-        using ( new AssertionScope() )
-        {
-            sut.Container.Should().BeSameAs( container );
-            sut.Level.Should().Be( 0 );
-            sut.Locator.AttachedScope.Should().BeSameAs( sut );
-            sut.Locator.Key.Should().BeNull();
-            sut.Locator.KeyType.Should().BeNull();
-            sut.Locator.IsKeyed.Should().BeFalse();
-            sut.IsDisposed.Should().BeFalse();
-            sut.IsRoot.Should().BeTrue();
-            sut.ParentScope.Should().BeNull();
-            sut.OriginalThreadId.Should().Be( threadId );
-            sut.Name.Should().BeNull();
-            sut.GetChildren().Should().BeEmpty();
-        }
+        Assertion.All(
+                sut.Container.TestRefEquals( container ),
+                sut.Level.TestEquals( 0 ),
+                sut.Locator.AttachedScope.TestRefEquals( sut ),
+                sut.Locator.Key.TestNull(),
+                sut.Locator.KeyType.TestNull(),
+                sut.Locator.IsKeyed.TestFalse(),
+                sut.IsDisposed.TestFalse(),
+                sut.IsRoot.TestTrue(),
+                sut.ParentScope.TestNull(),
+                sut.OriginalThreadId.TestEquals( threadId ),
+                sut.Name.TestNull(),
+                sut.GetChildren().TestEmpty() )
+            .Go();
     }
 
     [Theory]
@@ -95,14 +93,13 @@ public class DependencyScopeTests : DependencyTestsBase
 
         var result = sut.GetKeyedLocator( key );
 
-        using ( new AssertionScope() )
-        {
-            result.Key.Should().Be( key );
-            (( IDependencyLocator )result).Key.Should().Be( key );
-            result.KeyType.Should().Be( typeof( int ) );
-            result.IsKeyed.Should().BeTrue();
-            result.AttachedScope.Should().BeSameAs( sut );
-        }
+        Assertion.All(
+                result.Key.TestEquals( key ),
+                (( IDependencyLocator )result).Key.TestEquals( key ),
+                result.KeyType.TestEquals( typeof( int ) ),
+                result.IsKeyed.TestTrue(),
+                result.AttachedScope.TestRefEquals( sut ) )
+            .Go();
     }
 
     [Fact]
@@ -114,14 +111,13 @@ public class DependencyScopeTests : DependencyTestsBase
 
         var result = sut.GetKeyedLocator( 2 );
 
-        using ( new AssertionScope() )
-        {
-            result.Key.Should().Be( 2 );
-            (( IDependencyLocator )result).Key.Should().Be( 2 );
-            result.KeyType.Should().Be( typeof( int ) );
-            result.IsKeyed.Should().BeTrue();
-            result.AttachedScope.Should().BeSameAs( sut );
-        }
+        Assertion.All(
+                result.Key.TestEquals( 2 ),
+                (( IDependencyLocator )result).Key.TestEquals( 2 ),
+                result.KeyType.TestEquals( typeof( int ) ),
+                result.IsKeyed.TestTrue(),
+                result.AttachedScope.TestRefEquals( sut ) )
+            .Go();
     }
 
     [Fact]
@@ -133,7 +129,7 @@ public class DependencyScopeTests : DependencyTestsBase
         var result1 = sut.GetKeyedLocator( 1 );
         var result2 = sut.GetKeyedLocator( 1 );
 
-        result1.Should().BeSameAs( result2 );
+        result1.TestRefEquals( result2 ).Go();
     }
 
     [Fact]
@@ -145,7 +141,7 @@ public class DependencyScopeTests : DependencyTestsBase
 
         var action = Lambda.Of( () => sut.GetKeyedLocator( 1 ) );
 
-        action.Should().ThrowExactly<ObjectDisposedException>();
+        action.Test( exc => exc.TestType().Exact<ObjectDisposedException>() ).Go();
     }
 
     [Fact]
@@ -155,22 +151,21 @@ public class DependencyScopeTests : DependencyTestsBase
         var container = new DependencyContainerBuilder().Build();
         var sut = container.RootScope.BeginScope();
 
-        using ( new AssertionScope() )
-        {
-            sut.Container.Should().BeSameAs( container );
-            sut.Level.Should().Be( 1 );
-            sut.Locator.AttachedScope.Should().BeSameAs( sut );
-            sut.Locator.Key.Should().BeNull();
-            sut.Locator.KeyType.Should().BeNull();
-            sut.Locator.IsKeyed.Should().BeFalse();
-            sut.IsDisposed.Should().BeFalse();
-            sut.IsRoot.Should().BeFalse();
-            sut.ParentScope.Should().BeSameAs( container.RootScope );
-            sut.OriginalThreadId.Should().Be( threadId );
-            sut.Name.Should().BeNull();
-            container.RootScope.GetChildren().Should().BeSequentiallyEqualTo( sut );
-            sut.GetChildren().Should().BeEmpty();
-        }
+        Assertion.All(
+                sut.Container.TestRefEquals( container ),
+                sut.Level.TestEquals( 1 ),
+                sut.Locator.AttachedScope.TestRefEquals( sut ),
+                sut.Locator.Key.TestNull(),
+                sut.Locator.KeyType.TestNull(),
+                sut.Locator.IsKeyed.TestFalse(),
+                sut.IsDisposed.TestFalse(),
+                sut.IsRoot.TestFalse(),
+                sut.ParentScope.TestRefEquals( container.RootScope ),
+                sut.OriginalThreadId.TestEquals( threadId ),
+                sut.Name.TestNull(),
+                container.RootScope.GetChildren().TestSequence( [ sut ] ),
+                sut.GetChildren().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -181,19 +176,18 @@ public class DependencyScopeTests : DependencyTestsBase
         var container = new DependencyContainerBuilder().Build();
         var sut = container.RootScope.BeginScope( name );
 
-        using ( new AssertionScope() )
-        {
-            sut.Container.Should().BeSameAs( container );
-            sut.Level.Should().Be( 1 );
-            sut.Locator.AttachedScope.Should().BeSameAs( sut );
-            sut.IsDisposed.Should().BeFalse();
-            sut.IsRoot.Should().BeFalse();
-            sut.ParentScope.Should().BeSameAs( container.RootScope );
-            sut.OriginalThreadId.Should().Be( threadId );
-            sut.Name.Should().Be( name );
-            container.RootScope.GetChildren().Should().BeSequentiallyEqualTo( sut );
-            sut.GetChildren().Should().BeEmpty();
-        }
+        Assertion.All(
+                sut.Container.TestRefEquals( container ),
+                sut.Level.TestEquals( 1 ),
+                sut.Locator.AttachedScope.TestRefEquals( sut ),
+                sut.IsDisposed.TestFalse(),
+                sut.IsRoot.TestFalse(),
+                sut.ParentScope.TestRefEquals( container.RootScope ),
+                sut.OriginalThreadId.TestEquals( threadId ),
+                sut.Name.TestEquals( name ),
+                container.RootScope.GetChildren().TestSequence( [ sut ] ),
+                sut.GetChildren().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -205,7 +199,7 @@ public class DependencyScopeTests : DependencyTestsBase
         var child2 = container.RootScope.BeginScope();
         var child3 = container.RootScope.BeginScope();
 
-        container.RootScope.GetChildren().Should().BeSequentiallyEqualTo( child1, child2, child3 );
+        container.RootScope.GetChildren().TestSequence( [ child1, child2, child3 ] ).Go();
     }
 
     [Fact]
@@ -216,19 +210,18 @@ public class DependencyScopeTests : DependencyTestsBase
         var parent = container.RootScope.BeginScope();
         var sut = parent.BeginScope();
 
-        using ( new AssertionScope() )
-        {
-            sut.Container.Should().BeSameAs( container );
-            sut.Level.Should().Be( 2 );
-            sut.Locator.AttachedScope.Should().BeSameAs( sut );
-            sut.IsDisposed.Should().BeFalse();
-            sut.IsRoot.Should().BeFalse();
-            sut.ParentScope.Should().BeSameAs( parent );
-            sut.OriginalThreadId.Should().Be( threadId );
-            sut.Name.Should().BeNull();
-            parent.GetChildren().Should().BeSequentiallyEqualTo( sut );
-            sut.GetChildren().Should().BeEmpty();
-        }
+        Assertion.All(
+                sut.Container.TestRefEquals( container ),
+                sut.Level.TestEquals( 2 ),
+                sut.Locator.AttachedScope.TestRefEquals( sut ),
+                sut.IsDisposed.TestFalse(),
+                sut.IsRoot.TestFalse(),
+                sut.ParentScope.TestRefEquals( parent ),
+                sut.OriginalThreadId.TestEquals( threadId ),
+                sut.Name.TestNull(),
+                parent.GetChildren().TestSequence( [ sut ] ),
+                sut.GetChildren().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -240,19 +233,18 @@ public class DependencyScopeTests : DependencyTestsBase
         var parent = container.RootScope.BeginScope();
         var sut = parent.BeginScope( name );
 
-        using ( new AssertionScope() )
-        {
-            sut.Container.Should().BeSameAs( container );
-            sut.Level.Should().Be( 2 );
-            sut.Locator.AttachedScope.Should().BeSameAs( sut );
-            sut.IsDisposed.Should().BeFalse();
-            sut.IsRoot.Should().BeFalse();
-            sut.ParentScope.Should().BeSameAs( parent );
-            sut.OriginalThreadId.Should().Be( threadId );
-            sut.Name.Should().Be( name );
-            parent.GetChildren().Should().BeSequentiallyEqualTo( sut );
-            sut.GetChildren().Should().BeEmpty();
-        }
+        Assertion.All(
+                sut.Container.TestRefEquals( container ),
+                sut.Level.TestEquals( 2 ),
+                sut.Locator.AttachedScope.TestRefEquals( sut ),
+                sut.IsDisposed.TestFalse(),
+                sut.IsRoot.TestFalse(),
+                sut.ParentScope.TestRefEquals( parent ),
+                sut.OriginalThreadId.TestEquals( threadId ),
+                sut.Name.TestEquals( name ),
+                parent.GetChildren().TestSequence( [ sut ] ),
+                sut.GetChildren().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -265,7 +257,7 @@ public class DependencyScopeTests : DependencyTestsBase
         var child2 = parent.BeginScope();
         var child3 = parent.BeginScope();
 
-        parent.GetChildren().Should().BeSequentiallyEqualTo( child1, child2, child3 );
+        parent.GetChildren().TestSequence( [ child1, child2, child3 ] ).Go();
     }
 
     [Fact]
@@ -278,11 +270,10 @@ public class DependencyScopeTests : DependencyTestsBase
 
         var result = sut.BeginScope();
 
-        using ( new AssertionScope() )
-        {
-            sut.GetChildren().Should().BeSequentiallyEqualTo( child, result );
-            child.GetChildren().Should().BeSequentiallyEqualTo( grandchild );
-        }
+        Assertion.All(
+                sut.GetChildren().TestSequence( [ child, result ] ),
+                child.GetChildren().TestSequence( [ grandchild ] ) )
+            .Go();
     }
 
     [Fact]
@@ -296,18 +287,17 @@ public class DependencyScopeTests : DependencyTestsBase
 
         var result = sut.BeginScope();
 
-        using ( new AssertionScope() )
-        {
-            result.Container.Should().BeSameAs( container );
-            result.Level.Should().Be( 2 );
-            result.Locator.AttachedScope.Should().BeSameAs( result );
-            result.IsDisposed.Should().BeFalse();
-            result.IsRoot.Should().BeFalse();
-            result.ParentScope.Should().BeSameAs( sut );
-            result.OriginalThreadId.Should().Be( threadId );
-            sut.GetChildren().Should().BeSequentiallyEqualTo( result );
-            result.GetChildren().Should().BeEmpty();
-        }
+        Assertion.All(
+                result.Container.TestRefEquals( container ),
+                result.Level.TestEquals( 2 ),
+                result.Locator.AttachedScope.TestRefEquals( result ),
+                result.IsDisposed.TestFalse(),
+                result.IsRoot.TestFalse(),
+                result.ParentScope.TestRefEquals( sut ),
+                result.OriginalThreadId.TestEquals( threadId ),
+                sut.GetChildren().TestSequence( [ result ] ),
+                result.GetChildren().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -319,7 +309,7 @@ public class DependencyScopeTests : DependencyTestsBase
 
         var action = Lambda.Of( () => sut.BeginScope() );
 
-        action.Should().ThrowExactly<ObjectDisposedException>();
+        action.Test( exc => exc.TestType().Exact<ObjectDisposedException>() ).Go();
     }
 
     [Fact]
@@ -331,7 +321,13 @@ public class DependencyScopeTests : DependencyTestsBase
 
         var action = Lambda.Of( () => sut.BeginScope( name ) );
 
-        action.Should().ThrowExactly<NamedDependencyScopeCreationException>().AndMatch( e => e.ParentScope == sut && e.Name == name );
+        action.Test(
+                exc => Assertion.All(
+                    exc.TestType().Exact<NamedDependencyScopeCreationException>(),
+                    exc.TestIf()
+                        .OfType<NamedDependencyScopeCreationException>(
+                            e => Assertion.All( e.ParentScope.TestRefEquals( sut ), e.Name.TestEquals( name ) ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -349,17 +345,16 @@ public class DependencyScopeTests : DependencyTestsBase
 
         sut.Dispose();
 
-        using ( new AssertionScope() )
-        {
-            sut.IsDisposed.Should().BeTrue();
-            child1.IsDisposed.Should().BeTrue();
-            child2.IsDisposed.Should().BeTrue();
-            child3.IsDisposed.Should().BeTrue();
-            grandchild1.IsDisposed.Should().BeTrue();
-            grandchild2.IsDisposed.Should().BeTrue();
-            grandchild3.IsDisposed.Should().BeTrue();
-            sut.GetChildren().Should().BeEmpty();
-        }
+        Assertion.All(
+                sut.IsDisposed.TestTrue(),
+                child1.IsDisposed.TestTrue(),
+                child2.IsDisposed.TestTrue(),
+                child3.IsDisposed.TestTrue(),
+                grandchild1.IsDisposed.TestTrue(),
+                grandchild2.IsDisposed.TestTrue(),
+                grandchild3.IsDisposed.TestTrue(),
+                sut.GetChildren().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -370,7 +365,7 @@ public class DependencyScopeTests : DependencyTestsBase
 
         sut.Dispose();
 
-        container.RootScope.IsDisposed.Should().BeTrue();
+        container.RootScope.IsDisposed.TestTrue().Go();
     }
 
     [Fact]
@@ -382,7 +377,7 @@ public class DependencyScopeTests : DependencyTestsBase
 
         sut.Dispose();
 
-        container.RootScope.IsDisposed.Should().BeTrue();
+        container.RootScope.IsDisposed.TestTrue().Go();
     }
 
     [Fact]
@@ -394,7 +389,7 @@ public class DependencyScopeTests : DependencyTestsBase
 
         sut.Dispose();
 
-        sut.IsDisposed.Should().BeTrue();
+        sut.IsDisposed.TestTrue().Go();
     }
 
     [Fact]
@@ -406,7 +401,7 @@ public class DependencyScopeTests : DependencyTestsBase
 
         sut.Dispose();
 
-        sut.IsDisposed.Should().BeTrue();
+        sut.IsDisposed.TestTrue().Go();
     }
 
     [Fact]
@@ -421,13 +416,12 @@ public class DependencyScopeTests : DependencyTestsBase
 
         child1.Dispose();
 
-        using ( new AssertionScope() )
-        {
-            child1.IsDisposed.Should().BeTrue();
-            child2.IsDisposed.Should().BeFalse();
-            child3.IsDisposed.Should().BeFalse();
-            sut.GetChildren().Should().BeSequentiallyEqualTo( child2, child3 );
-        }
+        Assertion.All(
+                child1.IsDisposed.TestTrue(),
+                child2.IsDisposed.TestFalse(),
+                child3.IsDisposed.TestFalse(),
+                sut.GetChildren().TestSequence( [ child2, child3 ] ) )
+            .Go();
     }
 
     [Fact]
@@ -442,13 +436,12 @@ public class DependencyScopeTests : DependencyTestsBase
 
         child3.Dispose();
 
-        using ( new AssertionScope() )
-        {
-            child3.IsDisposed.Should().BeTrue();
-            child1.IsDisposed.Should().BeFalse();
-            child2.IsDisposed.Should().BeFalse();
-            sut.GetChildren().Should().BeSequentiallyEqualTo( child1, child2 );
-        }
+        Assertion.All(
+                child3.IsDisposed.TestTrue(),
+                child1.IsDisposed.TestFalse(),
+                child2.IsDisposed.TestFalse(),
+                sut.GetChildren().TestSequence( [ child1, child2 ] ) )
+            .Go();
     }
 
     [Fact]
@@ -463,13 +456,12 @@ public class DependencyScopeTests : DependencyTestsBase
 
         child2.Dispose();
 
-        using ( new AssertionScope() )
-        {
-            child2.IsDisposed.Should().BeTrue();
-            child1.IsDisposed.Should().BeFalse();
-            child3.IsDisposed.Should().BeFalse();
-            sut.GetChildren().Should().BeSequentiallyEqualTo( child1, child3 );
-        }
+        Assertion.All(
+                child2.IsDisposed.TestTrue(),
+                child1.IsDisposed.TestFalse(),
+                child3.IsDisposed.TestFalse(),
+                sut.GetChildren().TestSequence( [ child1, child3 ] ) )
+            .Go();
     }
 
     [Fact]
@@ -482,7 +474,7 @@ public class DependencyScopeTests : DependencyTestsBase
 
         sut.Dispose();
 
-        sut.IsDisposed.Should().BeTrue();
+        sut.IsDisposed.TestTrue().Go();
     }
 
     [Fact]
@@ -494,13 +486,13 @@ public class DependencyScopeTests : DependencyTestsBase
         scope.Dispose();
         var action = Lambda.Of( () => container.RootScope.BeginScope( "foo" ) );
 
-        using ( new AssertionScope() )
-        {
-            action.Should().NotThrow();
-            scope.IsDisposed.Should().BeTrue();
-            scope.Should().NotBeSameAs( container.TryGetScope( "foo" ) );
-            container.RootScope.GetChildren().Should().BeSequentiallyEqualTo( container.GetScope( "foo" ) );
-        }
+        action.Test(
+                exc => Assertion.All(
+                    exc.TestNull(),
+                    scope.IsDisposed.TestTrue(),
+                    scope.TestNotRefEquals( container.TryGetScope( "foo" ) ),
+                    container.RootScope.GetChildren().TestSequence( [ container.GetScope( "foo" ) ] ) ) )
+            .Go();
     }
 
     [Fact]
@@ -518,11 +510,10 @@ public class DependencyScopeTests : DependencyTestsBase
 
         sut.Dispose();
 
-        using ( new AssertionScope() )
-        {
-            resolved1.VerifyCalls().Received( x => x.Dispose(), 1 );
-            resolved2.VerifyCalls().Received( x => x.Dispose(), 1 );
-        }
+        Assertion.All(
+                resolved1.TestReceivedCalls( x => x.Dispose(), count: 1 ),
+                resolved2.TestReceivedCalls( x => x.Dispose(), count: 1 ) )
+            .Go();
     }
 
     [Fact]
@@ -540,7 +531,7 @@ public class DependencyScopeTests : DependencyTestsBase
 
         sut.Dispose();
 
-        resolved.VerifyCalls().DidNotReceive( x => x.Dispose() );
+        resolved.TestDidNotReceiveCall( x => x.Dispose() ).Go();
     }
 
     [Fact]
@@ -557,7 +548,7 @@ public class DependencyScopeTests : DependencyTestsBase
 
         container.Dispose();
 
-        resolved.VerifyCalls().Received( x => x.Dispose(), 1 );
+        resolved.TestReceivedCalls( x => x.Dispose(), count: 1 ).Go();
     }
 
     [Fact]
@@ -572,7 +563,7 @@ public class DependencyScopeTests : DependencyTestsBase
 
         container.Dispose();
 
-        (resolved as DisposableDependency)?.IsDisposed.Should().BeTrue();
+        ((resolved as DisposableDependency)?.IsDisposed).TestEquals( true ).Go();
     }
 
     [Fact]
@@ -589,7 +580,7 @@ public class DependencyScopeTests : DependencyTestsBase
 
         sut.Dispose();
 
-        resolved.VerifyCalls().DidNotReceive( x => x.Dispose() );
+        resolved.TestDidNotReceiveCall( x => x.Dispose() ).Go();
     }
 
     [Fact]
@@ -606,7 +597,7 @@ public class DependencyScopeTests : DependencyTestsBase
 
         sut.Dispose();
 
-        resolved.VerifyCalls().Received( x => x.Dispose(), 1 );
+        resolved.TestReceivedCalls( x => x.Dispose(), count: 1 ).Go();
     }
 
     [Fact]
@@ -625,7 +616,7 @@ public class DependencyScopeTests : DependencyTestsBase
 
         sut.Dispose();
 
-        resolved.VerifyCalls().DidNotReceive( x => x.Dispose() );
+        resolved.TestDidNotReceiveCall( x => x.Dispose() ).Go();
     }
 
     [Fact]
@@ -642,7 +633,7 @@ public class DependencyScopeTests : DependencyTestsBase
 
         sut.Dispose();
 
-        resolved.VerifyCalls().Received( x => x.Dispose(), 1 );
+        resolved.TestReceivedCalls( x => x.Dispose(), count: 1 ).Go();
     }
 
     [Fact]
@@ -660,7 +651,7 @@ public class DependencyScopeTests : DependencyTestsBase
 
         sut.Dispose();
 
-        resolved.VerifyCalls().DidNotReceive( x => x.Dispose() );
+        resolved.TestDidNotReceiveCall( x => x.Dispose() ).Go();
     }
 
     [Fact]
@@ -695,39 +686,32 @@ public class DependencyScopeTests : DependencyTestsBase
 
         var action = Lambda.Of( () => container.Dispose() );
 
-        using ( new AssertionScope() )
-        {
-            var aggregateException = action.Should().ThrowExactly<OwnedDependenciesDisposalAggregateException>().And;
-
-            resolved1.VerifyCalls().Received( x => x.Dispose(), 1 );
-            resolved2.VerifyCalls().Received( x => x.Dispose(), 1 );
-            resolved3.VerifyCalls().Received( x => x.Dispose(), 1 );
-            resolved4.VerifyCalls().Received( x => x.Dispose(), 1 );
-            resolved5.VerifyCalls().Received( x => x.Dispose(), 1 );
-            resolved6.VerifyCalls().Received( x => x.Dispose(), 1 );
-
-            container.RootScope.IsDisposed.Should().BeTrue();
-            childScope.IsDisposed.Should().BeTrue();
-            grandchildScope.IsDisposed.Should().BeTrue();
-
-            aggregateException.InnerExceptions.Should().HaveCount( 3 );
-
-            var rootException = aggregateException.InnerExceptions.OfType<OwnedDependencyDisposalException>()
-                .FirstOrDefault( e => e.Scope == container.RootScope );
-
-            var childException = aggregateException.InnerExceptions.OfType<OwnedDependencyDisposalException>()
-                .FirstOrDefault( e => e.Scope == childScope );
-
-            var grandchildException = aggregateException.InnerExceptions.OfType<OwnedDependencyDisposalException>()
-                .FirstOrDefault( e => e.Scope == grandchildScope );
-
-            rootException.Should().NotBeNull();
-            rootException?.InnerException.Should().BeSameAs( exception );
-            childException.Should().NotBeNull();
-            childException?.InnerException.Should().BeSameAs( exception );
-            grandchildException.Should().NotBeNull();
-            grandchildException?.InnerException.Should().BeSameAs( exception );
-        }
+        action.Test(
+                exc => Assertion.All(
+                    exc.TestType().Exact<OwnedDependenciesDisposalAggregateException>(),
+                    resolved1.TestReceivedCalls( x => x.Dispose(), count: 1 ),
+                    resolved2.TestReceivedCalls( x => x.Dispose(), count: 1 ),
+                    resolved3.TestReceivedCalls( x => x.Dispose(), count: 1 ),
+                    resolved4.TestReceivedCalls( x => x.Dispose(), count: 1 ),
+                    resolved5.TestReceivedCalls( x => x.Dispose(), count: 1 ),
+                    resolved6.TestReceivedCalls( x => x.Dispose(), count: 1 ),
+                    container.RootScope.IsDisposed.TestTrue(),
+                    childScope.IsDisposed.TestTrue(),
+                    grandchildScope.IsDisposed.TestTrue(),
+                    exc.TestIf()
+                        .OfType<OwnedDependenciesDisposalAggregateException>(
+                            aggregateException => Assertion.All(
+                                aggregateException.InnerExceptions.Count.TestEquals( 3 ),
+                                (aggregateException.InnerExceptions.OfType<OwnedDependencyDisposalException>()
+                                    .FirstOrDefault( e => e.Scope == container.RootScope )
+                                    ?.InnerException).TestRefEquals( exception ),
+                                (aggregateException.InnerExceptions.OfType<OwnedDependencyDisposalException>()
+                                    .FirstOrDefault( e => e.Scope == childScope )
+                                    ?.InnerException).TestRefEquals( exception ),
+                                (aggregateException.InnerExceptions.OfType<OwnedDependencyDisposalException>()
+                                    .FirstOrDefault( e => e.Scope == grandchildScope )
+                                    ?.InnerException).TestRefEquals( exception ) ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -763,39 +747,32 @@ public class DependencyScopeTests : DependencyTestsBase
 
         var action = Lambda.Of( () => sut.Dispose() );
 
-        using ( new AssertionScope() )
-        {
-            var aggregateException = action.Should().ThrowExactly<OwnedDependenciesDisposalAggregateException>().And;
-
-            resolved1.VerifyCalls().Received( x => x.Dispose(), 1 );
-            resolved2.VerifyCalls().Received( x => x.Dispose(), 1 );
-            resolved3.VerifyCalls().Received( x => x.Dispose(), 1 );
-            resolved4.VerifyCalls().Received( x => x.Dispose(), 1 );
-            resolved5.VerifyCalls().Received( x => x.Dispose(), 1 );
-            resolved6.VerifyCalls().Received( x => x.Dispose(), 1 );
-
-            sut.IsDisposed.Should().BeTrue();
-            childScope.IsDisposed.Should().BeTrue();
-            grandchildScope.IsDisposed.Should().BeTrue();
-
-            aggregateException.InnerExceptions.Should().HaveCount( 3 );
-
-            var sutException = aggregateException.InnerExceptions.OfType<OwnedDependencyDisposalException>()
-                .FirstOrDefault( e => e.Scope == sut );
-
-            var childException = aggregateException.InnerExceptions.OfType<OwnedDependencyDisposalException>()
-                .FirstOrDefault( e => e.Scope == childScope );
-
-            var grandchildException = aggregateException.InnerExceptions.OfType<OwnedDependencyDisposalException>()
-                .FirstOrDefault( e => e.Scope == grandchildScope );
-
-            sutException.Should().NotBeNull();
-            sutException?.InnerException.Should().BeSameAs( exception );
-            childException.Should().NotBeNull();
-            childException?.InnerException.Should().BeSameAs( exception );
-            grandchildException.Should().NotBeNull();
-            grandchildException?.InnerException.Should().BeSameAs( exception );
-        }
+        action.Test(
+                exc => Assertion.All(
+                    exc.TestType().Exact<OwnedDependenciesDisposalAggregateException>(),
+                    resolved1.TestReceivedCalls( x => x.Dispose(), count: 1 ),
+                    resolved2.TestReceivedCalls( x => x.Dispose(), count: 1 ),
+                    resolved3.TestReceivedCalls( x => x.Dispose(), count: 1 ),
+                    resolved4.TestReceivedCalls( x => x.Dispose(), count: 1 ),
+                    resolved5.TestReceivedCalls( x => x.Dispose(), count: 1 ),
+                    resolved6.TestReceivedCalls( x => x.Dispose(), count: 1 ),
+                    sut.IsDisposed.TestTrue(),
+                    childScope.IsDisposed.TestTrue(),
+                    grandchildScope.IsDisposed.TestTrue(),
+                    exc.TestIf()
+                        .OfType<OwnedDependenciesDisposalAggregateException>(
+                            aggregateException => Assertion.All(
+                                aggregateException.InnerExceptions.Count.TestEquals( 3 ),
+                                (aggregateException.InnerExceptions.OfType<OwnedDependencyDisposalException>()
+                                    .FirstOrDefault( e => e.Scope == sut )
+                                    ?.InnerException).TestRefEquals( exception ),
+                                (aggregateException.InnerExceptions.OfType<OwnedDependencyDisposalException>()
+                                    .FirstOrDefault( e => e.Scope == childScope )
+                                    ?.InnerException).TestRefEquals( exception ),
+                                (aggregateException.InnerExceptions.OfType<OwnedDependencyDisposalException>()
+                                    .FirstOrDefault( e => e.Scope == grandchildScope )
+                                    ?.InnerException).TestRefEquals( exception ) ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -812,7 +789,7 @@ public class DependencyScopeTests : DependencyTestsBase
 
         container.Dispose();
 
-        resolved.VerifyCalls().DidNotReceive( x => x.Dispose() );
+        resolved.TestDidNotReceiveCall( x => x.Dispose() ).Go();
     }
 
     [Fact]
@@ -833,10 +810,10 @@ public class DependencyScopeTests : DependencyTestsBase
 
         container.Dispose();
 
-        using ( new AssertionScope() )
-        {
-            resolved.VerifyCalls().DidNotReceive( x => x.Dispose() );
-            callback.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( resolved );
-        }
+        Assertion.All(
+                resolved.TestDidNotReceiveCall( x => x.Dispose() ),
+                callback.CallAt( 0 ).Exists.TestTrue(),
+                callback.CallAt( 0 ).Arguments.TestSequence( [ resolved ] ) )
+            .Go();
     }
 }

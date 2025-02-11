@@ -38,6 +38,18 @@ public abstract class Assertion
         return All( context, assertions.ToArray() );
     }
 
+    [Pure]
+    public static Assertion CallOrder(Action order)
+    {
+        return CallOrder( string.Empty, order );
+    }
+
+    [Pure]
+    public static Assertion CallOrder(string context, Action order)
+    {
+        return new CallOrderAssertion( context, order );
+    }
+
     public abstract void Go();
 
     protected static void Throw(string message)

@@ -9,7 +9,6 @@ using LfrlAnvil.Dependencies.Extensions;
 using LfrlAnvil.Dependencies.Internal;
 using LfrlAnvil.Dependencies.Internal.Resolvers;
 using LfrlAnvil.Functional;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 using LfrlAnvil.TestExtensions.NSubstitute;
 
 namespace LfrlAnvil.Dependencies.Tests;
@@ -25,7 +24,7 @@ public class DependencyContainerTests : DependencyTestsBase
 
         var result = scope.Locator.Resolve<IDependencyContainer>();
 
-        result.Should().BeSameAs( sut );
+        result.TestRefEquals( sut ).Go();
     }
 
     [Fact]
@@ -37,7 +36,7 @@ public class DependencyContainerTests : DependencyTestsBase
 
         var result = scope.Locator.Resolve<IDependencyContainer>();
 
-        result.Should().BeSameAs( sut );
+        result.TestRefEquals( sut ).Go();
     }
 
     [Fact]
@@ -49,7 +48,7 @@ public class DependencyContainerTests : DependencyTestsBase
 
         var result = scope.Locator.Resolve<IDependencyScope>();
 
-        result.Should().BeSameAs( scope );
+        result.TestRefEquals( scope ).Go();
     }
 
     [Fact]
@@ -61,7 +60,7 @@ public class DependencyContainerTests : DependencyTestsBase
 
         var result = scope.Locator.Resolve<IDependencyScope>();
 
-        result.Should().BeSameAs( scope );
+        result.TestRefEquals( scope ).Go();
     }
 
     [Fact]
@@ -72,7 +71,7 @@ public class DependencyContainerTests : DependencyTestsBase
 
         var result = sut.RootScope.GetKeyedLocator( 1 ).Resolve<IDependencyContainer>();
 
-        result.Should().BeSameAs( sut );
+        result.TestRefEquals( sut ).Go();
     }
 
     [Fact]
@@ -84,7 +83,7 @@ public class DependencyContainerTests : DependencyTestsBase
 
         var result = scope.GetKeyedLocator( 1 ).Resolve<IDependencyScope>();
 
-        result.Should().BeSameAs( scope );
+        result.TestRefEquals( scope ).Go();
     }
 
     [Fact]
@@ -96,7 +95,7 @@ public class DependencyContainerTests : DependencyTestsBase
 
         var result = sut.RootScope.GetKeyedLocator( 1 ).Resolve<IDependencyContainer>();
 
-        result.Should().BeSameAs( sut );
+        result.TestRefEquals( sut ).Go();
     }
 
     [Fact]
@@ -109,7 +108,7 @@ public class DependencyContainerTests : DependencyTestsBase
 
         var result = scope.GetKeyedLocator( 1 ).Resolve<IDependencyScope>();
 
-        result.Should().BeSameAs( scope );
+        result.TestRefEquals( scope ).Go();
     }
 
     [Fact]
@@ -129,15 +128,14 @@ public class DependencyContainerTests : DependencyTestsBase
         var result3 = rootScope.Locator.Resolve<IFoo>();
         var result4 = childScope.Locator.Resolve<IFoo>();
 
-        using ( new AssertionScope() )
-        {
-            factory.Verify().CallCount.Should().Be( 4 );
-            factory.Verify().CallAt( 0 ).Arguments.Should().BeSequentiallyEqualTo( rootScope );
-            factory.Verify().CallAt( 1 ).Arguments.Should().BeSequentiallyEqualTo( childScope );
-            factory.Verify().CallAt( 2 ).Arguments.Should().BeSequentiallyEqualTo( rootScope );
-            factory.Verify().CallAt( 3 ).Arguments.Should().BeSequentiallyEqualTo( childScope );
-            new[] { result1, result2, result3, result4 }.Should().OnlyHaveUniqueItems();
-        }
+        Assertion.All(
+                factory.CallCount().TestEquals( 4 ),
+                factory.CallAt( 0 ).Arguments.TestSequence( [ rootScope ] ),
+                factory.CallAt( 1 ).Arguments.TestSequence( [ childScope ] ),
+                factory.CallAt( 2 ).Arguments.TestSequence( [ rootScope ] ),
+                factory.CallAt( 3 ).Arguments.TestSequence( [ childScope ] ),
+                new[] { result1, result2, result3, result4 }.Distinct().Count().TestEquals( 4 ) )
+            .Go();
     }
 
     [Fact]
@@ -157,15 +155,14 @@ public class DependencyContainerTests : DependencyTestsBase
         var result3 = childScope.Locator.Resolve<IFoo>();
         var result4 = rootScope.Locator.Resolve<IFoo>();
 
-        using ( new AssertionScope() )
-        {
-            factory.Verify().CallCount.Should().Be( 4 );
-            factory.Verify().CallAt( 0 ).Arguments.Should().BeSequentiallyEqualTo( childScope );
-            factory.Verify().CallAt( 1 ).Arguments.Should().BeSequentiallyEqualTo( rootScope );
-            factory.Verify().CallAt( 2 ).Arguments.Should().BeSequentiallyEqualTo( childScope );
-            factory.Verify().CallAt( 3 ).Arguments.Should().BeSequentiallyEqualTo( rootScope );
-            new[] { result1, result2, result3, result4 }.Should().OnlyHaveUniqueItems();
-        }
+        Assertion.All(
+                factory.CallCount().TestEquals( 4 ),
+                factory.CallAt( 0 ).Arguments.TestSequence( [ childScope ] ),
+                factory.CallAt( 1 ).Arguments.TestSequence( [ rootScope ] ),
+                factory.CallAt( 2 ).Arguments.TestSequence( [ childScope ] ),
+                factory.CallAt( 3 ).Arguments.TestSequence( [ rootScope ] ),
+                new[] { result1, result2, result3, result4 }.Distinct().Count().TestEquals( 4 ) )
+            .Go();
     }
 
     [Fact]
@@ -185,15 +182,14 @@ public class DependencyContainerTests : DependencyTestsBase
         var result3 = parentScope.Locator.Resolve<IFoo>();
         var result4 = childScope.Locator.Resolve<IFoo>();
 
-        using ( new AssertionScope() )
-        {
-            factory.Verify().CallCount.Should().Be( 4 );
-            factory.Verify().CallAt( 0 ).Arguments.Should().BeSequentiallyEqualTo( parentScope );
-            factory.Verify().CallAt( 1 ).Arguments.Should().BeSequentiallyEqualTo( childScope );
-            factory.Verify().CallAt( 2 ).Arguments.Should().BeSequentiallyEqualTo( parentScope );
-            factory.Verify().CallAt( 3 ).Arguments.Should().BeSequentiallyEqualTo( childScope );
-            new[] { result1, result2, result3, result4 }.Should().OnlyHaveUniqueItems();
-        }
+        Assertion.All(
+                factory.CallCount().TestEquals( 4 ),
+                factory.CallAt( 0 ).Arguments.TestSequence( [ parentScope ] ),
+                factory.CallAt( 1 ).Arguments.TestSequence( [ childScope ] ),
+                factory.CallAt( 2 ).Arguments.TestSequence( [ parentScope ] ),
+                factory.CallAt( 3 ).Arguments.TestSequence( [ childScope ] ),
+                new[] { result1, result2, result3, result4 }.Distinct().Count().TestEquals( 4 ) )
+            .Go();
     }
 
     [Fact]
@@ -213,15 +209,14 @@ public class DependencyContainerTests : DependencyTestsBase
         var result3 = childScope.Locator.Resolve<IFoo>();
         var result4 = parentScope.Locator.Resolve<IFoo>();
 
-        using ( new AssertionScope() )
-        {
-            factory.Verify().CallCount.Should().Be( 4 );
-            factory.Verify().CallAt( 0 ).Arguments.Should().BeSequentiallyEqualTo( childScope );
-            factory.Verify().CallAt( 1 ).Arguments.Should().BeSequentiallyEqualTo( parentScope );
-            factory.Verify().CallAt( 2 ).Arguments.Should().BeSequentiallyEqualTo( childScope );
-            factory.Verify().CallAt( 3 ).Arguments.Should().BeSequentiallyEqualTo( parentScope );
-            new[] { result1, result2, result3, result4 }.Should().OnlyHaveUniqueItems();
-        }
+        Assertion.All(
+                factory.CallCount().TestEquals( 4 ),
+                factory.CallAt( 0 ).Arguments.TestSequence( [ childScope ] ),
+                factory.CallAt( 1 ).Arguments.TestSequence( [ parentScope ] ),
+                factory.CallAt( 2 ).Arguments.TestSequence( [ childScope ] ),
+                factory.CallAt( 3 ).Arguments.TestSequence( [ parentScope ] ),
+                new[] { result1, result2, result3, result4 }.Distinct().Count().TestEquals( 4 ) )
+            .Go();
     }
 
     [Fact]
@@ -241,12 +236,11 @@ public class DependencyContainerTests : DependencyTestsBase
         var result3 = rootScope.Locator.Resolve<IFoo>();
         var result4 = childScope.Locator.Resolve<IFoo>();
 
-        using ( new AssertionScope() )
-        {
-            factory.Verify().CallCount.Should().Be( 1 );
-            factory.Verify().CallAt( 0 ).Arguments.Should().BeSequentiallyEqualTo( rootScope );
-            new[] { result1, result2, result3, result4 }.Distinct().Should().HaveCount( 1 );
-        }
+        Assertion.All(
+                factory.CallCount().TestEquals( 1 ),
+                factory.CallAt( 0 ).Arguments.TestSequence( [ rootScope ] ),
+                new[] { result1, result2, result3, result4 }.Distinct().Count().TestEquals( 1 ) )
+            .Go();
     }
 
     [Fact]
@@ -266,12 +260,11 @@ public class DependencyContainerTests : DependencyTestsBase
         var result3 = childScope.Locator.Resolve<IFoo>();
         var result4 = rootScope.Locator.Resolve<IFoo>();
 
-        using ( new AssertionScope() )
-        {
-            factory.Verify().CallCount.Should().Be( 1 );
-            factory.Verify().CallAt( 0 ).Arguments.Should().BeSequentiallyEqualTo( childScope );
-            new[] { result1, result2, result3, result4 }.Distinct().Should().HaveCount( 1 );
-        }
+        Assertion.All(
+                factory.CallCount().TestEquals( 1 ),
+                factory.CallAt( 0 ).Arguments.TestSequence( [ childScope ] ),
+                new[] { result1, result2, result3, result4 }.Distinct().Count().TestEquals( 1 ) )
+            .Go();
     }
 
     [Fact]
@@ -291,12 +284,11 @@ public class DependencyContainerTests : DependencyTestsBase
         var result3 = parentScope.Locator.Resolve<IFoo>();
         var result4 = childScope.Locator.Resolve<IFoo>();
 
-        using ( new AssertionScope() )
-        {
-            factory.Verify().CallCount.Should().Be( 1 );
-            factory.Verify().CallAt( 0 ).Arguments.Should().BeSequentiallyEqualTo( parentScope );
-            new[] { result1, result2, result3, result4 }.Distinct().Should().HaveCount( 1 );
-        }
+        Assertion.All(
+                factory.CallCount().TestEquals( 1 ),
+                factory.CallAt( 0 ).Arguments.TestSequence( [ parentScope ] ),
+                new[] { result1, result2, result3, result4 }.Distinct().Count().TestEquals( 1 ) )
+            .Go();
     }
 
     [Fact]
@@ -316,12 +308,11 @@ public class DependencyContainerTests : DependencyTestsBase
         var result3 = childScope.Locator.Resolve<IFoo>();
         var result4 = parentScope.Locator.Resolve<IFoo>();
 
-        using ( new AssertionScope() )
-        {
-            factory.Verify().CallCount.Should().Be( 1 );
-            factory.Verify().CallAt( 0 ).Arguments.Should().BeSequentiallyEqualTo( childScope );
-            new[] { result1, result2, result3, result4 }.Distinct().Should().HaveCount( 1 );
-        }
+        Assertion.All(
+                factory.CallCount().TestEquals( 1 ),
+                factory.CallAt( 0 ).Arguments.TestSequence( [ childScope ] ),
+                new[] { result1, result2, result3, result4 }.Distinct().Count().TestEquals( 1 ) )
+            .Go();
     }
 
     [Fact]
@@ -341,15 +332,14 @@ public class DependencyContainerTests : DependencyTestsBase
         var result3 = rootScope.Locator.Resolve<IFoo>();
         var result4 = childScope.Locator.Resolve<IFoo>();
 
-        using ( new AssertionScope() )
-        {
-            factory.Verify().CallCount.Should().Be( 2 );
-            factory.Verify().CallAt( 0 ).Arguments.Should().BeSequentiallyEqualTo( rootScope );
-            factory.Verify().CallAt( 1 ).Arguments.Should().BeSequentiallyEqualTo( childScope );
-            result1.Should().NotBeSameAs( result2 );
-            result1.Should().BeSameAs( result3 );
-            result2.Should().BeSameAs( result4 );
-        }
+        Assertion.All(
+                factory.CallCount().TestEquals( 2 ),
+                factory.CallAt( 0 ).Arguments.TestSequence( [ rootScope ] ),
+                factory.CallAt( 1 ).Arguments.TestSequence( [ childScope ] ),
+                result1.TestNotRefEquals( result2 ),
+                result1.TestRefEquals( result3 ),
+                result2.TestRefEquals( result4 ) )
+            .Go();
     }
 
     [Fact]
@@ -369,15 +359,14 @@ public class DependencyContainerTests : DependencyTestsBase
         var result3 = childScope.Locator.Resolve<IFoo>();
         var result4 = rootScope.Locator.Resolve<IFoo>();
 
-        using ( new AssertionScope() )
-        {
-            factory.Verify().CallCount.Should().Be( 2 );
-            factory.Verify().CallAt( 0 ).Arguments.Should().BeSequentiallyEqualTo( childScope );
-            factory.Verify().CallAt( 1 ).Arguments.Should().BeSequentiallyEqualTo( rootScope );
-            result1.Should().NotBeSameAs( result2 );
-            result1.Should().BeSameAs( result3 );
-            result2.Should().BeSameAs( result4 );
-        }
+        Assertion.All(
+                factory.CallCount().TestEquals( 2 ),
+                factory.CallAt( 0 ).Arguments.TestSequence( [ childScope ] ),
+                factory.CallAt( 1 ).Arguments.TestSequence( [ rootScope ] ),
+                result1.TestNotRefEquals( result2 ),
+                result1.TestRefEquals( result3 ),
+                result2.TestRefEquals( result4 ) )
+            .Go();
     }
 
     [Fact]
@@ -397,15 +386,14 @@ public class DependencyContainerTests : DependencyTestsBase
         var result3 = parentScope.Locator.Resolve<IFoo>();
         var result4 = childScope.Locator.Resolve<IFoo>();
 
-        using ( new AssertionScope() )
-        {
-            factory.Verify().CallCount.Should().Be( 2 );
-            factory.Verify().CallAt( 0 ).Arguments.Should().BeSequentiallyEqualTo( parentScope );
-            factory.Verify().CallAt( 1 ).Arguments.Should().BeSequentiallyEqualTo( childScope );
-            result1.Should().NotBeSameAs( result2 );
-            result1.Should().BeSameAs( result3 );
-            result2.Should().BeSameAs( result4 );
-        }
+        Assertion.All(
+                factory.CallCount().TestEquals( 2 ),
+                factory.CallAt( 0 ).Arguments.TestSequence( [ parentScope ] ),
+                factory.CallAt( 1 ).Arguments.TestSequence( [ childScope ] ),
+                result1.TestNotRefEquals( result2 ),
+                result1.TestRefEquals( result3 ),
+                result2.TestRefEquals( result4 ) )
+            .Go();
     }
 
     [Fact]
@@ -425,15 +413,14 @@ public class DependencyContainerTests : DependencyTestsBase
         var result3 = childScope.Locator.Resolve<IFoo>();
         var result4 = parentScope.Locator.Resolve<IFoo>();
 
-        using ( new AssertionScope() )
-        {
-            factory.Verify().CallCount.Should().Be( 2 );
-            factory.Verify().CallAt( 0 ).Arguments.Should().BeSequentiallyEqualTo( childScope );
-            factory.Verify().CallAt( 1 ).Arguments.Should().BeSequentiallyEqualTo( parentScope );
-            result1.Should().NotBeSameAs( result2 );
-            result1.Should().BeSameAs( result3 );
-            result2.Should().BeSameAs( result4 );
-        }
+        Assertion.All(
+                factory.CallCount().TestEquals( 2 ),
+                factory.CallAt( 0 ).Arguments.TestSequence( [ childScope ] ),
+                factory.CallAt( 1 ).Arguments.TestSequence( [ parentScope ] ),
+                result1.TestNotRefEquals( result2 ),
+                result1.TestRefEquals( result3 ),
+                result2.TestRefEquals( result4 ) )
+            .Go();
     }
 
     [Fact]
@@ -453,12 +440,11 @@ public class DependencyContainerTests : DependencyTestsBase
         var result3 = rootScope.Locator.Resolve<IFoo>();
         var result4 = childScope.Locator.Resolve<IFoo>();
 
-        using ( new AssertionScope() )
-        {
-            factory.Verify().CallCount.Should().Be( 1 );
-            factory.Verify().CallAt( 0 ).Arguments.Should().BeSequentiallyEqualTo( rootScope );
-            new[] { result1, result2, result3, result4 }.Distinct().Should().HaveCount( 1 );
-        }
+        Assertion.All(
+                factory.CallCount().TestEquals( 1 ),
+                factory.CallAt( 0 ).Arguments.TestSequence( [ rootScope ] ),
+                new[] { result1, result2, result3, result4 }.Distinct().Count().TestEquals( 1 ) )
+            .Go();
     }
 
     [Fact]
@@ -478,15 +464,14 @@ public class DependencyContainerTests : DependencyTestsBase
         var result3 = childScope.Locator.Resolve<IFoo>();
         var result4 = rootScope.Locator.Resolve<IFoo>();
 
-        using ( new AssertionScope() )
-        {
-            factory.Verify().CallCount.Should().Be( 2 );
-            factory.Verify().CallAt( 0 ).Arguments.Should().BeSequentiallyEqualTo( childScope );
-            factory.Verify().CallAt( 1 ).Arguments.Should().BeSequentiallyEqualTo( rootScope );
-            result1.Should().NotBeSameAs( result2 );
-            result1.Should().BeSameAs( result3 );
-            result2.Should().BeSameAs( result4 );
-        }
+        Assertion.All(
+                factory.CallCount().TestEquals( 2 ),
+                factory.CallAt( 0 ).Arguments.TestSequence( [ childScope ] ),
+                factory.CallAt( 1 ).Arguments.TestSequence( [ rootScope ] ),
+                result1.TestNotRefEquals( result2 ),
+                result1.TestRefEquals( result3 ),
+                result2.TestRefEquals( result4 ) )
+            .Go();
     }
 
     [Fact]
@@ -506,12 +491,11 @@ public class DependencyContainerTests : DependencyTestsBase
         var result3 = parentScope.Locator.Resolve<IFoo>();
         var result4 = childScope.Locator.Resolve<IFoo>();
 
-        using ( new AssertionScope() )
-        {
-            factory.Verify().CallCount.Should().Be( 1 );
-            factory.Verify().CallAt( 0 ).Arguments.Should().BeSequentiallyEqualTo( parentScope );
-            new[] { result1, result2, result3, result4 }.Distinct().Should().HaveCount( 1 );
-        }
+        Assertion.All(
+                factory.CallCount().TestEquals( 1 ),
+                factory.CallAt( 0 ).Arguments.TestSequence( [ parentScope ] ),
+                new[] { result1, result2, result3, result4 }.Distinct().Count().TestEquals( 1 ) )
+            .Go();
     }
 
     [Fact]
@@ -531,15 +515,14 @@ public class DependencyContainerTests : DependencyTestsBase
         var result3 = childScope.Locator.Resolve<IFoo>();
         var result4 = parentScope.Locator.Resolve<IFoo>();
 
-        using ( new AssertionScope() )
-        {
-            factory.Verify().CallCount.Should().Be( 2 );
-            factory.Verify().CallAt( 0 ).Arguments.Should().BeSequentiallyEqualTo( childScope );
-            factory.Verify().CallAt( 1 ).Arguments.Should().BeSequentiallyEqualTo( parentScope );
-            result1.Should().NotBeSameAs( result2 );
-            result1.Should().BeSameAs( result3 );
-            result2.Should().BeSameAs( result4 );
-        }
+        Assertion.All(
+                factory.CallCount().TestEquals( 2 ),
+                factory.CallAt( 0 ).Arguments.TestSequence( [ childScope ] ),
+                factory.CallAt( 1 ).Arguments.TestSequence( [ parentScope ] ),
+                result1.TestNotRefEquals( result2 ),
+                result1.TestRefEquals( result3 ),
+                result2.TestRefEquals( result4 ) )
+            .Go();
     }
 
     [Fact]
@@ -556,7 +539,7 @@ public class DependencyContainerTests : DependencyTestsBase
         var result1 = scope.Locator.Resolve<IFoo>();
         var result2 = scope.Locator.Resolve<IBar>();
 
-        new object[] { result1, result2 }.Should().OnlyHaveUniqueItems();
+        new object[] { result1, result2 }.Distinct().Count().TestEquals( 2 ).Go();
     }
 
     [Fact]
@@ -573,7 +556,7 @@ public class DependencyContainerTests : DependencyTestsBase
         var result1 = scope.Locator.Resolve<IFoo>();
         var result2 = scope.Locator.Resolve<IBar>();
 
-        result1.Should().BeSameAs( result2 );
+        result1.TestRefEquals( result2 ).Go();
     }
 
     [Fact]
@@ -592,11 +575,10 @@ public class DependencyContainerTests : DependencyTestsBase
         var result2 = scope.BeginScope().Locator.Resolve<IBar>();
         var result3 = scope.Locator.Resolve<IFoo>();
 
-        using ( new AssertionScope() )
-        {
-            result1.Should().BeSameAs( result2 );
-            result1.Should().BeSameAs( result3 );
-        }
+        Assertion.All(
+                result1.TestRefEquals( result2 ),
+                result1.TestRefEquals( result3 ) )
+            .Go();
     }
 
     [Fact]
@@ -613,7 +595,7 @@ public class DependencyContainerTests : DependencyTestsBase
         var result1 = scope.Locator.Resolve<IFoo>();
         var result2 = scope.Locator.Resolve<IBar>();
 
-        result1.Should().BeSameAs( result2 );
+        result1.TestRefEquals( result2 ).Go();
     }
 
     [Theory]
@@ -636,12 +618,11 @@ public class DependencyContainerTests : DependencyTestsBase
         _ = scope.Locator.Resolve<IFoo>();
         _ = scope.Locator.Resolve<IFoo>();
 
-        using ( new AssertionScope() )
-        {
-            onResolvingCallback.Verify().CallCount.Should().Be( 2 );
-            onResolvingCallback.Verify().CallAt( 0 ).Arguments.Should().BeSequentiallyEqualTo( typeof( IFoo ), scope );
-            onResolvingCallback.Verify().CallAt( 1 ).Arguments.Should().BeSequentiallyEqualTo( typeof( IFoo ), scope );
-        }
+        Assertion.All(
+                onResolvingCallback.CallCount().TestEquals( 2 ),
+                onResolvingCallback.CallAt( 0 ).Arguments.TestSequence( [ typeof( IFoo ), scope ] ),
+                onResolvingCallback.CallAt( 1 ).Arguments.TestSequence( [ typeof( IFoo ), scope ] ) )
+            .Go();
     }
 
     [Theory]
@@ -661,12 +642,11 @@ public class DependencyContainerTests : DependencyTestsBase
         _ = scope.Locator.Resolve<IFoo>();
         _ = scope.Locator.Resolve<IFoo>();
 
-        using ( new AssertionScope() )
-        {
-            onResolvingCallback.Verify().CallCount.Should().Be( 2 );
-            onResolvingCallback.Verify().CallAt( 0 ).Arguments.Should().BeSequentiallyEqualTo( typeof( IFoo ), scope );
-            onResolvingCallback.Verify().CallAt( 1 ).Arguments.Should().BeSequentiallyEqualTo( typeof( IFoo ), scope );
-        }
+        Assertion.All(
+                onResolvingCallback.CallCount().TestEquals( 2 ),
+                onResolvingCallback.CallAt( 0 ).Arguments.TestSequence( [ typeof( IFoo ), scope ] ),
+                onResolvingCallback.CallAt( 1 ).Arguments.TestSequence( [ typeof( IFoo ), scope ] ) )
+            .Go();
     }
 
     [Fact]
@@ -688,12 +668,11 @@ public class DependencyContainerTests : DependencyTestsBase
         var result2 = scope.Locator.Resolve<IBar>();
         var result3 = scope.Locator.Resolve<IQux>();
 
-        using ( new AssertionScope() )
-        {
-            factory.Verify().CallCount.Should().Be( 2 );
-            result1.Should().BeSameAs( result2 );
-            result1.Should().NotBeSameAs( result3 );
-        }
+        Assertion.All(
+                factory.CallCount().TestEquals( 2 ),
+                result1.TestRefEquals( result2 ),
+                result1.TestNotRefEquals( result3 ) )
+            .Go();
     }
 
     [Theory]
@@ -712,11 +691,7 @@ public class DependencyContainerTests : DependencyTestsBase
 
         var action = Lambda.Of( () => scope.Locator.Resolve<IFoo>() );
 
-        using ( new AssertionScope() )
-        {
-            action.Should().Throw<Exception>().And.Should().BeSameAs( exception );
-            scope.ScopedInstancesByResolverId.Should().BeEmpty();
-        }
+        action.Test( exc => Assertion.All( exc.TestRefEquals( exception ), scope.ScopedInstancesByResolverId.TestEmpty() ) ).Go();
     }
 
     [Fact]
@@ -728,7 +703,7 @@ public class DependencyContainerTests : DependencyTestsBase
 
         var result = sut.RootScope.Locator.TryResolve<IFoo>();
 
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Fact]
@@ -740,7 +715,7 @@ public class DependencyContainerTests : DependencyTestsBase
 
         var result = sut.RootScope.GetKeyedLocator( 2 ).TryResolve<IFoo>();
 
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Fact]
@@ -752,7 +727,7 @@ public class DependencyContainerTests : DependencyTestsBase
 
         var result = sut.RootScope.GetKeyedLocator( "foo" ).TryResolve<IFoo>();
 
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Fact]
@@ -764,7 +739,7 @@ public class DependencyContainerTests : DependencyTestsBase
 
         var result = sut.RootScope.GetKeyedLocator( 1 ).TryResolve<IFoo>();
 
-        result.Should().NotBeNull();
+        result.TestNotNull().Go();
     }
 
     [Fact]
@@ -785,11 +760,10 @@ public class DependencyContainerTests : DependencyTestsBase
         var result2 = sut.RootScope.GetKeyedLocator( 1 ).Resolve<IFoo>();
         var result3 = sut.RootScope.GetKeyedLocator( "foo" ).Resolve<IQux>();
 
-        using ( new AssertionScope() )
-        {
-            result1.Should().BeSameAs( result2 );
-            result2.Should().BeSameAs( result3 );
-        }
+        Assertion.All(
+                result1.TestRefEquals( result2 ),
+                result2.TestRefEquals( result3 ) )
+            .Go();
     }
 
     [Fact]
@@ -800,7 +774,7 @@ public class DependencyContainerTests : DependencyTestsBase
 
         var result = sut.RootScope.Locator.Resolve( typeof( IDependencyContainer ) );
 
-        result.Should().BeSameAs( sut );
+        result.TestRefEquals( sut ).Go();
     }
 
     [Fact]
@@ -811,7 +785,11 @@ public class DependencyContainerTests : DependencyTestsBase
 
         var action = Lambda.Of( () => sut.RootScope.Locator.Resolve<IFoo>() );
 
-        action.Should().ThrowExactly<MissingDependencyException>().AndMatch( e => e.DependencyType == typeof( IFoo ) );
+        action.Test(
+                exc => Assertion.All(
+                    exc.TestType().Exact<MissingDependencyException>(),
+                    exc.TestIf().OfType<MissingDependencyException>( e => e.DependencyType.TestEquals( typeof( IFoo ) ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -822,7 +800,11 @@ public class DependencyContainerTests : DependencyTestsBase
 
         var action = Lambda.Of( () => sut.RootScope.Locator.Resolve( typeof( IFoo ) ) );
 
-        action.Should().ThrowExactly<MissingDependencyException>().AndMatch( e => e.DependencyType == typeof( IFoo ) );
+        action.Test(
+                exc => Assertion.All(
+                    exc.TestType().Exact<MissingDependencyException>(),
+                    exc.TestIf().OfType<MissingDependencyException>( e => e.DependencyType.TestEquals( typeof( IFoo ) ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -837,9 +819,15 @@ public class DependencyContainerTests : DependencyTestsBase
 
         var action = Lambda.Of( () => sut.RootScope.Locator.Resolve<IFoo>() );
 
-        action.Should()
-            .ThrowExactly<InvalidDependencyCastException>()
-            .AndMatch( e => e.DependencyType == typeof( IFoo ) && e.ResultType == typeof( string ) );
+        action.Test(
+                exc => Assertion.All(
+                    exc.TestType().Exact<InvalidDependencyCastException>(),
+                    exc.TestIf()
+                        .OfType<InvalidDependencyCastException>(
+                            e => Assertion.All(
+                                e.DependencyType.TestEquals( typeof( IFoo ) ),
+                                e.ResultType.TestEquals( typeof( string ) ) ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -854,9 +842,15 @@ public class DependencyContainerTests : DependencyTestsBase
 
         var action = Lambda.Of( () => sut.RootScope.Locator.Resolve( typeof( IFoo ) ) );
 
-        action.Should()
-            .ThrowExactly<InvalidDependencyCastException>()
-            .AndMatch( e => e.DependencyType == typeof( IFoo ) && e.ResultType == typeof( string ) );
+        action.Test(
+                exc => Assertion.All(
+                    exc.TestType().Exact<InvalidDependencyCastException>(),
+                    exc.TestIf()
+                        .OfType<InvalidDependencyCastException>(
+                            e => Assertion.All(
+                                e.DependencyType.TestEquals( typeof( IFoo ) ),
+                                e.ResultType.TestEquals( typeof( string ) ) ) ) ) )
+            .Go();
     }
 
     [Theory]
@@ -877,7 +871,7 @@ public class DependencyContainerTests : DependencyTestsBase
 
         var action = Lambda.Of( () => scope.Locator.Resolve<IFoo>() );
 
-        action.Should().ThrowExactly<ObjectDisposedException>();
+        action.Test( exc => exc.TestType().Exact<ObjectDisposedException>() ).Go();
     }
 
     [Theory]
@@ -895,7 +889,7 @@ public class DependencyContainerTests : DependencyTestsBase
 
         var action = Lambda.Of( () => scope.Locator.Resolve<IFoo>() );
 
-        action.Should().ThrowExactly<ObjectDisposedException>();
+        action.Test( exc => exc.TestType().Exact<ObjectDisposedException>() ).Go();
     }
 
     [Fact]
@@ -907,15 +901,22 @@ public class DependencyContainerTests : DependencyTestsBase
 
         var action = Lambda.Of( () => sut.RootScope.Locator.Resolve<IFoo>() );
 
-        action.Should()
-            .ThrowExactly<CircularDependencyReferenceException>()
-            .AndMatch(
-                e => e.DependencyType == typeof( IFoo )
-                    && e.ImplementorType == typeof( IFoo )
-                    && e.InnerException is CircularDependencyReferenceException inner
-                    && inner.DependencyType == typeof( IFoo )
-                    && inner.ImplementorType == typeof( IFoo )
-                    && inner.InnerException is null );
+        action.Test(
+                exc => Assertion.All(
+                    exc.TestType().Exact<CircularDependencyReferenceException>(),
+                    exc.TestIf()
+                        .OfType<CircularDependencyReferenceException>(
+                            e => Assertion.All(
+                                e.DependencyType.TestEquals( typeof( IFoo ) ),
+                                e.ImplementorType.TestEquals( typeof( IFoo ) ),
+                                e.InnerException.TestType().AssignableTo<CircularDependencyReferenceException>(),
+                                e.InnerException.TestIf()
+                                    .OfType<CircularDependencyReferenceException>(
+                                        inner => Assertion.All(
+                                            inner.DependencyType.TestEquals( typeof( IFoo ) ),
+                                            inner.ImplementorType.TestEquals( typeof( IFoo ) ),
+                                            inner.InnerException.TestNull() ) ) ) ) ) )
+            .Go();
     }
 
     [Theory]
@@ -940,24 +941,42 @@ public class DependencyContainerTests : DependencyTestsBase
 
         var action = Lambda.Of( () => sut.RootScope.Locator.Resolve( type ) );
 
-        action.Should()
-            .ThrowExactly<CircularDependencyReferenceException>()
-            .AndMatch(
-                e => e.DependencyType == type
-                    && e.ImplementorType == type
-                    && e.InnerException is CircularDependencyReferenceException inner1
-                    && inner1.DependencyType == firstType
-                    && inner1.ImplementorType == firstType
-                    && inner1.InnerException is CircularDependencyReferenceException inner2
-                    && inner2.DependencyType == secondType
-                    && inner2.ImplementorType == secondType
-                    && inner2.InnerException is CircularDependencyReferenceException inner3
-                    && inner3.DependencyType == thirdType
-                    && inner3.ImplementorType == thirdType
-                    && inner3.InnerException is CircularDependencyReferenceException inner4
-                    && inner4.DependencyType == type
-                    && inner4.ImplementorType == type
-                    && inner4.InnerException is null );
+        action.Test(
+                exc => Assertion.All(
+                    exc.TestType().Exact<CircularDependencyReferenceException>(),
+                    exc.TestIf()
+                        .OfType<CircularDependencyReferenceException>(
+                            e => Assertion.All(
+                                e.DependencyType.TestEquals( type ),
+                                e.ImplementorType.TestEquals( type ),
+                                e.InnerException.TestType().AssignableTo<CircularDependencyReferenceException>(),
+                                e.InnerException.TestIf()
+                                    .OfType<CircularDependencyReferenceException>(
+                                        inner1 => Assertion.All(
+                                            inner1.DependencyType.TestEquals( firstType ),
+                                            inner1.ImplementorType.TestEquals( firstType ),
+                                            inner1.InnerException.TestType().AssignableTo<CircularDependencyReferenceException>(),
+                                            inner1.InnerException.TestIf()
+                                                .OfType<CircularDependencyReferenceException>(
+                                                    inner2 => Assertion.All(
+                                                        inner2.DependencyType.TestEquals( secondType ),
+                                                        inner2.ImplementorType.TestEquals( secondType ),
+                                                        inner2.InnerException.TestType()
+                                                            .AssignableTo<CircularDependencyReferenceException>(),
+                                                        inner2.InnerException.TestIf()
+                                                            .OfType<CircularDependencyReferenceException>(
+                                                                inner3 => Assertion.All(
+                                                                    inner3.DependencyType.TestEquals( thirdType ),
+                                                                    inner3.ImplementorType.TestEquals( thirdType ),
+                                                                    inner3.InnerException.TestType()
+                                                                        .AssignableTo<CircularDependencyReferenceException>(),
+                                                                    inner3.InnerException.TestIf()
+                                                                        .OfType<CircularDependencyReferenceException>(
+                                                                            inner4 => Assertion.All(
+                                                                                inner4.DependencyType.TestEquals( type ),
+                                                                                inner4.ImplementorType.TestEquals( type ),
+                                                                                inner4.InnerException.TestNull() ) ) ) ) ) ) ) ) ) ) ) )
+            .Go();
     }
 
     [Theory]
@@ -974,9 +993,16 @@ public class DependencyContainerTests : DependencyTestsBase
 
         var action = Lambda.Of( () => sut.RootScope.Locator.Resolve( type ) );
 
-        action.Should()
-            .ThrowExactly<CircularDependencyReferenceException>()
-            .AndMatch( e => e.DependencyType == type && e.ImplementorType == type && e.InnerException is not null );
+        action.Test(
+                exc => Assertion.All(
+                    exc.TestType().Exact<CircularDependencyReferenceException>(),
+                    exc.TestIf()
+                        .OfType<CircularDependencyReferenceException>(
+                            e => Assertion.All(
+                                e.DependencyType.TestEquals( type ),
+                                e.ImplementorType.TestEquals( type ),
+                                e.InnerException.TestNotNull() ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -997,21 +1023,35 @@ public class DependencyContainerTests : DependencyTestsBase
 
         var action = Lambda.Of( () => sut.RootScope.Locator.Resolve<IFoo>() );
 
-        action.Should()
-            .ThrowExactly<CircularDependencyReferenceException>()
-            .AndMatch(
-                e => e.DependencyType == typeof( IFoo )
-                    && e.ImplementorType == typeof( IFoo )
-                    && e.InnerException is CircularDependencyReferenceException inner1
-                    && inner1.DependencyType == typeof( IBar )
-                    && inner1.ImplementorType == typeof( IBar )
-                    && inner1.InnerException is CircularDependencyReferenceException inner2
-                    && inner2.DependencyType == typeof( IQux )
-                    && inner2.ImplementorType == typeof( IQux )
-                    && inner2.InnerException is CircularDependencyReferenceException inner3
-                    && inner3.DependencyType == typeof( IBar )
-                    && inner3.ImplementorType == typeof( IBar )
-                    && inner3.InnerException is null );
+        action.Test(
+                exc => Assertion.All(
+                    exc.TestType().Exact<CircularDependencyReferenceException>(),
+                    exc.TestIf()
+                        .OfType<CircularDependencyReferenceException>(
+                            e => Assertion.All(
+                                e.DependencyType.TestEquals( typeof( IFoo ) ),
+                                e.ImplementorType.TestEquals( typeof( IFoo ) ),
+                                e.InnerException.TestType().AssignableTo<CircularDependencyReferenceException>(),
+                                e.InnerException.TestIf()
+                                    .OfType<CircularDependencyReferenceException>(
+                                        inner1 => Assertion.All(
+                                            inner1.DependencyType.TestEquals( typeof( IBar ) ),
+                                            inner1.ImplementorType.TestEquals( typeof( IBar ) ),
+                                            inner1.InnerException.TestType().AssignableTo<CircularDependencyReferenceException>(),
+                                            inner1.InnerException.TestIf()
+                                                .OfType<CircularDependencyReferenceException>(
+                                                    inner2 => Assertion.All(
+                                                        inner2.DependencyType.TestEquals( typeof( IQux ) ),
+                                                        inner2.ImplementorType.TestEquals( typeof( IQux ) ),
+                                                        inner2.InnerException.TestType()
+                                                            .AssignableTo<CircularDependencyReferenceException>(),
+                                                        inner2.InnerException.TestIf()
+                                                            .OfType<CircularDependencyReferenceException>(
+                                                                inner3 => Assertion.All(
+                                                                    inner3.DependencyType.TestEquals( typeof( IBar ) ),
+                                                                    inner3.ImplementorType.TestEquals( typeof( IBar ) ),
+                                                                    inner3.InnerException.TestNull() ) ) ) ) ) ) ) ) ) )
+            .Go();
     }
 
     [Theory]
@@ -1037,15 +1077,22 @@ public class DependencyContainerTests : DependencyTestsBase
 
         var action = Lambda.Of( () => sut.RootScope.Locator.Resolve<IFoo>() );
 
-        action.Should()
-            .ThrowExactly<CircularDependencyReferenceException>()
-            .AndMatch(
-                e => e.DependencyType == typeof( IFoo )
-                    && e.ImplementorType == typeof( IFoo )
-                    && e.InnerException is CircularDependencyReferenceException inner
-                    && inner.DependencyType == typeof( IFoo )
-                    && inner.ImplementorType == typeof( IFoo )
-                    && inner.InnerException is null );
+        action.Test(
+                exc => Assertion.All(
+                    exc.TestType().Exact<CircularDependencyReferenceException>(),
+                    exc.TestIf()
+                        .OfType<CircularDependencyReferenceException>(
+                            e => Assertion.All(
+                                e.DependencyType.TestEquals( typeof( IFoo ) ),
+                                e.ImplementorType.TestEquals( typeof( IFoo ) ),
+                                e.InnerException.TestType().AssignableTo<CircularDependencyReferenceException>(),
+                                e.InnerException.TestIf()
+                                    .OfType<CircularDependencyReferenceException>(
+                                        inner => Assertion.All(
+                                            inner.DependencyType.TestEquals( typeof( IFoo ) ),
+                                            inner.ImplementorType.TestEquals( typeof( IFoo ) ),
+                                            inner.InnerException.TestNull() ) ) ) ) ) )
+            .Go();
     }
 
     [Theory]
@@ -1077,15 +1124,22 @@ public class DependencyContainerTests : DependencyTestsBase
         _ = sut.RootScope.Locator.Resolve<IFoo>();
         var action = Lambda.Of( () => sut.RootScope.Locator.Resolve<IFoo>() );
 
-        action.Should()
-            .ThrowExactly<CircularDependencyReferenceException>()
-            .AndMatch(
-                e => e.DependencyType == typeof( IFoo )
-                    && e.ImplementorType == typeof( IFoo )
-                    && e.InnerException is CircularDependencyReferenceException inner
-                    && inner.DependencyType == typeof( IFoo )
-                    && inner.ImplementorType == typeof( IFoo )
-                    && inner.InnerException is null );
+        action.Test(
+                exc => Assertion.All(
+                    exc.TestType().Exact<CircularDependencyReferenceException>(),
+                    exc.TestIf()
+                        .OfType<CircularDependencyReferenceException>(
+                            e => Assertion.All(
+                                e.DependencyType.TestEquals( typeof( IFoo ) ),
+                                e.ImplementorType.TestEquals( typeof( IFoo ) ),
+                                e.InnerException.TestType().AssignableTo<CircularDependencyReferenceException>(),
+                                e.InnerException.TestIf()
+                                    .OfType<CircularDependencyReferenceException>(
+                                        inner => Assertion.All(
+                                            inner.DependencyType.TestEquals( typeof( IFoo ) ),
+                                            inner.ImplementorType.TestEquals( typeof( IFoo ) ),
+                                            inner.InnerException.TestNull() ) ) ) ) ) )
+            .Go();
     }
 
     [Theory]
@@ -1106,15 +1160,22 @@ public class DependencyContainerTests : DependencyTestsBase
 
         var action = Lambda.Of( () => sut.RootScope.Locator.Resolve<IFoo>() );
 
-        action.Should()
-            .ThrowExactly<CircularDependencyReferenceException>()
-            .AndMatch(
-                e => e.DependencyType == typeof( IFoo )
-                    && e.ImplementorType == typeof( IFoo )
-                    && e.InnerException is CircularDependencyReferenceException inner
-                    && inner.DependencyType == typeof( IFoo )
-                    && inner.ImplementorType == typeof( IFoo )
-                    && inner.InnerException is null );
+        action.Test(
+                exc => Assertion.All(
+                    exc.TestType().Exact<CircularDependencyReferenceException>(),
+                    exc.TestIf()
+                        .OfType<CircularDependencyReferenceException>(
+                            e => Assertion.All(
+                                e.DependencyType.TestEquals( typeof( IFoo ) ),
+                                e.ImplementorType.TestEquals( typeof( IFoo ) ),
+                                e.InnerException.TestType().AssignableTo<CircularDependencyReferenceException>(),
+                                e.InnerException.TestIf()
+                                    .OfType<CircularDependencyReferenceException>(
+                                        inner => Assertion.All(
+                                            inner.DependencyType.TestEquals( typeof( IFoo ) ),
+                                            inner.ImplementorType.TestEquals( typeof( IFoo ) ),
+                                            inner.InnerException.TestNull() ) ) ) ) ) )
+            .Go();
     }
 
     [Theory]
@@ -1134,11 +1195,10 @@ public class DependencyContainerTests : DependencyTestsBase
 
         var result = sut.RootScope.Locator.Resolve<IWithText>();
 
-        using ( new AssertionScope() )
-        {
-            result.GetType().Should().Be( typeof( ExplicitCtorImplementor ) );
-            result.Text.Should().BeSameAs( value );
-        }
+        Assertion.All(
+                result.GetType().TestEquals( typeof( ExplicitCtorImplementor ) ),
+                result.Text.TestRefEquals( value ) )
+            .Go();
     }
 
     [Theory]
@@ -1158,11 +1218,10 @@ public class DependencyContainerTests : DependencyTestsBase
 
         var result = sut.RootScope.GetKeyedLocator( 1 ).Resolve<IWithText>();
 
-        using ( new AssertionScope() )
-        {
-            result.GetType().Should().Be( typeof( ExplicitCtorImplementor ) );
-            result.Text.Should().BeSameAs( value );
-        }
+        Assertion.All(
+                result.GetType().TestEquals( typeof( ExplicitCtorImplementor ) ),
+                result.Text.TestRefEquals( value ) )
+            .Go();
     }
 
     [Fact]
@@ -1176,7 +1235,7 @@ public class DependencyContainerTests : DependencyTestsBase
 
         var result = sut.RootScope.Locator.Resolve<IFoo>();
 
-        result.GetType().Should().Be( typeof( Implementor ) );
+        result.GetType().TestEquals( typeof( Implementor ) ).Go();
     }
 
     [Fact]
@@ -1190,12 +1249,11 @@ public class DependencyContainerTests : DependencyTestsBase
 
         var result = sut.RootScope.Locator.Resolve<IBuiltIn>();
 
-        using ( new AssertionScope() )
-        {
-            result.GetType().Should().Be( typeof( BuiltInCtorParamImplementor ) );
-            result.Container.Should().BeSameAs( sut );
-            result.Scope.Should().BeSameAs( sut.RootScope );
-        }
+        Assertion.All(
+                result.GetType().TestEquals( typeof( BuiltInCtorParamImplementor ) ),
+                result.Container.TestRefEquals( sut ),
+                result.Scope.TestRefEquals( sut.RootScope ) )
+            .Go();
     }
 
     [Fact]
@@ -1209,11 +1267,10 @@ public class DependencyContainerTests : DependencyTestsBase
 
         var result = sut.RootScope.Locator.Resolve<IWithText>();
 
-        using ( new AssertionScope() )
-        {
-            result.GetType().Should().Be( typeof( DefaultCtorParamImplementor ) );
-            result.Text.Should().Be( "foo" );
-        }
+        Assertion.All(
+                result.GetType().TestEquals( typeof( DefaultCtorParamImplementor ) ),
+                result.Text.TestEquals( "foo" ) )
+            .Go();
     }
 
     [Fact]
@@ -1229,11 +1286,10 @@ public class DependencyContainerTests : DependencyTestsBase
 
         var result = sut.RootScope.Locator.Resolve<IWithText>();
 
-        using ( new AssertionScope() )
-        {
-            result.GetType().Should().Be( typeof( DefaultCtorParamImplementor ) );
-            result.Text.Should().BeSameAs( value );
-        }
+        Assertion.All(
+                result.GetType().TestEquals( typeof( DefaultCtorParamImplementor ) ),
+                result.Text.TestRefEquals( value ) )
+            .Go();
     }
 
     [Fact]
@@ -1247,11 +1303,10 @@ public class DependencyContainerTests : DependencyTestsBase
 
         var result = sut.RootScope.Locator.Resolve<IWithText>();
 
-        using ( new AssertionScope() )
-        {
-            result.GetType().Should().Be( typeof( OptionalCtorParamImplementor ) );
-            result.Text.Should().BeNull();
-        }
+        Assertion.All(
+                result.GetType().TestEquals( typeof( OptionalCtorParamImplementor ) ),
+                result.Text.TestNull() )
+            .Go();
     }
 
     [Fact]
@@ -1267,11 +1322,10 @@ public class DependencyContainerTests : DependencyTestsBase
 
         var result = sut.RootScope.Locator.Resolve<IWithText>();
 
-        using ( new AssertionScope() )
-        {
-            result.GetType().Should().Be( typeof( OptionalCtorParamImplementor ) );
-            result.Text.Should().BeSameAs( value );
-        }
+        Assertion.All(
+                result.GetType().TestEquals( typeof( OptionalCtorParamImplementor ) ),
+                result.Text.TestRefEquals( value ) )
+            .Go();
     }
 
     [Fact]
@@ -1286,11 +1340,10 @@ public class DependencyContainerTests : DependencyTestsBase
 
         var result = sut.RootScope.Locator.Resolve<IWithText>();
 
-        using ( new AssertionScope() )
-        {
-            result.GetType().Should().Be( typeof( ExplicitCtorImplementor ) );
-            result.Text.Should().BeSameAs( value );
-        }
+        Assertion.All(
+                result.GetType().TestEquals( typeof( ExplicitCtorImplementor ) ),
+                result.Text.TestRefEquals( value ) )
+            .Go();
     }
 
     [Fact]
@@ -1306,11 +1359,10 @@ public class DependencyContainerTests : DependencyTestsBase
 
         var result = sut.RootScope.Locator.Resolve<IWithText>();
 
-        using ( new AssertionScope() )
-        {
-            result.GetType().Should().Be( typeof( ExplicitCtorImplementor ) );
-            result.Text.Should().BeSameAs( value );
-        }
+        Assertion.All(
+                result.GetType().TestEquals( typeof( ExplicitCtorImplementor ) ),
+                result.Text.TestRefEquals( value ) )
+            .Go();
     }
 
     [Fact]
@@ -1322,19 +1374,16 @@ public class DependencyContainerTests : DependencyTestsBase
         var builder = new DependencyContainerBuilder();
         builder.GetKeyedLocator( 1 ).Add<string>().FromFactory( _ => value );
         builder.Add<IWithText>()
-            .FromConstructor(
-                ctor,
-                o => o.ResolveParameter( p => p.Name == "text", typeof( string ), c => c.Keyed( 1 ) ) );
+            .FromConstructor( ctor, o => o.ResolveParameter( p => p.Name == "text", typeof( string ), c => c.Keyed( 1 ) ) );
 
         var sut = builder.Build();
 
         var result = sut.RootScope.Locator.Resolve<IWithText>();
 
-        using ( new AssertionScope() )
-        {
-            result.GetType().Should().Be( typeof( ExplicitCtorImplementor ) );
-            result.Text.Should().BeSameAs( value );
-        }
+        Assertion.All(
+                result.GetType().TestEquals( typeof( ExplicitCtorImplementor ) ),
+                result.Text.TestRefEquals( value ) )
+            .Go();
     }
 
     [Theory]
@@ -1354,11 +1403,10 @@ public class DependencyContainerTests : DependencyTestsBase
 
         var result = sut.RootScope.Locator.Resolve<IWithText>();
 
-        using ( new AssertionScope() )
-        {
-            result.GetType().Should().Be( implementorType );
-            result.Text.Should().BeSameAs( value );
-        }
+        Assertion.All(
+                result.GetType().TestEquals( implementorType ),
+                result.Text.TestRefEquals( value ) )
+            .Go();
     }
 
     [Theory]
@@ -1376,11 +1424,10 @@ public class DependencyContainerTests : DependencyTestsBase
 
         var result = sut.RootScope.Locator.Resolve<IWithText>();
 
-        using ( new AssertionScope() )
-        {
-            result.GetType().Should().Be( implementorType );
-            result.Text.Should().BeNull();
-        }
+        Assertion.All(
+                result.GetType().TestEquals( implementorType ),
+                result.Text.TestNull() )
+            .Go();
     }
 
     [Theory]
@@ -1400,11 +1447,10 @@ public class DependencyContainerTests : DependencyTestsBase
 
         var result = sut.RootScope.Locator.Resolve<IWithText>();
 
-        using ( new AssertionScope() )
-        {
-            result.GetType().Should().Be( implementorType );
-            result.Text.Should().BeSameAs( value );
-        }
+        Assertion.All(
+                result.GetType().TestEquals( implementorType ),
+                result.Text.TestRefEquals( value ) )
+            .Go();
     }
 
     [Theory]
@@ -1424,11 +1470,10 @@ public class DependencyContainerTests : DependencyTestsBase
 
         var result = sut.RootScope.Locator.Resolve<IWithText>();
 
-        using ( new AssertionScope() )
-        {
-            result.GetType().Should().Be( implementorType );
-            result.Text.Should().BeSameAs( value );
-        }
+        Assertion.All(
+                result.GetType().TestEquals( implementorType ),
+                result.Text.TestRefEquals( value ) )
+            .Go();
     }
 
     [Theory]
@@ -1449,11 +1494,10 @@ public class DependencyContainerTests : DependencyTestsBase
 
         var result = sut.RootScope.Locator.Resolve<IWithText>();
 
-        using ( new AssertionScope() )
-        {
-            result.GetType().Should().Be( implementorType );
-            result.Text.Should().BeSameAs( value );
-        }
+        Assertion.All(
+                result.GetType().TestEquals( implementorType ),
+                result.Text.TestRefEquals( value ) )
+            .Go();
     }
 
     [Theory]
@@ -1470,19 +1514,16 @@ public class DependencyContainerTests : DependencyTestsBase
         var builder = new DependencyContainerBuilder();
         builder.GetKeyedLocator( 1 ).Add<string>().FromFactory( _ => value );
         builder.Add<IWithText>()
-            .FromConstructor(
-                ctor,
-                o => o.ResolveMember( m => m.Name.Contains( "_text" ), typeof( string ), c => c.Keyed( 1 ) ) );
+            .FromConstructor( ctor, o => o.ResolveMember( m => m.Name.Contains( "_text" ), typeof( string ), c => c.Keyed( 1 ) ) );
 
         var sut = builder.Build();
 
         var result = sut.RootScope.Locator.Resolve<IWithText>();
 
-        using ( new AssertionScope() )
-        {
-            result.GetType().Should().Be( implementorType );
-            result.Text.Should().BeSameAs( value );
-        }
+        Assertion.All(
+                result.GetType().TestEquals( implementorType ),
+                result.Text.TestRefEquals( value ) )
+            .Go();
     }
 
     [Fact]
@@ -1496,12 +1537,11 @@ public class DependencyContainerTests : DependencyTestsBase
 
         var result = sut.RootScope.Locator.Resolve<IBuiltIn>();
 
-        using ( new AssertionScope() )
-        {
-            result.GetType().Should().Be( typeof( BuiltInCtorMemberImplementor ) );
-            result.Container.Should().BeSameAs( sut );
-            result.Scope.Should().BeSameAs( sut.RootScope );
-        }
+        Assertion.All(
+                result.GetType().TestEquals( typeof( BuiltInCtorMemberImplementor ) ),
+                result.Container.TestRefEquals( sut ),
+                result.Scope.TestRefEquals( sut.RootScope ) )
+            .Go();
     }
 
     [Fact]
@@ -1518,18 +1558,14 @@ public class DependencyContainerTests : DependencyTestsBase
 
         var result = sut.RootScope.Locator.Resolve<IFoo>();
 
-        using ( new AssertionScope() )
-        {
-            result.GetType().Should().Be( typeof( ChainableFoo ) );
-            if ( result is not ChainableFoo foo )
-                return;
-
-            foo.Bar.GetType().Should().Be( typeof( ChainableBar ) );
-            if ( foo.Bar is not ChainableBar bar )
-                return;
-
-            bar.Qux.GetType().Should().Be( typeof( Implementor ) );
-        }
+        Assertion.All(
+                result.TestType().Exact<ChainableFoo>(),
+                result.TestIf()
+                    .OfType<ChainableFoo>(
+                        foo => Assertion.All(
+                            foo.Bar.TestType().Exact<ChainableBar>(),
+                            foo.Bar.TestIf().OfType<ChainableBar>( bar => bar.Qux.TestType().Exact<Implementor>() ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -1546,18 +1582,14 @@ public class DependencyContainerTests : DependencyTestsBase
 
         var result = sut.RootScope.Locator.Resolve<IFoo>();
 
-        using ( new AssertionScope() )
-        {
-            result.GetType().Should().Be( typeof( ChainableFieldFoo ) );
-            if ( result is not ChainableFieldFoo foo )
-                return;
-
-            foo.Bar.GetType().Should().Be( typeof( ChainableFieldBar ) );
-            if ( foo.Bar is not ChainableFieldBar bar )
-                return;
-
-            bar.Qux.GetType().Should().Be( typeof( Implementor ) );
-        }
+        Assertion.All(
+                result.TestType().Exact<ChainableFieldFoo>(),
+                result.TestIf()
+                    .OfType<ChainableFieldFoo>(
+                        foo => Assertion.All(
+                            foo.Bar.TestType().Exact<ChainableFieldBar>(),
+                            foo.Bar.TestIf().OfType<ChainableFieldBar>( bar => bar.Qux.TestType().Exact<Implementor>() ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -1575,11 +1607,10 @@ public class DependencyContainerTests : DependencyTestsBase
 
         var result = sut.RootScope.Locator.Resolve<IWithText>();
 
-        using ( new AssertionScope() )
-        {
-            result.GetType().Should().Be( typeof( CtorAndRefMemberImplementor ) );
-            result.Text.Should().Be( $"{stringValue}{intValue}" );
-        }
+        Assertion.All(
+                result.GetType().TestEquals( typeof( CtorAndRefMemberImplementor ) ),
+                result.Text.TestEquals( $"{stringValue}{intValue}" ) )
+            .Go();
     }
 
     [Fact]
@@ -1600,11 +1631,10 @@ public class DependencyContainerTests : DependencyTestsBase
 
         var result = sut.RootScope.Locator.Resolve<IWithText>();
 
-        using ( new AssertionScope() )
-        {
-            result.GetType().Should().Be( typeof( CtorAndRefMemberImplementor ) );
-            result.Text.Should().Be( $"{stringValue}{intValue}" );
-        }
+        Assertion.All(
+                result.GetType().TestEquals( typeof( CtorAndRefMemberImplementor ) ),
+                result.Text.TestEquals( $"{stringValue}{intValue}" ) )
+            .Go();
     }
 
     [Fact]
@@ -1622,11 +1652,10 @@ public class DependencyContainerTests : DependencyTestsBase
 
         var result = sut.RootScope.Locator.Resolve<IWithText>();
 
-        using ( new AssertionScope() )
-        {
-            result.GetType().Should().Be( typeof( CtorAndValueMemberImplementor ) );
-            result.Text.Should().Be( $"{intValue}{byteValue}" );
-        }
+        Assertion.All(
+                result.GetType().TestEquals( typeof( CtorAndValueMemberImplementor ) ),
+                result.Text.TestEquals( $"{intValue}{byteValue}" ) )
+            .Go();
     }
 
     [Fact]
@@ -1643,9 +1672,13 @@ public class DependencyContainerTests : DependencyTestsBase
 
         var action = Lambda.Of( () => sut.RootScope.Locator.Resolve<IWithText>() );
 
-        action.Should()
-            .ThrowExactly<InvalidDependencyCastException>()
-            .AndMatch( e => e.DependencyType == typeof( string ) && e.ResultType is null );
+        action.Test(
+                exc => Assertion.All(
+                    exc.TestType().Exact<InvalidDependencyCastException>(),
+                    exc.TestIf()
+                        .OfType<InvalidDependencyCastException>(
+                            e => Assertion.All( e.DependencyType.TestEquals( typeof( string ) ), e.ResultType.TestNull() ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -1662,9 +1695,13 @@ public class DependencyContainerTests : DependencyTestsBase
 
         var action = Lambda.Of( () => sut.RootScope.Locator.Resolve<IWithText>() );
 
-        action.Should()
-            .ThrowExactly<InvalidDependencyCastException>()
-            .AndMatch( e => e.DependencyType == typeof( int ) && e.ResultType is null );
+        action.Test(
+                exc => Assertion.All(
+                    exc.TestType().Exact<InvalidDependencyCastException>(),
+                    exc.TestIf()
+                        .OfType<InvalidDependencyCastException>(
+                            e => Assertion.All( e.DependencyType.TestEquals( typeof( int ) ), e.ResultType.TestNull() ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -1681,9 +1718,13 @@ public class DependencyContainerTests : DependencyTestsBase
 
         var action = Lambda.Of( () => sut.RootScope.Locator.Resolve<IWithText>() );
 
-        action.Should()
-            .ThrowExactly<InvalidDependencyCastException>()
-            .AndMatch( e => e.DependencyType == typeof( byte? ) && e.ResultType is null );
+        action.Test(
+                exc => Assertion.All(
+                    exc.TestType().Exact<InvalidDependencyCastException>(),
+                    exc.TestIf()
+                        .OfType<InvalidDependencyCastException>(
+                            e => Assertion.All( e.DependencyType.TestEquals( typeof( byte? ) ), e.ResultType.TestNull() ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -1696,7 +1737,7 @@ public class DependencyContainerTests : DependencyTestsBase
 
         var result = sut.RootScope.Locator.Resolve<ChainableFoo>();
 
-        result.Bar.Should().BeOfType( typeof( Implementor ) );
+        result.Bar.TestType().AssignableTo<Implementor>().Go();
     }
 
     [Fact]
@@ -1708,11 +1749,10 @@ public class DependencyContainerTests : DependencyTestsBase
 
         var result = sut.RootScope.Locator.Resolve<MultiCtorImplementor>();
 
-        using ( new AssertionScope() )
-        {
-            result.Bar.Should().BeNull();
-            result.Qux.Should().BeOfType( typeof( Implementor ) );
-        }
+        Assertion.All(
+                result.Bar.TestNull(),
+                result.Qux.TestType().AssignableTo<Implementor>() )
+            .Go();
     }
 
     [Fact]
@@ -1725,11 +1765,10 @@ public class DependencyContainerTests : DependencyTestsBase
 
         var result = sut.RootScope.Locator.Resolve<MultiCtorImplementor>();
 
-        using ( new AssertionScope() )
-        {
-            result.Bar.Should().BeOfType( typeof( Implementor ) );
-            result.Qux.Should().BeNull();
-        }
+        Assertion.All(
+                result.Bar.TestType().AssignableTo<Implementor>(),
+                result.Qux.TestNull() )
+            .Go();
     }
 
     [Fact]
@@ -1744,11 +1783,10 @@ public class DependencyContainerTests : DependencyTestsBase
 
         var result = sut.RootScope.Locator.Resolve<MultiCtorImplementor>();
 
-        using ( new AssertionScope() )
-        {
-            result.Bar.Should().BeOfType( typeof( Implementor ) );
-            result.Qux.Should().BeNull();
-        }
+        Assertion.All(
+                result.Bar.TestType().AssignableTo<Implementor>(),
+                result.Qux.TestNull() )
+            .Go();
     }
 
     [Fact]
@@ -1765,11 +1803,10 @@ public class DependencyContainerTests : DependencyTestsBase
 
         var result = sut.RootScope.Locator.Resolve<MultiCtorImplementor>();
 
-        using ( new AssertionScope() )
-        {
-            result.Bar.Should().BeOfType( typeof( Implementor ) );
-            result.Qux.Should().BeNull();
-        }
+        Assertion.All(
+                result.Bar.TestType().AssignableTo<Implementor>(),
+                result.Qux.TestNull() )
+            .Go();
     }
 
     [Fact]
@@ -1784,11 +1821,10 @@ public class DependencyContainerTests : DependencyTestsBase
 
         var result = sut.RootScope.Locator.Resolve<MultiCtorImplementor>();
 
-        using ( new AssertionScope() )
-        {
-            result.Bar.Should().BeNull();
-            result.Qux.Should().BeOfType( typeof( Implementor ) );
-        }
+        Assertion.All(
+                result.Bar.TestNull(),
+                result.Qux.TestType().AssignableTo<Implementor>() )
+            .Go();
     }
 
     [Fact]
@@ -1803,11 +1839,10 @@ public class DependencyContainerTests : DependencyTestsBase
 
         var result = sut.RootScope.Locator.Resolve<MultiCtorImplementor>();
 
-        using ( new AssertionScope() )
-        {
-            result.Bar.Should().BeOfType( typeof( Implementor ) );
-            result.Qux.Should().BeNull();
-        }
+        Assertion.All(
+                result.Bar.TestType().AssignableTo<Implementor>(),
+                result.Qux.TestNull() )
+            .Go();
     }
 
     [Fact]
@@ -1821,11 +1856,10 @@ public class DependencyContainerTests : DependencyTestsBase
 
         var result = sut.RootScope.Locator.Resolve<MultiCtorImplementor>();
 
-        using ( new AssertionScope() )
-        {
-            result.Bar.Should().BeNull();
-            result.Qux.Should().BeOfType( typeof( Implementor ) );
-        }
+        Assertion.All(
+                result.Bar.TestNull(),
+                result.Qux.TestType().AssignableTo<Implementor>() )
+            .Go();
     }
 
     [Fact]
@@ -1845,12 +1879,11 @@ public class DependencyContainerTests : DependencyTestsBase
 
         var result = sut.RootScope.Locator.Resolve<SameCtorScoreImplementor>();
 
-        using ( new AssertionScope() )
-        {
-            result.Bar.Should().BeOfType( typeof( Implementor ) );
-            result.Qux.Should().BeOfType( typeof( Implementor ) );
-            result.Text.Should().NotBeNull();
-        }
+        Assertion.All(
+                result.Bar.TestType().AssignableTo<Implementor>(),
+                result.Qux.TestType().AssignableTo<Implementor>(),
+                result.Text.TestNotNull() )
+            .Go();
     }
 
     [Fact]
@@ -1858,20 +1891,18 @@ public class DependencyContainerTests : DependencyTestsBase
     {
         var callback = Substitute.For<Action<object, Type, IDependencyScope>>();
         var builder = new DependencyContainerBuilder();
-        builder.Add<IFoo>()
-            .SetLifetime( DependencyLifetime.Singleton )
-            .FromType<Implementor>( o => o.SetOnCreatedCallback( callback ) );
+        builder.Add<IFoo>().SetLifetime( DependencyLifetime.Singleton ).FromType<Implementor>( o => o.SetOnCreatedCallback( callback ) );
 
         var sut = builder.Build();
 
         var result = sut.RootScope.Locator.Resolve<IFoo>();
         _ = sut.RootScope.Locator.Resolve<IFoo>();
 
-        using ( new AssertionScope() )
-        {
-            callback.Verify().CallCount.Should().Be( 1 );
-            callback.Verify().CallAt( 0 ).Arguments.Should().BeSequentiallyEqualTo( result, typeof( IFoo ), sut.RootScope );
-        }
+        Assertion.All(
+                callback.CallCount().TestEquals( 1 ),
+                callback.CallAt( 0 ).Exists.TestTrue(),
+                callback.CallAt( 0 ).Arguments.TestSequence( [ result, typeof( IFoo ), sut.RootScope ] ) )
+            .Go();
     }
 
     [Fact]
@@ -1881,20 +1912,18 @@ public class DependencyContainerTests : DependencyTestsBase
         var builder = new DependencyContainerBuilder();
         builder.Add<IBar>().SetLifetime( DependencyLifetime.Singleton ).FromType<Implementor>();
 
-        builder.Add<IFoo>()
-            .SetLifetime( DependencyLifetime.Singleton )
-            .FromType<ChainableFoo>( o => o.SetOnCreatedCallback( callback ) );
+        builder.Add<IFoo>().SetLifetime( DependencyLifetime.Singleton ).FromType<ChainableFoo>( o => o.SetOnCreatedCallback( callback ) );
 
         var sut = builder.Build();
 
         var result = sut.RootScope.Locator.Resolve<IFoo>();
         _ = sut.RootScope.Locator.Resolve<IFoo>();
 
-        using ( new AssertionScope() )
-        {
-            callback.Verify().CallCount.Should().Be( 1 );
-            callback.Verify().CallAt( 0 ).Arguments.Should().BeSequentiallyEqualTo( result, typeof( IFoo ), sut.RootScope );
-        }
+        Assertion.All(
+                callback.CallCount().TestEquals( 1 ),
+                callback.CallAt( 0 ).Exists.TestTrue(),
+                callback.CallAt( 0 ).Arguments.TestSequence( [ result, typeof( IFoo ), sut.RootScope ] ) )
+            .Go();
     }
 
     [Fact]
@@ -1914,11 +1943,11 @@ public class DependencyContainerTests : DependencyTestsBase
         var result = sut.RootScope.Locator.Resolve<IWithText>();
         _ = sut.RootScope.Locator.Resolve<IWithText>();
 
-        using ( new AssertionScope() )
-        {
-            callback.Verify().CallCount.Should().Be( 1 );
-            callback.Verify().CallAt( 0 ).Arguments.Should().BeSequentiallyEqualTo( result, typeof( IWithText ), sut.RootScope );
-        }
+        Assertion.All(
+                callback.CallCount().TestEquals( 1 ),
+                callback.CallAt( 0 ).Exists.TestTrue(),
+                callback.CallAt( 0 ).Arguments.TestSequence( [ result, typeof( IWithText ), sut.RootScope ] ) )
+            .Go();
     }
 
     [Fact]
@@ -1938,20 +1967,11 @@ public class DependencyContainerTests : DependencyTestsBase
         _ = sut.RootScope.Locator.Resolve<IEnumerable<IFoo>>();
         _ = sut.RootScope.Locator.Resolve<IEnumerable<IFoo>>();
 
-        using ( new AssertionScope() )
-        {
-            onResolvingCallback.Verify().CallCount.Should().Be( 2 );
-
-            onResolvingCallback.Verify()
-                .CallAt( 0 )
-                .Arguments.Should()
-                .BeSequentiallyEqualTo( typeof( IEnumerable<IFoo> ), sut.RootScope );
-
-            onResolvingCallback.Verify()
-                .CallAt( 1 )
-                .Arguments.Should()
-                .BeSequentiallyEqualTo( typeof( IEnumerable<IFoo> ), sut.RootScope );
-        }
+        Assertion.All(
+                onResolvingCallback.CallCount().TestEquals( 2 ),
+                onResolvingCallback.CallAt( 0 ).Arguments.TestSequence( [ typeof( IEnumerable<IFoo> ), sut.RootScope ] ),
+                onResolvingCallback.CallAt( 1 ).Arguments.TestSequence( [ typeof( IEnumerable<IFoo> ), sut.RootScope ] ) )
+            .Go();
     }
 
     [Fact]
@@ -1959,7 +1979,7 @@ public class DependencyContainerTests : DependencyTestsBase
     {
         var sut = new DependencyContainerBuilder().Build();
         var result = sut.RootScope.Locator.Resolve<IEnumerable<IFoo>>();
-        result.Should().BeEmpty();
+        result.TestEmpty().Go();
     }
 
     [Fact]
@@ -1970,7 +1990,7 @@ public class DependencyContainerTests : DependencyTestsBase
 
         var result = sut.RootScope.Locator.Resolve<IEnumerable<IFoo>>();
 
-        result.Should().BeSameAs( first );
+        result.TestRefEquals( first ).Go();
     }
 
     [Fact]
@@ -1982,7 +2002,7 @@ public class DependencyContainerTests : DependencyTestsBase
 
         var result = sut.RootScope.Locator.Resolve<RangeFoo>();
 
-        result.Texts.Should().BeEmpty();
+        result.Texts.TestEmpty().Go();
     }
 
     [Fact]
@@ -1995,7 +2015,7 @@ public class DependencyContainerTests : DependencyTestsBase
 
         var result = sut.RootScope.Locator.Resolve<RangeFoo>();
 
-        result.Texts.Should().BeEmpty();
+        result.Texts.TestEmpty().Go();
     }
 
     [Fact]
@@ -2007,7 +2027,7 @@ public class DependencyContainerTests : DependencyTestsBase
 
         var result = sut.RootScope.Locator.Resolve<RangeBar>();
 
-        result.Texts.Should().BeEmpty();
+        result.Texts.TestEmpty().Go();
     }
 
     [Fact]
@@ -2019,7 +2039,7 @@ public class DependencyContainerTests : DependencyTestsBase
 
         var result = sut.RootScope.Locator.Resolve<IEnumerable<IFoo>>();
 
-        result.Should().BeEmpty();
+        result.TestEmpty().Go();
     }
 
     [Fact]
@@ -2033,7 +2053,7 @@ public class DependencyContainerTests : DependencyTestsBase
 
         var result = sut.RootScope.Locator.Resolve<IEnumerable<IFoo>>();
 
-        result.Should().BeEmpty();
+        result.TestEmpty().Go();
     }
 
     [Fact]
@@ -2047,7 +2067,7 @@ public class DependencyContainerTests : DependencyTestsBase
 
         var result = sut.RootScope.Locator.Resolve<IEnumerable<string>>();
 
-        result.Should().BeSequentiallyEqualTo( "foo", "bar", "qux" );
+        result.TestSequence( [ "foo", "bar", "qux" ] ).Go();
     }
 
     [Fact]
@@ -2061,7 +2081,7 @@ public class DependencyContainerTests : DependencyTestsBase
 
         var result = sut.RootScope.Locator.Resolve<IEnumerable<int?>>();
 
-        result.Should().BeSequentiallyEqualTo( 1, 2, 3 );
+        result.TestSequence( [ 1, 2, 3 ] ).Go();
     }
 
     [Fact]
@@ -2075,7 +2095,7 @@ public class DependencyContainerTests : DependencyTestsBase
 
         var result = sut.RootScope.Locator.Resolve<IEnumerable<int>>();
 
-        result.Should().BeSequentiallyEqualTo( 1, 2, 3 );
+        result.TestSequence( [ 1, 2, 3 ] ).Go();
     }
 
     [Fact]
@@ -2089,7 +2109,7 @@ public class DependencyContainerTests : DependencyTestsBase
 
         var result = sut.RootScope.Locator.Resolve<string>();
 
-        result.Should().Be( "qux" );
+        result.TestEquals( "qux" ).Go();
     }
 
     [Fact]
@@ -2103,7 +2123,7 @@ public class DependencyContainerTests : DependencyTestsBase
 
         var result = sut.RootScope.Locator.Resolve<IWithText>();
 
-        result.Text.Should().Be( "foo|bar" );
+        result.Text.TestEquals( "foo|bar" ).Go();
     }
 
     [Fact]
@@ -2117,7 +2137,7 @@ public class DependencyContainerTests : DependencyTestsBase
 
         var result = sut.RootScope.Locator.Resolve<IEnumerable<string>>();
 
-        result.Should().BeSequentiallyEqualTo( "bar", "qux" );
+        result.TestSequence( [ "bar", "qux" ] ).Go();
     }
 
     [Fact]
@@ -2131,7 +2151,7 @@ public class DependencyContainerTests : DependencyTestsBase
 
         var result = sut.RootScope.Locator.Resolve<IEnumerable<string>>();
 
-        result.Should().BeSequentiallyEqualTo( "foo", "qux" );
+        result.TestSequence( [ "foo", "qux" ] ).Go();
     }
 
     [Fact]
@@ -2146,7 +2166,7 @@ public class DependencyContainerTests : DependencyTestsBase
 
         var result = sut.RootScope.Locator.Resolve<IEnumerable<string>>();
 
-        result.Should().BeSequentiallyEqualTo( "lorem", "ipsum" );
+        result.TestSequence( [ "lorem", "ipsum" ] ).Go();
     }
 
     [Fact]
@@ -2160,7 +2180,7 @@ public class DependencyContainerTests : DependencyTestsBase
 
         var result = sut.RootScope.Locator.Resolve<IEnumerable<IEnumerable<string>>>();
 
-        result.Should().BeEmpty();
+        result.TestEmpty().Go();
     }
 
     [Fact]
@@ -2173,7 +2193,7 @@ public class DependencyContainerTests : DependencyTestsBase
 
         var result = sut.RootScope.Locator.Resolve<IEnumerable<IEnumerable<string>>>();
 
-        result.SelectMany( t => t ).Should().BeSequentiallyEqualTo( "foo", "bar", "qux", "baz" );
+        result.SelectMany( t => t ).TestSequence( [ "foo", "bar", "qux", "baz" ] ).Go();
     }
 
     [Fact]
@@ -2189,11 +2209,10 @@ public class DependencyContainerTests : DependencyTestsBase
         var result = sut.RootScope.Locator.Resolve<IEnumerable<string>>();
         var keyedResult = sut.RootScope.GetKeyedLocator( 1 ).Resolve<IEnumerable<string>>();
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSequentiallyEqualTo( "foo", "bar" );
-            keyedResult.Should().BeSequentiallyEqualTo( "qux", "baz" );
-        }
+        Assertion.All(
+                result.TestSequence( [ "foo", "bar" ] ),
+                keyedResult.TestSequence( [ "qux", "baz" ] ) )
+            .Go();
     }
 
     [Fact]
@@ -2204,7 +2223,7 @@ public class DependencyContainerTests : DependencyTestsBase
 
         var result = sut.TryGetScope( "foo" );
 
-        result.Should().BeSameAs( scope );
+        result.TestRefEquals( scope ).Go();
     }
 
     [Fact]
@@ -2215,7 +2234,7 @@ public class DependencyContainerTests : DependencyTestsBase
 
         var result = sut.TryGetScope( "bar" );
 
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Fact]
@@ -2226,7 +2245,7 @@ public class DependencyContainerTests : DependencyTestsBase
 
         var result = sut.TryGetScope( "bar" );
 
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Fact]
@@ -2237,7 +2256,7 @@ public class DependencyContainerTests : DependencyTestsBase
 
         var result = sut.GetScope( "foo" );
 
-        result.Should().BeSameAs( scope );
+        result.TestRefEquals( scope ).Go();
     }
 
     [Fact]
@@ -2248,7 +2267,11 @@ public class DependencyContainerTests : DependencyTestsBase
 
         var action = Lambda.Of( () => sut.GetScope( "bar" ) );
 
-        action.Should().ThrowExactly<DependencyScopeNotFoundException>().AndMatch( e => e.ScopeName == "bar" );
+        action.Test(
+                exc => Assertion.All(
+                    exc.TestType().Exact<DependencyScopeNotFoundException>(),
+                    exc.TestIf().OfType<DependencyScopeNotFoundException>( e => e.ScopeName.TestEquals( "bar" ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -2263,12 +2286,11 @@ public class DependencyContainerTests : DependencyTestsBase
 
         sut.Dispose();
 
-        using ( new AssertionScope() )
-        {
-            rootScope.IsDisposed.Should().BeTrue();
-            childScope.IsDisposed.Should().BeTrue();
-            grandchildScope.IsDisposed.Should().BeTrue();
-        }
+        Assertion.All(
+                rootScope.IsDisposed.TestTrue(),
+                childScope.IsDisposed.TestTrue(),
+                grandchildScope.IsDisposed.TestTrue() )
+            .Go();
     }
 
     [Fact]
@@ -2280,7 +2302,7 @@ public class DependencyContainerTests : DependencyTestsBase
 
         sut.Dispose();
 
-        sut.RootScope.IsDisposed.Should().BeTrue();
+        sut.RootScope.IsDisposed.TestTrue().Go();
     }
 
     [Fact]
@@ -2297,8 +2319,8 @@ public class DependencyContainerTests : DependencyTestsBase
 
         var result = sut.GetResolvableTypes();
 
-        result.Should()
-            .BeEquivalentTo(
+        result.TestSetEqual(
+            [
                 typeof( IFoo ),
                 typeof( IBar ),
                 typeof( IQux ),
@@ -2306,7 +2328,9 @@ public class DependencyContainerTests : DependencyTestsBase
                 typeof( IDependencyScope ),
                 typeof( IEnumerable<IFoo> ),
                 typeof( IEnumerable<IBar> ),
-                typeof( IEnumerable<IQux> ) );
+                typeof( IEnumerable<IQux> )
+            ] )
+            .Go();
     }
 
     [Fact]
@@ -2323,7 +2347,7 @@ public class DependencyContainerTests : DependencyTestsBase
 
         var result = sut.GetResolvableTypes();
 
-        result.Should().BeEmpty();
+        result.TestEmpty().Go();
     }
 
     [Theory]
@@ -2360,7 +2384,7 @@ public class DependencyContainerTests : DependencyTestsBase
 
         var result = sut.TryGetLifetime( type );
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -2373,7 +2397,7 @@ public class DependencyContainerTests : DependencyTestsBase
 
         var result = sut.TryGetLifetime( typeof( IDependencyContainer ) );
 
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Fact]
@@ -2384,7 +2408,7 @@ public class DependencyContainerTests : DependencyTestsBase
 
         var action = Lambda.Of( () => sut.DisposeGracefully() );
 
-        action.Should().ThrowExactly<SynchronizationLockException>();
+        action.Test( exc => exc.TestType().Exact<SynchronizationLockException>() ).Go();
     }
 
     [Fact]
@@ -2430,11 +2454,10 @@ public class DependencyContainerTests : DependencyTestsBase
         _ = firstFactory( scope );
         var thirdFactory = resolver.Factory;
 
-        using ( new AssertionScope() )
-        {
-            firstFactory.Should().NotBeSameAs( secondFactory );
-            secondFactory.Should().BeSameAs( thirdFactory );
-        }
+        Assertion.All(
+                firstFactory.TestNotRefEquals( secondFactory ),
+                secondFactory.TestRefEquals( thirdFactory ) )
+            .Go();
     }
 
     private sealed class ResolverFactorySource : IResolverFactorySource

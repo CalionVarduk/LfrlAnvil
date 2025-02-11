@@ -1,6 +1,5 @@
 ﻿using LfrlAnvil.Dependencies.Bootstrapping;
 using LfrlAnvil.Functional;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Dependencies.Tests;
 
@@ -15,20 +14,16 @@ public class DependencyContainerBootstrapperCollectionTests : TestsBase
 
         var sut = new DependencyContainerBootstrapperCollection();
 
-        var result = sut
-            .Add( first )
-            .Add( second )
-            .Add( third );
+        var result = sut.Add( first ).Add( second ).Add( third );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            result.Count.Should().Be( 3 );
-            result[0].Should().BeSameAs( first );
-            result[1].Should().BeSameAs( second );
-            result[2].Should().BeSameAs( third );
-            result.Should().BeSequentiallyEqualTo( first, second, third );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                result.Count.TestEquals( 3 ),
+                result[0].TestRefEquals( first ),
+                result[1].TestRefEquals( second ),
+                result[2].TestRefEquals( third ),
+                result.TestSequence( [ first, second, third ] ) )
+            .Go();
     }
 
     [Fact]
@@ -39,26 +34,22 @@ public class DependencyContainerBootstrapperCollectionTests : TestsBase
         var third = Substitute.For<IDependencyContainerBootstrapper<DependencyContainerBuilder>>();
         var builder = new DependencyContainerBuilder();
 
-        var sut = new DependencyContainerBootstrapperCollection()
-            .Add( first )
-            .Add( second )
-            .Add( third );
+        var sut = new DependencyContainerBootstrapperCollection().Add( first ).Add( second ).Add( third );
 
         sut.Bootstrap( builder );
 
-        using ( new AssertionScope() )
-        {
-            first.VerifyCalls().Received( x => x.Bootstrap( builder ), 1 );
-            second.VerifyCalls().Received( x => x.Bootstrap( builder ), 1 );
-            third.VerifyCalls().Received( x => x.Bootstrap( builder ), 1 );
-            Verify.CallOrder(
-                () =>
-                {
-                    first.Bootstrap( builder );
-                    second.Bootstrap( builder );
-                    third.Bootstrap( builder );
-                } );
-        }
+        Assertion.All(
+                first.TestReceivedCalls( x => x.Bootstrap( builder ), count: 1 ),
+                second.TestReceivedCalls( x => x.Bootstrap( builder ), count: 1 ),
+                third.TestReceivedCalls( x => x.Bootstrap( builder ), count: 1 ),
+                Assertion.CallOrder(
+                    () =>
+                    {
+                        first.Bootstrap( builder );
+                        second.Bootstrap( builder );
+                        third.Bootstrap( builder );
+                    } ) )
+            .Go();
     }
 
     [Fact]
@@ -69,6 +60,6 @@ public class DependencyContainerBootstrapperCollectionTests : TestsBase
         sut.Add( sut );
 
         var action = Lambda.Of( () => sut.Bootstrap( builder ) );
-        action.Should().ThrowExactly<InvalidOperationException>();
+        action.Test( exc => exc.TestType().Exact<InvalidOperationException>() ).Go();
     }
 }
