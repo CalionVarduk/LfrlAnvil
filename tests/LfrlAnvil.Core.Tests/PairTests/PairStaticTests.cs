@@ -7,7 +7,7 @@ public class PairStaticTests
     {
         var result = Pair.GetUnderlyingFirstType( null );
 
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Theory]
@@ -18,7 +18,7 @@ public class PairStaticTests
     {
         var result = Pair.GetUnderlyingFirstType( type );
 
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Theory]
@@ -29,7 +29,7 @@ public class PairStaticTests
     {
         var result = Pair.GetUnderlyingFirstType( type );
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -39,7 +39,7 @@ public class PairStaticTests
 
         var result = Pair.GetUnderlyingFirstType( typeof( Pair<,> ) );
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -47,7 +47,7 @@ public class PairStaticTests
     {
         var result = Pair.GetUnderlyingSecondType( null );
 
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Theory]
@@ -58,7 +58,7 @@ public class PairStaticTests
     {
         var result = Pair.GetUnderlyingSecondType( type );
 
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Theory]
@@ -69,7 +69,7 @@ public class PairStaticTests
     {
         var result = Pair.GetUnderlyingSecondType( type );
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -79,7 +79,7 @@ public class PairStaticTests
 
         var result = Pair.GetUnderlyingSecondType( typeof( Pair<,> ) );
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -87,7 +87,7 @@ public class PairStaticTests
     {
         var result = Pair.GetUnderlyingTypes( null );
 
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Theory]
@@ -98,7 +98,7 @@ public class PairStaticTests
     {
         var result = Pair.GetUnderlyingTypes( type );
 
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Theory]
@@ -109,7 +109,7 @@ public class PairStaticTests
     {
         var result = Pair.GetUnderlyingTypes( type );
 
-        result.Should().BeEquivalentTo( new Pair<Type, Type>( expectedFirst, expectedSecond ) );
+        result.TestEquals( new Pair<Type, Type>( expectedFirst, expectedSecond ) ).Go();
     }
 
     [Fact]
@@ -119,6 +119,6 @@ public class PairStaticTests
 
         var result = Pair.GetUnderlyingTypes( typeof( Pair<,> ) );
 
-        result.Should().BeEquivalentTo( new Pair<Type, Type>( expected[0], expected[1] ) );
+        result.TestEquals( new Pair<Type, Type>( expected[0], expected[1] ) ).Go();
     }
 }

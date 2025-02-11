@@ -9,7 +9,7 @@ public class NonGenericInterfaceTests : TypeTestsBase
     {
         var sut = typeof( INonGenericInterface );
         var result = sut.GetImplementation<IDirect>();
-        result.Should().Be( typeof( IDirect ) );
+        result.TestEquals( typeof( IDirect ) ).Go();
     }
 
     [Fact]
@@ -17,7 +17,7 @@ public class NonGenericInterfaceTests : TypeTestsBase
     {
         var sut = typeof( INonGenericInterface );
         var result = sut.GetImplementation<IIndirectFromInterface>();
-        result.Should().Be( typeof( IIndirectFromInterface ) );
+        result.TestEquals( typeof( IIndirectFromInterface ) ).Go();
     }
 
     [Fact]
@@ -25,7 +25,7 @@ public class NonGenericInterfaceTests : TypeTestsBase
     {
         var sut = typeof( INonGenericInterface );
         var result = sut.GetImplementation<INotImplemented>();
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Fact]
@@ -33,7 +33,7 @@ public class NonGenericInterfaceTests : TypeTestsBase
     {
         var sut = typeof( INonGenericInterface );
         var result = sut.GetImplementation<INonGenericInterface>();
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Fact]
@@ -41,7 +41,7 @@ public class NonGenericInterfaceTests : TypeTestsBase
     {
         var sut = typeof( INonGenericInterface );
         var result = sut.Implements<IDirect>();
-        result.Should().BeTrue();
+        result.TestTrue().Go();
     }
 
     [Fact]
@@ -49,7 +49,7 @@ public class NonGenericInterfaceTests : TypeTestsBase
     {
         var sut = typeof( INonGenericInterface );
         var result = sut.Implements<IIndirectFromInterface>();
-        result.Should().BeTrue();
+        result.TestTrue().Go();
     }
 
     [Fact]
@@ -57,7 +57,7 @@ public class NonGenericInterfaceTests : TypeTestsBase
     {
         var sut = typeof( INonGenericInterface );
         var result = sut.Implements<INotImplemented>();
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Fact]
@@ -65,7 +65,7 @@ public class NonGenericInterfaceTests : TypeTestsBase
     {
         var sut = typeof( INonGenericInterface );
         var result = sut.Implements<INonGenericInterface>();
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Theory]
@@ -75,7 +75,7 @@ public class NonGenericInterfaceTests : TypeTestsBase
     {
         var sut = typeof( INonGenericInterface );
         var result = sut.GetOpenGenericImplementations( type );
-        result.Should().BeEmpty();
+        result.TestEmpty().Go();
     }
 
     [Theory]
@@ -85,7 +85,7 @@ public class NonGenericInterfaceTests : TypeTestsBase
     {
         var sut = typeof( INonGenericInterface );
         var result = sut.ImplementsOpenGeneric( type );
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Fact]
@@ -93,6 +93,6 @@ public class NonGenericInterfaceTests : TypeTestsBase
     {
         var sut = typeof( INonGenericInterface );
         var result = sut.GetAllImplementedGenericDefinitions();
-        result.Should().BeEmpty();
+        result.TestEmpty().Go();
     }
 }

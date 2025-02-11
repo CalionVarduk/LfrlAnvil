@@ -17,12 +17,11 @@ public abstract class GenericSequenceGeneratorTestsBase<T> : TestsBase
         var sut = Create();
         var firstValue = sut.Generate();
 
-        using ( new AssertionScope() )
-        {
-            sut.Bounds.Should().Be( expectedBounds );
-            sut.Step.Should().Be( expectedStep );
-            firstValue.Should().Be( expectedStart );
-        }
+        Assertion.All(
+                sut.Bounds.TestEquals( expectedBounds ),
+                sut.Step.TestEquals( expectedStep ),
+                firstValue.TestEquals( expectedStart ) )
+            .Go();
     }
 
     [Fact]
@@ -35,12 +34,11 @@ public abstract class GenericSequenceGeneratorTestsBase<T> : TestsBase
         var sut = Create( expectedStart );
         var firstValue = sut.Generate();
 
-        using ( new AssertionScope() )
-        {
-            sut.Bounds.Should().Be( expectedBounds );
-            sut.Step.Should().Be( expectedStep );
-            firstValue.Should().Be( expectedStart );
-        }
+        Assertion.All(
+                sut.Bounds.TestEquals( expectedBounds ),
+                sut.Step.TestEquals( expectedStep ),
+                firstValue.TestEquals( expectedStart ) )
+            .Go();
     }
 
     [Fact]
@@ -53,12 +51,11 @@ public abstract class GenericSequenceGeneratorTestsBase<T> : TestsBase
         var sut = Create( expectedStart, expectedStep );
         var firstValue = sut.Generate();
 
-        using ( new AssertionScope() )
-        {
-            sut.Bounds.Should().Be( expectedBounds );
-            sut.Step.Should().Be( expectedStep );
-            firstValue.Should().Be( expectedStart );
-        }
+        Assertion.All(
+                sut.Bounds.TestEquals( expectedBounds ),
+                sut.Step.TestEquals( expectedStep ),
+                firstValue.TestEquals( expectedStart ) )
+            .Go();
     }
 
     [Fact]
@@ -69,7 +66,7 @@ public abstract class GenericSequenceGeneratorTestsBase<T> : TestsBase
 
         var action = Lambda.Of( () => Create( expectedStart, expectedStep ) );
 
-        action.Should().ThrowExactly<ArgumentException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentException>() ).Go();
     }
 
     [Fact]
@@ -82,12 +79,11 @@ public abstract class GenericSequenceGeneratorTestsBase<T> : TestsBase
         var sut = Create( expectedBounds );
         var firstValue = sut.Generate();
 
-        using ( new AssertionScope() )
-        {
-            sut.Bounds.Should().Be( expectedBounds );
-            sut.Step.Should().Be( expectedStep );
-            firstValue.Should().Be( expectedBounds.Min );
-        }
+        Assertion.All(
+                sut.Bounds.TestEquals( expectedBounds ),
+                sut.Step.TestEquals( expectedStep ),
+                firstValue.TestEquals( expectedBounds.Min ) )
+            .Go();
     }
 
     [Fact]
@@ -100,12 +96,11 @@ public abstract class GenericSequenceGeneratorTestsBase<T> : TestsBase
         var sut = Create( expectedBounds, start );
         var firstValue = sut.Generate();
 
-        using ( new AssertionScope() )
-        {
-            sut.Bounds.Should().Be( expectedBounds );
-            sut.Step.Should().Be( expectedStep );
-            firstValue.Should().Be( start );
-        }
+        Assertion.All(
+                sut.Bounds.TestEquals( expectedBounds ),
+                sut.Step.TestEquals( expectedStep ),
+                firstValue.TestEquals( start ) )
+            .Go();
     }
 
     [Fact]
@@ -118,12 +113,11 @@ public abstract class GenericSequenceGeneratorTestsBase<T> : TestsBase
         var sut = Create( expectedBounds, min );
         var firstValue = sut.Generate();
 
-        using ( new AssertionScope() )
-        {
-            sut.Bounds.Should().Be( expectedBounds );
-            sut.Step.Should().Be( expectedStep );
-            firstValue.Should().Be( min );
-        }
+        Assertion.All(
+                sut.Bounds.TestEquals( expectedBounds ),
+                sut.Step.TestEquals( expectedStep ),
+                firstValue.TestEquals( min ) )
+            .Go();
     }
 
     [Fact]
@@ -136,12 +130,11 @@ public abstract class GenericSequenceGeneratorTestsBase<T> : TestsBase
         var sut = Create( expectedBounds, max );
         var firstValue = sut.Generate();
 
-        using ( new AssertionScope() )
-        {
-            sut.Bounds.Should().Be( expectedBounds );
-            sut.Step.Should().Be( expectedStep );
-            firstValue.Should().Be( max );
-        }
+        Assertion.All(
+                sut.Bounds.TestEquals( expectedBounds ),
+                sut.Step.TestEquals( expectedStep ),
+                firstValue.TestEquals( max ) )
+            .Go();
     }
 
     [Fact]
@@ -152,7 +145,7 @@ public abstract class GenericSequenceGeneratorTestsBase<T> : TestsBase
 
         var action = Lambda.Of( () => Create( expectedBounds, start ) );
 
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Fact]
@@ -163,7 +156,7 @@ public abstract class GenericSequenceGeneratorTestsBase<T> : TestsBase
 
         var action = Lambda.Of( () => Create( expectedBounds, start ) );
 
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Fact]
@@ -176,12 +169,11 @@ public abstract class GenericSequenceGeneratorTestsBase<T> : TestsBase
         var sut = Create( expectedBounds, start, expectedStep );
         var firstValue = sut.Generate();
 
-        using ( new AssertionScope() )
-        {
-            sut.Bounds.Should().Be( expectedBounds );
-            sut.Step.Should().Be( expectedStep );
-            firstValue.Should().Be( start );
-        }
+        Assertion.All(
+                sut.Bounds.TestEquals( expectedBounds ),
+                sut.Step.TestEquals( expectedStep ),
+                firstValue.TestEquals( start ) )
+            .Go();
     }
 
     [Fact]
@@ -194,12 +186,11 @@ public abstract class GenericSequenceGeneratorTestsBase<T> : TestsBase
         var sut = Create( expectedBounds, min, expectedStep );
         var firstValue = sut.Generate();
 
-        using ( new AssertionScope() )
-        {
-            sut.Bounds.Should().Be( expectedBounds );
-            sut.Step.Should().Be( expectedStep );
-            firstValue.Should().Be( min );
-        }
+        Assertion.All(
+                sut.Bounds.TestEquals( expectedBounds ),
+                sut.Step.TestEquals( expectedStep ),
+                firstValue.TestEquals( min ) )
+            .Go();
     }
 
     [Fact]
@@ -212,12 +203,11 @@ public abstract class GenericSequenceGeneratorTestsBase<T> : TestsBase
         var sut = Create( expectedBounds, max, expectedStep );
         var firstValue = sut.Generate();
 
-        using ( new AssertionScope() )
-        {
-            sut.Bounds.Should().Be( expectedBounds );
-            sut.Step.Should().Be( expectedStep );
-            firstValue.Should().Be( max );
-        }
+        Assertion.All(
+                sut.Bounds.TestEquals( expectedBounds ),
+                sut.Step.TestEquals( expectedStep ),
+                firstValue.TestEquals( max ) )
+            .Go();
     }
 
     [Fact]
@@ -229,7 +219,7 @@ public abstract class GenericSequenceGeneratorTestsBase<T> : TestsBase
 
         var action = Lambda.Of( () => Create( expectedBounds, start, expectedStep ) );
 
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Fact]
@@ -241,7 +231,7 @@ public abstract class GenericSequenceGeneratorTestsBase<T> : TestsBase
 
         var action = Lambda.Of( () => Create( expectedBounds, start, expectedStep ) );
 
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Fact]
@@ -253,7 +243,7 @@ public abstract class GenericSequenceGeneratorTestsBase<T> : TestsBase
 
         var action = Lambda.Of( () => Create( expectedBounds, start, expectedStep ) );
 
-        action.Should().ThrowExactly<ArgumentException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentException>() ).Go();
     }
 
     [Fact]
@@ -265,7 +255,7 @@ public abstract class GenericSequenceGeneratorTestsBase<T> : TestsBase
         sut.Reset( start );
         var firstValue = sut.Generate();
 
-        firstValue.Should().Be( start );
+        firstValue.TestEquals( start ).Go();
     }
 
     [Fact]
@@ -277,7 +267,7 @@ public abstract class GenericSequenceGeneratorTestsBase<T> : TestsBase
         sut.Reset( min );
         var firstValue = sut.Generate();
 
-        firstValue.Should().Be( min );
+        firstValue.TestEquals( min ).Go();
     }
 
     [Fact]
@@ -289,7 +279,7 @@ public abstract class GenericSequenceGeneratorTestsBase<T> : TestsBase
         sut.Reset( max );
         var firstValue = sut.Generate();
 
-        firstValue.Should().Be( max );
+        firstValue.TestEquals( max ).Go();
     }
 
     [Fact]
@@ -300,7 +290,7 @@ public abstract class GenericSequenceGeneratorTestsBase<T> : TestsBase
 
         var action = Lambda.Of( () => sut.Reset( start ) );
 
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Fact]
@@ -311,7 +301,7 @@ public abstract class GenericSequenceGeneratorTestsBase<T> : TestsBase
 
         var action = Lambda.Of( () => sut.Reset( start ) );
 
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Fact]
@@ -325,7 +315,7 @@ public abstract class GenericSequenceGeneratorTestsBase<T> : TestsBase
 
         var result = sut.Generate();
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -338,7 +328,7 @@ public abstract class GenericSequenceGeneratorTestsBase<T> : TestsBase
 
         var action = Lambda.Of( () => sut.Generate() );
 
-        action.Should().ThrowExactly<ValueGenerationException>();
+        action.Test( exc => exc.TestType().Exact<ValueGenerationException>() ).Go();
     }
 
     [Fact]
@@ -350,7 +340,7 @@ public abstract class GenericSequenceGeneratorTestsBase<T> : TestsBase
 
         var action = Lambda.Of( () => sut.Generate() );
 
-        action.Should().ThrowExactly<ValueGenerationException>();
+        action.Test( exc => exc.TestType().Exact<ValueGenerationException>() ).Go();
     }
 
     [Fact]
@@ -364,11 +354,10 @@ public abstract class GenericSequenceGeneratorTestsBase<T> : TestsBase
 
         var result = sut.TryGenerate( out var outResult );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            outResult.Should().Be( expected );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                outResult.TestEquals( expected ) )
+            .Go();
     }
 
     [Fact]
@@ -381,11 +370,10 @@ public abstract class GenericSequenceGeneratorTestsBase<T> : TestsBase
 
         var result = sut.TryGenerate( out var outResult );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeFalse();
-            outResult.Should().Be( default );
-        }
+        Assertion.All(
+                result.TestFalse(),
+                outResult.TestEquals( default ) )
+            .Go();
     }
 
     [Fact]
@@ -397,11 +385,10 @@ public abstract class GenericSequenceGeneratorTestsBase<T> : TestsBase
 
         var result = sut.TryGenerate( out var outResult );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeFalse();
-            outResult.Should().Be( default );
-        }
+        Assertion.All(
+                result.TestFalse(),
+                outResult.TestEquals( default ) )
+            .Go();
     }
 
     [Fact]
@@ -413,7 +400,7 @@ public abstract class GenericSequenceGeneratorTestsBase<T> : TestsBase
 
         var result = sut.Generate();
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -425,11 +412,10 @@ public abstract class GenericSequenceGeneratorTestsBase<T> : TestsBase
 
         var result = sut.TryGenerate( out var outResult );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( expected );
-            outResult.Should().Be( outExpected );
-        }
+        Assertion.All(
+                result.TestEquals( expected ),
+                outResult.TestEquals( outExpected ) )
+            .Go();
     }
 
     [Fact]
@@ -447,11 +433,10 @@ public abstract class GenericSequenceGeneratorTestsBase<T> : TestsBase
 
         var result = (( IGenerator )sut).TryGenerate( out var outResult );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( expected );
-            outResult.Should().BeNull();
-        }
+        Assertion.All(
+                result.TestEquals( expected ),
+                outResult.TestNull() )
+            .Go();
     }
 
     protected abstract Bounds<T> GetDefaultBounds();

@@ -1,4 +1,5 @@
-﻿using LfrlAnvil.Internal;
+﻿using LfrlAnvil.Extensions;
+using LfrlAnvil.Internal;
 
 namespace LfrlAnvil.Tests.NullableIndexTests;
 
@@ -9,11 +10,10 @@ public class NullableIndexTests : TestsBase
     {
         var sut = NullableIndex.Null;
 
-        using ( new AssertionScope() )
-        {
-            sut.HasValue.Should().BeFalse();
-            sut.ToString().Should().Be( "NULL" );
-        }
+        Assertion.All(
+                sut.HasValue.TestFalse(),
+                sut.ToString().TestEquals( "NULL" ) )
+            .Go();
     }
 
     [Theory]
@@ -27,12 +27,11 @@ public class NullableIndexTests : TestsBase
     {
         var sut = NullableIndex.Create( value );
 
-        using ( new AssertionScope() )
-        {
-            sut.HasValue.Should().BeTrue();
-            sut.Value.Should().Be( value );
-            sut.ToString().Should().Be( value.ToString() );
-        }
+        Assertion.All(
+                sut.HasValue.TestTrue(),
+                sut.Value.TestEquals( value ),
+                sut.ToString().TestEquals( value.ToString() ) )
+            .Go();
     }
 
     [Theory]
@@ -46,12 +45,11 @@ public class NullableIndexTests : TestsBase
     {
         var sut = NullableIndex.Create( value );
 
-        using ( new AssertionScope() )
-        {
-            sut.HasValue.Should().BeTrue();
-            sut.Value.Should().Be( value );
-            sut.ToString().Should().Be( value.ToString() );
-        }
+        Assertion.All(
+                sut.HasValue.TestTrue(),
+                sut.Value.ToNullable().TestEquals( value ),
+                sut.ToString().TestEquals( value.ToString() ) )
+            .Go();
     }
 
     [Fact]
@@ -59,11 +57,10 @@ public class NullableIndexTests : TestsBase
     {
         var sut = NullableIndex.Create( null );
 
-        using ( new AssertionScope() )
-        {
-            sut.HasValue.Should().BeFalse();
-            sut.ToString().Should().Be( "NULL" );
-        }
+        Assertion.All(
+                sut.HasValue.TestFalse(),
+                sut.ToString().TestEquals( "NULL" ) )
+            .Go();
     }
 
     [Theory]
@@ -77,12 +74,11 @@ public class NullableIndexTests : TestsBase
     {
         var sut = NullableIndex.CreateUnsafe( value );
 
-        using ( new AssertionScope() )
-        {
-            sut.HasValue.Should().BeTrue();
-            sut.Value.Should().Be( value );
-            sut.ToString().Should().Be( value.ToString() );
-        }
+        Assertion.All(
+                sut.HasValue.TestTrue(),
+                sut.Value.TestEquals( value ),
+                sut.ToString().TestEquals( value.ToString() ) )
+            .Go();
     }
 
     [Fact]
@@ -90,11 +86,10 @@ public class NullableIndexTests : TestsBase
     {
         var sut = NullableIndex.CreateUnsafe( NullableIndex.NullValue );
 
-        using ( new AssertionScope() )
-        {
-            sut.HasValue.Should().BeFalse();
-            sut.ToString().Should().Be( "NULL" );
-        }
+        Assertion.All(
+                sut.HasValue.TestFalse(),
+                sut.ToString().TestEquals( "NULL" ) )
+            .Go();
     }
 
     [Theory]
@@ -104,7 +99,7 @@ public class NullableIndexTests : TestsBase
     {
         var sut = NullableIndex.CreateUnsafe( value );
         var result = sut.GetHashCode();
-        result.Should().Be( value.GetHashCode() );
+        result.TestEquals( value.GetHashCode() ).Go();
     }
 
     [Theory]
@@ -121,7 +116,7 @@ public class NullableIndexTests : TestsBase
 
         var result = a.Equals( b );
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -138,7 +133,7 @@ public class NullableIndexTests : TestsBase
 
         var result = a.CompareTo( b );
 
-        Math.Sign( result ).Should().Be( expectedSign );
+        Math.Sign( result ).TestEquals( expectedSign ).Go();
     }
 
     [Theory]
@@ -148,7 +143,7 @@ public class NullableIndexTests : TestsBase
     {
         var sut = NullableIndex.CreateUnsafe( value );
         var result = ( int? )sut;
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -158,7 +153,7 @@ public class NullableIndexTests : TestsBase
     {
         var sut = NullableIndex.CreateUnsafe( value );
         sut++;
-        sut.Should().Be( NullableIndex.CreateUnsafe( expected ) );
+        sut.TestEquals( NullableIndex.CreateUnsafe( expected ) ).Go();
     }
 
     [Theory]
@@ -168,7 +163,7 @@ public class NullableIndexTests : TestsBase
     {
         var sut = NullableIndex.CreateUnsafe( value );
         sut--;
-        sut.Should().Be( NullableIndex.CreateUnsafe( expected ) );
+        sut.TestEquals( NullableIndex.CreateUnsafe( expected ) ).Go();
     }
 
     [Theory]
@@ -183,7 +178,7 @@ public class NullableIndexTests : TestsBase
 
         var result = a + b;
 
-        result.Should().Be( NullableIndex.CreateUnsafe( expected ) );
+        result.TestEquals( NullableIndex.CreateUnsafe( expected ) ).Go();
     }
 
     [Theory]
@@ -198,7 +193,7 @@ public class NullableIndexTests : TestsBase
 
         var result = a - b;
 
-        result.Should().Be( NullableIndex.CreateUnsafe( expected ) );
+        result.TestEquals( NullableIndex.CreateUnsafe( expected ) ).Go();
     }
 
     [Theory]
@@ -215,7 +210,7 @@ public class NullableIndexTests : TestsBase
 
         var result = a == b;
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -232,7 +227,7 @@ public class NullableIndexTests : TestsBase
 
         var result = a != b;
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -249,7 +244,7 @@ public class NullableIndexTests : TestsBase
 
         var result = a > b;
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -266,7 +261,7 @@ public class NullableIndexTests : TestsBase
 
         var result = a <= b;
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -283,7 +278,7 @@ public class NullableIndexTests : TestsBase
 
         var result = a < b;
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -300,6 +295,6 @@ public class NullableIndexTests : TestsBase
 
         var result = a >= b;
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 }

@@ -10,7 +10,7 @@ public class ClosedGenericInterfaceTests : TypeTestsBase
     {
         var sut = typeof( IGenericInterface<int> );
         var result = sut.GetImplementation<IDirect>();
-        result.Should().Be( typeof( IDirect ) );
+        result.TestEquals( typeof( IDirect ) ).Go();
     }
 
     [Fact]
@@ -18,7 +18,7 @@ public class ClosedGenericInterfaceTests : TypeTestsBase
     {
         var sut = typeof( IGenericInterface<int> );
         var result = sut.GetImplementation<IIndirectFromInterface>();
-        result.Should().Be( typeof( IIndirectFromInterface ) );
+        result.TestEquals( typeof( IIndirectFromInterface ) ).Go();
     }
 
     [Fact]
@@ -26,7 +26,7 @@ public class ClosedGenericInterfaceTests : TypeTestsBase
     {
         var sut = typeof( IGenericInterface<int> );
         var result = sut.GetImplementation<IBaseGeneric<int>>();
-        result.Should().Be( typeof( IBaseGeneric<int> ) );
+        result.TestEquals( typeof( IBaseGeneric<int> ) ).Go();
     }
 
     [Fact]
@@ -34,7 +34,7 @@ public class ClosedGenericInterfaceTests : TypeTestsBase
     {
         var sut = typeof( IGenericInterface<int> );
         var result = sut.GetImplementation<INotImplemented>();
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Fact]
@@ -42,7 +42,7 @@ public class ClosedGenericInterfaceTests : TypeTestsBase
     {
         var sut = typeof( IGenericInterface<int> );
         var result = sut.GetImplementation<IGenericInterface<int>>();
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Fact]
@@ -50,7 +50,7 @@ public class ClosedGenericInterfaceTests : TypeTestsBase
     {
         var sut = typeof( IGenericInterface<int> );
         var result = sut.GetImplementation( typeof( IBaseGeneric<> ) );
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Fact]
@@ -58,7 +58,7 @@ public class ClosedGenericInterfaceTests : TypeTestsBase
     {
         var sut = typeof( IGenericInterface<int> );
         var result = sut.Implements<IDirect>();
-        result.Should().BeTrue();
+        result.TestTrue().Go();
     }
 
     [Fact]
@@ -66,7 +66,7 @@ public class ClosedGenericInterfaceTests : TypeTestsBase
     {
         var sut = typeof( IGenericInterface<int> );
         var result = sut.Implements<IIndirectFromInterface>();
-        result.Should().BeTrue();
+        result.TestTrue().Go();
     }
 
     [Fact]
@@ -74,7 +74,7 @@ public class ClosedGenericInterfaceTests : TypeTestsBase
     {
         var sut = typeof( IGenericInterface<int> );
         var result = sut.Implements<IBaseGeneric<int>>();
-        result.Should().BeTrue();
+        result.TestTrue().Go();
     }
 
     [Fact]
@@ -82,7 +82,7 @@ public class ClosedGenericInterfaceTests : TypeTestsBase
     {
         var sut = typeof( IGenericInterface<int> );
         var result = sut.Implements<INotImplemented>();
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Fact]
@@ -90,7 +90,7 @@ public class ClosedGenericInterfaceTests : TypeTestsBase
     {
         var sut = typeof( IGenericInterface<int> );
         var result = sut.Implements<IGenericInterface<int>>();
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Fact]
@@ -98,7 +98,7 @@ public class ClosedGenericInterfaceTests : TypeTestsBase
     {
         var sut = typeof( IGenericInterface<int> );
         var result = sut.Implements( typeof( IBaseGeneric<> ) );
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Fact]
@@ -107,7 +107,7 @@ public class ClosedGenericInterfaceTests : TypeTestsBase
         var sut = typeof( IGenericInterface<int> );
         var expected = new[] { typeof( IBaseGeneric<int> ) }.AsEnumerable();
         var result = sut.GetOpenGenericImplementations( typeof( IBaseGeneric<> ) );
-        result.Should().BeEquivalentTo( expected );
+        result.TestSetEqual( expected ).Go();
     }
 
     [Fact]
@@ -115,7 +115,7 @@ public class ClosedGenericInterfaceTests : TypeTestsBase
     {
         var sut = typeof( IGenericInterface<int> );
         var result = sut.ImplementsOpenGeneric( typeof( IBaseGeneric<> ) );
-        result.Should().BeTrue();
+        result.TestTrue().Go();
     }
 
     [Fact]
@@ -124,7 +124,7 @@ public class ClosedGenericInterfaceTests : TypeTestsBase
         var sut = typeof( IGenericInterface<int> );
         var expected = new[] { typeof( IBaseGeneric<> ) }.AsEnumerable();
         var result = sut.GetAllImplementedGenericDefinitions();
-        result.Should().BeEquivalentTo( expected );
+        result.TestSetEqual( expected ).Go();
     }
 
     [Fact]
@@ -133,7 +133,7 @@ public class ClosedGenericInterfaceTests : TypeTestsBase
         var sut = typeof( IMultiGenericClosedInterface );
         var expected = new[] { typeof( IBaseGeneric<int> ), typeof( IBaseGeneric<string> ) }.AsEnumerable();
         var result = sut.GetOpenGenericImplementations( typeof( IBaseGeneric<> ) );
-        result.Should().BeEquivalentTo( expected );
+        result.TestSetEqual( expected ).Go();
     }
 
     [Fact]
@@ -141,7 +141,7 @@ public class ClosedGenericInterfaceTests : TypeTestsBase
     {
         var sut = typeof( IMultiGenericClosedInterface );
         var result = sut.ImplementsOpenGeneric( typeof( IBaseGeneric<> ) );
-        result.Should().BeTrue();
+        result.TestTrue().Go();
     }
 
     [Fact]
@@ -150,6 +150,6 @@ public class ClosedGenericInterfaceTests : TypeTestsBase
         var sut = typeof( IMultiGenericClosedInterface );
         var expected = new[] { typeof( IBaseGeneric<> ) }.AsEnumerable();
         var result = sut.GetAllImplementedGenericDefinitions();
-        result.Should().BeEquivalentTo( expected );
+        result.TestSetEqual( expected ).Go();
     }
 }

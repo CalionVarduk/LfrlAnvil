@@ -26,9 +26,11 @@ public class PersistenceExpressionsTests : TestsBase
             (( ISqlStatementNode )sut).QueryCount.Should().Be( 0 );
             text.Should()
                 .Be(
-                    @"DELETE FROM [foo]
-INNER JOIN [bar] ON ([foo].[a] : ?) == ([bar].[b] : ?)
-AND WHERE ([bar].[c] : ?) > (""5"" : System.Int32)" );
+                    """
+                    DELETE FROM [foo]
+                    INNER JOIN [bar] ON ([foo].[a] : ?) == ([bar].[b] : ?)
+                    AND WHERE ([bar].[c] : ?) > ("5" : System.Int32)
+                    """ );
         }
     }
 
@@ -48,8 +50,10 @@ AND WHERE ([bar].[c] : ?) > (""5"" : System.Int32)" );
             (( ISqlStatementNode )sut).QueryCount.Should().Be( 0 );
             text.Should()
                 .Be(
-                    @"DELETE FROM [foo]
-AND WHERE ([foo].[a] : ?) > (""5"" : System.Int32)" );
+                    """
+                    DELETE FROM [foo]
+                    AND WHERE ([foo].[a] : ?) > ("5" : System.Int32)
+                    """ );
         }
     }
 
@@ -115,13 +119,15 @@ AND WHERE ([foo].[a] : ?) > (""5"" : System.Int32)" );
             (( ISqlStatementNode )sut).QueryCount.Should().Be( 0 );
             text.Should()
                 .Be(
-                    @"UPDATE FROM [foo]
-INNER JOIN [bar] ON ([foo].[a] : ?) == ([bar].[b] : ?)
-AND WHERE ([bar].[c] : ?) > (""5"" : System.Int32)
-SET
-  ([foo].[b] : ?) = (""10"" : System.Int32),
-  ([foo].[c] : ?) = (""foo"" : System.String),
-  ([foo].[d] : ?) = (@dVal : System.Double)" );
+                    """
+                    UPDATE FROM [foo]
+                    INNER JOIN [bar] ON ([foo].[a] : ?) == ([bar].[b] : ?)
+                    AND WHERE ([bar].[c] : ?) > ("5" : System.Int32)
+                    SET
+                      ([foo].[b] : ?) = ("10" : System.Int32),
+                      ([foo].[c] : ?) = ("foo" : System.String),
+                      ([foo].[d] : ?) = (@dVal : System.Double)
+                    """ );
         }
     }
 
@@ -143,10 +149,12 @@ SET
             (( ISqlStatementNode )sut).QueryCount.Should().Be( 0 );
             text.Should()
                 .Be(
-                    @"UPDATE FROM [foo]
-INNER JOIN [bar] ON ([foo].[a] : ?) == ([bar].[b] : ?)
-AND WHERE ([bar].[c] : ?) > (""5"" : System.Int32)
-SET" );
+                    """
+                    UPDATE FROM [foo]
+                    INNER JOIN [bar] ON ([foo].[a] : ?) == ([bar].[b] : ?)
+                    AND WHERE ([bar].[c] : ?) > ("5" : System.Int32)
+                    SET
+                    """ );
         }
     }
 
@@ -173,12 +181,14 @@ SET" );
             sut.Assignments.Should().BeSequentiallyEqualTo( oldAssignments[0], newAssignments[0], newAssignments[1] );
             text.Should()
                 .Be(
-                    @"UPDATE FROM [foo]
-AND WHERE ([foo].[a] : ?) > (""5"" : System.Int32)
-SET
-  ([foo].[b] : ?) = (""10"" : System.Int32),
-  ([foo].[c] : ?) = (""foo"" : System.String),
-  ([foo].[d] : ?) = (@dVal : System.Double)" );
+                    """
+                    UPDATE FROM [foo]
+                    AND WHERE ([foo].[a] : ?) > ("5" : System.Int32)
+                    SET
+                      ([foo].[b] : ?) = ("10" : System.Int32),
+                      ([foo].[c] : ?) = ("foo" : System.String),
+                      ([foo].[d] : ?) = (@dVal : System.Double)
+                    """ );
         }
     }
 
@@ -197,10 +207,12 @@ SET
             sut.Should().BeSameAs( original );
             text.Should()
                 .Be(
-                    @"UPDATE FROM [foo]
-AND WHERE ([foo].[a] : ?) > (""5"" : System.Int32)
-SET
-  ([foo].[b] : ?) = (""10"" : System.Int32)" );
+                    """
+                    UPDATE FROM [foo]
+                    AND WHERE ([foo].[a] : ?) > ("5" : System.Int32)
+                    SET
+                      ([foo].[b] : ?) = ("10" : System.Int32)
+                    """ );
         }
     }
 
@@ -227,8 +239,10 @@ SET
             (( ISqlStatementNode )sut).QueryCount.Should().Be( 0 );
             text.Should()
                 .Be(
-                    @"INSERT INTO [foo] ([foo].[x] : ?, [foo].[y] : ?)
-SELECT a, b FROM bar" );
+                    """
+                    INSERT INTO [foo] ([foo].[x] : ?, [foo].[y] : ?)
+                    SELECT a, b FROM bar
+                    """ );
         }
     }
 
@@ -255,9 +269,11 @@ SELECT a, b FROM bar" );
             (( ISqlStatementNode )sut).QueryCount.Should().Be( 0 );
             text.Should()
                 .Be(
-                    @"INSERT INTO [foo] ([foo].[x] : ?, [foo].[y] : ?)
-VALUES
-((""5"" : System.Int32), (@a : System.String))" );
+                    """
+                    INSERT INTO [foo] ([foo].[x] : ?, [foo].[y] : ?)
+                    VALUES
+                    (("5" : System.Int32), (@a : System.String))
+                    """ );
         }
     }
 
@@ -279,8 +295,10 @@ VALUES
             (( ISqlStatementNode )sut).QueryCount.Should().Be( 0 );
             text.Should()
                 .Be(
-                    @"INSERT INTO [foo] AS [qux] ()
-SELECT a, b FROM bar" );
+                    """
+                    INSERT INTO [foo] AS [qux] ()
+                    SELECT a, b FROM bar
+                    """ );
         }
     }
 
@@ -322,13 +340,15 @@ SELECT a, b FROM bar" );
             (( ISqlStatementNode )sut).QueryCount.Should().Be( 0 );
             text.Should()
                 .Be(
-                    @"UPSERT [foo] USING
-SELECT a, b FROM bar
-WITH CONFLICT TARGET ([foo].[x] : ?)
-INSERT ([foo].[x] : ?, [foo].[y] : ?)
-ON CONFLICT SET
-  ([foo].[x] : ?) = (""10"" : System.Int32),
-  ([foo].[y] : ?) = (@dVal : System.Double)" );
+                    """
+                    UPSERT [foo] USING
+                    SELECT a, b FROM bar
+                    WITH CONFLICT TARGET ([foo].[x] : ?)
+                    INSERT ([foo].[x] : ?, [foo].[y] : ?)
+                    ON CONFLICT SET
+                      ([foo].[x] : ?) = ("10" : System.Int32),
+                      ([foo].[y] : ?) = (@dVal : System.Double)
+                    """ );
         }
     }
 
@@ -370,14 +390,16 @@ ON CONFLICT SET
             (( ISqlStatementNode )sut).QueryCount.Should().Be( 0 );
             text.Should()
                 .Be(
-                    @"UPSERT [foo] USING
-VALUES
-((""5"" : System.Int32), (@a : System.String))
-WITH CONFLICT TARGET ([foo].[x] : ?)
-INSERT ([foo].[x] : ?, [foo].[y] : ?)
-ON CONFLICT SET
-  ([foo].[x] : ?) = (""10"" : System.Int32),
-  ([foo].[y] : ?) = (@dVal : System.Double)" );
+                    """
+                    UPSERT [foo] USING
+                    VALUES
+                    (("5" : System.Int32), (@a : System.String))
+                    WITH CONFLICT TARGET ([foo].[x] : ?)
+                    INSERT ([foo].[x] : ?, [foo].[y] : ?)
+                    ON CONFLICT SET
+                      ([foo].[x] : ?) = ("10" : System.Int32),
+                      ([foo].[y] : ?) = (@dVal : System.Double)
+                    """ );
         }
     }
 }

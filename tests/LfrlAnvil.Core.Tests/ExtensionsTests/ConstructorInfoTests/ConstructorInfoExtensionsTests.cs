@@ -10,7 +10,7 @@ public class ConstructorInfoExtensionsTests : TestsBase
     {
         var ctor = typeof( TestCtorClass ).GetConstructor( new[] { typeof( int ), typeof( string ) } )!;
         var result = ctor.GetDebugString( includeDeclaringType: false );
-        result.Should().Be( ".ctor(System.Int32 a, System.String b)" );
+        result.TestEquals( ".ctor(System.Int32 a, System.String b)" ).Go();
     }
 
     [Fact]
@@ -18,7 +18,8 @@ public class ConstructorInfoExtensionsTests : TestsBase
     {
         var ctor = typeof( TestCtorClass ).GetConstructor( new[] { typeof( int ), typeof( string ) } )!;
         var result = ctor.GetDebugString( includeDeclaringType: true );
-        result.Should().Be( "LfrlAnvil.Tests.ExtensionsTests.ConstructorInfoTests.TestCtorClass..ctor(System.Int32 a, System.String b)" );
+        result.TestEquals( "LfrlAnvil.Tests.ExtensionsTests.ConstructorInfoTests.TestCtorClass..ctor(System.Int32 a, System.String b)" )
+            .Go();
     }
 
     [Fact]
@@ -26,7 +27,7 @@ public class ConstructorInfoExtensionsTests : TestsBase
     {
         var ctor = typeof( TestCtorClass ).GetConstructor( Type.EmptyTypes )!;
         var result = ctor.GetDebugString( includeDeclaringType: false );
-        result.Should().Be( ".ctor()" );
+        result.TestEquals( ".ctor()" ).Go();
     }
 
     [Fact]
@@ -34,7 +35,7 @@ public class ConstructorInfoExtensionsTests : TestsBase
     {
         var ctor = typeof( TestCtorClass ).GetConstructors().First( c => c.GetParameters().Length == 3 );
         var result = ctor.GetDebugString( includeDeclaringType: false );
-        result.Should().Be( ".ctor(System.String& a [in], System.Decimal& b, System.Int32& c [out])" );
+        result.TestEquals( ".ctor(System.String& a [in], System.Decimal& b, System.Int32& c [out])" ).Go();
     }
 
     [Fact]
@@ -42,7 +43,7 @@ public class ConstructorInfoExtensionsTests : TestsBase
     {
         var ctor = typeof( TestCtorGenericClass<,> ).GetConstructors().First();
         var result = ctor.GetDebugString( includeDeclaringType: false );
-        result.Should().Be( ".ctor(T1 a, T2 b)" );
+        result.TestEquals( ".ctor(T1 a, T2 b)" ).Go();
     }
 
     [Fact]
@@ -50,7 +51,7 @@ public class ConstructorInfoExtensionsTests : TestsBase
     {
         var ctor = typeof( TestCtorGenericClass<int, string> ).GetConstructors().First();
         var result = ctor.GetDebugString( includeDeclaringType: false );
-        result.Should().Be( ".ctor(System.Int32 a, System.String b)" );
+        result.TestEquals( ".ctor(System.Int32 a, System.String b)" ).Go();
     }
 }
 

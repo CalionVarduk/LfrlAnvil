@@ -13,12 +13,11 @@ public class CounterTaskTests : TestsBase
     public void Ctor_ShouldCreateTaskInProgress(int limit, int count, int expectedLimit)
     {
         var sut = new CounterTask( limit, count );
-        using ( new AssertionScope() )
-        {
-            sut.Limit.Should().Be( expectedLimit );
-            sut.Count.Should().Be( count );
-            sut.Task.IsCompleted.Should().BeFalse();
-        }
+        Assertion.All(
+                sut.Limit.TestEquals( expectedLimit ),
+                sut.Count.TestEquals( count ),
+                sut.Task.IsCompleted.TestFalse() )
+            .Go();
     }
 
     [Theory]
@@ -27,12 +26,11 @@ public class CounterTaskTests : TestsBase
     public void Ctor_ShouldCreateCompletedTask_WhenCountIsGreaterThanOrEqualToLimit(int count)
     {
         var sut = new CounterTask( limit: 14, count );
-        using ( new AssertionScope() )
-        {
-            sut.Limit.Should().Be( 14 );
-            sut.Count.Should().Be( 14 );
-            sut.Task.IsCompletedSuccessfully.Should().BeTrue();
-        }
+        Assertion.All(
+                sut.Limit.TestEquals( 14 ),
+                sut.Count.TestEquals( 14 ),
+                sut.Task.IsCompletedSuccessfully.TestTrue() )
+            .Go();
     }
 
     [Fact]
@@ -42,13 +40,12 @@ public class CounterTaskTests : TestsBase
 
         var result = sut.Increment();
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeFalse();
-            sut.Limit.Should().Be( 2 );
-            sut.Count.Should().Be( 1 );
-            sut.Task.IsCompleted.Should().BeFalse();
-        }
+        Assertion.All(
+                result.TestFalse(),
+                sut.Limit.TestEquals( 2 ),
+                sut.Count.TestEquals( 1 ),
+                sut.Task.IsCompleted.TestFalse() )
+            .Go();
     }
 
     [Fact]
@@ -58,13 +55,12 @@ public class CounterTaskTests : TestsBase
 
         var result = sut.Increment();
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            sut.Limit.Should().Be( 2 );
-            sut.Count.Should().Be( 2 );
-            sut.Task.IsCompletedSuccessfully.Should().BeTrue();
-        }
+        Assertion.All(
+                result.TestTrue(),
+                sut.Limit.TestEquals( 2 ),
+                sut.Count.TestEquals( 2 ),
+                sut.Task.IsCompletedSuccessfully.TestTrue() )
+            .Go();
     }
 
     [Fact]
@@ -74,13 +70,12 @@ public class CounterTaskTests : TestsBase
 
         var result = sut.Increment();
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            sut.Limit.Should().Be( 2 );
-            sut.Count.Should().Be( 2 );
-            sut.Task.IsCompletedSuccessfully.Should().BeTrue();
-        }
+        Assertion.All(
+                result.TestTrue(),
+                sut.Limit.TestEquals( 2 ),
+                sut.Count.TestEquals( 2 ),
+                sut.Task.IsCompletedSuccessfully.TestTrue() )
+            .Go();
     }
 
     [Fact]
@@ -90,13 +85,12 @@ public class CounterTaskTests : TestsBase
 
         var result = sut.Add( 2 );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeFalse();
-            sut.Limit.Should().Be( 3 );
-            sut.Count.Should().Be( 2 );
-            sut.Task.IsCompleted.Should().BeFalse();
-        }
+        Assertion.All(
+                result.TestFalse(),
+                sut.Limit.TestEquals( 3 ),
+                sut.Count.TestEquals( 2 ),
+                sut.Task.IsCompleted.TestFalse() )
+            .Go();
     }
 
     [Fact]
@@ -106,13 +100,12 @@ public class CounterTaskTests : TestsBase
 
         var result = sut.Add( 3 );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            sut.Limit.Should().Be( 3 );
-            sut.Count.Should().Be( 3 );
-            sut.Task.IsCompletedSuccessfully.Should().BeTrue();
-        }
+        Assertion.All(
+                result.TestTrue(),
+                sut.Limit.TestEquals( 3 ),
+                sut.Count.TestEquals( 3 ),
+                sut.Task.IsCompletedSuccessfully.TestTrue() )
+            .Go();
     }
 
     [Fact]
@@ -122,13 +115,12 @@ public class CounterTaskTests : TestsBase
 
         var result = sut.Add( 1 );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            sut.Limit.Should().Be( 2 );
-            sut.Count.Should().Be( 2 );
-            sut.Task.IsCompletedSuccessfully.Should().BeTrue();
-        }
+        Assertion.All(
+                result.TestTrue(),
+                sut.Limit.TestEquals( 2 ),
+                sut.Count.TestEquals( 2 ),
+                sut.Task.IsCompletedSuccessfully.TestTrue() )
+            .Go();
     }
 
     [Theory]
@@ -140,13 +132,12 @@ public class CounterTaskTests : TestsBase
 
         var result = sut.Add( value );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeFalse();
-            sut.Limit.Should().Be( 1 );
-            sut.Count.Should().Be( 0 );
-            sut.Task.IsCompleted.Should().BeFalse();
-        }
+        Assertion.All(
+                result.TestFalse(),
+                sut.Limit.TestEquals( 1 ),
+                sut.Count.TestEquals( 0 ),
+                sut.Task.IsCompleted.TestFalse() )
+            .Go();
     }
 
     [Fact]
@@ -156,12 +147,11 @@ public class CounterTaskTests : TestsBase
 
         sut.Dispose();
 
-        using ( new AssertionScope() )
-        {
-            sut.Limit.Should().Be( 1 );
-            sut.Count.Should().Be( 0 );
-            sut.Task.IsCanceled.Should().BeTrue();
-        }
+        Assertion.All(
+                sut.Limit.TestEquals( 1 ),
+                sut.Count.TestEquals( 0 ),
+                sut.Task.IsCanceled.TestTrue() )
+            .Go();
     }
 
     [Fact]
@@ -172,6 +162,6 @@ public class CounterTaskTests : TestsBase
 
         var action = Lambda.Of( () => sut.Dispose() );
 
-        action.Should().NotThrow();
+        action.Test( exc => exc.TestNull() ).Go();
     }
 }

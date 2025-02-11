@@ -36,8 +36,10 @@ public partial class MySqlNodeInterpreterTests
             sut.Context.Sql.ToString()
                 .Should()
                 .Be(
-                    @"DELETE FROM foo
-WHERE foo.`a` < 10" );
+                    """
+                    DELETE FROM foo
+                    WHERE foo.`a` < 10
+                    """ );
         }
 
         [Fact]
@@ -53,9 +55,11 @@ WHERE foo.`a` < 10" );
             sut.Context.Sql.ToString()
                 .Should()
                 .Be(
-                    @"DELETE `bar`
-FROM foo AS `bar`
-WHERE `bar`.`a` < 10" );
+                    """
+                    DELETE `bar`
+                    FROM foo AS `bar`
+                    WHERE `bar`.`a` < 10
+                    """ );
         }
 
         [Fact]
@@ -74,15 +78,17 @@ WHERE `bar`.`a` < 10" );
             sut.Context.Sql.ToString()
                 .Should()
                 .Be(
-                    @"WITH `cba` AS (
-  SELECT * FROM abc
-)
-DELETE FROM foo
-WHERE foo.`a` IN (
-  SELECT cba.c FROM cba
-)
-ORDER BY foo.`a` ASC
-LIMIT 5" );
+                    """
+                    WITH `cba` AS (
+                      SELECT * FROM abc
+                    )
+                    DELETE FROM foo
+                    WHERE foo.`a` IN (
+                      SELECT cba.c FROM cba
+                    )
+                    ORDER BY foo.`a` ASC
+                    LIMIT 5
+                    """ );
         }
 
         [Fact]
@@ -109,25 +115,27 @@ LIMIT 5" );
             sut.Context.Sql.ToString()
                 .Should()
                 .SatisfySql(
-                    @"WITH `cba` AS (
-  SELECT * FROM abc
-),
-`_{GUID}` AS (
-  SELECT DISTINCT
-    `f`.`a` AS `ID_a_0`
-  FROM `common`.`foo` AS `f`
-  WHERE `f`.`a` IN (
-    SELECT cba.c FROM cba
-  )
-  GROUP BY `f`.`b`
-  HAVING `f`.`b` > 20
-  WINDOW `wnd` AS ()
-  ORDER BY `f`.`a` ASC
-  LIMIT 5 OFFSET 10
-)
-DELETE `common`.`foo`
-FROM `common`.`foo`
-INNER JOIN `_{GUID}` ON `common`.`foo`.`a` = `_{GUID}`.`ID_a_0`;" );
+                    """
+                    WITH `cba` AS (
+                      SELECT * FROM abc
+                    ),
+                    `_{GUID}` AS (
+                      SELECT DISTINCT
+                        `f`.`a` AS `ID_a_0`
+                      FROM `common`.`foo` AS `f`
+                      WHERE `f`.`a` IN (
+                        SELECT cba.c FROM cba
+                      )
+                      GROUP BY `f`.`b`
+                      HAVING `f`.`b` > 20
+                      WINDOW `wnd` AS ()
+                      ORDER BY `f`.`a` ASC
+                      LIMIT 5 OFFSET 10
+                    )
+                    DELETE `common`.`foo`
+                    FROM `common`.`foo`
+                    INNER JOIN `_{GUID}` ON `common`.`foo`.`a` = `_{GUID}`.`ID_a_0`;
+                    """ );
         }
 
         [Fact]
@@ -143,9 +151,11 @@ INNER JOIN `_{GUID}` ON `common`.`foo`.`a` = `_{GUID}`.`ID_a_0`;" );
             sut.Context.Sql.ToString()
                 .Should()
                 .Be(
-                    @"DELETE foo
-FROM foo
-INNER JOIN bar ON foo.`a` = bar.`a`" );
+                    """
+                    DELETE foo
+                    FROM foo
+                    INNER JOIN bar ON foo.`a` = bar.`a`
+                    """ );
         }
 
         [Fact]
@@ -165,13 +175,15 @@ INNER JOIN bar ON foo.`a` = bar.`a`" );
             sut.Context.Sql.ToString()
                 .Should()
                 .Be(
-                    @"WITH `cba` AS (
-  SELECT * FROM abc
-)
-DELETE `f`
-FROM foo AS `f`
-INNER JOIN bar AS `b` ON `f`.`a` = `b`.`a`
-WHERE `f`.`a` < 10" );
+                    """
+                    WITH `cba` AS (
+                      SELECT * FROM abc
+                    )
+                    DELETE `f`
+                    FROM foo AS `f`
+                    INNER JOIN bar AS `b` ON `f`.`a` = `b`.`a`
+                    WHERE `f`.`a` < 10
+                    """ );
         }
 
         [Fact]
@@ -194,23 +206,25 @@ WHERE `f`.`a` < 10" );
             sut.Context.Sql.ToString()
                 .Should()
                 .SatisfySql(
-                    @"WITH `cba` AS (
-  SELECT * FROM abc
-),
-`_{GUID}` AS (
-  SELECT
-    `f`.`a` AS `ID_a_0`
-  FROM `common`.`foo` AS `f`
-  INNER JOIN bar ON `f`.`a` = bar.`a`
-  WHERE `f`.`a` IN (
-    SELECT cba.c FROM cba
-  )
-  ORDER BY `f`.`a` ASC
-  LIMIT 5
-)
-DELETE `common`.`foo`
-FROM `common`.`foo`
-INNER JOIN `_{GUID}` ON `common`.`foo`.`a` = `_{GUID}`.`ID_a_0`;" );
+                    """
+                    WITH `cba` AS (
+                      SELECT * FROM abc
+                    ),
+                    `_{GUID}` AS (
+                      SELECT
+                        `f`.`a` AS `ID_a_0`
+                      FROM `common`.`foo` AS `f`
+                      INNER JOIN bar ON `f`.`a` = bar.`a`
+                      WHERE `f`.`a` IN (
+                        SELECT cba.c FROM cba
+                      )
+                      ORDER BY `f`.`a` ASC
+                      LIMIT 5
+                    )
+                    DELETE `common`.`foo`
+                    FROM `common`.`foo`
+                    INNER JOIN `_{GUID}` ON `common`.`foo`.`a` = `_{GUID}`.`ID_a_0`;
+                    """ );
         }
 
         [Fact]
@@ -238,26 +252,28 @@ INNER JOIN `_{GUID}` ON `common`.`foo`.`a` = `_{GUID}`.`ID_a_0`;" );
             sut.Context.Sql.ToString()
                 .Should()
                 .SatisfySql(
-                    @"WITH `cba` AS (
-  SELECT * FROM abc
-),
-`_{GUID}` AS (
-  SELECT DISTINCT
-    `f`.`a` AS `ID_a_0`
-  FROM `common`.`foo` AS `f`
-  INNER JOIN bar ON `f`.`a` = bar.`a`
-  WHERE `f`.`a` IN (
-    SELECT cba.c FROM cba
-  )
-  GROUP BY `f`.`b`
-  HAVING `f`.`b` > 20
-  WINDOW `wnd` AS ()
-  ORDER BY `f`.`a` ASC
-  LIMIT 5 OFFSET 10
-)
-DELETE `common`.`foo`
-FROM `common`.`foo`
-INNER JOIN `_{GUID}` ON `common`.`foo`.`a` = `_{GUID}`.`ID_a_0`;" );
+                    """
+                    WITH `cba` AS (
+                      SELECT * FROM abc
+                    ),
+                    `_{GUID}` AS (
+                      SELECT DISTINCT
+                        `f`.`a` AS `ID_a_0`
+                      FROM `common`.`foo` AS `f`
+                      INNER JOIN bar ON `f`.`a` = bar.`a`
+                      WHERE `f`.`a` IN (
+                        SELECT cba.c FROM cba
+                      )
+                      GROUP BY `f`.`b`
+                      HAVING `f`.`b` > 20
+                      WINDOW `wnd` AS ()
+                      ORDER BY `f`.`a` ASC
+                      LIMIT 5 OFFSET 10
+                    )
+                    DELETE `common`.`foo`
+                    FROM `common`.`foo`
+                    INNER JOIN `_{GUID}` ON `common`.`foo`.`a` = `_{GUID}`.`ID_a_0`;
+                    """ );
         }
 
         [Fact]
@@ -277,16 +293,18 @@ INNER JOIN `_{GUID}` ON `common`.`foo`.`a` = `_{GUID}`.`ID_a_0`;" );
             sut.Context.Sql.ToString()
                 .Should()
                 .SatisfySql(
-                    @"WITH `_{GUID}` AS (
-  SELECT
-    `f`.`a` AS `ID_a_0`
-  FROM `common`.`foo` AS `f`
-  INNER JOIN bar ON `f`.`a` = bar.`a`
-  GROUP BY `f`.`b`
-)
-DELETE `common`.`foo`
-FROM `common`.`foo`
-INNER JOIN `_{GUID}` ON `common`.`foo`.`a` = `_{GUID}`.`ID_a_0`;" );
+                    """
+                    WITH `_{GUID}` AS (
+                      SELECT
+                        `f`.`a` AS `ID_a_0`
+                      FROM `common`.`foo` AS `f`
+                      INNER JOIN bar ON `f`.`a` = bar.`a`
+                      GROUP BY `f`.`b`
+                    )
+                    DELETE `common`.`foo`
+                    FROM `common`.`foo`
+                    INNER JOIN `_{GUID}` ON `common`.`foo`.`a` = `_{GUID}`.`ID_a_0`;
+                    """ );
         }
 
         [Fact]
@@ -306,17 +324,19 @@ INNER JOIN `_{GUID}` ON `common`.`foo`.`a` = `_{GUID}`.`ID_a_0`;" );
             sut.Context.Sql.ToString()
                 .Should()
                 .SatisfySql(
-                    @"WITH `_{GUID}` AS (
-  SELECT
-    `f`.`a` AS `ID_a_0`,
-    `f`.`b` AS `ID_b_1`
-  FROM `common`.`foo` AS `f`
-  INNER JOIN bar ON `f`.`a` = bar.`a`
-  GROUP BY `f`.`b`
-)
-DELETE `common`.`foo`
-FROM `common`.`foo`
-INNER JOIN `_{GUID}` ON (`common`.`foo`.`a` = `_{GUID}`.`ID_a_0`) AND (`common`.`foo`.`b` = `_{GUID}`.`ID_b_1`);" );
+                    """
+                    WITH `_{GUID}` AS (
+                      SELECT
+                        `f`.`a` AS `ID_a_0`,
+                        `f`.`b` AS `ID_b_1`
+                      FROM `common`.`foo` AS `f`
+                      INNER JOIN bar ON `f`.`a` = bar.`a`
+                      GROUP BY `f`.`b`
+                    )
+                    DELETE `common`.`foo`
+                    FROM `common`.`foo`
+                    INNER JOIN `_{GUID}` ON (`common`.`foo`.`a` = `_{GUID}`.`ID_a_0`) AND (`common`.`foo`.`b` = `_{GUID}`.`ID_b_1`);
+                    """ );
         }
 
         [Fact]
@@ -336,16 +356,18 @@ INNER JOIN `_{GUID}` ON (`common`.`foo`.`a` = `_{GUID}`.`ID_a_0`) AND (`common`.
             sut.Context.Sql.ToString()
                 .Should()
                 .SatisfySql(
-                    @"WITH `_{GUID}` AS (
-  SELECT
-    `f`.`a` AS `ID_a_0`
-  FROM `common`.`foo` AS `f`
-  INNER JOIN bar ON `f`.`a` = bar.`a`
-  GROUP BY `f`.`b`
-)
-DELETE `common`.`foo`
-FROM `common`.`foo`
-INNER JOIN `_{GUID}` ON `common`.`foo`.`a` = `_{GUID}`.`ID_a_0`;" );
+                    """
+                    WITH `_{GUID}` AS (
+                      SELECT
+                        `f`.`a` AS `ID_a_0`
+                      FROM `common`.`foo` AS `f`
+                      INNER JOIN bar ON `f`.`a` = bar.`a`
+                      GROUP BY `f`.`b`
+                    )
+                    DELETE `common`.`foo`
+                    FROM `common`.`foo`
+                    INNER JOIN `_{GUID}` ON `common`.`foo`.`a` = `_{GUID}`.`ID_a_0`;
+                    """ );
         }
 
         [Fact]
@@ -365,17 +387,19 @@ INNER JOIN `_{GUID}` ON `common`.`foo`.`a` = `_{GUID}`.`ID_a_0`;" );
             sut.Context.Sql.ToString()
                 .Should()
                 .SatisfySql(
-                    @"WITH `_{GUID}` AS (
-  SELECT
-    `f`.`a` AS `ID_a_0`,
-    `f`.`b` AS `ID_b_1`
-  FROM `common`.`foo` AS `f`
-  INNER JOIN bar ON `f`.`a` = bar.`a`
-  GROUP BY `f`.`b`
-)
-DELETE `common`.`foo`
-FROM `common`.`foo`
-INNER JOIN `_{GUID}` ON (`common`.`foo`.`a` = `_{GUID}`.`ID_a_0`) AND (`common`.`foo`.`b` = `_{GUID}`.`ID_b_1`);" );
+                    """
+                    WITH `_{GUID}` AS (
+                      SELECT
+                        `f`.`a` AS `ID_a_0`,
+                        `f`.`b` AS `ID_b_1`
+                      FROM `common`.`foo` AS `f`
+                      INNER JOIN bar ON `f`.`a` = bar.`a`
+                      GROUP BY `f`.`b`
+                    )
+                    DELETE `common`.`foo`
+                    FROM `common`.`foo`
+                    INNER JOIN `_{GUID}` ON (`common`.`foo`.`a` = `_{GUID}`.`ID_a_0`) AND (`common`.`foo`.`b` = `_{GUID}`.`ID_b_1`);
+                    """ );
         }
 
         [Fact]
@@ -398,18 +422,20 @@ INNER JOIN `_{GUID}` ON (`common`.`foo`.`a` = `_{GUID}`.`ID_a_0`) AND (`common`.
             sut.Context.Sql.ToString()
                 .Should()
                 .SatisfySql(
-                    @"WITH `_{GUID}` AS (
-  SELECT
-    `f`.`a` AS `ID_a_0`,
-    `f`.`b` AS `ID_b_1`
-  FROM `common`.`foo` AS `f`
-  INNER JOIN bar ON `f`.`a` = bar.`a`
-  WHERE `f`.`a` > 10
-  GROUP BY `f`.`b`
-)
-DELETE `common`.`foo`
-FROM `common`.`foo`
-INNER JOIN `_{GUID}` ON (`common`.`foo`.`a` = `_{GUID}`.`ID_a_0`) AND (`common`.`foo`.`b` = `_{GUID}`.`ID_b_1`);" );
+                    """
+                    WITH `_{GUID}` AS (
+                      SELECT
+                        `f`.`a` AS `ID_a_0`,
+                        `f`.`b` AS `ID_b_1`
+                      FROM `common`.`foo` AS `f`
+                      INNER JOIN bar ON `f`.`a` = bar.`a`
+                      WHERE `f`.`a` > 10
+                      GROUP BY `f`.`b`
+                    )
+                    DELETE `common`.`foo`
+                    FROM `common`.`foo`
+                    INNER JOIN `_{GUID}` ON (`common`.`foo`.`a` = `_{GUID}`.`ID_a_0`) AND (`common`.`foo`.`b` = `_{GUID}`.`ID_b_1`);
+                    """ );
         }
 
         [Theory]
@@ -440,16 +466,18 @@ INNER JOIN `_{GUID}` ON (`common`.`foo`.`a` = `_{GUID}`.`ID_a_0`) AND (`common`.
             sut.Context.Sql.ToString()
                 .Should()
                 .SatisfySql(
-                    $@"WITH `_{{GUID}}` AS (
-  SELECT
-    `f`.`a` AS `ID_a_0`
-  FROM {expectedName} AS `f`
-  INNER JOIN bar ON `f`.`a` = bar.`a`
-  GROUP BY `f`.`b`
-)
-DELETE {expectedName}
-FROM {expectedName}
-INNER JOIN `_{{GUID}}` ON {expectedName}.`a` = `_{{GUID}}`.`ID_a_0`;" );
+                    $$"""
+                      WITH `_{GUID}` AS (
+                        SELECT
+                          `f`.`a` AS `ID_a_0`
+                        FROM {{expectedName}} AS `f`
+                        INNER JOIN bar ON `f`.`a` = bar.`a`
+                        GROUP BY `f`.`b`
+                      )
+                      DELETE {{expectedName}}
+                      FROM {{expectedName}}
+                      INNER JOIN `_{GUID}` ON {{expectedName}}.`a` = `_{GUID}`.`ID_a_0`;
+                      """ );
         }
 
         [Theory]
@@ -480,17 +508,19 @@ INNER JOIN `_{{GUID}}` ON {expectedName}.`a` = `_{{GUID}}`.`ID_a_0`;" );
             sut.Context.Sql.ToString()
                 .Should()
                 .SatisfySql(
-                    $@"WITH `_{{GUID}}` AS (
-  SELECT
-    `f`.`a` AS `ID_a_0`,
-    `f`.`b` AS `ID_b_1`
-  FROM {expectedName} AS `f`
-  INNER JOIN bar ON `f`.`a` = bar.`a`
-  GROUP BY `f`.`b`
-)
-DELETE {expectedName}
-FROM {expectedName}
-INNER JOIN `_{{GUID}}` ON ({expectedName}.`a` = `_{{GUID}}`.`ID_a_0`) AND ({expectedName}.`b` = `_{{GUID}}`.`ID_b_1`);" );
+                    $$"""
+                      WITH `_{GUID}` AS (
+                        SELECT
+                          `f`.`a` AS `ID_a_0`,
+                          `f`.`b` AS `ID_b_1`
+                        FROM {{expectedName}} AS `f`
+                        INNER JOIN bar ON `f`.`a` = bar.`a`
+                        GROUP BY `f`.`b`
+                      )
+                      DELETE {{expectedName}}
+                      FROM {{expectedName}}
+                      INNER JOIN `_{GUID}` ON ({{expectedName}}.`a` = `_{GUID}`.`ID_a_0`) AND ({{expectedName}}.`b` = `_{GUID}`.`ID_b_1`);
+                      """ );
         }
 
         [Theory]
@@ -515,17 +545,19 @@ INNER JOIN `_{{GUID}}` ON ({expectedName}.`a` = `_{{GUID}}`.`ID_a_0`) AND ({expe
             sut.Context.Sql.ToString()
                 .Should()
                 .SatisfySql(
-                    $@"WITH `_{{GUID}}` AS (
-  SELECT
-    `f`.`a` AS `ID_a_0`,
-    `f`.`b` AS `ID_b_1`
-  FROM {expectedName} AS `f`
-  INNER JOIN bar ON `f`.`a` = bar.`a`
-  GROUP BY `f`.`b`
-)
-DELETE {expectedName}
-FROM {expectedName}
-INNER JOIN `_{{GUID}}` ON ({expectedName}.`a` = `_{{GUID}}`.`ID_a_0`) AND ({expectedName}.`b` = `_{{GUID}}`.`ID_b_1`);" );
+                    $$"""
+                      WITH `_{GUID}` AS (
+                        SELECT
+                          `f`.`a` AS `ID_a_0`,
+                          `f`.`b` AS `ID_b_1`
+                        FROM {{expectedName}} AS `f`
+                        INNER JOIN bar ON `f`.`a` = bar.`a`
+                        GROUP BY `f`.`b`
+                      )
+                      DELETE {{expectedName}}
+                      FROM {{expectedName}}
+                      INNER JOIN `_{GUID}` ON ({{expectedName}}.`a` = `_{GUID}`.`ID_a_0`) AND ({{expectedName}}.`b` = `_{GUID}`.`ID_b_1`);
+                      """ );
         }
 
         [Fact]

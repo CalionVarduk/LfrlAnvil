@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using LfrlAnvil.Extensions;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Tests.ExtensionsTests.MemoryTests;
 
@@ -15,7 +14,7 @@ public class MemoryExtensionsTests : TestsBase
         foreach ( var e in sut )
             result.Add( e );
 
-        result.Should().BeSequentiallyEqualTo( 1, 2, 3 );
+        result.TestSequence( [ 1, 2, 3 ] ).Go();
     }
 
     [Fact]
@@ -27,6 +26,6 @@ public class MemoryExtensionsTests : TestsBase
         foreach ( var e in sut )
             result.Add( e );
 
-        result.Should().BeSequentiallyEqualTo( 1, 2, 3 );
+        result.TestSequence( [ 1, 2, 3 ] ).Go();
     }
 }

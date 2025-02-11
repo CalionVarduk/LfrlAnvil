@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Tests.ReadOnlyArrayTests;
 
@@ -11,11 +10,10 @@ public class ReadOnlyArrayTests : TestsBase
     {
         var sut = ReadOnlyArray<int>.Empty;
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 0 );
-            sut.Should().BeEmpty();
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 0 ),
+                sut.TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -24,11 +22,10 @@ public class ReadOnlyArrayTests : TestsBase
         var source = Fixture.CreateMany<string>( count: 10 ).ToArray();
         var sut = ReadOnlyArray.Create( source );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( source.Length );
-            sut.Should().BeSequentiallyEqualTo( source );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( source.Length ),
+                sut.TestSequence( source ) )
+            .Go();
     }
 
     [Theory]
@@ -42,7 +39,7 @@ public class ReadOnlyArrayTests : TestsBase
 
         var result = sut[index];
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -51,11 +48,10 @@ public class ReadOnlyArrayTests : TestsBase
         var source = Fixture.CreateMany<string>( count: 10 ).ToArray();
         var sut = ReadOnlyArray<IEnumerable<char>>.From( ReadOnlyArray.Create( source ) );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( source.Length );
-            sut.Should().BeSequentiallyEqualTo( source );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( source.Length ),
+                sut.TestSequence( source ) )
+            .Go();
     }
 
     [Fact]
@@ -66,7 +62,7 @@ public class ReadOnlyArrayTests : TestsBase
 
         var result = sut.AsMemory();
 
-        result.ToArray().Should().BeSequentiallyEqualTo( source );
+        result.ToArray().TestSequence( source ).Go();
     }
 
     [Fact]
@@ -77,7 +73,7 @@ public class ReadOnlyArrayTests : TestsBase
 
         var result = sut.AsSpan();
 
-        result.ToArray().Should().BeSequentiallyEqualTo( source );
+        result.ToArray().TestSequence( source ).Go();
     }
 
     [Fact]
@@ -88,7 +84,7 @@ public class ReadOnlyArrayTests : TestsBase
 
         var result = sut.GetUnderlyingArray();
 
-        result.Should().BeSameAs( source );
+        result.TestRefEquals( source ).Go();
     }
 
     [Fact]
@@ -97,10 +93,9 @@ public class ReadOnlyArrayTests : TestsBase
         var source = Fixture.CreateMany<string>( count: 10 ).ToArray();
         var sut = ( ReadOnlyArray<string> )source;
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( source.Length );
-            sut.Should().BeSequentiallyEqualTo( source );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( source.Length ),
+                sut.TestSequence( source ) )
+            .Go();
     }
 }

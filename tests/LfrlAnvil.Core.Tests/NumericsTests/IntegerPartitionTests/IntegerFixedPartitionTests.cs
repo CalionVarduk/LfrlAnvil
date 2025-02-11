@@ -2,7 +2,6 @@
 using LfrlAnvil.Functional;
 using LfrlAnvil.Numerics;
 using LfrlAnvil.TestExtensions.Attributes;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Tests.NumericsTests.IntegerPartitionTests;
 
@@ -14,33 +13,32 @@ public class IntegerFixedPartitionTests : TestsBase
     public void GetEnumerator_ShouldReturnCorrectResult_WhenPartCountIsGreaterThanZero(ulong value, int partCount, ulong[] expected)
     {
         var sut = new IntegerFixedPartition( value, partCount );
-        using ( new AssertionScope() )
-        {
-            var sum = sut.Aggregate( 0UL, (a, b) => a + b );
-            sut.Should().BeSequentiallyEqualTo( expected );
-            sum.Should().Be( value );
-        }
+        var sum = sut.Aggregate( 0UL, (a, b) => a + b );
+        Assertion.All(
+                sut.TestSequence( expected ),
+                sum.TestEquals( value ) )
+            .Go();
     }
 
     [Fact]
     public void GetEnumerator_ShouldReturnEmptyResult_WhenPartCountEqualsZero()
     {
         var sut = new IntegerFixedPartition( Fixture.Create<ulong>(), partCount: 0 );
-        sut.Should().BeEmpty();
+        sut.TestEmpty().Go();
     }
 
     [Fact]
     public void GetEnumerator_ShouldReturnEmptyResult_ForDefault()
     {
         var sut = default( IntegerFixedPartition );
-        sut.Should().BeEmpty();
+        sut.TestEmpty().Go();
     }
 
     [Fact]
     public void Ctor_ShouldThrowArgumentOutOfRangeException_WhenPartCountIsLessThanZero()
     {
         var action = Lambda.Of( () => new IntegerFixedPartition( Fixture.Create<ulong>(), partCount: -1 ) );
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Fact]
@@ -48,6 +46,6 @@ public class IntegerFixedPartitionTests : TestsBase
     {
         var sut = new IntegerFixedPartition( 123, 7 );
         var result = sut.ToString();
-        result.Should().Be( "Partition 123 into 7 fixed part(s)" );
+        result.TestEquals( "Partition 123 into 7 fixed part(s)" ).Go();
     }
 }

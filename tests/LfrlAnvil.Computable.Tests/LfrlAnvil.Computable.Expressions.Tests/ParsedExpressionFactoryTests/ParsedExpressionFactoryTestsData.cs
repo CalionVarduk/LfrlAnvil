@@ -1589,48 +1589,66 @@ public class ParsedExpressionFactoryTestsData
                 28
             },
             {
-                @"( [ int a , int b , int c , int d , int e , int f , int g , int h ]
-[] a + b + c + d + e + f + g + h ) ( 1 , 2 , 3 , 4 , 5 , 6 , 7 , 8 )",
+                """
+                ( [ int a , int b , int c , int d , int e , int f , int g , int h ]
+                [] a + b + c + d + e + f + g + h ) ( 1 , 2 , 3 , 4 , 5 , 6 , 7 , 8 )
+                """,
                 36
             },
             {
-                @"( [ int a , int b , int c , int d , int e , int f , int g , int h , int i ]
-[] a + b + c + d + e + f + g + h + i ) ( 1 , 2 , 3 , 4 , 5 , 6 , 7 , 8 , 9 )",
+                """
+                ( [ int a , int b , int c , int d , int e , int f , int g , int h , int i ]
+                [] a + b + c + d + e + f + g + h + i ) ( 1 , 2 , 3 , 4 , 5 , 6 , 7 , 8 , 9 )
+                """,
                 45
             },
             {
-                @"( [ int a , int b , int c , int d , int e , int f , int g , int h , int i , int j ]
-[] a + b + c + d + e + f + g + h + i + j ) ( 1 , 2 , 3 , 4 , 5 , 6 , 7 , 8 , 9 , 10 )",
+                """
+                ( [ int a , int b , int c , int d , int e , int f , int g , int h , int i , int j ]
+                [] a + b + c + d + e + f + g + h + i + j ) ( 1 , 2 , 3 , 4 , 5 , 6 , 7 , 8 , 9 , 10 )
+                """,
                 55
             },
             {
-                @"( [ int a , int b , int c , int d , int e , int f , int g , int h , int i , int j , int k ]
-[] a + b + c + d + e + f + g + h + i + j + k ) ( 1 , 2 , 3 , 4 , 5 , 6 , 7 , 8 , 9 , 10 , 11 )",
+                """
+                ( [ int a , int b , int c , int d , int e , int f , int g , int h , int i , int j , int k ]
+                [] a + b + c + d + e + f + g + h + i + j + k ) ( 1 , 2 , 3 , 4 , 5 , 6 , 7 , 8 , 9 , 10 , 11 )
+                """,
                 66
             },
             {
-                @"( [ int a , int b , int c , int d , int e , int f , int g , int h , int i , int j , int k , int l ]
-[] a + b + c + d + e + f + g + h + i + j + k + l ) ( 1 , 2 , 3 , 4 , 5 , 6 , 7 , 8 , 9 , 10 , 11 , 12 )",
+                """
+                ( [ int a , int b , int c , int d , int e , int f , int g , int h , int i , int j , int k , int l ]
+                [] a + b + c + d + e + f + g + h + i + j + k + l ) ( 1 , 2 , 3 , 4 , 5 , 6 , 7 , 8 , 9 , 10 , 11 , 12 )
+                """,
                 78
             },
             {
-                @"( [ int a , int b , int c , int d , int e , int f , int g , int h , int i , int j , int k , int l , int m ]
-[] a + b + c + d + e + f + g + h + i + j + k + l + m ) ( 1 , 2 , 3 , 4 , 5 , 6 , 7 , 8 , 9 , 10 , 11 , 12 , 13 )",
+                """
+                ( [ int a , int b , int c , int d , int e , int f , int g , int h , int i , int j , int k , int l , int m ]
+                [] a + b + c + d + e + f + g + h + i + j + k + l + m ) ( 1 , 2 , 3 , 4 , 5 , 6 , 7 , 8 , 9 , 10 , 11 , 12 , 13 )
+                """,
                 91
             },
             {
-                @"( [ int a , int b , int c , int d , int e , int f , int g , int h , int i , int j , int k , int l , int m , int n ]
-[] a + b + c + d + e + f + g + h + i + j + k + l + m + n ) ( 1 , 2 , 3 , 4 , 5 , 6 , 7 , 8 , 9 , 10 , 11 , 12 , 13 , 14 )",
+                """
+                ( [ int a , int b , int c , int d , int e , int f , int g , int h , int i , int j , int k , int l , int m , int n ]
+                [] a + b + c + d + e + f + g + h + i + j + k + l + m + n ) ( 1 , 2 , 3 , 4 , 5 , 6 , 7 , 8 , 9 , 10 , 11 , 12 , 13 , 14 )
+                """,
                 105
             },
             {
-                @"( [ int a , int b , int c , int d , int e , int f , int g , int h , int i , int j , int k , int l , int m , int n , int o ]
-[] a + b + c + d + e + f + g + h + i + j + k + l + m + n + o ) ( 1 , 2 , 3 , 4 , 5 , 6 , 7 , 8 , 9 , 10 , 11 , 12 , 13 , 14 , 15 )",
+                """
+                ( [ int a , int b , int c , int d , int e , int f , int g , int h , int i , int j , int k , int l , int m , int n , int o ]
+                [] a + b + c + d + e + f + g + h + i + j + k + l + m + n + o ) ( 1 , 2 , 3 , 4 , 5 , 6 , 7 , 8 , 9 , 10 , 11 , 12 , 13 , 14 , 15 )
+                """,
                 120
             },
             {
-                @"( [ int a , int b , int c , int d , int e , int f , int g , int h , int i , int j , int k , int l , int m , int n , int o , int p ]
-[] a + b + c + d + e + f + g + h + i + j + k + l + m + n + o + p ) ( 1 , 2 , 3 , 4 , 5 , 6 , 7 , 8 , 9 , 10 , 11 , 12 , 13 , 14 , 15 , 16 )",
+                """
+                ( [ int a , int b , int c , int d , int e , int f , int g , int h , int i , int j , int k , int l , int m , int n , int o , int p ]
+                [] a + b + c + d + e + f + g + h + i + j + k + l + m + n + o + p ) ( 1 , 2 , 3 , 4 , 5 , 6 , 7 , 8 , 9 , 10 , 11 , 12 , 13 , 14 , 15 , 16 )
+                """,
                 136
             }
         };
@@ -1646,48 +1664,66 @@ public class ParsedExpressionFactoryTestsData
             { "( [ int a , int b , int c , int d , int e ] [] a + b + c + d + e + x ) ( 1 , 2 , 3 , 4 , 5 )", 25 },
             { "( [ int a , int b , int c , int d , int e , int f ] [] a + b + c + d + e + f + x ) ( 1 , 2 , 3 , 4 , 5 , 6 )", 31 },
             {
-                @"( [ int a , int b , int c , int d , int e , int f , int g ]
-[] a + b + c + d + e + f + g + x ) ( 1 , 2 , 3 , 4 , 5 , 6 , 7 )",
+                """
+                ( [ int a , int b , int c , int d , int e , int f , int g ]
+                [] a + b + c + d + e + f + g + x ) ( 1 , 2 , 3 , 4 , 5 , 6 , 7 )
+                """,
                 38
             },
             {
-                @"( [ int a , int b , int c , int d , int e , int f , int g , int h ]
-[] a + b + c + d + e + f + g + h + x ) ( 1 , 2 , 3 , 4 , 5 , 6 , 7 , 8 )",
+                """
+                ( [ int a , int b , int c , int d , int e , int f , int g , int h ]
+                [] a + b + c + d + e + f + g + h + x ) ( 1 , 2 , 3 , 4 , 5 , 6 , 7 , 8 )
+                """,
                 46
             },
             {
-                @"( [ int a , int b , int c , int d , int e , int f , int g , int h , int i ]
-[] a + b + c + d + e + f + g + h + i + x ) ( 1 , 2 , 3 , 4 , 5 , 6 , 7 , 8 , 9 )",
+                """
+                ( [ int a , int b , int c , int d , int e , int f , int g , int h , int i ]
+                [] a + b + c + d + e + f + g + h + i + x ) ( 1 , 2 , 3 , 4 , 5 , 6 , 7 , 8 , 9 )
+                """,
                 55
             },
             {
-                @"( [ int a , int b , int c , int d , int e , int f , int g , int h , int i , int j ]
-[] a + b + c + d + e + f + g + h + i + j + x ) ( 1 , 2 , 3 , 4 , 5 , 6 , 7 , 8 , 9 , 10 )",
+                """
+                ( [ int a , int b , int c , int d , int e , int f , int g , int h , int i , int j ]
+                [] a + b + c + d + e + f + g + h + i + j + x ) ( 1 , 2 , 3 , 4 , 5 , 6 , 7 , 8 , 9 , 10 )
+                """,
                 65
             },
             {
-                @"( [ int a , int b , int c , int d , int e , int f , int g , int h , int i , int j , int k ]
-[] a + b + c + d + e + f + g + h + i + j + k + x ) ( 1 , 2 , 3 , 4 , 5 , 6 , 7 , 8 , 9 , 10 , 11 )",
+                """
+                ( [ int a , int b , int c , int d , int e , int f , int g , int h , int i , int j , int k ]
+                [] a + b + c + d + e + f + g + h + i + j + k + x ) ( 1 , 2 , 3 , 4 , 5 , 6 , 7 , 8 , 9 , 10 , 11 )
+                """,
                 76
             },
             {
-                @"( [ int a , int b , int c , int d , int e , int f , int g , int h , int i , int j , int k , int l ]
-[] a + b + c + d + e + f + g + h + i + j + k + l + x ) ( 1 , 2 , 3 , 4 , 5 , 6 , 7 , 8 , 9 , 10 , 11 , 12 )",
+                """
+                ( [ int a , int b , int c , int d , int e , int f , int g , int h , int i , int j , int k , int l ]
+                [] a + b + c + d + e + f + g + h + i + j + k + l + x ) ( 1 , 2 , 3 , 4 , 5 , 6 , 7 , 8 , 9 , 10 , 11 , 12 )
+                """,
                 88
             },
             {
-                @"( [ int a , int b , int c , int d , int e , int f , int g , int h , int i , int j , int k , int l , int m ]
-[] a + b + c + d + e + f + g + h + i + j + k + l + m + x ) ( 1 , 2 , 3 , 4 , 5 , 6 , 7 , 8 , 9 , 10 , 11 , 12 , 13 )",
+                """
+                ( [ int a , int b , int c , int d , int e , int f , int g , int h , int i , int j , int k , int l , int m ]
+                [] a + b + c + d + e + f + g + h + i + j + k + l + m + x ) ( 1 , 2 , 3 , 4 , 5 , 6 , 7 , 8 , 9 , 10 , 11 , 12 , 13 )
+                """,
                 101
             },
             {
-                @"( [ int a , int b , int c , int d , int e , int f , int g , int h , int i , int j , int k , int l , int m , int n ]
-[] a + b + c + d + e + f + g + h + i + j + k + l + m + n + x ) ( 1 , 2 , 3 , 4 , 5 , 6 , 7 , 8 , 9 , 10 , 11 , 12 , 13 , 14 )",
+                """
+                ( [ int a , int b , int c , int d , int e , int f , int g , int h , int i , int j , int k , int l , int m , int n ]
+                [] a + b + c + d + e + f + g + h + i + j + k + l + m + n + x ) ( 1 , 2 , 3 , 4 , 5 , 6 , 7 , 8 , 9 , 10 , 11 , 12 , 13 , 14 )
+                """,
                 115
             },
             {
-                @"( [ int a , int b , int c , int d , int e , int f , int g , int h , int i , int j , int k , int l , int m , int n , int o ]
-[] a + b + c + d + e + f + g + h + i + j + k + l + m + n + o + x ) ( 1 , 2 , 3 , 4 , 5 , 6 , 7 , 8 , 9 , 10 , 11 , 12 , 13 , 14 , 15 )",
+                """
+                ( [ int a , int b , int c , int d , int e , int f , int g , int h , int i , int j , int k , int l , int m , int n , int o ]
+                [] a + b + c + d + e + f + g + h + i + j + k + l + m + n + o + x ) ( 1 , 2 , 3 , 4 , 5 , 6 , 7 , 8 , 9 , 10 , 11 , 12 , 13 , 14 , 15 )
+                """,
                 130
             }
         };

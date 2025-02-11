@@ -11,15 +11,7 @@ public abstract class GenericEqualityOfRefTypeTests<T> : GenericEqualityTests<T>
     public void Ctor_ShouldNotThrowWhenValueIsNull(T? first, T? second, bool expected)
     {
         var sut = new Equality<T>( first, second );
-
-        sut.Should()
-            .BeEquivalentTo(
-                new
-                {
-                    First = first,
-                    Second = second,
-                    Result = expected
-                } );
+        Assertion.All( sut.First.TestEquals( first ), sut.Second.TestEquals( second ), sut.Result.TestEquals( expected ) ).Go();
     }
 
     public static IEnumerable<object?[]> CreateCtorNullTestData(Fixture fixture)

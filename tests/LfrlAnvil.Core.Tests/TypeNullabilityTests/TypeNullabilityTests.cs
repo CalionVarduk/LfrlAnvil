@@ -7,12 +7,11 @@ public class TypeNullabilityTests : TestsBase
     {
         var sut = default( TypeNullability );
 
-        using ( new AssertionScope() )
-        {
-            sut.UnderlyingType.Should().Be( typeof( object ) );
-            sut.ActualType.Should().Be( typeof( object ) );
-            sut.IsNullable.Should().BeFalse();
-        }
+        Assertion.All(
+                sut.UnderlyingType.TestEquals( typeof( object ) ),
+                sut.ActualType.TestEquals( typeof( object ) ),
+                sut.IsNullable.TestFalse() )
+            .Go();
     }
 
     [Theory]
@@ -31,12 +30,11 @@ public class TypeNullabilityTests : TestsBase
     {
         var sut = TypeNullability.Create( type, isNullable );
 
-        using ( new AssertionScope() )
-        {
-            sut.UnderlyingType.Should().Be( expectedBaseType );
-            sut.ActualType.Should().Be( expectedFullType );
-            sut.IsNullable.Should().Be( expectedIsNullable );
-        }
+        Assertion.All(
+                sut.UnderlyingType.TestEquals( expectedBaseType ),
+                sut.ActualType.TestEquals( expectedFullType ),
+                sut.IsNullable.TestEquals( expectedIsNullable ) )
+            .Go();
     }
 
     [Theory]
@@ -46,12 +44,11 @@ public class TypeNullabilityTests : TestsBase
     {
         var sut = TypeNullability.Create<int>( isNullable );
 
-        using ( new AssertionScope() )
-        {
-            sut.UnderlyingType.Should().Be( typeof( int ) );
-            sut.ActualType.Should().Be( expectedFullType );
-            sut.IsNullable.Should().Be( isNullable );
-        }
+        Assertion.All(
+                sut.UnderlyingType.TestEquals( typeof( int ) ),
+                sut.ActualType.TestEquals( expectedFullType ),
+                sut.IsNullable.TestEquals( isNullable ) )
+            .Go();
     }
 
     [Theory]
@@ -61,12 +58,11 @@ public class TypeNullabilityTests : TestsBase
     {
         var sut = TypeNullability.Create<string>( isNullable );
 
-        using ( new AssertionScope() )
-        {
-            sut.UnderlyingType.Should().Be( typeof( string ) );
-            sut.ActualType.Should().Be( typeof( string ) );
-            sut.IsNullable.Should().Be( isNullable );
-        }
+        Assertion.All(
+                sut.UnderlyingType.TestEquals( typeof( string ) ),
+                sut.ActualType.TestEquals( typeof( string ) ),
+                sut.IsNullable.TestEquals( isNullable ) )
+            .Go();
     }
 
     [Fact]
@@ -77,7 +73,7 @@ public class TypeNullabilityTests : TestsBase
 
         var result = TypeNullability.GetCommonType( a, b );
 
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Fact]
@@ -88,7 +84,7 @@ public class TypeNullabilityTests : TestsBase
 
         var result = TypeNullability.GetCommonType( a, b );
 
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Fact]
@@ -99,7 +95,7 @@ public class TypeNullabilityTests : TestsBase
 
         var result = TypeNullability.GetCommonType( a, b );
 
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Theory]
@@ -112,7 +108,7 @@ public class TypeNullabilityTests : TestsBase
 
         var result = TypeNullability.GetCommonType( a, b );
 
-        result.Should().Be( TypeNullability.Create<int>( isNullable ) );
+        result.TestEquals( TypeNullability.Create<int>( isNullable ) ).Go();
     }
 
     [Fact]
@@ -123,7 +119,7 @@ public class TypeNullabilityTests : TestsBase
 
         var result = TypeNullability.GetCommonType( a, b );
 
-        result.Should().Be( TypeNullability.Create<int>( isNullable: true ) );
+        result.TestEquals( TypeNullability.Create<int>( isNullable: true ) ).Go();
     }
 
     [Fact]
@@ -134,7 +130,7 @@ public class TypeNullabilityTests : TestsBase
 
         var result = TypeNullability.GetCommonType( a, b );
 
-        result.Should().Be( TypeNullability.Create<int>( isNullable: true ) );
+        result.TestEquals( TypeNullability.Create<int>( isNullable: true ) ).Go();
     }
 
     [Theory]
@@ -149,7 +145,7 @@ public class TypeNullabilityTests : TestsBase
 
         var result = TypeNullability.GetCommonType( a, b );
 
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Fact]
@@ -157,7 +153,7 @@ public class TypeNullabilityTests : TestsBase
     {
         var sut = TypeNullability.Create<int>( isNullable: true );
         var result = sut.MakeNullable();
-        result.Should().Be( sut );
+        result.TestEquals( sut ).Go();
     }
 
     [Fact]
@@ -165,7 +161,7 @@ public class TypeNullabilityTests : TestsBase
     {
         var sut = TypeNullability.Create<int>();
         var result = sut.MakeNullable();
-        result.Should().Be( TypeNullability.Create<int>( isNullable: true ) );
+        result.TestEquals( TypeNullability.Create<int>( isNullable: true ) ).Go();
     }
 
     [Fact]
@@ -173,7 +169,7 @@ public class TypeNullabilityTests : TestsBase
     {
         var sut = TypeNullability.Create<int>();
         var result = sut.MakeRequired();
-        result.Should().Be( sut );
+        result.TestEquals( sut ).Go();
     }
 
     [Fact]
@@ -181,7 +177,7 @@ public class TypeNullabilityTests : TestsBase
     {
         var sut = TypeNullability.Create<int>( isNullable: true );
         var result = sut.MakeRequired();
-        result.Should().Be( TypeNullability.Create<int>() );
+        result.TestEquals( TypeNullability.Create<int>() ).Go();
     }
 
     [Theory]
@@ -191,7 +187,7 @@ public class TypeNullabilityTests : TestsBase
     {
         var sut = TypeNullability.Create<string>( isNullable );
         var result = sut.ToString();
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -200,7 +196,7 @@ public class TypeNullabilityTests : TestsBase
         var sut = TypeNullability.Create<int>( isNullable: true );
         var expected = HashCode.Combine( typeof( int ), true );
         var result = sut.GetHashCode();
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -222,7 +218,7 @@ public class TypeNullabilityTests : TestsBase
 
         var result = a == b;
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -244,6 +240,6 @@ public class TypeNullabilityTests : TestsBase
 
         var result = a != b;
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 }

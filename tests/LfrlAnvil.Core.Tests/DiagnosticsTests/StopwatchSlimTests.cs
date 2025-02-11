@@ -9,10 +9,9 @@ public class StopwatchSlimTests : TestsBase
     {
         var sut = StopwatchSlim.Create();
 
-        using ( new AssertionScope() )
-        {
-            sut.Start.Should().BeGreaterOrEqualTo( 0 );
-            sut.ElapsedTime.Should().BeGreaterOrEqualTo( TimeSpan.Zero );
-        }
+        Assertion.All(
+                sut.Start.TestGreaterThanOrEqualTo( 0 ),
+                sut.ElapsedTime.TestGreaterThanOrEqualTo( TimeSpan.Zero ) )
+            .Go();
     }
 }

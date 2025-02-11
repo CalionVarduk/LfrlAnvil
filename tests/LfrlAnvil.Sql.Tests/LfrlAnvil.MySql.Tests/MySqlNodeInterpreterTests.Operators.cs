@@ -479,9 +479,11 @@ public partial class MySqlNodeInterpreterTests
             sut.Context.Sql.ToString()
                 .Should()
                 .Be(
-                    @"EXISTS (
-  SELECT * FROM foo
-)" );
+                    """
+                    EXISTS (
+                      SELECT * FROM foo
+                    )
+                    """ );
         }
 
         [Fact]
@@ -492,9 +494,11 @@ public partial class MySqlNodeInterpreterTests
             sut.Context.Sql.ToString()
                 .Should()
                 .Be(
-                    @"NOT EXISTS (
-  SELECT * FROM foo
-)" );
+                    """
+                    NOT EXISTS (
+                      SELECT * FROM foo
+                    )
+                    """ );
         }
 
         [Fact]
@@ -505,9 +509,11 @@ public partial class MySqlNodeInterpreterTests
             sut.Context.Sql.ToString()
                 .Should()
                 .Be(
-                    @"(EXISTS (
-    SELECT * FROM foo
-  ))" );
+                    """
+                    (EXISTS (
+                        SELECT * FROM foo
+                      ))
+                    """ );
         }
 
         [Fact]
@@ -566,9 +572,11 @@ public partial class MySqlNodeInterpreterTests
             sut.Context.Sql.ToString()
                 .Should()
                 .Be(
-                    @"(foo.a) IN (
-  SELECT qux FROM bar
-)" );
+                    """
+                    (foo.a) IN (
+                      SELECT qux FROM bar
+                    )
+                    """ );
         }
 
         [Fact]
@@ -579,9 +587,11 @@ public partial class MySqlNodeInterpreterTests
             sut.Context.Sql.ToString()
                 .Should()
                 .Be(
-                    @"(foo.a) NOT IN (
-  SELECT qux FROM bar
-)" );
+                    """
+                    (foo.a) NOT IN (
+                      SELECT qux FROM bar
+                    )
+                    """ );
         }
 
         [Fact]
@@ -592,9 +602,11 @@ public partial class MySqlNodeInterpreterTests
             sut.Context.Sql.ToString()
                 .Should()
                 .Be(
-                    @"((foo.a) IN (
-    SELECT qux FROM bar
-  ))" );
+                    """
+                    ((foo.a) IN (
+                        SELECT qux FROM bar
+                      ))
+                    """ );
         }
     }
 }

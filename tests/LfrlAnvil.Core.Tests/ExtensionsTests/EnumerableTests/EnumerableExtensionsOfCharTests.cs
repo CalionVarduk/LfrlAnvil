@@ -1,6 +1,5 @@
 ﻿using System.Linq;
 using LfrlAnvil.Extensions;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Tests.ExtensionsTests.EnumerableTests;
 
@@ -11,7 +10,7 @@ public class EnumerableExtensionsOfCharTests : TestsBase
     {
         var sut = Fixture.Create<string>();
         var result = sut.ToMemory();
-        result.Should().Be( sut.AsMemory() );
+        result.TestEquals( sut.AsMemory() ).Go();
     }
 
     [Fact]
@@ -19,7 +18,7 @@ public class EnumerableExtensionsOfCharTests : TestsBase
     {
         var sut = Fixture.CreateMany<char>( count: 10 ).ToArray();
         var result = sut.ToMemory();
-        result.Should().Be( sut.AsMemory() );
+        result.TestEquals( sut.AsMemory() ).Go();
     }
 
     [Fact]
@@ -27,7 +26,7 @@ public class EnumerableExtensionsOfCharTests : TestsBase
     {
         var sut = Fixture.CreateMany<char>( count: 10 ).ToList();
         var result = sut.ToMemory();
-        result.ToArray().Should().BeSequentiallyEqualTo( sut );
+        result.TestSequence( sut ).Go();
     }
 
     [Fact]
@@ -35,6 +34,6 @@ public class EnumerableExtensionsOfCharTests : TestsBase
     {
         var sut = Enumerable.Empty<char>();
         var result = sut.ToMemory();
-        result.Should().Be( ReadOnlyMemory<char>.Empty );
+        result.TestEquals( ReadOnlyMemory<char>.Empty ).Go();
     }
 }

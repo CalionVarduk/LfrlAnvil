@@ -45,8 +45,10 @@ public class MySqlViewBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
-                    @"CREATE VIEW `foo`.`V` AS
-                    SELECT * FROM bar;" );
+                    """
+                    CREATE VIEW `foo`.`V` AS
+                                        SELECT * FROM bar;
+                    """ );
         }
     }
 
@@ -126,8 +128,10 @@ public class MySqlViewBuilderTests : TestsBase
                 .Sql.Should()
                 .SatisfySql(
                     "DROP VIEW `foo`.`V`;",
-                    @"CREATE VIEW `foo`.`bar` AS
-                    SELECT * FROM bar;" );
+                    """
+                    CREATE VIEW `foo`.`bar` AS
+                                        SELECT * FROM bar;
+                    """ );
         }
     }
 
@@ -160,27 +164,33 @@ public class MySqlViewBuilderTests : TestsBase
                 .Sql.Should()
                 .SatisfySql(
                     "DROP VIEW `foo`.`V`;",
-                    @"CREATE VIEW `foo`.`bar` AS
-                    SELECT * FROM bar;" );
+                    """
+                    CREATE VIEW `foo`.`bar` AS
+                                        SELECT * FROM bar;
+                    """ );
 
             actions.ElementAtOrDefault( 1 )
                 .Sql.Should()
                 .SatisfySql(
                     "DROP VIEW `foo`.`W1`;",
-                    @"CREATE VIEW `foo`.`W1` AS
-                    SELECT
-                      *
-                    FROM `foo`.`bar`;" );
+                    """
+                    CREATE VIEW `foo`.`W1` AS
+                                        SELECT
+                                          *
+                                        FROM `foo`.`bar`;
+                    """ );
 
             actions.ElementAtOrDefault( 2 )
                 .Sql.Should()
                 .SatisfySql(
                     "DROP VIEW `foo`.`W3`;",
-                    @"CREATE VIEW `foo`.`W3` AS
-                    SELECT
-                      *
-                    FROM `foo`.`bar`
-                    INNER JOIN `foo`.`W1` ON TRUE;" );
+                    """
+                    CREATE VIEW `foo`.`W3` AS
+                                        SELECT
+                                          *
+                                        FROM `foo`.`bar`
+                                        INNER JOIN `foo`.`W1` ON TRUE;
+                    """ );
         }
     }
 

@@ -8,11 +8,10 @@ public class BoxedTests : TestsBase
         var sut = Boxed.True;
         var result = sut.Equals( true );
 
-        using ( new AssertionScope() )
-        {
-            result.GetType().Should().Be( typeof( bool ) );
-            result.Should().BeTrue();
-        }
+        Assertion.All(
+                sut.TestType().Exact<bool>(),
+                result.TestTrue() )
+            .Go();
     }
 
     [Fact]
@@ -21,24 +20,23 @@ public class BoxedTests : TestsBase
         var sut = Boxed.False;
         var result = sut.Equals( false );
 
-        using ( new AssertionScope() )
-        {
-            result.GetType().Should().Be( typeof( bool ) );
-            result.Should().BeTrue();
-        }
+        Assertion.All(
+                sut.TestType().Exact<bool>(),
+                result.TestTrue() )
+            .Go();
     }
 
     [Fact]
     public void GetBool_ShouldReturnTrue_WhenParameterEqualsTrue()
     {
         var result = Boxed.GetBool( true );
-        result.Should().BeSameAs( Boxed.True );
+        result.TestRefEquals( Boxed.True ).Go();
     }
 
     [Fact]
     public void GetBool_ShouldReturnFalse_WhenParameterEqualsFalse()
     {
         var result = Boxed.GetBool( false );
-        result.Should().BeSameAs( Boxed.False );
+        result.TestRefEquals( Boxed.False ).Go();
     }
 }

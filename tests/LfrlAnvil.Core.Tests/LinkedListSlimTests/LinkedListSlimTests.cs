@@ -1,8 +1,8 @@
 ﻿using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using LfrlAnvil.Internal;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Tests.LinkedListSlimTests;
 
@@ -20,15 +20,14 @@ public class LinkedListSlimTests : TestsBase
     {
         var sut = LinkedListSlim<string>.Create( minCapacity );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 0 );
-            sut.IsEmpty.Should().BeTrue();
-            sut.Capacity.Should().Be( expectedCapacity );
-            sut.First.Should().BeNull();
-            sut.Last.Should().BeNull();
-            AssertEnumerator( sut );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 0 ),
+                sut.IsEmpty.TestTrue(),
+                sut.Capacity.TestEquals( expectedCapacity ),
+                sut.First.TestNull(),
+                sut.Last.TestNull(),
+                AssertEnumerator( sut ) )
+            .Go();
     }
 
     [Fact]
@@ -38,16 +37,15 @@ public class LinkedListSlimTests : TestsBase
 
         var result = sut.AddFirst( "foo" );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( 0 );
-            sut.Count.Should().Be( 1 );
-            sut.Capacity.Should().Be( 4 );
-            sut.IsEmpty.Should().BeFalse();
-            AssertFirst( sut, 0, "foo" );
-            AssertLast( sut, 0, "foo" );
-            AssertEnumerator( sut, (0, "foo") );
-        }
+        Assertion.All(
+                result.TestEquals( 0 ),
+                sut.Count.TestEquals( 1 ),
+                sut.Capacity.TestEquals( 4 ),
+                sut.IsEmpty.TestFalse(),
+                AssertFirst( sut, 0, "foo" ),
+                AssertLast( sut, 0, "foo" ),
+                AssertEnumerator( sut, (0, "foo") ) )
+            .Go();
     }
 
     [Fact]
@@ -61,16 +59,15 @@ public class LinkedListSlimTests : TestsBase
             sut.AddFirst( "x3" )
         };
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSequentiallyEqualTo( 0, 1, 2 );
-            sut.Count.Should().Be( 3 );
-            sut.Capacity.Should().Be( 4 );
-            sut.IsEmpty.Should().BeFalse();
-            AssertFirst( sut, 2, "x3" );
-            AssertLast( sut, 0, "x1" );
-            AssertEnumerator( sut, (2, "x3"), (1, "x2"), (0, "x1") );
-        }
+        Assertion.All(
+                result.TestSequence( [ 0, 1, 2 ] ),
+                sut.Count.TestEquals( 3 ),
+                sut.Capacity.TestEquals( 4 ),
+                sut.IsEmpty.TestFalse(),
+                AssertFirst( sut, 2, "x3" ),
+                AssertLast( sut, 0, "x1" ),
+                AssertEnumerator( sut, (2, "x3"), (1, "x2"), (0, "x1") ) )
+            .Go();
     }
 
     [Fact]
@@ -85,16 +82,15 @@ public class LinkedListSlimTests : TestsBase
             sut.AddFirst( "x4" )
         };
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSequentiallyEqualTo( 0, 1, 2, 3 );
-            sut.Count.Should().Be( 4 );
-            sut.Capacity.Should().Be( 4 );
-            sut.IsEmpty.Should().BeFalse();
-            AssertFirst( sut, 3, "x4" );
-            AssertLast( sut, 0, "x1" );
-            AssertEnumerator( sut, (3, "x4"), (2, "x3"), (1, "x2"), (0, "x1") );
-        }
+        Assertion.All(
+                result.TestSequence( [ 0, 1, 2, 3 ] ),
+                sut.Count.TestEquals( 4 ),
+                sut.Capacity.TestEquals( 4 ),
+                sut.IsEmpty.TestFalse(),
+                AssertFirst( sut, 3, "x4" ),
+                AssertLast( sut, 0, "x1" ),
+                AssertEnumerator( sut, (3, "x4"), (2, "x3"), (1, "x2"), (0, "x1") ) )
+            .Go();
     }
 
     [Fact]
@@ -111,16 +107,15 @@ public class LinkedListSlimTests : TestsBase
             sut.AddFirst( "x6" )
         };
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSequentiallyEqualTo( 0, 1, 2, 3, 4, 5 );
-            sut.Count.Should().Be( 6 );
-            sut.Capacity.Should().Be( 8 );
-            sut.IsEmpty.Should().BeFalse();
-            AssertFirst( sut, 5, "x6" );
-            AssertLast( sut, 0, "x1" );
-            AssertEnumerator( sut, (5, "x6"), (4, "x5"), (3, "x4"), (2, "x3"), (1, "x2"), (0, "x1") );
-        }
+        Assertion.All(
+                result.TestSequence( [ 0, 1, 2, 3, 4, 5 ] ),
+                sut.Count.TestEquals( 6 ),
+                sut.Capacity.TestEquals( 8 ),
+                sut.IsEmpty.TestFalse(),
+                AssertFirst( sut, 5, "x6" ),
+                AssertLast( sut, 0, "x1" ),
+                AssertEnumerator( sut, (5, "x6"), (4, "x5"), (3, "x4"), (2, "x3"), (1, "x2"), (0, "x1") ) )
+            .Go();
     }
 
     [Fact]
@@ -130,16 +125,15 @@ public class LinkedListSlimTests : TestsBase
 
         var result = sut.AddLast( "foo" );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( 0 );
-            sut.Count.Should().Be( 1 );
-            sut.Capacity.Should().Be( 4 );
-            sut.IsEmpty.Should().BeFalse();
-            AssertFirst( sut, 0, "foo" );
-            AssertLast( sut, 0, "foo" );
-            AssertEnumerator( sut, (0, "foo") );
-        }
+        Assertion.All(
+                result.TestEquals( 0 ),
+                sut.Count.TestEquals( 1 ),
+                sut.Capacity.TestEquals( 4 ),
+                sut.IsEmpty.TestFalse(),
+                AssertFirst( sut, 0, "foo" ),
+                AssertLast( sut, 0, "foo" ),
+                AssertEnumerator( sut, (0, "foo") ) )
+            .Go();
     }
 
     [Fact]
@@ -153,16 +147,15 @@ public class LinkedListSlimTests : TestsBase
             sut.AddLast( "x3" )
         };
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSequentiallyEqualTo( 0, 1, 2 );
-            sut.Count.Should().Be( 3 );
-            sut.Capacity.Should().Be( 4 );
-            sut.IsEmpty.Should().BeFalse();
-            AssertFirst( sut, 0, "x1" );
-            AssertLast( sut, 2, "x3" );
-            AssertEnumerator( sut, (0, "x1"), (1, "x2"), (2, "x3") );
-        }
+        Assertion.All(
+                result.TestSequence( [ 0, 1, 2 ] ),
+                sut.Count.TestEquals( 3 ),
+                sut.Capacity.TestEquals( 4 ),
+                sut.IsEmpty.TestFalse(),
+                AssertFirst( sut, 0, "x1" ),
+                AssertLast( sut, 2, "x3" ),
+                AssertEnumerator( sut, (0, "x1"), (1, "x2"), (2, "x3") ) )
+            .Go();
     }
 
     [Fact]
@@ -177,16 +170,15 @@ public class LinkedListSlimTests : TestsBase
             sut.AddLast( "x4" )
         };
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSequentiallyEqualTo( 0, 1, 2, 3 );
-            sut.Count.Should().Be( 4 );
-            sut.Capacity.Should().Be( 4 );
-            sut.IsEmpty.Should().BeFalse();
-            AssertFirst( sut, 0, "x1" );
-            AssertLast( sut, 3, "x4" );
-            AssertEnumerator( sut, (0, "x1"), (1, "x2"), (2, "x3"), (3, "x4") );
-        }
+        Assertion.All(
+                result.TestSequence( [ 0, 1, 2, 3 ] ),
+                sut.Count.TestEquals( 4 ),
+                sut.Capacity.TestEquals( 4 ),
+                sut.IsEmpty.TestFalse(),
+                AssertFirst( sut, 0, "x1" ),
+                AssertLast( sut, 3, "x4" ),
+                AssertEnumerator( sut, (0, "x1"), (1, "x2"), (2, "x3"), (3, "x4") ) )
+            .Go();
     }
 
     [Fact]
@@ -203,16 +195,15 @@ public class LinkedListSlimTests : TestsBase
             sut.AddLast( "x6" )
         };
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSequentiallyEqualTo( 0, 1, 2, 3, 4, 5 );
-            sut.Count.Should().Be( 6 );
-            sut.Capacity.Should().Be( 8 );
-            sut.IsEmpty.Should().BeFalse();
-            AssertFirst( sut, 0, "x1" );
-            AssertLast( sut, 5, "x6" );
-            AssertEnumerator( sut, (0, "x1"), (1, "x2"), (2, "x3"), (3, "x4"), (4, "x5"), (5, "x6") );
-        }
+        Assertion.All(
+                result.TestSequence( [ 0, 1, 2, 3, 4, 5 ] ),
+                sut.Count.TestEquals( 6 ),
+                sut.Capacity.TestEquals( 8 ),
+                sut.IsEmpty.TestFalse(),
+                AssertFirst( sut, 0, "x1" ),
+                AssertLast( sut, 5, "x6" ),
+                AssertEnumerator( sut, (0, "x1"), (1, "x2"), (2, "x3"), (3, "x4"), (4, "x5"), (5, "x6") ) )
+            .Go();
     }
 
     [Theory]
@@ -227,11 +218,10 @@ public class LinkedListSlimTests : TestsBase
 
         var result = sut.AddBefore( index, "foo" );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( -1 );
-            sut.Count.Should().Be( 3 );
-        }
+        Assertion.All(
+                result.TestEquals( -1 ),
+                sut.Count.TestEquals( 3 ) )
+            .Go();
     }
 
     [Fact]
@@ -241,11 +231,10 @@ public class LinkedListSlimTests : TestsBase
 
         var result = sut.AddBefore( NullableIndex.NullValue, "foo" );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( -1 );
-            sut.Count.Should().Be( 0 );
-        }
+        Assertion.All(
+                result.TestEquals( -1 ),
+                sut.Count.TestEquals( 0 ) )
+            .Go();
     }
 
     [Fact]
@@ -259,11 +248,10 @@ public class LinkedListSlimTests : TestsBase
 
         var result = sut.AddBefore( index, "foo" );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( -1 );
-            sut.Count.Should().Be( 2 );
-        }
+        Assertion.All(
+                result.TestEquals( -1 ),
+                sut.Count.TestEquals( 2 ) )
+            .Go();
     }
 
     [Fact]
@@ -276,14 +264,13 @@ public class LinkedListSlimTests : TestsBase
 
         var result = sut.AddBefore( index, "foo" );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( 3 );
-            sut.Count.Should().Be( 4 );
-            AssertFirst( sut, 3, "foo" );
-            AssertLast( sut, 1, "x2" );
-            AssertEnumerator( sut, (3, "foo"), (2, "x3"), (0, "x1"), (1, "x2") );
-        }
+        Assertion.All(
+                result.TestEquals( 3 ),
+                sut.Count.TestEquals( 4 ),
+                AssertFirst( sut, 3, "foo" ),
+                AssertLast( sut, 1, "x2" ),
+                AssertEnumerator( sut, (3, "foo"), (2, "x3"), (0, "x1"), (1, "x2") ) )
+            .Go();
     }
 
     [Fact]
@@ -296,14 +283,13 @@ public class LinkedListSlimTests : TestsBase
 
         var result = sut.AddBefore( index, "foo" );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( 3 );
-            sut.Count.Should().Be( 4 );
-            AssertFirst( sut, 2, "x3" );
-            AssertLast( sut, 1, "x2" );
-            AssertEnumerator( sut, (2, "x3"), (0, "x1"), (3, "foo"), (1, "x2") );
-        }
+        Assertion.All(
+                result.TestEquals( 3 ),
+                sut.Count.TestEquals( 4 ),
+                AssertFirst( sut, 2, "x3" ),
+                AssertLast( sut, 1, "x2" ),
+                AssertEnumerator( sut, (2, "x3"), (0, "x1"), (3, "foo"), (1, "x2") ) )
+            .Go();
     }
 
     [Fact]
@@ -316,14 +302,13 @@ public class LinkedListSlimTests : TestsBase
 
         var result = sut.AddBefore( index, "foo" );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( 3 );
-            sut.Count.Should().Be( 4 );
-            AssertFirst( sut, 2, "x3" );
-            AssertLast( sut, 1, "x2" );
-            AssertEnumerator( sut, (2, "x3"), (3, "foo"), (0, "x1"), (1, "x2") );
-        }
+        Assertion.All(
+                result.TestEquals( 3 ),
+                sut.Count.TestEquals( 4 ),
+                AssertFirst( sut, 2, "x3" ),
+                AssertLast( sut, 1, "x2" ),
+                AssertEnumerator( sut, (2, "x3"), (3, "foo"), (0, "x1"), (1, "x2") ) )
+            .Go();
     }
 
     [Theory]
@@ -338,11 +323,10 @@ public class LinkedListSlimTests : TestsBase
 
         var result = sut.AddAfter( index, "foo" );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( -1 );
-            sut.Count.Should().Be( 3 );
-        }
+        Assertion.All(
+                result.TestEquals( -1 ),
+                sut.Count.TestEquals( 3 ) )
+            .Go();
     }
 
     [Fact]
@@ -352,11 +336,10 @@ public class LinkedListSlimTests : TestsBase
 
         var result = sut.AddAfter( NullableIndex.NullValue, "foo" );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( -1 );
-            sut.Count.Should().Be( 0 );
-        }
+        Assertion.All(
+                result.TestEquals( -1 ),
+                sut.Count.TestEquals( 0 ) )
+            .Go();
     }
 
     [Fact]
@@ -370,11 +353,10 @@ public class LinkedListSlimTests : TestsBase
 
         var result = sut.AddAfter( index, "foo" );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( -1 );
-            sut.Count.Should().Be( 2 );
-        }
+        Assertion.All(
+                result.TestEquals( -1 ),
+                sut.Count.TestEquals( 2 ) )
+            .Go();
     }
 
     [Fact]
@@ -387,14 +369,13 @@ public class LinkedListSlimTests : TestsBase
 
         var result = sut.AddAfter( index, "foo" );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( 3 );
-            sut.Count.Should().Be( 4 );
-            AssertFirst( sut, 2, "x3" );
-            AssertLast( sut, 1, "x2" );
-            AssertEnumerator( sut, (2, "x3"), (3, "foo"), (0, "x1"), (1, "x2") );
-        }
+        Assertion.All(
+                result.TestEquals( 3 ),
+                sut.Count.TestEquals( 4 ),
+                AssertFirst( sut, 2, "x3" ),
+                AssertLast( sut, 1, "x2" ),
+                AssertEnumerator( sut, (2, "x3"), (3, "foo"), (0, "x1"), (1, "x2") ) )
+            .Go();
     }
 
     [Fact]
@@ -407,14 +388,13 @@ public class LinkedListSlimTests : TestsBase
 
         var result = sut.AddAfter( index, "foo" );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( 3 );
-            sut.Count.Should().Be( 4 );
-            AssertFirst( sut, 2, "x3" );
-            AssertLast( sut, 3, "foo" );
-            AssertEnumerator( sut, (2, "x3"), (0, "x1"), (1, "x2"), (3, "foo") );
-        }
+        Assertion.All(
+                result.TestEquals( 3 ),
+                sut.Count.TestEquals( 4 ),
+                AssertFirst( sut, 2, "x3" ),
+                AssertLast( sut, 3, "foo" ),
+                AssertEnumerator( sut, (2, "x3"), (0, "x1"), (1, "x2"), (3, "foo") ) )
+            .Go();
     }
 
     [Fact]
@@ -427,14 +407,13 @@ public class LinkedListSlimTests : TestsBase
 
         var result = sut.AddAfter( index, "foo" );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( 3 );
-            sut.Count.Should().Be( 4 );
-            AssertFirst( sut, 2, "x3" );
-            AssertLast( sut, 1, "x2" );
-            AssertEnumerator( sut, (2, "x3"), (0, "x1"), (3, "foo"), (1, "x2") );
-        }
+        Assertion.All(
+                result.TestEquals( 3 ),
+                sut.Count.TestEquals( 4 ),
+                AssertFirst( sut, 2, "x3" ),
+                AssertLast( sut, 1, "x2" ),
+                AssertEnumerator( sut, (2, "x3"), (0, "x1"), (3, "foo"), (1, "x2") ) )
+            .Go();
     }
 
     [Fact]
@@ -457,16 +436,15 @@ public class LinkedListSlimTests : TestsBase
             sut.AddLast( "x8" )
         };
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSequentiallyEqualTo( 2, 1, 0, 3, 4 );
-            sut.Count.Should().Be( 5 );
-            sut.Capacity.Should().Be( 8 );
-            sut.IsEmpty.Should().BeFalse();
-            AssertFirst( sut, 3, "x7" );
-            AssertLast( sut, 4, "x8" );
-            AssertEnumerator( sut, (3, "x7"), (1, "x5"), (2, "x4"), (0, "x6"), (4, "x8") );
-        }
+        Assertion.All(
+                result.TestSequence( [ 2, 1, 0, 3, 4 ] ),
+                sut.Count.TestEquals( 5 ),
+                sut.Capacity.TestEquals( 8 ),
+                sut.IsEmpty.TestFalse(),
+                AssertFirst( sut, 3, "x7" ),
+                AssertLast( sut, 4, "x8" ),
+                AssertEnumerator( sut, (3, "x7"), (1, "x5"), (2, "x4"), (0, "x6"), (4, "x8") ) )
+            .Go();
     }
 
     [Fact]
@@ -474,7 +452,7 @@ public class LinkedListSlimTests : TestsBase
     {
         var sut = LinkedListSlim<string>.Create();
         var result = sut.RemoveFirst();
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Fact]
@@ -485,14 +463,13 @@ public class LinkedListSlimTests : TestsBase
 
         var result = sut.RemoveFirst();
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            sut.Count.Should().Be( 0 );
-            sut.First.Should().BeNull();
-            sut.Last.Should().BeNull();
-            AssertEnumerator( sut );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                sut.Count.TestEquals( 0 ),
+                sut.First.TestNull(),
+                sut.Last.TestNull(),
+                AssertEnumerator( sut ) )
+            .Go();
     }
 
     [Fact]
@@ -504,14 +481,13 @@ public class LinkedListSlimTests : TestsBase
 
         var result = sut.RemoveFirst();
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            sut.Count.Should().Be( 1 );
-            AssertFirst( sut, 1, "x2" );
-            AssertLast( sut, 1, "x2" );
-            AssertEnumerator( sut, (1, "x2") );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                sut.Count.TestEquals( 1 ),
+                AssertFirst( sut, 1, "x2" ),
+                AssertLast( sut, 1, "x2" ),
+                AssertEnumerator( sut, (1, "x2") ) )
+            .Go();
     }
 
     [Fact]
@@ -521,11 +497,10 @@ public class LinkedListSlimTests : TestsBase
 
         var result = sut.RemoveFirst( out var removed );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeFalse();
-            removed.Should().BeNull();
-        }
+        Assertion.All(
+                result.TestFalse(),
+                removed.TestNull() )
+            .Go();
     }
 
     [Fact]
@@ -536,15 +511,14 @@ public class LinkedListSlimTests : TestsBase
 
         var result = sut.RemoveFirst( out var removed );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            removed.Should().Be( "x1" );
-            sut.Count.Should().Be( 0 );
-            sut.First.Should().BeNull();
-            sut.Last.Should().BeNull();
-            AssertEnumerator( sut );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                removed.TestEquals( "x1" ),
+                sut.Count.TestEquals( 0 ),
+                sut.First.TestNull(),
+                sut.Last.TestNull(),
+                AssertEnumerator( sut ) )
+            .Go();
     }
 
     [Fact]
@@ -556,15 +530,14 @@ public class LinkedListSlimTests : TestsBase
 
         var result = sut.RemoveFirst( out var removed );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            removed.Should().Be( "x1" );
-            sut.Count.Should().Be( 1 );
-            AssertFirst( sut, 1, "x2" );
-            AssertLast( sut, 1, "x2" );
-            AssertEnumerator( sut, (1, "x2") );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                removed.TestEquals( "x1" ),
+                sut.Count.TestEquals( 1 ),
+                AssertFirst( sut, 1, "x2" ),
+                AssertLast( sut, 1, "x2" ),
+                AssertEnumerator( sut, (1, "x2") ) )
+            .Go();
     }
 
     [Fact]
@@ -572,7 +545,7 @@ public class LinkedListSlimTests : TestsBase
     {
         var sut = LinkedListSlim<string>.Create();
         var result = sut.RemoveLast();
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Fact]
@@ -583,14 +556,13 @@ public class LinkedListSlimTests : TestsBase
 
         var result = sut.RemoveLast();
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            sut.Count.Should().Be( 0 );
-            sut.First.Should().BeNull();
-            sut.Last.Should().BeNull();
-            AssertEnumerator( sut );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                sut.Count.TestEquals( 0 ),
+                sut.First.TestNull(),
+                sut.Last.TestNull(),
+                AssertEnumerator( sut ) )
+            .Go();
     }
 
     [Fact]
@@ -602,14 +574,13 @@ public class LinkedListSlimTests : TestsBase
 
         var result = sut.RemoveLast();
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            sut.Count.Should().Be( 1 );
-            AssertFirst( sut, 0, "x1" );
-            AssertLast( sut, 0, "x1" );
-            AssertEnumerator( sut, (0, "x1") );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                sut.Count.TestEquals( 1 ),
+                AssertFirst( sut, 0, "x1" ),
+                AssertLast( sut, 0, "x1" ),
+                AssertEnumerator( sut, (0, "x1") ) )
+            .Go();
     }
 
     [Fact]
@@ -619,11 +590,10 @@ public class LinkedListSlimTests : TestsBase
 
         var result = sut.RemoveLast( out var removed );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeFalse();
-            removed.Should().BeNull();
-        }
+        Assertion.All(
+                result.TestFalse(),
+                removed.TestNull() )
+            .Go();
     }
 
     [Fact]
@@ -634,15 +604,14 @@ public class LinkedListSlimTests : TestsBase
 
         var result = sut.RemoveLast( out var removed );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            removed.Should().Be( "x1" );
-            sut.Count.Should().Be( 0 );
-            sut.First.Should().BeNull();
-            sut.Last.Should().BeNull();
-            AssertEnumerator( sut );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                removed.TestEquals( "x1" ),
+                sut.Count.TestEquals( 0 ),
+                sut.First.TestNull(),
+                sut.Last.TestNull(),
+                AssertEnumerator( sut ) )
+            .Go();
     }
 
     [Fact]
@@ -654,15 +623,14 @@ public class LinkedListSlimTests : TestsBase
 
         var result = sut.RemoveLast( out var removed );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            removed.Should().Be( "x2" );
-            sut.Count.Should().Be( 1 );
-            AssertFirst( sut, 0, "x1" );
-            AssertLast( sut, 0, "x1" );
-            AssertEnumerator( sut, (0, "x1") );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                removed.TestEquals( "x2" ),
+                sut.Count.TestEquals( 1 ),
+                AssertFirst( sut, 0, "x1" ),
+                AssertLast( sut, 0, "x1" ),
+                AssertEnumerator( sut, (0, "x1") ) )
+            .Go();
     }
 
     [Theory]
@@ -685,15 +653,14 @@ public class LinkedListSlimTests : TestsBase
 
         var result = sut.Remove( index );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeFalse();
-            sut.Count.Should().Be( 3 );
-            sut.Capacity.Should().Be( 8 );
-            AssertFirst( sut, 0, "x1" );
-            AssertLast( sut, 3, "x4" );
-            AssertEnumerator( sut, (0, "x1"), (2, "x3"), (3, "x4") );
-        }
+        Assertion.All(
+                result.TestFalse(),
+                sut.Count.TestEquals( 3 ),
+                sut.Capacity.TestEquals( 8 ),
+                AssertFirst( sut, 0, "x1" ),
+                AssertLast( sut, 3, "x4" ),
+                AssertEnumerator( sut, (0, "x1"), (2, "x3"), (3, "x4") ) )
+            .Go();
     }
 
     [Fact]
@@ -706,15 +673,14 @@ public class LinkedListSlimTests : TestsBase
 
         var result = sut.Remove( 0 );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            sut.Count.Should().Be( 2 );
-            sut.Capacity.Should().Be( 4 );
-            AssertFirst( sut, 1, "x2" );
-            AssertLast( sut, 2, "x3" );
-            AssertEnumerator( sut, (1, "x2"), (2, "x3") );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                sut.Count.TestEquals( 2 ),
+                sut.Capacity.TestEquals( 4 ),
+                AssertFirst( sut, 1, "x2" ),
+                AssertLast( sut, 2, "x3" ),
+                AssertEnumerator( sut, (1, "x2"), (2, "x3") ) )
+            .Go();
     }
 
     [Fact]
@@ -727,15 +693,14 @@ public class LinkedListSlimTests : TestsBase
 
         var result = sut.Remove( 2 );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            sut.Count.Should().Be( 2 );
-            sut.Capacity.Should().Be( 4 );
-            AssertFirst( sut, 0, "x1" );
-            AssertLast( sut, 1, "x2" );
-            AssertEnumerator( sut, (0, "x1"), (1, "x2") );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                sut.Count.TestEquals( 2 ),
+                sut.Capacity.TestEquals( 4 ),
+                AssertFirst( sut, 0, "x1" ),
+                AssertLast( sut, 1, "x2" ),
+                AssertEnumerator( sut, (0, "x1"), (1, "x2") ) )
+            .Go();
     }
 
     [Fact]
@@ -748,15 +713,14 @@ public class LinkedListSlimTests : TestsBase
 
         var result = sut.Remove( 1 );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            sut.Count.Should().Be( 2 );
-            sut.Capacity.Should().Be( 4 );
-            AssertFirst( sut, 0, "x1" );
-            AssertLast( sut, 2, "x3" );
-            AssertEnumerator( sut, (0, "x1"), (2, "x3") );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                sut.Count.TestEquals( 2 ),
+                sut.Capacity.TestEquals( 4 ),
+                AssertFirst( sut, 0, "x1" ),
+                AssertLast( sut, 2, "x3" ),
+                AssertEnumerator( sut, (0, "x1"), (2, "x3") ) )
+            .Go();
     }
 
     [Fact]
@@ -767,15 +731,14 @@ public class LinkedListSlimTests : TestsBase
 
         var result = sut.Remove( 0 );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            sut.Count.Should().Be( 0 );
-            sut.Capacity.Should().Be( 4 );
-            sut.First.Should().BeNull();
-            sut.Last.Should().BeNull();
-            AssertEnumerator( sut );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                sut.Count.TestEquals( 0 ),
+                sut.Capacity.TestEquals( 4 ),
+                sut.First.TestNull(),
+                sut.Last.TestNull(),
+                AssertEnumerator( sut ) )
+            .Go();
     }
 
     [Theory]
@@ -798,16 +761,15 @@ public class LinkedListSlimTests : TestsBase
 
         var result = sut.Remove( index, out var removed );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeFalse();
-            removed.Should().BeNull();
-            sut.Count.Should().Be( 3 );
-            sut.Capacity.Should().Be( 8 );
-            AssertFirst( sut, 0, "x1" );
-            AssertLast( sut, 3, "x4" );
-            AssertEnumerator( sut, (0, "x1"), (2, "x3"), (3, "x4") );
-        }
+        Assertion.All(
+                result.TestFalse(),
+                removed.TestNull(),
+                sut.Count.TestEquals( 3 ),
+                sut.Capacity.TestEquals( 8 ),
+                AssertFirst( sut, 0, "x1" ),
+                AssertLast( sut, 3, "x4" ),
+                AssertEnumerator( sut, (0, "x1"), (2, "x3"), (3, "x4") ) )
+            .Go();
     }
 
     [Fact]
@@ -820,16 +782,15 @@ public class LinkedListSlimTests : TestsBase
 
         var result = sut.Remove( 0, out var removed );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            removed.Should().Be( "x1" );
-            sut.Count.Should().Be( 2 );
-            sut.Capacity.Should().Be( 4 );
-            AssertFirst( sut, 1, "x2" );
-            AssertLast( sut, 2, "x3" );
-            AssertEnumerator( sut, (1, "x2"), (2, "x3") );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                removed.TestEquals( "x1" ),
+                sut.Count.TestEquals( 2 ),
+                sut.Capacity.TestEquals( 4 ),
+                AssertFirst( sut, 1, "x2" ),
+                AssertLast( sut, 2, "x3" ),
+                AssertEnumerator( sut, (1, "x2"), (2, "x3") ) )
+            .Go();
     }
 
     [Fact]
@@ -842,16 +803,15 @@ public class LinkedListSlimTests : TestsBase
 
         var result = sut.Remove( 2, out var removed );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            removed.Should().Be( "x3" );
-            sut.Count.Should().Be( 2 );
-            sut.Capacity.Should().Be( 4 );
-            AssertFirst( sut, 0, "x1" );
-            AssertLast( sut, 1, "x2" );
-            AssertEnumerator( sut, (0, "x1"), (1, "x2") );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                removed.TestEquals( "x3" ),
+                sut.Count.TestEquals( 2 ),
+                sut.Capacity.TestEquals( 4 ),
+                AssertFirst( sut, 0, "x1" ),
+                AssertLast( sut, 1, "x2" ),
+                AssertEnumerator( sut, (0, "x1"), (1, "x2") ) )
+            .Go();
     }
 
     [Fact]
@@ -864,16 +824,15 @@ public class LinkedListSlimTests : TestsBase
 
         var result = sut.Remove( 1, out var removed );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            removed.Should().Be( "x2" );
-            sut.Count.Should().Be( 2 );
-            sut.Capacity.Should().Be( 4 );
-            AssertFirst( sut, 0, "x1" );
-            AssertLast( sut, 2, "x3" );
-            AssertEnumerator( sut, (0, "x1"), (2, "x3") );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                removed.TestEquals( "x2" ),
+                sut.Count.TestEquals( 2 ),
+                sut.Capacity.TestEquals( 4 ),
+                AssertFirst( sut, 0, "x1" ),
+                AssertLast( sut, 2, "x3" ),
+                AssertEnumerator( sut, (0, "x1"), (2, "x3") ) )
+            .Go();
     }
 
     [Fact]
@@ -884,16 +843,15 @@ public class LinkedListSlimTests : TestsBase
 
         var result = sut.Remove( 0, out var removed );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            removed.Should().Be( "x1" );
-            sut.Count.Should().Be( 0 );
-            sut.Capacity.Should().Be( 4 );
-            sut.First.Should().BeNull();
-            sut.Last.Should().BeNull();
-            AssertEnumerator( sut );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                removed.TestEquals( "x1" ),
+                sut.Count.TestEquals( 0 ),
+                sut.Capacity.TestEquals( 4 ),
+                sut.First.TestNull(),
+                sut.Last.TestNull(),
+                AssertEnumerator( sut ) )
+            .Go();
     }
 
     [Theory]
@@ -919,7 +877,7 @@ public class LinkedListSlimTests : TestsBase
 
         var result = sut.Contains( index );
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -942,7 +900,7 @@ public class LinkedListSlimTests : TestsBase
 
         var result = sut.GetNode( index );
 
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Theory]
@@ -967,18 +925,18 @@ public class LinkedListSlimTests : TestsBase
 
         var result = sut.GetNode( index );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().NotBeNull();
-            if ( result is null )
-                return;
-
-            result.Value.Index.Should().Be( index );
-            result.Value.Value.Should().Be( expectedValue );
-            (result.Value.Prev?.Index).Should().Be( expectedPrev );
-            (result.Value.Next?.Index).Should().Be( expectedNext );
-            result.ToString().Should().Be( expectedString );
-        }
+        Assertion.All(
+                result.TestNotNull(),
+                result.TestIf()
+                    .NotNull(
+                        value => Assertion.All(
+                            "result.Value",
+                            value.Index.TestEquals( index ),
+                            value.Value.TestEquals( expectedValue ),
+                            (value.Prev?.Index).TestEquals( expectedPrev ),
+                            (value.Next?.Index).TestEquals( expectedNext ),
+                            value.ToString().TestEquals( expectedString ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -988,15 +946,14 @@ public class LinkedListSlimTests : TestsBase
 
         sut.Clear();
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 0 );
-            sut.Capacity.Should().Be( 16 );
-            sut.IsEmpty.Should().BeTrue();
-            sut.First.Should().BeNull();
-            sut.Last.Should().BeNull();
-            AssertEnumerator( sut );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 0 ),
+                sut.Capacity.TestEquals( 16 ),
+                sut.IsEmpty.TestTrue(),
+                sut.First.TestNull(),
+                sut.Last.TestNull(),
+                AssertEnumerator( sut ) )
+            .Go();
     }
 
     [Fact]
@@ -1010,15 +967,14 @@ public class LinkedListSlimTests : TestsBase
 
         sut.Clear();
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 0 );
-            sut.Capacity.Should().Be( 16 );
-            sut.IsEmpty.Should().BeTrue();
-            sut.First.Should().BeNull();
-            sut.Last.Should().BeNull();
-            AssertEnumerator( sut );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 0 ),
+                sut.Capacity.TestEquals( 16 ),
+                sut.IsEmpty.TestTrue(),
+                sut.First.TestNull(),
+                sut.Last.TestNull(),
+                AssertEnumerator( sut ) )
+            .Go();
     }
 
     [Fact]
@@ -1031,15 +987,14 @@ public class LinkedListSlimTests : TestsBase
 
         sut.Clear();
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 0 );
-            sut.Capacity.Should().Be( 4 );
-            sut.IsEmpty.Should().BeTrue();
-            sut.First.Should().BeNull();
-            sut.Last.Should().BeNull();
-            AssertEnumerator( sut );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 0 ),
+                sut.Capacity.TestEquals( 4 ),
+                sut.IsEmpty.TestTrue(),
+                sut.First.TestNull(),
+                sut.Last.TestNull(),
+                AssertEnumerator( sut ) )
+            .Go();
     }
 
     [Theory]
@@ -1051,15 +1006,14 @@ public class LinkedListSlimTests : TestsBase
 
         sut.ResetCapacity( minCapacity );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 0 );
-            sut.Capacity.Should().Be( 0 );
-            sut.IsEmpty.Should().BeTrue();
-            sut.First.Should().BeNull();
-            sut.Last.Should().BeNull();
-            AssertEnumerator( sut );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 0 ),
+                sut.Capacity.TestEquals( 0 ),
+                sut.IsEmpty.TestTrue(),
+                sut.First.TestNull(),
+                sut.Last.TestNull(),
+                AssertEnumerator( sut ) )
+            .Go();
     }
 
     [Theory]
@@ -1073,15 +1027,14 @@ public class LinkedListSlimTests : TestsBase
 
         sut.ResetCapacity( minCapacity );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 0 );
-            sut.Capacity.Should().Be( 0 );
-            sut.IsEmpty.Should().BeTrue();
-            sut.First.Should().BeNull();
-            sut.Last.Should().BeNull();
-            AssertEnumerator( sut );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 0 ),
+                sut.Capacity.TestEquals( 0 ),
+                sut.IsEmpty.TestTrue(),
+                sut.First.TestNull(),
+                sut.Last.TestNull(),
+                AssertEnumerator( sut ) )
+            .Go();
     }
 
     [Theory]
@@ -1095,15 +1048,14 @@ public class LinkedListSlimTests : TestsBase
 
         sut.ResetCapacity( minCapacity );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 0 );
-            sut.Capacity.Should().Be( 4 );
-            sut.IsEmpty.Should().BeTrue();
-            sut.First.Should().BeNull();
-            sut.Last.Should().BeNull();
-            AssertEnumerator( sut );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 0 ),
+                sut.Capacity.TestEquals( 4 ),
+                sut.IsEmpty.TestTrue(),
+                sut.First.TestNull(),
+                sut.Last.TestNull(),
+                AssertEnumerator( sut ) )
+            .Go();
     }
 
     [Theory]
@@ -1119,15 +1071,14 @@ public class LinkedListSlimTests : TestsBase
 
         sut.ResetCapacity( minCapacity );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 1 );
-            sut.Capacity.Should().Be( 4 );
-            sut.IsEmpty.Should().BeFalse();
-            AssertFirst( sut, 0, "foo" );
-            AssertLast( sut, 0, "foo" );
-            AssertEnumerator( sut, (0, "foo") );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 1 ),
+                sut.Capacity.TestEquals( 4 ),
+                sut.IsEmpty.TestFalse(),
+                AssertFirst( sut, 0, "foo" ),
+                AssertLast( sut, 0, "foo" ),
+                AssertEnumerator( sut, (0, "foo") ) )
+            .Go();
     }
 
     [Fact]
@@ -1137,15 +1088,14 @@ public class LinkedListSlimTests : TestsBase
 
         sut.ResetCapacity( minCapacity: 4 );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 0 );
-            sut.Capacity.Should().Be( 4 );
-            sut.IsEmpty.Should().BeTrue();
-            sut.First.Should().BeNull();
-            sut.Last.Should().BeNull();
-            AssertEnumerator( sut );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 0 ),
+                sut.Capacity.TestEquals( 4 ),
+                sut.IsEmpty.TestTrue(),
+                sut.First.TestNull(),
+                sut.Last.TestNull(),
+                AssertEnumerator( sut ) )
+            .Go();
     }
 
     [Fact]
@@ -1159,15 +1109,14 @@ public class LinkedListSlimTests : TestsBase
 
         sut.ResetCapacity( minCapacity: 4 );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 0 );
-            sut.Capacity.Should().Be( 4 );
-            sut.IsEmpty.Should().BeTrue();
-            sut.First.Should().BeNull();
-            sut.Last.Should().BeNull();
-            AssertEnumerator( sut );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 0 ),
+                sut.Capacity.TestEquals( 4 ),
+                sut.IsEmpty.TestTrue(),
+                sut.First.TestNull(),
+                sut.Last.TestNull(),
+                AssertEnumerator( sut ) )
+            .Go();
     }
 
     [Fact]
@@ -1179,15 +1128,14 @@ public class LinkedListSlimTests : TestsBase
 
         sut.ResetCapacity( minCapacity: 4 );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 2 );
-            sut.Capacity.Should().Be( 4 );
-            sut.IsEmpty.Should().BeFalse();
-            AssertFirst( sut, 0, "x1" );
-            AssertLast( sut, 1, "x2" );
-            AssertEnumerator( sut, (0, "x1"), (1, "x2") );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 2 ),
+                sut.Capacity.TestEquals( 4 ),
+                sut.IsEmpty.TestFalse(),
+                AssertFirst( sut, 0, "x1" ),
+                AssertLast( sut, 1, "x2" ),
+                AssertEnumerator( sut, (0, "x1"), (1, "x2") ) )
+            .Go();
     }
 
     [Fact]
@@ -1203,15 +1151,14 @@ public class LinkedListSlimTests : TestsBase
 
         sut.ResetCapacity( minCapacity: 4 );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 2 );
-            sut.Capacity.Should().Be( 4 );
-            sut.IsEmpty.Should().BeFalse();
-            AssertFirst( sut, 0, "x1" );
-            AssertLast( sut, 1, "x2" );
-            AssertEnumerator( sut, (0, "x1"), (1, "x2") );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 2 ),
+                sut.Capacity.TestEquals( 4 ),
+                sut.IsEmpty.TestFalse(),
+                AssertFirst( sut, 0, "x1" ),
+                AssertLast( sut, 1, "x2" ),
+                AssertEnumerator( sut, (0, "x1"), (1, "x2") ) )
+            .Go();
     }
 
     [Fact]
@@ -1225,15 +1172,14 @@ public class LinkedListSlimTests : TestsBase
 
         sut.ResetCapacity( minCapacity: 4 );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 4 );
-            sut.Capacity.Should().Be( 4 );
-            sut.IsEmpty.Should().BeFalse();
-            AssertFirst( sut, 0, "x1" );
-            AssertLast( sut, 3, "x4" );
-            AssertEnumerator( sut, (0, "x1"), (1, "x2"), (2, "x3"), (3, "x4") );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 4 ),
+                sut.Capacity.TestEquals( 4 ),
+                sut.IsEmpty.TestFalse(),
+                AssertFirst( sut, 0, "x1" ),
+                AssertLast( sut, 3, "x4" ),
+                AssertEnumerator( sut, (0, "x1"), (1, "x2"), (2, "x3"), (3, "x4") ) )
+            .Go();
     }
 
     [Fact]
@@ -1251,15 +1197,14 @@ public class LinkedListSlimTests : TestsBase
 
         sut.ResetCapacity( minCapacity: 4 );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 4 );
-            sut.Capacity.Should().Be( 4 );
-            sut.IsEmpty.Should().BeFalse();
-            AssertFirst( sut, 0, "x1" );
-            AssertLast( sut, 3, "x4" );
-            AssertEnumerator( sut, (0, "x1"), (1, "x2"), (2, "x3"), (3, "x4") );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 4 ),
+                sut.Capacity.TestEquals( 4 ),
+                sut.IsEmpty.TestFalse(),
+                AssertFirst( sut, 0, "x1" ),
+                AssertLast( sut, 3, "x4" ),
+                AssertEnumerator( sut, (0, "x1"), (1, "x2"), (2, "x3"), (3, "x4") ) )
+            .Go();
     }
 
     [Fact]
@@ -1290,15 +1235,14 @@ public class LinkedListSlimTests : TestsBase
 
         sut.ResetCapacity( minCapacity: 8 );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 3 );
-            sut.Capacity.Should().Be( 16 );
-            sut.IsEmpty.Should().BeFalse();
-            AssertFirst( sut, 0, "x1" );
-            AssertLast( sut, 1, "x12" );
-            AssertEnumerator( sut, (0, "x1"), (10, "x11"), (1, "x12") );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 3 ),
+                sut.Capacity.TestEquals( 16 ),
+                sut.IsEmpty.TestFalse(),
+                AssertFirst( sut, 0, "x1" ),
+                AssertLast( sut, 1, "x12" ),
+                AssertEnumerator( sut, (0, "x1"), (10, "x11"), (1, "x12") ) )
+            .Go();
     }
 
     [Fact]
@@ -1321,15 +1265,14 @@ public class LinkedListSlimTests : TestsBase
 
         sut.ResetCapacity( minCapacity: 4 );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 3 );
-            sut.Capacity.Should().Be( 8 );
-            sut.IsEmpty.Should().BeFalse();
-            AssertFirst( sut, 0, "x1" );
-            AssertLast( sut, 1, "x8" );
-            AssertEnumerator( sut, (0, "x1"), (6, "x7"), (1, "x8") );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 3 ),
+                sut.Capacity.TestEquals( 8 ),
+                sut.IsEmpty.TestFalse(),
+                AssertFirst( sut, 0, "x1" ),
+                AssertLast( sut, 1, "x8" ),
+                AssertEnumerator( sut, (0, "x1"), (6, "x7"), (1, "x8") ) )
+            .Go();
     }
 
     [Fact]
@@ -1356,15 +1299,14 @@ public class LinkedListSlimTests : TestsBase
         sut.AddLast( "x11" );
         sut.AddLast( "x12" );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 8 );
-            sut.Capacity.Should().Be( 8 );
-            sut.IsEmpty.Should().BeFalse();
-            AssertFirst( sut, 0, "x1" );
-            AssertLast( sut, 7, "x12" );
-            AssertEnumerator( sut, (0, "x1"), (2, "x3"), (6, "x7"), (1, "x8"), (3, "x9"), (4, "x10"), (5, "x11"), (7, "x12") );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 8 ),
+                sut.Capacity.TestEquals( 8 ),
+                sut.IsEmpty.TestFalse(),
+                AssertFirst( sut, 0, "x1" ),
+                AssertLast( sut, 7, "x12" ),
+                AssertEnumerator( sut, (0, "x1"), (2, "x3"), (6, "x7"), (1, "x8"), (3, "x9"), (4, "x10"), (5, "x11"), (7, "x12") ) )
+            .Go();
     }
 
     [Fact]
@@ -1374,15 +1316,14 @@ public class LinkedListSlimTests : TestsBase
 
         sut.ResetCapacity( minCapacity: 8 );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 0 );
-            sut.Capacity.Should().Be( 8 );
-            sut.IsEmpty.Should().BeTrue();
-            sut.First.Should().BeNull();
-            sut.Last.Should().BeNull();
-            AssertEnumerator( sut );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 0 ),
+                sut.Capacity.TestEquals( 8 ),
+                sut.IsEmpty.TestTrue(),
+                sut.First.TestNull(),
+                sut.Last.TestNull(),
+                AssertEnumerator( sut ) )
+            .Go();
     }
 
     [Fact]
@@ -1394,15 +1335,14 @@ public class LinkedListSlimTests : TestsBase
 
         sut.ResetCapacity( minCapacity: 8 );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 2 );
-            sut.Capacity.Should().Be( 8 );
-            sut.IsEmpty.Should().BeFalse();
-            AssertFirst( sut, 0, "x1" );
-            AssertLast( sut, 1, "x2" );
-            AssertEnumerator( sut, (0, "x1"), (1, "x2") );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 2 ),
+                sut.Capacity.TestEquals( 8 ),
+                sut.IsEmpty.TestFalse(),
+                AssertFirst( sut, 0, "x1" ),
+                AssertLast( sut, 1, "x2" ),
+                AssertEnumerator( sut, (0, "x1"), (1, "x2") ) )
+            .Go();
     }
 
     [Fact]
@@ -1416,15 +1356,14 @@ public class LinkedListSlimTests : TestsBase
 
         sut.ResetCapacity( minCapacity: 8 );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 4 );
-            sut.Capacity.Should().Be( 8 );
-            sut.IsEmpty.Should().BeFalse();
-            AssertFirst( sut, 0, "x1" );
-            AssertLast( sut, 3, "x4" );
-            AssertEnumerator( sut, (0, "x1"), (1, "x2"), (2, "x3"), (3, "x4") );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 4 ),
+                sut.Capacity.TestEquals( 8 ),
+                sut.IsEmpty.TestFalse(),
+                AssertFirst( sut, 0, "x1" ),
+                AssertLast( sut, 3, "x4" ),
+                AssertEnumerator( sut, (0, "x1"), (1, "x2"), (2, "x3"), (3, "x4") ) )
+            .Go();
     }
 
     [Fact]
@@ -1447,15 +1386,14 @@ public class LinkedListSlimTests : TestsBase
         sut.AddLast( "x8" );
         sut.AddLast( "x9" );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 6 );
-            sut.Capacity.Should().Be( 16 );
-            sut.IsEmpty.Should().BeFalse();
-            AssertFirst( sut, 3, "x4" );
-            AssertLast( sut, 5, "x9" );
-            AssertEnumerator( sut, (3, "x4"), (0, "x5"), (1, "x6"), (2, "x7"), (4, "x8"), (5, "x9") );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 6 ),
+                sut.Capacity.TestEquals( 16 ),
+                sut.IsEmpty.TestFalse(),
+                AssertFirst( sut, 3, "x4" ),
+                AssertLast( sut, 5, "x9" ),
+                AssertEnumerator( sut, (3, "x4"), (0, "x5"), (1, "x6"), (2, "x7"), (4, "x8"), (5, "x9") ) )
+            .Go();
     }
 
     [Theory]
@@ -1478,7 +1416,7 @@ public class LinkedListSlimTests : TestsBase
 
         ref var result = ref sut[index];
 
-        Unsafe.IsNullRef( ref result ).Should().BeTrue();
+        Unsafe.IsNullRef( ref result ).TestTrue().Go();
     }
 
     [Theory]
@@ -1498,43 +1436,50 @@ public class LinkedListSlimTests : TestsBase
 
         ref var result = ref sut[index];
 
-        using ( new AssertionScope() )
-        {
-            Unsafe.IsNullRef( ref result ).Should().BeFalse();
-            if ( ! Unsafe.IsNullRef( ref result ) )
-                result.Should().Be( expected );
-        }
+        Assertion.All(
+                Unsafe.IsNullRef( ref result ).TestFalse(),
+                Unsafe.IsNullRef( ref result ) ? Assertion.All() : result.TestEquals( expected ) )
+            .Go();
     }
 
-    private static void AssertEnumerator<T>(LinkedListSlim<T> source, params (int, T)[] expected)
+    [Pure]
+    private static Assertion AssertEnumerator<T>(LinkedListSlim<T> source, params (int, T)[] expected)
     {
         var i = 0;
         var result = new KeyValuePair<int, T>[source.Count];
         foreach ( var e in source )
             result[i++] = e;
 
-        result.Should().BeSequentiallyEqualTo( expected.Select( static e => KeyValuePair.Create( e.Item1, e.Item2 ) ) );
+        return result.TestSequence( expected.Select( static e => KeyValuePair.Create( e.Item1, e.Item2 ) ) );
     }
 
-    private static void AssertFirst<T>(LinkedListSlim<T> source, int index, T value)
+    [Pure]
+    private static Assertion AssertFirst<T>(LinkedListSlim<T> source, int index, T value)
     {
-        source.First.Should().NotBeNull();
-        if ( source.First is null )
-            return;
-
-        source.First.Value.Index.Should().Be( index );
-        source.First.Value.Value.Should().Be( value );
-        source.First.Value.Prev.Should().BeNull();
+        return Assertion.All(
+            "First",
+            source.First.TestNotNull(),
+            source.First.TestIf()
+                .NotNull(
+                    first => Assertion.All(
+                        "First.Value",
+                        first.Index.TestEquals( index ),
+                        first.Value.TestEquals( value ),
+                        first.Prev.TestNull() ) ) );
     }
 
-    private static void AssertLast<T>(LinkedListSlim<T> source, int index, T value)
+    [Pure]
+    private static Assertion AssertLast<T>(LinkedListSlim<T> source, int index, T value)
     {
-        source.Last.Should().NotBeNull();
-        if ( source.Last is null )
-            return;
-
-        source.Last.Value.Index.Should().Be( index );
-        source.Last.Value.Value.Should().Be( value );
-        source.Last.Value.Next.Should().BeNull();
+        return Assertion.All(
+            "Last",
+            source.Last.TestNotNull(),
+            source.Last.TestIf()
+                .NotNull(
+                    last => Assertion.All(
+                        "Last.Value",
+                        last.Index.TestEquals( index ),
+                        last.Value.TestEquals( value ),
+                        last.Next.TestNull() ) ) );
     }
 }

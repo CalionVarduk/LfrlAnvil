@@ -1,5 +1,4 @@
 ﻿using LfrlAnvil.Functional;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Tests.LazyDisposableTests;
 
@@ -10,12 +9,11 @@ public class LazyDisposableTests : TestsBase
     {
         var sut = new LazyDisposable<IDisposable>();
 
-        using ( new AssertionScope() )
-        {
-            sut.IsDisposed.Should().BeFalse();
-            sut.CanAssign.Should().BeTrue();
-            sut.Inner.Should().BeNull();
-        }
+        Assertion.All(
+                sut.IsDisposed.TestFalse(),
+                sut.CanAssign.TestTrue(),
+                sut.Inner.TestNull() )
+            .Go();
     }
 
     [Fact]
@@ -26,13 +24,12 @@ public class LazyDisposableTests : TestsBase
 
         sut.Assign( inner );
 
-        using ( new AssertionScope() )
-        {
-            sut.Inner.Should().BeSameAs( inner );
-            sut.IsDisposed.Should().BeFalse();
-            sut.CanAssign.Should().BeFalse();
-            inner.VerifyCalls().DidNotReceive( x => x.Dispose() );
-        }
+        Assertion.All(
+                sut.Inner.TestRefEquals( inner ),
+                sut.IsDisposed.TestFalse(),
+                sut.CanAssign.TestFalse(),
+                inner.DidNotReceiveCall( x => x.Dispose() ) )
+            .Go();
     }
 
     [Fact]
@@ -44,13 +41,12 @@ public class LazyDisposableTests : TestsBase
 
         sut.Assign( inner );
 
-        using ( new AssertionScope() )
-        {
-            sut.Inner.Should().BeSameAs( inner );
-            sut.IsDisposed.Should().BeTrue();
-            sut.CanAssign.Should().BeFalse();
-            inner.VerifyCalls().Received( x => x.Dispose() );
-        }
+        Assertion.All(
+                sut.Inner.TestRefEquals( inner ),
+                sut.IsDisposed.TestTrue(),
+                sut.CanAssign.TestFalse(),
+                inner.ReceivedCalls( x => x.Dispose() ) )
+            .Go();
     }
 
     [Fact]
@@ -62,7 +58,7 @@ public class LazyDisposableTests : TestsBase
 
         var action = Lambda.Of( () => sut.Assign( inner ) );
 
-        action.Should().ThrowExactly<InvalidOperationException>();
+        action.Test( exc => exc.TestType().Exact<InvalidOperationException>() ).Go();
     }
 
     [Fact]
@@ -70,7 +66,7 @@ public class LazyDisposableTests : TestsBase
     {
         var sut = new LazyDisposable<IDisposable>();
         sut.Dispose();
-        sut.IsDisposed.Should().BeTrue();
+        sut.IsDisposed.TestTrue().Go();
     }
 
     [Fact]
@@ -82,11 +78,10 @@ public class LazyDisposableTests : TestsBase
 
         sut.Dispose();
 
-        using ( new AssertionScope() )
-        {
-            sut.IsDisposed.Should().BeTrue();
-            inner.VerifyCalls().Received( x => x.Dispose() );
-        }
+        Assertion.All(
+                sut.IsDisposed.TestTrue(),
+                inner.ReceivedCalls( x => x.Dispose() ) )
+            .Go();
     }
 
     [Fact]
@@ -99,10 +94,9 @@ public class LazyDisposableTests : TestsBase
 
         sut.Dispose();
 
-        using ( new AssertionScope() )
-        {
-            sut.IsDisposed.Should().BeTrue();
-            inner.VerifyCalls().Received( x => x.Dispose(), count: 1 );
-        }
+        Assertion.All(
+                sut.IsDisposed.TestTrue(),
+                inner.ReceivedCalls( x => x.Dispose(), count: 1 ) )
+            .Go();
     }
 }

@@ -52,17 +52,19 @@ public partial class PostgreSqlTableBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
-                    @"CREATE TABLE ""foo"".""T"" (
-                      ""C5"" BYTEA NOT NULL GENERATED ALWAYS AS (""C1"" + 1) STORED,
-                      ""C1"" INT4 NOT NULL,
-                      ""C2"" INT4 NOT NULL,
-                      ""C6"" BYTEA GENERATED ALWAYS AS (""C2"" * ""C5"") STORED,
-                      ""C3"" INT8 NOT NULL,
-                      ""C4"" INT8 NOT NULL,
-                      CONSTRAINT ""PK_T"" PRIMARY KEY (""C2""),
-                      CONSTRAINT ""FK_T_C1_REF_T"" FOREIGN KEY (""C1"") REFERENCES ""foo"".""T"" (""C2"") ON DELETE RESTRICT ON UPDATE RESTRICT,
-                      CONSTRAINT ""CHK_T_{GUID}"" CHECK (""C1"" > 0)
-                    );",
+                    """
+                    CREATE TABLE "foo"."T" (
+                                          "C5" BYTEA NOT NULL GENERATED ALWAYS AS ("C1" + 1) STORED,
+                                          "C1" INT4 NOT NULL,
+                                          "C2" INT4 NOT NULL,
+                                          "C6" BYTEA GENERATED ALWAYS AS ("C2" * "C5") STORED,
+                                          "C3" INT8 NOT NULL,
+                                          "C4" INT8 NOT NULL,
+                                          CONSTRAINT "PK_T" PRIMARY KEY ("C2"),
+                                          CONSTRAINT "FK_T_C1_REF_T" FOREIGN KEY ("C1") REFERENCES "foo"."T" ("C2") ON DELETE RESTRICT ON UPDATE RESTRICT,
+                                          CONSTRAINT "CHK_T_{GUID}" CHECK ("C1" > 0)
+                                        );
+                    """,
                     "CREATE INDEX \"IX_T_C1A\" ON \"foo\".\"T\" (\"C1\" ASC);",
                     "CREATE INDEX \"IX_T_C3A_C4D\" ON \"foo\".\"T\" (\"C3\" ASC, \"C4\" DESC);" );
         }
@@ -266,8 +268,10 @@ public partial class PostgreSqlTableBuilderTests : TestsBase
             actions.ElementAtOrDefault( 1 )
                 .Sql.Should()
                 .SatisfySql(
-                    @"ALTER TABLE ""foo"".""U""
-                      ADD COLUMN ""C3"" INT4 NOT NULL DEFAULT (0);" );
+                    """
+                    ALTER TABLE "foo"."U"
+                                          ADD COLUMN "C3" INT4 NOT NULL DEFAULT (0);
+                    """ );
         }
     }
 
@@ -332,8 +336,10 @@ public partial class PostgreSqlTableBuilderTests : TestsBase
             actions.ElementAtOrDefault( 1 )
                 .Sql.Should()
                 .SatisfySql(
-                    @"ALTER TABLE ""foo"".""U""
-                      ADD COLUMN ""D"" INT4 NOT NULL DEFAULT (0);" );
+                    """
+                    ALTER TABLE "foo"."U"
+                                          ADD COLUMN "D" INT4 NOT NULL DEFAULT (0);
+                    """ );
         }
     }
 
@@ -647,15 +653,23 @@ public partial class PostgreSqlTableBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
-                    @"ALTER TABLE ""foo"".""T""
-                      RENAME CONSTRAINT ""A"" TO ""__A__{GUID}__"";",
-                    @"ALTER TABLE ""foo"".""T""
-                      RENAME CONSTRAINT ""B"" TO ""A"";",
+                    """
+                    ALTER TABLE "foo"."T"
+                                          RENAME CONSTRAINT "A" TO "__A__{GUID}__";
+                    """,
+                    """
+                    ALTER TABLE "foo"."T"
+                                          RENAME CONSTRAINT "B" TO "A";
+                    """,
                     "ALTER INDEX \"foo\".\"C\" RENAME TO \"B\";",
-                    @"ALTER TABLE ""foo"".""T""
-                      RENAME CONSTRAINT ""D"" TO ""C"";",
-                    @"ALTER TABLE ""foo"".""T""
-                      RENAME CONSTRAINT ""__A__{GUID}__"" TO ""D"";" );
+                    """
+                    ALTER TABLE "foo"."T"
+                                          RENAME CONSTRAINT "D" TO "C";
+                    """,
+                    """
+                    ALTER TABLE "foo"."T"
+                                          RENAME CONSTRAINT "__A__{GUID}__" TO "D";
+                    """ );
         }
     }
 
@@ -683,10 +697,14 @@ public partial class PostgreSqlTableBuilderTests : TestsBase
                 .Sql.Should()
                 .SatisfySql(
                     "ALTER INDEX \"foo\".\"C\" RENAME TO \"D\";",
-                    @"ALTER TABLE ""foo"".""T""
-                      RENAME CONSTRAINT ""B"" TO ""C"";",
-                    @"ALTER TABLE ""foo"".""T""
-                      RENAME CONSTRAINT ""A"" TO ""B"";" );
+                    """
+                    ALTER TABLE "foo"."T"
+                                          RENAME CONSTRAINT "B" TO "C";
+                    """,
+                    """
+                    ALTER TABLE "foo"."T"
+                                          RENAME CONSTRAINT "A" TO "B";
+                    """ );
         }
     }
 
@@ -733,35 +751,49 @@ public partial class PostgreSqlTableBuilderTests : TestsBase
             actions.ElementAtOrDefault( 1 )
                 .Sql.Should()
                 .SatisfySql(
-                    @"ALTER TABLE ""foo"".""U""
-                      DROP CONSTRAINT ""FK_T_C7_REF_T"",
-                      DROP CONSTRAINT ""CHK_1"";",
+                    """
+                    ALTER TABLE "foo"."U"
+                                          DROP CONSTRAINT "FK_T_C7_REF_T",
+                                          DROP CONSTRAINT "CHK_1";
+                    """,
                     "DROP INDEX \"foo\".\"IX_T_C2A\";",
-                    @"ALTER TABLE ""foo"".""U""
-                      DROP CONSTRAINT ""PK_T"";",
-                    @"ALTER TABLE ""foo"".""U""
-                      ALTER COLUMN ""C6"" DROP EXPRESSION,
-                      DROP COLUMN ""C4"",
-                      DROP COLUMN ""C5"";",
+                    """
+                    ALTER TABLE "foo"."U"
+                                          DROP CONSTRAINT "PK_T";
+                    """,
+                    """
+                    ALTER TABLE "foo"."U"
+                                          ALTER COLUMN "C6" DROP EXPRESSION,
+                                          DROP COLUMN "C4",
+                                          DROP COLUMN "C5";
+                    """,
                     "ALTER INDEX \"foo\".\"IX_T_C7A\" RENAME TO \"IX_2\";",
-                    @"ALTER TABLE ""foo"".""U""
-                      RENAME CONSTRAINT ""FK"" TO ""FK_2"";",
-                    @"ALTER TABLE ""foo"".""U""
-                      RENAME CONSTRAINT ""CHK_2"" TO ""CHK_1"";",
+                    """
+                    ALTER TABLE "foo"."U"
+                                          RENAME CONSTRAINT "FK" TO "FK_2";
+                    """,
+                    """
+                    ALTER TABLE "foo"."U"
+                                          RENAME CONSTRAINT "CHK_2" TO "CHK_1";
+                    """,
                     "ALTER TABLE \"foo\".\"U\" RENAME COLUMN \"C3\" TO \"X\";",
                     "ALTER TABLE \"foo\".\"U\" RENAME COLUMN \"C6\" TO \"Y\";",
-                    @"ALTER TABLE ""foo"".""U""
-                      ALTER COLUMN ""X"" DROP NOT NULL,
-                      ALTER COLUMN ""X"" SET DATA TYPE INT8,
-                      ADD COLUMN ""C10"" BYTEA NOT NULL DEFAULT ('\x'::BYTEA),
-                      ADD COLUMN ""C11"" BYTEA NOT NULL DEFAULT ('\x'::BYTEA),
-                      ADD COLUMN ""C5"" INT4 NOT NULL GENERATED ALWAYS AS (1) STORED,
-                      ADD CONSTRAINT ""PK_U"" PRIMARY KEY (""C10"");",
+                    """
+                    ALTER TABLE "foo"."U"
+                                          ALTER COLUMN "X" DROP NOT NULL,
+                                          ALTER COLUMN "X" SET DATA TYPE INT8,
+                                          ADD COLUMN "C10" BYTEA NOT NULL DEFAULT ('\x'::BYTEA),
+                                          ADD COLUMN "C11" BYTEA NOT NULL DEFAULT ('\x'::BYTEA),
+                                          ADD COLUMN "C5" INT4 NOT NULL GENERATED ALWAYS AS (1) STORED,
+                                          ADD CONSTRAINT "PK_U" PRIMARY KEY ("C10");
+                    """,
                     "CREATE INDEX \"IX_U_C2A_XD\" ON \"foo\".\"U\" (\"C2\" ASC, \"X\" DESC);",
                     "CREATE UNIQUE INDEX \"UIX_U_C11A\" ON \"foo\".\"U\" (\"C11\" ASC);",
-                    @"ALTER TABLE ""foo"".""U""
-                      ADD CONSTRAINT ""CHK_3"" CHECK (TRUE),
-                      ADD CONSTRAINT ""FK_U_C7_REF_U"" FOREIGN KEY (""C7"") REFERENCES ""foo"".""U"" (""C11"") ON DELETE RESTRICT ON UPDATE RESTRICT;" );
+                    """
+                    ALTER TABLE "foo"."U"
+                                          ADD CONSTRAINT "CHK_3" CHECK (TRUE),
+                                          ADD CONSTRAINT "FK_U_C7_REF_U" FOREIGN KEY ("C7") REFERENCES "foo"."U" ("C11") ON DELETE RESTRICT ON UPDATE RESTRICT;
+                    """ );
         }
     }
 

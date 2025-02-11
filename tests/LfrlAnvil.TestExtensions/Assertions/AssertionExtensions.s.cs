@@ -11,7 +11,7 @@ namespace LfrlAnvil.TestExtensions.Assertions;
 public static class AssertionExtensions
 {
     [Pure]
-    public static RefTypeAssertionFilter<T> TestIf<T>(this T subject)
+    public static RefTypeAssertionFilter<T> TestIf<T>(this T? subject)
         where T : class
     {
         return new RefTypeAssertionFilter<T>( subject );
@@ -213,6 +213,17 @@ public static class AssertionExtensions
     }
 
     [Pure]
+    public static Assertion TestFuzzyEquals<T>(
+        this T subject,
+        T value,
+        T epsilon,
+        [CallerArgumentExpression( "subject" )]
+        string context = "")
+    {
+        return new ApproximationAssertion<T>( context, subject, value, epsilon );
+    }
+
+    [Pure]
     public static Assertion TestMatch(this string subject, Regex regex, [CallerArgumentExpression( "subject" )] string context = "")
     {
         return subject.AsMemory().TestMatch( regex, context );
@@ -361,6 +372,26 @@ public static class AssertionExtensions
     }
 
     [Pure]
+    public static Assertion TestAll<T>(
+        this Memory<T> subject,
+        Func<T, int, Assertion> elementAssertion,
+        [CallerArgumentExpression( "subject" )]
+        string context = "")
+    {
+        return subject.ToArray().TestAll( elementAssertion, context );
+    }
+
+    [Pure]
+    public static Assertion TestAll<T>(
+        this Span<T> subject,
+        Func<T, int, Assertion> elementAssertion,
+        [CallerArgumentExpression( "subject" )]
+        string context = "")
+    {
+        return subject.ToArray().TestAll( elementAssertion, context );
+    }
+
+    [Pure]
     public static Assertion TestAny<T>(
         this IEnumerable<T> subject,
         Func<T, int, Assertion> elementAssertion,
@@ -391,13 +422,33 @@ public static class AssertionExtensions
     }
 
     [Pure]
+    public static Assertion TestAny<T>(
+        this Memory<T> subject,
+        Func<T, int, Assertion> elementAssertion,
+        [CallerArgumentExpression( "subject" )]
+        string context = "")
+    {
+        return subject.ToArray().TestAny( elementAssertion, context );
+    }
+
+    [Pure]
+    public static Assertion TestAny<T>(
+        this Span<T> subject,
+        Func<T, int, Assertion> elementAssertion,
+        [CallerArgumentExpression( "subject" )]
+        string context = "")
+    {
+        return subject.ToArray().TestAny( elementAssertion, context );
+    }
+
+    [Pure]
     public static Assertion TestSequence<T>(
         this IEnumerable<T> subject,
         IEnumerable<Func<T, int, Assertion>> elementAssertions,
         [CallerArgumentExpression( "subject" )]
         string context = "")
     {
-        return new SequenceAssertion<T>( context, subject, elementAssertions.ToArray(), exact: true );
+        return new SequenceAssertion<T>( context, subject, elementAssertions.ToArray(), SequenceComparisonType.Equal );
     }
 
     [Pure]
@@ -413,6 +464,26 @@ public static class AssertionExtensions
     [Pure]
     public static Assertion TestSequence<T>(
         this ReadOnlySpan<T> subject,
+        IEnumerable<Func<T, int, Assertion>> elementAssertions,
+        [CallerArgumentExpression( "subject" )]
+        string context = "")
+    {
+        return subject.ToArray().TestSequence( elementAssertions, context );
+    }
+
+    [Pure]
+    public static Assertion TestSequence<T>(
+        this Memory<T> subject,
+        IEnumerable<Func<T, int, Assertion>> elementAssertions,
+        [CallerArgumentExpression( "subject" )]
+        string context = "")
+    {
+        return subject.ToArray().TestSequence( elementAssertions, context );
+    }
+
+    [Pure]
+    public static Assertion TestSequence<T>(
+        this Span<T> subject,
         IEnumerable<Func<T, int, Assertion>> elementAssertions,
         [CallerArgumentExpression( "subject" )]
         string context = "")
@@ -443,6 +514,26 @@ public static class AssertionExtensions
     [Pure]
     public static Assertion TestSequence<T>(
         this ReadOnlySpan<T> subject,
+        IEnumerable<T> values,
+        [CallerArgumentExpression( "subject" )]
+        string context = "")
+    {
+        return subject.TestSequence( values.Select( x => ( Func<T, int, Assertion> )((element, _) => element.TestEquals( x )) ), context );
+    }
+
+    [Pure]
+    public static Assertion TestSequence<T>(
+        this Memory<T> subject,
+        IEnumerable<T> values,
+        [CallerArgumentExpression( "subject" )]
+        string context = "")
+    {
+        return subject.TestSequence( values.Select( x => ( Func<T, int, Assertion> )((element, _) => element.TestEquals( x )) ), context );
+    }
+
+    [Pure]
+    public static Assertion TestSequence<T>(
+        this Span<T> subject,
         IEnumerable<T> values,
         [CallerArgumentExpression( "subject" )]
         string context = "")
@@ -469,13 +560,25 @@ public static class AssertionExtensions
     }
 
     [Pure]
+    public static Assertion TestEmpty<T>(this Memory<T> subject, [CallerArgumentExpression( "subject" )] string context = "")
+    {
+        return subject.TestSequence( Array.Empty<T>(), context );
+    }
+
+    [Pure]
+    public static Assertion TestEmpty<T>(this Span<T> subject, [CallerArgumentExpression( "subject" )] string context = "")
+    {
+        return subject.TestSequence( Array.Empty<T>(), context );
+    }
+
+    [Pure]
     public static Assertion TestContainsSequence<T>(
         this IEnumerable<T> subject,
         IEnumerable<Func<T, int, Assertion>> elementAssertions,
         [CallerArgumentExpression( "subject" )]
         string context = "")
     {
-        return new SequenceAssertion<T>( context, subject, elementAssertions.ToArray(), exact: false );
+        return new SequenceAssertion<T>( context, subject, elementAssertions.ToArray(), SequenceComparisonType.Contains );
     }
 
     [Pure]
@@ -491,6 +594,26 @@ public static class AssertionExtensions
     [Pure]
     public static Assertion TestContainsSequence<T>(
         this ReadOnlySpan<T> subject,
+        IEnumerable<Func<T, int, Assertion>> elementAssertions,
+        [CallerArgumentExpression( "subject" )]
+        string context = "")
+    {
+        return subject.ToArray().TestContainsSequence( elementAssertions, context );
+    }
+
+    [Pure]
+    public static Assertion TestContainsSequence<T>(
+        this Memory<T> subject,
+        IEnumerable<Func<T, int, Assertion>> elementAssertions,
+        [CallerArgumentExpression( "subject" )]
+        string context = "")
+    {
+        return subject.ToArray().TestContainsSequence( elementAssertions, context );
+    }
+
+    [Pure]
+    public static Assertion TestContainsSequence<T>(
+        this Span<T> subject,
         IEnumerable<Func<T, int, Assertion>> elementAssertions,
         [CallerArgumentExpression( "subject" )]
         string context = "")
@@ -530,6 +653,140 @@ public static class AssertionExtensions
         string context = "")
     {
         return subject.TestContainsSequence(
+            values.Select( x => ( Func<T, int, Assertion> )((element, _) => element.TestEquals( x )) ),
+            context );
+    }
+
+    [Pure]
+    public static Assertion TestContainsSequence<T>(
+        this Memory<T> subject,
+        IEnumerable<T> values,
+        [CallerArgumentExpression( "subject" )]
+        string context = "")
+    {
+        return subject.TestContainsSequence(
+            values.Select( x => ( Func<T, int, Assertion> )((element, _) => element.TestEquals( x )) ),
+            context );
+    }
+
+    [Pure]
+    public static Assertion TestContainsSequence<T>(
+        this Span<T> subject,
+        IEnumerable<T> values,
+        [CallerArgumentExpression( "subject" )]
+        string context = "")
+    {
+        return subject.TestContainsSequence(
+            values.Select( x => ( Func<T, int, Assertion> )((element, _) => element.TestEquals( x )) ),
+            context );
+    }
+
+    [Pure]
+    public static Assertion TestContainsContiguousSequence<T>(
+        this IEnumerable<T> subject,
+        IEnumerable<Func<T, int, Assertion>> elementAssertions,
+        [CallerArgumentExpression( "subject" )]
+        string context = "")
+    {
+        return new SequenceAssertion<T>( context, subject, elementAssertions.ToArray(), SequenceComparisonType.ContainsContiguous );
+    }
+
+    [Pure]
+    public static Assertion TestContainsContiguousSequence<T>(
+        this ReadOnlyMemory<T> subject,
+        IEnumerable<Func<T, int, Assertion>> elementAssertions,
+        [CallerArgumentExpression( "subject" )]
+        string context = "")
+    {
+        return subject.ToArray().TestContainsContiguousSequence( elementAssertions, context );
+    }
+
+    [Pure]
+    public static Assertion TestContainsContiguousSequence<T>(
+        this ReadOnlySpan<T> subject,
+        IEnumerable<Func<T, int, Assertion>> elementAssertions,
+        [CallerArgumentExpression( "subject" )]
+        string context = "")
+    {
+        return subject.ToArray().TestContainsContiguousSequence( elementAssertions, context );
+    }
+
+    [Pure]
+    public static Assertion TestContainsContiguousSequence<T>(
+        this Memory<T> subject,
+        IEnumerable<Func<T, int, Assertion>> elementAssertions,
+        [CallerArgumentExpression( "subject" )]
+        string context = "")
+    {
+        return subject.ToArray().TestContainsContiguousSequence( elementAssertions, context );
+    }
+
+    [Pure]
+    public static Assertion TestContainsContiguousSequence<T>(
+        this Span<T> subject,
+        IEnumerable<Func<T, int, Assertion>> elementAssertions,
+        [CallerArgumentExpression( "subject" )]
+        string context = "")
+    {
+        return subject.ToArray().TestContainsContiguousSequence( elementAssertions, context );
+    }
+
+    [Pure]
+    public static Assertion TestContainsContiguousSequence<T>(
+        this IEnumerable<T> subject,
+        IEnumerable<T> values,
+        [CallerArgumentExpression( "subject" )]
+        string context = "")
+    {
+        return subject.TestContainsContiguousSequence(
+            values.Select( x => ( Func<T, int, Assertion> )((element, _) => element.TestEquals( x )) ),
+            context );
+    }
+
+    [Pure]
+    public static Assertion TestContainsContiguousSequence<T>(
+        this ReadOnlyMemory<T> subject,
+        IEnumerable<T> values,
+        [CallerArgumentExpression( "subject" )]
+        string context = "")
+    {
+        return subject.TestContainsContiguousSequence(
+            values.Select( x => ( Func<T, int, Assertion> )((element, _) => element.TestEquals( x )) ),
+            context );
+    }
+
+    [Pure]
+    public static Assertion TestContainsContiguousSequence<T>(
+        this ReadOnlySpan<T> subject,
+        IEnumerable<T> values,
+        [CallerArgumentExpression( "subject" )]
+        string context = "")
+    {
+        return subject.TestContainsContiguousSequence(
+            values.Select( x => ( Func<T, int, Assertion> )((element, _) => element.TestEquals( x )) ),
+            context );
+    }
+
+    [Pure]
+    public static Assertion TestContainsContiguousSequence<T>(
+        this Memory<T> subject,
+        IEnumerable<T> values,
+        [CallerArgumentExpression( "subject" )]
+        string context = "")
+    {
+        return subject.TestContainsContiguousSequence(
+            values.Select( x => ( Func<T, int, Assertion> )((element, _) => element.TestEquals( x )) ),
+            context );
+    }
+
+    [Pure]
+    public static Assertion TestContainsContiguousSequence<T>(
+        this Span<T> subject,
+        IEnumerable<T> values,
+        [CallerArgumentExpression( "subject" )]
+        string context = "")
+    {
+        return subject.TestContainsContiguousSequence(
             values.Select( x => ( Func<T, int, Assertion> )((element, _) => element.TestEquals( x )) ),
             context );
     }
@@ -565,6 +822,26 @@ public static class AssertionExtensions
     }
 
     [Pure]
+    public static Assertion TestSetEqual<T>(
+        this Memory<T> subject,
+        IEnumerable<T> values,
+        [CallerArgumentExpression( "subject" )]
+        string context = "")
+    {
+        return subject.ToArray().TestSetEqual( values, context );
+    }
+
+    [Pure]
+    public static Assertion TestSetEqual<T>(
+        this Span<T> subject,
+        IEnumerable<T> values,
+        [CallerArgumentExpression( "subject" )]
+        string context = "")
+    {
+        return subject.ToArray().TestSetEqual( values, context );
+    }
+
+    [Pure]
     public static Assertion TestSupersetOf<T>(
         this IEnumerable<T> subject,
         IEnumerable<T> values,
@@ -592,6 +869,81 @@ public static class AssertionExtensions
         string context = "")
     {
         return subject.ToArray().TestSupersetOf( values, context );
+    }
+
+    [Pure]
+    public static Assertion TestSupersetOf<T>(
+        this Memory<T> subject,
+        IEnumerable<T> values,
+        [CallerArgumentExpression( "subject" )]
+        string context = "")
+    {
+        return subject.ToArray().TestSupersetOf( values, context );
+    }
+
+    [Pure]
+    public static Assertion TestSupersetOf<T>(
+        this Span<T> subject,
+        IEnumerable<T> values,
+        [CallerArgumentExpression( "subject" )]
+        string context = "")
+    {
+        return subject.ToArray().TestSupersetOf( values, context );
+    }
+
+    // TODO: remove 's' at the end
+    [Pure]
+    public static Assertion ReceivedCalls<T>(
+        this T subject,
+        Action<T> assertion,
+        [CallerArgumentExpression( "subject" )]
+        string context = "",
+        [CallerArgumentExpression( "assertion" )]
+        string subContext = "")
+        where T : class
+    {
+        return new ReceivedCallsAssertion<T>( context, subContext, subject, assertion, count: null );
+    }
+
+    [Pure]
+    public static Assertion ReceivedCalls<T>(
+        this T subject,
+        Action<T> assertion,
+        int count,
+        [CallerArgumentExpression( "subject" )]
+        string context = "",
+        [CallerArgumentExpression( "assertion" )]
+        string subContext = "")
+        where T : class
+    {
+        return new ReceivedCallsAssertion<T>( context, subContext, subject, assertion, count: count );
+    }
+
+    [Pure]
+    public static Assertion DidNotReceiveCall<T>(
+        this T subject,
+        Action<T> assertion,
+        [CallerArgumentExpression( "subject" )]
+        string context = "",
+        [CallerArgumentExpression( "assertion" )]
+        string subContext = "")
+        where T : class
+    {
+        return subject.ReceivedCalls( assertion, 0, context, subContext );
+    }
+
+    [Pure]
+    public static int CallCount<TDelegate>(this TDelegate @delegate)
+        where TDelegate : Delegate
+    {
+        return @delegate.ReceivedCalls().Count();
+    }
+
+    [Pure]
+    public static object CallAt<TDelegate>(this TDelegate @delegate, int index)
+        where TDelegate : Delegate
+    {
+        return new DelegateCall( @delegate.ReceivedCalls().ElementAtOrDefault( index ) );
     }
 
     [Pure]

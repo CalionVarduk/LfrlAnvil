@@ -12,11 +12,10 @@ public class StringBuilderExtensionsTests : TestsBase
 
         var result = sut.Reverse();
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            result.ToString().Should().Be( "7654321" );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                result.ToString().TestEquals( "7654321" ) )
+            .Go();
     }
 
     [Theory]
@@ -44,11 +43,10 @@ public class StringBuilderExtensionsTests : TestsBase
 
         var result = sut.Reverse( startIndex, length );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            result.ToString().Should().Be( expected );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                result.ToString().TestEquals( expected ) )
+            .Go();
     }
 
     [Fact]
@@ -58,11 +56,10 @@ public class StringBuilderExtensionsTests : TestsBase
 
         var result = sut.Indent( 0 );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            result.ToString().Should().Be( Environment.NewLine );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                result.ToString().TestEquals( Environment.NewLine ) )
+            .Go();
     }
 
     [Theory]
@@ -75,11 +72,10 @@ public class StringBuilderExtensionsTests : TestsBase
 
         var result = sut.Indent( value );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            result.ToString().Should().Be( Environment.NewLine + new string( ' ', value ) );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                result.ToString().TestEquals( Environment.NewLine + new string( ' ', value ) ) )
+            .Go();
     }
 
     [Fact]
@@ -89,11 +85,10 @@ public class StringBuilderExtensionsTests : TestsBase
 
         var result = sut.AppendLine( '.' );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            result.ToString().Should().Be( $".{Environment.NewLine}" );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                result.ToString().TestEquals( $".{Environment.NewLine}" ) )
+            .Go();
     }
 
     [Fact]
@@ -103,11 +98,10 @@ public class StringBuilderExtensionsTests : TestsBase
 
         var result = sut.AppendSpace();
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            result.ToString().Should().Be( " " );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                result.ToString().TestEquals( " " ) )
+            .Go();
     }
 
     [Fact]
@@ -117,11 +111,10 @@ public class StringBuilderExtensionsTests : TestsBase
 
         var result = sut.AppendDot();
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            result.ToString().Should().Be( "." );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                result.ToString().TestEquals( "." ) )
+            .Go();
     }
 
     [Fact]
@@ -131,11 +124,10 @@ public class StringBuilderExtensionsTests : TestsBase
 
         var result = sut.AppendComma();
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            result.ToString().Should().Be( "," );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                result.ToString().TestEquals( "," ) )
+            .Go();
     }
 
     [Fact]
@@ -145,11 +137,10 @@ public class StringBuilderExtensionsTests : TestsBase
 
         var result = sut.AppendSemicolon();
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            result.ToString().Should().Be( ";" );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                result.ToString().TestEquals( ";" ) )
+            .Go();
     }
 
     [Fact]
@@ -159,10 +150,9 @@ public class StringBuilderExtensionsTests : TestsBase
 
         var result = sut.ShrinkBy( 3 );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            result.ToString().Should().Be( "foo" );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                result.ToString().TestEquals( "foo" ) )
+            .Go();
     }
 }

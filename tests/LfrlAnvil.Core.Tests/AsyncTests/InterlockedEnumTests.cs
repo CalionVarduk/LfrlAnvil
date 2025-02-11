@@ -8,7 +8,7 @@ public class InterlockedEnumTests : TestsBase
     public void Default_ShouldBeDefaultEnum()
     {
         var sut = default( InterlockedEnum<Foo> );
-        sut.Value.Should().Be( Foo.A );
+        sut.Value.TestEquals( Foo.A ).Go();
     }
 
     [Theory]
@@ -18,7 +18,7 @@ public class InterlockedEnumTests : TestsBase
     public void Ctor_ShouldCreateWithCorrectValue(Foo value)
     {
         var sut = new InterlockedEnum<Foo>( value );
-        sut.Value.Should().Be( value );
+        sut.Value.TestEquals( value ).Go();
     }
 
     [Theory]
@@ -29,7 +29,7 @@ public class InterlockedEnumTests : TestsBase
     {
         var sut = new InterlockedEnum<Foo>( value );
         var result = sut.ToString();
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -40,7 +40,7 @@ public class InterlockedEnumTests : TestsBase
 
         var result = sut.GetHashCode();
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -53,11 +53,10 @@ public class InterlockedEnumTests : TestsBase
         var sut = new InterlockedEnum<Foo>( value );
         var result = sut.Exchange( newValue );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( value );
-            sut.Value.Should().Be( newValue );
-        }
+        Assertion.All(
+                result.TestEquals( value ),
+                sut.Value.TestEquals( newValue ) )
+            .Go();
     }
 
     [Theory]
@@ -75,11 +74,10 @@ public class InterlockedEnumTests : TestsBase
         var sut = new InterlockedEnum<Foo>( value );
         var result = sut.CompareExchange( newValue, comparand );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( value );
-            sut.Value.Should().Be( expected );
-        }
+        Assertion.All(
+                result.TestEquals( value ),
+                sut.Value.TestEquals( expected ) )
+            .Go();
     }
 
     [Theory]
@@ -92,11 +90,10 @@ public class InterlockedEnumTests : TestsBase
         var sut = new InterlockedEnum<Foo>( value );
         var result = sut.Write( newValue );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( expected );
-            sut.Value.Should().Be( newValue );
-        }
+        Assertion.All(
+                result.TestEquals( expected ),
+                sut.Value.TestEquals( newValue ) )
+            .Go();
     }
 
     [Theory]
@@ -115,11 +112,10 @@ public class InterlockedEnumTests : TestsBase
         var sut = new InterlockedEnum<Foo>( value );
         var result = sut.Write( newValue, comparand );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( expected );
-            sut.Value.Should().Be( expectedValue );
-        }
+        Assertion.All(
+                result.TestEquals( expected ),
+                sut.Value.TestEquals( expectedValue ) )
+            .Go();
     }
 
     [Theory]
@@ -133,7 +129,7 @@ public class InterlockedEnumTests : TestsBase
 
         var result = left == right;
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -147,7 +143,7 @@ public class InterlockedEnumTests : TestsBase
 
         var result = left != right;
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -161,7 +157,7 @@ public class InterlockedEnumTests : TestsBase
 
         var result = left >= right;
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -175,7 +171,7 @@ public class InterlockedEnumTests : TestsBase
 
         var result = left <= right;
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -189,7 +185,7 @@ public class InterlockedEnumTests : TestsBase
 
         var result = left > right;
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -203,7 +199,7 @@ public class InterlockedEnumTests : TestsBase
 
         var result = left < right;
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     public enum Foo

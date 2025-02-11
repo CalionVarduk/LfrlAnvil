@@ -1,7 +1,6 @@
 ﻿using LfrlAnvil.Functional;
 using LfrlAnvil.Internal;
 using LfrlAnvil.Memory;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Tests.MemoryTests.MemoryPoolTests;
 
@@ -11,12 +10,11 @@ public class MemoryPoolTokenTests : TestsBase
     public void Empty_ShouldHaveCorrectProperties()
     {
         var sut = MemoryPoolToken<int>.Empty;
-        using ( new AssertionScope() )
-        {
-            sut.Clear.Should().BeFalse();
-            sut.Owner.Should().BeNull();
-            sut.ToString().Should().Be( "Length: 0" );
-        }
+        Assertion.All(
+                sut.Clear.TestFalse(),
+                sut.Owner.TestNull(),
+                sut.ToString().TestEquals( "Length: 0" ) )
+            .Go();
     }
 
     [Fact]
@@ -25,12 +23,11 @@ public class MemoryPoolTokenTests : TestsBase
         var pool = new MemoryPool<int>( 8 );
         var sut = pool.Rent( 5 );
 
-        using ( new AssertionScope() )
-        {
-            sut.Clear.Should().BeFalse();
-            sut.Owner.Should().BeSameAs( pool );
-            sut.ToString().Should().Be( "Length: 5" );
-        }
+        Assertion.All(
+                sut.Clear.TestFalse(),
+                sut.Owner.TestRefEquals( pool ),
+                sut.ToString().TestEquals( "Length: 5" ) )
+            .Go();
     }
 
     [Fact]
@@ -39,12 +36,11 @@ public class MemoryPoolTokenTests : TestsBase
         var pool = new MemoryPool<int>( 8 );
         var sut = pool.Rent( 5 ).EnableClearing();
 
-        using ( new AssertionScope() )
-        {
-            sut.Clear.Should().BeTrue();
-            sut.Owner.Should().BeSameAs( pool );
-            sut.ToString().Should().Be( "Length: 5 (clear enabled)" );
-        }
+        Assertion.All(
+                sut.Clear.TestTrue(),
+                sut.Owner.TestRefEquals( pool ),
+                sut.ToString().TestEquals( "Length: 5 (clear enabled)" ) )
+            .Go();
     }
 
     [Fact]
@@ -55,12 +51,11 @@ public class MemoryPoolTokenTests : TestsBase
         _ = pool.Rent( 4 );
         sut.Dispose();
 
-        using ( new AssertionScope() )
-        {
-            sut.Clear.Should().BeFalse();
-            sut.Owner.Should().BeSameAs( pool );
-            sut.ToString().Should().Be( "Length: 0" );
-        }
+        Assertion.All(
+                sut.Clear.TestFalse(),
+                sut.Owner.TestRefEquals( pool ),
+                sut.ToString().TestEquals( "Length: 0" ) )
+            .Go();
     }
 
     [Theory]
@@ -73,7 +68,7 @@ public class MemoryPoolTokenTests : TestsBase
 
         sut = sut.EnableClearing( value );
 
-        sut.Clear.Should().Be( value );
+        sut.Clear.TestEquals( value ).Go();
     }
 
     [Fact]
@@ -81,7 +76,7 @@ public class MemoryPoolTokenTests : TestsBase
     {
         var sut = MemoryPoolToken<int>.Empty;
         var result = sut.AsMemory();
-        result.Length.Should().Be( 0 );
+        result.Length.TestEquals( 0 ).Go();
     }
 
     [Fact]
@@ -92,7 +87,7 @@ public class MemoryPoolTokenTests : TestsBase
 
         var result = sut.AsMemory();
 
-        result.Length.Should().Be( 5 );
+        result.Length.TestEquals( 5 ).Go();
     }
 
     [Fact]
@@ -105,7 +100,7 @@ public class MemoryPoolTokenTests : TestsBase
 
         var result = sut.AsMemory();
 
-        result.Length.Should().Be( 0 );
+        result.Length.TestEquals( 0 ).Go();
     }
 
     [Fact]
@@ -113,7 +108,7 @@ public class MemoryPoolTokenTests : TestsBase
     {
         var sut = MemoryPoolToken<int>.Empty;
         var result = sut.AsSpan();
-        result.Length.Should().Be( 0 );
+        result.Length.TestEquals( 0 ).Go();
     }
 
     [Fact]
@@ -124,7 +119,7 @@ public class MemoryPoolTokenTests : TestsBase
 
         var result = sut.AsSpan();
 
-        result.Length.Should().Be( 5 );
+        result.Length.TestEquals( 5 ).Go();
     }
 
     [Fact]
@@ -137,7 +132,7 @@ public class MemoryPoolTokenTests : TestsBase
 
         var result = sut.AsSpan();
 
-        result.Length.Should().Be( 0 );
+        result.Length.TestEquals( 0 ).Go();
     }
 
     [Fact]
@@ -145,7 +140,7 @@ public class MemoryPoolTokenTests : TestsBase
     {
         var sut = MemoryPoolToken<int>.Empty;
         sut.SetLength( 5 );
-        sut.AsMemory().Length.Should().Be( 0 );
+        sut.AsMemory().Length.TestEquals( 0 ).Go();
     }
 
     [Fact]
@@ -158,7 +153,7 @@ public class MemoryPoolTokenTests : TestsBase
 
         sut.SetLength( 2 );
 
-        sut.AsMemory().Length.Should().Be( 0 );
+        sut.AsMemory().Length.TestEquals( 0 ).Go();
     }
 
     [Fact]
@@ -170,7 +165,7 @@ public class MemoryPoolTokenTests : TestsBase
 
         sut.SetLength( 5 );
 
-        sut.AsSpan().ToArray().Should().BeSequentiallyEqualTo( 1, 2, 3, 4, 5 );
+        sut.AsSpan().TestSequence( [ 1, 2, 3, 4, 5 ] ).Go();
     }
 
     [Theory]
@@ -183,7 +178,7 @@ public class MemoryPoolTokenTests : TestsBase
 
         var action = Lambda.Of( () => sut.SetLength( length ) );
 
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Fact]
@@ -194,7 +189,7 @@ public class MemoryPoolTokenTests : TestsBase
 
         sut.SetLength( 3 );
 
-        sut.AsSpan().ToArray().Should().HaveCount( 3 );
+        sut.AsSpan().Length.TestEquals( 3 ).Go();
     }
 
     [Fact]
@@ -208,11 +203,10 @@ public class MemoryPoolTokenTests : TestsBase
         sut.SetLength( 2 );
         var other = pool.Rent( 2 );
 
-        using ( new AssertionScope() )
-        {
-            sut.AsSpan().ToArray().Should().BeSequentiallyEqualTo( 1, 2 );
-            other.AsSpan().ToArray().Should().BeSequentiallyEqualTo( 3, 4 );
-        }
+        Assertion.All(
+                sut.AsSpan().TestSequence( [ 1, 2 ] ),
+                other.AsSpan().TestSequence( [ 3, 4 ] ) )
+            .Go();
     }
 
     [Fact]
@@ -229,11 +223,10 @@ public class MemoryPoolTokenTests : TestsBase
         sut.SetLength( 3 );
         other = pool.Rent( 5 );
 
-        using ( new AssertionScope() )
-        {
-            sut.AsSpan().ToArray().Should().BeSequentiallyEqualTo( 1, 2, 3 );
-            other.AsSpan().ToArray().Should().BeSequentiallyEqualTo( 4, 5, 6, 7, 8 );
-        }
+        Assertion.All(
+                sut.AsSpan().TestSequence( [ 1, 2, 3 ] ),
+                other.AsSpan().TestSequence( [ 4, 5, 6, 7, 8 ] ) )
+            .Go();
     }
 
     [Fact]
@@ -247,11 +240,10 @@ public class MemoryPoolTokenTests : TestsBase
         sut.SetLength( 3 );
         var other = pool.Rent( 5 );
 
-        using ( new AssertionScope() )
-        {
-            sut.AsSpan().ToArray().Should().BeSequentiallyEqualTo( 1, 2, 3 );
-            other.AsSpan().ToArray().Should().BeSequentiallyEqualTo( 4, 5, 6, 7, 8 );
-        }
+        Assertion.All(
+                sut.AsSpan().TestSequence( [ 1, 2, 3 ] ),
+                other.AsSpan().TestSequence( [ 4, 5, 6, 7, 8 ] ) )
+            .Go();
     }
 
     [Fact]
@@ -268,11 +260,10 @@ public class MemoryPoolTokenTests : TestsBase
         sut.SetLength( 3 );
         other = pool.Rent( 5 );
 
-        using ( new AssertionScope() )
-        {
-            sut.AsSpan().ToArray().Should().BeSequentiallyEqualTo( 1, 2, 3 );
-            other.AsSpan().ToArray().Should().BeSequentiallyEqualTo( 4, 5, 6, 7, 8 );
-        }
+        Assertion.All(
+                sut.AsSpan().TestSequence( [ 1, 2, 3 ] ),
+                other.AsSpan().TestSequence( [ 4, 5, 6, 7, 8 ] ) )
+            .Go();
     }
 
     [Fact]
@@ -286,11 +277,10 @@ public class MemoryPoolTokenTests : TestsBase
         sut.SetLength( 6 );
         var other = pool.Rent( 2 );
 
-        using ( new AssertionScope() )
-        {
-            sut.AsSpan().ToArray().Should().BeSequentiallyEqualTo( 1, 2, 3, 4, 5, 6 );
-            other.AsSpan().ToArray().Should().BeSequentiallyEqualTo( 7, 8 );
-        }
+        Assertion.All(
+                sut.AsSpan().TestSequence( [ 1, 2, 3, 4, 5, 6 ] ),
+                other.AsSpan().TestSequence( [ 7, 8 ] ) )
+            .Go();
     }
 
     [Fact]
@@ -304,11 +294,10 @@ public class MemoryPoolTokenTests : TestsBase
         sut.SetLength( 6 );
         var other = pool.Rent( 2 );
 
-        using ( new AssertionScope() )
-        {
-            sut.AsSpan().ToArray().Should().BeSequentiallyEqualTo( 1, 2, 3, 4, 5, 6 );
-            other.AsSpan().ToArray().Should().BeSequentiallyEqualTo( 0, 0 );
-        }
+        Assertion.All(
+                sut.AsSpan().TestSequence( [ 1, 2, 3, 4, 5, 6 ] ),
+                other.AsSpan().TestSequence( [ 0, 0 ] ) )
+            .Go();
     }
 
     [Fact]
@@ -320,7 +309,7 @@ public class MemoryPoolTokenTests : TestsBase
 
         sut.SetLength( 8 );
 
-        sut.AsSpan().ToArray().Should().BeSequentiallyEqualTo( 1, 2, 3, 4, 5, 6, 0, 0 );
+        sut.AsSpan().TestSequence( [ 1, 2, 3, 4, 5, 6, 0, 0 ] ).Go();
     }
 
     [Fact]
@@ -332,7 +321,7 @@ public class MemoryPoolTokenTests : TestsBase
 
         sut.SetLength( 7 );
 
-        sut.AsSpan().ToArray().Should().BeSequentiallyEqualTo( 1, 2, 3, 4, 5, 6, 0 );
+        sut.AsSpan().TestSequence( [ 1, 2, 3, 4, 5, 6, 0 ] ).Go();
     }
 
     [Fact]
@@ -351,7 +340,7 @@ public class MemoryPoolTokenTests : TestsBase
 
         sut.SetLength( 8 );
 
-        sut.AsSpan().ToArray().Should().BeSequentiallyEqualTo( 1, 2, 3, 4, 5, 6, 7, 8 );
+        sut.AsSpan().TestSequence( [ 1, 2, 3, 4, 5, 6, 7, 8 ] ).Go();
     }
 
     [Fact]
@@ -370,7 +359,7 @@ public class MemoryPoolTokenTests : TestsBase
 
         sut.SetLength( 7 );
 
-        sut.AsSpan().ToArray().Should().BeSequentiallyEqualTo( 1, 2, 3, 4, 5, 6, 7 );
+        sut.AsSpan().TestSequence( [ 1, 2, 3, 4, 5, 6, 7 ] ).Go();
     }
 
     [Fact]
@@ -387,7 +376,7 @@ public class MemoryPoolTokenTests : TestsBase
 
         sut.SetLength( 8 );
 
-        sut.AsSpan().ToArray().Should().BeSequentiallyEqualTo( 9, 10, 11, 12, 13, 14, 7, 8 );
+        sut.AsSpan().TestSequence( [ 9, 10, 11, 12, 13, 14, 7, 8 ] ).Go();
     }
 
     [Fact]
@@ -400,7 +389,7 @@ public class MemoryPoolTokenTests : TestsBase
 
         sut.SetLength( 8 );
 
-        sut.AsSpan().ToArray().Should().BeSequentiallyEqualTo( 1, 2, 3, 4, 5, 6, 0, 0 );
+        sut.AsSpan().TestSequence( [ 1, 2, 3, 4, 5, 6, 0, 0 ] ).Go();
     }
 
     [Fact]
@@ -413,7 +402,7 @@ public class MemoryPoolTokenTests : TestsBase
 
         sut.SetLength( 10 );
 
-        sut.AsSpan().ToArray().Should().BeSequentiallyEqualTo( 1, 2, 3, 4, 5, 6, 0, 0, 0, 0 );
+        sut.AsSpan().TestSequence( [ 1, 2, 3, 4, 5, 6, 0, 0, 0, 0 ] ).Go();
     }
 
     [Fact]
@@ -427,7 +416,7 @@ public class MemoryPoolTokenTests : TestsBase
 
         sut.SetLength( 7 );
 
-        sut.AsSpan().ToArray().Should().BeSequentiallyEqualTo( 1, 2, 3, 4, 5, 0, 0 );
+        sut.AsSpan().TestSequence( [ 1, 2, 3, 4, 5, 0, 0 ] ).Go();
     }
 
     [Fact]
@@ -440,7 +429,7 @@ public class MemoryPoolTokenTests : TestsBase
 
         sut.SetLength( 7 );
 
-        sut.AsSpan().ToArray().Should().BeSequentiallyEqualTo( 1, 2, 3, 4, 5, 6, 0 );
+        sut.AsSpan().TestSequence( [ 1, 2, 3, 4, 5, 6, 0 ] ).Go();
     }
 
     [Fact]
@@ -457,7 +446,7 @@ public class MemoryPoolTokenTests : TestsBase
 
         sut.SetLength( 7 );
 
-        sut.AsSpan().ToArray().Should().BeSequentiallyEqualTo( 1, 2, 3, 4, 5, 6, 13 );
+        sut.AsSpan().TestSequence( [ 1, 2, 3, 4, 5, 6, 13 ] ).Go();
     }
 
     [Fact]
@@ -475,7 +464,7 @@ public class MemoryPoolTokenTests : TestsBase
 
         sut.SetLength( 7 );
 
-        sut.AsSpan().ToArray().Should().BeSequentiallyEqualTo( 1, 2, 3, 4, 5, 6, 13 );
+        sut.AsSpan().TestSequence( [ 1, 2, 3, 4, 5, 6, 13 ] ).Go();
     }
 
     [Fact]
@@ -490,7 +479,7 @@ public class MemoryPoolTokenTests : TestsBase
 
         sut.SetLength( 7 );
 
-        sut.AsSpan().ToArray().Should().BeSequentiallyEqualTo( 1, 2, 3, 4, 5, 6, 0 );
+        sut.AsSpan().TestSequence( [ 1, 2, 3, 4, 5, 6, 0 ] ).Go();
     }
 
     [Fact]
@@ -505,7 +494,7 @@ public class MemoryPoolTokenTests : TestsBase
 
         sut.SetLength( 10 );
 
-        sut.AsSpan().ToArray().Should().BeSequentiallyEqualTo( 1, 2, 3, 4, 5, 6, 0, 0, 0, 0 );
+        sut.AsSpan().TestSequence( [ 1, 2, 3, 4, 5, 6, 0, 0, 0, 0 ] ).Go();
     }
 
     [Fact]
@@ -519,11 +508,10 @@ public class MemoryPoolTokenTests : TestsBase
         sut.SetLength( 8 );
         var other = pool.Rent( 6 );
 
-        using ( new AssertionScope() )
-        {
-            sut.AsSpan().ToArray().Should().BeSequentiallyEqualTo( 1, 2, 3, 4, 5, 6, 0, 0 );
-            other.AsSpan().ToArray().Should().BeSequentiallyEqualTo( 1, 2, 3, 4, 5, 6 );
-        }
+        Assertion.All(
+                sut.AsSpan().TestSequence( [ 1, 2, 3, 4, 5, 6, 0, 0 ] ),
+                other.AsSpan().TestSequence( [ 1, 2, 3, 4, 5, 6 ] ) )
+            .Go();
     }
 
     [Fact]
@@ -537,11 +525,10 @@ public class MemoryPoolTokenTests : TestsBase
         sut.SetLength( 8 );
         var other = pool.Rent( 6 );
 
-        using ( new AssertionScope() )
-        {
-            sut.AsSpan().ToArray().Should().BeSequentiallyEqualTo( 1, 2, 3, 4, 5, 6, 0, 0 );
-            other.AsSpan().ToArray().Should().BeSequentiallyEqualTo( 0, 0, 0, 0, 0, 0 );
-        }
+        Assertion.All(
+                sut.AsSpan().TestSequence( [ 1, 2, 3, 4, 5, 6, 0, 0 ] ),
+                other.AsSpan().TestSequence( [ 0, 0, 0, 0, 0, 0 ] ) )
+            .Go();
     }
 
     [Fact]
@@ -549,7 +536,7 @@ public class MemoryPoolTokenTests : TestsBase
     {
         var sut = MemoryPoolToken<int>.Empty;
         var result = sut.TryGetInfo();
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Fact]
@@ -560,8 +547,7 @@ public class MemoryPoolTokenTests : TestsBase
 
         var result = sut.TryGetInfo();
 
-        result.Should()
-            .BeEquivalentTo(
+        result.TestEquals(
                 new MemoryPool<int>.ReportInfo.Node(
                     pool: pool,
                     segmentIndex: 0,
@@ -570,7 +556,8 @@ public class MemoryPoolTokenTests : TestsBase
                     nodeId: NullableIndex.Create( 0 ),
                     startIndex: 0,
                     length: 5,
-                    isFragmented: false ) );
+                    isFragmented: false ) )
+            .Go();
     }
 
     [Fact]
@@ -583,8 +570,7 @@ public class MemoryPoolTokenTests : TestsBase
 
         var result = sut.TryGetInfo();
 
-        result.Should()
-            .BeEquivalentTo(
+        result.TestEquals(
                 new MemoryPool<int>.ReportInfo.Node(
                     pool: pool,
                     segmentIndex: 0,
@@ -593,7 +579,8 @@ public class MemoryPoolTokenTests : TestsBase
                     nodeId: NullableIndex.Create( 0 ),
                     startIndex: 0,
                     length: 3,
-                    isFragmented: true ) );
+                    isFragmented: true ) )
+            .Go();
     }
 
     [Fact]
@@ -605,7 +592,7 @@ public class MemoryPoolTokenTests : TestsBase
 
         var result = sut.TryGetInfo();
 
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Fact]
@@ -619,7 +606,7 @@ public class MemoryPoolTokenTests : TestsBase
 
         using var next = pool.Rent( 16 );
 
-        memory.Should().BeEquivalentTo( next.AsMemory() );
+        memory.TestEquals( next.AsMemory() ).Go();
     }
 
     [Fact]
@@ -634,7 +621,7 @@ public class MemoryPoolTokenTests : TestsBase
 
         using var next = pool.Rent( 16 );
 
-        memory.Should().BeEquivalentTo( next.AsMemory() );
+        memory.TestEquals( next.AsMemory() ).Go();
     }
 
     [Fact]
@@ -650,7 +637,7 @@ public class MemoryPoolTokenTests : TestsBase
 
         using var next = pool.Rent( 16 );
 
-        memory.Should().BeEquivalentTo( next.AsMemory() );
+        memory.TestEquals( next.AsMemory() ).Go();
     }
 
     [Fact]
@@ -665,7 +652,7 @@ public class MemoryPoolTokenTests : TestsBase
 
         sut.Dispose();
 
-        pool.Report.ActiveSegments.Should().Be( 0 );
+        pool.Report.ActiveSegments.TestEquals( 0 ).Go();
     }
 
     [Fact]
@@ -678,7 +665,7 @@ public class MemoryPoolTokenTests : TestsBase
         sut.Dispose();
         var other = pool.Rent( 16 );
 
-        (other.TryGetInfo()?.SegmentIndex).Should().Be( 0 );
+        (other.TryGetInfo()?.SegmentIndex).TestEquals( 0 ).Go();
     }
 
     [Fact]
@@ -691,7 +678,7 @@ public class MemoryPoolTokenTests : TestsBase
         sut.Dispose();
         var other = pool.Rent( 10 );
 
-        (other.TryGetInfo()?.SegmentIndex).Should().Be( 0 );
+        (other.TryGetInfo()?.SegmentIndex).TestEquals( 0 ).Go();
     }
 
     [Fact]
@@ -705,7 +692,7 @@ public class MemoryPoolTokenTests : TestsBase
         sut.Dispose();
         var other = pool.Rent( 16 );
 
-        (other.TryGetInfo()?.SegmentIndex).Should().Be( 0 );
+        (other.TryGetInfo()?.SegmentIndex).TestEquals( 0 ).Go();
     }
 
     [Fact]
@@ -718,7 +705,7 @@ public class MemoryPoolTokenTests : TestsBase
         sut.Dispose();
         var other = pool.Rent( 16 );
 
-        (other.TryGetInfo()?.SegmentIndex).Should().Be( 0 );
+        (other.TryGetInfo()?.SegmentIndex).TestEquals( 0 ).Go();
     }
 
     [Fact]
@@ -733,7 +720,7 @@ public class MemoryPoolTokenTests : TestsBase
         sut.Dispose();
         var other = pool.Rent( 8 );
 
-        other.AsSpan().ToArray().Should().BeSequentiallyEqualTo( 1, 2, 3, 4, 5, 6, 7, 8 );
+        other.AsSpan().TestSequence( [ 1, 2, 3, 4, 5, 6, 7, 8 ] ).Go();
     }
 
     [Fact]
@@ -750,7 +737,7 @@ public class MemoryPoolTokenTests : TestsBase
         sut.Dispose();
         other = pool.Rent( 8 );
 
-        other.AsSpan().ToArray().Should().BeSequentiallyEqualTo( 9, 10, 11, 12, 1, 2, 3, 4 );
+        other.AsSpan().TestSequence( [ 9, 10, 11, 12, 1, 2, 3, 4 ] ).Go();
     }
 
     [Fact]
@@ -765,7 +752,7 @@ public class MemoryPoolTokenTests : TestsBase
         sut.Dispose();
         var other = pool.Rent( 8 );
 
-        other.AsSpan().ToArray().Should().BeSequentiallyEqualTo( 1, 2, 3, 4, 5, 6, 7, 8 );
+        other.AsSpan().TestSequence( [ 1, 2, 3, 4, 5, 6, 7, 8 ] ).Go();
     }
 
     [Fact]
@@ -783,7 +770,7 @@ public class MemoryPoolTokenTests : TestsBase
         _ = pool.Rent( 16 );
         other = pool.Rent( 8 );
 
-        other.AsSpan().ToArray().Should().BeSequentiallyEqualTo( 1, 2, 3, 4, 5, 6, 7, 8 );
+        other.AsSpan().TestSequence( [ 1, 2, 3, 4, 5, 6, 7, 8 ] ).Go();
     }
 
     [Fact]
@@ -801,7 +788,7 @@ public class MemoryPoolTokenTests : TestsBase
         sut.Dispose();
         other = pool.Rent( 12 );
 
-        other.AsSpan().ToArray().Should().BeSequentiallyEqualTo( 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 );
+        other.AsSpan().TestSequence( [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 ] ).Go();
     }
 
     [Fact]
@@ -824,7 +811,7 @@ public class MemoryPoolTokenTests : TestsBase
         sut.Dispose();
         other = pool.Rent( 16 );
 
-        other.AsSpan().ToArray().Should().BeSequentiallyEqualTo( 9, 10, 11, 1, 2, 3, 4, 5, 6, 7, 8, 12, 13, 14, 15, 16 );
+        other.AsSpan().TestSequence( [ 9, 10, 11, 1, 2, 3, 4, 5, 6, 7, 8, 12, 13, 14, 15, 16 ] ).Go();
     }
 
     [Fact]
@@ -843,7 +830,7 @@ public class MemoryPoolTokenTests : TestsBase
         sut.Dispose();
         other = pool.Rent( 16 );
 
-        other.AsSpan().ToArray().Should().BeSequentiallyEqualTo( 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16 );
+        other.AsSpan().TestSequence( [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16 ] ).Go();
     }
 
     [Fact]
@@ -864,7 +851,7 @@ public class MemoryPoolTokenTests : TestsBase
         sut.Dispose();
         other = pool.Rent( 16 );
 
-        other.AsSpan().ToArray().Should().BeSequentiallyEqualTo( 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16 );
+        other.AsSpan().TestSequence( [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16 ] ).Go();
     }
 
     [Fact]
@@ -879,7 +866,7 @@ public class MemoryPoolTokenTests : TestsBase
         sut.Dispose();
         var other = pool.Rent( 12 );
 
-        other.AsSpan().ToArray().Should().BeSequentiallyEqualTo( 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 );
+        other.AsSpan().TestSequence( [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 ] ).Go();
     }
 
     [Fact]
@@ -897,7 +884,7 @@ public class MemoryPoolTokenTests : TestsBase
         sut.Dispose();
         other = pool.Rent( 16 );
 
-        other.AsSpan().ToArray().Should().BeSequentiallyEqualTo( 13, 14, 15, 16, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 );
+        other.AsSpan().TestSequence( [ 13, 14, 15, 16, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 ] ).Go();
     }
 
     [Fact]
@@ -912,7 +899,7 @@ public class MemoryPoolTokenTests : TestsBase
         sut.Dispose();
         var other = pool.Rent( 16 );
 
-        other.AsSpan().ToArray().Should().BeSequentiallyEqualTo( 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16 );
+        other.AsSpan().TestSequence( [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16 ] ).Go();
     }
 
     [Fact]
@@ -930,7 +917,7 @@ public class MemoryPoolTokenTests : TestsBase
         sut.Dispose();
         other = pool.Rent( 16 );
 
-        other.AsSpan().ToArray().Should().BeSequentiallyEqualTo( 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16 );
+        other.AsSpan().TestSequence( [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16 ] ).Go();
     }
 
     [Fact]
@@ -948,7 +935,7 @@ public class MemoryPoolTokenTests : TestsBase
         sut.Dispose();
         other = pool.Rent( 12 );
 
-        other.AsSpan().ToArray().Should().BeSequentiallyEqualTo( 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 );
+        other.AsSpan().TestSequence( [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 ] ).Go();
     }
 
     [Fact]
@@ -968,7 +955,7 @@ public class MemoryPoolTokenTests : TestsBase
         sut.Dispose();
         other = pool.Rent( 16 );
 
-        other.AsSpan().ToArray().Should().BeSequentiallyEqualTo( 13, 14, 15, 16, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 );
+        other.AsSpan().TestSequence( [ 13, 14, 15, 16, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 ] ).Go();
     }
 
     [Fact]
@@ -986,7 +973,7 @@ public class MemoryPoolTokenTests : TestsBase
         sut.Dispose();
         other = pool.Rent( 16 );
 
-        other.AsSpan().ToArray().Should().BeSequentiallyEqualTo( 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16 );
+        other.AsSpan().TestSequence( [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16 ] ).Go();
     }
 
     [Fact]
@@ -1006,7 +993,7 @@ public class MemoryPoolTokenTests : TestsBase
         sut.Dispose();
         other = pool.Rent( 16 );
 
-        other.AsSpan().ToArray().Should().BeSequentiallyEqualTo( 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16 );
+        other.AsSpan().TestSequence( [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16 ] ).Go();
     }
 
     [Fact]
@@ -1019,7 +1006,7 @@ public class MemoryPoolTokenTests : TestsBase
         sut.Dispose();
         var other = pool.Rent( 8 );
 
-        other.AsSpan().ToArray().Should().BeSequentiallyEqualTo( 1, 2, 3, 4, 5, 6, 7, 8 );
+        other.AsSpan().TestSequence( [ 1, 2, 3, 4, 5, 6, 7, 8 ] ).Go();
     }
 
     [Fact]
@@ -1032,6 +1019,6 @@ public class MemoryPoolTokenTests : TestsBase
         sut.Dispose();
         var other = pool.Rent( 8 );
 
-        other.AsSpan().ToArray().Should().BeSequentiallyEqualTo( 0, 0, 0, 0, 0, 0, 0, 0 );
+        other.AsSpan().TestSequence( [ 0, 0, 0, 0, 0, 0, 0, 0 ] ).Go();
     }
 }

@@ -88,8 +88,10 @@ public partial class SqlDatabaseBuilderTests
                 actions.ElementAtOrDefault( 0 )
                     .Sql.Should()
                     .Be(
-                        @"ALTER [Table] common.U
-  ALTER [Table] common.U ([1] : 'Name' (System.String) FROM T);" );
+                        """
+                        ALTER [Table] common.U
+                          ALTER [Table] common.U ([1] : 'Name' (System.String) FROM T);
+                        """ );
             }
         }
 

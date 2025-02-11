@@ -13,7 +13,7 @@ public class ParameterInfoExtensionsTests : TestsBase
     {
         var sut = GetBaseParameter();
         var result = sut.GetAttribute<TestUniqueAttribute>();
-        result.Should().BeEquivalentTo( new TestUniqueAttribute( 0 ) );
+        result.TestEquals( new TestUniqueAttribute( 0 ) ).Go();
     }
 
     [Fact]
@@ -21,7 +21,7 @@ public class ParameterInfoExtensionsTests : TestsBase
     {
         var sut = GetBaseParameter();
         var action = Lambda.Of( () => sut.GetAttribute<TestMultiAttribute>() );
-        action.Should().ThrowExactly<AmbiguousMatchException>();
+        action.Test( exc => exc.TestType().Exact<AmbiguousMatchException>() ).Go();
     }
 
     [Fact]
@@ -29,7 +29,7 @@ public class ParameterInfoExtensionsTests : TestsBase
     {
         var sut = GetBaseParameter();
         var result = sut.GetAttribute<TestUnusedAttribute>();
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Theory]
@@ -39,7 +39,7 @@ public class ParameterInfoExtensionsTests : TestsBase
     {
         var sut = GetDerivedParameter();
         var result = sut.GetAttribute<TestUniqueAttribute>( inherit );
-        result.Should().BeEquivalentTo( new TestUniqueAttribute( 4 ) );
+        result.TestEquals( new TestUniqueAttribute( 4 ) ).Go();
     }
 
     [Fact]
@@ -47,7 +47,7 @@ public class ParameterInfoExtensionsTests : TestsBase
     {
         var sut = GetDerivedParameter();
         var result = sut.GetAttribute<TestBaseOnlyAttribute>( inherit: true );
-        result.Should().BeEquivalentTo( new TestBaseOnlyAttribute( 3 ) );
+        result.TestEquals( new TestBaseOnlyAttribute( 3 ) ).Go();
     }
 
     [Fact]
@@ -55,7 +55,7 @@ public class ParameterInfoExtensionsTests : TestsBase
     {
         var sut = GetDerivedParameter();
         var result = sut.GetAttribute<TestBaseOnlyAttribute>( inherit: false );
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Fact]
@@ -64,7 +64,7 @@ public class ParameterInfoExtensionsTests : TestsBase
         var sut = GetBaseParameter();
         var expected = new[] { new TestUniqueAttribute( 0 ) }.AsEnumerable();
         var result = sut.GetAttributeRange<TestUniqueAttribute>();
-        result.Should().BeEquivalentTo( expected );
+        result.TestSetEqual( expected ).Go();
     }
 
     [Fact]
@@ -73,7 +73,7 @@ public class ParameterInfoExtensionsTests : TestsBase
         var sut = GetBaseParameter();
         var expected = new[] { new TestMultiAttribute( 1 ), new TestMultiAttribute( 2 ) }.AsEnumerable();
         var result = sut.GetAttributeRange<TestMultiAttribute>();
-        result.Should().BeEquivalentTo( expected );
+        result.TestSetEqual( expected ).Go();
     }
 
     [Fact]
@@ -81,7 +81,7 @@ public class ParameterInfoExtensionsTests : TestsBase
     {
         var sut = GetBaseParameter();
         var result = sut.GetAttributeRange<TestUnusedAttribute>();
-        result.Should().BeEmpty();
+        result.TestEmpty().Go();
     }
 
     [Theory]
@@ -92,7 +92,7 @@ public class ParameterInfoExtensionsTests : TestsBase
         var sut = GetDerivedParameter();
         var expected = new[] { new TestUniqueAttribute( 4 ) }.AsEnumerable();
         var result = sut.GetAttributeRange<TestUniqueAttribute>( inherit );
-        result.Should().BeEquivalentTo( expected );
+        result.TestSetEqual( expected ).Go();
     }
 
     [Fact]
@@ -101,7 +101,7 @@ public class ParameterInfoExtensionsTests : TestsBase
         var sut = GetDerivedParameter();
         var expected = new[] { new TestBaseOnlyAttribute( 3 ) }.AsEnumerable();
         var result = sut.GetAttributeRange<TestBaseOnlyAttribute>( inherit: true );
-        result.Should().BeEquivalentTo( expected );
+        result.TestSetEqual( expected ).Go();
     }
 
     [Fact]
@@ -109,7 +109,7 @@ public class ParameterInfoExtensionsTests : TestsBase
     {
         var sut = GetDerivedParameter();
         var result = sut.GetAttributeRange<TestBaseOnlyAttribute>( inherit: false );
-        result.Should().BeEmpty();
+        result.TestEmpty().Go();
     }
 
     [Fact]
@@ -123,7 +123,7 @@ public class ParameterInfoExtensionsTests : TestsBase
             .AsEnumerable();
 
         var result = sut.GetAttributeRange<TestMultiAttribute>( inherit: true );
-        result.Should().BeEquivalentTo( expected );
+        result.TestSetEqual( expected ).Go();
     }
 
     [Fact]
@@ -132,7 +132,7 @@ public class ParameterInfoExtensionsTests : TestsBase
         var sut = GetDerivedParameter();
         var expected = new[] { new TestMultiAttribute( 5 ), new TestMultiAttribute( 6 ) }.AsEnumerable();
         var result = sut.GetAttributeRange<TestMultiAttribute>( inherit: false );
-        result.Should().BeEquivalentTo( expected );
+        result.TestSetEqual( expected ).Go();
     }
 
     [Fact]
@@ -140,7 +140,7 @@ public class ParameterInfoExtensionsTests : TestsBase
     {
         var sut = GetBaseParameter();
         var result = sut.HasAttribute<TestMultiAttribute>();
-        result.Should().BeTrue();
+        result.TestTrue().Go();
     }
 
     [Fact]
@@ -148,7 +148,7 @@ public class ParameterInfoExtensionsTests : TestsBase
     {
         var sut = GetBaseParameter();
         var result = sut.HasAttribute<TestUnusedAttribute>();
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Fact]
@@ -156,7 +156,7 @@ public class ParameterInfoExtensionsTests : TestsBase
     {
         var sut = GetDerivedParameter();
         var result = sut.HasAttribute<TestBaseOnlyAttribute>( inherit: true );
-        result.Should().BeTrue();
+        result.TestTrue().Go();
     }
 
     [Fact]
@@ -164,7 +164,7 @@ public class ParameterInfoExtensionsTests : TestsBase
     {
         var sut = GetDerivedParameter();
         var result = sut.HasAttribute<TestBaseOnlyAttribute>( inherit: false );
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Fact]
@@ -175,7 +175,7 @@ public class ParameterInfoExtensionsTests : TestsBase
             .GetParameters()[0];
 
         var result = parameter.GetDebugString();
-        result.Should().Be( "System.Int32 key" );
+        result.TestEquals( "System.Int32 key" ).Go();
     }
 
     [Fact]
@@ -186,7 +186,7 @@ public class ParameterInfoExtensionsTests : TestsBase
             .GetParameters()[1];
 
         var result = parameter.GetDebugString();
-        result.Should().Be( "System.String& value [out]" );
+        result.TestEquals( "System.String& value [out]" ).Go();
     }
 
     [Fact]
@@ -197,7 +197,7 @@ public class ParameterInfoExtensionsTests : TestsBase
             .GetParameters()[0];
 
         var result = parameter.GetDebugString();
-        result.Should().Be( "System.Int32& a [in]" );
+        result.TestEquals( "System.Int32& a [in]" ).Go();
     }
 
     private static ParameterInfo GetBaseParameter()

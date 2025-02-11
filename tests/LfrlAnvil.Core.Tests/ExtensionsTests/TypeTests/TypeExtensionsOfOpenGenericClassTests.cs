@@ -10,7 +10,7 @@ public class OpenGenericClassTests : TypeTestsBase
     {
         var sut = typeof( GenericClass<> );
         var result = sut.GetImplementation<IDirect>();
-        result.Should().Be( typeof( IDirect ) );
+        result.TestEquals( typeof( IDirect ) ).Go();
     }
 
     [Fact]
@@ -18,7 +18,7 @@ public class OpenGenericClassTests : TypeTestsBase
     {
         var sut = typeof( GenericClass<> );
         var result = sut.GetImplementation<IIndirectFromInterface>();
-        result.Should().Be( typeof( IIndirectFromInterface ) );
+        result.TestEquals( typeof( IIndirectFromInterface ) ).Go();
     }
 
     [Fact]
@@ -26,7 +26,7 @@ public class OpenGenericClassTests : TypeTestsBase
     {
         var sut = typeof( GenericClass<> );
         var result = sut.GetImplementation<IIndirectFromType>();
-        result.Should().Be( typeof( IIndirectFromType ) );
+        result.TestEquals( typeof( IIndirectFromType ) ).Go();
     }
 
     [Fact]
@@ -34,7 +34,7 @@ public class OpenGenericClassTests : TypeTestsBase
     {
         var sut = typeof( GenericClass<> );
         var result = sut.GetImplementation<INotImplemented>();
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Fact]
@@ -42,7 +42,7 @@ public class OpenGenericClassTests : TypeTestsBase
     {
         var sut = typeof( GenericClass<> );
         var result = sut.GetImplementation( typeof( IBaseGeneric<> ) );
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Fact]
@@ -50,7 +50,7 @@ public class OpenGenericClassTests : TypeTestsBase
     {
         var sut = typeof( GenericClass<> );
         var result = sut.Implements<IDirect>();
-        result.Should().BeTrue();
+        result.TestTrue().Go();
     }
 
     [Fact]
@@ -58,7 +58,7 @@ public class OpenGenericClassTests : TypeTestsBase
     {
         var sut = typeof( GenericClass<> );
         var result = sut.Implements<IIndirectFromInterface>();
-        result.Should().BeTrue();
+        result.TestTrue().Go();
     }
 
     [Fact]
@@ -66,7 +66,7 @@ public class OpenGenericClassTests : TypeTestsBase
     {
         var sut = typeof( GenericClass<> );
         var result = sut.Implements<IIndirectFromType>();
-        result.Should().BeTrue();
+        result.TestTrue().Go();
     }
 
     [Fact]
@@ -74,7 +74,7 @@ public class OpenGenericClassTests : TypeTestsBase
     {
         var sut = typeof( GenericClass<> );
         var result = sut.Implements<INotImplemented>();
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Fact]
@@ -82,7 +82,7 @@ public class OpenGenericClassTests : TypeTestsBase
     {
         var sut = typeof( GenericClass<> );
         var result = sut.Implements( typeof( IBaseGeneric<> ) );
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Fact]
@@ -91,7 +91,7 @@ public class OpenGenericClassTests : TypeTestsBase
         var sut = typeof( GenericClass<> );
         var expected = new[] { typeof( IBaseGeneric<> ).MakeGenericType( sut.GetGenericArguments()[0] ) }.AsEnumerable();
         var result = sut.GetOpenGenericImplementations( typeof( IBaseGeneric<> ) );
-        result.Should().BeEquivalentTo( expected );
+        result.TestSetEqual( expected ).Go();
     }
 
     [Fact]
@@ -99,7 +99,7 @@ public class OpenGenericClassTests : TypeTestsBase
     {
         var sut = typeof( GenericClass<> );
         var result = sut.ImplementsOpenGeneric( typeof( IBaseGeneric<> ) );
-        result.Should().BeTrue();
+        result.TestTrue().Go();
     }
 
     [Fact]
@@ -108,7 +108,7 @@ public class OpenGenericClassTests : TypeTestsBase
         var sut = typeof( GenericClass<> );
         var expected = new[] { typeof( IBaseGeneric<> ) }.AsEnumerable();
         var result = sut.GetAllImplementedGenericDefinitions();
-        result.Should().BeEquivalentTo( expected );
+        result.TestSetEqual( expected ).Go();
     }
 
     [Fact]
@@ -122,7 +122,7 @@ public class OpenGenericClassTests : TypeTestsBase
         }.AsEnumerable();
 
         var result = sut.GetOpenGenericImplementations( typeof( IBaseGeneric<> ) );
-        result.Should().BeEquivalentTo( expected );
+        result.TestSetEqual( expected ).Go();
     }
 
     [Fact]
@@ -130,7 +130,7 @@ public class OpenGenericClassTests : TypeTestsBase
     {
         var sut = typeof( MultiGenericClass<,> );
         var result = sut.ImplementsOpenGeneric( typeof( IBaseGeneric<> ) );
-        result.Should().BeTrue();
+        result.TestTrue().Go();
     }
 
     [Fact]
@@ -139,7 +139,7 @@ public class OpenGenericClassTests : TypeTestsBase
         var sut = typeof( MultiGenericClass<,> );
         var expected = new[] { typeof( IBaseGeneric<> ) }.AsEnumerable();
         var result = sut.GetAllImplementedGenericDefinitions();
-        result.Should().BeEquivalentTo( expected );
+        result.TestSetEqual( expected ).Go();
     }
 
     [Fact]
@@ -147,7 +147,7 @@ public class OpenGenericClassTests : TypeTestsBase
     {
         var sut = typeof( BaseGenericClass<> );
         var result = sut.GetExtension<BaseClass>();
-        result.Should().Be( typeof( BaseClass ) );
+        result.TestEquals( typeof( BaseClass ) ).Go();
     }
 
     [Fact]
@@ -155,7 +155,7 @@ public class OpenGenericClassTests : TypeTestsBase
     {
         var sut = typeof( GenericClass<> );
         var result = sut.GetExtension<BaseClass>();
-        result.Should().Be( typeof( BaseClass ) );
+        result.TestEquals( typeof( BaseClass ) ).Go();
     }
 
     [Fact]
@@ -163,7 +163,7 @@ public class OpenGenericClassTests : TypeTestsBase
     {
         var sut = typeof( GenericClass<> );
         var result = sut.GetExtension<NotExtended>();
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Fact]
@@ -171,7 +171,7 @@ public class OpenGenericClassTests : TypeTestsBase
     {
         var sut = typeof( GenericClass<> );
         var result = sut.GetExtension( typeof( BaseGenericClass<> ) );
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Fact]
@@ -179,7 +179,7 @@ public class OpenGenericClassTests : TypeTestsBase
     {
         var sut = typeof( BaseGenericClass<> );
         var result = sut.Extends<BaseClass>();
-        result.Should().BeTrue();
+        result.TestTrue().Go();
     }
 
     [Fact]
@@ -187,7 +187,7 @@ public class OpenGenericClassTests : TypeTestsBase
     {
         var sut = typeof( GenericClass<> );
         var result = sut.Extends<BaseClass>();
-        result.Should().BeTrue();
+        result.TestTrue().Go();
     }
 
     [Fact]
@@ -195,7 +195,7 @@ public class OpenGenericClassTests : TypeTestsBase
     {
         var sut = typeof( GenericClass<> );
         var result = sut.Extends<NotExtended>();
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Fact]
@@ -203,7 +203,7 @@ public class OpenGenericClassTests : TypeTestsBase
     {
         var sut = typeof( GenericClass<> );
         var result = sut.Extends( typeof( BaseGenericClass<> ) );
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Fact]
@@ -211,7 +211,7 @@ public class OpenGenericClassTests : TypeTestsBase
     {
         var sut = typeof( GenericClass<> );
         var result = sut.GetOpenGenericExtension( typeof( BaseGenericClass<> ) );
-        result.Should().Be( typeof( BaseGenericClass<> ).MakeGenericType( sut.GetGenericArguments()[0] ) );
+        result.TestEquals( typeof( BaseGenericClass<> ).MakeGenericType( sut.GetGenericArguments()[0] ) ).Go();
     }
 
     [Fact]
@@ -219,7 +219,7 @@ public class OpenGenericClassTests : TypeTestsBase
     {
         var sut = typeof( GenericClass<> );
         var result = sut.ExtendsOpenGeneric( typeof( BaseGenericClass<> ) );
-        result.Should().BeTrue();
+        result.TestTrue().Go();
     }
 
     [Fact]
@@ -228,6 +228,6 @@ public class OpenGenericClassTests : TypeTestsBase
         var sut = typeof( GenericClass<> );
         var expected = new[] { typeof( BaseGenericClass<> ) }.AsEnumerable();
         var result = sut.GetAllExtendedGenericDefinitions();
-        result.Should().BeEquivalentTo( expected );
+        result.TestSetEqual( expected ).Go();
     }
 }

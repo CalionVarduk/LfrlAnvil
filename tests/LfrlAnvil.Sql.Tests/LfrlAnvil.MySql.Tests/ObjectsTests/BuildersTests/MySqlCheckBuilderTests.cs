@@ -56,8 +56,10 @@ public class MySqlCheckBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
-                    @"ALTER TABLE `foo`.`T`
-                      ADD CONSTRAINT `CHK_T_{GUID}` CHECK (`C` > 0);" );
+                    """
+                    ALTER TABLE `foo`.`T`
+                                          ADD CONSTRAINT `CHK_T_{GUID}` CHECK (`C` > 0);
+                    """ );
         }
     }
 
@@ -142,9 +144,11 @@ public class MySqlCheckBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
-                    @"ALTER TABLE `foo`.`T`
-                      DROP CHECK `CHK_T_{GUID}`,
-                      ADD CONSTRAINT `bar` CHECK (`C` > 0);" );
+                    """
+                    ALTER TABLE `foo`.`T`
+                                          DROP CHECK `CHK_T_{GUID}`,
+                                          ADD CONSTRAINT `bar` CHECK (`C` > 0);
+                    """ );
         }
     }
 
@@ -226,9 +230,11 @@ public class MySqlCheckBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
-                    @"ALTER TABLE `foo`.`T`
-                      DROP CHECK `bar`,
-                      ADD CONSTRAINT `CHK_T_{GUID}` CHECK (TRUE);" );
+                    """
+                    ALTER TABLE `foo`.`T`
+                                          DROP CHECK `bar`,
+                                          ADD CONSTRAINT `CHK_T_{GUID}` CHECK (TRUE);
+                    """ );
         }
     }
 
@@ -275,8 +281,10 @@ public class MySqlCheckBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
-                    @"ALTER TABLE `foo`.`T`
-                      DROP CHECK `CHK_T_{GUID}`;" );
+                    """
+                    ALTER TABLE `foo`.`T`
+                                          DROP CHECK `CHK_T_{GUID}`;
+                    """ );
         }
     }
 

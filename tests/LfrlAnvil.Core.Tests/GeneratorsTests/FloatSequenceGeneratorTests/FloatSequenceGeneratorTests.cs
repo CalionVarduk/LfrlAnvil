@@ -12,7 +12,7 @@ public class FloatSequenceGeneratorTests : GenericSequenceGeneratorOfSignedTypeT
     public void Ctor_WithStart_ShouldThrowArgumentOutOfRangeException_WhenStartIsNotFinite(float start)
     {
         var action = Lambda.Of( () => Create( start ) );
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Theory]
@@ -22,7 +22,7 @@ public class FloatSequenceGeneratorTests : GenericSequenceGeneratorOfSignedTypeT
     public void Ctor_WithStartAndStep_ShouldThrowArgumentOutOfRangeException_WhenStartIsNotFinite(float start)
     {
         var action = Lambda.Of( () => Create( start ) );
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Theory]
@@ -33,7 +33,7 @@ public class FloatSequenceGeneratorTests : GenericSequenceGeneratorOfSignedTypeT
     {
         var start = Fixture.Create<float>();
         var action = Lambda.Of( () => Create( start, step ) );
-        action.Should().ThrowExactly<ArgumentException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentException>() ).Go();
     }
 
     [Theory]
@@ -44,7 +44,7 @@ public class FloatSequenceGeneratorTests : GenericSequenceGeneratorOfSignedTypeT
     {
         var max = Fixture.Create<float>();
         var action = Lambda.Of( () => Create( Bounds.Create( min, max ) ) );
-        action.Should().ThrowExactly<ArgumentException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentException>() ).Go();
     }
 
     [Theory]
@@ -55,7 +55,7 @@ public class FloatSequenceGeneratorTests : GenericSequenceGeneratorOfSignedTypeT
     {
         var min = Fixture.Create<float>();
         var action = Lambda.Of( () => Create( Bounds.Create( min, max ) ) );
-        action.Should().ThrowExactly<ArgumentException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentException>() ).Go();
     }
 
     [Theory]
@@ -66,7 +66,7 @@ public class FloatSequenceGeneratorTests : GenericSequenceGeneratorOfSignedTypeT
     {
         var (start, max) = Fixture.CreateManyDistinctSorted<float>( count: 2 );
         var action = Lambda.Of( () => Create( Bounds.Create( min, max ), start ) );
-        action.Should().ThrowExactly<ArgumentException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentException>() ).Go();
     }
 
     [Theory]
@@ -77,7 +77,7 @@ public class FloatSequenceGeneratorTests : GenericSequenceGeneratorOfSignedTypeT
     {
         var (min, start) = Fixture.CreateManyDistinctSorted<float>( count: 2 );
         var action = Lambda.Of( () => Create( Bounds.Create( min, max ), start ) );
-        action.Should().ThrowExactly<ArgumentException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentException>() ).Go();
     }
 
     [Theory]
@@ -88,7 +88,7 @@ public class FloatSequenceGeneratorTests : GenericSequenceGeneratorOfSignedTypeT
     {
         var (min, max) = Fixture.CreateManyDistinctSorted<float>( count: 2 );
         var action = Lambda.Of( () => Create( Bounds.Create( min, max ), start ) );
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Theory]
@@ -102,7 +102,7 @@ public class FloatSequenceGeneratorTests : GenericSequenceGeneratorOfSignedTypeT
 
         var action = Lambda.Of( () => Create( Bounds.Create( min, max ), start, step ) );
 
-        action.Should().ThrowExactly<ArgumentException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentException>() ).Go();
     }
 
     [Theory]
@@ -116,7 +116,7 @@ public class FloatSequenceGeneratorTests : GenericSequenceGeneratorOfSignedTypeT
 
         var action = Lambda.Of( () => Create( Bounds.Create( min, max ), start, step ) );
 
-        action.Should().ThrowExactly<ArgumentException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentException>() ).Go();
     }
 
     [Theory]
@@ -130,7 +130,7 @@ public class FloatSequenceGeneratorTests : GenericSequenceGeneratorOfSignedTypeT
 
         var action = Lambda.Of( () => Create( Bounds.Create( min, max ), start, step ) );
 
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Theory]
@@ -141,7 +141,7 @@ public class FloatSequenceGeneratorTests : GenericSequenceGeneratorOfSignedTypeT
     {
         var (min, start, max) = Fixture.CreateManyDistinctSorted<float>( count: 3 );
         var action = Lambda.Of( () => Create( Bounds.Create( min, max ), start, step ) );
-        action.Should().ThrowExactly<ArgumentException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentException>() ).Go();
     }
 
     protected sealed override Bounds<float> GetDefaultBounds()

@@ -15,7 +15,7 @@ public class EnsureOfInt32Tests : GenericEnsureOfStructTypeTests<int>
     public void IsInIndexRange_ShouldThrowArgumentOutOfRangeException_WhenParamIsNotCorrectIndex(int param, int count)
     {
         var action = Lambda.Of( () => Ensure.IsInIndexRange( param, count ) );
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Theory]
@@ -26,6 +26,6 @@ public class EnsureOfInt32Tests : GenericEnsureOfStructTypeTests<int>
     public void IsInIndexRange_ShouldNotThrow_WhenParamIsCorrectIndex(int param, int count)
     {
         var action = Lambda.Of( () => Ensure.IsInIndexRange( param, count ) );
-        action.Should().NotThrow();
+        action.Test( exc => exc.TestNull() ).Go();
     }
 }

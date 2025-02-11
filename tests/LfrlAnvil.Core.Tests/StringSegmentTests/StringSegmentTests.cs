@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using LfrlAnvil.Functional;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Tests.StringSegmentTests;
 
@@ -11,13 +10,12 @@ public class StringSegmentTests : TestsBase
     {
         var sut = default( StringSegment );
 
-        using ( new AssertionScope() )
-        {
-            sut.StartIndex.Should().Be( 0 );
-            sut.Length.Should().Be( 0 );
-            sut.EndIndex.Should().Be( 0 );
-            sut.Source.Should().BeSameAs( string.Empty );
-        }
+        Assertion.All(
+                sut.StartIndex.TestEquals( 0 ),
+                sut.Length.TestEquals( 0 ),
+                sut.EndIndex.TestEquals( 0 ),
+                sut.Source.TestRefEquals( string.Empty ) )
+            .Go();
     }
 
     [Fact]
@@ -25,13 +23,12 @@ public class StringSegmentTests : TestsBase
     {
         var sut = StringSegment.Empty;
 
-        using ( new AssertionScope() )
-        {
-            sut.StartIndex.Should().Be( 0 );
-            sut.Length.Should().Be( 0 );
-            sut.EndIndex.Should().Be( 0 );
-            sut.Source.Should().BeSameAs( string.Empty );
-        }
+        Assertion.All(
+                sut.StartIndex.TestEquals( 0 ),
+                sut.Length.TestEquals( 0 ),
+                sut.EndIndex.TestEquals( 0 ),
+                sut.Source.TestRefEquals( string.Empty ) )
+            .Go();
     }
 
     [Theory]
@@ -42,13 +39,12 @@ public class StringSegmentTests : TestsBase
     {
         var sut = new StringSegment( source );
 
-        using ( new AssertionScope() )
-        {
-            sut.StartIndex.Should().Be( 0 );
-            sut.Length.Should().Be( source.Length );
-            sut.EndIndex.Should().Be( source.Length );
-            sut.Source.Should().BeSameAs( source );
-        }
+        Assertion.All(
+                sut.StartIndex.TestEquals( 0 ),
+                sut.Length.TestEquals( source.Length ),
+                sut.EndIndex.TestEquals( source.Length ),
+                sut.Source.TestRefEquals( source ) )
+            .Go();
     }
 
     [Theory]
@@ -68,20 +64,19 @@ public class StringSegmentTests : TestsBase
     {
         var sut = new StringSegment( source, startIndex );
 
-        using ( new AssertionScope() )
-        {
-            sut.StartIndex.Should().Be( expectedStartIndex );
-            sut.Length.Should().Be( expectedLength );
-            sut.EndIndex.Should().Be( expectedEndIndex );
-            sut.Source.Should().BeSameAs( source );
-        }
+        Assertion.All(
+                sut.StartIndex.TestEquals( expectedStartIndex ),
+                sut.Length.TestEquals( expectedLength ),
+                sut.EndIndex.TestEquals( expectedEndIndex ),
+                sut.Source.TestRefEquals( source ) )
+            .Go();
     }
 
     [Fact]
     public void Ctor_WithSourceAndStartIndex_ShouldThrowArgumentOutOfRangeException_WhenStartIndexIsLessThanZero()
     {
         var action = Lambda.Of( () => new StringSegment( Fixture.Create<string>(), startIndex: -1 ) );
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Theory]
@@ -117,27 +112,26 @@ public class StringSegmentTests : TestsBase
     {
         var sut = new StringSegment( source, startIndex, length );
 
-        using ( new AssertionScope() )
-        {
-            sut.StartIndex.Should().Be( expectedStartIndex );
-            sut.Length.Should().Be( expectedLength );
-            sut.EndIndex.Should().Be( expectedEndIndex );
-            sut.Source.Should().BeSameAs( source );
-        }
+        Assertion.All(
+                sut.StartIndex.TestEquals( expectedStartIndex ),
+                sut.Length.TestEquals( expectedLength ),
+                sut.EndIndex.TestEquals( expectedEndIndex ),
+                sut.Source.TestRefEquals( source ) )
+            .Go();
     }
 
     [Fact]
     public void Ctor_WithSourceAndStartIndexAndLength_ShouldThrowArgumentOutOfRangeException_WhenStartIndexIsLessThanZero()
     {
         var action = Lambda.Of( () => new StringSegment( Fixture.Create<string>(), startIndex: -1, length: 0 ) );
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Fact]
     public void Ctor_WithSourceAndStartIndexAndLength_ShouldThrowArgumentOutOfRangeException_WhenLengthIsLessThanZero()
     {
         var action = Lambda.Of( () => new StringSegment( Fixture.Create<string>(), startIndex: 0, length: -1 ) );
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Theory]
@@ -149,13 +143,12 @@ public class StringSegmentTests : TestsBase
         var memory = source.AsMemory( startIndex, length );
         var sut = StringSegment.FromMemory( memory );
 
-        using ( new AssertionScope() )
-        {
-            sut.StartIndex.Should().Be( startIndex );
-            sut.Length.Should().Be( length );
-            sut.EndIndex.Should().Be( startIndex + length );
-            sut.Source.Should().BeSameAs( source );
-        }
+        Assertion.All(
+                sut.StartIndex.TestEquals( startIndex ),
+                sut.Length.TestEquals( length ),
+                sut.EndIndex.TestEquals( startIndex + length ),
+                sut.Source.TestRefEquals( source ) )
+            .Go();
     }
 
     [Theory]
@@ -171,13 +164,12 @@ public class StringSegmentTests : TestsBase
         var memory = source.AsMemory( startIndex, length );
         var sut = StringSegment.FromMemory( memory );
 
-        using ( new AssertionScope() )
-        {
-            sut.StartIndex.Should().Be( 0 );
-            sut.Length.Should().Be( length );
-            sut.EndIndex.Should().Be( length );
-            sut.Source.Should().Be( expectedSource );
-        }
+        Assertion.All(
+                sut.StartIndex.TestEquals( 0 ),
+                sut.Length.TestEquals( length ),
+                sut.EndIndex.TestEquals( length ),
+                sut.Source.TestEquals( expectedSource ) )
+            .Go();
     }
 
     [Theory]
@@ -189,7 +181,7 @@ public class StringSegmentTests : TestsBase
     {
         var sut = new StringSegment( source, startIndex, length );
         var result = sut.ToString();
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -198,7 +190,7 @@ public class StringSegmentTests : TestsBase
         var sut = new StringSegment( "foobar", 2, 2 );
         var expected = string.GetHashCode( sut.ToString().AsSpan() );
         var result = sut.GetHashCode();
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -222,7 +214,7 @@ public class StringSegmentTests : TestsBase
 
         var result = sut.Equals( other );
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -248,7 +240,7 @@ public class StringSegmentTests : TestsBase
 
         var result = sut.CompareTo( other );
 
-        Math.Sign( result ).Should().Be( expectedSign );
+        Math.Sign( result ).TestEquals( expectedSign ).Go();
     }
 
     [Theory]
@@ -267,13 +259,12 @@ public class StringSegmentTests : TestsBase
         var sut = new StringSegment( "foobar", 1, 4 );
         var result = sut.Slice( startIndex );
 
-        using ( new AssertionScope() )
-        {
-            result.StartIndex.Should().Be( expectedStartIndex );
-            result.EndIndex.Should().Be( expectedEndIndex );
-            result.Length.Should().Be( expectedLength );
-            result.Source.Should().BeSameAs( sut.Source );
-        }
+        Assertion.All(
+                result.StartIndex.TestEquals( expectedStartIndex ),
+                result.EndIndex.TestEquals( expectedEndIndex ),
+                result.Length.TestEquals( expectedLength ),
+                result.Source.TestRefEquals( sut.Source ) )
+            .Go();
     }
 
     [Fact]
@@ -281,7 +272,7 @@ public class StringSegmentTests : TestsBase
     {
         var sut = new StringSegment( "foobar", 1, 4 );
         var action = Lambda.Of( () => sut.Slice( startIndex: -1 ) );
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Theory]
@@ -317,13 +308,12 @@ public class StringSegmentTests : TestsBase
         var sut = new StringSegment( "foobar", 1, 4 );
         var result = sut.Slice( startIndex, length );
 
-        using ( new AssertionScope() )
-        {
-            result.StartIndex.Should().Be( expectedStartIndex );
-            result.EndIndex.Should().Be( expectedEndIndex );
-            result.Length.Should().Be( expectedLength );
-            result.Source.Should().BeSameAs( sut.Source );
-        }
+        Assertion.All(
+                result.StartIndex.TestEquals( expectedStartIndex ),
+                result.EndIndex.TestEquals( expectedEndIndex ),
+                result.Length.TestEquals( expectedLength ),
+                result.Source.TestRefEquals( sut.Source ) )
+            .Go();
     }
 
     [Fact]
@@ -331,7 +321,7 @@ public class StringSegmentTests : TestsBase
     {
         var sut = new StringSegment( "foobar", 1, 4 );
         var action = Lambda.Of( () => sut.Slice( startIndex: -1, length: 0 ) );
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Fact]
@@ -339,7 +329,7 @@ public class StringSegmentTests : TestsBase
     {
         var sut = new StringSegment( "foobar", 1, 4 );
         var action = Lambda.Of( () => sut.Slice( startIndex: 0, length: -1 ) );
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Theory]
@@ -356,13 +346,12 @@ public class StringSegmentTests : TestsBase
         var sut = new StringSegment( "foobar", 1, 3 );
         var result = sut.SetStartIndex( value );
 
-        using ( new AssertionScope() )
-        {
-            result.StartIndex.Should().Be( expectedStartIndex );
-            result.EndIndex.Should().Be( expectedEndIndex );
-            result.Length.Should().Be( expectedLength );
-            result.Source.Should().BeSameAs( sut.Source );
-        }
+        Assertion.All(
+                result.StartIndex.TestEquals( expectedStartIndex ),
+                result.EndIndex.TestEquals( expectedEndIndex ),
+                result.Length.TestEquals( expectedLength ),
+                result.Source.TestRefEquals( sut.Source ) )
+            .Go();
     }
 
     [Fact]
@@ -370,7 +359,7 @@ public class StringSegmentTests : TestsBase
     {
         var sut = new StringSegment( "foobar", 1, 4 );
         var action = Lambda.Of( () => sut.SetStartIndex( value: -1 ) );
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Theory]
@@ -390,13 +379,12 @@ public class StringSegmentTests : TestsBase
         var sut = new StringSegment( "foobar", 1, 3 );
         var result = sut.SetEndIndex( value );
 
-        using ( new AssertionScope() )
-        {
-            result.StartIndex.Should().Be( expectedStartIndex );
-            result.EndIndex.Should().Be( expectedEndIndex );
-            result.Length.Should().Be( expectedLength );
-            result.Source.Should().BeSameAs( sut.Source );
-        }
+        Assertion.All(
+                result.StartIndex.TestEquals( expectedStartIndex ),
+                result.EndIndex.TestEquals( expectedEndIndex ),
+                result.Length.TestEquals( expectedLength ),
+                result.Source.TestRefEquals( sut.Source ) )
+            .Go();
     }
 
     [Fact]
@@ -404,7 +392,7 @@ public class StringSegmentTests : TestsBase
     {
         var sut = new StringSegment( "foobar", 1, 4 );
         var action = Lambda.Of( () => sut.SetEndIndex( value: -1 ) );
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Theory]
@@ -420,13 +408,12 @@ public class StringSegmentTests : TestsBase
         var sut = new StringSegment( "foobar", 1, 3 );
         var result = sut.SetLength( value );
 
-        using ( new AssertionScope() )
-        {
-            result.StartIndex.Should().Be( expectedStartIndex );
-            result.EndIndex.Should().Be( expectedEndIndex );
-            result.Length.Should().Be( expectedLength );
-            result.Source.Should().BeSameAs( sut.Source );
-        }
+        Assertion.All(
+                result.StartIndex.TestEquals( expectedStartIndex ),
+                result.EndIndex.TestEquals( expectedEndIndex ),
+                result.Length.TestEquals( expectedLength ),
+                result.Source.TestRefEquals( sut.Source ) )
+            .Go();
     }
 
     [Fact]
@@ -434,7 +421,7 @@ public class StringSegmentTests : TestsBase
     {
         var sut = new StringSegment( "foobar", 1, 4 );
         var action = Lambda.Of( () => sut.SetLength( value: -1 ) );
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Theory]
@@ -455,13 +442,12 @@ public class StringSegmentTests : TestsBase
         var sut = new StringSegment( "foobar", 2, 3 );
         var result = sut.Offset( offset );
 
-        using ( new AssertionScope() )
-        {
-            result.StartIndex.Should().Be( expectedStartIndex );
-            result.EndIndex.Should().Be( expectedEndIndex );
-            result.Length.Should().Be( expectedLength );
-            result.Source.Should().BeSameAs( sut.Source );
-        }
+        Assertion.All(
+                result.StartIndex.TestEquals( expectedStartIndex ),
+                result.EndIndex.TestEquals( expectedEndIndex ),
+                result.Length.TestEquals( expectedLength ),
+                result.Source.TestRefEquals( sut.Source ) )
+            .Go();
     }
 
     [Theory]
@@ -485,13 +471,12 @@ public class StringSegmentTests : TestsBase
         var sut = new StringSegment( "foobar", 3, startLength );
         var result = sut.Expand( count );
 
-        using ( new AssertionScope() )
-        {
-            result.StartIndex.Should().Be( expectedStartIndex );
-            result.EndIndex.Should().Be( expectedEndIndex );
-            result.Length.Should().Be( expectedLength );
-            result.Source.Should().BeSameAs( sut.Source );
-        }
+        Assertion.All(
+                result.StartIndex.TestEquals( expectedStartIndex ),
+                result.EndIndex.TestEquals( expectedEndIndex ),
+                result.Length.TestEquals( expectedLength ),
+                result.Source.TestRefEquals( sut.Source ) )
+            .Go();
     }
 
     [Fact]
@@ -499,7 +484,7 @@ public class StringSegmentTests : TestsBase
     {
         var sut = new StringSegment( "foobar", 1, 4 );
         var action = Lambda.Of( () => sut.Expand( count: -1 ) );
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Theory]
@@ -525,13 +510,12 @@ public class StringSegmentTests : TestsBase
         var sut = new StringSegment( "foobar", 0, startLength );
         var result = sut.Shrink( count );
 
-        using ( new AssertionScope() )
-        {
-            result.StartIndex.Should().Be( expectedStartIndex );
-            result.EndIndex.Should().Be( expectedEndIndex );
-            result.Length.Should().Be( expectedLength );
-            result.Source.Should().BeSameAs( sut.Source );
-        }
+        Assertion.All(
+                result.StartIndex.TestEquals( expectedStartIndex ),
+                result.EndIndex.TestEquals( expectedEndIndex ),
+                result.Length.TestEquals( expectedLength ),
+                result.Source.TestRefEquals( sut.Source ) )
+            .Go();
     }
 
     [Fact]
@@ -539,7 +523,7 @@ public class StringSegmentTests : TestsBase
     {
         var sut = new StringSegment( "foobar", 1, 4 );
         var action = Lambda.Of( () => sut.Shrink( count: -1 ) );
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Theory]
@@ -554,7 +538,7 @@ public class StringSegmentTests : TestsBase
 
         var result = sut.AsMemory();
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -569,7 +553,7 @@ public class StringSegmentTests : TestsBase
 
         var result = sut.AsSpan();
 
-        result.ToString().Should().Be( expected.ToString() );
+        result.ToString().TestEquals( expected.ToString() ).Go();
     }
 
     [Theory]
@@ -583,14 +567,14 @@ public class StringSegmentTests : TestsBase
     {
         var sut = new StringSegment( "foobar", 1, 4 );
         var result = sut[index];
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
     public void GetEnumerator_ShouldReturnCorrectResult()
     {
         IEnumerable<char> sut = new StringSegment( "foobar", 1, 4 );
-        sut.Should().BeSequentiallyEqualTo( 'o', 'o', 'b', 'a' );
+        sut.TestSequence( [ 'o', 'o', 'b', 'a' ] ).Go();
     }
 
     [Fact]
@@ -599,12 +583,11 @@ public class StringSegmentTests : TestsBase
         var source = Fixture.Create<string>();
         var result = ( StringSegment )source;
 
-        using ( new AssertionScope() )
-        {
-            result.Source.Should().BeSameAs( source );
-            result.StartIndex.Should().Be( 0 );
-            result.Length.Should().Be( source.Length );
-        }
+        Assertion.All(
+                result.Source.TestRefEquals( source ),
+                result.StartIndex.TestEquals( 0 ),
+                result.Length.TestEquals( source.Length ) )
+            .Go();
     }
 
     [Theory]
@@ -628,7 +611,7 @@ public class StringSegmentTests : TestsBase
 
         var result = sut == other;
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -652,7 +635,7 @@ public class StringSegmentTests : TestsBase
 
         var result = sut != other;
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -678,7 +661,7 @@ public class StringSegmentTests : TestsBase
 
         var result = sut > other;
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -704,7 +687,7 @@ public class StringSegmentTests : TestsBase
 
         var result = sut < other;
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -730,7 +713,7 @@ public class StringSegmentTests : TestsBase
 
         var result = sut >= other;
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -756,6 +739,6 @@ public class StringSegmentTests : TestsBase
 
         var result = sut <= other;
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 }

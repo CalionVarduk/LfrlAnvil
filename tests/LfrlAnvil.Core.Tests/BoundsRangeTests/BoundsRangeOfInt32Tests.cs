@@ -1,6 +1,4 @@
-﻿using LfrlAnvil.TestExtensions.FluentAssertions;
-
-namespace LfrlAnvil.Tests.BoundsRangeTests;
+﻿namespace LfrlAnvil.Tests.BoundsRangeTests;
 
 public class BoundsRangeOfInt32Tests : GenericBoundsRangeTests<int>
 {
@@ -24,7 +22,7 @@ public class BoundsRangeOfInt32Tests : GenericBoundsRangeTests<int>
 
         var result = sut.Normalize( (a, b) => a + 1 == b );
 
-        result.Should().BeSequentiallyEqualTo( expected );
+        result.TestSequence( expected ).Go();
     }
 
     [Fact]
@@ -44,6 +42,6 @@ public class BoundsRangeOfInt32Tests : GenericBoundsRangeTests<int>
 
         var result = sut.Normalize( (a, b) => a == b );
 
-        result.Should().BeSequentiallyEqualTo( sut );
+        result.TestSequence( sut ).Go();
     }
 }

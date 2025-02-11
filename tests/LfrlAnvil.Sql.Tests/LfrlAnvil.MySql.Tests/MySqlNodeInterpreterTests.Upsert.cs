@@ -28,14 +28,16 @@ public partial class MySqlNodeInterpreterTests
             sut.Context.Sql.ToString()
                 .Should()
                 .Be(
-                    @"INSERT INTO qux (`a`, `b`)
-VALUES
-('foo', 5),
-((bar.a), 25)
-AS `new`
-ON DUPLICATE KEY UPDATE
-  `b` = (qux.`b` + `new`.`b`),
-  `c` = (`new`.`b` + 1)" );
+                    """
+                    INSERT INTO qux (`a`, `b`)
+                    VALUES
+                    ('foo', 5),
+                    ((bar.a), 25)
+                    AS `new`
+                    ON DUPLICATE KEY UPDATE
+                      `b` = (qux.`b` + `new`.`b`),
+                      `c` = (`new`.`b` + 1)
+                    """ );
         }
 
         [Fact]
@@ -58,14 +60,16 @@ ON DUPLICATE KEY UPDATE
             sut.Context.Sql.ToString()
                 .Should()
                 .Be(
-                    @"INSERT INTO `common`.`qux` (`a`, `b`)
-VALUES
-('foo', 5),
-((bar.a), 25)
-AS `new`
-ON DUPLICATE KEY UPDATE
-  `b` = (`common`.`qux`.`b` + `new`.`b`),
-  `c` = (`new`.`b` + 1)" );
+                    """
+                    INSERT INTO `common`.`qux` (`a`, `b`)
+                    VALUES
+                    ('foo', 5),
+                    ((bar.a), 25)
+                    AS `new`
+                    ON DUPLICATE KEY UPDATE
+                      `b` = (`common`.`qux`.`b` + `new`.`b`),
+                      `c` = (`new`.`b` + 1)
+                    """ );
         }
 
         [Fact]
@@ -104,28 +108,30 @@ ON DUPLICATE KEY UPDATE
             sut.Context.Sql.ToString()
                 .Should()
                 .Be(
-                    @"INSERT INTO qux (`a`, `b`)
-WITH `cba` AS (
-  SELECT * FROM abc
-)
-SELECT * FROM (
-  SELECT DISTINCT
-    `common`.`foo`.`b` AS `a`,
-    (COUNT(*) OVER `wnd`) AS `b`
-  FROM `common`.`foo`
-  INNER JOIN `common`.`bar` ON `common`.`bar`.`c` = `common`.`foo`.`a`
-  WHERE `common`.`bar`.`c` IN (
-    SELECT cba.c FROM cba
-  )
-  GROUP BY `common`.`foo`.`b`
-  HAVING `common`.`foo`.`b` < 100
-  WINDOW `wnd` AS (ORDER BY `common`.`foo`.`a` ASC)
-  ORDER BY `common`.`foo`.`b` ASC
-  LIMIT 50 OFFSET 100
-) AS `new`(`a`, `b`)
-ON DUPLICATE KEY UPDATE
-  `b` = (qux.`b` + `new`.`b`),
-  `c` = (`new`.`b` + 1)" );
+                    """
+                    INSERT INTO qux (`a`, `b`)
+                    WITH `cba` AS (
+                      SELECT * FROM abc
+                    )
+                    SELECT * FROM (
+                      SELECT DISTINCT
+                        `common`.`foo`.`b` AS `a`,
+                        (COUNT(*) OVER `wnd`) AS `b`
+                      FROM `common`.`foo`
+                      INNER JOIN `common`.`bar` ON `common`.`bar`.`c` = `common`.`foo`.`a`
+                      WHERE `common`.`bar`.`c` IN (
+                        SELECT cba.c FROM cba
+                      )
+                      GROUP BY `common`.`foo`.`b`
+                      HAVING `common`.`foo`.`b` < 100
+                      WINDOW `wnd` AS (ORDER BY `common`.`foo`.`a` ASC)
+                      ORDER BY `common`.`foo`.`b` ASC
+                      LIMIT 50 OFFSET 100
+                    ) AS `new`(`a`, `b`)
+                    ON DUPLICATE KEY UPDATE
+                      `b` = (qux.`b` + `new`.`b`),
+                      `c` = (`new`.`b` + 1)
+                    """ );
         }
 
         [Fact]
@@ -164,28 +170,30 @@ ON DUPLICATE KEY UPDATE
             sut.Context.Sql.ToString()
                 .Should()
                 .Be(
-                    @"INSERT INTO `common`.`qux` (`a`, `b`)
-WITH `cba` AS (
-  SELECT * FROM abc
-)
-SELECT * FROM (
-  SELECT DISTINCT
-    `common`.`foo`.`b` AS `a`,
-    (COUNT(*) OVER `wnd`) AS `b`
-  FROM `common`.`foo`
-  INNER JOIN `common`.`bar` ON `common`.`bar`.`c` = `common`.`foo`.`a`
-  WHERE `common`.`bar`.`c` IN (
-    SELECT cba.c FROM cba
-  )
-  GROUP BY `common`.`foo`.`b`
-  HAVING `common`.`foo`.`b` < 100
-  WINDOW `wnd` AS (ORDER BY `common`.`foo`.`a` ASC)
-  ORDER BY `common`.`foo`.`b` ASC
-  LIMIT 50 OFFSET 100
-) AS `new`(`a`, `b`)
-ON DUPLICATE KEY UPDATE
-  `b` = (`common`.`qux`.`b` + `new`.`b`),
-  `c` = (`new`.`b` + 1)" );
+                    """
+                    INSERT INTO `common`.`qux` (`a`, `b`)
+                    WITH `cba` AS (
+                      SELECT * FROM abc
+                    )
+                    SELECT * FROM (
+                      SELECT DISTINCT
+                        `common`.`foo`.`b` AS `a`,
+                        (COUNT(*) OVER `wnd`) AS `b`
+                      FROM `common`.`foo`
+                      INNER JOIN `common`.`bar` ON `common`.`bar`.`c` = `common`.`foo`.`a`
+                      WHERE `common`.`bar`.`c` IN (
+                        SELECT cba.c FROM cba
+                      )
+                      GROUP BY `common`.`foo`.`b`
+                      HAVING `common`.`foo`.`b` < 100
+                      WINDOW `wnd` AS (ORDER BY `common`.`foo`.`a` ASC)
+                      ORDER BY `common`.`foo`.`b` ASC
+                      LIMIT 50 OFFSET 100
+                    ) AS `new`(`a`, `b`)
+                    ON DUPLICATE KEY UPDATE
+                      `b` = (`common`.`qux`.`b` + `new`.`b`),
+                      `c` = (`new`.`b` + 1)
+                    """ );
         }
 
         [Fact]
@@ -211,22 +219,24 @@ ON DUPLICATE KEY UPDATE
             sut.Context.Sql.ToString()
                 .Should()
                 .Be(
-                    @"INSERT INTO qux (`a`, `b`)
-WITH `x` AS (
-  SELECT * FROM ipsum
-)
-SELECT * FROM (
-  SELECT foo.a, foo.b FROM foo JOIN x ON x.a = foo.a
-  UNION ALL
-  SELECT a, b FROM bar
-  UNION
-  SELECT a, b FROM qux
-  ORDER BY (a) ASC
-  LIMIT 50 OFFSET 75
-) AS `new`(`a`, `b`)
-ON DUPLICATE KEY UPDATE
-  `b` = (qux.`b` + `new`.`b`),
-  `c` = (`new`.`b` + 1)" );
+                    """
+                    INSERT INTO qux (`a`, `b`)
+                    WITH `x` AS (
+                      SELECT * FROM ipsum
+                    )
+                    SELECT * FROM (
+                      SELECT foo.a, foo.b FROM foo JOIN x ON x.a = foo.a
+                      UNION ALL
+                      SELECT a, b FROM bar
+                      UNION
+                      SELECT a, b FROM qux
+                      ORDER BY (a) ASC
+                      LIMIT 50 OFFSET 75
+                    ) AS `new`(`a`, `b`)
+                    ON DUPLICATE KEY UPDATE
+                      `b` = (qux.`b` + `new`.`b`),
+                      `c` = (`new`.`b` + 1)
+                    """ );
         }
 
         [Fact]
@@ -252,22 +262,24 @@ ON DUPLICATE KEY UPDATE
             sut.Context.Sql.ToString()
                 .Should()
                 .Be(
-                    @"INSERT INTO `common`.`qux` (`a`, `b`)
-WITH `x` AS (
-  SELECT * FROM ipsum
-)
-SELECT * FROM (
-  SELECT foo.a, foo.b FROM foo JOIN x ON x.a = foo.a
-  UNION ALL
-  SELECT a, b FROM bar
-  UNION
-  SELECT a, b FROM qux
-  ORDER BY (a) ASC
-  LIMIT 50 OFFSET 75
-) AS `new`(`a`, `b`)
-ON DUPLICATE KEY UPDATE
-  `b` = (`common`.`qux`.`b` + `new`.`b`),
-  `c` = (`new`.`b` + 1)" );
+                    """
+                    INSERT INTO `common`.`qux` (`a`, `b`)
+                    WITH `x` AS (
+                      SELECT * FROM ipsum
+                    )
+                    SELECT * FROM (
+                      SELECT foo.a, foo.b FROM foo JOIN x ON x.a = foo.a
+                      UNION ALL
+                      SELECT a, b FROM bar
+                      UNION
+                      SELECT a, b FROM qux
+                      ORDER BY (a) ASC
+                      LIMIT 50 OFFSET 75
+                    ) AS `new`(`a`, `b`)
+                    ON DUPLICATE KEY UPDATE
+                      `b` = (`common`.`qux`.`b` + `new`.`b`),
+                      `c` = (`new`.`b` + 1)
+                    """ );
         }
 
         [Fact]
@@ -285,13 +297,15 @@ ON DUPLICATE KEY UPDATE
             sut.Context.Sql.ToString()
                 .Should()
                 .Be(
-                    @"INSERT INTO qux (`a`, `b`)
-SELECT * FROM (
-  SELECT * FROM bar
-) AS `new`(`a`, `b`)
-ON DUPLICATE KEY UPDATE
-  `b` = (qux.`b` + `new`.`b`),
-  `c` = (`new`.`b` + 1)" );
+                    """
+                    INSERT INTO qux (`a`, `b`)
+                    SELECT * FROM (
+                      SELECT * FROM bar
+                    ) AS `new`(`a`, `b`)
+                    ON DUPLICATE KEY UPDATE
+                      `b` = (qux.`b` + `new`.`b`),
+                      `c` = (`new`.`b` + 1)
+                    """ );
         }
 
         [Fact]
@@ -309,13 +323,15 @@ ON DUPLICATE KEY UPDATE
             sut.Context.Sql.ToString()
                 .Should()
                 .Be(
-                    @"INSERT INTO `common`.`qux` (`a`, `b`)
-SELECT * FROM (
-  SELECT * FROM bar
-) AS `new`(`a`, `b`)
-ON DUPLICATE KEY UPDATE
-  `b` = (`common`.`qux`.`b` + `new`.`b`),
-  `c` = (`new`.`b` + 1)" );
+                    """
+                    INSERT INTO `common`.`qux` (`a`, `b`)
+                    SELECT * FROM (
+                      SELECT * FROM bar
+                    ) AS `new`(`a`, `b`)
+                    ON DUPLICATE KEY UPDATE
+                      `b` = (`common`.`qux`.`b` + `new`.`b`),
+                      `c` = (`new`.`b` + 1)
+                    """ );
         }
 
         [Fact]
@@ -337,14 +353,16 @@ ON DUPLICATE KEY UPDATE
             sut.Context.Sql.ToString()
                 .Should()
                 .Be(
-                    @"INSERT INTO qux (`a`, `b`)
-VALUES
-('foo', 5),
-((bar.a), 25)
-AS `upsert-source`
-ON DUPLICATE KEY UPDATE
-  `b` = (qux.`b` + `upsert-source`.`b`),
-  `c` = (`upsert-source`.`b` + 1)" );
+                    """
+                    INSERT INTO qux (`a`, `b`)
+                    VALUES
+                    ('foo', 5),
+                    ((bar.a), 25)
+                    AS `upsert-source`
+                    ON DUPLICATE KEY UPDATE
+                      `b` = (qux.`b` + `upsert-source`.`b`),
+                      `c` = (`upsert-source`.`b` + 1)
+                    """ );
         }
     }
 }

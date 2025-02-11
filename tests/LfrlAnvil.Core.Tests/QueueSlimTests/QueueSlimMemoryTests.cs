@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using LfrlAnvil.Functional;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Tests.QueueSlimTests;
 
@@ -11,12 +10,11 @@ public class QueueSlimMemoryTests : TestsBase
     {
         var sut = QueueSlimMemory<string>.Empty;
 
-        using ( new AssertionScope() )
-        {
-            sut.First.ToArray().Should().BeEmpty();
-            sut.Second.ToArray().Should().BeEmpty();
-            sut.Length.Should().Be( 0 );
-        }
+        Assertion.All(
+                sut.First.TestEmpty(),
+                sut.Second.TestEmpty(),
+                sut.Length.TestEquals( 0 ) )
+            .Go();
     }
 
     [Fact]
@@ -26,12 +24,11 @@ public class QueueSlimMemoryTests : TestsBase
 
         var sut = QueueSlimMemory<string>.From( items );
 
-        using ( new AssertionScope() )
-        {
-            sut.First.ToArray().Should().BeSequentiallyEqualTo( items );
-            sut.Second.ToArray().Should().BeEmpty();
-            sut.Length.Should().Be( items.Length );
-        }
+        Assertion.All(
+                sut.First.TestSequence( items ),
+                sut.Second.TestEmpty(),
+                sut.Length.TestEquals( items.Length ) )
+            .Go();
     }
 
     [Fact]
@@ -43,12 +40,11 @@ public class QueueSlimMemoryTests : TestsBase
 
         var result = sut.Slice( 1, 2 );
 
-        using ( new AssertionScope() )
-        {
-            result.First.ToArray().Should().BeSequentiallyEqualTo( "x2", "x3" );
-            result.Second.ToArray().Should().BeEmpty();
-            result.Length.Should().Be( 2 );
-        }
+        Assertion.All(
+                result.First.TestSequence( [ "x2", "x3" ] ),
+                result.Second.TestEmpty(),
+                result.Length.TestEquals( 2 ) )
+            .Go();
     }
 
     [Fact]
@@ -62,12 +58,11 @@ public class QueueSlimMemoryTests : TestsBase
 
         var result = sut.Slice( 1, 2 );
 
-        using ( new AssertionScope() )
-        {
-            result.First.ToArray().Should().BeSequentiallyEqualTo( "x3", "x4" );
-            result.Second.ToArray().Should().BeEmpty();
-            result.Length.Should().Be( 2 );
-        }
+        Assertion.All(
+                result.First.TestSequence( [ "x3", "x4" ] ),
+                result.Second.TestEmpty(),
+                result.Length.TestEquals( 2 ) )
+            .Go();
     }
 
     [Fact]
@@ -81,12 +76,11 @@ public class QueueSlimMemoryTests : TestsBase
 
         var result = sut.Slice( 1, 3 );
 
-        using ( new AssertionScope() )
-        {
-            result.First.ToArray().Should().BeSequentiallyEqualTo( "x4" );
-            result.Second.ToArray().Should().BeSequentiallyEqualTo( "x5", "x6" );
-            result.Length.Should().Be( 3 );
-        }
+        Assertion.All(
+                result.First.TestSequence( [ "x4" ] ),
+                result.Second.TestSequence( [ "x5", "x6" ] ),
+                result.Length.TestEquals( 3 ) )
+            .Go();
     }
 
     [Fact]
@@ -100,12 +94,11 @@ public class QueueSlimMemoryTests : TestsBase
 
         var result = sut.Slice( 2, 2 );
 
-        using ( new AssertionScope() )
-        {
-            result.First.ToArray().Should().BeSequentiallyEqualTo( "x6", "x7" );
-            result.Second.ToArray().Should().BeEmpty();
-            result.Length.Should().Be( 2 );
-        }
+        Assertion.All(
+                result.First.TestSequence( [ "x6", "x7" ] ),
+                result.Second.TestEmpty(),
+                result.Length.TestEquals( 2 ) )
+            .Go();
     }
 
     [Fact]
@@ -119,12 +112,11 @@ public class QueueSlimMemoryTests : TestsBase
 
         var result = sut.Slice( 1 );
 
-        using ( new AssertionScope() )
-        {
-            result.First.ToArray().Should().BeSequentiallyEqualTo( "x4" );
-            result.Second.ToArray().Should().BeSequentiallyEqualTo( "x5", "x6" );
-            result.Length.Should().Be( 3 );
-        }
+        Assertion.All(
+                result.First.TestSequence( [ "x4" ] ),
+                result.Second.TestSequence( [ "x5", "x6" ] ),
+                result.Length.TestEquals( 3 ) )
+            .Go();
     }
 
     [Fact]
@@ -135,7 +127,7 @@ public class QueueSlimMemoryTests : TestsBase
 
         sut.CopyTo( target );
 
-        target.Should().BeSequentiallyEqualTo( "foo" );
+        target.TestSequence( [ "foo" ] ).Go();
     }
 
     [Fact]
@@ -150,7 +142,7 @@ public class QueueSlimMemoryTests : TestsBase
 
         sut.CopyTo( target );
 
-        target.Should().BeSequentiallyEqualTo( "x2", "x3", "x4", "x5", "e" );
+        target.TestSequence( [ "x2", "x3", "x4", "x5", "e" ] ).Go();
     }
 
     [Theory]
@@ -168,7 +160,7 @@ public class QueueSlimMemoryTests : TestsBase
 
         var result = sut[index];
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -183,7 +175,7 @@ public class QueueSlimMemoryTests : TestsBase
 
         var action = Lambda.Of( () => sut[index] );
 
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Fact]
@@ -192,10 +184,9 @@ public class QueueSlimMemoryTests : TestsBase
         var sut = QueueSlim<string>.Create( minCapacity: 4 ).AsMemory();
 
         var result = new List<string>();
-        foreach ( var e in sut )
-            result.Add( e );
+        foreach ( var e in sut ) result.Add( e );
 
-        result.Should().BeEmpty();
+        result.TestEmpty().Go();
     }
 
     [Fact]
@@ -206,10 +197,9 @@ public class QueueSlimMemoryTests : TestsBase
         var sut = queue.AsMemory();
 
         var result = new List<string>();
-        foreach ( var e in sut )
-            result.Add( e );
+        foreach ( var e in sut ) result.Add( e );
 
-        result.Should().BeSequentiallyEqualTo( "x1", "x2", "x3", "x4" );
+        result.TestSequence( [ "x1", "x2", "x3", "x4" ] ).Go();
     }
 
     [Fact]
@@ -221,10 +211,9 @@ public class QueueSlimMemoryTests : TestsBase
         var sut = queue.AsMemory();
 
         var result = new List<string>();
-        foreach ( var e in sut )
-            result.Add( e );
+        foreach ( var e in sut ) result.Add( e );
 
-        result.Should().BeSequentiallyEqualTo( "x2", "x3" );
+        result.TestSequence( [ "x2", "x3" ] ).Go();
     }
 
     [Fact]
@@ -237,10 +226,9 @@ public class QueueSlimMemoryTests : TestsBase
         var sut = queue.AsMemory();
 
         var result = new List<string>();
-        foreach ( var e in sut )
-            result.Add( e );
+        foreach ( var e in sut ) result.Add( e );
 
-        result.Should().BeSequentiallyEqualTo( "x3", "x4", "x5" );
+        result.TestSequence( [ "x3", "x4", "x5" ] ).Go();
     }
 
     [Fact]
@@ -253,9 +241,8 @@ public class QueueSlimMemoryTests : TestsBase
         var sut = queue.AsMemory();
 
         var result = new List<string>();
-        foreach ( var e in sut )
-            result.Add( e );
+        foreach ( var e in sut ) result.Add( e );
 
-        result.Should().BeSequentiallyEqualTo( "x4", "x5", "x6", "x7" );
+        result.TestSequence( [ "x4", "x5", "x6", "x7" ] ).Go();
     }
 }

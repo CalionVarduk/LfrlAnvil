@@ -45,11 +45,13 @@ public class SqlPrimaryKeyBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .Be(
-                    @"ALTER [Table] foo.T
-  CREATE [Index] foo.UIX_T_C2A
-  CREATE [PrimaryKey] foo.PK_T
-  REMOVE [Index] foo.UIX_T_C1A
-  REMOVE [PrimaryKey] foo.bar;" );
+                    """
+                    ALTER [Table] foo.T
+                      CREATE [Index] foo.UIX_T_C2A
+                      CREATE [PrimaryKey] foo.PK_T
+                      REMOVE [Index] foo.UIX_T_C1A
+                      REMOVE [PrimaryKey] foo.bar;
+                    """ );
         }
     }
 
@@ -116,8 +118,10 @@ public class SqlPrimaryKeyBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .Be(
-                    @"ALTER [Table] foo.T
-  ALTER [PrimaryKey] foo.bar ([1] : 'Name' (System.String) FROM PK_T);" );
+                    """
+                    ALTER [Table] foo.T
+                      ALTER [PrimaryKey] foo.bar ([1] : 'Name' (System.String) FROM PK_T);
+                    """ );
         }
     }
 
@@ -229,8 +233,10 @@ public class SqlPrimaryKeyBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .Be(
-                    @"ALTER [Table] foo.T
-  ALTER [PrimaryKey] foo.PK_T ([1] : 'Name' (System.String) FROM bar);" );
+                    """
+                    ALTER [Table] foo.T
+                      ALTER [PrimaryKey] foo.PK_T ([1] : 'Name' (System.String) FROM bar);
+                    """ );
         }
     }
 
@@ -293,9 +299,11 @@ public class SqlPrimaryKeyBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .Be(
-                    @"ALTER [Table] foo.T
-  REMOVE [Index] foo.UIX_T_C1A
-  REMOVE [PrimaryKey] foo.PK_T;" );
+                    """
+                    ALTER [Table] foo.T
+                      REMOVE [Index] foo.UIX_T_C1A
+                      REMOVE [PrimaryKey] foo.PK_T;
+                    """ );
         }
     }
 
@@ -448,8 +456,10 @@ public class SqlPrimaryKeyBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .Be(
-                    @"ALTER [Table] foo.T
-  ALTER [PrimaryKey] foo.bar ([1] : 'Name' (System.String) FROM PK_T);" );
+                    """
+                    ALTER [Table] foo.T
+                      ALTER [PrimaryKey] foo.bar ([1] : 'Name' (System.String) FROM PK_T);
+                    """ );
         }
     }
 
@@ -478,8 +488,10 @@ public class SqlPrimaryKeyBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .Be(
-                    @"ALTER [Table] foo.T
-  ALTER [PrimaryKey] foo.bar ([1] : 'Name' (System.String) FROM PK_T);" );
+                    """
+                    ALTER [Table] foo.T
+                      ALTER [PrimaryKey] foo.bar ([1] : 'Name' (System.String) FROM PK_T);
+                    """ );
         }
     }
 
@@ -508,8 +520,10 @@ public class SqlPrimaryKeyBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .Be(
-                    @"ALTER [Table] foo.T
-  ALTER [PrimaryKey] foo.bar ([1] : 'Name' (System.String) FROM PK_T);" );
+                    """
+                    ALTER [Table] foo.T
+                      ALTER [PrimaryKey] foo.bar ([1] : 'Name' (System.String) FROM PK_T);
+                    """ );
         }
     }
 
@@ -537,8 +551,10 @@ public class SqlPrimaryKeyBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .Be(
-                    @"ALTER [Table] foo.T
-  ALTER [PrimaryKey] foo.PK_T ([1] : 'Name' (System.String) FROM bar);" );
+                    """
+                    ALTER [Table] foo.T
+                      ALTER [PrimaryKey] foo.PK_T ([1] : 'Name' (System.String) FROM bar);
+                    """ );
         }
     }
 
@@ -566,8 +582,10 @@ public class SqlPrimaryKeyBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .Be(
-                    @"ALTER [Table] foo.T
-  ALTER [PrimaryKey] foo.PK_T ([1] : 'Name' (System.String) FROM bar);" );
+                    """
+                    ALTER [Table] foo.T
+                      ALTER [PrimaryKey] foo.PK_T ([1] : 'Name' (System.String) FROM bar);
+                    """ );
         }
     }
 }

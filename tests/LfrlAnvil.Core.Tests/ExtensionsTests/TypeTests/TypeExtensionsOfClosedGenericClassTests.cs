@@ -10,7 +10,7 @@ public class TypeExtensionsOfClosedGenericClassTests : TypeTestsBase
     {
         var sut = typeof( GenericClass<int> );
         var result = sut.GetImplementation<IDirect>();
-        result.Should().Be( typeof( IDirect ) );
+        result.TestEquals( typeof( IDirect ) ).Go();
     }
 
     [Fact]
@@ -18,7 +18,7 @@ public class TypeExtensionsOfClosedGenericClassTests : TypeTestsBase
     {
         var sut = typeof( GenericClass<int> );
         var result = sut.GetImplementation<IIndirectFromInterface>();
-        result.Should().Be( typeof( IIndirectFromInterface ) );
+        result.TestEquals( typeof( IIndirectFromInterface ) ).Go();
     }
 
     [Fact]
@@ -26,7 +26,7 @@ public class TypeExtensionsOfClosedGenericClassTests : TypeTestsBase
     {
         var sut = typeof( GenericClass<int> );
         var result = sut.GetImplementation<IIndirectFromType>();
-        result.Should().Be( typeof( IIndirectFromType ) );
+        result.TestEquals( typeof( IIndirectFromType ) ).Go();
     }
 
     [Fact]
@@ -34,7 +34,7 @@ public class TypeExtensionsOfClosedGenericClassTests : TypeTestsBase
     {
         var sut = typeof( GenericClass<int> );
         var result = sut.GetImplementation<IBaseGeneric<int>>();
-        result.Should().Be( typeof( IBaseGeneric<int> ) );
+        result.TestEquals( typeof( IBaseGeneric<int> ) ).Go();
     }
 
     [Fact]
@@ -42,7 +42,7 @@ public class TypeExtensionsOfClosedGenericClassTests : TypeTestsBase
     {
         var sut = typeof( GenericClass<int> );
         var result = sut.GetImplementation<INotImplemented>();
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Fact]
@@ -50,7 +50,7 @@ public class TypeExtensionsOfClosedGenericClassTests : TypeTestsBase
     {
         var sut = typeof( GenericClass<int> );
         var result = sut.GetImplementation( typeof( IBaseGeneric<> ) );
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Fact]
@@ -58,7 +58,7 @@ public class TypeExtensionsOfClosedGenericClassTests : TypeTestsBase
     {
         var sut = typeof( GenericClass<int> );
         var result = sut.Implements<IDirect>();
-        result.Should().BeTrue();
+        result.TestTrue().Go();
     }
 
     [Fact]
@@ -66,7 +66,7 @@ public class TypeExtensionsOfClosedGenericClassTests : TypeTestsBase
     {
         var sut = typeof( GenericClass<int> );
         var result = sut.Implements<IIndirectFromInterface>();
-        result.Should().BeTrue();
+        result.TestTrue().Go();
     }
 
     [Fact]
@@ -74,7 +74,7 @@ public class TypeExtensionsOfClosedGenericClassTests : TypeTestsBase
     {
         var sut = typeof( GenericClass<int> );
         var result = sut.Implements<IIndirectFromType>();
-        result.Should().BeTrue();
+        result.TestTrue().Go();
     }
 
     [Fact]
@@ -82,7 +82,7 @@ public class TypeExtensionsOfClosedGenericClassTests : TypeTestsBase
     {
         var sut = typeof( GenericClass<int> );
         var result = sut.Implements<IBaseGeneric<int>>();
-        result.Should().BeTrue();
+        result.TestTrue().Go();
     }
 
     [Fact]
@@ -90,7 +90,7 @@ public class TypeExtensionsOfClosedGenericClassTests : TypeTestsBase
     {
         var sut = typeof( GenericClass<int> );
         var result = sut.Implements<INotImplemented>();
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Fact]
@@ -98,7 +98,7 @@ public class TypeExtensionsOfClosedGenericClassTests : TypeTestsBase
     {
         var sut = typeof( GenericClass<int> );
         var result = sut.Implements( typeof( IBaseGeneric<> ) );
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Fact]
@@ -107,7 +107,7 @@ public class TypeExtensionsOfClosedGenericClassTests : TypeTestsBase
         var sut = typeof( GenericClass<int> );
         var expected = new[] { typeof( IBaseGeneric<int> ) }.AsEnumerable();
         var result = sut.GetOpenGenericImplementations( typeof( IBaseGeneric<> ) );
-        result.Should().BeEquivalentTo( expected );
+        result.TestSetEqual( expected ).Go();
     }
 
     [Fact]
@@ -115,7 +115,7 @@ public class TypeExtensionsOfClosedGenericClassTests : TypeTestsBase
     {
         var sut = typeof( GenericClass<int> );
         var result = sut.ImplementsOpenGeneric( typeof( IBaseGeneric<> ) );
-        result.Should().BeTrue();
+        result.TestTrue().Go();
     }
 
     [Fact]
@@ -124,7 +124,7 @@ public class TypeExtensionsOfClosedGenericClassTests : TypeTestsBase
         var sut = typeof( GenericClass<int> );
         var expected = new[] { typeof( IBaseGeneric<> ) }.AsEnumerable();
         var result = sut.GetAllImplementedGenericDefinitions();
-        result.Should().BeEquivalentTo( expected );
+        result.TestSetEqual( expected ).Go();
     }
 
     [Fact]
@@ -133,7 +133,7 @@ public class TypeExtensionsOfClosedGenericClassTests : TypeTestsBase
         var sut = typeof( MultiGenericClass<int, string> );
         var expected = new[] { typeof( IBaseGeneric<int> ), typeof( IBaseGeneric<string> ) }.AsEnumerable();
         var result = sut.GetOpenGenericImplementations( typeof( IBaseGeneric<> ) );
-        result.Should().BeEquivalentTo( expected );
+        result.TestSetEqual( expected ).Go();
     }
 
     [Fact]
@@ -142,7 +142,7 @@ public class TypeExtensionsOfClosedGenericClassTests : TypeTestsBase
         var sut = typeof( MultiGenericClass<int, int> );
         var expected = new[] { typeof( IBaseGeneric<int> ), typeof( IBaseGeneric<int> ) }.AsEnumerable();
         var result = sut.GetOpenGenericImplementations( typeof( IBaseGeneric<> ) );
-        result.Should().BeEquivalentTo( expected );
+        result.TestSetEqual( expected ).Go();
     }
 
     [Fact]
@@ -150,7 +150,7 @@ public class TypeExtensionsOfClosedGenericClassTests : TypeTestsBase
     {
         var sut = typeof( MultiGenericClass<int, string> );
         var result = sut.ImplementsOpenGeneric( typeof( IBaseGeneric<> ) );
-        result.Should().BeTrue();
+        result.TestTrue().Go();
     }
 
     [Fact]
@@ -159,7 +159,7 @@ public class TypeExtensionsOfClosedGenericClassTests : TypeTestsBase
         var sut = typeof( MultiGenericClass<int, string> );
         var expected = new[] { typeof( IBaseGeneric<> ) }.AsEnumerable();
         var result = sut.GetAllImplementedGenericDefinitions();
-        result.Should().BeEquivalentTo( expected );
+        result.TestSetEqual( expected ).Go();
     }
 
     [Fact]
@@ -167,7 +167,7 @@ public class TypeExtensionsOfClosedGenericClassTests : TypeTestsBase
     {
         var sut = typeof( GenericClass<int> );
         var result = sut.GetExtension<BaseGenericClass<int>>();
-        result.Should().Be( typeof( BaseGenericClass<int> ) );
+        result.TestEquals( typeof( BaseGenericClass<int> ) ).Go();
     }
 
     [Fact]
@@ -175,7 +175,7 @@ public class TypeExtensionsOfClosedGenericClassTests : TypeTestsBase
     {
         var sut = typeof( GenericClass<int> );
         var result = sut.GetExtension<BaseClass>();
-        result.Should().Be( typeof( BaseClass ) );
+        result.TestEquals( typeof( BaseClass ) ).Go();
     }
 
     [Fact]
@@ -183,7 +183,7 @@ public class TypeExtensionsOfClosedGenericClassTests : TypeTestsBase
     {
         var sut = typeof( GenericClass<int> );
         var result = sut.GetExtension<NotExtended>();
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Fact]
@@ -191,7 +191,7 @@ public class TypeExtensionsOfClosedGenericClassTests : TypeTestsBase
     {
         var sut = typeof( GenericClass<int> );
         var result = sut.GetExtension( typeof( BaseGenericClass<> ) );
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Fact]
@@ -199,7 +199,7 @@ public class TypeExtensionsOfClosedGenericClassTests : TypeTestsBase
     {
         var sut = typeof( GenericClass<int> );
         var result = sut.GetExtension<GenericClass<int>>();
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Fact]
@@ -207,7 +207,7 @@ public class TypeExtensionsOfClosedGenericClassTests : TypeTestsBase
     {
         var sut = typeof( GenericClass<int> );
         var result = sut.Extends<BaseGenericClass<int>>();
-        result.Should().BeTrue();
+        result.TestTrue().Go();
     }
 
     [Fact]
@@ -215,7 +215,7 @@ public class TypeExtensionsOfClosedGenericClassTests : TypeTestsBase
     {
         var sut = typeof( GenericClass<int> );
         var result = sut.Extends<BaseClass>();
-        result.Should().BeTrue();
+        result.TestTrue().Go();
     }
 
     [Fact]
@@ -223,7 +223,7 @@ public class TypeExtensionsOfClosedGenericClassTests : TypeTestsBase
     {
         var sut = typeof( GenericClass<int> );
         var result = sut.Extends<NotExtended>();
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Fact]
@@ -231,7 +231,7 @@ public class TypeExtensionsOfClosedGenericClassTests : TypeTestsBase
     {
         var sut = typeof( GenericClass<int> );
         var result = sut.Extends( typeof( BaseGenericClass<> ) );
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Fact]
@@ -239,7 +239,7 @@ public class TypeExtensionsOfClosedGenericClassTests : TypeTestsBase
     {
         var sut = typeof( GenericClass<int> );
         var result = sut.Extends<GenericClass<int>>();
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Fact]
@@ -247,7 +247,7 @@ public class TypeExtensionsOfClosedGenericClassTests : TypeTestsBase
     {
         var sut = typeof( GenericClass<int> );
         var result = sut.GetOpenGenericExtension( typeof( BaseGenericClass<> ) );
-        result.Should().Be( typeof( BaseGenericClass<int> ) );
+        result.TestEquals( typeof( BaseGenericClass<int> ) ).Go();
     }
 
     [Fact]
@@ -255,7 +255,7 @@ public class TypeExtensionsOfClosedGenericClassTests : TypeTestsBase
     {
         var sut = typeof( GenericClass<int> );
         var result = sut.ExtendsOpenGeneric( typeof( BaseGenericClass<> ) );
-        result.Should().BeTrue();
+        result.TestTrue().Go();
     }
 
     [Fact]
@@ -264,6 +264,6 @@ public class TypeExtensionsOfClosedGenericClassTests : TypeTestsBase
         var sut = typeof( GenericClass<int> );
         var expected = new[] { typeof( BaseGenericClass<> ) }.AsEnumerable();
         var result = sut.GetAllExtendedGenericDefinitions();
-        result.Should().BeEquivalentTo( expected );
+        result.TestSetEqual( expected ).Go();
     }
 }

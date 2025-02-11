@@ -2,6 +2,7 @@
 using System.Threading.Tasks;
 using System.Threading.Tasks.Sources;
 using LfrlAnvil.Async;
+using LfrlAnvil.Functional;
 
 namespace LfrlAnvil.Tests.AsyncTests;
 
@@ -14,11 +15,10 @@ public class ManualResetValueTaskSourceTests : TestsBase
     {
         var sut = new ManualResetValueTaskSource<int>( runContinuationsAsynchronously );
 
-        using ( new AssertionScope() )
-        {
-            sut.RunContinuationsAsynchronously.Should().Be( runContinuationsAsynchronously );
-            sut.Status.Should().Be( ValueTaskSourceStatus.Pending );
-        }
+        Assertion.All(
+                sut.RunContinuationsAsynchronously.TestEquals( runContinuationsAsynchronously ),
+                sut.Status.TestEquals( ValueTaskSourceStatus.Pending ) )
+            .Go();
     }
 
     [Fact]
@@ -35,15 +35,14 @@ public class ManualResetValueTaskSourceTests : TestsBase
 
         var result = await sut.GetTask();
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( 123 );
-            sut.Status.Should().Be( ValueTaskSourceStatus.Succeeded );
-        }
+        Assertion.All(
+                result.TestEquals( 123 ),
+                sut.Status.TestEquals( ValueTaskSourceStatus.Succeeded ) )
+            .Go();
     }
 
     [Fact]
-    public async Task SetException_ShouldCompleteCurrentOperation()
+    public void SetException_ShouldCompleteCurrentOperation()
     {
         var exception = new Exception( "foo" );
         var sut = new ManualResetValueTaskSource<int>();
@@ -55,25 +54,17 @@ public class ManualResetValueTaskSourceTests : TestsBase
                 sut.SetException( exception );
             } );
 
-        Exception? caughtException = null;
-        try
-        {
-            _ = await sut.GetTask();
-        }
-        catch ( Exception exc )
-        {
-            caughtException = exc;
-        }
+        var action = Lambda.Of( async () => await sut.GetTask() );
 
-        using ( new AssertionScope() )
-        {
-            caughtException.Should().BeSameAs( exception );
-            sut.Status.Should().Be( ValueTaskSourceStatus.Faulted );
-        }
+        action.Test(
+                exc => Assertion.All(
+                    exc.TestRefEquals( exception ),
+                    sut.Status.TestEquals( ValueTaskSourceStatus.Faulted ) ) )
+            .Go();
     }
 
     [Fact]
-    public async Task SetCancelled_ShouldCompleteCurrentOperation()
+    public void SetCancelled_ShouldCompleteCurrentOperation()
     {
         var cancellationTokenSource = new CancellationTokenSource();
         var token = cancellationTokenSource.Token;
@@ -88,22 +79,14 @@ public class ManualResetValueTaskSourceTests : TestsBase
                 sut.SetCancelled( token );
             } );
 
-        Exception? caughtException = null;
-        try
-        {
-            _ = await sut.GetTask();
-        }
-        catch ( Exception exc )
-        {
-            caughtException = exc;
-        }
+        var action = Lambda.Of( async () => await sut.GetTask() );
 
-        using ( new AssertionScope() )
-        {
-            caughtException.Should().BeOfType<OperationCanceledException>();
-            ((caughtException as OperationCanceledException)?.CancellationToken).Should().Be( token );
-            sut.Status.Should().Be( ValueTaskSourceStatus.Canceled );
-        }
+        action.Test(
+                exc => Assertion.All(
+                    exc.TestType().AssignableTo<OperationCanceledException>(),
+                    exc.TestIf().OfType<OperationCanceledException>( e => e.CancellationToken.TestEquals( token ) ),
+                    sut.Status.TestEquals( ValueTaskSourceStatus.Canceled ) ) )
+            .Go();
     }
 
     [Fact]
@@ -130,11 +113,10 @@ public class ManualResetValueTaskSourceTests : TestsBase
 
         var result = await sut.GetTask();
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( 456 );
-            sut.Status.Should().Be( ValueTaskSourceStatus.Succeeded );
-        }
+        Assertion.All(
+                result.TestEquals( 456 ),
+                sut.Status.TestEquals( ValueTaskSourceStatus.Succeeded ) )
+            .Go();
     }
 
     [Fact]
@@ -142,6 +124,6 @@ public class ManualResetValueTaskSourceTests : TestsBase
     {
         var sut = new ManualResetValueTaskSource<int>();
         var result = sut.ToString();
-        result.Should().Be( "Version: 0, Status: Pending" );
+        result.TestEquals( "Version: 0, Status: Pending" ).Go();
     }
 }

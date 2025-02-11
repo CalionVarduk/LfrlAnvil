@@ -7,7 +7,7 @@ public class RefStaticTests
     {
         var result = Ref.GetUnderlyingType( null );
 
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Theory]
@@ -18,7 +18,7 @@ public class RefStaticTests
     {
         var result = Ref.GetUnderlyingType( type );
 
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Theory]
@@ -29,7 +29,7 @@ public class RefStaticTests
     {
         var result = Ref.GetUnderlyingType( type );
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -39,6 +39,6 @@ public class RefStaticTests
 
         var result = Ref.GetUnderlyingType( typeof( Ref<> ) );
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 }

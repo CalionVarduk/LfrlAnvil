@@ -8,7 +8,7 @@ public class ResultTests : TestsBase
     public void Valid_ShouldReturnResultWithoutException()
     {
         var sut = Result.Valid;
-        sut.Exception.Should().BeNull();
+        sut.Exception.TestNull().Go();
     }
 
     [Fact]
@@ -16,7 +16,7 @@ public class ResultTests : TestsBase
     {
         var exception = new Exception( "foo" );
         var result = Result.Error( exception );
-        result.Exception.Should().BeSameAs( exception );
+        result.Exception.TestRefEquals( exception ).Go();
     }
 
     [Fact]
@@ -24,7 +24,7 @@ public class ResultTests : TestsBase
     {
         var sut = Result.Valid;
         var result = sut.ToString();
-        result.Should().Be( "<VALID>" );
+        result.TestEquals( "<VALID>" ).Go();
     }
 
     [Fact]
@@ -33,7 +33,7 @@ public class ResultTests : TestsBase
         var exception = new Exception( "foo" );
         var sut = Result.Error( exception );
         var result = sut.ToString();
-        result.Should().Be( exception.ToString() );
+        result.TestEquals( exception.ToString() ).Go();
     }
 
     [Fact]
@@ -41,7 +41,7 @@ public class ResultTests : TestsBase
     {
         var sut = Result.Valid;
         var action = Lambda.Of( () => sut.ThrowIfError() );
-        action.Should().NotThrow();
+        action.Test( exc => exc.TestNull() ).Go();
     }
 
     [Fact]
@@ -50,7 +50,7 @@ public class ResultTests : TestsBase
         var exception = new Exception( "foo" );
         var sut = Result.Error( exception );
         var action = Lambda.Of( () => sut.ThrowIfError() );
-        action.Should().Throw<Exception>().And.Should().BeSameAs( exception );
+        action.Test( exc => exc.TestType().AssignableTo<Exception>() ).Go();
     }
 
     [Fact]
@@ -59,11 +59,10 @@ public class ResultTests : TestsBase
         var value = Fixture.Create<string>();
         var result = Result.Create( value );
 
-        using ( new AssertionScope() )
-        {
-            result.Value.Should().BeSameAs( value );
-            result.Exception.Should().BeNull();
-        }
+        Assertion.All(
+                result.Value.TestRefEquals( value ),
+                result.Exception.TestNull() )
+            .Go();
     }
 
     [Fact]
@@ -73,11 +72,10 @@ public class ResultTests : TestsBase
         var exception = new Exception( "foo" );
         var result = Result.Error( exception, value );
 
-        using ( new AssertionScope() )
-        {
-            result.Value.Should().BeSameAs( value );
-            result.Exception.Should().BeSameAs( exception );
-        }
+        Assertion.All(
+                result.Value.TestRefEquals( value ),
+                result.Exception.TestRefEquals( exception ) )
+            .Go();
     }
 
     [Fact]
@@ -87,12 +85,12 @@ public class ResultTests : TestsBase
         var sut = Result.Create( value );
         var result = sut.ToString();
 
-        result.Should()
-            .Be(
+        result.TestEquals(
                 $"""
                  Value: {value}
                  <VALID>
-                 """ );
+                 """ )
+            .Go();
     }
 
     [Fact]
@@ -103,12 +101,12 @@ public class ResultTests : TestsBase
         var sut = Result.Error( exception, value );
         var result = sut.ToString();
 
-        result.Should()
-            .Be(
+        result.TestEquals(
                 $"""
                  Value: {value}
                  {exception}
-                 """ );
+                 """ )
+            .Go();
     }
 
     [Fact]
@@ -117,7 +115,7 @@ public class ResultTests : TestsBase
         var value = Fixture.Create<string>();
         var sut = Result.Create( value );
         var action = Lambda.Of( () => sut.ThrowIfError() );
-        action.Should().NotThrow();
+        action.Test( exc => exc.TestNull() ).Go();
     }
 
     [Fact]
@@ -127,7 +125,7 @@ public class ResultTests : TestsBase
         var exception = new Exception( "foo" );
         var sut = Result.Error( exception, value );
         var action = Lambda.Of( () => sut.ThrowIfError() );
-        action.Should().Throw<Exception>().And.Should().BeSameAs( exception );
+        action.Test( exc => exc.TestType().AssignableTo<Exception>() ).Go();
     }
 
     [Fact]
@@ -136,7 +134,7 @@ public class ResultTests : TestsBase
         var value = Fixture.Create<string>();
         var sut = Result.Create( value );
         var result = sut.GetValueOrThrow();
-        result.Should().BeSameAs( sut.Value );
+        result.TestRefEquals( sut.Value ).Go();
     }
 
     [Fact]
@@ -146,7 +144,7 @@ public class ResultTests : TestsBase
         var exception = new Exception( "foo" );
         var sut = Result.Error( exception, value );
         var action = Lambda.Of( () => sut.GetValueOrThrow() );
-        action.Should().Throw<Exception>().And.Should().BeSameAs( exception );
+        action.Test( exc => exc.TestType().AssignableTo<Exception>() ).Go();
     }
 
     [Fact]
@@ -154,7 +152,7 @@ public class ResultTests : TestsBase
     {
         var exception = new Exception( "foo" );
         var result = ( Result )exception;
-        result.Exception.Should().BeSameAs( exception );
+        result.Exception.TestRefEquals( exception ).Go();
     }
 
     [Fact]
@@ -162,7 +160,7 @@ public class ResultTests : TestsBase
     {
         var exception = new Exception( "foo" );
         var result = ( Result<string> )exception;
-        result.Exception.Should().BeSameAs( exception );
+        result.Exception.TestRefEquals( exception ).Go();
     }
 
     [Fact]
@@ -171,11 +169,10 @@ public class ResultTests : TestsBase
         var value = Fixture.Create<string>();
         var result = ( Result<string> )value;
 
-        using ( new AssertionScope() )
-        {
-            result.Exception.Should().BeNull();
-            result.Value.Should().BeSameAs( value );
-        }
+        Assertion.All(
+                result.Exception.TestNull(),
+                result.Value.TestRefEquals( value ) )
+            .Go();
     }
 
     [Fact]
@@ -184,7 +181,7 @@ public class ResultTests : TestsBase
         var value = Fixture.Create<string>();
         var sut = Result.Create( value );
         var result = ( Result )sut;
-        result.Exception.Should().BeNull();
+        result.Exception.TestNull().Go();
     }
 
     [Fact]
@@ -194,7 +191,7 @@ public class ResultTests : TestsBase
         var exception = new Exception( "foo" );
         var sut = Result.Error( exception, value );
         var result = ( Result )sut;
-        result.Exception.Should().BeSameAs( exception );
+        result.Exception.TestRefEquals( exception ).Go();
     }
 
     [Fact]
@@ -206,10 +203,9 @@ public class ResultTests : TestsBase
 
         var (outValue, outException) = sut;
 
-        using ( new AssertionScope() )
-        {
-            outValue.Should().BeSameAs( value );
-            outException.Should().BeSameAs( exception );
-        }
+        Assertion.All(
+                outValue.TestRefEquals( value ),
+                outException.TestRefEquals( exception ) )
+            .Go();
     }
 }

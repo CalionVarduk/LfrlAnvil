@@ -1,8 +1,8 @@
 ﻿using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using LfrlAnvil.Functional;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Tests.SparseListSlimTests;
 
@@ -20,16 +20,15 @@ public class SparseListSlimTests : TestsBase
     {
         var sut = SparseListSlim<string>.Create( minCapacity );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 0 );
-            sut.IsEmpty.Should().BeTrue();
-            sut.Capacity.Should().Be( expectedCapacity );
-            sut.First.Should().BeNull();
-            sut.Last.Should().BeNull();
-            AssertEnumerator( sut );
-            AssertSequenceEnumerator( sut );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 0 ),
+                sut.IsEmpty.TestTrue(),
+                sut.Capacity.TestEquals( expectedCapacity ),
+                sut.First.TestNull(),
+                sut.Last.TestNull(),
+                AssertEnumerator( sut ),
+                AssertSequenceEnumerator( sut ) )
+            .Go();
     }
 
     [Fact]
@@ -39,17 +38,16 @@ public class SparseListSlimTests : TestsBase
 
         var result = sut.Add( "foo" );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( 0 );
-            sut.Count.Should().Be( 1 );
-            sut.Capacity.Should().Be( 4 );
-            sut.IsEmpty.Should().BeFalse();
-            AssertFirst( sut, 0, "foo" );
-            AssertLast( sut, 0, "foo" );
-            AssertEnumerator( sut, (0, "foo") );
-            AssertSequenceEnumerator( sut, (0, "foo") );
-        }
+        Assertion.All(
+                result.TestEquals( 0 ),
+                sut.Count.TestEquals( 1 ),
+                sut.Capacity.TestEquals( 4 ),
+                sut.IsEmpty.TestFalse(),
+                AssertFirst( sut, 0, "foo" ),
+                AssertLast( sut, 0, "foo" ),
+                AssertEnumerator( sut, (0, "foo") ),
+                AssertSequenceEnumerator( sut, (0, "foo") ) )
+            .Go();
     }
 
     [Fact]
@@ -63,17 +61,16 @@ public class SparseListSlimTests : TestsBase
             sut.Add( "x3" )
         };
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSequentiallyEqualTo( 0, 1, 2 );
-            sut.Count.Should().Be( 3 );
-            sut.Capacity.Should().Be( 4 );
-            sut.IsEmpty.Should().BeFalse();
-            AssertFirst( sut, 0, "x1" );
-            AssertLast( sut, 2, "x3" );
-            AssertEnumerator( sut, (0, "x1"), (1, "x2"), (2, "x3") );
-            AssertSequenceEnumerator( sut, (0, "x1"), (1, "x2"), (2, "x3") );
-        }
+        Assertion.All(
+                result.TestSequence( [ 0, 1, 2 ] ),
+                sut.Count.TestEquals( 3 ),
+                sut.Capacity.TestEquals( 4 ),
+                sut.IsEmpty.TestFalse(),
+                AssertFirst( sut, 0, "x1" ),
+                AssertLast( sut, 2, "x3" ),
+                AssertEnumerator( sut, (0, "x1"), (1, "x2"), (2, "x3") ),
+                AssertSequenceEnumerator( sut, (0, "x1"), (1, "x2"), (2, "x3") ) )
+            .Go();
     }
 
     [Fact]
@@ -88,17 +85,16 @@ public class SparseListSlimTests : TestsBase
             sut.Add( "x4" )
         };
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSequentiallyEqualTo( 0, 1, 2, 3 );
-            sut.Count.Should().Be( 4 );
-            sut.Capacity.Should().Be( 4 );
-            sut.IsEmpty.Should().BeFalse();
-            AssertFirst( sut, 0, "x1" );
-            AssertLast( sut, 3, "x4" );
-            AssertEnumerator( sut, (0, "x1"), (1, "x2"), (2, "x3"), (3, "x4") );
-            AssertSequenceEnumerator( sut, (0, "x1"), (1, "x2"), (2, "x3"), (3, "x4") );
-        }
+        Assertion.All(
+                result.TestSequence( [ 0, 1, 2, 3 ] ),
+                sut.Count.TestEquals( 4 ),
+                sut.Capacity.TestEquals( 4 ),
+                sut.IsEmpty.TestFalse(),
+                AssertFirst( sut, 0, "x1" ),
+                AssertLast( sut, 3, "x4" ),
+                AssertEnumerator( sut, (0, "x1"), (1, "x2"), (2, "x3"), (3, "x4") ),
+                AssertSequenceEnumerator( sut, (0, "x1"), (1, "x2"), (2, "x3"), (3, "x4") ) )
+            .Go();
     }
 
     [Fact]
@@ -115,17 +111,16 @@ public class SparseListSlimTests : TestsBase
             sut.Add( "x6" )
         };
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSequentiallyEqualTo( 0, 1, 2, 3, 4, 5 );
-            sut.Count.Should().Be( 6 );
-            sut.Capacity.Should().Be( 8 );
-            sut.IsEmpty.Should().BeFalse();
-            AssertFirst( sut, 0, "x1" );
-            AssertLast( sut, 5, "x6" );
-            AssertEnumerator( sut, (0, "x1"), (1, "x2"), (2, "x3"), (3, "x4"), (4, "x5"), (5, "x6") );
-            AssertSequenceEnumerator( sut, (0, "x1"), (1, "x2"), (2, "x3"), (3, "x4"), (4, "x5"), (5, "x6") );
-        }
+        Assertion.All(
+                result.TestSequence( [ 0, 1, 2, 3, 4, 5 ] ),
+                sut.Count.TestEquals( 6 ),
+                sut.Capacity.TestEquals( 8 ),
+                sut.IsEmpty.TestFalse(),
+                AssertFirst( sut, 0, "x1" ),
+                AssertLast( sut, 5, "x6" ),
+                AssertEnumerator( sut, (0, "x1"), (1, "x2"), (2, "x3"), (3, "x4"), (4, "x5"), (5, "x6") ),
+                AssertSequenceEnumerator( sut, (0, "x1"), (1, "x2"), (2, "x3"), (3, "x4"), (4, "x5"), (5, "x6") ) )
+            .Go();
     }
 
     [Fact]
@@ -138,17 +133,16 @@ public class SparseListSlimTests : TestsBase
         ref var result = ref sut.AddDefault( out var index );
         result = "x3";
 
-        using ( new AssertionScope() )
-        {
-            index.Should().Be( 2 );
-            sut.Count.Should().Be( 3 );
-            sut.Capacity.Should().Be( 4 );
-            sut.IsEmpty.Should().BeFalse();
-            AssertFirst( sut, 0, "x1" );
-            AssertLast( sut, 2, "x3" );
-            AssertEnumerator( sut, (0, "x1"), (1, "x2"), (2, "x3") );
-            AssertSequenceEnumerator( sut, (0, "x1"), (1, "x2"), (2, "x3") );
-        }
+        Assertion.All(
+                index.TestEquals( 2 ),
+                sut.Count.TestEquals( 3 ),
+                sut.Capacity.TestEquals( 4 ),
+                sut.IsEmpty.TestFalse(),
+                AssertFirst( sut, 0, "x1" ),
+                AssertLast( sut, 2, "x3" ),
+                AssertEnumerator( sut, (0, "x1"), (1, "x2"), (2, "x3") ),
+                AssertSequenceEnumerator( sut, (0, "x1"), (1, "x2"), (2, "x3") ) )
+            .Go();
     }
 
     [Fact]
@@ -171,17 +165,16 @@ public class SparseListSlimTests : TestsBase
             sut.Add( "x8" )
         };
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSequentiallyEqualTo( 2, 1, 0, 3, 4 );
-            sut.Count.Should().Be( 5 );
-            sut.Capacity.Should().Be( 8 );
-            sut.IsEmpty.Should().BeFalse();
-            AssertFirst( sut, 2, "x4" );
-            AssertLast( sut, 4, "x8" );
-            AssertEnumerator( sut, (2, "x4"), (1, "x5"), (0, "x6"), (3, "x7"), (4, "x8") );
-            AssertSequenceEnumerator( sut, (0, "x6"), (1, "x5"), (2, "x4"), (3, "x7"), (4, "x8") );
-        }
+        Assertion.All(
+                result.TestSequence( [ 2, 1, 0, 3, 4 ] ),
+                sut.Count.TestEquals( 5 ),
+                sut.Capacity.TestEquals( 8 ),
+                sut.IsEmpty.TestFalse(),
+                AssertFirst( sut, 2, "x4" ),
+                AssertLast( sut, 4, "x8" ),
+                AssertEnumerator( sut, (2, "x4"), (1, "x5"), (0, "x6"), (3, "x7"), (4, "x8") ),
+                AssertSequenceEnumerator( sut, (0, "x6"), (1, "x5"), (2, "x4"), (3, "x7"), (4, "x8") ) )
+            .Go();
     }
 
     [Theory]
@@ -199,12 +192,11 @@ public class SparseListSlimTests : TestsBase
 
         ref var result = ref sut.GetRefOrAddDefault( index, out var exists )!;
 
-        using ( new AssertionScope() )
-        {
-            exists.Should().BeTrue();
-            result.Should().Be( expected );
-            sut.Count.Should().Be( 4 );
-        }
+        Assertion.All(
+                exists.TestTrue(),
+                result.TestEquals( expected ),
+                sut.Count.TestEquals( 4 ) )
+            .Go();
     }
 
     [Theory]
@@ -219,17 +211,16 @@ public class SparseListSlimTests : TestsBase
 
         ref var result = ref sut.GetRefOrAddDefault( index, out var exists )!;
 
-        using ( new AssertionScope() )
-        {
-            exists.Should().BeFalse();
-            result.Should().BeNull();
-            sut.Count.Should().Be( 1 );
-            sut.Capacity.Should().Be( expectedCapacity );
-            AssertFirst( sut, index, result );
-            AssertLast( sut, index, result );
-            AssertEnumerator( sut, (index, result) );
-            AssertSequenceEnumerator( sut, (index, result) );
-        }
+        Assertion.All(
+                exists.TestFalse(),
+                result.TestNull(),
+                sut.Count.TestEquals( 1 ),
+                sut.Capacity.TestEquals( expectedCapacity ),
+                AssertFirst( sut, index, result ),
+                AssertLast( sut, index, result ),
+                AssertEnumerator( sut, (index, result) ),
+                AssertSequenceEnumerator( sut, (index, result) ) )
+            .Go();
     }
 
     [Theory]
@@ -249,17 +240,16 @@ public class SparseListSlimTests : TestsBase
 
         ref var result = ref sut.GetRefOrAddDefault( index, out var exists )!;
 
-        using ( new AssertionScope() )
-        {
-            exists.Should().BeFalse();
-            result.Should().BeNull();
-            sut.Count.Should().Be( 1 );
-            sut.Capacity.Should().Be( expectedCapacity );
-            AssertFirst( sut, index, result );
-            AssertLast( sut, index, result );
-            AssertEnumerator( sut, (index, result) );
-            AssertSequenceEnumerator( sut, (index, result) );
-        }
+        Assertion.All(
+                exists.TestFalse(),
+                result.TestNull(),
+                sut.Count.TestEquals( 1 ),
+                sut.Capacity.TestEquals( expectedCapacity ),
+                AssertFirst( sut, index, result ),
+                AssertLast( sut, index, result ),
+                AssertEnumerator( sut, (index, result) ),
+                AssertSequenceEnumerator( sut, (index, result) ) )
+            .Go();
     }
 
     [Fact]
@@ -286,15 +276,14 @@ public class SparseListSlimTests : TestsBase
         value = ref sut.GetRefOrAddDefault( 5, out _ );
         value = "x10";
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 7 );
-            sut.Capacity.Should().Be( 8 );
-            AssertFirst( sut, 1, "x2" );
-            AssertLast( sut, 5, "x10" );
-            AssertEnumerator( sut, (1, "x2"), (4, "x5"), (6, "x6"), (0, "x7"), (3, "x8"), (2, "x9"), (5, "x10") );
-            AssertSequenceEnumerator( sut, (0, "x7"), (1, "x2"), (2, "x9"), (3, "x8"), (4, "x5"), (5, "x10"), (6, "x6") );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 7 ),
+                sut.Capacity.TestEquals( 8 ),
+                AssertFirst( sut, 1, "x2" ),
+                AssertLast( sut, 5, "x10" ),
+                AssertEnumerator( sut, (1, "x2"), (4, "x5"), (6, "x6"), (0, "x7"), (3, "x8"), (2, "x9"), (5, "x10") ),
+                AssertSequenceEnumerator( sut, (0, "x7"), (1, "x2"), (2, "x9"), (3, "x8"), (4, "x5"), (5, "x10"), (6, "x6") ) )
+            .Go();
     }
 
     [Fact]
@@ -308,15 +297,14 @@ public class SparseListSlimTests : TestsBase
         sut.Add( "x4" );
         sut.Add( "x5" );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 5 );
-            sut.Capacity.Should().Be( 8 );
-            AssertFirst( sut, 3, "x1" );
-            AssertLast( sut, 4, "x5" );
-            AssertEnumerator( sut, (3, "x1"), (0, "x2"), (1, "x3"), (2, "x4"), (4, "x5") );
-            AssertSequenceEnumerator( sut, (0, "x2"), (1, "x3"), (2, "x4"), (3, "x1"), (4, "x5") );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 5 ),
+                sut.Capacity.TestEquals( 8 ),
+                AssertFirst( sut, 3, "x1" ),
+                AssertLast( sut, 4, "x5" ),
+                AssertEnumerator( sut, (3, "x1"), (0, "x2"), (1, "x3"), (2, "x4"), (4, "x5") ),
+                AssertSequenceEnumerator( sut, (0, "x2"), (1, "x3"), (2, "x4"), (3, "x1"), (4, "x5") ) )
+            .Go();
     }
 
     [Fact]
@@ -328,15 +316,14 @@ public class SparseListSlimTests : TestsBase
         ref var result = ref sut.GetRefOrAddDefault( 1, out _ )!;
         result = "x2";
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 2 );
-            sut.Capacity.Should().Be( 4 );
-            AssertFirst( sut, 0, "x1" );
-            AssertLast( sut, 1, "x2" );
-            AssertEnumerator( sut, (0, "x1"), (1, "x2") );
-            AssertSequenceEnumerator( sut, (0, "x1"), (1, "x2") );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 2 ),
+                sut.Capacity.TestEquals( 4 ),
+                AssertFirst( sut, 0, "x1" ),
+                AssertLast( sut, 1, "x2" ),
+                AssertEnumerator( sut, (0, "x1"), (1, "x2") ),
+                AssertSequenceEnumerator( sut, (0, "x1"), (1, "x2") ) )
+            .Go();
     }
 
     [Fact]
@@ -348,15 +335,14 @@ public class SparseListSlimTests : TestsBase
         result = "x2";
         sut.Add( "x3" );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 2 );
-            sut.Capacity.Should().Be( 4 );
-            AssertFirst( sut, 1, "x2" );
-            AssertLast( sut, 0, "x3" );
-            AssertEnumerator( sut, (1, "x2"), (0, "x3") );
-            AssertSequenceEnumerator( sut, (0, "x3"), (1, "x2") );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 2 ),
+                sut.Capacity.TestEquals( 4 ),
+                AssertFirst( sut, 1, "x2" ),
+                AssertLast( sut, 0, "x3" ),
+                AssertEnumerator( sut, (1, "x2"), (0, "x3") ),
+                AssertSequenceEnumerator( sut, (0, "x3"), (1, "x2") ) )
+            .Go();
     }
 
     [Fact]
@@ -364,7 +350,7 @@ public class SparseListSlimTests : TestsBase
     {
         var sut = SparseListSlim<string>.Create();
         var action = Lambda.Of( () => _ = sut.GetRefOrAddDefault( -1, out _ ) );
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Fact]
@@ -379,16 +365,15 @@ public class SparseListSlimTests : TestsBase
 
         var result = sut.TryAdd( 2, "x5" );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            sut.Count.Should().Be( 4 );
-            sut.Capacity.Should().Be( 4 );
-            AssertFirst( sut, 0, "x1" );
-            AssertLast( sut, 2, "x5" );
-            AssertEnumerator( sut, (0, "x1"), (1, "x2"), (3, "x4"), (2, "x5") );
-            AssertSequenceEnumerator( sut, (0, "x1"), (1, "x2"), (2, "x5"), (3, "x4") );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                sut.Count.TestEquals( 4 ),
+                sut.Capacity.TestEquals( 4 ),
+                AssertFirst( sut, 0, "x1" ),
+                AssertLast( sut, 2, "x5" ),
+                AssertEnumerator( sut, (0, "x1"), (1, "x2"), (3, "x4"), (2, "x5") ),
+                AssertSequenceEnumerator( sut, (0, "x1"), (1, "x2"), (2, "x5"), (3, "x4") ) )
+            .Go();
     }
 
     [Fact]
@@ -402,16 +387,15 @@ public class SparseListSlimTests : TestsBase
 
         var result = sut.TryAdd( 2, "x5" );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeFalse();
-            sut.Count.Should().Be( 4 );
-            sut.Capacity.Should().Be( 4 );
-            AssertFirst( sut, 0, "x1" );
-            AssertLast( sut, 3, "x4" );
-            AssertEnumerator( sut, (0, "x1"), (1, "x2"), (2, "x3"), (3, "x4") );
-            AssertSequenceEnumerator( sut, (0, "x1"), (1, "x2"), (2, "x3"), (3, "x4") );
-        }
+        Assertion.All(
+                result.TestFalse(),
+                sut.Count.TestEquals( 4 ),
+                sut.Capacity.TestEquals( 4 ),
+                AssertFirst( sut, 0, "x1" ),
+                AssertLast( sut, 3, "x4" ),
+                AssertEnumerator( sut, (0, "x1"), (1, "x2"), (2, "x3"), (3, "x4") ),
+                AssertSequenceEnumerator( sut, (0, "x1"), (1, "x2"), (2, "x3"), (3, "x4") ) )
+            .Go();
     }
 
     [Theory]
@@ -434,16 +418,15 @@ public class SparseListSlimTests : TestsBase
 
         var result = sut.Remove( index );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeFalse();
-            sut.Count.Should().Be( 3 );
-            sut.Capacity.Should().Be( 8 );
-            AssertFirst( sut, 0, "x1" );
-            AssertLast( sut, 3, "x4" );
-            AssertEnumerator( sut, (0, "x1"), (2, "x3"), (3, "x4") );
-            AssertSequenceEnumerator( sut, (0, "x1"), (2, "x3"), (3, "x4") );
-        }
+        Assertion.All(
+                result.TestFalse(),
+                sut.Count.TestEquals( 3 ),
+                sut.Capacity.TestEquals( 8 ),
+                AssertFirst( sut, 0, "x1" ),
+                AssertLast( sut, 3, "x4" ),
+                AssertEnumerator( sut, (0, "x1"), (2, "x3"), (3, "x4") ),
+                AssertSequenceEnumerator( sut, (0, "x1"), (2, "x3"), (3, "x4") ) )
+            .Go();
     }
 
     [Fact]
@@ -456,16 +439,15 @@ public class SparseListSlimTests : TestsBase
 
         var result = sut.Remove( 0 );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            sut.Count.Should().Be( 2 );
-            sut.Capacity.Should().Be( 4 );
-            AssertFirst( sut, 1, "x2" );
-            AssertLast( sut, 2, "x3" );
-            AssertEnumerator( sut, (1, "x2"), (2, "x3") );
-            AssertSequenceEnumerator( sut, (1, "x2"), (2, "x3") );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                sut.Count.TestEquals( 2 ),
+                sut.Capacity.TestEquals( 4 ),
+                AssertFirst( sut, 1, "x2" ),
+                AssertLast( sut, 2, "x3" ),
+                AssertEnumerator( sut, (1, "x2"), (2, "x3") ),
+                AssertSequenceEnumerator( sut, (1, "x2"), (2, "x3") ) )
+            .Go();
     }
 
     [Fact]
@@ -478,16 +460,15 @@ public class SparseListSlimTests : TestsBase
 
         var result = sut.Remove( 2 );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            sut.Count.Should().Be( 2 );
-            sut.Capacity.Should().Be( 4 );
-            AssertFirst( sut, 0, "x1" );
-            AssertLast( sut, 1, "x2" );
-            AssertEnumerator( sut, (0, "x1"), (1, "x2") );
-            AssertSequenceEnumerator( sut, (0, "x1"), (1, "x2") );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                sut.Count.TestEquals( 2 ),
+                sut.Capacity.TestEquals( 4 ),
+                AssertFirst( sut, 0, "x1" ),
+                AssertLast( sut, 1, "x2" ),
+                AssertEnumerator( sut, (0, "x1"), (1, "x2") ),
+                AssertSequenceEnumerator( sut, (0, "x1"), (1, "x2") ) )
+            .Go();
     }
 
     [Fact]
@@ -500,16 +481,15 @@ public class SparseListSlimTests : TestsBase
 
         var result = sut.Remove( 1 );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            sut.Count.Should().Be( 2 );
-            sut.Capacity.Should().Be( 4 );
-            AssertFirst( sut, 0, "x1" );
-            AssertLast( sut, 2, "x3" );
-            AssertEnumerator( sut, (0, "x1"), (2, "x3") );
-            AssertSequenceEnumerator( sut, (0, "x1"), (2, "x3") );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                sut.Count.TestEquals( 2 ),
+                sut.Capacity.TestEquals( 4 ),
+                AssertFirst( sut, 0, "x1" ),
+                AssertLast( sut, 2, "x3" ),
+                AssertEnumerator( sut, (0, "x1"), (2, "x3") ),
+                AssertSequenceEnumerator( sut, (0, "x1"), (2, "x3") ) )
+            .Go();
     }
 
     [Fact]
@@ -520,16 +500,15 @@ public class SparseListSlimTests : TestsBase
 
         var result = sut.Remove( 0 );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            sut.Count.Should().Be( 0 );
-            sut.Capacity.Should().Be( 4 );
-            sut.First.Should().BeNull();
-            sut.Last.Should().BeNull();
-            AssertEnumerator( sut );
-            AssertSequenceEnumerator( sut );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                sut.Count.TestEquals( 0 ),
+                sut.Capacity.TestEquals( 4 ),
+                sut.First.TestNull(),
+                sut.Last.TestNull(),
+                AssertEnumerator( sut ),
+                AssertSequenceEnumerator( sut ) )
+            .Go();
     }
 
     [Theory]
@@ -552,17 +531,16 @@ public class SparseListSlimTests : TestsBase
 
         var result = sut.Remove( index, out var outResult );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeFalse();
-            outResult.Should().BeNull();
-            sut.Count.Should().Be( 3 );
-            sut.Capacity.Should().Be( 8 );
-            AssertFirst( sut, 0, "x1" );
-            AssertLast( sut, 3, "x4" );
-            AssertEnumerator( sut, (0, "x1"), (2, "x3"), (3, "x4") );
-            AssertSequenceEnumerator( sut, (0, "x1"), (2, "x3"), (3, "x4") );
-        }
+        Assertion.All(
+                result.TestFalse(),
+                outResult.TestNull(),
+                sut.Count.TestEquals( 3 ),
+                sut.Capacity.TestEquals( 8 ),
+                AssertFirst( sut, 0, "x1" ),
+                AssertLast( sut, 3, "x4" ),
+                AssertEnumerator( sut, (0, "x1"), (2, "x3"), (3, "x4") ),
+                AssertSequenceEnumerator( sut, (0, "x1"), (2, "x3"), (3, "x4") ) )
+            .Go();
     }
 
     [Fact]
@@ -575,17 +553,16 @@ public class SparseListSlimTests : TestsBase
 
         var result = sut.Remove( 0, out var outResult );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            outResult.Should().Be( "x1" );
-            sut.Count.Should().Be( 2 );
-            sut.Capacity.Should().Be( 4 );
-            AssertFirst( sut, 1, "x2" );
-            AssertLast( sut, 2, "x3" );
-            AssertEnumerator( sut, (1, "x2"), (2, "x3") );
-            AssertSequenceEnumerator( sut, (1, "x2"), (2, "x3") );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                outResult.TestEquals( "x1" ),
+                sut.Count.TestEquals( 2 ),
+                sut.Capacity.TestEquals( 4 ),
+                AssertFirst( sut, 1, "x2" ),
+                AssertLast( sut, 2, "x3" ),
+                AssertEnumerator( sut, (1, "x2"), (2, "x3") ),
+                AssertSequenceEnumerator( sut, (1, "x2"), (2, "x3") ) )
+            .Go();
     }
 
     [Fact]
@@ -598,17 +575,16 @@ public class SparseListSlimTests : TestsBase
 
         var result = sut.Remove( 2, out var outResult );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            outResult.Should().Be( "x3" );
-            sut.Count.Should().Be( 2 );
-            sut.Capacity.Should().Be( 4 );
-            AssertFirst( sut, 0, "x1" );
-            AssertLast( sut, 1, "x2" );
-            AssertEnumerator( sut, (0, "x1"), (1, "x2") );
-            AssertSequenceEnumerator( sut, (0, "x1"), (1, "x2") );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                outResult.TestEquals( "x3" ),
+                sut.Count.TestEquals( 2 ),
+                sut.Capacity.TestEquals( 4 ),
+                AssertFirst( sut, 0, "x1" ),
+                AssertLast( sut, 1, "x2" ),
+                AssertEnumerator( sut, (0, "x1"), (1, "x2") ),
+                AssertSequenceEnumerator( sut, (0, "x1"), (1, "x2") ) )
+            .Go();
     }
 
     [Fact]
@@ -621,17 +597,16 @@ public class SparseListSlimTests : TestsBase
 
         var result = sut.Remove( 1, out var outResult );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            outResult.Should().Be( "x2" );
-            sut.Count.Should().Be( 2 );
-            sut.Capacity.Should().Be( 4 );
-            AssertFirst( sut, 0, "x1" );
-            AssertLast( sut, 2, "x3" );
-            AssertEnumerator( sut, (0, "x1"), (2, "x3") );
-            AssertSequenceEnumerator( sut, (0, "x1"), (2, "x3") );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                outResult.TestEquals( "x2" ),
+                sut.Count.TestEquals( 2 ),
+                sut.Capacity.TestEquals( 4 ),
+                AssertFirst( sut, 0, "x1" ),
+                AssertLast( sut, 2, "x3" ),
+                AssertEnumerator( sut, (0, "x1"), (2, "x3") ),
+                AssertSequenceEnumerator( sut, (0, "x1"), (2, "x3") ) )
+            .Go();
     }
 
     [Fact]
@@ -642,17 +617,16 @@ public class SparseListSlimTests : TestsBase
 
         var result = sut.Remove( 0, out var outResult );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            outResult.Should().Be( "x1" );
-            sut.Count.Should().Be( 0 );
-            sut.Capacity.Should().Be( 4 );
-            sut.First.Should().BeNull();
-            sut.Last.Should().BeNull();
-            AssertEnumerator( sut );
-            AssertSequenceEnumerator( sut );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                outResult.TestEquals( "x1" ),
+                sut.Count.TestEquals( 0 ),
+                sut.Capacity.TestEquals( 4 ),
+                sut.First.TestNull(),
+                sut.Last.TestNull(),
+                AssertEnumerator( sut ),
+                AssertSequenceEnumerator( sut ) )
+            .Go();
     }
 
     [Theory]
@@ -678,7 +652,7 @@ public class SparseListSlimTests : TestsBase
 
         var result = sut.Contains( index );
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -701,7 +675,7 @@ public class SparseListSlimTests : TestsBase
 
         var result = sut.GetNode( index );
 
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Theory]
@@ -726,18 +700,18 @@ public class SparseListSlimTests : TestsBase
 
         var result = sut.GetNode( index );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().NotBeNull();
-            if ( result is null )
-                return;
-
-            result.Value.Index.Should().Be( index );
-            result.Value.Value.Should().Be( expectedValue );
-            (result.Value.Prev?.Index).Should().Be( expectedPrev );
-            (result.Value.Next?.Index).Should().Be( expectedNext );
-            result.ToString().Should().Be( expectedString );
-        }
+        Assertion.All(
+                result.TestNotNull(),
+                result.TestIf()
+                    .NotNull(
+                        value => Assertion.All(
+                            "result.Value",
+                            value.Index.TestEquals( index ),
+                            value.Value.TestEquals( expectedValue ),
+                            (value.Prev?.Index).TestEquals( expectedPrev ),
+                            (value.Next?.Index).TestEquals( expectedNext ),
+                            value.ToString().TestEquals( expectedString ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -747,16 +721,15 @@ public class SparseListSlimTests : TestsBase
 
         sut.Clear();
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 0 );
-            sut.Capacity.Should().Be( 16 );
-            sut.IsEmpty.Should().BeTrue();
-            sut.First.Should().BeNull();
-            sut.Last.Should().BeNull();
-            AssertEnumerator( sut );
-            AssertSequenceEnumerator( sut );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 0 ),
+                sut.Capacity.TestEquals( 16 ),
+                sut.IsEmpty.TestTrue(),
+                sut.First.TestNull(),
+                sut.Last.TestNull(),
+                AssertEnumerator( sut ),
+                AssertSequenceEnumerator( sut ) )
+            .Go();
     }
 
     [Fact]
@@ -770,16 +743,15 @@ public class SparseListSlimTests : TestsBase
 
         sut.Clear();
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 0 );
-            sut.Capacity.Should().Be( 16 );
-            sut.IsEmpty.Should().BeTrue();
-            sut.First.Should().BeNull();
-            sut.Last.Should().BeNull();
-            AssertEnumerator( sut );
-            AssertSequenceEnumerator( sut );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 0 ),
+                sut.Capacity.TestEquals( 16 ),
+                sut.IsEmpty.TestTrue(),
+                sut.First.TestNull(),
+                sut.Last.TestNull(),
+                AssertEnumerator( sut ),
+                AssertSequenceEnumerator( sut ) )
+            .Go();
     }
 
     [Fact]
@@ -792,16 +764,15 @@ public class SparseListSlimTests : TestsBase
 
         sut.Clear();
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 0 );
-            sut.Capacity.Should().Be( 4 );
-            sut.IsEmpty.Should().BeTrue();
-            sut.First.Should().BeNull();
-            sut.Last.Should().BeNull();
-            AssertEnumerator( sut );
-            AssertSequenceEnumerator( sut );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 0 ),
+                sut.Capacity.TestEquals( 4 ),
+                sut.IsEmpty.TestTrue(),
+                sut.First.TestNull(),
+                sut.Last.TestNull(),
+                AssertEnumerator( sut ),
+                AssertSequenceEnumerator( sut ) )
+            .Go();
     }
 
     [Theory]
@@ -813,16 +784,15 @@ public class SparseListSlimTests : TestsBase
 
         sut.ResetCapacity( minCapacity );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 0 );
-            sut.Capacity.Should().Be( 0 );
-            sut.IsEmpty.Should().BeTrue();
-            sut.First.Should().BeNull();
-            sut.Last.Should().BeNull();
-            AssertEnumerator( sut );
-            AssertSequenceEnumerator( sut );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 0 ),
+                sut.Capacity.TestEquals( 0 ),
+                sut.IsEmpty.TestTrue(),
+                sut.First.TestNull(),
+                sut.Last.TestNull(),
+                AssertEnumerator( sut ),
+                AssertSequenceEnumerator( sut ) )
+            .Go();
     }
 
     [Theory]
@@ -836,16 +806,15 @@ public class SparseListSlimTests : TestsBase
 
         sut.ResetCapacity( minCapacity );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 0 );
-            sut.Capacity.Should().Be( 0 );
-            sut.IsEmpty.Should().BeTrue();
-            sut.First.Should().BeNull();
-            sut.Last.Should().BeNull();
-            AssertEnumerator( sut );
-            AssertSequenceEnumerator( sut );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 0 ),
+                sut.Capacity.TestEquals( 0 ),
+                sut.IsEmpty.TestTrue(),
+                sut.First.TestNull(),
+                sut.Last.TestNull(),
+                AssertEnumerator( sut ),
+                AssertSequenceEnumerator( sut ) )
+            .Go();
     }
 
     [Theory]
@@ -859,16 +828,15 @@ public class SparseListSlimTests : TestsBase
 
         sut.ResetCapacity( minCapacity );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 0 );
-            sut.Capacity.Should().Be( 4 );
-            sut.IsEmpty.Should().BeTrue();
-            sut.First.Should().BeNull();
-            sut.Last.Should().BeNull();
-            AssertEnumerator( sut );
-            AssertSequenceEnumerator( sut );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 0 ),
+                sut.Capacity.TestEquals( 4 ),
+                sut.IsEmpty.TestTrue(),
+                sut.First.TestNull(),
+                sut.Last.TestNull(),
+                AssertEnumerator( sut ),
+                AssertSequenceEnumerator( sut ) )
+            .Go();
     }
 
     [Theory]
@@ -884,16 +852,15 @@ public class SparseListSlimTests : TestsBase
 
         sut.ResetCapacity( minCapacity );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 1 );
-            sut.Capacity.Should().Be( 4 );
-            sut.IsEmpty.Should().BeFalse();
-            AssertFirst( sut, 0, "foo" );
-            AssertLast( sut, 0, "foo" );
-            AssertEnumerator( sut, (0, "foo") );
-            AssertSequenceEnumerator( sut, (0, "foo") );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 1 ),
+                sut.Capacity.TestEquals( 4 ),
+                sut.IsEmpty.TestFalse(),
+                AssertFirst( sut, 0, "foo" ),
+                AssertLast( sut, 0, "foo" ),
+                AssertEnumerator( sut, (0, "foo") ),
+                AssertSequenceEnumerator( sut, (0, "foo") ) )
+            .Go();
     }
 
     [Fact]
@@ -903,16 +870,15 @@ public class SparseListSlimTests : TestsBase
 
         sut.ResetCapacity( minCapacity: 4 );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 0 );
-            sut.Capacity.Should().Be( 4 );
-            sut.IsEmpty.Should().BeTrue();
-            sut.First.Should().BeNull();
-            sut.Last.Should().BeNull();
-            AssertEnumerator( sut );
-            AssertSequenceEnumerator( sut );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 0 ),
+                sut.Capacity.TestEquals( 4 ),
+                sut.IsEmpty.TestTrue(),
+                sut.First.TestNull(),
+                sut.Last.TestNull(),
+                AssertEnumerator( sut ),
+                AssertSequenceEnumerator( sut ) )
+            .Go();
     }
 
     [Fact]
@@ -926,16 +892,15 @@ public class SparseListSlimTests : TestsBase
 
         sut.ResetCapacity( minCapacity: 4 );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 0 );
-            sut.Capacity.Should().Be( 4 );
-            sut.IsEmpty.Should().BeTrue();
-            sut.First.Should().BeNull();
-            sut.Last.Should().BeNull();
-            AssertEnumerator( sut );
-            AssertSequenceEnumerator( sut );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 0 ),
+                sut.Capacity.TestEquals( 4 ),
+                sut.IsEmpty.TestTrue(),
+                sut.First.TestNull(),
+                sut.Last.TestNull(),
+                AssertEnumerator( sut ),
+                AssertSequenceEnumerator( sut ) )
+            .Go();
     }
 
     [Fact]
@@ -947,16 +912,15 @@ public class SparseListSlimTests : TestsBase
 
         sut.ResetCapacity( minCapacity: 4 );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 2 );
-            sut.Capacity.Should().Be( 4 );
-            sut.IsEmpty.Should().BeFalse();
-            AssertFirst( sut, 0, "x1" );
-            AssertLast( sut, 1, "x2" );
-            AssertEnumerator( sut, (0, "x1"), (1, "x2") );
-            AssertSequenceEnumerator( sut, (0, "x1"), (1, "x2") );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 2 ),
+                sut.Capacity.TestEquals( 4 ),
+                sut.IsEmpty.TestFalse(),
+                AssertFirst( sut, 0, "x1" ),
+                AssertLast( sut, 1, "x2" ),
+                AssertEnumerator( sut, (0, "x1"), (1, "x2") ),
+                AssertSequenceEnumerator( sut, (0, "x1"), (1, "x2") ) )
+            .Go();
     }
 
     [Fact]
@@ -972,16 +936,15 @@ public class SparseListSlimTests : TestsBase
 
         sut.ResetCapacity( minCapacity: 4 );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 2 );
-            sut.Capacity.Should().Be( 4 );
-            sut.IsEmpty.Should().BeFalse();
-            AssertFirst( sut, 0, "x1" );
-            AssertLast( sut, 1, "x2" );
-            AssertEnumerator( sut, (0, "x1"), (1, "x2") );
-            AssertSequenceEnumerator( sut, (0, "x1"), (1, "x2") );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 2 ),
+                sut.Capacity.TestEquals( 4 ),
+                sut.IsEmpty.TestFalse(),
+                AssertFirst( sut, 0, "x1" ),
+                AssertLast( sut, 1, "x2" ),
+                AssertEnumerator( sut, (0, "x1"), (1, "x2") ),
+                AssertSequenceEnumerator( sut, (0, "x1"), (1, "x2") ) )
+            .Go();
     }
 
     [Fact]
@@ -995,16 +958,15 @@ public class SparseListSlimTests : TestsBase
 
         sut.ResetCapacity( minCapacity: 4 );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 4 );
-            sut.Capacity.Should().Be( 4 );
-            sut.IsEmpty.Should().BeFalse();
-            AssertFirst( sut, 0, "x1" );
-            AssertLast( sut, 3, "x4" );
-            AssertEnumerator( sut, (0, "x1"), (1, "x2"), (2, "x3"), (3, "x4") );
-            AssertSequenceEnumerator( sut, (0, "x1"), (1, "x2"), (2, "x3"), (3, "x4") );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 4 ),
+                sut.Capacity.TestEquals( 4 ),
+                sut.IsEmpty.TestFalse(),
+                AssertFirst( sut, 0, "x1" ),
+                AssertLast( sut, 3, "x4" ),
+                AssertEnumerator( sut, (0, "x1"), (1, "x2"), (2, "x3"), (3, "x4") ),
+                AssertSequenceEnumerator( sut, (0, "x1"), (1, "x2"), (2, "x3"), (3, "x4") ) )
+            .Go();
     }
 
     [Fact]
@@ -1022,16 +984,15 @@ public class SparseListSlimTests : TestsBase
 
         sut.ResetCapacity( minCapacity: 4 );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 4 );
-            sut.Capacity.Should().Be( 4 );
-            sut.IsEmpty.Should().BeFalse();
-            AssertFirst( sut, 0, "x1" );
-            AssertLast( sut, 3, "x4" );
-            AssertEnumerator( sut, (0, "x1"), (1, "x2"), (2, "x3"), (3, "x4") );
-            AssertSequenceEnumerator( sut, (0, "x1"), (1, "x2"), (2, "x3"), (3, "x4") );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 4 ),
+                sut.Capacity.TestEquals( 4 ),
+                sut.IsEmpty.TestFalse(),
+                AssertFirst( sut, 0, "x1" ),
+                AssertLast( sut, 3, "x4" ),
+                AssertEnumerator( sut, (0, "x1"), (1, "x2"), (2, "x3"), (3, "x4") ),
+                AssertSequenceEnumerator( sut, (0, "x1"), (1, "x2"), (2, "x3"), (3, "x4") ) )
+            .Go();
     }
 
     [Fact]
@@ -1044,16 +1005,15 @@ public class SparseListSlimTests : TestsBase
 
         sut.ResetCapacity( minCapacity: 8 );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 3 );
-            sut.Capacity.Should().Be( 16 );
-            sut.IsEmpty.Should().BeFalse();
-            AssertFirst( sut, 0, "x1" );
-            AssertLast( sut, 1, "x3" );
-            AssertEnumerator( sut, (0, "x1"), (10, "x2"), (1, "x3") );
-            AssertSequenceEnumerator( sut, (0, "x1"), (1, "x3"), (10, "x2") );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 3 ),
+                sut.Capacity.TestEquals( 16 ),
+                sut.IsEmpty.TestFalse(),
+                AssertFirst( sut, 0, "x1" ),
+                AssertLast( sut, 1, "x3" ),
+                AssertEnumerator( sut, (0, "x1"), (10, "x2"), (1, "x3") ),
+                AssertSequenceEnumerator( sut, (0, "x1"), (1, "x3"), (10, "x2") ) )
+            .Go();
     }
 
     [Fact]
@@ -1066,16 +1026,15 @@ public class SparseListSlimTests : TestsBase
 
         sut.ResetCapacity( minCapacity: 4 );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 3 );
-            sut.Capacity.Should().Be( 8 );
-            sut.IsEmpty.Should().BeFalse();
-            AssertFirst( sut, 0, "x1" );
-            AssertLast( sut, 1, "x3" );
-            AssertEnumerator( sut, (0, "x1"), (6, "x2"), (1, "x3") );
-            AssertSequenceEnumerator( sut, (0, "x1"), (1, "x3"), (6, "x2") );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 3 ),
+                sut.Capacity.TestEquals( 8 ),
+                sut.IsEmpty.TestFalse(),
+                AssertFirst( sut, 0, "x1" ),
+                AssertLast( sut, 1, "x3" ),
+                AssertEnumerator( sut, (0, "x1"), (6, "x2"), (1, "x3") ),
+                AssertSequenceEnumerator( sut, (0, "x1"), (1, "x3"), (6, "x2") ) )
+            .Go();
     }
 
     [Fact]
@@ -1102,16 +1061,15 @@ public class SparseListSlimTests : TestsBase
         sut.Add( "x11" );
         sut.Add( "x12" );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 8 );
-            sut.Capacity.Should().Be( 8 );
-            sut.IsEmpty.Should().BeFalse();
-            AssertFirst( sut, 0, "x1" );
-            AssertLast( sut, 7, "x12" );
-            AssertEnumerator( sut, (0, "x1"), (2, "x3"), (6, "x7"), (1, "x8"), (3, "x9"), (4, "x10"), (5, "x11"), (7, "x12") );
-            AssertSequenceEnumerator( sut, (0, "x1"), (1, "x8"), (2, "x3"), (3, "x9"), (4, "x10"), (5, "x11"), (6, "x7"), (7, "x12") );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 8 ),
+                sut.Capacity.TestEquals( 8 ),
+                sut.IsEmpty.TestFalse(),
+                AssertFirst( sut, 0, "x1" ),
+                AssertLast( sut, 7, "x12" ),
+                AssertEnumerator( sut, (0, "x1"), (2, "x3"), (6, "x7"), (1, "x8"), (3, "x9"), (4, "x10"), (5, "x11"), (7, "x12") ),
+                AssertSequenceEnumerator( sut, (0, "x1"), (1, "x8"), (2, "x3"), (3, "x9"), (4, "x10"), (5, "x11"), (6, "x7"), (7, "x12") ) )
+            .Go();
     }
 
     [Fact]
@@ -1121,16 +1079,15 @@ public class SparseListSlimTests : TestsBase
 
         sut.ResetCapacity( minCapacity: 8 );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 0 );
-            sut.Capacity.Should().Be( 8 );
-            sut.IsEmpty.Should().BeTrue();
-            sut.First.Should().BeNull();
-            sut.Last.Should().BeNull();
-            AssertEnumerator( sut );
-            AssertSequenceEnumerator( sut );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 0 ),
+                sut.Capacity.TestEquals( 8 ),
+                sut.IsEmpty.TestTrue(),
+                sut.First.TestNull(),
+                sut.Last.TestNull(),
+                AssertEnumerator( sut ),
+                AssertSequenceEnumerator( sut ) )
+            .Go();
     }
 
     [Fact]
@@ -1142,16 +1099,15 @@ public class SparseListSlimTests : TestsBase
 
         sut.ResetCapacity( minCapacity: 8 );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 2 );
-            sut.Capacity.Should().Be( 8 );
-            sut.IsEmpty.Should().BeFalse();
-            AssertFirst( sut, 0, "x1" );
-            AssertLast( sut, 1, "x2" );
-            AssertEnumerator( sut, (0, "x1"), (1, "x2") );
-            AssertSequenceEnumerator( sut, (0, "x1"), (1, "x2") );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 2 ),
+                sut.Capacity.TestEquals( 8 ),
+                sut.IsEmpty.TestFalse(),
+                AssertFirst( sut, 0, "x1" ),
+                AssertLast( sut, 1, "x2" ),
+                AssertEnumerator( sut, (0, "x1"), (1, "x2") ),
+                AssertSequenceEnumerator( sut, (0, "x1"), (1, "x2") ) )
+            .Go();
     }
 
     [Fact]
@@ -1165,16 +1121,15 @@ public class SparseListSlimTests : TestsBase
 
         sut.ResetCapacity( minCapacity: 8 );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 4 );
-            sut.Capacity.Should().Be( 8 );
-            sut.IsEmpty.Should().BeFalse();
-            AssertFirst( sut, 0, "x1" );
-            AssertLast( sut, 3, "x4" );
-            AssertEnumerator( sut, (0, "x1"), (1, "x2"), (2, "x3"), (3, "x4") );
-            AssertSequenceEnumerator( sut, (0, "x1"), (1, "x2"), (2, "x3"), (3, "x4") );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 4 ),
+                sut.Capacity.TestEquals( 8 ),
+                sut.IsEmpty.TestFalse(),
+                AssertFirst( sut, 0, "x1" ),
+                AssertLast( sut, 3, "x4" ),
+                AssertEnumerator( sut, (0, "x1"), (1, "x2"), (2, "x3"), (3, "x4") ),
+                AssertSequenceEnumerator( sut, (0, "x1"), (1, "x2"), (2, "x3"), (3, "x4") ) )
+            .Go();
     }
 
     [Fact]
@@ -1197,16 +1152,15 @@ public class SparseListSlimTests : TestsBase
         sut.Add( "x8" );
         sut.Add( "x9" );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 6 );
-            sut.Capacity.Should().Be( 16 );
-            sut.IsEmpty.Should().BeFalse();
-            AssertFirst( sut, 3, "x4" );
-            AssertLast( sut, 5, "x9" );
-            AssertEnumerator( sut, (3, "x4"), (0, "x5"), (1, "x6"), (2, "x7"), (4, "x8"), (5, "x9") );
-            AssertSequenceEnumerator( sut, (0, "x5"), (1, "x6"), (2, "x7"), (3, "x4"), (4, "x8"), (5, "x9") );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 6 ),
+                sut.Capacity.TestEquals( 16 ),
+                sut.IsEmpty.TestFalse(),
+                AssertFirst( sut, 3, "x4" ),
+                AssertLast( sut, 5, "x9" ),
+                AssertEnumerator( sut, (3, "x4"), (0, "x5"), (1, "x6"), (2, "x7"), (4, "x8"), (5, "x9") ),
+                AssertSequenceEnumerator( sut, (0, "x5"), (1, "x6"), (2, "x7"), (3, "x4"), (4, "x8"), (5, "x9") ) )
+            .Go();
     }
 
     [Theory]
@@ -1229,7 +1183,7 @@ public class SparseListSlimTests : TestsBase
 
         ref var result = ref sut[index];
 
-        Unsafe.IsNullRef( ref result ).Should().BeTrue();
+        Unsafe.IsNullRef( ref result ).TestTrue().Go();
     }
 
     [Theory]
@@ -1249,53 +1203,61 @@ public class SparseListSlimTests : TestsBase
 
         ref var result = ref sut[index];
 
-        using ( new AssertionScope() )
-        {
-            Unsafe.IsNullRef( ref result ).Should().BeFalse();
-            if ( ! Unsafe.IsNullRef( ref result ) )
-                result.Should().Be( expected );
-        }
+        Assertion.All(
+                Unsafe.IsNullRef( ref result ).TestFalse(),
+                Unsafe.IsNullRef( ref result ) ? Assertion.All() : result.TestEquals( expected ) )
+            .Go();
     }
 
-    private static void AssertEnumerator<T>(SparseListSlim<T> source, params (int, T)[] expected)
+    [Pure]
+    private static Assertion AssertEnumerator<T>(SparseListSlim<T> source, params (int, T)[] expected)
     {
         var i = 0;
         var result = new KeyValuePair<int, T>[source.Count];
         foreach ( var e in source )
             result[i++] = e;
 
-        result.Should().BeSequentiallyEqualTo( expected.Select( static e => KeyValuePair.Create( e.Item1, e.Item2 ) ) );
+        return result.TestSequence( expected.Select( static e => KeyValuePair.Create( e.Item1, e.Item2 ) ) );
     }
 
-    private static void AssertSequenceEnumerator<T>(SparseListSlim<T> source, params (int, T)[] expected)
+    [Pure]
+    private static Assertion AssertSequenceEnumerator<T>(SparseListSlim<T> source, params (int, T)[] expected)
     {
         var i = 0;
         var result = new KeyValuePair<int, T>[source.Count];
         foreach ( var e in source.Sequential )
             result[i++] = e;
 
-        result.Should().BeSequentiallyEqualTo( expected.Select( static e => KeyValuePair.Create( e.Item1, e.Item2 ) ) );
+        return result.TestSequence( expected.Select( static e => KeyValuePair.Create( e.Item1, e.Item2 ) ) );
     }
 
-    private static void AssertFirst<T>(SparseListSlim<T> source, int index, T value)
+    [Pure]
+    private static Assertion AssertFirst<T>(SparseListSlim<T> source, int index, T value)
     {
-        source.First.Should().NotBeNull();
-        if ( source.First is null )
-            return;
-
-        source.First.Value.Index.Should().Be( index );
-        source.First.Value.Value.Should().Be( value );
-        source.First.Value.Prev.Should().BeNull();
+        return Assertion.All(
+            "First",
+            source.First.TestNotNull(),
+            source.First.TestIf()
+                .NotNull(
+                    first => Assertion.All(
+                        "First.Value",
+                        first.Index.TestEquals( index ),
+                        first.Value.TestEquals( value ),
+                        first.Prev.TestNull() ) ) );
     }
 
-    private static void AssertLast<T>(SparseListSlim<T> source, int index, T value)
+    [Pure]
+    private static Assertion AssertLast<T>(SparseListSlim<T> source, int index, T value)
     {
-        source.Last.Should().NotBeNull();
-        if ( source.Last is null )
-            return;
-
-        source.Last.Value.Index.Should().Be( index );
-        source.Last.Value.Value.Should().Be( value );
-        source.Last.Value.Next.Should().BeNull();
+        return Assertion.All(
+            "Last",
+            source.Last.TestNotNull(),
+            source.Last.TestIf()
+                .NotNull(
+                    last => Assertion.All(
+                        "Last.Value",
+                        last.Index.TestEquals( index ),
+                        last.Value.TestEquals( value ),
+                        last.Next.TestNull() ) ) );
     }
 }

@@ -52,20 +52,24 @@ public partial class MySqlTableBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
-                    @"CREATE TABLE `foo`.`T` (
-                      `C1` INT NOT NULL,
-                      `C2` INT NOT NULL,
-                      `C3` BIGINT NOT NULL,
-                      `C4` BIGINT NOT NULL,
-                      `C5` LONGBLOB GENERATED ALWAYS AS (`C1` + 1) VIRTUAL NOT NULL,
-                      `C6` LONGBLOB GENERATED ALWAYS AS (`C2` * `C5`) STORED,
-                      CONSTRAINT `PK_T` PRIMARY KEY (`C2` ASC),
-                      CONSTRAINT `CHK_T_{GUID}` CHECK (`C1` > 0)
-                    );",
+                    """
+                    CREATE TABLE `foo`.`T` (
+                                          `C1` INT NOT NULL,
+                                          `C2` INT NOT NULL,
+                                          `C3` BIGINT NOT NULL,
+                                          `C4` BIGINT NOT NULL,
+                                          `C5` LONGBLOB GENERATED ALWAYS AS (`C1` + 1) VIRTUAL NOT NULL,
+                                          `C6` LONGBLOB GENERATED ALWAYS AS (`C2` * `C5`) STORED,
+                                          CONSTRAINT `PK_T` PRIMARY KEY (`C2` ASC),
+                                          CONSTRAINT `CHK_T_{GUID}` CHECK (`C1` > 0)
+                                        );
+                    """,
                     "CREATE INDEX `IX_T_C1A` ON `foo`.`T` (`C1` ASC);",
                     "CREATE INDEX `IX_T_C3A_C4D` ON `foo`.`T` (`C3` ASC, `C4` DESC);",
-                    @"ALTER TABLE `foo`.`T`
-                      ADD CONSTRAINT `FK_T_C1_REF_T` FOREIGN KEY (`C1`) REFERENCES `foo`.`T` (`C2`) ON DELETE RESTRICT ON UPDATE RESTRICT;" );
+                    """
+                    ALTER TABLE `foo`.`T`
+                                          ADD CONSTRAINT `FK_T_C1_REF_T` FOREIGN KEY (`C1`) REFERENCES `foo`.`T` (`C2`) ON DELETE RESTRICT ON UPDATE RESTRICT;
+                    """ );
         }
     }
 
@@ -267,8 +271,10 @@ public partial class MySqlTableBuilderTests : TestsBase
             actions.ElementAtOrDefault( 1 )
                 .Sql.Should()
                 .SatisfySql(
-                    @"ALTER TABLE `foo`.`U`
-                      ADD COLUMN `C3` INT NOT NULL DEFAULT 0;" );
+                    """
+                    ALTER TABLE `foo`.`U`
+                                          ADD COLUMN `C3` INT NOT NULL DEFAULT 0;
+                    """ );
         }
     }
 
@@ -305,20 +311,24 @@ public partial class MySqlTableBuilderTests : TestsBase
                 .Sql.Should()
                 .SatisfySql(
                     "DROP VIEW `foo`.`V1`;",
-                    @"CREATE VIEW `foo`.`V1` AS
-                    SELECT
-                      `foo`.`U`.`C`
-                    FROM `foo`.`U`;" );
+                    """
+                    CREATE VIEW `foo`.`V1` AS
+                                        SELECT
+                                          `foo`.`U`.`C`
+                                        FROM `foo`.`U`;
+                    """ );
 
             actions.ElementAtOrDefault( 2 )
                 .Sql.Should()
                 .SatisfySql(
                     "DROP VIEW `foo`.`V2`;",
-                    @"CREATE VIEW `foo`.`V2` AS
-                    SELECT
-                      *
-                    FROM `foo`.`V1`
-                    INNER JOIN `foo`.`U` ON TRUE;" );
+                    """
+                    CREATE VIEW `foo`.`V2` AS
+                                        SELECT
+                                          *
+                                        FROM `foo`.`V1`
+                                        INNER JOIN `foo`.`U` ON TRUE;
+                    """ );
         }
     }
 
@@ -356,26 +366,32 @@ public partial class MySqlTableBuilderTests : TestsBase
                 .Sql.Should()
                 .SatisfySql(
                     "DROP VIEW `foo`.`V1`;",
-                    @"CREATE VIEW `foo`.`V1` AS
-                    SELECT
-                      `foo`.`U`.`C`
-                    FROM `foo`.`U`;" );
+                    """
+                    CREATE VIEW `foo`.`V1` AS
+                                        SELECT
+                                          `foo`.`U`.`C`
+                                        FROM `foo`.`U`;
+                    """ );
 
             actions.ElementAtOrDefault( 2 )
                 .Sql.Should()
                 .SatisfySql(
                     "DROP VIEW `foo`.`V2`;",
-                    @"CREATE VIEW `foo`.`V2` AS
-                    SELECT
-                      *
-                    FROM `foo`.`V1`
-                    INNER JOIN `foo`.`U` ON TRUE;" );
+                    """
+                    CREATE VIEW `foo`.`V2` AS
+                                        SELECT
+                                          *
+                                        FROM `foo`.`V1`
+                                        INNER JOIN `foo`.`U` ON TRUE;
+                    """ );
 
             actions.ElementAtOrDefault( 3 )
                 .Sql.Should()
                 .SatisfySql(
-                    @"ALTER TABLE `foo`.`U`
-                      ADD COLUMN `D` INT NOT NULL DEFAULT 0;" );
+                    """
+                    ALTER TABLE `foo`.`U`
+                                          ADD COLUMN `D` INT NOT NULL DEFAULT 0;
+                    """ );
         }
     }
 
@@ -596,9 +612,11 @@ public partial class MySqlTableBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
-                    @"ALTER TABLE `foo`.`T`
-                      CHANGE COLUMN `A` `B` LONGBLOB NOT NULL,
-                      CHANGE COLUMN `B` `A` LONGBLOB NOT NULL;" );
+                    """
+                    ALTER TABLE `foo`.`T`
+                                          CHANGE COLUMN `A` `B` LONGBLOB NOT NULL,
+                                          CHANGE COLUMN `B` `A` LONGBLOB NOT NULL;
+                    """ );
         }
     }
 
@@ -627,11 +645,13 @@ public partial class MySqlTableBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
-                    @"ALTER TABLE `foo`.`T`
-                      CHANGE COLUMN `A` `D` LONGBLOB NOT NULL,
-                      CHANGE COLUMN `B` `A` LONGBLOB NOT NULL,
-                      CHANGE COLUMN `C` `B` LONGBLOB NOT NULL,
-                      CHANGE COLUMN `D` `C` LONGBLOB NOT NULL;" );
+                    """
+                    ALTER TABLE `foo`.`T`
+                                          CHANGE COLUMN `A` `D` LONGBLOB NOT NULL,
+                                          CHANGE COLUMN `B` `A` LONGBLOB NOT NULL,
+                                          CHANGE COLUMN `C` `B` LONGBLOB NOT NULL,
+                                          CHANGE COLUMN `D` `C` LONGBLOB NOT NULL;
+                    """ );
         }
     }
 
@@ -659,10 +679,12 @@ public partial class MySqlTableBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
-                    @"ALTER TABLE `foo`.`T`
-                      CHANGE COLUMN `A` `B` LONGBLOB NOT NULL,
-                      CHANGE COLUMN `B` `C` LONGBLOB NOT NULL,
-                      CHANGE COLUMN `C` `D` LONGBLOB NOT NULL;" );
+                    """
+                    ALTER TABLE `foo`.`T`
+                                          CHANGE COLUMN `A` `B` LONGBLOB NOT NULL,
+                                          CHANGE COLUMN `B` `C` LONGBLOB NOT NULL,
+                                          CHANGE COLUMN `C` `D` LONGBLOB NOT NULL;
+                    """ );
         }
     }
 
@@ -690,14 +712,16 @@ public partial class MySqlTableBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
-                    @"ALTER TABLE `foo`.`T`
-                      DROP PRIMARY KEY,
-                      DROP CHECK `B`,
-                      DROP CHECK `D`,
-                      RENAME INDEX `C` TO `B`,
-                      ADD CONSTRAINT `D` PRIMARY KEY (`P`(500) ASC),
-                      ADD CONSTRAINT `A` CHECK (TRUE),
-                      ADD CONSTRAINT `C` CHECK (TRUE);" );
+                    """
+                    ALTER TABLE `foo`.`T`
+                                          DROP PRIMARY KEY,
+                                          DROP CHECK `B`,
+                                          DROP CHECK `D`,
+                                          RENAME INDEX `C` TO `B`,
+                                          ADD CONSTRAINT `D` PRIMARY KEY (`P`(500) ASC),
+                                          ADD CONSTRAINT `A` CHECK (TRUE),
+                                          ADD CONSTRAINT `C` CHECK (TRUE);
+                    """ );
         }
     }
 
@@ -724,12 +748,14 @@ public partial class MySqlTableBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
-                    @"ALTER TABLE `foo`.`T`
-                      DROP PRIMARY KEY,
-                      DROP CHECK `B`,
-                      RENAME INDEX `C` TO `D`,
-                      ADD CONSTRAINT `B` PRIMARY KEY (`P`(500) ASC),
-                      ADD CONSTRAINT `C` CHECK (TRUE);" );
+                    """
+                    ALTER TABLE `foo`.`T`
+                                          DROP PRIMARY KEY,
+                                          DROP CHECK `B`,
+                                          RENAME INDEX `C` TO `D`,
+                                          ADD CONSTRAINT `B` PRIMARY KEY (`P`(500) ASC),
+                                          ADD CONSTRAINT `C` CHECK (TRUE);
+                    """ );
         }
     }
 
@@ -776,29 +802,35 @@ public partial class MySqlTableBuilderTests : TestsBase
             actions.ElementAtOrDefault( 1 )
                 .Sql.Should()
                 .SatisfySql(
-                    @"ALTER TABLE `foo`.`U`
-                      DROP FOREIGN KEY `FK_T_C7_REF_T`,
-                      DROP FOREIGN KEY `FK`;",
+                    """
+                    ALTER TABLE `foo`.`U`
+                                          DROP FOREIGN KEY `FK_T_C7_REF_T`,
+                                          DROP FOREIGN KEY `FK`;
+                    """,
                     "DROP INDEX `IX_T_C2A` ON `foo`.`U`;",
-                    @"ALTER TABLE `foo`.`U`
-                      DROP PRIMARY KEY,
-                      DROP CHECK `CHK_1`,
-                      DROP CHECK `CHK_2`,
-                      RENAME INDEX `IX_T_C7A` TO `IX_2`,
-                      DROP COLUMN `C4`,
-                      CHANGE COLUMN `C3` `X` BIGINT,
-                      CHANGE COLUMN `C5` `C5` INT GENERATED ALWAYS AS (1) STORED NOT NULL,
-                      CHANGE COLUMN `C6` `Y` INT NOT NULL,
-                      ADD COLUMN `C10` LONGBLOB NOT NULL DEFAULT (X''),
-                      ADD COLUMN `C11` LONGBLOB NOT NULL DEFAULT (X''),
-                      ADD CONSTRAINT `PK_U` PRIMARY KEY (`C10`(500) ASC),
-                      ADD CONSTRAINT `CHK_1` CHECK (TRUE),
-                      ADD CONSTRAINT `CHK_3` CHECK (TRUE);",
+                    """
+                    ALTER TABLE `foo`.`U`
+                                          DROP PRIMARY KEY,
+                                          DROP CHECK `CHK_1`,
+                                          DROP CHECK `CHK_2`,
+                                          RENAME INDEX `IX_T_C7A` TO `IX_2`,
+                                          DROP COLUMN `C4`,
+                                          CHANGE COLUMN `C3` `X` BIGINT,
+                                          CHANGE COLUMN `C5` `C5` INT GENERATED ALWAYS AS (1) STORED NOT NULL,
+                                          CHANGE COLUMN `C6` `Y` INT NOT NULL,
+                                          ADD COLUMN `C10` LONGBLOB NOT NULL DEFAULT (X''),
+                                          ADD COLUMN `C11` LONGBLOB NOT NULL DEFAULT (X''),
+                                          ADD CONSTRAINT `PK_U` PRIMARY KEY (`C10`(500) ASC),
+                                          ADD CONSTRAINT `CHK_1` CHECK (TRUE),
+                                          ADD CONSTRAINT `CHK_3` CHECK (TRUE);
+                    """,
                     "CREATE INDEX `IX_U_C2A_XD` ON `foo`.`U` (`C2` ASC, `X` DESC);",
                     "CREATE UNIQUE INDEX `UIX_U_C11A` ON `foo`.`U` (`C11`(500) ASC);",
-                    @"ALTER TABLE `foo`.`U`
-                      ADD CONSTRAINT `FK_2` FOREIGN KEY (`C7`) REFERENCES `foo`.`U` (`C9`) ON DELETE RESTRICT ON UPDATE RESTRICT,
-                      ADD CONSTRAINT `FK_U_C7_REF_U` FOREIGN KEY (`C7`) REFERENCES `foo`.`U` (`C11`) ON DELETE RESTRICT ON UPDATE RESTRICT;" );
+                    """
+                    ALTER TABLE `foo`.`U`
+                                          ADD CONSTRAINT `FK_2` FOREIGN KEY (`C7`) REFERENCES `foo`.`U` (`C9`) ON DELETE RESTRICT ON UPDATE RESTRICT,
+                                          ADD CONSTRAINT `FK_U_C7_REF_U` FOREIGN KEY (`C7`) REFERENCES `foo`.`U` (`C11`) ON DELETE RESTRICT ON UPDATE RESTRICT;
+                    """ );
         }
     }
 

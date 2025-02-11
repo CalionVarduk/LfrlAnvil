@@ -1,5 +1,4 @@
 ﻿using LfrlAnvil.Extensions;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Tests.ExtensionsTests.PairTests;
 
@@ -13,7 +12,7 @@ public class PairExtensionsOfInt32AndInt32Tests : GenericPairExtensionsTests<int
 
         var result = sut.AsEnumerable();
 
-        result.Should().BeSequentiallyEqualTo( first, second );
+        result.TestSequence( [ first, second ] ).Go();
     }
 
     [Fact]
@@ -24,7 +23,7 @@ public class PairExtensionsOfInt32AndInt32Tests : GenericPairExtensionsTests<int
 
         var result = sut.AsEnumerable();
 
-        result.Should().BeSequentiallyEqualTo( first, second );
+        result.TestSequence( [ first, second ] ).Go();
     }
 
     [Fact]
@@ -35,7 +34,7 @@ public class PairExtensionsOfInt32AndInt32Tests : GenericPairExtensionsTests<int
 
         var result = sut.AsEnumerable();
 
-        result.Should().BeSequentiallyEqualTo( first );
+        result.TestSequence( [ first ] ).Go();
     }
 
     [Fact]
@@ -46,7 +45,7 @@ public class PairExtensionsOfInt32AndInt32Tests : GenericPairExtensionsTests<int
 
         var result = sut.AsEnumerable();
 
-        result.Should().BeSequentiallyEqualTo( first, second );
+        result.TestSequence( [ first, second ] ).Go();
     }
 
     [Fact]
@@ -57,7 +56,7 @@ public class PairExtensionsOfInt32AndInt32Tests : GenericPairExtensionsTests<int
 
         var result = sut.AsEnumerable();
 
-        result.Should().BeSequentiallyEqualTo( second );
+        result.TestSequence( [ second ] ).Go();
     }
 
     [Fact]
@@ -68,7 +67,7 @@ public class PairExtensionsOfInt32AndInt32Tests : GenericPairExtensionsTests<int
 
         var result = sut.AsEnumerable();
 
-        result.Should().BeSequentiallyEqualTo( first, second );
+        result.TestSequence( [ first, second ] ).Go();
     }
 
     [Fact]
@@ -79,7 +78,7 @@ public class PairExtensionsOfInt32AndInt32Tests : GenericPairExtensionsTests<int
 
         var result = sut.AsEnumerable();
 
-        result.Should().BeSequentiallyEqualTo( first );
+        result.TestSequence( [ first ] ).Go();
     }
 
     [Fact]
@@ -90,7 +89,7 @@ public class PairExtensionsOfInt32AndInt32Tests : GenericPairExtensionsTests<int
 
         var result = sut.AsEnumerable();
 
-        result.Should().BeSequentiallyEqualTo( second );
+        result.TestSequence( [ second ] ).Go();
     }
 
     [Fact]
@@ -98,6 +97,6 @@ public class PairExtensionsOfInt32AndInt32Tests : GenericPairExtensionsTests<int
     {
         var sut = Pair.Create( ( int? )null, ( int? )null );
         var result = sut.AsEnumerable();
-        result.Should().BeEmpty();
+        result.TestEmpty().Go();
     }
 }

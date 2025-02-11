@@ -10,7 +10,7 @@ public class StopwatchTimestampTests : TestsBase
     {
         var result = StopwatchTimestamp.GetTicks( 10, 50 );
         var expected = ( long )(40 * ( double )TimeSpan.TicksPerSecond / Stopwatch.Frequency);
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -18,7 +18,7 @@ public class StopwatchTimestampTests : TestsBase
     {
         var result = StopwatchTimestamp.GetTimeSpan( 10, 50 );
         var expected = ( long )(40 * ( double )TimeSpan.TicksPerSecond / Stopwatch.Frequency);
-        result.Ticks.Should().Be( expected );
+        result.Ticks.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -26,7 +26,7 @@ public class StopwatchTimestampTests : TestsBase
     {
         var result = StopwatchTimestamp.GetStopwatchTicks( 50 );
         var expected = ( long )(50 * Stopwatch.Frequency / ( double )TimeSpan.TicksPerSecond);
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -34,6 +34,6 @@ public class StopwatchTimestampTests : TestsBase
     {
         var result = StopwatchTimestamp.GetStopwatchTicks( TimeSpan.FromTicks( 50 ) );
         var expected = ( long )(50 * Stopwatch.Frequency / ( double )TimeSpan.TicksPerSecond);
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 }

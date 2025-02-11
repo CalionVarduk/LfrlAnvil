@@ -16,7 +16,7 @@ public class MemoryElementWiseComparerTests : TestsBase
     {
         var sut = new MemoryElementWiseComparer<char>();
         var result = sut.Equals( a.AsMemory(), b.AsMemory() );
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -24,7 +24,7 @@ public class MemoryElementWiseComparerTests : TestsBase
     {
         var sut = new MemoryElementWiseComparer<char>();
         var result = sut.GetHashCode( string.Empty.AsMemory() );
-        result.Should().Be( Hash.Default.Value );
+        result.TestEquals( Hash.Default.Value ).Go();
     }
 
     [Fact]
@@ -33,6 +33,6 @@ public class MemoryElementWiseComparerTests : TestsBase
         var sut = new MemoryElementWiseComparer<char>();
         var expected = Hash.Default.Add( 'b' ).Add( 'a' ).Add( 'r' ).Value;
         var result = sut.GetHashCode( "bar".AsMemory() );
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 }

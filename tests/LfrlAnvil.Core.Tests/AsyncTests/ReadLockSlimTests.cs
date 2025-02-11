@@ -12,12 +12,11 @@ public class ReadLockSlimTests : TestsBase
         var @lock = new ReaderWriterLockSlim();
         _ = ReadLockSlim.Enter( @lock );
 
-        using ( new AssertionScope() )
-        {
-            @lock.IsReadLockHeld.Should().BeTrue();
-            @lock.IsUpgradeableReadLockHeld.Should().BeFalse();
-            @lock.IsWriteLockHeld.Should().BeFalse();
-        }
+        Assertion.All(
+                @lock.IsReadLockHeld.TestTrue(),
+                @lock.IsUpgradeableReadLockHeld.TestFalse(),
+                @lock.IsWriteLockHeld.TestFalse() )
+            .Go();
     }
 
     [Fact]
@@ -28,7 +27,7 @@ public class ReadLockSlimTests : TestsBase
 
         var action = Lambda.Of( () => ReadLockSlim.Enter( @lock ) );
 
-        action.Should().Throw<ObjectDisposedException>();
+        action.Test( exc => exc.TestType().AssignableTo<ObjectDisposedException>() ).Go();
     }
 
     [Fact]
@@ -37,13 +36,12 @@ public class ReadLockSlimTests : TestsBase
         var @lock = new ReaderWriterLockSlim();
         _ = ReadLockSlim.TryEnter( @lock, out var entered );
 
-        using ( new AssertionScope() )
-        {
-            entered.Should().BeTrue();
-            @lock.IsReadLockHeld.Should().BeTrue();
-            @lock.IsUpgradeableReadLockHeld.Should().BeFalse();
-            @lock.IsWriteLockHeld.Should().BeFalse();
-        }
+        Assertion.All(
+                entered.TestTrue(),
+                @lock.IsReadLockHeld.TestTrue(),
+                @lock.IsUpgradeableReadLockHeld.TestFalse(),
+                @lock.IsWriteLockHeld.TestFalse() )
+            .Go();
     }
 
     [Fact]
@@ -54,11 +52,10 @@ public class ReadLockSlimTests : TestsBase
 
         var result = ReadLockSlim.TryEnter( @lock, out var entered );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( default( ReadLockSlim ) );
-            entered.Should().BeFalse();
-        }
+        Assertion.All(
+                result.TestEquals( default ),
+                entered.TestFalse() )
+            .Go();
     }
 
     [Fact]
@@ -69,12 +66,11 @@ public class ReadLockSlimTests : TestsBase
 
         sut.Dispose();
 
-        using ( new AssertionScope() )
-        {
-            @lock.IsReadLockHeld.Should().BeFalse();
-            @lock.IsUpgradeableReadLockHeld.Should().BeFalse();
-            @lock.IsWriteLockHeld.Should().BeFalse();
-        }
+        Assertion.All(
+                @lock.IsReadLockHeld.TestFalse(),
+                @lock.IsUpgradeableReadLockHeld.TestFalse(),
+                @lock.IsWriteLockHeld.TestFalse() )
+            .Go();
     }
 
     [Fact]
@@ -82,7 +78,7 @@ public class ReadLockSlimTests : TestsBase
     {
         var sut = default( ReadLockSlim );
         var action = Lambda.Of( () => sut.Dispose() );
-        action.Should().NotThrow();
+        action.Test( exc => exc.TestNull() ).Go();
     }
 
     [Fact]
@@ -100,12 +96,11 @@ public class ReadLockSlimTests : TestsBase
         first.Dispose();
         var hasLockAfterSecondDisposal = @lock.IsReadLockHeld;
 
-        using ( new AssertionScope() )
-        {
-            hasFirstLock.Should().BeTrue();
-            hasSecondLock.Should().BeTrue();
-            hasLockAfterFirstDisposal.Should().BeTrue();
-            hasLockAfterSecondDisposal.Should().BeFalse();
-        }
+        Assertion.All(
+                hasFirstLock.TestTrue(),
+                hasSecondLock.TestTrue(),
+                hasLockAfterFirstDisposal.TestTrue(),
+                hasLockAfterSecondDisposal.TestFalse() )
+            .Go();
     }
 }

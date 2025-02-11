@@ -57,8 +57,10 @@ public class SqlForeignKeyBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .Be(
-                    @"ALTER [Table] foo.T
-  CREATE [ForeignKey] foo.FK_T_C2_REF_T;" );
+                    """
+                    ALTER [Table] foo.T
+                      CREATE [ForeignKey] foo.FK_T_C2_REF_T;
+                    """ );
         }
     }
 
@@ -98,8 +100,10 @@ public class SqlForeignKeyBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .Be(
-                    @"ALTER [Table] foo.T2
-  CREATE [ForeignKey] foo.FK_T2_C2_REF_T;" );
+                    """
+                    ALTER [Table] foo.T2
+                      CREATE [ForeignKey] foo.FK_T2_C2_REF_T;
+                    """ );
         }
     }
 
@@ -141,8 +145,10 @@ public class SqlForeignKeyBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .Be(
-                    @"ALTER [Table] bar.T2
-  CREATE [ForeignKey] bar.FK_T2_C2_REF_foo_T;" );
+                    """
+                    ALTER [Table] bar.T2
+                      CREATE [ForeignKey] bar.FK_T2_C2_REF_foo_T;
+                    """ );
         }
     }
 
@@ -231,8 +237,10 @@ public class SqlForeignKeyBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .Be(
-                    @"ALTER [Table] foo.T
-  ALTER [ForeignKey] foo.bar ([1] : 'Name' (System.String) FROM FK_T_C2_REF_T);" );
+                    """
+                    ALTER [Table] foo.T
+                      ALTER [ForeignKey] foo.bar ([1] : 'Name' (System.String) FROM FK_T_C2_REF_T);
+                    """ );
         }
     }
 
@@ -356,8 +364,10 @@ public class SqlForeignKeyBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .Be(
-                    @"ALTER [Table] foo.T
-  ALTER [ForeignKey] foo.FK_T_C2_REF_T ([1] : 'Name' (System.String) FROM bar);" );
+                    """
+                    ALTER [Table] foo.T
+                      ALTER [ForeignKey] foo.FK_T_C2_REF_T ([1] : 'Name' (System.String) FROM bar);
+                    """ );
         }
     }
 
@@ -421,8 +431,10 @@ public class SqlForeignKeyBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .Be(
-                    @"ALTER [Table] foo.T
-  ALTER [ForeignKey] foo.FK_T_C2_REF_T ([10] : 'OnDeleteBehavior' (LfrlAnvil.Sql.ReferenceBehavior) FROM 'RESTRICT' (Restrict));" );
+                    """
+                    ALTER [Table] foo.T
+                      ALTER [ForeignKey] foo.FK_T_C2_REF_T ([10] : 'OnDeleteBehavior' (LfrlAnvil.Sql.ReferenceBehavior) FROM 'RESTRICT' (Restrict));
+                    """ );
         }
     }
 
@@ -526,8 +538,10 @@ public class SqlForeignKeyBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .Be(
-                    @"ALTER [Table] foo.T
-  ALTER [ForeignKey] foo.FK_T_C2_REF_T ([11] : 'OnUpdateBehavior' (LfrlAnvil.Sql.ReferenceBehavior) FROM 'RESTRICT' (Restrict));" );
+                    """
+                    ALTER [Table] foo.T
+                      ALTER [ForeignKey] foo.FK_T_C2_REF_T ([11] : 'OnUpdateBehavior' (LfrlAnvil.Sql.ReferenceBehavior) FROM 'RESTRICT' (Restrict));
+                    """ );
         }
     }
 
@@ -630,8 +644,10 @@ public class SqlForeignKeyBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .Be(
-                    @"ALTER [Table] foo.T
-  REMOVE [ForeignKey] foo.FK_T_C2_REF_T;" );
+                    """
+                    ALTER [Table] foo.T
+                      REMOVE [ForeignKey] foo.FK_T_C2_REF_T;
+                    """ );
         }
     }
 
@@ -662,8 +678,10 @@ public class SqlForeignKeyBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .Be(
-                    @"ALTER [Table] foo.T2
-  REMOVE [ForeignKey] foo.FK_T2_C2_REF_T;" );
+                    """
+                    ALTER [Table] foo.T2
+                      REMOVE [ForeignKey] foo.FK_T2_C2_REF_T;
+                    """ );
         }
     }
 
@@ -696,8 +714,10 @@ public class SqlForeignKeyBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .Be(
-                    @"ALTER [Table] bar.T2
-  REMOVE [ForeignKey] bar.FK_T2_C2_REF_foo_T;" );
+                    """
+                    ALTER [Table] bar.T2
+                      REMOVE [ForeignKey] bar.FK_T2_C2_REF_foo_T;
+                    """ );
         }
     }
 
@@ -906,8 +926,10 @@ public class SqlForeignKeyBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .Be(
-                    @"ALTER [Table] foo.T
-  ALTER [ForeignKey] foo.bar ([1] : 'Name' (System.String) FROM FK_T_C2_REF_T);" );
+                    """
+                    ALTER [Table] foo.T
+                      ALTER [ForeignKey] foo.bar ([1] : 'Name' (System.String) FROM FK_T_C2_REF_T);
+                    """ );
         }
     }
 
@@ -938,8 +960,10 @@ public class SqlForeignKeyBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .Be(
-                    @"ALTER [Table] foo.T
-  ALTER [ForeignKey] foo.bar ([1] : 'Name' (System.String) FROM FK_T_C2_REF_T);" );
+                    """
+                    ALTER [Table] foo.T
+                      ALTER [ForeignKey] foo.bar ([1] : 'Name' (System.String) FROM FK_T_C2_REF_T);
+                    """ );
         }
     }
 
@@ -970,8 +994,10 @@ public class SqlForeignKeyBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .Be(
-                    @"ALTER [Table] foo.T
-  ALTER [ForeignKey] foo.bar ([1] : 'Name' (System.String) FROM FK_T_C2_REF_T);" );
+                    """
+                    ALTER [Table] foo.T
+                      ALTER [ForeignKey] foo.bar ([1] : 'Name' (System.String) FROM FK_T_C2_REF_T);
+                    """ );
         }
     }
 
@@ -1001,8 +1027,10 @@ public class SqlForeignKeyBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .Be(
-                    @"ALTER [Table] foo.T
-  ALTER [ForeignKey] foo.FK_T_C2_REF_T ([1] : 'Name' (System.String) FROM bar);" );
+                    """
+                    ALTER [Table] foo.T
+                      ALTER [ForeignKey] foo.FK_T_C2_REF_T ([1] : 'Name' (System.String) FROM bar);
+                    """ );
         }
     }
 
@@ -1032,8 +1060,10 @@ public class SqlForeignKeyBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .Be(
-                    @"ALTER [Table] foo.T
-  ALTER [ForeignKey] foo.FK_T_C2_REF_T ([1] : 'Name' (System.String) FROM bar);" );
+                    """
+                    ALTER [Table] foo.T
+                      ALTER [ForeignKey] foo.FK_T_C2_REF_T ([1] : 'Name' (System.String) FROM bar);
+                    """ );
         }
     }
 
@@ -1059,8 +1089,10 @@ public class SqlForeignKeyBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .Be(
-                    @"ALTER [Table] foo.T
-  ALTER [ForeignKey] foo.FK_T_C2_REF_T ([10] : 'OnDeleteBehavior' (LfrlAnvil.Sql.ReferenceBehavior) FROM 'RESTRICT' (Restrict));" );
+                    """
+                    ALTER [Table] foo.T
+                      ALTER [ForeignKey] foo.FK_T_C2_REF_T ([10] : 'OnDeleteBehavior' (LfrlAnvil.Sql.ReferenceBehavior) FROM 'RESTRICT' (Restrict));
+                    """ );
         }
     }
 
@@ -1086,8 +1118,10 @@ public class SqlForeignKeyBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .Be(
-                    @"ALTER [Table] foo.T
-  ALTER [ForeignKey] foo.FK_T_C2_REF_T ([11] : 'OnUpdateBehavior' (LfrlAnvil.Sql.ReferenceBehavior) FROM 'RESTRICT' (Restrict));" );
+                    """
+                    ALTER [Table] foo.T
+                      ALTER [ForeignKey] foo.FK_T_C2_REF_T ([11] : 'OnUpdateBehavior' (LfrlAnvil.Sql.ReferenceBehavior) FROM 'RESTRICT' (Restrict));
+                    """ );
         }
     }
 }

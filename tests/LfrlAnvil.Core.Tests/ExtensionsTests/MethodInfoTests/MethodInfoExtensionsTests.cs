@@ -9,7 +9,7 @@ public class MethodInfoExtensionsTests : TestsBase
     {
         var method = typeof( TestMethodClass ).GetMethod( nameof( TestMethodClass.NonGeneric ) )!;
         var result = method.GetDebugString( includeDeclaringType: false );
-        result.Should().Be( "System.Int32 NonGeneric(System.String a, System.Decimal b)" );
+        result.TestEquals( "System.Int32 NonGeneric(System.String a, System.Decimal b)" ).Go();
     }
 
     [Fact]
@@ -18,9 +18,9 @@ public class MethodInfoExtensionsTests : TestsBase
         var method = typeof( TestMethodClass ).GetMethod( nameof( TestMethodClass.NonGeneric ) )!;
         var result = method.GetDebugString( includeDeclaringType: true );
 
-        result.Should()
-            .Be(
-                "System.Int32 LfrlAnvil.Tests.ExtensionsTests.MethodInfoTests.TestMethodClass.NonGeneric(System.String a, System.Decimal b)" );
+        result.TestEquals(
+                "System.Int32 LfrlAnvil.Tests.ExtensionsTests.MethodInfoTests.TestMethodClass.NonGeneric(System.String a, System.Decimal b)" )
+            .Go();
     }
 
     [Fact]
@@ -28,7 +28,7 @@ public class MethodInfoExtensionsTests : TestsBase
     {
         var method = typeof( TestMethodClass ).GetMethod( nameof( TestMethodClass.Parameterless ) )!;
         var result = method.GetDebugString( includeDeclaringType: false );
-        result.Should().Be( "System.String Parameterless()" );
+        result.TestEquals( "System.String Parameterless()" ).Go();
     }
 
     [Fact]
@@ -36,7 +36,7 @@ public class MethodInfoExtensionsTests : TestsBase
     {
         var method = typeof( TestMethodClass ).GetMethod( nameof( TestMethodClass.ByRef ) )!;
         var result = method.GetDebugString( includeDeclaringType: false );
-        result.Should().Be( "System.Int32& ByRef(System.String& a [in], System.Decimal& b, System.Int32& c [out])" );
+        result.TestEquals( "System.Int32& ByRef(System.String& a [in], System.Decimal& b, System.Int32& c [out])" ).Go();
     }
 
     [Fact]
@@ -44,7 +44,7 @@ public class MethodInfoExtensionsTests : TestsBase
     {
         var method = typeof( TestMethodClass ).GetMethod( nameof( TestMethodClass.Generic ) )!;
         var result = method.GetDebugString( includeDeclaringType: false );
-        result.Should().Be( "T1 Generic`3[T1, T2, T3](T3 a, T2 b)" );
+        result.TestEquals( "T1 Generic`3[T1, T2, T3](T3 a, T2 b)" ).Go();
     }
 
     [Fact]
@@ -52,7 +52,7 @@ public class MethodInfoExtensionsTests : TestsBase
     {
         var method = typeof( TestMethodClass ).GetMethod( nameof( TestMethodClass.Generic ) )!;
         var result = method.GetDebugString( includeDeclaringType: true );
-        result.Should().Be( "T1 LfrlAnvil.Tests.ExtensionsTests.MethodInfoTests.TestMethodClass.Generic`3[T1, T2, T3](T3 a, T2 b)" );
+        result.TestEquals( "T1 LfrlAnvil.Tests.ExtensionsTests.MethodInfoTests.TestMethodClass.Generic`3[T1, T2, T3](T3 a, T2 b)" ).Go();
     }
 
     [Fact]
@@ -65,7 +65,7 @@ public class MethodInfoExtensionsTests : TestsBase
 
         var result = method.GetDebugString( includeDeclaringType: false );
 
-        result.Should().Be( "T1 Generic`3[T1 is System.Int32, T2 is System.String, T3 is System.Decimal](T3 a, T2 b)" );
+        result.TestEquals( "T1 Generic`3[T1 is System.Int32, T2 is System.String, T3 is System.Decimal](T3 a, T2 b)" ).Go();
     }
 
     [Fact]
@@ -73,7 +73,7 @@ public class MethodInfoExtensionsTests : TestsBase
     {
         var method = typeof( TestMethodClass ).GetMethod( nameof( TestMethodClass.PartiallyGeneric ) )!;
         var result = method.GetDebugString( includeDeclaringType: false );
-        result.Should().Be( "System.Int32 PartiallyGeneric`2[T1, T2](T2 a, System.String b, T1 c, System.Int32 d)" );
+        result.TestEquals( "System.Int32 PartiallyGeneric`2[T1, T2](T2 a, System.String b, T1 c, System.Int32 d)" ).Go();
     }
 
     [Fact]
@@ -85,9 +85,9 @@ public class MethodInfoExtensionsTests : TestsBase
 
         var result = method.GetDebugString( includeDeclaringType: false );
 
-        result.Should()
-            .Be(
-                "System.Int32 PartiallyGeneric`2[T1 is System.Single, T2 is System.Decimal](T2 a, System.String b, T1 c, System.Int32 d)" );
+        result.TestEquals(
+                "System.Int32 PartiallyGeneric`2[T1 is System.Single, T2 is System.Decimal](T2 a, System.String b, T1 c, System.Int32 d)" )
+            .Go();
     }
 
     [Fact]
@@ -95,7 +95,7 @@ public class MethodInfoExtensionsTests : TestsBase
     {
         var method = typeof( TestMethodGenericClass<,> ).GetMethod( nameof( TestMethodGenericClass<int, int>.Method ) )!;
         var result = method.GetDebugString( includeDeclaringType: false );
-        result.Should().Be( "T1 Method`1[T3](T2 a, T3 b)" );
+        result.TestEquals( "T1 Method`1[T3](T2 a, T3 b)" ).Go();
     }
 
     [Fact]
@@ -103,7 +103,7 @@ public class MethodInfoExtensionsTests : TestsBase
     {
         var method = typeof( TestMethodGenericClass<int, string> ).GetMethod( nameof( TestMethodGenericClass<int, int>.Method ) )!;
         var result = method.GetDebugString( includeDeclaringType: false );
-        result.Should().Be( "System.Int32 Method`1[T3](System.String a, T3 b)" );
+        result.TestEquals( "System.Int32 Method`1[T3](System.String a, T3 b)" ).Go();
     }
 }
 

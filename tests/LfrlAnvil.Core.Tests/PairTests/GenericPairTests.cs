@@ -13,13 +13,7 @@ public abstract class GenericPairTests<T1, T2> : TestsBase
 
         var sut = Pair.Create( first, second );
 
-        sut.Should()
-            .BeEquivalentTo(
-                new
-                {
-                    First = first,
-                    Second = second
-                } );
+        Assertion.All( sut.First.TestEquals( first ), sut.Second.TestEquals( second ) ).Go();
     }
 
     [Fact]
@@ -30,13 +24,7 @@ public abstract class GenericPairTests<T1, T2> : TestsBase
 
         var sut = new Pair<T1, T2>( first, second );
 
-        sut.Should()
-            .BeEquivalentTo(
-                new
-                {
-                    First = first,
-                    Second = second
-                } );
+        Assertion.All( sut.First.TestEquals( first ), sut.Second.TestEquals( second ) ).Go();
     }
 
     [Fact]
@@ -50,7 +38,7 @@ public abstract class GenericPairTests<T1, T2> : TestsBase
 
         var result = sut.GetHashCode();
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -64,13 +52,7 @@ public abstract class GenericPairTests<T1, T2> : TestsBase
 
         var result = sut.SetFirst( other );
 
-        result.Should()
-            .BeEquivalentTo(
-                new
-                {
-                    First = other,
-                    Second = second
-                } );
+        Assertion.All( result.First.TestEquals( other ), result.Second.TestEquals( second ) ).Go();
     }
 
     [Fact]
@@ -84,13 +66,7 @@ public abstract class GenericPairTests<T1, T2> : TestsBase
 
         var result = sut.SetSecond( other );
 
-        result.Should()
-            .BeEquivalentTo(
-                new
-                {
-                    First = first,
-                    Second = other
-                } );
+        Assertion.All( result.First.TestEquals( first ), result.Second.TestEquals( other ) ).Go();
     }
 
     [Theory]
@@ -102,7 +78,7 @@ public abstract class GenericPairTests<T1, T2> : TestsBase
 
         var result = a.Equals( b );
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -114,7 +90,7 @@ public abstract class GenericPairTests<T1, T2> : TestsBase
 
         var result = a == b;
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -126,6 +102,6 @@ public abstract class GenericPairTests<T1, T2> : TestsBase
 
         var result = a != b;
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 }

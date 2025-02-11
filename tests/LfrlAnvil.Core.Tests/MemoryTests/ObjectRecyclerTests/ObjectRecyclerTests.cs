@@ -1,6 +1,5 @@
 ﻿using LfrlAnvil.Functional;
 using LfrlAnvil.Memory;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Tests.MemoryTests.ObjectRecyclerTests;
 
@@ -12,16 +11,14 @@ public class ObjectRecyclerTests : TestsBase
         var sut = new RecyclerMock();
         var result = sut.Rent();
 
-        using ( new AssertionScope() )
-        {
-            sut.ObjectCount.Should().Be( 1 );
-            sut.ActiveObjectCount.Should().Be( 1 );
-            result.Owner.Should().BeSameAs( sut );
-            result.GetObject().Freed.Should().BeFalse();
-            result.ToString()
-                .Should()
-                .Be( "(active) [LfrlAnvil.Tests.MemoryTests.ObjectRecyclerTests.ObjectRecyclerTests+RecyclerMock+Obj]" );
-        }
+        Assertion.All(
+                sut.ObjectCount.TestEquals( 1 ),
+                sut.ActiveObjectCount.TestEquals( 1 ),
+                result.Owner.TestRefEquals( sut ),
+                result.GetObject().Freed.TestFalse(),
+                result.ToString()
+                    .TestEquals( "(active) [LfrlAnvil.Tests.MemoryTests.ObjectRecyclerTests.ObjectRecyclerTests+RecyclerMock+Obj]" ) )
+            .Go();
     }
 
     [Fact]
@@ -32,17 +29,16 @@ public class ObjectRecyclerTests : TestsBase
 
         var result = sut.Rent();
 
-        using ( new AssertionScope() )
-        {
-            sut.ObjectCount.Should().Be( 2 );
-            sut.ActiveObjectCount.Should().Be( 2 );
-            result.Owner.Should().BeSameAs( sut );
-            result.GetObject().Freed.Should().BeFalse();
-            result.GetObject().Should().NotBeSameAs( first.GetObject() );
-            result.ToString()
-                .Should()
-                .Be( "(active) [LfrlAnvil.Tests.MemoryTests.ObjectRecyclerTests.ObjectRecyclerTests+RecyclerMock+Disposable]" );
-        }
+        Assertion.All(
+                sut.ObjectCount.TestEquals( 2 ),
+                sut.ActiveObjectCount.TestEquals( 2 ),
+                result.Owner.TestRefEquals( sut ),
+                result.GetObject().Freed.TestFalse(),
+                result.GetObject().TestNotRefEquals( first.GetObject() ),
+                result.ToString()
+                    .TestEquals(
+                        "(active) [LfrlAnvil.Tests.MemoryTests.ObjectRecyclerTests.ObjectRecyclerTests+RecyclerMock+Disposable]" ) )
+            .Go();
     }
 
     [Fact]
@@ -56,18 +52,16 @@ public class ObjectRecyclerTests : TestsBase
 
         var result = sut.Rent();
 
-        using ( new AssertionScope() )
-        {
-            sut.ObjectCount.Should().Be( 2 );
-            sut.ActiveObjectCount.Should().Be( 2 );
-            result.Owner.Should().BeSameAs( sut );
-            result.GetObject().Freed.Should().BeTrue();
-            result.GetObject().Should().BeSameAs( obj );
-            result.GetObject().Should().NotBeSameAs( second.GetObject() );
-            result.ToString()
-                .Should()
-                .Be( "(active) [LfrlAnvil.Tests.MemoryTests.ObjectRecyclerTests.ObjectRecyclerTests+RecyclerMock+Obj]" );
-        }
+        Assertion.All(
+                sut.ObjectCount.TestEquals( 2 ),
+                sut.ActiveObjectCount.TestEquals( 2 ),
+                result.Owner.TestRefEquals( sut ),
+                result.GetObject().Freed.TestTrue(),
+                result.GetObject().TestRefEquals( obj ),
+                result.GetObject().TestNotRefEquals( second.GetObject() ),
+                result.ToString()
+                    .TestEquals( "(active) [LfrlAnvil.Tests.MemoryTests.ObjectRecyclerTests.ObjectRecyclerTests+RecyclerMock+Obj]" ) )
+            .Go();
     }
 
     [Fact]
@@ -84,19 +78,17 @@ public class ObjectRecyclerTests : TestsBase
 
         var result = sut.Rent();
 
-        using ( new AssertionScope() )
-        {
-            sut.ObjectCount.Should().Be( 3 );
-            sut.ActiveObjectCount.Should().Be( 2 );
-            result.Owner.Should().BeSameAs( sut );
-            result.GetObject().Freed.Should().BeTrue();
-            result.GetObject().Should().BeSameAs( obj2 );
-            result.GetObject().Should().NotBeSameAs( obj1 );
-            result.GetObject().Should().NotBeSameAs( third.GetObject() );
-            result.ToString()
-                .Should()
-                .Be( "(active) [LfrlAnvil.Tests.MemoryTests.ObjectRecyclerTests.ObjectRecyclerTests+RecyclerMock+Obj]" );
-        }
+        Assertion.All(
+                sut.ObjectCount.TestEquals( 3 ),
+                sut.ActiveObjectCount.TestEquals( 2 ),
+                result.Owner.TestRefEquals( sut ),
+                result.GetObject().Freed.TestTrue(),
+                result.GetObject().TestRefEquals( obj2 ),
+                result.GetObject().TestNotRefEquals( obj1 ),
+                result.GetObject().TestNotRefEquals( third.GetObject() ),
+                result.ToString()
+                    .TestEquals( "(active) [LfrlAnvil.Tests.MemoryTests.ObjectRecyclerTests.ObjectRecyclerTests+RecyclerMock+Obj]" ) )
+            .Go();
     }
 
     [Fact]
@@ -107,7 +99,7 @@ public class ObjectRecyclerTests : TestsBase
 
         var action = Lambda.Of( () => sut.Rent() );
 
-        action.Should().ThrowExactly<ObjectDisposedException>();
+        action.Test( exc => exc.TestType().Exact<ObjectDisposedException>() ).Go();
     }
 
     [Fact]
@@ -116,11 +108,10 @@ public class ObjectRecyclerTests : TestsBase
         var sut = new RecyclerMock();
         sut.Dispose();
 
-        using ( new AssertionScope() )
-        {
-            sut.ObjectCount.Should().Be( 0 );
-            sut.ActiveObjectCount.Should().Be( 0 );
-        }
+        Assertion.All(
+                sut.ObjectCount.TestEquals( 0 ),
+                sut.ActiveObjectCount.TestEquals( 0 ) )
+            .Go();
     }
 
     [Fact]
@@ -139,18 +130,17 @@ public class ObjectRecyclerTests : TestsBase
 
         sut.Dispose();
 
-        using ( new AssertionScope() )
-        {
-            sut.ObjectCount.Should().Be( 0 );
-            sut.ActiveObjectCount.Should().Be( 0 );
-            first.ToString().Should().Be( "(disposed)" );
-            second.ToString().Should().Be( "(disposed)" );
-            third.ToString().Should().Be( "(disposed)" );
-            fourth.ToString().Should().Be( "(disposed)" );
-            obj1.IsDisposed.Should().BeTrue();
-            obj2.IsDisposed.Should().BeTrue();
-            obj3.IsDisposed.Should().BeTrue();
-        }
+        Assertion.All(
+                sut.ObjectCount.TestEquals( 0 ),
+                sut.ActiveObjectCount.TestEquals( 0 ),
+                first.ToString().TestEquals( "(disposed)" ),
+                second.ToString().TestEquals( "(disposed)" ),
+                third.ToString().TestEquals( "(disposed)" ),
+                fourth.ToString().TestEquals( "(disposed)" ),
+                obj1.IsDisposed.TestTrue(),
+                obj2.IsDisposed.TestTrue(),
+                obj3.IsDisposed.TestTrue() )
+            .Go();
     }
 
     [Fact]
@@ -174,20 +164,20 @@ public class ObjectRecyclerTests : TestsBase
 
         var action = Lambda.Of( () => sut.Dispose() );
 
-        using ( new AssertionScope() )
-        {
-            action.Should().ThrowExactly<AggregateException>().And.InnerExceptions.Should().BeSequentiallyEqualTo( exc1, exc2 );
-            sut.ObjectCount.Should().Be( 0 );
-            sut.ActiveObjectCount.Should().Be( 0 );
-            first.ToString().Should().Be( "(disposed)" );
-            second.ToString().Should().Be( "(disposed)" );
-            third.ToString().Should().Be( "(disposed)" );
-            fourth.ToString().Should().Be( "(disposed)" );
-            obj1.IsDisposed.Should().BeTrue();
-            obj2.IsDisposed.Should().BeTrue();
-            obj3.IsDisposed.Should().BeTrue();
-            obj4.IsDisposed.Should().BeTrue();
-        }
+        action.Test(
+                exc => Assertion.All(
+                    exc.TestType().Exact<AggregateException>(),
+                    sut.ObjectCount.TestEquals( 0 ),
+                    sut.ActiveObjectCount.TestEquals( 0 ),
+                    first.ToString().TestEquals( "(disposed)" ),
+                    second.ToString().TestEquals( "(disposed)" ),
+                    third.ToString().TestEquals( "(disposed)" ),
+                    fourth.ToString().TestEquals( "(disposed)" ),
+                    obj1.IsDisposed.TestTrue(),
+                    obj2.IsDisposed.TestTrue(),
+                    obj3.IsDisposed.TestTrue(),
+                    obj4.IsDisposed.TestTrue() ) )
+            .Go();
     }
 
     [Fact]
@@ -198,7 +188,7 @@ public class ObjectRecyclerTests : TestsBase
 
         var action = Lambda.Of( () => sut.Dispose() );
 
-        action.Should().NotThrow();
+        action.Test( exc => exc.TestNull() ).Go();
     }
 
     [Fact]
@@ -207,11 +197,10 @@ public class ObjectRecyclerTests : TestsBase
         var sut = new RecyclerMock();
         sut.TrimExcess();
 
-        using ( new AssertionScope() )
-        {
-            sut.ObjectCount.Should().Be( 0 );
-            sut.ActiveObjectCount.Should().Be( 0 );
-        }
+        Assertion.All(
+                sut.ObjectCount.TestEquals( 0 ),
+                sut.ActiveObjectCount.TestEquals( 0 ) )
+            .Go();
     }
 
     [Fact]
@@ -227,17 +216,16 @@ public class ObjectRecyclerTests : TestsBase
 
         sut.TrimExcess();
 
-        using ( new AssertionScope() )
-        {
-            sut.ObjectCount.Should().Be( 3 );
-            sut.ActiveObjectCount.Should().Be( 3 );
-            objA.Freed.Should().BeFalse();
-            objA.IsDisposed.Should().BeFalse();
-            objB.Freed.Should().BeFalse();
-            objB.IsDisposed.Should().BeFalse();
-            objC.Freed.Should().BeFalse();
-            objC.IsDisposed.Should().BeFalse();
-        }
+        Assertion.All(
+                sut.ObjectCount.TestEquals( 3 ),
+                sut.ActiveObjectCount.TestEquals( 3 ),
+                objA.Freed.TestFalse(),
+                objA.IsDisposed.TestFalse(),
+                objB.Freed.TestFalse(),
+                objB.IsDisposed.TestFalse(),
+                objC.Freed.TestFalse(),
+                objC.IsDisposed.TestFalse() )
+            .Go();
     }
 
     [Fact]
@@ -256,14 +244,13 @@ public class ObjectRecyclerTests : TestsBase
 
         sut.TrimExcess();
 
-        using ( new AssertionScope() )
-        {
-            sut.ObjectCount.Should().Be( 0 );
-            sut.ActiveObjectCount.Should().Be( 0 );
-            objA.IsDisposed.Should().BeTrue();
-            objB.IsDisposed.Should().BeTrue();
-            objC.IsDisposed.Should().BeTrue();
-        }
+        Assertion.All(
+                sut.ObjectCount.TestEquals( 0 ),
+                sut.ActiveObjectCount.TestEquals( 0 ),
+                objA.IsDisposed.TestTrue(),
+                objB.IsDisposed.TestTrue(),
+                objC.IsDisposed.TestTrue() )
+            .Go();
     }
 
     [Fact]
@@ -286,21 +273,20 @@ public class ObjectRecyclerTests : TestsBase
 
         sut.TrimExcess();
 
-        using ( new AssertionScope() )
-        {
-            sut.ObjectCount.Should().Be( 5 );
-            sut.ActiveObjectCount.Should().Be( 2 );
-            objA.Freed.Should().BeTrue();
-            objA.IsDisposed.Should().BeFalse();
-            objB.Freed.Should().BeTrue();
-            objB.IsDisposed.Should().BeFalse();
-            objC.Freed.Should().BeFalse();
-            objC.IsDisposed.Should().BeFalse();
-            objD.Freed.Should().BeTrue();
-            objD.IsDisposed.Should().BeFalse();
-            objE.Freed.Should().BeFalse();
-            objE.IsDisposed.Should().BeFalse();
-        }
+        Assertion.All(
+                sut.ObjectCount.TestEquals( 5 ),
+                sut.ActiveObjectCount.TestEquals( 2 ),
+                objA.Freed.TestTrue(),
+                objA.IsDisposed.TestFalse(),
+                objB.Freed.TestTrue(),
+                objB.IsDisposed.TestFalse(),
+                objC.Freed.TestFalse(),
+                objC.IsDisposed.TestFalse(),
+                objD.Freed.TestTrue(),
+                objD.IsDisposed.TestFalse(),
+                objE.Freed.TestFalse(),
+                objE.IsDisposed.TestFalse() )
+            .Go();
     }
 
     [Fact]
@@ -329,25 +315,24 @@ public class ObjectRecyclerTests : TestsBase
 
         sut.TrimExcess();
 
-        using ( new AssertionScope() )
-        {
-            sut.ObjectCount.Should().Be( 5 );
-            sut.ActiveObjectCount.Should().Be( 2 );
-            objA.Freed.Should().BeTrue();
-            objA.IsDisposed.Should().BeFalse();
-            objB.Freed.Should().BeTrue();
-            objB.IsDisposed.Should().BeFalse();
-            objC.Freed.Should().BeFalse();
-            objC.IsDisposed.Should().BeFalse();
-            objD.Freed.Should().BeTrue();
-            objD.IsDisposed.Should().BeFalse();
-            objE.Freed.Should().BeFalse();
-            objE.IsDisposed.Should().BeFalse();
-            objF.Freed.Should().BeTrue();
-            objF.IsDisposed.Should().BeTrue();
-            objG.Freed.Should().BeTrue();
-            objG.IsDisposed.Should().BeTrue();
-        }
+        Assertion.All(
+                sut.ObjectCount.TestEquals( 5 ),
+                sut.ActiveObjectCount.TestEquals( 2 ),
+                objA.Freed.TestTrue(),
+                objA.IsDisposed.TestFalse(),
+                objB.Freed.TestTrue(),
+                objB.IsDisposed.TestFalse(),
+                objC.Freed.TestFalse(),
+                objC.IsDisposed.TestFalse(),
+                objD.Freed.TestTrue(),
+                objD.IsDisposed.TestFalse(),
+                objE.Freed.TestFalse(),
+                objE.IsDisposed.TestFalse(),
+                objF.Freed.TestTrue(),
+                objF.IsDisposed.TestTrue(),
+                objG.Freed.TestTrue(),
+                objG.IsDisposed.TestTrue() )
+            .Go();
     }
 
     [Fact]
@@ -370,21 +355,20 @@ public class ObjectRecyclerTests : TestsBase
 
         sut.TrimExcess();
 
-        using ( new AssertionScope() )
-        {
-            sut.ObjectCount.Should().Be( 2 );
-            sut.ActiveObjectCount.Should().Be( 2 );
-            objA.Freed.Should().BeFalse();
-            objA.IsDisposed.Should().BeFalse();
-            objB.Freed.Should().BeFalse();
-            objB.IsDisposed.Should().BeFalse();
-            objC.Freed.Should().BeTrue();
-            objC.IsDisposed.Should().BeTrue();
-            objD.Freed.Should().BeTrue();
-            objD.IsDisposed.Should().BeTrue();
-            objE.Freed.Should().BeTrue();
-            objE.IsDisposed.Should().BeTrue();
-        }
+        Assertion.All(
+                sut.ObjectCount.TestEquals( 2 ),
+                sut.ActiveObjectCount.TestEquals( 2 ),
+                objA.Freed.TestFalse(),
+                objA.IsDisposed.TestFalse(),
+                objB.Freed.TestFalse(),
+                objB.IsDisposed.TestFalse(),
+                objC.Freed.TestTrue(),
+                objC.IsDisposed.TestTrue(),
+                objD.Freed.TestTrue(),
+                objD.IsDisposed.TestTrue(),
+                objE.Freed.TestTrue(),
+                objE.IsDisposed.TestTrue() )
+            .Go();
     }
 
     [Fact]
@@ -408,20 +392,20 @@ public class ObjectRecyclerTests : TestsBase
 
         var action = Lambda.Of( () => sut.TrimExcess() );
 
-        using ( new AssertionScope() )
-        {
-            action.Should().ThrowExactly<AggregateException>().And.InnerExceptions.Should().BeSequentiallyEqualTo( exc1, exc2 );
-            sut.ObjectCount.Should().Be( 2 );
-            sut.ActiveObjectCount.Should().Be( 2 );
-            objA.Freed.Should().BeFalse();
-            objA.IsDisposed.Should().BeFalse();
-            objB.Freed.Should().BeFalse();
-            objB.IsDisposed.Should().BeFalse();
-            objC.Freed.Should().BeTrue();
-            objC.IsDisposed.Should().BeTrue();
-            objD.Freed.Should().BeTrue();
-            objD.IsDisposed.Should().BeTrue();
-        }
+        action.Test(
+                exc => Assertion.All(
+                    exc.TestType().Exact<AggregateException>(),
+                    sut.ObjectCount.TestEquals( 2 ),
+                    sut.ActiveObjectCount.TestEquals( 2 ),
+                    objA.Freed.TestFalse(),
+                    objA.IsDisposed.TestFalse(),
+                    objB.Freed.TestFalse(),
+                    objB.IsDisposed.TestFalse(),
+                    objC.Freed.TestTrue(),
+                    objC.IsDisposed.TestTrue(),
+                    objD.Freed.TestTrue(),
+                    objD.IsDisposed.TestTrue() ) )
+            .Go();
     }
 
     [Fact]
@@ -433,13 +417,12 @@ public class ObjectRecyclerTests : TestsBase
 
         sut.Dispose();
 
-        using ( new AssertionScope() )
-        {
-            recycler.ObjectCount.Should().Be( 1 );
-            recycler.ActiveObjectCount.Should().Be( 0 );
-            obj.Freed.Should().BeTrue();
-            sut.ToString().Should().Be( "(disposed)" );
-        }
+        Assertion.All(
+                recycler.ObjectCount.TestEquals( 1 ),
+                recycler.ActiveObjectCount.TestEquals( 0 ),
+                obj.Freed.TestTrue(),
+                sut.ToString().TestEquals( "(disposed)" ) )
+            .Go();
     }
 
     [Fact]
@@ -452,13 +435,12 @@ public class ObjectRecyclerTests : TestsBase
 
         sut.Dispose();
 
-        using ( new AssertionScope() )
-        {
-            recycler.ObjectCount.Should().Be( 2 );
-            recycler.ActiveObjectCount.Should().Be( 1 );
-            obj.Freed.Should().BeTrue();
-            sut.ToString().Should().Be( "(disposed)" );
-        }
+        Assertion.All(
+                recycler.ObjectCount.TestEquals( 2 ),
+                recycler.ActiveObjectCount.TestEquals( 1 ),
+                obj.Freed.TestTrue(),
+                sut.ToString().TestEquals( "(disposed)" ) )
+            .Go();
     }
 
     [Fact]
@@ -470,7 +452,7 @@ public class ObjectRecyclerTests : TestsBase
 
         var action = Lambda.Of( () => sut.Dispose() );
 
-        action.Should().NotThrow();
+        action.Test( exc => exc.TestNull() ).Go();
     }
 
     [Fact]
@@ -483,7 +465,7 @@ public class ObjectRecyclerTests : TestsBase
 
         var action = Lambda.Of( () => sut.Dispose() );
 
-        action.Should().NotThrow();
+        action.Test( exc => exc.TestNull() ).Go();
     }
 
     [Fact]
@@ -491,7 +473,7 @@ public class ObjectRecyclerTests : TestsBase
     {
         var sut = default( ObjectRecyclerToken<object> );
         var action = Lambda.Of( () => sut.GetObject() );
-        action.Should().ThrowExactly<ObjectDisposedException>();
+        action.Test( exc => exc.TestType().Exact<ObjectDisposedException>() ).Go();
     }
 
     [Fact]
@@ -503,7 +485,7 @@ public class ObjectRecyclerTests : TestsBase
 
         var action = Lambda.Of( () => sut.GetObject() );
 
-        action.Should().ThrowExactly<ObjectDisposedException>();
+        action.Test( exc => exc.TestType().Exact<ObjectDisposedException>() ).Go();
     }
 
     public sealed class RecyclerMock : ObjectRecycler<RecyclerMock.Obj>

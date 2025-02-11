@@ -19,11 +19,10 @@ public class MeasureTests : TestsBase
 
         var result = Measure.Call( action );
 
-        using ( new AssertionScope() )
-        {
-            callCount.Should().Be( 1 );
-            result.Should().BeGreaterThan( TimeSpan.Zero );
-        }
+        Assertion.All(
+                callCount.TestEquals( 1 ),
+                result.TestGreaterThan( TimeSpan.Zero ) )
+            .Go();
     }
 
     [Fact]
@@ -40,11 +39,10 @@ public class MeasureTests : TestsBase
 
         var result = Measure.Call( action );
 
-        using ( new AssertionScope() )
-        {
-            callCount.Should().Be( 1 );
-            result.Result.Should().Be( "foo" );
-            result.ElapsedTime.Should().BeGreaterThan( TimeSpan.Zero );
-        }
+        Assertion.All(
+                callCount.TestEquals( 1 ),
+                result.Result.TestEquals( "foo" ),
+                result.ElapsedTime.TestGreaterThan( TimeSpan.Zero ) )
+            .Go();
     }
 }

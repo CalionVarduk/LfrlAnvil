@@ -163,30 +163,38 @@ public partial class SqliteSchemaBuilderTests : TestsBase
                 .Sql.Should()
                 .SatisfySql(
                     "DROP VIEW \"foo_V1\";",
-                    @"CREATE VIEW ""bar_V1"" AS
-                    SELECT * FROM bar;" );
+                    """
+                    CREATE VIEW "bar_V1" AS
+                                        SELECT * FROM bar;
+                    """ );
 
             actions.ElementAtOrDefault( 3 )
                 .Sql.Should()
                 .SatisfySql(
                     "DROP VIEW \"foo_V2\";",
-                    @"CREATE VIEW ""bar_V2"" AS
-                    SELECT * FROM qux;" );
+                    """
+                    CREATE VIEW "bar_V2" AS
+                                        SELECT * FROM qux;
+                    """ );
 
             actions.ElementAtOrDefault( 4 )
                 .Sql.Should()
                 .SatisfySql(
                     "DROP INDEX \"foo_IX_T1_C2A\";",
-                    @"CREATE TABLE ""__bar_T1__{GUID}__"" (
-                      ""C1"" ANY NOT NULL,
-                      ""C2"" ANY,
-                      CONSTRAINT ""bar_PK_T1"" PRIMARY KEY (""C1"" ASC)
-                    ) WITHOUT ROWID;",
-                    @"INSERT INTO ""__bar_T1__{GUID}__"" (""C1"", ""C2"")
-                    SELECT
-                      ""bar_T1"".""C1"",
-                      ""bar_T1"".""C2""
-                    FROM ""bar_T1"";",
+                    """
+                    CREATE TABLE "__bar_T1__{GUID}__" (
+                                          "C1" ANY NOT NULL,
+                                          "C2" ANY,
+                                          CONSTRAINT "bar_PK_T1" PRIMARY KEY ("C1" ASC)
+                                        ) WITHOUT ROWID;
+                    """,
+                    """
+                    INSERT INTO "__bar_T1__{GUID}__" ("C1", "C2")
+                                        SELECT
+                                          "bar_T1"."C1",
+                                          "bar_T1"."C2"
+                                        FROM "bar_T1";
+                    """,
                     "DROP TABLE \"bar_T1\";",
                     "ALTER TABLE \"__bar_T1__{GUID}__\" RENAME TO \"bar_T1\";",
                     "CREATE INDEX \"bar_IX_T1_C2A\" ON \"bar_T1\" (\"C2\" ASC);" );
@@ -194,15 +202,19 @@ public partial class SqliteSchemaBuilderTests : TestsBase
             actions.ElementAtOrDefault( 5 )
                 .Sql.Should()
                 .SatisfySql(
-                    @"CREATE TABLE ""__bar_T2__{GUID}__"" (
-                      ""C3"" ANY NOT NULL,
-                      CONSTRAINT ""bar_PK_T2"" PRIMARY KEY (""C3"" ASC),
-                      CONSTRAINT ""bar_CHK_T2_{GUID}"" CHECK (TRUE)
-                    ) WITHOUT ROWID;",
-                    @"INSERT INTO ""__bar_T2__{GUID}__"" (""C3"")
-                    SELECT
-                      ""bar_T2"".""C3""
-                    FROM ""bar_T2"";",
+                    """
+                    CREATE TABLE "__bar_T2__{GUID}__" (
+                                          "C3" ANY NOT NULL,
+                                          CONSTRAINT "bar_PK_T2" PRIMARY KEY ("C3" ASC),
+                                          CONSTRAINT "bar_CHK_T2_{GUID}" CHECK (TRUE)
+                                        ) WITHOUT ROWID;
+                    """,
+                    """
+                    INSERT INTO "__bar_T2__{GUID}__" ("C3")
+                                        SELECT
+                                          "bar_T2"."C3"
+                                        FROM "bar_T2";
+                    """,
                     "DROP TABLE \"bar_T2\";",
                     "ALTER TABLE \"__bar_T2__{GUID}__\" RENAME TO \"bar_T2\";" );
         }
@@ -246,17 +258,21 @@ public partial class SqliteSchemaBuilderTests : TestsBase
                 .Sql.Should()
                 .SatisfySql(
                     "DROP INDEX \"foo_IX_T_C2A\";",
-                    @"CREATE TABLE ""__bar_T__{GUID}__"" (
-                      ""C1"" ANY NOT NULL,
-                      ""C2"" ANY,
-                      CONSTRAINT ""bar_PK_T"" PRIMARY KEY (""C1"" ASC),
-                      CONSTRAINT ""bar_FK_T_C2_REF_T"" FOREIGN KEY (""C2"") REFERENCES ""bar_T"" (""C1"") ON DELETE RESTRICT ON UPDATE RESTRICT
-                    ) WITHOUT ROWID;",
-                    @"INSERT INTO ""__bar_T__{GUID}__"" (""C1"", ""C2"")
-                    SELECT
-                      ""bar_T"".""C1"",
-                      ""bar_T"".""C2""
-                    FROM ""bar_T"";",
+                    """
+                    CREATE TABLE "__bar_T__{GUID}__" (
+                                          "C1" ANY NOT NULL,
+                                          "C2" ANY,
+                                          CONSTRAINT "bar_PK_T" PRIMARY KEY ("C1" ASC),
+                                          CONSTRAINT "bar_FK_T_C2_REF_T" FOREIGN KEY ("C2") REFERENCES "bar_T" ("C1") ON DELETE RESTRICT ON UPDATE RESTRICT
+                                        ) WITHOUT ROWID;
+                    """,
+                    """
+                    INSERT INTO "__bar_T__{GUID}__" ("C1", "C2")
+                                        SELECT
+                                          "bar_T"."C1",
+                                          "bar_T"."C2"
+                                        FROM "bar_T";
+                    """,
                     "DROP TABLE \"bar_T\";",
                     "ALTER TABLE \"__bar_T__{GUID}__\" RENAME TO \"bar_T\";",
                     "CREATE INDEX \"bar_IX_T_C2A\" ON \"bar_T\" (\"C2\" ASC);" );
@@ -308,29 +324,37 @@ public partial class SqliteSchemaBuilderTests : TestsBase
             actions.ElementAtOrDefault( 2 )
                 .Sql.Should()
                 .SatisfySql(
-                    @"CREATE TABLE ""__bar_T1__{GUID}__"" (
-                      ""C1"" ANY NOT NULL,
-                      CONSTRAINT ""bar_PK_T1"" PRIMARY KEY (""C1"" ASC)
-                    ) WITHOUT ROWID;",
-                    @"INSERT INTO ""__bar_T1__{GUID}__"" (""C1"")
-                    SELECT
-                      ""bar_T1"".""C1""
-                    FROM ""bar_T1"";",
+                    """
+                    CREATE TABLE "__bar_T1__{GUID}__" (
+                                          "C1" ANY NOT NULL,
+                                          CONSTRAINT "bar_PK_T1" PRIMARY KEY ("C1" ASC)
+                                        ) WITHOUT ROWID;
+                    """,
+                    """
+                    INSERT INTO "__bar_T1__{GUID}__" ("C1")
+                                        SELECT
+                                          "bar_T1"."C1"
+                                        FROM "bar_T1";
+                    """,
                     "DROP TABLE \"bar_T1\";",
                     "ALTER TABLE \"__bar_T1__{GUID}__\" RENAME TO \"bar_T1\";" );
 
             actions.ElementAtOrDefault( 3 )
                 .Sql.Should()
                 .SatisfySql(
-                    @"CREATE TABLE ""__bar_T2__{GUID}__"" (
-                      ""C2"" ANY NOT NULL,
-                      CONSTRAINT ""bar_PK_T2"" PRIMARY KEY (""C2"" ASC),
-                      CONSTRAINT ""bar_FK_T2_C2_REF_T1"" FOREIGN KEY (""C2"") REFERENCES ""bar_T1"" (""C1"") ON DELETE RESTRICT ON UPDATE RESTRICT
-                    ) WITHOUT ROWID;",
-                    @"INSERT INTO ""__bar_T2__{GUID}__"" (""C2"")
-                    SELECT
-                      ""bar_T2"".""C2""
-                    FROM ""bar_T2"";",
+                    """
+                    CREATE TABLE "__bar_T2__{GUID}__" (
+                                          "C2" ANY NOT NULL,
+                                          CONSTRAINT "bar_PK_T2" PRIMARY KEY ("C2" ASC),
+                                          CONSTRAINT "bar_FK_T2_C2_REF_T1" FOREIGN KEY ("C2") REFERENCES "bar_T1" ("C1") ON DELETE RESTRICT ON UPDATE RESTRICT
+                                        ) WITHOUT ROWID;
+                    """,
+                    """
+                    INSERT INTO "__bar_T2__{GUID}__" ("C2")
+                                        SELECT
+                                          "bar_T2"."C2"
+                                        FROM "bar_T2";
+                    """,
                     "DROP TABLE \"bar_T2\";",
                     "ALTER TABLE \"__bar_T2__{GUID}__\" RENAME TO \"bar_T2\";" );
         }
@@ -377,29 +401,37 @@ public partial class SqliteSchemaBuilderTests : TestsBase
             actions.ElementAtOrDefault( 1 )
                 .Sql.Should()
                 .SatisfySql(
-                    @"CREATE TABLE ""__bar_T__{GUID}__"" (
-                      ""C"" ANY NOT NULL,
-                      CONSTRAINT ""bar_PK_T"" PRIMARY KEY (""C"" ASC)
-                    ) WITHOUT ROWID;",
-                    @"INSERT INTO ""__bar_T__{GUID}__"" (""C"")
-                    SELECT
-                      ""bar_T"".""C""
-                    FROM ""bar_T"";",
+                    """
+                    CREATE TABLE "__bar_T__{GUID}__" (
+                                          "C" ANY NOT NULL,
+                                          CONSTRAINT "bar_PK_T" PRIMARY KEY ("C" ASC)
+                                        ) WITHOUT ROWID;
+                    """,
+                    """
+                    INSERT INTO "__bar_T__{GUID}__" ("C")
+                                        SELECT
+                                          "bar_T"."C"
+                                        FROM "bar_T";
+                    """,
                     "DROP TABLE \"bar_T\";",
                     "ALTER TABLE \"__bar_T__{GUID}__\" RENAME TO \"bar_T\";" );
 
             actions.ElementAtOrDefault( 2 )
                 .Sql.Should()
                 .SatisfySql(
-                    @"CREATE TABLE ""__T__{GUID}__"" (
-                      ""C"" ANY NOT NULL,
-                      CONSTRAINT ""PK_T"" PRIMARY KEY (""C"" ASC),
-                      CONSTRAINT ""FK_T_C_REF_foo_T"" FOREIGN KEY (""C"") REFERENCES ""bar_T"" (""C"") ON DELETE RESTRICT ON UPDATE RESTRICT
-                    ) WITHOUT ROWID;",
-                    @"INSERT INTO ""__T__{GUID}__"" (""C"")
-                    SELECT
-                      ""T"".""C""
-                    FROM ""T"";",
+                    """
+                    CREATE TABLE "__T__{GUID}__" (
+                                          "C" ANY NOT NULL,
+                                          CONSTRAINT "PK_T" PRIMARY KEY ("C" ASC),
+                                          CONSTRAINT "FK_T_C_REF_foo_T" FOREIGN KEY ("C") REFERENCES "bar_T" ("C") ON DELETE RESTRICT ON UPDATE RESTRICT
+                                        ) WITHOUT ROWID;
+                    """,
+                    """
+                    INSERT INTO "__T__{GUID}__" ("C")
+                                        SELECT
+                                          "T"."C"
+                                        FROM "T";
+                    """,
                     "DROP TABLE \"T\";",
                     "ALTER TABLE \"__T__{GUID}__\" RENAME TO \"T\";" );
         }
@@ -452,31 +484,39 @@ public partial class SqliteSchemaBuilderTests : TestsBase
                 .Sql.Should()
                 .SatisfySql(
                     "DROP VIEW \"foo_V1\";",
-                    @"CREATE VIEW ""bar_V1"" AS
-                    SELECT
-                      *
-                    FROM ""bar_T"";" );
+                    """
+                    CREATE VIEW "bar_V1" AS
+                                        SELECT
+                                          *
+                                        FROM "bar_T";
+                    """ );
 
             actions.ElementAtOrDefault( 2 )
                 .Sql.Should()
                 .SatisfySql(
                     "DROP VIEW \"foo_V2\";",
-                    @"CREATE VIEW ""bar_V2"" AS
-                    SELECT
-                      *
-                    FROM ""bar_V1"";" );
+                    """
+                    CREATE VIEW "bar_V2" AS
+                                        SELECT
+                                          *
+                                        FROM "bar_V1";
+                    """ );
 
             actions.ElementAtOrDefault( 3 )
                 .Sql.Should()
                 .SatisfySql(
-                    @"CREATE TABLE ""__bar_T__{GUID}__"" (
-                      ""C"" ANY NOT NULL,
-                      CONSTRAINT ""bar_PK_T"" PRIMARY KEY (""C"" ASC)
-                    ) WITHOUT ROWID;",
-                    @"INSERT INTO ""__bar_T__{GUID}__"" (""C"")
-                    SELECT
-                      ""bar_T"".""C""
-                    FROM ""bar_T"";",
+                    """
+                    CREATE TABLE "__bar_T__{GUID}__" (
+                                          "C" ANY NOT NULL,
+                                          CONSTRAINT "bar_PK_T" PRIMARY KEY ("C" ASC)
+                                        ) WITHOUT ROWID;
+                    """,
+                    """
+                    INSERT INTO "__bar_T__{GUID}__" ("C")
+                                        SELECT
+                                          "bar_T"."C"
+                                        FROM "bar_T";
+                    """,
                     "DROP TABLE \"bar_T\";",
                     "ALTER TABLE \"__bar_T__{GUID}__\" RENAME TO \"bar_T\";" );
         }
@@ -526,20 +566,26 @@ public partial class SqliteSchemaBuilderTests : TestsBase
                 .Sql.Should()
                 .SatisfySql(
                     "DROP VIEW \"foo_V\";",
-                    @"CREATE VIEW ""bar_V"" AS
-                    SELECT * FROM qux;" );
+                    """
+                    CREATE VIEW "bar_V" AS
+                                        SELECT * FROM qux;
+                    """ );
 
             actions.ElementAtOrDefault( 2 )
                 .Sql.Should()
                 .SatisfySql(
-                    @"CREATE TABLE ""__bar_T__{GUID}__"" (
-                      ""C"" ANY NOT NULL,
-                      CONSTRAINT ""bar_PK_T"" PRIMARY KEY (""C"" ASC)
-                    ) WITHOUT ROWID;",
-                    @"INSERT INTO ""__bar_T__{GUID}__"" (""C"")
-                    SELECT
-                      ""bar_T"".""C""
-                    FROM ""bar_T"";",
+                    """
+                    CREATE TABLE "__bar_T__{GUID}__" (
+                                          "C" ANY NOT NULL,
+                                          CONSTRAINT "bar_PK_T" PRIMARY KEY ("C" ASC)
+                                        ) WITHOUT ROWID;
+                    """,
+                    """
+                    INSERT INTO "__bar_T__{GUID}__" ("C")
+                                        SELECT
+                                          "bar_T"."C"
+                                        FROM "bar_T";
+                    """,
                     "DROP TABLE \"bar_T\";",
                     "ALTER TABLE \"__bar_T__{GUID}__\" RENAME TO \"bar_T\";" );
 
@@ -547,11 +593,13 @@ public partial class SqliteSchemaBuilderTests : TestsBase
                 .Sql.Should()
                 .SatisfySql(
                     "DROP VIEW \"V\";",
-                    @"CREATE VIEW ""V"" AS
-                    SELECT
-                      *
-                    FROM ""bar_V""
-                    INNER JOIN ""bar_T"" ON TRUE;" );
+                    """
+                    CREATE VIEW "V" AS
+                                        SELECT
+                                          *
+                                        FROM "bar_V"
+                                        INNER JOIN "bar_T" ON TRUE;
+                    """ );
         }
     }
 

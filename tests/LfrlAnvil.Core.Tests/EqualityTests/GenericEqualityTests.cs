@@ -10,15 +10,7 @@ public abstract class GenericEqualityTests<T> : TestsBase
     public void Create_ShouldCreateWithCorrectProperties(T first, T second, bool expected)
     {
         var sut = Equality.Create( first, second );
-
-        sut.Should()
-            .BeEquivalentTo(
-                new
-                {
-                    First = first,
-                    Second = second,
-                    Result = expected
-                } );
+        Assertion.All( sut.First.TestEquals( first ), sut.Second.TestEquals( second ), sut.Result.TestEquals( expected ) ).Go();
     }
 
     [Fact]
@@ -32,7 +24,7 @@ public abstract class GenericEqualityTests<T> : TestsBase
 
         var result = sut.GetHashCode();
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -40,15 +32,7 @@ public abstract class GenericEqualityTests<T> : TestsBase
     public void Ctor_ShouldCreateWithCorrectResult(T first, T second, bool expected)
     {
         var sut = new Equality<T>( first, second );
-
-        sut.Should()
-            .BeEquivalentTo(
-                new
-                {
-                    First = first,
-                    Second = second,
-                    Result = expected
-                } );
+        Assertion.All( sut.First.TestEquals( first ), sut.Second.TestEquals( second ), sut.Result.TestEquals( expected ) ).Go();
     }
 
     [Theory]
@@ -60,7 +44,7 @@ public abstract class GenericEqualityTests<T> : TestsBase
 
         var result = a.Equals( b );
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -71,7 +55,7 @@ public abstract class GenericEqualityTests<T> : TestsBase
 
         var result = ( bool )sut;
 
-        result.Should().Be( sut.Result );
+        result.TestEquals( sut.Result ).Go();
     }
 
     [Theory]
@@ -82,7 +66,7 @@ public abstract class GenericEqualityTests<T> : TestsBase
 
         var result = ! sut;
 
-        result.Should().Be( ! sut.Result );
+        result.TestEquals( ! sut.Result ).Go();
     }
 
     [Theory]
@@ -94,7 +78,7 @@ public abstract class GenericEqualityTests<T> : TestsBase
 
         var result = a == b;
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -106,6 +90,6 @@ public abstract class GenericEqualityTests<T> : TestsBase
 
         var result = a != b;
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 }

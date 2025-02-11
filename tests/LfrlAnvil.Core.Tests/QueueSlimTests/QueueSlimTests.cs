@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using LfrlAnvil.Functional;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Tests.QueueSlimTests;
 
@@ -18,12 +17,11 @@ public class QueueSlimTests : TestsBase
     {
         var sut = QueueSlim<string>.Create( minCapacity );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 0 );
-            sut.IsEmpty.Should().BeTrue();
-            sut.Capacity.Should().Be( expectedCapacity );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 0 ),
+                sut.IsEmpty.TestTrue(),
+                sut.Capacity.TestEquals( expectedCapacity ) )
+            .Go();
     }
 
     [Fact]
@@ -33,14 +31,13 @@ public class QueueSlimTests : TestsBase
 
         sut.Enqueue( "foo" );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 1 );
-            sut.Capacity.Should().Be( 4 );
-            sut.IsEmpty.Should().BeFalse();
-            sut.First().Should().Be( "foo" );
-            sut.Last().Should().Be( "foo" );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 1 ),
+                sut.Capacity.TestEquals( 4 ),
+                sut.IsEmpty.TestFalse(),
+                sut.First().TestEquals( "foo" ),
+                sut.Last().TestEquals( "foo" ) )
+            .Go();
     }
 
     [Fact]
@@ -51,14 +48,13 @@ public class QueueSlimTests : TestsBase
         sut.Enqueue( "x2" );
         sut.Enqueue( "x3" );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 3 );
-            sut.Capacity.Should().Be( 4 );
-            sut.IsEmpty.Should().BeFalse();
-            sut.First().Should().Be( "x1" );
-            sut.Last().Should().Be( "x3" );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 3 ),
+                sut.Capacity.TestEquals( 4 ),
+                sut.IsEmpty.TestFalse(),
+                sut.First().TestEquals( "x1" ),
+                sut.Last().TestEquals( "x3" ) )
+            .Go();
     }
 
     [Fact]
@@ -70,14 +66,13 @@ public class QueueSlimTests : TestsBase
         sut.Enqueue( "x3" );
         sut.Enqueue( "x4" );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 4 );
-            sut.Capacity.Should().Be( 4 );
-            sut.IsEmpty.Should().BeFalse();
-            sut.First().Should().Be( "x1" );
-            sut.Last().Should().Be( "x4" );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 4 ),
+                sut.Capacity.TestEquals( 4 ),
+                sut.IsEmpty.TestFalse(),
+                sut.First().TestEquals( "x1" ),
+                sut.Last().TestEquals( "x4" ) )
+            .Go();
     }
 
     [Fact]
@@ -91,14 +86,13 @@ public class QueueSlimTests : TestsBase
         sut.Enqueue( "x5" );
         sut.Enqueue( "x6" );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 6 );
-            sut.Capacity.Should().Be( 8 );
-            sut.IsEmpty.Should().BeFalse();
-            sut.First().Should().Be( "x1" );
-            sut.Last().Should().Be( "x6" );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 6 ),
+                sut.Capacity.TestEquals( 8 ),
+                sut.IsEmpty.TestFalse(),
+                sut.First().TestEquals( "x1" ),
+                sut.Last().TestEquals( "x6" ) )
+            .Go();
     }
 
     [Fact]
@@ -111,14 +105,13 @@ public class QueueSlimTests : TestsBase
 
         sut.Enqueue( "x3" );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 2 );
-            sut.Capacity.Should().Be( 4 );
-            sut.IsEmpty.Should().BeFalse();
-            sut.First().Should().Be( "x2" );
-            sut.Last().Should().Be( "x3" );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 2 ),
+                sut.Capacity.TestEquals( 4 ),
+                sut.IsEmpty.TestFalse(),
+                sut.First().TestEquals( "x2" ),
+                sut.Last().TestEquals( "x3" ) )
+            .Go();
     }
 
     [Fact]
@@ -134,14 +127,13 @@ public class QueueSlimTests : TestsBase
 
         sut.Enqueue( "x5" );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 3 );
-            sut.Capacity.Should().Be( 4 );
-            sut.IsEmpty.Should().BeFalse();
-            sut.First().Should().Be( "x3" );
-            sut.Last().Should().Be( "x5" );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 3 ),
+                sut.Capacity.TestEquals( 4 ),
+                sut.IsEmpty.TestFalse(),
+                sut.First().TestEquals( "x3" ),
+                sut.Last().TestEquals( "x5" ) )
+            .Go();
     }
 
     [Fact]
@@ -156,14 +148,13 @@ public class QueueSlimTests : TestsBase
 
         sut.Enqueue( "x5" );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 4 );
-            sut.Capacity.Should().Be( 4 );
-            sut.IsEmpty.Should().BeFalse();
-            sut.First().Should().Be( "x2" );
-            sut.Last().Should().Be( "x5" );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 4 ),
+                sut.Capacity.TestEquals( 4 ),
+                sut.IsEmpty.TestFalse(),
+                sut.First().TestEquals( "x2" ),
+                sut.Last().TestEquals( "x5" ) )
+            .Go();
     }
 
     [Fact]
@@ -180,14 +171,13 @@ public class QueueSlimTests : TestsBase
 
         sut.Enqueue( "x6" );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 4 );
-            sut.Capacity.Should().Be( 4 );
-            sut.IsEmpty.Should().BeFalse();
-            sut.First().Should().Be( "x3" );
-            sut.Last().Should().Be( "x6" );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 4 ),
+                sut.Capacity.TestEquals( 4 ),
+                sut.IsEmpty.TestFalse(),
+                sut.First().TestEquals( "x3" ),
+                sut.Last().TestEquals( "x6" ) )
+            .Go();
     }
 
     [Fact]
@@ -203,14 +193,13 @@ public class QueueSlimTests : TestsBase
 
         sut.Enqueue( "x6" );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 5 );
-            sut.Capacity.Should().Be( 8 );
-            sut.IsEmpty.Should().BeFalse();
-            sut.First().Should().Be( "x2" );
-            sut.Last().Should().Be( "x6" );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 5 ),
+                sut.Capacity.TestEquals( 8 ),
+                sut.IsEmpty.TestFalse(),
+                sut.First().TestEquals( "x2" ),
+                sut.Last().TestEquals( "x6" ) )
+            .Go();
     }
 
     [Fact]
@@ -220,12 +209,11 @@ public class QueueSlimTests : TestsBase
 
         sut.EnqueueRange( ReadOnlySpan<string>.Empty );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 0 );
-            sut.Capacity.Should().Be( 0 );
-            sut.IsEmpty.Should().BeTrue();
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 0 ),
+                sut.Capacity.TestEquals( 0 ),
+                sut.IsEmpty.TestTrue() )
+            .Go();
     }
 
     [Fact]
@@ -235,14 +223,13 @@ public class QueueSlimTests : TestsBase
 
         sut.EnqueueRange( new[] { "x1", "x2" } );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 2 );
-            sut.Capacity.Should().Be( 4 );
-            sut.IsEmpty.Should().BeFalse();
-            sut.First().Should().Be( "x1" );
-            sut.Last().Should().Be( "x2" );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 2 ),
+                sut.Capacity.TestEquals( 4 ),
+                sut.IsEmpty.TestFalse(),
+                sut.First().TestEquals( "x1" ),
+                sut.Last().TestEquals( "x2" ) )
+            .Go();
     }
 
     [Fact]
@@ -252,14 +239,13 @@ public class QueueSlimTests : TestsBase
         sut.EnqueueRange( new[] { "x1" } );
         sut.EnqueueRange( new[] { "x2", "x3" } );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 3 );
-            sut.Capacity.Should().Be( 4 );
-            sut.IsEmpty.Should().BeFalse();
-            sut.First().Should().Be( "x1" );
-            sut.Last().Should().Be( "x3" );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 3 ),
+                sut.Capacity.TestEquals( 4 ),
+                sut.IsEmpty.TestFalse(),
+                sut.First().TestEquals( "x1" ),
+                sut.Last().TestEquals( "x3" ) )
+            .Go();
     }
 
     [Fact]
@@ -269,14 +255,13 @@ public class QueueSlimTests : TestsBase
         sut.EnqueueRange( new[] { "x1" } );
         sut.EnqueueRange( new[] { "x2", "x3", "x4" } );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 4 );
-            sut.Capacity.Should().Be( 4 );
-            sut.IsEmpty.Should().BeFalse();
-            sut.First().Should().Be( "x1" );
-            sut.Last().Should().Be( "x4" );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 4 ),
+                sut.Capacity.TestEquals( 4 ),
+                sut.IsEmpty.TestFalse(),
+                sut.First().TestEquals( "x1" ),
+                sut.Last().TestEquals( "x4" ) )
+            .Go();
     }
 
     [Fact]
@@ -286,14 +271,13 @@ public class QueueSlimTests : TestsBase
         sut.EnqueueRange( new[] { "x1" } );
         sut.EnqueueRange( new[] { "x2", "x3", "x4", "x5", "x6" } );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 6 );
-            sut.Capacity.Should().Be( 8 );
-            sut.IsEmpty.Should().BeFalse();
-            sut.First().Should().Be( "x1" );
-            sut.Last().Should().Be( "x6" );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 6 ),
+                sut.Capacity.TestEquals( 8 ),
+                sut.IsEmpty.TestFalse(),
+                sut.First().TestEquals( "x1" ),
+                sut.Last().TestEquals( "x6" ) )
+            .Go();
     }
 
     [Fact]
@@ -305,14 +289,13 @@ public class QueueSlimTests : TestsBase
 
         sut.EnqueueRange( new[] { "x3", "x4" } );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 3 );
-            sut.Capacity.Should().Be( 4 );
-            sut.IsEmpty.Should().BeFalse();
-            sut.First().Should().Be( "x2" );
-            sut.Last().Should().Be( "x4" );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 3 ),
+                sut.Capacity.TestEquals( 4 ),
+                sut.IsEmpty.TestFalse(),
+                sut.First().TestEquals( "x2" ),
+                sut.Last().TestEquals( "x4" ) )
+            .Go();
     }
 
     [Fact]
@@ -325,14 +308,13 @@ public class QueueSlimTests : TestsBase
 
         sut.EnqueueRange( new[] { "x5" } );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 3 );
-            sut.Capacity.Should().Be( 4 );
-            sut.IsEmpty.Should().BeFalse();
-            sut.First().Should().Be( "x3" );
-            sut.Last().Should().Be( "x5" );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 3 ),
+                sut.Capacity.TestEquals( 4 ),
+                sut.IsEmpty.TestFalse(),
+                sut.First().TestEquals( "x3" ),
+                sut.Last().TestEquals( "x5" ) )
+            .Go();
     }
 
     [Fact]
@@ -344,14 +326,13 @@ public class QueueSlimTests : TestsBase
 
         sut.EnqueueRange( new[] { "x4", "x5" } );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 4 );
-            sut.Capacity.Should().Be( 4 );
-            sut.IsEmpty.Should().BeFalse();
-            sut.First().Should().Be( "x2" );
-            sut.Last().Should().Be( "x5" );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 4 ),
+                sut.Capacity.TestEquals( 4 ),
+                sut.IsEmpty.TestFalse(),
+                sut.First().TestEquals( "x2" ),
+                sut.Last().TestEquals( "x5" ) )
+            .Go();
     }
 
     [Fact]
@@ -366,14 +347,13 @@ public class QueueSlimTests : TestsBase
 
         sut.EnqueueRange( new[] { "x6", "x7" } );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 4 );
-            sut.Capacity.Should().Be( 4 );
-            sut.IsEmpty.Should().BeFalse();
-            sut.First().Should().Be( "x4" );
-            sut.Last().Should().Be( "x7" );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 4 ),
+                sut.Capacity.TestEquals( 4 ),
+                sut.IsEmpty.TestFalse(),
+                sut.First().TestEquals( "x4" ),
+                sut.Last().TestEquals( "x7" ) )
+            .Go();
     }
 
     [Fact]
@@ -387,14 +367,13 @@ public class QueueSlimTests : TestsBase
 
         sut.EnqueueRange( new[] { "x6", "x7" } );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 5 );
-            sut.Capacity.Should().Be( 8 );
-            sut.IsEmpty.Should().BeFalse();
-            sut.First().Should().Be( "x3" );
-            sut.Last().Should().Be( "x7" );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 5 ),
+                sut.Capacity.TestEquals( 8 ),
+                sut.IsEmpty.TestFalse(),
+                sut.First().TestEquals( "x3" ),
+                sut.Last().TestEquals( "x7" ) )
+            .Go();
     }
 
     [Fact]
@@ -407,14 +386,13 @@ public class QueueSlimTests : TestsBase
 
         sut.EnqueueRange( new[] { "x6", "x7" } );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 6 );
-            sut.Capacity.Should().Be( 8 );
-            sut.IsEmpty.Should().BeFalse();
-            sut.First().Should().Be( "x2" );
-            sut.Last().Should().Be( "x7" );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 6 ),
+                sut.Capacity.TestEquals( 8 ),
+                sut.IsEmpty.TestFalse(),
+                sut.First().TestEquals( "x2" ),
+                sut.Last().TestEquals( "x7" ) )
+            .Go();
     }
 
     [Fact]
@@ -424,13 +402,12 @@ public class QueueSlimTests : TestsBase
 
         var result = sut.Dequeue();
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeFalse();
-            sut.Count.Should().Be( 0 );
-            sut.Capacity.Should().Be( 0 );
-            sut.IsEmpty.Should().BeTrue();
-        }
+        Assertion.All(
+                result.TestFalse(),
+                sut.Count.TestEquals( 0 ),
+                sut.Capacity.TestEquals( 0 ),
+                sut.IsEmpty.TestTrue() )
+            .Go();
     }
 
     [Fact]
@@ -441,13 +418,12 @@ public class QueueSlimTests : TestsBase
 
         var result = sut.Dequeue();
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            sut.Count.Should().Be( 0 );
-            sut.Capacity.Should().Be( 4 );
-            sut.IsEmpty.Should().BeTrue();
-        }
+        Assertion.All(
+                result.TestTrue(),
+                sut.Count.TestEquals( 0 ),
+                sut.Capacity.TestEquals( 4 ),
+                sut.IsEmpty.TestTrue() )
+            .Go();
     }
 
     [Fact]
@@ -458,15 +434,14 @@ public class QueueSlimTests : TestsBase
 
         var result = sut.Dequeue();
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            sut.Count.Should().Be( 2 );
-            sut.Capacity.Should().Be( 4 );
-            sut.IsEmpty.Should().BeFalse();
-            sut.First().Should().Be( "x2" );
-            sut.Last().Should().Be( "x3" );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                sut.Count.TestEquals( 2 ),
+                sut.Capacity.TestEquals( 4 ),
+                sut.IsEmpty.TestFalse(),
+                sut.First().TestEquals( "x2" ),
+                sut.Last().TestEquals( "x3" ) )
+            .Go();
     }
 
     [Fact]
@@ -480,15 +455,14 @@ public class QueueSlimTests : TestsBase
 
         var result = sut.Dequeue();
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            sut.Count.Should().Be( 2 );
-            sut.Capacity.Should().Be( 4 );
-            sut.IsEmpty.Should().BeFalse();
-            sut.First().Should().Be( "x4" );
-            sut.Last().Should().Be( "x5" );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                sut.Count.TestEquals( 2 ),
+                sut.Capacity.TestEquals( 4 ),
+                sut.IsEmpty.TestFalse(),
+                sut.First().TestEquals( "x4" ),
+                sut.Last().TestEquals( "x5" ) )
+            .Go();
     }
 
     [Fact]
@@ -501,15 +475,14 @@ public class QueueSlimTests : TestsBase
 
         var result = sut.Dequeue();
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            sut.Count.Should().Be( 3 );
-            sut.Capacity.Should().Be( 4 );
-            sut.IsEmpty.Should().BeFalse();
-            sut.First().Should().Be( "x3" );
-            sut.Last().Should().Be( "x5" );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                sut.Count.TestEquals( 3 ),
+                sut.Capacity.TestEquals( 4 ),
+                sut.IsEmpty.TestFalse(),
+                sut.First().TestEquals( "x3" ),
+                sut.Last().TestEquals( "x5" ) )
+            .Go();
     }
 
     [Fact]
@@ -524,15 +497,14 @@ public class QueueSlimTests : TestsBase
 
         var result = sut.Dequeue();
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            sut.Count.Should().Be( 1 );
-            sut.Capacity.Should().Be( 4 );
-            sut.IsEmpty.Should().BeFalse();
-            sut.First().Should().Be( "x5" );
-            sut.Last().Should().Be( "x5" );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                sut.Count.TestEquals( 1 ),
+                sut.Capacity.TestEquals( 4 ),
+                sut.IsEmpty.TestFalse(),
+                sut.First().TestEquals( "x5" ),
+                sut.Last().TestEquals( "x5" ) )
+            .Go();
     }
 
     [Fact]
@@ -542,14 +514,13 @@ public class QueueSlimTests : TestsBase
 
         var result = sut.TryDequeue( out var outResult );
 
-        using ( new AssertionScope() )
-        {
-            outResult.Should().BeNull();
-            result.Should().BeFalse();
-            sut.Count.Should().Be( 0 );
-            sut.Capacity.Should().Be( 0 );
-            sut.IsEmpty.Should().BeTrue();
-        }
+        Assertion.All(
+                outResult.TestNull(),
+                result.TestFalse(),
+                sut.Count.TestEquals( 0 ),
+                sut.Capacity.TestEquals( 0 ),
+                sut.IsEmpty.TestTrue() )
+            .Go();
     }
 
     [Fact]
@@ -560,14 +531,13 @@ public class QueueSlimTests : TestsBase
 
         var result = sut.TryDequeue( out var outResult );
 
-        using ( new AssertionScope() )
-        {
-            outResult.Should().Be( "foo" );
-            result.Should().BeTrue();
-            sut.Count.Should().Be( 0 );
-            sut.Capacity.Should().Be( 4 );
-            sut.IsEmpty.Should().BeTrue();
-        }
+        Assertion.All(
+                outResult.TestEquals( "foo" ),
+                result.TestTrue(),
+                sut.Count.TestEquals( 0 ),
+                sut.Capacity.TestEquals( 4 ),
+                sut.IsEmpty.TestTrue() )
+            .Go();
     }
 
     [Fact]
@@ -578,16 +548,15 @@ public class QueueSlimTests : TestsBase
 
         var result = sut.TryDequeue( out var outResult );
 
-        using ( new AssertionScope() )
-        {
-            outResult.Should().Be( "x1" );
-            result.Should().BeTrue();
-            sut.Count.Should().Be( 2 );
-            sut.Capacity.Should().Be( 4 );
-            sut.IsEmpty.Should().BeFalse();
-            sut.First().Should().Be( "x2" );
-            sut.Last().Should().Be( "x3" );
-        }
+        Assertion.All(
+                outResult.TestEquals( "x1" ),
+                result.TestTrue(),
+                sut.Count.TestEquals( 2 ),
+                sut.Capacity.TestEquals( 4 ),
+                sut.IsEmpty.TestFalse(),
+                sut.First().TestEquals( "x2" ),
+                sut.Last().TestEquals( "x3" ) )
+            .Go();
     }
 
     [Fact]
@@ -601,16 +570,15 @@ public class QueueSlimTests : TestsBase
 
         var result = sut.TryDequeue( out var outResult );
 
-        using ( new AssertionScope() )
-        {
-            outResult.Should().Be( "x3" );
-            result.Should().BeTrue();
-            sut.Count.Should().Be( 2 );
-            sut.Capacity.Should().Be( 4 );
-            sut.IsEmpty.Should().BeFalse();
-            sut.First().Should().Be( "x4" );
-            sut.Last().Should().Be( "x5" );
-        }
+        Assertion.All(
+                outResult.TestEquals( "x3" ),
+                result.TestTrue(),
+                sut.Count.TestEquals( 2 ),
+                sut.Capacity.TestEquals( 4 ),
+                sut.IsEmpty.TestFalse(),
+                sut.First().TestEquals( "x4" ),
+                sut.Last().TestEquals( "x5" ) )
+            .Go();
     }
 
     [Fact]
@@ -623,16 +591,15 @@ public class QueueSlimTests : TestsBase
 
         var result = sut.TryDequeue( out var outResult );
 
-        using ( new AssertionScope() )
-        {
-            outResult.Should().Be( "x2" );
-            result.Should().BeTrue();
-            sut.Count.Should().Be( 3 );
-            sut.Capacity.Should().Be( 4 );
-            sut.IsEmpty.Should().BeFalse();
-            sut.First().Should().Be( "x3" );
-            sut.Last().Should().Be( "x5" );
-        }
+        Assertion.All(
+                outResult.TestEquals( "x2" ),
+                result.TestTrue(),
+                sut.Count.TestEquals( 3 ),
+                sut.Capacity.TestEquals( 4 ),
+                sut.IsEmpty.TestFalse(),
+                sut.First().TestEquals( "x3" ),
+                sut.Last().TestEquals( "x5" ) )
+            .Go();
     }
 
     [Fact]
@@ -647,16 +614,15 @@ public class QueueSlimTests : TestsBase
 
         var result = sut.TryDequeue( out var outResult );
 
-        using ( new AssertionScope() )
-        {
-            outResult.Should().Be( "x4" );
-            result.Should().BeTrue();
-            sut.Count.Should().Be( 1 );
-            sut.Capacity.Should().Be( 4 );
-            sut.IsEmpty.Should().BeFalse();
-            sut.First().Should().Be( "x5" );
-            sut.Last().Should().Be( "x5" );
-        }
+        Assertion.All(
+                outResult.TestEquals( "x4" ),
+                result.TestTrue(),
+                sut.Count.TestEquals( 1 ),
+                sut.Capacity.TestEquals( 4 ),
+                sut.IsEmpty.TestFalse(),
+                sut.First().TestEquals( "x5" ),
+                sut.Last().TestEquals( "x5" ) )
+            .Go();
     }
 
     [Fact]
@@ -666,13 +632,12 @@ public class QueueSlimTests : TestsBase
 
         var result = sut.DequeueRange( 1 );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( 0 );
-            sut.Count.Should().Be( 0 );
-            sut.Capacity.Should().Be( 0 );
-            sut.IsEmpty.Should().BeTrue();
-        }
+        Assertion.All(
+                result.TestEquals( 0 ),
+                sut.Count.TestEquals( 0 ),
+                sut.Capacity.TestEquals( 0 ),
+                sut.IsEmpty.TestTrue() )
+            .Go();
     }
 
     [Theory]
@@ -685,13 +650,12 @@ public class QueueSlimTests : TestsBase
 
         var result = sut.DequeueRange( count );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( 0 );
-            sut.Count.Should().Be( 1 );
-            sut.Capacity.Should().Be( 4 );
-            sut.IsEmpty.Should().BeFalse();
-        }
+        Assertion.All(
+                result.TestEquals( 0 ),
+                sut.Count.TestEquals( 1 ),
+                sut.Capacity.TestEquals( 4 ),
+                sut.IsEmpty.TestFalse() )
+            .Go();
     }
 
     [Theory]
@@ -704,13 +668,12 @@ public class QueueSlimTests : TestsBase
 
         var result = sut.DequeueRange( count );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( 3 );
-            sut.Count.Should().Be( 0 );
-            sut.Capacity.Should().Be( 4 );
-            sut.IsEmpty.Should().BeTrue();
-        }
+        Assertion.All(
+                result.TestEquals( 3 ),
+                sut.Count.TestEquals( 0 ),
+                sut.Capacity.TestEquals( 4 ),
+                sut.IsEmpty.TestTrue() )
+            .Go();
     }
 
     [Fact]
@@ -721,15 +684,14 @@ public class QueueSlimTests : TestsBase
 
         var result = sut.DequeueRange( 2 );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( 2 );
-            sut.Count.Should().Be( 1 );
-            sut.Capacity.Should().Be( 4 );
-            sut.IsEmpty.Should().BeFalse();
-            sut.First().Should().Be( "x3" );
-            sut.Last().Should().Be( "x3" );
-        }
+        Assertion.All(
+                result.TestEquals( 2 ),
+                sut.Count.TestEquals( 1 ),
+                sut.Capacity.TestEquals( 4 ),
+                sut.IsEmpty.TestFalse(),
+                sut.First().TestEquals( "x3" ),
+                sut.Last().TestEquals( "x3" ) )
+            .Go();
     }
 
     [Fact]
@@ -742,15 +704,14 @@ public class QueueSlimTests : TestsBase
 
         var result = sut.DequeueRange( 5 );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( 5 );
-            sut.Count.Should().Be( 2 );
-            sut.Capacity.Should().Be( 8 );
-            sut.IsEmpty.Should().BeFalse();
-            sut.First().Should().Be( "x8" );
-            sut.Last().Should().Be( "x9" );
-        }
+        Assertion.All(
+                result.TestEquals( 5 ),
+                sut.Count.TestEquals( 2 ),
+                sut.Capacity.TestEquals( 8 ),
+                sut.IsEmpty.TestFalse(),
+                sut.First().TestEquals( "x8" ),
+                sut.Last().TestEquals( "x9" ) )
+            .Go();
     }
 
     [Fact]
@@ -763,15 +724,14 @@ public class QueueSlimTests : TestsBase
 
         var result = sut.DequeueRange( 2 );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( 2 );
-            sut.Count.Should().Be( 2 );
-            sut.Capacity.Should().Be( 4 );
-            sut.IsEmpty.Should().BeFalse();
-            sut.First().Should().Be( "x5" );
-            sut.Last().Should().Be( "x6" );
-        }
+        Assertion.All(
+                result.TestEquals( 2 ),
+                sut.Count.TestEquals( 2 ),
+                sut.Capacity.TestEquals( 4 ),
+                sut.IsEmpty.TestFalse(),
+                sut.First().TestEquals( "x5" ),
+                sut.Last().TestEquals( "x6" ) )
+            .Go();
     }
 
     [Fact]
@@ -784,15 +744,14 @@ public class QueueSlimTests : TestsBase
 
         var result = sut.DequeueRange( 2 );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( 2 );
-            sut.Count.Should().Be( 1 );
-            sut.Capacity.Should().Be( 4 );
-            sut.IsEmpty.Should().BeFalse();
-            sut.First().Should().Be( "x5" );
-            sut.Last().Should().Be( "x5" );
-        }
+        Assertion.All(
+                result.TestEquals( 2 ),
+                sut.Count.TestEquals( 1 ),
+                sut.Capacity.TestEquals( 4 ),
+                sut.IsEmpty.TestFalse(),
+                sut.First().TestEquals( "x5" ),
+                sut.Last().TestEquals( "x5" ) )
+            .Go();
     }
 
     [Fact]
@@ -805,15 +764,14 @@ public class QueueSlimTests : TestsBase
 
         var result = sut.DequeueRange( 5 );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( 5 );
-            sut.Count.Should().Be( 2 );
-            sut.Capacity.Should().Be( 8 );
-            sut.IsEmpty.Should().BeFalse();
-            sut.First().Should().Be( "x10" );
-            sut.Last().Should().Be( "x11" );
-        }
+        Assertion.All(
+                result.TestEquals( 5 ),
+                sut.Count.TestEquals( 2 ),
+                sut.Capacity.TestEquals( 8 ),
+                sut.IsEmpty.TestFalse(),
+                sut.First().TestEquals( "x10" ),
+                sut.Last().TestEquals( "x11" ) )
+            .Go();
     }
 
     [Theory]
@@ -828,13 +786,12 @@ public class QueueSlimTests : TestsBase
 
         var result = sut.DequeueRange( count );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( 3 );
-            sut.Count.Should().Be( 0 );
-            sut.Capacity.Should().Be( 4 );
-            sut.IsEmpty.Should().BeTrue();
-        }
+        Assertion.All(
+                result.TestEquals( 3 ),
+                sut.Count.TestEquals( 0 ),
+                sut.Capacity.TestEquals( 4 ),
+                sut.IsEmpty.TestTrue() )
+            .Go();
     }
 
     [Fact]
@@ -844,12 +801,11 @@ public class QueueSlimTests : TestsBase
 
         sut.Clear();
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 0 );
-            sut.Capacity.Should().Be( 0 );
-            sut.IsEmpty.Should().BeTrue();
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 0 ),
+                sut.Capacity.TestEquals( 0 ),
+                sut.IsEmpty.TestTrue() )
+            .Go();
     }
 
     [Fact]
@@ -860,12 +816,11 @@ public class QueueSlimTests : TestsBase
 
         sut.Clear();
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 0 );
-            sut.Capacity.Should().Be( 4 );
-            sut.IsEmpty.Should().BeTrue();
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 0 ),
+                sut.Capacity.TestEquals( 4 ),
+                sut.IsEmpty.TestTrue() )
+            .Go();
     }
 
     [Fact]
@@ -876,12 +831,11 @@ public class QueueSlimTests : TestsBase
 
         sut.Clear();
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 0 );
-            sut.Capacity.Should().Be( 4 );
-            sut.IsEmpty.Should().BeTrue();
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 0 ),
+                sut.Capacity.TestEquals( 4 ),
+                sut.IsEmpty.TestTrue() )
+            .Go();
     }
 
     [Fact]
@@ -894,12 +848,11 @@ public class QueueSlimTests : TestsBase
 
         sut.Clear();
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 0 );
-            sut.Capacity.Should().Be( 4 );
-            sut.IsEmpty.Should().BeTrue();
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 0 ),
+                sut.Capacity.TestEquals( 4 ),
+                sut.IsEmpty.TestTrue() )
+            .Go();
     }
 
     [Fact]
@@ -912,12 +865,11 @@ public class QueueSlimTests : TestsBase
 
         sut.Clear();
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 0 );
-            sut.Capacity.Should().Be( 4 );
-            sut.IsEmpty.Should().BeTrue();
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 0 ),
+                sut.Capacity.TestEquals( 4 ),
+                sut.IsEmpty.TestTrue() )
+            .Go();
     }
 
     [Theory]
@@ -929,12 +881,11 @@ public class QueueSlimTests : TestsBase
 
         sut.ResetCapacity( minCapacity );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 0 );
-            sut.Capacity.Should().Be( 0 );
-            sut.IsEmpty.Should().BeTrue();
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 0 ),
+                sut.Capacity.TestEquals( 0 ),
+                sut.IsEmpty.TestTrue() )
+            .Go();
     }
 
     [Theory]
@@ -948,12 +899,11 @@ public class QueueSlimTests : TestsBase
 
         sut.ResetCapacity( minCapacity );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 0 );
-            sut.Capacity.Should().Be( 4 );
-            sut.IsEmpty.Should().BeTrue();
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 0 ),
+                sut.Capacity.TestEquals( 4 ),
+                sut.IsEmpty.TestTrue() )
+            .Go();
     }
 
     [Theory]
@@ -969,14 +919,13 @@ public class QueueSlimTests : TestsBase
 
         sut.ResetCapacity( minCapacity );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 1 );
-            sut.Capacity.Should().Be( 4 );
-            sut.IsEmpty.Should().BeFalse();
-            sut.First().Should().Be( "foo" );
-            sut.Last().Should().Be( "foo" );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 1 ),
+                sut.Capacity.TestEquals( 4 ),
+                sut.IsEmpty.TestFalse(),
+                sut.First().TestEquals( "foo" ),
+                sut.Last().TestEquals( "foo" ) )
+            .Go();
     }
 
     [Fact]
@@ -986,12 +935,11 @@ public class QueueSlimTests : TestsBase
 
         sut.ResetCapacity( minCapacity: 4 );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 0 );
-            sut.Capacity.Should().Be( 4 );
-            sut.IsEmpty.Should().BeTrue();
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 0 ),
+                sut.Capacity.TestEquals( 4 ),
+                sut.IsEmpty.TestTrue() )
+            .Go();
     }
 
     [Fact]
@@ -1002,14 +950,13 @@ public class QueueSlimTests : TestsBase
 
         sut.ResetCapacity( minCapacity: 4 );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 2 );
-            sut.Capacity.Should().Be( 4 );
-            sut.IsEmpty.Should().BeFalse();
-            sut.First().Should().Be( "x1" );
-            sut.Last().Should().Be( "x2" );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 2 ),
+                sut.Capacity.TestEquals( 4 ),
+                sut.IsEmpty.TestFalse(),
+                sut.First().TestEquals( "x1" ),
+                sut.Last().TestEquals( "x2" ) )
+            .Go();
     }
 
     [Fact]
@@ -1022,14 +969,13 @@ public class QueueSlimTests : TestsBase
 
         sut.ResetCapacity( minCapacity: 4 );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 2 );
-            sut.Capacity.Should().Be( 4 );
-            sut.IsEmpty.Should().BeFalse();
-            sut.First().Should().Be( "x2" );
-            sut.Last().Should().Be( "x3" );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 2 ),
+                sut.Capacity.TestEquals( 4 ),
+                sut.IsEmpty.TestFalse(),
+                sut.First().TestEquals( "x2" ),
+                sut.Last().TestEquals( "x3" ) )
+            .Go();
     }
 
     [Fact]
@@ -1040,14 +986,13 @@ public class QueueSlimTests : TestsBase
 
         sut.ResetCapacity( minCapacity: 4 );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 4 );
-            sut.Capacity.Should().Be( 4 );
-            sut.IsEmpty.Should().BeFalse();
-            sut.First().Should().Be( "x1" );
-            sut.Last().Should().Be( "x4" );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 4 ),
+                sut.Capacity.TestEquals( 4 ),
+                sut.IsEmpty.TestFalse(),
+                sut.First().TestEquals( "x1" ),
+                sut.Last().TestEquals( "x4" ) )
+            .Go();
     }
 
     [Fact]
@@ -1057,12 +1002,11 @@ public class QueueSlimTests : TestsBase
 
         sut.ResetCapacity( minCapacity: 8 );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 0 );
-            sut.Capacity.Should().Be( 8 );
-            sut.IsEmpty.Should().BeTrue();
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 0 ),
+                sut.Capacity.TestEquals( 8 ),
+                sut.IsEmpty.TestTrue() )
+            .Go();
     }
 
     [Fact]
@@ -1073,14 +1017,13 @@ public class QueueSlimTests : TestsBase
 
         sut.ResetCapacity( minCapacity: 8 );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 2 );
-            sut.Capacity.Should().Be( 8 );
-            sut.IsEmpty.Should().BeFalse();
-            sut.First().Should().Be( "x1" );
-            sut.Last().Should().Be( "x2" );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 2 ),
+                sut.Capacity.TestEquals( 8 ),
+                sut.IsEmpty.TestFalse(),
+                sut.First().TestEquals( "x1" ),
+                sut.Last().TestEquals( "x2" ) )
+            .Go();
     }
 
     [Fact]
@@ -1093,14 +1036,13 @@ public class QueueSlimTests : TestsBase
 
         sut.ResetCapacity( minCapacity: 8 );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 2 );
-            sut.Capacity.Should().Be( 8 );
-            sut.IsEmpty.Should().BeFalse();
-            sut.First().Should().Be( "x2" );
-            sut.Last().Should().Be( "x3" );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 2 ),
+                sut.Capacity.TestEquals( 8 ),
+                sut.IsEmpty.TestFalse(),
+                sut.First().TestEquals( "x2" ),
+                sut.Last().TestEquals( "x3" ) )
+            .Go();
     }
 
     [Fact]
@@ -1111,14 +1053,13 @@ public class QueueSlimTests : TestsBase
 
         sut.ResetCapacity( minCapacity: 8 );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 4 );
-            sut.Capacity.Should().Be( 8 );
-            sut.IsEmpty.Should().BeFalse();
-            sut.First().Should().Be( "x1" );
-            sut.Last().Should().Be( "x4" );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 4 ),
+                sut.Capacity.TestEquals( 8 ),
+                sut.IsEmpty.TestFalse(),
+                sut.First().TestEquals( "x1" ),
+                sut.Last().TestEquals( "x4" ) )
+            .Go();
     }
 
     [Fact]
@@ -1131,14 +1072,13 @@ public class QueueSlimTests : TestsBase
 
         sut.ResetCapacity( minCapacity: 8 );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 3 );
-            sut.Capacity.Should().Be( 8 );
-            sut.IsEmpty.Should().BeFalse();
-            sut.First().Should().Be( "x3" );
-            sut.Last().Should().Be( "x5" );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 3 ),
+                sut.Capacity.TestEquals( 8 ),
+                sut.IsEmpty.TestFalse(),
+                sut.First().TestEquals( "x3" ),
+                sut.Last().TestEquals( "x5" ) )
+            .Go();
     }
 
     [Fact]
@@ -1151,14 +1091,13 @@ public class QueueSlimTests : TestsBase
 
         sut.ResetCapacity( minCapacity: 8 );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 4 );
-            sut.Capacity.Should().Be( 8 );
-            sut.IsEmpty.Should().BeFalse();
-            sut.First().Should().Be( "x2" );
-            sut.Last().Should().Be( "x5" );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 4 ),
+                sut.Capacity.TestEquals( 8 ),
+                sut.IsEmpty.TestFalse(),
+                sut.First().TestEquals( "x2" ),
+                sut.Last().TestEquals( "x5" ) )
+            .Go();
     }
 
     [Fact]
@@ -1168,12 +1107,11 @@ public class QueueSlimTests : TestsBase
 
         var result = sut.AsMemory();
 
-        using ( new AssertionScope() )
-        {
-            result.First.ToArray().Should().BeEmpty();
-            result.Second.ToArray().Should().BeEmpty();
-            result.Length.Should().Be( 0 );
-        }
+        Assertion.All(
+                result.First.ToArray().TestEmpty(),
+                result.Second.ToArray().TestEmpty(),
+                result.Length.TestEquals( 0 ) )
+            .Go();
     }
 
     [Fact]
@@ -1184,12 +1122,11 @@ public class QueueSlimTests : TestsBase
 
         var result = sut.AsMemory();
 
-        using ( new AssertionScope() )
-        {
-            result.First.ToArray().Should().BeSequentiallyEqualTo( "x1", "x2", "x3", "x4" );
-            result.Second.ToArray().Should().BeEmpty();
-            result.Length.Should().Be( 4 );
-        }
+        Assertion.All(
+                result.First.ToArray().TestSequence( [ "x1", "x2", "x3", "x4" ] ),
+                result.Second.ToArray().TestEmpty(),
+                result.Length.TestEquals( 4 ) )
+            .Go();
     }
 
     [Fact]
@@ -1201,12 +1138,11 @@ public class QueueSlimTests : TestsBase
 
         var result = sut.AsMemory();
 
-        using ( new AssertionScope() )
-        {
-            result.First.ToArray().Should().BeSequentiallyEqualTo( "x2", "x3" );
-            result.Second.ToArray().Should().BeEmpty();
-            result.Length.Should().Be( 2 );
-        }
+        Assertion.All(
+                result.First.ToArray().TestSequence( [ "x2", "x3" ] ),
+                result.Second.ToArray().TestEmpty(),
+                result.Length.TestEquals( 2 ) )
+            .Go();
     }
 
     [Fact]
@@ -1219,12 +1155,11 @@ public class QueueSlimTests : TestsBase
 
         var result = sut.AsMemory();
 
-        using ( new AssertionScope() )
-        {
-            result.First.ToArray().Should().BeSequentiallyEqualTo( "x3", "x4" );
-            result.Second.ToArray().Should().BeSequentiallyEqualTo( "x5" );
-            result.Length.Should().Be( 3 );
-        }
+        Assertion.All(
+                result.First.ToArray().TestSequence( [ "x3", "x4" ] ),
+                result.Second.ToArray().TestSequence( [ "x5" ] ),
+                result.Length.TestEquals( 3 ) )
+            .Go();
     }
 
     [Fact]
@@ -1237,12 +1172,11 @@ public class QueueSlimTests : TestsBase
 
         var result = sut.AsMemory();
 
-        using ( new AssertionScope() )
-        {
-            result.First.ToArray().Should().BeSequentiallyEqualTo( "x4" );
-            result.Second.ToArray().Should().BeSequentiallyEqualTo( "x5", "x6", "x7" );
-            result.Length.Should().Be( 4 );
-        }
+        Assertion.All(
+                result.First.ToArray().TestSequence( [ "x4" ] ),
+                result.Second.ToArray().TestSequence( [ "x5", "x6", "x7" ] ),
+                result.Length.TestEquals( 4 ) )
+            .Go();
     }
 
     [Theory]
@@ -1257,7 +1191,7 @@ public class QueueSlimTests : TestsBase
 
         var result = sut[index];
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -1273,7 +1207,7 @@ public class QueueSlimTests : TestsBase
 
         var result = sut[index];
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -1290,7 +1224,7 @@ public class QueueSlimTests : TestsBase
 
         var result = sut[index];
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -1304,7 +1238,7 @@ public class QueueSlimTests : TestsBase
 
         var action = Lambda.Of( () => sut[index] );
 
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Theory]
@@ -1319,7 +1253,7 @@ public class QueueSlimTests : TestsBase
 
         var action = Lambda.Of( () => sut[index] );
 
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Theory]
@@ -1334,7 +1268,7 @@ public class QueueSlimTests : TestsBase
 
         var action = Lambda.Of( () => sut[index] );
 
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Fact]
@@ -1342,7 +1276,7 @@ public class QueueSlimTests : TestsBase
     {
         var sut = QueueSlim<string>.Create( minCapacity: 4 );
         var action = Lambda.Of( () => sut[0] );
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Fact]
@@ -1351,10 +1285,9 @@ public class QueueSlimTests : TestsBase
         var sut = QueueSlim<string>.Create( minCapacity: 4 );
 
         var result = new List<string>();
-        foreach ( var e in sut )
-            result.Add( e );
+        foreach ( var e in sut ) result.Add( e );
 
-        result.Should().BeEmpty();
+        result.TestEmpty().Go();
     }
 
     [Fact]
@@ -1364,10 +1297,9 @@ public class QueueSlimTests : TestsBase
         sut.EnqueueRange( new[] { "x1", "x2", "x3", "x4" } );
 
         var result = new List<string>();
-        foreach ( var e in sut )
-            result.Add( e );
+        foreach ( var e in sut ) result.Add( e );
 
-        result.Should().BeSequentiallyEqualTo( "x1", "x2", "x3", "x4" );
+        result.TestSequence( [ "x1", "x2", "x3", "x4" ] ).Go();
     }
 
     [Fact]
@@ -1378,10 +1310,9 @@ public class QueueSlimTests : TestsBase
         sut.Dequeue();
 
         var result = new List<string>();
-        foreach ( var e in sut )
-            result.Add( e );
+        foreach ( var e in sut ) result.Add( e );
 
-        result.Should().BeSequentiallyEqualTo( "x2", "x3" );
+        result.TestSequence( [ "x2", "x3" ] ).Go();
     }
 
     [Fact]
@@ -1393,10 +1324,9 @@ public class QueueSlimTests : TestsBase
         sut.Enqueue( "x5" );
 
         var result = new List<string>();
-        foreach ( var e in sut )
-            result.Add( e );
+        foreach ( var e in sut ) result.Add( e );
 
-        result.Should().BeSequentiallyEqualTo( "x3", "x4", "x5" );
+        result.TestSequence( [ "x3", "x4", "x5" ] ).Go();
     }
 
     [Fact]
@@ -1408,9 +1338,8 @@ public class QueueSlimTests : TestsBase
         sut.EnqueueRange( new[] { "x5", "x6", "x7" } );
 
         var result = new List<string>();
-        foreach ( var e in sut )
-            result.Add( e );
+        foreach ( var e in sut ) result.Add( e );
 
-        result.Should().BeSequentiallyEqualTo( "x4", "x5", "x6", "x7" );
+        result.TestSequence( [ "x4", "x5", "x6", "x7" ] ).Go();
     }
 }

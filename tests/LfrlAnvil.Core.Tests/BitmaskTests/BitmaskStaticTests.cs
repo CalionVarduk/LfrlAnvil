@@ -8,7 +8,7 @@ public class BitmaskStaticTests
     public void GetUnderlyingType_ShouldReturnNull_WhenTypeIsNull()
     {
         var result = Bitmask.GetUnderlyingType( null );
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Theory]
@@ -18,7 +18,7 @@ public class BitmaskStaticTests
     public void GetUnderlyingType_ShouldReturnNull_WhenTypeIsIncorrect(Type type)
     {
         var result = Bitmask.GetUnderlyingType( type );
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Theory]
@@ -28,7 +28,7 @@ public class BitmaskStaticTests
     public void GetUnderlyingType_ShouldReturnCorrectType_WhenTypeIsCorrect(Type type, Type expected)
     {
         var result = Bitmask.GetUnderlyingType( type );
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -36,35 +36,35 @@ public class BitmaskStaticTests
     {
         var expected = typeof( Bitmask<> ).GetGenericArguments()[0];
         var result = Bitmask.GetUnderlyingType( typeof( Bitmask<> ) );
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
     public void StaticCtor_ShouldThrowTypeInitializationException_WhenAttemptingToUseEnumWithoutFlagsAttribute()
     {
         var action = Lambda.Of( () => Bitmask<EnumWithoutFlagsAttribute>.BitCount );
-        action.Should().ThrowExactly<TypeInitializationException>();
+        action.Test( exc => exc.TestType().Exact<TypeInitializationException>() ).Go();
     }
 
     [Fact]
     public void StaticCtor_ShouldThrowTypeInitializationException_WhenAttemptingToUseEnumWithoutZeroValueMember()
     {
         var action = Lambda.Of( () => Bitmask<EnumWithoutZeroValueMember>.BitCount );
-        action.Should().ThrowExactly<TypeInitializationException>();
+        action.Test( exc => exc.TestType().Exact<TypeInitializationException>() ).Go();
     }
 
     [Fact]
     public void StaticCtor_ShouldThrowTypeInitializationException_WhenAttemptingToUseStructThatDoesntSupportConversionToUInt64()
     {
         var action = Lambda.Of( () => Bitmask<InvalidStructA>.BitCount );
-        action.Should().ThrowExactly<TypeInitializationException>();
+        action.Test( exc => exc.TestType().Exact<TypeInitializationException>() ).Go();
     }
 
     [Fact]
     public void StaticCtor_ShouldThrowTypeInitializationException_WhenAttemptingToUseStructThatDoesntSupportConversionFromUInt64()
     {
         var action = Lambda.Of( () => Bitmask<InvalidStructB>.BitCount );
-        action.Should().ThrowExactly<TypeInitializationException>();
+        action.Test( exc => exc.TestType().Exact<TypeInitializationException>() ).Go();
     }
 }
 

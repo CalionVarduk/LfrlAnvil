@@ -1,7 +1,6 @@
 ﻿using System.Linq;
 using LfrlAnvil.Extensions;
 using LfrlAnvil.Generators;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 using NSubstitute.Core;
 
 namespace LfrlAnvil.Tests.ExtensionsTests.GeneratorTests;
@@ -16,7 +15,7 @@ public abstract class GenericGeneratorExtensionsTests<T> : TestsBase
 
         var result = generator.ToEnumerable().ToArray();
 
-        result.Should().BeSequentiallyEqualTo( expected );
+        result.TestSequence( expected ).Go();
     }
 
     [Fact]
@@ -24,7 +23,7 @@ public abstract class GenericGeneratorExtensionsTests<T> : TestsBase
     {
         var generator = CreateGeneratorMock( Array.Empty<T>() );
         var result = generator.ToEnumerable().ToArray();
-        result.Should().BeEmpty();
+        result.TestEmpty().Go();
     }
 
     [Fact]
@@ -35,7 +34,7 @@ public abstract class GenericGeneratorExtensionsTests<T> : TestsBase
 
         var result = generator.ToEnumerable().Cast<T>().ToArray();
 
-        result.Should().BeSequentiallyEqualTo( expected );
+        result.TestSequence( expected ).Go();
     }
 
     [Fact]
@@ -43,7 +42,7 @@ public abstract class GenericGeneratorExtensionsTests<T> : TestsBase
     {
         IGenerator generator = CreateGeneratorMock( Array.Empty<T>() );
         var result = generator.ToEnumerable().Cast<T>().ToArray();
-        result.Should().BeEmpty();
+        result.TestEmpty().Go();
     }
 
     private static IGenerator<T> CreateGeneratorMock(T[] values)

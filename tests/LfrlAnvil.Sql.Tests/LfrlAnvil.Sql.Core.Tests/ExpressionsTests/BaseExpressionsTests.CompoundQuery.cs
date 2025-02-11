@@ -121,10 +121,12 @@ public partial class BaseExpressionsTests
                 result.Traits.Should().BeSequentiallyEqualTo( trait );
                 text.Should()
                     .Be(
-                        @"SELECT * FROM foo
-UNION
-SELECT * FROM bar
-LIMIT (""10"" : System.Int32)" );
+                        """
+                        SELECT * FROM foo
+                        UNION
+                        SELECT * FROM bar
+                        LIMIT ("10" : System.Int32)
+                        """ );
             }
         }
 
@@ -146,11 +148,13 @@ LIMIT (""10"" : System.Int32)" );
                 result.Traits.Should().BeSequentiallyEqualTo( firstTrait, secondTrait );
                 text.Should()
                     .Be(
-                        @"SELECT * FROM foo
-UNION
-SELECT * FROM bar
-LIMIT (""10"" : System.Int32)
-OFFSET (""15"" : System.Int32)" );
+                        """
+                        SELECT * FROM foo
+                        UNION
+                        SELECT * FROM bar
+                        LIMIT ("10" : System.Int32)
+                        OFFSET ("15" : System.Int32)
+                        """ );
             }
         }
 
@@ -173,11 +177,13 @@ OFFSET (""15"" : System.Int32)" );
                 result.Traits.Should().BeSequentiallyEqualTo( traits );
                 text.Should()
                     .Be(
-                        @"SELECT * FROM foo
-UNION
-SELECT * FROM bar
-LIMIT (""10"" : System.Int32)
-OFFSET (""15"" : System.Int32)" );
+                        """
+                        SELECT * FROM foo
+                        UNION
+                        SELECT * FROM bar
+                        LIMIT ("10" : System.Int32)
+                        OFFSET ("15" : System.Int32)
+                        """ );
             }
         }
     }

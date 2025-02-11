@@ -49,8 +49,10 @@ public class PostgreSqlColumnBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
-                    @"ALTER TABLE ""foo"".""T""
-                      ADD COLUMN ""C2"" BYTEA NOT NULL DEFAULT ('\x'::BYTEA);" );
+                    """
+                    ALTER TABLE "foo"."T"
+                                          ADD COLUMN "C2" BYTEA NOT NULL DEFAULT ('\x'::BYTEA);
+                    """ );
         }
     }
 
@@ -75,8 +77,10 @@ public class PostgreSqlColumnBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
-                    @"ALTER TABLE ""foo"".""T""
-                      ADD COLUMN ""C2"" BYTEA;" );
+                    """
+                    ALTER TABLE "foo"."T"
+                                          ADD COLUMN "C2" BYTEA;
+                    """ );
         }
     }
 
@@ -101,8 +105,10 @@ public class PostgreSqlColumnBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
-                    @"ALTER TABLE ""foo"".""T""
-                      ADD COLUMN ""C2"" BYTEA NOT NULL GENERATED ALWAYS AS (1) STORED;" );
+                    """
+                    ALTER TABLE "foo"."T"
+                                          ADD COLUMN "C2" BYTEA NOT NULL GENERATED ALWAYS AS (1) STORED;
+                    """ );
         }
     }
 
@@ -126,8 +132,10 @@ public class PostgreSqlColumnBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
-                    @"ALTER TABLE ""foo"".""T""
-                      ADD COLUMN ""C2"" BYTEA NOT NULL DEFAULT ('\x010203'::BYTEA);" );
+                    """
+                    ALTER TABLE "foo"."T"
+                                          ADD COLUMN "C2" BYTEA NOT NULL DEFAULT ('\x010203'::BYTEA);
+                    """ );
         }
     }
 
@@ -156,9 +164,11 @@ public class PostgreSqlColumnBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
-                    @"ALTER TABLE ""foo"".""T""
-                      ALTER COLUMN ""C2"" SET DATA TYPE VARCHAR,
-                      ADD COLUMN ""C3"" BYTEA;" );
+                    """
+                    ALTER TABLE "foo"."T"
+                                          ALTER COLUMN "C2" SET DATA TYPE VARCHAR,
+                                          ADD COLUMN "C3" BYTEA;
+                    """ );
         }
     }
 
@@ -186,8 +196,10 @@ public class PostgreSqlColumnBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
-                    @"ALTER TABLE ""foo"".""T""
-                      ALTER COLUMN ""C2"" SET NOT NULL;" );
+                    """
+                    ALTER TABLE "foo"."T"
+                                          ALTER COLUMN "C2" SET NOT NULL;
+                    """ );
         }
     }
 
@@ -215,8 +227,10 @@ public class PostgreSqlColumnBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
-                    @"ALTER TABLE ""foo"".""T""
-                      ALTER COLUMN ""C2"" SET DATA TYPE BYTEA;" );
+                    """
+                    ALTER TABLE "foo"."T"
+                                          ALTER COLUMN "C2" SET DATA TYPE BYTEA;
+                    """ );
         }
     }
 
@@ -253,10 +267,14 @@ public class PostgreSqlColumnBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
-                    @"ALTER TABLE ""foo"".""T""
-                      DROP COLUMN ""C2"";",
-                    $@"ALTER TABLE ""foo"".""T""
-                      ADD COLUMN ""C2"" BYTEA NOT NULL GENERATED ALWAYS AS (1) {expectedStorage};" );
+                    """
+                    ALTER TABLE "foo"."T"
+                                          DROP COLUMN "C2";
+                    """,
+                    $"""
+                     ALTER TABLE "foo"."T"
+                                           ADD COLUMN "C2" BYTEA NOT NULL GENERATED ALWAYS AS (1) {expectedStorage};
+                     """ );
         }
     }
 
@@ -487,9 +505,11 @@ public class PostgreSqlColumnBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
-                    @"ALTER TABLE ""foo"".""T""
-                      ALTER COLUMN ""C2"" DROP DEFAULT,
-                      ALTER COLUMN ""C2"" SET DATA TYPE INT4;" );
+                    """
+                    ALTER TABLE "foo"."T"
+                                          ALTER COLUMN "C2" DROP DEFAULT,
+                                          ALTER COLUMN "C2" SET DATA TYPE INT4;
+                    """ );
         }
     }
 
@@ -657,8 +677,10 @@ public class PostgreSqlColumnBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
-                    @"ALTER TABLE ""foo"".""T""
-                      ALTER COLUMN ""C2"" DROP NOT NULL;" );
+                    """
+                    ALTER TABLE "foo"."T"
+                                          ALTER COLUMN "C2" DROP NOT NULL;
+                    """ );
         }
     }
 
@@ -683,8 +705,10 @@ public class PostgreSqlColumnBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
-                    @"ALTER TABLE ""foo"".""T""
-                      ALTER COLUMN ""C2"" SET NOT NULL;" );
+                    """
+                    ALTER TABLE "foo"."T"
+                                          ALTER COLUMN "C2" SET NOT NULL;
+                    """ );
         }
     }
 
@@ -709,8 +733,10 @@ public class PostgreSqlColumnBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
-                    @"ALTER TABLE ""foo"".""T""
-                      ALTER COLUMN ""C2"" SET NOT NULL;" );
+                    """
+                    ALTER TABLE "foo"."T"
+                                          ALTER COLUMN "C2" SET NOT NULL;
+                    """ );
         }
     }
 
@@ -735,9 +761,11 @@ public class PostgreSqlColumnBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
-                    @"ALTER TABLE ""foo"".""T""
-                      ALTER COLUMN ""C2"" SET NOT NULL,
-                      ALTER COLUMN ""C2"" SET DATA TYPE INT4;" );
+                    """
+                    ALTER TABLE "foo"."T"
+                                          ALTER COLUMN "C2" SET NOT NULL,
+                                          ALTER COLUMN "C2" SET DATA TYPE INT4;
+                    """ );
         }
     }
 
@@ -856,9 +884,11 @@ public class PostgreSqlColumnBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
-                    @"ALTER TABLE ""foo"".""T""
-                      ALTER COLUMN ""C2"" DROP DEFAULT,
-                      ALTER COLUMN ""C2"" SET DEFAULT (42);" );
+                    """
+                    ALTER TABLE "foo"."T"
+                                          ALTER COLUMN "C2" DROP DEFAULT,
+                                          ALTER COLUMN "C2" SET DEFAULT (42);
+                    """ );
         }
     }
 
@@ -883,8 +913,10 @@ public class PostgreSqlColumnBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
-                    @"ALTER TABLE ""foo"".""T""
-                      ALTER COLUMN ""C2"" DROP DEFAULT;" );
+                    """
+                    ALTER TABLE "foo"."T"
+                                          ALTER COLUMN "C2" DROP DEFAULT;
+                    """ );
         }
     }
 
@@ -909,8 +941,10 @@ public class PostgreSqlColumnBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
-                    @"ALTER TABLE ""foo"".""T""
-                      ALTER COLUMN ""C2"" SET DEFAULT (123);" );
+                    """
+                    ALTER TABLE "foo"."T"
+                                          ALTER COLUMN "C2" SET DEFAULT (123);
+                    """ );
         }
     }
 
@@ -936,8 +970,10 @@ public class PostgreSqlColumnBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
-                    @"ALTER TABLE ""foo"".""T""
-                      ALTER COLUMN ""C2"" SET DEFAULT ((10 + 50) + GREATEST(100, 80));" );
+                    """
+                    ALTER TABLE "foo"."T"
+                                          ALTER COLUMN "C2" SET DEFAULT ((10 + 50) + GREATEST(100, 80));
+                    """ );
         }
     }
 
@@ -963,8 +999,10 @@ public class PostgreSqlColumnBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
-                    @"ALTER TABLE ""foo"".""T""
-                      ALTER COLUMN ""C2"" SET DEFAULT (123);" );
+                    """
+                    ALTER TABLE "foo"."T"
+                                          ALTER COLUMN "C2" SET DEFAULT (123);
+                    """ );
         }
     }
 
@@ -990,8 +1028,10 @@ public class PostgreSqlColumnBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
-                    @"ALTER TABLE ""foo"".""T""
-                      ALTER COLUMN ""C2"" SET DEFAULT (123);" );
+                    """
+                    ALTER TABLE "foo"."T"
+                                          ALTER COLUMN "C2" SET DEFAULT (123);
+                    """ );
         }
     }
 
@@ -1124,8 +1164,10 @@ public class PostgreSqlColumnBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
-                    @"ALTER TABLE ""foo"".""T""
-                      ALTER COLUMN ""C3"" DROP EXPRESSION;" );
+                    """
+                    ALTER TABLE "foo"."T"
+                                          ALTER COLUMN "C3" DROP EXPRESSION;
+                    """ );
         }
     }
 
@@ -1156,8 +1198,10 @@ public class PostgreSqlColumnBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
-                    @"ALTER TABLE ""foo"".""T""
-                      ALTER COLUMN ""C3"" DROP EXPRESSION;" );
+                    """
+                    ALTER TABLE "foo"."T"
+                                          ALTER COLUMN "C3" DROP EXPRESSION;
+                    """ );
         }
     }
 
@@ -1189,10 +1233,14 @@ public class PostgreSqlColumnBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
-                    @"ALTER TABLE ""foo"".""T""
-                      DROP COLUMN ""C3"";",
-                    @"ALTER TABLE ""foo"".""T""
-                      ADD COLUMN ""C3"" BYTEA NOT NULL GENERATED ALWAYS AS (""C2"" + 1) STORED;" );
+                    """
+                    ALTER TABLE "foo"."T"
+                                          DROP COLUMN "C3";
+                    """,
+                    """
+                    ALTER TABLE "foo"."T"
+                                          ADD COLUMN "C3" BYTEA NOT NULL GENERATED ALWAYS AS ("C2" + 1) STORED;
+                    """ );
         }
     }
 
@@ -1227,10 +1275,14 @@ public class PostgreSqlColumnBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
-                    @"ALTER TABLE ""foo"".""T""
-                      DROP COLUMN ""C3"";",
-                    @"ALTER TABLE ""foo"".""T""
-                      ADD COLUMN ""C3"" BYTEA NOT NULL GENERATED ALWAYS AS (""C2"" + 1) VIRTUAL;" );
+                    """
+                    ALTER TABLE "foo"."T"
+                                          DROP COLUMN "C3";
+                    """,
+                    """
+                    ALTER TABLE "foo"."T"
+                                          ADD COLUMN "C3" BYTEA NOT NULL GENERATED ALWAYS AS ("C2" + 1) VIRTUAL;
+                    """ );
         }
     }
 
@@ -1266,10 +1318,14 @@ public class PostgreSqlColumnBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
-                    $@"ALTER TABLE ""foo"".""T""
-                      DROP COLUMN ""C3"";",
-                    $@"ALTER TABLE ""foo"".""T""
-                      ADD COLUMN ""C3"" BYTEA NOT NULL GENERATED ALWAYS AS (""C2"" + 1) STORED;" );
+                    $"""
+                     ALTER TABLE "foo"."T"
+                                           DROP COLUMN "C3";
+                     """,
+                    $"""
+                     ALTER TABLE "foo"."T"
+                                           ADD COLUMN "C3" BYTEA NOT NULL GENERATED ALWAYS AS ("C2" + 1) STORED;
+                     """ );
         }
     }
 
@@ -1310,10 +1366,14 @@ public class PostgreSqlColumnBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
-                    @"ALTER TABLE ""foo"".""T""
-                      DROP COLUMN ""C3"";",
-                    $@"ALTER TABLE ""foo"".""T""
-                      ADD COLUMN ""C3"" BYTEA NOT NULL GENERATED ALWAYS AS (""C2"" + 1) {expectedStorage};" );
+                    """
+                    ALTER TABLE "foo"."T"
+                                          DROP COLUMN "C3";
+                    """,
+                    $"""
+                     ALTER TABLE "foo"."T"
+                                           ADD COLUMN "C3" BYTEA NOT NULL GENERATED ALWAYS AS ("C2" + 1) {expectedStorage};
+                     """ );
         }
     }
 
@@ -1353,10 +1413,14 @@ public class PostgreSqlColumnBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
-                    @"ALTER TABLE ""foo"".""T""
-                      DROP COLUMN ""C3"";",
-                    $@"ALTER TABLE ""foo"".""T""
-                      ADD COLUMN ""bar"" BYTEA NOT NULL GENERATED ALWAYS AS (""C2"" + 1) {expectedStorage};" );
+                    """
+                    ALTER TABLE "foo"."T"
+                                          DROP COLUMN "C3";
+                    """,
+                    $"""
+                     ALTER TABLE "foo"."T"
+                                           ADD COLUMN "bar" BYTEA NOT NULL GENERATED ALWAYS AS ("C2" + 1) {expectedStorage};
+                     """ );
         }
     }
 
@@ -1389,10 +1453,14 @@ public class PostgreSqlColumnBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
-                    @"ALTER TABLE ""foo"".""T""
-                      DROP COLUMN ""C3"";",
-                    @"ALTER TABLE ""foo"".""T""
-                      ADD COLUMN ""C3"" BYTEA NOT NULL GENERATED ALWAYS AS (""C2"" + 1) STORED;" );
+                    """
+                    ALTER TABLE "foo"."T"
+                                          DROP COLUMN "C3";
+                    """,
+                    """
+                    ALTER TABLE "foo"."T"
+                                          ADD COLUMN "C3" BYTEA NOT NULL GENERATED ALWAYS AS ("C2" + 1) STORED;
+                    """ );
         }
     }
 
@@ -1423,8 +1491,10 @@ public class PostgreSqlColumnBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
-                    @"ALTER TABLE ""foo"".""T""
-                      ADD COLUMN ""C3"" BYTEA NOT NULL GENERATED ALWAYS AS (""C2"" + 1) STORED;" );
+                    """
+                    ALTER TABLE "foo"."T"
+                                          ADD COLUMN "C3" BYTEA NOT NULL GENERATED ALWAYS AS ("C2" + 1) STORED;
+                    """ );
         }
     }
 
@@ -1576,13 +1646,17 @@ public class PostgreSqlColumnBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
-                    @"ALTER TABLE ""foo"".""T""
-                      ALTER COLUMN ""C2"" DROP EXPRESSION;",
+                    """
+                    ALTER TABLE "foo"."T"
+                                          ALTER COLUMN "C2" DROP EXPRESSION;
+                    """,
                     "ALTER TABLE \"foo\".\"T\" RENAME COLUMN \"C2\" TO \"C3\";",
-                    @"ALTER TABLE ""foo"".""T""
-                      ALTER COLUMN ""C3"" SET NOT NULL,
-                      ALTER COLUMN ""C3"" SET DATA TYPE FLOAT8,
-                      ALTER COLUMN ""C3"" SET DEFAULT (42);" );
+                    """
+                    ALTER TABLE "foo"."T"
+                                          ALTER COLUMN "C3" SET NOT NULL,
+                                          ALTER COLUMN "C3" SET DATA TYPE FLOAT8,
+                                          ALTER COLUMN "C3" SET DEFAULT (42);
+                    """ );
         }
     }
 
@@ -1613,8 +1687,10 @@ public class PostgreSqlColumnBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
-                    @"ALTER TABLE ""foo"".""T""
-                      DROP COLUMN ""C2"";" );
+                    """
+                    ALTER TABLE "foo"."T"
+                                          DROP COLUMN "C2";
+                    """ );
         }
     }
 

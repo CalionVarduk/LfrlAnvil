@@ -15,7 +15,7 @@ public abstract class GenericDictionaryExtensionsTests<TKey, TValue> : TestsBase
 
         var result = sut.GetOrAddDefault( key );
 
-        result.Should().Be( value );
+        result.TestEquals( value ).Go();
     }
 
     [Fact]
@@ -26,11 +26,10 @@ public abstract class GenericDictionaryExtensionsTests<TKey, TValue> : TestsBase
 
         var result = sut.GetOrAddDefault( key );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( default( TValue? ) );
-            sut[key].Should().Be( default( TValue? ) );
-        }
+        Assertion.All(
+                result.TestEquals( default ),
+                sut[key].TestEquals( default ) )
+            .Go();
     }
 
     [Fact]
@@ -42,7 +41,7 @@ public abstract class GenericDictionaryExtensionsTests<TKey, TValue> : TestsBase
 
         var result = sut.GetOrAdd( key, () => providedValue );
 
-        result.Should().Be( value );
+        result.TestEquals( value ).Go();
     }
 
     [Fact]
@@ -54,11 +53,10 @@ public abstract class GenericDictionaryExtensionsTests<TKey, TValue> : TestsBase
 
         var result = sut.GetOrAdd( key, () => providedValue );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( providedValue );
-            sut[key].Should().Be( providedValue );
-        }
+        Assertion.All(
+                result.TestEquals( providedValue ),
+                sut[key].TestEquals( providedValue ) )
+            .Go();
     }
 
     [Fact]
@@ -70,7 +68,7 @@ public abstract class GenericDictionaryExtensionsTests<TKey, TValue> : TestsBase
 
         var result = sut.GetOrAdd( key, new Lazy<TValue>( () => providedValue ) );
 
-        result.Should().Be( value );
+        result.TestEquals( value ).Go();
     }
 
     [Fact]
@@ -82,11 +80,10 @@ public abstract class GenericDictionaryExtensionsTests<TKey, TValue> : TestsBase
 
         var result = sut.GetOrAdd( key, new Lazy<TValue>( () => providedValue ) );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( providedValue );
-            sut[key].Should().Be( providedValue );
-        }
+        Assertion.All(
+                result.TestEquals( providedValue ),
+                sut[key].TestEquals( providedValue ) )
+            .Go();
     }
 
     [Fact]
@@ -98,11 +95,10 @@ public abstract class GenericDictionaryExtensionsTests<TKey, TValue> : TestsBase
 
         var result = sut.AddOrUpdate( key, value );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( AddOrUpdateResult.Added );
-            sut[key].Should().Be( value );
-        }
+        Assertion.All(
+                result.TestEquals( AddOrUpdateResult.Added ),
+                sut[key].TestEquals( value ) )
+            .Go();
     }
 
     [Fact]
@@ -114,11 +110,10 @@ public abstract class GenericDictionaryExtensionsTests<TKey, TValue> : TestsBase
 
         var result = sut.AddOrUpdate( key, newValue );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( AddOrUpdateResult.Updated );
-            sut[key].Should().Be( newValue );
-        }
+        Assertion.All(
+                result.TestEquals( AddOrUpdateResult.Updated ),
+                sut[key].TestEquals( newValue ) )
+            .Go();
     }
 
     [Fact]
@@ -130,11 +125,10 @@ public abstract class GenericDictionaryExtensionsTests<TKey, TValue> : TestsBase
 
         var result = sut.TryUpdate( key, value );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeFalse();
-            sut.Count.Should().Be( 0 );
-        }
+        Assertion.All(
+                result.TestFalse(),
+                sut.Count.TestEquals( 0 ) )
+            .Go();
     }
 
     [Fact]
@@ -146,10 +140,9 @@ public abstract class GenericDictionaryExtensionsTests<TKey, TValue> : TestsBase
 
         var result = sut.TryUpdate( key, newValue );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            sut[key].Should().Be( newValue );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                sut[key].TestEquals( newValue ) )
+            .Go();
     }
 }

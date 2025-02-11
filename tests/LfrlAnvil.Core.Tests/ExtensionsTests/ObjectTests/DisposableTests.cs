@@ -9,11 +9,10 @@ public class DisposableTests : TestsBase
     {
         var sut = new Valid();
         var result = sut.TryDispose();
-        using ( new AssertionScope() )
-        {
-            result.Exception.Should().BeNull();
-            sut.DisposeCalled.Should().BeTrue();
-        }
+        Assertion.All(
+                result.Exception.TestNull(),
+                sut.DisposeCalled.TestTrue() )
+            .Go();
     }
 
     [Fact]
@@ -21,11 +20,10 @@ public class DisposableTests : TestsBase
     {
         var sut = new Invalid();
         var result = sut.TryDispose();
-        using ( new AssertionScope() )
-        {
-            result.Exception.Should().BeOfType<NotSupportedException>();
-            sut.DisposeCalled.Should().BeTrue();
-        }
+        Assertion.All(
+                result.Exception.TestType().AssignableTo<NotSupportedException>(),
+                sut.DisposeCalled.TestTrue() )
+            .Go();
     }
 
     private sealed class Valid : IDisposable

@@ -35,8 +35,10 @@ public partial class SqliteNodeInterpreterTests
             sut.Context.Sql.ToString()
                 .Should()
                 .Be(
-                    @"DELETE FROM foo
-WHERE foo.""a"" < 10" );
+                    """
+                    DELETE FROM foo
+                    WHERE foo."a" < 10
+                    """ );
         }
 
         [Fact]
@@ -53,8 +55,10 @@ WHERE foo.""a"" < 10" );
             sut.Context.Sql.ToString()
                 .Should()
                 .Be(
-                    @"DELETE FROM ""common_foo"" AS ""bar""
-WHERE ""bar"".""a"" < 10" );
+                    """
+                    DELETE FROM "common_foo" AS "bar"
+                    WHERE "bar"."a" < 10
+                    """ );
         }
 
         [Fact]
@@ -75,15 +79,17 @@ WHERE ""bar"".""a"" < 10" );
             sut.Context.Sql.ToString()
                 .Should()
                 .Be(
-                    @"WITH ""cba"" AS (
-  SELECT * FROM abc
-)
-DELETE FROM ""common_foo"" AS ""f""
-WHERE ""f"".""a"" IN (
-  SELECT cba.c FROM cba
-)
-ORDER BY ""f"".""a"" ASC
-LIMIT 5 OFFSET 10" );
+                    """
+                    WITH "cba" AS (
+                      SELECT * FROM abc
+                    )
+                    DELETE FROM "common_foo" AS "f"
+                    WHERE "f"."a" IN (
+                      SELECT cba.c FROM cba
+                    )
+                    ORDER BY "f"."a" ASC
+                    LIMIT 5 OFFSET 10
+                    """ );
         }
 
         [Fact]
@@ -104,20 +110,22 @@ LIMIT 5 OFFSET 10" );
             sut.Context.Sql.ToString()
                 .Should()
                 .Be(
-                    @"WITH ""cba"" AS (
-  SELECT * FROM abc
-)
-DELETE FROM ""common_foo""
-WHERE ""common_foo"".""a"" IN (
-  SELECT
-    ""f"".""a""
-  FROM ""common_foo"" AS ""f""
-  WHERE ""f"".""a"" IN (
-    SELECT cba.c FROM cba
-  )
-  ORDER BY ""f"".""a"" ASC
-  LIMIT 5 OFFSET 10
-)" );
+                    """
+                    WITH "cba" AS (
+                      SELECT * FROM abc
+                    )
+                    DELETE FROM "common_foo"
+                    WHERE "common_foo"."a" IN (
+                      SELECT
+                        "f"."a"
+                      FROM "common_foo" AS "f"
+                      WHERE "f"."a" IN (
+                        SELECT cba.c FROM cba
+                      )
+                      ORDER BY "f"."a" ASC
+                      LIMIT 5 OFFSET 10
+                    )
+                    """ );
         }
 
         [Fact]
@@ -144,23 +152,25 @@ WHERE ""common_foo"".""a"" IN (
             sut.Context.Sql.ToString()
                 .Should()
                 .Be(
-                    @"WITH ""cba"" AS (
-  SELECT * FROM abc
-)
-DELETE FROM ""common_foo""
-WHERE ""common_foo"".""a"" IN (
-  SELECT DISTINCT
-    ""f"".""a""
-  FROM ""common_foo"" AS ""f""
-  WHERE ""f"".""a"" IN (
-    SELECT cba.c FROM cba
-  )
-  GROUP BY ""f"".""b""
-  HAVING ""f"".""b"" > 20
-  WINDOW ""wnd"" AS ()
-  ORDER BY ""f"".""a"" ASC
-  LIMIT 5 OFFSET 10
-)" );
+                    """
+                    WITH "cba" AS (
+                      SELECT * FROM abc
+                    )
+                    DELETE FROM "common_foo"
+                    WHERE "common_foo"."a" IN (
+                      SELECT DISTINCT
+                        "f"."a"
+                      FROM "common_foo" AS "f"
+                      WHERE "f"."a" IN (
+                        SELECT cba.c FROM cba
+                      )
+                      GROUP BY "f"."b"
+                      HAVING "f"."b" > 20
+                      WINDOW "wnd" AS ()
+                      ORDER BY "f"."a" ASC
+                      LIMIT 5 OFFSET 10
+                    )
+                    """ );
         }
 
         [Fact]
@@ -176,13 +186,15 @@ WHERE ""common_foo"".""a"" IN (
             sut.Context.Sql.ToString()
                 .Should()
                 .Be(
-                    @"DELETE FROM ""common_foo""
-WHERE ""common_foo"".""a"" IN (
-  SELECT
-    ""f"".""a""
-  FROM ""common_foo"" AS ""f""
-  INNER JOIN bar ON ""f"".""a"" = bar.""a""
-)" );
+                    """
+                    DELETE FROM "common_foo"
+                    WHERE "common_foo"."a" IN (
+                      SELECT
+                        "f"."a"
+                      FROM "common_foo" AS "f"
+                      INNER JOIN bar ON "f"."a" = bar."a"
+                    )
+                    """ );
         }
 
         [Fact]
@@ -202,17 +214,19 @@ WHERE ""common_foo"".""a"" IN (
             sut.Context.Sql.ToString()
                 .Should()
                 .Be(
-                    @"WITH ""cba"" AS (
-  SELECT * FROM abc
-)
-DELETE FROM ""common_foo""
-WHERE ""common_foo"".""a"" IN (
-  SELECT
-    ""f"".""a""
-  FROM ""common_foo"" AS ""f""
-  INNER JOIN bar AS ""b"" ON ""f"".""a"" = ""b"".""a""
-  WHERE ""f"".""a"" < 10
-)" );
+                    """
+                    WITH "cba" AS (
+                      SELECT * FROM abc
+                    )
+                    DELETE FROM "common_foo"
+                    WHERE "common_foo"."a" IN (
+                      SELECT
+                        "f"."a"
+                      FROM "common_foo" AS "f"
+                      INNER JOIN bar AS "b" ON "f"."a" = "b"."a"
+                      WHERE "f"."a" < 10
+                    )
+                    """ );
         }
 
         [Fact]
@@ -235,21 +249,23 @@ WHERE ""common_foo"".""a"" IN (
             sut.Context.Sql.ToString()
                 .Should()
                 .Be(
-                    @"WITH ""cba"" AS (
-  SELECT * FROM abc
-)
-DELETE FROM ""common_foo""
-WHERE ""common_foo"".""a"" IN (
-  SELECT
-    ""f"".""a""
-  FROM ""common_foo"" AS ""f""
-  INNER JOIN bar ON ""f"".""a"" = bar.""a""
-  WHERE ""f"".""a"" IN (
-    SELECT cba.c FROM cba
-  )
-  ORDER BY ""f"".""a"" ASC
-  LIMIT 5
-)" );
+                    """
+                    WITH "cba" AS (
+                      SELECT * FROM abc
+                    )
+                    DELETE FROM "common_foo"
+                    WHERE "common_foo"."a" IN (
+                      SELECT
+                        "f"."a"
+                      FROM "common_foo" AS "f"
+                      INNER JOIN bar ON "f"."a" = bar."a"
+                      WHERE "f"."a" IN (
+                        SELECT cba.c FROM cba
+                      )
+                      ORDER BY "f"."a" ASC
+                      LIMIT 5
+                    )
+                    """ );
         }
 
         [Fact]
@@ -277,24 +293,26 @@ WHERE ""common_foo"".""a"" IN (
             sut.Context.Sql.ToString()
                 .Should()
                 .Be(
-                    @"WITH ""cba"" AS (
-  SELECT * FROM abc
-)
-DELETE FROM ""common_foo""
-WHERE ""common_foo"".""a"" IN (
-  SELECT DISTINCT
-    ""f"".""a""
-  FROM ""common_foo"" AS ""f""
-  INNER JOIN bar ON ""f"".""a"" = bar.""a""
-  WHERE ""f"".""a"" IN (
-    SELECT cba.c FROM cba
-  )
-  GROUP BY ""f"".""b""
-  HAVING ""f"".""b"" > 20
-  WINDOW ""wnd"" AS ()
-  ORDER BY ""f"".""a"" ASC
-  LIMIT 5 OFFSET 10
-)" );
+                    """
+                    WITH "cba" AS (
+                      SELECT * FROM abc
+                    )
+                    DELETE FROM "common_foo"
+                    WHERE "common_foo"."a" IN (
+                      SELECT DISTINCT
+                        "f"."a"
+                      FROM "common_foo" AS "f"
+                      INNER JOIN bar ON "f"."a" = bar."a"
+                      WHERE "f"."a" IN (
+                        SELECT cba.c FROM cba
+                      )
+                      GROUP BY "f"."b"
+                      HAVING "f"."b" > 20
+                      WINDOW "wnd" AS ()
+                      ORDER BY "f"."a" ASC
+                      LIMIT 5 OFFSET 10
+                    )
+                    """ );
         }
 
         [Fact]
@@ -314,14 +332,16 @@ WHERE ""common_foo"".""a"" IN (
             sut.Context.Sql.ToString()
                 .Should()
                 .Be(
-                    @"DELETE FROM ""common_foo""
-WHERE ""common_foo"".""a"" IN (
-  SELECT
-    ""f"".""a""
-  FROM ""common_foo"" AS ""f""
-  INNER JOIN bar ON ""f"".""a"" = bar.""a""
-  GROUP BY ""f"".""b""
-)" );
+                    """
+                    DELETE FROM "common_foo"
+                    WHERE "common_foo"."a" IN (
+                      SELECT
+                        "f"."a"
+                      FROM "common_foo" AS "f"
+                      INNER JOIN bar ON "f"."a" = bar."a"
+                      GROUP BY "f"."b"
+                    )
+                    """ );
         }
 
         [Fact]
@@ -341,15 +361,17 @@ WHERE ""common_foo"".""a"" IN (
             sut.Context.Sql.ToString()
                 .Should()
                 .Be(
-                    @"DELETE FROM ""common_foo""
-WHERE EXISTS (
-  SELECT
-    *
-  FROM ""common_foo"" AS ""f""
-  INNER JOIN bar ON ""f"".""a"" = bar.""a""
-  WHERE (""common_foo"".""a"" = ""f"".""a"") AND (""common_foo"".""b"" = ""f"".""b"")
-  GROUP BY ""f"".""b""
-)" );
+                    """
+                    DELETE FROM "common_foo"
+                    WHERE EXISTS (
+                      SELECT
+                        *
+                      FROM "common_foo" AS "f"
+                      INNER JOIN bar ON "f"."a" = bar."a"
+                      WHERE ("common_foo"."a" = "f"."a") AND ("common_foo"."b" = "f"."b")
+                      GROUP BY "f"."b"
+                    )
+                    """ );
         }
 
         [Fact]
@@ -369,14 +391,16 @@ WHERE EXISTS (
             sut.Context.Sql.ToString()
                 .Should()
                 .Be(
-                    @"DELETE FROM ""common_foo""
-WHERE ""common_foo"".""a"" IN (
-  SELECT
-    ""f"".""a""
-  FROM ""common_foo"" AS ""f""
-  INNER JOIN bar ON ""f"".""a"" = bar.""a""
-  GROUP BY ""f"".""b""
-)" );
+                    """
+                    DELETE FROM "common_foo"
+                    WHERE "common_foo"."a" IN (
+                      SELECT
+                        "f"."a"
+                      FROM "common_foo" AS "f"
+                      INNER JOIN bar ON "f"."a" = bar."a"
+                      GROUP BY "f"."b"
+                    )
+                    """ );
         }
 
         [Fact]
@@ -396,15 +420,17 @@ WHERE ""common_foo"".""a"" IN (
             sut.Context.Sql.ToString()
                 .Should()
                 .Be(
-                    @"DELETE FROM ""common_foo""
-WHERE EXISTS (
-  SELECT
-    *
-  FROM ""common_foo"" AS ""f""
-  INNER JOIN bar ON ""f"".""a"" = bar.""a""
-  WHERE (""common_foo"".""a"" = ""f"".""a"") AND (""common_foo"".""b"" = ""f"".""b"")
-  GROUP BY ""f"".""b""
-)" );
+                    """
+                    DELETE FROM "common_foo"
+                    WHERE EXISTS (
+                      SELECT
+                        *
+                      FROM "common_foo" AS "f"
+                      INNER JOIN bar ON "f"."a" = bar."a"
+                      WHERE ("common_foo"."a" = "f"."a") AND ("common_foo"."b" = "f"."b")
+                      GROUP BY "f"."b"
+                    )
+                    """ );
         }
 
         [Fact]
@@ -427,15 +453,17 @@ WHERE EXISTS (
             sut.Context.Sql.ToString()
                 .Should()
                 .Be(
-                    @"DELETE FROM ""common_foo""
-WHERE EXISTS (
-  SELECT
-    *
-  FROM ""common_foo"" AS ""f""
-  INNER JOIN bar ON ""f"".""a"" = bar.""a""
-  WHERE (""f"".""a"" > 10) AND ((""common_foo"".""a"" = ""f"".""a"") AND (""common_foo"".""b"" = ""f"".""b""))
-  GROUP BY ""f"".""b""
-)" );
+                    """
+                    DELETE FROM "common_foo"
+                    WHERE EXISTS (
+                      SELECT
+                        *
+                      FROM "common_foo" AS "f"
+                      INNER JOIN bar ON "f"."a" = bar."a"
+                      WHERE ("f"."a" > 10) AND (("common_foo"."a" = "f"."a") AND ("common_foo"."b" = "f"."b"))
+                      GROUP BY "f"."b"
+                    )
+                    """ );
         }
 
         [Theory]
@@ -466,14 +494,16 @@ WHERE EXISTS (
             sut.Context.Sql.ToString()
                 .Should()
                 .Be(
-                    $@"DELETE FROM {expectedName}
-WHERE {expectedName}.""a"" IN (
-  SELECT
-    ""f"".""a""
-  FROM {expectedName} AS ""f""
-  INNER JOIN bar ON ""f"".""a"" = bar.""a""
-  GROUP BY ""f"".""b""
-)" );
+                    $"""
+                     DELETE FROM {expectedName}
+                     WHERE {expectedName}."a" IN (
+                       SELECT
+                         "f"."a"
+                       FROM {expectedName} AS "f"
+                       INNER JOIN bar ON "f"."a" = bar."a"
+                       GROUP BY "f"."b"
+                     )
+                     """ );
         }
 
         [Theory]
@@ -504,15 +534,17 @@ WHERE {expectedName}.""a"" IN (
             sut.Context.Sql.ToString()
                 .Should()
                 .Be(
-                    $@"DELETE FROM {expectedName}
-WHERE EXISTS (
-  SELECT
-    *
-  FROM {expectedName} AS ""f""
-  INNER JOIN bar ON ""f"".""a"" = bar.""a""
-  WHERE ({expectedName}.""a"" = ""f"".""a"") AND ({expectedName}.""b"" = ""f"".""b"")
-  GROUP BY ""f"".""b""
-)" );
+                    $"""
+                     DELETE FROM {expectedName}
+                     WHERE EXISTS (
+                       SELECT
+                         *
+                       FROM {expectedName} AS "f"
+                       INNER JOIN bar ON "f"."a" = bar."a"
+                       WHERE ({expectedName}."a" = "f"."a") AND ({expectedName}."b" = "f"."b")
+                       GROUP BY "f"."b"
+                     )
+                     """ );
         }
 
         [Theory]
@@ -537,15 +569,17 @@ WHERE EXISTS (
             sut.Context.Sql.ToString()
                 .Should()
                 .Be(
-                    $@"DELETE FROM {expectedName}
-WHERE EXISTS (
-  SELECT
-    *
-  FROM {expectedName} AS ""f""
-  INNER JOIN bar ON ""f"".""a"" = bar.""a""
-  WHERE ({expectedName}.""a"" = ""f"".""a"") AND ({expectedName}.""b"" = ""f"".""b"")
-  GROUP BY ""f"".""b""
-)" );
+                    $"""
+                     DELETE FROM {expectedName}
+                     WHERE EXISTS (
+                       SELECT
+                         *
+                       FROM {expectedName} AS "f"
+                       INNER JOIN bar ON "f"."a" = bar."a"
+                       WHERE ({expectedName}."a" = "f"."a") AND ({expectedName}."b" = "f"."b")
+                       GROUP BY "f"."b"
+                     )
+                     """ );
         }
 
         [Fact]

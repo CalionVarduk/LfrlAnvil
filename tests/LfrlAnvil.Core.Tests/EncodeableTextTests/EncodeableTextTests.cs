@@ -1,5 +1,4 @@
 ﻿using System.Text;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Tests.EncodeableTextTests;
 
@@ -9,12 +8,11 @@ public class EncodeableTextTests : TestsBase
     public void Default_ShouldContainEmptyString()
     {
         var sut = default( EncodeableText );
-        using ( new AssertionScope() )
-        {
-            sut.ByteCount.Should().Be( 0 );
-            sut.Value.ToArray().Should().BeEmpty();
-            sut.Encoding.Should().BeSameAs( Encoding.UTF8 );
-        }
+        Assertion.All(
+                sut.ByteCount.TestEquals( 0 ),
+                sut.Value.TestEmpty(),
+                sut.Encoding.TestRefEquals( Encoding.UTF8 ) )
+            .Go();
     }
 
     [Fact]
@@ -22,20 +20,19 @@ public class EncodeableTextTests : TestsBase
     {
         var result = EncodeableText.Create( Encoding.Unicode, "foobar" );
 
-        using ( new AssertionScope() )
-        {
-            result.Exception.Should().BeNull();
-            result.Value.ByteCount.Should().Be( 12 );
-            result.Value.Value.ToString().Should().Be( "foobar" );
-            result.Value.Encoding.Should().BeSameAs( Encoding.Unicode );
-        }
+        Assertion.All(
+                result.Exception.TestNull(),
+                result.Value.ByteCount.TestEquals( 12 ),
+                result.Value.Value.ToString().TestEquals( "foobar" ),
+                result.Value.Encoding.TestRefEquals( Encoding.Unicode ) )
+            .Go();
     }
 
     [Fact]
     public void Create_ShouldReturnInvalidResult_WhenEncoderFailsToRecoverByteCount()
     {
         var result = EncodeableText.Create( new InvalidEncoding(), "foobar" );
-        result.Exception.Should().BeOfType<NotSupportedException>();
+        result.Exception.TestType().Exact<NotSupportedException>().Go();
     }
 
     [Fact]
@@ -43,7 +40,7 @@ public class EncodeableTextTests : TestsBase
     {
         var sut = EncodeableText.Create( Encoding.UTF8, "foobar" ).Value;
         var result = sut.ToString();
-        result.Should().Be( "[Encoding: Unicode (UTF-8), ByteCount: 6] 'foobar'" );
+        result.TestEquals( "[Encoding: Unicode (UTF-8), ByteCount: 6] 'foobar'" ).Go();
     }
 
     [Fact]
@@ -54,11 +51,10 @@ public class EncodeableTextTests : TestsBase
 
         var result = sut.Encode( target );
 
-        using ( new AssertionScope() )
-        {
-            result.Exception.Should().BeNull();
-            target.Should().BeSequentiallyEqualTo<byte>( 102, 0, 111, 0, 111, 0, 0, 0, 0, 0 );
-        }
+        Assertion.All(
+                result.Exception.TestNull(),
+                target.TestSequence<byte>( [ 102, 0, 111, 0, 111, 0, 0, 0, 0, 0 ] ) )
+            .Go();
     }
 
     [Fact]
@@ -69,7 +65,7 @@ public class EncodeableTextTests : TestsBase
 
         var result = sut.Encode( target );
 
-        result.Exception.Should().BeOfType<ArgumentException>();
+        result.Exception.TestType().Exact<ArgumentException>().Go();
     }
 
     private sealed class InvalidEncoding : Encoding

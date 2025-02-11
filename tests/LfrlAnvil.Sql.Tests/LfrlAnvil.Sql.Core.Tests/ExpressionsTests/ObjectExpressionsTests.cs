@@ -711,12 +711,14 @@ public partial class ObjectExpressionsTests : TestsBase
             sut.IsAliased.Should().BeTrue();
             text.Should()
                 .Be(
-                    @"(
-  FROM [foo]
-  SELECT
-    ([foo].[bar] : ?) AS [x],
-    ([foo].[qux] : ?)
-) AS [lorem]" );
+                    """
+                    (
+                      FROM [foo]
+                      SELECT
+                        ([foo].[bar] : ?) AS [x],
+                        ([foo].[qux] : ?)
+                    ) AS [lorem]
+                    """ );
         }
     }
 
@@ -724,9 +726,11 @@ public partial class ObjectExpressionsTests : TestsBase
     public void QueryRecordSet_FromRawQuery_ShouldCreateQueryRecordSetNode()
     {
         var query = SqlNode.RawQuery(
-            @"SELECT *
-FROM foo
-WHERE value > 10" );
+            """
+            SELECT *
+            FROM foo
+            WHERE value > 10
+            """ );
 
         var sut = query.AsSet( "bar" );
         var text = sut.ToString();
@@ -742,11 +746,13 @@ WHERE value > 10" );
             sut.Query.Should().BeSameAs( query );
             text.Should()
                 .Be(
-                    @"(
-  SELECT *
-  FROM foo
-  WHERE value > 10
-) AS [bar]" );
+                    """
+                    (
+                      SELECT *
+                      FROM foo
+                      WHERE value > 10
+                    ) AS [bar]
+                    """ );
         }
     }
 
@@ -754,14 +760,18 @@ WHERE value > 10" );
     public void QueryRecordSet_FromCompoundQuery_ShouldCreateQueryRecordSetNode()
     {
         var query1 = SqlNode.RawQuery(
-            @"SELECT a, b
-FROM foo
-WHERE value > 10" );
+            """
+            SELECT a, b
+            FROM foo
+            WHERE value > 10
+            """ );
 
         var query2 = SqlNode.RawQuery(
-            @"SELECT a, c AS b
-FROM qux
-WHERE value < 10" );
+            """
+            SELECT a, c AS b
+            FROM qux
+            WHERE value < 10
+            """ );
 
         var query = query1.CompoundWith( query2.ToUnion() );
         var sut = query.AsSet( "bar" );
@@ -778,19 +788,21 @@ WHERE value < 10" );
             sut.Query.Should().BeSameAs( query );
             text.Should()
                 .Be(
-                    @"(
-  
-  SELECT a, b
-  FROM foo
-  WHERE value > 10
+                    """
+                    (
+                      
+                      SELECT a, b
+                      FROM foo
+                      WHERE value > 10
+                    
+                      UNION
+                      
+                      SELECT a, c AS b
+                      FROM qux
+                      WHERE value < 10
 
-  UNION
-  
-  SELECT a, c AS b
-  FROM qux
-  WHERE value < 10
-
-) AS [bar]" );
+                    ) AS [bar]
+                    """ );
         }
     }
 
@@ -822,19 +834,21 @@ WHERE value < 10" );
             sut.Query.Should().BeSameAs( query );
             text.Should()
                 .Be(
-                    @"(
-  
-  FROM [T1]
-  SELECT
-    ([T1].[a] : ?)
+                    """
+                    (
+                      
+                      FROM [T1]
+                      SELECT
+                        ([T1].[a] : ?)
+                    
+                      UNION
+                      
+                      FROM [T2]
+                      SELECT
+                        ([T2].[a] : ?)
 
-  UNION
-  
-  FROM [T2]
-  SELECT
-    ([T2].[a] : ?)
-
-) AS [foo]" );
+                    ) AS [foo]
+                    """ );
 
             var dataField = sut.GetField( "a" );
             dataField.Selection.Should().BeSameAs( query.Selection[0] );
@@ -981,8 +995,10 @@ WHERE value < 10" );
             sut.Joins.ToArray().Should().BeSequentiallyEqualTo( joinOn );
             text.Should()
                 .Be(
-                    @"FROM [foo]
-INNER JOIN [bar] AS [qux] ON TRUE" );
+                    """
+                    FROM [foo]
+                    INNER JOIN [bar] AS [qux] ON TRUE
+                    """ );
         }
     }
 
@@ -1004,8 +1020,10 @@ INNER JOIN [bar] AS [qux] ON TRUE" );
             sut.Joins.ToArray().ElementAtOrDefault( 0 ).Should().BeEquivalentTo( SqlNode.InnerJoinOn( inner, SqlNode.True() ) );
             text.Should()
                 .Be(
-                    @"FROM [foo]
-INNER JOIN [bar] AS [qux] ON TRUE" );
+                    """
+                    FROM [foo]
+                    INNER JOIN [bar] AS [qux] ON TRUE
+                    """ );
         }
     }
 
@@ -1044,8 +1062,10 @@ INNER JOIN [bar] AS [qux] ON TRUE" );
             sut.Joins.ToArray().Should().BeSequentiallyEqualTo( joinOn );
             text.Should()
                 .Be(
-                    @"FROM [foo]
-INNER JOIN [bar] AS [qux] ON TRUE" );
+                    """
+                    FROM [foo]
+                    INNER JOIN [bar] AS [qux] ON TRUE
+                    """ );
         }
     }
 
@@ -1070,9 +1090,11 @@ INNER JOIN [bar] AS [qux] ON TRUE" );
             sut.Joins.ToArray().Should().BeSequentiallyEqualTo( firstJoinOn, joinOn );
             text.Should()
                 .Be(
-                    @"FROM [foo]
-INNER JOIN [bar] ON TRUE
-INNER JOIN [qux] ON FALSE" );
+                    """
+                    FROM [foo]
+                    INNER JOIN [bar] ON TRUE
+                    INNER JOIN [qux] ON FALSE
+                    """ );
         }
     }
 
@@ -1094,8 +1116,10 @@ INNER JOIN [qux] ON FALSE" );
             sut.Joins.ToArray().ElementAtOrDefault( 0 ).Should().BeEquivalentTo( SqlNode.InnerJoinOn( inner, SqlNode.True() ) );
             text.Should()
                 .Be(
-                    @"FROM [foo]
-INNER JOIN [bar] AS [qux] ON TRUE" );
+                    """
+                    FROM [foo]
+                    INNER JOIN [bar] AS [qux] ON TRUE
+                    """ );
         }
     }
 
@@ -1121,9 +1145,11 @@ INNER JOIN [bar] AS [qux] ON TRUE" );
             sut.Joins.ToArray().ElementAtOrDefault( 1 ).Should().BeEquivalentTo( SqlNode.InnerJoinOn( inner, SqlNode.False() ) );
             text.Should()
                 .Be(
-                    @"FROM [foo]
-INNER JOIN [bar] ON TRUE
-INNER JOIN [qux] ON FALSE" );
+                    """
+                    FROM [foo]
+                    INNER JOIN [bar] ON TRUE
+                    INNER JOIN [qux] ON FALSE
+                    """ );
         }
     }
 
@@ -1166,9 +1192,11 @@ INNER JOIN [qux] ON FALSE" );
             sut.RecordSet.IsOptional.Should().BeFalse();
             text.Should()
                 .Be(
-                    @"ORDINAL [A] (
-  SELECT * FROM foo
-)" );
+                    """
+                    ORDINAL [A] (
+                      SELECT * FROM foo
+                    )
+                    """ );
         }
     }
 
@@ -1201,17 +1229,19 @@ INNER JOIN [qux] ON FALSE" );
             sut.RecordSet.IsOptional.Should().BeFalse();
             text.Should()
                 .Be(
-                    @"RECURSIVE [A] (
-  
-  SELECT * FROM foo
+                    """
+                    RECURSIVE [A] (
+                      
+                      SELECT * FROM foo
+                    
+                      UNION
+                      
+                      FROM [A]
+                      SELECT
+                        [A].*
 
-  UNION
-  
-  FROM [A]
-  SELECT
-    [A].*
-
-)" );
+                    )
+                    """ );
         }
     }
 

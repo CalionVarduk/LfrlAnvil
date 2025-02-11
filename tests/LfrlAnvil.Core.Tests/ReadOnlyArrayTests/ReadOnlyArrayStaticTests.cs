@@ -7,7 +7,7 @@ public class ReadOnlyArrayStaticTests : TestsBase
     {
         var result = ReadOnlyArray.GetUnderlyingType( null );
 
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Theory]
@@ -18,7 +18,7 @@ public class ReadOnlyArrayStaticTests : TestsBase
     {
         var result = ReadOnlyArray.GetUnderlyingType( type );
 
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Theory]
@@ -29,7 +29,7 @@ public class ReadOnlyArrayStaticTests : TestsBase
     {
         var result = ReadOnlyArray.GetUnderlyingType( type );
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -39,6 +39,6 @@ public class ReadOnlyArrayStaticTests : TestsBase
 
         var result = ReadOnlyArray.GetUnderlyingType( typeof( ReadOnlyArray<> ) );
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 }

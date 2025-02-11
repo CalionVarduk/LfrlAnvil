@@ -42,8 +42,10 @@ public partial class BaseExpressionsTests : TestsBase
 
         result.Should()
             .Be(
-                $@"AGG_{{{sut.GetType().GetDebugString()}}}((NULL), (""5"" : System.Int32))
-  DISTINCT" );
+                $$"""
+                  AGG_{{{sut.GetType().GetDebugString()}}}((NULL), ("5" : System.Int32))
+                    DISTINCT
+                  """ );
     }
 
     [Fact]
@@ -143,9 +145,11 @@ public partial class BaseExpressionsTests : TestsBase
             sut.Selection.ToArray().Should().BeSequentiallyEqualTo( field );
             text.Should()
                 .Be(
-                    $@"FROM <DUMMY>
-SELECT
-  (""1"" : System.Int32) AS [foo]" );
+                    $"""
+                     FROM <DUMMY>
+                     SELECT
+                       ("1" : System.Int32) AS [foo]
+                     """ );
         }
     }
 
@@ -268,10 +272,12 @@ SELECT
             (( ISqlStatementNode )sut).QueryCount.Should().Be( 1 );
             text.Should()
                 .Be(
-                    @"FROM [foo]
-SELECT
-  ([foo].[bar] : ?) AS [x],
-  ([foo].[qux] : ?)" );
+                    """
+                    FROM [foo]
+                    SELECT
+                      ([foo].[bar] : ?) AS [x],
+                      ([foo].[qux] : ?)
+                    """ );
         }
     }
 
@@ -292,8 +298,10 @@ SELECT
             (( ISqlStatementNode )sut).QueryCount.Should().Be( 1 );
             text.Should()
                 .Be(
-                    @"FROM [foo]
-SELECT" );
+                    """
+                    FROM [foo]
+                    SELECT
+                    """ );
         }
     }
 
@@ -315,18 +323,22 @@ SELECT" );
             (( ISqlStatementNode )sut).QueryCount.Should().Be( 1 );
             text.Should()
                 .Be(
-                    @"FROM [foo]
-SELECT
-  ([foo].[bar] : System.Int32)" );
+                    """
+                    FROM [foo]
+                    SELECT
+                      ([foo].[bar] : System.Int32)
+                    """ );
         }
     }
 
     [Fact]
     public void RawQuery_ShouldCreateRawQueryExpressionNode()
     {
-        var sql = @"SELECT *
-FROM foo
-WHERE id = @a AND value > @b";
+        var sql = """
+                  SELECT *
+                  FROM foo
+                  WHERE id = @a AND value > @b
+                  """;
 
         var parameters = new[] { SqlNode.Parameter( "a" ), SqlNode.Parameter( "b" ) };
         var sut = SqlNode.RawQuery( sql, parameters );
@@ -348,14 +360,18 @@ WHERE id = @a AND value > @b";
     public void CompoundQuery_ShouldCreateCompoundQueryExpressionNode_WithNonEmptyComponents()
     {
         var query1 = SqlNode.RawQuery(
-            @"SELECT a, b
-FROM foo
-WHERE value > 10" );
+            """
+            SELECT a, b
+            FROM foo
+            WHERE value > 10
+            """ );
 
         var query2 = SqlNode.RawQuery(
-            @"SELECT a, c AS b
-FROM qux
-WHERE value < 10" );
+            """
+            SELECT a, c AS b
+            FROM qux
+            WHERE value < 10
+            """ );
 
         var union = query2.ToUnion();
         var sut = query1.CompoundWith( new[] { union }.ToList() );
@@ -370,13 +386,15 @@ WHERE value < 10" );
             (( ISqlStatementNode )sut).QueryCount.Should().Be( 1 );
             text.Should()
                 .Be(
-                    @"SELECT a, b
-FROM foo
-WHERE value > 10
-UNION
-SELECT a, c AS b
-FROM qux
-WHERE value < 10" );
+                    """
+                    SELECT a, b
+                    FROM foo
+                    WHERE value > 10
+                    UNION
+                    SELECT a, c AS b
+                    FROM qux
+                    WHERE value < 10
+                    """ );
         }
     }
 
@@ -384,9 +402,11 @@ WHERE value < 10" );
     public void CompoundQuery_ShouldThrowArgumentException_WhenComponentsAreEmpty()
     {
         var query = SqlNode.RawQuery(
-            @"SELECT *
-FROM foo
-WHERE value > 10" );
+            """
+            SELECT *
+            FROM foo
+            WHERE value > 10
+            """ );
 
         var action = Lambda.Of( () => query.CompoundWith() );
 
@@ -408,8 +428,10 @@ WHERE value > 10" );
             sut.Expression.Should().BeSameAs( expression );
             text.Should()
                 .Be(
-                    $@"WHEN {condition}
-  THEN ({expression})" );
+                    $"""
+                     WHEN {condition}
+                       THEN ({expression})
+                     """ );
         }
     }
 
@@ -429,13 +451,15 @@ WHERE value > 10" );
             sut.Cases.ToArray().Should().BeSequentiallyEqualTo( firstCase, secondCase );
             text.Should()
                 .Be(
-                    $@"CASE
-  WHEN {firstCase.Condition}
-    THEN ({firstCase.Expression})
-  WHEN {secondCase.Condition}
-    THEN ({secondCase.Expression})
-  ELSE ({defaultNode})
-END" );
+                    $"""
+                     CASE
+                       WHEN {firstCase.Condition}
+                         THEN ({firstCase.Expression})
+                       WHEN {secondCase.Condition}
+                         THEN ({secondCase.Expression})
+                       ELSE ({defaultNode})
+                     END
+                     """ );
         }
     }
 
@@ -463,21 +487,23 @@ END" );
             sut.Cases.ToArray().Should().BeSequentiallyEqualTo( firstCase, secondCase );
             text.Should()
                 .Be(
-                    @"CASE
-  WHEN bar > 10
-    THEN (
-      CASE
-        WHEN bar > 20
-          THEN (""20"" : System.Int32)
-        WHEN bar > 15
-          THEN (""15"" : System.Int32)
-        ELSE (""10"" : System.Int32)
-      END
-    )
-  WHEN bar < 5
-    THEN (""5"" : System.Int32)
-  ELSE (@foo : System.Int32)
-END" );
+                    """
+                    CASE
+                      WHEN bar > 10
+                        THEN (
+                          CASE
+                            WHEN bar > 20
+                              THEN ("20" : System.Int32)
+                            WHEN bar > 15
+                              THEN ("15" : System.Int32)
+                            ELSE ("10" : System.Int32)
+                          END
+                        )
+                      WHEN bar < 5
+                        THEN ("5" : System.Int32)
+                      ELSE (@foo : System.Int32)
+                    END
+                    """ );
         }
     }
 
@@ -521,8 +547,10 @@ END" );
             sut.Query.Should().BeSameAs( query );
             text.Should()
                 .Be(
-                    @"UNION
-SELECT * FROM foo" );
+                    """
+                    UNION
+                    SELECT * FROM foo
+                    """ );
         }
     }
 
@@ -540,8 +568,10 @@ SELECT * FROM foo" );
             sut.Query.Should().BeSameAs( query );
             text.Should()
                 .Be(
-                    @"UNION ALL
-SELECT * FROM foo" );
+                    """
+                    UNION ALL
+                    SELECT * FROM foo
+                    """ );
         }
     }
 
@@ -559,8 +589,10 @@ SELECT * FROM foo" );
             sut.Query.Should().BeSameAs( query );
             text.Should()
                 .Be(
-                    @"INTERSECT
-SELECT * FROM foo" );
+                    """
+                    INTERSECT
+                    SELECT * FROM foo
+                    """ );
         }
     }
 
@@ -578,8 +610,10 @@ SELECT * FROM foo" );
             sut.Query.Should().BeSameAs( query );
             text.Should()
                 .Be(
-                    @"EXCEPT
-SELECT * FROM foo" );
+                    """
+                    EXCEPT
+                    SELECT * FROM foo
+                    """ );
         }
     }
 
@@ -641,8 +675,10 @@ SELECT * FROM foo" );
             sut[0].ToArray().Should().BeSequentiallyEqualTo( expressions );
             text.Should()
                 .Be(
-                    @"VALUES
-((""1"" : System.Int32), (""2"" : System.Int32), (""3"" : System.Int32))" );
+                    """
+                    VALUES
+                    (("1" : System.Int32), ("2" : System.Int32), ("3" : System.Int32))
+                    """ );
         }
     }
 
@@ -667,19 +703,23 @@ SELECT * FROM foo" );
             sut[1].ToArray().Should().BeSequentiallyEqualTo( expressions[1, 0], expressions[1, 1], expressions[1, 2] );
             text.Should()
                 .Be(
-                    @"VALUES
-((""1"" : System.Int32), (""2"" : System.Int32), (""3"" : System.Int32)),
-((""4"" : System.Int32), (""5"" : System.Int32), (""6"" : System.Int32))" );
+                    """
+                    VALUES
+                    (("1" : System.Int32), ("2" : System.Int32), ("3" : System.Int32)),
+                    (("4" : System.Int32), ("5" : System.Int32), ("6" : System.Int32))
+                    """ );
         }
     }
 
     [Fact]
     public void RawStatement_ShouldCreateRawStatementNode()
     {
-        var sql = @"INSERT INTO foo (x, y)
-VALUES
-(@a, 10),
-(@b, 20)";
+        var sql = """
+                  INSERT INTO foo (x, y)
+                  VALUES
+                  (@a, 10),
+                  (@b, 20)
+                  """;
 
         var parameters = new[] { SqlNode.Parameter( "a" ), SqlNode.Parameter( "b" ) };
         var sut = SqlNode.RawStatement( sql, parameters );
@@ -1000,16 +1040,18 @@ VALUES
             (( ISqlStatementNode )sut).QueryCount.Should().Be( 0 );
             text.Should()
                 .Be(
-                    @"CREATE TABLE [foo].[bar] (
-  [x] : System.Int32,
-  [y] : Nullable<System.String>,
-  [z] : System.Double DEFAULT (""10.5"" : System.Double),
-  [a] : System.String GENERATED (""foo"" : System.String) VIRTUAL,
-  [b] : Nullable<System.String> GENERATED (""bar"" : System.String) STORED,
-  PRIMARY KEY [PK_foobar] (([foo].[bar].[x] : System.Int32) ASC),
-  FOREIGN KEY [FK_foobar_REF_qux] (([foo].[bar].[y] : Nullable<System.String>)) REFERENCES [qux] (([qux].[y] : ?)) ON DELETE RESTRICT ON UPDATE RESTRICT,
-  CHECK [CHK_foobar] (([foo].[bar].[z] : System.Double) > (""100"" : System.Double))
-)" );
+                    """
+                    CREATE TABLE [foo].[bar] (
+                      [x] : System.Int32,
+                      [y] : Nullable<System.String>,
+                      [z] : System.Double DEFAULT ("10.5" : System.Double),
+                      [a] : System.String GENERATED ("foo" : System.String) VIRTUAL,
+                      [b] : Nullable<System.String> GENERATED ("bar" : System.String) STORED,
+                      PRIMARY KEY [PK_foobar] (([foo].[bar].[x] : System.Int32) ASC),
+                      FOREIGN KEY [FK_foobar_REF_qux] (([foo].[bar].[y] : Nullable<System.String>)) REFERENCES [qux] (([qux].[y] : ?)) ON DELETE RESTRICT ON UPDATE RESTRICT,
+                      CHECK [CHK_foobar] (([foo].[bar].[z] : System.Double) > ("100" : System.Double))
+                    )
+                    """ );
         }
     }
 
@@ -1040,8 +1082,10 @@ VALUES
             (( ISqlStatementNode )sut).QueryCount.Should().Be( 0 );
             text.Should()
                 .Be(
-                    $@"{expectedText} (
-)" );
+                    $"""
+                     {expectedText} (
+                     )
+                     """ );
         }
     }
 
@@ -1067,8 +1111,10 @@ VALUES
             (( ISqlStatementNode )sut).QueryCount.Should().Be( 0 );
             text.Should()
                 .Be(
-                    $@"{expectedHeader}
-SELECT * FROM qux" );
+                    $"""
+                     {expectedHeader}
+                     SELECT * FROM qux
+                     """ );
         }
     }
 
@@ -1340,14 +1386,16 @@ SELECT * FROM qux" );
             sut.Statements.ToArray().Should().BeSequentiallyEqualTo( statements );
             text.Should()
                 .Be(
-                    @"BATCH
-(
-  SELECT a, b FROM foo;
-
-  SELECT b, c FROM bar;
-
-  INSERT INTO qux (x, y) VALUES (1, 'foo');
-)" );
+                    """
+                    BATCH
+                    (
+                      SELECT a, b FROM foo;
+                    
+                      SELECT b, c FROM bar;
+                    
+                      INSERT INTO qux (x, y) VALUES (1, 'foo');
+                    )
+                    """ );
         }
     }
 
@@ -1365,10 +1413,12 @@ SELECT * FROM qux" );
             sut.QueryCount.Should().Be( 0 );
             text.Should()
                 .Be(
-                    @"BATCH
-(
-  
-)" );
+                    """
+                    BATCH
+                    (
+                      
+                    )
+                    """ );
         }
     }
 

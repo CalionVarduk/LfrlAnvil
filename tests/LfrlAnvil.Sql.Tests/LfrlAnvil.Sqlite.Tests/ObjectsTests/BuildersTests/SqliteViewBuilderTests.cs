@@ -45,8 +45,10 @@ public class SqliteViewBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
-                    @"CREATE VIEW ""foo_V"" AS
-                    SELECT * FROM bar;" );
+                    """
+                    CREATE VIEW "foo_V" AS
+                                        SELECT * FROM bar;
+                    """ );
         }
     }
 
@@ -126,8 +128,10 @@ public class SqliteViewBuilderTests : TestsBase
                 .Sql.Should()
                 .SatisfySql(
                     "DROP VIEW \"foo_V\";",
-                    @"CREATE VIEW ""foo_bar"" AS
-                    SELECT * FROM bar;" );
+                    """
+                    CREATE VIEW "foo_bar" AS
+                                        SELECT * FROM bar;
+                    """ );
         }
     }
 
@@ -160,27 +164,33 @@ public class SqliteViewBuilderTests : TestsBase
                 .Sql.Should()
                 .SatisfySql(
                     "DROP VIEW \"foo_V\";",
-                    @"CREATE VIEW ""foo_bar"" AS
-                    SELECT * FROM bar;" );
+                    """
+                    CREATE VIEW "foo_bar" AS
+                                        SELECT * FROM bar;
+                    """ );
 
             actions.ElementAtOrDefault( 1 )
                 .Sql.Should()
                 .SatisfySql(
                     "DROP VIEW \"foo_W1\";",
-                    @"CREATE VIEW ""foo_W1"" AS
-                    SELECT
-                      *
-                    FROM ""foo_bar"";" );
+                    """
+                    CREATE VIEW "foo_W1" AS
+                                        SELECT
+                                          *
+                                        FROM "foo_bar";
+                    """ );
 
             actions.ElementAtOrDefault( 2 )
                 .Sql.Should()
                 .SatisfySql(
                     "DROP VIEW \"foo_W3\";",
-                    @"CREATE VIEW ""foo_W3"" AS
-                    SELECT
-                      *
-                    FROM ""foo_bar""
-                    INNER JOIN ""foo_W1"" ON TRUE;" );
+                    """
+                    CREATE VIEW "foo_W3" AS
+                                        SELECT
+                                          *
+                                        FROM "foo_bar"
+                                        INNER JOIN "foo_W1" ON TRUE;
+                    """ );
         }
     }
 

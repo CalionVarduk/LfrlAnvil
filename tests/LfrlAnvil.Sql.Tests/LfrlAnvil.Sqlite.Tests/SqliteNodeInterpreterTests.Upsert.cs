@@ -33,13 +33,15 @@ public partial class SqliteNodeInterpreterTests
             sut.Context.Sql.ToString()
                 .Should()
                 .Be(
-                    @"INSERT INTO qux (""a"", ""b"")
-VALUES
-('foo', 5),
-((bar.a), 25)
-ON CONFLICT (""a"", ""c"") DO UPDATE SET
-  ""b"" = (qux.""b"" + EXCLUDED.""b""),
-  ""c"" = (EXCLUDED.""b"" + 1)" );
+                    """
+                    INSERT INTO qux ("a", "b")
+                    VALUES
+                    ('foo', 5),
+                    ((bar.a), 25)
+                    ON CONFLICT ("a", "c") DO UPDATE SET
+                      "b" = (qux."b" + EXCLUDED."b"),
+                      "c" = (EXCLUDED."b" + 1)
+                    """ );
         }
 
         [Fact]
@@ -62,13 +64,15 @@ ON CONFLICT (""a"", ""c"") DO UPDATE SET
             sut.Context.Sql.ToString()
                 .Should()
                 .Be(
-                    @"INSERT INTO ""common_qux"" (""a"", ""b"")
-VALUES
-('foo', 5),
-((bar.a), 25)
-ON CONFLICT (""a"", ""c"") DO UPDATE SET
-  ""b"" = (""common_qux"".""b"" + EXCLUDED.""b""),
-  ""c"" = (EXCLUDED.""b"" + 1)" );
+                    """
+                    INSERT INTO "common_qux" ("a", "b")
+                    VALUES
+                    ('foo', 5),
+                    ((bar.a), 25)
+                    ON CONFLICT ("a", "c") DO UPDATE SET
+                      "b" = ("common_qux"."b" + EXCLUDED."b"),
+                      "c" = (EXCLUDED."b" + 1)
+                    """ );
         }
 
         [Fact]
@@ -91,13 +95,15 @@ ON CONFLICT (""a"", ""c"") DO UPDATE SET
             sut.Context.Sql.ToString()
                 .Should()
                 .Be(
-                    @"INSERT INTO ""common_qux"" (""a"", ""b"")
-VALUES
-('foo', 5),
-((bar.a), 25)
-ON CONFLICT (""a"", ""c"") DO UPDATE SET
-  ""b"" = (""common_qux"".""b"" + EXCLUDED.""b""),
-  ""c"" = (EXCLUDED.""b"" + 1)" );
+                    """
+                    INSERT INTO "common_qux" ("a", "b")
+                    VALUES
+                    ('foo', 5),
+                    ((bar.a), 25)
+                    ON CONFLICT ("a", "c") DO UPDATE SET
+                      "b" = ("common_qux"."b" + EXCLUDED."b"),
+                      "c" = (EXCLUDED."b" + 1)
+                    """ );
         }
 
         [Fact]
@@ -125,13 +131,15 @@ ON CONFLICT (""a"", ""c"") DO UPDATE SET
             sut.Context.Sql.ToString()
                 .Should()
                 .Be(
-                    @"INSERT INTO ""qux"" (""a"", ""b"")
-VALUES
-('foo', 5),
-((bar.a), 25)
-ON CONFLICT (""a"", ""c"") DO UPDATE SET
-  ""b"" = (""qux"".""b"" + EXCLUDED.""b""),
-  ""c"" = (EXCLUDED.""b"" + 1)" );
+                    """
+                    INSERT INTO "qux" ("a", "b")
+                    VALUES
+                    ('foo', 5),
+                    ((bar.a), 25)
+                    ON CONFLICT ("a", "c") DO UPDATE SET
+                      "b" = ("qux"."b" + EXCLUDED."b"),
+                      "c" = (EXCLUDED."b" + 1)
+                    """ );
         }
 
         [Fact]
@@ -155,13 +163,15 @@ ON CONFLICT (""a"", ""c"") DO UPDATE SET
             sut.Context.Sql.ToString()
                 .Should()
                 .Be(
-                    @"INSERT INTO qux (""a"", ""b"")
-VALUES
-('foo', 5),
-((bar.a), 25)
-ON CONFLICT DO UPDATE SET
-  ""b"" = (qux.""b"" + EXCLUDED.""b""),
-  ""c"" = (EXCLUDED.""b"" + 1)" );
+                    """
+                    INSERT INTO qux ("a", "b")
+                    VALUES
+                    ('foo', 5),
+                    ((bar.a), 25)
+                    ON CONFLICT DO UPDATE SET
+                      "b" = (qux."b" + EXCLUDED."b"),
+                      "c" = (EXCLUDED."b" + 1)
+                    """ );
         }
 
         [Fact]
@@ -200,26 +210,28 @@ ON CONFLICT DO UPDATE SET
             sut.Context.Sql.ToString()
                 .Should()
                 .Be(
-                    @"WITH ""cba"" AS (
-  SELECT * FROM abc
-)
-INSERT INTO qux (""a"", ""b"")
-SELECT DISTINCT
-  ""common_foo"".""b"" AS ""a"",
-  (COUNT(*) OVER ""wnd"") AS ""b""
-FROM ""common_foo""
-INNER JOIN ""common_bar"" ON ""common_bar"".""c"" = ""common_foo"".""a""
-WHERE ""common_bar"".""c"" IN (
-  SELECT cba.c FROM cba
-)
-GROUP BY ""common_foo"".""b""
-HAVING ""common_foo"".""b"" < 100
-WINDOW ""wnd"" AS (ORDER BY ""common_foo"".""a"" ASC)
-ORDER BY ""common_foo"".""b"" ASC
-LIMIT 50 OFFSET 100
-ON CONFLICT (""a"", ""c"") DO UPDATE SET
-  ""b"" = (qux.""b"" + EXCLUDED.""b""),
-  ""c"" = (EXCLUDED.""b"" + 1)" );
+                    """
+                    WITH "cba" AS (
+                      SELECT * FROM abc
+                    )
+                    INSERT INTO qux ("a", "b")
+                    SELECT DISTINCT
+                      "common_foo"."b" AS "a",
+                      (COUNT(*) OVER "wnd") AS "b"
+                    FROM "common_foo"
+                    INNER JOIN "common_bar" ON "common_bar"."c" = "common_foo"."a"
+                    WHERE "common_bar"."c" IN (
+                      SELECT cba.c FROM cba
+                    )
+                    GROUP BY "common_foo"."b"
+                    HAVING "common_foo"."b" < 100
+                    WINDOW "wnd" AS (ORDER BY "common_foo"."a" ASC)
+                    ORDER BY "common_foo"."b" ASC
+                    LIMIT 50 OFFSET 100
+                    ON CONFLICT ("a", "c") DO UPDATE SET
+                      "b" = (qux."b" + EXCLUDED."b"),
+                      "c" = (EXCLUDED."b" + 1)
+                    """ );
         }
 
         [Fact]
@@ -258,26 +270,28 @@ ON CONFLICT (""a"", ""c"") DO UPDATE SET
             sut.Context.Sql.ToString()
                 .Should()
                 .Be(
-                    @"WITH ""cba"" AS (
-  SELECT * FROM abc
-)
-INSERT INTO ""common_qux"" (""a"", ""b"")
-SELECT DISTINCT
-  ""common_foo"".""b"" AS ""a"",
-  (COUNT(*) OVER ""wnd"") AS ""b""
-FROM ""common_foo""
-INNER JOIN ""common_bar"" ON ""common_bar"".""c"" = ""common_foo"".""a""
-WHERE ""common_bar"".""c"" IN (
-  SELECT cba.c FROM cba
-)
-GROUP BY ""common_foo"".""b""
-HAVING ""common_foo"".""b"" < 100
-WINDOW ""wnd"" AS (ORDER BY ""common_foo"".""a"" ASC)
-ORDER BY ""common_foo"".""b"" ASC
-LIMIT 50 OFFSET 100
-ON CONFLICT (""a"", ""c"") DO UPDATE SET
-  ""b"" = (""common_qux"".""b"" + EXCLUDED.""b""),
-  ""c"" = (EXCLUDED.""b"" + 1)" );
+                    """
+                    WITH "cba" AS (
+                      SELECT * FROM abc
+                    )
+                    INSERT INTO "common_qux" ("a", "b")
+                    SELECT DISTINCT
+                      "common_foo"."b" AS "a",
+                      (COUNT(*) OVER "wnd") AS "b"
+                    FROM "common_foo"
+                    INNER JOIN "common_bar" ON "common_bar"."c" = "common_foo"."a"
+                    WHERE "common_bar"."c" IN (
+                      SELECT cba.c FROM cba
+                    )
+                    GROUP BY "common_foo"."b"
+                    HAVING "common_foo"."b" < 100
+                    WINDOW "wnd" AS (ORDER BY "common_foo"."a" ASC)
+                    ORDER BY "common_foo"."b" ASC
+                    LIMIT 50 OFFSET 100
+                    ON CONFLICT ("a", "c") DO UPDATE SET
+                      "b" = ("common_qux"."b" + EXCLUDED."b"),
+                      "c" = (EXCLUDED."b" + 1)
+                    """ );
         }
 
         [Fact]
@@ -316,26 +330,28 @@ ON CONFLICT (""a"", ""c"") DO UPDATE SET
             sut.Context.Sql.ToString()
                 .Should()
                 .Be(
-                    @"WITH ""cba"" AS (
-  SELECT * FROM abc
-)
-INSERT INTO ""common_qux"" (""a"", ""b"")
-SELECT DISTINCT
-  ""common_foo"".""b"" AS ""a"",
-  (COUNT(*) OVER ""wnd"") AS ""b""
-FROM ""common_foo""
-INNER JOIN ""common_bar"" ON ""common_bar"".""c"" = ""common_foo"".""a""
-WHERE ""common_bar"".""c"" IN (
-  SELECT cba.c FROM cba
-)
-GROUP BY ""common_foo"".""b""
-HAVING ""common_foo"".""b"" < 100
-WINDOW ""wnd"" AS (ORDER BY ""common_foo"".""a"" ASC)
-ORDER BY ""common_foo"".""b"" ASC
-LIMIT 50 OFFSET 100
-ON CONFLICT (""a"", ""c"") DO UPDATE SET
-  ""b"" = (""common_qux"".""b"" + EXCLUDED.""b""),
-  ""c"" = (EXCLUDED.""b"" + 1)" );
+                    """
+                    WITH "cba" AS (
+                      SELECT * FROM abc
+                    )
+                    INSERT INTO "common_qux" ("a", "b")
+                    SELECT DISTINCT
+                      "common_foo"."b" AS "a",
+                      (COUNT(*) OVER "wnd") AS "b"
+                    FROM "common_foo"
+                    INNER JOIN "common_bar" ON "common_bar"."c" = "common_foo"."a"
+                    WHERE "common_bar"."c" IN (
+                      SELECT cba.c FROM cba
+                    )
+                    GROUP BY "common_foo"."b"
+                    HAVING "common_foo"."b" < 100
+                    WINDOW "wnd" AS (ORDER BY "common_foo"."a" ASC)
+                    ORDER BY "common_foo"."b" ASC
+                    LIMIT 50 OFFSET 100
+                    ON CONFLICT ("a", "c") DO UPDATE SET
+                      "b" = ("common_qux"."b" + EXCLUDED."b"),
+                      "c" = (EXCLUDED."b" + 1)
+                    """ );
         }
 
         [Fact]
@@ -379,26 +395,28 @@ ON CONFLICT (""a"", ""c"") DO UPDATE SET
             sut.Context.Sql.ToString()
                 .Should()
                 .Be(
-                    @"WITH ""cba"" AS (
-  SELECT * FROM abc
-)
-INSERT INTO ""qux"" (""a"", ""b"")
-SELECT DISTINCT
-  ""common_foo"".""b"" AS ""a"",
-  (COUNT(*) OVER ""wnd"") AS ""b""
-FROM ""common_foo""
-INNER JOIN ""common_bar"" ON ""common_bar"".""c"" = ""common_foo"".""a""
-WHERE ""common_bar"".""c"" IN (
-  SELECT cba.c FROM cba
-)
-GROUP BY ""common_foo"".""b""
-HAVING ""common_foo"".""b"" < 100
-WINDOW ""wnd"" AS (ORDER BY ""common_foo"".""a"" ASC)
-ORDER BY ""common_foo"".""b"" ASC
-LIMIT 50 OFFSET 100
-ON CONFLICT (""a"", ""c"") DO UPDATE SET
-  ""b"" = (""qux"".""b"" + EXCLUDED.""b""),
-  ""c"" = (EXCLUDED.""b"" + 1)" );
+                    """
+                    WITH "cba" AS (
+                      SELECT * FROM abc
+                    )
+                    INSERT INTO "qux" ("a", "b")
+                    SELECT DISTINCT
+                      "common_foo"."b" AS "a",
+                      (COUNT(*) OVER "wnd") AS "b"
+                    FROM "common_foo"
+                    INNER JOIN "common_bar" ON "common_bar"."c" = "common_foo"."a"
+                    WHERE "common_bar"."c" IN (
+                      SELECT cba.c FROM cba
+                    )
+                    GROUP BY "common_foo"."b"
+                    HAVING "common_foo"."b" < 100
+                    WINDOW "wnd" AS (ORDER BY "common_foo"."a" ASC)
+                    ORDER BY "common_foo"."b" ASC
+                    LIMIT 50 OFFSET 100
+                    ON CONFLICT ("a", "c") DO UPDATE SET
+                      "b" = ("qux"."b" + EXCLUDED."b"),
+                      "c" = (EXCLUDED."b" + 1)
+                    """ );
         }
 
         [Fact]
@@ -438,26 +456,28 @@ ON CONFLICT (""a"", ""c"") DO UPDATE SET
             sut.Context.Sql.ToString()
                 .Should()
                 .Be(
-                    @"WITH ""cba"" AS (
-  SELECT * FROM abc
-)
-INSERT INTO qux (""a"", ""b"")
-SELECT DISTINCT
-  ""common_foo"".""b"" AS ""a"",
-  (COUNT(*) OVER ""wnd"") AS ""b""
-FROM ""common_foo""
-INNER JOIN ""common_bar"" ON ""common_bar"".""c"" = ""common_foo"".""a""
-WHERE ""common_bar"".""c"" IN (
-  SELECT cba.c FROM cba
-)
-GROUP BY ""common_foo"".""b""
-HAVING ""common_foo"".""b"" < 100
-WINDOW ""wnd"" AS (ORDER BY ""common_foo"".""a"" ASC)
-ORDER BY ""common_foo"".""b"" ASC
-LIMIT 50 OFFSET 100
-ON CONFLICT DO UPDATE SET
-  ""b"" = (qux.""b"" + EXCLUDED.""b""),
-  ""c"" = (EXCLUDED.""b"" + 1)" );
+                    """
+                    WITH "cba" AS (
+                      SELECT * FROM abc
+                    )
+                    INSERT INTO qux ("a", "b")
+                    SELECT DISTINCT
+                      "common_foo"."b" AS "a",
+                      (COUNT(*) OVER "wnd") AS "b"
+                    FROM "common_foo"
+                    INNER JOIN "common_bar" ON "common_bar"."c" = "common_foo"."a"
+                    WHERE "common_bar"."c" IN (
+                      SELECT cba.c FROM cba
+                    )
+                    GROUP BY "common_foo"."b"
+                    HAVING "common_foo"."b" < 100
+                    WINDOW "wnd" AS (ORDER BY "common_foo"."a" ASC)
+                    ORDER BY "common_foo"."b" ASC
+                    LIMIT 50 OFFSET 100
+                    ON CONFLICT DO UPDATE SET
+                      "b" = (qux."b" + EXCLUDED."b"),
+                      "c" = (EXCLUDED."b" + 1)
+                    """ );
         }
 
         [Fact]
@@ -480,15 +500,17 @@ ON CONFLICT DO UPDATE SET
             sut.Context.Sql.ToString()
                 .Should()
                 .Be(
-                    @"INSERT INTO qux (""a"", ""b"")
-SELECT
-  ""common_foo"".""a"",
-  ""common_foo"".""b""
-FROM ""common_foo""
-WHERE TRUE
-ON CONFLICT (""a"", ""c"") DO UPDATE SET
-  ""b"" = (qux.""b"" + EXCLUDED.""b""),
-  ""c"" = (EXCLUDED.""b"" + 1)" );
+                    """
+                    INSERT INTO qux ("a", "b")
+                    SELECT
+                      "common_foo"."a",
+                      "common_foo"."b"
+                    FROM "common_foo"
+                    WHERE TRUE
+                    ON CONFLICT ("a", "c") DO UPDATE SET
+                      "b" = (qux."b" + EXCLUDED."b"),
+                      "c" = (EXCLUDED."b" + 1)
+                    """ );
         }
 
         [Fact]
@@ -514,23 +536,25 @@ ON CONFLICT (""a"", ""c"") DO UPDATE SET
             sut.Context.Sql.ToString()
                 .Should()
                 .Be(
-                    @"WITH ""x"" AS (
-  SELECT * FROM ipsum
-)
-INSERT INTO qux (""a"", ""b"")
-SELECT * FROM (
-  SELECT foo.a, foo.b FROM foo JOIN x ON x.a = foo.a
-  UNION ALL
-  SELECT a, b FROM bar
-  UNION
-  SELECT a, b FROM qux
-  ORDER BY (a) ASC
-  LIMIT 50 OFFSET 75
-) AS ""source""
-WHERE TRUE
-ON CONFLICT (""a"", ""c"") DO UPDATE SET
-  ""b"" = (qux.""b"" + EXCLUDED.""b""),
-  ""c"" = (EXCLUDED.""b"" + 1)" );
+                    """
+                    WITH "x" AS (
+                      SELECT * FROM ipsum
+                    )
+                    INSERT INTO qux ("a", "b")
+                    SELECT * FROM (
+                      SELECT foo.a, foo.b FROM foo JOIN x ON x.a = foo.a
+                      UNION ALL
+                      SELECT a, b FROM bar
+                      UNION
+                      SELECT a, b FROM qux
+                      ORDER BY (a) ASC
+                      LIMIT 50 OFFSET 75
+                    ) AS "source"
+                    WHERE TRUE
+                    ON CONFLICT ("a", "c") DO UPDATE SET
+                      "b" = (qux."b" + EXCLUDED."b"),
+                      "c" = (EXCLUDED."b" + 1)
+                    """ );
         }
 
         [Fact]
@@ -556,23 +580,25 @@ ON CONFLICT (""a"", ""c"") DO UPDATE SET
             sut.Context.Sql.ToString()
                 .Should()
                 .Be(
-                    @"WITH ""x"" AS (
-  SELECT * FROM ipsum
-)
-INSERT INTO ""common_qux"" (""a"", ""b"")
-SELECT * FROM (
-  SELECT foo.a, foo.b FROM foo JOIN x ON x.a = foo.a
-  UNION ALL
-  SELECT a, b FROM bar
-  UNION
-  SELECT a, b FROM qux
-  ORDER BY (a) ASC
-  LIMIT 50 OFFSET 75
-) AS ""source""
-WHERE TRUE
-ON CONFLICT (""a"", ""c"") DO UPDATE SET
-  ""b"" = (""common_qux"".""b"" + EXCLUDED.""b""),
-  ""c"" = (EXCLUDED.""b"" + 1)" );
+                    """
+                    WITH "x" AS (
+                      SELECT * FROM ipsum
+                    )
+                    INSERT INTO "common_qux" ("a", "b")
+                    SELECT * FROM (
+                      SELECT foo.a, foo.b FROM foo JOIN x ON x.a = foo.a
+                      UNION ALL
+                      SELECT a, b FROM bar
+                      UNION
+                      SELECT a, b FROM qux
+                      ORDER BY (a) ASC
+                      LIMIT 50 OFFSET 75
+                    ) AS "source"
+                    WHERE TRUE
+                    ON CONFLICT ("a", "c") DO UPDATE SET
+                      "b" = ("common_qux"."b" + EXCLUDED."b"),
+                      "c" = (EXCLUDED."b" + 1)
+                    """ );
         }
 
         [Fact]
@@ -598,23 +624,25 @@ ON CONFLICT (""a"", ""c"") DO UPDATE SET
             sut.Context.Sql.ToString()
                 .Should()
                 .Be(
-                    @"WITH ""x"" AS (
-  SELECT * FROM ipsum
-)
-INSERT INTO ""common_qux"" (""a"", ""b"")
-SELECT * FROM (
-  SELECT foo.a, foo.b FROM foo JOIN x ON x.a = foo.a
-  UNION ALL
-  SELECT a, b FROM bar
-  UNION
-  SELECT a, b FROM qux
-  ORDER BY (a) ASC
-  LIMIT 50 OFFSET 75
-) AS ""source""
-WHERE TRUE
-ON CONFLICT (""a"", ""c"") DO UPDATE SET
-  ""b"" = (""common_qux"".""b"" + EXCLUDED.""b""),
-  ""c"" = (EXCLUDED.""b"" + 1)" );
+                    """
+                    WITH "x" AS (
+                      SELECT * FROM ipsum
+                    )
+                    INSERT INTO "common_qux" ("a", "b")
+                    SELECT * FROM (
+                      SELECT foo.a, foo.b FROM foo JOIN x ON x.a = foo.a
+                      UNION ALL
+                      SELECT a, b FROM bar
+                      UNION
+                      SELECT a, b FROM qux
+                      ORDER BY (a) ASC
+                      LIMIT 50 OFFSET 75
+                    ) AS "source"
+                    WHERE TRUE
+                    ON CONFLICT ("a", "c") DO UPDATE SET
+                      "b" = ("common_qux"."b" + EXCLUDED."b"),
+                      "c" = (EXCLUDED."b" + 1)
+                    """ );
         }
 
         [Fact]
@@ -645,23 +673,25 @@ ON CONFLICT (""a"", ""c"") DO UPDATE SET
             sut.Context.Sql.ToString()
                 .Should()
                 .Be(
-                    @"WITH ""x"" AS (
-  SELECT * FROM ipsum
-)
-INSERT INTO ""qux"" (""a"", ""b"")
-SELECT * FROM (
-  SELECT foo.a, foo.b FROM foo JOIN x ON x.a = foo.a
-  UNION ALL
-  SELECT a, b FROM bar
-  UNION
-  SELECT a, b FROM qux
-  ORDER BY (a) ASC
-  LIMIT 50 OFFSET 75
-) AS ""source""
-WHERE TRUE
-ON CONFLICT (""a"", ""c"") DO UPDATE SET
-  ""b"" = (""qux"".""b"" + EXCLUDED.""b""),
-  ""c"" = (EXCLUDED.""b"" + 1)" );
+                    """
+                    WITH "x" AS (
+                      SELECT * FROM ipsum
+                    )
+                    INSERT INTO "qux" ("a", "b")
+                    SELECT * FROM (
+                      SELECT foo.a, foo.b FROM foo JOIN x ON x.a = foo.a
+                      UNION ALL
+                      SELECT a, b FROM bar
+                      UNION
+                      SELECT a, b FROM qux
+                      ORDER BY (a) ASC
+                      LIMIT 50 OFFSET 75
+                    ) AS "source"
+                    WHERE TRUE
+                    ON CONFLICT ("a", "c") DO UPDATE SET
+                      "b" = ("qux"."b" + EXCLUDED."b"),
+                      "c" = (EXCLUDED."b" + 1)
+                    """ );
         }
 
         [Fact]
@@ -688,23 +718,25 @@ ON CONFLICT (""a"", ""c"") DO UPDATE SET
             sut.Context.Sql.ToString()
                 .Should()
                 .Be(
-                    @"WITH ""x"" AS (
-  SELECT * FROM ipsum
-)
-INSERT INTO qux (""a"", ""b"")
-SELECT * FROM (
-  SELECT foo.a, foo.b FROM foo JOIN x ON x.a = foo.a
-  UNION ALL
-  SELECT a, b FROM bar
-  UNION
-  SELECT a, b FROM qux
-  ORDER BY (a) ASC
-  LIMIT 50 OFFSET 75
-) AS ""source""
-WHERE TRUE
-ON CONFLICT DO UPDATE SET
-  ""b"" = (qux.""b"" + EXCLUDED.""b""),
-  ""c"" = (EXCLUDED.""b"" + 1)" );
+                    """
+                    WITH "x" AS (
+                      SELECT * FROM ipsum
+                    )
+                    INSERT INTO qux ("a", "b")
+                    SELECT * FROM (
+                      SELECT foo.a, foo.b FROM foo JOIN x ON x.a = foo.a
+                      UNION ALL
+                      SELECT a, b FROM bar
+                      UNION
+                      SELECT a, b FROM qux
+                      ORDER BY (a) ASC
+                      LIMIT 50 OFFSET 75
+                    ) AS "source"
+                    WHERE TRUE
+                    ON CONFLICT DO UPDATE SET
+                      "b" = (qux."b" + EXCLUDED."b"),
+                      "c" = (EXCLUDED."b" + 1)
+                    """ );
         }
 
         [Fact]
@@ -722,11 +754,13 @@ ON CONFLICT DO UPDATE SET
             sut.Context.Sql.ToString()
                 .Should()
                 .Be(
-                    @"INSERT INTO qux (""a"", ""b"")
-SELECT * FROM bar
-ON CONFLICT (""a"", ""c"") DO UPDATE SET
-  ""b"" = (qux.""b"" + EXCLUDED.""b""),
-  ""c"" = (EXCLUDED.""b"" + 1)" );
+                    """
+                    INSERT INTO qux ("a", "b")
+                    SELECT * FROM bar
+                    ON CONFLICT ("a", "c") DO UPDATE SET
+                      "b" = (qux."b" + EXCLUDED."b"),
+                      "c" = (EXCLUDED."b" + 1)
+                    """ );
         }
 
         [Fact]
@@ -744,11 +778,13 @@ ON CONFLICT (""a"", ""c"") DO UPDATE SET
             sut.Context.Sql.ToString()
                 .Should()
                 .Be(
-                    @"INSERT INTO ""common_qux"" (""a"", ""b"")
-SELECT * FROM bar
-ON CONFLICT (""a"", ""c"") DO UPDATE SET
-  ""b"" = (""common_qux"".""b"" + EXCLUDED.""b""),
-  ""c"" = (EXCLUDED.""b"" + 1)" );
+                    """
+                    INSERT INTO "common_qux" ("a", "b")
+                    SELECT * FROM bar
+                    ON CONFLICT ("a", "c") DO UPDATE SET
+                      "b" = ("common_qux"."b" + EXCLUDED."b"),
+                      "c" = (EXCLUDED."b" + 1)
+                    """ );
         }
 
         [Fact]
@@ -766,11 +802,13 @@ ON CONFLICT (""a"", ""c"") DO UPDATE SET
             sut.Context.Sql.ToString()
                 .Should()
                 .Be(
-                    @"INSERT INTO ""common_qux"" (""a"", ""b"")
-SELECT * FROM bar
-ON CONFLICT (""a"", ""c"") DO UPDATE SET
-  ""b"" = (""common_qux"".""b"" + EXCLUDED.""b""),
-  ""c"" = (EXCLUDED.""b"" + 1)" );
+                    """
+                    INSERT INTO "common_qux" ("a", "b")
+                    SELECT * FROM bar
+                    ON CONFLICT ("a", "c") DO UPDATE SET
+                      "b" = ("common_qux"."b" + EXCLUDED."b"),
+                      "c" = (EXCLUDED."b" + 1)
+                    """ );
         }
 
         [Fact]
@@ -793,11 +831,13 @@ ON CONFLICT (""a"", ""c"") DO UPDATE SET
             sut.Context.Sql.ToString()
                 .Should()
                 .Be(
-                    @"INSERT INTO ""qux"" (""a"", ""b"")
-SELECT * FROM bar
-ON CONFLICT (""a"", ""c"") DO UPDATE SET
-  ""b"" = (""qux"".""b"" + EXCLUDED.""b""),
-  ""c"" = (EXCLUDED.""b"" + 1)" );
+                    """
+                    INSERT INTO "qux" ("a", "b")
+                    SELECT * FROM bar
+                    ON CONFLICT ("a", "c") DO UPDATE SET
+                      "b" = ("qux"."b" + EXCLUDED."b"),
+                      "c" = (EXCLUDED."b" + 1)
+                    """ );
         }
 
         [Fact]
@@ -816,11 +856,13 @@ ON CONFLICT (""a"", ""c"") DO UPDATE SET
             sut.Context.Sql.ToString()
                 .Should()
                 .Be(
-                    @"INSERT INTO qux (""a"", ""b"")
-SELECT * FROM bar
-ON CONFLICT DO UPDATE SET
-  ""b"" = (qux.""b"" + EXCLUDED.""b""),
-  ""c"" = (EXCLUDED.""b"" + 1)" );
+                    """
+                    INSERT INTO qux ("a", "b")
+                    SELECT * FROM bar
+                    ON CONFLICT DO UPDATE SET
+                      "b" = (qux."b" + EXCLUDED."b"),
+                      "c" = (EXCLUDED."b" + 1)
+                    """ );
         }
 
         [Fact]

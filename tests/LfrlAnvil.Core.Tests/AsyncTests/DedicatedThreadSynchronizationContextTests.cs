@@ -1,6 +1,7 @@
 ﻿using System.Globalization;
 using System.Threading;
 using LfrlAnvil.Async;
+using LfrlAnvil.Extensions;
 
 namespace LfrlAnvil.Tests.AsyncTests;
 
@@ -11,15 +12,14 @@ public class DedicatedThreadSynchronizationContextTests : TestsBase
     {
         var sut = new DedicatedThreadSynchronizationContext();
 
-        using ( new AssertionScope() )
-        {
-            sut.IsActive.Should().BeTrue();
-            sut.ThreadCulture.Should().NotBeNull();
-            sut.ThreadUICulture.Should().NotBeNull();
-            sut.ThreadName.Should().BeNull();
-            sut.ThreadPriority.Should().Be( ThreadPriority.Normal );
-            sut.ThreadId.Should().BeGreaterThan( 0 );
-        }
+        Assertion.All(
+                sut.IsActive.TestTrue(),
+                sut.ThreadCulture.TestNotNull(),
+                sut.ThreadUICulture.TestNotNull(),
+                sut.ThreadName.TestNull(),
+                sut.ThreadPriority.TestEquals( ThreadPriority.Normal ),
+                sut.ThreadId.TestGreaterThan( 0 ) )
+            .Go();
     }
 
     [Fact]
@@ -35,15 +35,14 @@ public class DedicatedThreadSynchronizationContextTests : TestsBase
 
         var sut = new DedicatedThreadSynchronizationContext( @params );
 
-        using ( new AssertionScope() )
-        {
-            sut.IsActive.Should().BeTrue();
-            sut.ThreadCulture.Should().BeSameAs( @params.Culture );
-            sut.ThreadUICulture.Should().BeSameAs( @params.UICulture );
-            sut.ThreadName.Should().Be( @params.Name );
-            sut.ThreadPriority.Should().Be( @params.Priority );
-            sut.ThreadId.Should().BeGreaterThan( 0 );
-        }
+        Assertion.All(
+                sut.IsActive.TestTrue(),
+                sut.ThreadCulture.TestRefEquals( @params.Culture ),
+                sut.ThreadUICulture.TestRefEquals( @params.UICulture ),
+                sut.ThreadName.TestEquals( @params.Name ),
+                sut.ThreadPriority.ToNullable().TestEquals( @params.Priority ),
+                sut.ThreadId.TestGreaterThan( 0 ) )
+            .Go();
     }
 
     [Fact]
@@ -63,11 +62,7 @@ public class DedicatedThreadSynchronizationContextTests : TestsBase
             },
             state );
 
-        using ( new AssertionScope() )
-        {
-            capturedState.Should().BeSameAs( state );
-            capturedThreadId.Should().Be( sut.ThreadId );
-        }
+        Assertion.All( capturedState.TestRefEquals( state ), capturedThreadId.TestEquals( sut.ThreadId ) ).Go();
     }
 
     [Fact]
@@ -92,10 +87,6 @@ public class DedicatedThreadSynchronizationContextTests : TestsBase
 
         reset.WaitOne();
 
-        using ( new AssertionScope() )
-        {
-            capturedState.Should().BeSameAs( state );
-            capturedThreadId.Should().Be( sut.ThreadId );
-        }
+        Assertion.All( capturedState.TestRefEquals( state ), capturedThreadId.TestEquals( sut.ThreadId ) ).Go();
     }
 }

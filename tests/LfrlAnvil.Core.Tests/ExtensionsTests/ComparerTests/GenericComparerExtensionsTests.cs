@@ -14,11 +14,10 @@ public abstract class GenericComparerExtensionsTests<T> : TestsBase
 
         var result = sut.Invert();
 
-        using ( new AssertionScope() )
-        {
-            result.Compare( lo, hi ).Should().Be( 1 );
-            result.Compare( hi, lo ).Should().Be( -1 );
-            result.Compare( lo, lo ).Should().Be( 0 );
-        }
+        Assertion.All(
+                result.Compare( lo, hi ).TestEquals( 1 ),
+                result.Compare( hi, lo ).TestEquals( -1 ),
+                result.Compare( lo, lo ).TestEquals( 0 ) )
+            .Go();
     }
 }

@@ -2,7 +2,6 @@
 using System.Linq;
 using LfrlAnvil.Extensions;
 using LfrlAnvil.TestExtensions.Attributes;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Tests.ExtensionsTests.ListTests;
 
@@ -14,7 +13,7 @@ public abstract class GenericListExtensionsTests<T> : TestsBase
     public void SwapItems_ShouldSwapTwoItemsCorrectly(IList<T> source, int index1, int index2, IReadOnlyList<T> expected)
     {
         source.SwapItems( index1, index2 );
-        source.Should().BeEquivalentTo( expected );
+        source.TestSequence( expected ).Go();
     }
 
     [Theory]
@@ -28,6 +27,6 @@ public abstract class GenericListExtensionsTests<T> : TestsBase
 
         sut.RemoveLast();
 
-        sut.Should().BeSequentiallyEqualTo( expected );
+        sut.TestSequence( expected ).Go();
     }
 }

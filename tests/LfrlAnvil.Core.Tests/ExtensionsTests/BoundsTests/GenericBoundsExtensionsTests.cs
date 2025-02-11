@@ -1,5 +1,4 @@
 ﻿using LfrlAnvil.Extensions;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Tests.ExtensionsTests.BoundsTests;
 
@@ -14,6 +13,6 @@ public abstract class GenericBoundsExtensionsTests<T> : TestsBase
 
         var result = sut.AsEnumerable();
 
-        result.Should().BeSequentiallyEqualTo( min, max );
+        result.TestSequence( [ min, max ] ).Go();
     }
 }

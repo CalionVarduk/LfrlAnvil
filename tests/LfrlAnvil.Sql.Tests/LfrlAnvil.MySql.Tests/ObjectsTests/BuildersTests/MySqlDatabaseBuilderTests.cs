@@ -65,12 +65,14 @@ public partial class MySqlDatabaseBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .Be(
-                    @"CREATE FUNCTION `common`.`GUID`() RETURNS BINARY(16)
-BEGIN
-  SET @value = UNHEX(REPLACE(UUID(), '-', ''));
-  RETURN CONCAT(REVERSE(SUBSTRING(@value, 1, 4)), REVERSE(SUBSTRING(@value, 5, 2)), REVERSE(SUBSTRING(@value, 7, 2)), SUBSTRING(@value, 9));
-END;
-" );
+                    """
+                    CREATE FUNCTION `common`.`GUID`() RETURNS BINARY(16)
+                    BEGIN
+                      SET @value = UNHEX(REPLACE(UUID(), '-', ''));
+                      RETURN CONCAT(REVERSE(SUBSTRING(@value, 1, 4)), REVERSE(SUBSTRING(@value, 5, 2)), REVERSE(SUBSTRING(@value, 7, 2)), SUBSTRING(@value, 9));
+                    END;
+
+                    """ );
         }
     }
 
@@ -88,16 +90,18 @@ END;
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .Be(
-                    @"CREATE PROCEDURE `common`.`_DROP_INDEX_IF_EXISTS`(`schema_name` VARCHAR(128), `table_name` VARCHAR(128), `index_name` VARCHAR(128))
-BEGIN
-  SET @schema_name = COALESCE(`schema_name`, DATABASE());
-  IF EXISTS (SELECT * FROM `information_schema`.`statistics` AS `s` WHERE `s`.`table_schema` = @schema_name AND `s`.`table_name` = `table_name` AND `s`.`index_name` = `index_name`) THEN
-    SET @text = CONCAT('DROP INDEX `', `index_name`, '` ON `', @schema_name, '`.`', `table_name`, '`;');
-    PREPARE stmt FROM @text;
-    EXECUTE stmt;
-  END IF;
-END;
-" );
+                    """
+                    CREATE PROCEDURE `common`.`_DROP_INDEX_IF_EXISTS`(`schema_name` VARCHAR(128), `table_name` VARCHAR(128), `index_name` VARCHAR(128))
+                    BEGIN
+                      SET @schema_name = COALESCE(`schema_name`, DATABASE());
+                      IF EXISTS (SELECT * FROM `information_schema`.`statistics` AS `s` WHERE `s`.`table_schema` = @schema_name AND `s`.`table_name` = `table_name` AND `s`.`index_name` = `index_name`) THEN
+                        SET @text = CONCAT('DROP INDEX `', `index_name`, '` ON `', @schema_name, '`.`', `table_name`, '`;');
+                        PREPARE stmt FROM @text;
+                        EXECUTE stmt;
+                      END IF;
+                    END;
+
+                    """ );
         }
     }
 

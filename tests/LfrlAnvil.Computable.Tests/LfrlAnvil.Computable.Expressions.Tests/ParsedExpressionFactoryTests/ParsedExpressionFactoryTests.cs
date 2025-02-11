@@ -2713,8 +2713,10 @@ public partial class ParsedExpressionFactoryTests : TestsBase
     [Fact]
     public void DelegateInvoke_ShouldReturnCorrectResult_WhenExpressionContainsDelegateWithManyParameters()
     {
-        var input = @"( [ string a , string b , string c , string d , string e , string f , string g , string h , string i , string j ]
-a + b + c + d + e + f + g + h + i + j ) ( 'a' , 'b' , 'c' , 'd' , 'e' , 'f' , 'g' , 'h' , 'i' , 'j' )";
+        var input = """
+                    ( [ string a , string b , string c , string d , string e , string f , string g , string h , string i , string j ]
+                    a + b + c + d + e + f + g + h + i + j ) ( 'a' , 'b' , 'c' , 'd' , 'e' , 'f' , 'g' , 'h' , 'i' , 'j' )
+                    """;
 
         var builder = new ParsedExpressionFactoryBuilder()
             .AddTypeDeclaration<string>( "string" )
@@ -3393,8 +3395,10 @@ a + b + c + d + e + f + g + h + i + j ) ( 'a' , 'b' , 'c' , 'd' , 'e' , 'f' , 'g
     public void Create_ShouldThrowParsedExpressionCreationException_WhenDelegateWithClosureHasMoreThanFifteenParameters()
     {
         var input =
-            @"( [ int a , int b , int c , int d , int e , int f , int g , int h , int i , int j , int k , int l , int m , int n , int o , int p ]
-[] a + b + c + d + e + f + g + h + i + j + k + l + m + n + o + p + x ) ( 1 , 2 , 3 , 4 , 5 , 6 , 7 , 8 , 9 , 10 , 11 , 12 , 13 , 14 , 15 , 16 )";
+            """
+            ( [ int a , int b , int c , int d , int e , int f , int g , int h , int i , int j , int k , int l , int m , int n , int o , int p ]
+            [] a + b + c + d + e + f + g + h + i + j + k + l + m + n + o + p + x ) ( 1 , 2 , 3 , 4 , 5 , 6 , 7 , 8 , 9 , 10 , 11 , 12 , 13 , 14 , 15 , 16 )
+            """;
 
         var builder = new ParsedExpressionFactoryBuilder()
             .SetNumberParserProvider( p => ParsedExpressionNumberParser.CreateDefaultInt32( p.Configuration ) )

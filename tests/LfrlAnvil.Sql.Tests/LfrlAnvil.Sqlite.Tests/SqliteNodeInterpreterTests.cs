@@ -266,8 +266,10 @@ public partial class SqliteNodeInterpreterTests : TestsBase
         sut.Context.Sql.ToString()
             .Should()
             .Be(
-                @"WHEN foo.a > 10
-  THEN (foo.b)" );
+                """
+                WHEN foo.a > 10
+                  THEN (foo.b)
+                """ );
     }
 
     [Fact]
@@ -278,8 +280,10 @@ public partial class SqliteNodeInterpreterTests : TestsBase
         sut.Context.Sql.ToString()
             .Should()
             .Be(
-                @"WHEN foo.a > 10
-  THEN 25" );
+                """
+                WHEN foo.a > 10
+                  THEN 25
+                """ );
     }
 
     [Fact]
@@ -298,13 +302,15 @@ public partial class SqliteNodeInterpreterTests : TestsBase
         sut.Context.Sql.ToString()
             .Should()
             .Be(
-                @"CASE
-  WHEN foo.a > 10
-    THEN (foo.b)
-  WHEN foo.a > 5
-    THEN @a
-  ELSE 25
-END" );
+                """
+                CASE
+                  WHEN foo.a > 10
+                    THEN (foo.b)
+                  WHEN foo.a > 5
+                    THEN @a
+                  ELSE 25
+                END
+                """ );
     }
 
     [Fact]
@@ -323,15 +329,17 @@ END" );
         sut.Context.Sql.ToString()
             .Should()
             .Be(
-                @"(
-  CASE
-    WHEN foo.a > 10
-      THEN (foo.b)
-    WHEN foo.a > 5
-      THEN @a
-    ELSE 25
-  END
-)" );
+                """
+                (
+                  CASE
+                    WHEN foo.a > 10
+                      THEN (foo.b)
+                    WHEN foo.a > 5
+                      THEN @a
+                    ELSE 25
+                  END
+                )
+                """ );
     }
 
     [Fact]
@@ -501,9 +509,11 @@ END" );
         sut.Context.Sql.ToString()
             .Should()
             .Be(
-                @"(
-  SELECT * FROM foo
-) AS ""bar""" );
+                """
+                (
+                  SELECT * FROM foo
+                ) AS "bar"
+                """ );
     }
 
     [Fact]
@@ -514,9 +524,11 @@ END" );
         sut.Context.Sql.ToString()
             .Should()
             .Be(
-                @"((
-    SELECT * FROM foo
-  ) AS ""bar"")" );
+                """
+                ((
+                    SELECT * FROM foo
+                  ) AS "bar")
+                """ );
     }
 
     [Fact]
@@ -648,9 +660,11 @@ END" );
         sut.Context.Sql.ToString()
             .Should()
             .Be(
-                @"FROM foo
-INNER JOIN bar ON bar.a = foo.a
-LEFT JOIN qux ON qux.b = foo.b" );
+                """
+                FROM foo
+                INNER JOIN bar ON bar.a = foo.a
+                LEFT JOIN qux ON qux.b = foo.b
+                """ );
     }
 
     [Fact]
@@ -796,9 +810,11 @@ LEFT JOIN qux ON qux.b = foo.b" );
         sut.Context.Sql.ToString()
             .Should()
             .Be(
-                @"(
-  SELECT * FROM foo
-)" );
+                """
+                (
+                  SELECT * FROM foo
+                )
+                """ );
     }
 
     [Fact]
@@ -832,16 +848,18 @@ LEFT JOIN qux ON qux.b = foo.b" );
             sut.Context.Sql.ToString()
                 .Should()
                 .Be(
-                    @"SELECT
-  ""common_foo"".""a"",
-  ""common_foo"".""b"" AS ""x"",
-  ""lorem"".*,
-  ""common_qux"".""e"",
-  ""common_qux"".""f"" AS ""y"",
-  @p AS ""z""
-FROM ""common_foo""
-INNER JOIN ""common_bar"" AS ""lorem"" ON ""lorem"".""c"" = ""common_foo"".""a""
-LEFT JOIN ""common_qux"" ON ""common_qux"".""e"" = ""common_foo"".""b""" );
+                    """
+                    SELECT
+                      "common_foo"."a",
+                      "common_foo"."b" AS "x",
+                      "lorem".*,
+                      "common_qux"."e",
+                      "common_qux"."f" AS "y",
+                      @p AS "z"
+                    FROM "common_foo"
+                    INNER JOIN "common_bar" AS "lorem" ON "lorem"."c" = "common_foo"."a"
+                    LEFT JOIN "common_qux" ON "common_qux"."e" = "common_foo"."b"
+                    """ );
         }
     }
 
@@ -893,31 +911,33 @@ LEFT JOIN ""common_qux"" ON ""common_qux"".""e"" = ""common_foo"".""b""" );
         sut.Context.Sql.ToString()
             .Should()
             .Be(
-                @"WITH ""cba"" AS (
-  SELECT * FROM abc
-),
-""zyx"" AS (
-  SELECT * FROM xyz JOIN cba ON cba.h = xyz.h
-)
-SELECT DISTINCT
-  ""common_foo"".""b"" AS ""x"",
-  ""lorem"".""c"",
-  COUNT(*) AS ""v"",
-  (SUM(""common_foo"".""a"") OVER ""wnd1"") AS ""w""
-FROM ""common_foo""
-INNER JOIN ""common_bar"" AS ""lorem"" ON ""lorem"".""c"" = ""common_foo"".""a""
-LEFT JOIN ""common_qux"" ON ""common_qux"".""e"" = ""common_foo"".""b""
-WHERE (""common_qux"".""f"" > 50) AND (""common_foo"".""a"" IN (
-    SELECT
-      ""zyx"".""h""
-    FROM ""zyx""
-  ))
-GROUP BY ""common_foo"".""b"", ""lorem"".""c""
-HAVING (""common_foo"".""b"" < 100) OR (""lorem"".""c"" BETWEEN 0 AND 75)
-WINDOW ""wnd1"" AS (PARTITION BY ""common_foo"".""a"", ""common_qux"".""e"" ORDER BY ""common_foo"".""b"" ASC),
-  ""wnd2"" AS (ORDER BY ""common_qux"".""e"" ASC, ""common_qux"".""f"" DESC ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW)
-ORDER BY ""common_foo"".""b"" ASC, ""lorem"".""c"" DESC
-LIMIT 50 OFFSET 100" );
+                """
+                WITH "cba" AS (
+                  SELECT * FROM abc
+                ),
+                "zyx" AS (
+                  SELECT * FROM xyz JOIN cba ON cba.h = xyz.h
+                )
+                SELECT DISTINCT
+                  "common_foo"."b" AS "x",
+                  "lorem"."c",
+                  COUNT(*) AS "v",
+                  (SUM("common_foo"."a") OVER "wnd1") AS "w"
+                FROM "common_foo"
+                INNER JOIN "common_bar" AS "lorem" ON "lorem"."c" = "common_foo"."a"
+                LEFT JOIN "common_qux" ON "common_qux"."e" = "common_foo"."b"
+                WHERE ("common_qux"."f" > 50) AND ("common_foo"."a" IN (
+                    SELECT
+                      "zyx"."h"
+                    FROM "zyx"
+                  ))
+                GROUP BY "common_foo"."b", "lorem"."c"
+                HAVING ("common_foo"."b" < 100) OR ("lorem"."c" BETWEEN 0 AND 75)
+                WINDOW "wnd1" AS (PARTITION BY "common_foo"."a", "common_qux"."e" ORDER BY "common_foo"."b" ASC),
+                  "wnd2" AS (ORDER BY "common_qux"."e" ASC, "common_qux"."f" DESC ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW)
+                ORDER BY "common_foo"."b" ASC, "lorem"."c" DESC
+                LIMIT 50 OFFSET 100
+                """ );
     }
 
     [Fact]
@@ -939,21 +959,23 @@ LIMIT 50 OFFSET 100" );
         sut.Context.Sql.ToString()
             .Should()
             .Be(
-                @"WITH RECURSIVE ""cba"" AS (
-  SELECT * FROM abc
-),
-""zyx"" AS (
-  
-  SELECT * FROM xyz JOIN cba ON cba.h = xyz.h
+                """
+                WITH RECURSIVE "cba" AS (
+                  SELECT * FROM abc
+                ),
+                "zyx" AS (
+                  
+                  SELECT * FROM xyz JOIN cba ON cba.h = xyz.h
+                
+                  UNION
+                  
+                  SELECT * FROM zyx
 
-  UNION
-  
-  SELECT * FROM zyx
-
-)
-SELECT
-  foo.""a""
-FROM foo" );
+                )
+                SELECT
+                  foo."a"
+                FROM foo
+                """ );
     }
 
     [Fact]
@@ -970,10 +992,12 @@ FROM foo" );
         sut.Context.Sql.ToString()
             .Should()
             .Be(
-                @"SELECT
-  foo.""a""
-FROM foo
-LIMIT 100" );
+                """
+                SELECT
+                  foo."a"
+                FROM foo
+                LIMIT 100
+                """ );
     }
 
     [Fact]
@@ -990,10 +1014,12 @@ LIMIT 100" );
         sut.Context.Sql.ToString()
             .Should()
             .Be(
-                @"SELECT
-  foo.""a""
-FROM foo
-LIMIT -1 OFFSET 100" );
+                """
+                SELECT
+                  foo."a"
+                FROM foo
+                LIMIT -1 OFFSET 100
+                """ );
     }
 
     [Fact]
@@ -1010,11 +1036,13 @@ LIMIT -1 OFFSET 100" );
         sut.Context.Sql.ToString()
             .Should()
             .Be(
-                @"(
-  SELECT
-    *
-  FROM ""common_foo""
-)" );
+                """
+                (
+                  SELECT
+                    *
+                  FROM "common_foo"
+                )
+                """ );
     }
 
     [Fact]
@@ -1029,11 +1057,13 @@ LIMIT -1 OFFSET 100" );
         sut.Context.Sql.ToString()
             .Should()
             .Be(
-                @"SELECT * FROM foo
-UNION ALL
-SELECT * FROM bar
-UNION
-SELECT * FROM qux" );
+                """
+                SELECT * FROM foo
+                UNION ALL
+                SELECT * FROM bar
+                UNION
+                SELECT * FROM qux
+                """ );
     }
 
     [Fact]
@@ -1053,16 +1083,18 @@ SELECT * FROM qux" );
         sut.Context.Sql.ToString()
             .Should()
             .Be(
-                @"WITH ""x"" AS (
-  SELECT * FROM lorem
-)
-SELECT foo.* FROM foo JOIN x ON x.a = foo.a
-UNION ALL
-SELECT * FROM bar
-UNION
-SELECT * FROM qux
-ORDER BY (a) ASC, (b) DESC
-LIMIT 50 OFFSET 75" );
+                """
+                WITH "x" AS (
+                  SELECT * FROM lorem
+                )
+                SELECT foo.* FROM foo JOIN x ON x.a = foo.a
+                UNION ALL
+                SELECT * FROM bar
+                UNION
+                SELECT * FROM qux
+                ORDER BY (a) ASC, (b) DESC
+                LIMIT 50 OFFSET 75
+                """ );
     }
 
     [Fact]
@@ -1077,19 +1109,21 @@ LIMIT 50 OFFSET 75" );
         sut.Context.Sql.ToString()
             .Should()
             .Be(
-                @"(
-  
-  SELECT * FROM foo
+                """
+                (
+                  
+                  SELECT * FROM foo
+                
+                  UNION ALL
+                  
+                  SELECT * FROM bar
+                
+                  UNION
+                  
+                  SELECT * FROM qux
 
-  UNION ALL
-  
-  SELECT * FROM bar
-
-  UNION
-  
-  SELECT * FROM qux
-
-)" );
+                )
+                """ );
     }
 
     [Fact]
@@ -1101,8 +1135,10 @@ LIMIT 50 OFFSET 75" );
         sut.Context.Sql.ToString()
             .Should()
             .Be(
-                @"EXCEPT
-SELECT * FROM qux" );
+                """
+                EXCEPT
+                SELECT * FROM qux
+                """ );
     }
 
     [Fact]
@@ -1114,8 +1150,10 @@ SELECT * FROM qux" );
         sut.Context.Sql.ToString()
             .Should()
             .Be(
-                @"INTERSECT
-SELECT * FROM qux" );
+                """
+                INTERSECT
+                SELECT * FROM qux
+                """ );
     }
 
     [Fact]
@@ -1186,12 +1224,14 @@ SELECT * FROM qux" );
         sut.Context.Sql.ToString()
             .Should()
             .Be(
-                @"WITH ""A"" AS (
-  SELECT * FROM foo
-),
-""B"" AS (
-  SELECT * FROM bar
-)" );
+                """
+                WITH "A" AS (
+                  SELECT * FROM foo
+                ),
+                "B" AS (
+                  SELECT * FROM bar
+                )
+                """ );
     }
 
     [Fact]
@@ -1206,18 +1246,20 @@ SELECT * FROM qux" );
         sut.Context.Sql.ToString()
             .Should()
             .Be(
-                @"WITH RECURSIVE ""A"" AS (
-  SELECT * FROM foo
-),
-""B"" AS (
-  
-  SELECT * FROM bar
+                """
+                WITH RECURSIVE "A" AS (
+                  SELECT * FROM foo
+                ),
+                "B" AS (
+                  
+                  SELECT * FROM bar
+                
+                  UNION
+                  
+                  SELECT * FROM B
 
-  UNION
-  
-  SELECT * FROM B
-
-)" );
+                )
+                """ );
     }
 
     [Fact]
@@ -1244,8 +1286,10 @@ SELECT * FROM qux" );
         sut.Context.Sql.ToString()
             .Should()
             .Be(
-                @"WINDOW ""foo"" AS (ORDER BY (qux.a) ASC),
-  ""bar"" AS (PARTITION BY (qux.a) ORDER BY (qux.b) DESC ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW)" );
+                """
+                WINDOW "foo" AS (ORDER BY (qux.a) ASC),
+                  "bar" AS (PARTITION BY (qux.a) ORDER BY (qux.b) DESC ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW)
+                """ );
     }
 
     [Fact]
@@ -1276,15 +1320,17 @@ SELECT * FROM qux" );
         sut.Context.Sql.ToString()
             .Should()
             .Be(
-                @"""A"" AS (
-  
-  SELECT * FROM foo
+                """
+                "A" AS (
+                  
+                  SELECT * FROM foo
+                
+                  UNION ALL
+                  
+                  SELECT * FROM A WHERE A.depth < 10
 
-  UNION ALL
-  
-  SELECT * FROM A WHERE A.depth < 10
-
-)" );
+                )
+                """ );
     }
 
     [Fact]
@@ -1359,9 +1405,11 @@ SELECT * FROM qux" );
         sut.Context.Sql.ToString()
             .Should()
             .Be(
-                @"VALUES
-('foo', 5),
-((bar.a), 25)" );
+                """
+                VALUES
+                ('foo', 5),
+                ((bar.a), 25)
+                """ );
     }
 
     [Fact]
@@ -1370,8 +1418,10 @@ SELECT * FROM qux" );
         var sut = CreateInterpreter();
         sut.Visit(
             SqlNode.RawStatement(
-                @"INSERT INTO foo (a, b)
-VALUES (@a, 1)",
+                """
+                INSERT INTO foo (a, b)
+                VALUES (@a, 1)
+                """,
                 SqlNode.Parameter<int>( "a" ) ) );
 
         using ( new AssertionScope() )
@@ -1379,8 +1429,10 @@ VALUES (@a, 1)",
             sut.Context.Sql.ToString()
                 .Should()
                 .Be(
-                    @"INSERT INTO foo (a, b)
-VALUES (@a, 1)" );
+                    """
+                    INSERT INTO foo (a, b)
+                    VALUES (@a, 1)
+                    """ );
 
             sut.Context.Parameters.Should()
                 .BeSequentiallyEqualTo( new SqlNodeInterpreterContextParameter( "a", TypeNullability.Create<int>(), null ) );
@@ -1402,10 +1454,12 @@ VALUES (@a, 1)" );
         sut.Context.Sql.ToString()
             .Should()
             .Be(
-                @"INSERT INTO qux (""a"", ""b"")
-VALUES
-('foo', 5),
-((bar.a), 25)" );
+                """
+                INSERT INTO qux ("a", "b")
+                VALUES
+                ('foo', 5),
+                ((bar.a), 25)
+                """ );
     }
 
     [Fact]
@@ -1418,8 +1472,10 @@ VALUES
         sut.Context.Sql.ToString()
             .Should()
             .Be(
-                @"INSERT INTO qux (""a"", ""b"")
-SELECT a, b FROM foo" );
+                """
+                INSERT INTO qux ("a", "b")
+                SELECT a, b FROM foo
+                """ );
     }
 
     [Fact]
@@ -1452,23 +1508,25 @@ SELECT a, b FROM foo" );
         sut.Context.Sql.ToString()
             .Should()
             .Be(
-                @"WITH ""cba"" AS (
-  SELECT * FROM abc
-)
-INSERT INTO qux (""a"", ""b"")
-SELECT DISTINCT
-  ""common_foo"".""b"" AS ""a"",
-  (COUNT(*) OVER ""wnd"") AS ""b""
-FROM ""common_foo""
-INNER JOIN ""common_bar"" ON ""common_bar"".""c"" = ""common_foo"".""a""
-WHERE ""common_bar"".""c"" IN (
-  SELECT cba.c FROM cba
-)
-GROUP BY ""common_foo"".""b""
-HAVING ""common_foo"".""b"" < 100
-WINDOW ""wnd"" AS (ORDER BY ""common_foo"".""a"" ASC)
-ORDER BY ""common_foo"".""b"" ASC
-LIMIT 50 OFFSET 100" );
+                """
+                WITH "cba" AS (
+                  SELECT * FROM abc
+                )
+                INSERT INTO qux ("a", "b")
+                SELECT DISTINCT
+                  "common_foo"."b" AS "a",
+                  (COUNT(*) OVER "wnd") AS "b"
+                FROM "common_foo"
+                INNER JOIN "common_bar" ON "common_bar"."c" = "common_foo"."a"
+                WHERE "common_bar"."c" IN (
+                  SELECT cba.c FROM cba
+                )
+                GROUP BY "common_foo"."b"
+                HAVING "common_foo"."b" < 100
+                WINDOW "wnd" AS (ORDER BY "common_foo"."a" ASC)
+                ORDER BY "common_foo"."b" ASC
+                LIMIT 50 OFFSET 100
+                """ );
     }
 
     [Fact]
@@ -1487,17 +1545,19 @@ LIMIT 50 OFFSET 100" );
         sut.Context.Sql.ToString()
             .Should()
             .Be(
-                @"WITH ""x"" AS (
-  SELECT * FROM ipsum
-)
-INSERT INTO lorem (""a"", ""b"")
-SELECT foo.a, foo.b FROM foo JOIN x ON x.a = foo.a
-UNION ALL
-SELECT a, b FROM bar
-UNION
-SELECT a, b FROM qux
-ORDER BY (a) ASC
-LIMIT 50 OFFSET 75" );
+                """
+                WITH "x" AS (
+                  SELECT * FROM ipsum
+                )
+                INSERT INTO lorem ("a", "b")
+                SELECT foo.a, foo.b FROM foo JOIN x ON x.a = foo.a
+                UNION ALL
+                SELECT a, b FROM bar
+                UNION
+                SELECT a, b FROM qux
+                ORDER BY (a) ASC
+                LIMIT 50 OFFSET 75
+                """ );
     }
 
     [Fact]
@@ -1520,8 +1580,10 @@ LIMIT 50 OFFSET 75" );
         sut.Context.Sql.ToString()
             .Should()
             .Be(
-                @"DELETE FROM ""common_foo"";
-DELETE FROM ""SQLITE_SEQUENCE"" WHERE ""name"" = 'common_foo'" );
+                """
+                DELETE FROM "common_foo";
+                DELETE FROM "SQLITE_SEQUENCE" WHERE "name" = 'common_foo'
+                """ );
     }
 
     [Fact]
@@ -1536,8 +1598,10 @@ DELETE FROM ""SQLITE_SEQUENCE"" WHERE ""name"" = 'common_foo'" );
         sut.Context.Sql.ToString()
             .Should()
             .Be(
-                @"DELETE FROM temp.""foo"";
-DELETE FROM temp.""SQLITE_SEQUENCE"" WHERE ""name"" = 'foo'" );
+                """
+                DELETE FROM temp."foo";
+                DELETE FROM temp."SQLITE_SEQUENCE" WHERE "name" = 'foo'
+                """ );
     }
 
     [Fact]
@@ -1552,8 +1616,10 @@ DELETE FROM temp.""SQLITE_SEQUENCE"" WHERE ""name"" = 'foo'" );
         sut.Context.Sql.ToString()
             .Should()
             .Be(
-                @"DELETE FROM ""qux"";
-DELETE FROM ""SQLITE_SEQUENCE"" WHERE ""name"" = 'qux'" );
+                """
+                DELETE FROM "qux";
+                DELETE FROM "SQLITE_SEQUENCE" WHERE "name" = 'qux'
+                """ );
     }
 
     [Fact]
@@ -1571,16 +1637,18 @@ DELETE FROM ""SQLITE_SEQUENCE"" WHERE ""name"" = 'qux'" );
         sut.Context.Sql.ToString()
             .Should()
             .Be(
-                @"PRAGMA read_uncommitted = 0;
-BEGIN IMMEDIATE;
+                """
+                PRAGMA read_uncommitted = 0;
+                BEGIN IMMEDIATE;
 
-DROP TABLE temp.""bar"";
+                DROP TABLE temp."bar";
 
-SELECT * FROM foo;
+                SELECT * FROM foo;
 
-SELECT * FROM qux;
+                SELECT * FROM qux;
 
-COMMIT;" );
+                COMMIT;
+                """ );
     }
 
     [Theory]
@@ -1598,8 +1666,10 @@ COMMIT;" );
         sut.Context.Sql.ToString()
             .Should()
             .Be(
-                @"PRAGMA read_uncommitted = 0;
-BEGIN IMMEDIATE" );
+                """
+                PRAGMA read_uncommitted = 0;
+                BEGIN IMMEDIATE
+                """ );
     }
 
     [Fact]
@@ -1611,8 +1681,10 @@ BEGIN IMMEDIATE" );
         sut.Context.Sql.ToString()
             .Should()
             .Be(
-                @"PRAGMA read_uncommitted = 1;
-BEGIN" );
+                """
+                PRAGMA read_uncommitted = 1;
+                BEGIN
+                """ );
     }
 
     [Fact]

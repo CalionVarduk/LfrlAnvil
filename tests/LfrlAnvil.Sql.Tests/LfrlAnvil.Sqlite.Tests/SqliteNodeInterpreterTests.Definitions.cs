@@ -185,14 +185,16 @@ public partial class SqliteNodeInterpreterTests
             sut.Context.Sql.ToString()
                 .Should()
                 .Be(
-                    $@"CREATE TABLE{(ifNotExists ? " IF NOT EXISTS" : string.Empty)} {expectedName} (
-  ""x"" INTEGER NOT NULL,
-  ""y"" TEXT,
-  ""z"" REAL NOT NULL DEFAULT (10.5),
-  CONSTRAINT ""PK_foobar"" PRIMARY KEY (""x"" ASC),
-  CONSTRAINT ""FK_foobar_REF_qux"" FOREIGN KEY (""y"") REFERENCES qux (""y"") ON DELETE RESTRICT ON UPDATE RESTRICT,
-  CONSTRAINT ""CHK_foobar"" CHECK (""z"" > 100.0)
-) WITHOUT ROWID" );
+                    $"""
+                     CREATE TABLE{(ifNotExists ? " IF NOT EXISTS" : string.Empty)} {expectedName} (
+                       "x" INTEGER NOT NULL,
+                       "y" TEXT,
+                       "z" REAL NOT NULL DEFAULT (10.5),
+                       CONSTRAINT "PK_foobar" PRIMARY KEY ("x" ASC),
+                       CONSTRAINT "FK_foobar_REF_qux" FOREIGN KEY ("y") REFERENCES qux ("y") ON DELETE RESTRICT ON UPDATE RESTRICT,
+                       CONSTRAINT "CHK_foobar" CHECK ("z" > 100.0)
+                     ) WITHOUT ROWID
+                     """ );
         }
 
         [Theory]
@@ -232,14 +234,16 @@ public partial class SqliteNodeInterpreterTests
             sut.Context.Sql.ToString()
                 .Should()
                 .Be(
-                    $@"CREATE TABLE{(ifNotExists ? " IF NOT EXISTS" : string.Empty)} {expectedName} (
-  ""x"" INTEGER NOT NULL,
-  ""y"" TEXT,
-  ""z"" REAL NOT NULL DEFAULT (10.5),
-  CONSTRAINT ""PK_foobar"" PRIMARY KEY (""x"" ASC),
-  CONSTRAINT ""FK_foobar_REF_qux"" FOREIGN KEY (""y"") REFERENCES qux (""y"") ON DELETE RESTRICT ON UPDATE RESTRICT,
-  CONSTRAINT ""CHK_foobar"" CHECK (""z"" > 100.0)
-) WITHOUT ROWID, STRICT" );
+                    $"""
+                     CREATE TABLE{(ifNotExists ? " IF NOT EXISTS" : string.Empty)} {expectedName} (
+                       "x" INTEGER NOT NULL,
+                       "y" TEXT,
+                       "z" REAL NOT NULL DEFAULT (10.5),
+                       CONSTRAINT "PK_foobar" PRIMARY KEY ("x" ASC),
+                       CONSTRAINT "FK_foobar_REF_qux" FOREIGN KEY ("y") REFERENCES qux ("y") ON DELETE RESTRICT ON UPDATE RESTRICT,
+                       CONSTRAINT "CHK_foobar" CHECK ("z" > 100.0)
+                     ) WITHOUT ROWID, STRICT
+                     """ );
         }
 
         [Theory]
@@ -255,8 +259,10 @@ public partial class SqliteNodeInterpreterTests
             sut.Context.Sql.ToString()
                 .Should()
                 .Be(
-                    $@"CREATE VIEW {expectedName} AS
-SELECT * FROM qux" );
+                    $"""
+                     CREATE VIEW {expectedName} AS
+                     SELECT * FROM qux
+                     """ );
         }
 
         [Theory]
@@ -272,9 +278,11 @@ SELECT * FROM qux" );
             sut.Context.Sql.ToString()
                 .Should()
                 .Be(
-                    $@"DROP VIEW IF EXISTS {expectedName};
-CREATE VIEW {expectedName} AS
-SELECT * FROM qux" );
+                    $"""
+                     DROP VIEW IF EXISTS {expectedName};
+                     CREATE VIEW {expectedName} AS
+                     SELECT * FROM qux
+                     """ );
         }
 
         [Theory]
@@ -336,8 +344,10 @@ SELECT * FROM qux" );
             sut.Context.Sql.ToString()
                 .Should()
                 .Be(
-                    $@"DROP INDEX IF EXISTS ""foo_bar"";
-CREATE {expectedType} ""foo_bar"" ON qux (""a"" ASC, ""b"" DESC)" );
+                    $"""
+                     DROP INDEX IF EXISTS "foo_bar";
+                     CREATE {expectedType} "foo_bar" ON qux ("a" ASC, "b" DESC)
+                     """ );
         }
 
         [Fact]

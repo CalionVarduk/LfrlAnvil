@@ -12,7 +12,7 @@ public class SemaphoreEntrySlimTests : TestsBase
     {
         var semaphore = new SemaphoreSlim( initialCount: 1 );
         _ = SemaphoreEntrySlim.Enter( semaphore );
-        semaphore.CurrentCount.Should().Be( 0 );
+        semaphore.CurrentCount.TestEquals( 0 ).Go();
     }
 
     [Fact]
@@ -23,7 +23,7 @@ public class SemaphoreEntrySlimTests : TestsBase
 
         var action = Lambda.Of( () => SemaphoreEntrySlim.Enter( semaphore ) );
 
-        action.Should().Throw<ObjectDisposedException>();
+        action.Test( exc => exc.TestType().AssignableTo<ObjectDisposedException>() ).Go();
     }
 
     [Fact]
@@ -32,12 +32,11 @@ public class SemaphoreEntrySlimTests : TestsBase
         var semaphore = new SemaphoreSlim( initialCount: 1 );
         var result = SemaphoreEntrySlim.TryEnter( semaphore, out var entered );
 
-        using ( new AssertionScope() )
-        {
-            semaphore.CurrentCount.Should().Be( 0 );
-            result.Entered.Should().Be( entered );
-            entered.Should().BeTrue();
-        }
+        Assertion.All(
+                semaphore.CurrentCount.TestEquals( 0 ),
+                result.Entered.TestEquals( entered ),
+                entered.TestTrue() )
+            .Go();
     }
 
     [Fact]
@@ -48,12 +47,11 @@ public class SemaphoreEntrySlimTests : TestsBase
 
         var result = SemaphoreEntrySlim.TryEnter( semaphore, out var entered );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( default( SemaphoreEntrySlim ) );
-            result.Entered.Should().Be( entered );
-            entered.Should().BeFalse();
-        }
+        Assertion.All(
+                result.TestEquals( default ),
+                result.Entered.TestEquals( entered ),
+                entered.TestFalse() )
+            .Go();
     }
 
     [Fact]
@@ -61,26 +59,18 @@ public class SemaphoreEntrySlimTests : TestsBase
     {
         var semaphore = new SemaphoreSlim( initialCount: 1 );
         _ = await SemaphoreEntrySlim.EnterAsync( semaphore );
-        semaphore.CurrentCount.Should().Be( 0 );
+        semaphore.CurrentCount.TestEquals( 0 ).Go();
     }
 
     [Fact]
-    public async Task EnterAsync_ShouldThrow_WhenSemaphoreIsDisposed()
+    public void EnterAsync_ShouldThrow_WhenSemaphoreIsDisposed()
     {
         var semaphore = new SemaphoreSlim( initialCount: 1 );
         semaphore.Dispose();
 
-        Exception? exception = null;
-        try
-        {
-            await SemaphoreEntrySlim.EnterAsync( semaphore );
-        }
-        catch ( Exception exc )
-        {
-            exception = exc;
-        }
+        var action = Lambda.Of( async () => await SemaphoreEntrySlim.EnterAsync( semaphore ) );
 
-        exception.Should().BeOfType<ObjectDisposedException>();
+        action.Test( exc => exc.TestType().AssignableTo<ObjectDisposedException>() ).Go();
     }
 
     [Fact]
@@ -89,11 +79,10 @@ public class SemaphoreEntrySlimTests : TestsBase
         var semaphore = new SemaphoreSlim( initialCount: 1 );
         var result = await SemaphoreEntrySlim.TryEnterAsync( semaphore );
 
-        using ( new AssertionScope() )
-        {
-            semaphore.CurrentCount.Should().Be( 0 );
-            result.Entered.Should().BeTrue();
-        }
+        Assertion.All(
+                semaphore.CurrentCount.TestEquals( 0 ),
+                result.Entered.TestTrue() )
+            .Go();
     }
 
     [Fact]
@@ -104,11 +93,10 @@ public class SemaphoreEntrySlimTests : TestsBase
 
         var result = await SemaphoreEntrySlim.TryEnterAsync( semaphore );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( default( SemaphoreEntrySlim ) );
-            result.Entered.Should().BeFalse();
-        }
+        Assertion.All(
+                result.TestEquals( default ),
+                result.Entered.TestFalse() )
+            .Go();
     }
 
     [Fact]
@@ -119,7 +107,7 @@ public class SemaphoreEntrySlimTests : TestsBase
 
         sut.Dispose();
 
-        semaphore.CurrentCount.Should().Be( 2 );
+        semaphore.CurrentCount.TestEquals( 2 ).Go();
     }
 
     [Fact]
@@ -127,7 +115,7 @@ public class SemaphoreEntrySlimTests : TestsBase
     {
         var sut = default( SemaphoreEntrySlim );
         var action = Lambda.Of( () => sut.Dispose() );
-        action.Should().NotThrow();
+        action.Test( exc => exc.TestNull() ).Go();
     }
 
     [Fact]
@@ -139,7 +127,7 @@ public class SemaphoreEntrySlimTests : TestsBase
 
         var action = Lambda.Of( () => sut.Dispose() );
 
-        action.Should().NotThrow();
+        action.Test( exc => exc.TestNull() ).Go();
     }
 
     [Fact]
@@ -157,12 +145,11 @@ public class SemaphoreEntrySlimTests : TestsBase
         first.Dispose();
         var countAfterSecondDisposal = semaphore.CurrentCount;
 
-        using ( new AssertionScope() )
-        {
-            firstCount.Should().Be( 1 );
-            secondCount.Should().Be( 0 );
-            countAfterFirstDisposal.Should().Be( 1 );
-            countAfterSecondDisposal.Should().Be( 2 );
-        }
+        Assertion.All(
+                firstCount.TestEquals( 1 ),
+                secondCount.TestEquals( 0 ),
+                countAfterFirstDisposal.TestEquals( 1 ),
+                countAfterSecondDisposal.TestEquals( 2 ) )
+            .Go();
     }
 }

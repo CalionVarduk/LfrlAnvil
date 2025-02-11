@@ -12,11 +12,10 @@ public class MeasurableTests : TestsBase
     {
         var sut = new MeasurableMock();
 
-        using ( new AssertionScope() )
-        {
-            sut.State.Should().Be( MeasurableState.Ready );
-            sut.Measurement.Should().BeEquivalentTo( TimeMeasurement.Zero );
-        }
+        Assertion.All(
+                sut.State.TestEquals( MeasurableState.Ready ),
+                sut.Measurement.TestEquals( TimeMeasurement.Zero ) )
+            .Go();
     }
 
     [Fact]
@@ -26,18 +25,18 @@ public class MeasurableTests : TestsBase
 
         sut.Invoke();
 
-        using ( new AssertionScope() )
-        {
-            sut.State.Should().Be( MeasurableState.Done );
-            sut.Measurement.Should().NotBeEquivalentTo( TimeMeasurement.Zero );
-            sut.Actions.Should()
-                .BeEquivalentTo(
+        Assertion.All(
+                sut.State.TestEquals( MeasurableState.Done ),
+                sut.Measurement.TestNotEquals( TimeMeasurement.Zero ),
+                sut.Actions.TestSequence(
+                [
                     ("Prepare", MeasurableState.Preparing, TimeMeasurement.Zero),
                     ("Run", MeasurableState.Running, new TimeMeasurement( sut.Measurement.Preparation, TimeSpan.Zero, TimeSpan.Zero )),
                     ("Teardown", MeasurableState.TearingDown,
                         new TimeMeasurement( sut.Measurement.Preparation, sut.Measurement.Invocation, TimeSpan.Zero )),
-                    ("Done", MeasurableState.Done, sut.Measurement) );
-        }
+                    ("Done", MeasurableState.Done, sut.Measurement)
+                ] ) )
+            .Go();
     }
 
     [Fact]
@@ -47,19 +46,20 @@ public class MeasurableTests : TestsBase
 
         var action = Lambda.Of( () => sut.Invoke() );
 
-        using ( new AssertionScope() )
-        {
-            action.Should().Throw<Exception>();
-            sut.State.Should().Be( MeasurableState.Done );
-            sut.Measurement.Should().NotBeEquivalentTo( TimeMeasurement.Zero );
-            sut.Actions.Should()
-                .BeEquivalentTo(
-                    ("Prepare", MeasurableState.Preparing, TimeMeasurement.Zero),
-                    ("Run", MeasurableState.Running, new TimeMeasurement( sut.Measurement.Preparation, TimeSpan.Zero, TimeSpan.Zero )),
-                    ("Teardown", MeasurableState.TearingDown,
-                        new TimeMeasurement( sut.Measurement.Preparation, sut.Measurement.Invocation, TimeSpan.Zero )),
-                    ("Done", MeasurableState.Done, sut.Measurement) );
-        }
+        action.Test(
+                exc => Assertion.All(
+                    exc.TestNotNull(),
+                    sut.State.TestEquals( MeasurableState.Done ),
+                    sut.Measurement.TestNotEquals( TimeMeasurement.Zero ),
+                    sut.Actions.TestSequence(
+                    [
+                        ("Prepare", MeasurableState.Preparing, TimeMeasurement.Zero),
+                        ("Run", MeasurableState.Running, new TimeMeasurement( sut.Measurement.Preparation, TimeSpan.Zero, TimeSpan.Zero )),
+                        ("Teardown", MeasurableState.TearingDown,
+                            new TimeMeasurement( sut.Measurement.Preparation, sut.Measurement.Invocation, TimeSpan.Zero )),
+                        ("Done", MeasurableState.Done, sut.Measurement)
+                    ] ) ) )
+            .Go();
     }
 
     [Fact]
@@ -70,7 +70,7 @@ public class MeasurableTests : TestsBase
 
         var action = Lambda.Of( () => sut.Invoke() );
 
-        action.Should().ThrowExactly<InvalidOperationException>();
+        action.Test( exc => exc.TestType().Exact<InvalidOperationException>() ).Go();
     }
 }
 

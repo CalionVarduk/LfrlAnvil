@@ -1,6 +1,5 @@
 ﻿using System.Linq;
 using LfrlAnvil.Functional;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Tests.ChainTests;
 
@@ -11,12 +10,11 @@ public abstract class GenericChainTests<T> : TestsBase
     {
         var sut = default( Chain<T> );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 0 );
-            sut.IsAttached.Should().BeFalse();
-            sut.IsExtendable.Should().BeTrue();
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 0 ),
+                sut.IsAttached.TestFalse(),
+                sut.IsExtendable.TestTrue() )
+            .Go();
     }
 
     [Fact]
@@ -24,12 +22,11 @@ public abstract class GenericChainTests<T> : TestsBase
     {
         var sut = Chain<T>.Empty;
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 0 );
-            sut.IsAttached.Should().BeFalse();
-            sut.IsExtendable.Should().BeTrue();
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 0 ),
+                sut.IsAttached.TestFalse(),
+                sut.IsExtendable.TestTrue() )
+            .Go();
     }
 
     [Fact]
@@ -38,13 +35,12 @@ public abstract class GenericChainTests<T> : TestsBase
         var value = Fixture.Create<T>();
         var sut = Chain.Create( value );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 1 );
-            sut.IsAttached.Should().BeFalse();
-            sut.IsExtendable.Should().BeTrue();
-            sut.Should().BeSequentiallyEqualTo( value );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 1 ),
+                sut.IsAttached.TestFalse(),
+                sut.IsExtendable.TestTrue(),
+                sut.TestSequence( [ value ] ) )
+            .Go();
     }
 
     [Fact]
@@ -53,13 +49,12 @@ public abstract class GenericChainTests<T> : TestsBase
         var values = Fixture.CreateManyDistinct<T>( count: 3 );
         var sut = Chain.Create( values.AsEnumerable() );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( values.Length );
-            sut.IsAttached.Should().BeFalse();
-            sut.IsExtendable.Should().BeTrue();
-            sut.Should().BeSequentiallyEqualTo( values );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( values.Length ),
+                sut.IsAttached.TestFalse(),
+                sut.IsExtendable.TestTrue(),
+                sut.TestSequence( values ) )
+            .Go();
     }
 
     [Fact]
@@ -69,15 +64,14 @@ public abstract class GenericChainTests<T> : TestsBase
         var other = Chain.Create( values.AsEnumerable() );
         var sut = Chain.Create( other );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( other.Count );
-            sut.IsAttached.Should().BeFalse();
-            sut.IsExtendable.Should().BeTrue();
-            sut.Should().BeSequentiallyEqualTo( other );
-            other.IsAttached.Should().BeFalse();
-            other.IsExtendable.Should().BeTrue();
-        }
+        Assertion.All(
+                sut.Count.TestEquals( other.Count ),
+                sut.IsAttached.TestFalse(),
+                sut.IsExtendable.TestTrue(),
+                sut.TestSequence( other ),
+                other.IsAttached.TestFalse(),
+                other.IsExtendable.TestTrue() )
+            .Go();
     }
 
     [Fact]
@@ -88,15 +82,14 @@ public abstract class GenericChainTests<T> : TestsBase
         _ = other.Extend( values.Last() );
         var sut = Chain.Create( other );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( other.Count );
-            sut.IsAttached.Should().BeFalse();
-            sut.IsExtendable.Should().BeTrue();
-            sut.Should().BeSequentiallyEqualTo( other );
-            other.IsAttached.Should().BeFalse();
-            other.IsExtendable.Should().BeFalse();
-        }
+        Assertion.All(
+                sut.Count.TestEquals( other.Count ),
+                sut.IsAttached.TestFalse(),
+                sut.IsExtendable.TestTrue(),
+                sut.TestSequence( other ),
+                other.IsAttached.TestFalse(),
+                other.IsExtendable.TestFalse() )
+            .Go();
     }
 
     [Fact]
@@ -105,13 +98,12 @@ public abstract class GenericChainTests<T> : TestsBase
         var value = Fixture.Create<T>();
         var sut = new Chain<T>( value );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 1 );
-            sut.IsAttached.Should().BeFalse();
-            sut.IsExtendable.Should().BeTrue();
-            sut.Should().BeSequentiallyEqualTo( value );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 1 ),
+                sut.IsAttached.TestFalse(),
+                sut.IsExtendable.TestTrue(),
+                sut.TestSequence( [ value ] ) )
+            .Go();
     }
 
     [Fact]
@@ -120,13 +112,12 @@ public abstract class GenericChainTests<T> : TestsBase
         var values = Fixture.CreateManyDistinct<T>( count: 3 );
         var sut = new Chain<T>( values.AsEnumerable() );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( values.Length );
-            sut.IsAttached.Should().BeFalse();
-            sut.IsExtendable.Should().BeTrue();
-            sut.Should().BeSequentiallyEqualTo( values );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( values.Length ),
+                sut.IsAttached.TestFalse(),
+                sut.IsExtendable.TestTrue(),
+                sut.TestSequence( values ) )
+            .Go();
     }
 
     [Fact]
@@ -134,13 +125,12 @@ public abstract class GenericChainTests<T> : TestsBase
     {
         var sut = new Chain<T>( Enumerable.Empty<T>() );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 0 );
-            sut.IsAttached.Should().BeFalse();
-            sut.IsExtendable.Should().BeTrue();
-            sut.Should().BeEmpty();
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 0 ),
+                sut.IsAttached.TestFalse(),
+                sut.IsExtendable.TestTrue(),
+                sut.TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -150,15 +140,14 @@ public abstract class GenericChainTests<T> : TestsBase
         var other = new Chain<T>( values.AsEnumerable() );
         var sut = new Chain<T>( other );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( other.Count );
-            sut.IsAttached.Should().BeFalse();
-            sut.IsExtendable.Should().BeTrue();
-            sut.Should().BeSequentiallyEqualTo( other );
-            other.IsAttached.Should().BeFalse();
-            other.IsExtendable.Should().BeTrue();
-        }
+        Assertion.All(
+                sut.Count.TestEquals( other.Count ),
+                sut.IsAttached.TestFalse(),
+                sut.IsExtendable.TestTrue(),
+                sut.TestSequence( other ),
+                other.IsAttached.TestFalse(),
+                other.IsExtendable.TestTrue() )
+            .Go();
     }
 
     [Fact]
@@ -169,15 +158,14 @@ public abstract class GenericChainTests<T> : TestsBase
         _ = other.Extend( values.Last() );
         var sut = new Chain<T>( other );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( other.Count );
-            sut.IsAttached.Should().BeFalse();
-            sut.IsExtendable.Should().BeTrue();
-            sut.Should().BeSequentiallyEqualTo( other );
-            other.IsAttached.Should().BeFalse();
-            other.IsExtendable.Should().BeFalse();
-        }
+        Assertion.All(
+                sut.Count.TestEquals( other.Count ),
+                sut.IsAttached.TestFalse(),
+                sut.IsExtendable.TestTrue(),
+                sut.TestSequence( other ),
+                other.IsAttached.TestFalse(),
+                other.IsExtendable.TestFalse() )
+            .Go();
     }
 
     [Fact]
@@ -185,13 +173,12 @@ public abstract class GenericChainTests<T> : TestsBase
     {
         var sut = new Chain<T>( Chain<T>.Empty );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 0 );
-            sut.IsAttached.Should().BeFalse();
-            sut.IsExtendable.Should().BeTrue();
-            sut.Should().BeEmpty();
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 0 ),
+                sut.IsAttached.TestFalse(),
+                sut.IsExtendable.TestTrue(),
+                sut.TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -202,13 +189,12 @@ public abstract class GenericChainTests<T> : TestsBase
 
         var result = sut.Extend( value );
 
-        using ( new AssertionScope() )
-        {
-            result.Count.Should().Be( 1 );
-            result.IsAttached.Should().BeFalse();
-            result.IsExtendable.Should().BeTrue();
-            result.Should().BeSequentiallyEqualTo( value );
-        }
+        Assertion.All(
+                result.Count.TestEquals( 1 ),
+                result.IsAttached.TestFalse(),
+                result.IsExtendable.TestTrue(),
+                result.TestSequence( [ value ] ) )
+            .Go();
     }
 
     [Fact]
@@ -219,13 +205,12 @@ public abstract class GenericChainTests<T> : TestsBase
 
         _ = sut.Extend( value );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 0 );
-            sut.IsAttached.Should().BeFalse();
-            sut.IsExtendable.Should().BeTrue();
-            sut.Should().BeEmpty();
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 0 ),
+                sut.IsAttached.TestFalse(),
+                sut.IsExtendable.TestTrue(),
+                sut.TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -238,13 +223,12 @@ public abstract class GenericChainTests<T> : TestsBase
 
         var result = sut.Extend( value );
 
-        using ( new AssertionScope() )
-        {
-            result.Count.Should().Be( allValues.Length );
-            result.IsAttached.Should().BeFalse();
-            result.IsExtendable.Should().BeTrue();
-            result.Should().BeSequentiallyEqualTo( allValues );
-        }
+        Assertion.All(
+                result.Count.TestEquals( allValues.Length ),
+                result.IsAttached.TestFalse(),
+                result.IsExtendable.TestTrue(),
+                result.TestSequence( allValues ) )
+            .Go();
     }
 
     [Fact]
@@ -257,13 +241,12 @@ public abstract class GenericChainTests<T> : TestsBase
 
         _ = sut.Extend( value );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( initialValues.Count );
-            sut.IsAttached.Should().BeFalse();
-            sut.IsExtendable.Should().BeFalse();
-            sut.Should().BeSequentiallyEqualTo( initialValues );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( initialValues.Count ),
+                sut.IsAttached.TestFalse(),
+                sut.IsExtendable.TestFalse(),
+                sut.TestSequence( initialValues ) )
+            .Go();
     }
 
     [Fact]
@@ -274,7 +257,7 @@ public abstract class GenericChainTests<T> : TestsBase
         _ = sut.Extend( values[1] );
 
         var action = Lambda.Of( () => sut.Extend( values[2] ) );
-        action.Should().ThrowExactly<InvalidOperationException>();
+        action.Test( exc => exc.TestType().Exact<InvalidOperationException>() ).Go();
     }
 
     [Fact]
@@ -285,7 +268,7 @@ public abstract class GenericChainTests<T> : TestsBase
         _ = Chain.Create( values[1] ).Extend( sut );
 
         var action = Lambda.Of( () => sut.Extend( values[2] ) );
-        action.Should().ThrowExactly<InvalidOperationException>();
+        action.Test( exc => exc.TestType().Exact<InvalidOperationException>() ).Go();
     }
 
     [Fact]
@@ -296,13 +279,12 @@ public abstract class GenericChainTests<T> : TestsBase
 
         var result = sut.Extend( values );
 
-        using ( new AssertionScope() )
-        {
-            result.Count.Should().Be( values.Length );
-            result.IsAttached.Should().BeFalse();
-            result.IsExtendable.Should().BeTrue();
-            result.Should().BeSequentiallyEqualTo( values );
-        }
+        Assertion.All(
+                result.Count.TestEquals( values.Length ),
+                result.IsAttached.TestFalse(),
+                result.IsExtendable.TestTrue(),
+                result.TestSequence( values ) )
+            .Go();
     }
 
     [Fact]
@@ -313,13 +295,12 @@ public abstract class GenericChainTests<T> : TestsBase
 
         _ = sut.Extend( values );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 0 );
-            sut.IsAttached.Should().BeFalse();
-            sut.IsExtendable.Should().BeTrue();
-            sut.Should().BeEmpty();
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 0 ),
+                sut.IsAttached.TestFalse(),
+                sut.IsExtendable.TestTrue(),
+                sut.TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -332,13 +313,12 @@ public abstract class GenericChainTests<T> : TestsBase
 
         var result = sut.Extend( values );
 
-        using ( new AssertionScope() )
-        {
-            result.Count.Should().Be( allValues.Length );
-            result.IsAttached.Should().BeFalse();
-            result.IsExtendable.Should().BeTrue();
-            result.Should().BeSequentiallyEqualTo( allValues );
-        }
+        Assertion.All(
+                result.Count.TestEquals( allValues.Length ),
+                result.IsAttached.TestFalse(),
+                result.IsExtendable.TestTrue(),
+                result.TestSequence( allValues ) )
+            .Go();
     }
 
     [Fact]
@@ -351,13 +331,12 @@ public abstract class GenericChainTests<T> : TestsBase
 
         _ = sut.Extend( values );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( initialValues.Count );
-            sut.IsAttached.Should().BeFalse();
-            sut.IsExtendable.Should().BeFalse();
-            sut.Should().BeSequentiallyEqualTo( initialValues );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( initialValues.Count ),
+                sut.IsAttached.TestFalse(),
+                sut.IsExtendable.TestFalse(),
+                sut.TestSequence( initialValues ) )
+            .Go();
     }
 
     [Fact]
@@ -368,14 +347,13 @@ public abstract class GenericChainTests<T> : TestsBase
 
         var result = sut.Extend( Enumerable.Empty<T>() );
 
-        using ( new AssertionScope() )
-        {
-            result.Count.Should().Be( initialValues.Length );
-            result.IsAttached.Should().BeFalse();
-            result.IsExtendable.Should().BeTrue();
-            result.Should().BeSequentiallyEqualTo( initialValues );
-            sut.IsExtendable.Should().BeTrue();
-        }
+        Assertion.All(
+                result.Count.TestEquals( initialValues.Length ),
+                result.IsAttached.TestFalse(),
+                result.IsExtendable.TestTrue(),
+                result.TestSequence( initialValues ),
+                sut.IsExtendable.TestTrue() )
+            .Go();
     }
 
     [Fact]
@@ -386,7 +364,7 @@ public abstract class GenericChainTests<T> : TestsBase
         _ = sut.Extend( values[1] );
 
         var action = Lambda.Of( () => sut.Extend( values.Skip( 2 ) ) );
-        action.Should().ThrowExactly<InvalidOperationException>();
+        action.Test( exc => exc.TestType().Exact<InvalidOperationException>() ).Go();
     }
 
     [Fact]
@@ -397,7 +375,7 @@ public abstract class GenericChainTests<T> : TestsBase
         _ = Chain.Create( values[1] ).Extend( sut );
 
         var action = Lambda.Of( () => sut.Extend( values.Skip( 2 ) ) );
-        action.Should().ThrowExactly<InvalidOperationException>();
+        action.Test( exc => exc.TestType().Exact<InvalidOperationException>() ).Go();
     }
 
     [Fact]
@@ -409,13 +387,12 @@ public abstract class GenericChainTests<T> : TestsBase
 
         var result = sut.Extend( other );
 
-        using ( new AssertionScope() )
-        {
-            result.Count.Should().Be( values.Length );
-            result.IsAttached.Should().BeFalse();
-            result.IsExtendable.Should().BeTrue();
-            result.Should().BeSequentiallyEqualTo( values );
-        }
+        Assertion.All(
+                result.Count.TestEquals( values.Length ),
+                result.IsAttached.TestFalse(),
+                result.IsExtendable.TestTrue(),
+                result.TestSequence( values ) )
+            .Go();
     }
 
     [Fact]
@@ -427,13 +404,12 @@ public abstract class GenericChainTests<T> : TestsBase
 
         _ = sut.Extend( other );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 0 );
-            sut.IsAttached.Should().BeFalse();
-            sut.IsExtendable.Should().BeTrue();
-            sut.Should().BeEmpty();
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 0 ),
+                sut.IsAttached.TestFalse(),
+                sut.IsExtendable.TestTrue(),
+                sut.TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -445,13 +421,12 @@ public abstract class GenericChainTests<T> : TestsBase
 
         _ = sut.Extend( other );
 
-        using ( new AssertionScope() )
-        {
-            other.Count.Should().Be( values.Length );
-            other.IsAttached.Should().BeFalse();
-            other.IsExtendable.Should().BeTrue();
-            other.Should().BeSequentiallyEqualTo( values );
-        }
+        Assertion.All(
+                other.Count.TestEquals( values.Length ),
+                other.IsAttached.TestFalse(),
+                other.IsExtendable.TestTrue(),
+                other.TestSequence( values ) )
+            .Go();
     }
 
     [Fact]
@@ -465,13 +440,12 @@ public abstract class GenericChainTests<T> : TestsBase
 
         var result = sut.Extend( other );
 
-        using ( new AssertionScope() )
-        {
-            result.Count.Should().Be( allValues.Length );
-            result.IsAttached.Should().BeFalse();
-            result.IsExtendable.Should().BeTrue();
-            result.Should().BeSequentiallyEqualTo( allValues );
-        }
+        Assertion.All(
+                result.Count.TestEquals( allValues.Length ),
+                result.IsAttached.TestFalse(),
+                result.IsExtendable.TestTrue(),
+                result.TestSequence( allValues ) )
+            .Go();
     }
 
     [Fact]
@@ -485,13 +459,12 @@ public abstract class GenericChainTests<T> : TestsBase
 
         _ = sut.Extend( other );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( initialValues.Count );
-            sut.IsAttached.Should().BeFalse();
-            sut.IsExtendable.Should().BeFalse();
-            sut.Should().BeSequentiallyEqualTo( initialValues );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( initialValues.Count ),
+                sut.IsAttached.TestFalse(),
+                sut.IsExtendable.TestFalse(),
+                sut.TestSequence( initialValues ) )
+            .Go();
     }
 
     [Fact]
@@ -505,13 +478,12 @@ public abstract class GenericChainTests<T> : TestsBase
 
         _ = sut.Extend( other );
 
-        using ( new AssertionScope() )
-        {
-            other.Count.Should().Be( values.Count );
-            other.IsAttached.Should().BeTrue();
-            other.IsExtendable.Should().BeFalse();
-            other.Should().BeSequentiallyEqualTo( values );
-        }
+        Assertion.All(
+                other.Count.TestEquals( values.Count ),
+                other.IsAttached.TestTrue(),
+                other.IsExtendable.TestFalse(),
+                other.TestSequence( values ) )
+            .Go();
     }
 
     [Fact]
@@ -522,14 +494,13 @@ public abstract class GenericChainTests<T> : TestsBase
 
         var result = sut.Extend( Chain<T>.Empty );
 
-        using ( new AssertionScope() )
-        {
-            result.Count.Should().Be( initialValues.Length );
-            result.IsAttached.Should().BeFalse();
-            result.IsExtendable.Should().BeTrue();
-            result.Should().BeSequentiallyEqualTo( initialValues );
-            sut.IsExtendable.Should().BeTrue();
-        }
+        Assertion.All(
+                result.Count.TestEquals( initialValues.Length ),
+                result.IsAttached.TestFalse(),
+                result.IsExtendable.TestTrue(),
+                result.TestSequence( initialValues ),
+                sut.IsExtendable.TestTrue() )
+            .Go();
     }
 
     [Fact]
@@ -544,13 +515,12 @@ public abstract class GenericChainTests<T> : TestsBase
 
         var result = sut.Extend( other );
 
-        using ( new AssertionScope() )
-        {
-            result.Count.Should().Be( allValues.Length - 1 );
-            result.IsAttached.Should().BeFalse();
-            result.IsExtendable.Should().BeFalse();
-            result.Should().BeSequentiallyEqualTo( allValues.SkipLast( 1 ) );
-        }
+        Assertion.All(
+                result.Count.TestEquals( allValues.Length - 1 ),
+                result.IsAttached.TestFalse(),
+                result.IsExtendable.TestFalse(),
+                result.TestSequence( allValues.SkipLast( 1 ) ) )
+            .Go();
     }
 
     [Fact]
@@ -565,13 +535,12 @@ public abstract class GenericChainTests<T> : TestsBase
 
         var result = sut.Extend( other );
 
-        using ( new AssertionScope() )
-        {
-            result.Count.Should().Be( allValues.Length - 1 );
-            result.IsAttached.Should().BeFalse();
-            result.IsExtendable.Should().BeTrue();
-            result.Should().BeSequentiallyEqualTo( allValues.SkipLast( 1 ) );
-        }
+        Assertion.All(
+                result.Count.TestEquals( allValues.Length - 1 ),
+                result.IsAttached.TestFalse(),
+                result.IsExtendable.TestTrue(),
+                result.TestSequence( allValues.SkipLast( 1 ) ) )
+            .Go();
     }
 
     [Fact]
@@ -582,13 +551,12 @@ public abstract class GenericChainTests<T> : TestsBase
 
         var result = sut.Extend( sut );
 
-        using ( new AssertionScope() )
-        {
-            result.Count.Should().Be( values.Length * 2 );
-            result.IsAttached.Should().BeTrue();
-            result.IsExtendable.Should().BeFalse();
-            result.Should().BeSequentiallyEqualTo( values.Concat( values ) );
-        }
+        Assertion.All(
+                result.Count.TestEquals( values.Length * 2 ),
+                result.IsAttached.TestTrue(),
+                result.IsExtendable.TestFalse(),
+                result.TestSequence( values.Concat( values ) ) )
+            .Go();
     }
 
     [Fact]
@@ -599,13 +567,12 @@ public abstract class GenericChainTests<T> : TestsBase
 
         _ = sut.Extend( sut );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( values.Length );
-            sut.IsAttached.Should().BeTrue();
-            sut.IsExtendable.Should().BeFalse();
-            sut.Should().BeSequentiallyEqualTo( values );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( values.Length ),
+                sut.IsAttached.TestTrue(),
+                sut.IsExtendable.TestFalse(),
+                sut.TestSequence( values ) )
+            .Go();
     }
 
     [Fact]
@@ -616,7 +583,7 @@ public abstract class GenericChainTests<T> : TestsBase
         _ = sut.Extend( values[1] );
 
         var action = Lambda.Of( () => sut.Extend( Chain.Create( values.Skip( 2 ) ) ) );
-        action.Should().ThrowExactly<InvalidOperationException>();
+        action.Test( exc => exc.TestType().Exact<InvalidOperationException>() ).Go();
     }
 
     [Fact]
@@ -627,7 +594,7 @@ public abstract class GenericChainTests<T> : TestsBase
         _ = Chain.Create( values[1] ).Extend( sut );
 
         var action = Lambda.Of( () => sut.Extend( Chain.Create( values.Skip( 2 ) ) ) );
-        action.Should().ThrowExactly<InvalidOperationException>();
+        action.Test( exc => exc.TestType().Exact<InvalidOperationException>() ).Go();
     }
 
     [Fact]
@@ -638,7 +605,7 @@ public abstract class GenericChainTests<T> : TestsBase
 
         var result = sut.ToExtendable();
 
-        result.Should().BeEquivalentTo( sut );
+        result.TestSequence( sut ).Go();
     }
 
     [Fact]
@@ -650,12 +617,11 @@ public abstract class GenericChainTests<T> : TestsBase
 
         var result = sut.ToExtendable();
 
-        using ( new AssertionScope() )
-        {
-            sut.IsExtendable.Should().BeFalse();
-            result.Should().BeSequentiallyEqualTo( sut );
-            result.IsExtendable.Should().BeTrue();
-        }
+        Assertion.All(
+                sut.IsExtendable.TestFalse(),
+                result.TestSequence( sut ),
+                result.IsExtendable.TestTrue() )
+            .Go();
     }
 
     [Fact]
@@ -668,11 +634,10 @@ public abstract class GenericChainTests<T> : TestsBase
 
         var result = sut.ToExtendable();
 
-        using ( new AssertionScope() )
-        {
-            sut.IsExtendable.Should().BeFalse();
-            result.Should().BeSequentiallyEqualTo( sut );
-            result.IsExtendable.Should().BeTrue();
-        }
+        Assertion.All(
+                sut.IsExtendable.TestFalse(),
+                result.TestSequence( sut ),
+                result.IsExtendable.TestTrue() )
+            .Go();
     }
 }

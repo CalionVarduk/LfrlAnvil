@@ -56,8 +56,10 @@ public class PostgreSqlCheckBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
-                    @"ALTER TABLE ""foo"".""T""
-                      ADD CONSTRAINT ""CHK_T_{GUID}"" CHECK (""C"" > 0);" );
+                    """
+                    ALTER TABLE "foo"."T"
+                                          ADD CONSTRAINT "CHK_T_{GUID}" CHECK ("C" > 0);
+                    """ );
         }
     }
 
@@ -142,8 +144,10 @@ public class PostgreSqlCheckBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
-                    @"ALTER TABLE ""foo"".""T""
-                      RENAME CONSTRAINT ""CHK_T_{GUID}"" TO ""bar"";" );
+                    """
+                    ALTER TABLE "foo"."T"
+                                          RENAME CONSTRAINT "CHK_T_{GUID}" TO "bar";
+                    """ );
         }
     }
 
@@ -225,8 +229,10 @@ public class PostgreSqlCheckBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
-                    @"ALTER TABLE ""foo"".""T""
-                      RENAME CONSTRAINT ""bar"" TO ""CHK_T_{GUID}"";" );
+                    """
+                    ALTER TABLE "foo"."T"
+                                          RENAME CONSTRAINT "bar" TO "CHK_T_{GUID}";
+                    """ );
         }
     }
 
@@ -273,8 +279,10 @@ public class PostgreSqlCheckBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
-                    @"ALTER TABLE ""foo"".""T""
-                      DROP CONSTRAINT ""CHK_T_{GUID}"";" );
+                    """
+                    ALTER TABLE "foo"."T"
+                                          DROP CONSTRAINT "CHK_T_{GUID}";
+                    """ );
         }
     }
 

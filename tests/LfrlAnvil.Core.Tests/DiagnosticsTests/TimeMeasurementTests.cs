@@ -9,13 +9,12 @@ public class TimeMeasurementTests : TestsBase
     {
         var sut = TimeMeasurement.Zero;
 
-        using ( new AssertionScope() )
-        {
-            sut.Preparation.Should().Be( TimeSpan.Zero );
-            sut.Invocation.Should().Be( TimeSpan.Zero );
-            sut.Teardown.Should().Be( TimeSpan.Zero );
-            sut.Total.Should().Be( TimeSpan.Zero );
-        }
+        Assertion.All(
+                sut.Preparation.TestEquals( TimeSpan.Zero ),
+                sut.Invocation.TestEquals( TimeSpan.Zero ),
+                sut.Teardown.TestEquals( TimeSpan.Zero ),
+                sut.Total.TestEquals( TimeSpan.Zero ) )
+            .Go();
     }
 
     [Fact]
@@ -23,13 +22,12 @@ public class TimeMeasurementTests : TestsBase
     {
         var sut = default( TimeMeasurement );
 
-        using ( new AssertionScope() )
-        {
-            sut.Preparation.Should().Be( TimeSpan.Zero );
-            sut.Invocation.Should().Be( TimeSpan.Zero );
-            sut.Teardown.Should().Be( TimeSpan.Zero );
-            sut.Total.Should().Be( TimeSpan.Zero );
-        }
+        Assertion.All(
+                sut.Preparation.TestEquals( TimeSpan.Zero ),
+                sut.Invocation.TestEquals( TimeSpan.Zero ),
+                sut.Teardown.TestEquals( TimeSpan.Zero ),
+                sut.Total.TestEquals( TimeSpan.Zero ) )
+            .Go();
     }
 
     [Fact]
@@ -40,13 +38,12 @@ public class TimeMeasurementTests : TestsBase
         var teardown = Fixture.Create<TimeSpan>();
         var sut = new TimeMeasurement( preparation, invocation, teardown );
 
-        using ( new AssertionScope() )
-        {
-            sut.Preparation.Should().Be( preparation );
-            sut.Invocation.Should().Be( invocation );
-            sut.Teardown.Should().Be( teardown );
-            sut.Total.Should().Be( preparation + invocation + teardown );
-        }
+        Assertion.All(
+                sut.Preparation.TestEquals( preparation ),
+                sut.Invocation.TestEquals( invocation ),
+                sut.Teardown.TestEquals( teardown ),
+                sut.Total.TestEquals( preparation + invocation + teardown ) )
+            .Go();
     }
 
     [Fact]
@@ -59,7 +56,7 @@ public class TimeMeasurementTests : TestsBase
 
         var result = sut.ToString();
 
-        result.Should().Be( "Preparation: 0.1234567s, Invocation: 1.2345678s, Teardown: 123.4567890s (Total: 124.8148135s)" );
+        result.TestEquals( "Preparation: 0.1234567s, Invocation: 1.2345678s, Teardown: 123.4567890s (Total: 124.8148135s)" ).Go();
     }
 
     [Fact]
@@ -70,12 +67,11 @@ public class TimeMeasurementTests : TestsBase
 
         var result = sut.SetPreparation( newPreparation );
 
-        using ( new AssertionScope() )
-        {
-            result.Preparation.Should().Be( newPreparation );
-            result.Invocation.Should().Be( invocation );
-            result.Teardown.Should().Be( teardown );
-        }
+        Assertion.All(
+                result.Preparation.TestEquals( newPreparation ),
+                result.Invocation.TestEquals( invocation ),
+                result.Teardown.TestEquals( teardown ) )
+            .Go();
     }
 
     [Fact]
@@ -86,12 +82,11 @@ public class TimeMeasurementTests : TestsBase
 
         var result = sut.SetInvocation( newInvocation );
 
-        using ( new AssertionScope() )
-        {
-            result.Preparation.Should().Be( preparation );
-            result.Invocation.Should().Be( newInvocation );
-            result.Teardown.Should().Be( teardown );
-        }
+        Assertion.All(
+                result.Preparation.TestEquals( preparation ),
+                result.Invocation.TestEquals( newInvocation ),
+                result.Teardown.TestEquals( teardown ) )
+            .Go();
     }
 
     [Fact]
@@ -102,11 +97,10 @@ public class TimeMeasurementTests : TestsBase
 
         var result = sut.SetTeardown( newTeardown );
 
-        using ( new AssertionScope() )
-        {
-            result.Preparation.Should().Be( preparation );
-            result.Invocation.Should().Be( invocation );
-            result.Teardown.Should().Be( newTeardown );
-        }
+        Assertion.All(
+                result.Preparation.TestEquals( preparation ),
+                result.Invocation.TestEquals( invocation ),
+                result.Teardown.TestEquals( newTeardown ) )
+            .Go();
     }
 }

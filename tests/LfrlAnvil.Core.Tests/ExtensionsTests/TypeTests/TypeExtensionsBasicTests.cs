@@ -12,7 +12,7 @@ public class TypeExtensionsBasicTests : TestsBase
     {
         var type = typeof( int );
         var result = type.IsConstructable();
-        result.Should().BeTrue();
+        result.TestTrue().Go();
     }
 
     [Fact]
@@ -20,7 +20,7 @@ public class TypeExtensionsBasicTests : TestsBase
     {
         var type = typeof( KeyValuePair<string, int> );
         var result = type.IsConstructable();
-        result.Should().BeTrue();
+        result.TestTrue().Go();
     }
 
     [Fact]
@@ -28,7 +28,7 @@ public class TypeExtensionsBasicTests : TestsBase
     {
         var type = typeof( KeyValuePair<,> );
         var result = type.IsConstructable();
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Fact]
@@ -36,7 +36,7 @@ public class TypeExtensionsBasicTests : TestsBase
     {
         var type = typeof( string );
         var result = type.IsConstructable();
-        result.Should().BeTrue();
+        result.TestTrue().Go();
     }
 
     [Fact]
@@ -44,7 +44,7 @@ public class TypeExtensionsBasicTests : TestsBase
     {
         var type = typeof( Dictionary<string, int> );
         var result = type.IsConstructable();
-        result.Should().BeTrue();
+        result.TestTrue().Go();
     }
 
     [Fact]
@@ -52,7 +52,7 @@ public class TypeExtensionsBasicTests : TestsBase
     {
         var type = typeof( Dictionary<,> );
         var result = type.IsConstructable();
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Fact]
@@ -60,7 +60,7 @@ public class TypeExtensionsBasicTests : TestsBase
     {
         var type = typeof( Dictionary<,> ).GetOpenGenericImplementations( typeof( IDictionary<,> ) ).Single();
         var result = type.IsConstructable();
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Fact]
@@ -68,7 +68,7 @@ public class TypeExtensionsBasicTests : TestsBase
     {
         var type = typeof( IEnumerable );
         var result = type.IsConstructable();
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Fact]
@@ -76,7 +76,7 @@ public class TypeExtensionsBasicTests : TestsBase
     {
         var type = typeof( IEnumerable );
         var result = type.GetDebugString();
-        result.Should().Be( "System.Collections.IEnumerable" );
+        result.TestEquals( "System.Collections.IEnumerable" ).Go();
     }
 
     [Fact]
@@ -84,7 +84,7 @@ public class TypeExtensionsBasicTests : TestsBase
     {
         var type = typeof( Dictionary<int, string> );
         var result = type.GetDebugString();
-        result.Should().Be( "System.Collections.Generic.Dictionary`2[TKey is System.Int32, TValue is System.String]" );
+        result.TestEquals( "System.Collections.Generic.Dictionary`2[TKey is System.Int32, TValue is System.String]" ).Go();
     }
 
     [Fact]
@@ -92,7 +92,7 @@ public class TypeExtensionsBasicTests : TestsBase
     {
         var type = typeof( Dictionary<,> );
         var result = type.GetDebugString();
-        result.Should().Be( "System.Collections.Generic.Dictionary`2[TKey, TValue]" );
+        result.TestEquals( "System.Collections.Generic.Dictionary`2[TKey, TValue]" ).Go();
     }
 
     [Fact]
@@ -100,7 +100,7 @@ public class TypeExtensionsBasicTests : TestsBase
     {
         var type = typeof( Foo.Bar );
         var result = type.GetDebugString();
-        result.Should().Be( "LfrlAnvil.Tests.ExtensionsTests.TypeTests.TypeExtensionsBasicTests+Foo+Bar" );
+        result.TestEquals( "LfrlAnvil.Tests.ExtensionsTests.TypeTests.TypeExtensionsBasicTests+Foo+Bar" ).Go();
     }
 
     [Fact]
@@ -112,7 +112,7 @@ public class TypeExtensionsBasicTests : TestsBase
             .ParameterType;
 
         var result = type.GetDebugString();
-        result.Should().Be( "System.String&" );
+        result.TestEquals( "System.String&" ).Go();
     }
 
     [Fact]
@@ -120,7 +120,7 @@ public class TypeExtensionsBasicTests : TestsBase
     {
         var type = typeof( Func<,> );
         var result = type.GetDebugString();
-        result.Should().Be( "System.Func`2[T [in], TResult [out]]" );
+        result.TestEquals( "System.Func`2[T [in], TResult [out]]" ).Go();
     }
 
     [Fact]
@@ -128,7 +128,7 @@ public class TypeExtensionsBasicTests : TestsBase
     {
         var type = typeof( Func<int, string> );
         var result = type.GetDebugString();
-        result.Should().Be( "System.Func`2[T [in] is System.Int32, TResult [out] is System.String]" );
+        result.TestEquals( "System.Func`2[T [in] is System.Int32, TResult [out] is System.String]" ).Go();
     }
 
     private sealed class Foo

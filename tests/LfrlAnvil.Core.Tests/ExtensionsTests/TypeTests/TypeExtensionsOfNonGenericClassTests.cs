@@ -12,7 +12,7 @@ public class NonGenericClassTests : TypeTestsBase
     {
         var sut = typeof( NonGenericClass );
         var result = sut.GetImplementation<IDirect>();
-        result.Should().Be( typeof( IDirect ) );
+        result.TestEquals( typeof( IDirect ) ).Go();
     }
 
     [Fact]
@@ -20,7 +20,7 @@ public class NonGenericClassTests : TypeTestsBase
     {
         var sut = typeof( NonGenericClass );
         var result = sut.GetImplementation<IIndirectFromInterface>();
-        result.Should().Be( typeof( IIndirectFromInterface ) );
+        result.TestEquals( typeof( IIndirectFromInterface ) ).Go();
     }
 
     [Fact]
@@ -28,7 +28,7 @@ public class NonGenericClassTests : TypeTestsBase
     {
         var sut = typeof( NonGenericClass );
         var result = sut.GetImplementation<IIndirectFromType>();
-        result.Should().Be( typeof( IIndirectFromType ) );
+        result.TestEquals( typeof( IIndirectFromType ) ).Go();
     }
 
     [Fact]
@@ -36,7 +36,7 @@ public class NonGenericClassTests : TypeTestsBase
     {
         var sut = typeof( NonGenericClass );
         var result = sut.GetImplementation<INotImplemented>();
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Fact]
@@ -44,7 +44,7 @@ public class NonGenericClassTests : TypeTestsBase
     {
         var sut = typeof( NonGenericClass );
         var result = sut.Implements<IDirect>();
-        result.Should().BeTrue();
+        result.TestTrue().Go();
     }
 
     [Fact]
@@ -52,7 +52,7 @@ public class NonGenericClassTests : TypeTestsBase
     {
         var sut = typeof( NonGenericClass );
         var result = sut.Implements<IIndirectFromInterface>();
-        result.Should().BeTrue();
+        result.TestTrue().Go();
     }
 
     [Fact]
@@ -60,7 +60,7 @@ public class NonGenericClassTests : TypeTestsBase
     {
         var sut = typeof( NonGenericClass );
         var result = sut.Implements<IIndirectFromType>();
-        result.Should().BeTrue();
+        result.TestTrue().Go();
     }
 
     [Fact]
@@ -68,7 +68,7 @@ public class NonGenericClassTests : TypeTestsBase
     {
         var sut = typeof( NonGenericClass );
         var result = sut.Implements<INotImplemented>();
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Theory]
@@ -78,7 +78,7 @@ public class NonGenericClassTests : TypeTestsBase
     {
         var sut = typeof( NonGenericClass );
         var result = sut.GetOpenGenericImplementations( type );
-        result.Should().BeEmpty();
+        result.TestEmpty().Go();
     }
 
     [Theory]
@@ -88,7 +88,7 @@ public class NonGenericClassTests : TypeTestsBase
     {
         var sut = typeof( NonGenericClass );
         var result = sut.ImplementsOpenGeneric( type );
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Fact]
@@ -96,7 +96,7 @@ public class NonGenericClassTests : TypeTestsBase
     {
         var sut = typeof( NonGenericClass );
         var result = sut.GetAllImplementedGenericDefinitions();
-        result.Should().BeEmpty();
+        result.TestEmpty().Go();
     }
 
     [Fact]
@@ -104,7 +104,7 @@ public class NonGenericClassTests : TypeTestsBase
     {
         var sut = typeof( NonGenericClass );
         var result = sut.GetExtension<BaseClass>();
-        result.Should().Be( typeof( BaseClass ) );
+        result.TestEquals( typeof( BaseClass ) ).Go();
     }
 
     [Fact]
@@ -112,7 +112,7 @@ public class NonGenericClassTests : TypeTestsBase
     {
         var sut = typeof( NonGenericClass );
         var result = sut.GetExtension<object>();
-        result.Should().Be( typeof( object ) );
+        result.TestEquals( typeof( object ) ).Go();
     }
 
     [Fact]
@@ -120,7 +120,7 @@ public class NonGenericClassTests : TypeTestsBase
     {
         var sut = typeof( NonGenericClass );
         var result = sut.GetExtension<NotExtended>();
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Fact]
@@ -128,7 +128,7 @@ public class NonGenericClassTests : TypeTestsBase
     {
         var sut = typeof( object );
         var result = sut.GetExtension<object>();
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Fact]
@@ -136,7 +136,7 @@ public class NonGenericClassTests : TypeTestsBase
     {
         var sut = typeof( NonGenericClass );
         var result = sut.GetExtension<NonGenericClass>();
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Fact]
@@ -144,7 +144,7 @@ public class NonGenericClassTests : TypeTestsBase
     {
         var sut = typeof( NonGenericClass );
         var result = sut.Extends<BaseClass>();
-        result.Should().BeTrue();
+        result.TestTrue().Go();
     }
 
     [Fact]
@@ -152,7 +152,7 @@ public class NonGenericClassTests : TypeTestsBase
     {
         var sut = typeof( NonGenericClass );
         var result = sut.Extends<object>();
-        result.Should().BeTrue();
+        result.TestTrue().Go();
     }
 
     [Fact]
@@ -160,7 +160,7 @@ public class NonGenericClassTests : TypeTestsBase
     {
         var sut = typeof( NonGenericClass );
         var result = sut.Extends<NotExtended>();
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Fact]
@@ -168,7 +168,7 @@ public class NonGenericClassTests : TypeTestsBase
     {
         var sut = typeof( NonGenericClass );
         var result = sut.Extends<NonGenericClass>();
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Theory]
@@ -178,7 +178,7 @@ public class NonGenericClassTests : TypeTestsBase
     {
         var sut = typeof( NonGenericClass );
         var result = sut.GetOpenGenericExtension( type );
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Theory]
@@ -188,7 +188,7 @@ public class NonGenericClassTests : TypeTestsBase
     {
         var sut = typeof( NonGenericClass );
         var result = sut.ExtendsOpenGeneric( type );
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Fact]
@@ -196,7 +196,7 @@ public class NonGenericClassTests : TypeTestsBase
     {
         var sut = typeof( NonGenericClass );
         var result = sut.GetAllExtendedGenericDefinitions();
-        result.Should().BeEmpty();
+        result.TestEmpty().Go();
     }
 
     [Fact]
@@ -205,12 +205,11 @@ public class NonGenericClassTests : TypeTestsBase
         var sut = typeof( FindMemberClass );
         var result = sut.FindMember( t => t.GetMethod( "GetEnumerator", BindingFlags.Public | BindingFlags.Instance ) );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().NotBeNull();
-            (result?.DeclaringType).Should().Be( sut );
-            (result?.ReturnType).Should().Be( typeof( IEnumerator<char> ) );
-        }
+        Assertion.All(
+                result.TestNotNull(),
+                (result?.DeclaringType).TestEquals( sut ),
+                (result?.ReturnType).TestEquals( typeof( IEnumerator<char> ) ) )
+            .Go();
     }
 
     [Fact]
@@ -220,12 +219,11 @@ public class NonGenericClassTests : TypeTestsBase
         var result = sut.FindMember(
             t => t != typeof( FindMemberSubClass ) ? t.GetMethod( "GetEnumerator", BindingFlags.Public | BindingFlags.Instance ) : null );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().NotBeNull();
-            (result?.DeclaringType).Should().Be( typeof( FindMemberClass ) );
-            (result?.ReturnType).Should().Be( typeof( IEnumerator<char> ) );
-        }
+        Assertion.All(
+                result.TestNotNull(),
+                (result?.DeclaringType).TestEquals( typeof( FindMemberClass ) ),
+                (result?.ReturnType).TestEquals( typeof( IEnumerator<char> ) ) )
+            .Go();
     }
 
     [Fact]
@@ -234,11 +232,10 @@ public class NonGenericClassTests : TypeTestsBase
         var sut = typeof( FindMemberClass );
         var result = sut.FindMember( t => t.GetMethod( "Dispose", BindingFlags.Public | BindingFlags.Instance ) );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().NotBeNull();
-            (result?.DeclaringType).Should().Be( typeof( IDisposable ) );
-        }
+        Assertion.All(
+                result.TestNotNull(),
+                (result?.DeclaringType).TestEquals( typeof( IDisposable ) ) )
+            .Go();
     }
 
     [Fact]
@@ -252,11 +249,10 @@ public class NonGenericClassTests : TypeTestsBase
                 return m is not null && m.ReturnType == typeof( IEnumerator ) ? m : null;
             } );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().NotBeNull();
-            (result?.DeclaringType).Should().Be( typeof( IEnumerable ) );
-        }
+        Assertion.All(
+                result.TestNotNull(),
+                (result?.DeclaringType).TestEquals( typeof( IEnumerable ) ) )
+            .Go();
     }
 
     [Fact]
@@ -264,7 +260,7 @@ public class NonGenericClassTests : TypeTestsBase
     {
         var sut = typeof( FindMemberClass );
         var result = sut.FindMember( t => t.GetMethod( "MoveNext", BindingFlags.Public | BindingFlags.Instance ) );
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     private class FindMemberClass : IEnumerable<char>, IDisposable

@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 using System.Linq;
 
 namespace LfrlAnvil.Tests.ExtensionsTests.EnumerableTests;
@@ -428,6 +429,18 @@ public sealed class Contained<T>
     public override string ToString()
     {
         return $"{{{Value}}}";
+    }
+
+    [Pure]
+    public override bool Equals(object? obj)
+    {
+        return ReferenceEquals( obj, this ) || (obj is Contained<T> c && EqualityComparer<T>.Default.Equals( Value, c.Value ));
+    }
+
+    [Pure]
+    public override int GetHashCode()
+    {
+        return HashCode.Combine( Value );
     }
 }
 

@@ -18,11 +18,10 @@ public class FixedTests : TestsBase
     {
         var sut = Fixed.Zero;
 
-        using ( new AssertionScope() )
-        {
-            sut.RawValue.Should().Be( 0 );
-            sut.Precision.Should().Be( 0 );
-        }
+        Assertion.All(
+                sut.RawValue.TestEquals( 0 ),
+                sut.Precision.TestEquals( ( byte )0 ) )
+            .Go();
     }
 
     [Fact]
@@ -30,11 +29,10 @@ public class FixedTests : TestsBase
     {
         var sut = Fixed.MaxValue;
 
-        using ( new AssertionScope() )
-        {
-            sut.RawValue.Should().Be( long.MaxValue );
-            sut.Precision.Should().Be( 0 );
-        }
+        Assertion.All(
+                sut.RawValue.TestEquals( long.MaxValue ),
+                sut.Precision.TestEquals( ( byte )0 ) )
+            .Go();
     }
 
     [Fact]
@@ -42,11 +40,10 @@ public class FixedTests : TestsBase
     {
         var sut = Fixed.MinValue;
 
-        using ( new AssertionScope() )
-        {
-            sut.RawValue.Should().Be( long.MinValue );
-            sut.Precision.Should().Be( 0 );
-        }
+        Assertion.All(
+                sut.RawValue.TestEquals( long.MinValue ),
+                sut.Precision.TestEquals( ( byte )0 ) )
+            .Go();
     }
 
     [Fact]
@@ -54,11 +51,10 @@ public class FixedTests : TestsBase
     {
         var sut = Fixed.Epsilon;
 
-        using ( new AssertionScope() )
-        {
-            sut.RawValue.Should().Be( 1 );
-            sut.Precision.Should().Be( 18 );
-        }
+        Assertion.All(
+                sut.RawValue.TestEquals( 1 ),
+                sut.Precision.TestEquals( ( byte )18 ) )
+            .Go();
     }
 
     [Theory]
@@ -70,11 +66,10 @@ public class FixedTests : TestsBase
     {
         var sut = Fixed.CreateZero( precision );
 
-        using ( new AssertionScope() )
-        {
-            sut.RawValue.Should().Be( 0 );
-            sut.Precision.Should().Be( precision );
-        }
+        Assertion.All(
+                sut.RawValue.TestEquals( 0 ),
+                sut.Precision.TestEquals( precision ) )
+            .Go();
     }
 
     [Theory]
@@ -83,7 +78,7 @@ public class FixedTests : TestsBase
     public void CreateZero_ShouldThrowArgumentOutOfRangeException_WhenPrecisionAreGreaterThanEighteen(byte precision)
     {
         var action = Lambda.Of( () => Fixed.CreateZero( precision ) );
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Theory]
@@ -95,11 +90,10 @@ public class FixedTests : TestsBase
     {
         var sut = Fixed.CreateMaxValue( precision );
 
-        using ( new AssertionScope() )
-        {
-            sut.RawValue.Should().Be( long.MaxValue );
-            sut.Precision.Should().Be( precision );
-        }
+        Assertion.All(
+                sut.RawValue.TestEquals( long.MaxValue ),
+                sut.Precision.TestEquals( precision ) )
+            .Go();
     }
 
     [Theory]
@@ -108,7 +102,7 @@ public class FixedTests : TestsBase
     public void CreateMaxValue_ShouldThrowArgumentOutOfRangeException_WhenPrecisionAreGreaterThanEighteen(byte precision)
     {
         var action = Lambda.Of( () => Fixed.CreateMaxValue( precision ) );
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Theory]
@@ -120,11 +114,10 @@ public class FixedTests : TestsBase
     {
         var sut = Fixed.CreateMinValue( precision );
 
-        using ( new AssertionScope() )
-        {
-            sut.RawValue.Should().Be( long.MinValue );
-            sut.Precision.Should().Be( precision );
-        }
+        Assertion.All(
+                sut.RawValue.TestEquals( long.MinValue ),
+                sut.Precision.TestEquals( precision ) )
+            .Go();
     }
 
     [Theory]
@@ -133,7 +126,7 @@ public class FixedTests : TestsBase
     public void CreateMinValue_ShouldThrowArgumentOutOfRangeException_WhenPrecisionAreGreaterThanEighteen(byte precision)
     {
         var action = Lambda.Of( () => Fixed.CreateMinValue( precision ) );
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Theory]
@@ -145,11 +138,10 @@ public class FixedTests : TestsBase
     {
         var sut = Fixed.CreateEpsilon( precision );
 
-        using ( new AssertionScope() )
-        {
-            sut.RawValue.Should().Be( 1 );
-            sut.Precision.Should().Be( precision );
-        }
+        Assertion.All(
+                sut.RawValue.TestEquals( 1 ),
+                sut.Precision.TestEquals( precision ) )
+            .Go();
     }
 
     [Theory]
@@ -158,7 +150,7 @@ public class FixedTests : TestsBase
     public void CreateEpsilon_ShouldThrowArgumentOutOfRangeException_WhenPrecisionAreGreaterThanEighteen(byte precision)
     {
         var action = Lambda.Of( () => Fixed.CreateEpsilon( precision ) );
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Theory]
@@ -167,11 +159,10 @@ public class FixedTests : TestsBase
     {
         var sut = Fixed.CreateRaw( rawValue, precision );
 
-        using ( new AssertionScope() )
-        {
-            sut.RawValue.Should().Be( rawValue );
-            sut.Precision.Should().Be( precision );
-        }
+        Assertion.All(
+                sut.RawValue.TestEquals( rawValue ),
+                sut.Precision.TestEquals( precision ) )
+            .Go();
     }
 
     [Theory]
@@ -180,7 +171,7 @@ public class FixedTests : TestsBase
     public void CreateRaw_ShouldThrowArgumentOutOfRangeException_WhenPrecisionAreGreaterThanEighteen(byte precision)
     {
         var action = Lambda.Of( () => Fixed.CreateRaw( Fixture.Create<long>(), precision ) );
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Theory]
@@ -189,11 +180,10 @@ public class FixedTests : TestsBase
     {
         var sut = Fixed.Create( value, precision );
 
-        using ( new AssertionScope() )
-        {
-            sut.RawValue.Should().Be( expected );
-            sut.Precision.Should().Be( precision );
-        }
+        Assertion.All(
+                sut.RawValue.TestEquals( expected ),
+                sut.Precision.TestEquals( precision ) )
+            .Go();
     }
 
     [Theory]
@@ -202,7 +192,7 @@ public class FixedTests : TestsBase
     public void Create_WithInt64_ShouldThrowOverflowException_WhenValueAndPrecisionExceedLimits(long value, byte precision)
     {
         var action = Lambda.Of( () => Fixed.Create( value, precision ) );
-        action.Should().ThrowExactly<OverflowException>();
+        action.Test( exc => exc.TestType().Exact<OverflowException>() ).Go();
     }
 
     [Theory]
@@ -211,7 +201,7 @@ public class FixedTests : TestsBase
     public void Create_WithInt64_ShouldThrowArgumentOutOfRangeException_WhenPrecisionAreGreaterThanEighteen(byte precision)
     {
         var action = Lambda.Of( () => Fixed.Create( 0, precision ) );
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Theory]
@@ -220,11 +210,10 @@ public class FixedTests : TestsBase
     {
         var sut = Fixed.Create( value, precision );
 
-        using ( new AssertionScope() )
-        {
-            sut.RawValue.Should().Be( expected );
-            sut.Precision.Should().Be( precision );
-        }
+        Assertion.All(
+                sut.RawValue.TestEquals( expected ),
+                sut.Precision.TestEquals( precision ) )
+            .Go();
     }
 
     [Theory]
@@ -233,7 +222,7 @@ public class FixedTests : TestsBase
     public void Create_WithDecimal_ShouldThrowArgumentOutOfRangeException_WhenPrecisionAreGreaterThanEighteen(byte precision)
     {
         var action = Lambda.Of( () => Fixed.Create( 0m, precision ) );
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Theory]
@@ -242,11 +231,10 @@ public class FixedTests : TestsBase
     {
         var sut = Fixed.Create( value, precision );
 
-        using ( new AssertionScope() )
-        {
-            sut.RawValue.Should().Be( expected );
-            sut.Precision.Should().Be( precision );
-        }
+        Assertion.All(
+                sut.RawValue.TestEquals( expected ),
+                sut.Precision.TestEquals( precision ) )
+            .Go();
     }
 
     [Theory]
@@ -255,7 +243,7 @@ public class FixedTests : TestsBase
     public void Create_WithDouble_ShouldThrowArgumentOutOfRangeException_WhenPrecisionAreGreaterThanEighteen(byte precision)
     {
         var action = Lambda.Of( () => Fixed.Create( 0.0, precision ) );
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Theory]
@@ -282,7 +270,7 @@ public class FixedTests : TestsBase
     {
         var expected = ( long )Math.Pow( 10, precision );
         var result = Fixed.GetScale( precision );
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -291,7 +279,7 @@ public class FixedTests : TestsBase
     public void GetScale_ShouldThrowIndexOutOfRangeException_WhenPrecisionAreGreaterThanEighteen(byte precision)
     {
         var action = Lambda.Of( () => Fixed.GetScale( precision ) );
-        action.Should().ThrowExactly<IndexOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<IndexOutOfRangeException>() ).Go();
     }
 
     [Theory]
@@ -306,7 +294,7 @@ public class FixedTests : TestsBase
 
         var result = sut.ToString();
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -317,7 +305,7 @@ public class FixedTests : TestsBase
 
         var result = sut.GetHashCode();
 
-        result.Should().Be( (( decimal )sut).GetHashCode() );
+        result.TestEquals( (( decimal )sut).GetHashCode() ).Go();
     }
 
     [Theory]
@@ -329,11 +317,10 @@ public class FixedTests : TestsBase
         var sut = Fixed.Create( value, precision );
         var result = sut.Abs();
 
-        using ( new AssertionScope() )
-        {
-            result.RawValue.Should().Be( expected );
-            result.Precision.Should().Be( precision );
-        }
+        Assertion.All(
+                result.RawValue.TestEquals( expected ),
+                result.Precision.TestEquals( precision ) )
+            .Go();
     }
 
     [Theory]
@@ -347,11 +334,10 @@ public class FixedTests : TestsBase
         var sut = Fixed.Create( value, precision );
         var result = sut.Truncate();
 
-        using ( new AssertionScope() )
-        {
-            result.RawValue.Should().Be( expected );
-            result.Precision.Should().Be( precision );
-        }
+        Assertion.All(
+                result.RawValue.TestEquals( expected ),
+                result.Precision.TestEquals( precision ) )
+            .Go();
     }
 
     [Theory]
@@ -361,11 +347,10 @@ public class FixedTests : TestsBase
         var sut = Fixed.Create( value, precision );
         var result = sut.Round( precisionToRoundTo );
 
-        using ( new AssertionScope() )
-        {
-            result.RawValue.Should().Be( expected );
-            result.Precision.Should().Be( precision );
-        }
+        Assertion.All(
+                result.RawValue.TestEquals( expected ),
+                result.Precision.TestEquals( precision ) )
+            .Go();
     }
 
     [Fact]
@@ -373,7 +358,7 @@ public class FixedTests : TestsBase
     {
         var sut = Fixed.CreateRaw( Fixture.Create<long>(), 10 );
         var action = Lambda.Of( () => sut.Round( -1 ) );
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Theory]
@@ -383,11 +368,10 @@ public class FixedTests : TestsBase
         var sut = Fixed.Create( value, precision );
         var result = sut.Floor();
 
-        using ( new AssertionScope() )
-        {
-            result.RawValue.Should().Be( expected );
-            result.Precision.Should().Be( precision );
-        }
+        Assertion.All(
+                result.RawValue.TestEquals( expected ),
+                result.Precision.TestEquals( precision ) )
+            .Go();
     }
 
     [Theory]
@@ -397,11 +381,10 @@ public class FixedTests : TestsBase
         var sut = Fixed.Create( value, precision );
         var result = sut.Ceiling();
 
-        using ( new AssertionScope() )
-        {
-            result.RawValue.Should().Be( expected );
-            result.Precision.Should().Be( precision );
-        }
+        Assertion.All(
+                result.RawValue.TestEquals( expected ),
+                result.Precision.TestEquals( precision ) )
+            .Go();
     }
 
     [Theory]
@@ -411,11 +394,10 @@ public class FixedTests : TestsBase
         var sut = Fixed.CreateRaw( Fixture.Create<long>(), precision );
         var result = sut.SetRawValue( rawValue );
 
-        using ( new AssertionScope() )
-        {
-            result.RawValue.Should().Be( rawValue );
-            result.Precision.Should().Be( precision );
-        }
+        Assertion.All(
+                result.RawValue.TestEquals( rawValue ),
+                result.Precision.TestEquals( precision ) )
+            .Go();
     }
 
     [Theory]
@@ -425,11 +407,10 @@ public class FixedTests : TestsBase
         var sut = Fixed.CreateRaw( Fixture.Create<long>(), precision );
         var result = sut.SetValue( value );
 
-        using ( new AssertionScope() )
-        {
-            result.RawValue.Should().Be( expected );
-            result.Precision.Should().Be( precision );
-        }
+        Assertion.All(
+                result.RawValue.TestEquals( expected ),
+                result.Precision.TestEquals( precision ) )
+            .Go();
     }
 
     [Theory]
@@ -439,11 +420,10 @@ public class FixedTests : TestsBase
         var sut = Fixed.CreateRaw( Fixture.Create<long>(), precision );
         var result = sut.SetValue( value );
 
-        using ( new AssertionScope() )
-        {
-            result.RawValue.Should().Be( expected );
-            result.Precision.Should().Be( precision );
-        }
+        Assertion.All(
+                result.RawValue.TestEquals( expected ),
+                result.Precision.TestEquals( precision ) )
+            .Go();
     }
 
     [Theory]
@@ -453,11 +433,10 @@ public class FixedTests : TestsBase
         var sut = Fixed.CreateRaw( Fixture.Create<long>(), precision );
         var result = sut.SetValue( value );
 
-        using ( new AssertionScope() )
-        {
-            result.RawValue.Should().Be( expected );
-            result.Precision.Should().Be( precision );
-        }
+        Assertion.All(
+                result.RawValue.TestEquals( expected ),
+                result.Precision.TestEquals( precision ) )
+            .Go();
     }
 
     [Theory]
@@ -474,11 +453,10 @@ public class FixedTests : TestsBase
         var sut = Fixed.CreateRaw( rawValue, precision );
         var result = sut.SetPrecision( newPrecision );
 
-        using ( new AssertionScope() )
-        {
-            result.RawValue.Should().Be( expected );
-            result.Precision.Should().Be( newPrecision );
-        }
+        Assertion.All(
+                result.RawValue.TestEquals( expected ),
+                result.Precision.TestEquals( newPrecision ) )
+            .Go();
     }
 
     [Theory]
@@ -488,7 +466,7 @@ public class FixedTests : TestsBase
     {
         var sut = Fixed.CreateRaw( rawValue, 0 );
         var action = Lambda.Of( () => sut.SetPrecision( 1 ) );
-        action.Should().ThrowExactly<OverflowException>();
+        action.Test( exc => exc.TestType().Exact<OverflowException>() ).Go();
     }
 
     [Theory]
@@ -498,7 +476,7 @@ public class FixedTests : TestsBase
     {
         var sut = Fixed.CreateRaw( Fixture.Create<long>(), 10 );
         var action = Lambda.Of( () => sut.SetPrecision( precision ) );
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Theory]
@@ -514,11 +492,10 @@ public class FixedTests : TestsBase
         var sut = Fixed.CreateRaw( rawValue, precision );
         var result = sut.AddRaw( toAdd );
 
-        using ( new AssertionScope() )
-        {
-            result.RawValue.Should().Be( expected );
-            result.Precision.Should().Be( precision );
-        }
+        Assertion.All(
+                result.RawValue.TestEquals( expected ),
+                result.Precision.TestEquals( precision ) )
+            .Go();
     }
 
     [Theory]
@@ -528,7 +505,7 @@ public class FixedTests : TestsBase
     {
         var sut = Fixed.CreateRaw( rawValue, 0 );
         var action = Lambda.Of( () => sut.AddRaw( toAdd ) );
-        action.Should().ThrowExactly<OverflowException>();
+        action.Test( exc => exc.TestType().Exact<OverflowException>() ).Go();
     }
 
     [Theory]
@@ -544,11 +521,10 @@ public class FixedTests : TestsBase
         var sut = Fixed.CreateRaw( rawValue, precision );
         var result = sut.SubtractRaw( toSubtract );
 
-        using ( new AssertionScope() )
-        {
-            result.RawValue.Should().Be( expected );
-            result.Precision.Should().Be( precision );
-        }
+        Assertion.All(
+                result.RawValue.TestEquals( expected ),
+                result.Precision.TestEquals( precision ) )
+            .Go();
     }
 
     [Theory]
@@ -558,7 +534,7 @@ public class FixedTests : TestsBase
     {
         var sut = Fixed.CreateRaw( rawValue, 0 );
         var action = Lambda.Of( () => sut.SubtractRaw( toSubtract ) );
-        action.Should().ThrowExactly<OverflowException>();
+        action.Test( exc => exc.TestType().Exact<OverflowException>() ).Go();
     }
 
     [Theory]
@@ -574,11 +550,10 @@ public class FixedTests : TestsBase
         var sut = Fixed.CreateRaw( rawValue, precision );
         var result = sut.MultiplyRaw( toMultiply );
 
-        using ( new AssertionScope() )
-        {
-            result.RawValue.Should().Be( expected );
-            result.Precision.Should().Be( precision );
-        }
+        Assertion.All(
+                result.RawValue.TestEquals( expected ),
+                result.Precision.TestEquals( precision ) )
+            .Go();
     }
 
     [Theory]
@@ -588,7 +563,7 @@ public class FixedTests : TestsBase
     {
         var sut = Fixed.CreateRaw( rawValue, 0 );
         var action = Lambda.Of( () => sut.MultiplyRaw( toMultiply ) );
-        action.Should().ThrowExactly<OverflowException>();
+        action.Test( exc => exc.TestType().Exact<OverflowException>() ).Go();
     }
 
     [Theory]
@@ -603,11 +578,10 @@ public class FixedTests : TestsBase
         var sut = Fixed.CreateRaw( rawValue, precision );
         var result = sut.DivideRaw( toDivide );
 
-        using ( new AssertionScope() )
-        {
-            result.RawValue.Should().Be( expected );
-            result.Precision.Should().Be( precision );
-        }
+        Assertion.All(
+                result.RawValue.TestEquals( expected ),
+                result.Precision.TestEquals( precision ) )
+            .Go();
     }
 
     [Fact]
@@ -615,7 +589,7 @@ public class FixedTests : TestsBase
     {
         var sut = Fixed.CreateRaw( Fixture.Create<long>(), 0 );
         var action = Lambda.Of( () => sut.DivideRaw( 0 ) );
-        action.Should().ThrowExactly<DivideByZeroException>();
+        action.Test( exc => exc.TestType().Exact<DivideByZeroException>() ).Go();
     }
 
     [Theory]
@@ -630,11 +604,10 @@ public class FixedTests : TestsBase
         var sut = Fixed.CreateRaw( rawValue, precision );
         var result = sut.ModuloRaw( toModulo );
 
-        using ( new AssertionScope() )
-        {
-            result.RawValue.Should().Be( expected );
-            result.Precision.Should().Be( precision );
-        }
+        Assertion.All(
+                result.RawValue.TestEquals( expected ),
+                result.Precision.TestEquals( precision ) )
+            .Go();
     }
 
     [Fact]
@@ -642,7 +615,7 @@ public class FixedTests : TestsBase
     {
         var sut = Fixed.CreateRaw( Fixture.Create<long>(), 0 );
         var action = Lambda.Of( () => sut.ModuloRaw( 0 ) );
-        action.Should().ThrowExactly<DivideByZeroException>();
+        action.Test( exc => exc.TestType().Exact<DivideByZeroException>() ).Go();
     }
 
     [Theory]
@@ -657,7 +630,7 @@ public class FixedTests : TestsBase
     {
         var sut = Fixed.CreateRaw( rawValue, precision );
         var result = ( decimal )sut;
-        result.Should().Be( ( decimal )expected );
+        result.TestEquals( ( decimal )expected ).Go();
     }
 
     [Theory]
@@ -672,7 +645,7 @@ public class FixedTests : TestsBase
     {
         var sut = Fixed.CreateRaw( rawValue, precision );
         var result = ( double )sut;
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -689,7 +662,7 @@ public class FixedTests : TestsBase
     {
         var sut = Fixed.CreateRaw( rawValue, precision );
         var result = ( long )sut;
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -702,11 +675,10 @@ public class FixedTests : TestsBase
         var sut = Fixed.CreateRaw( rawValue, precision );
         var result = -sut;
 
-        using ( new AssertionScope() )
-        {
-            result.RawValue.Should().Be( expected );
-            result.Precision.Should().Be( precision );
-        }
+        Assertion.All(
+                result.RawValue.TestEquals( expected ),
+                result.Precision.TestEquals( precision ) )
+            .Go();
     }
 
     [Theory]
@@ -719,11 +691,10 @@ public class FixedTests : TestsBase
         var sut = Fixed.CreateRaw( rawValue, precision );
         var result = ++sut;
 
-        using ( new AssertionScope() )
-        {
-            result.RawValue.Should().Be( expected );
-            result.Precision.Should().Be( precision );
-        }
+        Assertion.All(
+                result.RawValue.TestEquals( expected ),
+                result.Precision.TestEquals( precision ) )
+            .Go();
     }
 
     [Theory]
@@ -736,11 +707,10 @@ public class FixedTests : TestsBase
         var sut = Fixed.CreateRaw( rawValue, precision );
         var result = --sut;
 
-        using ( new AssertionScope() )
-        {
-            result.RawValue.Should().Be( expected );
-            result.Precision.Should().Be( precision );
-        }
+        Assertion.All(
+                result.RawValue.TestEquals( expected ),
+                result.Precision.TestEquals( precision ) )
+            .Go();
     }
 
     [Theory]
@@ -772,11 +742,10 @@ public class FixedTests : TestsBase
 
         var result = a + b;
 
-        using ( new AssertionScope() )
-        {
-            result.RawValue.Should().Be( expectedRawValue );
-            result.Precision.Should().Be( expectedPrecision );
-        }
+        Assertion.All(
+                result.RawValue.TestEquals( expectedRawValue ),
+                result.Precision.TestEquals( expectedPrecision ) )
+            .Go();
     }
 
     [Theory]
@@ -794,7 +763,7 @@ public class FixedTests : TestsBase
 
         var action = Lambda.Of( () => a + b );
 
-        action.Should().ThrowExactly<OverflowException>();
+        action.Test( exc => exc.TestType().Exact<OverflowException>() ).Go();
     }
 
     [Theory]
@@ -826,11 +795,10 @@ public class FixedTests : TestsBase
 
         var result = a - b;
 
-        using ( new AssertionScope() )
-        {
-            result.RawValue.Should().Be( expectedRawValue );
-            result.Precision.Should().Be( expectedPrecision );
-        }
+        Assertion.All(
+                result.RawValue.TestEquals( expectedRawValue ),
+                result.Precision.TestEquals( expectedPrecision ) )
+            .Go();
     }
 
     [Theory]
@@ -848,7 +816,7 @@ public class FixedTests : TestsBase
 
         var action = Lambda.Of( () => a - b );
 
-        action.Should().ThrowExactly<OverflowException>();
+        action.Test( exc => exc.TestType().Exact<OverflowException>() ).Go();
     }
 
     [Theory]
@@ -913,11 +881,10 @@ public class FixedTests : TestsBase
 
         var result = a * b;
 
-        using ( new AssertionScope() )
-        {
-            result.RawValue.Should().Be( expectedRawValue );
-            result.Precision.Should().Be( expectedPrecision );
-        }
+        Assertion.All(
+                result.RawValue.TestEquals( expectedRawValue ),
+                result.Precision.TestEquals( expectedPrecision ) )
+            .Go();
     }
 
     [Theory]
@@ -938,7 +905,7 @@ public class FixedTests : TestsBase
 
         var action = Lambda.Of( () => a * b );
 
-        action.Should().ThrowExactly<OverflowException>();
+        action.Test( exc => exc.TestType().Exact<OverflowException>() ).Go();
     }
 
     [Theory]
@@ -989,11 +956,10 @@ public class FixedTests : TestsBase
 
         var result = a / b;
 
-        using ( new AssertionScope() )
-        {
-            result.RawValue.Should().Be( expectedRawValue );
-            result.Precision.Should().Be( expectedPrecision );
-        }
+        Assertion.All(
+                result.RawValue.TestEquals( expectedRawValue ),
+                result.Precision.TestEquals( expectedPrecision ) )
+            .Go();
     }
 
     [Theory]
@@ -1013,7 +979,7 @@ public class FixedTests : TestsBase
 
         var action = Lambda.Of( () => a / b );
 
-        action.Should().ThrowExactly<OverflowException>();
+        action.Test( exc => exc.TestType().Exact<OverflowException>() ).Go();
     }
 
     [Theory]
@@ -1027,7 +993,7 @@ public class FixedTests : TestsBase
 
         var action = Lambda.Of( () => a / b );
 
-        action.Should().ThrowExactly<DivideByZeroException>();
+        action.Test( exc => exc.TestType().Exact<DivideByZeroException>() ).Go();
     }
 
     [Theory]
@@ -1058,11 +1024,10 @@ public class FixedTests : TestsBase
 
         var result = a % b;
 
-        using ( new AssertionScope() )
-        {
-            result.RawValue.Should().Be( expectedRawValue );
-            result.Precision.Should().Be( expectedPrecision );
-        }
+        Assertion.All(
+                result.RawValue.TestEquals( expectedRawValue ),
+                result.Precision.TestEquals( expectedPrecision ) )
+            .Go();
     }
 
     [Theory]
@@ -1079,7 +1044,7 @@ public class FixedTests : TestsBase
 
         var action = Lambda.Of( () => a % b );
 
-        action.Should().ThrowExactly<OverflowException>();
+        action.Test( exc => exc.TestType().Exact<OverflowException>() ).Go();
     }
 
     [Theory]
@@ -1093,7 +1058,7 @@ public class FixedTests : TestsBase
 
         var action = Lambda.Of( () => a % b );
 
-        action.Should().ThrowExactly<DivideByZeroException>();
+        action.Test( exc => exc.TestType().Exact<DivideByZeroException>() ).Go();
     }
 
     [Theory]
@@ -1114,11 +1079,10 @@ public class FixedTests : TestsBase
 
         var result = a * b;
 
-        using ( new AssertionScope() )
-        {
-            result.RawValue.Should().Be( expected );
-            result.Precision.Should().Be( precision );
-        }
+        Assertion.All(
+                result.RawValue.TestEquals( expected ),
+                result.Precision.TestEquals( precision ) )
+            .Go();
     }
 
     [Theory]
@@ -1139,11 +1103,10 @@ public class FixedTests : TestsBase
 
         var result = b * a;
 
-        using ( new AssertionScope() )
-        {
-            result.RawValue.Should().Be( expected );
-            result.Precision.Should().Be( precision );
-        }
+        Assertion.All(
+                result.RawValue.TestEquals( expected ),
+                result.Precision.TestEquals( precision ) )
+            .Go();
     }
 
     [Theory]
@@ -1155,7 +1118,7 @@ public class FixedTests : TestsBase
 
         var result = a == b;
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -1172,7 +1135,7 @@ public class FixedTests : TestsBase
 
         var result = a != b;
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -1184,7 +1147,7 @@ public class FixedTests : TestsBase
 
         var result = a < b;
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -1201,7 +1164,7 @@ public class FixedTests : TestsBase
 
         var result = a <= b;
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -1218,7 +1181,7 @@ public class FixedTests : TestsBase
 
         var result = a > b;
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -1235,6 +1198,6 @@ public class FixedTests : TestsBase
 
         var result = a >= b;
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 }

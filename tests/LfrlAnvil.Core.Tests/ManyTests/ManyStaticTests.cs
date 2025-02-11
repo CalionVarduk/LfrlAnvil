@@ -7,6 +7,6 @@ public class ManyStaticTests : TestsBase
     {
         var expected = new[] { 10, 20, 30 };
         var result = Many.Create( expected );
-        result.Should().BeSameAs( expected );
+        result.TestRefEquals( expected ).Go();
     }
 }

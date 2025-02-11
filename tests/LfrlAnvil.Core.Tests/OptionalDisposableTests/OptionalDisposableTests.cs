@@ -1,5 +1,5 @@
-﻿using LfrlAnvil.Functional;
-using LfrlAnvil.TestExtensions.FluentAssertions;
+﻿using LfrlAnvil.Extensions;
+using LfrlAnvil.Functional;
 
 namespace LfrlAnvil.Tests.OptionalDisposableTests;
 
@@ -9,7 +9,7 @@ public class OptionalDisposableTests : TestsBase
     public void Empty_ShouldReturnObjectWithoutValue()
     {
         var sut = OptionalDisposable<IDisposable>.Empty;
-        sut.Value.Should().BeNull();
+        sut.Value.TestNull().Go();
     }
 
     [Fact]
@@ -17,7 +17,7 @@ public class OptionalDisposableTests : TestsBase
     {
         var value = Substitute.For<IDisposable>();
         var sut = OptionalDisposable.Create( value );
-        sut.Value.Should().BeSameAs( value );
+        sut.Value.TestRefEquals( value ).Go();
     }
 
     [Fact]
@@ -25,7 +25,7 @@ public class OptionalDisposableTests : TestsBase
     {
         var value = Substitute.For<IDisposable>();
         var sut = OptionalDisposable.TryCreate( value );
-        sut.Value.Should().BeSameAs( value );
+        sut.Value.TestRefEquals( value ).Go();
     }
 
     [Fact]
@@ -33,7 +33,7 @@ public class OptionalDisposableTests : TestsBase
     {
         IDisposable? value = null;
         var sut = OptionalDisposable.TryCreate( value );
-        sut.Value.Should().BeNull();
+        sut.Value.TestNull().Go();
     }
 
     [Fact]
@@ -41,7 +41,7 @@ public class OptionalDisposableTests : TestsBase
     {
         OptionalDisposable<IDisposable>? value = OptionalDisposable.Create( Substitute.For<IDisposable>() );
         var sut = OptionalDisposable.TryCreate( value );
-        sut.Value.Should().BeEquivalentTo( value );
+        sut.Value.ToNullable().TestEquals( value ).Go();
     }
 
     [Fact]
@@ -49,7 +49,7 @@ public class OptionalDisposableTests : TestsBase
     {
         OptionalDisposable<IDisposable>? value = null;
         var sut = OptionalDisposable.TryCreate( value );
-        sut.Value.Should().BeEquivalentTo( default( OptionalDisposable<IDisposable> ) );
+        sut.Value.TestEquals( default ).Go();
     }
 
     [Fact]
@@ -60,7 +60,7 @@ public class OptionalDisposableTests : TestsBase
 
         sut.Dispose();
 
-        value.VerifyCalls().Received( o => o.Dispose(), 1 );
+        value.ReceivedCalls( o => o.Dispose(), count: 1 ).Go();
     }
 
     [Fact]
@@ -68,6 +68,6 @@ public class OptionalDisposableTests : TestsBase
     {
         var sut = OptionalDisposable<IDisposable>.Empty;
         var action = Lambda.Of( () => sut.Dispose() );
-        action.Should().NotThrow();
+        action.Test( exc => exc.TestNull() ).Go();
     }
 }

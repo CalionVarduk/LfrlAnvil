@@ -11,7 +11,7 @@ public class TaskSchedulerCaptureTests : TestsBase
     {
         TaskSchedulerCapture sut = default;
         var result = sut.TryGetScheduler();
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Fact]
@@ -19,7 +19,7 @@ public class TaskSchedulerCaptureTests : TestsBase
     {
         var sut = new TaskSchedulerCapture( TaskSchedulerCaptureStrategy.None );
         var result = sut.TryGetScheduler();
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Fact]
@@ -31,7 +31,7 @@ public class TaskSchedulerCaptureTests : TestsBase
 
         var result = sut.TryGetScheduler();
 
-        result.Should().BeSameAs( TaskScheduler.Current );
+        result.TestRefEquals( TaskScheduler.Current ).Go();
     }
 
     [Fact]
@@ -44,7 +44,7 @@ public class TaskSchedulerCaptureTests : TestsBase
 
         var result = sut.TryGetScheduler();
 
-        result.Should().NotBeNull().And.NotBeSameAs( TaskScheduler.Current );
+        Assertion.All( result.TestNotNull(), result.TestNotRefEquals( TaskScheduler.Current ) ).Go();
     }
 
     [Fact]
@@ -56,7 +56,7 @@ public class TaskSchedulerCaptureTests : TestsBase
         SynchronizationContext.SetSynchronizationContext( context );
         var result = sut.TryGetScheduler();
 
-        result.Should().NotBeNull().And.NotBeSameAs( TaskScheduler.Current );
+        Assertion.All( result.TestNotNull(), result.TestNotRefEquals( TaskScheduler.Current ) ).Go();
     }
 
     [Fact]
@@ -68,7 +68,7 @@ public class TaskSchedulerCaptureTests : TestsBase
         SynchronizationContext.SetSynchronizationContext( null );
         var result = sut.TryGetScheduler();
 
-        result.Should().BeSameAs( TaskScheduler.Current );
+        result.TestRefEquals( TaskScheduler.Current ).Go();
     }
 
     [Fact]
@@ -79,7 +79,7 @@ public class TaskSchedulerCaptureTests : TestsBase
 
         var result = sut.TryGetScheduler();
 
-        result.Should().BeSameAs( scheduler );
+        result.TestRefEquals( scheduler ).Go();
     }
 
     [Fact]
@@ -90,7 +90,7 @@ public class TaskSchedulerCaptureTests : TestsBase
 
         var result = TaskSchedulerCapture.GetCurrentScheduler();
 
-        result.Should().NotBeNull().And.NotBeSameAs( TaskScheduler.Current );
+        Assertion.All( result.TestNotNull(), result.TestNotRefEquals( TaskScheduler.Current ) ).Go();
     }
 
     [Fact]
@@ -98,7 +98,7 @@ public class TaskSchedulerCaptureTests : TestsBase
     {
         SynchronizationContext.SetSynchronizationContext( null );
         var result = TaskSchedulerCapture.GetCurrentScheduler();
-        result.Should().BeSameAs( TaskScheduler.Current );
+        result.TestRefEquals( TaskScheduler.Current ).Go();
     }
 
     [Fact]
@@ -109,10 +109,10 @@ public class TaskSchedulerCaptureTests : TestsBase
 
         var result = TaskSchedulerCapture.FromSynchronizationContext( context );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().NotBeNull().And.NotBeSameAs( TaskScheduler.Current );
-            SynchronizationContext.Current.Should().BeSameAs( previousContext );
-        }
+        Assertion.All(
+                result.TestNotNull(),
+                result.TestNotRefEquals( TaskScheduler.Current ),
+                SynchronizationContext.Current.TestRefEquals( previousContext ) )
+            .Go();
     }
 }

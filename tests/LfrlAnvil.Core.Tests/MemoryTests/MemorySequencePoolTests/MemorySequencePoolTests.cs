@@ -2,7 +2,6 @@
 using LfrlAnvil.Functional;
 using LfrlAnvil.Memory;
 using LfrlAnvil.TestExtensions.Attributes;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Tests.MemoryTests.MemorySequencePoolTests;
 
@@ -17,7 +16,7 @@ public class MemorySequencePoolTests : TestsBase
     public void Ctor_ShouldThrowArgumentOutOfRangeException_WhenMinSegmentLengthIsOutOfBounds(int minLength)
     {
         var action = Lambda.Of( () => new MemorySequencePool<int>( minLength ) );
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Theory]
@@ -40,11 +39,10 @@ public class MemorySequencePoolTests : TestsBase
     {
         var sut = new MemorySequencePool<int>( minLength );
 
-        using ( new AssertionScope() )
-        {
-            sut.SegmentLength.Should().Be( expected );
-            sut.ClearReturnedSequences.Should().BeTrue();
-        }
+        Assertion.All(
+                sut.SegmentLength.TestEquals( expected ),
+                sut.ClearReturnedSequences.TestTrue() )
+            .Go();
     }
 
     [Theory]
@@ -55,12 +53,11 @@ public class MemorySequencePoolTests : TestsBase
         var sut = new MemorySequencePool<int>( 16 );
         using var result = sut.Rent( length );
 
-        using ( new AssertionScope() )
-        {
-            result.Length.Should().Be( 0 );
-            result.Segments.Length.Should().Be( 0 );
-            result.Owner.Should().BeNull();
-        }
+        Assertion.All(
+                result.Length.TestEquals( 0 ),
+                result.Segments.Length.TestEquals( 0 ),
+                result.Owner.TestNull() )
+            .Go();
     }
 
     [Theory]
@@ -70,13 +67,12 @@ public class MemorySequencePoolTests : TestsBase
         var sut = new MemorySequencePool<int>( segmentLength );
         using var result = sut.Rent( length );
 
-        using ( new AssertionScope() )
-        {
-            result.Length.Should().Be( length );
-            result.Segments.Length.Should().Be( expectedSegmentCountRange.Length );
-            result.Segments.ToArray().Select( s => s.Count ).Should().BeSequentiallyEqualTo( expectedSegmentCountRange );
-            result.Owner.Should().BeSameAs( sut );
-        }
+        Assertion.All(
+                result.Length.TestEquals( length ),
+                result.Segments.Length.TestEquals( expectedSegmentCountRange.Length ),
+                result.Segments.ToArray().Select( s => s.Count ).TestSequence( expectedSegmentCountRange ),
+                result.Owner.TestRefEquals( sut ) )
+            .Go();
     }
 
     [Theory]
@@ -86,18 +82,16 @@ public class MemorySequencePoolTests : TestsBase
         var sut = new MemorySequencePool<int>( segmentLength );
 
         using var first = sut.Rent( firstLength );
-        foreach ( var s in first.Segments )
-            Array.Fill( s.Array!, 1, s.Offset, s.Count );
+        foreach ( var s in first.Segments ) Array.Fill( s.Array!, 1, s.Offset, s.Count );
 
         using var result = sut.Rent( length );
 
-        using ( new AssertionScope() )
-        {
-            result.Length.Should().Be( length );
-            result.Segments.Length.Should().Be( expectedSegmentCountRange.Length );
-            result.Segments.ToArray().Select( s => s.Count ).Should().BeSequentiallyEqualTo( expectedSegmentCountRange );
-            result.Should().AllBeEquivalentTo( default( int ) );
-        }
+        Assertion.All(
+                result.Length.TestEquals( length ),
+                result.Segments.Length.TestEquals( expectedSegmentCountRange.Length ),
+                result.Segments.ToArray().Select( s => s.Count ).TestSequence( expectedSegmentCountRange ),
+                result.TestAll( (e, _) => e.TestEquals( default ) ) )
+            .Go();
     }
 
     [Theory]
@@ -108,23 +102,20 @@ public class MemorySequencePoolTests : TestsBase
         var sut = new MemorySequencePool<int>( segmentLength ) { ClearReturnedSequences = false };
 
         using var first = sut.Rent( firstLength );
-        foreach ( var s in first.Segments )
-            Array.Fill( s.Array!, 1, s.Offset, s.Count );
+        foreach ( var s in first.Segments ) Array.Fill( s.Array!, 1, s.Offset, s.Count );
 
         using ( var tail = sut.Rent( tailLength ) )
         {
-            foreach ( var s in tail.Segments )
-                Array.Fill( s.Array!, tailValue, s.Offset, s.Count );
+            foreach ( var s in tail.Segments ) Array.Fill( s.Array!, tailValue, s.Offset, s.Count );
         }
 
         using var result = sut.Rent( length );
 
-        using ( new AssertionScope() )
-        {
-            result.Length.Should().Be( length );
-            result.Take( tailLength ).Should().AllBeEquivalentTo( tailValue );
-            result.Skip( tailLength ).Should().AllBeEquivalentTo( default( int ) );
-        }
+        Assertion.All(
+                result.Length.TestEquals( length ),
+                result.Take( tailLength ).TestAll( (e, _) => e.TestEquals( tailValue ) ),
+                result.Skip( tailLength ).TestAll( (e, _) => e.TestEquals( default ) ) )
+            .Go();
     }
 
     [Fact]
@@ -137,8 +128,7 @@ public class MemorySequencePoolTests : TestsBase
             first[i] = i + 1;
 
         using var second = sut.Rent( 8 );
-        foreach ( var s in second.Segments )
-            Array.Fill( s.Array!, -1, s.Offset, s.Count );
+        foreach ( var s in second.Segments ) Array.Fill( s.Array!, -1, s.Offset, s.Count );
 
         first.Dispose();
 
@@ -147,15 +137,14 @@ public class MemorySequencePoolTests : TestsBase
         using var fifth = sut.Rent( 2 );
         using var sixth = sut.Rent( 8 );
 
-        using ( new AssertionScope() )
-        {
-            second.Should().AllBeEquivalentTo( -1 );
-            third.Should().BeSequentiallyEqualTo( 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 );
-            fourth.Should().BeSequentiallyEqualTo( 11, 12, 13, 14 );
-            fifth.Should().BeSequentiallyEqualTo( 15, 16 );
-            sixth.Length.Should().Be( 8 );
-            sixth.Should().AllBeEquivalentTo( default( int ) );
-        }
+        Assertion.All(
+                second.TestAll( (e, _) => e.TestEquals( -1 ) ),
+                third.TestSequence( [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 ] ),
+                fourth.TestSequence( [ 11, 12, 13, 14 ] ),
+                fifth.TestSequence( [ 15, 16 ] ),
+                sixth.Length.TestEquals( 8 ),
+                sixth.TestAll( (e, _) => e.TestEquals( default ) ) )
+            .Go();
     }
 
     [Fact]
@@ -172,8 +161,7 @@ public class MemorySequencePoolTests : TestsBase
             second[i] = i + first.Length + 1;
 
         using var third = sut.Rent( 16 );
-        foreach ( var s in third.Segments )
-            Array.Fill( s.Array!, -1, s.Offset, s.Count );
+        foreach ( var s in third.Segments ) Array.Fill( s.Array!, -1, s.Offset, s.Count );
 
         second.Dispose();
         first.Dispose();
@@ -183,15 +171,14 @@ public class MemorySequencePoolTests : TestsBase
         using var sixth = sut.Rent( 2 );
         using var seventh = sut.Rent( 8 );
 
-        using ( new AssertionScope() )
-        {
-            third.Should().AllBeEquivalentTo( -1 );
-            fourth.Should().BeSequentiallyEqualTo( 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 );
-            fifth.Should().BeSequentiallyEqualTo( 11, 12, 13, 14 );
-            sixth.Should().BeSequentiallyEqualTo( 15, 16 );
-            seventh.Length.Should().Be( 8 );
-            seventh.Should().AllBeEquivalentTo( default( int ) );
-        }
+        Assertion.All(
+                third.TestAll( (e, _) => e.TestEquals( -1 ) ),
+                fourth.TestSequence( [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 ] ),
+                fifth.TestSequence( [ 11, 12, 13, 14 ] ),
+                sixth.TestSequence( [ 15, 16 ] ),
+                seventh.Length.TestEquals( 8 ),
+                seventh.TestAll( (e, _) => e.TestEquals( default ) ) )
+            .Go();
     }
 
     [Fact]
@@ -200,16 +187,14 @@ public class MemorySequencePoolTests : TestsBase
         var sut = new MemorySequencePool<int>( 8 ) { ClearReturnedSequences = false };
 
         using var first = sut.Rent( 8 );
-        foreach ( var s in first.Segments )
-            Array.Fill( s.Array!, -1, s.Offset, s.Count );
+        foreach ( var s in first.Segments ) Array.Fill( s.Array!, -1, s.Offset, s.Count );
 
         var second = sut.Rent( 16 );
         for ( var i = 0; i < second.Length; ++i )
             second[i] = i + 1;
 
         using var third = sut.Rent( 8 );
-        foreach ( var s in third.Segments )
-            Array.Fill( s.Array!, -2, s.Offset, s.Count );
+        foreach ( var s in third.Segments ) Array.Fill( s.Array!, -2, s.Offset, s.Count );
 
         second.Dispose();
 
@@ -218,16 +203,15 @@ public class MemorySequencePoolTests : TestsBase
         using var sixth = sut.Rent( 2 );
         using var seventh = sut.Rent( 8 );
 
-        using ( new AssertionScope() )
-        {
-            first.Should().AllBeEquivalentTo( -1 );
-            third.Should().AllBeEquivalentTo( -2 );
-            fourth.Should().BeSequentiallyEqualTo( 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 );
-            fifth.Should().BeSequentiallyEqualTo( 11, 12, 13, 14 );
-            sixth.Should().BeSequentiallyEqualTo( 15, 16 );
-            seventh.Length.Should().Be( 8 );
-            seventh.Should().AllBeEquivalentTo( default( int ) );
-        }
+        Assertion.All(
+                first.TestAll( (e, _) => e.TestEquals( -1 ) ),
+                third.TestAll( (e, _) => e.TestEquals( -2 ) ),
+                fourth.TestSequence( [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 ] ),
+                fifth.TestSequence( [ 11, 12, 13, 14 ] ),
+                sixth.TestSequence( [ 15, 16 ] ),
+                seventh.Length.TestEquals( 8 ),
+                seventh.TestAll( (e, _) => e.TestEquals( default ) ) )
+            .Go();
     }
 
     [Fact]
@@ -244,8 +228,7 @@ public class MemorySequencePoolTests : TestsBase
             second[i] = i + first.Length + 1;
 
         using var third = sut.Rent( 16 );
-        foreach ( var s in third.Segments )
-            Array.Fill( s.Array!, -1, s.Offset, s.Count );
+        foreach ( var s in third.Segments ) Array.Fill( s.Array!, -1, s.Offset, s.Count );
 
         first.Dispose();
         second.Dispose();
@@ -255,15 +238,14 @@ public class MemorySequencePoolTests : TestsBase
         using var sixth = sut.Rent( 2 );
         using var seventh = sut.Rent( 8 );
 
-        using ( new AssertionScope() )
-        {
-            third.Should().AllBeEquivalentTo( -1 );
-            fourth.Should().BeSequentiallyEqualTo( 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 );
-            fifth.Should().BeSequentiallyEqualTo( 11, 12, 13, 14 );
-            sixth.Should().BeSequentiallyEqualTo( 15, 16 );
-            seventh.Length.Should().Be( 8 );
-            seventh.Should().AllBeEquivalentTo( default( int ) );
-        }
+        Assertion.All(
+                third.TestAll( (e, _) => e.TestEquals( -1 ) ),
+                fourth.TestSequence( [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 ] ),
+                fifth.TestSequence( [ 11, 12, 13, 14 ] ),
+                sixth.TestSequence( [ 15, 16 ] ),
+                seventh.Length.TestEquals( 8 ),
+                seventh.TestAll( (e, _) => e.TestEquals( default ) ) )
+            .Go();
     }
 
     [Fact]
@@ -284,8 +266,7 @@ public class MemorySequencePoolTests : TestsBase
             third[i] = i + first.Length + second.Length + 1;
 
         using var fourth = sut.Rent( 16 );
-        foreach ( var s in fourth.Segments )
-            Array.Fill( s.Array!, -1, s.Offset, s.Count );
+        foreach ( var s in fourth.Segments ) Array.Fill( s.Array!, -1, s.Offset, s.Count );
 
         third.Dispose();
         second.Dispose();
@@ -295,15 +276,14 @@ public class MemorySequencePoolTests : TestsBase
         using var seventh = sut.Rent( 2 );
         using var eighth = sut.Rent( 8 );
 
-        using ( new AssertionScope() )
-        {
-            fourth.Should().AllBeEquivalentTo( -1 );
-            fifth.Should().BeSequentiallyEqualTo( 9, 10, 11, 12, 13, 14, 15, 16, 17, 18 );
-            sixth.Should().BeSequentiallyEqualTo( 19, 20, 21, 22 );
-            seventh.Should().BeSequentiallyEqualTo( 23, 24 );
-            eighth.Length.Should().Be( 8 );
-            eighth.Should().AllBeEquivalentTo( default( int ) );
-        }
+        Assertion.All(
+                fourth.TestAll( (e, _) => e.TestEquals( -1 ) ),
+                fifth.TestSequence( [ 9, 10, 11, 12, 13, 14, 15, 16, 17, 18 ] ),
+                sixth.TestSequence( [ 19, 20, 21, 22 ] ),
+                seventh.TestSequence( [ 23, 24 ] ),
+                eighth.Length.TestEquals( 8 ),
+                eighth.TestAll( (e, _) => e.TestEquals( default ) ) )
+            .Go();
     }
 
     [Fact]
@@ -324,8 +304,7 @@ public class MemorySequencePoolTests : TestsBase
             third[i] = i + first.Length + second.Length + 1;
 
         using var fourth = sut.Rent( 16 );
-        foreach ( var s in fourth.Segments )
-            Array.Fill( s.Array!, -1, s.Offset, s.Count );
+        foreach ( var s in fourth.Segments ) Array.Fill( s.Array!, -1, s.Offset, s.Count );
 
         first.Dispose();
         third.Dispose();
@@ -336,15 +315,14 @@ public class MemorySequencePoolTests : TestsBase
         using var seventh = sut.Rent( 3 );
         using var eighth = sut.Rent( 8 );
 
-        using ( new AssertionScope() )
-        {
-            fourth.Should().AllBeEquivalentTo( -1 );
-            fifth.Should().BeSequentiallyEqualTo( 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 );
-            sixth.Should().BeSequentiallyEqualTo( 16, 17, 18, 19, 20, 21 );
-            seventh.Should().BeSequentiallyEqualTo( 22, 23, 24 );
-            eighth.Length.Should().Be( 8 );
-            eighth.Should().AllBeEquivalentTo( default( int ) );
-        }
+        Assertion.All(
+                fourth.TestAll( (e, _) => e.TestEquals( -1 ) ),
+                fifth.TestSequence( [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 ] ),
+                sixth.TestSequence( [ 16, 17, 18, 19, 20, 21 ] ),
+                seventh.TestSequence( [ 22, 23, 24 ] ),
+                eighth.Length.TestEquals( 8 ),
+                eighth.TestAll( (e, _) => e.TestEquals( default ) ) )
+            .Go();
     }
 
     [Fact]
@@ -368,14 +346,13 @@ public class MemorySequencePoolTests : TestsBase
         using var fifth = sut.Rent( 2 );
         using var sixth = sut.Rent( 8 );
 
-        using ( new AssertionScope() )
-        {
-            third.Should().BeSequentiallyEqualTo( 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 );
-            fourth.Should().BeSequentiallyEqualTo( 11, 12, 13, 14 );
-            fifth.Should().BeSequentiallyEqualTo( 15, 16 );
-            sixth.Length.Should().Be( 8 );
-            sixth.Should().AllBeEquivalentTo( default( int ) );
-        }
+        Assertion.All(
+                third.TestSequence( [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 ] ),
+                fourth.TestSequence( [ 11, 12, 13, 14 ] ),
+                fifth.TestSequence( [ 15, 16 ] ),
+                sixth.Length.TestEquals( 8 ),
+                sixth.TestAll( (e, _) => e.TestEquals( default ) ) )
+            .Go();
     }
 
     [Fact]
@@ -384,8 +361,7 @@ public class MemorySequencePoolTests : TestsBase
         var sut = new MemorySequencePool<int>( 8 ) { ClearReturnedSequences = false };
 
         using var first = sut.Rent( 16 );
-        foreach ( var s in first.Segments )
-            Array.Fill( s.Array!, -1, s.Offset, s.Count );
+        foreach ( var s in first.Segments ) Array.Fill( s.Array!, -1, s.Offset, s.Count );
 
         var second = sut.Rent( 8 );
         for ( var i = 0; i < second.Length; ++i )
@@ -403,15 +379,14 @@ public class MemorySequencePoolTests : TestsBase
         using var sixth = sut.Rent( 2 );
         using var seventh = sut.Rent( 8 );
 
-        using ( new AssertionScope() )
-        {
-            first.Should().AllBeEquivalentTo( -1 );
-            fourth.Should().BeSequentiallyEqualTo( 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 );
-            fifth.Should().BeSequentiallyEqualTo( 11, 12, 13, 14 );
-            sixth.Should().BeSequentiallyEqualTo( 15, 16 );
-            seventh.Length.Should().Be( 8 );
-            seventh.Should().AllBeEquivalentTo( default( int ) );
-        }
+        Assertion.All(
+                first.TestAll( (e, _) => e.TestEquals( -1 ) ),
+                fourth.TestSequence( [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 ] ),
+                fifth.TestSequence( [ 11, 12, 13, 14 ] ),
+                sixth.TestSequence( [ 15, 16 ] ),
+                seventh.Length.TestEquals( 8 ),
+                seventh.TestAll( (e, _) => e.TestEquals( default ) ) )
+            .Go();
     }
 
     [Fact]
@@ -420,29 +395,26 @@ public class MemorySequencePoolTests : TestsBase
         var sut = new MemorySequencePool<int>( 8 ) { ClearReturnedSequences = false };
 
         using var first = sut.Rent( 8 );
-        foreach ( var s in first.Segments )
-            Array.Fill( s.Array!, -1, s.Offset, s.Count );
+        foreach ( var s in first.Segments ) Array.Fill( s.Array!, -1, s.Offset, s.Count );
 
         var second = sut.Rent( 8 );
         for ( var i = 0; i < second.Length; ++i )
             second[i] = i + 1;
 
         using var third = sut.Rent( 8 );
-        foreach ( var s in third.Segments )
-            Array.Fill( s.Array!, -2, s.Offset, s.Count );
+        foreach ( var s in third.Segments ) Array.Fill( s.Array!, -2, s.Offset, s.Count );
 
         second.Dispose();
 
         using var fourth = sut.Rent( 9 );
         using var fifth = sut.Rent( 8 );
 
-        using ( new AssertionScope() )
-        {
-            first.Should().AllBeEquivalentTo( -1 );
-            third.Should().AllBeEquivalentTo( -2 );
-            fourth.Should().AllBeEquivalentTo( default( int ) );
-            fifth.Should().BeSequentiallyEqualTo( 1, 2, 3, 4, 5, 6, 7, 8 );
-        }
+        Assertion.All(
+                first.TestAll( (e, _) => e.TestEquals( -1 ) ),
+                third.TestAll( (e, _) => e.TestEquals( -2 ) ),
+                fourth.TestAll( (e, _) => e.TestEquals( default ) ),
+                fifth.TestSequence( [ 1, 2, 3, 4, 5, 6, 7, 8 ] ) )
+            .Go();
     }
 
     [Fact]
@@ -494,26 +466,25 @@ public class MemorySequencePoolTests : TestsBase
         using var y = sut.Rent( 1 );
         using var z = sut.Rent( 8 );
 
-        using ( new AssertionScope() )
-        {
-            a.Should().BeSequentiallyEqualTo( 1, 2, 3 );
-            e.Should().BeSequentiallyEqualTo( 19, 20, 21, 22, 23, 24, 25 );
-            g.Should().BeSequentiallyEqualTo( 34, 35, 36, 37, 38, 39, 40, 41, 42 );
-            i.Should().BeSequentiallyEqualTo( 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63 );
-            m.Should().BeSequentiallyEqualTo( 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117 );
-            o.Should().BeSequentiallyEqualTo( 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150 );
-            p.Should().BeSequentiallyEqualTo( 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83 );
-            q.Should().BeSequentiallyEqualTo( 84, 85, 86 );
-            r.Should().BeSequentiallyEqualTo( 87, 88, 89, 90, 91, 92, 93, 94, 95 );
-            s.Should().BeSequentiallyEqualTo( 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132 );
-            t.Should().BeSequentiallyEqualTo( 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18 );
-            u.Should().BeSequentiallyEqualTo( 43, 44, 45, 46, 47, 48, 49, 50, 51, 52 );
-            v.Should().BeSequentiallyEqualTo( 26, 27, 28, 29 );
-            w.Should().BeSequentiallyEqualTo( 96, 97, 98, 99, 100, 101, 102 );
-            x.Should().BeSequentiallyEqualTo( 30, 31, 32, 33 );
-            y.Should().BeSequentiallyEqualTo( 133 );
-            z.Should().AllBeEquivalentTo( default( int ) );
-        }
+        Assertion.All(
+                a.TestSequence( [ 1, 2, 3 ] ),
+                e.TestSequence( [ 19, 20, 21, 22, 23, 24, 25 ] ),
+                g.TestSequence( [ 34, 35, 36, 37, 38, 39, 40, 41, 42 ] ),
+                i.TestSequence( [ 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63 ] ),
+                m.TestSequence( [ 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117 ] ),
+                o.TestSequence( [ 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150 ] ),
+                p.TestSequence( [ 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83 ] ),
+                q.TestSequence( [ 84, 85, 86 ] ),
+                r.TestSequence( [ 87, 88, 89, 90, 91, 92, 93, 94, 95 ] ),
+                s.TestSequence( [ 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132 ] ),
+                t.TestSequence( [ 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18 ] ),
+                u.TestSequence( [ 43, 44, 45, 46, 47, 48, 49, 50, 51, 52 ] ),
+                v.TestSequence( [ 26, 27, 28, 29 ] ),
+                w.TestSequence( [ 96, 97, 98, 99, 100, 101, 102 ] ),
+                x.TestSequence( [ 30, 31, 32, 33 ] ),
+                y.TestSequence( [ 133 ] ),
+                z.TestAll( (el, _) => el.TestEquals( default ) ) )
+            .Go();
     }
 
     [Theory]
@@ -527,11 +498,10 @@ public class MemorySequencePoolTests : TestsBase
         var sut = new MemorySequencePool<int>( 8 );
         using var result = sut.GreedyRent( length );
 
-        using ( new AssertionScope() )
-        {
-            result.Length.Should().Be( length );
-            result.Owner.Should().BeSameAs( sut );
-        }
+        Assertion.All(
+                result.Length.TestEquals( length ),
+                result.Owner.TestRefEquals( sut ) )
+            .Go();
     }
 
     [Theory]
@@ -555,13 +525,12 @@ public class MemorySequencePoolTests : TestsBase
         using var result = sut.GreedyRent( length );
         var other = sut.Rent( 8 );
 
-        using ( new AssertionScope() )
-        {
-            result.Length.Should().Be( length );
-            result.Should().AllBeEquivalentTo( 0 );
-            other.Should().BeSequentiallyEqualTo( 1, 2, 3, 4, 5, 6, 7, 8 );
-            second.Should().AllBeEquivalentTo( -1 );
-        }
+        Assertion.All(
+                result.Length.TestEquals( length ),
+                result.TestAll( (e, _) => e.TestEquals( 0 ) ),
+                other.TestSequence( [ 1, 2, 3, 4, 5, 6, 7, 8 ] ),
+                second.TestAll( (e, _) => e.TestEquals( -1 ) ) )
+            .Go();
     }
 
     [Fact]
@@ -575,7 +544,7 @@ public class MemorySequencePoolTests : TestsBase
 
         using var next = sut.Rent( 16 );
 
-        arr.Should().BeSameAs( next.Segments[0].Array );
+        arr.TestRefEquals( next.Segments[0].Array ).Go();
     }
 
     [Fact]
@@ -590,7 +559,7 @@ public class MemorySequencePoolTests : TestsBase
 
         using var next = sut.Rent( 16 );
 
-        arr.Should().BeSameAs( next.Segments[0].Array );
+        arr.TestRefEquals( next.Segments[0].Array ).Go();
     }
 
     [Fact]
@@ -606,7 +575,7 @@ public class MemorySequencePoolTests : TestsBase
 
         using var next = sut.Rent( 16 );
 
-        arr.Should().BeSameAs( next.Segments[0].Array );
+        arr.TestRefEquals( next.Segments[0].Array ).Go();
     }
 
     [Fact]
@@ -617,11 +586,10 @@ public class MemorySequencePoolTests : TestsBase
 
         result.Dispose();
 
-        using ( new AssertionScope() )
-        {
-            sut.Report.CachedNodes.Should().Be( 1 );
-            sut.Report.GetRentedNodes().Should().BeEmpty();
-        }
+        Assertion.All(
+                sut.Report.CachedNodes.TestEquals( 1 ),
+                sut.Report.GetRentedNodes().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -636,12 +604,11 @@ public class MemorySequencePoolTests : TestsBase
         b.Dispose();
         result.Dispose();
 
-        using ( new AssertionScope() )
-        {
-            sut.Report.CachedNodes.Should().Be( 3 );
-            sut.Report.FragmentedNodes.Should().Be( 0 );
-            sut.Report.GetRentedNodes().Should().BeEmpty();
-        }
+        Assertion.All(
+                sut.Report.CachedNodes.TestEquals( 3 ),
+                sut.Report.FragmentedNodes.TestEquals( 0 ),
+                sut.Report.GetRentedNodes().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -653,11 +620,10 @@ public class MemorySequencePoolTests : TestsBase
 
         result.Dispose();
 
-        using ( new AssertionScope() )
-        {
-            sut.Report.CachedNodes.Should().Be( 1 );
-            sut.Report.GetRentedNodes().Should().BeSequentiallyEqualTo( a );
-        }
+        Assertion.All(
+                sut.Report.CachedNodes.TestEquals( 1 ),
+                sut.Report.GetRentedNodes().TestSequence( [ a ] ) )
+            .Go();
     }
 
     [Fact]
@@ -669,12 +635,11 @@ public class MemorySequencePoolTests : TestsBase
 
         result.Dispose();
 
-        using ( new AssertionScope() )
-        {
-            sut.Report.CachedNodes.Should().Be( 1 );
-            sut.Report.FragmentedNodes.Should().Be( 0 );
-            sut.Report.GetRentedNodes().Should().BeSequentiallyEqualTo( a );
-        }
+        Assertion.All(
+                sut.Report.CachedNodes.TestEquals( 1 ),
+                sut.Report.FragmentedNodes.TestEquals( 0 ),
+                sut.Report.GetRentedNodes().TestSequence( [ a ] ) )
+            .Go();
     }
 
     [Fact]
@@ -688,12 +653,11 @@ public class MemorySequencePoolTests : TestsBase
         a.Dispose();
         result.Dispose();
 
-        using ( new AssertionScope() )
-        {
-            sut.Report.CachedNodes.Should().Be( 1 );
-            sut.Report.GetFragmentedNodeSizes().Should().BeSequentiallyEqualTo( 8 );
-            sut.Report.GetRentedNodes().Should().BeSequentiallyEqualTo( b );
-        }
+        Assertion.All(
+                sut.Report.CachedNodes.TestEquals( 1 ),
+                sut.Report.GetFragmentedNodeSizes().TestSequence( [ 8 ] ),
+                sut.Report.GetRentedNodes().TestSequence( [ b ] ) )
+            .Go();
     }
 
     [Fact]
@@ -709,12 +673,11 @@ public class MemorySequencePoolTests : TestsBase
         b.Dispose();
         result.Dispose();
 
-        using ( new AssertionScope() )
-        {
-            sut.Report.CachedNodes.Should().Be( 2 );
-            sut.Report.GetFragmentedNodeSizes().Should().BeSequentiallyEqualTo( 12 );
-            sut.Report.GetRentedNodes().Should().BeSequentiallyEqualTo( c );
-        }
+        Assertion.All(
+                sut.Report.CachedNodes.TestEquals( 2 ),
+                sut.Report.GetFragmentedNodeSizes().TestSequence( [ 12 ] ),
+                sut.Report.GetRentedNodes().TestSequence( [ c ] ) )
+            .Go();
     }
 
     [Fact]
@@ -727,12 +690,11 @@ public class MemorySequencePoolTests : TestsBase
 
         result.Dispose();
 
-        using ( new AssertionScope() )
-        {
-            sut.Report.CachedNodes.Should().Be( 1 );
-            sut.Report.FragmentedNodes.Should().Be( 0 );
-            sut.Report.GetRentedNodes().Should().BeSequentiallyEqualTo( b, a );
-        }
+        Assertion.All(
+                sut.Report.CachedNodes.TestEquals( 1 ),
+                sut.Report.FragmentedNodes.TestEquals( 0 ),
+                sut.Report.GetRentedNodes().TestSequence( [ b, a ] ) )
+            .Go();
     }
 
     [Fact]
@@ -746,12 +708,11 @@ public class MemorySequencePoolTests : TestsBase
         a.Dispose();
         result.Dispose();
 
-        using ( new AssertionScope() )
-        {
-            sut.Report.CachedNodes.Should().Be( 1 );
-            sut.Report.GetFragmentedNodeSizes().Should().BeSequentiallyEqualTo( 4 );
-            sut.Report.GetRentedNodes().Should().BeSequentiallyEqualTo( b );
-        }
+        Assertion.All(
+                sut.Report.CachedNodes.TestEquals( 1 ),
+                sut.Report.GetFragmentedNodeSizes().TestSequence( [ 4 ] ),
+                sut.Report.GetRentedNodes().TestSequence( [ b ] ) )
+            .Go();
     }
 
     [Fact]
@@ -766,12 +727,11 @@ public class MemorySequencePoolTests : TestsBase
         b.Dispose();
         result.Dispose();
 
-        using ( new AssertionScope() )
-        {
-            sut.Report.CachedNodes.Should().Be( 1 );
-            sut.Report.GetFragmentedNodeSizes().Should().BeSequentiallyEqualTo( 8 );
-            sut.Report.GetRentedNodes().Should().BeSequentiallyEqualTo( c, a );
-        }
+        Assertion.All(
+                sut.Report.CachedNodes.TestEquals( 1 ),
+                sut.Report.GetFragmentedNodeSizes().TestSequence( [ 8 ] ),
+                sut.Report.GetRentedNodes().TestSequence( [ c, a ] ) )
+            .Go();
     }
 
     [Theory]
@@ -792,22 +752,19 @@ public class MemorySequencePoolTests : TestsBase
         var sut = new MemorySequencePool<int>( 16 ) { ClearReturnedSequences = true };
 
         using var first = sut.Rent( firstLength );
-        foreach ( var s in first.Segments )
-            Array.Fill( s.Array!, 1, s.Offset, s.Count );
+        foreach ( var s in first.Segments ) Array.Fill( s.Array!, 1, s.Offset, s.Count );
 
         using ( var second = sut.Rent( length ) )
         {
-            foreach ( var s in second.Segments )
-                Array.Fill( s.Array!, 2, s.Offset, s.Count );
+            foreach ( var s in second.Segments ) Array.Fill( s.Array!, 2, s.Offset, s.Count );
         }
 
         using var result = sut.Rent( length );
 
-        using ( new AssertionScope() )
-        {
-            first.Should().AllBeEquivalentTo( 1 );
-            result.Should().AllBeEquivalentTo( default( int ) );
-        }
+        Assertion.All(
+                first.TestAll( (e, _) => e.TestEquals( 1 ) ),
+                result.TestAll( (e, _) => e.TestEquals( default ) ) )
+            .Go();
     }
 
     [Theory]
@@ -828,22 +785,19 @@ public class MemorySequencePoolTests : TestsBase
         var sut = new MemorySequencePool<int>( 16 ) { ClearReturnedSequences = false };
 
         using var first = sut.Rent( firstLength );
-        foreach ( var s in first.Segments )
-            Array.Fill( s.Array!, 1, s.Offset, s.Count );
+        foreach ( var s in first.Segments ) Array.Fill( s.Array!, 1, s.Offset, s.Count );
 
         using ( var second = sut.Rent( length ) )
         {
-            foreach ( var s in second.Segments )
-                Array.Fill( s.Array!, 2, s.Offset, s.Count );
+            foreach ( var s in second.Segments ) Array.Fill( s.Array!, 2, s.Offset, s.Count );
         }
 
         using var result = sut.Rent( length );
 
-        using ( new AssertionScope() )
-        {
-            first.Should().AllBeEquivalentTo( 1 );
-            result.Should().AllBeEquivalentTo( 2 );
-        }
+        Assertion.All(
+                first.TestAll( (e, _) => e.TestEquals( 1 ) ),
+                result.TestAll( (e, _) => e.TestEquals( 2 ) ) )
+            .Go();
     }
 
     [Fact]
@@ -853,14 +807,13 @@ public class MemorySequencePoolTests : TestsBase
 
         using ( var r = sut.Rent( 48 ) )
         {
-            foreach ( var s in r.Segments )
-                Array.Fill( s.Array!, 1, s.Offset, s.Count );
+            foreach ( var s in r.Segments ) Array.Fill( s.Array!, 1, s.Offset, s.Count );
         }
 
         sut.TrimExcess();
         using var result = sut.Rent( 48 );
 
-        result.Should().AllBeEquivalentTo( default( int ) );
+        result.TestAll( (e, _) => e.TestEquals( default ) ).Go();
     }
 
     [Fact]
@@ -869,24 +822,21 @@ public class MemorySequencePoolTests : TestsBase
         var sut = new MemorySequencePool<int>( 8 ) { ClearReturnedSequences = false };
 
         using var first = sut.Rent( 48 );
-        foreach ( var s in first.Segments )
-            Array.Fill( s.Array!, 1, s.Offset, s.Count );
+        foreach ( var s in first.Segments ) Array.Fill( s.Array!, 1, s.Offset, s.Count );
 
         using ( var r = sut.Rent( 48 ) )
         {
-            foreach ( var s in r.Segments )
-                Array.Fill( s.Array!, 2, s.Offset, s.Count );
+            foreach ( var s in r.Segments ) Array.Fill( s.Array!, 2, s.Offset, s.Count );
         }
 
         sut.TrimExcess();
         using var result = sut.Rent( 48 );
 
-        using ( new AssertionScope() )
-        {
-            first.Length.Should().Be( 48 );
-            first.Should().AllBeEquivalentTo( 1 );
-            result.Should().AllBeEquivalentTo( default( int ) );
-        }
+        Assertion.All(
+                first.Length.TestEquals( 48 ),
+                first.TestAll( (e, _) => e.TestEquals( 1 ) ),
+                result.TestAll( (e, _) => e.TestEquals( default ) ) )
+            .Go();
     }
 
     [Fact]
@@ -894,18 +844,17 @@ public class MemorySequencePoolTests : TestsBase
     {
         var sut = default( MemorySequencePool<int>.ReportInfo );
 
-        using ( new AssertionScope() )
-        {
-            sut.AllocatedSegments.Should().Be( 0 );
-            sut.ActiveSegments.Should().Be( 0 );
-            sut.CachedNodes.Should().Be( 0 );
-            sut.ActiveNodes.Should().Be( 0 );
-            sut.FragmentedNodes.Should().Be( 0 );
-            sut.ActiveElements.Should().Be( 0 );
-            sut.FragmentedElements.Should().Be( 0 );
-            sut.GetFragmentedNodeSizes().Should().BeEmpty();
-            sut.GetRentedNodes().Should().BeEmpty();
-        }
+        Assertion.All(
+                sut.AllocatedSegments.TestEquals( 0 ),
+                sut.ActiveSegments.TestEquals( 0 ),
+                sut.CachedNodes.TestEquals( 0 ),
+                sut.ActiveNodes.TestEquals( 0 ),
+                sut.FragmentedNodes.TestEquals( 0 ),
+                sut.ActiveElements.TestEquals( 0 ),
+                sut.FragmentedElements.TestEquals( 0 ),
+                sut.GetFragmentedNodeSizes().TestEmpty(),
+                sut.GetRentedNodes().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -913,18 +862,17 @@ public class MemorySequencePoolTests : TestsBase
     {
         var sut = new MemorySequencePool<int>( 16 ).Report;
 
-        using ( new AssertionScope() )
-        {
-            sut.AllocatedSegments.Should().Be( 0 );
-            sut.ActiveSegments.Should().Be( 0 );
-            sut.CachedNodes.Should().Be( 0 );
-            sut.ActiveNodes.Should().Be( 0 );
-            sut.FragmentedNodes.Should().Be( 0 );
-            sut.ActiveElements.Should().Be( 0 );
-            sut.FragmentedElements.Should().Be( 0 );
-            sut.GetFragmentedNodeSizes().Should().BeEmpty();
-            sut.GetRentedNodes().Should().BeEmpty();
-        }
+        Assertion.All(
+                sut.AllocatedSegments.TestEquals( 0 ),
+                sut.ActiveSegments.TestEquals( 0 ),
+                sut.CachedNodes.TestEquals( 0 ),
+                sut.ActiveNodes.TestEquals( 0 ),
+                sut.FragmentedNodes.TestEquals( 0 ),
+                sut.ActiveElements.TestEquals( 0 ),
+                sut.FragmentedElements.TestEquals( 0 ),
+                sut.GetFragmentedNodeSizes().TestEmpty(),
+                sut.GetRentedNodes().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -950,17 +898,16 @@ public class MemorySequencePoolTests : TestsBase
 
         var sut = pool.Report;
 
-        using ( new AssertionScope() )
-        {
-            sut.AllocatedSegments.Should().Be( 13 );
-            sut.ActiveSegments.Should().Be( 11 );
-            sut.CachedNodes.Should().Be( 2 );
-            sut.ActiveNodes.Should().Be( 8 );
-            sut.FragmentedNodes.Should().Be( 3 );
-            sut.ActiveElements.Should().Be( 81 );
-            sut.FragmentedElements.Should().Be( 28 );
-            sut.GetFragmentedNodeSizes().Should().BeSequentiallyEqualTo( 14, 5, 9 );
-            sut.GetRentedNodes().Should().BeSequentiallyEqualTo( h, g, f, d, b );
-        }
+        Assertion.All(
+                sut.AllocatedSegments.TestEquals( 13 ),
+                sut.ActiveSegments.TestEquals( 11 ),
+                sut.CachedNodes.TestEquals( 2 ),
+                sut.ActiveNodes.TestEquals( 8 ),
+                sut.FragmentedNodes.TestEquals( 3 ),
+                sut.ActiveElements.TestEquals( 81 ),
+                sut.FragmentedElements.TestEquals( 28 ),
+                sut.GetFragmentedNodeSizes().TestSequence( [ 14, 5, 9 ] ),
+                sut.GetRentedNodes().TestSequence( [ h, g, f, d, b ] ) )
+            .Go();
     }
 }

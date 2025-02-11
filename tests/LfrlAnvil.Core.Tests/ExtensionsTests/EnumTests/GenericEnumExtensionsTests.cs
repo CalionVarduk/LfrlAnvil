@@ -10,6 +10,6 @@ public abstract class GenericEnumExtensionsTests<T> : TestsBase
     {
         var value = Fixture.Create<T>();
         var result = value.ToBitmask();
-        result.Value.Should().Be( value );
+        result.Value.TestEquals( value ).Go();
     }
 }

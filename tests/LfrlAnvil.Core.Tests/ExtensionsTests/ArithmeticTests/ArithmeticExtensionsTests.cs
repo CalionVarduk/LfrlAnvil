@@ -12,7 +12,7 @@ public class ArithmeticExtensionsTests : TestsBase
     public void EuclidModulo_ShouldReturnCorrectResult_ForFloat(float a, float b, float expected)
     {
         var result = a.EuclidModulo( b );
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -20,7 +20,7 @@ public class ArithmeticExtensionsTests : TestsBase
     {
         var dividend = Fixture.Create<float>();
         var action = Lambda.Of( () => dividend.EuclidModulo( 0 ) );
-        action.Should().ThrowExactly<DivideByZeroException>();
+        action.Test( exc => exc.TestType().Exact<DivideByZeroException>() ).Go();
     }
 
     [Theory]
@@ -28,7 +28,7 @@ public class ArithmeticExtensionsTests : TestsBase
     public void EuclidModulo_ShouldReturnCorrectResult_ForDouble(double a, double b, double expected)
     {
         var result = a.EuclidModulo( b );
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -36,7 +36,7 @@ public class ArithmeticExtensionsTests : TestsBase
     {
         var dividend = Fixture.Create<double>();
         var action = Lambda.Of( () => dividend.EuclidModulo( 0 ) );
-        action.Should().ThrowExactly<DivideByZeroException>();
+        action.Test( exc => exc.TestType().Exact<DivideByZeroException>() ).Go();
     }
 
     [Theory]
@@ -44,7 +44,7 @@ public class ArithmeticExtensionsTests : TestsBase
     public void EuclidModulo_ShouldReturnCorrectResult_ForDecimal(decimal a, decimal b, decimal expected)
     {
         var result = a.EuclidModulo( b );
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -52,7 +52,7 @@ public class ArithmeticExtensionsTests : TestsBase
     {
         var dividend = Fixture.Create<decimal>();
         var action = Lambda.Of( () => dividend.EuclidModulo( 0 ) );
-        action.Should().ThrowExactly<DivideByZeroException>();
+        action.Test( exc => exc.TestType().Exact<DivideByZeroException>() ).Go();
     }
 
     [Theory]
@@ -60,7 +60,7 @@ public class ArithmeticExtensionsTests : TestsBase
     public void EuclidModulo_ShouldReturnCorrectResult_ForUint64(ulong a, ulong b, ulong expected)
     {
         var result = a.EuclidModulo( b );
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -68,7 +68,7 @@ public class ArithmeticExtensionsTests : TestsBase
     {
         var dividend = Fixture.Create<ulong>();
         var action = Lambda.Of( () => dividend.EuclidModulo( 0 ) );
-        action.Should().ThrowExactly<DivideByZeroException>();
+        action.Test( exc => exc.TestType().Exact<DivideByZeroException>() ).Go();
     }
 
     [Theory]
@@ -76,7 +76,7 @@ public class ArithmeticExtensionsTests : TestsBase
     public void EuclidModulo_ShouldReturnCorrectResult_ForInt64(long a, long b, long expected)
     {
         var result = a.EuclidModulo( b );
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -84,7 +84,7 @@ public class ArithmeticExtensionsTests : TestsBase
     {
         var dividend = Fixture.Create<long>();
         var action = Lambda.Of( () => dividend.EuclidModulo( 0 ) );
-        action.Should().ThrowExactly<DivideByZeroException>();
+        action.Test( exc => exc.TestType().Exact<DivideByZeroException>() ).Go();
     }
 
     [Theory]
@@ -92,7 +92,7 @@ public class ArithmeticExtensionsTests : TestsBase
     public void EuclidModulo_ShouldReturnCorrectResult_ForUint32(uint a, uint b, uint expected)
     {
         var result = a.EuclidModulo( b );
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -100,7 +100,7 @@ public class ArithmeticExtensionsTests : TestsBase
     {
         var dividend = Fixture.Create<uint>();
         var action = Lambda.Of( () => dividend.EuclidModulo( 0 ) );
-        action.Should().ThrowExactly<DivideByZeroException>();
+        action.Test( exc => exc.TestType().Exact<DivideByZeroException>() ).Go();
     }
 
     [Theory]
@@ -108,7 +108,7 @@ public class ArithmeticExtensionsTests : TestsBase
     public void EuclidModulo_ShouldReturnCorrectResult_ForInt32(int a, int b, int expected)
     {
         var result = a.EuclidModulo( b );
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -116,7 +116,7 @@ public class ArithmeticExtensionsTests : TestsBase
     {
         var dividend = Fixture.Create<int>();
         var action = Lambda.Of( () => dividend.EuclidModulo( 0 ) );
-        action.Should().ThrowExactly<DivideByZeroException>();
+        action.Test( exc => exc.TestType().Exact<DivideByZeroException>() ).Go();
     }
 
     [Theory]
@@ -124,7 +124,7 @@ public class ArithmeticExtensionsTests : TestsBase
     public void EuclidModulo_ShouldReturnCorrectResult_ForUint16(ushort a, ushort b, ushort expected)
     {
         var result = a.EuclidModulo( b );
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -132,7 +132,7 @@ public class ArithmeticExtensionsTests : TestsBase
     {
         var dividend = Fixture.Create<ushort>();
         var action = Lambda.Of( () => dividend.EuclidModulo( 0 ) );
-        action.Should().ThrowExactly<DivideByZeroException>();
+        action.Test( exc => exc.TestType().Exact<DivideByZeroException>() ).Go();
     }
 
     [Theory]
@@ -140,7 +140,7 @@ public class ArithmeticExtensionsTests : TestsBase
     public void EuclidModulo_ShouldReturnCorrectResult_ForInt16(short a, short b, short expected)
     {
         var result = a.EuclidModulo( b );
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -148,7 +148,7 @@ public class ArithmeticExtensionsTests : TestsBase
     {
         var dividend = Fixture.Create<short>();
         var action = Lambda.Of( () => dividend.EuclidModulo( 0 ) );
-        action.Should().ThrowExactly<DivideByZeroException>();
+        action.Test( exc => exc.TestType().Exact<DivideByZeroException>() ).Go();
     }
 
     [Theory]
@@ -156,7 +156,7 @@ public class ArithmeticExtensionsTests : TestsBase
     public void EuclidModulo_ShouldReturnCorrectResult_ForUint8(byte a, byte b, byte expected)
     {
         var result = a.EuclidModulo( b );
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -164,7 +164,7 @@ public class ArithmeticExtensionsTests : TestsBase
     {
         var dividend = Fixture.Create<byte>();
         var action = Lambda.Of( () => dividend.EuclidModulo( 0 ) );
-        action.Should().ThrowExactly<DivideByZeroException>();
+        action.Test( exc => exc.TestType().Exact<DivideByZeroException>() ).Go();
     }
 
     [Theory]
@@ -172,7 +172,7 @@ public class ArithmeticExtensionsTests : TestsBase
     public void EuclidModulo_ShouldReturnCorrectResult_ForInt8(sbyte a, sbyte b, sbyte expected)
     {
         var result = a.EuclidModulo( b );
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -180,7 +180,7 @@ public class ArithmeticExtensionsTests : TestsBase
     {
         var dividend = Fixture.Create<sbyte>();
         var action = Lambda.Of( () => dividend.EuclidModulo( 0 ) );
-        action.Should().ThrowExactly<DivideByZeroException>();
+        action.Test( exc => exc.TestType().Exact<DivideByZeroException>() ).Go();
     }
 
     [Theory]
@@ -188,7 +188,7 @@ public class ArithmeticExtensionsTests : TestsBase
     public void IsEven_ShouldReturnCorrectResult_ForUint64(ulong value, bool expected)
     {
         var result = value.IsEven();
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -196,7 +196,7 @@ public class ArithmeticExtensionsTests : TestsBase
     public void IsOdd_ShouldReturnCorrectResult_ForUint64(ulong value, bool expected)
     {
         var result = value.IsOdd();
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -204,7 +204,7 @@ public class ArithmeticExtensionsTests : TestsBase
     public void IsEven_ShouldReturnCorrectResult_ForInt64(long value, bool expected)
     {
         var result = value.IsEven();
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -212,7 +212,7 @@ public class ArithmeticExtensionsTests : TestsBase
     public void IsOdd_ShouldReturnCorrectResult_ForInt64(long value, bool expected)
     {
         var result = value.IsOdd();
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -220,7 +220,7 @@ public class ArithmeticExtensionsTests : TestsBase
     public void IsEven_ShouldReturnCorrectResult_ForUint32(uint value, bool expected)
     {
         var result = value.IsEven();
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -228,7 +228,7 @@ public class ArithmeticExtensionsTests : TestsBase
     public void IsOdd_ShouldReturnCorrectResult_ForUint32(uint value, bool expected)
     {
         var result = value.IsOdd();
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -236,7 +236,7 @@ public class ArithmeticExtensionsTests : TestsBase
     public void IsEven_ShouldReturnCorrectResult_ForInt32(int value, bool expected)
     {
         var result = value.IsEven();
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -244,7 +244,7 @@ public class ArithmeticExtensionsTests : TestsBase
     public void IsOdd_ShouldReturnCorrectResult_ForInt32(int value, bool expected)
     {
         var result = value.IsOdd();
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -252,7 +252,7 @@ public class ArithmeticExtensionsTests : TestsBase
     public void IsEven_ShouldReturnCorrectResult_ForUint16(ushort value, bool expected)
     {
         var result = value.IsEven();
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -260,7 +260,7 @@ public class ArithmeticExtensionsTests : TestsBase
     public void IsOdd_ShouldReturnCorrectResult_ForUint16(ushort value, bool expected)
     {
         var result = value.IsOdd();
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -268,7 +268,7 @@ public class ArithmeticExtensionsTests : TestsBase
     public void IsEven_ShouldReturnCorrectResult_ForInt16(short value, bool expected)
     {
         var result = value.IsEven();
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -276,7 +276,7 @@ public class ArithmeticExtensionsTests : TestsBase
     public void IsOdd_ShouldReturnCorrectResult_ForInt16(short value, bool expected)
     {
         var result = value.IsOdd();
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -284,7 +284,7 @@ public class ArithmeticExtensionsTests : TestsBase
     public void IsEven_ShouldReturnCorrectResult_ForUint8(byte value, bool expected)
     {
         var result = value.IsEven();
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -292,7 +292,7 @@ public class ArithmeticExtensionsTests : TestsBase
     public void IsOdd_ShouldReturnCorrectResult_ForUint8(byte value, bool expected)
     {
         var result = value.IsOdd();
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -300,7 +300,7 @@ public class ArithmeticExtensionsTests : TestsBase
     public void IsEven_ShouldReturnCorrectResult_ForInt8(sbyte value, bool expected)
     {
         var result = value.IsEven();
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -308,6 +308,6 @@ public class ArithmeticExtensionsTests : TestsBase
     public void IsOdd_ShouldReturnCorrectResult_ForInt8(sbyte value, bool expected)
     {
         var result = value.IsOdd();
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 }

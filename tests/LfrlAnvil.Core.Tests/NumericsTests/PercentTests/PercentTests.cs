@@ -9,56 +9,56 @@ public class PercentTests : TestsBase
     public void Zero_ShouldReturnCorrectResult()
     {
         var sut = Percent.Zero;
-        sut.Ratio.Should().Be( 0m );
+        sut.Ratio.TestEquals( 0m ).Go();
     }
 
     [Fact]
     public void One_ShouldReturnCorrectResult()
     {
         var sut = Percent.One;
-        sut.Ratio.Should().Be( 0.01m );
+        sut.Ratio.TestEquals( 0.01m ).Go();
     }
 
     [Fact]
     public void OneHundred_ShouldReturnCorrectResult()
     {
         var sut = Percent.OneHundred;
-        sut.Ratio.Should().Be( 1m );
+        sut.Ratio.TestEquals( 1m ).Go();
     }
 
     [Fact]
     public void Ctor_ShouldAssignCorrectRatio()
     {
         var sut = new Percent( 1234.567m );
-        sut.Ratio.Should().Be( 1234.567m );
+        sut.Ratio.TestEquals( 1234.567m ).Go();
     }
 
     [Fact]
     public void Normalize_WithInt64_ShouldReturnCorrectResult()
     {
         var sut = Percent.Normalize( 1234L );
-        sut.Ratio.Should().Be( 12.34m );
+        sut.Ratio.TestEquals( 12.34m ).Go();
     }
 
     [Fact]
     public void Normalize_WithDouble_ShouldReturnCorrectResult()
     {
         var sut = Percent.Normalize( 1234.567 );
-        sut.Ratio.Should().Be( 12.34567m );
+        sut.Ratio.TestEquals( 12.34567m ).Go();
     }
 
     [Fact]
     public void Normalize_WithDecimal_ShouldReturnCorrectResult()
     {
         var sut = Percent.Normalize( 1234.567m );
-        sut.Ratio.Should().Be( 12.34567m );
+        sut.Ratio.TestEquals( 12.34567m ).Go();
     }
 
     [Fact]
     public void Create_ShouldReturnCorrectResult()
     {
         var sut = Percent.Create( 1234.567m );
-        sut.Ratio.Should().Be( 1234.567m );
+        sut.Ratio.TestEquals( 1234.567m ).Go();
     }
 
     [Theory]
@@ -71,7 +71,7 @@ public class PercentTests : TestsBase
     public void Value_ShouldReturnRatioMultipliedByOneHundred(int value)
     {
         var sut = Percent.Normalize( value );
-        sut.Value.Should().Be( value );
+        sut.Value.TestEquals( value ).Go();
     }
 
     [Fact]
@@ -80,7 +80,7 @@ public class PercentTests : TestsBase
         var expected = 1.234567m.ToString( "P2", NumberFormatInfo.CurrentInfo );
         var sut = Percent.Normalize( 123.4567m );
         var result = sut.ToString();
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -88,7 +88,7 @@ public class PercentTests : TestsBase
     {
         var sut = Percent.Normalize( 123 );
         var result = sut.GetHashCode();
-        result.Should().Be( 1.23m.GetHashCode() );
+        result.TestEquals( 1.23m.GetHashCode() ).Go();
     }
 
     [Theory]
@@ -99,7 +99,7 @@ public class PercentTests : TestsBase
     {
         var sut = Percent.Normalize( value );
         var result = sut.Abs();
-        result.Value.Should().Be( expected );
+        result.Value.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -112,7 +112,7 @@ public class PercentTests : TestsBase
     {
         var sut = Percent.Normalize( value );
         var result = sut.Truncate();
-        result.Value.Should().Be( ( decimal )expected );
+        result.Value.TestEquals( ( decimal )expected ).Go();
     }
 
     [Theory]
@@ -125,7 +125,7 @@ public class PercentTests : TestsBase
     {
         var sut = Percent.Normalize( value );
         var result = sut.Floor();
-        result.Value.Should().Be( ( decimal )expected );
+        result.Value.TestEquals( ( decimal )expected ).Go();
     }
 
     [Theory]
@@ -138,7 +138,7 @@ public class PercentTests : TestsBase
     {
         var sut = Percent.Normalize( value );
         var result = sut.Ceiling();
-        result.Value.Should().Be( ( decimal )expected );
+        result.Value.TestEquals( ( decimal )expected ).Go();
     }
 
     [Theory]
@@ -150,7 +150,7 @@ public class PercentTests : TestsBase
     {
         var sut = Percent.Normalize( value );
         var result = sut.Round( decimals );
-        result.Value.Should().Be( ( decimal )expected );
+        result.Value.TestEquals( ( decimal )expected ).Go();
     }
 
     [Theory]
@@ -161,7 +161,7 @@ public class PercentTests : TestsBase
     {
         var sut = Percent.Normalize( value );
         var result = ( decimal )sut;
-        result.Should().Be( sut.Ratio );
+        result.TestEquals( sut.Ratio ).Go();
     }
 
     [Theory]
@@ -172,7 +172,7 @@ public class PercentTests : TestsBase
     {
         var sut = Percent.Normalize( value );
         var result = ( double )sut;
-        result.Should().Be( ( double )sut.Ratio );
+        result.TestEquals( ( double )sut.Ratio ).Go();
     }
 
     [Theory]
@@ -182,7 +182,7 @@ public class PercentTests : TestsBase
     {
         var sut = Percent.Normalize( value );
         var result = -sut;
-        result.Value.Should().Be( expected );
+        result.Value.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -192,7 +192,7 @@ public class PercentTests : TestsBase
     {
         var sut = Percent.Normalize( value );
         var result = ++sut;
-        result.Value.Should().Be( expected );
+        result.Value.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -202,7 +202,7 @@ public class PercentTests : TestsBase
     {
         var sut = Percent.Normalize( value );
         var result = --sut;
-        result.Value.Should().Be( expected );
+        result.Value.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -221,7 +221,7 @@ public class PercentTests : TestsBase
 
         var result = a + b;
 
-        result.Value.Should().Be( expected );
+        result.Value.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -240,7 +240,7 @@ public class PercentTests : TestsBase
 
         var result = a - b;
 
-        result.Value.Should().Be( expected );
+        result.Value.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -259,7 +259,7 @@ public class PercentTests : TestsBase
 
         var result = a * b;
 
-        result.Value.Should().Be( expected );
+        result.Value.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -278,7 +278,7 @@ public class PercentTests : TestsBase
 
         var result = a / b;
 
-        result.Value.Should().Be( expected );
+        result.Value.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -297,7 +297,7 @@ public class PercentTests : TestsBase
 
         var result = a % b;
 
-        result.Value.Should().Be( expected );
+        result.Value.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -316,7 +316,7 @@ public class PercentTests : TestsBase
 
         var result = a * b;
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -335,7 +335,7 @@ public class PercentTests : TestsBase
 
         var result = b * a;
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -354,7 +354,7 @@ public class PercentTests : TestsBase
 
         var result = a * b;
 
-        result.Should().BeApproximately( expected, 0.0000001 );
+        result.TestFuzzyEquals( expected, 0.0000001 ).Go();
     }
 
     [Theory]
@@ -373,7 +373,7 @@ public class PercentTests : TestsBase
 
         var result = b * a;
 
-        result.Should().BeApproximately( expected, 0.0000001 );
+        result.TestFuzzyEquals( expected, 0.0000001 ).Go();
     }
 
     [Theory]
@@ -392,7 +392,7 @@ public class PercentTests : TestsBase
 
         var result = a * b;
 
-        result.Should().BeApproximately( expected, 0.0001f );
+        result.TestFuzzyEquals( expected, 0.0001f ).Go();
     }
 
     [Theory]
@@ -411,7 +411,7 @@ public class PercentTests : TestsBase
 
         var result = b * a;
 
-        result.Should().BeApproximately( expected, 0.0001f );
+        result.TestFuzzyEquals( expected, 0.0001f ).Go();
     }
 
     [Theory]
@@ -427,7 +427,7 @@ public class PercentTests : TestsBase
     {
         var b = Percent.Normalize( right );
         var result = left * b;
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -443,7 +443,7 @@ public class PercentTests : TestsBase
     {
         var b = Percent.Normalize( left );
         var result = b * right;
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -462,7 +462,7 @@ public class PercentTests : TestsBase
 
         var result = a * b;
 
-        result.Ticks.Should().Be( expected );
+        result.Ticks.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -481,7 +481,7 @@ public class PercentTests : TestsBase
 
         var result = b * a;
 
-        result.Ticks.Should().Be( expected );
+        result.Ticks.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -495,7 +495,7 @@ public class PercentTests : TestsBase
 
         var result = a == b;
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -509,7 +509,7 @@ public class PercentTests : TestsBase
 
         var result = a != b;
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -523,7 +523,7 @@ public class PercentTests : TestsBase
 
         var result = a < b;
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -537,7 +537,7 @@ public class PercentTests : TestsBase
 
         var result = a <= b;
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -551,7 +551,7 @@ public class PercentTests : TestsBase
 
         var result = a > b;
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -565,6 +565,6 @@ public class PercentTests : TestsBase
 
         var result = a >= b;
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 }

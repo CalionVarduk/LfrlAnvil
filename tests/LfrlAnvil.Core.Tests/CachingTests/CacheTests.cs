@@ -1,10 +1,10 @@
 ﻿using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Threading.Tasks;
 using LfrlAnvil.Caching;
 using LfrlAnvil.Extensions;
 using LfrlAnvil.Functional;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Tests.CachingTests;
 
@@ -18,14 +18,13 @@ public class CacheTests : TestsBase
     {
         var sut = new Cache<string, int>( capacity );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 0 );
-            sut.Capacity.Should().Be( capacity );
-            sut.Comparer.Should().BeSameAs( EqualityComparer<string>.Default );
-            sut.Oldest.Should().BeNull();
-            sut.Newest.Should().BeNull();
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 0 ),
+                sut.Capacity.TestEquals( capacity ),
+                sut.Comparer.TestRefEquals( EqualityComparer<string>.Default ),
+                sut.Oldest.TestNull(),
+                sut.Newest.TestNull() )
+            .Go();
     }
 
     [Theory]
@@ -37,14 +36,13 @@ public class CacheTests : TestsBase
         var comparer = EqualityComparerFactory<string>.Create( (a, b) => a!.Equals( b ) );
         var sut = new Cache<string, int>( comparer, capacity );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 0 );
-            sut.Capacity.Should().Be( capacity );
-            sut.Comparer.Should().BeSameAs( comparer );
-            sut.Oldest.Should().BeNull();
-            sut.Newest.Should().BeNull();
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 0 ),
+                sut.Capacity.TestEquals( capacity ),
+                sut.Comparer.TestRefEquals( comparer ),
+                sut.Oldest.TestNull(),
+                sut.Newest.TestNull() )
+            .Go();
     }
 
     [Theory]
@@ -53,7 +51,7 @@ public class CacheTests : TestsBase
     public void Ctor_ShouldThrowArgumentOutOfRangeException_WhenCapacityIsLessThanOne(int capacity)
     {
         var action = Lambda.Of( () => new Cache<string, int>( capacity ) );
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Fact]
@@ -64,11 +62,10 @@ public class CacheTests : TestsBase
 
         var result = sut.TryAdd( entry.Key, entry.Value );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            AssertCollection( sut, entry );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                AssertCollection( sut, entry ) )
+            .Go();
     }
 
     [Fact]
@@ -81,11 +78,10 @@ public class CacheTests : TestsBase
 
         var result = sut.TryAdd( entry2.Key, entry2.Value );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeFalse();
-            AssertCollection( sut, entry1 );
-        }
+        Assertion.All(
+                result.TestFalse(),
+                AssertCollection( sut, entry1 ) )
+            .Go();
     }
 
     [Fact]
@@ -100,8 +96,7 @@ public class CacheTests : TestsBase
         sut.TryAdd( entry2.Key, entry2.Value );
         sut.TryAdd( entry3.Key, entry3.Value );
 
-        using ( new AssertionScope() )
-            AssertCollection( sut, entry1, entry2, entry3 );
+        AssertCollection( sut, entry1, entry2, entry3 ).Go();
     }
 
     [Fact]
@@ -118,11 +113,10 @@ public class CacheTests : TestsBase
 
         sut.TryAdd( entry4.Key, entry4.Value );
 
-        using ( new AssertionScope() )
-        {
-            AssertCollection( sut, entry2, entry3, entry4 );
-            sut.ContainsKey( entry1.Key ).Should().BeFalse();
-        }
+        Assertion.All(
+                AssertCollection( sut, entry2, entry3, entry4 ),
+                sut.ContainsKey( entry1.Key ).TestFalse() )
+            .Go();
     }
 
     [Fact]
@@ -140,12 +134,11 @@ public class CacheTests : TestsBase
 
         sut.TryAdd( entry4.Key, entry4.Value );
 
-        using ( new AssertionScope() )
-        {
-            removed.Should().BeSequentiallyEqualTo( CachedItemRemovalEvent<string, int>.CreateRemoved( entry1.Key, entry1.Value ) );
-            AssertCollection( sut, entry2, entry3, entry4 );
-            sut.ContainsKey( entry1.Key ).Should().BeFalse();
-        }
+        Assertion.All(
+                removed.TestSequence( [ CachedItemRemovalEvent<string, int>.CreateRemoved( entry1.Key, entry1.Value ) ] ),
+                AssertCollection( sut, entry2, entry3, entry4 ),
+                sut.ContainsKey( entry1.Key ).TestFalse() )
+            .Go();
     }
 
     [Fact]
@@ -156,11 +149,10 @@ public class CacheTests : TestsBase
 
         var result = sut.AddOrUpdate( entry.Key, entry.Value );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( AddOrUpdateResult.Added );
-            AssertCollection( sut, entry );
-        }
+        Assertion.All(
+                result.TestEquals( AddOrUpdateResult.Added ),
+                AssertCollection( sut, entry ) )
+            .Go();
     }
 
     [Fact]
@@ -173,11 +165,10 @@ public class CacheTests : TestsBase
 
         var result = sut.AddOrUpdate( entry2.Key, entry2.Value );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( AddOrUpdateResult.Updated );
-            AssertCollection( sut, entry2 );
-        }
+        Assertion.All(
+                result.TestEquals( AddOrUpdateResult.Updated ),
+                AssertCollection( sut, entry2 ) )
+            .Go();
     }
 
     [Fact]
@@ -191,14 +182,11 @@ public class CacheTests : TestsBase
 
         var result = sut.AddOrUpdate( entry2.Key, entry2.Value );
 
-        using ( new AssertionScope() )
-        {
-            removed.Should()
-                .BeSequentiallyEqualTo( CachedItemRemovalEvent<string, int>.CreateReplaced( entry1.Key, entry1.Value, entry2.Value ) );
-
-            result.Should().Be( AddOrUpdateResult.Updated );
-            AssertCollection( sut, entry2 );
-        }
+        Assertion.All(
+                removed.TestSequence( [ CachedItemRemovalEvent<string, int>.CreateReplaced( entry1.Key, entry1.Value, entry2.Value ) ] ),
+                result.TestEquals( AddOrUpdateResult.Updated ),
+                AssertCollection( sut, entry2 ) )
+            .Go();
     }
 
     [Fact]
@@ -213,8 +201,7 @@ public class CacheTests : TestsBase
         sut.AddOrUpdate( entry2.Key, entry2.Value );
         sut.AddOrUpdate( entry3.Key, entry3.Value );
 
-        using ( new AssertionScope() )
-            AssertCollection( sut, entry1, entry2, entry3 );
+        AssertCollection( sut, entry1, entry2, entry3 ).Go();
     }
 
     [Fact]
@@ -231,11 +218,10 @@ public class CacheTests : TestsBase
 
         sut.AddOrUpdate( entry4.Key, entry4.Value );
 
-        using ( new AssertionScope() )
-        {
-            AssertCollection( sut, entry2, entry3, entry4 );
-            sut.ContainsKey( entry1.Key ).Should().BeFalse();
-        }
+        Assertion.All(
+                AssertCollection( sut, entry2, entry3, entry4 ),
+                sut.ContainsKey( entry1.Key ).TestFalse() )
+            .Go();
     }
 
     [Fact]
@@ -253,12 +239,11 @@ public class CacheTests : TestsBase
 
         sut.AddOrUpdate( entry4.Key, entry4.Value );
 
-        using ( new AssertionScope() )
-        {
-            removed.Should().BeSequentiallyEqualTo( CachedItemRemovalEvent<string, int>.CreateRemoved( entry1.Key, entry1.Value ) );
-            AssertCollection( sut, entry2, entry3, entry4 );
-            sut.ContainsKey( entry1.Key ).Should().BeFalse();
-        }
+        Assertion.All(
+                removed.TestSequence( [ CachedItemRemovalEvent<string, int>.CreateRemoved( entry1.Key, entry1.Value ) ] ),
+                AssertCollection( sut, entry2, entry3, entry4 ),
+                sut.ContainsKey( entry1.Key ).TestFalse() )
+            .Go();
     }
 
     [Fact]
@@ -275,8 +260,7 @@ public class CacheTests : TestsBase
 
         sut.AddOrUpdate( entry4.Key, entry4.Value );
 
-        using ( new AssertionScope() )
-            AssertCollection( sut, entry2, entry3, entry4 );
+        AssertCollection( sut, entry2, entry3, entry4 ).Go();
     }
 
     [Fact]
@@ -287,8 +271,7 @@ public class CacheTests : TestsBase
 
         sut[entry.Key] = entry.Value;
 
-        using ( new AssertionScope() )
-            AssertCollection( sut, entry );
+        AssertCollection( sut, entry ).Go();
     }
 
     [Fact]
@@ -301,8 +284,7 @@ public class CacheTests : TestsBase
 
         sut[entry2.Key] = entry2.Value;
 
-        using ( new AssertionScope() )
-            AssertCollection( sut, entry2 );
+        AssertCollection( sut, entry2 ).Go();
     }
 
     [Fact]
@@ -316,13 +298,10 @@ public class CacheTests : TestsBase
 
         sut[entry2.Key] = entry2.Value;
 
-        using ( new AssertionScope() )
-        {
-            removed.Should()
-                .BeSequentiallyEqualTo( CachedItemRemovalEvent<string, int>.CreateReplaced( entry1.Key, entry1.Value, entry2.Value ) );
-
-            AssertCollection( sut, entry2 );
-        }
+        Assertion.All(
+                removed.TestSequence( [ CachedItemRemovalEvent<string, int>.CreateReplaced( entry1.Key, entry1.Value, entry2.Value ) ] ),
+                AssertCollection( sut, entry2 ) )
+            .Go();
     }
 
     [Fact]
@@ -337,8 +316,7 @@ public class CacheTests : TestsBase
         sut[entry2.Key] = entry2.Value;
         sut[entry3.Key] = entry3.Value;
 
-        using ( new AssertionScope() )
-            AssertCollection( sut, entry1, entry2, entry3 );
+        AssertCollection( sut, entry1, entry2, entry3 ).Go();
     }
 
     [Fact]
@@ -355,11 +333,10 @@ public class CacheTests : TestsBase
 
         sut[entry4.Key] = entry4.Value;
 
-        using ( new AssertionScope() )
-        {
-            AssertCollection( sut, entry2, entry3, entry4 );
-            sut.ContainsKey( entry1.Key ).Should().BeFalse();
-        }
+        Assertion.All(
+                AssertCollection( sut, entry2, entry3, entry4 ),
+                sut.ContainsKey( entry1.Key ).TestFalse() )
+            .Go();
     }
 
     [Fact]
@@ -377,12 +354,11 @@ public class CacheTests : TestsBase
 
         sut[entry4.Key] = entry4.Value;
 
-        using ( new AssertionScope() )
-        {
-            removed.Should().BeSequentiallyEqualTo( CachedItemRemovalEvent<string, int>.CreateRemoved( entry1.Key, entry1.Value ) );
-            AssertCollection( sut, entry2, entry3, entry4 );
-            sut.ContainsKey( entry1.Key ).Should().BeFalse();
-        }
+        Assertion.All(
+                removed.TestSequence( [ CachedItemRemovalEvent<string, int>.CreateRemoved( entry1.Key, entry1.Value ) ] ),
+                AssertCollection( sut, entry2, entry3, entry4 ),
+                sut.ContainsKey( entry1.Key ).TestFalse() )
+            .Go();
     }
 
     [Fact]
@@ -399,8 +375,7 @@ public class CacheTests : TestsBase
 
         sut[entry4.Key] = entry4.Value;
 
-        using ( new AssertionScope() )
-            AssertCollection( sut, entry2, entry3, entry4 );
+        AssertCollection( sut, entry2, entry3, entry4 ).Go();
     }
 
     [Fact]
@@ -416,11 +391,10 @@ public class CacheTests : TestsBase
 
         var result = sut[entry1.Key];
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( entry1.Value );
-            AssertCollection( sut, entry2, entry3, entry1 );
-        }
+        Assertion.All(
+                result.TestEquals( entry1.Value ),
+                AssertCollection( sut, entry2, entry3, entry1 ) )
+            .Go();
     }
 
     [Fact]
@@ -428,7 +402,7 @@ public class CacheTests : TestsBase
     {
         var sut = new Cache<string, int>( capacity: 3 );
         var action = Lambda.Of( () => sut["foo"] );
-        action.Should().ThrowExactly<KeyNotFoundException>();
+        action.Test( exc => exc.TestType().Exact<KeyNotFoundException>() ).Go();
     }
 
     [Fact]
@@ -444,12 +418,11 @@ public class CacheTests : TestsBase
 
         var result = sut.TryGetValue( entry1.Key, out var outResult );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            outResult.Should().Be( entry1.Value );
-            AssertCollection( sut, entry2, entry3, entry1 );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                outResult.TestEquals( entry1.Value ),
+                AssertCollection( sut, entry2, entry3, entry1 ) )
+            .Go();
     }
 
     [Fact]
@@ -458,12 +431,11 @@ public class CacheTests : TestsBase
         var sut = new Cache<string, int>( capacity: 3 );
         var result = sut.TryGetValue( "foo", out var outResult );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeFalse();
-            outResult.Should().Be( default );
-            sut.Count.Should().Be( 0 );
-        }
+        Assertion.All(
+                result.TestFalse(),
+                outResult.TestEquals( default ),
+                sut.Count.TestEquals( 0 ) )
+            .Go();
     }
 
     [Theory]
@@ -477,7 +449,7 @@ public class CacheTests : TestsBase
 
         var result = sut.ContainsKey( key );
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -493,11 +465,10 @@ public class CacheTests : TestsBase
 
         var result = sut.Restart( entry1.Key );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            AssertCollection( sut, entry2, entry3, entry1 );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                AssertCollection( sut, entry2, entry3, entry1 ) )
+            .Go();
     }
 
     [Fact]
@@ -506,11 +477,10 @@ public class CacheTests : TestsBase
         var sut = new Cache<string, int>( capacity: 3 );
         var result = sut.Restart( "foo" );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeFalse();
-            sut.Count.Should().Be( 0 );
-        }
+        Assertion.All(
+                result.TestFalse(),
+                sut.Count.TestEquals( 0 ) )
+            .Go();
     }
 
     [Fact]
@@ -518,7 +488,7 @@ public class CacheTests : TestsBase
     {
         var sut = new Cache<string, int>( capacity: 3 );
         var result = sut.Remove( "foo" );
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Fact]
@@ -534,11 +504,10 @@ public class CacheTests : TestsBase
 
         var result = sut.Remove( entry1.Key );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            AssertCollection( sut, entry2, entry3 );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                AssertCollection( sut, entry2, entry3 ) )
+            .Go();
     }
 
     [Fact]
@@ -554,11 +523,10 @@ public class CacheTests : TestsBase
 
         var result = sut.Remove( entry3.Key );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            AssertCollection( sut, entry1, entry2 );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                AssertCollection( sut, entry1, entry2 ) )
+            .Go();
     }
 
     [Fact]
@@ -574,11 +542,10 @@ public class CacheTests : TestsBase
 
         var result = sut.Remove( entry2.Key );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            AssertCollection( sut, entry1, entry3 );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                AssertCollection( sut, entry1, entry3 ) )
+            .Go();
     }
 
     [Fact]
@@ -595,12 +562,11 @@ public class CacheTests : TestsBase
 
         var result = sut.Remove( entry2.Key );
 
-        using ( new AssertionScope() )
-        {
-            removed.Should().BeSequentiallyEqualTo( CachedItemRemovalEvent<string, int>.CreateRemoved( entry2.Key, entry2.Value ) );
-            result.Should().BeTrue();
-            AssertCollection( sut, entry1, entry3 );
-        }
+        Assertion.All(
+                removed.TestSequence( [ CachedItemRemovalEvent<string, int>.CreateRemoved( entry2.Key, entry2.Value ) ] ),
+                result.TestTrue(),
+                AssertCollection( sut, entry1, entry3 ) )
+            .Go();
     }
 
     [Fact]
@@ -610,11 +576,10 @@ public class CacheTests : TestsBase
 
         var result = sut.Remove( "foo", out var outResult );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeFalse();
-            outResult.Should().Be( default );
-        }
+        Assertion.All(
+                result.TestFalse(),
+                outResult.TestEquals( default ) )
+            .Go();
     }
 
     [Fact]
@@ -630,12 +595,11 @@ public class CacheTests : TestsBase
 
         var result = sut.Remove( entry1.Key, out var outResult );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            outResult.Should().Be( entry1.Value );
-            AssertCollection( sut, entry2, entry3 );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                outResult.TestEquals( entry1.Value ),
+                AssertCollection( sut, entry2, entry3 ) )
+            .Go();
     }
 
     [Fact]
@@ -651,12 +615,11 @@ public class CacheTests : TestsBase
 
         var result = sut.Remove( entry3.Key, out var outResult );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            outResult.Should().Be( entry3.Value );
-            AssertCollection( sut, entry1, entry2 );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                outResult.TestEquals( entry3.Value ),
+                AssertCollection( sut, entry1, entry2 ) )
+            .Go();
     }
 
     [Fact]
@@ -672,12 +635,11 @@ public class CacheTests : TestsBase
 
         var result = sut.Remove( entry2.Key, out var outResult );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            outResult.Should().Be( entry2.Value );
-            AssertCollection( sut, entry1, entry3 );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                outResult.TestEquals( entry2.Value ),
+                AssertCollection( sut, entry1, entry3 ) )
+            .Go();
     }
 
     [Fact]
@@ -694,13 +656,12 @@ public class CacheTests : TestsBase
 
         var result = sut.Remove( entry2.Key, out var outResult );
 
-        using ( new AssertionScope() )
-        {
-            removed.Should().BeSequentiallyEqualTo( CachedItemRemovalEvent<string, int>.CreateRemoved( entry2.Key, entry2.Value ) );
-            result.Should().BeTrue();
-            outResult.Should().Be( entry2.Value );
-            AssertCollection( sut, entry1, entry3 );
-        }
+        Assertion.All(
+                removed.TestSequence( [ CachedItemRemovalEvent<string, int>.CreateRemoved( entry2.Key, entry2.Value ) ] ),
+                result.TestTrue(),
+                outResult.TestEquals( entry2.Value ),
+                AssertCollection( sut, entry1, entry3 ) )
+            .Go();
     }
 
     [Fact]
@@ -716,13 +677,12 @@ public class CacheTests : TestsBase
 
         sut.Clear();
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 0 );
-            sut.Should().BeEmpty();
-            sut.Oldest.Should().BeNull();
-            sut.Newest.Should().BeNull();
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 0 ),
+                sut.TestEmpty(),
+                sut.Oldest.TestNull(),
+                sut.Newest.TestNull() )
+            .Go();
     }
 
     [Fact]
@@ -739,19 +699,18 @@ public class CacheTests : TestsBase
 
         sut.Clear();
 
-        using ( new AssertionScope() )
-        {
-            removed.Should()
-                .BeSequentiallyEqualTo(
+        Assertion.All(
+                removed.TestSequence(
+                [
                     CachedItemRemovalEvent<string, int>.CreateRemoved( entry1.Key, entry1.Value ),
                     CachedItemRemovalEvent<string, int>.CreateRemoved( entry2.Key, entry2.Value ),
-                    CachedItemRemovalEvent<string, int>.CreateRemoved( entry3.Key, entry3.Value ) );
-
-            sut.Count.Should().Be( 0 );
-            sut.Should().BeEmpty();
-            sut.Oldest.Should().BeNull();
-            sut.Newest.Should().BeNull();
-        }
+                    CachedItemRemovalEvent<string, int>.CreateRemoved( entry3.Key, entry3.Value )
+                ] ),
+                sut.Count.TestEquals( 0 ),
+                sut.TestEmpty(),
+                sut.Oldest.TestNull(),
+                sut.Newest.TestNull() )
+            .Go();
     }
 
     [Fact]
@@ -768,12 +727,11 @@ public class CacheTests : TestsBase
 
         var result = sut.GetOrAdd( entry4.Key, _ => entry4.Value );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( entry4.Value );
-            AssertCollection( sut, entry2, entry3, entry4 );
-            sut.ContainsKey( entry1.Key ).Should().BeFalse();
-        }
+        Assertion.All(
+                result.TestEquals( entry4.Value ),
+                AssertCollection( sut, entry2, entry3, entry4 ),
+                sut.ContainsKey( entry1.Key ).TestFalse() )
+            .Go();
     }
 
     [Fact]
@@ -790,11 +748,10 @@ public class CacheTests : TestsBase
 
         var result = sut.GetOrAdd( entry4.Key, _ => entry4.Value );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( entry1.Value );
-            AssertCollection( sut, entry2, entry3, entry1 );
-        }
+        Assertion.All(
+                result.TestEquals( entry1.Value ),
+                AssertCollection( sut, entry2, entry3, entry1 ) )
+            .Go();
     }
 
     [Fact]
@@ -811,12 +768,11 @@ public class CacheTests : TestsBase
 
         var result = await sut.GetOrAddAsync( entry4.Key, (_, _) => ValueTask.FromResult( entry4.Value ) );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( entry4.Value );
-            AssertCollection( sut, entry2, entry3, entry4 );
-            sut.ContainsKey( entry1.Key ).Should().BeFalse();
-        }
+        Assertion.All(
+                result.TestEquals( entry4.Value ),
+                AssertCollection( sut, entry2, entry3, entry4 ),
+                sut.ContainsKey( entry1.Key ).TestFalse() )
+            .Go();
     }
 
     [Fact]
@@ -833,11 +789,10 @@ public class CacheTests : TestsBase
 
         var result = await sut.GetOrAddAsync( entry4.Key, (_, _) => ValueTask.FromResult( entry4.Value ) );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( entry1.Value );
-            AssertCollection( sut, entry2, entry3, entry1 );
-        }
+        Assertion.All(
+                result.TestEquals( entry1.Value ),
+                AssertCollection( sut, entry2, entry3, entry1 ) )
+            .Go();
     }
 
     [Fact]
@@ -854,12 +809,11 @@ public class CacheTests : TestsBase
 
         var result = await sut.GetOrAddAsync( entry4.Key, (_, _) => Task.FromResult( entry4.Value ) );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( entry4.Value );
-            AssertCollection( sut, entry2, entry3, entry4 );
-            sut.ContainsKey( entry1.Key ).Should().BeFalse();
-        }
+        Assertion.All(
+                result.TestEquals( entry4.Value ),
+                AssertCollection( sut, entry2, entry3, entry4 ),
+                sut.ContainsKey( entry1.Key ).TestFalse() )
+            .Go();
     }
 
     [Fact]
@@ -876,23 +830,22 @@ public class CacheTests : TestsBase
 
         var result = await sut.GetOrAddAsync( entry4.Key, (_, _) => Task.FromResult( entry4.Value ) );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( entry1.Value );
-            AssertCollection( sut, entry2, entry3, entry1 );
-        }
+        Assertion.All(
+                result.TestEquals( entry1.Value ),
+                AssertCollection( sut, entry2, entry3, entry1 ) )
+            .Go();
     }
 
-    private static void AssertCollection(Cache<string, int> sut, params KeyValuePair<string, int>[] expected)
+    [Pure]
+    private static Assertion AssertCollection(Cache<string, int> sut, params KeyValuePair<string, int>[] expected)
     {
-        sut.Count.Should().Be( expected.Length );
-        sut.Oldest.Should().Be( expected[0] );
-        sut.Newest.Should().Be( expected[^1] );
-        sut.Keys.Should().BeSequentiallyEqualTo( expected.Select( kv => kv.Key ) );
-        sut.Values.Should().BeSequentiallyEqualTo( expected.Select( kv => kv.Value ) );
-        sut.Should().BeSequentiallyEqualTo( expected );
-
-        foreach ( var (key, value) in expected )
-            sut.GetValueOrDefault( key ).Should().Be( value );
+        return Assertion.All(
+            sut.Count.TestEquals( expected.Length ),
+            sut.Oldest.TestEquals( expected[0] ),
+            sut.Newest.TestEquals( expected[^1] ),
+            sut.Keys.TestSequence( expected.Select( kv => kv.Key ) ),
+            sut.Values.TestSequence( expected.Select( kv => kv.Value ) ),
+            sut.TestSequence( expected ),
+            expected.TestAll( (kv, _) => sut.GetValueOrDefault( kv.Key ).TestEquals( kv.Value ) ) );
     }
 }

@@ -10,6 +10,6 @@ public abstract class GenericObjectExtensionsOfStructTypeTests<T> : GenericObjec
     {
         var value = Fixture.Create<T>();
         var result = value.ToNullable();
-        result.Should().BeEquivalentTo( value );
+        result.TestEquals( value ).Go();
     }
 }

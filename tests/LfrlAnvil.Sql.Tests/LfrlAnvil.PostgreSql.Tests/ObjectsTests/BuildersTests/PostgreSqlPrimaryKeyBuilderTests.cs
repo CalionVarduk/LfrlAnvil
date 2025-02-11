@@ -48,10 +48,14 @@ public class PostgreSqlPrimaryKeyBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
-                    @"ALTER TABLE ""foo"".""T""
-                      DROP CONSTRAINT ""PK_T"";",
-                    @"ALTER TABLE ""foo"".""T""
-                      ADD CONSTRAINT ""PK_T"" PRIMARY KEY (""C2"");" );
+                    """
+                    ALTER TABLE "foo"."T"
+                                          DROP CONSTRAINT "PK_T";
+                    """,
+                    """
+                    ALTER TABLE "foo"."T"
+                                          ADD CONSTRAINT "PK_T" PRIMARY KEY ("C2");
+                    """ );
         }
     }
 
@@ -118,8 +122,10 @@ public class PostgreSqlPrimaryKeyBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
-                    @"ALTER TABLE ""foo"".""T""
-                      RENAME CONSTRAINT ""PK_T"" TO ""bar"";" );
+                    """
+                    ALTER TABLE "foo"."T"
+                                          RENAME CONSTRAINT "PK_T" TO "bar";
+                    """ );
         }
     }
 
@@ -232,8 +238,10 @@ public class PostgreSqlPrimaryKeyBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
-                    @"ALTER TABLE ""foo"".""T""
-                      RENAME CONSTRAINT ""bar"" TO ""PK_T"";" );
+                    """
+                    ALTER TABLE "foo"."T"
+                                          RENAME CONSTRAINT "bar" TO "PK_T";
+                    """ );
         }
     }
 

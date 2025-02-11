@@ -3,7 +3,6 @@ using System.Linq;
 using LfrlAnvil.Extensions;
 using LfrlAnvil.Functional;
 using LfrlAnvil.TestExtensions.Attributes;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Tests.BoundsRangeTests;
 
@@ -15,14 +14,14 @@ public abstract class GenericBoundsRangeTests<T> : TestsBase
     public void Empty_ShouldReturnCorrectResult()
     {
         var result = BoundsRange<T>.Empty;
-        result.Count.Should().Be( 0 );
+        result.Count.TestEquals( 0 ).Go();
     }
 
     [Fact]
     public void Default_ShouldReturnCorrectResult()
     {
         var sut = default( BoundsRange<T> );
-        sut.Count.Should().Be( 0 );
+        sut.Count.TestEquals( 0 ).Go();
     }
 
     [Fact]
@@ -139,7 +138,7 @@ public abstract class GenericBoundsRangeTests<T> : TestsBase
     {
         var sut = BoundsRange.Create( range );
         var result = sut.ToString();
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -151,7 +150,7 @@ public abstract class GenericBoundsRangeTests<T> : TestsBase
 
         var result = sut.GetHashCode();
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -163,7 +162,7 @@ public abstract class GenericBoundsRangeTests<T> : TestsBase
 
         var result = sut.Equals( other );
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -171,7 +170,7 @@ public abstract class GenericBoundsRangeTests<T> : TestsBase
     {
         var sut = BoundsRange<T>.Empty;
         var result = sut.Flatten();
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Fact]
@@ -184,7 +183,7 @@ public abstract class GenericBoundsRangeTests<T> : TestsBase
 
         var result = sut.Flatten();
 
-        result.Should().Be( Bounds.Create( a, d ) );
+        result.TestEquals( Bounds.Create( a, d ) ).Go();
     }
 
     [Theory]
@@ -193,7 +192,7 @@ public abstract class GenericBoundsRangeTests<T> : TestsBase
     {
         var sut = new BoundsRange<T>( range );
         var result = sut.FindBoundsIndex( value );
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -202,7 +201,7 @@ public abstract class GenericBoundsRangeTests<T> : TestsBase
     {
         var sut = new BoundsRange<T>( range );
         var result = sut.FindBounds( value );
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -211,7 +210,7 @@ public abstract class GenericBoundsRangeTests<T> : TestsBase
     {
         var sut = new BoundsRange<T>( range );
         var result = sut.Contains( value );
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -220,7 +219,7 @@ public abstract class GenericBoundsRangeTests<T> : TestsBase
     {
         var sut = new BoundsRange<T>( range );
         var result = sut.Contains( value );
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -230,7 +229,7 @@ public abstract class GenericBoundsRangeTests<T> : TestsBase
         var sut = new BoundsRange<T>( range );
         var other = new BoundsRange<T>( otherRange );
         var result = sut.Contains( other );
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -239,7 +238,7 @@ public abstract class GenericBoundsRangeTests<T> : TestsBase
     {
         var sut = new BoundsRange<T>( range );
         var result = sut.Intersects( value );
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -249,7 +248,7 @@ public abstract class GenericBoundsRangeTests<T> : TestsBase
         var sut = new BoundsRange<T>( range );
         var other = new BoundsRange<T>( otherRange );
         var result = sut.Intersects( other );
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -261,7 +260,7 @@ public abstract class GenericBoundsRangeTests<T> : TestsBase
     {
         var sut = new BoundsRange<T>( range );
         var result = sut.GetIntersection( value );
-        result.Should().BeSequentiallyEqualTo( expected );
+        result.TestSequence( expected ).Go();
     }
 
     [Theory]
@@ -274,7 +273,7 @@ public abstract class GenericBoundsRangeTests<T> : TestsBase
         var sut = new BoundsRange<T>( range );
         var other = new BoundsRange<T>( otherRange );
         var result = sut.GetIntersection( other );
-        result.Should().BeSequentiallyEqualTo( expected );
+        result.TestSequence( expected ).Go();
     }
 
     [Theory]
@@ -286,7 +285,7 @@ public abstract class GenericBoundsRangeTests<T> : TestsBase
     {
         var sut = new BoundsRange<T>( range );
         var result = sut.MergeWith( value );
-        result.Should().BeSequentiallyEqualTo( expected );
+        result.TestSequence( expected ).Go();
     }
 
     [Theory]
@@ -299,7 +298,7 @@ public abstract class GenericBoundsRangeTests<T> : TestsBase
         var sut = new BoundsRange<T>( range );
         var other = new BoundsRange<T>( otherRange );
         var result = sut.MergeWith( other );
-        result.Should().BeSequentiallyEqualTo( expected );
+        result.TestSequence( expected ).Go();
     }
 
     [Theory]
@@ -311,7 +310,7 @@ public abstract class GenericBoundsRangeTests<T> : TestsBase
     {
         var sut = new BoundsRange<T>( range );
         var result = sut.Remove( value );
-        result.Should().BeSequentiallyEqualTo( expected );
+        result.TestSequence( expected ).Go();
     }
 
     [Theory]
@@ -324,7 +323,7 @@ public abstract class GenericBoundsRangeTests<T> : TestsBase
         var sut = new BoundsRange<T>( range );
         var other = new BoundsRange<T>( otherRange );
         var result = sut.Remove( other );
-        result.Should().BeSequentiallyEqualTo( expected );
+        result.TestSequence( expected ).Go();
     }
 
     [Theory]
@@ -333,7 +332,7 @@ public abstract class GenericBoundsRangeTests<T> : TestsBase
     {
         var sut = new BoundsRange<T>( range );
         var result = sut.Complement();
-        result.Should().BeSequentiallyEqualTo( expected );
+        result.TestSequence( expected ).Go();
     }
 
     [Theory]
@@ -345,7 +344,7 @@ public abstract class GenericBoundsRangeTests<T> : TestsBase
     {
         var sut = new BoundsRange<T>( range );
         var result = sut.Complement( container );
-        result.Should().BeSequentiallyEqualTo( expected );
+        result.TestSequence( expected ).Go();
     }
 
     [Theory]
@@ -358,7 +357,7 @@ public abstract class GenericBoundsRangeTests<T> : TestsBase
         var sut = new BoundsRange<T>( range );
         var other = new BoundsRange<T>( container );
         var result = sut.Complement( other );
-        result.Should().BeSequentiallyEqualTo( expected );
+        result.TestSequence( expected ).Go();
     }
 
     [Fact]
@@ -366,7 +365,7 @@ public abstract class GenericBoundsRangeTests<T> : TestsBase
     {
         var sut = BoundsRange<T>.Empty;
         var result = sut.Normalize( (a, b) => a.Equals( b ) );
-        result.Should().BeEmpty();
+        result.TestEmpty().Go();
     }
 
     [Fact]
@@ -378,7 +377,7 @@ public abstract class GenericBoundsRangeTests<T> : TestsBase
 
         var result = sut.Normalize( (a, b) => a.Equals( b ) );
 
-        result.Should().BeSequentiallyEqualTo( item );
+        result.TestSequence( [ item ] ).Go();
     }
 
     [Theory]
@@ -390,7 +389,7 @@ public abstract class GenericBoundsRangeTests<T> : TestsBase
 
         var result = sut == other;
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -405,7 +404,7 @@ public abstract class GenericBoundsRangeTests<T> : TestsBase
 
         var result = sut != other;
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     private void Factory_WithBounds_ShouldReturnCorrectResult(Func<Bounds<T>, BoundsRange<T>> factory)
@@ -415,11 +414,10 @@ public abstract class GenericBoundsRangeTests<T> : TestsBase
 
         var result = factory( bounds );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSequentiallyEqualTo( bounds );
-            result[0].Should().Be( bounds );
-        }
+        Assertion.All(
+                result.TestSequence( [ bounds ] ),
+                result[0].TestEquals( bounds ) )
+            .Go();
     }
 
     private void Factory_WithBounds_ShouldReturnCorrectResult_WithTheSameMinAndMax(Func<Bounds<T>, BoundsRange<T>> factory)
@@ -429,18 +427,17 @@ public abstract class GenericBoundsRangeTests<T> : TestsBase
 
         var result = factory( bounds );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSequentiallyEqualTo( bounds );
-            result[0].Should().Be( bounds );
-        }
+        Assertion.All(
+                result.TestSequence( [ bounds ] ),
+                result[0].TestEquals( bounds ) )
+            .Go();
     }
 
     private void Factory_WithRange_ShouldReturnCorrectResult_WhenRangeIsEmpty(Func<IEnumerable<Bounds<T>>, BoundsRange<T>> factory)
     {
         var range = Enumerable.Empty<Bounds<T>>();
         var result = factory( range );
-        result.Count.Should().Be( 0 );
+        result.Count.TestEquals( 0 ).Go();
     }
 
     private void Factory_WithRange_ShouldReturnCorrectResult_WhenRangeHasOneElement(
@@ -452,11 +449,10 @@ public abstract class GenericBoundsRangeTests<T> : TestsBase
 
         var result = factory( range );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSequentiallyEqualTo( bounds );
-            result[0].Should().Be( bounds );
-        }
+        Assertion.All(
+                result.TestSequence( [ bounds ] ),
+                result[0].TestEquals( bounds ) )
+            .Go();
     }
 
     private void Factory_WithRange_ShouldReturnCorrectResult_WhenRangeHasOneElementWithTheSameMinAndMax(
@@ -468,11 +464,10 @@ public abstract class GenericBoundsRangeTests<T> : TestsBase
 
         var result = factory( range );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSequentiallyEqualTo( bounds );
-            result[0].Should().Be( bounds );
-        }
+        Assertion.All(
+                result.TestSequence( [ bounds ] ),
+                result[0].TestEquals( bounds ) )
+            .Go();
     }
 
     private void Factory_WithRange_ShouldReturnCorrectResult_WhenAllInRangeHaveTheSameMinAndMax(
@@ -484,11 +479,10 @@ public abstract class GenericBoundsRangeTests<T> : TestsBase
 
         var result = factory( range );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSequentiallyEqualTo( bounds );
-            result[0].Should().Be( bounds );
-        }
+        Assertion.All(
+                result.TestSequence( [ bounds ] ),
+                result[0].TestEquals( bounds ) )
+            .Go();
     }
 
     private void Factory_WithRange_ShouldReturnCorrectResult_WhenAllValuesAreUnique(
@@ -502,13 +496,12 @@ public abstract class GenericBoundsRangeTests<T> : TestsBase
 
         var result = factory( range );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSequentiallyEqualTo( bounds1, bounds2, bounds3 );
-            result[0].Should().Be( bounds1 );
-            result[1].Should().Be( bounds2 );
-            result[2].Should().Be( bounds3 );
-        }
+        Assertion.All(
+                result.TestSequence( [ bounds1, bounds2, bounds3 ] ),
+                result[0].TestEquals( bounds1 ),
+                result[1].TestEquals( bounds2 ),
+                result[2].TestEquals( bounds3 ) )
+            .Go();
     }
 
     private void Factory_WithRange_ShouldReturnCorrectResult_WhenSomeValuesAreRedundant(
@@ -522,12 +515,11 @@ public abstract class GenericBoundsRangeTests<T> : TestsBase
 
         var result = factory( range );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSequentiallyEqualTo( Bounds.Create( a, c ), bounds3 );
-            result[0].Should().Be( Bounds.Create( a, c ) );
-            result[1].Should().Be( bounds3 );
-        }
+        Assertion.All(
+                result.TestSequence( [ Bounds.Create( a, c ), bounds3 ] ),
+                result[0].TestEquals( Bounds.Create( a, c ) ),
+                result[1].TestEquals( bounds3 ) )
+            .Go();
     }
 
     private void Factory_WithRange_ShouldThrowArgumentException_WhenBoundsAreNotOrdered(
@@ -540,6 +532,6 @@ public abstract class GenericBoundsRangeTests<T> : TestsBase
 
         var action = Lambda.Of( () => factory( range ) );
 
-        action.Should().ThrowExactly<ArgumentException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentException>() ).Go();
     }
 }

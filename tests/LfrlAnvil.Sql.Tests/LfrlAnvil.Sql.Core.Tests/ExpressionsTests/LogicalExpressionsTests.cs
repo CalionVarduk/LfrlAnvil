@@ -341,11 +341,13 @@ public class LogicalExpressionsTests : TestsBase
             sut.IsNegated.Should().BeFalse();
             text.Should()
                 .Be(
-                    @"EXISTS (
-  FROM [foo]
-  SELECT
-    *
-)" );
+                    """
+                    EXISTS (
+                      FROM [foo]
+                      SELECT
+                        *
+                    )
+                    """ );
         }
     }
 
@@ -368,12 +370,14 @@ public class LogicalExpressionsTests : TestsBase
             sut.IsNegated.Should().BeFalse();
             text.Should()
                 .Be(
-                    @"EXISTS (
-  FROM [foo]
-  AND WHERE TRUE
-  SELECT
-    *
-)" );
+                    """
+                    EXISTS (
+                      FROM [foo]
+                      AND WHERE TRUE
+                      SELECT
+                        *
+                    )
+                    """ );
         }
     }
 
@@ -397,11 +401,13 @@ public class LogicalExpressionsTests : TestsBase
             sut.IsNegated.Should().BeTrue();
             text.Should()
                 .Be(
-                    @"NOT EXISTS (
-  FROM [foo]
-  SELECT
-    *
-)" );
+                    """
+                    NOT EXISTS (
+                      FROM [foo]
+                      SELECT
+                        *
+                    )
+                    """ );
         }
     }
 
@@ -424,12 +430,14 @@ public class LogicalExpressionsTests : TestsBase
             sut.IsNegated.Should().BeTrue();
             text.Should()
                 .Be(
-                    @"NOT EXISTS (
-  FROM [foo]
-  AND WHERE TRUE
-  SELECT
-    *
-)" );
+                    """
+                    NOT EXISTS (
+                      FROM [foo]
+                      AND WHERE TRUE
+                      SELECT
+                        *
+                    )
+                    """ );
         }
     }
 
@@ -516,11 +524,13 @@ public class LogicalExpressionsTests : TestsBase
             sut.IsNegated.Should().BeFalse();
             text.Should()
                 .Be(
-                    $@"({value}) IN (
-  FROM [foo]
-  SELECT
-    ([foo].[id] : ?)
-)" );
+                    $"""
+                     ({value}) IN (
+                       FROM [foo]
+                       SELECT
+                         ([foo].[id] : ?)
+                     )
+                     """ );
         }
     }
 
@@ -541,11 +551,13 @@ public class LogicalExpressionsTests : TestsBase
             sut.IsNegated.Should().BeTrue();
             text.Should()
                 .Be(
-                    $@"({value}) NOT IN (
-  FROM [foo]
-  SELECT
-    ([foo].[id] : ?)
-)" );
+                    $"""
+                     ({value}) NOT IN (
+                       FROM [foo]
+                       SELECT
+                         ([foo].[id] : ?)
+                     )
+                     """ );
         }
     }
 

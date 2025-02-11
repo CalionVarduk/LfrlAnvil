@@ -33,10 +33,12 @@ public partial class BaseExpressionsTests
                 sut.Selection.ToArray().Should().BeSequentiallyEqualTo( oldSelection, newSelection );
                 text.Should()
                     .Be(
-                        @"FROM [foo]
-SELECT
-  ([foo].[bar] : ?),
-  ([foo].[qux] : ?) AS [x]" );
+                        """
+                        FROM [foo]
+                        SELECT
+                          ([foo].[bar] : ?),
+                          ([foo].[qux] : ?) AS [x]
+                        """ );
             }
         }
 
@@ -67,10 +69,12 @@ SELECT
                 result.Traits.Should().BeSequentiallyEqualTo( trait );
                 text.Should()
                     .Be(
-                        @"FROM [foo]
-LIMIT (""10"" : System.Int32)
-SELECT
-  *" );
+                        """
+                        FROM [foo]
+                        LIMIT ("10" : System.Int32)
+                        SELECT
+                          *
+                        """ );
             }
         }
 
@@ -91,11 +95,13 @@ SELECT
                 result.Traits.Should().BeSequentiallyEqualTo( firstTrait, secondTrait );
                 text.Should()
                     .Be(
-                        @"FROM [foo]
-LIMIT (""10"" : System.Int32)
-OFFSET (""15"" : System.Int32)
-SELECT
-  *" );
+                        """
+                        FROM [foo]
+                        LIMIT ("10" : System.Int32)
+                        OFFSET ("15" : System.Int32)
+                        SELECT
+                          *
+                        """ );
             }
         }
 
@@ -117,11 +123,13 @@ SELECT
                 result.Traits.Should().BeSequentiallyEqualTo( traits );
                 text.Should()
                     .Be(
-                        @"FROM [foo]
-LIMIT (""10"" : System.Int32)
-OFFSET (""15"" : System.Int32)
-SELECT
-  *" );
+                        """
+                        FROM [foo]
+                        LIMIT ("10" : System.Int32)
+                        OFFSET ("15" : System.Int32)
+                        SELECT
+                          *
+                        """ );
             }
         }
     }

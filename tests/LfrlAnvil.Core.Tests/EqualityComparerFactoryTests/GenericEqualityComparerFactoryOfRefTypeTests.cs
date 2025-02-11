@@ -16,6 +16,6 @@ public abstract class GenericEqualityComparerFactoryOfRefTypeTests<T> : GenericE
 
         var result = sut.GetHashCode( obj! );
 
-        result.Should().Be( 0 );
+        result.TestEquals( 0 ).Go();
     }
 }

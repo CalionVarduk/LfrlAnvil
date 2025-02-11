@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using LfrlAnvil.Extensions;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 using LfrlAnvil.TestExtensions.NSubstitute;
 
 namespace LfrlAnvil.Tests.ExtensionsTests.ObjectTests;
@@ -14,7 +13,7 @@ public abstract class GenericObjectExtensionsTests<T> : TestsBase
     {
         var value = Fixture.Create<T>();
         var sut = value.ToRef();
-        sut.Value.Should().Be( value );
+        sut.Value.TestEquals( value ).Go();
     }
 
     [Fact]
@@ -32,7 +31,7 @@ public abstract class GenericObjectExtensionsTests<T> : TestsBase
         for ( var i = 0; i < iterationCount; ++i )
             materialized.Add( result.ToList() );
 
-        @delegate.Verify().CallCount.Should().Be( sourceCount );
+        @delegate.CallCount().TestEquals( sourceCount ).Go();
     }
 
     [Fact]
@@ -42,7 +41,7 @@ public abstract class GenericObjectExtensionsTests<T> : TestsBase
 
         var result = sut.Memoize( o => o.Values );
 
-        result.Should().BeSameAs( sut.Values );
+        result.TestRefEquals( sut.Values ).Go();
     }
 
     [Fact]
@@ -50,7 +49,7 @@ public abstract class GenericObjectExtensionsTests<T> : TestsBase
     {
         VisitNode? sut = null;
         var result = sut.Visit( r => r.Next );
-        result.Should().BeEmpty();
+        result.TestEmpty().Go();
     }
 
     [Fact]
@@ -71,7 +70,7 @@ public abstract class GenericObjectExtensionsTests<T> : TestsBase
 
         var result = sut.Visit( r => r.Next ).Select( r => r.Value! );
 
-        result.Should().BeSequentiallyEqualTo( expected );
+        result.TestSequence( expected ).Go();
     }
 
     [Fact]
@@ -126,7 +125,7 @@ public abstract class GenericObjectExtensionsTests<T> : TestsBase
 
         var result = sut.VisitMany( n => n.Children ).Select( n => n.Value! );
 
-        result.Should().BeSequentiallyEqualTo( expected );
+        result.TestSequence( expected ).Go();
     }
 
     [Fact]
@@ -187,7 +186,7 @@ public abstract class GenericObjectExtensionsTests<T> : TestsBase
 
         var result = sut.VisitMany( n => n.Children, n => valuesToStopAt.Contains( n.Value! ) ).Select( n => n.Value );
 
-        result.Should().BeSequentiallyEqualTo( expected );
+        result.TestSequence( expected ).Go();
     }
 
     [Fact]
@@ -204,7 +203,7 @@ public abstract class GenericObjectExtensionsTests<T> : TestsBase
 
         var result = sut.VisitMany( n => n.Children, n => n.Value!.Equals( sut.Value ) ).Select( n => n.Value );
 
-        result.Should().BeEmpty();
+        result.TestEmpty().Go();
     }
 
     [Fact]
@@ -212,7 +211,7 @@ public abstract class GenericObjectExtensionsTests<T> : TestsBase
     {
         VisitNode? sut = null;
         var result = sut.VisitWithSelf( r => r.Next );
-        result.Should().BeEmpty();
+        result.TestEmpty().Go();
     }
 
     [Fact]
@@ -232,7 +231,7 @@ public abstract class GenericObjectExtensionsTests<T> : TestsBase
 
         var result = sut.VisitWithSelf( r => r.Next ).Select( r => r.Value! );
 
-        result.Should().BeSequentiallyEqualTo( values );
+        result.TestSequence( values ).Go();
     }
 
     [Fact]
@@ -286,7 +285,7 @@ public abstract class GenericObjectExtensionsTests<T> : TestsBase
 
         var result = sut.VisitManyWithSelf( n => n.Children ).Select( n => n.Value! );
 
-        result.Should().BeSequentiallyEqualTo( values );
+        result.TestSequence( values ).Go();
     }
 
     [Fact]
@@ -347,7 +346,7 @@ public abstract class GenericObjectExtensionsTests<T> : TestsBase
 
         var result = sut.VisitManyWithSelf( n => n.Children, n => valuesToStopAt.Contains( n.Value! ) ).Select( n => n.Value );
 
-        result.Should().BeSequentiallyEqualTo( expected );
+        result.TestSequence( expected ).Go();
     }
 
     [Fact]
@@ -364,7 +363,7 @@ public abstract class GenericObjectExtensionsTests<T> : TestsBase
 
         var result = sut.VisitManyWithSelf( n => n.Children, n => n.Value!.Equals( sut.Value ) ).Select( n => n.Value );
 
-        result.Should().BeSequentiallyEqualTo( sut.Value );
+        result.TestSequence( [ sut.Value ] ).Go();
     }
 
     public sealed class VisitNode

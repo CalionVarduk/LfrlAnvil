@@ -22,11 +22,10 @@ public abstract class GenericEqualityComparerFactoryTests<T> : TestsBase
 
         var result = sut.Equals( obj1, obj2 );
 
-        using ( new AssertionScope() )
-        {
-            customComparerCalled.Should().BeTrue();
-            result.Should().Be( defaultComparer.Equals( obj1, obj2 ) );
-        }
+        Assertion.All(
+                customComparerCalled.TestTrue(),
+                result.TestEquals( defaultComparer.Equals( obj1, obj2 ) ) )
+            .Go();
     }
 
     [Fact]
@@ -40,7 +39,7 @@ public abstract class GenericEqualityComparerFactoryTests<T> : TestsBase
 
         var result = sut.GetHashCode( obj! );
 
-        result.Should().Be( obj!.GetHashCode() );
+        result.TestEquals( obj!.GetHashCode() ).Go();
     }
 
     [Fact]
@@ -62,6 +61,6 @@ public abstract class GenericEqualityComparerFactoryTests<T> : TestsBase
 
         var result = sut.GetHashCode( obj! );
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 }

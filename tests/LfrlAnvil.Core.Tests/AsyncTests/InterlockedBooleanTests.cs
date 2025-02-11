@@ -10,7 +10,7 @@ public class InterlockedBooleanTests : TestsBase
     public void Default_ShouldBeFalse()
     {
         var sut = default( InterlockedBoolean );
-        sut.Value.Should().BeFalse();
+        sut.Value.TestFalse().Go();
     }
 
     [Theory]
@@ -19,7 +19,7 @@ public class InterlockedBooleanTests : TestsBase
     public void Ctor_ShouldCreateWithCorrectValue(bool value)
     {
         var sut = new InterlockedBoolean( value );
-        sut.Value.Should().Be( value );
+        sut.Value.TestEquals( value ).Go();
     }
 
     [Theory]
@@ -29,7 +29,7 @@ public class InterlockedBooleanTests : TestsBase
     {
         var sut = new InterlockedBoolean( value );
         var result = sut.ToString();
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -46,11 +46,10 @@ public class InterlockedBooleanTests : TestsBase
         var result1 = a.GetHashCode();
         var result2 = b.GetHashCode();
 
-        using ( new AssertionScope() )
-        {
-            result1.Should().Be( expected );
-            result2.Should().Be( expected );
-        }
+        Assertion.All(
+                result1.TestEquals( expected ),
+                result2.TestEquals( expected ) )
+            .Go();
     }
 
     [Theory]
@@ -61,11 +60,10 @@ public class InterlockedBooleanTests : TestsBase
         var sut = new InterlockedBoolean( value );
         var result = sut.WriteTrue();
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( expected );
-            sut.Value.Should().BeTrue();
-        }
+        Assertion.All(
+                result.TestEquals( expected ),
+                sut.Value.TestTrue() )
+            .Go();
     }
 
     [Theory]
@@ -76,11 +74,10 @@ public class InterlockedBooleanTests : TestsBase
         var sut = new InterlockedBoolean( value );
         var result = sut.WriteFalse();
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( expected );
-            sut.Value.Should().BeFalse();
-        }
+        Assertion.All(
+                result.TestEquals( expected ),
+                sut.Value.TestFalse() )
+            .Go();
     }
 
     [Theory]
@@ -93,11 +90,10 @@ public class InterlockedBooleanTests : TestsBase
         var sut = new InterlockedBoolean( value );
         var result = sut.Write( newValue );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( expected );
-            sut.Value.Should().Be( newValue );
-        }
+        Assertion.All(
+                result.TestEquals( expected ),
+                sut.Value.TestEquals( newValue ) )
+            .Go();
     }
 
     [Theory]
@@ -108,11 +104,10 @@ public class InterlockedBooleanTests : TestsBase
         var sut = new InterlockedBoolean( value );
         var result = sut.Toggle();
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( expected );
-            sut.Value.Should().Be( expected );
-        }
+        Assertion.All(
+                result.TestEquals( expected ),
+                sut.Value.TestEquals( expected ) )
+            .Go();
     }
 
     [Theory]
@@ -126,12 +121,11 @@ public class InterlockedBooleanTests : TestsBase
         for ( var i = 0; i < values.Length; ++i )
             values[i] = sut.Toggle();
 
-        using ( new AssertionScope() )
-        {
-            values.Where( (_, i) => i.IsEven() ).Should().AllBeEquivalentTo( ! value );
-            values.Where( (_, i) => i.IsOdd() ).Should().AllBeEquivalentTo( value );
-            sut.Value.Should().Be( values[^1] );
-        }
+        Assertion.All(
+                values.Where( (_, i) => i.IsEven() ).TestAll( (e, _) => e.TestNotEquals( value ) ),
+                values.Where( (_, i) => i.IsOdd() ).TestAll( (e, _) => e.TestEquals( value ) ),
+                sut.Value.TestEquals( values[^1] ) )
+            .Go();
     }
 
     [Theory]
@@ -145,7 +139,7 @@ public class InterlockedBooleanTests : TestsBase
 
         var result = left == right;
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -159,7 +153,7 @@ public class InterlockedBooleanTests : TestsBase
 
         var result = left != right;
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -173,7 +167,7 @@ public class InterlockedBooleanTests : TestsBase
 
         var result = left >= right;
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -187,7 +181,7 @@ public class InterlockedBooleanTests : TestsBase
 
         var result = left <= right;
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -201,7 +195,7 @@ public class InterlockedBooleanTests : TestsBase
 
         var result = left > right;
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -215,6 +209,6 @@ public class InterlockedBooleanTests : TestsBase
 
         var result = left < right;
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 }

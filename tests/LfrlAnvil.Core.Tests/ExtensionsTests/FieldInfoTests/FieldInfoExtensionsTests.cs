@@ -10,7 +10,7 @@ public class FieldInfoExtensionsTests : TestsBase
     {
         var sut = TestFieldClass.GetPublicFieldInfo();
         var result = sut.GetBackedProperty();
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Fact]
@@ -18,7 +18,7 @@ public class FieldInfoExtensionsTests : TestsBase
     {
         var sut = TestFieldClass.GetPrivateFieldInfo();
         var result = sut.GetBackedProperty();
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Fact]
@@ -29,7 +29,7 @@ public class FieldInfoExtensionsTests : TestsBase
 
         var result = sut.GetBackedProperty();
 
-        result.Should().BeSameAs( expected );
+        result.TestRefEquals( expected ).Go();
     }
 
     [Fact]
@@ -40,7 +40,7 @@ public class FieldInfoExtensionsTests : TestsBase
 
         var result = sut.GetBackedProperty();
 
-        result.Should().BeSameAs( expected );
+        result.TestRefEquals( expected ).Go();
     }
 
     [Fact]
@@ -48,7 +48,7 @@ public class FieldInfoExtensionsTests : TestsBase
     {
         var field = TestFieldClass.GetPublicFieldInfo();
         var result = field.GetDebugString( includeDeclaringType: false );
-        result.Should().Be( "System.Int32 TestField" );
+        result.TestEquals( "System.Int32 TestField" ).Go();
     }
 
     [Fact]
@@ -56,7 +56,7 @@ public class FieldInfoExtensionsTests : TestsBase
     {
         var field = TestFieldClass.GetPublicFieldInfo();
         var result = field.GetDebugString( includeDeclaringType: true );
-        result.Should().Be( "System.Int32 LfrlAnvil.Tests.ExtensionsTests.FieldInfoTests.TestFieldClass.TestField" );
+        result.TestEquals( "System.Int32 LfrlAnvil.Tests.ExtensionsTests.FieldInfoTests.TestFieldClass.TestField" ).Go();
     }
 }
 

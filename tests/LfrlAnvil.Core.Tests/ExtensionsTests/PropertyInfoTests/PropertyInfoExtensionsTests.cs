@@ -12,7 +12,7 @@ public class PropertyInfoExtensionsTests : TestsBase
     {
         var sut = TestClass.GetPublicExplicitWritableInfo();
         var result = sut.GetBackingField();
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Fact]
@@ -20,7 +20,7 @@ public class PropertyInfoExtensionsTests : TestsBase
     {
         var sut = TestClass.GetPublicExplicitWriteOnlyInfo();
         var result = sut.GetBackingField();
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Fact]
@@ -28,7 +28,7 @@ public class PropertyInfoExtensionsTests : TestsBase
     {
         var sut = TestClass.GetPublicExplicitReadOnlyInfo();
         var result = sut.GetBackingField();
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Fact]
@@ -36,7 +36,15 @@ public class PropertyInfoExtensionsTests : TestsBase
     {
         var sut = TestClass.GetPublicAutoWritableInfo();
         var result = sut.GetBackingField();
-        result.Should().Match<FieldInfo>( r => MatchBackingField( sut, r ) );
+        Assertion.All(
+                result.TestNotNull(),
+                result.TestIf()
+                    .NotNull(
+                        r => Assertion.All(
+                            r.IsPrivate.TestTrue(),
+                            r.Name.TestContains( sut.Name ),
+                            Attribute.IsDefined( r, typeof( CompilerGeneratedAttribute ) ).TestTrue() ) ) )
+            .Go();
     }
 
     [Fact]
@@ -44,7 +52,15 @@ public class PropertyInfoExtensionsTests : TestsBase
     {
         var sut = TestClass.GetPublicAutoReadOnlyInfo();
         var result = sut.GetBackingField();
-        result.Should().Match<FieldInfo>( r => MatchBackingField( sut, r ) );
+        Assertion.All(
+                result.TestNotNull(),
+                result.TestIf()
+                    .NotNull(
+                        r => Assertion.All(
+                            r.IsPrivate.TestTrue(),
+                            r.Name.TestContains( sut.Name ),
+                            Attribute.IsDefined( r, typeof( CompilerGeneratedAttribute ) ).TestTrue() ) ) )
+            .Go();
     }
 
     [Fact]
@@ -52,7 +68,7 @@ public class PropertyInfoExtensionsTests : TestsBase
     {
         var sut = TestClass.GetPrivateExplicitWritableInfo();
         var result = sut.GetBackingField();
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Fact]
@@ -60,7 +76,7 @@ public class PropertyInfoExtensionsTests : TestsBase
     {
         var sut = TestClass.GetPrivateExplicitWriteOnlyInfo();
         var result = sut.GetBackingField();
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Fact]
@@ -68,7 +84,7 @@ public class PropertyInfoExtensionsTests : TestsBase
     {
         var sut = TestClass.GetPrivateExplicitReadOnlyInfo();
         var result = sut.GetBackingField();
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Fact]
@@ -76,7 +92,15 @@ public class PropertyInfoExtensionsTests : TestsBase
     {
         var sut = TestClass.GetPrivateAutoWritableInfo();
         var result = sut.GetBackingField();
-        result.Should().Match<FieldInfo>( r => MatchBackingField( sut, r ) );
+        Assertion.All(
+                result.TestNotNull(),
+                result.TestIf()
+                    .NotNull(
+                        r => Assertion.All(
+                            r.IsPrivate.TestTrue(),
+                            r.Name.TestContains( sut.Name ),
+                            Attribute.IsDefined( r, typeof( CompilerGeneratedAttribute ) ).TestTrue() ) ) )
+            .Go();
     }
 
     [Fact]
@@ -84,7 +108,15 @@ public class PropertyInfoExtensionsTests : TestsBase
     {
         var sut = TestClass.GetPrivateAutoReadOnlyInfo();
         var result = sut.GetBackingField();
-        result.Should().Match<FieldInfo>( r => MatchBackingField( sut, r ) );
+        Assertion.All(
+                result.TestNotNull(),
+                result.TestIf()
+                    .NotNull(
+                        r => Assertion.All(
+                            r.IsPrivate.TestTrue(),
+                            r.Name.TestContains( sut.Name ),
+                            Attribute.IsDefined( r, typeof( CompilerGeneratedAttribute ) ).TestTrue() ) ) )
+            .Go();
     }
 
     [Fact]
@@ -92,7 +124,7 @@ public class PropertyInfoExtensionsTests : TestsBase
     {
         var sut = TestClass.GetIndexerInfo();
         var result = sut.IsIndexer();
-        result.Should().BeTrue();
+        result.TestTrue().Go();
     }
 
     [Fact]
@@ -100,7 +132,7 @@ public class PropertyInfoExtensionsTests : TestsBase
     {
         var sut = TestClass.GetPublicAutoWritableInfo();
         var result = sut.IsIndexer();
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Fact]
@@ -108,7 +140,7 @@ public class PropertyInfoExtensionsTests : TestsBase
     {
         var property = typeof( string ).GetProperty( nameof( string.Length ) )!;
         var result = property.GetDebugString( includeDeclaringType: false );
-        result.Should().Be( "System.Int32 Length [get]" );
+        result.TestEquals( "System.Int32 Length [get]" ).Go();
     }
 
     [Fact]
@@ -116,7 +148,7 @@ public class PropertyInfoExtensionsTests : TestsBase
     {
         var property = typeof( string ).GetProperty( nameof( string.Length ) )!;
         var result = property.GetDebugString( includeDeclaringType: true );
-        result.Should().Be( "System.Int32 System.String.Length [get]" );
+        result.TestEquals( "System.Int32 System.String.Length [get]" ).Go();
     }
 
     [Fact]
@@ -124,7 +156,7 @@ public class PropertyInfoExtensionsTests : TestsBase
     {
         var property = TestClass.GetPublicAutoWritableInfo();
         var result = property.GetDebugString( includeDeclaringType: false );
-        result.Should().Be( "System.Int32 PublicAutoWritableProperty [get][set]" );
+        result.TestEquals( "System.Int32 PublicAutoWritableProperty [get][set]" ).Go();
     }
 
     [Fact]
@@ -132,7 +164,7 @@ public class PropertyInfoExtensionsTests : TestsBase
     {
         var property = TestClass.GetPublicExplicitWriteOnlyInfo();
         var result = property.GetDebugString( includeDeclaringType: false );
-        result.Should().Be( "System.Int32 PublicExplicitWriteOnlyProperty [set]" );
+        result.TestEquals( "System.Int32 PublicExplicitWriteOnlyProperty [set]" ).Go();
     }
 
     [Fact]
@@ -140,15 +172,7 @@ public class PropertyInfoExtensionsTests : TestsBase
     {
         var property = TestClass.GetIndexerInfo();
         var result = property.GetDebugString( includeDeclaringType: false );
-        result.Should().Be( "System.Decimal Item[System.Int32 index] [get]" );
-    }
-
-    private static bool MatchBackingField(PropertyInfo property, FieldInfo? info)
-    {
-        return info != null
-            && info.IsPrivate
-            && info.Name.Contains( property.Name )
-            && Attribute.IsDefined( info, typeof( CompilerGeneratedAttribute ) );
+        result.TestEquals( "System.Decimal Item[System.Int32 index] [get]" ).Go();
     }
 }
 

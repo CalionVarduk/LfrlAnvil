@@ -26,8 +26,10 @@ public partial class SqliteNodeInterpreterTests
             sut.Context.Sql.ToString()
                 .Should()
                 .Be(
-                    @"UPDATE foo SET
-  ""a"" = 'bar'" );
+                    """
+                    UPDATE foo SET
+                      "a" = 'bar'
+                    """ );
         }
 
         [Fact]
@@ -43,9 +45,11 @@ public partial class SqliteNodeInterpreterTests
             sut.Context.Sql.ToString()
                 .Should()
                 .Be(
-                    @"UPDATE foo SET
-  ""a"" = 'bar'
-WHERE foo.""a"" < 10" );
+                    """
+                    UPDATE foo SET
+                      "a" = 'bar'
+                    WHERE foo."a" < 10
+                    """ );
         }
 
         [Fact]
@@ -62,9 +66,11 @@ WHERE foo.""a"" < 10" );
             sut.Context.Sql.ToString()
                 .Should()
                 .Be(
-                    @"UPDATE ""common_foo"" AS ""bar"" SET
-  ""a"" = 10
-WHERE ""bar"".""a"" < 10" );
+                    """
+                    UPDATE "common_foo" AS "bar" SET
+                      "a" = 10
+                    WHERE "bar"."a" < 10
+                    """ );
         }
 
         [Fact]
@@ -85,16 +91,18 @@ WHERE ""bar"".""a"" < 10" );
             sut.Context.Sql.ToString()
                 .Should()
                 .Be(
-                    @"WITH ""cba"" AS (
-  SELECT * FROM abc
-)
-UPDATE ""common_foo"" AS ""f"" SET
-  ""a"" = 10
-WHERE ""f"".""a"" IN (
-  SELECT cba.c FROM cba
-)
-ORDER BY ""f"".""a"" ASC
-LIMIT 5 OFFSET 10" );
+                    """
+                    WITH "cba" AS (
+                      SELECT * FROM abc
+                    )
+                    UPDATE "common_foo" AS "f" SET
+                      "a" = 10
+                    WHERE "f"."a" IN (
+                      SELECT cba.c FROM cba
+                    )
+                    ORDER BY "f"."a" ASC
+                    LIMIT 5 OFFSET 10
+                    """ );
         }
 
         [Fact]
@@ -115,21 +123,23 @@ LIMIT 5 OFFSET 10" );
             sut.Context.Sql.ToString()
                 .Should()
                 .Be(
-                    @"WITH ""cba"" AS (
-  SELECT * FROM abc
-)
-UPDATE ""common_foo"" SET
-  ""a"" = 10
-WHERE ""common_foo"".""a"" IN (
-  SELECT
-    ""f"".""a""
-  FROM ""common_foo"" AS ""f""
-  WHERE ""f"".""a"" IN (
-    SELECT cba.c FROM cba
-  )
-  ORDER BY ""f"".""a"" ASC
-  LIMIT 5 OFFSET 10
-)" );
+                    """
+                    WITH "cba" AS (
+                      SELECT * FROM abc
+                    )
+                    UPDATE "common_foo" SET
+                      "a" = 10
+                    WHERE "common_foo"."a" IN (
+                      SELECT
+                        "f"."a"
+                      FROM "common_foo" AS "f"
+                      WHERE "f"."a" IN (
+                        SELECT cba.c FROM cba
+                      )
+                      ORDER BY "f"."a" ASC
+                      LIMIT 5 OFFSET 10
+                    )
+                    """ );
         }
 
         [Fact]
@@ -156,24 +166,26 @@ WHERE ""common_foo"".""a"" IN (
             sut.Context.Sql.ToString()
                 .Should()
                 .Be(
-                    @"WITH ""cba"" AS (
-  SELECT * FROM abc
-)
-UPDATE ""common_foo"" SET
-  ""a"" = 10
-WHERE ""common_foo"".""a"" IN (
-  SELECT DISTINCT
-    ""f"".""a""
-  FROM ""common_foo"" AS ""f""
-  WHERE ""f"".""a"" IN (
-    SELECT cba.c FROM cba
-  )
-  GROUP BY ""f"".""b""
-  HAVING ""f"".""b"" > 20
-  WINDOW ""wnd"" AS ()
-  ORDER BY ""f"".""a"" ASC
-  LIMIT 5 OFFSET 10
-)" );
+                    """
+                    WITH "cba" AS (
+                      SELECT * FROM abc
+                    )
+                    UPDATE "common_foo" SET
+                      "a" = 10
+                    WHERE "common_foo"."a" IN (
+                      SELECT DISTINCT
+                        "f"."a"
+                      FROM "common_foo" AS "f"
+                      WHERE "f"."a" IN (
+                        SELECT cba.c FROM cba
+                      )
+                      GROUP BY "f"."b"
+                      HAVING "f"."b" > 20
+                      WINDOW "wnd" AS ()
+                      ORDER BY "f"."a" ASC
+                      LIMIT 5 OFFSET 10
+                    )
+                    """ );
         }
 
         [Fact]
@@ -197,13 +209,15 @@ WHERE ""common_foo"".""a"" IN (
             sut.Context.Sql.ToString()
                 .Should()
                 .Be(
-                    @"UPDATE foo SET
-  ""b"" = (
-    SELECT
-      bar.""y""
-    FROM bar
-    WHERE bar.""x"" = foo.""a""
-  )" );
+                    """
+                    UPDATE foo SET
+                      "b" = (
+                        SELECT
+                          bar."y"
+                        FROM bar
+                        WHERE bar."x" = foo."a"
+                      )
+                    """ );
         }
 
         [Fact]
@@ -223,9 +237,11 @@ WHERE ""common_foo"".""a"" IN (
             sut.Context.Sql.ToString()
                 .Should()
                 .Be(
-                    @"UPDATE foo SET
-  ""a"" = (foo.""a"" + 1),
-  ""b"" = (foo.""c"" * foo.""d"")" );
+                    """
+                    UPDATE foo SET
+                      "a" = (foo."a" + 1),
+                      "b" = (foo."c" * foo."d")
+                    """ );
         }
 
         [Fact]
@@ -241,10 +257,12 @@ WHERE ""common_foo"".""a"" IN (
             sut.Context.Sql.ToString()
                 .Should()
                 .Be(
-                    @"UPDATE ""common_foo"" AS ""f"" SET
-  ""a"" = 10
-FROM bar
-WHERE ""f"".""a"" = bar.""a""" );
+                    """
+                    UPDATE "common_foo" AS "f" SET
+                      "a" = 10
+                    FROM bar
+                    WHERE "f"."a" = bar."a"
+                    """ );
         }
 
         [Fact]
@@ -260,14 +278,16 @@ WHERE ""f"".""a"" = bar.""a""" );
             sut.Context.Sql.ToString()
                 .Should()
                 .Be(
-                    @"UPDATE ""common_foo"" SET
-  ""a"" = 10
-WHERE ""common_foo"".""a"" IN (
-  SELECT
-    ""f"".""a""
-  FROM ""common_foo"" AS ""f""
-  INNER JOIN bar ON ""f"".""a"" = bar.""a""
-)" );
+                    """
+                    UPDATE "common_foo" SET
+                      "a" = 10
+                    WHERE "common_foo"."a" IN (
+                      SELECT
+                        "f"."a"
+                      FROM "common_foo" AS "f"
+                      INNER JOIN bar ON "f"."a" = bar."a"
+                    )
+                    """ );
         }
 
         [Fact]
@@ -284,15 +304,17 @@ WHERE ""common_foo"".""a"" IN (
             sut.Context.Sql.ToString()
                 .Should()
                 .Be(
-                    @"UPDATE ""common_foo"" SET
-  ""a"" = 10
-WHERE ""common_foo"".""a"" IN (
-  SELECT
-    ""f"".""a""
-  FROM ""common_foo"" AS ""f""
-  INNER JOIN bar ON ""f"".""a"" = bar.""a""
-  INNER JOIN qux ON bar.""b"" = qux.""b""
-)" );
+                    """
+                    UPDATE "common_foo" SET
+                      "a" = 10
+                    WHERE "common_foo"."a" IN (
+                      SELECT
+                        "f"."a"
+                      FROM "common_foo" AS "f"
+                      INNER JOIN bar ON "f"."a" = bar."a"
+                      INNER JOIN qux ON bar."b" = qux."b"
+                    )
+                    """ );
         }
 
         [Fact]
@@ -308,9 +330,11 @@ WHERE ""common_foo"".""a"" IN (
             sut.Context.Sql.ToString()
                 .Should()
                 .Be(
-                    @"UPDATE ""common_foo"" AS ""f"" SET
-  ""a"" = 10
-FROM bar" );
+                    """
+                    UPDATE "common_foo" AS "f" SET
+                      "a" = 10
+                    FROM bar
+                    """ );
         }
 
         [Fact]
@@ -326,14 +350,16 @@ FROM bar" );
             sut.Context.Sql.ToString()
                 .Should()
                 .Be(
-                    @"UPDATE ""common_foo"" SET
-  ""a"" = 10
-WHERE ""common_foo"".""a"" IN (
-  SELECT
-    ""f"".""a""
-  FROM ""common_foo"" AS ""f""
-  LEFT JOIN bar ON ""f"".""a"" = bar.""a""
-)" );
+                    """
+                    UPDATE "common_foo" SET
+                      "a" = 10
+                    WHERE "common_foo"."a" IN (
+                      SELECT
+                        "f"."a"
+                      FROM "common_foo" AS "f"
+                      LEFT JOIN bar ON "f"."a" = bar."a"
+                    )
+                    """ );
         }
 
         [Fact]
@@ -349,14 +375,16 @@ WHERE ""common_foo"".""a"" IN (
             sut.Context.Sql.ToString()
                 .Should()
                 .Be(
-                    @"UPDATE ""common_foo"" SET
-  ""a"" = 10
-WHERE ""common_foo"".""a"" IN (
-  SELECT
-    ""f"".""a""
-  FROM ""common_foo"" AS ""f""
-  RIGHT JOIN bar ON ""f"".""a"" = bar.""a""
-)" );
+                    """
+                    UPDATE "common_foo" SET
+                      "a" = 10
+                    WHERE "common_foo"."a" IN (
+                      SELECT
+                        "f"."a"
+                      FROM "common_foo" AS "f"
+                      RIGHT JOIN bar ON "f"."a" = bar."a"
+                    )
+                    """ );
         }
 
         [Fact]
@@ -372,14 +400,16 @@ WHERE ""common_foo"".""a"" IN (
             sut.Context.Sql.ToString()
                 .Should()
                 .Be(
-                    @"UPDATE ""common_foo"" SET
-  ""a"" = 10
-WHERE ""common_foo"".""a"" IN (
-  SELECT
-    ""f"".""a""
-  FROM ""common_foo"" AS ""f""
-  FULL JOIN bar ON ""f"".""a"" = bar.""a""
-)" );
+                    """
+                    UPDATE "common_foo" SET
+                      "a" = 10
+                    WHERE "common_foo"."a" IN (
+                      SELECT
+                        "f"."a"
+                      FROM "common_foo" AS "f"
+                      FULL JOIN bar ON "f"."a" = bar."a"
+                    )
+                    """ );
         }
 
         [Fact]
@@ -399,13 +429,15 @@ WHERE ""common_foo"".""a"" IN (
             sut.Context.Sql.ToString()
                 .Should()
                 .Be(
-                    @"WITH ""cba"" AS (
-  SELECT * FROM abc
-)
-UPDATE ""common_foo"" AS ""f"" SET
-  ""a"" = 10
-FROM bar AS ""b""
-WHERE (""f"".""a"" = ""b"".""a"") AND (""f"".""a"" < 10)" );
+                    """
+                    WITH "cba" AS (
+                      SELECT * FROM abc
+                    )
+                    UPDATE "common_foo" AS "f" SET
+                      "a" = 10
+                    FROM bar AS "b"
+                    WHERE ("f"."a" = "b"."a") AND ("f"."a" < 10)
+                    """ );
         }
 
         [Fact]
@@ -425,18 +457,20 @@ WHERE (""f"".""a"" = ""b"".""a"") AND (""f"".""a"" < 10)" );
             sut.Context.Sql.ToString()
                 .Should()
                 .Be(
-                    @"WITH ""cba"" AS (
-  SELECT * FROM abc
-)
-UPDATE ""common_foo"" SET
-  ""a"" = 10
-WHERE ""common_foo"".""a"" IN (
-  SELECT
-    ""f"".""a""
-  FROM ""common_foo"" AS ""f""
-  INNER JOIN bar AS ""b"" ON ""f"".""a"" = ""b"".""a""
-  WHERE ""f"".""a"" < 10
-)" );
+                    """
+                    WITH "cba" AS (
+                      SELECT * FROM abc
+                    )
+                    UPDATE "common_foo" SET
+                      "a" = 10
+                    WHERE "common_foo"."a" IN (
+                      SELECT
+                        "f"."a"
+                      FROM "common_foo" AS "f"
+                      INNER JOIN bar AS "b" ON "f"."a" = "b"."a"
+                      WHERE "f"."a" < 10
+                    )
+                    """ );
         }
 
         [Fact]
@@ -460,17 +494,19 @@ WHERE ""common_foo"".""a"" IN (
             sut.Context.Sql.ToString()
                 .Should()
                 .Be(
-                    @"WITH ""cba"" AS (
-  SELECT * FROM abc
-)
-UPDATE ""common_foo"" AS ""f"" SET
-  ""a"" = 10
-FROM bar
-WHERE (""f"".""a"" = bar.""a"") AND (""f"".""a"" IN (
-    SELECT cba.c FROM cba
-  ))
-ORDER BY ""f"".""a"" ASC
-LIMIT 5 OFFSET 10" );
+                    """
+                    WITH "cba" AS (
+                      SELECT * FROM abc
+                    )
+                    UPDATE "common_foo" AS "f" SET
+                      "a" = 10
+                    FROM bar
+                    WHERE ("f"."a" = bar."a") AND ("f"."a" IN (
+                        SELECT cba.c FROM cba
+                      ))
+                    ORDER BY "f"."a" ASC
+                    LIMIT 5 OFFSET 10
+                    """ );
         }
 
         [Fact]
@@ -494,22 +530,24 @@ LIMIT 5 OFFSET 10" );
             sut.Context.Sql.ToString()
                 .Should()
                 .Be(
-                    @"WITH ""cba"" AS (
-  SELECT * FROM abc
-)
-UPDATE ""common_foo"" SET
-  ""a"" = 10
-WHERE ""common_foo"".""a"" IN (
-  SELECT
-    ""f"".""a""
-  FROM ""common_foo"" AS ""f""
-  INNER JOIN bar ON ""f"".""a"" = bar.""a""
-  WHERE ""f"".""a"" IN (
-    SELECT cba.c FROM cba
-  )
-  ORDER BY ""f"".""a"" ASC
-  LIMIT 5 OFFSET 10
-)" );
+                    """
+                    WITH "cba" AS (
+                      SELECT * FROM abc
+                    )
+                    UPDATE "common_foo" SET
+                      "a" = 10
+                    WHERE "common_foo"."a" IN (
+                      SELECT
+                        "f"."a"
+                      FROM "common_foo" AS "f"
+                      INNER JOIN bar ON "f"."a" = bar."a"
+                      WHERE "f"."a" IN (
+                        SELECT cba.c FROM cba
+                      )
+                      ORDER BY "f"."a" ASC
+                      LIMIT 5 OFFSET 10
+                    )
+                    """ );
         }
 
         [Fact]
@@ -533,22 +571,24 @@ WHERE ""common_foo"".""a"" IN (
             sut.Context.Sql.ToString()
                 .Should()
                 .Be(
-                    @"WITH ""cba"" AS (
-  SELECT * FROM abc
-)
-UPDATE ""common_foo"" SET
-  ""a"" = 10
-WHERE ""common_foo"".""a"" IN (
-  SELECT
-    ""f"".""a""
-  FROM ""common_foo"" AS ""f""
-  INNER JOIN bar ON ""f"".""a"" = bar.""a""
-  WHERE ""f"".""a"" IN (
-    SELECT cba.c FROM cba
-  )
-  ORDER BY ""f"".""a"" ASC
-  LIMIT 5 OFFSET 10
-)" );
+                    """
+                    WITH "cba" AS (
+                      SELECT * FROM abc
+                    )
+                    UPDATE "common_foo" SET
+                      "a" = 10
+                    WHERE "common_foo"."a" IN (
+                      SELECT
+                        "f"."a"
+                      FROM "common_foo" AS "f"
+                      INNER JOIN bar ON "f"."a" = bar."a"
+                      WHERE "f"."a" IN (
+                        SELECT cba.c FROM cba
+                      )
+                      ORDER BY "f"."a" ASC
+                      LIMIT 5 OFFSET 10
+                    )
+                    """ );
         }
 
         [Fact]
@@ -576,25 +616,27 @@ WHERE ""common_foo"".""a"" IN (
             sut.Context.Sql.ToString()
                 .Should()
                 .Be(
-                    @"WITH ""cba"" AS (
-  SELECT * FROM abc
-)
-UPDATE ""common_foo"" SET
-  ""a"" = 10
-WHERE ""common_foo"".""a"" IN (
-  SELECT DISTINCT
-    ""f"".""a""
-  FROM ""common_foo"" AS ""f""
-  INNER JOIN bar ON ""f"".""a"" = bar.""a""
-  WHERE ""f"".""a"" IN (
-    SELECT cba.c FROM cba
-  )
-  GROUP BY ""f"".""b""
-  HAVING ""f"".""b"" > 20
-  WINDOW ""wnd"" AS ()
-  ORDER BY ""f"".""a"" ASC
-  LIMIT 5 OFFSET 10
-)" );
+                    """
+                    WITH "cba" AS (
+                      SELECT * FROM abc
+                    )
+                    UPDATE "common_foo" SET
+                      "a" = 10
+                    WHERE "common_foo"."a" IN (
+                      SELECT DISTINCT
+                        "f"."a"
+                      FROM "common_foo" AS "f"
+                      INNER JOIN bar ON "f"."a" = bar."a"
+                      WHERE "f"."a" IN (
+                        SELECT cba.c FROM cba
+                      )
+                      GROUP BY "f"."b"
+                      HAVING "f"."b" > 20
+                      WINDOW "wnd" AS ()
+                      ORDER BY "f"."a" ASC
+                      LIMIT 5 OFFSET 10
+                    )
+                    """ );
         }
 
         [Fact]
@@ -621,15 +663,17 @@ WHERE ""common_foo"".""a"" IN (
             sut.Context.Sql.ToString()
                 .Should()
                 .Be(
-                    @"UPDATE ""common_foo"" AS ""f"" SET
-  ""b"" = (
-    SELECT
-      (bar.""y"" + qux.""y"") AS ""y""
-    FROM qux
-    WHERE qux.""x"" = ""f"".""a""
-  )
-FROM bar
-WHERE ""f"".""a"" = bar.""a""" );
+                    """
+                    UPDATE "common_foo" AS "f" SET
+                      "b" = (
+                        SELECT
+                          (bar."y" + qux."y") AS "y"
+                        FROM qux
+                        WHERE qux."x" = "f"."a"
+                      )
+                    FROM bar
+                    WHERE "f"."a" = bar."a"
+                    """ );
         }
 
         [Fact]
@@ -656,31 +700,33 @@ WHERE ""f"".""a"" = bar.""a""" );
             sut.Context.Sql.ToString()
                 .Should()
                 .SatisfySql(
-                    @"WITH ""_{GUID}"" AS (
-  SELECT
-    ""f"".""a"" AS ""ID_a_0"",
-    (
-      SELECT
-        (bar.""y"" + qux.""y"") AS ""y""
-      FROM qux
-      WHERE qux.""x"" = ""f"".""a""
-    ) AS ""VAL_b_0""
-  FROM ""common_foo"" AS ""f""
-  INNER JOIN bar ON ""f"".""a"" = bar.""a""
-)
-UPDATE ""common_foo"" SET
-  ""b"" = (
-    SELECT
-      ""_{GUID}"".""VAL_b_0""
-    FROM ""_{GUID}""
-    WHERE ""common_foo"".""a"" = ""_{GUID}"".""ID_a_0""
-    LIMIT 1
-  )
-WHERE ""common_foo"".""a"" IN (
-  SELECT
-    ""_{GUID}"".""ID_a_0""
-  FROM ""_{GUID}""
-);" );
+                    """
+                    WITH "_{GUID}" AS (
+                      SELECT
+                        "f"."a" AS "ID_a_0",
+                        (
+                          SELECT
+                            (bar."y" + qux."y") AS "y"
+                          FROM qux
+                          WHERE qux."x" = "f"."a"
+                        ) AS "VAL_b_0"
+                      FROM "common_foo" AS "f"
+                      INNER JOIN bar ON "f"."a" = bar."a"
+                    )
+                    UPDATE "common_foo" SET
+                      "b" = (
+                        SELECT
+                          "_{GUID}"."VAL_b_0"
+                        FROM "_{GUID}"
+                        WHERE "common_foo"."a" = "_{GUID}"."ID_a_0"
+                        LIMIT 1
+                      )
+                    WHERE "common_foo"."a" IN (
+                      SELECT
+                        "_{GUID}"."ID_a_0"
+                      FROM "_{GUID}"
+                    );
+                    """ );
         }
 
         [Fact]
@@ -703,11 +749,13 @@ WHERE ""common_foo"".""a"" IN (
             sut.Context.Sql.ToString()
                 .Should()
                 .Be(
-                    @"UPDATE ""common_foo"" AS ""f"" SET
-  ""a"" = ((""f"".""a"" + bar.""a"") + 1),
-  ""b"" = (""f"".""c"" * ""f"".""d"")
-FROM bar
-WHERE ""f"".""a"" = bar.""a""" );
+                    """
+                    UPDATE "common_foo" AS "f" SET
+                      "a" = (("f"."a" + bar."a") + 1),
+                      "b" = ("f"."c" * "f"."d")
+                    FROM bar
+                    WHERE "f"."a" = bar."a"
+                    """ );
         }
 
         [Fact]
@@ -730,27 +778,29 @@ WHERE ""f"".""a"" = bar.""a""" );
             sut.Context.Sql.ToString()
                 .Should()
                 .SatisfySql(
-                    @"WITH ""_{GUID}"" AS (
-  SELECT
-    ""f"".""a"" AS ""ID_a_0"",
-    ((""f"".""a"" + bar.""a"") + 1) AS ""VAL_a_0""
-  FROM ""common_foo"" AS ""f""
-  INNER JOIN bar ON ""f"".""a"" = bar.""a""
-)
-UPDATE ""common_foo"" SET
-  ""a"" = (
-    SELECT
-      ""_{GUID}"".""VAL_a_0""
-    FROM ""_{GUID}""
-    WHERE ""common_foo"".""a"" = ""_{GUID}"".""ID_a_0""
-    LIMIT 1
-  ),
-  ""b"" = (""common_foo"".""c"" * ""common_foo"".""d"")
-WHERE ""common_foo"".""a"" IN (
-  SELECT
-    ""_{GUID}"".""ID_a_0""
-  FROM ""_{GUID}""
-);" );
+                    """
+                    WITH "_{GUID}" AS (
+                      SELECT
+                        "f"."a" AS "ID_a_0",
+                        (("f"."a" + bar."a") + 1) AS "VAL_a_0"
+                      FROM "common_foo" AS "f"
+                      INNER JOIN bar ON "f"."a" = bar."a"
+                    )
+                    UPDATE "common_foo" SET
+                      "a" = (
+                        SELECT
+                          "_{GUID}"."VAL_a_0"
+                        FROM "_{GUID}"
+                        WHERE "common_foo"."a" = "_{GUID}"."ID_a_0"
+                        LIMIT 1
+                      ),
+                      "b" = ("common_foo"."c" * "common_foo"."d")
+                    WHERE "common_foo"."a" IN (
+                      SELECT
+                        "_{GUID}"."ID_a_0"
+                      FROM "_{GUID}"
+                    );
+                    """ );
         }
 
         [Fact]
@@ -770,15 +820,17 @@ WHERE ""common_foo"".""a"" IN (
             sut.Context.Sql.ToString()
                 .Should()
                 .Be(
-                    @"UPDATE ""common_foo"" SET
-  ""a"" = 10
-WHERE ""common_foo"".""a"" IN (
-  SELECT
-    ""f"".""a""
-  FROM ""common_foo"" AS ""f""
-  INNER JOIN bar ON ""f"".""a"" = bar.""a""
-  GROUP BY ""f"".""b""
-)" );
+                    """
+                    UPDATE "common_foo" SET
+                      "a" = 10
+                    WHERE "common_foo"."a" IN (
+                      SELECT
+                        "f"."a"
+                      FROM "common_foo" AS "f"
+                      INNER JOIN bar ON "f"."a" = bar."a"
+                      GROUP BY "f"."b"
+                    )
+                    """ );
         }
 
         [Fact]
@@ -798,16 +850,18 @@ WHERE ""common_foo"".""a"" IN (
             sut.Context.Sql.ToString()
                 .Should()
                 .Be(
-                    @"UPDATE ""common_foo"" SET
-  ""a"" = 10
-WHERE EXISTS (
-  SELECT
-    *
-  FROM ""common_foo"" AS ""f""
-  INNER JOIN bar ON ""f"".""a"" = bar.""a""
-  WHERE (""common_foo"".""a"" = ""f"".""a"") AND (""common_foo"".""b"" = ""f"".""b"")
-  GROUP BY ""f"".""b""
-)" );
+                    """
+                    UPDATE "common_foo" SET
+                      "a" = 10
+                    WHERE EXISTS (
+                      SELECT
+                        *
+                      FROM "common_foo" AS "f"
+                      INNER JOIN bar ON "f"."a" = bar."a"
+                      WHERE ("common_foo"."a" = "f"."a") AND ("common_foo"."b" = "f"."b")
+                      GROUP BY "f"."b"
+                    )
+                    """ );
         }
 
         [Fact]
@@ -827,15 +881,17 @@ WHERE EXISTS (
             sut.Context.Sql.ToString()
                 .Should()
                 .Be(
-                    @"UPDATE ""common_foo"" SET
-  ""a"" = 10
-WHERE ""common_foo"".""a"" IN (
-  SELECT
-    ""f"".""a""
-  FROM ""common_foo"" AS ""f""
-  INNER JOIN bar ON ""f"".""a"" = bar.""a""
-  GROUP BY ""f"".""b""
-)" );
+                    """
+                    UPDATE "common_foo" SET
+                      "a" = 10
+                    WHERE "common_foo"."a" IN (
+                      SELECT
+                        "f"."a"
+                      FROM "common_foo" AS "f"
+                      INNER JOIN bar ON "f"."a" = bar."a"
+                      GROUP BY "f"."b"
+                    )
+                    """ );
         }
 
         [Fact]
@@ -855,16 +911,18 @@ WHERE ""common_foo"".""a"" IN (
             sut.Context.Sql.ToString()
                 .Should()
                 .Be(
-                    @"UPDATE ""common_foo"" SET
-  ""a"" = 10
-WHERE EXISTS (
-  SELECT
-    *
-  FROM ""common_foo"" AS ""f""
-  INNER JOIN bar ON ""f"".""a"" = bar.""a""
-  WHERE (""common_foo"".""a"" = ""f"".""a"") AND (""common_foo"".""b"" = ""f"".""b"")
-  GROUP BY ""f"".""b""
-)" );
+                    """
+                    UPDATE "common_foo" SET
+                      "a" = 10
+                    WHERE EXISTS (
+                      SELECT
+                        *
+                      FROM "common_foo" AS "f"
+                      INNER JOIN bar ON "f"."a" = bar."a"
+                      WHERE ("common_foo"."a" = "f"."a") AND ("common_foo"."b" = "f"."b")
+                      GROUP BY "f"."b"
+                    )
+                    """ );
         }
 
         [Fact]
@@ -887,16 +945,18 @@ WHERE EXISTS (
             sut.Context.Sql.ToString()
                 .Should()
                 .Be(
-                    @"UPDATE ""common_foo"" SET
-  ""a"" = 10
-WHERE EXISTS (
-  SELECT
-    *
-  FROM ""common_foo"" AS ""f""
-  INNER JOIN bar ON ""f"".""a"" = bar.""a""
-  WHERE (""f"".""a"" > 10) AND ((""common_foo"".""a"" = ""f"".""a"") AND (""common_foo"".""b"" = ""f"".""b""))
-  GROUP BY ""f"".""b""
-)" );
+                    """
+                    UPDATE "common_foo" SET
+                      "a" = 10
+                    WHERE EXISTS (
+                      SELECT
+                        *
+                      FROM "common_foo" AS "f"
+                      INNER JOIN bar ON "f"."a" = bar."a"
+                      WHERE ("f"."a" > 10) AND (("common_foo"."a" = "f"."a") AND ("common_foo"."b" = "f"."b"))
+                      GROUP BY "f"."b"
+                    )
+                    """ );
         }
 
         [Theory]
@@ -927,15 +987,17 @@ WHERE EXISTS (
             sut.Context.Sql.ToString()
                 .Should()
                 .Be(
-                    $@"UPDATE {expectedName} SET
-  ""a"" = 10
-WHERE {expectedName}.""a"" IN (
-  SELECT
-    ""f"".""a""
-  FROM {expectedName} AS ""f""
-  INNER JOIN bar ON ""f"".""a"" = bar.""a""
-  GROUP BY ""f"".""b""
-)" );
+                    $"""
+                     UPDATE {expectedName} SET
+                       "a" = 10
+                     WHERE {expectedName}."a" IN (
+                       SELECT
+                         "f"."a"
+                       FROM {expectedName} AS "f"
+                       INNER JOIN bar ON "f"."a" = bar."a"
+                       GROUP BY "f"."b"
+                     )
+                     """ );
         }
 
         [Theory]
@@ -966,16 +1028,18 @@ WHERE {expectedName}.""a"" IN (
             sut.Context.Sql.ToString()
                 .Should()
                 .Be(
-                    $@"UPDATE {expectedName} SET
-  ""a"" = 10
-WHERE EXISTS (
-  SELECT
-    *
-  FROM {expectedName} AS ""f""
-  INNER JOIN bar ON ""f"".""a"" = bar.""a""
-  WHERE ({expectedName}.""a"" = ""f"".""a"") AND ({expectedName}.""b"" = ""f"".""b"")
-  GROUP BY ""f"".""b""
-)" );
+                    $"""
+                     UPDATE {expectedName} SET
+                       "a" = 10
+                     WHERE EXISTS (
+                       SELECT
+                         *
+                       FROM {expectedName} AS "f"
+                       INNER JOIN bar ON "f"."a" = bar."a"
+                       WHERE ({expectedName}."a" = "f"."a") AND ({expectedName}."b" = "f"."b")
+                       GROUP BY "f"."b"
+                     )
+                     """ );
         }
 
         [Theory]
@@ -1000,16 +1064,18 @@ WHERE EXISTS (
             sut.Context.Sql.ToString()
                 .Should()
                 .Be(
-                    $@"UPDATE {expectedName} SET
-  ""a"" = 10
-WHERE EXISTS (
-  SELECT
-    *
-  FROM {expectedName} AS ""f""
-  INNER JOIN bar ON ""f"".""a"" = bar.""a""
-  WHERE ({expectedName}.""a"" = ""f"".""a"") AND ({expectedName}.""b"" = ""f"".""b"")
-  GROUP BY ""f"".""b""
-)" );
+                    $"""
+                     UPDATE {expectedName} SET
+                       "a" = 10
+                     WHERE EXISTS (
+                       SELECT
+                         *
+                       FROM {expectedName} AS "f"
+                       INNER JOIN bar ON "f"."a" = bar."a"
+                       WHERE ({expectedName}."a" = "f"."a") AND ({expectedName}."b" = "f"."b")
+                       GROUP BY "f"."b"
+                     )
+                     """ );
         }
 
         [Fact]
@@ -1041,21 +1107,23 @@ WHERE EXISTS (
             sut.Context.Sql.ToString()
                 .Should()
                 .Be(
-                    @"UPDATE ""common_foo"" SET
-  ""a"" = (
-    SELECT
-      ""x"".""b""
-    FROM ""common_foo"" AS ""x""
-    WHERE ""x"".""a"" > ""common_foo"".""a""
-  ),
-  ""b"" = (""common_foo"".""c"" * ""common_foo"".""d"")
-WHERE ""common_foo"".""a"" IN (
-  SELECT
-    ""f"".""a""
-  FROM ""common_foo"" AS ""f""
-  INNER JOIN bar ON ""f"".""a"" = bar.""a""
-  GROUP BY ""f"".""b""
-)" );
+                    """
+                    UPDATE "common_foo" SET
+                      "a" = (
+                        SELECT
+                          "x"."b"
+                        FROM "common_foo" AS "x"
+                        WHERE "x"."a" > "common_foo"."a"
+                      ),
+                      "b" = ("common_foo"."c" * "common_foo"."d")
+                    WHERE "common_foo"."a" IN (
+                      SELECT
+                        "f"."a"
+                      FROM "common_foo" AS "f"
+                      INNER JOIN bar ON "f"."a" = bar."a"
+                      GROUP BY "f"."b"
+                    )
+                    """ );
         }
 
         [Fact]
@@ -1087,22 +1155,24 @@ WHERE ""common_foo"".""a"" IN (
             sut.Context.Sql.ToString()
                 .Should()
                 .Be(
-                    @"UPDATE ""common_foo"" SET
-  ""a"" = (
-    SELECT
-      ""x"".""b""
-    FROM ""common_foo"" AS ""x""
-    WHERE ""x"".""a"" > ""common_foo"".""a""
-  ),
-  ""b"" = (""common_foo"".""c"" * ""common_foo"".""d"")
-WHERE EXISTS (
-  SELECT
-    *
-  FROM ""common_foo"" AS ""f""
-  INNER JOIN bar ON ""f"".""a"" = bar.""a""
-  WHERE (""common_foo"".""a"" = ""f"".""a"") AND (""common_foo"".""b"" = ""f"".""b"")
-  GROUP BY ""f"".""b""
-)" );
+                    """
+                    UPDATE "common_foo" SET
+                      "a" = (
+                        SELECT
+                          "x"."b"
+                        FROM "common_foo" AS "x"
+                        WHERE "x"."a" > "common_foo"."a"
+                      ),
+                      "b" = ("common_foo"."c" * "common_foo"."d")
+                    WHERE EXISTS (
+                      SELECT
+                        *
+                      FROM "common_foo" AS "f"
+                      INNER JOIN bar ON "f"."a" = bar."a"
+                      WHERE ("common_foo"."a" = "f"."a") AND ("common_foo"."b" = "f"."b")
+                      GROUP BY "f"."b"
+                    )
+                    """ );
         }
 
         [Fact]
@@ -1125,19 +1195,21 @@ WHERE EXISTS (
             sut.Context.Sql.ToString()
                 .Should()
                 .SatisfySql(
-                    @"WITH ""_{GUID}"" AS (
-  SELECT
-    ""f"".""a"" AS ""ID_a_0"",
-    (""f"".""b"" + bar.""b"") AS ""VAL_b_0""
-  FROM ""common_foo"" AS ""f""
-  INNER JOIN bar ON bar.""a"" = ""f"".""a""
-  GROUP BY ""f"".""b""
-)
-UPDATE ""common_foo"" SET
-  ""b"" = ""_{GUID}"".""VAL_b_0"",
-  ""c"" = (""common_foo"".""c"" + 1)
-FROM ""_{GUID}""
-WHERE ""common_foo"".""a"" = ""_{GUID}"".""ID_a_0"";" );
+                    """
+                    WITH "_{GUID}" AS (
+                      SELECT
+                        "f"."a" AS "ID_a_0",
+                        ("f"."b" + bar."b") AS "VAL_b_0"
+                      FROM "common_foo" AS "f"
+                      INNER JOIN bar ON bar."a" = "f"."a"
+                      GROUP BY "f"."b"
+                    )
+                    UPDATE "common_foo" SET
+                      "b" = "_{GUID}"."VAL_b_0",
+                      "c" = ("common_foo"."c" + 1)
+                    FROM "_{GUID}"
+                    WHERE "common_foo"."a" = "_{GUID}"."ID_a_0";
+                    """ );
         }
 
         [Fact]
@@ -1160,28 +1232,30 @@ WHERE ""common_foo"".""a"" = ""_{GUID}"".""ID_a_0"";" );
             sut.Context.Sql.ToString()
                 .Should()
                 .SatisfySql(
-                    @"WITH ""_{GUID}"" AS (
-  SELECT
-    ""f"".""a"" AS ""ID_a_0"",
-    (""f"".""b"" + bar.""b"") AS ""VAL_b_0""
-  FROM ""common_foo"" AS ""f""
-  INNER JOIN bar ON bar.""a"" = ""f"".""a""
-  GROUP BY ""f"".""b""
-)
-UPDATE ""common_foo"" SET
-  ""b"" = (
-    SELECT
-      ""_{GUID}"".""VAL_b_0""
-    FROM ""_{GUID}""
-    WHERE ""common_foo"".""a"" = ""_{GUID}"".""ID_a_0""
-    LIMIT 1
-  ),
-  ""c"" = (""common_foo"".""c"" + 1)
-WHERE ""common_foo"".""a"" IN (
-  SELECT
-    ""_{GUID}"".""ID_a_0""
-    FROM ""_{GUID}""
-);" );
+                    """
+                    WITH "_{GUID}" AS (
+                      SELECT
+                        "f"."a" AS "ID_a_0",
+                        ("f"."b" + bar."b") AS "VAL_b_0"
+                      FROM "common_foo" AS "f"
+                      INNER JOIN bar ON bar."a" = "f"."a"
+                      GROUP BY "f"."b"
+                    )
+                    UPDATE "common_foo" SET
+                      "b" = (
+                        SELECT
+                          "_{GUID}"."VAL_b_0"
+                        FROM "_{GUID}"
+                        WHERE "common_foo"."a" = "_{GUID}"."ID_a_0"
+                        LIMIT 1
+                      ),
+                      "c" = ("common_foo"."c" + 1)
+                    WHERE "common_foo"."a" IN (
+                      SELECT
+                        "_{GUID}"."ID_a_0"
+                        FROM "_{GUID}"
+                    );
+                    """ );
         }
 
         [Fact]
@@ -1204,20 +1278,22 @@ WHERE ""common_foo"".""a"" IN (
             sut.Context.Sql.ToString()
                 .Should()
                 .SatisfySql(
-                    @"WITH ""_{GUID}"" AS (
-  SELECT
-    ""f"".""a"" AS ""ID_a_0"",
-    ""f"".""b"" AS ""ID_b_1"",
-    (""f"".""c"" + bar.""c"") AS ""VAL_c_0""
-  FROM ""common_foo"" AS ""f""
-  INNER JOIN bar ON bar.""a"" = ""f"".""a""
-  GROUP BY ""f"".""b""
-)
-UPDATE ""common_foo"" SET
-  ""c"" = ""_{GUID}"".""VAL_c_0"",
-  ""d"" = (""common_foo"".""d"" + 1)
-FROM ""_{GUID}""
-WHERE (""common_foo"".""a"" = ""_{GUID}"".""ID_a_0"") AND (""common_foo"".""b"" = ""_{GUID}"".""ID_b_1"");" );
+                    """
+                    WITH "_{GUID}" AS (
+                      SELECT
+                        "f"."a" AS "ID_a_0",
+                        "f"."b" AS "ID_b_1",
+                        ("f"."c" + bar."c") AS "VAL_c_0"
+                      FROM "common_foo" AS "f"
+                      INNER JOIN bar ON bar."a" = "f"."a"
+                      GROUP BY "f"."b"
+                    )
+                    UPDATE "common_foo" SET
+                      "c" = "_{GUID}"."VAL_c_0",
+                      "d" = ("common_foo"."d" + 1)
+                    FROM "_{GUID}"
+                    WHERE ("common_foo"."a" = "_{GUID}"."ID_a_0") AND ("common_foo"."b" = "_{GUID}"."ID_b_1");
+                    """ );
         }
 
         [Fact]
@@ -1240,30 +1316,32 @@ WHERE (""common_foo"".""a"" = ""_{GUID}"".""ID_a_0"") AND (""common_foo"".""b"" 
             sut.Context.Sql.ToString()
                 .Should()
                 .SatisfySql(
-                    @"WITH ""_{GUID}"" AS (
-  SELECT
-    ""f"".""a"" AS ""ID_a_0"",
-    ""f"".""b"" AS ""ID_b_1"",
-    (""f"".""c"" + bar.""c"") AS ""VAL_c_0""
-  FROM ""common_foo"" AS ""f""
-  INNER JOIN bar ON bar.""a"" = ""f"".""a""
-  GROUP BY ""f"".""b""
-)
-UPDATE ""common_foo"" SET
-  ""c"" = (
-    SELECT
-      ""_{GUID}"".""VAL_c_0""
-    FROM ""_{GUID}""
-    WHERE (""common_foo"".""a"" = ""_{GUID}"".""ID_a_0"") AND (""common_foo"".""b"" = ""_{GUID}"".""ID_b_1"")
-    LIMIT 1
-  ),
-  ""d"" = (""common_foo"".""d"" + 1)
-WHERE EXISTS (
-  SELECT
-    *
-  FROM ""_{GUID}""
-  WHERE (""common_foo"".""a"" = ""_{GUID}"".""ID_a_0"") AND (""common_foo"".""b"" = ""_{GUID}"".""ID_b_1"")
-);" );
+                    """
+                    WITH "_{GUID}" AS (
+                      SELECT
+                        "f"."a" AS "ID_a_0",
+                        "f"."b" AS "ID_b_1",
+                        ("f"."c" + bar."c") AS "VAL_c_0"
+                      FROM "common_foo" AS "f"
+                      INNER JOIN bar ON bar."a" = "f"."a"
+                      GROUP BY "f"."b"
+                    )
+                    UPDATE "common_foo" SET
+                      "c" = (
+                        SELECT
+                          "_{GUID}"."VAL_c_0"
+                        FROM "_{GUID}"
+                        WHERE ("common_foo"."a" = "_{GUID}"."ID_a_0") AND ("common_foo"."b" = "_{GUID}"."ID_b_1")
+                        LIMIT 1
+                      ),
+                      "d" = ("common_foo"."d" + 1)
+                    WHERE EXISTS (
+                      SELECT
+                        *
+                      FROM "_{GUID}"
+                      WHERE ("common_foo"."a" = "_{GUID}"."ID_a_0") AND ("common_foo"."b" = "_{GUID}"."ID_b_1")
+                    );
+                    """ );
         }
 
         [Fact]
@@ -1288,21 +1366,23 @@ WHERE EXISTS (
             sut.Context.Sql.ToString()
                 .Should()
                 .SatisfySql(
-                    @"WITH ""ipsum"" AS (
-  SELECT * FROM lorem
-),
-""_{GUID}"" AS (
-  SELECT
-    ""f"".""a"" AS ""ID_a_0"",
-    (""f"".""b"" + ""common_v"".""b"") AS ""VAL_b_0""
-  FROM ""common_foo"" AS ""f""
-  INNER JOIN ""common_v"" ON ""common_v"".""a"" = ""f"".""a""
-  GROUP BY ""f"".""b""
-)
-UPDATE ""common_foo"" SET
-  ""b"" = ""_{GUID}"".""VAL_b_0""
-FROM ""_{GUID}""
-WHERE ""common_foo"".""a"" = ""_{GUID}"".""ID_a_0"";" );
+                    """
+                    WITH "ipsum" AS (
+                      SELECT * FROM lorem
+                    ),
+                    "_{GUID}" AS (
+                      SELECT
+                        "f"."a" AS "ID_a_0",
+                        ("f"."b" + "common_v"."b") AS "VAL_b_0"
+                      FROM "common_foo" AS "f"
+                      INNER JOIN "common_v" ON "common_v"."a" = "f"."a"
+                      GROUP BY "f"."b"
+                    )
+                    UPDATE "common_foo" SET
+                      "b" = "_{GUID}"."VAL_b_0"
+                    FROM "_{GUID}"
+                    WHERE "common_foo"."a" = "_{GUID}"."ID_a_0";
+                    """ );
         }
 
         [Fact]
@@ -1327,30 +1407,32 @@ WHERE ""common_foo"".""a"" = ""_{GUID}"".""ID_a_0"";" );
             sut.Context.Sql.ToString()
                 .Should()
                 .SatisfySql(
-                    @"WITH ""ipsum"" AS (
-  SELECT * FROM lorem
-),
-""_{GUID}"" AS (
-  SELECT
-    ""f"".""a"" AS ""ID_a_0"",
-    (""f"".""b"" + ""common_v"".""b"") AS ""VAL_b_0""
-  FROM ""common_foo"" AS ""f""
-  INNER JOIN ""common_v"" ON ""common_v"".""a"" = ""f"".""a""
-  GROUP BY ""f"".""b""
-)
-UPDATE ""common_foo"" SET
-  ""b"" = (
-    SELECT
-      ""_{GUID}"".""VAL_b_0""
-    FROM ""_{GUID}""
-    WHERE ""common_foo"".""a"" = ""_{GUID}"".""ID_a_0""
-    LIMIT 1
-  )
-WHERE ""common_foo"".""a"" IN (
-  SELECT
-    ""_{GUID}"".""ID_a_0""
-  FROM ""_{GUID}""
-);" );
+                    """
+                    WITH "ipsum" AS (
+                      SELECT * FROM lorem
+                    ),
+                    "_{GUID}" AS (
+                      SELECT
+                        "f"."a" AS "ID_a_0",
+                        ("f"."b" + "common_v"."b") AS "VAL_b_0"
+                      FROM "common_foo" AS "f"
+                      INNER JOIN "common_v" ON "common_v"."a" = "f"."a"
+                      GROUP BY "f"."b"
+                    )
+                    UPDATE "common_foo" SET
+                      "b" = (
+                        SELECT
+                          "_{GUID}"."VAL_b_0"
+                        FROM "_{GUID}"
+                        WHERE "common_foo"."a" = "_{GUID}"."ID_a_0"
+                        LIMIT 1
+                      )
+                    WHERE "common_foo"."a" IN (
+                      SELECT
+                        "_{GUID}"."ID_a_0"
+                      FROM "_{GUID}"
+                    );
+                    """ );
         }
 
         [Fact]
@@ -1378,17 +1460,19 @@ WHERE ""common_foo"".""a"" IN (
             sut.Context.Sql.ToString()
                 .Should()
                 .SatisfySql(
-                    @"UPDATE ""common_foo"" AS ""f"" SET
-  ""b"" = (""lorem"".""x"" + 1),
-  ""d"" = (""f"".""d"" + 1),
-  ""c"" = (""f"".""c"" * ""lorem"".""y"")
-FROM (
-  SELECT
-    U.""x"",
-    U.""y""
-  FROM U
-) AS ""lorem""
-WHERE ""lorem"".""x"" = ""f"".""b"";" );
+                    """
+                    UPDATE "common_foo" AS "f" SET
+                      "b" = ("lorem"."x" + 1),
+                      "d" = ("f"."d" + 1),
+                      "c" = ("f"."c" * "lorem"."y")
+                    FROM (
+                      SELECT
+                        U."x",
+                        U."y"
+                      FROM U
+                    ) AS "lorem"
+                    WHERE "lorem"."x" = "f"."b";
+                    """ );
         }
 
         [Fact]
@@ -1416,40 +1500,42 @@ WHERE ""lorem"".""x"" = ""f"".""b"";" );
             sut.Context.Sql.ToString()
                 .Should()
                 .SatisfySql(
-                    @"WITH ""_{GUID}"" AS (
-  SELECT
-    ""f"".""a"" AS ""ID_a_0"",
-    (""lorem"".""x"" + 1) AS ""VAL_b_0"",
-    (""f"".""c"" * ""lorem"".""y"") AS ""VAL_c_2""
-  FROM ""common_foo"" AS ""f""
-  INNER JOIN (
-    SELECT
-      U.""x"",
-      U.""y""
-    FROM U
-  ) AS ""lorem"" ON ""lorem"".""x"" = ""f"".""b""
-)
-UPDATE ""common_foo"" SET
-  ""b"" = (
-    SELECT
-      ""_{GUID}"".""VAL_b_0""
-    FROM ""_{GUID}""
-    WHERE ""common_foo"".""a"" = ""_{GUID}"".""ID_a_0""
-    LIMIT 1
-  ),
-  ""d"" = (""common_foo"".""d"" + 1),
-  ""c"" = (
-    SELECT
-      ""_{GUID}"".""VAL_c_2""
-    FROM ""_{GUID}""
-    WHERE ""common_foo"".""a"" = ""_{GUID}"".""ID_a_0""
-    LIMIT 1
-  )
-WHERE ""common_foo"".""a"" IN (
-  SELECT
-    ""_{GUID}"".""ID_a_0""
-  FROM ""_{GUID}""
-);" );
+                    """
+                    WITH "_{GUID}" AS (
+                      SELECT
+                        "f"."a" AS "ID_a_0",
+                        ("lorem"."x" + 1) AS "VAL_b_0",
+                        ("f"."c" * "lorem"."y") AS "VAL_c_2"
+                      FROM "common_foo" AS "f"
+                      INNER JOIN (
+                        SELECT
+                          U."x",
+                          U."y"
+                        FROM U
+                      ) AS "lorem" ON "lorem"."x" = "f"."b"
+                    )
+                    UPDATE "common_foo" SET
+                      "b" = (
+                        SELECT
+                          "_{GUID}"."VAL_b_0"
+                        FROM "_{GUID}"
+                        WHERE "common_foo"."a" = "_{GUID}"."ID_a_0"
+                        LIMIT 1
+                      ),
+                      "d" = ("common_foo"."d" + 1),
+                      "c" = (
+                        SELECT
+                          "_{GUID}"."VAL_c_2"
+                        FROM "_{GUID}"
+                        WHERE "common_foo"."a" = "_{GUID}"."ID_a_0"
+                        LIMIT 1
+                      )
+                    WHERE "common_foo"."a" IN (
+                      SELECT
+                        "_{GUID}"."ID_a_0"
+                      FROM "_{GUID}"
+                    );
+                    """ );
         }
 
         [Fact]

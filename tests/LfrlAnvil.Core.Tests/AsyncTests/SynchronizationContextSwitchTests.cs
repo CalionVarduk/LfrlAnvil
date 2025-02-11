@@ -12,12 +12,11 @@ public class SynchronizationContextSwitchTests : TestsBase
         var context = new SynchronizationContext();
         var sut = new SynchronizationContextSwitch( context );
 
-        using ( new AssertionScope() )
-        {
-            sut.PreviousContext.Should().BeSameAs( previousContext );
-            sut.Context.Should().BeSameAs( context );
-            SynchronizationContext.Current.Should().BeSameAs( context );
-        }
+        Assertion.All(
+                sut.PreviousContext.TestRefEquals( previousContext ),
+                sut.Context.TestRefEquals( context ),
+                SynchronizationContext.Current.TestRefEquals( context ) )
+            .Go();
     }
 
     [Fact]
@@ -29,11 +28,10 @@ public class SynchronizationContextSwitchTests : TestsBase
 
         sut.Dispose();
 
-        using ( new AssertionScope() )
-        {
-            sut.PreviousContext.Should().BeSameAs( previousContext );
-            sut.Context.Should().BeSameAs( context );
-            SynchronizationContext.Current.Should().BeSameAs( previousContext );
-        }
+        Assertion.All(
+                sut.PreviousContext.TestRefEquals( previousContext ),
+                sut.Context.TestRefEquals( context ),
+                SynchronizationContext.Current.TestRefEquals( previousContext ) )
+            .Go();
     }
 }

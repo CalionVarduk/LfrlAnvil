@@ -57,8 +57,10 @@ public partial class ObjectExpressionsTests
                 result.Traits.Should().BeSequentiallyEqualTo( trait );
                 text.Should()
                     .Be(
-                        @"FROM [foo]
-AND WHERE a > 10" );
+                        """
+                        FROM [foo]
+                        AND WHERE a > 10
+                        """ );
             }
         }
 
@@ -77,9 +79,11 @@ AND WHERE a > 10" );
                 result.Traits.Should().BeSequentiallyEqualTo( firstTrait, secondTrait );
                 text.Should()
                     .Be(
-                        @"FROM [foo]
-AND WHERE a > 10
-OR WHERE b > 15" );
+                        """
+                        FROM [foo]
+                        AND WHERE a > 10
+                        OR WHERE b > 15
+                        """ );
             }
         }
 
@@ -99,9 +103,11 @@ OR WHERE b > 15" );
                 result.Traits.Should().BeSequentiallyEqualTo( traits );
                 text.Should()
                     .Be(
-                        @"FROM [foo]
-AND WHERE a > 10
-OR WHERE b > 15" );
+                        """
+                        FROM [foo]
+                        AND WHERE a > 10
+                        OR WHERE b > 15
+                        """ );
             }
         }
     }

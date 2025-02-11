@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using LfrlAnvil.Functional;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Tests.StackSlimTests;
 
@@ -18,12 +17,11 @@ public class StackSlimTests : TestsBase
     {
         var sut = StackSlim<string>.Create( minCapacity );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 0 );
-            sut.IsEmpty.Should().BeTrue();
-            sut.Capacity.Should().Be( expectedCapacity );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 0 ),
+                sut.IsEmpty.TestTrue(),
+                sut.Capacity.TestEquals( expectedCapacity ) )
+            .Go();
     }
 
     [Fact]
@@ -33,13 +31,12 @@ public class StackSlimTests : TestsBase
 
         sut.Push( "foo" );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 1 );
-            sut.Capacity.Should().Be( 4 );
-            sut.IsEmpty.Should().BeFalse();
-            sut.Top().Should().Be( "foo" );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 1 ),
+                sut.Capacity.TestEquals( 4 ),
+                sut.IsEmpty.TestFalse(),
+                sut.Top().TestEquals( "foo" ) )
+            .Go();
     }
 
     [Fact]
@@ -50,13 +47,12 @@ public class StackSlimTests : TestsBase
         sut.Push( "x2" );
         sut.Push( "x3" );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 3 );
-            sut.Capacity.Should().Be( 4 );
-            sut.IsEmpty.Should().BeFalse();
-            sut.Top().Should().Be( "x3" );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 3 ),
+                sut.Capacity.TestEquals( 4 ),
+                sut.IsEmpty.TestFalse(),
+                sut.Top().TestEquals( "x3" ) )
+            .Go();
     }
 
     [Fact]
@@ -68,13 +64,12 @@ public class StackSlimTests : TestsBase
         sut.Push( "x3" );
         sut.Push( "x4" );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 4 );
-            sut.Capacity.Should().Be( 4 );
-            sut.IsEmpty.Should().BeFalse();
-            sut.Top().Should().Be( "x4" );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 4 ),
+                sut.Capacity.TestEquals( 4 ),
+                sut.IsEmpty.TestFalse(),
+                sut.Top().TestEquals( "x4" ) )
+            .Go();
     }
 
     [Fact]
@@ -88,13 +83,12 @@ public class StackSlimTests : TestsBase
         sut.Push( "x5" );
         sut.Push( "x6" );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 6 );
-            sut.Capacity.Should().Be( 8 );
-            sut.IsEmpty.Should().BeFalse();
-            sut.Top().Should().Be( "x6" );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 6 ),
+                sut.Capacity.TestEquals( 8 ),
+                sut.IsEmpty.TestFalse(),
+                sut.Top().TestEquals( "x6" ) )
+            .Go();
     }
 
     [Fact]
@@ -104,12 +98,11 @@ public class StackSlimTests : TestsBase
 
         sut.PushRange( ReadOnlySpan<string>.Empty );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 0 );
-            sut.Capacity.Should().Be( 0 );
-            sut.IsEmpty.Should().BeTrue();
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 0 ),
+                sut.Capacity.TestEquals( 0 ),
+                sut.IsEmpty.TestTrue() )
+            .Go();
     }
 
     [Fact]
@@ -119,13 +112,12 @@ public class StackSlimTests : TestsBase
 
         sut.PushRange( new[] { "x1", "x2" } );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 2 );
-            sut.Capacity.Should().Be( 4 );
-            sut.IsEmpty.Should().BeFalse();
-            sut.Top().Should().Be( "x2" );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 2 ),
+                sut.Capacity.TestEquals( 4 ),
+                sut.IsEmpty.TestFalse(),
+                sut.Top().TestEquals( "x2" ) )
+            .Go();
     }
 
     [Fact]
@@ -135,13 +127,12 @@ public class StackSlimTests : TestsBase
         sut.PushRange( new[] { "x1" } );
         sut.PushRange( new[] { "x2", "x3" } );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 3 );
-            sut.Capacity.Should().Be( 4 );
-            sut.IsEmpty.Should().BeFalse();
-            sut.Top().Should().Be( "x3" );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 3 ),
+                sut.Capacity.TestEquals( 4 ),
+                sut.IsEmpty.TestFalse(),
+                sut.Top().TestEquals( "x3" ) )
+            .Go();
     }
 
     [Fact]
@@ -151,13 +142,12 @@ public class StackSlimTests : TestsBase
         sut.PushRange( new[] { "x1" } );
         sut.PushRange( new[] { "x2", "x3", "x4" } );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 4 );
-            sut.Capacity.Should().Be( 4 );
-            sut.IsEmpty.Should().BeFalse();
-            sut.Top().Should().Be( "x4" );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 4 ),
+                sut.Capacity.TestEquals( 4 ),
+                sut.IsEmpty.TestFalse(),
+                sut.Top().TestEquals( "x4" ) )
+            .Go();
     }
 
     [Fact]
@@ -167,13 +157,12 @@ public class StackSlimTests : TestsBase
         sut.PushRange( new[] { "x1" } );
         sut.PushRange( new[] { "x2", "x3", "x4", "x5", "x6" } );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 6 );
-            sut.Capacity.Should().Be( 8 );
-            sut.IsEmpty.Should().BeFalse();
-            sut.Top().Should().Be( "x6" );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 6 ),
+                sut.Capacity.TestEquals( 8 ),
+                sut.IsEmpty.TestFalse(),
+                sut.Top().TestEquals( "x6" ) )
+            .Go();
     }
 
     [Fact]
@@ -183,13 +172,12 @@ public class StackSlimTests : TestsBase
 
         var result = sut.Pop();
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeFalse();
-            sut.Count.Should().Be( 0 );
-            sut.Capacity.Should().Be( 0 );
-            sut.IsEmpty.Should().BeTrue();
-        }
+        Assertion.All(
+                result.TestFalse(),
+                sut.Count.TestEquals( 0 ),
+                sut.Capacity.TestEquals( 0 ),
+                sut.IsEmpty.TestTrue() )
+            .Go();
     }
 
     [Fact]
@@ -200,13 +188,12 @@ public class StackSlimTests : TestsBase
 
         var result = sut.Pop();
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            sut.Count.Should().Be( 0 );
-            sut.Capacity.Should().Be( 4 );
-            sut.IsEmpty.Should().BeTrue();
-        }
+        Assertion.All(
+                result.TestTrue(),
+                sut.Count.TestEquals( 0 ),
+                sut.Capacity.TestEquals( 4 ),
+                sut.IsEmpty.TestTrue() )
+            .Go();
     }
 
     [Fact]
@@ -217,14 +204,13 @@ public class StackSlimTests : TestsBase
 
         var result = sut.Pop();
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            sut.Count.Should().Be( 2 );
-            sut.Capacity.Should().Be( 4 );
-            sut.IsEmpty.Should().BeFalse();
-            sut.Top().Should().Be( "x2" );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                sut.Count.TestEquals( 2 ),
+                sut.Capacity.TestEquals( 4 ),
+                sut.IsEmpty.TestFalse(),
+                sut.Top().TestEquals( "x2" ) )
+            .Go();
     }
 
     [Fact]
@@ -234,14 +220,13 @@ public class StackSlimTests : TestsBase
 
         var result = sut.TryPop( out var outResult );
 
-        using ( new AssertionScope() )
-        {
-            outResult.Should().BeNull();
-            result.Should().BeFalse();
-            sut.Count.Should().Be( 0 );
-            sut.Capacity.Should().Be( 0 );
-            sut.IsEmpty.Should().BeTrue();
-        }
+        Assertion.All(
+                outResult.TestNull(),
+                result.TestFalse(),
+                sut.Count.TestEquals( 0 ),
+                sut.Capacity.TestEquals( 0 ),
+                sut.IsEmpty.TestTrue() )
+            .Go();
     }
 
     [Fact]
@@ -252,14 +237,13 @@ public class StackSlimTests : TestsBase
 
         var result = sut.TryPop( out var outResult );
 
-        using ( new AssertionScope() )
-        {
-            outResult.Should().Be( "foo" );
-            result.Should().BeTrue();
-            sut.Count.Should().Be( 0 );
-            sut.Capacity.Should().Be( 4 );
-            sut.IsEmpty.Should().BeTrue();
-        }
+        Assertion.All(
+                outResult.TestEquals( "foo" ),
+                result.TestTrue(),
+                sut.Count.TestEquals( 0 ),
+                sut.Capacity.TestEquals( 4 ),
+                sut.IsEmpty.TestTrue() )
+            .Go();
     }
 
     [Fact]
@@ -270,15 +254,14 @@ public class StackSlimTests : TestsBase
 
         var result = sut.TryPop( out var outResult );
 
-        using ( new AssertionScope() )
-        {
-            outResult.Should().Be( "x3" );
-            result.Should().BeTrue();
-            sut.Count.Should().Be( 2 );
-            sut.Capacity.Should().Be( 4 );
-            sut.IsEmpty.Should().BeFalse();
-            sut.Top().Should().Be( "x2" );
-        }
+        Assertion.All(
+                outResult.TestEquals( "x3" ),
+                result.TestTrue(),
+                sut.Count.TestEquals( 2 ),
+                sut.Capacity.TestEquals( 4 ),
+                sut.IsEmpty.TestFalse(),
+                sut.Top().TestEquals( "x2" ) )
+            .Go();
     }
 
     [Fact]
@@ -288,13 +271,12 @@ public class StackSlimTests : TestsBase
 
         var result = sut.PopRange( 1 );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( 0 );
-            sut.Count.Should().Be( 0 );
-            sut.Capacity.Should().Be( 0 );
-            sut.IsEmpty.Should().BeTrue();
-        }
+        Assertion.All(
+                result.TestEquals( 0 ),
+                sut.Count.TestEquals( 0 ),
+                sut.Capacity.TestEquals( 0 ),
+                sut.IsEmpty.TestTrue() )
+            .Go();
     }
 
     [Theory]
@@ -307,13 +289,12 @@ public class StackSlimTests : TestsBase
 
         var result = sut.PopRange( count );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( 0 );
-            sut.Count.Should().Be( 1 );
-            sut.Capacity.Should().Be( 4 );
-            sut.IsEmpty.Should().BeFalse();
-        }
+        Assertion.All(
+                result.TestEquals( 0 ),
+                sut.Count.TestEquals( 1 ),
+                sut.Capacity.TestEquals( 4 ),
+                sut.IsEmpty.TestFalse() )
+            .Go();
     }
 
     [Theory]
@@ -326,13 +307,12 @@ public class StackSlimTests : TestsBase
 
         var result = sut.PopRange( count );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( 3 );
-            sut.Count.Should().Be( 0 );
-            sut.Capacity.Should().Be( 4 );
-            sut.IsEmpty.Should().BeTrue();
-        }
+        Assertion.All(
+                result.TestEquals( 3 ),
+                sut.Count.TestEquals( 0 ),
+                sut.Capacity.TestEquals( 4 ),
+                sut.IsEmpty.TestTrue() )
+            .Go();
     }
 
     [Fact]
@@ -343,14 +323,13 @@ public class StackSlimTests : TestsBase
 
         var result = sut.PopRange( 2 );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( 2 );
-            sut.Count.Should().Be( 1 );
-            sut.Capacity.Should().Be( 4 );
-            sut.IsEmpty.Should().BeFalse();
-            sut.Top().Should().Be( "x1" );
-        }
+        Assertion.All(
+                result.TestEquals( 2 ),
+                sut.Count.TestEquals( 1 ),
+                sut.Capacity.TestEquals( 4 ),
+                sut.IsEmpty.TestFalse(),
+                sut.Top().TestEquals( "x1" ) )
+            .Go();
     }
 
     [Fact]
@@ -360,12 +339,11 @@ public class StackSlimTests : TestsBase
 
         sut.Clear();
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 0 );
-            sut.Capacity.Should().Be( 0 );
-            sut.IsEmpty.Should().BeTrue();
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 0 ),
+                sut.Capacity.TestEquals( 0 ),
+                sut.IsEmpty.TestTrue() )
+            .Go();
     }
 
     [Fact]
@@ -376,12 +354,11 @@ public class StackSlimTests : TestsBase
 
         sut.Clear();
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 0 );
-            sut.Capacity.Should().Be( 4 );
-            sut.IsEmpty.Should().BeTrue();
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 0 ),
+                sut.Capacity.TestEquals( 4 ),
+                sut.IsEmpty.TestTrue() )
+            .Go();
     }
 
     [Fact]
@@ -392,12 +369,11 @@ public class StackSlimTests : TestsBase
 
         sut.Clear();
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 0 );
-            sut.Capacity.Should().Be( 4 );
-            sut.IsEmpty.Should().BeTrue();
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 0 ),
+                sut.Capacity.TestEquals( 4 ),
+                sut.IsEmpty.TestTrue() )
+            .Go();
     }
 
     [Theory]
@@ -409,12 +385,11 @@ public class StackSlimTests : TestsBase
 
         sut.ResetCapacity( minCapacity );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 0 );
-            sut.Capacity.Should().Be( 0 );
-            sut.IsEmpty.Should().BeTrue();
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 0 ),
+                sut.Capacity.TestEquals( 0 ),
+                sut.IsEmpty.TestTrue() )
+            .Go();
     }
 
     [Theory]
@@ -428,12 +403,11 @@ public class StackSlimTests : TestsBase
 
         sut.ResetCapacity( minCapacity );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 0 );
-            sut.Capacity.Should().Be( 4 );
-            sut.IsEmpty.Should().BeTrue();
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 0 ),
+                sut.Capacity.TestEquals( 4 ),
+                sut.IsEmpty.TestTrue() )
+            .Go();
     }
 
     [Theory]
@@ -449,13 +423,12 @@ public class StackSlimTests : TestsBase
 
         sut.ResetCapacity( minCapacity );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 1 );
-            sut.Capacity.Should().Be( 4 );
-            sut.IsEmpty.Should().BeFalse();
-            sut.Top().Should().Be( "foo" );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 1 ),
+                sut.Capacity.TestEquals( 4 ),
+                sut.IsEmpty.TestFalse(),
+                sut.Top().TestEquals( "foo" ) )
+            .Go();
     }
 
     [Fact]
@@ -465,12 +438,11 @@ public class StackSlimTests : TestsBase
 
         sut.ResetCapacity( minCapacity: 4 );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 0 );
-            sut.Capacity.Should().Be( 4 );
-            sut.IsEmpty.Should().BeTrue();
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 0 ),
+                sut.Capacity.TestEquals( 4 ),
+                sut.IsEmpty.TestTrue() )
+            .Go();
     }
 
     [Fact]
@@ -481,13 +453,12 @@ public class StackSlimTests : TestsBase
 
         sut.ResetCapacity( minCapacity: 4 );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 2 );
-            sut.Capacity.Should().Be( 4 );
-            sut.IsEmpty.Should().BeFalse();
-            sut.Top().Should().Be( "x2" );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 2 ),
+                sut.Capacity.TestEquals( 4 ),
+                sut.IsEmpty.TestFalse(),
+                sut.Top().TestEquals( "x2" ) )
+            .Go();
     }
 
     [Fact]
@@ -498,13 +469,12 @@ public class StackSlimTests : TestsBase
 
         sut.ResetCapacity( minCapacity: 4 );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 4 );
-            sut.Capacity.Should().Be( 4 );
-            sut.IsEmpty.Should().BeFalse();
-            sut.Top().Should().Be( "x4" );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 4 ),
+                sut.Capacity.TestEquals( 4 ),
+                sut.IsEmpty.TestFalse(),
+                sut.Top().TestEquals( "x4" ) )
+            .Go();
     }
 
     [Fact]
@@ -514,12 +484,11 @@ public class StackSlimTests : TestsBase
 
         sut.ResetCapacity( minCapacity: 8 );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 0 );
-            sut.Capacity.Should().Be( 8 );
-            sut.IsEmpty.Should().BeTrue();
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 0 ),
+                sut.Capacity.TestEquals( 8 ),
+                sut.IsEmpty.TestTrue() )
+            .Go();
     }
 
     [Fact]
@@ -530,13 +499,12 @@ public class StackSlimTests : TestsBase
 
         sut.ResetCapacity( minCapacity: 8 );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 2 );
-            sut.Capacity.Should().Be( 8 );
-            sut.IsEmpty.Should().BeFalse();
-            sut.Top().Should().Be( "x2" );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 2 ),
+                sut.Capacity.TestEquals( 8 ),
+                sut.IsEmpty.TestFalse(),
+                sut.Top().TestEquals( "x2" ) )
+            .Go();
     }
 
     [Fact]
@@ -547,13 +515,12 @@ public class StackSlimTests : TestsBase
 
         sut.ResetCapacity( minCapacity: 8 );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 4 );
-            sut.Capacity.Should().Be( 8 );
-            sut.IsEmpty.Should().BeFalse();
-            sut.Top().Should().Be( "x4" );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 4 ),
+                sut.Capacity.TestEquals( 8 ),
+                sut.IsEmpty.TestFalse(),
+                sut.Top().TestEquals( "x4" ) )
+            .Go();
     }
 
     [Fact]
@@ -561,7 +528,7 @@ public class StackSlimTests : TestsBase
     {
         var sut = StackSlim<string>.Create( minCapacity: 4 );
         var result = sut.AsMemory();
-        result.ToArray().Should().BeEmpty();
+        result.ToArray().TestEmpty().Go();
     }
 
     [Fact]
@@ -572,7 +539,7 @@ public class StackSlimTests : TestsBase
 
         var result = sut.AsMemory();
 
-        result.ToArray().Should().BeSequentiallyEqualTo( "x4", "x3", "x2", "x1" );
+        result.ToArray().TestSequence( [ "x4", "x3", "x2", "x1" ] ).Go();
     }
 
     [Fact]
@@ -580,7 +547,7 @@ public class StackSlimTests : TestsBase
     {
         var sut = StackSlim<string>.Create( minCapacity: 4 );
         var result = sut.AsSpan();
-        result.ToArray().Should().BeEmpty();
+        result.ToArray().TestEmpty().Go();
     }
 
     [Fact]
@@ -591,7 +558,7 @@ public class StackSlimTests : TestsBase
 
         var result = sut.AsSpan();
 
-        result.ToArray().Should().BeSequentiallyEqualTo( "x4", "x3", "x2", "x1" );
+        result.ToArray().TestSequence( [ "x4", "x3", "x2", "x1" ] ).Go();
     }
 
     [Theory]
@@ -606,7 +573,7 @@ public class StackSlimTests : TestsBase
 
         var result = sut[index];
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -619,7 +586,7 @@ public class StackSlimTests : TestsBase
 
         var action = Lambda.Of( () => sut[index] );
 
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Fact]
@@ -628,10 +595,9 @@ public class StackSlimTests : TestsBase
         var sut = StackSlim<string>.Create( minCapacity: 4 );
 
         var result = new List<string>();
-        foreach ( var e in sut )
-            result.Add( e );
+        foreach ( var e in sut ) result.Add( e );
 
-        result.Should().BeEmpty();
+        result.TestEmpty().Go();
     }
 
     [Fact]
@@ -641,9 +607,8 @@ public class StackSlimTests : TestsBase
         sut.PushRange( new[] { "x1", "x2", "x3", "x4" } );
 
         var result = new List<string>();
-        foreach ( var e in sut )
-            result.Add( e );
+        foreach ( var e in sut ) result.Add( e );
 
-        result.Should().BeSequentiallyEqualTo( "x4", "x3", "x2", "x1" );
+        result.TestSequence( [ "x4", "x3", "x2", "x1" ] ).Go();
     }
 }

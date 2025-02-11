@@ -230,14 +230,16 @@ public partial class MySqlNodeInterpreterTests
             sut.Context.Sql.ToString()
                 .Should()
                 .Be(
-                    $@"CREATE{(isTemporary ? " TEMPORARY" : string.Empty)} TABLE{(ifNotExists ? " IF NOT EXISTS" : string.Empty)} {expectedName} (
-  `x` INT NOT NULL,
-  `y` LONGTEXT,
-  `z` DOUBLE NOT NULL DEFAULT 10.5,
-  CONSTRAINT `PK_foobar` PRIMARY KEY (`x` ASC),
-  CONSTRAINT `FK_foobar_REF_qux` FOREIGN KEY (`y`) REFERENCES qux (`y`) ON DELETE RESTRICT ON UPDATE RESTRICT,
-  CONSTRAINT `CHK_foobar` CHECK (`z` > 100.0)
-)" );
+                    $"""
+                     CREATE{(isTemporary ? " TEMPORARY" : string.Empty)} TABLE{(ifNotExists ? " IF NOT EXISTS" : string.Empty)} {expectedName} (
+                       `x` INT NOT NULL,
+                       `y` LONGTEXT,
+                       `z` DOUBLE NOT NULL DEFAULT 10.5,
+                       CONSTRAINT `PK_foobar` PRIMARY KEY (`x` ASC),
+                       CONSTRAINT `FK_foobar_REF_qux` FOREIGN KEY (`y`) REFERENCES qux (`y`) ON DELETE RESTRICT ON UPDATE RESTRICT,
+                       CONSTRAINT `CHK_foobar` CHECK (`z` > 100.0)
+                     )
+                     """ );
         }
 
         [Theory]
@@ -253,8 +255,10 @@ public partial class MySqlNodeInterpreterTests
             sut.Context.Sql.ToString()
                 .Should()
                 .Be(
-                    $@"CREATE VIEW {expectedName} AS
-SELECT * FROM qux" );
+                    $"""
+                     CREATE VIEW {expectedName} AS
+                     SELECT * FROM qux
+                     """ );
         }
 
         [Theory]
@@ -270,8 +274,10 @@ SELECT * FROM qux" );
             sut.Context.Sql.ToString()
                 .Should()
                 .Be(
-                    $@"CREATE OR REPLACE VIEW {expectedName} AS
-SELECT * FROM qux" );
+                    $"""
+                     CREATE OR REPLACE VIEW {expectedName} AS
+                     SELECT * FROM qux
+                     """ );
         }
 
         [Fact]
@@ -345,8 +351,10 @@ SELECT * FROM qux" );
             sut.Context.Sql.ToString()
                 .Should()
                 .Be(
-                    $@"CALL `common`.`_DROP_INDEX_IF_EXISTS`('foo', 'qux', 'bar');
-CREATE {expectedType} `bar` ON `foo`.`qux` (`a` ASC, `b` DESC)" );
+                    $"""
+                     CALL `common`.`_DROP_INDEX_IF_EXISTS`('foo', 'qux', 'bar');
+                     CREATE {expectedType} `bar` ON `foo`.`qux` (`a` ASC, `b` DESC)
+                     """ );
         }
 
         [Fact]

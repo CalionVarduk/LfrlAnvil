@@ -61,8 +61,10 @@ public class PostgreSqlForeignKeyBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
-                    @"ALTER TABLE ""foo"".""T""
-                      ADD CONSTRAINT ""FK_T_C2_REF_T"" FOREIGN KEY (""C2"") REFERENCES ""foo"".""T"" (""C1"") ON DELETE RESTRICT ON UPDATE RESTRICT;" );
+                    """
+                    ALTER TABLE "foo"."T"
+                                          ADD CONSTRAINT "FK_T_C2_REF_T" FOREIGN KEY ("C2") REFERENCES "foo"."T" ("C1") ON DELETE RESTRICT ON UPDATE RESTRICT;
+                    """ );
         }
     }
 
@@ -102,8 +104,10 @@ public class PostgreSqlForeignKeyBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
-                    @"ALTER TABLE ""foo"".""T2""
-                      ADD CONSTRAINT ""FK_T2_C2_REF_T"" FOREIGN KEY (""C2"") REFERENCES ""foo"".""T"" (""C1"") ON DELETE RESTRICT ON UPDATE RESTRICT;" );
+                    """
+                    ALTER TABLE "foo"."T2"
+                                          ADD CONSTRAINT "FK_T2_C2_REF_T" FOREIGN KEY ("C2") REFERENCES "foo"."T" ("C1") ON DELETE RESTRICT ON UPDATE RESTRICT;
+                    """ );
         }
     }
 
@@ -145,8 +149,10 @@ public class PostgreSqlForeignKeyBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
-                    @"ALTER TABLE ""bar"".""T2""
-                      ADD CONSTRAINT ""FK_T2_C2_REF_foo_T"" FOREIGN KEY (""C2"") REFERENCES ""foo"".""T"" (""C1"") ON DELETE RESTRICT ON UPDATE RESTRICT;" );
+                    """
+                    ALTER TABLE "bar"."T2"
+                                          ADD CONSTRAINT "FK_T2_C2_REF_foo_T" FOREIGN KEY ("C2") REFERENCES "foo"."T" ("C1") ON DELETE RESTRICT ON UPDATE RESTRICT;
+                    """ );
         }
     }
 
@@ -235,8 +241,10 @@ public class PostgreSqlForeignKeyBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
-                    @"ALTER TABLE ""foo"".""T""
-                      RENAME CONSTRAINT ""FK_T_C2_REF_T"" TO ""bar"";" );
+                    """
+                    ALTER TABLE "foo"."T"
+                                          RENAME CONSTRAINT "FK_T_C2_REF_T" TO "bar";
+                    """ );
         }
     }
 
@@ -361,8 +369,10 @@ public class PostgreSqlForeignKeyBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
-                    @"ALTER TABLE ""foo"".""T""
-                      RENAME CONSTRAINT ""bar"" TO ""FK_T_C2_REF_T"";" );
+                    """
+                    ALTER TABLE "foo"."T"
+                                          RENAME CONSTRAINT "bar" TO "FK_T_C2_REF_T";
+                    """ );
         }
     }
 
@@ -426,10 +436,14 @@ public class PostgreSqlForeignKeyBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
-                    @"ALTER TABLE ""foo"".""T""
-                      DROP CONSTRAINT ""FK_T_C2_REF_T"";",
-                    $@"ALTER TABLE ""foo"".""T""
-                      ADD CONSTRAINT ""FK_T_C2_REF_T"" FOREIGN KEY (""C2"") REFERENCES ""foo"".""T"" (""C1"") ON DELETE {behavior.Name} ON UPDATE RESTRICT;" );
+                    """
+                    ALTER TABLE "foo"."T"
+                                          DROP CONSTRAINT "FK_T_C2_REF_T";
+                    """,
+                    $"""
+                     ALTER TABLE "foo"."T"
+                                           ADD CONSTRAINT "FK_T_C2_REF_T" FOREIGN KEY ("C2") REFERENCES "foo"."T" ("C1") ON DELETE {behavior.Name} ON UPDATE RESTRICT;
+                     """ );
         }
     }
 
@@ -533,10 +547,14 @@ public class PostgreSqlForeignKeyBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
-                    @"ALTER TABLE ""foo"".""T""
-                      DROP CONSTRAINT ""FK_T_C2_REF_T"";",
-                    $@"ALTER TABLE ""foo"".""T""
-                      ADD CONSTRAINT ""FK_T_C2_REF_T"" FOREIGN KEY (""C2"") REFERENCES ""foo"".""T"" (""C1"") ON DELETE RESTRICT ON UPDATE {behavior.Name};" );
+                    """
+                    ALTER TABLE "foo"."T"
+                                          DROP CONSTRAINT "FK_T_C2_REF_T";
+                    """,
+                    $"""
+                     ALTER TABLE "foo"."T"
+                                           ADD CONSTRAINT "FK_T_C2_REF_T" FOREIGN KEY ("C2") REFERENCES "foo"."T" ("C1") ON DELETE RESTRICT ON UPDATE {behavior.Name};
+                     """ );
         }
     }
 
@@ -639,8 +657,10 @@ public class PostgreSqlForeignKeyBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
-                    @"ALTER TABLE ""foo"".""T""
-                      DROP CONSTRAINT ""FK_T_C2_REF_T"";" );
+                    """
+                    ALTER TABLE "foo"."T"
+                                          DROP CONSTRAINT "FK_T_C2_REF_T";
+                    """ );
         }
     }
 
@@ -671,8 +691,10 @@ public class PostgreSqlForeignKeyBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
-                    @"ALTER TABLE ""foo"".""T2""
-                      DROP CONSTRAINT ""FK_T2_C2_REF_T"";" );
+                    """
+                    ALTER TABLE "foo"."T2"
+                                          DROP CONSTRAINT "FK_T2_C2_REF_T";
+                    """ );
         }
     }
 
@@ -705,8 +727,10 @@ public class PostgreSqlForeignKeyBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
-                    @"ALTER TABLE ""bar"".""T2""
-                      DROP CONSTRAINT ""FK_T2_C2_REF_foo_T"";" );
+                    """
+                    ALTER TABLE "bar"."T2"
+                                          DROP CONSTRAINT "FK_T2_C2_REF_foo_T";
+                    """ );
         }
     }
 
@@ -748,10 +772,14 @@ public class PostgreSqlForeignKeyBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
-                    @"ALTER TABLE ""foo"".""T""
-                      DROP CONSTRAINT ""FK_T_C2_REF_T"";",
-                    @"ALTER TABLE ""foo"".""T""
-                      ADD CONSTRAINT ""bar"" FOREIGN KEY (""C2"") REFERENCES ""foo"".""T"" (""C1"") ON DELETE NO ACTION ON UPDATE CASCADE;" );
+                    """
+                    ALTER TABLE "foo"."T"
+                                          DROP CONSTRAINT "FK_T_C2_REF_T";
+                    """,
+                    """
+                    ALTER TABLE "foo"."T"
+                                          ADD CONSTRAINT "bar" FOREIGN KEY ("C2") REFERENCES "foo"."T" ("C1") ON DELETE NO ACTION ON UPDATE CASCADE;
+                    """ );
         }
     }
 

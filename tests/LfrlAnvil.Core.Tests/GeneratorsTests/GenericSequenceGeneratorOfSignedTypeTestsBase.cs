@@ -16,7 +16,7 @@ public abstract class GenericSequenceGeneratorOfSignedTypeTestsBase<T> : Generic
 
         var action = Lambda.Of( () => sut.Generate() );
 
-        action.Should().ThrowExactly<ValueGenerationException>();
+        action.Test( exc => exc.TestType().Exact<ValueGenerationException>() ).Go();
     }
 
     [Fact]
@@ -29,7 +29,7 @@ public abstract class GenericSequenceGeneratorOfSignedTypeTestsBase<T> : Generic
 
         var action = Lambda.Of( () => sut.Generate() );
 
-        action.Should().ThrowExactly<ValueGenerationException>();
+        action.Test( exc => exc.TestType().Exact<ValueGenerationException>() ).Go();
     }
 
     [Fact]
@@ -42,11 +42,10 @@ public abstract class GenericSequenceGeneratorOfSignedTypeTestsBase<T> : Generic
 
         var result = sut.TryGenerate( out var outResult );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeFalse();
-            outResult.Should().Be( default );
-        }
+        Assertion.All(
+                result.TestFalse(),
+                outResult.TestEquals( default ) )
+            .Go();
     }
 
     [Fact]
@@ -59,11 +58,10 @@ public abstract class GenericSequenceGeneratorOfSignedTypeTestsBase<T> : Generic
 
         var result = sut.TryGenerate( out var outResult );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeFalse();
-            outResult.Should().Be( default );
-        }
+        Assertion.All(
+                result.TestFalse(),
+                outResult.TestEquals( default ) )
+            .Go();
     }
 
     protected abstract T Negate(T a);

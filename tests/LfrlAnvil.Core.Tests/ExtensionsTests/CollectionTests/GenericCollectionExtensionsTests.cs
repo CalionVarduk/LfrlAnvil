@@ -3,7 +3,6 @@ using System.Linq;
 using LfrlAnvil.Extensions;
 using LfrlAnvil.Functional;
 using LfrlAnvil.Memory;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Tests.ExtensionsTests.CollectionTests;
 
@@ -14,7 +13,7 @@ public abstract class GenericCollectionExtensionsTests<T> : TestsBase
     {
         var sut = Fixture.CreateMany<T>( count: 3 ).ToList();
         var result = sut.EmptyIfNull();
-        result.Should().BeSameAs( sut );
+        result.TestRefEquals( sut ).Go();
     }
 
     [Fact]
@@ -22,7 +21,7 @@ public abstract class GenericCollectionExtensionsTests<T> : TestsBase
     {
         IReadOnlyCollection<T>? sut = null;
         var result = sut.EmptyIfNull();
-        result.Should().BeSameAs( Array.Empty<T>() );
+        result.TestRefEquals( Array.Empty<T>() ).Go();
     }
 
     [Fact]
@@ -30,7 +29,7 @@ public abstract class GenericCollectionExtensionsTests<T> : TestsBase
     {
         IReadOnlyCollection<T>? sut = null;
         var result = sut.IsNullOrEmpty();
-        result.Should().BeTrue();
+        result.TestTrue().Go();
     }
 
     [Fact]
@@ -38,7 +37,7 @@ public abstract class GenericCollectionExtensionsTests<T> : TestsBase
     {
         var sut = Array.Empty<T>();
         var result = sut.IsNullOrEmpty();
-        result.Should().BeTrue();
+        result.TestTrue().Go();
     }
 
     [Theory]
@@ -48,7 +47,7 @@ public abstract class GenericCollectionExtensionsTests<T> : TestsBase
     {
         var sut = Fixture.CreateMany<T>( count ).ToList();
         var result = sut.IsNullOrEmpty();
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Fact]
@@ -56,7 +55,7 @@ public abstract class GenericCollectionExtensionsTests<T> : TestsBase
     {
         var sut = Array.Empty<T>();
         var result = sut.IsEmpty();
-        result.Should().BeTrue();
+        result.TestTrue().Go();
     }
 
     [Theory]
@@ -66,7 +65,7 @@ public abstract class GenericCollectionExtensionsTests<T> : TestsBase
     {
         var sut = Fixture.CreateMany<T>( count ).ToList();
         var result = sut.IsEmpty();
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Theory]
@@ -87,7 +86,7 @@ public abstract class GenericCollectionExtensionsTests<T> : TestsBase
     {
         var sut = Fixture.CreateMany<T>( sourceCount ).ToList();
         var result = sut.ContainsAtLeast( minCount );
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -108,7 +107,7 @@ public abstract class GenericCollectionExtensionsTests<T> : TestsBase
     {
         var sut = Fixture.CreateMany<T>( sourceCount ).ToList();
         var result = sut.ContainsAtMost( maxCount );
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -122,7 +121,7 @@ public abstract class GenericCollectionExtensionsTests<T> : TestsBase
 
         var result = sut.ContainsInRange( min, max );
 
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Theory]
@@ -143,7 +142,7 @@ public abstract class GenericCollectionExtensionsTests<T> : TestsBase
     {
         var sut = Fixture.CreateMany<T>( count ).ToList();
         var result = sut.ContainsInRange( 0, maxCount );
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -167,7 +166,7 @@ public abstract class GenericCollectionExtensionsTests<T> : TestsBase
 
         var result = sut.ContainsInRange( minCount, maxCount );
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -181,7 +180,7 @@ public abstract class GenericCollectionExtensionsTests<T> : TestsBase
     {
         var sut = Fixture.CreateMany<T>( count ).ToList();
         var result = sut.ContainsInRange( minCount, minCount + 1 );
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Theory]
@@ -194,7 +193,7 @@ public abstract class GenericCollectionExtensionsTests<T> : TestsBase
     {
         var sut = Fixture.CreateMany<T>( count ).ToList();
         var result = sut.ContainsInRange( maxCount - 1, maxCount );
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Theory]
@@ -214,7 +213,7 @@ public abstract class GenericCollectionExtensionsTests<T> : TestsBase
     {
         var sut = Fixture.CreateMany<T>( sourceCount ).ToList();
         var result = sut.ContainsInRange( minCount, maxCount );
-        result.Should().BeTrue();
+        result.TestTrue().Go();
     }
 
     [Theory]
@@ -228,7 +227,7 @@ public abstract class GenericCollectionExtensionsTests<T> : TestsBase
 
         var result = sut.ContainsExactly( count );
 
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Theory]
@@ -244,7 +243,7 @@ public abstract class GenericCollectionExtensionsTests<T> : TestsBase
     {
         var sut = Fixture.CreateMany<T>( sourceCount ).ToList();
         var result = sut.ContainsExactly( count );
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -256,7 +255,7 @@ public abstract class GenericCollectionExtensionsTests<T> : TestsBase
 
         sut.CopyTo( span );
 
-        span.Should().BeSequentiallyEqualTo( sut );
+        span.TestSequence( sut ).Go();
     }
 
     [Fact]
@@ -270,7 +269,7 @@ public abstract class GenericCollectionExtensionsTests<T> : TestsBase
 
         sut.CopyTo( span );
 
-        span.Should().BeSequentiallyEqualTo( elements );
+        span.TestSequence( elements ).Go();
     }
 
     [Fact]
@@ -282,6 +281,6 @@ public abstract class GenericCollectionExtensionsTests<T> : TestsBase
 
         var action = Lambda.Of( () => sut.CopyTo( span ) );
 
-        action.Should().ThrowExactly<ArgumentException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentException>() ).Go();
     }
 }

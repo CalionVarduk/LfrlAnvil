@@ -2,7 +2,6 @@
 using System.Linq;
 using System.Threading;
 using LfrlAnvil.Async;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Tests.AsyncTests;
 
@@ -16,7 +15,7 @@ public class ConcurrentReadOnlyCollectionTests : TestsBase
 
         var hasLock = Monitor.IsEntered( sync );
 
-        hasLock.Should().BeFalse();
+        hasLock.TestFalse().Go();
     }
 
     [Theory]
@@ -31,7 +30,7 @@ public class ConcurrentReadOnlyCollectionTests : TestsBase
 
         var result = sut.Count;
 
-        result.Should().Be( count );
+        result.TestEquals( count ).Go();
     }
 
     [Fact]
@@ -52,7 +51,7 @@ public class ConcurrentReadOnlyCollectionTests : TestsBase
 
         _ = sut.Count;
 
-        hasLock.Should().BeTrue();
+        hasLock.TestTrue().Go();
     }
 
     [Fact]
@@ -62,7 +61,7 @@ public class ConcurrentReadOnlyCollectionTests : TestsBase
         var sync = new object();
         var sut = new ConcurrentReadOnlyCollection<int>( collection, sync );
 
-        sut.Should().BeSequentiallyEqualTo( collection );
+        sut.TestSequence( collection ).Go();
     }
 
     [Fact]
@@ -74,7 +73,7 @@ public class ConcurrentReadOnlyCollectionTests : TestsBase
         using var _ = sut.GetEnumerator();
         var hasLock = Monitor.IsEntered( sync );
 
-        hasLock.Should().BeTrue();
+        hasLock.TestTrue().Go();
     }
 
     [Fact]
@@ -88,6 +87,6 @@ public class ConcurrentReadOnlyCollectionTests : TestsBase
 
         var hasLock = Monitor.IsEntered( sync );
 
-        hasLock.Should().BeFalse();
+        hasLock.TestFalse().Go();
     }
 }

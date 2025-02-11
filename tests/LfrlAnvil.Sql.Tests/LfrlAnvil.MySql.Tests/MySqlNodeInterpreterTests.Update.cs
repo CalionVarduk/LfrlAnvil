@@ -26,8 +26,10 @@ public partial class MySqlNodeInterpreterTests
             sut.Context.Sql.ToString()
                 .Should()
                 .Be(
-                    @"UPDATE foo SET
-  `a` = 'bar'" );
+                    """
+                    UPDATE foo SET
+                      `a` = 'bar'
+                    """ );
         }
 
         [Fact]
@@ -43,9 +45,11 @@ public partial class MySqlNodeInterpreterTests
             sut.Context.Sql.ToString()
                 .Should()
                 .Be(
-                    @"UPDATE foo SET
-  `a` = 'bar'
-WHERE foo.`a` < 10" );
+                    """
+                    UPDATE foo SET
+                      `a` = 'bar'
+                    WHERE foo.`a` < 10
+                    """ );
         }
 
         [Fact]
@@ -62,9 +66,11 @@ WHERE foo.`a` < 10" );
             sut.Context.Sql.ToString()
                 .Should()
                 .Be(
-                    @"UPDATE `common`.`foo` AS `bar` SET
-  `a` = 10
-WHERE `bar`.`a` < 10" );
+                    """
+                    UPDATE `common`.`foo` AS `bar` SET
+                      `a` = 10
+                    WHERE `bar`.`a` < 10
+                    """ );
         }
 
         [Fact]
@@ -84,16 +90,18 @@ WHERE `bar`.`a` < 10" );
             sut.Context.Sql.ToString()
                 .Should()
                 .Be(
-                    @"WITH `cba` AS (
-  SELECT * FROM abc
-)
-UPDATE `common`.`foo` SET
-  `a` = 10
-WHERE `common`.`foo`.`a` IN (
-  SELECT cba.c FROM cba
-)
-ORDER BY `common`.`foo`.`a` ASC
-LIMIT 5" );
+                    """
+                    WITH `cba` AS (
+                      SELECT * FROM abc
+                    )
+                    UPDATE `common`.`foo` SET
+                      `a` = 10
+                    WHERE `common`.`foo`.`a` IN (
+                      SELECT cba.c FROM cba
+                    )
+                    ORDER BY `common`.`foo`.`a` ASC
+                    LIMIT 5
+                    """ );
         }
 
         [Fact]
@@ -120,25 +128,27 @@ LIMIT 5" );
             sut.Context.Sql.ToString()
                 .Should()
                 .SatisfySql(
-                    @"WITH `cba` AS (
-  SELECT * FROM abc
-),
-`_{GUID}` AS (
-  SELECT DISTINCT
-    `f`.`a` AS `ID_a_0`
-  FROM `common`.`foo` AS `f`
-  WHERE `f`.`a` IN (
-    SELECT cba.c FROM cba
-  )
-  GROUP BY `f`.`b`
-  HAVING `f`.`b` > 20
-  WINDOW `wnd` AS ()
-  ORDER BY `f`.`a` ASC
-  LIMIT 5 OFFSET 10
-)
-UPDATE `common`.`foo`
-INNER JOIN `_{GUID}` ON `common`.`foo`.`a` = `_{GUID}`.`ID_a_0` SET
-  `common`.`foo`.`a` = 10;" );
+                    """
+                    WITH `cba` AS (
+                      SELECT * FROM abc
+                    ),
+                    `_{GUID}` AS (
+                      SELECT DISTINCT
+                        `f`.`a` AS `ID_a_0`
+                      FROM `common`.`foo` AS `f`
+                      WHERE `f`.`a` IN (
+                        SELECT cba.c FROM cba
+                      )
+                      GROUP BY `f`.`b`
+                      HAVING `f`.`b` > 20
+                      WINDOW `wnd` AS ()
+                      ORDER BY `f`.`a` ASC
+                      LIMIT 5 OFFSET 10
+                    )
+                    UPDATE `common`.`foo`
+                    INNER JOIN `_{GUID}` ON `common`.`foo`.`a` = `_{GUID}`.`ID_a_0` SET
+                      `common`.`foo`.`a` = 10;
+                    """ );
         }
 
         [Fact]
@@ -162,13 +172,15 @@ INNER JOIN `_{GUID}` ON `common`.`foo`.`a` = `_{GUID}`.`ID_a_0` SET
             sut.Context.Sql.ToString()
                 .Should()
                 .Be(
-                    @"UPDATE foo SET
-  `b` = (
-    SELECT
-      bar.`y`
-    FROM bar
-    WHERE bar.`x` = foo.`a`
-  )" );
+                    """
+                    UPDATE foo SET
+                      `b` = (
+                        SELECT
+                          bar.`y`
+                        FROM bar
+                        WHERE bar.`x` = foo.`a`
+                      )
+                    """ );
         }
 
         [Fact]
@@ -188,9 +200,11 @@ INNER JOIN `_{GUID}` ON `common`.`foo`.`a` = `_{GUID}`.`ID_a_0` SET
             sut.Context.Sql.ToString()
                 .Should()
                 .Be(
-                    @"UPDATE foo SET
-  `a` = (foo.`a` + 1),
-  `b` = (foo.`c` * foo.`d`)" );
+                    """
+                    UPDATE foo SET
+                      `a` = (foo.`a` + 1),
+                      `b` = (foo.`c` * foo.`d`)
+                    """ );
         }
 
         [Fact]
@@ -206,9 +220,11 @@ INNER JOIN `_{GUID}` ON `common`.`foo`.`a` = `_{GUID}`.`ID_a_0` SET
             sut.Context.Sql.ToString()
                 .Should()
                 .Be(
-                    @"UPDATE `common`.`foo` AS `f`
-INNER JOIN bar ON `f`.`a` = bar.`a` SET
-  `f`.`a` = 10" );
+                    """
+                    UPDATE `common`.`foo` AS `f`
+                    INNER JOIN bar ON `f`.`a` = bar.`a` SET
+                      `f`.`a` = 10
+                    """ );
         }
 
         [Fact]
@@ -228,13 +244,15 @@ INNER JOIN bar ON `f`.`a` = bar.`a` SET
             sut.Context.Sql.ToString()
                 .Should()
                 .Be(
-                    @"WITH `cba` AS (
-  SELECT * FROM abc
-)
-UPDATE `common`.`foo` AS `f`
-INNER JOIN bar AS `b` ON `f`.`a` = `b`.`a` SET
-  `f`.`a` = 10
-WHERE `f`.`a` < 10" );
+                    """
+                    WITH `cba` AS (
+                      SELECT * FROM abc
+                    )
+                    UPDATE `common`.`foo` AS `f`
+                    INNER JOIN bar AS `b` ON `f`.`a` = `b`.`a` SET
+                      `f`.`a` = 10
+                    WHERE `f`.`a` < 10
+                    """ );
         }
 
         [Fact]
@@ -257,23 +275,25 @@ WHERE `f`.`a` < 10" );
             sut.Context.Sql.ToString()
                 .Should()
                 .SatisfySql(
-                    @"WITH `cba` AS (
-  SELECT * FROM abc
-),
-`_{GUID}` AS (
-  SELECT
-    `f`.`a` AS `ID_a_0`
-  FROM `common`.`foo` AS `f`
-  INNER JOIN bar ON `f`.`a` = bar.`a`
-  WHERE `f`.`a` IN (
-    SELECT cba.c FROM cba
-  )
-  ORDER BY `f`.`a` ASC
-  LIMIT 5
-)
-UPDATE `common`.`foo`
-INNER JOIN `_{GUID}` ON `common`.`foo`.`a` = `_{GUID}`.`ID_a_0` SET
-  `common`.`foo`.`a` = 10;" );
+                    """
+                    WITH `cba` AS (
+                      SELECT * FROM abc
+                    ),
+                    `_{GUID}` AS (
+                      SELECT
+                        `f`.`a` AS `ID_a_0`
+                      FROM `common`.`foo` AS `f`
+                      INNER JOIN bar ON `f`.`a` = bar.`a`
+                      WHERE `f`.`a` IN (
+                        SELECT cba.c FROM cba
+                      )
+                      ORDER BY `f`.`a` ASC
+                      LIMIT 5
+                    )
+                    UPDATE `common`.`foo`
+                    INNER JOIN `_{GUID}` ON `common`.`foo`.`a` = `_{GUID}`.`ID_a_0` SET
+                      `common`.`foo`.`a` = 10;
+                    """ );
         }
 
         [Fact]
@@ -301,26 +321,28 @@ INNER JOIN `_{GUID}` ON `common`.`foo`.`a` = `_{GUID}`.`ID_a_0` SET
             sut.Context.Sql.ToString()
                 .Should()
                 .SatisfySql(
-                    @"WITH `cba` AS (
-  SELECT * FROM abc
-),
-`_{GUID}` AS (
-  SELECT DISTINCT
-    `f`.`a` AS `ID_a_0`
-  FROM `common`.`foo` AS `f`
-  INNER JOIN bar ON `f`.`a` = bar.`a`
-  WHERE `f`.`a` IN (
-    SELECT cba.c FROM cba
-  )
-  GROUP BY `f`.`b`
-  HAVING `f`.`b` > 20
-  WINDOW `wnd` AS ()
-  ORDER BY `f`.`a` ASC
-  LIMIT 5 OFFSET 10
-)
-UPDATE `common`.`foo`
-INNER JOIN `_{GUID}` ON `common`.`foo`.`a` = `_{GUID}`.`ID_a_0` SET
-  `common`.`foo`.`a` = 10;" );
+                    """
+                    WITH `cba` AS (
+                      SELECT * FROM abc
+                    ),
+                    `_{GUID}` AS (
+                      SELECT DISTINCT
+                        `f`.`a` AS `ID_a_0`
+                      FROM `common`.`foo` AS `f`
+                      INNER JOIN bar ON `f`.`a` = bar.`a`
+                      WHERE `f`.`a` IN (
+                        SELECT cba.c FROM cba
+                      )
+                      GROUP BY `f`.`b`
+                      HAVING `f`.`b` > 20
+                      WINDOW `wnd` AS ()
+                      ORDER BY `f`.`a` ASC
+                      LIMIT 5 OFFSET 10
+                    )
+                    UPDATE `common`.`foo`
+                    INNER JOIN `_{GUID}` ON `common`.`foo`.`a` = `_{GUID}`.`ID_a_0` SET
+                      `common`.`foo`.`a` = 10;
+                    """ );
         }
 
         [Fact]
@@ -347,14 +369,16 @@ INNER JOIN `_{GUID}` ON `common`.`foo`.`a` = `_{GUID}`.`ID_a_0` SET
             sut.Context.Sql.ToString()
                 .Should()
                 .Be(
-                    @"UPDATE `common`.`foo` AS `f`
-INNER JOIN bar ON `f`.`a` = bar.`a` SET
-  `f`.`b` = (
-    SELECT
-      (bar.`y` + qux.`y`) AS `y`
-    FROM qux
-    WHERE qux.`x` = `f`.`a`
-  )" );
+                    """
+                    UPDATE `common`.`foo` AS `f`
+                    INNER JOIN bar ON `f`.`a` = bar.`a` SET
+                      `f`.`b` = (
+                        SELECT
+                          (bar.`y` + qux.`y`) AS `y`
+                        FROM qux
+                        WHERE qux.`x` = `f`.`a`
+                      )
+                    """ );
         }
 
         [Fact]
@@ -377,10 +401,12 @@ INNER JOIN bar ON `f`.`a` = bar.`a` SET
             sut.Context.Sql.ToString()
                 .Should()
                 .Be(
-                    @"UPDATE `common`.`foo` AS `f`
-INNER JOIN bar ON `f`.`a` = bar.`a` SET
-  `f`.`a` = ((`f`.`a` + bar.`a`) + 1),
-  `f`.`b` = (`f`.`c` * `f`.`d`)" );
+                    """
+                    UPDATE `common`.`foo` AS `f`
+                    INNER JOIN bar ON `f`.`a` = bar.`a` SET
+                      `f`.`a` = ((`f`.`a` + bar.`a`) + 1),
+                      `f`.`b` = (`f`.`c` * `f`.`d`)
+                    """ );
         }
 
         [Fact]
@@ -400,16 +426,18 @@ INNER JOIN bar ON `f`.`a` = bar.`a` SET
             sut.Context.Sql.ToString()
                 .Should()
                 .SatisfySql(
-                    @"WITH `_{GUID}` AS (
-  SELECT
-    `f`.`a` AS `ID_a_0`
-  FROM `common`.`foo` AS `f`
-  INNER JOIN bar ON `f`.`a` = bar.`a`
-  GROUP BY `f`.`b`
-)
-UPDATE `common`.`foo`
-INNER JOIN `_{GUID}` ON `common`.`foo`.`a` = `_{GUID}`.`ID_a_0` SET
-  `common`.`foo`.`a` = 10;" );
+                    """
+                    WITH `_{GUID}` AS (
+                      SELECT
+                        `f`.`a` AS `ID_a_0`
+                      FROM `common`.`foo` AS `f`
+                      INNER JOIN bar ON `f`.`a` = bar.`a`
+                      GROUP BY `f`.`b`
+                    )
+                    UPDATE `common`.`foo`
+                    INNER JOIN `_{GUID}` ON `common`.`foo`.`a` = `_{GUID}`.`ID_a_0` SET
+                      `common`.`foo`.`a` = 10;
+                    """ );
         }
 
         [Fact]
@@ -429,17 +457,19 @@ INNER JOIN `_{GUID}` ON `common`.`foo`.`a` = `_{GUID}`.`ID_a_0` SET
             sut.Context.Sql.ToString()
                 .Should()
                 .SatisfySql(
-                    @"WITH `_{GUID}` AS (
-  SELECT
-    `f`.`a` AS `ID_a_0`,
-    `f`.`b` AS `ID_b_1`
-  FROM `common`.`foo` AS `f`
-  INNER JOIN bar ON `f`.`a` = bar.`a`
-  GROUP BY `f`.`b`
-)
-UPDATE `common`.`foo`
-INNER JOIN `_{GUID}` ON (`common`.`foo`.`a` = `_{GUID}`.`ID_a_0`) AND (`common`.`foo`.`b` = `_{GUID}`.`ID_b_1`) SET
-  `common`.`foo`.`a` = 10;" );
+                    """
+                    WITH `_{GUID}` AS (
+                      SELECT
+                        `f`.`a` AS `ID_a_0`,
+                        `f`.`b` AS `ID_b_1`
+                      FROM `common`.`foo` AS `f`
+                      INNER JOIN bar ON `f`.`a` = bar.`a`
+                      GROUP BY `f`.`b`
+                    )
+                    UPDATE `common`.`foo`
+                    INNER JOIN `_{GUID}` ON (`common`.`foo`.`a` = `_{GUID}`.`ID_a_0`) AND (`common`.`foo`.`b` = `_{GUID}`.`ID_b_1`) SET
+                      `common`.`foo`.`a` = 10;
+                    """ );
         }
 
         [Fact]
@@ -459,16 +489,18 @@ INNER JOIN `_{GUID}` ON (`common`.`foo`.`a` = `_{GUID}`.`ID_a_0`) AND (`common`.
             sut.Context.Sql.ToString()
                 .Should()
                 .SatisfySql(
-                    @"WITH `_{GUID}` AS (
-  SELECT
-    `f`.`a` AS `ID_a_0`
-  FROM `common`.`foo` AS `f`
-  INNER JOIN bar ON `f`.`a` = bar.`a`
-  GROUP BY `f`.`b`
-)
-UPDATE `common`.`foo`
-INNER JOIN `_{GUID}` ON `common`.`foo`.`a` = `_{GUID}`.`ID_a_0` SET
-  `common`.`foo`.`a` = 10;" );
+                    """
+                    WITH `_{GUID}` AS (
+                      SELECT
+                        `f`.`a` AS `ID_a_0`
+                      FROM `common`.`foo` AS `f`
+                      INNER JOIN bar ON `f`.`a` = bar.`a`
+                      GROUP BY `f`.`b`
+                    )
+                    UPDATE `common`.`foo`
+                    INNER JOIN `_{GUID}` ON `common`.`foo`.`a` = `_{GUID}`.`ID_a_0` SET
+                      `common`.`foo`.`a` = 10;
+                    """ );
         }
 
         [Fact]
@@ -488,17 +520,19 @@ INNER JOIN `_{GUID}` ON `common`.`foo`.`a` = `_{GUID}`.`ID_a_0` SET
             sut.Context.Sql.ToString()
                 .Should()
                 .SatisfySql(
-                    @"WITH `_{GUID}` AS (
-  SELECT
-    `f`.`a` AS `ID_a_0`,
-    `f`.`b` AS `ID_b_1`
-  FROM `common`.`foo` AS `f`
-  INNER JOIN bar ON `f`.`a` = bar.`a`
-  GROUP BY `f`.`b`
-)
-UPDATE `common`.`foo`
-INNER JOIN `_{GUID}` ON (`common`.`foo`.`a` = `_{GUID}`.`ID_a_0`) AND (`common`.`foo`.`b` = `_{GUID}`.`ID_b_1`) SET
-  `common`.`foo`.`a` = 10;" );
+                    """
+                    WITH `_{GUID}` AS (
+                      SELECT
+                        `f`.`a` AS `ID_a_0`,
+                        `f`.`b` AS `ID_b_1`
+                      FROM `common`.`foo` AS `f`
+                      INNER JOIN bar ON `f`.`a` = bar.`a`
+                      GROUP BY `f`.`b`
+                    )
+                    UPDATE `common`.`foo`
+                    INNER JOIN `_{GUID}` ON (`common`.`foo`.`a` = `_{GUID}`.`ID_a_0`) AND (`common`.`foo`.`b` = `_{GUID}`.`ID_b_1`) SET
+                      `common`.`foo`.`a` = 10;
+                    """ );
         }
 
         [Fact]
@@ -521,18 +555,20 @@ INNER JOIN `_{GUID}` ON (`common`.`foo`.`a` = `_{GUID}`.`ID_a_0`) AND (`common`.
             sut.Context.Sql.ToString()
                 .Should()
                 .SatisfySql(
-                    @"WITH `_{GUID}` AS (
-  SELECT
-    `f`.`a` AS `ID_a_0`,
-    `f`.`b` AS `ID_b_1`
-  FROM `common`.`foo` AS `f`
-  INNER JOIN bar ON `f`.`a` = bar.`a`
-  WHERE `f`.`a` > 10
-  GROUP BY `f`.`b`
-)
-UPDATE `common`.`foo`
-INNER JOIN `_{GUID}` ON (`common`.`foo`.`a` = `_{GUID}`.`ID_a_0`) AND (`common`.`foo`.`b` = `_{GUID}`.`ID_b_1`) SET
-  `common`.`foo`.`a` = 10;" );
+                    """
+                    WITH `_{GUID}` AS (
+                      SELECT
+                        `f`.`a` AS `ID_a_0`,
+                        `f`.`b` AS `ID_b_1`
+                      FROM `common`.`foo` AS `f`
+                      INNER JOIN bar ON `f`.`a` = bar.`a`
+                      WHERE `f`.`a` > 10
+                      GROUP BY `f`.`b`
+                    )
+                    UPDATE `common`.`foo`
+                    INNER JOIN `_{GUID}` ON (`common`.`foo`.`a` = `_{GUID}`.`ID_a_0`) AND (`common`.`foo`.`b` = `_{GUID}`.`ID_b_1`) SET
+                      `common`.`foo`.`a` = 10;
+                    """ );
         }
 
         [Theory]
@@ -563,16 +599,18 @@ INNER JOIN `_{GUID}` ON (`common`.`foo`.`a` = `_{GUID}`.`ID_a_0`) AND (`common`.
             sut.Context.Sql.ToString()
                 .Should()
                 .SatisfySql(
-                    $@"WITH `_{{GUID}}` AS (
-  SELECT
-    `f`.`a` AS `ID_a_0`
-  FROM {expectedName} AS `f`
-  INNER JOIN bar ON `f`.`a` = bar.`a`
-  GROUP BY `f`.`b`
-)
-UPDATE {expectedName}
-INNER JOIN `_{{GUID}}` ON {expectedName}.`a` = `_{{GUID}}`.`ID_a_0` SET
-  {expectedName}.`a` = 10;" );
+                    $$"""
+                      WITH `_{GUID}` AS (
+                        SELECT
+                          `f`.`a` AS `ID_a_0`
+                        FROM {{expectedName}} AS `f`
+                        INNER JOIN bar ON `f`.`a` = bar.`a`
+                        GROUP BY `f`.`b`
+                      )
+                      UPDATE {{expectedName}}
+                      INNER JOIN `_{GUID}` ON {{expectedName}}.`a` = `_{GUID}`.`ID_a_0` SET
+                        {{expectedName}}.`a` = 10;
+                      """ );
         }
 
         [Theory]
@@ -603,17 +641,19 @@ INNER JOIN `_{{GUID}}` ON {expectedName}.`a` = `_{{GUID}}`.`ID_a_0` SET
             sut.Context.Sql.ToString()
                 .Should()
                 .SatisfySql(
-                    $@"WITH `_{{GUID}}` AS (
-  SELECT
-    `f`.`a` AS `ID_a_0`,
-    `f`.`b` AS `ID_b_1`
-  FROM {expectedName} AS `f`
-  INNER JOIN bar ON `f`.`a` = bar.`a`
-  GROUP BY `f`.`b`
-)
-UPDATE {expectedName}
-INNER JOIN `_{{GUID}}` ON ({expectedName}.`a` = `_{{GUID}}`.`ID_a_0`) AND ({expectedName}.`b` = `_{{GUID}}`.`ID_b_1`) SET
-  {expectedName}.`a` = 10;" );
+                    $$"""
+                      WITH `_{GUID}` AS (
+                        SELECT
+                          `f`.`a` AS `ID_a_0`,
+                          `f`.`b` AS `ID_b_1`
+                        FROM {{expectedName}} AS `f`
+                        INNER JOIN bar ON `f`.`a` = bar.`a`
+                        GROUP BY `f`.`b`
+                      )
+                      UPDATE {{expectedName}}
+                      INNER JOIN `_{GUID}` ON ({{expectedName}}.`a` = `_{GUID}`.`ID_a_0`) AND ({{expectedName}}.`b` = `_{GUID}`.`ID_b_1`) SET
+                        {{expectedName}}.`a` = 10;
+                      """ );
         }
 
         [Theory]
@@ -638,17 +678,19 @@ INNER JOIN `_{{GUID}}` ON ({expectedName}.`a` = `_{{GUID}}`.`ID_a_0`) AND ({expe
             sut.Context.Sql.ToString()
                 .Should()
                 .SatisfySql(
-                    $@"WITH `_{{GUID}}` AS (
-  SELECT
-    `f`.`a` AS `ID_a_0`,
-    `f`.`b` AS `ID_b_1`
-  FROM {expectedName} AS `f`
-  INNER JOIN bar ON `f`.`a` = bar.`a`
-  GROUP BY `f`.`b`
-)
-UPDATE {expectedName}
-INNER JOIN `_{{GUID}}` ON ({expectedName}.`a` = `_{{GUID}}`.`ID_a_0`) AND ({expectedName}.`b` = `_{{GUID}}`.`ID_b_1`) SET
-  {expectedName}.`a` = 10;" );
+                    $$"""
+                      WITH `_{GUID}` AS (
+                        SELECT
+                          `f`.`a` AS `ID_a_0`,
+                          `f`.`b` AS `ID_b_1`
+                        FROM {{expectedName}} AS `f`
+                        INNER JOIN bar ON `f`.`a` = bar.`a`
+                        GROUP BY `f`.`b`
+                      )
+                      UPDATE {{expectedName}}
+                      INNER JOIN `_{GUID}` ON ({{expectedName}}.`a` = `_{GUID}`.`ID_a_0`) AND ({{expectedName}}.`b` = `_{GUID}`.`ID_b_1`) SET
+                        {{expectedName}}.`a` = 10;
+                      """ );
         }
 
         [Fact]
@@ -679,22 +721,24 @@ INNER JOIN `_{{GUID}}` ON ({expectedName}.`a` = `_{{GUID}}`.`ID_a_0`) AND ({expe
             sut.Context.Sql.ToString()
                 .Should()
                 .SatisfySql(
-                    @"WITH `_{GUID}` AS (
-  SELECT
-    `f`.`a` AS `ID_a_0`
-  FROM `common`.`foo` AS `f`
-  INNER JOIN bar ON `f`.`a` = bar.`a`
-  GROUP BY `f`.`b`
-)
-UPDATE `common`.`foo`
-INNER JOIN `_{GUID}` ON `common`.`foo`.`a` = `_{GUID}`.`ID_a_0` SET
-  `common`.`foo`.`a` = (
-    SELECT
-      `x`.`b`
-    FROM `common`.`foo` AS `x`
-    WHERE `x`.`a` > `common`.`foo`.`a`
-  ),
-  `common`.`foo`.`b` = (`common`.`foo`.`c` * `common`.`foo`.`d`);" );
+                    """
+                    WITH `_{GUID}` AS (
+                      SELECT
+                        `f`.`a` AS `ID_a_0`
+                      FROM `common`.`foo` AS `f`
+                      INNER JOIN bar ON `f`.`a` = bar.`a`
+                      GROUP BY `f`.`b`
+                    )
+                    UPDATE `common`.`foo`
+                    INNER JOIN `_{GUID}` ON `common`.`foo`.`a` = `_{GUID}`.`ID_a_0` SET
+                      `common`.`foo`.`a` = (
+                        SELECT
+                          `x`.`b`
+                        FROM `common`.`foo` AS `x`
+                        WHERE `x`.`a` > `common`.`foo`.`a`
+                      ),
+                      `common`.`foo`.`b` = (`common`.`foo`.`c` * `common`.`foo`.`d`);
+                    """ );
         }
 
         [Fact]
@@ -725,23 +769,25 @@ INNER JOIN `_{GUID}` ON `common`.`foo`.`a` = `_{GUID}`.`ID_a_0` SET
             sut.Context.Sql.ToString()
                 .Should()
                 .SatisfySql(
-                    @"WITH `_{GUID}` AS (
-  SELECT
-    `f`.`a` AS `ID_a_0`,
-    `f`.`b` AS `ID_b_1`
-  FROM `common`.`foo` AS `f`
-  INNER JOIN bar ON `f`.`a` = bar.`a`
-  GROUP BY `f`.`b`
-)
-UPDATE `common`.`foo`
-INNER JOIN `_{GUID}` ON (`common`.`foo`.`a` = `_{GUID}`.`ID_a_0`) AND (`common`.`foo`.`b` = `_{GUID}`.`ID_b_1`) SET
-  `common`.`foo`.`a` = (
-    SELECT
-      `x`.`b`
-    FROM `common`.`foo` AS `x`
-    WHERE `x`.`a` > `common`.`foo`.`a`
-  ),
-  `common`.`foo`.`b` = (`common`.`foo`.`c` * `common`.`foo`.`d`);" );
+                    """
+                    WITH `_{GUID}` AS (
+                      SELECT
+                        `f`.`a` AS `ID_a_0`,
+                        `f`.`b` AS `ID_b_1`
+                      FROM `common`.`foo` AS `f`
+                      INNER JOIN bar ON `f`.`a` = bar.`a`
+                      GROUP BY `f`.`b`
+                    )
+                    UPDATE `common`.`foo`
+                    INNER JOIN `_{GUID}` ON (`common`.`foo`.`a` = `_{GUID}`.`ID_a_0`) AND (`common`.`foo`.`b` = `_{GUID}`.`ID_b_1`) SET
+                      `common`.`foo`.`a` = (
+                        SELECT
+                          `x`.`b`
+                        FROM `common`.`foo` AS `x`
+                        WHERE `x`.`a` > `common`.`foo`.`a`
+                      ),
+                      `common`.`foo`.`b` = (`common`.`foo`.`c` * `common`.`foo`.`d`);
+                    """ );
         }
 
         [Fact]
@@ -764,18 +810,20 @@ INNER JOIN `_{GUID}` ON (`common`.`foo`.`a` = `_{GUID}`.`ID_a_0`) AND (`common`.
             sut.Context.Sql.ToString()
                 .Should()
                 .SatisfySql(
-                    @"WITH `_{GUID}` AS (
-  SELECT
-    `f`.`a` AS `ID_a_0`,
-    (`f`.`b` + bar.`b`) AS `VAL_b_0`
-  FROM `common`.`foo` AS `f`
-  INNER JOIN bar ON bar.`a` = `f`.`a`
-  GROUP BY `f`.`b`
-)
-UPDATE `common`.`foo`
-INNER JOIN `_{GUID}` ON `common`.`foo`.`a` = `_{GUID}`.`ID_a_0` SET
-  `common`.`foo`.`b` = `_{GUID}`.`VAL_b_0`,
-  `common`.`foo`.`c` = (`common`.`foo`.`c` + 1);" );
+                    """
+                    WITH `_{GUID}` AS (
+                      SELECT
+                        `f`.`a` AS `ID_a_0`,
+                        (`f`.`b` + bar.`b`) AS `VAL_b_0`
+                      FROM `common`.`foo` AS `f`
+                      INNER JOIN bar ON bar.`a` = `f`.`a`
+                      GROUP BY `f`.`b`
+                    )
+                    UPDATE `common`.`foo`
+                    INNER JOIN `_{GUID}` ON `common`.`foo`.`a` = `_{GUID}`.`ID_a_0` SET
+                      `common`.`foo`.`b` = `_{GUID}`.`VAL_b_0`,
+                      `common`.`foo`.`c` = (`common`.`foo`.`c` + 1);
+                    """ );
         }
 
         [Fact]
@@ -798,19 +846,21 @@ INNER JOIN `_{GUID}` ON `common`.`foo`.`a` = `_{GUID}`.`ID_a_0` SET
             sut.Context.Sql.ToString()
                 .Should()
                 .SatisfySql(
-                    @"WITH `_{GUID}` AS (
-  SELECT
-    `f`.`a` AS `ID_a_0`,
-    `f`.`b` AS `ID_b_1`,
-    (`f`.`c` + bar.`c`) AS `VAL_c_0`
-  FROM `common`.`foo` AS `f`
-  INNER JOIN bar ON bar.`a` = `f`.`a`
-  GROUP BY `f`.`b`
-)
-UPDATE `common`.`foo`
-INNER JOIN `_{GUID}` ON (`common`.`foo`.`a` = `_{GUID}`.`ID_a_0`) AND (`common`.`foo`.`b` = `_{GUID}`.`ID_b_1`) SET
-  `common`.`foo`.`c` = `_{GUID}`.`VAL_c_0`,
-  `common`.`foo`.`d` = (`common`.`foo`.`d` + 1);" );
+                    """
+                    WITH `_{GUID}` AS (
+                      SELECT
+                        `f`.`a` AS `ID_a_0`,
+                        `f`.`b` AS `ID_b_1`,
+                        (`f`.`c` + bar.`c`) AS `VAL_c_0`
+                      FROM `common`.`foo` AS `f`
+                      INNER JOIN bar ON bar.`a` = `f`.`a`
+                      GROUP BY `f`.`b`
+                    )
+                    UPDATE `common`.`foo`
+                    INNER JOIN `_{GUID}` ON (`common`.`foo`.`a` = `_{GUID}`.`ID_a_0`) AND (`common`.`foo`.`b` = `_{GUID}`.`ID_b_1`) SET
+                      `common`.`foo`.`c` = `_{GUID}`.`VAL_c_0`,
+                      `common`.`foo`.`d` = (`common`.`foo`.`d` + 1);
+                    """ );
         }
 
         [Fact]
@@ -835,20 +885,22 @@ INNER JOIN `_{GUID}` ON (`common`.`foo`.`a` = `_{GUID}`.`ID_a_0`) AND (`common`.
             sut.Context.Sql.ToString()
                 .Should()
                 .SatisfySql(
-                    @"WITH `ipsum` AS (
-  SELECT * FROM lorem
-),
-`_{GUID}` AS (
-  SELECT
-    `f`.`a` AS `ID_a_0`,
-    (`f`.`b` + `common`.`v`.`b`) AS `VAL_b_0`
-  FROM `common`.`foo` AS `f`
-  INNER JOIN `common`.`v` ON `common`.`v`.`a` = `f`.`a`
-  GROUP BY `f`.`b`
-)
-UPDATE `common`.`foo`
-INNER JOIN `_{GUID}` ON `common`.`foo`.`a` = `_{GUID}`.`ID_a_0` SET
-  `common`.`foo`.`b` = `_{GUID}`.`VAL_b_0`;" );
+                    """
+                    WITH `ipsum` AS (
+                      SELECT * FROM lorem
+                    ),
+                    `_{GUID}` AS (
+                      SELECT
+                        `f`.`a` AS `ID_a_0`,
+                        (`f`.`b` + `common`.`v`.`b`) AS `VAL_b_0`
+                      FROM `common`.`foo` AS `f`
+                      INNER JOIN `common`.`v` ON `common`.`v`.`a` = `f`.`a`
+                      GROUP BY `f`.`b`
+                    )
+                    UPDATE `common`.`foo`
+                    INNER JOIN `_{GUID}` ON `common`.`foo`.`a` = `_{GUID}`.`ID_a_0` SET
+                      `common`.`foo`.`b` = `_{GUID}`.`VAL_b_0`;
+                    """ );
         }
 
         [Fact]
@@ -876,16 +928,18 @@ INNER JOIN `_{GUID}` ON `common`.`foo`.`a` = `_{GUID}`.`ID_a_0` SET
             sut.Context.Sql.ToString()
                 .Should()
                 .SatisfySql(
-                    @"UPDATE `common`.`foo` AS `f`
-INNER JOIN (
-  SELECT
-    U.`x`,
-    U.`y`
-  FROM U
-) AS `lorem` ON `lorem`.`x` = `f`.`b` SET
-  `f`.`b` = (`lorem`.`x` + 1),
-  `f`.`d` = (`f`.`d` + 1),
-  `f`.`c` = (`f`.`c` * `lorem`.`y`);" );
+                    """
+                    UPDATE `common`.`foo` AS `f`
+                    INNER JOIN (
+                      SELECT
+                        U.`x`,
+                        U.`y`
+                      FROM U
+                    ) AS `lorem` ON `lorem`.`x` = `f`.`b` SET
+                      `f`.`b` = (`lorem`.`x` + 1),
+                      `f`.`d` = (`f`.`d` + 1),
+                      `f`.`c` = (`f`.`c` * `lorem`.`y`);
+                    """ );
         }
 
         [Fact]
@@ -914,25 +968,27 @@ INNER JOIN (
             sut.Context.Sql.ToString()
                 .Should()
                 .SatisfySql(
-                    @"WITH `_{GUID}` AS (
-  SELECT
-    `f`.`a` AS `ID_a_0`,
-    (`lorem`.`x` + 1) AS `VAL_b_0`,
-    (`f`.`c` * `lorem`.`y`) AS `VAL_c_2`
-  FROM `common`.`foo` AS `f`
-  INNER JOIN (
-    SELECT
-      U.`x`,
-      U.`y`
-    FROM U
-  ) AS `lorem` ON `lorem`.`x` = `f`.`b`
-  GROUP BY `f`.`a`
-)
-UPDATE `common`.`foo`
-INNER JOIN `_{GUID}` ON `common`.`foo`.`a` = `_{GUID}`.`ID_a_0` SET
-  `common`.`foo`.`b` = `_{GUID}`.`VAL_b_0`,
-  `common`.`foo`.`d` = (`common`.`foo`.`d` + 1),
-  `common`.`foo`.`c` = `_{GUID}`.`VAL_c_2`;" );
+                    """
+                    WITH `_{GUID}` AS (
+                      SELECT
+                        `f`.`a` AS `ID_a_0`,
+                        (`lorem`.`x` + 1) AS `VAL_b_0`,
+                        (`f`.`c` * `lorem`.`y`) AS `VAL_c_2`
+                      FROM `common`.`foo` AS `f`
+                      INNER JOIN (
+                        SELECT
+                          U.`x`,
+                          U.`y`
+                        FROM U
+                      ) AS `lorem` ON `lorem`.`x` = `f`.`b`
+                      GROUP BY `f`.`a`
+                    )
+                    UPDATE `common`.`foo`
+                    INNER JOIN `_{GUID}` ON `common`.`foo`.`a` = `_{GUID}`.`ID_a_0` SET
+                      `common`.`foo`.`b` = `_{GUID}`.`VAL_b_0`,
+                      `common`.`foo`.`d` = (`common`.`foo`.`d` + 1),
+                      `common`.`foo`.`c` = `_{GUID}`.`VAL_c_2`;
+                    """ );
         }
 
         [Fact]

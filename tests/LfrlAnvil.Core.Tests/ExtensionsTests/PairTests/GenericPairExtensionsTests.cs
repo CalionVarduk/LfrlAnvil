@@ -14,13 +14,7 @@ public abstract class GenericPairExtensionsTests<T1, T2> : TestsBase
 
         var result = sut.ToPair();
 
-        result.Should()
-            .BeEquivalentTo(
-                new
-                {
-                    First = first,
-                    Second = second
-                } );
+        Assertion.All( result.First.TestEquals( first ), result.Second.TestEquals( second ) ).Go();
     }
 
     [Fact]
@@ -33,13 +27,7 @@ public abstract class GenericPairExtensionsTests<T1, T2> : TestsBase
 
         var result = sut.ToPair();
 
-        result.Should()
-            .BeEquivalentTo(
-                new
-                {
-                    First = first,
-                    Second = second
-                } );
+        Assertion.All( result.First.TestEquals( first ), result.Second.TestEquals( second ) ).Go();
     }
 
     [Fact]
@@ -52,13 +40,7 @@ public abstract class GenericPairExtensionsTests<T1, T2> : TestsBase
 
         var result = sut.ToTuple();
 
-        result.Should()
-            .BeEquivalentTo(
-                new
-                {
-                    Item1 = first,
-                    Item2 = second
-                } );
+        Assertion.All( result.Item1.TestEquals( first ), result.Item2.TestEquals( second ) ).Go();
     }
 
     [Fact]
@@ -71,13 +53,7 @@ public abstract class GenericPairExtensionsTests<T1, T2> : TestsBase
 
         var result = sut.ToValueTuple();
 
-        result.Should()
-            .BeEquivalentTo(
-                new
-                {
-                    Item1 = first,
-                    Item2 = second
-                } );
+        Assertion.All( result.Item1.TestEquals( first ), result.Item2.TestEquals( second ) ).Go();
     }
 
     [Fact]
@@ -90,10 +66,6 @@ public abstract class GenericPairExtensionsTests<T1, T2> : TestsBase
 
         var (a, b) = sut;
 
-        using ( new AssertionScope() )
-        {
-            a.Should().Be( first );
-            b.Should().Be( second );
-        }
+        Assertion.All( a.TestEquals( first ), b.TestEquals( second ) ).Go();
     }
 }

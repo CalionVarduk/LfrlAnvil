@@ -10,7 +10,7 @@ public class HashTests : TestsBase
     {
         var value = Fixture.Create<int>();
         var sut = new Hash( value );
-        sut.Value.Should().Be( value );
+        sut.Value.TestEquals( value ).Go();
     }
 
     [Fact]
@@ -22,7 +22,7 @@ public class HashTests : TestsBase
 
         var result = sut.Add( value );
 
-        result.Value.Should().Be( expected );
+        result.Value.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -34,7 +34,7 @@ public class HashTests : TestsBase
 
         var result = sut.Add( value );
 
-        result.Value.Should().Be( expected );
+        result.Value.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -46,7 +46,7 @@ public class HashTests : TestsBase
 
         var result = sut.AddRange( range );
 
-        result.Value.Should().Be( expected );
+        result.Value.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -57,7 +57,7 @@ public class HashTests : TestsBase
 
         var result = sut.GetHashCode();
 
-        result.Should().Be( value );
+        result.TestEquals( value ).Go();
     }
 
     [Theory]
@@ -69,7 +69,7 @@ public class HashTests : TestsBase
 
         var result = a.Equals( b );
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -81,7 +81,7 @@ public class HashTests : TestsBase
 
         var result = a.CompareTo( b );
 
-        Math.Sign( result ).Should().Be( expectedSign );
+        Math.Sign( result ).TestEquals( expectedSign ).Go();
     }
 
     [Fact]
@@ -92,7 +92,7 @@ public class HashTests : TestsBase
 
         var result = ( int )sut;
 
-        result.Should().Be( value );
+        result.TestEquals( value ).Go();
     }
 
     [Theory]
@@ -104,7 +104,7 @@ public class HashTests : TestsBase
 
         var result = a == b;
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -116,7 +116,7 @@ public class HashTests : TestsBase
 
         var result = a != b;
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -128,7 +128,7 @@ public class HashTests : TestsBase
 
         var result = a > b;
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -140,7 +140,7 @@ public class HashTests : TestsBase
 
         var result = a <= b;
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -152,7 +152,7 @@ public class HashTests : TestsBase
 
         var result = a < b;
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -164,6 +164,6 @@ public class HashTests : TestsBase
 
         var result = a >= b;
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 }

@@ -235,15 +235,19 @@ public partial class MySqlSchemaBuilderTests : TestsBase
                 .Sql.Should()
                 .SatisfySql(
                     "DROP VIEW `foo`.`V1`;",
-                    @"CREATE VIEW `bar`.`V1` AS
-                    SELECT * FROM bar;" );
+                    """
+                    CREATE VIEW `bar`.`V1` AS
+                                        SELECT * FROM bar;
+                    """ );
 
             actions.ElementAtOrDefault( 4 )
                 .Sql.Should()
                 .SatisfySql(
                     "DROP VIEW `foo`.`V2`;",
-                    @"CREATE VIEW `bar`.`V2` AS
-                    SELECT * FROM qux;" );
+                    """
+                    CREATE VIEW `bar`.`V2` AS
+                                        SELECT * FROM qux;
+                    """ );
 
             actions.ElementAtOrDefault( 5 ).Sql.Should().SatisfySql( "DROP SCHEMA `foo`;" );
         }
@@ -292,18 +296,22 @@ public partial class MySqlSchemaBuilderTests : TestsBase
                 .Sql.Should()
                 .SatisfySql(
                     "DROP VIEW `foo`.`V`;",
-                    @"CREATE VIEW `bar`.`V` AS
-                    SELECT * FROM qux;" );
+                    """
+                    CREATE VIEW `bar`.`V` AS
+                                        SELECT * FROM qux;
+                    """ );
 
             actions.ElementAtOrDefault( 3 )
                 .Sql.Should()
                 .SatisfySql(
                     "DROP VIEW `common`.`V`;",
-                    @"CREATE VIEW `common`.`V` AS
-                    SELECT
-                      *
-                    FROM `bar`.`V`
-                    INNER JOIN `bar`.`T` ON TRUE;" );
+                    """
+                    CREATE VIEW `common`.`V` AS
+                                        SELECT
+                                          *
+                                        FROM `bar`.`V`
+                                        INNER JOIN `bar`.`T` ON TRUE;
+                    """ );
 
             actions.ElementAtOrDefault( 4 ).Sql.Should().SatisfySql( "DROP SCHEMA `foo`;" );
         }

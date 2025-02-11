@@ -56,15 +56,19 @@ public class SqliteCheckBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
-                    @"CREATE TABLE ""__foo_T__{GUID}__"" (
-                      ""C"" ANY NOT NULL,
-                      CONSTRAINT ""foo_PK_T"" PRIMARY KEY (""C"" ASC),
-                      CONSTRAINT ""foo_CHK_T_{GUID}"" CHECK (""C"" > 0)
-                    ) WITHOUT ROWID;",
-                    @"INSERT INTO ""__foo_T__{GUID}__"" (""C"")
-                    SELECT
-                      ""foo_T"".""C""
-                    FROM ""foo_T"";",
+                    """
+                    CREATE TABLE "__foo_T__{GUID}__" (
+                                          "C" ANY NOT NULL,
+                                          CONSTRAINT "foo_PK_T" PRIMARY KEY ("C" ASC),
+                                          CONSTRAINT "foo_CHK_T_{GUID}" CHECK ("C" > 0)
+                                        ) WITHOUT ROWID;
+                    """,
+                    """
+                    INSERT INTO "__foo_T__{GUID}__" ("C")
+                                        SELECT
+                                          "foo_T"."C"
+                                        FROM "foo_T";
+                    """,
                     "DROP TABLE \"foo_T\";",
                     "ALTER TABLE \"__foo_T__{GUID}__\" RENAME TO \"foo_T\";" );
         }
@@ -151,15 +155,19 @@ public class SqliteCheckBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
-                    @"CREATE TABLE ""__foo_T__{GUID}__"" (
-                      ""C"" ANY NOT NULL,
-                      CONSTRAINT ""foo_PK_T"" PRIMARY KEY (""C"" ASC),
-                      CONSTRAINT ""foo_bar"" CHECK (""C"" > 0)
-                    ) WITHOUT ROWID;",
-                    @"INSERT INTO ""__foo_T__{GUID}__"" (""C"")
-                    SELECT
-                      ""foo_T"".""C""
-                    FROM ""foo_T"";",
+                    """
+                    CREATE TABLE "__foo_T__{GUID}__" (
+                                          "C" ANY NOT NULL,
+                                          CONSTRAINT "foo_PK_T" PRIMARY KEY ("C" ASC),
+                                          CONSTRAINT "foo_bar" CHECK ("C" > 0)
+                                        ) WITHOUT ROWID;
+                    """,
+                    """
+                    INSERT INTO "__foo_T__{GUID}__" ("C")
+                                        SELECT
+                                          "foo_T"."C"
+                                        FROM "foo_T";
+                    """,
                     "DROP TABLE \"foo_T\";",
                     "ALTER TABLE \"__foo_T__{GUID}__\" RENAME TO \"foo_T\";" );
         }
@@ -243,15 +251,19 @@ public class SqliteCheckBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
-                    @"CREATE TABLE ""__foo_T__{GUID}__"" (
-                      ""C1"" ANY NOT NULL,
-                      CONSTRAINT ""foo_PK_T"" PRIMARY KEY (""C1"" ASC),
-                      CONSTRAINT ""foo_CHK_T_{GUID}"" CHECK (TRUE)
-                    ) WITHOUT ROWID;",
-                    @"INSERT INTO ""__foo_T__{GUID}__"" (""C1"")
-                    SELECT
-                      ""foo_T"".""C1""
-                    FROM ""foo_T"";",
+                    """
+                    CREATE TABLE "__foo_T__{GUID}__" (
+                                          "C1" ANY NOT NULL,
+                                          CONSTRAINT "foo_PK_T" PRIMARY KEY ("C1" ASC),
+                                          CONSTRAINT "foo_CHK_T_{GUID}" CHECK (TRUE)
+                                        ) WITHOUT ROWID;
+                    """,
+                    """
+                    INSERT INTO "__foo_T__{GUID}__" ("C1")
+                                        SELECT
+                                          "foo_T"."C1"
+                                        FROM "foo_T";
+                    """,
                     "DROP TABLE \"foo_T\";",
                     "ALTER TABLE \"__foo_T__{GUID}__\" RENAME TO \"foo_T\";" );
         }
@@ -301,14 +313,18 @@ public class SqliteCheckBuilderTests : TestsBase
                 .Sql
                 .Should()
                 .SatisfySql(
-                    @"CREATE TABLE ""__foo_T__{GUID}__"" (
-                      ""C"" ANY NOT NULL,
-                      CONSTRAINT ""foo_PK_T"" PRIMARY KEY (""C"" ASC)
-                    ) WITHOUT ROWID;",
-                    @"INSERT INTO ""__foo_T__{GUID}__"" (""C"")
-                    SELECT
-                      ""foo_T"".""C""
-                    FROM ""foo_T"";",
+                    """
+                    CREATE TABLE "__foo_T__{GUID}__" (
+                                          "C" ANY NOT NULL,
+                                          CONSTRAINT "foo_PK_T" PRIMARY KEY ("C" ASC)
+                                        ) WITHOUT ROWID;
+                    """,
+                    """
+                    INSERT INTO "__foo_T__{GUID}__" ("C")
+                                        SELECT
+                                          "foo_T"."C"
+                                        FROM "foo_T";
+                    """,
                     "DROP TABLE \"foo_T\";",
                     "ALTER TABLE \"__foo_T__{GUID}__\" RENAME TO \"foo_T\";" );
         }

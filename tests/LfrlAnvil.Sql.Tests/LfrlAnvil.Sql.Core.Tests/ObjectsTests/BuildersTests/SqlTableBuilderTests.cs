@@ -116,8 +116,10 @@ public partial class SqlTableBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .Be(
-                    @"ALTER [Table] foo.bar
-  ALTER [Table] foo.bar ([1] : 'Name' (System.String) FROM T);" );
+                    """
+                    ALTER [Table] foo.bar
+                      ALTER [Table] foo.bar ([1] : 'Name' (System.String) FROM T);
+                    """ );
         }
     }
 
@@ -547,8 +549,10 @@ public partial class SqlTableBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .Be(
-                    @"ALTER [Table] foo.bar
-  ALTER [Table] foo.bar ([1] : 'Name' (System.String) FROM T);" );
+                    """
+                    ALTER [Table] foo.bar
+                      ALTER [Table] foo.bar ([1] : 'Name' (System.String) FROM T);
+                    """ );
         }
     }
 
@@ -577,8 +581,10 @@ public partial class SqlTableBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .Be(
-                    @"ALTER [Table] foo.bar
-  ALTER [Table] foo.bar ([1] : 'Name' (System.String) FROM T);" );
+                    """
+                    ALTER [Table] foo.bar
+                      ALTER [Table] foo.bar ([1] : 'Name' (System.String) FROM T);
+                    """ );
         }
     }
 }

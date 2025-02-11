@@ -195,12 +195,14 @@ public class ExpressionTraitsTests : TestsBase
             sut.ContainsRecursive.Should().BeFalse();
             text.Should()
                 .Be(
-                    @"WITH ORDINAL [A] (
-  SELECT * FROM foo
-),
-ORDINAL [B] (
-  SELECT * FROM bar
-)" );
+                    """
+                    WITH ORDINAL [A] (
+                      SELECT * FROM foo
+                    ),
+                    ORDINAL [B] (
+                      SELECT * FROM bar
+                    )
+                    """ );
         }
     }
 
@@ -224,18 +226,20 @@ ORDINAL [B] (
             sut.ContainsRecursive.Should().BeTrue();
             text.Should()
                 .Be(
-                    @"WITH ORDINAL [A] (
-  SELECT * FROM foo
-),
-RECURSIVE [B] (
-  
-  SELECT * FROM bar
+                    """
+                    WITH ORDINAL [A] (
+                      SELECT * FROM foo
+                    ),
+                    RECURSIVE [B] (
+                      
+                      SELECT * FROM bar
+                    
+                      UNION
+                      
+                      SELECT * FROM B
 
-  UNION
-  
-  SELECT * FROM B
-
-)" );
+                    )
+                    """ );
         }
     }
 
@@ -281,8 +285,10 @@ RECURSIVE [B] (
             sut.Windows.ToArray().Should().BeSequentiallyEqualTo( windows );
             text.Should()
                 .Be(
-                    @"WINDOW [foo] AS (PARTITION BY ([qux].[a] : ?) ORDER BY ([qux].[b] : ?) ASC ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW),
-  [bar] AS (PARTITION BY ([qux].[x] : ?) ORDER BY ([qux].[y] : ?) DESC RANGE BETWEEN CURRENT ROW AND UNBOUNDED FOLLOWING)" );
+                    """
+                    WINDOW [foo] AS (PARTITION BY ([qux].[a] : ?) ORDER BY ([qux].[b] : ?) ASC ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW),
+                      [bar] AS (PARTITION BY ([qux].[x] : ?) ORDER BY ([qux].[y] : ?) DESC RANGE BETWEEN CURRENT ROW AND UNBOUNDED FOLLOWING)
+                    """ );
         }
     }
 
@@ -514,8 +520,10 @@ RECURSIVE [B] (
             (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.DistinctTrait );
             text.Should()
                 .Be(
-                    @"FROM [foo]
-DISTINCT" );
+                    """
+                    FROM [foo]
+                    DISTINCT
+                    """ );
         }
     }
 
@@ -537,9 +545,11 @@ DISTINCT" );
             (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.DistinctTrait );
             text.Should()
                 .Be(
-                    @"FROM [foo]
-INNER JOIN [bar] ON TRUE
-DISTINCT" );
+                    """
+                    FROM [foo]
+                    INNER JOIN [bar] ON TRUE
+                    DISTINCT
+                    """ );
         }
     }
 
@@ -560,8 +570,10 @@ DISTINCT" );
             (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.DistinctTrait );
             text.Should()
                 .Be(
-                    @"AGG_COUNT((*))
-  DISTINCT" );
+                    """
+                    AGG_COUNT((*))
+                      DISTINCT
+                    """ );
         }
     }
 
@@ -587,8 +599,10 @@ DISTINCT" );
             (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.FilterTrait );
             text.Should()
                 .Be(
-                    @"FROM [foo]
-AND WHERE a > 10" );
+                    """
+                    FROM [foo]
+                    AND WHERE a > 10
+                    """ );
         }
     }
 
@@ -614,9 +628,11 @@ AND WHERE a > 10" );
             (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.FilterTrait );
             text.Should()
                 .Be(
-                    @"FROM [foo]
-INNER JOIN [bar] ON TRUE
-AND WHERE a > 10" );
+                    """
+                    FROM [foo]
+                    INNER JOIN [bar] ON TRUE
+                    AND WHERE a > 10
+                    """ );
         }
     }
 
@@ -638,8 +654,10 @@ AND WHERE a > 10" );
             (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.FilterTrait );
             text.Should()
                 .Be(
-                    @"AGG_COUNT((*))
-  AND WHERE a > 10" );
+                    """
+                    AGG_COUNT((*))
+                      AND WHERE a > 10
+                    """ );
         }
     }
 
@@ -665,8 +683,10 @@ AND WHERE a > 10" );
             (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.FilterTrait );
             text.Should()
                 .Be(
-                    @"FROM [foo]
-OR WHERE a > 10" );
+                    """
+                    FROM [foo]
+                    OR WHERE a > 10
+                    """ );
         }
     }
 
@@ -692,9 +712,11 @@ OR WHERE a > 10" );
             (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.FilterTrait );
             text.Should()
                 .Be(
-                    @"FROM [foo]
-INNER JOIN [bar] ON TRUE
-OR WHERE a > 10" );
+                    """
+                    FROM [foo]
+                    INNER JOIN [bar] ON TRUE
+                    OR WHERE a > 10
+                    """ );
         }
     }
 
@@ -716,8 +738,10 @@ OR WHERE a > 10" );
             (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.FilterTrait );
             text.Should()
                 .Be(
-                    @"AGG_COUNT((*))
-  OR WHERE a > 10" );
+                    """
+                    AGG_COUNT((*))
+                      OR WHERE a > 10
+                    """ );
         }
     }
 
@@ -741,8 +765,10 @@ OR WHERE a > 10" );
             (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.SortTrait );
             text.Should()
                 .Be(
-                    @"AGG_COUNT((*))
-  ORDER BY (""10"" : System.Int32) ASC" );
+                    """
+                    AGG_COUNT((*))
+                      ORDER BY ("10" : System.Int32) ASC
+                    """ );
         }
     }
 
@@ -768,8 +794,10 @@ OR WHERE a > 10" );
             (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.AggregationTrait );
             text.Should()
                 .Be(
-                    @"FROM [foo]
-GROUP BY ([foo].[a] : ?)" );
+                    """
+                    FROM [foo]
+                    GROUP BY ([foo].[a] : ?)
+                    """ );
         }
     }
 
@@ -810,9 +838,11 @@ GROUP BY ([foo].[a] : ?)" );
             (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.AggregationTrait );
             text.Should()
                 .Be(
-                    @"FROM [foo]
-INNER JOIN [bar] ON TRUE
-GROUP BY ([foo].[a] : ?)" );
+                    """
+                    FROM [foo]
+                    INNER JOIN [bar] ON TRUE
+                    GROUP BY ([foo].[a] : ?)
+                    """ );
         }
     }
 
@@ -853,8 +883,10 @@ GROUP BY ([foo].[a] : ?)" );
             (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.AggregationFilterTrait );
             text.Should()
                 .Be(
-                    @"FROM [foo]
-AND HAVING a > 10" );
+                    """
+                    FROM [foo]
+                    AND HAVING a > 10
+                    """ );
         }
     }
 
@@ -880,9 +912,11 @@ AND HAVING a > 10" );
             (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.AggregationFilterTrait );
             text.Should()
                 .Be(
-                    @"FROM [foo]
-INNER JOIN [bar] ON TRUE
-AND HAVING a > 10" );
+                    """
+                    FROM [foo]
+                    INNER JOIN [bar] ON TRUE
+                    AND HAVING a > 10
+                    """ );
         }
     }
 
@@ -908,8 +942,10 @@ AND HAVING a > 10" );
             (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.AggregationFilterTrait );
             text.Should()
                 .Be(
-                    @"FROM [foo]
-OR HAVING a > 10" );
+                    """
+                    FROM [foo]
+                    OR HAVING a > 10
+                    """ );
         }
     }
 
@@ -935,9 +971,11 @@ OR HAVING a > 10" );
             (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.AggregationFilterTrait );
             text.Should()
                 .Be(
-                    @"FROM [foo]
-INNER JOIN [bar] ON TRUE
-OR HAVING a > 10" );
+                    """
+                    FROM [foo]
+                    INNER JOIN [bar] ON TRUE
+                    OR HAVING a > 10
+                    """ );
         }
     }
 
@@ -962,8 +1000,10 @@ OR HAVING a > 10" );
             (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.WindowDefinitionTrait );
             text.Should()
                 .Be(
-                    @"FROM [foo]
-WINDOW [x] AS (ORDER BY ([foo].[a] : ?) ASC)" );
+                    """
+                    FROM [foo]
+                    WINDOW [x] AS (ORDER BY ([foo].[a] : ?) ASC)
+                    """ );
         }
     }
 
@@ -1011,10 +1051,12 @@ WINDOW [x] AS (ORDER BY ([foo].[a] : ?) ASC)" );
             (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.WindowDefinitionTrait );
             text.Should()
                 .Be(
-                    @"FROM [foo]
-INNER JOIN [bar] ON TRUE
-WINDOW [x] AS (ORDER BY ([foo].[a] : ?) ASC),
-  [y] AS (ORDER BY ([bar].[b] : ?) DESC)" );
+                    """
+                    FROM [foo]
+                    INNER JOIN [bar] ON TRUE
+                    WINDOW [x] AS (ORDER BY ([foo].[a] : ?) ASC),
+                      [y] AS (ORDER BY ([bar].[b] : ?) DESC)
+                    """ );
         }
     }
 
@@ -1034,8 +1076,10 @@ WINDOW [x] AS (ORDER BY ([foo].[a] : ?) ASC),
             sut.Traits.Should().BeEmpty();
             text.Should()
                 .Be(
-                    @"FROM [foo]
-INNER JOIN [bar] ON TRUE" );
+                    """
+                    FROM [foo]
+                    INNER JOIN [bar] ON TRUE
+                    """ );
         }
     }
 
@@ -1056,8 +1100,10 @@ INNER JOIN [bar] ON TRUE" );
             (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.WindowTrait );
             text.Should()
                 .Be(
-                    @"AGG_COUNT((*))
-  OVER [x] AS (ORDER BY ([foo].[a] : ?) ASC)" );
+                    """
+                    AGG_COUNT((*))
+                      OVER [x] AS (ORDER BY ([foo].[a] : ?) ASC)
+                    """ );
         }
     }
 
@@ -1082,8 +1128,10 @@ INNER JOIN [bar] ON TRUE" );
             (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.SortTrait );
             text.Should()
                 .Be(
-                    @"FROM [foo]
-ORDER BY ([foo].[a] : ?) ASC" );
+                    """
+                    FROM [foo]
+                    ORDER BY ([foo].[a] : ?) ASC
+                    """ );
         }
     }
 
@@ -1126,9 +1174,11 @@ ORDER BY ([foo].[a] : ?) ASC" );
             (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.SortTrait );
             text.Should()
                 .Be(
-                    @"FROM [foo]
-INNER JOIN [bar] ON TRUE
-ORDER BY ([foo].[a] : ?) ASC, ([bar].[b] : ?) DESC" );
+                    """
+                    FROM [foo]
+                    INNER JOIN [bar] ON TRUE
+                    ORDER BY ([foo].[a] : ?) ASC, ([bar].[b] : ?) DESC
+                    """ );
         }
     }
 
@@ -1148,8 +1198,10 @@ ORDER BY ([foo].[a] : ?) ASC, ([bar].[b] : ?) DESC" );
             sut.Traits.Should().BeEmpty();
             text.Should()
                 .Be(
-                    @"FROM [foo]
-INNER JOIN [bar] ON TRUE" );
+                    """
+                    FROM [foo]
+                    INNER JOIN [bar] ON TRUE
+                    """ );
         }
     }
 
@@ -1174,10 +1226,12 @@ INNER JOIN [bar] ON TRUE" );
             (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.CommonTableExpressionTrait );
             text.Should()
                 .Be(
-                    @"FROM [foo]
-WITH ORDINAL [A] (
-  SELECT * FROM bar
-)" );
+                    """
+                    FROM [foo]
+                    WITH ORDINAL [A] (
+                      SELECT * FROM bar
+                    )
+                    """ );
         }
     }
 
@@ -1217,14 +1271,16 @@ WITH ORDINAL [A] (
             (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.CommonTableExpressionTrait );
             text.Should()
                 .Be(
-                    @"FROM [A]
-INNER JOIN [B] AS [C] ON TRUE
-WITH ORDINAL [A] (
-  SELECT * FROM foo
-),
-ORDINAL [B] (
-  SELECT * FROM bar
-)" );
+                    """
+                    FROM [A]
+                    INNER JOIN [B] AS [C] ON TRUE
+                    WITH ORDINAL [A] (
+                      SELECT * FROM foo
+                    ),
+                    ORDINAL [B] (
+                      SELECT * FROM bar
+                    )
+                    """ );
         }
     }
 
@@ -1244,8 +1300,10 @@ ORDINAL [B] (
             sut.Traits.Should().BeEmpty();
             text.Should()
                 .Be(
-                    @"FROM [foo]
-INNER JOIN [bar] ON TRUE" );
+                    """
+                    FROM [foo]
+                    INNER JOIN [bar] ON TRUE
+                    """ );
         }
     }
 
@@ -1267,8 +1325,10 @@ INNER JOIN [bar] ON TRUE" );
             (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.LimitTrait );
             text.Should()
                 .Be(
-                    @"FROM [foo]
-LIMIT (""10"" : System.Int32)" );
+                    """
+                    FROM [foo]
+                    LIMIT ("10" : System.Int32)
+                    """ );
         }
     }
 
@@ -1290,9 +1350,11 @@ LIMIT (""10"" : System.Int32)" );
             (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.LimitTrait );
             text.Should()
                 .Be(
-                    @"FROM [foo]
-INNER JOIN [bar] ON TRUE
-LIMIT (""10"" : System.Int32)" );
+                    """
+                    FROM [foo]
+                    INNER JOIN [bar] ON TRUE
+                    LIMIT ("10" : System.Int32)
+                    """ );
         }
     }
 
@@ -1314,8 +1376,10 @@ LIMIT (""10"" : System.Int32)" );
             (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.OffsetTrait );
             text.Should()
                 .Be(
-                    @"FROM [foo]
-OFFSET (""10"" : System.Int32)" );
+                    """
+                    FROM [foo]
+                    OFFSET ("10" : System.Int32)
+                    """ );
         }
     }
 
@@ -1337,9 +1401,11 @@ OFFSET (""10"" : System.Int32)" );
             (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.OffsetTrait );
             text.Should()
                 .Be(
-                    @"FROM [foo]
-INNER JOIN [bar] ON TRUE
-OFFSET (""10"" : System.Int32)" );
+                    """
+                    FROM [foo]
+                    INNER JOIN [bar] ON TRUE
+                    OFFSET ("10" : System.Int32)
+                    """ );
         }
     }
 
@@ -1361,9 +1427,11 @@ OFFSET (""10"" : System.Int32)" );
             (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.DistinctTrait );
             text.Should()
                 .Be(
-                    @"FROM [foo]
-DISTINCT
-SELECT" );
+                    """
+                    FROM [foo]
+                    DISTINCT
+                    SELECT
+                    """ );
         }
     }
 
@@ -1389,9 +1457,11 @@ SELECT" );
             (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.FilterTrait );
             text.Should()
                 .Be(
-                    @"FROM [foo]
-AND WHERE a > 10
-SELECT" );
+                    """
+                    FROM [foo]
+                    AND WHERE a > 10
+                    SELECT
+                    """ );
         }
     }
 
@@ -1417,9 +1487,11 @@ SELECT" );
             (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.FilterTrait );
             text.Should()
                 .Be(
-                    @"FROM [foo]
-OR WHERE a > 10
-SELECT" );
+                    """
+                    FROM [foo]
+                    OR WHERE a > 10
+                    SELECT
+                    """ );
         }
     }
 
@@ -1445,9 +1517,11 @@ SELECT" );
             (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.AggregationTrait );
             text.Should()
                 .Be(
-                    @"FROM [foo]
-GROUP BY ([foo].[a] : ?), ([foo].[b] : ?)
-SELECT" );
+                    """
+                    FROM [foo]
+                    GROUP BY ([foo].[a] : ?), ([foo].[b] : ?)
+                    SELECT
+                    """ );
         }
     }
 
@@ -1489,9 +1563,11 @@ SELECT" );
             (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.AggregationFilterTrait );
             text.Should()
                 .Be(
-                    @"FROM [foo]
-AND HAVING a > 10
-SELECT" );
+                    """
+                    FROM [foo]
+                    AND HAVING a > 10
+                    SELECT
+                    """ );
         }
     }
 
@@ -1517,9 +1593,11 @@ SELECT" );
             (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.AggregationFilterTrait );
             text.Should()
                 .Be(
-                    @"FROM [foo]
-OR HAVING a > 10
-SELECT" );
+                    """
+                    FROM [foo]
+                    OR HAVING a > 10
+                    SELECT
+                    """ );
         }
     }
 
@@ -1550,10 +1628,12 @@ SELECT" );
             (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.WindowDefinitionTrait );
             text.Should()
                 .Be(
-                    @"FROM [foo]
-WINDOW [x] AS (ORDER BY ([foo].[a] : ?) ASC),
-  [y] AS (ORDER BY ([foo].[b] : ?) DESC)
-SELECT" );
+                    """
+                    FROM [foo]
+                    WINDOW [x] AS (ORDER BY ([foo].[a] : ?) ASC),
+                      [y] AS (ORDER BY ([foo].[b] : ?) DESC)
+                    SELECT
+                    """ );
         }
     }
 
@@ -1597,9 +1677,11 @@ SELECT" );
             (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.SortTrait );
             text.Should()
                 .Be(
-                    @"FROM [foo]
-ORDER BY ([foo].[a] : ?) ASC, ([foo].[b] : ?) DESC
-SELECT" );
+                    """
+                    FROM [foo]
+                    ORDER BY ([foo].[a] : ?) ASC, ([foo].[b] : ?) DESC
+                    SELECT
+                    """ );
         }
     }
 
@@ -1643,10 +1725,12 @@ SELECT" );
             (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.SortTrait );
             text.Should()
                 .Be(
-                    @"SELECT * FROM foo
-UNION
-SELECT * FROM bar
-ORDER BY (a) ASC, (b) DESC" );
+                    """
+                    SELECT * FROM foo
+                    UNION
+                    SELECT * FROM bar
+                    ORDER BY (a) ASC, (b) DESC
+                    """ );
         }
     }
 
@@ -1690,11 +1774,13 @@ ORDER BY (a) ASC, (b) DESC" );
             (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.CommonTableExpressionTrait );
             text.Should()
                 .Be(
-                    @"FROM [foo]
-WITH ORDINAL [A] (
-  SELECT * FROM bar
-)
-SELECT" );
+                    """
+                    FROM [foo]
+                    WITH ORDINAL [A] (
+                      SELECT * FROM bar
+                    )
+                    SELECT
+                    """ );
         }
     }
 
@@ -1739,12 +1825,14 @@ SELECT" );
             (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.CommonTableExpressionTrait );
             text.Should()
                 .Be(
-                    @"SELECT * FROM foo
-UNION
-SELECT * FROM bar
-WITH ORDINAL [A] (
-  SELECT * FROM qux
-)" );
+                    """
+                    SELECT * FROM foo
+                    UNION
+                    SELECT * FROM bar
+                    WITH ORDINAL [A] (
+                      SELECT * FROM qux
+                    )
+                    """ );
         }
     }
 
@@ -1782,9 +1870,11 @@ WITH ORDINAL [A] (
             (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.LimitTrait );
             text.Should()
                 .Be(
-                    @"FROM [foo]
-LIMIT (""10"" : System.Int32)
-SELECT" );
+                    """
+                    FROM [foo]
+                    LIMIT ("10" : System.Int32)
+                    SELECT
+                    """ );
         }
     }
 
@@ -1807,10 +1897,12 @@ SELECT" );
             (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.LimitTrait );
             text.Should()
                 .Be(
-                    @"SELECT * FROM foo
-UNION
-SELECT * FROM bar
-LIMIT (""10"" : System.Int32)" );
+                    """
+                    SELECT * FROM foo
+                    UNION
+                    SELECT * FROM bar
+                    LIMIT ("10" : System.Int32)
+                    """ );
         }
     }
 
@@ -1833,9 +1925,11 @@ LIMIT (""10"" : System.Int32)" );
             (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.OffsetTrait );
             text.Should()
                 .Be(
-                    @"FROM [foo]
-OFFSET (""10"" : System.Int32)
-SELECT" );
+                    """
+                    FROM [foo]
+                    OFFSET ("10" : System.Int32)
+                    SELECT
+                    """ );
         }
     }
 
@@ -1858,10 +1952,12 @@ SELECT" );
             (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.OffsetTrait );
             text.Should()
                 .Be(
-                    @"SELECT * FROM foo
-UNION
-SELECT * FROM bar
-OFFSET (""10"" : System.Int32)" );
+                    """
+                    SELECT * FROM foo
+                    UNION
+                    SELECT * FROM bar
+                    OFFSET ("10" : System.Int32)
+                    """ );
         }
     }
 }

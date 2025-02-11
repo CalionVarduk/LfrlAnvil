@@ -9,7 +9,7 @@ public class OptionalDisposableStaticTests : TestsBase
     {
         var result = OptionalDisposable.GetUnderlyingType( null );
 
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Theory]
@@ -20,7 +20,7 @@ public class OptionalDisposableStaticTests : TestsBase
     {
         var result = OptionalDisposable.GetUnderlyingType( type );
 
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Theory]
@@ -30,7 +30,7 @@ public class OptionalDisposableStaticTests : TestsBase
     {
         var result = OptionalDisposable.GetUnderlyingType( type );
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -40,6 +40,6 @@ public class OptionalDisposableStaticTests : TestsBase
 
         var result = OptionalDisposable.GetUnderlyingType( typeof( OptionalDisposable<> ) );
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 }

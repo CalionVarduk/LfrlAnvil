@@ -3,7 +3,6 @@ using System.Linq;
 using LfrlAnvil.Extensions;
 using LfrlAnvil.Functional;
 using LfrlAnvil.Memory;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Tests.MemoryTests.ArrayPoolTokenTests;
 
@@ -16,13 +15,12 @@ public class ArrayPoolTokenTests : TestsBase
     {
         var sut = default( ArrayPoolToken<int> );
 
-        using ( new AssertionScope() )
-        {
-            sut.Pool.Should().BeNull();
-            sut.Length.Should().Be( 0 );
-            sut.ClearArray.Should().BeFalse();
-            sut.Source.Should().BeEmpty();
-        }
+        Assertion.All(
+                sut.Pool.TestNull(),
+                sut.Length.TestEquals( 0 ),
+                sut.ClearArray.TestFalse(),
+                sut.Source.TestEmpty() )
+            .Go();
     }
 
     [Theory]
@@ -34,13 +32,12 @@ public class ArrayPoolTokenTests : TestsBase
     {
         var sut = _pool.RentToken( length, clearArray );
 
-        using ( new AssertionScope() )
-        {
-            sut.Pool.Should().BeSameAs( _pool );
-            sut.Length.Should().Be( length );
-            sut.ClearArray.Should().Be( clearArray );
-            sut.Source.Should().HaveCountGreaterOrEqualTo( length );
-        }
+        Assertion.All(
+                sut.Pool.TestRefEquals( _pool ),
+                sut.Length.TestEquals( length ),
+                sut.ClearArray.TestEquals( clearArray ),
+                sut.Source.Length.TestGreaterThanOrEqualTo( length ) )
+            .Go();
     }
 
     [Fact]
@@ -48,7 +45,7 @@ public class ArrayPoolTokenTests : TestsBase
     {
         var sut = default( ArrayPoolToken<int> );
         var result = sut.AsSpan();
-        result.Length.Should().Be( 0 );
+        result.Length.TestEquals( 0 ).Go();
     }
 
     [Theory]
@@ -64,7 +61,7 @@ public class ArrayPoolTokenTests : TestsBase
 
         var result = sut.AsSpan();
 
-        result.ToArray().Should().BeSequentiallyEqualTo( Enumerable.Range( 0, length ) );
+        result.TestSequence( Enumerable.Range( 0, length ) ).Go();
     }
 
     [Fact]
@@ -72,7 +69,7 @@ public class ArrayPoolTokenTests : TestsBase
     {
         var sut = default( ArrayPoolToken<int> );
         var result = sut.AsMemory();
-        result.Length.Should().Be( 0 );
+        result.Length.TestEquals( 0 ).Go();
     }
 
     [Theory]
@@ -88,7 +85,7 @@ public class ArrayPoolTokenTests : TestsBase
 
         var result = sut.AsMemory();
 
-        result.ToArray().Should().BeSequentiallyEqualTo( Enumerable.Range( 0, length ) );
+        result.TestSequence( Enumerable.Range( 0, length ) ).Go();
     }
 
     [Fact]
@@ -96,7 +93,7 @@ public class ArrayPoolTokenTests : TestsBase
     {
         var sut = default( ArrayPoolToken<int> );
         var action = Lambda.Of( () => sut.Dispose() );
-        action.Should().NotThrow();
+        action.Test( exc => exc.TestNull() ).Go();
     }
 
     [Fact]
@@ -111,11 +108,10 @@ public class ArrayPoolTokenTests : TestsBase
 
         var next = _pool.RentToken( 8 );
 
-        using ( new AssertionScope() )
-        {
-            next.Source.Should().BeSameAs( source );
-            source.Should().BeSequentiallyEqualTo( Enumerable.Range( 0, sut.Source.Length ) );
-        }
+        Assertion.All(
+                next.Source.TestRefEquals( source ),
+                source.TestSequence( Enumerable.Range( 0, sut.Source.Length ) ) )
+            .Go();
     }
 
     [Fact]
@@ -130,10 +126,9 @@ public class ArrayPoolTokenTests : TestsBase
 
         var next = _pool.RentToken( 8 );
 
-        using ( new AssertionScope() )
-        {
-            next.Source.Should().BeSameAs( source );
-            source.Should().BeSequentiallyEqualTo( Enumerable.Repeat( 0, sut.Source.Length ) );
-        }
+        Assertion.All(
+                next.Source.TestRefEquals( source ),
+                source.TestSequence( Enumerable.Repeat( 0, sut.Source.Length ) ) )
+            .Go();
     }
 }

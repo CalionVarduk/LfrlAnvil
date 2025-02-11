@@ -10,7 +10,7 @@ public class PipelineTests : TestsBase
     {
         var defaultResult = Fixture.Create<int>();
         var sut = new Pipeline<string, int>( Array.Empty<IPipelineProcessor<string, int>>(), defaultResult );
-        sut.DefaultResult.Should().Be( defaultResult );
+        sut.DefaultResult.TestEquals( defaultResult ).Go();
     }
 
     [Fact]
@@ -22,7 +22,7 @@ public class PipelineTests : TestsBase
 
         var result = sut.Invoke( args );
 
-        result.Should().Be( defaultResult );
+        result.TestEquals( defaultResult ).Go();
     }
 
     [Fact]
@@ -39,7 +39,7 @@ public class PipelineTests : TestsBase
 
         var result = sut.Invoke( 100 );
 
-        result.Should().Be( 106 );
+        result.TestEquals( 106 ).Go();
     }
 
     [Fact]
@@ -61,7 +61,7 @@ public class PipelineTests : TestsBase
 
         var result = sut.Invoke( 100 );
 
-        result.Should().Be( 101 );
+        result.TestEquals( 101 ).Go();
     }
 
     [Fact]
@@ -78,7 +78,7 @@ public class PipelineTests : TestsBase
 
         var result = await sut.Invoke( 100 );
 
-        result.Should().Be( 106 );
+        result.TestEquals( 106 ).Go();
     }
 
     [Fact]
@@ -110,6 +110,6 @@ public class PipelineTests : TestsBase
 
         var result = await sut.Invoke( 100 );
 
-        result.Should().Be( 106 );
+        result.TestEquals( 106 ).Go();
     }
 }

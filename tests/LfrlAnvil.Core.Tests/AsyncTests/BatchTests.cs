@@ -4,7 +4,6 @@ using System.Linq;
 using System.Threading.Tasks;
 using LfrlAnvil.Async;
 using LfrlAnvil.Functional;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Tests.AsyncTests;
 
@@ -24,14 +23,13 @@ public class BatchTests : TestsBase
     {
         var sut = new Batch( queueOverflowStrategy, autoFlushCount, queueSizeLimitHint );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 0 );
-            sut.QueueOverflowStrategy.Should().Be( queueOverflowStrategy );
-            sut.AutoFlushCount.Should().Be( autoFlushCount );
-            sut.QueueSizeLimitHint.Should().Be( expectedQueueSizeLimitHint );
-            sut.Events.Should().BeEmpty();
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 0 ),
+                sut.QueueOverflowStrategy.TestEquals( queueOverflowStrategy ),
+                sut.AutoFlushCount.TestEquals( autoFlushCount ),
+                sut.QueueSizeLimitHint.TestEquals( expectedQueueSizeLimitHint ),
+                sut.Events.TestEmpty() )
+            .Go();
     }
 
     [Theory]
@@ -40,7 +38,7 @@ public class BatchTests : TestsBase
     public void Ctor_ShouldThrowArgumentOutOfRangeException_WhenAutoFlushCountIsLessThanOne(int value)
     {
         var action = Lambda.Of( () => new Batch( BatchQueueOverflowStrategy.DiscardLast, value, int.MaxValue ) );
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Fact]
@@ -50,12 +48,11 @@ public class BatchTests : TestsBase
 
         var result = sut.Add( "e1" );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            sut.Count.Should().Be( 1 );
-            sut.Events.Should().BeSequentiallyEqualTo( new Event( "OnEnqueued:autoFlushing=False", "e1" ) );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                sut.Count.TestEquals( 1 ),
+                sut.Events.TestSequence( [ new Event( "OnEnqueued:autoFlushing=False", "e1" ) ] ) )
+            .Go();
     }
 
     [Fact]
@@ -75,18 +72,18 @@ public class BatchTests : TestsBase
         var result = sut.Add( "e3" );
         await taskSource.Task;
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            sut.Count.Should().Be( 0 );
-            sut.Events.Should()
-                .BeSequentiallyEqualTo(
+        Assertion.All(
+                result.TestTrue(),
+                sut.Count.TestEquals( 0 ),
+                sut.Events.TestSequence(
+                [
                     new Event( "OnEnqueued:autoFlushing=False", "e1" ),
                     new Event( "OnEnqueued:autoFlushing=False", "e2" ),
                     new Event( "OnEnqueued:autoFlushing=True", "e3" ),
                     new Event( "OnDequeued:disposing=False", "e1", "e2", "e3" ),
-                    new Event( "ProcessAsync:disposing=False", "e1", "e2", "e3" ) );
-        }
+                    new Event( "ProcessAsync:disposing=False", "e1", "e2", "e3" )
+                ] ) )
+            .Go();
     }
 
     [Fact]
@@ -110,19 +107,19 @@ public class BatchTests : TestsBase
         sut.Add( "e4" );
         var result = sut.Add( "e5" );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeFalse();
-            sut.Count.Should().Be( 2 );
-            sut.Events.Should()
-                .BeSequentiallyEqualTo(
+        Assertion.All(
+                result.TestFalse(),
+                sut.Count.TestEquals( 2 ),
+                sut.Events.TestSequence(
+                [
                     new Event( "OnEnqueued:autoFlushing=False", "e1" ),
                     new Event( "OnEnqueued:autoFlushing=True", "e2" ),
                     new Event( "OnDequeued:disposing=False", "e1", "e2" ),
                     new Event( "ProcessAsync:disposing=False", "e1", "e2" ),
                     new Event( "OnEnqueued:autoFlushing=False", "e3" ),
-                    new Event( "OnEnqueued:autoFlushing=True", "e4" ) );
-        }
+                    new Event( "OnEnqueued:autoFlushing=True", "e4" )
+                ] ) )
+            .Go();
     }
 
     [Fact]
@@ -146,12 +143,11 @@ public class BatchTests : TestsBase
         sut.Add( "e4" );
         var result = sut.Add( "e5" );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            sut.Count.Should().Be( 2 );
-            sut.Events.Should()
-                .BeSequentiallyEqualTo(
+        Assertion.All(
+                result.TestTrue(),
+                sut.Count.TestEquals( 2 ),
+                sut.Events.TestSequence(
+                [
                     new Event( "OnEnqueued:autoFlushing=False", "e1" ),
                     new Event( "OnEnqueued:autoFlushing=True", "e2" ),
                     new Event( "OnDequeued:disposing=False", "e1", "e2" ),
@@ -159,8 +155,9 @@ public class BatchTests : TestsBase
                     new Event( "OnEnqueued:autoFlushing=False", "e3" ),
                     new Event( "OnEnqueued:autoFlushing=True", "e4" ),
                     new Event( "OnDiscarding:disposing=False", "e3" ),
-                    new Event( "OnEnqueued:autoFlushing=True", "e5" ) );
-        }
+                    new Event( "OnEnqueued:autoFlushing=True", "e5" )
+                ] ) )
+            .Go();
     }
 
     [Fact]
@@ -184,20 +181,20 @@ public class BatchTests : TestsBase
         sut.Add( "e4" );
         var result = sut.Add( "e5" );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            sut.Count.Should().Be( 3 );
-            sut.Events.Should()
-                .BeSequentiallyEqualTo(
+        Assertion.All(
+                result.TestTrue(),
+                sut.Count.TestEquals( 3 ),
+                sut.Events.TestSequence(
+                [
                     new Event( "OnEnqueued:autoFlushing=False", "e1" ),
                     new Event( "OnEnqueued:autoFlushing=True", "e2" ),
                     new Event( "OnDequeued:disposing=False", "e1", "e2" ),
                     new Event( "ProcessAsync:disposing=False", "e1", "e2" ),
                     new Event( "OnEnqueued:autoFlushing=False", "e3" ),
                     new Event( "OnEnqueued:autoFlushing=True", "e4" ),
-                    new Event( "OnEnqueued:autoFlushing=False", "e5" ) );
-        }
+                    new Event( "OnEnqueued:autoFlushing=False", "e5" )
+                ] ) )
+            .Go();
     }
 
     [Fact]
@@ -208,12 +205,11 @@ public class BatchTests : TestsBase
 
         var result = sut.Add( "e1" );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeFalse();
-            sut.Count.Should().Be( 0 );
-            sut.Events.Should().BeSequentiallyEqualTo( new Event( "OnDisposed" ) );
-        }
+        Assertion.All(
+                result.TestFalse(),
+                sut.Count.TestEquals( 0 ),
+                sut.Events.TestSequence( [ new Event( "OnDisposed" ) ] ) )
+            .Go();
     }
 
     [Fact]
@@ -223,12 +219,11 @@ public class BatchTests : TestsBase
 
         var result = sut.AddRange( new[] { "e1", "e2" }.AsSpan() );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            sut.Count.Should().Be( 2 );
-            sut.Events.Should().BeSequentiallyEqualTo( new Event( "OnEnqueued:autoFlushing=False", "e1", "e2" ) );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                sut.Count.TestEquals( 2 ),
+                sut.Events.TestSequence( [ new Event( "OnEnqueued:autoFlushing=False", "e1", "e2" ) ] ) )
+            .Go();
     }
 
     [Fact]
@@ -247,17 +242,17 @@ public class BatchTests : TestsBase
         var result = sut.AddRange( new[] { "e2", "e3" }.AsSpan() );
         await taskSource.Task;
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            sut.Count.Should().Be( 0 );
-            sut.Events.Should()
-                .BeSequentiallyEqualTo(
+        Assertion.All(
+                result.TestTrue(),
+                sut.Count.TestEquals( 0 ),
+                sut.Events.TestSequence(
+                [
                     new Event( "OnEnqueued:autoFlushing=False", "e1" ),
                     new Event( "OnEnqueued:autoFlushing=True", "e2", "e3" ),
                     new Event( "OnDequeued:disposing=False", "e1", "e2", "e3" ),
-                    new Event( "ProcessAsync:disposing=False", "e1", "e2", "e3" ) );
-        }
+                    new Event( "ProcessAsync:disposing=False", "e1", "e2", "e3" )
+                ] ) )
+            .Go();
     }
 
     [Fact]
@@ -279,17 +274,17 @@ public class BatchTests : TestsBase
         sut.AddRange( new[] { "e3", "e4", "e5" }.AsSpan() );
         var result = sut.AddRange( new[] { "e6", "e7" }.AsSpan() );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeFalse();
-            sut.Count.Should().Be( 3 );
-            sut.Events.Should()
-                .BeSequentiallyEqualTo(
+        Assertion.All(
+                result.TestFalse(),
+                sut.Count.TestEquals( 3 ),
+                sut.Events.TestSequence(
+                [
                     new Event( "OnEnqueued:autoFlushing=True", "e1", "e2" ),
                     new Event( "OnDequeued:disposing=False", "e1", "e2" ),
                     new Event( "ProcessAsync:disposing=False", "e1", "e2" ),
-                    new Event( "OnEnqueued:autoFlushing=True", "e3", "e4", "e5" ) );
-        }
+                    new Event( "OnEnqueued:autoFlushing=True", "e3", "e4", "e5" )
+                ] ) )
+            .Go();
     }
 
     [Fact]
@@ -311,19 +306,19 @@ public class BatchTests : TestsBase
         sut.AddRange( new[] { "e3", "e4", "e5" }.AsSpan() );
         var result = sut.AddRange( new[] { "e6", "e7" }.AsSpan() );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            sut.Count.Should().Be( 2 );
-            sut.Events.Should()
-                .BeSequentiallyEqualTo(
+        Assertion.All(
+                result.TestTrue(),
+                sut.Count.TestEquals( 2 ),
+                sut.Events.TestSequence(
+                [
                     new Event( "OnEnqueued:autoFlushing=True", "e1", "e2" ),
                     new Event( "OnDequeued:disposing=False", "e1", "e2" ),
                     new Event( "ProcessAsync:disposing=False", "e1", "e2" ),
                     new Event( "OnEnqueued:autoFlushing=True", "e3", "e4", "e5" ),
                     new Event( "OnDiscarding:disposing=False", "e3", "e4", "e5" ),
-                    new Event( "OnEnqueued:autoFlushing=True", "e6", "e7" ) );
-        }
+                    new Event( "OnEnqueued:autoFlushing=True", "e6", "e7" )
+                ] ) )
+            .Go();
     }
 
     [Fact]
@@ -345,18 +340,18 @@ public class BatchTests : TestsBase
         sut.AddRange( new[] { "e3", "e4", "e5" }.AsSpan() );
         var result = sut.AddRange( new[] { "e6", "e7" }.AsSpan() );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            sut.Count.Should().Be( 5 );
-            sut.Events.Should()
-                .BeSequentiallyEqualTo(
+        Assertion.All(
+                result.TestTrue(),
+                sut.Count.TestEquals( 5 ),
+                sut.Events.TestSequence(
+                [
                     new Event( "OnEnqueued:autoFlushing=True", "e1", "e2" ),
                     new Event( "OnDequeued:disposing=False", "e1", "e2" ),
                     new Event( "ProcessAsync:disposing=False", "e1", "e2" ),
                     new Event( "OnEnqueued:autoFlushing=True", "e3", "e4", "e5" ),
-                    new Event( "OnEnqueued:autoFlushing=False", "e6", "e7" ) );
-        }
+                    new Event( "OnEnqueued:autoFlushing=False", "e6", "e7" )
+                ] ) )
+            .Go();
     }
 
     [Theory]
@@ -366,14 +361,8 @@ public class BatchTests : TestsBase
     public void AddRange_WithSpan_ShouldDoNothing_WhenRangeIsEmpty(BatchQueueOverflowStrategy strategy)
     {
         var sut = new Batch( strategy, 10, int.MaxValue );
-
         var result = sut.AddRange( ReadOnlySpan<string>.Empty );
-
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            sut.Count.Should().Be( 0 );
-        }
+        Assertion.All( result.TestTrue(), sut.Count.TestEquals( 0 ) ).Go();
     }
 
     [Fact]
@@ -384,12 +373,11 @@ public class BatchTests : TestsBase
 
         var result = sut.AddRange( new[] { "e1" }.AsSpan() );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeFalse();
-            sut.Count.Should().Be( 0 );
-            sut.Events.Should().BeSequentiallyEqualTo( new Event( "OnDisposed" ) );
-        }
+        Assertion.All(
+                result.TestFalse(),
+                sut.Count.TestEquals( 0 ),
+                sut.Events.TestSequence( [ new Event( "OnDisposed" ) ] ) )
+            .Go();
     }
 
     [Fact]
@@ -399,12 +387,11 @@ public class BatchTests : TestsBase
 
         var result = sut.AddRange( new[] { "e1", "e2" }.Where( _ => true ) );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            sut.Count.Should().Be( 2 );
-            sut.Events.Should().BeSequentiallyEqualTo( new Event( "OnEnqueued:autoFlushing=False", "e1", "e2" ) );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                sut.Count.TestEquals( 2 ),
+                sut.Events.TestSequence( [ new Event( "OnEnqueued:autoFlushing=False", "e1", "e2" ) ] ) )
+            .Go();
     }
 
     [Fact]
@@ -423,17 +410,17 @@ public class BatchTests : TestsBase
         var result = sut.AddRange( new[] { "e2", "e3" }.Where( _ => true ) );
         await taskSource.Task;
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            sut.Count.Should().Be( 0 );
-            sut.Events.Should()
-                .BeSequentiallyEqualTo(
+        Assertion.All(
+                result.TestTrue(),
+                sut.Count.TestEquals( 0 ),
+                sut.Events.TestSequence(
+                [
                     new Event( "OnEnqueued:autoFlushing=False", "e1" ),
                     new Event( "OnEnqueued:autoFlushing=True", "e2", "e3" ),
                     new Event( "OnDequeued:disposing=False", "e1", "e2", "e3" ),
-                    new Event( "ProcessAsync:disposing=False", "e1", "e2", "e3" ) );
-        }
+                    new Event( "ProcessAsync:disposing=False", "e1", "e2", "e3" )
+                ] ) )
+            .Go();
     }
 
     [Fact]
@@ -455,17 +442,17 @@ public class BatchTests : TestsBase
         sut.AddRange( new[] { "e3", "e4", "e5" }.Where( _ => true ) );
         var result = sut.AddRange( new[] { "e6", "e7" }.Where( _ => true ) );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeFalse();
-            sut.Count.Should().Be( 3 );
-            sut.Events.Should()
-                .BeSequentiallyEqualTo(
+        Assertion.All(
+                result.TestFalse(),
+                sut.Count.TestEquals( 3 ),
+                sut.Events.TestSequence(
+                [
                     new Event( "OnEnqueued:autoFlushing=True", "e1", "e2" ),
                     new Event( "OnDequeued:disposing=False", "e1", "e2" ),
                     new Event( "ProcessAsync:disposing=False", "e1", "e2" ),
-                    new Event( "OnEnqueued:autoFlushing=True", "e3", "e4", "e5" ) );
-        }
+                    new Event( "OnEnqueued:autoFlushing=True", "e3", "e4", "e5" )
+                ] ) )
+            .Go();
     }
 
     [Fact]
@@ -487,20 +474,20 @@ public class BatchTests : TestsBase
         sut.AddRange( new[] { "e3", "e4", "e5" }.Where( _ => true ) );
         var result = sut.AddRange( new[] { "e6", "e7" }.Where( _ => true ) );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            sut.Count.Should().Be( 2 );
-            sut.Events.Should()
-                .BeSequentiallyEqualTo(
+        Assertion.All(
+                result.TestTrue(),
+                sut.Count.TestEquals( 2 ),
+                sut.Events.TestSequence(
+                [
                     new Event( "OnEnqueued:autoFlushing=True", "e1", "e2" ),
                     new Event( "OnDequeued:disposing=False", "e1", "e2" ),
                     new Event( "ProcessAsync:disposing=False", "e1", "e2" ),
                     new Event( "OnEnqueued:autoFlushing=True", "e3", "e4", "e5" ),
                     new Event( "OnDiscarding:disposing=False", "e3", "e4" ),
                     new Event( "OnDiscarding:disposing=False", "e5" ),
-                    new Event( "OnEnqueued:autoFlushing=True", "e6", "e7" ) );
-        }
+                    new Event( "OnEnqueued:autoFlushing=True", "e6", "e7" )
+                ] ) )
+            .Go();
     }
 
     [Fact]
@@ -522,18 +509,18 @@ public class BatchTests : TestsBase
         sut.AddRange( new[] { "e3", "e4", "e5" }.Where( _ => true ) );
         var result = sut.AddRange( new[] { "e6", "e7" }.Where( _ => true ) );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            sut.Count.Should().Be( 5 );
-            sut.Events.Should()
-                .BeSequentiallyEqualTo(
+        Assertion.All(
+                result.TestTrue(),
+                sut.Count.TestEquals( 5 ),
+                sut.Events.TestSequence(
+                [
                     new Event( "OnEnqueued:autoFlushing=True", "e1", "e2" ),
                     new Event( "OnDequeued:disposing=False", "e1", "e2" ),
                     new Event( "ProcessAsync:disposing=False", "e1", "e2" ),
                     new Event( "OnEnqueued:autoFlushing=True", "e3", "e4", "e5" ),
-                    new Event( "OnEnqueued:autoFlushing=False", "e6", "e7" ) );
-        }
+                    new Event( "OnEnqueued:autoFlushing=False", "e6", "e7" )
+                ] ) )
+            .Go();
     }
 
     [Theory]
@@ -543,14 +530,8 @@ public class BatchTests : TestsBase
     public void AddRange_ShouldDoNothing_WhenRangeIsEmpty(BatchQueueOverflowStrategy strategy)
     {
         var sut = new Batch( strategy, 10, int.MaxValue );
-
         var result = sut.AddRange( Enumerable.Empty<string>().Where( _ => true ) );
-
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            sut.Count.Should().Be( 0 );
-        }
+        Assertion.All( result.TestTrue(), sut.Count.TestEquals( 0 ) ).Go();
     }
 
     [Fact]
@@ -561,12 +542,11 @@ public class BatchTests : TestsBase
 
         var result = sut.AddRange( new[] { "e1" }.Where( _ => true ) );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeFalse();
-            sut.Count.Should().Be( 0 );
-            sut.Events.Should().BeSequentiallyEqualTo( new Event( "OnDisposed" ) );
-        }
+        Assertion.All(
+                result.TestFalse(),
+                sut.Count.TestEquals( 0 ),
+                sut.Events.TestSequence( [ new Event( "OnDisposed" ) ] ) )
+            .Go();
     }
 
     [Fact]
@@ -576,12 +556,11 @@ public class BatchTests : TestsBase
 
         var result = sut.AddRange( new[] { "e1", "e2", "e3" }.AsEnumerable() );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            sut.Count.Should().Be( 3 );
-            sut.Events.Should().BeSequentiallyEqualTo( new Event( "OnEnqueued:autoFlushing=False", "e1", "e2", "e3" ) );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                sut.Count.TestEquals( 3 ),
+                sut.Events.TestSequence( [ new Event( "OnEnqueued:autoFlushing=False", "e1", "e2", "e3" ) ] ) )
+            .Go();
     }
 
     [Fact]
@@ -593,11 +572,7 @@ public class BatchTests : TestsBase
         await Task.Delay( 15 );
         await sut.DisposeAsync();
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            sut.Events.Should().BeSequentiallyEqualTo( new Event( "OnDisposed" ) );
-        }
+        Assertion.All( result.TestTrue(), sut.Events.TestSequence( [ new Event( "OnDisposed" ) ] ) ).Go();
     }
 
     [Fact]
@@ -616,16 +591,16 @@ public class BatchTests : TestsBase
         var result = sut.Flush();
         await taskSource.Task;
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            sut.Count.Should().Be( 0 );
-            sut.Events.Should()
-                .BeSequentiallyEqualTo(
+        Assertion.All(
+                result.TestTrue(),
+                sut.Count.TestEquals( 0 ),
+                sut.Events.TestSequence(
+                [
                     new Event( "OnEnqueued:autoFlushing=False", "e1", "e2", "e3" ),
                     new Event( "OnDequeued:disposing=False", "e1", "e2", "e3" ),
-                    new Event( "ProcessAsync:disposing=False", "e1", "e2", "e3" ) );
-        }
+                    new Event( "ProcessAsync:disposing=False", "e1", "e2", "e3" )
+                ] ) )
+            .Go();
     }
 
     [Fact]
@@ -636,11 +611,7 @@ public class BatchTests : TestsBase
 
         var result = sut.Flush();
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeFalse();
-            sut.Events.Should().BeSequentiallyEqualTo( new Event( "OnDisposed" ) );
-        }
+        Assertion.All( result.TestFalse(), sut.Events.TestSequence( [ new Event( "OnDisposed" ) ] ) ).Go();
     }
 
     [Fact]
@@ -648,7 +619,7 @@ public class BatchTests : TestsBase
     {
         var sut = new Batch( BatchQueueOverflowStrategy.DiscardLast, 10, int.MaxValue );
         sut.Dispose();
-        sut.Events.Should().BeSequentiallyEqualTo( new Event( "OnDisposed" ) );
+        sut.Events.TestSequence( [ new Event( "OnDisposed" ) ] ).Go();
     }
 
     [Fact]
@@ -659,16 +630,16 @@ public class BatchTests : TestsBase
 
         sut.Dispose();
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 0 );
-            sut.Events.Should()
-                .BeSequentiallyEqualTo(
+        Assertion.All(
+                sut.Count.TestEquals( 0 ),
+                sut.Events.TestSequence(
+                [
                     new Event( "OnEnqueued:autoFlushing=False", "e1", "e2", "e3" ),
                     new Event( "OnDequeued:disposing=True", "e1", "e2", "e3" ),
                     new Event( "ProcessAsync:disposing=True", "e1", "e2", "e3" ),
-                    new Event( "OnDisposed" ) );
-        }
+                    new Event( "OnDisposed" )
+                ] ) )
+            .Go();
     }
 
     [Fact]
@@ -689,19 +660,19 @@ public class BatchTests : TestsBase
         await Task.Delay( 15 );
         await sut.DisposeAsync();
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 0 );
-            sut.Events.Should()
-                .BeSequentiallyEqualTo(
+        Assertion.All(
+                sut.Count.TestEquals( 0 ),
+                sut.Events.TestSequence(
+                [
                     new Event( "OnEnqueued:autoFlushing=True", "e1", "e2", "e3", "e4", "e5" ),
                     new Event( "OnDequeued:disposing=False", "e1", "e2", "e3" ),
                     new Event( "ProcessAsync:disposing=False", "e1", "e2", "e3" ),
                     new Event( "ProcessAsync:disposing=True", "e1", "e2", "e3" ),
                     new Event( "OnDiscarding:disposing=True", "e1", "e2", "e3" ),
                     new Event( "OnDiscarding:disposing=True", "e4", "e5" ),
-                    new Event( "OnDisposed" ) );
-        }
+                    new Event( "OnDisposed" )
+                ] ) )
+            .Go();
     }
 
     [Fact]
@@ -712,11 +683,10 @@ public class BatchTests : TestsBase
 
         var action = Lambda.Of( () => sut.Dispose() );
 
-        using ( new AssertionScope() )
-        {
-            action.Should().NotThrow();
-            sut.Events.Should().BeSequentiallyEqualTo( new Event( "OnDisposed" ) );
-        }
+        Assertion.All(
+                action.Test( exc => exc.TestNull() ),
+                sut.Events.TestSequence( [ new Event( "OnDisposed" ) ] ) )
+            .Go();
     }
 
     [Fact]
@@ -736,17 +706,17 @@ public class BatchTests : TestsBase
         sut.AddRange( new[] { "e1", "e2", "e3", "e4", "e5" }.AsSpan() );
         await taskSource.Task;
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 0 );
-            sut.Events.Should()
-                .BeSequentiallyEqualTo(
+        Assertion.All(
+                sut.Count.TestEquals( 0 ),
+                sut.Events.TestSequence(
+                [
                     new Event( "OnEnqueued:autoFlushing=True", "e1", "e2", "e3", "e4", "e5" ),
                     new Event( "OnDequeued:disposing=False", "e1", "e2", "e3" ),
                     new Event( "ProcessAsync:disposing=False", "e1", "e2", "e3" ),
                     new Event( "OnDequeued:disposing=False", "e4", "e5" ),
-                    new Event( "ProcessAsync:disposing=False", "e4", "e5" ) );
-        }
+                    new Event( "ProcessAsync:disposing=False", "e4", "e5" )
+                ] ) )
+            .Go();
     }
 
     [Fact]
@@ -766,11 +736,10 @@ public class BatchTests : TestsBase
         sut.AddRange( new[] { "e1", "e2", "e3", "e4", "e5" }.AsSpan() );
         await taskSource.Task;
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 0 );
-            sut.Events.Should()
-                .BeSequentiallyEqualTo(
+        Assertion.All(
+                sut.Count.TestEquals( 0 ),
+                sut.Events.TestSequence(
+                [
                     new Event( "OnEnqueued:autoFlushing=True", "e1", "e2", "e3", "e4", "e5" ),
                     new Event( "OnDequeued:disposing=False", "e1", "e2", "e3" ),
                     new Event( "ProcessAsync:disposing=False", "e1", "e2", "e3" ),
@@ -778,8 +747,9 @@ public class BatchTests : TestsBase
                     new Event( "ProcessAsync:disposing=False", "e2", "e3", "e4" ),
                     new Event( "OnDequeued:disposing=False", "e5" ),
                     new Event( "ProcessAsync:disposing=False", "e4", "e5" ),
-                    new Event( "ProcessAsync:disposing=False", "e5" ) );
-        }
+                    new Event( "ProcessAsync:disposing=False", "e5" )
+                ] ) )
+            .Go();
     }
 
     [Fact]
@@ -799,17 +769,17 @@ public class BatchTests : TestsBase
         sut.AddRange( new[] { "e1", "e2", "e3", "e4", "e5" }.AsSpan() );
         await taskSource.Task;
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 1 );
-            sut.Events.Should()
-                .BeSequentiallyEqualTo(
+        Assertion.All(
+                sut.Count.TestEquals( 1 ),
+                sut.Events.TestSequence(
+                [
                     new Event( "OnEnqueued:autoFlushing=True", "e1", "e2", "e3", "e4", "e5" ),
                     new Event( "OnDequeued:disposing=False", "e1", "e2", "e3" ),
                     new Event( "ProcessAsync:disposing=False", "e1", "e2", "e3" ),
                     new Event( "OnDequeued:disposing=False", "e4" ),
-                    new Event( "ProcessAsync:disposing=False", "e2", "e3", "e4" ) );
-        }
+                    new Event( "ProcessAsync:disposing=False", "e2", "e3", "e4" )
+                ] ) )
+            .Go();
     }
 
     [Fact]
@@ -839,18 +809,18 @@ public class BatchTests : TestsBase
         sut.Flush();
         await taskSource.Task;
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 0 );
-            sut.Events.Should()
-                .BeSequentiallyEqualTo(
+        Assertion.All(
+                sut.Count.TestEquals( 0 ),
+                sut.Events.TestSequence(
+                [
                     new Event( "OnEnqueued:autoFlushing=True", "e1", "e2", "e3", "e4", "e5" ),
                     new Event( "OnDequeued:disposing=False", "e1", "e2", "e3" ),
                     new Event( "ProcessAsync:disposing=False", "e1", "e2", "e3" ),
                     new Event( "ProcessAsync:disposing=False", "e1", "e2", "e3" ),
                     new Event( "OnDequeued:disposing=False", "e4", "e5" ),
-                    new Event( "ProcessAsync:disposing=False", "e4", "e5" ) );
-        }
+                    new Event( "ProcessAsync:disposing=False", "e4", "e5" )
+                ] ) )
+            .Go();
     }
 
     [Fact]
@@ -869,18 +839,18 @@ public class BatchTests : TestsBase
         sut.AddRange( new[] { "e1", "e2", "e3", "e4", "e5" }.AsSpan() );
         await taskSource.Task;
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 0 );
-            sut.Events.Should()
-                .BeSequentiallyEqualTo(
+        Assertion.All(
+                sut.Count.TestEquals( 0 ),
+                sut.Events.TestSequence(
+                [
                     new Event( "OnEnqueued:autoFlushing=True", "e1", "e2", "e3", "e4", "e5" ),
                     new Event( "OnDequeued:disposing=False", "e1", "e2", "e3" ),
                     new Event( "ProcessAsync:disposing=False", "e1", "e2", "e3" ),
                     new Event( "OnDequeued:disposing=True", "e4", "e5" ),
                     new Event( "ProcessAsync:disposing=True", "e4", "e5" ),
-                    new Event( "OnDisposed" ) );
-        }
+                    new Event( "OnDisposed" )
+                ] ) )
+            .Go();
     }
 
     [Fact]
@@ -891,12 +861,10 @@ public class BatchTests : TestsBase
 
         var action = Lambda.Of( () => sut.Add( "e1" ) );
 
-        using ( new AssertionScope() )
-        {
-            action.Should().NotThrow();
-            sut.Count.Should().Be( 1 );
-            sut.Events.Should().BeSequentiallyEqualTo( new Event( "OnEnqueued:autoFlushing=False", "e1" ) );
-        }
+        Assertion.All(
+                action.Test( exc => Assertion.All( exc.TestNull(), sut.Count.TestEquals( 1 ) ) ),
+                sut.Events.TestSequence( [ new Event( "OnEnqueued:autoFlushing=False", "e1" ) ] ) )
+            .Go();
     }
 
     [Fact]
@@ -913,18 +881,18 @@ public class BatchTests : TestsBase
         sut.OnDequeuedCallback = () => throw new Exception();
 
         var action = Lambda.Of( () => sut.Add( "e1" ) );
-        action.Should().NotThrow();
+        action.Test( exc => exc.TestNull() ).Go();
         await taskSource.Task;
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 0 );
-            sut.Events.Should()
-                .BeSequentiallyEqualTo(
+        Assertion.All(
+                sut.Count.TestEquals( 0 ),
+                sut.Events.TestSequence(
+                [
                     new Event( "OnEnqueued:autoFlushing=True", "e1" ),
                     new Event( "OnDequeued:disposing=False", "e1" ),
-                    new Event( "ProcessAsync:disposing=False", "e1" ) );
-        }
+                    new Event( "ProcessAsync:disposing=False", "e1" )
+                ] ) )
+            .Go();
     }
 
     [Fact]
@@ -957,14 +925,13 @@ public class BatchTests : TestsBase
 
         sut.Add( "e2" );
         var action = Lambda.Of( () => sut.Add( "e3" ) );
-        action.Should().NotThrow();
+        action.Test( exc => exc.TestNull() ).Go();
         await taskSource.Task;
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 0 );
-            sut.Events.Should()
-                .BeSequentiallyEqualTo(
+        Assertion.All(
+                sut.Count.TestEquals( 0 ),
+                sut.Events.TestSequence(
+                [
                     new Event( "OnEnqueued:autoFlushing=True", "e1" ),
                     new Event( "OnDequeued:disposing=False", "e1" ),
                     new Event( "ProcessAsync:disposing=False", "e1" ),
@@ -972,8 +939,9 @@ public class BatchTests : TestsBase
                     new Event( "OnDiscarding:disposing=False", "e2" ),
                     new Event( "OnEnqueued:autoFlushing=True", "e3" ),
                     new Event( "OnDequeued:disposing=False", "e3" ),
-                    new Event( "ProcessAsync:disposing=False", "e3" ) );
-        }
+                    new Event( "ProcessAsync:disposing=False", "e3" )
+                ] ) )
+            .Go();
     }
 
     [Fact]
@@ -984,7 +952,7 @@ public class BatchTests : TestsBase
 
         var action = Lambda.Of( () => sut.Dispose() );
 
-        action.Should().NotThrow();
+        action.Test( exc => exc.TestNull() ).Go();
     }
 
     [Fact]
@@ -999,18 +967,18 @@ public class BatchTests : TestsBase
         };
 
         var action = Lambda.Of( () => sut.Add( "e1" ) );
-        action.Should().NotThrow();
+        action.Test( exc => exc.TestNull() ).Go();
         await taskSource.Task;
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 0 );
-            sut.Events.Should()
-                .BeSequentiallyEqualTo(
+        Assertion.All(
+                sut.Count.TestEquals( 0 ),
+                sut.Events.TestSequence(
+                [
                     new Event( "OnEnqueued:autoFlushing=True", "e1" ),
                     new Event( "OnDequeued:disposing=False", "e1" ),
-                    new Event( "ProcessAsync:disposing=False", "e1" ) );
-        }
+                    new Event( "ProcessAsync:disposing=False", "e1" )
+                ] ) )
+            .Go();
 
         taskSource = new TaskCompletionSource( TaskCreationOptions.RunContinuationsAsynchronously );
         sut.OnProcessAsyncCallback = () =>
@@ -1022,11 +990,10 @@ public class BatchTests : TestsBase
         sut.Flush();
         await taskSource.Task;
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 0 );
-            sut.Events.Skip( 3 ).Should().BeSequentiallyEqualTo( new Event( "ProcessAsync:disposing=False", "e1" ) );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 0 ),
+                sut.Events.Skip( 3 ).TestSequence( [ new Event( "ProcessAsync:disposing=False", "e1" ) ] ) )
+            .Go();
     }
 
     private sealed class Batch : Batch<string>

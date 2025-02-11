@@ -14,7 +14,7 @@ public class ExclusiveLockTests : TestsBase
 
         var hasLock = Monitor.IsEntered( sync );
 
-        hasLock.Should().BeTrue();
+        hasLock.TestTrue().Go();
     }
 
     [Fact]
@@ -26,7 +26,7 @@ public class ExclusiveLockTests : TestsBase
         sut.Dispose();
         var hasLock = Monitor.IsEntered( sync );
 
-        hasLock.Should().BeFalse();
+        hasLock.TestFalse().Go();
     }
 
     [Fact]
@@ -34,7 +34,7 @@ public class ExclusiveLockTests : TestsBase
     {
         var sut = default( ExclusiveLock );
         var action = Lambda.Of( () => sut.Dispose() );
-        action.Should().NotThrow();
+        action.Test( exc => exc.TestNull() ).Go();
     }
 
     [Fact]
@@ -52,12 +52,11 @@ public class ExclusiveLockTests : TestsBase
         first.Dispose();
         var hasLockAfterSecondDisposal = Monitor.IsEntered( sync );
 
-        using ( new AssertionScope() )
-        {
-            hasFirstLock.Should().BeTrue();
-            hasSecondLock.Should().BeTrue();
-            hasLockAfterFirstDisposal.Should().BeTrue();
-            hasLockAfterSecondDisposal.Should().BeFalse();
-        }
+        Assertion.All(
+                hasFirstLock.TestTrue(),
+                hasSecondLock.TestTrue(),
+                hasLockAfterFirstDisposal.TestTrue(),
+                hasLockAfterSecondDisposal.TestFalse() )
+            .Go();
     }
 }

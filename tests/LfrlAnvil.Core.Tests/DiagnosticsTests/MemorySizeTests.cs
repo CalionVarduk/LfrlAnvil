@@ -8,7 +8,7 @@ public class MemorySizeTests : TestsBase
     public void Zero_ShouldReturnZeroBytes()
     {
         var sut = MemorySize.Zero;
-        sut.Bytes.Should().Be( 0 );
+        sut.Bytes.TestEquals( 0 ).Go();
     }
 
     [Theory]
@@ -17,7 +17,7 @@ public class MemorySizeTests : TestsBase
     public void Ctor_ShouldCreateCorrectResult(long value)
     {
         var sut = new MemorySize( value );
-        sut.Bytes.Should().Be( value );
+        sut.Bytes.TestEquals( value ).Go();
     }
 
     [Theory]
@@ -26,7 +26,7 @@ public class MemorySizeTests : TestsBase
     public void FromBytes_WithInt64_ShouldCreateCorrectResult(long value)
     {
         var sut = MemorySize.FromBytes( value );
-        sut.Bytes.Should().Be( value );
+        sut.Bytes.TestEquals( value ).Go();
     }
 
     [Theory]
@@ -39,7 +39,7 @@ public class MemorySizeTests : TestsBase
     public void FromBytes_WithDouble_ShouldCreateRoundedResult(double value, long expected)
     {
         var sut = MemorySize.FromBytes( value );
-        sut.Bytes.Should().Be( expected );
+        sut.Bytes.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -48,7 +48,7 @@ public class MemorySizeTests : TestsBase
     public void FromKilobytes_WithInt64_ShouldCreateCorrectResult(long value, long expected)
     {
         var sut = MemorySize.FromKilobytes( value );
-        sut.Bytes.Should().Be( expected );
+        sut.Bytes.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -61,7 +61,7 @@ public class MemorySizeTests : TestsBase
     public void FromKilobytes_WithDouble_ShouldCreateRoundedResult(double value, long expected)
     {
         var sut = MemorySize.FromKilobytes( value );
-        sut.Bytes.Should().Be( expected );
+        sut.Bytes.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -70,7 +70,7 @@ public class MemorySizeTests : TestsBase
     public void FromMegabytes_WithInt64_ShouldCreateCorrectResult(long value, long expected)
     {
         var sut = MemorySize.FromMegabytes( value );
-        sut.Bytes.Should().Be( expected );
+        sut.Bytes.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -83,7 +83,7 @@ public class MemorySizeTests : TestsBase
     public void FromMegabytes_WithDouble_ShouldCreateRoundedResult(double value, long expected)
     {
         var sut = MemorySize.FromMegabytes( value );
-        sut.Bytes.Should().Be( expected );
+        sut.Bytes.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -92,7 +92,7 @@ public class MemorySizeTests : TestsBase
     public void FromGigabytes_WithInt64_ShouldCreateCorrectResult(long value, long expected)
     {
         var sut = MemorySize.FromGigabytes( value );
-        sut.Bytes.Should().Be( expected );
+        sut.Bytes.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -105,7 +105,7 @@ public class MemorySizeTests : TestsBase
     public void FromGigabytes_WithDouble_ShouldCreateRoundedResult(double value, long expected)
     {
         var sut = MemorySize.FromGigabytes( value );
-        sut.Bytes.Should().Be( expected );
+        sut.Bytes.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -114,7 +114,7 @@ public class MemorySizeTests : TestsBase
     public void FromTerabytes_WithInt64_ShouldCreateCorrectResult(long value, long expected)
     {
         var sut = MemorySize.FromTerabytes( value );
-        sut.Bytes.Should().Be( expected );
+        sut.Bytes.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -127,7 +127,7 @@ public class MemorySizeTests : TestsBase
     public void FromTerabytes_WithDouble_ShouldCreateRoundedResult(double value, long expected)
     {
         var sut = MemorySize.FromTerabytes( value );
-        sut.Bytes.Should().Be( expected );
+        sut.Bytes.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -135,22 +135,21 @@ public class MemorySizeTests : TestsBase
     {
         var sut = MemorySize.FromBytes( 4673730511616 );
 
-        using ( new AssertionScope() )
-        {
-            sut.Bytes.Should().Be( 4673730511616 );
-            sut.TotalKilobytes.Should().Be( 4564189952.75 );
-            sut.TotalMegabytes.Should().Be( 4457216.750732421875 );
-            sut.TotalGigabytes.Should().Be( 4352.7507331371307373046875 );
-            sut.TotalTerabytes.Should().Be( 4.2507331378292292356491088867188 );
-            sut.FullKilobytes.Should().Be( 4564189952 );
-            sut.FullMegabytes.Should().Be( 4457216 );
-            sut.FullGigabytes.Should().Be( 4352 );
-            sut.FullTerabytes.Should().Be( 4 );
-            sut.BytesInKilobyte.Should().Be( 768 );
-            sut.BytesInMegabyte.Should().Be( 787200 );
-            sut.BytesInGigabyte.Should().Be( 806093568 );
-            sut.BytesInTerabyte.Should().Be( 275684000512 );
-        }
+        Assertion.All(
+                sut.Bytes.TestEquals( 4673730511616 ),
+                sut.TotalKilobytes.TestEquals( 4564189952.75 ),
+                sut.TotalMegabytes.TestEquals( 4457216.750732421875 ),
+                sut.TotalGigabytes.TestEquals( 4352.7507331371307373046875 ),
+                sut.TotalTerabytes.TestEquals( 4.2507331378292292356491088867188 ),
+                sut.FullKilobytes.TestEquals( 4564189952 ),
+                sut.FullMegabytes.TestEquals( 4457216 ),
+                sut.FullGigabytes.TestEquals( 4352 ),
+                sut.FullTerabytes.TestEquals( 4 ),
+                sut.BytesInKilobyte.TestEquals( 768 ),
+                sut.BytesInMegabyte.TestEquals( 787200 ),
+                sut.BytesInGigabyte.TestEquals( 806093568 ),
+                sut.BytesInTerabyte.TestEquals( 275684000512 ) )
+            .Go();
     }
 
     [Fact]
@@ -158,7 +157,7 @@ public class MemorySizeTests : TestsBase
     {
         var sut = MemorySize.FromBytes( 1234 );
         var result = sut.ToString();
-        result.Should().Be( "1234 B" );
+        result.TestEquals( "1234 B" ).Go();
     }
 
     [Fact]
@@ -166,7 +165,7 @@ public class MemorySizeTests : TestsBase
     {
         var sut = MemorySize.FromBytes( 1234 );
         var result = sut.GetHashCode();
-        result.Should().Be( sut.Bytes.GetHashCode() );
+        result.TestEquals( sut.Bytes.GetHashCode() ).Go();
     }
 
     [Theory]
@@ -176,7 +175,7 @@ public class MemorySizeTests : TestsBase
     public void Equals_ShouldReturnCorrectResult(long a, long b, bool expected)
     {
         var result = MemorySize.FromBytes( a ).Equals( MemorySize.FromBytes( b ) );
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -186,7 +185,7 @@ public class MemorySizeTests : TestsBase
     public void CompareTo_ShouldReturnCorrectResult(long a, long b, int expectedSign)
     {
         var result = MemorySize.FromBytes( a ).CompareTo( MemorySize.FromBytes( b ) );
-        Math.Sign( result ).Should().Be( expectedSign );
+        Math.Sign( result ).TestEquals( expectedSign ).Go();
     }
 
     [Fact]
@@ -197,7 +196,7 @@ public class MemorySizeTests : TestsBase
 
         var result = sut.Add( other );
 
-        result.Bytes.Should().Be( 579 );
+        result.Bytes.TestEquals( 579 ).Go();
     }
 
     [Fact]
@@ -208,7 +207,7 @@ public class MemorySizeTests : TestsBase
 
         var result = sut.Subtract( other );
 
-        result.Bytes.Should().Be( -333 );
+        result.Bytes.TestEquals( -333 ).Go();
     }
 
     [Fact]
@@ -219,7 +218,7 @@ public class MemorySizeTests : TestsBase
 
         var result = sut + other;
 
-        result.Bytes.Should().Be( 579 );
+        result.Bytes.TestEquals( 579 ).Go();
     }
 
     [Fact]
@@ -230,7 +229,7 @@ public class MemorySizeTests : TestsBase
 
         var result = sut - other;
 
-        result.Bytes.Should().Be( -333 );
+        result.Bytes.TestEquals( -333 ).Go();
     }
 
     [Theory]
@@ -240,7 +239,7 @@ public class MemorySizeTests : TestsBase
     public void EqualityOperator_ShouldReturnCorrectResult(long a, long b, bool expected)
     {
         var result = MemorySize.FromBytes( a ) == MemorySize.FromBytes( b );
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -250,7 +249,7 @@ public class MemorySizeTests : TestsBase
     public void InequalityOperator_ShouldReturnCorrectResult(long a, long b, bool expected)
     {
         var result = MemorySize.FromBytes( a ) != MemorySize.FromBytes( b );
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -260,7 +259,7 @@ public class MemorySizeTests : TestsBase
     public void GreaterThanOrEqualToOperator_ShouldReturnCorrectResult(long a, long b, bool expected)
     {
         var result = MemorySize.FromBytes( a ) >= MemorySize.FromBytes( b );
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -270,7 +269,7 @@ public class MemorySizeTests : TestsBase
     public void LessThanOrEqualToOperator_ShouldReturnCorrectResult(long a, long b, bool expected)
     {
         var result = MemorySize.FromBytes( a ) <= MemorySize.FromBytes( b );
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -280,7 +279,7 @@ public class MemorySizeTests : TestsBase
     public void GreaterThanOperator_ShouldReturnCorrectResult(long a, long b, bool expected)
     {
         var result = MemorySize.FromBytes( a ) > MemorySize.FromBytes( b );
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -290,6 +289,6 @@ public class MemorySizeTests : TestsBase
     public void LessThanOperator_ShouldReturnCorrectResult(long a, long b, bool expected)
     {
         var result = MemorySize.FromBytes( a ) < MemorySize.FromBytes( b );
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 }

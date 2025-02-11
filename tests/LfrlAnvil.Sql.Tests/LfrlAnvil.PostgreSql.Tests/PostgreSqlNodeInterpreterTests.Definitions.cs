@@ -212,14 +212,16 @@ public partial class PostgreSqlNodeInterpreterTests
             sut.Context.Sql.ToString()
                 .Should()
                 .Be(
-                    $@"CREATE{(isTemporary ? " TEMPORARY" : string.Empty)} TABLE{(ifNotExists ? " IF NOT EXISTS" : string.Empty)} {expectedName} (
-  ""x"" INT4 NOT NULL,
-  ""y"" VARCHAR,
-  ""z"" FLOAT8 NOT NULL DEFAULT (10.5),
-  CONSTRAINT ""PK_foobar"" PRIMARY KEY (""x""),
-  CONSTRAINT ""FK_foobar_REF_qux"" FOREIGN KEY (""y"") REFERENCES qux (""y"") ON DELETE RESTRICT ON UPDATE RESTRICT,
-  CONSTRAINT ""CHK_foobar"" CHECK (""z"" > 100.0)
-)" );
+                    $"""
+                     CREATE{(isTemporary ? " TEMPORARY" : string.Empty)} TABLE{(ifNotExists ? " IF NOT EXISTS" : string.Empty)} {expectedName} (
+                       "x" INT4 NOT NULL,
+                       "y" VARCHAR,
+                       "z" FLOAT8 NOT NULL DEFAULT (10.5),
+                       CONSTRAINT "PK_foobar" PRIMARY KEY ("x"),
+                       CONSTRAINT "FK_foobar_REF_qux" FOREIGN KEY ("y") REFERENCES qux ("y") ON DELETE RESTRICT ON UPDATE RESTRICT,
+                       CONSTRAINT "CHK_foobar" CHECK ("z" > 100.0)
+                     )
+                     """ );
         }
 
         [Theory]
@@ -235,8 +237,10 @@ public partial class PostgreSqlNodeInterpreterTests
             sut.Context.Sql.ToString()
                 .Should()
                 .Be(
-                    $@"CREATE{(isTemporary ? " TEMPORARY" : string.Empty)} VIEW {expectedName} AS
-SELECT * FROM qux" );
+                    $"""
+                     CREATE{(isTemporary ? " TEMPORARY" : string.Empty)} VIEW {expectedName} AS
+                     SELECT * FROM qux
+                     """ );
         }
 
         [Theory]
@@ -252,8 +256,10 @@ SELECT * FROM qux" );
             sut.Context.Sql.ToString()
                 .Should()
                 .Be(
-                    $@"CREATE OR REPLACE{(isTemporary ? " TEMPORARY" : string.Empty)} VIEW {expectedName} AS
-SELECT * FROM qux" );
+                    $"""
+                     CREATE OR REPLACE{(isTemporary ? " TEMPORARY" : string.Empty)} VIEW {expectedName} AS
+                     SELECT * FROM qux
+                     """ );
         }
 
         [Theory]
@@ -315,8 +321,10 @@ SELECT * FROM qux" );
             sut.Context.Sql.ToString()
                 .Should()
                 .Be(
-                    $@"DROP INDEX IF EXISTS ""foo"".""bar"";
-CREATE {expectedType} ""bar"" ON ""foo"".""qux"" (""a"" ASC, ""b"" DESC)" );
+                    $"""
+                     DROP INDEX IF EXISTS "foo"."bar";
+                     CREATE {expectedType} "bar" ON "foo"."qux" ("a" ASC, "b" DESC)
+                     """ );
         }
 
         [Fact]
@@ -374,8 +382,10 @@ CREATE {expectedType} ""bar"" ON ""foo"".""qux"" (""a"" ASC, ""b"" DESC)" );
             sut.Context.Sql.ToString()
                 .Should()
                 .Be(
-                    @"ALTER TABLE ""foo"".""bar"" SET SCHEMA ""qux"";
-ALTER TABLE ""qux"".""bar"" RENAME TO ""lorem""" );
+                    """
+                    ALTER TABLE "foo"."bar" SET SCHEMA "qux";
+                    ALTER TABLE "qux"."bar" RENAME TO "lorem"
+                    """ );
         }
 
         [Theory]

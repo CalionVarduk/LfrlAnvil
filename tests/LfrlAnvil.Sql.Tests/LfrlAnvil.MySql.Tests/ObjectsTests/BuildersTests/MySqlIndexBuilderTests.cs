@@ -124,9 +124,11 @@ public class MySqlIndexBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
-                    @"ALTER TABLE `foo`.`T`
-                      DROP PRIMARY KEY,
-                      ADD CONSTRAINT `PK_T` PRIMARY KEY (`C2` ASC);" );
+                    """
+                    ALTER TABLE `foo`.`T`
+                                          DROP PRIMARY KEY,
+                                          ADD CONSTRAINT `PK_T` PRIMARY KEY (`C2` ASC);
+                    """ );
         }
     }
 
@@ -220,8 +222,10 @@ public class MySqlIndexBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
-                    @"ALTER TABLE `foo`.`T`
-                      RENAME INDEX `IX_T_C2A` TO `bar`;" );
+                    """
+                    ALTER TABLE `foo`.`T`
+                                          RENAME INDEX `IX_T_C2A` TO `bar`;
+                    """ );
         }
     }
 
@@ -252,8 +256,10 @@ public class MySqlIndexBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
-                    @"ALTER TABLE `foo`.`T`
-                      RENAME INDEX `IX_T_C2A` TO `bar`;" );
+                    """
+                    ALTER TABLE `foo`.`T`
+                                          RENAME INDEX `IX_T_C2A` TO `bar`;
+                    """ );
         }
     }
 
@@ -395,8 +401,10 @@ public class MySqlIndexBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
-                    @"ALTER TABLE `foo`.`T`
-                      RENAME INDEX `bar` TO `IX_T_C2A`;" );
+                    """
+                    ALTER TABLE `foo`.`T`
+                                          RENAME INDEX `bar` TO `IX_T_C2A`;
+                    """ );
         }
     }
 
@@ -425,8 +433,10 @@ public class MySqlIndexBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
-                    @"ALTER TABLE `foo`.`T`
-                      RENAME INDEX `bar` TO `UIX_T_C2A`;" );
+                    """
+                    ALTER TABLE `foo`.`T`
+                                          RENAME INDEX `bar` TO `UIX_T_C2A`;
+                    """ );
         }
     }
 
@@ -577,12 +587,16 @@ public class MySqlIndexBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
-                    @"ALTER TABLE `foo`.`T`
-                      DROP FOREIGN KEY `FK_T_C2_REF_T`;",
+                    """
+                    ALTER TABLE `foo`.`T`
+                                          DROP FOREIGN KEY `FK_T_C2_REF_T`;
+                    """,
                     "DROP INDEX `IX_T_C2A` ON `foo`.`T`;",
                     "CREATE UNIQUE INDEX `IX_T_C2A` ON `foo`.`T` (`C2` ASC);",
-                    @"ALTER TABLE `foo`.`T`
-                      ADD CONSTRAINT `FK_T_C2_REF_T` FOREIGN KEY (`C2`) REFERENCES `foo`.`T` (`C1`) ON DELETE RESTRICT ON UPDATE RESTRICT;" );
+                    """
+                    ALTER TABLE `foo`.`T`
+                                          ADD CONSTRAINT `FK_T_C2_REF_T` FOREIGN KEY (`C2`) REFERENCES `foo`.`T` (`C1`) ON DELETE RESTRICT ON UPDATE RESTRICT;
+                    """ );
         }
     }
 
@@ -796,11 +810,15 @@ public class MySqlIndexBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
-                    @"ALTER TABLE `foo`.`T`
-                      DROP FOREIGN KEY `FK_T_C2_REF_T`;",
+                    """
+                    ALTER TABLE `foo`.`T`
+                                          DROP FOREIGN KEY `FK_T_C2_REF_T`;
+                    """,
                     "DROP INDEX `IX_T_C2A` ON `foo`.`T`;",
-                    @"ALTER TABLE `foo`.`T`
-                      ADD CONSTRAINT `FK_T_C2_REF_T` FOREIGN KEY (`C2`) REFERENCES `foo`.`T` (`C1`) ON DELETE RESTRICT ON UPDATE RESTRICT;" );
+                    """
+                    ALTER TABLE `foo`.`T`
+                                          ADD CONSTRAINT `FK_T_C2_REF_T` FOREIGN KEY (`C2`) REFERENCES `foo`.`T` (`C1`) ON DELETE RESTRICT ON UPDATE RESTRICT;
+                    """ );
         }
     }
 
@@ -826,11 +844,15 @@ public class MySqlIndexBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
-                    @"ALTER TABLE `foo`.`T`
-                      DROP FOREIGN KEY `FK_T_C2_REF_T`;",
+                    """
+                    ALTER TABLE `foo`.`T`
+                                          DROP FOREIGN KEY `FK_T_C2_REF_T`;
+                    """,
                     "CREATE INDEX `IX_T_C2A` ON `foo`.`T` (`C2` ASC);",
-                    @"ALTER TABLE `foo`.`T`
-                      ADD CONSTRAINT `FK_T_C2_REF_T` FOREIGN KEY (`C2`) REFERENCES `foo`.`T` (`C1`) ON DELETE RESTRICT ON UPDATE RESTRICT;" );
+                    """
+                    ALTER TABLE `foo`.`T`
+                                          ADD CONSTRAINT `FK_T_C2_REF_T` FOREIGN KEY (`C2`) REFERENCES `foo`.`T` (`C1`) ON DELETE RESTRICT ON UPDATE RESTRICT;
+                    """ );
         }
     }
 
@@ -1163,12 +1185,16 @@ public class MySqlIndexBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
-                    @"ALTER TABLE `foo`.`T`
-                      DROP FOREIGN KEY `FK_T_C2_REF_T`;",
+                    """
+                    ALTER TABLE `foo`.`T`
+                                          DROP FOREIGN KEY `FK_T_C2_REF_T`;
+                    """,
                     "DROP INDEX `IX_T_C2A` ON `foo`.`T`;",
                     "CREATE INDEX `IX_T_C2A` ON `foo`.`T` (`C2` ASC) WHERE TRUE;",
-                    @"ALTER TABLE `foo`.`T`
-                      ADD CONSTRAINT `FK_T_C2_REF_T` FOREIGN KEY (`C2`) REFERENCES `foo`.`T` (`C1`) ON DELETE RESTRICT ON UPDATE RESTRICT;" );
+                    """
+                    ALTER TABLE `foo`.`T`
+                                          ADD CONSTRAINT `FK_T_C2_REF_T` FOREIGN KEY (`C2`) REFERENCES `foo`.`T` (`C1`) ON DELETE RESTRICT ON UPDATE RESTRICT;
+                    """ );
         }
     }
 
@@ -1230,14 +1256,20 @@ public class MySqlIndexBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
-                    @"ALTER TABLE `foo`.`T`
-                      DROP FOREIGN KEY `FK_T_C3_REF_T`;",
+                    """
+                    ALTER TABLE `foo`.`T`
+                                          DROP FOREIGN KEY `FK_T_C3_REF_T`;
+                    """,
                     "DROP INDEX `IX_T_C3A` ON `foo`.`T`;",
-                    @"ALTER TABLE `foo`.`T`
-                      DROP PRIMARY KEY,
-                      ADD CONSTRAINT `PK_T` PRIMARY KEY (`C3` ASC);",
-                    @"ALTER TABLE `foo`.`T`
-                      ADD CONSTRAINT `FK_T_C3_REF_T` FOREIGN KEY (`C3`) REFERENCES `foo`.`T` (`C2`) ON DELETE RESTRICT ON UPDATE RESTRICT;" );
+                    """
+                    ALTER TABLE `foo`.`T`
+                                          DROP PRIMARY KEY,
+                                          ADD CONSTRAINT `PK_T` PRIMARY KEY (`C3` ASC);
+                    """,
+                    """
+                    ALTER TABLE `foo`.`T`
+                                          ADD CONSTRAINT `FK_T_C3_REF_T` FOREIGN KEY (`C3`) REFERENCES `foo`.`T` (`C2`) ON DELETE RESTRICT ON UPDATE RESTRICT;
+                    """ );
         }
     }
 
@@ -1261,9 +1293,11 @@ public class MySqlIndexBuilderTests : TestsBase
                 .Sql.Should()
                 .SatisfySql(
                     "DROP INDEX `UIX_T_C2A` ON `foo`.`T`;",
-                    @"ALTER TABLE `foo`.`T`
-                      DROP PRIMARY KEY,
-                      ADD CONSTRAINT `PK_T` PRIMARY KEY (`C2` ASC);" );
+                    """
+                    ALTER TABLE `foo`.`T`
+                                          DROP PRIMARY KEY,
+                                          ADD CONSTRAINT `PK_T` PRIMARY KEY (`C2` ASC);
+                    """ );
         }
     }
 

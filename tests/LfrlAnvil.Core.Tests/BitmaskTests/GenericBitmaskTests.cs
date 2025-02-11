@@ -2,7 +2,6 @@
 using System.Linq;
 using LfrlAnvil.Functional;
 using LfrlAnvil.TestExtensions.Attributes;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Tests.BitmaskTests;
 
@@ -14,7 +13,7 @@ public abstract class GenericBitmaskTests<T> : TestsBase
     public void Default_ShouldReturnBitmaskWithDefaultValue()
     {
         var sut = default( Bitmask<T> );
-        sut.Value.Should().Be( default( T ) );
+        sut.Value.TestEquals( default ).Go();
     }
 
     [Fact]
@@ -22,14 +21,14 @@ public abstract class GenericBitmaskTests<T> : TestsBase
     {
         var value = Fixture.Create<T>();
         var sut = Bitmask.Create( value );
-        sut.Value.Should().Be( value );
+        sut.Value.TestEquals( value ).Go();
     }
 
     [Fact]
     public void Empty_ShouldHaveDefaultValue()
     {
         var sut = Bitmask<T>.Empty;
-        sut.Value.Should().Be( default( T ) );
+        sut.Value.TestEquals( default ).Go();
     }
 
     [Fact]
@@ -41,7 +40,7 @@ public abstract class GenericBitmaskTests<T> : TestsBase
         var sut = Bitmask<T>.All;
         var expected = new Bitmask<T>( GenericBitmaskTestsData<T>.Convert( maxValue ) ).Sanitize().Value;
 
-        sut.Value.Should().Be( expected );
+        sut.Value.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -49,7 +48,7 @@ public abstract class GenericBitmaskTests<T> : TestsBase
     {
         var value = Fixture.Create<T>();
         var sut = new Bitmask<T>( value );
-        sut.Value.Should().Be( value );
+        sut.Value.TestEquals( value ).Go();
     }
 
     [Fact]
@@ -62,7 +61,7 @@ public abstract class GenericBitmaskTests<T> : TestsBase
 
         var result = sut.GetHashCode();
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -73,7 +72,7 @@ public abstract class GenericBitmaskTests<T> : TestsBase
 
         var result = sut.Clear();
 
-        result.Value.Should().Be( default( T ) );
+        result.Value.TestEquals( default ).Go();
     }
 
     [Theory]
@@ -85,7 +84,7 @@ public abstract class GenericBitmaskTests<T> : TestsBase
 
         var result = a.ContainsAny( b );
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -97,7 +96,7 @@ public abstract class GenericBitmaskTests<T> : TestsBase
 
         var result = a.ContainsAll( b );
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -105,7 +104,7 @@ public abstract class GenericBitmaskTests<T> : TestsBase
     {
         var sut = new Bitmask<T>();
         var action = Lambda.Of( () => sut.ContainsBit( -1 ) );
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Fact]
@@ -113,7 +112,7 @@ public abstract class GenericBitmaskTests<T> : TestsBase
     {
         var sut = new Bitmask<T>();
         var action = Lambda.Of( () => sut.ContainsBit( Bitmask<T>.BitCount ) );
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Theory]
@@ -122,7 +121,7 @@ public abstract class GenericBitmaskTests<T> : TestsBase
     {
         var sut = new Bitmask<T>( value );
         var result = sut.ContainsBit( bitIndex );
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -134,7 +133,7 @@ public abstract class GenericBitmaskTests<T> : TestsBase
 
         var result = a.Set( b );
 
-        result.Value.Should().Be( expected );
+        result.Value.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -142,7 +141,7 @@ public abstract class GenericBitmaskTests<T> : TestsBase
     {
         var sut = new Bitmask<T>();
         var action = Lambda.Of( () => sut.SetBit( -1 ) );
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Fact]
@@ -150,7 +149,7 @@ public abstract class GenericBitmaskTests<T> : TestsBase
     {
         var sut = new Bitmask<T>();
         var action = Lambda.Of( () => sut.SetBit( Bitmask<T>.BitCount ) );
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Theory]
@@ -159,7 +158,7 @@ public abstract class GenericBitmaskTests<T> : TestsBase
     {
         var sut = new Bitmask<T>( value );
         var result = sut.SetBit( bitIndex );
-        result.Value.Should().Be( expected );
+        result.Value.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -171,7 +170,7 @@ public abstract class GenericBitmaskTests<T> : TestsBase
 
         var result = a.Unset( b );
 
-        result.Value.Should().Be( expected );
+        result.Value.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -179,7 +178,7 @@ public abstract class GenericBitmaskTests<T> : TestsBase
     {
         var sut = new Bitmask<T>();
         var action = Lambda.Of( () => sut.UnsetBit( -1 ) );
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Fact]
@@ -187,7 +186,7 @@ public abstract class GenericBitmaskTests<T> : TestsBase
     {
         var sut = new Bitmask<T>();
         var action = Lambda.Of( () => sut.UnsetBit( Bitmask<T>.BitCount ) );
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Theory]
@@ -196,7 +195,7 @@ public abstract class GenericBitmaskTests<T> : TestsBase
     {
         var sut = new Bitmask<T>( value );
         var result = sut.UnsetBit( bitIndex );
-        result.Value.Should().Be( expected );
+        result.Value.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -208,7 +207,7 @@ public abstract class GenericBitmaskTests<T> : TestsBase
 
         var result = a.Intersect( b );
 
-        result.Value.Should().Be( expected );
+        result.Value.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -220,7 +219,7 @@ public abstract class GenericBitmaskTests<T> : TestsBase
 
         var result = a.Alternate( b );
 
-        result.Value.Should().Be( expected );
+        result.Value.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -229,7 +228,7 @@ public abstract class GenericBitmaskTests<T> : TestsBase
     {
         var sut = new Bitmask<T>( value );
         var result = sut.Negate();
-        result.Value.Should().Be( expected );
+        result.Value.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -241,7 +240,7 @@ public abstract class GenericBitmaskTests<T> : TestsBase
 
         var result = a.Equals( b );
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -253,7 +252,7 @@ public abstract class GenericBitmaskTests<T> : TestsBase
 
         var result = a.CompareTo( b );
 
-        Math.Sign( result ).Should().Be( expectedSign );
+        Math.Sign( result ).TestEquals( expectedSign ).Go();
     }
 
     [Theory]
@@ -262,7 +261,7 @@ public abstract class GenericBitmaskTests<T> : TestsBase
     {
         var sut = new Bitmask<T>( value );
         var result = sut.AsEnumerable();
-        result.Should().BeSequentiallyEqualTo( expected );
+        result.TestSequence( expected ).Go();
     }
 
     [Theory]
@@ -271,7 +270,7 @@ public abstract class GenericBitmaskTests<T> : TestsBase
     {
         var sut = new Bitmask<T>( value );
         var result = sut.Count;
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -282,7 +281,7 @@ public abstract class GenericBitmaskTests<T> : TestsBase
 
         var result = ( T )sut;
 
-        result.Should().Be( value );
+        result.TestEquals( value ).Go();
     }
 
     [Fact]
@@ -290,7 +289,7 @@ public abstract class GenericBitmaskTests<T> : TestsBase
     {
         var value = Fixture.Create<T>();
         var result = ( Bitmask<T> )value;
-        result.Value.Should().Be( value );
+        result.Value.TestEquals( value ).Go();
     }
 
     [Theory]
@@ -302,7 +301,7 @@ public abstract class GenericBitmaskTests<T> : TestsBase
 
         var result = a == b;
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -314,7 +313,7 @@ public abstract class GenericBitmaskTests<T> : TestsBase
 
         var result = a != b;
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -326,7 +325,7 @@ public abstract class GenericBitmaskTests<T> : TestsBase
 
         var result = a > b;
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -338,7 +337,7 @@ public abstract class GenericBitmaskTests<T> : TestsBase
 
         var result = a >= b;
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -350,7 +349,7 @@ public abstract class GenericBitmaskTests<T> : TestsBase
 
         var result = a < b;
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -362,7 +361,7 @@ public abstract class GenericBitmaskTests<T> : TestsBase
 
         var result = a <= b;
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -374,7 +373,7 @@ public abstract class GenericBitmaskTests<T> : TestsBase
 
         var result = a | b;
 
-        result.Value.Should().Be( expected );
+        result.Value.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -383,7 +382,7 @@ public abstract class GenericBitmaskTests<T> : TestsBase
     {
         var a = new Bitmask<T>( value1 );
         var result = a | value2;
-        result.Value.Should().Be( expected );
+        result.Value.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -392,7 +391,7 @@ public abstract class GenericBitmaskTests<T> : TestsBase
     {
         var b = new Bitmask<T>( value2 );
         var result = value1 | b;
-        result.Value.Should().Be( expected );
+        result.Value.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -404,7 +403,7 @@ public abstract class GenericBitmaskTests<T> : TestsBase
 
         var result = a & b;
 
-        result.Value.Should().Be( expected );
+        result.Value.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -413,7 +412,7 @@ public abstract class GenericBitmaskTests<T> : TestsBase
     {
         var a = new Bitmask<T>( value1 );
         var result = a & value2;
-        result.Value.Should().Be( expected );
+        result.Value.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -422,7 +421,7 @@ public abstract class GenericBitmaskTests<T> : TestsBase
     {
         var b = new Bitmask<T>( value2 );
         var result = value1 & b;
-        result.Value.Should().Be( expected );
+        result.Value.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -434,7 +433,7 @@ public abstract class GenericBitmaskTests<T> : TestsBase
 
         var result = a ^ b;
 
-        result.Value.Should().Be( expected );
+        result.Value.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -443,7 +442,7 @@ public abstract class GenericBitmaskTests<T> : TestsBase
     {
         var a = new Bitmask<T>( value1 );
         var result = a ^ value2;
-        result.Value.Should().Be( expected );
+        result.Value.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -452,7 +451,7 @@ public abstract class GenericBitmaskTests<T> : TestsBase
     {
         var b = new Bitmask<T>( value2 );
         var result = value1 ^ b;
-        result.Value.Should().Be( expected );
+        result.Value.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -461,25 +460,25 @@ public abstract class GenericBitmaskTests<T> : TestsBase
     {
         var sut = new Bitmask<T>( value );
         var result = ~sut;
-        result.Value.Should().Be( expected );
+        result.Value.TestEquals( expected ).Go();
     }
 
     protected void BitCount_ShouldBeCorrect_Impl(int expected)
     {
         var sut = Bitmask<T>.BitCount;
-        sut.Should().Be( expected );
+        sut.TestEquals( expected ).Go();
     }
 
     protected void BaseType_ShouldBeCorrect_Impl(Type expected)
     {
         var sut = Bitmask<T>.BaseType;
-        sut.Should().Be( expected );
+        sut.TestEquals( expected ).Go();
     }
 
     protected void Sanitize_ShouldReturnCorrectResult_Impl(T value, T expected)
     {
         var sut = new Bitmask<T>( value );
         var result = sut.Sanitize();
-        result.Value.Should().Be( expected );
+        result.Value.TestEquals( expected ).Go();
     }
 }

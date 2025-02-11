@@ -1,6 +1,4 @@
-﻿using LfrlAnvil.TestExtensions.FluentAssertions;
-
-namespace LfrlAnvil.Tests.ComparerFactoryTests;
+﻿namespace LfrlAnvil.Tests.ComparerFactoryTests;
 
 public class ComparerFactoryTests : TestsBase
 {
@@ -11,6 +9,6 @@ public class ComparerFactoryTests : TestsBase
         var sut = ComparerFactory<int>.CreateBy( x => x.ToString() );
         Array.Sort( values, sut );
 
-        values.Should().BeSequentiallyEqualTo( 1, 10, 19, 20, 9 );
+        values.TestSequence( [ 1, 10, 19, 20, 9 ] ).Go();
     }
 }

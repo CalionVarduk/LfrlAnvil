@@ -10,7 +10,7 @@ public class TaskRegistryTests : TestsBase
     public void Ctor_ShouldReturnEmptyRegistry()
     {
         var sut = new TaskRegistry();
-        sut.Count.Should().Be( 0 );
+        sut.Count.TestEquals( 0 ).Go();
     }
 
     [Fact]
@@ -21,11 +21,10 @@ public class TaskRegistryTests : TestsBase
 
         sut.Add( taskSource.Task );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 1 );
-            sut.Contains( taskSource.Task ).Should().BeTrue();
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 1 ),
+                sut.Contains( taskSource.Task ).TestTrue() )
+            .Go();
     }
 
     [Fact]
@@ -37,11 +36,10 @@ public class TaskRegistryTests : TestsBase
 
         sut.Add( taskSource.Task );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 0 );
-            sut.Contains( taskSource.Task ).Should().BeFalse();
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 0 ),
+                sut.Contains( taskSource.Task ).TestFalse() )
+            .Go();
     }
 
     [Fact]
@@ -53,11 +51,10 @@ public class TaskRegistryTests : TestsBase
 
         sut.Add( taskSource.Task );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 0 );
-            sut.Contains( taskSource.Task ).Should().BeFalse();
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 0 ),
+                sut.Contains( taskSource.Task ).TestFalse() )
+            .Go();
     }
 
     [Fact]
@@ -69,11 +66,10 @@ public class TaskRegistryTests : TestsBase
 
         sut.Add( taskSource.Task );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 0 );
-            sut.Contains( taskSource.Task ).Should().BeFalse();
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 0 ),
+                sut.Contains( taskSource.Task ).TestFalse() )
+            .Go();
     }
 
     [Fact]
@@ -85,7 +81,7 @@ public class TaskRegistryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Add( taskSource.Task ) );
 
-        action.Should().ThrowExactly<ObjectDisposedException>();
+        action.Test( exc => exc.TestType().Exact<ObjectDisposedException>() ).Go();
     }
 
     [Fact]
@@ -96,7 +92,7 @@ public class TaskRegistryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Add( task ) );
 
-        action.Should().ThrowExactly<ArgumentException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentException>() ).Go();
     }
 
     [Fact]
@@ -108,11 +104,10 @@ public class TaskRegistryTests : TestsBase
 
         taskSource.SetResult();
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 0 );
-            sut.Contains( taskSource.Task ).Should().BeFalse();
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 0 ),
+                sut.Contains( taskSource.Task ).TestFalse() )
+            .Go();
     }
 
     [Fact]
@@ -124,11 +119,10 @@ public class TaskRegistryTests : TestsBase
 
         taskSource.SetException( new Exception() );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 0 );
-            sut.Contains( taskSource.Task ).Should().BeFalse();
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 0 ),
+                sut.Contains( taskSource.Task ).TestFalse() )
+            .Go();
     }
 
     [Fact]
@@ -140,11 +134,10 @@ public class TaskRegistryTests : TestsBase
 
         taskSource.SetCanceled();
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 0 );
-            sut.Contains( taskSource.Task ).Should().BeFalse();
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 0 ),
+                sut.Contains( taskSource.Task ).TestFalse() )
+            .Go();
     }
 
     [Fact]
@@ -164,13 +157,12 @@ public class TaskRegistryTests : TestsBase
         taskSources[2].SetResult();
         var isCompleted4 = result.IsCompleted;
 
-        using ( new AssertionScope() )
-        {
-            isCompleted1.Should().BeFalse();
-            isCompleted2.Should().BeFalse();
-            isCompleted3.Should().BeFalse();
-            isCompleted4.Should().BeTrue();
-        }
+        Assertion.All(
+                isCompleted1.TestFalse(),
+                isCompleted2.TestFalse(),
+                isCompleted3.TestFalse(),
+                isCompleted4.TestTrue() )
+            .Go();
     }
 
     [Fact]
@@ -194,11 +186,10 @@ public class TaskRegistryTests : TestsBase
 
         sut.Dispose();
 
-        using ( new AssertionScope() )
-        {
-            taskSources.Should().OnlyContain( s => s.Task.IsCompleted );
-            sut.Count.Should().Be( 0 );
-        }
+        Assertion.All(
+                taskSources.TestAll( (s, _) => s.Task.IsCompleted.TestTrue() ),
+                sut.Count.TestEquals( 0 ) )
+            .Go();
     }
 
     [Fact]
@@ -222,11 +213,10 @@ public class TaskRegistryTests : TestsBase
 
         sut.Dispose();
 
-        using ( new AssertionScope() )
-        {
-            taskSources.Should().OnlyContain( s => s.Task.IsCompleted );
-            sut.Count.Should().Be( 0 );
-        }
+        Assertion.All(
+                taskSources.TestAll( (s, _) => s.Task.IsCompleted.TestTrue() ),
+                sut.Count.TestEquals( 0 ) )
+            .Go();
     }
 
     [Fact]
@@ -250,12 +240,12 @@ public class TaskRegistryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Dispose() );
 
-        using ( new AssertionScope() )
-        {
-            action.Should().ThrowExactly<AggregateException>();
-            taskSources.Should().OnlyContain( s => s.Task.IsCompleted );
-            sut.Count.Should().Be( 0 );
-        }
+        action.Test(
+                exc => Assertion.All(
+                    exc.TestType().Exact<AggregateException>(),
+                    taskSources.TestAll( (s, _) => s.Task.IsCompleted.TestTrue() ),
+                    sut.Count.TestEquals( 0 ) ) )
+            .Go();
     }
 
     [Fact]
@@ -266,6 +256,6 @@ public class TaskRegistryTests : TestsBase
 
         var action = Lambda.Of( () => sut.Dispose() );
 
-        action.Should().NotThrow();
+        action.Test( exc => exc.TestNull() ).Go();
     }
 }

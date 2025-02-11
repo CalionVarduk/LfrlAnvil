@@ -8,7 +8,7 @@ public class InterlockedInt32Tests : TestsBase
     public void Default_ShouldBeZero()
     {
         var sut = default( InterlockedInt32 );
-        sut.Value.Should().Be( 0 );
+        sut.Value.TestEquals( 0 ).Go();
     }
 
     [Theory]
@@ -18,7 +18,7 @@ public class InterlockedInt32Tests : TestsBase
     public void Ctor_ShouldCreateWithCorrectValue(int value)
     {
         var sut = new InterlockedInt32( value );
-        sut.Value.Should().Be( value );
+        sut.Value.TestEquals( value ).Go();
     }
 
     [Fact]
@@ -26,7 +26,7 @@ public class InterlockedInt32Tests : TestsBase
     {
         var sut = new InterlockedInt32( 123 );
         var result = sut.ToString();
-        result.Should().Be( "123" );
+        result.TestEquals( "123" ).Go();
     }
 
     [Fact]
@@ -37,7 +37,7 @@ public class InterlockedInt32Tests : TestsBase
 
         var result = sut.GetHashCode();
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -50,11 +50,10 @@ public class InterlockedInt32Tests : TestsBase
         var sut = new InterlockedInt32( value );
         var result = sut.Exchange( newValue );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( value );
-            sut.Value.Should().Be( newValue );
-        }
+        Assertion.All(
+                result.TestEquals( value ),
+                sut.Value.TestEquals( newValue ) )
+            .Go();
     }
 
     [Theory]
@@ -72,11 +71,10 @@ public class InterlockedInt32Tests : TestsBase
         var sut = new InterlockedInt32( value );
         var result = sut.CompareExchange( newValue, comparand );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( value );
-            sut.Value.Should().Be( expected );
-        }
+        Assertion.All(
+                result.TestEquals( value ),
+                sut.Value.TestEquals( expected ) )
+            .Go();
     }
 
     [Theory]
@@ -89,11 +87,10 @@ public class InterlockedInt32Tests : TestsBase
         var sut = new InterlockedInt32( value );
         var result = sut.Write( newValue );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( expected );
-            sut.Value.Should().Be( newValue );
-        }
+        Assertion.All(
+                result.TestEquals( expected ),
+                sut.Value.TestEquals( newValue ) )
+            .Go();
     }
 
     [Theory]
@@ -112,11 +109,10 @@ public class InterlockedInt32Tests : TestsBase
         var sut = new InterlockedInt32( value );
         var result = sut.Write( newValue, comparand );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( expected );
-            sut.Value.Should().Be( expectedValue );
-        }
+        Assertion.All(
+                result.TestEquals( expected ),
+                sut.Value.TestEquals( expectedValue ) )
+            .Go();
     }
 
     [Theory]
@@ -128,11 +124,10 @@ public class InterlockedInt32Tests : TestsBase
         var sut = new InterlockedInt32( oldValue );
         var result = sut.Increment();
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( oldValue + 1 );
-            sut.Value.Should().Be( oldValue + 1 );
-        }
+        Assertion.All(
+                result.TestEquals( oldValue + 1 ),
+                sut.Value.TestEquals( oldValue + 1 ) )
+            .Go();
     }
 
     [Theory]
@@ -144,11 +139,10 @@ public class InterlockedInt32Tests : TestsBase
         var sut = new InterlockedInt32( oldValue );
         var result = sut.Decrement();
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( oldValue - 1 );
-            sut.Value.Should().Be( oldValue - 1 );
-        }
+        Assertion.All(
+                result.TestEquals( oldValue - 1 ),
+                sut.Value.TestEquals( oldValue - 1 ) )
+            .Go();
     }
 
     [Theory]
@@ -160,11 +154,10 @@ public class InterlockedInt32Tests : TestsBase
         var sut = new InterlockedInt32( oldValue );
         var result = sut.Add( 123 );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( oldValue + 123 );
-            sut.Value.Should().Be( oldValue + 123 );
-        }
+        Assertion.All(
+                result.TestEquals( oldValue + 123 ),
+                sut.Value.TestEquals( oldValue + 123 ) )
+            .Go();
     }
 
     [Theory]
@@ -176,11 +169,10 @@ public class InterlockedInt32Tests : TestsBase
         var sut = new InterlockedInt32( oldValue );
         var result = sut.Subtract( 123 );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( oldValue - 123 );
-            sut.Value.Should().Be( oldValue - 123 );
-        }
+        Assertion.All(
+                result.TestEquals( oldValue - 123 ),
+                sut.Value.TestEquals( oldValue - 123 ) )
+            .Go();
     }
 
     [Theory]
@@ -192,11 +184,10 @@ public class InterlockedInt32Tests : TestsBase
         var sut = new InterlockedInt32( oldValue );
         var result = sut.And( 123 );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( oldValue );
-            sut.Value.Should().Be( oldValue & 123 );
-        }
+        Assertion.All(
+                result.TestEquals( oldValue ),
+                sut.Value.TestEquals( oldValue & 123 ) )
+            .Go();
     }
 
     [Theory]
@@ -208,11 +199,10 @@ public class InterlockedInt32Tests : TestsBase
         var sut = new InterlockedInt32( oldValue );
         var result = sut.Or( 123 );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( oldValue );
-            sut.Value.Should().Be( oldValue | 123 );
-        }
+        Assertion.All(
+                result.TestEquals( oldValue ),
+                sut.Value.TestEquals( oldValue | 123 ) )
+            .Go();
     }
 
     [Theory]
@@ -226,7 +216,7 @@ public class InterlockedInt32Tests : TestsBase
 
         var result = left == right;
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -240,7 +230,7 @@ public class InterlockedInt32Tests : TestsBase
 
         var result = left != right;
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -254,7 +244,7 @@ public class InterlockedInt32Tests : TestsBase
 
         var result = left >= right;
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -268,7 +258,7 @@ public class InterlockedInt32Tests : TestsBase
 
         var result = left <= right;
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -282,7 +272,7 @@ public class InterlockedInt32Tests : TestsBase
 
         var result = left > right;
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -296,6 +286,6 @@ public class InterlockedInt32Tests : TestsBase
 
         var result = left < right;
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 }

@@ -117,8 +117,10 @@ public class SqlViewBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .Be(
-                    @"ALTER [View] foo.bar
-  ALTER [View] foo.bar ([1] : 'Name' (System.String) FROM V);" );
+                    """
+                    ALTER [View] foo.bar
+                      ALTER [View] foo.bar ([1] : 'Name' (System.String) FROM V);
+                    """ );
         }
     }
 
@@ -316,8 +318,10 @@ public class SqlViewBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .Be(
-                    @"ALTER [View] foo.bar
-  ALTER [View] foo.bar ([1] : 'Name' (System.String) FROM V);" );
+                    """
+                    ALTER [View] foo.bar
+                      ALTER [View] foo.bar ([1] : 'Name' (System.String) FROM V);
+                    """ );
         }
     }
 
@@ -346,8 +350,10 @@ public class SqlViewBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .Be(
-                    @"ALTER [View] foo.bar
-  ALTER [View] foo.bar ([1] : 'Name' (System.String) FROM V);" );
+                    """
+                    ALTER [View] foo.bar
+                      ALTER [View] foo.bar ([1] : 'Name' (System.String) FROM V);
+                    """ );
         }
     }
 }

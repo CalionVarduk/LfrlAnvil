@@ -14,13 +14,7 @@ public abstract class GenericBoundsTests<T> : TestsBase
 
         var sut = Bounds.Create( min, max );
 
-        sut.Should()
-            .BeEquivalentTo(
-                new
-                {
-                    Min = min,
-                    Max = max
-                } );
+        Assertion.All( sut.Min.TestEquals( min ), sut.Max.TestEquals( max ) ).Go();
     }
 
     [Fact]
@@ -30,13 +24,7 @@ public abstract class GenericBoundsTests<T> : TestsBase
 
         var sut = new Bounds<T>( min, max );
 
-        sut.Should()
-            .BeEquivalentTo(
-                new
-                {
-                    Min = min,
-                    Max = max
-                } );
+        Assertion.All( sut.Min.TestEquals( min ), sut.Max.TestEquals( max ) ).Go();
     }
 
     [Fact]
@@ -46,13 +34,7 @@ public abstract class GenericBoundsTests<T> : TestsBase
 
         var sut = new Bounds<T>( value, value );
 
-        sut.Should()
-            .BeEquivalentTo(
-                new
-                {
-                    Min = value,
-                    Max = value
-                } );
+        Assertion.All( sut.Min.TestEquals( value ), sut.Max.TestEquals( value ) ).Go();
     }
 
     [Fact]
@@ -60,7 +42,7 @@ public abstract class GenericBoundsTests<T> : TestsBase
     {
         var (max, min) = Fixture.CreateManyDistinctSorted<T>( count: 2 );
         var action = Lambda.Of( () => new Bounds<T>( min, max ) );
-        action.Should().ThrowExactly<ArgumentException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentException>() ).Go();
     }
 
     [Fact]
@@ -71,13 +53,7 @@ public abstract class GenericBoundsTests<T> : TestsBase
 
         var result = sut.SetMin( newMin );
 
-        result.Should()
-            .BeEquivalentTo(
-                new
-                {
-                    Min = newMin,
-                    Max = max
-                } );
+        Assertion.All( result.Min.TestEquals( newMin ), result.Max.TestEquals( max ) ).Go();
     }
 
     [Fact]
@@ -88,13 +64,7 @@ public abstract class GenericBoundsTests<T> : TestsBase
 
         var result = sut.SetMax( newMax );
 
-        result.Should()
-            .BeEquivalentTo(
-                new
-                {
-                    Min = min,
-                    Max = newMax
-                } );
+        Assertion.All( result.Min.TestEquals( min ), result.Max.TestEquals( newMax ) ).Go();
     }
 
     [Fact]
@@ -107,7 +77,7 @@ public abstract class GenericBoundsTests<T> : TestsBase
 
         var result = sut.GetHashCode();
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -119,7 +89,7 @@ public abstract class GenericBoundsTests<T> : TestsBase
 
         var result = a.Equals( b );
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -128,7 +98,7 @@ public abstract class GenericBoundsTests<T> : TestsBase
     {
         var sut = new Bounds<T>( min, max );
         var result = sut.Clamp( value );
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -137,7 +107,7 @@ public abstract class GenericBoundsTests<T> : TestsBase
     {
         var sut = new Bounds<T>( min, max );
         var result = sut.Contains( value );
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -146,7 +116,7 @@ public abstract class GenericBoundsTests<T> : TestsBase
     {
         var sut = new Bounds<T>( min, max );
         var result = sut.ContainsExclusively( value );
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -158,7 +128,7 @@ public abstract class GenericBoundsTests<T> : TestsBase
 
         var result = sut.Contains( other );
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -170,7 +140,7 @@ public abstract class GenericBoundsTests<T> : TestsBase
 
         var result = sut.ContainsExclusively( other );
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -182,7 +152,7 @@ public abstract class GenericBoundsTests<T> : TestsBase
 
         var result = sut.Intersects( other );
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -194,7 +164,7 @@ public abstract class GenericBoundsTests<T> : TestsBase
 
         var result = sut.GetIntersection( other );
 
-        result.Should().BeEquivalentTo( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -206,7 +176,7 @@ public abstract class GenericBoundsTests<T> : TestsBase
 
         var result = sut.MergeWith( other );
 
-        result.Should().BeEquivalentTo( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -217,11 +187,10 @@ public abstract class GenericBoundsTests<T> : TestsBase
 
         var result = sut.SplitAt( value );
 
-        using ( new AssertionScope() )
-        {
-            result.First.Should().BeEquivalentTo( expectedFirst );
-            result.Second.Should().BeEquivalentTo( expectedSecond );
-        }
+        Assertion.All(
+                result.First.TestEquals( expectedFirst ),
+                result.Second.TestEquals( expectedSecond ) )
+            .Go();
     }
 
     [Theory]
@@ -233,11 +202,10 @@ public abstract class GenericBoundsTests<T> : TestsBase
 
         var result = sut.Remove( other );
 
-        using ( new AssertionScope() )
-        {
-            result.First.Should().BeEquivalentTo( expectedFirst );
-            result.Second.Should().BeEquivalentTo( expectedSecond );
-        }
+        Assertion.All(
+                result.First.TestEquals( expectedFirst ),
+                result.Second.TestEquals( expectedSecond ) )
+            .Go();
     }
 
     [Theory]
@@ -249,7 +217,7 @@ public abstract class GenericBoundsTests<T> : TestsBase
 
         var result = a == b;
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -261,6 +229,6 @@ public abstract class GenericBoundsTests<T> : TestsBase
 
         var result = a != b;
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 }

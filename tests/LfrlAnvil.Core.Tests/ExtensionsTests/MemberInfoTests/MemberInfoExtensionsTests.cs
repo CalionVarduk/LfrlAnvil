@@ -12,7 +12,7 @@ public class MemberInfoExtensionsTests : TestsBase
     {
         var sut = typeof( BaseClass );
         var result = sut.GetAttribute<TestUniqueAttribute>();
-        result.Should().BeEquivalentTo( new TestUniqueAttribute( 0 ) );
+        result.TestEquals( new TestUniqueAttribute( 0 ) ).Go();
     }
 
     [Fact]
@@ -20,7 +20,7 @@ public class MemberInfoExtensionsTests : TestsBase
     {
         var sut = typeof( BaseClass );
         var action = Lambda.Of( () => sut.GetAttribute<TestMultiAttribute>() );
-        action.Should().ThrowExactly<AmbiguousMatchException>();
+        action.Test( exc => exc.TestType().Exact<AmbiguousMatchException>() ).Go();
     }
 
     [Fact]
@@ -28,7 +28,7 @@ public class MemberInfoExtensionsTests : TestsBase
     {
         var sut = typeof( BaseClass );
         var result = sut.GetAttribute<TestUnusedAttribute>();
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Theory]
@@ -38,7 +38,7 @@ public class MemberInfoExtensionsTests : TestsBase
     {
         var sut = typeof( DerivedClass );
         var result = sut.GetAttribute<TestUniqueAttribute>( inherit );
-        result.Should().BeEquivalentTo( new TestUniqueAttribute( 4 ) );
+        result.TestEquals( new TestUniqueAttribute( 4 ) ).Go();
     }
 
     [Fact]
@@ -46,7 +46,7 @@ public class MemberInfoExtensionsTests : TestsBase
     {
         var sut = typeof( DerivedClass );
         var result = sut.GetAttribute<TestBaseOnlyAttribute>( inherit: true );
-        result.Should().BeEquivalentTo( new TestBaseOnlyAttribute( 3 ) );
+        result.TestEquals( new TestBaseOnlyAttribute( 3 ) ).Go();
     }
 
     [Fact]
@@ -54,7 +54,7 @@ public class MemberInfoExtensionsTests : TestsBase
     {
         var sut = typeof( DerivedClass );
         var result = sut.GetAttribute<TestBaseOnlyAttribute>( inherit: false );
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Fact]
@@ -63,7 +63,7 @@ public class MemberInfoExtensionsTests : TestsBase
         var sut = typeof( BaseClass );
         var expected = new[] { new TestUniqueAttribute( 0 ) }.AsEnumerable();
         var result = sut.GetAttributeRange<TestUniqueAttribute>();
-        result.Should().BeEquivalentTo( expected );
+        result.TestSetEqual( expected ).Go();
     }
 
     [Fact]
@@ -72,7 +72,7 @@ public class MemberInfoExtensionsTests : TestsBase
         var sut = typeof( BaseClass );
         var expected = new[] { new TestMultiAttribute( 1 ), new TestMultiAttribute( 2 ) }.AsEnumerable();
         var result = sut.GetAttributeRange<TestMultiAttribute>();
-        result.Should().BeEquivalentTo( expected );
+        result.TestSetEqual( expected ).Go();
     }
 
     [Fact]
@@ -80,7 +80,7 @@ public class MemberInfoExtensionsTests : TestsBase
     {
         var sut = typeof( BaseClass );
         var result = sut.GetAttributeRange<TestUnusedAttribute>();
-        result.Should().BeEmpty();
+        result.TestEmpty().Go();
     }
 
     [Theory]
@@ -91,7 +91,7 @@ public class MemberInfoExtensionsTests : TestsBase
         var sut = typeof( DerivedClass );
         var expected = new[] { new TestUniqueAttribute( 4 ) }.AsEnumerable();
         var result = sut.GetAttributeRange<TestUniqueAttribute>( inherit );
-        result.Should().BeEquivalentTo( expected );
+        result.TestSetEqual( expected ).Go();
     }
 
     [Fact]
@@ -100,7 +100,7 @@ public class MemberInfoExtensionsTests : TestsBase
         var sut = typeof( DerivedClass );
         var expected = new[] { new TestBaseOnlyAttribute( 3 ) }.AsEnumerable();
         var result = sut.GetAttributeRange<TestBaseOnlyAttribute>( inherit: true );
-        result.Should().BeEquivalentTo( expected );
+        result.TestSetEqual( expected ).Go();
     }
 
     [Fact]
@@ -108,7 +108,7 @@ public class MemberInfoExtensionsTests : TestsBase
     {
         var sut = typeof( DerivedClass );
         var result = sut.GetAttributeRange<TestBaseOnlyAttribute>( inherit: false );
-        result.Should().BeEmpty();
+        result.TestEmpty().Go();
     }
 
     [Fact]
@@ -122,7 +122,7 @@ public class MemberInfoExtensionsTests : TestsBase
             .AsEnumerable();
 
         var result = sut.GetAttributeRange<TestMultiAttribute>( inherit: true );
-        result.Should().BeEquivalentTo( expected );
+        result.TestSetEqual( expected ).Go();
     }
 
     [Fact]
@@ -131,7 +131,7 @@ public class MemberInfoExtensionsTests : TestsBase
         var sut = typeof( DerivedClass );
         var expected = new[] { new TestMultiAttribute( 5 ), new TestMultiAttribute( 6 ) }.AsEnumerable();
         var result = sut.GetAttributeRange<TestMultiAttribute>( inherit: false );
-        result.Should().BeEquivalentTo( expected );
+        result.TestSetEqual( expected ).Go();
     }
 
     [Fact]
@@ -139,7 +139,7 @@ public class MemberInfoExtensionsTests : TestsBase
     {
         var sut = typeof( BaseClass );
         var result = sut.HasAttribute<TestMultiAttribute>();
-        result.Should().BeTrue();
+        result.TestTrue().Go();
     }
 
     [Fact]
@@ -147,7 +147,7 @@ public class MemberInfoExtensionsTests : TestsBase
     {
         var sut = typeof( BaseClass );
         var result = sut.HasAttribute<TestUnusedAttribute>();
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Fact]
@@ -155,7 +155,7 @@ public class MemberInfoExtensionsTests : TestsBase
     {
         var sut = typeof( DerivedClass );
         var result = sut.HasAttribute<TestBaseOnlyAttribute>( inherit: true );
-        result.Should().BeTrue();
+        result.TestTrue().Go();
     }
 
     [Fact]
@@ -163,7 +163,7 @@ public class MemberInfoExtensionsTests : TestsBase
     {
         var sut = typeof( DerivedClass );
         var result = sut.HasAttribute<TestBaseOnlyAttribute>( inherit: false );
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Fact]
@@ -171,7 +171,7 @@ public class MemberInfoExtensionsTests : TestsBase
     {
         var member = typeof( DerivedClass ).GetMember( nameof( DerivedClass.TestEvent ) )[0];
         var result = member.TryAsEvent();
-        result.Should().Be( member );
+        result.TestEquals( member ).Go();
     }
 
     [Fact]
@@ -179,7 +179,7 @@ public class MemberInfoExtensionsTests : TestsBase
     {
         MemberInfo? member = null;
         var result = member!.TryAsEvent();
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Theory]
@@ -192,7 +192,7 @@ public class MemberInfoExtensionsTests : TestsBase
     {
         var member = typeof( DerivedClass ).GetMember( memberName )[0];
         var result = member.TryAsEvent();
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Fact]
@@ -200,7 +200,7 @@ public class MemberInfoExtensionsTests : TestsBase
     {
         var member = typeof( DerivedClass ).GetMember( nameof( DerivedClass.TestField ) )[0];
         var result = member.TryAsField();
-        result.Should().Be( member );
+        result.TestEquals( member ).Go();
     }
 
     [Fact]
@@ -208,7 +208,7 @@ public class MemberInfoExtensionsTests : TestsBase
     {
         MemberInfo? member = null;
         var result = member!.TryAsField();
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Theory]
@@ -221,7 +221,7 @@ public class MemberInfoExtensionsTests : TestsBase
     {
         var member = typeof( DerivedClass ).GetMember( memberName )[0];
         var result = member.TryAsField();
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Fact]
@@ -229,7 +229,7 @@ public class MemberInfoExtensionsTests : TestsBase
     {
         var member = typeof( DerivedClass ).GetMember( nameof( DerivedClass.TestProperty ) )[0];
         var result = member.TryAsProperty();
-        (result as object).Should().Be( member );
+        result.TestEquals( member ).Go();
     }
 
     [Fact]
@@ -237,7 +237,7 @@ public class MemberInfoExtensionsTests : TestsBase
     {
         MemberInfo? member = null;
         var result = member!.TryAsProperty();
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Theory]
@@ -250,7 +250,7 @@ public class MemberInfoExtensionsTests : TestsBase
     {
         var member = typeof( DerivedClass ).GetMember( memberName )[0];
         var result = member.TryAsProperty();
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Fact]
@@ -258,7 +258,7 @@ public class MemberInfoExtensionsTests : TestsBase
     {
         var member = typeof( DerivedClass ).GetMember( nameof( DerivedClass.TestType ) )[0];
         var result = member.TryAsType();
-        (result as object).Should().Be( member );
+        result.TestEquals( member ).Go();
     }
 
     [Fact]
@@ -266,7 +266,7 @@ public class MemberInfoExtensionsTests : TestsBase
     {
         MemberInfo? member = null;
         var result = member!.TryAsType();
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Theory]
@@ -279,7 +279,7 @@ public class MemberInfoExtensionsTests : TestsBase
     {
         var member = typeof( DerivedClass ).GetMember( memberName )[0];
         var result = member.TryAsType();
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Fact]
@@ -287,7 +287,7 @@ public class MemberInfoExtensionsTests : TestsBase
     {
         var member = typeof( DerivedClass ).GetMember( ".ctor" )[0];
         var result = member.TryAsConstructor();
-        (result as object).Should().Be( member );
+        result.TestEquals( member ).Go();
     }
 
     [Fact]
@@ -295,7 +295,7 @@ public class MemberInfoExtensionsTests : TestsBase
     {
         MemberInfo? member = null;
         var result = member!.TryAsConstructor();
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Theory]
@@ -308,7 +308,7 @@ public class MemberInfoExtensionsTests : TestsBase
     {
         var member = typeof( DerivedClass ).GetMember( memberName )[0];
         var result = member.TryAsConstructor();
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Fact]
@@ -316,7 +316,7 @@ public class MemberInfoExtensionsTests : TestsBase
     {
         var member = typeof( DerivedClass ).GetMember( nameof( DerivedClass.TestMethod ) )[0];
         var result = member.TryAsMethod();
-        (result as object).Should().Be( member );
+        result.TestEquals( member ).Go();
     }
 
     [Fact]
@@ -324,7 +324,7 @@ public class MemberInfoExtensionsTests : TestsBase
     {
         MemberInfo? member = null;
         var result = member!.TryAsMethod();
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Theory]
@@ -337,7 +337,7 @@ public class MemberInfoExtensionsTests : TestsBase
     {
         var member = typeof( DerivedClass ).GetMember( memberName )[0];
         var result = member.TryAsMethod();
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [AttributeUsage( AttributeTargets.Class )]

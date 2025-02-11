@@ -12,7 +12,7 @@ public class EnumerationTests : TestsBase
     {
         var sut = ValidEnum.One;
         var result = sut.ToString();
-        result.Should().Be( "'one' (1)" );
+        result.TestEquals( "'one' (1)" ).Go();
     }
 
     [Fact]
@@ -20,7 +20,7 @@ public class EnumerationTests : TestsBase
     {
         var sut = ValidEnum.One;
         var result = sut.GetHashCode();
-        result.Should().Be( sut.Value.GetHashCode() );
+        result.TestEquals( sut.Value.GetHashCode() ).Go();
     }
 
     [Theory]
@@ -28,7 +28,7 @@ public class EnumerationTests : TestsBase
     public void Equals_ShouldReturnCorrectResult(ValidEnum a, ValidEnum b, bool expected)
     {
         var result = a.Equals( b );
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -36,7 +36,7 @@ public class EnumerationTests : TestsBase
     public void CompareTo_ShouldReturnCorrectResult(ValidEnum a, ValidEnum b, int expected)
     {
         var result = a.CompareTo( b );
-        Math.Sign( result ).Should().Be( expected );
+        Math.Sign( result ).TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -44,7 +44,7 @@ public class EnumerationTests : TestsBase
     {
         var sut = ValidEnum.Two;
         var result = ( int )sut;
-        result.Should().Be( sut.Value );
+        result.TestEquals( sut.Value ).Go();
     }
 
     [Theory]
@@ -52,7 +52,7 @@ public class EnumerationTests : TestsBase
     public void EqualityOperator_ShouldReturnCorrectResult(ValidEnum? a, ValidEnum? b, bool expected)
     {
         var result = a == b;
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -60,7 +60,7 @@ public class EnumerationTests : TestsBase
     public void InequalityOperator_ShouldReturnCorrectResult(ValidEnum? a, ValidEnum? b, bool expected)
     {
         var result = a != b;
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -68,7 +68,7 @@ public class EnumerationTests : TestsBase
     public void GreaterThanOrEqualToOperator_ShouldReturnCorrectResult(ValidEnum? a, ValidEnum? b, bool expected)
     {
         var result = a >= b;
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -76,7 +76,7 @@ public class EnumerationTests : TestsBase
     public void GreaterThanOperator_ShouldReturnCorrectResult(ValidEnum? a, ValidEnum? b, bool expected)
     {
         var result = a > b;
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -84,7 +84,7 @@ public class EnumerationTests : TestsBase
     public void LessThanOrEqualToOperator_ShouldReturnCorrectResult(ValidEnum? a, ValidEnum? b, bool expected)
     {
         var result = a <= b;
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -92,50 +92,46 @@ public class EnumerationTests : TestsBase
     public void LessThanOperator_ShouldReturnCorrectResult(ValidEnum? a, ValidEnum? b, bool expected)
     {
         var result = a < b;
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
     public void GetNameDictionary_ShouldIncludeOnlyNonNullPublicStaticFieldsAndAutoPropertiesOfEnumType()
     {
         var sut = ValidEnum.ByName;
-        using ( new AssertionScope() )
-        {
-            sut.Should().HaveCount( 3 );
-            sut.Should()
-                .BeEquivalentTo(
-                    KeyValuePair.Create( "one", ValidEnum.One ),
-                    KeyValuePair.Create( "two", ValidEnum.Two ),
-                    KeyValuePair.Create( "three", ValidEnum.Three ) );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 3 ),
+                sut.Keys.TestSetEqual( [ "one", "two", "three" ] ),
+                sut.GetValueOrDefault( "one" ).TestEquals( ValidEnum.One ),
+                sut.GetValueOrDefault( "two" ).TestEquals( ValidEnum.Two ),
+                sut.GetValueOrDefault( "three" ).TestEquals( ValidEnum.Three ) )
+            .Go();
     }
 
     [Fact]
     public void GetNameDictionary_ShouldThrowException_WhenNamesAreDuplicated()
     {
         var action = Lambda.Of( () => DuplicateNameEnum.ByName );
-        action.Should().ThrowExactly<TypeInitializationException>();
+        action.Test( exc => exc.TestType().Exact<TypeInitializationException>() ).Go();
     }
 
     [Fact]
     public void GetValueDictionary_ShouldIncludeOnlyNonNullPublicStaticFieldsAndAutoPropertiesOfEnumType()
     {
         var sut = ValidEnum.ByValue;
-        using ( new AssertionScope() )
-        {
-            sut.Should().HaveCount( 3 );
-            sut.Should()
-                .BeEquivalentTo(
-                    KeyValuePair.Create( 1, ValidEnum.One ),
-                    KeyValuePair.Create( 2, ValidEnum.Two ),
-                    KeyValuePair.Create( 3, ValidEnum.Three ) );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 3 ),
+                sut.Keys.TestSetEqual( [ 1, 2, 3 ] ),
+                sut.GetValueOrDefault( 1 ).TestEquals( ValidEnum.One ),
+                sut.GetValueOrDefault( 2 ).TestEquals( ValidEnum.Two ),
+                sut.GetValueOrDefault( 3 ).TestEquals( ValidEnum.Three ) )
+            .Go();
     }
 
     [Fact]
     public void GetValueDictionary_ShouldThrowException_WhenNamesAreDuplicated()
     {
         var action = Lambda.Of( () => DuplicateValueEnum.ByValue );
-        action.Should().ThrowExactly<TypeInitializationException>();
+        action.Test( exc => exc.TestType().Exact<TypeInitializationException>() ).Go();
     }
 }

@@ -45,8 +45,10 @@ public class PostgreSqlViewBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
-                    @"CREATE VIEW ""foo"".""V"" AS
-                    SELECT * FROM bar;" );
+                    """
+                    CREATE VIEW "foo"."V" AS
+                                        SELECT * FROM bar;
+                    """ );
         }
     }
 

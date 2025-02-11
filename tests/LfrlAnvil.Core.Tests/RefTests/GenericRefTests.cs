@@ -9,7 +9,7 @@ public abstract class GenericRefTests<T> : TestsBase
     {
         var value = Fixture.Create<T>();
         var sut = Ref.Create( value );
-        sut.Value.Should().Be( value );
+        sut.Value.TestEquals( value ).Go();
     }
 
     [Fact]
@@ -17,7 +17,7 @@ public abstract class GenericRefTests<T> : TestsBase
     {
         var value = Fixture.Create<T>();
         var sut = new Ref<T>( value );
-        sut.Value.Should().Be( value );
+        sut.Value.TestEquals( value ).Go();
     }
 
     [Fact]
@@ -25,7 +25,7 @@ public abstract class GenericRefTests<T> : TestsBase
     {
         var value = Fixture.Create<T>();
         var sut = new Ref<T>( value );
-        sut.Count.Should().Be( 1 );
+        sut.Count.TestEquals( 1 ).Go();
     }
 
     [Fact]
@@ -36,7 +36,7 @@ public abstract class GenericRefTests<T> : TestsBase
 
         var result = sut[0];
 
-        result.Should().Be( value );
+        result.TestEquals( value ).Go();
     }
 
     [Theory]
@@ -50,7 +50,7 @@ public abstract class GenericRefTests<T> : TestsBase
 
         var action = Lambda.Of( () => sut[index] );
 
-        action.Should().ThrowExactly<IndexOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<IndexOutOfRangeException>() ).Go();
     }
 
     [Fact]
@@ -58,7 +58,7 @@ public abstract class GenericRefTests<T> : TestsBase
     {
         var value = Fixture.Create<T>();
         var sut = new Ref<T>( value );
-        sut.Should().BeEquivalentTo( new[] { value } );
+        sut.TestSequence( [ value ] ).Go();
     }
 
     [Fact]
@@ -69,7 +69,7 @@ public abstract class GenericRefTests<T> : TestsBase
 
         var result = ( T )sut;
 
-        result.Should().Be( value );
+        result.TestEquals( value ).Go();
     }
 
     [Fact]
@@ -77,6 +77,6 @@ public abstract class GenericRefTests<T> : TestsBase
     {
         var value = Fixture.Create<T>();
         var result = ( Ref<T> )value;
-        result.Value.Should().Be( value );
+        result.Value.TestEquals( value ).Go();
     }
 }

@@ -9,13 +9,13 @@ public class ReinterpretCastTests : TestsBase
     {
         var value = new List<int>();
         var result = ReinterpretCast.To<IEnumerable<int>>( value );
-        result.Should().BeSameAs( value );
+        result.TestRefEquals( value ).Go();
     }
 
     [Fact]
     public void To_ShouldReturnNull_WhenParameterIsNull()
     {
         var result = ReinterpretCast.To<string>( null );
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 }

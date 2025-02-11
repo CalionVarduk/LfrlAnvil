@@ -10,7 +10,7 @@ public abstract class GenericObjectExtensionsOfComparableTypeTests<T> : GenericO
     {
         var sut = Fixture.CreateNotDefault<T>();
         var result = sut.Min( sut );
-        result.Should().Be( sut );
+        result.TestEquals( sut ).Go();
     }
 
     [Fact]
@@ -18,7 +18,7 @@ public abstract class GenericObjectExtensionsOfComparableTypeTests<T> : GenericO
     {
         var (sut, other) = Fixture.CreateManyDistinctSorted<T>( count: 2 );
         var result = sut.Min( other );
-        result.Should().Be( sut );
+        result.TestEquals( sut ).Go();
     }
 
     [Fact]
@@ -26,7 +26,7 @@ public abstract class GenericObjectExtensionsOfComparableTypeTests<T> : GenericO
     {
         var (other, sut) = Fixture.CreateManyDistinctSorted<T>( count: 2 );
         var result = sut.Min( other );
-        result.Should().Be( other );
+        result.TestEquals( other ).Go();
     }
 
     [Fact]
@@ -34,7 +34,7 @@ public abstract class GenericObjectExtensionsOfComparableTypeTests<T> : GenericO
     {
         var sut = Fixture.CreateNotDefault<T>();
         var result = sut.Max( sut );
-        result.Should().Be( sut );
+        result.TestEquals( sut ).Go();
     }
 
     [Fact]
@@ -42,7 +42,7 @@ public abstract class GenericObjectExtensionsOfComparableTypeTests<T> : GenericO
     {
         var (other, sut) = Fixture.CreateManyDistinctSorted<T>( count: 2 );
         var result = sut.Max( other );
-        result.Should().Be( sut );
+        result.TestEquals( sut ).Go();
     }
 
     [Fact]
@@ -50,7 +50,7 @@ public abstract class GenericObjectExtensionsOfComparableTypeTests<T> : GenericO
     {
         var (sut, other) = Fixture.CreateManyDistinctSorted<T>( count: 2 );
         var result = sut.Max( other );
-        result.Should().Be( other );
+        result.TestEquals( other ).Go();
     }
 
     [Fact]
@@ -58,7 +58,7 @@ public abstract class GenericObjectExtensionsOfComparableTypeTests<T> : GenericO
     {
         var (sut, min, max) = Fixture.CreateManyDistinctSorted<T>( count: 3 );
         var result = sut.Clamp( min, max );
-        result.Should().Be( min );
+        result.TestEquals( min ).Go();
     }
 
     [Fact]
@@ -66,7 +66,7 @@ public abstract class GenericObjectExtensionsOfComparableTypeTests<T> : GenericO
     {
         var (min, max, sut) = Fixture.CreateManyDistinctSorted<T>( count: 3 );
         var result = sut.Clamp( min, max );
-        result.Should().Be( max );
+        result.TestEquals( max ).Go();
     }
 
     [Fact]
@@ -74,7 +74,7 @@ public abstract class GenericObjectExtensionsOfComparableTypeTests<T> : GenericO
     {
         var (min, sut, max) = Fixture.CreateManyDistinctSorted<T>( count: 3 );
         var result = sut.Clamp( min, max );
-        result.Should().Be( sut );
+        result.TestEquals( sut ).Go();
     }
 
     [Fact]
@@ -82,7 +82,7 @@ public abstract class GenericObjectExtensionsOfComparableTypeTests<T> : GenericO
     {
         var sut = Fixture.CreateNotDefault<T>();
         var result = sut.MinMax( sut );
-        result.Should().Be( (sut, sut) );
+        result.TestEquals( (sut, sut) ).Go();
     }
 
     [Fact]
@@ -90,7 +90,7 @@ public abstract class GenericObjectExtensionsOfComparableTypeTests<T> : GenericO
     {
         var (other, sut) = Fixture.CreateManyDistinctSorted<T>( count: 2 );
         var result = sut.MinMax( other );
-        result.Should().Be( (other, sut) );
+        result.TestEquals( (other, sut) ).Go();
     }
 
     [Fact]
@@ -98,6 +98,6 @@ public abstract class GenericObjectExtensionsOfComparableTypeTests<T> : GenericO
     {
         var (sut, other) = Fixture.CreateManyDistinctSorted<T>( count: 2 );
         var result = sut.MinMax( other );
-        result.Should().Be( (sut, other) );
+        result.TestEquals( (sut, other) ).Go();
     }
 }

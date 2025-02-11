@@ -2,7 +2,6 @@
 using System.Linq;
 using LfrlAnvil.Functional;
 using LfrlAnvil.Memory;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Tests.MemoryTests.RentedMemorySequenceTests;
 
@@ -13,13 +12,12 @@ public class RentedMemorySequenceTests : TestsBase
     {
         var sut = default( RentedMemorySequence<int> );
 
-        using ( new AssertionScope() )
-        {
-            sut.Owner.Should().BeNull();
-            sut.Length.Should().Be( 0 );
-            sut.Segments.ToArray().Should().BeEmpty();
-            sut.Should().BeEmpty();
-        }
+        Assertion.All(
+                sut.Owner.TestNull(),
+                sut.Length.TestEquals( 0 ),
+                sut.Segments.ToArray().TestEmpty(),
+                sut.TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -27,13 +25,12 @@ public class RentedMemorySequenceTests : TestsBase
     {
         var sut = RentedMemorySequence<int>.Empty;
 
-        using ( new AssertionScope() )
-        {
-            sut.Owner.Should().BeNull();
-            sut.Length.Should().Be( 0 );
-            sut.Segments.ToArray().Should().BeEmpty();
-            sut.Should().BeEmpty();
-        }
+        Assertion.All(
+                sut.Owner.TestNull(),
+                sut.Length.TestEquals( 0 ),
+                sut.Segments.ToArray().TestEmpty(),
+                sut.TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -48,7 +45,7 @@ public class RentedMemorySequenceTests : TestsBase
         for ( var i = 0; i < sut.Length; ++i )
             result[i] = sut[i];
 
-        result.Should().BeSequentiallyEqualTo( 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 );
+        result.TestSequence( [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 ] ).Go();
     }
 
     [Theory]
@@ -62,7 +59,7 @@ public class RentedMemorySequenceTests : TestsBase
 
         var action = Lambda.Of( () => sut[index] );
 
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Fact]
@@ -77,7 +74,7 @@ public class RentedMemorySequenceTests : TestsBase
         var result = new int[12];
         sut.CopyTo( result );
 
-        result.Should().BeSequentiallyEqualTo( 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 );
+        result.TestSequence( [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 ] ).Go();
     }
 
     [Theory]
@@ -91,7 +88,7 @@ public class RentedMemorySequenceTests : TestsBase
 
         var action = Lambda.Of( () => sut[index] = Fixture.Create<int>() );
 
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Fact]
@@ -105,7 +102,7 @@ public class RentedMemorySequenceTests : TestsBase
         ref var result = ref sut.GetRef( 8 );
         result = 20;
 
-        sut.Should().BeSequentiallyEqualTo( 1, 2, 3, 4, 5, 6, 7, 8, 20, 10, 11, 12 );
+        sut.TestSequence( [ 1, 2, 3, 4, 5, 6, 7, 8, 20, 10, 11, 12 ] ).Go();
     }
 
     [Theory]
@@ -119,7 +116,7 @@ public class RentedMemorySequenceTests : TestsBase
 
         var action = Lambda.Of( () => sut.GetRef( index ) );
 
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Fact]
@@ -134,17 +131,16 @@ public class RentedMemorySequenceTests : TestsBase
 
         var result = sut.Segments;
 
-        using ( new AssertionScope() )
-        {
-            result.Length.Should().Be( 4 );
-            result[0].Should().BeSequentiallyEqualTo( 1, 2, 3, 4, 5 );
-            result[1].Should().BeSequentiallyEqualTo( 6, 7, 8, 9, 10, 11, 12, 13 );
-            result[2].Should().BeSequentiallyEqualTo( 14, 15, 16, 17, 18, 19, 20, 21 );
-            result[3].Should().BeSequentiallyEqualTo( 22, 23, 24, 25, 26, 27, 28 );
-            result.ToArray().Should().BeSequentiallyEqualTo( result[0], result[1], result[2], result[3] );
-            result.ToArray().SelectMany( s => s ).Should().BeSequentiallyEqualTo( sut );
-            result.ToString().Should().Be( "RentedMemorySequenceSegmentCollection<Int32>[4]" );
-        }
+        Assertion.All(
+                result.Length.TestEquals( 4 ),
+                result[0].TestSequence( [ 1, 2, 3, 4, 5 ] ),
+                result[1].TestSequence( [ 6, 7, 8, 9, 10, 11, 12, 13 ] ),
+                result[2].TestSequence( [ 14, 15, 16, 17, 18, 19, 20, 21 ] ),
+                result[3].TestSequence( [ 22, 23, 24, 25, 26, 27, 28 ] ),
+                result.ToArray().TestSequence( [ result[0], result[1], result[2], result[3] ] ),
+                result.ToArray().SelectMany( s => s ).TestSequence( sut ),
+                result.ToString().TestEquals( "RentedMemorySequenceSegmentCollection<Int32>[4]" ) )
+            .Go();
     }
 
     [Theory]
@@ -164,11 +160,10 @@ public class RentedMemorySequenceTests : TestsBase
 
         var result = sut.Slice( startIndex );
 
-        using ( new AssertionScope() )
-        {
-            result.StartIndex.Should().Be( startIndex );
-            result.Length.Should().Be( expectedLength );
-        }
+        Assertion.All(
+                result.StartIndex.TestEquals( startIndex ),
+                result.Length.TestEquals( expectedLength ) )
+            .Go();
     }
 
     [Theory]
@@ -181,7 +176,7 @@ public class RentedMemorySequenceTests : TestsBase
 
         var action = Lambda.Of( () => { _ = sut.Slice( startIndex ); } );
 
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Theory]
@@ -217,11 +212,10 @@ public class RentedMemorySequenceTests : TestsBase
 
         var result = sut.Slice( startIndex, length );
 
-        using ( new AssertionScope() )
-        {
-            result.StartIndex.Should().Be( startIndex );
-            result.Length.Should().Be( length );
-        }
+        Assertion.All(
+                result.StartIndex.TestEquals( startIndex ),
+                result.Length.TestEquals( length ) )
+            .Go();
     }
 
     [Theory]
@@ -252,7 +246,7 @@ public class RentedMemorySequenceTests : TestsBase
 
         var action = Lambda.Of( () => { _ = sut.Slice( startIndex, length ); } );
 
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Fact]
@@ -263,11 +257,10 @@ public class RentedMemorySequenceTests : TestsBase
 
         sut.Push( 1 );
 
-        using ( new AssertionScope() )
-        {
-            sut.Should().BeSequentiallyEqualTo( 1 );
-            sut.Length.Should().Be( 1 );
-        }
+        Assertion.All(
+                sut.TestSequence( [ 1 ] ),
+                sut.Length.TestEquals( 1 ) )
+            .Go();
     }
 
     [Fact]
@@ -278,11 +271,10 @@ public class RentedMemorySequenceTests : TestsBase
 
         sut.Push( 1 );
 
-        using ( new AssertionScope() )
-        {
-            sut.Should().BeSequentiallyEqualTo( 0, 0, 0, 0, 0, 0, 0, 0, 1 );
-            sut.Length.Should().Be( 9 );
-        }
+        Assertion.All(
+                sut.TestSequence( [ 0, 0, 0, 0, 0, 0, 0, 0, 1 ] ),
+                sut.Length.TestEquals( 9 ) )
+            .Go();
     }
 
     [Theory]
@@ -300,13 +292,12 @@ public class RentedMemorySequenceTests : TestsBase
 
         sut.Push( 1 );
 
-        using ( new AssertionScope() )
-        {
-            pool.Report.FragmentedElements.Should().Be( fragmentedLength - 1 );
-            pool.Report.GetRentedNodes().Should().BeSequentiallyEqualTo( tail, sut );
-            sut.Should().BeSequentiallyEqualTo( 0, 0, 0, 0, 0, 0, 0, 0, 1 );
-            sut.Length.Should().Be( 9 );
-        }
+        Assertion.All(
+                pool.Report.FragmentedElements.TestEquals( fragmentedLength - 1 ),
+                pool.Report.GetRentedNodes().TestSequence( [ tail, sut ] ),
+                sut.TestSequence( [ 0, 0, 0, 0, 0, 0, 0, 0, 1 ] ),
+                sut.Length.TestEquals( 9 ) )
+            .Go();
     }
 
     [Fact]
@@ -322,14 +313,13 @@ public class RentedMemorySequenceTests : TestsBase
 
         sut.Push( 9 );
 
-        using ( new AssertionScope() )
-        {
-            pool.Report.GetFragmentedNodeSizes().Should().BeSequentiallyEqualTo( 8 );
-            pool.Report.GetRentedNodes().Should().BeSequentiallyEqualTo( sut, other );
-            sut.Should().BeSequentiallyEqualTo( 1, 2, 3, 4, 5, 6, 7, 8, 9 );
-            sut.Length.Should().Be( 9 );
-            other.Should().AllBeEquivalentTo( 0 );
-        }
+        Assertion.All(
+                pool.Report.GetFragmentedNodeSizes().TestSequence( [ 8 ] ),
+                pool.Report.GetRentedNodes().TestSequence( [ sut, other ] ),
+                sut.TestSequence( [ 1, 2, 3, 4, 5, 6, 7, 8, 9 ] ),
+                sut.Length.TestEquals( 9 ),
+                other.TestAll( (e, _) => e.TestEquals( 0 ) ) )
+            .Go();
     }
 
     [Fact]
@@ -341,7 +331,7 @@ public class RentedMemorySequenceTests : TestsBase
 
         sut.Push( 1 );
 
-        sut.Length.Should().Be( 0 );
+        sut.Length.TestEquals( 0 ).Go();
     }
 
     [Fact]
@@ -354,7 +344,7 @@ public class RentedMemorySequenceTests : TestsBase
 
         sut.Push( 1 );
 
-        sut.Length.Should().Be( 0 );
+        sut.Length.TestEquals( 0 ).Go();
     }
 
     [Fact]
@@ -365,7 +355,7 @@ public class RentedMemorySequenceTests : TestsBase
 
         sut.Push( 1 );
 
-        sut.Length.Should().Be( 0 );
+        sut.Length.TestEquals( 0 ).Go();
     }
 
     [Theory]
@@ -379,11 +369,10 @@ public class RentedMemorySequenceTests : TestsBase
 
         sut.Expand( length );
 
-        using ( new AssertionScope() )
-        {
-            sut.Should().BeSequentiallyEqualTo( Enumerable.Repeat( 0, length ) );
-            sut.Length.Should().Be( length );
-        }
+        Assertion.All(
+                sut.TestSequence( Enumerable.Repeat( 0, length ) ),
+                sut.Length.TestEquals( length ) )
+            .Go();
     }
 
     [Theory]
@@ -399,11 +388,10 @@ public class RentedMemorySequenceTests : TestsBase
 
         sut.Expand( length );
 
-        using ( new AssertionScope() )
-        {
-            sut.Should().BeSequentiallyEqualTo( Enumerable.Range( 1, 8 ).Concat( Enumerable.Repeat( 0, length ) ) );
-            sut.Length.Should().Be( 8 + length );
-        }
+        Assertion.All(
+                sut.TestSequence( Enumerable.Range( 1, 8 ).Concat( Enumerable.Repeat( 0, length ) ) ),
+                sut.Length.TestEquals( 8 + length ) )
+            .Go();
     }
 
     [Theory]
@@ -429,13 +417,12 @@ public class RentedMemorySequenceTests : TestsBase
 
         sut.Expand( length );
 
-        using ( new AssertionScope() )
-        {
-            pool.Report.FragmentedElements.Should().Be( fragmentedLength - length );
-            pool.Report.GetRentedNodes().Should().BeSequentiallyEqualTo( tail, sut );
-            sut.Should().BeSequentiallyEqualTo( Enumerable.Range( 1, 8 ).Concat( Enumerable.Repeat( 0, length ) ) );
-            sut.Length.Should().Be( 8 + length );
-        }
+        Assertion.All(
+                pool.Report.FragmentedElements.TestEquals( fragmentedLength - length ),
+                pool.Report.GetRentedNodes().TestSequence( [ tail, sut ] ),
+                sut.TestSequence( Enumerable.Range( 1, 8 ).Concat( Enumerable.Repeat( 0, length ) ) ),
+                sut.Length.TestEquals( 8 + length ) )
+            .Go();
     }
 
     [Fact]
@@ -452,14 +439,13 @@ public class RentedMemorySequenceTests : TestsBase
 
         sut.Expand( 1 );
 
-        using ( new AssertionScope() )
-        {
-            pool.Report.GetFragmentedNodeSizes().Should().BeSequentiallyEqualTo( 8 );
-            pool.Report.GetRentedNodes().Should().BeSequentiallyEqualTo( sut, other );
-            sut.Should().BeSequentiallyEqualTo( 1, 2, 3, 4, 5, 6, 7, 8, 0 );
-            sut.Length.Should().Be( 9 );
-            other.Should().AllBeEquivalentTo( -1 );
-        }
+        Assertion.All(
+                pool.Report.GetFragmentedNodeSizes().TestSequence( [ 8 ] ),
+                pool.Report.GetRentedNodes().TestSequence( [ sut, other ] ),
+                sut.TestSequence( [ 1, 2, 3, 4, 5, 6, 7, 8, 0 ] ),
+                sut.Length.TestEquals( 9 ),
+                other.TestAll( (e, _) => e.TestEquals( -1 ) ) )
+            .Go();
     }
 
     [Fact]
@@ -478,14 +464,13 @@ public class RentedMemorySequenceTests : TestsBase
         f.Dispose();
         sut.Expand( 2 );
 
-        using ( new AssertionScope() )
-        {
-            pool.Report.GetFragmentedNodeSizes().Should().BeSequentiallyEqualTo( 9 );
-            pool.Report.GetRentedNodes().Should().BeSequentiallyEqualTo( sut, other );
-            sut.Should().BeSequentiallyEqualTo( 1, 2, 3, 4, 5, 6, 7, 8, 0, 0 );
-            sut.Length.Should().Be( 10 );
-            other.Should().AllBeEquivalentTo( -1 );
-        }
+        Assertion.All(
+                pool.Report.GetFragmentedNodeSizes().TestSequence( [ 9 ] ),
+                pool.Report.GetRentedNodes().TestSequence( [ sut, other ] ),
+                sut.TestSequence( [ 1, 2, 3, 4, 5, 6, 7, 8, 0, 0 ] ),
+                sut.Length.TestEquals( 10 ),
+                other.TestAll( (e, _) => e.TestEquals( -1 ) ) )
+            .Go();
     }
 
     [Fact]
@@ -497,7 +482,7 @@ public class RentedMemorySequenceTests : TestsBase
 
         sut.Expand( 1 );
 
-        sut.Length.Should().Be( 0 );
+        sut.Length.TestEquals( 0 ).Go();
     }
 
     [Fact]
@@ -510,7 +495,7 @@ public class RentedMemorySequenceTests : TestsBase
 
         sut.Expand( 1 );
 
-        sut.Length.Should().Be( 0 );
+        sut.Length.TestEquals( 0 ).Go();
     }
 
     [Fact]
@@ -521,7 +506,7 @@ public class RentedMemorySequenceTests : TestsBase
 
         sut.Expand( 1 );
 
-        sut.Length.Should().Be( 0 );
+        sut.Length.TestEquals( 0 ).Go();
     }
 
     [Theory]
@@ -534,7 +519,7 @@ public class RentedMemorySequenceTests : TestsBase
 
         sut.Expand( length );
 
-        sut.Length.Should().Be( 8 );
+        sut.Length.TestEquals( 8 ).Go();
     }
 
     [Fact]
@@ -547,7 +532,7 @@ public class RentedMemorySequenceTests : TestsBase
 
         sut.Refresh();
 
-        sut.Length.Should().Be( 11 );
+        sut.Length.TestEquals( 11 ).Go();
     }
 
     [Fact]
@@ -559,7 +544,7 @@ public class RentedMemorySequenceTests : TestsBase
 
         sut.Refresh();
 
-        sut.Length.Should().Be( 0 );
+        sut.Length.TestEquals( 0 ).Go();
     }
 
     [Fact]
@@ -572,7 +557,7 @@ public class RentedMemorySequenceTests : TestsBase
 
         sut.Refresh();
 
-        sut.Length.Should().Be( 0 );
+        sut.Length.TestEquals( 0 ).Go();
     }
 
     [Fact]
@@ -586,7 +571,7 @@ public class RentedMemorySequenceTests : TestsBase
 
         sut.Refresh();
 
-        sut.Length.Should().Be( 0 );
+        sut.Length.TestEquals( 0 ).Go();
     }
 
     [Fact]
@@ -597,7 +582,7 @@ public class RentedMemorySequenceTests : TestsBase
 
         var result = sut.ToString();
 
-        result.Should().Be( "RentedMemorySequence<Int32>[16]" );
+        result.TestEquals( "RentedMemorySequence<Int32>[16]" ).Go();
     }
 
     [Theory]
@@ -617,7 +602,7 @@ public class RentedMemorySequenceTests : TestsBase
 
         var result = sut.Contains( value );
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -651,7 +636,7 @@ public class RentedMemorySequenceTests : TestsBase
 
         var result = sut.Contains( value );
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -663,7 +648,7 @@ public class RentedMemorySequenceTests : TestsBase
 
         var result = sut.Contains( default );
 
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Fact]
@@ -676,7 +661,7 @@ public class RentedMemorySequenceTests : TestsBase
 
         var result = sut.Contains( default );
 
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Fact]
@@ -688,7 +673,7 @@ public class RentedMemorySequenceTests : TestsBase
 
         var result = sut.Contains( default );
 
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Theory]
@@ -718,12 +703,11 @@ public class RentedMemorySequenceTests : TestsBase
 
         sut.Clear();
 
-        using ( new AssertionScope() )
-        {
-            first.Should().AllBeEquivalentTo( -1 );
-            third.Should().AllBeEquivalentTo( -2 );
-            sut.Should().AllBeEquivalentTo( default( int ) );
-        }
+        Assertion.All(
+                first.TestAll( (e, _) => e.TestEquals( -1 ) ),
+                third.TestAll( (e, _) => e.TestEquals( -2 ) ),
+                sut.TestAll( (e, _) => e.TestEquals( default( int ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -736,7 +720,7 @@ public class RentedMemorySequenceTests : TestsBase
 
         sut.Clear();
 
-        pool.Rent( 8 ).Should().BeSequentiallyEqualTo( 1, 2, 3, 4, 5, 6, 7, 8 );
+        pool.Rent( 8 ).TestSequence( [ 1, 2, 3, 4, 5, 6, 7, 8 ] ).Go();
     }
 
     [Fact]
@@ -750,7 +734,7 @@ public class RentedMemorySequenceTests : TestsBase
 
         sut.Clear();
 
-        pool.Rent( 8 ).Should().BeSequentiallyEqualTo( 1, 2, 3, 4, 5, 6, 7, 8 );
+        pool.Rent( 8 ).TestSequence( [ 1, 2, 3, 4, 5, 6, 7, 8 ] ).Go();
     }
 
     [Fact]
@@ -770,11 +754,10 @@ public class RentedMemorySequenceTests : TestsBase
 
         sut.Clear();
 
-        using ( new AssertionScope() )
-        {
-            first.Should().AllBeEquivalentTo( -1 );
-            second.Should().AllBeEquivalentTo( -2 );
-        }
+        Assertion.All(
+                first.TestAll( (e, _) => e.TestEquals( -1 ) ),
+                second.TestAll( (e, _) => e.TestEquals( -2 ) ) )
+            .Go();
     }
 
     [Theory]
@@ -807,12 +790,11 @@ public class RentedMemorySequenceTests : TestsBase
 
         sut.CopyTo( array, arrayIndex );
 
-        using ( new AssertionScope() )
-        {
-            array.Take( arrayIndex ).Should().AllBeEquivalentTo( -1 );
-            array.Skip( arrayIndex ).Take( sut.Length ).Should().BeSequentiallyEqualTo( sut );
-            array.Skip( arrayIndex + sut.Length ).Should().AllBeEquivalentTo( -1 );
-        }
+        Assertion.All(
+                array.Take( arrayIndex ).TestAll( (e, _) => e.TestEquals( -1 ) ),
+                array.Skip( arrayIndex ).Take( sut.Length ).TestSequence( sut ),
+                array.Skip( arrayIndex + sut.Length ).TestAll( (e, _) => e.TestEquals( -1 ) ) )
+            .Go();
     }
 
     [Fact]
@@ -829,7 +811,7 @@ public class RentedMemorySequenceTests : TestsBase
 
         sut.CopyTo( array, 0 );
 
-        array.Should().AllBeEquivalentTo( 0 );
+        array.TestAll( (e, _) => e.TestEquals( 0 ) ).Go();
     }
 
     [Fact]
@@ -847,7 +829,7 @@ public class RentedMemorySequenceTests : TestsBase
 
         sut.CopyTo( array, 0 );
 
-        array.Should().AllBeEquivalentTo( 0 );
+        array.TestAll( (e, _) => e.TestEquals( 0 ) ).Go();
     }
 
     [Fact]
@@ -864,7 +846,7 @@ public class RentedMemorySequenceTests : TestsBase
 
         sut.CopyTo( array, 0 );
 
-        array.Should().AllBeEquivalentTo( 0 );
+        array.TestAll( (e, _) => e.TestEquals( 0 ) ).Go();
     }
 
     [Theory]
@@ -883,7 +865,7 @@ public class RentedMemorySequenceTests : TestsBase
 
         var action = Lambda.Of( () => sut.CopyTo( array, 0 ) );
 
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Theory]
@@ -914,11 +896,10 @@ public class RentedMemorySequenceTests : TestsBase
 
         sut.CopyTo( span );
 
-        using ( new AssertionScope() )
-        {
-            span.Take( sut.Length ).Should().BeSequentiallyEqualTo( sut );
-            span.Skip( sut.Length ).Should().AllBeEquivalentTo( -1 );
-        }
+        Assertion.All(
+                span.Take( sut.Length ).TestSequence( sut ),
+                span.Skip( sut.Length ).TestAll( (e, _) => e.TestEquals( -1 ) ) )
+            .Go();
     }
 
     [Fact]
@@ -934,7 +915,7 @@ public class RentedMemorySequenceTests : TestsBase
 
         sut.CopyTo( other );
 
-        other.Should().AllBeEquivalentTo( 0 );
+        other.TestAll( (e, _) => e.TestEquals( 0 ) ).Go();
     }
 
     [Fact]
@@ -950,7 +931,7 @@ public class RentedMemorySequenceTests : TestsBase
 
         sut.CopyTo( other );
 
-        other.Should().AllBeEquivalentTo( 0 );
+        other.TestAll( (e, _) => e.TestEquals( 0 ) ).Go();
     }
 
     [Fact]
@@ -962,7 +943,7 @@ public class RentedMemorySequenceTests : TestsBase
 
         sut.CopyTo( other );
 
-        other.Should().AllBeEquivalentTo( 0 );
+        other.TestAll( (e, _) => e.TestEquals( 0 ) ).Go();
     }
 
     [Theory]
@@ -981,7 +962,7 @@ public class RentedMemorySequenceTests : TestsBase
 
         var action = Lambda.Of( () => sut.CopyTo( other ) );
 
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Theory]
@@ -1017,13 +998,12 @@ public class RentedMemorySequenceTests : TestsBase
 
         sut.CopyFrom( array );
 
-        using ( new AssertionScope() )
-        {
-            first.Should().AllBeEquivalentTo( -1 );
-            second.Should().AllBeEquivalentTo( -2 );
-            sut.Take( spanLength ).Should().BeSequentiallyEqualTo( array );
-            sut.Skip( spanLength ).Should().AllBeEquivalentTo( -3 );
-        }
+        Assertion.All(
+                first.TestAll( (e, _) => e.TestEquals( -1 ) ),
+                second.TestAll( (e, _) => e.TestEquals( -2 ) ),
+                sut.Take( spanLength ).TestSequence( array ),
+                sut.Skip( spanLength ).TestAll( (e, _) => e.TestEquals( -3 ) ) )
+            .Go();
     }
 
     [Fact]
@@ -1038,11 +1018,10 @@ public class RentedMemorySequenceTests : TestsBase
         sut.CopyFrom( span );
         var tail = pool.Rent( 8 );
 
-        using ( new AssertionScope() )
-        {
-            head.Should().AllBeEquivalentTo( 0 );
-            tail.Should().AllBeEquivalentTo( 0 );
-        }
+        Assertion.All(
+                head.TestAll( (e, _) => e.TestEquals( 0 ) ),
+                tail.TestAll( (e, _) => e.TestEquals( 0 ) ) )
+            .Go();
     }
 
     [Fact]
@@ -1057,11 +1036,10 @@ public class RentedMemorySequenceTests : TestsBase
         sut.CopyFrom( span );
         var head = pool.Rent( 8 );
 
-        using ( new AssertionScope() )
-        {
-            head.Should().AllBeEquivalentTo( 0 );
-            tail.Should().AllBeEquivalentTo( 0 );
-        }
+        Assertion.All(
+                head.TestAll( (e, _) => e.TestEquals( 0 ) ),
+                tail.TestAll( (e, _) => e.TestEquals( 0 ) ) )
+            .Go();
     }
 
     [Fact]
@@ -1073,7 +1051,7 @@ public class RentedMemorySequenceTests : TestsBase
 
         sut.CopyFrom( ReadOnlySpan<int>.Empty );
 
-        tail.Should().AllBeEquivalentTo( 0 );
+        tail.TestAll( (e, _) => e.TestEquals( 0 ) ).Go();
     }
 
     [Theory]
@@ -1093,7 +1071,7 @@ public class RentedMemorySequenceTests : TestsBase
 
         var action = Lambda.Of( () => sut.CopyFrom( array ) );
 
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Theory]
@@ -1116,7 +1094,7 @@ public class RentedMemorySequenceTests : TestsBase
 
         var result = sut.ToArray();
 
-        result.Should().BeSequentiallyEqualTo( sut );
+        result.TestSequence( sut ).Go();
     }
 
     [Fact]
@@ -1131,7 +1109,7 @@ public class RentedMemorySequenceTests : TestsBase
 
         var result = sut.ToArray();
 
-        result.Should().BeEmpty();
+        result.TestEmpty().Go();
     }
 
     [Fact]
@@ -1147,7 +1125,7 @@ public class RentedMemorySequenceTests : TestsBase
 
         var result = sut.ToArray();
 
-        result.Should().BeEmpty();
+        result.TestEmpty().Go();
     }
 
     [Fact]
@@ -1159,7 +1137,7 @@ public class RentedMemorySequenceTests : TestsBase
 
         var result = sut.ToArray();
 
-        result.Should().BeEmpty();
+        result.TestEmpty().Go();
     }
 
     [Fact]
@@ -1173,12 +1151,11 @@ public class RentedMemorySequenceTests : TestsBase
 
         sut.Sort();
 
-        using ( new AssertionScope() )
-        {
-            a.Should().AllBeEquivalentTo( 0 );
-            b.Should().AllBeEquivalentTo( 0 );
-            sut.Should().BeSequentiallyEqualTo( 2, 3, 5, 7, 7, 8, 9, 10 );
-        }
+        Assertion.All(
+                a.TestAll( (e, _) => e.TestEquals( 0 ) ),
+                b.TestAll( (e, _) => e.TestEquals( 0 ) ),
+                sut.TestSequence( [ 2, 3, 5, 7, 7, 8, 9, 10 ] ) )
+            .Go();
     }
 
     [Fact]
@@ -1192,12 +1169,11 @@ public class RentedMemorySequenceTests : TestsBase
 
         sut.Sort();
 
-        using ( new AssertionScope() )
-        {
-            a.Should().AllBeEquivalentTo( 0 );
-            b.Should().AllBeEquivalentTo( 0 );
-            sut.Should().BeSequentiallyEqualTo( 1 );
-        }
+        Assertion.All(
+                a.TestAll( (e, _) => e.TestEquals( 0 ) ),
+                b.TestAll( (e, _) => e.TestEquals( 0 ) ),
+                sut.TestSequence( [ 1 ] ) )
+            .Go();
     }
 
     [Fact]
@@ -1214,7 +1190,7 @@ public class RentedMemorySequenceTests : TestsBase
         sut.Sort();
         var other = pool.Rent( 8 );
 
-        other.Should().BeSequentiallyEqualTo( 8, 7, 6, 5, 4, 3, 2, 1 );
+        other.TestSequence( [ 8, 7, 6, 5, 4, 3, 2, 1 ] ).Go();
     }
 
     [Fact]
@@ -1230,7 +1206,7 @@ public class RentedMemorySequenceTests : TestsBase
         sut.Sort();
         var other = pool.Rent( 8 );
 
-        other.Should().BeSequentiallyEqualTo( 8, 7, 6, 5, 4, 3, 2, 1 );
+        other.TestSequence( [ 8, 7, 6, 5, 4, 3, 2, 1 ] ).Go();
     }
 
     [Fact]
@@ -1243,7 +1219,7 @@ public class RentedMemorySequenceTests : TestsBase
 
         var result = sut.Where( i => i > 0 );
 
-        result.Should().BeSequentiallyEqualTo( sut );
+        result.TestSequence( sut ).Go();
     }
 
     [Fact]
@@ -1254,7 +1230,7 @@ public class RentedMemorySequenceTests : TestsBase
 
         var result = sut.Where( i => i >= 0 );
 
-        result.Should().BeEmpty();
+        result.TestEmpty().Go();
     }
 
     [Fact]
@@ -1265,11 +1241,10 @@ public class RentedMemorySequenceTests : TestsBase
 
         var result = ( RentedMemorySequenceSpan<int> )sut;
 
-        using ( new AssertionScope() )
-        {
-            result.StartIndex.Should().Be( 0 );
-            result.Length.Should().Be( sut.Length );
-        }
+        Assertion.All(
+                result.StartIndex.TestEquals( 0 ),
+                result.Length.TestEquals( sut.Length ) )
+            .Go();
     }
 
     [Fact]
@@ -1278,12 +1253,11 @@ public class RentedMemorySequenceTests : TestsBase
         var pool = new MemorySequencePool<int>( 8 );
         var sut = pool.Rent( 16 );
 
-        using ( new AssertionScope() )
-        {
-            (( ICollection<int> )sut).IsReadOnly.Should().BeFalse();
-            (( ICollection<int> )sut).Count.Should().Be( sut.Length );
-            (( IReadOnlyCollection<int> )sut).Count.Should().Be( sut.Length );
-        }
+        Assertion.All(
+                (( ICollection<int> )sut).IsReadOnly.TestFalse(),
+                (( ICollection<int> )sut).Count.TestEquals( sut.Length ),
+                (( IReadOnlyCollection<int> )sut).Count.TestEquals( sut.Length ) )
+            .Go();
     }
 
     [Fact]
@@ -1294,7 +1268,7 @@ public class RentedMemorySequenceTests : TestsBase
 
         var action = Lambda.Of( () => (( ICollection<int> )sut).Add( Fixture.Create<int>() ) );
 
-        action.Should().ThrowExactly<NotSupportedException>();
+        action.Test( exc => exc.TestType().Exact<NotSupportedException>() ).Go();
     }
 
     [Fact]
@@ -1305,6 +1279,6 @@ public class RentedMemorySequenceTests : TestsBase
 
         var action = Lambda.Of( () => (( ICollection<int> )sut).Remove( Fixture.Create<int>() ) );
 
-        action.Should().ThrowExactly<NotSupportedException>();
+        action.Test( exc => exc.TestType().Exact<NotSupportedException>() ).Go();
     }
 }

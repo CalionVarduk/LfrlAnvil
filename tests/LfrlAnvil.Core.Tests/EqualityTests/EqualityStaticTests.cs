@@ -7,7 +7,7 @@ public class EqualityStaticTests
     {
         var result = Equality.GetUnderlyingType( null );
 
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Theory]
@@ -18,7 +18,7 @@ public class EqualityStaticTests
     {
         var result = Equality.GetUnderlyingType( type );
 
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Theory]
@@ -29,7 +29,7 @@ public class EqualityStaticTests
     {
         var result = Equality.GetUnderlyingType( type );
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -39,6 +39,6 @@ public class EqualityStaticTests
 
         var result = Equality.GetUnderlyingType( typeof( Equality<> ) );
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 }

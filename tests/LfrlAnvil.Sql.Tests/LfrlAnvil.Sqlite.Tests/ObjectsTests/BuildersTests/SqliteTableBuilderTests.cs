@@ -53,17 +53,19 @@ public partial class SqliteTableBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
-                    @"CREATE TABLE ""foo_T"" (
-                      ""C5"" ANY NOT NULL GENERATED ALWAYS AS (""C1"" + 1) VIRTUAL,
-                      ""C1"" ANY NOT NULL,
-                      ""C2"" ANY NOT NULL,
-                      ""C6"" ANY GENERATED ALWAYS AS (""C2"" * ""C5"") STORED,
-                      ""C3"" ANY NOT NULL,
-                      ""C4"" ANY NOT NULL,
-                      CONSTRAINT ""foo_PK_T"" PRIMARY KEY (""C2"" ASC),
-                      CONSTRAINT ""foo_FK_T_C1_REF_T"" FOREIGN KEY (""C1"") REFERENCES ""foo_T"" (""C2"") ON DELETE RESTRICT ON UPDATE RESTRICT,
-                      CONSTRAINT ""foo_CHK_T_{GUID}"" CHECK (""C1"" > 0)
-                    ) WITHOUT ROWID;",
+                    """
+                    CREATE TABLE "foo_T" (
+                                          "C5" ANY NOT NULL GENERATED ALWAYS AS ("C1" + 1) VIRTUAL,
+                                          "C1" ANY NOT NULL,
+                                          "C2" ANY NOT NULL,
+                                          "C6" ANY GENERATED ALWAYS AS ("C2" * "C5") STORED,
+                                          "C3" ANY NOT NULL,
+                                          "C4" ANY NOT NULL,
+                                          CONSTRAINT "foo_PK_T" PRIMARY KEY ("C2" ASC),
+                                          CONSTRAINT "foo_FK_T_C1_REF_T" FOREIGN KEY ("C1") REFERENCES "foo_T" ("C2") ON DELETE RESTRICT ON UPDATE RESTRICT,
+                                          CONSTRAINT "foo_CHK_T_{GUID}" CHECK ("C1" > 0)
+                                        ) WITHOUT ROWID;
+                    """,
                     "CREATE INDEX \"foo_IX_T_C1A\" ON \"foo_T\" (\"C1\" ASC);",
                     "CREATE INDEX \"foo_IX_T_C3A_C4D\" ON \"foo_T\" (\"C3\" ASC, \"C4\" DESC);" );
         }
@@ -201,19 +203,23 @@ public partial class SqliteTableBuilderTests : TestsBase
                 .Sql.Should()
                 .SatisfySql(
                     "DROP INDEX \"foo_IX_T_C2A\";",
-                    @"CREATE TABLE ""__foo_bar__{GUID}__"" (
-                      ""C1"" ANY NOT NULL,
-                      ""C2"" ANY NOT NULL,
-                      CONSTRAINT ""foo_PK_T"" PRIMARY KEY (""C1"" ASC),
-                      CONSTRAINT ""foo_FK_T_C1_REF_U"" FOREIGN KEY (""C1"") REFERENCES ""U"" (""C"") ON DELETE RESTRICT ON UPDATE RESTRICT,
-                      CONSTRAINT ""foo_FK_T_C2_REF_T"" FOREIGN KEY (""C2"") REFERENCES ""foo_bar"" (""C1"") ON DELETE RESTRICT ON UPDATE RESTRICT,
-                      CONSTRAINT ""foo_CHK_T_{GUID}"" CHECK (""C1"" > 0)
-                    ) WITHOUT ROWID;",
-                    @"INSERT INTO ""__foo_bar__{GUID}__"" (""C1"", ""C2"")
-                    SELECT
-                      ""foo_bar"".""C1"",
-                      ""foo_bar"".""C2""
-                    FROM ""foo_bar"";",
+                    """
+                    CREATE TABLE "__foo_bar__{GUID}__" (
+                                          "C1" ANY NOT NULL,
+                                          "C2" ANY NOT NULL,
+                                          CONSTRAINT "foo_PK_T" PRIMARY KEY ("C1" ASC),
+                                          CONSTRAINT "foo_FK_T_C1_REF_U" FOREIGN KEY ("C1") REFERENCES "U" ("C") ON DELETE RESTRICT ON UPDATE RESTRICT,
+                                          CONSTRAINT "foo_FK_T_C2_REF_T" FOREIGN KEY ("C2") REFERENCES "foo_bar" ("C1") ON DELETE RESTRICT ON UPDATE RESTRICT,
+                                          CONSTRAINT "foo_CHK_T_{GUID}" CHECK ("C1" > 0)
+                                        ) WITHOUT ROWID;
+                    """,
+                    """
+                    INSERT INTO "__foo_bar__{GUID}__" ("C1", "C2")
+                                        SELECT
+                                          "foo_bar"."C1",
+                                          "foo_bar"."C2"
+                                        FROM "foo_bar";
+                    """,
                     "DROP TABLE \"foo_bar\";",
                     "ALTER TABLE \"__foo_bar__{GUID}__\" RENAME TO \"foo_bar\";",
                     "CREATE INDEX \"foo_IX_T_C2A\" ON \"foo_bar\" (\"C2\" ASC);" );
@@ -265,18 +271,22 @@ public partial class SqliteTableBuilderTests : TestsBase
                 .Sql.Should()
                 .SatisfySql(
                     "DROP INDEX \"foo_IX_T3_C4A\";",
-                    @"CREATE TABLE ""__foo_T3__{GUID}__"" (
-                      ""C3"" ANY NOT NULL,
-                      ""C4"" ANY NOT NULL,
-                      CONSTRAINT ""foo_PK_T3"" PRIMARY KEY (""C3"" ASC),
-                      CONSTRAINT ""foo_FK_T3_C3_REF_T1"" FOREIGN KEY (""C3"") REFERENCES ""foo_U"" (""C1"") ON DELETE RESTRICT ON UPDATE RESTRICT,
-                      CONSTRAINT ""foo_FK_T3_C4_REF_T1"" FOREIGN KEY (""C4"") REFERENCES ""foo_U"" (""C1"") ON DELETE RESTRICT ON UPDATE RESTRICT
-                    ) WITHOUT ROWID;",
-                    @"INSERT INTO ""__foo_T3__{GUID}__"" (""C3"", ""C4"")
-                    SELECT
-                      ""foo_T3"".""C3"",
-                      ""foo_T3"".""C4""
-                    FROM ""foo_T3"";",
+                    """
+                    CREATE TABLE "__foo_T3__{GUID}__" (
+                                          "C3" ANY NOT NULL,
+                                          "C4" ANY NOT NULL,
+                                          CONSTRAINT "foo_PK_T3" PRIMARY KEY ("C3" ASC),
+                                          CONSTRAINT "foo_FK_T3_C3_REF_T1" FOREIGN KEY ("C3") REFERENCES "foo_U" ("C1") ON DELETE RESTRICT ON UPDATE RESTRICT,
+                                          CONSTRAINT "foo_FK_T3_C4_REF_T1" FOREIGN KEY ("C4") REFERENCES "foo_U" ("C1") ON DELETE RESTRICT ON UPDATE RESTRICT
+                                        ) WITHOUT ROWID;
+                    """,
+                    """
+                    INSERT INTO "__foo_T3__{GUID}__" ("C3", "C4")
+                                        SELECT
+                                          "foo_T3"."C3",
+                                          "foo_T3"."C4"
+                                        FROM "foo_T3";
+                    """,
                     "DROP TABLE \"foo_T3\";",
                     "ALTER TABLE \"__foo_T3__{GUID}__\" RENAME TO \"foo_T3\";",
                     "CREATE INDEX \"foo_IX_T3_C4A\" ON \"foo_T3\" (\"C4\" ASC);" );
@@ -284,15 +294,19 @@ public partial class SqliteTableBuilderTests : TestsBase
             actions.ElementAtOrDefault( 2 )
                 .Sql.Should()
                 .SatisfySql(
-                    @"CREATE TABLE ""__foo_T2__{GUID}__"" (
-                      ""C2"" ANY NOT NULL,
-                      CONSTRAINT ""foo_PK_T2"" PRIMARY KEY (""C2"" ASC),
-                      CONSTRAINT ""foo_FK_T2_C2_REF_T1"" FOREIGN KEY (""C2"") REFERENCES ""foo_U"" (""C1"") ON DELETE RESTRICT ON UPDATE RESTRICT
-                    ) WITHOUT ROWID;",
-                    @"INSERT INTO ""__foo_T2__{GUID}__"" (""C2"")
-                    SELECT
-                      ""foo_T2"".""C2""
-                    FROM ""foo_T2"";",
+                    """
+                    CREATE TABLE "__foo_T2__{GUID}__" (
+                                          "C2" ANY NOT NULL,
+                                          CONSTRAINT "foo_PK_T2" PRIMARY KEY ("C2" ASC),
+                                          CONSTRAINT "foo_FK_T2_C2_REF_T1" FOREIGN KEY ("C2") REFERENCES "foo_U" ("C1") ON DELETE RESTRICT ON UPDATE RESTRICT
+                                        ) WITHOUT ROWID;
+                    """,
+                    """
+                    INSERT INTO "__foo_T2__{GUID}__" ("C2")
+                                        SELECT
+                                          "foo_T2"."C2"
+                                        FROM "foo_T2";
+                    """,
                     "DROP TABLE \"foo_T2\";",
                     "ALTER TABLE \"__foo_T2__{GUID}__\" RENAME TO \"foo_T2\";" );
         }
@@ -333,16 +347,20 @@ public partial class SqliteTableBuilderTests : TestsBase
             actions.ElementAtOrDefault( 1 )
                 .Sql.Should()
                 .SatisfySql(
-                    @"CREATE TABLE ""__foo_T2__{GUID}__"" (
-                      ""C2"" ANY NOT NULL,
-                      ""C3"" ANY NOT NULL GENERATED ALWAYS AS (""C2"" * 3) STORED,
-                      CONSTRAINT ""foo_PK_T2"" PRIMARY KEY (""C2"" ASC),
-                      CONSTRAINT ""foo_FK_T2_C2_REF_T1"" FOREIGN KEY (""C2"") REFERENCES ""foo_U"" (""C1"") ON DELETE RESTRICT ON UPDATE RESTRICT
-                    ) WITHOUT ROWID;",
-                    @"INSERT INTO ""__foo_T2__{GUID}__"" (""C2"")
-                    SELECT
-                      ""foo_T2"".""C2""
-                    FROM ""foo_T2"";",
+                    """
+                    CREATE TABLE "__foo_T2__{GUID}__" (
+                                          "C2" ANY NOT NULL,
+                                          "C3" ANY NOT NULL GENERATED ALWAYS AS ("C2" * 3) STORED,
+                                          CONSTRAINT "foo_PK_T2" PRIMARY KEY ("C2" ASC),
+                                          CONSTRAINT "foo_FK_T2_C2_REF_T1" FOREIGN KEY ("C2") REFERENCES "foo_U" ("C1") ON DELETE RESTRICT ON UPDATE RESTRICT
+                                        ) WITHOUT ROWID;
+                    """,
+                    """
+                    INSERT INTO "__foo_T2__{GUID}__" ("C2")
+                                        SELECT
+                                          "foo_T2"."C2"
+                                        FROM "foo_T2";
+                    """,
                     "DROP TABLE \"foo_T2\";",
                     "ALTER TABLE \"__foo_T2__{GUID}__\" RENAME TO \"foo_T2\";" );
         }
@@ -383,31 +401,39 @@ public partial class SqliteTableBuilderTests : TestsBase
             actions.ElementAtOrDefault( 1 )
                 .Sql.Should()
                 .SatisfySql(
-                    @"CREATE TABLE ""__foo_T2__{GUID}__"" (
-                      ""C2"" ANY NOT NULL,
-                      CONSTRAINT ""foo_PK_T2"" PRIMARY KEY (""C2"" ASC),
-                      CONSTRAINT ""foo_FK_T2_C2_REF_T1"" FOREIGN KEY (""C2"") REFERENCES ""foo_U"" (""C1"") ON DELETE RESTRICT ON UPDATE RESTRICT
-                    ) WITHOUT ROWID;",
-                    @"INSERT INTO ""__foo_T2__{GUID}__"" (""C2"")
-                    SELECT
-                      ""foo_T2"".""C2""
-                    FROM ""foo_T2"";",
+                    """
+                    CREATE TABLE "__foo_T2__{GUID}__" (
+                                          "C2" ANY NOT NULL,
+                                          CONSTRAINT "foo_PK_T2" PRIMARY KEY ("C2" ASC),
+                                          CONSTRAINT "foo_FK_T2_C2_REF_T1" FOREIGN KEY ("C2") REFERENCES "foo_U" ("C1") ON DELETE RESTRICT ON UPDATE RESTRICT
+                                        ) WITHOUT ROWID;
+                    """,
+                    """
+                    INSERT INTO "__foo_T2__{GUID}__" ("C2")
+                                        SELECT
+                                          "foo_T2"."C2"
+                                        FROM "foo_T2";
+                    """,
                     "DROP TABLE \"foo_T2\";",
                     "ALTER TABLE \"__foo_T2__{GUID}__\" RENAME TO \"foo_T2\";" );
 
             actions.ElementAtOrDefault( 2 )
                 .Sql.Should()
                 .SatisfySql(
-                    @"CREATE TABLE ""__foo_U__{GUID}__"" (
-                      ""C1"" ANY NOT NULL,
-                      ""C3"" INTEGER NOT NULL DEFAULT (0),
-                      CONSTRAINT ""foo_PK_T1"" PRIMARY KEY (""C1"" ASC)
-                    ) WITHOUT ROWID;",
-                    @"INSERT INTO ""__foo_U__{GUID}__"" (""C1"", ""C3"")
-                    SELECT
-                      ""foo_U"".""C1"",
-                      0 AS ""C3""
-                    FROM ""foo_U"";",
+                    """
+                    CREATE TABLE "__foo_U__{GUID}__" (
+                                          "C1" ANY NOT NULL,
+                                          "C3" INTEGER NOT NULL DEFAULT (0),
+                                          CONSTRAINT "foo_PK_T1" PRIMARY KEY ("C1" ASC)
+                                        ) WITHOUT ROWID;
+                    """,
+                    """
+                    INSERT INTO "__foo_U__{GUID}__" ("C1", "C3")
+                                        SELECT
+                                          "foo_U"."C1",
+                                          0 AS "C3"
+                                        FROM "foo_U";
+                    """,
                     "DROP TABLE \"foo_U\";",
                     "ALTER TABLE \"__foo_U__{GUID}__\" RENAME TO \"foo_U\";" );
         }
@@ -448,20 +474,24 @@ public partial class SqliteTableBuilderTests : TestsBase
                 .Sql.Should()
                 .SatisfySql(
                     "DROP VIEW \"foo_V1\";",
-                    @"CREATE VIEW ""foo_V1"" AS
-                    SELECT
-                      ""foo_U"".""C""
-                    FROM ""foo_U"";" );
+                    """
+                    CREATE VIEW "foo_V1" AS
+                                        SELECT
+                                          "foo_U"."C"
+                                        FROM "foo_U";
+                    """ );
 
             actions.ElementAtOrDefault( 2 )
                 .Sql.Should()
                 .SatisfySql(
                     "DROP VIEW \"foo_V2\";",
-                    @"CREATE VIEW ""foo_V2"" AS
-                    SELECT
-                      *
-                    FROM ""foo_V1""
-                    INNER JOIN ""foo_U"" ON TRUE;" );
+                    """
+                    CREATE VIEW "foo_V2" AS
+                                        SELECT
+                                          *
+                                        FROM "foo_V1"
+                                        INNER JOIN "foo_U" ON TRUE;
+                    """ );
         }
     }
 
@@ -501,34 +531,42 @@ public partial class SqliteTableBuilderTests : TestsBase
                 .Sql.Should()
                 .SatisfySql(
                     "DROP VIEW \"foo_V1\";",
-                    @"CREATE VIEW ""foo_V1"" AS
-                    SELECT
-                      ""foo_U"".""C""
-                    FROM ""foo_U"";" );
+                    """
+                    CREATE VIEW "foo_V1" AS
+                                        SELECT
+                                          "foo_U"."C"
+                                        FROM "foo_U";
+                    """ );
 
             actions.ElementAtOrDefault( 2 )
                 .Sql.Should()
                 .SatisfySql(
                     "DROP VIEW \"foo_V2\";",
-                    @"CREATE VIEW ""foo_V2"" AS
-                    SELECT
-                      *
-                    FROM ""foo_V1""
-                    INNER JOIN ""foo_U"" ON TRUE;" );
+                    """
+                    CREATE VIEW "foo_V2" AS
+                                        SELECT
+                                          *
+                                        FROM "foo_V1"
+                                        INNER JOIN "foo_U" ON TRUE;
+                    """ );
 
             actions.ElementAtOrDefault( 3 )
                 .Sql.Should()
                 .SatisfySql(
-                    @"CREATE TABLE ""__foo_U__{GUID}__"" (
-                      ""C"" ANY NOT NULL,
-                      ""D"" INTEGER NOT NULL DEFAULT (0),
-                      CONSTRAINT ""foo_PK_T"" PRIMARY KEY (""C"" ASC)
-                    ) WITHOUT ROWID;",
-                    @"INSERT INTO ""__foo_U__{GUID}__"" (""C"", ""D"")
-                    SELECT
-                      ""foo_U"".""C"",
-                      0 AS ""D""
-                    FROM ""foo_U"";",
+                    """
+                    CREATE TABLE "__foo_U__{GUID}__" (
+                                          "C" ANY NOT NULL,
+                                          "D" INTEGER NOT NULL DEFAULT (0),
+                                          CONSTRAINT "foo_PK_T" PRIMARY KEY ("C" ASC)
+                                        ) WITHOUT ROWID;
+                    """,
+                    """
+                    INSERT INTO "__foo_U__{GUID}__" ("C", "D")
+                                        SELECT
+                                          "foo_U"."C",
+                                          0 AS "D"
+                                        FROM "foo_U";
+                    """,
                     "DROP TABLE \"foo_U\";",
                     "ALTER TABLE \"__foo_U__{GUID}__\" RENAME TO \"foo_U\";" );
         }
@@ -847,18 +885,22 @@ public partial class SqliteTableBuilderTests : TestsBase
                 .Sql.Should()
                 .SatisfySql(
                     "DROP INDEX \"foo_C\";",
-                    @"CREATE TABLE ""__foo_T__{GUID}__"" (
-                      ""P"" ANY NOT NULL,
-                      ""I"" ANY NOT NULL,
-                      CONSTRAINT ""foo_D"" PRIMARY KEY (""P"" ASC),
-                      CONSTRAINT ""foo_A"" CHECK (TRUE),
-                      CONSTRAINT ""foo_C"" CHECK (TRUE)
-                    ) WITHOUT ROWID;",
-                    @"INSERT INTO ""__foo_T__{GUID}__"" (""P"", ""I"")
-                    SELECT
-                      ""foo_T"".""P"",
-                      ""foo_T"".""I""
-                    FROM ""foo_T"";",
+                    """
+                    CREATE TABLE "__foo_T__{GUID}__" (
+                                          "P" ANY NOT NULL,
+                                          "I" ANY NOT NULL,
+                                          CONSTRAINT "foo_D" PRIMARY KEY ("P" ASC),
+                                          CONSTRAINT "foo_A" CHECK (TRUE),
+                                          CONSTRAINT "foo_C" CHECK (TRUE)
+                                        ) WITHOUT ROWID;
+                    """,
+                    """
+                    INSERT INTO "__foo_T__{GUID}__" ("P", "I")
+                                        SELECT
+                                          "foo_T"."P",
+                                          "foo_T"."I"
+                                        FROM "foo_T";
+                    """,
                     "DROP TABLE \"foo_T\";",
                     "ALTER TABLE \"__foo_T__{GUID}__\" RENAME TO \"foo_T\";",
                     "CREATE INDEX \"foo_B\" ON \"foo_T\" (\"I\" ASC);" );
@@ -889,17 +931,21 @@ public partial class SqliteTableBuilderTests : TestsBase
                 .Sql.Should()
                 .SatisfySql(
                     "DROP INDEX \"foo_C\";",
-                    @"CREATE TABLE ""__foo_T__{GUID}__"" (
-                      ""P"" ANY NOT NULL,
-                      ""I"" ANY NOT NULL,
-                      CONSTRAINT ""foo_B"" PRIMARY KEY (""P"" ASC),
-                      CONSTRAINT ""foo_C"" CHECK (TRUE)
-                    ) WITHOUT ROWID;",
-                    @"INSERT INTO ""__foo_T__{GUID}__"" (""P"", ""I"")
-                    SELECT
-                      ""foo_T"".""P"",
-                      ""foo_T"".""I""
-                    FROM ""foo_T"";",
+                    """
+                    CREATE TABLE "__foo_T__{GUID}__" (
+                                          "P" ANY NOT NULL,
+                                          "I" ANY NOT NULL,
+                                          CONSTRAINT "foo_B" PRIMARY KEY ("P" ASC),
+                                          CONSTRAINT "foo_C" CHECK (TRUE)
+                                        ) WITHOUT ROWID;
+                    """,
+                    """
+                    INSERT INTO "__foo_T__{GUID}__" ("P", "I")
+                                        SELECT
+                                          "foo_T"."P",
+                                          "foo_T"."I"
+                                        FROM "foo_T";
+                    """,
                     "DROP TABLE \"foo_T\";",
                     "ALTER TABLE \"__foo_T__{GUID}__\" RENAME TO \"foo_T\";",
                     "CREATE INDEX \"foo_D\" ON \"foo_T\" (\"I\" ASC);" );
@@ -953,35 +999,39 @@ public partial class SqliteTableBuilderTests : TestsBase
                     "DROP INDEX \"foo_IX_T_C7A\";",
                     "DROP INDEX \"foo_UIX_T_C8A\";",
                     "DROP INDEX \"foo_UIX_T_C9A\";",
-                    @"CREATE TABLE ""__foo_U__{GUID}__"" (
-                      ""C1"" ANY NOT NULL,
-                      ""C2"" INTEGER NOT NULL,
-                      ""C11"" ANY NOT NULL DEFAULT (X''),
-                      ""Y"" INTEGER NOT NULL,
-                      ""C5"" INTEGER NOT NULL GENERATED ALWAYS AS (1) STORED,
-                      ""C10"" ANY NOT NULL DEFAULT (X''),
-                      ""C7"" ANY NOT NULL,
-                      ""C8"" ANY NOT NULL,
-                      ""C9"" ANY NOT NULL,
-                      ""X"" INTEGER,
-                      CONSTRAINT ""foo_PK_U"" PRIMARY KEY (""C10"" ASC),
-                      CONSTRAINT ""foo_FK_2"" FOREIGN KEY (""C7"") REFERENCES ""foo_U"" (""C9"") ON DELETE RESTRICT ON UPDATE RESTRICT,
-                      CONSTRAINT ""foo_FK_U_C7_REF_U"" FOREIGN KEY (""C7"") REFERENCES ""foo_U"" (""C11"") ON DELETE RESTRICT ON UPDATE RESTRICT,
-                      CONSTRAINT ""foo_CHK_1"" CHECK (TRUE),
-                      CONSTRAINT ""foo_CHK_3"" CHECK (TRUE)
-                    ) WITHOUT ROWID;",
-                    @"INSERT INTO ""__foo_U__{GUID}__"" (""C1"", ""C2"", ""C11"", ""Y"", ""C10"", ""C7"", ""C8"", ""C9"", ""X"")
-                    SELECT
-                      ""foo_U"".""C1"",
-                      ""foo_U"".""C2"",
-                      X'' AS ""C11"",
-                      ""foo_U"".""Y"" AS ""Y"",
-                      X'' AS ""C10"",
-                      ""foo_U"".""C7"",
-                      ""foo_U"".""C8"",
-                      ""foo_U"".""C9"",
-                      ""foo_U"".""X"" AS ""X""
-                    FROM ""foo_U"";",
+                    """
+                    CREATE TABLE "__foo_U__{GUID}__" (
+                                          "C1" ANY NOT NULL,
+                                          "C2" INTEGER NOT NULL,
+                                          "C11" ANY NOT NULL DEFAULT (X''),
+                                          "Y" INTEGER NOT NULL,
+                                          "C5" INTEGER NOT NULL GENERATED ALWAYS AS (1) STORED,
+                                          "C10" ANY NOT NULL DEFAULT (X''),
+                                          "C7" ANY NOT NULL,
+                                          "C8" ANY NOT NULL,
+                                          "C9" ANY NOT NULL,
+                                          "X" INTEGER,
+                                          CONSTRAINT "foo_PK_U" PRIMARY KEY ("C10" ASC),
+                                          CONSTRAINT "foo_FK_2" FOREIGN KEY ("C7") REFERENCES "foo_U" ("C9") ON DELETE RESTRICT ON UPDATE RESTRICT,
+                                          CONSTRAINT "foo_FK_U_C7_REF_U" FOREIGN KEY ("C7") REFERENCES "foo_U" ("C11") ON DELETE RESTRICT ON UPDATE RESTRICT,
+                                          CONSTRAINT "foo_CHK_1" CHECK (TRUE),
+                                          CONSTRAINT "foo_CHK_3" CHECK (TRUE)
+                                        ) WITHOUT ROWID;
+                    """,
+                    """
+                    INSERT INTO "__foo_U__{GUID}__" ("C1", "C2", "C11", "Y", "C10", "C7", "C8", "C9", "X")
+                                        SELECT
+                                          "foo_U"."C1",
+                                          "foo_U"."C2",
+                                          X'' AS "C11",
+                                          "foo_U"."Y" AS "Y",
+                                          X'' AS "C10",
+                                          "foo_U"."C7",
+                                          "foo_U"."C8",
+                                          "foo_U"."C9",
+                                          "foo_U"."X" AS "X"
+                                        FROM "foo_U";
+                    """,
                     "DROP TABLE \"foo_U\";",
                     "ALTER TABLE \"__foo_U__{GUID}__\" RENAME TO \"foo_U\";",
                     "CREATE UNIQUE INDEX \"foo_UIX_U_C11A\" ON \"foo_U\" (\"C11\" ASC);",

@@ -111,8 +111,10 @@ public partial class SqlSchemaBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .Be(
-                    @"ALTER [Schema] bar
-  ALTER [Schema] bar ([1] : 'Name' (System.String) FROM foo);" );
+                    """
+                    ALTER [Schema] bar
+                      ALTER [Schema] bar ([1] : 'Name' (System.String) FROM foo);
+                    """ );
         }
     }
 
@@ -150,8 +152,10 @@ public partial class SqlSchemaBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .Be(
-                    @"ALTER [Schema] bar
-  ALTER [Schema] bar ([1] : 'Name' (System.String) FROM foo);" );
+                    """
+                    ALTER [Schema] bar
+                      ALTER [Schema] bar ([1] : 'Name' (System.String) FROM foo);
+                    """ );
         }
     }
 
@@ -358,8 +362,10 @@ public partial class SqlSchemaBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .Be(
-                    @"ALTER [Schema] bar
-  ALTER [Schema] bar ([1] : 'Name' (System.String) FROM foo);" );
+                    """
+                    ALTER [Schema] bar
+                      ALTER [Schema] bar ([1] : 'Name' (System.String) FROM foo);
+                    """ );
         }
     }
 
@@ -384,8 +390,10 @@ public partial class SqlSchemaBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .Be(
-                    @"ALTER [Schema] bar
-  ALTER [Schema] bar ([1] : 'Name' (System.String) FROM foo);" );
+                    """
+                    ALTER [Schema] bar
+                      ALTER [Schema] bar ([1] : 'Name' (System.String) FROM foo);
+                    """ );
         }
     }
 }

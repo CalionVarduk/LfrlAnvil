@@ -49,8 +49,10 @@ public class MySqlColumnBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
-                    @"ALTER TABLE `foo`.`T`
-                      ADD COLUMN `C2` LONGBLOB NOT NULL DEFAULT (X'');" );
+                    """
+                    ALTER TABLE `foo`.`T`
+                                          ADD COLUMN `C2` LONGBLOB NOT NULL DEFAULT (X'');
+                    """ );
         }
     }
 
@@ -75,8 +77,10 @@ public class MySqlColumnBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
-                    @"ALTER TABLE `foo`.`T`
-                      ADD COLUMN `C2` LONGBLOB;" );
+                    """
+                    ALTER TABLE `foo`.`T`
+                                          ADD COLUMN `C2` LONGBLOB;
+                    """ );
         }
     }
 
@@ -101,8 +105,10 @@ public class MySqlColumnBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
-                    @"ALTER TABLE `foo`.`T`
-                      ADD COLUMN `C2` LONGBLOB GENERATED ALWAYS AS (1) VIRTUAL NOT NULL;" );
+                    """
+                    ALTER TABLE `foo`.`T`
+                                          ADD COLUMN `C2` LONGBLOB GENERATED ALWAYS AS (1) VIRTUAL NOT NULL;
+                    """ );
         }
     }
 
@@ -126,8 +132,10 @@ public class MySqlColumnBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
-                    @"ALTER TABLE `foo`.`T`
-                      ADD COLUMN `C2` LONGBLOB NOT NULL DEFAULT (X'010203');" );
+                    """
+                    ALTER TABLE `foo`.`T`
+                                          ADD COLUMN `C2` LONGBLOB NOT NULL DEFAULT (X'010203');
+                    """ );
         }
     }
 
@@ -156,9 +164,11 @@ public class MySqlColumnBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
-                    @"ALTER TABLE `foo`.`T`
-                      CHANGE COLUMN `C2` `C2` LONGTEXT NOT NULL,
-                      ADD COLUMN `C3` LONGBLOB;" );
+                    """
+                    ALTER TABLE `foo`.`T`
+                                          CHANGE COLUMN `C2` `C2` LONGTEXT NOT NULL,
+                                          ADD COLUMN `C3` LONGBLOB;
+                    """ );
         }
     }
 
@@ -186,8 +196,10 @@ public class MySqlColumnBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
-                    @"ALTER TABLE `foo`.`T`
-                      CHANGE COLUMN `C2` `C2` LONGBLOB NOT NULL;" );
+                    """
+                    ALTER TABLE `foo`.`T`
+                                          CHANGE COLUMN `C2` `C2` LONGBLOB NOT NULL;
+                    """ );
         }
     }
 
@@ -215,8 +227,10 @@ public class MySqlColumnBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
-                    @"ALTER TABLE `foo`.`T`
-                      CHANGE COLUMN `C2` `C2` LONGBLOB NOT NULL;" );
+                    """
+                    ALTER TABLE `foo`.`T`
+                                          CHANGE COLUMN `C2` `C2` LONGBLOB NOT NULL;
+                    """ );
         }
     }
 
@@ -249,9 +263,11 @@ public class MySqlColumnBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
-                    $@"ALTER TABLE `foo`.`T`
-                      DROP COLUMN `C2`,
-                      ADD COLUMN `C2` LONGBLOB GENERATED ALWAYS AS (1) {expectedStorage} NOT NULL;" );
+                    $"""
+                     ALTER TABLE `foo`.`T`
+                                           DROP COLUMN `C2`,
+                                           ADD COLUMN `C2` LONGBLOB GENERATED ALWAYS AS (1) {expectedStorage} NOT NULL;
+                     """ );
         }
     }
 
@@ -335,8 +351,10 @@ public class MySqlColumnBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
-                    @"ALTER TABLE `foo`.`T`
-                      CHANGE COLUMN `C2` `bar` LONGBLOB NOT NULL;" );
+                    """
+                    ALTER TABLE `foo`.`T`
+                                          CHANGE COLUMN `C2` `bar` LONGBLOB NOT NULL;
+                    """ );
         }
     }
 
@@ -484,8 +502,10 @@ public class MySqlColumnBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
-                    @"ALTER TABLE `foo`.`T`
-                      CHANGE COLUMN `C2` `C2` INT NOT NULL;" );
+                    """
+                    ALTER TABLE `foo`.`T`
+                                          CHANGE COLUMN `C2` `C2` INT NOT NULL;
+                    """ );
         }
     }
 
@@ -653,8 +673,10 @@ public class MySqlColumnBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
-                    @"ALTER TABLE `foo`.`T`
-                      CHANGE COLUMN `C2` `C2` LONGBLOB;" );
+                    """
+                    ALTER TABLE `foo`.`T`
+                                          CHANGE COLUMN `C2` `C2` LONGBLOB;
+                    """ );
         }
     }
 
@@ -679,8 +701,10 @@ public class MySqlColumnBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
-                    @"ALTER TABLE `foo`.`T`
-                      CHANGE COLUMN `C2` `C2` LONGBLOB NOT NULL;" );
+                    """
+                    ALTER TABLE `foo`.`T`
+                                          CHANGE COLUMN `C2` `C2` LONGBLOB NOT NULL;
+                    """ );
         }
     }
 
@@ -705,8 +729,10 @@ public class MySqlColumnBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
-                    @"ALTER TABLE `foo`.`T`
-                      CHANGE COLUMN `C2` `C2` LONGBLOB NOT NULL DEFAULT (X'010203');" );
+                    """
+                    ALTER TABLE `foo`.`T`
+                                          CHANGE COLUMN `C2` `C2` LONGBLOB NOT NULL DEFAULT (X'010203');
+                    """ );
         }
     }
 
@@ -731,8 +757,10 @@ public class MySqlColumnBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
-                    @"ALTER TABLE `foo`.`T`
-                      CHANGE COLUMN `C2` `C2` INT NOT NULL;" );
+                    """
+                    ALTER TABLE `foo`.`T`
+                                          CHANGE COLUMN `C2` `C2` INT NOT NULL;
+                    """ );
         }
     }
 
@@ -851,8 +879,10 @@ public class MySqlColumnBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
-                    @"ALTER TABLE `foo`.`T`
-                      CHANGE COLUMN `C2` `C2` LONGBLOB NOT NULL DEFAULT (42);" );
+                    """
+                    ALTER TABLE `foo`.`T`
+                                          CHANGE COLUMN `C2` `C2` LONGBLOB NOT NULL DEFAULT (42);
+                    """ );
         }
     }
 
@@ -877,8 +907,10 @@ public class MySqlColumnBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
-                    @"ALTER TABLE `foo`.`T`
-                      CHANGE COLUMN `C2` `C2` LONGBLOB NOT NULL;" );
+                    """
+                    ALTER TABLE `foo`.`T`
+                                          CHANGE COLUMN `C2` `C2` LONGBLOB NOT NULL;
+                    """ );
         }
     }
 
@@ -903,8 +935,10 @@ public class MySqlColumnBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
-                    @"ALTER TABLE `foo`.`T`
-                      CHANGE COLUMN `C2` `C2` LONGBLOB NOT NULL DEFAULT (123);" );
+                    """
+                    ALTER TABLE `foo`.`T`
+                                          CHANGE COLUMN `C2` `C2` LONGBLOB NOT NULL DEFAULT (123);
+                    """ );
         }
     }
 
@@ -930,8 +964,10 @@ public class MySqlColumnBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
-                    @"ALTER TABLE `foo`.`T`
-                      CHANGE COLUMN `C2` `C2` BIGINT NOT NULL DEFAULT ((10 + 50) + GREATEST(100, 80));" );
+                    """
+                    ALTER TABLE `foo`.`T`
+                                          CHANGE COLUMN `C2` `C2` BIGINT NOT NULL DEFAULT ((10 + 50) + GREATEST(100, 80));
+                    """ );
         }
     }
 
@@ -957,8 +993,10 @@ public class MySqlColumnBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
-                    @"ALTER TABLE `foo`.`T`
-                      CHANGE COLUMN `C2` `C2` LONGBLOB NOT NULL DEFAULT (123);" );
+                    """
+                    ALTER TABLE `foo`.`T`
+                                          CHANGE COLUMN `C2` `C2` LONGBLOB NOT NULL DEFAULT (123);
+                    """ );
         }
     }
 
@@ -984,8 +1022,10 @@ public class MySqlColumnBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
-                    @"ALTER TABLE `foo`.`T`
-                      CHANGE COLUMN `C2` `C2` LONGBLOB NOT NULL DEFAULT (123);" );
+                    """
+                    ALTER TABLE `foo`.`T`
+                                          CHANGE COLUMN `C2` `C2` LONGBLOB NOT NULL DEFAULT (123);
+                    """ );
         }
     }
 
@@ -1118,8 +1158,10 @@ public class MySqlColumnBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
-                    @"ALTER TABLE `foo`.`T`
-                      CHANGE COLUMN `C3` `C3` LONGBLOB NOT NULL;" );
+                    """
+                    ALTER TABLE `foo`.`T`
+                                          CHANGE COLUMN `C3` `C3` LONGBLOB NOT NULL;
+                    """ );
         }
     }
 
@@ -1147,9 +1189,11 @@ public class MySqlColumnBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
-                    @"ALTER TABLE `foo`.`T`
-                      DROP COLUMN `C3`,
-                      ADD COLUMN `C3` LONGBLOB NOT NULL DEFAULT (X'');" );
+                    """
+                    ALTER TABLE `foo`.`T`
+                                          DROP COLUMN `C3`,
+                                          ADD COLUMN `C3` LONGBLOB NOT NULL DEFAULT (X'');
+                    """ );
         }
     }
 
@@ -1181,8 +1225,10 @@ public class MySqlColumnBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
-                    @"ALTER TABLE `foo`.`T`
-                      CHANGE COLUMN `C3` `C3` LONGBLOB GENERATED ALWAYS AS (`C2` + 1) STORED NOT NULL;" );
+                    """
+                    ALTER TABLE `foo`.`T`
+                                          CHANGE COLUMN `C3` `C3` LONGBLOB GENERATED ALWAYS AS (`C2` + 1) STORED NOT NULL;
+                    """ );
         }
     }
 
@@ -1214,9 +1260,11 @@ public class MySqlColumnBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
-                    @"ALTER TABLE `foo`.`T`
-                      DROP COLUMN `C3`,
-                      ADD COLUMN `C3` LONGBLOB GENERATED ALWAYS AS (`C2` + 1) VIRTUAL NOT NULL;" );
+                    """
+                    ALTER TABLE `foo`.`T`
+                                          DROP COLUMN `C3`,
+                                          ADD COLUMN `C3` LONGBLOB GENERATED ALWAYS AS (`C2` + 1) VIRTUAL NOT NULL;
+                    """ );
         }
     }
 
@@ -1254,8 +1302,10 @@ public class MySqlColumnBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
-                    $@"ALTER TABLE `foo`.`T`
-                      CHANGE COLUMN `C3` `C3` LONGBLOB GENERATED ALWAYS AS (`C2` + 1) {expectedStorage} NOT NULL;" );
+                    $"""
+                     ALTER TABLE `foo`.`T`
+                                           CHANGE COLUMN `C3` `C3` LONGBLOB GENERATED ALWAYS AS (`C2` + 1) {expectedStorage} NOT NULL;
+                     """ );
         }
     }
 
@@ -1293,9 +1343,11 @@ public class MySqlColumnBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
-                    $@"ALTER TABLE `foo`.`T`
-                      DROP COLUMN `C3`,
-                      ADD COLUMN `C3` LONGBLOB GENERATED ALWAYS AS (`C2` + 1) {expectedStorage} NOT NULL;" );
+                    $"""
+                     ALTER TABLE `foo`.`T`
+                                           DROP COLUMN `C3`,
+                                           ADD COLUMN `C3` LONGBLOB GENERATED ALWAYS AS (`C2` + 1) {expectedStorage} NOT NULL;
+                     """ );
         }
     }
 
@@ -1332,9 +1384,11 @@ public class MySqlColumnBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
-                    $@"ALTER TABLE `foo`.`T`
-                      DROP COLUMN `C3`,
-                      ADD COLUMN `bar` LONGBLOB GENERATED ALWAYS AS (`C2` + 1) {expectedStorage} NOT NULL;" );
+                    $"""
+                     ALTER TABLE `foo`.`T`
+                                           DROP COLUMN `C3`,
+                                           ADD COLUMN `bar` LONGBLOB GENERATED ALWAYS AS (`C2` + 1) {expectedStorage} NOT NULL;
+                     """ );
         }
     }
 
@@ -1367,8 +1421,10 @@ public class MySqlColumnBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
-                    @"ALTER TABLE `foo`.`T`
-                      CHANGE COLUMN `C3` `C3` LONGBLOB GENERATED ALWAYS AS (`C2` + 1) STORED NOT NULL;" );
+                    """
+                    ALTER TABLE `foo`.`T`
+                                          CHANGE COLUMN `C3` `C3` LONGBLOB GENERATED ALWAYS AS (`C2` + 1) STORED NOT NULL;
+                    """ );
         }
     }
 
@@ -1508,8 +1564,10 @@ public class MySqlColumnBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
-                    @"ALTER TABLE `foo`.`T`
-                      DROP COLUMN `C2`;" );
+                    """
+                    ALTER TABLE `foo`.`T`
+                                          DROP COLUMN `C2`;
+                    """ );
         }
     }
 

@@ -12,11 +12,10 @@ public class FractionTests : TestsBase
     {
         var sut = default( Fraction );
 
-        using ( new AssertionScope() )
-        {
-            sut.Numerator.Should().Be( 0 );
-            sut.Denominator.Should().Be( 1 );
-        }
+        Assertion.All(
+                sut.Numerator.TestEquals( 0 ),
+                sut.Denominator.TestEquals( 1UL ) )
+            .Go();
     }
 
     [Fact]
@@ -24,11 +23,10 @@ public class FractionTests : TestsBase
     {
         var sut = Fraction.Zero;
 
-        using ( new AssertionScope() )
-        {
-            sut.Numerator.Should().Be( 0 );
-            sut.Denominator.Should().Be( 1 );
-        }
+        Assertion.All(
+                sut.Numerator.TestEquals( 0 ),
+                sut.Denominator.TestEquals( 1UL ) )
+            .Go();
     }
 
     [Fact]
@@ -36,11 +34,10 @@ public class FractionTests : TestsBase
     {
         var sut = Fraction.One;
 
-        using ( new AssertionScope() )
-        {
-            sut.Numerator.Should().Be( 1 );
-            sut.Denominator.Should().Be( 1 );
-        }
+        Assertion.All(
+                sut.Numerator.TestEquals( 1 ),
+                sut.Denominator.TestEquals( 1UL ) )
+            .Go();
     }
 
     [Fact]
@@ -48,11 +45,10 @@ public class FractionTests : TestsBase
     {
         var sut = Fraction.MinValue;
 
-        using ( new AssertionScope() )
-        {
-            sut.Numerator.Should().Be( long.MinValue );
-            sut.Denominator.Should().Be( 1 );
-        }
+        Assertion.All(
+                sut.Numerator.TestEquals( long.MinValue ),
+                sut.Denominator.TestEquals( 1UL ) )
+            .Go();
     }
 
     [Fact]
@@ -60,11 +56,10 @@ public class FractionTests : TestsBase
     {
         var sut = Fraction.MaxValue;
 
-        using ( new AssertionScope() )
-        {
-            sut.Numerator.Should().Be( long.MaxValue );
-            sut.Denominator.Should().Be( 1 );
-        }
+        Assertion.All(
+                sut.Numerator.TestEquals( long.MaxValue ),
+                sut.Denominator.TestEquals( 1UL ) )
+            .Go();
     }
 
     [Fact]
@@ -72,11 +67,10 @@ public class FractionTests : TestsBase
     {
         var sut = Fraction.Epsilon;
 
-        using ( new AssertionScope() )
-        {
-            sut.Numerator.Should().Be( 1 );
-            sut.Denominator.Should().Be( ulong.MaxValue );
-        }
+        Assertion.All(
+                sut.Numerator.TestEquals( 1 ),
+                sut.Denominator.TestEquals( ulong.MaxValue ) )
+            .Go();
     }
 
     [Theory]
@@ -89,11 +83,10 @@ public class FractionTests : TestsBase
     {
         var sut = new Fraction( value );
 
-        using ( new AssertionScope() )
-        {
-            sut.Numerator.Should().Be( value );
-            sut.Denominator.Should().Be( 1 );
-        }
+        Assertion.All(
+                sut.Numerator.TestEquals( value ),
+                sut.Denominator.TestEquals( 1UL ) )
+            .Go();
     }
 
     [Theory]
@@ -111,18 +104,17 @@ public class FractionTests : TestsBase
     {
         var sut = new Fraction( numerator, denominator );
 
-        using ( new AssertionScope() )
-        {
-            sut.Numerator.Should().Be( numerator );
-            sut.Denominator.Should().Be( denominator );
-        }
+        Assertion.All(
+                sut.Numerator.TestEquals( numerator ),
+                sut.Denominator.TestEquals( denominator ) )
+            .Go();
     }
 
     [Fact]
     public void Ctor_WithDenominator_ShouldThrowArgumentOutOfRangeException_WhenDenominatorEqualsZero()
     {
         var action = Lambda.Of( () => new Fraction( Fixture.Create<long>(), denominator: 0 ) );
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Theory]
@@ -140,18 +132,17 @@ public class FractionTests : TestsBase
     {
         var sut = Fraction.Create( ( decimal )value, denominator );
 
-        using ( new AssertionScope() )
-        {
-            sut.Numerator.Should().Be( expectedNumerator );
-            sut.Denominator.Should().Be( denominator );
-        }
+        Assertion.All(
+                sut.Numerator.TestEquals( expectedNumerator ),
+                sut.Denominator.TestEquals( denominator ) )
+            .Go();
     }
 
     [Fact]
     public void Create_WithDecimal_ShouldThrowOverflowException_WhenNumeratorIsTooLarge()
     {
         var action = Lambda.Of( () => Fraction.Create( 1.0000001m, ulong.MaxValue ) );
-        action.Should().ThrowExactly<OverflowException>();
+        action.Test( exc => exc.TestType().Exact<OverflowException>() ).Go();
     }
 
     [Theory]
@@ -169,18 +160,17 @@ public class FractionTests : TestsBase
     {
         var sut = Fraction.Create( value, denominator );
 
-        using ( new AssertionScope() )
-        {
-            sut.Numerator.Should().Be( expectedNumerator );
-            sut.Denominator.Should().Be( denominator );
-        }
+        Assertion.All(
+                sut.Numerator.TestEquals( expectedNumerator ),
+                sut.Denominator.TestEquals( denominator ) )
+            .Go();
     }
 
     [Fact]
     public void Create_WithDouble_ShouldThrowOverflowException_WhenNumeratorIsTooLarge()
     {
         var action = Lambda.Of( () => Fraction.Create( 1.0000001, ulong.MaxValue ) );
-        action.Should().ThrowExactly<OverflowException>();
+        action.Test( exc => exc.TestType().Exact<OverflowException>() ).Go();
     }
 
     [Theory]
@@ -192,11 +182,10 @@ public class FractionTests : TestsBase
     {
         var sut = Fraction.Create( Fixed.CreateRaw( rawValue, precision ) );
 
-        using ( new AssertionScope() )
-        {
-            sut.Numerator.Should().Be( rawValue );
-            sut.Denominator.Should().Be( expectedDenominator );
-        }
+        Assertion.All(
+                sut.Numerator.TestEquals( rawValue ),
+                sut.Denominator.TestEquals( expectedDenominator ) )
+            .Go();
     }
 
     [Fact]
@@ -204,7 +193,7 @@ public class FractionTests : TestsBase
     {
         var sut = new Fraction( 1234, 567 );
         var result = sut.ToString();
-        result.Should().Be( "1234 / 567" );
+        result.TestEquals( "1234 / 567" ).Go();
     }
 
     [Fact]
@@ -216,7 +205,7 @@ public class FractionTests : TestsBase
         var aHash = a.GetHashCode();
         var bHash = b.GetHashCode();
 
-        aHash.Should().Be( bHash );
+        aHash.TestEquals( bHash ).Go();
     }
 
     [Theory]
@@ -228,19 +217,18 @@ public class FractionTests : TestsBase
         var sut = new Fraction( numerator, denominator );
         var result = sut.Abs();
 
-        using ( new AssertionScope() )
-        {
-            result.Numerator.Should().Be( expectedNumerator );
-            result.Denominator.Should().Be( sut.Denominator );
-        }
+        Assertion.All(
+                result.Numerator.TestEquals( expectedNumerator ),
+                result.Denominator.TestEquals( sut.Denominator ) )
+            .Go();
     }
 
     [Fact]
     public void Abs_ShouldThrowOverflowException_WhenNumeratorEqualsMinValue()
     {
-        var sut = new Fraction( long.MinValue, 1 );
+        var sut = new Fraction( long.MinValue );
         var action = Lambda.Of( () => sut.Abs() );
-        action.Should().ThrowExactly<OverflowException>();
+        action.Test( exc => exc.TestType().Exact<OverflowException>() ).Go();
     }
 
     [Theory]
@@ -261,11 +249,10 @@ public class FractionTests : TestsBase
         var sut = new Fraction( numerator, denominator );
         var result = sut.Truncate();
 
-        using ( new AssertionScope() )
-        {
-            result.Numerator.Should().Be( expectedNumerator );
-            result.Denominator.Should().Be( 1 );
-        }
+        Assertion.All(
+                result.Numerator.TestEquals( expectedNumerator ),
+                result.Denominator.TestEquals( 1UL ) )
+            .Go();
     }
 
     [Theory]
@@ -286,11 +273,10 @@ public class FractionTests : TestsBase
         var sut = new Fraction( numerator, denominator );
         var result = sut.Floor();
 
-        using ( new AssertionScope() )
-        {
-            result.Numerator.Should().Be( expectedNumerator );
-            result.Denominator.Should().Be( 1 );
-        }
+        Assertion.All(
+                result.Numerator.TestEquals( expectedNumerator ),
+                result.Denominator.TestEquals( 1UL ) )
+            .Go();
     }
 
     [Fact]
@@ -298,7 +284,7 @@ public class FractionTests : TestsBase
     {
         var sut = new Fraction( long.MinValue, 3 );
         var action = Lambda.Of( () => sut.Floor() );
-        action.Should().ThrowExactly<OverflowException>();
+        action.Test( exc => exc.TestType().Exact<OverflowException>() ).Go();
     }
 
     [Theory]
@@ -319,11 +305,10 @@ public class FractionTests : TestsBase
         var sut = new Fraction( numerator, denominator );
         var result = sut.Ceiling();
 
-        using ( new AssertionScope() )
-        {
-            result.Numerator.Should().Be( expectedNumerator );
-            result.Denominator.Should().Be( 1 );
-        }
+        Assertion.All(
+                result.Numerator.TestEquals( expectedNumerator ),
+                result.Denominator.TestEquals( 1UL ) )
+            .Go();
     }
 
     [Fact]
@@ -331,7 +316,7 @@ public class FractionTests : TestsBase
     {
         var sut = new Fraction( long.MaxValue, 2 );
         var action = Lambda.Of( () => sut.Ceiling() );
-        action.Should().ThrowExactly<OverflowException>();
+        action.Test( exc => exc.TestType().Exact<OverflowException>() ).Go();
     }
 
     [Theory]
@@ -350,11 +335,10 @@ public class FractionTests : TestsBase
         var sut = new Fraction( numerator, denominator );
         var result = sut.Reciprocal();
 
-        using ( new AssertionScope() )
-        {
-            result.Numerator.Should().Be( expectedNumerator );
-            result.Denominator.Should().Be( expectedDenominator );
-        }
+        Assertion.All(
+                result.Numerator.TestEquals( expectedNumerator ),
+                result.Denominator.TestEquals( expectedDenominator ) )
+            .Go();
     }
 
     [Fact]
@@ -362,7 +346,7 @@ public class FractionTests : TestsBase
     {
         var sut = new Fraction( 1, ( ulong )long.MaxValue + 1 );
         var action = Lambda.Of( () => sut.Reciprocal() );
-        action.Should().ThrowExactly<OverflowException>();
+        action.Test( exc => exc.TestType().Exact<OverflowException>() ).Go();
     }
 
     [Fact]
@@ -370,7 +354,7 @@ public class FractionTests : TestsBase
     {
         var sut = new Fraction( 0, 123 );
         var action = Lambda.Of( () => sut.Reciprocal() );
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Theory]
@@ -397,11 +381,10 @@ public class FractionTests : TestsBase
         var sut = new Fraction( numerator, denominator );
         var result = sut.Simplify();
 
-        using ( new AssertionScope() )
-        {
-            result.Numerator.Should().Be( expectedNumerator );
-            result.Denominator.Should().Be( expectedDenominator );
-        }
+        Assertion.All(
+                result.Numerator.TestEquals( expectedNumerator ),
+                result.Denominator.TestEquals( expectedDenominator ) )
+            .Go();
     }
 
     [Theory]
@@ -417,11 +400,10 @@ public class FractionTests : TestsBase
         var sut = new Fraction( numerator, denominator );
         var result = sut.SetNumerator( value );
 
-        using ( new AssertionScope() )
-        {
-            result.Numerator.Should().Be( value );
-            result.Denominator.Should().Be( sut.Denominator );
-        }
+        Assertion.All(
+                result.Numerator.TestEquals( value ),
+                result.Denominator.TestEquals( sut.Denominator ) )
+            .Go();
     }
 
     [Theory]
@@ -434,11 +416,10 @@ public class FractionTests : TestsBase
         var sut = new Fraction( numerator, denominator );
         var result = sut.SetDenominator( value );
 
-        using ( new AssertionScope() )
-        {
-            result.Numerator.Should().Be( sut.Numerator );
-            result.Denominator.Should().Be( value );
-        }
+        Assertion.All(
+                result.Numerator.TestEquals( sut.Numerator ),
+                result.Denominator.TestEquals( value ) )
+            .Go();
     }
 
     [Fact]
@@ -446,7 +427,7 @@ public class FractionTests : TestsBase
     {
         var sut = new Fraction( 123, 456 );
         var action = Lambda.Of( () => sut.SetDenominator( 0 ) );
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Theory]
@@ -467,11 +448,10 @@ public class FractionTests : TestsBase
         var sut = new Fraction( numerator, denominator );
         var result = sut.Round( newDenominator );
 
-        using ( new AssertionScope() )
-        {
-            result.Numerator.Should().Be( expectedNumerator );
-            result.Denominator.Should().Be( newDenominator );
-        }
+        Assertion.All(
+                result.Numerator.TestEquals( expectedNumerator ),
+                result.Denominator.TestEquals( newDenominator ) )
+            .Go();
     }
 
     [Fact]
@@ -479,23 +459,23 @@ public class FractionTests : TestsBase
     {
         var sut = new Fraction( 123, 456 );
         var action = Lambda.Of( () => sut.Round( 0 ) );
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Fact]
     public void Round_ShouldThrowOverflowException_WhenNumeratorDropsBelowMinPossibleValue()
     {
-        var sut = new Fraction( long.MinValue / 2 - 1, 1 );
+        var sut = new Fraction( long.MinValue / 2 - 1 );
         var action = Lambda.Of( () => sut.Round( 2 ) );
-        action.Should().ThrowExactly<OverflowException>();
+        action.Test( exc => exc.TestType().Exact<OverflowException>() ).Go();
     }
 
     [Fact]
     public void Round_ShouldThrowOverflowException_WhenNumeratorRisesAboveMaxPossibleValue()
     {
-        var sut = new Fraction( long.MaxValue / 2 + 1, 1 );
+        var sut = new Fraction( long.MaxValue / 2 + 1 );
         var action = Lambda.Of( () => sut.Round( 2 ) );
-        action.Should().ThrowExactly<OverflowException>();
+        action.Test( exc => exc.TestType().Exact<OverflowException>() ).Go();
     }
 
     [Fact]
@@ -504,11 +484,10 @@ public class FractionTests : TestsBase
         var value = Fixed.CreateRaw( 1234, 5 );
         var result = ( Fraction )value;
 
-        using ( new AssertionScope() )
-        {
-            result.Numerator.Should().Be( value.RawValue );
-            result.Denominator.Should().Be( 100000 );
-        }
+        Assertion.All(
+                result.Numerator.TestEquals( value.RawValue ),
+                result.Denominator.TestEquals( 100000UL ) )
+            .Go();
     }
 
     [Fact]
@@ -516,7 +495,7 @@ public class FractionTests : TestsBase
     {
         var sut = new Fraction( 125, 50 );
         var result = ( double )sut;
-        result.Should().Be( 2.5 );
+        result.TestEquals( 2.5 ).Go();
     }
 
     [Fact]
@@ -524,7 +503,7 @@ public class FractionTests : TestsBase
     {
         var sut = new Fraction( 125, 50 );
         var result = ( decimal )sut;
-        result.Should().Be( 2.5m );
+        result.TestEquals( 2.5m ).Go();
     }
 
     [Theory]
@@ -538,19 +517,18 @@ public class FractionTests : TestsBase
         var sut = new Fraction( numerator, denominator );
         var result = -sut;
 
-        using ( new AssertionScope() )
-        {
-            result.Numerator.Should().Be( expectedNumerator );
-            result.Denominator.Should().Be( sut.Denominator );
-        }
+        Assertion.All(
+                result.Numerator.TestEquals( expectedNumerator ),
+                result.Denominator.TestEquals( sut.Denominator ) )
+            .Go();
     }
 
     [Fact]
     public void NegateOperator_ShouldThrowOverflowException_WhenNumeratorEqualsMinValue()
     {
-        var sut = new Fraction( long.MinValue, 1 );
+        var sut = new Fraction( long.MinValue );
         var action = Lambda.Of( () => -sut );
-        action.Should().ThrowExactly<OverflowException>();
+        action.Test( exc => exc.TestType().Exact<OverflowException>() ).Go();
     }
 
     [Theory]
@@ -565,11 +543,10 @@ public class FractionTests : TestsBase
         var sut = new Fraction( numerator, denominator );
         var result = ++sut;
 
-        using ( new AssertionScope() )
-        {
-            result.Numerator.Should().Be( expectedNumerator );
-            result.Denominator.Should().Be( sut.Denominator );
-        }
+        Assertion.All(
+                result.Numerator.TestEquals( expectedNumerator ),
+                result.Denominator.TestEquals( sut.Denominator ) )
+            .Go();
     }
 
     [Fact]
@@ -577,15 +554,15 @@ public class FractionTests : TestsBase
     {
         var sut = new Fraction( 123, ( ulong )long.MaxValue + 1 );
         var action = Lambda.Of( () => ++sut );
-        action.Should().ThrowExactly<OverflowException>();
+        action.Test( exc => exc.TestType().Exact<OverflowException>() ).Go();
     }
 
     [Fact]
     public void IncrementOperator_ShouldThrowOverflowException_WhenNumeratorRisesAboveMaxPossibleValue()
     {
-        var sut = new Fraction( long.MaxValue, 1 );
+        var sut = new Fraction( long.MaxValue );
         var action = Lambda.Of( () => ++sut );
-        action.Should().ThrowExactly<OverflowException>();
+        action.Test( exc => exc.TestType().Exact<OverflowException>() ).Go();
     }
 
     [Theory]
@@ -600,19 +577,18 @@ public class FractionTests : TestsBase
         var sut = new Fraction( numerator, denominator );
         var result = --sut;
 
-        using ( new AssertionScope() )
-        {
-            result.Numerator.Should().Be( expectedNumerator );
-            result.Denominator.Should().Be( sut.Denominator );
-        }
+        Assertion.All(
+                result.Numerator.TestEquals( expectedNumerator ),
+                result.Denominator.TestEquals( sut.Denominator ) )
+            .Go();
     }
 
     [Fact]
     public void DecrementOperator_ShouldThrowOverflowException_WhenNumeratorDropsBelowMinPossibleValue()
     {
-        var sut = new Fraction( long.MinValue, 1 );
+        var sut = new Fraction( long.MinValue );
         var action = Lambda.Of( () => --sut );
-        action.Should().ThrowExactly<OverflowException>();
+        action.Test( exc => exc.TestType().Exact<OverflowException>() ).Go();
     }
 
     [Fact]
@@ -620,7 +596,7 @@ public class FractionTests : TestsBase
     {
         var sut = new Fraction( 123, ( ulong )long.MaxValue + 1 );
         var action = Lambda.Of( () => --sut );
-        action.Should().ThrowExactly<OverflowException>();
+        action.Test( exc => exc.TestType().Exact<OverflowException>() ).Go();
     }
 
     [Theory]
@@ -640,11 +616,10 @@ public class FractionTests : TestsBase
 
         var result = a + b;
 
-        using ( new AssertionScope() )
-        {
-            result.Numerator.Should().Be( exn );
-            result.Denominator.Should().Be( exd );
-        }
+        Assertion.All(
+                result.Numerator.TestEquals( exn ),
+                result.Denominator.TestEquals( exd ) )
+            .Go();
     }
 
     [Theory]
@@ -659,7 +634,7 @@ public class FractionTests : TestsBase
 
         var action = Lambda.Of( () => a + b );
 
-        action.Should().ThrowExactly<OverflowException>();
+        action.Test( exc => exc.TestType().Exact<OverflowException>() ).Go();
     }
 
     [Fact]
@@ -670,7 +645,7 @@ public class FractionTests : TestsBase
 
         var action = Lambda.Of( () => a + b );
 
-        action.Should().ThrowExactly<OverflowException>();
+        action.Test( exc => exc.TestType().Exact<OverflowException>() ).Go();
     }
 
     [Theory]
@@ -690,11 +665,10 @@ public class FractionTests : TestsBase
 
         var result = a - b;
 
-        using ( new AssertionScope() )
-        {
-            result.Numerator.Should().Be( exn );
-            result.Denominator.Should().Be( exd );
-        }
+        Assertion.All(
+                result.Numerator.TestEquals( exn ),
+                result.Denominator.TestEquals( exd ) )
+            .Go();
     }
 
     [Theory]
@@ -713,7 +687,7 @@ public class FractionTests : TestsBase
 
         var action = Lambda.Of( () => a - b );
 
-        action.Should().ThrowExactly<OverflowException>();
+        action.Test( exc => exc.TestType().Exact<OverflowException>() ).Go();
     }
 
     [Fact]
@@ -724,7 +698,7 @@ public class FractionTests : TestsBase
 
         var action = Lambda.Of( () => a - b );
 
-        action.Should().ThrowExactly<OverflowException>();
+        action.Test( exc => exc.TestType().Exact<OverflowException>() ).Go();
     }
 
     [Theory]
@@ -745,11 +719,10 @@ public class FractionTests : TestsBase
 
         var result = a * b;
 
-        using ( new AssertionScope() )
-        {
-            result.Numerator.Should().Be( exn );
-            result.Denominator.Should().Be( exd );
-        }
+        Assertion.All(
+                result.Numerator.TestEquals( exn ),
+                result.Denominator.TestEquals( exd ) )
+            .Go();
     }
 
     [Theory]
@@ -766,7 +739,7 @@ public class FractionTests : TestsBase
 
         var action = Lambda.Of( () => a * b );
 
-        action.Should().ThrowExactly<OverflowException>();
+        action.Test( exc => exc.TestType().Exact<OverflowException>() ).Go();
     }
 
     [Fact]
@@ -777,7 +750,7 @@ public class FractionTests : TestsBase
 
         var action = Lambda.Of( () => a * b );
 
-        action.Should().ThrowExactly<OverflowException>();
+        action.Test( exc => exc.TestType().Exact<OverflowException>() ).Go();
     }
 
     [Theory]
@@ -802,11 +775,10 @@ public class FractionTests : TestsBase
 
         var result = a * b;
 
-        using ( new AssertionScope() )
-        {
-            result.Numerator.Should().Be( expectedNumerator );
-            result.Denominator.Should().Be( a.Denominator );
-        }
+        Assertion.All(
+                result.Numerator.TestEquals( expectedNumerator ),
+                result.Denominator.TestEquals( a.Denominator ) )
+            .Go();
     }
 
     [Theory]
@@ -831,11 +803,10 @@ public class FractionTests : TestsBase
 
         var result = b * a;
 
-        using ( new AssertionScope() )
-        {
-            result.Numerator.Should().Be( expectedNumerator );
-            result.Denominator.Should().Be( a.Denominator );
-        }
+        Assertion.All(
+                result.Numerator.TestEquals( expectedNumerator ),
+                result.Denominator.TestEquals( a.Denominator ) )
+            .Go();
     }
 
     [Theory]
@@ -856,22 +827,21 @@ public class FractionTests : TestsBase
 
         var result = a / b;
 
-        using ( new AssertionScope() )
-        {
-            result.Numerator.Should().Be( exn );
-            result.Denominator.Should().Be( exd );
-        }
+        Assertion.All(
+                result.Numerator.TestEquals( exn ),
+                result.Denominator.TestEquals( exd ) )
+            .Go();
     }
 
     [Fact]
     public void DivideOperator_ShouldThrowDivideByZeroException_WhenDivisorEqualsZero()
     {
         var a = new Fraction( 123, 456 );
-        var b = new Fraction( 0, 1 );
+        var b = new Fraction( 0 );
 
         var action = Lambda.Of( () => a / b );
 
-        action.Should().ThrowExactly<DivideByZeroException>();
+        action.Test( exc => exc.TestType().Exact<DivideByZeroException>() ).Go();
     }
 
     [Theory]
@@ -884,18 +854,18 @@ public class FractionTests : TestsBase
 
         var action = Lambda.Of( () => a / b );
 
-        action.Should().ThrowExactly<OverflowException>();
+        action.Test( exc => exc.TestType().Exact<OverflowException>() ).Go();
     }
 
     [Fact]
     public void DivideOperator_ShouldThrowOverflowException_WhenDenominatorRisesAboveMaxPossibleValue()
     {
         var a = new Fraction( 1, ulong.MaxValue / 2 );
-        var b = new Fraction( 3, 1 );
+        var b = new Fraction( 3 );
 
         var action = Lambda.Of( () => a / b );
 
-        action.Should().ThrowExactly<OverflowException>();
+        action.Test( exc => exc.TestType().Exact<OverflowException>() ).Go();
     }
 
     [Theory]
@@ -916,22 +886,21 @@ public class FractionTests : TestsBase
 
         var result = a % b;
 
-        using ( new AssertionScope() )
-        {
-            result.Numerator.Should().Be( exn );
-            result.Denominator.Should().Be( exd );
-        }
+        Assertion.All(
+                result.Numerator.TestEquals( exn ),
+                result.Denominator.TestEquals( exd ) )
+            .Go();
     }
 
     [Fact]
     public void ModuloOperator_ShouldThrowDivideByZeroException_WhenDivisorEqualsZero()
     {
         var a = new Fraction( 123, 456 );
-        var b = new Fraction( 0, 1 );
+        var b = new Fraction( 0 );
 
         var action = Lambda.Of( () => a % b );
 
-        action.Should().ThrowExactly<DivideByZeroException>();
+        action.Test( exc => exc.TestType().Exact<DivideByZeroException>() ).Go();
     }
 
     [Theory]
@@ -943,7 +912,7 @@ public class FractionTests : TestsBase
 
         var result = a == b;
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -955,7 +924,7 @@ public class FractionTests : TestsBase
 
         var result = a != b;
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -967,7 +936,7 @@ public class FractionTests : TestsBase
 
         var result = a >= b;
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -979,7 +948,7 @@ public class FractionTests : TestsBase
 
         var result = a > b;
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -991,7 +960,7 @@ public class FractionTests : TestsBase
 
         var result = a <= b;
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -1003,6 +972,6 @@ public class FractionTests : TestsBase
 
         var result = a < b;
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 }

@@ -69,10 +69,12 @@ public class SqlDatabaseFactoryTests : TestsBase
                     "DbTransaction[0]:DbCommand[0].Dispose(True)",
                     "DbTransaction[0].Dispose(True)",
                     "CreateDbCommand(DbCommand[1])",
-                    @"DbCommand[1].ExecuteReader(DbDataReader[0] => FROM [common].[__VersionHistory]
-ORDER BY ([common].[__VersionHistory].[Ordinal] : System.Int32) ASC
-SELECT
-  *;)",
+                    """
+                    DbCommand[1].ExecuteReader(DbDataReader[0] => FROM [common].[__VersionHistory]
+                    ORDER BY ([common].[__VersionHistory].[Ordinal] : System.Int32) ASC
+                    SELECT
+                      *;)
+                    """,
                     "DbCommand[1].DbDataReader[0].Close",
                     "DbCommand[1].Dispose(True)",
                     "ChangeState(Open => Closed)",
@@ -109,10 +111,12 @@ SELECT
                     "DbTransaction[0]:DbCommand[0].Dispose(True)",
                     "DbTransaction[0].Dispose(True)",
                     "CreateDbCommand(DbCommand[1])",
-                    @"DbCommand[1].ExecuteReader(DbDataReader[0] => FROM [foo].[bar]
-ORDER BY ([foo].[bar].[Ordinal] : System.Int32) ASC
-SELECT
-  *;)",
+                    """
+                    DbCommand[1].ExecuteReader(DbDataReader[0] => FROM [foo].[bar]
+                    ORDER BY ([foo].[bar].[Ordinal] : System.Int32) ASC
+                    SELECT
+                      *;)
+                    """,
                     "DbCommand[1].DbDataReader[0].Close",
                     "DbCommand[1].Dispose(True)",
                     "ChangeState(Open => Closed)",
@@ -138,10 +142,12 @@ SELECT
                 .BeSequentiallyEqualTo(
                     "ChangeState(Closed => Open)",
                     "CreateDbCommand(DbCommand[0])",
-                    @"DbCommand[0].ExecuteReader(DbDataReader[0] => FROM [common].[__VersionHistory]
-ORDER BY ([common].[__VersionHistory].[Ordinal] : System.Int32) ASC
-SELECT
-  *;)",
+                    """
+                    DbCommand[0].ExecuteReader(DbDataReader[0] => FROM [common].[__VersionHistory]
+                    ORDER BY ([common].[__VersionHistory].[Ordinal] : System.Int32) ASC
+                    SELECT
+                      *;)
+                    """,
                     "DbCommand[0].DbDataReader[0].Close",
                     "DbCommand[0].Dispose(True)",
                     "ChangeState(Open => Closed)",
@@ -172,11 +178,13 @@ SELECT
                 .BeSequentiallyEqualTo(
                     "ChangeState(Closed => Open)",
                     "CreateDbCommand(DbCommand[0])",
-                    @"DbCommand[0].ExecuteReader(DbDataReader[0] => FROM [common].[__VersionHistory]
-LIMIT (""1"" : System.Int32)
-ORDER BY ([common].[__VersionHistory].[Ordinal] : System.Int32) DESC
-SELECT
-  *;)",
+                    """
+                    DbCommand[0].ExecuteReader(DbDataReader[0] => FROM [common].[__VersionHistory]
+                    LIMIT ("1" : System.Int32)
+                    ORDER BY ([common].[__VersionHistory].[Ordinal] : System.Int32) DESC
+                    SELECT
+                      *;)
+                    """,
                     "DbCommand[0].DbDataReader[0].Close",
                     "DbCommand[0].Dispose(True)",
                     "ChangeState(Open => Closed)",
@@ -270,10 +278,12 @@ SELECT
                 .BeSequentiallyEqualTo(
                     "ChangeState(Closed => Open)",
                     "CreateDbCommand(DbCommand[0])",
-                    @"DbCommand[0].ExecuteReader(DbDataReader[0] => FROM [common].[__VersionHistory]
-ORDER BY ([common].[__VersionHistory].[Ordinal] : System.Int32) ASC
-SELECT
-  *;)",
+                    """
+                    DbCommand[0].ExecuteReader(DbDataReader[0] => FROM [common].[__VersionHistory]
+                    ORDER BY ([common].[__VersionHistory].[Ordinal] : System.Int32) ASC
+                    SELECT
+                      *;)
+                    """,
                     "DbCommand[0].DbDataReader[0].Close",
                     "DbCommand[0].Dispose(True)",
                     "ChangeState(Open => Closed)",
@@ -337,10 +347,12 @@ SELECT
                 .BeSequentiallyEqualTo(
                     "ChangeState(Closed => Open)",
                     "CreateDbCommand(DbCommand[0])",
-                    @"DbCommand[0].ExecuteReader(DbDataReader[0] => FROM [common].[__VersionHistory]
-ORDER BY ([common].[__VersionHistory].[Ordinal] : System.Int32) ASC
-SELECT
-  *;)",
+                    """
+                    DbCommand[0].ExecuteReader(DbDataReader[0] => FROM [common].[__VersionHistory]
+                    ORDER BY ([common].[__VersionHistory].[Ordinal] : System.Int32) ASC
+                    SELECT
+                      *;)
+                    """,
                     "DbCommand[0].DbDataReader[0].Close",
                     "DbCommand[0].Dispose(True)",
                     "ChangeState(Open => Closed)",
@@ -395,10 +407,12 @@ SELECT
                 .BeSequentiallyEqualTo(
                     "ChangeState(Closed => Open)",
                     "CreateDbCommand(DbCommand[0])",
-                    @"DbCommand[0].ExecuteReader(DbDataReader[0] => FROM [common].[__VersionHistory]
-ORDER BY ([common].[__VersionHistory].[Ordinal] : System.Int32) ASC
-SELECT
-  *;)",
+                    """
+                    DbCommand[0].ExecuteReader(DbDataReader[0] => FROM [common].[__VersionHistory]
+                    ORDER BY ([common].[__VersionHistory].[Ordinal] : System.Int32) ASC
+                    SELECT
+                      *;)
+                    """,
                     "DbCommand[0].DbDataReader[0].Close",
                     "DbCommand[0].Dispose(True)",
                     "ChangeState(Open => Closed)",
@@ -459,10 +473,12 @@ SELECT
                 .BeSequentiallyEqualTo(
                     "ChangeState(Closed => Open)",
                     "CreateDbCommand(DbCommand[0])",
-                    @"DbCommand[0].ExecuteReader(DbDataReader[0] => FROM [common].[__VersionHistory]
-ORDER BY ([common].[__VersionHistory].[Ordinal] : System.Int32) ASC
-SELECT
-  *;)",
+                    """
+                    DbCommand[0].ExecuteReader(DbDataReader[0] => FROM [common].[__VersionHistory]
+                    ORDER BY ([common].[__VersionHistory].[Ordinal] : System.Int32) ASC
+                    SELECT
+                      *;)
+                    """,
                     "DbCommand[0].DbDataReader[0].Close",
                     "DbCommand[0].Dispose(True)",
                     "CreateDbCommand(DbCommand[1])",
@@ -508,27 +524,35 @@ SELECT
                     "CreateDbCommand(DbCommand[3])",
                     "BeginDbTransaction(DbTransaction[0].Serializable)",
                     "DbTransaction[0]:DbCommand[3].ExecuteNonQuery(CREATE [Table] common.T1;)",
-                    @"DbTransaction[0]:DbCommand[1].ExecuteNonQuery(INSERT INTO [common].[__VersionHistory] ([common].[__VersionHistory].[Ordinal] : System.Int32, [common].[__VersionHistory].[VersionMajor] : System.Int32, [common].[__VersionHistory].[VersionMinor] : System.Int32, [common].[__VersionHistory].[VersionBuild] : Nullable<System.Int32>, [common].[__VersionHistory].[VersionRevision] : Nullable<System.Int32>, [common].[__VersionHistory].[Description] : System.String, [common].[__VersionHistory].[CommitDateUtc] : System.DateTime, [common].[__VersionHistory].[CommitDurationInTicks] : System.Int64)
-VALUES
-((@Ordinal : System.Int32), (@VersionMajor : System.Int32), (@VersionMinor : System.Int32), (@VersionBuild : Nullable<System.Int32>), (@VersionRevision : Nullable<System.Int32>), (@Description : System.String), (@CommitDateUtc : System.DateTime), (""0"" : System.Int32));)",
+                    """
+                    DbTransaction[0]:DbCommand[1].ExecuteNonQuery(INSERT INTO [common].[__VersionHistory] ([common].[__VersionHistory].[Ordinal] : System.Int32, [common].[__VersionHistory].[VersionMajor] : System.Int32, [common].[__VersionHistory].[VersionMinor] : System.Int32, [common].[__VersionHistory].[VersionBuild] : Nullable<System.Int32>, [common].[__VersionHistory].[VersionRevision] : Nullable<System.Int32>, [common].[__VersionHistory].[Description] : System.String, [common].[__VersionHistory].[CommitDateUtc] : System.DateTime, [common].[__VersionHistory].[CommitDurationInTicks] : System.Int64)
+                    VALUES
+                    ((@Ordinal : System.Int32), (@VersionMajor : System.Int32), (@VersionMinor : System.Int32), (@VersionBuild : Nullable<System.Int32>), (@VersionRevision : Nullable<System.Int32>), (@Description : System.String), (@CommitDateUtc : System.DateTime), ("0" : System.Int32));)
+                    """,
                     "DbTransaction[0].Commit",
                     "DbTransaction[0].Dispose(True)",
                     "BeginDbTransaction(DbTransaction[1].Serializable)",
                     "DbTransaction[1]:DbCommand[3].ExecuteNonQuery(CREATE [Table] common.T2;)",
-                    @"DbTransaction[1]:DbCommand[1].ExecuteNonQuery(INSERT INTO [common].[__VersionHistory] ([common].[__VersionHistory].[Ordinal] : System.Int32, [common].[__VersionHistory].[VersionMajor] : System.Int32, [common].[__VersionHistory].[VersionMinor] : System.Int32, [common].[__VersionHistory].[VersionBuild] : Nullable<System.Int32>, [common].[__VersionHistory].[VersionRevision] : Nullable<System.Int32>, [common].[__VersionHistory].[Description] : System.String, [common].[__VersionHistory].[CommitDateUtc] : System.DateTime, [common].[__VersionHistory].[CommitDurationInTicks] : System.Int64)
-VALUES
-((@Ordinal : System.Int32), (@VersionMajor : System.Int32), (@VersionMinor : System.Int32), (@VersionBuild : Nullable<System.Int32>), (@VersionRevision : Nullable<System.Int32>), (@Description : System.String), (@CommitDateUtc : System.DateTime), (""0"" : System.Int32));)",
+                    """
+                    DbTransaction[1]:DbCommand[1].ExecuteNonQuery(INSERT INTO [common].[__VersionHistory] ([common].[__VersionHistory].[Ordinal] : System.Int32, [common].[__VersionHistory].[VersionMajor] : System.Int32, [common].[__VersionHistory].[VersionMinor] : System.Int32, [common].[__VersionHistory].[VersionBuild] : Nullable<System.Int32>, [common].[__VersionHistory].[VersionRevision] : Nullable<System.Int32>, [common].[__VersionHistory].[Description] : System.String, [common].[__VersionHistory].[CommitDateUtc] : System.DateTime, [common].[__VersionHistory].[CommitDurationInTicks] : System.Int64)
+                    VALUES
+                    ((@Ordinal : System.Int32), (@VersionMajor : System.Int32), (@VersionMinor : System.Int32), (@VersionBuild : Nullable<System.Int32>), (@VersionRevision : Nullable<System.Int32>), (@Description : System.String), (@CommitDateUtc : System.DateTime), ("0" : System.Int32));)
+                    """,
                     "DbTransaction[1].Commit",
                     "DbTransaction[1].Dispose(True)",
                     "BeginDbTransaction(DbTransaction[2].Serializable)",
-                    @"DbTransaction[2]:DbCommand[2].ExecuteNonQuery(UPDATE FROM [common].[__VersionHistory]
-AND WHERE ([common].[__VersionHistory].[Ordinal] : System.Int32) == (@Ordinal : System.Int32)
-SET
-  ([common].[__VersionHistory].[CommitDurationInTicks] : System.Int64) = (@CommitDurationInTicks : System.Int64);)",
-                    @"DbTransaction[2]:DbCommand[2].ExecuteNonQuery(UPDATE FROM [common].[__VersionHistory]
-AND WHERE ([common].[__VersionHistory].[Ordinal] : System.Int32) == (@Ordinal : System.Int32)
-SET
-  ([common].[__VersionHistory].[CommitDurationInTicks] : System.Int64) = (@CommitDurationInTicks : System.Int64);)",
+                    """
+                    DbTransaction[2]:DbCommand[2].ExecuteNonQuery(UPDATE FROM [common].[__VersionHistory]
+                    AND WHERE ([common].[__VersionHistory].[Ordinal] : System.Int32) == (@Ordinal : System.Int32)
+                    SET
+                      ([common].[__VersionHistory].[CommitDurationInTicks] : System.Int64) = (@CommitDurationInTicks : System.Int64);)
+                    """,
+                    """
+                    DbTransaction[2]:DbCommand[2].ExecuteNonQuery(UPDATE FROM [common].[__VersionHistory]
+                    AND WHERE ([common].[__VersionHistory].[Ordinal] : System.Int32) == (@Ordinal : System.Int32)
+                    SET
+                      ([common].[__VersionHistory].[CommitDurationInTicks] : System.Int64) = (@CommitDurationInTicks : System.Int64);)
+                    """,
                     "DbTransaction[2].Commit",
                     "DbTransaction[2].Dispose(True)",
                     "DbCommand[3].Dispose(True)",
@@ -592,10 +616,12 @@ SET
                 .BeSequentiallyEqualTo(
                     "ChangeState(Closed => Open)",
                     "CreateDbCommand(DbCommand[0])",
-                    @"DbCommand[0].ExecuteReader(DbDataReader[0] => FROM [common].[__VersionHistory]
-ORDER BY ([common].[__VersionHistory].[Ordinal] : System.Int32) ASC
-SELECT
-  *;)",
+                    """
+                    DbCommand[0].ExecuteReader(DbDataReader[0] => FROM [common].[__VersionHistory]
+                    ORDER BY ([common].[__VersionHistory].[Ordinal] : System.Int32) ASC
+                    SELECT
+                      *;)
+                    """,
                     "DbCommand[0].DbDataReader[0].Close",
                     "DbCommand[0].Dispose(True)",
                     "CreateDbCommand(DbCommand[1])",
@@ -644,24 +670,30 @@ SELECT
                     "BeginDbTransaction(DbTransaction[0].Serializable)",
                     "DbTransaction[0]:DbCommand[4].ExecuteNonQuery(CREATE [Table] common.T1;)",
                     "DbTransaction[0]:DbCommand[3].ExecuteNonQuery(DELETE FROM [common].[__VersionHistory];)",
-                    @"DbTransaction[0]:DbCommand[1].ExecuteNonQuery(INSERT INTO [common].[__VersionHistory] ([common].[__VersionHistory].[Ordinal] : System.Int32, [common].[__VersionHistory].[VersionMajor] : System.Int32, [common].[__VersionHistory].[VersionMinor] : System.Int32, [common].[__VersionHistory].[VersionBuild] : Nullable<System.Int32>, [common].[__VersionHistory].[VersionRevision] : Nullable<System.Int32>, [common].[__VersionHistory].[Description] : System.String, [common].[__VersionHistory].[CommitDateUtc] : System.DateTime, [common].[__VersionHistory].[CommitDurationInTicks] : System.Int64)
-VALUES
-((@Ordinal : System.Int32), (@VersionMajor : System.Int32), (@VersionMinor : System.Int32), (@VersionBuild : Nullable<System.Int32>), (@VersionRevision : Nullable<System.Int32>), (@Description : System.String), (@CommitDateUtc : System.DateTime), (""0"" : System.Int32));)",
+                    """
+                    DbTransaction[0]:DbCommand[1].ExecuteNonQuery(INSERT INTO [common].[__VersionHistory] ([common].[__VersionHistory].[Ordinal] : System.Int32, [common].[__VersionHistory].[VersionMajor] : System.Int32, [common].[__VersionHistory].[VersionMinor] : System.Int32, [common].[__VersionHistory].[VersionBuild] : Nullable<System.Int32>, [common].[__VersionHistory].[VersionRevision] : Nullable<System.Int32>, [common].[__VersionHistory].[Description] : System.String, [common].[__VersionHistory].[CommitDateUtc] : System.DateTime, [common].[__VersionHistory].[CommitDurationInTicks] : System.Int64)
+                    VALUES
+                    ((@Ordinal : System.Int32), (@VersionMajor : System.Int32), (@VersionMinor : System.Int32), (@VersionBuild : Nullable<System.Int32>), (@VersionRevision : Nullable<System.Int32>), (@Description : System.String), (@CommitDateUtc : System.DateTime), ("0" : System.Int32));)
+                    """,
                     "DbTransaction[0].Commit",
                     "DbTransaction[0].Dispose(True)",
                     "BeginDbTransaction(DbTransaction[1].Serializable)",
                     "DbTransaction[1]:DbCommand[4].ExecuteNonQuery(CREATE [Table] common.T2;)",
                     "DbTransaction[1]:DbCommand[3].ExecuteNonQuery(DELETE FROM [common].[__VersionHistory];)",
-                    @"DbTransaction[1]:DbCommand[1].ExecuteNonQuery(INSERT INTO [common].[__VersionHistory] ([common].[__VersionHistory].[Ordinal] : System.Int32, [common].[__VersionHistory].[VersionMajor] : System.Int32, [common].[__VersionHistory].[VersionMinor] : System.Int32, [common].[__VersionHistory].[VersionBuild] : Nullable<System.Int32>, [common].[__VersionHistory].[VersionRevision] : Nullable<System.Int32>, [common].[__VersionHistory].[Description] : System.String, [common].[__VersionHistory].[CommitDateUtc] : System.DateTime, [common].[__VersionHistory].[CommitDurationInTicks] : System.Int64)
-VALUES
-((@Ordinal : System.Int32), (@VersionMajor : System.Int32), (@VersionMinor : System.Int32), (@VersionBuild : Nullable<System.Int32>), (@VersionRevision : Nullable<System.Int32>), (@Description : System.String), (@CommitDateUtc : System.DateTime), (""0"" : System.Int32));)",
+                    """
+                    DbTransaction[1]:DbCommand[1].ExecuteNonQuery(INSERT INTO [common].[__VersionHistory] ([common].[__VersionHistory].[Ordinal] : System.Int32, [common].[__VersionHistory].[VersionMajor] : System.Int32, [common].[__VersionHistory].[VersionMinor] : System.Int32, [common].[__VersionHistory].[VersionBuild] : Nullable<System.Int32>, [common].[__VersionHistory].[VersionRevision] : Nullable<System.Int32>, [common].[__VersionHistory].[Description] : System.String, [common].[__VersionHistory].[CommitDateUtc] : System.DateTime, [common].[__VersionHistory].[CommitDurationInTicks] : System.Int64)
+                    VALUES
+                    ((@Ordinal : System.Int32), (@VersionMajor : System.Int32), (@VersionMinor : System.Int32), (@VersionBuild : Nullable<System.Int32>), (@VersionRevision : Nullable<System.Int32>), (@Description : System.String), (@CommitDateUtc : System.DateTime), ("0" : System.Int32));)
+                    """,
                     "DbTransaction[1].Commit",
                     "DbTransaction[1].Dispose(True)",
                     "BeginDbTransaction(DbTransaction[2].Serializable)",
-                    @"DbTransaction[2]:DbCommand[2].ExecuteNonQuery(UPDATE FROM [common].[__VersionHistory]
-AND WHERE ([common].[__VersionHistory].[Ordinal] : System.Int32) == (@Ordinal : System.Int32)
-SET
-  ([common].[__VersionHistory].[CommitDurationInTicks] : System.Int64) = (@CommitDurationInTicks : System.Int64);)",
+                    """
+                    DbTransaction[2]:DbCommand[2].ExecuteNonQuery(UPDATE FROM [common].[__VersionHistory]
+                    AND WHERE ([common].[__VersionHistory].[Ordinal] : System.Int32) == (@Ordinal : System.Int32)
+                    SET
+                      ([common].[__VersionHistory].[CommitDurationInTicks] : System.Int64) = (@CommitDurationInTicks : System.Int64);)
+                    """,
                     "DbTransaction[2].Commit",
                     "DbTransaction[2].Dispose(True)",
                     "DbCommand[4].Dispose(True)",
@@ -741,10 +773,12 @@ SET
                 .BeSequentiallyEqualTo(
                     "ChangeState(Closed => Open)",
                     "CreateDbCommand(DbCommand[0])",
-                    @"DbCommand[0].ExecuteReader(DbDataReader[0] => FROM [common].[__VersionHistory]
-ORDER BY ([common].[__VersionHistory].[Ordinal] : System.Int32) ASC
-SELECT
-  *;)",
+                    """
+                    DbCommand[0].ExecuteReader(DbDataReader[0] => FROM [common].[__VersionHistory]
+                    ORDER BY ([common].[__VersionHistory].[Ordinal] : System.Int32) ASC
+                    SELECT
+                      *;)
+                    """,
                     "DbCommand[0].DbDataReader[0].Close",
                     "DbCommand[0].Dispose(True)",
                     "ChangeState(Open => Closed)",
@@ -814,10 +848,12 @@ SELECT
                 .BeSequentiallyEqualTo(
                     "ChangeState(Closed => Open)",
                     "CreateDbCommand(DbCommand[0])",
-                    @"DbCommand[0].ExecuteReader(DbDataReader[0] => FROM [common].[__VersionHistory]
-ORDER BY ([common].[__VersionHistory].[Ordinal] : System.Int32) ASC
-SELECT
-  *;)",
+                    """
+                    DbCommand[0].ExecuteReader(DbDataReader[0] => FROM [common].[__VersionHistory]
+                    ORDER BY ([common].[__VersionHistory].[Ordinal] : System.Int32) ASC
+                    SELECT
+                      *;)
+                    """,
                     "DbCommand[0].DbDataReader[0].Close",
                     "DbCommand[0].Dispose(True)",
                     "ChangeState(Open => Closed)",
@@ -890,10 +926,12 @@ SELECT
                 .BeSequentiallyEqualTo(
                     "ChangeState(Closed => Open)",
                     "CreateDbCommand(DbCommand[0])",
-                    @"DbCommand[0].ExecuteReader(DbDataReader[0] => FROM [common].[__VersionHistory]
-ORDER BY ([common].[__VersionHistory].[Ordinal] : System.Int32) ASC
-SELECT
-  *;)",
+                    """
+                    DbCommand[0].ExecuteReader(DbDataReader[0] => FROM [common].[__VersionHistory]
+                    ORDER BY ([common].[__VersionHistory].[Ordinal] : System.Int32) ASC
+                    SELECT
+                      *;)
+                    """,
                     "DbCommand[0].DbDataReader[0].Close",
                     "DbCommand[0].Dispose(True)",
                     "CreateDbCommand(DbCommand[1])",
@@ -939,16 +977,20 @@ SELECT
                     "CreateDbCommand(DbCommand[3])",
                     "BeginDbTransaction(DbTransaction[0].Serializable)",
                     "DbTransaction[0]:DbCommand[3].ExecuteNonQuery(CREATE [Table] common.T2;)",
-                    @"DbTransaction[0]:DbCommand[1].ExecuteNonQuery(INSERT INTO [common].[__VersionHistory] ([common].[__VersionHistory].[Ordinal] : System.Int32, [common].[__VersionHistory].[VersionMajor] : System.Int32, [common].[__VersionHistory].[VersionMinor] : System.Int32, [common].[__VersionHistory].[VersionBuild] : Nullable<System.Int32>, [common].[__VersionHistory].[VersionRevision] : Nullable<System.Int32>, [common].[__VersionHistory].[Description] : System.String, [common].[__VersionHistory].[CommitDateUtc] : System.DateTime, [common].[__VersionHistory].[CommitDurationInTicks] : System.Int64)
-VALUES
-((@Ordinal : System.Int32), (@VersionMajor : System.Int32), (@VersionMinor : System.Int32), (@VersionBuild : Nullable<System.Int32>), (@VersionRevision : Nullable<System.Int32>), (@Description : System.String), (@CommitDateUtc : System.DateTime), (""0"" : System.Int32));)",
+                    """
+                    DbTransaction[0]:DbCommand[1].ExecuteNonQuery(INSERT INTO [common].[__VersionHistory] ([common].[__VersionHistory].[Ordinal] : System.Int32, [common].[__VersionHistory].[VersionMajor] : System.Int32, [common].[__VersionHistory].[VersionMinor] : System.Int32, [common].[__VersionHistory].[VersionBuild] : Nullable<System.Int32>, [common].[__VersionHistory].[VersionRevision] : Nullable<System.Int32>, [common].[__VersionHistory].[Description] : System.String, [common].[__VersionHistory].[CommitDateUtc] : System.DateTime, [common].[__VersionHistory].[CommitDurationInTicks] : System.Int64)
+                    VALUES
+                    ((@Ordinal : System.Int32), (@VersionMajor : System.Int32), (@VersionMinor : System.Int32), (@VersionBuild : Nullable<System.Int32>), (@VersionRevision : Nullable<System.Int32>), (@Description : System.String), (@CommitDateUtc : System.DateTime), ("0" : System.Int32));)
+                    """,
                     "DbTransaction[0].Commit",
                     "DbTransaction[0].Dispose(True)",
                     "BeginDbTransaction(DbTransaction[1].Serializable)",
-                    @"DbTransaction[1]:DbCommand[2].ExecuteNonQuery(UPDATE FROM [common].[__VersionHistory]
-AND WHERE ([common].[__VersionHistory].[Ordinal] : System.Int32) == (@Ordinal : System.Int32)
-SET
-  ([common].[__VersionHistory].[CommitDurationInTicks] : System.Int64) = (@CommitDurationInTicks : System.Int64);)",
+                    """
+                    DbTransaction[1]:DbCommand[2].ExecuteNonQuery(UPDATE FROM [common].[__VersionHistory]
+                    AND WHERE ([common].[__VersionHistory].[Ordinal] : System.Int32) == (@Ordinal : System.Int32)
+                    SET
+                      ([common].[__VersionHistory].[CommitDurationInTicks] : System.Int64) = (@CommitDurationInTicks : System.Int64);)
+                    """,
                     "DbTransaction[1].Commit",
                     "DbTransaction[1].Dispose(True)",
                     "DbCommand[3].Dispose(True)",
@@ -1024,10 +1066,12 @@ SET
                 .BeSequentiallyEqualTo(
                     "ChangeState(Closed => Open)",
                     "CreateDbCommand(DbCommand[0])",
-                    @"DbCommand[0].ExecuteReader(DbDataReader[0] => FROM [common].[__VersionHistory]
-ORDER BY ([common].[__VersionHistory].[Ordinal] : System.Int32) ASC
-SELECT
-  *;)",
+                    """
+                    DbCommand[0].ExecuteReader(DbDataReader[0] => FROM [common].[__VersionHistory]
+                    ORDER BY ([common].[__VersionHistory].[Ordinal] : System.Int32) ASC
+                    SELECT
+                      *;)
+                    """,
                     "DbCommand[0].DbDataReader[0].Close",
                     "DbCommand[0].Dispose(True)",
                     "CreateDbCommand(DbCommand[1])",
@@ -1076,16 +1120,20 @@ SELECT
                     "BeginDbTransaction(DbTransaction[0].Serializable)",
                     "DbTransaction[0]:DbCommand[4].ExecuteNonQuery(CREATE [Table] common.T2;)",
                     "DbTransaction[0]:DbCommand[3].ExecuteNonQuery(DELETE FROM [common].[__VersionHistory];)",
-                    @"DbTransaction[0]:DbCommand[1].ExecuteNonQuery(INSERT INTO [common].[__VersionHistory] ([common].[__VersionHistory].[Ordinal] : System.Int32, [common].[__VersionHistory].[VersionMajor] : System.Int32, [common].[__VersionHistory].[VersionMinor] : System.Int32, [common].[__VersionHistory].[VersionBuild] : Nullable<System.Int32>, [common].[__VersionHistory].[VersionRevision] : Nullable<System.Int32>, [common].[__VersionHistory].[Description] : System.String, [common].[__VersionHistory].[CommitDateUtc] : System.DateTime, [common].[__VersionHistory].[CommitDurationInTicks] : System.Int64)
-VALUES
-((@Ordinal : System.Int32), (@VersionMajor : System.Int32), (@VersionMinor : System.Int32), (@VersionBuild : Nullable<System.Int32>), (@VersionRevision : Nullable<System.Int32>), (@Description : System.String), (@CommitDateUtc : System.DateTime), (""0"" : System.Int32));)",
+                    """
+                    DbTransaction[0]:DbCommand[1].ExecuteNonQuery(INSERT INTO [common].[__VersionHistory] ([common].[__VersionHistory].[Ordinal] : System.Int32, [common].[__VersionHistory].[VersionMajor] : System.Int32, [common].[__VersionHistory].[VersionMinor] : System.Int32, [common].[__VersionHistory].[VersionBuild] : Nullable<System.Int32>, [common].[__VersionHistory].[VersionRevision] : Nullable<System.Int32>, [common].[__VersionHistory].[Description] : System.String, [common].[__VersionHistory].[CommitDateUtc] : System.DateTime, [common].[__VersionHistory].[CommitDurationInTicks] : System.Int64)
+                    VALUES
+                    ((@Ordinal : System.Int32), (@VersionMajor : System.Int32), (@VersionMinor : System.Int32), (@VersionBuild : Nullable<System.Int32>), (@VersionRevision : Nullable<System.Int32>), (@Description : System.String), (@CommitDateUtc : System.DateTime), ("0" : System.Int32));)
+                    """,
                     "DbTransaction[0].Commit",
                     "DbTransaction[0].Dispose(True)",
                     "BeginDbTransaction(DbTransaction[1].Serializable)",
-                    @"DbTransaction[1]:DbCommand[2].ExecuteNonQuery(UPDATE FROM [common].[__VersionHistory]
-AND WHERE ([common].[__VersionHistory].[Ordinal] : System.Int32) == (@Ordinal : System.Int32)
-SET
-  ([common].[__VersionHistory].[CommitDurationInTicks] : System.Int64) = (@CommitDurationInTicks : System.Int64);)",
+                    """
+                    DbTransaction[1]:DbCommand[2].ExecuteNonQuery(UPDATE FROM [common].[__VersionHistory]
+                    AND WHERE ([common].[__VersionHistory].[Ordinal] : System.Int32) == (@Ordinal : System.Int32)
+                    SET
+                      ([common].[__VersionHistory].[CommitDurationInTicks] : System.Int64) = (@CommitDurationInTicks : System.Int64);)
+                    """,
                     "DbTransaction[1].Commit",
                     "DbTransaction[1].Dispose(True)",
                     "DbCommand[4].Dispose(True)",
@@ -1325,20 +1373,28 @@ SET
 
         caughtEvents.Should()
             .BeSequentiallyEqualTo(
-                @"[Before] [0.0, 1] [VersionHistory]
-CREATE [Table] common.__VersionHistory;",
-                @"[After] [0.0, 1] [VersionHistory]
-CREATE [Table] common.__VersionHistory;",
-                @"[Before] [0.0, 2] [VersionHistory]
-FROM [common].[__VersionHistory]
-ORDER BY ([common].[__VersionHistory].[Ordinal] : System.Int32) ASC
-SELECT
-  *;",
-                @"[After] [0.0, 2] [VersionHistory]
-FROM [common].[__VersionHistory]
-ORDER BY ([common].[__VersionHistory].[Ordinal] : System.Int32) ASC
-SELECT
-  *;" );
+                """
+                [Before] [0.0, 1] [VersionHistory]
+                CREATE [Table] common.__VersionHistory;
+                """,
+                """
+                [After] [0.0, 1] [VersionHistory]
+                CREATE [Table] common.__VersionHistory;
+                """,
+                """
+                [Before] [0.0, 2] [VersionHistory]
+                FROM [common].[__VersionHistory]
+                ORDER BY ([common].[__VersionHistory].[Ordinal] : System.Int32) ASC
+                SELECT
+                  *;
+                """,
+                """
+                [After] [0.0, 2] [VersionHistory]
+                FROM [common].[__VersionHistory]
+                ORDER BY ([common].[__VersionHistory].[Ordinal] : System.Int32) ASC
+                SELECT
+                  *;
+                """ );
     }
 
     [Fact]
@@ -1389,42 +1445,62 @@ SELECT
 
         caughtEvents.Should()
             .BeSequentiallyEqualTo(
-                @"[Before] [0.0, 1] [VersionHistory]
-CREATE [Table] common.__VersionHistory;",
-                @"[After] [0.0, 1] [VersionHistory]
-CREATE [Table] common.__VersionHistory;",
-                @"[Before] [0.0, 2] [VersionHistory]
-FROM [common].[__VersionHistory]
-ORDER BY ([common].[__VersionHistory].[Ordinal] : System.Int32) ASC
-SELECT
-  *;",
-                @"[After] [0.0, 2] [VersionHistory]
-FROM [common].[__VersionHistory]
-ORDER BY ([common].[__VersionHistory].[Ordinal] : System.Int32) ASC
-SELECT
-  *;",
-                @"[Before] [0.2, 1] [Change]
-CREATE [Table] common.T2;",
-                @"[After] [0.2, 1] [Change]
-CREATE [Table] common.T2;",
-                @"[Before] [0.2, 2] [VersionHistory]
-INSERT INTO [common].[__VersionHistory] ([common].[__VersionHistory].[Ordinal] : System.Int32, [common].[__VersionHistory].[VersionMajor] : System.Int32, [common].[__VersionHistory].[VersionMinor] : System.Int32, [common].[__VersionHistory].[VersionBuild] : Nullable<System.Int32>, [common].[__VersionHistory].[VersionRevision] : Nullable<System.Int32>, [common].[__VersionHistory].[Description] : System.String, [common].[__VersionHistory].[CommitDateUtc] : System.DateTime, [common].[__VersionHistory].[CommitDurationInTicks] : System.Int64)
-VALUES
-((@Ordinal : System.Int32), (@VersionMajor : System.Int32), (@VersionMinor : System.Int32), (@VersionBuild : Nullable<System.Int32>), (@VersionRevision : Nullable<System.Int32>), (@Description : System.String), (@CommitDateUtc : System.DateTime), (""0"" : System.Int32));",
-                @"[After] [0.2, 2] [VersionHistory]
-INSERT INTO [common].[__VersionHistory] ([common].[__VersionHistory].[Ordinal] : System.Int32, [common].[__VersionHistory].[VersionMajor] : System.Int32, [common].[__VersionHistory].[VersionMinor] : System.Int32, [common].[__VersionHistory].[VersionBuild] : Nullable<System.Int32>, [common].[__VersionHistory].[VersionRevision] : Nullable<System.Int32>, [common].[__VersionHistory].[Description] : System.String, [common].[__VersionHistory].[CommitDateUtc] : System.DateTime, [common].[__VersionHistory].[CommitDurationInTicks] : System.Int64)
-VALUES
-((@Ordinal : System.Int32), (@VersionMajor : System.Int32), (@VersionMinor : System.Int32), (@VersionBuild : Nullable<System.Int32>), (@VersionRevision : Nullable<System.Int32>), (@Description : System.String), (@CommitDateUtc : System.DateTime), (""0"" : System.Int32));",
-                @"[Before] [0.0, 3] [VersionHistory]
-UPDATE FROM [common].[__VersionHistory]
-AND WHERE ([common].[__VersionHistory].[Ordinal] : System.Int32) == (@Ordinal : System.Int32)
-SET
-  ([common].[__VersionHistory].[CommitDurationInTicks] : System.Int64) = (@CommitDurationInTicks : System.Int64);",
-                @"[After] [0.0, 3] [VersionHistory]
-UPDATE FROM [common].[__VersionHistory]
-AND WHERE ([common].[__VersionHistory].[Ordinal] : System.Int32) == (@Ordinal : System.Int32)
-SET
-  ([common].[__VersionHistory].[CommitDurationInTicks] : System.Int64) = (@CommitDurationInTicks : System.Int64);" );
+                """
+                [Before] [0.0, 1] [VersionHistory]
+                CREATE [Table] common.__VersionHistory;
+                """,
+                """
+                [After] [0.0, 1] [VersionHistory]
+                CREATE [Table] common.__VersionHistory;
+                """,
+                """
+                [Before] [0.0, 2] [VersionHistory]
+                FROM [common].[__VersionHistory]
+                ORDER BY ([common].[__VersionHistory].[Ordinal] : System.Int32) ASC
+                SELECT
+                  *;
+                """,
+                """
+                [After] [0.0, 2] [VersionHistory]
+                FROM [common].[__VersionHistory]
+                ORDER BY ([common].[__VersionHistory].[Ordinal] : System.Int32) ASC
+                SELECT
+                  *;
+                """,
+                """
+                [Before] [0.2, 1] [Change]
+                CREATE [Table] common.T2;
+                """,
+                """
+                [After] [0.2, 1] [Change]
+                CREATE [Table] common.T2;
+                """,
+                """
+                [Before] [0.2, 2] [VersionHistory]
+                INSERT INTO [common].[__VersionHistory] ([common].[__VersionHistory].[Ordinal] : System.Int32, [common].[__VersionHistory].[VersionMajor] : System.Int32, [common].[__VersionHistory].[VersionMinor] : System.Int32, [common].[__VersionHistory].[VersionBuild] : Nullable<System.Int32>, [common].[__VersionHistory].[VersionRevision] : Nullable<System.Int32>, [common].[__VersionHistory].[Description] : System.String, [common].[__VersionHistory].[CommitDateUtc] : System.DateTime, [common].[__VersionHistory].[CommitDurationInTicks] : System.Int64)
+                VALUES
+                ((@Ordinal : System.Int32), (@VersionMajor : System.Int32), (@VersionMinor : System.Int32), (@VersionBuild : Nullable<System.Int32>), (@VersionRevision : Nullable<System.Int32>), (@Description : System.String), (@CommitDateUtc : System.DateTime), ("0" : System.Int32));
+                """,
+                """
+                [After] [0.2, 2] [VersionHistory]
+                INSERT INTO [common].[__VersionHistory] ([common].[__VersionHistory].[Ordinal] : System.Int32, [common].[__VersionHistory].[VersionMajor] : System.Int32, [common].[__VersionHistory].[VersionMinor] : System.Int32, [common].[__VersionHistory].[VersionBuild] : Nullable<System.Int32>, [common].[__VersionHistory].[VersionRevision] : Nullable<System.Int32>, [common].[__VersionHistory].[Description] : System.String, [common].[__VersionHistory].[CommitDateUtc] : System.DateTime, [common].[__VersionHistory].[CommitDurationInTicks] : System.Int64)
+                VALUES
+                ((@Ordinal : System.Int32), (@VersionMajor : System.Int32), (@VersionMinor : System.Int32), (@VersionBuild : Nullable<System.Int32>), (@VersionRevision : Nullable<System.Int32>), (@Description : System.String), (@CommitDateUtc : System.DateTime), ("0" : System.Int32));
+                """,
+                """
+                [Before] [0.0, 3] [VersionHistory]
+                UPDATE FROM [common].[__VersionHistory]
+                AND WHERE ([common].[__VersionHistory].[Ordinal] : System.Int32) == (@Ordinal : System.Int32)
+                SET
+                  ([common].[__VersionHistory].[CommitDurationInTicks] : System.Int64) = (@CommitDurationInTicks : System.Int64);
+                """,
+                """
+                [After] [0.0, 3] [VersionHistory]
+                UPDATE FROM [common].[__VersionHistory]
+                AND WHERE ([common].[__VersionHistory].[Ordinal] : System.Int32) == (@Ordinal : System.Int32)
+                SET
+                  ([common].[__VersionHistory].[CommitDurationInTicks] : System.Int64) = (@CommitDurationInTicks : System.Int64);
+                """ );
     }
 
     [Theory]

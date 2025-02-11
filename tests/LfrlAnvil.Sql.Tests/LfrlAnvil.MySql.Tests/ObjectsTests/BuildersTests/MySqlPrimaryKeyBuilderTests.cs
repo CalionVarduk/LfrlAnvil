@@ -48,9 +48,11 @@ public class MySqlPrimaryKeyBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
-                    @"ALTER TABLE `foo`.`T`
-                      DROP PRIMARY KEY,
-                      ADD CONSTRAINT `PK_T` PRIMARY KEY (`C2` ASC);" );
+                    """
+                    ALTER TABLE `foo`.`T`
+                                          DROP PRIMARY KEY,
+                                          ADD CONSTRAINT `PK_T` PRIMARY KEY (`C2` ASC);
+                    """ );
         }
     }
 
@@ -117,9 +119,11 @@ public class MySqlPrimaryKeyBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
-                    @"ALTER TABLE `foo`.`T`
-                      DROP PRIMARY KEY,
-                      ADD CONSTRAINT `bar` PRIMARY KEY (`C` ASC);" );
+                    """
+                    ALTER TABLE `foo`.`T`
+                                          DROP PRIMARY KEY,
+                                          ADD CONSTRAINT `bar` PRIMARY KEY (`C` ASC);
+                    """ );
         }
     }
 
@@ -232,9 +236,11 @@ public class MySqlPrimaryKeyBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
-                    @"ALTER TABLE `foo`.`T`
-                      DROP PRIMARY KEY,
-                      ADD CONSTRAINT `PK_T` PRIMARY KEY (`C` ASC);" );
+                    """
+                    ALTER TABLE `foo`.`T`
+                                          DROP PRIMARY KEY,
+                                          ADD CONSTRAINT `PK_T` PRIMARY KEY (`C` ASC);
+                    """ );
         }
     }
 

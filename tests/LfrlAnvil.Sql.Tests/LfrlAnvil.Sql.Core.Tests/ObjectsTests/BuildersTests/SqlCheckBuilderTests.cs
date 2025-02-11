@@ -53,8 +53,10 @@ public class SqlCheckBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .Be(
-                    $@"ALTER [Table] foo.T
-  CREATE {sut};" );
+                    $"""
+                     ALTER [Table] foo.T
+                       CREATE {sut};
+                     """ );
         }
     }
 
@@ -139,8 +141,10 @@ public class SqlCheckBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .Be(
-                    $@"ALTER [Table] foo.T
-  ALTER {sut} ([1] : 'Name' (System.String) FROM {oldName});" );
+                    $"""
+                     ALTER [Table] foo.T
+                       ALTER {sut} ([1] : 'Name' (System.String) FROM {oldName});
+                     """ );
         }
     }
 
@@ -221,8 +225,10 @@ public class SqlCheckBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .Be(
-                    $@"ALTER [Table] foo.T
-  ALTER {sut} ([1] : 'Name' (System.String) FROM bar);" );
+                    $"""
+                     ALTER [Table] foo.T
+                       ALTER {sut} ([1] : 'Name' (System.String) FROM bar);
+                     """ );
         }
     }
 
@@ -269,8 +275,10 @@ public class SqlCheckBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .Be(
-                    $@"ALTER [Table] foo.T
-  REMOVE {sut};" );
+                    $"""
+                     ALTER [Table] foo.T
+                       REMOVE {sut};
+                     """ );
         }
     }
 
@@ -402,8 +410,10 @@ public class SqlCheckBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .Be(
-                    $@"ALTER [Table] foo.T
-  ALTER [Check] foo.bar ([1] : 'Name' (System.String) FROM {oldName});" );
+                    $"""
+                     ALTER [Table] foo.T
+                       ALTER [Check] foo.bar ([1] : 'Name' (System.String) FROM {oldName});
+                     """ );
         }
     }
 
@@ -433,8 +443,10 @@ public class SqlCheckBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .Be(
-                    $@"ALTER [Table] foo.T
-  ALTER [Check] foo.bar ([1] : 'Name' (System.String) FROM {oldName});" );
+                    $"""
+                     ALTER [Table] foo.T
+                       ALTER [Check] foo.bar ([1] : 'Name' (System.String) FROM {oldName});
+                     """ );
         }
     }
 
@@ -464,8 +476,10 @@ public class SqlCheckBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .Be(
-                    $@"ALTER [Table] foo.T
-  ALTER [Check] foo.bar ([1] : 'Name' (System.String) FROM {oldName});" );
+                    $"""
+                     ALTER [Table] foo.T
+                       ALTER [Check] foo.bar ([1] : 'Name' (System.String) FROM {oldName});
+                     """ );
         }
     }
 
@@ -494,8 +508,10 @@ public class SqlCheckBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .Be(
-                    $@"ALTER [Table] foo.T
-  ALTER {sut} ([1] : 'Name' (System.String) FROM bar);" );
+                    $"""
+                     ALTER [Table] foo.T
+                       ALTER {sut} ([1] : 'Name' (System.String) FROM bar);
+                     """ );
         }
     }
 
@@ -524,8 +540,10 @@ public class SqlCheckBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .Be(
-                    $@"ALTER [Table] foo.T
-  ALTER {sut} ([1] : 'Name' (System.String) FROM bar);" );
+                    $"""
+                     ALTER [Table] foo.T
+                       ALTER {sut} ([1] : 'Name' (System.String) FROM bar);
+                     """ );
         }
     }
 }

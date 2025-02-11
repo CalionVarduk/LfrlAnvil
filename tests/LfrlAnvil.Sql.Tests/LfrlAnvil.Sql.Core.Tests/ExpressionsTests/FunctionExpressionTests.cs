@@ -41,8 +41,10 @@ public class FunctionExpressionTests : TestsBase
             sut.Traits.Should().BeSequentiallyEqualTo( trait );
             text.Should()
                 .Be(
-                    @"AGG_[foo].[bar]((""10"" : System.Int32), (""20"" : System.Int32))
-  DISTINCT" );
+                    """
+                    AGG_[foo].[bar](("10" : System.Int32), ("20" : System.Int32))
+                      DISTINCT
+                    """ );
         }
     }
 
@@ -789,8 +791,10 @@ public class FunctionExpressionTests : TestsBase
             (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.DistinctTrait );
             text.Should()
                 .Be(
-                    @"AGG_COUNT((@a : System.Int32))
-  DISTINCT" );
+                    """
+                    AGG_COUNT((@a : System.Int32))
+                      DISTINCT
+                    """ );
         }
     }
 
@@ -827,8 +831,10 @@ public class FunctionExpressionTests : TestsBase
             (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.DistinctTrait );
             text.Should()
                 .Be(
-                    @"AGG_MIN((@a : System.Int32))
-  DISTINCT" );
+                    """
+                    AGG_MIN((@a : System.Int32))
+                      DISTINCT
+                    """ );
         }
     }
 
@@ -908,8 +914,10 @@ public class FunctionExpressionTests : TestsBase
             (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.DistinctTrait );
             text.Should()
                 .Be(
-                    @"AGG_MAX((@a : System.Int32))
-  DISTINCT" );
+                    """
+                    AGG_MAX((@a : System.Int32))
+                      DISTINCT
+                    """ );
         }
     }
 
@@ -989,8 +997,10 @@ public class FunctionExpressionTests : TestsBase
             (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.DistinctTrait );
             text.Should()
                 .Be(
-                    @"AGG_SUM((@a : System.Int32))
-  DISTINCT" );
+                    """
+                    AGG_SUM((@a : System.Int32))
+                      DISTINCT
+                    """ );
         }
     }
 
@@ -1027,8 +1037,10 @@ public class FunctionExpressionTests : TestsBase
             (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.DistinctTrait );
             text.Should()
                 .Be(
-                    @"AGG_AVERAGE((@a : System.Int32))
-  DISTINCT" );
+                    """
+                    AGG_AVERAGE((@a : System.Int32))
+                      DISTINCT
+                    """ );
         }
     }
 
@@ -1083,8 +1095,10 @@ public class FunctionExpressionTests : TestsBase
             (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.DistinctTrait );
             text.Should()
                 .Be(
-                    @"AGG_STRING_CONCAT((@a : System.String))
-  DISTINCT" );
+                    """
+                    AGG_STRING_CONCAT((@a : System.String))
+                      DISTINCT
+                    """ );
         }
     }
 
@@ -1119,8 +1133,10 @@ public class FunctionExpressionTests : TestsBase
             (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.DistinctTrait );
             text.Should()
                 .Be(
-                    @"WND_ROW_NUMBER()
-  DISTINCT" );
+                    """
+                    WND_ROW_NUMBER()
+                      DISTINCT
+                    """ );
         }
     }
 
@@ -1155,8 +1171,10 @@ public class FunctionExpressionTests : TestsBase
             (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.DistinctTrait );
             text.Should()
                 .Be(
-                    @"WND_RANK()
-  DISTINCT" );
+                    """
+                    WND_RANK()
+                      DISTINCT
+                    """ );
         }
     }
 
@@ -1191,8 +1209,10 @@ public class FunctionExpressionTests : TestsBase
             (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.DistinctTrait );
             text.Should()
                 .Be(
-                    @"WND_DENSE_RANK()
-  DISTINCT" );
+                    """
+                    WND_DENSE_RANK()
+                      DISTINCT
+                    """ );
         }
     }
 
@@ -1227,8 +1247,10 @@ public class FunctionExpressionTests : TestsBase
             (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.DistinctTrait );
             text.Should()
                 .Be(
-                    @"WND_CUMULATIVE_DISTRIBUTION()
-  DISTINCT" );
+                    """
+                    WND_CUMULATIVE_DISTRIBUTION()
+                      DISTINCT
+                    """ );
         }
     }
 
@@ -1265,8 +1287,10 @@ public class FunctionExpressionTests : TestsBase
             (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.DistinctTrait );
             text.Should()
                 .Be(
-                    @"WND_N_TILE((@a : System.Int32))
-  DISTINCT" );
+                    """
+                    WND_N_TILE((@a : System.Int32))
+                      DISTINCT
+                    """ );
         }
     }
 
@@ -1365,8 +1389,10 @@ public class FunctionExpressionTests : TestsBase
             (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.DistinctTrait );
             text.Should()
                 .Be(
-                    @"WND_LAG((@a : System.String), (@b : System.Int32), (@c : System.String))
-  DISTINCT" );
+                    """
+                    WND_LAG((@a : System.String), (@b : System.Int32), (@c : System.String))
+                      DISTINCT
+                    """ );
         }
     }
 
@@ -1465,8 +1491,10 @@ public class FunctionExpressionTests : TestsBase
             (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.DistinctTrait );
             text.Should()
                 .Be(
-                    @"WND_LEAD((@a : System.String), (@b : System.Int32), (@c : System.String))
-  DISTINCT" );
+                    """
+                    WND_LEAD((@a : System.String), (@b : System.Int32), (@c : System.String))
+                      DISTINCT
+                    """ );
         }
     }
 
@@ -1503,8 +1531,10 @@ public class FunctionExpressionTests : TestsBase
             (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.DistinctTrait );
             text.Should()
                 .Be(
-                    @"WND_FIRST_VALUE((@a : System.String))
-  DISTINCT" );
+                    """
+                    WND_FIRST_VALUE((@a : System.String))
+                      DISTINCT
+                    """ );
         }
     }
 
@@ -1541,8 +1571,10 @@ public class FunctionExpressionTests : TestsBase
             (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.DistinctTrait );
             text.Should()
                 .Be(
-                    @"WND_LAST_VALUE((@a : System.String))
-  DISTINCT" );
+                    """
+                    WND_LAST_VALUE((@a : System.String))
+                      DISTINCT
+                    """ );
         }
     }
 
@@ -1581,8 +1613,10 @@ public class FunctionExpressionTests : TestsBase
             (sut.Traits.ElementAtOrDefault( 0 )?.NodeType).Should().Be( SqlNodeType.DistinctTrait );
             text.Should()
                 .Be(
-                    @"WND_NTH_VALUE((@a : System.String), (@b : System.Int32))
-  DISTINCT" );
+                    """
+                    WND_NTH_VALUE((@a : System.String), (@b : System.Int32))
+                      DISTINCT
+                    """ );
         }
     }
 

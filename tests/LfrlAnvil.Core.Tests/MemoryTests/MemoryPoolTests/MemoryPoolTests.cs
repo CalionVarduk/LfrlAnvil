@@ -3,7 +3,6 @@ using System.Diagnostics.Contracts;
 using System.Linq;
 using LfrlAnvil.Internal;
 using LfrlAnvil.Memory;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Tests.MemoryTests.MemoryPoolTests;
 
@@ -31,7 +30,7 @@ public class MemoryPoolTests : TestsBase
     public void Ctor_ShouldComputeSegmentLengthByRoundingUpMinSegmentLengthToPowerOf2(int minLength, int expected)
     {
         var sut = new MemoryPool<int>( minLength );
-        sut.SegmentLength.Should().Be( expected );
+        sut.SegmentLength.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -42,13 +41,12 @@ public class MemoryPoolTests : TestsBase
         var sut = new MemoryPool<int>( 16 );
         using var result = sut.Rent( length );
 
-        using ( new AssertionScope() )
-        {
-            result.Owner.Should().BeNull();
-            result.Clear.Should().BeFalse();
-            result.AsMemory().ToArray().Should().BeEmpty();
-            result.AsSpan().ToArray().Should().BeEmpty();
-        }
+        Assertion.All(
+                result.Owner.TestNull(),
+                result.Clear.TestFalse(),
+                result.AsMemory().TestEmpty(),
+                result.AsSpan().TestEmpty() )
+            .Go();
     }
 
     [Theory]
@@ -64,13 +62,12 @@ public class MemoryPoolTests : TestsBase
         var sut = new MemoryPool<int>( 16 );
         var result = sut.Rent( length );
 
-        using ( new AssertionScope() )
-        {
-            result.Owner.Should().BeSameAs( sut );
-            result.Clear.Should().BeFalse();
-            result.AsMemory().Length.Should().Be( length );
-            result.AsSpan().Length.Should().Be( length );
-        }
+        Assertion.All(
+                result.Owner.TestRefEquals( sut ),
+                result.Clear.TestFalse(),
+                result.AsMemory().Length.TestEquals( length ),
+                result.AsSpan().Length.TestEquals( length ) )
+            .Go();
     }
 
     [Theory]
@@ -91,14 +88,13 @@ public class MemoryPoolTests : TestsBase
 
         var result = sut.Rent( length );
 
-        using ( new AssertionScope() )
-        {
-            result.Owner.Should().BeSameAs( sut );
-            result.Clear.Should().BeFalse();
-            result.AsMemory().Length.Should().Be( length );
-            result.AsSpan().Length.Should().Be( length );
-            result.AsSpan().ToArray().Should().AllBeEquivalentTo( default( int ) );
-        }
+        Assertion.All(
+                result.Owner.TestRefEquals( sut ),
+                result.Clear.TestFalse(),
+                result.AsMemory().Length.TestEquals( length ),
+                result.AsSpan().Length.TestEquals( length ),
+                result.AsSpan().TestAll( (e, _) => e.TestEquals( default ) ) )
+            .Go();
     }
 
     [Theory]
@@ -121,12 +117,11 @@ public class MemoryPoolTests : TestsBase
 
         var result = sut.Rent( length );
 
-        using ( new AssertionScope() )
-        {
-            result.AsSpan().Length.Should().Be( length );
-            result.AsSpan().ToArray().Take( tailLength ).Should().AllBeEquivalentTo( 2 );
-            result.AsSpan().ToArray().Skip( tailLength ).Should().AllBeEquivalentTo( default( int ) );
-        }
+        Assertion.All(
+                result.AsSpan().Length.TestEquals( length ),
+                result.AsSpan().ToArray().Take( tailLength ).TestAll( (e, _) => e.TestEquals( 2 ) ),
+                result.AsSpan().ToArray().Skip( tailLength ).TestAll( (e, _) => e.TestEquals( default ) ) )
+            .Go();
     }
 
     [Fact]
@@ -147,14 +142,13 @@ public class MemoryPoolTests : TestsBase
         var fifth = sut.Rent( 2 );
         var sixth = sut.Rent( 8 );
 
-        using ( new AssertionScope() )
-        {
-            second.AsSpan().ToArray().Should().AllBeEquivalentTo( -1 );
-            third.AsSpan().ToArray().Should().BeSequentiallyEqualTo( 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 );
-            fourth.AsSpan().ToArray().Should().BeSequentiallyEqualTo( 11, 12, 13, 14 );
-            fifth.AsSpan().ToArray().Should().BeSequentiallyEqualTo( 15, 16 );
-            sixth.AsSpan().ToArray().Should().AllBeEquivalentTo( default( int ) );
-        }
+        Assertion.All(
+                second.AsSpan().TestAll( (e, _) => e.TestEquals( -1 ) ),
+                third.AsSpan().TestSequence( [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 ] ),
+                fourth.AsSpan().TestSequence( [ 11, 12, 13, 14 ] ),
+                fifth.AsSpan().TestSequence( [ 15, 16 ] ),
+                sixth.AsSpan().TestAll( (e, _) => e.TestEquals( default ) ) )
+            .Go();
     }
 
     [Fact]
@@ -179,14 +173,13 @@ public class MemoryPoolTests : TestsBase
         var sixth = sut.Rent( 2 );
         var seventh = sut.Rent( 8 );
 
-        using ( new AssertionScope() )
-        {
-            third.AsSpan().ToArray().Should().AllBeEquivalentTo( -1 );
-            fourth.AsSpan().ToArray().Should().BeSequentiallyEqualTo( 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 );
-            fifth.AsSpan().ToArray().Should().BeSequentiallyEqualTo( 11, 12, 13, 14 );
-            sixth.AsSpan().ToArray().Should().BeSequentiallyEqualTo( 15, 16 );
-            seventh.AsSpan().ToArray().Should().AllBeEquivalentTo( default( int ) );
-        }
+        Assertion.All(
+                third.AsSpan().TestAll( (e, _) => e.TestEquals( -1 ) ),
+                fourth.AsSpan().TestSequence( [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 ] ),
+                fifth.AsSpan().TestSequence( [ 11, 12, 13, 14 ] ),
+                sixth.AsSpan().TestSequence( [ 15, 16 ] ),
+                seventh.AsSpan().TestAll( (e, _) => e.TestEquals( default ) ) )
+            .Go();
     }
 
     [Fact]
@@ -210,15 +203,14 @@ public class MemoryPoolTests : TestsBase
         var sixth = sut.Rent( 1 );
         var seventh = sut.Rent( 8 );
 
-        using ( new AssertionScope() )
-        {
-            first.AsSpan().ToArray().Should().AllBeEquivalentTo( -1 );
-            third.AsSpan().ToArray().Should().AllBeEquivalentTo( -2 );
-            fourth.AsSpan().ToArray().Should().BeSequentiallyEqualTo( 1, 2, 3, 4, 5 );
-            fifth.AsSpan().ToArray().Should().BeSequentiallyEqualTo( 6, 7 );
-            sixth.AsSpan().ToArray().Should().BeSequentiallyEqualTo( 8 );
-            seventh.AsSpan().ToArray().Should().AllBeEquivalentTo( default( int ) );
-        }
+        Assertion.All(
+                first.AsSpan().TestAll( (e, _) => e.TestEquals( -1 ) ),
+                third.AsSpan().TestAll( (e, _) => e.TestEquals( -2 ) ),
+                fourth.AsSpan().TestSequence( [ 1, 2, 3, 4, 5 ] ),
+                fifth.AsSpan().TestSequence( [ 6, 7 ] ),
+                sixth.AsSpan().TestSequence( [ 8 ] ),
+                seventh.AsSpan().TestAll( (e, _) => e.TestEquals( default ) ) )
+            .Go();
     }
 
     [Fact]
@@ -243,14 +235,13 @@ public class MemoryPoolTests : TestsBase
         var sixth = sut.Rent( 2 );
         var seventh = sut.Rent( 8 );
 
-        using ( new AssertionScope() )
-        {
-            third.AsSpan().ToArray().Should().AllBeEquivalentTo( -1 );
-            fourth.AsSpan().ToArray().Should().BeSequentiallyEqualTo( 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 );
-            fifth.AsSpan().ToArray().Should().BeSequentiallyEqualTo( 11, 12, 13, 14 );
-            sixth.AsSpan().ToArray().Should().BeSequentiallyEqualTo( 15, 16 );
-            seventh.AsSpan().ToArray().Should().AllBeEquivalentTo( default( int ) );
-        }
+        Assertion.All(
+                third.AsSpan().TestAll( (e, _) => e.TestEquals( -1 ) ),
+                fourth.AsSpan().TestSequence( [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 ] ),
+                fifth.AsSpan().TestSequence( [ 11, 12, 13, 14 ] ),
+                sixth.AsSpan().TestSequence( [ 15, 16 ] ),
+                seventh.AsSpan().TestAll( (e, _) => e.TestEquals( default ) ) )
+            .Go();
     }
 
     [Fact]
@@ -278,14 +269,13 @@ public class MemoryPoolTests : TestsBase
         var seventh = sut.Rent( 2 );
         var eighth = sut.Rent( 8 );
 
-        using ( new AssertionScope() )
-        {
-            fourth.AsSpan().ToArray().Should().AllBeEquivalentTo( -1 );
-            fifth.AsSpan().ToArray().Should().BeSequentiallyEqualTo( 5, 6, 7, 8, 9, 10, 11 );
-            sixth.AsSpan().ToArray().Should().BeSequentiallyEqualTo( 12, 13, 14 );
-            seventh.AsSpan().ToArray().Should().BeSequentiallyEqualTo( 15, 16 );
-            eighth.AsSpan().ToArray().Should().AllBeEquivalentTo( default( int ) );
-        }
+        Assertion.All(
+                fourth.AsSpan().TestAll( (e, _) => e.TestEquals( -1 ) ),
+                fifth.AsSpan().TestSequence( [ 5, 6, 7, 8, 9, 10, 11 ] ),
+                sixth.AsSpan().TestSequence( [ 12, 13, 14 ] ),
+                seventh.AsSpan().TestSequence( [ 15, 16 ] ),
+                eighth.AsSpan().TestAll( (e, _) => e.TestEquals( default ) ) )
+            .Go();
     }
 
     [Fact]
@@ -314,14 +304,13 @@ public class MemoryPoolTests : TestsBase
         var seventh = sut.Rent( 2 );
         var eighth = sut.Rent( 8 );
 
-        using ( new AssertionScope() )
-        {
-            fourth.AsSpan().ToArray().Should().AllBeEquivalentTo( -1 );
-            fifth.AsSpan().ToArray().Should().BeSequentiallyEqualTo( 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 );
-            sixth.AsSpan().ToArray().Should().BeSequentiallyEqualTo( 11, 12, 13, 14 );
-            seventh.AsSpan().ToArray().Should().BeSequentiallyEqualTo( 15, 16 );
-            eighth.AsSpan().ToArray().Should().AllBeEquivalentTo( default( int ) );
-        }
+        Assertion.All(
+                fourth.AsSpan().TestAll( (e, _) => e.TestEquals( -1 ) ),
+                fifth.AsSpan().TestSequence( [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 ] ),
+                sixth.AsSpan().TestSequence( [ 11, 12, 13, 14 ] ),
+                seventh.AsSpan().TestSequence( [ 15, 16 ] ),
+                eighth.AsSpan().TestAll( (e, _) => e.TestEquals( default ) ) )
+            .Go();
     }
 
     [Fact]
@@ -343,13 +332,12 @@ public class MemoryPoolTests : TestsBase
         var fifth = sut.Rent( 2 );
         var sixth = sut.Rent( 8 );
 
-        using ( new AssertionScope() )
-        {
-            third.AsSpan().ToArray().Should().BeSequentiallyEqualTo( 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 );
-            fourth.AsSpan().ToArray().Should().BeSequentiallyEqualTo( 11, 12, 13, 14 );
-            fifth.AsSpan().ToArray().Should().BeSequentiallyEqualTo( 15, 16 );
-            sixth.AsSpan().ToArray().Should().AllBeEquivalentTo( default( int ) );
-        }
+        Assertion.All(
+                third.AsSpan().TestSequence( [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 ] ),
+                fourth.AsSpan().TestSequence( [ 11, 12, 13, 14 ] ),
+                fifth.AsSpan().TestSequence( [ 15, 16 ] ),
+                sixth.AsSpan().TestAll( (e, _) => e.TestEquals( default ) ) )
+            .Go();
     }
 
     [Fact]
@@ -374,14 +362,13 @@ public class MemoryPoolTests : TestsBase
         var sixth = sut.Rent( 2 );
         var seventh = sut.Rent( 8 );
 
-        using ( new AssertionScope() )
-        {
-            first.AsSpan().ToArray().Should().AllBeEquivalentTo( -1 );
-            fourth.AsSpan().ToArray().Should().BeSequentiallyEqualTo( 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 );
-            fifth.AsSpan().ToArray().Should().BeSequentiallyEqualTo( 11, 12, 13, 14 );
-            sixth.AsSpan().ToArray().Should().BeSequentiallyEqualTo( 15, 16 );
-            seventh.AsSpan().ToArray().Should().AllBeEquivalentTo( default( int ) );
-        }
+        Assertion.All(
+                first.AsSpan().TestAll( (e, _) => e.TestEquals( -1 ) ),
+                fourth.AsSpan().TestSequence( [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 ] ),
+                fifth.AsSpan().TestSequence( [ 11, 12, 13, 14 ] ),
+                sixth.AsSpan().TestSequence( [ 15, 16 ] ),
+                seventh.AsSpan().TestAll( (e, _) => e.TestEquals( default ) ) )
+            .Go();
     }
 
     [Fact]
@@ -403,13 +390,12 @@ public class MemoryPoolTests : TestsBase
         var fourth = sut.Rent( 9 );
         var fifth = sut.Rent( 8 );
 
-        using ( new AssertionScope() )
-        {
-            first.AsSpan().ToArray().Should().AllBeEquivalentTo( -1 );
-            third.AsSpan().ToArray().Should().AllBeEquivalentTo( -2 );
-            fourth.AsSpan().ToArray().Should().AllBeEquivalentTo( default( int ) );
-            fifth.AsSpan().ToArray().Should().BeSequentiallyEqualTo( 1, 2, 3, 4, 5, 6, 7, 8 );
-        }
+        Assertion.All(
+                first.AsSpan().TestAll( (e, _) => e.TestEquals( -1 ) ),
+                third.AsSpan().TestAll( (e, _) => e.TestEquals( -2 ) ),
+                fourth.AsSpan().TestAll( (e, _) => e.TestEquals( default ) ),
+                fifth.AsSpan().TestSequence( [ 1, 2, 3, 4, 5, 6, 7, 8 ] ) )
+            .Go();
     }
 
     [Fact]
@@ -459,42 +445,25 @@ public class MemoryPoolTests : TestsBase
         var y = sut.Rent( 1 );
         var z = sut.Rent( 8 );
 
-        using ( new AssertionScope() )
-        {
-            a.AsSpan().ToArray().Should().BeSequentiallyEqualTo( 1, 2, 3 );
-            e.AsSpan().ToArray().Should().BeSequentiallyEqualTo( 19, 20, 21, 22, 23, 24, 25 );
-            g.AsSpan().ToArray().Should().BeSequentiallyEqualTo( 34, 35, 36, 37, 38, 39, 40, 41, 42 );
-            i.AsSpan().ToArray().Should().BeSequentiallyEqualTo( 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63 );
-            m.AsSpan()
-                .ToArray()
-                .Should()
-                .BeSequentiallyEqualTo( 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117 );
-
-            o.AsSpan()
-                .ToArray()
-                .Should()
-                .BeSequentiallyEqualTo( 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150 );
-
-            p.AsSpan()
-                .ToArray()
-                .Should()
-                .BeSequentiallyEqualTo( 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83 );
-
-            q.AsSpan().ToArray().Should().BeSequentiallyEqualTo( 84, 85, 86 );
-            r.AsSpan().ToArray().Should().BeSequentiallyEqualTo( 87, 88, 89, 90, 91, 92, 93, 94, 95 );
-            s.AsSpan()
-                .ToArray()
-                .Should()
-                .BeSequentiallyEqualTo( 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132 );
-
-            t.AsSpan().ToArray().Should().BeSequentiallyEqualTo( 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18 );
-            u.AsSpan().ToArray().Should().BeSequentiallyEqualTo( 43, 44, 45, 46, 47, 48, 49, 50, 51, 52 );
-            v.AsSpan().ToArray().Should().BeSequentiallyEqualTo( 26, 27, 28, 29 );
-            w.AsSpan().ToArray().Should().BeSequentiallyEqualTo( 96, 97, 98, 99, 100, 101, 102 );
-            x.AsSpan().ToArray().Should().BeSequentiallyEqualTo( 30, 31, 32, 33 );
-            y.AsSpan().ToArray().Should().BeSequentiallyEqualTo( 133 );
-            z.AsSpan().ToArray().Should().AllBeEquivalentTo( default( int ) );
-        }
+        Assertion.All(
+                a.AsSpan().TestSequence( [ 1, 2, 3 ] ),
+                e.AsSpan().TestSequence( [ 19, 20, 21, 22, 23, 24, 25 ] ),
+                g.AsSpan().TestSequence( [ 34, 35, 36, 37, 38, 39, 40, 41, 42 ] ),
+                i.AsSpan().TestSequence( [ 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63 ] ),
+                m.AsSpan().TestSequence( [ 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117 ] ),
+                o.AsSpan().TestSequence( [ 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150 ] ),
+                p.AsSpan().TestSequence( [ 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83 ] ),
+                q.AsSpan().TestSequence( [ 84, 85, 86 ] ),
+                r.AsSpan().TestSequence( [ 87, 88, 89, 90, 91, 92, 93, 94, 95 ] ),
+                s.AsSpan().TestSequence( [ 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132 ] ),
+                t.AsSpan().TestSequence( [ 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18 ] ),
+                u.AsSpan().TestSequence( [ 43, 44, 45, 46, 47, 48, 49, 50, 51, 52 ] ),
+                v.AsSpan().TestSequence( [ 26, 27, 28, 29 ] ),
+                w.AsSpan().TestSequence( [ 96, 97, 98, 99, 100, 101, 102 ] ),
+                x.AsSpan().TestSequence( [ 30, 31, 32, 33 ] ),
+                y.AsSpan().TestSequence( [ 133 ] ),
+                z.AsSpan().TestAll( (el, _) => el.TestEquals( default ) ) )
+            .Go();
     }
 
     [Fact]
@@ -505,52 +474,50 @@ public class MemoryPoolTests : TestsBase
         a.Dispose();
         var b = sut.Rent( 9 );
 
-        using ( new AssertionScope() )
-        {
-            b.TryGetInfo()
-                .Should()
-                .BeEquivalentTo(
-                    new MemoryPool<int>.ReportInfo.Node(
-                        pool: sut,
-                        segmentIndex: 1,
-                        segmentLength: 16,
-                        isSegmentActive: true,
-                        nodeId: NullableIndex.Create( 1 ),
-                        startIndex: 0,
-                        length: 9,
-                        isFragmented: false ) );
-
-            ToArray( sut.Report.Nodes )
-                .Should()
-                .BeSequentiallyEqualTo(
-                    new MemoryPool<int>.ReportInfo.Node(
-                        pool: sut,
-                        segmentIndex: 1,
-                        segmentLength: 16,
-                        isSegmentActive: true,
-                        nodeId: NullableIndex.Create( 1 ),
-                        startIndex: 0,
-                        length: 9,
-                        isFragmented: false ),
-                    new MemoryPool<int>.ReportInfo.Node(
-                        pool: sut,
-                        segmentIndex: 0,
-                        segmentLength: 8,
-                        isSegmentActive: true,
-                        nodeId: NullableIndex.Create( 0 ),
-                        startIndex: 0,
-                        length: 8,
-                        isFragmented: true ),
-                    new MemoryPool<int>.ReportInfo.Node(
-                        pool: sut,
-                        segmentIndex: 1,
-                        segmentLength: 16,
-                        isSegmentActive: true,
-                        nodeId: NullableIndex.Null,
-                        startIndex: 9,
-                        length: 7,
-                        isFragmented: false ) );
-        }
+        Assertion.All(
+                b.TryGetInfo()
+                    .TestEquals(
+                        new MemoryPool<int>.ReportInfo.Node(
+                            pool: sut,
+                            segmentIndex: 1,
+                            segmentLength: 16,
+                            isSegmentActive: true,
+                            nodeId: NullableIndex.Create( 1 ),
+                            startIndex: 0,
+                            length: 9,
+                            isFragmented: false ) ),
+                ToArray( sut.Report.Nodes )
+                    .TestSequence(
+                    [
+                        new MemoryPool<int>.ReportInfo.Node(
+                            pool: sut,
+                            segmentIndex: 1,
+                            segmentLength: 16,
+                            isSegmentActive: true,
+                            nodeId: NullableIndex.Create( 1 ),
+                            startIndex: 0,
+                            length: 9,
+                            isFragmented: false ),
+                        new MemoryPool<int>.ReportInfo.Node(
+                            pool: sut,
+                            segmentIndex: 0,
+                            segmentLength: 8,
+                            isSegmentActive: true,
+                            nodeId: NullableIndex.Create( 0 ),
+                            startIndex: 0,
+                            length: 8,
+                            isFragmented: true ),
+                        new MemoryPool<int>.ReportInfo.Node(
+                            pool: sut,
+                            segmentIndex: 1,
+                            segmentLength: 16,
+                            isSegmentActive: true,
+                            nodeId: NullableIndex.Null,
+                            startIndex: 9,
+                            length: 7,
+                            isFragmented: false )
+                    ] ) )
+            .Go();
     }
 
     [Fact]
@@ -564,83 +531,79 @@ public class MemoryPoolTests : TestsBase
         c.Dispose();
         var d = sut.Rent( 9 );
 
-        using ( new AssertionScope() )
-        {
-            a.TryGetInfo()
-                .Should()
-                .BeEquivalentTo(
-                    new MemoryPool<int>.ReportInfo.Node(
-                        pool: sut,
-                        segmentIndex: 0,
-                        segmentLength: 8,
-                        isSegmentActive: true,
-                        nodeId: NullableIndex.Create( 0 ),
-                        startIndex: 0,
-                        length: 8,
-                        isFragmented: false ) );
-
-            d.TryGetInfo()
-                .Should()
-                .BeEquivalentTo(
-                    new MemoryPool<int>.ReportInfo.Node(
-                        pool: sut,
-                        segmentIndex: 3,
-                        segmentLength: 16,
-                        isSegmentActive: true,
-                        nodeId: NullableIndex.Create( 1 ),
-                        startIndex: 0,
-                        length: 9,
-                        isFragmented: false ) );
-
-            ToArray( sut.Report.Nodes )
-                .Should()
-                .BeSequentiallyEqualTo(
-                    new MemoryPool<int>.ReportInfo.Node(
-                        pool: sut,
-                        segmentIndex: 3,
-                        segmentLength: 16,
-                        isSegmentActive: true,
-                        nodeId: NullableIndex.Create( 1 ),
-                        startIndex: 0,
-                        length: 9,
-                        isFragmented: false ),
-                    new MemoryPool<int>.ReportInfo.Node(
-                        pool: sut,
-                        segmentIndex: 2,
-                        segmentLength: 8,
-                        isSegmentActive: true,
-                        nodeId: NullableIndex.Create( 2 ),
-                        startIndex: 0,
-                        length: 8,
-                        isFragmented: true ),
-                    new MemoryPool<int>.ReportInfo.Node(
-                        pool: sut,
-                        segmentIndex: 1,
-                        segmentLength: 8,
-                        isSegmentActive: true,
-                        nodeId: NullableIndex.Create( 3 ),
-                        startIndex: 0,
-                        length: 8,
-                        isFragmented: true ),
-                    new MemoryPool<int>.ReportInfo.Node(
-                        pool: sut,
-                        segmentIndex: 0,
-                        segmentLength: 8,
-                        isSegmentActive: true,
-                        nodeId: NullableIndex.Create( 0 ),
-                        startIndex: 0,
-                        length: 8,
-                        isFragmented: false ),
-                    new MemoryPool<int>.ReportInfo.Node(
-                        pool: sut,
-                        segmentIndex: 3,
-                        segmentLength: 16,
-                        isSegmentActive: true,
-                        nodeId: NullableIndex.Null,
-                        startIndex: 9,
-                        length: 7,
-                        isFragmented: false ) );
-        }
+        Assertion.All(
+                a.TryGetInfo()
+                    .TestEquals(
+                        new MemoryPool<int>.ReportInfo.Node(
+                            pool: sut,
+                            segmentIndex: 0,
+                            segmentLength: 8,
+                            isSegmentActive: true,
+                            nodeId: NullableIndex.Create( 0 ),
+                            startIndex: 0,
+                            length: 8,
+                            isFragmented: false ) ),
+                d.TryGetInfo()
+                    .TestEquals(
+                        new MemoryPool<int>.ReportInfo.Node(
+                            pool: sut,
+                            segmentIndex: 3,
+                            segmentLength: 16,
+                            isSegmentActive: true,
+                            nodeId: NullableIndex.Create( 1 ),
+                            startIndex: 0,
+                            length: 9,
+                            isFragmented: false ) ),
+                ToArray( sut.Report.Nodes )
+                    .TestSequence(
+                    [
+                        new MemoryPool<int>.ReportInfo.Node(
+                            pool: sut,
+                            segmentIndex: 3,
+                            segmentLength: 16,
+                            isSegmentActive: true,
+                            nodeId: NullableIndex.Create( 1 ),
+                            startIndex: 0,
+                            length: 9,
+                            isFragmented: false ),
+                        new MemoryPool<int>.ReportInfo.Node(
+                            pool: sut,
+                            segmentIndex: 2,
+                            segmentLength: 8,
+                            isSegmentActive: true,
+                            nodeId: NullableIndex.Create( 2 ),
+                            startIndex: 0,
+                            length: 8,
+                            isFragmented: true ),
+                        new MemoryPool<int>.ReportInfo.Node(
+                            pool: sut,
+                            segmentIndex: 1,
+                            segmentLength: 8,
+                            isSegmentActive: true,
+                            nodeId: NullableIndex.Create( 3 ),
+                            startIndex: 0,
+                            length: 8,
+                            isFragmented: true ),
+                        new MemoryPool<int>.ReportInfo.Node(
+                            pool: sut,
+                            segmentIndex: 0,
+                            segmentLength: 8,
+                            isSegmentActive: true,
+                            nodeId: NullableIndex.Create( 0 ),
+                            startIndex: 0,
+                            length: 8,
+                            isFragmented: false ),
+                        new MemoryPool<int>.ReportInfo.Node(
+                            pool: sut,
+                            segmentIndex: 3,
+                            segmentLength: 16,
+                            isSegmentActive: true,
+                            nodeId: NullableIndex.Null,
+                            startIndex: 9,
+                            length: 7,
+                            isFragmented: false )
+                    ] ) )
+            .Go();
     }
 
     [Fact]
@@ -652,83 +615,79 @@ public class MemoryPoolTests : TestsBase
         b.Dispose();
         var c = sut.Rent( 9 );
 
-        using ( new AssertionScope() )
-        {
-            a.TryGetInfo()
-                .Should()
-                .BeEquivalentTo(
-                    new MemoryPool<int>.ReportInfo.Node(
-                        pool: sut,
-                        segmentIndex: 0,
-                        segmentLength: 8,
-                        isSegmentActive: true,
-                        nodeId: NullableIndex.Create( 0 ),
-                        startIndex: 0,
-                        length: 7,
-                        isFragmented: false ) );
-
-            c.TryGetInfo()
-                .Should()
-                .BeEquivalentTo(
-                    new MemoryPool<int>.ReportInfo.Node(
-                        pool: sut,
-                        segmentIndex: 2,
-                        segmentLength: 16,
-                        isSegmentActive: true,
-                        nodeId: NullableIndex.Create( 1 ),
-                        startIndex: 0,
-                        length: 9,
-                        isFragmented: false ) );
-
-            ToArray( sut.Report.Nodes )
-                .Should()
-                .BeSequentiallyEqualTo(
-                    new MemoryPool<int>.ReportInfo.Node(
-                        pool: sut,
-                        segmentIndex: 2,
-                        segmentLength: 16,
-                        isSegmentActive: true,
-                        nodeId: NullableIndex.Create( 1 ),
-                        startIndex: 0,
-                        length: 9,
-                        isFragmented: false ),
-                    new MemoryPool<int>.ReportInfo.Node(
-                        pool: sut,
-                        segmentIndex: 1,
-                        segmentLength: 8,
-                        isSegmentActive: true,
-                        nodeId: NullableIndex.Create( 2 ),
-                        startIndex: 0,
-                        length: 8,
-                        isFragmented: true ),
-                    new MemoryPool<int>.ReportInfo.Node(
-                        pool: sut,
-                        segmentIndex: 0,
-                        segmentLength: 8,
-                        isSegmentActive: true,
-                        nodeId: NullableIndex.Create( 3 ),
-                        startIndex: 7,
-                        length: 1,
-                        isFragmented: true ),
-                    new MemoryPool<int>.ReportInfo.Node(
-                        pool: sut,
-                        segmentIndex: 0,
-                        segmentLength: 8,
-                        isSegmentActive: true,
-                        nodeId: NullableIndex.Create( 0 ),
-                        startIndex: 0,
-                        length: 7,
-                        isFragmented: false ),
-                    new MemoryPool<int>.ReportInfo.Node(
-                        pool: sut,
-                        segmentIndex: 2,
-                        segmentLength: 16,
-                        isSegmentActive: true,
-                        nodeId: NullableIndex.Null,
-                        startIndex: 9,
-                        length: 7,
-                        isFragmented: false ) );
-        }
+        Assertion.All(
+                a.TryGetInfo()
+                    .TestEquals(
+                        new MemoryPool<int>.ReportInfo.Node(
+                            pool: sut,
+                            segmentIndex: 0,
+                            segmentLength: 8,
+                            isSegmentActive: true,
+                            nodeId: NullableIndex.Create( 0 ),
+                            startIndex: 0,
+                            length: 7,
+                            isFragmented: false ) ),
+                c.TryGetInfo()
+                    .TestEquals(
+                        new MemoryPool<int>.ReportInfo.Node(
+                            pool: sut,
+                            segmentIndex: 2,
+                            segmentLength: 16,
+                            isSegmentActive: true,
+                            nodeId: NullableIndex.Create( 1 ),
+                            startIndex: 0,
+                            length: 9,
+                            isFragmented: false ) ),
+                ToArray( sut.Report.Nodes )
+                    .TestSequence(
+                    [
+                        new MemoryPool<int>.ReportInfo.Node(
+                            pool: sut,
+                            segmentIndex: 2,
+                            segmentLength: 16,
+                            isSegmentActive: true,
+                            nodeId: NullableIndex.Create( 1 ),
+                            startIndex: 0,
+                            length: 9,
+                            isFragmented: false ),
+                        new MemoryPool<int>.ReportInfo.Node(
+                            pool: sut,
+                            segmentIndex: 1,
+                            segmentLength: 8,
+                            isSegmentActive: true,
+                            nodeId: NullableIndex.Create( 2 ),
+                            startIndex: 0,
+                            length: 8,
+                            isFragmented: true ),
+                        new MemoryPool<int>.ReportInfo.Node(
+                            pool: sut,
+                            segmentIndex: 0,
+                            segmentLength: 8,
+                            isSegmentActive: true,
+                            nodeId: NullableIndex.Create( 3 ),
+                            startIndex: 7,
+                            length: 1,
+                            isFragmented: true ),
+                        new MemoryPool<int>.ReportInfo.Node(
+                            pool: sut,
+                            segmentIndex: 0,
+                            segmentLength: 8,
+                            isSegmentActive: true,
+                            nodeId: NullableIndex.Create( 0 ),
+                            startIndex: 0,
+                            length: 7,
+                            isFragmented: false ),
+                        new MemoryPool<int>.ReportInfo.Node(
+                            pool: sut,
+                            segmentIndex: 2,
+                            segmentLength: 16,
+                            isSegmentActive: true,
+                            nodeId: NullableIndex.Null,
+                            startIndex: 9,
+                            length: 7,
+                            isFragmented: false )
+                    ] ) )
+            .Go();
     }
 
     [Fact]
@@ -743,41 +702,40 @@ public class MemoryPoolTests : TestsBase
 
         var result = sut.Rent( 9 );
 
-        using ( new AssertionScope() )
-        {
-            result.AsSpan().ToArray().Should().BeSequentiallyEqualTo( 9, 10, 11, 12, 13, 14, 15, 16, 17 );
-
-            ToArray( sut.Report.Nodes )
-                .Should()
-                .BeSequentiallyEqualTo(
-                    new MemoryPool<int>.ReportInfo.Node(
-                        pool: sut,
-                        segmentIndex: 1,
-                        segmentLength: 16,
-                        isSegmentActive: true,
-                        nodeId: NullableIndex.Create( 1 ),
-                        startIndex: 0,
-                        length: 9,
-                        isFragmented: false ),
-                    new MemoryPool<int>.ReportInfo.Node(
-                        pool: sut,
-                        segmentIndex: 0,
-                        segmentLength: 8,
-                        isSegmentActive: true,
-                        nodeId: NullableIndex.Create( 0 ),
-                        startIndex: 0,
-                        length: 8,
-                        isFragmented: false ),
-                    new MemoryPool<int>.ReportInfo.Node(
-                        pool: sut,
-                        segmentIndex: 1,
-                        segmentLength: 16,
-                        isSegmentActive: true,
-                        nodeId: NullableIndex.Null,
-                        startIndex: 9,
-                        length: 7,
-                        isFragmented: false ) );
-        }
+        Assertion.All(
+                result.AsSpan().TestSequence( [ 9, 10, 11, 12, 13, 14, 15, 16, 17 ] ),
+                ToArray( sut.Report.Nodes )
+                    .TestSequence(
+                    [
+                        new MemoryPool<int>.ReportInfo.Node(
+                            pool: sut,
+                            segmentIndex: 1,
+                            segmentLength: 16,
+                            isSegmentActive: true,
+                            nodeId: NullableIndex.Create( 1 ),
+                            startIndex: 0,
+                            length: 9,
+                            isFragmented: false ),
+                        new MemoryPool<int>.ReportInfo.Node(
+                            pool: sut,
+                            segmentIndex: 0,
+                            segmentLength: 8,
+                            isSegmentActive: true,
+                            nodeId: NullableIndex.Create( 0 ),
+                            startIndex: 0,
+                            length: 8,
+                            isFragmented: false ),
+                        new MemoryPool<int>.ReportInfo.Node(
+                            pool: sut,
+                            segmentIndex: 1,
+                            segmentLength: 16,
+                            isSegmentActive: true,
+                            nodeId: NullableIndex.Null,
+                            startIndex: 9,
+                            length: 7,
+                            isFragmented: false )
+                    ] ) )
+            .Go();
     }
 
     [Theory]
@@ -788,13 +746,12 @@ public class MemoryPoolTests : TestsBase
         var sut = new MemoryPool<int>( 16 );
         using var result = sut.GreedyRent( length );
 
-        using ( new AssertionScope() )
-        {
-            result.Owner.Should().BeNull();
-            result.Clear.Should().BeFalse();
-            result.AsMemory().ToArray().Should().BeEmpty();
-            result.AsSpan().ToArray().Should().BeEmpty();
-        }
+        Assertion.All(
+                result.Owner.TestNull(),
+                result.Clear.TestFalse(),
+                result.AsMemory().TestEmpty(),
+                result.AsSpan().TestEmpty() )
+            .Go();
     }
 
     [Theory]
@@ -807,11 +764,10 @@ public class MemoryPoolTests : TestsBase
         var sut = new MemoryPool<int>( 8 );
         using var result = sut.GreedyRent( length );
 
-        using ( new AssertionScope() )
-        {
-            result.AsSpan().Length.Should().Be( length );
-            result.Owner.Should().BeSameAs( sut );
-        }
+        Assertion.All(
+                result.AsSpan().Length.TestEquals( length ),
+                result.Owner.TestRefEquals( sut ) )
+            .Go();
     }
 
     [Theory]
@@ -833,13 +789,12 @@ public class MemoryPoolTests : TestsBase
         using var result = sut.GreedyRent( length );
         var other = sut.Rent( 8 );
 
-        using ( new AssertionScope() )
-        {
-            result.AsSpan().Length.Should().Be( length );
-            result.AsSpan().ToArray().Should().AllBeEquivalentTo( 0 );
-            other.AsSpan().ToArray().Should().BeSequentiallyEqualTo( 1, 2, 3, 4, 5, 6, 7, 8 );
-            second.AsSpan().ToArray().Should().AllBeEquivalentTo( -1 );
-        }
+        Assertion.All(
+                result.AsSpan().Length.TestEquals( length ),
+                result.AsSpan().TestAll( (e, _) => e.TestEquals( 0 ) ),
+                other.AsSpan().TestSequence( [ 1, 2, 3, 4, 5, 6, 7, 8 ] ),
+                second.AsSpan().TestAll( (e, _) => e.TestEquals( -1 ) ) )
+            .Go();
     }
 
     [Theory]
@@ -867,11 +822,10 @@ public class MemoryPoolTests : TestsBase
 
         using var result = sut.Rent( length );
 
-        using ( new AssertionScope() )
-        {
-            first.AsSpan().ToArray().Should().AllBeEquivalentTo( 1 );
-            result.AsSpan().ToArray().Should().AllBeEquivalentTo( default( int ) );
-        }
+        Assertion.All(
+                first.AsSpan().TestAll( (e, _) => e.TestEquals( 1 ) ),
+                result.AsSpan().TestAll( (e, _) => e.TestEquals( default ) ) )
+            .Go();
     }
 
     [Theory]
@@ -899,11 +853,10 @@ public class MemoryPoolTests : TestsBase
 
         using var result = sut.Rent( length );
 
-        using ( new AssertionScope() )
-        {
-            first.AsSpan().ToArray().Should().AllBeEquivalentTo( 1 );
-            result.AsSpan().ToArray().Should().AllBeEquivalentTo( 2 );
-        }
+        Assertion.All(
+                first.AsSpan().TestAll( (e, _) => e.TestEquals( 1 ) ),
+                result.AsSpan().TestAll( (e, _) => e.TestEquals( 2 ) ) )
+            .Go();
     }
 
     [Fact]
@@ -917,7 +870,7 @@ public class MemoryPoolTests : TestsBase
         sut.TrimExcess();
         using var result = sut.Rent( 12 );
 
-        result.AsSpan().ToArray().Should().AllBeEquivalentTo( default( int ) );
+        result.AsSpan().TestAll( (e, _) => e.TestEquals( default ) ).Go();
     }
 
     [Fact]
@@ -934,12 +887,11 @@ public class MemoryPoolTests : TestsBase
         sut.TrimExcess();
         using var result = sut.Rent( 12 );
 
-        using ( new AssertionScope() )
-        {
-            first.AsSpan().Length.Should().Be( 12 );
-            first.AsSpan().ToArray().Should().AllBeEquivalentTo( 1 );
-            result.AsSpan().ToArray().Should().AllBeEquivalentTo( default( int ) );
-        }
+        Assertion.All(
+                first.AsSpan().Length.TestEquals( 12 ),
+                first.AsSpan().TestAll( (e, _) => e.TestEquals( 1 ) ),
+                result.AsSpan().TestAll( (e, _) => e.TestEquals( default ) ) )
+            .Go();
     }
 
     [Fact]
@@ -965,73 +917,63 @@ public class MemoryPoolTests : TestsBase
         d = sut.Rent( 1 );
         e = sut.Rent( 1 );
 
-        using ( new AssertionScope() )
-        {
-            a.TryGetInfo()
-                .Should()
-                .BeEquivalentTo(
-                    new MemoryPool<int>.ReportInfo.Node(
-                        pool: sut,
-                        segmentIndex: 0,
-                        segmentLength: 8,
-                        isSegmentActive: true,
-                        nodeId: NullableIndex.Create( 2 ),
-                        startIndex: 0,
-                        length: 3,
-                        isFragmented: false ) );
-
-            b.TryGetInfo()
-                .Should()
-                .BeEquivalentTo(
-                    new MemoryPool<int>.ReportInfo.Node(
-                        pool: sut,
-                        segmentIndex: 0,
-                        segmentLength: 8,
-                        isSegmentActive: true,
-                        nodeId: NullableIndex.Create( 4 ),
-                        startIndex: 3,
-                        length: 5,
-                        isFragmented: false ) );
-
-            c.TryGetInfo()
-                .Should()
-                .BeEquivalentTo(
-                    new MemoryPool<int>.ReportInfo.Node(
-                        pool: sut,
-                        segmentIndex: 1,
-                        segmentLength: 8,
-                        isSegmentActive: true,
-                        nodeId: NullableIndex.Create( 3 ),
-                        startIndex: 0,
-                        length: 7,
-                        isFragmented: false ) );
-
-            d.TryGetInfo()
-                .Should()
-                .BeEquivalentTo(
-                    new MemoryPool<int>.ReportInfo.Node(
-                        pool: sut,
-                        segmentIndex: 1,
-                        segmentLength: 8,
-                        isSegmentActive: true,
-                        nodeId: NullableIndex.Create( 0 ),
-                        startIndex: 7,
-                        length: 1,
-                        isFragmented: false ) );
-
-            e.TryGetInfo()
-                .Should()
-                .BeEquivalentTo(
-                    new MemoryPool<int>.ReportInfo.Node(
-                        pool: sut,
-                        segmentIndex: 2,
-                        segmentLength: 8,
-                        isSegmentActive: true,
-                        nodeId: NullableIndex.Create( 1 ),
-                        startIndex: 0,
-                        length: 1,
-                        isFragmented: false ) );
-        }
+        Assertion.All(
+                a.TryGetInfo()
+                    .TestEquals(
+                        new MemoryPool<int>.ReportInfo.Node(
+                            pool: sut,
+                            segmentIndex: 0,
+                            segmentLength: 8,
+                            isSegmentActive: true,
+                            nodeId: NullableIndex.Create( 2 ),
+                            startIndex: 0,
+                            length: 3,
+                            isFragmented: false ) ),
+                b.TryGetInfo()
+                    .TestEquals(
+                        new MemoryPool<int>.ReportInfo.Node(
+                            pool: sut,
+                            segmentIndex: 0,
+                            segmentLength: 8,
+                            isSegmentActive: true,
+                            nodeId: NullableIndex.Create( 4 ),
+                            startIndex: 3,
+                            length: 5,
+                            isFragmented: false ) ),
+                c.TryGetInfo()
+                    .TestEquals(
+                        new MemoryPool<int>.ReportInfo.Node(
+                            pool: sut,
+                            segmentIndex: 1,
+                            segmentLength: 8,
+                            isSegmentActive: true,
+                            nodeId: NullableIndex.Create( 3 ),
+                            startIndex: 0,
+                            length: 7,
+                            isFragmented: false ) ),
+                d.TryGetInfo()
+                    .TestEquals(
+                        new MemoryPool<int>.ReportInfo.Node(
+                            pool: sut,
+                            segmentIndex: 1,
+                            segmentLength: 8,
+                            isSegmentActive: true,
+                            nodeId: NullableIndex.Create( 0 ),
+                            startIndex: 7,
+                            length: 1,
+                            isFragmented: false ) ),
+                e.TryGetInfo()
+                    .TestEquals(
+                        new MemoryPool<int>.ReportInfo.Node(
+                            pool: sut,
+                            segmentIndex: 2,
+                            segmentLength: 8,
+                            isSegmentActive: true,
+                            nodeId: NullableIndex.Create( 1 ),
+                            startIndex: 0,
+                            length: 1,
+                            isFragmented: false ) ) )
+            .Go();
     }
 
     [Fact]
@@ -1039,14 +981,13 @@ public class MemoryPoolTests : TestsBase
     {
         var sut = default( MemoryPool<int>.ReportInfo );
 
-        using ( new AssertionScope() )
-        {
-            sut.AllocatedSegments.Should().Be( 0 );
-            sut.ActiveSegments.Should().Be( 0 );
-            ToArray( sut.Nodes ).Should().BeEmpty();
-            sut.FragmentedNodes.Count.Should().Be( 0 );
-            ToArray( sut.FragmentedNodes ).Should().BeEmpty();
-        }
+        Assertion.All(
+                sut.AllocatedSegments.TestEquals( 0 ),
+                sut.ActiveSegments.TestEquals( 0 ),
+                ToArray( sut.Nodes ).TestEmpty(),
+                sut.FragmentedNodes.Count.TestEquals( 0 ),
+                ToArray( sut.FragmentedNodes ).TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -1054,14 +995,13 @@ public class MemoryPoolTests : TestsBase
     {
         var sut = new MemoryPool<int>( 16 ).Report;
 
-        using ( new AssertionScope() )
-        {
-            sut.AllocatedSegments.Should().Be( 0 );
-            sut.ActiveSegments.Should().Be( 0 );
-            ToArray( sut.Nodes ).Should().BeEmpty();
-            sut.FragmentedNodes.Count.Should().Be( 0 );
-            ToArray( sut.FragmentedNodes ).Should().BeEmpty();
-        }
+        Assertion.All(
+                sut.AllocatedSegments.TestEquals( 0 ),
+                sut.ActiveSegments.TestEquals( 0 ),
+                ToArray( sut.Nodes ).TestEmpty(),
+                sut.FragmentedNodes.Count.TestEquals( 0 ),
+                ToArray( sut.FragmentedNodes ).TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -1089,32 +1029,18 @@ public class MemoryPoolTests : TestsBase
         var nodes = ToArray( sut.Nodes );
         var fragmentedNodes = ToArray( sut.FragmentedNodes );
 
-        using ( new AssertionScope() )
-        {
-            sut.AllocatedSegments.Should().Be( 5 );
-            sut.ActiveSegments.Should().Be( 4 );
-            sut.FragmentedNodes.Count.Should().Be( 3 );
-
-            fragmentedNodes.Should()
-                .BeSequentiallyEqualTo(
-                    new MemoryPool<int>.ReportInfo.FragmentedNode(
-                        segmentIndex: 0,
-                        segmentLength: 16,
-                        startIndex: 0,
-                        length: 16 ),
-                    new MemoryPool<int>.ReportInfo.FragmentedNode(
-                        segmentIndex: 1,
-                        segmentLength: 32,
-                        startIndex: 25,
-                        length: 7 ),
-                    new MemoryPool<int>.ReportInfo.FragmentedNode(
-                        segmentIndex: 2,
-                        segmentLength: 16,
-                        startIndex: 0,
-                        length: 16 ) );
-
-            nodes.Should()
-                .BeSequentiallyEqualTo(
+        Assertion.All(
+                sut.AllocatedSegments.TestEquals( 5 ),
+                sut.ActiveSegments.TestEquals( 4 ),
+                sut.FragmentedNodes.Count.TestEquals( 3 ),
+                fragmentedNodes.TestSequence(
+                [
+                    new MemoryPool<int>.ReportInfo.FragmentedNode( segmentIndex: 0, segmentLength: 16, startIndex: 0, length: 16 ),
+                    new MemoryPool<int>.ReportInfo.FragmentedNode( segmentIndex: 1, segmentLength: 32, startIndex: 25, length: 7 ),
+                    new MemoryPool<int>.ReportInfo.FragmentedNode( segmentIndex: 2, segmentLength: 16, startIndex: 0, length: 16 )
+                ] ),
+                nodes.TestSequence(
+                [
                     new MemoryPool<int>.ReportInfo.Node(
                         pool: pool,
                         segmentIndex: 3,
@@ -1204,8 +1130,9 @@ public class MemoryPoolTests : TestsBase
                         nodeId: NullableIndex.Null,
                         startIndex: 0,
                         length: 32,
-                        isFragmented: false ) );
-        }
+                        isFragmented: false )
+                ] ) )
+            .Go();
     }
 
     [Fact]
@@ -1218,15 +1145,13 @@ public class MemoryPoolTests : TestsBase
         var nodes = ToArray( sut.Nodes );
         var fragmentedNodes = ToArray( sut.FragmentedNodes );
 
-        using ( new AssertionScope() )
-        {
-            sut.AllocatedSegments.Should().Be( 1 );
-            sut.ActiveSegments.Should().Be( 1 );
-            sut.FragmentedNodes.Count.Should().Be( 0 );
-            fragmentedNodes.Should().BeEmpty();
-
-            nodes.Should()
-                .BeSequentiallyEqualTo(
+        Assertion.All(
+                sut.AllocatedSegments.TestEquals( 1 ),
+                sut.ActiveSegments.TestEquals( 1 ),
+                sut.FragmentedNodes.Count.TestEquals( 0 ),
+                fragmentedNodes.TestEmpty(),
+                nodes.TestSequence(
+                [
                     new MemoryPool<int>.ReportInfo.Node(
                         pool: pool,
                         segmentIndex: 0,
@@ -1235,8 +1160,9 @@ public class MemoryPoolTests : TestsBase
                         nodeId: NullableIndex.CreateUnsafe( 0 ),
                         startIndex: 0,
                         length: 16,
-                        isFragmented: false ) );
-        }
+                        isFragmented: false )
+                ] ) )
+            .Go();
     }
 
     [Fact]
@@ -1249,15 +1175,14 @@ public class MemoryPoolTests : TestsBase
 
         var sut = ToArray( pool.Report.FragmentedNodes )[0];
 
-        using ( new AssertionScope() )
-        {
-            sut.SegmentIndex.Should().Be( 0 );
-            sut.SegmentLength.Should().Be( 8 );
-            sut.StartIndex.Should().Be( 0 );
-            sut.Length.Should().Be( 3 );
-            sut.EndIndex.Should().Be( 3 );
-            sut.ToString().Should().Be( "Segment: @0 (Length: 8), Node: [0:2] (3)" );
-        }
+        Assertion.All(
+                sut.SegmentIndex.TestEquals( 0 ),
+                sut.SegmentLength.TestEquals( 8 ),
+                sut.StartIndex.TestEquals( 0 ),
+                sut.Length.TestEquals( 3 ),
+                sut.EndIndex.TestEquals( 3 ),
+                sut.ToString().TestEquals( "Segment: @0 (Length: 8), Node: [0:2] (3)" ) )
+            .Go();
     }
 
     [Fact]
@@ -1268,17 +1193,16 @@ public class MemoryPoolTests : TestsBase
 
         var sut = ToArray( pool.Report.Nodes )[0];
 
-        using ( new AssertionScope() )
-        {
-            sut.SegmentIndex.Should().Be( 0 );
-            sut.SegmentLength.Should().Be( 8 );
-            sut.StartIndex.Should().Be( 0 );
-            sut.Length.Should().Be( 5 );
-            sut.EndIndex.Should().Be( 5 );
-            sut.IsSegmentActive.Should().BeTrue();
-            sut.IsFragmented.Should().BeFalse();
-            sut.ToString().Should().Be( "Segment: @0 (Length: 8), Node: [0:4] (5)" );
-        }
+        Assertion.All(
+                sut.SegmentIndex.TestEquals( 0 ),
+                sut.SegmentLength.TestEquals( 8 ),
+                sut.StartIndex.TestEquals( 0 ),
+                sut.Length.TestEquals( 5 ),
+                sut.EndIndex.TestEquals( 5 ),
+                sut.IsSegmentActive.TestTrue(),
+                sut.IsFragmented.TestFalse(),
+                sut.ToString().TestEquals( "Segment: @0 (Length: 8), Node: [0:4] (5)" ) )
+            .Go();
     }
 
     [Fact]
@@ -1291,17 +1215,16 @@ public class MemoryPoolTests : TestsBase
 
         var sut = ToArray( pool.Report.Nodes )[1];
 
-        using ( new AssertionScope() )
-        {
-            sut.SegmentIndex.Should().Be( 0 );
-            sut.SegmentLength.Should().Be( 8 );
-            sut.StartIndex.Should().Be( 0 );
-            sut.Length.Should().Be( 3 );
-            sut.EndIndex.Should().Be( 3 );
-            sut.IsSegmentActive.Should().BeTrue();
-            sut.IsFragmented.Should().BeTrue();
-            sut.ToString().Should().Be( "Segment: @0 (Length: 8), Node: [0:2] (3) (fragmented)" );
-        }
+        Assertion.All(
+                sut.SegmentIndex.TestEquals( 0 ),
+                sut.SegmentLength.TestEquals( 8 ),
+                sut.StartIndex.TestEquals( 0 ),
+                sut.Length.TestEquals( 3 ),
+                sut.EndIndex.TestEquals( 3 ),
+                sut.IsSegmentActive.TestTrue(),
+                sut.IsFragmented.TestTrue(),
+                sut.ToString().TestEquals( "Segment: @0 (Length: 8), Node: [0:2] (3) (fragmented)" ) )
+            .Go();
     }
 
     [Fact]
@@ -1312,17 +1235,16 @@ public class MemoryPoolTests : TestsBase
 
         var sut = ToArray( pool.Report.Nodes )[1];
 
-        using ( new AssertionScope() )
-        {
-            sut.SegmentIndex.Should().Be( 0 );
-            sut.SegmentLength.Should().Be( 8 );
-            sut.StartIndex.Should().Be( 5 );
-            sut.Length.Should().Be( 3 );
-            sut.EndIndex.Should().Be( 8 );
-            sut.IsSegmentActive.Should().BeTrue();
-            sut.IsFragmented.Should().BeFalse();
-            sut.ToString().Should().Be( "Segment: @0 (Length: 8), Node: [5:7] (3) (free tail)" );
-        }
+        Assertion.All(
+                sut.SegmentIndex.TestEquals( 0 ),
+                sut.SegmentLength.TestEquals( 8 ),
+                sut.StartIndex.TestEquals( 5 ),
+                sut.Length.TestEquals( 3 ),
+                sut.EndIndex.TestEquals( 8 ),
+                sut.IsSegmentActive.TestTrue(),
+                sut.IsFragmented.TestFalse(),
+                sut.ToString().TestEquals( "Segment: @0 (Length: 8), Node: [5:7] (3) (free tail)" ) )
+            .Go();
     }
 
     [Fact]
@@ -1334,17 +1256,16 @@ public class MemoryPoolTests : TestsBase
 
         var sut = ToArray( pool.Report.Nodes )[0];
 
-        using ( new AssertionScope() )
-        {
-            sut.SegmentIndex.Should().Be( 0 );
-            sut.SegmentLength.Should().Be( 8 );
-            sut.StartIndex.Should().Be( 0 );
-            sut.Length.Should().Be( 8 );
-            sut.EndIndex.Should().Be( 8 );
-            sut.IsSegmentActive.Should().BeFalse();
-            sut.IsFragmented.Should().BeFalse();
-            sut.ToString().Should().Be( "Segment: @0 (Length: 8) (inactive)" );
-        }
+        Assertion.All(
+                sut.SegmentIndex.TestEquals( 0 ),
+                sut.SegmentLength.TestEquals( 8 ),
+                sut.StartIndex.TestEquals( 0 ),
+                sut.Length.TestEquals( 8 ),
+                sut.EndIndex.TestEquals( 8 ),
+                sut.IsSegmentActive.TestFalse(),
+                sut.IsFragmented.TestFalse(),
+                sut.ToString().TestEquals( "Segment: @0 (Length: 8) (inactive)" ) )
+            .Go();
     }
 
     [Fact]
@@ -1356,7 +1277,7 @@ public class MemoryPoolTests : TestsBase
 
         var result = sut.TryGetToken();
 
-        result.Should().BeEquivalentTo( token );
+        result.TestEquals( token ).Go();
     }
 
     [Fact]
@@ -1370,7 +1291,7 @@ public class MemoryPoolTests : TestsBase
 
         var result = sut.TryGetToken();
 
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Fact]
@@ -1382,7 +1303,7 @@ public class MemoryPoolTests : TestsBase
 
         var result = sut.TryGetToken();
 
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Fact]
@@ -1395,7 +1316,7 @@ public class MemoryPoolTests : TestsBase
 
         var result = sut.TryGetToken();
 
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Pure]

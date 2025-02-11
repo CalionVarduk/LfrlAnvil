@@ -15,15 +15,12 @@ public class PipelineBuilderTests : TestsBase
             PipelineProcessor.Create<int, int>( c => c.SetResult( c.Result + 3 ) )
         };
 
-        var sut = new PipelineBuilder<int, int>( defaultResult: 0 )
-            .Add( processors[0] )
-            .Add( processors.Skip( 1 ) )
-            .SetDefaultResult( 1 );
+        var sut = new PipelineBuilder<int, int>( defaultResult: 0 ).Add( processors[0] ).Add( processors.Skip( 1 ) ).SetDefaultResult( 1 );
 
         var pipeline = sut.Build();
 
         var result = pipeline.Invoke( 100 );
 
-        result.Should().Be( 106 );
+        result.TestEquals( 106 ).Go();
     }
 }

@@ -61,8 +61,10 @@ public class MySqlForeignKeyBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
-                    @"ALTER TABLE `foo`.`T`
-                      ADD CONSTRAINT `FK_T_C2_REF_T` FOREIGN KEY (`C2`) REFERENCES `foo`.`T` (`C1`) ON DELETE RESTRICT ON UPDATE RESTRICT;" );
+                    """
+                    ALTER TABLE `foo`.`T`
+                                          ADD CONSTRAINT `FK_T_C2_REF_T` FOREIGN KEY (`C2`) REFERENCES `foo`.`T` (`C1`) ON DELETE RESTRICT ON UPDATE RESTRICT;
+                    """ );
         }
     }
 
@@ -102,8 +104,10 @@ public class MySqlForeignKeyBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
-                    @"ALTER TABLE `foo`.`T2`
-                      ADD CONSTRAINT `FK_T2_C2_REF_T` FOREIGN KEY (`C2`) REFERENCES `foo`.`T` (`C1`) ON DELETE RESTRICT ON UPDATE RESTRICT;" );
+                    """
+                    ALTER TABLE `foo`.`T2`
+                                          ADD CONSTRAINT `FK_T2_C2_REF_T` FOREIGN KEY (`C2`) REFERENCES `foo`.`T` (`C1`) ON DELETE RESTRICT ON UPDATE RESTRICT;
+                    """ );
         }
     }
 
@@ -145,8 +149,10 @@ public class MySqlForeignKeyBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
-                    @"ALTER TABLE `bar`.`T2`
-                      ADD CONSTRAINT `FK_T2_C2_REF_foo_T` FOREIGN KEY (`C2`) REFERENCES `foo`.`T` (`C1`) ON DELETE RESTRICT ON UPDATE RESTRICT;" );
+                    """
+                    ALTER TABLE `bar`.`T2`
+                                          ADD CONSTRAINT `FK_T2_C2_REF_foo_T` FOREIGN KEY (`C2`) REFERENCES `foo`.`T` (`C1`) ON DELETE RESTRICT ON UPDATE RESTRICT;
+                    """ );
         }
     }
 
@@ -235,10 +241,14 @@ public class MySqlForeignKeyBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
-                    @"ALTER TABLE `foo`.`T`
-                      DROP FOREIGN KEY `FK_T_C2_REF_T`;",
-                    @"ALTER TABLE `foo`.`T`
-                      ADD CONSTRAINT `bar` FOREIGN KEY (`C2`) REFERENCES `foo`.`T` (`C1`) ON DELETE RESTRICT ON UPDATE RESTRICT;" );
+                    """
+                    ALTER TABLE `foo`.`T`
+                                          DROP FOREIGN KEY `FK_T_C2_REF_T`;
+                    """,
+                    """
+                    ALTER TABLE `foo`.`T`
+                                          ADD CONSTRAINT `bar` FOREIGN KEY (`C2`) REFERENCES `foo`.`T` (`C1`) ON DELETE RESTRICT ON UPDATE RESTRICT;
+                    """ );
         }
     }
 
@@ -363,10 +373,14 @@ public class MySqlForeignKeyBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
-                    @"ALTER TABLE `foo`.`T`
-                      DROP FOREIGN KEY `bar`;",
-                    @"ALTER TABLE `foo`.`T`
-                      ADD CONSTRAINT `FK_T_C2_REF_T` FOREIGN KEY (`C2`) REFERENCES `foo`.`T` (`C1`) ON DELETE RESTRICT ON UPDATE RESTRICT;" );
+                    """
+                    ALTER TABLE `foo`.`T`
+                                          DROP FOREIGN KEY `bar`;
+                    """,
+                    """
+                    ALTER TABLE `foo`.`T`
+                                          ADD CONSTRAINT `FK_T_C2_REF_T` FOREIGN KEY (`C2`) REFERENCES `foo`.`T` (`C1`) ON DELETE RESTRICT ON UPDATE RESTRICT;
+                    """ );
         }
     }
 
@@ -430,10 +444,14 @@ public class MySqlForeignKeyBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
-                    @"ALTER TABLE `foo`.`T`
-                      DROP FOREIGN KEY `FK_T_C2_REF_T`;",
-                    $@"ALTER TABLE `foo`.`T`
-                      ADD CONSTRAINT `FK_T_C2_REF_T` FOREIGN KEY (`C2`) REFERENCES `foo`.`T` (`C1`) ON DELETE {behavior.Name} ON UPDATE RESTRICT;" );
+                    """
+                    ALTER TABLE `foo`.`T`
+                                          DROP FOREIGN KEY `FK_T_C2_REF_T`;
+                    """,
+                    $"""
+                     ALTER TABLE `foo`.`T`
+                                           ADD CONSTRAINT `FK_T_C2_REF_T` FOREIGN KEY (`C2`) REFERENCES `foo`.`T` (`C1`) ON DELETE {behavior.Name} ON UPDATE RESTRICT;
+                     """ );
         }
     }
 
@@ -537,10 +555,14 @@ public class MySqlForeignKeyBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
-                    @"ALTER TABLE `foo`.`T`
-                      DROP FOREIGN KEY `FK_T_C2_REF_T`;",
-                    $@"ALTER TABLE `foo`.`T`
-                      ADD CONSTRAINT `FK_T_C2_REF_T` FOREIGN KEY (`C2`) REFERENCES `foo`.`T` (`C1`) ON DELETE RESTRICT ON UPDATE {behavior.Name};" );
+                    """
+                    ALTER TABLE `foo`.`T`
+                                          DROP FOREIGN KEY `FK_T_C2_REF_T`;
+                    """,
+                    $"""
+                     ALTER TABLE `foo`.`T`
+                                           ADD CONSTRAINT `FK_T_C2_REF_T` FOREIGN KEY (`C2`) REFERENCES `foo`.`T` (`C1`) ON DELETE RESTRICT ON UPDATE {behavior.Name};
+                     """ );
         }
     }
 
@@ -643,8 +665,10 @@ public class MySqlForeignKeyBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
-                    @"ALTER TABLE `foo`.`T`
-                      DROP FOREIGN KEY `FK_T_C2_REF_T`;" );
+                    """
+                    ALTER TABLE `foo`.`T`
+                                          DROP FOREIGN KEY `FK_T_C2_REF_T`;
+                    """ );
         }
     }
 
@@ -675,8 +699,10 @@ public class MySqlForeignKeyBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
-                    @"ALTER TABLE `foo`.`T2`
-                      DROP FOREIGN KEY `FK_T2_C2_REF_T`;" );
+                    """
+                    ALTER TABLE `foo`.`T2`
+                                          DROP FOREIGN KEY `FK_T2_C2_REF_T`;
+                    """ );
         }
     }
 
@@ -709,8 +735,10 @@ public class MySqlForeignKeyBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
-                    @"ALTER TABLE `bar`.`T2`
-                      DROP FOREIGN KEY `FK_T2_C2_REF_foo_T`;" );
+                    """
+                    ALTER TABLE `bar`.`T2`
+                                          DROP FOREIGN KEY `FK_T2_C2_REF_foo_T`;
+                    """ );
         }
     }
 

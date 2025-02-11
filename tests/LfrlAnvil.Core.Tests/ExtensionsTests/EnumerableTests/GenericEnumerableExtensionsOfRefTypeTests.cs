@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using LfrlAnvil.Extensions;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Tests.ExtensionsTests.EnumerableTests;
 
@@ -16,7 +15,7 @@ public abstract class GenericEnumerableExtensionsOfRefTypeTests<T> : GenericEnum
 
         var result = sut.WhereNotNull();
 
-        result.Should().BeSequentiallyEqualTo( expected );
+        result.TestSequence( expected ).Go();
     }
 
     [Fact]
@@ -24,7 +23,7 @@ public abstract class GenericEnumerableExtensionsOfRefTypeTests<T> : GenericEnum
     {
         var sut = Fixture.CreateMany<T>().ToList();
         var result = sut.WhereNotNull();
-        result.Should().BeSequentiallyEqualTo( sut );
+        result.TestSequence( sut ).Go();
     }
 
     [Fact]
@@ -35,7 +34,7 @@ public abstract class GenericEnumerableExtensionsOfRefTypeTests<T> : GenericEnum
 
         var result = sut.WhereNotNull( EqualityComparer<T>.Default );
 
-        result.Should().BeSequentiallyEqualTo( expected );
+        result.TestSequence( expected ).Go();
     }
 
     [Fact]
@@ -43,7 +42,7 @@ public abstract class GenericEnumerableExtensionsOfRefTypeTests<T> : GenericEnum
     {
         var sut = Fixture.CreateMany<T>().ToList();
         var result = sut.WhereNotNull( EqualityComparer<T>.Default );
-        result.Should().BeSequentiallyEqualTo( sut );
+        result.TestSequence( sut ).Go();
     }
 
     [Fact]
@@ -51,7 +50,7 @@ public abstract class GenericEnumerableExtensionsOfRefTypeTests<T> : GenericEnum
     {
         var sut = Fixture.CreateMany<T>().Append( Fixture.CreateDefault<T>() );
         var result = sut.ContainsNull();
-        result.Should().BeTrue();
+        result.TestTrue().Go();
     }
 
     [Fact]
@@ -59,7 +58,7 @@ public abstract class GenericEnumerableExtensionsOfRefTypeTests<T> : GenericEnum
     {
         var sut = Fixture.CreateMany<T>();
         var result = sut.ContainsNull();
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Fact]
@@ -67,7 +66,7 @@ public abstract class GenericEnumerableExtensionsOfRefTypeTests<T> : GenericEnum
     {
         var sut = Fixture.CreateMany<T>().Append( Fixture.CreateDefault<T>() );
         var result = sut.ContainsNull( EqualityComparer<T?>.Default );
-        result.Should().BeTrue();
+        result.TestTrue().Go();
     }
 
     [Fact]
@@ -75,6 +74,6 @@ public abstract class GenericEnumerableExtensionsOfRefTypeTests<T> : GenericEnum
     {
         var sut = Fixture.CreateMany<T>();
         var result = sut.ContainsNull( EqualityComparer<T?>.Default );
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 }

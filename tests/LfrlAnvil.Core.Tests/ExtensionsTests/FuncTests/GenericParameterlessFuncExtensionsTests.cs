@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using LfrlAnvil.Extensions;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 using LfrlAnvil.TestExtensions.NSubstitute;
 
 namespace LfrlAnvil.Tests.ExtensionsTests.FuncTests;
@@ -16,7 +15,7 @@ public abstract class GenericParameterlessFuncExtensionsTests<TReturnValue> : Te
 
         var result = sut.ToLazy();
 
-        result.Value.Should().Be( value );
+        result.Value.TestEquals( value ).Go();
     }
 
     [Fact]
@@ -35,7 +34,7 @@ public abstract class GenericParameterlessFuncExtensionsTests<TReturnValue> : Te
         for ( var i = 0; i < iterationCount; ++i )
             materialized.Add( result.ToList() );
 
-        @delegate.Verify().CallCount.Should().Be( sourceCount );
+        @delegate.CallCount().TestEquals( sourceCount ).Go();
     }
 
     [Fact]
@@ -46,7 +45,7 @@ public abstract class GenericParameterlessFuncExtensionsTests<TReturnValue> : Te
 
         var result = sut.Memoize();
 
-        result.Should().BeSameAs( values );
+        result.TestRefEquals( values ).Go();
     }
 
     [Fact]
@@ -58,6 +57,6 @@ public abstract class GenericParameterlessFuncExtensionsTests<TReturnValue> : Te
         var result = sut.IgnoreResult();
         result();
 
-        sut.Verify().CallCount.Should().Be( 1 );
+        sut.CallCount().TestEquals( 1 ).Go();
     }
 }

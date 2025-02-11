@@ -2,7 +2,6 @@
 using System.Linq.Expressions;
 using LfrlAnvil.Extensions;
 using LfrlAnvil.Functional;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Tests.ExtensionsTests.ExpressionTests;
 
@@ -13,7 +12,7 @@ public class ExpressionExtensionsTests : TestsBase
     {
         Expression<Func<TestClass, string?>> sut = t => t.Field;
         var result = sut.GetMemberName();
-        result.Should().Be( nameof( TestClass.Field ) );
+        result.TestEquals( nameof( TestClass.Field ) ).Go();
     }
 
     [Fact]
@@ -21,7 +20,7 @@ public class ExpressionExtensionsTests : TestsBase
     {
         Expression<Func<TestClass, string?>> sut = t => t.Property;
         var result = sut.GetMemberName();
-        result.Should().Be( nameof( TestClass.Property ) );
+        result.TestEquals( nameof( TestClass.Property ) ).Go();
     }
 
     [Fact]
@@ -29,7 +28,7 @@ public class ExpressionExtensionsTests : TestsBase
     {
         Expression<Func<TestClass, string?>> sut = t => t.Method();
         var action = Lambda.Of( () => sut.GetMemberName() );
-        action.Should().ThrowExactly<ArgumentException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentException>() ).Go();
     }
 
     [Fact]
@@ -37,7 +36,7 @@ public class ExpressionExtensionsTests : TestsBase
     {
         Expression<Func<TestClass, string?>> sut = _ => TestClass.StaticProperty;
         var action = Lambda.Of( () => sut.GetMemberName() );
-        action.Should().ThrowExactly<ArgumentException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentException>() ).Go();
     }
 
     [Fact]
@@ -45,7 +44,7 @@ public class ExpressionExtensionsTests : TestsBase
     {
         Expression<Func<TestClass, string>> sut = _ => string.Empty;
         var action = Lambda.Of( () => sut.GetMemberName() );
-        action.Should().ThrowExactly<ArgumentException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentException>() ).Go();
     }
 
     [Fact]
@@ -53,7 +52,7 @@ public class ExpressionExtensionsTests : TestsBase
     {
         Expression<Func<TestClass, string?>> sut = t => t.Other!.Property;
         var action = Lambda.Of( () => sut.GetMemberName() );
-        action.Should().ThrowExactly<ArgumentException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentException>() ).Go();
     }
 
     [Fact]
@@ -64,11 +63,10 @@ public class ExpressionExtensionsTests : TestsBase
 
         var result = sut.TryGetValue<int>( out var outResult );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            outResult.Should().Be( value );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                outResult.TestEquals( value ) )
+            .Go();
     }
 
     [Fact]
@@ -79,11 +77,10 @@ public class ExpressionExtensionsTests : TestsBase
 
         var result = sut.TryGetValue<object>( out var outResult );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            outResult.Should().Be( value );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                outResult.TestEquals( value ) )
+            .Go();
     }
 
     [Fact]
@@ -94,11 +91,10 @@ public class ExpressionExtensionsTests : TestsBase
 
         var result = sut.TryGetValue<int>( out var outResult );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeFalse();
-            outResult.Should().Be( default );
-        }
+        Assertion.All(
+                result.TestFalse(),
+                outResult.TestEquals( default ) )
+            .Go();
     }
 
     [Fact]
@@ -108,11 +104,10 @@ public class ExpressionExtensionsTests : TestsBase
 
         var result = sut.TryGetValue<string>( out var outResult );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeFalse();
-            outResult.Should().Be( default );
-        }
+        Assertion.All(
+                result.TestFalse(),
+                outResult.TestEquals( default ) )
+            .Go();
     }
 
     [Fact]
@@ -123,7 +118,7 @@ public class ExpressionExtensionsTests : TestsBase
 
         var result = sut.GetValueOrDefault<int>();
 
-        result.Should().Be( value );
+        result.TestEquals( value ).Go();
     }
 
     [Fact]
@@ -134,7 +129,7 @@ public class ExpressionExtensionsTests : TestsBase
 
         var result = sut.GetValueOrDefault<object>();
 
-        result.Should().Be( value );
+        result.TestEquals( value ).Go();
     }
 
     [Fact]
@@ -145,7 +140,7 @@ public class ExpressionExtensionsTests : TestsBase
 
         var result = sut.GetValueOrDefault<int>();
 
-        result.Should().Be( default );
+        result.TestEquals( default ).Go();
     }
 
     [Fact]
@@ -153,7 +148,7 @@ public class ExpressionExtensionsTests : TestsBase
     {
         var sut = Expression.Constant( null, typeof( string ) );
         var result = sut.GetValueOrDefault<string>();
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Fact]
@@ -161,7 +156,7 @@ public class ExpressionExtensionsTests : TestsBase
     {
         var sut = Expression.Constant( "foo", typeof( string ) );
         var result = sut.GetOrConvert<string>();
-        result.Should().BeSameAs( sut );
+        result.TestRefEquals( sut ).Go();
     }
 
     [Fact]
@@ -170,16 +165,15 @@ public class ExpressionExtensionsTests : TestsBase
         var sut = Expression.Constant( "foo", typeof( string ) );
         var result = sut.GetOrConvert<IEnumerable<char>>();
 
-        using ( new AssertionScope() )
-        {
-            result.Should().NotBeSameAs( sut );
-            result.NodeType.Should().Be( ExpressionType.Convert );
-            if ( result is not UnaryExpression unary )
-                return;
-
-            unary.Type.Should().Be( typeof( IEnumerable<char> ) );
-            unary.Operand.Should().BeSameAs( sut );
-        }
+        Assertion.All(
+                result.TestNotRefEquals( sut ),
+                result.NodeType.TestEquals( ExpressionType.Convert ),
+                result.TestIf()
+                    .OfType<UnaryExpression>(
+                        unary => Assertion.All(
+                            unary.Type.TestEquals( typeof( IEnumerable<char> ) ),
+                            unary.Operand.TestRefEquals( sut ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -188,18 +182,17 @@ public class ExpressionExtensionsTests : TestsBase
         var sut = Expression.Constant( "foo", typeof( string ) );
         var result = sut.IsNullReference();
 
-        using ( new AssertionScope() )
-        {
-            result.NodeType.Should().Be( ExpressionType.Equal );
-            result.Type.Should().Be( typeof( bool ) );
-            result.Left.Should().BeSameAs( sut );
-            result.Right.NodeType.Should().Be( ExpressionType.Constant );
-            if ( result.Right is not ConstantExpression nullConst )
-                return;
-
-            nullConst.Type.Should().Be( sut.Type );
-            nullConst.Value.Should().BeNull();
-        }
+        Assertion.All(
+                result.NodeType.TestEquals( ExpressionType.Equal ),
+                result.Type.TestEquals( typeof( bool ) ),
+                result.Left.TestRefEquals( sut ),
+                result.Right.NodeType.TestEquals( ExpressionType.Constant ),
+                result.Right.TestIf()
+                    .OfType<ConstantExpression>(
+                        nullConst => Assertion.All(
+                            nullConst.Type.TestEquals( sut.Type ),
+                            nullConst.Value.TestNull() ) ) )
+            .Go();
     }
 
     [Fact]
@@ -208,18 +201,17 @@ public class ExpressionExtensionsTests : TestsBase
         var sut = Expression.Constant( "foo", typeof( string ) );
         var result = sut.IsNotNullReference();
 
-        using ( new AssertionScope() )
-        {
-            result.NodeType.Should().Be( ExpressionType.NotEqual );
-            result.Type.Should().Be( typeof( bool ) );
-            result.Left.Should().BeSameAs( sut );
-            result.Right.NodeType.Should().Be( ExpressionType.Constant );
-            if ( result.Right is not ConstantExpression nullConst )
-                return;
-
-            nullConst.Type.Should().Be( sut.Type );
-            nullConst.Value.Should().BeNull();
-        }
+        Assertion.All(
+                result.NodeType.TestEquals( ExpressionType.NotEqual ),
+                result.Type.TestEquals( typeof( bool ) ),
+                result.Left.TestRefEquals( sut ),
+                result.Right.NodeType.TestEquals( ExpressionType.Constant ),
+                result.Right.TestIf()
+                    .OfType<ConstantExpression>(
+                        nullConst => Assertion.All(
+                            nullConst.Type.TestEquals( sut.Type ),
+                            nullConst.Value.TestNull() ) ) )
+            .Go();
     }
 
     [Fact]
@@ -239,7 +231,7 @@ public class ExpressionExtensionsTests : TestsBase
 
         var result = @delegate();
 
-        result.Should().BeSequentiallyEqualTo( 0, 1, 2 );
+        result.TestSequence( [ 0, 1, 2 ] ).Go();
     }
 
     [Fact]
@@ -259,11 +251,10 @@ public class ExpressionExtensionsTests : TestsBase
 
         var result = @delegate();
 
-        using ( new AssertionScope() )
-        {
-            sut.DisposeCalled.Should().BeTrue();
-            result.Should().BeSequentiallyEqualTo( 0, 1, 2 );
-        }
+        Assertion.All(
+                sut.DisposeCalled.TestTrue(),
+                result.TestSequence( [ 0, 1, 2 ] ) )
+            .Go();
     }
 
     [Fact]
@@ -283,11 +274,7 @@ public class ExpressionExtensionsTests : TestsBase
 
         var action = Lambda.Of( () => @delegate() );
 
-        using ( new AssertionScope() )
-        {
-            action.Should().ThrowExactly<Exception>();
-            sut.DisposeCalled.Should().BeFalse();
-        }
+        action.Test( exc => Assertion.All( exc.TestType().Exact<Exception>(), sut.DisposeCalled.TestFalse() ) ).Go();
     }
 
     [Fact]
@@ -307,11 +294,10 @@ public class ExpressionExtensionsTests : TestsBase
 
         var result = @delegate();
 
-        using ( new AssertionScope() )
-        {
-            sut.DisposeCalled.Should().BeTrue();
-            result.Should().BeSequentiallyEqualTo( 0, 1, 2 );
-        }
+        Assertion.All(
+                sut.DisposeCalled.TestTrue(),
+                result.TestSequence( [ 0, 1, 2 ] ) )
+            .Go();
     }
 
     [Fact]
@@ -331,11 +317,7 @@ public class ExpressionExtensionsTests : TestsBase
 
         var action = Lambda.Of( () => @delegate() );
 
-        using ( new AssertionScope() )
-        {
-            action.Should().ThrowExactly<Exception>();
-            sut.DisposeCalled.Should().BeFalse();
-        }
+        action.Test( exc => Assertion.All( exc.TestType().Exact<Exception>(), sut.DisposeCalled.TestFalse() ) ).Go();
     }
 
     [Fact]
@@ -355,7 +337,7 @@ public class ExpressionExtensionsTests : TestsBase
 
         var result = @delegate();
 
-        result.Should().BeSequentiallyEqualTo( 0, 1, 2 );
+        result.TestSequence( [ 0, 1, 2 ] ).Go();
     }
 
     [Fact]
@@ -386,31 +368,33 @@ public class ExpressionExtensionsTests : TestsBase
         // 0 + ((10 + p2) + (20 + pNoName))
         var result = sut.ReplaceParametersByName( parametersToReplace );
 
-        using ( new AssertionScope() )
-        {
-            result.NodeType.Should().Be( ExpressionType.Add );
-            result.Should().BeAssignableTo<BinaryExpression>();
-            if ( result is not BinaryExpression newSut )
-                return;
-
-            newSut.Left.Should().BeSameAs( c1 );
-            newSut.Right.NodeType.Should().Be( ExpressionType.Add );
-            newSut.Right.Should().BeAssignableTo<BinaryExpression>();
-            if ( newSut.Right is not BinaryExpression newP1P2P3PNoNameAdd )
-                return;
-
-            newP1P2P3PNoNameAdd.Left.NodeType.Should().Be( ExpressionType.Add );
-            newP1P2P3PNoNameAdd.Right.NodeType.Should().Be( ExpressionType.Add );
-
-            if ( newP1P2P3PNoNameAdd.Left is not BinaryExpression newP1P2Add
-                || newP1P2P3PNoNameAdd.Right is not BinaryExpression newP3PNoNameAdd )
-                return;
-
-            newP1P2Add.Left.Should().BeSameAs( p1Replacement );
-            newP1P2Add.Right.Should().BeSameAs( p2 );
-            newP3PNoNameAdd.Left.Should().BeSameAs( p3Replacement );
-            newP3PNoNameAdd.Right.Should().BeSameAs( pNoName );
-        }
+        Assertion.All(
+                result.NodeType.TestEquals( ExpressionType.Add ),
+                result.TestType().AssignableTo<BinaryExpression>(),
+                result.TestIf()
+                    .OfType<BinaryExpression>(
+                        newSut => Assertion.All(
+                            newSut.Left.TestRefEquals( c1 ),
+                            newSut.Right.NodeType.TestEquals( ExpressionType.Add ),
+                            newSut.Right.TestType().AssignableTo<BinaryExpression>(),
+                            newSut.Right.TestIf()
+                                .OfType<BinaryExpression>(
+                                    newP1P2P3PNoNameAdd => Assertion.All(
+                                        newP1P2P3PNoNameAdd.Left.NodeType.TestEquals( ExpressionType.Add ),
+                                        newP1P2P3PNoNameAdd.Right.NodeType.TestEquals( ExpressionType.Add ),
+                                        newP1P2P3PNoNameAdd.Left.TestType().AssignableTo<BinaryExpression>(),
+                                        newP1P2P3PNoNameAdd.Left.TestIf()
+                                            .OfType<BinaryExpression>(
+                                                newP1P2Add => Assertion.All(
+                                                    newP1P2Add.Left.TestRefEquals( p1Replacement ),
+                                                    newP1P2Add.Right.TestRefEquals( p2 ) ) ),
+                                        newP1P2P3PNoNameAdd.Right.TestType().AssignableTo<BinaryExpression>(),
+                                        newP1P2P3PNoNameAdd.Right.TestIf()
+                                            .OfType<BinaryExpression>(
+                                                newP3PNoNameAdd => Assertion.All(
+                                                    newP3PNoNameAdd.Left.TestRefEquals( p3Replacement ),
+                                                    newP3PNoNameAdd.Right.TestRefEquals( pNoName ) ) ) ) ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -438,31 +422,33 @@ public class ExpressionExtensionsTests : TestsBase
         // 0 + ((10 + p2) + (p3 + 20))
         var result = sut.ReplaceParameters( parametersToReplace, replacements );
 
-        using ( new AssertionScope() )
-        {
-            result.NodeType.Should().Be( ExpressionType.Add );
-            result.Should().BeAssignableTo<BinaryExpression>();
-            if ( result is not BinaryExpression newSut )
-                return;
-
-            newSut.Left.Should().BeSameAs( c1 );
-            newSut.Right.NodeType.Should().Be( ExpressionType.Add );
-            newSut.Right.Should().BeAssignableTo<BinaryExpression>();
-            if ( newSut.Right is not BinaryExpression newP1P2P3PNoNameAdd )
-                return;
-
-            newP1P2P3PNoNameAdd.Left.NodeType.Should().Be( ExpressionType.Add );
-            newP1P2P3PNoNameAdd.Right.NodeType.Should().Be( ExpressionType.Add );
-
-            if ( newP1P2P3PNoNameAdd.Left is not BinaryExpression newP1P2Add
-                || newP1P2P3PNoNameAdd.Right is not BinaryExpression newP3PNoNameAdd )
-                return;
-
-            newP1P2Add.Left.Should().BeSameAs( p1Replacement );
-            newP1P2Add.Right.Should().BeSameAs( p2 );
-            newP3PNoNameAdd.Left.Should().BeSameAs( p3 );
-            newP3PNoNameAdd.Right.Should().BeSameAs( pNoNameReplacement );
-        }
+        Assertion.All(
+                result.NodeType.TestEquals( ExpressionType.Add ),
+                result.TestType().AssignableTo<BinaryExpression>(),
+                result.TestIf()
+                    .OfType<BinaryExpression>(
+                        newSut => Assertion.All(
+                            newSut.Left.TestRefEquals( c1 ),
+                            newSut.Right.NodeType.TestEquals( ExpressionType.Add ),
+                            newSut.Right.TestType().AssignableTo<BinaryExpression>(),
+                            newSut.Right.TestIf()
+                                .OfType<BinaryExpression>(
+                                    newP1P2P3PNoNameAdd => Assertion.All(
+                                        newP1P2P3PNoNameAdd.Left.NodeType.TestEquals( ExpressionType.Add ),
+                                        newP1P2P3PNoNameAdd.Right.NodeType.TestEquals( ExpressionType.Add ),
+                                        newP1P2P3PNoNameAdd.Left.TestType().AssignableTo<BinaryExpression>(),
+                                        newP1P2P3PNoNameAdd.Left.TestIf()
+                                            .OfType<BinaryExpression>(
+                                                newP1P2Add => Assertion.All(
+                                                    newP1P2Add.Left.TestRefEquals( p1Replacement ),
+                                                    newP1P2Add.Right.TestRefEquals( p2 ) ) ),
+                                        newP1P2P3PNoNameAdd.Right.TestType().AssignableTo<BinaryExpression>(),
+                                        newP1P2P3PNoNameAdd.Right.TestIf()
+                                            .OfType<BinaryExpression>(
+                                                newP3PNoNameAdd => Assertion.All(
+                                                    newP3PNoNameAdd.Left.TestRefEquals( p3 ),
+                                                    newP3PNoNameAdd.Right.TestRefEquals( pNoNameReplacement ) ) ) ) ) ) ) )
+            .Go();
     }
 
     private sealed class EnumerableWithNonDisposableEnumerator

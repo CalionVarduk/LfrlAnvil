@@ -13,11 +13,7 @@ public class CancellableTests : TestsBase
 
         var sut = new Cancellable<string>( value, token );
 
-        using ( new AssertionScope() )
-        {
-            sut.Value.Should().Be( value );
-            sut.Token.Should().Be( token );
-        }
+        Assertion.All( sut.Value.TestEquals( value ), sut.Token.TestEquals( token ) ).Go();
     }
 
     [Fact]
@@ -28,11 +24,7 @@ public class CancellableTests : TestsBase
 
         var sut = Cancellable.Create( value, token );
 
-        using ( new AssertionScope() )
-        {
-            sut.Value.Should().Be( value );
-            sut.Token.Should().Be( token );
-        }
+        Assertion.All( sut.Value.TestEquals( value ), sut.Token.TestEquals( token ) ).Go();
     }
 
     [Theory]
@@ -46,6 +38,6 @@ public class CancellableTests : TestsBase
 
         var result = sut.ToString();
 
-        result.Should().Be( $"Value: {value}, IsCancellationRequested: {expectedCancelledText}" );
+        result.TestEquals( $"Value: {value}, IsCancellationRequested: {expectedCancelledText}" ).Go();
     }
 }

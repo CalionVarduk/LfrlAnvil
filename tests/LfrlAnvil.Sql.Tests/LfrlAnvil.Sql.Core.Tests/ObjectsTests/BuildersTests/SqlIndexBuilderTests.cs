@@ -51,8 +51,10 @@ public class SqlIndexBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .Be(
-                    @"ALTER [Table] foo.T
-  CREATE [Index] foo.IX_T_C2A;" );
+                    """
+                    ALTER [Table] foo.T
+                      CREATE [Index] foo.IX_T_C2A;
+                    """ );
         }
     }
 
@@ -138,8 +140,10 @@ public class SqlIndexBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .Be(
-                    @"ALTER [Table] foo.T
-  ALTER [Index] foo.bar ([1] : 'Name' (System.String) FROM IX_T_C2A);" );
+                    """
+                    ALTER [Table] foo.T
+                      ALTER [Index] foo.bar ([1] : 'Name' (System.String) FROM IX_T_C2A);
+                    """ );
         }
     }
 
@@ -257,8 +261,10 @@ public class SqlIndexBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .Be(
-                    @"ALTER [Table] foo.T
-  ALTER [Index] foo.IX_T_C2A ([1] : 'Name' (System.String) FROM bar);" );
+                    """
+                    ALTER [Table] foo.T
+                      ALTER [Index] foo.IX_T_C2A ([1] : 'Name' (System.String) FROM bar);
+                    """ );
         }
     }
 
@@ -287,8 +293,10 @@ public class SqlIndexBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .Be(
-                    @"ALTER [Table] foo.T
-  ALTER [Index] foo.UIX_T_C2A ([1] : 'Name' (System.String) FROM bar);" );
+                    """
+                    ALTER [Table] foo.T
+                      ALTER [Index] foo.UIX_T_C2A ([1] : 'Name' (System.String) FROM bar);
+                    """ );
         }
     }
 
@@ -386,8 +394,10 @@ public class SqlIndexBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .Be(
-                    @"ALTER [Table] foo.T
-  ALTER [Index] foo.IX_T_C2A ([6] : 'IsUnique' (System.Boolean) FROM False);" );
+                    """
+                    ALTER [Table] foo.T
+                      ALTER [Index] foo.IX_T_C2A ([6] : 'IsUnique' (System.Boolean) FROM False);
+                    """ );
         }
     }
 
@@ -412,8 +422,10 @@ public class SqlIndexBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .Be(
-                    @"ALTER [Table] foo.T
-  ALTER [Index] foo.IX_T_C2A ([6] : 'IsUnique' (System.Boolean) FROM True);" );
+                    """
+                    ALTER [Table] foo.T
+                      ALTER [Index] foo.IX_T_C2A ([6] : 'IsUnique' (System.Boolean) FROM True);
+                    """ );
         }
     }
 
@@ -554,8 +566,10 @@ public class SqlIndexBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .Be(
-                    @"ALTER [Table] foo.T
-  ALTER [Index] foo.IX_T_C2A ([7] : 'IsVirtual' (System.Boolean) FROM False);" );
+                    """
+                    ALTER [Table] foo.T
+                      ALTER [Index] foo.IX_T_C2A ([7] : 'IsVirtual' (System.Boolean) FROM False);
+                    """ );
         }
     }
 
@@ -580,8 +594,10 @@ public class SqlIndexBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .Be(
-                    @"ALTER [Table] foo.T
-  ALTER [Index] foo.IX_T_C2A ([7] : 'IsVirtual' (System.Boolean) FROM True);" );
+                    """
+                    ALTER [Table] foo.T
+                      ALTER [Index] foo.IX_T_C2A ([7] : 'IsVirtual' (System.Boolean) FROM True);
+                    """ );
         }
     }
 
@@ -727,8 +743,10 @@ public class SqlIndexBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .Be(
-                    @"ALTER [Table] foo.T
-  ALTER [Index] foo.IX_T_C2A ([8] : 'Filter' (LfrlAnvil.Sql.Expressions.Logical.SqlConditionNode) FROM <null>);" );
+                    """
+                    ALTER [Table] foo.T
+                      ALTER [Index] foo.IX_T_C2A ([8] : 'Filter' (LfrlAnvil.Sql.Expressions.Logical.SqlConditionNode) FROM <null>);
+                    """ );
         }
     }
 
@@ -758,8 +776,10 @@ public class SqlIndexBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .Be(
-                    @"ALTER [Table] foo.T
-  ALTER [Index] foo.IX_T_C2A ([8] : 'Filter' (LfrlAnvil.Sql.Expressions.Logical.SqlConditionNode) FROM ([foo].[T].[C2] : System.Object) <> (NULL));" );
+                    """
+                    ALTER [Table] foo.T
+                      ALTER [Index] foo.IX_T_C2A ([8] : 'Filter' (LfrlAnvil.Sql.Expressions.Logical.SqlConditionNode) FROM ([foo].[T].[C2] : System.Object) <> (NULL));
+                    """ );
         }
     }
 
@@ -866,8 +886,10 @@ public class SqlIndexBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .Be(
-                    @"ALTER [Table] foo.T
-  REMOVE [Index] foo.IX_T_C2A;" );
+                    """
+                    ALTER [Table] foo.T
+                      REMOVE [Index] foo.IX_T_C2A;
+                    """ );
         }
     }
 
@@ -902,9 +924,11 @@ public class SqlIndexBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .Be(
-                    @"ALTER [Table] foo.T
-  REMOVE [Index] foo.UIX_T_CA
-  REMOVE [PrimaryKey] foo.PK_T;" );
+                    """
+                    ALTER [Table] foo.T
+                      REMOVE [Index] foo.UIX_T_CA
+                      REMOVE [PrimaryKey] foo.PK_T;
+                    """ );
         }
     }
 
@@ -1094,8 +1118,10 @@ public class SqlIndexBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .Be(
-                    @"ALTER [Table] foo.T
-  ALTER [Index] foo.bar ([1] : 'Name' (System.String) FROM IX_T_C2A);" );
+                    """
+                    ALTER [Table] foo.T
+                      ALTER [Index] foo.bar ([1] : 'Name' (System.String) FROM IX_T_C2A);
+                    """ );
         }
     }
 
@@ -1125,8 +1151,10 @@ public class SqlIndexBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .Be(
-                    @"ALTER [Table] foo.T
-  ALTER [Index] foo.bar ([1] : 'Name' (System.String) FROM IX_T_C2A);" );
+                    """
+                    ALTER [Table] foo.T
+                      ALTER [Index] foo.bar ([1] : 'Name' (System.String) FROM IX_T_C2A);
+                    """ );
         }
     }
 
@@ -1156,8 +1184,10 @@ public class SqlIndexBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .Be(
-                    @"ALTER [Table] foo.T
-  ALTER [Index] foo.bar ([1] : 'Name' (System.String) FROM IX_T_C2A);" );
+                    """
+                    ALTER [Table] foo.T
+                      ALTER [Index] foo.bar ([1] : 'Name' (System.String) FROM IX_T_C2A);
+                    """ );
         }
     }
 
@@ -1186,8 +1216,10 @@ public class SqlIndexBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .Be(
-                    @"ALTER [Table] foo.T
-  ALTER [Index] foo.IX_T_C2A ([1] : 'Name' (System.String) FROM bar);" );
+                    """
+                    ALTER [Table] foo.T
+                      ALTER [Index] foo.IX_T_C2A ([1] : 'Name' (System.String) FROM bar);
+                    """ );
         }
     }
 
@@ -1216,8 +1248,10 @@ public class SqlIndexBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .Be(
-                    @"ALTER [Table] foo.T
-  ALTER [Index] foo.IX_T_C2A ([1] : 'Name' (System.String) FROM bar);" );
+                    """
+                    ALTER [Table] foo.T
+                      ALTER [Index] foo.IX_T_C2A ([1] : 'Name' (System.String) FROM bar);
+                    """ );
         }
     }
 
@@ -1242,8 +1276,10 @@ public class SqlIndexBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .Be(
-                    @"ALTER [Table] foo.T
-  ALTER [Index] foo.IX_T_C2A ([6] : 'IsUnique' (System.Boolean) FROM False);" );
+                    """
+                    ALTER [Table] foo.T
+                      ALTER [Index] foo.IX_T_C2A ([6] : 'IsUnique' (System.Boolean) FROM False);
+                    """ );
         }
     }
 
@@ -1268,8 +1304,10 @@ public class SqlIndexBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .Be(
-                    @"ALTER [Table] foo.T
-  ALTER [Index] foo.IX_T_C2A ([7] : 'IsVirtual' (System.Boolean) FROM False);" );
+                    """
+                    ALTER [Table] foo.T
+                      ALTER [Index] foo.IX_T_C2A ([7] : 'IsVirtual' (System.Boolean) FROM False);
+                    """ );
         }
     }
 
@@ -1302,8 +1340,10 @@ public class SqlIndexBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .Be(
-                    @"ALTER [Table] foo.T
-  ALTER [Index] foo.IX_T_C2A ([8] : 'Filter' (LfrlAnvil.Sql.Expressions.Logical.SqlConditionNode) FROM <null>);" );
+                    """
+                    ALTER [Table] foo.T
+                      ALTER [Index] foo.IX_T_C2A ([8] : 'Filter' (LfrlAnvil.Sql.Expressions.Logical.SqlConditionNode) FROM <null>);
+                    """ );
         }
     }
 }

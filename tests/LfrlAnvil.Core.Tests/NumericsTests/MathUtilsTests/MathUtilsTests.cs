@@ -1,7 +1,6 @@
 ﻿using LfrlAnvil.Functional;
 using LfrlAnvil.Numerics;
 using LfrlAnvil.TestExtensions.Attributes;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Tests.NumericsTests.MathUtilsTests;
 
@@ -19,7 +18,7 @@ public class MathUtilsTests : TestsBase
     public void UnsignedAbs_ShouldReturnCorrectResult(long value, ulong expected)
     {
         var result = MathUtils.UnsignedAbs( value );
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -33,11 +32,10 @@ public class MathUtilsTests : TestsBase
         var refSign = sign;
         var result = MathUtils.ToUnsigned( value, ref refSign );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( ( ulong )value );
-            refSign.Should().Be( sign );
-        }
+        Assertion.All(
+                result.TestEquals( ( ulong )value ),
+                refSign.TestEquals( sign ) )
+            .Go();
     }
 
     [Theory]
@@ -50,11 +48,10 @@ public class MathUtilsTests : TestsBase
         var refSign = sign;
         var result = MathUtils.ToUnsigned( value, ref refSign );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( expected );
-            refSign.Should().Be( -sign );
-        }
+        Assertion.All(
+                result.TestEquals( expected ),
+                refSign.TestEquals( -sign ) )
+            .Go();
     }
 
     [Theory]
@@ -65,7 +62,7 @@ public class MathUtilsTests : TestsBase
     public void ToSigned_ShouldReturnCorrectResult_WhenValueIsNotNegative(ulong value, long expected)
     {
         var result = MathUtils.ToSigned( value, sign: 1 );
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -76,21 +73,21 @@ public class MathUtilsTests : TestsBase
     public void ToSigned_ShouldReturnCorrectResult_WhenValueIsNegative(ulong value, long expected)
     {
         var result = MathUtils.ToSigned( value, sign: -1 );
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
     public void ToSigned_ShouldThrowOverflowException_WhenValueIsNotNegativeAndExceedsInt64MaxValue()
     {
         var action = Lambda.Of( () => MathUtils.ToSigned( ( ulong )long.MaxValue + 1, sign: 1 ) );
-        action.Should().ThrowExactly<OverflowException>();
+        action.Test( exc => exc.TestType().Exact<OverflowException>() ).Go();
     }
 
     [Fact]
     public void ToSigned_ShouldThrowOverflowException_WhenValueIsNegativeAndExceedsInt64MinValue()
     {
         var action = Lambda.Of( () => MathUtils.ToSigned( ( ulong )long.MaxValue + 2, sign: -1 ) );
-        action.Should().ThrowExactly<OverflowException>();
+        action.Test( exc => exc.TestType().Exact<OverflowException>() ).Go();
     }
 
     [Theory]
@@ -105,11 +102,10 @@ public class MathUtilsTests : TestsBase
     {
         var (high, low) = MathUtils.BigMulU128( a, b );
 
-        using ( new AssertionScope() )
-        {
-            high.Should().Be( expectedHigh );
-            low.Should().Be( expectedLow );
-        }
+        Assertion.All(
+                high.TestEquals( expectedHigh ),
+                low.TestEquals( expectedLow ) )
+            .Go();
     }
 
     [Theory]
@@ -137,19 +133,18 @@ public class MathUtilsTests : TestsBase
     {
         var (high, low, remainder) = MathUtils.BigDivU128( aHigh, aLow, b );
 
-        using ( new AssertionScope() )
-        {
-            high.Should().Be( expectedHigh );
-            low.Should().Be( expectedLow );
-            remainder.Should().Be( expectedRemainder );
-        }
+        Assertion.All(
+                high.TestEquals( expectedHigh ),
+                low.TestEquals( expectedLow ),
+                remainder.TestEquals( expectedRemainder ) )
+            .Go();
     }
 
     [Fact]
     public void BigDivU128_ShouldThrowDivideByZeroException_WhenRightIsEqualToZero()
     {
         var action = Lambda.Of( () => MathUtils.BigDivU128( Fixture.Create<ulong>(), Fixture.Create<ulong>(), 0 ) );
-        action.Should().ThrowExactly<DivideByZeroException>();
+        action.Test( exc => exc.TestType().Exact<DivideByZeroException>() ).Go();
     }
 
     [Theory]
@@ -157,7 +152,7 @@ public class MathUtilsTests : TestsBase
     public void Gcd_ShouldReturnGreatestCommonDivisor(ulong a, ulong b, ulong expected)
     {
         var result = MathUtils.Gcd( a, b );
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -165,14 +160,14 @@ public class MathUtilsTests : TestsBase
     public void Lcm_ShouldReturnLeastCommonMultiple(ulong a, ulong b, ulong expected)
     {
         var result = MathUtils.Lcm( a, b );
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
     public void Lcm_ShouldThrowOverflowException_WhenValueIsTooLarge()
     {
         var action = Lambda.Of( () => MathUtils.Lcm( ulong.MaxValue, 2 ) );
-        action.Should().ThrowExactly<OverflowException>();
+        action.Test( exc => exc.TestType().Exact<OverflowException>() ).Go();
     }
 
     [Theory]
@@ -180,14 +175,14 @@ public class MathUtilsTests : TestsBase
     public void ConvertToFractions_ShouldReturnCorrectResult(Percent[] percentages, Fraction targetSum, Fraction[] expected)
     {
         var result = MathUtils.ConvertToFractions( percentages, targetSum );
-        result.Should().BeSequentiallyEqualTo( expected );
+        result.TestSequence( expected ).Go();
     }
 
     [Fact]
     public void ConvertToFractions_ShouldThrowArgumentOutOfRangeException_WhenTargetSumIsLessThanZero()
     {
         var action = Lambda.Of( () => MathUtils.ConvertToFractions( Array.Empty<Percent>(), -Fraction.Epsilon ) );
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Theory]
@@ -196,10 +191,8 @@ public class MathUtilsTests : TestsBase
     public void ConvertToFractions_ShouldThrowArgumentOutOfRangeException_WhenAtLeastOnePercentIsNotPositive(long value)
     {
         var action = Lambda.Of(
-            () => MathUtils.ConvertToFractions(
-                new[] { Percent.One, Percent.One, Percent.Normalize( value ) },
-                new Fraction( 1, 1 ) ) );
+            () => MathUtils.ConvertToFractions( new[] { Percent.One, Percent.One, Percent.Normalize( value ) }, new Fraction( 1 ) ) );
 
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 }

@@ -14,12 +14,11 @@ public class NullabilityInfoContextTests : TestsBase
 
         var result = sut.GetTypeNullability( field );
 
-        using ( new AssertionScope() )
-        {
-            result.IsNullable.Should().BeFalse();
-            result.ActualType.Should().Be( typeof( int ) );
-            result.UnderlyingType.Should().Be( typeof( int ) );
-        }
+        Assertion.All(
+                result.IsNullable.TestFalse(),
+                result.ActualType.TestEquals( typeof( int ) ),
+                result.UnderlyingType.TestEquals( typeof( int ) ) )
+            .Go();
     }
 
     [Fact]
@@ -30,12 +29,11 @@ public class NullabilityInfoContextTests : TestsBase
 
         var result = sut.GetTypeNullability( field );
 
-        using ( new AssertionScope() )
-        {
-            result.IsNullable.Should().BeTrue();
-            result.ActualType.Should().Be( typeof( int? ) );
-            result.UnderlyingType.Should().Be( typeof( int ) );
-        }
+        Assertion.All(
+                result.IsNullable.TestTrue(),
+                result.ActualType.TestEquals( typeof( int? ) ),
+                result.UnderlyingType.TestEquals( typeof( int ) ) )
+            .Go();
     }
 
     [Fact]
@@ -46,12 +44,11 @@ public class NullabilityInfoContextTests : TestsBase
 
         var result = sut.GetTypeNullability( field );
 
-        using ( new AssertionScope() )
-        {
-            result.IsNullable.Should().BeFalse();
-            result.ActualType.Should().Be( typeof( string ) );
-            result.UnderlyingType.Should().Be( typeof( string ) );
-        }
+        Assertion.All(
+                result.IsNullable.TestFalse(),
+                result.ActualType.TestEquals( typeof( string ) ),
+                result.UnderlyingType.TestEquals( typeof( string ) ) )
+            .Go();
     }
 
     [Fact]
@@ -62,12 +59,11 @@ public class NullabilityInfoContextTests : TestsBase
 
         var result = sut.GetTypeNullability( field );
 
-        using ( new AssertionScope() )
-        {
-            result.IsNullable.Should().BeTrue();
-            result.ActualType.Should().Be( typeof( string ) );
-            result.UnderlyingType.Should().Be( typeof( string ) );
-        }
+        Assertion.All(
+                result.IsNullable.TestTrue(),
+                result.ActualType.TestEquals( typeof( string ) ),
+                result.UnderlyingType.TestEquals( typeof( string ) ) )
+            .Go();
     }
 
     [Fact]
@@ -78,12 +74,11 @@ public class NullabilityInfoContextTests : TestsBase
 
         var result = sut.GetTypeNullability( property );
 
-        using ( new AssertionScope() )
-        {
-            result.IsNullable.Should().BeFalse();
-            result.ActualType.Should().Be( typeof( int ) );
-            result.UnderlyingType.Should().Be( typeof( int ) );
-        }
+        Assertion.All(
+                result.IsNullable.TestFalse(),
+                result.ActualType.TestEquals( typeof( int ) ),
+                result.UnderlyingType.TestEquals( typeof( int ) ) )
+            .Go();
     }
 
     [Fact]
@@ -94,12 +89,11 @@ public class NullabilityInfoContextTests : TestsBase
 
         var result = sut.GetTypeNullability( property );
 
-        using ( new AssertionScope() )
-        {
-            result.IsNullable.Should().BeTrue();
-            result.ActualType.Should().Be( typeof( int? ) );
-            result.UnderlyingType.Should().Be( typeof( int ) );
-        }
+        Assertion.All(
+                result.IsNullable.TestTrue(),
+                result.ActualType.TestEquals( typeof( int? ) ),
+                result.UnderlyingType.TestEquals( typeof( int ) ) )
+            .Go();
     }
 
     [Fact]
@@ -110,12 +104,11 @@ public class NullabilityInfoContextTests : TestsBase
 
         var result = sut.GetTypeNullability( property );
 
-        using ( new AssertionScope() )
-        {
-            result.IsNullable.Should().BeFalse();
-            result.ActualType.Should().Be( typeof( string ) );
-            result.UnderlyingType.Should().Be( typeof( string ) );
-        }
+        Assertion.All(
+                result.IsNullable.TestFalse(),
+                result.ActualType.TestEquals( typeof( string ) ),
+                result.UnderlyingType.TestEquals( typeof( string ) ) )
+            .Go();
     }
 
     [Fact]
@@ -126,12 +119,11 @@ public class NullabilityInfoContextTests : TestsBase
 
         var result = sut.GetTypeNullability( property );
 
-        using ( new AssertionScope() )
-        {
-            result.IsNullable.Should().BeTrue();
-            result.ActualType.Should().Be( typeof( string ) );
-            result.UnderlyingType.Should().Be( typeof( string ) );
-        }
+        Assertion.All(
+                result.IsNullable.TestTrue(),
+                result.ActualType.TestEquals( typeof( string ) ),
+                result.UnderlyingType.TestEquals( typeof( string ) ) )
+            .Go();
     }
 
     [Fact]
@@ -142,12 +134,11 @@ public class NullabilityInfoContextTests : TestsBase
 
         var result = sut.GetTypeNullability( parameter );
 
-        using ( new AssertionScope() )
-        {
-            result.IsNullable.Should().BeFalse();
-            result.ActualType.Should().Be( typeof( int ) );
-            result.UnderlyingType.Should().Be( typeof( int ) );
-        }
+        Assertion.All(
+                result.IsNullable.TestFalse(),
+                result.ActualType.TestEquals( typeof( int ) ),
+                result.UnderlyingType.TestEquals( typeof( int ) ) )
+            .Go();
     }
 
     [Fact]
@@ -158,12 +149,11 @@ public class NullabilityInfoContextTests : TestsBase
 
         var result = sut.GetTypeNullability( parameter );
 
-        using ( new AssertionScope() )
-        {
-            result.IsNullable.Should().BeTrue();
-            result.ActualType.Should().Be( typeof( int? ) );
-            result.UnderlyingType.Should().Be( typeof( int ) );
-        }
+        Assertion.All(
+                result.IsNullable.TestTrue(),
+                result.ActualType.TestEquals( typeof( int? ) ),
+                result.UnderlyingType.TestEquals( typeof( int ) ) )
+            .Go();
     }
 
     [Fact]
@@ -174,12 +164,11 @@ public class NullabilityInfoContextTests : TestsBase
 
         var result = sut.GetTypeNullability( parameter );
 
-        using ( new AssertionScope() )
-        {
-            result.IsNullable.Should().BeFalse();
-            result.ActualType.Should().Be( typeof( string ) );
-            result.UnderlyingType.Should().Be( typeof( string ) );
-        }
+        Assertion.All(
+                result.IsNullable.TestFalse(),
+                result.ActualType.TestEquals( typeof( string ) ),
+                result.UnderlyingType.TestEquals( typeof( string ) ) )
+            .Go();
     }
 
     [Fact]
@@ -190,12 +179,11 @@ public class NullabilityInfoContextTests : TestsBase
 
         var result = sut.GetTypeNullability( parameter );
 
-        using ( new AssertionScope() )
-        {
-            result.IsNullable.Should().BeTrue();
-            result.ActualType.Should().Be( typeof( string ) );
-            result.UnderlyingType.Should().Be( typeof( string ) );
-        }
+        Assertion.All(
+                result.IsNullable.TestTrue(),
+                result.ActualType.TestEquals( typeof( string ) ),
+                result.UnderlyingType.TestEquals( typeof( string ) ) )
+            .Go();
     }
 
     private sealed class Source

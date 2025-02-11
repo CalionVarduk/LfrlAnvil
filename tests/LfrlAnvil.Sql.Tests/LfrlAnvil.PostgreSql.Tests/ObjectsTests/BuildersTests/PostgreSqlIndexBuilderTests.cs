@@ -124,10 +124,14 @@ public class PostgreSqlIndexBuilderTests : TestsBase
             actions.ElementAtOrDefault( 0 )
                 .Sql.Should()
                 .SatisfySql(
-                    @"ALTER TABLE ""foo"".""T""
-                      DROP CONSTRAINT ""PK_T"";",
-                    @"ALTER TABLE ""foo"".""T""
-                      ADD CONSTRAINT ""PK_T"" PRIMARY KEY (""C2"");" );
+                    """
+                    ALTER TABLE "foo"."T"
+                                          DROP CONSTRAINT "PK_T";
+                    """,
+                    """
+                    ALTER TABLE "foo"."T"
+                                          ADD CONSTRAINT "PK_T" PRIMARY KEY ("C2");
+                    """ );
         }
     }
 
@@ -1039,10 +1043,14 @@ public class PostgreSqlIndexBuilderTests : TestsBase
                 .Sql.Should()
                 .SatisfySql(
                     "DROP INDEX \"foo\".\"UIX_T_C2A\";",
-                    @"ALTER TABLE ""foo"".""T""
-                      DROP CONSTRAINT ""PK_T"";",
-                    @"ALTER TABLE ""foo"".""T""
-                      ADD CONSTRAINT ""PK_T"" PRIMARY KEY (""C2"");" );
+                    """
+                    ALTER TABLE "foo"."T"
+                                          DROP CONSTRAINT "PK_T";
+                    """,
+                    """
+                    ALTER TABLE "foo"."T"
+                                          ADD CONSTRAINT "PK_T" PRIMARY KEY ("C2");
+                    """ );
         }
     }
 
