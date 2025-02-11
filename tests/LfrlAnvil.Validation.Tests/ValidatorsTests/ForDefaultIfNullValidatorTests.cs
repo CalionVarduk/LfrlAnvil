@@ -1,5 +1,4 @@
-﻿using LfrlAnvil.TestExtensions.FluentAssertions;
-using LfrlAnvil.Validation.Extensions;
+﻿using LfrlAnvil.Validation.Extensions;
 
 namespace LfrlAnvil.Validation.Tests.ValidatorsTests;
 
@@ -10,7 +9,7 @@ public class ForDefaultIfNullValidatorTests : ValidatorTestsBase
     {
         var sut = Validators<string>.Empty( Fixture.Create<string>() ).ForDefaultIfNull( string.Empty );
         var result = sut.Validate( null );
-        result.Should().BeEmpty();
+        result.TestEmpty().Go();
     }
 
     [Fact]
@@ -21,7 +20,7 @@ public class ForDefaultIfNullValidatorTests : ValidatorTestsBase
 
         var result = sut.Validate( null );
 
-        result.Should().BeSequentiallyEqualTo( failure );
+        result.TestSequence( [ failure ] ).Go();
     }
 
     [Fact]
@@ -32,7 +31,7 @@ public class ForDefaultIfNullValidatorTests : ValidatorTestsBase
 
         var result = sut.Validate( value );
 
-        result.Should().BeEmpty();
+        result.TestEmpty().Go();
     }
 
     [Fact]
@@ -44,7 +43,7 @@ public class ForDefaultIfNullValidatorTests : ValidatorTestsBase
 
         var result = sut.Validate( value );
 
-        result.Should().BeSequentiallyEqualTo( failure );
+        result.TestSequence( [ failure ] ).Go();
     }
 
     [Fact]
@@ -52,7 +51,7 @@ public class ForDefaultIfNullValidatorTests : ValidatorTestsBase
     {
         var sut = Validators<string>.EqualTo( 0, Fixture.Create<string>() ).ForDefaultIfNull( 0 );
         var result = sut.Validate( null );
-        result.Should().BeEmpty();
+        result.TestEmpty().Go();
     }
 
     [Fact]
@@ -64,7 +63,7 @@ public class ForDefaultIfNullValidatorTests : ValidatorTestsBase
 
         var result = sut.Validate( null );
 
-        result.Should().BeSequentiallyEqualTo( failure );
+        result.TestSequence( [ failure ] ).Go();
     }
 
     [Fact]
@@ -75,7 +74,7 @@ public class ForDefaultIfNullValidatorTests : ValidatorTestsBase
 
         var result = sut.Validate( value );
 
-        result.Should().BeEmpty();
+        result.TestEmpty().Go();
     }
 
     [Fact]
@@ -87,6 +86,6 @@ public class ForDefaultIfNullValidatorTests : ValidatorTestsBase
 
         var result = sut.Validate( value );
 
-        result.Should().BeSequentiallyEqualTo( failure );
+        result.TestSequence( [ failure ] ).Go();
     }
 }

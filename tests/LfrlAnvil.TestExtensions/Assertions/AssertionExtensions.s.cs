@@ -893,7 +893,7 @@ public static class AssertionExtensions
 
     // TODO: remove 's' at the end
     [Pure]
-    public static Assertion ReceivedCalls<T>(
+    public static Assertion TestReceivedCalls<T>(
         this T subject,
         Action<T> assertion,
         [CallerArgumentExpression( "subject" )]
@@ -906,7 +906,7 @@ public static class AssertionExtensions
     }
 
     [Pure]
-    public static Assertion ReceivedCalls<T>(
+    public static Assertion TestReceivedCalls<T>(
         this T subject,
         Action<T> assertion,
         int count,
@@ -920,7 +920,7 @@ public static class AssertionExtensions
     }
 
     [Pure]
-    public static Assertion DidNotReceiveCall<T>(
+    public static Assertion TestDidNotReceiveCall<T>(
         this T subject,
         Action<T> assertion,
         [CallerArgumentExpression( "subject" )]
@@ -929,7 +929,7 @@ public static class AssertionExtensions
         string subContext = "")
         where T : class
     {
-        return subject.ReceivedCalls( assertion, 0, context, subContext );
+        return subject.TestReceivedCalls( assertion, 0, context, subContext );
     }
 
     [Pure]

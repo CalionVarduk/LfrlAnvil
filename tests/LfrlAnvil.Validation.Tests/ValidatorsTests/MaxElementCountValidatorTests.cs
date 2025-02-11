@@ -10,7 +10,7 @@ public class MaxElementCountValidatorTests : ValidatorTestsBase
     public void Ctor_ShouldThrowArgumentOutOfRangeException_WhenMaxCountIsLessThanZero()
     {
         var action = Lambda.Of( () => new MaxElementCountValidator<int, string>( maxCount: -1, failureResult: Fixture.Create<string>() ) );
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Theory]
@@ -28,7 +28,7 @@ public class MaxElementCountValidatorTests : ValidatorTestsBase
 
         var result = sut.Validate( value );
 
-        result.Should().BeEmpty();
+        result.TestEmpty().Go();
     }
 
     [Theory]
@@ -45,6 +45,6 @@ public class MaxElementCountValidatorTests : ValidatorTestsBase
 
         var result = sut.Validate( value );
 
-        AssertValidationResult( result, ValidationMessage.Create( resource, maxCount ) );
+        AssertValidationResult( result, ValidationMessage.Create( resource, maxCount ) ).Go();
     }
 }

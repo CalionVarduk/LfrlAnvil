@@ -9,7 +9,7 @@ public class ExactStringLengthValidatorTests : ValidatorTestsBase
     public void Ctor_ShouldThrowArgumentOutOfRangeException_WhenLengthIsLessThanZero()
     {
         var action = Lambda.Of( () => new IsLengthExactValidator<string>( length: -1, failureResult: Fixture.Create<string>() ) );
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Theory]
@@ -24,7 +24,7 @@ public class ExactStringLengthValidatorTests : ValidatorTestsBase
 
         var result = sut.Validate( value );
 
-        result.Should().BeEmpty();
+        result.TestEmpty().Go();
     }
 
     [Theory]
@@ -42,6 +42,6 @@ public class ExactStringLengthValidatorTests : ValidatorTestsBase
 
         var result = sut.Validate( value );
 
-        AssertValidationResult( result, ValidationMessage.Create( resource, length ) );
+        AssertValidationResult( result, ValidationMessage.Create( resource, length ) ).Go();
     }
 }

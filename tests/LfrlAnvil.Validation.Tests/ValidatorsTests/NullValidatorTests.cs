@@ -10,7 +10,7 @@ public class NullValidatorTests : ValidatorTestsBase
 
         var result = sut.Validate( null );
 
-        result.Should().BeEmpty();
+        result.TestEmpty().Go();
     }
 
     [Fact]
@@ -21,7 +21,7 @@ public class NullValidatorTests : ValidatorTestsBase
 
         var result = sut.Validate( null );
 
-        result.Should().BeEmpty();
+        result.TestEmpty().Go();
     }
 
     [Fact]
@@ -33,7 +33,7 @@ public class NullValidatorTests : ValidatorTestsBase
 
         var result = sut.Validate( value );
 
-        AssertValidationResult( result, ValidationMessage.Create( resource ) );
+        AssertValidationResult( result, ValidationMessage.Create( resource ) ).Go();
     }
 
     [Fact]
@@ -45,7 +45,7 @@ public class NullValidatorTests : ValidatorTestsBase
 
         var result = sut.Validate( value );
 
-        AssertValidationResult( result, ValidationMessage.Create( resource ) );
+        AssertValidationResult( result, ValidationMessage.Create( resource ) ).Go();
     }
 
     [Fact]
@@ -57,6 +57,6 @@ public class NullValidatorTests : ValidatorTestsBase
 
         var result = sut.Validate( value );
 
-        AssertValidationResult( result, ValidationMessage.Create( resource ) );
+        AssertValidationResult( result, ValidationMessage.Create( resource ) ).Go();
     }
 }

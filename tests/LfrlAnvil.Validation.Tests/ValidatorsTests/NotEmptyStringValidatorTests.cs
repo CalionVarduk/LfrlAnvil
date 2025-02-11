@@ -13,7 +13,7 @@ public class NotEmptyStringValidatorTests : ValidatorTestsBase
 
         var result = sut.Validate( value );
 
-        result.Should().BeEmpty();
+        result.TestEmpty().Go();
     }
 
     [Fact]
@@ -25,6 +25,6 @@ public class NotEmptyStringValidatorTests : ValidatorTestsBase
 
         var result = sut.Validate( value );
 
-        AssertValidationResult( result, ValidationMessage.Create( resource ) );
+        AssertValidationResult( result, ValidationMessage.Create( resource ) ).Go();
     }
 }

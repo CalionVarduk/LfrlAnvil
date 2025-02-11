@@ -1,5 +1,4 @@
 ﻿using System.Linq;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Validation.Tests.ValidatorsTests;
 
@@ -15,7 +14,7 @@ public class TypeCastValidatorTests : ValidatorTestsBase
 
         var result = sut.Validate( value );
 
-        result.Should().BeEmpty();
+        result.TestEmpty().Go();
     }
 
     [Fact]
@@ -29,7 +28,7 @@ public class TypeCastValidatorTests : ValidatorTestsBase
 
         var result = sut.Validate( value );
 
-        result.Should().BeSequentiallyEqualTo( failure );
+        result.TestSequence( [ failure ] ).Go();
     }
 
     [Fact]
@@ -42,7 +41,7 @@ public class TypeCastValidatorTests : ValidatorTestsBase
 
         var result = sut.Validate( value );
 
-        result.Should().BeEmpty();
+        result.TestEmpty().Go();
     }
 
     [Fact]
@@ -56,7 +55,7 @@ public class TypeCastValidatorTests : ValidatorTestsBase
 
         var result = sut.Validate( value );
 
-        result.Should().BeSequentiallyEqualTo( failure );
+        result.TestSequence( [ failure ] ).Go();
     }
 
     [Fact]
@@ -69,7 +68,7 @@ public class TypeCastValidatorTests : ValidatorTestsBase
 
         var result = sut.Validate( value );
 
-        result.Should().BeSequentiallyEqualTo( failure );
+        result.TestSequence( [ failure ] ).Go();
     }
 
     [Fact]
@@ -82,7 +81,7 @@ public class TypeCastValidatorTests : ValidatorTestsBase
 
         var result = sut.Validate( value );
 
-        result.Should().BeEmpty();
+        result.TestEmpty().Go();
     }
 
     [Fact]
@@ -95,7 +94,7 @@ public class TypeCastValidatorTests : ValidatorTestsBase
 
         var result = sut.Validate( value );
 
-        result.Should().BeSequentiallyEqualTo( failure );
+        result.TestSequence( [ failure ] ).Go();
     }
 
     [Fact]
@@ -108,6 +107,6 @@ public class TypeCastValidatorTests : ValidatorTestsBase
 
         var result = sut.Validate( value );
 
-        result.Should().BeEmpty();
+        result.TestEmpty().Go();
     }
 }

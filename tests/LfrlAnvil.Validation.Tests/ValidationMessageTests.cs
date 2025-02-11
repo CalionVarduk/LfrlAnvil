@@ -1,6 +1,4 @@
-﻿using LfrlAnvil.TestExtensions.FluentAssertions;
-
-namespace LfrlAnvil.Validation.Tests;
+﻿namespace LfrlAnvil.Validation.Tests;
 
 public class ValidationMessageTests : TestsBase
 {
@@ -12,11 +10,11 @@ public class ValidationMessageTests : TestsBase
 
         var sut = new ValidationMessage<string>( resource, parameter );
 
-        using ( new AssertionScope() )
-        {
-            sut.Resource.Should().BeSameAs( resource );
-            sut.Parameters.Should().BeSequentiallyEqualTo( parameter );
-        }
+        Assertion.All(
+                sut.Resource.TestRefEquals( resource ),
+                sut.Parameters.TestNotNull(),
+                sut.Parameters.TestIf().NotNull( p => p.TestSequence( [ parameter ] ) ) )
+            .Go();
     }
 
     [Fact]
@@ -27,11 +25,11 @@ public class ValidationMessageTests : TestsBase
 
         var sut = ValidationMessage.Create( resource, parameter );
 
-        using ( new AssertionScope() )
-        {
-            sut.Resource.Should().BeSameAs( resource );
-            sut.Parameters.Should().BeSequentiallyEqualTo( parameter );
-        }
+        Assertion.All(
+                sut.Resource.TestRefEquals( resource ),
+                sut.Parameters.TestNotNull(),
+                sut.Parameters.TestIf().NotNull( p => p.TestSequence( [ parameter ] ) ) )
+            .Go();
     }
 
     [Fact]
@@ -44,7 +42,7 @@ public class ValidationMessageTests : TestsBase
 
         var result = sut.ToString();
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -52,7 +50,7 @@ public class ValidationMessageTests : TestsBase
     {
         var result = ValidationMessage.GetUnderlyingType( null );
 
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Theory]
@@ -63,7 +61,7 @@ public class ValidationMessageTests : TestsBase
     {
         var result = ValidationMessage.GetUnderlyingType( type );
 
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Theory]
@@ -74,7 +72,7 @@ public class ValidationMessageTests : TestsBase
     {
         var result = ValidationMessage.GetUnderlyingType( type );
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -84,6 +82,6 @@ public class ValidationMessageTests : TestsBase
 
         var result = ValidationMessage.GetUnderlyingType( typeof( ValidationMessage<> ) );
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 }

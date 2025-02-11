@@ -17,7 +17,7 @@ public class LessThanOrEqualToValidatorTests : ValidatorTestsBase
 
         var result = sut.Validate( value );
 
-        result.Should().BeEmpty();
+        result.TestEmpty().Go();
     }
 
     [Theory]
@@ -31,7 +31,7 @@ public class LessThanOrEqualToValidatorTests : ValidatorTestsBase
 
         var result = sut.Validate( value );
 
-        AssertValidationResult( result, ValidationMessage.Create( resource, determinant ) );
+        AssertValidationResult( result, ValidationMessage.Create( resource, determinant ) ).Go();
     }
 
     [Theory]
@@ -49,7 +49,7 @@ public class LessThanOrEqualToValidatorTests : ValidatorTestsBase
 
         var result = sut.Validate( value );
 
-        result.Should().BeEmpty();
+        result.TestEmpty().Go();
     }
 
     [Theory]
@@ -65,6 +65,6 @@ public class LessThanOrEqualToValidatorTests : ValidatorTestsBase
 
         var result = sut.Validate( value );
 
-        AssertValidationResult( result, ValidationMessage.Create( message.Resource ) );
+        AssertValidationResult( result, ValidationMessage.Create( message.Resource ) ).Go();
     }
 }

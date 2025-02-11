@@ -12,7 +12,7 @@ public class InRangeValidatorTests : ValidatorTestsBase
         var action = Lambda.Of(
             () => new IsInRangeValidator<int, string>( min: 2, max: 1, Comparer<int>.Default, failureResult: Fixture.Create<string>() ) );
 
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Theory]
@@ -31,7 +31,7 @@ public class InRangeValidatorTests : ValidatorTestsBase
 
         var result = sut.Validate( value );
 
-        result.Should().BeEmpty();
+        result.TestEmpty().Go();
     }
 
     [Theory]
@@ -49,7 +49,7 @@ public class InRangeValidatorTests : ValidatorTestsBase
 
         var result = sut.Validate( value );
 
-        AssertValidationResult( result, ValidationMessage.Create( resource, min, max ) );
+        AssertValidationResult( result, ValidationMessage.Create( resource, min, max ) ).Go();
     }
 
     [Theory]
@@ -68,7 +68,7 @@ public class InRangeValidatorTests : ValidatorTestsBase
 
         var result = sut.Validate( value );
 
-        result.Should().BeEmpty();
+        result.TestEmpty().Go();
     }
 
     [Theory]
@@ -89,6 +89,6 @@ public class InRangeValidatorTests : ValidatorTestsBase
 
         var result = sut.Validate( value );
 
-        AssertValidationResult( result, ValidationMessage.Create( message.Resource ) );
+        AssertValidationResult( result, ValidationMessage.Create( message.Resource ) ).Go();
     }
 }

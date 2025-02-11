@@ -11,7 +11,7 @@ public class StringLengthInRangeValidatorTests : ValidatorTestsBase
         var action = Lambda.Of(
             () => new IsLengthInRangeValidator<string>( minLength: -1, maxLength: 0, failureResult: Fixture.Create<string>() ) );
 
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Fact]
@@ -20,7 +20,7 @@ public class StringLengthInRangeValidatorTests : ValidatorTestsBase
         var action = Lambda.Of(
             () => new IsLengthInRangeValidator<string>( minLength: 2, maxLength: 1, failureResult: Fixture.Create<string>() ) );
 
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Theory]
@@ -39,7 +39,7 @@ public class StringLengthInRangeValidatorTests : ValidatorTestsBase
 
         var result = sut.Validate( value );
 
-        result.Should().BeEmpty();
+        result.TestEmpty().Go();
     }
 
     [Theory]
@@ -62,6 +62,6 @@ public class StringLengthInRangeValidatorTests : ValidatorTestsBase
 
         var result = sut.Validate( value );
 
-        AssertValidationResult( result, ValidationMessage.Create( resource, minLength, maxLength ) );
+        AssertValidationResult( result, ValidationMessage.Create( resource, minLength, maxLength ) ).Go();
     }
 }

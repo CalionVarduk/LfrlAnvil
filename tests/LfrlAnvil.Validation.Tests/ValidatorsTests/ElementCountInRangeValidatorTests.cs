@@ -12,7 +12,7 @@ public class ElementCountInRangeValidatorTests : ValidatorTestsBase
         var action = Lambda.Of(
             () => new IsElementCountInRangeValidator<int, string>( minCount: -1, maxCount: 0, failureResult: Fixture.Create<string>() ) );
 
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Fact]
@@ -21,7 +21,7 @@ public class ElementCountInRangeValidatorTests : ValidatorTestsBase
         var action = Lambda.Of(
             () => new IsElementCountInRangeValidator<int, string>( minCount: 2, maxCount: 1, failureResult: Fixture.Create<string>() ) );
 
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Theory]
@@ -41,7 +41,7 @@ public class ElementCountInRangeValidatorTests : ValidatorTestsBase
 
         var result = sut.Validate( value );
 
-        result.Should().BeEmpty();
+        result.TestEmpty().Go();
     }
 
     [Theory]
@@ -65,6 +65,6 @@ public class ElementCountInRangeValidatorTests : ValidatorTestsBase
 
         var result = sut.Validate( value );
 
-        AssertValidationResult( result, ValidationMessage.Create( resource, minCount, maxCount ) );
+        AssertValidationResult( result, ValidationMessage.Create( resource, minCount, maxCount ) ).Go();
     }
 }

@@ -1,24 +1,19 @@
-﻿using System.Linq;
-using LfrlAnvil.TestExtensions.FluentAssertions;
+﻿using System.Diagnostics.Contracts;
+using System.Linq;
 
 namespace LfrlAnvil.Validation.Tests.ValidatorsTests;
 
 public abstract class ValidatorTestsBase : TestsBase
 {
-    protected static void AssertValidationResult<TResource>(
+    [Pure]
+    protected static Assertion AssertValidationResult<TResource>(
         Chain<ValidationMessage<TResource>> result,
         params ValidationMessage<TResource>[] expected)
     {
-        using ( new AssertionScope() )
-        {
-            result.Count.Should().Be( expected.Length );
-            var actual = result.ToArray();
-            var count = Math.Min( actual.Length, expected.Length );
-            for ( var i = 0; i < count; ++i )
-            {
-                actual[i].Resource.Should().BeEquivalentTo( expected[i].Resource );
-                actual[i].Parameters.Should().BeSequentiallyEqualTo( expected[i].Parameters ?? Array.Empty<object?>() );
-            }
-        }
+        return result.TestSequence(
+            expected.Select(
+                e => ( Func<ValidationMessage<TResource>, int, Assertion> )((r, _) => Assertion.All(
+                    r.Resource.TestEquals( e.Resource ),
+                    (r.Parameters ?? Array.Empty<object?>()).TestSequence( e.Parameters ?? Array.Empty<object?>() ) )) ) );
     }
 }

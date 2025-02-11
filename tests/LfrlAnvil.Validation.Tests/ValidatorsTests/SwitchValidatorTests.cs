@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Validation.Tests.ValidatorsTests;
 
@@ -23,7 +22,7 @@ public class SwitchValidatorTests : ValidatorTestsBase
 
         var result = sut.Validate( value );
 
-        result.Should().BeEmpty();
+        result.TestEmpty().Go();
     }
 
     [Fact]
@@ -45,7 +44,7 @@ public class SwitchValidatorTests : ValidatorTestsBase
 
         var result = sut.Validate( value );
 
-        result.Should().BeSequentiallyEqualTo( failure );
+        result.TestSequence( [ failure ] ).Go();
     }
 
     [Fact]
@@ -66,7 +65,7 @@ public class SwitchValidatorTests : ValidatorTestsBase
 
         var result = sut.Validate( value );
 
-        result.Should().BeEmpty();
+        result.TestEmpty().Go();
     }
 
     [Fact]
@@ -88,7 +87,7 @@ public class SwitchValidatorTests : ValidatorTestsBase
 
         var result = sut.Validate( value );
 
-        result.Should().BeSequentiallyEqualTo( failure );
+        result.TestSequence( [ failure ] ).Go();
     }
 
     [Fact]
@@ -108,7 +107,7 @@ public class SwitchValidatorTests : ValidatorTestsBase
 
         var result = sut.Validate( value );
 
-        result.Should().BeSequentiallyEqualTo( failure );
+        result.TestSequence( [ failure ] ).Go();
     }
 
     [Fact]
@@ -127,6 +126,6 @@ public class SwitchValidatorTests : ValidatorTestsBase
 
         var result = sut.Validate( value );
 
-        result.Should().BeEmpty();
+        result.TestEmpty().Go();
     }
 }

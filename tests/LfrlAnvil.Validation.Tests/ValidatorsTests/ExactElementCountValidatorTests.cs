@@ -10,7 +10,7 @@ public class ExactElementCountValidatorTests : ValidatorTestsBase
     public void Ctor_ShouldThrowArgumentOutOfRangeException_WhenCountIsLessThanZero()
     {
         var action = Lambda.Of( () => new IsElementCountExactValidator<int, string>( count: -1, failureResult: Fixture.Create<string>() ) );
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Theory]
@@ -26,7 +26,7 @@ public class ExactElementCountValidatorTests : ValidatorTestsBase
 
         var result = sut.Validate( value );
 
-        result.Should().BeEmpty();
+        result.TestEmpty().Go();
     }
 
     [Theory]
@@ -45,6 +45,6 @@ public class ExactElementCountValidatorTests : ValidatorTestsBase
 
         var result = sut.Validate( value );
 
-        AssertValidationResult( result, ValidationMessage.Create( resource, count ) );
+        AssertValidationResult( result, ValidationMessage.Create( resource, count ) ).Go();
     }
 }

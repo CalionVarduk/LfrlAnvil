@@ -16,11 +16,11 @@ public class ConditionalValidatorTests : ValidatorTestsBase
 
         var result = sut.Validate( value );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeEmpty();
-            condition.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( value );
-        }
+        Assertion.All(
+                result.TestEmpty(),
+                condition.CallAt( 0 ).Exists.TestTrue(),
+                condition.CallAt( 0 ).Arguments.TestSequence( [ value ] ) )
+            .Go();
     }
 
     [Fact]
@@ -35,11 +35,11 @@ public class ConditionalValidatorTests : ValidatorTestsBase
 
         var result = sut.Validate( value );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSequentiallyEqualTo( failure );
-            condition.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( value );
-        }
+        Assertion.All(
+                result.TestSequence( [ failure ] ),
+                condition.CallAt( 0 ).Exists.TestTrue(),
+                condition.CallAt( 0 ).Arguments.TestSequence( [ value ] ) )
+            .Go();
     }
 
     [Fact]
@@ -53,11 +53,11 @@ public class ConditionalValidatorTests : ValidatorTestsBase
 
         var result = sut.Validate( value );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeEmpty();
-            condition.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( value );
-        }
+        Assertion.All(
+                result.TestEmpty(),
+                condition.CallAt( 0 ).Exists.TestTrue(),
+                condition.CallAt( 0 ).Arguments.TestSequence( [ value ] ) )
+            .Go();
     }
 
     [Fact]
@@ -72,11 +72,11 @@ public class ConditionalValidatorTests : ValidatorTestsBase
 
         var result = sut.Validate( value );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSequentiallyEqualTo( failure );
-            condition.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( value );
-        }
+        Assertion.All(
+                result.TestSequence( [ failure ] ),
+                condition.CallAt( 0 ).Exists.TestTrue(),
+                condition.CallAt( 0 ).Arguments.TestSequence( [ value ] ) )
+            .Go();
     }
 
     [Fact]
@@ -90,11 +90,11 @@ public class ConditionalValidatorTests : ValidatorTestsBase
 
         var result = sut.Validate( value );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSequentiallyEqualTo( failure );
-            condition.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( value );
-        }
+        Assertion.All(
+                result.TestSequence( [ failure ] ),
+                condition.CallAt( 0 ).Exists.TestTrue(),
+                condition.CallAt( 0 ).Arguments.TestSequence( [ value ] ) )
+            .Go();
     }
 
     [Fact]
@@ -108,11 +108,11 @@ public class ConditionalValidatorTests : ValidatorTestsBase
 
         var result = sut.Validate( value );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeEmpty();
-            condition.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( value );
-        }
+        Assertion.All(
+                result.TestEmpty(),
+                condition.CallAt( 0 ).Exists.TestTrue(),
+                condition.CallAt( 0 ).Arguments.TestSequence( [ value ] ) )
+            .Go();
     }
 
     [Fact]
@@ -126,11 +126,11 @@ public class ConditionalValidatorTests : ValidatorTestsBase
 
         var result = sut.Validate( value );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSequentiallyEqualTo( failure );
-            condition.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( value );
-        }
+        Assertion.All(
+                result.TestSequence( [ failure ] ),
+                condition.CallAt( 0 ).Exists.TestTrue(),
+                condition.CallAt( 0 ).Arguments.TestSequence( [ value ] ) )
+            .Go();
     }
 
     [Fact]
@@ -144,10 +144,10 @@ public class ConditionalValidatorTests : ValidatorTestsBase
 
         var result = sut.Validate( value );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeEmpty();
-            condition.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( value );
-        }
+        Assertion.All(
+                result.TestEmpty(),
+                condition.CallAt( 0 ).Exists.TestTrue(),
+                condition.CallAt( 0 ).Arguments.TestSequence( [ value ] ) )
+            .Go();
     }
 }

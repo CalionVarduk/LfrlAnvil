@@ -10,7 +10,7 @@ public class ValidationMessageFormatterTests : TestsBase
     {
         var sut = new Formatter( () => ValidationMessageFormatterArgs.Default );
         var result = sut.Format( null, Chain<ValidationMessage<string>>.Empty );
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Fact]
@@ -21,11 +21,10 @@ public class ValidationMessageFormatterTests : TestsBase
 
         var result = sut.Format( builder, Chain<ValidationMessage<string>>.Empty );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( builder );
-            result.Length.Should().Be( 0 );
-        }
+        Assertion.All(
+                result.TestRefEquals( builder ),
+                result.Length.TestEquals( 0 ) )
+            .Go();
     }
 
     [Fact]
@@ -39,14 +38,10 @@ public class ValidationMessageFormatterTests : TestsBase
 
         var result = sut.Format( null, Chain.Create( message1 ).Extend( message2 ), CultureInfo.InvariantCulture );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().NotBeNull();
-            if ( result is null )
-                return;
-
-            result.ToString().Should().Be( expected );
-        }
+        Assertion.All(
+                result.TestNotNull(),
+                result.TestIf().NotNull( r => r.ToString().TestEquals( expected ) ) )
+            .Go();
     }
 
     [Fact]
@@ -61,20 +56,17 @@ public class ValidationMessageFormatterTests : TestsBase
 
         var result = sut.Format( builder, Chain.Create( message1 ).Extend( message2 ), CultureInfo.InvariantCulture );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( builder );
-            result.ToString().Should().Be( expected );
-        }
+        Assertion.All(
+                result.TestRefEquals( builder ),
+                result.ToString().TestEquals( expected ) )
+            .Go();
     }
 
     [Fact]
     public void Format_ShouldCreateNewBuilderWithText_WhenStringBuilderIsNullAndMessagesAreNotEmpty_WithPrefixAndPostfixAll()
     {
         var sut = new Formatter(
-            () => ValidationMessageFormatterArgs.Default
-                .SetPrefixAll( "[prefix all: {0}] " )
-                .SetPostfixAll( " [postfix all]" ) );
+            () => ValidationMessageFormatterArgs.Default.SetPrefixAll( "[prefix all: {0}] " ).SetPostfixAll( " [postfix all]" ) );
 
         var message1 = ValidationMessage.Create( "RESOURCE_ONE_{0}", 123 );
         var message2 = ValidationMessage.Create( "RESOURCE_TWO_{0}_{1}", 456, 789 );
@@ -82,47 +74,35 @@ public class ValidationMessageFormatterTests : TestsBase
 
         var result = sut.Format( null, Chain.Create( message1 ).Extend( message2 ), CultureInfo.InvariantCulture );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().NotBeNull();
-            if ( result is null )
-                return;
-
-            result.ToString().Should().Be( expected );
-        }
+        Assertion.All(
+                result.TestNotNull(),
+                result.TestIf().NotNull( r => r.ToString().TestEquals( expected ) ) )
+            .Go();
     }
 
     [Fact]
     public void Format_ShouldCreateNewBuilderWithText_WhenStringBuilderIsNullAndMessagesAreNotEmpty_WithPrefixAndPostfixEach()
     {
         var sut = new Formatter(
-            () => ValidationMessageFormatterArgs.Default
-                .SetPrefixEach( "[prefix each] " )
-                .SetPostfixEach( " [postfix each]" ) );
+            () => ValidationMessageFormatterArgs.Default.SetPrefixEach( "[prefix each] " ).SetPostfixEach( " [postfix each]" ) );
 
         var message1 = ValidationMessage.Create( "RESOURCE_ONE_{0}", 123 );
         var message2 = ValidationMessage.Create( "RESOURCE_TWO_{0}_{1}", 456, 789 );
-        var expected =
-            $"[prefix each] resource one 123 [postfix each]{Environment.NewLine}[prefix each] resource two 456 789 [postfix each]";
+        var expected
+            = $"[prefix each] resource one 123 [postfix each]{Environment.NewLine}[prefix each] resource two 456 789 [postfix each]";
 
         var result = sut.Format( null, Chain.Create( message1 ).Extend( message2 ), CultureInfo.InvariantCulture );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().NotBeNull();
-            if ( result is null )
-                return;
-
-            result.ToString().Should().Be( expected );
-        }
+        Assertion.All(
+                result.TestNotNull(),
+                result.TestIf().NotNull( r => r.ToString().TestEquals( expected ) ) )
+            .Go();
     }
 
     [Fact]
     public void Format_ShouldCreateNewBuilderWithText_WhenStringBuilderIsNullAndMessagesAreNotEmpty_WithIncludedIndex()
     {
-        var sut = new Formatter(
-            () => ValidationMessageFormatterArgs.Default
-                .SetIncludeIndex( true ) );
+        var sut = new Formatter( () => ValidationMessageFormatterArgs.Default.SetIncludeIndex( true ) );
 
         var message1 = ValidationMessage.Create( "RESOURCE_ONE_{0}", 123 );
         var message2 = ValidationMessage.Create( "RESOURCE_TWO_{0}_{1}", 456, 789 );
@@ -130,22 +110,17 @@ public class ValidationMessageFormatterTests : TestsBase
 
         var result = sut.Format( null, Chain.Create( message1 ).Extend( message2 ), CultureInfo.InvariantCulture );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().NotBeNull();
-            if ( result is null )
-                return;
-
-            result.ToString().Should().Be( expected );
-        }
+        Assertion.All(
+                result.TestNotNull(),
+                result.TestIf().NotNull( r => r.ToString().TestEquals( expected ) ) )
+            .Go();
     }
 
     [Fact]
     public void Format_ShouldCreateNewBuilderWithText_WhenStringBuilderIsNullAndMessagesAreNotEmpty_WithAllArgsChanged()
     {
         var sut = new Formatter(
-            () => ValidationMessageFormatterArgs.Default
-                .SetPrefixAll( "[prefix all: {0}] " )
+            () => ValidationMessageFormatterArgs.Default.SetPrefixAll( "[prefix all: {0}] " )
                 .SetPostfixAll( " [postfix all]" )
                 .SetPrefixEach( "[prefix each] " )
                 .SetPostfixEach( " [postfix each]" )
@@ -154,19 +129,15 @@ public class ValidationMessageFormatterTests : TestsBase
 
         var message1 = ValidationMessage.Create( "RESOURCE_ONE_{0}", 123 );
         var message2 = ValidationMessage.Create( "RESOURCE_TWO_{0}_{1}", 456, 789 );
-        var expected =
-            $"[prefix all: 2] 1. [prefix each] resource one 123 [postfix each] & 2. [prefix each] resource two 456 789 [postfix each] [postfix all]";
+        var expected
+            = $"[prefix all: 2] 1. [prefix each] resource one 123 [postfix each] & 2. [prefix each] resource two 456 789 [postfix each] [postfix all]";
 
         var result = sut.Format( null, Chain.Create( message1 ).Extend( message2 ), CultureInfo.InvariantCulture );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().NotBeNull();
-            if ( result is null )
-                return;
-
-            result.ToString().Should().Be( expected );
-        }
+        Assertion.All(
+                result.TestNotNull(),
+                result.TestIf().NotNull( r => r.ToString().TestEquals( expected ) ) )
+            .Go();
     }
 
     private sealed class Formatter : ValidationMessageFormatter<string>

@@ -9,7 +9,7 @@ public class MinStringLengthValidatorTests : ValidatorTestsBase
     public void Ctor_ShouldThrowArgumentOutOfRangeException_WhenMinLengthIsLessThanZero()
     {
         var action = Lambda.Of( () => new MinLengthValidator<string>( minLength: -1, failureResult: Fixture.Create<string>() ) );
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Theory]
@@ -26,7 +26,7 @@ public class MinStringLengthValidatorTests : ValidatorTestsBase
 
         var result = sut.Validate( value );
 
-        result.Should().BeEmpty();
+        result.TestEmpty().Go();
     }
 
     [Theory]
@@ -42,6 +42,6 @@ public class MinStringLengthValidatorTests : ValidatorTestsBase
 
         var result = sut.Validate( value );
 
-        AssertValidationResult( result, ValidationMessage.Create( resource, minLength ) );
+        AssertValidationResult( result, ValidationMessage.Create( resource, minLength ) ).Go();
     }
 }

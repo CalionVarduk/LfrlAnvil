@@ -60,7 +60,7 @@ public class OptionalDisposableTests : TestsBase
 
         sut.Dispose();
 
-        value.ReceivedCalls( o => o.Dispose(), count: 1 ).Go();
+        value.TestReceivedCalls( o => o.Dispose(), count: 1 ).Go();
     }
 
     [Fact]

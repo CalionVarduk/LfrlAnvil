@@ -1,5 +1,4 @@
-﻿using LfrlAnvil.TestExtensions.FluentAssertions;
-using LfrlAnvil.Validation.Validators;
+﻿using LfrlAnvil.Validation.Validators;
 
 namespace LfrlAnvil.Validation.Tests.ValidatorsTests;
 
@@ -10,7 +9,7 @@ public class LambdaValidatorTests : ValidatorTestsBase
     {
         var sut = LambdaValidator<string>.Create( (int _) => Chain<string>.Empty );
         var result = sut.Validate( Fixture.Create<int>() );
-        result.Should().BeEmpty();
+        result.TestEmpty().Go();
     }
 
     [Fact]
@@ -21,6 +20,6 @@ public class LambdaValidatorTests : ValidatorTestsBase
 
         var result = sut.Validate( Fixture.Create<int>() );
 
-        result.Should().BeSequentiallyEqualTo( failure );
+        result.TestSequence( [ failure ] ).Go();
     }
 }

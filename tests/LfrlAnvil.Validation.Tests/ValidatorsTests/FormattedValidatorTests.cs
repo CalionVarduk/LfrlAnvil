@@ -1,6 +1,5 @@
 ﻿using System.Linq;
 using System.Text;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 using LfrlAnvil.TestExtensions.NSubstitute;
 using LfrlAnvil.Validation.Extensions;
 
@@ -12,8 +11,7 @@ public class FormattedValidatorTests : ValidatorTestsBase
     public void Validate_ShouldReturnEmptyChain_WhenFormatterReturnsNullStringBuilder()
     {
         var formatter = Substitute.For<IValidationMessageFormatter<string>>();
-        formatter
-            .Format( Arg.Any<StringBuilder?>(), Arg.Any<Chain<ValidationMessage<string>>>(), Arg.Any<IFormatProvider?>() )
+        formatter.Format( Arg.Any<StringBuilder?>(), Arg.Any<Chain<ValidationMessage<string>>>(), Arg.Any<IFormatProvider?>() )
             .Returns( _ => null );
 
         var format = Substitute.For<IFormatProvider>();
@@ -22,12 +20,11 @@ public class FormattedValidatorTests : ValidatorTestsBase
 
         var result = sut.Validate( Fixture.Create<int>() );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeEmpty();
-            formatProvider.Verify().CallCount.Should().Be( 1 );
-            formatter.VerifyCalls().Received( f => f.Format( null, Chain<ValidationMessage<string>>.Empty, format ), 1 );
-        }
+        Assertion.All(
+                result.TestEmpty(),
+                formatProvider.CallCount().TestEquals( 1 ),
+                formatter.TestReceivedCalls( f => f.Format( null, Chain<ValidationMessage<string>>.Empty, format ), count: 1 ) )
+            .Go();
     }
 
     [Fact]
@@ -37,20 +34,18 @@ public class FormattedValidatorTests : ValidatorTestsBase
         var formatterResult = new StringBuilder( Fixture.Create<string>() );
 
         var formatter = Substitute.For<IValidationMessageFormatter<string>>();
-        formatter
-            .Format( Arg.Any<StringBuilder?>(), Arg.Any<Chain<ValidationMessage<string>>>(), Arg.Any<IFormatProvider?>() )
+        formatter.Format( Arg.Any<StringBuilder?>(), Arg.Any<Chain<ValidationMessage<string>>>(), Arg.Any<IFormatProvider?>() )
             .Returns( _ => formatterResult );
 
         var sut = FormattableValidators<string>.Fail<int>( failure ).Format( formatter );
 
         var result = sut.Validate( Fixture.Create<int>() );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().HaveCount( 1 );
-            result.FirstOrDefault().Result.Should().Be( formatterResult.ToString() );
-            AssertValidationResult( result.FirstOrDefault().Messages, ValidationMessage.Create( failure ) );
-            formatter.VerifyCalls().Received( f => f.Format( null, Arg.Any<Chain<ValidationMessage<string>>>() ), 1 );
-        }
+        Assertion.All(
+                result.Count.TestEquals( 1 ),
+                result.FirstOrDefault().Result.TestEquals( formatterResult.ToString() ),
+                AssertValidationResult( result.FirstOrDefault().Messages, ValidationMessage.Create( failure ) ),
+                formatter.TestReceivedCalls( f => f.Format( null, Arg.Any<Chain<ValidationMessage<string>>>() ), count: 1 ) )
+            .Go();
     }
 }

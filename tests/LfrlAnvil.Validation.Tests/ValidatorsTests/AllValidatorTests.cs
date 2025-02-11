@@ -1,6 +1,4 @@
-﻿using LfrlAnvil.TestExtensions.FluentAssertions;
-
-namespace LfrlAnvil.Validation.Tests.ValidatorsTests;
+﻿namespace LfrlAnvil.Validation.Tests.ValidatorsTests;
 
 public class AllValidatorTests : ValidatorTestsBase
 {
@@ -12,7 +10,7 @@ public class AllValidatorTests : ValidatorTestsBase
 
         var result = sut.Validate( value );
 
-        result.Should().BeEmpty();
+        result.TestEmpty().Go();
     }
 
     [Fact]
@@ -26,7 +24,7 @@ public class AllValidatorTests : ValidatorTestsBase
 
         var result = sut.Validate( value );
 
-        result.Should().BeEmpty();
+        result.TestEmpty().Go();
     }
 
     [Fact]
@@ -41,7 +39,7 @@ public class AllValidatorTests : ValidatorTestsBase
 
         var result = sut.Validate( value );
 
-        result.Should().BeSequentiallyEqualTo( failure );
+        result.TestSequence( [ failure ] ).Go();
     }
 
     [Fact]
@@ -56,6 +54,6 @@ public class AllValidatorTests : ValidatorTestsBase
 
         var result = sut.Validate( value );
 
-        result.Should().BeSequentiallyEqualTo( failure1, failure2, failure3, failure4 );
+        result.TestSequence( [ failure1, failure2, failure3, failure4 ] ).Go();
     }
 }

@@ -28,7 +28,7 @@ public class LazyDisposableTests : TestsBase
                 sut.Inner.TestRefEquals( inner ),
                 sut.IsDisposed.TestFalse(),
                 sut.CanAssign.TestFalse(),
-                inner.DidNotReceiveCall( x => x.Dispose() ) )
+                inner.TestDidNotReceiveCall( x => x.Dispose() ) )
             .Go();
     }
 
@@ -45,7 +45,7 @@ public class LazyDisposableTests : TestsBase
                 sut.Inner.TestRefEquals( inner ),
                 sut.IsDisposed.TestTrue(),
                 sut.CanAssign.TestFalse(),
-                inner.ReceivedCalls( x => x.Dispose() ) )
+                inner.TestReceivedCalls( x => x.Dispose() ) )
             .Go();
     }
 
@@ -80,7 +80,7 @@ public class LazyDisposableTests : TestsBase
 
         Assertion.All(
                 sut.IsDisposed.TestTrue(),
-                inner.ReceivedCalls( x => x.Dispose() ) )
+                inner.TestReceivedCalls( x => x.Dispose() ) )
             .Go();
     }
 
@@ -96,7 +96,7 @@ public class LazyDisposableTests : TestsBase
 
         Assertion.All(
                 sut.IsDisposed.TestTrue(),
-                inner.ReceivedCalls( x => x.Dispose(), count: 1 ) )
+                inner.TestReceivedCalls( x => x.Dispose(), count: 1 ) )
             .Go();
     }
 }

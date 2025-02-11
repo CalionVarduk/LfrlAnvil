@@ -13,7 +13,7 @@ public class NotWhiteSpaceStringValidatorTests : ValidatorTestsBase
 
         var result = sut.Validate( value );
 
-        result.Should().BeEmpty();
+        result.TestEmpty().Go();
     }
 
     [Theory]
@@ -27,6 +27,6 @@ public class NotWhiteSpaceStringValidatorTests : ValidatorTestsBase
 
         var result = sut.Validate( value );
 
-        AssertValidationResult( result, ValidationMessage.Create( resource ) );
+        AssertValidationResult( result, ValidationMessage.Create( resource ) ).Go();
     }
 }

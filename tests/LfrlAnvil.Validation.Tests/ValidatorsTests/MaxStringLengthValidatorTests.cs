@@ -9,7 +9,7 @@ public class MaxStringLengthValidatorTests : ValidatorTestsBase
     public void Ctor_ShouldThrowArgumentOutOfRangeException_WhenMaxLengthIsLessThanZero()
     {
         var action = Lambda.Of( () => new MaxLengthValidator<string>( maxLength: -1, failureResult: Fixture.Create<string>() ) );
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Theory]
@@ -26,7 +26,7 @@ public class MaxStringLengthValidatorTests : ValidatorTestsBase
 
         var result = sut.Validate( value );
 
-        result.Should().BeEmpty();
+        result.TestEmpty().Go();
     }
 
     [Theory]
@@ -42,6 +42,6 @@ public class MaxStringLengthValidatorTests : ValidatorTestsBase
 
         var result = sut.Validate( value );
 
-        AssertValidationResult( result, ValidationMessage.Create( resource, maxLength ) );
+        AssertValidationResult( result, ValidationMessage.Create( resource, maxLength ) ).Go();
     }
 }
