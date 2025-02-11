@@ -10,12 +10,11 @@ public class IdentifierTests : TestsBase
     {
         var sut = default( Identifier );
 
-        using ( new AssertionScope() )
-        {
-            sut.Value.Should().Be( 0 );
-            sut.High.Should().Be( 0 );
-            sut.Low.Should().Be( 0 );
-        }
+        Assertion.All(
+                sut.Value.TestEquals( 0UL ),
+                sut.High.TestEquals( 0UL ),
+                sut.Low.TestEquals( ( ushort )0 ) )
+            .Go();
     }
 
     [Theory]
@@ -24,12 +23,11 @@ public class IdentifierTests : TestsBase
     {
         var sut = new Identifier( value );
 
-        using ( new AssertionScope() )
-        {
-            sut.Value.Should().Be( value );
-            sut.High.Should().Be( expectedHigh );
-            sut.Low.Should().Be( expectedLow );
-        }
+        Assertion.All(
+                sut.Value.TestEquals( value ),
+                sut.High.TestEquals( expectedHigh ),
+                sut.Low.TestEquals( expectedLow ) )
+            .Go();
     }
 
     [Theory]
@@ -38,12 +36,11 @@ public class IdentifierTests : TestsBase
     {
         var sut = new Identifier( high, low );
 
-        using ( new AssertionScope() )
-        {
-            sut.Value.Should().Be( expectedValue );
-            sut.High.Should().Be( high );
-            sut.Low.Should().Be( low );
-        }
+        Assertion.All(
+                sut.Value.TestEquals( expectedValue ),
+                sut.High.TestEquals( high ),
+                sut.Low.TestEquals( low ) )
+            .Go();
     }
 
     [Theory]
@@ -52,7 +49,7 @@ public class IdentifierTests : TestsBase
     {
         var sut = new Identifier( value );
         var result = sut.ToString();
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -64,7 +61,7 @@ public class IdentifierTests : TestsBase
 
         var result = sut.GetHashCode();
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -76,7 +73,7 @@ public class IdentifierTests : TestsBase
 
         var result = a.Equals( b );
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -88,7 +85,7 @@ public class IdentifierTests : TestsBase
 
         var result = a.CompareTo( b );
 
-        Math.Sign( result ).Should().Be( expectedSign );
+        Math.Sign( result ).TestEquals( expectedSign ).Go();
     }
 
     [Fact]
@@ -99,7 +96,7 @@ public class IdentifierTests : TestsBase
 
         var result = ( ulong )sut;
 
-        result.Should().Be( value );
+        result.TestEquals( value ).Go();
     }
 
     [Theory]
@@ -111,7 +108,7 @@ public class IdentifierTests : TestsBase
 
         var result = a == b;
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -123,7 +120,7 @@ public class IdentifierTests : TestsBase
 
         var result = a != b;
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -135,7 +132,7 @@ public class IdentifierTests : TestsBase
 
         var result = a > b;
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -147,7 +144,7 @@ public class IdentifierTests : TestsBase
 
         var result = a >= b;
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -159,7 +156,7 @@ public class IdentifierTests : TestsBase
 
         var result = a < b;
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -171,6 +168,6 @@ public class IdentifierTests : TestsBase
 
         var result = a <= b;
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 }

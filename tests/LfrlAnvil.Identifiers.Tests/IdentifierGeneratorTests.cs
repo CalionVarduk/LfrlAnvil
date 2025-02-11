@@ -24,18 +24,17 @@ public class IdentifierGeneratorTests : TestsBase
 
         var sut = new IdentifierGenerator( timestampProvider );
 
-        using ( new AssertionScope() )
-        {
-            sut.BaseTimestamp.Should().Be( Timestamp.Zero );
-            sut.LastTimestamp.Should().Be( expectedStartTimestamp );
-            sut.StartTimestamp.Should().Be( expectedStartTimestamp );
-            sut.MaxTimestamp.Should().Be( expectedMaxTimestamp );
-            sut.TimeEpsilon.Should().Be( expectedTimeEpsilon );
-            sut.LowValueOverflowStrategy.Should().Be( LowValueOverflowStrategy.Forbidden );
-            sut.LowValueBounds.Should().Be( expectedLowValueBounds );
-            sut.LastHighValue.Should().Be( expectedLastHighValue );
-            sut.LastLowValue.Should().Be( -1 );
-        }
+        Assertion.All(
+                sut.BaseTimestamp.TestEquals( Timestamp.Zero ),
+                sut.LastTimestamp.TestEquals( expectedStartTimestamp ),
+                sut.StartTimestamp.TestEquals( expectedStartTimestamp ),
+                sut.MaxTimestamp.TestEquals( expectedMaxTimestamp ),
+                sut.TimeEpsilon.TestEquals( expectedTimeEpsilon ),
+                sut.LowValueOverflowStrategy.TestEquals( LowValueOverflowStrategy.Forbidden ),
+                sut.LowValueBounds.TestEquals( expectedLowValueBounds ),
+                sut.LastHighValue.TestEquals( expectedLastHighValue ),
+                sut.LastLowValue.TestEquals( -1 ) )
+            .Go();
     }
 
     [Fact]
@@ -46,7 +45,7 @@ public class IdentifierGeneratorTests : TestsBase
 
         var action = Lambda.Of( () => new IdentifierGenerator( timestampProvider ) );
 
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Theory]
@@ -64,18 +63,17 @@ public class IdentifierGeneratorTests : TestsBase
 
         var sut = new IdentifierGenerator( timestampProvider, @params );
 
-        using ( new AssertionScope() )
-        {
-            sut.BaseTimestamp.Should().Be( expectedBaseTimestamp );
-            sut.LastTimestamp.Should().Be( expectedStartTimestamp );
-            sut.StartTimestamp.Should().Be( expectedStartTimestamp );
-            sut.MaxTimestamp.Should().Be( expectedMaxTimestamp );
-            sut.TimeEpsilon.Should().Be( @params.TimeEpsilon );
-            sut.LowValueOverflowStrategy.Should().Be( @params.LowValueOverflowStrategy );
-            sut.LowValueBounds.Should().Be( @params.LowValueBounds );
-            sut.LastHighValue.Should().Be( expectedLastHighValue );
-            sut.LastLowValue.Should().Be( expectedLastLowValue );
-        }
+        Assertion.All(
+                sut.BaseTimestamp.TestEquals( expectedBaseTimestamp ),
+                sut.LastTimestamp.TestEquals( expectedStartTimestamp ),
+                sut.StartTimestamp.TestEquals( expectedStartTimestamp ),
+                sut.MaxTimestamp.TestEquals( expectedMaxTimestamp ),
+                sut.TimeEpsilon.TestEquals( @params.TimeEpsilon ),
+                sut.LowValueOverflowStrategy.TestEquals( @params.LowValueOverflowStrategy ),
+                sut.LowValueBounds.TestEquals( @params.LowValueBounds ),
+                sut.LastHighValue.TestEquals( expectedLastHighValue ),
+                sut.LastLowValue.TestEquals( expectedLastLowValue ) )
+            .Go();
     }
 
     [Fact]
@@ -86,7 +84,7 @@ public class IdentifierGeneratorTests : TestsBase
 
         var action = Lambda.Of( () => new IdentifierGenerator( timestampProvider ) );
 
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Fact]
@@ -97,7 +95,7 @@ public class IdentifierGeneratorTests : TestsBase
 
         var action = Lambda.Of( () => new IdentifierGenerator( timestampProvider, @params ) );
 
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Fact]
@@ -108,7 +106,7 @@ public class IdentifierGeneratorTests : TestsBase
 
         var action = Lambda.Of( () => new IdentifierGenerator( timestampProvider, @params ) );
 
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Fact]
@@ -119,7 +117,7 @@ public class IdentifierGeneratorTests : TestsBase
 
         var action = Lambda.Of( () => new IdentifierGenerator( timestampProvider, @params ) );
 
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Fact]
@@ -130,7 +128,7 @@ public class IdentifierGeneratorTests : TestsBase
 
         var action = Lambda.Of( () => new IdentifierGenerator( timestampProvider, @params ) );
 
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Theory]
@@ -146,7 +144,7 @@ public class IdentifierGeneratorTests : TestsBase
 
         var result = sut.Generate();
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -164,7 +162,7 @@ public class IdentifierGeneratorTests : TestsBase
 
         var result = sut.Generate();
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -175,19 +173,14 @@ public class IdentifierGeneratorTests : TestsBase
         Identifier expected)
     {
         var startTimestamp = Timestamp.Zero;
-        var timestampProvider = GetTimestampProviderMock(
-            startTimestamp,
-            startTimestamp,
-            startTimestamp,
-            startTimestamp,
-            futureTimestamp );
+        var timestampProvider = GetTimestampProviderMock( startTimestamp, startTimestamp, startTimestamp, startTimestamp, futureTimestamp );
 
         var sut = new IdentifierGenerator( timestampProvider, new IdentifierGeneratorParams { LowValueBounds = lowValueBounds } );
         GenerateRange( sut, 3 );
 
         var result = sut.Generate();
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -207,7 +200,7 @@ public class IdentifierGeneratorTests : TestsBase
 
         var result = sut.Generate();
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -222,7 +215,7 @@ public class IdentifierGeneratorTests : TestsBase
 
         var result = sut.Generate();
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -244,7 +237,7 @@ public class IdentifierGeneratorTests : TestsBase
 
         var action = Lambda.Of( () => sut.Generate() );
 
-        action.Should().ThrowExactly<IdentifierGenerationException>();
+        action.Test( exc => exc.TestType().Exact<IdentifierGenerationException>() ).Go();
     }
 
     [Fact]
@@ -258,7 +251,7 @@ public class IdentifierGeneratorTests : TestsBase
 
         var action = Lambda.Of( () => sut.Generate() );
 
-        action.Should().ThrowExactly<IdentifierGenerationException>();
+        action.Test( exc => exc.TestType().Exact<IdentifierGenerationException>() ).Go();
     }
 
     [Theory]
@@ -279,7 +272,7 @@ public class IdentifierGeneratorTests : TestsBase
 
         var action = Lambda.Of( () => sut.Generate() );
 
-        action.Should().ThrowExactly<IdentifierGenerationException>();
+        action.Test( exc => exc.TestType().Exact<IdentifierGenerationException>() ).Go();
     }
 
     [Theory]
@@ -295,11 +288,10 @@ public class IdentifierGeneratorTests : TestsBase
 
         var result = sut.TryGenerate( out var outResult );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            outResult.Should().Be( expected );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                outResult.TestEquals( expected ) )
+            .Go();
     }
 
     [Theory]
@@ -318,11 +310,10 @@ public class IdentifierGeneratorTests : TestsBase
 
         var result = sut.TryGenerate( out var outResult );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            outResult.Should().Be( expected );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                outResult.TestEquals( expected ) )
+            .Go();
     }
 
     [Theory]
@@ -333,23 +324,17 @@ public class IdentifierGeneratorTests : TestsBase
         Identifier expected)
     {
         var startTimestamp = Timestamp.Zero;
-        var timestampProvider = GetTimestampProviderMock(
-            startTimestamp,
-            startTimestamp,
-            startTimestamp,
-            startTimestamp,
-            futureTimestamp );
+        var timestampProvider = GetTimestampProviderMock( startTimestamp, startTimestamp, startTimestamp, startTimestamp, futureTimestamp );
 
         var sut = new IdentifierGenerator( timestampProvider, new IdentifierGeneratorParams { LowValueBounds = lowValueBounds } );
         GenerateRange( sut, 3 );
 
         var result = sut.TryGenerate( out var outResult );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            outResult.Should().Be( expected );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                outResult.TestEquals( expected ) )
+            .Go();
     }
 
     [Theory]
@@ -369,11 +354,10 @@ public class IdentifierGeneratorTests : TestsBase
 
         var result = sut.TryGenerate( out var outResult );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            outResult.Should().Be( expected );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                outResult.TestEquals( expected ) )
+            .Go();
     }
 
     [Fact]
@@ -388,11 +372,10 @@ public class IdentifierGeneratorTests : TestsBase
 
         var result = sut.TryGenerate( out var outResult );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            outResult.Should().Be( expected );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                outResult.TestEquals( expected ) )
+            .Go();
     }
 
     [Fact]
@@ -414,11 +397,10 @@ public class IdentifierGeneratorTests : TestsBase
 
         var result = sut.TryGenerate( out var outResult );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeFalse();
-            outResult.Should().Be( default );
-        }
+        Assertion.All(
+                result.TestFalse(),
+                outResult.TestEquals( default ) )
+            .Go();
     }
 
     [Fact]
@@ -432,11 +414,10 @@ public class IdentifierGeneratorTests : TestsBase
 
         var result = sut.TryGenerate( out var outResult );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeFalse();
-            outResult.Should().Be( default );
-        }
+        Assertion.All(
+                result.TestFalse(),
+                outResult.TestEquals( default ) )
+            .Go();
     }
 
     [Theory]
@@ -456,11 +437,10 @@ public class IdentifierGeneratorTests : TestsBase
 
         var result = sut.TryGenerate( out var outResult );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeFalse();
-            outResult.Should().Be( default );
-        }
+        Assertion.All(
+                result.TestFalse(),
+                outResult.TestEquals( default ) )
+            .Go();
     }
 
     [Theory]
@@ -474,7 +454,7 @@ public class IdentifierGeneratorTests : TestsBase
 
         var result = sut.GetTimestamp( identifier );
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -488,7 +468,7 @@ public class IdentifierGeneratorTests : TestsBase
 
         var result = sut.CalculateThroughput( duration );
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -502,12 +482,11 @@ public class IdentifierGeneratorTests : TestsBase
 
         var expected = sut.Generate();
 
-        using ( new AssertionScope() )
-        {
-            sut.LastLowValue.Should().Be( expected.Low );
-            sut.LastHighValue.Should().Be( expected.High );
-            sut.LastTimestamp.Should().Be( nextTimestamp );
-        }
+        Assertion.All(
+                sut.LastLowValue.TestEquals( expected.Low ),
+                sut.LastHighValue.TestEquals( expected.High ),
+                sut.LastTimestamp.TestEquals( nextTimestamp ) )
+            .Go();
     }
 
     [Fact]
@@ -522,12 +501,11 @@ public class IdentifierGeneratorTests : TestsBase
         sut.Generate();
         var expected = sut.Generate();
 
-        using ( new AssertionScope() )
-        {
-            sut.LastLowValue.Should().Be( expected.Low );
-            sut.LastHighValue.Should().Be( expected.High );
-            sut.LastTimestamp.Should().Be( nextTimestamp );
-        }
+        Assertion.All(
+                sut.LastLowValue.TestEquals( expected.Low ),
+                sut.LastHighValue.TestEquals( expected.High ),
+                sut.LastTimestamp.TestEquals( nextTimestamp ) )
+            .Go();
     }
 
     [Fact]
@@ -535,24 +513,18 @@ public class IdentifierGeneratorTests : TestsBase
     {
         var startTimestamp = Timestamp.Zero;
         var nextTimestamp = startTimestamp.Add( Duration.FromMilliseconds( 1 ) );
-        var timestampProvider = GetTimestampProviderMock(
-            startTimestamp,
-            startTimestamp,
-            startTimestamp,
-            startTimestamp,
-            nextTimestamp );
+        var timestampProvider = GetTimestampProviderMock( startTimestamp, startTimestamp, startTimestamp, startTimestamp, nextTimestamp );
 
         var sut = new IdentifierGenerator( timestampProvider );
         GenerateRange( sut, 3 );
 
         var expected = sut.Generate();
 
-        using ( new AssertionScope() )
-        {
-            sut.LastLowValue.Should().Be( expected.Low );
-            sut.LastHighValue.Should().Be( expected.High );
-            sut.LastTimestamp.Should().Be( nextTimestamp );
-        }
+        Assertion.All(
+                sut.LastLowValue.TestEquals( expected.Low ),
+                sut.LastHighValue.TestEquals( expected.High ),
+                sut.LastTimestamp.TestEquals( nextTimestamp ) )
+            .Go();
     }
 
     [Theory]
@@ -574,12 +546,11 @@ public class IdentifierGeneratorTests : TestsBase
 
         sut.Generate();
 
-        using ( new AssertionScope() )
-        {
-            sut.LastLowValue.Should().Be( expectedId.Low );
-            sut.LastHighValue.Should().Be( expectedId.High );
-            sut.LastTimestamp.Should().Be( expectedLastTimestamp );
-        }
+        Assertion.All(
+                sut.LastLowValue.TestEquals( expectedId.Low ),
+                sut.LastHighValue.TestEquals( expectedId.High ),
+                sut.LastTimestamp.TestEquals( expectedLastTimestamp ) )
+            .Go();
     }
 
     [Fact]
@@ -600,12 +571,11 @@ public class IdentifierGeneratorTests : TestsBase
         var expected = sut.Generate();
         sut.TryGenerate( out _ );
 
-        using ( new AssertionScope() )
-        {
-            sut.LastLowValue.Should().Be( expected.Low );
-            sut.LastHighValue.Should().Be( expected.High );
-            sut.LastTimestamp.Should().Be( startTimestamp );
-        }
+        Assertion.All(
+                sut.LastLowValue.TestEquals( expected.Low ),
+                sut.LastHighValue.TestEquals( expected.High ),
+                sut.LastTimestamp.TestEquals( startTimestamp ) )
+            .Go();
     }
 
     [Theory]
@@ -622,7 +592,7 @@ public class IdentifierGeneratorTests : TestsBase
 
         var result = sut.LowValuesLeft;
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -640,7 +610,7 @@ public class IdentifierGeneratorTests : TestsBase
 
         var result = sut.LowValuesLeft;
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -657,7 +627,7 @@ public class IdentifierGeneratorTests : TestsBase
 
         var result = sut.LowValuesLeft;
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -672,7 +642,7 @@ public class IdentifierGeneratorTests : TestsBase
 
         var result = sut.LowValuesLeft;
 
-        result.Should().Be( 0 );
+        result.TestEquals( 0 ).Go();
     }
 
     [Theory]
@@ -688,7 +658,7 @@ public class IdentifierGeneratorTests : TestsBase
 
         var result = sut.HighValuesLeft;
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -705,7 +675,7 @@ public class IdentifierGeneratorTests : TestsBase
 
         var result = sut.HighValuesLeft;
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -720,7 +690,7 @@ public class IdentifierGeneratorTests : TestsBase
 
         var result = sut.HighValuesLeft;
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -735,7 +705,7 @@ public class IdentifierGeneratorTests : TestsBase
 
         var result = sut.HighValuesLeft;
 
-        result.Should().Be( 0 );
+        result.TestEquals( 0UL ).Go();
     }
 
     [Theory]
@@ -750,7 +720,7 @@ public class IdentifierGeneratorTests : TestsBase
 
         var result = sut.ValuesLeft;
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -767,7 +737,7 @@ public class IdentifierGeneratorTests : TestsBase
 
         var result = sut.ValuesLeft;
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -782,7 +752,7 @@ public class IdentifierGeneratorTests : TestsBase
 
         var result = sut.ValuesLeft;
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -797,7 +767,7 @@ public class IdentifierGeneratorTests : TestsBase
 
         var result = sut.ValuesLeft;
 
-        result.Should().Be( 0 );
+        result.TestEquals( 0UL ).Go();
     }
 
     [Fact]
@@ -811,7 +781,7 @@ public class IdentifierGeneratorTests : TestsBase
 
         var result = sut.IsOutOfValues;
 
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Fact]
@@ -826,7 +796,7 @@ public class IdentifierGeneratorTests : TestsBase
 
         var result = sut.IsOutOfValues;
 
-        result.Should().BeTrue();
+        result.TestTrue().Go();
     }
 
     [Fact]
@@ -841,7 +811,7 @@ public class IdentifierGeneratorTests : TestsBase
 
         var result = sut.Generate();
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -862,7 +832,7 @@ public class IdentifierGeneratorTests : TestsBase
 
         var action = Lambda.Of( () => sut.Generate() );
 
-        action.Should().ThrowExactly<IdentifierGenerationException>();
+        action.Test( exc => exc.TestType().Exact<IdentifierGenerationException>() ).Go();
     }
 
     [Fact]
@@ -877,11 +847,10 @@ public class IdentifierGeneratorTests : TestsBase
 
         var result = sut.TryGenerate( out var outResult );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( expected );
-            outResult.Should().Be( outExpected );
-        }
+        Assertion.All(
+                result.TestEquals( expected ),
+                outResult.TestEquals( outExpected ) )
+            .Go();
     }
 
     [Fact]
@@ -902,11 +871,10 @@ public class IdentifierGeneratorTests : TestsBase
 
         var result = sut.TryGenerate( out var outResult );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeFalse();
-            outResult.Should().BeNull();
-        }
+        Assertion.All(
+                result.TestFalse(),
+                outResult.TestNull() )
+            .Go();
     }
 
     private static ITimestampProvider GetTimestampProviderMock(params Timestamp[] returnValues)
