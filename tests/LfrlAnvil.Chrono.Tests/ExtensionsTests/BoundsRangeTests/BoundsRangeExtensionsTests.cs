@@ -2,7 +2,6 @@
 using System.Linq;
 using LfrlAnvil.Chrono.Extensions;
 using LfrlAnvil.TestExtensions.Attributes;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Chrono.Tests.ExtensionsTests.BoundsRangeTests;
 
@@ -39,12 +38,9 @@ public class BoundsRangeExtensionsTests : TestsBase
 
         var result = sut.Normalize();
 
-        result.Should()
-            .BeSequentiallyEqualTo(
-                Bounds.Create( dt1, dt2 ),
-                Bounds.Create( dt3, dt4 ),
-                Bounds.Create( dt5, dt10 ),
-                Bounds.Create( dt11, dt12 ) );
+        result.TestSequence(
+                [ Bounds.Create( dt1, dt2 ), Bounds.Create( dt3, dt4 ), Bounds.Create( dt5, dt10 ), Bounds.Create( dt11, dt12 ) ] )
+            .Go();
     }
 
     [Theory]
@@ -55,7 +51,7 @@ public class BoundsRangeExtensionsTests : TestsBase
     {
         var sut = BoundsRange.Create( range.Select( r => Bounds.Create( r.Min, r.Max ) ) );
         var result = sut.GetTimeSpan();
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -90,12 +86,9 @@ public class BoundsRangeExtensionsTests : TestsBase
 
         var result = sut.Normalize();
 
-        result.Should()
-            .BeSequentiallyEqualTo(
-                Bounds.Create( dt1, dt2 ),
-                Bounds.Create( dt3, dt4 ),
-                Bounds.Create( dt5, dt10 ),
-                Bounds.Create( dt11, dt12 ) );
+        result.TestSequence(
+                [ Bounds.Create( dt1, dt2 ), Bounds.Create( dt3, dt4 ), Bounds.Create( dt5, dt10 ), Bounds.Create( dt11, dt12 ) ] )
+            .Go();
     }
 
     [Theory]
@@ -110,7 +103,7 @@ public class BoundsRangeExtensionsTests : TestsBase
 
         var result = sut.GetDuration();
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -145,11 +138,8 @@ public class BoundsRangeExtensionsTests : TestsBase
 
         var result = sut.Normalize();
 
-        result.Should()
-            .BeSequentiallyEqualTo(
-                Bounds.Create( dt1, dt2 ),
-                Bounds.Create( dt3, dt4 ),
-                Bounds.Create( dt5, dt10 ),
-                Bounds.Create( dt11, dt12 ) );
+        result.TestSequence(
+                [ Bounds.Create( dt1, dt2 ), Bounds.Create( dt3, dt4 ), Bounds.Create( dt5, dt10 ), Bounds.Create( dt11, dt12 ) ] )
+            .Go();
     }
 }

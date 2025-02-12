@@ -4,9 +4,9 @@ using Xunit.Sdk;
 
 namespace LfrlAnvil.TestExtensions.Assertions;
 
-internal sealed class AssertionGroup : Assertion
+internal sealed class ConjunctionAssertion : Assertion
 {
-    internal AssertionGroup(string context, IReadOnlyList<Assertion> assertions)
+    internal ConjunctionAssertion(string context, IReadOnlyList<Assertion> assertions)
         : base( context )
     {
         Assertions = assertions;

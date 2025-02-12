@@ -16,7 +16,7 @@ public class TimestampProviderExtensionsTests : TestsBase
 
         var result = sut.IsInPast( timestamp );
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -30,7 +30,7 @@ public class TimestampProviderExtensionsTests : TestsBase
 
         var result = sut.IsNow( timestamp );
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -44,7 +44,7 @@ public class TimestampProviderExtensionsTests : TestsBase
 
         var result = sut.IsInFuture( timestamp );
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -52,7 +52,7 @@ public class TimestampProviderExtensionsTests : TestsBase
     {
         var sut = new FrozenTimestampProvider( default );
         var result = sut.IsFrozen();
-        result.Should().BeTrue();
+        result.TestTrue().Go();
     }
 
     [Fact]
@@ -60,7 +60,7 @@ public class TimestampProviderExtensionsTests : TestsBase
     {
         var sut = new TimestampProvider();
         var result = sut.IsFrozen();
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Theory]
@@ -75,7 +75,7 @@ public class TimestampProviderExtensionsTests : TestsBase
 
         var result = sut.GetDifference( timestamp );
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -90,7 +90,7 @@ public class TimestampProviderExtensionsTests : TestsBase
 
         var result = sut.GetDifference( other );
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -103,11 +103,10 @@ public class TimestampProviderExtensionsTests : TestsBase
         var firstResult = frozen.GetNow();
         var secondResult = frozen.GetNow();
 
-        using ( new AssertionScope() )
-        {
-            firstResult.UnixEpochTicks.Should().Be( first );
-            secondResult.UnixEpochTicks.Should().Be( first );
-        }
+        Assertion.All(
+                firstResult.UnixEpochTicks.TestEquals( first ),
+                secondResult.UnixEpochTicks.TestEquals( first ) )
+            .Go();
     }
 
     private static ITimestampProvider GetMockedProvider(long timestampTicks, params long[] additionalTimestampTicks)

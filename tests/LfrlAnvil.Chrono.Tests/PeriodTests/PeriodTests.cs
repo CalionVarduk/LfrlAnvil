@@ -1,4 +1,5 @@
-﻿using LfrlAnvil.TestExtensions.Attributes;
+﻿using System.Diagnostics.Contracts;
+using LfrlAnvil.TestExtensions.Attributes;
 
 namespace LfrlAnvil.Chrono.Tests.PeriodTests;
 
@@ -10,20 +11,19 @@ public class PeriodTests : TestsBase
     {
         var sut = default( Period );
 
-        using ( new AssertionScope() )
-        {
-            sut.Years.Should().Be( 0 );
-            sut.Months.Should().Be( 0 );
-            sut.Weeks.Should().Be( 0 );
-            sut.Days.Should().Be( 0 );
-            sut.Hours.Should().Be( 0 );
-            sut.Minutes.Should().Be( 0 );
-            sut.Seconds.Should().Be( 0 );
-            sut.Milliseconds.Should().Be( 0 );
-            sut.Microseconds.Should().Be( 0 );
-            sut.Ticks.Should().Be( 0 );
-            sut.ActiveUnits.Should().Be( PeriodUnits.None );
-        }
+        Assertion.All(
+                sut.Years.TestEquals( 0 ),
+                sut.Months.TestEquals( 0 ),
+                sut.Weeks.TestEquals( 0 ),
+                sut.Days.TestEquals( 0 ),
+                sut.Hours.TestEquals( 0 ),
+                sut.Minutes.TestEquals( 0 ),
+                sut.Seconds.TestEquals( 0 ),
+                sut.Milliseconds.TestEquals( 0 ),
+                sut.Microseconds.TestEquals( 0 ),
+                sut.Ticks.TestEquals( 0 ),
+                sut.ActiveUnits.TestEquals( PeriodUnits.None ) )
+            .Go();
     }
 
     [Fact]
@@ -31,20 +31,19 @@ public class PeriodTests : TestsBase
     {
         var sut = Period.Empty;
 
-        using ( new AssertionScope() )
-        {
-            sut.Years.Should().Be( 0 );
-            sut.Months.Should().Be( 0 );
-            sut.Weeks.Should().Be( 0 );
-            sut.Days.Should().Be( 0 );
-            sut.Hours.Should().Be( 0 );
-            sut.Minutes.Should().Be( 0 );
-            sut.Seconds.Should().Be( 0 );
-            sut.Milliseconds.Should().Be( 0 );
-            sut.Microseconds.Should().Be( 0 );
-            sut.Ticks.Should().Be( 0 );
-            sut.ActiveUnits.Should().Be( PeriodUnits.None );
-        }
+        Assertion.All(
+                sut.Years.TestEquals( 0 ),
+                sut.Months.TestEquals( 0 ),
+                sut.Weeks.TestEquals( 0 ),
+                sut.Days.TestEquals( 0 ),
+                sut.Hours.TestEquals( 0 ),
+                sut.Minutes.TestEquals( 0 ),
+                sut.Seconds.TestEquals( 0 ),
+                sut.Milliseconds.TestEquals( 0 ),
+                sut.Microseconds.TestEquals( 0 ),
+                sut.Ticks.TestEquals( 0 ),
+                sut.ActiveUnits.TestEquals( PeriodUnits.None ) )
+            .Go();
     }
 
     [Theory]
@@ -58,20 +57,19 @@ public class PeriodTests : TestsBase
     {
         var sut = new Period( years, months, weeks, days );
 
-        using ( new AssertionScope() )
-        {
-            sut.Years.Should().Be( years );
-            sut.Months.Should().Be( months );
-            sut.Weeks.Should().Be( weeks );
-            sut.Days.Should().Be( days );
-            sut.Hours.Should().Be( 0 );
-            sut.Minutes.Should().Be( 0 );
-            sut.Seconds.Should().Be( 0 );
-            sut.Milliseconds.Should().Be( 0 );
-            sut.Microseconds.Should().Be( 0 );
-            sut.Ticks.Should().Be( 0 );
-            sut.ActiveUnits.Should().Be( expectedUnits );
-        }
+        Assertion.All(
+                sut.Years.TestEquals( years ),
+                sut.Months.TestEquals( months ),
+                sut.Weeks.TestEquals( weeks ),
+                sut.Days.TestEquals( days ),
+                sut.Hours.TestEquals( 0 ),
+                sut.Minutes.TestEquals( 0 ),
+                sut.Seconds.TestEquals( 0 ),
+                sut.Milliseconds.TestEquals( 0 ),
+                sut.Microseconds.TestEquals( 0 ),
+                sut.Ticks.TestEquals( 0 ),
+                sut.ActiveUnits.TestEquals( expectedUnits ) )
+            .Go();
     }
 
     [Theory]
@@ -87,20 +85,19 @@ public class PeriodTests : TestsBase
     {
         var sut = new Period( hours, minutes, seconds, milliseconds, microseconds, ticks );
 
-        using ( new AssertionScope() )
-        {
-            sut.Years.Should().Be( 0 );
-            sut.Months.Should().Be( 0 );
-            sut.Weeks.Should().Be( 0 );
-            sut.Days.Should().Be( 0 );
-            sut.Hours.Should().Be( hours );
-            sut.Minutes.Should().Be( minutes );
-            sut.Seconds.Should().Be( seconds );
-            sut.Milliseconds.Should().Be( milliseconds );
-            sut.Microseconds.Should().Be( microseconds );
-            sut.Ticks.Should().Be( ticks );
-            sut.ActiveUnits.Should().Be( expectedUnits );
-        }
+        Assertion.All(
+                sut.Years.TestEquals( 0 ),
+                sut.Months.TestEquals( 0 ),
+                sut.Weeks.TestEquals( 0 ),
+                sut.Days.TestEquals( 0 ),
+                sut.Hours.TestEquals( hours ),
+                sut.Minutes.TestEquals( minutes ),
+                sut.Seconds.TestEquals( seconds ),
+                sut.Milliseconds.TestEquals( milliseconds ),
+                sut.Microseconds.TestEquals( microseconds ),
+                sut.Ticks.TestEquals( ticks ),
+                sut.ActiveUnits.TestEquals( expectedUnits ) )
+            .Go();
     }
 
     [Theory]
@@ -122,20 +119,19 @@ public class PeriodTests : TestsBase
             time.Microseconds,
             time.Ticks );
 
-        using ( new AssertionScope() )
-        {
-            sut.Years.Should().Be( date.Years );
-            sut.Months.Should().Be( date.Months );
-            sut.Weeks.Should().Be( date.Weeks );
-            sut.Days.Should().Be( date.Days );
-            sut.Hours.Should().Be( time.Hours );
-            sut.Minutes.Should().Be( time.Minutes );
-            sut.Seconds.Should().Be( time.Seconds );
-            sut.Milliseconds.Should().Be( time.Milliseconds );
-            sut.Microseconds.Should().Be( time.Microseconds );
-            sut.Ticks.Should().Be( time.Ticks );
-            sut.ActiveUnits.Should().Be( expectedUnits );
-        }
+        Assertion.All(
+                sut.Years.TestEquals( date.Years ),
+                sut.Months.TestEquals( date.Months ),
+                sut.Weeks.TestEquals( date.Weeks ),
+                sut.Days.TestEquals( date.Days ),
+                sut.Hours.TestEquals( time.Hours ),
+                sut.Minutes.TestEquals( time.Minutes ),
+                sut.Seconds.TestEquals( time.Seconds ),
+                sut.Milliseconds.TestEquals( time.Milliseconds ),
+                sut.Microseconds.TestEquals( time.Microseconds ),
+                sut.Ticks.TestEquals( time.Ticks ),
+                sut.ActiveUnits.TestEquals( expectedUnits ) )
+            .Go();
     }
 
     [Theory]
@@ -153,20 +149,19 @@ public class PeriodTests : TestsBase
     {
         var sut = new Period( timeSpan );
 
-        using ( new AssertionScope() )
-        {
-            sut.Years.Should().Be( 0 );
-            sut.Months.Should().Be( 0 );
-            sut.Weeks.Should().Be( 0 );
-            sut.Days.Should().Be( expectedDays );
-            sut.Hours.Should().Be( expectedHours );
-            sut.Minutes.Should().Be( expectedMinutes );
-            sut.Seconds.Should().Be( expectedSeconds );
-            sut.Milliseconds.Should().Be( expectedMilliseconds );
-            sut.Microseconds.Should().Be( expectedMicroseconds );
-            sut.Ticks.Should().Be( expectedTicks );
-            sut.ActiveUnits.Should().Be( expectedUnits );
-        }
+        Assertion.All(
+                sut.Years.TestEquals( 0 ),
+                sut.Months.TestEquals( 0 ),
+                sut.Weeks.TestEquals( 0 ),
+                sut.Days.TestEquals( expectedDays ),
+                sut.Hours.TestEquals( expectedHours ),
+                sut.Minutes.TestEquals( expectedMinutes ),
+                sut.Seconds.TestEquals( expectedSeconds ),
+                sut.Milliseconds.TestEquals( expectedMilliseconds ),
+                sut.Microseconds.TestEquals( expectedMicroseconds ),
+                sut.Ticks.TestEquals( expectedTicks ),
+                sut.ActiveUnits.TestEquals( expectedUnits ) )
+            .Go();
     }
 
     [Fact]
@@ -175,20 +170,19 @@ public class PeriodTests : TestsBase
         var value = Fixture.CreateNotDefault<int>();
         var sut = Period.FromTicks( value );
 
-        using ( new AssertionScope() )
-        {
-            sut.Years.Should().Be( 0 );
-            sut.Months.Should().Be( 0 );
-            sut.Weeks.Should().Be( 0 );
-            sut.Days.Should().Be( 0 );
-            sut.Hours.Should().Be( 0 );
-            sut.Minutes.Should().Be( 0 );
-            sut.Seconds.Should().Be( 0 );
-            sut.Milliseconds.Should().Be( 0 );
-            sut.Microseconds.Should().Be( 0 );
-            sut.Ticks.Should().Be( value );
-            sut.ActiveUnits.Should().Be( PeriodUnits.Ticks );
-        }
+        Assertion.All(
+                sut.Years.TestEquals( 0 ),
+                sut.Months.TestEquals( 0 ),
+                sut.Weeks.TestEquals( 0 ),
+                sut.Days.TestEquals( 0 ),
+                sut.Hours.TestEquals( 0 ),
+                sut.Minutes.TestEquals( 0 ),
+                sut.Seconds.TestEquals( 0 ),
+                sut.Milliseconds.TestEquals( 0 ),
+                sut.Microseconds.TestEquals( 0 ),
+                sut.Ticks.TestEquals( value ),
+                sut.ActiveUnits.TestEquals( PeriodUnits.Ticks ) )
+            .Go();
     }
 
     [Fact]
@@ -197,20 +191,19 @@ public class PeriodTests : TestsBase
         var value = Fixture.CreateNotDefault<int>();
         var sut = Period.FromMicroseconds( value );
 
-        using ( new AssertionScope() )
-        {
-            sut.Years.Should().Be( 0 );
-            sut.Months.Should().Be( 0 );
-            sut.Weeks.Should().Be( 0 );
-            sut.Days.Should().Be( 0 );
-            sut.Hours.Should().Be( 0 );
-            sut.Minutes.Should().Be( 0 );
-            sut.Seconds.Should().Be( 0 );
-            sut.Milliseconds.Should().Be( 0 );
-            sut.Microseconds.Should().Be( value );
-            sut.Ticks.Should().Be( 0 );
-            sut.ActiveUnits.Should().Be( PeriodUnits.Microseconds );
-        }
+        Assertion.All(
+                sut.Years.TestEquals( 0 ),
+                sut.Months.TestEquals( 0 ),
+                sut.Weeks.TestEquals( 0 ),
+                sut.Days.TestEquals( 0 ),
+                sut.Hours.TestEquals( 0 ),
+                sut.Minutes.TestEquals( 0 ),
+                sut.Seconds.TestEquals( 0 ),
+                sut.Milliseconds.TestEquals( 0 ),
+                sut.Microseconds.TestEquals( value ),
+                sut.Ticks.TestEquals( 0 ),
+                sut.ActiveUnits.TestEquals( PeriodUnits.Microseconds ) )
+            .Go();
     }
 
     [Fact]
@@ -219,20 +212,19 @@ public class PeriodTests : TestsBase
         var value = Fixture.CreateNotDefault<int>();
         var sut = Period.FromMilliseconds( value );
 
-        using ( new AssertionScope() )
-        {
-            sut.Years.Should().Be( 0 );
-            sut.Months.Should().Be( 0 );
-            sut.Weeks.Should().Be( 0 );
-            sut.Days.Should().Be( 0 );
-            sut.Hours.Should().Be( 0 );
-            sut.Minutes.Should().Be( 0 );
-            sut.Seconds.Should().Be( 0 );
-            sut.Milliseconds.Should().Be( value );
-            sut.Microseconds.Should().Be( 0 );
-            sut.Ticks.Should().Be( 0 );
-            sut.ActiveUnits.Should().Be( PeriodUnits.Milliseconds );
-        }
+        Assertion.All(
+                sut.Years.TestEquals( 0 ),
+                sut.Months.TestEquals( 0 ),
+                sut.Weeks.TestEquals( 0 ),
+                sut.Days.TestEquals( 0 ),
+                sut.Hours.TestEquals( 0 ),
+                sut.Minutes.TestEquals( 0 ),
+                sut.Seconds.TestEquals( 0 ),
+                sut.Milliseconds.TestEquals( value ),
+                sut.Microseconds.TestEquals( 0 ),
+                sut.Ticks.TestEquals( 0 ),
+                sut.ActiveUnits.TestEquals( PeriodUnits.Milliseconds ) )
+            .Go();
     }
 
     [Fact]
@@ -241,20 +233,19 @@ public class PeriodTests : TestsBase
         var value = Fixture.CreateNotDefault<int>();
         var sut = Period.FromSeconds( value );
 
-        using ( new AssertionScope() )
-        {
-            sut.Years.Should().Be( 0 );
-            sut.Months.Should().Be( 0 );
-            sut.Weeks.Should().Be( 0 );
-            sut.Days.Should().Be( 0 );
-            sut.Hours.Should().Be( 0 );
-            sut.Minutes.Should().Be( 0 );
-            sut.Seconds.Should().Be( value );
-            sut.Milliseconds.Should().Be( 0 );
-            sut.Microseconds.Should().Be( 0 );
-            sut.Ticks.Should().Be( 0 );
-            sut.ActiveUnits.Should().Be( PeriodUnits.Seconds );
-        }
+        Assertion.All(
+                sut.Years.TestEquals( 0 ),
+                sut.Months.TestEquals( 0 ),
+                sut.Weeks.TestEquals( 0 ),
+                sut.Days.TestEquals( 0 ),
+                sut.Hours.TestEquals( 0 ),
+                sut.Minutes.TestEquals( 0 ),
+                sut.Seconds.TestEquals( value ),
+                sut.Milliseconds.TestEquals( 0 ),
+                sut.Microseconds.TestEquals( 0 ),
+                sut.Ticks.TestEquals( 0 ),
+                sut.ActiveUnits.TestEquals( PeriodUnits.Seconds ) )
+            .Go();
     }
 
     [Fact]
@@ -263,20 +254,19 @@ public class PeriodTests : TestsBase
         var value = Fixture.CreateNotDefault<int>();
         var sut = Period.FromMinutes( value );
 
-        using ( new AssertionScope() )
-        {
-            sut.Years.Should().Be( 0 );
-            sut.Months.Should().Be( 0 );
-            sut.Weeks.Should().Be( 0 );
-            sut.Days.Should().Be( 0 );
-            sut.Hours.Should().Be( 0 );
-            sut.Minutes.Should().Be( value );
-            sut.Seconds.Should().Be( 0 );
-            sut.Milliseconds.Should().Be( 0 );
-            sut.Microseconds.Should().Be( 0 );
-            sut.Ticks.Should().Be( 0 );
-            sut.ActiveUnits.Should().Be( PeriodUnits.Minutes );
-        }
+        Assertion.All(
+                sut.Years.TestEquals( 0 ),
+                sut.Months.TestEquals( 0 ),
+                sut.Weeks.TestEquals( 0 ),
+                sut.Days.TestEquals( 0 ),
+                sut.Hours.TestEquals( 0 ),
+                sut.Minutes.TestEquals( value ),
+                sut.Seconds.TestEquals( 0 ),
+                sut.Milliseconds.TestEquals( 0 ),
+                sut.Microseconds.TestEquals( 0 ),
+                sut.Ticks.TestEquals( 0 ),
+                sut.ActiveUnits.TestEquals( PeriodUnits.Minutes ) )
+            .Go();
     }
 
     [Fact]
@@ -285,20 +275,19 @@ public class PeriodTests : TestsBase
         var value = Fixture.CreateNotDefault<int>();
         var sut = Period.FromHours( value );
 
-        using ( new AssertionScope() )
-        {
-            sut.Years.Should().Be( 0 );
-            sut.Months.Should().Be( 0 );
-            sut.Weeks.Should().Be( 0 );
-            sut.Days.Should().Be( 0 );
-            sut.Hours.Should().Be( value );
-            sut.Minutes.Should().Be( 0 );
-            sut.Seconds.Should().Be( 0 );
-            sut.Milliseconds.Should().Be( 0 );
-            sut.Microseconds.Should().Be( 0 );
-            sut.Ticks.Should().Be( 0 );
-            sut.ActiveUnits.Should().Be( PeriodUnits.Hours );
-        }
+        Assertion.All(
+                sut.Years.TestEquals( 0 ),
+                sut.Months.TestEquals( 0 ),
+                sut.Weeks.TestEquals( 0 ),
+                sut.Days.TestEquals( 0 ),
+                sut.Hours.TestEquals( value ),
+                sut.Minutes.TestEquals( 0 ),
+                sut.Seconds.TestEquals( 0 ),
+                sut.Milliseconds.TestEquals( 0 ),
+                sut.Microseconds.TestEquals( 0 ),
+                sut.Ticks.TestEquals( 0 ),
+                sut.ActiveUnits.TestEquals( PeriodUnits.Hours ) )
+            .Go();
     }
 
     [Fact]
@@ -307,20 +296,19 @@ public class PeriodTests : TestsBase
         var value = Fixture.CreateNotDefault<int>();
         var sut = Period.FromDays( value );
 
-        using ( new AssertionScope() )
-        {
-            sut.Years.Should().Be( 0 );
-            sut.Months.Should().Be( 0 );
-            sut.Weeks.Should().Be( 0 );
-            sut.Days.Should().Be( value );
-            sut.Hours.Should().Be( 0 );
-            sut.Minutes.Should().Be( 0 );
-            sut.Seconds.Should().Be( 0 );
-            sut.Milliseconds.Should().Be( 0 );
-            sut.Microseconds.Should().Be( 0 );
-            sut.Ticks.Should().Be( 0 );
-            sut.ActiveUnits.Should().Be( PeriodUnits.Days );
-        }
+        Assertion.All(
+                sut.Years.TestEquals( 0 ),
+                sut.Months.TestEquals( 0 ),
+                sut.Weeks.TestEquals( 0 ),
+                sut.Days.TestEquals( value ),
+                sut.Hours.TestEquals( 0 ),
+                sut.Minutes.TestEquals( 0 ),
+                sut.Seconds.TestEquals( 0 ),
+                sut.Milliseconds.TestEquals( 0 ),
+                sut.Microseconds.TestEquals( 0 ),
+                sut.Ticks.TestEquals( 0 ),
+                sut.ActiveUnits.TestEquals( PeriodUnits.Days ) )
+            .Go();
     }
 
     [Fact]
@@ -329,20 +317,19 @@ public class PeriodTests : TestsBase
         var value = Fixture.CreateNotDefault<int>();
         var sut = Period.FromWeeks( value );
 
-        using ( new AssertionScope() )
-        {
-            sut.Years.Should().Be( 0 );
-            sut.Months.Should().Be( 0 );
-            sut.Weeks.Should().Be( value );
-            sut.Days.Should().Be( 0 );
-            sut.Hours.Should().Be( 0 );
-            sut.Minutes.Should().Be( 0 );
-            sut.Seconds.Should().Be( 0 );
-            sut.Milliseconds.Should().Be( 0 );
-            sut.Microseconds.Should().Be( 0 );
-            sut.Ticks.Should().Be( 0 );
-            sut.ActiveUnits.Should().Be( PeriodUnits.Weeks );
-        }
+        Assertion.All(
+                sut.Years.TestEquals( 0 ),
+                sut.Months.TestEquals( 0 ),
+                sut.Weeks.TestEquals( value ),
+                sut.Days.TestEquals( 0 ),
+                sut.Hours.TestEquals( 0 ),
+                sut.Minutes.TestEquals( 0 ),
+                sut.Seconds.TestEquals( 0 ),
+                sut.Milliseconds.TestEquals( 0 ),
+                sut.Microseconds.TestEquals( 0 ),
+                sut.Ticks.TestEquals( 0 ),
+                sut.ActiveUnits.TestEquals( PeriodUnits.Weeks ) )
+            .Go();
     }
 
     [Fact]
@@ -351,20 +338,19 @@ public class PeriodTests : TestsBase
         var value = Fixture.CreateNotDefault<int>();
         var sut = Period.FromMonths( value );
 
-        using ( new AssertionScope() )
-        {
-            sut.Years.Should().Be( 0 );
-            sut.Months.Should().Be( value );
-            sut.Weeks.Should().Be( 0 );
-            sut.Days.Should().Be( 0 );
-            sut.Hours.Should().Be( 0 );
-            sut.Minutes.Should().Be( 0 );
-            sut.Seconds.Should().Be( 0 );
-            sut.Milliseconds.Should().Be( 0 );
-            sut.Microseconds.Should().Be( 0 );
-            sut.Ticks.Should().Be( 0 );
-            sut.ActiveUnits.Should().Be( PeriodUnits.Months );
-        }
+        Assertion.All(
+                sut.Years.TestEquals( 0 ),
+                sut.Months.TestEquals( value ),
+                sut.Weeks.TestEquals( 0 ),
+                sut.Days.TestEquals( 0 ),
+                sut.Hours.TestEquals( 0 ),
+                sut.Minutes.TestEquals( 0 ),
+                sut.Seconds.TestEquals( 0 ),
+                sut.Milliseconds.TestEquals( 0 ),
+                sut.Microseconds.TestEquals( 0 ),
+                sut.Ticks.TestEquals( 0 ),
+                sut.ActiveUnits.TestEquals( PeriodUnits.Months ) )
+            .Go();
     }
 
     [Fact]
@@ -373,20 +359,19 @@ public class PeriodTests : TestsBase
         var value = Fixture.CreateNotDefault<int>();
         var sut = Period.FromYears( value );
 
-        using ( new AssertionScope() )
-        {
-            sut.Years.Should().Be( value );
-            sut.Months.Should().Be( 0 );
-            sut.Weeks.Should().Be( 0 );
-            sut.Days.Should().Be( 0 );
-            sut.Hours.Should().Be( 0 );
-            sut.Minutes.Should().Be( 0 );
-            sut.Seconds.Should().Be( 0 );
-            sut.Milliseconds.Should().Be( 0 );
-            sut.Microseconds.Should().Be( 0 );
-            sut.Ticks.Should().Be( 0 );
-            sut.ActiveUnits.Should().Be( PeriodUnits.Years );
-        }
+        Assertion.All(
+                sut.Years.TestEquals( value ),
+                sut.Months.TestEquals( 0 ),
+                sut.Weeks.TestEquals( 0 ),
+                sut.Days.TestEquals( 0 ),
+                sut.Hours.TestEquals( 0 ),
+                sut.Minutes.TestEquals( 0 ),
+                sut.Seconds.TestEquals( 0 ),
+                sut.Milliseconds.TestEquals( 0 ),
+                sut.Microseconds.TestEquals( 0 ),
+                sut.Ticks.TestEquals( 0 ),
+                sut.ActiveUnits.TestEquals( PeriodUnits.Years ) )
+            .Go();
     }
 
     [Theory]
@@ -410,15 +395,14 @@ public class PeriodTests : TestsBase
 
         var result = sut.ToString();
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
     public void GetHashCode_ShouldReturnCorrectResult()
     {
         var sut = CreatePeriod();
-        var expected = Hash.Default
-            .Add( sut.Years )
+        var expected = Hash.Default.Add( sut.Years )
             .Add( sut.Months )
             .Add( sut.Weeks )
             .Add( sut.Days )
@@ -432,7 +416,7 @@ public class PeriodTests : TestsBase
 
         var result = sut.GetHashCode();
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -470,7 +454,7 @@ public class PeriodTests : TestsBase
 
         var result = a.Equals( b );
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -509,19 +493,18 @@ public class PeriodTests : TestsBase
 
         var result = sut.Add( other );
 
-        using ( new AssertionScope() )
-        {
-            result.Years.Should().Be( expectedDate.Years );
-            result.Months.Should().Be( expectedDate.Months );
-            result.Weeks.Should().Be( expectedDate.Weeks );
-            result.Days.Should().Be( expectedDate.Days );
-            result.Hours.Should().Be( expectedTime.Hours );
-            result.Minutes.Should().Be( expectedTime.Minutes );
-            result.Seconds.Should().Be( expectedTime.Seconds );
-            result.Milliseconds.Should().Be( expectedTime.Milliseconds );
-            result.Microseconds.Should().Be( expectedTime.Microseconds );
-            result.Ticks.Should().Be( expectedTime.Ticks );
-        }
+        Assertion.All(
+                result.Years.TestEquals( expectedDate.Years ),
+                result.Months.TestEquals( expectedDate.Months ),
+                result.Weeks.TestEquals( expectedDate.Weeks ),
+                result.Days.TestEquals( expectedDate.Days ),
+                result.Hours.TestEquals( expectedTime.Hours ),
+                result.Minutes.TestEquals( expectedTime.Minutes ),
+                result.Seconds.TestEquals( expectedTime.Seconds ),
+                result.Milliseconds.TestEquals( expectedTime.Milliseconds ),
+                result.Microseconds.TestEquals( expectedTime.Microseconds ),
+                result.Ticks.TestEquals( expectedTime.Ticks ) )
+            .Go();
     }
 
     [Fact]
@@ -533,7 +516,7 @@ public class PeriodTests : TestsBase
 
         var result = sut.AddTicks( value );
 
-        result.Should().BeEquivalentTo( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -545,7 +528,7 @@ public class PeriodTests : TestsBase
 
         var result = sut.AddMicroseconds( value );
 
-        result.Should().BeEquivalentTo( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -557,7 +540,7 @@ public class PeriodTests : TestsBase
 
         var result = sut.AddMilliseconds( value );
 
-        result.Should().BeEquivalentTo( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -569,7 +552,7 @@ public class PeriodTests : TestsBase
 
         var result = sut.AddSeconds( value );
 
-        result.Should().BeEquivalentTo( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -581,7 +564,7 @@ public class PeriodTests : TestsBase
 
         var result = sut.AddMinutes( value );
 
-        result.Should().BeEquivalentTo( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -593,7 +576,7 @@ public class PeriodTests : TestsBase
 
         var result = sut.AddHours( value );
 
-        result.Should().BeEquivalentTo( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -605,7 +588,7 @@ public class PeriodTests : TestsBase
 
         var result = sut.AddDays( value );
 
-        result.Should().BeEquivalentTo( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -617,7 +600,7 @@ public class PeriodTests : TestsBase
 
         var result = sut.AddWeeks( value );
 
-        result.Should().BeEquivalentTo( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -629,7 +612,7 @@ public class PeriodTests : TestsBase
 
         var result = sut.AddMonths( value );
 
-        result.Should().BeEquivalentTo( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -641,7 +624,7 @@ public class PeriodTests : TestsBase
 
         var result = sut.AddYears( value );
 
-        result.Should().BeEquivalentTo( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -680,19 +663,18 @@ public class PeriodTests : TestsBase
 
         var result = sut.Subtract( other );
 
-        using ( new AssertionScope() )
-        {
-            result.Years.Should().Be( expectedDate.Years );
-            result.Months.Should().Be( expectedDate.Months );
-            result.Weeks.Should().Be( expectedDate.Weeks );
-            result.Days.Should().Be( expectedDate.Days );
-            result.Hours.Should().Be( expectedTime.Hours );
-            result.Minutes.Should().Be( expectedTime.Minutes );
-            result.Seconds.Should().Be( expectedTime.Seconds );
-            result.Milliseconds.Should().Be( expectedTime.Milliseconds );
-            result.Microseconds.Should().Be( expectedTime.Microseconds );
-            result.Ticks.Should().Be( expectedTime.Ticks );
-        }
+        Assertion.All(
+                result.Years.TestEquals( expectedDate.Years ),
+                result.Months.TestEquals( expectedDate.Months ),
+                result.Weeks.TestEquals( expectedDate.Weeks ),
+                result.Days.TestEquals( expectedDate.Days ),
+                result.Hours.TestEquals( expectedTime.Hours ),
+                result.Minutes.TestEquals( expectedTime.Minutes ),
+                result.Seconds.TestEquals( expectedTime.Seconds ),
+                result.Milliseconds.TestEquals( expectedTime.Milliseconds ),
+                result.Microseconds.TestEquals( expectedTime.Microseconds ),
+                result.Ticks.TestEquals( expectedTime.Ticks ) )
+            .Go();
     }
 
     [Fact]
@@ -704,7 +686,7 @@ public class PeriodTests : TestsBase
 
         var result = sut.SubtractTicks( value );
 
-        result.Should().BeEquivalentTo( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -716,7 +698,7 @@ public class PeriodTests : TestsBase
 
         var result = sut.SubtractMicroseconds( value );
 
-        result.Should().BeEquivalentTo( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -728,7 +710,7 @@ public class PeriodTests : TestsBase
 
         var result = sut.SubtractMilliseconds( value );
 
-        result.Should().BeEquivalentTo( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -740,7 +722,7 @@ public class PeriodTests : TestsBase
 
         var result = sut.SubtractSeconds( value );
 
-        result.Should().BeEquivalentTo( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -752,7 +734,7 @@ public class PeriodTests : TestsBase
 
         var result = sut.SubtractMinutes( value );
 
-        result.Should().BeEquivalentTo( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -764,7 +746,7 @@ public class PeriodTests : TestsBase
 
         var result = sut.SubtractHours( value );
 
-        result.Should().BeEquivalentTo( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -776,7 +758,7 @@ public class PeriodTests : TestsBase
 
         var result = sut.SubtractDays( value );
 
-        result.Should().BeEquivalentTo( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -788,7 +770,7 @@ public class PeriodTests : TestsBase
 
         var result = sut.SubtractWeeks( value );
 
-        result.Should().BeEquivalentTo( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -800,7 +782,7 @@ public class PeriodTests : TestsBase
 
         var result = sut.SubtractMonths( value );
 
-        result.Should().BeEquivalentTo( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -812,7 +794,7 @@ public class PeriodTests : TestsBase
 
         var result = sut.SubtractYears( value );
 
-        result.Should().BeEquivalentTo( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -852,19 +834,18 @@ public class PeriodTests : TestsBase
 
         var result = sut.Set( other, units );
 
-        using ( new AssertionScope() )
-        {
-            result.Years.Should().Be( expectedDate.Years );
-            result.Months.Should().Be( expectedDate.Months );
-            result.Weeks.Should().Be( expectedDate.Weeks );
-            result.Days.Should().Be( expectedDate.Days );
-            result.Hours.Should().Be( expectedTime.Hours );
-            result.Minutes.Should().Be( expectedTime.Minutes );
-            result.Seconds.Should().Be( expectedTime.Seconds );
-            result.Milliseconds.Should().Be( expectedTime.Milliseconds );
-            result.Microseconds.Should().Be( expectedTime.Microseconds );
-            result.Ticks.Should().Be( expectedTime.Ticks );
-        }
+        Assertion.All(
+                result.Years.TestEquals( expectedDate.Years ),
+                result.Months.TestEquals( expectedDate.Months ),
+                result.Weeks.TestEquals( expectedDate.Weeks ),
+                result.Days.TestEquals( expectedDate.Days ),
+                result.Hours.TestEquals( expectedTime.Hours ),
+                result.Minutes.TestEquals( expectedTime.Minutes ),
+                result.Seconds.TestEquals( expectedTime.Seconds ),
+                result.Milliseconds.TestEquals( expectedTime.Milliseconds ),
+                result.Microseconds.TestEquals( expectedTime.Microseconds ),
+                result.Ticks.TestEquals( expectedTime.Ticks ) )
+            .Go();
     }
 
     [Fact]
@@ -878,19 +859,18 @@ public class PeriodTests : TestsBase
 
         var result = sut.SetDate( years, months, weeks, days );
 
-        using ( new AssertionScope() )
-        {
-            result.Years.Should().Be( years );
-            result.Months.Should().Be( months );
-            result.Weeks.Should().Be( weeks );
-            result.Days.Should().Be( days );
-            result.Hours.Should().Be( sut.Hours );
-            result.Minutes.Should().Be( sut.Minutes );
-            result.Seconds.Should().Be( sut.Seconds );
-            result.Milliseconds.Should().Be( sut.Milliseconds );
-            result.Microseconds.Should().Be( sut.Microseconds );
-            result.Ticks.Should().Be( sut.Ticks );
-        }
+        Assertion.All(
+                result.Years.TestEquals( years ),
+                result.Months.TestEquals( months ),
+                result.Weeks.TestEquals( weeks ),
+                result.Days.TestEquals( days ),
+                result.Hours.TestEquals( sut.Hours ),
+                result.Minutes.TestEquals( sut.Minutes ),
+                result.Seconds.TestEquals( sut.Seconds ),
+                result.Milliseconds.TestEquals( sut.Milliseconds ),
+                result.Microseconds.TestEquals( sut.Microseconds ),
+                result.Ticks.TestEquals( sut.Ticks ) )
+            .Go();
     }
 
     [Fact]
@@ -906,19 +886,18 @@ public class PeriodTests : TestsBase
 
         var result = sut.SetTime( hours, minutes, seconds, milliseconds, microseconds, ticks );
 
-        using ( new AssertionScope() )
-        {
-            result.Years.Should().Be( sut.Years );
-            result.Months.Should().Be( sut.Months );
-            result.Weeks.Should().Be( sut.Weeks );
-            result.Days.Should().Be( sut.Days );
-            result.Hours.Should().Be( hours );
-            result.Minutes.Should().Be( minutes );
-            result.Seconds.Should().Be( seconds );
-            result.Milliseconds.Should().Be( milliseconds );
-            result.Microseconds.Should().Be( microseconds );
-            result.Ticks.Should().Be( ticks );
-        }
+        Assertion.All(
+                result.Years.TestEquals( sut.Years ),
+                result.Months.TestEquals( sut.Months ),
+                result.Weeks.TestEquals( sut.Weeks ),
+                result.Days.TestEquals( sut.Days ),
+                result.Hours.TestEquals( hours ),
+                result.Minutes.TestEquals( minutes ),
+                result.Seconds.TestEquals( seconds ),
+                result.Milliseconds.TestEquals( milliseconds ),
+                result.Microseconds.TestEquals( microseconds ),
+                result.Ticks.TestEquals( ticks ) )
+            .Go();
     }
 
     [Fact]
@@ -929,19 +908,18 @@ public class PeriodTests : TestsBase
 
         var result = sut.SetTicks( value );
 
-        using ( new AssertionScope() )
-        {
-            result.Years.Should().Be( sut.Years );
-            result.Months.Should().Be( sut.Months );
-            result.Weeks.Should().Be( sut.Weeks );
-            result.Days.Should().Be( sut.Days );
-            result.Hours.Should().Be( sut.Hours );
-            result.Minutes.Should().Be( sut.Minutes );
-            result.Seconds.Should().Be( sut.Seconds );
-            result.Milliseconds.Should().Be( sut.Milliseconds );
-            result.Microseconds.Should().Be( sut.Microseconds );
-            result.Ticks.Should().Be( value );
-        }
+        Assertion.All(
+                result.Years.TestEquals( sut.Years ),
+                result.Months.TestEquals( sut.Months ),
+                result.Weeks.TestEquals( sut.Weeks ),
+                result.Days.TestEquals( sut.Days ),
+                result.Hours.TestEquals( sut.Hours ),
+                result.Minutes.TestEquals( sut.Minutes ),
+                result.Seconds.TestEquals( sut.Seconds ),
+                result.Milliseconds.TestEquals( sut.Milliseconds ),
+                result.Microseconds.TestEquals( sut.Microseconds ),
+                result.Ticks.TestEquals( value ) )
+            .Go();
     }
 
     [Fact]
@@ -952,19 +930,18 @@ public class PeriodTests : TestsBase
 
         var result = sut.SetMilliseconds( value );
 
-        using ( new AssertionScope() )
-        {
-            result.Years.Should().Be( sut.Years );
-            result.Months.Should().Be( sut.Months );
-            result.Weeks.Should().Be( sut.Weeks );
-            result.Days.Should().Be( sut.Days );
-            result.Hours.Should().Be( sut.Hours );
-            result.Minutes.Should().Be( sut.Minutes );
-            result.Seconds.Should().Be( sut.Seconds );
-            result.Milliseconds.Should().Be( value );
-            result.Microseconds.Should().Be( sut.Microseconds );
-            result.Ticks.Should().Be( sut.Ticks );
-        }
+        Assertion.All(
+                result.Years.TestEquals( sut.Years ),
+                result.Months.TestEquals( sut.Months ),
+                result.Weeks.TestEquals( sut.Weeks ),
+                result.Days.TestEquals( sut.Days ),
+                result.Hours.TestEquals( sut.Hours ),
+                result.Minutes.TestEquals( sut.Minutes ),
+                result.Seconds.TestEquals( sut.Seconds ),
+                result.Milliseconds.TestEquals( value ),
+                result.Microseconds.TestEquals( sut.Microseconds ),
+                result.Ticks.TestEquals( sut.Ticks ) )
+            .Go();
     }
 
     [Fact]
@@ -975,19 +952,18 @@ public class PeriodTests : TestsBase
 
         var result = sut.SetSeconds( value );
 
-        using ( new AssertionScope() )
-        {
-            result.Years.Should().Be( sut.Years );
-            result.Months.Should().Be( sut.Months );
-            result.Weeks.Should().Be( sut.Weeks );
-            result.Days.Should().Be( sut.Days );
-            result.Hours.Should().Be( sut.Hours );
-            result.Minutes.Should().Be( sut.Minutes );
-            result.Seconds.Should().Be( value );
-            result.Milliseconds.Should().Be( sut.Milliseconds );
-            result.Microseconds.Should().Be( sut.Microseconds );
-            result.Ticks.Should().Be( sut.Ticks );
-        }
+        Assertion.All(
+                result.Years.TestEquals( sut.Years ),
+                result.Months.TestEquals( sut.Months ),
+                result.Weeks.TestEquals( sut.Weeks ),
+                result.Days.TestEquals( sut.Days ),
+                result.Hours.TestEquals( sut.Hours ),
+                result.Minutes.TestEquals( sut.Minutes ),
+                result.Seconds.TestEquals( value ),
+                result.Milliseconds.TestEquals( sut.Milliseconds ),
+                result.Microseconds.TestEquals( sut.Microseconds ),
+                result.Ticks.TestEquals( sut.Ticks ) )
+            .Go();
     }
 
     [Fact]
@@ -998,19 +974,18 @@ public class PeriodTests : TestsBase
 
         var result = sut.SetMinutes( value );
 
-        using ( new AssertionScope() )
-        {
-            result.Years.Should().Be( sut.Years );
-            result.Months.Should().Be( sut.Months );
-            result.Weeks.Should().Be( sut.Weeks );
-            result.Days.Should().Be( sut.Days );
-            result.Hours.Should().Be( sut.Hours );
-            result.Minutes.Should().Be( value );
-            result.Seconds.Should().Be( sut.Seconds );
-            result.Milliseconds.Should().Be( sut.Milliseconds );
-            result.Microseconds.Should().Be( sut.Microseconds );
-            result.Ticks.Should().Be( sut.Ticks );
-        }
+        Assertion.All(
+                result.Years.TestEquals( sut.Years ),
+                result.Months.TestEquals( sut.Months ),
+                result.Weeks.TestEquals( sut.Weeks ),
+                result.Days.TestEquals( sut.Days ),
+                result.Hours.TestEquals( sut.Hours ),
+                result.Minutes.TestEquals( value ),
+                result.Seconds.TestEquals( sut.Seconds ),
+                result.Milliseconds.TestEquals( sut.Milliseconds ),
+                result.Microseconds.TestEquals( sut.Microseconds ),
+                result.Ticks.TestEquals( sut.Ticks ) )
+            .Go();
     }
 
     [Fact]
@@ -1021,19 +996,18 @@ public class PeriodTests : TestsBase
 
         var result = sut.SetHours( value );
 
-        using ( new AssertionScope() )
-        {
-            result.Years.Should().Be( sut.Years );
-            result.Months.Should().Be( sut.Months );
-            result.Weeks.Should().Be( sut.Weeks );
-            result.Days.Should().Be( sut.Days );
-            result.Hours.Should().Be( value );
-            result.Minutes.Should().Be( sut.Minutes );
-            result.Seconds.Should().Be( sut.Seconds );
-            result.Milliseconds.Should().Be( sut.Milliseconds );
-            result.Microseconds.Should().Be( sut.Microseconds );
-            result.Ticks.Should().Be( sut.Ticks );
-        }
+        Assertion.All(
+                result.Years.TestEquals( sut.Years ),
+                result.Months.TestEquals( sut.Months ),
+                result.Weeks.TestEquals( sut.Weeks ),
+                result.Days.TestEquals( sut.Days ),
+                result.Hours.TestEquals( value ),
+                result.Minutes.TestEquals( sut.Minutes ),
+                result.Seconds.TestEquals( sut.Seconds ),
+                result.Milliseconds.TestEquals( sut.Milliseconds ),
+                result.Microseconds.TestEquals( sut.Microseconds ),
+                result.Ticks.TestEquals( sut.Ticks ) )
+            .Go();
     }
 
     [Fact]
@@ -1044,19 +1018,18 @@ public class PeriodTests : TestsBase
 
         var result = sut.SetDays( value );
 
-        using ( new AssertionScope() )
-        {
-            result.Years.Should().Be( sut.Years );
-            result.Months.Should().Be( sut.Months );
-            result.Weeks.Should().Be( sut.Weeks );
-            result.Days.Should().Be( value );
-            result.Hours.Should().Be( sut.Hours );
-            result.Minutes.Should().Be( sut.Minutes );
-            result.Seconds.Should().Be( sut.Seconds );
-            result.Milliseconds.Should().Be( sut.Milliseconds );
-            result.Microseconds.Should().Be( sut.Microseconds );
-            result.Ticks.Should().Be( sut.Ticks );
-        }
+        Assertion.All(
+                result.Years.TestEquals( sut.Years ),
+                result.Months.TestEquals( sut.Months ),
+                result.Weeks.TestEquals( sut.Weeks ),
+                result.Days.TestEquals( value ),
+                result.Hours.TestEquals( sut.Hours ),
+                result.Minutes.TestEquals( sut.Minutes ),
+                result.Seconds.TestEquals( sut.Seconds ),
+                result.Milliseconds.TestEquals( sut.Milliseconds ),
+                result.Microseconds.TestEquals( sut.Microseconds ),
+                result.Ticks.TestEquals( sut.Ticks ) )
+            .Go();
     }
 
     [Fact]
@@ -1067,19 +1040,18 @@ public class PeriodTests : TestsBase
 
         var result = sut.SetWeeks( value );
 
-        using ( new AssertionScope() )
-        {
-            result.Years.Should().Be( sut.Years );
-            result.Months.Should().Be( sut.Months );
-            result.Weeks.Should().Be( value );
-            result.Days.Should().Be( sut.Days );
-            result.Hours.Should().Be( sut.Hours );
-            result.Minutes.Should().Be( sut.Minutes );
-            result.Seconds.Should().Be( sut.Seconds );
-            result.Milliseconds.Should().Be( sut.Milliseconds );
-            result.Microseconds.Should().Be( sut.Microseconds );
-            result.Ticks.Should().Be( sut.Ticks );
-        }
+        Assertion.All(
+                result.Years.TestEquals( sut.Years ),
+                result.Months.TestEquals( sut.Months ),
+                result.Weeks.TestEquals( value ),
+                result.Days.TestEquals( sut.Days ),
+                result.Hours.TestEquals( sut.Hours ),
+                result.Minutes.TestEquals( sut.Minutes ),
+                result.Seconds.TestEquals( sut.Seconds ),
+                result.Milliseconds.TestEquals( sut.Milliseconds ),
+                result.Microseconds.TestEquals( sut.Microseconds ),
+                result.Ticks.TestEquals( sut.Ticks ) )
+            .Go();
     }
 
     [Fact]
@@ -1090,19 +1062,18 @@ public class PeriodTests : TestsBase
 
         var result = sut.SetMonths( value );
 
-        using ( new AssertionScope() )
-        {
-            result.Years.Should().Be( sut.Years );
-            result.Months.Should().Be( value );
-            result.Weeks.Should().Be( sut.Weeks );
-            result.Days.Should().Be( sut.Days );
-            result.Hours.Should().Be( sut.Hours );
-            result.Minutes.Should().Be( sut.Minutes );
-            result.Seconds.Should().Be( sut.Seconds );
-            result.Milliseconds.Should().Be( sut.Milliseconds );
-            result.Microseconds.Should().Be( sut.Microseconds );
-            result.Ticks.Should().Be( sut.Ticks );
-        }
+        Assertion.All(
+                result.Years.TestEquals( sut.Years ),
+                result.Months.TestEquals( value ),
+                result.Weeks.TestEquals( sut.Weeks ),
+                result.Days.TestEquals( sut.Days ),
+                result.Hours.TestEquals( sut.Hours ),
+                result.Minutes.TestEquals( sut.Minutes ),
+                result.Seconds.TestEquals( sut.Seconds ),
+                result.Milliseconds.TestEquals( sut.Milliseconds ),
+                result.Microseconds.TestEquals( sut.Microseconds ),
+                result.Ticks.TestEquals( sut.Ticks ) )
+            .Go();
     }
 
     [Fact]
@@ -1113,19 +1084,18 @@ public class PeriodTests : TestsBase
 
         var result = sut.SetYears( value );
 
-        using ( new AssertionScope() )
-        {
-            result.Years.Should().Be( value );
-            result.Months.Should().Be( sut.Months );
-            result.Weeks.Should().Be( sut.Weeks );
-            result.Days.Should().Be( sut.Days );
-            result.Hours.Should().Be( sut.Hours );
-            result.Minutes.Should().Be( sut.Minutes );
-            result.Seconds.Should().Be( sut.Seconds );
-            result.Milliseconds.Should().Be( sut.Milliseconds );
-            result.Microseconds.Should().Be( sut.Microseconds );
-            result.Ticks.Should().Be( sut.Ticks );
-        }
+        Assertion.All(
+                result.Years.TestEquals( value ),
+                result.Months.TestEquals( sut.Months ),
+                result.Weeks.TestEquals( sut.Weeks ),
+                result.Days.TestEquals( sut.Days ),
+                result.Hours.TestEquals( sut.Hours ),
+                result.Minutes.TestEquals( sut.Minutes ),
+                result.Seconds.TestEquals( sut.Seconds ),
+                result.Milliseconds.TestEquals( sut.Milliseconds ),
+                result.Microseconds.TestEquals( sut.Microseconds ),
+                result.Ticks.TestEquals( sut.Ticks ) )
+            .Go();
     }
 
     [Fact]
@@ -1135,19 +1105,18 @@ public class PeriodTests : TestsBase
 
         var result = sut.Negate();
 
-        using ( new AssertionScope() )
-        {
-            result.Years.Should().Be( -sut.Years );
-            result.Months.Should().Be( -sut.Months );
-            result.Weeks.Should().Be( -sut.Weeks );
-            result.Days.Should().Be( -sut.Days );
-            result.Hours.Should().Be( -sut.Hours );
-            result.Minutes.Should().Be( -sut.Minutes );
-            result.Seconds.Should().Be( -sut.Seconds );
-            result.Milliseconds.Should().Be( -sut.Milliseconds );
-            result.Microseconds.Should().Be( -sut.Microseconds );
-            result.Ticks.Should().Be( -sut.Ticks );
-        }
+        Assertion.All(
+                result.Years.TestEquals( -sut.Years ),
+                result.Months.TestEquals( -sut.Months ),
+                result.Weeks.TestEquals( -sut.Weeks ),
+                result.Days.TestEquals( -sut.Days ),
+                result.Hours.TestEquals( -sut.Hours ),
+                result.Minutes.TestEquals( -sut.Minutes ),
+                result.Seconds.TestEquals( -sut.Seconds ),
+                result.Milliseconds.TestEquals( -sut.Milliseconds ),
+                result.Microseconds.TestEquals( -sut.Microseconds ),
+                result.Ticks.TestEquals( -sut.Ticks ) )
+            .Go();
     }
 
     [Theory]
@@ -1172,19 +1141,18 @@ public class PeriodTests : TestsBase
 
         var result = sut.Abs();
 
-        using ( new AssertionScope() )
-        {
-            result.Years.Should().Be( expectedDate.Years );
-            result.Months.Should().Be( expectedDate.Months );
-            result.Weeks.Should().Be( expectedDate.Weeks );
-            result.Days.Should().Be( expectedDate.Days );
-            result.Hours.Should().Be( expectedTime.Hours );
-            result.Minutes.Should().Be( expectedTime.Minutes );
-            result.Seconds.Should().Be( expectedTime.Seconds );
-            result.Milliseconds.Should().Be( expectedTime.Milliseconds );
-            result.Microseconds.Should().Be( expectedTime.Microseconds );
-            result.Ticks.Should().Be( expectedTime.Ticks );
-        }
+        Assertion.All(
+                result.Years.TestEquals( expectedDate.Years ),
+                result.Months.TestEquals( expectedDate.Months ),
+                result.Weeks.TestEquals( expectedDate.Weeks ),
+                result.Days.TestEquals( expectedDate.Days ),
+                result.Hours.TestEquals( expectedTime.Hours ),
+                result.Minutes.TestEquals( expectedTime.Minutes ),
+                result.Seconds.TestEquals( expectedTime.Seconds ),
+                result.Milliseconds.TestEquals( expectedTime.Milliseconds ),
+                result.Microseconds.TestEquals( expectedTime.Microseconds ),
+                result.Ticks.TestEquals( expectedTime.Ticks ) )
+            .Go();
     }
 
     [Theory]
@@ -1210,19 +1178,18 @@ public class PeriodTests : TestsBase
 
         var result = sut.Skip( units );
 
-        using ( new AssertionScope() )
-        {
-            result.Years.Should().Be( expectedDate.Years );
-            result.Months.Should().Be( expectedDate.Months );
-            result.Weeks.Should().Be( expectedDate.Weeks );
-            result.Days.Should().Be( expectedDate.Days );
-            result.Hours.Should().Be( expectedTime.Hours );
-            result.Minutes.Should().Be( expectedTime.Minutes );
-            result.Seconds.Should().Be( expectedTime.Seconds );
-            result.Milliseconds.Should().Be( expectedTime.Milliseconds );
-            result.Microseconds.Should().Be( expectedTime.Microseconds );
-            result.Ticks.Should().Be( expectedTime.Ticks );
-        }
+        Assertion.All(
+                result.Years.TestEquals( expectedDate.Years ),
+                result.Months.TestEquals( expectedDate.Months ),
+                result.Weeks.TestEquals( expectedDate.Weeks ),
+                result.Days.TestEquals( expectedDate.Days ),
+                result.Hours.TestEquals( expectedTime.Hours ),
+                result.Minutes.TestEquals( expectedTime.Minutes ),
+                result.Seconds.TestEquals( expectedTime.Seconds ),
+                result.Milliseconds.TestEquals( expectedTime.Milliseconds ),
+                result.Microseconds.TestEquals( expectedTime.Microseconds ),
+                result.Ticks.TestEquals( expectedTime.Ticks ) )
+            .Go();
     }
 
     [Theory]
@@ -1248,19 +1215,18 @@ public class PeriodTests : TestsBase
 
         var result = sut.Take( units );
 
-        using ( new AssertionScope() )
-        {
-            result.Years.Should().Be( expectedDate.Years );
-            result.Months.Should().Be( expectedDate.Months );
-            result.Weeks.Should().Be( expectedDate.Weeks );
-            result.Days.Should().Be( expectedDate.Days );
-            result.Hours.Should().Be( expectedTime.Hours );
-            result.Minutes.Should().Be( expectedTime.Minutes );
-            result.Seconds.Should().Be( expectedTime.Seconds );
-            result.Milliseconds.Should().Be( expectedTime.Milliseconds );
-            result.Microseconds.Should().Be( expectedTime.Microseconds );
-            result.Ticks.Should().Be( expectedTime.Ticks );
-        }
+        Assertion.All(
+                result.Years.TestEquals( expectedDate.Years ),
+                result.Months.TestEquals( expectedDate.Months ),
+                result.Weeks.TestEquals( expectedDate.Weeks ),
+                result.Days.TestEquals( expectedDate.Days ),
+                result.Hours.TestEquals( expectedTime.Hours ),
+                result.Minutes.TestEquals( expectedTime.Minutes ),
+                result.Seconds.TestEquals( expectedTime.Seconds ),
+                result.Milliseconds.TestEquals( expectedTime.Milliseconds ),
+                result.Microseconds.TestEquals( expectedTime.Microseconds ),
+                result.Ticks.TestEquals( expectedTime.Ticks ) )
+            .Go();
     }
 
     [Fact]
@@ -1271,7 +1237,7 @@ public class PeriodTests : TestsBase
 
         var result = -sut;
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -1283,7 +1249,7 @@ public class PeriodTests : TestsBase
 
         var result = a + b;
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -1295,7 +1261,7 @@ public class PeriodTests : TestsBase
 
         var result = a - b;
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -1333,7 +1299,7 @@ public class PeriodTests : TestsBase
 
         var result = a == b;
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -1371,9 +1337,10 @@ public class PeriodTests : TestsBase
 
         var result = a != b;
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
+    [Pure]
     private Period CreatePeriod()
     {
         var years = Fixture.Create<int>();

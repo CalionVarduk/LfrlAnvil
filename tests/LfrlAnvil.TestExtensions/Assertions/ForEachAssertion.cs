@@ -20,10 +20,11 @@ internal sealed class ForEachAssertion<T> : Assertion
 
     public override void Go()
     {
+        var errors = new List<string>();
         var elements = Subject.Select( (e, i) => (Element: e, Index: i) ).ToList();
+
         if ( ExpectAll )
         {
-            var errors = new List<string>();
             foreach ( var (e, i) in elements )
             {
                 try
@@ -39,7 +40,7 @@ internal sealed class ForEachAssertion<T> : Assertion
             if ( errors.Count > 0 )
                 Throw(
                     $"""
-                     [{Context}] elements should all satisfy the assertion but found {errors.Count} error(s):
+                     [{Context}] elements should all satisfy an assertion but found {errors.Count} error(s):
                      {string.Join( Environment.NewLine, errors.Select( (e, i) => $"{i + 1}. {e}" ) )}
 
                      Collection of {elements.Count} element(s):
@@ -55,15 +56,16 @@ internal sealed class ForEachAssertion<T> : Assertion
                     ElementAssertion( e, i ).Go();
                     return;
                 }
-                catch ( XunitException )
+                catch ( XunitException exc )
                 {
-                    // NOTE: do nothing
+                    errors.Add( $"@[{i}] {exc.Message.Indent()}" );
                 }
             }
 
             Throw(
                 $"""
-                 [{Context}] should contain at least one element that satisfies the assertion.
+                 [{Context}] should contain at least one element that satisfies an assertion but failed with {errors.Count} error(s):
+                 {string.Join( Environment.NewLine, errors.Select( (e, i) => $"{i + 1}. {e}" ) )}
 
                  Collection of {elements.Count} element(s):
                  {string.Join( Environment.NewLine, elements.Select( x => $"[@{x.Index}] {$"'{x.Element}'".Indent()}" ) )}

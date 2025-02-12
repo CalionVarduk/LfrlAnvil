@@ -10,12 +10,11 @@ public class TimestampTests : TestsBase
     {
         var result = Timestamp.Zero;
 
-        using ( new AssertionScope() )
-        {
-            result.UnixEpochTicks.Should().Be( 0 );
-            result.UtcValue.Should().Be( DateTime.UnixEpoch );
-            result.UtcValue.Kind.Should().Be( DateTimeKind.Utc );
-        }
+        Assertion.All(
+                result.UnixEpochTicks.TestEquals( 0 ),
+                result.UtcValue.TestEquals( DateTime.UnixEpoch ),
+                result.UtcValue.Kind.TestEquals( DateTimeKind.Utc ) )
+            .Go();
     }
 
     [Fact]
@@ -23,12 +22,11 @@ public class TimestampTests : TestsBase
     {
         var sut = default( Timestamp );
 
-        using ( new AssertionScope() )
-        {
-            sut.UnixEpochTicks.Should().Be( 0 );
-            sut.UtcValue.Should().Be( DateTime.UnixEpoch );
-            sut.UtcValue.Kind.Should().Be( DateTimeKind.Utc );
-        }
+        Assertion.All(
+                sut.UnixEpochTicks.TestEquals( 0 ),
+                sut.UtcValue.TestEquals( DateTime.UnixEpoch ),
+                sut.UtcValue.Kind.TestEquals( DateTimeKind.Utc ) )
+            .Go();
     }
 
     [Theory]
@@ -37,12 +35,11 @@ public class TimestampTests : TestsBase
     {
         var sut = new Timestamp( ticks );
 
-        using ( new AssertionScope() )
-        {
-            sut.UnixEpochTicks.Should().Be( ticks );
-            sut.UtcValue.Should().Be( expectedUtcValue );
-            sut.UtcValue.Kind.Should().Be( DateTimeKind.Utc );
-        }
+        Assertion.All(
+                sut.UnixEpochTicks.TestEquals( ticks ),
+                sut.UtcValue.TestEquals( expectedUtcValue ),
+                sut.UtcValue.Kind.TestEquals( DateTimeKind.Utc ) )
+            .Go();
     }
 
     [Theory]
@@ -51,12 +48,11 @@ public class TimestampTests : TestsBase
     {
         var sut = new Timestamp( utcValue );
 
-        using ( new AssertionScope() )
-        {
-            sut.UnixEpochTicks.Should().Be( expectedTicks );
-            sut.UtcValue.Should().Be( utcValue );
-            sut.UtcValue.Kind.Should().Be( DateTimeKind.Utc );
-        }
+        Assertion.All(
+                sut.UnixEpochTicks.TestEquals( expectedTicks ),
+                sut.UtcValue.TestEquals( utcValue ),
+                sut.UtcValue.Kind.TestEquals( DateTimeKind.Utc ) )
+            .Go();
     }
 
     [Fact]
@@ -67,7 +63,7 @@ public class TimestampTests : TestsBase
 
         var result = sut.ToString();
 
-        result.Should().Be( $"{ticks} ticks" );
+        result.TestEquals( $"{ticks} ticks" ).Go();
     }
 
     [Fact]
@@ -78,7 +74,7 @@ public class TimestampTests : TestsBase
 
         var result = sut.GetHashCode();
 
-        result.Should().Be( ticks.GetHashCode() );
+        result.TestEquals( ticks.GetHashCode() ).Go();
     }
 
     [Theory]
@@ -90,7 +86,7 @@ public class TimestampTests : TestsBase
 
         var result = a.Equals( b );
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -102,7 +98,7 @@ public class TimestampTests : TestsBase
 
         var result = a.CompareTo( b );
 
-        Math.Sign( result ).Should().Be( expectedSign );
+        Math.Sign( result ).TestEquals( expectedSign ).Go();
     }
 
     [Theory]
@@ -114,7 +110,7 @@ public class TimestampTests : TestsBase
 
         var result = sut.Add( value );
 
-        result.UnixEpochTicks.Should().Be( expectedTicks );
+        result.UnixEpochTicks.TestEquals( expectedTicks ).Go();
     }
 
     [Theory]
@@ -126,7 +122,7 @@ public class TimestampTests : TestsBase
 
         var result = sut.Subtract( value );
 
-        result.UnixEpochTicks.Should().Be( expectedTicks );
+        result.UnixEpochTicks.TestEquals( expectedTicks ).Go();
     }
 
     [Theory]
@@ -138,7 +134,7 @@ public class TimestampTests : TestsBase
 
         var result = sut.Subtract( other );
 
-        result.Ticks.Should().Be( expectedTicks );
+        result.Ticks.TestEquals( expectedTicks ).Go();
     }
 
     [Theory]
@@ -149,11 +145,10 @@ public class TimestampTests : TestsBase
 
         var result = ( DateTime )sut;
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( expected );
-            result.Kind.Should().Be( DateTimeKind.Utc );
-        }
+        Assertion.All(
+                result.TestEquals( expected ),
+                result.Kind.TestEquals( DateTimeKind.Utc ) )
+            .Go();
     }
 
     [Theory]
@@ -165,7 +160,7 @@ public class TimestampTests : TestsBase
 
         var result = sut + value;
 
-        result.UnixEpochTicks.Should().Be( expectedTicks );
+        result.UnixEpochTicks.TestEquals( expectedTicks ).Go();
     }
 
     [Theory]
@@ -177,7 +172,7 @@ public class TimestampTests : TestsBase
 
         var result = sut - value;
 
-        result.UnixEpochTicks.Should().Be( expectedTicks );
+        result.UnixEpochTicks.TestEquals( expectedTicks ).Go();
     }
 
     [Theory]
@@ -189,7 +184,7 @@ public class TimestampTests : TestsBase
 
         var result = sut - other;
 
-        result.Ticks.Should().Be( expectedTicks );
+        result.Ticks.TestEquals( expectedTicks ).Go();
     }
 
     [Theory]
@@ -201,7 +196,7 @@ public class TimestampTests : TestsBase
 
         var result = a == b;
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -213,7 +208,7 @@ public class TimestampTests : TestsBase
 
         var result = a != b;
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -225,7 +220,7 @@ public class TimestampTests : TestsBase
 
         var result = a > b;
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -237,7 +232,7 @@ public class TimestampTests : TestsBase
 
         var result = a <= b;
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -249,7 +244,7 @@ public class TimestampTests : TestsBase
 
         var result = a < b;
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -261,6 +256,6 @@ public class TimestampTests : TestsBase
 
         var result = a >= b;
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 }

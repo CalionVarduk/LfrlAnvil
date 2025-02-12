@@ -16,7 +16,7 @@ public class ZonedClockBaseTests : TestsBase
 
         var result = sut.Generate();
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -30,11 +30,10 @@ public class ZonedClockBaseTests : TestsBase
 
         var result = sut.TryGenerate( out var outResult );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            outResult.Should().Be( expected );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                outResult.TestEquals( expected ) )
+            .Go();
     }
 
     [Fact]
@@ -48,7 +47,7 @@ public class ZonedClockBaseTests : TestsBase
 
         var result = sut.Generate();
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -62,10 +61,9 @@ public class ZonedClockBaseTests : TestsBase
 
         var result = sut.TryGenerate( out var outResult );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            outResult.Should().Be( expected );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                outResult.TestEquals( expected ) )
+            .Go();
     }
 }

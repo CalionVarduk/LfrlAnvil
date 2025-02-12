@@ -9,7 +9,9 @@ public class TimeZoneInfoExtensionsTestsData
         GetGetActiveAdjustmentRuleWithNullResultData(
             Fixture fixture)
     {
-        var (a, b, c, d, e) = fixture.CreateManyDistinctSorted<DateTime>( count: 5 );
+        var (a, b, c, d, e) = fixture.CreateManyDistinctSorted<DateOnly>( count: 5 )
+            .Select( d => d.ToDateTime( TimeOnly.MinValue ) )
+            .ToList();
 
         return new TheoryData<DateTime, IEnumerable<(DateTime, DateTime)>>
         {

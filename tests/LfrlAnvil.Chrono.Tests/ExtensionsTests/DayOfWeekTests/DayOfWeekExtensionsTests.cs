@@ -15,6 +15,6 @@ public class DayOfWeekExtensionsTests : TestsBase
     public void ToIso_ShouldReturnCorrectResult(DayOfWeek sut, IsoDayOfWeek expected)
     {
         var result = sut.ToIso();
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 }

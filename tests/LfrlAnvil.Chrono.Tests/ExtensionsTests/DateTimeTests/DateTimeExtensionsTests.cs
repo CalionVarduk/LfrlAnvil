@@ -13,7 +13,7 @@ public class DateTimeExtensionsTests : TestsBase
     {
         var value = new DateTime( 2021, month, 1 );
         var result = value.GetMonthOfYear();
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -21,7 +21,7 @@ public class DateTimeExtensionsTests : TestsBase
     {
         var value = Fixture.Create<DateTime>();
         var result = value.GetDayOfWeek();
-        result.Should().Be( value.DayOfWeek.ToIso() );
+        result.TestEquals( value.DayOfWeek.ToIso() ).Go();
     }
 
     [Theory]
@@ -29,7 +29,7 @@ public class DateTimeExtensionsTests : TestsBase
     public void GetStartOfDay_ShouldReturnTargetWithNoTimeOfDay(DateTime value, DateTime expected)
     {
         var result = value.GetStartOfDay();
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -37,7 +37,7 @@ public class DateTimeExtensionsTests : TestsBase
     public void GetEndOfDay_ShouldReturnTargetWithTimeOfDaySetToLastPossibleTick(DateTime value, DateTime expected)
     {
         var result = value.GetEndOfDay();
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -48,7 +48,7 @@ public class DateTimeExtensionsTests : TestsBase
         DateTime expected)
     {
         var result = value.GetStartOfWeek( weekStart );
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -56,7 +56,7 @@ public class DateTimeExtensionsTests : TestsBase
     public void GetEndOfWeek_ShouldReturnEndOfLastDayInWeek(DateTime value, DayOfWeek weekStart, DateTime expected)
     {
         var result = value.GetEndOfWeek( weekStart );
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -64,7 +64,7 @@ public class DateTimeExtensionsTests : TestsBase
     public void GetStartOfMonth_ShouldReturnStartOfFirstDayInMonth(DateTime value, DateTime expected)
     {
         var result = value.GetStartOfMonth();
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -72,7 +72,7 @@ public class DateTimeExtensionsTests : TestsBase
     public void GetEndOfMonth_ShouldReturnEndOfLastDayInMonth(DateTime value, DateTime expected)
     {
         var result = value.GetEndOfMonth();
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -80,7 +80,7 @@ public class DateTimeExtensionsTests : TestsBase
     public void GetStartOfYear_ShouldReturnStartOfFirstDayInYear(DateTime value, DateTime expected)
     {
         var result = value.GetStartOfYear();
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -88,7 +88,7 @@ public class DateTimeExtensionsTests : TestsBase
     public void GetEndOfYear_ShouldReturnEndOfLastDayInYear(DateTime value, DateTime expected)
     {
         var result = value.GetEndOfYear();
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -96,7 +96,7 @@ public class DateTimeExtensionsTests : TestsBase
     public void Add_ShouldReturnCorrectResult(DateTime value, Period period, DateTime expected)
     {
         var result = value.Add( period );
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -119,7 +119,7 @@ public class DateTimeExtensionsTests : TestsBase
 
         var result = sut.Subtract( periodToSubtract );
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -127,7 +127,7 @@ public class DateTimeExtensionsTests : TestsBase
     public void SetYear_ShouldReturnTargetWithChangedYear(DateTime value, int year, DateTime expected)
     {
         var result = value.SetYear( year );
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -135,7 +135,7 @@ public class DateTimeExtensionsTests : TestsBase
     public void SetYear_ShouldThrowArgumentOutOfRangeException_WhenYearIsInvalid(DateTime value, int year)
     {
         var action = Lambda.Of( () => value.SetYear( year ) );
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Theory]
@@ -143,7 +143,7 @@ public class DateTimeExtensionsTests : TestsBase
     public void SetMonth_ShouldReturnTargetWithChangedMonth(DateTime value, IsoMonthOfYear month, DateTime expected)
     {
         var result = value.SetMonth( month );
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -151,7 +151,7 @@ public class DateTimeExtensionsTests : TestsBase
     public void SetDayOfMonth_ShouldReturnTargetWithChangedDayOfMonth(DateTime value, int day, DateTime expected)
     {
         var result = value.SetDayOfMonth( day );
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -159,7 +159,7 @@ public class DateTimeExtensionsTests : TestsBase
     public void SetDayOfMonth_ShouldThrowArgumentOutOfRangeException_WhenDayIsInvalid(DateTime value, int day)
     {
         var action = Lambda.Of( () => value.SetDayOfMonth( day ) );
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Theory]
@@ -167,7 +167,7 @@ public class DateTimeExtensionsTests : TestsBase
     public void SetDayOfYear_ShouldReturnTargetWithChangedDayOfYear(DateTime value, int day, DateTime expected)
     {
         var result = value.SetDayOfYear( day );
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -175,7 +175,7 @@ public class DateTimeExtensionsTests : TestsBase
     public void SetDayOfYear_ShouldThrowArgumentOutOfRangeException_WhenDayIsInvalid(DateTime value, int day)
     {
         var action = Lambda.Of( () => value.SetDayOfYear( day ) );
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Theory]
@@ -186,7 +186,7 @@ public class DateTimeExtensionsTests : TestsBase
         DateTime expected)
     {
         var result = value.SetTimeOfDay( timeOfDay );
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -198,7 +198,7 @@ public class DateTimeExtensionsTests : TestsBase
         Period expected)
     {
         var result = end.GetPeriodOffset( start, units );
-        result.Should().BeEquivalentTo( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -210,7 +210,7 @@ public class DateTimeExtensionsTests : TestsBase
         Period expected)
     {
         var result = end.GetPeriodOffset( start, units );
-        result.Should().BeEquivalentTo( -expected );
+        result.TestEquals( -expected ).Go();
     }
 
     [Theory]
@@ -222,7 +222,7 @@ public class DateTimeExtensionsTests : TestsBase
         Period expected)
     {
         var result = end.GetGreedyPeriodOffset( start, units );
-        result.Should().BeEquivalentTo( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -234,6 +234,6 @@ public class DateTimeExtensionsTests : TestsBase
         Period expected)
     {
         var result = end.GetGreedyPeriodOffset( start, units );
-        result.Should().BeEquivalentTo( -expected );
+        result.TestEquals( -expected ).Go();
     }
 }

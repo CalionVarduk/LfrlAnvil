@@ -14,10 +14,9 @@ public class FrozenTimestampProviderTests : TestsBase
         await Task.Delay( TimeSpan.FromMilliseconds( 1 ) );
         var secondResult = sut.GetNow();
 
-        using ( new AssertionScope() )
-        {
-            firstResult.Should().Be( expected );
-            secondResult.Should().Be( expected );
-        }
+        Assertion.All(
+                firstResult.TestEquals( expected ),
+                secondResult.TestEquals( expected ) )
+            .Go();
     }
 }

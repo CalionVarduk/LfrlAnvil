@@ -2,7 +2,6 @@
 using LfrlAnvil.Chrono.Extensions;
 using LfrlAnvil.Functional;
 using LfrlAnvil.TestExtensions.Attributes;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Chrono.Tests.ZonedMonthTests;
 
@@ -16,18 +15,17 @@ public class ZonedMonthTests : TestsBase
         var expectedStart = ZonedDateTime.CreateUtc( DateTime.UnixEpoch );
         var expectedEnd = ZonedDateTime.CreateUtc( DateTime.UnixEpoch.GetEndOfMonth() );
 
-        using ( new AssertionScope() )
-        {
-            result.Start.Should().Be( expectedStart );
-            result.End.Should().Be( expectedEnd );
-            result.Year.Should().Be( result.Start.Year );
-            result.Month.Should().Be( result.Start.Month );
-            result.DayCount.Should().Be( 31 );
-            result.TimeZone.Should().Be( TimeZoneInfo.Utc );
-            result.Duration.Should().Be( Duration.FromHours( 744 ) );
-            result.IsLocal.Should().BeFalse();
-            result.IsUtc.Should().BeTrue();
-        }
+        Assertion.All(
+                result.Start.TestEquals( expectedStart ),
+                result.End.TestEquals( expectedEnd ),
+                result.Year.TestEquals( result.Start.Year ),
+                result.Month.TestEquals( result.Start.Month ),
+                result.DayCount.TestEquals( 31 ),
+                result.TimeZone.TestEquals( TimeZoneInfo.Utc ),
+                result.Duration.TestEquals( Duration.FromHours( 744 ) ),
+                result.IsLocal.TestFalse(),
+                result.IsUtc.TestTrue() )
+            .Go();
     }
 
     [Theory]
@@ -39,18 +37,17 @@ public class ZonedMonthTests : TestsBase
         var expectedDuration = Duration.FromHours( 24 * expectedDayCount );
         var sut = ZonedMonth.Create( dateTime, timeZone );
 
-        using ( new AssertionScope() )
-        {
-            sut.Start.Should().Be( expectedStart );
-            sut.End.Should().Be( expectedEnd );
-            sut.Year.Should().Be( sut.Start.Year );
-            sut.Month.Should().Be( sut.Start.Month );
-            sut.DayCount.Should().Be( expectedDayCount );
-            sut.TimeZone.Should().Be( timeZone );
-            sut.Duration.Should().Be( expectedDuration );
-            sut.IsLocal.Should().BeFalse();
-            sut.IsUtc.Should().BeFalse();
-        }
+        Assertion.All(
+                sut.Start.TestEquals( expectedStart ),
+                sut.End.TestEquals( expectedEnd ),
+                sut.Year.TestEquals( sut.Start.Year ),
+                sut.Month.TestEquals( sut.Start.Month ),
+                sut.DayCount.TestEquals( expectedDayCount ),
+                sut.TimeZone.TestEquals( timeZone ),
+                sut.Duration.TestEquals( expectedDuration ),
+                sut.IsLocal.TestFalse(),
+                sut.IsUtc.TestFalse() )
+            .Go();
     }
 
     [Theory]
@@ -66,18 +63,17 @@ public class ZonedMonthTests : TestsBase
 
         var sut = ZonedMonth.Create( dateTime, timeZone );
 
-        using ( new AssertionScope() )
-        {
-            sut.Start.Should().Be( expectedStart );
-            sut.End.Should().Be( expectedEnd );
-            sut.Year.Should().Be( sut.Start.Year );
-            sut.Month.Should().Be( sut.Start.Month );
-            sut.DayCount.Should().Be( expectedDayCount );
-            sut.TimeZone.Should().Be( timeZone );
-            sut.Duration.Should().Be( expectedDuration );
-            sut.IsLocal.Should().BeFalse();
-            sut.IsUtc.Should().BeFalse();
-        }
+        Assertion.All(
+                sut.Start.TestEquals( expectedStart ),
+                sut.End.TestEquals( expectedEnd ),
+                sut.Year.TestEquals( sut.Start.Year ),
+                sut.Month.TestEquals( sut.Start.Month ),
+                sut.DayCount.TestEquals( expectedDayCount ),
+                sut.TimeZone.TestEquals( timeZone ),
+                sut.Duration.TestEquals( expectedDuration ),
+                sut.IsLocal.TestFalse(),
+                sut.IsUtc.TestFalse() )
+            .Go();
     }
 
     [Theory]
@@ -93,18 +89,17 @@ public class ZonedMonthTests : TestsBase
 
         var sut = ZonedMonth.Create( dateTime, timeZone );
 
-        using ( new AssertionScope() )
-        {
-            sut.Start.Should().Be( expectedStart );
-            sut.End.Should().Be( expectedEnd );
-            sut.Year.Should().Be( sut.Start.Year );
-            sut.Month.Should().Be( sut.Start.Month );
-            sut.DayCount.Should().Be( expectedDayCount );
-            sut.TimeZone.Should().Be( timeZone );
-            sut.Duration.Should().Be( expectedDuration );
-            sut.IsLocal.Should().BeFalse();
-            sut.IsUtc.Should().BeFalse();
-        }
+        Assertion.All(
+                sut.Start.TestEquals( expectedStart ),
+                sut.End.TestEquals( expectedEnd ),
+                sut.Year.TestEquals( sut.Start.Year ),
+                sut.Month.TestEquals( sut.Start.Month ),
+                sut.DayCount.TestEquals( expectedDayCount ),
+                sut.TimeZone.TestEquals( timeZone ),
+                sut.Duration.TestEquals( expectedDuration ),
+                sut.IsLocal.TestFalse(),
+                sut.IsUtc.TestFalse() )
+            .Go();
     }
 
     [Theory]
@@ -121,18 +116,17 @@ public class ZonedMonthTests : TestsBase
 
         var sut = ZonedMonth.Create( dateTime, timeZone );
 
-        using ( new AssertionScope() )
-        {
-            sut.Start.Should().Be( expectedStart );
-            sut.End.Should().Be( expectedEnd );
-            sut.Year.Should().Be( sut.Start.Year );
-            sut.Month.Should().Be( sut.Start.Month );
-            sut.DayCount.Should().Be( expectedDayCount );
-            sut.TimeZone.Should().Be( timeZone );
-            sut.Duration.Should().Be( expectedDuration );
-            sut.IsLocal.Should().BeFalse();
-            sut.IsUtc.Should().BeFalse();
-        }
+        Assertion.All(
+                sut.Start.TestEquals( expectedStart ),
+                sut.End.TestEquals( expectedEnd ),
+                sut.Year.TestEquals( sut.Start.Year ),
+                sut.Month.TestEquals( sut.Start.Month ),
+                sut.DayCount.TestEquals( expectedDayCount ),
+                sut.TimeZone.TestEquals( timeZone ),
+                sut.Duration.TestEquals( expectedDuration ),
+                sut.IsLocal.TestFalse(),
+                sut.IsUtc.TestFalse() )
+            .Go();
     }
 
     [Theory]
@@ -149,18 +143,17 @@ public class ZonedMonthTests : TestsBase
 
         var sut = ZonedMonth.Create( dateTime, timeZone );
 
-        using ( new AssertionScope() )
-        {
-            sut.Start.Should().Be( expectedStart );
-            sut.End.Should().Be( expectedEnd );
-            sut.Year.Should().Be( sut.Start.Year );
-            sut.Month.Should().Be( sut.Start.Month );
-            sut.DayCount.Should().Be( expectedDayCount );
-            sut.TimeZone.Should().Be( timeZone );
-            sut.Duration.Should().Be( expectedDuration );
-            sut.IsLocal.Should().BeFalse();
-            sut.IsUtc.Should().BeFalse();
-        }
+        Assertion.All(
+                sut.Start.TestEquals( expectedStart ),
+                sut.End.TestEquals( expectedEnd ),
+                sut.Year.TestEquals( sut.Start.Year ),
+                sut.Month.TestEquals( sut.Start.Month ),
+                sut.DayCount.TestEquals( expectedDayCount ),
+                sut.TimeZone.TestEquals( timeZone ),
+                sut.Duration.TestEquals( expectedDuration ),
+                sut.IsLocal.TestFalse(),
+                sut.IsUtc.TestFalse() )
+            .Go();
     }
 
     [Theory]
@@ -180,18 +173,17 @@ public class ZonedMonthTests : TestsBase
 
         var sut = ZonedMonth.Create( dateTime, timeZone );
 
-        using ( new AssertionScope() )
-        {
-            sut.Start.Should().Be( expectedStart );
-            sut.End.Should().Be( expectedEnd );
-            sut.Year.Should().Be( sut.Start.Year );
-            sut.Month.Should().Be( sut.Start.Month );
-            sut.DayCount.Should().Be( expectedDayCount );
-            sut.TimeZone.Should().Be( timeZone );
-            sut.Duration.Should().Be( expectedDuration );
-            sut.IsLocal.Should().BeFalse();
-            sut.IsUtc.Should().BeFalse();
-        }
+        Assertion.All(
+                sut.Start.TestEquals( expectedStart ),
+                sut.End.TestEquals( expectedEnd ),
+                sut.Year.TestEquals( sut.Start.Year ),
+                sut.Month.TestEquals( sut.Start.Month ),
+                sut.DayCount.TestEquals( expectedDayCount ),
+                sut.TimeZone.TestEquals( timeZone ),
+                sut.Duration.TestEquals( expectedDuration ),
+                sut.IsLocal.TestFalse(),
+                sut.IsUtc.TestFalse() )
+            .Go();
     }
 
     [Theory]
@@ -210,18 +202,17 @@ public class ZonedMonthTests : TestsBase
 
         var sut = ZonedMonth.Create( dateTime, timeZone );
 
-        using ( new AssertionScope() )
-        {
-            sut.Start.Should().Be( expectedStart );
-            sut.End.Should().Be( expectedEnd );
-            sut.Year.Should().Be( sut.Start.Year );
-            sut.Month.Should().Be( sut.Start.Month );
-            sut.DayCount.Should().Be( expectedDayCount );
-            sut.TimeZone.Should().Be( timeZone );
-            sut.Duration.Should().Be( expectedDuration );
-            sut.IsLocal.Should().BeFalse();
-            sut.IsUtc.Should().BeFalse();
-        }
+        Assertion.All(
+                sut.Start.TestEquals( expectedStart ),
+                sut.End.TestEquals( expectedEnd ),
+                sut.Year.TestEquals( sut.Start.Year ),
+                sut.Month.TestEquals( sut.Start.Month ),
+                sut.DayCount.TestEquals( expectedDayCount ),
+                sut.TimeZone.TestEquals( timeZone ),
+                sut.Duration.TestEquals( expectedDuration ),
+                sut.IsLocal.TestFalse(),
+                sut.IsUtc.TestFalse() )
+            .Go();
     }
 
     [Theory]
@@ -241,18 +232,17 @@ public class ZonedMonthTests : TestsBase
 
         var sut = ZonedMonth.Create( dateTime, timeZone );
 
-        using ( new AssertionScope() )
-        {
-            sut.Start.Should().Be( expectedStart );
-            sut.End.Should().Be( expectedEnd );
-            sut.Year.Should().Be( sut.Start.Year );
-            sut.Month.Should().Be( sut.Start.Month );
-            sut.DayCount.Should().Be( expectedDayCount );
-            sut.TimeZone.Should().Be( timeZone );
-            sut.Duration.Should().Be( expectedDuration );
-            sut.IsLocal.Should().BeFalse();
-            sut.IsUtc.Should().BeFalse();
-        }
+        Assertion.All(
+                sut.Start.TestEquals( expectedStart ),
+                sut.End.TestEquals( expectedEnd ),
+                sut.Year.TestEquals( sut.Start.Year ),
+                sut.Month.TestEquals( sut.Start.Month ),
+                sut.DayCount.TestEquals( expectedDayCount ),
+                sut.TimeZone.TestEquals( timeZone ),
+                sut.Duration.TestEquals( expectedDuration ),
+                sut.IsLocal.TestFalse(),
+                sut.IsUtc.TestFalse() )
+            .Go();
     }
 
     [Theory]
@@ -273,18 +263,17 @@ public class ZonedMonthTests : TestsBase
 
         var sut = ZonedMonth.Create( dateTime, timeZone );
 
-        using ( new AssertionScope() )
-        {
-            sut.Start.Should().Be( expectedStart );
-            sut.End.Should().Be( expectedEnd );
-            sut.Year.Should().Be( sut.Start.Year );
-            sut.Month.Should().Be( sut.Start.Month );
-            sut.DayCount.Should().Be( expectedDayCount );
-            sut.TimeZone.Should().Be( timeZone );
-            sut.Duration.Should().Be( expectedDuration );
-            sut.IsLocal.Should().BeFalse();
-            sut.IsUtc.Should().BeFalse();
-        }
+        Assertion.All(
+                sut.Start.TestEquals( expectedStart ),
+                sut.End.TestEquals( expectedEnd ),
+                sut.Year.TestEquals( sut.Start.Year ),
+                sut.Month.TestEquals( sut.Start.Month ),
+                sut.DayCount.TestEquals( expectedDayCount ),
+                sut.TimeZone.TestEquals( timeZone ),
+                sut.Duration.TestEquals( expectedDuration ),
+                sut.IsLocal.TestFalse(),
+                sut.IsUtc.TestFalse() )
+            .Go();
     }
 
     [Theory]
@@ -300,18 +289,17 @@ public class ZonedMonthTests : TestsBase
 
         var sut = ZonedMonth.Create( dateTime, timeZone );
 
-        using ( new AssertionScope() )
-        {
-            sut.Start.Should().Be( expectedStart );
-            sut.End.Should().Be( expectedEnd );
-            sut.Year.Should().Be( sut.Start.Year );
-            sut.Month.Should().Be( sut.Start.Month );
-            sut.DayCount.Should().Be( expectedDayCount );
-            sut.TimeZone.Should().Be( timeZone );
-            sut.Duration.Should().Be( expectedDuration );
-            sut.IsLocal.Should().BeFalse();
-            sut.IsUtc.Should().BeFalse();
-        }
+        Assertion.All(
+                sut.Start.TestEquals( expectedStart ),
+                sut.End.TestEquals( expectedEnd ),
+                sut.Year.TestEquals( sut.Start.Year ),
+                sut.Month.TestEquals( sut.Start.Month ),
+                sut.DayCount.TestEquals( expectedDayCount ),
+                sut.TimeZone.TestEquals( timeZone ),
+                sut.Duration.TestEquals( expectedDuration ),
+                sut.IsLocal.TestFalse(),
+                sut.IsUtc.TestFalse() )
+            .Go();
     }
 
     [Fact]
@@ -324,7 +312,7 @@ public class ZonedMonthTests : TestsBase
 
         var result = ZonedMonth.Create( source );
 
-        result.Should().BeEquivalentTo( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -337,7 +325,7 @@ public class ZonedMonthTests : TestsBase
 
         var result = ZonedMonth.Create( source );
 
-        result.Should().BeEquivalentTo( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -349,7 +337,7 @@ public class ZonedMonthTests : TestsBase
 
         var result = ZonedMonth.Create( dateTime.Year, ( IsoMonthOfYear )dateTime.Month, timeZone );
 
-        result.Should().BeEquivalentTo( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -363,18 +351,17 @@ public class ZonedMonthTests : TestsBase
 
         var result = ZonedMonth.CreateUtc( timestamp );
 
-        using ( new AssertionScope() )
-        {
-            result.Start.Should().Be( expectedStart );
-            result.End.Should().Be( expectedEnd );
-            result.Year.Should().Be( result.Start.Year );
-            result.Month.Should().Be( result.Start.Month );
-            result.DayCount.Should().Be( expectedDayCount );
-            result.TimeZone.Should().Be( TimeZoneInfo.Utc );
-            result.Duration.Should().Be( expectedDuration );
-            result.IsLocal.Should().BeFalse();
-            result.IsUtc.Should().BeTrue();
-        }
+        Assertion.All(
+                result.Start.TestEquals( expectedStart ),
+                result.End.TestEquals( expectedEnd ),
+                result.Year.TestEquals( result.Start.Year ),
+                result.Month.TestEquals( result.Start.Month ),
+                result.DayCount.TestEquals( expectedDayCount ),
+                result.TimeZone.TestEquals( TimeZoneInfo.Utc ),
+                result.Duration.TestEquals( expectedDuration ),
+                result.IsLocal.TestFalse(),
+                result.IsUtc.TestTrue() )
+            .Go();
     }
 
     [Fact]
@@ -388,18 +375,17 @@ public class ZonedMonthTests : TestsBase
 
         var result = ZonedMonth.CreateUtc( dateTime );
 
-        using ( new AssertionScope() )
-        {
-            result.Start.Should().Be( expectedStart );
-            result.End.Should().Be( expectedEnd );
-            result.Year.Should().Be( result.Start.Year );
-            result.Month.Should().Be( result.Start.Month );
-            result.DayCount.Should().Be( expectedDayCount );
-            result.TimeZone.Should().Be( TimeZoneInfo.Utc );
-            result.Duration.Should().Be( expectedDuration );
-            result.IsLocal.Should().BeFalse();
-            result.IsUtc.Should().BeTrue();
-        }
+        Assertion.All(
+                result.Start.TestEquals( expectedStart ),
+                result.End.TestEquals( expectedEnd ),
+                result.Year.TestEquals( result.Start.Year ),
+                result.Month.TestEquals( result.Start.Month ),
+                result.DayCount.TestEquals( expectedDayCount ),
+                result.TimeZone.TestEquals( TimeZoneInfo.Utc ),
+                result.Duration.TestEquals( expectedDuration ),
+                result.IsLocal.TestFalse(),
+                result.IsUtc.TestTrue() )
+            .Go();
     }
 
     [Fact]
@@ -410,7 +396,7 @@ public class ZonedMonthTests : TestsBase
 
         var result = ZonedMonth.CreateUtc( dateTime.Year, ( IsoMonthOfYear )dateTime.Month );
 
-        result.Should().BeEquivalentTo( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -421,7 +407,7 @@ public class ZonedMonthTests : TestsBase
 
         var result = ZonedMonth.CreateLocal( dateTime );
 
-        result.Should().BeEquivalentTo( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -432,7 +418,7 @@ public class ZonedMonthTests : TestsBase
 
         var result = ZonedMonth.CreateLocal( dateTime.Year, ( IsoMonthOfYear )dateTime.Month );
 
-        result.Should().BeEquivalentTo( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -441,7 +427,7 @@ public class ZonedMonthTests : TestsBase
     {
         var sut = ZonedMonth.Create( month, timeZone );
         var result = sut.ToString();
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -454,7 +440,7 @@ public class ZonedMonthTests : TestsBase
 
         var result = sut.GetHashCode();
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -466,7 +452,7 @@ public class ZonedMonthTests : TestsBase
 
         var result = a.Equals( b );
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -478,7 +464,7 @@ public class ZonedMonthTests : TestsBase
 
         var result = a.CompareTo( b );
 
-        Math.Sign( result ).Should().Be( expectedSign );
+        Math.Sign( result ).TestEquals( expectedSign ).Go();
     }
 
     [Fact]
@@ -493,7 +479,7 @@ public class ZonedMonthTests : TestsBase
 
         var result = sut.ToTimeZone( targetTimeZone );
 
-        result.Should().BeEquivalentTo( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -507,7 +493,7 @@ public class ZonedMonthTests : TestsBase
 
         var result = sut.ToUtcTimeZone();
 
-        result.Should().BeEquivalentTo( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -521,7 +507,7 @@ public class ZonedMonthTests : TestsBase
 
         var result = sut.ToLocalTimeZone();
 
-        result.Should().BeEquivalentTo( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -538,7 +524,7 @@ public class ZonedMonthTests : TestsBase
 
         var result = sut.Contains( dateTime );
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -558,7 +544,7 @@ public class ZonedMonthTests : TestsBase
 
         var result = sut.Contains( dateTime );
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -575,7 +561,7 @@ public class ZonedMonthTests : TestsBase
 
         var result = sut.Contains( day );
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -589,7 +575,7 @@ public class ZonedMonthTests : TestsBase
 
         var result = sut.GetNext();
 
-        result.Should().BeEquivalentTo( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -603,7 +589,7 @@ public class ZonedMonthTests : TestsBase
 
         var result = sut.GetPrevious();
 
-        result.Should().BeEquivalentTo( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -615,7 +601,7 @@ public class ZonedMonthTests : TestsBase
 
         var result = sut.AddMonths( monthsToAdd );
 
-        result.Should().BeEquivalentTo( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -631,7 +617,7 @@ public class ZonedMonthTests : TestsBase
 
         var result = sut.Add( period );
 
-        result.Should().BeEquivalentTo( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -646,7 +632,7 @@ public class ZonedMonthTests : TestsBase
 
         var result = sut.SubtractMonths( monthCount );
 
-        result.Should().BeEquivalentTo( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -672,7 +658,7 @@ public class ZonedMonthTests : TestsBase
 
         var result = sut.Subtract( periodToSubtract );
 
-        result.Should().BeEquivalentTo( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -690,7 +676,7 @@ public class ZonedMonthTests : TestsBase
 
         var result = sut.GetPeriodOffset( other, units );
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -708,7 +694,7 @@ public class ZonedMonthTests : TestsBase
 
         var result = sut.GetGreedyPeriodOffset( other, units );
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -720,7 +706,7 @@ public class ZonedMonthTests : TestsBase
 
         var result = sut.SetYear( newYear );
 
-        result.Should().BeEquivalentTo( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -729,7 +715,7 @@ public class ZonedMonthTests : TestsBase
     {
         var sut = ZonedMonth.Create( month, timeZone );
         var action = Lambda.Of( () => sut.SetYear( newYear ) );
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Theory]
@@ -745,7 +731,7 @@ public class ZonedMonthTests : TestsBase
 
         var result = sut.SetMonth( newMonth );
 
-        result.Should().BeEquivalentTo( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -761,7 +747,7 @@ public class ZonedMonthTests : TestsBase
 
         var result = sut.GetDayOfMonth( dayOfMonth );
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -773,7 +759,7 @@ public class ZonedMonthTests : TestsBase
     {
         var sut = ZonedMonth.Create( month, timeZone );
         var action = Lambda.Of( () => sut.GetDayOfMonth( dayOfMonth ) );
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Theory]
@@ -789,7 +775,7 @@ public class ZonedMonthTests : TestsBase
 
         var result = sut.TryGetDayOfMonth( dayOfMonth );
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -801,7 +787,7 @@ public class ZonedMonthTests : TestsBase
     {
         var sut = ZonedMonth.Create( month, timeZone );
         var result = sut.TryGetDayOfMonth( dayOfMonth );
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Fact]
@@ -814,7 +800,7 @@ public class ZonedMonthTests : TestsBase
 
         var result = sut.GetYear();
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -831,7 +817,7 @@ public class ZonedMonthTests : TestsBase
 
         var result = sut.GetWeekOfMonth( weekOfMonth, weekStart );
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -843,7 +829,7 @@ public class ZonedMonthTests : TestsBase
         var timeZone = TimeZoneFactory.CreateRandom( Fixture );
         var sut = ZonedMonth.Create( dateTime, timeZone );
         var action = Lambda.Of( () => sut.GetWeekOfMonth( 1, ( IsoDayOfWeek )weekStart ) );
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Theory]
@@ -856,7 +842,7 @@ public class ZonedMonthTests : TestsBase
     {
         var sut = ZonedMonth.Create( month, timeZone );
         var action = Lambda.Of( () => sut.GetWeekOfMonth( weekOfMonth, weekStart ) );
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Theory]
@@ -873,7 +859,7 @@ public class ZonedMonthTests : TestsBase
 
         var result = sut.TryGetWeekOfMonth( weekOfMonth, weekStart );
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -885,7 +871,7 @@ public class ZonedMonthTests : TestsBase
         var timeZone = TimeZoneFactory.CreateRandom( Fixture );
         var sut = ZonedMonth.Create( dateTime, timeZone );
         var action = Lambda.Of( () => sut.TryGetWeekOfMonth( 1, ( IsoDayOfWeek )weekStart ) );
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Theory]
@@ -898,7 +884,7 @@ public class ZonedMonthTests : TestsBase
     {
         var sut = ZonedMonth.Create( month, timeZone );
         var result = sut.TryGetWeekOfMonth( weekOfMonth, weekStart );
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Theory]
@@ -909,26 +895,24 @@ public class ZonedMonthTests : TestsBase
 
         var result = sut.GetAllDays().ToList();
 
-        using ( new AssertionScope() )
-        {
-            result.Select(
-                    d => new
-                    {
-                        d.Year,
-                        d.Month,
-                        d.TimeZone
-                    } )
-                .Should()
-                .AllBeEquivalentTo(
-                    new
-                    {
-                        sut.Year,
-                        sut.Month,
-                        sut.TimeZone
-                    } );
-
-            result.Select( d => d.DayOfMonth ).Should().BeSequentiallyEqualTo( Enumerable.Range( 1, expectedDayCount ) );
-        }
+        Assertion.All(
+                result.Select(
+                        d => new
+                        {
+                            d.Year,
+                            d.Month,
+                            d.TimeZone
+                        } )
+                    .TestAll(
+                        (e, _) => e.TestEquals(
+                            new
+                            {
+                                sut.Year,
+                                sut.Month,
+                                sut.TimeZone
+                            } ) ),
+                result.Select( d => d.DayOfMonth ).TestSequence( Enumerable.Range( 1, expectedDayCount ) ) )
+            .Go();
     }
 
     [Theory]
@@ -937,7 +921,7 @@ public class ZonedMonthTests : TestsBase
     {
         var sut = ZonedMonth.Create( month, timeZone );
         var result = sut.GetWeekCount( weekStart );
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -949,7 +933,7 @@ public class ZonedMonthTests : TestsBase
         var timeZone = TimeZoneFactory.CreateRandom( Fixture );
         var sut = ZonedMonth.Create( dateTime, timeZone );
         var action = Lambda.Of( () => sut.GetWeekCount( ( IsoDayOfWeek )weekStart ) );
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Theory]
@@ -964,27 +948,25 @@ public class ZonedMonthTests : TestsBase
 
         var result = sut.GetAllWeeks( weekStart ).ToList();
 
-        using ( new AssertionScope() )
-        {
-            result.Should().HaveCount( expectedWeekCount );
-
-            result.Select(
-                    w => new
-                    {
-                        w.Start.DayOfWeek,
-                        w.TimeZone
-                    } )
-                .Should()
-                .AllBeEquivalentTo(
-                    new
-                    {
-                        DayOfWeek = weekStart,
-                        sut.TimeZone
-                    } );
-
-            result.Should().OnlyContain( w => w.Start.Month == sut.Month || w.End.Month == sut.Month );
-            result.Should().BeInAscendingOrder( w => w.Start );
-        }
+        Assertion.All(
+                result.Count.TestEquals( expectedWeekCount ),
+                result.Select(
+                        w => new
+                        {
+                            w.Start.DayOfWeek,
+                            w.TimeZone
+                        } )
+                    .TestAll(
+                        (e, _) => e.TestEquals(
+                            new
+                            {
+                                DayOfWeek = weekStart,
+                                sut.TimeZone
+                            } ) ),
+                result.TestAll(
+                    (w, _) => Assertion.Any( "Month", w.Start.Month.TestEquals( sut.Month ), w.End.Month.TestEquals( sut.Month ) ) ),
+                result.TestSequence( result.OrderBy( w => w.Start ) ) )
+            .Go();
     }
 
     [Theory]
@@ -996,7 +978,7 @@ public class ZonedMonthTests : TestsBase
         var timeZone = TimeZoneFactory.CreateRandom( Fixture );
         var sut = ZonedMonth.Create( dateTime, timeZone );
         var action = Lambda.Of( () => sut.GetAllWeeks( ( IsoDayOfWeek )weekStart ) );
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Fact]
@@ -1008,7 +990,7 @@ public class ZonedMonthTests : TestsBase
 
         var result = sut.ToBounds();
 
-        result.Should().Be( Bounds.Create( sut.Start, sut.End ) );
+        result.TestEquals( Bounds.Create( sut.Start, sut.End ) ).Go();
     }
 
     [Fact]
@@ -1021,7 +1003,7 @@ public class ZonedMonthTests : TestsBase
 
         var result = sut.ToCheckedBounds();
 
-        result.Should().BeSequentiallyEqualTo( expected );
+        result.TestSequence( expected ).Go();
     }
 
     [Fact]
@@ -1044,7 +1026,7 @@ public class ZonedMonthTests : TestsBase
 
         var result = sut.ToCheckedBounds();
 
-        result.Should().BeSequentiallyEqualTo( expected );
+        result.TestSequence( expected ).Go();
     }
 
     [Fact]
@@ -1067,7 +1049,7 @@ public class ZonedMonthTests : TestsBase
 
         var result = sut.ToCheckedBounds();
 
-        result.Should().BeSequentiallyEqualTo( expected );
+        result.TestSequence( expected ).Go();
     }
 
     [Fact]
@@ -1098,7 +1080,7 @@ public class ZonedMonthTests : TestsBase
 
         var result = sut.ToCheckedBounds();
 
-        result.Should().BeSequentiallyEqualTo( expected );
+        result.TestSequence( expected ).Go();
     }
 
     [Fact]
@@ -1124,7 +1106,7 @@ public class ZonedMonthTests : TestsBase
 
         var result = sut + periodToSubtract;
 
-        result.Should().BeEquivalentTo( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -1150,7 +1132,7 @@ public class ZonedMonthTests : TestsBase
 
         var result = sut - periodToSubtract;
 
-        result.Should().BeEquivalentTo( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -1167,7 +1149,7 @@ public class ZonedMonthTests : TestsBase
 
         var result = a == b;
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -1184,7 +1166,7 @@ public class ZonedMonthTests : TestsBase
 
         var result = a != b;
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -1201,7 +1183,7 @@ public class ZonedMonthTests : TestsBase
 
         var result = a > b;
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -1218,7 +1200,7 @@ public class ZonedMonthTests : TestsBase
 
         var result = a <= b;
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -1235,7 +1217,7 @@ public class ZonedMonthTests : TestsBase
 
         var result = a < b;
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -1252,6 +1234,6 @@ public class ZonedMonthTests : TestsBase
 
         var result = a >= b;
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 }

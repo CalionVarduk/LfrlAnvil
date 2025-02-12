@@ -12,7 +12,7 @@ public class AdjustmentRuleExtensionsTests : TestsBase
 
         var result = sut.GetTransitionTimeWithInvalidity();
 
-        result.Should().Be( sut.DaylightTransitionStart );
+        result.TestEquals( sut.DaylightTransitionStart ).Go();
     }
 
     [Fact]
@@ -23,7 +23,7 @@ public class AdjustmentRuleExtensionsTests : TestsBase
 
         var result = sut.GetTransitionTimeWithInvalidity();
 
-        result.Should().Be( sut.DaylightTransitionEnd );
+        result.TestEquals( sut.DaylightTransitionEnd ).Go();
     }
 
     [Fact]
@@ -34,7 +34,7 @@ public class AdjustmentRuleExtensionsTests : TestsBase
 
         var result = sut.GetTransitionTimeWithAmbiguity();
 
-        result.Should().Be( sut.DaylightTransitionEnd );
+        result.TestEquals( sut.DaylightTransitionEnd ).Go();
     }
 
     [Fact]
@@ -45,7 +45,7 @@ public class AdjustmentRuleExtensionsTests : TestsBase
 
         var result = sut.GetTransitionTimeWithAmbiguity();
 
-        result.Should().Be( sut.DaylightTransitionStart );
+        result.TestEquals( sut.DaylightTransitionStart ).Go();
     }
 
     private static TimeZoneInfo.AdjustmentRule CreateRule(int deltaInHours)

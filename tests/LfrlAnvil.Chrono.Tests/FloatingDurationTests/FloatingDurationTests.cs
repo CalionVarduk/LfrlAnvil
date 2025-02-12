@@ -11,28 +11,28 @@ public class FloatingDurationTests : TestsBase
     public void Zero_ShouldReturnResultWithZeroTicks()
     {
         var sut = FloatingDuration.Zero;
-        sut.Ticks.Should().Be( 0 );
+        sut.Ticks.TestEquals( 0 ).Go();
     }
 
     [Fact]
     public void MinValue_ShouldReturnResultWithMinLongTicks()
     {
         var sut = FloatingDuration.MinValue;
-        sut.Ticks.Should().Be( decimal.MinValue );
+        sut.Ticks.TestEquals( decimal.MinValue ).Go();
     }
 
     [Fact]
     public void MaxValue_ShouldReturnResultWithMaxLongTicks()
     {
         var sut = FloatingDuration.MaxValue;
-        sut.Ticks.Should().Be( decimal.MaxValue );
+        sut.Ticks.TestEquals( decimal.MaxValue ).Go();
     }
 
     [Fact]
     public void Default_ShouldReturnResultWithZeroTicks()
     {
         var sut = default( FloatingDuration );
-        sut.Ticks.Should().Be( 0 );
+        sut.Ticks.TestEquals( 0 ).Go();
     }
 
     [Theory]
@@ -40,7 +40,7 @@ public class FloatingDurationTests : TestsBase
     public void Ctor_WithTicks_ShouldCreateCorrectly(decimal ticks)
     {
         var sut = new FloatingDuration( ticks );
-        sut.Ticks.Should().Be( ticks );
+        sut.Ticks.TestEquals( ticks ).Go();
     }
 
     [Theory]
@@ -55,7 +55,7 @@ public class FloatingDurationTests : TestsBase
         decimal expectedTicks)
     {
         var sut = new FloatingDuration( hours, minutes, seconds, milliseconds, microseconds, ticks );
-        sut.Ticks.Should().Be( expectedTicks );
+        sut.Ticks.TestEquals( expectedTicks ).Go();
     }
 
     [Theory]
@@ -63,7 +63,7 @@ public class FloatingDurationTests : TestsBase
     public void Ctor_WithTimeSpan_ShouldCreateCorrectly(TimeSpan timeSpan)
     {
         var sut = new FloatingDuration( timeSpan );
-        sut.Ticks.Should().Be( timeSpan.Ticks );
+        sut.Ticks.TestEquals( timeSpan.Ticks ).Go();
     }
 
     [Theory]
@@ -71,7 +71,7 @@ public class FloatingDurationTests : TestsBase
     public void Ctor_WithDuration_ShouldCreateCorrectly(Duration duration)
     {
         var sut = new FloatingDuration( duration );
-        sut.Ticks.Should().Be( duration.Ticks );
+        sut.Ticks.TestEquals( duration.Ticks ).Go();
     }
 
     [Theory]
@@ -79,7 +79,7 @@ public class FloatingDurationTests : TestsBase
     public void FullTicks_ShouldReturnCorrectResult(decimal ticks)
     {
         var sut = new FloatingDuration( ticks );
-        sut.FullTicks.Should().Be( ( long )ticks );
+        sut.FullTicks.TestEquals( ( long )ticks ).Go();
     }
 
     [Theory]
@@ -87,7 +87,7 @@ public class FloatingDurationTests : TestsBase
     public void FullMicroseconds_ShouldReturnCorrectResult(int microseconds, int ticks, long expected)
     {
         var sut = new FloatingDuration( 0, 0, 0, 0, microseconds, ticks );
-        sut.FullMicroseconds.Should().Be( expected );
+        sut.FullMicroseconds.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -95,7 +95,7 @@ public class FloatingDurationTests : TestsBase
     public void FullMilliseconds_ShouldReturnCorrectResult(int milliseconds, int microseconds, int ticks, long expected)
     {
         var sut = new FloatingDuration( 0, 0, 0, milliseconds, microseconds, ticks );
-        sut.FullMilliseconds.Should().Be( expected );
+        sut.FullMilliseconds.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -103,7 +103,7 @@ public class FloatingDurationTests : TestsBase
     public void FullSeconds_ShouldReturnCorrectResult(int seconds, int milliseconds, int microseconds, int ticks, long expected)
     {
         var sut = new FloatingDuration( 0, 0, seconds, milliseconds, microseconds, ticks );
-        sut.FullSeconds.Should().Be( expected );
+        sut.FullSeconds.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -117,7 +117,7 @@ public class FloatingDurationTests : TestsBase
         long expected)
     {
         var sut = new FloatingDuration( 0, minutes, seconds, milliseconds, microseconds, ticks );
-        sut.FullMinutes.Should().Be( expected );
+        sut.FullMinutes.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -132,7 +132,7 @@ public class FloatingDurationTests : TestsBase
         long expected)
     {
         var sut = new FloatingDuration( hours, minutes, seconds, milliseconds, microseconds, ticks );
-        sut.FullHours.Should().Be( expected );
+        sut.FullHours.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -140,7 +140,7 @@ public class FloatingDurationTests : TestsBase
     public void TicksInMicrosecond_ShouldReturnCorrectResult(int microseconds, decimal ticks, decimal expected)
     {
         var sut = new FloatingDuration( 0, 0, 0, 0, microseconds, ticks );
-        sut.TicksInMicrosecond.Should().Be( expected );
+        sut.TicksInMicrosecond.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -148,7 +148,7 @@ public class FloatingDurationTests : TestsBase
     public void MicrosecondsInMillisecond_ShouldReturnCorrectResult(int milliseconds, int microseconds, int ticks, int expected)
     {
         var sut = new FloatingDuration( 0, 0, 0, milliseconds, microseconds, ticks );
-        sut.MicrosecondsInMillisecond.Should().Be( expected );
+        sut.MicrosecondsInMillisecond.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -156,7 +156,7 @@ public class FloatingDurationTests : TestsBase
     public void MillisecondsInSecond_ShouldReturnCorrectResult(int seconds, int milliseconds, int microseconds, int ticks, int expected)
     {
         var sut = new FloatingDuration( 0, 0, seconds, milliseconds, microseconds, ticks );
-        sut.MillisecondsInSecond.Should().Be( expected );
+        sut.MillisecondsInSecond.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -170,7 +170,7 @@ public class FloatingDurationTests : TestsBase
         int expected)
     {
         var sut = new FloatingDuration( 0, minutes, seconds, milliseconds, microseconds, ticks );
-        sut.SecondsInMinute.Should().Be( expected );
+        sut.SecondsInMinute.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -185,7 +185,7 @@ public class FloatingDurationTests : TestsBase
         int expected)
     {
         var sut = new FloatingDuration( hours, minutes, seconds, milliseconds, microseconds, ticks );
-        sut.MinutesInHour.Should().Be( expected );
+        sut.MinutesInHour.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -193,7 +193,7 @@ public class FloatingDurationTests : TestsBase
     public void TotalMicroseconds_ShouldReturnCorrectResult(int microseconds, int ticks, decimal expected)
     {
         var sut = new FloatingDuration( 0, 0, 0, 0, microseconds, ticks );
-        sut.TotalMicroseconds.Should().BeApproximately( expected, 0.0000000000000001m );
+        sut.TotalMicroseconds.TestFuzzyEquals( expected, 0.0000000000000001m ).Go();
     }
 
     [Theory]
@@ -201,7 +201,7 @@ public class FloatingDurationTests : TestsBase
     public void TotalMilliseconds_ShouldReturnCorrectResult(int milliseconds, int microseconds, int ticks, decimal expected)
     {
         var sut = new FloatingDuration( 0, 0, 0, milliseconds, microseconds, ticks );
-        sut.TotalMilliseconds.Should().BeApproximately( expected, 0.0000000000000001m );
+        sut.TotalMilliseconds.TestFuzzyEquals( expected, 0.0000000000000001m ).Go();
     }
 
     [Theory]
@@ -209,7 +209,7 @@ public class FloatingDurationTests : TestsBase
     public void TotalSeconds_ShouldReturnCorrectResult(int seconds, int milliseconds, int microseconds, int ticks, decimal expected)
     {
         var sut = new FloatingDuration( 0, 0, seconds, milliseconds, microseconds, ticks );
-        sut.TotalSeconds.Should().BeApproximately( expected, 0.0000000000000001m );
+        sut.TotalSeconds.TestFuzzyEquals( expected, 0.0000000000000001m ).Go();
     }
 
     [Theory]
@@ -223,7 +223,7 @@ public class FloatingDurationTests : TestsBase
         decimal expected)
     {
         var sut = new FloatingDuration( 0, minutes, seconds, milliseconds, microseconds, ticks );
-        sut.TotalMinutes.Should().BeApproximately( expected, 0.0000000000000001m );
+        sut.TotalMinutes.TestFuzzyEquals( expected, 0.0000000000000001m ).Go();
     }
 
     [Theory]
@@ -238,7 +238,7 @@ public class FloatingDurationTests : TestsBase
         decimal expected)
     {
         var sut = new FloatingDuration( hours, minutes, seconds, milliseconds, microseconds, ticks );
-        sut.TotalHours.Should().BeApproximately( expected, 0.0000000000000001m );
+        sut.TotalHours.TestFuzzyEquals( expected, 0.0000000000000001m ).Go();
     }
 
     [Theory]
@@ -246,7 +246,7 @@ public class FloatingDurationTests : TestsBase
     public void FromTicks_ShouldReturnCorrectResult(decimal ticks)
     {
         var sut = FloatingDuration.FromTicks( ticks );
-        sut.Ticks.Should().Be( ticks );
+        sut.Ticks.TestEquals( ticks ).Go();
     }
 
     [Theory]
@@ -254,7 +254,7 @@ public class FloatingDurationTests : TestsBase
     public void FromMicroseconds_ShouldReturnCorrectResult(long microseconds, long expectedTicks)
     {
         var sut = FloatingDuration.FromMicroseconds( microseconds );
-        sut.Ticks.Should().Be( expectedTicks );
+        sut.Ticks.TestEquals( expectedTicks ).Go();
     }
 
     [Theory]
@@ -262,7 +262,7 @@ public class FloatingDurationTests : TestsBase
     public void FromMilliseconds_ShouldReturnCorrectResult(long milliseconds, long expectedTicks)
     {
         var sut = FloatingDuration.FromMilliseconds( milliseconds );
-        sut.Ticks.Should().Be( expectedTicks );
+        sut.Ticks.TestEquals( expectedTicks ).Go();
     }
 
     [Theory]
@@ -270,7 +270,7 @@ public class FloatingDurationTests : TestsBase
     public void FromSeconds_ShouldReturnCorrectResult(long seconds, long expectedTicks)
     {
         var sut = FloatingDuration.FromSeconds( seconds );
-        sut.Ticks.Should().Be( expectedTicks );
+        sut.Ticks.TestEquals( expectedTicks ).Go();
     }
 
     [Theory]
@@ -278,7 +278,7 @@ public class FloatingDurationTests : TestsBase
     public void FromMinutes_ShouldReturnCorrectResult(long minutes, long expectedTicks)
     {
         var sut = FloatingDuration.FromMinutes( minutes );
-        sut.Ticks.Should().Be( expectedTicks );
+        sut.Ticks.TestEquals( expectedTicks ).Go();
     }
 
     [Theory]
@@ -286,7 +286,7 @@ public class FloatingDurationTests : TestsBase
     public void FromHours_ShouldReturnCorrectResult(long hours, long expectedTicks)
     {
         var sut = FloatingDuration.FromHours( hours );
-        sut.Ticks.Should().Be( expectedTicks );
+        sut.Ticks.TestEquals( expectedTicks ).Go();
     }
 
     [Theory]
@@ -295,7 +295,7 @@ public class FloatingDurationTests : TestsBase
     {
         var sut = new FloatingDuration( ticks );
         var result = sut.ToString();
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -306,7 +306,7 @@ public class FloatingDurationTests : TestsBase
 
         var result = sut.GetHashCode();
 
-        result.Should().Be( ticks.GetHashCode() );
+        result.TestEquals( ticks.GetHashCode() ).Go();
     }
 
     [Theory]
@@ -318,7 +318,7 @@ public class FloatingDurationTests : TestsBase
 
         var result = a.Equals( b );
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -330,7 +330,7 @@ public class FloatingDurationTests : TestsBase
 
         var result = a.CompareTo( b );
 
-        Math.Sign( result ).Should().Be( expectedSign );
+        Math.Sign( result ).TestEquals( expectedSign ).Go();
     }
 
     [Theory]
@@ -339,7 +339,7 @@ public class FloatingDurationTests : TestsBase
     {
         var sut = new FloatingDuration( ticks );
         var result = sut.Negate();
-        result.Ticks.Should().Be( expectedTicks );
+        result.Ticks.TestEquals( expectedTicks ).Go();
     }
 
     [Theory]
@@ -348,7 +348,7 @@ public class FloatingDurationTests : TestsBase
     {
         var sut = new FloatingDuration( ticks );
         var result = sut.Abs();
-        result.Ticks.Should().Be( expectedTicks );
+        result.Ticks.TestEquals( expectedTicks ).Go();
     }
 
     [Theory]
@@ -360,7 +360,7 @@ public class FloatingDurationTests : TestsBase
 
         var result = sut.Add( other );
 
-        result.Ticks.Should().Be( expectedTicks );
+        result.Ticks.TestEquals( expectedTicks ).Go();
     }
 
     [Theory]
@@ -369,7 +369,7 @@ public class FloatingDurationTests : TestsBase
     {
         var sut = new FloatingDuration( ticks1 );
         var result = sut.AddTicks( ticks2 );
-        result.Ticks.Should().Be( expectedTicks );
+        result.Ticks.TestEquals( expectedTicks ).Go();
     }
 
     [Theory]
@@ -378,7 +378,7 @@ public class FloatingDurationTests : TestsBase
     {
         var sut = new FloatingDuration( ticks );
         var result = sut.AddMicroseconds( microseconds );
-        result.Ticks.Should().Be( expectedTicks );
+        result.Ticks.TestEquals( expectedTicks ).Go();
     }
 
     [Theory]
@@ -387,7 +387,7 @@ public class FloatingDurationTests : TestsBase
     {
         var sut = new FloatingDuration( ticks );
         var result = sut.AddMilliseconds( milliseconds );
-        result.Ticks.Should().Be( expectedTicks );
+        result.Ticks.TestEquals( expectedTicks ).Go();
     }
 
     [Theory]
@@ -396,7 +396,7 @@ public class FloatingDurationTests : TestsBase
     {
         var sut = new FloatingDuration( ticks );
         var result = sut.AddSeconds( seconds );
-        result.Ticks.Should().Be( expectedTicks );
+        result.Ticks.TestEquals( expectedTicks ).Go();
     }
 
     [Theory]
@@ -405,7 +405,7 @@ public class FloatingDurationTests : TestsBase
     {
         var sut = new FloatingDuration( ticks );
         var result = sut.AddMinutes( minutes );
-        result.Ticks.Should().Be( expectedTicks );
+        result.Ticks.TestEquals( expectedTicks ).Go();
     }
 
     [Theory]
@@ -414,7 +414,7 @@ public class FloatingDurationTests : TestsBase
     {
         var sut = new FloatingDuration( ticks );
         var result = sut.AddHours( hours );
-        result.Ticks.Should().Be( expectedTicks );
+        result.Ticks.TestEquals( expectedTicks ).Go();
     }
 
     [Theory]
@@ -426,7 +426,7 @@ public class FloatingDurationTests : TestsBase
 
         var result = sut.Subtract( other );
 
-        result.Ticks.Should().Be( expectedTicks );
+        result.Ticks.TestEquals( expectedTicks ).Go();
     }
 
     [Theory]
@@ -435,7 +435,7 @@ public class FloatingDurationTests : TestsBase
     {
         var sut = new FloatingDuration( ticks1 );
         var result = sut.SubtractTicks( ticks2 );
-        result.Ticks.Should().Be( expectedTicks );
+        result.Ticks.TestEquals( expectedTicks ).Go();
     }
 
     [Theory]
@@ -444,7 +444,7 @@ public class FloatingDurationTests : TestsBase
     {
         var sut = new FloatingDuration( ticks );
         var result = sut.SubtractMicroseconds( microseconds );
-        result.Ticks.Should().Be( expectedTicks );
+        result.Ticks.TestEquals( expectedTicks ).Go();
     }
 
     [Theory]
@@ -453,7 +453,7 @@ public class FloatingDurationTests : TestsBase
     {
         var sut = new FloatingDuration( ticks );
         var result = sut.SubtractMilliseconds( milliseconds );
-        result.Ticks.Should().Be( expectedTicks );
+        result.Ticks.TestEquals( expectedTicks ).Go();
     }
 
     [Theory]
@@ -462,7 +462,7 @@ public class FloatingDurationTests : TestsBase
     {
         var sut = new FloatingDuration( ticks );
         var result = sut.SubtractSeconds( seconds );
-        result.Ticks.Should().Be( expectedTicks );
+        result.Ticks.TestEquals( expectedTicks ).Go();
     }
 
     [Theory]
@@ -471,7 +471,7 @@ public class FloatingDurationTests : TestsBase
     {
         var sut = new FloatingDuration( ticks );
         var result = sut.SubtractMinutes( minutes );
-        result.Ticks.Should().Be( expectedTicks );
+        result.Ticks.TestEquals( expectedTicks ).Go();
     }
 
     [Theory]
@@ -480,7 +480,7 @@ public class FloatingDurationTests : TestsBase
     {
         var sut = new FloatingDuration( ticks );
         var result = sut.SubtractHours( hours );
-        result.Ticks.Should().Be( expectedTicks );
+        result.Ticks.TestEquals( expectedTicks ).Go();
     }
 
     [Theory]
@@ -489,7 +489,7 @@ public class FloatingDurationTests : TestsBase
     {
         var sut = new FloatingDuration( ticks );
         var result = sut.Multiply( multiplier );
-        result.Ticks.Should().BeApproximately( expectedTicks, 0.0000000000000001m );
+        result.Ticks.TestFuzzyEquals( expectedTicks, 0.0000000000000001m ).Go();
     }
 
     [Fact]
@@ -497,7 +497,7 @@ public class FloatingDurationTests : TestsBase
     {
         var sut = FloatingDuration.FromTicks( Fixture.Create<decimal>() );
         var action = Lambda.Of( () => sut.Divide( 0 ) );
-        action.Should().ThrowExactly<DivideByZeroException>();
+        action.Test( exc => exc.TestType().Exact<DivideByZeroException>() ).Go();
     }
 
     [Theory]
@@ -506,7 +506,7 @@ public class FloatingDurationTests : TestsBase
     {
         var sut = new FloatingDuration( ticks );
         var result = sut.Divide( divisor );
-        result.Ticks.Should().BeApproximately( expectedTicks, 0.0000000000000001m );
+        result.Ticks.TestFuzzyEquals( expectedTicks, 0.0000000000000001m ).Go();
     }
 
     [Theory]
@@ -515,7 +515,7 @@ public class FloatingDurationTests : TestsBase
     {
         var sut = new FloatingDuration( ticks );
         var result = sut.TrimToTick();
-        result.Ticks.Should().Be( expectedTicks );
+        result.Ticks.TestEquals( expectedTicks ).Go();
     }
 
     [Theory]
@@ -524,7 +524,7 @@ public class FloatingDurationTests : TestsBase
     {
         var sut = new FloatingDuration( ticks );
         var result = sut.TrimToMicrosecond();
-        result.Ticks.Should().Be( expectedTicks );
+        result.Ticks.TestEquals( expectedTicks ).Go();
     }
 
     [Theory]
@@ -533,7 +533,7 @@ public class FloatingDurationTests : TestsBase
     {
         var sut = new FloatingDuration( ticks );
         var result = sut.TrimToMillisecond();
-        result.Ticks.Should().Be( expectedTicks );
+        result.Ticks.TestEquals( expectedTicks ).Go();
     }
 
     [Theory]
@@ -542,7 +542,7 @@ public class FloatingDurationTests : TestsBase
     {
         var sut = new FloatingDuration( ticks );
         var result = sut.TrimToSecond();
-        result.Ticks.Should().Be( expectedTicks );
+        result.Ticks.TestEquals( expectedTicks ).Go();
     }
 
     [Theory]
@@ -551,7 +551,7 @@ public class FloatingDurationTests : TestsBase
     {
         var sut = new FloatingDuration( ticks );
         var result = sut.TrimToMinute();
-        result.Ticks.Should().Be( expectedTicks );
+        result.Ticks.TestEquals( expectedTicks ).Go();
     }
 
     [Theory]
@@ -560,7 +560,7 @@ public class FloatingDurationTests : TestsBase
     {
         var sut = new FloatingDuration( ticks );
         var result = sut.TrimToHour();
-        result.Ticks.Should().Be( expectedTicks );
+        result.Ticks.TestEquals( expectedTicks ).Go();
     }
 
     [Theory]
@@ -569,7 +569,7 @@ public class FloatingDurationTests : TestsBase
     {
         var sut = new FloatingDuration( ticks );
         var action = Lambda.Of( () => sut.SetTicksInMicrosecond( value ) );
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Theory]
@@ -579,11 +579,10 @@ public class FloatingDurationTests : TestsBase
         var sut = new FloatingDuration( ticks );
         var result = sut.SetTicksInMicrosecond( value );
 
-        using ( new AssertionScope() )
-        {
-            result.TicksInMicrosecond.Should().Be( value );
-            result.Ticks.Should().Be( expectedTicks );
-        }
+        Assertion.All(
+                result.TicksInMicrosecond.TestEquals( value ),
+                result.Ticks.TestEquals( expectedTicks ) )
+            .Go();
     }
 
     [Theory]
@@ -592,7 +591,7 @@ public class FloatingDurationTests : TestsBase
     {
         var sut = new FloatingDuration( ticks );
         var action = Lambda.Of( () => sut.SetMicrosecondsInMillisecond( value ) );
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Theory]
@@ -602,11 +601,10 @@ public class FloatingDurationTests : TestsBase
         var sut = new FloatingDuration( ticks );
         var result = sut.SetMicrosecondsInMillisecond( value );
 
-        using ( new AssertionScope() )
-        {
-            result.MicrosecondsInMillisecond.Should().Be( value );
-            result.Ticks.Should().Be( expectedTicks );
-        }
+        Assertion.All(
+                result.MicrosecondsInMillisecond.TestEquals( value ),
+                result.Ticks.TestEquals( expectedTicks ) )
+            .Go();
     }
 
     [Theory]
@@ -615,7 +613,7 @@ public class FloatingDurationTests : TestsBase
     {
         var sut = new FloatingDuration( ticks );
         var action = Lambda.Of( () => sut.SetMillisecondsInSecond( value ) );
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Theory]
@@ -625,11 +623,10 @@ public class FloatingDurationTests : TestsBase
         var sut = new FloatingDuration( ticks );
         var result = sut.SetMillisecondsInSecond( value );
 
-        using ( new AssertionScope() )
-        {
-            result.MillisecondsInSecond.Should().Be( value );
-            result.Ticks.Should().Be( expectedTicks );
-        }
+        Assertion.All(
+                result.MillisecondsInSecond.TestEquals( value ),
+                result.Ticks.TestEquals( expectedTicks ) )
+            .Go();
     }
 
     [Theory]
@@ -638,7 +635,7 @@ public class FloatingDurationTests : TestsBase
     {
         var sut = new FloatingDuration( ticks );
         var action = Lambda.Of( () => sut.SetSecondsInMinute( value ) );
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Theory]
@@ -648,11 +645,10 @@ public class FloatingDurationTests : TestsBase
         var sut = new FloatingDuration( ticks );
         var result = sut.SetSecondsInMinute( value );
 
-        using ( new AssertionScope() )
-        {
-            result.SecondsInMinute.Should().Be( value );
-            result.Ticks.Should().Be( expectedTicks );
-        }
+        Assertion.All(
+                result.SecondsInMinute.TestEquals( value ),
+                result.Ticks.TestEquals( expectedTicks ) )
+            .Go();
     }
 
     [Theory]
@@ -661,7 +657,7 @@ public class FloatingDurationTests : TestsBase
     {
         var sut = new FloatingDuration( ticks );
         var action = Lambda.Of( () => sut.SetMinutesInHour( value ) );
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Theory]
@@ -671,11 +667,10 @@ public class FloatingDurationTests : TestsBase
         var sut = new FloatingDuration( ticks );
         var result = sut.SetMinutesInHour( value );
 
-        using ( new AssertionScope() )
-        {
-            result.MinutesInHour.Should().Be( value );
-            result.Ticks.Should().Be( expectedTicks );
-        }
+        Assertion.All(
+                result.MinutesInHour.TestEquals( value ),
+                result.Ticks.TestEquals( expectedTicks ) )
+            .Go();
     }
 
     [Theory]
@@ -684,7 +679,7 @@ public class FloatingDurationTests : TestsBase
     {
         var sut = new FloatingDuration( ticks );
         var action = Lambda.Of( () => sut.SetHours( value ) );
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Theory]
@@ -694,11 +689,10 @@ public class FloatingDurationTests : TestsBase
         var sut = new FloatingDuration( ticks );
         var result = sut.SetHours( value );
 
-        using ( new AssertionScope() )
-        {
-            result.FullHours.Should().Be( value );
-            result.Ticks.Should().Be( expectedTicks );
-        }
+        Assertion.All(
+                result.FullHours.TestEquals( value ),
+                result.Ticks.TestEquals( expectedTicks ) )
+            .Go();
     }
 
     [Theory]
@@ -708,7 +702,7 @@ public class FloatingDurationTests : TestsBase
         var expected = Math.Round( ticks, MidpointRounding.AwayFromZero );
         var sut = new FloatingDuration( ticks );
         var result = ( TimeSpan )sut;
-        result.Ticks.Should().Be( ( long )expected );
+        result.Ticks.TestEquals( ( long )expected ).Go();
     }
 
     [Theory]
@@ -718,7 +712,7 @@ public class FloatingDurationTests : TestsBase
         var expected = Math.Round( ticks, MidpointRounding.AwayFromZero );
         var sut = new FloatingDuration( ticks );
         var result = ( Duration )sut;
-        result.Ticks.Should().Be( ( long )expected );
+        result.Ticks.TestEquals( ( long )expected ).Go();
     }
 
     [Theory]
@@ -727,7 +721,7 @@ public class FloatingDurationTests : TestsBase
     {
         var sut = new FloatingDuration( ticks );
         var result = -sut;
-        result.Ticks.Should().Be( expectedTicks );
+        result.Ticks.TestEquals( expectedTicks ).Go();
     }
 
     [Theory]
@@ -739,7 +733,7 @@ public class FloatingDurationTests : TestsBase
 
         var result = sut + other;
 
-        result.Ticks.Should().Be( expectedTicks );
+        result.Ticks.TestEquals( expectedTicks ).Go();
     }
 
     [Theory]
@@ -751,7 +745,7 @@ public class FloatingDurationTests : TestsBase
 
         var result = sut - other;
 
-        result.Ticks.Should().Be( expectedTicks );
+        result.Ticks.TestEquals( expectedTicks ).Go();
     }
 
     [Theory]
@@ -760,7 +754,7 @@ public class FloatingDurationTests : TestsBase
     {
         var sut = new FloatingDuration( ticks );
         var result = sut * multiplier;
-        result.Ticks.Should().BeApproximately( expectedTicks, 0.0000000000000001m );
+        result.Ticks.TestFuzzyEquals( expectedTicks, 0.0000000000000001m ).Go();
     }
 
     [Fact]
@@ -768,7 +762,7 @@ public class FloatingDurationTests : TestsBase
     {
         var sut = FloatingDuration.FromTicks( Fixture.Create<decimal>() );
         var action = Lambda.Of( () => sut / 0 );
-        action.Should().ThrowExactly<DivideByZeroException>();
+        action.Test( exc => exc.TestType().Exact<DivideByZeroException>() ).Go();
     }
 
     [Theory]
@@ -777,7 +771,7 @@ public class FloatingDurationTests : TestsBase
     {
         var sut = new FloatingDuration( ticks );
         var result = sut / divisor;
-        result.Ticks.Should().BeApproximately( expectedTicks, 0.0000000000000001m );
+        result.Ticks.TestFuzzyEquals( expectedTicks, 0.0000000000000001m ).Go();
     }
 
     [Theory]
@@ -796,7 +790,7 @@ public class FloatingDurationTests : TestsBase
 
         var result = a * b;
 
-        result.Ticks.Should().Be( expectedTicks );
+        result.Ticks.TestEquals( expectedTicks ).Go();
     }
 
     [Theory]
@@ -815,7 +809,7 @@ public class FloatingDurationTests : TestsBase
 
         var result = b * a;
 
-        result.Ticks.Should().Be( expectedTicks );
+        result.Ticks.TestEquals( expectedTicks ).Go();
     }
 
     [Theory]
@@ -827,7 +821,7 @@ public class FloatingDurationTests : TestsBase
 
         var result = a == b;
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -839,7 +833,7 @@ public class FloatingDurationTests : TestsBase
 
         var result = a != b;
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -851,7 +845,7 @@ public class FloatingDurationTests : TestsBase
 
         var result = a > b;
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -863,7 +857,7 @@ public class FloatingDurationTests : TestsBase
 
         var result = a <= b;
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -875,7 +869,7 @@ public class FloatingDurationTests : TestsBase
 
         var result = a < b;
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -887,6 +881,6 @@ public class FloatingDurationTests : TestsBase
 
         var result = a >= b;
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 }

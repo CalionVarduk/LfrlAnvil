@@ -13,7 +13,7 @@ public class TimeZoneInfoExtensionsTests : TestsBase
     {
         var sut = TimeZoneInfo.Utc;
         var kind = sut.GetDateTimeKind();
-        kind.Should().Be( DateTimeKind.Utc );
+        kind.TestEquals( DateTimeKind.Utc ).Go();
     }
 
     [Fact]
@@ -21,7 +21,7 @@ public class TimeZoneInfoExtensionsTests : TestsBase
     {
         var sut = TimeZoneInfo.Local;
         var kind = sut.GetDateTimeKind();
-        kind.Should().Be( DateTimeKind.Local );
+        kind.TestEquals( DateTimeKind.Local ).Go();
     }
 
     [Fact]
@@ -29,7 +29,7 @@ public class TimeZoneInfoExtensionsTests : TestsBase
     {
         var sut = TimeZoneFactory.CreateRandom( Fixture );
         var kind = sut.GetDateTimeKind();
-        kind.Should().Be( DateTimeKind.Unspecified );
+        kind.TestEquals( DateTimeKind.Unspecified ).Go();
     }
 
     [Theory]
@@ -53,7 +53,7 @@ public class TimeZoneInfoExtensionsTests : TestsBase
 
         var result = sut.GetActiveAdjustmentRule( dateTimeToTest );
 
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Theory]
@@ -78,12 +78,15 @@ public class TimeZoneInfoExtensionsTests : TestsBase
 
         var result = sut.GetActiveAdjustmentRule( dateTimeToTest );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().NotBeNull();
-            result?.DateStart.Should().Be( expectedRange.Start );
-            result?.DateEnd.Should().Be( expectedRange.End );
-        }
+        Assertion.All(
+                result.TestNotNull(),
+                result.TestIf()
+                    .NotNull(
+                        r => Assertion.All(
+                            "result.Value",
+                            r.DateStart.TestEquals( expectedRange.Start ),
+                            r.DateEnd.TestEquals( expectedRange.End ) ) ) )
+            .Go();
     }
 
     [Theory]
@@ -107,7 +110,7 @@ public class TimeZoneInfoExtensionsTests : TestsBase
 
         var result = sut.GetActiveAdjustmentRuleIndex( dateTimeToTest );
 
-        result.Should().Be( -1 );
+        result.TestEquals( -1 ).Go();
     }
 
     [Theory]
@@ -132,12 +135,12 @@ public class TimeZoneInfoExtensionsTests : TestsBase
 
         var result = sut.GetActiveAdjustmentRuleIndex( dateTimeToTest );
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
     [MethodData( nameof( TimeZoneInfoExtensionsTestsData.GetGetContainingInvalidityRangeData ) )]
-    private void GetContainingInvalidityRange_ShouldReturnCorrectResult(
+    public void GetContainingInvalidityRange_ShouldReturnCorrectResult(
         TimeZoneInfo timeZone,
         DateTime dateTime,
         (DateTime Start, DateTime End)? expected)
@@ -148,16 +151,15 @@ public class TimeZoneInfoExtensionsTests : TestsBase
 
         var result = timeZone.GetContainingInvalidityRange( dateTime );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( expectedBounds );
-            timeZone.IsInvalidTime( dateTime ).Should().Be( expected is not null );
-        }
+        Assertion.All(
+                result.TestEquals( expectedBounds ),
+                timeZone.IsInvalidTime( dateTime ).TestEquals( expected is not null ) )
+            .Go();
     }
 
     [Theory]
     [MethodData( nameof( TimeZoneInfoExtensionsTestsData.GetGetContainingAmbiguityRangeData ) )]
-    private void GetContainingAmbiguityRange_ShouldReturnCorrectResult(
+    public void GetContainingAmbiguityRange_ShouldReturnCorrectResult(
         TimeZoneInfo timeZone,
         DateTime dateTime,
         (DateTime Start, DateTime End)? expected)
@@ -168,10 +170,9 @@ public class TimeZoneInfoExtensionsTests : TestsBase
 
         var result = timeZone.GetContainingAmbiguityRange( dateTime );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( expectedBounds );
-            timeZone.IsAmbiguousTime( dateTime ).Should().Be( expected is not null );
-        }
+        Assertion.All(
+                result.TestEquals( expectedBounds ),
+                timeZone.IsAmbiguousTime( dateTime ).TestEquals( expected is not null ) )
+            .Go();
     }
 }

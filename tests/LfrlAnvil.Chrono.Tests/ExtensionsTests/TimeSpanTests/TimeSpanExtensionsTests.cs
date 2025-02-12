@@ -14,6 +14,6 @@ public class TimeSpanExtensionsTests : TestsBase
     {
         var sut = TimeSpan.FromTicks( ticks );
         var result = sut.Abs();
-        result.Ticks.Should().Be( expectedTicks );
+        result.Ticks.TestEquals( expectedTicks ).Go();
     }
 }

@@ -6,14 +6,14 @@ public class DateTimeProviderTests : TestsBase
     public void Utc_ShouldReturnCorrectResult()
     {
         var sut = DateTimeProvider.Utc;
-        sut.Kind.Should().Be( DateTimeKind.Utc );
+        sut.Kind.TestEquals( DateTimeKind.Utc ).Go();
     }
 
     [Fact]
     public void Local_ShouldReturnCorrectResult()
     {
         var sut = DateTimeProvider.Local;
-        sut.Kind.Should().Be( DateTimeKind.Local );
+        sut.Kind.TestEquals( DateTimeKind.Local ).Go();
     }
 
     [Fact]
@@ -25,11 +25,10 @@ public class DateTimeProviderTests : TestsBase
         var result = sut.GetNow();
         var expectedMax = DateTime.UtcNow;
 
-        using ( new AssertionScope() )
-        {
-            result.Kind.Should().Be( DateTimeKind.Utc );
-            result.Should().BeOnOrAfter( expectedMin ).And.BeOnOrBefore( expectedMax );
-        }
+        Assertion.All(
+                result.Kind.TestEquals( DateTimeKind.Utc ),
+                result.TestInRange( expectedMin, expectedMax ) )
+            .Go();
     }
 
     [Fact]
@@ -41,10 +40,9 @@ public class DateTimeProviderTests : TestsBase
         var result = sut.GetNow();
         var expectedMax = DateTime.Now;
 
-        using ( new AssertionScope() )
-        {
-            result.Kind.Should().Be( DateTimeKind.Local );
-            result.Should().BeOnOrAfter( expectedMin ).And.BeOnOrBefore( expectedMax );
-        }
+        Assertion.All(
+                result.Kind.TestEquals( DateTimeKind.Local ),
+                result.TestInRange( expectedMin, expectedMax ) )
+            .Go();
     }
 }

@@ -11,6 +11,6 @@ public class TimestampProviderTests : TestsBase
         var result = sut.GetNow();
         var expectedMax = DateTime.UtcNow;
 
-        result.UtcValue.Should().BeOnOrAfter( expectedMin ).And.BeOnOrBefore( expectedMax );
+        result.UtcValue.TestInRange( expectedMin, expectedMax ).Go();
     }
 }

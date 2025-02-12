@@ -9,7 +9,7 @@ public class FrozenDateTimeProviderTests : TestsBase
     {
         var value = Fixture.Create<DateTime>();
         var sut = new FrozenDateTimeProvider( value );
-        sut.Kind.Should().Be( value.Kind );
+        sut.Kind.TestEquals( value.Kind ).Go();
     }
 
     [Fact]
@@ -22,10 +22,9 @@ public class FrozenDateTimeProviderTests : TestsBase
         await Task.Delay( TimeSpan.FromMilliseconds( 1 ) );
         var secondResult = sut.GetNow();
 
-        using ( new AssertionScope() )
-        {
-            firstResult.Should().Be( value );
-            secondResult.Should().Be( value );
-        }
+        Assertion.All(
+                firstResult.TestEquals( value ),
+                secondResult.TestEquals( value ) )
+            .Go();
     }
 }

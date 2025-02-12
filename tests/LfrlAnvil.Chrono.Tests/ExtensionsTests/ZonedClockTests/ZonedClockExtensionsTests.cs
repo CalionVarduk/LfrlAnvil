@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System.Diagnostics.Contracts;
+using System.Linq;
 using LfrlAnvil.Chrono.Extensions;
 
 namespace LfrlAnvil.Chrono.Tests.ExtensionsTests.ZonedClockTests;
@@ -15,7 +16,7 @@ public class ZonedClockExtensionsTests : TestsBase
 
         var result = sut.Create( dateTime );
 
-        result.Should().BeEquivalentTo( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -28,7 +29,7 @@ public class ZonedClockExtensionsTests : TestsBase
 
         var result = sut.TryCreate( dateTime );
 
-        result.Should().BeEquivalentTo( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -43,7 +44,7 @@ public class ZonedClockExtensionsTests : TestsBase
 
         var result = sut.IsInPast( dateTime );
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -58,7 +59,7 @@ public class ZonedClockExtensionsTests : TestsBase
 
         var result = sut.IsNow( dateTime );
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -73,7 +74,7 @@ public class ZonedClockExtensionsTests : TestsBase
 
         var result = sut.IsInFuture( dateTime );
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -81,7 +82,7 @@ public class ZonedClockExtensionsTests : TestsBase
     {
         var sut = new FrozenZonedClock( default );
         var result = sut.IsFrozen();
-        result.Should().BeTrue();
+        result.TestTrue().Go();
     }
 
     [Fact]
@@ -90,7 +91,7 @@ public class ZonedClockExtensionsTests : TestsBase
         var timeZone = TimeZoneFactory.CreateRandom( Fixture );
         var sut = new ZonedClock( timeZone );
         var result = sut.IsFrozen();
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Theory]
@@ -106,7 +107,7 @@ public class ZonedClockExtensionsTests : TestsBase
 
         var result = sut.GetDurationOffset( dateTime );
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -122,7 +123,7 @@ public class ZonedClockExtensionsTests : TestsBase
 
         var result = sut.GetDurationOffset( other );
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -136,13 +137,13 @@ public class ZonedClockExtensionsTests : TestsBase
         var firstResult = frozen.GetNow();
         var secondResult = frozen.GetNow();
 
-        using ( new AssertionScope() )
-        {
-            firstResult.Timestamp.UnixEpochTicks.Should().Be( first );
-            secondResult.Timestamp.UnixEpochTicks.Should().Be( first );
-        }
+        Assertion.All(
+                firstResult.Timestamp.UnixEpochTicks.TestEquals( first ),
+                secondResult.Timestamp.UnixEpochTicks.TestEquals( first ) )
+            .Go();
     }
 
+    [Pure]
     private static IZonedClock GetMockedClock(TimeZoneInfo timeZone)
     {
         var result = Substitute.For<IZonedClock>();
@@ -150,6 +151,7 @@ public class ZonedClockExtensionsTests : TestsBase
         return result;
     }
 
+    [Pure]
     private static IZonedClock GetMockedClock(TimeZoneInfo timeZone, long timestampTicks, params long[] additionalTimestampTicks)
     {
         var result = GetMockedClock( timeZone );
@@ -163,6 +165,7 @@ public class ZonedClockExtensionsTests : TestsBase
         return result;
     }
 
+    [Pure]
     private static ZonedDateTime CreateDateTime(long ticks, TimeZoneInfo timeZone)
     {
         return ZonedDateTime.CreateUtc( DateTime.UnixEpoch + TimeSpan.FromTicks( ticks ) ).ToTimeZone( timeZone );

@@ -12,7 +12,7 @@ public class BoundsExtensionsTests : TestsBase
     {
         var sut = Bounds.Create( min, max );
         var result = sut.GetTimeSpan();
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -21,7 +21,7 @@ public class BoundsExtensionsTests : TestsBase
     {
         var sut = Bounds.Create( min, max );
         var result = sut.GetPeriod( units );
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -30,7 +30,7 @@ public class BoundsExtensionsTests : TestsBase
     {
         var sut = Bounds.Create( min, max );
         var result = sut.GetGreedyPeriod( units );
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -42,7 +42,7 @@ public class BoundsExtensionsTests : TestsBase
 
         var result = sut.GetDuration();
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -54,7 +54,7 @@ public class BoundsExtensionsTests : TestsBase
 
         var result = sut.GetPeriod( units );
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -70,7 +70,7 @@ public class BoundsExtensionsTests : TestsBase
 
         var result = sut.GetGreedyPeriod( units );
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -82,7 +82,7 @@ public class BoundsExtensionsTests : TestsBase
 
         var result = sut.GetPeriod( units );
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -98,6 +98,6 @@ public class BoundsExtensionsTests : TestsBase
 
         var result = sut.GetGreedyPeriod( units );
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 }

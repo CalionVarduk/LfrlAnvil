@@ -11,15 +11,14 @@ public class TimeOfDayTests : TestsBase
     {
         var result = TimeOfDay.Start;
 
-        using ( new AssertionScope() )
-        {
-            result.Hour.Should().Be( 0 );
-            result.Minute.Should().Be( 0 );
-            result.Second.Should().Be( 0 );
-            result.Millisecond.Should().Be( 0 );
-            result.Microsecond.Should().Be( 0 );
-            result.Tick.Should().Be( 0 );
-        }
+        Assertion.All(
+                result.Hour.TestEquals( 0 ),
+                result.Minute.TestEquals( 0 ),
+                result.Second.TestEquals( 0 ),
+                result.Millisecond.TestEquals( 0 ),
+                result.Microsecond.TestEquals( 0 ),
+                result.Tick.TestEquals( 0 ) )
+            .Go();
     }
 
     [Fact]
@@ -27,15 +26,14 @@ public class TimeOfDayTests : TestsBase
     {
         var result = TimeOfDay.Mid;
 
-        using ( new AssertionScope() )
-        {
-            result.Hour.Should().Be( 12 );
-            result.Minute.Should().Be( 0 );
-            result.Second.Should().Be( 0 );
-            result.Millisecond.Should().Be( 0 );
-            result.Microsecond.Should().Be( 0 );
-            result.Tick.Should().Be( 0 );
-        }
+        Assertion.All(
+                result.Hour.TestEquals( 12 ),
+                result.Minute.TestEquals( 0 ),
+                result.Second.TestEquals( 0 ),
+                result.Millisecond.TestEquals( 0 ),
+                result.Microsecond.TestEquals( 0 ),
+                result.Tick.TestEquals( 0 ) )
+            .Go();
     }
 
     [Fact]
@@ -43,15 +41,14 @@ public class TimeOfDayTests : TestsBase
     {
         var result = TimeOfDay.End;
 
-        using ( new AssertionScope() )
-        {
-            result.Hour.Should().Be( 23 );
-            result.Minute.Should().Be( 59 );
-            result.Second.Should().Be( 59 );
-            result.Millisecond.Should().Be( 999 );
-            result.Microsecond.Should().Be( 999 );
-            result.Tick.Should().Be( 9 );
-        }
+        Assertion.All(
+                result.Hour.TestEquals( 23 ),
+                result.Minute.TestEquals( 59 ),
+                result.Second.TestEquals( 59 ),
+                result.Millisecond.TestEquals( 999 ),
+                result.Microsecond.TestEquals( 999 ),
+                result.Tick.TestEquals( 9 ) )
+            .Go();
     }
 
     [Fact]
@@ -59,15 +56,14 @@ public class TimeOfDayTests : TestsBase
     {
         var sut = default( TimeOfDay );
 
-        using ( new AssertionScope() )
-        {
-            sut.Hour.Should().Be( 0 );
-            sut.Minute.Should().Be( 0 );
-            sut.Second.Should().Be( 0 );
-            sut.Millisecond.Should().Be( 0 );
-            sut.Microsecond.Should().Be( 0 );
-            sut.Tick.Should().Be( 0 );
-        }
+        Assertion.All(
+                sut.Hour.TestEquals( 0 ),
+                sut.Minute.TestEquals( 0 ),
+                sut.Second.TestEquals( 0 ),
+                sut.Millisecond.TestEquals( 0 ),
+                sut.Microsecond.TestEquals( 0 ),
+                sut.Tick.TestEquals( 0 ) )
+            .Go();
     }
 
     [Theory]
@@ -82,15 +78,14 @@ public class TimeOfDayTests : TestsBase
     {
         var sut = new TimeOfDay( hour, minute, second, millisecond, microsecond, tick );
 
-        using ( new AssertionScope() )
-        {
-            sut.Hour.Should().Be( hour );
-            sut.Minute.Should().Be( minute );
-            sut.Second.Should().Be( second );
-            sut.Millisecond.Should().Be( millisecond );
-            sut.Microsecond.Should().Be( microsecond );
-            sut.Tick.Should().Be( tick );
-        }
+        Assertion.All(
+                sut.Hour.TestEquals( hour ),
+                sut.Minute.TestEquals( minute ),
+                sut.Second.TestEquals( second ),
+                sut.Millisecond.TestEquals( millisecond ),
+                sut.Microsecond.TestEquals( microsecond ),
+                sut.Tick.TestEquals( tick ) )
+            .Go();
     }
 
     [Theory]
@@ -104,7 +99,7 @@ public class TimeOfDayTests : TestsBase
         int tick)
     {
         var action = Lambda.Of( () => new TimeOfDay( hour, minute, second, millisecond, microsecond, tick ) );
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Theory]
@@ -114,15 +109,14 @@ public class TimeOfDayTests : TestsBase
         var timeSpan = TimeSpan.FromTicks( ticks );
         var sut = new TimeOfDay( timeSpan );
 
-        using ( new AssertionScope() )
-        {
-            sut.Hour.Should().Be( timeSpan.Hours );
-            sut.Minute.Should().Be( timeSpan.Minutes );
-            sut.Second.Should().Be( timeSpan.Seconds );
-            sut.Millisecond.Should().Be( timeSpan.Milliseconds );
-            sut.Microsecond.Should().Be( timeSpan.Microseconds );
-            sut.Tick.Should().Be( ( int )(timeSpan.Ticks % ChronoConstants.TicksPerMicrosecond) );
-        }
+        Assertion.All(
+                sut.Hour.TestEquals( timeSpan.Hours ),
+                sut.Minute.TestEquals( timeSpan.Minutes ),
+                sut.Second.TestEquals( timeSpan.Seconds ),
+                sut.Millisecond.TestEquals( timeSpan.Milliseconds ),
+                sut.Microsecond.TestEquals( timeSpan.Microseconds ),
+                sut.Tick.TestEquals( ( int )(timeSpan.Ticks % ChronoConstants.TicksPerMicrosecond) ) )
+            .Go();
     }
 
     [Theory]
@@ -131,7 +125,7 @@ public class TimeOfDayTests : TestsBase
     {
         var timeSpan = TimeSpan.FromTicks( ticks );
         var action = Lambda.Of( () => new TimeOfDay( timeSpan ) );
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Theory]
@@ -140,7 +134,7 @@ public class TimeOfDayTests : TestsBase
     {
         var sut = new TimeOfDay( TimeSpan.FromTicks( ticks ) );
         var result = sut.ToString();
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -149,7 +143,7 @@ public class TimeOfDayTests : TestsBase
     {
         var sut = new TimeOfDay( TimeSpan.FromTicks( ticks ) );
         var result = sut.GetHashCode();
-        result.Should().Be( ticks.GetHashCode() );
+        result.TestEquals( ticks.GetHashCode() ).Go();
     }
 
     [Theory]
@@ -161,7 +155,7 @@ public class TimeOfDayTests : TestsBase
 
         var result = a.Equals( b );
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -173,7 +167,7 @@ public class TimeOfDayTests : TestsBase
 
         var result = a.CompareTo( b );
 
-        Math.Sign( result ).Should().Be( expectedSign );
+        Math.Sign( result ).TestEquals( expectedSign ).Go();
     }
 
     [Fact]
@@ -181,7 +175,7 @@ public class TimeOfDayTests : TestsBase
     {
         var sut = TimeOfDay.Start;
         var result = sut.Invert();
-        result.Should().Be( sut );
+        result.TestEquals( sut ).Go();
     }
 
     [Theory]
@@ -193,7 +187,7 @@ public class TimeOfDayTests : TestsBase
 
         var result = sut.Invert();
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -205,7 +199,7 @@ public class TimeOfDayTests : TestsBase
 
         var result = sut.Subtract( other );
 
-        result.Ticks.Should().Be( expectedTicks );
+        result.Ticks.TestEquals( expectedTicks ).Go();
     }
 
     [Theory]
@@ -217,7 +211,7 @@ public class TimeOfDayTests : TestsBase
 
         var result = sut.TrimToMicrosecond();
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -229,7 +223,7 @@ public class TimeOfDayTests : TestsBase
 
         var result = sut.TrimToMillisecond();
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -241,7 +235,7 @@ public class TimeOfDayTests : TestsBase
 
         var result = sut.TrimToSecond();
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -253,7 +247,7 @@ public class TimeOfDayTests : TestsBase
 
         var result = sut.TrimToMinute();
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -265,7 +259,7 @@ public class TimeOfDayTests : TestsBase
 
         var result = sut.TrimToHour();
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -274,7 +268,7 @@ public class TimeOfDayTests : TestsBase
     {
         var sut = TimeOfDay.Start;
         var action = Lambda.Of( () => sut.SetTick( value ) );
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Theory]
@@ -286,11 +280,10 @@ public class TimeOfDayTests : TestsBase
 
         var result = sut.SetTick( value );
 
-        using ( new AssertionScope() )
-        {
-            result.Tick.Should().Be( value );
-            result.Should().Be( expected );
-        }
+        Assertion.All(
+                result.Tick.TestEquals( value ),
+                result.TestEquals( expected ) )
+            .Go();
     }
 
     [Theory]
@@ -299,7 +292,7 @@ public class TimeOfDayTests : TestsBase
     {
         var sut = TimeOfDay.Start;
         var action = Lambda.Of( () => sut.SetMicrosecond( value ) );
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Theory]
@@ -311,11 +304,10 @@ public class TimeOfDayTests : TestsBase
 
         var result = sut.SetMicrosecond( value );
 
-        using ( new AssertionScope() )
-        {
-            result.Microsecond.Should().Be( value );
-            result.Should().Be( expected );
-        }
+        Assertion.All(
+                result.Microsecond.TestEquals( value ),
+                result.TestEquals( expected ) )
+            .Go();
     }
 
     [Theory]
@@ -324,7 +316,7 @@ public class TimeOfDayTests : TestsBase
     {
         var sut = TimeOfDay.Start;
         var action = Lambda.Of( () => sut.SetMillisecond( value ) );
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Theory]
@@ -336,11 +328,10 @@ public class TimeOfDayTests : TestsBase
 
         var result = sut.SetMillisecond( value );
 
-        using ( new AssertionScope() )
-        {
-            result.Millisecond.Should().Be( value );
-            result.Should().Be( expected );
-        }
+        Assertion.All(
+                result.Millisecond.TestEquals( value ),
+                result.TestEquals( expected ) )
+            .Go();
     }
 
     [Theory]
@@ -349,7 +340,7 @@ public class TimeOfDayTests : TestsBase
     {
         var sut = TimeOfDay.Start;
         var action = Lambda.Of( () => sut.SetSecond( value ) );
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Theory]
@@ -361,11 +352,10 @@ public class TimeOfDayTests : TestsBase
 
         var result = sut.SetSecond( value );
 
-        using ( new AssertionScope() )
-        {
-            result.Second.Should().Be( value );
-            result.Should().Be( expected );
-        }
+        Assertion.All(
+                result.Second.TestEquals( value ),
+                result.TestEquals( expected ) )
+            .Go();
     }
 
     [Theory]
@@ -374,7 +364,7 @@ public class TimeOfDayTests : TestsBase
     {
         var sut = TimeOfDay.Start;
         var action = Lambda.Of( () => sut.SetMinute( value ) );
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Theory]
@@ -386,11 +376,10 @@ public class TimeOfDayTests : TestsBase
 
         var result = sut.SetMinute( value );
 
-        using ( new AssertionScope() )
-        {
-            result.Minute.Should().Be( value );
-            result.Should().Be( expected );
-        }
+        Assertion.All(
+                result.Minute.TestEquals( value ),
+                result.TestEquals( expected ) )
+            .Go();
     }
 
     [Theory]
@@ -399,7 +388,7 @@ public class TimeOfDayTests : TestsBase
     {
         var sut = TimeOfDay.Start;
         var action = Lambda.Of( () => sut.SetHour( value ) );
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Theory]
@@ -411,11 +400,10 @@ public class TimeOfDayTests : TestsBase
 
         var result = sut.SetHour( value );
 
-        using ( new AssertionScope() )
-        {
-            result.Hour.Should().Be( value );
-            result.Should().Be( expected );
-        }
+        Assertion.All(
+                result.Hour.TestEquals( value ),
+                result.TestEquals( expected ) )
+            .Go();
     }
 
     [Theory]
@@ -424,7 +412,7 @@ public class TimeOfDayTests : TestsBase
     {
         var sut = new TimeOfDay( TimeSpan.FromTicks( ticks ) );
         var result = ( TimeSpan )sut;
-        result.Ticks.Should().Be( ticks );
+        result.Ticks.TestEquals( ticks ).Go();
     }
 
     [Theory]
@@ -433,7 +421,7 @@ public class TimeOfDayTests : TestsBase
     {
         var sut = new TimeOfDay( TimeSpan.FromTicks( ticks ) );
         var result = ( Duration )sut;
-        result.Ticks.Should().Be( ticks );
+        result.Ticks.TestEquals( ticks ).Go();
     }
 
     [Theory]
@@ -445,7 +433,7 @@ public class TimeOfDayTests : TestsBase
 
         var result = sut - other;
 
-        result.Ticks.Should().Be( expectedTicks );
+        result.Ticks.TestEquals( expectedTicks ).Go();
     }
 
     [Theory]
@@ -457,7 +445,7 @@ public class TimeOfDayTests : TestsBase
 
         var result = a == b;
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -469,7 +457,7 @@ public class TimeOfDayTests : TestsBase
 
         var result = a != b;
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -481,7 +469,7 @@ public class TimeOfDayTests : TestsBase
 
         var result = a > b;
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -493,7 +481,7 @@ public class TimeOfDayTests : TestsBase
 
         var result = a <= b;
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -505,7 +493,7 @@ public class TimeOfDayTests : TestsBase
 
         var result = a < b;
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -517,6 +505,6 @@ public class TimeOfDayTests : TestsBase
 
         var result = a >= b;
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 }

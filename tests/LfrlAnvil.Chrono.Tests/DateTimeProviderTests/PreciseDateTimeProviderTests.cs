@@ -9,14 +9,14 @@ public class PreciseDateTimeProviderTests : TestsBase
     public void Utc_ShouldReturnCorrectResult()
     {
         var sut = PreciseDateTimeProvider.Utc;
-        sut.Kind.Should().Be( DateTimeKind.Utc );
+        sut.Kind.TestEquals( DateTimeKind.Utc ).Go();
     }
 
     [Fact]
     public void Local_ShouldReturnCorrectResult()
     {
         var sut = PreciseDateTimeProvider.Local;
-        sut.Kind.Should().Be( DateTimeKind.Local );
+        sut.Kind.TestEquals( DateTimeKind.Local ).Go();
     }
 
     [Theory]
@@ -26,7 +26,7 @@ public class PreciseDateTimeProviderTests : TestsBase
     public void Ctor_ForUtc_ShouldThrowArgumentOutOfRangeException_WhenPrecisionResetTimeoutIsInvalid(long value)
     {
         var action = Lambda.Of( () => new PreciseUtcDateTimeProvider( Duration.FromTicks( value ) ) );
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Theory]
@@ -36,7 +36,7 @@ public class PreciseDateTimeProviderTests : TestsBase
     public void Ctor_ForLocal_ShouldThrowArgumentOutOfRangeException_WhenPrecisionResetTimeoutIsInvalid(long value)
     {
         var action = Lambda.Of( () => new PreciseLocalDateTimeProvider( Duration.FromTicks( value ) ) );
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Theory]
@@ -47,11 +47,10 @@ public class PreciseDateTimeProviderTests : TestsBase
     {
         var sut = new PreciseUtcDateTimeProvider( Duration.FromTicks( value ) );
 
-        using ( new AssertionScope() )
-        {
-            sut.Kind.Should().Be( DateTimeKind.Utc );
-            sut.PrecisionResetTimeout.Should().Be( Duration.FromTicks( value ) );
-        }
+        Assertion.All(
+                sut.Kind.TestEquals( DateTimeKind.Utc ),
+                sut.PrecisionResetTimeout.TestEquals( Duration.FromTicks( value ) ) )
+            .Go();
     }
 
     [Theory]
@@ -62,11 +61,10 @@ public class PreciseDateTimeProviderTests : TestsBase
     {
         var sut = new PreciseLocalDateTimeProvider( Duration.FromTicks( value ) );
 
-        using ( new AssertionScope() )
-        {
-            sut.Kind.Should().Be( DateTimeKind.Local );
-            sut.PrecisionResetTimeout.Should().Be( Duration.FromTicks( value ) );
-        }
+        Assertion.All(
+                sut.Kind.TestEquals( DateTimeKind.Local ),
+                sut.PrecisionResetTimeout.TestEquals( Duration.FromTicks( value ) ) )
+            .Go();
     }
 
     [Fact]
@@ -74,11 +72,10 @@ public class PreciseDateTimeProviderTests : TestsBase
     {
         var sut = new PreciseUtcDateTimeProvider();
 
-        using ( new AssertionScope() )
-        {
-            sut.Kind.Should().Be( DateTimeKind.Utc );
-            sut.PrecisionResetTimeout.Should().Be( Duration.FromMinutes( 1 ) );
-        }
+        Assertion.All(
+                sut.Kind.TestEquals( DateTimeKind.Utc ),
+                sut.PrecisionResetTimeout.TestEquals( Duration.FromMinutes( 1 ) ) )
+            .Go();
     }
 
     [Fact]
@@ -86,11 +83,10 @@ public class PreciseDateTimeProviderTests : TestsBase
     {
         var sut = new PreciseLocalDateTimeProvider();
 
-        using ( new AssertionScope() )
-        {
-            sut.Kind.Should().Be( DateTimeKind.Local );
-            sut.PrecisionResetTimeout.Should().Be( Duration.FromMinutes( 1 ) );
-        }
+        Assertion.All(
+                sut.Kind.TestEquals( DateTimeKind.Local ),
+                sut.PrecisionResetTimeout.TestEquals( Duration.FromMinutes( 1 ) ) )
+            .Go();
     }
 
     [Fact]
@@ -102,11 +98,10 @@ public class PreciseDateTimeProviderTests : TestsBase
         var result = sut.GetNow();
         var expectedMax = DateTime.UtcNow;
 
-        using ( new AssertionScope() )
-        {
-            result.Kind.Should().Be( DateTimeKind.Utc );
-            result.Should().BeOnOrAfter( expectedMin ).And.BeOnOrBefore( expectedMax );
-        }
+        Assertion.All(
+                result.Kind.TestEquals( DateTimeKind.Utc ),
+                result.TestInRange( expectedMin, expectedMax ) )
+            .Go();
     }
 
     [Fact]
@@ -118,11 +113,10 @@ public class PreciseDateTimeProviderTests : TestsBase
         var result = sut.GetNow();
         var expectedMax = DateTime.Now;
 
-        using ( new AssertionScope() )
-        {
-            result.Kind.Should().Be( DateTimeKind.Local );
-            result.Should().BeOnOrAfter( expectedMin ).And.BeOnOrBefore( expectedMax );
-        }
+        Assertion.All(
+                result.Kind.TestEquals( DateTimeKind.Local ),
+                result.TestInRange( expectedMin, expectedMax ) )
+            .Go();
     }
 
     [Fact]
@@ -136,11 +130,10 @@ public class PreciseDateTimeProviderTests : TestsBase
         var result = sut.GetNow();
         var expectedMax = DateTime.UtcNow;
 
-        using ( new AssertionScope() )
-        {
-            result.Kind.Should().Be( DateTimeKind.Utc );
-            result.Should().BeOnOrAfter( expectedMin ).And.BeOnOrBefore( expectedMax );
-        }
+        Assertion.All(
+                result.Kind.TestEquals( DateTimeKind.Utc ),
+                result.TestInRange( expectedMin, expectedMax ) )
+            .Go();
     }
 
     [Fact]
@@ -154,10 +147,9 @@ public class PreciseDateTimeProviderTests : TestsBase
         var result = sut.GetNow();
         var expectedMax = DateTime.Now;
 
-        using ( new AssertionScope() )
-        {
-            result.Kind.Should().Be( DateTimeKind.Local );
-            result.Should().BeOnOrAfter( expectedMin ).And.BeOnOrBefore( expectedMax );
-        }
+        Assertion.All(
+                result.Kind.TestEquals( DateTimeKind.Local ),
+                result.TestInRange( expectedMin, expectedMax ) )
+            .Go();
     }
 }

@@ -12,7 +12,7 @@ public class PreciseTimestampProviderTests : TestsBase
     public void Ctor_ShouldThrowArgumentOutOfRangeException_WhenPrecisionResetTimeoutIsInvalid(long value)
     {
         var action = Lambda.Of( () => new PreciseTimestampProvider( Duration.FromTicks( value ) ) );
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Theory]
@@ -22,14 +22,14 @@ public class PreciseTimestampProviderTests : TestsBase
     public void Ctor_ShouldReturnCorrectResult(long value)
     {
         var sut = new PreciseTimestampProvider( Duration.FromTicks( value ) );
-        sut.PrecisionResetTimeout.Should().Be( Duration.FromTicks( value ) );
+        sut.PrecisionResetTimeout.TestEquals( Duration.FromTicks( value ) ).Go();
     }
 
     [Fact]
     public void DefaultCtor_ShouldReturnCorrectResult()
     {
         var sut = new PreciseTimestampProvider();
-        sut.PrecisionResetTimeout.Should().Be( Duration.FromMinutes( 1 ) );
+        sut.PrecisionResetTimeout.TestEquals( Duration.FromMinutes( 1 ) ).Go();
     }
 
     [Fact]
@@ -41,7 +41,7 @@ public class PreciseTimestampProviderTests : TestsBase
         var result = sut.GetNow();
         var expectedMax = DateTime.UtcNow;
 
-        result.UtcValue.Should().BeOnOrAfter( expectedMin ).And.BeOnOrBefore( expectedMax );
+        result.UtcValue.TestInRange( expectedMin, expectedMax ).Go();
     }
 
     [Fact]
@@ -55,6 +55,6 @@ public class PreciseTimestampProviderTests : TestsBase
         var result = sut.GetNow();
         var expectedMax = DateTime.UtcNow;
 
-        result.UtcValue.Should().BeOnOrAfter( expectedMin ).And.BeOnOrBefore( expectedMax );
+        result.UtcValue.TestInRange( expectedMin, expectedMax ).Go();
     }
 }

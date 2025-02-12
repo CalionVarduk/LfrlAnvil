@@ -12,7 +12,7 @@ public class TransitionTimeExtensionsTests
     {
         var sut = TimeZoneFactory.CreateFixedTime( time );
         var result = sut.ToDateTime( year );
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -25,13 +25,10 @@ public class TransitionTimeExtensionsTests
         int year,
         DateTime expected)
     {
-        var sut = TimeZoneFactory.CreateFloatingTime(
-            monthAndTime: new DateTime( 1, month, 1 ) + timeOfDay,
-            week: week,
-            day: dayOfWeek );
+        var sut = TimeZoneFactory.CreateFloatingTime( monthAndTime: new DateTime( 1, month, 1 ) + timeOfDay, week: week, day: dayOfWeek );
 
         var result = sut.ToDateTime( year );
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 }

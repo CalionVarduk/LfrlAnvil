@@ -23,7 +23,7 @@ public abstract class Assertion
     [Pure]
     public static Assertion All(string context, params Assertion[] assertions)
     {
-        return new AssertionGroup( context, assertions );
+        return new ConjunctionAssertion( context, assertions );
     }
 
     [Pure]
@@ -36,6 +36,30 @@ public abstract class Assertion
     public static Assertion All(string context, IEnumerable<Assertion> assertions)
     {
         return All( context, assertions.ToArray() );
+    }
+
+    [Pure]
+    public static Assertion Any(params Assertion[] assertions)
+    {
+        return Any( string.Empty, assertions );
+    }
+
+    [Pure]
+    public static Assertion Any(string context, params Assertion[] assertions)
+    {
+        return new AlternativeAssertion( context, assertions );
+    }
+
+    [Pure]
+    public static Assertion Any(IEnumerable<Assertion> assertions)
+    {
+        return Any( string.Empty, assertions );
+    }
+
+    [Pure]
+    public static Assertion Any(string context, IEnumerable<Assertion> assertions)
+    {
+        return Any( context, assertions.ToArray() );
     }
 
     [Pure]

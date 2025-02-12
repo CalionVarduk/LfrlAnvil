@@ -10,11 +10,10 @@ public class PreciseZonedClockTests : TestsBase
     {
         var sut = PreciseZonedClock.Utc;
 
-        using ( new AssertionScope() )
-        {
-            sut.TimeZone.Should().Be( TimeZoneInfo.Utc );
-            sut.PrecisionResetTimeout.Should().Be( Duration.FromMinutes( 1 ) );
-        }
+        Assertion.All(
+                sut.TimeZone.TestEquals( TimeZoneInfo.Utc ),
+                sut.PrecisionResetTimeout.TestEquals( Duration.FromMinutes( 1 ) ) )
+            .Go();
     }
 
     [Fact]
@@ -22,11 +21,10 @@ public class PreciseZonedClockTests : TestsBase
     {
         var sut = PreciseZonedClock.Local;
 
-        using ( new AssertionScope() )
-        {
-            sut.TimeZone.Should().Be( TimeZoneInfo.Local );
-            sut.PrecisionResetTimeout.Should().Be( Duration.FromMinutes( 1 ) );
-        }
+        Assertion.All(
+                sut.TimeZone.TestEquals( TimeZoneInfo.Local ),
+                sut.PrecisionResetTimeout.TestEquals( Duration.FromMinutes( 1 ) ) )
+            .Go();
     }
 
     [Theory]
@@ -37,7 +35,7 @@ public class PreciseZonedClockTests : TestsBase
     {
         var timeZone = TimeZoneFactory.CreateRandom( Fixture );
         var action = Lambda.Of( () => new PreciseZonedClock( timeZone, Duration.FromTicks( value ) ) );
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Theory]
@@ -49,11 +47,10 @@ public class PreciseZonedClockTests : TestsBase
         var timeZone = TimeZoneFactory.CreateRandom( Fixture );
         var sut = new PreciseZonedClock( timeZone, Duration.FromTicks( value ) );
 
-        using ( new AssertionScope() )
-        {
-            sut.TimeZone.Should().Be( timeZone );
-            sut.PrecisionResetTimeout.Should().Be( Duration.FromTicks( value ) );
-        }
+        Assertion.All(
+                sut.TimeZone.TestEquals( timeZone ),
+                sut.PrecisionResetTimeout.TestEquals( Duration.FromTicks( value ) ) )
+            .Go();
     }
 
     [Fact]
@@ -62,11 +59,10 @@ public class PreciseZonedClockTests : TestsBase
         var timeZone = TimeZoneFactory.CreateRandom( Fixture );
         var sut = new PreciseZonedClock( timeZone );
 
-        using ( new AssertionScope() )
-        {
-            sut.TimeZone.Should().Be( timeZone );
-            sut.PrecisionResetTimeout.Should().Be( Duration.FromMinutes( 1 ) );
-        }
+        Assertion.All(
+                sut.TimeZone.TestEquals( timeZone ),
+                sut.PrecisionResetTimeout.TestEquals( Duration.FromMinutes( 1 ) ) )
+            .Go();
     }
 
     [Fact]
@@ -79,11 +75,10 @@ public class PreciseZonedClockTests : TestsBase
         var result = sut.GetNow();
         var expectedMaxTimestamp = new Timestamp( DateTime.UtcNow );
 
-        using ( new AssertionScope() )
-        {
-            result.Timestamp.Should().BeGreaterOrEqualTo( expectedMinTimestamp ).And.BeLessOrEqualTo( expectedMaxTimestamp );
-            result.TimeZone.Should().Be( timeZone );
-        }
+        Assertion.All(
+                result.Timestamp.TestInRange( expectedMinTimestamp, expectedMaxTimestamp ),
+                result.TimeZone.TestEquals( timeZone ) )
+            .Go();
     }
 
     [Fact]
@@ -98,10 +93,9 @@ public class PreciseZonedClockTests : TestsBase
         var result = sut.GetNow();
         var expectedMaxTimestamp = new Timestamp( DateTime.UtcNow );
 
-        using ( new AssertionScope() )
-        {
-            result.Timestamp.Should().BeGreaterOrEqualTo( expectedMinTimestamp ).And.BeLessOrEqualTo( expectedMaxTimestamp );
-            result.TimeZone.Should().Be( timeZone );
-        }
+        Assertion.All(
+                result.Timestamp.TestInRange( expectedMinTimestamp, expectedMaxTimestamp ),
+                result.TimeZone.TestEquals( timeZone ) )
+            .Go();
     }
 }
