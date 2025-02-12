@@ -18,12 +18,11 @@ public abstract class GenericTwoWayDictionaryTests<T1, T2> : GenericCollectionTe
     {
         var sut = new TwoWayDictionary<T1, T2>();
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 0 );
-            sut.ForwardComparer.Should().Be( EqualityComparer<T1>.Default );
-            sut.ReverseComparer.Should().Be( EqualityComparer<T2>.Default );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 0 ),
+                sut.ForwardComparer.TestEquals( EqualityComparer<T1>.Default ),
+                sut.ReverseComparer.TestEquals( EqualityComparer<T2>.Default ) )
+            .Go();
     }
 
     [Fact]
@@ -34,12 +33,11 @@ public abstract class GenericTwoWayDictionaryTests<T1, T2> : GenericCollectionTe
 
         var sut = new TwoWayDictionary<T1, T2>( forwardComparer, reverseComparer );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 0 );
-            sut.ForwardComparer.Should().Be( forwardComparer );
-            sut.ReverseComparer.Should().Be( reverseComparer );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 0 ),
+                sut.ForwardComparer.TestRefEquals( forwardComparer ),
+                sut.ReverseComparer.TestRefEquals( reverseComparer ) )
+            .Go();
     }
 
     [Fact]
@@ -52,13 +50,12 @@ public abstract class GenericTwoWayDictionaryTests<T1, T2> : GenericCollectionTe
 
         var result = sut.TryAdd( first, newSecond );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeFalse();
-            sut.Count.Should().Be( 1 );
-            sut.Forward[first].Should().Be( oldSecond );
-            sut.Reverse[oldSecond].Should().Be( first );
-        }
+        Assertion.All(
+                result.TestFalse(),
+                sut.Count.TestEquals( 1 ),
+                sut.Forward[first].TestEquals( oldSecond ),
+                sut.Reverse[oldSecond].TestEquals( first ) )
+            .Go();
     }
 
     [Fact]
@@ -71,13 +68,12 @@ public abstract class GenericTwoWayDictionaryTests<T1, T2> : GenericCollectionTe
 
         var result = sut.TryAdd( newFirst, second );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeFalse();
-            sut.Count.Should().Be( 1 );
-            sut.Forward[oldFirst].Should().Be( second );
-            sut.Reverse[second].Should().Be( oldFirst );
-        }
+        Assertion.All(
+                result.TestFalse(),
+                sut.Count.TestEquals( 1 ),
+                sut.Forward[oldFirst].TestEquals( second ),
+                sut.Reverse[second].TestEquals( oldFirst ) )
+            .Go();
     }
 
     [Fact]
@@ -90,13 +86,12 @@ public abstract class GenericTwoWayDictionaryTests<T1, T2> : GenericCollectionTe
 
         var result = sut.TryAdd( first, second );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            sut.Count.Should().Be( 1 );
-            sut.Forward[first].Should().Be( second );
-            sut.Reverse[second].Should().Be( first );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                sut.Count.TestEquals( 1 ),
+                sut.Forward[first].TestEquals( second ),
+                sut.Reverse[second].TestEquals( first ) )
+            .Go();
     }
 
     [Fact]
@@ -109,15 +104,14 @@ public abstract class GenericTwoWayDictionaryTests<T1, T2> : GenericCollectionTe
 
         var result = sut.TryAdd( first, second );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            sut.Count.Should().Be( 2 );
-            sut.Forward[first].Should().Be( second );
-            sut.Reverse[second].Should().Be( first );
-            sut.Forward[otherFirst].Should().Be( otherSecond );
-            sut.Reverse[otherSecond].Should().Be( otherFirst );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                sut.Count.TestEquals( 2 ),
+                sut.Forward[first].TestEquals( second ),
+                sut.Reverse[second].TestEquals( first ),
+                sut.Forward[otherFirst].TestEquals( otherSecond ),
+                sut.Reverse[otherSecond].TestEquals( otherFirst ) )
+            .Go();
     }
 
     [Fact]
@@ -130,13 +124,13 @@ public abstract class GenericTwoWayDictionaryTests<T1, T2> : GenericCollectionTe
 
         var action = Lambda.Of( () => sut.Add( first, newSecond ) );
 
-        using ( new AssertionScope() )
-        {
-            action.Should().ThrowExactly<ArgumentException>();
-            sut.Count.Should().Be( 1 );
-            sut.Forward[first].Should().Be( oldSecond );
-            sut.Reverse[oldSecond].Should().Be( first );
-        }
+        action.Test(
+                exc => Assertion.All(
+                    exc.TestType().Exact<ArgumentException>(),
+                    sut.Count.TestEquals( 1 ),
+                    sut.Forward[first].TestEquals( oldSecond ),
+                    sut.Reverse[oldSecond].TestEquals( first ) ) )
+            .Go();
     }
 
     [Fact]
@@ -149,13 +143,13 @@ public abstract class GenericTwoWayDictionaryTests<T1, T2> : GenericCollectionTe
 
         var action = Lambda.Of( () => sut.Add( newFirst, second ) );
 
-        using ( new AssertionScope() )
-        {
-            action.Should().ThrowExactly<ArgumentException>();
-            sut.Count.Should().Be( 1 );
-            sut.Forward[oldFirst].Should().Be( second );
-            sut.Reverse[second].Should().Be( oldFirst );
-        }
+        action.Test(
+                exc => Assertion.All(
+                    exc.TestType().Exact<ArgumentException>(),
+                    sut.Count.TestEquals( 1 ),
+                    sut.Forward[oldFirst].TestEquals( second ),
+                    sut.Reverse[second].TestEquals( oldFirst ) ) )
+            .Go();
     }
 
     [Fact]
@@ -168,12 +162,11 @@ public abstract class GenericTwoWayDictionaryTests<T1, T2> : GenericCollectionTe
 
         sut.Add( first, second );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 1 );
-            sut.Forward[first].Should().Be( second );
-            sut.Reverse[second].Should().Be( first );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 1 ),
+                sut.Forward[first].TestEquals( second ),
+                sut.Reverse[second].TestEquals( first ) )
+            .Go();
     }
 
     [Fact]
@@ -186,14 +179,13 @@ public abstract class GenericTwoWayDictionaryTests<T1, T2> : GenericCollectionTe
 
         sut.Add( first, second );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 2 );
-            sut.Forward[first].Should().Be( second );
-            sut.Reverse[second].Should().Be( first );
-            sut.Forward[otherFirst].Should().Be( otherSecond );
-            sut.Reverse[otherSecond].Should().Be( otherFirst );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 2 ),
+                sut.Forward[first].TestEquals( second ),
+                sut.Reverse[second].TestEquals( first ),
+                sut.Forward[otherFirst].TestEquals( otherSecond ),
+                sut.Reverse[otherSecond].TestEquals( otherFirst ) )
+            .Go();
     }
 
     [Fact]
@@ -206,13 +198,12 @@ public abstract class GenericTwoWayDictionaryTests<T1, T2> : GenericCollectionTe
 
         var result = sut.TryUpdateForward( first2, second );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeFalse();
-            sut.Count.Should().Be( 1 );
-            sut.Forward[first1].Should().Be( second );
-            sut.Reverse[second].Should().Be( first1 );
-        }
+        Assertion.All(
+                result.TestFalse(),
+                sut.Count.TestEquals( 1 ),
+                sut.Forward[first1].TestEquals( second ),
+                sut.Reverse[second].TestEquals( first1 ) )
+            .Go();
     }
 
     [Fact]
@@ -225,11 +216,10 @@ public abstract class GenericTwoWayDictionaryTests<T1, T2> : GenericCollectionTe
 
         var result = sut.TryUpdateForward( first, second );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeFalse();
-            sut.Count.Should().Be( 0 );
-        }
+        Assertion.All(
+                result.TestFalse(),
+                sut.Count.TestEquals( 0 ) )
+            .Go();
     }
 
     [Fact]
@@ -242,14 +232,13 @@ public abstract class GenericTwoWayDictionaryTests<T1, T2> : GenericCollectionTe
 
         var result = sut.TryUpdateForward( first, second2 );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            sut.Count.Should().Be( 1 );
-            sut.Forward[first].Should().Be( second2 );
-            sut.Reverse[second2].Should().Be( first );
-            sut.Reverse.ContainsKey( second1 ).Should().BeFalse();
-        }
+        Assertion.All(
+                result.TestTrue(),
+                sut.Count.TestEquals( 1 ),
+                sut.Forward[first].TestEquals( second2 ),
+                sut.Reverse[second2].TestEquals( first ),
+                sut.Reverse.ContainsKey( second1 ).TestFalse() )
+            .Go();
     }
 
     [Fact]
@@ -262,13 +251,13 @@ public abstract class GenericTwoWayDictionaryTests<T1, T2> : GenericCollectionTe
 
         var action = Lambda.Of( () => sut.UpdateForward( first2, second ) );
 
-        using ( new AssertionScope() )
-        {
-            action.Should().ThrowExactly<ArgumentException>();
-            sut.Count.Should().Be( 1 );
-            sut.Forward[first1].Should().Be( second );
-            sut.Reverse[second].Should().Be( first1 );
-        }
+        action.Test(
+                exc => Assertion.All(
+                    exc.TestType().Exact<ArgumentException>(),
+                    sut.Count.TestEquals( 1 ),
+                    sut.Forward[first1].TestEquals( second ),
+                    sut.Reverse[second].TestEquals( first1 ) ) )
+            .Go();
     }
 
     [Fact]
@@ -281,11 +270,11 @@ public abstract class GenericTwoWayDictionaryTests<T1, T2> : GenericCollectionTe
 
         var action = Lambda.Of( () => sut.UpdateForward( first, second ) );
 
-        using ( new AssertionScope() )
-        {
-            action.Should().ThrowExactly<KeyNotFoundException>();
-            sut.Count.Should().Be( 0 );
-        }
+        action.Test(
+                exc => Assertion.All(
+                    exc.TestType().Exact<KeyNotFoundException>(),
+                    sut.Count.TestEquals( 0 ) ) )
+            .Go();
     }
 
     [Fact]
@@ -298,13 +287,12 @@ public abstract class GenericTwoWayDictionaryTests<T1, T2> : GenericCollectionTe
 
         sut.UpdateForward( first, second2 );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 1 );
-            sut.Forward[first].Should().Be( second2 );
-            sut.Reverse[second2].Should().Be( first );
-            sut.Reverse.ContainsKey( second1 ).Should().BeFalse();
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 1 ),
+                sut.Forward[first].TestEquals( second2 ),
+                sut.Reverse[second2].TestEquals( first ),
+                sut.Reverse.ContainsKey( second1 ).TestFalse() )
+            .Go();
     }
 
     [Fact]
@@ -317,13 +305,12 @@ public abstract class GenericTwoWayDictionaryTests<T1, T2> : GenericCollectionTe
 
         var result = sut.TryUpdateReverse( second2, first );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeFalse();
-            sut.Count.Should().Be( 1 );
-            sut.Forward[first].Should().Be( second1 );
-            sut.Reverse[second1].Should().Be( first );
-        }
+        Assertion.All(
+                result.TestFalse(),
+                sut.Count.TestEquals( 1 ),
+                sut.Forward[first].TestEquals( second1 ),
+                sut.Reverse[second1].TestEquals( first ) )
+            .Go();
     }
 
     [Fact]
@@ -336,11 +323,10 @@ public abstract class GenericTwoWayDictionaryTests<T1, T2> : GenericCollectionTe
 
         var result = sut.TryUpdateReverse( second, first );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeFalse();
-            sut.Count.Should().Be( 0 );
-        }
+        Assertion.All(
+                result.TestFalse(),
+                sut.Count.TestEquals( 0 ) )
+            .Go();
     }
 
     [Fact]
@@ -353,14 +339,13 @@ public abstract class GenericTwoWayDictionaryTests<T1, T2> : GenericCollectionTe
 
         var result = sut.TryUpdateReverse( second, first2 );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            sut.Count.Should().Be( 1 );
-            sut.Reverse[second].Should().Be( first2 );
-            sut.Forward[first2].Should().Be( second );
-            sut.Forward.ContainsKey( first1 ).Should().BeFalse();
-        }
+        Assertion.All(
+                result.TestTrue(),
+                sut.Count.TestEquals( 1 ),
+                sut.Reverse[second].TestEquals( first2 ),
+                sut.Forward[first2].TestEquals( second ),
+                sut.Forward.ContainsKey( first1 ).TestFalse() )
+            .Go();
     }
 
     [Fact]
@@ -373,13 +358,13 @@ public abstract class GenericTwoWayDictionaryTests<T1, T2> : GenericCollectionTe
 
         var action = Lambda.Of( () => sut.UpdateReverse( second2, first ) );
 
-        using ( new AssertionScope() )
-        {
-            action.Should().ThrowExactly<ArgumentException>();
-            sut.Count.Should().Be( 1 );
-            sut.Forward[first].Should().Be( second1 );
-            sut.Reverse[second1].Should().Be( first );
-        }
+        action.Test(
+                exc => Assertion.All(
+                    exc.TestType().Exact<ArgumentException>(),
+                    sut.Count.TestEquals( 1 ),
+                    sut.Forward[first].TestEquals( second1 ),
+                    sut.Reverse[second1].TestEquals( first ) ) )
+            .Go();
     }
 
     [Fact]
@@ -392,11 +377,11 @@ public abstract class GenericTwoWayDictionaryTests<T1, T2> : GenericCollectionTe
 
         var action = Lambda.Of( () => sut.UpdateReverse( second, first ) );
 
-        using ( new AssertionScope() )
-        {
-            action.Should().ThrowExactly<KeyNotFoundException>();
-            sut.Count.Should().Be( 0 );
-        }
+        action.Test(
+                exc => Assertion.All(
+                    exc.TestType().Exact<KeyNotFoundException>(),
+                    sut.Count.TestEquals( 0 ) ) )
+            .Go();
     }
 
     [Fact]
@@ -409,13 +394,12 @@ public abstract class GenericTwoWayDictionaryTests<T1, T2> : GenericCollectionTe
 
         sut.UpdateReverse( second, first2 );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 1 );
-            sut.Reverse[second].Should().Be( first2 );
-            sut.Forward[first2].Should().Be( second );
-            sut.Forward.ContainsKey( first1 ).Should().BeFalse();
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 1 ),
+                sut.Reverse[second].TestEquals( first2 ),
+                sut.Forward[first2].TestEquals( second ),
+                sut.Forward.ContainsKey( first1 ).TestFalse() )
+            .Go();
     }
 
     [Fact]
@@ -427,7 +411,7 @@ public abstract class GenericTwoWayDictionaryTests<T1, T2> : GenericCollectionTe
 
         var result = sut.RemoveForward( first );
 
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Fact]
@@ -440,11 +424,10 @@ public abstract class GenericTwoWayDictionaryTests<T1, T2> : GenericCollectionTe
 
         var result = sut.RemoveForward( first );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            sut.Count.Should().Be( 0 );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                sut.Count.TestEquals( 0 ) )
+            .Go();
     }
 
     [Fact]
@@ -456,7 +439,7 @@ public abstract class GenericTwoWayDictionaryTests<T1, T2> : GenericCollectionTe
 
         var result = sut.RemoveReverse( second );
 
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Fact]
@@ -469,11 +452,10 @@ public abstract class GenericTwoWayDictionaryTests<T1, T2> : GenericCollectionTe
 
         var result = sut.RemoveReverse( second );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            sut.Count.Should().Be( 0 );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                sut.Count.TestEquals( 0 ) )
+            .Go();
     }
 
     [Fact]
@@ -485,11 +467,10 @@ public abstract class GenericTwoWayDictionaryTests<T1, T2> : GenericCollectionTe
 
         var result = sut.RemoveForward( first, out var removed );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeFalse();
-            removed.Should().Be( default( T2 ) );
-        }
+        Assertion.All(
+                result.TestFalse(),
+                removed.TestEquals( default ) )
+            .Go();
     }
 
     [Fact]
@@ -502,12 +483,11 @@ public abstract class GenericTwoWayDictionaryTests<T1, T2> : GenericCollectionTe
 
         var result = sut.RemoveForward( first, out var removed );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            sut.Count.Should().Be( 0 );
-            removed.Should().Be( second );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                sut.Count.TestEquals( 0 ),
+                removed.TestEquals( second ) )
+            .Go();
     }
 
     [Fact]
@@ -519,11 +499,10 @@ public abstract class GenericTwoWayDictionaryTests<T1, T2> : GenericCollectionTe
 
         var result = sut.RemoveReverse( second, out var removed );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeFalse();
-            removed.Should().Be( default( T1 ) );
-        }
+        Assertion.All(
+                result.TestFalse(),
+                removed.TestEquals( default ) )
+            .Go();
     }
 
     [Fact]
@@ -536,12 +515,11 @@ public abstract class GenericTwoWayDictionaryTests<T1, T2> : GenericCollectionTe
 
         var result = sut.RemoveReverse( second, out var removed );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            sut.Count.Should().Be( 0 );
-            removed.Should().Be( first );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                sut.Count.TestEquals( 0 ),
+                removed.TestEquals( first ) )
+            .Go();
     }
 
     [Fact]
@@ -559,7 +537,7 @@ public abstract class GenericTwoWayDictionaryTests<T1, T2> : GenericCollectionTe
 
         sut.Clear();
 
-        sut.Count.Should().Be( 0 );
+        sut.Count.TestEquals( 0 ).Go();
     }
 
     [Fact]
@@ -572,7 +550,7 @@ public abstract class GenericTwoWayDictionaryTests<T1, T2> : GenericCollectionTe
 
         var result = sut.Contains( first, second );
 
-        result.Should().BeTrue();
+        result.TestTrue().Go();
     }
 
     [Fact]
@@ -585,7 +563,7 @@ public abstract class GenericTwoWayDictionaryTests<T1, T2> : GenericCollectionTe
 
         var result = sut.Contains( first, second2 );
 
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Fact]
@@ -598,7 +576,7 @@ public abstract class GenericTwoWayDictionaryTests<T1, T2> : GenericCollectionTe
 
         var result = sut.Contains( first2, second );
 
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Fact]
@@ -611,7 +589,7 @@ public abstract class GenericTwoWayDictionaryTests<T1, T2> : GenericCollectionTe
 
         var result = sut.Contains( first, second );
 
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Fact]
@@ -624,7 +602,7 @@ public abstract class GenericTwoWayDictionaryTests<T1, T2> : GenericCollectionTe
 
         var result = sut.Contains( Pair.Create( first, second ) );
 
-        result.Should().BeTrue();
+        result.TestTrue().Go();
     }
 
     [Fact]
@@ -637,7 +615,7 @@ public abstract class GenericTwoWayDictionaryTests<T1, T2> : GenericCollectionTe
 
         var result = sut.Contains( Pair.Create( first, second2 ) );
 
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Fact]
@@ -650,7 +628,7 @@ public abstract class GenericTwoWayDictionaryTests<T1, T2> : GenericCollectionTe
 
         var result = sut.Contains( Pair.Create( first2, second ) );
 
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Fact]
@@ -663,7 +641,7 @@ public abstract class GenericTwoWayDictionaryTests<T1, T2> : GenericCollectionTe
 
         var result = sut.Contains( Pair.Create( first, second ) );
 
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Fact]
@@ -682,7 +660,7 @@ public abstract class GenericTwoWayDictionaryTests<T1, T2> : GenericCollectionTe
             { first3, second3 }
         };
 
-        sut.Should().BeEquivalentTo( expected );
+        sut.TestSetEqual( expected ).Go();
     }
 
     [Fact]
@@ -696,7 +674,7 @@ public abstract class GenericTwoWayDictionaryTests<T1, T2> : GenericCollectionTe
 
         var result = sut.Remove( Pair.Create( first, second2 ) );
 
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Fact]
@@ -710,7 +688,7 @@ public abstract class GenericTwoWayDictionaryTests<T1, T2> : GenericCollectionTe
 
         var result = sut.Remove( Pair.Create( first2, second ) );
 
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     protected sealed override ICollection<Pair<T1, T2>> CreateEmptyCollection()

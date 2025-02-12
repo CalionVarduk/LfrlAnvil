@@ -17,15 +17,14 @@ public class DirectedGraphEdgeExtensionsTests : TestsBase
 
         var result = sut.GetSourceInfo();
 
-        using ( new AssertionScope() )
-        {
-            result.Edge.Should().BeSameAs( sut );
-            result.From.Should().BeSameAs( a );
-            result.To.Should().BeSameAs( b );
-            result.Direction.Should().Be( direction );
-            result.CanReach.Should().Be( canReach );
-            result.CanBeReached.Should().Be( canBeReached );
-        }
+        Assertion.All(
+                result.Edge.TestRefEquals( sut ),
+                result.From.TestRefEquals( a ),
+                result.To.TestRefEquals( b ),
+                result.Direction.TestEquals( direction ),
+                result.CanReach.TestEquals( canReach ),
+                result.CanBeReached.TestEquals( canBeReached ) )
+            .Go();
     }
 
     [Theory]
@@ -41,15 +40,14 @@ public class DirectedGraphEdgeExtensionsTests : TestsBase
 
         var result = sut.GetTargetInfo();
 
-        using ( new AssertionScope() )
-        {
-            result.Edge.Should().BeSameAs( sut );
-            result.From.Should().BeSameAs( b );
-            result.To.Should().BeSameAs( a );
-            result.Direction.Should().Be( direction.Invert() );
-            result.CanReach.Should().Be( canReach );
-            result.CanBeReached.Should().Be( canBeReached );
-        }
+        Assertion.All(
+                result.Edge.TestRefEquals( sut ),
+                result.From.TestRefEquals( b ),
+                result.To.TestRefEquals( a ),
+                result.Direction.TestEquals( direction.Invert() ),
+                result.CanReach.TestEquals( canReach ),
+                result.CanBeReached.TestEquals( canBeReached ) )
+            .Go();
     }
 
     [Fact]
@@ -62,13 +60,16 @@ public class DirectedGraphEdgeExtensionsTests : TestsBase
 
         var result = sut.GetInfo( a );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().NotBeNull();
-            result?.Edge.Should().BeSameAs( sut );
-            result?.From.Should().BeSameAs( a );
-            result?.To.Should().BeSameAs( b );
-        }
+        Assertion.All(
+                result.TestNotNull(),
+                result.TestIf()
+                    .NotNull(
+                        r => Assertion.All(
+                            "result",
+                            r.Edge.TestRefEquals( sut ),
+                            r.From.TestRefEquals( a ),
+                            r.To.TestRefEquals( b ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -81,13 +82,16 @@ public class DirectedGraphEdgeExtensionsTests : TestsBase
 
         var result = sut.GetInfo( b );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().NotBeNull();
-            result?.Edge.Should().BeSameAs( sut );
-            result?.From.Should().BeSameAs( b );
-            result?.To.Should().BeSameAs( a );
-        }
+        Assertion.All(
+                result.TestNotNull(),
+                result.TestIf()
+                    .NotNull(
+                        r => Assertion.All(
+                            "result",
+                            r.Edge.TestRefEquals( sut ),
+                            r.From.TestRefEquals( b ),
+                            r.To.TestRefEquals( a ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -101,6 +105,6 @@ public class DirectedGraphEdgeExtensionsTests : TestsBase
 
         var result = sut.GetInfo( c );
 
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 }

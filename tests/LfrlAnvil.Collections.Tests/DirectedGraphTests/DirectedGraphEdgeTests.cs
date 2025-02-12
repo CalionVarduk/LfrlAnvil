@@ -14,7 +14,7 @@ public class DirectedGraphEdgeTests : TestsBase
 
         sut.Value = newValue;
 
-        sut.Value.Should().Be( newValue );
+        sut.Value.TestEquals( newValue ).Go();
     }
 
     [Theory]
@@ -31,7 +31,7 @@ public class DirectedGraphEdgeTests : TestsBase
 
         var result = sut.ToString();
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -45,7 +45,7 @@ public class DirectedGraphEdgeTests : TestsBase
 
         var result = sut.ToString();
 
-        result.Should().Be( "a =/= b" );
+        result.TestEquals( "a =/= b" ).Go();
     }
 
     [Theory]
@@ -62,7 +62,7 @@ public class DirectedGraphEdgeTests : TestsBase
 
         var action = Lambda.Of( () => sut.ChangeDirection( direction ) );
 
-        action.Should().ThrowExactly<InvalidOperationException>();
+        action.Test( exc => exc.TestType().Exact<InvalidOperationException>() ).Go();
     }
 
     [Fact]
@@ -74,7 +74,7 @@ public class DirectedGraphEdgeTests : TestsBase
 
         var action = Lambda.Of( () => sut.ChangeDirection( GraphDirection.None ) );
 
-        action.Should().ThrowExactly<ArgumentException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentException>() ).Go();
     }
 
     [Theory]
@@ -96,7 +96,7 @@ public class DirectedGraphEdgeTests : TestsBase
 
         sut.ChangeDirection( newDirection );
 
-        sut.Direction.Should().Be( newDirection );
+        sut.Direction.TestEquals( newDirection ).Go();
     }
 
     [Theory]
@@ -111,7 +111,7 @@ public class DirectedGraphEdgeTests : TestsBase
 
         sut.ChangeDirection( direction );
 
-        sut.Direction.Should().Be( GraphDirection.Both );
+        sut.Direction.TestEquals( GraphDirection.Both ).Go();
     }
 
     [Fact]
@@ -124,7 +124,7 @@ public class DirectedGraphEdgeTests : TestsBase
 
         var action = Lambda.Of( () => sut.Remove() );
 
-        action.Should().ThrowExactly<InvalidOperationException>();
+        action.Test( exc => exc.TestType().Exact<InvalidOperationException>() ).Go();
     }
 
     [Fact]
@@ -137,12 +137,11 @@ public class DirectedGraphEdgeTests : TestsBase
 
         sut.Remove();
 
-        using ( new AssertionScope() )
-        {
-            a.Edges.Should().BeEmpty();
-            b.Edges.Should().BeEmpty();
-            sut.Direction.Should().Be( GraphDirection.None );
-        }
+        Assertion.All(
+                a.Edges.TestEmpty(),
+                b.Edges.TestEmpty(),
+                sut.Direction.TestEquals( GraphDirection.None ) )
+            .Go();
     }
 
     [Fact]
@@ -155,7 +154,7 @@ public class DirectedGraphEdgeTests : TestsBase
 
         var result = (( IDirectedGraphEdge<string, int, long> )sut).Source;
 
-        result.Should().BeSameAs( sut.Source );
+        result.TestRefEquals( sut.Source ).Go();
     }
 
     [Fact]
@@ -168,6 +167,6 @@ public class DirectedGraphEdgeTests : TestsBase
 
         var result = (( IDirectedGraphEdge<string, int, long> )sut).Target;
 
-        result.Should().BeSameAs( sut.Target );
+        result.TestRefEquals( sut.Target ).Go();
     }
 }

@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using LfrlAnvil.Functional;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Collections.Tests.SequentialDictionaryTests;
 
@@ -13,13 +12,12 @@ public abstract class GenericSequentialDictionaryTests<TKey, TValue> : GenericDi
     {
         var sut = new SequentialDictionary<TKey, TValue>();
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 0 );
-            sut.Comparer.Should().Be( EqualityComparer<TKey>.Default );
-            sut.First.Should().BeNull();
-            sut.Last.Should().BeNull();
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 0 ),
+                sut.Comparer.TestEquals( EqualityComparer<TKey>.Default ),
+                sut.First.TestNull(),
+                sut.Last.TestNull() )
+            .Go();
     }
 
     [Fact]
@@ -28,13 +26,12 @@ public abstract class GenericSequentialDictionaryTests<TKey, TValue> : GenericDi
         var comparer = EqualityComparerFactory<TKey>.Create( (a, b) => a!.Equals( b ) );
         var sut = new SequentialDictionary<TKey, TValue>( comparer );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 0 );
-            sut.Comparer.Should().Be( comparer );
-            sut.First.Should().BeNull();
-            sut.Last.Should().BeNull();
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 0 ),
+                sut.Comparer.TestRefEquals( comparer ),
+                sut.First.TestNull(),
+                sut.Last.TestNull() )
+            .Go();
     }
 
     [Fact]
@@ -46,13 +43,12 @@ public abstract class GenericSequentialDictionaryTests<TKey, TValue> : GenericDi
 
         sut.Add( key, value );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 1 );
-            sut[key].Should().Be( value );
-            sut.First.Should().Be( KeyValuePair.Create( key, value ) );
-            sut.Last.Should().Be( KeyValuePair.Create( key, value ) );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 1 ),
+                sut[key].TestEquals( value ),
+                sut.First.TestEquals( KeyValuePair.Create( key, value ) ),
+                sut.Last.TestEquals( KeyValuePair.Create( key, value ) ) )
+            .Go();
     }
 
     [Fact]
@@ -64,13 +60,12 @@ public abstract class GenericSequentialDictionaryTests<TKey, TValue> : GenericDi
 
         sut.Add( keys[1], values[1] );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 2 );
-            sut[keys[1]].Should().Be( values[1] );
-            sut.First.Should().Be( KeyValuePair.Create( keys[0], values[0] ) );
-            sut.Last.Should().Be( KeyValuePair.Create( keys[1], values[1] ) );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 2 ),
+                sut[keys[1]].TestEquals( values[1] ),
+                sut.First.TestEquals( KeyValuePair.Create( keys[0], values[0] ) ),
+                sut.Last.TestEquals( KeyValuePair.Create( keys[1], values[1] ) ) )
+            .Go();
     }
 
     [Fact]
@@ -82,7 +77,7 @@ public abstract class GenericSequentialDictionaryTests<TKey, TValue> : GenericDi
 
         var action = Lambda.Of( () => sut.Add( key, values[1] ) );
 
-        action.Should().ThrowExactly<ArgumentException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentException>() ).Go();
     }
 
     [Fact]
@@ -93,7 +88,7 @@ public abstract class GenericSequentialDictionaryTests<TKey, TValue> : GenericDi
 
         var result = sut.Remove( key );
 
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Fact]
@@ -105,13 +100,12 @@ public abstract class GenericSequentialDictionaryTests<TKey, TValue> : GenericDi
 
         var result = sut.Remove( key );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            sut.Count.Should().Be( 0 );
-            sut.First.Should().BeNull();
-            sut.Last.Should().BeNull();
-        }
+        Assertion.All(
+                result.TestTrue(),
+                sut.Count.TestEquals( 0 ),
+                sut.First.TestNull(),
+                sut.Last.TestNull() )
+            .Go();
     }
 
     [Fact]
@@ -127,14 +121,13 @@ public abstract class GenericSequentialDictionaryTests<TKey, TValue> : GenericDi
 
         var result = sut.Remove( keys[0] );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            sut.Count.Should().Be( 1 );
-            sut.ContainsKey( keys[1] ).Should().BeTrue();
-            sut.First.Should().Be( KeyValuePair.Create( keys[1], values[1] ) );
-            sut.Last.Should().Be( KeyValuePair.Create( keys[1], values[1] ) );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                sut.Count.TestEquals( 1 ),
+                sut.ContainsKey( keys[1] ).TestTrue(),
+                sut.First.TestEquals( KeyValuePair.Create( keys[1], values[1] ) ),
+                sut.Last.TestEquals( KeyValuePair.Create( keys[1], values[1] ) ) )
+            .Go();
     }
 
     [Fact]
@@ -145,11 +138,10 @@ public abstract class GenericSequentialDictionaryTests<TKey, TValue> : GenericDi
 
         var result = sut.Remove( key, out var removed );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeFalse();
-            removed.Should().Be( default( TValue ) );
-        }
+        Assertion.All(
+                result.TestFalse(),
+                removed.TestEquals( default ) )
+            .Go();
     }
 
     [Fact]
@@ -161,14 +153,13 @@ public abstract class GenericSequentialDictionaryTests<TKey, TValue> : GenericDi
 
         var result = sut.Remove( key, out var removed );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            sut.Count.Should().Be( 0 );
-            removed.Should().Be( value );
-            sut.First.Should().BeNull();
-            sut.Last.Should().BeNull();
-        }
+        Assertion.All(
+                result.TestTrue(),
+                sut.Count.TestEquals( 0 ),
+                removed.TestEquals( value ),
+                sut.First.TestNull(),
+                sut.Last.TestNull() )
+            .Go();
     }
 
     [Fact]
@@ -184,15 +175,14 @@ public abstract class GenericSequentialDictionaryTests<TKey, TValue> : GenericDi
 
         var result = sut.Remove( keys[0], out var removed );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            sut.Count.Should().Be( 1 );
-            sut.ContainsKey( keys[1] ).Should().BeTrue();
-            removed.Should().Be( values[0] );
-            sut.First.Should().Be( KeyValuePair.Create( keys[1], values[1] ) );
-            sut.Last.Should().Be( KeyValuePair.Create( keys[1], values[1] ) );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                sut.Count.TestEquals( 1 ),
+                sut.ContainsKey( keys[1] ).TestTrue(),
+                removed.TestEquals( values[0] ),
+                sut.First.TestEquals( KeyValuePair.Create( keys[1], values[1] ) ),
+                sut.Last.TestEquals( KeyValuePair.Create( keys[1], values[1] ) ) )
+            .Go();
     }
 
     [Fact]
@@ -204,11 +194,10 @@ public abstract class GenericSequentialDictionaryTests<TKey, TValue> : GenericDi
 
         var result = sut.TryGetValue( key, out var outResult );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            outResult.Should().Be( value );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                outResult.TestEquals( value ) )
+            .Go();
     }
 
     [Fact]
@@ -219,11 +208,10 @@ public abstract class GenericSequentialDictionaryTests<TKey, TValue> : GenericDi
 
         var result = sut.TryGetValue( key, out var outResult );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeFalse();
-            outResult.Should().Be( default( TValue ) );
-        }
+        Assertion.All(
+                result.TestFalse(),
+                outResult.TestEquals( default ) )
+            .Go();
     }
 
     [Fact]
@@ -238,12 +226,11 @@ public abstract class GenericSequentialDictionaryTests<TKey, TValue> : GenericDi
 
         sut.Clear();
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 0 );
-            sut.First.Should().BeNull();
-            sut.Last.Should().BeNull();
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 0 ),
+                sut.First.TestNull(),
+                sut.Last.TestNull() )
+            .Go();
     }
 
     [Fact]
@@ -256,12 +243,13 @@ public abstract class GenericSequentialDictionaryTests<TKey, TValue> : GenericDi
         var keysToRemove = new[] { keys[0], keys[2], keys[6] };
         var itemsToAddLast = keys.Zip( values, KeyValuePair.Create ).Skip( 7 );
 
-        var expected = new[] { keys[1], keys[3], keys[4], keys[5], keys[7], keys[8], keys[9] }
-            .Zip( new[] { values[1], values[3], values[4], values[5], values[7], values[8], values[9] }, KeyValuePair.Create );
+        var expected = new[] { keys[1], keys[3], keys[4], keys[5], keys[7], keys[8], keys[9] }.Zip(
+            new[] { values[1], values[3], values[4], values[5], values[7], values[8], values[9] },
+            KeyValuePair.Create );
 
         var sut = GetDictionaryForOrderVerification( initialItems, keysToRemove, itemsToAddLast ).AsEnumerable();
 
-        sut.Should().BeSequentiallyEqualTo( expected );
+        sut.TestSequence( expected ).Go();
     }
 
     [Fact]
@@ -280,7 +268,7 @@ public abstract class GenericSequentialDictionaryTests<TKey, TValue> : GenericDi
 
         var result = sut.Keys;
 
-        result.Should().BeSequentiallyEqualTo( expected );
+        result.TestSequence( expected ).Go();
     }
 
     [Fact]
@@ -299,7 +287,7 @@ public abstract class GenericSequentialDictionaryTests<TKey, TValue> : GenericDi
 
         var result = sut.Values;
 
-        result.Should().BeSequentiallyEqualTo( expected );
+        result.TestSequence( expected ).Go();
     }
 
     [Fact]
@@ -311,13 +299,12 @@ public abstract class GenericSequentialDictionaryTests<TKey, TValue> : GenericDi
 
         sut[key] = value;
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 1 );
-            sut[key].Should().Be( value );
-            sut.First.Should().Be( KeyValuePair.Create( key, value ) );
-            sut.Last.Should().Be( KeyValuePair.Create( key, value ) );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 1 ),
+                sut[key].TestEquals( value ),
+                sut.First.TestEquals( KeyValuePair.Create( key, value ) ),
+                sut.Last.TestEquals( KeyValuePair.Create( key, value ) ) )
+            .Go();
     }
 
     [Fact]
@@ -329,13 +316,12 @@ public abstract class GenericSequentialDictionaryTests<TKey, TValue> : GenericDi
 
         sut[keys[1]] = values[1];
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 2 );
-            sut[keys[1]].Should().Be( values[1] );
-            sut.First.Should().Be( KeyValuePair.Create( keys[0], values[0] ) );
-            sut.Last.Should().Be( KeyValuePair.Create( keys[1], values[1] ) );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 2 ),
+                sut[keys[1]].TestEquals( values[1] ),
+                sut.First.TestEquals( KeyValuePair.Create( keys[0], values[0] ) ),
+                sut.Last.TestEquals( KeyValuePair.Create( keys[1], values[1] ) ) )
+            .Go();
     }
 
     [Fact]
@@ -347,13 +333,12 @@ public abstract class GenericSequentialDictionaryTests<TKey, TValue> : GenericDi
 
         sut[key] = values[1];
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 1 );
-            sut[key].Should().Be( values[1] );
-            sut.First.Should().Be( KeyValuePair.Create( key, values[1] ) );
-            sut.Last.Should().Be( KeyValuePair.Create( key, values[1] ) );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 1 ),
+                sut[key].TestEquals( values[1] ),
+                sut.First.TestEquals( KeyValuePair.Create( key, values[1] ) ),
+                sut.Last.TestEquals( KeyValuePair.Create( key, values[1] ) ) )
+            .Go();
     }
 
     [Fact]
@@ -367,14 +352,15 @@ public abstract class GenericSequentialDictionaryTests<TKey, TValue> : GenericDi
         var itemsToAddLast = keys.Zip( values, KeyValuePair.Create ).Skip( 7 ).Take( 3 );
         var keyToReplace = keys[4];
 
-        var expected = new[] { keys[1], keys[3], keys[4], keys[5], keys[7], keys[8], keys[9] }
-            .Zip( new[] { values[1], values[3], values[10], values[5], values[7], values[8], values[9] }, KeyValuePair.Create );
+        var expected = new[] { keys[1], keys[3], keys[4], keys[5], keys[7], keys[8], keys[9] }.Zip(
+            new[] { values[1], values[3], values[10], values[5], values[7], values[8], values[9] },
+            KeyValuePair.Create );
 
         var sut = GetDictionaryForOrderVerification( initialItems, keysToRemove, itemsToAddLast );
 
         sut[keyToReplace] = values[10];
 
-        sut.AsEnumerable().Should().BeSequentiallyEqualTo( expected );
+        sut.AsEnumerable().TestSequence( expected ).Go();
     }
 
     protected sealed override IDictionary<TKey, TValue> CreateEmptyDictionary()

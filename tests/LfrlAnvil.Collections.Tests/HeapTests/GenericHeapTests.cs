@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 using System.Linq;
 using LfrlAnvil.Functional;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Collections.Tests.HeapTests;
 
@@ -12,11 +12,10 @@ public abstract class GenericHeapTests<T> : TestsBase
     {
         var sut = new Heap<T>();
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 0 );
-            sut.Comparer.Should().Be( Comparer<T>.Default );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 0 ),
+                sut.Comparer.TestEquals( Comparer<T>.Default ) )
+            .Go();
     }
 
     [Fact]
@@ -25,11 +24,10 @@ public abstract class GenericHeapTests<T> : TestsBase
         var comparer = Comparer<T>.Create( (a, b) => a!.GetHashCode().CompareTo( b!.GetHashCode() ) );
         var sut = new Heap<T>( comparer );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 0 );
-            sut.Comparer.Should().Be( comparer );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 0 ),
+                sut.Comparer.TestEquals( comparer ) )
+            .Go();
     }
 
     [Fact]
@@ -39,12 +37,11 @@ public abstract class GenericHeapTests<T> : TestsBase
 
         var sut = new Heap<T>( items );
 
-        using ( new AssertionScope() )
-        {
-            sut.Should().BeEquivalentTo( items );
-            sut.Comparer.Should().Be( Comparer<T>.Default );
-            AssertHeapInvariant( sut );
-        }
+        Assertion.All(
+                sut.TestSetEqual( items ),
+                sut.Comparer.TestEquals( Comparer<T>.Default ),
+                AssertHeapInvariant( sut ) )
+            .Go();
     }
 
     [Fact]
@@ -55,12 +52,11 @@ public abstract class GenericHeapTests<T> : TestsBase
 
         var sut = new Heap<T>( items );
 
-        using ( new AssertionScope() )
-        {
-            sut.Should().BeEquivalentTo( items );
-            sut.Comparer.Should().Be( Comparer<T>.Default );
-            AssertHeapInvariant( sut );
-        }
+        Assertion.All(
+                sut.TestSetEqual( items ),
+                sut.Comparer.TestEquals( Comparer<T>.Default ),
+                AssertHeapInvariant( sut ) )
+            .Go();
     }
 
     [Fact]
@@ -71,12 +67,11 @@ public abstract class GenericHeapTests<T> : TestsBase
 
         var sut = new Heap<T>( items, comparer );
 
-        using ( new AssertionScope() )
-        {
-            sut.Should().BeEquivalentTo( items );
-            sut.Comparer.Should().Be( comparer );
-            AssertHeapInvariant( sut );
-        }
+        Assertion.All(
+                sut.TestSetEqual( items ),
+                sut.Comparer.TestEquals( comparer ),
+                AssertHeapInvariant( sut ) )
+            .Go();
     }
 
     [Fact]
@@ -88,11 +83,10 @@ public abstract class GenericHeapTests<T> : TestsBase
 
         sut.Add( item );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 1 );
-            sut[0].Should().Be( item );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 1 ),
+                sut[0].TestEquals( item ) )
+            .Go();
     }
 
     [Fact]
@@ -104,7 +98,7 @@ public abstract class GenericHeapTests<T> : TestsBase
 
         sut.Add( item );
 
-        sut.Should().BeSequentiallyEqualTo( item, other );
+        sut.TestSequence( [ item, other ] ).Go();
     }
 
     [Fact]
@@ -116,7 +110,7 @@ public abstract class GenericHeapTests<T> : TestsBase
 
         sut.Add( item );
 
-        sut.Should().BeSequentiallyEqualTo( other, item );
+        sut.TestSequence( [ other, item ] ).Go();
     }
 
     [Fact]
@@ -128,7 +122,7 @@ public abstract class GenericHeapTests<T> : TestsBase
 
         sut.Add( item );
 
-        sut.Should().BeSequentiallyEqualTo( other, left, item );
+        sut.TestSequence( [ other, left, item ] ).Go();
     }
 
     [Fact]
@@ -138,14 +132,12 @@ public abstract class GenericHeapTests<T> : TestsBase
 
         var sut = new Heap<T>();
 
-        foreach ( var item in items )
-            sut.Add( item );
+        foreach ( var item in items ) sut.Add( item );
 
-        using ( new AssertionScope() )
-        {
-            sut.Should().BeEquivalentTo( items );
-            AssertHeapInvariant( sut );
-        }
+        Assertion.All(
+                sut.TestSetEqual( items ),
+                AssertHeapInvariant( sut ) )
+            .Go();
     }
 
     [Fact]
@@ -153,7 +145,7 @@ public abstract class GenericHeapTests<T> : TestsBase
     {
         var sut = new Heap<T>();
         var action = Lambda.Of( () => sut.Peek() );
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Fact]
@@ -163,11 +155,10 @@ public abstract class GenericHeapTests<T> : TestsBase
 
         var result = sut.TryPeek( out var peeked );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeFalse();
-            peeked.Should().Be( default( T ) );
-        }
+        Assertion.All(
+                result.TestFalse(),
+                peeked.TestEquals( default ) )
+            .Go();
     }
 
     [Fact]
@@ -179,11 +170,10 @@ public abstract class GenericHeapTests<T> : TestsBase
 
         var result = sut.TryPeek( out var peeked );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            peeked.Should().Be( item );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                peeked.TestEquals( item ) )
+            .Go();
     }
 
     [Fact]
@@ -197,12 +187,11 @@ public abstract class GenericHeapTests<T> : TestsBase
 
         var result = sut.TryPeek( out var peeked );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            peeked.Should().Be( expected );
-            sut.Should().BeSequentiallyEqualTo( heapifiedItems );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                peeked.TestEquals( expected ),
+                sut.TestSequence( heapifiedItems ) )
+            .Go();
     }
 
     [Fact]
@@ -210,7 +199,7 @@ public abstract class GenericHeapTests<T> : TestsBase
     {
         var sut = new Heap<T>();
         var action = Lambda.Of( () => sut.Extract() );
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Fact]
@@ -220,11 +209,10 @@ public abstract class GenericHeapTests<T> : TestsBase
 
         var result = sut.TryExtract( out var extracted );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeFalse();
-            extracted.Should().Be( default( T ) );
-        }
+        Assertion.All(
+                result.TestFalse(),
+                extracted.TestEquals( default ) )
+            .Go();
     }
 
     [Fact]
@@ -236,12 +224,11 @@ public abstract class GenericHeapTests<T> : TestsBase
 
         var result = sut.TryExtract( out var extracted );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            extracted.Should().Be( item );
-            sut.Count.Should().Be( 0 );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                extracted.TestEquals( item ),
+                sut.Count.TestEquals( 0 ) )
+            .Go();
     }
 
     [Fact]
@@ -254,14 +241,12 @@ public abstract class GenericHeapTests<T> : TestsBase
 
         var result = sut.TryExtract( out var extracted );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            extracted.Should().Be( expectedExtracted );
-            sut.Should().NotContain( expectedExtracted );
-            sut.Should().BeEquivalentTo( items.Where( i => ! i!.Equals( expectedExtracted ) ) );
-            AssertHeapInvariant( sut );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                extracted.TestEquals( expectedExtracted ),
+                sut.TestSetEqual( items.Where( i => ! i!.Equals( expectedExtracted ) ) ),
+                AssertHeapInvariant( sut ) )
+            .Go();
     }
 
     [Fact]
@@ -269,7 +254,7 @@ public abstract class GenericHeapTests<T> : TestsBase
     {
         var sut = new Heap<T>();
         var action = Lambda.Of( () => sut.Pop() );
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Fact]
@@ -279,7 +264,7 @@ public abstract class GenericHeapTests<T> : TestsBase
 
         var result = sut.TryPop();
 
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Fact]
@@ -291,11 +276,10 @@ public abstract class GenericHeapTests<T> : TestsBase
 
         var result = sut.TryPop();
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            sut.Count.Should().Be( 0 );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                sut.Count.TestEquals( 0 ) )
+            .Go();
     }
 
     [Fact]
@@ -308,13 +292,11 @@ public abstract class GenericHeapTests<T> : TestsBase
 
         var result = sut.TryPop();
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            sut.Should().NotContain( expectedExtracted );
-            sut.Should().BeEquivalentTo( items.Where( i => ! i!.Equals( expectedExtracted ) ) );
-            AssertHeapInvariant( sut );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                sut.TestSetEqual( items.Where( i => ! i!.Equals( expectedExtracted ) ) ),
+                AssertHeapInvariant( sut ) )
+            .Go();
     }
 
     [Fact]
@@ -325,7 +307,7 @@ public abstract class GenericHeapTests<T> : TestsBase
 
         var action = Lambda.Of( () => sut.Replace( item ) );
 
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Fact]
@@ -336,12 +318,11 @@ public abstract class GenericHeapTests<T> : TestsBase
 
         var result = sut.TryReplace( item, out var replaced );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeFalse();
-            replaced.Should().Be( default( T ) );
-            sut.Count.Should().Be( 0 );
-        }
+        Assertion.All(
+                result.TestFalse(),
+                replaced.TestEquals( default ),
+                sut.Count.TestEquals( 0 ) )
+            .Go();
     }
 
     [Fact]
@@ -353,12 +334,11 @@ public abstract class GenericHeapTests<T> : TestsBase
 
         var result = sut.TryReplace( newItem, out var replaced );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            replaced.Should().Be( oldItem );
-            sut.Should().BeSequentiallyEqualTo( newItem );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                replaced.TestEquals( oldItem ),
+                sut.TestSequence( [ newItem ] ) )
+            .Go();
     }
 
     [Fact]
@@ -374,14 +354,12 @@ public abstract class GenericHeapTests<T> : TestsBase
 
         var result = sut.TryReplace( newItem, out var replaced );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            replaced.Should().Be( expectedReplaced );
-            sut.Should().NotContain( expectedReplaced );
-            sut.Should().BeEquivalentTo( items.Where( i => ! i!.Equals( expectedReplaced ) ).Append( newItem ) );
-            AssertHeapInvariant( sut );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                replaced.TestEquals( expectedReplaced ),
+                sut.TestSetEqual( items.Where( i => ! i!.Equals( expectedReplaced ) ).Append( newItem ) ),
+                AssertHeapInvariant( sut ) )
+            .Go();
     }
 
     [Fact]
@@ -393,7 +371,7 @@ public abstract class GenericHeapTests<T> : TestsBase
 
         sut.Clear();
 
-        sut.Count.Should().Be( 0 );
+        sut.Count.TestEquals( 0 ).Go();
     }
 
     [Theory]
@@ -407,7 +385,7 @@ public abstract class GenericHeapTests<T> : TestsBase
 
         var action = Lambda.Of( () => sut[index] );
 
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Theory]
@@ -427,14 +405,16 @@ public abstract class GenericHeapTests<T> : TestsBase
 
         var result = sut[index];
 
-        result.Should().Be( items[index] );
+        result.TestEquals( items[index] ).Go();
     }
 
-    private static void AssertHeapInvariant(Heap<T> heap)
+    [Pure]
+    private static Assertion AssertHeapInvariant(Heap<T> heap)
     {
         var comparer = heap.Comparer;
         var maxParentIndex = (heap.Count >> 1) - 1;
 
+        var assertions = new List<Assertion>();
         for ( var parentIndex = 0; parentIndex <= maxParentIndex; ++parentIndex )
         {
             var parent = heap[parentIndex];
@@ -445,12 +425,10 @@ public abstract class GenericHeapTests<T> : TestsBase
             var leftChild = heap[leftChildIndex];
             var leftChildComparisonResult = comparer.Compare( parent, leftChild );
 
-            leftChildComparisonResult.Should()
-                .BeLessOrEqualTo(
+            assertions.Add(
+                leftChildComparisonResult.TestLessThanOrEqualTo(
                     0,
-                    "min heap invariant must be satisfied, which means that parent {0} must be less than or equal to its left child {1}",
-                    parent,
-                    leftChild );
+                    $"parent[@{parentIndex}: '{parent}'] <=> left-child[@{leftChildIndex}: '{leftChild}']" ) );
 
             if ( rightChildIndex >= heap.Count )
                 continue;
@@ -458,12 +436,12 @@ public abstract class GenericHeapTests<T> : TestsBase
             var rightChild = heap[rightChildIndex];
             var rightChildComparisonResult = comparer.Compare( parent, rightChild );
 
-            rightChildComparisonResult.Should()
-                .BeLessOrEqualTo(
+            assertions.Add(
+                rightChildComparisonResult.TestLessThanOrEqualTo(
                     0,
-                    "min heap invariant must be satisfied, which means that parent {0} must be less than or equal to its right child {1}",
-                    parent,
-                    rightChild );
+                    $"parent[@{parentIndex}: '{parent}'] <=> right-child[@{rightChildIndex}: '{rightChild}']" ) );
         }
+
+        return Assertion.All( "MinHeapInvariant", assertions );
     }
 }

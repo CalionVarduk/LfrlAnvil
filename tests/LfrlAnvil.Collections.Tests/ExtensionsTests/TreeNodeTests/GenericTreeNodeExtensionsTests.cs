@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using LfrlAnvil.Collections.Extensions;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Collections.Tests.ExtensionsTests.TreeNodeTests;
 
@@ -12,7 +11,7 @@ public abstract class GenericTreeNodeExtensionsTests<T> : TestsBase
     {
         var sut = new TestNode<T>( Fixture.Create<T>(), null );
         var result = sut.IsRoot();
-        result.Should().BeTrue();
+        result.TestTrue().Go();
     }
 
     [Fact]
@@ -23,7 +22,7 @@ public abstract class GenericTreeNodeExtensionsTests<T> : TestsBase
 
         var result = sut.IsRoot();
 
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Fact]
@@ -34,7 +33,7 @@ public abstract class GenericTreeNodeExtensionsTests<T> : TestsBase
 
         var result = sut.IsLeaf();
 
-        result.Should().BeTrue();
+        result.TestTrue().Go();
     }
 
     [Fact]
@@ -45,7 +44,7 @@ public abstract class GenericTreeNodeExtensionsTests<T> : TestsBase
 
         var result = sut.IsLeaf();
 
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Theory]
@@ -62,7 +61,7 @@ public abstract class GenericTreeNodeExtensionsTests<T> : TestsBase
 
         var result = sut.GetChildIndex( node );
 
-        result.Should().Be( index );
+        result.TestEquals( index ).Go();
     }
 
     [Fact]
@@ -73,7 +72,7 @@ public abstract class GenericTreeNodeExtensionsTests<T> : TestsBase
 
         var result = sut.GetChildIndex( node );
 
-        result.Should().Be( -1 );
+        result.TestEquals( -1 ).Go();
     }
 
     [Fact]
@@ -84,7 +83,7 @@ public abstract class GenericTreeNodeExtensionsTests<T> : TestsBase
 
         var result = sut.IsChildOf( parent );
 
-        result.Should().BeTrue();
+        result.TestTrue().Go();
     }
 
     [Fact]
@@ -92,7 +91,7 @@ public abstract class GenericTreeNodeExtensionsTests<T> : TestsBase
     {
         var sut = new TestNode<T>( Fixture.Create<T>(), null );
         var result = sut.IsChildOf( sut );
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Fact]
@@ -104,7 +103,7 @@ public abstract class GenericTreeNodeExtensionsTests<T> : TestsBase
 
         var result = sut.IsChildOf( ancestor );
 
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Fact]
@@ -115,7 +114,7 @@ public abstract class GenericTreeNodeExtensionsTests<T> : TestsBase
 
         var result = sut.IsChildOf( child );
 
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Fact]
@@ -127,7 +126,7 @@ public abstract class GenericTreeNodeExtensionsTests<T> : TestsBase
 
         var result = sut.IsChildOf( descendant );
 
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Fact]
@@ -138,7 +137,7 @@ public abstract class GenericTreeNodeExtensionsTests<T> : TestsBase
 
         var result = sut.IsParentOf( parent );
 
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Fact]
@@ -146,7 +145,7 @@ public abstract class GenericTreeNodeExtensionsTests<T> : TestsBase
     {
         var sut = new TestNode<T>( Fixture.Create<T>(), null );
         var result = sut.IsParentOf( sut );
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Fact]
@@ -158,7 +157,7 @@ public abstract class GenericTreeNodeExtensionsTests<T> : TestsBase
 
         var result = sut.IsParentOf( ancestor );
 
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Fact]
@@ -169,7 +168,7 @@ public abstract class GenericTreeNodeExtensionsTests<T> : TestsBase
 
         var result = sut.IsParentOf( child );
 
-        result.Should().BeTrue();
+        result.TestTrue().Go();
     }
 
     [Fact]
@@ -181,7 +180,7 @@ public abstract class GenericTreeNodeExtensionsTests<T> : TestsBase
 
         var result = sut.IsParentOf( descendant );
 
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Fact]
@@ -192,7 +191,7 @@ public abstract class GenericTreeNodeExtensionsTests<T> : TestsBase
 
         var result = sut.IsAncestorOf( parent );
 
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Fact]
@@ -200,7 +199,7 @@ public abstract class GenericTreeNodeExtensionsTests<T> : TestsBase
     {
         var sut = new TestNode<T>( Fixture.Create<T>(), null );
         var result = sut.IsAncestorOf( sut );
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Fact]
@@ -212,7 +211,7 @@ public abstract class GenericTreeNodeExtensionsTests<T> : TestsBase
 
         var result = sut.IsAncestorOf( ancestor );
 
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Fact]
@@ -223,7 +222,7 @@ public abstract class GenericTreeNodeExtensionsTests<T> : TestsBase
 
         var result = sut.IsAncestorOf( child );
 
-        result.Should().BeTrue();
+        result.TestTrue().Go();
     }
 
     [Fact]
@@ -235,7 +234,7 @@ public abstract class GenericTreeNodeExtensionsTests<T> : TestsBase
 
         var result = sut.IsAncestorOf( descendant );
 
-        result.Should().BeTrue();
+        result.TestTrue().Go();
     }
 
     [Fact]
@@ -246,7 +245,7 @@ public abstract class GenericTreeNodeExtensionsTests<T> : TestsBase
 
         var result = sut.IsDescendantOf( parent );
 
-        result.Should().BeTrue();
+        result.TestTrue().Go();
     }
 
     [Fact]
@@ -254,7 +253,7 @@ public abstract class GenericTreeNodeExtensionsTests<T> : TestsBase
     {
         var sut = new TestNode<T>( Fixture.Create<T>(), null );
         var result = sut.IsDescendantOf( sut );
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Fact]
@@ -266,7 +265,7 @@ public abstract class GenericTreeNodeExtensionsTests<T> : TestsBase
 
         var result = sut.IsDescendantOf( ancestor );
 
-        result.Should().BeTrue();
+        result.TestTrue().Go();
     }
 
     [Fact]
@@ -277,7 +276,7 @@ public abstract class GenericTreeNodeExtensionsTests<T> : TestsBase
 
         var result = sut.IsDescendantOf( child );
 
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Fact]
@@ -289,7 +288,7 @@ public abstract class GenericTreeNodeExtensionsTests<T> : TestsBase
 
         var result = sut.IsDescendantOf( descendant );
 
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Fact]
@@ -297,7 +296,7 @@ public abstract class GenericTreeNodeExtensionsTests<T> : TestsBase
     {
         var sut = new TestNode<T>( Fixture.Create<T>(), null );
         var result = sut.GetLevel();
-        result.Should().Be( 0 );
+        result.TestEquals( 0 ).Go();
     }
 
     [Fact]
@@ -308,7 +307,7 @@ public abstract class GenericTreeNodeExtensionsTests<T> : TestsBase
 
         var result = sut.GetLevel();
 
-        result.Should().Be( 1 );
+        result.TestEquals( 1 ).Go();
     }
 
     [Fact]
@@ -320,7 +319,7 @@ public abstract class GenericTreeNodeExtensionsTests<T> : TestsBase
 
         var result = sut.GetLevel();
 
-        result.Should().Be( 2 );
+        result.TestEquals( 2 ).Go();
     }
 
     [Fact]
@@ -328,7 +327,7 @@ public abstract class GenericTreeNodeExtensionsTests<T> : TestsBase
     {
         var sut = new TestNode<T>( Fixture.Create<T>(), null );
         var result = sut.GetLevel( sut );
-        result.Should().Be( 0 );
+        result.TestEquals( 0 ).Go();
     }
 
     [Fact]
@@ -339,7 +338,7 @@ public abstract class GenericTreeNodeExtensionsTests<T> : TestsBase
 
         var result = sut.GetLevel( parent );
 
-        result.Should().Be( 1 );
+        result.TestEquals( 1 ).Go();
     }
 
     [Fact]
@@ -350,7 +349,7 @@ public abstract class GenericTreeNodeExtensionsTests<T> : TestsBase
 
         var result = sut.GetLevel( sut );
 
-        result.Should().Be( 0 );
+        result.TestEquals( 0 ).Go();
     }
 
     [Fact]
@@ -362,7 +361,7 @@ public abstract class GenericTreeNodeExtensionsTests<T> : TestsBase
 
         var result = sut.GetLevel( parent );
 
-        result.Should().Be( 2 );
+        result.TestEquals( 2 ).Go();
     }
 
     [Fact]
@@ -374,7 +373,7 @@ public abstract class GenericTreeNodeExtensionsTests<T> : TestsBase
 
         var result = sut.GetLevel( child );
 
-        result.Should().Be( 1 );
+        result.TestEquals( 1 ).Go();
     }
 
     [Fact]
@@ -386,7 +385,7 @@ public abstract class GenericTreeNodeExtensionsTests<T> : TestsBase
 
         var result = sut.GetLevel( sut );
 
-        result.Should().Be( 0 );
+        result.TestEquals( 0 ).Go();
     }
 
     [Fact]
@@ -398,7 +397,7 @@ public abstract class GenericTreeNodeExtensionsTests<T> : TestsBase
 
         var result = sut.GetLevel( root );
 
-        result.Should().Be( -1 );
+        result.TestEquals( -1 ).Go();
     }
 
     [Fact]
@@ -406,7 +405,7 @@ public abstract class GenericTreeNodeExtensionsTests<T> : TestsBase
     {
         var sut = new TestNode<T>( Fixture.Create<T>(), null );
         var result = sut.GetRoot();
-        result.Should().Be( sut );
+        result.TestEquals( sut ).Go();
     }
 
     [Fact]
@@ -417,7 +416,7 @@ public abstract class GenericTreeNodeExtensionsTests<T> : TestsBase
 
         var result = sut.GetRoot();
 
-        result.Should().Be( parent );
+        result.TestEquals( parent ).Go();
     }
 
     [Fact]
@@ -429,7 +428,7 @@ public abstract class GenericTreeNodeExtensionsTests<T> : TestsBase
 
         var result = sut.GetRoot();
 
-        result.Should().Be( parent );
+        result.TestEquals( parent ).Go();
     }
 
     [Fact]
@@ -442,7 +441,7 @@ public abstract class GenericTreeNodeExtensionsTests<T> : TestsBase
 
         var result = d.VisitAncestors();
 
-        result.Should().BeSequentiallyEqualTo( c, b, a );
+        result.TestSequence( [ c, b, a ] ).Go();
     }
 
     [Fact]
@@ -462,7 +461,7 @@ public abstract class GenericTreeNodeExtensionsTests<T> : TestsBase
 
         var result = a.VisitDescendants();
 
-        result.Should().BeSequentiallyEqualTo( b, c, d, e, f, g, h, i, j, k );
+        result.TestSequence( [ b, c, d, e, f, g, h, i, j, k ] ).Go();
     }
 
     [Fact]
@@ -483,7 +482,7 @@ public abstract class GenericTreeNodeExtensionsTests<T> : TestsBase
 
         var result = a.VisitDescendants( nodesToStopAt.Contains );
 
-        result.Should().BeSequentiallyEqualTo( b, c, d, g );
+        result.TestSequence( [ b, c, d, g ] ).Go();
     }
 }
 

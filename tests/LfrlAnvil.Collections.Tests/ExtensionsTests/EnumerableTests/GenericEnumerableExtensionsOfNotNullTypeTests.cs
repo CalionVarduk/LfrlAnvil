@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using LfrlAnvil.Collections.Extensions;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Collections.Tests.ExtensionsTests.EnumerableTests;
 
@@ -17,7 +16,7 @@ public abstract class GenericEnumerableExtensionsOfNotNullTypeTests<T> : TestsBa
 
         var result = items.ToMultiHashSet();
 
-        result.Should().BeEquivalentTo( expected );
+        result.TestSetEqual( expected ).Go();
     }
 
     [Fact]
@@ -29,10 +28,7 @@ public abstract class GenericEnumerableExtensionsOfNotNullTypeTests<T> : TestsBa
 
         var result = items.ToMultiDictionary( i => i.Val );
 
-        result.AsEnumerable()
-            .SelectMany( kv => kv.Value.Select( v => KeyValuePair.Create( kv.Key, v ) ) )
-            .Should()
-            .BeEquivalentTo( expected );
+        result.AsEnumerable().SelectMany( kv => kv.Value.Select( v => KeyValuePair.Create( kv.Key, v ) ) ).TestSetEqual( expected ).Go();
     }
 
     [Fact]
@@ -44,10 +40,7 @@ public abstract class GenericEnumerableExtensionsOfNotNullTypeTests<T> : TestsBa
 
         var result = items.ToMultiDictionary( i => i.Val, i => i );
 
-        result.AsEnumerable()
-            .SelectMany( kv => kv.Value.Select( v => KeyValuePair.Create( kv.Key, v ) ) )
-            .Should()
-            .BeEquivalentTo( expected );
+        result.AsEnumerable().SelectMany( kv => kv.Value.Select( v => KeyValuePair.Create( kv.Key, v ) ) ).TestSetEqual( expected ).Go();
     }
 
     [Fact]
@@ -59,10 +52,7 @@ public abstract class GenericEnumerableExtensionsOfNotNullTypeTests<T> : TestsBa
 
         var result = expected.ToMultiDictionary();
 
-        result.AsEnumerable()
-            .SelectMany( kv => kv.Value.Select( v => KeyValuePair.Create( kv.Key, v ) ) )
-            .Should()
-            .BeEquivalentTo( expected );
+        result.AsEnumerable().SelectMany( kv => kv.Value.Select( v => KeyValuePair.Create( kv.Key, v ) ) ).TestSetEqual( expected ).Go();
     }
 
     [Fact]
@@ -75,10 +65,7 @@ public abstract class GenericEnumerableExtensionsOfNotNullTypeTests<T> : TestsBa
 
         var result = groupings.ToMultiDictionary();
 
-        result.AsEnumerable()
-            .SelectMany( kv => kv.Value.Select( v => KeyValuePair.Create( kv.Key, v ) ) )
-            .Should()
-            .BeEquivalentTo( expected );
+        result.AsEnumerable().SelectMany( kv => kv.Value.Select( v => KeyValuePair.Create( kv.Key, v ) ) ).TestSetEqual( expected ).Go();
     }
 
     [Fact]
@@ -86,7 +73,7 @@ public abstract class GenericEnumerableExtensionsOfNotNullTypeTests<T> : TestsBa
     {
         var items = Fixture.CreateManyDistinct<T>( count: 5 );
         var result = items.ToSequentialHashSet();
-        result.Should().BeSequentiallyEqualTo( items );
+        result.TestSequence( items ).Go();
     }
 
     [Fact]
@@ -97,7 +84,7 @@ public abstract class GenericEnumerableExtensionsOfNotNullTypeTests<T> : TestsBa
 
         var result = items.ToSequentialDictionary( i => i.Val );
 
-        result.AsEnumerable().Should().BeSequentiallyEqualTo( expected );
+        result.AsEnumerable().TestSequence( expected ).Go();
     }
 
     [Fact]
@@ -108,7 +95,7 @@ public abstract class GenericEnumerableExtensionsOfNotNullTypeTests<T> : TestsBa
 
         var result = items.ToSequentialDictionary( i => i, i => new Value<T>( i ) );
 
-        result.AsEnumerable().Should().BeSequentiallyEqualTo( expected );
+        result.AsEnumerable().TestSequence( expected ).Go();
     }
 }
 

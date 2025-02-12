@@ -12,6 +12,6 @@ public class GraphDirectionExtensionsTests : TestsBase
     public void Invert_ShouldReturnCorrectResult(GraphDirection sut, GraphDirection expected)
     {
         var result = sut.Invert();
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 }

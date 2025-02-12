@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using LfrlAnvil.TestExtensions.Attributes;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Collections.Tests.SequentialHashSetTests;
 
@@ -14,11 +13,10 @@ public abstract class GenericSequentialHashSetTests<T> : GenericCollectionTestsB
     {
         var sut = new SequentialHashSet<T>();
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 0 );
-            sut.Comparer.Should().Be( EqualityComparer<T>.Default );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 0 ),
+                sut.Comparer.TestEquals( EqualityComparer<T>.Default ) )
+            .Go();
     }
 
     [Fact]
@@ -27,11 +25,10 @@ public abstract class GenericSequentialHashSetTests<T> : GenericCollectionTestsB
         var comparer = EqualityComparerFactory<T>.Create( (a, b) => a!.Equals( b ) );
         var sut = new SequentialHashSet<T>( comparer );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 0 );
-            sut.Comparer.Should().Be( comparer );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 0 ),
+                sut.Comparer.TestRefEquals( comparer ) )
+            .Go();
     }
 
     [Fact]
@@ -42,12 +39,11 @@ public abstract class GenericSequentialHashSetTests<T> : GenericCollectionTestsB
 
         var result = sut.Add( item );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 1 );
-            sut.Contains( item ).Should().BeTrue();
-            result.Should().BeTrue();
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 1 ),
+                sut.Contains( item ).TestTrue(),
+                result.TestTrue() )
+            .Go();
     }
 
     [Fact]
@@ -58,12 +54,11 @@ public abstract class GenericSequentialHashSetTests<T> : GenericCollectionTestsB
 
         var result = sut.Add( items[1] );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 2 );
-            sut.Contains( items[1] ).Should().BeTrue();
-            result.Should().BeTrue();
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 2 ),
+                sut.Contains( items[1] ).TestTrue(),
+                result.TestTrue() )
+            .Go();
     }
 
     [Fact]
@@ -74,11 +69,10 @@ public abstract class GenericSequentialHashSetTests<T> : GenericCollectionTestsB
 
         var result = sut.Add( item );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 1 );
-            result.Should().BeFalse();
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 1 ),
+                result.TestFalse() )
+            .Go();
     }
 
     [Fact]
@@ -89,7 +83,7 @@ public abstract class GenericSequentialHashSetTests<T> : GenericCollectionTestsB
 
         var result = sut.Remove( item );
 
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Fact]
@@ -100,11 +94,10 @@ public abstract class GenericSequentialHashSetTests<T> : GenericCollectionTestsB
 
         var result = sut.Remove( item );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            sut.Count.Should().Be( 0 );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                sut.Count.TestEquals( 0 ) )
+            .Go();
     }
 
     [Fact]
@@ -119,12 +112,11 @@ public abstract class GenericSequentialHashSetTests<T> : GenericCollectionTestsB
 
         var result = sut.Remove( items[0] );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            sut.Count.Should().Be( 1 );
-            sut.Contains( items[1] ).Should().BeTrue();
-        }
+        Assertion.All(
+                result.TestTrue(),
+                sut.Count.TestEquals( 1 ),
+                sut.Contains( items[1] ).TestTrue() )
+            .Go();
     }
 
     [Fact]
@@ -135,7 +127,7 @@ public abstract class GenericSequentialHashSetTests<T> : GenericCollectionTestsB
 
         var result = sut.Contains( item );
 
-        result.Should().BeTrue();
+        result.TestTrue().Go();
     }
 
     [Fact]
@@ -146,7 +138,7 @@ public abstract class GenericSequentialHashSetTests<T> : GenericCollectionTestsB
 
         var result = sut.Contains( item );
 
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Fact]
@@ -160,7 +152,7 @@ public abstract class GenericSequentialHashSetTests<T> : GenericCollectionTestsB
 
         sut.Clear();
 
-        sut.Count.Should().Be( 0 );
+        sut.Count.TestEquals( 0 ).Go();
     }
 
     [Fact]
@@ -173,7 +165,7 @@ public abstract class GenericSequentialHashSetTests<T> : GenericCollectionTestsB
 
         sut.ExceptWith( sut );
 
-        sut.Should().HaveCount( 0 );
+        sut.Count.TestEquals( 0 ).Go();
     }
 
     [Theory]
@@ -186,7 +178,7 @@ public abstract class GenericSequentialHashSetTests<T> : GenericCollectionTestsB
 
         sut.ExceptWith( other );
 
-        sut.Should().BeSequentiallyEqualTo( expected );
+        sut.TestSequence( expected ).Go();
     }
 
     [Fact]
@@ -199,7 +191,7 @@ public abstract class GenericSequentialHashSetTests<T> : GenericCollectionTestsB
 
         sut.UnionWith( sut );
 
-        sut.Should().BeSequentiallyEqualTo( items );
+        sut.TestSequence( items ).Go();
     }
 
     [Theory]
@@ -212,7 +204,7 @@ public abstract class GenericSequentialHashSetTests<T> : GenericCollectionTestsB
 
         sut.UnionWith( other );
 
-        sut.Should().BeSequentiallyEqualTo( expected );
+        sut.TestSequence( expected ).Go();
     }
 
     [Fact]
@@ -225,7 +217,7 @@ public abstract class GenericSequentialHashSetTests<T> : GenericCollectionTestsB
 
         sut.IntersectWith( sut );
 
-        sut.Should().BeSequentiallyEqualTo( items );
+        sut.TestSequence( items ).Go();
     }
 
     [Theory]
@@ -238,7 +230,7 @@ public abstract class GenericSequentialHashSetTests<T> : GenericCollectionTestsB
 
         sut.IntersectWith( other );
 
-        sut.Should().BeSequentiallyEqualTo( expected );
+        sut.TestSequence( expected ).Go();
     }
 
     [Theory]
@@ -256,7 +248,7 @@ public abstract class GenericSequentialHashSetTests<T> : GenericCollectionTestsB
 
         sut.IntersectWith( otherSet );
 
-        sut.Should().BeSequentiallyEqualTo( expected );
+        sut.TestSequence( expected ).Go();
     }
 
     [Theory]
@@ -276,7 +268,7 @@ public abstract class GenericSequentialHashSetTests<T> : GenericCollectionTestsB
 
         sut.IntersectWith( otherSet );
 
-        sut.Should().BeSequentiallyEqualTo( expected );
+        sut.TestSequence( expected ).Go();
     }
 
     [Fact]
@@ -289,7 +281,7 @@ public abstract class GenericSequentialHashSetTests<T> : GenericCollectionTestsB
 
         sut.SymmetricExceptWith( sut );
 
-        sut.Should().HaveCount( 0 );
+        sut.Count.TestEquals( 0 ).Go();
     }
 
     [Theory]
@@ -302,7 +294,7 @@ public abstract class GenericSequentialHashSetTests<T> : GenericCollectionTestsB
 
         sut.SymmetricExceptWith( other );
 
-        sut.Should().BeSequentiallyEqualTo( expected );
+        sut.TestSequence( expected ).Go();
     }
 
     [Fact]
@@ -315,7 +307,7 @@ public abstract class GenericSequentialHashSetTests<T> : GenericCollectionTestsB
 
         var result = sut.Overlaps( sut );
 
-        result.Should().BeTrue();
+        result.TestTrue().Go();
     }
 
     [Theory]
@@ -328,7 +320,7 @@ public abstract class GenericSequentialHashSetTests<T> : GenericCollectionTestsB
 
         var result = sut.Overlaps( other );
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -341,7 +333,7 @@ public abstract class GenericSequentialHashSetTests<T> : GenericCollectionTestsB
 
         var result = sut.SetEquals( sut );
 
-        result.Should().BeTrue();
+        result.TestTrue().Go();
     }
 
     [Theory]
@@ -354,7 +346,7 @@ public abstract class GenericSequentialHashSetTests<T> : GenericCollectionTestsB
 
         var result = sut.SetEquals( other );
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -369,7 +361,7 @@ public abstract class GenericSequentialHashSetTests<T> : GenericCollectionTestsB
 
         var result = sut.SetEquals( otherSet );
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -389,7 +381,7 @@ public abstract class GenericSequentialHashSetTests<T> : GenericCollectionTestsB
 
         var result = sut.SetEquals( otherSet );
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -402,7 +394,7 @@ public abstract class GenericSequentialHashSetTests<T> : GenericCollectionTestsB
 
         var result = sut.IsSupersetOf( sut );
 
-        result.Should().BeTrue();
+        result.TestTrue().Go();
     }
 
     [Theory]
@@ -415,7 +407,7 @@ public abstract class GenericSequentialHashSetTests<T> : GenericCollectionTestsB
 
         var result = sut.IsSupersetOf( other );
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -428,7 +420,7 @@ public abstract class GenericSequentialHashSetTests<T> : GenericCollectionTestsB
 
         var result = sut.IsProperSupersetOf( sut );
 
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Theory]
@@ -441,7 +433,7 @@ public abstract class GenericSequentialHashSetTests<T> : GenericCollectionTestsB
 
         var result = sut.IsProperSupersetOf( other );
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -454,7 +446,7 @@ public abstract class GenericSequentialHashSetTests<T> : GenericCollectionTestsB
 
         var result = sut.IsSubsetOf( sut );
 
-        result.Should().BeTrue();
+        result.TestTrue().Go();
     }
 
     [Theory]
@@ -467,7 +459,7 @@ public abstract class GenericSequentialHashSetTests<T> : GenericCollectionTestsB
 
         var result = sut.IsSubsetOf( other );
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -482,7 +474,7 @@ public abstract class GenericSequentialHashSetTests<T> : GenericCollectionTestsB
 
         var result = sut.IsSubsetOf( otherSet );
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -502,7 +494,7 @@ public abstract class GenericSequentialHashSetTests<T> : GenericCollectionTestsB
 
         var result = sut.IsSubsetOf( otherSet );
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -515,7 +507,7 @@ public abstract class GenericSequentialHashSetTests<T> : GenericCollectionTestsB
 
         var result = sut.IsProperSubsetOf( sut );
 
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Theory]
@@ -528,7 +520,7 @@ public abstract class GenericSequentialHashSetTests<T> : GenericCollectionTestsB
 
         var result = sut.IsProperSubsetOf( other );
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -543,7 +535,7 @@ public abstract class GenericSequentialHashSetTests<T> : GenericCollectionTestsB
 
         var result = sut.IsProperSubsetOf( otherSet );
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -563,7 +555,7 @@ public abstract class GenericSequentialHashSetTests<T> : GenericCollectionTestsB
 
         var result = sut.IsProperSubsetOf( otherSet );
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -588,7 +580,7 @@ public abstract class GenericSequentialHashSetTests<T> : GenericCollectionTestsB
         foreach ( var item in itemsToAddLast )
             sut.Add( item );
 
-        sut.Should().BeSequentiallyEqualTo( expected );
+        sut.TestSequence( expected ).Go();
     }
 
     protected sealed override ICollection<T> CreateEmptyCollection()

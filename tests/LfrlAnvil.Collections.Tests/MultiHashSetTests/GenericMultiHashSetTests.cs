@@ -20,11 +20,10 @@ public abstract class GenericMultiHashSetTests<T> : GenericCollectionTestsBase<P
     {
         var sut = new MultiHashSet<T>();
 
-        using ( new AssertionScope() )
-        {
-            sut.FullCount.Should().Be( 0 );
-            sut.Comparer.Should().Be( EqualityComparer<T>.Default );
-        }
+        Assertion.All(
+                sut.FullCount.TestEquals( 0 ),
+                sut.Comparer.TestEquals( EqualityComparer<T>.Default ) )
+            .Go();
     }
 
     [Fact]
@@ -32,7 +31,7 @@ public abstract class GenericMultiHashSetTests<T> : GenericCollectionTestsBase<P
     {
         var comparer = EqualityComparerFactory<T>.Create( (a, b) => a!.Equals( b ) );
         var sut = new MultiHashSet<T>( comparer );
-        sut.Comparer.Should().Be( comparer );
+        sut.Comparer.TestRefEquals( comparer ).Go();
     }
 
     [Fact]
@@ -44,12 +43,11 @@ public abstract class GenericMultiHashSetTests<T> : GenericCollectionTestsBase<P
 
         var result = sut.Add( item );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( 1 );
-            sut.FullCount.Should().Be( 1 );
-            sut.Count.Should().Be( 1 );
-        }
+        Assertion.All(
+                result.TestEquals( 1 ),
+                sut.FullCount.TestEquals( 1 ),
+                sut.Count.TestEquals( 1 ) )
+            .Go();
     }
 
     [Fact]
@@ -61,12 +59,11 @@ public abstract class GenericMultiHashSetTests<T> : GenericCollectionTestsBase<P
 
         var result = sut.Add( item );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( 1 );
-            sut.FullCount.Should().Be( 2 );
-            sut.Count.Should().Be( 2 );
-        }
+        Assertion.All(
+                result.TestEquals( 1 ),
+                sut.FullCount.TestEquals( 2 ),
+                sut.Count.TestEquals( 2 ) )
+            .Go();
     }
 
     [Fact]
@@ -78,12 +75,11 @@ public abstract class GenericMultiHashSetTests<T> : GenericCollectionTestsBase<P
 
         var result = sut.Add( item );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( 2 );
-            sut.FullCount.Should().Be( 2 );
-            sut.Count.Should().Be( 1 );
-        }
+        Assertion.All(
+                result.TestEquals( 2 ),
+                sut.FullCount.TestEquals( 2 ),
+                sut.Count.TestEquals( 1 ) )
+            .Go();
     }
 
     [Fact]
@@ -99,12 +95,11 @@ public abstract class GenericMultiHashSetTests<T> : GenericCollectionTestsBase<P
 
         var result = sut.Add( item );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( 2 );
-            sut.FullCount.Should().Be( 3 );
-            sut.Count.Should().Be( 2 );
-        }
+        Assertion.All(
+                result.TestEquals( 2 ),
+                sut.FullCount.TestEquals( 3 ),
+                sut.Count.TestEquals( 2 ) )
+            .Go();
     }
 
     [Fact]
@@ -117,12 +112,12 @@ public abstract class GenericMultiHashSetTests<T> : GenericCollectionTestsBase<P
 
         var action = Lambda.Of( () => sut.Add( item ) );
 
-        using ( new AssertionScope() )
-        {
-            action.Should().ThrowExactly<OverflowException>();
-            sut.Count.Should().Be( 1 );
-            sut.FullCount.Should().Be( int.MaxValue );
-        }
+        action.Test(
+                exc => Assertion.All(
+                    exc.TestType().Exact<OverflowException>(),
+                    sut.Count.TestEquals( 1 ),
+                    sut.FullCount.TestEquals( int.MaxValue ) ) )
+            .Go();
     }
 
     [Theory]
@@ -137,12 +132,11 @@ public abstract class GenericMultiHashSetTests<T> : GenericCollectionTestsBase<P
 
         var result = sut.AddMany( item, count );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( count );
-            sut.FullCount.Should().Be( count );
-            sut.Count.Should().Be( 1 );
-        }
+        Assertion.All(
+                result.TestEquals( count ),
+                sut.FullCount.TestEquals( count ),
+                sut.Count.TestEquals( 1 ) )
+            .Go();
     }
 
     [Theory]
@@ -157,12 +151,11 @@ public abstract class GenericMultiHashSetTests<T> : GenericCollectionTestsBase<P
 
         var result = sut.AddMany( item, count );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( count );
-            sut.FullCount.Should().Be( 1 + count );
-            sut.Count.Should().Be( 2 );
-        }
+        Assertion.All(
+                result.TestEquals( count ),
+                sut.FullCount.TestEquals( 1 + count ),
+                sut.Count.TestEquals( 2 ) )
+            .Go();
     }
 
     [Theory]
@@ -177,12 +170,11 @@ public abstract class GenericMultiHashSetTests<T> : GenericCollectionTestsBase<P
 
         var result = sut.AddMany( item, count );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( 1 + count );
-            sut.FullCount.Should().Be( 1 + count );
-            sut.Count.Should().Be( 1 );
-        }
+        Assertion.All(
+                result.TestEquals( 1 + count ),
+                sut.FullCount.TestEquals( 1 + count ),
+                sut.Count.TestEquals( 1 ) )
+            .Go();
     }
 
     [Theory]
@@ -201,12 +193,11 @@ public abstract class GenericMultiHashSetTests<T> : GenericCollectionTestsBase<P
 
         var result = sut.AddMany( item, count );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( 1 + count );
-            sut.FullCount.Should().Be( 2 + count );
-            sut.Count.Should().Be( 2 );
-        }
+        Assertion.All(
+                result.TestEquals( 1 + count ),
+                sut.FullCount.TestEquals( 2 + count ),
+                sut.Count.TestEquals( 2 ) )
+            .Go();
     }
 
     [Theory]
@@ -220,7 +211,7 @@ public abstract class GenericMultiHashSetTests<T> : GenericCollectionTestsBase<P
 
         var action = Lambda.Of( () => sut.AddMany( item, count ) );
 
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Fact]
@@ -233,7 +224,7 @@ public abstract class GenericMultiHashSetTests<T> : GenericCollectionTestsBase<P
 
         var action = Lambda.Of( () => sut.AddMany( item, 1 ) );
 
-        action.Should().ThrowExactly<OverflowException>();
+        action.Test( exc => exc.TestType().Exact<OverflowException>() ).Go();
     }
 
     [Fact]
@@ -245,7 +236,7 @@ public abstract class GenericMultiHashSetTests<T> : GenericCollectionTestsBase<P
 
         var result = sut.Remove( item );
 
-        result.Should().Be( -1 );
+        result.TestEquals( -1 ).Go();
     }
 
     [Fact]
@@ -258,12 +249,11 @@ public abstract class GenericMultiHashSetTests<T> : GenericCollectionTestsBase<P
 
         var result = sut.Remove( item );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( 1 );
-            sut.FullCount.Should().Be( 1 );
-            sut.Count.Should().Be( 1 );
-        }
+        Assertion.All(
+                result.TestEquals( 1 ),
+                sut.FullCount.TestEquals( 1 ),
+                sut.Count.TestEquals( 1 ) )
+            .Go();
     }
 
     [Fact]
@@ -275,12 +265,11 @@ public abstract class GenericMultiHashSetTests<T> : GenericCollectionTestsBase<P
 
         var result = sut.Remove( item );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( 0 );
-            sut.FullCount.Should().Be( 0 );
-            sut.Count.Should().Be( 0 );
-        }
+        Assertion.All(
+                result.TestEquals( 0 ),
+                sut.FullCount.TestEquals( 0 ),
+                sut.Count.TestEquals( 0 ) )
+            .Go();
     }
 
     [Fact]
@@ -292,7 +281,7 @@ public abstract class GenericMultiHashSetTests<T> : GenericCollectionTestsBase<P
 
         var result = sut.RemoveMany( item, 1 );
 
-        result.Should().Be( -1 );
+        result.TestEquals( -1 ).Go();
     }
 
     [Theory]
@@ -308,12 +297,11 @@ public abstract class GenericMultiHashSetTests<T> : GenericCollectionTestsBase<P
 
         var result = sut.RemoveMany( item, count );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( 4 - count );
-            sut.FullCount.Should().Be( 4 - count );
-            sut.Count.Should().Be( 1 );
-        }
+        Assertion.All(
+                result.TestEquals( 4 - count ),
+                sut.FullCount.TestEquals( 4 - count ),
+                sut.Count.TestEquals( 1 ) )
+            .Go();
     }
 
     [Theory]
@@ -329,12 +317,11 @@ public abstract class GenericMultiHashSetTests<T> : GenericCollectionTestsBase<P
 
         var result = sut.RemoveMany( item, count );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( 0 );
-            sut.FullCount.Should().Be( 0 );
-            sut.Count.Should().Be( 0 );
-        }
+        Assertion.All(
+                result.TestEquals( 0 ),
+                sut.FullCount.TestEquals( 0 ),
+                sut.Count.TestEquals( 0 ) )
+            .Go();
     }
 
     [Theory]
@@ -348,7 +335,7 @@ public abstract class GenericMultiHashSetTests<T> : GenericCollectionTestsBase<P
 
         var action = Lambda.Of( () => sut.RemoveMany( item, count ) );
 
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Theory]
@@ -364,12 +351,11 @@ public abstract class GenericMultiHashSetTests<T> : GenericCollectionTestsBase<P
 
         var result = sut.RemoveAll( item );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( count );
-            sut.FullCount.Should().Be( 0 );
-            sut.Count.Should().Be( 0 );
-        }
+        Assertion.All(
+                result.TestEquals( count ),
+                sut.FullCount.TestEquals( 0 ),
+                sut.Count.TestEquals( 0 ) )
+            .Go();
     }
 
     [Fact]
@@ -381,7 +367,7 @@ public abstract class GenericMultiHashSetTests<T> : GenericCollectionTestsBase<P
 
         var result = sut.RemoveAll( item );
 
-        result.Should().Be( 0 );
+        result.TestEquals( 0 ).Go();
     }
 
     [Fact]
@@ -396,11 +382,10 @@ public abstract class GenericMultiHashSetTests<T> : GenericCollectionTestsBase<P
 
         sut.Clear();
 
-        using ( new AssertionScope() )
-        {
-            sut.FullCount.Should().Be( 0 );
-            sut.Count.Should().Be( 0 );
-        }
+        Assertion.All(
+                sut.FullCount.TestEquals( 0 ),
+                sut.Count.TestEquals( 0 ) )
+            .Go();
     }
 
     [Fact]
@@ -413,7 +398,7 @@ public abstract class GenericMultiHashSetTests<T> : GenericCollectionTestsBase<P
 
         sut.ExceptWith( sut );
 
-        sut.Should().HaveCount( 0 );
+        sut.Count.TestEquals( 0 ).Go();
     }
 
     [Theory]
@@ -429,7 +414,7 @@ public abstract class GenericMultiHashSetTests<T> : GenericCollectionTestsBase<P
 
         sut.ExceptWith( other );
 
-        sut.Should().BeEquivalentTo( expected );
+        sut.TestSetEqual( expected ).Go();
     }
 
     [Fact]
@@ -442,7 +427,7 @@ public abstract class GenericMultiHashSetTests<T> : GenericCollectionTestsBase<P
 
         sut.UnionWith( sut );
 
-        sut.Should().BeEquivalentTo( items );
+        sut.TestSetEqual( items ).Go();
     }
 
     [Theory]
@@ -458,7 +443,7 @@ public abstract class GenericMultiHashSetTests<T> : GenericCollectionTestsBase<P
 
         sut.UnionWith( other );
 
-        sut.Should().BeEquivalentTo( expected );
+        sut.TestSetEqual( expected ).Go();
     }
 
     [Fact]
@@ -471,7 +456,7 @@ public abstract class GenericMultiHashSetTests<T> : GenericCollectionTestsBase<P
 
         sut.IntersectWith( sut );
 
-        sut.Should().BeEquivalentTo( items );
+        sut.TestSetEqual( items ).Go();
     }
 
     [Theory]
@@ -487,7 +472,7 @@ public abstract class GenericMultiHashSetTests<T> : GenericCollectionTestsBase<P
 
         sut.IntersectWith( other );
 
-        sut.Should().BeEquivalentTo( expected );
+        sut.TestSetEqual( expected ).Go();
     }
 
     [Theory]
@@ -507,7 +492,7 @@ public abstract class GenericMultiHashSetTests<T> : GenericCollectionTestsBase<P
 
         sut.IntersectWith( otherSet );
 
-        sut.Should().BeEquivalentTo( expected );
+        sut.TestSetEqual( expected ).Go();
     }
 
     [Fact]
@@ -520,7 +505,7 @@ public abstract class GenericMultiHashSetTests<T> : GenericCollectionTestsBase<P
 
         sut.SymmetricExceptWith( sut );
 
-        sut.Should().HaveCount( 0 );
+        sut.Count.TestEquals( 0 ).Go();
     }
 
     [Theory]
@@ -536,7 +521,7 @@ public abstract class GenericMultiHashSetTests<T> : GenericCollectionTestsBase<P
 
         sut.SymmetricExceptWith( other );
 
-        sut.Should().BeEquivalentTo( expected );
+        sut.TestSetEqual( expected ).Go();
     }
 
     [Fact]
@@ -549,7 +534,7 @@ public abstract class GenericMultiHashSetTests<T> : GenericCollectionTestsBase<P
 
         var result = sut.Overlaps( sut );
 
-        result.Should().BeTrue();
+        result.TestTrue().Go();
     }
 
     [Theory]
@@ -562,7 +547,7 @@ public abstract class GenericMultiHashSetTests<T> : GenericCollectionTestsBase<P
 
         var result = sut.Overlaps( other );
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -575,7 +560,7 @@ public abstract class GenericMultiHashSetTests<T> : GenericCollectionTestsBase<P
 
         var result = sut.SetEquals( sut );
 
-        result.Should().BeTrue();
+        result.TestTrue().Go();
     }
 
     [Theory]
@@ -588,7 +573,7 @@ public abstract class GenericMultiHashSetTests<T> : GenericCollectionTestsBase<P
 
         var result = sut.SetEquals( other );
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -608,7 +593,7 @@ public abstract class GenericMultiHashSetTests<T> : GenericCollectionTestsBase<P
 
         var result = sut.SetEquals( otherSet );
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -621,7 +606,7 @@ public abstract class GenericMultiHashSetTests<T> : GenericCollectionTestsBase<P
 
         var result = sut.IsSupersetOf( sut );
 
-        result.Should().BeTrue();
+        result.TestTrue().Go();
     }
 
     [Theory]
@@ -634,7 +619,7 @@ public abstract class GenericMultiHashSetTests<T> : GenericCollectionTestsBase<P
 
         var result = sut.IsSupersetOf( other );
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -654,7 +639,7 @@ public abstract class GenericMultiHashSetTests<T> : GenericCollectionTestsBase<P
 
         var result = sut.IsSupersetOf( otherSet );
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -667,7 +652,7 @@ public abstract class GenericMultiHashSetTests<T> : GenericCollectionTestsBase<P
 
         var result = sut.IsProperSupersetOf( sut );
 
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Theory]
@@ -683,7 +668,7 @@ public abstract class GenericMultiHashSetTests<T> : GenericCollectionTestsBase<P
 
         var result = sut.IsProperSupersetOf( other );
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -703,7 +688,7 @@ public abstract class GenericMultiHashSetTests<T> : GenericCollectionTestsBase<P
 
         var result = sut.IsProperSupersetOf( otherSet );
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -716,7 +701,7 @@ public abstract class GenericMultiHashSetTests<T> : GenericCollectionTestsBase<P
 
         var result = sut.IsSubsetOf( sut );
 
-        result.Should().BeTrue();
+        result.TestTrue().Go();
     }
 
     [Theory]
@@ -729,7 +714,7 @@ public abstract class GenericMultiHashSetTests<T> : GenericCollectionTestsBase<P
 
         var result = sut.IsSubsetOf( other );
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -749,7 +734,7 @@ public abstract class GenericMultiHashSetTests<T> : GenericCollectionTestsBase<P
 
         var result = sut.IsSubsetOf( otherSet );
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -762,7 +747,7 @@ public abstract class GenericMultiHashSetTests<T> : GenericCollectionTestsBase<P
 
         var result = sut.IsProperSubsetOf( sut );
 
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Theory]
@@ -778,7 +763,7 @@ public abstract class GenericMultiHashSetTests<T> : GenericCollectionTestsBase<P
 
         var result = sut.IsProperSubsetOf( other );
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -798,7 +783,7 @@ public abstract class GenericMultiHashSetTests<T> : GenericCollectionTestsBase<P
 
         var result = sut.IsProperSubsetOf( otherSet );
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -810,7 +795,7 @@ public abstract class GenericMultiHashSetTests<T> : GenericCollectionTestsBase<P
 
         var result = sut.Contains( item );
 
-        result.Should().BeTrue();
+        result.TestTrue().Go();
     }
 
     [Fact]
@@ -822,7 +807,7 @@ public abstract class GenericMultiHashSetTests<T> : GenericCollectionTestsBase<P
 
         var result = sut.Contains( item );
 
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Theory]
@@ -839,7 +824,7 @@ public abstract class GenericMultiHashSetTests<T> : GenericCollectionTestsBase<P
 
         var result = sut.Contains( item, checkedMultiplicity );
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -852,7 +837,7 @@ public abstract class GenericMultiHashSetTests<T> : GenericCollectionTestsBase<P
 
         var result = sut.Contains( item, multiplicity );
 
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Theory]
@@ -869,7 +854,7 @@ public abstract class GenericMultiHashSetTests<T> : GenericCollectionTestsBase<P
 
         var result = sut.Contains( Pair.Create( item, checkedMultiplicity ) );
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -882,7 +867,7 @@ public abstract class GenericMultiHashSetTests<T> : GenericCollectionTestsBase<P
 
         var result = sut.Contains( Pair.Create( item, multiplicity ) );
 
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Theory]
@@ -898,7 +883,7 @@ public abstract class GenericMultiHashSetTests<T> : GenericCollectionTestsBase<P
 
         var result = sut.GetMultiplicity( item );
 
-        result.Should().Be( count );
+        result.TestEquals( count ).Go();
     }
 
     [Fact]
@@ -910,7 +895,7 @@ public abstract class GenericMultiHashSetTests<T> : GenericCollectionTestsBase<P
 
         var result = sut.GetMultiplicity( item );
 
-        result.Should().Be( 0 );
+        result.TestEquals( 0 ).Go();
     }
 
     [Fact]
@@ -922,11 +907,10 @@ public abstract class GenericMultiHashSetTests<T> : GenericCollectionTestsBase<P
 
         var result = sut.SetMultiplicity( item, 0 );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( 0 );
-            sut.FullCount.Should().Be( 0 );
-        }
+        Assertion.All(
+                result.TestEquals( 0 ),
+                sut.FullCount.TestEquals( 0 ) )
+            .Go();
     }
 
     [Theory]
@@ -941,13 +925,12 @@ public abstract class GenericMultiHashSetTests<T> : GenericCollectionTestsBase<P
 
         var result = sut.SetMultiplicity( item, value );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( 0 );
-            sut.Count.Should().Be( 1 );
-            sut.FullCount.Should().Be( value );
-            sut.GetMultiplicity( item ).Should().Be( value );
-        }
+        Assertion.All(
+                result.TestEquals( 0 ),
+                sut.Count.TestEquals( 1 ),
+                sut.FullCount.TestEquals( value ),
+                sut.GetMultiplicity( item ).TestEquals( value ) )
+            .Go();
     }
 
     [Theory]
@@ -963,13 +946,12 @@ public abstract class GenericMultiHashSetTests<T> : GenericCollectionTestsBase<P
 
         var result = sut.SetMultiplicity( item, value );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( value );
-            sut.Count.Should().Be( 1 );
-            sut.FullCount.Should().Be( value );
-            sut.GetMultiplicity( item ).Should().Be( value );
-        }
+        Assertion.All(
+                result.TestEquals( value ),
+                sut.Count.TestEquals( 1 ),
+                sut.FullCount.TestEquals( value ),
+                sut.GetMultiplicity( item ).TestEquals( value ) )
+            .Go();
     }
 
     [Theory]
@@ -988,13 +970,12 @@ public abstract class GenericMultiHashSetTests<T> : GenericCollectionTestsBase<P
 
         var result = sut.SetMultiplicity( item, newMultiplicity );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( oldMultiplicity );
-            sut.Count.Should().Be( 1 );
-            sut.FullCount.Should().Be( newMultiplicity );
-            sut.GetMultiplicity( item ).Should().Be( newMultiplicity );
-        }
+        Assertion.All(
+                result.TestEquals( oldMultiplicity ),
+                sut.Count.TestEquals( 1 ),
+                sut.FullCount.TestEquals( newMultiplicity ),
+                sut.GetMultiplicity( item ).TestEquals( newMultiplicity ) )
+            .Go();
     }
 
     [Theory]
@@ -1010,13 +991,12 @@ public abstract class GenericMultiHashSetTests<T> : GenericCollectionTestsBase<P
 
         var result = sut.SetMultiplicity( item, 0 );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( oldMultiplicity );
-            sut.Count.Should().Be( 0 );
-            sut.FullCount.Should().Be( 0 );
-            sut.GetMultiplicity( item ).Should().Be( 0 );
-        }
+        Assertion.All(
+                result.TestEquals( oldMultiplicity ),
+                sut.Count.TestEquals( 0 ),
+                sut.FullCount.TestEquals( 0 ),
+                sut.GetMultiplicity( item ).TestEquals( 0 ) )
+            .Go();
     }
 
     [Fact]
@@ -1029,7 +1009,7 @@ public abstract class GenericMultiHashSetTests<T> : GenericCollectionTestsBase<P
         for ( var i = 0; i < items.Length; ++i )
             sut.AddMany( items[i], i + 1 );
 
-        sut.DistinctItems.Should().BeEquivalentTo( items );
+        sut.DistinctItems.TestSetEqual( items ).Go();
     }
 
     [Fact]
@@ -1044,22 +1024,21 @@ public abstract class GenericMultiHashSetTests<T> : GenericCollectionTestsBase<P
         for ( var i = 0; i < items.Length; ++i )
             sut.AddMany( items[i], i + 1 );
 
-        sut.Items.Should().BeEquivalentTo( expected );
+        Assertion.All( sut.Items.Count().TestEquals( expected.Length ), sut.Items.TestSetEqual( expected ) ).Go();
     }
 
     [Fact]
     public void GetEnumerator_ShouldReturnCorrectResult()
     {
         var items = Fixture.CreateManyDistinct<T>( count: 3 );
-        var expected = new[] { Pair.Create( items[0], 1 ), Pair.Create( items[1], 2 ), Pair.Create( items[2], 3 ) }
-            .AsEnumerable();
+        var expected = new[] { Pair.Create( items[0], 1 ), Pair.Create( items[1], 2 ), Pair.Create( items[2], 3 ) }.AsEnumerable();
 
         var sut = new MultiHashSet<T>();
 
         for ( var i = 0; i < items.Length; ++i )
             sut.AddMany( items[i], i + 1 );
 
-        sut.Should().BeEquivalentTo( expected );
+        sut.TestSetEqual( expected ).Go();
     }
 
     [Theory]
@@ -1075,12 +1054,11 @@ public abstract class GenericMultiHashSetTests<T> : GenericCollectionTestsBase<P
 
         var result = set.Add( Pair.Create( item, multiplicity ) );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            sut.FullCount.Should().Be( multiplicity + 1 );
-            sut.Count.Should().Be( 1 );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                sut.FullCount.TestEquals( multiplicity + 1 ),
+                sut.Count.TestEquals( 1 ) )
+            .Go();
     }
 
     [Theory]
@@ -1095,7 +1073,7 @@ public abstract class GenericMultiHashSetTests<T> : GenericCollectionTestsBase<P
 
         var action = Lambda.Of( () => set.Add( Pair.Create( item, multiplicity ) ) );
 
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     protected sealed override ICollection<Pair<T, int>> CreateEmptyCollection()

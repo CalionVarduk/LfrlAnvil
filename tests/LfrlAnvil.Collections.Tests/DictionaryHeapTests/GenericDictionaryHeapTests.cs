@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 using System.Linq;
 using LfrlAnvil.Functional;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Collections.Tests.DictionaryHeapTests;
 
@@ -13,12 +13,11 @@ public abstract class GenericDictionaryHeapTests<TKey, TValue> : TestsBase
     {
         var sut = new DictionaryHeap<TKey, TValue>();
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 0 );
-            sut.Comparer.Should().Be( Comparer<TValue>.Default );
-            sut.KeyComparer.Should().Be( EqualityComparer<TKey>.Default );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 0 ),
+                sut.Comparer.TestEquals( Comparer<TValue>.Default ),
+                sut.KeyComparer.TestEquals( EqualityComparer<TKey>.Default ) )
+            .Go();
     }
 
     [Fact]
@@ -28,12 +27,11 @@ public abstract class GenericDictionaryHeapTests<TKey, TValue> : TestsBase
         var comparer = Comparer<TValue>.Create( (a, b) => a!.GetHashCode().CompareTo( b!.GetHashCode() ) );
         var sut = new DictionaryHeap<TKey, TValue>( keyComparer, comparer );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 0 );
-            sut.Comparer.Should().Be( comparer );
-            sut.KeyComparer.Should().Be( keyComparer );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 0 ),
+                sut.Comparer.TestEquals( comparer ),
+                sut.KeyComparer.TestEquals( keyComparer ) )
+            .Go();
     }
 
     [Fact]
@@ -44,13 +42,12 @@ public abstract class GenericDictionaryHeapTests<TKey, TValue> : TestsBase
 
         var sut = new DictionaryHeap<TKey, TValue>( keys.Zip( items, KeyValuePair.Create ) );
 
-        using ( new AssertionScope() )
-        {
-            sut.Should().BeEquivalentTo( items );
-            sut.Comparer.Should().Be( Comparer<TValue>.Default );
-            sut.KeyComparer.Should().Be( EqualityComparer<TKey>.Default );
-            AssertHeapInvariant( sut );
-        }
+        Assertion.All(
+                sut.TestSetEqual( items ),
+                sut.Comparer.TestEquals( Comparer<TValue>.Default ),
+                sut.KeyComparer.TestEquals( EqualityComparer<TKey>.Default ),
+                AssertHeapInvariant( sut ) )
+            .Go();
     }
 
     [Fact]
@@ -62,13 +59,12 @@ public abstract class GenericDictionaryHeapTests<TKey, TValue> : TestsBase
 
         var sut = new DictionaryHeap<TKey, TValue>( keys.Zip( items, KeyValuePair.Create ) );
 
-        using ( new AssertionScope() )
-        {
-            sut.Should().BeEquivalentTo( items );
-            sut.Comparer.Should().Be( Comparer<TValue>.Default );
-            sut.KeyComparer.Should().Be( EqualityComparer<TKey>.Default );
-            AssertHeapInvariant( sut );
-        }
+        Assertion.All(
+                sut.TestSetEqual( items ),
+                sut.Comparer.TestEquals( Comparer<TValue>.Default ),
+                sut.KeyComparer.TestEquals( EqualityComparer<TKey>.Default ),
+                AssertHeapInvariant( sut ) )
+            .Go();
     }
 
     [Fact]
@@ -81,13 +77,12 @@ public abstract class GenericDictionaryHeapTests<TKey, TValue> : TestsBase
 
         var sut = new DictionaryHeap<TKey, TValue>( keys.Zip( items, KeyValuePair.Create ), keyComparer, comparer );
 
-        using ( new AssertionScope() )
-        {
-            sut.Should().BeEquivalentTo( items );
-            sut.Comparer.Should().Be( comparer );
-            sut.KeyComparer.Should().Be( keyComparer );
-            AssertHeapInvariant( sut );
-        }
+        Assertion.All(
+                sut.TestSetEqual( items ),
+                sut.Comparer.TestEquals( comparer ),
+                sut.KeyComparer.TestEquals( keyComparer ),
+                AssertHeapInvariant( sut ) )
+            .Go();
     }
 
     [Fact]
@@ -99,7 +94,7 @@ public abstract class GenericDictionaryHeapTests<TKey, TValue> : TestsBase
 
         var action = Lambda.Of( () => new DictionaryHeap<TKey, TValue>( keys.Zip( items, KeyValuePair.Create ) ) );
 
-        action.Should().ThrowExactly<ArgumentException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentException>() ).Go();
     }
 
     [Fact]
@@ -112,12 +107,11 @@ public abstract class GenericDictionaryHeapTests<TKey, TValue> : TestsBase
 
         sut.Add( key, item );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 1 );
-            sut[0].Should().Be( item );
-            sut.GetKey( 0 ).Should().Be( key );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 1 ),
+                sut[0].TestEquals( item ),
+                sut.GetKey( 0 ).TestEquals( key ) )
+            .Go();
     }
 
     [Fact]
@@ -130,7 +124,7 @@ public abstract class GenericDictionaryHeapTests<TKey, TValue> : TestsBase
 
         sut.Add( keys[1], item );
 
-        sut.Should().BeSequentiallyEqualTo( item, other );
+        sut.TestSequence( [ item, other ] ).Go();
     }
 
     [Fact]
@@ -143,7 +137,7 @@ public abstract class GenericDictionaryHeapTests<TKey, TValue> : TestsBase
 
         sut.Add( keys[1], item );
 
-        sut.Should().BeSequentiallyEqualTo( other, item );
+        sut.TestSequence( [ other, item ] ).Go();
     }
 
     [Fact]
@@ -156,7 +150,7 @@ public abstract class GenericDictionaryHeapTests<TKey, TValue> : TestsBase
 
         sut.Add( keys[2], item );
 
-        sut.Should().BeSequentiallyEqualTo( other, left, item );
+        sut.TestSequence( [ other, left, item ] ).Go();
     }
 
     [Fact]
@@ -168,7 +162,7 @@ public abstract class GenericDictionaryHeapTests<TKey, TValue> : TestsBase
 
         var action = Lambda.Of( () => sut.Add( key, item ) );
 
-        action.Should().ThrowExactly<ArgumentException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentException>() ).Go();
     }
 
     [Fact]
@@ -179,14 +173,12 @@ public abstract class GenericDictionaryHeapTests<TKey, TValue> : TestsBase
 
         var sut = new DictionaryHeap<TKey, TValue>();
 
-        foreach ( var (key, item) in keys.Zip( items ) )
-            sut.Add( key, item );
+        foreach ( var (key, item) in keys.Zip( items ) ) sut.Add( key, item );
 
-        using ( new AssertionScope() )
-        {
-            sut.Should().BeEquivalentTo( items );
-            AssertHeapInvariant( sut );
-        }
+        Assertion.All(
+                sut.TestSetEqual( items ),
+                AssertHeapInvariant( sut ) )
+            .Go();
     }
 
     [Fact]
@@ -199,13 +191,12 @@ public abstract class GenericDictionaryHeapTests<TKey, TValue> : TestsBase
 
         var result = sut.TryAdd( key, item );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            sut.Count.Should().Be( 1 );
-            sut[0].Should().Be( item );
-            sut.GetKey( 0 ).Should().Be( key );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                sut.Count.TestEquals( 1 ),
+                sut[0].TestEquals( item ),
+                sut.GetKey( 0 ).TestEquals( key ) )
+            .Go();
     }
 
     [Fact]
@@ -218,11 +209,10 @@ public abstract class GenericDictionaryHeapTests<TKey, TValue> : TestsBase
 
         var result = sut.TryAdd( keys[1], item );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            sut.Should().BeSequentiallyEqualTo( item, other );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                sut.TestSequence( [ item, other ] ) )
+            .Go();
     }
 
     [Fact]
@@ -235,11 +225,10 @@ public abstract class GenericDictionaryHeapTests<TKey, TValue> : TestsBase
 
         var result = sut.TryAdd( keys[1], item );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            sut.Should().BeSequentiallyEqualTo( other, item );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                sut.TestSequence( [ other, item ] ) )
+            .Go();
     }
 
     [Fact]
@@ -252,11 +241,10 @@ public abstract class GenericDictionaryHeapTests<TKey, TValue> : TestsBase
 
         var result = sut.TryAdd( keys[2], item );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            sut.Should().BeSequentiallyEqualTo( other, left, item );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                sut.TestSequence( [ other, left, item ] ) )
+            .Go();
     }
 
     [Fact]
@@ -268,11 +256,10 @@ public abstract class GenericDictionaryHeapTests<TKey, TValue> : TestsBase
 
         var result = sut.TryAdd( key, item );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeFalse();
-            sut.Should().BeSequentiallyEqualTo( other );
-        }
+        Assertion.All(
+                result.TestFalse(),
+                sut.TestSequence( [ other ] ) )
+            .Go();
     }
 
     [Fact]
@@ -283,14 +270,12 @@ public abstract class GenericDictionaryHeapTests<TKey, TValue> : TestsBase
 
         var sut = new DictionaryHeap<TKey, TValue>();
 
-        foreach ( var (key, item) in keys.Zip( items ) )
-            sut.TryAdd( key, item );
+        foreach ( var (key, item) in keys.Zip( items ) ) sut.TryAdd( key, item );
 
-        using ( new AssertionScope() )
-        {
-            sut.Should().BeEquivalentTo( items );
-            AssertHeapInvariant( sut );
-        }
+        Assertion.All(
+                sut.TestSetEqual( items ),
+                AssertHeapInvariant( sut ) )
+            .Go();
     }
 
     [Fact]
@@ -298,7 +283,7 @@ public abstract class GenericDictionaryHeapTests<TKey, TValue> : TestsBase
     {
         var sut = new DictionaryHeap<TKey, TValue>();
         var action = Lambda.Of( () => sut.Peek() );
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Fact]
@@ -308,11 +293,10 @@ public abstract class GenericDictionaryHeapTests<TKey, TValue> : TestsBase
 
         var result = sut.TryPeek( out var peeked );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeFalse();
-            peeked.Should().Be( default( TValue ) );
-        }
+        Assertion.All(
+                result.TestFalse(),
+                peeked.TestEquals( default ) )
+            .Go();
     }
 
     [Fact]
@@ -325,11 +309,10 @@ public abstract class GenericDictionaryHeapTests<TKey, TValue> : TestsBase
 
         var result = sut.TryPeek( out var peeked );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            peeked.Should().Be( item );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                peeked.TestEquals( item ) )
+            .Go();
     }
 
     [Fact]
@@ -344,12 +327,11 @@ public abstract class GenericDictionaryHeapTests<TKey, TValue> : TestsBase
 
         var result = sut.TryPeek( out var peeked );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            peeked.Should().Be( expected );
-            sut.Should().BeSequentiallyEqualTo( heapifiedItems );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                peeked.TestEquals( expected ),
+                sut.TestSequence( heapifiedItems ) )
+            .Go();
     }
 
     [Fact]
@@ -357,7 +339,7 @@ public abstract class GenericDictionaryHeapTests<TKey, TValue> : TestsBase
     {
         var sut = new DictionaryHeap<TKey, TValue>();
         var action = Lambda.Of( () => sut.Extract() );
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Fact]
@@ -367,11 +349,10 @@ public abstract class GenericDictionaryHeapTests<TKey, TValue> : TestsBase
 
         var result = sut.TryExtract( out var extracted );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeFalse();
-            extracted.Should().Be( default( TValue ) );
-        }
+        Assertion.All(
+                result.TestFalse(),
+                extracted.TestEquals( default ) )
+            .Go();
     }
 
     [Fact]
@@ -384,13 +365,12 @@ public abstract class GenericDictionaryHeapTests<TKey, TValue> : TestsBase
 
         var result = sut.TryExtract( out var extracted );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            extracted.Should().Be( item );
-            sut.Count.Should().Be( 0 );
-            sut.ContainsKey( key ).Should().BeFalse();
-        }
+        Assertion.All(
+                result.TestTrue(),
+                extracted.TestEquals( item ),
+                sut.Count.TestEquals( 0 ),
+                sut.ContainsKey( key ).TestFalse() )
+            .Go();
     }
 
     [Fact]
@@ -405,15 +385,13 @@ public abstract class GenericDictionaryHeapTests<TKey, TValue> : TestsBase
 
         var result = sut.TryExtract( out var extracted );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            extracted.Should().Be( expectedExtracted );
-            sut.Should().NotContain( expectedExtracted );
-            sut.Should().BeEquivalentTo( items.Where( i => ! i!.Equals( expectedExtracted ) ) );
-            sut.ContainsKey( expectedKey ).Should().BeFalse();
-            AssertHeapInvariant( sut );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                extracted.TestEquals( expectedExtracted ),
+                sut.TestSetEqual( items.Where( i => ! i!.Equals( expectedExtracted ) ) ),
+                sut.ContainsKey( expectedKey ).TestFalse(),
+                AssertHeapInvariant( sut ) )
+            .Go();
     }
 
     [Fact]
@@ -426,7 +404,7 @@ public abstract class GenericDictionaryHeapTests<TKey, TValue> : TestsBase
 
         var action = Lambda.Of( () => sut.Remove( keys[1] ) );
 
-        action.Should().ThrowExactly<KeyNotFoundException>();
+        action.Test( exc => exc.TestType().Exact<KeyNotFoundException>() ).Go();
     }
 
     [Fact]
@@ -439,12 +417,11 @@ public abstract class GenericDictionaryHeapTests<TKey, TValue> : TestsBase
 
         var result = sut.Remove( key );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( item );
-            sut.Count.Should().Be( 0 );
-            sut.ContainsKey( key ).Should().BeFalse();
-        }
+        Assertion.All(
+                result.TestEquals( item ),
+                sut.Count.TestEquals( 0 ),
+                sut.ContainsKey( key ).TestFalse() )
+            .Go();
     }
 
     [Fact]
@@ -459,13 +436,12 @@ public abstract class GenericDictionaryHeapTests<TKey, TValue> : TestsBase
 
         var result = sut.Remove( keys[index] );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( items[index] );
-            sut.Should().BeEquivalentTo( expected );
-            sut.ContainsKey( keys[index] ).Should().BeFalse();
-            AssertHeapInvariant( sut );
-        }
+        Assertion.All(
+                result.TestEquals( items[index] ),
+                sut.TestSetEqual( expected ),
+                sut.ContainsKey( keys[index] ).TestFalse(),
+                AssertHeapInvariant( sut ) )
+            .Go();
     }
 
     [Fact]
@@ -491,13 +467,12 @@ public abstract class GenericDictionaryHeapTests<TKey, TValue> : TestsBase
 
         var result = sut.Remove( keys[index] );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( items[index] );
-            sut.Should().BeEquivalentTo( expected );
-            sut.ContainsKey( keys[index] ).Should().BeFalse();
-            AssertHeapInvariant( sut );
-        }
+        Assertion.All(
+                result.TestEquals( items[index] ),
+                sut.TestSetEqual( expected ),
+                sut.ContainsKey( keys[index] ).TestFalse(),
+                AssertHeapInvariant( sut ) )
+            .Go();
     }
 
     [Theory]
@@ -519,13 +494,12 @@ public abstract class GenericDictionaryHeapTests<TKey, TValue> : TestsBase
 
         var result = sut.Remove( keys[index] );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( items[index] );
-            sut.Should().BeEquivalentTo( expected );
-            sut.ContainsKey( keys[index] ).Should().BeFalse();
-            AssertHeapInvariant( sut );
-        }
+        Assertion.All(
+                result.TestEquals( items[index] ),
+                sut.TestSetEqual( expected ),
+                sut.ContainsKey( keys[index] ).TestFalse(),
+                AssertHeapInvariant( sut ) )
+            .Go();
     }
 
     [Fact]
@@ -538,11 +512,10 @@ public abstract class GenericDictionaryHeapTests<TKey, TValue> : TestsBase
 
         var result = sut.TryRemove( keys[1], out var removed );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeFalse();
-            removed.Should().Be( default( TValue ) );
-        }
+        Assertion.All(
+                result.TestFalse(),
+                removed.TestEquals( default ) )
+            .Go();
     }
 
     [Fact]
@@ -557,14 +530,13 @@ public abstract class GenericDictionaryHeapTests<TKey, TValue> : TestsBase
 
         var result = sut.TryRemove( keys[index], out var removed );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            removed.Should().Be( items[index] );
-            sut.Should().BeEquivalentTo( expected );
-            sut.ContainsKey( keys[index] ).Should().BeFalse();
-            AssertHeapInvariant( sut );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                removed.TestEquals( items[index] ),
+                sut.TestSetEqual( expected ),
+                sut.ContainsKey( keys[index] ).TestFalse(),
+                AssertHeapInvariant( sut ) )
+            .Go();
     }
 
     [Fact]
@@ -590,14 +562,13 @@ public abstract class GenericDictionaryHeapTests<TKey, TValue> : TestsBase
 
         var result = sut.TryRemove( keys[index], out var removed );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            removed.Should().Be( items[index] );
-            sut.Should().BeEquivalentTo( expected );
-            sut.ContainsKey( keys[index] ).Should().BeFalse();
-            AssertHeapInvariant( sut );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                removed.TestEquals( items[index] ),
+                sut.TestSetEqual( expected ),
+                sut.ContainsKey( keys[index] ).TestFalse(),
+                AssertHeapInvariant( sut ) )
+            .Go();
     }
 
     [Theory]
@@ -619,14 +590,13 @@ public abstract class GenericDictionaryHeapTests<TKey, TValue> : TestsBase
 
         var result = sut.TryRemove( keys[index], out var removed );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            removed.Should().Be( items[index] );
-            sut.Should().BeEquivalentTo( expected );
-            sut.ContainsKey( keys[index] ).Should().BeFalse();
-            AssertHeapInvariant( sut );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                removed.TestEquals( items[index] ),
+                sut.TestSetEqual( expected ),
+                sut.ContainsKey( keys[index] ).TestFalse(),
+                AssertHeapInvariant( sut ) )
+            .Go();
     }
 
     [Fact]
@@ -634,7 +604,7 @@ public abstract class GenericDictionaryHeapTests<TKey, TValue> : TestsBase
     {
         var sut = new DictionaryHeap<TKey, TValue>();
         var action = Lambda.Of( () => sut.Pop() );
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Fact]
@@ -644,7 +614,7 @@ public abstract class GenericDictionaryHeapTests<TKey, TValue> : TestsBase
 
         var result = sut.TryPop();
 
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Fact]
@@ -657,12 +627,11 @@ public abstract class GenericDictionaryHeapTests<TKey, TValue> : TestsBase
 
         var result = sut.TryPop();
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            sut.Count.Should().Be( 0 );
-            sut.ContainsKey( key ).Should().BeFalse();
-        }
+        Assertion.All(
+                result.TestTrue(),
+                sut.Count.TestEquals( 0 ),
+                sut.ContainsKey( key ).TestFalse() )
+            .Go();
     }
 
     [Fact]
@@ -677,14 +646,12 @@ public abstract class GenericDictionaryHeapTests<TKey, TValue> : TestsBase
 
         var result = sut.TryPop();
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            sut.Should().NotContain( expectedExtracted );
-            sut.Should().BeEquivalentTo( items.Where( i => ! i!.Equals( expectedExtracted ) ) );
-            sut.ContainsKey( expectedKey ).Should().BeFalse();
-            AssertHeapInvariant( sut );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                sut.TestSetEqual( items.Where( i => ! i!.Equals( expectedExtracted ) ) ),
+                sut.ContainsKey( expectedKey ).TestFalse(),
+                AssertHeapInvariant( sut ) )
+            .Go();
     }
 
     [Fact]
@@ -697,7 +664,7 @@ public abstract class GenericDictionaryHeapTests<TKey, TValue> : TestsBase
 
         var action = Lambda.Of( () => sut.Replace( keys[1], item ) );
 
-        action.Should().ThrowExactly<KeyNotFoundException>();
+        action.Test( exc => exc.TestType().Exact<KeyNotFoundException>() ).Go();
     }
 
     [Fact]
@@ -714,14 +681,13 @@ public abstract class GenericDictionaryHeapTests<TKey, TValue> : TestsBase
 
         var result = sut.Replace( keys[index], newValue );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( items[index] );
-            sut.Should().BeEquivalentTo( expected );
-            sut.ContainsKey( keys[index] ).Should().BeTrue();
-            sut.GetValue( keys[index] ).Should().Be( newValue );
-            AssertHeapInvariant( sut );
-        }
+        Assertion.All(
+                result.TestEquals( items[index] ),
+                sut.TestSetEqual( expected ),
+                sut.ContainsKey( keys[index] ).TestTrue(),
+                sut.GetValue( keys[index] ).TestEquals( newValue ),
+                AssertHeapInvariant( sut ) )
+            .Go();
     }
 
     [Fact]
@@ -738,14 +704,13 @@ public abstract class GenericDictionaryHeapTests<TKey, TValue> : TestsBase
 
         var result = sut.Replace( keys[index], newValue );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( items[index] );
-            sut.Should().BeEquivalentTo( expected );
-            sut.ContainsKey( keys[index] ).Should().BeTrue();
-            sut.GetValue( keys[index] ).Should().Be( newValue );
-            AssertHeapInvariant( sut );
-        }
+        Assertion.All(
+                result.TestEquals( items[index] ),
+                sut.TestSetEqual( expected ),
+                sut.ContainsKey( keys[index] ).TestTrue(),
+                sut.GetValue( keys[index] ).TestEquals( newValue ),
+                AssertHeapInvariant( sut ) )
+            .Go();
     }
 
     [Theory]
@@ -769,14 +734,13 @@ public abstract class GenericDictionaryHeapTests<TKey, TValue> : TestsBase
 
         var result = sut.Replace( keys[index], newValue );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( items[index] );
-            sut.Should().BeEquivalentTo( expected );
-            sut.ContainsKey( keys[index] ).Should().BeTrue();
-            sut.GetValue( keys[index] ).Should().Be( newValue );
-            AssertHeapInvariant( sut );
-        }
+        Assertion.All(
+                result.TestEquals( items[index] ),
+                sut.TestSetEqual( expected ),
+                sut.ContainsKey( keys[index] ).TestTrue(),
+                sut.GetValue( keys[index] ).TestEquals( newValue ),
+                AssertHeapInvariant( sut ) )
+            .Go();
     }
 
     [Fact]
@@ -789,11 +753,10 @@ public abstract class GenericDictionaryHeapTests<TKey, TValue> : TestsBase
 
         var result = sut.TryReplace( keys[1], item, out var replaced );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeFalse();
-            replaced.Should().Be( default( TValue ) );
-        }
+        Assertion.All(
+                result.TestFalse(),
+                replaced.TestEquals( default ) )
+            .Go();
     }
 
     [Fact]
@@ -810,15 +773,14 @@ public abstract class GenericDictionaryHeapTests<TKey, TValue> : TestsBase
 
         var result = sut.TryReplace( keys[index], newValue, out var replaced );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            replaced.Should().Be( items[index] );
-            sut.Should().BeEquivalentTo( expected );
-            sut.ContainsKey( keys[index] ).Should().BeTrue();
-            sut.GetValue( keys[index] ).Should().Be( newValue );
-            AssertHeapInvariant( sut );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                replaced.TestEquals( items[index] ),
+                sut.TestSetEqual( expected ),
+                sut.ContainsKey( keys[index] ).TestTrue(),
+                sut.GetValue( keys[index] ).TestEquals( newValue ),
+                AssertHeapInvariant( sut ) )
+            .Go();
     }
 
     [Fact]
@@ -835,15 +797,14 @@ public abstract class GenericDictionaryHeapTests<TKey, TValue> : TestsBase
 
         var result = sut.TryReplace( keys[index], newValue, out var replaced );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            replaced.Should().Be( items[index] );
-            sut.Should().BeEquivalentTo( expected );
-            sut.ContainsKey( keys[index] ).Should().BeTrue();
-            sut.GetValue( keys[index] ).Should().Be( newValue );
-            AssertHeapInvariant( sut );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                replaced.TestEquals( items[index] ),
+                sut.TestSetEqual( expected ),
+                sut.ContainsKey( keys[index] ).TestTrue(),
+                sut.GetValue( keys[index] ).TestEquals( newValue ),
+                AssertHeapInvariant( sut ) )
+            .Go();
     }
 
     [Theory]
@@ -867,15 +828,14 @@ public abstract class GenericDictionaryHeapTests<TKey, TValue> : TestsBase
 
         var result = sut.TryReplace( keys[index], newValue, out var replaced );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            replaced.Should().Be( items[index] );
-            sut.Should().BeEquivalentTo( expected );
-            sut.ContainsKey( keys[index] ).Should().BeTrue();
-            sut.GetValue( keys[index] ).Should().Be( newValue );
-            AssertHeapInvariant( sut );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                replaced.TestEquals( items[index] ),
+                sut.TestSetEqual( expected ),
+                sut.ContainsKey( keys[index] ).TestTrue(),
+                sut.GetValue( keys[index] ).TestEquals( newValue ),
+                AssertHeapInvariant( sut ) )
+            .Go();
     }
 
     [Fact]
@@ -888,11 +848,10 @@ public abstract class GenericDictionaryHeapTests<TKey, TValue> : TestsBase
 
         var result = sut.AddOrReplace( keys[1], value );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( value );
-            sut.Should().BeEquivalentTo( value, other );
-        }
+        Assertion.All(
+                result.TestEquals( value ),
+                sut.TestSetEqual( [ value, other ] ) )
+            .Go();
     }
 
     [Fact]
@@ -905,11 +864,10 @@ public abstract class GenericDictionaryHeapTests<TKey, TValue> : TestsBase
 
         var result = sut.AddOrReplace( key, value );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( other );
-            sut.Should().BeEquivalentTo( value );
-        }
+        Assertion.All(
+                result.TestEquals( other ),
+                sut.TestSequence( [ value ] ) )
+            .Go();
     }
 
     [Fact]
@@ -922,7 +880,7 @@ public abstract class GenericDictionaryHeapTests<TKey, TValue> : TestsBase
 
         sut.Clear();
 
-        sut.Count.Should().Be( 0 );
+        sut.Count.TestEquals( 0 ).Go();
     }
 
     [Theory]
@@ -937,7 +895,7 @@ public abstract class GenericDictionaryHeapTests<TKey, TValue> : TestsBase
 
         var action = Lambda.Of( () => sut[index] );
 
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Theory]
@@ -953,7 +911,7 @@ public abstract class GenericDictionaryHeapTests<TKey, TValue> : TestsBase
 
         var result = sut[index];
 
-        result.Should().Be( items[index] );
+        result.TestEquals( items[index] ).Go();
     }
 
     [Theory]
@@ -968,7 +926,7 @@ public abstract class GenericDictionaryHeapTests<TKey, TValue> : TestsBase
 
         var action = Lambda.Of( () => sut.GetKey( index ) );
 
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Theory]
@@ -984,7 +942,7 @@ public abstract class GenericDictionaryHeapTests<TKey, TValue> : TestsBase
 
         var result = sut.GetKey( index );
 
-        result.Should().Be( keys[index] );
+        result.TestEquals( keys[index] ).Go();
     }
 
     [Fact]
@@ -997,7 +955,7 @@ public abstract class GenericDictionaryHeapTests<TKey, TValue> : TestsBase
 
         var action = Lambda.Of( () => sut.GetIndex( keys[3] ) );
 
-        action.Should().ThrowExactly<KeyNotFoundException>();
+        action.Test( exc => exc.TestType().Exact<KeyNotFoundException>() ).Go();
     }
 
     [Fact]
@@ -1010,7 +968,7 @@ public abstract class GenericDictionaryHeapTests<TKey, TValue> : TestsBase
 
         var result = sut.GetIndex( keys[1] );
 
-        result.Should().Be( 1 );
+        result.TestEquals( 1 ).Go();
     }
 
     [Fact]
@@ -1023,7 +981,7 @@ public abstract class GenericDictionaryHeapTests<TKey, TValue> : TestsBase
 
         var result = sut.ContainsKey( key );
 
-        result.Should().BeTrue();
+        result.TestTrue().Go();
     }
 
     [Fact]
@@ -1036,7 +994,7 @@ public abstract class GenericDictionaryHeapTests<TKey, TValue> : TestsBase
 
         var result = sut.ContainsKey( keys[1] );
 
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Fact]
@@ -1049,7 +1007,7 @@ public abstract class GenericDictionaryHeapTests<TKey, TValue> : TestsBase
 
         var result = sut.GetValue( key );
 
-        result.Should().Be( item );
+        result.TestEquals( item ).Go();
     }
 
     [Fact]
@@ -1062,7 +1020,7 @@ public abstract class GenericDictionaryHeapTests<TKey, TValue> : TestsBase
 
         var action = Lambda.Of( () => sut.GetValue( keys[1] ) );
 
-        action.Should().ThrowExactly<KeyNotFoundException>();
+        action.Test( exc => exc.TestType().Exact<KeyNotFoundException>() ).Go();
     }
 
     [Fact]
@@ -1075,11 +1033,10 @@ public abstract class GenericDictionaryHeapTests<TKey, TValue> : TestsBase
 
         var result = sut.TryGetValue( key, out var outResult );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            outResult.Should().Be( item );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                outResult.TestEquals( item ) )
+            .Go();
     }
 
     [Fact]
@@ -1092,18 +1049,19 @@ public abstract class GenericDictionaryHeapTests<TKey, TValue> : TestsBase
 
         var result = sut.TryGetValue( keys[1], out var outResult );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeFalse();
-            outResult.Should().Be( default( TValue ) );
-        }
+        Assertion.All(
+                result.TestFalse(),
+                outResult.TestEquals( default ) )
+            .Go();
     }
 
-    private static void AssertHeapInvariant(DictionaryHeap<TKey, TValue> heap)
+    [Pure]
+    private static Assertion AssertHeapInvariant(DictionaryHeap<TKey, TValue> heap)
     {
         var comparer = heap.Comparer;
         var maxParentIndex = (heap.Count >> 1) - 1;
 
+        var assertions = new List<Assertion>();
         for ( var parentIndex = 0; parentIndex <= maxParentIndex; ++parentIndex )
         {
             var parent = heap[parentIndex];
@@ -1114,12 +1072,10 @@ public abstract class GenericDictionaryHeapTests<TKey, TValue> : TestsBase
             var leftChild = heap[leftChildIndex];
             var leftChildComparisonResult = comparer.Compare( parent, leftChild );
 
-            leftChildComparisonResult.Should()
-                .BeLessOrEqualTo(
+            assertions.Add(
+                leftChildComparisonResult.TestLessThanOrEqualTo(
                     0,
-                    "min heap invariant must be satisfied, which means that parent {0} must be less than or equal to its left child {1}",
-                    parent,
-                    leftChild );
+                    $"parent[@{parentIndex}: '{parent}'] <=> left-child[@{leftChildIndex}: '{leftChild}']" ) );
 
             if ( rightChildIndex >= heap.Count )
                 continue;
@@ -1127,12 +1083,12 @@ public abstract class GenericDictionaryHeapTests<TKey, TValue> : TestsBase
             var rightChild = heap[rightChildIndex];
             var rightChildComparisonResult = comparer.Compare( parent, rightChild );
 
-            rightChildComparisonResult.Should()
-                .BeLessOrEqualTo(
+            assertions.Add(
+                rightChildComparisonResult.TestLessThanOrEqualTo(
                     0,
-                    "min heap invariant must be satisfied, which means that parent {0} must be less than or equal to its right child {1}",
-                    parent,
-                    rightChild );
+                    $"parent[@{parentIndex}: '{parent}'] <=> right-child[@{rightChildIndex}: '{rightChild}']" ) );
         }
+
+        return Assertion.All( "MinHeapInvariant", assertions );
     }
 }

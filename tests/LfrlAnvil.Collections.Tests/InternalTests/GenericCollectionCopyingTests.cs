@@ -1,6 +1,5 @@
 ﻿using System.Linq;
 using LfrlAnvil.Collections.Internal;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Collections.Tests.InternalTests;
 
@@ -17,7 +16,7 @@ public abstract class GenericCollectionCopyingTests<T> : TestsBase
 
         CollectionCopying.CopyTo( items, arr, 1 );
 
-        arr.Should().BeSequentiallyEqualTo( arrayItem, items[0], items[1], items[2], arrayItem );
+        arr.TestSequence( [ arrayItem, items[0], items[1], items[2], arrayItem ] ).Go();
     }
 
     [Fact]
@@ -31,7 +30,7 @@ public abstract class GenericCollectionCopyingTests<T> : TestsBase
 
         CollectionCopying.CopyTo( items, arr, 1 );
 
-        arr.Should().BeSequentiallyEqualTo( arrayItem, items[0], items[1] );
+        arr.TestSequence( [ arrayItem, items[0], items[1] ] ).Go();
     }
 
     [Fact]
@@ -45,7 +44,7 @@ public abstract class GenericCollectionCopyingTests<T> : TestsBase
 
         CollectionCopying.CopyTo( items, arr, -1 );
 
-        arr.Should().BeSequentiallyEqualTo( items[1], items[2], arrayItem );
+        arr.TestSequence( [ items[1], items[2], arrayItem ] ).Go();
     }
 
     [Fact]
@@ -59,7 +58,7 @@ public abstract class GenericCollectionCopyingTests<T> : TestsBase
 
         CollectionCopying.CopyTo( items, arr, -1 );
 
-        arr.Should().BeSequentiallyEqualTo( items[1], items[2], items[3] );
+        arr.TestSequence( [ items[1], items[2], items[3] ] ).Go();
     }
 
     [Theory]
@@ -75,6 +74,6 @@ public abstract class GenericCollectionCopyingTests<T> : TestsBase
 
         CollectionCopying.CopyTo( items, arr, arrayIndex );
 
-        arr.Should().BeSequentiallyEqualTo( arrayItem, arrayItem, arrayItem );
+        arr.TestSequence( [ arrayItem, arrayItem, arrayItem ] ).Go();
     }
 }

@@ -2,8 +2,6 @@
 using System.Linq;
 using LfrlAnvil.Extensions;
 using LfrlAnvil.Functional;
-using LfrlAnvil.Internal;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Collections.Tests.RingTests;
 
@@ -13,7 +11,7 @@ public abstract class GenericRingTests<T> : TestsBase
     public void Ctor_ShouldThrowArgumentOutOfRangeException_WhenNoParametersHaveBeenPassed()
     {
         var action = Lambda.Of( () => new Ring<T>() );
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Theory]
@@ -22,7 +20,7 @@ public abstract class GenericRingTests<T> : TestsBase
     public void Ctor_ShouldThrowArgumentOutOfRangeException_WhenCountIsLessThanOne(int count)
     {
         var action = Lambda.Of( () => new Ring<T>( count ) );
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Theory]
@@ -33,19 +31,18 @@ public abstract class GenericRingTests<T> : TestsBase
     {
         var sut = new Ring<T>( count );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( count );
-            sut.WriteIndex.Should().Be( 0 );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( count ),
+                sut.WriteIndex.TestEquals( 0 ) )
+            .Go();
     }
 
     [Fact]
     public void Ctor_ShouldCreateWithCorrectItems()
     {
-        var items = Fixture.CreateManyDistinct<T>( count: 3 );
+        var items = Fixture.CreateManyDistinct<T?>( count: 3 );
         var sut = new Ring<T>( items[0], items[1], items[2] );
-        sut.Should().BeEquivalentTo( items );
+        sut.TestSetEqual( items ).Go();
     }
 
     [Theory]
@@ -64,7 +61,7 @@ public abstract class GenericRingTests<T> : TestsBase
         sut.WriteIndex = writeIndex;
         var result = sut.WriteIndex;
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -74,7 +71,7 @@ public abstract class GenericRingTests<T> : TestsBase
     {
         var sut = new Ring<T>( count: 3 );
         var action = Lambda.Of( () => sut[index] );
-        action.Should().ThrowExactly<IndexOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<IndexOutOfRangeException>() ).Go();
     }
 
     [Theory]
@@ -88,7 +85,7 @@ public abstract class GenericRingTests<T> : TestsBase
 
         var action = Lambda.Of( () => sut[index] = item );
 
-        action.Should().ThrowExactly<IndexOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<IndexOutOfRangeException>() ).Go();
     }
 
     [Theory]
@@ -104,7 +101,7 @@ public abstract class GenericRingTests<T> : TestsBase
         sut[index] = item;
         var result = sut[index];
 
-        result.Should().Be( item );
+        result.TestEquals( item ).Go();
     }
 
     [Theory]
@@ -123,7 +120,7 @@ public abstract class GenericRingTests<T> : TestsBase
 
         var result = sut.GetWrappedIndex( index );
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -155,7 +152,7 @@ public abstract class GenericRingTests<T> : TestsBase
     {
         var sut = new Ring<T>( count: 3 ) { WriteIndex = writeIndex };
         var result = sut.GetWriteIndex( offset );
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -170,12 +167,11 @@ public abstract class GenericRingTests<T> : TestsBase
 
         sut.SetNext( item );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 3 );
-            sut.WriteIndex.Should().Be( expectedWriteIndex );
-            sut[writeIndex].Should().Be( item );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 3 ),
+                sut.WriteIndex.TestEquals( expectedWriteIndex ),
+                sut[writeIndex].TestEquals( item ) )
+            .Go();
     }
 
     [Theory]
@@ -190,12 +186,11 @@ public abstract class GenericRingTests<T> : TestsBase
 
         sut.Clear();
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 3 );
-            sut.WriteIndex.Should().Be( 0 );
-            sut.Should().OnlyContain( i => Generic<T>.AreEqual( i, default ) );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 3 ),
+                sut.WriteIndex.TestEquals( 0 ),
+                sut.TestAll( (e, _) => e.TestEquals( default ) ) )
+            .Go();
     }
 
     [Theory]
@@ -220,7 +215,7 @@ public abstract class GenericRingTests<T> : TestsBase
         var sut = new Ring<T>( items );
         var result = sut.Read( readIndex );
 
-        result.Should().BeSequentiallyEqualTo( expected );
+        result.TestSequence( expected ).Go();
     }
 
     [Theory]
@@ -235,7 +230,7 @@ public abstract class GenericRingTests<T> : TestsBase
 
         var sut = new Ring<T>( items ) { WriteIndex = writeIndex };
 
-        sut.Should().BeSequentiallyEqualTo( expected );
+        sut.TestSequence( expected ).Go();
     }
 
     [Theory]
@@ -270,10 +265,10 @@ public abstract class GenericRingTests<T> : TestsBase
         while ( sut.MoveNext() )
             ++availableSteps;
 
-        using ( new AssertionScope() )
-        {
-            firstItemAfterReset.Should().Be( items[startIndex] );
-            availableSteps.Should().Be( items.Length );
-        }
+        Assertion.All(
+                firstItemAfterReset.TestNotNull(),
+                firstItemAfterReset.TestIf().NotNull( i => i.TestEquals( items[startIndex]! ) ),
+                availableSteps.TestEquals( items.Length ) )
+            .Go();
     }
 }

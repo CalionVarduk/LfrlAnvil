@@ -17,7 +17,7 @@ public class HeapStaticTests : TestsBase
     {
         var result = Heap.GetParentIndex( childIndex );
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -36,7 +36,7 @@ public class HeapStaticTests : TestsBase
     {
         var result = Heap.GetLeftChildIndex( parentIndex );
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -55,6 +55,6 @@ public class HeapStaticTests : TestsBase
     {
         var result = Heap.GetRightChildIndex( parentIndex );
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 }

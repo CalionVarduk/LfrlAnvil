@@ -2,7 +2,6 @@
 using System.Linq;
 using LfrlAnvil.Collections.Extensions;
 using LfrlAnvil.Functional;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Collections.Tests.MultiDictionaryTests;
 
@@ -14,11 +13,10 @@ public abstract class GenericMultiDictionaryTests<TKey, TValue> : TestsBase
     {
         var sut = new MultiDictionary<TKey, TValue>();
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 0 );
-            sut.Comparer.Should().Be( EqualityComparer<TKey>.Default );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 0 ),
+                sut.Comparer.TestEquals( EqualityComparer<TKey>.Default ) )
+            .Go();
     }
 
     [Fact]
@@ -27,11 +25,10 @@ public abstract class GenericMultiDictionaryTests<TKey, TValue> : TestsBase
         var comparer = EqualityComparerFactory<TKey>.Create( (a, b) => a!.Equals( b ) );
         var sut = new MultiDictionary<TKey, TValue>( comparer );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 0 );
-            sut.Comparer.Should().Be( comparer );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 0 ),
+                sut.Comparer.TestEquals( comparer ) )
+            .Go();
     }
 
     [Fact]
@@ -43,11 +40,10 @@ public abstract class GenericMultiDictionaryTests<TKey, TValue> : TestsBase
 
         sut.Add( key, value );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 1 );
-            sut[key].Should().BeSequentiallyEqualTo( value );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 1 ),
+                sut[key].TestSequence( [ value ] ) )
+            .Go();
     }
 
     [Fact]
@@ -60,11 +56,10 @@ public abstract class GenericMultiDictionaryTests<TKey, TValue> : TestsBase
 
         sut.Add( keys[1], values[1] );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 2 );
-            sut[keys[1]].Should().BeSequentiallyEqualTo( values[1] );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 2 ),
+                sut[keys[1]].TestSequence( [ values[1] ] ) )
+            .Go();
     }
 
     [Fact]
@@ -77,11 +72,10 @@ public abstract class GenericMultiDictionaryTests<TKey, TValue> : TestsBase
 
         sut.Add( key, values[1] );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 1 );
-            sut[key].Should().BeSequentiallyEqualTo( values );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 1 ),
+                sut[key].TestSequence( values ) )
+            .Go();
     }
 
     [Fact]
@@ -93,11 +87,10 @@ public abstract class GenericMultiDictionaryTests<TKey, TValue> : TestsBase
 
         sut.AddRange( key, values );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 1 );
-            sut[key].Should().BeSequentiallyEqualTo( values );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 1 ),
+                sut[key].TestSequence( values ) )
+            .Go();
     }
 
     [Fact]
@@ -111,11 +104,10 @@ public abstract class GenericMultiDictionaryTests<TKey, TValue> : TestsBase
 
         sut.AddRange( keys[1], values );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 2 );
-            sut[keys[1]].Should().BeSequentiallyEqualTo( values );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 2 ),
+                sut[keys[1]].TestSequence( values ) )
+            .Go();
     }
 
     [Fact]
@@ -129,11 +121,10 @@ public abstract class GenericMultiDictionaryTests<TKey, TValue> : TestsBase
 
         sut.AddRange( key, values );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 1 );
-            sut[key].Should().BeSequentiallyEqualTo( allValues );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 1 ),
+                sut[key].TestSequence( allValues ) )
+            .Go();
     }
 
     [Fact]
@@ -145,11 +136,10 @@ public abstract class GenericMultiDictionaryTests<TKey, TValue> : TestsBase
 
         sut.AddRange( key, values );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 0 );
-            sut.ContainsKey( key ).Should().BeFalse();
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 0 ),
+                sut.ContainsKey( key ).TestFalse() )
+            .Go();
     }
 
     [Fact]
@@ -161,11 +151,10 @@ public abstract class GenericMultiDictionaryTests<TKey, TValue> : TestsBase
 
         sut.SetRange( key, values );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 1 );
-            sut[key].Should().BeSequentiallyEqualTo( values );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 1 ),
+                sut[key].TestSequence( values ) )
+            .Go();
     }
 
     [Fact]
@@ -179,11 +168,10 @@ public abstract class GenericMultiDictionaryTests<TKey, TValue> : TestsBase
 
         sut.SetRange( keys[1], values );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 2 );
-            sut[keys[1]].Should().BeSequentiallyEqualTo( values );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 2 ),
+                sut[keys[1]].TestSequence( values ) )
+            .Go();
     }
 
     [Fact]
@@ -197,11 +185,10 @@ public abstract class GenericMultiDictionaryTests<TKey, TValue> : TestsBase
 
         sut.SetRange( key, values );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 1 );
-            sut[key].Should().BeSequentiallyEqualTo( values );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 1 ),
+                sut[key].TestSequence( values ) )
+            .Go();
     }
 
     [Fact]
@@ -215,11 +202,10 @@ public abstract class GenericMultiDictionaryTests<TKey, TValue> : TestsBase
 
         sut.SetRange( key, values );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 0 );
-            sut.ContainsKey( key ).Should().BeFalse();
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 0 ),
+                sut.ContainsKey( key ).TestFalse() )
+            .Go();
     }
 
     [Fact]
@@ -230,7 +216,7 @@ public abstract class GenericMultiDictionaryTests<TKey, TValue> : TestsBase
 
         var result = sut.Remove( key );
 
-        result.Should().BeEmpty();
+        result.TestEmpty().Go();
     }
 
     [Fact]
@@ -243,11 +229,10 @@ public abstract class GenericMultiDictionaryTests<TKey, TValue> : TestsBase
 
         var result = sut.Remove( key );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSequentiallyEqualTo( values );
-            sut.Count.Should().Be( 0 );
-        }
+        Assertion.All(
+                result.TestSequence( values ),
+                sut.Count.TestEquals( 0 ) )
+            .Go();
     }
 
     [Fact]
@@ -261,12 +246,11 @@ public abstract class GenericMultiDictionaryTests<TKey, TValue> : TestsBase
 
         var result = sut.Remove( keys[0] );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSequentiallyEqualTo( values.Take( 2 ) );
-            sut.Count.Should().Be( 1 );
-            sut.ContainsKey( keys[1] ).Should().BeTrue();
-        }
+        Assertion.All(
+                result.TestSequence( values.Take( 2 ) ),
+                sut.Count.TestEquals( 1 ),
+                sut.ContainsKey( keys[1] ).TestTrue() )
+            .Go();
     }
 
     [Fact]
@@ -278,7 +262,7 @@ public abstract class GenericMultiDictionaryTests<TKey, TValue> : TestsBase
 
         var result = sut.Remove( key, value );
 
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Fact]
@@ -291,11 +275,10 @@ public abstract class GenericMultiDictionaryTests<TKey, TValue> : TestsBase
 
         var result = sut.Remove( key, values[1] );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            sut[key].Should().BeSequentiallyEqualTo( values[0], values[2] );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                sut[key].TestSequence( [ values[0], values[2] ] ) )
+            .Go();
     }
 
     [Fact]
@@ -308,11 +291,10 @@ public abstract class GenericMultiDictionaryTests<TKey, TValue> : TestsBase
 
         var result = sut.Remove( key, values[2] );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeFalse();
-            sut[key].Should().BeSequentiallyEqualTo( values.Take( 2 ) );
-        }
+        Assertion.All(
+                result.TestFalse(),
+                sut[key].TestSequence( values.Take( 2 ) ) )
+            .Go();
     }
 
     [Fact]
@@ -325,11 +307,10 @@ public abstract class GenericMultiDictionaryTests<TKey, TValue> : TestsBase
 
         var result = sut.Remove( key, value );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            sut.Count.Should().Be( 0 );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                sut.Count.TestEquals( 0 ) )
+            .Go();
     }
 
     [Fact]
@@ -340,7 +321,7 @@ public abstract class GenericMultiDictionaryTests<TKey, TValue> : TestsBase
 
         var result = sut.RemoveAt( key, index: 0 );
 
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Fact]
@@ -353,11 +334,10 @@ public abstract class GenericMultiDictionaryTests<TKey, TValue> : TestsBase
 
         var result = sut.RemoveAt( key, index: 1 );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            sut[key].Should().BeSequentiallyEqualTo( values[0], values[2] );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                sut[key].TestSequence( [ values[0], values[2] ] ) )
+            .Go();
     }
 
     [Fact]
@@ -370,11 +350,10 @@ public abstract class GenericMultiDictionaryTests<TKey, TValue> : TestsBase
 
         var result = sut.RemoveAt( key, index: 0 );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            sut.Count.Should().Be( 0 );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                sut.Count.TestEquals( 0 ) )
+            .Go();
     }
 
     [Theory]
@@ -389,7 +368,7 @@ public abstract class GenericMultiDictionaryTests<TKey, TValue> : TestsBase
 
         var action = Lambda.Of( () => sut.RemoveAt( key, index ) );
 
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Fact]
@@ -400,7 +379,7 @@ public abstract class GenericMultiDictionaryTests<TKey, TValue> : TestsBase
 
         var result = sut.RemoveRange( key, index: 0, count: 0 );
 
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Fact]
@@ -413,11 +392,10 @@ public abstract class GenericMultiDictionaryTests<TKey, TValue> : TestsBase
 
         var result = sut.RemoveRange( key, index: 1, count: 2 );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            sut[key].Should().BeSequentiallyEqualTo( values[0], values[3] );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                sut[key].TestSequence( [ values[0], values[3] ] ) )
+            .Go();
     }
 
     [Fact]
@@ -430,11 +408,10 @@ public abstract class GenericMultiDictionaryTests<TKey, TValue> : TestsBase
 
         var result = sut.RemoveRange( key, index: 0, count: 3 );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            sut.Count.Should().Be( 0 );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                sut.Count.TestEquals( 0 ) )
+            .Go();
     }
 
     [Theory]
@@ -449,7 +426,7 @@ public abstract class GenericMultiDictionaryTests<TKey, TValue> : TestsBase
 
         var action = Lambda.Of( () => sut.RemoveRange( key, index, count ) );
 
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Theory]
@@ -465,7 +442,7 @@ public abstract class GenericMultiDictionaryTests<TKey, TValue> : TestsBase
 
         var action = Lambda.Of( () => sut.RemoveRange( key, index, count ) );
 
-        action.Should().ThrowExactly<ArgumentException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentException>() ).Go();
     }
 
     [Fact]
@@ -476,7 +453,7 @@ public abstract class GenericMultiDictionaryTests<TKey, TValue> : TestsBase
 
         var result = sut.RemoveAll( key, _ => true );
 
-        result.Should().Be( 0 );
+        result.TestEquals( 0 ).Go();
     }
 
     [Fact]
@@ -489,11 +466,10 @@ public abstract class GenericMultiDictionaryTests<TKey, TValue> : TestsBase
 
         var result = sut.RemoveAll( key, v => v!.Equals( values[0] ) || v.Equals( values[1] ) );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( 2 );
-            sut[key].Should().BeSequentiallyEqualTo( values[2] );
-        }
+        Assertion.All(
+                result.TestEquals( 2 ),
+                sut[key].TestSequence( [ values[2] ] ) )
+            .Go();
     }
 
     [Fact]
@@ -506,11 +482,10 @@ public abstract class GenericMultiDictionaryTests<TKey, TValue> : TestsBase
 
         var result = sut.RemoveAll( key, _ => false );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( 0 );
-            sut[key].Should().BeSequentiallyEqualTo( values );
-        }
+        Assertion.All(
+                result.TestEquals( 0 ),
+                sut[key].TestSequence( values ) )
+            .Go();
     }
 
     [Fact]
@@ -523,11 +498,10 @@ public abstract class GenericMultiDictionaryTests<TKey, TValue> : TestsBase
 
         var result = sut.RemoveAll( key, _ => true );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( 3 );
-            sut.Count.Should().Be( 0 );
-        }
+        Assertion.All(
+                result.TestEquals( 3 ),
+                sut.Count.TestEquals( 0 ) )
+            .Go();
     }
 
     [Fact]
@@ -540,11 +514,10 @@ public abstract class GenericMultiDictionaryTests<TKey, TValue> : TestsBase
 
         var result = sut.TryGetValue( key, out var outResult );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            outResult.Should().BeSequentiallyEqualTo( values );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                (outResult ?? Array.Empty<TValue>()).TestSequence( values ) )
+            .Go();
     }
 
     [Fact]
@@ -555,11 +528,10 @@ public abstract class GenericMultiDictionaryTests<TKey, TValue> : TestsBase
 
         var result = sut.TryGetValue( key, out var outResult );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeFalse();
-            outResult.Should().BeNull();
-        }
+        Assertion.All(
+                result.TestFalse(),
+                outResult.TestNull() )
+            .Go();
     }
 
     [Fact]
@@ -572,7 +544,7 @@ public abstract class GenericMultiDictionaryTests<TKey, TValue> : TestsBase
 
         var result = sut.GetCount( key );
 
-        result.Should().Be( 3 );
+        result.TestEquals( 3 ).Go();
     }
 
     [Fact]
@@ -583,7 +555,7 @@ public abstract class GenericMultiDictionaryTests<TKey, TValue> : TestsBase
 
         var result = sut.GetCount( key );
 
-        result.Should().Be( 0 );
+        result.TestEquals( 0 ).Go();
     }
 
     [Fact]
@@ -598,7 +570,7 @@ public abstract class GenericMultiDictionaryTests<TKey, TValue> : TestsBase
 
         sut.Clear();
 
-        sut.Count.Should().Be( 0 );
+        sut.Count.TestEquals( 0 ).Go();
     }
 
     [Fact]
@@ -609,7 +581,7 @@ public abstract class GenericMultiDictionaryTests<TKey, TValue> : TestsBase
 
         var result = sut[key];
 
-        result.Should().BeEmpty();
+        result.TestEmpty().Go();
     }
 
     [Fact]
@@ -621,11 +593,10 @@ public abstract class GenericMultiDictionaryTests<TKey, TValue> : TestsBase
 
         sut[key] = values;
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 1 );
-            sut[key].Should().BeSequentiallyEqualTo( values );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 1 ),
+                sut[key].TestSequence( values ) )
+            .Go();
     }
 
     [Fact]
@@ -639,11 +610,10 @@ public abstract class GenericMultiDictionaryTests<TKey, TValue> : TestsBase
 
         sut[keys[1]] = values;
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 2 );
-            sut[keys[1]].Should().BeSequentiallyEqualTo( values );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 2 ),
+                sut[keys[1]].TestSequence( values ) )
+            .Go();
     }
 
     [Fact]
@@ -657,11 +627,10 @@ public abstract class GenericMultiDictionaryTests<TKey, TValue> : TestsBase
 
         sut[key] = values;
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 1 );
-            sut[key].Should().BeSequentiallyEqualTo( values );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 1 ),
+                sut[key].TestSequence( values ) )
+            .Go();
     }
 
     [Fact]
@@ -675,11 +644,10 @@ public abstract class GenericMultiDictionaryTests<TKey, TValue> : TestsBase
 
         sut[key] = values;
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 0 );
-            sut.ContainsKey( key ).Should().BeFalse();
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 0 ),
+                sut.ContainsKey( key ).TestFalse() )
+            .Go();
     }
 
     [Fact]
@@ -694,13 +662,11 @@ public abstract class GenericMultiDictionaryTests<TKey, TValue> : TestsBase
 
         var result = sut.AsEnumerable().ToList();
 
-        using ( new AssertionScope() )
-        {
-            result.Should().HaveCount( 3 );
-            result.SelectMany( kv => kv.Value.Select( v => KeyValuePair.Create( kv.Key, v ) ) )
-                .Should()
-                .BeEquivalentTo( keys.Zip( values ).Select( x => KeyValuePair.Create( x.First, x.Second ) ) );
-        }
+        Assertion.All(
+                result.Count.TestEquals( 3 ),
+                result.SelectMany( kv => kv.Value.Select( v => KeyValuePair.Create( kv.Key, v ) ) )
+                    .TestSetEqual( keys.Zip( values ).Select( x => KeyValuePair.Create( x.First, x.Second ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -715,11 +681,10 @@ public abstract class GenericMultiDictionaryTests<TKey, TValue> : TestsBase
 
         var result = sut.Keys.ToList();
 
-        using ( new AssertionScope() )
-        {
-            result.Should().HaveCount( 3 );
-            result.Should().BeEquivalentTo( keys );
-        }
+        Assertion.All(
+                result.Count.TestEquals( 3 ),
+                result.TestSetEqual( keys ) )
+            .Go();
     }
 
     [Fact]
@@ -734,11 +699,10 @@ public abstract class GenericMultiDictionaryTests<TKey, TValue> : TestsBase
 
         var result = sut.Values.ToList();
 
-        using ( new AssertionScope() )
-        {
-            result.Should().HaveCount( 3 );
-            result.SelectMany( v => v ).Should().BeEquivalentTo( values );
-        }
+        Assertion.All(
+                result.Count.TestEquals( 3 ),
+                result.SelectMany( v => v ).TestSetEqual( values ) )
+            .Go();
     }
 
     [Fact]
@@ -749,7 +713,7 @@ public abstract class GenericMultiDictionaryTests<TKey, TValue> : TestsBase
 
         var result = sut[key];
 
-        result.Should().BeEmpty();
+        result.TestEmpty().Go();
     }
 
     [Fact]
@@ -763,7 +727,7 @@ public abstract class GenericMultiDictionaryTests<TKey, TValue> : TestsBase
 
         var result = sut[key];
 
-        result.Should().BeSequentiallyEqualTo( values );
+        result.TestSequence( values ).Go();
     }
 
     [Fact]
@@ -774,7 +738,7 @@ public abstract class GenericMultiDictionaryTests<TKey, TValue> : TestsBase
 
         var result = sut.Contains( key );
 
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Fact]
@@ -788,7 +752,7 @@ public abstract class GenericMultiDictionaryTests<TKey, TValue> : TestsBase
 
         var result = sut.Contains( key );
 
-        result.Should().BeTrue();
+        result.TestTrue().Go();
     }
 
     [Fact]
@@ -803,13 +767,11 @@ public abstract class GenericMultiDictionaryTests<TKey, TValue> : TestsBase
 
         var result = (( ILookup<TKey, TValue> )sut).ToList();
 
-        using ( new AssertionScope() )
-        {
-            result.Should().HaveCount( 3 );
-            result.SelectMany( g => g.Select( v => KeyValuePair.Create( g.Key, v ) ) )
-                .Should()
-                .BeEquivalentTo( keys.Zip( values ).Select( x => KeyValuePair.Create( x.First, x.Second ) ) );
-        }
+        Assertion.All(
+                result.Count.TestEquals( 3 ),
+                result.SelectMany( g => g.Select( v => KeyValuePair.Create( g.Key, v ) ) )
+                    .TestSetEqual( keys.Zip( values ).Select( x => KeyValuePair.Create( x.First, x.Second ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -825,7 +787,7 @@ public abstract class GenericMultiDictionaryTests<TKey, TValue> : TestsBase
 
         var result = sut.Keys;
 
-        result.Should().BeEquivalentTo( keys );
+        result.TestSetEqual( keys ).Go();
     }
 
     [Fact]
@@ -841,7 +803,7 @@ public abstract class GenericMultiDictionaryTests<TKey, TValue> : TestsBase
 
         var result = sut.Values;
 
-        result.SelectMany( v => v ).Should().BeEquivalentTo( values );
+        result.SelectMany( v => v ).TestSetEqual( values ).Go();
     }
 
     [Fact]
@@ -857,7 +819,7 @@ public abstract class GenericMultiDictionaryTests<TKey, TValue> : TestsBase
 
         var result = sut.Keys;
 
-        result.Should().BeEquivalentTo( keys );
+        result.TestSetEqual( keys ).Go();
     }
 
     [Fact]
@@ -873,7 +835,7 @@ public abstract class GenericMultiDictionaryTests<TKey, TValue> : TestsBase
 
         var result = sut.Values;
 
-        result.SelectMany( v => v ).Should().BeEquivalentTo( values );
+        result.SelectMany( v => v ).TestSetEqual( values ).Go();
     }
 
     [Fact]
@@ -888,11 +850,10 @@ public abstract class GenericMultiDictionaryTests<TKey, TValue> : TestsBase
 
         sut.Add( key, values );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 1 );
-            sut[key].Should().BeSequentiallyEqualTo( allValues );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 1 ),
+                sut[key].TestSequence( allValues ) )
+            .Go();
     }
 
     [Fact]
@@ -907,12 +868,11 @@ public abstract class GenericMultiDictionaryTests<TKey, TValue> : TestsBase
 
         var result = sut.Remove( keys[0] );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            sut.Count.Should().Be( 1 );
-            sut.ContainsKey( keys[1] ).Should().BeTrue();
-        }
+        Assertion.All(
+                result.TestTrue(),
+                sut.Count.TestEquals( 1 ),
+                sut.ContainsKey( keys[1] ).TestTrue() )
+            .Go();
     }
 
     [Fact]
@@ -927,11 +887,10 @@ public abstract class GenericMultiDictionaryTests<TKey, TValue> : TestsBase
 
         sut.Add( KeyValuePair.Create( key, ( IReadOnlyList<TValue> )values ) );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 1 );
-            source[key].Should().BeSequentiallyEqualTo( allValues );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 1 ),
+                source[key].TestSequence( allValues ) )
+            .Go();
     }
 
     [Fact]
@@ -946,12 +905,11 @@ public abstract class GenericMultiDictionaryTests<TKey, TValue> : TestsBase
 
         var result = sut.Remove( KeyValuePair.Create( keys[0], ( IReadOnlyList<TValue> )new[] { values[0], values[2] } ) );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            sut.Count.Should().Be( 2 );
-            source[keys[0]].Should().BeSequentiallyEqualTo( values[1] );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                sut.Count.TestEquals( 2 ),
+                source[keys[0]].TestSequence( [ values[1] ] ) )
+            .Go();
     }
 
     [Fact]
@@ -965,7 +923,7 @@ public abstract class GenericMultiDictionaryTests<TKey, TValue> : TestsBase
 
         var result = sut.Contains( KeyValuePair.Create( key, values ) );
 
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Fact]
@@ -979,6 +937,6 @@ public abstract class GenericMultiDictionaryTests<TKey, TValue> : TestsBase
 
         var result = sut.Contains( KeyValuePair.Create( key, ( IReadOnlyList<TValue> )new[] { values[0], values[2] } ) );
 
-        result.Should().BeTrue();
+        result.TestTrue().Go();
     }
 }

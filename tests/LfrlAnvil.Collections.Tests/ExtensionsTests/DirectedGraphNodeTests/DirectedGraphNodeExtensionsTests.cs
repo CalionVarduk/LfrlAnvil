@@ -12,7 +12,7 @@ public class DirectedGraphNodeExtensionsTests : TestsBase
 
         var result = sut.IsRoot();
 
-        result.Should().BeTrue();
+        result.TestTrue().Go();
     }
 
     [Fact]
@@ -27,7 +27,7 @@ public class DirectedGraphNodeExtensionsTests : TestsBase
 
         var result = sut.IsRoot();
 
-        result.Should().BeTrue();
+        result.TestTrue().Go();
     }
 
     [Fact]
@@ -39,7 +39,7 @@ public class DirectedGraphNodeExtensionsTests : TestsBase
 
         var result = sut.IsRoot();
 
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Fact]
@@ -54,6 +54,6 @@ public class DirectedGraphNodeExtensionsTests : TestsBase
 
         var result = sut.IsRoot();
 
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 }

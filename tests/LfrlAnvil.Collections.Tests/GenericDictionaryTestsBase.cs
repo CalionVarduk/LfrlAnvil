@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 
 namespace LfrlAnvil.Collections.Tests;
 
@@ -22,7 +23,7 @@ public abstract class GenericDictionaryTestsBase<TKey, TValue> : GenericCollecti
 
         var result = sut.Keys;
 
-        result.Should().BeEquivalentTo( keys );
+        Assertion.All( result.Count.TestEquals( keys.Length ), result.TestSetEqual( keys ) ).Go();
     }
 
     [Fact]
@@ -37,7 +38,7 @@ public abstract class GenericDictionaryTestsBase<TKey, TValue> : GenericCollecti
 
         var result = sut.Values;
 
-        result.Should().BeEquivalentTo( values );
+        Assertion.All( result.Count.TestEquals( values.Length ), result.TestSetEqual( values ) ).Go();
     }
 
     [Fact]
@@ -50,9 +51,9 @@ public abstract class GenericDictionaryTestsBase<TKey, TValue> : GenericCollecti
         sut.Add( keys[1], values[1] );
         sut.Add( keys[2], values[2] );
 
-        var result = AsReadOnlyDictionary( sut ).Keys;
+        var result = AsReadOnlyDictionary( sut ).Keys.ToList();
 
-        result.Should().BeEquivalentTo( keys );
+        Assertion.All( result.Count.TestEquals( keys.Length ), result.TestSetEqual( keys ) ).Go();
     }
 
     [Fact]
@@ -65,9 +66,9 @@ public abstract class GenericDictionaryTestsBase<TKey, TValue> : GenericCollecti
         sut.Add( keys[1], values[1] );
         sut.Add( keys[2], values[2] );
 
-        var result = AsReadOnlyDictionary( sut ).Values;
+        var result = AsReadOnlyDictionary( sut ).Values.ToList();
 
-        result.Should().BeEquivalentTo( values );
+        Assertion.All( result.Count.TestEquals( values.Length ), result.TestSetEqual( values ) ).Go();
     }
 
     [Fact]
@@ -80,7 +81,7 @@ public abstract class GenericDictionaryTestsBase<TKey, TValue> : GenericCollecti
 
         var result = sut.ContainsKey( key );
 
-        result.Should().BeTrue();
+        result.TestTrue().Go();
     }
 
     [Fact]
@@ -91,7 +92,7 @@ public abstract class GenericDictionaryTestsBase<TKey, TValue> : GenericCollecti
 
         var result = sut.ContainsKey( key );
 
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Fact]
@@ -104,7 +105,7 @@ public abstract class GenericDictionaryTestsBase<TKey, TValue> : GenericCollecti
 
         var result = AsReadOnlyDictionary( sut ).ContainsKey( key );
 
-        result.Should().BeTrue();
+        result.TestTrue().Go();
     }
 
     [Fact]
@@ -115,7 +116,7 @@ public abstract class GenericDictionaryTestsBase<TKey, TValue> : GenericCollecti
 
         var result = AsReadOnlyDictionary( sut ).ContainsKey( key );
 
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Fact]
@@ -128,11 +129,7 @@ public abstract class GenericDictionaryTestsBase<TKey, TValue> : GenericCollecti
 
         var result = sut.TryGetValue( key, out var outResult );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            outResult.Should().Be( value );
-        }
+        Assertion.All( result.TestTrue(), outResult.TestEquals( value ) ).Go();
     }
 
     [Fact]
@@ -143,11 +140,7 @@ public abstract class GenericDictionaryTestsBase<TKey, TValue> : GenericCollecti
 
         var result = sut.TryGetValue( key, out var outResult );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeFalse();
-            outResult.Should().Be( default( TValue ) );
-        }
+        Assertion.All( result.TestFalse(), outResult.TestEquals( default ) ).Go();
     }
 
     [Fact]
@@ -160,11 +153,7 @@ public abstract class GenericDictionaryTestsBase<TKey, TValue> : GenericCollecti
 
         var result = AsReadOnlyDictionary( sut ).TryGetValue( key, out var outResult );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            outResult.Should().Be( value );
-        }
+        Assertion.All( result.TestTrue(), outResult.TestEquals( value ) ).Go();
     }
 
     [Fact]
@@ -175,11 +164,7 @@ public abstract class GenericDictionaryTestsBase<TKey, TValue> : GenericCollecti
 
         var result = AsReadOnlyDictionary( sut ).TryGetValue( key, out var outResult );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeFalse();
-            outResult.Should().Be( default( TValue ) );
-        }
+        Assertion.All( result.TestFalse(), outResult.TestEquals( default ) ).Go();
     }
 
     [Fact]
@@ -191,7 +176,7 @@ public abstract class GenericDictionaryTestsBase<TKey, TValue> : GenericCollecti
 
         sut.Add( KeyValuePair.Create( key, value ) );
 
-        sut[key].Should().Be( value );
+        sut[key].TestEquals( value ).Go();
     }
 
     [Fact]
@@ -204,11 +189,7 @@ public abstract class GenericDictionaryTestsBase<TKey, TValue> : GenericCollecti
 
         var result = sut.Remove( KeyValuePair.Create( key, values[1] ) );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeFalse();
-            sut.Count.Should().Be( 1 );
-        }
+        Assertion.All( result.TestFalse(), sut.Count.TestEquals( 1 ) ).Go();
     }
 
     [Fact]
@@ -221,11 +202,7 @@ public abstract class GenericDictionaryTestsBase<TKey, TValue> : GenericCollecti
 
         var result = sut.Remove( key );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            sut.ContainsKey( key ).Should().BeFalse();
-        }
+        Assertion.All( result.TestTrue(), sut.ContainsKey( key ).TestFalse() ).Go();
     }
 
     [Fact]
@@ -238,7 +215,7 @@ public abstract class GenericDictionaryTestsBase<TKey, TValue> : GenericCollecti
 
         var result = sut.Contains( KeyValuePair.Create( key, values[1] ) );
 
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     protected abstract IDictionary<TKey, TValue> CreateEmptyDictionary();

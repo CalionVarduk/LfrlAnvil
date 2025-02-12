@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 using System.Linq;
 using LfrlAnvil.Functional;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Collections.Tests.TreeDictionaryTests;
 
@@ -13,12 +13,11 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     {
         var sut = new TreeDictionary<TKey, TValue>();
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 0 );
-            sut.Comparer.Should().Be( EqualityComparer<TKey>.Default );
-            sut.Root.Should().BeNull();
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 0 ),
+                sut.Comparer.TestEquals( EqualityComparer<TKey>.Default ),
+                sut.Root.TestNull() )
+            .Go();
     }
 
     [Fact]
@@ -27,12 +26,11 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
         var comparer = EqualityComparerFactory<TKey>.Create( (a, b) => a!.Equals( b ) );
         var sut = new TreeDictionary<TKey, TValue>( comparer );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 0 );
-            sut.Comparer.Should().Be( comparer );
-            sut.Root.Should().BeNull();
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 0 ),
+                sut.Comparer.TestRefEquals( comparer ),
+                sut.Root.TestNull() )
+            .Go();
     }
 
     [Fact]
@@ -62,17 +60,16 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         var result = setRoot( sut, key, value );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 1 );
-            sut[key].Should().Be( value );
-            sut.Root.Should().Be( result );
-            result.Key.Should().Be( key );
-            result.Value.Should().Be( value );
-            result.Parent.Should().BeNull();
-            result.Tree.Should().BeSameAs( sut );
-            AssertNodeRelationship( result );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 1 ),
+                sut[key].TestEquals( value ),
+                sut.Root.TestEquals( result ),
+                result.Key.TestEquals( key ),
+                result.Value.TestEquals( value ),
+                result.Parent.TestNull(),
+                result.Tree.TestRefEquals( sut ),
+                AssertNodeRelationship( result ) )
+            .Go();
     }
 
     [Fact]
@@ -103,17 +100,16 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         var result = setRoot( sut, keys[1], values[1] );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 2 );
-            sut[keys[1]].Should().Be( values[1] );
-            sut.Root.Should().Be( result );
-            result.Key.Should().Be( keys[1] );
-            result.Value.Should().Be( values[1] );
-            result.Parent.Should().BeNull();
-            result.Tree.Should().BeSameAs( sut );
-            AssertNodeRelationship( result, oldRoot );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 2 ),
+                sut[keys[1]].TestEquals( values[1] ),
+                sut.Root.TestEquals( result ),
+                result.Key.TestEquals( keys[1] ),
+                result.Value.TestEquals( values[1] ),
+                result.Parent.TestNull(),
+                result.Tree.TestRefEquals( sut ),
+                AssertNodeRelationship( result, oldRoot ) )
+            .Go();
     }
 
     [Fact]
@@ -144,17 +140,15 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         var action = Lambda.Of( () => setRoot( sut, key, values[1], intercept ) );
 
-        using ( new AssertionScope() )
-        {
-            action.Should().ThrowExactly<ArgumentException>();
-            sut.Count.Should().Be( 1 );
-            sut.Root.Should().Be( root );
-            root.Value.Should().Be( values[0] );
-            AssertNodeRelationship( root );
-
-            if ( intercept.Node is not null )
-                AssertLackOfLinkedTree( intercept.Node );
-        }
+        action.Test(
+                exc => Assertion.All(
+                    exc.TestType().Exact<ArgumentException>(),
+                    sut.Count.TestEquals( 1 ),
+                    sut.Root.TestEquals( root ),
+                    root.Value.TestEquals( values[0] ),
+                    AssertNodeRelationship( root ),
+                    intercept.Node.TestIf().NotNull( AssertLackOfLinkedTree ) ) )
+            .Go();
     }
 
     [Fact]
@@ -167,7 +161,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         var action = Lambda.Of( () => sut.SetRoot( node ) );
 
-        action.Should().ThrowExactly<InvalidOperationException>();
+        action.Test( exc => exc.TestType().Exact<InvalidOperationException>() ).Go();
     }
 
     [Fact]
@@ -197,17 +191,16 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         var result = add( sut, key, value );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 1 );
-            sut[key].Should().Be( value );
-            sut.Root.Should().Be( result );
-            result.Key.Should().Be( key );
-            result.Value.Should().Be( value );
-            result.Parent.Should().BeNull();
-            result.Tree.Should().BeSameAs( sut );
-            AssertNodeRelationship( result );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 1 ),
+                sut[key].TestEquals( value ),
+                sut.Root.TestEquals( result ),
+                result.Key.TestEquals( key ),
+                result.Value.TestEquals( value ),
+                result.Parent.TestNull(),
+                result.Tree.TestRefEquals( sut ),
+                AssertNodeRelationship( result ) )
+            .Go();
     }
 
     [Fact]
@@ -238,16 +231,15 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         var result = add( sut, keys[1], values[1] );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 2 );
-            sut[keys[1]].Should().Be( values[1] );
-            sut.Root.Should().Be( root );
-            result.Key.Should().Be( keys[1] );
-            result.Value.Should().Be( values[1] );
-            result.Tree.Should().BeSameAs( sut );
-            AssertNodeRelationship( root, result );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 2 ),
+                sut[keys[1]].TestEquals( values[1] ),
+                sut.Root.TestEquals( root ),
+                result.Key.TestEquals( keys[1] ),
+                result.Value.TestEquals( values[1] ),
+                result.Tree.TestRefEquals( sut ),
+                AssertNodeRelationship( root, result ) )
+            .Go();
     }
 
     [Fact]
@@ -278,17 +270,15 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         var action = Lambda.Of( () => add( sut, key, values[1], intercept ) );
 
-        using ( new AssertionScope() )
-        {
-            action.Should().ThrowExactly<ArgumentException>();
-            sut.Count.Should().Be( 1 );
-            sut.Root.Should().Be( root );
-            root.Value.Should().Be( values[0] );
-            AssertNodeRelationship( root );
-
-            if ( intercept.Node is not null )
-                AssertLackOfLinkedTree( intercept.Node );
-        }
+        action.Test(
+                exc => Assertion.All(
+                    exc.TestType().Exact<ArgumentException>(),
+                    sut.Count.TestEquals( 1 ),
+                    sut.Root.TestEquals( root ),
+                    root.Value.TestEquals( values[0] ),
+                    AssertNodeRelationship( root ),
+                    intercept.Node.TestIf().NotNull( AssertLackOfLinkedTree ) ) )
+            .Go();
     }
 
     [Fact]
@@ -301,7 +291,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         var action = Lambda.Of( () => sut.Add( node ) );
 
-        action.Should().ThrowExactly<InvalidOperationException>();
+        action.Test( exc => exc.TestType().Exact<InvalidOperationException>() ).Go();
     }
 
     [Fact]
@@ -351,17 +341,16 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         var result = addTo( sut, parent, keys[2], values[2] );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 3 );
-            sut[keys[2]].Should().Be( values[2] );
-            result.Key.Should().Be( keys[2] );
-            result.Value.Should().Be( values[2] );
-            result.Tree.Should().BeSameAs( sut );
-            AssertNodeRelationship( root, parent );
-            AssertNodeRelationship( parent, result );
-            AssertNodeRelationship( result );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 3 ),
+                sut[keys[2]].TestEquals( values[2] ),
+                result.Key.TestEquals( keys[2] ),
+                result.Value.TestEquals( values[2] ),
+                result.Tree.TestRefEquals( sut ),
+                AssertNodeRelationship( root, parent ),
+                AssertNodeRelationship( parent, result ),
+                AssertNodeRelationship( result ) )
+            .Go();
     }
 
     [Fact]
@@ -412,18 +401,17 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         var result = addTo( sut, parent, keys[3], values[3] );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 4 );
-            sut[keys[3]].Should().Be( values[3] );
-            result.Key.Should().Be( keys[3] );
-            result.Value.Should().Be( values[3] );
-            result.Tree.Should().BeSameAs( sut );
-            AssertNodeRelationship( root, parent );
-            AssertNodeRelationship( parent, child, result );
-            AssertNodeRelationship( child );
-            AssertNodeRelationship( result );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 4 ),
+                sut[keys[3]].TestEquals( values[3] ),
+                result.Key.TestEquals( keys[3] ),
+                result.Value.TestEquals( values[3] ),
+                result.Tree.TestRefEquals( sut ),
+                AssertNodeRelationship( root, parent ),
+                AssertNodeRelationship( parent, child, result ),
+                AssertNodeRelationship( child ),
+                AssertNodeRelationship( result ) )
+            .Go();
     }
 
     [Fact]
@@ -471,17 +459,15 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         var action = Lambda.Of( () => addTo( sut, root, key, values[1], intercept ) );
 
-        using ( new AssertionScope() )
-        {
-            action.Should().ThrowExactly<ArgumentException>();
-            sut.Count.Should().Be( 1 );
-            sut.Root.Should().Be( root );
-            root.Value.Should().Be( values[0] );
-            AssertNodeRelationship( root );
-
-            if ( intercept.Node is not null )
-                AssertLackOfLinkedTree( intercept.Node );
-        }
+        action.Test(
+                exc => Assertion.All(
+                    exc.TestType().Exact<ArgumentException>(),
+                    sut.Count.TestEquals( 1 ),
+                    sut.Root.TestEquals( root ),
+                    root.Value.TestEquals( values[0] ),
+                    AssertNodeRelationship( root ),
+                    intercept.Node.TestIf().NotNull( AssertLackOfLinkedTree ) ) )
+            .Go();
     }
 
     [Fact]
@@ -493,7 +479,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         var action = Lambda.Of( () => sut.AddTo( keys[0], keys[1], value ) );
 
-        action.Should().ThrowExactly<KeyNotFoundException>();
+        action.Test( exc => exc.TestType().Exact<KeyNotFoundException>() ).Go();
     }
 
     [Fact]
@@ -506,7 +492,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         var action = Lambda.Of( () => sut.AddTo( keys[0], node ) );
 
-        action.Should().ThrowExactly<KeyNotFoundException>();
+        action.Test( exc => exc.TestType().Exact<KeyNotFoundException>() ).Go();
     }
 
     [Fact]
@@ -520,7 +506,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         var action = Lambda.Of( () => sut.AddTo( parent.Key, node ) );
 
-        action.Should().ThrowExactly<InvalidOperationException>();
+        action.Test( exc => exc.TestType().Exact<InvalidOperationException>() ).Go();
     }
 
     [Fact]
@@ -534,7 +520,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         var action = Lambda.Of( () => sut.AddTo( parent, keys[1], values[1] ) );
 
-        action.Should().ThrowExactly<InvalidOperationException>();
+        action.Test( exc => exc.TestType().Exact<InvalidOperationException>() ).Go();
     }
 
     [Fact]
@@ -547,7 +533,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         var action = Lambda.Of( () => sut.AddTo( parent, keys[1], values[1] ) );
 
-        action.Should().ThrowExactly<InvalidOperationException>();
+        action.Test( exc => exc.TestType().Exact<InvalidOperationException>() ).Go();
     }
 
     [Fact]
@@ -562,7 +548,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         var action = Lambda.Of( () => sut.AddTo( parent, node ) );
 
-        action.Should().ThrowExactly<InvalidOperationException>();
+        action.Test( exc => exc.TestType().Exact<InvalidOperationException>() ).Go();
     }
 
     [Fact]
@@ -576,7 +562,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         var action = Lambda.Of( () => sut.AddTo( parent, node ) );
 
-        action.Should().ThrowExactly<InvalidOperationException>();
+        action.Test( exc => exc.TestType().Exact<InvalidOperationException>() ).Go();
     }
 
     [Fact]
@@ -590,7 +576,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         var action = Lambda.Of( () => sut.AddTo( parent, node ) );
 
-        action.Should().ThrowExactly<InvalidOperationException>();
+        action.Test( exc => exc.TestType().Exact<InvalidOperationException>() ).Go();
     }
 
     [Fact]
@@ -612,23 +598,21 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
         var b = sut.GetNode( keys[1] );
         var c = sut.GetNode( keys[2] );
 
-        using ( new AssertionScope() )
-        {
-            a.Should().NotBeNull();
-            b.Should().NotBeNull();
-            c.Should().NotBeNull();
-            sut.Count.Should().Be( 3 );
-            sut.Root.Should().Be( a );
-            result.Should().Be( a );
-        }
+        Assertion.All(
+                a.TestNotNull(),
+                b.TestNotNull(),
+                c.TestNotNull(),
+                sut.Count.TestEquals( 3 ),
+                sut.Root.TestEquals( a ),
+                result.TestEquals( a ) )
+            .Go();
 
-        using ( new AssertionScope() )
-        {
-            a!.Parent.Should().BeNull();
-            AssertNodeRelationship( a, b!, c! );
-            AssertNodeRelationship( b! );
-            AssertNodeRelationship( c! );
-        }
+        Assertion.All(
+                a!.Parent.TestNull(),
+                AssertNodeRelationship( a, b!, c! ),
+                AssertNodeRelationship( b! ),
+                AssertNodeRelationship( c! ) )
+            .Go();
     }
 
     [Fact]
@@ -653,26 +637,24 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
         var e = sut.GetNode( keys[4] );
         var f = sut.GetNode( keys[5] );
 
-        using ( new AssertionScope() )
-        {
-            d.Should().NotBeNull();
-            e.Should().NotBeNull();
-            f.Should().NotBeNull();
-            sut.Count.Should().Be( 6 );
-            sut.Root.Should().Be( a );
-            result.Should().Be( d );
-        }
+        Assertion.All(
+                d.TestNotNull(),
+                e.TestNotNull(),
+                f.TestNotNull(),
+                sut.Count.TestEquals( 6 ),
+                sut.Root.TestEquals( a ),
+                result.TestEquals( d ) )
+            .Go();
 
-        using ( new AssertionScope() )
-        {
-            a.Parent.Should().BeNull();
-            AssertNodeRelationship( a, b, c, d! );
-            AssertNodeRelationship( b );
-            AssertNodeRelationship( c );
-            AssertNodeRelationship( d!, e!, f! );
-            AssertNodeRelationship( e! );
-            AssertNodeRelationship( f! );
-        }
+        Assertion.All(
+                a.Parent.TestNull(),
+                AssertNodeRelationship( a, b, c, d! ),
+                AssertNodeRelationship( b ),
+                AssertNodeRelationship( c ),
+                AssertNodeRelationship( d!, e!, f! ),
+                AssertNodeRelationship( e! ),
+                AssertNodeRelationship( f! ) )
+            .Go();
     }
 
     [Fact]
@@ -717,22 +699,20 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
         var b = sut.GetNode( keys[1] );
         var c = sut.GetNode( keys[3] );
 
-        using ( new AssertionScope() )
-        {
-            b.Should().NotBeNull();
-            c.Should().NotBeNull();
-            sut.Count.Should().Be( 3 );
-            sut.Root.Should().Be( a );
-            result.Should().Be( b );
-        }
+        Assertion.All(
+                b.TestNotNull(),
+                c.TestNotNull(),
+                sut.Count.TestEquals( 3 ),
+                sut.Root.TestEquals( a ),
+                result.TestEquals( b ) )
+            .Go();
 
-        using ( new AssertionScope() )
-        {
-            a.Parent.Should().BeNull();
-            AssertNodeRelationship( a, b! );
-            AssertNodeRelationship( b!, c! );
-            AssertNodeRelationship( c! );
-        }
+        Assertion.All(
+                a.Parent.TestNull(),
+                AssertNodeRelationship( a, b! ),
+                AssertNodeRelationship( b!, c! ),
+                AssertNodeRelationship( c! ) )
+            .Go();
     }
 
     [Fact]
@@ -770,26 +750,24 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
         var e = sut.GetNode( keys[4] );
         var f = sut.GetNode( keys[5] );
 
-        using ( new AssertionScope() )
-        {
-            d.Should().NotBeNull();
-            e.Should().NotBeNull();
-            f.Should().NotBeNull();
-            sut.Count.Should().Be( 6 );
-            sut.Root.Should().Be( a );
-            result.Should().Be( d );
-        }
+        Assertion.All(
+                d.TestNotNull(),
+                e.TestNotNull(),
+                f.TestNotNull(),
+                sut.Count.TestEquals( 6 ),
+                sut.Root.TestEquals( a ),
+                result.TestEquals( d ) )
+            .Go();
 
-        using ( new AssertionScope() )
-        {
-            a.Parent.Should().BeNull();
-            AssertNodeRelationship( a, b, c );
-            AssertNodeRelationship( b, d! );
-            AssertNodeRelationship( c );
-            AssertNodeRelationship( d!, e!, f! );
-            AssertNodeRelationship( e! );
-            AssertNodeRelationship( f! );
-        }
+        Assertion.All(
+                a.Parent.TestNull(),
+                AssertNodeRelationship( a, b, c ),
+                AssertNodeRelationship( b, d! ),
+                AssertNodeRelationship( c ),
+                AssertNodeRelationship( d!, e!, f! ),
+                AssertNodeRelationship( e! ),
+                AssertNodeRelationship( f! ) )
+            .Go();
     }
 
     [Fact]
@@ -821,7 +799,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         var action = Lambda.Of( () => addSubtree( sut, parent, node ) );
 
-        action.Should().ThrowExactly<InvalidOperationException>();
+        action.Test( exc => exc.TestType().Exact<InvalidOperationException>() ).Go();
     }
 
     [Fact]
@@ -865,7 +843,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         var action = Lambda.Of( () => addSubtree( sut, parent, subtree.Root! ) );
 
-        action.Should().ThrowExactly<ArgumentException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentException>() ).Go();
     }
 
     [Fact]
@@ -878,7 +856,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         var action = Lambda.Of( () => sut.AddSubtreeTo( keys[0], subtree.Root! ) );
 
-        action.Should().ThrowExactly<KeyNotFoundException>();
+        action.Test( exc => exc.TestType().Exact<KeyNotFoundException>() ).Go();
     }
 
     [Fact]
@@ -893,7 +871,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         var action = Lambda.Of( () => sut.AddSubtreeTo( parent, subtree.Root! ) );
 
-        action.Should().ThrowExactly<InvalidOperationException>();
+        action.Test( exc => exc.TestType().Exact<InvalidOperationException>() ).Go();
     }
 
     [Fact]
@@ -907,7 +885,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         var action = Lambda.Of( () => sut.AddSubtreeTo( parent, subtree.Root! ) );
 
-        action.Should().ThrowExactly<InvalidOperationException>();
+        action.Test( exc => exc.TestType().Exact<InvalidOperationException>() ).Go();
     }
 
     [Fact]
@@ -935,11 +913,10 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         var (result, removed) = remove( sut, key );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeFalse();
-            removed.Should().Be( default( TValue ) );
-        }
+        Assertion.All(
+                result.TestFalse(),
+                removed.TestEquals( default ) )
+            .Go();
     }
 
     [Fact]
@@ -980,14 +957,13 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         var (result, removed) = remove( sut, root );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            removed.Should().Be( value );
-            sut.Count.Should().Be( 0 );
-            sut.Root.Should().BeNull();
-            AssertLackOfLinkedTree( root );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                removed.TestEquals( value ),
+                sut.Count.TestEquals( 0 ),
+                sut.Root.TestNull(),
+                AssertLackOfLinkedTree( root ) )
+            .Go();
     }
 
     [Fact]
@@ -1030,17 +1006,16 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         var (result, removed) = remove( sut, root );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            removed.Should().Be( values[0] );
-            sut.Count.Should().Be( 2 );
-            sut.Root.Should().Be( firstChild );
-            firstChild.Parent.Should().BeNull();
-            AssertNodeRelationship( firstChild, secondChild );
-            AssertNodeRelationship( secondChild );
-            AssertLackOfLinkedTree( root );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                removed.TestEquals( values[0] ),
+                sut.Count.TestEquals( 2 ),
+                sut.Root.TestEquals( firstChild ),
+                firstChild.Parent.TestNull(),
+                AssertNodeRelationship( firstChild, secondChild ),
+                AssertNodeRelationship( secondChild ),
+                AssertLackOfLinkedTree( root ) )
+            .Go();
     }
 
     [Fact]
@@ -1085,19 +1060,18 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         var (result, removed) = remove( sut, node );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            removed.Should().Be( values[1] );
-            sut.Count.Should().Be( 4 );
-            sut.Root.Should().Be( root );
-            root.Parent.Should().BeNull();
-            AssertNodeRelationship( root, other, firstChild, secondChild );
-            AssertNodeRelationship( other );
-            AssertNodeRelationship( firstChild );
-            AssertNodeRelationship( secondChild );
-            AssertLackOfLinkedTree( node );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                removed.TestEquals( values[1] ),
+                sut.Count.TestEquals( 4 ),
+                sut.Root.TestEquals( root ),
+                root.Parent.TestNull(),
+                AssertNodeRelationship( root, other, firstChild, secondChild ),
+                AssertNodeRelationship( other ),
+                AssertNodeRelationship( firstChild ),
+                AssertNodeRelationship( secondChild ),
+                AssertLackOfLinkedTree( node ) )
+            .Go();
     }
 
     [Fact]
@@ -1111,7 +1085,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         var action = Lambda.Of( () => sut.Remove( node ) );
 
-        action.Should().ThrowExactly<InvalidOperationException>();
+        action.Test( exc => exc.TestType().Exact<InvalidOperationException>() ).Go();
     }
 
     [Fact]
@@ -1124,7 +1098,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         var action = Lambda.Of( () => sut.Remove( node ) );
 
-        action.Should().ThrowExactly<InvalidOperationException>();
+        action.Test( exc => exc.TestType().Exact<InvalidOperationException>() ).Go();
     }
 
     [Fact]
@@ -1155,15 +1129,12 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         var result = removeSubtree( sut );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( 3 );
-            sut.Count.Should().Be( 0 );
-            sut.Root.Should().BeNull();
-
-            foreach ( var node in nodes )
-                AssertLackOfLinkedTree( node );
-        }
+        Assertion.All(
+                result.TestEquals( 3 ),
+                sut.Count.TestEquals( 0 ),
+                sut.Root.TestNull(),
+                nodes.TestAll( (node, _) => AssertLackOfLinkedTree( node ) ) )
+            .Go();
     }
 
     [Fact]
@@ -1193,19 +1164,18 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         var result = removeSubtree( sut, c );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( 4 );
-            sut.Count.Should().Be( 2 );
-            sut.Root.Should().Be( a );
-            a.Parent.Should().BeNull();
-            AssertNodeRelationship( a, b );
-            AssertNodeRelationship( b );
-            AssertLackOfLinkedTree( c );
-            AssertLackOfLinkedTree( d );
-            AssertLackOfLinkedTree( e );
-            AssertLackOfLinkedTree( f );
-        }
+        Assertion.All(
+                result.TestEquals( 4 ),
+                sut.Count.TestEquals( 2 ),
+                sut.Root.TestEquals( a ),
+                a.Parent.TestNull(),
+                AssertNodeRelationship( a, b ),
+                AssertNodeRelationship( b ),
+                AssertLackOfLinkedTree( c ),
+                AssertLackOfLinkedTree( d ),
+                AssertLackOfLinkedTree( e ),
+                AssertLackOfLinkedTree( f ) )
+            .Go();
     }
 
     [Fact]
@@ -1216,7 +1186,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         var result = sut.RemoveSubtree( key );
 
-        result.Should().Be( 0 );
+        result.TestEquals( 0 ).Go();
     }
 
     [Fact]
@@ -1228,7 +1198,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         var result = sut.RemoveSubtree( keys[1] );
 
-        result.Should().Be( 0 );
+        result.TestEquals( 0 ).Go();
     }
 
     [Fact]
@@ -1242,7 +1212,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         var action = Lambda.Of( () => sut.RemoveSubtree( node ) );
 
-        action.Should().ThrowExactly<InvalidOperationException>();
+        action.Test( exc => exc.TestType().Exact<InvalidOperationException>() ).Go();
     }
 
     [Fact]
@@ -1255,7 +1225,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         var action = Lambda.Of( () => sut.RemoveSubtree( node ) );
 
-        action.Should().ThrowExactly<InvalidOperationException>();
+        action.Test( exc => exc.TestType().Exact<InvalidOperationException>() ).Go();
     }
 
     [Fact]
@@ -1281,11 +1251,10 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         swap( sut, a, a );
 
-        using ( new AssertionScope() )
-        {
-            AssertNodeRelationship( a, b );
-            AssertNodeRelationship( b );
-        }
+        Assertion.All(
+                AssertNodeRelationship( a, b ),
+                AssertNodeRelationship( b ) )
+            .Go();
     }
 
     [Fact]
@@ -1314,15 +1283,14 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         swap( sut, b, c );
 
-        using ( new AssertionScope() )
-        {
-            a.Parent.Should().BeNull();
-            AssertNodeRelationship( a, c, b );
-            AssertNodeRelationship( c, d );
-            AssertNodeRelationship( b, e );
-            AssertNodeRelationship( d );
-            AssertNodeRelationship( e );
-        }
+        Assertion.All(
+                a.Parent.TestNull(),
+                AssertNodeRelationship( a, c, b ),
+                AssertNodeRelationship( c, d ),
+                AssertNodeRelationship( b, e ),
+                AssertNodeRelationship( d ),
+                AssertNodeRelationship( e ) )
+            .Go();
     }
 
     [Fact]
@@ -1350,15 +1318,14 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         swap( sut, a, b );
 
-        using ( new AssertionScope() )
-        {
-            sut.Root.Should().Be( b );
-            b.Parent.Should().BeNull();
-            AssertNodeRelationship( b, a, c );
-            AssertNodeRelationship( a, d );
-            AssertNodeRelationship( c );
-            AssertNodeRelationship( d );
-        }
+        Assertion.All(
+                sut.Root.TestEquals( b ),
+                b.Parent.TestNull(),
+                AssertNodeRelationship( b, a, c ),
+                AssertNodeRelationship( a, d ),
+                AssertNodeRelationship( c ),
+                AssertNodeRelationship( d ) )
+            .Go();
     }
 
     [Fact]
@@ -1386,15 +1353,14 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         swap( sut, b, a );
 
-        using ( new AssertionScope() )
-        {
-            sut.Root.Should().Be( b );
-            b.Parent.Should().BeNull();
-            AssertNodeRelationship( b, a, c );
-            AssertNodeRelationship( a, d );
-            AssertNodeRelationship( c );
-            AssertNodeRelationship( d );
-        }
+        Assertion.All(
+                sut.Root.TestEquals( b ),
+                b.Parent.TestNull(),
+                AssertNodeRelationship( b, a, c ),
+                AssertNodeRelationship( a, d ),
+                AssertNodeRelationship( c ),
+                AssertNodeRelationship( d ) )
+            .Go();
     }
 
     [Fact]
@@ -1425,17 +1391,16 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         swap( sut, a, c );
 
-        using ( new AssertionScope() )
-        {
-            sut.Root.Should().Be( c );
-            c.Parent.Should().BeNull();
-            AssertNodeRelationship( c, b );
-            AssertNodeRelationship( b, a, d );
-            AssertNodeRelationship( a, e, f );
-            AssertNodeRelationship( d );
-            AssertNodeRelationship( e );
-            AssertNodeRelationship( f );
-        }
+        Assertion.All(
+                sut.Root.TestEquals( c ),
+                c.Parent.TestNull(),
+                AssertNodeRelationship( c, b ),
+                AssertNodeRelationship( b, a, d ),
+                AssertNodeRelationship( a, e, f ),
+                AssertNodeRelationship( d ),
+                AssertNodeRelationship( e ),
+                AssertNodeRelationship( f ) )
+            .Go();
     }
 
     [Fact]
@@ -1466,17 +1431,16 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         swap( sut, c, a );
 
-        using ( new AssertionScope() )
-        {
-            sut.Root.Should().Be( c );
-            c.Parent.Should().BeNull();
-            AssertNodeRelationship( c, b );
-            AssertNodeRelationship( b, a, d );
-            AssertNodeRelationship( a, e, f );
-            AssertNodeRelationship( d );
-            AssertNodeRelationship( e );
-            AssertNodeRelationship( f );
-        }
+        Assertion.All(
+                sut.Root.TestEquals( c ),
+                c.Parent.TestNull(),
+                AssertNodeRelationship( c, b ),
+                AssertNodeRelationship( b, a, d ),
+                AssertNodeRelationship( a, e, f ),
+                AssertNodeRelationship( d ),
+                AssertNodeRelationship( e ),
+                AssertNodeRelationship( f ) )
+            .Go();
     }
 
     [Fact]
@@ -1506,17 +1470,16 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         swap( sut, b, d );
 
-        using ( new AssertionScope() )
-        {
-            sut.Root.Should().Be( a );
-            a.Parent.Should().BeNull();
-            AssertNodeRelationship( a, d, c );
-            AssertNodeRelationship( d, b, e );
-            AssertNodeRelationship( c );
-            AssertNodeRelationship( b, f );
-            AssertNodeRelationship( e );
-            AssertNodeRelationship( f );
-        }
+        Assertion.All(
+                sut.Root.TestEquals( a ),
+                a.Parent.TestNull(),
+                AssertNodeRelationship( a, d, c ),
+                AssertNodeRelationship( d, b, e ),
+                AssertNodeRelationship( c ),
+                AssertNodeRelationship( b, f ),
+                AssertNodeRelationship( e ),
+                AssertNodeRelationship( f ) )
+            .Go();
     }
 
     [Fact]
@@ -1546,17 +1509,16 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         swap( sut, d, b );
 
-        using ( new AssertionScope() )
-        {
-            sut.Root.Should().Be( a );
-            a.Parent.Should().BeNull();
-            AssertNodeRelationship( a, d, c );
-            AssertNodeRelationship( d, b, e );
-            AssertNodeRelationship( c );
-            AssertNodeRelationship( b, f );
-            AssertNodeRelationship( e );
-            AssertNodeRelationship( f );
-        }
+        Assertion.All(
+                sut.Root.TestEquals( a ),
+                a.Parent.TestNull(),
+                AssertNodeRelationship( a, d, c ),
+                AssertNodeRelationship( d, b, e ),
+                AssertNodeRelationship( c ),
+                AssertNodeRelationship( b, f ),
+                AssertNodeRelationship( e ),
+                AssertNodeRelationship( f ) )
+            .Go();
     }
 
     [Fact]
@@ -1587,18 +1549,17 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         swap( sut, b, e );
 
-        using ( new AssertionScope() )
-        {
-            sut.Root.Should().Be( a );
-            a.Parent.Should().BeNull();
-            AssertNodeRelationship( a, e, c );
-            AssertNodeRelationship( e, d );
-            AssertNodeRelationship( c );
-            AssertNodeRelationship( d, b, f );
-            AssertNodeRelationship( b, g );
-            AssertNodeRelationship( f );
-            AssertNodeRelationship( g );
-        }
+        Assertion.All(
+                sut.Root.TestEquals( a ),
+                a.Parent.TestNull(),
+                AssertNodeRelationship( a, e, c ),
+                AssertNodeRelationship( e, d ),
+                AssertNodeRelationship( c ),
+                AssertNodeRelationship( d, b, f ),
+                AssertNodeRelationship( b, g ),
+                AssertNodeRelationship( f ),
+                AssertNodeRelationship( g ) )
+            .Go();
     }
 
     [Fact]
@@ -1629,18 +1590,17 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         swap( sut, e, b );
 
-        using ( new AssertionScope() )
-        {
-            sut.Root.Should().Be( a );
-            a.Parent.Should().BeNull();
-            AssertNodeRelationship( a, e, c );
-            AssertNodeRelationship( e, d );
-            AssertNodeRelationship( c );
-            AssertNodeRelationship( d, b, f );
-            AssertNodeRelationship( b, g );
-            AssertNodeRelationship( f );
-            AssertNodeRelationship( g );
-        }
+        Assertion.All(
+                sut.Root.TestEquals( a ),
+                a.Parent.TestNull(),
+                AssertNodeRelationship( a, e, c ),
+                AssertNodeRelationship( e, d ),
+                AssertNodeRelationship( c ),
+                AssertNodeRelationship( d, b, f ),
+                AssertNodeRelationship( b, g ),
+                AssertNodeRelationship( f ),
+                AssertNodeRelationship( g ) )
+            .Go();
     }
 
     [Fact]
@@ -1673,20 +1633,19 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         swap( sut, d, g );
 
-        using ( new AssertionScope() )
-        {
-            sut.Root.Should().Be( a );
-            a.Parent.Should().BeNull();
-            AssertNodeRelationship( a, b, c );
-            AssertNodeRelationship( b, g, e );
-            AssertNodeRelationship( c, f, d );
-            AssertNodeRelationship( g, h );
-            AssertNodeRelationship( e );
-            AssertNodeRelationship( f );
-            AssertNodeRelationship( d, i );
-            AssertNodeRelationship( h );
-            AssertNodeRelationship( i );
-        }
+        Assertion.All(
+                sut.Root.TestEquals( a ),
+                a.Parent.TestNull(),
+                AssertNodeRelationship( a, b, c ),
+                AssertNodeRelationship( b, g, e ),
+                AssertNodeRelationship( c, f, d ),
+                AssertNodeRelationship( g, h ),
+                AssertNodeRelationship( e ),
+                AssertNodeRelationship( f ),
+                AssertNodeRelationship( d, i ),
+                AssertNodeRelationship( h ),
+                AssertNodeRelationship( i ) )
+            .Go();
     }
 
     [Fact]
@@ -1698,7 +1657,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         var action = Lambda.Of( () => sut.Swap( keys[1], keys[0] ) );
 
-        action.Should().ThrowExactly<KeyNotFoundException>();
+        action.Test( exc => exc.TestType().Exact<KeyNotFoundException>() ).Go();
     }
 
     [Fact]
@@ -1710,7 +1669,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         var action = Lambda.Of( () => sut.Swap( keys[0], keys[1] ) );
 
-        action.Should().ThrowExactly<KeyNotFoundException>();
+        action.Test( exc => exc.TestType().Exact<KeyNotFoundException>() ).Go();
     }
 
     [Fact]
@@ -1724,7 +1683,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         var action = Lambda.Of( () => sut.Swap( node, sut.Root! ) );
 
-        action.Should().ThrowExactly<InvalidOperationException>();
+        action.Test( exc => exc.TestType().Exact<InvalidOperationException>() ).Go();
     }
 
     [Fact]
@@ -1737,7 +1696,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         var action = Lambda.Of( () => sut.Swap( node, sut.Root! ) );
 
-        action.Should().ThrowExactly<InvalidOperationException>();
+        action.Test( exc => exc.TestType().Exact<InvalidOperationException>() ).Go();
     }
 
     [Fact]
@@ -1751,7 +1710,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         var action = Lambda.Of( () => sut.Swap( sut.Root!, node ) );
 
-        action.Should().ThrowExactly<InvalidOperationException>();
+        action.Test( exc => exc.TestType().Exact<InvalidOperationException>() ).Go();
     }
 
     [Fact]
@@ -1764,7 +1723,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         var action = Lambda.Of( () => sut.Swap( sut.Root!, node ) );
 
-        action.Should().ThrowExactly<InvalidOperationException>();
+        action.Test( exc => exc.TestType().Exact<InvalidOperationException>() ).Go();
     }
 
     [Fact]
@@ -1813,12 +1772,11 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         var result = moveTo( sut, a, b );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( b );
-            AssertNodeRelationship( a, b );
-            AssertNodeRelationship( b );
-        }
+        Assertion.All(
+                result.TestEquals( b ),
+                AssertNodeRelationship( a, b ),
+                AssertNodeRelationship( b ) )
+            .Go();
     }
 
     [Fact]
@@ -1871,17 +1829,16 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         var result = moveTo( sut, b, a );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( a );
-            sut.Root.Should().Be( b );
-            AssertNodeRelationship( b, d, e, a, c );
-            AssertNodeRelationship( d );
-            AssertNodeRelationship( e );
-            AssertNodeRelationship( a );
-            AssertNodeRelationship( c, f );
-            AssertNodeRelationship( f );
-        }
+        Assertion.All(
+                result.TestEquals( a ),
+                sut.Root.TestEquals( b ),
+                AssertNodeRelationship( b, d, e, a, c ),
+                AssertNodeRelationship( d ),
+                AssertNodeRelationship( e ),
+                AssertNodeRelationship( a ),
+                AssertNodeRelationship( c, f ),
+                AssertNodeRelationship( f ) )
+            .Go();
     }
 
     [Fact]
@@ -1934,17 +1891,16 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         var result = moveTo( sut, c, a );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( a );
-            sut.Root.Should().Be( c );
-            AssertNodeRelationship( c, e, f, a, b );
-            AssertNodeRelationship( e );
-            AssertNodeRelationship( f );
-            AssertNodeRelationship( a );
-            AssertNodeRelationship( b, d );
-            AssertNodeRelationship( d );
-        }
+        Assertion.All(
+                result.TestEquals( a ),
+                sut.Root.TestEquals( c ),
+                AssertNodeRelationship( c, e, f, a, b ),
+                AssertNodeRelationship( e ),
+                AssertNodeRelationship( f ),
+                AssertNodeRelationship( a ),
+                AssertNodeRelationship( b, d ),
+                AssertNodeRelationship( d ) )
+            .Go();
     }
 
     [Fact]
@@ -1997,17 +1953,16 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         var result = moveTo( sut, d, a );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( a );
-            sut.Root.Should().Be( b );
-            AssertNodeRelationship( b, d, c );
-            AssertNodeRelationship( d, e, f, a );
-            AssertNodeRelationship( e );
-            AssertNodeRelationship( f );
-            AssertNodeRelationship( a );
-            AssertNodeRelationship( c );
-        }
+        Assertion.All(
+                result.TestEquals( a ),
+                sut.Root.TestEquals( b ),
+                AssertNodeRelationship( b, d, c ),
+                AssertNodeRelationship( d, e, f, a ),
+                AssertNodeRelationship( e ),
+                AssertNodeRelationship( f ),
+                AssertNodeRelationship( a ),
+                AssertNodeRelationship( c ) )
+            .Go();
     }
 
     [Fact]
@@ -2061,18 +2016,17 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         var result = moveTo( sut, d, b );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( b );
-            sut.Root.Should().Be( a );
-            AssertNodeRelationship( a, c, d, e );
-            AssertNodeRelationship( c );
-            AssertNodeRelationship( d, f, g, b );
-            AssertNodeRelationship( e );
-            AssertNodeRelationship( f );
-            AssertNodeRelationship( g );
-            AssertNodeRelationship( b );
-        }
+        Assertion.All(
+                result.TestEquals( b ),
+                sut.Root.TestEquals( a ),
+                AssertNodeRelationship( a, c, d, e ),
+                AssertNodeRelationship( c ),
+                AssertNodeRelationship( d, f, g, b ),
+                AssertNodeRelationship( e ),
+                AssertNodeRelationship( f ),
+                AssertNodeRelationship( g ),
+                AssertNodeRelationship( b ) )
+            .Go();
     }
 
     [Fact]
@@ -2126,18 +2080,17 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         var result = moveTo( sut, e, c );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( c );
-            sut.Root.Should().Be( a );
-            AssertNodeRelationship( a, b, d, e );
-            AssertNodeRelationship( b );
-            AssertNodeRelationship( d );
-            AssertNodeRelationship( e, f, g, c );
-            AssertNodeRelationship( f );
-            AssertNodeRelationship( g );
-            AssertNodeRelationship( c );
-        }
+        Assertion.All(
+                result.TestEquals( c ),
+                sut.Root.TestEquals( a ),
+                AssertNodeRelationship( a, b, d, e ),
+                AssertNodeRelationship( b ),
+                AssertNodeRelationship( d ),
+                AssertNodeRelationship( e, f, g, c ),
+                AssertNodeRelationship( f ),
+                AssertNodeRelationship( g ),
+                AssertNodeRelationship( c ) )
+            .Go();
     }
 
     [Fact]
@@ -2192,19 +2145,18 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         var result = moveTo( sut, f, b );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( b );
-            sut.Root.Should().Be( a );
-            AssertNodeRelationship( a, c, d, e );
-            AssertNodeRelationship( c );
-            AssertNodeRelationship( d );
-            AssertNodeRelationship( e, f );
-            AssertNodeRelationship( f, g, h, b );
-            AssertNodeRelationship( g );
-            AssertNodeRelationship( h );
-            AssertNodeRelationship( b );
-        }
+        Assertion.All(
+                result.TestEquals( b ),
+                sut.Root.TestEquals( a ),
+                AssertNodeRelationship( a, c, d, e ),
+                AssertNodeRelationship( c ),
+                AssertNodeRelationship( d ),
+                AssertNodeRelationship( e, f ),
+                AssertNodeRelationship( f, g, h, b ),
+                AssertNodeRelationship( g ),
+                AssertNodeRelationship( h ),
+                AssertNodeRelationship( b ) )
+            .Go();
     }
 
     [Fact]
@@ -2259,19 +2211,18 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         var result = moveTo( sut, b, f );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( f );
-            sut.Root.Should().Be( a );
-            AssertNodeRelationship( a, b, c );
-            AssertNodeRelationship( b, d, e, f );
-            AssertNodeRelationship( c );
-            AssertNodeRelationship( d );
-            AssertNodeRelationship( e, g, h );
-            AssertNodeRelationship( f );
-            AssertNodeRelationship( g );
-            AssertNodeRelationship( h );
-        }
+        Assertion.All(
+                result.TestEquals( f ),
+                sut.Root.TestEquals( a ),
+                AssertNodeRelationship( a, b, c ),
+                AssertNodeRelationship( b, d, e, f ),
+                AssertNodeRelationship( c ),
+                AssertNodeRelationship( d ),
+                AssertNodeRelationship( e, g, h ),
+                AssertNodeRelationship( f ),
+                AssertNodeRelationship( g ),
+                AssertNodeRelationship( h ) )
+            .Go();
     }
 
     [Fact]
@@ -2327,20 +2278,19 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         var result = moveTo( sut, g, d );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( d );
-            sut.Root.Should().Be( a );
-            AssertNodeRelationship( a, b, c );
-            AssertNodeRelationship( b, e, h );
-            AssertNodeRelationship( c, f, g );
-            AssertNodeRelationship( e );
-            AssertNodeRelationship( h );
-            AssertNodeRelationship( f );
-            AssertNodeRelationship( g, i, d );
-            AssertNodeRelationship( i );
-            AssertNodeRelationship( d );
-        }
+        Assertion.All(
+                result.TestEquals( d ),
+                sut.Root.TestEquals( a ),
+                AssertNodeRelationship( a, b, c ),
+                AssertNodeRelationship( b, e, h ),
+                AssertNodeRelationship( c, f, g ),
+                AssertNodeRelationship( e ),
+                AssertNodeRelationship( h ),
+                AssertNodeRelationship( f ),
+                AssertNodeRelationship( g, i, d ),
+                AssertNodeRelationship( i ),
+                AssertNodeRelationship( d ) )
+            .Go();
     }
 
     [Fact]
@@ -2376,7 +2326,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         var action = Lambda.Of( () => moveTo( sut, sut.Root!, sut.Root! ) );
 
-        action.Should().ThrowExactly<InvalidOperationException>();
+        action.Test( exc => exc.TestType().Exact<InvalidOperationException>() ).Go();
     }
 
     [Fact]
@@ -2388,7 +2338,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         var action = Lambda.Of( () => sut.MoveTo( keys[0], keys[1] ) );
 
-        action.Should().ThrowExactly<KeyNotFoundException>();
+        action.Test( exc => exc.TestType().Exact<KeyNotFoundException>() ).Go();
     }
 
     [Fact]
@@ -2400,7 +2350,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         var action = Lambda.Of( () => sut.MoveTo( keys[1], keys[0] ) );
 
-        action.Should().ThrowExactly<KeyNotFoundException>();
+        action.Test( exc => exc.TestType().Exact<KeyNotFoundException>() ).Go();
     }
 
     [Fact]
@@ -2414,7 +2364,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         var action = Lambda.Of( () => sut.MoveTo( key, node ) );
 
-        action.Should().ThrowExactly<InvalidOperationException>();
+        action.Test( exc => exc.TestType().Exact<InvalidOperationException>() ).Go();
     }
 
     [Fact]
@@ -2427,7 +2377,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         var action = Lambda.Of( () => sut.MoveTo( key, node ) );
 
-        action.Should().ThrowExactly<InvalidOperationException>();
+        action.Test( exc => exc.TestType().Exact<InvalidOperationException>() ).Go();
     }
 
     [Fact]
@@ -2439,7 +2389,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         var action = Lambda.Of( () => sut.MoveTo( keys[1], sut.Root! ) );
 
-        action.Should().ThrowExactly<KeyNotFoundException>();
+        action.Test( exc => exc.TestType().Exact<KeyNotFoundException>() ).Go();
     }
 
     [Fact]
@@ -2453,7 +2403,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         var action = Lambda.Of( () => sut.MoveTo( node, key ) );
 
-        action.Should().ThrowExactly<InvalidOperationException>();
+        action.Test( exc => exc.TestType().Exact<InvalidOperationException>() ).Go();
     }
 
     [Fact]
@@ -2466,7 +2416,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         var action = Lambda.Of( () => sut.MoveTo( node, key ) );
 
-        action.Should().ThrowExactly<InvalidOperationException>();
+        action.Test( exc => exc.TestType().Exact<InvalidOperationException>() ).Go();
     }
 
     [Fact]
@@ -2478,7 +2428,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         var action = Lambda.Of( () => sut.MoveTo( sut.Root!, keys[1] ) );
 
-        action.Should().ThrowExactly<KeyNotFoundException>();
+        action.Test( exc => exc.TestType().Exact<KeyNotFoundException>() ).Go();
     }
 
     [Fact]
@@ -2492,7 +2442,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         var action = Lambda.Of( () => sut.MoveTo( sut.Root!, node ) );
 
-        action.Should().ThrowExactly<InvalidOperationException>();
+        action.Test( exc => exc.TestType().Exact<InvalidOperationException>() ).Go();
     }
 
     [Fact]
@@ -2505,7 +2455,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         var action = Lambda.Of( () => sut.MoveTo( sut.Root!, node ) );
 
-        action.Should().ThrowExactly<InvalidOperationException>();
+        action.Test( exc => exc.TestType().Exact<InvalidOperationException>() ).Go();
     }
 
     [Fact]
@@ -2519,7 +2469,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         var action = Lambda.Of( () => sut.MoveTo( node, sut.Root! ) );
 
-        action.Should().ThrowExactly<InvalidOperationException>();
+        action.Test( exc => exc.TestType().Exact<InvalidOperationException>() ).Go();
     }
 
     [Fact]
@@ -2532,7 +2482,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         var action = Lambda.Of( () => sut.MoveTo( node, sut.Root! ) );
 
-        action.Should().ThrowExactly<InvalidOperationException>();
+        action.Test( exc => exc.TestType().Exact<InvalidOperationException>() ).Go();
     }
 
     [Fact]
@@ -2582,13 +2532,12 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         var result = moveSubtreeTo( sut, a, b );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( b );
-            AssertNodeRelationship( a, b );
-            AssertNodeRelationship( b, c );
-            AssertNodeRelationship( c );
-        }
+        Assertion.All(
+                result.TestEquals( b ),
+                AssertNodeRelationship( a, b ),
+                AssertNodeRelationship( b, c ),
+                AssertNodeRelationship( c ) )
+            .Go();
     }
 
     [Fact]
@@ -2645,20 +2594,19 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         var result = moveSubtreeTo( sut, b, f );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( f );
-            sut.Root.Should().Be( a );
-            AssertNodeRelationship( a, b, c );
-            AssertNodeRelationship( b, d, e, f );
-            AssertNodeRelationship( c );
-            AssertNodeRelationship( d );
-            AssertNodeRelationship( e, g );
-            AssertNodeRelationship( f, h, i );
-            AssertNodeRelationship( g );
-            AssertNodeRelationship( h );
-            AssertNodeRelationship( i );
-        }
+        Assertion.All(
+                result.TestEquals( f ),
+                sut.Root.TestEquals( a ),
+                AssertNodeRelationship( a, b, c ),
+                AssertNodeRelationship( b, d, e, f ),
+                AssertNodeRelationship( c ),
+                AssertNodeRelationship( d ),
+                AssertNodeRelationship( e, g ),
+                AssertNodeRelationship( f, h, i ),
+                AssertNodeRelationship( g ),
+                AssertNodeRelationship( h ),
+                AssertNodeRelationship( i ) )
+            .Go();
     }
 
     [Fact]
@@ -2716,20 +2664,19 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         var result = moveSubtreeTo( sut, g, d );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( d );
-            sut.Root.Should().Be( a );
-            AssertNodeRelationship( a, b, c );
-            AssertNodeRelationship( b, e );
-            AssertNodeRelationship( e );
-            AssertNodeRelationship( c, f, g );
-            AssertNodeRelationship( f );
-            AssertNodeRelationship( g, i, d );
-            AssertNodeRelationship( i );
-            AssertNodeRelationship( d, h );
-            AssertNodeRelationship( h );
-        }
+        Assertion.All(
+                result.TestEquals( d ),
+                sut.Root.TestEquals( a ),
+                AssertNodeRelationship( a, b, c ),
+                AssertNodeRelationship( b, e ),
+                AssertNodeRelationship( e ),
+                AssertNodeRelationship( c, f, g ),
+                AssertNodeRelationship( f ),
+                AssertNodeRelationship( g, i, d ),
+                AssertNodeRelationship( i ),
+                AssertNodeRelationship( d, h ),
+                AssertNodeRelationship( h ) )
+            .Go();
     }
 
     [Fact]
@@ -2769,7 +2716,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         var action = Lambda.Of( () => moveSubtreeTo( sut, sut.Root!, sut.Root! ) );
 
-        action.Should().ThrowExactly<InvalidOperationException>();
+        action.Test( exc => exc.TestType().Exact<InvalidOperationException>() ).Go();
     }
 
     [Fact]
@@ -2783,8 +2730,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     public void MoveSubtreeTo_WithNode_ShouldChangeParentCorrectly_WhenNodeIsRootAndParentIsRootChild()
     {
         MoveSubtreeTo_ShouldThrowInvalidOperationException_WhenNodeIsRootAndParentIsRootChild_Impl(
-            (sut, a, b) =>
-                sut.MoveSubtreeTo( a.Key, b ) );
+            (sut, a, b) => sut.MoveSubtreeTo( a.Key, b ) );
     }
 
     [Fact]
@@ -2798,8 +2744,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     public void MoveSubtreeTo_WithParentAndTargetNode_ShouldChangeParentCorrectly_WhenNodeIsRootAndParentIsRootChild()
     {
         MoveSubtreeTo_ShouldThrowInvalidOperationException_WhenNodeIsRootAndParentIsRootChild_Impl(
-            (sut, a, b) =>
-                sut.MoveSubtreeTo( a, b ) );
+            (sut, a, b) => sut.MoveSubtreeTo( a, b ) );
     }
 
     private void MoveSubtreeTo_ShouldThrowInvalidOperationException_WhenNodeIsRootAndParentIsRootChild_Impl(
@@ -2813,7 +2758,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         var action = Lambda.Of( () => moveSubtreeTo( sut, b, a ) );
 
-        action.Should().ThrowExactly<InvalidOperationException>();
+        action.Test( exc => exc.TestType().Exact<InvalidOperationException>() ).Go();
     }
 
     [Fact]
@@ -2827,8 +2772,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     public void MoveSubtreeTo_WithNode_ShouldThrowInvalidOperationException_WhenNodeIsRootAndParentIsIndirectDescendant()
     {
         MoveSubtreeTo_ShouldThrowInvalidOperationException_WhenNodeIsRootAndParentIsIndirectDescendant_Impl(
-            (sut, a, b) =>
-                sut.MoveSubtreeTo( a.Key, b ) );
+            (sut, a, b) => sut.MoveSubtreeTo( a.Key, b ) );
     }
 
     [Fact]
@@ -2842,8 +2786,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     public void MoveSubtreeTo_WithParentAndTargetNode_ShouldThrowInvalidOperationException_WhenNodeIsRootAndParentIsIndirectDescendant()
     {
         MoveSubtreeTo_ShouldThrowInvalidOperationException_WhenNodeIsRootAndParentIsIndirectDescendant_Impl(
-            (sut, a, b) =>
-                sut.MoveSubtreeTo( a, b ) );
+            (sut, a, b) => sut.MoveSubtreeTo( a, b ) );
     }
 
     private void MoveSubtreeTo_ShouldThrowInvalidOperationException_WhenNodeIsRootAndParentIsIndirectDescendant_Impl(
@@ -2858,7 +2801,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         var action = Lambda.Of( () => moveSubtreeTo( sut, c, a ) );
 
-        action.Should().ThrowExactly<InvalidOperationException>();
+        action.Test( exc => exc.TestType().Exact<InvalidOperationException>() ).Go();
     }
 
     [Fact]
@@ -2870,9 +2813,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     [Fact]
     public void MoveSubtreeTo_WithNode_ShouldThrowInvalidOperationException_WhenParentIsNodesChild()
     {
-        MoveSubtreeTo_ShouldThrowInvalidOperationException_WhenParentIsNodesChild_Impl(
-            (sut, a, b) =>
-                sut.MoveSubtreeTo( a.Key, b ) );
+        MoveSubtreeTo_ShouldThrowInvalidOperationException_WhenParentIsNodesChild_Impl( (sut, a, b) => sut.MoveSubtreeTo( a.Key, b ) );
     }
 
     [Fact]
@@ -2884,9 +2825,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     [Fact]
     public void MoveSubtreeTo_WithParentAndTargetNode_ShouldThrowInvalidOperationException_WhenParentIsNodesChild()
     {
-        MoveSubtreeTo_ShouldThrowInvalidOperationException_WhenParentIsNodesChild_Impl(
-            (sut, a, b) =>
-                sut.MoveSubtreeTo( a, b ) );
+        MoveSubtreeTo_ShouldThrowInvalidOperationException_WhenParentIsNodesChild_Impl( (sut, a, b) => sut.MoveSubtreeTo( a, b ) );
     }
 
     private void MoveSubtreeTo_ShouldThrowInvalidOperationException_WhenParentIsNodesChild_Impl(
@@ -2901,7 +2840,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         var action = Lambda.Of( () => moveSubtreeTo( sut, c, b ) );
 
-        action.Should().ThrowExactly<InvalidOperationException>();
+        action.Test( exc => exc.TestType().Exact<InvalidOperationException>() ).Go();
     }
 
     [Fact]
@@ -2915,8 +2854,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     public void MoveSubtreeTo_WithNode_ShouldThrowInvalidOperationException_WhenParentIsNodesIndirectDescendant()
     {
         MoveSubtreeTo_ShouldThrowInvalidOperationException_WhenParentIsNodesIndirectDescendant_Impl(
-            (sut, a, b) =>
-                sut.MoveSubtreeTo( a.Key, b ) );
+            (sut, a, b) => sut.MoveSubtreeTo( a.Key, b ) );
     }
 
     [Fact]
@@ -2930,8 +2868,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     public void MoveSubtreeTo_WithParentAndTargetNode_ShouldThrowInvalidOperationException_WhenParentIsNodesIndirectDescendant()
     {
         MoveSubtreeTo_ShouldThrowInvalidOperationException_WhenParentIsNodesIndirectDescendant_Impl(
-            (sut, a, b) =>
-                sut.MoveSubtreeTo( a, b ) );
+            (sut, a, b) => sut.MoveSubtreeTo( a, b ) );
     }
 
     private void MoveSubtreeTo_ShouldThrowInvalidOperationException_WhenParentIsNodesIndirectDescendant_Impl(
@@ -2947,7 +2884,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         var action = Lambda.Of( () => moveSubtreeTo( sut, d, b ) );
 
-        action.Should().ThrowExactly<InvalidOperationException>();
+        action.Test( exc => exc.TestType().Exact<InvalidOperationException>() ).Go();
     }
 
     [Fact]
@@ -2959,7 +2896,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         var action = Lambda.Of( () => sut.MoveSubtreeTo( keys[0], keys[1] ) );
 
-        action.Should().ThrowExactly<KeyNotFoundException>();
+        action.Test( exc => exc.TestType().Exact<KeyNotFoundException>() ).Go();
     }
 
     [Fact]
@@ -2971,7 +2908,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         var action = Lambda.Of( () => sut.MoveSubtreeTo( keys[1], keys[0] ) );
 
-        action.Should().ThrowExactly<KeyNotFoundException>();
+        action.Test( exc => exc.TestType().Exact<KeyNotFoundException>() ).Go();
     }
 
     [Fact]
@@ -2985,7 +2922,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         var action = Lambda.Of( () => sut.MoveSubtreeTo( key, node ) );
 
-        action.Should().ThrowExactly<InvalidOperationException>();
+        action.Test( exc => exc.TestType().Exact<InvalidOperationException>() ).Go();
     }
 
     [Fact]
@@ -2998,7 +2935,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         var action = Lambda.Of( () => sut.MoveSubtreeTo( key, node ) );
 
-        action.Should().ThrowExactly<InvalidOperationException>();
+        action.Test( exc => exc.TestType().Exact<InvalidOperationException>() ).Go();
     }
 
     [Fact]
@@ -3010,7 +2947,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         var action = Lambda.Of( () => sut.MoveSubtreeTo( keys[1], sut.Root! ) );
 
-        action.Should().ThrowExactly<KeyNotFoundException>();
+        action.Test( exc => exc.TestType().Exact<KeyNotFoundException>() ).Go();
     }
 
     [Fact]
@@ -3024,7 +2961,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         var action = Lambda.Of( () => sut.MoveSubtreeTo( node, key ) );
 
-        action.Should().ThrowExactly<InvalidOperationException>();
+        action.Test( exc => exc.TestType().Exact<InvalidOperationException>() ).Go();
     }
 
     [Fact]
@@ -3037,7 +2974,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         var action = Lambda.Of( () => sut.MoveSubtreeTo( node, key ) );
 
-        action.Should().ThrowExactly<InvalidOperationException>();
+        action.Test( exc => exc.TestType().Exact<InvalidOperationException>() ).Go();
     }
 
     [Fact]
@@ -3049,7 +2986,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         var action = Lambda.Of( () => sut.MoveSubtreeTo( sut.Root!, keys[1] ) );
 
-        action.Should().ThrowExactly<KeyNotFoundException>();
+        action.Test( exc => exc.TestType().Exact<KeyNotFoundException>() ).Go();
     }
 
     [Fact]
@@ -3063,7 +3000,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         var action = Lambda.Of( () => sut.MoveSubtreeTo( sut.Root!, node ) );
 
-        action.Should().ThrowExactly<InvalidOperationException>();
+        action.Test( exc => exc.TestType().Exact<InvalidOperationException>() ).Go();
     }
 
     [Fact]
@@ -3076,7 +3013,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         var action = Lambda.Of( () => sut.MoveSubtreeTo( sut.Root!, node ) );
 
-        action.Should().ThrowExactly<InvalidOperationException>();
+        action.Test( exc => exc.TestType().Exact<InvalidOperationException>() ).Go();
     }
 
     [Fact]
@@ -3090,7 +3027,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         var action = Lambda.Of( () => sut.MoveSubtreeTo( node, sut.Root! ) );
 
-        action.Should().ThrowExactly<InvalidOperationException>();
+        action.Test( exc => exc.TestType().Exact<InvalidOperationException>() ).Go();
     }
 
     [Fact]
@@ -3103,7 +3040,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         var action = Lambda.Of( () => sut.MoveSubtreeTo( node, sut.Root! ) );
 
-        action.Should().ThrowExactly<InvalidOperationException>();
+        action.Test( exc => exc.TestType().Exact<InvalidOperationException>() ).Go();
     }
 
     [Fact]
@@ -3122,14 +3059,11 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         sut.Clear();
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 0 );
-            sut.Root.Should().BeNull();
-
-            foreach ( var node in nodes )
-                AssertLackOfLinkedTree( node );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 0 ),
+                sut.Root.TestNull(),
+                nodes.TestAll( (node, _) => AssertLackOfLinkedTree( node ) ) )
+            .Go();
     }
 
     [Fact]
@@ -3141,12 +3075,11 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         var result = sut.CreateSubtree( keys[1] );
 
-        using ( new AssertionScope() )
-        {
-            result.Count.Should().Be( 0 );
-            result.Root.Should().BeNull();
-            result.Comparer.Should().Be( sut.Comparer );
-        }
+        Assertion.All(
+                result.Count.TestEquals( 0 ),
+                result.Root.TestNull(),
+                result.Comparer.TestRefEquals( sut.Comparer ) )
+            .Go();
     }
 
     [Fact]
@@ -3168,24 +3101,22 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
         var rd = result.GetNode( d.Key );
         var re = result.GetNode( e.Key );
 
-        using ( new AssertionScope() )
-        {
-            rb.Should().NotBeNull();
-            rc.Should().NotBeNull();
-            rd.Should().NotBeNull();
-            re.Should().NotBeNull();
-            result.Count.Should().Be( 4 );
-            result.Root.Should().Be( rb );
-            result.Comparer.Should().Be( sut.Comparer );
-        }
+        Assertion.All(
+                rb.TestNotNull(),
+                rc.TestNotNull(),
+                rd.TestNotNull(),
+                re.TestNotNull(),
+                result.Count.TestEquals( 4 ),
+                result.Root.TestEquals( rb ),
+                result.Comparer.TestRefEquals( sut.Comparer ) )
+            .Go();
 
-        using ( new AssertionScope() )
-        {
-            rb!.Parent.Should().BeNull();
-            AssertNodeRelationship( rb, rc!, rd! );
-            AssertNodeRelationship( rd!, re! );
-            AssertNodeRelationship( re! );
-        }
+        Assertion.All(
+                rb!.Parent.TestNull(),
+                AssertNodeRelationship( rb, rc!, rd! ),
+                AssertNodeRelationship( rd!, re! ),
+                AssertNodeRelationship( re! ) )
+            .Go();
     }
 
     [Fact]
@@ -3198,7 +3129,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         var result = sut.GetNode( key );
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -3209,7 +3140,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         var result = sut.GetNode( key );
 
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Fact]
@@ -3221,11 +3152,10 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         var result = sut.TryGetValue( key, out var outResult );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            outResult.Should().Be( value );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                outResult.TestEquals( value ) )
+            .Go();
     }
 
     [Fact]
@@ -3236,11 +3166,10 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         var result = sut.TryGetValue( key, out var outResult );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeFalse();
-            outResult.Should().Be( default( TValue ) );
-        }
+        Assertion.All(
+                result.TestFalse(),
+                outResult.TestEquals( default ) )
+            .Go();
     }
 
     [Fact]
@@ -3251,12 +3180,11 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
         var expected = keys.Zip( values, KeyValuePair.Create ).ToList();
         var sut = new TreeDictionary<TKey, TValue>();
 
-        foreach ( var (k, v) in expected )
-            sut.Add( k, v );
+        foreach ( var (k, v) in expected ) sut.Add( k, v );
 
         var result = sut.AsEnumerable();
 
-        result.Should().BeEquivalentTo( expected );
+        result.TestSetEqual( expected ).Go();
     }
 
     [Fact]
@@ -3269,17 +3197,16 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
         sut[key] = value;
         var result = sut.GetNode( key )!;
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 1 );
-            sut[key].Should().Be( value );
-            sut.Root.Should().Be( result );
-            result.Key.Should().Be( key );
-            result.Value.Should().Be( value );
-            result.Parent.Should().BeNull();
-            result.Tree.Should().BeSameAs( sut );
-            AssertNodeRelationship( result );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 1 ),
+                sut[key].TestEquals( value ),
+                sut.Root.TestEquals( result ),
+                result.Key.TestEquals( key ),
+                result.Value.TestEquals( value ),
+                result.Parent.TestNull(),
+                result.Tree.TestRefEquals( sut ),
+                AssertNodeRelationship( result ) )
+            .Go();
     }
 
     [Fact]
@@ -3293,16 +3220,15 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
         sut[keys[1]] = values[1];
         var result = sut.GetNode( keys[1] )!;
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 2 );
-            sut[keys[1]].Should().Be( values[1] );
-            sut.Root.Should().Be( root );
-            result.Key.Should().Be( keys[1] );
-            result.Value.Should().Be( values[1] );
-            result.Tree.Should().BeSameAs( sut );
-            AssertNodeRelationship( root, result );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 2 ),
+                sut[keys[1]].TestEquals( values[1] ),
+                sut.Root.TestEquals( root ),
+                result.Key.TestEquals( keys[1] ),
+                result.Value.TestEquals( values[1] ),
+                result.Tree.TestRefEquals( sut ),
+                AssertNodeRelationship( root, result ) )
+            .Go();
     }
 
     [Fact]
@@ -3315,16 +3241,15 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         sut[key] = values[1];
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 1 );
-            sut[key].Should().Be( values[1] );
-            sut.Root.Should().Be( node );
-            node.Key.Should().Be( key );
-            node.Value.Should().Be( values[1] );
-            node.Tree.Should().BeSameAs( sut );
-            AssertNodeRelationship( node );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 1 ),
+                sut[key].TestEquals( values[1] ),
+                sut.Root.TestEquals( node ),
+                node.Key.TestEquals( key ),
+                node.Value.TestEquals( values[1] ),
+                node.Tree.TestRefEquals( sut ),
+                AssertNodeRelationship( node ) )
+            .Go();
     }
 
     [Fact]
@@ -3334,12 +3259,11 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
         var values = Fixture.CreateManyDistinct<TValue>( count: 3 );
         var sut = new TreeDictionary<TKey, TValue>();
 
-        foreach ( var (k, v) in keys.Zip( values ) )
-            sut.Add( k, v );
+        foreach ( var (k, v) in keys.Zip( values ) ) sut.Add( k, v );
 
         var result = sut.Keys;
 
-        result.Should().BeEquivalentTo( keys );
+        result.TestSetEqual( keys ).Go();
     }
 
     [Fact]
@@ -3349,12 +3273,11 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
         var values = Fixture.CreateManyDistinct<TValue>( count: 3 );
         var sut = new TreeDictionary<TKey, TValue>();
 
-        foreach ( var (k, v) in keys.Zip( values ) )
-            sut.Add( k, v );
+        foreach ( var (k, v) in keys.Zip( values ) ) sut.Add( k, v );
 
         var result = sut.Values;
 
-        result.Should().BeEquivalentTo( values );
+        result.TestSetEqual( values ).Go();
     }
 
     [Fact]
@@ -3362,7 +3285,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
     {
         var sut = new TreeDictionary<TKey, TValue>();
         var result = sut.Nodes;
-        result.Should().BeEmpty();
+        result.TestEmpty().Go();
     }
 
     [Fact]
@@ -3385,7 +3308,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         var result = sut.Nodes;
 
-        result.Should().BeSequentiallyEqualTo( a, b, c, d, e, f, g, h, i, j );
+        result.TestSequence( [ a, b, c, d, e, f, g, h, i, j ] ).Go();
     }
 
     [Fact]
@@ -3399,7 +3322,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         var result = node.ToString();
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -3412,7 +3335,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         var result = (( IReadOnlyTreeDictionary<TKey, TValue> )sut).GetNode( key );
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -3425,7 +3348,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         var result = (( IReadOnlyTreeDictionary<TKey, TValue> )sut).CreateSubtree( key );
 
-        result.AsEnumerable().Should().BeEquivalentTo( expected );
+        result.AsEnumerable().TestSetEqual( expected ).Go();
     }
 
     [Fact]
@@ -3437,7 +3360,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         var result = (( ITreeDictionary<TKey, TValue> )sut).SetRoot( key, value );
 
-        result.Should().Be( sut.Root );
+        result.TestEquals( sut.Root ).Go();
     }
 
     [Fact]
@@ -3450,7 +3373,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         (( ITreeDictionary<TKey, TValue> )sut).SetRoot( node );
 
-        node.Should().Be( sut.Root );
+        node.TestEquals( sut.Root ).Go();
     }
 
     [Fact]
@@ -3461,7 +3384,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         var action = Lambda.Of( () => (( ITreeDictionary<TKey, TValue> )sut).SetRoot( node ) );
 
-        action.Should().ThrowExactly<ArgumentException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentException>() ).Go();
     }
 
     [Fact]
@@ -3473,7 +3396,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         var result = (( ITreeDictionary<TKey, TValue> )sut).Add( keys[1], values[1] );
 
-        result.Should().Be( sut.Root!.Children[0] );
+        result.TestEquals( sut.Root!.Children[0] ).Go();
     }
 
     [Fact]
@@ -3486,7 +3409,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         (( ITreeDictionary<TKey, TValue> )sut).Add( node );
 
-        node.Should().Be( sut.Root!.Children[0] );
+        node.TestEquals( sut.Root!.Children[0] ).Go();
     }
 
     [Fact]
@@ -3497,7 +3420,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         var action = Lambda.Of( () => (( ITreeDictionary<TKey, TValue> )sut).Add( node ) );
 
-        action.Should().ThrowExactly<ArgumentException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentException>() ).Go();
     }
 
     [Fact]
@@ -3509,7 +3432,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         var result = (( ITreeDictionary<TKey, TValue> )sut).AddTo( keys[0], keys[1], values[1] );
 
-        result.Should().Be( sut.Root!.Children[0] );
+        result.TestEquals( sut.Root!.Children[0] ).Go();
     }
 
     [Fact]
@@ -3522,7 +3445,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         (( ITreeDictionary<TKey, TValue> )sut).AddTo( keys[0], node );
 
-        node.Should().Be( sut.Root!.Children[0] );
+        node.TestEquals( sut.Root!.Children[0] ).Go();
     }
 
     [Fact]
@@ -3535,7 +3458,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         var action = Lambda.Of( () => (( ITreeDictionary<TKey, TValue> )sut).AddTo( key, node ) );
 
-        action.Should().ThrowExactly<ArgumentException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentException>() ).Go();
     }
 
     [Fact]
@@ -3547,7 +3470,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         var result = (( ITreeDictionary<TKey, TValue> )sut).AddTo( sut.Root!, keys[1], values[1] );
 
-        result.Should().Be( sut.Root!.Children[0] );
+        result.TestEquals( sut.Root!.Children[0] ).Go();
     }
 
     [Fact]
@@ -3560,7 +3483,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         var action = Lambda.Of( () => (( ITreeDictionary<TKey, TValue> )sut).AddTo( parent, keys[1], values[1] ) );
 
-        action.Should().ThrowExactly<ArgumentException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentException>() ).Go();
     }
 
     [Fact]
@@ -3573,7 +3496,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         (( ITreeDictionary<TKey, TValue> )sut).AddTo( sut.Root!, node );
 
-        node.Should().Be( sut.Root!.Children[0] );
+        node.TestEquals( sut.Root!.Children[0] ).Go();
     }
 
     [Fact]
@@ -3587,7 +3510,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         var action = Lambda.Of( () => (( ITreeDictionary<TKey, TValue> )sut).AddTo( parent, node ) );
 
-        action.Should().ThrowExactly<ArgumentException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentException>() ).Go();
     }
 
     [Fact]
@@ -3600,7 +3523,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         var action = Lambda.Of( () => (( ITreeDictionary<TKey, TValue> )sut).AddTo( sut.Root!, node ) );
 
-        action.Should().ThrowExactly<ArgumentException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentException>() ).Go();
     }
 
     [Fact]
@@ -3613,7 +3536,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         var result = (( ITreeDictionary<TKey, TValue> )sut).AddSubtree( subtree.Root! );
 
-        result.Should().Be( sut.Root );
+        result.TestEquals( sut.Root ).Go();
     }
 
     [Fact]
@@ -3626,7 +3549,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         var result = (( ITreeDictionary<TKey, TValue> )sut).AddSubtreeTo( keys[0], subtree.Root! );
 
-        result.Should().Be( sut.Root!.Children[0] );
+        result.TestEquals( sut.Root!.Children[0] ).Go();
     }
 
     [Fact]
@@ -3639,7 +3562,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         var result = (( ITreeDictionary<TKey, TValue> )sut).AddSubtreeTo( sut.Root!, subtree.Root! );
 
-        result.Should().Be( sut.Root!.Children[0] );
+        result.TestEquals( sut.Root!.Children[0] ).Go();
     }
 
     [Fact]
@@ -3653,7 +3576,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         var action = Lambda.Of( () => (( ITreeDictionary<TKey, TValue> )sut).AddSubtreeTo( parent, subtree.Root! ) );
 
-        action.Should().ThrowExactly<ArgumentException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentException>() ).Go();
     }
 
     [Fact]
@@ -3665,7 +3588,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         (( ITreeDictionary<TKey, TValue> )sut).Remove( sut.Root! );
 
-        sut.Should().BeEmpty();
+        sut.TestEmpty().Go();
     }
 
     [Fact]
@@ -3676,7 +3599,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         var action = Lambda.Of( () => (( ITreeDictionary<TKey, TValue> )sut).Remove( node ) );
 
-        action.Should().ThrowExactly<ArgumentException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentException>() ).Go();
     }
 
     [Fact]
@@ -3688,11 +3611,10 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         var result = (( ITreeDictionary<TKey, TValue> )sut).RemoveSubtree( sut.Root! );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( 1 );
-            sut.Should().BeEmpty();
-        }
+        Assertion.All(
+                result.TestEquals( 1 ),
+                sut.TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -3703,7 +3625,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         var action = Lambda.Of( () => (( ITreeDictionary<TKey, TValue> )sut).RemoveSubtree( node ) );
 
-        action.Should().ThrowExactly<ArgumentException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentException>() ).Go();
     }
 
     [Fact]
@@ -3717,12 +3639,11 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         (( ITreeDictionary<TKey, TValue> )sut).Swap( a, b );
 
-        using ( new AssertionScope() )
-        {
-            b.Parent.Should().BeNull();
-            AssertNodeRelationship( b, a );
-            AssertNodeRelationship( a );
-        }
+        Assertion.All(
+                b.Parent.TestNull(),
+                AssertNodeRelationship( b, a ),
+                AssertNodeRelationship( a ) )
+            .Go();
     }
 
     [Fact]
@@ -3735,7 +3656,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         var action = Lambda.Of( () => (( ITreeDictionary<TKey, TValue> )sut).Swap( node, sut.Root! ) );
 
-        action.Should().ThrowExactly<ArgumentException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentException>() ).Go();
     }
 
     [Fact]
@@ -3748,7 +3669,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         var action = Lambda.Of( () => (( ITreeDictionary<TKey, TValue> )sut).Swap( sut.Root!, node ) );
 
-        action.Should().ThrowExactly<ArgumentException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentException>() ).Go();
     }
 
     [Fact]
@@ -3762,13 +3683,12 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         var result = (( ITreeDictionary<TKey, TValue> )sut).MoveTo( keys[1], keys[0] );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( a );
-            sut.Root.Should().Be( b );
-            AssertNodeRelationship( b, a );
-            AssertNodeRelationship( a );
-        }
+        Assertion.All(
+                result.TestEquals( a ),
+                sut.Root.TestEquals( b ),
+                AssertNodeRelationship( b, a ),
+                AssertNodeRelationship( a ) )
+            .Go();
     }
 
     [Fact]
@@ -3782,12 +3702,11 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         (( ITreeDictionary<TKey, TValue> )sut).MoveTo( keys[1], a );
 
-        using ( new AssertionScope() )
-        {
-            sut.Root.Should().Be( b );
-            AssertNodeRelationship( b, a );
-            AssertNodeRelationship( a );
-        }
+        Assertion.All(
+                sut.Root.TestEquals( b ),
+                AssertNodeRelationship( b, a ),
+                AssertNodeRelationship( a ) )
+            .Go();
     }
 
     [Fact]
@@ -3800,7 +3719,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         var action = Lambda.Of( () => (( ITreeDictionary<TKey, TValue> )sut).MoveTo( key, node ) );
 
-        action.Should().ThrowExactly<ArgumentException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentException>() ).Go();
     }
 
     [Fact]
@@ -3814,13 +3733,12 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         var result = (( ITreeDictionary<TKey, TValue> )sut).MoveTo( b, keys[0] );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( a );
-            sut.Root.Should().Be( b );
-            AssertNodeRelationship( b, a );
-            AssertNodeRelationship( a );
-        }
+        Assertion.All(
+                result.TestEquals( a ),
+                sut.Root.TestEquals( b ),
+                AssertNodeRelationship( b, a ),
+                AssertNodeRelationship( a ) )
+            .Go();
     }
 
     [Fact]
@@ -3833,7 +3751,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         var action = Lambda.Of( () => (( ITreeDictionary<TKey, TValue> )sut).MoveTo( parent, key ) );
 
-        action.Should().ThrowExactly<ArgumentException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentException>() ).Go();
     }
 
     [Fact]
@@ -3847,12 +3765,11 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         (( ITreeDictionary<TKey, TValue> )sut).MoveTo( b, a );
 
-        using ( new AssertionScope() )
-        {
-            sut.Root.Should().Be( b );
-            AssertNodeRelationship( b, a );
-            AssertNodeRelationship( a );
-        }
+        Assertion.All(
+                sut.Root.TestEquals( b ),
+                AssertNodeRelationship( b, a ),
+                AssertNodeRelationship( a ) )
+            .Go();
     }
 
     [Fact]
@@ -3865,7 +3782,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         var action = Lambda.Of( () => (( ITreeDictionary<TKey, TValue> )sut).MoveTo( parent, sut.Root! ) );
 
-        action.Should().ThrowExactly<ArgumentException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentException>() ).Go();
     }
 
     [Fact]
@@ -3878,7 +3795,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         var action = Lambda.Of( () => (( ITreeDictionary<TKey, TValue> )sut).MoveTo( sut.Root!, node ) );
 
-        action.Should().ThrowExactly<ArgumentException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentException>() ).Go();
     }
 
     [Fact]
@@ -3893,14 +3810,13 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         var result = (( ITreeDictionary<TKey, TValue> )sut).MoveSubtreeTo( keys[2], keys[1] );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( b );
-            sut.Root.Should().Be( a );
-            AssertNodeRelationship( a, c );
-            AssertNodeRelationship( c, b );
-            AssertNodeRelationship( b );
-        }
+        Assertion.All(
+                result.TestEquals( b ),
+                sut.Root.TestEquals( a ),
+                AssertNodeRelationship( a, c ),
+                AssertNodeRelationship( c, b ),
+                AssertNodeRelationship( b ) )
+            .Go();
     }
 
     [Fact]
@@ -3915,13 +3831,12 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         (( ITreeDictionary<TKey, TValue> )sut).MoveSubtreeTo( keys[2], b );
 
-        using ( new AssertionScope() )
-        {
-            sut.Root.Should().Be( a );
-            AssertNodeRelationship( a, c );
-            AssertNodeRelationship( c, b );
-            AssertNodeRelationship( b );
-        }
+        Assertion.All(
+                sut.Root.TestEquals( a ),
+                AssertNodeRelationship( a, c ),
+                AssertNodeRelationship( c, b ),
+                AssertNodeRelationship( b ) )
+            .Go();
     }
 
     [Fact]
@@ -3934,7 +3849,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         var action = Lambda.Of( () => (( ITreeDictionary<TKey, TValue> )sut).MoveSubtreeTo( key, node ) );
 
-        action.Should().ThrowExactly<ArgumentException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentException>() ).Go();
     }
 
     [Fact]
@@ -3949,14 +3864,13 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         var result = (( ITreeDictionary<TKey, TValue> )sut).MoveSubtreeTo( c, keys[1] );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( b );
-            sut.Root.Should().Be( a );
-            AssertNodeRelationship( a, c );
-            AssertNodeRelationship( c, b );
-            AssertNodeRelationship( b );
-        }
+        Assertion.All(
+                result.TestEquals( b ),
+                sut.Root.TestEquals( a ),
+                AssertNodeRelationship( a, c ),
+                AssertNodeRelationship( c, b ),
+                AssertNodeRelationship( b ) )
+            .Go();
     }
 
     [Fact]
@@ -3969,7 +3883,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         var action = Lambda.Of( () => (( ITreeDictionary<TKey, TValue> )sut).MoveSubtreeTo( parent, key ) );
 
-        action.Should().ThrowExactly<ArgumentException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentException>() ).Go();
     }
 
     [Fact]
@@ -3984,13 +3898,12 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         (( ITreeDictionary<TKey, TValue> )sut).MoveSubtreeTo( c, b );
 
-        using ( new AssertionScope() )
-        {
-            sut.Root.Should().Be( a );
-            AssertNodeRelationship( a, c );
-            AssertNodeRelationship( c, b );
-            AssertNodeRelationship( b );
-        }
+        Assertion.All(
+                sut.Root.TestEquals( a ),
+                AssertNodeRelationship( a, c ),
+                AssertNodeRelationship( c, b ),
+                AssertNodeRelationship( b ) )
+            .Go();
     }
 
     [Fact]
@@ -4003,7 +3916,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         var action = Lambda.Of( () => (( ITreeDictionary<TKey, TValue> )sut).MoveSubtreeTo( parent, sut.Root! ) );
 
-        action.Should().ThrowExactly<ArgumentException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentException>() ).Go();
     }
 
     [Fact]
@@ -4016,7 +3929,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
 
         var action = Lambda.Of( () => (( ITreeDictionary<TKey, TValue> )sut).MoveSubtreeTo( sut.Root!, node ) );
 
-        action.Should().ThrowExactly<ArgumentException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentException>() ).Go();
     }
 
     protected sealed override IDictionary<TKey, TValue> CreateEmptyDictionary()
@@ -4024,22 +3937,25 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
         return new TreeDictionary<TKey, TValue>();
     }
 
-    private static void AssertNodeRelationship(
+    [Pure]
+    private static Assertion AssertNodeRelationship(
         TreeDictionaryNode<TKey, TValue> parent,
         params TreeDictionaryNode<TKey, TValue>[] children)
     {
-        parent.Children.Select( c => c.Key ).Should().BeSequentiallyEqualTo( children.Select( c => c.Key ) );
-        if ( children.Length == 0 )
-            return;
-
-        children.Select( c => c.Parent!.Key ).Should().OnlyContain( pk => pk.Equals( parent.Key ) );
+        return Assertion.All(
+            "NodeRelationship",
+            parent.Children.Select( c => c.Key ).TestSequence( children.Select( c => c.Key ) ),
+            children.Select( c => c.Parent!.Key ).TestAll( (pk, _) => pk.TestEquals( parent.Key ) ) );
     }
 
-    private static void AssertLackOfLinkedTree(TreeDictionaryNode<TKey, TValue> node)
+    [Pure]
+    private static Assertion AssertLackOfLinkedTree(TreeDictionaryNode<TKey, TValue> node)
     {
-        node.Tree.Should().BeNull();
-        node.Parent.Should().BeNull();
-        node.Children.Should().BeEmpty();
+        return Assertion.All(
+            "LackOfLinkedTree",
+            node.Tree.TestNull(),
+            node.Parent.TestNull(),
+            node.Children.TestEmpty() );
     }
 
     private sealed class ThrowResultInterceptor

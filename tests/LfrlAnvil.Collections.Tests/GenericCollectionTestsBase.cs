@@ -12,7 +12,7 @@ public abstract class GenericCollectionTestsBase<T> : TestsBase
 
         sut.Add( item );
 
-        sut.Count.Should().Be( 1 );
+        sut.Count.TestEquals( 1 ).Go();
     }
 
     [Fact]
@@ -23,7 +23,7 @@ public abstract class GenericCollectionTestsBase<T> : TestsBase
 
         var result = sut.Remove( item );
 
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Fact]
@@ -35,11 +35,7 @@ public abstract class GenericCollectionTestsBase<T> : TestsBase
 
         var result = sut.Remove( item );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            sut.Count.Should().Be( 0 );
-        }
+        Assertion.All( result.TestTrue(), sut.Count.TestEquals( 0 ) ).Go();
     }
 
     [Fact]
@@ -51,7 +47,7 @@ public abstract class GenericCollectionTestsBase<T> : TestsBase
 
         var result = sut.Contains( item );
 
-        result.Should().BeTrue();
+        result.TestTrue().Go();
     }
 
     [Fact]
@@ -62,7 +58,7 @@ public abstract class GenericCollectionTestsBase<T> : TestsBase
 
         var result = sut.Contains( item );
 
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Fact]
@@ -77,7 +73,7 @@ public abstract class GenericCollectionTestsBase<T> : TestsBase
         var array = new T[3];
         sut.CopyTo( array, 0 );
 
-        array.Should().BeEquivalentTo( items );
+        Assertion.All( array.Length.TestEquals( items.Length ), array.TestSetEqual( items ) ).Go();
     }
 
     protected abstract ICollection<T> CreateEmptyCollection();

@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using LfrlAnvil.Collections.Extensions;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Collections.Tests.ExtensionsTests.TreeDictionaryNodeTests;
 
@@ -13,7 +12,7 @@ public abstract class GenericTreeDictionaryNodeExtensionsTests<TKey, TValue> : T
     {
         var sut = new TestNode<TKey, TValue>( Fixture.Create<TKey>(), Fixture.Create<TValue>(), null );
         var result = sut.GetRoot();
-        result.Should().Be( sut );
+        result.TestEquals( sut ).Go();
     }
 
     [Fact]
@@ -24,7 +23,7 @@ public abstract class GenericTreeDictionaryNodeExtensionsTests<TKey, TValue> : T
 
         var result = sut.GetRoot();
 
-        result.Should().Be( parent );
+        result.TestEquals( parent ).Go();
     }
 
     [Fact]
@@ -36,7 +35,7 @@ public abstract class GenericTreeDictionaryNodeExtensionsTests<TKey, TValue> : T
 
         var result = sut.GetRoot();
 
-        result.Should().Be( parent );
+        result.TestEquals( parent ).Go();
     }
 
     [Fact]
@@ -49,7 +48,7 @@ public abstract class GenericTreeDictionaryNodeExtensionsTests<TKey, TValue> : T
 
         var result = d.VisitAncestors();
 
-        result.Should().BeSequentiallyEqualTo( c, b, a );
+        result.TestSequence( [ c, b, a ] ).Go();
     }
 
     [Fact]
@@ -69,7 +68,7 @@ public abstract class GenericTreeDictionaryNodeExtensionsTests<TKey, TValue> : T
 
         var result = a.VisitDescendants();
 
-        result.Should().BeSequentiallyEqualTo( b, c, d, e, f, g, h, i, j, k );
+        result.TestSequence( [ b, c, d, e, f, g, h, i, j, k ] ).Go();
     }
 
     [Fact]
@@ -90,7 +89,7 @@ public abstract class GenericTreeDictionaryNodeExtensionsTests<TKey, TValue> : T
 
         var result = a.VisitDescendants( n => nodesToStopAt.Contains( n ) );
 
-        result.Should().BeSequentiallyEqualTo( b, c, d, g );
+        result.TestSequence( [ b, c, d, g ] ).Go();
     }
 
     [Fact]
@@ -102,7 +101,7 @@ public abstract class GenericTreeDictionaryNodeExtensionsTests<TKey, TValue> : T
 
         var result = sut.GetRoot();
 
-        result.Should().Be( sut );
+        result.TestEquals( sut ).Go();
     }
 
     [Fact]
@@ -117,7 +116,7 @@ public abstract class GenericTreeDictionaryNodeExtensionsTests<TKey, TValue> : T
 
         var result = sut.GetRoot();
 
-        result.Should().Be( parent );
+        result.TestEquals( parent ).Go();
     }
 
     [Fact]
@@ -135,7 +134,7 @@ public abstract class GenericTreeDictionaryNodeExtensionsTests<TKey, TValue> : T
 
         var result = sut.GetRoot();
 
-        result.Should().Be( parent );
+        result.TestEquals( parent ).Go();
     }
 
     [Fact]
@@ -156,7 +155,7 @@ public abstract class GenericTreeDictionaryNodeExtensionsTests<TKey, TValue> : T
 
         var result = d.VisitAncestors();
 
-        result.Should().BeSequentiallyEqualTo( c, b, a );
+        result.TestSequence( [ c, b, a ] ).Go();
     }
 
     [Fact]
@@ -198,7 +197,7 @@ public abstract class GenericTreeDictionaryNodeExtensionsTests<TKey, TValue> : T
 
         var result = a.VisitDescendants();
 
-        result.Should().BeSequentiallyEqualTo( b, c, d, e, f, g, h, i, j, k );
+        result.TestSequence( [ b, c, d, e, f, g, h, i, j, k ] ).Go();
     }
 
     [Fact]
@@ -241,7 +240,7 @@ public abstract class GenericTreeDictionaryNodeExtensionsTests<TKey, TValue> : T
 
         var result = a.VisitDescendants( n => nodesToStopAt.Contains( n ) );
 
-        result.Should().BeSequentiallyEqualTo( b, c, d, g );
+        result.TestSequence( [ b, c, d, g ] ).Go();
     }
 
     [Fact]
@@ -250,13 +249,12 @@ public abstract class GenericTreeDictionaryNodeExtensionsTests<TKey, TValue> : T
         var sut = new TreeDictionaryNode<TKey, TValue>( Fixture.Create<TKey>(), Fixture.Create<TValue>() );
         var result = sut.CreateTree();
 
-        using ( new AssertionScope() )
-        {
-            result.Count.Should().Be( 1 );
-            result.Root!.Key.Should().Be( sut.Key );
-            result.Comparer.Should().Be( EqualityComparer<TKey>.Default );
-            result[sut.Key].Should().Be( sut.Value );
-        }
+        Assertion.All(
+                result.Count.TestEquals( 1 ),
+                result.Root!.Key.TestEquals( sut.Key ),
+                result.Comparer.TestEquals( EqualityComparer<TKey>.Default ),
+                result[sut.Key].TestEquals( sut.Value ) )
+            .Go();
     }
 
     [Fact]
@@ -288,15 +286,14 @@ public abstract class GenericTreeDictionaryNodeExtensionsTests<TKey, TValue> : T
 
         var result = b.CreateTree();
 
-        using ( new AssertionScope() )
-        {
-            result.Count.Should().Be( 5 );
-            result.Root!.Key.Should().Be( b.Key );
-            result.Comparer.Should().Be( comparer );
-            result.GetNode( b.Key )!.Children.Select( n => n.Key ).Should().BeSequentiallyEqualTo( d.Key, e.Key );
-            result.GetNode( d.Key )!.Children.Select( n => n.Key ).Should().BeSequentiallyEqualTo( f.Key );
-            result.GetNode( e.Key )!.Children.Select( n => n.Key ).Should().BeSequentiallyEqualTo( g.Key );
-        }
+        Assertion.All(
+                result.Count.TestEquals( 5 ),
+                result.Root!.Key.TestEquals( b.Key ),
+                result.Comparer.TestEquals( comparer ),
+                result.GetNode( b.Key )!.Children.Select( n => n.Key ).TestSequence( [ d.Key, e.Key ] ),
+                result.GetNode( d.Key )!.Children.Select( n => n.Key ).TestSequence( [ f.Key ] ),
+                result.GetNode( e.Key )!.Children.Select( n => n.Key ).TestSequence( [ g.Key ] ) )
+            .Go();
     }
 }
 

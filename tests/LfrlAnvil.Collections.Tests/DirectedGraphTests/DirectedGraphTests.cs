@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using LfrlAnvil.Functional;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Collections.Tests.DirectedGraphTests;
 
@@ -10,13 +10,12 @@ public class DirectedGraphTests : TestsBase
     public void Ctor_ShouldCreateGraphWithoutAnyNodes()
     {
         var sut = new DirectedGraph<string, int, long>();
-        using ( new AssertionScope() )
-        {
-            sut.Nodes.Should().BeEmpty();
-            sut.Edges.Should().BeEmpty();
-            sut.KeyComparer.Should().BeSameAs( EqualityComparer<string>.Default );
-            (( IDirectedGraph<string, int, long> )sut).Nodes.Should().BeSameAs( sut.Nodes );
-        }
+        Assertion.All(
+                sut.Nodes.TestEmpty(),
+                sut.Edges.TestEmpty(),
+                sut.KeyComparer.TestRefEquals( EqualityComparer<string>.Default ),
+                (( IDirectedGraph<string, int, long> )sut).Nodes.TestRefEquals( sut.Nodes ) )
+            .Go();
     }
 
     [Fact]
@@ -25,13 +24,12 @@ public class DirectedGraphTests : TestsBase
         var comparer = EqualityComparerFactory<string>.Create( (a, b) => a == b );
         var sut = new DirectedGraph<string, int, long>( comparer );
 
-        using ( new AssertionScope() )
-        {
-            sut.Nodes.Should().BeEmpty();
-            sut.Edges.Should().BeEmpty();
-            sut.KeyComparer.Should().BeSameAs( comparer );
-            (( IDirectedGraph<string, int, long> )sut).Nodes.Should().BeSameAs( sut.Nodes );
-        }
+        Assertion.All(
+                sut.Nodes.TestEmpty(),
+                sut.Edges.TestEmpty(),
+                sut.KeyComparer.TestRefEquals( comparer ),
+                (( IDirectedGraph<string, int, long> )sut).Nodes.TestRefEquals( sut.Nodes ) )
+            .Go();
     }
 
     [Fact]
@@ -43,14 +41,13 @@ public class DirectedGraphTests : TestsBase
 
         var result = sut.AddNode( key, value );
 
-        using ( new AssertionScope() )
-        {
-            result.Key.Should().Be( key );
-            result.Value.Should().Be( value );
-            result.Graph.Should().BeSameAs( sut );
-            result.Edges.Should().BeEmpty();
-            sut.Nodes.Should().BeEquivalentTo( result );
-        }
+        Assertion.All(
+                result.Key.TestEquals( key ),
+                result.Value.TestEquals( value ),
+                result.Graph.TestRefEquals( sut ),
+                result.Edges.TestEmpty(),
+                sut.Nodes.TestSequence( [ result ] ) )
+            .Go();
     }
 
     [Fact]
@@ -63,15 +60,14 @@ public class DirectedGraphTests : TestsBase
 
         var result = sut.AddNode( key, value );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().NotBeSameAs( first );
-            result.Key.Should().Be( key );
-            result.Value.Should().Be( value );
-            result.Graph.Should().BeSameAs( sut );
-            result.Edges.Should().BeEmpty();
-            sut.Nodes.Should().BeEquivalentTo( first, result );
-        }
+        Assertion.All(
+                result.TestNotRefEquals( first ),
+                result.Key.TestEquals( key ),
+                result.Value.TestEquals( value ),
+                result.Graph.TestRefEquals( sut ),
+                result.Edges.TestEmpty(),
+                sut.Nodes.TestSetEqual( [ first, result ] ) )
+            .Go();
     }
 
     [Fact]
@@ -84,7 +80,7 @@ public class DirectedGraphTests : TestsBase
 
         var action = Lambda.Of( () => sut.AddNode( key, otherValue ) );
 
-        action.Should().ThrowExactly<ArgumentException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentException>() ).Go();
     }
 
     [Fact]
@@ -96,16 +92,19 @@ public class DirectedGraphTests : TestsBase
 
         var result = sut.TryAddNode( key, value, out var outResult );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            outResult.Should().NotBeNull();
-            outResult?.Key.Should().Be( key );
-            outResult?.Value.Should().Be( value );
-            outResult?.Graph.Should().BeSameAs( sut );
-            outResult?.Edges.Should().BeEmpty();
-            sut.Nodes.Should().BeEquivalentTo( outResult );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                outResult.TestNotNull(),
+                outResult.TestIf()
+                    .NotNull(
+                        r => Assertion.All(
+                            "outResult",
+                            r.Key.TestEquals( key ),
+                            r.Value.TestEquals( value ),
+                            r.Graph.TestRefEquals( sut ),
+                            r.Edges.TestEmpty() ) ),
+                sut.Nodes.TestSequence( [ outResult ] ) )
+            .Go();
     }
 
     [Fact]
@@ -118,17 +117,20 @@ public class DirectedGraphTests : TestsBase
 
         var result = sut.TryAddNode( key, value, out var outResult );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            outResult.Should().NotBeNull();
-            outResult.Should().NotBeSameAs( first );
-            outResult?.Key.Should().Be( key );
-            outResult?.Value.Should().Be( value );
-            outResult?.Graph.Should().BeSameAs( sut );
-            outResult?.Edges.Should().BeEmpty();
-            sut.Nodes.Should().BeEquivalentTo( first, outResult );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                outResult.TestNotNull(),
+                outResult.TestNotRefEquals( first ),
+                outResult.TestIf()
+                    .NotNull(
+                        r => Assertion.All(
+                            "outResult",
+                            r.Key.TestEquals( key ),
+                            r.Value.TestEquals( value ),
+                            r.Graph.TestRefEquals( sut ),
+                            r.Edges.TestEmpty() ) ),
+                sut.Nodes.TestSetEqual( [ first, outResult ] ) )
+            .Go();
     }
 
     [Fact]
@@ -141,13 +143,12 @@ public class DirectedGraphTests : TestsBase
 
         var result = sut.TryAddNode( key, otherValue, out var outResult );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeFalse();
-            outResult.Should().BeNull();
-            first.Value.Should().Be( value );
-            sut.Nodes.Should().BeEquivalentTo( first );
-        }
+        Assertion.All(
+                result.TestFalse(),
+                outResult.TestNull(),
+                first.Value.TestEquals( value ),
+                sut.Nodes.TestSequence( [ first ] ) )
+            .Go();
     }
 
     [Fact]
@@ -159,15 +160,14 @@ public class DirectedGraphTests : TestsBase
 
         var result = sut.GetOrAddNode( key, value );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().NotBeNull();
-            result.Key.Should().Be( key );
-            result.Value.Should().Be( value );
-            result.Graph.Should().BeSameAs( sut );
-            result.Edges.Should().BeEmpty();
-            sut.Nodes.Should().BeEquivalentTo( result );
-        }
+        Assertion.All(
+                result.TestNotNull(),
+                result.Key.TestEquals( key ),
+                result.Value.TestEquals( value ),
+                result.Graph.TestRefEquals( sut ),
+                result.Edges.TestEmpty(),
+                sut.Nodes.TestSequence( [ result ] ) )
+            .Go();
     }
 
     [Fact]
@@ -180,12 +180,11 @@ public class DirectedGraphTests : TestsBase
 
         var result = sut.GetOrAddNode( key, otherValue );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( first );
-            result.Value.Should().Be( value );
-            sut.Nodes.Should().BeEquivalentTo( first );
-        }
+        Assertion.All(
+                result.TestRefEquals( first ),
+                result.Value.TestEquals( value ),
+                sut.Nodes.TestSequence( [ first ] ) )
+            .Go();
     }
 
     [Fact]
@@ -196,7 +195,7 @@ public class DirectedGraphTests : TestsBase
 
         var result = sut.ContainsNode( key );
 
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Fact]
@@ -208,7 +207,7 @@ public class DirectedGraphTests : TestsBase
 
         var result = sut.ContainsNode( key );
 
-        result.Should().BeTrue();
+        result.TestTrue().Go();
     }
 
     [Fact]
@@ -222,7 +221,7 @@ public class DirectedGraphTests : TestsBase
 
         var result = sut.Contains( node );
 
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Fact]
@@ -234,7 +233,7 @@ public class DirectedGraphTests : TestsBase
 
         var result = sut.Contains( node );
 
-        result.Should().BeTrue();
+        result.TestTrue().Go();
     }
 
     [Fact]
@@ -248,7 +247,7 @@ public class DirectedGraphTests : TestsBase
 
         var result = sut.Contains( node );
 
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Fact]
@@ -259,7 +258,7 @@ public class DirectedGraphTests : TestsBase
 
         var result = sut.Contains( node );
 
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Fact]
@@ -271,7 +270,7 @@ public class DirectedGraphTests : TestsBase
 
         var result = sut.Contains( node );
 
-        result.Should().BeTrue();
+        result.TestTrue().Go();
     }
 
     [Fact]
@@ -282,7 +281,7 @@ public class DirectedGraphTests : TestsBase
 
         var action = Lambda.Of( () => sut.GetNode( key ) );
 
-        action.Should().ThrowExactly<KeyNotFoundException>();
+        action.Test( exc => exc.TestType().Exact<KeyNotFoundException>() ).Go();
     }
 
     [Fact]
@@ -294,7 +293,7 @@ public class DirectedGraphTests : TestsBase
 
         var result = sut.GetNode( key );
 
-        result.Should().BeSameAs( node );
+        result.TestRefEquals( node ).Go();
     }
 
     [Fact]
@@ -305,11 +304,10 @@ public class DirectedGraphTests : TestsBase
 
         var result = sut.TryGetNode( key, out var outResult );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeFalse();
-            outResult.Should().BeNull();
-        }
+        Assertion.All(
+                result.TestFalse(),
+                outResult.TestNull() )
+            .Go();
     }
 
     [Fact]
@@ -321,11 +319,10 @@ public class DirectedGraphTests : TestsBase
 
         var result = sut.TryGetNode( key, out var outResult );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            outResult.Should().BeSameAs( node );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                outResult.TestRefEquals( node ) )
+            .Go();
     }
 
     [Theory]
@@ -340,14 +337,13 @@ public class DirectedGraphTests : TestsBase
 
         var result = sut.AddEdge( a.Key, a.Key, value, direction );
 
-        using ( new AssertionScope() )
-        {
-            result.Source.Should().BeSameAs( a );
-            result.Target.Should().BeSameAs( a );
-            result.Value.Should().Be( value );
-            result.Direction.Should().Be( GraphDirection.Both );
-            a.Edges.Should().BeEquivalentTo( result );
-        }
+        Assertion.All(
+                result.Source.TestRefEquals( a ),
+                result.Target.TestRefEquals( a ),
+                result.Value.TestEquals( value ),
+                result.Direction.TestEquals( GraphDirection.Both ),
+                a.Edges.TestSequence( [ result ] ) )
+            .Go();
     }
 
     [Theory]
@@ -363,15 +359,14 @@ public class DirectedGraphTests : TestsBase
 
         var result = sut.AddEdge( a.Key, b.Key, value, direction );
 
-        using ( new AssertionScope() )
-        {
-            result.Source.Should().BeSameAs( a );
-            result.Target.Should().BeSameAs( b );
-            result.Value.Should().Be( value );
-            result.Direction.Should().Be( direction );
-            a.Edges.Should().BeEquivalentTo( result );
-            b.Edges.Should().BeEquivalentTo( result );
-        }
+        Assertion.All(
+                result.Source.TestRefEquals( a ),
+                result.Target.TestRefEquals( b ),
+                result.Value.TestEquals( value ),
+                result.Direction.TestEquals( direction ),
+                a.Edges.TestSequence( [ result ] ),
+                b.Edges.TestSequence( [ result ] ) )
+            .Go();
     }
 
     [Fact]
@@ -382,7 +377,7 @@ public class DirectedGraphTests : TestsBase
 
         var action = Lambda.Of( () => sut.AddEdge( a.Key, a.Key, Fixture.Create<long>(), GraphDirection.None ) );
 
-        action.Should().ThrowExactly<ArgumentException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentException>() ).Go();
     }
 
     [Fact]
@@ -393,7 +388,7 @@ public class DirectedGraphTests : TestsBase
 
         var action = Lambda.Of( () => sut.AddEdge( "b", a.Key, Fixture.Create<long>() ) );
 
-        action.Should().ThrowExactly<KeyNotFoundException>();
+        action.Test( exc => exc.TestType().Exact<KeyNotFoundException>() ).Go();
     }
 
     [Fact]
@@ -404,7 +399,7 @@ public class DirectedGraphTests : TestsBase
 
         var action = Lambda.Of( () => sut.AddEdge( a.Key, "b", Fixture.Create<long>() ) );
 
-        action.Should().ThrowExactly<KeyNotFoundException>();
+        action.Test( exc => exc.TestType().Exact<KeyNotFoundException>() ).Go();
     }
 
     [Theory]
@@ -419,16 +414,19 @@ public class DirectedGraphTests : TestsBase
 
         var result = sut.TryAddEdge( a.Key, a.Key, value, direction, out var outResult );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            outResult.Should().NotBeNull();
-            outResult?.Source.Should().BeSameAs( a );
-            outResult?.Source.Should().BeSameAs( a );
-            outResult?.Value.Should().Be( value );
-            outResult?.Direction.Should().Be( GraphDirection.Both );
-            a.Edges.Should().BeEquivalentTo( outResult );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                outResult.TestNotNull(),
+                outResult.TestIf()
+                    .NotNull(
+                        r => Assertion.All(
+                            "outResult",
+                            r.Source.TestRefEquals( a ),
+                            r.Source.TestRefEquals( a ),
+                            r.Value.TestEquals( value ),
+                            r.Direction.TestEquals( GraphDirection.Both ) ) ),
+                a.Edges.TestSequence( [ outResult ] ) )
+            .Go();
     }
 
     [Theory]
@@ -444,17 +442,20 @@ public class DirectedGraphTests : TestsBase
 
         var result = sut.TryAddEdge( a.Key, b.Key, value, direction, out var outResult );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            outResult.Should().NotBeNull();
-            outResult?.Source.Should().BeSameAs( a );
-            outResult?.Target.Should().BeSameAs( b );
-            outResult?.Value.Should().Be( value );
-            outResult?.Direction.Should().Be( direction );
-            a.Edges.Should().BeEquivalentTo( outResult );
-            b.Edges.Should().BeEquivalentTo( outResult );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                outResult.TestNotNull(),
+                outResult.TestIf()
+                    .NotNull(
+                        r => Assertion.All(
+                            "outResult",
+                            r.Source.TestRefEquals( a ),
+                            r.Target.TestRefEquals( b ),
+                            r.Value.TestEquals( value ),
+                            r.Direction.TestEquals( direction ) ) ),
+                a.Edges.TestSequence( [ outResult ] ),
+                b.Edges.TestSequence( [ outResult ] ) )
+            .Go();
     }
 
     [Fact]
@@ -465,7 +466,7 @@ public class DirectedGraphTests : TestsBase
 
         var action = Lambda.Of( () => sut.TryAddEdge( a.Key, a.Key, Fixture.Create<long>(), GraphDirection.None, out _ ) );
 
-        action.Should().ThrowExactly<ArgumentException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentException>() ).Go();
     }
 
     [Fact]
@@ -476,11 +477,10 @@ public class DirectedGraphTests : TestsBase
 
         var result = sut.TryAddEdge( "b", a.Key, Fixture.Create<long>(), GraphDirection.Both, out var outResult );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeFalse();
-            outResult.Should().BeNull();
-        }
+        Assertion.All(
+                result.TestFalse(),
+                outResult.TestNull() )
+            .Go();
     }
 
     [Fact]
@@ -491,11 +491,10 @@ public class DirectedGraphTests : TestsBase
 
         var result = sut.TryAddEdge( a.Key, "b", Fixture.Create<long>(), GraphDirection.Both, out var outResult );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeFalse();
-            outResult.Should().BeNull();
-        }
+        Assertion.All(
+                result.TestFalse(),
+                outResult.TestNull() )
+            .Go();
     }
 
     [Fact]
@@ -507,7 +506,7 @@ public class DirectedGraphTests : TestsBase
 
         var result = sut.ContainsEdge( "a", key );
 
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Fact]
@@ -519,7 +518,7 @@ public class DirectedGraphTests : TestsBase
 
         var result = sut.ContainsEdge( key, "a" );
 
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Fact]
@@ -532,7 +531,7 @@ public class DirectedGraphTests : TestsBase
 
         var result = sut.ContainsEdge( key1, key2 );
 
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Fact]
@@ -546,7 +545,7 @@ public class DirectedGraphTests : TestsBase
 
         var result = sut.ContainsEdge( key1, key2 );
 
-        result.Should().BeTrue();
+        result.TestTrue().Go();
     }
 
     [Fact]
@@ -560,7 +559,7 @@ public class DirectedGraphTests : TestsBase
 
         var result = sut.ContainsEdge( key2, key1 );
 
-        result.Should().BeTrue();
+        result.TestTrue().Go();
     }
 
     [Fact]
@@ -578,7 +577,7 @@ public class DirectedGraphTests : TestsBase
 
         var result = sut.Contains( edge );
 
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Fact]
@@ -592,7 +591,7 @@ public class DirectedGraphTests : TestsBase
 
         var result = sut.Contains( edge );
 
-        result.Should().BeTrue();
+        result.TestTrue().Go();
     }
 
     [Fact]
@@ -607,7 +606,7 @@ public class DirectedGraphTests : TestsBase
 
         var result = sut.Contains( edge );
 
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Fact]
@@ -625,7 +624,7 @@ public class DirectedGraphTests : TestsBase
 
         var result = sut.Contains( edge );
 
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Fact]
@@ -636,7 +635,7 @@ public class DirectedGraphTests : TestsBase
 
         var result = sut.Contains( edge );
 
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Fact]
@@ -650,7 +649,7 @@ public class DirectedGraphTests : TestsBase
 
         var result = sut.Contains( edge );
 
-        result.Should().BeTrue();
+        result.TestTrue().Go();
     }
 
     [Fact]
@@ -665,7 +664,7 @@ public class DirectedGraphTests : TestsBase
 
         var result = sut.Contains( edge );
 
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Fact]
@@ -677,7 +676,7 @@ public class DirectedGraphTests : TestsBase
 
         var action = Lambda.Of( () => sut.GetEdge( key, "a" ) );
 
-        action.Should().ThrowExactly<KeyNotFoundException>();
+        action.Test( exc => exc.TestType().Exact<KeyNotFoundException>() ).Go();
     }
 
     [Fact]
@@ -689,7 +688,7 @@ public class DirectedGraphTests : TestsBase
 
         var action = Lambda.Of( () => sut.GetEdge( "a", key ) );
 
-        action.Should().ThrowExactly<KeyNotFoundException>();
+        action.Test( exc => exc.TestType().Exact<KeyNotFoundException>() ).Go();
     }
 
     [Fact]
@@ -702,7 +701,7 @@ public class DirectedGraphTests : TestsBase
 
         var action = Lambda.Of( () => sut.GetEdge( key1, key2 ) );
 
-        action.Should().ThrowExactly<KeyNotFoundException>();
+        action.Test( exc => exc.TestType().Exact<KeyNotFoundException>() ).Go();
     }
 
     [Fact]
@@ -716,7 +715,7 @@ public class DirectedGraphTests : TestsBase
 
         var result = sut.GetEdge( key1, key2 );
 
-        result.Should().BeSameAs( edge );
+        result.TestRefEquals( edge ).Go();
     }
 
     [Fact]
@@ -730,7 +729,7 @@ public class DirectedGraphTests : TestsBase
 
         var result = sut.GetEdge( key2, key1 );
 
-        result.Should().BeSameAs( edge );
+        result.TestRefEquals( edge ).Go();
     }
 
     [Fact]
@@ -742,11 +741,10 @@ public class DirectedGraphTests : TestsBase
 
         var result = sut.TryGetEdge( key, "a", out var outResult );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeFalse();
-            outResult.Should().BeNull();
-        }
+        Assertion.All(
+                result.TestFalse(),
+                outResult.TestNull() )
+            .Go();
     }
 
     [Fact]
@@ -758,11 +756,10 @@ public class DirectedGraphTests : TestsBase
 
         var result = sut.TryGetEdge( "a", key, out var outResult );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeFalse();
-            outResult.Should().BeNull();
-        }
+        Assertion.All(
+                result.TestFalse(),
+                outResult.TestNull() )
+            .Go();
     }
 
     [Fact]
@@ -775,11 +772,10 @@ public class DirectedGraphTests : TestsBase
 
         var result = sut.TryGetEdge( key1, key2, out var outResult );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeFalse();
-            outResult.Should().BeNull();
-        }
+        Assertion.All(
+                result.TestFalse(),
+                outResult.TestNull() )
+            .Go();
     }
 
     [Fact]
@@ -793,11 +789,10 @@ public class DirectedGraphTests : TestsBase
 
         var result = sut.TryGetEdge( key1, key2, out var outResult );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            outResult.Should().BeSameAs( edge );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                outResult.TestRefEquals( edge ) )
+            .Go();
     }
 
     [Fact]
@@ -811,11 +806,10 @@ public class DirectedGraphTests : TestsBase
 
         var result = sut.TryGetEdge( key2, key1, out var outResult );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            outResult.Should().BeSameAs( edge );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                outResult.TestRefEquals( edge ) )
+            .Go();
     }
 
     [Fact]
@@ -826,11 +820,10 @@ public class DirectedGraphTests : TestsBase
 
         var result = sut.RemoveNode( "b" );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeFalse();
-            sut.Nodes.Should().BeEquivalentTo( node );
-        }
+        Assertion.All(
+                result.TestFalse(),
+                sut.Nodes.TestSequence( [ node ] ) )
+            .Go();
     }
 
     [Fact]
@@ -847,18 +840,17 @@ public class DirectedGraphTests : TestsBase
 
         var result = sut.RemoveNode( a.Key );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            sut.Nodes.Should().BeEquivalentTo( b, c );
-            a.Graph.Should().BeNull();
-            a.Edges.Should().BeEmpty();
-            b.Edges.Should().BeEquivalentTo( bc );
-            c.Edges.Should().BeEquivalentTo( bc );
-            aa.Direction.Should().Be( GraphDirection.None );
-            ab.Direction.Should().Be( GraphDirection.None );
-            ca.Direction.Should().Be( GraphDirection.None );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                sut.Nodes.TestSetEqual( [ b, c ] ),
+                a.Graph.TestNull(),
+                a.Edges.TestEmpty(),
+                b.Edges.TestSequence( [ bc ] ),
+                c.Edges.TestSequence( [ bc ] ),
+                aa.Direction.TestEquals( GraphDirection.None ),
+                ab.Direction.TestEquals( GraphDirection.None ),
+                ca.Direction.TestEquals( GraphDirection.None ) )
+            .Go();
     }
 
     [Fact]
@@ -869,12 +861,11 @@ public class DirectedGraphTests : TestsBase
 
         var result = sut.RemoveNode( "b", out var outResult );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeFalse();
-            outResult.Should().Be( default );
-            sut.Nodes.Should().BeEquivalentTo( node );
-        }
+        Assertion.All(
+                result.TestFalse(),
+                outResult.TestEquals( default ),
+                sut.Nodes.TestSequence( [ node ] ) )
+            .Go();
     }
 
     [Fact]
@@ -892,19 +883,18 @@ public class DirectedGraphTests : TestsBase
 
         var result = sut.RemoveNode( a.Key, out var outResult );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            outResult.Should().Be( values[0] );
-            sut.Nodes.Should().BeEquivalentTo( b, c );
-            a.Graph.Should().BeNull();
-            a.Edges.Should().BeEmpty();
-            b.Edges.Should().BeEquivalentTo( bc );
-            c.Edges.Should().BeEquivalentTo( bc );
-            aa.Direction.Should().Be( GraphDirection.None );
-            ab.Direction.Should().Be( GraphDirection.None );
-            ca.Direction.Should().Be( GraphDirection.None );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                outResult.TestEquals( values[0] ),
+                sut.Nodes.TestSetEqual( [ b, c ] ),
+                a.Graph.TestNull(),
+                a.Edges.TestEmpty(),
+                b.Edges.TestSequence( [ bc ] ),
+                c.Edges.TestSequence( [ bc ] ),
+                aa.Direction.TestEquals( GraphDirection.None ),
+                ab.Direction.TestEquals( GraphDirection.None ),
+                ca.Direction.TestEquals( GraphDirection.None ) )
+            .Go();
     }
 
     [Fact]
@@ -917,11 +907,10 @@ public class DirectedGraphTests : TestsBase
 
         var result = sut.Remove( node );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeFalse();
-            sut.Nodes.Should().HaveCount( 1 );
-        }
+        Assertion.All(
+                result.TestFalse(),
+                sut.Nodes.Count.TestEquals( 1 ) )
+            .Go();
     }
 
     [Fact]
@@ -933,7 +922,7 @@ public class DirectedGraphTests : TestsBase
 
         var result = sut.Remove( node );
 
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Fact]
@@ -951,18 +940,17 @@ public class DirectedGraphTests : TestsBase
 
         var result = sut.Remove( a );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            sut.Nodes.Should().BeEquivalentTo( b, c );
-            a.Graph.Should().BeNull();
-            a.Edges.Should().BeEmpty();
-            b.Edges.Should().BeEquivalentTo( bc );
-            c.Edges.Should().BeEquivalentTo( bc );
-            aa.Direction.Should().Be( GraphDirection.None );
-            ab.Direction.Should().Be( GraphDirection.None );
-            ca.Direction.Should().Be( GraphDirection.None );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                sut.Nodes.TestSetEqual( [ b, c ] ),
+                a.Graph.TestNull(),
+                a.Edges.TestEmpty(),
+                b.Edges.TestSequence( [ bc ] ),
+                c.Edges.TestSequence( [ bc ] ),
+                aa.Direction.TestEquals( GraphDirection.None ),
+                ab.Direction.TestEquals( GraphDirection.None ),
+                ca.Direction.TestEquals( GraphDirection.None ) )
+            .Go();
     }
 
     [Fact]
@@ -973,7 +961,7 @@ public class DirectedGraphTests : TestsBase
 
         var result = sut.Remove( node );
 
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Fact]
@@ -986,11 +974,10 @@ public class DirectedGraphTests : TestsBase
 
         var result = sut.Remove( node );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeFalse();
-            sut.Nodes.Should().HaveCount( 1 );
-        }
+        Assertion.All(
+                result.TestFalse(),
+                sut.Nodes.Count.TestEquals( 1 ) )
+            .Go();
     }
 
     [Fact]
@@ -1002,7 +989,7 @@ public class DirectedGraphTests : TestsBase
 
         var result = sut.Remove( node );
 
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Fact]
@@ -1020,18 +1007,17 @@ public class DirectedGraphTests : TestsBase
 
         var result = sut.Remove( a );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            sut.Nodes.Should().BeEquivalentTo( b, c );
-            a.Graph.Should().BeNull();
-            a.Edges.Should().BeEmpty();
-            b.Edges.Should().BeEquivalentTo( bc );
-            c.Edges.Should().BeEquivalentTo( bc );
-            aa.Direction.Should().Be( GraphDirection.None );
-            ab.Direction.Should().Be( GraphDirection.None );
-            ca.Direction.Should().Be( GraphDirection.None );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                sut.Nodes.TestSetEqual( [ b, c ] ),
+                a.Graph.TestNull(),
+                a.Edges.TestEmpty(),
+                b.Edges.TestSequence( [ bc ] ),
+                c.Edges.TestSequence( [ bc ] ),
+                aa.Direction.TestEquals( GraphDirection.None ),
+                ab.Direction.TestEquals( GraphDirection.None ),
+                ca.Direction.TestEquals( GraphDirection.None ) )
+            .Go();
     }
 
     [Fact]
@@ -1043,7 +1029,7 @@ public class DirectedGraphTests : TestsBase
 
         var result = sut.RemoveEdge( key, "a" );
 
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Fact]
@@ -1055,7 +1041,7 @@ public class DirectedGraphTests : TestsBase
 
         var result = sut.RemoveEdge( "a", key );
 
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Fact]
@@ -1068,7 +1054,7 @@ public class DirectedGraphTests : TestsBase
 
         var result = sut.RemoveEdge( key1, key2 );
 
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Fact]
@@ -1081,12 +1067,11 @@ public class DirectedGraphTests : TestsBase
 
         var result = sut.RemoveEdge( key, key );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            node.Edges.Should().BeEmpty();
-            edge.Direction.Should().Be( GraphDirection.None );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                node.Edges.TestEmpty(),
+                edge.Direction.TestEquals( GraphDirection.None ) )
+            .Go();
     }
 
     [Fact]
@@ -1100,13 +1085,12 @@ public class DirectedGraphTests : TestsBase
 
         var result = sut.RemoveEdge( key1, key2 );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            source.Edges.Should().BeEmpty();
-            target.Edges.Should().BeEmpty();
-            edge.Direction.Should().Be( GraphDirection.None );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                source.Edges.TestEmpty(),
+                target.Edges.TestEmpty(),
+                edge.Direction.TestEquals( GraphDirection.None ) )
+            .Go();
     }
 
     [Fact]
@@ -1120,13 +1104,12 @@ public class DirectedGraphTests : TestsBase
 
         var result = sut.RemoveEdge( key2, key1 );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            source.Edges.Should().BeEmpty();
-            target.Edges.Should().BeEmpty();
-            edge.Direction.Should().Be( GraphDirection.None );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                source.Edges.TestEmpty(),
+                target.Edges.TestEmpty(),
+                edge.Direction.TestEquals( GraphDirection.None ) )
+            .Go();
     }
 
     [Fact]
@@ -1138,11 +1121,10 @@ public class DirectedGraphTests : TestsBase
 
         var result = sut.RemoveEdge( key, "a", out var outResult );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeFalse();
-            outResult.Should().Be( default );
-        }
+        Assertion.All(
+                result.TestFalse(),
+                outResult.TestEquals( default ) )
+            .Go();
     }
 
     [Fact]
@@ -1154,11 +1136,10 @@ public class DirectedGraphTests : TestsBase
 
         var result = sut.RemoveEdge( "a", key, out var outResult );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeFalse();
-            outResult.Should().Be( default );
-        }
+        Assertion.All(
+                result.TestFalse(),
+                outResult.TestEquals( default ) )
+            .Go();
     }
 
     [Fact]
@@ -1171,11 +1152,10 @@ public class DirectedGraphTests : TestsBase
 
         var result = sut.RemoveEdge( key1, key2, out var outResult );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeFalse();
-            outResult.Should().Be( default );
-        }
+        Assertion.All(
+                result.TestFalse(),
+                outResult.TestEquals( default ) )
+            .Go();
     }
 
     [Fact]
@@ -1188,13 +1168,12 @@ public class DirectedGraphTests : TestsBase
 
         var result = sut.RemoveEdge( key, key, out var outResult );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            outResult.Should().Be( edge.Value );
-            node.Edges.Should().BeEmpty();
-            edge.Direction.Should().Be( GraphDirection.None );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                outResult.TestEquals( edge.Value ),
+                node.Edges.TestEmpty(),
+                edge.Direction.TestEquals( GraphDirection.None ) )
+            .Go();
     }
 
     [Fact]
@@ -1208,14 +1187,13 @@ public class DirectedGraphTests : TestsBase
 
         var result = sut.RemoveEdge( key1, key2, out var outResult );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            outResult.Should().Be( edge.Value );
-            source.Edges.Should().BeEmpty();
-            target.Edges.Should().BeEmpty();
-            edge.Direction.Should().Be( GraphDirection.None );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                outResult.TestEquals( edge.Value ),
+                source.Edges.TestEmpty(),
+                target.Edges.TestEmpty(),
+                edge.Direction.TestEquals( GraphDirection.None ) )
+            .Go();
     }
 
     [Fact]
@@ -1229,14 +1207,13 @@ public class DirectedGraphTests : TestsBase
 
         var result = sut.RemoveEdge( key2, key1, out var outResult );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            outResult.Should().Be( edge.Value );
-            source.Edges.Should().BeEmpty();
-            target.Edges.Should().BeEmpty();
-            edge.Direction.Should().Be( GraphDirection.None );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                outResult.TestEquals( edge.Value ),
+                source.Edges.TestEmpty(),
+                target.Edges.TestEmpty(),
+                edge.Direction.TestEquals( GraphDirection.None ) )
+            .Go();
     }
 
     [Fact]
@@ -1253,12 +1230,11 @@ public class DirectedGraphTests : TestsBase
 
         var result = sut.Remove( edge );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeFalse();
-            a.Edges.Should().HaveCount( 1 );
-            b.Edges.Should().HaveCount( 1 );
-        }
+        Assertion.All(
+                result.TestFalse(),
+                a.Edges.Count.TestEquals( 1 ),
+                b.Edges.Count.TestEquals( 1 ) )
+            .Go();
     }
 
     [Fact]
@@ -1272,7 +1248,7 @@ public class DirectedGraphTests : TestsBase
 
         var result = sut.Remove( edge );
 
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Fact]
@@ -1286,7 +1262,7 @@ public class DirectedGraphTests : TestsBase
 
         var result = sut.Remove( edge );
 
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Fact]
@@ -1300,7 +1276,7 @@ public class DirectedGraphTests : TestsBase
 
         var result = sut.Remove( edge );
 
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Fact]
@@ -1313,13 +1289,12 @@ public class DirectedGraphTests : TestsBase
 
         var result = sut.Remove( edge );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            edge.Direction.Should().Be( GraphDirection.None );
-            a.Edges.Should().BeEmpty();
-            b.Edges.Should().BeEmpty();
-        }
+        Assertion.All(
+                result.TestTrue(),
+                edge.Direction.TestEquals( GraphDirection.None ),
+                a.Edges.TestEmpty(),
+                b.Edges.TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -1330,7 +1305,7 @@ public class DirectedGraphTests : TestsBase
 
         var result = sut.Remove( edge );
 
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Fact]
@@ -1347,12 +1322,11 @@ public class DirectedGraphTests : TestsBase
 
         var result = sut.Remove( edge );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeFalse();
-            a.Edges.Should().HaveCount( 1 );
-            b.Edges.Should().HaveCount( 1 );
-        }
+        Assertion.All(
+                result.TestFalse(),
+                a.Edges.Count.TestEquals( 1 ),
+                b.Edges.Count.TestEquals( 1 ) )
+            .Go();
     }
 
     [Fact]
@@ -1366,7 +1340,7 @@ public class DirectedGraphTests : TestsBase
 
         var result = sut.Remove( edge );
 
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Fact]
@@ -1380,7 +1354,7 @@ public class DirectedGraphTests : TestsBase
 
         var result = sut.Remove( edge );
 
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Fact]
@@ -1394,7 +1368,7 @@ public class DirectedGraphTests : TestsBase
 
         var result = sut.Remove( edge );
 
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Fact]
@@ -1407,13 +1381,12 @@ public class DirectedGraphTests : TestsBase
 
         var result = sut.Remove( edge );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            edge.Direction.Should().Be( GraphDirection.None );
-            a.Edges.Should().BeEmpty();
-            b.Edges.Should().BeEmpty();
-        }
+        Assertion.All(
+                result.TestTrue(),
+                edge.Direction.TestEquals( GraphDirection.None ),
+                a.Edges.TestEmpty(),
+                b.Edges.TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -1430,21 +1403,20 @@ public class DirectedGraphTests : TestsBase
 
         sut.Clear();
 
-        using ( new AssertionScope() )
-        {
-            sut.Nodes.Should().BeEmpty();
-            sut.Edges.Should().BeEmpty();
-            a.Graph.Should().BeNull();
-            a.Edges.Should().BeEmpty();
-            b.Graph.Should().BeNull();
-            b.Edges.Should().BeEmpty();
-            c.Graph.Should().BeNull();
-            c.Edges.Should().BeEmpty();
-            aa.Direction.Should().Be( GraphDirection.None );
-            ab.Direction.Should().Be( GraphDirection.None );
-            ca.Direction.Should().Be( GraphDirection.None );
-            bc.Direction.Should().Be( GraphDirection.None );
-        }
+        Assertion.All(
+                sut.Nodes.TestEmpty(),
+                sut.Edges.TestEmpty(),
+                a.Graph.TestNull(),
+                a.Edges.TestEmpty(),
+                b.Graph.TestNull(),
+                b.Edges.TestEmpty(),
+                c.Graph.TestNull(),
+                c.Edges.TestEmpty(),
+                aa.Direction.TestEquals( GraphDirection.None ),
+                ab.Direction.TestEquals( GraphDirection.None ),
+                ca.Direction.TestEquals( GraphDirection.None ),
+                bc.Direction.TestEquals( GraphDirection.None ) )
+            .Go();
     }
 
     [Fact]
@@ -1459,9 +1431,9 @@ public class DirectedGraphTests : TestsBase
         var ca = sut.AddEdge( c.Key, a.Key, Fixture.Create<long>() );
         var bc = sut.AddEdge( b.Key, c.Key, Fixture.Create<long>() );
 
-        var result = sut.Edges;
+        var result = sut.Edges.ToList();
 
-        result.Should().HaveCount( 4 ).And.BeEquivalentTo( aa, ab, ca, bc );
+        Assertion.All( result.Count.TestEquals( 4 ), result.TestSetEqual( [ aa, ab, ca, bc ] ) ).Go();
     }
 
     [Fact]
@@ -1479,7 +1451,7 @@ public class DirectedGraphTests : TestsBase
 
         var result = (( IReadOnlyDirectedGraph<string, int, long> )sut).Edges;
 
-        result.Should().BeSequentiallyEqualTo( expected );
+        result.TestSequence( expected ).Go();
     }
 
     [Fact]
@@ -1491,7 +1463,7 @@ public class DirectedGraphTests : TestsBase
 
         var result = (( IReadOnlyDirectedGraph<string, int, long> )sut).GetNode( "a" );
 
-        result.Should().BeSameAs( expected );
+        result.TestRefEquals( expected ).Go();
     }
 
     [Fact]
@@ -1503,11 +1475,10 @@ public class DirectedGraphTests : TestsBase
 
         var result = (( IReadOnlyDirectedGraph<string, int, long> )sut).TryGetNode( "a", out var outResult );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( expected );
-            outResult.Should().BeSameAs( outExpected );
-        }
+        Assertion.All(
+                result.TestEquals( expected ),
+                outResult.TestRefEquals( outExpected ) )
+            .Go();
     }
 
     [Fact]
@@ -1518,11 +1489,10 @@ public class DirectedGraphTests : TestsBase
 
         var result = (( IReadOnlyDirectedGraph<string, int, long> )sut).TryGetNode( "a", out var outResult );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( expected );
-            outResult.Should().BeSameAs( outExpected );
-        }
+        Assertion.All(
+                result.TestEquals( expected ),
+                outResult.TestRefEquals( outExpected ) )
+            .Go();
     }
 
     [Fact]
@@ -1535,7 +1505,7 @@ public class DirectedGraphTests : TestsBase
 
         var result = (( IReadOnlyDirectedGraph<string, int, long> )sut).GetEdge( "a", "a" );
 
-        result.Should().BeSameAs( expected );
+        result.TestRefEquals( expected ).Go();
     }
 
     [Fact]
@@ -1548,11 +1518,10 @@ public class DirectedGraphTests : TestsBase
 
         var result = (( IReadOnlyDirectedGraph<string, int, long> )sut).TryGetEdge( "a", "a", out var outResult );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( expected );
-            outResult.Should().BeSameAs( outExpected );
-        }
+        Assertion.All(
+                result.TestEquals( expected ),
+                outResult.TestRefEquals( outExpected ) )
+            .Go();
     }
 
     [Fact]
@@ -1564,11 +1533,10 @@ public class DirectedGraphTests : TestsBase
 
         var result = (( IReadOnlyDirectedGraph<string, int, long> )sut).TryGetEdge( "a", "a", out var outResult );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( expected );
-            outResult.Should().BeSameAs( outExpected );
-        }
+        Assertion.All(
+                result.TestEquals( expected ),
+                outResult.TestRefEquals( outExpected ) )
+            .Go();
     }
 
     [Fact]
@@ -1576,7 +1544,7 @@ public class DirectedGraphTests : TestsBase
     {
         var sut = new DirectedGraph<string, int, long>();
         var result = (( IDirectedGraph<string, int, long> )sut).AddNode( "a", Fixture.Create<int>() );
-        result.Should().BeSameAs( sut.GetNode( "a" ) );
+        result.TestRefEquals( sut.GetNode( "a" ) ).Go();
     }
 
     [Fact]
@@ -1586,11 +1554,10 @@ public class DirectedGraphTests : TestsBase
 
         var result = (( IDirectedGraph<string, int, long> )sut).TryAddNode( "a", Fixture.Create<int>(), out var outResult );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            outResult.Should().BeSameAs( sut.GetNode( "a" ) );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                outResult.TestRefEquals( sut.GetNode( "a" ) ) )
+            .Go();
     }
 
     [Fact]
@@ -1598,7 +1565,7 @@ public class DirectedGraphTests : TestsBase
     {
         var sut = new DirectedGraph<string, int, long>();
         var result = (( IDirectedGraph<string, int, long> )sut).GetOrAddNode( "a", Fixture.Create<int>() );
-        result.Should().BeSameAs( sut.GetOrAddNode( "a", Fixture.Create<int>() ) );
+        result.TestRefEquals( sut.GetOrAddNode( "a", Fixture.Create<int>() ) ).Go();
     }
 
     [Fact]
@@ -1609,7 +1576,7 @@ public class DirectedGraphTests : TestsBase
 
         var result = (( IDirectedGraph<string, int, long> )sut).AddEdge( "a", "a", Fixture.Create<long>() );
 
-        result.Should().BeSameAs( sut.GetEdge( "a", "a" ) );
+        result.TestRefEquals( sut.GetEdge( "a", "a" ) ).Go();
     }
 
     [Fact]
@@ -1625,10 +1592,9 @@ public class DirectedGraphTests : TestsBase
             GraphDirection.Both,
             out var outResult );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            outResult.Should().BeSameAs( sut.GetEdge( "a", "a" ) );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                outResult.TestRefEquals( sut.GetEdge( "a", "a" ) ) )
+            .Go();
     }
 }
