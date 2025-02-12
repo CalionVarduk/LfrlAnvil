@@ -11,8 +11,7 @@ public class StateMachineTests : TestsBase
     {
         var (a, b, c) = ("a", "b", "c");
 
-        var builder = new StateMachineBuilder<string, int, string>( Fixture.Create<string>() )
-            .AddTransition( a, b, 0 )
+        var builder = new StateMachineBuilder<string, int, string>( Fixture.Create<string>() ).AddTransition( a, b, 0 )
             .AddTransition( b, c, 0 )
             .AddTransition( c, 0 )
             .MarkAsInitial( a );
@@ -21,12 +20,11 @@ public class StateMachineTests : TestsBase
 
         var result = sut.CreateInstance();
 
-        using ( new AssertionScope() )
-        {
-            result.Machine.Should().BeSameAs( sut );
-            result.CurrentState.Should().BeSameAs( sut.InitialState );
-            result.Subject.Should().BeSameAs( result );
-        }
+        Assertion.All(
+                result.Machine.TestRefEquals( sut ),
+                result.CurrentState.TestRefEquals( sut.InitialState ),
+                result.Subject.TestRefEquals( result ) )
+            .Go();
     }
 
     [Fact]
@@ -34,8 +32,7 @@ public class StateMachineTests : TestsBase
     {
         var (a, b, c) = ("a", "b", "c");
 
-        var builder = new StateMachineBuilder<string, int, string>( Fixture.Create<string>() )
-            .AddTransition( a, b, 0 )
+        var builder = new StateMachineBuilder<string, int, string>( Fixture.Create<string>() ).AddTransition( a, b, 0 )
             .AddTransition( b, c, 0 )
             .AddTransition( c, 0 )
             .MarkAsInitial( a );
@@ -44,12 +41,11 @@ public class StateMachineTests : TestsBase
 
         var result = sut.CreateInstance( c );
 
-        using ( new AssertionScope() )
-        {
-            result.Machine.Should().BeSameAs( sut );
-            result.CurrentState.Should().BeSameAs( sut.States[c] );
-            result.Subject.Should().BeSameAs( result );
-        }
+        Assertion.All(
+                result.Machine.TestRefEquals( sut ),
+                result.CurrentState.TestRefEquals( sut.States[c] ),
+                result.Subject.TestRefEquals( result ) )
+            .Go();
     }
 
     [Fact]
@@ -57,8 +53,7 @@ public class StateMachineTests : TestsBase
     {
         var (a, b, c, d) = ("a", "b", "c", "d");
 
-        var builder = new StateMachineBuilder<string, int, string>( Fixture.Create<string>() )
-            .AddTransition( a, b, 0 )
+        var builder = new StateMachineBuilder<string, int, string>( Fixture.Create<string>() ).AddTransition( a, b, 0 )
             .AddTransition( b, c, 0 )
             .AddTransition( c, 0 )
             .MarkAsInitial( a );
@@ -67,7 +62,7 @@ public class StateMachineTests : TestsBase
 
         var action = Lambda.Of( () => sut.CreateInstance( d ) );
 
-        action.Should().ThrowExactly<StateMachineStateException>();
+        action.Test( exc => exc.TestType().Exact<StateMachineStateException>() ).Go();
     }
 
     [Fact]
@@ -76,8 +71,7 @@ public class StateMachineTests : TestsBase
         var (a, b, c) = ("a", "b", "c");
         var subject = new object();
 
-        var builder = new StateMachineBuilder<string, int, string>( Fixture.Create<string>() )
-            .AddTransition( a, b, 0 )
+        var builder = new StateMachineBuilder<string, int, string>( Fixture.Create<string>() ).AddTransition( a, b, 0 )
             .AddTransition( b, c, 0 )
             .AddTransition( c, 0 )
             .MarkAsInitial( a );
@@ -86,12 +80,11 @@ public class StateMachineTests : TestsBase
 
         var result = sut.CreateInstanceWithSubject( subject );
 
-        using ( new AssertionScope() )
-        {
-            result.Machine.Should().BeSameAs( sut );
-            result.CurrentState.Should().BeSameAs( sut.InitialState );
-            result.Subject.Should().BeSameAs( subject );
-        }
+        Assertion.All(
+                result.Machine.TestRefEquals( sut ),
+                result.CurrentState.TestRefEquals( sut.InitialState ),
+                result.Subject.TestRefEquals( subject ) )
+            .Go();
     }
 
     [Fact]
@@ -100,8 +93,7 @@ public class StateMachineTests : TestsBase
         var (a, b, c) = ("a", "b", "c");
         var subject = new object();
 
-        var builder = new StateMachineBuilder<string, int, string>( Fixture.Create<string>() )
-            .AddTransition( a, b, 0 )
+        var builder = new StateMachineBuilder<string, int, string>( Fixture.Create<string>() ).AddTransition( a, b, 0 )
             .AddTransition( b, c, 0 )
             .AddTransition( c, 0 )
             .MarkAsInitial( a );
@@ -110,12 +102,11 @@ public class StateMachineTests : TestsBase
 
         var result = sut.CreateInstanceWithSubject( c, subject );
 
-        using ( new AssertionScope() )
-        {
-            result.Machine.Should().BeSameAs( sut );
-            result.CurrentState.Should().BeSameAs( sut.States[c] );
-            result.Subject.Should().BeSameAs( subject );
-        }
+        Assertion.All(
+                result.Machine.TestRefEquals( sut ),
+                result.CurrentState.TestRefEquals( sut.States[c] ),
+                result.Subject.TestRefEquals( subject ) )
+            .Go();
     }
 
     [Fact]
@@ -124,8 +115,7 @@ public class StateMachineTests : TestsBase
         var (a, b, c, d) = ("a", "b", "c", "d");
         var subject = new object();
 
-        var builder = new StateMachineBuilder<string, int, string>( Fixture.Create<string>() )
-            .AddTransition( a, b, 0 )
+        var builder = new StateMachineBuilder<string, int, string>( Fixture.Create<string>() ).AddTransition( a, b, 0 )
             .AddTransition( b, c, 0 )
             .AddTransition( c, 0 )
             .MarkAsInitial( a );
@@ -134,7 +124,7 @@ public class StateMachineTests : TestsBase
 
         var action = Lambda.Of( () => sut.CreateInstanceWithSubject( d, subject ) );
 
-        action.Should().ThrowExactly<StateMachineStateException>();
+        action.Test( exc => exc.TestType().Exact<StateMachineStateException>() ).Go();
     }
 
     [Fact]
@@ -149,7 +139,7 @@ public class StateMachineTests : TestsBase
 
         var result = sut.WithOptimization( StateMachineOptimizationParams<string>.None() );
 
-        result.Should().BeSameAs( sut );
+        result.TestRefEquals( sut ).Go();
     }
 
     [Fact]
@@ -164,7 +154,7 @@ public class StateMachineTests : TestsBase
 
         var result = sut.WithOptimization( StateMachineOptimizationParams<string>.None() );
 
-        result.Should().BeSameAs( sut );
+        result.TestRefEquals( sut ).Go();
     }
 
     [Fact]
@@ -179,7 +169,7 @@ public class StateMachineTests : TestsBase
 
         var result = sut.WithOptimization( StateMachineOptimizationParams<string>.RemoveUnreachableStates() );
 
-        result.Should().BeSameAs( sut );
+        result.TestRefEquals( sut ).Go();
     }
 
     [Fact]
@@ -194,7 +184,7 @@ public class StateMachineTests : TestsBase
 
         var result = sut.WithOptimization( StateMachineOptimizationParams<string>.None() );
 
-        result.Should().BeSameAs( sut );
+        result.TestRefEquals( sut ).Go();
     }
 
     [Fact]
@@ -209,7 +199,7 @@ public class StateMachineTests : TestsBase
 
         var result = sut.WithOptimization( StateMachineOptimizationParams<string>.RemoveUnreachableStates() );
 
-        result.Should().BeSameAs( sut );
+        result.TestRefEquals( sut ).Go();
     }
 
     [Fact]
@@ -224,41 +214,37 @@ public class StateMachineTests : TestsBase
 
         var result = sut.WithOptimization( StateMachineOptimizationParams<string>.Minimize( (s, _) => s ) );
 
-        result.Should().BeSameAs( sut );
+        result.TestRefEquals( sut ).Go();
     }
 
     [Fact]
     public void WithOptimization_ShouldReturnNewStateMachine_WhenCurrentOptimizationIsNoneAndNewOptimizationRemovesUnreachableStates()
     {
         var (a, b) = ("a", "b");
-        var builder = new StateMachineBuilder<string, int, string>( Fixture.Create<string>() )
-            .MarkAsDefault( b )
-            .MarkAsInitial( a );
+        var builder = new StateMachineBuilder<string, int, string>( Fixture.Create<string>() ).MarkAsDefault( b ).MarkAsInitial( a );
 
         var sut = builder.Build();
 
         var result = sut.WithOptimization( StateMachineOptimizationParams<string>.RemoveUnreachableStates() );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().NotBeSameAs( sut );
-            result.States.Should().NotBeSameAs( sut.States );
-            result.Optimization.Should().Be( StateMachineOptimization.RemoveUnreachableStates );
-            result.DefaultResult.Should().Be( sut.DefaultResult );
-            result.StateComparer.Should().BeSameAs( sut.StateComparer );
-            result.InputComparer.Should().BeSameAs( sut.InputComparer );
-            result.InitialState.Should().BeSameAs( sut.InitialState );
-            result.States.Should().HaveCount( 1 );
-            result.States.Keys.Should().BeEquivalentTo( a );
-        }
+        Assertion.All(
+                result.TestNotRefEquals( sut ),
+                result.States.TestNotRefEquals( sut.States ),
+                result.Optimization.TestEquals( StateMachineOptimization.RemoveUnreachableStates ),
+                result.DefaultResult.TestEquals( sut.DefaultResult ),
+                result.StateComparer.TestRefEquals( sut.StateComparer ),
+                result.InputComparer.TestRefEquals( sut.InputComparer ),
+                result.InitialState.TestRefEquals( sut.InitialState ),
+                result.States.Count.TestEquals( 1 ),
+                result.States.Keys.TestSetEqual( [ a ] ) )
+            .Go();
     }
 
     [Fact]
     public void WithOptimization_ShouldReturnNewStateMachine_WhenCurrentOptimizationIsNoneAndNewOptimizationMinimizes()
     {
         var (a, b, c) = ("a", "b", "c");
-        var builder = new StateMachineBuilder<string, int, string>( Fixture.Create<string>() )
-            .AddTransition( a, b, 0 )
+        var builder = new StateMachineBuilder<string, int, string>( Fixture.Create<string>() ).AddTransition( a, b, 0 )
             .AddTransition( b, 0 )
             .MarkAsDefault( c )
             .MarkAsInitial( a );
@@ -268,19 +254,18 @@ public class StateMachineTests : TestsBase
         var result = sut.WithOptimization(
             StateMachineOptimizationParams<string>.Minimize( (s1, s2) => new string( s1.Concat( s2 ).OrderBy( x => x ).ToArray() ) ) );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().NotBeSameAs( sut );
-            result.States.Should().NotBeSameAs( sut.States );
-            result.Optimization.Should().Be( StateMachineOptimization.Minimize );
-            result.DefaultResult.Should().Be( sut.DefaultResult );
-            result.StateComparer.Should().BeSameAs( sut.StateComparer );
-            result.InputComparer.Should().BeSameAs( sut.InputComparer );
-            result.InitialState.Should().NotBeSameAs( sut.InitialState );
-            result.States.Should().HaveCount( 1 );
-            result.States.Keys.Should().BeEquivalentTo( a + b );
-            result.States[a + b].Should().BeSameAs( result.InitialState );
-        }
+        Assertion.All(
+                result.TestNotRefEquals( sut ),
+                result.States.TestNotRefEquals( sut.States ),
+                result.Optimization.TestEquals( StateMachineOptimization.Minimize ),
+                result.DefaultResult.TestEquals( sut.DefaultResult ),
+                result.StateComparer.TestRefEquals( sut.StateComparer ),
+                result.InputComparer.TestRefEquals( sut.InputComparer ),
+                result.InitialState.TestNotRefEquals( sut.InitialState ),
+                result.States.Count.TestEquals( 1 ),
+                result.States.Keys.TestSetEqual( [ a + b ] ),
+                result.States[a + b].TestRefEquals( result.InitialState ) )
+            .Go();
     }
 
     [Fact]
@@ -298,19 +283,18 @@ public class StateMachineTests : TestsBase
         var result = sut.WithOptimization(
             StateMachineOptimizationParams<string>.Minimize( (s1, s2) => new string( s1.Concat( s2 ).OrderBy( x => x ).ToArray() ) ) );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().NotBeSameAs( sut );
-            result.States.Should().NotBeSameAs( sut.States );
-            result.Optimization.Should().Be( StateMachineOptimization.Minimize );
-            result.DefaultResult.Should().Be( sut.DefaultResult );
-            result.StateComparer.Should().BeSameAs( sut.StateComparer );
-            result.InputComparer.Should().BeSameAs( sut.InputComparer );
-            result.InitialState.Should().NotBeSameAs( sut.InitialState );
-            result.States.Should().HaveCount( 1 );
-            result.States.Keys.Should().BeEquivalentTo( a + b );
-            result.States[a + b].Should().BeSameAs( result.InitialState );
-        }
+        Assertion.All(
+                result.TestNotRefEquals( sut ),
+                result.States.TestNotRefEquals( sut.States ),
+                result.Optimization.TestEquals( StateMachineOptimization.Minimize ),
+                result.DefaultResult.TestEquals( sut.DefaultResult ),
+                result.StateComparer.TestRefEquals( sut.StateComparer ),
+                result.InputComparer.TestRefEquals( sut.InputComparer ),
+                result.InitialState.TestNotRefEquals( sut.InitialState ),
+                result.States.Count.TestEquals( 1 ),
+                result.States.Keys.TestSetEqual( [ a + b ] ),
+                result.States[a + b].TestRefEquals( result.InitialState ) )
+            .Go();
     }
 
     [Fact]
@@ -330,20 +314,19 @@ public class StateMachineTests : TestsBase
         var result = sut.WithOptimization(
             StateMachineOptimizationParams<string>.Minimize( (s1, s2) => new string( s1.Concat( s2 ).OrderBy( x => x ).ToArray() ) ) );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().NotBeSameAs( sut );
-            result.States.Should().NotBeSameAs( sut.States );
-            result.Optimization.Should().Be( StateMachineOptimization.Minimize );
-            result.DefaultResult.Should().Be( sut.DefaultResult );
-            result.StateComparer.Should().BeSameAs( sut.StateComparer );
-            result.InputComparer.Should().BeSameAs( sut.InputComparer );
-            result.InitialState.Should().BeSameAs( sut.InitialState );
-            result.States.Should().HaveCount( 2 );
-            result.States.Keys.Should().BeEquivalentTo( a, b );
-            result.States[a].Should().BeSameAs( result.InitialState );
-            result.States[b].Should().BeSameAs( sut.States[b] );
-        }
+        Assertion.All(
+                result.TestNotRefEquals( sut ),
+                result.States.TestNotRefEquals( sut.States ),
+                result.Optimization.TestEquals( StateMachineOptimization.Minimize ),
+                result.DefaultResult.TestEquals( sut.DefaultResult ),
+                result.StateComparer.TestRefEquals( sut.StateComparer ),
+                result.InputComparer.TestRefEquals( sut.InputComparer ),
+                result.InitialState.TestRefEquals( sut.InitialState ),
+                result.States.Count.TestEquals( 2 ),
+                result.States.Keys.TestSetEqual( [ a, b ] ),
+                result.States[a].TestRefEquals( result.InitialState ),
+                result.States[b].TestRefEquals( sut.States[b] ) )
+            .Go();
     }
 
     [Fact]
@@ -362,20 +345,19 @@ public class StateMachineTests : TestsBase
         var result = sut.WithOptimization(
             StateMachineOptimizationParams<string>.Minimize( (s1, s2) => new string( s1.Concat( s2 ).OrderBy( x => x ).ToArray() ) ) );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().NotBeSameAs( sut );
-            result.States.Should().NotBeSameAs( sut.States );
-            result.Optimization.Should().Be( StateMachineOptimization.Minimize );
-            result.DefaultResult.Should().Be( sut.DefaultResult );
-            result.StateComparer.Should().BeSameAs( sut.StateComparer );
-            result.InputComparer.Should().BeSameAs( sut.InputComparer );
-            result.InitialState.Should().BeSameAs( sut.InitialState );
-            result.States.Should().HaveCount( 2 );
-            result.States.Keys.Should().BeEquivalentTo( a, b );
-            result.States[a].Should().BeSameAs( result.InitialState );
-            result.States[b].Should().BeSameAs( sut.States[b] );
-        }
+        Assertion.All(
+                result.TestNotRefEquals( sut ),
+                result.States.TestNotRefEquals( sut.States ),
+                result.Optimization.TestEquals( StateMachineOptimization.Minimize ),
+                result.DefaultResult.TestEquals( sut.DefaultResult ),
+                result.StateComparer.TestRefEquals( sut.StateComparer ),
+                result.InputComparer.TestRefEquals( sut.InputComparer ),
+                result.InitialState.TestRefEquals( sut.InitialState ),
+                result.States.Count.TestEquals( 2 ),
+                result.States.Keys.TestSetEqual( [ a, b ] ),
+                result.States[a].TestRefEquals( result.InitialState ),
+                result.States[b].TestRefEquals( sut.States[b] ) )
+            .Go();
     }
 
     [Fact]
@@ -395,20 +377,19 @@ public class StateMachineTests : TestsBase
         var result = sut.WithOptimization(
             StateMachineOptimizationParams<string>.Minimize( (s1, s2) => new string( s1.Concat( s2 ).OrderBy( x => x ).ToArray() ) ) );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().NotBeSameAs( sut );
-            result.States.Should().NotBeSameAs( sut.States );
-            result.Optimization.Should().Be( StateMachineOptimization.Minimize );
-            result.DefaultResult.Should().Be( sut.DefaultResult );
-            result.StateComparer.Should().BeSameAs( sut.StateComparer );
-            result.InputComparer.Should().BeSameAs( sut.InputComparer );
-            result.InitialState.Should().BeSameAs( sut.InitialState );
-            result.States.Should().HaveCount( 2 );
-            result.States.Keys.Should().BeEquivalentTo( a, b );
-            result.States[a].Should().BeSameAs( result.InitialState );
-            result.States[b].Should().BeSameAs( sut.States[b] );
-        }
+        Assertion.All(
+                result.TestNotRefEquals( sut ),
+                result.States.TestNotRefEquals( sut.States ),
+                result.Optimization.TestEquals( StateMachineOptimization.Minimize ),
+                result.DefaultResult.TestEquals( sut.DefaultResult ),
+                result.StateComparer.TestRefEquals( sut.StateComparer ),
+                result.InputComparer.TestRefEquals( sut.InputComparer ),
+                result.InitialState.TestRefEquals( sut.InitialState ),
+                result.States.Count.TestEquals( 2 ),
+                result.States.Keys.TestSetEqual( [ a, b ] ),
+                result.States[a].TestRefEquals( result.InitialState ),
+                result.States[b].TestRefEquals( sut.States[b] ) )
+            .Go();
     }
 
     [Fact]
@@ -416,20 +397,17 @@ public class StateMachineTests : TestsBase
     {
         var a = "a";
 
-        var builder = new StateMachineBuilder<string, int, string>( Fixture.Create<string>() )
-            .AddTransition( a, 0 )
-            .MarkAsInitial( a );
+        var builder = new StateMachineBuilder<string, int, string>( Fixture.Create<string>() ).AddTransition( a, 0 ).MarkAsInitial( a );
 
         IStateMachine<string, int, string> sut = builder.Build();
 
         var result = sut.CreateInstance();
 
-        using ( new AssertionScope() )
-        {
-            result.Machine.Should().BeSameAs( sut );
-            result.CurrentState.Should().BeSameAs( sut.InitialState );
-            result.Subject.Should().BeSameAs( result );
-        }
+        Assertion.All(
+                result.Machine.TestRefEquals( sut ),
+                result.CurrentState.TestRefEquals( sut.InitialState ),
+                result.Subject.TestRefEquals( result ) )
+            .Go();
     }
 
     [Fact]
@@ -437,20 +415,17 @@ public class StateMachineTests : TestsBase
     {
         var (a, b) = ("a", "b");
 
-        var builder = new StateMachineBuilder<string, int, string>( Fixture.Create<string>() )
-            .AddTransition( a, b, 0 )
-            .MarkAsInitial( a );
+        var builder = new StateMachineBuilder<string, int, string>( Fixture.Create<string>() ).AddTransition( a, b, 0 ).MarkAsInitial( a );
 
         IStateMachine<string, int, string> sut = builder.Build();
 
         var result = sut.CreateInstance( b );
 
-        using ( new AssertionScope() )
-        {
-            result.Machine.Should().BeSameAs( sut );
-            result.CurrentState.Should().BeSameAs( sut.States[b] );
-            result.Subject.Should().BeSameAs( result );
-        }
+        Assertion.All(
+                result.Machine.TestRefEquals( sut ),
+                result.CurrentState.TestRefEquals( sut.States[b] ),
+                result.Subject.TestRefEquals( result ) )
+            .Go();
     }
 
     [Fact]
@@ -459,20 +434,17 @@ public class StateMachineTests : TestsBase
         var a = "a";
         var subject = new object();
 
-        var builder = new StateMachineBuilder<string, int, string>( Fixture.Create<string>() )
-            .AddTransition( a, 0 )
-            .MarkAsInitial( a );
+        var builder = new StateMachineBuilder<string, int, string>( Fixture.Create<string>() ).AddTransition( a, 0 ).MarkAsInitial( a );
 
         IStateMachine<string, int, string> sut = builder.Build();
 
         var result = sut.CreateInstanceWithSubject( subject );
 
-        using ( new AssertionScope() )
-        {
-            result.Machine.Should().BeSameAs( sut );
-            result.CurrentState.Should().BeSameAs( sut.InitialState );
-            result.Subject.Should().BeSameAs( subject );
-        }
+        Assertion.All(
+                result.Machine.TestRefEquals( sut ),
+                result.CurrentState.TestRefEquals( sut.InitialState ),
+                result.Subject.TestRefEquals( subject ) )
+            .Go();
     }
 
     [Fact]
@@ -481,40 +453,34 @@ public class StateMachineTests : TestsBase
         var (a, b) = ("a", "b");
         var subject = new object();
 
-        var builder = new StateMachineBuilder<string, int, string>( Fixture.Create<string>() )
-            .AddTransition( a, b, 0 )
-            .MarkAsInitial( a );
+        var builder = new StateMachineBuilder<string, int, string>( Fixture.Create<string>() ).AddTransition( a, b, 0 ).MarkAsInitial( a );
 
         IStateMachine<string, int, string> sut = builder.Build();
 
         var result = sut.CreateInstanceWithSubject( b, subject );
 
-        using ( new AssertionScope() )
-        {
-            result.Machine.Should().BeSameAs( sut );
-            result.CurrentState.Should().BeSameAs( sut.States[b] );
-            result.Subject.Should().BeSameAs( subject );
-        }
+        Assertion.All(
+                result.Machine.TestRefEquals( sut ),
+                result.CurrentState.TestRefEquals( sut.States[b] ),
+                result.Subject.TestRefEquals( subject ) )
+            .Go();
     }
 
     [Fact]
     public void IStateMachineWithOptimization_ShouldBeEquivalentToWithOptimization()
     {
         var (a, b) = ("a", "b");
-        var builder = new StateMachineBuilder<string, int, string>( Fixture.Create<string>() )
-            .MarkAsDefault( b )
-            .MarkAsInitial( a );
+        var builder = new StateMachineBuilder<string, int, string>( Fixture.Create<string>() ).MarkAsDefault( b ).MarkAsInitial( a );
 
         IStateMachine<string, int, string> sut = builder.Build();
 
         var result = sut.WithOptimization( StateMachineOptimizationParams<string>.RemoveUnreachableStates() );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().NotBeSameAs( sut );
-            result.Optimization.Should().Be( StateMachineOptimization.RemoveUnreachableStates );
-            result.States.Should().HaveCount( 1 );
-            result.States.Keys.Should().BeEquivalentTo( a );
-        }
+        Assertion.All(
+                result.TestNotRefEquals( sut ),
+                result.Optimization.TestEquals( StateMachineOptimization.RemoveUnreachableStates ),
+                result.States.Count.TestEquals( 1 ),
+                result.States.Keys.TestSetEqual( [ a ] ) )
+            .Go();
     }
 }

@@ -1,6 +1,5 @@
 ﻿using LfrlAnvil.Computable.Automata.Exceptions;
 using LfrlAnvil.Functional;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Computable.Automata.Tests.StateMachineInstanceTests;
 
@@ -16,8 +15,7 @@ public class StateMachineInstanceTests : TestsBase
         var handler = Substitute.For<IStateTransitionHandler<string, int, string>>();
         handler.Handle( Arg.Any<StateTransitionHandlerArgs<string, int, string>>() ).Returns( expectedResult );
 
-        var builder = new StateMachineBuilder<string, int, string>( defaultResult )
-            .AddTransition( a, b, input, handler )
+        var builder = new StateMachineBuilder<string, int, string>( defaultResult ).AddTransition( a, b, input, handler )
             .MarkAsInitial( a );
 
         var machine = builder.Build();
@@ -25,17 +23,14 @@ public class StateMachineInstanceTests : TestsBase
 
         var result = sut.Transition( input );
 
-        using ( new AssertionScope() )
-        {
-            sut.CurrentState.Should().BeSameAs( machine.States[b] );
-            result.Should().Be( expectedResult );
-
-            handler.VerifyCalls()
-                .Received(
+        Assertion.All(
+                sut.CurrentState.TestRefEquals( machine.States[b] ),
+                result.TestEquals( expectedResult ),
+                handler.TestReceivedCalls(
                     h => h.Handle(
                         new StateTransitionHandlerArgs<string, int, string>( sut, machine.InitialState, sut.CurrentState, input ) ),
-                    count: 1 );
-        }
+                    count: 1 ) )
+            .Go();
     }
 
     [Fact]
@@ -49,8 +44,7 @@ public class StateMachineInstanceTests : TestsBase
         var handler = Substitute.For<IStateTransitionHandler<string, int, string>>();
         handler.Handle( Arg.Any<StateTransitionHandlerArgs<string, int, string>>() ).Returns( expectedResult );
 
-        var builder = new StateMachineBuilder<string, int, string>( defaultResult )
-            .AddTransition( a, b, input, handler )
+        var builder = new StateMachineBuilder<string, int, string>( defaultResult ).AddTransition( a, b, input, handler )
             .MarkAsInitial( a );
 
         var machine = builder.Build();
@@ -58,17 +52,14 @@ public class StateMachineInstanceTests : TestsBase
 
         var result = sut.Transition( input );
 
-        using ( new AssertionScope() )
-        {
-            sut.CurrentState.Should().BeSameAs( machine.States[b] );
-            result.Should().Be( expectedResult );
-
-            handler.VerifyCalls()
-                .Received(
+        Assertion.All(
+                sut.CurrentState.TestRefEquals( machine.States[b] ),
+                result.TestEquals( expectedResult ),
+                handler.TestReceivedCalls(
                     h => h.Handle(
                         new StateTransitionHandlerArgs<string, int, string>( subject, machine.InitialState, sut.CurrentState, input ) ),
-                    count: 1 );
-        }
+                    count: 1 ) )
+            .Go();
     }
 
     [Fact]
@@ -78,20 +69,17 @@ public class StateMachineInstanceTests : TestsBase
         var input = Fixture.Create<int>();
         var defaultResult = Fixture.Create<string>();
 
-        var builder = new StateMachineBuilder<string, int, string>( defaultResult )
-            .AddTransition( a, b, input )
-            .MarkAsInitial( a );
+        var builder = new StateMachineBuilder<string, int, string>( defaultResult ).AddTransition( a, b, input ).MarkAsInitial( a );
 
         var machine = builder.Build();
         var sut = machine.CreateInstance();
 
         var result = sut.Transition( input );
 
-        using ( new AssertionScope() )
-        {
-            sut.CurrentState.Should().BeSameAs( machine.States[b] );
-            result.Should().Be( defaultResult );
-        }
+        Assertion.All(
+                sut.CurrentState.TestRefEquals( machine.States[b] ),
+                result.TestEquals( defaultResult ) )
+            .Go();
     }
 
     [Fact]
@@ -101,15 +89,14 @@ public class StateMachineInstanceTests : TestsBase
         var input = Fixture.Create<int>();
         var defaultResult = Fixture.Create<string>();
 
-        var builder = new StateMachineBuilder<string, int, string>( defaultResult )
-            .MarkAsInitial( a );
+        var builder = new StateMachineBuilder<string, int, string>( defaultResult ).MarkAsInitial( a );
 
         var machine = builder.Build();
         var sut = machine.CreateInstance();
 
         var action = Lambda.Of( () => sut.Transition( input ) );
 
-        action.Should().ThrowExactly<StateMachineTransitionException>();
+        action.Test( exc => exc.TestType().Exact<StateMachineTransitionException>() ).Go();
     }
 
     [Theory]
@@ -128,8 +115,7 @@ public class StateMachineInstanceTests : TestsBase
         var handler = StateTransitionHandler.Create<string, int, string>(
             args => $"{args.Source.Value}({args.Input}) => {args.Destination.Value}" );
 
-        var builder = new StateMachineBuilder<string, int, string>( defaultResult )
-            .AddTransition( a, b, _0, handler )
+        var builder = new StateMachineBuilder<string, int, string>( defaultResult ).AddTransition( a, b, _0, handler )
             .AddTransition( a, c, _1, handler )
             .AddTransition( a, _2, handler )
             .MarkAsInitial( a );
@@ -139,11 +125,10 @@ public class StateMachineInstanceTests : TestsBase
 
         var result = sut.Transition( input );
 
-        using ( new AssertionScope() )
-        {
-            sut.CurrentState.Should().BeSameAs( machine.States[expectedState] );
-            result.Should().Be( expectedResult );
-        }
+        Assertion.All(
+                sut.CurrentState.TestRefEquals( machine.States[expectedState] ),
+                result.TestEquals( expectedResult ) )
+            .Go();
     }
 
     [Theory]
@@ -162,8 +147,7 @@ public class StateMachineInstanceTests : TestsBase
         var handler = StateTransitionHandler.Create<string, int, string>(
             args => $"{args.Source.Value}({args.Input}) => {args.Destination.Value}" );
 
-        var builder = new StateMachineBuilder<string, int, string>( defaultResult )
-            .AddTransition( b, b, _0, handler )
+        var builder = new StateMachineBuilder<string, int, string>( defaultResult ).AddTransition( b, b, _0, handler )
             .AddTransition( b, c, _1, handler )
             .AddTransition( b, a, _2, handler )
             .MarkAsInitial( a );
@@ -173,10 +157,9 @@ public class StateMachineInstanceTests : TestsBase
 
         var result = sut.Transition( input );
 
-        using ( new AssertionScope() )
-        {
-            sut.CurrentState.Should().BeSameAs( machine.States[expectedState] );
-            result.Should().Be( expectedResult );
-        }
+        Assertion.All(
+                sut.CurrentState.TestRefEquals( machine.States[expectedState] ),
+                result.TestEquals( expectedResult ) )
+            .Go();
     }
 }

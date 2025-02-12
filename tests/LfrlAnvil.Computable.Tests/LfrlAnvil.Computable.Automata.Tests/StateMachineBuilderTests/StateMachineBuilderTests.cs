@@ -13,14 +13,13 @@ public class StateMachineBuilderTests : TestsBase
         var defaultResult = Fixture.Create<string>();
         var sut = new StateMachineBuilder<string, int, string>( defaultResult );
 
-        using ( new AssertionScope() )
-        {
-            sut.DefaultResult.Should().Be( defaultResult );
-            sut.Optimization.Level.Should().Be( StateMachineOptimization.None );
-            sut.StateComparer.Should().BeSameAs( EqualityComparer<string>.Default );
-            sut.InputComparer.Should().BeSameAs( EqualityComparer<int>.Default );
-            sut.GetStates().Should().BeEmpty();
-        }
+        Assertion.All(
+                sut.DefaultResult.TestEquals( defaultResult ),
+                sut.Optimization.Level.TestEquals( StateMachineOptimization.None ),
+                sut.StateComparer.TestRefEquals( EqualityComparer<string>.Default ),
+                sut.InputComparer.TestRefEquals( EqualityComparer<int>.Default ),
+                sut.GetStates().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -31,14 +30,13 @@ public class StateMachineBuilderTests : TestsBase
         var inputComparer = EqualityComparerFactory<int>.Create( (a, b) => a == b );
         var sut = new StateMachineBuilder<string, int, string>( defaultResult, stateComparer, inputComparer );
 
-        using ( new AssertionScope() )
-        {
-            sut.DefaultResult.Should().Be( defaultResult );
-            sut.Optimization.Level.Should().Be( StateMachineOptimization.None );
-            sut.StateComparer.Should().BeSameAs( stateComparer );
-            sut.InputComparer.Should().BeSameAs( inputComparer );
-            sut.GetStates().Should().BeEmpty();
-        }
+        Assertion.All(
+                sut.DefaultResult.TestEquals( defaultResult ),
+                sut.Optimization.Level.TestEquals( StateMachineOptimization.None ),
+                sut.StateComparer.TestRefEquals( stateComparer ),
+                sut.InputComparer.TestRefEquals( inputComparer ),
+                sut.GetStates().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -49,11 +47,10 @@ public class StateMachineBuilderTests : TestsBase
 
         var result = sut.SetDefaultResult( value );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            result.DefaultResult.Should().Be( value );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                result.DefaultResult.TestEquals( value ) )
+            .Go();
     }
 
     [Fact]
@@ -62,11 +59,10 @@ public class StateMachineBuilderTests : TestsBase
         var sut = new StateMachineBuilder<string, int, string>( Fixture.Create<string>() );
         var result = sut.SetOptimization( StateMachineOptimizationParams<string>.None() );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            result.Optimization.Level.Should().Be( StateMachineOptimization.None );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                result.Optimization.Level.TestEquals( StateMachineOptimization.None ) )
+            .Go();
     }
 
     [Fact]
@@ -75,11 +71,10 @@ public class StateMachineBuilderTests : TestsBase
         var sut = new StateMachineBuilder<string, int, string>( Fixture.Create<string>() );
         var result = sut.SetOptimization( StateMachineOptimizationParams<string>.RemoveUnreachableStates() );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            result.Optimization.Level.Should().Be( StateMachineOptimization.RemoveUnreachableStates );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                result.Optimization.Level.TestEquals( StateMachineOptimization.RemoveUnreachableStates ) )
+            .Go();
     }
 
     [Fact]
@@ -88,11 +83,10 @@ public class StateMachineBuilderTests : TestsBase
         var sut = new StateMachineBuilder<string, int, string>( Fixture.Create<string>() );
         var result = sut.SetOptimization( StateMachineOptimizationParams<string>.Minimize( (s, _) => s ) );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            result.Optimization.Level.Should().Be( StateMachineOptimization.Minimize );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                result.Optimization.Level.TestEquals( StateMachineOptimization.Minimize ) )
+            .Go();
     }
 
     [Fact]
@@ -112,13 +106,12 @@ public class StateMachineBuilderTests : TestsBase
 
         var result = sut.AddTransition( source, destination, input );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            sut.GetStates().Should().BeEquivalentTo( expectedStates );
-            sut.GetTransitions( source ).Should().BeEquivalentTo( expectedSourceTransitions );
-            sut.GetTransitions( destination ).Should().BeEmpty();
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.GetStates().TestSetEqual( expectedStates ),
+                sut.GetTransitions( source ).TestSetEqual( expectedSourceTransitions ),
+                sut.GetTransitions( destination ).TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -138,13 +131,12 @@ public class StateMachineBuilderTests : TestsBase
 
         var result = sut.AddTransition( source, destination, input );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            sut.GetStates().Should().BeEquivalentTo( expectedStates );
-            sut.GetTransitions( source ).Should().BeEquivalentTo( expectedSourceTransitions );
-            sut.GetTransitions( destination ).Should().BeEmpty();
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.GetStates().TestSetEqual( expectedStates ),
+                sut.GetTransitions( source ).TestSetEqual( expectedSourceTransitions ),
+                sut.GetTransitions( destination ).TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -164,13 +156,12 @@ public class StateMachineBuilderTests : TestsBase
 
         var result = sut.AddTransition( source, destination, input );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            sut.GetStates().Should().BeEquivalentTo( expectedStates );
-            sut.GetTransitions( source ).Should().BeEquivalentTo( expectedSourceTransitions );
-            sut.GetTransitions( destination ).Should().BeEmpty();
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.GetStates().TestSetEqual( expectedStates ),
+                sut.GetTransitions( source ).TestSetEqual( expectedSourceTransitions ),
+                sut.GetTransitions( destination ).TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -191,13 +182,12 @@ public class StateMachineBuilderTests : TestsBase
 
         var result = sut.AddTransition( source, destination, input );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            sut.GetStates().Should().BeEquivalentTo( expectedStates );
-            sut.GetTransitions( source ).Should().BeEquivalentTo( expectedSourceTransitions );
-            sut.GetTransitions( destination ).Should().BeEmpty();
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.GetStates().TestSetEqual( expectedStates ),
+                sut.GetTransitions( source ).TestSetEqual( expectedSourceTransitions ),
+                sut.GetTransitions( destination ).TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -222,13 +212,12 @@ public class StateMachineBuilderTests : TestsBase
 
         var result = sut.AddTransition( source, destination, input );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            sut.GetStates().Should().BeEquivalentTo( expectedStates );
-            sut.GetTransitions( source ).Should().BeEquivalentTo( expectedSourceTransitions );
-            sut.GetTransitions( destination ).Should().BeEmpty();
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.GetStates().TestSetEqual( expectedStates ),
+                sut.GetTransitions( source ).TestSetEqual( expectedSourceTransitions ),
+                sut.GetTransitions( destination ).TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -243,12 +232,11 @@ public class StateMachineBuilderTests : TestsBase
 
         var result = sut.AddTransition( state, input );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            sut.GetStates().Should().BeEquivalentTo( expectedStates );
-            sut.GetTransitions( state ).Should().BeEquivalentTo( expectedTransitions );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.GetStates().TestSetEqual( expectedStates ),
+                sut.GetTransitions( state ).TestSetEqual( expectedTransitions ) )
+            .Go();
     }
 
     [Fact]
@@ -262,7 +250,7 @@ public class StateMachineBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.AddTransition( source, destination, input ) );
 
-        action.Should().ThrowExactly<StateMachineTransitionException>();
+        action.Test( exc => exc.TestType().Exact<StateMachineTransitionException>() ).Go();
     }
 
     [Fact]
@@ -275,12 +263,11 @@ public class StateMachineBuilderTests : TestsBase
 
         var result = sut.MarkAsAccept( state );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            sut.GetStates().Should().BeEquivalentTo( expectedStates );
-            sut.GetTransitions( state ).Should().BeEmpty();
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.GetStates().TestSetEqual( expectedStates ),
+                sut.GetTransitions( state ).TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -294,12 +281,11 @@ public class StateMachineBuilderTests : TestsBase
 
         var result = sut.MarkAsAccept( state );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            sut.GetStates().Should().BeEquivalentTo( expectedStates );
-            sut.GetTransitions( state ).Should().BeEmpty();
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.GetStates().TestSetEqual( expectedStates ),
+                sut.GetTransitions( state ).TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -313,12 +299,11 @@ public class StateMachineBuilderTests : TestsBase
 
         var result = sut.MarkAsAccept( state );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            sut.GetStates().Should().BeEquivalentTo( expectedStates );
-            sut.GetTransitions( state ).Should().BeEmpty();
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.GetStates().TestSetEqual( expectedStates ),
+                sut.GetTransitions( state ).TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -332,12 +317,11 @@ public class StateMachineBuilderTests : TestsBase
 
         var result = sut.MarkAsAccept( state );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            sut.GetStates().Should().BeEquivalentTo( expectedStates );
-            sut.GetTransitions( state ).Should().BeEmpty();
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.GetStates().TestSetEqual( expectedStates ),
+                sut.GetTransitions( state ).TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -350,12 +334,11 @@ public class StateMachineBuilderTests : TestsBase
 
         var result = sut.MarkAsDefault( state );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            sut.GetStates().Should().BeEquivalentTo( expectedStates );
-            sut.GetTransitions( state ).Should().BeEmpty();
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.GetStates().TestSetEqual( expectedStates ),
+                sut.GetTransitions( state ).TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -369,12 +352,11 @@ public class StateMachineBuilderTests : TestsBase
 
         var result = sut.MarkAsDefault( state );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            sut.GetStates().Should().BeEquivalentTo( expectedStates );
-            sut.GetTransitions( state ).Should().BeEmpty();
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.GetStates().TestSetEqual( expectedStates ),
+                sut.GetTransitions( state ).TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -388,12 +370,11 @@ public class StateMachineBuilderTests : TestsBase
 
         var result = sut.MarkAsDefault( state );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            sut.GetStates().Should().BeEquivalentTo( expectedStates );
-            sut.GetTransitions( state ).Should().BeEmpty();
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.GetStates().TestSetEqual( expectedStates ),
+                sut.GetTransitions( state ).TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -407,12 +388,11 @@ public class StateMachineBuilderTests : TestsBase
 
         var result = sut.MarkAsDefault( state );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            sut.GetStates().Should().BeEquivalentTo( expectedStates );
-            sut.GetTransitions( state ).Should().BeEmpty();
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.GetStates().TestSetEqual( expectedStates ),
+                sut.GetTransitions( state ).TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -425,12 +405,11 @@ public class StateMachineBuilderTests : TestsBase
 
         var result = sut.MarkAsInitial( state );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            sut.GetStates().Should().BeEquivalentTo( expectedStates );
-            sut.GetTransitions( state ).Should().BeEmpty();
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.GetStates().TestSetEqual( expectedStates ),
+                sut.GetTransitions( state ).TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -444,12 +423,11 @@ public class StateMachineBuilderTests : TestsBase
 
         var result = sut.MarkAsInitial( state );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            sut.GetStates().Should().BeEquivalentTo( expectedStates );
-            sut.GetTransitions( state ).Should().BeEmpty();
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.GetStates().TestSetEqual( expectedStates ),
+                sut.GetTransitions( state ).TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -463,12 +441,11 @@ public class StateMachineBuilderTests : TestsBase
 
         var result = sut.MarkAsInitial( state );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            sut.GetStates().Should().BeEquivalentTo( expectedStates );
-            sut.GetTransitions( state ).Should().BeEmpty();
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.GetStates().TestSetEqual( expectedStates ),
+                sut.GetTransitions( state ).TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -482,12 +459,11 @@ public class StateMachineBuilderTests : TestsBase
 
         var result = sut.MarkAsInitial( state );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            sut.GetStates().Should().BeEquivalentTo( expectedStates );
-            sut.GetTransitions( state ).Should().BeEmpty();
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.GetStates().TestSetEqual( expectedStates ),
+                sut.GetTransitions( state ).TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -504,12 +480,11 @@ public class StateMachineBuilderTests : TestsBase
 
         var result = sut.MarkAsInitial( state );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            sut.GetStates().Should().BeEquivalentTo( expectedStates );
-            sut.GetTransitions( state ).Should().BeEmpty();
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.GetStates().TestSetEqual( expectedStates ),
+                sut.GetTransitions( state ).TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -521,7 +496,7 @@ public class StateMachineBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.Build() );
 
-        action.Should().ThrowExactly<StateMachineCreationException>();
+        action.Test( exc => exc.TestType().Exact<StateMachineCreationException>() ).Go();
     }
 
     [Fact]
@@ -534,19 +509,18 @@ public class StateMachineBuilderTests : TestsBase
 
         var result = sut.Build();
 
-        using ( new AssertionScope() )
-        {
-            result.DefaultResult.Should().Be( defaultResult );
-            result.Optimization.Should().Be( sut.Optimization.Level );
-            result.StateComparer.Should().BeSameAs( sut.StateComparer );
-            result.InputComparer.Should().BeSameAs( sut.InputComparer );
-            result.States.Should().HaveCount( 1 );
-            result.States.ContainsKey( result.InitialState.Value ).Should().BeTrue();
-            result.InitialState.Value.Should().Be( state );
-            result.InitialState.Type.Should().Be( StateMachineNodeType.Initial );
-            result.InitialState.Transitions.Should().BeEmpty();
-            result.States[result.InitialState.Value].Should().BeSameAs( result.InitialState );
-        }
+        Assertion.All(
+                result.DefaultResult.TestEquals( defaultResult ),
+                result.Optimization.TestEquals( sut.Optimization.Level ),
+                result.StateComparer.TestRefEquals( sut.StateComparer ),
+                result.InputComparer.TestRefEquals( sut.InputComparer ),
+                result.States.Count.TestEquals( 1 ),
+                result.States.ContainsKey( result.InitialState.Value ).TestTrue(),
+                result.InitialState.Value.TestEquals( state ),
+                result.InitialState.Type.TestEquals( StateMachineNodeType.Initial ),
+                result.InitialState.Transitions.TestEmpty(),
+                result.States[result.InitialState.Value].TestRefEquals( result.InitialState ) )
+            .Go();
     }
 
     [Fact]
@@ -556,8 +530,7 @@ public class StateMachineBuilderTests : TestsBase
         var (a, b, c, d, e, f) = ("a", "b", "c", "d", "e", "f");
         var (_0, _1) = (0, 1);
 
-        var sut = new StateMachineBuilder<string, int, string>( defaultResult )
-            .AddTransition( a, b, _0 )
+        var sut = new StateMachineBuilder<string, int, string>( defaultResult ).AddTransition( a, b, _0 )
             .AddTransition( a, c, _1 )
             .AddTransition( b, a, _0 )
             .AddTransition( b, d, _1 )
@@ -576,60 +549,45 @@ public class StateMachineBuilderTests : TestsBase
 
         var result = sut.Build();
 
-        using ( new AssertionScope() )
-        {
-            result.DefaultResult.Should().Be( defaultResult );
-            result.Optimization.Should().Be( sut.Optimization.Level );
-            result.StateComparer.Should().BeSameAs( sut.StateComparer );
-            result.InputComparer.Should().BeSameAs( sut.InputComparer );
-            result.States.Should().HaveCount( 6 );
-            result.States.Keys.Should().BeEquivalentTo( a, b, c, d, e, f );
-
-            var aNode = result.States[a];
-            var bNode = result.States[b];
-            var cNode = result.States[c];
-            var dNode = result.States[d];
-            var eNode = result.States[e];
-            var fNode = result.States[f];
-
-            result.InitialState.Should().BeSameAs( aNode );
-
-            aNode.Type.Should().Be( StateMachineNodeType.Initial );
-            aNode.Transitions.Should().HaveCount( 2 );
-            aNode.Transitions.Keys.Should().BeEquivalentTo( _0, _1 );
-            aNode.Transitions[_0].Destination.Should().BeSameAs( bNode );
-            aNode.Transitions[_1].Destination.Should().BeSameAs( cNode );
-
-            bNode.Type.Should().Be( StateMachineNodeType.Default );
-            bNode.Transitions.Should().HaveCount( 2 );
-            bNode.Transitions.Keys.Should().BeEquivalentTo( _0, _1 );
-            bNode.Transitions[_0].Destination.Should().BeSameAs( aNode );
-            bNode.Transitions[_1].Destination.Should().BeSameAs( dNode );
-
-            cNode.Type.Should().Be( StateMachineNodeType.Accept );
-            cNode.Transitions.Should().HaveCount( 2 );
-            cNode.Transitions.Keys.Should().BeEquivalentTo( _0, _1 );
-            cNode.Transitions[_0].Destination.Should().BeSameAs( eNode );
-            cNode.Transitions[_1].Destination.Should().BeSameAs( fNode );
-
-            dNode.Type.Should().Be( StateMachineNodeType.Accept );
-            dNode.Transitions.Should().HaveCount( 2 );
-            dNode.Transitions.Keys.Should().BeEquivalentTo( _0, _1 );
-            dNode.Transitions[_0].Destination.Should().BeSameAs( eNode );
-            dNode.Transitions[_1].Destination.Should().BeSameAs( fNode );
-
-            eNode.Type.Should().Be( StateMachineNodeType.Accept );
-            eNode.Transitions.Should().HaveCount( 2 );
-            eNode.Transitions.Keys.Should().BeEquivalentTo( _0, _1 );
-            eNode.Transitions[_0].Destination.Should().BeSameAs( eNode );
-            eNode.Transitions[_1].Destination.Should().BeSameAs( fNode );
-
-            fNode.Type.Should().Be( StateMachineNodeType.Default );
-            fNode.Transitions.Should().HaveCount( 2 );
-            fNode.Transitions.Keys.Should().BeEquivalentTo( _0, _1 );
-            fNode.Transitions[_0].Destination.Should().BeSameAs( fNode );
-            fNode.Transitions[_1].Destination.Should().BeSameAs( fNode );
-        }
+        Assertion.All(
+                result.DefaultResult.TestEquals( defaultResult ),
+                result.Optimization.TestEquals( sut.Optimization.Level ),
+                result.StateComparer.TestRefEquals( sut.StateComparer ),
+                result.InputComparer.TestRefEquals( sut.InputComparer ),
+                result.States.Count.TestEquals( 6 ),
+                result.States.Keys.TestSetEqual( [ a, b, c, d, e, f ] ),
+                result.InitialState.TestRefEquals( result.States[a] ),
+                result.States[a].Type.TestEquals( StateMachineNodeType.Initial ),
+                result.States[a].Transitions.Count.TestEquals( 2 ),
+                result.States[a].Transitions.Keys.TestSetEqual( [ _0, _1 ] ),
+                result.States[a].Transitions[_0].Destination.TestRefEquals( result.States[b] ),
+                result.States[a].Transitions[_1].Destination.TestRefEquals( result.States[c] ),
+                result.States[b].Type.TestEquals( StateMachineNodeType.Default ),
+                result.States[b].Transitions.Count.TestEquals( 2 ),
+                result.States[b].Transitions.Keys.TestSetEqual( [ _0, _1 ] ),
+                result.States[b].Transitions[_0].Destination.TestRefEquals( result.States[a] ),
+                result.States[b].Transitions[_1].Destination.TestRefEquals( result.States[d] ),
+                result.States[c].Type.TestEquals( StateMachineNodeType.Accept ),
+                result.States[c].Transitions.Count.TestEquals( 2 ),
+                result.States[c].Transitions.Keys.TestSetEqual( [ _0, _1 ] ),
+                result.States[c].Transitions[_0].Destination.TestRefEquals( result.States[e] ),
+                result.States[c].Transitions[_1].Destination.TestRefEquals( result.States[f] ),
+                result.States[d].Type.TestEquals( StateMachineNodeType.Accept ),
+                result.States[d].Transitions.Count.TestEquals( 2 ),
+                result.States[d].Transitions.Keys.TestSetEqual( [ _0, _1 ] ),
+                result.States[d].Transitions[_0].Destination.TestRefEquals( result.States[e] ),
+                result.States[d].Transitions[_1].Destination.TestRefEquals( result.States[f] ),
+                result.States[e].Type.TestEquals( StateMachineNodeType.Accept ),
+                result.States[e].Transitions.Count.TestEquals( 2 ),
+                result.States[e].Transitions.Keys.TestSetEqual( [ _0, _1 ] ),
+                result.States[e].Transitions[_0].Destination.TestRefEquals( result.States[e] ),
+                result.States[e].Transitions[_1].Destination.TestRefEquals( result.States[f] ),
+                result.States[f].Type.TestEquals( StateMachineNodeType.Default ),
+                result.States[f].Transitions.Count.TestEquals( 2 ),
+                result.States[f].Transitions.Keys.TestSetEqual( [ _0, _1 ] ),
+                result.States[f].Transitions[_0].Destination.TestRefEquals( result.States[f] ),
+                result.States[f].Transitions[_1].Destination.TestRefEquals( result.States[f] ) )
+            .Go();
     }
 
     [Fact]
@@ -650,22 +608,18 @@ public class StateMachineBuilderTests : TestsBase
 
         var result = sut.Build();
 
-        using ( new AssertionScope() )
-        {
-            result.DefaultResult.Should().Be( defaultResult );
-            result.Optimization.Should().Be( sut.Optimization.Level );
-            result.StateComparer.Should().BeSameAs( sut.StateComparer );
-            result.InputComparer.Should().BeSameAs( sut.InputComparer );
-            result.States.Should().HaveCount( 1 );
-            result.States.Keys.Should().BeEquivalentTo( a );
-
-            var aNode = result.States[a];
-
-            aNode.Type.Should().Be( StateMachineNodeType.Initial );
-            aNode.Transitions.Should().HaveCount( 1 );
-            aNode.Transitions.Keys.Should().BeEquivalentTo( _0 );
-            aNode.Transitions[_0].Destination.Should().BeSameAs( aNode );
-        }
+        Assertion.All(
+                result.DefaultResult.TestEquals( defaultResult ),
+                result.Optimization.TestEquals( sut.Optimization.Level ),
+                result.StateComparer.TestRefEquals( sut.StateComparer ),
+                result.InputComparer.TestRefEquals( sut.InputComparer ),
+                result.States.Count.TestEquals( 1 ),
+                result.States.Keys.TestSetEqual( [ a ] ),
+                result.States[a].Type.TestEquals( StateMachineNodeType.Initial ),
+                result.States[a].Transitions.Count.TestEquals( 1 ),
+                result.States[a].Transitions.Keys.TestSetEqual( [ _0 ] ),
+                result.States[a].Transitions[_0].Destination.TestRefEquals( result.States[a] ) )
+            .Go();
     }
 
     [Fact]
@@ -686,36 +640,28 @@ public class StateMachineBuilderTests : TestsBase
 
         var result = sut.Build();
 
-        using ( new AssertionScope() )
-        {
-            result.DefaultResult.Should().Be( defaultResult );
-            result.Optimization.Should().Be( sut.Optimization.Level );
-            result.StateComparer.Should().BeSameAs( sut.StateComparer );
-            result.InputComparer.Should().BeSameAs( sut.InputComparer );
-            result.States.Should().HaveCount( 3 );
-            result.States.Keys.Should().BeEquivalentTo( a, b, c );
-
-            var aNode = result.States[a];
-            var bNode = result.States[b];
-            var cNode = result.States[c];
-
-            aNode.Type.Should().Be( StateMachineNodeType.Initial );
-            aNode.Transitions.Should().HaveCount( 2 );
-            aNode.Transitions.Keys.Should().BeEquivalentTo( _0, _1 );
-            aNode.Transitions[_0].Destination.Should().BeSameAs( bNode );
-            aNode.Transitions[_1].Destination.Should().BeSameAs( aNode );
-
-            bNode.Type.Should().Be( StateMachineNodeType.Default );
-            bNode.Transitions.Should().HaveCount( 2 );
-            bNode.Transitions.Keys.Should().BeEquivalentTo( _0, _1 );
-            bNode.Transitions[_0].Destination.Should().BeSameAs( aNode );
-            bNode.Transitions[_1].Destination.Should().BeSameAs( cNode );
-
-            cNode.Type.Should().Be( StateMachineNodeType.Default );
-            cNode.Transitions.Should().HaveCount( 1 );
-            cNode.Transitions.Keys.Should().BeEquivalentTo( _0 );
-            cNode.Transitions[_0].Destination.Should().BeSameAs( cNode );
-        }
+        Assertion.All(
+                result.DefaultResult.TestEquals( defaultResult ),
+                result.Optimization.TestEquals( sut.Optimization.Level ),
+                result.StateComparer.TestRefEquals( sut.StateComparer ),
+                result.InputComparer.TestRefEquals( sut.InputComparer ),
+                result.States.Count.TestEquals( 3 ),
+                result.States.Keys.TestSetEqual( [ a, b, c ] ),
+                result.States[a].Type.TestEquals( StateMachineNodeType.Initial ),
+                result.States[a].Transitions.Count.TestEquals( 2 ),
+                result.States[a].Transitions.Keys.TestSetEqual( [ _0, _1 ] ),
+                result.States[a].Transitions[_0].Destination.TestRefEquals( result.States[b] ),
+                result.States[a].Transitions[_1].Destination.TestRefEquals( result.States[a] ),
+                result.States[b].Type.TestEquals( StateMachineNodeType.Default ),
+                result.States[b].Transitions.Count.TestEquals( 2 ),
+                result.States[b].Transitions.Keys.TestSetEqual( [ _0, _1 ] ),
+                result.States[b].Transitions[_0].Destination.TestRefEquals( result.States[a] ),
+                result.States[b].Transitions[_1].Destination.TestRefEquals( result.States[c] ),
+                result.States[c].Type.TestEquals( StateMachineNodeType.Default ),
+                result.States[c].Transitions.Count.TestEquals( 1 ),
+                result.States[c].Transitions.Keys.TestSetEqual( [ _0 ] ),
+                result.States[c].Transitions[_0].Destination.TestRefEquals( result.States[c] ) )
+            .Go();
     }
 
     [Fact]
@@ -739,30 +685,24 @@ public class StateMachineBuilderTests : TestsBase
 
         var result = sut.Build();
 
-        using ( new AssertionScope() )
-        {
-            result.DefaultResult.Should().Be( defaultResult );
-            result.Optimization.Should().Be( sut.Optimization.Level );
-            result.StateComparer.Should().BeSameAs( sut.StateComparer );
-            result.InputComparer.Should().BeSameAs( sut.InputComparer );
-            result.States.Should().HaveCount( 2 );
-            result.States.Keys.Should().BeEquivalentTo( a, b );
-
-            var aNode = result.States[a];
-            var bNode = result.States[b];
-
-            aNode.Type.Should().Be( StateMachineNodeType.Initial );
-            aNode.Transitions.Should().HaveCount( 2 );
-            aNode.Transitions.Keys.Should().BeEquivalentTo( _0, _1 );
-            aNode.Transitions[_0].Destination.Should().BeSameAs( bNode );
-            aNode.Transitions[_1].Destination.Should().BeSameAs( aNode );
-
-            bNode.Type.Should().Be( StateMachineNodeType.Default );
-            bNode.Transitions.Should().HaveCount( 2 );
-            bNode.Transitions.Keys.Should().BeEquivalentTo( _0, _1 );
-            bNode.Transitions[_0].Destination.Should().BeSameAs( aNode );
-            bNode.Transitions[_1].Destination.Should().BeSameAs( aNode );
-        }
+        Assertion.All(
+                result.DefaultResult.TestEquals( defaultResult ),
+                result.Optimization.TestEquals( sut.Optimization.Level ),
+                result.StateComparer.TestRefEquals( sut.StateComparer ),
+                result.InputComparer.TestRefEquals( sut.InputComparer ),
+                result.States.Count.TestEquals( 2 ),
+                result.States.Keys.TestSetEqual( [ a, b ] ),
+                result.States[a].Type.TestEquals( StateMachineNodeType.Initial ),
+                result.States[a].Transitions.Count.TestEquals( 2 ),
+                result.States[a].Transitions.Keys.TestSetEqual( [ _0, _1 ] ),
+                result.States[a].Transitions[_0].Destination.TestRefEquals( result.States[b] ),
+                result.States[a].Transitions[_1].Destination.TestRefEquals( result.States[a] ),
+                result.States[b].Type.TestEquals( StateMachineNodeType.Default ),
+                result.States[b].Transitions.Count.TestEquals( 2 ),
+                result.States[b].Transitions.Keys.TestSetEqual( [ _0, _1 ] ),
+                result.States[b].Transitions[_0].Destination.TestRefEquals( result.States[a] ),
+                result.States[b].Transitions[_1].Destination.TestRefEquals( result.States[a] ) )
+            .Go();
     }
 
     [Fact]
@@ -784,30 +724,24 @@ public class StateMachineBuilderTests : TestsBase
 
         var result = sut.Build();
 
-        using ( new AssertionScope() )
-        {
-            result.DefaultResult.Should().Be( defaultResult );
-            result.Optimization.Should().Be( sut.Optimization.Level );
-            result.StateComparer.Should().BeSameAs( sut.StateComparer );
-            result.InputComparer.Should().BeSameAs( sut.InputComparer );
-            result.States.Should().HaveCount( 2 );
-            result.States.Keys.Should().BeEquivalentTo( a, b );
-
-            var aNode = result.States[a];
-            var bNode = result.States[b];
-
-            aNode.Type.Should().Be( StateMachineNodeType.Initial );
-            aNode.Transitions.Should().HaveCount( 2 );
-            aNode.Transitions.Keys.Should().BeEquivalentTo( _0, _1 );
-            aNode.Transitions[_0].Destination.Should().BeSameAs( bNode );
-            aNode.Transitions[_1].Destination.Should().BeSameAs( bNode );
-
-            bNode.Type.Should().Be( StateMachineNodeType.Accept );
-            bNode.Transitions.Should().HaveCount( 2 );
-            bNode.Transitions.Keys.Should().BeEquivalentTo( _0, _1 );
-            bNode.Transitions[_0].Destination.Should().BeSameAs( bNode );
-            bNode.Transitions[_1].Destination.Should().BeSameAs( bNode );
-        }
+        Assertion.All(
+                result.DefaultResult.TestEquals( defaultResult ),
+                result.Optimization.TestEquals( sut.Optimization.Level ),
+                result.StateComparer.TestRefEquals( sut.StateComparer ),
+                result.InputComparer.TestRefEquals( sut.InputComparer ),
+                result.States.Count.TestEquals( 2 ),
+                result.States.Keys.TestSetEqual( [ a, b ] ),
+                result.States[a].Type.TestEquals( StateMachineNodeType.Initial ),
+                result.States[a].Transitions.Count.TestEquals( 2 ),
+                result.States[a].Transitions.Keys.TestSetEqual( [ _0, _1 ] ),
+                result.States[a].Transitions[_0].Destination.TestRefEquals( result.States[b] ),
+                result.States[a].Transitions[_1].Destination.TestRefEquals( result.States[b] ),
+                result.States[b].Type.TestEquals( StateMachineNodeType.Accept ),
+                result.States[b].Transitions.Count.TestEquals( 2 ),
+                result.States[b].Transitions.Keys.TestSetEqual( [ _0, _1 ] ),
+                result.States[b].Transitions[_0].Destination.TestRefEquals( result.States[b] ),
+                result.States[b].Transitions[_1].Destination.TestRefEquals( result.States[b] ) )
+            .Go();
     }
 
     [Fact]
@@ -832,30 +766,24 @@ public class StateMachineBuilderTests : TestsBase
 
         var result = sut.Build();
 
-        using ( new AssertionScope() )
-        {
-            result.DefaultResult.Should().Be( defaultResult );
-            result.Optimization.Should().Be( sut.Optimization.Level );
-            result.StateComparer.Should().BeSameAs( sut.StateComparer );
-            result.InputComparer.Should().BeSameAs( sut.InputComparer );
-            result.States.Should().HaveCount( 2 );
-            result.States.Keys.Should().BeEquivalentTo( a, b + c );
-
-            var aNode = result.States[a];
-            var bcNode = result.States[b + c];
-
-            aNode.Type.Should().Be( StateMachineNodeType.Initial );
-            aNode.Transitions.Should().HaveCount( 2 );
-            aNode.Transitions.Keys.Should().BeEquivalentTo( _0, _1 );
-            aNode.Transitions[_0].Destination.Should().BeSameAs( bcNode );
-            aNode.Transitions[_1].Destination.Should().BeSameAs( bcNode );
-
-            bcNode.Type.Should().Be( StateMachineNodeType.Accept );
-            bcNode.Transitions.Should().HaveCount( 2 );
-            bcNode.Transitions.Keys.Should().BeEquivalentTo( _0, _1 );
-            bcNode.Transitions[_0].Destination.Should().BeSameAs( bcNode );
-            bcNode.Transitions[_1].Destination.Should().BeSameAs( bcNode );
-        }
+        Assertion.All(
+                result.DefaultResult.TestEquals( defaultResult ),
+                result.Optimization.TestEquals( sut.Optimization.Level ),
+                result.StateComparer.TestRefEquals( sut.StateComparer ),
+                result.InputComparer.TestRefEquals( sut.InputComparer ),
+                result.States.Count.TestEquals( 2 ),
+                result.States.Keys.TestSetEqual( [ a, b + c ] ),
+                result.States[a].Type.TestEquals( StateMachineNodeType.Initial ),
+                result.States[a].Transitions.Count.TestEquals( 2 ),
+                result.States[a].Transitions.Keys.TestSetEqual( [ _0, _1 ] ),
+                result.States[a].Transitions[_0].Destination.TestRefEquals( result.States[b + c] ),
+                result.States[a].Transitions[_1].Destination.TestRefEquals( result.States[b + c] ),
+                result.States[b + c].Type.TestEquals( StateMachineNodeType.Accept ),
+                result.States[b + c].Transitions.Count.TestEquals( 2 ),
+                result.States[b + c].Transitions.Keys.TestSetEqual( [ _0, _1 ] ),
+                result.States[b + c].Transitions[_0].Destination.TestRefEquals( result.States[b + c] ),
+                result.States[b + c].Transitions[_1].Destination.TestRefEquals( result.States[b + c] ) )
+            .Go();
     }
 
     [Fact]
@@ -880,23 +808,19 @@ public class StateMachineBuilderTests : TestsBase
 
         var result = sut.Build();
 
-        using ( new AssertionScope() )
-        {
-            result.DefaultResult.Should().Be( defaultResult );
-            result.Optimization.Should().Be( sut.Optimization.Level );
-            result.StateComparer.Should().BeSameAs( sut.StateComparer );
-            result.InputComparer.Should().BeSameAs( sut.InputComparer );
-            result.States.Should().HaveCount( 1 );
-            result.States.Keys.Should().BeEquivalentTo( a + b );
-
-            var abNode = result.States[a + b];
-
-            abNode.Type.Should().Be( StateMachineNodeType.Initial | StateMachineNodeType.Accept );
-            abNode.Transitions.Should().HaveCount( 2 );
-            abNode.Transitions.Keys.Should().BeEquivalentTo( _0, _1 );
-            abNode.Transitions[_0].Destination.Should().BeSameAs( abNode );
-            abNode.Transitions[_1].Destination.Should().BeSameAs( abNode );
-        }
+        Assertion.All(
+                result.DefaultResult.TestEquals( defaultResult ),
+                result.Optimization.TestEquals( sut.Optimization.Level ),
+                result.StateComparer.TestRefEquals( sut.StateComparer ),
+                result.InputComparer.TestRefEquals( sut.InputComparer ),
+                result.States.Count.TestEquals( 1 ),
+                result.States.Keys.TestSetEqual( [ a + b ] ),
+                result.States[a + b].Type.TestEquals( StateMachineNodeType.Initial | StateMachineNodeType.Accept ),
+                result.States[a + b].Transitions.Count.TestEquals( 2 ),
+                result.States[a + b].Transitions.Keys.TestSetEqual( [ _0, _1 ] ),
+                result.States[a + b].Transitions[_0].Destination.TestRefEquals( result.States[a + b] ),
+                result.States[a + b].Transitions[_1].Destination.TestRefEquals( result.States[a + b] ) )
+            .Go();
     }
 
     [Fact]
@@ -920,30 +844,24 @@ public class StateMachineBuilderTests : TestsBase
 
         var result = sut.Build();
 
-        using ( new AssertionScope() )
-        {
-            result.DefaultResult.Should().Be( defaultResult );
-            result.Optimization.Should().Be( sut.Optimization.Level );
-            result.StateComparer.Should().BeSameAs( sut.StateComparer );
-            result.InputComparer.Should().BeSameAs( sut.InputComparer );
-            result.States.Should().HaveCount( 2 );
-            result.States.Keys.Should().BeEquivalentTo( a, b );
-
-            var aNode = result.States[a];
-            var bNode = result.States[b];
-
-            aNode.Type.Should().Be( StateMachineNodeType.Initial );
-            aNode.Transitions.Should().HaveCount( 2 );
-            aNode.Transitions.Keys.Should().BeEquivalentTo( _0, _1 );
-            aNode.Transitions[_0].Destination.Should().BeSameAs( aNode );
-            aNode.Transitions[_1].Destination.Should().BeSameAs( bNode );
-
-            bNode.Type.Should().Be( StateMachineNodeType.Accept );
-            bNode.Transitions.Should().HaveCount( 2 );
-            bNode.Transitions.Keys.Should().BeEquivalentTo( _0, _1 );
-            bNode.Transitions[_0].Destination.Should().BeSameAs( bNode );
-            bNode.Transitions[_1].Destination.Should().BeSameAs( bNode );
-        }
+        Assertion.All(
+                result.DefaultResult.TestEquals( defaultResult ),
+                result.Optimization.TestEquals( sut.Optimization.Level ),
+                result.StateComparer.TestRefEquals( sut.StateComparer ),
+                result.InputComparer.TestRefEquals( sut.InputComparer ),
+                result.States.Count.TestEquals( 2 ),
+                result.States.Keys.TestSetEqual( [ a, b ] ),
+                result.States[a].Type.TestEquals( StateMachineNodeType.Initial ),
+                result.States[a].Transitions.Count.TestEquals( 2 ),
+                result.States[a].Transitions.Keys.TestSetEqual( [ _0, _1 ] ),
+                result.States[a].Transitions[_0].Destination.TestRefEquals( result.States[a] ),
+                result.States[a].Transitions[_1].Destination.TestRefEquals( result.States[b] ),
+                result.States[b].Type.TestEquals( StateMachineNodeType.Accept ),
+                result.States[b].Transitions.Count.TestEquals( 2 ),
+                result.States[b].Transitions.Keys.TestSetEqual( [ _0, _1 ] ),
+                result.States[b].Transitions[_0].Destination.TestRefEquals( result.States[b] ),
+                result.States[b].Transitions[_1].Destination.TestRefEquals( result.States[b] ) )
+            .Go();
     }
 
     [Fact]
@@ -968,37 +886,29 @@ public class StateMachineBuilderTests : TestsBase
 
         var result = sut.Build();
 
-        using ( new AssertionScope() )
-        {
-            result.DefaultResult.Should().Be( defaultResult );
-            result.Optimization.Should().Be( sut.Optimization.Level );
-            result.StateComparer.Should().BeSameAs( sut.StateComparer );
-            result.InputComparer.Should().BeSameAs( sut.InputComparer );
-            result.States.Should().HaveCount( 3 );
-            result.States.Keys.Should().BeEquivalentTo( a, b, c );
-
-            var aNode = result.States[a];
-            var bNode = result.States[b];
-            var cNode = result.States[c];
-
-            aNode.Type.Should().Be( StateMachineNodeType.Initial );
-            aNode.Transitions.Should().HaveCount( 2 );
-            aNode.Transitions.Keys.Should().BeEquivalentTo( _0, _1 );
-            aNode.Transitions[_0].Destination.Should().BeSameAs( cNode );
-            aNode.Transitions[_1].Destination.Should().BeSameAs( bNode );
-
-            bNode.Type.Should().Be( StateMachineNodeType.Dead );
-            bNode.Transitions.Should().HaveCount( 2 );
-            bNode.Transitions.Keys.Should().BeEquivalentTo( _0, _1 );
-            bNode.Transitions[_0].Destination.Should().BeSameAs( bNode );
-            bNode.Transitions[_1].Destination.Should().BeSameAs( bNode );
-
-            cNode.Type.Should().Be( StateMachineNodeType.Accept );
-            cNode.Transitions.Should().HaveCount( 2 );
-            cNode.Transitions.Keys.Should().BeEquivalentTo( _0, _1 );
-            cNode.Transitions[_0].Destination.Should().BeSameAs( cNode );
-            cNode.Transitions[_1].Destination.Should().BeSameAs( cNode );
-        }
+        Assertion.All(
+                result.DefaultResult.TestEquals( defaultResult ),
+                result.Optimization.TestEquals( sut.Optimization.Level ),
+                result.StateComparer.TestRefEquals( sut.StateComparer ),
+                result.InputComparer.TestRefEquals( sut.InputComparer ),
+                result.States.Count.TestEquals( 3 ),
+                result.States.Keys.TestSetEqual( [ a, b, c ] ),
+                result.States[a].Type.TestEquals( StateMachineNodeType.Initial ),
+                result.States[a].Transitions.Count.TestEquals( 2 ),
+                result.States[a].Transitions.Keys.TestSetEqual( [ _0, _1 ] ),
+                result.States[a].Transitions[_0].Destination.TestRefEquals( result.States[c] ),
+                result.States[a].Transitions[_1].Destination.TestRefEquals( result.States[b] ),
+                result.States[b].Type.TestEquals( StateMachineNodeType.Dead ),
+                result.States[b].Transitions.Count.TestEquals( 2 ),
+                result.States[b].Transitions.Keys.TestSetEqual( [ _0, _1 ] ),
+                result.States[b].Transitions[_0].Destination.TestRefEquals( result.States[b] ),
+                result.States[b].Transitions[_1].Destination.TestRefEquals( result.States[b] ),
+                result.States[c].Type.TestEquals( StateMachineNodeType.Accept ),
+                result.States[c].Transitions.Count.TestEquals( 2 ),
+                result.States[c].Transitions.Keys.TestSetEqual( [ _0, _1 ] ),
+                result.States[c].Transitions[_0].Destination.TestRefEquals( result.States[c] ),
+                result.States[c].Transitions[_1].Destination.TestRefEquals( result.States[c] ) )
+            .Go();
     }
 
     [Fact]
@@ -1026,38 +936,30 @@ public class StateMachineBuilderTests : TestsBase
 
         var result = sut.Build();
 
-        using ( new AssertionScope() )
-        {
-            result.DefaultResult.Should().Be( defaultResult );
-            result.Optimization.Should().Be( sut.Optimization.Level );
-            result.StateComparer.Should().BeSameAs( sut.StateComparer );
-            result.InputComparer.Should().BeSameAs( sut.InputComparer );
-            result.States.Should().HaveCount( 3 );
-            result.States.Keys.Should().BeEquivalentTo( a, b, c );
-
-            var aNode = result.States[a];
-            var bNode = result.States[b];
-            var cNode = result.States[c];
-
-            aNode.Type.Should().Be( StateMachineNodeType.Initial );
-            aNode.Transitions.Should().HaveCount( 2 );
-            aNode.Transitions.Keys.Should().BeEquivalentTo( _0, _1 );
-            aNode.Transitions[_0].Destination.Should().BeSameAs( cNode );
-            aNode.Transitions[_1].Destination.Should().BeSameAs( bNode );
-
-            bNode.Type.Should().Be( StateMachineNodeType.Accept );
-            bNode.Transitions.Should().HaveCount( 2 );
-            bNode.Transitions.Keys.Should().BeEquivalentTo( _0, _1 );
-            bNode.Transitions[_0].Destination.Should().BeSameAs( bNode );
-            bNode.Transitions[_1].Destination.Should().BeSameAs( bNode );
-            bNode.Transitions[_1].Handler.Should().BeSameAs( handler );
-
-            cNode.Type.Should().Be( StateMachineNodeType.Accept );
-            cNode.Transitions.Should().HaveCount( 2 );
-            cNode.Transitions.Keys.Should().BeEquivalentTo( _0, _1 );
-            cNode.Transitions[_0].Destination.Should().BeSameAs( cNode );
-            cNode.Transitions[_1].Destination.Should().BeSameAs( cNode );
-        }
+        Assertion.All(
+                result.DefaultResult.TestEquals( defaultResult ),
+                result.Optimization.TestEquals( sut.Optimization.Level ),
+                result.StateComparer.TestRefEquals( sut.StateComparer ),
+                result.InputComparer.TestRefEquals( sut.InputComparer ),
+                result.States.Count.TestEquals( 3 ),
+                result.States.Keys.TestSetEqual( [ a, b, c ] ),
+                result.States[a].Type.TestEquals( StateMachineNodeType.Initial ),
+                result.States[a].Transitions.Count.TestEquals( 2 ),
+                result.States[a].Transitions.Keys.TestSetEqual( [ _0, _1 ] ),
+                result.States[a].Transitions[_0].Destination.TestRefEquals( result.States[c] ),
+                result.States[a].Transitions[_1].Destination.TestRefEquals( result.States[b] ),
+                result.States[b].Type.TestEquals( StateMachineNodeType.Accept ),
+                result.States[b].Transitions.Count.TestEquals( 2 ),
+                result.States[b].Transitions.Keys.TestSetEqual( [ _0, _1 ] ),
+                result.States[b].Transitions[_0].Destination.TestRefEquals( result.States[b] ),
+                result.States[b].Transitions[_1].Destination.TestRefEquals( result.States[b] ),
+                result.States[b].Transitions[_1].Handler.TestRefEquals( handler ),
+                result.States[c].Type.TestEquals( StateMachineNodeType.Accept ),
+                result.States[c].Transitions.Count.TestEquals( 2 ),
+                result.States[c].Transitions.Keys.TestSetEqual( [ _0, _1 ] ),
+                result.States[c].Transitions[_0].Destination.TestRefEquals( result.States[c] ),
+                result.States[c].Transitions[_1].Destination.TestRefEquals( result.States[c] ) )
+            .Go();
     }
 
     [Fact]
@@ -1086,39 +988,31 @@ public class StateMachineBuilderTests : TestsBase
 
         var result = sut.Build();
 
-        using ( new AssertionScope() )
-        {
-            result.DefaultResult.Should().Be( defaultResult );
-            result.Optimization.Should().Be( sut.Optimization.Level );
-            result.StateComparer.Should().BeSameAs( sut.StateComparer );
-            result.InputComparer.Should().BeSameAs( sut.InputComparer );
-            result.States.Should().HaveCount( 3 );
-            result.States.Keys.Should().BeEquivalentTo( a, b, c );
-
-            var aNode = result.States[a];
-            var bNode = result.States[b];
-            var cNode = result.States[c];
-
-            aNode.Type.Should().Be( StateMachineNodeType.Initial );
-            aNode.Transitions.Should().HaveCount( 2 );
-            aNode.Transitions.Keys.Should().BeEquivalentTo( _0, _1 );
-            aNode.Transitions[_0].Destination.Should().BeSameAs( cNode );
-            aNode.Transitions[_1].Destination.Should().BeSameAs( bNode );
-
-            bNode.Type.Should().Be( StateMachineNodeType.Accept );
-            bNode.Transitions.Should().HaveCount( 2 );
-            bNode.Transitions.Keys.Should().BeEquivalentTo( _0, _1 );
-            bNode.Transitions[_0].Destination.Should().BeSameAs( bNode );
-            bNode.Transitions[_1].Destination.Should().BeSameAs( bNode );
-            bNode.Transitions[_1].Handler.Should().BeSameAs( handlerB );
-
-            cNode.Type.Should().Be( StateMachineNodeType.Accept );
-            cNode.Transitions.Should().HaveCount( 2 );
-            cNode.Transitions.Keys.Should().BeEquivalentTo( _0, _1 );
-            cNode.Transitions[_0].Destination.Should().BeSameAs( cNode );
-            cNode.Transitions[_1].Destination.Should().BeSameAs( cNode );
-            cNode.Transitions[_1].Handler.Should().BeSameAs( handlerC );
-        }
+        Assertion.All(
+                result.DefaultResult.TestEquals( defaultResult ),
+                result.Optimization.TestEquals( sut.Optimization.Level ),
+                result.StateComparer.TestRefEquals( sut.StateComparer ),
+                result.InputComparer.TestRefEquals( sut.InputComparer ),
+                result.States.Count.TestEquals( 3 ),
+                result.States.Keys.TestSetEqual( [ a, b, c ] ),
+                result.States[a].Type.TestEquals( StateMachineNodeType.Initial ),
+                result.States[a].Transitions.Count.TestEquals( 2 ),
+                result.States[a].Transitions.Keys.TestSetEqual( [ _0, _1 ] ),
+                result.States[a].Transitions[_0].Destination.TestRefEquals( result.States[c] ),
+                result.States[a].Transitions[_1].Destination.TestRefEquals( result.States[b] ),
+                result.States[b].Type.TestEquals( StateMachineNodeType.Accept ),
+                result.States[b].Transitions.Count.TestEquals( 2 ),
+                result.States[b].Transitions.Keys.TestSetEqual( [ _0, _1 ] ),
+                result.States[b].Transitions[_0].Destination.TestRefEquals( result.States[b] ),
+                result.States[b].Transitions[_1].Destination.TestRefEquals( result.States[b] ),
+                result.States[b].Transitions[_1].Handler.TestRefEquals( handlerB ),
+                result.States[c].Type.TestEquals( StateMachineNodeType.Accept ),
+                result.States[c].Transitions.Count.TestEquals( 2 ),
+                result.States[c].Transitions.Keys.TestSetEqual( [ _0, _1 ] ),
+                result.States[c].Transitions[_0].Destination.TestRefEquals( result.States[c] ),
+                result.States[c].Transitions[_1].Destination.TestRefEquals( result.States[c] ),
+                result.States[c].Transitions[_1].Handler.TestRefEquals( handlerC ) )
+            .Go();
     }
 
     [Fact]
@@ -1145,31 +1039,25 @@ public class StateMachineBuilderTests : TestsBase
 
         var result = sut.Build();
 
-        using ( new AssertionScope() )
-        {
-            result.DefaultResult.Should().Be( defaultResult );
-            result.Optimization.Should().Be( sut.Optimization.Level );
-            result.StateComparer.Should().BeSameAs( sut.StateComparer );
-            result.InputComparer.Should().BeSameAs( sut.InputComparer );
-            result.States.Should().HaveCount( 2 );
-            result.States.Keys.Should().BeEquivalentTo( a, b + c );
-
-            var aNode = result.States[a];
-            var bcNode = result.States[b + c];
-
-            aNode.Type.Should().Be( StateMachineNodeType.Initial );
-            aNode.Transitions.Should().HaveCount( 2 );
-            aNode.Transitions.Keys.Should().BeEquivalentTo( _0, _1 );
-            aNode.Transitions[_0].Destination.Should().BeSameAs( bcNode );
-            aNode.Transitions[_1].Destination.Should().BeSameAs( bcNode );
-
-            bcNode.Type.Should().Be( StateMachineNodeType.Accept );
-            bcNode.Transitions.Should().HaveCount( 2 );
-            bcNode.Transitions.Keys.Should().BeEquivalentTo( _0, _1 );
-            bcNode.Transitions[_0].Destination.Should().BeSameAs( bcNode );
-            bcNode.Transitions[_1].Destination.Should().BeSameAs( bcNode );
-            bcNode.Transitions[_1].Handler.Should().BeSameAs( handler );
-        }
+        Assertion.All(
+                result.DefaultResult.TestEquals( defaultResult ),
+                result.Optimization.TestEquals( sut.Optimization.Level ),
+                result.StateComparer.TestRefEquals( sut.StateComparer ),
+                result.InputComparer.TestRefEquals( sut.InputComparer ),
+                result.States.Count.TestEquals( 2 ),
+                result.States.Keys.TestSetEqual( [ a, b + c ] ),
+                result.States[a].Type.TestEquals( StateMachineNodeType.Initial ),
+                result.States[a].Transitions.Count.TestEquals( 2 ),
+                result.States[a].Transitions.Keys.TestSetEqual( [ _0, _1 ] ),
+                result.States[a].Transitions[_0].Destination.TestRefEquals( result.States[b + c] ),
+                result.States[a].Transitions[_1].Destination.TestRefEquals( result.States[b + c] ),
+                result.States[b + c].Type.TestEquals( StateMachineNodeType.Accept ),
+                result.States[b + c].Transitions.Count.TestEquals( 2 ),
+                result.States[b + c].Transitions.Keys.TestSetEqual( [ _0, _1 ] ),
+                result.States[b + c].Transitions[_0].Destination.TestRefEquals( result.States[b + c] ),
+                result.States[b + c].Transitions[_1].Destination.TestRefEquals( result.States[b + c] ),
+                result.States[b + c].Transitions[_1].Handler.TestRefEquals( handler ) )
+            .Go();
     }
 
     [Fact]
@@ -1193,42 +1081,32 @@ public class StateMachineBuilderTests : TestsBase
 
         var result = sut.Build();
 
-        using ( new AssertionScope() )
-        {
-            result.DefaultResult.Should().Be( defaultResult );
-            result.Optimization.Should().Be( sut.Optimization.Level );
-            result.StateComparer.Should().BeSameAs( sut.StateComparer );
-            result.InputComparer.Should().BeSameAs( sut.InputComparer );
-            result.States.Should().HaveCount( 4 );
-            result.States.Keys.Should().BeEquivalentTo( a, b, c, d );
-
-            var aNode = result.States[a];
-            var bNode = result.States[b];
-            var cNode = result.States[c];
-            var dNode = result.States[d];
-
-            aNode.Type.Should().Be( StateMachineNodeType.Initial );
-            aNode.Transitions.Should().HaveCount( 2 );
-            aNode.Transitions.Keys.Should().BeEquivalentTo( _0, _1 );
-            aNode.Transitions[_0].Destination.Should().BeSameAs( cNode );
-            aNode.Transitions[_1].Destination.Should().BeSameAs( bNode );
-
-            bNode.Type.Should().Be( StateMachineNodeType.Default );
-            bNode.Transitions.Should().HaveCount( 1 );
-            bNode.Transitions.Keys.Should().BeEquivalentTo( _1 );
-            bNode.Transitions[_1].Destination.Should().BeSameAs( dNode );
-
-            cNode.Type.Should().Be( StateMachineNodeType.Default );
-            cNode.Transitions.Should().HaveCount( 1 );
-            cNode.Transitions.Keys.Should().BeEquivalentTo( _0 );
-            cNode.Transitions[_0].Destination.Should().BeSameAs( dNode );
-
-            dNode.Type.Should().Be( StateMachineNodeType.Accept );
-            dNode.Transitions.Should().HaveCount( 2 );
-            dNode.Transitions.Keys.Should().BeEquivalentTo( _0, _1 );
-            dNode.Transitions[_0].Destination.Should().BeSameAs( dNode );
-            dNode.Transitions[_1].Destination.Should().BeSameAs( dNode );
-        }
+        Assertion.All(
+                result.DefaultResult.TestEquals( defaultResult ),
+                result.Optimization.TestEquals( sut.Optimization.Level ),
+                result.StateComparer.TestRefEquals( sut.StateComparer ),
+                result.InputComparer.TestRefEquals( sut.InputComparer ),
+                result.States.Count.TestEquals( 4 ),
+                result.States.Keys.TestSetEqual( [ a, b, c, d ] ),
+                result.States[a].Type.TestEquals( StateMachineNodeType.Initial ),
+                result.States[a].Transitions.Count.TestEquals( 2 ),
+                result.States[a].Transitions.Keys.TestSetEqual( [ _0, _1 ] ),
+                result.States[a].Transitions[_0].Destination.TestRefEquals( result.States[c] ),
+                result.States[a].Transitions[_1].Destination.TestRefEquals( result.States[b] ),
+                result.States[b].Type.TestEquals( StateMachineNodeType.Default ),
+                result.States[b].Transitions.Count.TestEquals( 1 ),
+                result.States[b].Transitions.Keys.TestSetEqual( [ _1 ] ),
+                result.States[b].Transitions[_1].Destination.TestRefEquals( result.States[d] ),
+                result.States[c].Type.TestEquals( StateMachineNodeType.Default ),
+                result.States[c].Transitions.Count.TestEquals( 1 ),
+                result.States[c].Transitions.Keys.TestSetEqual( [ _0 ] ),
+                result.States[c].Transitions[_0].Destination.TestRefEquals( result.States[d] ),
+                result.States[d].Type.TestEquals( StateMachineNodeType.Accept ),
+                result.States[d].Transitions.Count.TestEquals( 2 ),
+                result.States[d].Transitions.Keys.TestSetEqual( [ _0, _1 ] ),
+                result.States[d].Transitions[_0].Destination.TestRefEquals( result.States[d] ),
+                result.States[d].Transitions[_1].Destination.TestRefEquals( result.States[d] ) )
+            .Go();
     }
 
     [Fact]
@@ -1249,29 +1127,23 @@ public class StateMachineBuilderTests : TestsBase
 
         var result = sut.Build();
 
-        using ( new AssertionScope() )
-        {
-            result.DefaultResult.Should().Be( defaultResult );
-            result.Optimization.Should().Be( sut.Optimization.Level );
-            result.StateComparer.Should().BeSameAs( sut.StateComparer );
-            result.InputComparer.Should().BeSameAs( sut.InputComparer );
-            result.States.Should().HaveCount( 2 );
-            result.States.Keys.Should().BeEquivalentTo( a, b + c + d );
-
-            var aNode = result.States[a];
-            var bcdNode = result.States[b + c + d];
-
-            aNode.Type.Should().Be( StateMachineNodeType.Initial | StateMachineNodeType.Accept );
-            aNode.Transitions.Should().HaveCount( 2 );
-            aNode.Transitions.Keys.Should().BeEquivalentTo( _0, _1 );
-            aNode.Transitions[_0].Destination.Should().BeSameAs( bcdNode );
-            aNode.Transitions[_1].Destination.Should().BeSameAs( bcdNode );
-
-            bcdNode.Type.Should().Be( StateMachineNodeType.Dead );
-            bcdNode.Transitions.Should().HaveCount( 1 );
-            bcdNode.Transitions.Keys.Should().BeEquivalentTo( _0 );
-            bcdNode.Transitions[_0].Destination.Should().BeSameAs( bcdNode );
-        }
+        Assertion.All(
+                result.DefaultResult.TestEquals( defaultResult ),
+                result.Optimization.TestEquals( sut.Optimization.Level ),
+                result.StateComparer.TestRefEquals( sut.StateComparer ),
+                result.InputComparer.TestRefEquals( sut.InputComparer ),
+                result.States.Count.TestEquals( 2 ),
+                result.States.Keys.TestSetEqual( [ a, b + c + d ] ),
+                result.States[a].Type.TestEquals( StateMachineNodeType.Initial | StateMachineNodeType.Accept ),
+                result.States[a].Transitions.Count.TestEquals( 2 ),
+                result.States[a].Transitions.Keys.TestSetEqual( [ _0, _1 ] ),
+                result.States[a].Transitions[_0].Destination.TestRefEquals( result.States[b + c + d] ),
+                result.States[a].Transitions[_1].Destination.TestRefEquals( result.States[b + c + d] ),
+                result.States[b + c + d].Type.TestEquals( StateMachineNodeType.Dead ),
+                result.States[b + c + d].Transitions.Count.TestEquals( 1 ),
+                result.States[b + c + d].Transitions.Keys.TestSetEqual( [ _0 ] ),
+                result.States[b + c + d].Transitions[_0].Destination.TestRefEquals( result.States[b + c + d] ) )
+            .Go();
     }
 
     [Fact]
@@ -1295,34 +1167,26 @@ public class StateMachineBuilderTests : TestsBase
 
         var result = sut.Build();
 
-        using ( new AssertionScope() )
-        {
-            result.DefaultResult.Should().Be( defaultResult );
-            result.Optimization.Should().Be( sut.Optimization.Level );
-            result.StateComparer.Should().BeSameAs( sut.StateComparer );
-            result.InputComparer.Should().BeSameAs( sut.InputComparer );
-            result.States.Should().HaveCount( 3 );
-            result.States.Keys.Should().BeEquivalentTo( a, c, b + d );
-
-            var aNode = result.States[a];
-            var cNode = result.States[c];
-            var bdNode = result.States[b + d];
-
-            aNode.Type.Should().Be( StateMachineNodeType.Initial | StateMachineNodeType.Accept );
-            aNode.Transitions.Should().HaveCount( 2 );
-            aNode.Transitions.Keys.Should().BeEquivalentTo( _0, _1 );
-            aNode.Transitions[_0].Destination.Should().BeSameAs( bdNode );
-            aNode.Transitions[_1].Destination.Should().BeSameAs( cNode );
-
-            cNode.Type.Should().Be( StateMachineNodeType.Default );
-            cNode.Transitions.Should().HaveCount( 1 );
-            cNode.Transitions.Keys.Should().BeEquivalentTo( _0 );
-            cNode.Transitions[_0].Destination.Should().BeSameAs( bdNode );
-            cNode.Transitions[_0].Handler.Should().BeSameAs( handler );
-
-            bdNode.Type.Should().Be( StateMachineNodeType.Dead );
-            bdNode.Transitions.Should().BeEmpty();
-        }
+        Assertion.All(
+                result.DefaultResult.TestEquals( defaultResult ),
+                result.Optimization.TestEquals( sut.Optimization.Level ),
+                result.StateComparer.TestRefEquals( sut.StateComparer ),
+                result.InputComparer.TestRefEquals( sut.InputComparer ),
+                result.States.Count.TestEquals( 3 ),
+                result.States.Keys.TestSetEqual( [ a, c, b + d ] ),
+                result.States[a].Type.TestEquals( StateMachineNodeType.Initial | StateMachineNodeType.Accept ),
+                result.States[a].Transitions.Count.TestEquals( 2 ),
+                result.States[a].Transitions.Keys.TestSetEqual( [ _0, _1 ] ),
+                result.States[a].Transitions[_0].Destination.TestRefEquals( result.States[b + d] ),
+                result.States[a].Transitions[_1].Destination.TestRefEquals( result.States[c] ),
+                result.States[c].Type.TestEquals( StateMachineNodeType.Default ),
+                result.States[c].Transitions.Count.TestEquals( 1 ),
+                result.States[c].Transitions.Keys.TestSetEqual( [ _0 ] ),
+                result.States[c].Transitions[_0].Destination.TestRefEquals( result.States[b + d] ),
+                result.States[c].Transitions[_0].Handler.TestRefEquals( handler ),
+                result.States[b + d].Type.TestEquals( StateMachineNodeType.Dead ),
+                result.States[b + d].Transitions.TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -1348,22 +1212,18 @@ public class StateMachineBuilderTests : TestsBase
 
         var result = sut.Build();
 
-        using ( new AssertionScope() )
-        {
-            result.DefaultResult.Should().Be( defaultResult );
-            result.Optimization.Should().Be( sut.Optimization.Level );
-            result.StateComparer.Should().BeSameAs( sut.StateComparer );
-            result.InputComparer.Should().BeSameAs( sut.InputComparer );
-            result.States.Should().HaveCount( 1 );
-            result.States.Keys.Should().BeEquivalentTo( a + b + c + d + e );
-
-            var abcdeNode = result.States[a + b + c + d + e];
-
-            abcdeNode.Type.Should().Be( StateMachineNodeType.Initial | StateMachineNodeType.Accept );
-            abcdeNode.Transitions.Should().HaveCount( 1 );
-            abcdeNode.Transitions.Keys.Should().BeEquivalentTo( 0 );
-            abcdeNode.Transitions[0].Destination.Should().BeSameAs( abcdeNode );
-        }
+        Assertion.All(
+                result.DefaultResult.TestEquals( defaultResult ),
+                result.Optimization.TestEquals( sut.Optimization.Level ),
+                result.StateComparer.TestRefEquals( sut.StateComparer ),
+                result.InputComparer.TestRefEquals( sut.InputComparer ),
+                result.States.Count.TestEquals( 1 ),
+                result.States.Keys.TestSetEqual( [ a + b + c + d + e ] ),
+                result.States[a + b + c + d + e].Type.TestEquals( StateMachineNodeType.Initial | StateMachineNodeType.Accept ),
+                result.States[a + b + c + d + e].Transitions.Count.TestEquals( 1 ),
+                result.States[a + b + c + d + e].Transitions.Keys.TestSetEqual( [ 0 ] ),
+                result.States[a + b + c + d + e].Transitions[0].Destination.TestRefEquals( result.States[a + b + c + d + e] ) )
+            .Go();
     }
 
     [Fact]
@@ -1395,38 +1255,29 @@ public class StateMachineBuilderTests : TestsBase
 
         var result = sut.Build();
 
-        using ( new AssertionScope() )
-        {
-            result.DefaultResult.Should().Be( defaultResult );
-            result.Optimization.Should().Be( sut.Optimization.Level );
-            result.StateComparer.Should().BeSameAs( sut.StateComparer );
-            result.InputComparer.Should().BeSameAs( sut.InputComparer );
-            result.States.Should().HaveCount( 3 );
-            result.States.Keys.Should().BeEquivalentTo( a + b, c + d + e, f );
-
-            var abNode = result.States[a + b];
-            var cdeNode = result.States[c + d + e];
-            var fNode = result.States[f];
-
-            result.InitialState.Should().BeSameAs( abNode );
-
-            abNode.Type.Should().Be( StateMachineNodeType.Initial );
-            abNode.Transitions.Should().HaveCount( 2 );
-            abNode.Transitions.Keys.Should().BeEquivalentTo( _0, _1 );
-            abNode.Transitions[_0].Destination.Should().BeSameAs( abNode );
-            abNode.Transitions[_1].Destination.Should().BeSameAs( cdeNode );
-
-            cdeNode.Type.Should().Be( StateMachineNodeType.Accept );
-            cdeNode.Transitions.Should().HaveCount( 2 );
-            cdeNode.Transitions.Keys.Should().BeEquivalentTo( _0, _1 );
-            cdeNode.Transitions[_0].Destination.Should().BeSameAs( cdeNode );
-            cdeNode.Transitions[_1].Destination.Should().BeSameAs( fNode );
-
-            fNode.Type.Should().Be( StateMachineNodeType.Dead );
-            fNode.Transitions.Should().HaveCount( 2 );
-            fNode.Transitions.Keys.Should().BeEquivalentTo( _0, _1 );
-            fNode.Transitions[_0].Destination.Should().BeSameAs( fNode );
-            fNode.Transitions[_1].Destination.Should().BeSameAs( fNode );
-        }
+        Assertion.All(
+                result.DefaultResult.TestEquals( defaultResult ),
+                result.Optimization.TestEquals( sut.Optimization.Level ),
+                result.StateComparer.TestRefEquals( sut.StateComparer ),
+                result.InputComparer.TestRefEquals( sut.InputComparer ),
+                result.States.Count.TestEquals( 3 ),
+                result.States.Keys.TestSetEqual( [ a + b, c + d + e, f ] ),
+                result.InitialState.TestRefEquals( result.States[a + b] ),
+                result.States[a + b].Type.TestEquals( StateMachineNodeType.Initial ),
+                result.States[a + b].Transitions.Count.TestEquals( 2 ),
+                result.States[a + b].Transitions.Keys.TestSetEqual( [ _0, _1 ] ),
+                result.States[a + b].Transitions[_0].Destination.TestRefEquals( result.States[a + b] ),
+                result.States[a + b].Transitions[_1].Destination.TestRefEquals( result.States[c + d + e] ),
+                result.States[c + d + e].Type.TestEquals( StateMachineNodeType.Accept ),
+                result.States[c + d + e].Transitions.Count.TestEquals( 2 ),
+                result.States[c + d + e].Transitions.Keys.TestSetEqual( [ _0, _1 ] ),
+                result.States[c + d + e].Transitions[_0].Destination.TestRefEquals( result.States[c + d + e] ),
+                result.States[c + d + e].Transitions[_1].Destination.TestRefEquals( result.States[f] ),
+                result.States[f].Type.TestEquals( StateMachineNodeType.Dead ),
+                result.States[f].Transitions.Count.TestEquals( 2 ),
+                result.States[f].Transitions.Keys.TestSetEqual( [ _0, _1 ] ),
+                result.States[f].Transitions[_0].Destination.TestRefEquals( result.States[f] ),
+                result.States[f].Transitions[_1].Destination.TestRefEquals( result.States[f] ) )
+            .Go();
     }
 }
