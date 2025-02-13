@@ -3,7 +3,6 @@ using System.Linq;
 using LfrlAnvil.Functional;
 using LfrlAnvil.Reactive.Decorators;
 using LfrlAnvil.Reactive.Extensions;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Reactive.Tests.DecoratorsTests;
 
@@ -15,7 +14,7 @@ public class EventListenerMergeAllDecoratorTests : TestsBase
     public void Ctor_ShouldThrowArgumentOutOfRangeException_WhenMaxConcurrencyIsLessThanOne(int maxConcurrency)
     {
         var action = Lambda.Of( () => new EventListenerMergeAllDecorator<int>( maxConcurrency ) );
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Theory]
@@ -30,7 +29,7 @@ public class EventListenerMergeAllDecoratorTests : TestsBase
 
         _ = sut.Decorate( next, subscriber );
 
-        subscriber.VerifyCalls().DidNotReceive( x => x.Dispose() );
+        subscriber.TestDidNotReceiveCall( x => x.Dispose() ).Go();
     }
 
     [Theory]
@@ -49,12 +48,11 @@ public class EventListenerMergeAllDecoratorTests : TestsBase
         foreach ( var stream in innerStreams )
             listener.React( stream );
 
-        using ( new AssertionScope() )
-        {
-            innerStreams.Take( maxConcurrency ).Should().OnlyContain( s => s.HasSubscribers );
-            innerStreams.Skip( maxConcurrency ).Should().BeEmptyOrOnlyContain( s => ! s.HasSubscribers );
-            next.VerifyCalls().DidNotReceive( x => x.React( Arg.Any<int>() ) );
-        }
+        Assertion.All(
+                innerStreams.Take( maxConcurrency ).TestAll( (s, _) => s.HasSubscribers.TestTrue() ),
+                innerStreams.Skip( maxConcurrency ).TestAll( (s, _) => s.HasSubscribers.TestFalse() ),
+                next.TestDidNotReceiveCall( x => x.React( Arg.Any<int>() ) ) )
+            .Go();
     }
 
     [Fact]
@@ -85,13 +83,12 @@ public class EventListenerMergeAllDecoratorTests : TestsBase
         foreach ( var e in thirdStreamValues )
             innerStreams[2].Publish( e );
 
-        using ( new AssertionScope() )
-        {
-            innerStreams[0].HasSubscribers.Should().BeTrue();
-            innerStreams[1].HasSubscribers.Should().BeFalse();
-            innerStreams[2].HasSubscribers.Should().BeFalse();
-            actualEvents.Should().BeSequentiallyEqualTo( expectedEvents );
-        }
+        Assertion.All(
+                innerStreams[0].HasSubscribers.TestTrue(),
+                innerStreams[1].HasSubscribers.TestFalse(),
+                innerStreams[2].HasSubscribers.TestFalse(),
+                actualEvents.TestSequence( expectedEvents ) )
+            .Go();
     }
 
     [Fact]
@@ -121,13 +118,12 @@ public class EventListenerMergeAllDecoratorTests : TestsBase
         foreach ( var e in thirdStreamValues )
             innerStreams[2].Publish( e );
 
-        using ( new AssertionScope() )
-        {
-            innerStreams[0].HasSubscribers.Should().BeTrue();
-            innerStreams[1].HasSubscribers.Should().BeTrue();
-            innerStreams[2].HasSubscribers.Should().BeFalse();
-            actualEvents.Should().BeSequentiallyEqualTo( expectedEvents );
-        }
+        Assertion.All(
+                innerStreams[0].HasSubscribers.TestTrue(),
+                innerStreams[1].HasSubscribers.TestTrue(),
+                innerStreams[2].HasSubscribers.TestFalse(),
+                actualEvents.TestSequence( expectedEvents ) )
+            .Go();
     }
 
     [Fact]
@@ -165,13 +161,12 @@ public class EventListenerMergeAllDecoratorTests : TestsBase
         innerStreams[2].Publish( thirdStreamValues[1] );
         innerStreams[0].Publish( firstStreamValues[1] );
 
-        using ( new AssertionScope() )
-        {
-            innerStreams[0].HasSubscribers.Should().BeTrue();
-            innerStreams[1].HasSubscribers.Should().BeTrue();
-            innerStreams[2].HasSubscribers.Should().BeTrue();
-            actualEvents.Should().BeSequentiallyEqualTo( expectedEvents );
-        }
+        Assertion.All(
+                innerStreams[0].HasSubscribers.TestTrue(),
+                innerStreams[1].HasSubscribers.TestTrue(),
+                innerStreams[2].HasSubscribers.TestTrue(),
+                actualEvents.TestSequence( expectedEvents ) )
+            .Go();
     }
 
     [Fact]
@@ -207,13 +202,12 @@ public class EventListenerMergeAllDecoratorTests : TestsBase
         foreach ( var e in thirdStreamValues )
             innerStreams[2].Publish( e );
 
-        using ( new AssertionScope() )
-        {
-            innerStreams[0].HasSubscribers.Should().BeFalse();
-            innerStreams[1].HasSubscribers.Should().BeFalse();
-            innerStreams[2].HasSubscribers.Should().BeTrue();
-            actualEvents.Should().BeSequentiallyEqualTo( expectedEvents );
-        }
+        Assertion.All(
+                innerStreams[0].HasSubscribers.TestFalse(),
+                innerStreams[1].HasSubscribers.TestFalse(),
+                innerStreams[2].HasSubscribers.TestTrue(),
+                actualEvents.TestSequence( expectedEvents ) )
+            .Go();
     }
 
     [Fact]
@@ -255,13 +249,12 @@ public class EventListenerMergeAllDecoratorTests : TestsBase
         foreach ( var e in thirdStreamValues )
             innerStreams[2].Publish( e );
 
-        using ( new AssertionScope() )
-        {
-            innerStreams[0].HasSubscribers.Should().BeFalse();
-            innerStreams[1].HasSubscribers.Should().BeTrue();
-            innerStreams[2].HasSubscribers.Should().BeTrue();
-            actualEvents.Should().BeSequentiallyEqualTo( expectedEvents );
-        }
+        Assertion.All(
+                innerStreams[0].HasSubscribers.TestFalse(),
+                innerStreams[1].HasSubscribers.TestTrue(),
+                innerStreams[2].HasSubscribers.TestTrue(),
+                actualEvents.TestSequence( expectedEvents ) )
+            .Go();
     }
 
     [Theory]
@@ -283,11 +276,10 @@ public class EventListenerMergeAllDecoratorTests : TestsBase
         foreach ( var stream in innerStreams )
             stream.Dispose();
 
-        using ( new AssertionScope() )
-        {
-            innerStreams.Should().OnlyContain( s => ! s.HasSubscribers );
-            subscriber.VerifyCalls().DidNotReceive( x => x.Dispose() );
-        }
+        Assertion.All(
+                innerStreams.TestAll( (s, _) => s.HasSubscribers.TestFalse() ),
+                subscriber.TestDidNotReceiveCall( x => x.Dispose() ) )
+            .Go();
     }
 
     [Fact]
@@ -304,12 +296,11 @@ public class EventListenerMergeAllDecoratorTests : TestsBase
         foreach ( var stream in innerStreams )
             listener.React( stream );
 
-        using ( new AssertionScope() )
-        {
-            innerStreams[0].HasSubscribers.Should().BeFalse();
-            innerStreams[1].HasSubscribers.Should().BeTrue();
-            innerStreams[2].HasSubscribers.Should().BeFalse();
-        }
+        Assertion.All(
+                innerStreams[0].HasSubscribers.TestFalse(),
+                innerStreams[1].HasSubscribers.TestTrue(),
+                innerStreams[2].HasSubscribers.TestFalse() )
+            .Go();
     }
 
     [Fact]
@@ -327,12 +318,11 @@ public class EventListenerMergeAllDecoratorTests : TestsBase
         foreach ( var stream in innerStreams )
             listener.React( stream );
 
-        using ( new AssertionScope() )
-        {
-            innerStreams[0].HasSubscribers.Should().BeFalse();
-            innerStreams[1].HasSubscribers.Should().BeFalse();
-            innerStreams[2].HasSubscribers.Should().BeTrue();
-        }
+        Assertion.All(
+                innerStreams[0].HasSubscribers.TestFalse(),
+                innerStreams[1].HasSubscribers.TestFalse(),
+                innerStreams[2].HasSubscribers.TestTrue() )
+            .Go();
     }
 
     [Theory]
@@ -353,11 +343,10 @@ public class EventListenerMergeAllDecoratorTests : TestsBase
         foreach ( var stream in innerStreams )
             listener.React( stream );
 
-        using ( new AssertionScope() )
-        {
-            innerStreams.Should().OnlyContain( s => ! s.HasSubscribers );
-            subscriber.VerifyCalls().DidNotReceive( x => x.Dispose() );
-        }
+        Assertion.All(
+                innerStreams.TestAll( (s, _) => s.HasSubscribers.TestFalse() ),
+                subscriber.TestDidNotReceiveCall( x => x.Dispose() ) )
+            .Go();
     }
 
     [Theory]
@@ -382,7 +371,7 @@ public class EventListenerMergeAllDecoratorTests : TestsBase
         subscriber.IsDisposed.Returns( true );
         listener.OnDispose( source );
 
-        innerStreams.Should().OnlyContain( s => ! s.HasSubscribers );
+        innerStreams.TestAll( (s, _) => s.HasSubscribers.TestFalse() ).Go();
     }
 
     [Theory]
@@ -397,7 +386,7 @@ public class EventListenerMergeAllDecoratorTests : TestsBase
 
         listener.OnDispose( source );
 
-        next.VerifyCalls().Received( x => x.OnDispose( source ) );
+        next.TestReceivedCalls( x => x.OnDispose( source ) ).Go();
     }
 
     [Fact]
@@ -435,11 +424,10 @@ public class EventListenerMergeAllDecoratorTests : TestsBase
         innerStreams[2].Publish( thirdStreamValues[1] );
         innerStreams[0].Publish( firstStreamValues[1] );
 
-        using ( new AssertionScope() )
-        {
-            innerStreams.Should().OnlyContain( s => s.HasSubscribers );
-            actualEvents.Should().BeSequentiallyEqualTo( expectedEvents );
-        }
+        Assertion.All(
+                innerStreams.TestAll( (s, _) => s.HasSubscribers.TestTrue() ),
+                actualEvents.TestSequence( expectedEvents ) )
+            .Go();
     }
 
     [Fact]
@@ -474,12 +462,11 @@ public class EventListenerMergeAllDecoratorTests : TestsBase
         foreach ( var e in thirdStreamValues )
             innerStreams[2].Publish( e );
 
-        using ( new AssertionScope() )
-        {
-            innerStreams[0].HasSubscribers.Should().BeFalse();
-            innerStreams[1].HasSubscribers.Should().BeFalse();
-            innerStreams[2].HasSubscribers.Should().BeTrue();
-            actualEvents.Should().BeSequentiallyEqualTo( expectedEvents );
-        }
+        Assertion.All(
+                innerStreams[0].HasSubscribers.TestFalse(),
+                innerStreams[1].HasSubscribers.TestFalse(),
+                innerStreams[2].HasSubscribers.TestTrue(),
+                actualEvents.TestSequence( expectedEvents ) )
+            .Go();
     }
 }

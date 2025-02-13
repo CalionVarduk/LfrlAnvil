@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
 using LfrlAnvil.Reactive.Decorators;
 using LfrlAnvil.Reactive.Extensions;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Reactive.Tests.DecoratorsTests;
 
@@ -17,11 +16,10 @@ public class EventListenerSampleWhenDecoratorTests : TestsBase
 
         _ = sut.Decorate( next, subscriber );
 
-        using ( new AssertionScope() )
-        {
-            subscriber.VerifyCalls().DidNotReceive( x => x.Dispose() );
-            target.HasSubscribers.Should().BeTrue();
-        }
+        Assertion.All(
+                subscriber.TestDidNotReceiveCall( x => x.Dispose() ),
+                target.HasSubscribers.TestTrue() )
+            .Go();
     }
 
     [Fact]
@@ -36,11 +34,10 @@ public class EventListenerSampleWhenDecoratorTests : TestsBase
 
         _ = sut.Decorate( next, subscriber );
 
-        using ( new AssertionScope() )
-        {
-            subscriber.VerifyCalls().Received( x => x.Dispose() );
-            target.HasSubscribers.Should().BeFalse();
-        }
+        Assertion.All(
+                subscriber.TestReceivedCalls( x => x.Dispose() ),
+                target.HasSubscribers.TestFalse() )
+            .Go();
     }
 
     [Fact]
@@ -79,7 +76,7 @@ public class EventListenerSampleWhenDecoratorTests : TestsBase
         target.Publish( Fixture.Create<string>() );
         target.Publish( Fixture.Create<string>() );
 
-        actualEvents.Should().BeSequentiallyEqualTo( expectedEvents );
+        actualEvents.TestSequence( expectedEvents ).Go();
     }
 
     [Theory]
@@ -95,7 +92,7 @@ public class EventListenerSampleWhenDecoratorTests : TestsBase
 
         listener.OnDispose( source );
 
-        next.VerifyCalls().Received( x => x.OnDispose( source ) );
+        next.TestReceivedCalls( x => x.OnDispose( source ) ).Go();
     }
 
     [Theory]
@@ -111,7 +108,7 @@ public class EventListenerSampleWhenDecoratorTests : TestsBase
 
         listener.OnDispose( source );
 
-        target.HasSubscribers.Should().BeFalse();
+        target.HasSubscribers.TestFalse().Go();
     }
 
     [Fact]
@@ -150,7 +147,7 @@ public class EventListenerSampleWhenDecoratorTests : TestsBase
         target.Publish( Fixture.Create<string>() );
         target.Publish( Fixture.Create<string>() );
 
-        actualEvents.Should().BeSequentiallyEqualTo( expectedEvents );
+        actualEvents.TestSequence( expectedEvents ).Go();
     }
 
     [Fact]
@@ -165,9 +162,8 @@ public class EventListenerSampleWhenDecoratorTests : TestsBase
         var decorated = sut.SampleWhen( sut );
         decorated.Listen( next );
 
-        foreach ( var e in sourceEvents )
-            sut.Publish( e );
+        foreach ( var e in sourceEvents ) sut.Publish( e );
 
-        actualEvents.Should().BeSequentiallyEqualTo( expectedEvents );
+        actualEvents.TestSequence( expectedEvents ).Go();
     }
 }

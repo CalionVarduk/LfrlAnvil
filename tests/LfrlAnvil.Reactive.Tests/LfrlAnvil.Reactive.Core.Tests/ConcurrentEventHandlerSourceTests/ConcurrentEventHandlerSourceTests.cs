@@ -2,7 +2,6 @@
 using System.Linq;
 using System.Threading;
 using LfrlAnvil.Reactive.Composites;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Reactive.Tests.ConcurrentEventHandlerSourceTests;
 
@@ -14,11 +13,10 @@ public class ConcurrentEventHandlerSourceTests : TestsBase
         var target = new Target();
         var sut = new ConcurrentEventHandlerSource<int>( h => target.Handler += h, h => target.Handler -= h );
 
-        using ( new AssertionScope() )
-        {
-            sut.HasSubscribers.Should().BeFalse();
-            target.IsHandlerNull().Should().BeFalse();
-        }
+        Assertion.All(
+                sut.HasSubscribers.TestFalse(),
+                target.IsHandlerNull().TestFalse() )
+            .Go();
     }
 
     [Fact]
@@ -33,14 +31,12 @@ public class ConcurrentEventHandlerSourceTests : TestsBase
 
         _ = sut.Listen( listener );
 
-        foreach ( var value in values )
-            target.Emit( sender, value );
+        foreach ( var value in values ) target.Emit( sender, value );
 
-        using ( new AssertionScope() )
-        {
-            actualValues.Select( v => v.Event ).Should().BeSequentiallyEqualTo( values );
-            actualValues.Select( v => v.Sender ).Should().OnlyContain( s => ReferenceEquals( s, sender ) );
-        }
+        Assertion.All(
+                actualValues.Select( v => v.Event ).TestSequence( values ),
+                actualValues.Select( v => v.Sender ).TestAll( (s, _) => s.TestRefEquals( sender ) ) )
+            .Go();
     }
 
     [Fact]
@@ -57,7 +53,7 @@ public class ConcurrentEventHandlerSourceTests : TestsBase
         _ = sut.Listen( listener );
         target.Emit( sender, @event );
 
-        hasLock.Should().BeTrue();
+        hasLock.TestTrue().Go();
     }
 
     [Fact]
@@ -68,7 +64,7 @@ public class ConcurrentEventHandlerSourceTests : TestsBase
 
         sut.Dispose();
 
-        target.IsHandlerNull().Should().BeTrue();
+        target.IsHandlerNull().TestTrue().Go();
     }
 
     [Fact]
@@ -83,14 +79,12 @@ public class ConcurrentEventHandlerSourceTests : TestsBase
 
         _ = sut.Listen( listener );
 
-        foreach ( var value in values )
-            target.Emit( sender, value );
+        foreach ( var value in values ) target.Emit( sender, value );
 
-        using ( new AssertionScope() )
-        {
-            actualValues.Select( v => v.Event ).Should().BeSequentiallyEqualTo( values );
-            actualValues.Select( v => v.Sender ).Should().OnlyContain( s => ReferenceEquals( s, sender ) );
-        }
+        Assertion.All(
+                actualValues.Select( v => v.Event ).TestSequence( values ),
+                actualValues.Select( v => v.Sender ).TestAll( (s, _) => s.TestRefEquals( sender ) ) )
+            .Go();
     }
 
     private sealed class Target

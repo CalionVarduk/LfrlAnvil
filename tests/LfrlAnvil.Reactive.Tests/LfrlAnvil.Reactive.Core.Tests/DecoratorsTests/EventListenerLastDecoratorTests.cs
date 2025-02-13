@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
 using LfrlAnvil.Reactive.Decorators;
 using LfrlAnvil.Reactive.Extensions;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Reactive.Tests.DecoratorsTests;
 
@@ -16,7 +15,7 @@ public class EventListenerLastDecoratorTests : TestsBase
 
         _ = sut.Decorate( next, subscriber );
 
-        subscriber.VerifyCalls().DidNotReceive( x => x.Dispose() );
+        subscriber.TestDidNotReceiveCall( x => x.Dispose() ).Go();
     }
 
     [Fact]
@@ -33,7 +32,7 @@ public class EventListenerLastDecoratorTests : TestsBase
         foreach ( var e in sourceEvents )
             listener.React( e );
 
-        actualEvents.Should().BeEmpty();
+        actualEvents.TestEmpty().Go();
     }
 
     [Theory]
@@ -54,7 +53,7 @@ public class EventListenerLastDecoratorTests : TestsBase
 
         listener.OnDispose( source );
 
-        actualEvents.Should().BeSequentiallyEqualTo( sourceEvents[^1] );
+        actualEvents.TestSequence( [ sourceEvents[^1] ] ).Go();
     }
 
     [Theory]
@@ -69,7 +68,7 @@ public class EventListenerLastDecoratorTests : TestsBase
 
         listener.OnDispose( source );
 
-        next.VerifyCalls().DidNotReceive( x => x.React( Arg.Any<int>() ) );
+        next.TestDidNotReceiveCall( x => x.React( Arg.Any<int>() ) ).Go();
     }
 
     [Theory]
@@ -84,7 +83,7 @@ public class EventListenerLastDecoratorTests : TestsBase
 
         listener.OnDispose( source );
 
-        next.VerifyCalls().Received( x => x.OnDispose( source ) );
+        next.TestReceivedCalls( x => x.OnDispose( source ) ).Go();
     }
 
     [Fact]
@@ -103,6 +102,6 @@ public class EventListenerLastDecoratorTests : TestsBase
 
         sut.Dispose();
 
-        actualEvents.Should().BeSequentiallyEqualTo( sourceEvents[^1] );
+        actualEvents.TestSequence( [ sourceEvents[^1] ] ).Go();
     }
 }

@@ -1,5 +1,4 @@
 ﻿using LfrlAnvil.Reactive.Internal;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Reactive.Tests.WhenAllEventSourceTests;
 
@@ -10,7 +9,7 @@ public abstract class GenericWhenAllEventSourceTests<TEvent> : TestsBase
     {
         var inner = new EventPublisher<TEvent>();
         var sut = new WhenAllEventSource<TEvent>( new[] { inner } );
-        sut.HasSubscribers.Should().BeFalse();
+        sut.HasSubscribers.TestFalse().Go();
     }
 
     [Fact]
@@ -22,11 +21,10 @@ public abstract class GenericWhenAllEventSourceTests<TEvent> : TestsBase
 
         var subscriber = sut.Listen( listener );
 
-        using ( new AssertionScope() )
-        {
-            subscriber.IsDisposed.Should().BeTrue();
-            result.Should().BeEmpty();
-        }
+        Assertion.All(
+                subscriber.IsDisposed.TestTrue(),
+                result.TestNotNull( r => r.TestEmpty() ) )
+            .Go();
     }
 
     [Fact]
@@ -39,11 +37,10 @@ public abstract class GenericWhenAllEventSourceTests<TEvent> : TestsBase
 
         var subscriber = sut.Listen( listener );
 
-        using ( new AssertionScope() )
-        {
-            subscriber.IsDisposed.Should().BeTrue();
-            listener.VerifyCalls().DidNotReceive( x => x.React( Arg.Any<ReadOnlyMemory<TEvent?>>() ) );
-        }
+        Assertion.All(
+                subscriber.IsDisposed.TestTrue(),
+                listener.TestDidNotReceiveCall( x => x.React( Arg.Any<ReadOnlyMemory<TEvent?>>() ) ) )
+            .Go();
     }
 
     [Fact]
@@ -61,15 +58,14 @@ public abstract class GenericWhenAllEventSourceTests<TEvent> : TestsBase
 
         sut.Dispose();
 
-        using ( new AssertionScope() )
-        {
-            sut.HasSubscribers.Should().BeFalse();
-            firstStream.HasSubscribers.Should().BeFalse();
-            secondStream.HasSubscribers.Should().BeFalse();
-            thirdStream.HasSubscribers.Should().BeFalse();
-            subscriber.IsDisposed.Should().BeTrue();
-            result.Should().BeSequentiallyEqualTo( expectedResult );
-        }
+        Assertion.All(
+                sut.HasSubscribers.TestFalse(),
+                firstStream.HasSubscribers.TestFalse(),
+                secondStream.HasSubscribers.TestFalse(),
+                thirdStream.HasSubscribers.TestFalse(),
+                subscriber.IsDisposed.TestTrue(),
+                result.TestNotNull( r => r.TestSequence( expectedResult ) ) )
+            .Go();
     }
 
     [Fact]
@@ -86,13 +82,12 @@ public abstract class GenericWhenAllEventSourceTests<TEvent> : TestsBase
         firstStream.Dispose();
         thirdStream.Dispose();
 
-        using ( new AssertionScope() )
-        {
-            secondStream.HasSubscribers.Should().BeTrue();
-            sut.HasSubscribers.Should().BeTrue();
-            subscriber.IsDisposed.Should().BeFalse();
-            listener.VerifyCalls().DidNotReceive( x => x.React( Arg.Any<ReadOnlyMemory<TEvent?>>() ) );
-        }
+        Assertion.All(
+                secondStream.HasSubscribers.TestTrue(),
+                sut.HasSubscribers.TestTrue(),
+                subscriber.IsDisposed.TestFalse(),
+                listener.TestDidNotReceiveCall( x => x.React( Arg.Any<ReadOnlyMemory<TEvent?>>() ) ) )
+            .Go();
     }
 
     [Fact]
@@ -128,12 +123,11 @@ public abstract class GenericWhenAllEventSourceTests<TEvent> : TestsBase
 
         firstStream.Dispose();
 
-        using ( new AssertionScope() )
-        {
-            sut.HasSubscribers.Should().BeFalse();
-            subscriber.IsDisposed.Should().BeTrue();
-            result.Should().BeSequentiallyEqualTo( expectedResult );
-        }
+        Assertion.All(
+                sut.HasSubscribers.TestFalse(),
+                subscriber.IsDisposed.TestTrue(),
+                result.TestNotNull( r => r.TestSequence( expectedResult ) ) )
+            .Go();
     }
 
     [Fact]
@@ -165,13 +159,12 @@ public abstract class GenericWhenAllEventSourceTests<TEvent> : TestsBase
 
         sut.Dispose();
 
-        using ( new AssertionScope() )
-        {
-            secondStream.HasSubscribers.Should().BeFalse();
-            sut.HasSubscribers.Should().BeFalse();
-            subscriber.IsDisposed.Should().BeTrue();
-            result.Should().BeSequentiallyEqualTo( expectedResult );
-        }
+        Assertion.All(
+                secondStream.HasSubscribers.TestFalse(),
+                sut.HasSubscribers.TestFalse(),
+                subscriber.IsDisposed.TestTrue(),
+                result.TestNotNull( r => r.TestSequence( expectedResult ) ) )
+            .Go();
     }
 
     [Fact]
@@ -203,15 +196,14 @@ public abstract class GenericWhenAllEventSourceTests<TEvent> : TestsBase
 
         sut.Dispose();
 
-        using ( new AssertionScope() )
-        {
-            firstStream.HasSubscribers.Should().BeFalse();
-            secondStream.HasSubscribers.Should().BeFalse();
-            thirdStream.HasSubscribers.Should().BeFalse();
-            sut.HasSubscribers.Should().BeFalse();
-            subscriber.IsDisposed.Should().BeTrue();
-            result.Should().BeSequentiallyEqualTo( expectedResult );
-        }
+        Assertion.All(
+                firstStream.HasSubscribers.TestFalse(),
+                secondStream.HasSubscribers.TestFalse(),
+                thirdStream.HasSubscribers.TestFalse(),
+                sut.HasSubscribers.TestFalse(),
+                subscriber.IsDisposed.TestTrue(),
+                result.TestNotNull( r => r.TestSequence( expectedResult ) ) )
+            .Go();
     }
 
     [Fact]
@@ -247,11 +239,10 @@ public abstract class GenericWhenAllEventSourceTests<TEvent> : TestsBase
 
         firstStream.Dispose();
 
-        using ( new AssertionScope() )
-        {
-            sut.HasSubscribers.Should().BeFalse();
-            subscriber.IsDisposed.Should().BeTrue();
-            result.Should().BeSequentiallyEqualTo( expectedResult );
-        }
+        Assertion.All(
+                sut.HasSubscribers.TestFalse(),
+                subscriber.IsDisposed.TestTrue(),
+                result.TestNotNull( r => r.TestSequence( expectedResult ) ) )
+            .Go();
     }
 }

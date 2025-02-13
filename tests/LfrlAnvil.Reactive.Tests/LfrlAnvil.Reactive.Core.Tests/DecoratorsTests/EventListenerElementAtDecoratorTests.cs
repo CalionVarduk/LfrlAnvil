@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
 using LfrlAnvil.Reactive.Decorators;
 using LfrlAnvil.Reactive.Extensions;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Reactive.Tests.DecoratorsTests;
 
@@ -19,7 +18,7 @@ public class EventListenerElementAtDecoratorTests : TestsBase
 
         _ = sut.Decorate( next, subscriber );
 
-        subscriber.VerifyCalls().DidNotReceive( x => x.Dispose() );
+        subscriber.TestDidNotReceiveCall( x => x.Dispose() ).Go();
     }
 
     [Fact]
@@ -32,7 +31,7 @@ public class EventListenerElementAtDecoratorTests : TestsBase
 
         _ = sut.Decorate( next, subscriber );
 
-        subscriber.VerifyCalls().Received( x => x.Dispose() );
+        subscriber.TestReceivedCalls( x => x.Dispose() ).Go();
     }
 
     [Fact]
@@ -49,7 +48,7 @@ public class EventListenerElementAtDecoratorTests : TestsBase
         foreach ( var e in sourceEvents )
             listener.React( e );
 
-        actualEvents.Should().BeEmpty();
+        actualEvents.TestEmpty().Go();
     }
 
     [Fact]
@@ -66,7 +65,7 @@ public class EventListenerElementAtDecoratorTests : TestsBase
         foreach ( var e in sourceEvents )
             listener.React( e );
 
-        actualEvents.Should().BeSequentiallyEqualTo( sourceEvents[^1] );
+        actualEvents.TestSequence( [ sourceEvents[^1] ] ).Go();
     }
 
     [Fact]
@@ -83,7 +82,7 @@ public class EventListenerElementAtDecoratorTests : TestsBase
         foreach ( var e in sourceEvents )
             listener.React( e );
 
-        subscriber.VerifyCalls().Received( x => x.Dispose() );
+        subscriber.TestReceivedCalls( x => x.Dispose() ).Go();
     }
 
     [Theory]
@@ -98,7 +97,7 @@ public class EventListenerElementAtDecoratorTests : TestsBase
 
         listener.OnDispose( source );
 
-        next.VerifyCalls().Received( x => x.OnDispose( source ) );
+        next.TestReceivedCalls( x => x.OnDispose( source ) ).Go();
     }
 
     [Theory]
@@ -120,10 +119,9 @@ public class EventListenerElementAtDecoratorTests : TestsBase
         foreach ( var e in sourceEvents )
             sut.Publish( e );
 
-        using ( new AssertionScope() )
-        {
-            actualEvents.Should().BeSequentiallyEqualTo( sourceEvents[index] );
-            subscriber.IsDisposed.Should().BeTrue();
-        }
+        Assertion.All(
+                actualEvents.TestSequence( [ sourceEvents[index] ] ),
+                subscriber.IsDisposed.TestTrue() )
+            .Go();
     }
 }

@@ -3,7 +3,6 @@ using System.Linq;
 using System.Threading;
 using LfrlAnvil.Reactive.Decorators;
 using LfrlAnvil.Reactive.Extensions;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Reactive.Tests.DecoratorsTests;
 
@@ -18,7 +17,7 @@ public class EventListenerConcurrentAllDecoratorTests : TestsBase
 
         _ = sut.Decorate( next, subscriber );
 
-        subscriber.VerifyCalls().DidNotReceive( x => x.Dispose() );
+        subscriber.TestDidNotReceiveCall( x => x.Dispose() ).Go();
     }
 
     [Fact]
@@ -46,16 +45,11 @@ public class EventListenerConcurrentAllDecoratorTests : TestsBase
         foreach ( var e in sourceEvents )
             listener.React( e );
 
-        using ( new AssertionScope() )
-        {
-            actualEvents.Should().BeSequentiallyEqualTo( expectedSourceEvents );
-
-            foreach ( var e in sourceEvents )
-            {
-                var decorator = e.ReceivedCalls().First().GetArguments().First();
-                decorator.Should().BeOfType<EventListenerConcurrentDecorator<int>>();
-            }
-        }
+        Assertion.All(
+                actualEvents.TestSequence( expectedSourceEvents ),
+                sourceEvents.TestAll(
+                    (e, _) => e.CallAt( 0 ).Arguments.FirstOrDefault().TestType().AssignableTo<EventListenerConcurrentDecorator<int>>() ) )
+            .Go();
     }
 
     [Fact]
@@ -66,8 +60,7 @@ public class EventListenerConcurrentAllDecoratorTests : TestsBase
 
         var inner = new EventPublisher<int>();
         var innerNext = Substitute.For<IEventListener<int>>();
-        innerNext.When( x => x.React( Arg.Any<int>() ) )
-            .Do( _ => { hasLock = Monitor.IsEntered( sync ); } );
+        innerNext.When( x => x.React( Arg.Any<int>() ) ).Do( _ => { hasLock = Monitor.IsEntered( sync ); } );
 
         var next = EventListener.Create<IEventStream<int>>( e => e.Listen( innerNext ) );
         var subscriber = Substitute.For<IEventSubscriber>();
@@ -77,7 +70,7 @@ public class EventListenerConcurrentAllDecoratorTests : TestsBase
         listener.React( inner );
         inner.Publish( Fixture.Create<int>() );
 
-        hasLock.Should().BeTrue();
+        hasLock.TestTrue().Go();
     }
 
     [Theory]
@@ -92,7 +85,7 @@ public class EventListenerConcurrentAllDecoratorTests : TestsBase
 
         listener.OnDispose( source );
 
-        next.VerifyCalls().Received( x => x.OnDispose( source ) );
+        next.TestReceivedCalls( x => x.OnDispose( source ) ).Go();
     }
 
     [Fact]
@@ -110,12 +103,10 @@ public class EventListenerConcurrentAllDecoratorTests : TestsBase
 
         sut.Publish( inner );
 
-        using ( new AssertionScope() )
-        {
-            actualEvents.Should().BeSequentiallyEqualTo( expectedInner );
-            var decorator = inner.ReceivedCalls().First().GetArguments().First();
-            decorator.Should().BeOfType<EventListenerConcurrentDecorator<int>>();
-        }
+        Assertion.All(
+                actualEvents.TestSequence( [ expectedInner ] ),
+                inner.CallAt( 0 ).Arguments.FirstOrDefault().TestType().AssignableTo<EventListenerConcurrentDecorator<int>>() )
+            .Go();
     }
 
     [Fact]
@@ -134,12 +125,10 @@ public class EventListenerConcurrentAllDecoratorTests : TestsBase
 
         sut.Publish( inner );
 
-        using ( new AssertionScope() )
-        {
-            actualEvents.Should().BeSequentiallyEqualTo( expectedInner );
-            var decorator = inner.ReceivedCalls().First().GetArguments().First();
-            decorator.Should().BeOfType<EventListenerConcurrentDecorator<int>>();
-        }
+        Assertion.All(
+                actualEvents.TestSequence( [ expectedInner ] ),
+                inner.CallAt( 0 ).Arguments.FirstOrDefault().TestType().AssignableTo<EventListenerConcurrentDecorator<int>>() )
+            .Go();
     }
 
     [Fact]
@@ -157,15 +146,13 @@ public class EventListenerConcurrentAllDecoratorTests : TestsBase
 
         var result = sut.ShareConcurrencyWithAll();
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( expectedSecondDecorateResult );
-
-            var sutDecorator = sut.ReceivedCalls().First().GetArguments().First();
-            sutDecorator.Should().BeOfType<EventListenerConcurrentDecorator<IEventStream<int>>>();
-
-            var nextDecorator = expectedFirstDecorateResult.ReceivedCalls().First().GetArguments().First();
-            nextDecorator.Should().BeOfType<EventListenerConcurrentAllDecorator<int>>();
-        }
+        Assertion.All(
+                result.TestRefEquals( expectedSecondDecorateResult ),
+                sut.CallAt( 0 ).Arguments.FirstOrDefault().TestType().AssignableTo<EventListenerConcurrentDecorator<IEventStream<int>>>(),
+                expectedFirstDecorateResult.CallAt( 0 )
+                    .Arguments.FirstOrDefault()
+                    .TestType()
+                    .AssignableTo<EventListenerConcurrentAllDecorator<int>>() )
+            .Go();
     }
 }

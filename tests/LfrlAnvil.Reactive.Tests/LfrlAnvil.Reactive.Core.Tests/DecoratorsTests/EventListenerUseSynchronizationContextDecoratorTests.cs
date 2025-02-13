@@ -3,7 +3,6 @@ using LfrlAnvil.Async;
 using LfrlAnvil.Functional;
 using LfrlAnvil.Reactive.Decorators;
 using LfrlAnvil.Reactive.Extensions;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Reactive.Tests.DecoratorsTests;
 
@@ -14,7 +13,7 @@ public class EventListenerUseSynchronizationContextDecoratorTests : TestsBase
     {
         using var @switch = new SynchronizationContextSwitch( null );
         var action = Lambda.Of( () => new EventListenerUseSynchronizationContextDecorator<int>() );
-        action.Should().ThrowExactly<InvalidOperationException>();
+        action.Test( exc => exc.TestType().Exact<InvalidOperationException>() ).Go();
     }
 
     [Fact]
@@ -26,7 +25,7 @@ public class EventListenerUseSynchronizationContextDecoratorTests : TestsBase
 
         _ = sut.Decorate( next, subscriber );
 
-        subscriber.VerifyCalls().DidNotReceive( x => x.Dispose() );
+        subscriber.TestDidNotReceiveCall( x => x.Dispose() ).Go();
     }
 
     [Fact]
@@ -50,11 +49,10 @@ public class EventListenerUseSynchronizationContextDecoratorTests : TestsBase
 
         listener.React( sourceEvent );
 
-        using ( new AssertionScope() )
-        {
-            context.VerifyCalls().Received( x => x.Post( Arg.Any<SendOrPostCallback>(), null ), count: 1 );
-            next.VerifyCalls().Received( x => x.React( sourceEvent ) );
-        }
+        Assertion.All(
+                context.TestReceivedCalls( x => x.Post( Arg.Any<SendOrPostCallback>(), Arg.Is<object?>( o => o == null ) ), count: 1 ),
+                next.TestReceivedCalls( x => x.React( sourceEvent ) ) )
+            .Go();
     }
 
     [Theory]
@@ -79,11 +77,10 @@ public class EventListenerUseSynchronizationContextDecoratorTests : TestsBase
 
         listener.OnDispose( source );
 
-        using ( new AssertionScope() )
-        {
-            context.VerifyCalls().Received( x => x.Post( Arg.Any<SendOrPostCallback>(), null ), count: 1 );
-            next.VerifyCalls().Received( x => x.OnDispose( source ) );
-        }
+        Assertion.All(
+                context.TestReceivedCalls( x => x.Post( Arg.Any<SendOrPostCallback>(), Arg.Is<object?>( o => o == null ) ), count: 1 ),
+                next.TestReceivedCalls( x => x.OnDispose( source ) ) )
+            .Go();
     }
 
     [Fact]
@@ -107,10 +104,9 @@ public class EventListenerUseSynchronizationContextDecoratorTests : TestsBase
 
         sut.Publish( sourceEvent );
 
-        using ( new AssertionScope() )
-        {
-            context.VerifyCalls().Received( x => x.Post( Arg.Any<SendOrPostCallback>(), null ), count: 1 );
-            next.VerifyCalls().Received( x => x.React( sourceEvent ) );
-        }
+        Assertion.All(
+                context.TestReceivedCalls( x => x.Post( Arg.Any<SendOrPostCallback>(), Arg.Is<object?>( o => o == null ) ), count: 1 ),
+                next.TestReceivedCalls( x => x.React( sourceEvent ) ) )
+            .Go();
     }
 }

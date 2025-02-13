@@ -3,9 +3,8 @@ using LfrlAnvil.Functional;
 using LfrlAnvil.Reactive.Exceptions;
 using LfrlAnvil.Reactive.Exchanges;
 using LfrlAnvil.Reactive.Extensions;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 
-namespace LfrlAnvil.Reactive.Tests.ExchangesTests.EventExchangesTests;
+namespace LfrlAnvil.Reactive.Tests.ExchangesTests;
 
 public class EventExchangesTests : TestsBase
 {
@@ -14,11 +13,7 @@ public class EventExchangesTests : TestsBase
     {
         var sut = new EventExchange();
 
-        using ( new AssertionScope() )
-        {
-            sut.IsDisposed.Should().BeFalse();
-            sut.GetRegisteredEventTypes().Should().BeEmpty();
-        }
+        Assertion.All( sut.IsDisposed.TestFalse(), sut.GetRegisteredEventTypes().TestEmpty() ).Go();
     }
 
     [Fact]
@@ -27,11 +22,7 @@ public class EventExchangesTests : TestsBase
         var sut = new EventExchange();
         var result = sut.RegisterPublisher<int>();
 
-        using ( new AssertionScope() )
-        {
-            sut.GetRegisteredEventTypes().Should().BeEquivalentTo( typeof( int ) );
-            result.Subscribers.Should().HaveCount( 1 );
-        }
+        Assertion.All( sut.GetRegisteredEventTypes().TestSetEqual( [ typeof( int ) ] ), result.Subscribers.Count.TestEquals( 1 ) ).Go();
     }
 
     [Fact]
@@ -42,13 +33,12 @@ public class EventExchangesTests : TestsBase
         var stringPublisher = sut.RegisterPublisher<string>();
         var guidPublisher = sut.RegisterPublisher<Guid>();
 
-        using ( new AssertionScope() )
-        {
-            sut.GetRegisteredEventTypes().Should().BeEquivalentTo( typeof( int ), typeof( string ), typeof( Guid ) );
-            intPublisher.Subscribers.Should().HaveCount( 1 );
-            stringPublisher.Subscribers.Should().HaveCount( 1 );
-            guidPublisher.Subscribers.Should().HaveCount( 1 );
-        }
+        Assertion.All(
+                sut.GetRegisteredEventTypes().TestSetEqual( [ typeof( int ), typeof( string ), typeof( Guid ) ] ),
+                intPublisher.Subscribers.Count.TestEquals( 1 ),
+                stringPublisher.Subscribers.Count.TestEquals( 1 ),
+                guidPublisher.Subscribers.Count.TestEquals( 1 ) )
+            .Go();
     }
 
     [Fact]
@@ -58,12 +48,11 @@ public class EventExchangesTests : TestsBase
         var publisher = new EventPublisher<int>();
         var result = sut.RegisterPublisher( publisher );
 
-        using ( new AssertionScope() )
-        {
-            sut.GetRegisteredEventTypes().Should().BeEquivalentTo( typeof( int ) );
-            result.Subscribers.Should().HaveCount( 1 );
-            result.Should().BeSameAs( publisher );
-        }
+        Assertion.All(
+                sut.GetRegisteredEventTypes().TestSetEqual( [ typeof( int ) ] ),
+                result.Subscribers.Count.TestEquals( 1 ),
+                result.TestRefEquals( publisher ) )
+            .Go();
     }
 
     [Fact]
@@ -74,7 +63,7 @@ public class EventExchangesTests : TestsBase
 
         var action = Lambda.Of( () => sut.RegisterPublisher<int>() );
 
-        action.Should().ThrowExactly<ObjectDisposedException>();
+        action.Test( exc => exc.TestType().Exact<ObjectDisposedException>() ).Go();
     }
 
     [Fact]
@@ -85,7 +74,8 @@ public class EventExchangesTests : TestsBase
 
         var action = Lambda.Of( () => sut.RegisterPublisher<int>() );
 
-        action.Should().ThrowExactly<EventPublisherAlreadyExistsException>().AndMatch( e => e.EventType == typeof( int ) );
+        action.Test( exc => exc.TestType().Exact<EventPublisherAlreadyExistsException>( e => e.EventType.TestEquals( typeof( int ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -98,14 +88,13 @@ public class EventExchangesTests : TestsBase
 
         sut.Dispose();
 
-        using ( new AssertionScope() )
-        {
-            sut.IsDisposed.Should().BeTrue();
-            sut.GetRegisteredEventTypes().Should().BeEmpty();
-            intPublisher.IsDisposed.Should().BeTrue();
-            stringPublisher.IsDisposed.Should().BeTrue();
-            guidPublisher.IsDisposed.Should().BeTrue();
-        }
+        Assertion.All(
+                sut.IsDisposed.TestTrue(),
+                sut.GetRegisteredEventTypes().TestEmpty(),
+                intPublisher.IsDisposed.TestTrue(),
+                stringPublisher.IsDisposed.TestTrue(),
+                guidPublisher.IsDisposed.TestTrue() )
+            .Go();
     }
 
     [Fact]
@@ -116,11 +105,7 @@ public class EventExchangesTests : TestsBase
 
         sut.Dispose();
 
-        using ( new AssertionScope() )
-        {
-            sut.IsDisposed.Should().BeTrue();
-            sut.GetRegisteredEventTypes().Should().BeEmpty();
-        }
+        Assertion.All( sut.IsDisposed.TestTrue(), sut.GetRegisteredEventTypes().TestEmpty() ).Go();
     }
 
     [Fact]
@@ -131,7 +116,7 @@ public class EventExchangesTests : TestsBase
 
         publisher.Dispose();
 
-        sut.GetRegisteredEventTypes().Should().BeEmpty();
+        sut.GetRegisteredEventTypes().TestEmpty().Go();
     }
 
     [Fact]
@@ -143,7 +128,7 @@ public class EventExchangesTests : TestsBase
 
         var action = Lambda.Of( () => subscriber.Dispose() );
 
-        action.Should().ThrowExactly<InvalidEventPublisherDisposalException>();
+        action.Test( exc => exc.TestType().Exact<InvalidEventPublisherDisposalException>() ).Go();
     }
 
     [Fact]
@@ -154,7 +139,7 @@ public class EventExchangesTests : TestsBase
 
         var result = sut.IsRegistered<int>();
 
-        result.Should().BeTrue();
+        result.TestTrue().Go();
     }
 
     [Fact]
@@ -162,7 +147,7 @@ public class EventExchangesTests : TestsBase
     {
         var sut = new EventExchange();
         var result = sut.IsRegistered<int>();
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Fact]
@@ -173,7 +158,7 @@ public class EventExchangesTests : TestsBase
 
         var result = sut.GetStream<int>();
 
-        result.Should().BeSameAs( publisher );
+        result.TestRefEquals( publisher ).Go();
     }
 
     [Fact]
@@ -181,7 +166,7 @@ public class EventExchangesTests : TestsBase
     {
         var sut = new EventExchange();
         var action = Lambda.Of( () => sut.GetStream<int>() );
-        action.Should().ThrowExactly<EventPublisherNotFoundException>().AndMatch( e => e.EventType == typeof( int ) );
+        action.Test( exc => exc.TestType().Exact<EventPublisherNotFoundException>( e => e.EventType.TestEquals( typeof( int ) ) ) ).Go();
     }
 
     [Fact]
@@ -192,11 +177,7 @@ public class EventExchangesTests : TestsBase
 
         var result = sut.TryGetStream<int>( out var outResult );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            outResult.Should().BeSameAs( publisher );
-        }
+        Assertion.All( result.TestTrue(), outResult.TestRefEquals( publisher ) ).Go();
     }
 
     [Fact]
@@ -206,11 +187,7 @@ public class EventExchangesTests : TestsBase
 
         var result = sut.TryGetStream<int>( out var outResult );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeFalse();
-            outResult.Should().BeNull();
-        }
+        Assertion.All( result.TestFalse(), outResult.TestNull() ).Go();
     }
 
     [Fact]
@@ -221,7 +198,7 @@ public class EventExchangesTests : TestsBase
 
         var result = sut.GetPublisher<int>();
 
-        result.Should().BeSameAs( publisher );
+        result.TestRefEquals( publisher ).Go();
     }
 
     [Fact]
@@ -229,7 +206,7 @@ public class EventExchangesTests : TestsBase
     {
         var sut = new EventExchange();
         var action = Lambda.Of( () => sut.GetPublisher<int>() );
-        action.Should().ThrowExactly<EventPublisherNotFoundException>().AndMatch( e => e.EventType == typeof( int ) );
+        action.Test( exc => exc.TestType().Exact<EventPublisherNotFoundException>( e => e.EventType.TestEquals( typeof( int ) ) ) ).Go();
     }
 
     [Fact]
@@ -240,11 +217,7 @@ public class EventExchangesTests : TestsBase
 
         var result = sut.TryGetPublisher<int>( out var outResult );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            outResult.Should().BeSameAs( publisher );
-        }
+        Assertion.All( result.TestTrue(), outResult.TestRefEquals( publisher ) ).Go();
     }
 
     [Fact]
@@ -254,11 +227,7 @@ public class EventExchangesTests : TestsBase
 
         var result = sut.TryGetPublisher<int>( out var outResult );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeFalse();
-            outResult.Should().BeNull();
-        }
+        Assertion.All( result.TestFalse(), outResult.TestNull() ).Go();
     }
 
     [Fact]
@@ -269,7 +238,7 @@ public class EventExchangesTests : TestsBase
 
         var result = sut.GetStream( typeof( int ) );
 
-        result.Should().BeSameAs( publisher );
+        result.TestRefEquals( publisher ).Go();
     }
 
     [Fact]
@@ -277,7 +246,7 @@ public class EventExchangesTests : TestsBase
     {
         var sut = new EventExchange();
         var action = Lambda.Of( () => sut.GetStream( typeof( int ) ) );
-        action.Should().ThrowExactly<EventPublisherNotFoundException>().AndMatch( e => e.EventType == typeof( int ) );
+        action.Test( exc => exc.TestType().Exact<EventPublisherNotFoundException>( e => e.EventType.TestEquals( typeof( int ) ) ) ).Go();
     }
 
     [Fact]
@@ -288,11 +257,7 @@ public class EventExchangesTests : TestsBase
 
         var result = sut.TryGetStream( typeof( int ), out var outResult );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            outResult.Should().BeSameAs( publisher );
-        }
+        Assertion.All( result.TestTrue(), outResult.TestRefEquals( publisher ) ).Go();
     }
 
     [Fact]
@@ -302,11 +267,7 @@ public class EventExchangesTests : TestsBase
 
         var result = sut.TryGetStream( typeof( int ), out var outResult );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeFalse();
-            outResult.Should().BeNull();
-        }
+        Assertion.All( result.TestFalse(), outResult.TestNull() ).Go();
     }
 
     [Fact]
@@ -317,7 +278,7 @@ public class EventExchangesTests : TestsBase
 
         var result = sut.GetPublisher( typeof( int ) );
 
-        result.Should().BeSameAs( publisher );
+        result.TestRefEquals( publisher ).Go();
     }
 
     [Fact]
@@ -325,7 +286,7 @@ public class EventExchangesTests : TestsBase
     {
         var sut = new EventExchange();
         var action = Lambda.Of( () => sut.GetPublisher( typeof( int ) ) );
-        action.Should().ThrowExactly<EventPublisherNotFoundException>().AndMatch( e => e.EventType == typeof( int ) );
+        action.Test( exc => exc.TestType().Exact<EventPublisherNotFoundException>( e => e.EventType.TestEquals( typeof( int ) ) ) ).Go();
     }
 
     [Fact]
@@ -336,11 +297,7 @@ public class EventExchangesTests : TestsBase
 
         var result = sut.TryGetPublisher( typeof( int ), out var outResult );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            outResult.Should().BeSameAs( publisher );
-        }
+        Assertion.All( result.TestTrue(), outResult.TestRefEquals( publisher ) ).Go();
     }
 
     [Fact]
@@ -350,11 +307,7 @@ public class EventExchangesTests : TestsBase
 
         var result = sut.TryGetPublisher( typeof( int ), out var outResult );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeFalse();
-            outResult.Should().BeNull();
-        }
+        Assertion.All( result.TestFalse(), outResult.TestNull() ).Go();
     }
 
     [Fact]
@@ -369,11 +322,7 @@ public class EventExchangesTests : TestsBase
 
         var result = sut.Listen( listener );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( subscriber );
-            publisher.VerifyCalls().Received( x => x.Listen( listener ) );
-        }
+        Assertion.All( result.TestRefEquals( subscriber ), publisher.TestReceivedCalls( x => x.Listen( listener ) ) ).Go();
     }
 
     [Fact]
@@ -384,7 +333,7 @@ public class EventExchangesTests : TestsBase
 
         var action = Lambda.Of( () => sut.Listen( listener ) );
 
-        action.Should().ThrowExactly<EventPublisherNotFoundException>().AndMatch( e => e.EventType == typeof( int ) );
+        action.Test( exc => exc.TestType().Exact<EventPublisherNotFoundException>( e => e.EventType.TestEquals( typeof( int ) ) ) ).Go();
     }
 
     [Fact]
@@ -399,12 +348,8 @@ public class EventExchangesTests : TestsBase
 
         var result = sut.TryListen( listener, out var outResult );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            outResult.Should().BeSameAs( subscriber );
-            publisher.VerifyCalls().Received( x => x.Listen( listener ) );
-        }
+        Assertion.All( result.TestTrue(), outResult.TestRefEquals( subscriber ), publisher.TestReceivedCalls( x => x.Listen( listener ) ) )
+            .Go();
     }
 
     [Fact]
@@ -415,11 +360,7 @@ public class EventExchangesTests : TestsBase
 
         var result = sut.TryListen( listener, out var outResult );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeFalse();
-            outResult.Should().BeNull();
-        }
+        Assertion.All( result.TestFalse(), outResult.TestNull() ).Go();
     }
 
     [Fact]
@@ -434,11 +375,7 @@ public class EventExchangesTests : TestsBase
 
         var result = sut.Listen( typeof( int ), listener );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( subscriber );
-            publisher.VerifyCalls().Received( x => x.Listen( listener ) );
-        }
+        Assertion.All( result.TestRefEquals( subscriber ), publisher.TestReceivedCalls( x => x.Listen( listener ) ) ).Go();
     }
 
     [Fact]
@@ -449,7 +386,7 @@ public class EventExchangesTests : TestsBase
 
         var action = Lambda.Of( () => sut.Listen( typeof( int ), listener ) );
 
-        action.Should().ThrowExactly<EventPublisherNotFoundException>().AndMatch( e => e.EventType == typeof( int ) );
+        action.Test( exc => exc.TestType().Exact<EventPublisherNotFoundException>( e => e.EventType.TestEquals( typeof( int ) ) ) ).Go();
     }
 
     [Fact]
@@ -464,12 +401,8 @@ public class EventExchangesTests : TestsBase
 
         var result = sut.TryListen( typeof( int ), listener, out var outResult );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            outResult.Should().BeSameAs( subscriber );
-            publisher.VerifyCalls().Received( x => x.Listen( listener ) );
-        }
+        Assertion.All( result.TestTrue(), outResult.TestRefEquals( subscriber ), publisher.TestReceivedCalls( x => x.Listen( listener ) ) )
+            .Go();
     }
 
     [Fact]
@@ -480,11 +413,7 @@ public class EventExchangesTests : TestsBase
 
         var result = sut.TryListen( typeof( int ), listener, out var outResult );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeFalse();
-            outResult.Should().BeNull();
-        }
+        Assertion.All( result.TestFalse(), outResult.TestNull() ).Go();
     }
 
     [Fact]
@@ -497,7 +426,7 @@ public class EventExchangesTests : TestsBase
 
         sut.Publish( @event );
 
-        publisher.VerifyCalls().Received( x => x.Publish( @event ) );
+        publisher.TestReceivedCalls( x => x.Publish( @event ) ).Go();
     }
 
     [Fact]
@@ -508,7 +437,7 @@ public class EventExchangesTests : TestsBase
 
         var action = Lambda.Of( () => sut.Publish( @event ) );
 
-        action.Should().ThrowExactly<EventPublisherNotFoundException>().AndMatch( e => e.EventType == typeof( int ) );
+        action.Test( exc => exc.TestType().Exact<EventPublisherNotFoundException>( e => e.EventType.TestEquals( typeof( int ) ) ) ).Go();
     }
 
     [Fact]
@@ -521,11 +450,7 @@ public class EventExchangesTests : TestsBase
 
         var result = sut.TryPublish( @event );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            publisher.VerifyCalls().Received( x => x.Publish( @event ) );
-        }
+        Assertion.All( result.TestTrue(), publisher.TestReceivedCalls( x => x.Publish( @event ) ) ).Go();
     }
 
     [Fact]
@@ -536,7 +461,7 @@ public class EventExchangesTests : TestsBase
 
         var result = sut.TryPublish( @event );
 
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Fact]
@@ -549,7 +474,7 @@ public class EventExchangesTests : TestsBase
 
         sut.Publish( typeof( int ), @event );
 
-        publisher.VerifyCalls().Received( x => x.Publish( @event ) );
+        publisher.TestReceivedCalls( x => x.Publish( @event ) ).Go();
     }
 
     [Fact]
@@ -560,7 +485,7 @@ public class EventExchangesTests : TestsBase
 
         var action = Lambda.Of( () => sut.Publish( typeof( int ), @event ) );
 
-        action.Should().ThrowExactly<EventPublisherNotFoundException>().AndMatch( e => e.EventType == typeof( int ) );
+        action.Test( exc => exc.TestType().Exact<EventPublisherNotFoundException>( e => e.EventType.TestEquals( typeof( int ) ) ) ).Go();
     }
 
     [Fact]
@@ -573,11 +498,7 @@ public class EventExchangesTests : TestsBase
 
         var result = sut.TryPublish( typeof( int ), @event );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            publisher.VerifyCalls().Received( x => x.Publish( @event ) );
-        }
+        Assertion.All( result.TestTrue(), publisher.TestReceivedCalls( x => x.Publish( @event ) ) ).Go();
     }
 
     [Fact]
@@ -588,6 +509,6 @@ public class EventExchangesTests : TestsBase
 
         var result = sut.TryPublish( typeof( int ), @event );
 
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 }

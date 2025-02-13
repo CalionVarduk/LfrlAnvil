@@ -1,6 +1,4 @@
-﻿using LfrlAnvil.TestExtensions.FluentAssertions;
-
-namespace LfrlAnvil.Reactive.Tests.DecoratedEventListenerTests;
+﻿namespace LfrlAnvil.Reactive.Tests.DecoratedEventListenerTests;
 
 public abstract class GenericDecoratedEventListenerTests<TSourceEvent, TNextEvent> : TestsBase
 {
@@ -14,6 +12,6 @@ public abstract class GenericDecoratedEventListenerTests<TSourceEvent, TNextEven
 
         sut.OnDispose( source );
 
-        next.VerifyCalls().Received( x => x.OnDispose( source ) );
+        next.TestReceivedCalls( x => x.OnDispose( source ) ).Go();
     }
 }

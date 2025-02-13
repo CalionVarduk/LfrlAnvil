@@ -2,7 +2,6 @@
 using System.Linq;
 using LfrlAnvil.Reactive.Decorators;
 using LfrlAnvil.Reactive.Extensions;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Reactive.Tests.DecoratorsTests;
 
@@ -18,11 +17,10 @@ public class EventListenerTakeUntilDecoratorTests : TestsBase
 
         _ = sut.Decorate( next, subscriber );
 
-        using ( new AssertionScope() )
-        {
-            subscriber.VerifyCalls().DidNotReceive( x => x.Dispose() );
-            target.HasSubscribers.Should().BeTrue();
-        }
+        Assertion.All(
+                subscriber.TestDidNotReceiveCall( x => x.Dispose() ),
+                target.HasSubscribers.TestTrue() )
+            .Go();
     }
 
     [Fact]
@@ -37,7 +35,7 @@ public class EventListenerTakeUntilDecoratorTests : TestsBase
 
         _ = sut.Decorate( next, subscriber );
 
-        subscriber.VerifyCalls().Received( x => x.Dispose() );
+        subscriber.TestReceivedCalls( x => x.Dispose() ).Go();
     }
 
     [Fact]
@@ -52,7 +50,7 @@ public class EventListenerTakeUntilDecoratorTests : TestsBase
 
         _ = sut.Decorate( next, subscriber );
 
-        subscriber.VerifyCalls().Received( x => x.Dispose() );
+        subscriber.TestReceivedCalls( x => x.Dispose() ).Go();
     }
 
     [Fact]
@@ -66,7 +64,7 @@ public class EventListenerTakeUntilDecoratorTests : TestsBase
 
         target.Publish( Fixture.Create<string>() );
 
-        subscriber.VerifyCalls().Received( x => x.Dispose() );
+        subscriber.TestReceivedCalls( x => x.Dispose() ).Go();
     }
 
     [Fact]
@@ -80,7 +78,7 @@ public class EventListenerTakeUntilDecoratorTests : TestsBase
 
         target.Dispose();
 
-        subscriber.VerifyCalls().Received( x => x.Dispose() );
+        subscriber.TestReceivedCalls( x => x.Dispose() ).Go();
     }
 
     [Fact]
@@ -98,7 +96,7 @@ public class EventListenerTakeUntilDecoratorTests : TestsBase
         foreach ( var e in sourceEvents )
             listener.React( e );
 
-        actualEvents.Should().BeSequentiallyEqualTo( sourceEvents );
+        actualEvents.TestSequence( sourceEvents ).Go();
     }
 
     [Theory]
@@ -114,7 +112,7 @@ public class EventListenerTakeUntilDecoratorTests : TestsBase
 
         listener.OnDispose( source );
 
-        next.VerifyCalls().Received( x => x.OnDispose( source ) );
+        next.TestReceivedCalls( x => x.OnDispose( source ) ).Go();
     }
 
     [Theory]
@@ -130,7 +128,7 @@ public class EventListenerTakeUntilDecoratorTests : TestsBase
 
         listener.OnDispose( source );
 
-        target.HasSubscribers.Should().BeFalse();
+        target.HasSubscribers.TestFalse().Go();
     }
 
     [Fact]
@@ -154,12 +152,11 @@ public class EventListenerTakeUntilDecoratorTests : TestsBase
         foreach ( var e in sourceEvents.Skip( expectedEvents.Length ) )
             sut.Publish( e );
 
-        using ( new AssertionScope() )
-        {
-            actualEvents.Should().BeSequentiallyEqualTo( expectedEvents );
-            sut.HasSubscribers.Should().BeFalse();
-            target.HasSubscribers.Should().BeFalse();
-        }
+        Assertion.All(
+                actualEvents.TestSequence( expectedEvents ),
+                sut.HasSubscribers.TestFalse(),
+                target.HasSubscribers.TestFalse() )
+            .Go();
     }
 
     [Fact]
@@ -173,11 +170,10 @@ public class EventListenerTakeUntilDecoratorTests : TestsBase
 
         sut.Publish( @event );
 
-        using ( new AssertionScope() )
-        {
-            next.VerifyCalls().DidNotReceive( x => x.React( Arg.Any<int>() ) );
-            next.VerifyCalls().Received( x => x.OnDispose( DisposalSource.Subscriber ) );
-            sut.HasSubscribers.Should().BeFalse();
-        }
+        Assertion.All(
+                next.TestDidNotReceiveCall( x => x.React( Arg.Any<int>() ) ),
+                next.TestReceivedCalls( x => x.OnDispose( DisposalSource.Subscriber ) ),
+                sut.HasSubscribers.TestFalse() )
+            .Go();
     }
 }

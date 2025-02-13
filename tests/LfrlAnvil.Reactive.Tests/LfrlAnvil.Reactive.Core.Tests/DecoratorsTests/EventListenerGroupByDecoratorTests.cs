@@ -2,7 +2,6 @@
 using LfrlAnvil.Reactive.Composites;
 using LfrlAnvil.Reactive.Decorators;
 using LfrlAnvil.Reactive.Extensions;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Reactive.Tests.DecoratorsTests;
 
@@ -17,7 +16,7 @@ public class EventListenerGroupByDecoratorTests : TestsBase
 
         _ = sut.Decorate( next, subscriber );
 
-        subscriber.VerifyCalls().DidNotReceive( x => x.Dispose() );
+        subscriber.TestDidNotReceiveCall( x => x.Dispose() ).Go();
     }
 
     [Fact]
@@ -48,16 +47,15 @@ public class EventListenerGroupByDecoratorTests : TestsBase
         foreach ( var e in sourceEvents )
             listener.React( e );
 
-        using ( new AssertionScope() )
-        {
-            actualEvents.Should().HaveCount( expectedEvents.Length );
-            for ( var i = 0; i < actualEvents.Count; ++i )
-            {
-                actualEvents[i].Key.Should().Be( expectedEvents[i].Key );
-                actualEvents[i].Event.Should().Be( expectedEvents[i].Event );
-                actualEvents[i].AllEvents.Should().BeSequentiallyEqualTo( expectedEvents[i].AllEvents );
-            }
-        }
+        Assertion.All(
+                actualEvents.Count.TestEquals( expectedEvents.Length ),
+                actualEvents.TestAll(
+                    (e, i) => Assertion.All(
+                        "event",
+                        e.Key.TestEquals( expectedEvents[i].Key ),
+                        e.Event.TestEquals( expectedEvents[i].Event ),
+                        e.AllEvents.TestSequence( expectedEvents[i].AllEvents ) ) ) )
+            .Go();
     }
 
     [Theory]
@@ -73,7 +71,7 @@ public class EventListenerGroupByDecoratorTests : TestsBase
 
         listener.OnDispose( source );
 
-        next.VerifyCalls().Received( x => x.OnDispose( source ) );
+        next.TestReceivedCalls( x => x.OnDispose( source ) ).Go();
     }
 
     [Fact]
@@ -104,15 +102,14 @@ public class EventListenerGroupByDecoratorTests : TestsBase
         foreach ( var e in sourceEvents )
             sut.Publish( e );
 
-        using ( new AssertionScope() )
-        {
-            actualEvents.Should().HaveCount( expectedEvents.Length );
-            for ( var i = 0; i < actualEvents.Count; ++i )
-            {
-                actualEvents[i].Key.Should().Be( expectedEvents[i].Key );
-                actualEvents[i].Event.Should().Be( expectedEvents[i].Event );
-                actualEvents[i].AllEvents.Should().BeSequentiallyEqualTo( expectedEvents[i].AllEvents );
-            }
-        }
+        Assertion.All(
+                actualEvents.Count.TestEquals( expectedEvents.Length ),
+                actualEvents.TestAll(
+                    (e, i) => Assertion.All(
+                        "event",
+                        e.Key.TestEquals( expectedEvents[i].Key ),
+                        e.Event.TestEquals( expectedEvents[i].Event ),
+                        e.AllEvents.TestSequence( expectedEvents[i].AllEvents ) ) ) )
+            .Go();
     }
 }

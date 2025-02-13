@@ -2,7 +2,6 @@
 using LfrlAnvil.Functional;
 using LfrlAnvil.Reactive.Decorators;
 using LfrlAnvil.Reactive.Extensions;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Reactive.Tests.DecoratorsTests;
 
@@ -17,7 +16,7 @@ public class EventListenerBufferDecoratorTests : TestsBase
 
         _ = sut.Decorate( next, subscriber );
 
-        subscriber.VerifyCalls().DidNotReceive( x => x.Dispose() );
+        subscriber.TestDidNotReceiveCall( x => x.Dispose() ).Go();
     }
 
     [Theory]
@@ -26,7 +25,7 @@ public class EventListenerBufferDecoratorTests : TestsBase
     public void Ctor_ShouldThrowArgumentOutOfRangeException_WhenBufferLengthIsLessThanOne(int length)
     {
         var action = Lambda.Of( () => new EventListenerBufferDecorator<int>( length ) );
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Fact]
@@ -44,12 +43,10 @@ public class EventListenerBufferDecoratorTests : TestsBase
         foreach ( var e in sourceEvents )
             listener.React( e );
 
-        using ( new AssertionScope() )
-        {
-            actualEvents.Should().HaveCount( expectedEvents.Length );
-            for ( var i = 0; i < actualEvents.Count; ++i )
-                actualEvents[i].Should().BeSequentiallyEqualTo( expectedEvents[i] );
-        }
+        Assertion.All(
+                actualEvents.Count.TestEquals( expectedEvents.Length ),
+                actualEvents.TestAll( (e, i) => e.TestSequence( expectedEvents[i] ) ) )
+            .Go();
     }
 
     [Theory]
@@ -64,7 +61,7 @@ public class EventListenerBufferDecoratorTests : TestsBase
 
         listener.OnDispose( source );
 
-        next.VerifyCalls().Received( x => x.OnDispose( source ) );
+        next.TestReceivedCalls( x => x.OnDispose( source ) ).Go();
     }
 
     [Theory]
@@ -87,7 +84,7 @@ public class EventListenerBufferDecoratorTests : TestsBase
 
         listener.OnDispose( source );
 
-        actualEvents.Should().BeSequentiallyEqualTo( expectedEvents );
+        actualEvents.TestSequence( expectedEvents ).Go();
     }
 
     [Fact]
@@ -105,12 +102,10 @@ public class EventListenerBufferDecoratorTests : TestsBase
         foreach ( var e in sourceEvents )
             sut.Publish( e );
 
-        using ( new AssertionScope() )
-        {
-            actualEvents.Should().HaveCount( expectedEvents.Length );
-            for ( var i = 0; i < actualEvents.Count; ++i )
-                actualEvents[i].Should().BeSequentiallyEqualTo( expectedEvents[i] );
-        }
+        Assertion.All(
+                actualEvents.Count.TestEquals( expectedEvents.Length ),
+                actualEvents.TestAll( (e, i) => e.TestSequence( expectedEvents[i] ) ) )
+            .Go();
     }
 
     [Fact]
@@ -130,6 +125,6 @@ public class EventListenerBufferDecoratorTests : TestsBase
 
         subscriber.Dispose();
 
-        actualEvents.Should().BeSequentiallyEqualTo( expectedEvents );
+        actualEvents.TestSequence( expectedEvents ).Go();
     }
 }

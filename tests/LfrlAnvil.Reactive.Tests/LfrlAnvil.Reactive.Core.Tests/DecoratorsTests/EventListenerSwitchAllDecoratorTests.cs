@@ -2,7 +2,6 @@
 using System.Linq;
 using LfrlAnvil.Reactive.Decorators;
 using LfrlAnvil.Reactive.Extensions;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Reactive.Tests.DecoratorsTests;
 
@@ -17,7 +16,7 @@ public class EventListenerSwitchAllDecoratorTests : TestsBase
 
         _ = sut.Decorate( next, subscriber );
 
-        subscriber.VerifyCalls().DidNotReceive( x => x.Dispose() );
+        subscriber.TestDidNotReceiveCall( x => x.Dispose() ).Go();
     }
 
     [Fact]
@@ -31,7 +30,7 @@ public class EventListenerSwitchAllDecoratorTests : TestsBase
 
         listener.React( inner );
 
-        inner.HasSubscribers.Should().BeTrue();
+        inner.HasSubscribers.TestTrue().Go();
     }
 
     [Fact]
@@ -47,7 +46,7 @@ public class EventListenerSwitchAllDecoratorTests : TestsBase
 
         listener.React( inner );
 
-        subscriber.VerifyCalls().DidNotReceive( x => x.Dispose() );
+        subscriber.TestDidNotReceiveCall( x => x.Dispose() ).Go();
     }
 
     [Fact]
@@ -67,11 +66,10 @@ public class EventListenerSwitchAllDecoratorTests : TestsBase
         foreach ( var e in firstStreamValues )
             inner.Publish( e );
 
-        using ( new AssertionScope() )
-        {
-            inner.HasSubscribers.Should().BeTrue();
-            actualEvents.Should().BeSequentiallyEqualTo( firstStreamValues );
-        }
+        Assertion.All(
+                inner.HasSubscribers.TestTrue(),
+                actualEvents.TestSequence( firstStreamValues ) )
+            .Go();
     }
 
     [Fact]
@@ -103,12 +101,11 @@ public class EventListenerSwitchAllDecoratorTests : TestsBase
         foreach ( var e in secondStreamValues )
             secondInner.Publish( e );
 
-        using ( new AssertionScope() )
-        {
-            firstInner.HasSubscribers.Should().BeFalse();
-            secondInner.HasSubscribers.Should().BeTrue();
-            actualEvents.Should().BeSequentiallyEqualTo( expectedEvents );
-        }
+        Assertion.All(
+                firstInner.HasSubscribers.TestFalse(),
+                secondInner.HasSubscribers.TestTrue(),
+                actualEvents.TestSequence( expectedEvents ) )
+            .Go();
     }
 
     [Fact]
@@ -141,13 +138,12 @@ public class EventListenerSwitchAllDecoratorTests : TestsBase
         foreach ( var e in thirdStreamValues )
             thirdInner.Publish( e );
 
-        using ( new AssertionScope() )
-        {
-            firstInner.HasSubscribers.Should().BeFalse();
-            secondInner.HasSubscribers.Should().BeFalse();
-            thirdInner.HasSubscribers.Should().BeTrue();
-            actualEvents.Should().BeSequentiallyEqualTo( expectedEvents );
-        }
+        Assertion.All(
+                firstInner.HasSubscribers.TestFalse(),
+                secondInner.HasSubscribers.TestFalse(),
+                thirdInner.HasSubscribers.TestTrue(),
+                actualEvents.TestSequence( expectedEvents ) )
+            .Go();
     }
 
     [Theory]
@@ -164,7 +160,7 @@ public class EventListenerSwitchAllDecoratorTests : TestsBase
         listener.React( inner );
         listener.OnDispose( source );
 
-        inner.HasSubscribers.Should().BeFalse();
+        inner.HasSubscribers.TestFalse().Go();
     }
 
     [Theory]
@@ -179,7 +175,7 @@ public class EventListenerSwitchAllDecoratorTests : TestsBase
 
         listener.OnDispose( source );
 
-        next.VerifyCalls().Received( x => x.OnDispose( source ) );
+        next.TestReceivedCalls( x => x.OnDispose( source ) ).Go();
     }
 
     [Fact]
@@ -212,14 +208,13 @@ public class EventListenerSwitchAllDecoratorTests : TestsBase
         foreach ( var e in thirdStreamValues )
             thirdInner.Publish( e );
 
-        using ( new AssertionScope() )
-        {
-            firstInner.HasSubscribers.Should().BeFalse();
-            secondInner.HasSubscribers.Should().BeFalse();
-            thirdInner.HasSubscribers.Should().BeTrue();
-            sut.HasSubscribers.Should().BeTrue();
-            subscriber.IsDisposed.Should().BeFalse();
-            actualEvents.Should().BeSequentiallyEqualTo( expectedEvents );
-        }
+        Assertion.All(
+                firstInner.HasSubscribers.TestFalse(),
+                secondInner.HasSubscribers.TestFalse(),
+                thirdInner.HasSubscribers.TestTrue(),
+                sut.HasSubscribers.TestTrue(),
+                subscriber.IsDisposed.TestFalse(),
+                actualEvents.TestSequence( expectedEvents ) )
+            .Go();
     }
 }

@@ -1,6 +1,5 @@
 ﻿using System.Linq;
 using LfrlAnvil.Functional;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Reactive.Tests.HistoryEventPublisherTests;
 
@@ -14,12 +13,11 @@ public abstract class GenericHistoryEventPublisherTests<TEvent> : TestsBase
     {
         var sut = new HistoryEventPublisher<TEvent>( capacity );
 
-        using ( new AssertionScope() )
-        {
-            sut.Subscribers.Should().BeEmpty();
-            sut.History.Should().BeEmpty();
-            sut.Capacity.Should().Be( capacity );
-        }
+        Assertion.All(
+                sut.Subscribers.TestEmpty(),
+                sut.History.TestEmpty(),
+                sut.Capacity.TestEquals( capacity ) )
+            .Go();
     }
 
     [Theory]
@@ -28,7 +26,7 @@ public abstract class GenericHistoryEventPublisherTests<TEvent> : TestsBase
     public void Ctor_ShouldThrowArgumentOutOfRangeException_WhenCapacityIsLessThanOne(int capacity)
     {
         var action = Lambda.Of( () => new HistoryEventPublisher<TEvent>( capacity ) );
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Fact]
@@ -39,7 +37,7 @@ public abstract class GenericHistoryEventPublisherTests<TEvent> : TestsBase
 
         sut.Publish( @event );
 
-        sut.History.Should().BeSequentiallyEqualTo( @event );
+        sut.History.TestSequence( [ @event ] ).Go();
     }
 
     [Fact]
@@ -48,10 +46,9 @@ public abstract class GenericHistoryEventPublisherTests<TEvent> : TestsBase
         var events = Fixture.CreateManyDistinct<TEvent>( count: 3 );
         var sut = new HistoryEventPublisher<TEvent>( capacity: 10 );
 
-        foreach ( var @event in events )
-            sut.Publish( @event );
+        foreach ( var @event in events ) sut.Publish( @event );
 
-        sut.History.Should().BeSequentiallyEqualTo( events );
+        sut.History.TestSequence( events ).Go();
     }
 
     [Fact]
@@ -60,10 +57,9 @@ public abstract class GenericHistoryEventPublisherTests<TEvent> : TestsBase
         var events = Fixture.CreateManyDistinct<TEvent>( count: 3 );
         var sut = new HistoryEventPublisher<TEvent>( capacity: 2 );
 
-        foreach ( var @event in events )
-            sut.Publish( @event );
+        foreach ( var @event in events ) sut.Publish( @event );
 
-        sut.History.Should().BeSequentiallyEqualTo( events[1], events[2] );
+        sut.History.TestSequence( [ events[1], events[2] ] ).Go();
     }
 
     [Fact]
@@ -76,7 +72,7 @@ public abstract class GenericHistoryEventPublisherTests<TEvent> : TestsBase
 
         sut.Publish( @event );
 
-        listener.VerifyCalls().Received( x => x.React( @event ) );
+        listener.TestReceivedCalls( x => x.React( @event ) ).Go();
     }
 
     [Fact]
@@ -85,13 +81,14 @@ public abstract class GenericHistoryEventPublisherTests<TEvent> : TestsBase
         var events = Fixture.CreateManyDistinct<TEvent>( count: 2 );
         var listener = Substitute.For<IEventListener<TEvent>>();
         var sut = new HistoryEventPublisher<TEvent>( capacity: 10 );
-        foreach ( var @event in events )
-            sut.Publish( @event );
+        foreach ( var @event in events ) sut.Publish( @event );
 
         sut.Listen( listener );
 
-        listener.VerifyCalls().Received( x => x.React( events[0] ) );
-        listener.VerifyCalls().Received( x => x.React( events[1] ) );
+        Assertion.All(
+                listener.TestReceivedCalls( x => x.React( events[0] ) ),
+                listener.TestReceivedCalls( x => x.React( events[1] ) ) )
+            .Go();
     }
 
     [Fact]
@@ -101,17 +98,15 @@ public abstract class GenericHistoryEventPublisherTests<TEvent> : TestsBase
         var sut = new HistoryEventPublisher<TEvent>( capacity: 10 );
         var listener = Substitute.For<IEventListener<TEvent>>();
         listener.When( l => l.React( events[0] ) ).Do( _ => sut.Subscribers.First().Dispose() );
-        foreach ( var @event in events )
-            sut.Publish( @event );
+        foreach ( var @event in events ) sut.Publish( @event );
 
         var subscriber = sut.Listen( listener );
 
-        using ( new AssertionScope() )
-        {
-            subscriber.IsDisposed.Should().BeTrue();
-            listener.VerifyCalls().Received( x => x.React( events[0] ) );
-            listener.VerifyCalls().DidNotReceive( x => x.React( events[1] ) );
-        }
+        Assertion.All(
+                subscriber.IsDisposed.TestTrue(),
+                listener.TestReceivedCalls( x => x.React( events[0] ) ),
+                listener.TestDidNotReceiveCall( x => x.React( events[1] ) ) )
+            .Go();
     }
 
     [Fact]
@@ -123,7 +118,7 @@ public abstract class GenericHistoryEventPublisherTests<TEvent> : TestsBase
 
         sut.ClearHistory();
 
-        sut.History.Should().BeEmpty();
+        sut.History.TestEmpty().Go();
     }
 
     [Fact]
@@ -131,15 +126,13 @@ public abstract class GenericHistoryEventPublisherTests<TEvent> : TestsBase
     {
         var events = Fixture.CreateManyDistinct<TEvent>( count: 3 );
         var sut = new HistoryEventPublisher<TEvent>( capacity: 10 );
-        foreach ( var @event in events )
-            sut.Publish( @event );
+        foreach ( var @event in events ) sut.Publish( @event );
 
         sut.Dispose();
 
-        using ( new AssertionScope() )
-        {
-            sut.IsDisposed.Should().BeTrue();
-            sut.History.Should().BeEmpty();
-        }
+        Assertion.All(
+                sut.IsDisposed.TestTrue(),
+                sut.History.TestEmpty() )
+            .Go();
     }
 }

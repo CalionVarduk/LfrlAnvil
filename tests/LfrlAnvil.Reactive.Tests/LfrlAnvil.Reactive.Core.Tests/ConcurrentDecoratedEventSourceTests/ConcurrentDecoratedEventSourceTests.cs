@@ -2,7 +2,6 @@
 using LfrlAnvil.Functional;
 using LfrlAnvil.Reactive.Exceptions;
 using LfrlAnvil.Reactive.Internal;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Reactive.Tests.ConcurrentDecoratedEventSourceTests;
 
@@ -17,11 +16,10 @@ public class ConcurrentDecoratedEventSourceTests : TestsBase
 
         var result = sut.Decorate( decorator );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().NotBeSameAs( sut );
-            result.IsDisposed.Should().Be( @base.IsDisposed );
-        }
+        Assertion.All(
+                result.TestNotRefEquals( sut ),
+                result.IsDisposed.TestEquals( @base.IsDisposed ) )
+            .Go();
     }
 
     [Fact]
@@ -37,7 +35,7 @@ public class ConcurrentDecoratedEventSourceTests : TestsBase
 
         var subscriber = result.Listen( listener );
 
-        sut.Subscribers.Should().BeSequentiallyEqualTo( subscriber );
+        sut.Subscribers.TestSequence( [ subscriber ] ).Go();
     }
 
     [Fact]
@@ -61,7 +59,7 @@ public class ConcurrentDecoratedEventSourceTests : TestsBase
 
         result.Listen( listener );
 
-        hasLock.Should().BeTrue();
+        hasLock.TestTrue().Go();
     }
 
     [Fact]
@@ -74,11 +72,10 @@ public class ConcurrentDecoratedEventSourceTests : TestsBase
 
         var result = sut.Decorate( decorator ).Decorate( nestedDecorator );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().NotBeSameAs( sut );
-            result.IsDisposed.Should().Be( @base.IsDisposed );
-        }
+        Assertion.All(
+                result.TestNotRefEquals( sut ),
+                result.IsDisposed.TestEquals( @base.IsDisposed ) )
+            .Go();
     }
 
     [Fact]
@@ -98,7 +95,7 @@ public class ConcurrentDecoratedEventSourceTests : TestsBase
 
         var subscriber = result.Listen( listener );
 
-        sut.Subscribers.Should().BeSequentiallyEqualTo( subscriber );
+        sut.Subscribers.TestSequence( [ subscriber ] ).Go();
     }
 
     [Fact]
@@ -125,7 +122,7 @@ public class ConcurrentDecoratedEventSourceTests : TestsBase
 
         result.Listen( listener );
 
-        hasLock.Should().BeTrue();
+        hasLock.TestTrue().Go();
     }
 
     [Fact]
@@ -139,11 +136,10 @@ public class ConcurrentDecoratedEventSourceTests : TestsBase
 
         var result = sut.Decorate( decorator ).Decorate( nestedDecorator ).Decorate( deeplyNestedDecorator );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().NotBeSameAs( sut );
-            result.IsDisposed.Should().Be( @base.IsDisposed );
-        }
+        Assertion.All(
+                result.TestNotRefEquals( sut ),
+                result.IsDisposed.TestEquals( @base.IsDisposed ) )
+            .Go();
     }
 
     [Fact]
@@ -159,11 +155,10 @@ public class ConcurrentDecoratedEventSourceTests : TestsBase
 
         var subscriber = sut.Listen( listener );
 
-        using ( new AssertionScope() )
-        {
-            source.HasSubscribers.Should().BeTrue();
-            source.Subscribers.Should().BeSequentiallyEqualTo( subscriber );
-        }
+        Assertion.All(
+                source.HasSubscribers.TestTrue(),
+                source.Subscribers.TestSequence( [ subscriber ] ) )
+            .Go();
     }
 
     [Fact]
@@ -176,8 +171,12 @@ public class ConcurrentDecoratedEventSourceTests : TestsBase
 
         var action = Lambda.Of( () => sut.Listen( listener ) );
 
-        action.Should()
-            .ThrowExactly<InvalidArgumentTypeException>()
-            .AndMatch( e => e.Argument == listener && e.ExpectedType == typeof( IEventListener<string> ) );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<InvalidArgumentTypeException>(
+                        e => Assertion.All(
+                            e.Argument.TestRefEquals( listener ),
+                            e.ExpectedType.TestEquals( typeof( IEventListener<string> ) ) ) ) )
+            .Go();
     }
 }

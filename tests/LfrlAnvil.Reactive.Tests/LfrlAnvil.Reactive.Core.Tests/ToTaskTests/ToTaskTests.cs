@@ -13,11 +13,10 @@ public class ToTaskTests : TestsBase
         var source = new EventPublisher<int>();
         var task = source.ToTask( CancellationToken.None );
 
-        using ( new AssertionScope() )
-        {
-            source.HasSubscribers.Should().BeTrue();
-            task.Status.Should().Be( TaskStatus.WaitingForActivation );
-        }
+        Assertion.All(
+                source.HasSubscribers.TestTrue(),
+                task.Status.TestEquals( TaskStatus.WaitingForActivation ) )
+            .Go();
     }
 
     [Fact]
@@ -29,11 +28,10 @@ public class ToTaskTests : TestsBase
 
         var task = source.ToTask( cancellationTokenSource.Token );
 
-        using ( new AssertionScope() )
-        {
-            source.HasSubscribers.Should().BeFalse();
-            task.Status.Should().Be( TaskStatus.Canceled );
-        }
+        Assertion.All(
+                source.HasSubscribers.TestFalse(),
+                task.Status.TestEquals( TaskStatus.Canceled ) )
+            .Go();
     }
 
     [Fact]
@@ -44,11 +42,10 @@ public class ToTaskTests : TestsBase
 
         source.Publish( Fixture.Create<int>() );
 
-        using ( new AssertionScope() )
-        {
-            source.HasSubscribers.Should().BeTrue();
-            task.Status.Should().Be( TaskStatus.WaitingForActivation );
-        }
+        Assertion.All(
+                source.HasSubscribers.TestTrue(),
+                task.Status.TestEquals( TaskStatus.WaitingForActivation ) )
+            .Go();
     }
 
     [Fact]
@@ -62,11 +59,10 @@ public class ToTaskTests : TestsBase
         source.Publish( Fixture.Create<int>() );
         cancellationTokenSource.Cancel();
 
-        using ( new AssertionScope() )
-        {
-            source.HasSubscribers.Should().BeFalse();
-            task.Status.Should().Be( TaskStatus.Canceled );
-        }
+        Assertion.All(
+                source.HasSubscribers.TestFalse(),
+                task.Status.TestEquals( TaskStatus.Canceled ) )
+            .Go();
     }
 
     [Fact]
@@ -83,11 +79,10 @@ public class ToTaskTests : TestsBase
         source.Dispose();
         var result = await task;
 
-        using ( new AssertionScope() )
-        {
-            task.Status.Should().Be( TaskStatus.RanToCompletion );
-            result.Should().Be( expectedResult );
-        }
+        Assertion.All(
+                task.Status.TestEquals( TaskStatus.RanToCompletion ),
+                result.TestEquals( expectedResult ) )
+            .Go();
     }
 
     [Fact]
@@ -99,11 +94,10 @@ public class ToTaskTests : TestsBase
         source.Dispose();
         var result = await task;
 
-        using ( new AssertionScope() )
-        {
-            task.Status.Should().Be( TaskStatus.RanToCompletion );
-            result.Should().Be( default );
-        }
+        Assertion.All(
+                task.Status.TestEquals( TaskStatus.RanToCompletion ),
+                result.TestEquals( default ) )
+            .Go();
     }
 
     [Fact]
@@ -121,11 +115,10 @@ public class ToTaskTests : TestsBase
         subscriber.Dispose();
         var result = await task;
 
-        using ( new AssertionScope() )
-        {
-            task.Status.Should().Be( TaskStatus.RanToCompletion );
-            result.Should().Be( expectedResult );
-        }
+        Assertion.All(
+                task.Status.TestEquals( TaskStatus.RanToCompletion ),
+                result.TestEquals( expectedResult ) )
+            .Go();
     }
 
     [Fact]
@@ -138,10 +131,9 @@ public class ToTaskTests : TestsBase
         subscriber.Dispose();
         var result = await task;
 
-        using ( new AssertionScope() )
-        {
-            task.Status.Should().Be( TaskStatus.RanToCompletion );
-            result.Should().Be( default );
-        }
+        Assertion.All(
+                task.Status.TestEquals( TaskStatus.RanToCompletion ),
+                result.TestEquals( default ) )
+            .Go();
     }
 }

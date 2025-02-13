@@ -1,6 +1,5 @@
 ﻿using LfrlAnvil.Functional;
 using LfrlAnvil.Reactive.Exceptions;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Reactive.Tests.EventListenerTests;
 
@@ -15,7 +14,7 @@ public abstract class GenericEventListenerTests<TEvent> : TestsBase
 
         sut.React( @event );
 
-        react.Verify().CallAt( 0 ).Arguments.Should().BeSequentiallyEqualTo( @event );
+        react.CallAt( 0 ).Arguments.TestSequence( [ @event ] ).Go();
     }
 
     [Theory]
@@ -29,7 +28,7 @@ public abstract class GenericEventListenerTests<TEvent> : TestsBase
 
         sut.OnDispose( source );
 
-        onDispose.Verify().CallAt( 0 ).Exists().And.Arguments.Should().BeSequentiallyEqualTo( source );
+        onDispose.CallAt( 0 ).Arguments.TestSequence( [ source ] ).Go();
     }
 
     [Fact]
@@ -41,7 +40,7 @@ public abstract class GenericEventListenerTests<TEvent> : TestsBase
 
         sut.React( @event );
 
-        listener.VerifyCalls().Received( x => x.React( @event ) );
+        listener.TestReceivedCalls( x => x.React( @event ) ).Go();
     }
 
     [Fact]
@@ -52,9 +51,11 @@ public abstract class GenericEventListenerTests<TEvent> : TestsBase
 
         var action = Lambda.Of( () => sut.React( @event ) );
 
-        action.Should()
-            .ThrowExactly<InvalidArgumentTypeException>()
-            .AndMatch( e => e.Argument == @event && e.ExpectedType == typeof( TEvent ) );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<InvalidArgumentTypeException>(
+                        e => Assertion.All( e.Argument.TestRefEquals( @event ), e.ExpectedType.TestEquals( typeof( TEvent ) ) ) ) )
+            .Go();
     }
 
     private sealed class Invalid

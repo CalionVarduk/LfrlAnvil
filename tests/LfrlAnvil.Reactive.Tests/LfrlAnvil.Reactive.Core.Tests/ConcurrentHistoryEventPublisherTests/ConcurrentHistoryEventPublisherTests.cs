@@ -3,7 +3,6 @@ using System.Threading.Tasks;
 using LfrlAnvil.Functional;
 using LfrlAnvil.Reactive.Extensions;
 using LfrlAnvil.Reactive.Internal;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Reactive.Tests.ConcurrentHistoryEventPublisherTests;
 
@@ -17,7 +16,7 @@ public class ConcurrentHistoryEventPublisherTests : TestsBase
     {
         var @base = new HistoryEventPublisher<int>( capacity );
         var sut = new ConcurrentHistoryEventPublisher<int, HistoryEventPublisher<int>>( @base );
-        sut.Capacity.Should().Be( @base.Capacity );
+        sut.Capacity.TestEquals( @base.Capacity ).Go();
     }
 
     [Fact]
@@ -25,12 +24,11 @@ public class ConcurrentHistoryEventPublisherTests : TestsBase
     {
         var events = Fixture.CreateManyDistinct<int>( count: 3 );
         var @base = new HistoryEventPublisher<int>( capacity: 3 );
-        foreach ( var e in events )
-            @base.Publish( e );
+        foreach ( var e in events ) @base.Publish( e );
 
         var sut = new ConcurrentHistoryEventPublisher<int, HistoryEventPublisher<int>>( @base );
 
-        sut.History.Should().BeSequentiallyEqualTo( @base.History );
+        sut.History.TestSequence( @base.History ).Go();
     }
 
     [Fact]
@@ -38,14 +36,13 @@ public class ConcurrentHistoryEventPublisherTests : TestsBase
     {
         var events = Fixture.CreateManyDistinct<int>( count: 3 );
         var @base = new HistoryEventPublisher<int>( capacity: 3 );
-        foreach ( var e in events )
-            @base.Publish( e );
+        foreach ( var e in events ) @base.Publish( e );
 
         var sut = new ConcurrentHistoryEventPublisher<int, HistoryEventPublisher<int>>( @base );
 
         sut.ClearHistory();
 
-        @base.History.Should().BeEmpty();
+        @base.History.TestEmpty().Go();
     }
 
     [Fact]
@@ -57,7 +54,7 @@ public class ConcurrentHistoryEventPublisherTests : TestsBase
 
         var action = Lambda.Of( () => sut.ClearHistory() );
 
-        await action.Should().AcquireLockOn( sync );
+        (await action.TestLockAcquisitionAsync( sync )).Go();
     }
 
     [Fact]
@@ -70,7 +67,7 @@ public class ConcurrentHistoryEventPublisherTests : TestsBase
         using var result = sut.History.GetEnumerator();
         var hasLock = Monitor.IsEntered( sync );
 
-        hasLock.Should().BeTrue();
+        hasLock.TestTrue().Go();
     }
 
     [Fact]
@@ -84,7 +81,7 @@ public class ConcurrentHistoryEventPublisherTests : TestsBase
         result.Dispose();
         var hasLock = Monitor.IsEntered( sync );
 
-        hasLock.Should().BeFalse();
+        hasLock.TestFalse().Go();
     }
 
     [Fact]
@@ -92,6 +89,6 @@ public class ConcurrentHistoryEventPublisherTests : TestsBase
     {
         var @base = new HistoryEventPublisher<int>( capacity: 1 );
         var sut = @base.ToConcurrent();
-        sut.Should().BeOfType<ConcurrentHistoryEventPublisher<int, HistoryEventPublisher<int>>>();
+        sut.TestType().AssignableTo<ConcurrentHistoryEventPublisher<int, HistoryEventPublisher<int>>>().Go();
     }
 }

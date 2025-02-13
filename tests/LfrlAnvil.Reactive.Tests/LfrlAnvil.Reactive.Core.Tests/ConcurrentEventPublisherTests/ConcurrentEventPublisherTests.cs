@@ -4,7 +4,6 @@ using LfrlAnvil.Functional;
 using LfrlAnvil.Reactive.Exceptions;
 using LfrlAnvil.Reactive.Extensions;
 using LfrlAnvil.Reactive.Internal;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Reactive.Tests.ConcurrentEventPublisherTests;
 
@@ -22,7 +21,7 @@ public class ConcurrentEventPublisherTests : TestsBase
 
         sut.Publish( @event );
 
-        listener.VerifyCalls().Received( x => x.React( @event ) );
+        listener.TestReceivedCalls( x => x.React( @event ) ).Go();
     }
 
     [Fact]
@@ -38,7 +37,7 @@ public class ConcurrentEventPublisherTests : TestsBase
 
         sut.Publish( @event );
 
-        hasLock.Should().BeTrue();
+        hasLock.TestTrue().Go();
     }
 
     [Fact]
@@ -53,7 +52,7 @@ public class ConcurrentEventPublisherTests : TestsBase
 
         sut.Publish( @event );
 
-        listener.VerifyCalls().Received( x => x.React( @event ) );
+        listener.TestReceivedCalls( x => x.React( @event ) ).Go();
     }
 
     [Fact]
@@ -65,9 +64,11 @@ public class ConcurrentEventPublisherTests : TestsBase
 
         var action = Lambda.Of( () => sut.Publish( @event ) );
 
-        action.Should()
-            .ThrowExactly<InvalidArgumentTypeException>()
-            .AndMatch( e => e.Argument == @event && e.ExpectedType == typeof( int ) );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<InvalidArgumentTypeException>(
+                        e => Assertion.All( e.Argument.TestRefEquals( @event ), e.ExpectedType.TestEquals( typeof( int ) ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -75,6 +76,6 @@ public class ConcurrentEventPublisherTests : TestsBase
     {
         var @base = new EventPublisher<int>();
         var sut = @base.ToConcurrent();
-        sut.Should().BeOfType<ConcurrentEventPublisher<int, EventPublisher<int>>>();
+        sut.TestType().AssignableTo<ConcurrentEventPublisher<int, EventPublisher<int>>>().Go();
     }
 }

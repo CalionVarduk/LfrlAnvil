@@ -2,7 +2,6 @@
 using System.Linq;
 using LfrlAnvil.Reactive.Decorators;
 using LfrlAnvil.Reactive.Extensions;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Reactive.Tests.DecoratorsTests;
 
@@ -18,7 +17,7 @@ public class EventListenerPrependDecoratorTests : TestsBase
 
         _ = sut.Decorate( next, subscriber );
 
-        subscriber.VerifyCalls().DidNotReceive( x => x.Dispose() );
+        subscriber.TestDidNotReceiveCall( x => x.Dispose() ).Go();
     }
 
     [Fact]
@@ -32,7 +31,7 @@ public class EventListenerPrependDecoratorTests : TestsBase
         var sut = new EventListenerPrependDecorator<int>( values );
         _ = sut.Decorate( next, subscriber );
 
-        actualEvents.Should().BeSequentiallyEqualTo( values );
+        actualEvents.TestSequence( values ).Go();
     }
 
     [Fact]
@@ -51,7 +50,7 @@ public class EventListenerPrependDecoratorTests : TestsBase
         foreach ( var e in sourceEvents )
             listener.React( e );
 
-        actualEvents.Should().BeSequentiallyEqualTo( expectedEvents );
+        actualEvents.TestSequence( expectedEvents ).Go();
     }
 
     [Theory]
@@ -67,7 +66,7 @@ public class EventListenerPrependDecoratorTests : TestsBase
 
         listener.OnDispose( source );
 
-        next.VerifyCalls().Received( x => x.OnDispose( source ) );
+        next.TestReceivedCalls( x => x.OnDispose( source ) ).Go();
     }
 
     [Fact]
@@ -86,6 +85,6 @@ public class EventListenerPrependDecoratorTests : TestsBase
         foreach ( var e in sourceEvents )
             sut.Publish( e );
 
-        actualEvents.Should().BeSequentiallyEqualTo( expectedEvents );
+        actualEvents.TestSequence( expectedEvents ).Go();
     }
 }

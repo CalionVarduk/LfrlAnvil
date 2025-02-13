@@ -1,7 +1,5 @@
 ﻿using System.Collections.Generic;
-using System.Linq;
 using LfrlAnvil.Reactive.Internal;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Reactive.Tests.CombineEventSourceTests;
 
@@ -12,7 +10,7 @@ public abstract class GenericCombineEventSourceTests<TEvent> : TestsBase
     {
         var inner = new EventPublisher<TEvent>();
         var sut = new CombineEventSource<TEvent>( new[] { inner } );
-        sut.HasSubscribers.Should().BeFalse();
+        sut.HasSubscribers.TestFalse().Go();
     }
 
     [Fact]
@@ -23,11 +21,10 @@ public abstract class GenericCombineEventSourceTests<TEvent> : TestsBase
 
         var subscriber = sut.Listen( listener );
 
-        using ( new AssertionScope() )
-        {
-            subscriber.IsDisposed.Should().BeTrue();
-            listener.VerifyCalls().DidNotReceive( x => x.React( Arg.Any<ReadOnlyMemory<TEvent>>() ) );
-        }
+        Assertion.All(
+                subscriber.IsDisposed.TestTrue(),
+                listener.TestDidNotReceiveCall( x => x.React( Arg.Any<ReadOnlyMemory<TEvent>>() ) ) )
+            .Go();
     }
 
     [Fact]
@@ -40,11 +37,10 @@ public abstract class GenericCombineEventSourceTests<TEvent> : TestsBase
 
         var subscriber = sut.Listen( listener );
 
-        using ( new AssertionScope() )
-        {
-            subscriber.IsDisposed.Should().BeTrue();
-            listener.VerifyCalls().DidNotReceive( x => x.React( Arg.Any<ReadOnlyMemory<TEvent>>() ) );
-        }
+        Assertion.All(
+                subscriber.IsDisposed.TestTrue(),
+                listener.TestDidNotReceiveCall( x => x.React( Arg.Any<ReadOnlyMemory<TEvent>>() ) ) )
+            .Go();
     }
 
     [Fact]
@@ -60,15 +56,14 @@ public abstract class GenericCombineEventSourceTests<TEvent> : TestsBase
 
         sut.Dispose();
 
-        using ( new AssertionScope() )
-        {
-            sut.HasSubscribers.Should().BeFalse();
-            firstStream.HasSubscribers.Should().BeFalse();
-            secondStream.HasSubscribers.Should().BeFalse();
-            thirdStream.HasSubscribers.Should().BeFalse();
-            subscriber.IsDisposed.Should().BeTrue();
-            listener.VerifyCalls().DidNotReceive( x => x.React( Arg.Any<ReadOnlyMemory<TEvent>>() ) );
-        }
+        Assertion.All(
+                sut.HasSubscribers.TestFalse(),
+                firstStream.HasSubscribers.TestFalse(),
+                secondStream.HasSubscribers.TestFalse(),
+                thirdStream.HasSubscribers.TestFalse(),
+                subscriber.IsDisposed.TestTrue(),
+                listener.TestDidNotReceiveCall( x => x.React( Arg.Any<ReadOnlyMemory<TEvent>>() ) ) )
+            .Go();
     }
 
     [Fact]
@@ -82,15 +77,14 @@ public abstract class GenericCombineEventSourceTests<TEvent> : TestsBase
         var sut = new CombineEventSource<TEvent>( new[] { firstStream, secondStream, thirdStream } );
         var subscriber = sut.Listen( listener );
 
-        using ( new AssertionScope() )
-        {
-            firstStream.HasSubscribers.Should().BeTrue();
-            secondStream.HasSubscribers.Should().BeTrue();
-            thirdStream.HasSubscribers.Should().BeTrue();
-            sut.HasSubscribers.Should().BeTrue();
-            subscriber.IsDisposed.Should().BeFalse();
-            listener.VerifyCalls().DidNotReceive( x => x.React( Arg.Any<ReadOnlyMemory<TEvent>>() ) );
-        }
+        Assertion.All(
+                firstStream.HasSubscribers.TestTrue(),
+                secondStream.HasSubscribers.TestTrue(),
+                thirdStream.HasSubscribers.TestTrue(),
+                sut.HasSubscribers.TestTrue(),
+                subscriber.IsDisposed.TestFalse(),
+                listener.TestDidNotReceiveCall( x => x.React( Arg.Any<ReadOnlyMemory<TEvent>>() ) ) )
+            .Go();
     }
 
     [Fact]
@@ -108,21 +102,18 @@ public abstract class GenericCombineEventSourceTests<TEvent> : TestsBase
         var sut = new CombineEventSource<TEvent>( new[] { firstStream, secondStream, thirdStream } );
         var subscriber = sut.Listen( listener );
 
-        foreach ( var e in thirdStreamValues )
-            thirdStream.Publish( e );
+        foreach ( var e in thirdStreamValues ) thirdStream.Publish( e );
 
-        foreach ( var e in firstStreamValues )
-            firstStream.Publish( e );
+        foreach ( var e in firstStreamValues ) firstStream.Publish( e );
 
-        using ( new AssertionScope() )
-        {
-            firstStream.HasSubscribers.Should().BeTrue();
-            secondStream.HasSubscribers.Should().BeTrue();
-            thirdStream.HasSubscribers.Should().BeTrue();
-            sut.HasSubscribers.Should().BeTrue();
-            subscriber.IsDisposed.Should().BeFalse();
-            listener.VerifyCalls().DidNotReceive( x => x.React( Arg.Any<ReadOnlyMemory<TEvent>>() ) );
-        }
+        Assertion.All(
+                firstStream.HasSubscribers.TestTrue(),
+                secondStream.HasSubscribers.TestTrue(),
+                thirdStream.HasSubscribers.TestTrue(),
+                sut.HasSubscribers.TestTrue(),
+                subscriber.IsDisposed.TestFalse(),
+                listener.TestDidNotReceiveCall( x => x.React( Arg.Any<ReadOnlyMemory<TEvent>>() ) ) )
+            .Go();
     }
 
     [Fact]
@@ -138,15 +129,14 @@ public abstract class GenericCombineEventSourceTests<TEvent> : TestsBase
         var sut = new CombineEventSource<TEvent>( new[] { firstStream, secondStream, thirdStream } );
         var subscriber = sut.Listen( listener );
 
-        using ( new AssertionScope() )
-        {
-            firstStream.HasSubscribers.Should().BeFalse();
-            secondStream.HasSubscribers.Should().BeFalse();
-            thirdStream.HasSubscribers.Should().BeFalse();
-            sut.HasSubscribers.Should().BeFalse();
-            subscriber.IsDisposed.Should().BeTrue();
-            listener.VerifyCalls().DidNotReceive( x => x.React( Arg.Any<ReadOnlyMemory<TEvent>>() ) );
-        }
+        Assertion.All(
+                firstStream.HasSubscribers.TestFalse(),
+                secondStream.HasSubscribers.TestFalse(),
+                thirdStream.HasSubscribers.TestFalse(),
+                sut.HasSubscribers.TestFalse(),
+                subscriber.IsDisposed.TestTrue(),
+                listener.TestDidNotReceiveCall( x => x.React( Arg.Any<ReadOnlyMemory<TEvent>>() ) ) )
+            .Go();
     }
 
     [Fact]
@@ -165,23 +155,20 @@ public abstract class GenericCombineEventSourceTests<TEvent> : TestsBase
         var sut = new CombineEventSource<TEvent>( new[] { firstStream, secondStream, thirdStream } );
         var subscriber = sut.Listen( listener );
 
-        foreach ( var e in thirdStreamValues )
-            thirdStream.Publish( e );
+        foreach ( var e in thirdStreamValues ) thirdStream.Publish( e );
 
-        foreach ( var e in firstStreamValues )
-            firstStream.Publish( e );
+        foreach ( var e in firstStreamValues ) firstStream.Publish( e );
 
         firstStream.Dispose();
 
-        using ( new AssertionScope() )
-        {
-            firstStream.HasSubscribers.Should().BeFalse();
-            secondStream.HasSubscribers.Should().BeFalse();
-            thirdStream.HasSubscribers.Should().BeFalse();
-            sut.HasSubscribers.Should().BeFalse();
-            subscriber.IsDisposed.Should().BeTrue();
-            listener.VerifyCalls().DidNotReceive( x => x.React( Arg.Any<ReadOnlyMemory<TEvent>>() ) );
-        }
+        Assertion.All(
+                firstStream.HasSubscribers.TestFalse(),
+                secondStream.HasSubscribers.TestFalse(),
+                thirdStream.HasSubscribers.TestFalse(),
+                sut.HasSubscribers.TestFalse(),
+                subscriber.IsDisposed.TestTrue(),
+                listener.TestDidNotReceiveCall( x => x.React( Arg.Any<ReadOnlyMemory<TEvent>>() ) ) )
+            .Go();
     }
 
     [Fact]
@@ -220,18 +207,15 @@ public abstract class GenericCombineEventSourceTests<TEvent> : TestsBase
         firstStream.Publish( firstStreamValues[2] );
         thirdStream.Publish( thirdStreamValues[2] );
 
-        using ( new AssertionScope() )
-        {
-            sut.HasSubscribers.Should().BeTrue();
-            firstStream.HasSubscribers.Should().BeTrue();
-            secondStream.HasSubscribers.Should().BeTrue();
-            thirdStream.HasSubscribers.Should().BeTrue();
-            subscriber.IsDisposed.Should().BeFalse();
-
-            result.Should().HaveCount( expectedResult.Length );
-            for ( var i = 0; i < result.Count; ++i )
-                result[i].Should().BeSequentiallyEqualTo( expectedResult[i] );
-        }
+        Assertion.All(
+                sut.HasSubscribers.TestTrue(),
+                firstStream.HasSubscribers.TestTrue(),
+                secondStream.HasSubscribers.TestTrue(),
+                thirdStream.HasSubscribers.TestTrue(),
+                subscriber.IsDisposed.TestFalse(),
+                result.Count.TestEquals( expectedResult.Length ),
+                result.TestAll( (events, i) => events.TestSequence( expectedResult[i] ) ) )
+            .Go();
     }
 
     [Fact]
@@ -258,18 +242,15 @@ public abstract class GenericCombineEventSourceTests<TEvent> : TestsBase
 
         secondStream.Publish( values[3] );
 
-        using ( new AssertionScope() )
-        {
-            sut.HasSubscribers.Should().BeTrue();
-            firstStream.HasSubscribers.Should().BeFalse();
-            secondStream.HasSubscribers.Should().BeTrue();
-            thirdStream.HasSubscribers.Should().BeFalse();
-            subscriber.IsDisposed.Should().BeFalse();
-
-            result.Should().HaveCount( expectedResult.Length );
-            for ( var i = 0; i < result.Count; ++i )
-                result[i].Should().BeSequentiallyEqualTo( expectedResult[i] );
-        }
+        Assertion.All(
+                sut.HasSubscribers.TestTrue(),
+                firstStream.HasSubscribers.TestFalse(),
+                secondStream.HasSubscribers.TestTrue(),
+                thirdStream.HasSubscribers.TestFalse(),
+                subscriber.IsDisposed.TestFalse(),
+                result.Count.TestEquals( expectedResult.Length ),
+                result.TestAll( (events, i) => events.TestSequence( expectedResult[i] ) ) )
+            .Go();
     }
 
     [Fact]
@@ -294,15 +275,15 @@ public abstract class GenericCombineEventSourceTests<TEvent> : TestsBase
         thirdStream.Dispose();
         secondStream.Dispose();
 
-        using ( new AssertionScope() )
-        {
-            sut.HasSubscribers.Should().BeFalse();
-            firstStream.HasSubscribers.Should().BeFalse();
-            secondStream.HasSubscribers.Should().BeFalse();
-            thirdStream.HasSubscribers.Should().BeFalse();
-            subscriber.IsDisposed.Should().BeTrue();
-            result.Should().HaveCount( 1 ).And.Subject.First().Should().BeSequentiallyEqualTo( values );
-        }
+        Assertion.All(
+                sut.HasSubscribers.TestFalse(),
+                firstStream.HasSubscribers.TestFalse(),
+                secondStream.HasSubscribers.TestFalse(),
+                thirdStream.HasSubscribers.TestFalse(),
+                subscriber.IsDisposed.TestTrue(),
+                result.Count.TestEquals( 1 ),
+                result.TestAll( (r, _) => r.TestSequence( values ) ) )
+            .Go();
     }
 
     [Fact]
@@ -342,17 +323,14 @@ public abstract class GenericCombineEventSourceTests<TEvent> : TestsBase
         firstStream.Publish( firstStreamValues[2] );
         thirdStream.Publish( thirdStreamValues[2] );
 
-        using ( new AssertionScope() )
-        {
-            sut.HasSubscribers.Should().BeTrue();
-            firstStream.HasSubscribers.Should().BeTrue();
-            secondStream.HasSubscribers.Should().BeTrue();
-            thirdStream.HasSubscribers.Should().BeTrue();
-            subscriber.IsDisposed.Should().BeFalse();
-
-            result.Should().HaveCount( expectedResult.Length );
-            for ( var i = 0; i < result.Count; ++i )
-                result[i].Should().BeSequentiallyEqualTo( expectedResult[i] );
-        }
+        Assertion.All(
+                sut.HasSubscribers.TestTrue(),
+                firstStream.HasSubscribers.TestTrue(),
+                secondStream.HasSubscribers.TestTrue(),
+                thirdStream.HasSubscribers.TestTrue(),
+                subscriber.IsDisposed.TestFalse(),
+                result.Count.TestEquals( expectedResult.Length ),
+                result.TestAll( (events, i) => events.TestSequence( expectedResult[i] ) ) )
+            .Go();
     }
 }

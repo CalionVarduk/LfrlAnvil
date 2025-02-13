@@ -4,6 +4,7 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Runtime.ExceptionServices;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace LfrlAnvil.TestExtensions.Assertions;
@@ -1060,10 +1061,50 @@ public static class AssertionExtensions
     }
 
     [Pure]
-    public static DelegateCall CallAt<TDelegate>(this TDelegate @delegate, int index)
-        where TDelegate : Delegate
+    public static MockCall CallAt<T>(this T source, int index)
+        where T : class
     {
-        return new DelegateCall( @delegate.ReceivedCalls().ElementAtOrDefault( index ) );
+        return new MockCall( source.ReceivedCalls().ElementAtOrDefault( index ) );
+    }
+
+    public static Task<Assertion> TestLockAcquisitionAsync(this Action source, object sync)
+    {
+        return source.TestLockAcquisitionAsync( sync, TimeSpan.FromMilliseconds( 15 ) );
+    }
+
+    public static async Task<Assertion> TestLockAcquisitionAsync(this Action source, object sync, TimeSpan lockTimeout)
+    {
+        var lockEnd = Substitute.For<Action>();
+        var actionEnd = Substitute.For<Action>();
+
+        var lockReset = new ManualResetEventSlim( false );
+        var actionReset = new ManualResetEventSlim( false );
+
+        var task = Task.Run(
+            () =>
+            {
+                actionReset.Wait();
+                lockReset.Set();
+                source();
+                actionEnd();
+            } );
+
+        lock ( sync )
+        {
+            actionReset.Set();
+            lockReset.Wait();
+            Thread.Sleep( lockTimeout );
+            lockEnd();
+        }
+
+        await task;
+
+        return Assertion.CallOrder(
+            () =>
+            {
+                lockEnd();
+                actionEnd();
+            } );
     }
 
     [Pure]

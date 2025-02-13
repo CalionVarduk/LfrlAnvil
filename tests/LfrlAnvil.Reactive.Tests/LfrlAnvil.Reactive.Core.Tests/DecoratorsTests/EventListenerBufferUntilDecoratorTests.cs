@@ -2,7 +2,6 @@
 using System.Linq;
 using LfrlAnvil.Reactive.Decorators;
 using LfrlAnvil.Reactive.Extensions;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Reactive.Tests.DecoratorsTests;
 
@@ -18,11 +17,10 @@ public class EventListenerBufferUntilDecoratorTests : TestsBase
 
         _ = sut.Decorate( next, subscriber );
 
-        using ( new AssertionScope() )
-        {
-            subscriber.VerifyCalls().DidNotReceive( x => x.Dispose() );
-            target.HasSubscribers.Should().BeTrue();
-        }
+        Assertion.All(
+                subscriber.TestDidNotReceiveCall( x => x.Dispose() ),
+                target.HasSubscribers.TestTrue() )
+            .Go();
     }
 
     [Fact]
@@ -37,11 +35,10 @@ public class EventListenerBufferUntilDecoratorTests : TestsBase
 
         _ = sut.Decorate( next, subscriber );
 
-        using ( new AssertionScope() )
-        {
-            subscriber.VerifyCalls().Received( x => x.Dispose() );
-            target.HasSubscribers.Should().BeFalse();
-        }
+        Assertion.All(
+                subscriber.TestReceivedCalls( x => x.Dispose() ),
+                target.HasSubscribers.TestFalse() )
+            .Go();
     }
 
     [Fact]
@@ -78,12 +75,10 @@ public class EventListenerBufferUntilDecoratorTests : TestsBase
 
         target.Publish( Fixture.Create<string>() );
 
-        using ( new AssertionScope() )
-        {
-            actualEvents.Should().HaveCount( expectedEvents.Length );
-            for ( var i = 0; i < actualEvents.Count; ++i )
-                actualEvents[i].Should().BeSequentiallyEqualTo( expectedEvents[i] );
-        }
+        Assertion.All(
+                actualEvents.Count.TestEquals( expectedEvents.Length ),
+                actualEvents.TestAll( (e, i) => e.TestSequence( expectedEvents[i] ) ) )
+            .Go();
     }
 
     [Fact]
@@ -103,7 +98,7 @@ public class EventListenerBufferUntilDecoratorTests : TestsBase
 
         target.Publish( Fixture.Create<string>() );
 
-        actualEvents.Should().BeSequentiallyEqualTo( sourceEvents );
+        actualEvents.TestSequence( sourceEvents ).Go();
     }
 
     [Theory]
@@ -119,7 +114,7 @@ public class EventListenerBufferUntilDecoratorTests : TestsBase
 
         listener.OnDispose( source );
 
-        next.VerifyCalls().Received( x => x.OnDispose( source ) );
+        next.TestReceivedCalls( x => x.OnDispose( source ) ).Go();
     }
 
     [Theory]
@@ -135,7 +130,7 @@ public class EventListenerBufferUntilDecoratorTests : TestsBase
 
         listener.OnDispose( source );
 
-        target.HasSubscribers.Should().BeFalse();
+        target.HasSubscribers.TestFalse().Go();
     }
 
     [Fact]
@@ -149,7 +144,7 @@ public class EventListenerBufferUntilDecoratorTests : TestsBase
 
         target.Dispose();
 
-        subscriber.VerifyCalls().Received( x => x.Dispose() );
+        subscriber.TestReceivedCalls( x => x.Dispose() ).Go();
     }
 
     [Theory]
@@ -172,7 +167,7 @@ public class EventListenerBufferUntilDecoratorTests : TestsBase
 
         listener.OnDispose( source );
 
-        actualEvents.Should().BeSequentiallyEqualTo( sourceEvents );
+        actualEvents.TestSequence( sourceEvents ).Go();
     }
 
     [Fact]
@@ -192,7 +187,7 @@ public class EventListenerBufferUntilDecoratorTests : TestsBase
 
         target.Dispose();
 
-        actualEvents.Should().BeSequentiallyEqualTo( sourceEvents );
+        actualEvents.TestSequence( sourceEvents ).Go();
     }
 
     [Fact]
@@ -229,12 +224,10 @@ public class EventListenerBufferUntilDecoratorTests : TestsBase
 
         target.Publish( Fixture.Create<string>() );
 
-        using ( new AssertionScope() )
-        {
-            actualEvents.Should().HaveCount( expectedEvents.Length );
-            for ( var i = 0; i < actualEvents.Count; ++i )
-                actualEvents[i].Should().BeSequentiallyEqualTo( expectedEvents[i] );
-        }
+        Assertion.All(
+                actualEvents.Count.TestEquals( expectedEvents.Length ),
+                actualEvents.TestAll( (e, i) => e.TestSequence( expectedEvents[i] ) ) )
+            .Go();
     }
 
     [Fact]
@@ -254,7 +247,7 @@ public class EventListenerBufferUntilDecoratorTests : TestsBase
 
         subscriber.Dispose();
 
-        actualEvents.Should().BeSequentiallyEqualTo( sourceEvents );
+        actualEvents.TestSequence( sourceEvents ).Go();
     }
 
     [Fact]
@@ -271,12 +264,10 @@ public class EventListenerBufferUntilDecoratorTests : TestsBase
         foreach ( var e in sourceEvents )
             sut.Publish( e );
 
-        using ( new AssertionScope() )
-        {
-            actualEvents.Should().HaveCount( sourceEvents.Length );
-            actualEvents[0].Should().BeEmpty();
-            for ( var i = 1; i < actualEvents.Count; ++i )
-                actualEvents[i].Should().BeSequentiallyEqualTo( sourceEvents[i - 1] );
-        }
+        Assertion.All(
+                actualEvents.Count.TestEquals( sourceEvents.Length ),
+                actualEvents.Take( 1 ).TestAll( (e, _) => e.TestEmpty() ),
+                actualEvents.Skip( 1 ).TestAll( (e, i) => e.TestSequence( [ sourceEvents[i] ] ) ) )
+            .Go();
     }
 }

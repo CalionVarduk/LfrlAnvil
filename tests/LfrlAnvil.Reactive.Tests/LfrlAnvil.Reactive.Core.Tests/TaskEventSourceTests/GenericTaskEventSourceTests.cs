@@ -1,11 +1,9 @@
 ﻿using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using LfrlAnvil.Async;
 using LfrlAnvil.Reactive.Composites;
 using LfrlAnvil.Reactive.Internal;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Reactive.Tests.TaskEventSourceTests;
 
@@ -20,7 +18,7 @@ public abstract class GenericTaskEventSourceTests<TEvent> : TestsBase
             _ => Task.FromResult( Fixture.Create<TEvent>() ),
             new TaskSchedulerCapture( _scheduler ) );
 
-        sut.HasSubscribers.Should().BeFalse();
+        sut.HasSubscribers.TestFalse().Go();
     }
 
     [Theory]
@@ -33,7 +31,7 @@ public abstract class GenericTaskEventSourceTests<TEvent> : TestsBase
             _ => Task.FromResult( Fixture.Create<TEvent>() ),
             new TaskSchedulerCapture( strategy ) );
 
-        sut.HasSubscribers.Should().BeFalse();
+        sut.HasSubscribers.TestFalse().Go();
     }
 
     [Fact]
@@ -48,11 +46,10 @@ public abstract class GenericTaskEventSourceTests<TEvent> : TestsBase
 
         var subscriber = sut.Listen( listener );
 
-        using ( new AssertionScope() )
-        {
-            subscriber.IsDisposed.Should().BeTrue();
-            listener.VerifyCalls().DidNotReceive( x => x.React( Arg.Any<FromTask<TEvent>>() ) );
-        }
+        Assertion.All(
+                subscriber.IsDisposed.TestTrue(),
+                listener.TestDidNotReceiveCall( x => x.React( Arg.Any<FromTask<TEvent>>() ) ) )
+            .Go();
     }
 
     [Fact]
@@ -69,12 +66,11 @@ public abstract class GenericTaskEventSourceTests<TEvent> : TestsBase
 
         var subscriber = sut.Listen( listener );
 
-        using ( new AssertionScope() )
-        {
-            sut.HasSubscribers.Should().BeTrue();
-            subscriber.IsDisposed.Should().BeFalse();
-            listener.VerifyCalls().DidNotReceive( x => x.React( Arg.Any<FromTask<TEvent>>() ) );
-        }
+        Assertion.All(
+                sut.HasSubscribers.TestTrue(),
+                subscriber.IsDisposed.TestFalse(),
+                listener.TestDidNotReceiveCall( x => x.React( Arg.Any<FromTask<TEvent>>() ) ) )
+            .Go();
     }
 
     [Fact]
@@ -91,12 +87,11 @@ public abstract class GenericTaskEventSourceTests<TEvent> : TestsBase
 
         var subscriber = sut.Listen( listener );
 
-        using ( new AssertionScope() )
-        {
-            sut.HasSubscribers.Should().BeTrue();
-            subscriber.IsDisposed.Should().BeFalse();
-            listener.VerifyCalls().DidNotReceive( x => x.React( Arg.Any<FromTask<TEvent>>() ) );
-        }
+        Assertion.All(
+                sut.HasSubscribers.TestTrue(),
+                subscriber.IsDisposed.TestFalse(),
+                listener.TestDidNotReceiveCall( x => x.React( Arg.Any<FromTask<TEvent>>() ) ) )
+            .Go();
     }
 
     [Fact]
@@ -118,26 +113,20 @@ public abstract class GenericTaskEventSourceTests<TEvent> : TestsBase
 
         var subscriber = sut.Listen( listener );
 
-        using ( new AssertionScope() )
-        {
-            sut.HasSubscribers.Should().BeFalse();
-            subscriber.IsDisposed.Should().BeTrue();
-
-            actualValues.Should()
-                .HaveCount( 1 )
-                .And.Subject.First()
-                .Should()
-                .BeEquivalentTo(
-                    new
-                    {
-                        Status = TaskStatus.RanToCompletion,
-                        Result = value,
-                        Exception = ( AggregateException? )null,
-                        IsCanceled = false,
-                        IsFaulted = false,
-                        IsCompletedSuccessfully = true
-                    } );
-        }
+        Assertion.All(
+                sut.HasSubscribers.TestFalse(),
+                subscriber.IsDisposed.TestTrue(),
+                actualValues.Count.TestEquals( 1 ),
+                actualValues.TestAll(
+                    (task, _) => Assertion.All(
+                        "task",
+                        task.Status.TestEquals( TaskStatus.RanToCompletion ),
+                        task.Result.TestEquals( value ),
+                        task.Exception.TestNull(),
+                        task.IsCanceled.TestFalse(),
+                        task.IsFaulted.TestFalse(),
+                        task.IsCompletedSuccessfully.TestTrue() ) ) )
+            .Go();
     }
 
     [Fact]
@@ -159,26 +148,20 @@ public abstract class GenericTaskEventSourceTests<TEvent> : TestsBase
 
         var subscriber = sut.Listen( listener );
 
-        using ( new AssertionScope() )
-        {
-            sut.HasSubscribers.Should().BeFalse();
-            subscriber.IsDisposed.Should().BeTrue();
-
-            actualValues.Should()
-                .HaveCount( 1 )
-                .And.Subject.First()
-                .Should()
-                .BeEquivalentTo(
-                    new
-                    {
-                        Status = TaskStatus.Faulted,
-                        Result = default( TEvent ),
-                        Exception = new AggregateException( exception ),
-                        IsCanceled = false,
-                        IsFaulted = true,
-                        IsCompletedSuccessfully = false
-                    } );
-        }
+        Assertion.All(
+                sut.HasSubscribers.TestFalse(),
+                subscriber.IsDisposed.TestTrue(),
+                actualValues.Count.TestEquals( 1 ),
+                actualValues.TestAll(
+                    (task, _) => Assertion.All(
+                        "task",
+                        task.Status.TestEquals( TaskStatus.Faulted ),
+                        task.Result.TestEquals( default ),
+                        task.Exception.TestType().AssignableTo<AggregateException>( e => e.InnerExceptions.TestSequence( [ exception ] ) ),
+                        task.IsCanceled.TestFalse(),
+                        task.IsFaulted.TestTrue(),
+                        task.IsCompletedSuccessfully.TestFalse() ) ) )
+            .Go();
     }
 
     [Fact]
@@ -206,26 +189,20 @@ public abstract class GenericTaskEventSourceTests<TEvent> : TestsBase
         subscriber.Dispose();
         await eventReceivedTaskSource.Task;
 
-        using ( new AssertionScope() )
-        {
-            sut.HasSubscribers.Should().BeFalse();
-            subscriber.IsDisposed.Should().BeTrue();
-
-            actualValues.Should()
-                .HaveCount( 1 )
-                .And.Subject.First()
-                .Should()
-                .BeEquivalentTo(
-                    new
-                    {
-                        Status = TaskStatus.Canceled,
-                        Result = default( TEvent ),
-                        Exception = ( AggregateException? )null,
-                        IsCanceled = true,
-                        IsFaulted = false,
-                        IsCompletedSuccessfully = false
-                    } );
-        }
+        Assertion.All(
+                sut.HasSubscribers.TestFalse(),
+                subscriber.IsDisposed.TestTrue(),
+                actualValues.Count.TestEquals( 1 ),
+                actualValues.TestAll(
+                    (task, _) => Assertion.All(
+                        "task",
+                        task.Status.TestEquals( TaskStatus.Canceled ),
+                        task.Result.TestEquals( default ),
+                        task.Exception.TestNull(),
+                        task.IsCanceled.TestTrue(),
+                        task.IsFaulted.TestFalse(),
+                        task.IsCompletedSuccessfully.TestFalse() ) ) )
+            .Go();
     }
 
     [Fact]
@@ -253,26 +230,20 @@ public abstract class GenericTaskEventSourceTests<TEvent> : TestsBase
         sut.Dispose();
         await eventReceivedTaskSource.Task;
 
-        using ( new AssertionScope() )
-        {
-            sut.HasSubscribers.Should().BeFalse();
-            subscriber.IsDisposed.Should().BeTrue();
-
-            actualValues.Should()
-                .HaveCount( 1 )
-                .And.Subject.First()
-                .Should()
-                .BeEquivalentTo(
-                    new
-                    {
-                        Status = TaskStatus.Canceled,
-                        Result = default( TEvent ),
-                        Exception = ( AggregateException? )null,
-                        IsCanceled = true,
-                        IsFaulted = false,
-                        IsCompletedSuccessfully = false
-                    } );
-        }
+        Assertion.All(
+                sut.HasSubscribers.TestFalse(),
+                subscriber.IsDisposed.TestTrue(),
+                actualValues.Count.TestEquals( 1 ),
+                actualValues.TestAll(
+                    (task, _) => Assertion.All(
+                        "task",
+                        task.Status.TestEquals( TaskStatus.Canceled ),
+                        task.Result.TestEquals( default ),
+                        task.Exception.TestNull(),
+                        task.IsCanceled.TestTrue(),
+                        task.IsFaulted.TestFalse(),
+                        task.IsCompletedSuccessfully.TestFalse() ) ) )
+            .Go();
     }
 
     [Fact]
@@ -281,18 +252,15 @@ public abstract class GenericTaskEventSourceTests<TEvent> : TestsBase
         var task = Task.Delay( 100 ).ContinueWith( _ => Fixture.Create<TEvent>() );
 
         var listener = Substitute.For<IEventListener<FromTask<TEvent>>>();
-        var sut = new TaskEventSource<TEvent>(
-            _ => task,
-            new TaskSchedulerCapture( _scheduler ) );
+        var sut = new TaskEventSource<TEvent>( _ => task, new TaskSchedulerCapture( _scheduler ) );
 
         var subscriber = sut.Listen( listener );
 
-        using ( new AssertionScope() )
-        {
-            subscriber.IsDisposed.Should().BeFalse();
-            listener.VerifyCalls().DidNotReceive( x => x.React( Arg.Any<FromTask<TEvent>>() ) );
-            task.Status.Should().NotBe( TaskStatus.Created );
-        }
+        Assertion.All(
+                subscriber.IsDisposed.TestFalse(),
+                listener.TestDidNotReceiveCall( x => x.React( Arg.Any<FromTask<TEvent>>() ) ),
+                task.Status.TestNotEquals( TaskStatus.Created ) )
+            .Go();
     }
 
     [Fact]
@@ -313,33 +281,27 @@ public abstract class GenericTaskEventSourceTests<TEvent> : TestsBase
         var subscriber = sut.Listen( listener );
         await Task.Delay( 100 );
 
-        using ( new AssertionScope() )
-        {
-            sut.HasSubscribers.Should().BeFalse();
-            subscriber.IsDisposed.Should().BeTrue();
-
-            actualValues.Should()
-                .HaveCount( 1 )
-                .And.Subject.First()
-                .Should()
-                .BeEquivalentTo(
-                    new
-                    {
-                        Status = TaskStatus.RanToCompletion,
-                        Result = value,
-                        Exception = ( AggregateException? )null,
-                        IsCanceled = false,
-                        IsFaulted = false,
-                        IsCompletedSuccessfully = true
-                    } );
-        }
+        Assertion.All(
+                sut.HasSubscribers.TestFalse(),
+                subscriber.IsDisposed.TestTrue(),
+                actualValues.Count.TestEquals( 1 ),
+                actualValues.TestAll(
+                    (task, _) => Assertion.All(
+                        "task",
+                        task.Status.TestEquals( TaskStatus.RanToCompletion ),
+                        task.Result.TestEquals( value ),
+                        task.Exception.TestNull(),
+                        task.IsCanceled.TestFalse(),
+                        task.IsFaulted.TestFalse(),
+                        task.IsCompletedSuccessfully.TestTrue() ) ) )
+            .Go();
     }
 
     [Fact]
     public void FromTask_WithCallbackScheduler_ShouldCreateEventSourceWithoutSubscriptions()
     {
         var sut = EventSource.FromTask( _ => Task.FromResult( Fixture.Create<TEvent>() ), new TaskSchedulerCapture( _scheduler ) );
-        sut.HasSubscribers.Should().BeFalse();
+        sut.HasSubscribers.TestFalse().Go();
     }
 
     [Theory]
@@ -349,6 +311,6 @@ public abstract class GenericTaskEventSourceTests<TEvent> : TestsBase
     public void FromTask_WithContextCapture_ShouldCreateEventSourceWithoutSubscriptions(TaskSchedulerCaptureStrategy strategy)
     {
         var sut = EventSource.FromTask( _ => Task.FromResult( Fixture.Create<TEvent>() ), new TaskSchedulerCapture( strategy ) );
-        sut.HasSubscribers.Should().BeFalse();
+        sut.HasSubscribers.TestFalse().Go();
     }
 }

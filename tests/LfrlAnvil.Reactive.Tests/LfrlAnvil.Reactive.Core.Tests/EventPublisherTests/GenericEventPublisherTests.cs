@@ -1,7 +1,6 @@
 ﻿using System.Linq;
 using LfrlAnvil.Functional;
 using LfrlAnvil.Reactive.Exceptions;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Reactive.Tests.EventPublisherTests;
 
@@ -12,12 +11,7 @@ public abstract class GenericEventPublisherTests<TEvent> : TestsBase
     {
         var sut = new EventPublisher<TEvent>();
 
-        using ( new AssertionScope() )
-        {
-            sut.IsDisposed.Should().BeFalse();
-            sut.HasSubscribers.Should().BeFalse();
-            sut.Subscribers.Should().BeEmpty();
-        }
+        Assertion.All( sut.IsDisposed.TestFalse(), sut.HasSubscribers.TestFalse(), sut.Subscribers.TestEmpty() ).Go();
     }
 
     [Fact]
@@ -27,11 +21,7 @@ public abstract class GenericEventPublisherTests<TEvent> : TestsBase
 
         var subscriber = sut.Listen( EventListener<TEvent>.Empty );
 
-        using ( new AssertionScope() )
-        {
-            sut.HasSubscribers.Should().BeTrue();
-            sut.Subscribers.Should().BeSequentiallyEqualTo( subscriber );
-        }
+        Assertion.All( sut.HasSubscribers.TestTrue(), sut.Subscribers.TestSequence( [ subscriber ] ) ).Go();
     }
 
     [Fact]
@@ -42,12 +32,7 @@ public abstract class GenericEventPublisherTests<TEvent> : TestsBase
 
         var subscriber = sut.Listen( EventListener<TEvent>.Empty );
 
-        using ( new AssertionScope() )
-        {
-            subscriber.IsDisposed.Should().BeTrue();
-            sut.HasSubscribers.Should().BeFalse();
-            sut.Subscribers.Should().BeEmpty();
-        }
+        Assertion.All( subscriber.IsDisposed.TestTrue(), sut.HasSubscribers.TestFalse(), sut.Subscribers.TestEmpty() ).Go();
     }
 
     [Fact]
@@ -59,7 +44,7 @@ public abstract class GenericEventPublisherTests<TEvent> : TestsBase
 
         sut.Listen( listener );
 
-        listener.VerifyCalls().Received( x => x.OnDispose( DisposalSource.EventSource ) );
+        listener.TestReceivedCalls( x => x.OnDispose( DisposalSource.EventSource ) ).Go();
     }
 
     [Fact]
@@ -70,11 +55,7 @@ public abstract class GenericEventPublisherTests<TEvent> : TestsBase
 
         var subscriber2 = sut.Listen( EventListener<TEvent>.Empty );
 
-        using ( new AssertionScope() )
-        {
-            sut.HasSubscribers.Should().BeTrue();
-            sut.Subscribers.Should().BeSequentiallyEqualTo( subscriber1, subscriber2 );
-        }
+        Assertion.All( sut.HasSubscribers.TestTrue(), sut.Subscribers.TestSequence( [ subscriber1, subscriber2 ] ) ).Go();
     }
 
     [Fact]
@@ -85,12 +66,7 @@ public abstract class GenericEventPublisherTests<TEvent> : TestsBase
 
         subscriber.Dispose();
 
-        using ( new AssertionScope() )
-        {
-            subscriber.IsDisposed.Should().BeTrue();
-            sut.HasSubscribers.Should().BeFalse();
-            sut.Subscribers.Should().BeEmpty();
-        }
+        Assertion.All( subscriber.IsDisposed.TestTrue(), sut.HasSubscribers.TestFalse(), sut.Subscribers.TestEmpty() ).Go();
     }
 
     [Fact]
@@ -102,7 +78,7 @@ public abstract class GenericEventPublisherTests<TEvent> : TestsBase
 
         subscriber.Dispose();
 
-        listener.VerifyCalls().Received( x => x.OnDispose( DisposalSource.Subscriber ) );
+        listener.TestReceivedCalls( x => x.OnDispose( DisposalSource.Subscriber ) ).Go();
     }
 
     [Fact]
@@ -116,7 +92,7 @@ public abstract class GenericEventPublisherTests<TEvent> : TestsBase
 
         subscriber.Dispose();
 
-        listener.VerifyCalls().DidNotReceive( x => x.OnDispose( Arg.Any<DisposalSource>() ) );
+        listener.TestDidNotReceiveCall( x => x.OnDispose( Arg.Any<DisposalSource>() ) ).Go();
     }
 
     [Fact]
@@ -131,11 +107,7 @@ public abstract class GenericEventPublisherTests<TEvent> : TestsBase
 
         sut.Publish( @event );
 
-        using ( new AssertionScope() )
-        {
-            listener1.VerifyCalls().Received( x => x.React( @event ) );
-            listener2.VerifyCalls().Received( x => x.React( @event ) );
-        }
+        Assertion.All( listener1.TestReceivedCalls( x => x.React( @event ) ), listener2.TestReceivedCalls( x => x.React( @event ) ) ).Go();
     }
 
     [Fact]
@@ -150,12 +122,11 @@ public abstract class GenericEventPublisherTests<TEvent> : TestsBase
 
         sut.Publish( @event );
 
-        using ( new AssertionScope() )
-        {
-            sut.Subscribers.Should().BeSequentiallyEqualTo( subscriber1 );
-            subscriber2.IsDisposed.Should().BeTrue();
-            listener2.VerifyCalls().DidNotReceive( x => x.React( @event ) );
-        }
+        Assertion.All(
+                sut.Subscribers.TestSequence( [ subscriber1 ] ),
+                subscriber2.IsDisposed.TestTrue(),
+                listener2.TestDidNotReceiveCall( x => x.React( @event ) ) )
+            .Go();
     }
 
     [Fact]
@@ -166,8 +137,7 @@ public abstract class GenericEventPublisherTests<TEvent> : TestsBase
         var listener1 = EventListener.Create(
             (TEvent e) =>
             {
-                if ( e!.Equals( firstEvent ) )
-                    sut.Publish( secondEvent );
+                if ( e!.Equals( firstEvent ) ) sut.Publish( secondEvent );
             } );
 
         var listener2 = Substitute.For<IEventListener<TEvent>>();
@@ -176,11 +146,10 @@ public abstract class GenericEventPublisherTests<TEvent> : TestsBase
 
         sut.Publish( firstEvent );
 
-        using ( new AssertionScope() )
-        {
-            listener2.VerifyCalls().Received( x => x.React( firstEvent ) );
-            listener2.VerifyCalls().Received( x => x.React( secondEvent ) );
-        }
+        Assertion.All(
+                listener2.TestReceivedCalls( x => x.React( firstEvent ) ),
+                listener2.TestReceivedCalls( x => x.React( secondEvent ) ) )
+            .Go();
     }
 
     [Fact]
@@ -192,7 +161,7 @@ public abstract class GenericEventPublisherTests<TEvent> : TestsBase
 
         var action = Lambda.Of( () => sut.Publish( @event ) );
 
-        action.Should().ThrowExactly<ObjectDisposedException>();
+        action.Test( exc => exc.TestType().Exact<ObjectDisposedException>() ).Go();
     }
 
     [Fact]
@@ -204,13 +173,12 @@ public abstract class GenericEventPublisherTests<TEvent> : TestsBase
 
         sut.Dispose();
 
-        using ( new AssertionScope() )
-        {
-            sut.IsDisposed.Should().BeTrue();
-            sut.Subscribers.Should().BeEmpty();
-            subscriber1.IsDisposed.Should().BeTrue();
-            subscriber2.IsDisposed.Should().BeTrue();
-        }
+        Assertion.All(
+                sut.IsDisposed.TestTrue(),
+                sut.Subscribers.TestEmpty(),
+                subscriber1.IsDisposed.TestTrue(),
+                subscriber2.IsDisposed.TestTrue() )
+            .Go();
     }
 
     [Fact]
@@ -224,11 +192,10 @@ public abstract class GenericEventPublisherTests<TEvent> : TestsBase
 
         sut.Dispose();
 
-        using ( new AssertionScope() )
-        {
-            listener1.VerifyCalls().Received( x => x.OnDispose( DisposalSource.EventSource ) );
-            listener2.VerifyCalls().Received( x => x.OnDispose( DisposalSource.EventSource ) );
-        }
+        Assertion.All(
+                listener1.TestReceivedCalls( x => x.OnDispose( DisposalSource.EventSource ) ),
+                listener2.TestReceivedCalls( x => x.OnDispose( DisposalSource.EventSource ) ) )
+            .Go();
     }
 
     [Fact]
@@ -243,8 +210,10 @@ public abstract class GenericEventPublisherTests<TEvent> : TestsBase
 
         sut.Dispose();
 
-        listener2.VerifyCalls().DidNotReceive( x => x.OnDispose( DisposalSource.EventSource ) );
-        listener2.VerifyCalls().Received( x => x.OnDispose( DisposalSource.Subscriber ) );
+        Assertion.All(
+                listener2.TestDidNotReceiveCall( x => x.OnDispose( DisposalSource.EventSource ) ),
+                listener2.TestReceivedCalls( x => x.OnDispose( DisposalSource.Subscriber ) ) )
+            .Go();
     }
 
     [Fact]
@@ -255,7 +224,7 @@ public abstract class GenericEventPublisherTests<TEvent> : TestsBase
 
         var action = Lambda.Of( () => sut.Dispose() );
 
-        action.Should().NotThrow();
+        action.Test( exc => exc.TestNull() ).Go();
     }
 
     [Fact]
@@ -266,11 +235,7 @@ public abstract class GenericEventPublisherTests<TEvent> : TestsBase
 
         var subscriber = sut.Listen( EventListener<TEvent>.Empty );
 
-        using ( new AssertionScope() )
-        {
-            source.HasSubscribers.Should().BeTrue();
-            source.Subscribers.Should().BeSequentiallyEqualTo( subscriber );
-        }
+        Assertion.All( source.HasSubscribers.TestTrue(), source.Subscribers.TestSequence( [ subscriber ] ) ).Go();
     }
 
     [Fact]
@@ -281,9 +246,13 @@ public abstract class GenericEventPublisherTests<TEvent> : TestsBase
 
         var action = Lambda.Of( () => sut.Listen( listener ) );
 
-        action.Should()
-            .ThrowExactly<InvalidArgumentTypeException>()
-            .AndMatch( e => e.Argument == listener && e.ExpectedType == typeof( IEventListener<TEvent> ) );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<InvalidArgumentTypeException>(
+                        e => Assertion.All(
+                            e.Argument.TestRefEquals( listener ),
+                            e.ExpectedType.TestEquals( typeof( IEventListener<TEvent> ) ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -297,7 +266,7 @@ public abstract class GenericEventPublisherTests<TEvent> : TestsBase
 
         sut.Publish( @event );
 
-        listener.VerifyCalls().Received( x => x.React( @event ) );
+        listener.TestReceivedCalls( x => x.React( @event ) ).Go();
     }
 
     [Fact]
@@ -308,8 +277,10 @@ public abstract class GenericEventPublisherTests<TEvent> : TestsBase
 
         var action = Lambda.Of( () => sut.Publish( @event ) );
 
-        action.Should()
-            .ThrowExactly<InvalidArgumentTypeException>()
-            .AndMatch( e => e.Argument == @event && e.ExpectedType == typeof( TEvent ) );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<InvalidArgumentTypeException>(
+                        e => Assertion.All( e.Argument.TestRefEquals( @event ), e.ExpectedType.TestEquals( typeof( TEvent ) ) ) ) )
+            .Go();
     }
 }

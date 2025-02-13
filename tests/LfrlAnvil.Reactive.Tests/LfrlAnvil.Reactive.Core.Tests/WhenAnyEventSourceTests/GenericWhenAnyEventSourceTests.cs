@@ -1,8 +1,6 @@
 ﻿using System.Collections.Generic;
-using System.Linq;
 using LfrlAnvil.Reactive.Composites;
 using LfrlAnvil.Reactive.Internal;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Reactive.Tests.WhenAnyEventSourceTests;
 
@@ -13,7 +11,7 @@ public abstract class GenericWhenAnyEventSourceTests<TEvent> : TestsBase
     {
         var inner = new EventPublisher<TEvent>();
         var sut = new WhenAnyEventSource<TEvent>( new[] { inner } );
-        sut.HasSubscribers.Should().BeFalse();
+        sut.HasSubscribers.TestFalse().Go();
     }
 
     [Fact]
@@ -24,11 +22,10 @@ public abstract class GenericWhenAnyEventSourceTests<TEvent> : TestsBase
 
         var subscriber = sut.Listen( listener );
 
-        using ( new AssertionScope() )
-        {
-            subscriber.IsDisposed.Should().BeTrue();
-            listener.VerifyCalls().DidNotReceive( x => x.React( Arg.Any<WithIndex<TEvent>>() ) );
-        }
+        Assertion.All(
+                subscriber.IsDisposed.TestTrue(),
+                listener.TestDidNotReceiveCall( x => x.React( Arg.Any<WithIndex<TEvent>>() ) ) )
+            .Go();
     }
 
     [Fact]
@@ -41,11 +38,10 @@ public abstract class GenericWhenAnyEventSourceTests<TEvent> : TestsBase
 
         var subscriber = sut.Listen( listener );
 
-        using ( new AssertionScope() )
-        {
-            subscriber.IsDisposed.Should().BeTrue();
-            listener.VerifyCalls().DidNotReceive( x => x.React( Arg.Any<WithIndex<TEvent>>() ) );
-        }
+        Assertion.All(
+                subscriber.IsDisposed.TestTrue(),
+                listener.TestDidNotReceiveCall( x => x.React( Arg.Any<WithIndex<TEvent>>() ) ) )
+            .Go();
     }
 
     [Fact]
@@ -59,15 +55,14 @@ public abstract class GenericWhenAnyEventSourceTests<TEvent> : TestsBase
         var sut = new WhenAnyEventSource<TEvent>( new[] { firstStream, secondStream, thirdStream } );
         var subscriber = sut.Listen( listener );
 
-        using ( new AssertionScope() )
-        {
-            firstStream.HasSubscribers.Should().BeTrue();
-            secondStream.HasSubscribers.Should().BeTrue();
-            thirdStream.HasSubscribers.Should().BeTrue();
-            sut.HasSubscribers.Should().BeTrue();
-            subscriber.IsDisposed.Should().BeFalse();
-            listener.VerifyCalls().DidNotReceive( x => x.React( Arg.Any<WithIndex<TEvent>>() ) );
-        }
+        Assertion.All(
+                firstStream.HasSubscribers.TestTrue(),
+                secondStream.HasSubscribers.TestTrue(),
+                thirdStream.HasSubscribers.TestTrue(),
+                sut.HasSubscribers.TestTrue(),
+                subscriber.IsDisposed.TestFalse(),
+                listener.TestDidNotReceiveCall( x => x.React( Arg.Any<WithIndex<TEvent>>() ) ) )
+            .Go();
     }
 
     [Fact]
@@ -83,15 +78,14 @@ public abstract class GenericWhenAnyEventSourceTests<TEvent> : TestsBase
 
         sut.Dispose();
 
-        using ( new AssertionScope() )
-        {
-            sut.HasSubscribers.Should().BeFalse();
-            firstStream.HasSubscribers.Should().BeFalse();
-            secondStream.HasSubscribers.Should().BeFalse();
-            thirdStream.HasSubscribers.Should().BeFalse();
-            subscriber.IsDisposed.Should().BeTrue();
-            listener.VerifyCalls().DidNotReceive( x => x.React( Arg.Any<WithIndex<TEvent>>() ) );
-        }
+        Assertion.All(
+                sut.HasSubscribers.TestFalse(),
+                firstStream.HasSubscribers.TestFalse(),
+                secondStream.HasSubscribers.TestFalse(),
+                thirdStream.HasSubscribers.TestFalse(),
+                subscriber.IsDisposed.TestTrue(),
+                listener.TestDidNotReceiveCall( x => x.React( Arg.Any<WithIndex<TEvent>>() ) ) )
+            .Go();
     }
 
     [Fact]
@@ -108,13 +102,12 @@ public abstract class GenericWhenAnyEventSourceTests<TEvent> : TestsBase
         firstStream.Dispose();
         thirdStream.Dispose();
 
-        using ( new AssertionScope() )
-        {
-            secondStream.HasSubscribers.Should().BeTrue();
-            sut.HasSubscribers.Should().BeTrue();
-            subscriber.IsDisposed.Should().BeFalse();
-            listener.VerifyCalls().DidNotReceive( x => x.React( Arg.Any<WithIndex<TEvent>>() ) );
-        }
+        Assertion.All(
+                secondStream.HasSubscribers.TestTrue(),
+                sut.HasSubscribers.TestTrue(),
+                subscriber.IsDisposed.TestFalse(),
+                listener.TestDidNotReceiveCall( x => x.React( Arg.Any<WithIndex<TEvent>>() ) ) )
+            .Go();
     }
 
     [Fact]
@@ -132,12 +125,11 @@ public abstract class GenericWhenAnyEventSourceTests<TEvent> : TestsBase
         secondStream.Dispose();
         thirdStream.Dispose();
 
-        using ( new AssertionScope() )
-        {
-            sut.HasSubscribers.Should().BeFalse();
-            subscriber.IsDisposed.Should().BeTrue();
-            listener.VerifyCalls().DidNotReceive( x => x.React( Arg.Any<WithIndex<TEvent>>() ) );
-        }
+        Assertion.All(
+                sut.HasSubscribers.TestFalse(),
+                subscriber.IsDisposed.TestTrue(),
+                listener.TestDidNotReceiveCall( x => x.React( Arg.Any<WithIndex<TEvent>>() ) ) )
+            .Go();
     }
 
     [Fact]
@@ -167,15 +159,15 @@ public abstract class GenericWhenAnyEventSourceTests<TEvent> : TestsBase
         foreach ( var e in secondStreamValues )
             secondStream.Publish( e );
 
-        using ( new AssertionScope() )
-        {
-            sut.HasSubscribers.Should().BeFalse();
-            firstStream.HasSubscribers.Should().BeFalse();
-            secondStream.HasSubscribers.Should().BeFalse();
-            thirdStream.HasSubscribers.Should().BeFalse();
-            subscriber.IsDisposed.Should().BeTrue();
-            result.Should().HaveCount( 1 ).And.Subject.First().Should().BeEquivalentTo( expectedResult );
-        }
+        Assertion.All(
+                sut.HasSubscribers.TestFalse(),
+                firstStream.HasSubscribers.TestFalse(),
+                secondStream.HasSubscribers.TestFalse(),
+                thirdStream.HasSubscribers.TestFalse(),
+                subscriber.IsDisposed.TestTrue(),
+                result.Count.TestEquals( 1 ),
+                result.TestAll( (r, _) => r.TestEquals( expectedResult ) ) )
+            .Go();
     }
 
     [Fact]
@@ -188,8 +180,7 @@ public abstract class GenericWhenAnyEventSourceTests<TEvent> : TestsBase
         var expectedResult = new WithIndex<TEvent>( firstStreamValues[0], 0 );
 
         var firstStream = new HistoryEventPublisher<TEvent>( capacity: 2 );
-        foreach ( var e in firstStreamValues )
-            firstStream.Publish( e );
+        foreach ( var e in firstStreamValues ) firstStream.Publish( e );
 
         var secondStream = new EventPublisher<TEvent>();
         var thirdStream = new EventPublisher<TEvent>();
@@ -205,15 +196,15 @@ public abstract class GenericWhenAnyEventSourceTests<TEvent> : TestsBase
         foreach ( var e in secondStreamValues )
             secondStream.Publish( e );
 
-        using ( new AssertionScope() )
-        {
-            sut.HasSubscribers.Should().BeFalse();
-            firstStream.HasSubscribers.Should().BeFalse();
-            secondStream.HasSubscribers.Should().BeFalse();
-            thirdStream.HasSubscribers.Should().BeFalse();
-            subscriber.IsDisposed.Should().BeTrue();
-            result.Should().HaveCount( 1 ).And.Subject.First().Should().BeEquivalentTo( expectedResult );
-        }
+        Assertion.All(
+                sut.HasSubscribers.TestFalse(),
+                firstStream.HasSubscribers.TestFalse(),
+                secondStream.HasSubscribers.TestFalse(),
+                thirdStream.HasSubscribers.TestFalse(),
+                subscriber.IsDisposed.TestTrue(),
+                result.Count.TestEquals( 1 ),
+                result.TestAll( (r, _) => r.TestEquals( expectedResult ) ) )
+            .Go();
     }
 
     [Fact]
@@ -243,14 +234,14 @@ public abstract class GenericWhenAnyEventSourceTests<TEvent> : TestsBase
         foreach ( var e in secondStreamValues )
             secondStream.Publish( e );
 
-        using ( new AssertionScope() )
-        {
-            sut.HasSubscribers.Should().BeFalse();
-            firstStream.HasSubscribers.Should().BeFalse();
-            secondStream.HasSubscribers.Should().BeFalse();
-            thirdStream.HasSubscribers.Should().BeFalse();
-            subscriber.IsDisposed.Should().BeTrue();
-            result.Should().HaveCount( 1 ).And.Subject.First().Should().BeEquivalentTo( expectedResult );
-        }
+        Assertion.All(
+                sut.HasSubscribers.TestFalse(),
+                firstStream.HasSubscribers.TestFalse(),
+                secondStream.HasSubscribers.TestFalse(),
+                thirdStream.HasSubscribers.TestFalse(),
+                subscriber.IsDisposed.TestTrue(),
+                result.Count.TestEquals( 1 ),
+                result.TestAll( (r, _) => r.TestEquals( expectedResult ) ) )
+            .Go();
     }
 }

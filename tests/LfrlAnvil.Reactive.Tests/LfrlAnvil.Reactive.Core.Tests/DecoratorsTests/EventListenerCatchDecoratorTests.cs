@@ -1,8 +1,6 @@
 ﻿using System.Collections.Generic;
-using System.Linq;
 using LfrlAnvil.Reactive.Decorators;
 using LfrlAnvil.Reactive.Extensions;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Reactive.Tests.DecoratorsTests;
 
@@ -18,7 +16,7 @@ public class EventListenerCatchDecoratorTests : TestsBase
 
         _ = sut.Decorate( next, subscriber );
 
-        subscriber.VerifyCalls().DidNotReceive( x => x.Dispose() );
+        subscriber.TestDidNotReceiveCall( x => x.Dispose() ).Go();
     }
 
     [Fact]
@@ -36,7 +34,7 @@ public class EventListenerCatchDecoratorTests : TestsBase
         foreach ( var e in sourceEvents )
             listener.React( e );
 
-        actualEvents.Should().BeSequentiallyEqualTo( sourceEvents );
+        actualEvents.TestSequence( sourceEvents ).Go();
     }
 
     [Fact]
@@ -52,7 +50,7 @@ public class EventListenerCatchDecoratorTests : TestsBase
 
         listener.React( sourceEvent );
 
-        onError.Verify().CallAt( 0 ).Exists().And.Arguments.First().Should().BeSameAs( exception );
+        onError.CallAt( 0 ).Arguments.TestSequence( [ exception ] ).Go();
     }
 
     [Theory]
@@ -69,7 +67,7 @@ public class EventListenerCatchDecoratorTests : TestsBase
 
         listener.OnDispose( source );
 
-        onError.Verify().CallAt( 0 ).Exists().And.Arguments.First().Should().BeSameAs( exception );
+        onError.CallAt( 0 ).Arguments.TestSequence( [ exception ] ).Go();
     }
 
     [Theory]
@@ -85,7 +83,7 @@ public class EventListenerCatchDecoratorTests : TestsBase
 
         listener.OnDispose( source );
 
-        next.VerifyCalls().Received( x => x.OnDispose( source ) );
+        next.TestReceivedCalls( x => x.OnDispose( source ) ).Go();
     }
 
     [Fact]
@@ -103,7 +101,7 @@ public class EventListenerCatchDecoratorTests : TestsBase
         foreach ( var e in sourceEvents )
             sut.Publish( e );
 
-        actualEvents.Should().BeSequentiallyEqualTo( sourceEvents );
+        actualEvents.TestSequence( sourceEvents ).Go();
     }
 
     [Fact]
@@ -119,7 +117,7 @@ public class EventListenerCatchDecoratorTests : TestsBase
 
         sut.Publish( sourceEvent );
 
-        onError.Verify().CallAt( 0 ).Exists().And.Arguments.First().Should().BeSameAs( exception );
+        onError.CallAt( 0 ).Arguments.TestSequence( [ exception ] ).Go();
     }
 
     [Fact]
@@ -134,6 +132,6 @@ public class EventListenerCatchDecoratorTests : TestsBase
 
         subscriber.Dispose();
 
-        onError.Verify().CallAt( 0 ).Exists().And.Arguments.First().Should().BeSameAs( exception );
+        onError.CallAt( 0 ).Arguments.TestSequence( [ exception ] ).Go();
     }
 }

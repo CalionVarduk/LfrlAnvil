@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
 using LfrlAnvil.Reactive.Decorators;
 using LfrlAnvil.Reactive.Extensions;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Reactive.Tests.DecoratorsTests;
 
@@ -17,11 +16,10 @@ public class EventListenerThrottleUntilDecoratorTests : TestsBase
 
         _ = sut.Decorate( next, subscriber );
 
-        using ( new AssertionScope() )
-        {
-            subscriber.VerifyCalls().DidNotReceive( x => x.Dispose() );
-            target.HasSubscribers.Should().BeFalse();
-        }
+        Assertion.All(
+                subscriber.TestDidNotReceiveCall( x => x.Dispose() ),
+                target.HasSubscribers.TestFalse() )
+            .Go();
     }
 
     [Fact]
@@ -36,11 +34,10 @@ public class EventListenerThrottleUntilDecoratorTests : TestsBase
 
         _ = sut.Decorate( next, subscriber );
 
-        using ( new AssertionScope() )
-        {
-            subscriber.VerifyCalls().Received( x => x.Dispose() );
-            target.HasSubscribers.Should().BeFalse();
-        }
+        Assertion.All(
+                subscriber.TestReceivedCalls( x => x.Dispose() ),
+                target.HasSubscribers.TestFalse() )
+            .Go();
     }
 
     [Fact]
@@ -54,11 +51,10 @@ public class EventListenerThrottleUntilDecoratorTests : TestsBase
 
         target.Publish( Fixture.Create<string>() );
 
-        using ( new AssertionScope() )
-        {
-            next.VerifyCalls().DidNotReceive( x => x.React( Arg.Any<int>() ) );
-            subscriber.VerifyCalls().DidNotReceive( x => x.Dispose() );
-        }
+        Assertion.All(
+                next.TestDidNotReceiveCall( x => x.React( Arg.Any<int>() ) ),
+                subscriber.TestDidNotReceiveCall( x => x.Dispose() ) )
+            .Go();
     }
 
     [Fact]
@@ -73,12 +69,11 @@ public class EventListenerThrottleUntilDecoratorTests : TestsBase
 
         listener.React( sourceEvent );
 
-        using ( new AssertionScope() )
-        {
-            next.VerifyCalls().Received( x => x.React( sourceEvent ), 1 );
-            subscriber.VerifyCalls().DidNotReceive( x => x.Dispose() );
-            target.Subscribers.Should().HaveCount( 1 );
-        }
+        Assertion.All(
+                next.TestReceivedCalls( x => x.React( sourceEvent ), 1 ),
+                subscriber.TestDidNotReceiveCall( x => x.Dispose() ),
+                target.Subscribers.Count.TestEquals( 1 ) )
+            .Go();
     }
 
     [Fact]
@@ -94,12 +89,11 @@ public class EventListenerThrottleUntilDecoratorTests : TestsBase
         listener.React( sourceEvent );
         target.Publish( Fixture.Create<string>() );
 
-        using ( new AssertionScope() )
-        {
-            next.VerifyCalls().Received( x => x.React( sourceEvent ) );
-            subscriber.VerifyCalls().DidNotReceive( x => x.Dispose() );
-            target.HasSubscribers.Should().BeFalse();
-        }
+        Assertion.All(
+                next.TestReceivedCalls( x => x.React( sourceEvent ) ),
+                subscriber.TestDidNotReceiveCall( x => x.Dispose() ),
+                target.HasSubscribers.TestFalse() )
+            .Go();
     }
 
     [Fact]
@@ -117,12 +111,11 @@ public class EventListenerThrottleUntilDecoratorTests : TestsBase
 
         listener.React( sourceEvent );
 
-        using ( new AssertionScope() )
-        {
-            next.VerifyCalls().Received( x => x.React( sourceEvent ) );
-            subscriber.VerifyCalls().DidNotReceive( x => x.Dispose() );
-            target.HasSubscribers.Should().BeFalse();
-        }
+        Assertion.All(
+                next.TestReceivedCalls( x => x.React( sourceEvent ) ),
+                subscriber.TestDidNotReceiveCall( x => x.Dispose() ),
+                target.HasSubscribers.TestFalse() )
+            .Go();
     }
 
     [Fact]
@@ -161,7 +154,7 @@ public class EventListenerThrottleUntilDecoratorTests : TestsBase
         target.Publish( Fixture.Create<string>() );
         target.Publish( Fixture.Create<string>() );
 
-        actualEvents.Should().BeSequentiallyEqualTo( expectedEvents );
+        actualEvents.TestSequence( expectedEvents ).Go();
     }
 
     [Fact]
@@ -177,12 +170,11 @@ public class EventListenerThrottleUntilDecoratorTests : TestsBase
         listener.React( sourceEvent );
         target.Dispose();
 
-        using ( new AssertionScope() )
-        {
-            next.VerifyCalls().Received( x => x.React( sourceEvent ), 1 );
-            subscriber.VerifyCalls().Received( x => x.Dispose() );
-            target.HasSubscribers.Should().BeFalse();
-        }
+        Assertion.All(
+                next.TestReceivedCalls( x => x.React( sourceEvent ), 1 ),
+                subscriber.TestReceivedCalls( x => x.Dispose() ),
+                target.HasSubscribers.TestFalse() )
+            .Go();
     }
 
     [Fact]
@@ -198,12 +190,11 @@ public class EventListenerThrottleUntilDecoratorTests : TestsBase
         target.Dispose();
         listener.React( sourceEvent );
 
-        using ( new AssertionScope() )
-        {
-            next.VerifyCalls().DidNotReceive( x => x.React( sourceEvent ) );
-            subscriber.VerifyCalls().Received( x => x.Dispose() );
-            target.HasSubscribers.Should().BeFalse();
-        }
+        Assertion.All(
+                next.TestDidNotReceiveCall( x => x.React( sourceEvent ) ),
+                subscriber.TestReceivedCalls( x => x.Dispose() ),
+                target.HasSubscribers.TestFalse() )
+            .Go();
     }
 
     [Theory]
@@ -219,7 +210,7 @@ public class EventListenerThrottleUntilDecoratorTests : TestsBase
 
         listener.OnDispose( source );
 
-        next.VerifyCalls().Received( x => x.OnDispose( source ) );
+        next.TestReceivedCalls( x => x.OnDispose( source ) ).Go();
     }
 
     [Theory]
@@ -235,7 +226,7 @@ public class EventListenerThrottleUntilDecoratorTests : TestsBase
 
         listener.OnDispose( source );
 
-        target.HasSubscribers.Should().BeFalse();
+        target.HasSubscribers.TestFalse().Go();
     }
 
     [Fact]
@@ -274,7 +265,7 @@ public class EventListenerThrottleUntilDecoratorTests : TestsBase
         target.Publish( Fixture.Create<string>() );
         target.Publish( Fixture.Create<string>() );
 
-        actualEvents.Should().BeSequentiallyEqualTo( expectedEvents );
+        actualEvents.TestSequence( expectedEvents ).Go();
     }
 
     [Fact]
@@ -292,6 +283,6 @@ public class EventListenerThrottleUntilDecoratorTests : TestsBase
         foreach ( var e in sourceEvents )
             sut.Publish( e );
 
-        actualEvents.Should().BeSequentiallyEqualTo( expectedEvents );
+        actualEvents.TestSequence( expectedEvents ).Go();
     }
 }

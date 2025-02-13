@@ -2,7 +2,6 @@
 using System.Linq;
 using LfrlAnvil.Functional;
 using LfrlAnvil.Reactive.Internal;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Reactive.Tests.MergeEventSourceTests;
 
@@ -14,7 +13,7 @@ public abstract class GenericMergeEventSourceTests<TEvent> : TestsBase
     public void Ctor_ShouldThrowArgumentOutOfRangeException_WhenMaxConcurrencyIsLessThanOne(int maxConcurrency)
     {
         var action = Lambda.Of( () => new MergeEventSource<TEvent>( Enumerable.Empty<IEventStream<TEvent>>(), maxConcurrency ) );
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Theory]
@@ -25,7 +24,7 @@ public abstract class GenericMergeEventSourceTests<TEvent> : TestsBase
     {
         var inner = new EventPublisher<TEvent>();
         var sut = new MergeEventSource<TEvent>( new[] { inner }, maxConcurrency );
-        sut.HasSubscribers.Should().BeFalse();
+        sut.HasSubscribers.TestFalse().Go();
     }
 
     [Fact]
@@ -36,11 +35,10 @@ public abstract class GenericMergeEventSourceTests<TEvent> : TestsBase
 
         var subscriber = sut.Listen( listener );
 
-        using ( new AssertionScope() )
-        {
-            subscriber.IsDisposed.Should().BeTrue();
-            listener.VerifyCalls().DidNotReceive( x => x.React( Arg.Any<TEvent>() ) );
-        }
+        Assertion.All(
+                subscriber.IsDisposed.TestTrue(),
+                listener.TestDidNotReceiveCall( x => x.React( Arg.Any<TEvent>() ) ) )
+            .Go();
     }
 
     [Fact]
@@ -53,11 +51,10 @@ public abstract class GenericMergeEventSourceTests<TEvent> : TestsBase
 
         var subscriber = sut.Listen( listener );
 
-        using ( new AssertionScope() )
-        {
-            subscriber.IsDisposed.Should().BeTrue();
-            listener.VerifyCalls().DidNotReceive( x => x.React( Arg.Any<TEvent>() ) );
-        }
+        Assertion.All(
+                subscriber.IsDisposed.TestTrue(),
+                listener.TestDidNotReceiveCall( x => x.React( Arg.Any<TEvent>() ) ) )
+            .Go();
     }
 
     [Theory]
@@ -76,15 +73,14 @@ public abstract class GenericMergeEventSourceTests<TEvent> : TestsBase
 
         sut.Dispose();
 
-        using ( new AssertionScope() )
-        {
-            sut.HasSubscribers.Should().BeFalse();
-            firstStream.HasSubscribers.Should().BeFalse();
-            secondStream.HasSubscribers.Should().BeFalse();
-            thirdStream.HasSubscribers.Should().BeFalse();
-            subscriber.IsDisposed.Should().BeTrue();
-            listener.VerifyCalls().DidNotReceive( x => x.React( Arg.Any<TEvent>() ) );
-        }
+        Assertion.All(
+                sut.HasSubscribers.TestFalse(),
+                firstStream.HasSubscribers.TestFalse(),
+                secondStream.HasSubscribers.TestFalse(),
+                thirdStream.HasSubscribers.TestFalse(),
+                subscriber.IsDisposed.TestTrue(),
+                listener.TestDidNotReceiveCall( x => x.React( Arg.Any<TEvent>() ) ) )
+            .Go();
     }
 
     [Fact]
@@ -98,15 +94,14 @@ public abstract class GenericMergeEventSourceTests<TEvent> : TestsBase
         var sut = new MergeEventSource<TEvent>( new[] { firstStream, secondStream, thirdStream }, maxConcurrency: 1 );
         var subscriber = sut.Listen( listener );
 
-        using ( new AssertionScope() )
-        {
-            firstStream.HasSubscribers.Should().BeTrue();
-            secondStream.HasSubscribers.Should().BeFalse();
-            thirdStream.HasSubscribers.Should().BeFalse();
-            sut.HasSubscribers.Should().BeTrue();
-            subscriber.IsDisposed.Should().BeFalse();
-            listener.VerifyCalls().DidNotReceive( x => x.React( Arg.Any<TEvent>() ) );
-        }
+        Assertion.All(
+                firstStream.HasSubscribers.TestTrue(),
+                secondStream.HasSubscribers.TestFalse(),
+                thirdStream.HasSubscribers.TestFalse(),
+                sut.HasSubscribers.TestTrue(),
+                subscriber.IsDisposed.TestFalse(),
+                listener.TestDidNotReceiveCall( x => x.React( Arg.Any<TEvent>() ) ) )
+            .Go();
     }
 
     [Fact]
@@ -121,15 +116,14 @@ public abstract class GenericMergeEventSourceTests<TEvent> : TestsBase
         var sut = new MergeEventSource<TEvent>( new[] { firstStream, secondStream, thirdStream }, maxConcurrency: 2 );
         var subscriber = sut.Listen( listener );
 
-        using ( new AssertionScope() )
-        {
-            firstStream.HasSubscribers.Should().BeTrue();
-            secondStream.HasSubscribers.Should().BeTrue();
-            thirdStream.HasSubscribers.Should().BeFalse();
-            sut.HasSubscribers.Should().BeTrue();
-            subscriber.IsDisposed.Should().BeFalse();
-            listener.VerifyCalls().DidNotReceive( x => x.React( Arg.Any<TEvent>() ) );
-        }
+        Assertion.All(
+                firstStream.HasSubscribers.TestTrue(),
+                secondStream.HasSubscribers.TestTrue(),
+                thirdStream.HasSubscribers.TestFalse(),
+                sut.HasSubscribers.TestTrue(),
+                subscriber.IsDisposed.TestFalse(),
+                listener.TestDidNotReceiveCall( x => x.React( Arg.Any<TEvent>() ) ) )
+            .Go();
     }
 
     [Fact]
@@ -143,15 +137,14 @@ public abstract class GenericMergeEventSourceTests<TEvent> : TestsBase
         var sut = new MergeEventSource<TEvent>( new[] { firstStream, secondStream, thirdStream }, maxConcurrency: int.MaxValue );
         var subscriber = sut.Listen( listener );
 
-        using ( new AssertionScope() )
-        {
-            firstStream.HasSubscribers.Should().BeTrue();
-            secondStream.HasSubscribers.Should().BeTrue();
-            thirdStream.HasSubscribers.Should().BeTrue();
-            sut.HasSubscribers.Should().BeTrue();
-            subscriber.IsDisposed.Should().BeFalse();
-            listener.VerifyCalls().DidNotReceive( x => x.React( Arg.Any<TEvent>() ) );
-        }
+        Assertion.All(
+                firstStream.HasSubscribers.TestTrue(),
+                secondStream.HasSubscribers.TestTrue(),
+                thirdStream.HasSubscribers.TestTrue(),
+                sut.HasSubscribers.TestTrue(),
+                subscriber.IsDisposed.TestFalse(),
+                listener.TestDidNotReceiveCall( x => x.React( Arg.Any<TEvent>() ) ) )
+            .Go();
     }
 
     [Fact]
@@ -181,15 +174,14 @@ public abstract class GenericMergeEventSourceTests<TEvent> : TestsBase
         foreach ( var e in thirdStreamValues )
             thirdStream.Publish( e );
 
-        using ( new AssertionScope() )
-        {
-            firstStream.HasSubscribers.Should().BeTrue();
-            secondStream.HasSubscribers.Should().BeFalse();
-            thirdStream.HasSubscribers.Should().BeFalse();
-            sut.HasSubscribers.Should().BeTrue();
-            subscriber.IsDisposed.Should().BeFalse();
-            actualEvents.Should().BeSequentiallyEqualTo( expectedEvents );
-        }
+        Assertion.All(
+                firstStream.HasSubscribers.TestTrue(),
+                secondStream.HasSubscribers.TestFalse(),
+                thirdStream.HasSubscribers.TestFalse(),
+                sut.HasSubscribers.TestTrue(),
+                subscriber.IsDisposed.TestFalse(),
+                actualEvents.TestSequence( expectedEvents ) )
+            .Go();
     }
 
     [Fact]
@@ -218,15 +210,14 @@ public abstract class GenericMergeEventSourceTests<TEvent> : TestsBase
         foreach ( var e in thirdStreamValues )
             thirdStream.Publish( e );
 
-        using ( new AssertionScope() )
-        {
-            firstStream.HasSubscribers.Should().BeTrue();
-            secondStream.HasSubscribers.Should().BeTrue();
-            thirdStream.HasSubscribers.Should().BeFalse();
-            sut.HasSubscribers.Should().BeTrue();
-            subscriber.IsDisposed.Should().BeFalse();
-            actualEvents.Should().BeSequentiallyEqualTo( expectedEvents );
-        }
+        Assertion.All(
+                firstStream.HasSubscribers.TestTrue(),
+                secondStream.HasSubscribers.TestTrue(),
+                thirdStream.HasSubscribers.TestFalse(),
+                sut.HasSubscribers.TestTrue(),
+                subscriber.IsDisposed.TestFalse(),
+                actualEvents.TestSequence( expectedEvents ) )
+            .Go();
     }
 
     [Fact]
@@ -262,15 +253,14 @@ public abstract class GenericMergeEventSourceTests<TEvent> : TestsBase
         thirdStream.Publish( thirdStreamValues[1] );
         firstStream.Publish( firstStreamValues[1] );
 
-        using ( new AssertionScope() )
-        {
-            firstStream.HasSubscribers.Should().BeTrue();
-            secondStream.HasSubscribers.Should().BeTrue();
-            thirdStream.HasSubscribers.Should().BeTrue();
-            sut.HasSubscribers.Should().BeTrue();
-            subscriber.IsDisposed.Should().BeFalse();
-            actualEvents.Should().BeSequentiallyEqualTo( expectedEvents );
-        }
+        Assertion.All(
+                firstStream.HasSubscribers.TestTrue(),
+                secondStream.HasSubscribers.TestTrue(),
+                thirdStream.HasSubscribers.TestTrue(),
+                sut.HasSubscribers.TestTrue(),
+                subscriber.IsDisposed.TestFalse(),
+                actualEvents.TestSequence( expectedEvents ) )
+            .Go();
     }
 
     [Fact]
@@ -305,15 +295,14 @@ public abstract class GenericMergeEventSourceTests<TEvent> : TestsBase
         foreach ( var e in thirdStreamValues )
             thirdStream.Publish( e );
 
-        using ( new AssertionScope() )
-        {
-            firstStream.HasSubscribers.Should().BeFalse();
-            secondStream.HasSubscribers.Should().BeFalse();
-            thirdStream.HasSubscribers.Should().BeTrue();
-            sut.HasSubscribers.Should().BeTrue();
-            subscriber.IsDisposed.Should().BeFalse();
-            actualEvents.Should().BeSequentiallyEqualTo( expectedEvents );
-        }
+        Assertion.All(
+                firstStream.HasSubscribers.TestFalse(),
+                secondStream.HasSubscribers.TestFalse(),
+                thirdStream.HasSubscribers.TestTrue(),
+                sut.HasSubscribers.TestTrue(),
+                subscriber.IsDisposed.TestFalse(),
+                actualEvents.TestSequence( expectedEvents ) )
+            .Go();
     }
 
     [Fact]
@@ -353,15 +342,14 @@ public abstract class GenericMergeEventSourceTests<TEvent> : TestsBase
         foreach ( var e in thirdStreamValues )
             thirdStream.Publish( e );
 
-        using ( new AssertionScope() )
-        {
-            firstStream.HasSubscribers.Should().BeFalse();
-            secondStream.HasSubscribers.Should().BeTrue();
-            thirdStream.HasSubscribers.Should().BeTrue();
-            sut.HasSubscribers.Should().BeTrue();
-            subscriber.IsDisposed.Should().BeFalse();
-            actualEvents.Should().BeSequentiallyEqualTo( expectedEvents );
-        }
+        Assertion.All(
+                firstStream.HasSubscribers.TestFalse(),
+                secondStream.HasSubscribers.TestTrue(),
+                thirdStream.HasSubscribers.TestTrue(),
+                sut.HasSubscribers.TestTrue(),
+                subscriber.IsDisposed.TestFalse(),
+                actualEvents.TestSequence( expectedEvents ) )
+            .Go();
     }
 
     [Theory]
@@ -382,14 +370,13 @@ public abstract class GenericMergeEventSourceTests<TEvent> : TestsBase
         secondStream.Dispose();
         thirdStream.Dispose();
 
-        using ( new AssertionScope() )
-        {
-            firstStream.HasSubscribers.Should().BeFalse();
-            secondStream.HasSubscribers.Should().BeFalse();
-            thirdStream.HasSubscribers.Should().BeFalse();
-            sut.HasSubscribers.Should().BeFalse();
-            subscriber.IsDisposed.Should().BeTrue();
-        }
+        Assertion.All(
+                firstStream.HasSubscribers.TestFalse(),
+                secondStream.HasSubscribers.TestFalse(),
+                thirdStream.HasSubscribers.TestFalse(),
+                sut.HasSubscribers.TestFalse(),
+                subscriber.IsDisposed.TestTrue() )
+            .Go();
     }
 
     [Fact]
@@ -406,14 +393,13 @@ public abstract class GenericMergeEventSourceTests<TEvent> : TestsBase
         var sut = new MergeEventSource<TEvent>( new[] { firstStream, secondStream, thirdStream }, maxConcurrency: 1 );
         var subscriber = sut.Listen( listener );
 
-        using ( new AssertionScope() )
-        {
-            firstStream.HasSubscribers.Should().BeFalse();
-            secondStream.HasSubscribers.Should().BeTrue();
-            thirdStream.HasSubscribers.Should().BeFalse();
-            sut.HasSubscribers.Should().BeTrue();
-            subscriber.IsDisposed.Should().BeFalse();
-        }
+        Assertion.All(
+                firstStream.HasSubscribers.TestFalse(),
+                secondStream.HasSubscribers.TestTrue(),
+                thirdStream.HasSubscribers.TestFalse(),
+                sut.HasSubscribers.TestTrue(),
+                subscriber.IsDisposed.TestFalse() )
+            .Go();
     }
 
     [Fact]
@@ -431,14 +417,13 @@ public abstract class GenericMergeEventSourceTests<TEvent> : TestsBase
         var sut = new MergeEventSource<TEvent>( new[] { firstStream, secondStream, thirdStream }, maxConcurrency: 2 );
         var subscriber = sut.Listen( listener );
 
-        using ( new AssertionScope() )
-        {
-            firstStream.HasSubscribers.Should().BeFalse();
-            secondStream.HasSubscribers.Should().BeFalse();
-            thirdStream.HasSubscribers.Should().BeTrue();
-            sut.HasSubscribers.Should().BeTrue();
-            subscriber.IsDisposed.Should().BeFalse();
-        }
+        Assertion.All(
+                firstStream.HasSubscribers.TestFalse(),
+                secondStream.HasSubscribers.TestFalse(),
+                thirdStream.HasSubscribers.TestTrue(),
+                sut.HasSubscribers.TestTrue(),
+                subscriber.IsDisposed.TestFalse() )
+            .Go();
     }
 
     [Theory]
@@ -459,14 +444,13 @@ public abstract class GenericMergeEventSourceTests<TEvent> : TestsBase
         var sut = new MergeEventSource<TEvent>( new[] { firstStream, secondStream, thirdStream }, maxConcurrency );
         var subscriber = sut.Listen( listener );
 
-        using ( new AssertionScope() )
-        {
-            firstStream.HasSubscribers.Should().BeFalse();
-            secondStream.HasSubscribers.Should().BeFalse();
-            thirdStream.HasSubscribers.Should().BeFalse();
-            sut.HasSubscribers.Should().BeFalse();
-            subscriber.IsDisposed.Should().BeTrue();
-        }
+        Assertion.All(
+                firstStream.HasSubscribers.TestFalse(),
+                secondStream.HasSubscribers.TestFalse(),
+                thirdStream.HasSubscribers.TestFalse(),
+                sut.HasSubscribers.TestFalse(),
+                subscriber.IsDisposed.TestTrue() )
+            .Go();
     }
 
     [Fact]
@@ -502,15 +486,14 @@ public abstract class GenericMergeEventSourceTests<TEvent> : TestsBase
         thirdStream.Publish( thirdStreamValues[1] );
         firstStream.Publish( firstStreamValues[1] );
 
-        using ( new AssertionScope() )
-        {
-            firstStream.HasSubscribers.Should().BeTrue();
-            secondStream.HasSubscribers.Should().BeTrue();
-            thirdStream.HasSubscribers.Should().BeTrue();
-            sut.HasSubscribers.Should().BeTrue();
-            subscriber.IsDisposed.Should().BeFalse();
-            actualEvents.Should().BeSequentiallyEqualTo( expectedEvents );
-        }
+        Assertion.All(
+                firstStream.HasSubscribers.TestTrue(),
+                secondStream.HasSubscribers.TestTrue(),
+                thirdStream.HasSubscribers.TestTrue(),
+                sut.HasSubscribers.TestTrue(),
+                subscriber.IsDisposed.TestFalse(),
+                actualEvents.TestSequence( expectedEvents ) )
+            .Go();
     }
 
     [Fact]
@@ -544,14 +527,13 @@ public abstract class GenericMergeEventSourceTests<TEvent> : TestsBase
         foreach ( var e in thirdStreamValues )
             thirdStream.Publish( e );
 
-        using ( new AssertionScope() )
-        {
-            firstStream.HasSubscribers.Should().BeFalse();
-            secondStream.HasSubscribers.Should().BeFalse();
-            thirdStream.HasSubscribers.Should().BeTrue();
-            sut.HasSubscribers.Should().BeTrue();
-            subscriber.IsDisposed.Should().BeFalse();
-            actualEvents.Should().BeSequentiallyEqualTo( expectedEvents );
-        }
+        Assertion.All(
+                firstStream.HasSubscribers.TestFalse(),
+                secondStream.HasSubscribers.TestFalse(),
+                thirdStream.HasSubscribers.TestTrue(),
+                sut.HasSubscribers.TestTrue(),
+                subscriber.IsDisposed.TestFalse(),
+                actualEvents.TestSequence( expectedEvents ) )
+            .Go();
     }
 }

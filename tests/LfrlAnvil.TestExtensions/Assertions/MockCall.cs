@@ -2,11 +2,11 @@
 
 namespace LfrlAnvil.TestExtensions.Assertions;
 
-public sealed class DelegateCall
+public sealed class MockCall
 {
     private readonly ICall? _call;
 
-    internal DelegateCall(ICall? call)
+    internal MockCall(ICall? call)
     {
         _call = call;
     }

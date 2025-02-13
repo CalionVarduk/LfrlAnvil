@@ -3,7 +3,6 @@ using System.Linq;
 using System.Threading;
 using LfrlAnvil.Reactive.Decorators;
 using LfrlAnvil.Reactive.Extensions;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Reactive.Tests.DecoratorsTests;
 
@@ -18,7 +17,7 @@ public class EventListenerConcurrentDecoratorTests : TestsBase
 
         _ = sut.Decorate( next, subscriber );
 
-        subscriber.VerifyCalls().DidNotReceive( x => x.Dispose() );
+        subscriber.TestDidNotReceiveCall( x => x.Dispose() ).Go();
     }
 
     [Fact]
@@ -35,7 +34,7 @@ public class EventListenerConcurrentDecoratorTests : TestsBase
         foreach ( var e in sourceEvents )
             listener.React( e );
 
-        actualEvents.Should().BeSequentiallyEqualTo( sourceEvents );
+        actualEvents.TestSequence( sourceEvents ).Go();
     }
 
     [Theory]
@@ -51,7 +50,7 @@ public class EventListenerConcurrentDecoratorTests : TestsBase
         listener.OnDispose( source );
         listener.React( Fixture.Create<int>() );
 
-        next.VerifyCalls().DidNotReceive( x => x.React( Arg.Any<int>() ) );
+        next.TestDidNotReceiveCall( x => x.React( Arg.Any<int>() ) ).Go();
     }
 
     [Theory]
@@ -67,7 +66,7 @@ public class EventListenerConcurrentDecoratorTests : TestsBase
         listener.OnDispose( source );
         listener.OnDispose( source );
 
-        next.VerifyCalls().Received( x => x.OnDispose( source ), count: 1 );
+        next.TestReceivedCalls( x => x.OnDispose( source ), count: 1 ).Go();
     }
 
     [Fact]
@@ -86,7 +85,7 @@ public class EventListenerConcurrentDecoratorTests : TestsBase
 
         listener.React( Fixture.Create<int>() );
 
-        hasLock.Should().BeTrue();
+        hasLock.TestTrue().Go();
     }
 
     [Theory]
@@ -107,7 +106,7 @@ public class EventListenerConcurrentDecoratorTests : TestsBase
 
         listener.OnDispose( source );
 
-        hasLock.Should().BeTrue();
+        hasLock.TestTrue().Go();
     }
 
     [Theory]
@@ -122,7 +121,7 @@ public class EventListenerConcurrentDecoratorTests : TestsBase
 
         listener.OnDispose( source );
 
-        next.VerifyCalls().Received( x => x.OnDispose( source ) );
+        next.TestReceivedCalls( x => x.OnDispose( source ) ).Go();
     }
 
     [Fact]
@@ -139,7 +138,7 @@ public class EventListenerConcurrentDecoratorTests : TestsBase
         foreach ( var e in sourceEvents )
             sut.Publish( e );
 
-        actualEvents.Should().BeSequentiallyEqualTo( sourceEvents );
+        actualEvents.TestSequence( sourceEvents ).Go();
     }
 
     [Fact]
@@ -157,7 +156,7 @@ public class EventListenerConcurrentDecoratorTests : TestsBase
         foreach ( var e in sourceEvents )
             sut.Publish( e );
 
-        actualEvents.Should().BeSequentiallyEqualTo( sourceEvents );
+        actualEvents.TestSequence( sourceEvents ).Go();
     }
 
     [Fact]
@@ -172,16 +171,11 @@ public class EventListenerConcurrentDecoratorTests : TestsBase
 
         var (sutDecorateResult, otherDecorateResult) = sut.ShareConcurrencyWith( other, (a, b) => (a, b) );
 
-        using ( new AssertionScope() )
-        {
-            sutDecorateResult.Should().BeSameAs( expectedSutDecorateResult );
-            otherDecorateResult.Should().BeSameAs( expectedOtherDecorateResult );
-
-            var sutDecorator = sut.ReceivedCalls().First().GetArguments().First();
-            sutDecorator.Should().BeOfType<EventListenerConcurrentDecorator<int>>();
-
-            var otherDecorator = other.ReceivedCalls().First().GetArguments().First();
-            otherDecorator.Should().BeOfType<EventListenerConcurrentDecorator<string>>();
-        }
+        Assertion.All(
+                sutDecorateResult.TestRefEquals( expectedSutDecorateResult ),
+                otherDecorateResult.TestRefEquals( expectedOtherDecorateResult ),
+                sut.CallAt( 0 ).Arguments.FirstOrDefault().TestType().AssignableTo<EventListenerConcurrentDecorator<int>>(),
+                other.CallAt( 0 ).Arguments.FirstOrDefault().TestType().AssignableTo<EventListenerConcurrentDecorator<string>>() )
+            .Go();
     }
 }

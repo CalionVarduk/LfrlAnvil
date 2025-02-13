@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
 using LfrlAnvil.Reactive.Decorators;
 using LfrlAnvil.Reactive.Extensions;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Reactive.Tests.DecoratorsTests;
 
@@ -17,11 +16,10 @@ public class EventListenerZipDecoratorTests : TestsBase
 
         _ = sut.Decorate( next, subscriber );
 
-        using ( new AssertionScope() )
-        {
-            subscriber.VerifyCalls().DidNotReceive( x => x.Dispose() );
-            target.HasSubscribers.Should().BeTrue();
-        }
+        Assertion.All(
+                subscriber.TestDidNotReceiveCall( x => x.Dispose() ),
+                target.HasSubscribers.TestTrue() )
+            .Go();
     }
 
     [Fact]
@@ -36,11 +34,10 @@ public class EventListenerZipDecoratorTests : TestsBase
 
         _ = sut.Decorate( next, subscriber );
 
-        using ( new AssertionScope() )
-        {
-            subscriber.VerifyCalls().Received( x => x.Dispose() );
-            target.HasSubscribers.Should().BeFalse();
-        }
+        Assertion.All(
+                subscriber.TestReceivedCalls( x => x.Dispose() ),
+                target.HasSubscribers.TestFalse() )
+            .Go();
     }
 
     [Fact]
@@ -58,7 +55,7 @@ public class EventListenerZipDecoratorTests : TestsBase
         foreach ( var e in sourceEvents )
             listener.React( e );
 
-        actualEvents.Should().BeEmpty();
+        actualEvents.TestEmpty().Go();
     }
 
     [Fact]
@@ -76,7 +73,7 @@ public class EventListenerZipDecoratorTests : TestsBase
         foreach ( var e in targetEvents )
             target.Publish( e );
 
-        actualEvents.Should().BeEmpty();
+        actualEvents.TestEmpty().Go();
     }
 
     [Fact]
@@ -99,7 +96,7 @@ public class EventListenerZipDecoratorTests : TestsBase
         foreach ( var e in targetEvents )
             target.Publish( e );
 
-        actualEvents.Should().BeSequentiallyEqualTo( expectedEvents );
+        actualEvents.TestSequence( expectedEvents ).Go();
     }
 
     [Fact]
@@ -122,7 +119,7 @@ public class EventListenerZipDecoratorTests : TestsBase
         foreach ( var e in sourceEvents )
             listener.React( e );
 
-        actualEvents.Should().BeSequentiallyEqualTo( expectedEvents );
+        actualEvents.TestSequence( expectedEvents ).Go();
     }
 
     [Fact]
@@ -145,7 +142,7 @@ public class EventListenerZipDecoratorTests : TestsBase
             target.Publish( targetEvents[i] );
         }
 
-        actualEvents.Should().BeSequentiallyEqualTo( expectedEvents );
+        actualEvents.TestSequence( expectedEvents ).Go();
     }
 
     [Fact]
@@ -168,7 +165,7 @@ public class EventListenerZipDecoratorTests : TestsBase
             listener.React( sourceEvents[i] );
         }
 
-        actualEvents.Should().BeSequentiallyEqualTo( expectedEvents );
+        actualEvents.TestSequence( expectedEvents ).Go();
     }
 
     [Theory]
@@ -184,7 +181,7 @@ public class EventListenerZipDecoratorTests : TestsBase
 
         listener.OnDispose( source );
 
-        next.VerifyCalls().Received( x => x.OnDispose( source ) );
+        next.TestReceivedCalls( x => x.OnDispose( source ) ).Go();
     }
 
     [Theory]
@@ -200,7 +197,7 @@ public class EventListenerZipDecoratorTests : TestsBase
 
         listener.OnDispose( source );
 
-        target.HasSubscribers.Should().BeFalse();
+        target.HasSubscribers.TestFalse().Go();
     }
 
     [Fact]
@@ -223,7 +220,7 @@ public class EventListenerZipDecoratorTests : TestsBase
             target.Publish( targetEvents[i] );
         }
 
-        actualEvents.Should().BeSequentiallyEqualTo( expectedEvents );
+        actualEvents.TestSequence( expectedEvents ).Go();
     }
 
     [Fact]
@@ -241,6 +238,6 @@ public class EventListenerZipDecoratorTests : TestsBase
         foreach ( var e in sourceEvents )
             sut.Publish( e );
 
-        actualEvents.Should().BeSequentiallyEqualTo( expectedEvents );
+        actualEvents.TestSequence( expectedEvents ).Go();
     }
 }

@@ -1,6 +1,5 @@
 ﻿using LfrlAnvil.Functional;
 using LfrlAnvil.Reactive.Exceptions;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Reactive.Tests.DecoratedEventSourceTests;
 
@@ -16,12 +15,11 @@ public abstract class GenericDecoratedEventSourceTests<TRootEvent, TNextEvent, T
 
         var result = sut.Decorate( decorator );
 
-        using ( new AssertionScope() )
-        {
-            sut.Subscribers.Should().BeSequentiallyEqualTo( subscriber );
-            result.Should().NotBeSameAs( sut );
-            result.IsDisposed.Should().BeFalse();
-        }
+        Assertion.All(
+                sut.Subscribers.TestSequence( [ subscriber ] ),
+                result.TestNotRefEquals( sut ),
+                result.IsDisposed.TestFalse() )
+            .Go();
     }
 
     [Fact]
@@ -33,12 +31,11 @@ public abstract class GenericDecoratedEventSourceTests<TRootEvent, TNextEvent, T
 
         var result = sut.Decorate( decorator );
 
-        using ( new AssertionScope() )
-        {
-            sut.Subscribers.Should().BeEmpty();
-            result.Should().NotBeSameAs( sut );
-            result.IsDisposed.Should().BeTrue();
-        }
+        Assertion.All(
+                sut.Subscribers.TestEmpty(),
+                result.TestNotRefEquals( sut ),
+                result.IsDisposed.TestTrue() )
+            .Go();
     }
 
     [Fact]
@@ -53,7 +50,7 @@ public abstract class GenericDecoratedEventSourceTests<TRootEvent, TNextEvent, T
 
         var subscriber = result.Listen( listener );
 
-        sut.Subscribers.Should().BeSequentiallyEqualTo( subscriber );
+        sut.Subscribers.TestSequence( [ subscriber ] ).Go();
     }
 
     [Fact]
@@ -69,11 +66,10 @@ public abstract class GenericDecoratedEventSourceTests<TRootEvent, TNextEvent, T
 
         var subscriber = result.Listen( listener );
 
-        using ( new AssertionScope() )
-        {
-            subscriber.IsDisposed.Should().BeTrue();
-            sut.Subscribers.Should().BeEmpty();
-        }
+        Assertion.All(
+                subscriber.IsDisposed.TestTrue(),
+                sut.Subscribers.TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -95,12 +91,11 @@ public abstract class GenericDecoratedEventSourceTests<TRootEvent, TNextEvent, T
 
         var subscriber = result.Listen( listener );
 
-        using ( new AssertionScope() )
-        {
-            subscriber.IsDisposed.Should().BeTrue();
-            sut.Subscribers.Should().BeEmpty();
-            rootListener.VerifyCalls().Received( x => x.OnDispose( DisposalSource.Subscriber ) );
-        }
+        Assertion.All(
+                subscriber.IsDisposed.TestTrue(),
+                sut.Subscribers.TestEmpty(),
+                rootListener.TestReceivedCalls( x => x.OnDispose( DisposalSource.Subscriber ) ) )
+            .Go();
     }
 
     [Fact]
@@ -114,12 +109,11 @@ public abstract class GenericDecoratedEventSourceTests<TRootEvent, TNextEvent, T
 
         var result = sut.Decorate( decorator ).Decorate( nestedDecorator );
 
-        using ( new AssertionScope() )
-        {
-            sut.Subscribers.Should().BeSequentiallyEqualTo( subscriber );
-            result.Should().NotBeSameAs( sut );
-            result.IsDisposed.Should().BeFalse();
-        }
+        Assertion.All(
+                sut.Subscribers.TestSequence( [ subscriber ] ),
+                result.TestNotRefEquals( sut ),
+                result.IsDisposed.TestFalse() )
+            .Go();
     }
 
     [Fact]
@@ -132,12 +126,11 @@ public abstract class GenericDecoratedEventSourceTests<TRootEvent, TNextEvent, T
 
         var result = sut.Decorate( decorator ).Decorate( nestedDecorator );
 
-        using ( new AssertionScope() )
-        {
-            sut.Subscribers.Should().BeEmpty();
-            result.Should().NotBeSameAs( sut );
-            result.IsDisposed.Should().BeTrue();
-        }
+        Assertion.All(
+                sut.Subscribers.TestEmpty(),
+                result.TestNotRefEquals( sut ),
+                result.IsDisposed.TestTrue() )
+            .Go();
     }
 
     [Fact]
@@ -156,7 +149,7 @@ public abstract class GenericDecoratedEventSourceTests<TRootEvent, TNextEvent, T
 
         var subscriber = result.Listen( listener );
 
-        sut.Subscribers.Should().BeSequentiallyEqualTo( subscriber );
+        sut.Subscribers.TestSequence( [ subscriber ] ).Go();
     }
 
     [Fact]
@@ -176,11 +169,10 @@ public abstract class GenericDecoratedEventSourceTests<TRootEvent, TNextEvent, T
 
         var subscriber = result.Listen( listener );
 
-        using ( new AssertionScope() )
-        {
-            subscriber.IsDisposed.Should().BeTrue();
-            sut.Subscribers.Should().BeEmpty();
-        }
+        Assertion.All(
+                subscriber.IsDisposed.TestTrue(),
+                sut.Subscribers.TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -205,11 +197,10 @@ public abstract class GenericDecoratedEventSourceTests<TRootEvent, TNextEvent, T
 
         var subscriber = result.Listen( listener );
 
-        using ( new AssertionScope() )
-        {
-            subscriber.IsDisposed.Should().BeTrue();
-            sut.Subscribers.Should().BeEmpty();
-        }
+        Assertion.All(
+                subscriber.IsDisposed.TestTrue(),
+                sut.Subscribers.TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -224,12 +215,11 @@ public abstract class GenericDecoratedEventSourceTests<TRootEvent, TNextEvent, T
 
         var result = sut.Decorate( decorator ).Decorate( nestedDecorator ).Decorate( deeplyNestedDecorator );
 
-        using ( new AssertionScope() )
-        {
-            sut.Subscribers.Should().BeSequentiallyEqualTo( subscriber );
-            result.Should().NotBeSameAs( sut );
-            result.IsDisposed.Should().BeFalse();
-        }
+        Assertion.All(
+                sut.Subscribers.TestSequence( [ subscriber ] ),
+                result.TestNotRefEquals( sut ),
+                result.IsDisposed.TestFalse() )
+            .Go();
     }
 
     [Fact]
@@ -243,12 +233,11 @@ public abstract class GenericDecoratedEventSourceTests<TRootEvent, TNextEvent, T
 
         var result = sut.Decorate( decorator ).Decorate( nestedDecorator ).Decorate( deeplyNestedDecorator );
 
-        using ( new AssertionScope() )
-        {
-            sut.Subscribers.Should().BeEmpty();
-            result.Should().NotBeSameAs( sut );
-            result.IsDisposed.Should().BeTrue();
-        }
+        Assertion.All(
+                sut.Subscribers.TestEmpty(),
+                result.TestNotRefEquals( sut ),
+                result.IsDisposed.TestTrue() )
+            .Go();
     }
 
     [Fact]
@@ -263,7 +252,7 @@ public abstract class GenericDecoratedEventSourceTests<TRootEvent, TNextEvent, T
 
         var subscriber = sut.Listen( EventListener<TNextEvent>.Empty );
 
-        source.Subscribers.Should().BeSequentiallyEqualTo( subscriber );
+        source.Subscribers.TestSequence( [ subscriber ] ).Go();
     }
 
     [Fact]
@@ -275,8 +264,12 @@ public abstract class GenericDecoratedEventSourceTests<TRootEvent, TNextEvent, T
 
         var action = Lambda.Of( () => sut.Listen( listener ) );
 
-        action.Should()
-            .ThrowExactly<InvalidArgumentTypeException>()
-            .AndMatch( e => e.Argument == listener && e.ExpectedType == typeof( IEventListener<TNextEvent> ) );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<InvalidArgumentTypeException>(
+                        e => Assertion.All(
+                            e.Argument.TestRefEquals( listener ),
+                            e.ExpectedType.TestEquals( typeof( IEventListener<TNextEvent> ) ) ) ) )
+            .Go();
     }
 }

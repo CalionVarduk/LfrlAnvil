@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using LfrlAnvil.Reactive.Internal;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Reactive.Tests.EnumerableEventSourceTests;
 
@@ -12,7 +11,7 @@ public abstract class GenericEnumerableEventSourceTests<TEvent> : TestsBase
     {
         var values = Fixture.CreateMany<TEvent>();
         var sut = new EnumerableEventSource<TEvent>( values );
-        sut.HasSubscribers.Should().BeFalse();
+        sut.HasSubscribers.TestFalse().Go();
     }
 
     [Fact]
@@ -25,7 +24,7 @@ public abstract class GenericEnumerableEventSourceTests<TEvent> : TestsBase
 
         _ = sut.Listen( listener );
 
-        actualValues.Should().BeSequentiallyEqualTo( values );
+        actualValues.TestSequence( values ).Go();
     }
 
     [Fact]
@@ -37,11 +36,10 @@ public abstract class GenericEnumerableEventSourceTests<TEvent> : TestsBase
 
         var subscriber = sut.Listen( listener );
 
-        using ( new AssertionScope() )
-        {
-            subscriber.IsDisposed.Should().BeTrue();
-            sut.HasSubscribers.Should().BeFalse();
-        }
+        Assertion.All(
+                subscriber.IsDisposed.TestTrue(),
+                sut.HasSubscribers.TestFalse() )
+            .Go();
     }
 
     [Fact]
@@ -59,11 +57,10 @@ public abstract class GenericEnumerableEventSourceTests<TEvent> : TestsBase
 
         _ = sut.Listen( listener );
 
-        using ( new AssertionScope() )
-        {
-            sut.HasSubscribers.Should().BeFalse();
-            actualValues.Should().BeSequentiallyEqualTo( values[0] );
-        }
+        Assertion.All(
+                sut.HasSubscribers.TestFalse(),
+                actualValues.TestSequence( [ values[0] ] ) )
+            .Go();
     }
 
     [Fact]
@@ -76,6 +73,6 @@ public abstract class GenericEnumerableEventSourceTests<TEvent> : TestsBase
 
         _ = sut.Listen( listener );
 
-        actualValues.Should().BeSequentiallyEqualTo( values );
+        actualValues.TestSequence( values ).Go();
     }
 }

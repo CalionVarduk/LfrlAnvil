@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
 using LfrlAnvil.Reactive.Decorators;
 using LfrlAnvil.Reactive.Extensions;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Reactive.Tests.DecoratorsTests;
 
@@ -17,7 +16,7 @@ public class EventListenerDefaultIfEmptyDecoratorTests : TestsBase
 
         _ = sut.Decorate( next, subscriber );
 
-        subscriber.VerifyCalls().DidNotReceive( x => x.Dispose() );
+        subscriber.TestDidNotReceiveCall( x => x.Dispose() ).Go();
     }
 
     [Fact]
@@ -35,7 +34,7 @@ public class EventListenerDefaultIfEmptyDecoratorTests : TestsBase
         foreach ( var e in sourceEvents )
             listener.React( e );
 
-        actualEvents.Should().BeSequentiallyEqualTo( sourceEvents );
+        actualEvents.TestSequence( sourceEvents ).Go();
     }
 
     [Theory]
@@ -54,7 +53,7 @@ public class EventListenerDefaultIfEmptyDecoratorTests : TestsBase
         listener.React( sourceEvent );
         listener.OnDispose( source );
 
-        next.VerifyCalls().DidNotReceive( x => x.React( value ) );
+        next.TestDidNotReceiveCall( x => x.React( value ) ).Go();
     }
 
     [Theory]
@@ -70,7 +69,7 @@ public class EventListenerDefaultIfEmptyDecoratorTests : TestsBase
 
         listener.OnDispose( source );
 
-        next.VerifyCalls().Received( x => x.React( value ) );
+        next.TestReceivedCalls( x => x.React( value ) ).Go();
     }
 
     [Theory]
@@ -86,7 +85,7 @@ public class EventListenerDefaultIfEmptyDecoratorTests : TestsBase
 
         listener.OnDispose( source );
 
-        next.VerifyCalls().Received( x => x.OnDispose( source ) );
+        next.TestReceivedCalls( x => x.OnDispose( source ) ).Go();
     }
 
     [Fact]
@@ -104,7 +103,7 @@ public class EventListenerDefaultIfEmptyDecoratorTests : TestsBase
         foreach ( var e in sourceEvents )
             sut.Publish( e );
 
-        actualEvents.Should().BeSequentiallyEqualTo( sourceEvents );
+        actualEvents.TestSequence( sourceEvents ).Go();
     }
 
     [Fact]
@@ -120,7 +119,7 @@ public class EventListenerDefaultIfEmptyDecoratorTests : TestsBase
 
         sut.Dispose();
 
-        actualEvents.Should().BeSequentiallyEqualTo( value );
+        actualEvents.TestSequence( [ value ] ).Go();
     }
 
     [Fact]
@@ -135,6 +134,6 @@ public class EventListenerDefaultIfEmptyDecoratorTests : TestsBase
 
         sut.Dispose();
 
-        actualEvents.Should().BeSequentiallyEqualTo( default( int ) );
+        actualEvents.TestSequence( [ default( int ) ] ).Go();
     }
 }

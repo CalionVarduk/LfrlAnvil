@@ -4,7 +4,6 @@ using LfrlAnvil.Functional;
 using LfrlAnvil.Reactive.Exceptions;
 using LfrlAnvil.Reactive.Extensions;
 using LfrlAnvil.Reactive.Internal;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Reactive.Tests.ConcurrentEventSourceTests;
 
@@ -19,12 +18,11 @@ public class ConcurrentEventSourceTests : TestsBase
 
         var subscriber = sut.Listen( listener );
 
-        using ( new AssertionScope() )
-        {
-            @base.Subscribers.Should().BeSequentiallyEqualTo( subscriber );
-            sut.Subscribers.Should().BeSequentiallyEqualTo( @base.Subscribers );
-            sut.HasSubscribers.Should().Be( @base.HasSubscribers );
-        }
+        Assertion.All(
+                @base.Subscribers.TestSequence( [ subscriber ] ),
+                sut.Subscribers.TestSequence( @base.Subscribers ),
+                sut.HasSubscribers.TestEquals( @base.HasSubscribers ) )
+            .Go();
     }
 
     [Fact]
@@ -41,7 +39,7 @@ public class ConcurrentEventSourceTests : TestsBase
 
         sut.Listen( listener );
 
-        hasLock.Should().BeTrue();
+        hasLock.TestTrue().Go();
     }
 
     [Fact]
@@ -54,13 +52,12 @@ public class ConcurrentEventSourceTests : TestsBase
 
         subscriber.Dispose();
 
-        using ( new AssertionScope() )
-        {
-            subscriber.IsDisposed.Should().BeTrue();
-            @base.Subscribers.Should().BeEmpty();
-            sut.Subscribers.Should().BeEmpty();
-            sut.HasSubscribers.Should().BeFalse();
-        }
+        Assertion.All(
+                subscriber.IsDisposed.TestTrue(),
+                @base.Subscribers.TestEmpty(),
+                sut.Subscribers.TestEmpty(),
+                sut.HasSubscribers.TestFalse() )
+            .Go();
     }
 
     [Fact]
@@ -74,7 +71,7 @@ public class ConcurrentEventSourceTests : TestsBase
 
         var action = Lambda.Of( () => subscriber.Dispose() );
 
-        await action.Should().AcquireLockOn( sync );
+        (await action.TestLockAcquisitionAsync( sync )).Go();
     }
 
     [Fact]
@@ -87,11 +84,10 @@ public class ConcurrentEventSourceTests : TestsBase
 
         sut.Dispose();
 
-        using ( new AssertionScope() )
-        {
-            @base.IsDisposed.Should().BeTrue();
-            sut.IsDisposed.Should().BeTrue();
-        }
+        Assertion.All(
+                @base.IsDisposed.TestTrue(),
+                sut.IsDisposed.TestTrue() )
+            .Go();
     }
 
     [Fact]
@@ -107,7 +103,7 @@ public class ConcurrentEventSourceTests : TestsBase
 
         sut.Dispose();
 
-        hasLock.Should().BeTrue();
+        hasLock.TestTrue().Go();
     }
 
     [Fact]
@@ -120,7 +116,7 @@ public class ConcurrentEventSourceTests : TestsBase
         using var result = sut.Subscribers.GetEnumerator();
         var hasLock = Monitor.IsEntered( sync );
 
-        hasLock.Should().BeTrue();
+        hasLock.TestTrue().Go();
     }
 
     [Fact]
@@ -134,7 +130,7 @@ public class ConcurrentEventSourceTests : TestsBase
         result.Dispose();
         var hasLock = Monitor.IsEntered( sync );
 
-        hasLock.Should().BeFalse();
+        hasLock.TestFalse().Go();
     }
 
     [Fact]
@@ -147,11 +143,10 @@ public class ConcurrentEventSourceTests : TestsBase
 
         var subscriber = sut.Listen( listener );
 
-        using ( new AssertionScope() )
-        {
-            source.HasSubscribers.Should().BeTrue();
-            source.Subscribers.Should().BeSequentiallyEqualTo( subscriber );
-        }
+        Assertion.All(
+                source.HasSubscribers.TestTrue(),
+                source.Subscribers.TestSequence( [ subscriber ] ) )
+            .Go();
     }
 
     [Fact]
@@ -163,9 +158,13 @@ public class ConcurrentEventSourceTests : TestsBase
 
         var action = Lambda.Of( () => sut.Listen( listener ) );
 
-        action.Should()
-            .ThrowExactly<InvalidArgumentTypeException>()
-            .AndMatch( e => e.Argument == listener && e.ExpectedType == typeof( IEventListener<int> ) );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<InvalidArgumentTypeException>(
+                        e => Assertion.All(
+                            e.Argument.TestRefEquals( listener ),
+                            e.ExpectedType.TestEquals( typeof( IEventListener<int> ) ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -173,6 +172,6 @@ public class ConcurrentEventSourceTests : TestsBase
     {
         EventSource<int> @base = new EventPublisher<int>();
         var sut = @base.ToConcurrent();
-        sut.Should().BeOfType<ConcurrentEventSource<int, EventSource<int>>>();
+        sut.TestType().AssignableTo<ConcurrentEventSource<int, EventSource<int>>>().Go();
     }
 }
