@@ -1,5 +1,4 @@
-﻿using System.Collections.ObjectModel;
-using System.Linq;
+﻿using System.Linq;
 using System.Linq.Expressions;
 using LfrlAnvil.Computable.Expressions.Constructs.Variadic;
 using LfrlAnvil.Computable.Expressions.Exceptions;
@@ -157,30 +156,35 @@ public class SwitchTests : TestsBase
                                                 exception => Assertion.All(
                                                     "exception",
                                                     exception.Type.TestEquals( typeof( ParsedExpressionInvocationException ) ),
-                                                    exception.Arguments.Count.TestEquals( 2 ),
-                                                    (exception.Arguments.FirstOrDefault()?.NodeType).TestEquals( ExpressionType.Constant ),
-                                                    (exception.Arguments.ElementAtOrDefault( 1 )?.NodeType).TestEquals(
-                                                        ExpressionType.NewArrayInit ),
-                                                    exception.Arguments.FirstOrDefault()
-                                                        .TestType()
-                                                        .AssignableTo<ConstantExpression>(
-                                                            constantArg =>
-                                                                constantArg.Value.TestEquals(
-                                                                    Resources.SwitchValueWasNotHandledByAnyCaseFormat ) ),
-                                                    exception.Arguments.ElementAtOrDefault( 1 )
-                                                        .TestType()
-                                                        .AssignableTo<NewArrayExpression>(
-                                                            arrayArg => Assertion.All(
-                                                                "arrayArg",
-                                                                arrayArg.Expressions.Count.TestEquals( 1 ),
-                                                                (arrayArg.Expressions.FirstOrDefault()?.NodeType).TestEquals(
-                                                                    ExpressionType.Convert ),
-                                                                arrayArg.Expressions.FirstOrDefault()
-                                                                    .TestType()
-                                                                    .AssignableTo<UnaryExpression>(
-                                                                        argConvert =>
-                                                                            argConvert.Operand.TestRefEquals(
-                                                                                parameters[0] ) ) ) ) ) ) ) ) ) ) )
+                                                    exception.Arguments.TestCount( count => count.TestEquals( 2 ) )
+                                                        .Then(
+                                                            args =>
+                                                            {
+                                                                var first = args[0];
+                                                                var second = args[1];
+                                                                return Assertion.All(
+                                                                    "args",
+                                                                    first.NodeType.TestEquals( ExpressionType.Constant ),
+                                                                    second.NodeType.TestEquals( ExpressionType.NewArrayInit ),
+                                                                    first.TestType()
+                                                                        .AssignableTo<ConstantExpression>(
+                                                                            constantArg =>
+                                                                                constantArg.Value.TestEquals(
+                                                                                    Resources.SwitchValueWasNotHandledByAnyCaseFormat ) ),
+                                                                    second.TestType()
+                                                                        .AssignableTo<NewArrayExpression>(
+                                                                            arrayArg => Assertion.All(
+                                                                                "arrayArg",
+                                                                                arrayArg.Expressions.Count.TestEquals( 1 ),
+                                                                                arrayArg.Expressions.TestAll(
+                                                                                    (expr, _) => Assertion.All(
+                                                                                        expr.NodeType.TestEquals( ExpressionType.Convert ),
+                                                                                        expr.TestType()
+                                                                                            .AssignableTo<UnaryExpression>(
+                                                                                                argConvert =>
+                                                                                                    argConvert.Operand.TestRefEquals(
+                                                                                                        parameters[0] ) ) ) ) ) ) );
+                                                            } ) ) ) ) ) ) ) )
             .Go();
     }
 
@@ -331,9 +335,11 @@ public class SwitchTests : TestsBase
                             @switch.SwitchValue.TestRefEquals( parameters[0] ),
                             @switch.DefaultBody.TestRefEquals( parameters[^1] ),
                             @switch.Cases.Count.TestEquals( 1 ),
-                            (@switch.Cases.FirstOrDefault()?.Body).TestRefEquals( caseBody ),
-                            (@switch.Cases.FirstOrDefault()?.TestValues ?? new ReadOnlyCollection<Expression>( Array.Empty<Expression>() ))
-                            .TestSequence( [ caseParameter ] ) ) ) )
+                            @switch.Cases.TestAll(
+                                (@case, _) => Assertion.All(
+                                    "@case",
+                                    @case.Body.TestRefEquals( caseBody ),
+                                    @case.TestValues.TestSequence( [ caseParameter ] ) ) ) ) ) )
             .Go();
     }
 
@@ -382,26 +388,33 @@ public class SwitchTests : TestsBase
                             "@switch",
                             @switch.SwitchValue.TestRefEquals( parameters[0] ),
                             (@switch.DefaultBody?.NodeType).TestEquals( ExpressionType.Throw ),
-                            @switch.Cases.Count.TestEquals( 3 ),
                             @switch.DefaultBody.TestType()
                                 .AssignableTo<UnaryExpression>(
                                     defaultThrow => Assertion.All(
                                         "defaultThrow",
                                         defaultThrow.Type.TestEquals( typeof( string ) ),
                                         defaultThrow.Operand.TestRefEquals( exception ) ) ),
-                            @switch.Cases.FirstOrDefault().TestRefEquals( ( SwitchCase )(( ConstantExpression )parameters[1]).Value! ),
-                            (@switch.Cases.ElementAtOrDefault( 1 )?.Body.NodeType).TestEquals( ExpressionType.Throw ),
-                            (@switch.Cases.ElementAtOrDefault( 1 )?.TestValues
-                                ?? new ReadOnlyCollection<Expression>( Array.Empty<Expression>() ))
-                            .TestSequence( (( SwitchCase )(( ConstantExpression )parameters[2]).Value!).TestValues ),
-                            @switch.Cases.ElementAtOrDefault( 2 )
-                                .TestRefEquals( ( SwitchCase )(( ConstantExpression )parameters[3]).Value! ),
-                            (@switch.Cases.ElementAtOrDefault( 1 )?.Body).TestType()
-                            .AssignableTo<UnaryExpression>(
-                                caseThrow => Assertion.All(
-                                    "caseThrow",
-                                    caseThrow.Type.TestEquals( typeof( string ) ),
-                                    caseThrow.Operand.TestRefEquals( exception ) ) ) ) ) )
+                            @switch.Cases.TestCount( count => count.TestEquals( 3 ) )
+                                .Then(
+                                    cases =>
+                                    {
+                                        var first = cases[0];
+                                        var second = cases[1];
+                                        var third = cases[2];
+                                        return Assertion.All(
+                                            "cases",
+                                            first.TestRefEquals( ( SwitchCase )(( ConstantExpression )parameters[1]).Value! ),
+                                            second.Body.NodeType.TestEquals( ExpressionType.Throw ),
+                                            second.TestValues.TestSequence(
+                                                (( SwitchCase )(( ConstantExpression )parameters[2]).Value!).TestValues ),
+                                            third.TestRefEquals( ( SwitchCase )(( ConstantExpression )parameters[3]).Value! ),
+                                            second.Body.TestType()
+                                                .AssignableTo<UnaryExpression>(
+                                                    caseThrow => Assertion.All(
+                                                        "caseThrow",
+                                                        caseThrow.Type.TestEquals( typeof( string ) ),
+                                                        caseThrow.Operand.TestRefEquals( exception ) ) ) );
+                                    } ) ) ) )
             .Go();
     }
 

@@ -1,5 +1,4 @@
-﻿using System.Linq;
-using System.Text;
+﻿using System.Text;
 using LfrlAnvil.TestExtensions.NSubstitute;
 using LfrlAnvil.Validation.Extensions;
 
@@ -42,9 +41,11 @@ public class FormattedValidatorTests : ValidatorTestsBase
         var result = sut.Validate( Fixture.Create<int>() );
 
         Assertion.All(
-                result.Count.TestEquals( 1 ),
-                result.FirstOrDefault().Result.TestEquals( formatterResult.ToString() ),
-                AssertValidationResult( result.FirstOrDefault().Messages, ValidationMessage.Create( failure ) ),
+                result.TestCount( count => count.TestEquals( 1 ) )
+                    .Then(
+                        failures => Assertion.All(
+                            failures[0].Result.TestEquals( formatterResult.ToString() ),
+                            AssertValidationResult( failures[0].Messages, ValidationMessage.Create( failure ) ) ) ),
                 formatter.TestReceivedCalls( f => f.Format( null, Arg.Any<Chain<ValidationMessage<string>>>() ), count: 1 ) )
             .Go();
     }

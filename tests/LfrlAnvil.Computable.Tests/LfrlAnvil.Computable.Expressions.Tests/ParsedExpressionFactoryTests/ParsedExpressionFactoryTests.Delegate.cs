@@ -595,11 +595,19 @@ public partial class ParsedExpressionFactoryTests
         var @delegate = expression.Compile();
         var result = @delegate.Invoke();
 
-        Assertion.All(
-                result.Length.TestEquals( 3 ),
-                (result.FirstOrDefault() ?? [ ]).TestSequence( [ "a" ] ),
-                (result.ElementAtOrDefault( 1 ) ?? [ ]).TestEmpty(),
-                (result.ElementAtOrDefault( 2 ) ?? [ ]).TestSequence( [ "b", "c" ] ) )
+        result.TestCount( count => count.TestEquals( 3 ) )
+            .Then(
+                values =>
+                {
+                    var first = values[0];
+                    var second = values[1];
+                    var third = values[2];
+                    return Assertion.All(
+                        "values",
+                        first.TestSequence( [ "a" ] ),
+                        second.TestEmpty(),
+                        third.TestSequence( [ "b", "c" ] ) );
+                } )
             .Go();
     }
 

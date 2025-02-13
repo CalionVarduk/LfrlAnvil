@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.Linq;
 using LfrlAnvil.TestExtensions.Attributes;
 using LfrlAnvil.TestExtensions.NSubstitute;
 
@@ -68,7 +67,7 @@ public abstract class GenericValidTypeCastTests<TSource, TDestination> : Generic
 
         Assertion.All(
                 validDelegate.CallAt( 0 ).Exists.TestTrue(),
-                validDelegate.CallAt( 0 ).Arguments.FirstOrDefault().TestEquals( value ),
+                validDelegate.CallAt( 0 ).Arguments.TestSequence( [ value ] ),
                 result.IsValid.TestTrue(),
                 result.Result.TestEquals( returnedValue ) )
             .Go();
@@ -90,7 +89,7 @@ public abstract class GenericValidTypeCastTests<TSource, TDestination> : Generic
 
         Assertion.All(
                 validDelegate.CallAt( 0 ).Exists.TestTrue(),
-                validDelegate.CallAt( 0 ).Arguments.FirstOrDefault().TestEquals( value ),
+                validDelegate.CallAt( 0 ).Arguments.TestSequence( [ value ] ),
                 invalidDelegate.CallCount().TestEquals( 0 ),
                 result.IsValid.TestTrue(),
                 result.Result.TestEquals( returnedValue ) )
@@ -111,7 +110,7 @@ public abstract class GenericValidTypeCastTests<TSource, TDestination> : Generic
 
         Assertion.All(
                 validDelegate.CallAt( 0 ).Exists.TestTrue(),
-                validDelegate.CallAt( 0 ).Arguments.FirstOrDefault().TestEquals( value ),
+                validDelegate.CallAt( 0 ).Arguments.TestSequence( [ value ] ),
                 invalidDelegate.CallCount().TestEquals( 0 ),
                 result.TestEquals( returnedValue ) )
             .Go();
@@ -130,7 +129,7 @@ public abstract class GenericValidTypeCastTests<TSource, TDestination> : Generic
 
         Assertion.All(
                 validDelegate.CallAt( 0 ).Exists.TestTrue(),
-                validDelegate.CallAt( 0 ).Arguments.FirstOrDefault().TestEquals( value ),
+                validDelegate.CallAt( 0 ).Arguments.TestSequence( [ value ] ),
                 invalidDelegate.CallCount().TestEquals( 0 ) )
             .Go();
     }
@@ -148,7 +147,7 @@ public abstract class GenericValidTypeCastTests<TSource, TDestination> : Generic
 
         Assertion.All(
                 validDelegate.CallAt( 0 ).Exists.TestTrue(),
-                validDelegate.CallAt( 0 ).Arguments.FirstOrDefault().TestEquals( value ),
+                validDelegate.CallAt( 0 ).Arguments.TestSequence( [ value ] ),
                 result.Value.TestEquals( returnedValue ) )
             .Go();
     }
@@ -165,7 +164,7 @@ public abstract class GenericValidTypeCastTests<TSource, TDestination> : Generic
 
         Assertion.All(
                 validDelegate.CallAt( 0 ).Exists.TestTrue(),
-                validDelegate.CallAt( 0 ).Arguments.FirstOrDefault().TestEquals( value ) )
+                validDelegate.CallAt( 0 ).Arguments.TestSequence( [ value ] ) )
             .Go();
     }
 
@@ -182,7 +181,7 @@ public abstract class GenericValidTypeCastTests<TSource, TDestination> : Generic
 
         Assertion.All(
                 validDelegate.CallAt( 0 ).Exists.TestTrue(),
-                validDelegate.CallAt( 0 ).Arguments.FirstOrDefault().TestEquals( value ),
+                validDelegate.CallAt( 0 ).Arguments.TestSequence( [ value ] ),
                 result.TestEquals( returnedValue ) )
             .Go();
     }
@@ -200,7 +199,7 @@ public abstract class GenericValidTypeCastTests<TSource, TDestination> : Generic
 
         Assertion.All(
                 validDelegate.CallAt( 0 ).Exists.TestTrue(),
-                validDelegate.CallAt( 0 ).Arguments.FirstOrDefault().TestEquals( value ),
+                validDelegate.CallAt( 0 ).Arguments.TestSequence( [ value ] ),
                 result.TestEquals( returnedValue ) )
             .Go();
     }

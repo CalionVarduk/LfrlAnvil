@@ -5,16 +5,16 @@ using Xunit.Sdk;
 
 namespace LfrlAnvil.TestExtensions.Assertions;
 
-internal sealed class SequenceAssertion<T> : SubjectAssertion<IEnumerable<T>>
+internal sealed class SequenceAssertion<T> : SubjectAssertion<IReadOnlyList<T>>
 {
     internal SequenceAssertion(
         string context,
-        IEnumerable<T> subject,
-        IReadOnlyList<Func<T, int, Assertion>> elementAssertions,
+        IReadOnlyList<T> subject,
+        IEnumerable<Func<T, int, Assertion>> elementAssertions,
         SequenceComparisonType type)
         : base( context, subject )
     {
-        ElementAssertions = elementAssertions;
+        ElementAssertions = elementAssertions as IReadOnlyList<Func<T, int, Assertion>> ?? elementAssertions.ToArray();
         Type = type;
     }
 

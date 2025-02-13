@@ -699,15 +699,14 @@ public class DependencyScopeTests : DependencyTestsBase
                         .Exact<OwnedDependenciesDisposalAggregateException>(
                             aggregateException => Assertion.All(
                                 aggregateException.InnerExceptions.Count.TestEquals( 3 ),
-                                (aggregateException.InnerExceptions.OfType<OwnedDependencyDisposalException>()
-                                    .FirstOrDefault( e => e.Scope == container.RootScope )
-                                    ?.InnerException).TestRefEquals( exception ),
-                                (aggregateException.InnerExceptions.OfType<OwnedDependencyDisposalException>()
-                                    .FirstOrDefault( e => e.Scope == childScope )
-                                    ?.InnerException).TestRefEquals( exception ),
-                                (aggregateException.InnerExceptions.OfType<OwnedDependencyDisposalException>()
-                                    .FirstOrDefault( e => e.Scope == grandchildScope )
-                                    ?.InnerException).TestRefEquals( exception ) ) ) ) )
+                                aggregateException.InnerExceptions.OfType<OwnedDependencyDisposalException>()
+                                    .TestAll(
+                                        (e, _) => Assertion.All(
+                                            e.InnerException.TestRefEquals( exception ),
+                                            Assertion.Any(
+                                                e.Scope.TestRefEquals( container.RootScope ),
+                                                e.Scope.TestRefEquals( childScope ),
+                                                e.Scope.TestRefEquals( grandchildScope ) ) ) ) ) ) ) )
             .Go();
     }
 
@@ -759,15 +758,14 @@ public class DependencyScopeTests : DependencyTestsBase
                         .Exact<OwnedDependenciesDisposalAggregateException>(
                             aggregateException => Assertion.All(
                                 aggregateException.InnerExceptions.Count.TestEquals( 3 ),
-                                (aggregateException.InnerExceptions.OfType<OwnedDependencyDisposalException>()
-                                    .FirstOrDefault( e => e.Scope == sut )
-                                    ?.InnerException).TestRefEquals( exception ),
-                                (aggregateException.InnerExceptions.OfType<OwnedDependencyDisposalException>()
-                                    .FirstOrDefault( e => e.Scope == childScope )
-                                    ?.InnerException).TestRefEquals( exception ),
-                                (aggregateException.InnerExceptions.OfType<OwnedDependencyDisposalException>()
-                                    .FirstOrDefault( e => e.Scope == grandchildScope )
-                                    ?.InnerException).TestRefEquals( exception ) ) ) ) )
+                                aggregateException.InnerExceptions.OfType<OwnedDependencyDisposalException>()
+                                    .TestAll(
+                                        (e, _) => Assertion.All(
+                                            e.InnerException.TestRefEquals( exception ),
+                                            Assertion.Any(
+                                                e.Scope.TestRefEquals( sut ),
+                                                e.Scope.TestRefEquals( childScope ),
+                                                e.Scope.TestRefEquals( grandchildScope ) ) ) ) ) ) ) )
             .Go();
     }
 

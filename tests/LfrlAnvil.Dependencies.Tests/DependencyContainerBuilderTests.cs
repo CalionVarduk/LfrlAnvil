@@ -735,14 +735,13 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
                         c.Type.TestNull(),
                         c.InvocationOptions.OnCreatedCallback.TestNull(),
                         c.InvocationOptions.MemberResolutions.TestEmpty(),
-                        c.InvocationOptions.ParameterResolutions.Count.TestEquals( 2 ),
-                        c.InvocationOptions.ParameterResolutions.ElementAtOrDefault( 0 )
-                            .TestEquals( InjectableDependencyResolution<ParameterInfo>.FromFactory( predicate1, factory ) ),
-                        c.InvocationOptions.ParameterResolutions.ElementAtOrDefault( 1 )
-                            .TestEquals(
-                                InjectableDependencyResolution<ParameterInfo>.FromImplementorKey(
-                                    predicate2,
-                                    new DependencyKey<int>( typeof( IFoo ), 1 ) ) ) ) ) )
+                        c.InvocationOptions.ParameterResolutions.TestSequence(
+                        [
+                            InjectableDependencyResolution<ParameterInfo>.FromFactory( predicate1, factory ),
+                            InjectableDependencyResolution<ParameterInfo>.FromImplementorKey(
+                                predicate2,
+                                new DependencyKey<int>( typeof( IFoo ), 1 ) )
+                        ] ) ) ) )
             .Go();
     }
 
@@ -768,14 +767,13 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
                         c.Type.TestNull(),
                         c.InvocationOptions.OnCreatedCallback.TestNull(),
                         c.InvocationOptions.ParameterResolutions.TestEmpty(),
-                        c.InvocationOptions.MemberResolutions.Count.TestEquals( 2 ),
-                        c.InvocationOptions.MemberResolutions.ElementAtOrDefault( 0 )
-                            .TestEquals( InjectableDependencyResolution<MemberInfo>.FromFactory( predicate1, factory ) ),
-                        c.InvocationOptions.MemberResolutions.ElementAtOrDefault( 1 )
-                            .TestEquals(
-                                InjectableDependencyResolution<MemberInfo>.FromImplementorKey(
-                                    predicate2,
-                                    new DependencyKey<int>( typeof( IFoo ), 1 ) ) ) ) ) )
+                        c.InvocationOptions.MemberResolutions.TestSequence(
+                        [
+                            InjectableDependencyResolution<MemberInfo>.FromFactory( predicate1, factory ),
+                            InjectableDependencyResolution<MemberInfo>.FromImplementorKey(
+                                predicate2,
+                                new DependencyKey<int>( typeof( IFoo ), 1 ) )
+                        ] ) ) ) )
             .Go();
     }
 
@@ -1025,10 +1023,12 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
         Assertion.All(
                 result.IsOk.TestFalse(),
                 result.Container.TestNull(),
-                result.Messages.Count.TestEquals( 1 ),
-                result.Messages.FirstOrDefault().ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IFoo ) ) ) ),
-                result.Messages.FirstOrDefault().Warnings.TestEmpty(),
-                result.Messages.FirstOrDefault().Errors.Count.TestEquals( 1 ) )
+                result.Messages.TestCount( count => count.TestEquals( 1 ) )
+                    .Then(
+                        messages => Assertion.All(
+                            messages[0].ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IFoo ) ) ) ),
+                            messages[0].Warnings.TestEmpty(),
+                            messages[0].Errors.Count.TestEquals( 1 ) ) ) )
             .Go();
     }
 
@@ -1043,10 +1043,12 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
         Assertion.All(
                 result.IsOk.TestFalse(),
                 result.Container.TestNull(),
-                result.Messages.Count.TestEquals( 1 ),
-                result.Messages.FirstOrDefault().ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IFoo ) ) ) ),
-                result.Messages.FirstOrDefault().Warnings.TestEmpty(),
-                result.Messages.FirstOrDefault().Errors.Count.TestEquals( 1 ) )
+                result.Messages.TestCount( count => count.TestEquals( 1 ) )
+                    .Then(
+                        messages => Assertion.All(
+                            messages[0].ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IFoo ) ) ) ),
+                            messages[0].Warnings.TestEmpty(),
+                            messages[0].Errors.Count.TestEquals( 1 ) ) ) )
             .Go();
     }
 
@@ -1062,10 +1064,12 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
         Assertion.All(
                 result.IsOk.TestFalse(),
                 result.Container.TestNull(),
-                result.Messages.Count.TestEquals( 1 ),
-                result.Messages.FirstOrDefault().ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IFoo ) ) ) ),
-                result.Messages.FirstOrDefault().Warnings.TestEmpty(),
-                result.Messages.FirstOrDefault().Errors.Count.TestEquals( 1 ) )
+                result.Messages.TestCount( count => count.TestEquals( 1 ) )
+                    .Then(
+                        messages => Assertion.All(
+                            messages[0].ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IFoo ) ) ) ),
+                            messages[0].Warnings.TestEmpty(),
+                            messages[0].Errors.Count.TestEquals( 1 ) ) ) )
             .Go();
     }
 
@@ -1082,11 +1086,12 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
         Assertion.All(
                 result.IsOk.TestFalse(),
                 result.Container.TestNull(),
-                result.Messages.Count.TestEquals( 1 ),
-                result.Messages.FirstOrDefault()
-                    .ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IWithText ) ) ) ),
-                result.Messages.FirstOrDefault().Warnings.TestEmpty(),
-                result.Messages.FirstOrDefault().Errors.Count.TestEquals( 1 ) )
+                result.Messages.TestCount( count => count.TestEquals( 1 ) )
+                    .Then(
+                        messages => Assertion.All(
+                            messages[0].ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IWithText ) ) ) ),
+                            messages[0].Warnings.TestEmpty(),
+                            messages[0].Errors.Count.TestEquals( 1 ) ) ) )
             .Go();
     }
 
@@ -1103,11 +1108,12 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
         Assertion.All(
                 result.IsOk.TestFalse(),
                 result.Container.TestNull(),
-                result.Messages.Count.TestEquals( 1 ),
-                result.Messages.FirstOrDefault()
-                    .ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IWithText ) ) ) ),
-                result.Messages.FirstOrDefault().Warnings.TestEmpty(),
-                result.Messages.FirstOrDefault().Errors.Count.TestEquals( 1 ) )
+                result.Messages.TestCount( count => count.TestEquals( 1 ) )
+                    .Then(
+                        messages => Assertion.All(
+                            messages[0].ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IWithText ) ) ) ),
+                            messages[0].Warnings.TestEmpty(),
+                            messages[0].Errors.Count.TestEquals( 1 ) ) ) )
             .Go();
     }
 
@@ -1130,11 +1136,12 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
         Assertion.All(
                 result.IsOk.TestTrue(),
                 result.Container.TestNotNull(),
-                result.Messages.Count.TestEquals( 1 ),
-                result.Messages.FirstOrDefault()
-                    .ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IWithText ) ) ) ),
-                result.Messages.FirstOrDefault().Warnings.Count.TestEquals( 2 ),
-                result.Messages.FirstOrDefault().Errors.TestEmpty() )
+                result.Messages.TestCount( count => count.TestEquals( 1 ) )
+                    .Then(
+                        messages => Assertion.All(
+                            messages[0].ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IWithText ) ) ) ),
+                            messages[0].Warnings.Count.TestEquals( 2 ),
+                            messages[0].Errors.TestEmpty() ) ) )
             .Go();
     }
 
@@ -1154,11 +1161,12 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
         Assertion.All(
                 result.IsOk.TestFalse(),
                 result.Container.TestNull(),
-                result.Messages.Count.TestEquals( 1 ),
-                result.Messages.FirstOrDefault()
-                    .ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IWithText ) ) ) ),
-                result.Messages.FirstOrDefault().Warnings.TestEmpty(),
-                result.Messages.FirstOrDefault().Errors.Count.TestEquals( 2 ) )
+                result.Messages.TestCount( count => count.TestEquals( 1 ) )
+                    .Then(
+                        messages => Assertion.All(
+                            messages[0].ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IWithText ) ) ) ),
+                            messages[0].Warnings.TestEmpty(),
+                            messages[0].Errors.Count.TestEquals( 2 ) ) ) )
             .Go();
     }
 
@@ -1175,10 +1183,12 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
         Assertion.All(
                 result.IsOk.TestFalse(),
                 result.Container.TestNull(),
-                result.Messages.Count.TestEquals( 1 ),
-                result.Messages.FirstOrDefault().ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IFoo ) ) ) ),
-                result.Messages.FirstOrDefault().Warnings.TestEmpty(),
-                result.Messages.FirstOrDefault().Errors.Count.TestEquals( 1 ) )
+                result.Messages.TestCount( count => count.TestEquals( 1 ) )
+                    .Then(
+                        messages => Assertion.All(
+                            messages[0].ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IFoo ) ) ) ),
+                            messages[0].Warnings.TestEmpty(),
+                            messages[0].Errors.Count.TestEquals( 1 ) ) ) )
             .Go();
     }
 
@@ -1195,10 +1205,12 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
         Assertion.All(
                 result.IsOk.TestFalse(),
                 result.Container.TestNull(),
-                result.Messages.Count.TestEquals( 1 ),
-                result.Messages.FirstOrDefault().ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IFoo ) ) ) ),
-                result.Messages.FirstOrDefault().Warnings.TestEmpty(),
-                result.Messages.FirstOrDefault().Errors.Count.TestEquals( 1 ) )
+                result.Messages.TestCount( count => count.TestEquals( 1 ) )
+                    .Then(
+                        messages => Assertion.All(
+                            messages[0].ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IFoo ) ) ) ),
+                            messages[0].Warnings.TestEmpty(),
+                            messages[0].Errors.Count.TestEquals( 1 ) ) ) )
             .Go();
     }
 
@@ -1213,10 +1225,12 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
         Assertion.All(
                 result.IsOk.TestFalse(),
                 result.Container.TestNull(),
-                result.Messages.Count.TestEquals( 1 ),
-                result.Messages.FirstOrDefault().ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IFoo ) ) ) ),
-                result.Messages.FirstOrDefault().Warnings.TestEmpty(),
-                result.Messages.FirstOrDefault().Errors.Count.TestEquals( 1 ) )
+                result.Messages.TestCount( count => count.TestEquals( 1 ) )
+                    .Then(
+                        messages => Assertion.All(
+                            messages[0].ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IFoo ) ) ) ),
+                            messages[0].Warnings.TestEmpty(),
+                            messages[0].Errors.Count.TestEquals( 1 ) ) ) )
             .Go();
     }
 
@@ -1231,10 +1245,12 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
         Assertion.All(
                 result.IsOk.TestFalse(),
                 result.Container.TestNull(),
-                result.Messages.Count.TestEquals( 1 ),
-                result.Messages.FirstOrDefault().ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IFoo ) ) ) ),
-                result.Messages.FirstOrDefault().Warnings.TestEmpty(),
-                result.Messages.FirstOrDefault().Errors.Count.TestEquals( 1 ) )
+                result.Messages.TestCount( count => count.TestEquals( 1 ) )
+                    .Then(
+                        messages => Assertion.All(
+                            messages[0].ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IFoo ) ) ) ),
+                            messages[0].Warnings.TestEmpty(),
+                            messages[0].Errors.Count.TestEquals( 1 ) ) ) )
             .Go();
     }
 
@@ -1249,11 +1265,12 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
         Assertion.All(
                 result.IsOk.TestFalse(),
                 result.Container.TestNull(),
-                result.Messages.Count.TestEquals( 1 ),
-                result.Messages.FirstOrDefault()
-                    .ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( ChainableFoo ) ) ) ),
-                result.Messages.FirstOrDefault().Warnings.TestEmpty(),
-                result.Messages.FirstOrDefault().Errors.Count.TestEquals( 1 ) )
+                result.Messages.TestCount( count => count.TestEquals( 1 ) )
+                    .Then(
+                        messages => Assertion.All(
+                            messages[0].ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( ChainableFoo ) ) ) ),
+                            messages[0].Warnings.TestEmpty(),
+                            messages[0].Errors.Count.TestEquals( 1 ) ) ) )
             .Go();
     }
 
@@ -1268,10 +1285,12 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
         Assertion.All(
                 result.IsOk.TestFalse(),
                 result.Container.TestNull(),
-                result.Messages.Count.TestEquals( 1 ),
-                result.Messages.FirstOrDefault().ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IFoo ) ) ) ),
-                result.Messages.FirstOrDefault().Warnings.TestEmpty(),
-                result.Messages.FirstOrDefault().Errors.Count.TestEquals( 1 ) )
+                result.Messages.TestCount( count => count.TestEquals( 1 ) )
+                    .Then(
+                        messages => Assertion.All(
+                            messages[0].ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IFoo ) ) ) ),
+                            messages[0].Warnings.TestEmpty(),
+                            messages[0].Errors.Count.TestEquals( 1 ) ) ) )
             .Go();
     }
 
@@ -1288,10 +1307,12 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
         Assertion.All(
                 result.IsOk.TestFalse(),
                 result.Container.TestNull(),
-                result.Messages.Count.TestEquals( 1 ),
-                result.Messages.FirstOrDefault().ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( dependencyType ) ) ),
-                result.Messages.FirstOrDefault().Warnings.TestEmpty(),
-                result.Messages.FirstOrDefault().Errors.Count.TestEquals( 1 ) )
+                result.Messages.TestCount( count => count.TestEquals( 1 ) )
+                    .Then(
+                        messages => Assertion.All(
+                            messages[0].ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( dependencyType ) ) ),
+                            messages[0].Warnings.TestEmpty(),
+                            messages[0].Errors.Count.TestEquals( 1 ) ) ) )
             .Go();
     }
 
@@ -1308,10 +1329,12 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
         Assertion.All(
                 result.IsOk.TestFalse(),
                 result.Container.TestNull(),
-                result.Messages.Count.TestEquals( 1 ),
-                result.Messages.FirstOrDefault().ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IFoo ) ) ) ),
-                result.Messages.FirstOrDefault().Warnings.TestEmpty(),
-                result.Messages.FirstOrDefault().Errors.Count.TestEquals( 1 ) )
+                result.Messages.TestCount( count => count.TestEquals( 1 ) )
+                    .Then(
+                        messages => Assertion.All(
+                            messages[0].ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IFoo ) ) ) ),
+                            messages[0].Warnings.TestEmpty(),
+                            messages[0].Errors.Count.TestEquals( 1 ) ) ) )
             .Go();
     }
 
@@ -1330,11 +1353,13 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
         Assertion.All(
                 result.IsOk.TestFalse(),
                 result.Container.TestNull(),
-                result.Messages.Count.TestEquals( 1 ),
-                result.Messages.FirstOrDefault()
-                    .ImplementorKey.TestEquals( ImplementorKey.CreateShared( new DependencyKey( typeof( Implementor ) ) ) ),
-                result.Messages.FirstOrDefault().Warnings.TestEmpty(),
-                result.Messages.FirstOrDefault().Errors.Count.TestEquals( 1 ) )
+                result.Messages.TestCount( count => count.TestEquals( 1 ) )
+                    .Then(
+                        messages => Assertion.All(
+                            messages[0]
+                                .ImplementorKey.TestEquals( ImplementorKey.CreateShared( new DependencyKey( typeof( Implementor ) ) ) ),
+                            messages[0].Warnings.TestEmpty(),
+                            messages[0].Errors.Count.TestEquals( 1 ) ) ) )
             .Go();
     }
 
@@ -1351,10 +1376,12 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
         Assertion.All(
                 result.IsOk.TestFalse(),
                 result.Container.TestNull(),
-                result.Messages.Count.TestEquals( 1 ),
-                result.Messages.FirstOrDefault().ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IFoo ) ) ) ),
-                result.Messages.FirstOrDefault().Warnings.TestEmpty(),
-                result.Messages.FirstOrDefault().Errors.Count.TestEquals( 1 ) )
+                result.Messages.TestCount( count => count.TestEquals( 1 ) )
+                    .Then(
+                        messages => Assertion.All(
+                            messages[0].ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IFoo ) ) ) ),
+                            messages[0].Warnings.TestEmpty(),
+                            messages[0].Errors.Count.TestEquals( 1 ) ) ) )
             .Go();
     }
 
@@ -1375,10 +1402,12 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
         Assertion.All(
                 result.IsOk.TestFalse(),
                 result.Container.TestNull(),
-                result.Messages.Count.TestEquals( 1 ),
-                result.Messages.FirstOrDefault().ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IFoo ) ) ) ),
-                result.Messages.FirstOrDefault().Warnings.TestEmpty(),
-                result.Messages.FirstOrDefault().Errors.Count.TestEquals( 1 ) )
+                result.Messages.TestCount( count => count.TestEquals( 1 ) )
+                    .Then(
+                        messages => Assertion.All(
+                            messages[0].ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IFoo ) ) ) ),
+                            messages[0].Warnings.TestEmpty(),
+                            messages[0].Errors.Count.TestEquals( 1 ) ) ) )
             .Go();
     }
 
@@ -1399,10 +1428,12 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
         Assertion.All(
                 result.IsOk.TestFalse(),
                 result.Container.TestNull(),
-                result.Messages.Count.TestEquals( 1 ),
-                result.Messages.FirstOrDefault().ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IFoo ) ) ) ),
-                result.Messages.FirstOrDefault().Warnings.TestEmpty(),
-                result.Messages.FirstOrDefault().Errors.Count.TestEquals( 1 ) )
+                result.Messages.TestCount( count => count.TestEquals( 1 ) )
+                    .Then(
+                        messages => Assertion.All(
+                            messages[0].ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IFoo ) ) ) ),
+                            messages[0].Warnings.TestEmpty(),
+                            messages[0].Errors.Count.TestEquals( 1 ) ) ) )
             .Go();
     }
 
@@ -1423,10 +1454,12 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
         Assertion.All(
                 result.IsOk.TestFalse(),
                 result.Container.TestNull(),
-                result.Messages.Count.TestEquals( 1 ),
-                result.Messages.FirstOrDefault().ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IFoo ) ) ) ),
-                result.Messages.FirstOrDefault().Warnings.TestEmpty(),
-                result.Messages.FirstOrDefault().Errors.Count.TestEquals( 1 ) )
+                result.Messages.TestCount( count => count.TestEquals( 1 ) )
+                    .Then(
+                        messages => Assertion.All(
+                            messages[0].ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IFoo ) ) ) ),
+                            messages[0].Warnings.TestEmpty(),
+                            messages[0].Errors.Count.TestEquals( 1 ) ) ) )
             .Go();
     }
 
@@ -1443,11 +1476,12 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
         Assertion.All(
                 result.IsOk.TestFalse(),
                 result.Container.TestNull(),
-                result.Messages.Count.TestEquals( 1 ),
-                result.Messages.FirstOrDefault()
-                    .ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IWithText ) ) ) ),
-                result.Messages.FirstOrDefault().Warnings.TestEmpty(),
-                result.Messages.FirstOrDefault().Errors.Count.TestEquals( 1 ) )
+                result.Messages.TestCount( count => count.TestEquals( 1 ) )
+                    .Then(
+                        messages => Assertion.All(
+                            messages[0].ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IWithText ) ) ) ),
+                            messages[0].Warnings.TestEmpty(),
+                            messages[0].Errors.Count.TestEquals( 1 ) ) ) )
             .Go();
     }
 
@@ -1478,14 +1512,21 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
         Assertion.All(
                 result.IsOk.TestFalse(),
                 result.Container.TestNull(),
-                result.Messages.Count.TestEquals( 2 ),
-                result.Messages.FirstOrDefault().ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IFoo ) ) ) ),
-                result.Messages.FirstOrDefault().Warnings.TestEmpty(),
-                result.Messages.FirstOrDefault().Errors.Count.TestEquals( 2 ),
-                result.Messages.LastOrDefault()
-                    .ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IWithText ) ) ) ),
-                result.Messages.LastOrDefault().Warnings.TestEmpty(),
-                result.Messages.LastOrDefault().Errors.Count.TestEquals( 1 ) )
+                result.Messages.TestCount( count => count.TestEquals( 2 ) )
+                    .Then(
+                        messages =>
+                        {
+                            var first = messages[0];
+                            var second = messages[1];
+                            return Assertion.All(
+                                "messages",
+                                first.ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IFoo ) ) ) ),
+                                first.Warnings.TestEmpty(),
+                                first.Errors.Count.TestEquals( 2 ),
+                                second.ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IWithText ) ) ) ),
+                                second.Warnings.TestEmpty(),
+                                second.Errors.Count.TestEquals( 1 ) );
+                        } ) )
             .Go();
     }
 
@@ -1542,11 +1583,12 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
         Assertion.All(
                 result.IsOk.TestTrue(),
                 result.Container.TestNotNull(),
-                result.Messages.Count.TestEquals( 1 ),
-                result.Messages.FirstOrDefault()
-                    .ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IWithText ) ) ) ),
-                result.Messages.FirstOrDefault().Warnings.Count.TestEquals( 1 ),
-                result.Messages.FirstOrDefault().Errors.TestEmpty() )
+                result.Messages.TestCount( count => count.TestEquals( 1 ) )
+                    .Then(
+                        messages => Assertion.All(
+                            messages[0].ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IWithText ) ) ) ),
+                            messages[0].Warnings.Count.TestEquals( 1 ),
+                            messages[0].Errors.TestEmpty() ) ) )
             .Go();
     }
 
@@ -1573,11 +1615,12 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
         Assertion.All(
                 result.IsOk.TestFalse(),
                 result.Container.TestNull(),
-                result.Messages.Count.TestEquals( 1 ),
-                result.Messages.FirstOrDefault()
-                    .ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IWithText ) ) ) ),
-                result.Messages.FirstOrDefault().Warnings.TestEmpty(),
-                result.Messages.FirstOrDefault().Errors.Count.TestEquals( 1 ) )
+                result.Messages.TestCount( count => count.TestEquals( 1 ) )
+                    .Then(
+                        messages => Assertion.All(
+                            messages[0].ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IWithText ) ) ) ),
+                            messages[0].Warnings.TestEmpty(),
+                            messages[0].Errors.Count.TestEquals( 1 ) ) ) )
             .Go();
     }
 
@@ -1595,11 +1638,12 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
         Assertion.All(
                 result.IsOk.TestFalse(),
                 result.Container.TestNull(),
-                result.Messages.Count.TestEquals( 1 ),
-                result.Messages.FirstOrDefault()
-                    .ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IFoo ) ), 0 ) ),
-                result.Messages.FirstOrDefault().Warnings.TestEmpty(),
-                result.Messages.FirstOrDefault().Errors.Count.TestEquals( 2 ) )
+                result.Messages.TestCount( count => count.TestEquals( 1 ) )
+                    .Then(
+                        messages => Assertion.All(
+                            messages[0].ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IFoo ) ), 0 ) ),
+                            messages[0].Warnings.TestEmpty(),
+                            messages[0].Errors.Count.TestEquals( 2 ) ) ) )
             .Go();
     }
 
@@ -1616,11 +1660,12 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
         Assertion.All(
                 result.IsOk.TestFalse(),
                 result.Container.TestNull(),
-                result.Messages.Count.TestEquals( 1 ),
-                result.Messages.FirstOrDefault()
-                    .ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IFoo ) ), 1 ) ),
-                result.Messages.FirstOrDefault().Warnings.TestEmpty(),
-                result.Messages.FirstOrDefault().Errors.Count.TestEquals( 1 ) )
+                result.Messages.TestCount( count => count.TestEquals( 1 ) )
+                    .Then(
+                        messages => Assertion.All(
+                            messages[0].ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IFoo ) ), 1 ) ),
+                            messages[0].Warnings.TestEmpty(),
+                            messages[0].Errors.Count.TestEquals( 1 ) ) ) )
             .Go();
     }
 
@@ -1647,10 +1692,12 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
         Assertion.All(
                 result.IsOk.TestTrue(),
                 result.Container.TestNotNull(),
-                result.Messages.Count.TestEquals( 1 ),
-                result.Messages.FirstOrDefault().ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IFoo ) ) ) ),
-                result.Messages.FirstOrDefault().Warnings.Count.TestEquals( 1 ),
-                result.Messages.FirstOrDefault().Errors.TestEmpty() )
+                result.Messages.TestCount( count => count.TestEquals( 1 ) )
+                    .Then(
+                        messages => Assertion.All(
+                            messages[0].ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IFoo ) ) ) ),
+                            messages[0].Warnings.Count.TestEquals( 1 ),
+                            messages[0].Errors.TestEmpty() ) ) )
             .Go();
     }
 
@@ -1677,10 +1724,12 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
         Assertion.All(
                 result.IsOk.TestFalse(),
                 result.Container.TestNull(),
-                result.Messages.Count.TestEquals( 1 ),
-                result.Messages.FirstOrDefault().ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IFoo ) ) ) ),
-                result.Messages.FirstOrDefault().Warnings.TestEmpty(),
-                result.Messages.FirstOrDefault().Errors.Count.TestEquals( 1 ) )
+                result.Messages.TestCount( count => count.TestEquals( 1 ) )
+                    .Then(
+                        messages => Assertion.All(
+                            messages[0].ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IFoo ) ) ) ),
+                            messages[0].Warnings.TestEmpty(),
+                            messages[0].Errors.Count.TestEquals( 1 ) ) ) )
             .Go();
     }
 
@@ -1697,19 +1746,25 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
         Assertion.All(
                 result.IsOk.TestFalse(),
                 result.Container.TestNull(),
-                result.Messages.Count.TestEquals( 3 ),
-                result.Messages.FirstOrDefault()
-                    .ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IWithText ) ) ) ),
-                result.Messages.FirstOrDefault().Warnings.TestEmpty(),
-                result.Messages.FirstOrDefault().Errors.Count.TestEquals( 3 ),
-                result.Messages.ElementAtOrDefault( 1 )
-                    .ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IWithText ) ), 0 ) ),
-                result.Messages.ElementAtOrDefault( 1 ).Warnings.TestEmpty(),
-                result.Messages.ElementAtOrDefault( 1 ).Errors.Count.TestEquals( 2 ),
-                result.Messages.LastOrDefault()
-                    .ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IWithText ) ), 1 ) ),
-                result.Messages.LastOrDefault().Warnings.TestEmpty(),
-                result.Messages.LastOrDefault().Errors.Count.TestEquals( 1 ) )
+                result.Messages.TestCount( count => count.TestEquals( 3 ) )
+                    .Then(
+                        messages =>
+                        {
+                            var first = messages[0];
+                            var second = messages[1];
+                            var third = messages[2];
+                            return Assertion.All(
+                                "messages",
+                                first.ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IWithText ) ) ) ),
+                                first.Warnings.TestEmpty(),
+                                first.Errors.Count.TestEquals( 3 ),
+                                second.ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IWithText ) ), 0 ) ),
+                                second.Warnings.TestEmpty(),
+                                second.Errors.Count.TestEquals( 2 ),
+                                third.ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IWithText ) ), 1 ) ),
+                                third.Warnings.TestEmpty(),
+                                third.Errors.Count.TestEquals( 1 ) );
+                        } ) )
             .Go();
     }
 
@@ -1728,14 +1783,21 @@ public class DependencyContainerBuilderTests : DependencyTestsBase
         Assertion.All(
                 result.IsOk.TestFalse(),
                 result.Container.TestNull(),
-                result.Messages.Count.TestEquals( 2 ),
-                result.Messages.FirstOrDefault().ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IFoo ) ) ) ),
-                result.Messages.FirstOrDefault().Warnings.TestEmpty(),
-                result.Messages.FirstOrDefault().Errors.Count.TestEquals( 1 ),
-                result.Messages.LastOrDefault()
-                    .ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IWithText ) ), 0 ) ),
-                result.Messages.LastOrDefault().Warnings.TestEmpty(),
-                result.Messages.LastOrDefault().Errors.Count.TestEquals( 1 ) )
+                result.Messages.TestCount( count => count.TestEquals( 2 ) )
+                    .Then(
+                        messages =>
+                        {
+                            var first = messages[0];
+                            var second = messages[1];
+                            return Assertion.All(
+                                "messages",
+                                first.ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IFoo ) ) ) ),
+                                first.Warnings.TestEmpty(),
+                                first.Errors.Count.TestEquals( 1 ),
+                                second.ImplementorKey.TestEquals( ImplementorKey.Create( new DependencyKey( typeof( IWithText ) ), 0 ) ),
+                                second.Warnings.TestEmpty(),
+                                second.Errors.Count.TestEquals( 1 ) );
+                        } ) )
             .Go();
     }
 

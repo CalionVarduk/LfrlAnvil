@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.Linq;
 using LfrlAnvil.Functional.Exceptions;
 using LfrlAnvil.TestExtensions.Attributes;
 using LfrlAnvil.TestExtensions.NSubstitute;
@@ -219,7 +218,7 @@ public abstract class GenericErraticTests<T> : TestsBase
 
         Assertion.All(
                 okDelegate.CallAt( 0 ).Exists.TestTrue(),
-                okDelegate.CallAt( 0 ).Arguments.FirstOrDefault().TestEquals( value ),
+                okDelegate.CallAt( 0 ).Arguments.TestSequence( [ value ] ),
                 result.IsOk.TestTrue(),
                 result.Value.TestEquals( returnedValue ) )
             .Go();
@@ -256,7 +255,7 @@ public abstract class GenericErraticTests<T> : TestsBase
 
         Assertion.All(
                 okDelegate.CallAt( 0 ).Exists.TestTrue(),
-                okDelegate.CallAt( 0 ).Arguments.FirstOrDefault().TestEquals( value ),
+                okDelegate.CallAt( 0 ).Arguments.TestSequence( [ value ] ),
                 errorDelegate.CallCount().TestEquals( 0 ),
                 result.IsOk.TestTrue(),
                 result.Value.TestEquals( returnedValue ) )
@@ -278,7 +277,7 @@ public abstract class GenericErraticTests<T> : TestsBase
         Assertion.All(
                 okDelegate.CallCount().TestEquals( 0 ),
                 errorDelegate.CallAt( 0 ).Exists.TestTrue(),
-                errorDelegate.CallAt( 0 ).Arguments.FirstOrDefault().TestEquals( error ),
+                errorDelegate.CallAt( 0 ).Arguments.TestSequence( [ error ] ),
                 result.IsOk.TestTrue(),
                 result.Value.TestEquals( returnedValue ) )
             .Go();
@@ -298,7 +297,7 @@ public abstract class GenericErraticTests<T> : TestsBase
 
         Assertion.All(
                 okDelegate.CallAt( 0 ).Exists.TestTrue(),
-                okDelegate.CallAt( 0 ).Arguments.FirstOrDefault().TestEquals( value ),
+                okDelegate.CallAt( 0 ).Arguments.TestSequence( [ value ] ),
                 errorDelegate.CallCount().TestEquals( 0 ),
                 result.TestEquals( returnedValue ) )
             .Go();
@@ -319,7 +318,7 @@ public abstract class GenericErraticTests<T> : TestsBase
         Assertion.All(
                 okDelegate.CallCount().TestEquals( 0 ),
                 errorDelegate.CallAt( 0 ).Exists.TestTrue(),
-                errorDelegate.CallAt( 0 ).Arguments.FirstOrDefault().TestEquals( error ),
+                errorDelegate.CallAt( 0 ).Arguments.TestSequence( [ error ] ),
                 result.TestEquals( returnedValue ) )
             .Go();
     }
@@ -337,7 +336,7 @@ public abstract class GenericErraticTests<T> : TestsBase
 
         Assertion.All(
                 okDelegate.CallAt( 0 ).Exists.TestTrue(),
-                okDelegate.CallAt( 0 ).Arguments.FirstOrDefault().TestEquals( value ),
+                okDelegate.CallAt( 0 ).Arguments.TestSequence( [ value ] ),
                 errorDelegate.CallCount().TestEquals( 0 ) )
             .Go();
     }
@@ -356,7 +355,7 @@ public abstract class GenericErraticTests<T> : TestsBase
         Assertion.All(
                 okDelegate.CallCount().TestEquals( 0 ),
                 errorDelegate.CallAt( 0 ).Exists.TestTrue(),
-                errorDelegate.CallAt( 0 ).Arguments.FirstOrDefault().TestEquals( error ) )
+                errorDelegate.CallAt( 0 ).Arguments.TestSequence( [ error ] ) )
             .Go();
     }
 
@@ -373,7 +372,7 @@ public abstract class GenericErraticTests<T> : TestsBase
 
         Assertion.All(
                 okDelegate.CallAt( 0 ).Exists.TestTrue(),
-                okDelegate.CallAt( 0 ).Arguments.FirstOrDefault().TestEquals( value ),
+                okDelegate.CallAt( 0 ).Arguments.TestSequence( [ value ] ),
                 result.Value.TestEquals( returnedValue ) )
             .Go();
     }
@@ -406,7 +405,7 @@ public abstract class GenericErraticTests<T> : TestsBase
 
         Assertion.All(
                 okDelegate.CallAt( 0 ).Exists.TestTrue(),
-                okDelegate.CallAt( 0 ).Arguments.FirstOrDefault().TestEquals( value ) )
+                okDelegate.CallAt( 0 ).Arguments.TestSequence( [ value ] ) )
             .Go();
     }
 
@@ -436,7 +435,7 @@ public abstract class GenericErraticTests<T> : TestsBase
 
         Assertion.All(
                 okDelegate.CallAt( 0 ).Exists.TestTrue(),
-                okDelegate.CallAt( 0 ).Arguments.FirstOrDefault().TestEquals( value ),
+                okDelegate.CallAt( 0 ).Arguments.TestSequence( [ value ] ),
                 result.TestEquals( returnedValue ) )
             .Go();
     }
@@ -470,7 +469,7 @@ public abstract class GenericErraticTests<T> : TestsBase
 
         Assertion.All(
                 okDelegate.CallAt( 0 ).Exists.TestTrue(),
-                okDelegate.CallAt( 0 ).Arguments.FirstOrDefault().TestEquals( value ),
+                okDelegate.CallAt( 0 ).Arguments.TestSequence( [ value ] ),
                 result.TestEquals( returnedValue ) )
             .Go();
     }
@@ -505,7 +504,7 @@ public abstract class GenericErraticTests<T> : TestsBase
 
         Assertion.All(
                 errorDelegate.CallAt( 0 ).Exists.TestTrue(),
-                errorDelegate.CallAt( 0 ).Arguments.FirstOrDefault().TestEquals( error ),
+                errorDelegate.CallAt( 0 ).Arguments.TestSequence( [ error ] ),
                 result.Value.TestEquals( returnedValue ) )
             .Go();
     }
@@ -538,7 +537,7 @@ public abstract class GenericErraticTests<T> : TestsBase
 
         Assertion.All(
                 errorDelegate.CallAt( 0 ).Exists.TestTrue(),
-                errorDelegate.CallAt( 0 ).Arguments.FirstOrDefault().TestEquals( error ) )
+                errorDelegate.CallAt( 0 ).Arguments.TestSequence( [ error ] ) )
             .Go();
     }
 
@@ -568,7 +567,7 @@ public abstract class GenericErraticTests<T> : TestsBase
 
         Assertion.All(
                 errorDelegate.CallAt( 0 ).Exists.TestTrue(),
-                errorDelegate.CallAt( 0 ).Arguments.FirstOrDefault().TestEquals( error ),
+                errorDelegate.CallAt( 0 ).Arguments.TestSequence( [ error ] ),
                 result.TestEquals( returnedValue ) )
             .Go();
     }
@@ -602,7 +601,7 @@ public abstract class GenericErraticTests<T> : TestsBase
 
         Assertion.All(
                 errorDelegate.CallAt( 0 ).Exists.TestTrue(),
-                errorDelegate.CallAt( 0 ).Arguments.FirstOrDefault().TestEquals( error ),
+                errorDelegate.CallAt( 0 ).Arguments.TestSequence( [ error ] ),
                 result.TestEquals( returnedValue ) )
             .Go();
     }

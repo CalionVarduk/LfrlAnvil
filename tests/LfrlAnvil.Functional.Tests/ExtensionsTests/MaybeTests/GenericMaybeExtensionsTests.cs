@@ -1,5 +1,4 @@
-﻿using System.Linq;
-using LfrlAnvil.Functional.Extensions;
+﻿using LfrlAnvil.Functional.Extensions;
 using LfrlAnvil.TestExtensions.NSubstitute;
 
 namespace LfrlAnvil.Functional.Tests.ExtensionsTests.MaybeTests;
@@ -109,7 +108,7 @@ public abstract class GenericMaybeExtensionsTests<T> : TestsBase
                 result.TestEquals( returnedValue ),
                 bothDelegate.CallCount().TestEquals( 0 ),
                 firstDelegate.CallAt( 0 ).Exists.TestTrue(),
-                firstDelegate.CallAt( 0 ).Arguments.FirstOrDefault().TestEquals( value ),
+                firstDelegate.CallAt( 0 ).Arguments.TestSequence( [ value ] ),
                 secondDelegate.CallCount().TestEquals( 0 ),
                 noneDelegate.CallCount().TestEquals( 0 ) )
             .Go();
@@ -135,7 +134,7 @@ public abstract class GenericMaybeExtensionsTests<T> : TestsBase
                 bothDelegate.CallCount().TestEquals( 0 ),
                 firstDelegate.CallCount().TestEquals( 0 ),
                 secondDelegate.CallAt( 0 ).Exists.TestTrue(),
-                secondDelegate.CallAt( 0 ).Arguments.FirstOrDefault().TestEquals( otherValue ),
+                secondDelegate.CallAt( 0 ).Arguments.TestSequence( [ otherValue ] ),
                 noneDelegate.CallCount().TestEquals( 0 ) )
             .Go();
     }
@@ -206,7 +205,7 @@ public abstract class GenericMaybeExtensionsTests<T> : TestsBase
         Assertion.All(
                 bothDelegate.CallCount().TestEquals( 0 ),
                 firstDelegate.CallAt( 0 ).Exists.TestTrue(),
-                firstDelegate.CallAt( 0 ).Arguments.FirstOrDefault().TestEquals( value ),
+                firstDelegate.CallAt( 0 ).Arguments.TestSequence( [ value ] ),
                 secondDelegate.CallCount().TestEquals( 0 ),
                 noneDelegate.CallCount().TestEquals( 0 ) )
             .Go();
@@ -231,7 +230,7 @@ public abstract class GenericMaybeExtensionsTests<T> : TestsBase
                 bothDelegate.CallCount().TestEquals( 0 ),
                 firstDelegate.CallCount().TestEquals( 0 ),
                 secondDelegate.CallAt( 0 ).Exists.TestTrue(),
-                secondDelegate.CallAt( 0 ).Arguments.FirstOrDefault().TestEquals( otherValue ),
+                secondDelegate.CallAt( 0 ).Arguments.TestSequence( [ otherValue ] ),
                 noneDelegate.CallCount().TestEquals( 0 ) )
             .Go();
     }

@@ -32,12 +32,17 @@ public partial class ParsedExpressionFactoryTests : TestsBase
 
         Assertion.All(
                 provider.CallAt( 0 ).Exists.TestTrue(),
-                (( ParsedExpressionNumberParserParams )provider.CallAt( 0 ).Arguments.FirstOrDefault()!).Configuration.TestRefEquals(
-                    sut.Configuration ),
-                (( ParsedExpressionNumberParserParams )provider.CallAt( 0 ).Arguments.FirstOrDefault()!).ArgumentType.TestEquals(
-                    typeof( decimal ) ),
-                (( ParsedExpressionNumberParserParams )provider.CallAt( 0 ).Arguments.FirstOrDefault()!).ResultType.TestEquals(
-                    typeof( string ) ) )
+                provider.CallAt( 0 )
+                    .Arguments.TestAll(
+                        (arg, _) =>
+                        {
+                            var @params = ( ParsedExpressionNumberParserParams )arg!;
+                            return Assertion.All(
+                                "@params",
+                                @params.Configuration.TestRefEquals( sut.Configuration ),
+                                @params.ArgumentType.TestEquals( typeof( decimal ) ),
+                                @params.ResultType.TestEquals( typeof( string ) ) );
+                        } ) )
             .Go();
     }
 

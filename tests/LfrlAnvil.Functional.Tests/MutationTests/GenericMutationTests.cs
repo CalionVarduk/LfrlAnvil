@@ -172,7 +172,7 @@ public abstract class GenericMutationTests<T> : TestsBase
                 result.OldValue.TestEquals( returnedOldValue ),
                 result.Value.TestEquals( returnedValue ),
                 changedDelegate.CallAt( 0 ).Exists.TestTrue(),
-                changedDelegate.CallAt( 0 ).Arguments.FirstOrDefault().TestEquals( (oldValue, value) ) )
+                changedDelegate.CallAt( 0 ).Arguments.TestSequence( [ (oldValue, value) ] ) )
             .Go();
     }
 
@@ -214,7 +214,7 @@ public abstract class GenericMutationTests<T> : TestsBase
                 result.OldValue.TestEquals( returnedOldValue ),
                 result.Value.TestEquals( returnedValue ),
                 changedDelegate.CallAt( 0 ).Exists.TestTrue(),
-                changedDelegate.CallAt( 0 ).Arguments.FirstOrDefault().TestEquals( (oldValue, value) ),
+                changedDelegate.CallAt( 0 ).Arguments.TestSequence( [ (oldValue, value) ] ),
                 unchangedDelegate.CallCount().TestEquals( 0 ) )
             .Go();
     }
@@ -240,7 +240,7 @@ public abstract class GenericMutationTests<T> : TestsBase
                 result.Value.TestEquals( returnedValue ),
                 changedDelegate.CallCount().TestEquals( 0 ),
                 unchangedDelegate.CallAt( 0 ).Exists.TestTrue(),
-                unchangedDelegate.CallAt( 0 ).Arguments.FirstOrDefault().TestEquals( value ) )
+                unchangedDelegate.CallAt( 0 ).Arguments.TestSequence( [ value ] ) )
             .Go();
     }
 
@@ -259,7 +259,7 @@ public abstract class GenericMutationTests<T> : TestsBase
         Assertion.All(
                 result.TestEquals( returnedValue ),
                 changedDelegate.CallAt( 0 ).Exists.TestTrue(),
-                changedDelegate.CallAt( 0 ).Arguments.FirstOrDefault().TestEquals( (oldValue, value) ),
+                changedDelegate.CallAt( 0 ).Arguments.TestSequence( [ (oldValue, value) ] ),
                 unchangedDelegate.CallCount().TestEquals( 0 ) )
             .Go();
     }
@@ -280,7 +280,7 @@ public abstract class GenericMutationTests<T> : TestsBase
                 result.TestEquals( returnedValue ),
                 changedDelegate.CallCount().TestEquals( 0 ),
                 unchangedDelegate.CallAt( 0 ).Exists.TestTrue(),
-                unchangedDelegate.CallAt( 0 ).Arguments.FirstOrDefault().TestEquals( value ) )
+                unchangedDelegate.CallAt( 0 ).Arguments.TestSequence( [ value ] ) )
             .Go();
     }
 
@@ -297,7 +297,7 @@ public abstract class GenericMutationTests<T> : TestsBase
 
         Assertion.All(
                 changedDelegate.CallAt( 0 ).Exists.TestTrue(),
-                changedDelegate.CallAt( 0 ).Arguments.FirstOrDefault().TestEquals( (oldValue, value) ),
+                changedDelegate.CallAt( 0 ).Arguments.TestSequence( [ (oldValue, value) ] ),
                 unchangedDelegate.CallCount().TestEquals( 0 ) )
             .Go();
     }
@@ -316,7 +316,7 @@ public abstract class GenericMutationTests<T> : TestsBase
         Assertion.All(
                 changedDelegate.CallCount().TestEquals( 0 ),
                 unchangedDelegate.CallAt( 0 ).Exists.TestTrue(),
-                unchangedDelegate.CallAt( 0 ).Arguments.FirstOrDefault().TestEquals( value ) )
+                unchangedDelegate.CallAt( 0 ).Arguments.TestSequence( [ value ] ) )
             .Go();
     }
 
@@ -334,7 +334,7 @@ public abstract class GenericMutationTests<T> : TestsBase
         Assertion.All(
                 result.Value.TestEquals( returnedValue ),
                 changedDelegate.CallAt( 0 ).Exists.TestTrue(),
-                changedDelegate.CallAt( 0 ).Arguments.FirstOrDefault().TestEquals( (oldValue, value) ) )
+                changedDelegate.CallAt( 0 ).Arguments.TestSequence( [ (oldValue, value) ] ) )
             .Go();
     }
 
@@ -366,7 +366,7 @@ public abstract class GenericMutationTests<T> : TestsBase
 
         Assertion.All(
                 changedDelegate.CallAt( 0 ).Exists.TestTrue(),
-                changedDelegate.CallAt( 0 ).Arguments.FirstOrDefault().TestEquals( (oldValue, value) ) )
+                changedDelegate.CallAt( 0 ).Arguments.TestSequence( [ (oldValue, value) ] ) )
             .Go();
     }
 
@@ -397,7 +397,7 @@ public abstract class GenericMutationTests<T> : TestsBase
         Assertion.All(
                 result.TestEquals( returnedValue ),
                 changedDelegate.CallAt( 0 ).Exists.TestTrue(),
-                changedDelegate.CallAt( 0 ).Arguments.FirstOrDefault().TestEquals( (oldValue, value) ) )
+                changedDelegate.CallAt( 0 ).Arguments.TestSequence( [ (oldValue, value) ] ) )
             .Go();
     }
 
@@ -431,7 +431,7 @@ public abstract class GenericMutationTests<T> : TestsBase
         Assertion.All(
                 result.TestEquals( returnedValue ),
                 changedDelegate.CallAt( 0 ).Exists.TestTrue(),
-                changedDelegate.CallAt( 0 ).Arguments.FirstOrDefault().TestEquals( (oldValue, value) ) )
+                changedDelegate.CallAt( 0 ).Arguments.TestSequence( [ (oldValue, value) ] ) )
             .Go();
     }
 
@@ -466,7 +466,7 @@ public abstract class GenericMutationTests<T> : TestsBase
         Assertion.All(
                 result.Value.TestEquals( returnedValue ),
                 unchangedDelegate.CallAt( 0 ).Exists.TestTrue(),
-                unchangedDelegate.CallAt( 0 ).Arguments.FirstOrDefault().TestEquals( value ) )
+                unchangedDelegate.CallAt( 0 ).Arguments.TestSequence( [ value ] ) )
             .Go();
     }
 
@@ -498,7 +498,7 @@ public abstract class GenericMutationTests<T> : TestsBase
 
         Assertion.All(
                 unchangedDelegate.CallAt( 0 ).Exists.TestTrue(),
-                unchangedDelegate.CallAt( 0 ).Arguments.FirstOrDefault().TestEquals( value ) )
+                unchangedDelegate.CallAt( 0 ).Arguments.TestSequence( [ value ] ) )
             .Go();
     }
 
@@ -529,7 +529,7 @@ public abstract class GenericMutationTests<T> : TestsBase
         Assertion.All(
                 result.TestEquals( returnedValue ),
                 unchangedDelegate.CallAt( 0 ).Exists.TestTrue(),
-                unchangedDelegate.CallAt( 0 ).Arguments.FirstOrDefault().TestEquals( value ) )
+                unchangedDelegate.CallAt( 0 ).Arguments.TestSequence( [ value ] ) )
             .Go();
     }
 
@@ -563,7 +563,7 @@ public abstract class GenericMutationTests<T> : TestsBase
         Assertion.All(
                 result.TestEquals( returnedValue ),
                 unchangedDelegate.CallAt( 0 ).Exists.TestTrue(),
-                unchangedDelegate.CallAt( 0 ).Arguments.FirstOrDefault().TestEquals( value ) )
+                unchangedDelegate.CallAt( 0 ).Arguments.TestSequence( [ value ] ) )
             .Go();
     }
 

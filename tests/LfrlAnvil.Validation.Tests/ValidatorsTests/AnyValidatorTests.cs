@@ -1,6 +1,4 @@
-﻿using System.Linq;
-
-namespace LfrlAnvil.Validation.Tests.ValidatorsTests;
+﻿namespace LfrlAnvil.Validation.Tests.ValidatorsTests;
 
 public class AnyValidatorTests : ValidatorTestsBase
 {
@@ -12,10 +10,7 @@ public class AnyValidatorTests : ValidatorTestsBase
 
         var result = sut.Validate( value );
 
-        Assertion.All(
-                result.Count.TestEquals( 1 ),
-                result.FirstOrDefault().Result.TestEmpty() )
-            .Go();
+        result.TestCount( count => count.TestEquals( 1 ) ).Then( failures => failures[0].Result.TestEmpty() ).Go();
     }
 
     [Fact]
@@ -59,9 +54,8 @@ public class AnyValidatorTests : ValidatorTestsBase
 
         var result = sut.Validate( value );
 
-        Assertion.All(
-                result.Count.TestEquals( 1 ),
-                result.FirstOrDefault().Result.TestSequence( [ failure1, failure2, failure3, failure4 ] ) )
+        result.TestCount( count => count.TestEquals( 1 ) )
+            .Then( failures => failures[0].Result.TestSequence( [ failure1, failure2, failure3, failure4 ] ) )
             .Go();
     }
 }

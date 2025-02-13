@@ -1,5 +1,4 @@
-﻿using System.Linq;
-using LfrlAnvil.Functional.Exceptions;
+﻿using LfrlAnvil.Functional.Exceptions;
 using LfrlAnvil.TestExtensions.Attributes;
 using LfrlAnvil.TestExtensions.NSubstitute;
 
@@ -234,7 +233,7 @@ public abstract class GenericEitherTests<T1, T2> : TestsBase
 
         Assertion.All(
                 firstDelegate.CallAt( 0 ).Exists.TestTrue(),
-                firstDelegate.CallAt( 0 ).Arguments.FirstOrDefault().TestEquals( value ),
+                firstDelegate.CallAt( 0 ).Arguments.TestSequence( [ value ] ),
                 result.HasFirst.TestTrue(),
                 result.First.TestEquals( returnedValue ) )
             .Go();
@@ -270,7 +269,7 @@ public abstract class GenericEitherTests<T1, T2> : TestsBase
 
         Assertion.All(
                 secondDelegate.CallAt( 0 ).Exists.TestTrue(),
-                secondDelegate.CallAt( 0 ).Arguments.FirstOrDefault().TestEquals( value ),
+                secondDelegate.CallAt( 0 ).Arguments.TestSequence( [ value ] ),
                 result.HasSecond.TestTrue(),
                 result.Second.TestEquals( returnedValue ) )
             .Go();
@@ -307,7 +306,7 @@ public abstract class GenericEitherTests<T1, T2> : TestsBase
 
         Assertion.All(
                 firstDelegate.CallAt( 0 ).Exists.TestTrue(),
-                firstDelegate.CallAt( 0 ).Arguments.FirstOrDefault().TestEquals( value ),
+                firstDelegate.CallAt( 0 ).Arguments.TestSequence( [ value ] ),
                 secondDelegate.CallCount().TestEquals( 0 ),
                 result.HasFirst.TestTrue(),
                 result.First.TestEquals( returnedValue ) )
@@ -329,7 +328,7 @@ public abstract class GenericEitherTests<T1, T2> : TestsBase
         Assertion.All(
                 firstDelegate.CallCount().TestEquals( 0 ),
                 secondDelegate.CallAt( 0 ).Exists.TestTrue(),
-                secondDelegate.CallAt( 0 ).Arguments.FirstOrDefault().TestEquals( value ),
+                secondDelegate.CallAt( 0 ).Arguments.TestSequence( [ value ] ),
                 result.HasSecond.TestTrue(),
                 result.Second.TestEquals( returnedValue ) )
             .Go();
@@ -349,7 +348,7 @@ public abstract class GenericEitherTests<T1, T2> : TestsBase
 
         Assertion.All(
                 firstDelegate.CallAt( 0 ).Exists.TestTrue(),
-                firstDelegate.CallAt( 0 ).Arguments.FirstOrDefault().TestEquals( value ),
+                firstDelegate.CallAt( 0 ).Arguments.TestSequence( [ value ] ),
                 secondDelegate.CallCount().TestEquals( 0 ),
                 result.TestEquals( returnedValue ) )
             .Go();
@@ -370,7 +369,7 @@ public abstract class GenericEitherTests<T1, T2> : TestsBase
         Assertion.All(
                 firstDelegate.CallCount().TestEquals( 0 ),
                 secondDelegate.CallAt( 0 ).Exists.TestTrue(),
-                secondDelegate.CallAt( 0 ).Arguments.FirstOrDefault().TestEquals( value ),
+                secondDelegate.CallAt( 0 ).Arguments.TestSequence( [ value ] ),
                 result.TestEquals( returnedValue ) )
             .Go();
     }
@@ -388,7 +387,7 @@ public abstract class GenericEitherTests<T1, T2> : TestsBase
 
         Assertion.All(
                 firstDelegate.CallAt( 0 ).Exists.TestTrue(),
-                firstDelegate.CallAt( 0 ).Arguments.FirstOrDefault().TestEquals( value ),
+                firstDelegate.CallAt( 0 ).Arguments.TestSequence( [ value ] ),
                 secondDelegate.CallCount().TestEquals( 0 ) )
             .Go();
     }
@@ -407,7 +406,7 @@ public abstract class GenericEitherTests<T1, T2> : TestsBase
         Assertion.All(
                 firstDelegate.CallCount().TestEquals( 0 ),
                 secondDelegate.CallAt( 0 ).Exists.TestTrue(),
-                secondDelegate.CallAt( 0 ).Arguments.FirstOrDefault().TestEquals( value ) )
+                secondDelegate.CallAt( 0 ).Arguments.TestSequence( [ value ] ) )
             .Go();
     }
 
@@ -424,7 +423,7 @@ public abstract class GenericEitherTests<T1, T2> : TestsBase
 
         Assertion.All(
                 firstDelegate.CallAt( 0 ).Exists.TestTrue(),
-                firstDelegate.CallAt( 0 ).Arguments.FirstOrDefault().TestEquals( value ),
+                firstDelegate.CallAt( 0 ).Arguments.TestSequence( [ value ] ),
                 result.Value.TestEquals( returnedValue ) )
             .Go();
     }
@@ -457,7 +456,7 @@ public abstract class GenericEitherTests<T1, T2> : TestsBase
 
         Assertion.All(
                 firstDelegate.CallAt( 0 ).Exists.TestTrue(),
-                firstDelegate.CallAt( 0 ).Arguments.FirstOrDefault().TestEquals( value ) )
+                firstDelegate.CallAt( 0 ).Arguments.TestSequence( [ value ] ) )
             .Go();
     }
 
@@ -487,7 +486,7 @@ public abstract class GenericEitherTests<T1, T2> : TestsBase
 
         Assertion.All(
                 firstDelegate.CallAt( 0 ).Exists.TestTrue(),
-                firstDelegate.CallAt( 0 ).Arguments.FirstOrDefault().TestEquals( value ),
+                firstDelegate.CallAt( 0 ).Arguments.TestSequence( [ value ] ),
                 result.TestEquals( returnedValue ) )
             .Go();
     }
@@ -521,7 +520,7 @@ public abstract class GenericEitherTests<T1, T2> : TestsBase
 
         Assertion.All(
                 firstDelegate.CallAt( 0 ).Exists.TestTrue(),
-                firstDelegate.CallAt( 0 ).Arguments.FirstOrDefault().TestEquals( value ),
+                firstDelegate.CallAt( 0 ).Arguments.TestSequence( [ value ] ),
                 result.TestEquals( returnedValue ) )
             .Go();
     }
@@ -556,7 +555,7 @@ public abstract class GenericEitherTests<T1, T2> : TestsBase
 
         Assertion.All(
                 secondDelegate.CallAt( 0 ).Exists.TestTrue(),
-                secondDelegate.CallAt( 0 ).Arguments.FirstOrDefault().TestEquals( value ),
+                secondDelegate.CallAt( 0 ).Arguments.TestSequence( [ value ] ),
                 result.Value.TestEquals( returnedValue ) )
             .Go();
     }
@@ -589,7 +588,7 @@ public abstract class GenericEitherTests<T1, T2> : TestsBase
 
         Assertion.All(
                 secondDelegate.CallAt( 0 ).Exists.TestTrue(),
-                secondDelegate.CallAt( 0 ).Arguments.FirstOrDefault().TestEquals( value ) )
+                secondDelegate.CallAt( 0 ).Arguments.TestSequence( [ value ] ) )
             .Go();
     }
 
@@ -619,7 +618,7 @@ public abstract class GenericEitherTests<T1, T2> : TestsBase
 
         Assertion.All(
                 secondDelegate.CallAt( 0 ).Exists.TestTrue(),
-                secondDelegate.CallAt( 0 ).Arguments.FirstOrDefault().TestEquals( value ),
+                secondDelegate.CallAt( 0 ).Arguments.TestSequence( [ value ] ),
                 result.TestEquals( returnedValue ) )
             .Go();
     }
@@ -653,7 +652,7 @@ public abstract class GenericEitherTests<T1, T2> : TestsBase
 
         Assertion.All(
                 secondDelegate.CallAt( 0 ).Exists.TestTrue(),
-                secondDelegate.CallAt( 0 ).Arguments.FirstOrDefault().TestEquals( value ),
+                secondDelegate.CallAt( 0 ).Arguments.TestSequence( [ value ] ),
                 result.TestEquals( returnedValue ) )
             .Go();
     }

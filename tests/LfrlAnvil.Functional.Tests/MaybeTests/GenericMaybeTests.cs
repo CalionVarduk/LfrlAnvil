@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.Linq;
 using LfrlAnvil.Functional.Exceptions;
 using LfrlAnvil.TestExtensions.Attributes;
 using LfrlAnvil.TestExtensions.NSubstitute;
@@ -150,7 +149,7 @@ public abstract class GenericMaybeTests<T> : TestsBase
 
         Assertion.All(
                 someDelegate.CallAt( 0 ).Exists.TestTrue(),
-                someDelegate.CallAt( 0 ).Arguments.FirstOrDefault().TestEquals( value ),
+                someDelegate.CallAt( 0 ).Arguments.TestSequence( [value] ),
                 result.Value.TestEquals( returnedValue ) )
             .Go();
     }
@@ -184,7 +183,7 @@ public abstract class GenericMaybeTests<T> : TestsBase
 
         Assertion.All(
                 someDelegate.CallAt( 0 ).Exists.TestTrue(),
-                someDelegate.CallAt( 0 ).Arguments.FirstOrDefault().TestEquals( value ),
+                someDelegate.CallAt( 0 ).Arguments.TestSequence( [value] ),
                 noneDelegate.CallCount().TestEquals( 0 ),
                 result.Value.TestEquals( returnedValue ) )
             .Go();
@@ -222,7 +221,7 @@ public abstract class GenericMaybeTests<T> : TestsBase
 
         Assertion.All(
                 someDelegate.CallAt( 0 ).Exists.TestTrue(),
-                someDelegate.CallAt( 0 ).Arguments.FirstOrDefault().TestEquals( value ),
+                someDelegate.CallAt( 0 ).Arguments.TestSequence( [value] ),
                 noneDelegate.CallCount().TestEquals( 0 ),
                 result.TestEquals( returnedValue ) )
             .Go();
@@ -259,7 +258,7 @@ public abstract class GenericMaybeTests<T> : TestsBase
 
         Assertion.All(
                 someDelegate.CallAt( 0 ).Exists.TestTrue(),
-                someDelegate.CallAt( 0 ).Arguments.FirstOrDefault().TestEquals( value ),
+                someDelegate.CallAt( 0 ).Arguments.TestSequence( [value] ),
                 noneDelegate.CallCount().TestEquals( 0 ) )
             .Go();
     }
@@ -293,7 +292,7 @@ public abstract class GenericMaybeTests<T> : TestsBase
 
         Assertion.All(
                 someDelegate.CallAt( 0 ).Exists.TestTrue(),
-                someDelegate.CallAt( 0 ).Arguments.FirstOrDefault().TestEquals( value ),
+                someDelegate.CallAt( 0 ).Arguments.TestSequence( [value] ),
                 result.Value.TestEquals( returnedValue ) )
             .Go();
     }
@@ -325,7 +324,7 @@ public abstract class GenericMaybeTests<T> : TestsBase
 
         Assertion.All(
                 someDelegate.CallAt( 0 ).Exists.TestTrue(),
-                someDelegate.CallAt( 0 ).Arguments.FirstOrDefault().TestEquals( value ) )
+                someDelegate.CallAt( 0 ).Arguments.TestSequence( [value] ) )
             .Go();
     }
 
@@ -354,7 +353,7 @@ public abstract class GenericMaybeTests<T> : TestsBase
 
         Assertion.All(
                 someDelegate.CallAt( 0 ).Exists.TestTrue(),
-                someDelegate.CallAt( 0 ).Arguments.FirstOrDefault().TestEquals( value ),
+                someDelegate.CallAt( 0 ).Arguments.TestSequence( [value] ),
                 result.TestEquals( returnedValue ) )
             .Go();
     }
@@ -387,7 +386,7 @@ public abstract class GenericMaybeTests<T> : TestsBase
 
         Assertion.All(
                 someDelegate.CallAt( 0 ).Exists.TestTrue(),
-                someDelegate.CallAt( 0 ).Arguments.FirstOrDefault().TestEquals( value ),
+                someDelegate.CallAt( 0 ).Arguments.TestSequence( [value] ),
                 result.TestEquals( returnedValue ) )
             .Go();
     }

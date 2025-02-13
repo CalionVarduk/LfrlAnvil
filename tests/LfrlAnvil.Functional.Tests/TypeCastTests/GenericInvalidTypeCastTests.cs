@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.Linq;
 using LfrlAnvil.Functional.Exceptions;
 using LfrlAnvil.TestExtensions.Attributes;
 using LfrlAnvil.TestExtensions.NSubstitute;
@@ -92,7 +91,7 @@ public abstract class GenericInvalidTypeCastTests<TSource, TDestination> : Gener
         Assertion.All(
                 validDelegate.CallCount().TestEquals( 0 ),
                 invalidDelegate.CallAt( 0 ).Exists.TestTrue(),
-                invalidDelegate.CallAt( 0 ).Arguments.FirstOrDefault().TestEquals( value ),
+                invalidDelegate.CallAt( 0 ).Arguments.TestSequence( [ value ] ),
                 result.IsValid.TestFalse() )
             .Go();
     }
@@ -112,7 +111,7 @@ public abstract class GenericInvalidTypeCastTests<TSource, TDestination> : Gener
         Assertion.All(
                 validDelegate.CallCount().TestEquals( 0 ),
                 invalidDelegate.CallAt( 0 ).Exists.TestTrue(),
-                invalidDelegate.CallAt( 0 ).Arguments.FirstOrDefault().TestEquals( value ),
+                invalidDelegate.CallAt( 0 ).Arguments.TestSequence( [ value ] ),
                 result.TestEquals( returnedValue ) )
             .Go();
     }
@@ -131,7 +130,7 @@ public abstract class GenericInvalidTypeCastTests<TSource, TDestination> : Gener
         Assertion.All(
                 validDelegate.CallCount().TestEquals( 0 ),
                 invalidDelegate.CallAt( 0 ).Exists.TestTrue(),
-                invalidDelegate.CallAt( 0 ).Arguments.FirstOrDefault().TestEquals( value ) )
+                invalidDelegate.CallAt( 0 ).Arguments.TestSequence( [ value ] ) )
             .Go();
     }
 
@@ -210,7 +209,7 @@ public abstract class GenericInvalidTypeCastTests<TSource, TDestination> : Gener
 
         Assertion.All(
                 invalidDelegate.CallAt( 0 ).Exists.TestTrue(),
-                invalidDelegate.CallAt( 0 ).Arguments.FirstOrDefault().TestEquals( value ),
+                invalidDelegate.CallAt( 0 ).Arguments.TestSequence( [ value ] ),
                 result.Value.TestEquals( returnedValue ) )
             .Go();
     }
@@ -227,7 +226,7 @@ public abstract class GenericInvalidTypeCastTests<TSource, TDestination> : Gener
 
         Assertion.All(
                 invalidDelegate.CallAt( 0 ).Exists.TestTrue(),
-                invalidDelegate.CallAt( 0 ).Arguments.FirstOrDefault().TestEquals( value ) )
+                invalidDelegate.CallAt( 0 ).Arguments.TestSequence( [ value ] ) )
             .Go();
     }
 
@@ -244,7 +243,7 @@ public abstract class GenericInvalidTypeCastTests<TSource, TDestination> : Gener
 
         Assertion.All(
                 invalidDelegate.CallAt( 0 ).Exists.TestTrue(),
-                invalidDelegate.CallAt( 0 ).Arguments.FirstOrDefault().TestEquals( value ),
+                invalidDelegate.CallAt( 0 ).Arguments.TestSequence( [ value ] ),
                 result.TestEquals( returnedValue ) )
             .Go();
     }
@@ -262,7 +261,7 @@ public abstract class GenericInvalidTypeCastTests<TSource, TDestination> : Gener
 
         Assertion.All(
                 invalidDelegate.CallAt( 0 ).Exists.TestTrue(),
-                invalidDelegate.CallAt( 0 ).Arguments.FirstOrDefault().TestEquals( value ),
+                invalidDelegate.CallAt( 0 ).Arguments.TestSequence( [ value ] ),
                 result.TestEquals( returnedValue ) )
             .Go();
     }
