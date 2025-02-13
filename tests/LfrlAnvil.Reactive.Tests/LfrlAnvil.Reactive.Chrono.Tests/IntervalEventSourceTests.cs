@@ -5,7 +5,6 @@ using LfrlAnvil.Chrono;
 using LfrlAnvil.Functional;
 using LfrlAnvil.Reactive.Chrono.Composites;
 using LfrlAnvil.Reactive.Chrono.Internal;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 using LfrlAnvil.TestExtensions.NSubstitute;
 
 namespace LfrlAnvil.Reactive.Chrono.Tests;
@@ -22,12 +21,11 @@ public class IntervalEventSourceTests : TestsBase
         var timestampProvider = Substitute.For<ITimestampProvider>();
         var sut = new IntervalEventSource( timestampProvider, interval, scheduler, spinWaitDurationHint, count );
 
-        using ( new AssertionScope() )
-        {
-            sut.IsDisposed.Should().BeFalse();
-            sut.Subscribers.Should().BeEmpty();
-            sut.HasSubscribers.Should().BeFalse();
-        }
+        Assertion.All(
+                sut.IsDisposed.TestFalse(),
+                sut.Subscribers.TestEmpty(),
+                sut.HasSubscribers.TestFalse() )
+            .Go();
     }
 
     [Theory]
@@ -43,7 +41,7 @@ public class IntervalEventSourceTests : TestsBase
 
         var action = Lambda.Of( () => new IntervalEventSource( timestampProvider, interval, scheduler, spinWaitDurationHint, count ) );
 
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Theory]
@@ -59,7 +57,7 @@ public class IntervalEventSourceTests : TestsBase
 
         var action = Lambda.Of( () => new IntervalEventSource( timestampProvider, interval, scheduler, spinWaitDurationHint, count ) );
 
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Fact]
@@ -73,7 +71,7 @@ public class IntervalEventSourceTests : TestsBase
 
         var action = Lambda.Of( () => new IntervalEventSource( timestampProvider, interval, scheduler, spinWaitDurationHint, count ) );
 
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Theory]
@@ -88,7 +86,7 @@ public class IntervalEventSourceTests : TestsBase
 
         var action = Lambda.Of( () => new IntervalEventSource( timestampProvider, interval, scheduler, spinWaitDurationHint, count ) );
 
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Fact]
@@ -105,11 +103,10 @@ public class IntervalEventSourceTests : TestsBase
 
         var subscriber = sut.Listen( listener );
 
-        using ( new AssertionScope() )
-        {
-            subscriber.IsDisposed.Should().BeTrue();
-            listener.VerifyCalls().DidNotReceive( x => x.React( Arg.Any<WithInterval<long>>() ) );
-        }
+        Assertion.All(
+                subscriber.IsDisposed.TestTrue(),
+                listener.TestDidNotReceiveCall( x => x.React( Arg.Any<WithInterval<long>>() ) ) )
+            .Go();
     }
 
     [Fact]
@@ -131,12 +128,11 @@ public class IntervalEventSourceTests : TestsBase
 
         sut.Dispose();
 
-        using ( new AssertionScope() )
-        {
-            sut.HasSubscribers.Should().BeFalse();
-            subscriber.IsDisposed.Should().BeTrue();
-            listener.VerifyCalls().DidNotReceive( x => x.React( Arg.Any<WithInterval<long>>() ) );
-        }
+        Assertion.All(
+                sut.HasSubscribers.TestFalse(),
+                subscriber.IsDisposed.TestTrue(),
+                listener.TestDidNotReceiveCall( x => x.React( Arg.Any<WithInterval<long>>() ) ) )
+            .Go();
     }
 
     [Fact]
@@ -172,13 +168,12 @@ public class IntervalEventSourceTests : TestsBase
 
         var subscriber = sut.Listen( listener );
 
-        using ( new AssertionScope() )
-        {
-            subscriber.IsDisposed.Should().BeTrue();
-            sut.IsDisposed.Should().BeFalse();
-            sut.HasSubscribers.Should().BeFalse();
-            actualEvents.Should().BeSequentiallyEqualTo( expectedEvents );
-        }
+        Assertion.All(
+                subscriber.IsDisposed.TestTrue(),
+                sut.IsDisposed.TestFalse(),
+                sut.HasSubscribers.TestFalse(),
+                actualEvents.TestSequence( expectedEvents ) )
+            .Go();
     }
 
     [Fact]
@@ -214,13 +209,12 @@ public class IntervalEventSourceTests : TestsBase
         var subscriber = sut.Listen( listener );
         await completion.Task;
 
-        using ( new AssertionScope() )
-        {
-            subscriber.IsDisposed.Should().BeTrue();
-            sut.IsDisposed.Should().BeFalse();
-            sut.HasSubscribers.Should().BeFalse();
-            actualEvents.Should().BeSequentiallyEqualTo( expectedEvents );
-        }
+        Assertion.All(
+                subscriber.IsDisposed.TestTrue(),
+                sut.IsDisposed.TestFalse(),
+                sut.HasSubscribers.TestFalse(),
+                actualEvents.TestSequence( expectedEvents ) )
+            .Go();
     }
 
     [Fact]
@@ -253,13 +247,12 @@ public class IntervalEventSourceTests : TestsBase
         sut.Listen( firstListener );
         sut.Listen( secondListener );
 
-        using ( new AssertionScope() )
-        {
-            sut.IsDisposed.Should().BeFalse();
-            sut.HasSubscribers.Should().BeFalse();
-            actualFirstEvents.Should().BeSequentiallyEqualTo( expectedFirstEvent );
-            actualSecondEvents.Should().BeSequentiallyEqualTo( expectedSecondEvent );
-        }
+        Assertion.All(
+                sut.IsDisposed.TestFalse(),
+                sut.HasSubscribers.TestFalse(),
+                actualFirstEvents.TestSequence( [ expectedFirstEvent ] ),
+                actualSecondEvents.TestSequence( [ expectedSecondEvent ] ) )
+            .Go();
     }
 
     [Fact]
@@ -297,7 +290,7 @@ public class IntervalEventSourceTests : TestsBase
         sut.Listen( listener );
         await completion.Task;
 
-        actualEvents.Should().BeSequentiallyEqualTo( expectedEvents );
+        actualEvents.TestSequence( expectedEvents ).Go();
     }
 
     [Fact]
@@ -320,7 +313,7 @@ public class IntervalEventSourceTests : TestsBase
         sut.Listen( listener );
         await completion.Task;
 
-        actualEvents.Should().BeSequentiallyEqualTo( expectedEvents );
+        actualEvents.TestSequence( expectedEvents ).Go();
     }
 
     [Fact]
@@ -360,7 +353,7 @@ public class IntervalEventSourceTests : TestsBase
         sut.Listen( listener );
         await completion.Task;
 
-        actualEvents.Should().BeSequentiallyEqualTo( expectedEvents );
+        actualEvents.TestSequence( expectedEvents ).Go();
     }
 
     [Fact]
@@ -400,7 +393,7 @@ public class IntervalEventSourceTests : TestsBase
         sut.Listen( listener );
         await completion.Task;
 
-        actualEvents.Should().BeSequentiallyEqualTo( expectedEvents );
+        actualEvents.TestSequence( expectedEvents ).Go();
     }
 
     [Fact]
@@ -422,7 +415,7 @@ public class IntervalEventSourceTests : TestsBase
 
         sut.Listen( listener );
 
-        actualEvents.Should().BeSequentiallyEqualTo( expectedEvents );
+        actualEvents.TestSequence( expectedEvents ).Go();
     }
 
     [Fact]
@@ -463,7 +456,7 @@ public class IntervalEventSourceTests : TestsBase
         sut.Listen( listener );
         await completion.Task;
 
-        actualEvents.Should().BeSequentiallyEqualTo( expectedEvents );
+        actualEvents.TestSequence( expectedEvents ).Go();
     }
 
     [Fact]
@@ -485,7 +478,7 @@ public class IntervalEventSourceTests : TestsBase
         sut.Listen( listener );
         await completion.Task;
 
-        actualEvents.Should().BeSequentiallyEqualTo( expectedEvent );
+        actualEvents.TestSequence( [ expectedEvent ] ).Go();
     }
 
     [Fact]
@@ -506,6 +499,6 @@ public class IntervalEventSourceTests : TestsBase
 
         sut.Listen( listener );
 
-        actualEvents.Should().BeSequentiallyEqualTo( expectedEvent );
+        actualEvents.TestSequence( [ expectedEvent ] ).Go();
     }
 }

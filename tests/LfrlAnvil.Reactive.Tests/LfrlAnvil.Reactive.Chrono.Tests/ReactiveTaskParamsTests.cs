@@ -18,17 +18,16 @@ public class ReactiveTaskParamsTests : TestsBase
             Exception: null,
             CancellationReason: null );
 
-        using ( new AssertionScope() )
-        {
-            sut.Invocation.InvocationId.Should().Be( invocationId );
-            sut.Invocation.OriginalTimestamp.Should().Be( originalTimestamp );
-            sut.Invocation.InvocationTimestamp.Should().Be( invocationTimestamp );
-            sut.ElapsedTime.Should().Be( elapsedTime );
-            sut.Exception.Should().BeNull();
-            sut.CancellationReason.Should().BeNull();
-            sut.IsFailed.Should().BeFalse();
-            sut.IsSuccessful.Should().BeTrue();
-        }
+        Assertion.All(
+                sut.Invocation.InvocationId.TestEquals( invocationId ),
+                sut.Invocation.OriginalTimestamp.TestEquals( originalTimestamp ),
+                sut.Invocation.InvocationTimestamp.TestEquals( invocationTimestamp ),
+                sut.ElapsedTime.TestEquals( elapsedTime ),
+                sut.Exception.TestNull(),
+                sut.CancellationReason.TestNull(),
+                sut.IsFailed.TestFalse(),
+                sut.IsSuccessful.TestTrue() )
+            .Go();
     }
 
     [Fact]
@@ -46,17 +45,16 @@ public class ReactiveTaskParamsTests : TestsBase
             Exception: exception,
             CancellationReason: null );
 
-        using ( new AssertionScope() )
-        {
-            sut.Invocation.InvocationId.Should().Be( invocationId );
-            sut.Invocation.OriginalTimestamp.Should().Be( originalTimestamp );
-            sut.Invocation.InvocationTimestamp.Should().Be( invocationTimestamp );
-            sut.ElapsedTime.Should().Be( elapsedTime );
-            sut.Exception.Should().BeSameAs( exception );
-            sut.CancellationReason.Should().BeNull();
-            sut.IsFailed.Should().BeTrue();
-            sut.IsSuccessful.Should().BeFalse();
-        }
+        Assertion.All(
+                sut.Invocation.InvocationId.TestEquals( invocationId ),
+                sut.Invocation.OriginalTimestamp.TestEquals( originalTimestamp ),
+                sut.Invocation.InvocationTimestamp.TestEquals( invocationTimestamp ),
+                sut.ElapsedTime.TestEquals( elapsedTime ),
+                sut.Exception.TestRefEquals( exception ),
+                sut.CancellationReason.TestNull(),
+                sut.IsFailed.TestTrue(),
+                sut.IsSuccessful.TestFalse() )
+            .Go();
     }
 
     [Theory]
@@ -76,16 +74,15 @@ public class ReactiveTaskParamsTests : TestsBase
             Exception: null,
             CancellationReason: reason );
 
-        using ( new AssertionScope() )
-        {
-            sut.Invocation.InvocationId.Should().Be( invocationId );
-            sut.Invocation.OriginalTimestamp.Should().Be( originalTimestamp );
-            sut.Invocation.InvocationTimestamp.Should().Be( invocationTimestamp );
-            sut.ElapsedTime.Should().Be( elapsedTime );
-            sut.Exception.Should().BeNull();
-            sut.CancellationReason.Should().Be( reason );
-            sut.IsFailed.Should().BeFalse();
-            sut.IsSuccessful.Should().BeFalse();
-        }
+        Assertion.All(
+                sut.Invocation.InvocationId.TestEquals( invocationId ),
+                sut.Invocation.OriginalTimestamp.TestEquals( originalTimestamp ),
+                sut.Invocation.InvocationTimestamp.TestEquals( invocationTimestamp ),
+                sut.ElapsedTime.TestEquals( elapsedTime ),
+                sut.Exception.TestNull(),
+                sut.CancellationReason.TestEquals( reason ),
+                sut.IsFailed.TestFalse(),
+                sut.IsSuccessful.TestFalse() )
+            .Go();
     }
 }

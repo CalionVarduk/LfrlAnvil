@@ -4,7 +4,6 @@ using System.Threading.Tasks;
 using LfrlAnvil.Chrono;
 using LfrlAnvil.Functional;
 using LfrlAnvil.Reactive.Chrono.Composites;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 using LfrlAnvil.TestExtensions.NSubstitute;
 
 namespace LfrlAnvil.Reactive.Chrono.Tests;
@@ -18,15 +17,14 @@ public class ReactiveTimerTests : TestsBase
         var timestampProvider = Substitute.For<ITimestampProvider>();
         var sut = new ReactiveTimer( timestampProvider, interval );
 
-        using ( new AssertionScope() )
-        {
-            sut.Interval.Should().Be( interval );
-            sut.Count.Should().Be( long.MaxValue );
-            sut.State.Should().Be( ReactiveTimerState.Idle );
-            sut.IsDisposed.Should().BeFalse();
-            sut.Subscribers.Should().BeEmpty();
-            sut.HasSubscribers.Should().BeFalse();
-        }
+        Assertion.All(
+                sut.Interval.TestEquals( interval ),
+                sut.Count.TestEquals( long.MaxValue ),
+                sut.State.TestEquals( ReactiveTimerState.Idle ),
+                sut.IsDisposed.TestFalse(),
+                sut.Subscribers.TestEmpty(),
+                sut.HasSubscribers.TestFalse() )
+            .Go();
     }
 
     [Theory]
@@ -39,7 +37,7 @@ public class ReactiveTimerTests : TestsBase
 
         var action = Lambda.Of( () => new ReactiveTimer( timestampProvider, interval ) );
 
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Theory]
@@ -52,7 +50,7 @@ public class ReactiveTimerTests : TestsBase
 
         var action = Lambda.Of( () => new ReactiveTimer( timestampProvider, interval ) );
 
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Fact]
@@ -63,15 +61,14 @@ public class ReactiveTimerTests : TestsBase
         var timestampProvider = Substitute.For<ITimestampProvider>();
         var sut = new ReactiveTimer( timestampProvider, interval, count );
 
-        using ( new AssertionScope() )
-        {
-            sut.Interval.Should().Be( interval );
-            sut.Count.Should().Be( count );
-            sut.State.Should().Be( ReactiveTimerState.Idle );
-            sut.IsDisposed.Should().BeFalse();
-            sut.Subscribers.Should().BeEmpty();
-            sut.HasSubscribers.Should().BeFalse();
-        }
+        Assertion.All(
+                sut.Interval.TestEquals( interval ),
+                sut.Count.TestEquals( count ),
+                sut.State.TestEquals( ReactiveTimerState.Idle ),
+                sut.IsDisposed.TestFalse(),
+                sut.Subscribers.TestEmpty(),
+                sut.HasSubscribers.TestFalse() )
+            .Go();
     }
 
     [Theory]
@@ -86,7 +83,7 @@ public class ReactiveTimerTests : TestsBase
 
         var action = Lambda.Of( () => new ReactiveTimer( timestampProvider, interval, count ) );
 
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Theory]
@@ -100,7 +97,7 @@ public class ReactiveTimerTests : TestsBase
 
         var action = Lambda.Of( () => new ReactiveTimer( timestampProvider, interval, count ) );
 
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Theory]
@@ -113,7 +110,7 @@ public class ReactiveTimerTests : TestsBase
 
         var action = Lambda.Of( () => new ReactiveTimer( timestampProvider, interval, count ) );
 
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Fact]
@@ -124,15 +121,14 @@ public class ReactiveTimerTests : TestsBase
         var timestampProvider = Substitute.For<ITimestampProvider>();
         var sut = new ReactiveTimer( timestampProvider, interval, spinWaitDurationHint );
 
-        using ( new AssertionScope() )
-        {
-            sut.Interval.Should().Be( interval );
-            sut.Count.Should().Be( long.MaxValue );
-            sut.State.Should().Be( ReactiveTimerState.Idle );
-            sut.IsDisposed.Should().BeFalse();
-            sut.Subscribers.Should().BeEmpty();
-            sut.HasSubscribers.Should().BeFalse();
-        }
+        Assertion.All(
+                sut.Interval.TestEquals( interval ),
+                sut.Count.TestEquals( long.MaxValue ),
+                sut.State.TestEquals( ReactiveTimerState.Idle ),
+                sut.IsDisposed.TestFalse(),
+                sut.Subscribers.TestEmpty(),
+                sut.HasSubscribers.TestFalse() )
+            .Go();
     }
 
     [Theory]
@@ -148,7 +144,7 @@ public class ReactiveTimerTests : TestsBase
 
         var action = Lambda.Of( () => new ReactiveTimer( timestampProvider, interval, spinWaitDurationHint ) );
 
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Theory]
@@ -164,7 +160,7 @@ public class ReactiveTimerTests : TestsBase
 
         var action = Lambda.Of( () => new ReactiveTimer( timestampProvider, interval, spinWaitDurationHint ) );
 
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Fact]
@@ -177,7 +173,7 @@ public class ReactiveTimerTests : TestsBase
 
         var action = Lambda.Of( () => new ReactiveTimer( timestampProvider, interval, spinWaitDurationHint ) );
 
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Fact]
@@ -189,15 +185,14 @@ public class ReactiveTimerTests : TestsBase
         var timestampProvider = Substitute.For<ITimestampProvider>();
         var sut = new ReactiveTimer( timestampProvider, interval, spinWaitDurationHint, count );
 
-        using ( new AssertionScope() )
-        {
-            sut.Interval.Should().Be( interval );
-            sut.Count.Should().Be( count );
-            sut.State.Should().Be( ReactiveTimerState.Idle );
-            sut.IsDisposed.Should().BeFalse();
-            sut.Subscribers.Should().BeEmpty();
-            sut.HasSubscribers.Should().BeFalse();
-        }
+        Assertion.All(
+                sut.Interval.TestEquals( interval ),
+                sut.Count.TestEquals( count ),
+                sut.State.TestEquals( ReactiveTimerState.Idle ),
+                sut.IsDisposed.TestFalse(),
+                sut.Subscribers.TestEmpty(),
+                sut.HasSubscribers.TestFalse() )
+            .Go();
     }
 
     [Theory]
@@ -212,7 +207,7 @@ public class ReactiveTimerTests : TestsBase
 
         var action = Lambda.Of( () => new ReactiveTimer( timestampProvider, interval, spinWaitDurationHint, count ) );
 
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Theory]
@@ -227,7 +222,7 @@ public class ReactiveTimerTests : TestsBase
 
         var action = Lambda.Of( () => new ReactiveTimer( timestampProvider, interval, spinWaitDurationHint, count ) );
 
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Fact]
@@ -240,7 +235,7 @@ public class ReactiveTimerTests : TestsBase
 
         var action = Lambda.Of( () => new ReactiveTimer( timestampProvider, interval, spinWaitDurationHint, count ) );
 
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Theory]
@@ -254,7 +249,7 @@ public class ReactiveTimerTests : TestsBase
 
         var action = Lambda.Of( () => new ReactiveTimer( timestampProvider, interval, spinWaitDurationHint, count ) );
 
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Fact]
@@ -275,13 +270,12 @@ public class ReactiveTimerTests : TestsBase
 
         var result = sut.Start();
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            sut.State.Should().Be( ReactiveTimerState.Idle );
-            sut.IsDisposed.Should().BeTrue();
-            actualEvents.Should().BeSequentiallyEqualTo( expectedEvent );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                sut.State.TestEquals( ReactiveTimerState.Idle ),
+                sut.IsDisposed.TestTrue(),
+                actualEvents.TestSequence( [ expectedEvent ] ) )
+            .Go();
     }
 
     [Fact]
@@ -298,11 +292,10 @@ public class ReactiveTimerTests : TestsBase
         var result = sut.Start();
         await task;
 
-        using ( new AssertionScope() )
-        {
-            state.Should().Be( ReactiveTimerState.Running );
-            result.Should().BeFalse();
-        }
+        Assertion.All(
+                state.TestEquals( ReactiveTimerState.Running ),
+                result.TestFalse() )
+            .Go();
     }
 
     [Fact]
@@ -315,11 +308,10 @@ public class ReactiveTimerTests : TestsBase
 
         var result = sut.Start();
 
-        using ( new AssertionScope() )
-        {
-            sut.State.Should().Be( ReactiveTimerState.Idle );
-            result.Should().BeFalse();
-        }
+        Assertion.All(
+                sut.State.TestEquals( ReactiveTimerState.Idle ),
+                result.TestFalse() )
+            .Go();
     }
 
     [Fact]
@@ -341,13 +333,12 @@ public class ReactiveTimerTests : TestsBase
 
         var result = sut.Start( delay );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            sut.State.Should().Be( ReactiveTimerState.Idle );
-            sut.IsDisposed.Should().BeTrue();
-            actualEvents.Should().BeSequentiallyEqualTo( expectedEvent );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                sut.State.TestEquals( ReactiveTimerState.Idle ),
+                sut.IsDisposed.TestTrue(),
+                actualEvents.TestSequence( [ expectedEvent ] ) )
+            .Go();
     }
 
     [Fact]
@@ -365,11 +356,10 @@ public class ReactiveTimerTests : TestsBase
         var result = sut.Start( delay );
         await task;
 
-        using ( new AssertionScope() )
-        {
-            state.Should().Be( ReactiveTimerState.Running );
-            result.Should().BeFalse();
-        }
+        Assertion.All(
+                state.TestEquals( ReactiveTimerState.Running ),
+                result.TestFalse() )
+            .Go();
     }
 
     [Theory]
@@ -384,7 +374,7 @@ public class ReactiveTimerTests : TestsBase
 
         var action = Lambda.Of( () => sut.Start( delay ) );
 
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Theory]
@@ -399,7 +389,7 @@ public class ReactiveTimerTests : TestsBase
 
         var action = Lambda.Of( () => sut.Start( delay ) );
 
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Fact]
@@ -413,11 +403,10 @@ public class ReactiveTimerTests : TestsBase
 
         var result = sut.Start( delay );
 
-        using ( new AssertionScope() )
-        {
-            sut.State.Should().Be( ReactiveTimerState.Idle );
-            result.Should().BeFalse();
-        }
+        Assertion.All(
+                sut.State.TestEquals( ReactiveTimerState.Idle ),
+                result.TestFalse() )
+            .Go();
     }
 
     [Fact]
@@ -440,13 +429,12 @@ public class ReactiveTimerTests : TestsBase
         var state = sut.State;
         await task;
 
-        using ( new AssertionScope() )
-        {
-            state.Should().Be( ReactiveTimerState.Running );
-            sut.State.Should().Be( ReactiveTimerState.Idle );
-            sut.IsDisposed.Should().BeTrue();
-            actualEvents.Should().BeSequentiallyEqualTo( expectedEvent );
-        }
+        Assertion.All(
+                state.TestEquals( ReactiveTimerState.Running ),
+                sut.State.TestEquals( ReactiveTimerState.Idle ),
+                sut.IsDisposed.TestTrue(),
+                actualEvents.TestSequence( [ expectedEvent ] ) )
+            .Go();
     }
 
     [Fact]
@@ -464,11 +452,10 @@ public class ReactiveTimerTests : TestsBase
         var isCancelled = result.IsCanceled;
         await task;
 
-        using ( new AssertionScope() )
-        {
-            state.Should().Be( ReactiveTimerState.Running );
-            isCancelled.Should().BeTrue();
-        }
+        Assertion.All(
+                state.TestEquals( ReactiveTimerState.Running ),
+                isCancelled.TestTrue() )
+            .Go();
     }
 
     [Fact]
@@ -481,11 +468,10 @@ public class ReactiveTimerTests : TestsBase
 
         var result = sut.StartAsync();
 
-        using ( new AssertionScope() )
-        {
-            sut.State.Should().Be( ReactiveTimerState.Idle );
-            result.IsCompleted.Should().BeTrue();
-        }
+        Assertion.All(
+                sut.State.TestEquals( ReactiveTimerState.Idle ),
+                result.IsCompleted.TestTrue() )
+            .Go();
     }
 
     [Fact]
@@ -509,13 +495,12 @@ public class ReactiveTimerTests : TestsBase
         var state = sut.State;
         await task;
 
-        using ( new AssertionScope() )
-        {
-            state.Should().Be( ReactiveTimerState.Running );
-            sut.State.Should().Be( ReactiveTimerState.Idle );
-            sut.IsDisposed.Should().BeTrue();
-            actualEvents.Should().BeSequentiallyEqualTo( expectedEvent );
-        }
+        Assertion.All(
+                state.TestEquals( ReactiveTimerState.Running ),
+                sut.State.TestEquals( ReactiveTimerState.Idle ),
+                sut.IsDisposed.TestTrue(),
+                actualEvents.TestSequence( [ expectedEvent ] ) )
+            .Go();
     }
 
     [Fact]
@@ -534,11 +519,10 @@ public class ReactiveTimerTests : TestsBase
         var isCancelled = result.IsCanceled;
         await task;
 
-        using ( new AssertionScope() )
-        {
-            state.Should().Be( ReactiveTimerState.Running );
-            isCancelled.Should().BeTrue();
-        }
+        Assertion.All(
+                state.TestEquals( ReactiveTimerState.Running ),
+                isCancelled.TestTrue() )
+            .Go();
     }
 
     [Theory]
@@ -553,7 +537,7 @@ public class ReactiveTimerTests : TestsBase
 
         var action = Lambda.Of( () => sut.StartAsync( delay ) );
 
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Theory]
@@ -568,7 +552,7 @@ public class ReactiveTimerTests : TestsBase
 
         var action = Lambda.Of( () => sut.StartAsync( delay ) );
 
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Fact]
@@ -582,11 +566,10 @@ public class ReactiveTimerTests : TestsBase
 
         var result = sut.StartAsync( delay );
 
-        using ( new AssertionScope() )
-        {
-            sut.State.Should().Be( ReactiveTimerState.Idle );
-            result.IsCompleted.Should().BeTrue();
-        }
+        Assertion.All(
+                sut.State.TestEquals( ReactiveTimerState.Idle ),
+                result.IsCompleted.TestTrue() )
+            .Go();
     }
 
     [Fact]
@@ -608,12 +591,11 @@ public class ReactiveTimerTests : TestsBase
 
         await sut.StartAsync( scheduler );
 
-        using ( new AssertionScope() )
-        {
-            sut.State.Should().Be( ReactiveTimerState.Idle );
-            sut.IsDisposed.Should().BeTrue();
-            actualEvents.Should().BeSequentiallyEqualTo( expectedEvent );
-        }
+        Assertion.All(
+                sut.State.TestEquals( ReactiveTimerState.Idle ),
+                sut.IsDisposed.TestTrue(),
+                actualEvents.TestSequence( [ expectedEvent ] ) )
+            .Go();
     }
 
     [Fact]
@@ -632,11 +614,10 @@ public class ReactiveTimerTests : TestsBase
         var isCancelled = result.IsCanceled;
         await task;
 
-        using ( new AssertionScope() )
-        {
-            state.Should().Be( ReactiveTimerState.Running );
-            isCancelled.Should().BeTrue();
-        }
+        Assertion.All(
+                state.TestEquals( ReactiveTimerState.Running ),
+                isCancelled.TestTrue() )
+            .Go();
     }
 
     [Fact]
@@ -650,11 +631,10 @@ public class ReactiveTimerTests : TestsBase
 
         var result = sut.StartAsync( scheduler );
 
-        using ( new AssertionScope() )
-        {
-            sut.State.Should().Be( ReactiveTimerState.Idle );
-            result.IsCompleted.Should().BeTrue();
-        }
+        Assertion.All(
+                sut.State.TestEquals( ReactiveTimerState.Idle ),
+                result.IsCompleted.TestTrue() )
+            .Go();
     }
 
     [Fact]
@@ -677,12 +657,11 @@ public class ReactiveTimerTests : TestsBase
 
         await sut.StartAsync( scheduler, delay );
 
-        using ( new AssertionScope() )
-        {
-            sut.State.Should().Be( ReactiveTimerState.Idle );
-            sut.IsDisposed.Should().BeTrue();
-            actualEvents.Should().BeSequentiallyEqualTo( expectedEvent );
-        }
+        Assertion.All(
+                sut.State.TestEquals( ReactiveTimerState.Idle ),
+                sut.IsDisposed.TestTrue(),
+                actualEvents.TestSequence( [ expectedEvent ] ) )
+            .Go();
     }
 
     [Fact]
@@ -702,11 +681,10 @@ public class ReactiveTimerTests : TestsBase
         var isCancelled = result.IsCanceled;
         await task;
 
-        using ( new AssertionScope() )
-        {
-            state.Should().Be( ReactiveTimerState.Running );
-            isCancelled.Should().BeTrue();
-        }
+        Assertion.All(
+                state.TestEquals( ReactiveTimerState.Running ),
+                isCancelled.TestTrue() )
+            .Go();
     }
 
     [Theory]
@@ -722,7 +700,7 @@ public class ReactiveTimerTests : TestsBase
 
         var action = Lambda.Of( () => sut.StartAsync( scheduler, delay ) );
 
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Theory]
@@ -738,7 +716,7 @@ public class ReactiveTimerTests : TestsBase
 
         var action = Lambda.Of( () => sut.StartAsync( scheduler, delay ) );
 
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Fact]
@@ -753,11 +731,10 @@ public class ReactiveTimerTests : TestsBase
 
         var result = sut.StartAsync( scheduler, delay );
 
-        using ( new AssertionScope() )
-        {
-            sut.State.Should().Be( ReactiveTimerState.Idle );
-            result.IsCompleted.Should().BeTrue();
-        }
+        Assertion.All(
+                sut.State.TestEquals( ReactiveTimerState.Idle ),
+                result.IsCompleted.TestTrue() )
+            .Go();
     }
 
     [Fact]
@@ -787,12 +764,11 @@ public class ReactiveTimerTests : TestsBase
 
         sut.Start();
 
-        using ( new AssertionScope() )
-        {
-            sut.State.Should().Be( ReactiveTimerState.Idle );
-            sut.IsDisposed.Should().BeTrue();
-            actualEvents.Should().BeSequentiallyEqualTo( expectedEvents );
-        }
+        Assertion.All(
+                sut.State.TestEquals( ReactiveTimerState.Idle ),
+                sut.IsDisposed.TestTrue(),
+                actualEvents.TestSequence( expectedEvents ) )
+            .Go();
     }
 
     [Fact]
@@ -821,12 +797,11 @@ public class ReactiveTimerTests : TestsBase
 
         sut.Start();
 
-        using ( new AssertionScope() )
-        {
-            sut.State.Should().Be( ReactiveTimerState.Idle );
-            sut.IsDisposed.Should().BeTrue();
-            actualEvents.Should().BeSequentiallyEqualTo( expectedEvents );
-        }
+        Assertion.All(
+                sut.State.TestEquals( ReactiveTimerState.Idle ),
+                sut.IsDisposed.TestTrue(),
+                actualEvents.TestSequence( expectedEvents ) )
+            .Go();
     }
 
     [Fact]
@@ -852,12 +827,11 @@ public class ReactiveTimerTests : TestsBase
 
         sut.Start();
 
-        using ( new AssertionScope() )
-        {
-            sut.State.Should().Be( ReactiveTimerState.Idle );
-            sut.IsDisposed.Should().BeTrue();
-            actualEvents.Should().BeSequentiallyEqualTo( expectedEvents );
-        }
+        Assertion.All(
+                sut.State.TestEquals( ReactiveTimerState.Idle ),
+                sut.IsDisposed.TestTrue(),
+                actualEvents.TestSequence( expectedEvents ) )
+            .Go();
     }
 
     [Fact]
@@ -895,12 +869,11 @@ public class ReactiveTimerTests : TestsBase
 
         sut.Start();
 
-        using ( new AssertionScope() )
-        {
-            sut.State.Should().Be( ReactiveTimerState.Idle );
-            sut.IsDisposed.Should().BeTrue();
-            actualEvents.Should().BeSequentiallyEqualTo( expectedEvents );
-        }
+        Assertion.All(
+                sut.State.TestEquals( ReactiveTimerState.Idle ),
+                sut.IsDisposed.TestTrue(),
+                actualEvents.TestSequence( expectedEvents ) )
+            .Go();
     }
 
     [Fact]
@@ -938,12 +911,11 @@ public class ReactiveTimerTests : TestsBase
 
         sut.Start();
 
-        using ( new AssertionScope() )
-        {
-            sut.State.Should().Be( ReactiveTimerState.Idle );
-            sut.IsDisposed.Should().BeTrue();
-            actualEvents.Should().BeSequentiallyEqualTo( expectedEvents );
-        }
+        Assertion.All(
+                sut.State.TestEquals( ReactiveTimerState.Idle ),
+                sut.IsDisposed.TestTrue(),
+                actualEvents.TestSequence( expectedEvents ) )
+            .Go();
     }
 
     [Fact]
@@ -985,12 +957,11 @@ public class ReactiveTimerTests : TestsBase
 
         sut.Start();
 
-        using ( new AssertionScope() )
-        {
-            sut.State.Should().Be( ReactiveTimerState.Idle );
-            sut.IsDisposed.Should().BeTrue();
-            actualEvents.Should().BeSequentiallyEqualTo( expectedEvents );
-        }
+        Assertion.All(
+                sut.State.TestEquals( ReactiveTimerState.Idle ),
+                sut.IsDisposed.TestTrue(),
+                actualEvents.TestSequence( expectedEvents ) )
+            .Go();
     }
 
     [Fact]
@@ -1014,12 +985,11 @@ public class ReactiveTimerTests : TestsBase
 
         sut.Start();
 
-        using ( new AssertionScope() )
-        {
-            sut.State.Should().Be( ReactiveTimerState.Idle );
-            sut.IsDisposed.Should().BeTrue();
-            actualEvents.Should().BeSequentiallyEqualTo( expectedEvent );
-        }
+        Assertion.All(
+                sut.State.TestEquals( ReactiveTimerState.Idle ),
+                sut.IsDisposed.TestTrue(),
+                actualEvents.TestSequence( [ expectedEvent ] ) )
+            .Go();
     }
 
     [Fact]
@@ -1066,12 +1036,11 @@ public class ReactiveTimerTests : TestsBase
         sut.Start();
         sut.Start();
 
-        using ( new AssertionScope() )
-        {
-            sut.State.Should().Be( ReactiveTimerState.Idle );
-            sut.IsDisposed.Should().BeTrue();
-            actualEvents.Should().BeSequentiallyEqualTo( expectedEvents );
-        }
+        Assertion.All(
+                sut.State.TestEquals( ReactiveTimerState.Idle ),
+                sut.IsDisposed.TestTrue(),
+                actualEvents.TestSequence( expectedEvents ) )
+            .Go();
     }
 
     [Fact]
@@ -1083,7 +1052,7 @@ public class ReactiveTimerTests : TestsBase
 
         sut.Dispose();
 
-        sut.IsDisposed.Should().BeTrue();
+        sut.IsDisposed.TestTrue().Go();
     }
 
     [Fact]
@@ -1096,7 +1065,7 @@ public class ReactiveTimerTests : TestsBase
 
         sut.Dispose();
 
-        sut.IsDisposed.Should().BeTrue();
+        sut.IsDisposed.TestTrue().Go();
     }
 
     [Fact]
@@ -1113,11 +1082,10 @@ public class ReactiveTimerTests : TestsBase
         sut.Dispose();
         await task;
 
-        using ( new AssertionScope() )
-        {
-            sut.State.Should().Be( ReactiveTimerState.Idle );
-            listener.VerifyCalls().DidNotReceive( x => x.React( Arg.Any<WithInterval<long>>() ) );
-        }
+        Assertion.All(
+                sut.State.TestEquals( ReactiveTimerState.Idle ),
+                listener.TestDidNotReceiveCall( x => x.React( Arg.Any<WithInterval<long>>() ) ) )
+            .Go();
     }
 
     [Fact]
@@ -1136,14 +1104,13 @@ public class ReactiveTimerTests : TestsBase
         var state = sut.State;
         await task;
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            state.Should().NotBe( ReactiveTimerState.Running );
-            sut.State.Should().Be( ReactiveTimerState.Idle );
-            sut.IsDisposed.Should().BeFalse();
-            listener.VerifyCalls().DidNotReceive( x => x.React( Arg.Any<WithInterval<long>>() ) );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                state.TestNotEquals( ReactiveTimerState.Running ),
+                sut.State.TestEquals( ReactiveTimerState.Idle ),
+                sut.IsDisposed.TestFalse(),
+                listener.TestDidNotReceiveCall( x => x.React( Arg.Any<WithInterval<long>>() ) ) )
+            .Go();
     }
 
     [Fact]
@@ -1170,12 +1137,11 @@ public class ReactiveTimerTests : TestsBase
         sut.Listen( listener );
         sut.Start();
 
-        using ( new AssertionScope() )
-        {
-            sut.State.Should().Be( ReactiveTimerState.Idle );
-            sut.IsDisposed.Should().BeFalse();
-            actualEvents.Should().BeSequentiallyEqualTo( expectedEvent );
-        }
+        Assertion.All(
+                sut.State.TestEquals( ReactiveTimerState.Idle ),
+                sut.IsDisposed.TestFalse(),
+                actualEvents.TestSequence( [ expectedEvent ] ) )
+            .Go();
     }
 
     [Fact]
@@ -1187,11 +1153,10 @@ public class ReactiveTimerTests : TestsBase
 
         var result = sut.Stop();
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeFalse();
-            sut.State.Should().Be( ReactiveTimerState.Idle );
-        }
+        Assertion.All(
+                result.TestFalse(),
+                sut.State.TestEquals( ReactiveTimerState.Idle ) )
+            .Go();
     }
 
     [Fact]
@@ -1204,10 +1169,9 @@ public class ReactiveTimerTests : TestsBase
 
         var result = sut.Stop();
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeFalse();
-            sut.State.Should().Be( ReactiveTimerState.Idle );
-        }
+        Assertion.All(
+                result.TestFalse(),
+                sut.State.TestEquals( ReactiveTimerState.Idle ) )
+            .Go();
     }
 }

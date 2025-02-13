@@ -4,7 +4,6 @@ using LfrlAnvil.Chrono;
 using LfrlAnvil.Reactive.Chrono.Composites;
 using LfrlAnvil.Reactive.Chrono.Decorators;
 using LfrlAnvil.Reactive.Chrono.Extensions;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Reactive.Chrono.Tests.DecoratorsTests;
 
@@ -23,7 +22,7 @@ public class EventListenerDelayDecoratorTests : TestsBase
 
         _ = sut.Decorate( next, subscriber );
 
-        subscriber.VerifyCalls().DidNotReceive( x => x.Dispose() );
+        subscriber.TestDidNotReceiveCall( x => x.Dispose() ).Go();
     }
 
     [Fact]
@@ -56,7 +55,7 @@ public class EventListenerDelayDecoratorTests : TestsBase
         listener.React( sourceEvent );
         await completion.Task;
 
-        actualEvents.Should().BeSequentiallyEqualTo( expectedEvent );
+        actualEvents.TestSequence( [ expectedEvent ] ).Go();
     }
 
     [Fact]
@@ -83,7 +82,7 @@ public class EventListenerDelayDecoratorTests : TestsBase
 
         listener.React( sourceEvent );
 
-        actualEvents.Should().BeSequentiallyEqualTo( expectedEvent );
+        actualEvents.TestSequence( [ expectedEvent ] ).Go();
     }
 
     [Theory]
@@ -102,7 +101,7 @@ public class EventListenerDelayDecoratorTests : TestsBase
 
         listener.OnDispose( source );
 
-        next.VerifyCalls().Received( x => x.OnDispose( source ) );
+        next.TestReceivedCalls( x => x.OnDispose( source ) ).Go();
     }
 
     [Fact]
@@ -130,7 +129,7 @@ public class EventListenerDelayDecoratorTests : TestsBase
         sut.Publish( sourceEvent );
         await completion.Task;
 
-        actualEvents.Should().BeSequentiallyEqualTo( expectedEvent );
+        actualEvents.TestSequence( [ expectedEvent ] ).Go();
     }
 
     [Fact]
@@ -152,6 +151,6 @@ public class EventListenerDelayDecoratorTests : TestsBase
 
         sut.Publish( sourceEvent );
 
-        actualEvents.Should().BeSequentiallyEqualTo( expectedEvent );
+        actualEvents.TestSequence( [ expectedEvent ] ).Go();
     }
 }

@@ -13,12 +13,11 @@ public class EventQueueTests : TestsBase
         var startPoint = new Timestamp( startTicks );
         var sut = new EventQueue<int>( startPoint );
 
-        using ( new AssertionScope() )
-        {
-            sut.StartPoint.Should().Be( startPoint );
-            sut.CurrentPoint.Should().Be( startPoint );
-            sut.Count.Should().Be( 0 );
-        }
+        Assertion.All(
+                sut.StartPoint.TestEquals( startPoint ),
+                sut.CurrentPoint.TestEquals( startPoint ),
+                sut.Count.TestEquals( 0 ) )
+            .Go();
     }
 
     [Fact]
@@ -26,6 +25,6 @@ public class EventQueueTests : TestsBase
     {
         var sut = new EventQueue<int>( new Timestamp( 123 ) );
         sut.Move( Duration.FromTicks( 456 ) );
-        sut.CurrentPoint.Should().Be( new Timestamp( 579 ) );
+        sut.CurrentPoint.TestEquals( new Timestamp( 579 ) ).Go();
     }
 }

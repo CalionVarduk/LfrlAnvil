@@ -13,12 +13,11 @@ public class ReorderableEventQueueTests : TestsBase
         var startPoint = new Timestamp( startTicks );
         var sut = new ReorderableEventQueue<int>( startPoint );
 
-        using ( new AssertionScope() )
-        {
-            sut.StartPoint.Should().Be( startPoint );
-            sut.CurrentPoint.Should().Be( startPoint );
-            sut.Count.Should().Be( 0 );
-        }
+        Assertion.All(
+                sut.StartPoint.TestEquals( startPoint ),
+                sut.CurrentPoint.TestEquals( startPoint ),
+                sut.Count.TestEquals( 0 ) )
+            .Go();
     }
 
     [Theory]
@@ -31,13 +30,12 @@ public class ReorderableEventQueueTests : TestsBase
         var eventComparer = EqualityComparerFactory<int>.Create( (a, b) => a.GetHashCode() == b.GetHashCode() );
         var sut = new ReorderableEventQueue<int>( startPoint, eventComparer );
 
-        using ( new AssertionScope() )
-        {
-            sut.StartPoint.Should().Be( startPoint );
-            sut.CurrentPoint.Should().Be( startPoint );
-            sut.Count.Should().Be( 0 );
-            sut.EventComparer.Should().BeSameAs( eventComparer );
-        }
+        Assertion.All(
+                sut.StartPoint.TestEquals( startPoint ),
+                sut.CurrentPoint.TestEquals( startPoint ),
+                sut.Count.TestEquals( 0 ),
+                sut.EventComparer.TestRefEquals( eventComparer ) )
+            .Go();
     }
 
     [Fact]
@@ -45,7 +43,7 @@ public class ReorderableEventQueueTests : TestsBase
     {
         var sut = new ReorderableEventQueue<int>( new Timestamp( 123 ) );
         sut.Move( Duration.FromTicks( 456 ) );
-        sut.CurrentPoint.Should().Be( new Timestamp( 579 ) );
+        sut.CurrentPoint.TestEquals( new Timestamp( 579 ) ).Go();
     }
 
     [Fact]
@@ -56,7 +54,7 @@ public class ReorderableEventQueueTests : TestsBase
 
         var @event = sut.AdvanceDequeuePoint( 0, Duration.FromTicks( 321 ) );
 
-        (@event?.DequeuePoint).Should().Be( new Timestamp( 258 ) );
+        (@event?.DequeuePoint).TestEquals( new Timestamp( 258 ) ).Go();
     }
 
     [Fact]
@@ -67,7 +65,7 @@ public class ReorderableEventQueueTests : TestsBase
 
         var @event = sut.IncreaseDelta( 0, Duration.FromTicks( 321 ) );
 
-        (@event?.Delta).Should().Be( Duration.FromTicks( 777 ) );
+        (@event?.Delta).TestEquals( Duration.FromTicks( 777 ) ).Go();
     }
 
     [Fact]
@@ -78,6 +76,6 @@ public class ReorderableEventQueueTests : TestsBase
 
         var @event = sut.DecreaseDelta( 0, Duration.FromTicks( 321 ) );
 
-        (@event?.Delta).Should().Be( Duration.FromTicks( 135 ) );
+        (@event?.Delta).TestEquals( Duration.FromTicks( 135 ) ).Go();
     }
 }

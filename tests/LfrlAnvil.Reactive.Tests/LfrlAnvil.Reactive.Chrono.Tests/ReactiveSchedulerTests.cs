@@ -7,7 +7,6 @@ using LfrlAnvil.Async;
 using LfrlAnvil.Chrono;
 using LfrlAnvil.Chrono.Internal;
 using LfrlAnvil.Functional;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Reactive.Chrono.Tests;
 
@@ -20,16 +19,15 @@ public class ReactiveSchedulerTests : TestsBase
         var timestamps = new Timestamps( start );
         var sut = new ReactiveScheduler<string>( timestamps );
 
-        using ( new AssertionScope() )
-        {
-            sut.Timestamps.Should().BeSameAs( timestamps );
-            sut.State.Should().Be( ReactiveSchedulerState.Created );
-            sut.DefaultInterval.Should().Be( Duration.FromHours( 1 ) );
-            sut.SpinWaitDurationHint.Should().Be( Duration.FromMicroseconds( 1 ) );
-            sut.StartTimestamp.Should().Be( start );
-            sut.KeyComparer.Should().BeSameAs( EqualityComparer<string>.Default );
-            sut.TaskKeys.Should().BeEmpty();
-        }
+        Assertion.All(
+                sut.Timestamps.TestRefEquals( timestamps ),
+                sut.State.TestEquals( ReactiveSchedulerState.Created ),
+                sut.DefaultInterval.TestEquals( Duration.FromHours( 1 ) ),
+                sut.SpinWaitDurationHint.TestEquals( Duration.FromMicroseconds( 1 ) ),
+                sut.StartTimestamp.TestEquals( start ),
+                sut.KeyComparer.TestRefEquals( EqualityComparer<string>.Default ),
+                sut.TaskKeys.TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -42,16 +40,15 @@ public class ReactiveSchedulerTests : TestsBase
         var keyComparer = EqualityComparerFactory<string>.Create( (a, b) => a!.Equals( b ) );
         var sut = new ReactiveScheduler<string>( timestamps, keyComparer, defaultInterval, spinWaitDurationHint );
 
-        using ( new AssertionScope() )
-        {
-            sut.Timestamps.Should().BeSameAs( timestamps );
-            sut.State.Should().Be( ReactiveSchedulerState.Created );
-            sut.DefaultInterval.Should().Be( defaultInterval );
-            sut.SpinWaitDurationHint.Should().Be( spinWaitDurationHint );
-            sut.StartTimestamp.Should().Be( start );
-            sut.KeyComparer.Should().BeSameAs( keyComparer );
-            sut.TaskKeys.Should().BeEmpty();
-        }
+        Assertion.All(
+                sut.Timestamps.TestRefEquals( timestamps ),
+                sut.State.TestEquals( ReactiveSchedulerState.Created ),
+                sut.DefaultInterval.TestEquals( defaultInterval ),
+                sut.SpinWaitDurationHint.TestEquals( spinWaitDurationHint ),
+                sut.StartTimestamp.TestEquals( start ),
+                sut.KeyComparer.TestRefEquals( keyComparer ),
+                sut.TaskKeys.TestEmpty() )
+            .Go();
     }
 
     [Theory]
@@ -73,7 +70,7 @@ public class ReactiveSchedulerTests : TestsBase
                 defaultInterval: defaultInterval,
                 spinWaitDurationHint: spinWaitDurationHint ) );
 
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Fact]
@@ -86,12 +83,11 @@ public class ReactiveSchedulerTests : TestsBase
 
         var result = sut.Schedule( task, next );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            sut.TaskKeys.Should().BeSequentiallyEqualTo( "foo" );
-            AssertTaskState( sut.TryGetTaskState( "foo" ), task, nextTimestamp: next, interval: Duration.Zero, repetitions: 1 );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                sut.TaskKeys.TestSequence( [ "foo" ] ),
+                AssertTaskState( sut.TryGetTaskState( "foo" ), task, nextTimestamp: next, interval: Duration.Zero, repetitions: 1 ) )
+            .Go();
     }
 
     [Fact]
@@ -105,12 +101,11 @@ public class ReactiveSchedulerTests : TestsBase
 
         var result = sut.Schedule( task, next, interval, 42 );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            sut.TaskKeys.Should().BeSequentiallyEqualTo( "foo" );
-            AssertTaskState( sut.TryGetTaskState( "foo" ), task, nextTimestamp: next, interval: interval, repetitions: 42 );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                sut.TaskKeys.TestSequence( [ "foo" ] ),
+                AssertTaskState( sut.TryGetTaskState( "foo" ), task, nextTimestamp: next, interval: interval, repetitions: 42 ) )
+            .Go();
     }
 
     [Fact]
@@ -124,18 +119,17 @@ public class ReactiveSchedulerTests : TestsBase
 
         var result = sut.ScheduleInfinite( task, next, interval );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            sut.TaskKeys.Should().BeSequentiallyEqualTo( "foo" );
-            AssertTaskState(
-                sut.TryGetTaskState( "foo" ),
-                task,
-                nextTimestamp: next,
-                interval: interval,
-                repetitions: null,
-                isInfinite: true );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                sut.TaskKeys.TestSequence( [ "foo" ] ),
+                AssertTaskState(
+                    sut.TryGetTaskState( "foo" ),
+                    task,
+                    nextTimestamp: next,
+                    interval: interval,
+                    repetitions: null,
+                    isInfinite: true ) )
+            .Go();
     }
 
     [Fact]
@@ -149,12 +143,11 @@ public class ReactiveSchedulerTests : TestsBase
 
         var result = sut.Schedule( new ScheduleTask( "foo" ), new Timestamp( 456 ) );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeFalse();
-            sut.TaskKeys.Should().BeSequentiallyEqualTo( "foo" );
-            AssertTaskState( sut.TryGetTaskState( "foo" ), task, nextTimestamp: next, interval: Duration.Zero, repetitions: 1 );
-        }
+        Assertion.All(
+                result.TestFalse(),
+                sut.TaskKeys.TestSequence( [ "foo" ] ),
+                AssertTaskState( sut.TryGetTaskState( "foo" ), task, nextTimestamp: next, interval: Duration.Zero, repetitions: 1 ) )
+            .Go();
     }
 
     [Fact]
@@ -169,12 +162,11 @@ public class ReactiveSchedulerTests : TestsBase
 
         var result = sut.Schedule( new ScheduleTask( "foo" ), new Timestamp( 789 ), Duration.FromTicks( 234 ), 84 );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeFalse();
-            sut.TaskKeys.Should().BeSequentiallyEqualTo( "foo" );
-            AssertTaskState( sut.TryGetTaskState( "foo" ), task, nextTimestamp: next, interval: interval, repetitions: 42 );
-        }
+        Assertion.All(
+                result.TestFalse(),
+                sut.TaskKeys.TestSequence( [ "foo" ] ),
+                AssertTaskState( sut.TryGetTaskState( "foo" ), task, nextTimestamp: next, interval: interval, repetitions: 42 ) )
+            .Go();
     }
 
     [Fact]
@@ -189,18 +181,17 @@ public class ReactiveSchedulerTests : TestsBase
 
         var result = sut.ScheduleInfinite( new ScheduleTask( "foo" ), new Timestamp( 789 ), Duration.FromTicks( 234 ) );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeFalse();
-            sut.TaskKeys.Should().BeSequentiallyEqualTo( "foo" );
-            AssertTaskState(
-                sut.TryGetTaskState( "foo" ),
-                task,
-                nextTimestamp: next,
-                interval: interval,
-                repetitions: null,
-                isInfinite: true );
-        }
+        Assertion.All(
+                result.TestFalse(),
+                sut.TaskKeys.TestSequence( [ "foo" ] ),
+                AssertTaskState(
+                    sut.TryGetTaskState( "foo" ),
+                    task,
+                    nextTimestamp: next,
+                    interval: interval,
+                    repetitions: null,
+                    isInfinite: true ) )
+            .Go();
     }
 
     [Fact]
@@ -214,12 +205,11 @@ public class ReactiveSchedulerTests : TestsBase
 
         var result = sut.Schedule( task, next );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            sut.TaskKeys.Should().BeSequentiallyEqualTo( "foo" );
-            AssertTaskState( sut.TryGetTaskState( "foo" ), task, nextTimestamp: next, interval: Duration.Zero, repetitions: 1 );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                sut.TaskKeys.TestSequence( [ "foo" ] ),
+                AssertTaskState( sut.TryGetTaskState( "foo" ), task, nextTimestamp: next, interval: Duration.Zero, repetitions: 1 ) )
+            .Go();
     }
 
     [Fact]
@@ -234,12 +224,11 @@ public class ReactiveSchedulerTests : TestsBase
 
         var result = sut.Schedule( task, next, interval, 42 );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            sut.TaskKeys.Should().BeSequentiallyEqualTo( "foo" );
-            AssertTaskState( sut.TryGetTaskState( "foo" ), task, nextTimestamp: next, interval: interval, repetitions: 42 );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                sut.TaskKeys.TestSequence( [ "foo" ] ),
+                AssertTaskState( sut.TryGetTaskState( "foo" ), task, nextTimestamp: next, interval: interval, repetitions: 42 ) )
+            .Go();
     }
 
     [Fact]
@@ -254,18 +243,17 @@ public class ReactiveSchedulerTests : TestsBase
 
         var result = sut.ScheduleInfinite( task, next, interval );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            sut.TaskKeys.Should().BeSequentiallyEqualTo( "foo" );
-            AssertTaskState(
-                sut.TryGetTaskState( "foo" ),
-                task,
-                nextTimestamp: next,
-                interval: interval,
-                repetitions: null,
-                isInfinite: true );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                sut.TaskKeys.TestSequence( [ "foo" ] ),
+                AssertTaskState(
+                    sut.TryGetTaskState( "foo" ),
+                    task,
+                    nextTimestamp: next,
+                    interval: interval,
+                    repetitions: null,
+                    isInfinite: true ) )
+            .Go();
     }
 
     [Fact]
@@ -278,12 +266,11 @@ public class ReactiveSchedulerTests : TestsBase
 
         var result = sut.Schedule( task, new Timestamp( 123 ) );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeFalse();
-            sut.TaskKeys.Should().BeEmpty();
-            sut.TryGetTaskState( "foo" ).Should().BeNull();
-        }
+        Assertion.All(
+                result.TestFalse(),
+                sut.TaskKeys.TestEmpty(),
+                sut.TryGetTaskState( "foo" ).TestNull() )
+            .Go();
     }
 
     [Fact]
@@ -296,12 +283,11 @@ public class ReactiveSchedulerTests : TestsBase
 
         var result = sut.Schedule( task, new Timestamp( 123 ), Duration.FromTicks( 456 ), 42 );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeFalse();
-            sut.TaskKeys.Should().BeEmpty();
-            sut.TryGetTaskState( "foo" ).Should().BeNull();
-        }
+        Assertion.All(
+                result.TestFalse(),
+                sut.TaskKeys.TestEmpty(),
+                sut.TryGetTaskState( "foo" ).TestNull() )
+            .Go();
     }
 
     [Fact]
@@ -314,12 +300,11 @@ public class ReactiveSchedulerTests : TestsBase
 
         var result = sut.ScheduleInfinite( task, new Timestamp( 123 ), Duration.FromTicks( 456 ) );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeFalse();
-            sut.TaskKeys.Should().BeEmpty();
-            sut.TryGetTaskState( "foo" ).Should().BeNull();
-        }
+        Assertion.All(
+                result.TestFalse(),
+                sut.TaskKeys.TestEmpty(),
+                sut.TryGetTaskState( "foo" ).TestNull() )
+            .Go();
     }
 
     [Theory]
@@ -333,12 +318,11 @@ public class ReactiveSchedulerTests : TestsBase
 
         var result = sut.Schedule( task, new Timestamp( 123 ), Duration.FromTicks( 456 ), repetitions );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeFalse();
-            sut.TaskKeys.Should().BeEmpty();
-            sut.TryGetTaskState( "foo" ).Should().BeNull();
-        }
+        Assertion.All(
+                result.TestFalse(),
+                sut.TaskKeys.TestEmpty(),
+                sut.TryGetTaskState( "foo" ).TestNull() )
+            .Go();
     }
 
     [Fact]
@@ -350,7 +334,7 @@ public class ReactiveSchedulerTests : TestsBase
 
         var action = Lambda.Of( () => sut.Schedule( task, new Timestamp( 123 ), Duration.FromTicks( -1 ), 1 ) );
 
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Fact]
@@ -362,7 +346,7 @@ public class ReactiveSchedulerTests : TestsBase
 
         var action = Lambda.Of( () => sut.ScheduleInfinite( task, new Timestamp( 123 ), Duration.FromTicks( -1 ) ) );
 
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Fact]
@@ -373,7 +357,7 @@ public class ReactiveSchedulerTests : TestsBase
 
         var result = sut.SetInterval( "foo", Duration.FromHours( 1 ) );
 
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Fact]
@@ -385,7 +369,7 @@ public class ReactiveSchedulerTests : TestsBase
 
         var result = sut.SetInterval( "foo", Duration.FromHours( 1 ) );
 
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Theory]
@@ -400,16 +384,15 @@ public class ReactiveSchedulerTests : TestsBase
 
         var result = sut.SetInterval( "foo", Duration.FromTicks( ticks ) );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            AssertTaskState(
-                sut.TryGetTaskState( "foo" ),
-                task,
-                interval: Duration.FromTicks( ticks ),
-                nextTimestamp: new Timestamp( 123 ),
-                repetitions: 42 );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                AssertTaskState(
+                    sut.TryGetTaskState( "foo" ),
+                    task,
+                    interval: Duration.FromTicks( ticks ),
+                    nextTimestamp: new Timestamp( 123 ),
+                    repetitions: 42 ) )
+            .Go();
     }
 
     [Theory]
@@ -422,7 +405,7 @@ public class ReactiveSchedulerTests : TestsBase
 
         var action = Lambda.Of( () => sut.SetInterval( "foo", Duration.FromTicks( ticks ) ) );
 
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Fact]
@@ -433,7 +416,7 @@ public class ReactiveSchedulerTests : TestsBase
 
         var result = sut.SetRepetitions( "foo", 1 );
 
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Fact]
@@ -445,7 +428,7 @@ public class ReactiveSchedulerTests : TestsBase
 
         var result = sut.SetRepetitions( "foo", 1 );
 
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Theory]
@@ -460,16 +443,15 @@ public class ReactiveSchedulerTests : TestsBase
 
         var result = sut.SetRepetitions( "foo", repetitions );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            AssertTaskState(
-                sut.TryGetTaskState( "foo" ),
-                task,
-                interval: Duration.FromTicks( 123 ),
-                nextTimestamp: new Timestamp( 123 ),
-                repetitions: repetitions );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                AssertTaskState(
+                    sut.TryGetTaskState( "foo" ),
+                    task,
+                    interval: Duration.FromTicks( 123 ),
+                    nextTimestamp: new Timestamp( 123 ),
+                    repetitions: repetitions ) )
+            .Go();
     }
 
     [Theory]
@@ -482,7 +464,7 @@ public class ReactiveSchedulerTests : TestsBase
 
         var action = Lambda.Of( () => sut.SetRepetitions( "foo", repetitions ) );
 
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Fact]
@@ -493,7 +475,7 @@ public class ReactiveSchedulerTests : TestsBase
 
         var result = sut.MakeInfinite( "foo" );
 
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Fact]
@@ -505,7 +487,7 @@ public class ReactiveSchedulerTests : TestsBase
 
         var result = sut.MakeInfinite( "foo" );
 
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Fact]
@@ -518,16 +500,15 @@ public class ReactiveSchedulerTests : TestsBase
 
         var result = sut.MakeInfinite( "foo" );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            AssertTaskState(
-                sut.TryGetTaskState( "foo" ),
-                task,
-                interval: Duration.FromTicks( 123 ),
-                nextTimestamp: new Timestamp( 123 ),
-                isInfinite: true );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                AssertTaskState(
+                    sut.TryGetTaskState( "foo" ),
+                    task,
+                    interval: Duration.FromTicks( 123 ),
+                    nextTimestamp: new Timestamp( 123 ),
+                    isInfinite: true ) )
+            .Go();
     }
 
     [Fact]
@@ -538,7 +519,7 @@ public class ReactiveSchedulerTests : TestsBase
 
         var result = sut.SetNextTimestamp( "foo", new Timestamp( 123 ) );
 
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Fact]
@@ -550,7 +531,7 @@ public class ReactiveSchedulerTests : TestsBase
 
         var result = sut.SetNextTimestamp( "foo", new Timestamp( 123 ) );
 
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Theory]
@@ -565,16 +546,15 @@ public class ReactiveSchedulerTests : TestsBase
 
         var result = sut.SetNextTimestamp( "foo", new Timestamp( ticks ) );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            AssertTaskState(
-                sut.TryGetTaskState( "foo" ),
-                task,
-                interval: Duration.FromTicks( 123 ),
-                nextTimestamp: new Timestamp( ticks ),
-                repetitions: 42 );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                AssertTaskState(
+                    sut.TryGetTaskState( "foo" ),
+                    task,
+                    interval: Duration.FromTicks( 123 ),
+                    nextTimestamp: new Timestamp( ticks ),
+                    repetitions: 42 ) )
+            .Go();
     }
 
     [Fact]
@@ -606,38 +586,34 @@ public class ReactiveSchedulerTests : TestsBase
         sut.Dispose();
         invocationOrder.CancelTimeout();
 
-        using ( new AssertionScope() )
-        {
-            scheduleResult.Should().BeFalse();
-            setIntervalResult.Should().BeFalse();
-            setRepetitionsResult.Should().BeFalse();
-            makeInfiniteResult.Should().BeFalse();
-            setNextTimestampResult.Should().BeFalse();
-
-            AssertTaskState(
-                state1,
-                task,
-                Duration.Zero,
-                repetitions: 0,
-                firstInvocationTimestamp: new Timestamp( 123 ),
-                lastInvocationTimestamp: new Timestamp( 123 ),
-                totalInvocations: 1,
-                activeTasks: 1,
-                maxActiveTasks: 1 );
-
-            AssertTaskState(
-                state2,
-                task,
-                Duration.Zero,
-                isDisposed: true,
-                firstInvocationTimestamp: new Timestamp( 123 ),
-                lastInvocationTimestamp: new Timestamp( 123 ),
-                totalInvocations: 1,
-                activeTasks: 1,
-                maxActiveTasks: 1 );
-
-            state3.Should().BeEquivalentTo( state2 );
-        }
+        Assertion.All(
+                scheduleResult.TestFalse(),
+                setIntervalResult.TestFalse(),
+                setRepetitionsResult.TestFalse(),
+                makeInfiniteResult.TestFalse(),
+                setNextTimestampResult.TestFalse(),
+                AssertTaskState(
+                    state1,
+                    task,
+                    Duration.Zero,
+                    repetitions: 0,
+                    firstInvocationTimestamp: new Timestamp( 123 ),
+                    lastInvocationTimestamp: new Timestamp( 123 ),
+                    totalInvocations: 1,
+                    activeTasks: 1,
+                    maxActiveTasks: 1 ),
+                AssertTaskState(
+                    state2,
+                    task,
+                    Duration.Zero,
+                    isDisposed: true,
+                    firstInvocationTimestamp: new Timestamp( 123 ),
+                    lastInvocationTimestamp: new Timestamp( 123 ),
+                    totalInvocations: 1,
+                    activeTasks: 1,
+                    maxActiveTasks: 1 ),
+                state3.TestEquals( state2 ) )
+            .Go();
     }
 
     [Fact]
@@ -669,40 +645,37 @@ public class ReactiveSchedulerTests : TestsBase
         sut.Dispose();
         invocationOrder.CancelTimeout();
 
-        using ( new AssertionScope() )
-        {
-            AssertTaskState(
-                state1,
-                task,
-                Duration.Zero,
-                repetitions: 0,
-                firstInvocationTimestamp: new Timestamp( 123 ),
-                lastInvocationTimestamp: new Timestamp( 123 ),
-                totalInvocations: 1,
-                activeInvocations: 1 );
-
-            AssertTaskState(
-                state2,
-                task,
-                Duration.Zero,
-                repetitions: 0,
-                firstInvocationTimestamp: new Timestamp( 123 ),
-                lastInvocationTimestamp: new Timestamp( 123 ),
-                totalInvocations: 1,
-                activeTasks: 1,
-                maxActiveTasks: 1 );
-
-            AssertTaskState(
-                state3,
-                task,
-                Duration.Zero,
-                repetitions: 0,
-                firstInvocationTimestamp: new Timestamp( 123 ),
-                lastInvocationTimestamp: new Timestamp( 123 ),
-                totalInvocations: 1,
-                completedInvocations: 1,
-                maxActiveTasks: 1 );
-        }
+        Assertion.All(
+                AssertTaskState(
+                    state1,
+                    task,
+                    Duration.Zero,
+                    repetitions: 0,
+                    firstInvocationTimestamp: new Timestamp( 123 ),
+                    lastInvocationTimestamp: new Timestamp( 123 ),
+                    totalInvocations: 1,
+                    activeInvocations: 1 ),
+                AssertTaskState(
+                    state2,
+                    task,
+                    Duration.Zero,
+                    repetitions: 0,
+                    firstInvocationTimestamp: new Timestamp( 123 ),
+                    lastInvocationTimestamp: new Timestamp( 123 ),
+                    totalInvocations: 1,
+                    activeTasks: 1,
+                    maxActiveTasks: 1 ),
+                AssertTaskState(
+                    state3,
+                    task,
+                    Duration.Zero,
+                    repetitions: 0,
+                    firstInvocationTimestamp: new Timestamp( 123 ),
+                    lastInvocationTimestamp: new Timestamp( 123 ),
+                    totalInvocations: 1,
+                    completedInvocations: 1,
+                    maxActiveTasks: 1 ) )
+            .Go();
     }
 
     [Fact]
@@ -730,19 +703,18 @@ public class ReactiveSchedulerTests : TestsBase
         sut.Dispose();
         invocationOrder.CancelTimeout();
 
-        using ( new AssertionScope() )
-        {
-            AssertTaskState(
-                state,
-                task,
-                Duration.Zero,
-                repetitions: 0,
-                firstInvocationTimestamp: new Timestamp( 123 ),
-                lastInvocationTimestamp: new Timestamp( 123 ),
-                totalInvocations: 1,
-                activeTasks: 1,
-                maxActiveTasks: 1 );
-        }
+        Assertion.All(
+                AssertTaskState(
+                    state,
+                    task,
+                    Duration.Zero,
+                    repetitions: 0,
+                    firstInvocationTimestamp: new Timestamp( 123 ),
+                    lastInvocationTimestamp: new Timestamp( 123 ),
+                    totalInvocations: 1,
+                    activeTasks: 1,
+                    maxActiveTasks: 1 ) )
+            .Go();
     }
 
     [Fact]
@@ -753,7 +725,7 @@ public class ReactiveSchedulerTests : TestsBase
 
         var result = sut.Remove( "foo" );
 
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Fact]
@@ -783,33 +755,30 @@ public class ReactiveSchedulerTests : TestsBase
         invocationOrder.WaitForEnd();
         invocationOrder.CancelTimeout();
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            AssertTaskState(
-                state1,
-                task,
-                Duration.Zero,
-                repetitions: 0,
-                firstInvocationTimestamp: new Timestamp( 123 ),
-                lastInvocationTimestamp: new Timestamp( 123 ),
-                totalInvocations: 1,
-                activeTasks: 1,
-                maxActiveTasks: 1 );
-
-            AssertTaskState(
-                state2,
-                task,
-                Duration.Zero,
-                isDisposed: true,
-                firstInvocationTimestamp: new Timestamp( 123 ),
-                lastInvocationTimestamp: new Timestamp( 123 ),
-                totalInvocations: 1,
-                activeTasks: 1,
-                maxActiveTasks: 1 );
-
-            state3.Should().BeNull();
-        }
+        Assertion.All(
+                result.TestTrue(),
+                AssertTaskState(
+                    state1,
+                    task,
+                    Duration.Zero,
+                    repetitions: 0,
+                    firstInvocationTimestamp: new Timestamp( 123 ),
+                    lastInvocationTimestamp: new Timestamp( 123 ),
+                    totalInvocations: 1,
+                    activeTasks: 1,
+                    maxActiveTasks: 1 ),
+                AssertTaskState(
+                    state2,
+                    task,
+                    Duration.Zero,
+                    isDisposed: true,
+                    firstInvocationTimestamp: new Timestamp( 123 ),
+                    lastInvocationTimestamp: new Timestamp( 123 ),
+                    totalInvocations: 1,
+                    activeTasks: 1,
+                    maxActiveTasks: 1 ),
+                state3.TestNull() )
+            .Go();
     }
 
     [Fact]
@@ -857,55 +826,50 @@ public class ReactiveSchedulerTests : TestsBase
         invocationOrder.WaitForEnd();
         invocationOrder.CancelTimeout();
 
-        using ( new AssertionScope() )
-        {
-            AssertTaskState(
-                fooState1,
-                fooTask,
-                Duration.Zero,
-                repetitions: 0,
-                firstInvocationTimestamp: new Timestamp( 123 ),
-                lastInvocationTimestamp: new Timestamp( 123 ),
-                totalInvocations: 1,
-                activeTasks: 1,
-                maxActiveTasks: 1 );
-
-            AssertTaskState(
-                barState1,
-                barTask,
-                Duration.Zero,
-                repetitions: 0,
-                firstInvocationTimestamp: new Timestamp( 246 ),
-                lastInvocationTimestamp: new Timestamp( 246 ),
-                totalInvocations: 1,
-                activeTasks: 1,
-                maxActiveTasks: 1 );
-
-            AssertTaskState(
-                fooState2,
-                fooTask,
-                Duration.Zero,
-                isDisposed: true,
-                firstInvocationTimestamp: new Timestamp( 123 ),
-                lastInvocationTimestamp: new Timestamp( 123 ),
-                totalInvocations: 1,
-                activeTasks: 1,
-                maxActiveTasks: 1 );
-
-            AssertTaskState(
-                barState2,
-                barTask,
-                Duration.Zero,
-                isDisposed: true,
-                firstInvocationTimestamp: new Timestamp( 246 ),
-                lastInvocationTimestamp: new Timestamp( 246 ),
-                totalInvocations: 1,
-                activeTasks: 1,
-                maxActiveTasks: 1 );
-
-            fooState3.Should().BeNull();
-            barState3.Should().BeNull();
-        }
+        Assertion.All(
+                AssertTaskState(
+                    fooState1,
+                    fooTask,
+                    Duration.Zero,
+                    repetitions: 0,
+                    firstInvocationTimestamp: new Timestamp( 123 ),
+                    lastInvocationTimestamp: new Timestamp( 123 ),
+                    totalInvocations: 1,
+                    activeTasks: 1,
+                    maxActiveTasks: 1 ),
+                AssertTaskState(
+                    barState1,
+                    barTask,
+                    Duration.Zero,
+                    repetitions: 0,
+                    firstInvocationTimestamp: new Timestamp( 246 ),
+                    lastInvocationTimestamp: new Timestamp( 246 ),
+                    totalInvocations: 1,
+                    activeTasks: 1,
+                    maxActiveTasks: 1 ),
+                AssertTaskState(
+                    fooState2,
+                    fooTask,
+                    Duration.Zero,
+                    isDisposed: true,
+                    firstInvocationTimestamp: new Timestamp( 123 ),
+                    lastInvocationTimestamp: new Timestamp( 123 ),
+                    totalInvocations: 1,
+                    activeTasks: 1,
+                    maxActiveTasks: 1 ),
+                AssertTaskState(
+                    barState2,
+                    barTask,
+                    Duration.Zero,
+                    isDisposed: true,
+                    firstInvocationTimestamp: new Timestamp( 246 ),
+                    lastInvocationTimestamp: new Timestamp( 246 ),
+                    totalInvocations: 1,
+                    activeTasks: 1,
+                    maxActiveTasks: 1 ),
+                fooState3.TestNull(),
+                barState3.TestNull() )
+            .Go();
     }
 
     [Fact]
@@ -922,19 +886,19 @@ public class ReactiveSchedulerTests : TestsBase
 
         var action = Lambda.Of( () => sut.Clear() );
 
-        using ( new AssertionScope() )
-        {
-            var exception = action.Should().ThrowExactly<AggregateException>().And;
-            exception.InnerExceptions.Should().HaveCount( 2 );
-
-            ((exception.InnerExceptions.ElementAtOrDefault( 0 ) as AggregateException)?.InnerExceptions).Should()
-                .BeSequentiallyEqualTo( fooException );
-
-            ((exception.InnerExceptions.ElementAtOrDefault( 1 ) as AggregateException)?.InnerExceptions).Should()
-                .BeSequentiallyEqualTo( barException );
-
-            sut.TaskKeys.Should().BeEmpty();
-        }
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<AggregateException>(
+                        e => Assertion.All(
+                            e.InnerExceptions.Count.TestEquals( 2 ),
+                            e.InnerExceptions.ElementAtOrDefault( 0 )
+                                .TestType()
+                                .AssignableTo<AggregateException>( inner => inner.InnerExceptions.TestSequence( [ fooException ] ) ),
+                            e.InnerExceptions.ElementAtOrDefault( 1 )
+                                .TestType()
+                                .AssignableTo<AggregateException>( inner => inner.InnerExceptions.TestSequence( [ barException ] ) ),
+                            sut.TaskKeys.TestEmpty() ) ) )
+            .Go();
     }
 
     [Fact]
@@ -955,7 +919,7 @@ public class ReactiveSchedulerTests : TestsBase
         sut.Start();
         await disposer;
 
-        state.Should().Be( ReactiveSchedulerState.Running );
+        state.TestEquals( ReactiveSchedulerState.Running ).Go();
     }
 
     [Fact]
@@ -979,16 +943,16 @@ public class ReactiveSchedulerTests : TestsBase
         sut.Dispose();
         await scheduler;
 
-        exception.Should().BeNull();
+        exception.TestNull().Go();
     }
 
     [Fact]
-    public async Task Start_ShouldDoNothing_WhenSchedulerIsDisposed()
+    public void Start_ShouldDoNothing_WhenSchedulerIsDisposed()
     {
         var timestamps = new Timestamps();
         var sut = new ReactiveScheduler<string>( timestamps );
 
-        var scheduler = sut.StartAsync();
+        _ = sut.StartAsync();
         sut.Dispose();
 
         Exception? exception = null;
@@ -1001,9 +965,7 @@ public class ReactiveSchedulerTests : TestsBase
             exception = exc;
         }
 
-        await scheduler;
-
-        exception.Should().BeNull();
+        exception.TestNull().Go();
     }
 
     [Fact]
@@ -1018,11 +980,10 @@ public class ReactiveSchedulerTests : TestsBase
         sut.Dispose();
         await result;
 
-        using ( new AssertionScope() )
-        {
-            state.Should().Be( ReactiveSchedulerState.Running );
-            isRunning.Should().BeTrue();
-        }
+        Assertion.All(
+                state.TestEquals( ReactiveSchedulerState.Running ),
+                isRunning.TestTrue() )
+            .Go();
     }
 
     [Fact]
@@ -1037,11 +998,10 @@ public class ReactiveSchedulerTests : TestsBase
         sut.Dispose();
         await result;
 
-        using ( new AssertionScope() )
-        {
-            state.Should().Be( ReactiveSchedulerState.Running );
-            isRunning.Should().BeTrue();
-        }
+        Assertion.All(
+                state.TestEquals( ReactiveSchedulerState.Running ),
+                isRunning.TestTrue() )
+            .Go();
     }
 
     [Fact]
@@ -1057,7 +1017,7 @@ public class ReactiveSchedulerTests : TestsBase
         await scheduler;
         await result;
 
-        isCompleted.Should().BeTrue();
+        isCompleted.TestTrue().Go();
     }
 
     [Fact]
@@ -1072,7 +1032,7 @@ public class ReactiveSchedulerTests : TestsBase
         var isCompleted = result.IsCompleted;
         await scheduler;
 
-        isCompleted.Should().BeTrue();
+        isCompleted.TestTrue().Go();
     }
 
     [Fact]
@@ -1087,13 +1047,12 @@ public class ReactiveSchedulerTests : TestsBase
 
         sut.Dispose();
 
-        using ( new AssertionScope() )
-        {
-            sut.State.Should().Be( ReactiveSchedulerState.Disposed );
-            sut.TaskKeys.Should().BeEmpty();
-            fooTask.IsDisposed.Should().BeTrue();
-            barTask.IsDisposed.Should().BeTrue();
-        }
+        Assertion.All(
+                sut.State.TestEquals( ReactiveSchedulerState.Disposed ),
+                sut.TaskKeys.TestEmpty(),
+                fooTask.IsDisposed.TestTrue(),
+                barTask.IsDisposed.TestTrue() )
+            .Go();
     }
 
     [Fact]
@@ -1109,7 +1068,7 @@ public class ReactiveSchedulerTests : TestsBase
 
         var action = Lambda.Of( () => sut.Dispose() );
 
-        action.Should().NotThrow();
+        action.Test( exc => exc.TestNull() ).Go();
     }
 
     [Fact]
@@ -1136,32 +1095,29 @@ public class ReactiveSchedulerTests : TestsBase
         await schedule;
         invocationOrder.CancelTimeout();
 
-        using ( new AssertionScope() )
-        {
-            sut.State.Should().Be( ReactiveSchedulerState.Disposed );
-
-            AssertTaskState(
-                state1,
-                fooTask,
-                Duration.Zero,
-                repetitions: 0,
-                firstInvocationTimestamp: new Timestamp( 123 ),
-                lastInvocationTimestamp: new Timestamp( 123 ),
-                totalInvocations: 1,
-                activeTasks: 1,
-                maxActiveTasks: 1 );
-
-            AssertTaskState(
-                state2,
-                fooTask,
-                Duration.Zero,
-                isDisposed: true,
-                firstInvocationTimestamp: new Timestamp( 123 ),
-                lastInvocationTimestamp: new Timestamp( 123 ),
-                totalInvocations: 1,
-                activeTasks: 1,
-                maxActiveTasks: 1 );
-        }
+        Assertion.All(
+                sut.State.TestEquals( ReactiveSchedulerState.Disposed ),
+                AssertTaskState(
+                    state1,
+                    fooTask,
+                    Duration.Zero,
+                    repetitions: 0,
+                    firstInvocationTimestamp: new Timestamp( 123 ),
+                    lastInvocationTimestamp: new Timestamp( 123 ),
+                    totalInvocations: 1,
+                    activeTasks: 1,
+                    maxActiveTasks: 1 ),
+                AssertTaskState(
+                    state2,
+                    fooTask,
+                    Duration.Zero,
+                    isDisposed: true,
+                    firstInvocationTimestamp: new Timestamp( 123 ),
+                    lastInvocationTimestamp: new Timestamp( 123 ),
+                    totalInvocations: 1,
+                    activeTasks: 1,
+                    maxActiveTasks: 1 ) )
+            .Go();
     }
 
     [Fact]
@@ -1178,20 +1134,20 @@ public class ReactiveSchedulerTests : TestsBase
 
         var action = Lambda.Of( () => sut.Dispose() );
 
-        using ( new AssertionScope() )
-        {
-            var exception = action.Should().ThrowExactly<AggregateException>().And;
-            exception.InnerExceptions.Should().HaveCount( 2 );
-
-            ((exception.InnerExceptions.ElementAtOrDefault( 0 ) as AggregateException)?.InnerExceptions).Should()
-                .BeSequentiallyEqualTo( fooException );
-
-            ((exception.InnerExceptions.ElementAtOrDefault( 1 ) as AggregateException)?.InnerExceptions).Should()
-                .BeSequentiallyEqualTo( barException );
-
-            sut.State.Should().Be( ReactiveSchedulerState.Disposed );
-            sut.TaskKeys.Should().BeEmpty();
-        }
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<AggregateException>(
+                        e => Assertion.All(
+                            e.InnerExceptions.Count.TestEquals( 2 ),
+                            e.InnerExceptions.ElementAtOrDefault( 0 )
+                                .TestType()
+                                .AssignableTo<AggregateException>( inner => inner.InnerExceptions.TestSequence( [ fooException ] ) ),
+                            e.InnerExceptions.ElementAtOrDefault( 1 )
+                                .TestType()
+                                .AssignableTo<AggregateException>( inner => inner.InnerExceptions.TestSequence( [ barException ] ) ),
+                            sut.State.TestEquals( ReactiveSchedulerState.Disposed ),
+                            sut.TaskKeys.TestEmpty() ) ) )
+            .Go();
     }
 
     [Fact]
@@ -1227,31 +1183,30 @@ public class ReactiveSchedulerTests : TestsBase
         sut.Dispose();
         invocationOrder.CancelTimeout();
 
-        using ( new AssertionScope() )
-        {
-            fooTask.Invocations.Should()
-                .BeSequentiallyEqualTo(
+        Assertion.All(
+                fooTask.Invocations.TestSequence(
+                [
                     new ReactiveTaskInvocationParams( 0, new Timestamp( 123 ), new Timestamp( 123 ) ),
                     new ReactiveTaskInvocationParams( 1, new Timestamp( 246 ), new Timestamp( 246 ) ),
-                    new ReactiveTaskInvocationParams( 2, new Timestamp( 369 ), new Timestamp( 369 ) ) );
-
-            fooTask.Completions.Should()
-                .BeSequentiallyEqualTo(
+                    new ReactiveTaskInvocationParams( 2, new Timestamp( 369 ), new Timestamp( 369 ) )
+                ] ),
+                fooTask.Completions.TestSequence(
+                [
                     new TaskCompletion( new ReactiveTaskInvocationParams( 1, new Timestamp( 246 ), new Timestamp( 246 ) ), null, null ),
                     new TaskCompletion( new ReactiveTaskInvocationParams( 0, new Timestamp( 123 ), new Timestamp( 123 ) ), null, null ),
-                    new TaskCompletion( new ReactiveTaskInvocationParams( 2, new Timestamp( 369 ), new Timestamp( 369 ) ), null, null ) );
-
-            AssertTaskState(
-                lastState,
-                fooTask,
-                interval: Duration.FromTicks( 123 ),
-                repetitions: 0,
-                firstInvocationTimestamp: new Timestamp( 123 ),
-                lastInvocationTimestamp: new Timestamp( 369 ),
-                totalInvocations: 3,
-                completedInvocations: 3,
-                maxActiveTasks: 3 );
-        }
+                    new TaskCompletion( new ReactiveTaskInvocationParams( 2, new Timestamp( 369 ), new Timestamp( 369 ) ), null, null )
+                ] ),
+                AssertTaskState(
+                    lastState,
+                    fooTask,
+                    interval: Duration.FromTicks( 123 ),
+                    repetitions: 0,
+                    firstInvocationTimestamp: new Timestamp( 123 ),
+                    lastInvocationTimestamp: new Timestamp( 369 ),
+                    totalInvocations: 3,
+                    completedInvocations: 3,
+                    maxActiveTasks: 3 ) )
+            .Go();
     }
 
     [Fact]
@@ -1295,40 +1250,39 @@ public class ReactiveSchedulerTests : TestsBase
         sut.Dispose();
         invocationOrder.CancelTimeout();
 
-        using ( new AssertionScope() )
-        {
-            fooTask.Invocations.Should()
-                .BeSequentiallyEqualTo(
+        Assertion.All(
+                fooTask.Invocations.TestSequence(
+                [
                     new ReactiveTaskInvocationParams( 0, new Timestamp( 123 ), new Timestamp( 123 ) ),
                     new ReactiveTaskInvocationParams( 1, new Timestamp( 246 ), new Timestamp( 246 ) ),
                     new ReactiveTaskInvocationParams( 2, new Timestamp( 369 ), new Timestamp( 492 ) ),
-                    new ReactiveTaskInvocationParams( 3, new Timestamp( 492 ), new Timestamp( 615 ) ) );
-
-            fooTask.Completions.Should()
-                .BeSequentiallyEqualTo(
+                    new ReactiveTaskInvocationParams( 3, new Timestamp( 492 ), new Timestamp( 615 ) )
+                ] ),
+                fooTask.Completions.TestSequence(
+                [
                     new TaskCompletion( new ReactiveTaskInvocationParams( 1, new Timestamp( 246 ), new Timestamp( 246 ) ), null, null ),
                     new TaskCompletion( new ReactiveTaskInvocationParams( 2, new Timestamp( 369 ), new Timestamp( 492 ) ), null, null ),
                     new TaskCompletion( new ReactiveTaskInvocationParams( 0, new Timestamp( 123 ), new Timestamp( 123 ) ), null, null ),
-                    new TaskCompletion( new ReactiveTaskInvocationParams( 3, new Timestamp( 492 ), new Timestamp( 615 ) ), null, null ) );
-
-            fooTask.Enqueues.Should()
-                .BeSequentiallyEqualTo(
+                    new TaskCompletion( new ReactiveTaskInvocationParams( 3, new Timestamp( 492 ), new Timestamp( 615 ) ), null, null )
+                ] ),
+                fooTask.Enqueues.TestSequence(
+                [
                     new TaskEnqueue( new ReactiveTaskInvocationParams( 2, new Timestamp( 369 ), new Timestamp( 492 ) ), 0 ),
-                    new TaskEnqueue( new ReactiveTaskInvocationParams( 3, new Timestamp( 492 ), new Timestamp( 492 ) ), 1 ) );
-
-            AssertTaskState(
-                lastState,
-                fooTask,
-                interval: Duration.FromTicks( 123 ),
-                repetitions: 0,
-                firstInvocationTimestamp: new Timestamp( 123 ),
-                lastInvocationTimestamp: new Timestamp( 492 ),
-                totalInvocations: 4,
-                completedInvocations: 4,
-                delayedInvocations: 2,
-                maxActiveTasks: 2,
-                maxQueuedInvocations: 2 );
-        }
+                    new TaskEnqueue( new ReactiveTaskInvocationParams( 3, new Timestamp( 492 ), new Timestamp( 492 ) ), 1 )
+                ] ),
+                AssertTaskState(
+                    lastState,
+                    fooTask,
+                    interval: Duration.FromTicks( 123 ),
+                    repetitions: 0,
+                    firstInvocationTimestamp: new Timestamp( 123 ),
+                    lastInvocationTimestamp: new Timestamp( 492 ),
+                    totalInvocations: 4,
+                    completedInvocations: 4,
+                    delayedInvocations: 2,
+                    maxActiveTasks: 2,
+                    maxQueuedInvocations: 2 ) )
+            .Go();
     }
 
     [Fact]
@@ -1364,34 +1318,33 @@ public class ReactiveSchedulerTests : TestsBase
         sut.Dispose();
         invocationOrder.CancelTimeout();
 
-        using ( new AssertionScope() )
-        {
-            fooTask.Invocations.Should()
-                .BeSequentiallyEqualTo(
+        Assertion.All(
+                fooTask.Invocations.TestSequence(
+                [
                     new ReactiveTaskInvocationParams( 0, new Timestamp( 123 ), new Timestamp( 123 ) ),
-                    new ReactiveTaskInvocationParams( 1, new Timestamp( 246 ), new Timestamp( 246 ) ) );
-
-            fooTask.Completions.Should()
-                .BeSequentiallyEqualTo(
+                    new ReactiveTaskInvocationParams( 1, new Timestamp( 246 ), new Timestamp( 246 ) )
+                ] ),
+                fooTask.Completions.TestSequence(
+                [
                     new TaskCompletion(
                         new ReactiveTaskInvocationParams( 2, new Timestamp( 369 ), new Timestamp( 369 ) ),
                         null,
                         TaskCancellationReason.MaxQueueSizeLimit ),
                     new TaskCompletion( new ReactiveTaskInvocationParams( 0, new Timestamp( 123 ), new Timestamp( 123 ) ), null, null ),
-                    new TaskCompletion( new ReactiveTaskInvocationParams( 1, new Timestamp( 246 ), new Timestamp( 246 ) ), null, null ) );
-
-            AssertTaskState(
-                lastState,
-                fooTask,
-                interval: Duration.FromTicks( 123 ),
-                repetitions: 0,
-                firstInvocationTimestamp: new Timestamp( 123 ),
-                lastInvocationTimestamp: new Timestamp( 369 ),
-                totalInvocations: 3,
-                completedInvocations: 2,
-                skippedInvocations: 1,
-                maxActiveTasks: 2 );
-        }
+                    new TaskCompletion( new ReactiveTaskInvocationParams( 1, new Timestamp( 246 ), new Timestamp( 246 ) ), null, null )
+                ] ),
+                AssertTaskState(
+                    lastState,
+                    fooTask,
+                    interval: Duration.FromTicks( 123 ),
+                    repetitions: 0,
+                    firstInvocationTimestamp: new Timestamp( 123 ),
+                    lastInvocationTimestamp: new Timestamp( 369 ),
+                    totalInvocations: 3,
+                    completedInvocations: 2,
+                    skippedInvocations: 1,
+                    maxActiveTasks: 2 ) )
+            .Go();
     }
 
     [Fact]
@@ -1428,44 +1381,43 @@ public class ReactiveSchedulerTests : TestsBase
         sut.Dispose();
         invocationOrder.CancelTimeout();
 
-        using ( new AssertionScope() )
-        {
-            fooTask.Invocations.Should()
-                .BeSequentiallyEqualTo(
+        Assertion.All(
+                fooTask.Invocations.TestSequence(
+                [
                     new ReactiveTaskInvocationParams( 0, new Timestamp( 123 ), new Timestamp( 123 ) ),
                     new ReactiveTaskInvocationParams( 2, new Timestamp( 369 ), new Timestamp( 492 ) ),
-                    new ReactiveTaskInvocationParams( 3, new Timestamp( 492 ), new Timestamp( 615 ) ) );
-
-            fooTask.Completions.Should()
-                .BeSequentiallyEqualTo(
+                    new ReactiveTaskInvocationParams( 3, new Timestamp( 492 ), new Timestamp( 615 ) )
+                ] ),
+                fooTask.Completions.TestSequence(
+                [
                     new TaskCompletion(
                         new ReactiveTaskInvocationParams( 1, new Timestamp( 246 ), new Timestamp( 492 ) ),
                         null,
                         TaskCancellationReason.MaxQueueSizeLimit ),
                     new TaskCompletion( new ReactiveTaskInvocationParams( 0, new Timestamp( 123 ), new Timestamp( 123 ) ), null, null ),
                     new TaskCompletion( new ReactiveTaskInvocationParams( 2, new Timestamp( 369 ), new Timestamp( 492 ) ), null, null ),
-                    new TaskCompletion( new ReactiveTaskInvocationParams( 3, new Timestamp( 492 ), new Timestamp( 615 ) ), null, null ) );
-
-            fooTask.Enqueues.Should()
-                .BeSequentiallyEqualTo(
+                    new TaskCompletion( new ReactiveTaskInvocationParams( 3, new Timestamp( 492 ), new Timestamp( 615 ) ), null, null )
+                ] ),
+                fooTask.Enqueues.TestSequence(
+                [
                     new TaskEnqueue( new ReactiveTaskInvocationParams( 1, new Timestamp( 246 ), new Timestamp( 492 ) ), 0 ),
                     new TaskEnqueue( new ReactiveTaskInvocationParams( 2, new Timestamp( 369 ), new Timestamp( 492 ) ), 1 ),
-                    new TaskEnqueue( new ReactiveTaskInvocationParams( 3, new Timestamp( 492 ), new Timestamp( 492 ) ), 2 ) );
-
-            AssertTaskState(
-                lastState,
-                fooTask,
-                interval: Duration.FromTicks( 123 ),
-                repetitions: 0,
-                firstInvocationTimestamp: new Timestamp( 123 ),
-                lastInvocationTimestamp: new Timestamp( 492 ),
-                totalInvocations: 4,
-                completedInvocations: 3,
-                delayedInvocations: 2,
-                skippedInvocations: 1,
-                maxActiveTasks: 1,
-                maxQueuedInvocations: 2 );
-        }
+                    new TaskEnqueue( new ReactiveTaskInvocationParams( 3, new Timestamp( 492 ), new Timestamp( 492 ) ), 2 )
+                ] ),
+                AssertTaskState(
+                    lastState,
+                    fooTask,
+                    interval: Duration.FromTicks( 123 ),
+                    repetitions: 0,
+                    firstInvocationTimestamp: new Timestamp( 123 ),
+                    lastInvocationTimestamp: new Timestamp( 492 ),
+                    totalInvocations: 4,
+                    completedInvocations: 3,
+                    delayedInvocations: 2,
+                    skippedInvocations: 1,
+                    maxActiveTasks: 1,
+                    maxQueuedInvocations: 2 ) )
+            .Go();
     }
 
     [Fact]
@@ -1498,35 +1450,30 @@ public class ReactiveSchedulerTests : TestsBase
         sut.Dispose();
         invocationOrder.CancelTimeout();
 
-        using ( new AssertionScope() )
-        {
-            fooTask.Invocations.Should()
-                .BeSequentiallyEqualTo( new ReactiveTaskInvocationParams( 0, new Timestamp( 123 ), new Timestamp( 123 ) ) );
-
-            fooTask.Completions.Should()
-                .BeSequentiallyEqualTo(
+        Assertion.All(
+                fooTask.Invocations.TestSequence( [ new ReactiveTaskInvocationParams( 0, new Timestamp( 123 ), new Timestamp( 123 ) ) ] ),
+                fooTask.Completions.TestSequence(
+                [
                     new TaskCompletion(
                         new ReactiveTaskInvocationParams( 1, new Timestamp( 246 ), new Timestamp( 246 ) ),
                         null,
                         TaskCancellationReason.CancellationRequested ),
-                    new TaskCompletion( new ReactiveTaskInvocationParams( 0, new Timestamp( 123 ), new Timestamp( 123 ) ), null, null ) );
-
-            fooTask.Enqueues.Should()
-                .BeSequentiallyEqualTo(
-                    new TaskEnqueue( new ReactiveTaskInvocationParams( 1, new Timestamp( 246 ), new Timestamp( 246 ) ), 0 ) );
-
-            AssertTaskState(
-                lastState,
-                fooTask,
-                interval: interval,
-                repetitions: 0,
-                firstInvocationTimestamp: new Timestamp( 123 ),
-                lastInvocationTimestamp: new Timestamp( 246 ),
-                totalInvocations: 2,
-                completedInvocations: 1,
-                skippedInvocations: 1,
-                maxActiveTasks: 1 );
-        }
+                    new TaskCompletion( new ReactiveTaskInvocationParams( 0, new Timestamp( 123 ), new Timestamp( 123 ) ), null, null )
+                ] ),
+                fooTask.Enqueues.TestSequence(
+                    [ new TaskEnqueue( new ReactiveTaskInvocationParams( 1, new Timestamp( 246 ), new Timestamp( 246 ) ), 0 ) ] ),
+                AssertTaskState(
+                    lastState,
+                    fooTask,
+                    interval: interval,
+                    repetitions: 0,
+                    firstInvocationTimestamp: new Timestamp( 123 ),
+                    lastInvocationTimestamp: new Timestamp( 246 ),
+                    totalInvocations: 2,
+                    completedInvocations: 1,
+                    skippedInvocations: 1,
+                    maxActiveTasks: 1 ) )
+            .Go();
     }
 
     [Fact]
@@ -1549,29 +1496,26 @@ public class ReactiveSchedulerTests : TestsBase
         sut.Dispose();
         invocationOrder.CancelTimeout();
 
-        using ( new AssertionScope() )
-        {
-            fooTask.Invocations.Should()
-                .BeSequentiallyEqualTo( new ReactiveTaskInvocationParams( 0, new Timestamp( 123 ), new Timestamp( 123 ) ) );
-
-            fooTask.Completions.Should()
-                .BeSequentiallyEqualTo(
+        Assertion.All(
+                fooTask.Invocations.TestSequence( [ new ReactiveTaskInvocationParams( 0, new Timestamp( 123 ), new Timestamp( 123 ) ) ] ),
+                fooTask.Completions.TestSequence(
+                [
                     new TaskCompletion(
                         new ReactiveTaskInvocationParams( 0, new Timestamp( 123 ), new Timestamp( 123 ) ),
                         exception,
-                        null ) );
-
-            AssertTaskState(
-                lastState,
-                fooTask,
-                interval: Duration.Zero,
-                repetitions: 0,
-                firstInvocationTimestamp: new Timestamp( 123 ),
-                lastInvocationTimestamp: new Timestamp( 123 ),
-                totalInvocations: 1,
-                completedInvocations: 1,
-                failedInvocations: 1 );
-        }
+                        null )
+                ] ),
+                AssertTaskState(
+                    lastState,
+                    fooTask,
+                    interval: Duration.Zero,
+                    repetitions: 0,
+                    firstInvocationTimestamp: new Timestamp( 123 ),
+                    lastInvocationTimestamp: new Timestamp( 123 ),
+                    totalInvocations: 1,
+                    completedInvocations: 1,
+                    failedInvocations: 1 ) )
+            .Go();
     }
 
     [Fact]
@@ -1594,35 +1538,31 @@ public class ReactiveSchedulerTests : TestsBase
         sut.Dispose();
         invocationOrder.CancelTimeout();
 
-        using ( new AssertionScope() )
-        {
-            fooTask.Invocations.Should()
-                .BeSequentiallyEqualTo( new ReactiveTaskInvocationParams( 0, new Timestamp( 123 ), new Timestamp( 123 ) ) );
-
-            fooTask.Completions.Should().HaveCount( 1 );
-            fooTask.Completions.ElementAtOrDefault( 0 )
-                .Invocation.Should()
-                .Be( new ReactiveTaskInvocationParams( 0, new Timestamp( 123 ), new Timestamp( 123 ) ) );
-
-            ((fooTask.Completions.ElementAtOrDefault( 0 ).Exception as AggregateException)?.InnerExceptions).Should().HaveCount( 1 );
-            ((fooTask.Completions.ElementAtOrDefault( 0 ).Exception as AggregateException)?.InnerExceptions.ElementAtOrDefault( 0 ))
-                .Should()
-                .BeSameAs( exception );
-
-            fooTask.Completions.ElementAtOrDefault( 0 ).CancellationReason.Should().BeNull();
-
-            AssertTaskState(
-                lastState,
-                fooTask,
-                interval: Duration.Zero,
-                repetitions: 0,
-                firstInvocationTimestamp: new Timestamp( 123 ),
-                lastInvocationTimestamp: new Timestamp( 123 ),
-                totalInvocations: 1,
-                completedInvocations: 1,
-                failedInvocations: 1,
-                maxActiveTasks: 1 );
-        }
+        Assertion.All(
+                fooTask.Invocations.TestSequence( [ new ReactiveTaskInvocationParams( 0, new Timestamp( 123 ), new Timestamp( 123 ) ) ] ),
+                fooTask.Completions.Count.TestEquals( 1 ),
+                fooTask.Completions.ElementAtOrDefault( 0 )
+                    .Invocation.TestEquals( new ReactiveTaskInvocationParams( 0, new Timestamp( 123 ), new Timestamp( 123 ) ) ),
+                fooTask.Completions.ElementAtOrDefault( 0 )
+                    .Exception.TestType()
+                    .AssignableTo<AggregateException>(
+                        inner => Assertion.All(
+                            "inner",
+                            inner.InnerExceptions.Count.TestEquals( 1 ),
+                            inner.InnerExceptions.TestAll( (e, _) => e.TestRefEquals( exception ) ) ) ),
+                fooTask.Completions.ElementAtOrDefault( 0 ).CancellationReason.TestNull(),
+                AssertTaskState(
+                    lastState,
+                    fooTask,
+                    interval: Duration.Zero,
+                    repetitions: 0,
+                    firstInvocationTimestamp: new Timestamp( 123 ),
+                    lastInvocationTimestamp: new Timestamp( 123 ),
+                    totalInvocations: 1,
+                    completedInvocations: 1,
+                    failedInvocations: 1,
+                    maxActiveTasks: 1 ) )
+            .Go();
     }
 
     [Fact]
@@ -1649,26 +1589,23 @@ public class ReactiveSchedulerTests : TestsBase
         sut.Dispose();
         invocationOrder.CancelTimeout();
 
-        using ( new AssertionScope() )
-        {
-            fooTask.Invocations.Should()
-                .BeSequentiallyEqualTo( new ReactiveTaskInvocationParams( 0, new Timestamp( 123 ), new Timestamp( 123 ) ) );
-
-            fooTask.Completions.Should()
-                .BeSequentiallyEqualTo(
-                    new TaskCompletion( new ReactiveTaskInvocationParams( 0, new Timestamp( 123 ), new Timestamp( 123 ) ), null, null ) );
-
-            AssertTaskState(
-                lastState,
-                fooTask,
-                interval: Duration.Zero,
-                repetitions: 0,
-                firstInvocationTimestamp: new Timestamp( 123 ),
-                lastInvocationTimestamp: new Timestamp( 123 ),
-                totalInvocations: 1,
-                completedInvocations: 1,
-                maxActiveTasks: 1 );
-        }
+        Assertion.All(
+                fooTask.Invocations.TestSequence( [ new ReactiveTaskInvocationParams( 0, new Timestamp( 123 ), new Timestamp( 123 ) ) ] ),
+                fooTask.Completions.TestSequence(
+                [
+                    new TaskCompletion( new ReactiveTaskInvocationParams( 0, new Timestamp( 123 ), new Timestamp( 123 ) ), null, null )
+                ] ),
+                AssertTaskState(
+                    lastState,
+                    fooTask,
+                    interval: Duration.Zero,
+                    repetitions: 0,
+                    firstInvocationTimestamp: new Timestamp( 123 ),
+                    lastInvocationTimestamp: new Timestamp( 123 ),
+                    totalInvocations: 1,
+                    completedInvocations: 1,
+                    maxActiveTasks: 1 ) )
+            .Go();
     }
 
     [Fact]
@@ -1701,35 +1638,30 @@ public class ReactiveSchedulerTests : TestsBase
         sut.Dispose();
         invocationOrder.CancelTimeout();
 
-        using ( new AssertionScope() )
-        {
-            fooTask.Invocations.Should()
-                .BeSequentiallyEqualTo( new ReactiveTaskInvocationParams( 0, new Timestamp( 123 ), new Timestamp( 123 ) ) );
-
-            fooTask.Completions.Should()
-                .BeSequentiallyEqualTo(
+        Assertion.All(
+                fooTask.Invocations.TestSequence( [ new ReactiveTaskInvocationParams( 0, new Timestamp( 123 ), new Timestamp( 123 ) ) ] ),
+                fooTask.Completions.TestSequence(
+                [
                     new TaskCompletion(
                         new ReactiveTaskInvocationParams( 1, new Timestamp( 246 ), new Timestamp( 246 ) ),
                         null,
                         TaskCancellationReason.CancellationRequested ),
-                    new TaskCompletion( new ReactiveTaskInvocationParams( 0, new Timestamp( 123 ), new Timestamp( 123 ) ), null, null ) );
-
-            fooTask.Enqueues.Should()
-                .BeSequentiallyEqualTo(
-                    new TaskEnqueue( new ReactiveTaskInvocationParams( 1, new Timestamp( 246 ), new Timestamp( 246 ) ), 0 ) );
-
-            AssertTaskState(
-                lastState,
-                fooTask,
-                interval: Duration.FromTicks( 123 ),
-                repetitions: 0,
-                firstInvocationTimestamp: new Timestamp( 123 ),
-                lastInvocationTimestamp: new Timestamp( 246 ),
-                totalInvocations: 2,
-                skippedInvocations: 1,
-                activeTasks: 1,
-                maxActiveTasks: 1 );
-        }
+                    new TaskCompletion( new ReactiveTaskInvocationParams( 0, new Timestamp( 123 ), new Timestamp( 123 ) ), null, null )
+                ] ),
+                fooTask.Enqueues.TestSequence(
+                    [ new TaskEnqueue( new ReactiveTaskInvocationParams( 1, new Timestamp( 246 ), new Timestamp( 246 ) ), 0 ) ] ),
+                AssertTaskState(
+                    lastState,
+                    fooTask,
+                    interval: Duration.FromTicks( 123 ),
+                    repetitions: 0,
+                    firstInvocationTimestamp: new Timestamp( 123 ),
+                    lastInvocationTimestamp: new Timestamp( 246 ),
+                    totalInvocations: 2,
+                    skippedInvocations: 1,
+                    activeTasks: 1,
+                    maxActiveTasks: 1 ) )
+            .Go();
     }
 
     [Fact]
@@ -1758,30 +1690,27 @@ public class ReactiveSchedulerTests : TestsBase
         sut.Dispose();
         invocationOrder.CancelTimeout();
 
-        using ( new AssertionScope() )
-        {
-            fooTask.Invocations.Should()
-                .BeSequentiallyEqualTo( new ReactiveTaskInvocationParams( 0, new Timestamp( 123 ), new Timestamp( 123 ) ) );
-
-            fooTask.Completions.Should()
-                .BeSequentiallyEqualTo(
+        Assertion.All(
+                fooTask.Invocations.TestSequence( [ new ReactiveTaskInvocationParams( 0, new Timestamp( 123 ), new Timestamp( 123 ) ) ] ),
+                fooTask.Completions.TestSequence(
+                [
                     new TaskCompletion(
                         new ReactiveTaskInvocationParams( 0, new Timestamp( 123 ), new Timestamp( 123 ) ),
                         null,
-                        TaskCancellationReason.CancellationRequested ) );
-
-            AssertTaskState(
-                lastState,
-                fooTask,
-                interval: Duration.Zero,
-                repetitions: 0,
-                firstInvocationTimestamp: new Timestamp( 123 ),
-                lastInvocationTimestamp: new Timestamp( 123 ),
-                totalInvocations: 1,
-                completedInvocations: 1,
-                cancelledInvocations: 1,
-                maxActiveTasks: 1 );
-        }
+                        TaskCancellationReason.CancellationRequested )
+                ] ),
+                AssertTaskState(
+                    lastState,
+                    fooTask,
+                    interval: Duration.Zero,
+                    repetitions: 0,
+                    firstInvocationTimestamp: new Timestamp( 123 ),
+                    lastInvocationTimestamp: new Timestamp( 123 ),
+                    totalInvocations: 1,
+                    completedInvocations: 1,
+                    cancelledInvocations: 1,
+                    maxActiveTasks: 1 ) )
+            .Go();
     }
 
     [Fact]
@@ -1803,26 +1732,23 @@ public class ReactiveSchedulerTests : TestsBase
         sut.Dispose();
         invocationOrder.CancelTimeout();
 
-        using ( new AssertionScope() )
-        {
-            fooTask.Invocations.Should()
-                .BeSequentiallyEqualTo( new ReactiveTaskInvocationParams( 0, new Timestamp( 123 ), new Timestamp( 123 ) ) );
-
-            fooTask.Completions.Should()
-                .BeSequentiallyEqualTo(
-                    new TaskCompletion( new ReactiveTaskInvocationParams( 0, new Timestamp( 123 ), new Timestamp( 123 ) ), null, null ) );
-
-            AssertTaskState(
-                lastState,
-                fooTask,
-                interval: Duration.Zero,
-                repetitions: 0,
-                firstInvocationTimestamp: new Timestamp( 123 ),
-                lastInvocationTimestamp: new Timestamp( 123 ),
-                totalInvocations: 1,
-                completedInvocations: 1,
-                maxActiveTasks: 1 );
-        }
+        Assertion.All(
+                fooTask.Invocations.TestSequence( [ new ReactiveTaskInvocationParams( 0, new Timestamp( 123 ), new Timestamp( 123 ) ) ] ),
+                fooTask.Completions.TestSequence(
+                [
+                    new TaskCompletion( new ReactiveTaskInvocationParams( 0, new Timestamp( 123 ), new Timestamp( 123 ) ), null, null )
+                ] ),
+                AssertTaskState(
+                    lastState,
+                    fooTask,
+                    interval: Duration.Zero,
+                    repetitions: 0,
+                    firstInvocationTimestamp: new Timestamp( 123 ),
+                    lastInvocationTimestamp: new Timestamp( 123 ),
+                    totalInvocations: 1,
+                    completedInvocations: 1,
+                    maxActiveTasks: 1 ) )
+            .Go();
     }
 
     [Fact]
@@ -1843,25 +1769,22 @@ public class ReactiveSchedulerTests : TestsBase
         sut.Dispose();
         invocationOrder.CancelTimeout();
 
-        using ( new AssertionScope() )
-        {
-            fooTask.Invocations.Should()
-                .BeSequentiallyEqualTo( new ReactiveTaskInvocationParams( 0, new Timestamp( 123 ), new Timestamp( 123 ) ) );
-
-            fooTask.Completions.Should()
-                .BeSequentiallyEqualTo(
-                    new TaskCompletion( new ReactiveTaskInvocationParams( 0, new Timestamp( 123 ), new Timestamp( 123 ) ), null, null ) );
-
-            AssertTaskState(
-                lastState,
-                fooTask,
-                interval: Duration.Zero,
-                repetitions: 0,
-                firstInvocationTimestamp: new Timestamp( 123 ),
-                lastInvocationTimestamp: new Timestamp( 123 ),
-                totalInvocations: 1,
-                completedInvocations: 1 );
-        }
+        Assertion.All(
+                fooTask.Invocations.TestSequence( [ new ReactiveTaskInvocationParams( 0, new Timestamp( 123 ), new Timestamp( 123 ) ) ] ),
+                fooTask.Completions.TestSequence(
+                [
+                    new TaskCompletion( new ReactiveTaskInvocationParams( 0, new Timestamp( 123 ), new Timestamp( 123 ) ), null, null )
+                ] ),
+                AssertTaskState(
+                    lastState,
+                    fooTask,
+                    interval: Duration.Zero,
+                    repetitions: 0,
+                    firstInvocationTimestamp: new Timestamp( 123 ),
+                    lastInvocationTimestamp: new Timestamp( 123 ),
+                    totalInvocations: 1,
+                    completedInvocations: 1 ) )
+            .Go();
     }
 
     [Fact]
@@ -1888,12 +1811,15 @@ public class ReactiveSchedulerTests : TestsBase
 
         var action = Lambda.Of( () => sut.Remove( "foo" ) );
 
-        using ( new AssertionScope() )
-        {
-            var exc = action.Should().ThrowExactly<AggregateException>().And;
-            var inner = exc.InnerExceptions.ElementAtOrDefault( 0 ) as AggregateException;
-            (inner?.InnerExceptions).Should().BeSequentiallyEqualTo( exception );
-        }
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<AggregateException>(
+                        e => e.InnerExceptions.ElementAtOrDefault( 0 )
+                            .TestType()
+                            .AssignableTo<AggregateException>(
+                                inner =>
+                                    inner.InnerExceptions.TestSequence( [ exception ] ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -1927,13 +1853,10 @@ public class ReactiveSchedulerTests : TestsBase
         sut.Dispose();
         invocationOrder.CancelTimeout();
 
-        using ( new AssertionScope() )
-        {
-            fooTask.Invocations.Should()
-                .BeSequentiallyEqualTo( new ReactiveTaskInvocationParams( 0, new Timestamp( 123 ), new Timestamp( 123 ) ) );
-
-            fooTask.Completions.Should()
-                .BeSequentiallyEqualTo(
+        Assertion.All(
+                fooTask.Invocations.TestSequence( [ new ReactiveTaskInvocationParams( 0, new Timestamp( 123 ), new Timestamp( 123 ) ) ] ),
+                fooTask.Completions.TestSequence(
+                [
                     new TaskCompletion(
                         new ReactiveTaskInvocationParams( 1, new Timestamp( 246 ), new Timestamp( 369 ) ),
                         null,
@@ -1942,13 +1865,14 @@ public class ReactiveSchedulerTests : TestsBase
                     new TaskCompletion(
                         new ReactiveTaskInvocationParams( 2, new Timestamp( 369 ), new Timestamp( 369 ) ),
                         null,
-                        TaskCancellationReason.TaskDisposed ) );
-
-            fooTask.Enqueues.Should()
-                .BeSequentiallyEqualTo(
+                        TaskCancellationReason.TaskDisposed )
+                ] ),
+                fooTask.Enqueues.TestSequence(
+                [
                     new TaskEnqueue( new ReactiveTaskInvocationParams( 1, new Timestamp( 246 ), new Timestamp( 369 ) ), 0 ),
-                    new TaskEnqueue( new ReactiveTaskInvocationParams( 2, new Timestamp( 369 ), new Timestamp( 369 ) ), 1 ) );
-        }
+                    new TaskEnqueue( new ReactiveTaskInvocationParams( 2, new Timestamp( 369 ), new Timestamp( 369 ) ), 1 )
+                ] ) )
+            .Go();
     }
 
     [Fact]
@@ -1982,52 +1906,48 @@ public class ReactiveSchedulerTests : TestsBase
         sut.Dispose();
         invocationOrder.CancelTimeout();
 
-        using ( new AssertionScope() )
-        {
-            fooTask.Invocations.Should()
-                .BeSequentiallyEqualTo(
+        Assertion.All(
+                fooTask.Invocations.TestSequence(
+                [
                     new ReactiveTaskInvocationParams( 0, new Timestamp( 123 ), new Timestamp( 123 ) ),
                     new ReactiveTaskInvocationParams( 1, new Timestamp( 246 ), new Timestamp( 246 ) ),
-                    new ReactiveTaskInvocationParams( 2, new Timestamp( 369 ), new Timestamp( 369 ) ) );
-
-            fooTask.Completions.Should()
-                .BeSequentiallyEqualTo(
+                    new ReactiveTaskInvocationParams( 2, new Timestamp( 369 ), new Timestamp( 369 ) )
+                ] ),
+                fooTask.Completions.TestSequence(
+                [
                     new TaskCompletion( new ReactiveTaskInvocationParams( 0, new Timestamp( 123 ), new Timestamp( 123 ) ), null, null ),
                     new TaskCompletion( new ReactiveTaskInvocationParams( 1, new Timestamp( 246 ), new Timestamp( 246 ) ), null, null ),
-                    new TaskCompletion( new ReactiveTaskInvocationParams( 2, new Timestamp( 369 ), new Timestamp( 369 ) ), null, null ) );
-
-            state.Should().HaveCount( 3 );
-
-            AssertTaskState(
-                state.ElementAtOrDefault( 0 ),
-                fooTask,
-                interval: Duration.Zero,
-                repetitions: 0,
-                firstInvocationTimestamp: new Timestamp( 123 ),
-                lastInvocationTimestamp: new Timestamp( 123 ),
-                totalInvocations: 1,
-                completedInvocations: 1 );
-
-            AssertTaskState(
-                state.ElementAtOrDefault( 1 ),
-                fooTask,
-                interval: Duration.Zero,
-                repetitions: 0,
-                firstInvocationTimestamp: new Timestamp( 123 ),
-                lastInvocationTimestamp: new Timestamp( 246 ),
-                totalInvocations: 2,
-                completedInvocations: 2 );
-
-            AssertTaskState(
-                state.ElementAtOrDefault( 2 ),
-                fooTask,
-                interval: Duration.Zero,
-                repetitions: 0,
-                firstInvocationTimestamp: new Timestamp( 123 ),
-                lastInvocationTimestamp: new Timestamp( 369 ),
-                totalInvocations: 3,
-                completedInvocations: 3 );
-        }
+                    new TaskCompletion( new ReactiveTaskInvocationParams( 2, new Timestamp( 369 ), new Timestamp( 369 ) ), null, null )
+                ] ),
+                state.Count.TestEquals( 3 ),
+                AssertTaskState(
+                    state.ElementAtOrDefault( 0 ),
+                    fooTask,
+                    interval: Duration.Zero,
+                    repetitions: 0,
+                    firstInvocationTimestamp: new Timestamp( 123 ),
+                    lastInvocationTimestamp: new Timestamp( 123 ),
+                    totalInvocations: 1,
+                    completedInvocations: 1 ),
+                AssertTaskState(
+                    state.ElementAtOrDefault( 1 ),
+                    fooTask,
+                    interval: Duration.Zero,
+                    repetitions: 0,
+                    firstInvocationTimestamp: new Timestamp( 123 ),
+                    lastInvocationTimestamp: new Timestamp( 246 ),
+                    totalInvocations: 2,
+                    completedInvocations: 2 ),
+                AssertTaskState(
+                    state.ElementAtOrDefault( 2 ),
+                    fooTask,
+                    interval: Duration.Zero,
+                    repetitions: 0,
+                    firstInvocationTimestamp: new Timestamp( 123 ),
+                    lastInvocationTimestamp: new Timestamp( 369 ),
+                    totalInvocations: 3,
+                    completedInvocations: 3 ) )
+            .Go();
     }
 
     [Fact]
@@ -2052,15 +1972,13 @@ public class ReactiveSchedulerTests : TestsBase
         await schedule;
         invocationOrder.CancelTimeout();
 
-        using ( new AssertionScope() )
-        {
-            fooTask.Invocations.Should()
-                .BeSequentiallyEqualTo( new ReactiveTaskInvocationParams( 0, new Timestamp( 123 ), new Timestamp( 123 ) ) );
-
-            fooTask.Completions.Should()
-                .BeSequentiallyEqualTo(
-                    new TaskCompletion( new ReactiveTaskInvocationParams( 0, new Timestamp( 123 ), new Timestamp( 123 ) ), null, null ) );
-        }
+        Assertion.All(
+                fooTask.Invocations.TestSequence( [ new ReactiveTaskInvocationParams( 0, new Timestamp( 123 ), new Timestamp( 123 ) ) ] ),
+                fooTask.Completions.TestSequence(
+                [
+                    new TaskCompletion( new ReactiveTaskInvocationParams( 0, new Timestamp( 123 ), new Timestamp( 123 ) ), null, null )
+                ] ) )
+            .Go();
     }
 
     [Fact]
@@ -2085,15 +2003,13 @@ public class ReactiveSchedulerTests : TestsBase
         await schedule;
         invocationOrder.CancelTimeout();
 
-        using ( new AssertionScope() )
-        {
-            fooTask.Invocations.Should()
-                .BeSequentiallyEqualTo( new ReactiveTaskInvocationParams( 0, new Timestamp( 123 ), new Timestamp( 123 ) ) );
-
-            fooTask.Completions.Should()
-                .BeSequentiallyEqualTo(
-                    new TaskCompletion( new ReactiveTaskInvocationParams( 0, new Timestamp( 123 ), new Timestamp( 123 ) ), null, null ) );
-        }
+        Assertion.All(
+                fooTask.Invocations.TestSequence( [ new ReactiveTaskInvocationParams( 0, new Timestamp( 123 ), new Timestamp( 123 ) ) ] ),
+                fooTask.Completions.TestSequence(
+                [
+                    new TaskCompletion( new ReactiveTaskInvocationParams( 0, new Timestamp( 123 ), new Timestamp( 123 ) ), null, null )
+                ] ) )
+            .Go();
     }
 
     [Fact]
@@ -2126,23 +2042,19 @@ public class ReactiveSchedulerTests : TestsBase
         await schedule;
         invocationOrder.CancelTimeout();
 
-        using ( new AssertionScope() )
-        {
-            fooTask.Invocations.Should()
-                .BeSequentiallyEqualTo( new ReactiveTaskInvocationParams( 0, new Timestamp( 123 ), new Timestamp( 123 ) ) );
-
-            fooTask.Completions.Should()
-                .BeSequentiallyEqualTo(
+        Assertion.All(
+                fooTask.Invocations.TestSequence( [ new ReactiveTaskInvocationParams( 0, new Timestamp( 123 ), new Timestamp( 123 ) ) ] ),
+                fooTask.Completions.TestSequence(
+                [
                     new TaskCompletion( new ReactiveTaskInvocationParams( 0, new Timestamp( 123 ), new Timestamp( 123 ) ), null, null ),
                     new TaskCompletion(
                         new ReactiveTaskInvocationParams( 1, new Timestamp( 246 ), new Timestamp( 246 ) ),
                         null,
-                        TaskCancellationReason.TaskDisposed ) );
-
-            fooTask.Enqueues.Should()
-                .BeSequentiallyEqualTo(
-                    new TaskEnqueue( new ReactiveTaskInvocationParams( 1, new Timestamp( 246 ), new Timestamp( 246 ) ), 0 ) );
-        }
+                        TaskCancellationReason.TaskDisposed )
+                ] ),
+                fooTask.Enqueues.TestSequence(
+                    [ new TaskEnqueue( new ReactiveTaskInvocationParams( 1, new Timestamp( 246 ), new Timestamp( 246 ) ), 0 ) ] ) )
+            .Go();
     }
 
     [Fact]
@@ -2166,15 +2078,13 @@ public class ReactiveSchedulerTests : TestsBase
         await schedule;
         invocationOrder.CancelTimeout();
 
-        using ( new AssertionScope() )
-        {
-            fooTask.Invocations.Should()
-                .BeSequentiallyEqualTo( new ReactiveTaskInvocationParams( 0, new Timestamp( 123 ), new Timestamp( 123 ) ) );
-
-            fooTask.Completions.Should()
-                .BeSequentiallyEqualTo(
-                    new TaskCompletion( new ReactiveTaskInvocationParams( 0, new Timestamp( 123 ), new Timestamp( 123 ) ), null, null ) );
-        }
+        Assertion.All(
+                fooTask.Invocations.TestSequence( [ new ReactiveTaskInvocationParams( 0, new Timestamp( 123 ), new Timestamp( 123 ) ) ] ),
+                fooTask.Completions.TestSequence(
+                [
+                    new TaskCompletion( new ReactiveTaskInvocationParams( 0, new Timestamp( 123 ), new Timestamp( 123 ) ), null, null )
+                ] ) )
+            .Go();
     }
 
     [Fact]
@@ -2200,15 +2110,13 @@ public class ReactiveSchedulerTests : TestsBase
         await schedule;
         invocationOrder.CancelTimeout();
 
-        using ( new AssertionScope() )
-        {
-            fooTask.Invocations.Should()
-                .BeSequentiallyEqualTo( new ReactiveTaskInvocationParams( 0, new Timestamp( 123 ), new Timestamp( 123 ) ) );
-
-            fooTask.Completions.Should()
-                .BeSequentiallyEqualTo(
-                    new TaskCompletion( new ReactiveTaskInvocationParams( 0, new Timestamp( 123 ), new Timestamp( 123 ) ), null, null ) );
-        }
+        Assertion.All(
+                fooTask.Invocations.TestSequence( [ new ReactiveTaskInvocationParams( 0, new Timestamp( 123 ), new Timestamp( 123 ) ) ] ),
+                fooTask.Completions.TestSequence(
+                [
+                    new TaskCompletion( new ReactiveTaskInvocationParams( 0, new Timestamp( 123 ), new Timestamp( 123 ) ), null, null )
+                ] ) )
+            .Go();
     }
 
     [Fact]
@@ -2234,15 +2142,13 @@ public class ReactiveSchedulerTests : TestsBase
         await schedule;
         invocationOrder.CancelTimeout();
 
-        using ( new AssertionScope() )
-        {
-            fooTask.Invocations.Should()
-                .BeSequentiallyEqualTo( new ReactiveTaskInvocationParams( 0, new Timestamp( 123 ), new Timestamp( 123 ) ) );
-
-            fooTask.Completions.Should()
-                .BeSequentiallyEqualTo(
-                    new TaskCompletion( new ReactiveTaskInvocationParams( 0, new Timestamp( 123 ), new Timestamp( 123 ) ), null, null ) );
-        }
+        Assertion.All(
+                fooTask.Invocations.TestSequence( [ new ReactiveTaskInvocationParams( 0, new Timestamp( 123 ), new Timestamp( 123 ) ) ] ),
+                fooTask.Completions.TestSequence(
+                [
+                    new TaskCompletion( new ReactiveTaskInvocationParams( 0, new Timestamp( 123 ), new Timestamp( 123 ) ), null, null )
+                ] ) )
+            .Go();
     }
 
     [Fact]
@@ -2275,23 +2181,19 @@ public class ReactiveSchedulerTests : TestsBase
         await schedule;
         invocationOrder.CancelTimeout();
 
-        using ( new AssertionScope() )
-        {
-            fooTask.Invocations.Should()
-                .BeSequentiallyEqualTo( new ReactiveTaskInvocationParams( 0, new Timestamp( 123 ), new Timestamp( 123 ) ) );
-
-            fooTask.Completions.Should()
-                .BeSequentiallyEqualTo(
+        Assertion.All(
+                fooTask.Invocations.TestSequence( [ new ReactiveTaskInvocationParams( 0, new Timestamp( 123 ), new Timestamp( 123 ) ) ] ),
+                fooTask.Completions.TestSequence(
+                [
                     new TaskCompletion( new ReactiveTaskInvocationParams( 0, new Timestamp( 123 ), new Timestamp( 123 ) ), null, null ),
                     new TaskCompletion(
                         new ReactiveTaskInvocationParams( 1, new Timestamp( 246 ), new Timestamp( 246 ) ),
                         null,
-                        TaskCancellationReason.TaskDisposed ) );
-
-            fooTask.Enqueues.Should()
-                .BeSequentiallyEqualTo(
-                    new TaskEnqueue( new ReactiveTaskInvocationParams( 1, new Timestamp( 246 ), new Timestamp( 246 ) ), 0 ) );
-        }
+                        TaskCancellationReason.TaskDisposed )
+                ] ),
+                fooTask.Enqueues.TestSequence(
+                    [ new TaskEnqueue( new ReactiveTaskInvocationParams( 1, new Timestamp( 246 ), new Timestamp( 246 ) ), 0 ) ] ) )
+            .Go();
     }
 
     [Fact]
@@ -2347,17 +2249,20 @@ public class ReactiveSchedulerTests : TestsBase
         invocationOrder.WaitForEnd();
         invocationOrder.CancelTimeout();
 
-        invocations.Should()
-            .BeSequentiallyEqualTo(
+        invocations.TestSequence(
+            [
                 ("qux", new ReactiveTaskInvocationParams( 0, new Timestamp( 50 ), new Timestamp( 50 ) )),
                 ("foo", new ReactiveTaskInvocationParams( 0, new Timestamp( 123 ), new Timestamp( 123 ) )),
                 ("bar", new ReactiveTaskInvocationParams( 0, new Timestamp( 150 ), new Timestamp( 150 ) )),
                 ("foo", new ReactiveTaskInvocationParams( 1, new Timestamp( 165 ), new Timestamp( 165 ) )),
                 ("qux", new ReactiveTaskInvocationParams( 1, new Timestamp( 200 ), new Timestamp( 200 ) )),
-                ("qux", new ReactiveTaskInvocationParams( 2, new Timestamp( 350 ), new Timestamp( 350 ) )) );
+                ("qux", new ReactiveTaskInvocationParams( 2, new Timestamp( 350 ), new Timestamp( 350 ) ))
+            ] )
+            .Go();
     }
 
-    private static void AssertTaskState(
+    [Pure]
+    private static Assertion AssertTaskState(
         ScheduleTaskState<string>? state,
         ScheduleTask task,
         Duration interval,
@@ -2379,39 +2284,49 @@ public class ReactiveSchedulerTests : TestsBase
         long activeTasks = 0,
         long maxActiveTasks = 0)
     {
-        (state?.NextTimestamp).Should().Be( nextTimestamp );
-        (state?.Interval).Should().Be( interval );
-        (state?.Repetitions).Should().Be( repetitions );
-        (state?.IsDisposed).Should().Be( isDisposed );
-        (state?.IsInfinite).Should().Be( isInfinite );
-        (state?.State.Task).Should().BeSameAs( task );
-        (state?.State.FirstInvocationTimestamp).Should().Be( firstInvocationTimestamp );
-        (state?.State.LastInvocationTimestamp).Should().Be( lastInvocationTimestamp );
-        (state?.State.TotalInvocations).Should().Be( totalInvocations );
-        (state?.State.ActiveInvocations).Should().Be( activeInvocations );
-        (state?.State.CompletedInvocations).Should().Be( completedInvocations );
-        (state?.State.SkippedInvocations).Should().Be( skippedInvocations );
-        (state?.State.DelayedInvocations).Should().Be( delayedInvocations );
-        (state?.State.FailedInvocations).Should().Be( failedInvocations );
-        (state?.State.CancelledInvocations).Should().Be( cancelledInvocations );
-        (state?.State.QueuedInvocations).Should().Be( queuedInvocations );
-        (state?.State.MaxQueuedInvocations).Should().Be( maxQueuedInvocations );
-        (state?.State.ActiveTasks).Should().Be( activeTasks );
-        (state?.State.MaxActiveTasks).Should().Be( maxActiveTasks );
-        if ( completedInvocations > 0 )
-        {
-            (state?.State.MinElapsedTime.Ticks).Should().BeGreaterOrEqualTo( 0 );
-            (state?.State.MinElapsedTime.Ticks).Should().BeLessOrEqualTo( state?.State.MaxElapsedTime.Ticks ?? 0 );
-            (state?.State.MaxElapsedTime.Ticks).Should().BeGreaterOrEqualTo( state?.State.MinElapsedTime.Ticks ?? 0 );
-            (state?.State.AverageElapsedTime.Ticks).Should().BeGreaterOrEqualTo( state?.State.MinElapsedTime.Ticks ?? 0 );
-            (state?.State.AverageElapsedTime.Ticks).Should().BeLessOrEqualTo( state?.State.MaxElapsedTime.Ticks ?? 0 );
-        }
-        else
-        {
-            (state?.State.MinElapsedTime).Should().Be( Duration.MaxValue );
-            (state?.State.MaxElapsedTime).Should().Be( Duration.MinValue );
-            (state?.State.AverageElapsedTime).Should().Be( FloatingDuration.Zero );
-        }
+        return state.TestNotNull(
+            s =>
+            {
+                var assertions = new List<Assertion>
+                {
+                    s.NextTimestamp.TestEquals( nextTimestamp ),
+                    s.Interval.TestEquals( interval ),
+                    s.Repetitions.TestEquals( repetitions ),
+                    s.IsDisposed.TestEquals( isDisposed ),
+                    s.IsInfinite.TestEquals( isInfinite ),
+                    s.State.Task.TestRefEquals( task ),
+                    s.State.FirstInvocationTimestamp.TestEquals( firstInvocationTimestamp ),
+                    s.State.LastInvocationTimestamp.TestEquals( lastInvocationTimestamp ),
+                    s.State.TotalInvocations.TestEquals( totalInvocations ),
+                    s.State.ActiveInvocations.TestEquals( activeInvocations ),
+                    s.State.CompletedInvocations.TestEquals( completedInvocations ),
+                    s.State.SkippedInvocations.TestEquals( skippedInvocations ),
+                    s.State.DelayedInvocations.TestEquals( delayedInvocations ),
+                    s.State.FailedInvocations.TestEquals( failedInvocations ),
+                    s.State.CancelledInvocations.TestEquals( cancelledInvocations ),
+                    s.State.QueuedInvocations.TestEquals( queuedInvocations ),
+                    s.State.MaxQueuedInvocations.TestEquals( maxQueuedInvocations ),
+                    s.State.ActiveTasks.TestEquals( activeTasks ),
+                    s.State.MaxActiveTasks.TestEquals( maxActiveTasks )
+                };
+
+                if ( completedInvocations > 0 )
+                {
+                    assertions.Add( s.State.MinElapsedTime.Ticks.TestGreaterThanOrEqualTo( 0 ) );
+                    assertions.Add( s.State.MinElapsedTime.Ticks.TestLessThanOrEqualTo( s.State.MaxElapsedTime.Ticks ) );
+                    assertions.Add( s.State.MaxElapsedTime.Ticks.TestGreaterThanOrEqualTo( s.State.MinElapsedTime.Ticks ) );
+                    assertions.Add( s.State.AverageElapsedTime.Ticks.TestGreaterThanOrEqualTo( s.State.MinElapsedTime.Ticks ) );
+                    assertions.Add( s.State.AverageElapsedTime.Ticks.TestLessThanOrEqualTo( s.State.MaxElapsedTime.Ticks ) );
+                }
+                else
+                {
+                    assertions.Add( s.State.MinElapsedTime.TestEquals( Duration.MaxValue ) );
+                    assertions.Add( s.State.MaxElapsedTime.TestEquals( Duration.MinValue ) );
+                    assertions.Add( s.State.AverageElapsedTime.TestEquals( FloatingDuration.Zero ) );
+                }
+
+                return Assertion.All( "state", assertions );
+            } );
     }
 
     private sealed class ScheduleTask : ScheduleTask<string>
