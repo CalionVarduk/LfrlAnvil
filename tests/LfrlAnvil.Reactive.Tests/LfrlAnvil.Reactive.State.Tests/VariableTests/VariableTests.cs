@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using LfrlAnvil.Reactive.State.Events;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 using LfrlAnvil.Validation;
 
 namespace LfrlAnvil.Reactive.State.Tests.VariableTests;
@@ -17,7 +17,7 @@ public partial class VariableTests : TestsBase
 
         var result = sut.ToString();
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -31,12 +31,11 @@ public partial class VariableTests : TestsBase
 
         sut.Dispose();
 
-        using ( new AssertionScope() )
-        {
-            onChange.IsDisposed.Should().BeTrue();
-            onValidate.IsDisposed.Should().BeTrue();
-            sut.State.Should().Be( VariableState.Changed | VariableState.ReadOnly | VariableState.Disposed );
-        }
+        Assertion.All(
+                onChange.IsDisposed.TestTrue(),
+                onValidate.IsDisposed.TestTrue(),
+                sut.State.TestEquals( VariableState.Changed | VariableState.ReadOnly | VariableState.Disposed ) )
+            .Go();
     }
 
     [Fact]
@@ -57,33 +56,34 @@ public partial class VariableTests : TestsBase
         value.Add( Fixture.Create<int>() );
         sut.Refresh();
 
-        using ( new AssertionScope() )
-        {
-            sut.State.Should().Be( VariableState.Changed | VariableState.Invalid | VariableState.Warning | VariableState.Dirty );
-            sut.Value.Should().BeSameAs( value );
-            sut.Errors.Should().BeSequentiallyEqualTo( error );
-            sut.Warnings.Should().BeSequentiallyEqualTo( warning );
-            onChangeEvents.Should().HaveCount( 1 );
-            onValidateEvents.Should().HaveCount( 1 );
-
-            var changeEvent = onChangeEvents[0];
-            changeEvent.Variable.Should().BeSameAs( sut );
-            changeEvent.PreviousState.Should().Be( VariableState.Default );
-            changeEvent.NewState.Should().Be( sut.State );
-            changeEvent.PreviousValue.Should().BeSameAs( value );
-            changeEvent.NewValue.Should().BeSameAs( value );
-            changeEvent.Source.Should().Be( VariableChangeSource.Refresh );
-
-            var validateEvent = onValidateEvents[0];
-            validateEvent.Variable.Should().BeSameAs( sut );
-            validateEvent.AssociatedChange.Should().BeSameAs( changeEvent );
-            validateEvent.PreviousState.Should().Be( VariableState.Default );
-            validateEvent.NewState.Should().Be( sut.State );
-            validateEvent.PreviousWarnings.Should().BeEmpty();
-            validateEvent.NewWarnings.Should().BeSequentiallyEqualTo( sut.Warnings );
-            validateEvent.PreviousErrors.Should().BeEmpty();
-            validateEvent.NewErrors.Should().BeSequentiallyEqualTo( sut.Errors );
-        }
+        Assertion.All(
+                sut.State.TestEquals( VariableState.Changed | VariableState.Invalid | VariableState.Warning | VariableState.Dirty ),
+                sut.Value.TestRefEquals( value ),
+                sut.Errors.TestSequence( [ error ] ),
+                sut.Warnings.TestSequence( [ warning ] ),
+                onChangeEvents.TestCount( count => count.TestEquals( 1 ) )
+                    .Then(
+                        e => Assertion.All(
+                            "changeEvent",
+                            e[0].Variable.TestRefEquals( sut ),
+                            e[0].PreviousState.TestEquals( VariableState.Default ),
+                            e[0].NewState.TestEquals( sut.State ),
+                            e[0].PreviousValue.TestEquals( value ),
+                            e[0].NewValue.TestEquals( value ),
+                            e[0].Source.TestEquals( VariableChangeSource.Refresh ) ) ),
+                onValidateEvents.TestCount( count => count.TestEquals( 1 ) )
+                    .Then(
+                        e => Assertion.All(
+                            "validateEvent",
+                            e[0].Variable.TestRefEquals( sut ),
+                            e[0].AssociatedChange.TestRefEquals( onChangeEvents.FirstOrDefault() ),
+                            e[0].PreviousState.TestEquals( VariableState.Default ),
+                            e[0].NewState.TestEquals( sut.State ),
+                            e[0].PreviousWarnings.TestEmpty(),
+                            e[0].NewWarnings.TestSequence( sut.Warnings ),
+                            e[0].PreviousErrors.TestEmpty(),
+                            e[0].NewErrors.TestSequence( sut.Errors ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -100,33 +100,34 @@ public partial class VariableTests : TestsBase
 
         sut.Refresh();
 
-        using ( new AssertionScope() )
-        {
-            sut.State.Should().Be( VariableState.ReadOnly | VariableState.Dirty );
-            sut.Value.Should().Be( value );
-            sut.Errors.Should().BeEmpty();
-            sut.Warnings.Should().BeEmpty();
-            onChangeEvents.Should().HaveCount( 1 );
-            onValidateEvents.Should().HaveCount( 1 );
-
-            var changeEvent = onChangeEvents[0];
-            changeEvent.Variable.Should().BeSameAs( sut );
-            changeEvent.PreviousState.Should().Be( VariableState.ReadOnly );
-            changeEvent.NewState.Should().Be( sut.State );
-            changeEvent.PreviousValue.Should().Be( value );
-            changeEvent.NewValue.Should().Be( value );
-            changeEvent.Source.Should().Be( VariableChangeSource.Refresh );
-
-            var validateEvent = onValidateEvents[0];
-            validateEvent.Variable.Should().BeSameAs( sut );
-            validateEvent.AssociatedChange.Should().BeSameAs( changeEvent );
-            validateEvent.PreviousState.Should().Be( VariableState.ReadOnly );
-            validateEvent.NewState.Should().Be( sut.State );
-            validateEvent.PreviousWarnings.Should().BeEmpty();
-            validateEvent.NewWarnings.Should().BeSequentiallyEqualTo( sut.Warnings );
-            validateEvent.PreviousErrors.Should().BeEmpty();
-            validateEvent.NewErrors.Should().BeSequentiallyEqualTo( sut.Errors );
-        }
+        Assertion.All(
+                sut.State.TestEquals( VariableState.ReadOnly | VariableState.Dirty ),
+                sut.Value.TestEquals( value ),
+                sut.Errors.TestEmpty(),
+                sut.Warnings.TestEmpty(),
+                onChangeEvents.TestCount( count => count.TestEquals( 1 ) )
+                    .Then(
+                        e => Assertion.All(
+                            "changeEvent",
+                            e[0].Variable.TestRefEquals( sut ),
+                            e[0].PreviousState.TestEquals( VariableState.ReadOnly ),
+                            e[0].NewState.TestEquals( sut.State ),
+                            e[0].PreviousValue.TestEquals( value ),
+                            e[0].NewValue.TestEquals( value ),
+                            e[0].Source.TestEquals( VariableChangeSource.Refresh ) ) ),
+                onValidateEvents.TestCount( count => count.TestEquals( 1 ) )
+                    .Then(
+                        e => Assertion.All(
+                            "validateEvent",
+                            e[0].Variable.TestRefEquals( sut ),
+                            e[0].AssociatedChange.TestRefEquals( onChangeEvents.FirstOrDefault() ),
+                            e[0].PreviousState.TestEquals( VariableState.ReadOnly ),
+                            e[0].NewState.TestEquals( sut.State ),
+                            e[0].PreviousWarnings.TestEmpty(),
+                            e[0].NewWarnings.TestSequence( sut.Warnings ),
+                            e[0].PreviousErrors.TestEmpty(),
+                            e[0].NewErrors.TestSequence( sut.Errors ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -143,15 +144,14 @@ public partial class VariableTests : TestsBase
         sut.Dispose();
         sut.Refresh();
 
-        using ( new AssertionScope() )
-        {
-            sut.State.Should().Be( VariableState.ReadOnly | VariableState.Disposed );
-            sut.Value.Should().Be( value );
-            sut.Errors.Should().BeEmpty();
-            sut.Warnings.Should().BeEmpty();
-            onChangeEvents.Should().BeEmpty();
-            onValidateEvents.Should().BeEmpty();
-        }
+        Assertion.All(
+                sut.State.TestEquals( VariableState.ReadOnly | VariableState.Disposed ),
+                sut.Value.TestEquals( value ),
+                sut.Errors.TestEmpty(),
+                sut.Warnings.TestEmpty(),
+                onChangeEvents.TestEmpty(),
+                onValidateEvents.TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -168,24 +168,24 @@ public partial class VariableTests : TestsBase
 
         sut.RefreshValidation();
 
-        using ( new AssertionScope() )
-        {
-            sut.State.Should().Be( VariableState.Invalid | VariableState.Warning );
-            sut.Value.Should().Be( value );
-            sut.Errors.Should().BeSequentiallyEqualTo( error );
-            sut.Warnings.Should().BeSequentiallyEqualTo( warning );
-            onValidateEvents.Should().HaveCount( 1 );
-
-            var validateEvent = onValidateEvents[0];
-            validateEvent.Variable.Should().BeSameAs( sut );
-            validateEvent.AssociatedChange.Should().BeNull();
-            validateEvent.PreviousState.Should().Be( VariableState.Default );
-            validateEvent.NewState.Should().Be( sut.State );
-            validateEvent.PreviousWarnings.Should().BeEmpty();
-            validateEvent.NewWarnings.Should().BeSequentiallyEqualTo( sut.Warnings );
-            validateEvent.PreviousErrors.Should().BeEmpty();
-            validateEvent.NewErrors.Should().BeSequentiallyEqualTo( sut.Errors );
-        }
+        Assertion.All(
+                sut.State.TestEquals( VariableState.Invalid | VariableState.Warning ),
+                sut.Value.TestEquals( value ),
+                sut.Errors.TestSequence( [ error ] ),
+                sut.Warnings.TestSequence( [ warning ] ),
+                onValidateEvents.TestCount( count => count.TestEquals( 1 ) )
+                    .Then(
+                        e => Assertion.All(
+                            "validateEvent",
+                            e[0].Variable.TestRefEquals( sut ),
+                            e[0].AssociatedChange.TestNull(),
+                            e[0].PreviousState.TestEquals( VariableState.Default ),
+                            e[0].NewState.TestEquals( sut.State ),
+                            e[0].PreviousWarnings.TestEmpty(),
+                            e[0].NewWarnings.TestSequence( sut.Warnings ),
+                            e[0].PreviousErrors.TestEmpty(),
+                            e[0].NewErrors.TestSequence( sut.Errors ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -203,24 +203,24 @@ public partial class VariableTests : TestsBase
 
         sut.RefreshValidation();
 
-        using ( new AssertionScope() )
-        {
-            sut.State.Should().Be( VariableState.Invalid | VariableState.Warning | VariableState.ReadOnly );
-            sut.Value.Should().Be( value );
-            sut.Errors.Should().BeSequentiallyEqualTo( error );
-            sut.Warnings.Should().BeSequentiallyEqualTo( warning );
-            onValidateEvents.Should().HaveCount( 1 );
-
-            var validateEvent = onValidateEvents[0];
-            validateEvent.Variable.Should().BeSameAs( sut );
-            validateEvent.AssociatedChange.Should().BeNull();
-            validateEvent.PreviousState.Should().Be( VariableState.ReadOnly );
-            validateEvent.NewState.Should().Be( sut.State );
-            validateEvent.PreviousWarnings.Should().BeEmpty();
-            validateEvent.NewWarnings.Should().BeSequentiallyEqualTo( sut.Warnings );
-            validateEvent.PreviousErrors.Should().BeEmpty();
-            validateEvent.NewErrors.Should().BeSequentiallyEqualTo( sut.Errors );
-        }
+        Assertion.All(
+                sut.State.TestEquals( VariableState.Invalid | VariableState.Warning | VariableState.ReadOnly ),
+                sut.Value.TestEquals( value ),
+                sut.Errors.TestSequence( [ error ] ),
+                sut.Warnings.TestSequence( [ warning ] ),
+                onValidateEvents.TestCount( count => count.TestEquals( 1 ) )
+                    .Then(
+                        e => Assertion.All(
+                            "validateEvent",
+                            e[0].Variable.TestRefEquals( sut ),
+                            e[0].AssociatedChange.TestNull(),
+                            e[0].PreviousState.TestEquals( VariableState.ReadOnly ),
+                            e[0].NewState.TestEquals( sut.State ),
+                            e[0].PreviousWarnings.TestEmpty(),
+                            e[0].NewWarnings.TestSequence( sut.Warnings ),
+                            e[0].PreviousErrors.TestEmpty(),
+                            e[0].NewErrors.TestSequence( sut.Errors ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -235,14 +235,13 @@ public partial class VariableTests : TestsBase
         sut.Dispose();
         sut.RefreshValidation();
 
-        using ( new AssertionScope() )
-        {
-            sut.State.Should().Be( VariableState.ReadOnly | VariableState.Disposed );
-            sut.Value.Should().Be( value );
-            sut.Errors.Should().BeEmpty();
-            sut.Warnings.Should().BeEmpty();
-            onValidateEvents.Should().BeEmpty();
-        }
+        Assertion.All(
+                sut.State.TestEquals( VariableState.ReadOnly | VariableState.Disposed ),
+                sut.Value.TestEquals( value ),
+                sut.Errors.TestEmpty(),
+                sut.Warnings.TestEmpty(),
+                onValidateEvents.TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -260,24 +259,24 @@ public partial class VariableTests : TestsBase
 
         sut.ClearValidation();
 
-        using ( new AssertionScope() )
-        {
-            sut.State.Should().Be( VariableState.Dirty );
-            sut.Value.Should().Be( value );
-            sut.Errors.Should().BeEmpty();
-            sut.Warnings.Should().BeEmpty();
-            onValidateEvents.Should().HaveCount( 1 );
-
-            var validateEvent = onValidateEvents[0];
-            validateEvent.Variable.Should().BeSameAs( sut );
-            validateEvent.AssociatedChange.Should().BeNull();
-            validateEvent.PreviousState.Should().Be( VariableState.Invalid | VariableState.Warning | VariableState.Dirty );
-            validateEvent.NewState.Should().Be( sut.State );
-            validateEvent.PreviousWarnings.Should().BeSequentiallyEqualTo( warning );
-            validateEvent.NewWarnings.Should().BeSequentiallyEqualTo( sut.Warnings );
-            validateEvent.PreviousErrors.Should().BeSequentiallyEqualTo( error );
-            validateEvent.NewErrors.Should().BeSequentiallyEqualTo( sut.Errors );
-        }
+        Assertion.All(
+                sut.State.TestEquals( VariableState.Dirty ),
+                sut.Value.TestEquals( value ),
+                sut.Errors.TestEmpty(),
+                sut.Warnings.TestEmpty(),
+                onValidateEvents.TestCount( count => count.TestEquals( 1 ) )
+                    .Then(
+                        e => Assertion.All(
+                            "validateEvent",
+                            e[0].Variable.TestRefEquals( sut ),
+                            e[0].AssociatedChange.TestNull(),
+                            e[0].PreviousState.TestEquals( VariableState.Invalid | VariableState.Warning | VariableState.Dirty ),
+                            e[0].NewState.TestEquals( sut.State ),
+                            e[0].PreviousWarnings.TestSequence( [ warning ] ),
+                            e[0].NewWarnings.TestSequence( sut.Warnings ),
+                            e[0].PreviousErrors.TestSequence( [ error ] ),
+                            e[0].NewErrors.TestSequence( sut.Errors ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -291,14 +290,13 @@ public partial class VariableTests : TestsBase
 
         sut.ClearValidation();
 
-        using ( new AssertionScope() )
-        {
-            sut.State.Should().Be( VariableState.Default );
-            sut.Value.Should().Be( value );
-            sut.Errors.Should().BeEmpty();
-            sut.Warnings.Should().BeEmpty();
-            onValidateEvents.Should().BeEmpty();
-        }
+        Assertion.All(
+                sut.State.TestEquals( VariableState.Default ),
+                sut.Value.TestEquals( value ),
+                sut.Errors.TestEmpty(),
+                sut.Warnings.TestEmpty(),
+                onValidateEvents.TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -313,14 +311,13 @@ public partial class VariableTests : TestsBase
         sut.Dispose();
         sut.ClearValidation();
 
-        using ( new AssertionScope() )
-        {
-            sut.State.Should().Be( VariableState.ReadOnly | VariableState.Disposed );
-            sut.Value.Should().Be( value );
-            sut.Errors.Should().BeEmpty();
-            sut.Warnings.Should().BeEmpty();
-            onValidateEvents.Should().BeEmpty();
-        }
+        Assertion.All(
+                sut.State.TestEquals( VariableState.ReadOnly | VariableState.Disposed ),
+                sut.Value.TestEquals( value ),
+                sut.Errors.TestEmpty(),
+                sut.Warnings.TestEmpty(),
+                onValidateEvents.TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -334,19 +331,19 @@ public partial class VariableTests : TestsBase
 
         sut.SetReadOnly( true );
 
-        using ( new AssertionScope() )
-        {
-            sut.State.Should().Be( VariableState.ReadOnly );
-            onChangeEvents.Should().HaveCount( 1 );
-
-            var changeEvent = onChangeEvents[0];
-            changeEvent.Variable.Should().BeSameAs( sut );
-            changeEvent.PreviousState.Should().Be( VariableState.Default );
-            changeEvent.NewState.Should().Be( sut.State );
-            changeEvent.PreviousValue.Should().Be( value );
-            changeEvent.NewValue.Should().Be( value );
-            changeEvent.Source.Should().Be( VariableChangeSource.SetReadOnly );
-        }
+        Assertion.All(
+                sut.State.TestEquals( VariableState.ReadOnly ),
+                onChangeEvents.TestCount( count => count.TestEquals( 1 ) )
+                    .Then(
+                        e => Assertion.All(
+                            "changeEvent",
+                            e[0].Variable.TestRefEquals( sut ),
+                            e[0].PreviousState.TestEquals( VariableState.Default ),
+                            e[0].NewState.TestEquals( sut.State ),
+                            e[0].PreviousValue.TestEquals( value ),
+                            e[0].NewValue.TestEquals( value ),
+                            e[0].Source.TestEquals( VariableChangeSource.SetReadOnly ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -361,19 +358,19 @@ public partial class VariableTests : TestsBase
 
         sut.SetReadOnly( false );
 
-        using ( new AssertionScope() )
-        {
-            sut.State.Should().Be( VariableState.Default );
-            onChangeEvents.Should().HaveCount( 1 );
-
-            var changeEvent = onChangeEvents[0];
-            changeEvent.Variable.Should().BeSameAs( sut );
-            changeEvent.PreviousState.Should().Be( VariableState.ReadOnly );
-            changeEvent.NewState.Should().Be( sut.State );
-            changeEvent.PreviousValue.Should().Be( value );
-            changeEvent.NewValue.Should().Be( value );
-            changeEvent.Source.Should().Be( VariableChangeSource.SetReadOnly );
-        }
+        Assertion.All(
+                sut.State.TestEquals( VariableState.Default ),
+                onChangeEvents.TestCount( count => count.TestEquals( 1 ) )
+                    .Then(
+                        e => Assertion.All(
+                            "changeEvent",
+                            e[0].Variable.TestRefEquals( sut ),
+                            e[0].PreviousState.TestEquals( VariableState.ReadOnly ),
+                            e[0].NewState.TestEquals( sut.State ),
+                            e[0].PreviousValue.TestEquals( value ),
+                            e[0].NewValue.TestEquals( value ),
+                            e[0].Source.TestEquals( VariableChangeSource.SetReadOnly ) ) ) )
+            .Go();
     }
 
     [Theory]
@@ -390,11 +387,10 @@ public partial class VariableTests : TestsBase
 
         sut.SetReadOnly( enabled );
 
-        using ( new AssertionScope() )
-        {
-            sut.State.Should().Be( enabled ? VariableState.ReadOnly : VariableState.Default );
-            onChangeEvents.Should().BeEmpty();
-        }
+        Assertion.All(
+                sut.State.TestEquals( enabled ? VariableState.ReadOnly : VariableState.Default ),
+                onChangeEvents.TestEmpty() )
+            .Go();
     }
 
     [Theory]
@@ -411,10 +407,9 @@ public partial class VariableTests : TestsBase
         sut.Dispose();
         sut.SetReadOnly( enabled );
 
-        using ( new AssertionScope() )
-        {
-            sut.State.Should().Be( VariableState.ReadOnly | VariableState.Disposed );
-            onChangeEvents.Should().BeEmpty();
-        }
+        Assertion.All(
+                sut.State.TestEquals( VariableState.ReadOnly | VariableState.Disposed ),
+                onChangeEvents.TestEmpty() )
+            .Go();
     }
 }

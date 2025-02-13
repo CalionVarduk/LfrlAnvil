@@ -2,7 +2,6 @@
 using System.Linq;
 using LfrlAnvil.Functional;
 using LfrlAnvil.Reactive.State.Events;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Reactive.State.Tests.CollectionVariableTests;
 
@@ -23,16 +22,15 @@ public partial class CollectionVariableTests
 
         var result = sut.Clear();
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( VariableChangeResult.Changed );
-            sut.State.Should().Be( VariableState.Changed | VariableState.Dirty );
-            sut.Elements.Values.Should().BeEmpty();
-            onChangeEvents.Should().HaveCount( 1 );
-            onChangeEvents[0].RemovedElements.Select( e => e.Element ).Should().BeSequentiallyEqualTo( elements );
-            onValidateEvents.Should().HaveCount( 1 );
-            onValidateEvents[0].AssociatedChange.Should().BeSameAs( onChangeEvents[0] );
-        }
+        Assertion.All(
+                result.TestEquals( VariableChangeResult.Changed ),
+                sut.State.TestEquals( VariableState.Changed | VariableState.Dirty ),
+                sut.Elements.Values.TestEmpty(),
+                onChangeEvents.Count.TestEquals( 1 ),
+                onChangeEvents[0].RemovedElements.Select( e => e.Element ).TestSequence( elements ),
+                onValidateEvents.Count.TestEquals( 1 ),
+                onValidateEvents[0].AssociatedChange.TestRefEquals( onChangeEvents[0] ) )
+            .Go();
     }
 
     [Fact]
@@ -49,14 +47,13 @@ public partial class CollectionVariableTests
 
         var result = sut.Clear();
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( VariableChangeResult.NotChanged );
-            sut.State.Should().Be( VariableState.Default );
-            sut.Elements.Values.Should().BeEmpty();
-            onChangeEvents.Should().BeEmpty();
-            onValidateEvents.Should().BeEmpty();
-        }
+        Assertion.All(
+                result.TestEquals( VariableChangeResult.NotChanged ),
+                sut.State.TestEquals( VariableState.Default ),
+                sut.Elements.Values.TestEmpty(),
+                onChangeEvents.TestEmpty(),
+                onValidateEvents.TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -75,13 +72,12 @@ public partial class CollectionVariableTests
 
         var result = sut.Clear();
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( VariableChangeResult.ReadOnly );
-            sut.State.Should().Be( VariableState.ReadOnly );
-            sut.Elements.Values.Should().BeSequentiallyEqualTo( elements.AsEnumerable() );
-            onChangeEvents.Should().BeEmpty();
-            onValidateEvents.Should().BeEmpty();
-        }
+        Assertion.All(
+                result.TestEquals( VariableChangeResult.ReadOnly ),
+                sut.State.TestEquals( VariableState.ReadOnly ),
+                sut.Elements.Values.TestSequence( elements.AsEnumerable() ),
+                onChangeEvents.TestEmpty(),
+                onValidateEvents.TestEmpty() )
+            .Go();
     }
 }

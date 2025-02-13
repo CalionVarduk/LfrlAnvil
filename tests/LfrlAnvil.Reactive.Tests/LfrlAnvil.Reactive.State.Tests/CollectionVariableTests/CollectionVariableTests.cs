@@ -23,7 +23,7 @@ public partial class CollectionVariableTests : TestsBase
 
         var result = sut.ToString();
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -39,12 +39,11 @@ public partial class CollectionVariableTests : TestsBase
 
         sut.Dispose();
 
-        using ( new AssertionScope() )
-        {
-            onChange.IsDisposed.Should().BeTrue();
-            onValidate.IsDisposed.Should().BeTrue();
-            sut.State.Should().Be( VariableState.Changed | VariableState.ReadOnly | VariableState.Disposed );
-        }
+        Assertion.All(
+                onChange.IsDisposed.TestTrue(),
+                onValidate.IsDisposed.TestTrue(),
+                sut.State.TestEquals( VariableState.Changed | VariableState.ReadOnly | VariableState.Disposed ) )
+            .Go();
     }
 
     [Fact]
@@ -58,21 +57,21 @@ public partial class CollectionVariableTests : TestsBase
 
         sut.SetReadOnly( true );
 
-        using ( new AssertionScope() )
-        {
-            sut.State.Should().Be( VariableState.ReadOnly );
-            onChangeEvents.Should().HaveCount( 1 );
-
-            var changeEvent = onChangeEvents[0];
-            changeEvent.Variable.Should().BeSameAs( sut );
-            changeEvent.PreviousState.Should().Be( VariableState.Default );
-            changeEvent.NewState.Should().Be( sut.State );
-            changeEvent.Source.Should().Be( VariableChangeSource.SetReadOnly );
-            changeEvent.AddedElements.Should().BeEmpty();
-            changeEvent.RemovedElements.Should().BeEmpty();
-            changeEvent.RefreshedElements.Should().BeEmpty();
-            changeEvent.ReplacedElements.Should().BeEmpty();
-        }
+        Assertion.All(
+                sut.State.TestEquals( VariableState.ReadOnly ),
+                onChangeEvents.TestCount( count => count.TestEquals( 1 ) )
+                    .Then(
+                        e => Assertion.All(
+                            "changeEvent",
+                            e[0].Variable.TestRefEquals( sut ),
+                            e[0].PreviousState.TestEquals( VariableState.Default ),
+                            e[0].NewState.TestEquals( sut.State ),
+                            e[0].Source.TestEquals( VariableChangeSource.SetReadOnly ),
+                            e[0].AddedElements.TestEmpty(),
+                            e[0].RemovedElements.TestEmpty(),
+                            e[0].RefreshedElements.TestEmpty(),
+                            e[0].ReplacedElements.TestEmpty() ) ) )
+            .Go();
     }
 
     [Fact]
@@ -87,21 +86,21 @@ public partial class CollectionVariableTests : TestsBase
 
         sut.SetReadOnly( false );
 
-        using ( new AssertionScope() )
-        {
-            sut.State.Should().Be( VariableState.Default );
-            onChangeEvents.Should().HaveCount( 1 );
-
-            var changeEvent = onChangeEvents[0];
-            changeEvent.Variable.Should().BeSameAs( sut );
-            changeEvent.PreviousState.Should().Be( VariableState.ReadOnly );
-            changeEvent.NewState.Should().Be( sut.State );
-            changeEvent.Source.Should().Be( VariableChangeSource.SetReadOnly );
-            changeEvent.AddedElements.Should().BeEmpty();
-            changeEvent.RemovedElements.Should().BeEmpty();
-            changeEvent.RefreshedElements.Should().BeEmpty();
-            changeEvent.ReplacedElements.Should().BeEmpty();
-        }
+        Assertion.All(
+                sut.State.TestEquals( VariableState.Default ),
+                onChangeEvents.TestCount( count => count.TestEquals( 1 ) )
+                    .Then(
+                        e => Assertion.All(
+                            "changeEvent",
+                            e[0].Variable.TestRefEquals( sut ),
+                            e[0].PreviousState.TestEquals( VariableState.ReadOnly ),
+                            e[0].NewState.TestEquals( sut.State ),
+                            e[0].Source.TestEquals( VariableChangeSource.SetReadOnly ),
+                            e[0].AddedElements.TestEmpty(),
+                            e[0].RemovedElements.TestEmpty(),
+                            e[0].RefreshedElements.TestEmpty(),
+                            e[0].ReplacedElements.TestEmpty() ) ) )
+            .Go();
     }
 
     [Theory]
@@ -118,11 +117,10 @@ public partial class CollectionVariableTests : TestsBase
 
         sut.SetReadOnly( enabled );
 
-        using ( new AssertionScope() )
-        {
-            sut.State.Should().Be( enabled ? VariableState.ReadOnly : VariableState.Default );
-            onChangeEvents.Should().BeEmpty();
-        }
+        Assertion.All(
+                sut.State.TestEquals( enabled ? VariableState.ReadOnly : VariableState.Default ),
+                onChangeEvents.TestEmpty() )
+            .Go();
     }
 
     [Theory]
@@ -139,11 +137,10 @@ public partial class CollectionVariableTests : TestsBase
         sut.Dispose();
         sut.SetReadOnly( enabled );
 
-        using ( new AssertionScope() )
-        {
-            sut.State.Should().Be( VariableState.ReadOnly | VariableState.Disposed );
-            onChangeEvents.Should().BeEmpty();
-        }
+        Assertion.All(
+                sut.State.TestEquals( VariableState.ReadOnly | VariableState.Disposed ),
+                onChangeEvents.TestEmpty() )
+            .Go();
     }
 }
 

@@ -2,7 +2,6 @@
 using System.Linq;
 using LfrlAnvil.Functional;
 using LfrlAnvil.Reactive.State.Events;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 using LfrlAnvil.Validation;
 
 namespace LfrlAnvil.Reactive.State.Tests.CollectionVariableTests;
@@ -24,49 +23,55 @@ public partial class CollectionVariableTests
 
         var result = sut.Remove( element.Key );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( VariableChangeResult.Changed );
-            sut.State.Should().Be( VariableState.Changed | VariableState.Dirty );
-            sut.Elements.Values.Should().BeEmpty();
-            sut.Elements.ModifiedElementKeys.Should().BeEquivalentTo( element.Key );
-            sut.Elements.GetState( element.Key ).Should().Be( CollectionVariableElementState.Removed );
-            sut.Elements.GetErrors( element.Key ).Should().BeEmpty();
-            sut.Elements.GetWarnings( element.Key ).Should().BeEmpty();
-            onChangeEvents.Should().HaveCount( 1 );
-            onValidateEvents.Should().HaveCount( 1 );
-
-            var changeEvent = onChangeEvents[0];
-            changeEvent.Variable.Should().BeSameAs( sut );
-            changeEvent.PreviousState.Should().Be( VariableState.Default );
-            changeEvent.NewState.Should().Be( sut.State );
-            changeEvent.Source.Should().Be( VariableChangeSource.Change );
-            changeEvent.AddedElements.Should().BeEmpty();
-            changeEvent.RefreshedElements.Should().BeEmpty();
-            changeEvent.ReplacedElements.Should().BeEmpty();
-            changeEvent.RemovedElements.Should().HaveCount( 1 );
-
-            var elementSnapshot = changeEvent.RemovedElements[0];
-            elementSnapshot.Element.Should().BeSameAs( element );
-            elementSnapshot.PreviousState.Should().Be( CollectionVariableElementState.Default );
-            elementSnapshot.NewState.Should().Be( sut.Elements.GetState( element.Key ) );
-            elementSnapshot.PreviousErrors.Should().BeEmpty();
-            elementSnapshot.NewErrors.Should().BeSequentiallyEqualTo( sut.Elements.GetErrors( element.Key ) );
-            elementSnapshot.PreviousWarnings.Should().BeEmpty();
-            elementSnapshot.NewWarnings.Should().BeSequentiallyEqualTo( sut.Elements.GetWarnings( element.Key ) );
-
-            var validateEvent = onValidateEvents[0];
-            validateEvent.Variable.Should().BeSameAs( sut );
-            validateEvent.AssociatedChange.Should().BeSameAs( changeEvent );
-            validateEvent.PreviousState.Should().Be( VariableState.Default );
-            validateEvent.NewState.Should().Be( sut.State );
-            validateEvent.PreviousWarnings.Should().BeEmpty();
-            validateEvent.NewWarnings.Should().BeSequentiallyEqualTo( sut.Warnings );
-            validateEvent.PreviousErrors.Should().BeEmpty();
-            validateEvent.NewErrors.Should().BeSequentiallyEqualTo( sut.Errors );
-            validateEvent.Elements.Should().HaveCount( 1 );
-            validateEvent.Elements[0].Should().BeSameAs( elementSnapshot );
-        }
+        Assertion.All(
+                result.TestEquals( VariableChangeResult.Changed ),
+                sut.State.TestEquals( VariableState.Changed | VariableState.Dirty ),
+                sut.Elements.Values.TestEmpty(),
+                sut.Elements.ModifiedElementKeys.TestSetEqual( [ element.Key ] ),
+                sut.Elements.GetState( element.Key ).TestEquals( CollectionVariableElementState.Removed ),
+                sut.Elements.GetErrors( element.Key ).TestEmpty(),
+                sut.Elements.GetWarnings( element.Key ).TestEmpty(),
+                onChangeEvents.TestCount( count => count.TestEquals( 1 ) )
+                    .Then(
+                        e => Assertion.All(
+                            "changeEvent",
+                            e[0].Variable.TestRefEquals( sut ),
+                            e[0].PreviousState.TestEquals( VariableState.Default ),
+                            e[0].NewState.TestEquals( sut.State ),
+                            e[0].Source.TestEquals( VariableChangeSource.Change ),
+                            e[0].AddedElements.TestEmpty(),
+                            e[0].RefreshedElements.TestEmpty(),
+                            e[0].ReplacedElements.TestEmpty(),
+                            e[0]
+                                .RemovedElements.TestCount( count => count.TestEquals( 1 ) )
+                                .Then(
+                                    s => Assertion.All(
+                                        "elementSnapshot",
+                                        s[0].Element.TestRefEquals( element ),
+                                        s[0].PreviousState.TestEquals( CollectionVariableElementState.Default ),
+                                        s[0].NewState.TestEquals( sut.Elements.GetState( element.Key ) ),
+                                        s[0].PreviousErrors.TestEmpty(),
+                                        s[0].NewErrors.TestSequence( sut.Elements.GetErrors( element.Key ) ),
+                                        s[0].PreviousWarnings.TestEmpty(),
+                                        s[0].NewWarnings.TestSequence( sut.Elements.GetWarnings( element.Key ) ) ) ) ) ),
+                onValidateEvents.TestCount( count => count.TestEquals( 1 ) )
+                    .Then(
+                        e => Assertion.All(
+                            "validateEvent",
+                            e[0].Variable.TestRefEquals( sut ),
+                            e[0].AssociatedChange.TestRefEquals( onChangeEvents.FirstOrDefault() ),
+                            e[0].PreviousState.TestEquals( VariableState.Default ),
+                            e[0].NewState.TestEquals( sut.State ),
+                            e[0].PreviousWarnings.TestEmpty(),
+                            e[0].NewWarnings.TestSequence( sut.Warnings ),
+                            e[0].PreviousErrors.TestEmpty(),
+                            e[0].NewErrors.TestSequence( sut.Errors ),
+                            e[0]
+                                .Elements.TestCount( count => count.TestEquals( 1 ) )
+                                .Then(
+                                    el =>
+                                        el[0].TestRefEquals( onChangeEvents.FirstOrDefault()?.RemovedElements.FirstOrDefault() ) ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -97,62 +102,68 @@ public partial class CollectionVariableTests
 
         var result = sut.Remove( element.Key );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( VariableChangeResult.Changed );
-            sut.State.Should().Be( VariableState.Invalid | VariableState.Warning | VariableState.Dirty );
-            sut.Errors.Should().BeSequentiallyEqualTo( error );
-            sut.Warnings.Should().BeSequentiallyEqualTo( warning );
-            sut.Elements.Values.Should().BeEmpty();
-            sut.Elements.ModifiedElementKeys.Should().BeEmpty();
-            sut.Elements.InvalidElementKeys.Should().BeEmpty();
-            sut.Elements.WarningElementKeys.Should().BeEmpty();
-            sut.Elements.GetState( element.Key ).Should().Be( CollectionVariableElementState.NotFound );
-            sut.Elements.GetErrors( element.Key ).Should().BeEmpty();
-            sut.Elements.GetWarnings( element.Key ).Should().BeEmpty();
-            onChangeEvents.Should().HaveCount( 1 );
-            onValidateEvents.Should().HaveCount( 1 );
-
-            var changeEvent = onChangeEvents[0];
-            changeEvent.Variable.Should().BeSameAs( sut );
-            changeEvent.PreviousState.Should()
-                .Be( VariableState.Changed | VariableState.Invalid | VariableState.Warning | VariableState.Dirty );
-
-            changeEvent.NewState.Should().Be( sut.State );
-            changeEvent.Source.Should().Be( VariableChangeSource.Change );
-            changeEvent.AddedElements.Should().BeEmpty();
-            changeEvent.RefreshedElements.Should().BeEmpty();
-            changeEvent.ReplacedElements.Should().BeEmpty();
-            changeEvent.RemovedElements.Should().HaveCount( 1 );
-
-            var elementSnapshot = changeEvent.RemovedElements[0];
-            elementSnapshot.Element.Should().BeSameAs( element );
-            elementSnapshot.PreviousState.Should()
-                .Be(
-                    CollectionVariableElementState.Added
-                    | CollectionVariableElementState.Invalid
-                    | CollectionVariableElementState.Warning );
-
-            elementSnapshot.NewState.Should().Be( sut.Elements.GetState( element.Key ) );
-            elementSnapshot.PreviousErrors.Should().BeSequentiallyEqualTo( elementError );
-            elementSnapshot.NewErrors.Should().BeSequentiallyEqualTo( sut.Elements.GetErrors( element.Key ) );
-            elementSnapshot.PreviousWarnings.Should().BeSequentiallyEqualTo( elementWarning );
-            elementSnapshot.NewWarnings.Should().BeSequentiallyEqualTo( sut.Elements.GetWarnings( element.Key ) );
-
-            var validateEvent = onValidateEvents[0];
-            validateEvent.Variable.Should().BeSameAs( sut );
-            validateEvent.AssociatedChange.Should().BeSameAs( changeEvent );
-            validateEvent.PreviousState.Should()
-                .Be( VariableState.Changed | VariableState.Invalid | VariableState.Warning | VariableState.Dirty );
-
-            validateEvent.NewState.Should().Be( sut.State );
-            validateEvent.PreviousWarnings.Should().BeSequentiallyEqualTo( warning );
-            validateEvent.NewWarnings.Should().BeSequentiallyEqualTo( sut.Warnings );
-            validateEvent.PreviousErrors.Should().BeSequentiallyEqualTo( error );
-            validateEvent.NewErrors.Should().BeSequentiallyEqualTo( sut.Errors );
-            validateEvent.Elements.Should().HaveCount( 1 );
-            validateEvent.Elements[0].Should().BeSameAs( elementSnapshot );
-        }
+        Assertion.All(
+                result.TestEquals( VariableChangeResult.Changed ),
+                sut.State.TestEquals( VariableState.Invalid | VariableState.Warning | VariableState.Dirty ),
+                sut.Errors.TestSequence( [ error ] ),
+                sut.Warnings.TestSequence( [ warning ] ),
+                sut.Elements.Values.TestEmpty(),
+                sut.Elements.ModifiedElementKeys.TestEmpty(),
+                sut.Elements.InvalidElementKeys.TestEmpty(),
+                sut.Elements.WarningElementKeys.TestEmpty(),
+                sut.Elements.GetState( element.Key ).TestEquals( CollectionVariableElementState.NotFound ),
+                sut.Elements.GetErrors( element.Key ).TestEmpty(),
+                sut.Elements.GetWarnings( element.Key ).TestEmpty(),
+                onChangeEvents.TestCount( count => count.TestEquals( 1 ) )
+                    .Then(
+                        e => Assertion.All(
+                            "changeEvent",
+                            e[0].Variable.TestRefEquals( sut ),
+                            e[0]
+                                .PreviousState.TestEquals(
+                                    VariableState.Changed | VariableState.Invalid | VariableState.Warning | VariableState.Dirty ),
+                            e[0].NewState.TestEquals( sut.State ),
+                            e[0].Source.TestEquals( VariableChangeSource.Change ),
+                            e[0].AddedElements.TestEmpty(),
+                            e[0].RefreshedElements.TestEmpty(),
+                            e[0].ReplacedElements.TestEmpty(),
+                            e[0]
+                                .RemovedElements.TestCount( count => count.TestEquals( 1 ) )
+                                .Then(
+                                    s => Assertion.All(
+                                        "elementSnapshot",
+                                        s[0].Element.TestRefEquals( element ),
+                                        s[0]
+                                            .PreviousState.TestEquals(
+                                                CollectionVariableElementState.Added
+                                                | CollectionVariableElementState.Invalid
+                                                | CollectionVariableElementState.Warning ),
+                                        s[0].NewState.TestEquals( sut.Elements.GetState( element.Key ) ),
+                                        s[0].PreviousErrors.TestSequence( [ elementError ] ),
+                                        s[0].NewErrors.TestSequence( sut.Elements.GetErrors( element.Key ) ),
+                                        s[0].PreviousWarnings.TestSequence( [ elementWarning ] ),
+                                        s[0].NewWarnings.TestSequence( sut.Elements.GetWarnings( element.Key ) ) ) ) ) ),
+                onValidateEvents.TestCount( count => count.TestEquals( 1 ) )
+                    .Then(
+                        e => Assertion.All(
+                            "validateEvent",
+                            e[0].Variable.TestRefEquals( sut ),
+                            e[0].AssociatedChange.TestRefEquals( onChangeEvents.FirstOrDefault() ),
+                            e[0]
+                                .PreviousState.TestEquals(
+                                    VariableState.Changed | VariableState.Invalid | VariableState.Warning | VariableState.Dirty ),
+                            e[0].NewState.TestEquals( sut.State ),
+                            e[0].PreviousWarnings.TestSequence( [ warning ] ),
+                            e[0].NewWarnings.TestSequence( sut.Warnings ),
+                            e[0].PreviousErrors.TestSequence( [ error ] ),
+                            e[0].NewErrors.TestSequence( sut.Errors ),
+                            e[0].Elements.Count.TestEquals( 1 ),
+                            e[0]
+                                .Elements.TestCount( count => count.TestEquals( 1 ) )
+                                .Then(
+                                    el =>
+                                        el[0].TestRefEquals( onChangeEvents.FirstOrDefault()?.RemovedElements.FirstOrDefault() ) ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -170,14 +181,13 @@ public partial class CollectionVariableTests
 
         var result = sut.Remove( key );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( VariableChangeResult.NotChanged );
-            sut.State.Should().Be( VariableState.Default );
-            sut.Elements.Values.Should().BeEmpty();
-            onChangeEvents.Should().BeEmpty();
-            onValidateEvents.Should().BeEmpty();
-        }
+        Assertion.All(
+                result.TestEquals( VariableChangeResult.NotChanged ),
+                sut.State.TestEquals( VariableState.Default ),
+                sut.Elements.Values.TestEmpty(),
+                onChangeEvents.TestEmpty(),
+                onValidateEvents.TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -196,14 +206,13 @@ public partial class CollectionVariableTests
 
         var result = sut.Remove( element.Key );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( VariableChangeResult.ReadOnly );
-            sut.State.Should().Be( VariableState.ReadOnly );
-            sut.Elements.Values.Should().BeEquivalentTo( element );
-            onChangeEvents.Should().BeEmpty();
-            onValidateEvents.Should().BeEmpty();
-        }
+        Assertion.All(
+                result.TestEquals( VariableChangeResult.ReadOnly ),
+                sut.State.TestEquals( VariableState.ReadOnly ),
+                sut.Elements.Values.TestSetEqual( [ element ] ),
+                onChangeEvents.TestEmpty(),
+                onValidateEvents.TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -228,26 +237,24 @@ public partial class CollectionVariableTests
 
         var result = sut.Remove( keys );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( VariableChangeResult.Changed );
-            sut.State.Should().Be( VariableState.Changed | VariableState.Dirty );
-            sut.Elements.Values.Should().BeEquivalentTo( allElements[0] );
-            sut.Elements.ModifiedElementKeys.Should().BeEquivalentTo( allElements[1].Key );
-            sut.Elements.GetState( allElements[0].Key ).Should().Be( CollectionVariableElementState.Default );
-            sut.Elements.GetState( allElements[1].Key ).Should().Be( CollectionVariableElementState.Removed );
-            sut.Elements.GetState( allElements[2].Key ).Should().Be( CollectionVariableElementState.NotFound );
-            sut.Elements.GetState( allElements[3].Key ).Should().Be( CollectionVariableElementState.NotFound );
-            onChangeEvents.Should().HaveCount( 1 );
-            onValidateEvents.Should().HaveCount( 1 );
-
-            var changeEvent = onChangeEvents[0];
-            changeEvent.RemovedElements.Select( e => e.Element ).Should().BeSequentiallyEqualTo( allElements[1], allElements[2] );
-
-            var validateEvent = onValidateEvents[0];
-            validateEvent.Elements.Select( e => e.Element ).Should().BeSequentiallyEqualTo( allElements[1], allElements[2] );
-            validateEvent.AssociatedChange.Should().BeSameAs( changeEvent );
-        }
+        Assertion.All(
+                result.TestEquals( VariableChangeResult.Changed ),
+                sut.State.TestEquals( VariableState.Changed | VariableState.Dirty ),
+                sut.Elements.Values.TestSetEqual( [ allElements[0] ] ),
+                sut.Elements.ModifiedElementKeys.TestSetEqual( [ allElements[1].Key ] ),
+                sut.Elements.GetState( allElements[0].Key ).TestEquals( CollectionVariableElementState.Default ),
+                sut.Elements.GetState( allElements[1].Key ).TestEquals( CollectionVariableElementState.Removed ),
+                sut.Elements.GetState( allElements[2].Key ).TestEquals( CollectionVariableElementState.NotFound ),
+                sut.Elements.GetState( allElements[3].Key ).TestEquals( CollectionVariableElementState.NotFound ),
+                onChangeEvents.TestCount( count => count.TestEquals( 1 ) )
+                    .Then( e => e[0].RemovedElements.Select( el => el.Element ).TestSequence( [ allElements[1], allElements[2] ] ) ),
+                onValidateEvents.TestCount( count => count.TestEquals( 1 ) )
+                    .Then(
+                        e => Assertion.All(
+                            "validateEvent",
+                            e[0].Elements.Select( el => el.Element ).TestSequence( [ allElements[1], allElements[2] ] ),
+                            e[0].AssociatedChange.TestRefEquals( onChangeEvents.FirstOrDefault() ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -265,16 +272,15 @@ public partial class CollectionVariableTests
 
         var result = sut.Remove( new[] { element.Key } );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( VariableChangeResult.Changed );
-            sut.State.Should().Be( VariableState.Changed | VariableState.Dirty );
-            sut.Elements.Values.Should().BeEmpty();
-            onChangeEvents.Should().HaveCount( 1 );
-            onChangeEvents[0].RemovedElements.Select( e => e.Element ).Should().BeSequentiallyEqualTo( element );
-            onValidateEvents.Should().HaveCount( 1 );
-            onValidateEvents[0].Elements.Select( e => e.Element ).Should().BeSequentiallyEqualTo( element );
-        }
+        Assertion.All(
+                result.TestEquals( VariableChangeResult.Changed ),
+                sut.State.TestEquals( VariableState.Changed | VariableState.Dirty ),
+                sut.Elements.Values.TestEmpty(),
+                onChangeEvents.Count.TestEquals( 1 ),
+                onChangeEvents[0].RemovedElements.Select( e => e.Element ).TestSequence( [ element ] ),
+                onValidateEvents.Count.TestEquals( 1 ),
+                onValidateEvents[0].Elements.Select( e => e.Element ).TestSequence( [ element ] ) )
+            .Go();
     }
 
     [Fact]
@@ -292,14 +298,13 @@ public partial class CollectionVariableTests
 
         var result = sut.Remove( new[] { key, key } );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( VariableChangeResult.NotChanged );
-            sut.State.Should().Be( VariableState.Default );
-            sut.Elements.Values.Should().BeEmpty();
-            onChangeEvents.Should().BeEmpty();
-            onValidateEvents.Should().BeEmpty();
-        }
+        Assertion.All(
+                result.TestEquals( VariableChangeResult.NotChanged ),
+                sut.State.TestEquals( VariableState.Default ),
+                sut.Elements.Values.TestEmpty(),
+                onChangeEvents.TestEmpty(),
+                onValidateEvents.TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -317,14 +322,13 @@ public partial class CollectionVariableTests
 
         var result = sut.Remove( Array.Empty<int>() );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( VariableChangeResult.NotChanged );
-            sut.State.Should().Be( VariableState.Default );
-            sut.Elements.Values.Should().BeEquivalentTo( elements.AsEnumerable() );
-            onChangeEvents.Should().BeEmpty();
-            onValidateEvents.Should().BeEmpty();
-        }
+        Assertion.All(
+                result.TestEquals( VariableChangeResult.NotChanged ),
+                sut.State.TestEquals( VariableState.Default ),
+                sut.Elements.Values.TestSetEqual( elements.AsEnumerable() ),
+                onChangeEvents.TestEmpty(),
+                onValidateEvents.TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -343,13 +347,12 @@ public partial class CollectionVariableTests
 
         var result = sut.Remove( elements.Select( e => e.Key ) );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( VariableChangeResult.ReadOnly );
-            sut.State.Should().Be( VariableState.ReadOnly );
-            sut.Elements.Values.Should().BeEquivalentTo( elements.AsEnumerable() );
-            onChangeEvents.Should().BeEmpty();
-            onValidateEvents.Should().BeEmpty();
-        }
+        Assertion.All(
+                result.TestEquals( VariableChangeResult.ReadOnly ),
+                sut.State.TestEquals( VariableState.ReadOnly ),
+                sut.Elements.Values.TestSetEqual( elements.AsEnumerable() ),
+                onChangeEvents.TestEmpty(),
+                onValidateEvents.TestEmpty() )
+            .Go();
     }
 }

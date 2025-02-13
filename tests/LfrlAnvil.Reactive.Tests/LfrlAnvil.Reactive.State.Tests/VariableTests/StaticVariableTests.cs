@@ -12,18 +12,17 @@ public class StaticVariableTests : TestsBase
         var comparer = EqualityComparerFactory<int>.Create( (a, b) => a == b );
         var sut = Variable.WithoutValidators<string>.Create( initialValue, value, comparer );
 
-        using ( new AssertionScope() )
-        {
-            sut.Parent.Should().BeNull();
-            sut.InitialValue.Should().Be( initialValue );
-            sut.Value.Should().Be( value );
-            sut.Comparer.Should().BeSameAs( comparer );
-            sut.Errors.Should().BeEmpty();
-            sut.Warnings.Should().BeEmpty();
-            sut.State.Should().Be( VariableState.Changed );
-            sut.ErrorsValidator.Should().BeOfType( typeof( PassingValidator<int, string> ) );
-            sut.WarningsValidator.Should().BeOfType( typeof( PassingValidator<int, string> ) );
-        }
+        Assertion.All(
+                sut.Parent.TestNull(),
+                sut.InitialValue.TestEquals( initialValue ),
+                sut.Value.TestEquals( value ),
+                sut.Comparer.TestRefEquals( comparer ),
+                sut.Errors.TestEmpty(),
+                sut.Warnings.TestEmpty(),
+                sut.State.TestEquals( VariableState.Changed ),
+                sut.ErrorsValidator.TestType().AssignableTo<PassingValidator<int, string>>(),
+                sut.WarningsValidator.TestType().AssignableTo<PassingValidator<int, string>>() )
+            .Go();
     }
 
     [Fact]
@@ -33,18 +32,17 @@ public class StaticVariableTests : TestsBase
         var comparer = EqualityComparerFactory<int>.Create( (a, b) => a == b );
         var sut = Variable.WithoutValidators<string>.Create( initialValue, comparer );
 
-        using ( new AssertionScope() )
-        {
-            sut.Parent.Should().BeNull();
-            sut.InitialValue.Should().Be( initialValue );
-            sut.Value.Should().Be( initialValue );
-            sut.Comparer.Should().BeSameAs( comparer );
-            sut.Errors.Should().BeEmpty();
-            sut.Warnings.Should().BeEmpty();
-            sut.State.Should().Be( VariableState.Default );
-            sut.ErrorsValidator.Should().BeOfType( typeof( PassingValidator<int, string> ) );
-            sut.WarningsValidator.Should().BeOfType( typeof( PassingValidator<int, string> ) );
-        }
+        Assertion.All(
+                sut.Parent.TestNull(),
+                sut.InitialValue.TestEquals( initialValue ),
+                sut.Value.TestEquals( initialValue ),
+                sut.Comparer.TestRefEquals( comparer ),
+                sut.Errors.TestEmpty(),
+                sut.Warnings.TestEmpty(),
+                sut.State.TestEquals( VariableState.Default ),
+                sut.ErrorsValidator.TestType().AssignableTo<PassingValidator<int, string>>(),
+                sut.WarningsValidator.TestType().AssignableTo<PassingValidator<int, string>>() )
+            .Go();
     }
 
     [Fact]
@@ -56,18 +54,17 @@ public class StaticVariableTests : TestsBase
         var warningsValidator = Substitute.For<IValidator<int, string>>();
         var sut = Variable.Create( initialValue, value, comparer, errorsValidator, warningsValidator );
 
-        using ( new AssertionScope() )
-        {
-            sut.Parent.Should().BeNull();
-            sut.InitialValue.Should().Be( initialValue );
-            sut.Value.Should().Be( value );
-            sut.Comparer.Should().BeSameAs( comparer );
-            sut.Errors.Should().BeEmpty();
-            sut.Warnings.Should().BeEmpty();
-            sut.State.Should().Be( VariableState.Changed );
-            sut.ErrorsValidator.Should().BeSameAs( errorsValidator );
-            sut.WarningsValidator.Should().BeSameAs( warningsValidator );
-        }
+        Assertion.All(
+                sut.Parent.TestNull(),
+                sut.InitialValue.TestEquals( initialValue ),
+                sut.Value.TestEquals( value ),
+                sut.Comparer.TestRefEquals( comparer ),
+                sut.Errors.TestEmpty(),
+                sut.Warnings.TestEmpty(),
+                sut.State.TestEquals( VariableState.Changed ),
+                sut.ErrorsValidator.TestRefEquals( errorsValidator ),
+                sut.WarningsValidator.TestRefEquals( warningsValidator ) )
+            .Go();
     }
 
     [Fact]
@@ -79,17 +76,16 @@ public class StaticVariableTests : TestsBase
         var warningsValidator = Substitute.For<IValidator<int, string>>();
         var sut = Variable.Create( initialValue, comparer, errorsValidator, warningsValidator );
 
-        using ( new AssertionScope() )
-        {
-            sut.Parent.Should().BeNull();
-            sut.InitialValue.Should().Be( initialValue );
-            sut.Value.Should().Be( initialValue );
-            sut.Comparer.Should().BeSameAs( comparer );
-            sut.Errors.Should().BeEmpty();
-            sut.Warnings.Should().BeEmpty();
-            sut.State.Should().Be( VariableState.Default );
-            sut.ErrorsValidator.Should().BeSameAs( errorsValidator );
-            sut.WarningsValidator.Should().BeSameAs( warningsValidator );
-        }
+        Assertion.All(
+                sut.Parent.TestNull(),
+                sut.InitialValue.TestEquals( initialValue ),
+                sut.Value.TestEquals( initialValue ),
+                sut.Comparer.TestRefEquals( comparer ),
+                sut.Errors.TestEmpty(),
+                sut.Warnings.TestEmpty(),
+                sut.State.TestEquals( VariableState.Default ),
+                sut.ErrorsValidator.TestRefEquals( errorsValidator ),
+                sut.WarningsValidator.TestRefEquals( warningsValidator ) )
+            .Go();
     }
 }

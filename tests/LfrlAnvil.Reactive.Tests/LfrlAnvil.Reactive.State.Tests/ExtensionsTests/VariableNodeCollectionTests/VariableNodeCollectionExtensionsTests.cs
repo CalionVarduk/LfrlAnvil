@@ -24,7 +24,7 @@ public class VariableNodeCollectionExtensionsTests : TestsBase
 
         var result = sut.Nodes.FindAllInvalid();
 
-        result.Should().BeEquivalentTo( node1, node2 );
+        result.TestSetEqual( [ node1, node2 ] ).Go();
     }
 
     [Fact]
@@ -45,7 +45,7 @@ public class VariableNodeCollectionExtensionsTests : TestsBase
 
         var result = sut.Nodes.FindAllWarning();
 
-        result.Should().BeEquivalentTo( node2, node3 );
+        result.TestSetEqual( [ node2, node3 ] ).Go();
     }
 
     [Fact]
@@ -65,7 +65,7 @@ public class VariableNodeCollectionExtensionsTests : TestsBase
 
         var result = sut.Nodes.FindAllChanged();
 
-        result.Should().BeEquivalentTo( node1, node2 );
+        result.TestSetEqual( [ node1, node2 ] ).Go();
     }
 
     [Fact]
@@ -84,7 +84,7 @@ public class VariableNodeCollectionExtensionsTests : TestsBase
 
         var result = sut.Nodes.FindAllReadOnly();
 
-        result.Should().BeEquivalentTo( node1, node2 );
+        result.TestSetEqual( [ node1, node2 ] ).Go();
     }
 
     [Fact]
@@ -103,6 +103,6 @@ public class VariableNodeCollectionExtensionsTests : TestsBase
 
         var result = sut.Nodes.FindAllDirty();
 
-        result.Should().BeEquivalentTo( node1, node2 );
+        result.TestSetEqual( [ node1, node2 ] ).Go();
     }
 }

@@ -2,7 +2,6 @@
 using System.Linq;
 using LfrlAnvil.Functional;
 using LfrlAnvil.Reactive.State.Events;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Reactive.State.Tests.CollectionVariableTests;
 
@@ -46,40 +45,38 @@ public partial class CollectionVariableTests
 
         sut.Reset( newElements );
 
-        using ( new AssertionScope() )
-        {
-            sut.State.Should().Be( VariableState.ReadOnly );
-            sut.InitialElements.Values.Should().BeEquivalentTo( newElements.AsEnumerable() );
-            sut.Elements.Values.Should().BeEquivalentTo( newElements.AsEnumerable() );
-            sut.Errors.Should().BeEmpty();
-            sut.Warnings.Should().BeEmpty();
-
-            onChangeEvents.Should().HaveCount( 1 );
-            var changeEvent = onChangeEvents[0];
-            changeEvent.Source.Should().Be( VariableChangeSource.Reset );
-            changeEvent.RefreshedElements.Should().BeEmpty();
-            changeEvent.RemovedElements.Select( e => e.Element ).Should().BeSequentiallyEqualTo( elements[1], elements[3], elements[5] );
-            changeEvent.AddedElements.Select( e => e.Element ).Should().BeSequentiallyEqualTo( allElements[4], allElements[7] );
-            changeEvent.ReplacedElements.Select( e => (e.Element, e.PreviousElement) )
-                .Should()
-                .BeSequentiallyEqualTo( (newElements[0], elements[0]), (newElements[1], elements[2]), (newElements[3], elements[4]) );
-
-            onValidateEvents.Should().HaveCount( 1 );
-            var validateEvent = onValidateEvents[0];
-            validateEvent.Elements.Select( e => e.Element )
-                .Should()
-                .BeSequentiallyEqualTo(
-                    newElements[0],
-                    newElements[1],
-                    newElements[2],
-                    newElements[3],
-                    newElements[4],
-                    elements[1],
-                    elements[3],
-                    elements[5] );
-
-            validateEvent.AssociatedChange.Should().BeSameAs( changeEvent );
-        }
+        Assertion.All(
+                sut.State.TestEquals( VariableState.ReadOnly ),
+                sut.InitialElements.Values.TestSetEqual( newElements.AsEnumerable() ),
+                sut.Elements.Values.TestSetEqual( newElements.AsEnumerable() ),
+                sut.Errors.TestEmpty(),
+                sut.Warnings.TestEmpty(),
+                onChangeEvents.TestCount( count => count.TestEquals( 1 ) )
+                    .Then(
+                        e => Assertion.All(
+                            "changeEvent",
+                            e[0].Source.TestEquals( VariableChangeSource.Reset ),
+                            e[0].RefreshedElements.TestEmpty(),
+                            e[0].RemovedElements.Select( el => el.Element ).TestSequence( [ elements[1], elements[3], elements[5] ] ),
+                            e[0].AddedElements.Select( el => el.Element ).TestSequence( [ allElements[4], allElements[7] ] ),
+                            e[0]
+                                .ReplacedElements.Select( el => (el.Element, el.PreviousElement) )
+                                .TestSequence(
+                                    [ (newElements[0], elements[0]), (newElements[1], elements[2]), (newElements[3], elements[4]) ] ) ) ),
+                onValidateEvents.TestCount( count => count.TestEquals( 1 ) )
+                    .Then(
+                        e => Assertion.All(
+                            "validateEvent",
+                            e[0]
+                                .Elements.Select( el => el.Element )
+                                .TestSequence(
+                                [
+                                    newElements[0], newElements[1], newElements[2], newElements[3], newElements[4], elements[1],
+                                    elements[3],
+                                    elements[5]
+                                ] ),
+                            e[0].AssociatedChange.TestRefEquals( onChangeEvents.FirstOrDefault() ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -99,13 +96,12 @@ public partial class CollectionVariableTests
 
         sut.Reset( new[] { element } );
 
-        using ( new AssertionScope() )
-        {
-            sut.InitialElements.Should().BeEmpty();
-            sut.Elements.Should().BeEmpty();
-            onChangeEvents.Should().BeEmpty();
-            onValidateEvents.Should().BeEmpty();
-        }
+        Assertion.All(
+                sut.InitialElements.TestEmpty(),
+                sut.Elements.TestEmpty(),
+                onChangeEvents.TestEmpty(),
+                onValidateEvents.TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -146,44 +142,40 @@ public partial class CollectionVariableTests
 
         sut.Reset( newInitialElements, newElements );
 
-        using ( new AssertionScope() )
-        {
-            sut.State.Should().Be( VariableState.Changed );
-            sut.InitialElements.Values.Should().BeEquivalentTo( newInitialElements.AsEnumerable() );
-            sut.Elements.Values.Should().BeEquivalentTo( newElements.AsEnumerable() );
-            sut.Errors.Should().BeEmpty();
-            sut.Warnings.Should().BeEmpty();
-
-            onChangeEvents.Should().HaveCount( 1 );
-            var changeEvent = onChangeEvents[0];
-            changeEvent.Source.Should().Be( VariableChangeSource.Reset );
-            changeEvent.RefreshedElements.Should().BeEmpty();
-            changeEvent.RemovedElements.Select( e => e.Element ).Should().BeSequentiallyEqualTo( elements[2], elements[3], elements[5] );
-            changeEvent.AddedElements.Select( e => e.Element )
-                .Should()
-                .BeSequentiallyEqualTo( allElements[4], allElements[8], allElements[9] );
-
-            changeEvent.ReplacedElements.Select( e => (e.Element, e.PreviousElement) )
-                .Should()
-                .BeSequentiallyEqualTo( (newElements[0], elements[0]), (newElements[1], elements[1]), (newElements[3], elements[4]) );
-
-            onValidateEvents.Should().HaveCount( 1 );
-            var validateEvent = onValidateEvents[0];
-            validateEvent.Elements.Select( e => e.Element )
-                .Should()
-                .BeSequentiallyEqualTo(
-                    newElements[0],
-                    newElements[1],
-                    newElements[2],
-                    newElements[3],
-                    newElements[4],
-                    newElements[5],
-                    elements[2],
-                    elements[3],
-                    elements[5] );
-
-            validateEvent.AssociatedChange.Should().BeSameAs( changeEvent );
-        }
+        Assertion.All(
+                sut.State.TestEquals( VariableState.Changed ),
+                sut.InitialElements.Values.TestSetEqual( newInitialElements.AsEnumerable() ),
+                sut.Elements.Values.TestSetEqual( newElements.AsEnumerable() ),
+                sut.Errors.TestEmpty(),
+                sut.Warnings.TestEmpty(),
+                onChangeEvents.TestCount( count => count.TestEquals( 1 ) )
+                    .Then(
+                        e => Assertion.All(
+                            "changeEvent",
+                            e[0].Source.TestEquals( VariableChangeSource.Reset ),
+                            e[0].RefreshedElements.TestEmpty(),
+                            e[0].RemovedElements.Select( el => el.Element ).TestSequence( [ elements[2], elements[3], elements[5] ] ),
+                            e[0]
+                                .AddedElements.Select( el => el.Element )
+                                .TestSequence( [ allElements[4], allElements[8], allElements[9] ] ),
+                            e[0]
+                                .ReplacedElements.Select( el => (el.Element, el.PreviousElement) )
+                                .TestSequence(
+                                    [ (newElements[0], elements[0]), (newElements[1], elements[1]), (newElements[3], elements[4]) ] ) ) ),
+                onValidateEvents.TestCount( count => count.TestEquals( 1 ) )
+                    .Then(
+                        e => Assertion.All(
+                            "validateEvent",
+                            e[0]
+                                .Elements.Select( el => el.Element )
+                                .TestSequence(
+                                [
+                                    newElements[0], newElements[1], newElements[2], newElements[3], newElements[4], newElements[5],
+                                    elements[2],
+                                    elements[3], elements[5]
+                                ] ),
+                            e[0].AssociatedChange.TestRefEquals( onChangeEvents.FirstOrDefault() ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -203,12 +195,11 @@ public partial class CollectionVariableTests
 
         sut.Reset( new[] { element }, new[] { element, addedElement } );
 
-        using ( new AssertionScope() )
-        {
-            sut.InitialElements.Should().BeEmpty();
-            sut.Elements.Should().BeEmpty();
-            onChangeEvents.Should().BeEmpty();
-            onValidateEvents.Should().BeEmpty();
-        }
+        Assertion.All(
+                sut.InitialElements.TestEmpty(),
+                sut.Elements.TestEmpty(),
+                onChangeEvents.TestEmpty(),
+                onValidateEvents.TestEmpty() )
+            .Go();
     }
 }

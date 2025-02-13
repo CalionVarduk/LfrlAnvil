@@ -1,6 +1,5 @@
 ﻿using LfrlAnvil.Functional;
 using LfrlAnvil.Reactive.State.Exceptions;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 using LfrlAnvil.Validation;
 
 namespace LfrlAnvil.Reactive.State.Tests.VariableRootTests;
@@ -18,7 +17,11 @@ public partial class VariableRootTests
 
         var action = Lambda.Of( () => sut.ExposedRegisterNode( Fixture.Create<string>(), variable ) );
 
-        action.Should().ThrowExactly<VariableNodeRegistrationException>().AndMatch( e => e.Parent == sut && e.Child == variable );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<VariableNodeRegistrationException>(
+                        e => Assertion.All( e.Parent.TestRefEquals( sut ), e.Child.TestRefEquals( variable ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -32,7 +35,11 @@ public partial class VariableRootTests
 
         var action = Lambda.Of( () => sut.ExposedRegisterNode( Fixture.Create<string>(), variable ) );
 
-        action.Should().ThrowExactly<VariableNodeRegistrationException>().AndMatch( e => e.Parent == sut && e.Child == variable );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<VariableNodeRegistrationException>(
+                        e => Assertion.All( e.Parent.TestRefEquals( sut ), e.Child.TestRefEquals( variable ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -47,7 +54,11 @@ public partial class VariableRootTests
 
         var action = Lambda.Of( () => sut.ExposedRegisterNode( Fixture.Create<string>(), variable ) );
 
-        action.Should().ThrowExactly<VariableNodeRegistrationException>().AndMatch( e => e.Parent == sut && e.Child == variable );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<VariableNodeRegistrationException>(
+                        e => Assertion.All( e.Parent.TestRefEquals( sut ), e.Child.TestRefEquals( variable ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -62,7 +73,11 @@ public partial class VariableRootTests
 
         var action = Lambda.Of( () => sut.ExposedRegisterNode( Fixture.Create<string>(), variable ) );
 
-        action.Should().ThrowExactly<VariableNodeRegistrationException>().AndMatch( e => e.Parent == sut && e.Child == variable );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<VariableNodeRegistrationException>(
+                        e => Assertion.All( e.Parent.TestRefEquals( sut ), e.Child.TestRefEquals( variable ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -70,7 +85,11 @@ public partial class VariableRootTests
     {
         var sut = new VariableRootMock();
         var action = Lambda.Of( () => sut.ExposedRegisterNode( Fixture.Create<string>(), sut ) );
-        action.Should().ThrowExactly<VariableNodeRegistrationException>().AndMatch( e => e.Parent == sut && e.Child == sut );
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<VariableNodeRegistrationException>(
+                        e => Assertion.All( e.Parent.TestRefEquals( sut ), e.Child.TestRefEquals( sut ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -86,7 +105,7 @@ public partial class VariableRootTests
 
         var action = Lambda.Of( () => sut.ExposedRegisterNode( key, variable2 ) );
 
-        action.Should().ThrowExactly<ArgumentException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentException>() ).Go();
     }
 
     [Fact]
@@ -99,19 +118,18 @@ public partial class VariableRootTests
 
         sut.ExposedRegisterNode( key, variable );
 
-        using ( new AssertionScope() )
-        {
-            sut.State.Should().Be( VariableState.Default );
-            sut.Nodes.ChangedNodeKeys.Should().BeEmpty();
-            sut.Nodes.InvalidNodeKeys.Should().BeEmpty();
-            sut.Nodes.WarningNodeKeys.Should().BeEmpty();
-            sut.Nodes.ReadOnlyNodeKeys.Should().BeEmpty();
-            sut.Nodes.DirtyNodeKeys.Should().BeEmpty();
-            sut.Nodes[key].Should().BeSameAs( variable );
-            sut.Nodes.ContainsKey( key ).Should().BeTrue();
-            sut.Nodes.TryGetValue( key, out var outResult ).Should().BeTrue();
-            outResult.Should().BeSameAs( variable );
-        }
+        Assertion.All(
+                sut.State.TestEquals( VariableState.Default ),
+                sut.Nodes.ChangedNodeKeys.TestEmpty(),
+                sut.Nodes.InvalidNodeKeys.TestEmpty(),
+                sut.Nodes.WarningNodeKeys.TestEmpty(),
+                sut.Nodes.ReadOnlyNodeKeys.TestEmpty(),
+                sut.Nodes.DirtyNodeKeys.TestEmpty(),
+                sut.Nodes[key].TestRefEquals( variable ),
+                sut.Nodes.ContainsKey( key ).TestTrue(),
+                sut.Nodes.TryGetValue( key, out var outResult ).TestTrue(),
+                outResult.TestRefEquals( variable ) )
+            .Go();
     }
 
     [Fact]
@@ -124,15 +142,14 @@ public partial class VariableRootTests
 
         sut.ExposedRegisterNode( key, variable );
 
-        using ( new AssertionScope() )
-        {
-            sut.State.Should().Be( VariableState.Changed );
-            sut.Nodes.ChangedNodeKeys.Should().BeEquivalentTo( key );
-            sut.Nodes.InvalidNodeKeys.Should().BeEmpty();
-            sut.Nodes.WarningNodeKeys.Should().BeEmpty();
-            sut.Nodes.ReadOnlyNodeKeys.Should().BeEmpty();
-            sut.Nodes.DirtyNodeKeys.Should().BeEmpty();
-        }
+        Assertion.All(
+                sut.State.TestEquals( VariableState.Changed ),
+                sut.Nodes.ChangedNodeKeys.TestSetEqual( [ key ] ),
+                sut.Nodes.InvalidNodeKeys.TestEmpty(),
+                sut.Nodes.WarningNodeKeys.TestEmpty(),
+                sut.Nodes.ReadOnlyNodeKeys.TestEmpty(),
+                sut.Nodes.DirtyNodeKeys.TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -147,15 +164,14 @@ public partial class VariableRootTests
 
         sut.ExposedRegisterNode( key, variable );
 
-        using ( new AssertionScope() )
-        {
-            sut.State.Should().Be( VariableState.Invalid );
-            sut.Nodes.ChangedNodeKeys.Should().BeEmpty();
-            sut.Nodes.InvalidNodeKeys.Should().BeEquivalentTo( key );
-            sut.Nodes.WarningNodeKeys.Should().BeEmpty();
-            sut.Nodes.ReadOnlyNodeKeys.Should().BeEmpty();
-            sut.Nodes.DirtyNodeKeys.Should().BeEmpty();
-        }
+        Assertion.All(
+                sut.State.TestEquals( VariableState.Invalid ),
+                sut.Nodes.ChangedNodeKeys.TestEmpty(),
+                sut.Nodes.InvalidNodeKeys.TestSetEqual( [ key ] ),
+                sut.Nodes.WarningNodeKeys.TestEmpty(),
+                sut.Nodes.ReadOnlyNodeKeys.TestEmpty(),
+                sut.Nodes.DirtyNodeKeys.TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -171,15 +187,14 @@ public partial class VariableRootTests
 
         sut.ExposedRegisterNode( key, variable );
 
-        using ( new AssertionScope() )
-        {
-            sut.State.Should().Be( VariableState.Warning );
-            sut.Nodes.ChangedNodeKeys.Should().BeEmpty();
-            sut.Nodes.InvalidNodeKeys.Should().BeEmpty();
-            sut.Nodes.WarningNodeKeys.Should().BeEquivalentTo( key );
-            sut.Nodes.ReadOnlyNodeKeys.Should().BeEmpty();
-            sut.Nodes.DirtyNodeKeys.Should().BeEmpty();
-        }
+        Assertion.All(
+                sut.State.TestEquals( VariableState.Warning ),
+                sut.Nodes.ChangedNodeKeys.TestEmpty(),
+                sut.Nodes.InvalidNodeKeys.TestEmpty(),
+                sut.Nodes.WarningNodeKeys.TestSetEqual( [ key ] ),
+                sut.Nodes.ReadOnlyNodeKeys.TestEmpty(),
+                sut.Nodes.DirtyNodeKeys.TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -193,15 +208,14 @@ public partial class VariableRootTests
 
         sut.ExposedRegisterNode( key, variable );
 
-        using ( new AssertionScope() )
-        {
-            sut.State.Should().Be( VariableState.Dirty );
-            sut.Nodes.ChangedNodeKeys.Should().BeEmpty();
-            sut.Nodes.InvalidNodeKeys.Should().BeEmpty();
-            sut.Nodes.WarningNodeKeys.Should().BeEmpty();
-            sut.Nodes.ReadOnlyNodeKeys.Should().BeEmpty();
-            sut.Nodes.DirtyNodeKeys.Should().BeEquivalentTo( key );
-        }
+        Assertion.All(
+                sut.State.TestEquals( VariableState.Dirty ),
+                sut.Nodes.ChangedNodeKeys.TestEmpty(),
+                sut.Nodes.InvalidNodeKeys.TestEmpty(),
+                sut.Nodes.WarningNodeKeys.TestEmpty(),
+                sut.Nodes.ReadOnlyNodeKeys.TestEmpty(),
+                sut.Nodes.DirtyNodeKeys.TestSetEqual( [ key ] ) )
+            .Go();
     }
 
     [Fact]
@@ -215,15 +229,14 @@ public partial class VariableRootTests
 
         sut.ExposedRegisterNode( key, variable );
 
-        using ( new AssertionScope() )
-        {
-            sut.State.Should().Be( VariableState.ReadOnly );
-            sut.Nodes.ChangedNodeKeys.Should().BeEmpty();
-            sut.Nodes.InvalidNodeKeys.Should().BeEmpty();
-            sut.Nodes.WarningNodeKeys.Should().BeEmpty();
-            sut.Nodes.ReadOnlyNodeKeys.Should().BeEquivalentTo( key );
-            sut.Nodes.DirtyNodeKeys.Should().BeEmpty();
-        }
+        Assertion.All(
+                sut.State.TestEquals( VariableState.ReadOnly ),
+                sut.Nodes.ChangedNodeKeys.TestEmpty(),
+                sut.Nodes.InvalidNodeKeys.TestEmpty(),
+                sut.Nodes.WarningNodeKeys.TestEmpty(),
+                sut.Nodes.ReadOnlyNodeKeys.TestSetEqual( [ key ] ),
+                sut.Nodes.DirtyNodeKeys.TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -238,15 +251,14 @@ public partial class VariableRootTests
 
         sut.ExposedRegisterNode( nextKey, nextVariable );
 
-        using ( new AssertionScope() )
-        {
-            sut.State.Should().Be( VariableState.Default );
-            sut.Nodes.ChangedNodeKeys.Should().BeEmpty();
-            sut.Nodes.InvalidNodeKeys.Should().BeEmpty();
-            sut.Nodes.WarningNodeKeys.Should().BeEmpty();
-            sut.Nodes.ReadOnlyNodeKeys.Should().BeEmpty();
-            sut.Nodes.DirtyNodeKeys.Should().BeEmpty();
-        }
+        Assertion.All(
+                sut.State.TestEquals( VariableState.Default ),
+                sut.Nodes.ChangedNodeKeys.TestEmpty(),
+                sut.Nodes.InvalidNodeKeys.TestEmpty(),
+                sut.Nodes.WarningNodeKeys.TestEmpty(),
+                sut.Nodes.ReadOnlyNodeKeys.TestEmpty(),
+                sut.Nodes.DirtyNodeKeys.TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -261,15 +273,14 @@ public partial class VariableRootTests
 
         sut.ExposedRegisterNode( nextKey, nextVariable );
 
-        using ( new AssertionScope() )
-        {
-            sut.State.Should().Be( VariableState.Changed );
-            sut.Nodes.ChangedNodeKeys.Should().BeEquivalentTo( key, nextKey );
-            sut.Nodes.InvalidNodeKeys.Should().BeEmpty();
-            sut.Nodes.WarningNodeKeys.Should().BeEmpty();
-            sut.Nodes.ReadOnlyNodeKeys.Should().BeEmpty();
-            sut.Nodes.DirtyNodeKeys.Should().BeEmpty();
-        }
+        Assertion.All(
+                sut.State.TestEquals( VariableState.Changed ),
+                sut.Nodes.ChangedNodeKeys.TestSetEqual( [ key, nextKey ] ),
+                sut.Nodes.InvalidNodeKeys.TestEmpty(),
+                sut.Nodes.WarningNodeKeys.TestEmpty(),
+                sut.Nodes.ReadOnlyNodeKeys.TestEmpty(),
+                sut.Nodes.DirtyNodeKeys.TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -287,15 +298,14 @@ public partial class VariableRootTests
 
         sut.ExposedRegisterNode( nextKey, nextVariable );
 
-        using ( new AssertionScope() )
-        {
-            sut.State.Should().Be( VariableState.Invalid );
-            sut.Nodes.ChangedNodeKeys.Should().BeEmpty();
-            sut.Nodes.InvalidNodeKeys.Should().BeEquivalentTo( key, nextKey );
-            sut.Nodes.WarningNodeKeys.Should().BeEmpty();
-            sut.Nodes.ReadOnlyNodeKeys.Should().BeEmpty();
-            sut.Nodes.DirtyNodeKeys.Should().BeEmpty();
-        }
+        Assertion.All(
+                sut.State.TestEquals( VariableState.Invalid ),
+                sut.Nodes.ChangedNodeKeys.TestEmpty(),
+                sut.Nodes.InvalidNodeKeys.TestSetEqual( [ key, nextKey ] ),
+                sut.Nodes.WarningNodeKeys.TestEmpty(),
+                sut.Nodes.ReadOnlyNodeKeys.TestEmpty(),
+                sut.Nodes.DirtyNodeKeys.TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -314,15 +324,14 @@ public partial class VariableRootTests
 
         sut.ExposedRegisterNode( nextKey, nextVariable );
 
-        using ( new AssertionScope() )
-        {
-            sut.State.Should().Be( VariableState.Warning );
-            sut.Nodes.ChangedNodeKeys.Should().BeEmpty();
-            sut.Nodes.InvalidNodeKeys.Should().BeEmpty();
-            sut.Nodes.WarningNodeKeys.Should().BeEquivalentTo( key, nextKey );
-            sut.Nodes.ReadOnlyNodeKeys.Should().BeEmpty();
-            sut.Nodes.DirtyNodeKeys.Should().BeEmpty();
-        }
+        Assertion.All(
+                sut.State.TestEquals( VariableState.Warning ),
+                sut.Nodes.ChangedNodeKeys.TestEmpty(),
+                sut.Nodes.InvalidNodeKeys.TestEmpty(),
+                sut.Nodes.WarningNodeKeys.TestSetEqual( [ key, nextKey ] ),
+                sut.Nodes.ReadOnlyNodeKeys.TestEmpty(),
+                sut.Nodes.DirtyNodeKeys.TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -339,15 +348,14 @@ public partial class VariableRootTests
 
         sut.ExposedRegisterNode( nextKey, nextVariable );
 
-        using ( new AssertionScope() )
-        {
-            sut.State.Should().Be( VariableState.ReadOnly );
-            sut.Nodes.ChangedNodeKeys.Should().BeEmpty();
-            sut.Nodes.InvalidNodeKeys.Should().BeEmpty();
-            sut.Nodes.WarningNodeKeys.Should().BeEmpty();
-            sut.Nodes.ReadOnlyNodeKeys.Should().BeEquivalentTo( key, nextKey );
-            sut.Nodes.DirtyNodeKeys.Should().BeEmpty();
-        }
+        Assertion.All(
+                sut.State.TestEquals( VariableState.ReadOnly ),
+                sut.Nodes.ChangedNodeKeys.TestEmpty(),
+                sut.Nodes.InvalidNodeKeys.TestEmpty(),
+                sut.Nodes.WarningNodeKeys.TestEmpty(),
+                sut.Nodes.ReadOnlyNodeKeys.TestSetEqual( [ key, nextKey ] ),
+                sut.Nodes.DirtyNodeKeys.TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -364,15 +372,14 @@ public partial class VariableRootTests
 
         sut.ExposedRegisterNode( nextKey, nextVariable );
 
-        using ( new AssertionScope() )
-        {
-            sut.State.Should().Be( VariableState.Dirty );
-            sut.Nodes.ChangedNodeKeys.Should().BeEmpty();
-            sut.Nodes.InvalidNodeKeys.Should().BeEmpty();
-            sut.Nodes.WarningNodeKeys.Should().BeEmpty();
-            sut.Nodes.ReadOnlyNodeKeys.Should().BeEmpty();
-            sut.Nodes.DirtyNodeKeys.Should().BeEquivalentTo( key, nextKey );
-        }
+        Assertion.All(
+                sut.State.TestEquals( VariableState.Dirty ),
+                sut.Nodes.ChangedNodeKeys.TestEmpty(),
+                sut.Nodes.InvalidNodeKeys.TestEmpty(),
+                sut.Nodes.WarningNodeKeys.TestEmpty(),
+                sut.Nodes.ReadOnlyNodeKeys.TestEmpty(),
+                sut.Nodes.DirtyNodeKeys.TestSetEqual( [ key, nextKey ] ) )
+            .Go();
     }
 
     [Fact]
@@ -388,15 +395,14 @@ public partial class VariableRootTests
 
         sut.ExposedRegisterNode( nextKey, nextVariable );
 
-        using ( new AssertionScope() )
-        {
-            sut.State.Should().Be( VariableState.Changed );
-            sut.Nodes.ChangedNodeKeys.Should().BeEquivalentTo( key );
-            sut.Nodes.InvalidNodeKeys.Should().BeEmpty();
-            sut.Nodes.WarningNodeKeys.Should().BeEmpty();
-            sut.Nodes.ReadOnlyNodeKeys.Should().BeEquivalentTo( nextKey );
-            sut.Nodes.DirtyNodeKeys.Should().BeEmpty();
-        }
+        Assertion.All(
+                sut.State.TestEquals( VariableState.Changed ),
+                sut.Nodes.ChangedNodeKeys.TestSetEqual( [ key ] ),
+                sut.Nodes.InvalidNodeKeys.TestEmpty(),
+                sut.Nodes.WarningNodeKeys.TestEmpty(),
+                sut.Nodes.ReadOnlyNodeKeys.TestSetEqual( [ nextKey ] ),
+                sut.Nodes.DirtyNodeKeys.TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -413,15 +419,14 @@ public partial class VariableRootTests
 
         sut.ExposedRegisterNode( nextKey, nextVariable );
 
-        using ( new AssertionScope() )
-        {
-            sut.State.Should().Be( VariableState.Invalid | VariableState.Changed );
-            sut.Nodes.ChangedNodeKeys.Should().BeEquivalentTo( nextKey );
-            sut.Nodes.InvalidNodeKeys.Should().BeEquivalentTo( key );
-            sut.Nodes.WarningNodeKeys.Should().BeEmpty();
-            sut.Nodes.ReadOnlyNodeKeys.Should().BeEmpty();
-            sut.Nodes.DirtyNodeKeys.Should().BeEmpty();
-        }
+        Assertion.All(
+                sut.State.TestEquals( VariableState.Invalid | VariableState.Changed ),
+                sut.Nodes.ChangedNodeKeys.TestSetEqual( [ nextKey ] ),
+                sut.Nodes.InvalidNodeKeys.TestSetEqual( [ key ] ),
+                sut.Nodes.WarningNodeKeys.TestEmpty(),
+                sut.Nodes.ReadOnlyNodeKeys.TestEmpty(),
+                sut.Nodes.DirtyNodeKeys.TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -439,15 +444,14 @@ public partial class VariableRootTests
 
         sut.ExposedRegisterNode( nextKey, nextVariable );
 
-        using ( new AssertionScope() )
-        {
-            sut.State.Should().Be( VariableState.Warning | VariableState.Changed );
-            sut.Nodes.ChangedNodeKeys.Should().BeEquivalentTo( nextKey );
-            sut.Nodes.InvalidNodeKeys.Should().BeEmpty();
-            sut.Nodes.WarningNodeKeys.Should().BeEquivalentTo( key );
-            sut.Nodes.ReadOnlyNodeKeys.Should().BeEmpty();
-            sut.Nodes.DirtyNodeKeys.Should().BeEmpty();
-        }
+        Assertion.All(
+                sut.State.TestEquals( VariableState.Warning | VariableState.Changed ),
+                sut.Nodes.ChangedNodeKeys.TestSetEqual( [ nextKey ] ),
+                sut.Nodes.InvalidNodeKeys.TestEmpty(),
+                sut.Nodes.WarningNodeKeys.TestSetEqual( [ key ] ),
+                sut.Nodes.ReadOnlyNodeKeys.TestEmpty(),
+                sut.Nodes.DirtyNodeKeys.TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -463,15 +467,14 @@ public partial class VariableRootTests
 
         sut.ExposedRegisterNode( nextKey, nextVariable );
 
-        using ( new AssertionScope() )
-        {
-            sut.State.Should().Be( VariableState.Changed );
-            sut.Nodes.ChangedNodeKeys.Should().BeEquivalentTo( nextKey );
-            sut.Nodes.InvalidNodeKeys.Should().BeEmpty();
-            sut.Nodes.WarningNodeKeys.Should().BeEmpty();
-            sut.Nodes.ReadOnlyNodeKeys.Should().BeEquivalentTo( key );
-            sut.Nodes.DirtyNodeKeys.Should().BeEmpty();
-        }
+        Assertion.All(
+                sut.State.TestEquals( VariableState.Changed ),
+                sut.Nodes.ChangedNodeKeys.TestSetEqual( [ nextKey ] ),
+                sut.Nodes.InvalidNodeKeys.TestEmpty(),
+                sut.Nodes.WarningNodeKeys.TestEmpty(),
+                sut.Nodes.ReadOnlyNodeKeys.TestSetEqual( [ key ] ),
+                sut.Nodes.DirtyNodeKeys.TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -487,14 +490,13 @@ public partial class VariableRootTests
 
         sut.ExposedRegisterNode( nextKey, nextVariable );
 
-        using ( new AssertionScope() )
-        {
-            sut.State.Should().Be( VariableState.Changed | VariableState.Dirty );
-            sut.Nodes.ChangedNodeKeys.Should().BeEquivalentTo( nextKey );
-            sut.Nodes.InvalidNodeKeys.Should().BeEmpty();
-            sut.Nodes.WarningNodeKeys.Should().BeEmpty();
-            sut.Nodes.ReadOnlyNodeKeys.Should().BeEmpty();
-            sut.Nodes.DirtyNodeKeys.Should().BeEquivalentTo( key );
-        }
+        Assertion.All(
+                sut.State.TestEquals( VariableState.Changed | VariableState.Dirty ),
+                sut.Nodes.ChangedNodeKeys.TestSetEqual( [ nextKey ] ),
+                sut.Nodes.InvalidNodeKeys.TestEmpty(),
+                sut.Nodes.WarningNodeKeys.TestEmpty(),
+                sut.Nodes.ReadOnlyNodeKeys.TestEmpty(),
+                sut.Nodes.DirtyNodeKeys.TestSetEqual( [ key ] ) )
+            .Go();
     }
 }

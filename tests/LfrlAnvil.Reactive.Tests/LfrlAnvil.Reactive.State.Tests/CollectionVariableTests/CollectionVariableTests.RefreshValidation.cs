@@ -2,7 +2,6 @@
 using System.Linq;
 using LfrlAnvil.Functional;
 using LfrlAnvil.Reactive.State.Events;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 using LfrlAnvil.Validation;
 
 namespace LfrlAnvil.Reactive.State.Tests.CollectionVariableTests;
@@ -35,27 +34,25 @@ public partial class CollectionVariableTests
 
         sut.RefreshValidation( element.Key );
 
-        using ( new AssertionScope() )
-        {
-            sut.State.Should().Be( VariableState.Invalid | VariableState.Warning );
-            sut.Errors.Should().BeSequentiallyEqualTo( error );
-            sut.Warnings.Should().BeSequentiallyEqualTo( warning );
-            sut.Elements.GetState( element.Key )
-                .Should()
-                .Be( CollectionVariableElementState.Invalid | CollectionVariableElementState.Warning );
-
-            sut.Elements.GetErrors( element.Key ).Should().BeSequentiallyEqualTo( elementError );
-            sut.Elements.GetWarnings( element.Key ).Should().BeSequentiallyEqualTo( elementWarning );
-
-            onChangeEvents.Should().BeEmpty();
-            onValidateEvents.Should().HaveCount( 1 );
-            var validateEvent = onValidateEvents[0];
-            validateEvent.Elements.Select( e => e.Element ).Should().BeSequentiallyEqualTo( element );
-            validateEvent.PreviousErrors.Should().BeEmpty();
-            validateEvent.NewErrors.Should().BeSequentiallyEqualTo( sut.Errors );
-            validateEvent.PreviousWarnings.Should().BeEmpty();
-            validateEvent.NewWarnings.Should().BeSequentiallyEqualTo( sut.Warnings );
-        }
+        Assertion.All(
+                sut.State.TestEquals( VariableState.Invalid | VariableState.Warning ),
+                sut.Errors.TestSequence( [ error ] ),
+                sut.Warnings.TestSequence( [ warning ] ),
+                sut.Elements.GetState( element.Key )
+                    .TestEquals( CollectionVariableElementState.Invalid | CollectionVariableElementState.Warning ),
+                sut.Elements.GetErrors( element.Key ).TestSequence( [ elementError ] ),
+                sut.Elements.GetWarnings( element.Key ).TestSequence( [ elementWarning ] ),
+                onChangeEvents.TestEmpty(),
+                onValidateEvents.TestCount( count => count.TestEquals( 1 ) )
+                    .Then(
+                        e => Assertion.All(
+                            "validateEvent",
+                            e[0].Elements.Select( el => el.Element ).TestSequence( [ element ] ),
+                            e[0].PreviousErrors.TestEmpty(),
+                            e[0].NewErrors.TestSequence( sut.Errors ),
+                            e[0].PreviousWarnings.TestEmpty(),
+                            e[0].NewWarnings.TestSequence( sut.Warnings ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -81,7 +78,7 @@ public partial class CollectionVariableTests
 
         sut.RefreshValidation( other.Key );
 
-        onValidateEvents.Should().BeEmpty();
+        onValidateEvents.TestEmpty().Go();
     }
 
     [Fact]
@@ -109,7 +106,7 @@ public partial class CollectionVariableTests
 
         sut.RefreshValidation( element.Key );
 
-        onValidateEvents.Should().BeEmpty();
+        onValidateEvents.TestEmpty().Go();
     }
 
     [Fact]
@@ -138,22 +135,22 @@ public partial class CollectionVariableTests
 
         sut.RefreshValidation( new[] { element.Key, otherElement.Key, element.Key, otherElement.Key, nonExistingElement.Key } );
 
-        using ( new AssertionScope() )
-        {
-            sut.State.Should().Be( VariableState.Invalid | VariableState.Warning );
-            sut.Errors.Should().BeSequentiallyEqualTo( error );
-            sut.Warnings.Should().BeSequentiallyEqualTo( warning );
-
-            onChangeEvents.Should().BeEmpty();
-            onValidateEvents.Should().HaveCount( 1 );
-            var validateEvent = onValidateEvents[0];
-            validateEvent.Elements.Select( e => e.Element ).Should().BeSequentiallyEqualTo( element, otherElement );
-            validateEvent.PreviousErrors.Should().BeEmpty();
-            validateEvent.NewErrors.Should().BeSequentiallyEqualTo( sut.Errors );
-            validateEvent.PreviousWarnings.Should().BeEmpty();
-            validateEvent.NewWarnings.Should().BeSequentiallyEqualTo( sut.Warnings );
-            validateEvent.AssociatedChange.Should().BeNull();
-        }
+        Assertion.All(
+                sut.State.TestEquals( VariableState.Invalid | VariableState.Warning ),
+                sut.Errors.TestSequence( [ error ] ),
+                sut.Warnings.TestSequence( [ warning ] ),
+                onChangeEvents.TestEmpty(),
+                onValidateEvents.TestCount( count => count.TestEquals( 1 ) )
+                    .Then(
+                        e => Assertion.All(
+                            "validateEvent",
+                            e[0].Elements.Select( el => el.Element ).TestSequence( [ element, otherElement ] ),
+                            e[0].PreviousErrors.TestEmpty(),
+                            e[0].NewErrors.TestSequence( sut.Errors ),
+                            e[0].PreviousWarnings.TestEmpty(),
+                            e[0].NewWarnings.TestSequence( sut.Warnings ),
+                            e[0].AssociatedChange.TestNull() ) ) )
+            .Go();
     }
 
     [Fact]
@@ -182,21 +179,21 @@ public partial class CollectionVariableTests
 
         sut.RefreshValidation( Array.Empty<int>() );
 
-        using ( new AssertionScope() )
-        {
-            sut.State.Should().Be( VariableState.Invalid | VariableState.Warning );
-            sut.Errors.Should().BeSequentiallyEqualTo( error );
-            sut.Warnings.Should().BeSequentiallyEqualTo( warning );
-
-            onChangeEvents.Should().BeEmpty();
-            onValidateEvents.Should().HaveCount( 1 );
-            var validateEvent = onValidateEvents[0];
-            validateEvent.Elements.Should().BeEmpty();
-            validateEvent.PreviousErrors.Should().BeEmpty();
-            validateEvent.NewErrors.Should().BeSequentiallyEqualTo( sut.Errors );
-            validateEvent.PreviousWarnings.Should().BeEmpty();
-            validateEvent.NewWarnings.Should().BeSequentiallyEqualTo( sut.Warnings );
-        }
+        Assertion.All(
+                sut.State.TestEquals( VariableState.Invalid | VariableState.Warning ),
+                sut.Errors.TestSequence( [ error ] ),
+                sut.Warnings.TestSequence( [ warning ] ),
+                onChangeEvents.TestEmpty(),
+                onValidateEvents.TestCount( count => count.TestEquals( 1 ) )
+                    .Then(
+                        e => Assertion.All(
+                            "validateEvent",
+                            e[0].Elements.TestEmpty(),
+                            e[0].PreviousErrors.TestEmpty(),
+                            e[0].NewErrors.TestSequence( sut.Errors ),
+                            e[0].PreviousWarnings.TestEmpty(),
+                            e[0].NewWarnings.TestSequence( sut.Warnings ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -225,21 +222,21 @@ public partial class CollectionVariableTests
 
         sut.RefreshValidation( new[] { other1.Key, other2.Key } );
 
-        using ( new AssertionScope() )
-        {
-            sut.State.Should().Be( VariableState.Invalid | VariableState.Warning );
-            sut.Errors.Should().BeSequentiallyEqualTo( error );
-            sut.Warnings.Should().BeSequentiallyEqualTo( warning );
-
-            onChangeEvents.Should().BeEmpty();
-            onValidateEvents.Should().HaveCount( 1 );
-            var validateEvent = onValidateEvents[0];
-            validateEvent.Elements.Should().BeEmpty();
-            validateEvent.PreviousErrors.Should().BeEmpty();
-            validateEvent.NewErrors.Should().BeSequentiallyEqualTo( sut.Errors );
-            validateEvent.PreviousWarnings.Should().BeEmpty();
-            validateEvent.NewWarnings.Should().BeSequentiallyEqualTo( sut.Warnings );
-        }
+        Assertion.All(
+                sut.State.TestEquals( VariableState.Invalid | VariableState.Warning ),
+                sut.Errors.TestSequence( [ error ] ),
+                sut.Warnings.TestSequence( [ warning ] ),
+                onChangeEvents.TestEmpty(),
+                onValidateEvents.TestCount( count => count.TestEquals( 1 ) )
+                    .Then(
+                        e => Assertion.All(
+                            "validateEvent",
+                            e[0].Elements.TestEmpty(),
+                            e[0].PreviousErrors.TestEmpty(),
+                            e[0].NewErrors.TestSequence( sut.Errors ),
+                            e[0].PreviousWarnings.TestEmpty(),
+                            e[0].NewWarnings.TestSequence( sut.Warnings ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -268,21 +265,21 @@ public partial class CollectionVariableTests
 
         sut.RefreshValidation( new[] { nonExistingElement.Key, element.Key, otherElement.Key } );
 
-        using ( new AssertionScope() )
-        {
-            sut.State.Should().Be( VariableState.Invalid | VariableState.Warning );
-            sut.Errors.Should().BeSequentiallyEqualTo( error );
-            sut.Warnings.Should().BeSequentiallyEqualTo( warning );
-
-            onChangeEvents.Should().BeEmpty();
-            onValidateEvents.Should().HaveCount( 1 );
-            var validateEvent = onValidateEvents[0];
-            validateEvent.Elements.Select( e => e.Element ).Should().BeSequentiallyEqualTo( element, otherElement );
-            validateEvent.PreviousErrors.Should().BeEmpty();
-            validateEvent.NewErrors.Should().BeSequentiallyEqualTo( sut.Errors );
-            validateEvent.PreviousWarnings.Should().BeEmpty();
-            validateEvent.NewWarnings.Should().BeSequentiallyEqualTo( sut.Warnings );
-        }
+        Assertion.All(
+                sut.State.TestEquals( VariableState.Invalid | VariableState.Warning ),
+                sut.Errors.TestSequence( [ error ] ),
+                sut.Warnings.TestSequence( [ warning ] ),
+                onChangeEvents.TestEmpty(),
+                onValidateEvents.TestCount( count => count.TestEquals( 1 ) )
+                    .Then(
+                        e => Assertion.All(
+                            "validateEvent",
+                            e[0].Elements.Select( el => el.Element ).TestSequence( [ element, otherElement ] ),
+                            e[0].PreviousErrors.TestEmpty(),
+                            e[0].NewErrors.TestSequence( sut.Errors ),
+                            e[0].PreviousWarnings.TestEmpty(),
+                            e[0].NewWarnings.TestSequence( sut.Warnings ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -310,7 +307,7 @@ public partial class CollectionVariableTests
 
         sut.RefreshValidation( new[] { element.Key } );
 
-        onValidateEvents.Should().BeEmpty();
+        onValidateEvents.TestEmpty().Go();
     }
 
     [Fact]
@@ -339,20 +336,20 @@ public partial class CollectionVariableTests
 
         sut.RefreshValidation();
 
-        using ( new AssertionScope() )
-        {
-            sut.State.Should().Be( VariableState.Invalid | VariableState.Warning );
-            sut.Errors.Should().BeSequentiallyEqualTo( error );
-            sut.Warnings.Should().BeSequentiallyEqualTo( warning );
-
-            onChangeEvents.Should().BeEmpty();
-            onValidateEvents.Should().HaveCount( 1 );
-            var validateEvent = onValidateEvents[0];
-            validateEvent.Elements.Select( e => e.Element ).Should().BeSequentiallyEqualTo( element, otherElement );
-            validateEvent.PreviousErrors.Should().BeEmpty();
-            validateEvent.NewErrors.Should().BeSequentiallyEqualTo( sut.Errors );
-            validateEvent.PreviousWarnings.Should().BeEmpty();
-            validateEvent.NewWarnings.Should().BeSequentiallyEqualTo( sut.Warnings );
-        }
+        Assertion.All(
+                sut.State.TestEquals( VariableState.Invalid | VariableState.Warning ),
+                sut.Errors.TestSequence( [ error ] ),
+                sut.Warnings.TestSequence( [ warning ] ),
+                onChangeEvents.TestEmpty(),
+                onValidateEvents.TestCount( count => count.TestEquals( 1 ) )
+                    .Then(
+                        e => Assertion.All(
+                            "validateEvent",
+                            e[0].Elements.Select( el => el.Element ).TestSequence( [ element, otherElement ] ),
+                            e[0].PreviousErrors.TestEmpty(),
+                            e[0].NewErrors.TestSequence( sut.Errors ),
+                            e[0].PreviousWarnings.TestEmpty(),
+                            e[0].NewWarnings.TestSequence( sut.Warnings ) ) ) )
+            .Go();
     }
 }

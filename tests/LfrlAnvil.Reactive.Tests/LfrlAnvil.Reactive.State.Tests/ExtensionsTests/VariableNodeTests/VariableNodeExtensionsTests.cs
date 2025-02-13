@@ -13,7 +13,7 @@ public class VariableNodeExtensionsTests : TestsBase
 
         var result = node.IsChanged();
 
-        result.Should().BeTrue();
+        result.TestTrue().Go();
     }
 
     [Fact]
@@ -21,7 +21,7 @@ public class VariableNodeExtensionsTests : TestsBase
     {
         var node = Variable.WithoutValidators<string>.Create( Fixture.Create<int>() );
         var result = node.IsChanged();
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Fact]
@@ -33,7 +33,7 @@ public class VariableNodeExtensionsTests : TestsBase
 
         var result = node.IsInvalid();
 
-        result.Should().BeTrue();
+        result.TestTrue().Go();
     }
 
     [Fact]
@@ -41,7 +41,7 @@ public class VariableNodeExtensionsTests : TestsBase
     {
         var node = Variable.WithoutValidators<string>.Create( Fixture.Create<int>() );
         var result = node.IsInvalid();
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Fact]
@@ -53,7 +53,7 @@ public class VariableNodeExtensionsTests : TestsBase
 
         var result = node.IsWarning();
 
-        result.Should().BeTrue();
+        result.TestTrue().Go();
     }
 
     [Fact]
@@ -61,7 +61,7 @@ public class VariableNodeExtensionsTests : TestsBase
     {
         var node = Variable.WithoutValidators<string>.Create( Fixture.Create<int>() );
         var result = node.IsWarning();
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Fact]
@@ -72,7 +72,7 @@ public class VariableNodeExtensionsTests : TestsBase
 
         var result = node.IsReadOnly();
 
-        result.Should().BeTrue();
+        result.TestTrue().Go();
     }
 
     [Fact]
@@ -80,7 +80,7 @@ public class VariableNodeExtensionsTests : TestsBase
     {
         var node = Variable.WithoutValidators<string>.Create( Fixture.Create<int>() );
         var result = node.IsReadOnly();
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Fact]
@@ -91,7 +91,7 @@ public class VariableNodeExtensionsTests : TestsBase
 
         var result = node.IsDisposed();
 
-        result.Should().BeTrue();
+        result.TestTrue().Go();
     }
 
     [Fact]
@@ -99,7 +99,7 @@ public class VariableNodeExtensionsTests : TestsBase
     {
         var node = Variable.WithoutValidators<string>.Create( Fixture.Create<int>() );
         var result = node.IsDisposed();
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Fact]
@@ -110,7 +110,7 @@ public class VariableNodeExtensionsTests : TestsBase
 
         var result = node.IsDirty();
 
-        result.Should().BeTrue();
+        result.TestTrue().Go();
     }
 
     [Fact]
@@ -118,6 +118,6 @@ public class VariableNodeExtensionsTests : TestsBase
     {
         var node = Variable.WithoutValidators<string>.Create( Fixture.Create<int>() );
         var result = node.IsDirty();
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 }

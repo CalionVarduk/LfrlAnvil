@@ -26,21 +26,19 @@ public class StaticCollectionVariableRootTests : TestsBase
             keySelector,
             keyComparer );
 
-        using ( new AssertionScope() )
-        {
-            sut.Parent.Should().BeNull();
-            sut.InitialElements.Values.Should().BeEquivalentTo( initialElements );
-            sut.Elements.Values.Should().BeEquivalentTo( elements );
-            sut.Errors.Should().BeEmpty();
-            sut.Warnings.Should().BeEmpty();
-            sut.State.Should().Be( VariableState.Changed );
-            sut.KeySelector.Should().BeSameAs( keySelector );
-            sut.ErrorsValidator.Should().BeOfType( typeof( PassingValidator<ICollectionVariableRootElements<int, VariableMock>, string> ) );
-            sut.WarningsValidator.Should()
-                .BeOfType( typeof( PassingValidator<ICollectionVariableRootElements<int, VariableMock>, string> ) );
-
-            sut.Elements.KeyComparer.Should().BeSameAs( keyComparer );
-        }
+        Assertion.All(
+                sut.Parent.TestNull(),
+                sut.InitialElements.Values.TestSetEqual( initialElements ),
+                sut.Elements.Values.TestSetEqual( elements ),
+                sut.Errors.TestEmpty(),
+                sut.Warnings.TestEmpty(),
+                sut.State.TestEquals( VariableState.Changed ),
+                sut.KeySelector.TestRefEquals( keySelector ),
+                sut.ErrorsValidator.TestType().AssignableTo<PassingValidator<ICollectionVariableRootElements<int, VariableMock>, string>>(),
+                sut.WarningsValidator.TestType()
+                    .AssignableTo<PassingValidator<ICollectionVariableRootElements<int, VariableMock>, string>>(),
+                sut.Elements.KeyComparer.TestRefEquals( keyComparer ) )
+            .Go();
     }
 
     [Fact]
@@ -51,21 +49,19 @@ public class StaticCollectionVariableRootTests : TestsBase
         var keyComparer = EqualityComparerFactory<int>.Create( (a, b) => a == b );
         var sut = CollectionVariableRoot.WithoutValidators<string>.Create( initialElements, keySelector, keyComparer );
 
-        using ( new AssertionScope() )
-        {
-            sut.Parent.Should().BeNull();
-            sut.InitialElements.Values.Should().BeEquivalentTo( initialElements );
-            sut.Elements.Values.Should().BeEquivalentTo( initialElements );
-            sut.Errors.Should().BeEmpty();
-            sut.Warnings.Should().BeEmpty();
-            sut.State.Should().Be( VariableState.Default );
-            sut.KeySelector.Should().BeSameAs( keySelector );
-            sut.ErrorsValidator.Should().BeOfType( typeof( PassingValidator<ICollectionVariableRootElements<int, VariableMock>, string> ) );
-            sut.WarningsValidator.Should()
-                .BeOfType( typeof( PassingValidator<ICollectionVariableRootElements<int, VariableMock>, string> ) );
-
-            sut.Elements.KeyComparer.Should().BeSameAs( keyComparer );
-        }
+        Assertion.All(
+                sut.Parent.TestNull(),
+                sut.InitialElements.Values.TestSetEqual( initialElements ),
+                sut.Elements.Values.TestSetEqual( initialElements ),
+                sut.Errors.TestEmpty(),
+                sut.Warnings.TestEmpty(),
+                sut.State.TestEquals( VariableState.Default ),
+                sut.KeySelector.TestRefEquals( keySelector ),
+                sut.ErrorsValidator.TestType().AssignableTo<PassingValidator<ICollectionVariableRootElements<int, VariableMock>, string>>(),
+                sut.WarningsValidator.TestType()
+                    .AssignableTo<PassingValidator<ICollectionVariableRootElements<int, VariableMock>, string>>(),
+                sut.Elements.KeyComparer.TestRefEquals( keyComparer ) )
+            .Go();
     }
 
     [Fact]
@@ -86,19 +82,18 @@ public class StaticCollectionVariableRootTests : TestsBase
             errorsValidator,
             warningsValidator );
 
-        using ( new AssertionScope() )
-        {
-            sut.Parent.Should().BeNull();
-            sut.InitialElements.Values.Should().BeEquivalentTo( initialElements );
-            sut.Elements.Values.Should().BeEquivalentTo( elements );
-            sut.Errors.Should().BeEmpty();
-            sut.Warnings.Should().BeEmpty();
-            sut.State.Should().Be( VariableState.Changed );
-            sut.KeySelector.Should().BeSameAs( keySelector );
-            sut.ErrorsValidator.Should().BeSameAs( errorsValidator );
-            sut.WarningsValidator.Should().BeSameAs( warningsValidator );
-            sut.Elements.KeyComparer.Should().BeSameAs( keyComparer );
-        }
+        Assertion.All(
+                sut.Parent.TestNull(),
+                sut.InitialElements.Values.TestSetEqual( initialElements ),
+                sut.Elements.Values.TestSetEqual( elements ),
+                sut.Errors.TestEmpty(),
+                sut.Warnings.TestEmpty(),
+                sut.State.TestEquals( VariableState.Changed ),
+                sut.KeySelector.TestRefEquals( keySelector ),
+                sut.ErrorsValidator.TestRefEquals( errorsValidator ),
+                sut.WarningsValidator.TestRefEquals( warningsValidator ),
+                sut.Elements.KeyComparer.TestRefEquals( keyComparer ) )
+            .Go();
     }
 
     [Fact]
@@ -116,18 +111,17 @@ public class StaticCollectionVariableRootTests : TestsBase
             errorsValidator,
             warningsValidator );
 
-        using ( new AssertionScope() )
-        {
-            sut.Parent.Should().BeNull();
-            sut.InitialElements.Values.Should().BeEquivalentTo( initialElements );
-            sut.Elements.Values.Should().BeEquivalentTo( initialElements );
-            sut.Errors.Should().BeEmpty();
-            sut.Warnings.Should().BeEmpty();
-            sut.State.Should().Be( VariableState.Default );
-            sut.KeySelector.Should().BeSameAs( keySelector );
-            sut.ErrorsValidator.Should().BeSameAs( errorsValidator );
-            sut.WarningsValidator.Should().BeSameAs( warningsValidator );
-            sut.Elements.KeyComparer.Should().BeSameAs( keyComparer );
-        }
+        Assertion.All(
+                sut.Parent.TestNull(),
+                sut.InitialElements.Values.TestSetEqual( initialElements ),
+                sut.Elements.Values.TestSetEqual( initialElements ),
+                sut.Errors.TestEmpty(),
+                sut.Warnings.TestEmpty(),
+                sut.State.TestEquals( VariableState.Default ),
+                sut.KeySelector.TestRefEquals( keySelector ),
+                sut.ErrorsValidator.TestRefEquals( errorsValidator ),
+                sut.WarningsValidator.TestRefEquals( warningsValidator ),
+                sut.Elements.KeyComparer.TestRefEquals( keyComparer ) )
+            .Go();
     }
 }

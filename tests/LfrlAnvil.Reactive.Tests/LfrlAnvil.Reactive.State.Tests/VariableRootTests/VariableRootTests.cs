@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
 using LfrlAnvil.Reactive.State.Events;
 using LfrlAnvil.Reactive.State.Internal;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 using LfrlAnvil.Validation;
 
 namespace LfrlAnvil.Reactive.State.Tests.VariableRootTests;
@@ -13,42 +12,37 @@ public partial class VariableRootTests : TestsBase
     {
         var sut = new VariableRootMock();
 
-        using ( new AssertionScope() )
-        {
-            sut.Parent.Should().BeNull();
-            sut.State.Should().Be( VariableState.ReadOnly );
-            sut.Nodes.Should().BeEmpty();
-            sut.Nodes.Count.Should().Be( 0 );
-            sut.Nodes.Comparer.Should().BeSameAs( EqualityComparer<string>.Default );
-            sut.Nodes.Keys.Should().BeEmpty();
-            sut.Nodes.Values.Should().BeEmpty();
-            sut.Nodes.ChangedNodeKeys.Should().BeEmpty();
-            sut.Nodes.InvalidNodeKeys.Should().BeEmpty();
-            sut.Nodes.WarningNodeKeys.Should().BeEmpty();
-            sut.Nodes.ReadOnlyNodeKeys.Should().BeEmpty();
-            sut.Nodes.DirtyNodeKeys.Should().BeEmpty();
-
-            (( IVariableNodeCollection )sut.Nodes).Keys.Should().BeSameAs( sut.Nodes.Keys );
-            (( IVariableNodeCollection )sut.Nodes).Values.Should().BeSameAs( sut.Nodes.Values );
-            (( IVariableNodeCollection )sut.Nodes).ChangedNodeKeys.Should().BeSameAs( sut.Nodes.ChangedNodeKeys );
-            (( IVariableNodeCollection )sut.Nodes).InvalidNodeKeys.Should().BeSameAs( sut.Nodes.InvalidNodeKeys );
-            (( IVariableNodeCollection )sut.Nodes).WarningNodeKeys.Should().BeSameAs( sut.Nodes.WarningNodeKeys );
-            (( IVariableNodeCollection )sut.Nodes).ReadOnlyNodeKeys.Should().BeSameAs( sut.Nodes.ReadOnlyNodeKeys );
-            (( IVariableNodeCollection )sut.Nodes).DirtyNodeKeys.Should().BeSameAs( sut.Nodes.DirtyNodeKeys );
-
-            (( IReadOnlyDictionary<string, IVariableNode> )sut.Nodes).Keys.Should().BeSameAs( sut.Nodes.Keys );
-            (( IReadOnlyDictionary<string, IVariableNode> )sut.Nodes).Values.Should().BeSameAs( sut.Nodes.Values );
-
-            (( IReadOnlyVariableRoot<string> )sut).OnChange.Should().BeSameAs( sut.OnChange );
-            (( IReadOnlyVariableRoot<string> )sut).OnValidate.Should().BeSameAs( sut.OnValidate );
-
-            (( object )(( IReadOnlyVariableRoot )sut).Nodes).Should().BeSameAs( sut.Nodes );
-            (( IReadOnlyVariableRoot )sut).OnChange.Should().BeSameAs( sut.OnChange );
-            (( IReadOnlyVariableRoot )sut).OnValidate.Should().BeSameAs( sut.OnValidate );
-            (( IVariableNode )sut).OnChange.Should().BeSameAs( sut.OnChange );
-            (( IVariableNode )sut).OnValidate.Should().BeSameAs( sut.OnValidate );
-            (( IVariableNode )sut).GetChildren().Should().BeEmpty();
-        }
+        Assertion.All(
+                sut.Parent.TestNull(),
+                sut.State.TestEquals( VariableState.ReadOnly ),
+                sut.Nodes.TestEmpty(),
+                sut.Nodes.Count.TestEquals( 0 ),
+                sut.Nodes.Comparer.TestRefEquals( EqualityComparer<string>.Default ),
+                sut.Nodes.Keys.TestEmpty(),
+                sut.Nodes.Values.TestEmpty(),
+                sut.Nodes.ChangedNodeKeys.TestEmpty(),
+                sut.Nodes.InvalidNodeKeys.TestEmpty(),
+                sut.Nodes.WarningNodeKeys.TestEmpty(),
+                sut.Nodes.ReadOnlyNodeKeys.TestEmpty(),
+                sut.Nodes.DirtyNodeKeys.TestEmpty(),
+                (( IVariableNodeCollection )sut.Nodes).Keys.TestRefEquals( sut.Nodes.Keys ),
+                (( IVariableNodeCollection )sut.Nodes).Values.TestRefEquals( sut.Nodes.Values ),
+                (( IVariableNodeCollection )sut.Nodes).ChangedNodeKeys.TestRefEquals( sut.Nodes.ChangedNodeKeys ),
+                (( IVariableNodeCollection )sut.Nodes).InvalidNodeKeys.TestRefEquals( sut.Nodes.InvalidNodeKeys ),
+                (( IVariableNodeCollection )sut.Nodes).WarningNodeKeys.TestRefEquals( sut.Nodes.WarningNodeKeys ),
+                (( IVariableNodeCollection )sut.Nodes).ReadOnlyNodeKeys.TestRefEquals( sut.Nodes.ReadOnlyNodeKeys ),
+                (( IVariableNodeCollection )sut.Nodes).DirtyNodeKeys.TestRefEquals( sut.Nodes.DirtyNodeKeys ),
+                (( IReadOnlyDictionary<string, IVariableNode> )sut.Nodes).Keys.TestRefEquals( sut.Nodes.Keys ),
+                (( IReadOnlyDictionary<string, IVariableNode> )sut.Nodes).Values.TestRefEquals( sut.Nodes.Values ),
+                (( IReadOnlyVariableRoot<string> )sut).OnChange.TestRefEquals( sut.OnChange ),
+                (( IReadOnlyVariableRoot<string> )sut).OnValidate.TestRefEquals( sut.OnValidate ),
+                (( object )(( IReadOnlyVariableRoot )sut).Nodes).TestRefEquals( sut.Nodes ),
+                (( IReadOnlyVariableRoot )sut).OnChange.TestRefEquals( sut.OnChange ),
+                (( IReadOnlyVariableRoot )sut).OnValidate.TestRefEquals( sut.OnValidate ),
+                (( IVariableNode )sut).OnChange.TestRefEquals( sut.OnChange ),
+                (( IVariableNode )sut).OnValidate.TestRefEquals( sut.OnValidate ),
+                (( IVariableNode )sut).GetChildren().TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -62,7 +56,7 @@ public partial class VariableRootTests : TestsBase
 
         var result = sut.ToString();
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -88,16 +82,15 @@ public partial class VariableRootTests : TestsBase
 
         sut.Refresh();
 
-        using ( new AssertionScope() )
-        {
-            sut.State.Should().Be( VariableState.Dirty );
-            variable1.State.Should().Be( VariableState.Dirty );
-            variable2.State.Should().Be( VariableState.Dirty );
-            variable3.State.Should().Be( VariableState.Dirty );
-            root1.State.Should().Be( VariableState.Dirty );
-            changeListener.VerifyCalls().Received( x => x.React( Arg.Any<VariableRootChangeEvent<string>>() ), 3 );
-            validateListener.VerifyCalls().Received( x => x.React( Arg.Any<VariableRootValidationEvent<string>>() ), 3 );
-        }
+        Assertion.All(
+                sut.State.TestEquals( VariableState.Dirty ),
+                variable1.State.TestEquals( VariableState.Dirty ),
+                variable2.State.TestEquals( VariableState.Dirty ),
+                variable3.State.TestEquals( VariableState.Dirty ),
+                root1.State.TestEquals( VariableState.Dirty ),
+                changeListener.TestReceivedCalls( x => x.React( Arg.Any<VariableRootChangeEvent<string>>() ), count: 3 ),
+                validateListener.TestReceivedCalls( x => x.React( Arg.Any<VariableRootValidationEvent<string>>() ), count: 3 ) )
+            .Go();
     }
 
     [Fact]
@@ -111,7 +104,7 @@ public partial class VariableRootTests : TestsBase
 
         sut.Refresh();
 
-        sut.State.Should().Be( VariableState.ReadOnly | VariableState.Disposed );
+        sut.State.TestEquals( VariableState.ReadOnly | VariableState.Disposed ).Go();
     }
 
     [Fact]
@@ -136,17 +129,16 @@ public partial class VariableRootTests : TestsBase
 
         sut.RefreshValidation();
 
-        using ( new AssertionScope() )
-        {
-            sut.State.Should().Be( VariableState.Invalid | VariableState.Warning );
-            sut.Nodes.InvalidNodeKeys.Should().BeEquivalentTo( key1, key2, key3 );
-            sut.Nodes.WarningNodeKeys.Should().BeEquivalentTo( key1, key2, key3 );
-            variable1.State.Should().Be( VariableState.Invalid | VariableState.Warning );
-            variable2.State.Should().Be( VariableState.Invalid | VariableState.Warning );
-            variable3.State.Should().Be( VariableState.Invalid | VariableState.Warning );
-            root1.State.Should().Be( VariableState.Invalid | VariableState.Warning );
-            validateListener.VerifyCalls().Received( x => x.React( Arg.Any<VariableRootValidationEvent<string>>() ), 3 );
-        }
+        Assertion.All(
+                sut.State.TestEquals( VariableState.Invalid | VariableState.Warning ),
+                sut.Nodes.InvalidNodeKeys.TestSetEqual( [ key1, key2, key3 ] ),
+                sut.Nodes.WarningNodeKeys.TestSetEqual( [ key1, key2, key3 ] ),
+                variable1.State.TestEquals( VariableState.Invalid | VariableState.Warning ),
+                variable2.State.TestEquals( VariableState.Invalid | VariableState.Warning ),
+                variable3.State.TestEquals( VariableState.Invalid | VariableState.Warning ),
+                root1.State.TestEquals( VariableState.Invalid | VariableState.Warning ),
+                validateListener.TestReceivedCalls( x => x.React( Arg.Any<VariableRootValidationEvent<string>>() ), count: 3 ) )
+            .Go();
     }
 
     [Fact]
@@ -161,7 +153,7 @@ public partial class VariableRootTests : TestsBase
 
         sut.RefreshValidation();
 
-        sut.State.Should().Be( VariableState.ReadOnly | VariableState.Disposed );
+        sut.State.TestEquals( VariableState.ReadOnly | VariableState.Disposed ).Go();
     }
 
     [Fact]
@@ -189,17 +181,16 @@ public partial class VariableRootTests : TestsBase
 
         sut.ClearValidation();
 
-        using ( new AssertionScope() )
-        {
-            sut.State.Should().Be( VariableState.Default );
-            sut.Nodes.InvalidNodeKeys.Should().BeEmpty();
-            sut.Nodes.WarningNodeKeys.Should().BeEmpty();
-            variable1.State.Should().Be( VariableState.Default );
-            variable2.State.Should().Be( VariableState.Default );
-            variable3.State.Should().Be( VariableState.Default );
-            root1.State.Should().Be( VariableState.Default );
-            validateListener.VerifyCalls().Received( x => x.React( Arg.Any<VariableRootValidationEvent<string>>() ), 3 );
-        }
+        Assertion.All(
+                sut.State.TestEquals( VariableState.Default ),
+                sut.Nodes.InvalidNodeKeys.TestEmpty(),
+                sut.Nodes.WarningNodeKeys.TestEmpty(),
+                variable1.State.TestEquals( VariableState.Default ),
+                variable2.State.TestEquals( VariableState.Default ),
+                variable3.State.TestEquals( VariableState.Default ),
+                root1.State.TestEquals( VariableState.Default ),
+                validateListener.TestReceivedCalls( x => x.React( Arg.Any<VariableRootValidationEvent<string>>() ), count: 3 ) )
+            .Go();
     }
 
     [Fact]
@@ -215,7 +206,7 @@ public partial class VariableRootTests : TestsBase
 
         sut.ClearValidation();
 
-        sut.State.Should().Be( VariableState.ReadOnly | VariableState.Disposed | VariableState.Invalid | VariableState.Warning );
+        sut.State.TestEquals( VariableState.ReadOnly | VariableState.Disposed | VariableState.Invalid | VariableState.Warning ).Go();
     }
 
     [Theory]
@@ -243,16 +234,15 @@ public partial class VariableRootTests : TestsBase
 
         sut.SetReadOnly( enabled );
 
-        using ( new AssertionScope() )
-        {
-            var expectedState = enabled ? VariableState.ReadOnly : VariableState.Default;
-            sut.State.Should().Be( expectedState );
-            variable1.State.Should().Be( expectedState );
-            variable2.State.Should().Be( expectedState );
-            variable3.State.Should().Be( expectedState );
-            root1.State.Should().Be( expectedState );
-            changeListener.VerifyCalls().Received( x => x.React( Arg.Any<VariableRootChangeEvent<string>>() ) );
-        }
+        var expectedState = enabled ? VariableState.ReadOnly : VariableState.Default;
+        Assertion.All(
+                sut.State.TestEquals( expectedState ),
+                variable1.State.TestEquals( expectedState ),
+                variable2.State.TestEquals( expectedState ),
+                variable3.State.TestEquals( expectedState ),
+                root1.State.TestEquals( expectedState ),
+                changeListener.TestReceivedCalls( x => x.React( Arg.Any<VariableRootChangeEvent<string>>() ) ) )
+            .Go();
     }
 
     [Theory]
@@ -272,7 +262,7 @@ public partial class VariableRootTests : TestsBase
 
         sut.SetReadOnly( enabled );
 
-        sut.State.Should().Be( VariableState.ReadOnly | VariableState.Disposed );
+        sut.State.TestEquals( VariableState.ReadOnly | VariableState.Disposed ).Go();
     }
 
     [Fact]
@@ -296,17 +286,16 @@ public partial class VariableRootTests : TestsBase
 
         sut.Dispose();
 
-        using ( new AssertionScope() )
-        {
-            sut.State.Should().Be( VariableState.ReadOnly | VariableState.Disposed );
-            sut.Nodes.ReadOnlyNodeKeys.Should().BeEquivalentTo( key1, key2, key3 );
-            onChange.IsDisposed.Should().BeTrue();
-            onValidate.IsDisposed.Should().BeTrue();
-            (variable1.State & VariableState.Disposed).Should().Be( VariableState.Disposed );
-            (variable2.State & VariableState.Disposed).Should().Be( VariableState.Disposed );
-            (variable3.State & VariableState.Disposed).Should().Be( VariableState.Disposed );
-            (root1.State & VariableState.Disposed).Should().Be( VariableState.Disposed );
-        }
+        Assertion.All(
+                sut.State.TestEquals( VariableState.ReadOnly | VariableState.Disposed ),
+                sut.Nodes.ReadOnlyNodeKeys.TestSetEqual( [ key1, key2, key3 ] ),
+                onChange.IsDisposed.TestTrue(),
+                onValidate.IsDisposed.TestTrue(),
+                (variable1.State & VariableState.Disposed).TestEquals( VariableState.Disposed ),
+                (variable2.State & VariableState.Disposed).TestEquals( VariableState.Disposed ),
+                (variable3.State & VariableState.Disposed).TestEquals( VariableState.Disposed ),
+                (root1.State & VariableState.Disposed).TestEquals( VariableState.Disposed ) )
+            .Go();
     }
 
     [Fact]
@@ -317,7 +306,7 @@ public partial class VariableRootTests : TestsBase
 
         sut.Dispose();
 
-        sut.State.Should().Be( VariableState.ReadOnly | VariableState.Disposed );
+        sut.State.TestEquals( VariableState.ReadOnly | VariableState.Disposed ).Go();
     }
 }
 
