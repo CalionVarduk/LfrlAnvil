@@ -266,8 +266,7 @@ public abstract class GenericRingTests<T> : TestsBase
             ++availableSteps;
 
         Assertion.All(
-                firstItemAfterReset.TestNotNull(),
-                firstItemAfterReset.TestIf().NotNull( i => i.TestEquals( items[startIndex]! ) ),
+                firstItemAfterReset.TestNotNull( i => i.TestEquals( items[startIndex]! ) ),
                 availableSteps.TestEquals( items.Length ) )
             .Go();
     }

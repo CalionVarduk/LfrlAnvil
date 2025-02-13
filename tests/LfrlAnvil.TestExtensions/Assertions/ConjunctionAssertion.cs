@@ -32,7 +32,7 @@ internal sealed class ConjunctionAssertion : Assertion
         if ( errors.Count > 0 )
             Throw(
                 $"""
-                 {(Context.Length > 0 ? $"[{Context}]" : "Assertion group")} failed with {errors.Count} error(s):
+                 {(Context.Length > 0 ? $"[{Context}]" : "ALL assertion")} failed with {errors.Count} error(s):
                  {string.Join( Environment.NewLine, errors.Select( (e, i) => $"{i + 1}. {e.Indent()}" ) )}
                  """ );
     }

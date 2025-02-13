@@ -1493,10 +1493,7 @@ public class ParsedExpressionFactoryBuilderTests : TestsBase
 
         var action = Lambda.Of( () => sut.Build() );
 
-        action.Test(
-                exc => Assertion.All(
-                    exc.TestType().Exact<ParsedExpressionFactoryBuilderException>(),
-                    exc.TestIf().OfType<ParsedExpressionFactoryBuilderException>( e => e.Messages.Count.TestGreaterThan( 1 ) ) ) )
+        action.Test( exc => exc.TestType().Exact<ParsedExpressionFactoryBuilderException>( e => e.Messages.Count.TestGreaterThan( 1 ) ) )
             .Go();
     }
 }

@@ -1,16 +1,14 @@
 ﻿namespace LfrlAnvil.TestExtensions.Assertions;
 
-internal sealed class RefEqualsAssertion<T> : Assertion
+internal sealed class RefEqualsAssertion<T> : SubjectAssertion<T>
 {
     internal RefEqualsAssertion(string context, T subject, object? value, bool expected)
-        : base( context )
+        : base( context, subject )
     {
-        Subject = subject;
         Value = value;
         Expected = expected;
     }
 
-    internal T Subject { get; }
     internal object? Value { get; }
     internal bool Expected { get; }
 

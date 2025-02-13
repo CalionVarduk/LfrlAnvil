@@ -38,10 +38,7 @@ public class ValidationMessageFormatterTests : TestsBase
 
         var result = sut.Format( null, Chain.Create( message1 ).Extend( message2 ), CultureInfo.InvariantCulture );
 
-        Assertion.All(
-                result.TestNotNull(),
-                result.TestIf().NotNull( r => r.ToString().TestEquals( expected ) ) )
-            .Go();
+        result.TestNotNull( r => r.ToString().TestEquals( expected ) ).Go();
     }
 
     [Fact]
@@ -74,10 +71,7 @@ public class ValidationMessageFormatterTests : TestsBase
 
         var result = sut.Format( null, Chain.Create( message1 ).Extend( message2 ), CultureInfo.InvariantCulture );
 
-        Assertion.All(
-                result.TestNotNull(),
-                result.TestIf().NotNull( r => r.ToString().TestEquals( expected ) ) )
-            .Go();
+        result.TestNotNull( r => r.ToString().TestEquals( expected ) ).Go();
     }
 
     [Fact]
@@ -93,10 +87,7 @@ public class ValidationMessageFormatterTests : TestsBase
 
         var result = sut.Format( null, Chain.Create( message1 ).Extend( message2 ), CultureInfo.InvariantCulture );
 
-        Assertion.All(
-                result.TestNotNull(),
-                result.TestIf().NotNull( r => r.ToString().TestEquals( expected ) ) )
-            .Go();
+        result.TestNotNull( r => r.ToString().TestEquals( expected ) ).Go();
     }
 
     [Fact]
@@ -110,10 +101,7 @@ public class ValidationMessageFormatterTests : TestsBase
 
         var result = sut.Format( null, Chain.Create( message1 ).Extend( message2 ), CultureInfo.InvariantCulture );
 
-        Assertion.All(
-                result.TestNotNull(),
-                result.TestIf().NotNull( r => r.ToString().TestEquals( expected ) ) )
-            .Go();
+        result.TestNotNull( r => r.ToString().TestEquals( expected ) ).Go();
     }
 
     [Fact]
@@ -134,10 +122,7 @@ public class ValidationMessageFormatterTests : TestsBase
 
         var result = sut.Format( null, Chain.Create( message1 ).Extend( message2 ), CultureInfo.InvariantCulture );
 
-        Assertion.All(
-                result.TestNotNull(),
-                result.TestIf().NotNull( r => r.ToString().TestEquals( expected ) ) )
-            .Go();
+        result.TestNotNull( r => r.ToString().TestEquals( expected ) ).Go();
     }
 
     private sealed class Formatter : ValidationMessageFormatter<string>

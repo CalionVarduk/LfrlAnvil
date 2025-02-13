@@ -82,9 +82,8 @@ public class IfTests : TestsBase
 
         Assertion.All(
                 result.NodeType.TestEquals( ExpressionType.Conditional ),
-                result.TestType().AssignableTo<ConditionalExpression>(),
-                result.TestIf()
-                    .OfType<ConditionalExpression>(
+                result.TestType()
+                    .AssignableTo<ConditionalExpression>(
                         conditional => Assertion.All(
                             "Conditional",
                             conditional.Test.TestRefEquals( parameters[0] ),
@@ -139,17 +138,15 @@ public class IfTests : TestsBase
 
         Assertion.All(
                 result.NodeType.TestEquals( ExpressionType.Conditional ),
-                result.TestType().AssignableTo<ConditionalExpression>(),
-                result.TestIf()
-                    .OfType<ConditionalExpression>(
+                result.TestType()
+                    .AssignableTo<ConditionalExpression>(
                         conditional => Assertion.All(
                             "conditional",
                             conditional.Test.TestRefEquals( parameters[0] ),
                             conditional.IfTrue.NodeType.TestEquals( ExpressionType.Throw ),
                             conditional.IfFalse.TestRefEquals( parameters[2] ),
-                            conditional.IfTrue.TestType().AssignableTo<UnaryExpression>(),
-                            conditional.IfTrue.TestIf()
-                                .OfType<UnaryExpression>(
+                            conditional.IfTrue.TestType()
+                                .AssignableTo<UnaryExpression>(
                                     @throw => Assertion.All(
                                         "@throw",
                                         @throw.Type.TestEquals( parameters[2].Type ),
@@ -172,17 +169,15 @@ public class IfTests : TestsBase
 
         Assertion.All(
                 result.NodeType.TestEquals( ExpressionType.Conditional ),
-                result.TestType().AssignableTo<ConditionalExpression>(),
-                result.TestIf()
-                    .OfType<ConditionalExpression>(
+                result.TestType()
+                    .AssignableTo<ConditionalExpression>(
                         conditional => Assertion.All(
                             "conditional",
                             conditional.Test.TestRefEquals( parameters[0] ),
                             conditional.IfTrue.TestRefEquals( parameters[1] ),
                             conditional.IfFalse.NodeType.TestEquals( ExpressionType.Throw ),
-                            conditional.IfFalse.TestType().AssignableTo<UnaryExpression>(),
-                            conditional.IfFalse.TestIf()
-                                .OfType<UnaryExpression>(
+                            conditional.IfFalse.TestType()
+                                .AssignableTo<UnaryExpression>(
                                     @throw => Assertion.All(
                                         "@throw",
                                         @throw.Type.TestEquals( parameters[1].Type ),
@@ -202,9 +197,8 @@ public class IfTests : TestsBase
 
         Assertion.All(
                 result.NodeType.TestEquals( ExpressionType.Throw ),
-                result.TestType().AssignableTo<UnaryExpression>(),
-                result.TestIf()
-                    .OfType<UnaryExpression>(
+                result.TestType()
+                    .AssignableTo<UnaryExpression>(
                         @throw => Assertion.All(
                             "@throw",
                             @throw.Type.TestEquals( typeof( string ) ),
@@ -224,9 +218,8 @@ public class IfTests : TestsBase
 
         Assertion.All(
                 result.NodeType.TestEquals( ExpressionType.Throw ),
-                result.TestType().AssignableTo<UnaryExpression>(),
-                result.TestIf()
-                    .OfType<UnaryExpression>(
+                result.TestType()
+                    .AssignableTo<UnaryExpression>(
                         @throw => Assertion.All(
                             "@throw",
                             @throw.Type.TestEquals( typeof( string ) ),

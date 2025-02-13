@@ -21,12 +21,10 @@ public class Int64UnaryOperatorTests : UnaryOperatorsTestsBase
             sut: new ParsedExpressionNegateInt64Operator(),
             expectedNodeType: ExpressionType.Constant,
             operandValue: 123,
-            (_, result) => Assertion.All(
-                result.TestType().AssignableTo<ConstantExpression>(),
-                result.TestIf()
-                    .OfType<ConstantExpression>(
-                        constantResult =>
-                            constantResult.Value.TestEquals( -123L ) ) ) );
+            (_, result) => result.TestType()
+                .AssignableTo<ConstantExpression>(
+                    constantResult =>
+                        constantResult.Value.TestEquals( -123L ) ) );
     }
 
     [Fact]
@@ -45,11 +43,9 @@ public class Int64UnaryOperatorTests : UnaryOperatorsTestsBase
             sut: new ParsedExpressionBitwiseNotInt64Operator(),
             expectedNodeType: ExpressionType.Constant,
             operandValue: 123,
-            (_, result) => Assertion.All(
-                result.TestType().AssignableTo<ConstantExpression>(),
-                result.TestIf()
-                    .OfType<ConstantExpression>(
-                        constantResult =>
-                            constantResult.Value.TestEquals( ~123L ) ) ) );
+            (_, result) => result.TestType()
+                .AssignableTo<ConstantExpression>(
+                    constantResult =>
+                        constantResult.Value.TestEquals( ~123L ) ) );
     }
 }

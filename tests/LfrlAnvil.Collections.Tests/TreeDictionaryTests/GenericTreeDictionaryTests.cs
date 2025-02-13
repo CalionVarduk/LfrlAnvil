@@ -147,7 +147,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
                     sut.Root.TestEquals( root ),
                     root.Value.TestEquals( values[0] ),
                     AssertNodeRelationship( root ),
-                    intercept.Node.TestIf().NotNull( AssertLackOfLinkedTree ) ) )
+                    intercept.Node is null ? Assertion.All() : AssertLackOfLinkedTree( intercept.Node ) ) )
             .Go();
     }
 
@@ -277,7 +277,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
                     sut.Root.TestEquals( root ),
                     root.Value.TestEquals( values[0] ),
                     AssertNodeRelationship( root ),
-                    intercept.Node.TestIf().NotNull( AssertLackOfLinkedTree ) ) )
+                    intercept.Node is null ? Assertion.All() : AssertLackOfLinkedTree( intercept.Node ) ) )
             .Go();
     }
 
@@ -466,7 +466,7 @@ public abstract class GenericTreeDictionaryTests<TKey, TValue> : GenericDictiona
                     sut.Root.TestEquals( root ),
                     root.Value.TestEquals( values[0] ),
                     AssertNodeRelationship( root ),
-                    intercept.Node.TestIf().NotNull( AssertLackOfLinkedTree ) ) )
+                    intercept.Node is null ? Assertion.All() : AssertLackOfLinkedTree( intercept.Node ) ) )
             .Go();
     }
 

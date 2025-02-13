@@ -36,14 +36,11 @@ public class PropertyInfoExtensionsTests : TestsBase
     {
         var sut = TestClass.GetPublicAutoWritableInfo();
         var result = sut.GetBackingField();
-        Assertion.All(
-                result.TestNotNull(),
-                result.TestIf()
-                    .NotNull(
-                        r => Assertion.All(
-                            r.IsPrivate.TestTrue(),
-                            r.Name.TestContains( sut.Name ),
-                            Attribute.IsDefined( r, typeof( CompilerGeneratedAttribute ) ).TestTrue() ) ) )
+        result.TestNotNull(
+                r => Assertion.All(
+                    r.IsPrivate.TestTrue(),
+                    r.Name.TestContains( sut.Name ),
+                    Attribute.IsDefined( r, typeof( CompilerGeneratedAttribute ) ).TestTrue() ) )
             .Go();
     }
 
@@ -52,14 +49,11 @@ public class PropertyInfoExtensionsTests : TestsBase
     {
         var sut = TestClass.GetPublicAutoReadOnlyInfo();
         var result = sut.GetBackingField();
-        Assertion.All(
-                result.TestNotNull(),
-                result.TestIf()
-                    .NotNull(
-                        r => Assertion.All(
-                            r.IsPrivate.TestTrue(),
-                            r.Name.TestContains( sut.Name ),
-                            Attribute.IsDefined( r, typeof( CompilerGeneratedAttribute ) ).TestTrue() ) ) )
+        result.TestNotNull(
+                r => Assertion.All(
+                    r.IsPrivate.TestTrue(),
+                    r.Name.TestContains( sut.Name ),
+                    Attribute.IsDefined( r, typeof( CompilerGeneratedAttribute ) ).TestTrue() ) )
             .Go();
     }
 
@@ -92,14 +86,11 @@ public class PropertyInfoExtensionsTests : TestsBase
     {
         var sut = TestClass.GetPrivateAutoWritableInfo();
         var result = sut.GetBackingField();
-        Assertion.All(
-                result.TestNotNull(),
-                result.TestIf()
-                    .NotNull(
-                        r => Assertion.All(
-                            r.IsPrivate.TestTrue(),
-                            r.Name.TestContains( sut.Name ),
-                            Attribute.IsDefined( r, typeof( CompilerGeneratedAttribute ) ).TestTrue() ) ) )
+        result.TestNotNull(
+                r => Assertion.All(
+                    r.IsPrivate.TestTrue(),
+                    r.Name.TestContains( sut.Name ),
+                    Attribute.IsDefined( r, typeof( CompilerGeneratedAttribute ) ).TestTrue() ) )
             .Go();
     }
 
@@ -108,14 +99,11 @@ public class PropertyInfoExtensionsTests : TestsBase
     {
         var sut = TestClass.GetPrivateAutoReadOnlyInfo();
         var result = sut.GetBackingField();
-        Assertion.All(
-                result.TestNotNull(),
-                result.TestIf()
-                    .NotNull(
-                        r => Assertion.All(
-                            r.IsPrivate.TestTrue(),
-                            r.Name.TestContains( sut.Name ),
-                            Attribute.IsDefined( r, typeof( CompilerGeneratedAttribute ) ).TestTrue() ) ) )
+        result.TestNotNull(
+                r => Assertion.All(
+                    r.IsPrivate.TestTrue(),
+                    r.Name.TestContains( sut.Name ),
+                    Attribute.IsDefined( r, typeof( CompilerGeneratedAttribute ) ).TestTrue() ) )
             .Go();
     }
 

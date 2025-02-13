@@ -2,17 +2,15 @@
 
 namespace LfrlAnvil.TestExtensions.Assertions;
 
-internal sealed class RegexAssertion : Assertion
+internal sealed class RegexAssertion : SubjectAssertion<ReadOnlyMemory<char>>
 {
     internal RegexAssertion(string context, ReadOnlyMemory<char> subject, Regex regex, bool match)
-        : base( context )
+        : base( context, subject )
     {
-        Subject = subject;
         Regex = regex;
         Match = match;
     }
 
-    internal ReadOnlyMemory<char> Subject { get; }
     internal Regex Regex { get; }
     internal bool Match { get; }
 

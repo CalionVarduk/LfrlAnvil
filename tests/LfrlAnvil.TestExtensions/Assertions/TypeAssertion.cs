@@ -1,16 +1,14 @@
 ﻿namespace LfrlAnvil.TestExtensions.Assertions;
 
-internal sealed class TypeAssertion<T> : Assertion
+internal sealed class TypeAssertion<T> : SubjectAssertion<T>
 {
     internal TypeAssertion(string context, T subject, Type expected, bool exact)
-        : base( context )
+        : base( context, subject )
     {
-        Subject = subject;
         Expected = expected;
         Exact = exact;
     }
 
-    internal T Subject { get; }
     internal Type Expected { get; }
     internal bool Exact { get; }
 

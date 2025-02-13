@@ -5,28 +5,19 @@ using Xunit.Sdk;
 
 namespace LfrlAnvil.TestExtensions.Assertions;
 
-internal enum SequenceComparisonType : byte
-{
-    Equal,
-    Contains,
-    ContainsContiguous
-}
-
-internal sealed class SequenceAssertion<T> : Assertion
+internal sealed class SequenceAssertion<T> : SubjectAssertion<IEnumerable<T>>
 {
     internal SequenceAssertion(
         string context,
         IEnumerable<T> subject,
         IReadOnlyList<Func<T, int, Assertion>> elementAssertions,
         SequenceComparisonType type)
-        : base( context )
+        : base( context, subject )
     {
-        Subject = subject;
         ElementAssertions = elementAssertions;
         Type = type;
     }
 
-    internal IEnumerable<T> Subject { get; }
     internal IReadOnlyList<Func<T, int, Assertion>> ElementAssertions { get; }
     internal SequenceComparisonType Type { get; }
 

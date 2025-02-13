@@ -379,11 +379,7 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
     public void TryMinMax_ShouldReturnCorrectResult_WhenSourceIsNotEmpty(IEnumerable<T> sut, T expectedMin, T expectedMax)
     {
         var result = sut.TryMinMax();
-
-        Assertion.All(
-                result.TestNotNull(),
-                result.TestIf().NotNull( r => Assertion.All( r.Min.TestEquals( expectedMin ), r.Max.TestEquals( expectedMax ) ) ) )
-            .Go();
+        result.TestNotNull( r => Assertion.All( r.Min.TestEquals( expectedMin ), r.Max.TestEquals( expectedMax ) ) ).Go();
     }
 
     [Fact]
@@ -876,12 +872,7 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
     {
         var sut = values.Select( v => new Contained<T> { Value = v } );
         var result = sut.TryMinMaxBy( c => c.Value );
-
-        Assertion.All(
-                result.TestNotNull(),
-                result.TestIf()
-                    .NotNull( r => Assertion.All( r.Min.Value.TestEquals( expectedMin ), r.Max.Value.TestEquals( expectedMax ) ) ) )
-            .Go();
+        result.TestNotNull( r => Assertion.All( r.Min.Value.TestEquals( expectedMin ), r.Max.Value.TestEquals( expectedMax ) ) ).Go();
     }
 
     [Fact]
@@ -901,12 +892,7 @@ public abstract class GenericEnumerableExtensionsTests<T> : TestsBase
     {
         var sut = values.Select( v => new Contained<T> { Value = v } );
         var result = sut.TryMinMaxBy( c => c.Value, c => c.Value );
-
-        Assertion.All(
-                result.TestNotNull(),
-                result.TestIf()
-                    .NotNull( r => Assertion.All( r.Min.Value.TestEquals( expectedMin ), r.Max.Value.TestEquals( expectedMax ) ) ) )
-            .Go();
+        result.TestNotNull( r => Assertion.All( r.Min.Value.TestEquals( expectedMin ), r.Max.Value.TestEquals( expectedMax ) ) ).Go();
     }
 
     [Fact]

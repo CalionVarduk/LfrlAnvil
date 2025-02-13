@@ -11,27 +11,14 @@ namespace LfrlAnvil.TestExtensions.Assertions;
 public static class AssertionExtensions
 {
     [Pure]
-    public static RefTypeAssertionFilter<T> TestIf<T>(this T? subject)
+    public static TypeAssertionBuilder<T> TestType<T>(this T? subject, [CallerArgumentExpression( "subject" )] string context = "")
         where T : class
-    {
-        return new RefTypeAssertionFilter<T>( subject );
-    }
-
-    [Pure]
-    public static NullableValueTypeAssertionFilter<T> TestIf<T>(this T? subject)
-        where T : struct
-    {
-        return new NullableValueTypeAssertionFilter<T>( subject );
-    }
-
-    [Pure]
-    public static TypeAssertionBuilder<T> TestType<T>(this T subject, [CallerArgumentExpression( "subject" )] string context = "")
     {
         return new TypeAssertionBuilder<T>( context, subject );
     }
 
     [Pure]
-    public static Assertion Test(
+    public static SubjectAssertion<Action> Test(
         this Action subject,
         Func<Exception?, Assertion> completionAssertion,
         [CallerArgumentExpression( "subject" )]
@@ -41,7 +28,7 @@ public static class AssertionExtensions
     }
 
     [Pure]
-    public static Assertion Test<T>(
+    public static SubjectAssertion<Action> Test<T>(
         this Func<T> subject,
         Func<Exception?, Assertion> completionAssertion,
         [CallerArgumentExpression( "subject" )]
@@ -51,7 +38,7 @@ public static class AssertionExtensions
     }
 
     [Pure]
-    public static Assertion Test(
+    public static SubjectAssertion<Action> Test(
         this Func<Task> subject,
         Func<Exception?, Assertion> completionAssertion,
         [CallerArgumentExpression( "subject" )]
@@ -77,7 +64,7 @@ public static class AssertionExtensions
     }
 
     [Pure]
-    public static Assertion Test<T>(
+    public static SubjectAssertion<Action> Test<T>(
         this Func<Task<T>> subject,
         Func<Exception?, Assertion> completionAssertion,
         [CallerArgumentExpression( "subject" )]
@@ -87,7 +74,7 @@ public static class AssertionExtensions
     }
 
     [Pure]
-    public static Assertion Test(
+    public static SubjectAssertion<Action> Test(
         this Func<ValueTask> subject,
         Func<Exception?, Assertion> completionAssertion,
         [CallerArgumentExpression( "subject" )]
@@ -97,7 +84,7 @@ public static class AssertionExtensions
     }
 
     [Pure]
-    public static Assertion Test<T>(
+    public static SubjectAssertion<Action> Test<T>(
         this Func<ValueTask<T>> subject,
         Func<Exception?, Assertion> completionAssertion,
         [CallerArgumentExpression( "subject" )]
@@ -107,91 +94,127 @@ public static class AssertionExtensions
     }
 
     [Pure]
-    public static Assertion TestNull<T>(this T? subject, [CallerArgumentExpression( "subject" )] string context = "")
+    public static SubjectAssertion<T?> TestNull<T>(this T? subject, [CallerArgumentExpression( "subject" )] string context = "")
         where T : class
     {
         return new NullAssertion<T?>( context, subject, expected: true );
     }
 
     [Pure]
-    public static Assertion TestNull<T>(this T? subject, [CallerArgumentExpression( "subject" )] string context = "")
+    public static SubjectAssertion<T?> TestNull<T>(this T? subject, [CallerArgumentExpression( "subject" )] string context = "")
         where T : struct
     {
         return new NullAssertion<T?>( context, subject, expected: true );
     }
 
     [Pure]
-    public static Assertion TestNotNull<T>(this T? subject, [CallerArgumentExpression( "subject" )] string context = "")
+    public static SubjectAssertion<T?> TestNotNull<T>(this T? subject, [CallerArgumentExpression( "subject" )] string context = "")
         where T : class
     {
         return new NullAssertion<T?>( context, subject, expected: false );
     }
 
     [Pure]
-    public static Assertion TestNotNull<T>(this T? subject, [CallerArgumentExpression( "subject" )] string context = "")
+    public static SubjectAssertion<T?> TestNotNull<T>(this T? subject, [CallerArgumentExpression( "subject" )] string context = "")
         where T : struct
     {
         return new NullAssertion<T?>( context, subject, expected: false );
     }
 
     [Pure]
-    public static Assertion TestTrue(this bool subject, [CallerArgumentExpression( "subject" )] string context = "")
+    public static SubjectAssertion<T?> TestNotNull<T>(
+        this T? subject,
+        Func<T, Assertion> continuation,
+        [CallerArgumentExpression( "subject" )] string context = "")
+        where T : class
+    {
+        return subject.TestNotNull( context ).Then( x => continuation( x! ) );
+    }
+
+    [Pure]
+    public static SubjectAssertion<T?> TestNotNull<T>(
+        this T? subject,
+        Func<T, Assertion> continuation,
+        [CallerArgumentExpression( "subject" )] string context = "")
+        where T : struct
+    {
+        return subject.TestNotNull( context ).Then( x => continuation( x!.Value ) );
+    }
+
+    [Pure]
+    public static SubjectAssertion<bool> TestTrue(this bool subject, [CallerArgumentExpression( "subject" )] string context = "")
     {
         return new BoolAssertion( context, subject, true );
     }
 
     [Pure]
-    public static Assertion TestFalse(this bool subject, [CallerArgumentExpression( "subject" )] string context = "")
+    public static SubjectAssertion<bool> TestFalse(this bool subject, [CallerArgumentExpression( "subject" )] string context = "")
     {
         return new BoolAssertion( context, subject, false );
     }
 
     [Pure]
-    public static Assertion TestRefEquals<T>(this T? subject, object? value, [CallerArgumentExpression( "subject" )] string context = "")
+    public static SubjectAssertion<T?> TestRefEquals<T>(
+        this T? subject,
+        object? value,
+        [CallerArgumentExpression( "subject" )]
+        string context = "")
         where T : class
     {
         return new RefEqualsAssertion<T?>( context, subject, value, expected: true );
     }
 
     [Pure]
-    public static Assertion TestNotRefEquals<T>(this T? subject, object? value, [CallerArgumentExpression( "subject" )] string context = "")
+    public static SubjectAssertion<T?> TestNotRefEquals<T>(
+        this T? subject,
+        object? value,
+        [CallerArgumentExpression( "subject" )]
+        string context = "")
         where T : class
     {
         return new RefEqualsAssertion<T?>( context, subject, value, expected: false );
     }
 
     [Pure]
-    public static Assertion TestEquals<T>(this T subject, T value, [CallerArgumentExpression( "subject" )] string context = "")
+    public static SubjectAssertion<T> TestEquals<T>(this T subject, T value, [CallerArgumentExpression( "subject" )] string context = "")
     {
         return new EqualityAssertion<T>( context, subject, value, expected: true );
     }
 
     [Pure]
-    public static Assertion TestNotEquals<T>(this T subject, T value, [CallerArgumentExpression( "subject" )] string context = "")
+    public static SubjectAssertion<T> TestNotEquals<T>(this T subject, T value, [CallerArgumentExpression( "subject" )] string context = "")
     {
         return new EqualityAssertion<T>( context, subject, value, expected: false );
     }
 
     [Pure]
-    public static Assertion TestLessThan<T>(this T subject, T value, [CallerArgumentExpression( "subject" )] string context = "")
+    public static SubjectAssertion<T> TestLessThan<T>(this T subject, T value, [CallerArgumentExpression( "subject" )] string context = "")
     {
         return new ComparisonAssertion<T>( context, subject, value, ComparisonType.LessThan );
     }
 
     [Pure]
-    public static Assertion TestLessThanOrEqualTo<T>(this T subject, T value, [CallerArgumentExpression( "subject" )] string context = "")
+    public static SubjectAssertion<T> TestLessThanOrEqualTo<T>(
+        this T subject,
+        T value,
+        [CallerArgumentExpression( "subject" )]
+        string context = "")
     {
         return new ComparisonAssertion<T>( context, subject, value, ComparisonType.LessThanOrEqualTo );
     }
 
     [Pure]
-    public static Assertion TestGreaterThan<T>(this T subject, T value, [CallerArgumentExpression( "subject" )] string context = "")
+    public static SubjectAssertion<T> TestGreaterThan<T>(
+        this T subject,
+        T value,
+        [CallerArgumentExpression( "subject" )]
+        string context = "")
     {
         return new ComparisonAssertion<T>( context, subject, value, ComparisonType.GreaterThan );
     }
 
     [Pure]
-    public static Assertion TestGreaterThanOrEqualTo<T>(
+    public static SubjectAssertion<T> TestGreaterThanOrEqualTo<T>(
         this T subject,
         T value,
         [CallerArgumentExpression( "subject" )]
@@ -201,19 +224,29 @@ public static class AssertionExtensions
     }
 
     [Pure]
-    public static Assertion TestInRange<T>(this T subject, T min, T max, [CallerArgumentExpression( "subject" )] string context = "")
+    public static SubjectAssertion<T> TestInRange<T>(
+        this T subject,
+        T min,
+        T max,
+        [CallerArgumentExpression( "subject" )]
+        string context = "")
     {
         return new RangeComparisonAssertion<T>( context, subject, min, max, expected: true );
     }
 
     [Pure]
-    public static Assertion TestNotInRange<T>(this T subject, T min, T max, [CallerArgumentExpression( "subject" )] string context = "")
+    public static SubjectAssertion<T> TestNotInRange<T>(
+        this T subject,
+        T min,
+        T max,
+        [CallerArgumentExpression( "subject" )]
+        string context = "")
     {
         return new RangeComparisonAssertion<T>( context, subject, min, max, expected: false );
     }
 
     [Pure]
-    public static Assertion TestFuzzyEquals<T>(
+    public static SubjectAssertion<T> TestFuzzyEquals<T>(
         this T subject,
         T value,
         T epsilon,
@@ -224,13 +257,17 @@ public static class AssertionExtensions
     }
 
     [Pure]
-    public static Assertion TestMatch(this string subject, Regex regex, [CallerArgumentExpression( "subject" )] string context = "")
+    public static SubjectAssertion<ReadOnlyMemory<char>> TestMatch(
+        this string subject,
+        Regex regex,
+        [CallerArgumentExpression( "subject" )]
+        string context = "")
     {
         return subject.AsMemory().TestMatch( regex, context );
     }
 
     [Pure]
-    public static Assertion TestMatch(
+    public static SubjectAssertion<ReadOnlyMemory<char>> TestMatch(
         this ReadOnlyMemory<char> subject,
         Regex regex,
         [CallerArgumentExpression( "subject" )]
@@ -240,7 +277,7 @@ public static class AssertionExtensions
     }
 
     [Pure]
-    public static Assertion TestMatch(
+    public static SubjectAssertion<ReadOnlyMemory<char>> TestMatch(
         this ReadOnlySpan<char> subject,
         Regex regex,
         [CallerArgumentExpression( "subject" )]
@@ -250,13 +287,17 @@ public static class AssertionExtensions
     }
 
     [Pure]
-    public static Assertion TestNotMatch(this string subject, Regex regex, [CallerArgumentExpression( "subject" )] string context = "")
+    public static SubjectAssertion<ReadOnlyMemory<char>> TestNotMatch(
+        this string subject,
+        Regex regex,
+        [CallerArgumentExpression( "subject" )]
+        string context = "")
     {
         return subject.AsMemory().TestNotMatch( regex, context );
     }
 
     [Pure]
-    public static Assertion TestNotMatch(
+    public static SubjectAssertion<ReadOnlyMemory<char>> TestNotMatch(
         this ReadOnlyMemory<char> subject,
         Regex regex,
         [CallerArgumentExpression( "subject" )]
@@ -266,7 +307,7 @@ public static class AssertionExtensions
     }
 
     [Pure]
-    public static Assertion TestNotMatch(
+    public static SubjectAssertion<ReadOnlyMemory<char>> TestNotMatch(
         this ReadOnlySpan<char> subject,
         Regex regex,
         [CallerArgumentExpression( "subject" )]
@@ -276,7 +317,7 @@ public static class AssertionExtensions
     }
 
     [Pure]
-    public static Assertion TestStartsWith(
+    public static SubjectAssertion<ReadOnlyMemory<char>> TestStartsWith(
         this string subject,
         string value,
         StringComparison comparison = StringComparison.Ordinal,
@@ -287,7 +328,7 @@ public static class AssertionExtensions
     }
 
     [Pure]
-    public static Assertion TestStartsWith(
+    public static SubjectAssertion<ReadOnlyMemory<char>> TestStartsWith(
         this ReadOnlyMemory<char> subject,
         ReadOnlyMemory<char> value,
         StringComparison comparison = StringComparison.Ordinal,
@@ -298,7 +339,7 @@ public static class AssertionExtensions
     }
 
     [Pure]
-    public static Assertion TestStartsWith(
+    public static SubjectAssertion<ReadOnlyMemory<char>> TestStartsWith(
         this ReadOnlySpan<char> subject,
         ReadOnlySpan<char> value,
         StringComparison comparison = StringComparison.Ordinal,
@@ -309,7 +350,7 @@ public static class AssertionExtensions
     }
 
     [Pure]
-    public static Assertion TestContains(
+    public static SubjectAssertion<ReadOnlyMemory<char>> TestContains(
         this string subject,
         string value,
         StringComparison comparison = StringComparison.Ordinal,
@@ -320,7 +361,7 @@ public static class AssertionExtensions
     }
 
     [Pure]
-    public static Assertion TestContains(
+    public static SubjectAssertion<ReadOnlyMemory<char>> TestContains(
         this ReadOnlyMemory<char> subject,
         ReadOnlyMemory<char> value,
         StringComparison comparison = StringComparison.Ordinal,
@@ -331,7 +372,7 @@ public static class AssertionExtensions
     }
 
     [Pure]
-    public static Assertion TestContains(
+    public static SubjectAssertion<ReadOnlyMemory<char>> TestContains(
         this ReadOnlySpan<char> subject,
         ReadOnlySpan<char> value,
         StringComparison comparison = StringComparison.Ordinal,
@@ -342,7 +383,7 @@ public static class AssertionExtensions
     }
 
     [Pure]
-    public static Assertion TestAll<T>(
+    public static SubjectAssertion<IEnumerable<T>> TestAll<T>(
         this IEnumerable<T> subject,
         Func<T, int, Assertion> elementAssertion,
         [CallerArgumentExpression( "subject" )]
@@ -352,7 +393,7 @@ public static class AssertionExtensions
     }
 
     [Pure]
-    public static Assertion TestAll<T>(
+    public static SubjectAssertion<IEnumerable<T>> TestAll<T>(
         this ReadOnlyMemory<T> subject,
         Func<T, int, Assertion> elementAssertion,
         [CallerArgumentExpression( "subject" )]
@@ -362,7 +403,7 @@ public static class AssertionExtensions
     }
 
     [Pure]
-    public static Assertion TestAll<T>(
+    public static SubjectAssertion<IEnumerable<T>> TestAll<T>(
         this ReadOnlySpan<T> subject,
         Func<T, int, Assertion> elementAssertion,
         [CallerArgumentExpression( "subject" )]
@@ -372,7 +413,7 @@ public static class AssertionExtensions
     }
 
     [Pure]
-    public static Assertion TestAll<T>(
+    public static SubjectAssertion<IEnumerable<T>> TestAll<T>(
         this Memory<T> subject,
         Func<T, int, Assertion> elementAssertion,
         [CallerArgumentExpression( "subject" )]
@@ -382,7 +423,7 @@ public static class AssertionExtensions
     }
 
     [Pure]
-    public static Assertion TestAll<T>(
+    public static SubjectAssertion<IEnumerable<T>> TestAll<T>(
         this Span<T> subject,
         Func<T, int, Assertion> elementAssertion,
         [CallerArgumentExpression( "subject" )]
@@ -392,7 +433,7 @@ public static class AssertionExtensions
     }
 
     [Pure]
-    public static Assertion TestAny<T>(
+    public static SubjectAssertion<IEnumerable<T>> TestAny<T>(
         this IEnumerable<T> subject,
         Func<T, int, Assertion> elementAssertion,
         [CallerArgumentExpression( "subject" )]
@@ -402,7 +443,7 @@ public static class AssertionExtensions
     }
 
     [Pure]
-    public static Assertion TestAny<T>(
+    public static SubjectAssertion<IEnumerable<T>> TestAny<T>(
         this ReadOnlyMemory<T> subject,
         Func<T, int, Assertion> elementAssertion,
         [CallerArgumentExpression( "subject" )]
@@ -412,7 +453,7 @@ public static class AssertionExtensions
     }
 
     [Pure]
-    public static Assertion TestAny<T>(
+    public static SubjectAssertion<IEnumerable<T>> TestAny<T>(
         this ReadOnlySpan<T> subject,
         Func<T, int, Assertion> elementAssertion,
         [CallerArgumentExpression( "subject" )]
@@ -422,7 +463,7 @@ public static class AssertionExtensions
     }
 
     [Pure]
-    public static Assertion TestAny<T>(
+    public static SubjectAssertion<IEnumerable<T>> TestAny<T>(
         this Memory<T> subject,
         Func<T, int, Assertion> elementAssertion,
         [CallerArgumentExpression( "subject" )]
@@ -432,7 +473,7 @@ public static class AssertionExtensions
     }
 
     [Pure]
-    public static Assertion TestAny<T>(
+    public static SubjectAssertion<IEnumerable<T>> TestAny<T>(
         this Span<T> subject,
         Func<T, int, Assertion> elementAssertion,
         [CallerArgumentExpression( "subject" )]
@@ -442,7 +483,7 @@ public static class AssertionExtensions
     }
 
     [Pure]
-    public static Assertion TestSequence<T>(
+    public static SubjectAssertion<IEnumerable<T>> TestSequence<T>(
         this IEnumerable<T> subject,
         IEnumerable<Func<T, int, Assertion>> elementAssertions,
         [CallerArgumentExpression( "subject" )]
@@ -452,7 +493,7 @@ public static class AssertionExtensions
     }
 
     [Pure]
-    public static Assertion TestSequence<T>(
+    public static SubjectAssertion<IEnumerable<T>> TestSequence<T>(
         this ReadOnlyMemory<T> subject,
         IEnumerable<Func<T, int, Assertion>> elementAssertions,
         [CallerArgumentExpression( "subject" )]
@@ -462,7 +503,7 @@ public static class AssertionExtensions
     }
 
     [Pure]
-    public static Assertion TestSequence<T>(
+    public static SubjectAssertion<IEnumerable<T>> TestSequence<T>(
         this ReadOnlySpan<T> subject,
         IEnumerable<Func<T, int, Assertion>> elementAssertions,
         [CallerArgumentExpression( "subject" )]
@@ -472,7 +513,7 @@ public static class AssertionExtensions
     }
 
     [Pure]
-    public static Assertion TestSequence<T>(
+    public static SubjectAssertion<IEnumerable<T>> TestSequence<T>(
         this Memory<T> subject,
         IEnumerable<Func<T, int, Assertion>> elementAssertions,
         [CallerArgumentExpression( "subject" )]
@@ -482,7 +523,7 @@ public static class AssertionExtensions
     }
 
     [Pure]
-    public static Assertion TestSequence<T>(
+    public static SubjectAssertion<IEnumerable<T>> TestSequence<T>(
         this Span<T> subject,
         IEnumerable<Func<T, int, Assertion>> elementAssertions,
         [CallerArgumentExpression( "subject" )]
@@ -492,7 +533,7 @@ public static class AssertionExtensions
     }
 
     [Pure]
-    public static Assertion TestSequence<T>(
+    public static SubjectAssertion<IEnumerable<T>> TestSequence<T>(
         this IEnumerable<T> subject,
         IEnumerable<T> values,
         [CallerArgumentExpression( "subject" )]
@@ -502,7 +543,7 @@ public static class AssertionExtensions
     }
 
     [Pure]
-    public static Assertion TestSequence<T>(
+    public static SubjectAssertion<IEnumerable<T>> TestSequence<T>(
         this ReadOnlyMemory<T> subject,
         IEnumerable<T> values,
         [CallerArgumentExpression( "subject" )]
@@ -512,7 +553,7 @@ public static class AssertionExtensions
     }
 
     [Pure]
-    public static Assertion TestSequence<T>(
+    public static SubjectAssertion<IEnumerable<T>> TestSequence<T>(
         this ReadOnlySpan<T> subject,
         IEnumerable<T> values,
         [CallerArgumentExpression( "subject" )]
@@ -522,7 +563,7 @@ public static class AssertionExtensions
     }
 
     [Pure]
-    public static Assertion TestSequence<T>(
+    public static SubjectAssertion<IEnumerable<T>> TestSequence<T>(
         this Memory<T> subject,
         IEnumerable<T> values,
         [CallerArgumentExpression( "subject" )]
@@ -532,7 +573,7 @@ public static class AssertionExtensions
     }
 
     [Pure]
-    public static Assertion TestSequence<T>(
+    public static SubjectAssertion<IEnumerable<T>> TestSequence<T>(
         this Span<T> subject,
         IEnumerable<T> values,
         [CallerArgumentExpression( "subject" )]
@@ -542,37 +583,52 @@ public static class AssertionExtensions
     }
 
     [Pure]
-    public static Assertion TestEmpty<T>(this IEnumerable<T> subject, [CallerArgumentExpression( "subject" )] string context = "")
+    public static SubjectAssertion<IEnumerable<T>> TestEmpty<T>(
+        this IEnumerable<T> subject,
+        [CallerArgumentExpression( "subject" )]
+        string context = "")
     {
         return subject.TestSequence( Array.Empty<T>(), context );
     }
 
     [Pure]
-    public static Assertion TestEmpty<T>(this ReadOnlyMemory<T> subject, [CallerArgumentExpression( "subject" )] string context = "")
+    public static SubjectAssertion<IEnumerable<T>> TestEmpty<T>(
+        this ReadOnlyMemory<T> subject,
+        [CallerArgumentExpression( "subject" )]
+        string context = "")
     {
         return subject.TestSequence( Array.Empty<T>(), context );
     }
 
     [Pure]
-    public static Assertion TestEmpty<T>(this ReadOnlySpan<T> subject, [CallerArgumentExpression( "subject" )] string context = "")
+    public static SubjectAssertion<IEnumerable<T>> TestEmpty<T>(
+        this ReadOnlySpan<T> subject,
+        [CallerArgumentExpression( "subject" )]
+        string context = "")
     {
         return subject.TestSequence( Array.Empty<T>(), context );
     }
 
     [Pure]
-    public static Assertion TestEmpty<T>(this Memory<T> subject, [CallerArgumentExpression( "subject" )] string context = "")
+    public static SubjectAssertion<IEnumerable<T>> TestEmpty<T>(
+        this Memory<T> subject,
+        [CallerArgumentExpression( "subject" )]
+        string context = "")
     {
         return subject.TestSequence( Array.Empty<T>(), context );
     }
 
     [Pure]
-    public static Assertion TestEmpty<T>(this Span<T> subject, [CallerArgumentExpression( "subject" )] string context = "")
+    public static SubjectAssertion<IEnumerable<T>> TestEmpty<T>(
+        this Span<T> subject,
+        [CallerArgumentExpression( "subject" )]
+        string context = "")
     {
         return subject.TestSequence( Array.Empty<T>(), context );
     }
 
     [Pure]
-    public static Assertion TestContainsSequence<T>(
+    public static SubjectAssertion<IEnumerable<T>> TestContainsSequence<T>(
         this IEnumerable<T> subject,
         IEnumerable<Func<T, int, Assertion>> elementAssertions,
         [CallerArgumentExpression( "subject" )]
@@ -582,7 +638,7 @@ public static class AssertionExtensions
     }
 
     [Pure]
-    public static Assertion TestContainsSequence<T>(
+    public static SubjectAssertion<IEnumerable<T>> TestContainsSequence<T>(
         this ReadOnlyMemory<T> subject,
         IEnumerable<Func<T, int, Assertion>> elementAssertions,
         [CallerArgumentExpression( "subject" )]
@@ -592,7 +648,7 @@ public static class AssertionExtensions
     }
 
     [Pure]
-    public static Assertion TestContainsSequence<T>(
+    public static SubjectAssertion<IEnumerable<T>> TestContainsSequence<T>(
         this ReadOnlySpan<T> subject,
         IEnumerable<Func<T, int, Assertion>> elementAssertions,
         [CallerArgumentExpression( "subject" )]
@@ -602,7 +658,7 @@ public static class AssertionExtensions
     }
 
     [Pure]
-    public static Assertion TestContainsSequence<T>(
+    public static SubjectAssertion<IEnumerable<T>> TestContainsSequence<T>(
         this Memory<T> subject,
         IEnumerable<Func<T, int, Assertion>> elementAssertions,
         [CallerArgumentExpression( "subject" )]
@@ -612,7 +668,7 @@ public static class AssertionExtensions
     }
 
     [Pure]
-    public static Assertion TestContainsSequence<T>(
+    public static SubjectAssertion<IEnumerable<T>> TestContainsSequence<T>(
         this Span<T> subject,
         IEnumerable<Func<T, int, Assertion>> elementAssertions,
         [CallerArgumentExpression( "subject" )]
@@ -622,7 +678,7 @@ public static class AssertionExtensions
     }
 
     [Pure]
-    public static Assertion TestContainsSequence<T>(
+    public static SubjectAssertion<IEnumerable<T>> TestContainsSequence<T>(
         this IEnumerable<T> subject,
         IEnumerable<T> values,
         [CallerArgumentExpression( "subject" )]
@@ -634,7 +690,7 @@ public static class AssertionExtensions
     }
 
     [Pure]
-    public static Assertion TestContainsSequence<T>(
+    public static SubjectAssertion<IEnumerable<T>> TestContainsSequence<T>(
         this ReadOnlyMemory<T> subject,
         IEnumerable<T> values,
         [CallerArgumentExpression( "subject" )]
@@ -646,7 +702,7 @@ public static class AssertionExtensions
     }
 
     [Pure]
-    public static Assertion TestContainsSequence<T>(
+    public static SubjectAssertion<IEnumerable<T>> TestContainsSequence<T>(
         this ReadOnlySpan<T> subject,
         IEnumerable<T> values,
         [CallerArgumentExpression( "subject" )]
@@ -658,7 +714,7 @@ public static class AssertionExtensions
     }
 
     [Pure]
-    public static Assertion TestContainsSequence<T>(
+    public static SubjectAssertion<IEnumerable<T>> TestContainsSequence<T>(
         this Memory<T> subject,
         IEnumerable<T> values,
         [CallerArgumentExpression( "subject" )]
@@ -670,7 +726,7 @@ public static class AssertionExtensions
     }
 
     [Pure]
-    public static Assertion TestContainsSequence<T>(
+    public static SubjectAssertion<IEnumerable<T>> TestContainsSequence<T>(
         this Span<T> subject,
         IEnumerable<T> values,
         [CallerArgumentExpression( "subject" )]
@@ -682,7 +738,7 @@ public static class AssertionExtensions
     }
 
     [Pure]
-    public static Assertion TestContainsContiguousSequence<T>(
+    public static SubjectAssertion<IEnumerable<T>> TestContainsContiguousSequence<T>(
         this IEnumerable<T> subject,
         IEnumerable<Func<T, int, Assertion>> elementAssertions,
         [CallerArgumentExpression( "subject" )]
@@ -692,7 +748,7 @@ public static class AssertionExtensions
     }
 
     [Pure]
-    public static Assertion TestContainsContiguousSequence<T>(
+    public static SubjectAssertion<IEnumerable<T>> TestContainsContiguousSequence<T>(
         this ReadOnlyMemory<T> subject,
         IEnumerable<Func<T, int, Assertion>> elementAssertions,
         [CallerArgumentExpression( "subject" )]
@@ -702,7 +758,7 @@ public static class AssertionExtensions
     }
 
     [Pure]
-    public static Assertion TestContainsContiguousSequence<T>(
+    public static SubjectAssertion<IEnumerable<T>> TestContainsContiguousSequence<T>(
         this ReadOnlySpan<T> subject,
         IEnumerable<Func<T, int, Assertion>> elementAssertions,
         [CallerArgumentExpression( "subject" )]
@@ -712,7 +768,7 @@ public static class AssertionExtensions
     }
 
     [Pure]
-    public static Assertion TestContainsContiguousSequence<T>(
+    public static SubjectAssertion<IEnumerable<T>> TestContainsContiguousSequence<T>(
         this Memory<T> subject,
         IEnumerable<Func<T, int, Assertion>> elementAssertions,
         [CallerArgumentExpression( "subject" )]
@@ -722,7 +778,7 @@ public static class AssertionExtensions
     }
 
     [Pure]
-    public static Assertion TestContainsContiguousSequence<T>(
+    public static SubjectAssertion<IEnumerable<T>> TestContainsContiguousSequence<T>(
         this Span<T> subject,
         IEnumerable<Func<T, int, Assertion>> elementAssertions,
         [CallerArgumentExpression( "subject" )]
@@ -732,7 +788,7 @@ public static class AssertionExtensions
     }
 
     [Pure]
-    public static Assertion TestContainsContiguousSequence<T>(
+    public static SubjectAssertion<IEnumerable<T>> TestContainsContiguousSequence<T>(
         this IEnumerable<T> subject,
         IEnumerable<T> values,
         [CallerArgumentExpression( "subject" )]
@@ -744,7 +800,7 @@ public static class AssertionExtensions
     }
 
     [Pure]
-    public static Assertion TestContainsContiguousSequence<T>(
+    public static SubjectAssertion<IEnumerable<T>> TestContainsContiguousSequence<T>(
         this ReadOnlyMemory<T> subject,
         IEnumerable<T> values,
         [CallerArgumentExpression( "subject" )]
@@ -756,7 +812,7 @@ public static class AssertionExtensions
     }
 
     [Pure]
-    public static Assertion TestContainsContiguousSequence<T>(
+    public static SubjectAssertion<IEnumerable<T>> TestContainsContiguousSequence<T>(
         this ReadOnlySpan<T> subject,
         IEnumerable<T> values,
         [CallerArgumentExpression( "subject" )]
@@ -768,7 +824,7 @@ public static class AssertionExtensions
     }
 
     [Pure]
-    public static Assertion TestContainsContiguousSequence<T>(
+    public static SubjectAssertion<IEnumerable<T>> TestContainsContiguousSequence<T>(
         this Memory<T> subject,
         IEnumerable<T> values,
         [CallerArgumentExpression( "subject" )]
@@ -780,7 +836,7 @@ public static class AssertionExtensions
     }
 
     [Pure]
-    public static Assertion TestContainsContiguousSequence<T>(
+    public static SubjectAssertion<IEnumerable<T>> TestContainsContiguousSequence<T>(
         this Span<T> subject,
         IEnumerable<T> values,
         [CallerArgumentExpression( "subject" )]
@@ -792,7 +848,7 @@ public static class AssertionExtensions
     }
 
     [Pure]
-    public static Assertion TestSetEqual<T>(
+    public static SubjectAssertion<IEnumerable<T>> TestSetEqual<T>(
         this IEnumerable<T> subject,
         IEnumerable<T> values,
         [CallerArgumentExpression( "subject" )]
@@ -802,7 +858,7 @@ public static class AssertionExtensions
     }
 
     [Pure]
-    public static Assertion TestSetEqual<T>(
+    public static SubjectAssertion<IEnumerable<T>> TestSetEqual<T>(
         this ReadOnlyMemory<T> subject,
         IEnumerable<T> values,
         [CallerArgumentExpression( "subject" )]
@@ -812,7 +868,7 @@ public static class AssertionExtensions
     }
 
     [Pure]
-    public static Assertion TestSetEqual<T>(
+    public static SubjectAssertion<IEnumerable<T>> TestSetEqual<T>(
         this ReadOnlySpan<T> subject,
         IEnumerable<T> values,
         [CallerArgumentExpression( "subject" )]
@@ -822,7 +878,7 @@ public static class AssertionExtensions
     }
 
     [Pure]
-    public static Assertion TestSetEqual<T>(
+    public static SubjectAssertion<IEnumerable<T>> TestSetEqual<T>(
         this Memory<T> subject,
         IEnumerable<T> values,
         [CallerArgumentExpression( "subject" )]
@@ -832,7 +888,7 @@ public static class AssertionExtensions
     }
 
     [Pure]
-    public static Assertion TestSetEqual<T>(
+    public static SubjectAssertion<IEnumerable<T>> TestSetEqual<T>(
         this Span<T> subject,
         IEnumerable<T> values,
         [CallerArgumentExpression( "subject" )]
@@ -842,7 +898,7 @@ public static class AssertionExtensions
     }
 
     [Pure]
-    public static Assertion TestSupersetOf<T>(
+    public static SubjectAssertion<IEnumerable<T>> TestSupersetOf<T>(
         this IEnumerable<T> subject,
         IEnumerable<T> values,
         [CallerArgumentExpression( "subject" )]
@@ -852,7 +908,7 @@ public static class AssertionExtensions
     }
 
     [Pure]
-    public static Assertion TestSupersetOf<T>(
+    public static SubjectAssertion<IEnumerable<T>> TestSupersetOf<T>(
         this ReadOnlyMemory<T> subject,
         IEnumerable<T> values,
         [CallerArgumentExpression( "subject" )]
@@ -862,7 +918,7 @@ public static class AssertionExtensions
     }
 
     [Pure]
-    public static Assertion TestSupersetOf<T>(
+    public static SubjectAssertion<IEnumerable<T>> TestSupersetOf<T>(
         this ReadOnlySpan<T> subject,
         IEnumerable<T> values,
         [CallerArgumentExpression( "subject" )]
@@ -872,7 +928,7 @@ public static class AssertionExtensions
     }
 
     [Pure]
-    public static Assertion TestSupersetOf<T>(
+    public static SubjectAssertion<IEnumerable<T>> TestSupersetOf<T>(
         this Memory<T> subject,
         IEnumerable<T> values,
         [CallerArgumentExpression( "subject" )]
@@ -882,7 +938,7 @@ public static class AssertionExtensions
     }
 
     [Pure]
-    public static Assertion TestSupersetOf<T>(
+    public static SubjectAssertion<IEnumerable<T>> TestSupersetOf<T>(
         this Span<T> subject,
         IEnumerable<T> values,
         [CallerArgumentExpression( "subject" )]
@@ -893,7 +949,7 @@ public static class AssertionExtensions
 
     // TODO: remove 's' at the end
     [Pure]
-    public static Assertion TestReceivedCalls<T>(
+    public static SubjectAssertion<T> TestReceivedCalls<T>(
         this T subject,
         Action<T> assertion,
         [CallerArgumentExpression( "subject" )]
@@ -906,7 +962,7 @@ public static class AssertionExtensions
     }
 
     [Pure]
-    public static Assertion TestReceivedCalls<T>(
+    public static SubjectAssertion<T> TestReceivedCalls<T>(
         this T subject,
         Action<T> assertion,
         int count,
@@ -920,7 +976,7 @@ public static class AssertionExtensions
     }
 
     [Pure]
-    public static Assertion TestDidNotReceiveCall<T>(
+    public static SubjectAssertion<T> TestDidNotReceiveCall<T>(
         this T subject,
         Action<T> assertion,
         [CallerArgumentExpression( "subject" )]

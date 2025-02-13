@@ -47,19 +47,12 @@ public abstract class TypeConvertersTestsBase : ConstructsTestsBase
     {
         var operand = CreateVariableOperand<TSourceArg>( "value" );
         var action = Lambda.Of( () => sut.Process( operand ) );
-        action.Test(
-                exc => Assertion.All(
-                    exc.TestType().Exact<TException>(),
-                    exc.TestIf().OfType<TException>( e => (matcher ?? (_ => true))( e ).TestTrue() ) ) )
-            .Go();
+        action.Test( exc => exc.TestType().Exact<TException>( e => (matcher ?? (_ => true))( e ).TestTrue() ) ).Go();
     }
 
     [Pure]
     protected static Assertion DefaultNodeAssertion(Expression operand, Expression result)
     {
-        return Assertion.All(
-            "Node",
-            result.TestType().AssignableTo<UnaryExpression>(),
-            result.TestIf().OfType<UnaryExpression>( unaryResult => unaryResult.Operand.TestRefEquals( operand ) ) );
+        return result.TestType().AssignableTo<UnaryExpression>( unaryResult => unaryResult.Operand.TestRefEquals( operand ) );
     }
 }

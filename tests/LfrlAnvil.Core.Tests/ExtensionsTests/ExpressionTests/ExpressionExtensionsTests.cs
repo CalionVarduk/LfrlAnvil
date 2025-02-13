@@ -168,8 +168,8 @@ public class ExpressionExtensionsTests : TestsBase
         Assertion.All(
                 result.TestNotRefEquals( sut ),
                 result.NodeType.TestEquals( ExpressionType.Convert ),
-                result.TestIf()
-                    .OfType<UnaryExpression>(
+                result.TestType()
+                    .AssignableTo<UnaryExpression>(
                         unary => Assertion.All(
                             unary.Type.TestEquals( typeof( IEnumerable<char> ) ),
                             unary.Operand.TestRefEquals( sut ) ) ) )
@@ -187,8 +187,8 @@ public class ExpressionExtensionsTests : TestsBase
                 result.Type.TestEquals( typeof( bool ) ),
                 result.Left.TestRefEquals( sut ),
                 result.Right.NodeType.TestEquals( ExpressionType.Constant ),
-                result.Right.TestIf()
-                    .OfType<ConstantExpression>(
+                result.Right.TestType()
+                    .AssignableTo<ConstantExpression>(
                         nullConst => Assertion.All(
                             nullConst.Type.TestEquals( sut.Type ),
                             nullConst.Value.TestNull() ) ) )
@@ -206,8 +206,8 @@ public class ExpressionExtensionsTests : TestsBase
                 result.Type.TestEquals( typeof( bool ) ),
                 result.Left.TestRefEquals( sut ),
                 result.Right.NodeType.TestEquals( ExpressionType.Constant ),
-                result.Right.TestIf()
-                    .OfType<ConstantExpression>(
+                result.Right.TestType()
+                    .AssignableTo<ConstantExpression>(
                         nullConst => Assertion.All(
                             nullConst.Type.TestEquals( sut.Type ),
                             nullConst.Value.TestNull() ) ) )
@@ -370,27 +370,23 @@ public class ExpressionExtensionsTests : TestsBase
 
         Assertion.All(
                 result.NodeType.TestEquals( ExpressionType.Add ),
-                result.TestType().AssignableTo<BinaryExpression>(),
-                result.TestIf()
-                    .OfType<BinaryExpression>(
+                result.TestType()
+                    .AssignableTo<BinaryExpression>(
                         newSut => Assertion.All(
                             newSut.Left.TestRefEquals( c1 ),
                             newSut.Right.NodeType.TestEquals( ExpressionType.Add ),
-                            newSut.Right.TestType().AssignableTo<BinaryExpression>(),
-                            newSut.Right.TestIf()
-                                .OfType<BinaryExpression>(
+                            newSut.Right.TestType()
+                                .AssignableTo<BinaryExpression>(
                                     newP1P2P3PNoNameAdd => Assertion.All(
                                         newP1P2P3PNoNameAdd.Left.NodeType.TestEquals( ExpressionType.Add ),
                                         newP1P2P3PNoNameAdd.Right.NodeType.TestEquals( ExpressionType.Add ),
-                                        newP1P2P3PNoNameAdd.Left.TestType().AssignableTo<BinaryExpression>(),
-                                        newP1P2P3PNoNameAdd.Left.TestIf()
-                                            .OfType<BinaryExpression>(
+                                        newP1P2P3PNoNameAdd.Left.TestType()
+                                            .AssignableTo<BinaryExpression>(
                                                 newP1P2Add => Assertion.All(
                                                     newP1P2Add.Left.TestRefEquals( p1Replacement ),
                                                     newP1P2Add.Right.TestRefEquals( p2 ) ) ),
-                                        newP1P2P3PNoNameAdd.Right.TestType().AssignableTo<BinaryExpression>(),
-                                        newP1P2P3PNoNameAdd.Right.TestIf()
-                                            .OfType<BinaryExpression>(
+                                        newP1P2P3PNoNameAdd.Right.TestType()
+                                            .AssignableTo<BinaryExpression>(
                                                 newP3PNoNameAdd => Assertion.All(
                                                     newP3PNoNameAdd.Left.TestRefEquals( p3Replacement ),
                                                     newP3PNoNameAdd.Right.TestRefEquals( pNoName ) ) ) ) ) ) ) )
@@ -424,27 +420,23 @@ public class ExpressionExtensionsTests : TestsBase
 
         Assertion.All(
                 result.NodeType.TestEquals( ExpressionType.Add ),
-                result.TestType().AssignableTo<BinaryExpression>(),
-                result.TestIf()
-                    .OfType<BinaryExpression>(
+                result.TestType()
+                    .AssignableTo<BinaryExpression>(
                         newSut => Assertion.All(
                             newSut.Left.TestRefEquals( c1 ),
                             newSut.Right.NodeType.TestEquals( ExpressionType.Add ),
-                            newSut.Right.TestType().AssignableTo<BinaryExpression>(),
-                            newSut.Right.TestIf()
-                                .OfType<BinaryExpression>(
+                            newSut.Right.TestType()
+                                .AssignableTo<BinaryExpression>(
                                     newP1P2P3PNoNameAdd => Assertion.All(
                                         newP1P2P3PNoNameAdd.Left.NodeType.TestEquals( ExpressionType.Add ),
                                         newP1P2P3PNoNameAdd.Right.NodeType.TestEquals( ExpressionType.Add ),
-                                        newP1P2P3PNoNameAdd.Left.TestType().AssignableTo<BinaryExpression>(),
-                                        newP1P2P3PNoNameAdd.Left.TestIf()
-                                            .OfType<BinaryExpression>(
+                                        newP1P2P3PNoNameAdd.Left.TestType()
+                                            .AssignableTo<BinaryExpression>(
                                                 newP1P2Add => Assertion.All(
                                                     newP1P2Add.Left.TestRefEquals( p1Replacement ),
                                                     newP1P2Add.Right.TestRefEquals( p2 ) ) ),
-                                        newP1P2P3PNoNameAdd.Right.TestType().AssignableTo<BinaryExpression>(),
-                                        newP1P2P3PNoNameAdd.Right.TestIf()
-                                            .OfType<BinaryExpression>(
+                                        newP1P2P3PNoNameAdd.Right.TestType()
+                                            .AssignableTo<BinaryExpression>(
                                                 newP3PNoNameAdd => Assertion.All(
                                                     newP3PNoNameAdd.Left.TestRefEquals( p3 ),
                                                     newP3PNoNameAdd.Right.TestRefEquals( pNoNameReplacement ) ) ) ) ) ) ) )

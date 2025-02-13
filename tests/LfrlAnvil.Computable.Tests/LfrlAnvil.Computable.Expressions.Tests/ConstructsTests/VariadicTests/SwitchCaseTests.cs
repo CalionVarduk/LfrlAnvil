@@ -31,15 +31,13 @@ public class SwitchCaseTests : TestsBase
 
         Assertion.All(
                 result.NodeType.TestEquals( ExpressionType.Constant ),
-                result.TestType().AssignableTo<ConstantExpression>(),
-                result.TestIf()
-                    .OfType<ConstantExpression>(
+                result.TestType()
+                    .AssignableTo<ConstantExpression>(
                         constant => Assertion.All(
                             "constant",
                             constant.Value.TestType().AssignableTo<SwitchCase>(),
-                            constant.Value.TestType().AssignableTo<SwitchCase>(),
-                            constant.Value.TestIf()
-                                .OfType<SwitchCase>(
+                            constant.Value.TestType()
+                                .AssignableTo<SwitchCase>(
                                     switchCase => Assertion.All(
                                         "switchCase",
                                         switchCase.Body.TestRefEquals( parameters[^1] ),

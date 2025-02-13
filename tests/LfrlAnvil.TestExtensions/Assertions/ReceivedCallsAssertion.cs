@@ -2,20 +2,18 @@
 
 namespace LfrlAnvil.TestExtensions.Assertions;
 
-internal sealed class ReceivedCallsAssertion<T> : Assertion
+internal sealed class ReceivedCallsAssertion<T> : SubjectAssertion<T>
     where T : class
 {
     internal ReceivedCallsAssertion(string context, string subContext, T subject, Action<T> assertion, int? count)
-        : base( context )
+        : base( context, subject )
     {
         SubContext = subContext;
-        Subject = subject;
         Assertion = assertion;
         Count = count;
     }
 
     internal string SubContext { get; }
-    internal T Subject { get; }
     internal Action<T> Assertion { get; }
     internal int? Count { get; }
 

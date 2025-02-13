@@ -78,14 +78,11 @@ public class TimeZoneInfoExtensionsTests : TestsBase
 
         var result = sut.GetActiveAdjustmentRule( dateTimeToTest );
 
-        Assertion.All(
-                result.TestNotNull(),
-                result.TestIf()
-                    .NotNull(
-                        r => Assertion.All(
-                            "result.Value",
-                            r.DateStart.TestEquals( expectedRange.Start ),
-                            r.DateEnd.TestEquals( expectedRange.End ) ) ) )
+        result.TestNotNull(
+                r => Assertion.All(
+                    "result.Value",
+                    r.DateStart.TestEquals( expectedRange.Start ),
+                    r.DateEnd.TestEquals( expectedRange.End ) ) )
             .Go();
     }
 

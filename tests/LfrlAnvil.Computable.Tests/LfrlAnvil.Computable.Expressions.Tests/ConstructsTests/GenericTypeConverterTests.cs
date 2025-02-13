@@ -40,16 +40,12 @@ public class GenericTypeConverterTests : TypeConvertersTestsBase
             sut:
             new StringConverterWithObjectTargetType(),
             operandValue: Fixture.Create<string>(),
-            (operand, result) => Assertion.All(
-                result.TestType().AssignableTo<UnaryExpression>(),
-                result.TestIf()
-                    .OfType<UnaryExpression>(
-                        unaryResult => Assertion.All(
-                            "unaryResult",
-                            unaryResult.Operand.TestType().AssignableTo<UnaryExpression>(),
-                            unaryResult.Operand.TestIf()
-                                .OfType<UnaryExpression>(
-                                    intermediateOperand => intermediateOperand.Operand.TestRefEquals( operand ) ) ) ) ) );
+            (operand, result) =>
+                result.TestType()
+                    .AssignableTo<UnaryExpression>(
+                        unaryResult => unaryResult.Operand.TestType()
+                            .AssignableTo<UnaryExpression>(
+                                intermediateOperand => intermediateOperand.Operand.TestRefEquals( operand ) ) ) );
     }
 
     [Fact]

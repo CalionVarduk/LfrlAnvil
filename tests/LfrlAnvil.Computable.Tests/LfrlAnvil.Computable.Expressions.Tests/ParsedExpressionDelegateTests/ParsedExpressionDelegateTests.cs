@@ -62,11 +62,9 @@ public class ParsedExpressionDelegateTests : TestsBase
         var action = Lambda.Of( () => sut.Invoke( values ) );
 
         action.Test(
-                exc => Assertion.All(
-                    exc.TestType().Exact<InvalidParsedExpressionArgumentCountException>(),
-                    exc.TestIf()
-                        .OfType<InvalidParsedExpressionArgumentCountException>(
-                            e => Assertion.All( e.Actual.TestEquals( valuesCount ), e.Expected.TestEquals( sut.Arguments.Count ) ) ) ) )
+                exc => exc.TestType()
+                    .Exact<InvalidParsedExpressionArgumentCountException>(
+                        e => Assertion.All( e.Actual.TestEquals( valuesCount ), e.Expected.TestEquals( sut.Arguments.Count ) ) ) )
             .Go();
     }
 }

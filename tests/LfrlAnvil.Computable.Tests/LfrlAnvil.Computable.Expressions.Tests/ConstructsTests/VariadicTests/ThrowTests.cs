@@ -16,32 +16,28 @@ public class ThrowTests : TestsBase
 
         Assertion.All(
                 result.NodeType.TestEquals( ExpressionType.Throw ),
-                result.TestType().AssignableTo<UnaryExpression>(),
-                result.TestIf()
-                    .OfType<UnaryExpression>(
+                result.TestType()
+                    .AssignableTo<UnaryExpression>(
                         @throw => Assertion.All(
                             "@throw",
                             @throw.Type.TestEquals( typeof( void ) ),
                             @throw.Operand.NodeType.TestEquals( ExpressionType.New ),
-                            @throw.Operand.TestType().AssignableTo<NewExpression>(),
-                            @throw.Operand.TestIf()
-                                .OfType<NewExpression>(
+                            @throw.Operand.TestType()
+                                .AssignableTo<NewExpression>(
                                     exception => Assertion.All(
                                         "exception",
                                         exception.Type.TestEquals( typeof( ParsedExpressionInvocationException ) ),
                                         exception.Arguments.Count.TestEquals( 2 ),
                                         (exception.Arguments.FirstOrDefault()?.NodeType).TestEquals( ExpressionType.Constant ),
                                         (exception.Arguments.ElementAtOrDefault( 1 )?.NodeType).TestEquals( ExpressionType.Constant ),
-                                        exception.Arguments.FirstOrDefault().TestType().AssignableTo<ConstantExpression>(),
                                         exception.Arguments.FirstOrDefault()
-                                            .TestIf()
-                                            .OfType<ConstantExpression>(
+                                            .TestType()
+                                            .AssignableTo<ConstantExpression>(
                                                 firstConstant =>
                                                     firstConstant.Value.TestEquals( Resources.InvocationHasThrownAnException ) ),
-                                        exception.Arguments.ElementAtOrDefault( 1 ).TestType().AssignableTo<ConstantExpression>(),
                                         exception.Arguments.ElementAtOrDefault( 1 )
-                                            .TestIf()
-                                            .OfType<ConstantExpression>(
+                                            .TestType()
+                                            .AssignableTo<ConstantExpression>(
                                                 secondConstant => secondConstant.Value.TestEquals( Array.Empty<object?>() ) ) ) ) ) ) )
             .Go();
     }
@@ -56,9 +52,8 @@ public class ThrowTests : TestsBase
 
         Assertion.All(
                 result.NodeType.TestEquals( ExpressionType.Throw ),
-                result.TestType().AssignableTo<UnaryExpression>(),
-                result.TestIf()
-                    .OfType<UnaryExpression>(
+                result.TestType()
+                    .AssignableTo<UnaryExpression>(
                         @throw => Assertion.All(
                             "@throw",
                             @throw.Type.TestEquals( typeof( void ) ),
@@ -98,26 +93,23 @@ public class ThrowTests : TestsBase
 
         Assertion.All(
                 result.NodeType.TestEquals( ExpressionType.Throw ),
-                result.TestType().AssignableTo<UnaryExpression>(),
-                result.TestIf()
-                    .OfType<UnaryExpression>(
+                result.TestType()
+                    .AssignableTo<UnaryExpression>(
                         @throw => Assertion.All(
                             "@throw",
                             @throw.Type.TestEquals( typeof( void ) ),
                             @throw.Operand.NodeType.TestEquals( ExpressionType.New ),
-                            @throw.Operand.TestType().AssignableTo<NewExpression>(),
-                            @throw.Operand.TestIf()
-                                .OfType<NewExpression>(
+                            @throw.Operand.TestType()
+                                .AssignableTo<NewExpression>(
                                     exception => Assertion.All(
                                         "exception",
                                         exception.Type.TestEquals( typeof( ParsedExpressionInvocationException ) ),
                                         exception.Arguments.Count.TestEquals( 2 ),
                                         exception.Arguments.FirstOrDefault().TestRefEquals( expression ),
                                         (exception.Arguments.ElementAtOrDefault( 1 )?.NodeType).TestEquals( ExpressionType.Constant ),
-                                        exception.Arguments.ElementAtOrDefault( 1 ).TestType().AssignableTo<ConstantExpression>(),
                                         exception.Arguments.ElementAtOrDefault( 1 )
-                                            .TestIf()
-                                            .OfType<ConstantExpression>(
+                                            .TestType()
+                                            .AssignableTo<ConstantExpression>(
                                                 secondConstant => secondConstant.Value.TestEquals( Array.Empty<object?>() ) ) ) ) ) ) )
             .Go();
     }
@@ -133,32 +125,26 @@ public class ThrowTests : TestsBase
 
         Assertion.All(
                 result.NodeType.TestEquals( ExpressionType.Throw ),
-                result.TestType().AssignableTo<UnaryExpression>(),
-                result.TestIf()
-                    .OfType<UnaryExpression>(
+                result.TestType()
+                    .AssignableTo<UnaryExpression>(
                         @throw => Assertion.All(
                             "@throw",
                             @throw.Type.TestEquals( typeof( void ) ),
                             @throw.Operand.NodeType.TestEquals( ExpressionType.New ),
-                            @throw.Operand.TestType().AssignableTo<NewExpression>(),
-                            @throw.Operand.TestIf()
-                                .OfType<NewExpression>(
+                            @throw.Operand.TestType()
+                                .AssignableTo<NewExpression>(
                                     exception => Assertion.All(
                                         "exception",
                                         exception.Type.TestEquals( typeof( ParsedExpressionInvocationException ) ),
                                         exception.Arguments.Count.TestEquals( 2 ),
                                         exception.Arguments.FirstOrDefault().TestRefEquals( parameters[0] ),
                                         (exception.Arguments.ElementAtOrDefault( 1 )?.NodeType).TestEquals( ExpressionType.Constant ),
-                                        exception.Arguments.ElementAtOrDefault( 1 ).TestType().AssignableTo<ConstantExpression>(),
                                         exception.Arguments.ElementAtOrDefault( 1 )
-                                            .TestIf()
-                                            .OfType<ConstantExpression>(
+                                            .TestType()
+                                            .AssignableTo<ConstantExpression>(
                                                 secondConstant =>
-                                                    Assertion.All(
-                                                        "secondConstant",
-                                                        secondConstant.Value.TestType().Exact<object[]>(),
-                                                        secondConstant.Value.TestIf()
-                                                            .OfType<object[]>( value => value.TestSequence( [ 0, 1m ] ) ) ) ) ) ) ) ) )
+                                                    secondConstant.Value.TestType()
+                                                        .Exact<object[]>( value => value.TestSequence( [ 0, 1m ] ) ) ) ) ) ) ) )
             .Go();
     }
 
@@ -180,26 +166,23 @@ public class ThrowTests : TestsBase
 
         Assertion.All(
                 result.NodeType.TestEquals( ExpressionType.Throw ),
-                result.TestType().AssignableTo<UnaryExpression>(),
-                result.TestIf()
-                    .OfType<UnaryExpression>(
+                result.TestType()
+                    .AssignableTo<UnaryExpression>(
                         @throw => Assertion.All(
                             "@throw",
                             @throw.Type.TestEquals( typeof( void ) ),
                             @throw.Operand.NodeType.TestEquals( ExpressionType.New ),
-                            @throw.Operand.TestType().AssignableTo<NewExpression>(),
-                            @throw.Operand.TestIf()
-                                .OfType<NewExpression>(
+                            @throw.Operand.TestType()
+                                .AssignableTo<NewExpression>(
                                     exception => Assertion.All(
                                         "exception",
                                         exception.Type.TestEquals( typeof( ParsedExpressionInvocationException ) ),
                                         exception.Arguments.Count.TestEquals( 2 ),
                                         exception.Arguments.FirstOrDefault().TestRefEquals( parameters[0] ),
                                         (exception.Arguments.ElementAtOrDefault( 1 )?.NodeType).TestEquals( ExpressionType.NewArrayInit ),
-                                        exception.Arguments.ElementAtOrDefault( 1 ).TestType().AssignableTo<NewArrayExpression>(),
                                         exception.Arguments.ElementAtOrDefault( 1 )
-                                            .TestIf()
-                                            .OfType<NewArrayExpression>(
+                                            .TestType()
+                                            .AssignableTo<NewArrayExpression>(
                                                 argsExpression => Assertion.All(
                                                     "argsExpression",
                                                     argsExpression.Type.TestEquals( typeof( object?[] ) ),
@@ -209,17 +192,13 @@ public class ThrowTests : TestsBase
                                                     argsExpression.Expressions.ElementAtOrDefault( 1 ).TestRefEquals( parameters[2] ),
                                                     (argsExpression.Expressions.ElementAtOrDefault( 2 )?.NodeType).TestEquals(
                                                         ExpressionType.Convert ),
-                                                    argsExpression.Expressions.FirstOrDefault().TestType().AssignableTo<UnaryExpression>(),
                                                     argsExpression.Expressions.FirstOrDefault()
-                                                        .TestIf()
-                                                        .OfType<UnaryExpression>(
+                                                        .TestType()
+                                                        .AssignableTo<UnaryExpression>(
                                                             firstConvertArg => firstConvertArg.Operand.TestRefEquals( parameters[1] ) ),
                                                     argsExpression.Expressions.ElementAtOrDefault( 2 )
                                                         .TestType()
-                                                        .AssignableTo<UnaryExpression>(),
-                                                    argsExpression.Expressions.ElementAtOrDefault( 2 )
-                                                        .TestIf()
-                                                        .OfType<UnaryExpression>(
+                                                        .AssignableTo<UnaryExpression>(
                                                             thirdFormatArg =>
                                                                 thirdFormatArg.Operand.TestRefEquals( parameters[3] ) ) ) ) ) ) ) ) )
             .Go();

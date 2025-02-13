@@ -83,8 +83,7 @@ public class ManualResetValueTaskSourceTests : TestsBase
 
         action.Test(
                 exc => Assertion.All(
-                    exc.TestType().AssignableTo<OperationCanceledException>(),
-                    exc.TestIf().OfType<OperationCanceledException>( e => e.CancellationToken.TestEquals( token ) ),
+                    exc.TestType().AssignableTo<OperationCanceledException>( e => e.CancellationToken.TestEquals( token ) ),
                     sut.Status.TestEquals( ValueTaskSourceStatus.Canceled ) ) )
             .Go();
     }

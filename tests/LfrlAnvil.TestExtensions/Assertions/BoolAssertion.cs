@@ -1,15 +1,13 @@
 ﻿namespace LfrlAnvil.TestExtensions.Assertions;
 
-internal sealed class BoolAssertion : Assertion
+internal sealed class BoolAssertion : SubjectAssertion<bool>
 {
     internal BoolAssertion(string context, bool subject, bool expected)
-        : base( context )
+        : base( context, subject )
     {
-        Subject = subject;
         Expected = expected;
     }
 
-    internal bool Subject { get; }
     internal bool Expected { get; }
 
     public override void Go()

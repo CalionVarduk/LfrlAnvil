@@ -1,16 +1,14 @@
 ﻿namespace LfrlAnvil.TestExtensions.Assertions;
 
-internal sealed class ApproximationAssertion<T> : Assertion
+internal sealed class ApproximationAssertion<T> : SubjectAssertion<T>
 {
     internal ApproximationAssertion(string context, T subject, T value, T epsilon)
-        : base( context )
+        : base( context, subject )
     {
-        Subject = subject;
         Value = value;
         Epsilon = epsilon;
     }
 
-    internal T Subject { get; }
     internal T Value { get; }
     internal T Epsilon { get; }
 

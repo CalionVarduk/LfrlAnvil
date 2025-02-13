@@ -2,17 +2,15 @@
 
 namespace LfrlAnvil.TestExtensions.Assertions;
 
-internal sealed class EqualityAssertion<T> : Assertion
+internal sealed class EqualityAssertion<T> : SubjectAssertion<T>
 {
     internal EqualityAssertion(string context, T subject, T value, bool expected)
-        : base( context )
+        : base( context, subject )
     {
-        Subject = subject;
         Value = value;
         Expected = expected;
     }
 
-    internal T Subject { get; }
     internal T Value { get; }
     internal bool Expected { get; }
 

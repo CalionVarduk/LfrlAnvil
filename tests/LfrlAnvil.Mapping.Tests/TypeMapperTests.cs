@@ -97,13 +97,11 @@ public class TypeMapperTests : TestsBase
         var action = Lambda.Of( () => sut.Map<int, string>( 1234 ) );
 
         action.Test(
-                exc => Assertion.All(
-                    exc.TestType().Exact<UndefinedTypeMappingException>(),
-                    exc.TestIf()
-                        .OfType<UndefinedTypeMappingException>(
-                            e => Assertion.All(
-                                e.SourceType.TestEquals( typeof( int ) ),
-                                e.DestinationType.TestEquals( typeof( string ) ) ) ) ) )
+                exc => exc.TestType()
+                    .Exact<UndefinedTypeMappingException>(
+                        e => Assertion.All(
+                            e.SourceType.TestEquals( typeof( int ) ),
+                            e.DestinationType.TestEquals( typeof( string ) ) ) ) )
             .Go();
     }
 
@@ -153,13 +151,11 @@ public class TypeMapperTests : TestsBase
         var action = Lambda.Of( () => sut.Map<string>( 1234 ) );
 
         action.Test(
-                exc => Assertion.All(
-                    exc.TestType().Exact<UndefinedTypeMappingException>(),
-                    exc.TestIf()
-                        .OfType<UndefinedTypeMappingException>(
-                            e => Assertion.All(
-                                e.SourceType.TestEquals( typeof( int ) ),
-                                e.DestinationType.TestEquals( typeof( string ) ) ) ) ) )
+                exc => exc.TestType()
+                    .Exact<UndefinedTypeMappingException>(
+                        e => Assertion.All(
+                            e.SourceType.TestEquals( typeof( int ) ),
+                            e.DestinationType.TestEquals( typeof( string ) ) ) ) )
             .Go();
     }
 
@@ -223,13 +219,11 @@ public class TypeMapperTests : TestsBase
         var action = Lambda.Of( () => sut.Map( 1234 ).To<string>() );
 
         action.Test(
-                exc => Assertion.All(
-                    exc.TestType().Exact<UndefinedTypeMappingException>(),
-                    exc.TestIf()
-                        .OfType<UndefinedTypeMappingException>(
-                            e => Assertion.All(
-                                e.SourceType.TestEquals( typeof( int ) ),
-                                e.DestinationType.TestEquals( typeof( string ) ) ) ) ) )
+                exc => exc.TestType()
+                    .Exact<UndefinedTypeMappingException>(
+                        e => Assertion.All(
+                            e.SourceType.TestEquals( typeof( int ) ),
+                            e.DestinationType.TestEquals( typeof( string ) ) ) ) )
             .Go();
     }
 
@@ -279,13 +273,11 @@ public class TypeMapperTests : TestsBase
         var action = Lambda.Of( () => sut.Map( typeof( string ), 1234 ) );
 
         action.Test(
-                exc => Assertion.All(
-                    exc.TestType().Exact<UndefinedTypeMappingException>(),
-                    exc.TestIf()
-                        .OfType<UndefinedTypeMappingException>(
-                            e => Assertion.All(
-                                e.SourceType.TestEquals( typeof( int ) ),
-                                e.DestinationType.TestEquals( typeof( string ) ) ) ) ) )
+                exc => exc.TestType()
+                    .Exact<UndefinedTypeMappingException>(
+                        e => Assertion.All(
+                            e.SourceType.TestEquals( typeof( int ) ),
+                            e.DestinationType.TestEquals( typeof( string ) ) ) ) )
             .Go();
     }
 
@@ -338,13 +330,11 @@ public class TypeMapperTests : TestsBase
         var action = Lambda.Of( () => sut.MapMany<int, string>( source ) );
 
         action.Test(
-                exc => Assertion.All(
-                    exc.TestType().Exact<UndefinedTypeMappingException>(),
-                    exc.TestIf()
-                        .OfType<UndefinedTypeMappingException>(
-                            e => Assertion.All(
-                                e.SourceType.TestEquals( typeof( int ) ),
-                                e.DestinationType.TestEquals( typeof( string ) ) ) ) ) )
+                exc => exc.TestType()
+                    .Exact<UndefinedTypeMappingException>(
+                        e => Assertion.All(
+                            e.SourceType.TestEquals( typeof( int ) ),
+                            e.DestinationType.TestEquals( typeof( string ) ) ) ) )
             .Go();
     }
 
@@ -360,8 +350,7 @@ public class TypeMapperTests : TestsBase
 
         Assertion.All(
                 result.TestTrue(),
-                outResult.TestNotNull(),
-                outResult.TestIf().NotNull( r => r.TestSequence( expected ) ) )
+                outResult.TestNotNull( r => r.TestSequence( expected ) ) )
             .Go();
     }
 
@@ -416,13 +405,11 @@ public class TypeMapperTests : TestsBase
         var action = Lambda.Of( () => sut.MapMany( source ).To<string>() );
 
         action.Test(
-                exc => Assertion.All(
-                    exc.TestType().Exact<UndefinedTypeMappingException>(),
-                    exc.TestIf()
-                        .OfType<UndefinedTypeMappingException>(
-                            e => Assertion.All(
-                                e.SourceType.TestEquals( typeof( int ) ),
-                                e.DestinationType.TestEquals( typeof( string ) ) ) ) ) )
+                exc => exc.TestType()
+                    .Exact<UndefinedTypeMappingException>(
+                        e => Assertion.All(
+                            e.SourceType.TestEquals( typeof( int ) ),
+                            e.DestinationType.TestEquals( typeof( string ) ) ) ) )
             .Go();
     }
 
@@ -438,8 +425,7 @@ public class TypeMapperTests : TestsBase
 
         Assertion.All(
                 result.TestTrue(),
-                outResult.TestNotNull(),
-                outResult.TestIf().NotNull( r => r.TestSequence( expected ) ) )
+                outResult.TestNotNull( r => r.TestSequence( expected ) ) )
             .Go();
     }
 

@@ -12,8 +12,7 @@ public class ValidationMessageTests : TestsBase
 
         Assertion.All(
                 sut.Resource.TestRefEquals( resource ),
-                sut.Parameters.TestNotNull(),
-                sut.Parameters.TestIf().NotNull( p => p.TestSequence( [ parameter ] ) ) )
+                sut.Parameters.TestNotNull( p => p.TestSequence( [ parameter ] ) ) )
             .Go();
     }
 
@@ -27,8 +26,7 @@ public class ValidationMessageTests : TestsBase
 
         Assertion.All(
                 sut.Resource.TestRefEquals( resource ),
-                sut.Parameters.TestNotNull(),
-                sut.Parameters.TestIf().NotNull( p => p.TestSequence( [ parameter ] ) ) )
+                sut.Parameters.TestNotNull( p => p.TestSequence( [ parameter ] ) ) )
             .Go();
     }
 

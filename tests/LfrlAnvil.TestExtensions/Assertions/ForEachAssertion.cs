@@ -4,17 +4,15 @@ using Xunit.Sdk;
 
 namespace LfrlAnvil.TestExtensions.Assertions;
 
-internal sealed class ForEachAssertion<T> : Assertion
+internal sealed class ForEachAssertion<T> : SubjectAssertion<IEnumerable<T>>
 {
     internal ForEachAssertion(string context, IEnumerable<T> subject, Func<T, int, Assertion> elementAssertion, bool expectAll)
-        : base( context )
+        : base( context, subject )
     {
-        Subject = subject;
         ElementAssertion = elementAssertion;
         ExpectAll = expectAll;
     }
 
-    internal IEnumerable<T> Subject { get; }
     internal Func<T, int, Assertion> ElementAssertion { get; }
     internal bool ExpectAll { get; }
 

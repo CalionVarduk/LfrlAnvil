@@ -94,15 +94,13 @@ public class DirectedGraphTests : TestsBase
 
         Assertion.All(
                 result.TestTrue(),
-                outResult.TestNotNull(),
-                outResult.TestIf()
-                    .NotNull(
-                        r => Assertion.All(
-                            "outResult",
-                            r.Key.TestEquals( key ),
-                            r.Value.TestEquals( value ),
-                            r.Graph.TestRefEquals( sut ),
-                            r.Edges.TestEmpty() ) ),
+                outResult.TestNotNull(
+                    r => Assertion.All(
+                        "outResult",
+                        r.Key.TestEquals( key ),
+                        r.Value.TestEquals( value ),
+                        r.Graph.TestRefEquals( sut ),
+                        r.Edges.TestEmpty() ) ),
                 sut.Nodes.TestSequence( [ outResult ] ) )
             .Go();
     }
@@ -119,16 +117,14 @@ public class DirectedGraphTests : TestsBase
 
         Assertion.All(
                 result.TestTrue(),
-                outResult.TestNotNull(),
                 outResult.TestNotRefEquals( first ),
-                outResult.TestIf()
-                    .NotNull(
-                        r => Assertion.All(
-                            "outResult",
-                            r.Key.TestEquals( key ),
-                            r.Value.TestEquals( value ),
-                            r.Graph.TestRefEquals( sut ),
-                            r.Edges.TestEmpty() ) ),
+                outResult.TestNotNull(
+                    r => Assertion.All(
+                        "outResult",
+                        r.Key.TestEquals( key ),
+                        r.Value.TestEquals( value ),
+                        r.Graph.TestRefEquals( sut ),
+                        r.Edges.TestEmpty() ) ),
                 sut.Nodes.TestSetEqual( [ first, outResult ] ) )
             .Go();
     }
@@ -416,15 +412,13 @@ public class DirectedGraphTests : TestsBase
 
         Assertion.All(
                 result.TestTrue(),
-                outResult.TestNotNull(),
-                outResult.TestIf()
-                    .NotNull(
-                        r => Assertion.All(
-                            "outResult",
-                            r.Source.TestRefEquals( a ),
-                            r.Source.TestRefEquals( a ),
-                            r.Value.TestEquals( value ),
-                            r.Direction.TestEquals( GraphDirection.Both ) ) ),
+                outResult.TestNotNull(
+                    r => Assertion.All(
+                        "outResult",
+                        r.Source.TestRefEquals( a ),
+                        r.Source.TestRefEquals( a ),
+                        r.Value.TestEquals( value ),
+                        r.Direction.TestEquals( GraphDirection.Both ) ) ),
                 a.Edges.TestSequence( [ outResult ] ) )
             .Go();
     }
@@ -444,15 +438,13 @@ public class DirectedGraphTests : TestsBase
 
         Assertion.All(
                 result.TestTrue(),
-                outResult.TestNotNull(),
-                outResult.TestIf()
-                    .NotNull(
-                        r => Assertion.All(
-                            "outResult",
-                            r.Source.TestRefEquals( a ),
-                            r.Target.TestRefEquals( b ),
-                            r.Value.TestEquals( value ),
-                            r.Direction.TestEquals( direction ) ) ),
+                outResult.TestNotNull(
+                    r => Assertion.All(
+                        "outResult",
+                        r.Source.TestRefEquals( a ),
+                        r.Target.TestRefEquals( b ),
+                        r.Value.TestEquals( value ),
+                        r.Direction.TestEquals( direction ) ) ),
                 a.Edges.TestSequence( [ outResult ] ),
                 b.Edges.TestSequence( [ outResult ] ) )
             .Go();

@@ -29,12 +29,9 @@ public class BooleanBinaryOperatorTests : BinaryOperatorsTestsBase
             expectedNodeType: ExpressionType.Constant,
             leftValue: left,
             rightValue: right,
-            (_, _, result) => Assertion.All(
-                result.TestType().AssignableTo<ConstantExpression>(),
-                result.TestIf()
-                    .OfType<ConstantExpression>(
-                        constantExpression =>
-                            constantExpression.Value.TestEquals( expected ) ) ) );
+            (_, _, result) =>
+                result.TestType()
+                    .AssignableTo<ConstantExpression>( constantExpression => constantExpression.Value.TestEquals( expected ) ) );
     }
 
     [Fact]
@@ -54,12 +51,8 @@ public class BooleanBinaryOperatorTests : BinaryOperatorsTestsBase
             sut: new ParsedExpressionAndOperator(),
             expectedNodeType: ExpressionType.Constant,
             leftValue: false,
-            (_, _, result) => Assertion.All(
-                result.TestType().AssignableTo<ConstantExpression>(),
-                result.TestIf()
-                    .OfType<ConstantExpression>(
-                        constantExpression =>
-                            constantExpression.Value.TestEquals( false ) ) ) );
+            (_, _, result) =>
+                result.TestType().AssignableTo<ConstantExpression>( constantExpression => constantExpression.Value.TestEquals( false ) ) );
     }
 
     [Fact]
@@ -79,12 +72,8 @@ public class BooleanBinaryOperatorTests : BinaryOperatorsTestsBase
             sut: new ParsedExpressionAndOperator(),
             expectedNodeType: ExpressionType.Constant,
             rightValue: false,
-            (_, _, result) => Assertion.All(
-                result.TestType().AssignableTo<ConstantExpression>(),
-                result.TestIf()
-                    .OfType<ConstantExpression>(
-                        constantExpression =>
-                            constantExpression.Value.TestEquals( false ) ) ) );
+            (_, _, result) =>
+                result.TestType().AssignableTo<ConstantExpression>( constantExpression => constantExpression.Value.TestEquals( false ) ) );
     }
 
     [Fact]
@@ -111,12 +100,9 @@ public class BooleanBinaryOperatorTests : BinaryOperatorsTestsBase
             expectedNodeType: ExpressionType.Constant,
             leftValue: left,
             rightValue: right,
-            (_, _, result) => Assertion.All(
-                result.TestType().AssignableTo<ConstantExpression>(),
-                result.TestIf()
-                    .OfType<ConstantExpression>(
-                        constantExpression =>
-                            constantExpression.Value.TestEquals( expected ) ) ) );
+            (_, _, result) =>
+                result.TestType()
+                    .AssignableTo<ConstantExpression>( constantExpression => constantExpression.Value.TestEquals( expected ) ) );
     }
 
     [Fact]
@@ -126,12 +112,8 @@ public class BooleanBinaryOperatorTests : BinaryOperatorsTestsBase
             sut: new ParsedExpressionOrOperator(),
             expectedNodeType: ExpressionType.Constant,
             leftValue: true,
-            (_, _, result) => Assertion.All(
-                result.TestType().AssignableTo<ConstantExpression>(),
-                result.TestIf()
-                    .OfType<ConstantExpression>(
-                        constantExpression =>
-                            constantExpression.Value.TestEquals( true ) ) ) );
+            (_, _, result) =>
+                result.TestType().AssignableTo<ConstantExpression>( constantExpression => constantExpression.Value.TestEquals( true ) ) );
     }
 
     [Fact]
@@ -151,12 +133,8 @@ public class BooleanBinaryOperatorTests : BinaryOperatorsTestsBase
             sut: new ParsedExpressionOrOperator(),
             expectedNodeType: ExpressionType.Constant,
             rightValue: true,
-            (_, _, result) => Assertion.All(
-                result.TestType().AssignableTo<ConstantExpression>(),
-                result.TestIf()
-                    .OfType<ConstantExpression>(
-                        constantExpression =>
-                            constantExpression.Value.TestEquals( true ) ) ) );
+            (_, _, result) =>
+                result.TestType().AssignableTo<ConstantExpression>( constantExpression => constantExpression.Value.TestEquals( true ) ) );
     }
 
     [Fact]
@@ -193,12 +171,9 @@ public class BooleanBinaryOperatorTests : BinaryOperatorsTestsBase
             expectedNodeType: ExpressionType.Constant,
             leftValue: left,
             rightValue: right,
-            (_, _, result) => Assertion.All(
-                result.TestType().AssignableTo<ConstantExpression>(),
-                result.TestIf()
-                    .OfType<ConstantExpression>(
-                        constantExpression =>
-                            constantExpression.Value.TestEquals( expected ) ) ) );
+            (_, _, result) =>
+                result.TestType()
+                    .AssignableTo<ConstantExpression>( constantExpression => constantExpression.Value.TestEquals( expected ) ) );
     }
 
     [Fact]
@@ -218,12 +193,8 @@ public class BooleanBinaryOperatorTests : BinaryOperatorsTestsBase
             sut: new ParsedExpressionBitwiseAndBooleanOperator(),
             expectedNodeType: ExpressionType.Constant,
             leftValue: false,
-            (_, _, result) => Assertion.All(
-                result.TestType().AssignableTo<ConstantExpression>(),
-                result.TestIf()
-                    .OfType<ConstantExpression>(
-                        constantExpression =>
-                            constantExpression.Value.TestEquals( false ) ) ) );
+            (_, _, result) =>
+                result.TestType().AssignableTo<ConstantExpression>( constantExpression => constantExpression.Value.TestEquals( false ) ) );
     }
 
     [Fact]
@@ -243,12 +214,8 @@ public class BooleanBinaryOperatorTests : BinaryOperatorsTestsBase
             sut: new ParsedExpressionBitwiseAndBooleanOperator(),
             expectedNodeType: ExpressionType.Constant,
             rightValue: false,
-            (_, _, result) => Assertion.All(
-                result.TestType().AssignableTo<ConstantExpression>(),
-                result.TestIf()
-                    .OfType<ConstantExpression>(
-                        constantExpression =>
-                            constantExpression.Value.TestEquals( false ) ) ) );
+            (_, _, result) =>
+                result.TestType().AssignableTo<ConstantExpression>( constantExpression => constantExpression.Value.TestEquals( false ) ) );
     }
 
     [Fact]
@@ -275,12 +242,9 @@ public class BooleanBinaryOperatorTests : BinaryOperatorsTestsBase
             expectedNodeType: ExpressionType.Constant,
             leftValue: left,
             rightValue: right,
-            (_, _, result) => Assertion.All(
-                result.TestType().AssignableTo<ConstantExpression>(),
-                result.TestIf()
-                    .OfType<ConstantExpression>(
-                        constantExpression =>
-                            constantExpression.Value.TestEquals( expected ) ) ) );
+            (_, _, result) =>
+                result.TestType()
+                    .AssignableTo<ConstantExpression>( constantExpression => constantExpression.Value.TestEquals( expected ) ) );
     }
 
     [Fact]
@@ -290,12 +254,8 @@ public class BooleanBinaryOperatorTests : BinaryOperatorsTestsBase
             sut: new ParsedExpressionBitwiseOrBooleanOperator(),
             expectedNodeType: ExpressionType.Constant,
             leftValue: true,
-            (_, _, result) => Assertion.All(
-                result.TestType().AssignableTo<ConstantExpression>(),
-                result.TestIf()
-                    .OfType<ConstantExpression>(
-                        constantExpression =>
-                            constantExpression.Value.TestEquals( true ) ) ) );
+            (_, _, result) =>
+                result.TestType().AssignableTo<ConstantExpression>( constantExpression => constantExpression.Value.TestEquals( true ) ) );
     }
 
     [Fact]
@@ -315,12 +275,8 @@ public class BooleanBinaryOperatorTests : BinaryOperatorsTestsBase
             sut: new ParsedExpressionBitwiseOrBooleanOperator(),
             expectedNodeType: ExpressionType.Constant,
             rightValue: true,
-            (_, _, result) => Assertion.All(
-                result.TestType().AssignableTo<ConstantExpression>(),
-                result.TestIf()
-                    .OfType<ConstantExpression>(
-                        constantExpression =>
-                            constantExpression.Value.TestEquals( true ) ) ) );
+            (_, _, result) =>
+                result.TestType().AssignableTo<ConstantExpression>( constantExpression => constantExpression.Value.TestEquals( true ) ) );
     }
 
     [Fact]
@@ -357,12 +313,9 @@ public class BooleanBinaryOperatorTests : BinaryOperatorsTestsBase
             expectedNodeType: ExpressionType.Constant,
             leftValue: left,
             rightValue: right,
-            (_, _, result) => Assertion.All(
-                result.TestType().AssignableTo<ConstantExpression>(),
-                result.TestIf()
-                    .OfType<ConstantExpression>(
-                        constantExpression =>
-                            constantExpression.Value.TestEquals( expected ) ) ) );
+            (_, _, result) =>
+                result.TestType()
+                    .AssignableTo<ConstantExpression>( constantExpression => constantExpression.Value.TestEquals( expected ) ) );
     }
 
     [Fact]
@@ -408,12 +361,8 @@ public class BooleanBinaryOperatorTests : BinaryOperatorsTestsBase
             expectedNodeType: ExpressionType.Constant,
             leftValue: left,
             rightValue: right,
-            (_, _, result) => Assertion.All(
-                result.TestType().AssignableTo<ConstantExpression>(),
-                result.TestIf()
-                    .OfType<ConstantExpression>(
-                        constantResult =>
-                            constantResult.Value.TestEquals( expected ) ) ) );
+            (_, _, result) =>
+                result.TestType().AssignableTo<ConstantExpression>( constantResult => constantResult.Value.TestEquals( expected ) ) );
     }
 
     [Fact]
@@ -459,12 +408,8 @@ public class BooleanBinaryOperatorTests : BinaryOperatorsTestsBase
             expectedNodeType: ExpressionType.Constant,
             leftValue: left,
             rightValue: right,
-            (_, _, result) => Assertion.All(
-                result.TestType().AssignableTo<ConstantExpression>(),
-                result.TestIf()
-                    .OfType<ConstantExpression>(
-                        constantResult =>
-                            constantResult.Value.TestEquals( expected ) ) ) );
+            (_, _, result) =>
+                result.TestType().AssignableTo<ConstantExpression>( constantResult => constantResult.Value.TestEquals( expected ) ) );
     }
 
     [Fact]
@@ -493,15 +438,13 @@ public class BooleanBinaryOperatorTests : BinaryOperatorsTestsBase
         Process_ShouldPopTwoOperandsAndPushOneExpression_WhenBothOperandsAreVariable<bool, bool, int>(
             sut: new ParsedExpressionCompareBooleanOperator(),
             expectedNodeType: ExpressionType.Call,
-            (left, right, result) => Assertion.All(
-                result.TestType().AssignableTo<MethodCallExpression>(),
-                result.TestIf()
-                    .OfType<MethodCallExpression>(
-                        methodCallResult => Assertion.All(
-                            "methodCallResult",
-                            methodCallResult.Object.TestRefEquals( left ),
-                            methodCallResult.Arguments.TestSequence( [ right ] ),
-                            methodCallResult.Method.Name.TestEquals( nameof( IComparable.CompareTo ) ) ) ) ) );
+            (left, right, result) => result.TestType()
+                .AssignableTo<MethodCallExpression>(
+                    methodCallResult => Assertion.All(
+                        "methodCallResult",
+                        methodCallResult.Object.TestRefEquals( left ),
+                        methodCallResult.Arguments.TestSequence( [ right ] ),
+                        methodCallResult.Method.Name.TestEquals( nameof( IComparable.CompareTo ) ) ) ) );
     }
 
     [Theory]
@@ -519,12 +462,8 @@ public class BooleanBinaryOperatorTests : BinaryOperatorsTestsBase
             expectedNodeType: ExpressionType.Constant,
             leftValue: left,
             rightValue: right,
-            (_, _, result) => Assertion.All(
-                result.TestType().AssignableTo<ConstantExpression>(),
-                result.TestIf()
-                    .OfType<ConstantExpression>(
-                        constantResult =>
-                            constantResult.Value.TestEquals( expected ) ) ) );
+            (_, _, result) =>
+                result.TestType().AssignableTo<ConstantExpression>( constantResult => constantResult.Value.TestEquals( expected ) ) );
     }
 
     [Fact]
@@ -534,15 +473,13 @@ public class BooleanBinaryOperatorTests : BinaryOperatorsTestsBase
             sut: new ParsedExpressionCompareBooleanOperator(),
             expectedNodeType: ExpressionType.Call,
             leftValue: Fixture.Create<bool>(),
-            (left, right, result) => Assertion.All(
-                result.TestType().AssignableTo<MethodCallExpression>(),
-                result.TestIf()
-                    .OfType<MethodCallExpression>(
-                        methodCallResult => Assertion.All(
-                            "methodCallResult",
-                            methodCallResult.Object.TestRefEquals( left ),
-                            methodCallResult.Arguments.TestSequence( [ right ] ),
-                            methodCallResult.Method.Name.TestEquals( nameof( IComparable.CompareTo ) ) ) ) ) );
+            (left, right, result) => result.TestType()
+                .AssignableTo<MethodCallExpression>(
+                    methodCallResult => Assertion.All(
+                        "methodCallResult",
+                        methodCallResult.Object.TestRefEquals( left ),
+                        methodCallResult.Arguments.TestSequence( [ right ] ),
+                        methodCallResult.Method.Name.TestEquals( nameof( IComparable.CompareTo ) ) ) ) );
     }
 
     [Fact]
@@ -552,14 +489,12 @@ public class BooleanBinaryOperatorTests : BinaryOperatorsTestsBase
             sut: new ParsedExpressionCompareBooleanOperator(),
             expectedNodeType: ExpressionType.Call,
             rightValue: Fixture.Create<bool>(),
-            (left, right, result) => Assertion.All(
-                result.TestType().AssignableTo<MethodCallExpression>(),
-                result.TestIf()
-                    .OfType<MethodCallExpression>(
-                        methodCallResult => Assertion.All(
-                            "methodCallResult",
-                            methodCallResult.Object.TestRefEquals( left ),
-                            methodCallResult.Arguments.TestSequence( [ right ] ),
-                            methodCallResult.Method.Name.TestEquals( nameof( IComparable.CompareTo ) ) ) ) ) );
+            (left, right, result) => result.TestType()
+                .AssignableTo<MethodCallExpression>(
+                    methodCallResult => Assertion.All(
+                        "methodCallResult",
+                        methodCallResult.Object.TestRefEquals( left ),
+                        methodCallResult.Arguments.TestSequence( [ right ] ),
+                        methodCallResult.Method.Name.TestEquals( nameof( IComparable.CompareTo ) ) ) ) );
     }
 }

@@ -322,11 +322,9 @@ public class DependencyScopeTests : DependencyTestsBase
         var action = Lambda.Of( () => sut.BeginScope( name ) );
 
         action.Test(
-                exc => Assertion.All(
-                    exc.TestType().Exact<NamedDependencyScopeCreationException>(),
-                    exc.TestIf()
-                        .OfType<NamedDependencyScopeCreationException>(
-                            e => Assertion.All( e.ParentScope.TestRefEquals( sut ), e.Name.TestEquals( name ) ) ) ) )
+                exc => exc.TestType()
+                    .Exact<NamedDependencyScopeCreationException>(
+                        e => Assertion.All( e.ParentScope.TestRefEquals( sut ), e.Name.TestEquals( name ) ) ) )
             .Go();
     }
 
@@ -688,7 +686,6 @@ public class DependencyScopeTests : DependencyTestsBase
 
         action.Test(
                 exc => Assertion.All(
-                    exc.TestType().Exact<OwnedDependenciesDisposalAggregateException>(),
                     resolved1.TestReceivedCalls( x => x.Dispose(), count: 1 ),
                     resolved2.TestReceivedCalls( x => x.Dispose(), count: 1 ),
                     resolved3.TestReceivedCalls( x => x.Dispose(), count: 1 ),
@@ -698,8 +695,8 @@ public class DependencyScopeTests : DependencyTestsBase
                     container.RootScope.IsDisposed.TestTrue(),
                     childScope.IsDisposed.TestTrue(),
                     grandchildScope.IsDisposed.TestTrue(),
-                    exc.TestIf()
-                        .OfType<OwnedDependenciesDisposalAggregateException>(
+                    exc.TestType()
+                        .Exact<OwnedDependenciesDisposalAggregateException>(
                             aggregateException => Assertion.All(
                                 aggregateException.InnerExceptions.Count.TestEquals( 3 ),
                                 (aggregateException.InnerExceptions.OfType<OwnedDependencyDisposalException>()
@@ -749,7 +746,6 @@ public class DependencyScopeTests : DependencyTestsBase
 
         action.Test(
                 exc => Assertion.All(
-                    exc.TestType().Exact<OwnedDependenciesDisposalAggregateException>(),
                     resolved1.TestReceivedCalls( x => x.Dispose(), count: 1 ),
                     resolved2.TestReceivedCalls( x => x.Dispose(), count: 1 ),
                     resolved3.TestReceivedCalls( x => x.Dispose(), count: 1 ),
@@ -759,8 +755,8 @@ public class DependencyScopeTests : DependencyTestsBase
                     sut.IsDisposed.TestTrue(),
                     childScope.IsDisposed.TestTrue(),
                     grandchildScope.IsDisposed.TestTrue(),
-                    exc.TestIf()
-                        .OfType<OwnedDependenciesDisposalAggregateException>(
+                    exc.TestType()
+                        .Exact<OwnedDependenciesDisposalAggregateException>(
                             aggregateException => Assertion.All(
                                 aggregateException.InnerExceptions.Count.TestEquals( 3 ),
                                 (aggregateException.InnerExceptions.OfType<OwnedDependencyDisposalException>()

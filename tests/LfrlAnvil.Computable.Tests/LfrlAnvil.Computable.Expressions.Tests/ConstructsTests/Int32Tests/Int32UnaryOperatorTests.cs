@@ -21,12 +21,10 @@ public class Int32UnaryOperatorTests : UnaryOperatorsTestsBase
             sut: new ParsedExpressionNegateInt32Operator(),
             expectedNodeType: ExpressionType.Constant,
             operandValue: 123,
-            (_, result) => Assertion.All(
-                result.TestType().AssignableTo<ConstantExpression>(),
-                result.TestIf()
-                    .OfType<ConstantExpression>(
-                        constantResult =>
-                            constantResult.Value.TestEquals( -123 ) ) ) );
+            (_, result) => result.TestType()
+                .AssignableTo<ConstantExpression>(
+                    constantResult =>
+                        constantResult.Value.TestEquals( -123 ) ) );
     }
 
     [Fact]
@@ -45,11 +43,9 @@ public class Int32UnaryOperatorTests : UnaryOperatorsTestsBase
             sut: new ParsedExpressionBitwiseNotInt32Operator(),
             expectedNodeType: ExpressionType.Constant,
             operandValue: 123,
-            (_, result) => Assertion.All(
-                result.TestType().AssignableTo<ConstantExpression>(),
-                result.TestIf()
-                    .OfType<ConstantExpression>(
-                        constantResult =>
-                            constantResult.Value.TestEquals( ~123 ) ) ) );
+            (_, result) => result.TestType()
+                .AssignableTo<ConstantExpression>(
+                    constantResult =>
+                        constantResult.Value.TestEquals( ~123 ) ) );
     }
 }

@@ -21,11 +21,9 @@ public class DoubleUnaryOperatorTests : UnaryOperatorsTestsBase
             sut: new ParsedExpressionNegateDoubleOperator(),
             expectedNodeType: ExpressionType.Constant,
             operandValue: 123,
-            (_, result) => Assertion.All(
-                result.TestType().AssignableTo<ConstantExpression>(),
-                result.TestIf()
-                    .OfType<ConstantExpression>(
-                        constantResult =>
-                            constantResult.Value.TestEquals( -123.0 ) ) ) );
+            (_, result) => result.TestType()
+                .AssignableTo<ConstantExpression>(
+                    constantResult =>
+                        constantResult.Value.TestEquals( -123.0 ) ) );
     }
 }

@@ -14,15 +14,13 @@ public class StringTypeConverterTests : TypeConvertersTestsBase
     {
         Process_ShouldPopOneOperandAndPushOneExpression_WhenOperandIsVariable<string, int, string>(
             sut: new ParsedExpressionToStringTypeConverter(),
-            (operand, result) => Assertion.All(
-                result.TestType().AssignableTo<MethodCallExpression>(),
-                result.TestIf()
-                    .OfType<MethodCallExpression>(
-                        methodCallResult => Assertion.All(
-                            "methodCallResult",
-                            methodCallResult.Object.TestRefEquals( operand ),
-                            methodCallResult.Arguments.TestEmpty(),
-                            methodCallResult.Method.Name.TestEquals( nameof( ToString ) ) ) ) ),
+            (operand, result) => result.TestType()
+                .AssignableTo<MethodCallExpression>(
+                    methodCallResult => Assertion.All(
+                        "methodCallResult",
+                        methodCallResult.Object.TestRefEquals( operand ),
+                        methodCallResult.Arguments.TestEmpty(),
+                        methodCallResult.Method.Name.TestEquals( nameof( ToString ) ) ) ),
             expectedNodeType: ExpressionType.Call );
     }
 
@@ -32,12 +30,10 @@ public class StringTypeConverterTests : TypeConvertersTestsBase
         Process_ShouldPopOneOperandAndPushOneExpression_WhenOperandIsConstant<string, int, string>(
             sut: new ParsedExpressionToStringTypeConverter(),
             operandValue: 123,
-            (_, result) => Assertion.All(
-                result.TestType().AssignableTo<ConstantExpression>(),
-                result.TestIf()
-                    .OfType<ConstantExpression>(
-                        constantResult =>
-                            constantResult.Value.TestEquals( "123" ) ) ),
+            (_, result) => result.TestType()
+                .AssignableTo<ConstantExpression>(
+                    constantResult =>
+                        constantResult.Value.TestEquals( "123" ) ),
             expectedNodeType: ExpressionType.Constant );
     }
 
@@ -59,21 +55,18 @@ public class StringTypeConverterTests : TypeConvertersTestsBase
 
         Process_ShouldPopOneOperandAndPushOneExpression_WhenOperandIsVariable<string, decimal, string>(
             sut: new ParsedExpressionDecimalToStringTypeConverter( formatProvider ),
-            (operand, result) => Assertion.All(
-                result.TestType().AssignableTo<MethodCallExpression>(),
-                result.TestIf()
-                    .OfType<MethodCallExpression>(
-                        methodCallResult => Assertion.All(
-                            "methodCallResult",
-                            methodCallResult.Object.TestRefEquals( operand ),
-                            methodCallResult.Method.Name.TestEquals( nameof( ToString ) ),
-                            methodCallResult.Arguments.Count.TestEquals( 1 ),
-                            methodCallResult.Arguments.FirstOrDefault().TestType().AssignableTo<ConstantExpression>(),
-                            methodCallResult.Arguments.FirstOrDefault()
-                                .TestIf()
-                                .OfType<ConstantExpression>(
-                                    constantArgument =>
-                                        constantArgument.Value.TestRefEquals( formatProvider ) ) ) ) ),
+            (operand, result) => result.TestType()
+                .AssignableTo<MethodCallExpression>(
+                    methodCallResult => Assertion.All(
+                        "methodCallResult",
+                        methodCallResult.Object.TestRefEquals( operand ),
+                        methodCallResult.Method.Name.TestEquals( nameof( ToString ) ),
+                        methodCallResult.Arguments.Count.TestEquals( 1 ),
+                        methodCallResult.Arguments.FirstOrDefault()
+                            .TestType()
+                            .AssignableTo<ConstantExpression>(
+                                constantArgument =>
+                                    constantArgument.Value.TestRefEquals( formatProvider ) ) ) ),
             expectedNodeType: ExpressionType.Call );
     }
 
@@ -83,12 +76,10 @@ public class StringTypeConverterTests : TypeConvertersTestsBase
         Process_ShouldPopOneOperandAndPushOneExpression_WhenOperandIsConstant<string, decimal, string>(
             sut: new ParsedExpressionDecimalToStringTypeConverter( CultureInfo.InvariantCulture ),
             operandValue: 123,
-            (_, result) => Assertion.All(
-                result.TestType().AssignableTo<ConstantExpression>(),
-                result.TestIf()
-                    .OfType<ConstantExpression>(
-                        constantResult =>
-                            constantResult.Value.TestEquals( "123" ) ) ),
+            (_, result) => result.TestType()
+                .AssignableTo<ConstantExpression>(
+                    constantResult =>
+                        constantResult.Value.TestEquals( "123" ) ),
             expectedNodeType: ExpressionType.Constant );
     }
 
@@ -99,21 +90,18 @@ public class StringTypeConverterTests : TypeConvertersTestsBase
 
         Process_ShouldPopOneOperandAndPushOneExpression_WhenOperandIsVariable<string, double, string>(
             sut: new ParsedExpressionDoubleToStringTypeConverter( formatProvider ),
-            (operand, result) => Assertion.All(
-                result.TestType().AssignableTo<MethodCallExpression>(),
-                result.TestIf()
-                    .OfType<MethodCallExpression>(
-                        methodCallResult => Assertion.All(
-                            "methodCallResult",
-                            methodCallResult.Object.TestRefEquals( operand ),
-                            methodCallResult.Method.Name.TestEquals( nameof( ToString ) ),
-                            methodCallResult.Arguments.Count.TestEquals( 1 ),
-                            methodCallResult.Arguments.FirstOrDefault().TestType().AssignableTo<ConstantExpression>(),
-                            methodCallResult.Arguments.FirstOrDefault()
-                                .TestIf()
-                                .OfType<ConstantExpression>(
-                                    constantArgument =>
-                                        constantArgument.Value.TestRefEquals( formatProvider ) ) ) ) ),
+            (operand, result) => result.TestType()
+                .AssignableTo<MethodCallExpression>(
+                    methodCallResult => Assertion.All(
+                        "methodCallResult",
+                        methodCallResult.Object.TestRefEquals( operand ),
+                        methodCallResult.Method.Name.TestEquals( nameof( ToString ) ),
+                        methodCallResult.Arguments.Count.TestEquals( 1 ),
+                        methodCallResult.Arguments.FirstOrDefault()
+                            .TestType()
+                            .AssignableTo<ConstantExpression>(
+                                constantArgument =>
+                                    constantArgument.Value.TestRefEquals( formatProvider ) ) ) ),
             expectedNodeType: ExpressionType.Call );
     }
 
@@ -123,12 +111,10 @@ public class StringTypeConverterTests : TypeConvertersTestsBase
         Process_ShouldPopOneOperandAndPushOneExpression_WhenOperandIsConstant<string, double, string>(
             sut: new ParsedExpressionDoubleToStringTypeConverter( CultureInfo.InvariantCulture ),
             operandValue: 123,
-            (_, result) => Assertion.All(
-                result.TestType().AssignableTo<ConstantExpression>(),
-                result.TestIf()
-                    .OfType<ConstantExpression>(
-                        constantResult =>
-                            constantResult.Value.TestEquals( "123" ) ) ),
+            (_, result) => result.TestType()
+                .AssignableTo<ConstantExpression>(
+                    constantResult =>
+                        constantResult.Value.TestEquals( "123" ) ),
             expectedNodeType: ExpressionType.Constant );
     }
 
@@ -139,21 +125,18 @@ public class StringTypeConverterTests : TypeConvertersTestsBase
 
         Process_ShouldPopOneOperandAndPushOneExpression_WhenOperandIsVariable<string, float, string>(
             sut: new ParsedExpressionFloatToStringTypeConverter( formatProvider ),
-            (operand, result) => Assertion.All(
-                result.TestType().AssignableTo<MethodCallExpression>(),
-                result.TestIf()
-                    .OfType<MethodCallExpression>(
-                        methodCallResult => Assertion.All(
-                            "methodCallResult",
-                            methodCallResult.Object.TestRefEquals( operand ),
-                            methodCallResult.Method.Name.TestEquals( nameof( ToString ) ),
-                            methodCallResult.Arguments.Count.TestEquals( 1 ),
-                            methodCallResult.Arguments.FirstOrDefault().TestType().AssignableTo<ConstantExpression>(),
-                            methodCallResult.Arguments.FirstOrDefault()
-                                .TestIf()
-                                .OfType<ConstantExpression>(
-                                    constantArgument =>
-                                        constantArgument.Value.TestRefEquals( formatProvider ) ) ) ) ),
+            (operand, result) => result.TestType()
+                .AssignableTo<MethodCallExpression>(
+                    methodCallResult => Assertion.All(
+                        "methodCallResult",
+                        methodCallResult.Object.TestRefEquals( operand ),
+                        methodCallResult.Method.Name.TestEquals( nameof( ToString ) ),
+                        methodCallResult.Arguments.Count.TestEquals( 1 ),
+                        methodCallResult.Arguments.FirstOrDefault()
+                            .TestType()
+                            .AssignableTo<ConstantExpression>(
+                                constantArgument =>
+                                    constantArgument.Value.TestRefEquals( formatProvider ) ) ) ),
             expectedNodeType: ExpressionType.Call );
     }
 
@@ -163,12 +146,10 @@ public class StringTypeConverterTests : TypeConvertersTestsBase
         Process_ShouldPopOneOperandAndPushOneExpression_WhenOperandIsConstant<string, float, string>(
             sut: new ParsedExpressionFloatToStringTypeConverter( CultureInfo.InvariantCulture ),
             operandValue: 123,
-            (_, result) => Assertion.All(
-                result.TestType().AssignableTo<ConstantExpression>(),
-                result.TestIf()
-                    .OfType<ConstantExpression>(
-                        constantResult =>
-                            constantResult.Value.TestEquals( "123" ) ) ),
+            (_, result) => result.TestType()
+                .AssignableTo<ConstantExpression>(
+                    constantResult =>
+                        constantResult.Value.TestEquals( "123" ) ),
             expectedNodeType: ExpressionType.Constant );
     }
 
@@ -179,21 +160,18 @@ public class StringTypeConverterTests : TypeConvertersTestsBase
 
         Process_ShouldPopOneOperandAndPushOneExpression_WhenOperandIsVariable<string, BigInteger, string>(
             sut: new ParsedExpressionBigIntToStringTypeConverter( formatProvider ),
-            (operand, result) => Assertion.All(
-                result.TestType().AssignableTo<MethodCallExpression>(),
-                result.TestIf()
-                    .OfType<MethodCallExpression>(
-                        methodCallResult => Assertion.All(
-                            "methodCallResult",
-                            methodCallResult.Object.TestRefEquals( operand ),
-                            methodCallResult.Method.Name.TestEquals( nameof( ToString ) ),
-                            methodCallResult.Arguments.Count.TestEquals( 1 ),
-                            methodCallResult.Arguments.FirstOrDefault().TestType().AssignableTo<ConstantExpression>(),
-                            methodCallResult.Arguments.FirstOrDefault()
-                                .TestIf()
-                                .OfType<ConstantExpression>(
-                                    constantArgument =>
-                                        constantArgument.Value.TestRefEquals( formatProvider ) ) ) ) ),
+            (operand, result) => result.TestType()
+                .AssignableTo<MethodCallExpression>(
+                    methodCallResult => Assertion.All(
+                        "methodCallResult",
+                        methodCallResult.Object.TestRefEquals( operand ),
+                        methodCallResult.Method.Name.TestEquals( nameof( ToString ) ),
+                        methodCallResult.Arguments.Count.TestEquals( 1 ),
+                        methodCallResult.Arguments.FirstOrDefault()
+                            .TestType()
+                            .AssignableTo<ConstantExpression>(
+                                constantArgument =>
+                                    constantArgument.Value.TestRefEquals( formatProvider ) ) ) ),
             expectedNodeType: ExpressionType.Call );
     }
 
@@ -203,12 +181,10 @@ public class StringTypeConverterTests : TypeConvertersTestsBase
         Process_ShouldPopOneOperandAndPushOneExpression_WhenOperandIsConstant<string, BigInteger, string>(
             sut: new ParsedExpressionBigIntToStringTypeConverter( CultureInfo.InvariantCulture ),
             operandValue: 123,
-            (_, result) => Assertion.All(
-                result.TestType().AssignableTo<ConstantExpression>(),
-                result.TestIf()
-                    .OfType<ConstantExpression>(
-                        constantResult =>
-                            constantResult.Value.TestEquals( "123" ) ) ),
+            (_, result) => result.TestType()
+                .AssignableTo<ConstantExpression>(
+                    constantResult =>
+                        constantResult.Value.TestEquals( "123" ) ),
             expectedNodeType: ExpressionType.Constant );
     }
 
@@ -219,21 +195,18 @@ public class StringTypeConverterTests : TypeConvertersTestsBase
 
         Process_ShouldPopOneOperandAndPushOneExpression_WhenOperandIsVariable<string, long, string>(
             sut: new ParsedExpressionInt64ToStringTypeConverter( formatProvider ),
-            (operand, result) => Assertion.All(
-                result.TestType().AssignableTo<MethodCallExpression>(),
-                result.TestIf()
-                    .OfType<MethodCallExpression>(
-                        methodCallResult => Assertion.All(
-                            "methodCallResult",
-                            methodCallResult.Object.TestRefEquals( operand ),
-                            methodCallResult.Method.Name.TestEquals( nameof( ToString ) ),
-                            methodCallResult.Arguments.Count.TestEquals( 1 ),
-                            methodCallResult.Arguments.FirstOrDefault().TestType().AssignableTo<ConstantExpression>(),
-                            methodCallResult.Arguments.FirstOrDefault()
-                                .TestIf()
-                                .OfType<ConstantExpression>(
-                                    constantArgument =>
-                                        constantArgument.Value.TestRefEquals( formatProvider ) ) ) ) ),
+            (operand, result) => result.TestType()
+                .AssignableTo<MethodCallExpression>(
+                    methodCallResult => Assertion.All(
+                        "methodCallResult",
+                        methodCallResult.Object.TestRefEquals( operand ),
+                        methodCallResult.Method.Name.TestEquals( nameof( ToString ) ),
+                        methodCallResult.Arguments.Count.TestEquals( 1 ),
+                        methodCallResult.Arguments.FirstOrDefault()
+                            .TestType()
+                            .AssignableTo<ConstantExpression>(
+                                constantArgument =>
+                                    constantArgument.Value.TestRefEquals( formatProvider ) ) ) ),
             expectedNodeType: ExpressionType.Call );
     }
 
@@ -243,12 +216,10 @@ public class StringTypeConverterTests : TypeConvertersTestsBase
         Process_ShouldPopOneOperandAndPushOneExpression_WhenOperandIsConstant<string, long, string>(
             sut: new ParsedExpressionInt64ToStringTypeConverter( CultureInfo.InvariantCulture ),
             operandValue: 123,
-            (_, result) => Assertion.All(
-                result.TestType().AssignableTo<ConstantExpression>(),
-                result.TestIf()
-                    .OfType<ConstantExpression>(
-                        constantResult =>
-                            constantResult.Value.TestEquals( "123" ) ) ),
+            (_, result) => result.TestType()
+                .AssignableTo<ConstantExpression>(
+                    constantResult =>
+                        constantResult.Value.TestEquals( "123" ) ),
             expectedNodeType: ExpressionType.Constant );
     }
 
@@ -259,21 +230,18 @@ public class StringTypeConverterTests : TypeConvertersTestsBase
 
         Process_ShouldPopOneOperandAndPushOneExpression_WhenOperandIsVariable<string, int, string>(
             sut: new ParsedExpressionInt32ToStringTypeConverter( formatProvider ),
-            (operand, result) => Assertion.All(
-                result.TestType().AssignableTo<MethodCallExpression>(),
-                result.TestIf()
-                    .OfType<MethodCallExpression>(
-                        methodCallResult => Assertion.All(
-                            "methodCallResult",
-                            methodCallResult.Object.TestRefEquals( operand ),
-                            methodCallResult.Method.Name.TestEquals( nameof( ToString ) ),
-                            methodCallResult.Arguments.Count.TestEquals( 1 ),
-                            methodCallResult.Arguments.FirstOrDefault().TestType().AssignableTo<ConstantExpression>(),
-                            methodCallResult.Arguments.FirstOrDefault()
-                                .TestIf()
-                                .OfType<ConstantExpression>(
-                                    constantArgument =>
-                                        constantArgument.Value.TestRefEquals( formatProvider ) ) ) ) ),
+            (operand, result) => result.TestType()
+                .AssignableTo<MethodCallExpression>(
+                    methodCallResult => Assertion.All(
+                        "methodCallResult",
+                        methodCallResult.Object.TestRefEquals( operand ),
+                        methodCallResult.Method.Name.TestEquals( nameof( ToString ) ),
+                        methodCallResult.Arguments.Count.TestEquals( 1 ),
+                        methodCallResult.Arguments.FirstOrDefault()
+                            .TestType()
+                            .AssignableTo<ConstantExpression>(
+                                constantArgument =>
+                                    constantArgument.Value.TestRefEquals( formatProvider ) ) ) ),
             expectedNodeType: ExpressionType.Call );
     }
 
@@ -283,12 +251,10 @@ public class StringTypeConverterTests : TypeConvertersTestsBase
         Process_ShouldPopOneOperandAndPushOneExpression_WhenOperandIsConstant<string, int, string>(
             sut: new ParsedExpressionInt32ToStringTypeConverter( CultureInfo.InvariantCulture ),
             operandValue: 123,
-            (_, result) => Assertion.All(
-                result.TestType().AssignableTo<ConstantExpression>(),
-                result.TestIf()
-                    .OfType<ConstantExpression>(
-                        constantResult =>
-                            constantResult.Value.TestEquals( "123" ) ) ),
+            (_, result) => result.TestType()
+                .AssignableTo<ConstantExpression>(
+                    constantResult =>
+                        constantResult.Value.TestEquals( "123" ) ),
             expectedNodeType: ExpressionType.Constant );
     }
 
@@ -299,21 +265,18 @@ public class StringTypeConverterTests : TypeConvertersTestsBase
 
         Process_ShouldPopOneOperandAndPushOneExpression_WhenOperandIsVariable<string, bool, string>(
             sut: new ParsedExpressionBooleanToStringTypeConverter( formatProvider ),
-            (operand, result) => Assertion.All(
-                result.TestType().AssignableTo<MethodCallExpression>(),
-                result.TestIf()
-                    .OfType<MethodCallExpression>(
-                        methodCallResult => Assertion.All(
-                            "methodCallResult",
-                            methodCallResult.Object.TestRefEquals( operand ),
-                            methodCallResult.Method.Name.TestEquals( nameof( ToString ) ),
-                            methodCallResult.Arguments.Count.TestEquals( 1 ),
-                            methodCallResult.Arguments.FirstOrDefault().TestType().AssignableTo<ConstantExpression>(),
-                            methodCallResult.Arguments.FirstOrDefault()
-                                .TestIf()
-                                .OfType<ConstantExpression>(
-                                    constantArgument =>
-                                        constantArgument.Value.TestRefEquals( formatProvider ) ) ) ) ),
+            (operand, result) => result.TestType()
+                .AssignableTo<MethodCallExpression>(
+                    methodCallResult => Assertion.All(
+                        "methodCallResult",
+                        methodCallResult.Object.TestRefEquals( operand ),
+                        methodCallResult.Method.Name.TestEquals( nameof( ToString ) ),
+                        methodCallResult.Arguments.Count.TestEquals( 1 ),
+                        methodCallResult.Arguments.FirstOrDefault()
+                            .TestType()
+                            .AssignableTo<ConstantExpression>(
+                                constantArgument =>
+                                    constantArgument.Value.TestRefEquals( formatProvider ) ) ) ),
             expectedNodeType: ExpressionType.Call );
     }
 
@@ -323,12 +286,10 @@ public class StringTypeConverterTests : TypeConvertersTestsBase
         Process_ShouldPopOneOperandAndPushOneExpression_WhenOperandIsConstant<string, bool, string>(
             sut: new ParsedExpressionBooleanToStringTypeConverter( CultureInfo.InvariantCulture ),
             operandValue: true,
-            (_, result) => Assertion.All(
-                result.TestType().AssignableTo<ConstantExpression>(),
-                result.TestIf()
-                    .OfType<ConstantExpression>(
-                        constantResult =>
-                            constantResult.Value.TestEquals( "True" ) ) ),
+            (_, result) => result.TestType()
+                .AssignableTo<ConstantExpression>(
+                    constantResult =>
+                        constantResult.Value.TestEquals( "True" ) ),
             expectedNodeType: ExpressionType.Constant );
     }
 }

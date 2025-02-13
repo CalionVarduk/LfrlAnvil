@@ -51,9 +51,6 @@ public abstract class UnaryOperatorsTestsBase : ConstructsTestsBase
     [Pure]
     protected static Assertion DefaultNodeAssertion(Expression operand, Expression result)
     {
-        return Assertion.All(
-            "Node",
-            result.TestType().AssignableTo<UnaryExpression>(),
-            result.TestIf().OfType<UnaryExpression>( unaryResult => unaryResult.Operand.TestRefEquals( operand ) ) );
+        return result.TestType().AssignableTo<UnaryExpression>( unaryResult => unaryResult.Operand.TestRefEquals( operand ) );
     }
 }

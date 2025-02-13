@@ -2549,11 +2549,7 @@ public partial class ParsedExpressionFactoryTests
         Assertion.All(
                 result.TestEquals( "( foo|BiOp|bar )" ),
                 expression.Body.NodeType.TestEquals( ExpressionType.Block ),
-                expression.Body.TestType().AssignableTo<BlockExpression>(),
-                expression.Body.TestIf()
-                    .OfType<BlockExpression>(
-                        block =>
-                            block.Expressions.Count.TestEquals( 2 ) ) )
+                expression.Body.TestType().AssignableTo<BlockExpression>( block => block.Expressions.Count.TestEquals( 2 ) ) )
             .Go();
     }
 
@@ -2574,11 +2570,7 @@ public partial class ParsedExpressionFactoryTests
         Assertion.All(
                 result.TestEquals( "( foo|BiOp|bar )" ),
                 expression.Body.NodeType.TestEquals( ExpressionType.Block ),
-                expression.Body.TestType().AssignableTo<BlockExpression>(),
-                expression.Body.TestIf()
-                    .OfType<BlockExpression>(
-                        block =>
-                            block.Expressions.Count.TestEquals( 2 ) ) )
+                expression.Body.TestType().AssignableTo<BlockExpression>( block => block.Expressions.Count.TestEquals( 2 ) ) )
             .Go();
     }
 

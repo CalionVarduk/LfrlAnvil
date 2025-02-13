@@ -2,17 +2,15 @@
 
 namespace LfrlAnvil.TestExtensions.Assertions;
 
-internal sealed class ComparisonAssertion<T> : Assertion
+internal sealed class ComparisonAssertion<T> : SubjectAssertion<T>
 {
     internal ComparisonAssertion(string context, T subject, T value, ComparisonType type)
-        : base( context )
+        : base( context, subject )
     {
-        Subject = subject;
         Value = value;
         Type = type;
     }
 
-    internal T Subject { get; }
     internal T Value { get; }
     internal ComparisonType Type { get; }
 

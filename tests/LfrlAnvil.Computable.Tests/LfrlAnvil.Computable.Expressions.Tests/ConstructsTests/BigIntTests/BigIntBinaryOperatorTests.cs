@@ -24,10 +24,9 @@ public class BigIntBinaryOperatorTests : BinaryOperatorsTestsBase
             expectedNodeType: ExpressionType.Constant,
             leftValue: 123,
             rightValue: 456,
-            (_, _, result) => Assertion.All(
-                result.TestType().AssignableTo<ConstantExpression>(),
-                result.TestIf()
-                    .OfType<ConstantExpression>( constantResult => constantResult.Value.TestEquals( new BigInteger( 579 ) ) ) ) );
+            (_, _, result) =>
+                result.TestType()
+                    .AssignableTo<ConstantExpression>( constantResult => constantResult.Value.TestEquals( new BigInteger( 579 ) ) ) );
     }
 
     [Fact]
@@ -87,10 +86,9 @@ public class BigIntBinaryOperatorTests : BinaryOperatorsTestsBase
             expectedNodeType: ExpressionType.Constant,
             leftValue: 123,
             rightValue: 456,
-            (_, _, result) => Assertion.All(
-                result.TestType().AssignableTo<ConstantExpression>(),
-                result.TestIf()
-                    .OfType<ConstantExpression>( constantResult => constantResult.Value.TestEquals( new BigInteger( -333 ) ) ) ) );
+            (_, _, result) =>
+                result.TestType()
+                    .AssignableTo<ConstantExpression>( constantResult => constantResult.Value.TestEquals( new BigInteger( -333 ) ) ) );
     }
 
     [Fact]
@@ -110,12 +108,8 @@ public class BigIntBinaryOperatorTests : BinaryOperatorsTestsBase
             sut: new ParsedExpressionSubtractBigIntOperator(),
             expectedNodeType: ExpressionType.Negate,
             leftValue: 0,
-            (_, right, result) => Assertion.All(
-                result.TestType().AssignableTo<UnaryExpression>(),
-                result.TestIf()
-                    .OfType<UnaryExpression>(
-                        unaryResult =>
-                            unaryResult.Operand.TestRefEquals( right ) ) ) );
+            (_, right, result) =>
+                result.TestType().AssignableTo<UnaryExpression>( unaryResult => unaryResult.Operand.TestRefEquals( right ) ) );
     }
 
     [Fact]
@@ -155,12 +149,9 @@ public class BigIntBinaryOperatorTests : BinaryOperatorsTestsBase
             expectedNodeType: ExpressionType.Constant,
             leftValue: 123,
             rightValue: 456,
-            (_, _, result) => Assertion.All(
-                result.TestType().AssignableTo<ConstantExpression>(),
-                result.TestIf()
-                    .OfType<ConstantExpression>(
-                        constantResult =>
-                            constantResult.Value.TestEquals( new BigInteger( 56088 ) ) ) ) );
+            (_, _, result) =>
+                result.TestType()
+                    .AssignableTo<ConstantExpression>( constantResult => constantResult.Value.TestEquals( new BigInteger( 56088 ) ) ) );
     }
 
     [Fact]
@@ -180,12 +171,9 @@ public class BigIntBinaryOperatorTests : BinaryOperatorsTestsBase
             sut: new ParsedExpressionMultiplyBigIntOperator(),
             expectedNodeType: ExpressionType.Constant,
             leftValue: 0,
-            (_, _, result) => Assertion.All(
-                result.TestType().AssignableTo<ConstantExpression>(),
-                result.TestIf()
-                    .OfType<ConstantExpression>(
-                        constantResult =>
-                            constantResult.Value.TestEquals( BigInteger.Zero ) ) ) );
+            (_, _, result) =>
+                result.TestType()
+                    .AssignableTo<ConstantExpression>( constantResult => constantResult.Value.TestEquals( BigInteger.Zero ) ) );
     }
 
     [Fact]
@@ -205,12 +193,8 @@ public class BigIntBinaryOperatorTests : BinaryOperatorsTestsBase
             sut: new ParsedExpressionMultiplyBigIntOperator(),
             expectedNodeType: ExpressionType.Negate,
             leftValue: -1,
-            (_, right, result) => Assertion.All(
-                result.TestType().AssignableTo<UnaryExpression>(),
-                result.TestIf()
-                    .OfType<UnaryExpression>(
-                        unaryResult =>
-                            unaryResult.Operand.TestRefEquals( right ) ) ) );
+            (_, right, result) => result.TestType()
+                .AssignableTo<UnaryExpression>( unaryResult => unaryResult.Operand.TestRefEquals( right ) ) );
     }
 
     [Fact]
@@ -230,12 +214,8 @@ public class BigIntBinaryOperatorTests : BinaryOperatorsTestsBase
             sut: new ParsedExpressionMultiplyBigIntOperator(),
             expectedNodeType: ExpressionType.Constant,
             rightValue: 0,
-            (_, _, result) => Assertion.All(
-                result.TestType().AssignableTo<ConstantExpression>(),
-                result.TestIf()
-                    .OfType<ConstantExpression>(
-                        constantResult =>
-                            constantResult.Value.TestEquals( BigInteger.Zero ) ) ) );
+            (_, _, result) => result.TestType()
+                .AssignableTo<ConstantExpression>( constantResult => constantResult.Value.TestEquals( BigInteger.Zero ) ) );
     }
 
     [Fact]
@@ -255,12 +235,8 @@ public class BigIntBinaryOperatorTests : BinaryOperatorsTestsBase
             sut: new ParsedExpressionMultiplyBigIntOperator(),
             expectedNodeType: ExpressionType.Negate,
             rightValue: -1,
-            (left, _, result) => Assertion.All(
-                result.TestType().AssignableTo<UnaryExpression>(),
-                result.TestIf()
-                    .OfType<UnaryExpression>(
-                        unaryResult =>
-                            unaryResult.Operand.TestRefEquals( left ) ) ) );
+            (left, _, result) => result.TestType()
+                .AssignableTo<UnaryExpression>( unaryResult => unaryResult.Operand.TestRefEquals( left ) ) );
     }
 
     [Fact]
@@ -280,12 +256,8 @@ public class BigIntBinaryOperatorTests : BinaryOperatorsTestsBase
             expectedNodeType: ExpressionType.Constant,
             leftValue: 1236,
             rightValue: 4,
-            (_, _, result) => Assertion.All(
-                result.TestType().AssignableTo<ConstantExpression>(),
-                result.TestIf()
-                    .OfType<ConstantExpression>(
-                        constantResult =>
-                            constantResult.Value.TestEquals( new BigInteger( 309 ) ) ) ) );
+            (_, _, result) => result.TestType()
+                .AssignableTo<ConstantExpression>( constantResult => constantResult.Value.TestEquals( new BigInteger( 309 ) ) ) );
     }
 
     [Fact]
@@ -333,12 +305,8 @@ public class BigIntBinaryOperatorTests : BinaryOperatorsTestsBase
             sut: new ParsedExpressionDivideBigIntOperator(),
             expectedNodeType: ExpressionType.Negate,
             rightValue: -1,
-            (left, _, result) => Assertion.All(
-                result.TestType().AssignableTo<UnaryExpression>(),
-                result.TestIf()
-                    .OfType<UnaryExpression>(
-                        unaryResult =>
-                            unaryResult.Operand.TestRefEquals( left ) ) ) );
+            (left, _, result) => result.TestType()
+                .AssignableTo<UnaryExpression>( unaryResult => unaryResult.Operand.TestRefEquals( left ) ) );
     }
 
     [Fact]
@@ -358,12 +326,8 @@ public class BigIntBinaryOperatorTests : BinaryOperatorsTestsBase
             expectedNodeType: ExpressionType.Constant,
             leftValue: 456,
             rightValue: 123,
-            (_, _, result) => Assertion.All(
-                result.TestType().AssignableTo<ConstantExpression>(),
-                result.TestIf()
-                    .OfType<ConstantExpression>(
-                        constantResult =>
-                            constantResult.Value.TestEquals( new BigInteger( 87 ) ) ) ) );
+            (_, _, result) => result.TestType()
+                .AssignableTo<ConstantExpression>( constantResult => constantResult.Value.TestEquals( new BigInteger( 87 ) ) ) );
     }
 
     [Fact]
@@ -404,12 +368,8 @@ public class BigIntBinaryOperatorTests : BinaryOperatorsTestsBase
             sut: new ParsedExpressionModuloBigIntOperator(),
             expectedNodeType: ExpressionType.Constant,
             rightValue: right,
-            (_, _, result) => Assertion.All(
-                result.TestType().AssignableTo<ConstantExpression>(),
-                result.TestIf()
-                    .OfType<ConstantExpression>(
-                        constantResult =>
-                            constantResult.Value.TestEquals( BigInteger.Zero ) ) ) );
+            (_, _, result) => result.TestType()
+                .AssignableTo<ConstantExpression>( constantResult => constantResult.Value.TestEquals( BigInteger.Zero ) ) );
     }
 
     [Fact]
@@ -429,12 +389,8 @@ public class BigIntBinaryOperatorTests : BinaryOperatorsTestsBase
             expectedNodeType: ExpressionType.Constant,
             leftValue: 123,
             rightValue: 456,
-            (_, _, result) => Assertion.All(
-                result.TestType().AssignableTo<ConstantExpression>(),
-                result.TestIf()
-                    .OfType<ConstantExpression>(
-                        constantExpression =>
-                            constantExpression.Value.TestEquals( new BigInteger( 72 ) ) ) ) );
+            (_, _, result) => result.TestType()
+                .AssignableTo<ConstantExpression>( constantExpression => constantExpression.Value.TestEquals( new BigInteger( 72 ) ) ) );
     }
 
     [Fact]
@@ -454,12 +410,8 @@ public class BigIntBinaryOperatorTests : BinaryOperatorsTestsBase
             sut: new ParsedExpressionBitwiseAndBigIntOperator(),
             expectedNodeType: ExpressionType.Constant,
             leftValue: 0,
-            (_, _, result) => Assertion.All(
-                result.TestType().AssignableTo<ConstantExpression>(),
-                result.TestIf()
-                    .OfType<ConstantExpression>(
-                        constantExpression =>
-                            constantExpression.Value.TestEquals( BigInteger.Zero ) ) ) );
+            (_, _, result) => result.TestType()
+                .AssignableTo<ConstantExpression>( constantExpression => constantExpression.Value.TestEquals( BigInteger.Zero ) ) );
     }
 
     [Fact]
@@ -479,12 +431,10 @@ public class BigIntBinaryOperatorTests : BinaryOperatorsTestsBase
             sut: new ParsedExpressionBitwiseAndBigIntOperator(),
             expectedNodeType: ExpressionType.Constant,
             rightValue: 0,
-            (_, _, result) => Assertion.All(
-                result.TestType().AssignableTo<ConstantExpression>(),
-                result.TestIf()
-                    .OfType<ConstantExpression>(
-                        constantExpression =>
-                            constantExpression.Value.TestEquals( BigInteger.Zero ) ) ) );
+            (_, _, result) => result.TestType()
+                .AssignableTo<ConstantExpression>(
+                    constantExpression =>
+                        constantExpression.Value.TestEquals( BigInteger.Zero ) ) );
     }
 
     [Fact]
@@ -504,12 +454,8 @@ public class BigIntBinaryOperatorTests : BinaryOperatorsTestsBase
             expectedNodeType: ExpressionType.Constant,
             leftValue: 123,
             rightValue: 456,
-            (_, _, result) => Assertion.All(
-                result.TestType().AssignableTo<ConstantExpression>(),
-                result.TestIf()
-                    .OfType<ConstantExpression>(
-                        constantExpression =>
-                            constantExpression.Value.TestEquals( new BigInteger( 507 ) ) ) ) );
+            (_, _, result) => result.TestType()
+                .AssignableTo<ConstantExpression>( constantExpression => constantExpression.Value.TestEquals( new BigInteger( 507 ) ) ) );
     }
 
     [Fact]
@@ -569,12 +515,8 @@ public class BigIntBinaryOperatorTests : BinaryOperatorsTestsBase
             expectedNodeType: ExpressionType.Constant,
             leftValue: 123,
             rightValue: 456,
-            (_, _, result) => Assertion.All(
-                result.TestType().AssignableTo<ConstantExpression>(),
-                result.TestIf()
-                    .OfType<ConstantExpression>(
-                        constantExpression =>
-                            constantExpression.Value.TestEquals( new BigInteger( 435 ) ) ) ) );
+            (_, _, result) => result.TestType()
+                .AssignableTo<ConstantExpression>( constantExpression => constantExpression.Value.TestEquals( new BigInteger( 435 ) ) ) );
     }
 
     [Fact]
@@ -634,12 +576,9 @@ public class BigIntBinaryOperatorTests : BinaryOperatorsTestsBase
             expectedNodeType: ExpressionType.Constant,
             leftValue: 456,
             rightValue: 12,
-            (_, _, result) => Assertion.All(
-                result.TestType().AssignableTo<ConstantExpression>(),
-                result.TestIf()
-                    .OfType<ConstantExpression>(
-                        constantExpression =>
-                            constantExpression.Value.TestEquals( new BigInteger( 1867776 ) ) ) ) );
+            (_, _, result) => result.TestType()
+                .AssignableTo<ConstantExpression>(
+                    constantExpression => constantExpression.Value.TestEquals( new BigInteger( 1867776 ) ) ) );
     }
 
     [Fact]
@@ -659,12 +598,8 @@ public class BigIntBinaryOperatorTests : BinaryOperatorsTestsBase
             sut: new ParsedExpressionBitwiseLeftShiftBigIntOperator(),
             expectedNodeType: ExpressionType.Constant,
             leftValue: 0,
-            (_, _, result) => Assertion.All(
-                result.TestType().AssignableTo<ConstantExpression>(),
-                result.TestIf()
-                    .OfType<ConstantExpression>(
-                        constantResult =>
-                            constantResult.Value.TestEquals( BigInteger.Zero ) ) ) );
+            (_, _, result) => result.TestType()
+                .AssignableTo<ConstantExpression>( constantResult => constantResult.Value.TestEquals( BigInteger.Zero ) ) );
     }
 
     [Theory]
@@ -711,12 +646,8 @@ public class BigIntBinaryOperatorTests : BinaryOperatorsTestsBase
             expectedNodeType: ExpressionType.Constant,
             leftValue: 1867776,
             rightValue: 12,
-            (_, _, result) => Assertion.All(
-                result.TestType().AssignableTo<ConstantExpression>(),
-                result.TestIf()
-                    .OfType<ConstantExpression>(
-                        constantExpression =>
-                            constantExpression.Value.TestEquals( new BigInteger( 456 ) ) ) ) );
+            (_, _, result) => result.TestType()
+                .AssignableTo<ConstantExpression>( constantExpression => constantExpression.Value.TestEquals( new BigInteger( 456 ) ) ) );
     }
 
     [Fact]
@@ -736,12 +667,8 @@ public class BigIntBinaryOperatorTests : BinaryOperatorsTestsBase
             sut: new ParsedExpressionBitwiseRightShiftBigIntOperator(),
             expectedNodeType: ExpressionType.Constant,
             leftValue: 0,
-            (_, _, result) => Assertion.All(
-                result.TestType().AssignableTo<ConstantExpression>(),
-                result.TestIf()
-                    .OfType<ConstantExpression>(
-                        constantResult =>
-                            constantResult.Value.TestEquals( BigInteger.Zero ) ) ) );
+            (_, _, result) => result.TestType()
+                .AssignableTo<ConstantExpression>( constantResult => constantResult.Value.TestEquals( BigInteger.Zero ) ) );
     }
 
     [Theory]
@@ -793,12 +720,8 @@ public class BigIntBinaryOperatorTests : BinaryOperatorsTestsBase
             expectedNodeType: ExpressionType.Constant,
             leftValue: left,
             rightValue: right,
-            (_, _, result) => Assertion.All(
-                result.TestType().AssignableTo<ConstantExpression>(),
-                result.TestIf()
-                    .OfType<ConstantExpression>(
-                        constantResult =>
-                            constantResult.Value.TestEquals( expected ) ) ) );
+            (_, _, result) => result.TestType()
+                .AssignableTo<ConstantExpression>( constantResult => constantResult.Value.TestEquals( expected ) ) );
     }
 
     [Fact]
@@ -843,12 +766,8 @@ public class BigIntBinaryOperatorTests : BinaryOperatorsTestsBase
             expectedNodeType: ExpressionType.Constant,
             leftValue: left,
             rightValue: right,
-            (_, _, result) => Assertion.All(
-                result.TestType().AssignableTo<ConstantExpression>(),
-                result.TestIf()
-                    .OfType<ConstantExpression>(
-                        constantResult =>
-                            constantResult.Value.TestEquals( expected ) ) ) );
+            (_, _, result) => result.TestType()
+                .AssignableTo<ConstantExpression>( constantResult => constantResult.Value.TestEquals( expected ) ) );
     }
 
     [Fact]
@@ -894,12 +813,8 @@ public class BigIntBinaryOperatorTests : BinaryOperatorsTestsBase
             expectedNodeType: ExpressionType.Constant,
             leftValue: left,
             rightValue: right,
-            (_, _, result) => Assertion.All(
-                result.TestType().AssignableTo<ConstantExpression>(),
-                result.TestIf()
-                    .OfType<ConstantExpression>(
-                        constantResult =>
-                            constantResult.Value.TestEquals( expected ) ) ) );
+            (_, _, result) => result.TestType()
+                .AssignableTo<ConstantExpression>( constantResult => constantResult.Value.TestEquals( expected ) ) );
     }
 
     [Fact]
@@ -945,12 +860,8 @@ public class BigIntBinaryOperatorTests : BinaryOperatorsTestsBase
             expectedNodeType: ExpressionType.Constant,
             leftValue: left,
             rightValue: right,
-            (_, _, result) => Assertion.All(
-                result.TestType().AssignableTo<ConstantExpression>(),
-                result.TestIf()
-                    .OfType<ConstantExpression>(
-                        constantResult =>
-                            constantResult.Value.TestEquals( expected ) ) ) );
+            (_, _, result) => result.TestType()
+                .AssignableTo<ConstantExpression>( constantResult => constantResult.Value.TestEquals( expected ) ) );
     }
 
     [Fact]
@@ -996,12 +907,8 @@ public class BigIntBinaryOperatorTests : BinaryOperatorsTestsBase
             expectedNodeType: ExpressionType.Constant,
             leftValue: left,
             rightValue: right,
-            (_, _, result) => Assertion.All(
-                result.TestType().AssignableTo<ConstantExpression>(),
-                result.TestIf()
-                    .OfType<ConstantExpression>(
-                        constantResult =>
-                            constantResult.Value.TestEquals( expected ) ) ) );
+            (_, _, result) => result.TestType()
+                .AssignableTo<ConstantExpression>( constantResult => constantResult.Value.TestEquals( expected ) ) );
     }
 
     [Fact]
@@ -1047,12 +954,8 @@ public class BigIntBinaryOperatorTests : BinaryOperatorsTestsBase
             expectedNodeType: ExpressionType.Constant,
             leftValue: left,
             rightValue: right,
-            (_, _, result) => Assertion.All(
-                result.TestType().AssignableTo<ConstantExpression>(),
-                result.TestIf()
-                    .OfType<ConstantExpression>(
-                        constantResult =>
-                            constantResult.Value.TestEquals( expected ) ) ) );
+            (_, _, result) => result.TestType()
+                .AssignableTo<ConstantExpression>( constantResult => constantResult.Value.TestEquals( expected ) ) );
     }
 
     [Fact]
@@ -1081,15 +984,13 @@ public class BigIntBinaryOperatorTests : BinaryOperatorsTestsBase
         Process_ShouldPopTwoOperandsAndPushOneExpression_WhenBothOperandsAreVariable<BigInteger, BigInteger, int>(
             sut: new ParsedExpressionCompareBigIntOperator(),
             expectedNodeType: ExpressionType.Call,
-            (left, right, result) => Assertion.All(
-                result.TestType().AssignableTo<MethodCallExpression>(),
-                result.TestIf()
-                    .OfType<MethodCallExpression>(
-                        methodCallResult => Assertion.All(
-                            "methodCallResult",
-                            methodCallResult.Object.TestRefEquals( left ),
-                            methodCallResult.Arguments.TestSequence( [ right ] ),
-                            methodCallResult.Method.Name.TestEquals( nameof( IComparable.CompareTo ) ) ) ) ) );
+            (left, right, result) => result.TestType()
+                .AssignableTo<MethodCallExpression>(
+                    methodCallResult => Assertion.All(
+                        "methodCallResult",
+                        methodCallResult.Object.TestRefEquals( left ),
+                        methodCallResult.Arguments.TestSequence( [ right ] ),
+                        methodCallResult.Method.Name.TestEquals( nameof( IComparable.CompareTo ) ) ) ) );
     }
 
     [Theory]
@@ -1106,12 +1007,8 @@ public class BigIntBinaryOperatorTests : BinaryOperatorsTestsBase
             expectedNodeType: ExpressionType.Constant,
             leftValue: left,
             rightValue: right,
-            (_, _, result) => Assertion.All(
-                result.TestType().AssignableTo<ConstantExpression>(),
-                result.TestIf()
-                    .OfType<ConstantExpression>(
-                        constantResult =>
-                            constantResult.Value.TestEquals( expected ) ) ) );
+            (_, _, result) => result.TestType()
+                .AssignableTo<ConstantExpression>( constantResult => constantResult.Value.TestEquals( expected ) ) );
     }
 
     [Fact]
@@ -1121,15 +1018,13 @@ public class BigIntBinaryOperatorTests : BinaryOperatorsTestsBase
             sut: new ParsedExpressionCompareBigIntOperator(),
             expectedNodeType: ExpressionType.Call,
             leftValue: Fixture.Create<BigInteger>(),
-            (left, right, result) => Assertion.All(
-                result.TestType().AssignableTo<MethodCallExpression>(),
-                result.TestIf()
-                    .OfType<MethodCallExpression>(
-                        methodCallResult => Assertion.All(
-                            "methodCallResult",
-                            methodCallResult.Object.TestRefEquals( left ),
-                            methodCallResult.Arguments.TestSequence( [ right ] ),
-                            methodCallResult.Method.Name.TestEquals( nameof( IComparable.CompareTo ) ) ) ) ) );
+            (left, right, result) => result.TestType()
+                .AssignableTo<MethodCallExpression>(
+                    methodCallResult => Assertion.All(
+                        "methodCallResult",
+                        methodCallResult.Object.TestRefEquals( left ),
+                        methodCallResult.Arguments.TestSequence( [ right ] ),
+                        methodCallResult.Method.Name.TestEquals( nameof( IComparable.CompareTo ) ) ) ) );
     }
 
     [Fact]
@@ -1139,14 +1034,12 @@ public class BigIntBinaryOperatorTests : BinaryOperatorsTestsBase
             sut: new ParsedExpressionCompareBigIntOperator(),
             expectedNodeType: ExpressionType.Call,
             rightValue: Fixture.Create<BigInteger>(),
-            (left, right, result) => Assertion.All(
-                result.TestType().AssignableTo<MethodCallExpression>(),
-                result.TestIf()
-                    .OfType<MethodCallExpression>(
-                        methodCallResult => Assertion.All(
-                            "methodCallResult",
-                            methodCallResult.Object.TestRefEquals( left ),
-                            methodCallResult.Arguments.TestSequence( [ right ] ),
-                            methodCallResult.Method.Name.TestEquals( nameof( IComparable.CompareTo ) ) ) ) ) );
+            (left, right, result) => result.TestType()
+                .AssignableTo<MethodCallExpression>(
+                    methodCallResult => Assertion.All(
+                        "methodCallResult",
+                        methodCallResult.Object.TestRefEquals( left ),
+                        methodCallResult.Arguments.TestSequence( [ right ] ),
+                        methodCallResult.Method.Name.TestEquals( nameof( IComparable.CompareTo ) ) ) ) );
     }
 }

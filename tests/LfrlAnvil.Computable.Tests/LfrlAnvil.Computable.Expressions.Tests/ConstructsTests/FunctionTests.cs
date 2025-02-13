@@ -38,22 +38,20 @@ public class FunctionTests : TestsBase
 
         Assertion.All(
                 result.NodeType.TestEquals( ExpressionType.Add ),
-                result.TestType().AssignableTo<BinaryExpression>(),
-                result.TestIf()
-                    .OfType<BinaryExpression>(
+                result.TestType()
+                    .AssignableTo<BinaryExpression>(
                         binaryResult => Assertion.All(
                             "binaryResult",
                             binaryResult.Left.NodeType.TestEquals( ExpressionType.Add ),
                             binaryResult.Right.NodeType.TestEquals( ExpressionType.Constant ),
-                            binaryResult.Left.TestType().AssignableTo<BinaryExpression>(),
-                            binaryResult.Left.TestIf()
-                                .OfType<BinaryExpression>(
+                            binaryResult.Left.TestType()
+                                .AssignableTo<BinaryExpression>(
                                     parametersAdd => Assertion.All(
                                         "parametersAdd",
                                         parametersAdd.Left.TestRefEquals( v1 ),
                                         parametersAdd.Right.TestRefEquals( v2 ) ) ),
-                            binaryResult.Right.TestType().AssignableTo<ConstantExpression>(),
-                            binaryResult.Right.TestIf().OfType<ConstantExpression>( constant => constant.Value.TestEquals( 10 ) ) ) ) )
+                            binaryResult.Right.TestType()
+                                .AssignableTo<ConstantExpression>( constant => constant.Value.TestEquals( 10 ) ) ) ) )
             .Go();
     }
 
@@ -75,9 +73,8 @@ public class FunctionTests : TestsBase
 
         Assertion.All(
                 result.NodeType.TestEquals( ExpressionType.Invoke ),
-                result.TestType().AssignableTo<InvocationExpression>(),
-                result.TestIf()
-                    .OfType<InvocationExpression>(
+                result.TestType()
+                    .AssignableTo<InvocationExpression>(
                         invocation => Assertion.All(
                             "invocation",
                             invocation.Expression.TestRefEquals( expression ),
@@ -96,11 +93,8 @@ public class FunctionTests : TestsBase
 
         Assertion.All(
                 result.NodeType.TestEquals( ExpressionType.Invoke ),
-                result.TestType().AssignableTo<InvocationExpression>(),
-                result.TestIf()
-                    .OfType<InvocationExpression>(
-                        invocation =>
-                            invocation.Expression.TestRefEquals( expression ) ) )
+                result.TestType()
+                    .AssignableTo<InvocationExpression>( invocation => invocation.Expression.TestRefEquals( expression ) ) )
             .Go();
     }
 

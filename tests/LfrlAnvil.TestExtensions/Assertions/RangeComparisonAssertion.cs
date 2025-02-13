@@ -2,18 +2,16 @@
 
 namespace LfrlAnvil.TestExtensions.Assertions;
 
-internal sealed class RangeComparisonAssertion<T> : Assertion
+internal sealed class RangeComparisonAssertion<T> : SubjectAssertion<T>
 {
     internal RangeComparisonAssertion(string context, T subject, T min, T max, bool expected)
-        : base( context )
+        : base( context, subject )
     {
-        Subject = subject;
         Min = min;
         Max = max;
         Expected = expected;
     }
 
-    internal T Subject { get; }
     internal T Min { get; }
     internal T Max { get; }
     internal bool Expected { get; }

@@ -195,11 +195,9 @@ public class ZonedDateTimeTests : TestsBase
         var action = Lambda.Of( () => ZonedDateTime.Create( dateTime, timeZone ) );
 
         action.Test(
-                exc => Assertion.All(
-                    exc.TestType().Exact<InvalidZonedDateTimeException>(),
-                    exc.TestIf()
-                        .OfType<InvalidZonedDateTimeException>(
-                            e => Assertion.All( e.DateTime.TestEquals( dateTime ), e.TimeZone.TestRefEquals( timeZone ) ) ) ) )
+                exc => exc.TestType()
+                    .Exact<InvalidZonedDateTimeException>(
+                        e => Assertion.All( e.DateTime.TestEquals( dateTime ), e.TimeZone.TestRefEquals( timeZone ) ) ) )
             .Go();
     }
 
@@ -731,13 +729,11 @@ public class ZonedDateTimeTests : TestsBase
         var action = Lambda.Of( () => sut.Add( period ) );
 
         action.Test(
-                exc => Assertion.All(
-                    exc.TestType().Exact<InvalidZonedDateTimeException>(),
-                    exc.TestIf()
-                        .OfType<InvalidZonedDateTimeException>(
-                            e => Assertion.All(
-                                e.DateTime.TestEquals( dateTime.Add( period ) ),
-                                e.TimeZone.TestRefEquals( timeZone ) ) ) ) )
+                exc => exc.TestType()
+                    .Exact<InvalidZonedDateTimeException>(
+                        e => Assertion.All(
+                            e.DateTime.TestEquals( dateTime.Add( period ) ),
+                            e.TimeZone.TestRefEquals( timeZone ) ) ) )
             .Go();
     }
 
@@ -1179,13 +1175,11 @@ public class ZonedDateTimeTests : TestsBase
         var action = Lambda.Of( () => sut.SetTimeOfDay( newTime ) );
 
         action.Test(
-                exc => Assertion.All(
-                    exc.TestType().Exact<InvalidZonedDateTimeException>(),
-                    exc.TestIf()
-                        .OfType<InvalidZonedDateTimeException>(
-                            e => Assertion.All(
-                                e.DateTime.TestEquals( dateTime + ( TimeSpan )newTime ),
-                                e.TimeZone.TestRefEquals( timeZone ) ) ) ) )
+                exc => exc.TestType()
+                    .Exact<InvalidZonedDateTimeException>(
+                        e => Assertion.All(
+                            e.DateTime.TestEquals( dateTime + ( TimeSpan )newTime ),
+                            e.TimeZone.TestRefEquals( timeZone ) ) ) )
             .Go();
     }
 
@@ -1266,21 +1260,18 @@ public class ZonedDateTimeTests : TestsBase
             ? timeZone.BaseUtcOffset
             : timeZone.BaseUtcOffset + daylightSavingOffset;
 
-        Assertion.All(
-                result.TestNotNull(),
-                result.TestIf()
-                    .NotNull(
-                        r => Assertion.All(
-                            "result.Value",
-                            r.Timestamp.TestEquals( new Timestamp( expectedUtcDateTime ) ),
-                            AssertValueDateCorrectness( r, sut.Value, sut.Value.Kind ),
-                            r.TimeZone.TestEquals( sut.TimeZone ),
-                            r.UtcOffset.TestEquals( new Duration( expectedUtcOffset ) ),
-                            r.TimeOfDay.TestEquals( sut.TimeOfDay ),
-                            r.IsLocal.TestEquals( sut.IsLocal ),
-                            r.IsUtc.TestEquals( sut.IsUtc ),
-                            r.IsInDaylightSavingTime.TestEquals( ! sut.IsInDaylightSavingTime ),
-                            r.IsAmbiguous.TestTrue() ) ) )
+        result.TestNotNull(
+                r => Assertion.All(
+                    "result.Value",
+                    r.Timestamp.TestEquals( new Timestamp( expectedUtcDateTime ) ),
+                    AssertValueDateCorrectness( r, sut.Value, sut.Value.Kind ),
+                    r.TimeZone.TestEquals( sut.TimeZone ),
+                    r.UtcOffset.TestEquals( new Duration( expectedUtcOffset ) ),
+                    r.TimeOfDay.TestEquals( sut.TimeOfDay ),
+                    r.IsLocal.TestEquals( sut.IsLocal ),
+                    r.IsUtc.TestEquals( sut.IsUtc ),
+                    r.IsInDaylightSavingTime.TestEquals( ! sut.IsInDaylightSavingTime ),
+                    r.IsAmbiguous.TestTrue() ) )
             .Go();
     }
 

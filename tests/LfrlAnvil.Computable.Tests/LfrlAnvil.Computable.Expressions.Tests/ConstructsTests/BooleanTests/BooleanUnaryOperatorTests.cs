@@ -23,11 +23,9 @@ public class BooleanUnaryOperatorTests : UnaryOperatorsTestsBase
             sut: new ParsedExpressionNotOperator(),
             expectedNodeType: ExpressionType.Constant,
             operandValue: operand,
-            (_, result) => Assertion.All(
-                result.TestType().AssignableTo<ConstantExpression>(),
-                result.TestIf()
-                    .OfType<ConstantExpression>(
-                        constantResult =>
-                            constantResult.Value.TestEquals( expected ) ) ) );
+            (_, result) => result.TestType()
+                .AssignableTo<ConstantExpression>(
+                    constantResult =>
+                        constantResult.Value.TestEquals( expected ) ) );
     }
 }

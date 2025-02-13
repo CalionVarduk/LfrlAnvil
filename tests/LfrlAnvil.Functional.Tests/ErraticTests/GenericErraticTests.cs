@@ -114,11 +114,7 @@ public abstract class GenericErraticTests<T> : TestsBase
 
         var action = Lambda.Of( () => sut.GetValue() );
 
-        action.Test(
-                exc => Assertion.All(
-                    exc.TestType().Exact<ValueAccessException>(),
-                    exc.TestIf().OfType<ValueAccessException>( e => e.MemberName.TestEquals( nameof( Erratic<T>.Value ) ) ) ) )
-            .Go();
+        action.Test( exc => exc.TestType().Exact<ValueAccessException>( e => e.MemberName.TestEquals( nameof( Erratic<T>.Value ) ) ) ).Go();
     }
 
     [Fact]
@@ -185,11 +181,7 @@ public abstract class GenericErraticTests<T> : TestsBase
 
         var action = Lambda.Of( () => sut.GetError() );
 
-        action.Test(
-                exc => Assertion.All(
-                    exc.TestType().Exact<ValueAccessException>(),
-                    exc.TestIf().OfType<ValueAccessException>( e => e.MemberName.TestEquals( nameof( Erratic<T>.Error ) ) ) ) )
-            .Go();
+        action.Test( exc => exc.TestType().Exact<ValueAccessException>( e => e.MemberName.TestEquals( nameof( Erratic<T>.Error ) ) ) ).Go();
     }
 
     [Fact]
@@ -750,11 +742,7 @@ public abstract class GenericErraticTests<T> : TestsBase
 
         var action = Lambda.Of( () => ( T )sut );
 
-        action.Test(
-                exc => Assertion.All(
-                    exc.TestType().Exact<ValueAccessException>(),
-                    exc.TestIf().OfType<ValueAccessException>( e => e.MemberName.TestEquals( nameof( Erratic<T>.Value ) ) ) ) )
-            .Go();
+        action.Test( exc => exc.TestType().Exact<ValueAccessException>( e => e.MemberName.TestEquals( nameof( Erratic<T>.Value ) ) ) ).Go();
     }
 
     [Fact]
@@ -776,11 +764,7 @@ public abstract class GenericErraticTests<T> : TestsBase
 
         var action = Lambda.Of( () => ( Exception )sut );
 
-        action.Test(
-                exc => Assertion.All(
-                    exc.TestType().Exact<ValueAccessException>(),
-                    exc.TestIf().OfType<ValueAccessException>( e => e.MemberName.TestEquals( nameof( Erratic<T>.Error ) ) ) ) )
-            .Go();
+        action.Test( exc => exc.TestType().Exact<ValueAccessException>( e => e.MemberName.TestEquals( nameof( Erratic<T>.Error ) ) ) ).Go();
     }
 
     [Theory]

@@ -1,6 +1,6 @@
 ﻿namespace LfrlAnvil.TestExtensions.Assertions;
 
-internal sealed class LikeAssertion : Assertion
+internal sealed class LikeAssertion : SubjectAssertion<ReadOnlyMemory<char>>
 {
     internal enum ComparisonType : byte
     {
@@ -14,15 +14,13 @@ internal sealed class LikeAssertion : Assertion
         ReadOnlyMemory<char> value,
         StringComparison comparison,
         ComparisonType type)
-        : base( context )
+        : base( context, subject )
     {
-        Subject = subject;
         Value = value;
         Comparison = comparison;
         Type = type;
     }
 
-    internal ReadOnlyMemory<char> Subject { get; }
     internal ReadOnlyMemory<char> Value { get; }
     internal StringComparison Comparison { get; }
     internal ComparisonType Type { get; }

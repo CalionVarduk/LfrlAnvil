@@ -3,17 +3,15 @@ using System.Linq;
 
 namespace LfrlAnvil.TestExtensions.Assertions;
 
-internal sealed class SetAssertion<T> : Assertion
+internal sealed class SetAssertion<T> : SubjectAssertion<IEnumerable<T>>
 {
     internal SetAssertion(string context, IEnumerable<T> subject, IReadOnlyList<T> values, bool exact)
-        : base( context )
+        : base( context, subject )
     {
-        Subject = subject;
         Values = values;
         Exact = exact;
     }
 
-    internal IEnumerable<T> Subject { get; }
     internal IReadOnlyList<T> Values { get; }
     internal bool Exact { get; }
 

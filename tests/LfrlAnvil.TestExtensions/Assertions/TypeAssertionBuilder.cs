@@ -3,37 +3,50 @@
 namespace LfrlAnvil.TestExtensions.Assertions;
 
 public sealed class TypeAssertionBuilder<T>
+    where T : class
 {
-    internal TypeAssertionBuilder(string context, T subject)
+    internal TypeAssertionBuilder(string context, T? subject)
     {
         Context = context;
         Subject = subject;
     }
 
     public string Context { get; }
-    public T Subject { get; }
+    public T? Subject { get; }
 
     [Pure]
-    public Assertion Exact(Type expected)
+    public SubjectAssertion<T?> Exact(Type expected)
     {
-        return new TypeAssertion<T>( Context, Subject, expected, exact: true );
+        return new TypeAssertion<T?>( Context, Subject, expected, exact: true );
     }
 
     [Pure]
-    public Assertion AssignableTo(Type expected)
+    public SubjectAssertion<T?> AssignableTo(Type expected)
     {
-        return new TypeAssertion<T>( Context, Subject, expected, exact: false );
+        return new TypeAssertion<T?>( Context, Subject, expected, exact: false );
     }
 
     [Pure]
-    public Assertion Exact<TExpected>()
+    public SubjectAssertion<T?> Exact<TExpected>()
     {
         return Exact( typeof( TExpected ) );
     }
 
     [Pure]
-    public Assertion AssignableTo<TExpected>()
+    public SubjectAssertion<T?> Exact<TExpected>(Func<TExpected, Assertion> continuation)
+    {
+        return Exact( typeof( TExpected ) ).Then( x => continuation( ( TExpected )( object )x! ) );
+    }
+
+    [Pure]
+    public SubjectAssertion<T?> AssignableTo<TExpected>()
     {
         return AssignableTo( typeof( TExpected ) );
+    }
+
+    [Pure]
+    public SubjectAssertion<T?> AssignableTo<TExpected>(Func<TExpected, Assertion> continuation)
+    {
+        return AssignableTo( typeof( TExpected ) ).Then( x => continuation( ( TExpected )( object )x! ) );
     }
 }

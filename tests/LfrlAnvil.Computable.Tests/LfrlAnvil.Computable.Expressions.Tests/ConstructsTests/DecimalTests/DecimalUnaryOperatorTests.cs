@@ -21,11 +21,9 @@ public class DecimalUnaryOperatorTests : UnaryOperatorsTestsBase
             sut: new ParsedExpressionNegateDecimalOperator(),
             expectedNodeType: ExpressionType.Constant,
             operandValue: 123,
-            (_, result) => Assertion.All(
-                result.TestType().AssignableTo<ConstantExpression>(),
-                result.TestIf()
-                    .OfType<ConstantExpression>(
-                        constantResult =>
-                            constantResult.Value.TestEquals( -123m ) ) ) );
+            (_, result) => result.TestType()
+                .AssignableTo<ConstantExpression>(
+                    constantResult =>
+                        constantResult.Value.TestEquals( -123m ) ) );
     }
 }

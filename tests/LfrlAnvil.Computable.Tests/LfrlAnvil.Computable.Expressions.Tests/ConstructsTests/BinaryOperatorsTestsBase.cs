@@ -107,14 +107,11 @@ public abstract class BinaryOperatorsTestsBase : ConstructsTestsBase
     [Pure]
     protected static Assertion DefaultNodeAssertion(Expression left, Expression right, Expression result)
     {
-        return Assertion.All(
-            "Node",
-            result.TestType().AssignableTo<BinaryExpression>(),
-            result.TestIf()
-                .OfType<BinaryExpression>(
-                    binaryResult => Assertion.All(
-                        "binaryResult",
-                        binaryResult.Left.TestRefEquals( left ),
-                        binaryResult.Right.TestRefEquals( right ) ) ) );
+        return result.TestType()
+            .AssignableTo<BinaryExpression>(
+                binaryResult => Assertion.All(
+                    "binaryResult",
+                    binaryResult.Left.TestRefEquals( left ),
+                    binaryResult.Right.TestRefEquals( right ) ) );
     }
 }

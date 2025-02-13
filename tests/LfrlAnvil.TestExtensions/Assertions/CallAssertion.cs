@@ -2,16 +2,14 @@
 
 namespace LfrlAnvil.TestExtensions.Assertions;
 
-internal sealed class CallAssertion : Assertion
+internal sealed class CallAssertion : SubjectAssertion<Action>
 {
     internal CallAssertion(string context, Action subject, Func<Exception?, Assertion> completionAssertion)
-        : base( context )
+        : base( context, subject )
     {
-        Subject = subject;
         CompletionAssertion = completionAssertion;
     }
 
-    internal Action Subject { get; }
     internal Func<Exception?, Assertion> CompletionAssertion { get; }
 
     public override void Go()

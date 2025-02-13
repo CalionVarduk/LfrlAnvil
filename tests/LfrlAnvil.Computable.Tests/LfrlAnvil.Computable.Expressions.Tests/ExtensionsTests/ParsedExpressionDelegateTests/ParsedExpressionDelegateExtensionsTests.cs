@@ -188,11 +188,9 @@ public class ParsedExpressionDelegateExtensionsTests : TestsBase
             () => sut.MapArguments( KeyValuePair.Create( "a", 0m ), KeyValuePair.Create( "e", 0m ), KeyValuePair.Create( "f", 0m ) ) );
 
         action.Test(
-                exc => Assertion.All(
-                    exc.TestType().Exact<InvalidParsedExpressionArgumentsException>(),
-                    exc.TestIf()
-                        .OfType<InvalidParsedExpressionArgumentsException>(
-                            e => e.ArgumentNames.Select( n => n.ToString() ).TestSequence( [ "e", "f" ] ) ) ) )
+                exc => exc.TestType()
+                    .Exact<InvalidParsedExpressionArgumentsException>(
+                        e => e.ArgumentNames.Select( n => n.ToString() ).TestSequence( [ "e", "f" ] ) ) )
             .Go();
     }
 }
