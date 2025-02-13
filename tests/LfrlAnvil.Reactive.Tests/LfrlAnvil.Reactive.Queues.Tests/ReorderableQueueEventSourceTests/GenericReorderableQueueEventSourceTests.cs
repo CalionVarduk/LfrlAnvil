@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
 using LfrlAnvil.Functional;
 using LfrlAnvil.Reactive.Queues.Composites;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Reactive.Queues.Tests.ReorderableQueueEventSourceTests;
 
@@ -19,7 +18,7 @@ public abstract class GenericReorderableQueueEventSourceTests<TEvent> : TestsBas
     {
         var queue = new MockEventQueue( Fixture.Create<long>() );
         var sut = new ReorderableQueueEventSource<TEvent, long, int>( queue );
-        sut.Queue.Should().BeSameAs( queue );
+        sut.Queue.TestRefEquals( queue ).Go();
     }
 
     [Fact]
@@ -27,7 +26,7 @@ public abstract class GenericReorderableQueueEventSourceTests<TEvent> : TestsBas
     {
         var queue = new MockEventQueue( Fixture.Create<long>() );
         var sut = QueueEventSource.Create( queue );
-        sut.Queue.Should().BeSameAs( queue );
+        sut.Queue.TestRefEquals( queue ).Go();
     }
 
     [Fact]
@@ -52,16 +51,16 @@ public abstract class GenericReorderableQueueEventSourceTests<TEvent> : TestsBas
 
         sut.Move( delta );
 
-        using ( new AssertionScope() )
-        {
-            sut.Queue.Should().BeEmpty();
-            sut.Queue.CurrentPoint.Should().Be( thirdDequeuePoint );
-            receivedEvents.Should()
-                .BeSequentiallyEqualTo(
+        Assertion.All(
+                sut.Queue.TestEmpty(),
+                sut.Queue.CurrentPoint.TestEquals( thirdDequeuePoint ),
+                receivedEvents.TestSequence(
+                [
                     new FromQueue<TEvent, long, int>( firstEnqueued, thirdDequeuePoint, delta ),
                     new FromQueue<TEvent, long, int>( secondEnqueued, thirdDequeuePoint, delta ),
-                    new FromQueue<TEvent, long, int>( thirdEnqueued, thirdDequeuePoint, delta ) );
-        }
+                    new FromQueue<TEvent, long, int>( thirdEnqueued, thirdDequeuePoint, delta )
+                ] ) )
+            .Go();
     }
 
     [Fact]
@@ -73,7 +72,7 @@ public abstract class GenericReorderableQueueEventSourceTests<TEvent> : TestsBas
 
         var action = Lambda.Of( () => sut.Move( Fixture.Create<int>() ) );
 
-        action.Should().ThrowExactly<ObjectDisposedException>();
+        action.Test( exc => exc.TestType().Exact<ObjectDisposedException>() ).Go();
     }
 
     [Fact]
@@ -85,7 +84,7 @@ public abstract class GenericReorderableQueueEventSourceTests<TEvent> : TestsBas
 
         sut.Dispose();
 
-        sut.Queue.Should().BeEmpty();
+        sut.Queue.TestEmpty().Go();
     }
 
     private sealed class MockEventQueue : ReorderableEventQueueBase<TEvent, long, int>

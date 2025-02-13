@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
 using LfrlAnvil.Functional;
 using LfrlAnvil.Reactive.Queues.Composites;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Reactive.Queues.Tests.QueueEventSourceTests;
 
@@ -18,7 +17,7 @@ public abstract class GenericQueueEventSourceTests<TEvent> : TestsBase
     {
         var queue = new MockEventQueue( Fixture.Create<long>() );
         var sut = new QueueEventSource<TEvent, long, int>( queue );
-        sut.Queue.Should().BeSameAs( queue );
+        sut.Queue.TestRefEquals( queue ).Go();
     }
 
     [Fact]
@@ -26,7 +25,7 @@ public abstract class GenericQueueEventSourceTests<TEvent> : TestsBase
     {
         var queue = new MockEventQueue( Fixture.Create<long>() );
         var sut = QueueEventSource.Create( queue );
-        sut.Queue.Should().BeSameAs( queue );
+        sut.Queue.TestRefEquals( queue ).Go();
     }
 
     [Fact]
@@ -51,16 +50,16 @@ public abstract class GenericQueueEventSourceTests<TEvent> : TestsBase
 
         sut.Move( delta );
 
-        using ( new AssertionScope() )
-        {
-            sut.Queue.Should().BeEmpty();
-            sut.Queue.CurrentPoint.Should().Be( thirdDequeuePoint );
-            receivedEvents.Should()
-                .BeSequentiallyEqualTo(
+        Assertion.All(
+                sut.Queue.TestEmpty(),
+                sut.Queue.CurrentPoint.TestEquals( thirdDequeuePoint ),
+                receivedEvents.TestSequence(
+                [
                     new FromQueue<TEvent, long, int>( firstEnqueued, thirdDequeuePoint, delta ),
                     new FromQueue<TEvent, long, int>( secondEnqueued, thirdDequeuePoint, delta ),
-                    new FromQueue<TEvent, long, int>( thirdEnqueued, thirdDequeuePoint, delta ) );
-        }
+                    new FromQueue<TEvent, long, int>( thirdEnqueued, thirdDequeuePoint, delta )
+                ] ) )
+            .Go();
     }
 
     [Fact]
@@ -72,7 +71,7 @@ public abstract class GenericQueueEventSourceTests<TEvent> : TestsBase
 
         var action = Lambda.Of( () => sut.Move( Fixture.Create<int>() ) );
 
-        action.Should().ThrowExactly<ObjectDisposedException>();
+        action.Test( exc => exc.TestType().Exact<ObjectDisposedException>() ).Go();
     }
 
     [Fact]
@@ -84,7 +83,7 @@ public abstract class GenericQueueEventSourceTests<TEvent> : TestsBase
 
         sut.Dispose();
 
-        sut.Queue.Should().BeEmpty();
+        sut.Queue.TestEmpty().Go();
     }
 
     private sealed class MockEventQueue : EventQueueBase<TEvent, long, int>

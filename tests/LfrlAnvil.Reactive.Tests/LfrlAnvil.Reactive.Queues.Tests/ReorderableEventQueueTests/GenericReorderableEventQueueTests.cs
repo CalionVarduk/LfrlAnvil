@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using LfrlAnvil.Functional;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Reactive.Queues.Tests.ReorderableEventQueueTests;
 
@@ -22,12 +21,11 @@ public abstract class GenericReorderableEventQueueTests<TEvent> : TestsBase
     {
         var sut = new MockEventQueue( startPoint );
 
-        using ( new AssertionScope() )
-        {
-            sut.StartPoint.Should().Be( startPoint );
-            sut.CurrentPoint.Should().Be( startPoint );
-            sut.Count.Should().Be( 0 );
-        }
+        Assertion.All(
+                sut.StartPoint.TestEquals( startPoint ),
+                sut.CurrentPoint.TestEquals( startPoint ),
+                sut.Count.TestEquals( 0 ) )
+            .Go();
     }
 
     [Theory]
@@ -40,14 +38,13 @@ public abstract class GenericReorderableEventQueueTests<TEvent> : TestsBase
         var comparer = Comparer<long>.Create( (a, b) => a.GetHashCode().CompareTo( b.GetHashCode() ) );
         var sut = new MockEventQueue( startPoint, eventComparer, comparer );
 
-        using ( new AssertionScope() )
-        {
-            sut.StartPoint.Should().Be( startPoint );
-            sut.CurrentPoint.Should().Be( startPoint );
-            sut.Count.Should().Be( 0 );
-            sut.Comparer.Should().BeSameAs( comparer );
-            sut.EventComparer.Should().BeSameAs( eventComparer );
-        }
+        Assertion.All(
+                sut.StartPoint.TestEquals( startPoint ),
+                sut.CurrentPoint.TestEquals( startPoint ),
+                sut.Count.TestEquals( 0 ),
+                sut.Comparer.TestRefEquals( comparer ),
+                sut.EventComparer.TestRefEquals( eventComparer ) )
+            .Go();
     }
 
     [Fact]
@@ -61,16 +58,15 @@ public abstract class GenericReorderableEventQueueTests<TEvent> : TestsBase
 
         var result = sut.Enqueue( @event, delta );
 
-        using ( new AssertionScope() )
-        {
-            result.Event.Should().Be( @event );
-            result.DequeuePoint.Should().Be( expectedDequeuePoint );
-            result.Delta.Should().Be( default );
-            result.Repetitions.Should().Be( 1 );
-            result.IsInfinite.Should().BeFalse();
-            sut.Count.Should().Be( 1 );
-            sut.Should().BeEquivalentTo( result );
-        }
+        Assertion.All(
+                result.Event.TestEquals( @event ),
+                result.DequeuePoint.TestEquals( expectedDequeuePoint ),
+                result.Delta.TestEquals( default ),
+                result.Repetitions.TestEquals( 1 ),
+                result.IsInfinite.TestFalse(),
+                sut.Count.TestEquals( 1 ),
+                sut.TestSetEqual( [ result ] ) )
+            .Go();
     }
 
     [Fact]
@@ -85,16 +81,15 @@ public abstract class GenericReorderableEventQueueTests<TEvent> : TestsBase
 
         var result = sut.Enqueue( @event, eventDelta );
 
-        using ( new AssertionScope() )
-        {
-            result.Event.Should().Be( @event );
-            result.DequeuePoint.Should().Be( expectedEventDequeuePoint );
-            result.Delta.Should().Be( default );
-            result.Repetitions.Should().Be( 1 );
-            result.IsInfinite.Should().BeFalse();
-            sut.Count.Should().Be( 2 );
-            sut.Should().BeEquivalentTo( firstEvent, result );
-        }
+        Assertion.All(
+                result.Event.TestEquals( @event ),
+                result.DequeuePoint.TestEquals( expectedEventDequeuePoint ),
+                result.Delta.TestEquals( default ),
+                result.Repetitions.TestEquals( 1 ),
+                result.IsInfinite.TestFalse(),
+                sut.Count.TestEquals( 2 ),
+                sut.TestSetEqual( [ firstEvent, result ] ) )
+            .Go();
     }
 
     [Fact]
@@ -109,16 +104,15 @@ public abstract class GenericReorderableEventQueueTests<TEvent> : TestsBase
 
         var result = sut.Enqueue( @event, newDelta );
 
-        using ( new AssertionScope() )
-        {
-            result.Event.Should().Be( @event );
-            result.DequeuePoint.Should().Be( expectedDequeuePoint );
-            result.Delta.Should().Be( default );
-            result.Repetitions.Should().Be( 1 );
-            result.IsInfinite.Should().BeFalse();
-            sut.Count.Should().Be( 1 );
-            sut.Should().BeEquivalentTo( result );
-        }
+        Assertion.All(
+                result.Event.TestEquals( @event ),
+                result.DequeuePoint.TestEquals( expectedDequeuePoint ),
+                result.Delta.TestEquals( default ),
+                result.Repetitions.TestEquals( 1 ),
+                result.IsInfinite.TestFalse(),
+                sut.Count.TestEquals( 1 ),
+                sut.TestSetEqual( [ result ] ) )
+            .Go();
     }
 
     [Fact]
@@ -130,16 +124,15 @@ public abstract class GenericReorderableEventQueueTests<TEvent> : TestsBase
 
         var result = sut.EnqueueAt( @event, dequeuePoint );
 
-        using ( new AssertionScope() )
-        {
-            result.Event.Should().Be( @event );
-            result.DequeuePoint.Should().Be( dequeuePoint );
-            result.Delta.Should().Be( default );
-            result.Repetitions.Should().Be( 1 );
-            result.IsInfinite.Should().BeFalse();
-            sut.Count.Should().Be( 1 );
-            sut.Should().BeEquivalentTo( result );
-        }
+        Assertion.All(
+                result.Event.TestEquals( @event ),
+                result.DequeuePoint.TestEquals( dequeuePoint ),
+                result.Delta.TestEquals( default ),
+                result.Repetitions.TestEquals( 1 ),
+                result.IsInfinite.TestFalse(),
+                sut.Count.TestEquals( 1 ),
+                sut.TestSetEqual( [ result ] ) )
+            .Go();
     }
 
     [Fact]
@@ -152,16 +145,15 @@ public abstract class GenericReorderableEventQueueTests<TEvent> : TestsBase
 
         var result = sut.EnqueueAt( @event, eventDequeuePoint );
 
-        using ( new AssertionScope() )
-        {
-            result.Event.Should().Be( @event );
-            result.DequeuePoint.Should().Be( eventDequeuePoint );
-            result.Delta.Should().Be( default );
-            result.Repetitions.Should().Be( 1 );
-            result.IsInfinite.Should().BeFalse();
-            sut.Count.Should().Be( 2 );
-            sut.Should().BeEquivalentTo( firstEvent, result );
-        }
+        Assertion.All(
+                result.Event.TestEquals( @event ),
+                result.DequeuePoint.TestEquals( eventDequeuePoint ),
+                result.Delta.TestEquals( default ),
+                result.Repetitions.TestEquals( 1 ),
+                result.IsInfinite.TestFalse(),
+                sut.Count.TestEquals( 2 ),
+                sut.TestSetEqual( [ firstEvent, result ] ) )
+            .Go();
     }
 
     [Fact]
@@ -174,16 +166,15 @@ public abstract class GenericReorderableEventQueueTests<TEvent> : TestsBase
 
         var result = sut.EnqueueAt( @event, newDequeuePoint );
 
-        using ( new AssertionScope() )
-        {
-            result.Event.Should().Be( @event );
-            result.DequeuePoint.Should().Be( newDequeuePoint );
-            result.Delta.Should().Be( default );
-            result.Repetitions.Should().Be( 1 );
-            result.IsInfinite.Should().BeFalse();
-            sut.Count.Should().Be( 1 );
-            sut.Should().BeEquivalentTo( result );
-        }
+        Assertion.All(
+                result.Event.TestEquals( @event ),
+                result.DequeuePoint.TestEquals( newDequeuePoint ),
+                result.Delta.TestEquals( default ),
+                result.Repetitions.TestEquals( 1 ),
+                result.IsInfinite.TestFalse(),
+                sut.Count.TestEquals( 1 ),
+                sut.TestSetEqual( [ result ] ) )
+            .Go();
     }
 
     [Fact]
@@ -198,16 +189,15 @@ public abstract class GenericReorderableEventQueueTests<TEvent> : TestsBase
 
         var result = sut.Enqueue( @event, delta, repetitions );
 
-        using ( new AssertionScope() )
-        {
-            result.Event.Should().Be( @event );
-            result.DequeuePoint.Should().Be( expectedDequeuePoint );
-            result.Delta.Should().Be( delta );
-            result.Repetitions.Should().Be( repetitions );
-            result.IsInfinite.Should().BeFalse();
-            sut.Count.Should().Be( 1 );
-            sut.Should().BeEquivalentTo( result );
-        }
+        Assertion.All(
+                result.Event.TestEquals( @event ),
+                result.DequeuePoint.TestEquals( expectedDequeuePoint ),
+                result.Delta.TestEquals( delta ),
+                result.Repetitions.TestEquals( repetitions ),
+                result.IsInfinite.TestFalse(),
+                sut.Count.TestEquals( 1 ),
+                sut.TestSetEqual( [ result ] ) )
+            .Go();
     }
 
     [Fact]
@@ -223,16 +213,15 @@ public abstract class GenericReorderableEventQueueTests<TEvent> : TestsBase
 
         var result = sut.Enqueue( @event, eventDelta, eventRepetitions );
 
-        using ( new AssertionScope() )
-        {
-            result.Event.Should().Be( @event );
-            result.DequeuePoint.Should().Be( expectedEventDequeuePoint );
-            result.Delta.Should().Be( eventDelta );
-            result.Repetitions.Should().Be( eventRepetitions );
-            result.IsInfinite.Should().BeFalse();
-            sut.Count.Should().Be( 2 );
-            sut.Should().BeEquivalentTo( firstEvent, result );
-        }
+        Assertion.All(
+                result.Event.TestEquals( @event ),
+                result.DequeuePoint.TestEquals( expectedEventDequeuePoint ),
+                result.Delta.TestEquals( eventDelta ),
+                result.Repetitions.TestEquals( eventRepetitions ),
+                result.IsInfinite.TestFalse(),
+                sut.Count.TestEquals( 2 ),
+                sut.TestSetEqual( [ firstEvent, result ] ) )
+            .Go();
     }
 
     [Fact]
@@ -248,16 +237,15 @@ public abstract class GenericReorderableEventQueueTests<TEvent> : TestsBase
 
         var result = sut.Enqueue( @event, newDelta, newRepetitions );
 
-        using ( new AssertionScope() )
-        {
-            result.Event.Should().Be( @event );
-            result.DequeuePoint.Should().Be( expectedDequeuePoint );
-            result.Delta.Should().Be( newDelta );
-            result.Repetitions.Should().Be( newRepetitions );
-            result.IsInfinite.Should().BeFalse();
-            sut.Count.Should().Be( 1 );
-            sut.Should().BeEquivalentTo( result );
-        }
+        Assertion.All(
+                result.Event.TestEquals( @event ),
+                result.DequeuePoint.TestEquals( expectedDequeuePoint ),
+                result.Delta.TestEquals( newDelta ),
+                result.Repetitions.TestEquals( newRepetitions ),
+                result.IsInfinite.TestFalse(),
+                sut.Count.TestEquals( 1 ),
+                sut.TestSetEqual( [ result ] ) )
+            .Go();
     }
 
     [Theory]
@@ -267,7 +255,7 @@ public abstract class GenericReorderableEventQueueTests<TEvent> : TestsBase
     {
         var sut = new MockEventQueue( Fixture.Create<long>() );
         var action = Lambda.Of( () => sut.Enqueue( Fixture.Create<TEvent>(), Fixture.Create<int>(), repetitions ) );
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Fact]
@@ -281,16 +269,15 @@ public abstract class GenericReorderableEventQueueTests<TEvent> : TestsBase
 
         var result = sut.EnqueueAt( @event, dequeuePoint, delta, repetitions );
 
-        using ( new AssertionScope() )
-        {
-            result.Event.Should().Be( @event );
-            result.DequeuePoint.Should().Be( dequeuePoint );
-            result.Delta.Should().Be( delta );
-            result.Repetitions.Should().Be( repetitions );
-            result.IsInfinite.Should().BeFalse();
-            sut.Count.Should().Be( 1 );
-            sut.Should().BeEquivalentTo( result );
-        }
+        Assertion.All(
+                result.Event.TestEquals( @event ),
+                result.DequeuePoint.TestEquals( dequeuePoint ),
+                result.Delta.TestEquals( delta ),
+                result.Repetitions.TestEquals( repetitions ),
+                result.IsInfinite.TestFalse(),
+                sut.Count.TestEquals( 1 ),
+                sut.TestSetEqual( [ result ] ) )
+            .Go();
     }
 
     [Fact]
@@ -306,16 +293,15 @@ public abstract class GenericReorderableEventQueueTests<TEvent> : TestsBase
 
         var result = sut.EnqueueAt( @event, eventDequeuePoint, eventDelta, eventRepetitions );
 
-        using ( new AssertionScope() )
-        {
-            result.Event.Should().Be( @event );
-            result.DequeuePoint.Should().Be( eventDequeuePoint );
-            result.Delta.Should().Be( eventDelta );
-            result.Repetitions.Should().Be( eventRepetitions );
-            result.IsInfinite.Should().BeFalse();
-            sut.Count.Should().Be( 2 );
-            sut.Should().BeEquivalentTo( firstEvent, result );
-        }
+        Assertion.All(
+                result.Event.TestEquals( @event ),
+                result.DequeuePoint.TestEquals( eventDequeuePoint ),
+                result.Delta.TestEquals( eventDelta ),
+                result.Repetitions.TestEquals( eventRepetitions ),
+                result.IsInfinite.TestFalse(),
+                sut.Count.TestEquals( 2 ),
+                sut.TestSetEqual( [ firstEvent, result ] ) )
+            .Go();
     }
 
     [Fact]
@@ -330,16 +316,15 @@ public abstract class GenericReorderableEventQueueTests<TEvent> : TestsBase
 
         var result = sut.EnqueueAt( @event, newDequeuePoint, newDelta, newRepetitions );
 
-        using ( new AssertionScope() )
-        {
-            result.Event.Should().Be( @event );
-            result.DequeuePoint.Should().Be( newDequeuePoint );
-            result.Delta.Should().Be( newDelta );
-            result.Repetitions.Should().Be( newRepetitions );
-            result.IsInfinite.Should().BeFalse();
-            sut.Count.Should().Be( 1 );
-            sut.Should().BeEquivalentTo( result );
-        }
+        Assertion.All(
+                result.Event.TestEquals( @event ),
+                result.DequeuePoint.TestEquals( newDequeuePoint ),
+                result.Delta.TestEquals( newDelta ),
+                result.Repetitions.TestEquals( newRepetitions ),
+                result.IsInfinite.TestFalse(),
+                sut.Count.TestEquals( 1 ),
+                sut.TestSetEqual( [ result ] ) )
+            .Go();
     }
 
     [Theory]
@@ -351,7 +336,7 @@ public abstract class GenericReorderableEventQueueTests<TEvent> : TestsBase
         var action = Lambda.Of(
             () => sut.EnqueueAt( Fixture.Create<TEvent>(), Fixture.Create<long>(), Fixture.Create<int>(), repetitions ) );
 
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Fact]
@@ -365,16 +350,15 @@ public abstract class GenericReorderableEventQueueTests<TEvent> : TestsBase
 
         var result = sut.EnqueueInfinite( @event, delta );
 
-        using ( new AssertionScope() )
-        {
-            result.Event.Should().Be( @event );
-            result.DequeuePoint.Should().Be( expectedDequeuePoint );
-            result.Delta.Should().Be( delta );
-            result.Repetitions.Should().Be( 0 );
-            result.IsInfinite.Should().BeTrue();
-            sut.Count.Should().Be( 1 );
-            sut.Should().BeEquivalentTo( result );
-        }
+        Assertion.All(
+                result.Event.TestEquals( @event ),
+                result.DequeuePoint.TestEquals( expectedDequeuePoint ),
+                result.Delta.TestEquals( delta ),
+                result.Repetitions.TestEquals( 0 ),
+                result.IsInfinite.TestTrue(),
+                sut.Count.TestEquals( 1 ),
+                sut.TestSetEqual( [ result ] ) )
+            .Go();
     }
 
     [Fact]
@@ -389,16 +373,15 @@ public abstract class GenericReorderableEventQueueTests<TEvent> : TestsBase
 
         var result = sut.EnqueueInfinite( @event, eventDelta );
 
-        using ( new AssertionScope() )
-        {
-            result.Event.Should().Be( @event );
-            result.DequeuePoint.Should().Be( expectedEventDequeuePoint );
-            result.Delta.Should().Be( eventDelta );
-            result.Repetitions.Should().Be( 0 );
-            result.IsInfinite.Should().BeTrue();
-            sut.Count.Should().Be( 2 );
-            sut.Should().BeEquivalentTo( firstEvent, result );
-        }
+        Assertion.All(
+                result.Event.TestEquals( @event ),
+                result.DequeuePoint.TestEquals( expectedEventDequeuePoint ),
+                result.Delta.TestEquals( eventDelta ),
+                result.Repetitions.TestEquals( 0 ),
+                result.IsInfinite.TestTrue(),
+                sut.Count.TestEquals( 2 ),
+                sut.TestSetEqual( [ firstEvent, result ] ) )
+            .Go();
     }
 
     [Fact]
@@ -413,16 +396,15 @@ public abstract class GenericReorderableEventQueueTests<TEvent> : TestsBase
 
         var result = sut.EnqueueInfinite( @event, newDelta );
 
-        using ( new AssertionScope() )
-        {
-            result.Event.Should().Be( @event );
-            result.DequeuePoint.Should().Be( expectedDequeuePoint );
-            result.Delta.Should().Be( newDelta );
-            result.Repetitions.Should().Be( 0 );
-            result.IsInfinite.Should().BeTrue();
-            sut.Count.Should().Be( 1 );
-            sut.Should().BeEquivalentTo( result );
-        }
+        Assertion.All(
+                result.Event.TestEquals( @event ),
+                result.DequeuePoint.TestEquals( expectedDequeuePoint ),
+                result.Delta.TestEquals( newDelta ),
+                result.Repetitions.TestEquals( 0 ),
+                result.IsInfinite.TestTrue(),
+                sut.Count.TestEquals( 1 ),
+                sut.TestSetEqual( [ result ] ) )
+            .Go();
     }
 
     [Fact]
@@ -435,16 +417,15 @@ public abstract class GenericReorderableEventQueueTests<TEvent> : TestsBase
 
         var result = sut.EnqueueInfiniteAt( @event, dequeuePoint, delta );
 
-        using ( new AssertionScope() )
-        {
-            result.Event.Should().Be( @event );
-            result.DequeuePoint.Should().Be( dequeuePoint );
-            result.Delta.Should().Be( delta );
-            result.Repetitions.Should().Be( 0 );
-            result.IsInfinite.Should().BeTrue();
-            sut.Count.Should().Be( 1 );
-            sut.Should().BeEquivalentTo( result );
-        }
+        Assertion.All(
+                result.Event.TestEquals( @event ),
+                result.DequeuePoint.TestEquals( dequeuePoint ),
+                result.Delta.TestEquals( delta ),
+                result.Repetitions.TestEquals( 0 ),
+                result.IsInfinite.TestTrue(),
+                sut.Count.TestEquals( 1 ),
+                sut.TestSetEqual( [ result ] ) )
+            .Go();
     }
 
     [Fact]
@@ -459,16 +440,15 @@ public abstract class GenericReorderableEventQueueTests<TEvent> : TestsBase
 
         var result = sut.EnqueueInfiniteAt( @event, eventDequeuePoint, eventDelta );
 
-        using ( new AssertionScope() )
-        {
-            result.Event.Should().Be( @event );
-            result.DequeuePoint.Should().Be( eventDequeuePoint );
-            result.Delta.Should().Be( eventDelta );
-            result.Repetitions.Should().Be( 0 );
-            result.IsInfinite.Should().BeTrue();
-            sut.Count.Should().Be( 2 );
-            sut.Should().BeEquivalentTo( firstEvent, result );
-        }
+        Assertion.All(
+                result.Event.TestEquals( @event ),
+                result.DequeuePoint.TestEquals( eventDequeuePoint ),
+                result.Delta.TestEquals( eventDelta ),
+                result.Repetitions.TestEquals( 0 ),
+                result.IsInfinite.TestTrue(),
+                sut.Count.TestEquals( 2 ),
+                sut.TestSetEqual( [ firstEvent, result ] ) )
+            .Go();
     }
 
     [Fact]
@@ -482,16 +462,15 @@ public abstract class GenericReorderableEventQueueTests<TEvent> : TestsBase
 
         var result = sut.EnqueueInfiniteAt( @event, newDequeuePoint, newDelta );
 
-        using ( new AssertionScope() )
-        {
-            result.Event.Should().Be( @event );
-            result.DequeuePoint.Should().Be( newDequeuePoint );
-            result.Delta.Should().Be( newDelta );
-            result.Repetitions.Should().Be( 0 );
-            result.IsInfinite.Should().BeTrue();
-            sut.Count.Should().Be( 1 );
-            sut.Should().BeEquivalentTo( result );
-        }
+        Assertion.All(
+                result.Event.TestEquals( @event ),
+                result.DequeuePoint.TestEquals( newDequeuePoint ),
+                result.Delta.TestEquals( newDelta ),
+                result.Repetitions.TestEquals( 0 ),
+                result.IsInfinite.TestTrue(),
+                sut.Count.TestEquals( 1 ),
+                sut.TestSetEqual( [ result ] ) )
+            .Go();
     }
 
     [Fact]
@@ -502,7 +481,7 @@ public abstract class GenericReorderableEventQueueTests<TEvent> : TestsBase
 
         var result = sut.SetDequeuePoint( @event, Fixture.Create<long>() );
 
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Fact]
@@ -518,21 +497,18 @@ public abstract class GenericReorderableEventQueueTests<TEvent> : TestsBase
 
         var result = sut.SetDequeuePoint( @event, newDequeuePoint );
 
-        using ( new AssertionScope() )
-        {
-            sut.GetEvent( @event ).Should().BeEquivalentTo( result );
-            sut.GetNext().Should().BeEquivalentTo( result );
-            result.Should()
-                .BeEquivalentTo(
-                    new
-                    {
-                        Event = @event,
-                        DequeuePoint = newDequeuePoint,
-                        Delta = delta,
-                        Repetitions = repetitions,
-                        IsInfinite = false
-                    } );
-        }
+        Assertion.All(
+                sut.GetEvent( @event ).TestEquals( result ),
+                sut.GetNext().TestEquals( result ),
+                result.TestNotNull(
+                    r => Assertion.All(
+                        "result.Value",
+                        r.Event.TestEquals( @event ),
+                        r.DequeuePoint.TestEquals( newDequeuePoint ),
+                        r.Delta.TestEquals( delta ),
+                        r.Repetitions.TestEquals( repetitions ),
+                        r.IsInfinite.TestFalse() ) ) )
+            .Go();
     }
 
     [Fact]
@@ -543,7 +519,7 @@ public abstract class GenericReorderableEventQueueTests<TEvent> : TestsBase
 
         var result = sut.DelayDequeuePoint( @event, Fixture.Create<int>() );
 
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Fact]
@@ -560,21 +536,18 @@ public abstract class GenericReorderableEventQueueTests<TEvent> : TestsBase
 
         var result = sut.DelayDequeuePoint( @event, delay );
 
-        using ( new AssertionScope() )
-        {
-            sut.GetEvent( @event ).Should().BeEquivalentTo( result );
-            sut.GetNext().Should().BeEquivalentTo( enqueuedOther );
-            result.Should()
-                .BeEquivalentTo(
-                    new
-                    {
-                        Event = @event,
-                        DequeuePoint = otherDequeuePoint + 1,
-                        Delta = delta,
-                        Repetitions = repetitions,
-                        IsInfinite = false
-                    } );
-        }
+        Assertion.All(
+                sut.GetEvent( @event ).TestEquals( result ),
+                sut.GetNext().TestEquals( enqueuedOther ),
+                result.TestNotNull(
+                    r => Assertion.All(
+                        "result.Value",
+                        r.Event.TestEquals( @event ),
+                        r.DequeuePoint.TestEquals( otherDequeuePoint + 1 ),
+                        r.Delta.TestEquals( delta ),
+                        r.Repetitions.TestEquals( repetitions ),
+                        r.IsInfinite.TestFalse() ) ) )
+            .Go();
     }
 
     [Fact]
@@ -585,7 +558,7 @@ public abstract class GenericReorderableEventQueueTests<TEvent> : TestsBase
 
         var result = sut.AdvanceDequeuePoint( @event, Fixture.Create<int>() );
 
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Fact]
@@ -602,21 +575,18 @@ public abstract class GenericReorderableEventQueueTests<TEvent> : TestsBase
 
         var result = sut.AdvanceDequeuePoint( @event, advance );
 
-        using ( new AssertionScope() )
-        {
-            sut.GetEvent( @event ).Should().BeEquivalentTo( result );
-            sut.GetNext().Should().BeEquivalentTo( result );
-            result.Should()
-                .BeEquivalentTo(
-                    new
-                    {
-                        Event = @event,
-                        DequeuePoint = otherDequeuePoint - 1,
-                        Delta = delta,
-                        Repetitions = repetitions,
-                        IsInfinite = false
-                    } );
-        }
+        Assertion.All(
+                sut.GetEvent( @event ).TestEquals( result ),
+                sut.GetNext().TestEquals( result ),
+                result.TestNotNull(
+                    r => Assertion.All(
+                        "result.Value",
+                        r.Event.TestEquals( @event ),
+                        r.DequeuePoint.TestEquals( otherDequeuePoint - 1 ),
+                        r.Delta.TestEquals( delta ),
+                        r.Repetitions.TestEquals( repetitions ),
+                        r.IsInfinite.TestFalse() ) ) )
+            .Go();
     }
 
     [Fact]
@@ -627,7 +597,7 @@ public abstract class GenericReorderableEventQueueTests<TEvent> : TestsBase
 
         var result = sut.SetDelta( @event, Fixture.Create<int>() );
 
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Fact]
@@ -642,20 +612,17 @@ public abstract class GenericReorderableEventQueueTests<TEvent> : TestsBase
 
         var result = sut.SetDelta( @event, newDelta );
 
-        using ( new AssertionScope() )
-        {
-            sut.GetEvent( @event ).Should().BeEquivalentTo( result );
-            result.Should()
-                .BeEquivalentTo(
-                    new
-                    {
-                        Event = @event,
-                        DequeuePoint = dequeuePoint,
-                        Delta = newDelta,
-                        Repetitions = repetitions,
-                        IsInfinite = false
-                    } );
-        }
+        Assertion.All(
+                sut.GetEvent( @event ).TestEquals( result ),
+                result.TestNotNull(
+                    r => Assertion.All(
+                        "result.Value",
+                        r.Event.TestEquals( @event ),
+                        r.DequeuePoint.TestEquals( dequeuePoint ),
+                        r.Delta.TestEquals( newDelta ),
+                        r.Repetitions.TestEquals( repetitions ),
+                        r.IsInfinite.TestFalse() ) ) )
+            .Go();
     }
 
     [Fact]
@@ -666,7 +633,7 @@ public abstract class GenericReorderableEventQueueTests<TEvent> : TestsBase
 
         var result = sut.IncreaseDelta( @event, Fixture.Create<int>() );
 
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Fact]
@@ -683,20 +650,17 @@ public abstract class GenericReorderableEventQueueTests<TEvent> : TestsBase
 
         var result = sut.IncreaseDelta( @event, deltaIncrease );
 
-        using ( new AssertionScope() )
-        {
-            sut.GetEvent( @event ).Should().BeEquivalentTo( result );
-            result.Should()
-                .BeEquivalentTo(
-                    new
-                    {
-                        Event = @event,
-                        DequeuePoint = dequeuePoint,
-                        Delta = expectedDelta,
-                        Repetitions = repetitions,
-                        IsInfinite = false
-                    } );
-        }
+        Assertion.All(
+                sut.GetEvent( @event ).TestEquals( result ),
+                result.TestNotNull(
+                    r => Assertion.All(
+                        "result.Value",
+                        r.Event.TestEquals( @event ),
+                        r.DequeuePoint.TestEquals( dequeuePoint ),
+                        r.Delta.TestEquals( expectedDelta ),
+                        r.Repetitions.TestEquals( repetitions ),
+                        r.IsInfinite.TestFalse() ) ) )
+            .Go();
     }
 
     [Fact]
@@ -707,7 +671,7 @@ public abstract class GenericReorderableEventQueueTests<TEvent> : TestsBase
 
         var result = sut.DecreaseDelta( @event, Fixture.Create<int>() );
 
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Fact]
@@ -724,20 +688,17 @@ public abstract class GenericReorderableEventQueueTests<TEvent> : TestsBase
 
         var result = sut.DecreaseDelta( @event, deltaDecrease );
 
-        using ( new AssertionScope() )
-        {
-            sut.GetEvent( @event ).Should().BeEquivalentTo( result );
-            result.Should()
-                .BeEquivalentTo(
-                    new
-                    {
-                        Event = @event,
-                        DequeuePoint = dequeuePoint,
-                        Delta = expectedDelta,
-                        Repetitions = repetitions,
-                        IsInfinite = false
-                    } );
-        }
+        Assertion.All(
+                sut.GetEvent( @event ).TestEquals( result ),
+                result.TestNotNull(
+                    r => Assertion.All(
+                        "result.Value",
+                        r.Event.TestEquals( @event ),
+                        r.DequeuePoint.TestEquals( dequeuePoint ),
+                        r.Delta.TestEquals( expectedDelta ),
+                        r.Repetitions.TestEquals( repetitions ),
+                        r.IsInfinite.TestFalse() ) ) )
+            .Go();
     }
 
     [Fact]
@@ -748,7 +709,7 @@ public abstract class GenericReorderableEventQueueTests<TEvent> : TestsBase
 
         var result = sut.SetRepetitions( @event, Fixture.Create<int>( x => x > 0 ) );
 
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Fact]
@@ -763,20 +724,17 @@ public abstract class GenericReorderableEventQueueTests<TEvent> : TestsBase
 
         var result = sut.SetRepetitions( @event, newRepetitions );
 
-        using ( new AssertionScope() )
-        {
-            sut.GetEvent( @event ).Should().BeEquivalentTo( result );
-            result.Should()
-                .BeEquivalentTo(
-                    new
-                    {
-                        Event = @event,
-                        DequeuePoint = dequeuePoint,
-                        Delta = delta,
-                        Repetitions = newRepetitions,
-                        IsInfinite = false
-                    } );
-        }
+        Assertion.All(
+                sut.GetEvent( @event ).TestEquals( result ),
+                result.TestNotNull(
+                    r => Assertion.All(
+                        "result.Value",
+                        r.Event.TestEquals( @event ),
+                        r.DequeuePoint.TestEquals( dequeuePoint ),
+                        r.Delta.TestEquals( delta ),
+                        r.Repetitions.TestEquals( newRepetitions ),
+                        r.IsInfinite.TestFalse() ) ) )
+            .Go();
     }
 
     [Fact]
@@ -791,20 +749,17 @@ public abstract class GenericReorderableEventQueueTests<TEvent> : TestsBase
 
         var result = sut.SetRepetitions( @event, repetitions );
 
-        using ( new AssertionScope() )
-        {
-            sut.GetEvent( @event ).Should().BeEquivalentTo( result );
-            result.Should()
-                .BeEquivalentTo(
-                    new
-                    {
-                        Event = @event,
-                        DequeuePoint = dequeuePoint,
-                        Delta = delta,
-                        Repetitions = repetitions,
-                        IsInfinite = false
-                    } );
-        }
+        Assertion.All(
+                sut.GetEvent( @event ).TestEquals( result ),
+                result.TestNotNull(
+                    r => Assertion.All(
+                        "result.Value",
+                        r.Event.TestEquals( @event ),
+                        r.DequeuePoint.TestEquals( dequeuePoint ),
+                        r.Delta.TestEquals( delta ),
+                        r.Repetitions.TestEquals( repetitions ),
+                        r.IsInfinite.TestFalse() ) ) )
+            .Go();
     }
 
     [Theory]
@@ -818,7 +773,7 @@ public abstract class GenericReorderableEventQueueTests<TEvent> : TestsBase
 
         var action = Lambda.Of( () => sut.SetRepetitions( @event, repetitions ) );
 
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Fact]
@@ -829,7 +784,7 @@ public abstract class GenericReorderableEventQueueTests<TEvent> : TestsBase
 
         var result = sut.IncreaseRepetitions( @event, Fixture.Create<int>( x => x > 0 ) );
 
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Fact]
@@ -846,20 +801,17 @@ public abstract class GenericReorderableEventQueueTests<TEvent> : TestsBase
 
         var result = sut.IncreaseRepetitions( @event, repetitionsIncrease );
 
-        using ( new AssertionScope() )
-        {
-            sut.GetEvent( @event ).Should().BeEquivalentTo( result );
-            result.Should()
-                .BeEquivalentTo(
-                    new
-                    {
-                        Event = @event,
-                        DequeuePoint = dequeuePoint,
-                        Delta = delta,
-                        Repetitions = expectedRepetitions,
-                        IsInfinite = false
-                    } );
-        }
+        Assertion.All(
+                sut.GetEvent( @event ).TestEquals( result ),
+                result.TestNotNull(
+                    r => Assertion.All(
+                        "result.Value",
+                        r.Event.TestEquals( @event ),
+                        r.DequeuePoint.TestEquals( dequeuePoint ),
+                        r.Delta.TestEquals( delta ),
+                        r.Repetitions.TestEquals( expectedRepetitions ),
+                        r.IsInfinite.TestFalse() ) ) )
+            .Go();
     }
 
     [Fact]
@@ -873,11 +825,10 @@ public abstract class GenericReorderableEventQueueTests<TEvent> : TestsBase
 
         var result = sut.IncreaseRepetitions( @event, Fixture.Create<int>( x => x > 0 ) );
 
-        using ( new AssertionScope() )
-        {
-            sut.GetEvent( @event ).Should().BeEquivalentTo( result );
-            result.Should().BeEquivalentTo( oldEnqueuedEvent );
-        }
+        Assertion.All(
+                sut.GetEvent( @event ).TestEquals( result ),
+                result.TestEquals( oldEnqueuedEvent ) )
+            .Go();
     }
 
     [Theory]
@@ -893,7 +844,7 @@ public abstract class GenericReorderableEventQueueTests<TEvent> : TestsBase
 
         var action = Lambda.Of( () => sut.IncreaseRepetitions( @event, repetitionsIncrease ) );
 
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Fact]
@@ -904,7 +855,7 @@ public abstract class GenericReorderableEventQueueTests<TEvent> : TestsBase
 
         var result = sut.DecreaseRepetitions( @event, Fixture.Create<int>( x => x > 0 ) );
 
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Fact]
@@ -921,20 +872,17 @@ public abstract class GenericReorderableEventQueueTests<TEvent> : TestsBase
 
         var result = sut.DecreaseRepetitions( @event, repetitionsDecrease );
 
-        using ( new AssertionScope() )
-        {
-            sut.GetEvent( @event ).Should().BeEquivalentTo( result );
-            result.Should()
-                .BeEquivalentTo(
-                    new
-                    {
-                        Event = @event,
-                        DequeuePoint = dequeuePoint,
-                        Delta = delta,
-                        Repetitions = expectedRepetitions,
-                        IsInfinite = false
-                    } );
-        }
+        Assertion.All(
+                sut.GetEvent( @event ).TestEquals( result ),
+                result.TestNotNull(
+                    r => Assertion.All(
+                        "result.Value",
+                        r.Event.TestEquals( @event ),
+                        r.DequeuePoint.TestEquals( dequeuePoint ),
+                        r.Delta.TestEquals( delta ),
+                        r.Repetitions.TestEquals( expectedRepetitions ),
+                        r.IsInfinite.TestFalse() ) ) )
+            .Go();
     }
 
     [Fact]
@@ -948,11 +896,10 @@ public abstract class GenericReorderableEventQueueTests<TEvent> : TestsBase
 
         var result = sut.DecreaseRepetitions( @event, Fixture.Create<int>( x => x > 0 ) );
 
-        using ( new AssertionScope() )
-        {
-            sut.GetEvent( @event ).Should().BeEquivalentTo( result );
-            result.Should().BeEquivalentTo( oldEnqueuedEvent );
-        }
+        Assertion.All(
+                sut.GetEvent( @event ).TestEquals( result ),
+                result.TestEquals( oldEnqueuedEvent ) )
+            .Go();
     }
 
     [Theory]
@@ -968,7 +915,7 @@ public abstract class GenericReorderableEventQueueTests<TEvent> : TestsBase
 
         var action = Lambda.Of( () => sut.DecreaseRepetitions( @event, repetitionsDecrease ) );
 
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Fact]
@@ -979,7 +926,7 @@ public abstract class GenericReorderableEventQueueTests<TEvent> : TestsBase
 
         var result = sut.MakeInfinite( @event );
 
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Fact]
@@ -994,20 +941,17 @@ public abstract class GenericReorderableEventQueueTests<TEvent> : TestsBase
 
         var result = sut.MakeInfinite( @event );
 
-        using ( new AssertionScope() )
-        {
-            sut.GetEvent( @event ).Should().BeEquivalentTo( result );
-            result.Should()
-                .BeEquivalentTo(
-                    new
-                    {
-                        Event = @event,
-                        DequeuePoint = dequeuePoint,
-                        Delta = delta,
-                        Repetitions = 0,
-                        IsInfinite = true
-                    } );
-        }
+        Assertion.All(
+                sut.GetEvent( @event ).TestEquals( result ),
+                result.TestNotNull(
+                    r => Assertion.All(
+                        "result.Value",
+                        r.Event.TestEquals( @event ),
+                        r.DequeuePoint.TestEquals( dequeuePoint ),
+                        r.Delta.TestEquals( delta ),
+                        r.Repetitions.TestEquals( 0 ),
+                        r.IsInfinite.TestTrue() ) ) )
+            .Go();
     }
 
     [Fact]
@@ -1021,11 +965,10 @@ public abstract class GenericReorderableEventQueueTests<TEvent> : TestsBase
 
         var result = sut.MakeInfinite( @event );
 
-        using ( new AssertionScope() )
-        {
-            sut.GetEvent( @event ).Should().BeEquivalentTo( result );
-            result.Should().BeEquivalentTo( oldEnqueuedEvent );
-        }
+        Assertion.All(
+                sut.GetEvent( @event ).TestEquals( result ),
+                result.TestEquals( oldEnqueuedEvent ) )
+            .Go();
     }
 
     [Fact]
@@ -1038,7 +981,7 @@ public abstract class GenericReorderableEventQueueTests<TEvent> : TestsBase
 
         sut.Move( delta );
 
-        sut.CurrentPoint.Should().Be( expectedCurrentPoint );
+        sut.CurrentPoint.TestEquals( expectedCurrentPoint ).Go();
     }
 
     [Fact]
@@ -1050,11 +993,10 @@ public abstract class GenericReorderableEventQueueTests<TEvent> : TestsBase
 
         sut.Clear();
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 0 );
-            sut.Should().BeEmpty();
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 0 ),
+                sut.TestEmpty() )
+            .Go();
     }
 
     [Fact]
@@ -1062,7 +1004,7 @@ public abstract class GenericReorderableEventQueueTests<TEvent> : TestsBase
     {
         var sut = new MockEventQueue( Fixture.Create<long>() );
         var result = sut.Dequeue();
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Fact]
@@ -1074,7 +1016,7 @@ public abstract class GenericReorderableEventQueueTests<TEvent> : TestsBase
 
         var result = sut.Dequeue();
 
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Fact]
@@ -1087,21 +1029,17 @@ public abstract class GenericReorderableEventQueueTests<TEvent> : TestsBase
 
         var result = sut.Dequeue();
 
-        using ( new AssertionScope() )
-        {
-            result.Should()
-                .BeEquivalentTo(
-                    new
-                    {
-                        Event = @event,
-                        DequeuePoint = eventDequeuePoint,
-                        Delta = default( int ),
-                        Repetitions = 1,
-                        IsInfinite = false
-                    } );
-
-            sut.Count.Should().Be( 0 );
-        }
+        Assertion.All(
+                result.TestNotNull(
+                    r => Assertion.All(
+                        "result.Value",
+                        r.Event.TestEquals( @event ),
+                        r.DequeuePoint.TestEquals( eventDequeuePoint ),
+                        r.Delta.TestEquals( default ),
+                        r.Repetitions.TestEquals( 1 ),
+                        r.IsInfinite.TestFalse() ) ),
+                sut.Count.TestEquals( 0 ) )
+            .Go();
     }
 
     [Fact]
@@ -1115,21 +1053,17 @@ public abstract class GenericReorderableEventQueueTests<TEvent> : TestsBase
 
         var result = sut.Dequeue();
 
-        using ( new AssertionScope() )
-        {
-            result.Should()
-                .BeEquivalentTo(
-                    new
-                    {
-                        Event = @event,
-                        DequeuePoint = eventDequeuePoint,
-                        Delta = delta,
-                        Repetitions = 1,
-                        IsInfinite = false
-                    } );
-
-            sut.Count.Should().Be( 0 );
-        }
+        Assertion.All(
+                result.TestNotNull(
+                    r => Assertion.All(
+                        "result.Value",
+                        r.Event.TestEquals( @event ),
+                        r.DequeuePoint.TestEquals( eventDequeuePoint ),
+                        r.Delta.TestEquals( delta ),
+                        r.Repetitions.TestEquals( 1 ),
+                        r.IsInfinite.TestFalse() ) ),
+                sut.Count.TestEquals( 0 ) )
+            .Go();
     }
 
     [Fact]
@@ -1146,30 +1080,23 @@ public abstract class GenericReorderableEventQueueTests<TEvent> : TestsBase
 
         var result = sut.Dequeue();
 
-        using ( new AssertionScope() )
-        {
-            result.Should()
-                .BeEquivalentTo(
-                    new
-                    {
-                        Event = @event,
-                        DequeuePoint = eventDequeuePoint,
-                        Delta = delta,
-                        Repetitions = repetitions,
-                        IsInfinite = false
-                    } );
-
-            sut.Should()
-                .BeEquivalentTo(
-                    new
-                    {
-                        Event = @event,
-                        DequeuePoint = expectedNewDequeuePoint,
-                        Delta = delta,
-                        Repetitions = repetitions - 1,
-                        IsInfinite = false
-                    } );
-        }
+        Assertion.All(
+                result.TestNotNull(
+                    r => Assertion.All(
+                        "result.Value",
+                        r.Event.TestEquals( @event ),
+                        r.DequeuePoint.TestEquals( eventDequeuePoint ),
+                        r.Delta.TestEquals( delta ),
+                        r.Repetitions.TestEquals( repetitions ),
+                        r.IsInfinite.TestFalse() ) ),
+                sut.TestAll(
+                    (e, _) => Assertion.All(
+                        e.Event.TestEquals( @event ),
+                        e.DequeuePoint.TestEquals( expectedNewDequeuePoint ),
+                        e.Delta.TestEquals( delta ),
+                        e.Repetitions.TestEquals( repetitions - 1 ),
+                        e.IsInfinite.TestFalse() ) ) )
+            .Go();
     }
 
     [Fact]
@@ -1184,30 +1111,23 @@ public abstract class GenericReorderableEventQueueTests<TEvent> : TestsBase
 
         var result = sut.Dequeue();
 
-        using ( new AssertionScope() )
-        {
-            result.Should()
-                .BeEquivalentTo(
-                    new
-                    {
-                        Event = @event,
-                        DequeuePoint = eventDequeuePoint,
-                        Delta = delta,
-                        Repetitions = 0,
-                        IsInfinite = true
-                    } );
-
-            sut.Should()
-                .BeEquivalentTo(
-                    new
-                    {
-                        Event = @event,
-                        DequeuePoint = expectedNewDequeuePoint,
-                        Delta = delta,
-                        Repetitions = 0,
-                        IsInfinite = true
-                    } );
-        }
+        Assertion.All(
+                result.TestNotNull(
+                    r => Assertion.All(
+                        "result.Value",
+                        r.Event.TestEquals( @event ),
+                        r.DequeuePoint.TestEquals( eventDequeuePoint ),
+                        r.Delta.TestEquals( delta ),
+                        r.Repetitions.TestEquals( 0 ),
+                        r.IsInfinite.TestTrue() ) ),
+                sut.TestAll(
+                    (e, _) => Assertion.All(
+                        e.Event.TestEquals( @event ),
+                        e.DequeuePoint.TestEquals( expectedNewDequeuePoint ),
+                        e.Delta.TestEquals( delta ),
+                        e.Repetitions.TestEquals( 0 ),
+                        e.IsInfinite.TestTrue() ) ) )
+            .Go();
     }
 
     [Fact]
@@ -1233,7 +1153,7 @@ public abstract class GenericReorderableEventQueueTests<TEvent> : TestsBase
             dequeuedEvent = sut.Dequeue();
         }
 
-        result.Should().BeSequentiallyEqualTo( expectedResult );
+        result.TestSequence( expectedResult ).Go();
     }
 
     [Fact]
@@ -1246,20 +1166,17 @@ public abstract class GenericReorderableEventQueueTests<TEvent> : TestsBase
 
         var result = sut.Remove( @event );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 0 );
-            result.Should()
-                .BeEquivalentTo(
-                    new
-                    {
-                        Event = @event,
-                        DequeuePoint = dequeuePoint,
-                        Delta = default( int ),
-                        Repetitions = 1,
-                        IsInfinite = false
-                    } );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 0 ),
+                result.TestNotNull(
+                    r => Assertion.All(
+                        "result.Value",
+                        r.Event.TestEquals( @event ),
+                        r.DequeuePoint.TestEquals( dequeuePoint ),
+                        r.Delta.TestEquals( default ),
+                        r.Repetitions.TestEquals( 1 ),
+                        r.IsInfinite.TestFalse() ) ) )
+            .Go();
     }
 
     [Fact]
@@ -1271,7 +1188,7 @@ public abstract class GenericReorderableEventQueueTests<TEvent> : TestsBase
 
         var result = sut.Remove( @event );
 
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Fact]
@@ -1283,7 +1200,7 @@ public abstract class GenericReorderableEventQueueTests<TEvent> : TestsBase
 
         var result = sut.Contains( @event );
 
-        result.Should().BeTrue();
+        result.TestTrue().Go();
     }
 
     [Fact]
@@ -1295,7 +1212,7 @@ public abstract class GenericReorderableEventQueueTests<TEvent> : TestsBase
 
         var result = sut.Contains( @event );
 
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Fact]
@@ -1308,16 +1225,15 @@ public abstract class GenericReorderableEventQueueTests<TEvent> : TestsBase
 
         var result = sut.GetEvent( @event );
 
-        result.Should()
-            .BeEquivalentTo(
-                new
-                {
-                    Event = @event,
-                    DequeuePoint = dequeuePoint,
-                    Delta = default( int ),
-                    Repetitions = 1,
-                    IsInfinite = false
-                } );
+        result.TestNotNull(
+                r => Assertion.All(
+                    "result.Value",
+                    r.Event.TestEquals( @event ),
+                    r.DequeuePoint.TestEquals( dequeuePoint ),
+                    r.Delta.TestEquals( default ),
+                    r.Repetitions.TestEquals( 1 ),
+                    r.IsInfinite.TestFalse() ) )
+            .Go();
     }
 
     [Fact]
@@ -1329,7 +1245,7 @@ public abstract class GenericReorderableEventQueueTests<TEvent> : TestsBase
 
         var result = sut.GetEvent( @event );
 
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Fact]
@@ -1337,7 +1253,7 @@ public abstract class GenericReorderableEventQueueTests<TEvent> : TestsBase
     {
         var sut = new MockEventQueue( Fixture.Create<long>() );
         var result = sut.GetNext();
-        result.Should().BeNull();
+        result.TestNull().Go();
     }
 
     [Fact]
@@ -1351,7 +1267,7 @@ public abstract class GenericReorderableEventQueueTests<TEvent> : TestsBase
 
         var result = sut.GetNext();
 
-        result.Should().BeEquivalentTo( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -1365,7 +1281,7 @@ public abstract class GenericReorderableEventQueueTests<TEvent> : TestsBase
 
         var result = sut.GetNext();
 
-        result.Should().BeEquivalentTo( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -1379,7 +1295,7 @@ public abstract class GenericReorderableEventQueueTests<TEvent> : TestsBase
 
         var result = sut.GetNext();
 
-        result.Should().BeEquivalentTo( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -1392,7 +1308,7 @@ public abstract class GenericReorderableEventQueueTests<TEvent> : TestsBase
 
         var result = sut.GetEvents( endPoint );
 
-        result.Should().BeEmpty();
+        result.TestEmpty().Go();
     }
 
     [Fact]
@@ -1405,16 +1321,20 @@ public abstract class GenericReorderableEventQueueTests<TEvent> : TestsBase
 
         var result = sut.GetEvents( endPoint );
 
-        result.Should()
-            .BeEquivalentTo(
-                new
+        result.TestCount( count => count.TestEquals( 1 ) )
+            .Then(
+                e =>
                 {
-                    Event = @event,
-                    DequeuePoint = dequeuePoint,
-                    Delta = default( int ),
-                    Repetitions = 1,
-                    IsInfinite = false
-                } );
+                    var r = e[0];
+                    return Assertion.All(
+                        "result",
+                        r.Event.TestEquals( @event ),
+                        r.DequeuePoint.TestEquals( dequeuePoint ),
+                        r.Delta.TestEquals( default ),
+                        r.Repetitions.TestEquals( 1 ),
+                        r.IsInfinite.TestFalse() );
+                } )
+            .Go();
     }
 
     [Fact]
@@ -1455,7 +1375,19 @@ public abstract class GenericReorderableEventQueueTests<TEvent> : TestsBase
 
         var result = sut.GetEvents( endPoint );
 
-        result.Should().BeEquivalentTo( expected );
+        result.TestAll(
+                (r, i) =>
+                {
+                    var values = expected.ElementAt( i );
+                    return Assertion.All(
+                        "result",
+                        r.Event.TestEquals( values.Event ),
+                        r.DequeuePoint.TestEquals( values.DequeuePoint ),
+                        r.Delta.TestEquals( values.Delta ),
+                        r.Repetitions.TestEquals( values.Repetitions ),
+                        r.IsInfinite.TestEquals( values.IsInfinite ) );
+                } )
+            .Go();
     }
 
     [Fact]
@@ -1499,7 +1431,19 @@ public abstract class GenericReorderableEventQueueTests<TEvent> : TestsBase
 
         var result = sut.GetEvents( endPoint );
 
-        result.Should().BeEquivalentTo( expected );
+        result.TestAll(
+                (r, i) =>
+                {
+                    var values = expected.ElementAt( i );
+                    return Assertion.All(
+                        "result",
+                        r.Event.TestEquals( values.Event ),
+                        r.DequeuePoint.TestEquals( values.DequeuePoint ),
+                        r.Delta.TestEquals( values.Delta ),
+                        r.Repetitions.TestEquals( values.Repetitions ),
+                        r.IsInfinite.TestEquals( values.IsInfinite ) );
+                } )
+            .Go();
     }
 
     [Fact]
@@ -1542,7 +1486,19 @@ public abstract class GenericReorderableEventQueueTests<TEvent> : TestsBase
 
         var result = sut.GetEvents( endPoint );
 
-        result.Should().BeEquivalentTo( expected );
+        result.TestAll(
+                (r, i) =>
+                {
+                    var values = expected.ElementAt( i );
+                    return Assertion.All(
+                        "result",
+                        r.Event.TestEquals( values.Event ),
+                        r.DequeuePoint.TestEquals( values.DequeuePoint ),
+                        r.Delta.TestEquals( values.Delta ),
+                        r.Repetitions.TestEquals( values.Repetitions ),
+                        r.IsInfinite.TestEquals( values.IsInfinite ) );
+                } )
+            .Go();
     }
 
     [Fact]
@@ -1552,23 +1508,37 @@ public abstract class GenericReorderableEventQueueTests<TEvent> : TestsBase
         var firstDequeuePoints = Fixture.CreateManyDistinct<long>( count: 10 );
         var eventsWithDequeuePoints = events.Zip( firstDequeuePoints ).ToList();
         var expectedResult = eventsWithDequeuePoints.Select(
-            x => new
-            {
-                Event = x.First,
-                DequeuePoint = x.Second,
-                Delta = default( int ),
-                Repetitions = 1,
-                IsInfinite = false
-            } );
+                x => new
+                {
+                    Event = x.First,
+                    DequeuePoint = x.Second,
+                    Delta = default( int ),
+                    Repetitions = 1,
+                    IsInfinite = false
+                } )
+            .OrderBy( x => x.DequeuePoint )
+            .ToList();
 
         var sut = new MockEventQueue( Fixture.Create<long>() );
 
         foreach ( var (@event, dequeuePoint) in eventsWithDequeuePoints )
             sut.EnqueueAt( @event, dequeuePoint );
 
-        var result = sut.GetEvents( eventsWithDequeuePoints.Select( x => x.Second ).Max() );
+        var result = sut.GetEvents( eventsWithDequeuePoints.Select( x => x.Second ).Max() ).OrderBy( e => e.DequeuePoint );
 
-        result.Should().BeEquivalentTo( expectedResult );
+        result.TestAll(
+                (r, i) =>
+                {
+                    var values = expectedResult.ElementAt( i );
+                    return Assertion.All(
+                        "result",
+                        r.Event.TestEquals( values.Event ),
+                        r.DequeuePoint.TestEquals( values.DequeuePoint ),
+                        r.Delta.TestEquals( values.Delta ),
+                        r.Repetitions.TestEquals( values.Repetitions ),
+                        r.IsInfinite.TestEquals( values.IsInfinite ) );
+                } )
+            .Go();
     }
 
     private sealed class MockEventQueue : ReorderableEventQueueBase<TEvent, long, int>
