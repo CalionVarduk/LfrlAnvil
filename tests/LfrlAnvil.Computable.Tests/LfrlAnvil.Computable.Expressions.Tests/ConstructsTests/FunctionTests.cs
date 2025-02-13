@@ -1,7 +1,6 @@
 ﻿using System.Linq.Expressions;
 using LfrlAnvil.Computable.Expressions.Constructs;
 using LfrlAnvil.Functional;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Computable.Expressions.Tests.ConstructsTests;
 
@@ -12,7 +11,7 @@ public class FunctionTests : TestsBase
     {
         var voidExpression = Expression.Lambda<Action>( Expression.Block() );
         var action = Lambda.Of( () => new ParsedExpressionFunction( voidExpression ) );
-        action.Should().ThrowExactly<ArgumentException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentException>() ).Go();
     }
 
     [Fact]
@@ -23,7 +22,7 @@ public class FunctionTests : TestsBase
 
         var result = sut.Process( Array.Empty<Expression>() );
 
-        result.Should().BeSameAs( expression.Body );
+        result.TestRefEquals( expression.Body ).Go();
     }
 
     [Fact]
@@ -37,21 +36,25 @@ public class FunctionTests : TestsBase
 
         var result = sut.Process( new[] { v1, v2 } );
 
-        using ( new AssertionScope() )
-        {
-            result.NodeType.Should().Be( ExpressionType.Add );
-            if ( result is not BinaryExpression binaryResult )
-                return;
-
-            binaryResult.Left.NodeType.Should().Be( ExpressionType.Add );
-            binaryResult.Right.NodeType.Should().Be( ExpressionType.Constant );
-            if ( binaryResult.Left is not BinaryExpression parametersAdd || binaryResult.Right is not ConstantExpression constant )
-                return;
-
-            parametersAdd.Left.Should().BeSameAs( v1 );
-            parametersAdd.Right.Should().BeSameAs( v2 );
-            constant.Value.Should().Be( 10 );
-        }
+        Assertion.All(
+                result.NodeType.TestEquals( ExpressionType.Add ),
+                result.TestType().AssignableTo<BinaryExpression>(),
+                result.TestIf()
+                    .OfType<BinaryExpression>(
+                        binaryResult => Assertion.All(
+                            "binaryResult",
+                            binaryResult.Left.NodeType.TestEquals( ExpressionType.Add ),
+                            binaryResult.Right.NodeType.TestEquals( ExpressionType.Constant ),
+                            binaryResult.Left.TestType().AssignableTo<BinaryExpression>(),
+                            binaryResult.Left.TestIf()
+                                .OfType<BinaryExpression>(
+                                    parametersAdd => Assertion.All(
+                                        "parametersAdd",
+                                        parametersAdd.Left.TestRefEquals( v1 ),
+                                        parametersAdd.Right.TestRefEquals( v2 ) ) ),
+                            binaryResult.Right.TestType().AssignableTo<ConstantExpression>(),
+                            binaryResult.Right.TestIf().OfType<ConstantExpression>( constant => constant.Value.TestEquals( 10 ) ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -70,15 +73,16 @@ public class FunctionTests : TestsBase
 
         var result = sut.Process( new[] { v1, v2, v3 } );
 
-        using ( new AssertionScope() )
-        {
-            result.NodeType.Should().Be( ExpressionType.Invoke );
-            if ( result is not InvocationExpression invocation )
-                return;
-
-            invocation.Expression.Should().BeSameAs( expression );
-            invocation.Arguments.Should().BeSequentiallyEqualTo( v1, v2, v3 );
-        }
+        Assertion.All(
+                result.NodeType.TestEquals( ExpressionType.Invoke ),
+                result.TestType().AssignableTo<InvocationExpression>(),
+                result.TestIf()
+                    .OfType<InvocationExpression>(
+                        invocation => Assertion.All(
+                            "invocation",
+                            invocation.Expression.TestRefEquals( expression ),
+                            invocation.Arguments.TestSequence( [ v1, v2, v3 ] ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -90,14 +94,14 @@ public class FunctionTests : TestsBase
 
         var result = sut.Process( Array.Empty<Expression>() );
 
-        using ( new AssertionScope() )
-        {
-            result.NodeType.Should().Be( ExpressionType.Invoke );
-            if ( result is not InvocationExpression invocation )
-                return;
-
-            invocation.Expression.Should().BeSameAs( expression );
-        }
+        Assertion.All(
+                result.NodeType.TestEquals( ExpressionType.Invoke ),
+                result.TestType().AssignableTo<InvocationExpression>(),
+                result.TestIf()
+                    .OfType<InvocationExpression>(
+                        invocation =>
+                            invocation.Expression.TestRefEquals( expression ) ) )
+            .Go();
     }
 
     [Fact]
@@ -105,7 +109,7 @@ public class FunctionTests : TestsBase
     {
         var expression = Lambda.ExpressionOf( () => Fixture.Create<int>() );
         var sut = ParsedExpressionFunction.Create( expression );
-        sut.Lambda.Should().BeSameAs( expression );
+        sut.Lambda.TestRefEquals( expression ).Go();
     }
 
     [Fact]
@@ -113,7 +117,7 @@ public class FunctionTests : TestsBase
     {
         var expression = Lambda.ExpressionOf( (int a) => a );
         var sut = ParsedExpressionFunction.Create( expression );
-        sut.Lambda.Should().BeSameAs( expression );
+        sut.Lambda.TestRefEquals( expression ).Go();
     }
 
     [Fact]
@@ -121,7 +125,7 @@ public class FunctionTests : TestsBase
     {
         var expression = Lambda.ExpressionOf( (int a, int b) => a + b );
         var sut = ParsedExpressionFunction.Create( expression );
-        sut.Lambda.Should().BeSameAs( expression );
+        sut.Lambda.TestRefEquals( expression ).Go();
     }
 
     [Fact]
@@ -129,7 +133,7 @@ public class FunctionTests : TestsBase
     {
         var expression = Lambda.ExpressionOf( (int a, int b, int c) => a + b + c );
         var sut = ParsedExpressionFunction.Create( expression );
-        sut.Lambda.Should().BeSameAs( expression );
+        sut.Lambda.TestRefEquals( expression ).Go();
     }
 
     [Fact]
@@ -137,7 +141,7 @@ public class FunctionTests : TestsBase
     {
         var expression = Lambda.ExpressionOf( (int a, int b, int c, int d) => a + b + c + d );
         var sut = ParsedExpressionFunction.Create( expression );
-        sut.Lambda.Should().BeSameAs( expression );
+        sut.Lambda.TestRefEquals( expression ).Go();
     }
 
     [Fact]
@@ -145,7 +149,7 @@ public class FunctionTests : TestsBase
     {
         var expression = Lambda.ExpressionOf( (int a, int b, int c, int d, int e) => a + b + c + d + e );
         var sut = ParsedExpressionFunction.Create( expression );
-        sut.Lambda.Should().BeSameAs( expression );
+        sut.Lambda.TestRefEquals( expression ).Go();
     }
 
     [Fact]
@@ -153,7 +157,7 @@ public class FunctionTests : TestsBase
     {
         var expression = Lambda.ExpressionOf( (int a, int b, int c, int d, int e, int f) => a + b + c + d + e + f );
         var sut = ParsedExpressionFunction.Create( expression );
-        sut.Lambda.Should().BeSameAs( expression );
+        sut.Lambda.TestRefEquals( expression ).Go();
     }
 
     [Fact]
@@ -161,6 +165,6 @@ public class FunctionTests : TestsBase
     {
         var expression = Lambda.ExpressionOf( (int a, int b, int c, int d, int e, int f, int g) => a + b + c + d + e + f + g );
         var sut = ParsedExpressionFunction.Create( expression );
-        sut.Lambda.Should().BeSameAs( expression );
+        sut.Lambda.TestRefEquals( expression ).Go();
     }
 }

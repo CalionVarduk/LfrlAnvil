@@ -1,4 +1,5 @@
-﻿using System.Linq.Expressions;
+﻿using System.Diagnostics.Contracts;
+using System.Linq.Expressions;
 using LfrlAnvil.Computable.Expressions.Constructs;
 using LfrlAnvil.Functional;
 
@@ -9,36 +10,34 @@ public abstract class UnaryOperatorsTestsBase : ConstructsTestsBase
     protected static void Process_ShouldPopOneOperandAndPushOneExpression_WhenOperandIsVariable<TArg, TResult>(
         ParsedExpressionUnaryOperator sut,
         ExpressionType expectedNodeType,
-        Action<Expression, Expression> nodeAssertion)
+        Func<Expression, Expression, Assertion> nodeAssertion)
     {
         var operand = CreateVariableOperand<TArg>( "value" );
 
         var result = sut.Process( operand );
 
-        using ( new AssertionScope() )
-        {
-            result.NodeType.Should().Be( expectedNodeType );
-            result.Type.Should().Be( typeof( TResult ) );
-            nodeAssertion( operand, result );
-        }
+        Assertion.All(
+                result.NodeType.TestEquals( expectedNodeType ),
+                result.Type.TestEquals( typeof( TResult ) ),
+                nodeAssertion( operand, result ) )
+            .Go();
     }
 
     protected static void Process_ShouldPopOneOperandAndPushOneExpression_WhenOperandIsConstant<TArg, TResult>(
         ParsedExpressionUnaryOperator sut,
         ExpressionType expectedNodeType,
         TArg operandValue,
-        Action<Expression, Expression> nodeAssertion)
+        Func<Expression, Expression, Assertion> nodeAssertion)
     {
         var operand = CreateConstantOperand( operandValue );
 
         var result = sut.Process( operand );
 
-        using ( new AssertionScope() )
-        {
-            result.NodeType.Should().Be( expectedNodeType );
-            result.Type.Should().Be( typeof( TResult ) );
-            nodeAssertion( operand, result );
-        }
+        Assertion.All(
+                result.NodeType.TestEquals( expectedNodeType ),
+                result.Type.TestEquals( typeof( TResult ) ),
+                nodeAssertion( operand, result ) )
+            .Go();
     }
 
     protected static void Process_ShouldThrowException_WhenOperatorDoesNotExist<TArg, TException>(ParsedExpressionUnaryOperator sut)
@@ -46,15 +45,15 @@ public abstract class UnaryOperatorsTestsBase : ConstructsTestsBase
     {
         var operand = CreateVariableOperand<TArg>( "value" );
         var action = Lambda.Of( () => sut.Process( operand ) );
-        action.Should().ThrowExactly<TException>();
+        action.Test( exc => exc.TestType().Exact<TException>() ).Go();
     }
 
-    protected static void DefaultNodeAssertion(Expression operand, Expression result)
+    [Pure]
+    protected static Assertion DefaultNodeAssertion(Expression operand, Expression result)
     {
-        result.Should().BeAssignableTo<UnaryExpression>();
-        if ( result is not UnaryExpression unaryResult )
-            return;
-
-        unaryResult.Operand.Should().BeSameAs( operand );
+        return Assertion.All(
+            "Node",
+            result.TestType().AssignableTo<UnaryExpression>(),
+            result.TestIf().OfType<UnaryExpression>( unaryResult => unaryResult.Operand.TestRefEquals( operand ) ) );
     }
 }

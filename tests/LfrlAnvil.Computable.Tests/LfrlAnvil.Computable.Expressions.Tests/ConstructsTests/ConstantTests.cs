@@ -11,11 +11,10 @@ public class ConstantTests : TestsBase
         var value = Fixture.Create<int>();
         var sut = ParsedExpressionConstant.Create( value );
 
-        using ( new AssertionScope() )
-        {
-            sut.Expression.Value.Should().Be( value );
-            sut.Expression.Type.Should().Be( typeof( int ) );
-        }
+        Assertion.All(
+                sut.Expression.Value.TestEquals( value ),
+                sut.Expression.Type.TestEquals( typeof( int ) ) )
+            .Go();
     }
 
     [Fact]
@@ -24,11 +23,10 @@ public class ConstantTests : TestsBase
         var value = Fixture.Create<int>();
         var sut = new ParsedExpressionConstant<int>( value );
 
-        using ( new AssertionScope() )
-        {
-            sut.Expression.Value.Should().Be( value );
-            sut.Expression.Type.Should().Be( typeof( int ) );
-        }
+        Assertion.All(
+                sut.Expression.Value.TestEquals( value ),
+                sut.Expression.Type.TestEquals( typeof( int ) ) )
+            .Go();
     }
 
     [Fact]
@@ -36,11 +34,10 @@ public class ConstantTests : TestsBase
     {
         var sut = new ParsedExpressionConstant( typeof( string ), null );
 
-        using ( new AssertionScope() )
-        {
-            sut.Expression.Value.Should().BeNull();
-            sut.Expression.Type.Should().Be( typeof( string ) );
-        }
+        Assertion.All(
+                sut.Expression.Value.TestNull(),
+                sut.Expression.Type.TestEquals( typeof( string ) ) )
+            .Go();
     }
 
     [Fact]
@@ -48,6 +45,6 @@ public class ConstantTests : TestsBase
     {
         var value = Fixture.Create<int>();
         var action = Lambda.Of( () => new ParsedExpressionConstant( typeof( string ), value ) );
-        action.Should().ThrowExactly<ArgumentException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentException>() ).Go();
     }
 }

@@ -4,7 +4,6 @@ using LfrlAnvil.Computable.Expressions.Constructs;
 using LfrlAnvil.Computable.Expressions.Exceptions;
 using LfrlAnvil.Computable.Expressions.Extensions;
 using LfrlAnvil.Functional;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Computable.Expressions.Tests.ExtensionsTests.ParsedExpressionDelegateTests;
 
@@ -29,7 +28,7 @@ public class ParsedExpressionDelegateExtensionsTests : TestsBase
             KeyValuePair.Create( "b", bValue ),
             KeyValuePair.Create( "d", dValue ) );
 
-        result.Should().BeSequentiallyEqualTo( aValue, bValue, default, dValue );
+        result.TestSequence( [ aValue, bValue, default, dValue ] ).Go();
     }
 
     [Fact]
@@ -51,7 +50,7 @@ public class ParsedExpressionDelegateExtensionsTests : TestsBase
             KeyValuePair.Create( ( StringSegment )"b", bValue ),
             KeyValuePair.Create( ( StringSegment )"d", dValue ) );
 
-        result.Should().BeSequentiallyEqualTo( aValue, bValue, default, dValue );
+        result.TestSequence( [ aValue, bValue, default, dValue ] ).Go();
     }
 
     [Fact]
@@ -75,7 +74,7 @@ public class ParsedExpressionDelegateExtensionsTests : TestsBase
             KeyValuePair.Create( "b", bValue ),
             KeyValuePair.Create( "d", dValue ) );
 
-        buffer.Should().BeSequentiallyEqualTo( aValue, bValue, default, dValue );
+        buffer.TestSequence( [ aValue, bValue, default, dValue ] ).Go();
     }
 
     [Fact]
@@ -99,7 +98,7 @@ public class ParsedExpressionDelegateExtensionsTests : TestsBase
             KeyValuePair.Create( ( StringSegment )"b", bValue ),
             KeyValuePair.Create( ( StringSegment )"d", dValue ) );
 
-        buffer.Should().BeSequentiallyEqualTo( aValue, bValue, default, dValue );
+        buffer.TestSequence( [ aValue, bValue, default, dValue ] ).Go();
     }
 
     [Fact]
@@ -126,7 +125,7 @@ public class ParsedExpressionDelegateExtensionsTests : TestsBase
             KeyValuePair.Create( "b", bValue ),
             KeyValuePair.Create( "d", dValue ) );
 
-        buffer.Should().BeSequentiallyEqualTo( aValue, bValue, oldThirdValue, dValue, oldFifthValue, oldSixthValue );
+        buffer.TestSequence( [ aValue, bValue, oldThirdValue, dValue, oldFifthValue, oldSixthValue ] ).Go();
     }
 
     [Fact]
@@ -145,7 +144,7 @@ public class ParsedExpressionDelegateExtensionsTests : TestsBase
 
         sut.MapArguments( buffer, Array.Empty<KeyValuePair<string, decimal>>() );
 
-        buffer.Should().BeSequentiallyEqualTo( oldFirstValue, oldSecondValue, oldThirdValue );
+        buffer.TestSequence( [ oldFirstValue, oldSecondValue, oldThirdValue ] ).Go();
     }
 
     [Theory]
@@ -170,7 +169,7 @@ public class ParsedExpressionDelegateExtensionsTests : TestsBase
 
         var action = Lambda.Of( () => sut.MapArguments( buffer, Array.Empty<KeyValuePair<string, decimal>>() ) );
 
-        action.Should().ThrowExactly<ParsedExpressionArgumentBufferTooSmallException>();
+        action.Test( exc => exc.TestType().Exact<ParsedExpressionArgumentBufferTooSmallException>() ).Go();
     }
 
     [Fact]
@@ -188,8 +187,12 @@ public class ParsedExpressionDelegateExtensionsTests : TestsBase
         var action = Lambda.Of(
             () => sut.MapArguments( KeyValuePair.Create( "a", 0m ), KeyValuePair.Create( "e", 0m ), KeyValuePair.Create( "f", 0m ) ) );
 
-        action.Should()
-            .ThrowExactly<InvalidParsedExpressionArgumentsException>()
-            .AndMatch( e => e.ArgumentNames.Select( n => n.ToString() ).SequenceEqual( new[] { "e", "f" } ) );
+        action.Test(
+                exc => Assertion.All(
+                    exc.TestType().Exact<InvalidParsedExpressionArgumentsException>(),
+                    exc.TestIf()
+                        .OfType<InvalidParsedExpressionArgumentsException>(
+                            e => e.ArgumentNames.Select( n => n.ToString() ).TestSequence( [ "e", "f" ] ) ) ) )
+            .Go();
     }
 }

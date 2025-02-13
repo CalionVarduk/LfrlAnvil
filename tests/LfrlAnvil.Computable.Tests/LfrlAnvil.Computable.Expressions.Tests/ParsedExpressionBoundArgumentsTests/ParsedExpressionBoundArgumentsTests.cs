@@ -9,7 +9,7 @@ public class ParsedExpressionBoundArgumentsTests : TestsBase
     public void Empty_ShouldReturnCorrectResult()
     {
         var sut = ParsedExpressionBoundArguments<int>.Empty;
-        sut.Should().BeEmpty();
+        sut.TestEmpty().Go();
     }
 
     [Fact]
@@ -23,13 +23,11 @@ public class ParsedExpressionBoundArgumentsTests : TestsBase
                 KeyValuePair.Create( ( StringSegment )"c", 30 )
             } );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 3 );
-            sut.Select( kv => KeyValuePair.Create( kv.Key.ToString(), kv.Value ) )
-                .Should()
-                .BeEquivalentTo( KeyValuePair.Create( "a", 10 ), KeyValuePair.Create( "b", 20 ), KeyValuePair.Create( "c", 30 ) );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 3 ),
+                sut.Select( kv => KeyValuePair.Create( kv.Key.ToString(), kv.Value ) )
+                    .TestSetEqual( [ KeyValuePair.Create( "a", 10 ), KeyValuePair.Create( "b", 20 ), KeyValuePair.Create( "c", 30 ) ] ) )
+            .Go();
     }
 
     [Theory]
@@ -48,7 +46,7 @@ public class ParsedExpressionBoundArgumentsTests : TestsBase
 
         var result = sut.Contains( name );
 
-        result.Should().BeTrue();
+        result.TestTrue().Go();
     }
 
     [Fact]
@@ -56,7 +54,7 @@ public class ParsedExpressionBoundArgumentsTests : TestsBase
     {
         var sut = new ParsedExpressionBoundArguments<int>( new[] { KeyValuePair.Create( ( StringSegment )"a", 10 ) } );
         var result = sut.Contains( "b" );
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Theory]
@@ -75,11 +73,10 @@ public class ParsedExpressionBoundArgumentsTests : TestsBase
 
         var result = sut.TryGetValue( name, out var outResult );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeTrue();
-            outResult.Should().Be( expected );
-        }
+        Assertion.All(
+                result.TestTrue(),
+                outResult.TestEquals( expected ) )
+            .Go();
     }
 
     [Fact]
@@ -89,10 +86,9 @@ public class ParsedExpressionBoundArgumentsTests : TestsBase
 
         var result = sut.TryGetValue( "b", out var outResult );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeFalse();
-            outResult.Should().Be( default );
-        }
+        Assertion.All(
+                result.TestFalse(),
+                outResult.TestEquals( default ) )
+            .Go();
     }
 }

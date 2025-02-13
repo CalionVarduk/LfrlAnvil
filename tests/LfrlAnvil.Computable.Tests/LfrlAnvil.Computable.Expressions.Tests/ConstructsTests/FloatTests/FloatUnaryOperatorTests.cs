@@ -21,13 +21,11 @@ public class FloatUnaryOperatorTests : UnaryOperatorsTestsBase
             sut: new ParsedExpressionNegateFloatOperator(),
             expectedNodeType: ExpressionType.Constant,
             operandValue: 123,
-            (_, result) =>
-            {
-                result.Should().BeAssignableTo<ConstantExpression>();
-                if ( result is not ConstantExpression constantResult )
-                    return;
-
-                constantResult.Value.Should().Be( -123.0F );
-            } );
+            (_, result) => Assertion.All(
+                result.TestType().AssignableTo<ConstantExpression>(),
+                result.TestIf()
+                    .OfType<ConstantExpression>(
+                        constantResult =>
+                            constantResult.Value.TestEquals( -123.0F ) ) ) );
     }
 }

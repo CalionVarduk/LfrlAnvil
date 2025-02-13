@@ -1,7 +1,6 @@
 ﻿using LfrlAnvil.Computable.Expressions.Constructs;
 using LfrlAnvil.Computable.Expressions.Exceptions;
 using LfrlAnvil.Functional;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Computable.Expressions.Tests.ParsedExpressionDelegateTests;
 
@@ -20,7 +19,7 @@ public class ParsedExpressionDelegateTests : TestsBase
 
         var sut = expression.Compile();
 
-        sut.Arguments.Should().BeSameAs( expression.UnboundArguments );
+        sut.Arguments.TestRefEquals( expression.UnboundArguments ).Go();
     }
 
     [Fact]
@@ -40,7 +39,7 @@ public class ParsedExpressionDelegateTests : TestsBase
 
         var result = sut.Invoke( aValue, bValue );
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -62,8 +61,12 @@ public class ParsedExpressionDelegateTests : TestsBase
 
         var action = Lambda.Of( () => sut.Invoke( values ) );
 
-        action.Should()
-            .ThrowExactly<InvalidParsedExpressionArgumentCountException>()
-            .AndMatch( e => e.Actual == valuesCount && e.Expected == sut.Arguments.Count );
+        action.Test(
+                exc => Assertion.All(
+                    exc.TestType().Exact<InvalidParsedExpressionArgumentCountException>(),
+                    exc.TestIf()
+                        .OfType<InvalidParsedExpressionArgumentCountException>(
+                            e => Assertion.All( e.Actual.TestEquals( valuesCount ), e.Expected.TestEquals( sut.Arguments.Count ) ) ) ) )
+            .Go();
     }
 }

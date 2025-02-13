@@ -1,5 +1,4 @@
-﻿using System.Linq;
-using System.Linq.Expressions;
+﻿using System.Linq.Expressions;
 using LfrlAnvil.Computable.Expressions.Constructs.Int32;
 
 namespace LfrlAnvil.Computable.Expressions.Tests.ConstructsTests.Int32Tests;
@@ -24,13 +23,12 @@ public class Int32BinaryOperatorTests : BinaryOperatorsTestsBase
             leftValue: 123,
             rightValue: 456,
             (_, _, result) =>
-            {
-                result.Should().BeAssignableTo<ConstantExpression>();
-                if ( result is not ConstantExpression constantResult )
-                    return;
-
-                constantResult.Value.Should().Be( 579 );
-            } );
+                Assertion.All(
+                    result.TestType().AssignableTo<ConstantExpression>(),
+                    result.TestIf()
+                        .OfType<ConstantExpression>(
+                            constantResult =>
+                                constantResult.Value.TestEquals( 579 ) ) ) );
     }
 
     [Fact]
@@ -50,7 +48,7 @@ public class Int32BinaryOperatorTests : BinaryOperatorsTestsBase
             sut: new ParsedExpressionAddInt32Operator(),
             expectedNodeType: ExpressionType.Parameter,
             leftValue: 0,
-            (_, right, result) => result.Should().BeSameAs( right ) );
+            (_, right, result) => result.TestRefEquals( right ) );
     }
 
     [Fact]
@@ -70,7 +68,7 @@ public class Int32BinaryOperatorTests : BinaryOperatorsTestsBase
             sut: new ParsedExpressionAddInt32Operator(),
             expectedNodeType: ExpressionType.Parameter,
             rightValue: 0,
-            (left, _, result) => result.Should().BeSameAs( left ) );
+            (left, _, result) => result.TestRefEquals( left ) );
     }
 
     [Fact]
@@ -91,13 +89,12 @@ public class Int32BinaryOperatorTests : BinaryOperatorsTestsBase
             leftValue: 123,
             rightValue: 456,
             (_, _, result) =>
-            {
-                result.Should().BeAssignableTo<ConstantExpression>();
-                if ( result is not ConstantExpression constantResult )
-                    return;
-
-                constantResult.Value.Should().Be( -333 );
-            } );
+                Assertion.All(
+                    result.TestType().AssignableTo<ConstantExpression>(),
+                    result.TestIf()
+                        .OfType<ConstantExpression>(
+                            constantResult =>
+                                constantResult.Value.TestEquals( -333 ) ) ) );
     }
 
     [Fact]
@@ -118,13 +115,12 @@ public class Int32BinaryOperatorTests : BinaryOperatorsTestsBase
             expectedNodeType: ExpressionType.Negate,
             leftValue: 0,
             (_, right, result) =>
-            {
-                result.Should().BeAssignableTo<UnaryExpression>();
-                if ( result is not UnaryExpression unaryResult )
-                    return;
-
-                unaryResult.Operand.Should().BeSameAs( right );
-            } );
+                Assertion.All(
+                    result.TestType().AssignableTo<UnaryExpression>(),
+                    result.TestIf()
+                        .OfType<UnaryExpression>(
+                            unaryResult =>
+                                unaryResult.Operand.TestRefEquals( right ) ) ) );
     }
 
     [Fact]
@@ -144,7 +140,7 @@ public class Int32BinaryOperatorTests : BinaryOperatorsTestsBase
             sut: new ParsedExpressionSubtractInt32Operator(),
             expectedNodeType: ExpressionType.Parameter,
             rightValue: 0,
-            (left, _, result) => result.Should().BeSameAs( left ) );
+            (left, _, result) => result.TestRefEquals( left ) );
     }
 
     [Fact]
@@ -165,13 +161,12 @@ public class Int32BinaryOperatorTests : BinaryOperatorsTestsBase
             leftValue: 123,
             rightValue: 456,
             (_, _, result) =>
-            {
-                result.Should().BeAssignableTo<ConstantExpression>();
-                if ( result is not ConstantExpression constantResult )
-                    return;
-
-                constantResult.Value.Should().Be( 56088 );
-            } );
+                Assertion.All(
+                    result.TestType().AssignableTo<ConstantExpression>(),
+                    result.TestIf()
+                        .OfType<ConstantExpression>(
+                            constantResult =>
+                                constantResult.Value.TestEquals( 56088 ) ) ) );
     }
 
     [Fact]
@@ -192,13 +187,12 @@ public class Int32BinaryOperatorTests : BinaryOperatorsTestsBase
             expectedNodeType: ExpressionType.Constant,
             leftValue: 0,
             (_, _, result) =>
-            {
-                result.Should().BeAssignableTo<ConstantExpression>();
-                if ( result is not ConstantExpression constantResult )
-                    return;
-
-                constantResult.Value.Should().Be( 0 );
-            } );
+                Assertion.All(
+                    result.TestType().AssignableTo<ConstantExpression>(),
+                    result.TestIf()
+                        .OfType<ConstantExpression>(
+                            constantResult =>
+                                constantResult.Value.TestEquals( 0 ) ) ) );
     }
 
     [Fact]
@@ -208,7 +202,7 @@ public class Int32BinaryOperatorTests : BinaryOperatorsTestsBase
             sut: new ParsedExpressionMultiplyInt32Operator(),
             expectedNodeType: ExpressionType.Parameter,
             leftValue: 1,
-            (_, right, result) => result.Should().BeSameAs( right ) );
+            (_, right, result) => result.TestRefEquals( right ) );
     }
 
     [Fact]
@@ -219,13 +213,12 @@ public class Int32BinaryOperatorTests : BinaryOperatorsTestsBase
             expectedNodeType: ExpressionType.Negate,
             leftValue: -1,
             (_, right, result) =>
-            {
-                result.Should().BeAssignableTo<UnaryExpression>();
-                if ( result is not UnaryExpression unaryResult )
-                    return;
-
-                unaryResult.Operand.Should().BeSameAs( right );
-            } );
+                Assertion.All(
+                    result.TestType().AssignableTo<UnaryExpression>(),
+                    result.TestIf()
+                        .OfType<UnaryExpression>(
+                            unaryResult =>
+                                unaryResult.Operand.TestRefEquals( right ) ) ) );
     }
 
     [Fact]
@@ -246,13 +239,12 @@ public class Int32BinaryOperatorTests : BinaryOperatorsTestsBase
             expectedNodeType: ExpressionType.Constant,
             rightValue: 0,
             (_, _, result) =>
-            {
-                result.Should().BeAssignableTo<ConstantExpression>();
-                if ( result is not ConstantExpression constantResult )
-                    return;
-
-                constantResult.Value.Should().Be( 0 );
-            } );
+                Assertion.All(
+                    result.TestType().AssignableTo<ConstantExpression>(),
+                    result.TestIf()
+                        .OfType<ConstantExpression>(
+                            constantResult =>
+                                constantResult.Value.TestEquals( 0 ) ) ) );
     }
 
     [Fact]
@@ -262,7 +254,7 @@ public class Int32BinaryOperatorTests : BinaryOperatorsTestsBase
             sut: new ParsedExpressionMultiplyInt32Operator(),
             expectedNodeType: ExpressionType.Parameter,
             rightValue: 1,
-            (left, _, result) => result.Should().BeSameAs( left ) );
+            (left, _, result) => result.TestRefEquals( left ) );
     }
 
     [Fact]
@@ -273,13 +265,12 @@ public class Int32BinaryOperatorTests : BinaryOperatorsTestsBase
             expectedNodeType: ExpressionType.Negate,
             rightValue: -1,
             (left, _, result) =>
-            {
-                result.Should().BeAssignableTo<UnaryExpression>();
-                if ( result is not UnaryExpression unaryResult )
-                    return;
-
-                unaryResult.Operand.Should().BeSameAs( left );
-            } );
+                Assertion.All(
+                    result.TestType().AssignableTo<UnaryExpression>(),
+                    result.TestIf()
+                        .OfType<UnaryExpression>(
+                            unaryResult =>
+                                unaryResult.Operand.TestRefEquals( left ) ) ) );
     }
 
     [Fact]
@@ -300,13 +291,12 @@ public class Int32BinaryOperatorTests : BinaryOperatorsTestsBase
             leftValue: 1236,
             rightValue: 4,
             (_, _, result) =>
-            {
-                result.Should().BeAssignableTo<ConstantExpression>();
-                if ( result is not ConstantExpression constantResult )
-                    return;
-
-                constantResult.Value.Should().Be( 309 );
-            } );
+                Assertion.All(
+                    result.TestType().AssignableTo<ConstantExpression>(),
+                    result.TestIf()
+                        .OfType<ConstantExpression>(
+                            constantResult =>
+                                constantResult.Value.TestEquals( 309 ) ) ) );
     }
 
     [Fact]
@@ -344,7 +334,7 @@ public class Int32BinaryOperatorTests : BinaryOperatorsTestsBase
             sut: new ParsedExpressionDivideInt32Operator(),
             expectedNodeType: ExpressionType.Parameter,
             rightValue: 1,
-            (left, _, result) => result.Should().BeSameAs( left ) );
+            (left, _, result) => result.TestRefEquals( left ) );
     }
 
     [Fact]
@@ -355,13 +345,12 @@ public class Int32BinaryOperatorTests : BinaryOperatorsTestsBase
             expectedNodeType: ExpressionType.Negate,
             rightValue: -1,
             (left, _, result) =>
-            {
-                result.Should().BeAssignableTo<UnaryExpression>();
-                if ( result is not UnaryExpression unaryResult )
-                    return;
-
-                unaryResult.Operand.Should().BeSameAs( left );
-            } );
+                Assertion.All(
+                    result.TestType().AssignableTo<UnaryExpression>(),
+                    result.TestIf()
+                        .OfType<UnaryExpression>(
+                            unaryResult =>
+                                unaryResult.Operand.TestRefEquals( left ) ) ) );
     }
 
     [Fact]
@@ -382,13 +371,12 @@ public class Int32BinaryOperatorTests : BinaryOperatorsTestsBase
             leftValue: 456,
             rightValue: 123,
             (_, _, result) =>
-            {
-                result.Should().BeAssignableTo<ConstantExpression>();
-                if ( result is not ConstantExpression constantResult )
-                    return;
-
-                constantResult.Value.Should().Be( 87 );
-            } );
+                Assertion.All(
+                    result.TestType().AssignableTo<ConstantExpression>(),
+                    result.TestIf()
+                        .OfType<ConstantExpression>(
+                            constantResult =>
+                                constantResult.Value.TestEquals( 87 ) ) ) );
     }
 
     [Fact]
@@ -429,13 +417,12 @@ public class Int32BinaryOperatorTests : BinaryOperatorsTestsBase
             expectedNodeType: ExpressionType.Constant,
             rightValue: right,
             (_, _, result) =>
-            {
-                result.Should().BeAssignableTo<ConstantExpression>();
-                if ( result is not ConstantExpression constantResult )
-                    return;
-
-                constantResult.Value.Should().Be( 0 );
-            } );
+                Assertion.All(
+                    result.TestType().AssignableTo<ConstantExpression>(),
+                    result.TestIf()
+                        .OfType<ConstantExpression>(
+                            constantResult =>
+                                constantResult.Value.TestEquals( 0 ) ) ) );
     }
 
     [Fact]
@@ -456,13 +443,12 @@ public class Int32BinaryOperatorTests : BinaryOperatorsTestsBase
             leftValue: 123,
             rightValue: 456,
             (_, _, result) =>
-            {
-                result.Should().BeAssignableTo<ConstantExpression>();
-                if ( result is not ConstantExpression constantExpression )
-                    return;
-
-                constantExpression.Value.Should().Be( 72 );
-            } );
+                Assertion.All(
+                    result.TestType().AssignableTo<ConstantExpression>(),
+                    result.TestIf()
+                        .OfType<ConstantExpression>(
+                            constantExpression =>
+                                constantExpression.Value.TestEquals( 72 ) ) ) );
     }
 
     [Fact]
@@ -483,13 +469,12 @@ public class Int32BinaryOperatorTests : BinaryOperatorsTestsBase
             expectedNodeType: ExpressionType.Constant,
             leftValue: 0,
             (_, _, result) =>
-            {
-                result.Should().BeAssignableTo<ConstantExpression>();
-                if ( result is not ConstantExpression constantExpression )
-                    return;
-
-                constantExpression.Value.Should().Be( 0 );
-            } );
+                Assertion.All(
+                    result.TestType().AssignableTo<ConstantExpression>(),
+                    result.TestIf()
+                        .OfType<ConstantExpression>(
+                            constantExpression =>
+                                constantExpression.Value.TestEquals( 0 ) ) ) );
     }
 
     [Fact]
@@ -510,13 +495,12 @@ public class Int32BinaryOperatorTests : BinaryOperatorsTestsBase
             expectedNodeType: ExpressionType.Constant,
             rightValue: 0,
             (_, _, result) =>
-            {
-                result.Should().BeAssignableTo<ConstantExpression>();
-                if ( result is not ConstantExpression constantExpression )
-                    return;
-
-                constantExpression.Value.Should().Be( 0 );
-            } );
+                Assertion.All(
+                    result.TestType().AssignableTo<ConstantExpression>(),
+                    result.TestIf()
+                        .OfType<ConstantExpression>(
+                            constantExpression =>
+                                constantExpression.Value.TestEquals( 0 ) ) ) );
     }
 
     [Fact]
@@ -537,13 +521,12 @@ public class Int32BinaryOperatorTests : BinaryOperatorsTestsBase
             leftValue: 123,
             rightValue: 456,
             (_, _, result) =>
-            {
-                result.Should().BeAssignableTo<ConstantExpression>();
-                if ( result is not ConstantExpression constantExpression )
-                    return;
-
-                constantExpression.Value.Should().Be( 507 );
-            } );
+                Assertion.All(
+                    result.TestType().AssignableTo<ConstantExpression>(),
+                    result.TestIf()
+                        .OfType<ConstantExpression>(
+                            constantExpression =>
+                                constantExpression.Value.TestEquals( 507 ) ) ) );
     }
 
     [Fact]
@@ -563,7 +546,7 @@ public class Int32BinaryOperatorTests : BinaryOperatorsTestsBase
             sut: new ParsedExpressionBitwiseOrInt32Operator(),
             expectedNodeType: ExpressionType.Parameter,
             leftValue: 0,
-            (_, right, result) => result.Should().BeSameAs( right ) );
+            (_, right, result) => result.TestRefEquals( right ) );
     }
 
     [Fact]
@@ -583,7 +566,7 @@ public class Int32BinaryOperatorTests : BinaryOperatorsTestsBase
             sut: new ParsedExpressionBitwiseOrInt32Operator(),
             expectedNodeType: ExpressionType.Parameter,
             rightValue: 0,
-            (left, _, result) => result.Should().BeSameAs( left ) );
+            (left, _, result) => result.TestRefEquals( left ) );
     }
 
     [Fact]
@@ -604,13 +587,12 @@ public class Int32BinaryOperatorTests : BinaryOperatorsTestsBase
             leftValue: 123,
             rightValue: 456,
             (_, _, result) =>
-            {
-                result.Should().BeAssignableTo<ConstantExpression>();
-                if ( result is not ConstantExpression constantExpression )
-                    return;
-
-                constantExpression.Value.Should().Be( 435 );
-            } );
+                Assertion.All(
+                    result.TestType().AssignableTo<ConstantExpression>(),
+                    result.TestIf()
+                        .OfType<ConstantExpression>(
+                            constantExpression =>
+                                constantExpression.Value.TestEquals( 435 ) ) ) );
     }
 
     [Fact]
@@ -630,7 +612,7 @@ public class Int32BinaryOperatorTests : BinaryOperatorsTestsBase
             sut: new ParsedExpressionBitwiseXorInt32Operator(),
             expectedNodeType: ExpressionType.Parameter,
             leftValue: 0,
-            (_, right, result) => result.Should().BeSameAs( right ) );
+            (_, right, result) => result.TestRefEquals( right ) );
     }
 
     [Fact]
@@ -650,7 +632,7 @@ public class Int32BinaryOperatorTests : BinaryOperatorsTestsBase
             sut: new ParsedExpressionBitwiseXorInt32Operator(),
             expectedNodeType: ExpressionType.Parameter,
             rightValue: 0,
-            (left, _, result) => result.Should().BeSameAs( left ) );
+            (left, _, result) => result.TestRefEquals( left ) );
     }
 
     [Fact]
@@ -671,13 +653,12 @@ public class Int32BinaryOperatorTests : BinaryOperatorsTestsBase
             leftValue: 456,
             rightValue: 12,
             (_, _, result) =>
-            {
-                result.Should().BeAssignableTo<ConstantExpression>();
-                if ( result is not ConstantExpression constantExpression )
-                    return;
-
-                constantExpression.Value.Should().Be( 1867776 );
-            } );
+                Assertion.All(
+                    result.TestType().AssignableTo<ConstantExpression>(),
+                    result.TestIf()
+                        .OfType<ConstantExpression>(
+                            constantExpression =>
+                                constantExpression.Value.TestEquals( 1867776 ) ) ) );
     }
 
     [Fact]
@@ -698,13 +679,12 @@ public class Int32BinaryOperatorTests : BinaryOperatorsTestsBase
             expectedNodeType: ExpressionType.Constant,
             leftValue: 0,
             (_, _, result) =>
-            {
-                result.Should().BeAssignableTo<ConstantExpression>();
-                if ( result is not ConstantExpression constantResult )
-                    return;
-
-                constantResult.Value.Should().Be( 0 );
-            } );
+                Assertion.All(
+                    result.TestType().AssignableTo<ConstantExpression>(),
+                    result.TestIf()
+                        .OfType<ConstantExpression>(
+                            constantResult =>
+                                constantResult.Value.TestEquals( 0 ) ) ) );
     }
 
     [Theory]
@@ -737,7 +717,7 @@ public class Int32BinaryOperatorTests : BinaryOperatorsTestsBase
             sut: new ParsedExpressionBitwiseLeftShiftInt32Operator(),
             expectedNodeType: ExpressionType.Parameter,
             rightValue: shift,
-            (left, _, result) => result.Should().BeSameAs( left ) );
+            (left, _, result) => result.TestRefEquals( left ) );
     }
 
     [Fact]
@@ -758,13 +738,12 @@ public class Int32BinaryOperatorTests : BinaryOperatorsTestsBase
             leftValue: 1867776,
             rightValue: 12,
             (_, _, result) =>
-            {
-                result.Should().BeAssignableTo<ConstantExpression>();
-                if ( result is not ConstantExpression constantExpression )
-                    return;
-
-                constantExpression.Value.Should().Be( 456 );
-            } );
+                Assertion.All(
+                    result.TestType().AssignableTo<ConstantExpression>(),
+                    result.TestIf()
+                        .OfType<ConstantExpression>(
+                            constantExpression =>
+                                constantExpression.Value.TestEquals( 456 ) ) ) );
     }
 
     [Fact]
@@ -785,13 +764,12 @@ public class Int32BinaryOperatorTests : BinaryOperatorsTestsBase
             expectedNodeType: ExpressionType.Constant,
             leftValue: 0,
             (_, _, result) =>
-            {
-                result.Should().BeAssignableTo<ConstantExpression>();
-                if ( result is not ConstantExpression constantResult )
-                    return;
-
-                constantResult.Value.Should().Be( 0 );
-            } );
+                Assertion.All(
+                    result.TestType().AssignableTo<ConstantExpression>(),
+                    result.TestIf()
+                        .OfType<ConstantExpression>(
+                            constantResult =>
+                                constantResult.Value.TestEquals( 0 ) ) ) );
     }
 
     [Theory]
@@ -824,7 +802,7 @@ public class Int32BinaryOperatorTests : BinaryOperatorsTestsBase
             sut: new ParsedExpressionBitwiseRightShiftInt32Operator(),
             expectedNodeType: ExpressionType.Parameter,
             rightValue: shift,
-            (left, _, result) => result.Should().BeSameAs( left ) );
+            (left, _, result) => result.TestRefEquals( left ) );
     }
 
     [Fact]
@@ -850,13 +828,12 @@ public class Int32BinaryOperatorTests : BinaryOperatorsTestsBase
             leftValue: left,
             rightValue: right,
             (_, _, result) =>
-            {
-                result.Should().BeAssignableTo<ConstantExpression>();
-                if ( result is not ConstantExpression constantResult )
-                    return;
-
-                constantResult.Value.Should().Be( expected );
-            } );
+                Assertion.All(
+                    result.TestType().AssignableTo<ConstantExpression>(),
+                    result.TestIf()
+                        .OfType<ConstantExpression>(
+                            constantResult =>
+                                constantResult.Value.TestEquals( expected ) ) ) );
     }
 
     [Fact]
@@ -902,13 +879,12 @@ public class Int32BinaryOperatorTests : BinaryOperatorsTestsBase
             leftValue: left,
             rightValue: right,
             (_, _, result) =>
-            {
-                result.Should().BeAssignableTo<ConstantExpression>();
-                if ( result is not ConstantExpression constantResult )
-                    return;
-
-                constantResult.Value.Should().Be( expected );
-            } );
+                Assertion.All(
+                    result.TestType().AssignableTo<ConstantExpression>(),
+                    result.TestIf()
+                        .OfType<ConstantExpression>(
+                            constantResult =>
+                                constantResult.Value.TestEquals( expected ) ) ) );
     }
 
     [Fact]
@@ -955,13 +931,12 @@ public class Int32BinaryOperatorTests : BinaryOperatorsTestsBase
             leftValue: left,
             rightValue: right,
             (_, _, result) =>
-            {
-                result.Should().BeAssignableTo<ConstantExpression>();
-                if ( result is not ConstantExpression constantResult )
-                    return;
-
-                constantResult.Value.Should().Be( expected );
-            } );
+                Assertion.All(
+                    result.TestType().AssignableTo<ConstantExpression>(),
+                    result.TestIf()
+                        .OfType<ConstantExpression>(
+                            constantResult =>
+                                constantResult.Value.TestEquals( expected ) ) ) );
     }
 
     [Fact]
@@ -1008,13 +983,12 @@ public class Int32BinaryOperatorTests : BinaryOperatorsTestsBase
             leftValue: left,
             rightValue: right,
             (_, _, result) =>
-            {
-                result.Should().BeAssignableTo<ConstantExpression>();
-                if ( result is not ConstantExpression constantResult )
-                    return;
-
-                constantResult.Value.Should().Be( expected );
-            } );
+                Assertion.All(
+                    result.TestType().AssignableTo<ConstantExpression>(),
+                    result.TestIf()
+                        .OfType<ConstantExpression>(
+                            constantResult =>
+                                constantResult.Value.TestEquals( expected ) ) ) );
     }
 
     [Fact]
@@ -1061,13 +1035,12 @@ public class Int32BinaryOperatorTests : BinaryOperatorsTestsBase
             leftValue: left,
             rightValue: right,
             (_, _, result) =>
-            {
-                result.Should().BeAssignableTo<ConstantExpression>();
-                if ( result is not ConstantExpression constantResult )
-                    return;
-
-                constantResult.Value.Should().Be( expected );
-            } );
+                Assertion.All(
+                    result.TestType().AssignableTo<ConstantExpression>(),
+                    result.TestIf()
+                        .OfType<ConstantExpression>(
+                            constantResult =>
+                                constantResult.Value.TestEquals( expected ) ) ) );
     }
 
     [Fact]
@@ -1114,13 +1087,12 @@ public class Int32BinaryOperatorTests : BinaryOperatorsTestsBase
             leftValue: left,
             rightValue: right,
             (_, _, result) =>
-            {
-                result.Should().BeAssignableTo<ConstantExpression>();
-                if ( result is not ConstantExpression constantResult )
-                    return;
-
-                constantResult.Value.Should().Be( expected );
-            } );
+                Assertion.All(
+                    result.TestType().AssignableTo<ConstantExpression>(),
+                    result.TestIf()
+                        .OfType<ConstantExpression>(
+                            constantResult =>
+                                constantResult.Value.TestEquals( expected ) ) ) );
     }
 
     [Fact]
@@ -1150,15 +1122,15 @@ public class Int32BinaryOperatorTests : BinaryOperatorsTestsBase
             sut: new ParsedExpressionCompareInt32Operator(),
             expectedNodeType: ExpressionType.Call,
             (left, right, result) =>
-            {
-                result.Should().BeAssignableTo<MethodCallExpression>();
-                if ( result is not MethodCallExpression methodCallResult )
-                    return;
-
-                methodCallResult.Object.Should().BeSameAs( left );
-                methodCallResult.Arguments.Should().HaveCount( 1 ).And.Subject.First().Should().BeSameAs( right );
-                methodCallResult.Method.Name.Should().Be( nameof( IComparable.CompareTo ) );
-            } );
+                Assertion.All(
+                    result.TestType().AssignableTo<MethodCallExpression>(),
+                    result.TestIf()
+                        .OfType<MethodCallExpression>(
+                            methodCallResult => Assertion.All(
+                                "methodCallResult",
+                                methodCallResult.Object.TestRefEquals( left ),
+                                methodCallResult.Arguments.TestSequence( [ right ] ),
+                                methodCallResult.Method.Name.TestEquals( nameof( IComparable.CompareTo ) ) ) ) ) );
     }
 
     [Theory]
@@ -1176,13 +1148,12 @@ public class Int32BinaryOperatorTests : BinaryOperatorsTestsBase
             leftValue: left,
             rightValue: right,
             (_, _, result) =>
-            {
-                result.Should().BeAssignableTo<ConstantExpression>();
-                if ( result is not ConstantExpression constantResult )
-                    return;
-
-                constantResult.Value.Should().Be( expected );
-            } );
+                Assertion.All(
+                    result.TestType().AssignableTo<ConstantExpression>(),
+                    result.TestIf()
+                        .OfType<ConstantExpression>(
+                            constantResult =>
+                                constantResult.Value.TestEquals( expected ) ) ) );
     }
 
     [Fact]
@@ -1193,15 +1164,15 @@ public class Int32BinaryOperatorTests : BinaryOperatorsTestsBase
             expectedNodeType: ExpressionType.Call,
             leftValue: Fixture.Create<int>(),
             (left, right, result) =>
-            {
-                result.Should().BeAssignableTo<MethodCallExpression>();
-                if ( result is not MethodCallExpression methodCallResult )
-                    return;
-
-                methodCallResult.Object.Should().BeSameAs( left );
-                methodCallResult.Arguments.Should().HaveCount( 1 ).And.Subject.First().Should().BeSameAs( right );
-                methodCallResult.Method.Name.Should().Be( nameof( IComparable.CompareTo ) );
-            } );
+                Assertion.All(
+                    result.TestType().AssignableTo<MethodCallExpression>(),
+                    result.TestIf()
+                        .OfType<MethodCallExpression>(
+                            methodCallResult => Assertion.All(
+                                "methodCallResult",
+                                methodCallResult.Object.TestRefEquals( left ),
+                                methodCallResult.Arguments.TestSequence( [ right ] ),
+                                methodCallResult.Method.Name.TestEquals( nameof( IComparable.CompareTo ) ) ) ) ) );
     }
 
     [Fact]
@@ -1212,14 +1183,14 @@ public class Int32BinaryOperatorTests : BinaryOperatorsTestsBase
             expectedNodeType: ExpressionType.Call,
             rightValue: Fixture.Create<int>(),
             (left, right, result) =>
-            {
-                result.Should().BeAssignableTo<MethodCallExpression>();
-                if ( result is not MethodCallExpression methodCallResult )
-                    return;
-
-                methodCallResult.Object.Should().BeSameAs( left );
-                methodCallResult.Arguments.Should().HaveCount( 1 ).And.Subject.First().Should().BeSameAs( right );
-                methodCallResult.Method.Name.Should().Be( nameof( IComparable.CompareTo ) );
-            } );
+                Assertion.All(
+                    result.TestType().AssignableTo<MethodCallExpression>(),
+                    result.TestIf()
+                        .OfType<MethodCallExpression>(
+                            methodCallResult => Assertion.All(
+                                "methodCallResult",
+                                methodCallResult.Object.TestRefEquals( left ),
+                                methodCallResult.Arguments.TestSequence( [ right ] ),
+                                methodCallResult.Method.Name.TestEquals( nameof( IComparable.CompareTo ) ) ) ) ) );
     }
 }

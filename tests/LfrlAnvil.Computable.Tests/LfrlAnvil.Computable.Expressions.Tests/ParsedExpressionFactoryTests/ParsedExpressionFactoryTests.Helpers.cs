@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using System.Diagnostics.Contracts;
 using System.Globalization;
 using System.Linq;
 using System.Linq.Expressions;
@@ -13,12 +14,16 @@ namespace LfrlAnvil.Computable.Expressions.Tests.ParsedExpressionFactoryTests;
 
 public partial class ParsedExpressionFactoryTests
 {
-    private static bool MatchExpectations(
+    [Pure]
+    private static Assertion MatchExpectations(
         ParsedExpressionCreationException exception,
         string input,
         params ParsedExpressionBuilderErrorType[] types)
     {
-        return exception.Errors.Select( e => e.Type ).SequenceEqual( types ) && exception.Input == input;
+        return Assertion.All(
+            "Expectations",
+            exception.Errors.Select( e => e.Type ).TestSequence( types ),
+            exception.Input.TestEquals( input ) );
     }
 
     private sealed class MockPrefixUnaryOperator : ParsedExpressionUnaryOperator

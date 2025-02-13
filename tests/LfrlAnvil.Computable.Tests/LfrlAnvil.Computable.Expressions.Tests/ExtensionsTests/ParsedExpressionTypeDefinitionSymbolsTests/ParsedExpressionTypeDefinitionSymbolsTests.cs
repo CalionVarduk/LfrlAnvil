@@ -9,13 +9,12 @@ public class ParsedExpressionTypeDefinitionSymbolsTests : TestsBase
     {
         var sut = default( ParsedExpressionTypeDefinitionSymbols );
 
-        using ( new AssertionScope() )
-        {
-            sut.Name.ToString().Should().BeEmpty();
-            sut.PrefixTypeConverter.Should().NotBeNull().And.Subject.ToString().Should().Be( "[]" );
-            sut.PostfixTypeConverter.Should().BeNull();
-            sut.Constant.Should().NotBeNull().And.Subject.ToString().Should().BeEmpty();
-        }
+        Assertion.All(
+                sut.Name.ToString().TestEmpty(),
+                (sut.PrefixTypeConverter?.ToString()).TestEquals( "[]" ),
+                sut.PostfixTypeConverter.TestNull(),
+                (sut.Constant?.ToString()).TestEquals( string.Empty ) )
+            .Go();
     }
 
     [Fact]
@@ -23,13 +22,12 @@ public class ParsedExpressionTypeDefinitionSymbolsTests : TestsBase
     {
         var sut = ParsedExpressionTypeDefinitionSymbols.Empty;
 
-        using ( new AssertionScope() )
-        {
-            sut.Name.ToString().Should().BeEmpty();
-            sut.PrefixTypeConverter.Should().NotBeNull().And.Subject.ToString().Should().Be( "[]" );
-            sut.PostfixTypeConverter.Should().BeNull();
-            sut.Constant.Should().NotBeNull().And.Subject.ToString().Should().BeEmpty();
-        }
+        Assertion.All(
+                sut.Name.ToString().TestEmpty(),
+                (sut.PrefixTypeConverter?.ToString()).TestEquals( "[]" ),
+                sut.PostfixTypeConverter.TestNull(),
+                (sut.Constant?.ToString()).TestEquals( string.Empty ) )
+            .Go();
     }
 
     [Fact]
@@ -43,7 +41,7 @@ public class ParsedExpressionTypeDefinitionSymbolsTests : TestsBase
 
         var result = sut.ToString();
 
-        result.Should().Be( "Name: 'name', PrefixTypeConverter: 'prefix', PostfixTypeConverter: 'postfix', Constant: 'constant'" );
+        result.TestEquals( "Name: 'name', PrefixTypeConverter: 'prefix', PostfixTypeConverter: 'postfix', Constant: 'constant'" ).Go();
     }
 
     [Fact]
@@ -56,7 +54,7 @@ public class ParsedExpressionTypeDefinitionSymbolsTests : TestsBase
 
         var result = sut.ToString();
 
-        result.Should().Be( "Name: 'name'" );
+        result.TestEquals( "Name: 'name'" ).Go();
     }
 
     [Fact]
@@ -69,7 +67,7 @@ public class ParsedExpressionTypeDefinitionSymbolsTests : TestsBase
 
         var result = sut.ToString();
 
-        result.Should().Be( "Name: 'name', PrefixTypeConverter: 'prefix'" );
+        result.TestEquals( "Name: 'name', PrefixTypeConverter: 'prefix'" ).Go();
     }
 
     [Fact]
@@ -83,7 +81,7 @@ public class ParsedExpressionTypeDefinitionSymbolsTests : TestsBase
 
         var result = sut.ToString();
 
-        result.Should().Be( "Name: 'name', PostfixTypeConverter: 'postfix'" );
+        result.TestEquals( "Name: 'name', PostfixTypeConverter: 'postfix'" ).Go();
     }
 
     [Fact]
@@ -96,7 +94,7 @@ public class ParsedExpressionTypeDefinitionSymbolsTests : TestsBase
 
         var result = sut.ToString();
 
-        result.Should().Be( "Name: 'name', Constant: 'constant'" );
+        result.TestEquals( "Name: 'name', Constant: 'constant'" ).Go();
     }
 
     [Fact]
@@ -106,13 +104,12 @@ public class ParsedExpressionTypeDefinitionSymbolsTests : TestsBase
         var name = Fixture.Create<string>();
         var sut = new ParsedExpressionTypeDefinitionSymbols().SetName( name );
 
-        using ( new AssertionScope() )
-        {
-            sut.Name.ToString().Should().Be( name );
-            sut.PrefixTypeConverter.Should().NotBeNull().And.Subject.ToString().Should().Be( $"[{name}]" );
-            sut.PostfixTypeConverter.Should().BeNull();
-            sut.Constant.Should().NotBeNull().And.Subject.ToString().Should().Be( name.ToUpperInvariant() );
-        }
+        Assertion.All(
+                sut.Name.ToString().TestEquals( name ),
+                (sut.PrefixTypeConverter?.ToString()).TestEquals( $"[{name}]" ),
+                sut.PostfixTypeConverter.TestNull(),
+                (sut.Constant?.ToString()).TestEquals( name.ToUpperInvariant() ) )
+            .Go();
     }
 
     [Fact]
@@ -120,13 +117,12 @@ public class ParsedExpressionTypeDefinitionSymbolsTests : TestsBase
     {
         var sut = new ParsedExpressionTypeDefinitionSymbols().DisablePrefixTypeConverter();
 
-        using ( new AssertionScope() )
-        {
-            sut.Name.ToString().Should().BeEmpty();
-            sut.PrefixTypeConverter.Should().BeNull();
-            sut.PostfixTypeConverter.Should().BeNull();
-            sut.Constant.Should().NotBeNull().And.Subject.ToString().Should().BeEmpty();
-        }
+        Assertion.All(
+                sut.Name.ToString().TestEmpty(),
+                sut.PrefixTypeConverter.TestNull(),
+                sut.PostfixTypeConverter.TestNull(),
+                (sut.Constant?.ToString()).TestEquals( string.Empty ) )
+            .Go();
     }
 
     [Fact]
@@ -137,13 +133,12 @@ public class ParsedExpressionTypeDefinitionSymbolsTests : TestsBase
             .SetPrefixTypeConverter( symbol )
             .DisablePrefixTypeConverter();
 
-        using ( new AssertionScope() )
-        {
-            sut.Name.ToString().Should().BeEmpty();
-            sut.PrefixTypeConverter.Should().BeNull();
-            sut.PostfixTypeConverter.Should().BeNull();
-            sut.Constant.Should().NotBeNull().And.Subject.ToString().Should().BeEmpty();
-        }
+        Assertion.All(
+                sut.Name.ToString().TestEmpty(),
+                sut.PrefixTypeConverter.TestNull(),
+                sut.PostfixTypeConverter.TestNull(),
+                (sut.Constant?.ToString()).TestEquals( string.Empty ) )
+            .Go();
     }
 
     [Fact]
@@ -152,13 +147,12 @@ public class ParsedExpressionTypeDefinitionSymbolsTests : TestsBase
         var symbol = Fixture.Create<string>();
         var sut = new ParsedExpressionTypeDefinitionSymbols().SetPrefixTypeConverter( symbol );
 
-        using ( new AssertionScope() )
-        {
-            sut.Name.ToString().Should().BeEmpty();
-            sut.PrefixTypeConverter.Should().NotBeNull().And.Subject.ToString().Should().Be( symbol );
-            sut.PostfixTypeConverter.Should().BeNull();
-            sut.Constant.Should().NotBeNull().And.Subject.ToString().Should().BeEmpty();
-        }
+        Assertion.All(
+                sut.Name.ToString().TestEmpty(),
+                (sut.PrefixTypeConverter?.ToString()).TestEquals( symbol ),
+                sut.PostfixTypeConverter.TestNull(),
+                (sut.Constant?.ToString()).TestEquals( string.Empty ) )
+            .Go();
     }
 
     [Fact]
@@ -169,13 +163,12 @@ public class ParsedExpressionTypeDefinitionSymbolsTests : TestsBase
             .DisablePrefixTypeConverter()
             .SetPrefixTypeConverter( symbol );
 
-        using ( new AssertionScope() )
-        {
-            sut.Name.ToString().Should().BeEmpty();
-            sut.PrefixTypeConverter.Should().NotBeNull().And.Subject.ToString().Should().Be( symbol );
-            sut.PostfixTypeConverter.Should().BeNull();
-            sut.Constant.Should().NotBeNull().And.Subject.ToString().Should().BeEmpty();
-        }
+        Assertion.All(
+                sut.Name.ToString().TestEmpty(),
+                (sut.PrefixTypeConverter?.ToString()).TestEquals( symbol ),
+                sut.PostfixTypeConverter.TestNull(),
+                (sut.Constant?.ToString()).TestEquals( string.Empty ) )
+            .Go();
     }
 
     [Fact]
@@ -187,13 +180,12 @@ public class ParsedExpressionTypeDefinitionSymbolsTests : TestsBase
             .SetConstant( constant )
             .SetName( name );
 
-        using ( new AssertionScope() )
-        {
-            sut.Name.ToString().Should().Be( name );
-            sut.PrefixTypeConverter.Should().NotBeNull().And.Subject.ToString().Should().Be( prefixSymbol );
-            sut.PostfixTypeConverter.Should().BeNull();
-            sut.Constant.Should().NotBeNull().And.Subject.ToString().Should().Be( constant );
-        }
+        Assertion.All(
+                sut.Name.ToString().TestEquals( name ),
+                (sut.PrefixTypeConverter?.ToString()).TestEquals( prefixSymbol ),
+                sut.PostfixTypeConverter.TestNull(),
+                (sut.Constant?.ToString()).TestEquals( constant ) )
+            .Go();
     }
 
     [Fact]
@@ -205,13 +197,12 @@ public class ParsedExpressionTypeDefinitionSymbolsTests : TestsBase
             .DisableConstant()
             .SetName( name );
 
-        using ( new AssertionScope() )
-        {
-            sut.Name.ToString().Should().Be( name );
-            sut.PrefixTypeConverter.Should().BeNull();
-            sut.PostfixTypeConverter.Should().BeNull();
-            sut.Constant.Should().BeNull();
-        }
+        Assertion.All(
+                sut.Name.ToString().TestEquals( name ),
+                sut.PrefixTypeConverter.TestNull(),
+                sut.PostfixTypeConverter.TestNull(),
+                sut.Constant.TestNull() )
+            .Go();
     }
 
     [Fact]
@@ -223,13 +214,12 @@ public class ParsedExpressionTypeDefinitionSymbolsTests : TestsBase
             .SetPrefixTypeConverter( prefixSymbol )
             .SetDefaultPrefixTypeConverter();
 
-        using ( new AssertionScope() )
-        {
-            sut.Name.ToString().Should().Be( name );
-            sut.PrefixTypeConverter.Should().NotBeNull().And.Subject.ToString().Should().Be( $"[{name}]" );
-            sut.PostfixTypeConverter.Should().BeNull();
-            sut.Constant.Should().NotBeNull().And.Subject.ToString().Should().Be( name.ToUpperInvariant() );
-        }
+        Assertion.All(
+                sut.Name.ToString().TestEquals( name ),
+                (sut.PrefixTypeConverter?.ToString()).TestEquals( $"[{name}]" ),
+                sut.PostfixTypeConverter.TestNull(),
+                (sut.Constant?.ToString()).TestEquals( name.ToUpperInvariant() ) )
+            .Go();
     }
 
     [Fact]
@@ -241,13 +231,12 @@ public class ParsedExpressionTypeDefinitionSymbolsTests : TestsBase
             .DisablePrefixTypeConverter()
             .SetDefaultPrefixTypeConverter();
 
-        using ( new AssertionScope() )
-        {
-            sut.Name.ToString().Should().Be( name );
-            sut.PrefixTypeConverter.Should().NotBeNull().And.Subject.ToString().Should().Be( $"[{name}]" );
-            sut.PostfixTypeConverter.Should().BeNull();
-            sut.Constant.Should().NotBeNull().And.Subject.ToString().Should().Be( name.ToUpperInvariant() );
-        }
+        Assertion.All(
+                sut.Name.ToString().TestEquals( name ),
+                (sut.PrefixTypeConverter?.ToString()).TestEquals( $"[{name}]" ),
+                sut.PostfixTypeConverter.TestNull(),
+                (sut.Constant?.ToString()).TestEquals( name.ToUpperInvariant() ) )
+            .Go();
     }
 
     [Fact]
@@ -257,13 +246,12 @@ public class ParsedExpressionTypeDefinitionSymbolsTests : TestsBase
         var sut = new ParsedExpressionTypeDefinitionSymbols()
             .SetPostfixTypeConverter( symbol );
 
-        using ( new AssertionScope() )
-        {
-            sut.Name.ToString().Should().BeEmpty();
-            sut.PrefixTypeConverter.Should().NotBeNull().And.Subject.ToString().Should().Be( "[]" );
-            sut.PostfixTypeConverter.Should().NotBeNull().And.Subject.ToString().Should().Be( symbol );
-            sut.Constant.Should().NotBeNull().And.Subject.ToString().Should().BeEmpty();
-        }
+        Assertion.All(
+                sut.Name.ToString().TestEmpty(),
+                (sut.PrefixTypeConverter?.ToString()).TestEquals( "[]" ),
+                (sut.PostfixTypeConverter?.ToString()).TestEquals( symbol ),
+                (sut.Constant?.ToString()).TestEquals( string.Empty ) )
+            .Go();
     }
 
     [Fact]
@@ -274,13 +262,12 @@ public class ParsedExpressionTypeDefinitionSymbolsTests : TestsBase
             .SetPostfixTypeConverter( symbol )
             .DisablePostfixTypeConverter();
 
-        using ( new AssertionScope() )
-        {
-            sut.Name.ToString().Should().BeEmpty();
-            sut.PrefixTypeConverter.Should().NotBeNull().And.Subject.ToString().Should().Be( "[]" );
-            sut.PostfixTypeConverter.Should().BeNull();
-            sut.Constant.Should().NotBeNull().And.Subject.ToString().Should().BeEmpty();
-        }
+        Assertion.All(
+                sut.Name.ToString().TestEmpty(),
+                (sut.PrefixTypeConverter?.ToString()).TestEquals( "[]" ),
+                sut.PostfixTypeConverter.TestNull(),
+                (sut.Constant?.ToString()).TestEquals( string.Empty ) )
+            .Go();
     }
 
     [Fact]
@@ -288,13 +275,12 @@ public class ParsedExpressionTypeDefinitionSymbolsTests : TestsBase
     {
         var sut = new ParsedExpressionTypeDefinitionSymbols().DisableConstant();
 
-        using ( new AssertionScope() )
-        {
-            sut.Name.ToString().Should().BeEmpty();
-            sut.PrefixTypeConverter.Should().NotBeNull().And.Subject.ToString().Should().Be( "[]" );
-            sut.PostfixTypeConverter.Should().BeNull();
-            sut.Constant.Should().BeNull();
-        }
+        Assertion.All(
+                sut.Name.ToString().TestEmpty(),
+                (sut.PrefixTypeConverter?.ToString()).TestEquals( "[]" ),
+                sut.PostfixTypeConverter.TestNull(),
+                sut.Constant.TestNull() )
+            .Go();
     }
 
     [Fact]
@@ -305,13 +291,12 @@ public class ParsedExpressionTypeDefinitionSymbolsTests : TestsBase
             .SetConstant( symbol )
             .DisableConstant();
 
-        using ( new AssertionScope() )
-        {
-            sut.Name.ToString().Should().BeEmpty();
-            sut.PrefixTypeConverter.Should().NotBeNull().And.Subject.ToString().Should().Be( "[]" );
-            sut.PostfixTypeConverter.Should().BeNull();
-            sut.Constant.Should().BeNull();
-        }
+        Assertion.All(
+                sut.Name.ToString().TestEmpty(),
+                (sut.PrefixTypeConverter?.ToString()).TestEquals( "[]" ),
+                sut.PostfixTypeConverter.TestNull(),
+                sut.Constant.TestNull() )
+            .Go();
     }
 
     [Fact]
@@ -320,13 +305,12 @@ public class ParsedExpressionTypeDefinitionSymbolsTests : TestsBase
         var symbol = Fixture.Create<string>();
         var sut = new ParsedExpressionTypeDefinitionSymbols().SetConstant( symbol );
 
-        using ( new AssertionScope() )
-        {
-            sut.Name.ToString().Should().BeEmpty();
-            sut.PrefixTypeConverter.Should().NotBeNull().And.Subject.ToString().Should().Be( "[]" );
-            sut.PostfixTypeConverter.Should().BeNull();
-            sut.Constant.Should().NotBeNull().And.Subject.ToString().Should().Be( symbol );
-        }
+        Assertion.All(
+                sut.Name.ToString().TestEmpty(),
+                (sut.PrefixTypeConverter?.ToString()).TestEquals( "[]" ),
+                sut.PostfixTypeConverter.TestNull(),
+                (sut.Constant?.ToString()).TestEquals( symbol ) )
+            .Go();
     }
 
     [Fact]
@@ -337,13 +321,12 @@ public class ParsedExpressionTypeDefinitionSymbolsTests : TestsBase
             .DisableConstant()
             .SetConstant( symbol );
 
-        using ( new AssertionScope() )
-        {
-            sut.Name.ToString().Should().BeEmpty();
-            sut.PrefixTypeConverter.Should().NotBeNull().And.Subject.ToString().Should().Be( "[]" );
-            sut.PostfixTypeConverter.Should().BeNull();
-            sut.Constant.Should().NotBeNull().And.Subject.ToString().Should().Be( symbol );
-        }
+        Assertion.All(
+                sut.Name.ToString().TestEmpty(),
+                (sut.PrefixTypeConverter?.ToString()).TestEquals( "[]" ),
+                sut.PostfixTypeConverter.TestNull(),
+                (sut.Constant?.ToString()).TestEquals( symbol ) )
+            .Go();
     }
 
     [Fact]
@@ -355,13 +338,12 @@ public class ParsedExpressionTypeDefinitionSymbolsTests : TestsBase
             .SetConstant( constant )
             .SetDefaultConstant();
 
-        using ( new AssertionScope() )
-        {
-            sut.Name.ToString().Should().Be( name );
-            sut.PrefixTypeConverter.Should().NotBeNull().And.Subject.ToString().Should().Be( $"[{name}]" );
-            sut.PostfixTypeConverter.Should().BeNull();
-            sut.Constant.Should().NotBeNull().And.Subject.ToString().Should().Be( name.ToUpperInvariant() );
-        }
+        Assertion.All(
+                sut.Name.ToString().TestEquals( name ),
+                (sut.PrefixTypeConverter?.ToString()).TestEquals( $"[{name}]" ),
+                sut.PostfixTypeConverter.TestNull(),
+                (sut.Constant?.ToString()).TestEquals( name.ToUpperInvariant() ) )
+            .Go();
     }
 
     [Fact]
@@ -373,12 +355,11 @@ public class ParsedExpressionTypeDefinitionSymbolsTests : TestsBase
             .DisableConstant()
             .SetDefaultConstant();
 
-        using ( new AssertionScope() )
-        {
-            sut.Name.ToString().Should().Be( name );
-            sut.PrefixTypeConverter.Should().NotBeNull().And.Subject.ToString().Should().Be( $"[{name}]" );
-            sut.PostfixTypeConverter.Should().BeNull();
-            sut.Constant.Should().NotBeNull().And.Subject.ToString().Should().Be( name.ToUpperInvariant() );
-        }
+        Assertion.All(
+                sut.Name.ToString().TestEquals( name ),
+                (sut.PrefixTypeConverter?.ToString()).TestEquals( $"[{name}]" ),
+                sut.PostfixTypeConverter.TestNull(),
+                (sut.Constant?.ToString()).TestEquals( name.ToUpperInvariant() ) )
+            .Go();
     }
 }

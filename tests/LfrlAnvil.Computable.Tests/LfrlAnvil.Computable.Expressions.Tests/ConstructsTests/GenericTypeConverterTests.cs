@@ -29,7 +29,7 @@ public class GenericTypeConverterTests : TypeConvertersTestsBase
         Process_ShouldPopOneOperandAndPushOneExpression_WhenOperandIsConstant<int, int, int>(
             sut: new ParsedExpressionTypeConverter<int>(),
             operandValue: Fixture.Create<int>(),
-            (operand, result) => result.Should().BeSameAs( operand ),
+            (operand, result) => result.TestRefEquals( operand ),
             expectedNodeType: ExpressionType.Constant );
     }
 
@@ -37,20 +37,19 @@ public class GenericTypeConverterTests : TypeConvertersTestsBase
     public void TypeConverterProcess_ShouldPopOneOperandAndPushOneExpression_WhenConversionResultTypeIsDifferentButAssignableToTargetType()
     {
         Process_ShouldPopOneOperandAndPushOneExpression_WhenOperandIsConstant<object, string, object>(
-            sut: new StringConverterWithObjectTargetType(),
+            sut:
+            new StringConverterWithObjectTargetType(),
             operandValue: Fixture.Create<string>(),
-            (operand, result) =>
-            {
-                result.Should().BeAssignableTo<UnaryExpression>();
-                if ( result is not UnaryExpression unaryResult )
-                    return;
-
-                unaryResult.Operand.Should().BeAssignableTo<UnaryExpression>();
-                if ( unaryResult.Operand is not UnaryExpression intermediateOperand )
-                    return;
-
-                intermediateOperand.Operand.Should().BeSameAs( operand );
-            } );
+            (operand, result) => Assertion.All(
+                result.TestType().AssignableTo<UnaryExpression>(),
+                result.TestIf()
+                    .OfType<UnaryExpression>(
+                        unaryResult => Assertion.All(
+                            "unaryResult",
+                            unaryResult.Operand.TestType().AssignableTo<UnaryExpression>(),
+                            unaryResult.Operand.TestIf()
+                                .OfType<UnaryExpression>(
+                                    intermediateOperand => intermediateOperand.Operand.TestRefEquals( operand ) ) ) ) ) );
     }
 
     [Fact]

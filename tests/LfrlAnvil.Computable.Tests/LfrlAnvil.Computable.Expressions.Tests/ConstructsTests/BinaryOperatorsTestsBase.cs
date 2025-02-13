@@ -1,4 +1,5 @@
-﻿using System.Linq.Expressions;
+﻿using System.Diagnostics.Contracts;
+using System.Linq.Expressions;
 using LfrlAnvil.Computable.Expressions.Constructs;
 using LfrlAnvil.Functional;
 
@@ -9,19 +10,18 @@ public abstract class BinaryOperatorsTestsBase : ConstructsTestsBase
     protected static void Process_ShouldPopTwoOperandsAndPushOneExpression_WhenBothOperandsAreVariable<TLeftArg, TRightArg, TResult>(
         ParsedExpressionBinaryOperator sut,
         ExpressionType expectedNodeType,
-        Action<Expression, Expression, Expression> nodeAssertion)
+        Func<Expression, Expression, Expression, Assertion> nodeAssertion)
     {
         var left = CreateVariableOperand<TLeftArg>( "left" );
         var right = CreateVariableOperand<TRightArg>( "right" );
 
         var result = sut.Process( left, right );
 
-        using ( new AssertionScope() )
-        {
-            result.NodeType.Should().Be( expectedNodeType );
-            result.Type.Should().Be( typeof( TResult ) );
-            nodeAssertion( left, right, result );
-        }
+        Assertion.All(
+                result.NodeType.TestEquals( expectedNodeType ),
+                result.Type.TestEquals( typeof( TResult ) ),
+                nodeAssertion( left, right, result ) )
+            .Go();
     }
 
     protected static void Process_ShouldPopTwoOperandsAndPushOneExpression_WhenBothOperandsAreConstant<TLeftArg, TRightArg, TResult>(
@@ -29,57 +29,54 @@ public abstract class BinaryOperatorsTestsBase : ConstructsTestsBase
         ExpressionType expectedNodeType,
         TLeftArg leftValue,
         TRightArg rightValue,
-        Action<Expression, Expression, Expression> nodeAssertion)
+        Func<Expression, Expression, Expression, Assertion> nodeAssertion)
     {
         var left = CreateConstantOperand( leftValue );
         var right = CreateConstantOperand( rightValue );
 
         var result = sut.Process( left, right );
 
-        using ( new AssertionScope() )
-        {
-            result.NodeType.Should().Be( expectedNodeType );
-            result.Type.Should().Be( typeof( TResult ) );
-            nodeAssertion( left, right, result );
-        }
+        Assertion.All(
+                result.NodeType.TestEquals( expectedNodeType ),
+                result.Type.TestEquals( typeof( TResult ) ),
+                nodeAssertion( left, right, result ) )
+            .Go();
     }
 
     protected static void Process_ShouldPopTwoOperandsAndPushOneExpression_WhenLeftOperandIsConstant<TLeftArg, TRightArg, TResult>(
         ParsedExpressionBinaryOperator sut,
         ExpressionType expectedNodeType,
         TLeftArg leftValue,
-        Action<Expression, Expression, Expression> nodeAssertion)
+        Func<Expression, Expression, Expression, Assertion> nodeAssertion)
     {
         var left = CreateConstantOperand( leftValue );
         var right = CreateVariableOperand<TRightArg>( "right" );
 
         var result = sut.Process( left, right );
 
-        using ( new AssertionScope() )
-        {
-            result.NodeType.Should().Be( expectedNodeType );
-            result.Type.Should().Be( typeof( TResult ) );
-            nodeAssertion( left, right, result );
-        }
+        Assertion.All(
+                result.NodeType.TestEquals( expectedNodeType ),
+                result.Type.TestEquals( typeof( TResult ) ),
+                nodeAssertion( left, right, result ) )
+            .Go();
     }
 
     protected static void Process_ShouldPopTwoOperandsAndPushOneExpression_WhenRightOperandIsConstant<TLeftArg, TRightArg, TResult>(
         ParsedExpressionBinaryOperator sut,
         ExpressionType expectedNodeType,
         TRightArg rightValue,
-        Action<Expression, Expression, Expression> nodeAssertion)
+        Func<Expression, Expression, Expression, Assertion> nodeAssertion)
     {
         var left = CreateVariableOperand<TLeftArg>( "left" );
         var right = CreateConstantOperand( rightValue );
 
         var result = sut.Process( left, right );
 
-        using ( new AssertionScope() )
-        {
-            result.NodeType.Should().Be( expectedNodeType );
-            result.Type.Should().Be( typeof( TResult ) );
-            nodeAssertion( left, right, result );
-        }
+        Assertion.All(
+                result.NodeType.TestEquals( expectedNodeType ),
+                result.Type.TestEquals( typeof( TResult ) ),
+                nodeAssertion( left, right, result ) )
+            .Go();
     }
 
     protected static void Process_ShouldThrowException_WhenOperatorDoesNotExist<TLeftArg, TRightArg, TException>(
@@ -91,7 +88,7 @@ public abstract class BinaryOperatorsTestsBase : ConstructsTestsBase
 
         var action = Lambda.Of( () => sut.Process( left, right ) );
 
-        action.Should().ThrowExactly<TException>();
+        action.Test( exc => exc.TestType().Exact<TException>() ).Go();
     }
 
     protected static void Process_ShouldThrowException_WhenAttemptingToResolveRightConstantValue<TLeftArg, TRightArg, TException>(
@@ -104,16 +101,20 @@ public abstract class BinaryOperatorsTestsBase : ConstructsTestsBase
 
         var action = Lambda.Of( () => sut.Process( left, right ) );
 
-        action.Should().ThrowExactly<TException>();
+        action.Test( exc => exc.TestType().Exact<TException>() ).Go();
     }
 
-    protected static void DefaultNodeAssertion(Expression left, Expression right, Expression result)
+    [Pure]
+    protected static Assertion DefaultNodeAssertion(Expression left, Expression right, Expression result)
     {
-        result.Should().BeAssignableTo<BinaryExpression>();
-        if ( result is not BinaryExpression binaryResult )
-            return;
-
-        binaryResult.Left.Should().BeSameAs( left );
-        binaryResult.Right.Should().BeSameAs( right );
+        return Assertion.All(
+            "Node",
+            result.TestType().AssignableTo<BinaryExpression>(),
+            result.TestIf()
+                .OfType<BinaryExpression>(
+                    binaryResult => Assertion.All(
+                        "binaryResult",
+                        binaryResult.Left.TestRefEquals( left ),
+                        binaryResult.Right.TestRefEquals( right ) ) ) );
     }
 }

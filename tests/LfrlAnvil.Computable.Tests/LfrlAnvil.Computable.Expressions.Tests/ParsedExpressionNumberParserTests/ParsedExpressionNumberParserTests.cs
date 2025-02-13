@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 using System.Numerics;
 using LfrlAnvil.Computable.Expressions.Internal;
 
@@ -28,11 +29,10 @@ public class ParsedExpressionNumberParserTests : TestsBase
 
         var result = parser.TryParse( input, out var outResult );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( expected is not null );
-            outResult.Should().Be( ( decimal? )expected );
-        }
+        Assertion.All(
+                result.TestEquals( expected is not null ),
+                outResult.TestEquals( ( decimal? )expected ) )
+            .Go();
     }
 
     [Theory]
@@ -57,11 +57,10 @@ public class ParsedExpressionNumberParserTests : TestsBase
 
         var result = parser.TryParse( input, out var outResult );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( expected is not null );
-            outResult.Should().Be( expected );
-        }
+        Assertion.All(
+                result.TestEquals( expected is not null ),
+                outResult.TestEquals( expected ) )
+            .Go();
     }
 
     [Theory]
@@ -85,11 +84,10 @@ public class ParsedExpressionNumberParserTests : TestsBase
 
         var result = parser.TryParse( input, out var outResult );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( expected is not null );
-            outResult.Should().Be( expected );
-        }
+        Assertion.All(
+                result.TestEquals( expected is not null ),
+                outResult.TestEquals( expected ) )
+            .Go();
     }
 
     [Theory]
@@ -111,11 +109,10 @@ public class ParsedExpressionNumberParserTests : TestsBase
 
         var result = parser.TryParse( input, out var outResult );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( expected is not null );
-            outResult.Should().Be( expected );
-        }
+        Assertion.All(
+                result.TestEquals( expected is not null ),
+                outResult.TestEquals( expected ) )
+            .Go();
     }
 
     [Theory]
@@ -137,11 +134,10 @@ public class ParsedExpressionNumberParserTests : TestsBase
 
         var result = parser.TryParse( input, out var outResult );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( expected is not null );
-            outResult.Should().Be( expected );
-        }
+        Assertion.All(
+                result.TestEquals( expected is not null ),
+                outResult.TestEquals( expected ) )
+            .Go();
     }
 
     [Theory]
@@ -164,13 +160,13 @@ public class ParsedExpressionNumberParserTests : TestsBase
 
         var result = parser.TryParse( input, out var outResult );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().Be( expected is not null );
-            outResult.Should().Be( ( BigInteger? )expected );
-        }
+        Assertion.All(
+                result.TestEquals( expected is not null ),
+                outResult.TestEquals( ( BigInteger? )expected ) )
+            .Go();
     }
 
+    [Pure]
     private static ParsedExpressionFactoryInternalConfiguration GetConfiguration(bool allowNonIntegerNumbers, bool allowScientificNotation)
     {
         var configuration = Substitute.For<IParsedExpressionFactoryConfiguration>();

@@ -1,5 +1,4 @@
-﻿using System.Linq;
-using System.Linq.Expressions;
+﻿using System.Linq.Expressions;
 using LfrlAnvil.Computable.Expressions.Constructs.Double;
 
 namespace LfrlAnvil.Computable.Expressions.Tests.ConstructsTests.DoubleTests;
@@ -24,13 +23,12 @@ public class DoubleBinaryOperatorTests : BinaryOperatorsTestsBase
             leftValue: 123,
             rightValue: 456,
             (_, _, result) =>
-            {
-                result.Should().BeAssignableTo<ConstantExpression>();
-                if ( result is not ConstantExpression constantResult )
-                    return;
-
-                constantResult.Value.Should().Be( 579.0 );
-            } );
+                Assertion.All(
+                    result.TestType().AssignableTo<ConstantExpression>(),
+                    result.TestIf()
+                        .OfType<ConstantExpression>(
+                            constantResult =>
+                                constantResult.Value.TestEquals( 579.0 ) ) ) );
     }
 
     [Fact]
@@ -50,7 +48,7 @@ public class DoubleBinaryOperatorTests : BinaryOperatorsTestsBase
             sut: new ParsedExpressionAddDoubleOperator(),
             expectedNodeType: ExpressionType.Parameter,
             leftValue: 0,
-            (_, right, result) => result.Should().BeSameAs( right ) );
+            (_, right, result) => result.TestRefEquals( right ) );
     }
 
     [Fact]
@@ -70,7 +68,7 @@ public class DoubleBinaryOperatorTests : BinaryOperatorsTestsBase
             sut: new ParsedExpressionAddDoubleOperator(),
             expectedNodeType: ExpressionType.Parameter,
             rightValue: 0,
-            (left, _, result) => result.Should().BeSameAs( left ) );
+            (left, _, result) => result.TestRefEquals( left ) );
     }
 
     [Fact]
@@ -91,13 +89,12 @@ public class DoubleBinaryOperatorTests : BinaryOperatorsTestsBase
             leftValue: 123,
             rightValue: 456,
             (_, _, result) =>
-            {
-                result.Should().BeAssignableTo<ConstantExpression>();
-                if ( result is not ConstantExpression constantResult )
-                    return;
-
-                constantResult.Value.Should().Be( -333.0 );
-            } );
+                Assertion.All(
+                    result.TestType().AssignableTo<ConstantExpression>(),
+                    result.TestIf()
+                        .OfType<ConstantExpression>(
+                            constantResult =>
+                                constantResult.Value.TestEquals( -333.0 ) ) ) );
     }
 
     [Fact]
@@ -118,13 +115,12 @@ public class DoubleBinaryOperatorTests : BinaryOperatorsTestsBase
             expectedNodeType: ExpressionType.Negate,
             leftValue: 0,
             (_, right, result) =>
-            {
-                result.Should().BeAssignableTo<UnaryExpression>();
-                if ( result is not UnaryExpression unaryResult )
-                    return;
-
-                unaryResult.Operand.Should().BeSameAs( right );
-            } );
+                Assertion.All(
+                    result.TestType().AssignableTo<UnaryExpression>(),
+                    result.TestIf()
+                        .OfType<UnaryExpression>(
+                            unaryResult =>
+                                unaryResult.Operand.TestRefEquals( right ) ) ) );
     }
 
     [Fact]
@@ -144,7 +140,7 @@ public class DoubleBinaryOperatorTests : BinaryOperatorsTestsBase
             sut: new ParsedExpressionSubtractDoubleOperator(),
             expectedNodeType: ExpressionType.Parameter,
             rightValue: 0,
-            (left, _, result) => result.Should().BeSameAs( left ) );
+            (left, _, result) => result.TestRefEquals( left ) );
     }
 
     [Fact]
@@ -165,13 +161,12 @@ public class DoubleBinaryOperatorTests : BinaryOperatorsTestsBase
             leftValue: 123,
             rightValue: 456,
             (_, _, result) =>
-            {
-                result.Should().BeAssignableTo<ConstantExpression>();
-                if ( result is not ConstantExpression constantResult )
-                    return;
-
-                constantResult.Value.Should().Be( 56088.0 );
-            } );
+                Assertion.All(
+                    result.TestType().AssignableTo<ConstantExpression>(),
+                    result.TestIf()
+                        .OfType<ConstantExpression>(
+                            constantResult =>
+                                constantResult.Value.TestEquals( 56088.0 ) ) ) );
     }
 
     [Fact]
@@ -192,13 +187,12 @@ public class DoubleBinaryOperatorTests : BinaryOperatorsTestsBase
             expectedNodeType: ExpressionType.Constant,
             leftValue: 0,
             (_, _, result) =>
-            {
-                result.Should().BeAssignableTo<ConstantExpression>();
-                if ( result is not ConstantExpression constantResult )
-                    return;
-
-                constantResult.Value.Should().Be( 0.0 );
-            } );
+                Assertion.All(
+                    result.TestType().AssignableTo<ConstantExpression>(),
+                    result.TestIf()
+                        .OfType<ConstantExpression>(
+                            constantResult =>
+                                constantResult.Value.TestEquals( 0.0 ) ) ) );
     }
 
     [Fact]
@@ -208,7 +202,7 @@ public class DoubleBinaryOperatorTests : BinaryOperatorsTestsBase
             sut: new ParsedExpressionMultiplyDoubleOperator(),
             expectedNodeType: ExpressionType.Parameter,
             leftValue: 1,
-            (_, right, result) => result.Should().BeSameAs( right ) );
+            (_, right, result) => result.TestRefEquals( right ) );
     }
 
     [Fact]
@@ -219,13 +213,12 @@ public class DoubleBinaryOperatorTests : BinaryOperatorsTestsBase
             expectedNodeType: ExpressionType.Negate,
             leftValue: -1,
             (_, right, result) =>
-            {
-                result.Should().BeAssignableTo<UnaryExpression>();
-                if ( result is not UnaryExpression unaryResult )
-                    return;
-
-                unaryResult.Operand.Should().BeSameAs( right );
-            } );
+                Assertion.All(
+                    result.TestType().AssignableTo<UnaryExpression>(),
+                    result.TestIf()
+                        .OfType<UnaryExpression>(
+                            unaryResult =>
+                                unaryResult.Operand.TestRefEquals( right ) ) ) );
     }
 
     [Fact]
@@ -246,13 +239,12 @@ public class DoubleBinaryOperatorTests : BinaryOperatorsTestsBase
             expectedNodeType: ExpressionType.Constant,
             rightValue: 0,
             (_, _, result) =>
-            {
-                result.Should().BeAssignableTo<ConstantExpression>();
-                if ( result is not ConstantExpression constantResult )
-                    return;
-
-                constantResult.Value.Should().Be( 0.0 );
-            } );
+                Assertion.All(
+                    result.TestType().AssignableTo<ConstantExpression>(),
+                    result.TestIf()
+                        .OfType<ConstantExpression>(
+                            constantResult =>
+                                constantResult.Value.TestEquals( 0.0 ) ) ) );
     }
 
     [Fact]
@@ -262,7 +254,7 @@ public class DoubleBinaryOperatorTests : BinaryOperatorsTestsBase
             sut: new ParsedExpressionMultiplyDoubleOperator(),
             expectedNodeType: ExpressionType.Parameter,
             rightValue: 1,
-            (left, _, result) => result.Should().BeSameAs( left ) );
+            (left, _, result) => result.TestRefEquals( left ) );
     }
 
     [Fact]
@@ -273,13 +265,12 @@ public class DoubleBinaryOperatorTests : BinaryOperatorsTestsBase
             expectedNodeType: ExpressionType.Negate,
             rightValue: -1,
             (left, _, result) =>
-            {
-                result.Should().BeAssignableTo<UnaryExpression>();
-                if ( result is not UnaryExpression unaryResult )
-                    return;
-
-                unaryResult.Operand.Should().BeSameAs( left );
-            } );
+                Assertion.All(
+                    result.TestType().AssignableTo<UnaryExpression>(),
+                    result.TestIf()
+                        .OfType<UnaryExpression>(
+                            unaryResult =>
+                                unaryResult.Operand.TestRefEquals( left ) ) ) );
     }
 
     [Fact]
@@ -300,13 +291,12 @@ public class DoubleBinaryOperatorTests : BinaryOperatorsTestsBase
             leftValue: 1236,
             rightValue: 4,
             (_, _, result) =>
-            {
-                result.Should().BeAssignableTo<ConstantExpression>();
-                if ( result is not ConstantExpression constantResult )
-                    return;
-
-                constantResult.Value.Should().Be( 309.0 );
-            } );
+                Assertion.All(
+                    result.TestType().AssignableTo<ConstantExpression>(),
+                    result.TestIf()
+                        .OfType<ConstantExpression>(
+                            constantResult =>
+                                constantResult.Value.TestEquals( 309.0 ) ) ) );
     }
 
     [Fact]
@@ -336,7 +326,7 @@ public class DoubleBinaryOperatorTests : BinaryOperatorsTestsBase
             sut: new ParsedExpressionDivideDoubleOperator(),
             expectedNodeType: ExpressionType.Parameter,
             rightValue: 1,
-            (left, _, result) => result.Should().BeSameAs( left ) );
+            (left, _, result) => result.TestRefEquals( left ) );
     }
 
     [Fact]
@@ -347,13 +337,12 @@ public class DoubleBinaryOperatorTests : BinaryOperatorsTestsBase
             expectedNodeType: ExpressionType.Negate,
             rightValue: -1,
             (left, _, result) =>
-            {
-                result.Should().BeAssignableTo<UnaryExpression>();
-                if ( result is not UnaryExpression unaryResult )
-                    return;
-
-                unaryResult.Operand.Should().BeSameAs( left );
-            } );
+                Assertion.All(
+                    result.TestType().AssignableTo<UnaryExpression>(),
+                    result.TestIf()
+                        .OfType<UnaryExpression>(
+                            unaryResult =>
+                                unaryResult.Operand.TestRefEquals( left ) ) ) );
     }
 
     [Fact]
@@ -374,13 +363,12 @@ public class DoubleBinaryOperatorTests : BinaryOperatorsTestsBase
             leftValue: 456,
             rightValue: 123,
             (_, _, result) =>
-            {
-                result.Should().BeAssignableTo<ConstantExpression>();
-                if ( result is not ConstantExpression constantResult )
-                    return;
-
-                constantResult.Value.Should().Be( 87.0 );
-            } );
+                Assertion.All(
+                    result.TestType().AssignableTo<ConstantExpression>(),
+                    result.TestIf()
+                        .OfType<ConstantExpression>(
+                            constantResult =>
+                                constantResult.Value.TestEquals( 87.0 ) ) ) );
     }
 
     [Fact]
@@ -426,13 +414,12 @@ public class DoubleBinaryOperatorTests : BinaryOperatorsTestsBase
             leftValue: left,
             rightValue: right,
             (_, _, result) =>
-            {
-                result.Should().BeAssignableTo<ConstantExpression>();
-                if ( result is not ConstantExpression constantResult )
-                    return;
-
-                constantResult.Value.Should().Be( expected );
-            } );
+                Assertion.All(
+                    result.TestType().AssignableTo<ConstantExpression>(),
+                    result.TestIf()
+                        .OfType<ConstantExpression>(
+                            constantResult =>
+                                constantResult.Value.TestEquals( expected ) ) ) );
     }
 
     [Fact]
@@ -478,13 +465,12 @@ public class DoubleBinaryOperatorTests : BinaryOperatorsTestsBase
             leftValue: left,
             rightValue: right,
             (_, _, result) =>
-            {
-                result.Should().BeAssignableTo<ConstantExpression>();
-                if ( result is not ConstantExpression constantResult )
-                    return;
-
-                constantResult.Value.Should().Be( expected );
-            } );
+                Assertion.All(
+                    result.TestType().AssignableTo<ConstantExpression>(),
+                    result.TestIf()
+                        .OfType<ConstantExpression>(
+                            constantResult =>
+                                constantResult.Value.TestEquals( expected ) ) ) );
     }
 
     [Fact]
@@ -531,13 +517,12 @@ public class DoubleBinaryOperatorTests : BinaryOperatorsTestsBase
             leftValue: left,
             rightValue: right,
             (_, _, result) =>
-            {
-                result.Should().BeAssignableTo<ConstantExpression>();
-                if ( result is not ConstantExpression constantResult )
-                    return;
-
-                constantResult.Value.Should().Be( expected );
-            } );
+                Assertion.All(
+                    result.TestType().AssignableTo<ConstantExpression>(),
+                    result.TestIf()
+                        .OfType<ConstantExpression>(
+                            constantResult =>
+                                constantResult.Value.TestEquals( expected ) ) ) );
     }
 
     [Fact]
@@ -584,13 +569,12 @@ public class DoubleBinaryOperatorTests : BinaryOperatorsTestsBase
             leftValue: left,
             rightValue: right,
             (_, _, result) =>
-            {
-                result.Should().BeAssignableTo<ConstantExpression>();
-                if ( result is not ConstantExpression constantResult )
-                    return;
-
-                constantResult.Value.Should().Be( expected );
-            } );
+                Assertion.All(
+                    result.TestType().AssignableTo<ConstantExpression>(),
+                    result.TestIf()
+                        .OfType<ConstantExpression>(
+                            constantResult =>
+                                constantResult.Value.TestEquals( expected ) ) ) );
     }
 
     [Fact]
@@ -637,13 +621,12 @@ public class DoubleBinaryOperatorTests : BinaryOperatorsTestsBase
             leftValue: left,
             rightValue: right,
             (_, _, result) =>
-            {
-                result.Should().BeAssignableTo<ConstantExpression>();
-                if ( result is not ConstantExpression constantResult )
-                    return;
-
-                constantResult.Value.Should().Be( expected );
-            } );
+                Assertion.All(
+                    result.TestType().AssignableTo<ConstantExpression>(),
+                    result.TestIf()
+                        .OfType<ConstantExpression>(
+                            constantResult =>
+                                constantResult.Value.TestEquals( expected ) ) ) );
     }
 
     [Fact]
@@ -690,13 +673,12 @@ public class DoubleBinaryOperatorTests : BinaryOperatorsTestsBase
             leftValue: left,
             rightValue: right,
             (_, _, result) =>
-            {
-                result.Should().BeAssignableTo<ConstantExpression>();
-                if ( result is not ConstantExpression constantResult )
-                    return;
-
-                constantResult.Value.Should().Be( expected );
-            } );
+                Assertion.All(
+                    result.TestType().AssignableTo<ConstantExpression>(),
+                    result.TestIf()
+                        .OfType<ConstantExpression>(
+                            constantResult =>
+                                constantResult.Value.TestEquals( expected ) ) ) );
     }
 
     [Fact]
@@ -726,15 +708,15 @@ public class DoubleBinaryOperatorTests : BinaryOperatorsTestsBase
             sut: new ParsedExpressionCompareDoubleOperator(),
             expectedNodeType: ExpressionType.Call,
             (left, right, result) =>
-            {
-                result.Should().BeAssignableTo<MethodCallExpression>();
-                if ( result is not MethodCallExpression methodCallResult )
-                    return;
-
-                methodCallResult.Object.Should().BeSameAs( left );
-                methodCallResult.Arguments.Should().HaveCount( 1 ).And.Subject.First().Should().BeSameAs( right );
-                methodCallResult.Method.Name.Should().Be( nameof( IComparable.CompareTo ) );
-            } );
+                Assertion.All(
+                    result.TestType().AssignableTo<MethodCallExpression>(),
+                    result.TestIf()
+                        .OfType<MethodCallExpression>(
+                            methodCallResult => Assertion.All(
+                                "methodCallResult",
+                                methodCallResult.Object.TestRefEquals( left ),
+                                methodCallResult.Arguments.TestSequence( [ right ] ),
+                                methodCallResult.Method.Name.TestEquals( nameof( IComparable.CompareTo ) ) ) ) ) );
     }
 
     [Theory]
@@ -752,13 +734,12 @@ public class DoubleBinaryOperatorTests : BinaryOperatorsTestsBase
             leftValue: left,
             rightValue: right,
             (_, _, result) =>
-            {
-                result.Should().BeAssignableTo<ConstantExpression>();
-                if ( result is not ConstantExpression constantResult )
-                    return;
-
-                constantResult.Value.Should().Be( expected );
-            } );
+                Assertion.All(
+                    result.TestType().AssignableTo<ConstantExpression>(),
+                    result.TestIf()
+                        .OfType<ConstantExpression>(
+                            constantResult =>
+                                constantResult.Value.TestEquals( expected ) ) ) );
     }
 
     [Fact]
@@ -769,15 +750,15 @@ public class DoubleBinaryOperatorTests : BinaryOperatorsTestsBase
             expectedNodeType: ExpressionType.Call,
             leftValue: Fixture.Create<double>(),
             (left, right, result) =>
-            {
-                result.Should().BeAssignableTo<MethodCallExpression>();
-                if ( result is not MethodCallExpression methodCallResult )
-                    return;
-
-                methodCallResult.Object.Should().BeSameAs( left );
-                methodCallResult.Arguments.Should().HaveCount( 1 ).And.Subject.First().Should().BeSameAs( right );
-                methodCallResult.Method.Name.Should().Be( nameof( IComparable.CompareTo ) );
-            } );
+                Assertion.All(
+                    result.TestType().AssignableTo<MethodCallExpression>(),
+                    result.TestIf()
+                        .OfType<MethodCallExpression>(
+                            methodCallResult => Assertion.All(
+                                "methodCallResult",
+                                methodCallResult.Object.TestRefEquals( left ),
+                                methodCallResult.Arguments.TestSequence( [ right ] ),
+                                methodCallResult.Method.Name.TestEquals( nameof( IComparable.CompareTo ) ) ) ) ) );
     }
 
     [Fact]
@@ -788,14 +769,14 @@ public class DoubleBinaryOperatorTests : BinaryOperatorsTestsBase
             expectedNodeType: ExpressionType.Call,
             rightValue: Fixture.Create<double>(),
             (left, right, result) =>
-            {
-                result.Should().BeAssignableTo<MethodCallExpression>();
-                if ( result is not MethodCallExpression methodCallResult )
-                    return;
-
-                methodCallResult.Object.Should().BeSameAs( left );
-                methodCallResult.Arguments.Should().HaveCount( 1 ).And.Subject.First().Should().BeSameAs( right );
-                methodCallResult.Method.Name.Should().Be( nameof( IComparable.CompareTo ) );
-            } );
+                Assertion.All(
+                    result.TestType().AssignableTo<MethodCallExpression>(),
+                    result.TestIf()
+                        .OfType<MethodCallExpression>(
+                            methodCallResult => Assertion.All(
+                                "methodCallResult",
+                                methodCallResult.Object.TestRefEquals( left ),
+                                methodCallResult.Arguments.TestSequence( [ right ] ),
+                                methodCallResult.Method.Name.TestEquals( nameof( IComparable.CompareTo ) ) ) ) ) );
     }
 }

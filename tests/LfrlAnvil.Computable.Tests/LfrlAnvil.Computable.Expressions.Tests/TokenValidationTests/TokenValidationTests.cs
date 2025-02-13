@@ -15,7 +15,7 @@ public class TokenValidationTests : TestsBase
     public void IsValidLocalTermName_ShouldReturnTrue_WhenTextIsValid(string text)
     {
         var result = TokenValidation.IsValidLocalTermName( new StringSegment( text ), stringDelimiter: '\'' );
-        result.Should().BeTrue();
+        result.TestTrue().Go();
     }
 
     [Theory]
@@ -33,7 +33,7 @@ public class TokenValidationTests : TestsBase
     public void IsValidLocalTermName_ShouldReturnFalse_WhenTextIsInvalid(string text)
     {
         var result = TokenValidation.IsValidLocalTermName( new StringSegment( text ), stringDelimiter: '\'' );
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Theory]
@@ -54,7 +54,7 @@ public class TokenValidationTests : TestsBase
     public void IsValidConstructSymbol_ShouldReturnTrue_WhenTextIsValid(string text)
     {
         var result = TokenValidation.IsValidConstructSymbol( new StringSegment( text ), stringDelimiter: '\'' );
-        result.Should().BeTrue();
+        result.TestTrue().Go();
     }
 
     [Theory]
@@ -91,7 +91,7 @@ public class TokenValidationTests : TestsBase
     public void IsValidConstructSymbol_ShouldReturnFalse_WhenTextIsInvalid(string text)
     {
         var result = TokenValidation.IsValidConstructSymbol( new StringSegment( text ), stringDelimiter: '\'' );
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Theory]
@@ -106,7 +106,7 @@ public class TokenValidationTests : TestsBase
     public void IsNumberSymbolValid_ShouldReturnTrue_WhenSymbolIsValid(char symbol)
     {
         var result = TokenValidation.IsNumberSymbolValid( symbol );
-        result.Should().BeTrue();
+        result.TestTrue().Go();
     }
 
     [Theory]
@@ -123,7 +123,7 @@ public class TokenValidationTests : TestsBase
     public void IsNumberSymbolValid_ShouldReturnFalse_WhenSymbolIsInvalid(char symbol)
     {
         var result = TokenValidation.IsNumberSymbolValid( symbol );
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Theory]
@@ -135,7 +135,7 @@ public class TokenValidationTests : TestsBase
     public void IsStringDelimiterSymbolValid_ShouldReturnTrue_WhenSymbolIsValid(char symbol)
     {
         var result = TokenValidation.IsStringDelimiterSymbolValid( symbol );
-        result.Should().BeTrue();
+        result.TestTrue().Go();
     }
 
     [Theory]
@@ -155,7 +155,7 @@ public class TokenValidationTests : TestsBase
     public void IsStringDelimiterSymbolValid_ShouldReturnFalse_WhenSymbolIsInvalid(char symbol)
     {
         var result = TokenValidation.IsStringDelimiterSymbolValid( symbol );
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Theory]
@@ -166,7 +166,7 @@ public class TokenValidationTests : TestsBase
     public void IsExponentSymbolValid_ShouldReturnTrue_WhenSymbolIsValid(char symbol)
     {
         var result = TokenValidation.IsExponentSymbolValid( symbol );
-        result.Should().BeTrue();
+        result.TestTrue().Go();
     }
 
     [Theory]
@@ -189,6 +189,6 @@ public class TokenValidationTests : TestsBase
     public void IsExponentSymbolValid_ShouldReturnFalse_WhenSymbolIsInvalid(char symbol)
     {
         var result = TokenValidation.IsExponentSymbolValid( symbol );
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 }

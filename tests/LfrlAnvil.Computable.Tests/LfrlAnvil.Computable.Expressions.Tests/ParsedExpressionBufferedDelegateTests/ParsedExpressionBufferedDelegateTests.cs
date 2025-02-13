@@ -3,7 +3,6 @@ using LfrlAnvil.Computable.Expressions.Constructs;
 using LfrlAnvil.Computable.Expressions.Exceptions;
 using LfrlAnvil.Computable.Expressions.Extensions;
 using LfrlAnvil.Functional;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Computable.Expressions.Tests.ParsedExpressionBufferedDelegateTests;
 
@@ -23,12 +22,11 @@ public class ParsedExpressionBufferedDelegateTests : TestsBase
 
         var sut = @delegate.ToBuffered();
 
-        using ( new AssertionScope() )
-        {
-            sut.Base.Should().BeSameAs( @delegate );
-            sut.GetArgumentValue( 0 ).Should().Be( default );
-            sut.GetArgumentValue( 1 ).Should().Be( default );
-        }
+        Assertion.All(
+                sut.Base.TestRefEquals( @delegate ),
+                sut.GetArgumentValue( 0 ).TestEquals( default ),
+                sut.GetArgumentValue( 1 ).TestEquals( default ) )
+            .Go();
     }
 
     [Fact]
@@ -49,12 +47,11 @@ public class ParsedExpressionBufferedDelegateTests : TestsBase
         sut.SetArgumentValue( 0, aValue );
         var result = sut.SetArgumentValue( 1, bValue );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            sut.GetArgumentValue( 0 ).Should().Be( aValue );
-            sut.GetArgumentValue( 1 ).Should().Be( bValue );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.GetArgumentValue( 0 ).TestEquals( aValue ),
+                sut.GetArgumentValue( 1 ).TestEquals( bValue ) )
+            .Go();
     }
 
     [Fact]
@@ -75,12 +72,11 @@ public class ParsedExpressionBufferedDelegateTests : TestsBase
         sut.SetArgumentValue( "a", aValue );
         var result = sut.SetArgumentValue( "b", bValue );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            sut.GetArgumentValue( "a" ).Should().Be( aValue );
-            sut.GetArgumentValue( "b" ).Should().Be( bValue );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.GetArgumentValue( "a" ).TestEquals( aValue ),
+                sut.GetArgumentValue( "b" ).TestEquals( bValue ) )
+            .Go();
     }
 
     [Theory]
@@ -102,7 +98,7 @@ public class ParsedExpressionBufferedDelegateTests : TestsBase
 
         var action = Lambda.Of( () => sut.SetArgumentValue( index, value ) );
 
-        action.Should().ThrowExactly<IndexOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<IndexOutOfRangeException>() ).Go();
     }
 
     [Fact]
@@ -122,9 +118,13 @@ public class ParsedExpressionBufferedDelegateTests : TestsBase
 
         var action = Lambda.Of( () => sut.SetArgumentValue( "c", value ) );
 
-        action.Should()
-            .ThrowExactly<InvalidParsedExpressionArgumentsException>()
-            .AndMatch( e => e.ArgumentNames.Select( n => n.ToString() ).SequenceEqual( new[] { "c" } ) );
+        action.Test(
+                exc => Assertion.All(
+                    exc.TestType().Exact<InvalidParsedExpressionArgumentsException>(),
+                    exc.TestIf()
+                        .OfType<InvalidParsedExpressionArgumentsException>(
+                            e => e.ArgumentNames.Select( n => n.ToString() ).TestSequence( [ "c" ] ) ) ) )
+            .Go();
     }
 
     [Theory]
@@ -144,7 +144,7 @@ public class ParsedExpressionBufferedDelegateTests : TestsBase
 
         var action = Lambda.Of( () => sut.GetArgumentValue( index ) );
 
-        action.Should().ThrowExactly<IndexOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<IndexOutOfRangeException>() ).Go();
     }
 
     [Fact]
@@ -162,9 +162,13 @@ public class ParsedExpressionBufferedDelegateTests : TestsBase
 
         var action = Lambda.Of( () => sut.GetArgumentValue( "c" ) );
 
-        action.Should()
-            .ThrowExactly<InvalidParsedExpressionArgumentsException>()
-            .AndMatch( e => e.ArgumentNames.Select( n => n.ToString() ).SequenceEqual( new[] { "c" } ) );
+        action.Test(
+                exc => Assertion.All(
+                    exc.TestType().Exact<InvalidParsedExpressionArgumentsException>(),
+                    exc.TestIf()
+                        .OfType<InvalidParsedExpressionArgumentsException>(
+                            e => e.ArgumentNames.Select( n => n.ToString() ).TestSequence( [ "c" ] ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -184,12 +188,11 @@ public class ParsedExpressionBufferedDelegateTests : TestsBase
 
         var result = sut.ClearArgumentValues( defaultValue );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            sut.GetArgumentValue( 0 ).Should().Be( defaultValue );
-            sut.GetArgumentValue( 1 ).Should().Be( defaultValue );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                sut.GetArgumentValue( 0 ).TestEquals( defaultValue ),
+                sut.GetArgumentValue( 1 ).TestEquals( defaultValue ) )
+            .Go();
     }
 
     [Fact]
@@ -213,6 +216,6 @@ public class ParsedExpressionBufferedDelegateTests : TestsBase
 
         var result = sut.Invoke();
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 }

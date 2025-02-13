@@ -1,4 +1,5 @@
 ﻿using System.Globalization;
+using System.Linq;
 using System.Linq.Expressions;
 using System.Numerics;
 using LfrlAnvil.Computable.Expressions.Constructs.String;
@@ -9,363 +10,325 @@ namespace LfrlAnvil.Computable.Expressions.Tests.ConstructsTests.StringTests;
 public class StringTypeConverterTests : TypeConvertersTestsBase
 {
     [Fact]
-    public static void TypeConverterProcess_ShouldPopOneOperandAndPushOneExpression_WhenOperandIsVariable()
+    public void TypeConverterProcess_ShouldPopOneOperandAndPushOneExpression_WhenOperandIsVariable()
     {
         Process_ShouldPopOneOperandAndPushOneExpression_WhenOperandIsVariable<string, int, string>(
             sut: new ParsedExpressionToStringTypeConverter(),
-            (operand, result) =>
-            {
-                result.Should().BeAssignableTo<MethodCallExpression>();
-                if ( result is not MethodCallExpression methodCallResult )
-                    return;
-
-                methodCallResult.Object.Should().BeSameAs( operand );
-                methodCallResult.Arguments.Should().BeEmpty();
-                methodCallResult.Method.Name.Should().Be( nameof( ToString ) );
-            },
+            (operand, result) => Assertion.All(
+                result.TestType().AssignableTo<MethodCallExpression>(),
+                result.TestIf()
+                    .OfType<MethodCallExpression>(
+                        methodCallResult => Assertion.All(
+                            "methodCallResult",
+                            methodCallResult.Object.TestRefEquals( operand ),
+                            methodCallResult.Arguments.TestEmpty(),
+                            methodCallResult.Method.Name.TestEquals( nameof( ToString ) ) ) ) ),
             expectedNodeType: ExpressionType.Call );
     }
 
     [Fact]
-    public static void TypeConverterProcess_ShouldPopOneOperandAndPushOneExpression_WhenOperandIsConstantAndNotNull()
+    public void TypeConverterProcess_ShouldPopOneOperandAndPushOneExpression_WhenOperandIsConstantAndNotNull()
     {
         Process_ShouldPopOneOperandAndPushOneExpression_WhenOperandIsConstant<string, int, string>(
             sut: new ParsedExpressionToStringTypeConverter(),
             operandValue: 123,
-            (_, result) =>
-            {
-                result.Should().BeAssignableTo<ConstantExpression>();
-                if ( result is not ConstantExpression constantResult )
-                    return;
-
-                constantResult.Value.Should().Be( "123" );
-            },
+            (_, result) => Assertion.All(
+                result.TestType().AssignableTo<ConstantExpression>(),
+                result.TestIf()
+                    .OfType<ConstantExpression>(
+                        constantResult =>
+                            constantResult.Value.TestEquals( "123" ) ) ),
             expectedNodeType: ExpressionType.Constant );
     }
 
     [Fact]
-    public static void TypeConverterProcess_ShouldThrowArgumentNullException_WhenOperandIsConstantAndNull()
+    public void TypeConverterProcess_ShouldThrowArgumentNullException_WhenOperandIsConstantAndNull()
     {
         var sut = new ParsedExpressionToStringTypeConverter();
         var operand = CreateConstantOperand( ( object? )null );
 
         var action = Lambda.Of( () => sut.Process( operand ) );
 
-        action.Should().ThrowExactly<ArgumentNullException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentNullException>() ).Go();
     }
 
     [Fact]
-    public static void FromDecimalTypeConverterProcess_ShouldPopOneOperandAndPushOneExpression_WhenOperandIsVariable()
+    public void FromDecimalTypeConverterProcess_ShouldPopOneOperandAndPushOneExpression_WhenOperandIsVariable()
     {
         var formatProvider = CultureInfo.InvariantCulture;
 
         Process_ShouldPopOneOperandAndPushOneExpression_WhenOperandIsVariable<string, decimal, string>(
             sut: new ParsedExpressionDecimalToStringTypeConverter( formatProvider ),
-            (operand, result) =>
-            {
-                result.Should().BeAssignableTo<MethodCallExpression>();
-                if ( result is not MethodCallExpression methodCallResult )
-                    return;
-
-                methodCallResult.Object.Should().BeSameAs( operand );
-                methodCallResult.Method.Name.Should().Be( nameof( ToString ) );
-                methodCallResult.Arguments.Should().HaveCount( 1 );
-                if ( methodCallResult.Arguments.Count != 1 )
-                    return;
-
-                methodCallResult.Arguments[0].Should().BeAssignableTo<ConstantExpression>();
-                if ( methodCallResult.Arguments[0] is not ConstantExpression constantArgument )
-                    return;
-
-                constantArgument.Value.Should().BeSameAs( formatProvider );
-            },
+            (operand, result) => Assertion.All(
+                result.TestType().AssignableTo<MethodCallExpression>(),
+                result.TestIf()
+                    .OfType<MethodCallExpression>(
+                        methodCallResult => Assertion.All(
+                            "methodCallResult",
+                            methodCallResult.Object.TestRefEquals( operand ),
+                            methodCallResult.Method.Name.TestEquals( nameof( ToString ) ),
+                            methodCallResult.Arguments.Count.TestEquals( 1 ),
+                            methodCallResult.Arguments.FirstOrDefault().TestType().AssignableTo<ConstantExpression>(),
+                            methodCallResult.Arguments.FirstOrDefault()
+                                .TestIf()
+                                .OfType<ConstantExpression>(
+                                    constantArgument =>
+                                        constantArgument.Value.TestRefEquals( formatProvider ) ) ) ) ),
             expectedNodeType: ExpressionType.Call );
     }
 
     [Fact]
-    public static void FromDecimalTypeConverterProcess_ShouldPopOneOperandAndPushOneExpression_WhenOperandIsConstantAndNotNull()
+    public void FromDecimalTypeConverterProcess_ShouldPopOneOperandAndPushOneExpression_WhenOperandIsConstantAndNotNull()
     {
         Process_ShouldPopOneOperandAndPushOneExpression_WhenOperandIsConstant<string, decimal, string>(
             sut: new ParsedExpressionDecimalToStringTypeConverter( CultureInfo.InvariantCulture ),
             operandValue: 123,
-            (_, result) =>
-            {
-                result.Should().BeAssignableTo<ConstantExpression>();
-                if ( result is not ConstantExpression constantResult )
-                    return;
-
-                constantResult.Value.Should().Be( "123" );
-            },
+            (_, result) => Assertion.All(
+                result.TestType().AssignableTo<ConstantExpression>(),
+                result.TestIf()
+                    .OfType<ConstantExpression>(
+                        constantResult =>
+                            constantResult.Value.TestEquals( "123" ) ) ),
             expectedNodeType: ExpressionType.Constant );
     }
 
     [Fact]
-    public static void FromDoubleTypeConverterProcess_ShouldPopOneOperandAndPushOneExpression_WhenOperandIsVariable()
+    public void FromDoubleTypeConverterProcess_ShouldPopOneOperandAndPushOneExpression_WhenOperandIsVariable()
     {
         var formatProvider = CultureInfo.InvariantCulture;
 
         Process_ShouldPopOneOperandAndPushOneExpression_WhenOperandIsVariable<string, double, string>(
             sut: new ParsedExpressionDoubleToStringTypeConverter( formatProvider ),
-            (operand, result) =>
-            {
-                result.Should().BeAssignableTo<MethodCallExpression>();
-                if ( result is not MethodCallExpression methodCallResult )
-                    return;
-
-                methodCallResult.Object.Should().BeSameAs( operand );
-                methodCallResult.Method.Name.Should().Be( nameof( ToString ) );
-                methodCallResult.Arguments.Should().HaveCount( 1 );
-                if ( methodCallResult.Arguments.Count != 1 )
-                    return;
-
-                methodCallResult.Arguments[0].Should().BeAssignableTo<ConstantExpression>();
-                if ( methodCallResult.Arguments[0] is not ConstantExpression constantArgument )
-                    return;
-
-                constantArgument.Value.Should().BeSameAs( formatProvider );
-            },
+            (operand, result) => Assertion.All(
+                result.TestType().AssignableTo<MethodCallExpression>(),
+                result.TestIf()
+                    .OfType<MethodCallExpression>(
+                        methodCallResult => Assertion.All(
+                            "methodCallResult",
+                            methodCallResult.Object.TestRefEquals( operand ),
+                            methodCallResult.Method.Name.TestEquals( nameof( ToString ) ),
+                            methodCallResult.Arguments.Count.TestEquals( 1 ),
+                            methodCallResult.Arguments.FirstOrDefault().TestType().AssignableTo<ConstantExpression>(),
+                            methodCallResult.Arguments.FirstOrDefault()
+                                .TestIf()
+                                .OfType<ConstantExpression>(
+                                    constantArgument =>
+                                        constantArgument.Value.TestRefEquals( formatProvider ) ) ) ) ),
             expectedNodeType: ExpressionType.Call );
     }
 
     [Fact]
-    public static void FromDoubleTypeConverterProcess_ShouldPopOneOperandAndPushOneExpression_WhenOperandIsConstantAndNotNull()
+    public void FromDoubleTypeConverterProcess_ShouldPopOneOperandAndPushOneExpression_WhenOperandIsConstantAndNotNull()
     {
         Process_ShouldPopOneOperandAndPushOneExpression_WhenOperandIsConstant<string, double, string>(
             sut: new ParsedExpressionDoubleToStringTypeConverter( CultureInfo.InvariantCulture ),
             operandValue: 123,
-            (_, result) =>
-            {
-                result.Should().BeAssignableTo<ConstantExpression>();
-                if ( result is not ConstantExpression constantResult )
-                    return;
-
-                constantResult.Value.Should().Be( "123" );
-            },
+            (_, result) => Assertion.All(
+                result.TestType().AssignableTo<ConstantExpression>(),
+                result.TestIf()
+                    .OfType<ConstantExpression>(
+                        constantResult =>
+                            constantResult.Value.TestEquals( "123" ) ) ),
             expectedNodeType: ExpressionType.Constant );
     }
 
     [Fact]
-    public static void FromFloatTypeConverterProcess_ShouldPopOneOperandAndPushOneExpression_WhenOperandIsVariable()
+    public void FromFloatTypeConverterProcess_ShouldPopOneOperandAndPushOneExpression_WhenOperandIsVariable()
     {
         var formatProvider = CultureInfo.InvariantCulture;
 
         Process_ShouldPopOneOperandAndPushOneExpression_WhenOperandIsVariable<string, float, string>(
             sut: new ParsedExpressionFloatToStringTypeConverter( formatProvider ),
-            (operand, result) =>
-            {
-                result.Should().BeAssignableTo<MethodCallExpression>();
-                if ( result is not MethodCallExpression methodCallResult )
-                    return;
-
-                methodCallResult.Object.Should().BeSameAs( operand );
-                methodCallResult.Method.Name.Should().Be( nameof( ToString ) );
-                methodCallResult.Arguments.Should().HaveCount( 1 );
-                if ( methodCallResult.Arguments.Count != 1 )
-                    return;
-
-                methodCallResult.Arguments[0].Should().BeAssignableTo<ConstantExpression>();
-                if ( methodCallResult.Arguments[0] is not ConstantExpression constantArgument )
-                    return;
-
-                constantArgument.Value.Should().BeSameAs( formatProvider );
-            },
+            (operand, result) => Assertion.All(
+                result.TestType().AssignableTo<MethodCallExpression>(),
+                result.TestIf()
+                    .OfType<MethodCallExpression>(
+                        methodCallResult => Assertion.All(
+                            "methodCallResult",
+                            methodCallResult.Object.TestRefEquals( operand ),
+                            methodCallResult.Method.Name.TestEquals( nameof( ToString ) ),
+                            methodCallResult.Arguments.Count.TestEquals( 1 ),
+                            methodCallResult.Arguments.FirstOrDefault().TestType().AssignableTo<ConstantExpression>(),
+                            methodCallResult.Arguments.FirstOrDefault()
+                                .TestIf()
+                                .OfType<ConstantExpression>(
+                                    constantArgument =>
+                                        constantArgument.Value.TestRefEquals( formatProvider ) ) ) ) ),
             expectedNodeType: ExpressionType.Call );
     }
 
     [Fact]
-    public static void FromFloatTypeConverterProcess_ShouldPopOneOperandAndPushOneExpression_WhenOperandIsConstantAndNotNull()
+    public void FromFloatTypeConverterProcess_ShouldPopOneOperandAndPushOneExpression_WhenOperandIsConstantAndNotNull()
     {
         Process_ShouldPopOneOperandAndPushOneExpression_WhenOperandIsConstant<string, float, string>(
             sut: new ParsedExpressionFloatToStringTypeConverter( CultureInfo.InvariantCulture ),
             operandValue: 123,
-            (_, result) =>
-            {
-                result.Should().BeAssignableTo<ConstantExpression>();
-                if ( result is not ConstantExpression constantResult )
-                    return;
-
-                constantResult.Value.Should().Be( "123" );
-            },
+            (_, result) => Assertion.All(
+                result.TestType().AssignableTo<ConstantExpression>(),
+                result.TestIf()
+                    .OfType<ConstantExpression>(
+                        constantResult =>
+                            constantResult.Value.TestEquals( "123" ) ) ),
             expectedNodeType: ExpressionType.Constant );
     }
 
     [Fact]
-    public static void FromBigIntegerTypeConverterProcess_ShouldPopOneOperandAndPushOneExpression_WhenOperandIsVariable()
+    public void FromBigIntegerTypeConverterProcess_ShouldPopOneOperandAndPushOneExpression_WhenOperandIsVariable()
     {
         var formatProvider = CultureInfo.InvariantCulture;
 
         Process_ShouldPopOneOperandAndPushOneExpression_WhenOperandIsVariable<string, BigInteger, string>(
             sut: new ParsedExpressionBigIntToStringTypeConverter( formatProvider ),
-            (operand, result) =>
-            {
-                result.Should().BeAssignableTo<MethodCallExpression>();
-                if ( result is not MethodCallExpression methodCallResult )
-                    return;
-
-                methodCallResult.Object.Should().BeSameAs( operand );
-                methodCallResult.Method.Name.Should().Be( nameof( ToString ) );
-                methodCallResult.Arguments.Should().HaveCount( 1 );
-                if ( methodCallResult.Arguments.Count != 1 )
-                    return;
-
-                methodCallResult.Arguments[0].Should().BeAssignableTo<ConstantExpression>();
-                if ( methodCallResult.Arguments[0] is not ConstantExpression constantArgument )
-                    return;
-
-                constantArgument.Value.Should().BeSameAs( formatProvider );
-            },
+            (operand, result) => Assertion.All(
+                result.TestType().AssignableTo<MethodCallExpression>(),
+                result.TestIf()
+                    .OfType<MethodCallExpression>(
+                        methodCallResult => Assertion.All(
+                            "methodCallResult",
+                            methodCallResult.Object.TestRefEquals( operand ),
+                            methodCallResult.Method.Name.TestEquals( nameof( ToString ) ),
+                            methodCallResult.Arguments.Count.TestEquals( 1 ),
+                            methodCallResult.Arguments.FirstOrDefault().TestType().AssignableTo<ConstantExpression>(),
+                            methodCallResult.Arguments.FirstOrDefault()
+                                .TestIf()
+                                .OfType<ConstantExpression>(
+                                    constantArgument =>
+                                        constantArgument.Value.TestRefEquals( formatProvider ) ) ) ) ),
             expectedNodeType: ExpressionType.Call );
     }
 
     [Fact]
-    public static void FromBigIntegerTypeConverterProcess_ShouldPopOneOperandAndPushOneExpression_WhenOperandIsConstantAndNotNull()
+    public void FromBigIntegerTypeConverterProcess_ShouldPopOneOperandAndPushOneExpression_WhenOperandIsConstantAndNotNull()
     {
         Process_ShouldPopOneOperandAndPushOneExpression_WhenOperandIsConstant<string, BigInteger, string>(
             sut: new ParsedExpressionBigIntToStringTypeConverter( CultureInfo.InvariantCulture ),
             operandValue: 123,
-            (_, result) =>
-            {
-                result.Should().BeAssignableTo<ConstantExpression>();
-                if ( result is not ConstantExpression constantResult )
-                    return;
-
-                constantResult.Value.Should().Be( "123" );
-            },
+            (_, result) => Assertion.All(
+                result.TestType().AssignableTo<ConstantExpression>(),
+                result.TestIf()
+                    .OfType<ConstantExpression>(
+                        constantResult =>
+                            constantResult.Value.TestEquals( "123" ) ) ),
             expectedNodeType: ExpressionType.Constant );
     }
 
     [Fact]
-    public static void FromInt64TypeConverterProcess_ShouldPopOneOperandAndPushOneExpression_WhenOperandIsVariable()
+    public void FromInt64TypeConverterProcess_ShouldPopOneOperandAndPushOneExpression_WhenOperandIsVariable()
     {
         var formatProvider = CultureInfo.InvariantCulture;
 
         Process_ShouldPopOneOperandAndPushOneExpression_WhenOperandIsVariable<string, long, string>(
             sut: new ParsedExpressionInt64ToStringTypeConverter( formatProvider ),
-            (operand, result) =>
-            {
-                result.Should().BeAssignableTo<MethodCallExpression>();
-                if ( result is not MethodCallExpression methodCallResult )
-                    return;
-
-                methodCallResult.Object.Should().BeSameAs( operand );
-                methodCallResult.Method.Name.Should().Be( nameof( ToString ) );
-                methodCallResult.Arguments.Should().HaveCount( 1 );
-                if ( methodCallResult.Arguments.Count != 1 )
-                    return;
-
-                methodCallResult.Arguments[0].Should().BeAssignableTo<ConstantExpression>();
-                if ( methodCallResult.Arguments[0] is not ConstantExpression constantArgument )
-                    return;
-
-                constantArgument.Value.Should().BeSameAs( formatProvider );
-            },
+            (operand, result) => Assertion.All(
+                result.TestType().AssignableTo<MethodCallExpression>(),
+                result.TestIf()
+                    .OfType<MethodCallExpression>(
+                        methodCallResult => Assertion.All(
+                            "methodCallResult",
+                            methodCallResult.Object.TestRefEquals( operand ),
+                            methodCallResult.Method.Name.TestEquals( nameof( ToString ) ),
+                            methodCallResult.Arguments.Count.TestEquals( 1 ),
+                            methodCallResult.Arguments.FirstOrDefault().TestType().AssignableTo<ConstantExpression>(),
+                            methodCallResult.Arguments.FirstOrDefault()
+                                .TestIf()
+                                .OfType<ConstantExpression>(
+                                    constantArgument =>
+                                        constantArgument.Value.TestRefEquals( formatProvider ) ) ) ) ),
             expectedNodeType: ExpressionType.Call );
     }
 
     [Fact]
-    public static void FromInt64TypeConverterProcess_ShouldPopOneOperandAndPushOneExpression_WhenOperandIsConstantAndNotNull()
+    public void FromInt64TypeConverterProcess_ShouldPopOneOperandAndPushOneExpression_WhenOperandIsConstantAndNotNull()
     {
         Process_ShouldPopOneOperandAndPushOneExpression_WhenOperandIsConstant<string, long, string>(
             sut: new ParsedExpressionInt64ToStringTypeConverter( CultureInfo.InvariantCulture ),
             operandValue: 123,
-            (_, result) =>
-            {
-                result.Should().BeAssignableTo<ConstantExpression>();
-                if ( result is not ConstantExpression constantResult )
-                    return;
-
-                constantResult.Value.Should().Be( "123" );
-            },
+            (_, result) => Assertion.All(
+                result.TestType().AssignableTo<ConstantExpression>(),
+                result.TestIf()
+                    .OfType<ConstantExpression>(
+                        constantResult =>
+                            constantResult.Value.TestEquals( "123" ) ) ),
             expectedNodeType: ExpressionType.Constant );
     }
 
     [Fact]
-    public static void FromInt32TypeConverterProcess_ShouldPopOneOperandAndPushOneExpression_WhenOperandIsVariable()
+    public void FromInt32TypeConverterProcess_ShouldPopOneOperandAndPushOneExpression_WhenOperandIsVariable()
     {
         var formatProvider = CultureInfo.InvariantCulture;
 
         Process_ShouldPopOneOperandAndPushOneExpression_WhenOperandIsVariable<string, int, string>(
             sut: new ParsedExpressionInt32ToStringTypeConverter( formatProvider ),
-            (operand, result) =>
-            {
-                result.Should().BeAssignableTo<MethodCallExpression>();
-                if ( result is not MethodCallExpression methodCallResult )
-                    return;
-
-                methodCallResult.Object.Should().BeSameAs( operand );
-                methodCallResult.Method.Name.Should().Be( nameof( ToString ) );
-                methodCallResult.Arguments.Should().HaveCount( 1 );
-                if ( methodCallResult.Arguments.Count != 1 )
-                    return;
-
-                methodCallResult.Arguments[0].Should().BeAssignableTo<ConstantExpression>();
-                if ( methodCallResult.Arguments[0] is not ConstantExpression constantArgument )
-                    return;
-
-                constantArgument.Value.Should().BeSameAs( formatProvider );
-            },
+            (operand, result) => Assertion.All(
+                result.TestType().AssignableTo<MethodCallExpression>(),
+                result.TestIf()
+                    .OfType<MethodCallExpression>(
+                        methodCallResult => Assertion.All(
+                            "methodCallResult",
+                            methodCallResult.Object.TestRefEquals( operand ),
+                            methodCallResult.Method.Name.TestEquals( nameof( ToString ) ),
+                            methodCallResult.Arguments.Count.TestEquals( 1 ),
+                            methodCallResult.Arguments.FirstOrDefault().TestType().AssignableTo<ConstantExpression>(),
+                            methodCallResult.Arguments.FirstOrDefault()
+                                .TestIf()
+                                .OfType<ConstantExpression>(
+                                    constantArgument =>
+                                        constantArgument.Value.TestRefEquals( formatProvider ) ) ) ) ),
             expectedNodeType: ExpressionType.Call );
     }
 
     [Fact]
-    public static void FromInt32TypeConverterProcess_ShouldPopOneOperandAndPushOneExpression_WhenOperandIsConstantAndNotNull()
+    public void FromInt32TypeConverterProcess_ShouldPopOneOperandAndPushOneExpression_WhenOperandIsConstantAndNotNull()
     {
         Process_ShouldPopOneOperandAndPushOneExpression_WhenOperandIsConstant<string, int, string>(
             sut: new ParsedExpressionInt32ToStringTypeConverter( CultureInfo.InvariantCulture ),
             operandValue: 123,
-            (_, result) =>
-            {
-                result.Should().BeAssignableTo<ConstantExpression>();
-                if ( result is not ConstantExpression constantResult )
-                    return;
-
-                constantResult.Value.Should().Be( "123" );
-            },
+            (_, result) => Assertion.All(
+                result.TestType().AssignableTo<ConstantExpression>(),
+                result.TestIf()
+                    .OfType<ConstantExpression>(
+                        constantResult =>
+                            constantResult.Value.TestEquals( "123" ) ) ),
             expectedNodeType: ExpressionType.Constant );
     }
 
     [Fact]
-    public static void FromBooleanTypeConverterProcess_ShouldPopOneOperandAndPushOneExpression_WhenOperandIsVariable()
+    public void FromBooleanTypeConverterProcess_ShouldPopOneOperandAndPushOneExpression_WhenOperandIsVariable()
     {
         var formatProvider = CultureInfo.InvariantCulture;
 
         Process_ShouldPopOneOperandAndPushOneExpression_WhenOperandIsVariable<string, bool, string>(
             sut: new ParsedExpressionBooleanToStringTypeConverter( formatProvider ),
-            (operand, result) =>
-            {
-                result.Should().BeAssignableTo<MethodCallExpression>();
-                if ( result is not MethodCallExpression methodCallResult )
-                    return;
-
-                methodCallResult.Object.Should().BeSameAs( operand );
-                methodCallResult.Method.Name.Should().Be( nameof( ToString ) );
-                methodCallResult.Arguments.Should().HaveCount( 1 );
-                if ( methodCallResult.Arguments.Count != 1 )
-                    return;
-
-                methodCallResult.Arguments[0].Should().BeAssignableTo<ConstantExpression>();
-                if ( methodCallResult.Arguments[0] is not ConstantExpression constantArgument )
-                    return;
-
-                constantArgument.Value.Should().BeSameAs( formatProvider );
-            },
+            (operand, result) => Assertion.All(
+                result.TestType().AssignableTo<MethodCallExpression>(),
+                result.TestIf()
+                    .OfType<MethodCallExpression>(
+                        methodCallResult => Assertion.All(
+                            "methodCallResult",
+                            methodCallResult.Object.TestRefEquals( operand ),
+                            methodCallResult.Method.Name.TestEquals( nameof( ToString ) ),
+                            methodCallResult.Arguments.Count.TestEquals( 1 ),
+                            methodCallResult.Arguments.FirstOrDefault().TestType().AssignableTo<ConstantExpression>(),
+                            methodCallResult.Arguments.FirstOrDefault()
+                                .TestIf()
+                                .OfType<ConstantExpression>(
+                                    constantArgument =>
+                                        constantArgument.Value.TestRefEquals( formatProvider ) ) ) ) ),
             expectedNodeType: ExpressionType.Call );
     }
 
     [Fact]
-    public static void FromBooleanTypeConverterProcess_ShouldPopOneOperandAndPushOneExpression_WhenOperandIsConstantAndNotNull()
+    public void FromBooleanTypeConverterProcess_ShouldPopOneOperandAndPushOneExpression_WhenOperandIsConstantAndNotNull()
     {
         Process_ShouldPopOneOperandAndPushOneExpression_WhenOperandIsConstant<string, bool, string>(
             sut: new ParsedExpressionBooleanToStringTypeConverter( CultureInfo.InvariantCulture ),
             operandValue: true,
-            (_, result) =>
-            {
-                result.Should().BeAssignableTo<ConstantExpression>();
-                if ( result is not ConstantExpression constantResult )
-                    return;
-
-                constantResult.Value.Should().Be( "True" );
-            },
+            (_, result) => Assertion.All(
+                result.TestType().AssignableTo<ConstantExpression>(),
+                result.TestIf()
+                    .OfType<ConstantExpression>(
+                        constantResult =>
+                            constantResult.Value.TestEquals( "True" ) ) ),
             expectedNodeType: ExpressionType.Constant );
     }
 }

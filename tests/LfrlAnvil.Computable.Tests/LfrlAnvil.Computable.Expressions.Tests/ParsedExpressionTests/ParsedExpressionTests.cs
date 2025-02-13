@@ -21,15 +21,14 @@ public class ParsedExpressionTests : TestsBase
 
         var sut = factory.Create<decimal, decimal>( input );
 
-        using ( new AssertionScope() )
-        {
-            sut.Input.Should().Be( input );
-            sut.BoundArguments.Should().BeEmpty();
-            sut.DiscardedArguments.Should().BeEmpty();
-            sut.UnboundArguments.Should().HaveCount( 2 );
-            sut.UnboundArguments.GetIndex( "a" ).Should().Be( 0 );
-            sut.UnboundArguments.GetIndex( "b" ).Should().Be( 1 );
-        }
+        Assertion.All(
+                sut.Input.TestEquals( input ),
+                sut.BoundArguments.TestEmpty(),
+                sut.DiscardedArguments.TestEmpty(),
+                sut.UnboundArguments.Count.TestEquals( 2 ),
+                sut.UnboundArguments.GetIndex( "a" ).TestEquals( 0 ),
+                sut.UnboundArguments.GetIndex( "b" ).TestEquals( 1 ) )
+            .Go();
     }
 
     [Fact]
@@ -46,14 +45,13 @@ public class ParsedExpressionTests : TestsBase
 
         var sut = factory.Create<decimal, decimal>( input );
 
-        using ( new AssertionScope() )
-        {
-            sut.Input.Should().Be( input );
-            sut.BoundArguments.Should().BeEmpty();
-            sut.DiscardedArguments.Select( n => n.ToString() ).Should().BeEquivalentTo( "a" );
-            sut.UnboundArguments.Should().HaveCount( 1 );
-            sut.UnboundArguments.GetIndex( "b" ).Should().Be( 0 );
-        }
+        Assertion.All(
+                sut.Input.TestEquals( input ),
+                sut.BoundArguments.TestEmpty(),
+                sut.DiscardedArguments.Select( n => n.ToString() ).TestSetEqual( [ "a" ] ),
+                sut.UnboundArguments.Count.TestEquals( 1 ),
+                sut.UnboundArguments.GetIndex( "b" ).TestEquals( 0 ) )
+            .Go();
     }
 
     [Fact]
@@ -71,7 +69,7 @@ public class ParsedExpressionTests : TestsBase
 
         var result = sut.ToString();
 
-        result.Should().Be( "[System.Decimal => System.Double] a + 12.34 + b" );
+        result.TestEquals( "[System.Decimal => System.Double] a + 12.34 + b" ).Go();
     }
 
     [Fact]
@@ -92,19 +90,18 @@ public class ParsedExpressionTests : TestsBase
             KeyValuePair.Create( "c", cValue ),
             KeyValuePair.Create( "e", eValue ) );
 
-        using ( new AssertionScope() )
-        {
-            result.UnboundArguments.Should().HaveCount( 2 );
-            result.UnboundArguments.GetIndex( "a" ).Should().Be( 0 );
-            result.UnboundArguments.GetIndex( "d" ).Should().Be( 1 );
-            result.BoundArguments.Should().HaveCount( 3 );
-            result.BoundArguments.TryGetValue( "b", out var actualB ).Should().BeTrue();
-            result.BoundArguments.TryGetValue( "c", out var actualC ).Should().BeTrue();
-            result.BoundArguments.TryGetValue( "e", out var actualE ).Should().BeTrue();
-            actualB.Should().Be( bValue );
-            actualC.Should().Be( cValue );
-            actualE.Should().Be( eValue );
-        }
+        Assertion.All(
+                result.UnboundArguments.Count.TestEquals( 2 ),
+                result.UnboundArguments.GetIndex( "a" ).TestEquals( 0 ),
+                result.UnboundArguments.GetIndex( "d" ).TestEquals( 1 ),
+                result.BoundArguments.Count.TestEquals( 3 ),
+                result.BoundArguments.TryGetValue( "b", out var actualB ).TestTrue(),
+                result.BoundArguments.TryGetValue( "c", out var actualC ).TestTrue(),
+                result.BoundArguments.TryGetValue( "e", out var actualE ).TestTrue(),
+                actualB.TestEquals( bValue ),
+                actualC.TestEquals( cValue ),
+                actualE.TestEquals( eValue ) )
+            .Go();
     }
 
     [Fact]
@@ -125,19 +122,18 @@ public class ParsedExpressionTests : TestsBase
             KeyValuePair.Create( ( StringSegment )"c", cValue ),
             KeyValuePair.Create( ( StringSegment )"e", eValue ) );
 
-        using ( new AssertionScope() )
-        {
-            result.UnboundArguments.Should().HaveCount( 2 );
-            result.UnboundArguments.GetIndex( "a" ).Should().Be( 0 );
-            result.UnboundArguments.GetIndex( "d" ).Should().Be( 1 );
-            result.BoundArguments.Should().HaveCount( 3 );
-            result.BoundArguments.TryGetValue( "b", out var actualB ).Should().BeTrue();
-            result.BoundArguments.TryGetValue( "c", out var actualC ).Should().BeTrue();
-            result.BoundArguments.TryGetValue( "e", out var actualE ).Should().BeTrue();
-            actualB.Should().Be( bValue );
-            actualC.Should().Be( cValue );
-            actualE.Should().Be( eValue );
-        }
+        Assertion.All(
+                result.UnboundArguments.Count.TestEquals( 2 ),
+                result.UnboundArguments.GetIndex( "a" ).TestEquals( 0 ),
+                result.UnboundArguments.GetIndex( "d" ).TestEquals( 1 ),
+                result.BoundArguments.Count.TestEquals( 3 ),
+                result.BoundArguments.TryGetValue( "b", out var actualB ).TestTrue(),
+                result.BoundArguments.TryGetValue( "c", out var actualC ).TestTrue(),
+                result.BoundArguments.TryGetValue( "e", out var actualE ).TestTrue(),
+                actualB.TestEquals( bValue ),
+                actualC.TestEquals( cValue ),
+                actualE.TestEquals( eValue ) )
+            .Go();
     }
 
     [Fact]
@@ -158,19 +154,18 @@ public class ParsedExpressionTests : TestsBase
             KeyValuePair.Create( 2, cValue ),
             KeyValuePair.Create( 4, eValue ) );
 
-        using ( new AssertionScope() )
-        {
-            result.UnboundArguments.Should().HaveCount( 2 );
-            result.UnboundArguments.GetIndex( "a" ).Should().Be( 0 );
-            result.UnboundArguments.GetIndex( "d" ).Should().Be( 1 );
-            result.BoundArguments.Should().HaveCount( 3 );
-            result.BoundArguments.TryGetValue( "b", out var actualB ).Should().BeTrue();
-            result.BoundArguments.TryGetValue( "c", out var actualC ).Should().BeTrue();
-            result.BoundArguments.TryGetValue( "e", out var actualE ).Should().BeTrue();
-            actualB.Should().Be( bValue );
-            actualC.Should().Be( cValue );
-            actualE.Should().Be( eValue );
-        }
+        Assertion.All(
+                result.UnboundArguments.Count.TestEquals( 2 ),
+                result.UnboundArguments.GetIndex( "a" ).TestEquals( 0 ),
+                result.UnboundArguments.GetIndex( "d" ).TestEquals( 1 ),
+                result.BoundArguments.Count.TestEquals( 3 ),
+                result.BoundArguments.TryGetValue( "b", out var actualB ).TestTrue(),
+                result.BoundArguments.TryGetValue( "c", out var actualC ).TestTrue(),
+                result.BoundArguments.TryGetValue( "e", out var actualE ).TestTrue(),
+                actualB.TestEquals( bValue ),
+                actualC.TestEquals( cValue ),
+                actualE.TestEquals( eValue ) )
+            .Go();
     }
 
     [Fact]
@@ -186,7 +181,7 @@ public class ParsedExpressionTests : TestsBase
 
         var result = sut.BindArguments( Array.Empty<KeyValuePair<int, decimal>>() );
 
-        result.Should().BeSameAs( sut );
+        result.TestRefEquals( sut ).Go();
     }
 
     [Fact]
@@ -204,7 +199,7 @@ public class ParsedExpressionTests : TestsBase
             new[] { KeyValuePair.Create( 1, 0m ), KeyValuePair.Create( 2, 0m ), KeyValuePair.Create( 4, 0m ) }
                 .Where( _ => false ) );
 
-        result.Should().BeSameAs( sut );
+        result.TestRefEquals( sut ).Go();
     }
 
     [Fact]
@@ -225,19 +220,18 @@ public class ParsedExpressionTests : TestsBase
             .BindArguments( KeyValuePair.Create( "c", cValue ) )
             .BindArguments( KeyValuePair.Create( "e", eValue ) );
 
-        using ( new AssertionScope() )
-        {
-            result.UnboundArguments.Should().HaveCount( 2 );
-            result.UnboundArguments.GetIndex( "a" ).Should().Be( 0 );
-            result.UnboundArguments.GetIndex( "d" ).Should().Be( 1 );
-            result.BoundArguments.Should().HaveCount( 3 );
-            result.BoundArguments.TryGetValue( "b", out var actualB ).Should().BeTrue();
-            result.BoundArguments.TryGetValue( "c", out var actualC ).Should().BeTrue();
-            result.BoundArguments.TryGetValue( "e", out var actualE ).Should().BeTrue();
-            actualB.Should().Be( bValue );
-            actualC.Should().Be( cValue );
-            actualE.Should().Be( eValue );
-        }
+        Assertion.All(
+                result.UnboundArguments.Count.TestEquals( 2 ),
+                result.UnboundArguments.GetIndex( "a" ).TestEquals( 0 ),
+                result.UnboundArguments.GetIndex( "d" ).TestEquals( 1 ),
+                result.BoundArguments.Count.TestEquals( 3 ),
+                result.BoundArguments.TryGetValue( "b", out var actualB ).TestTrue(),
+                result.BoundArguments.TryGetValue( "c", out var actualC ).TestTrue(),
+                result.BoundArguments.TryGetValue( "e", out var actualE ).TestTrue(),
+                actualB.TestEquals( bValue ),
+                actualC.TestEquals( cValue ),
+                actualE.TestEquals( eValue ) )
+            .Go();
     }
 
     [Fact]
@@ -255,15 +249,14 @@ public class ParsedExpressionTests : TestsBase
 
         var result = sut.BindArguments( KeyValuePair.Create( "a", 0m ) );
 
-        using ( new AssertionScope() )
-        {
-            result.DiscardedArguments.Select( n => n.ToString() ).Should().BeEquivalentTo( "b" );
-            result.UnboundArguments.Should().HaveCount( 1 );
-            result.UnboundArguments.GetIndex( "c" ).Should().Be( 0 );
-            result.BoundArguments.Should().HaveCount( 1 );
-            result.BoundArguments.TryGetValue( "a", out var actualA ).Should().BeTrue();
-            actualA.Should().Be( 0m );
-        }
+        Assertion.All(
+                result.DiscardedArguments.Select( n => n.ToString() ).TestSetEqual( [ "b" ] ),
+                result.UnboundArguments.Count.TestEquals( 1 ),
+                result.UnboundArguments.GetIndex( "c" ).TestEquals( 0 ),
+                result.BoundArguments.Count.TestEquals( 1 ),
+                result.BoundArguments.TryGetValue( "a", out var actualA ).TestTrue(),
+                actualA.TestEquals( 0m ) )
+            .Go();
     }
 
     [Fact]
@@ -281,15 +274,14 @@ public class ParsedExpressionTests : TestsBase
 
         var result = sut.BindArguments( KeyValuePair.Create( "b", 0m ) );
 
-        using ( new AssertionScope() )
-        {
-            result.DiscardedArguments.Select( n => n.ToString() ).Should().BeEquivalentTo( "a", "c" );
-            result.UnboundArguments.Should().HaveCount( 1 );
-            result.UnboundArguments.GetIndex( "d" ).Should().Be( 0 );
-            result.BoundArguments.Should().HaveCount( 1 );
-            result.BoundArguments.TryGetValue( "b", out var actualB ).Should().BeTrue();
-            actualB.Should().Be( 0m );
-        }
+        Assertion.All(
+                result.DiscardedArguments.Select( n => n.ToString() ).TestSetEqual( [ "a", "c" ] ),
+                result.UnboundArguments.Count.TestEquals( 1 ),
+                result.UnboundArguments.GetIndex( "d" ).TestEquals( 0 ),
+                result.BoundArguments.Count.TestEquals( 1 ),
+                result.BoundArguments.TryGetValue( "b", out var actualB ).TestTrue(),
+                actualB.TestEquals( 0m ) )
+            .Go();
     }
 
     [Fact]
@@ -312,7 +304,7 @@ public class ParsedExpressionTests : TestsBase
                 .BindArguments( KeyValuePair.Create( "c", cValue ) )
                 .BindArguments( KeyValuePair.Create( "f", fValue ) ) );
 
-        action.Should().ThrowExactly<ParsedExpressionArgumentBindingException>();
+        action.Test( exc => exc.TestType().Exact<ParsedExpressionArgumentBindingException>() ).Go();
     }
 
     [Fact]
@@ -328,7 +320,7 @@ public class ParsedExpressionTests : TestsBase
 
         var action = Lambda.Of( () => sut.BindArguments( KeyValuePair.Create( "b", 0m ) ) );
 
-        action.Should().ThrowExactly<ParsedExpressionCreationException>();
+        action.Test( exc => exc.TestType().Exact<ParsedExpressionCreationException>() ).Go();
     }
 
     [Fact]
@@ -355,7 +347,7 @@ public class ParsedExpressionTests : TestsBase
         var unboundResult = unboundDelegate.Invoke( aValue, bValue, cValue, dValue, eValue );
         var boundResult = boundDelegate.Invoke( aValue, dValue );
 
-        unboundResult.Should().Be( boundResult );
+        unboundResult.TestEquals( boundResult ).Go();
     }
 
     [Fact]
@@ -376,7 +368,7 @@ public class ParsedExpressionTests : TestsBase
         var @delegate = result.Compile();
         var resultValue = @delegate.Invoke( bValue );
 
-        resultValue.Should().Be( expected );
+        resultValue.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -397,7 +389,7 @@ public class ParsedExpressionTests : TestsBase
         var @delegate = result.Compile();
         var resultValue = @delegate.Invoke( bValue );
 
-        resultValue.Should().Be( expected );
+        resultValue.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -418,7 +410,7 @@ public class ParsedExpressionTests : TestsBase
         var @delegate = result.Compile();
         var resultValue = @delegate.Invoke( bValue );
 
-        resultValue.Should().Be( expected );
+        resultValue.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -439,7 +431,7 @@ public class ParsedExpressionTests : TestsBase
         var @delegate = result.Compile();
         var resultValue = @delegate.Invoke( bValue );
 
-        resultValue.Should().Be( expected );
+        resultValue.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -460,7 +452,7 @@ public class ParsedExpressionTests : TestsBase
         var @delegate = result.Compile();
         var resultValue = @delegate.Invoke( bValue );
 
-        resultValue.Should().Be( expected );
+        resultValue.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -481,6 +473,6 @@ public class ParsedExpressionTests : TestsBase
         var @delegate = result.Compile();
         var resultValue = @delegate.Invoke( bValue );
 
-        resultValue.Should().Be( expected );
+        resultValue.TestEquals( expected ).Go();
     }
 }

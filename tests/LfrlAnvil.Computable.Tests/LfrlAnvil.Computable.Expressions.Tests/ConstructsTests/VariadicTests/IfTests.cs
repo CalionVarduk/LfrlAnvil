@@ -20,7 +20,7 @@ public class IfTests : TestsBase
 
         var action = Lambda.Of( () => sut.Process( parameters ) );
 
-        action.Should().ThrowExactly<ArgumentException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentException>() ).Go();
     }
 
     [Fact]
@@ -32,7 +32,7 @@ public class IfTests : TestsBase
 
         var action = Lambda.Of( () => sut.Process( parameters ) );
 
-        action.Should().ThrowExactly<ArgumentException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentException>() ).Go();
     }
 
     [Fact]
@@ -44,7 +44,7 @@ public class IfTests : TestsBase
 
         var action = Lambda.Of( () => sut.Process( parameters ) );
 
-        action.Should().ThrowExactly<ArgumentException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentException>() ).Go();
     }
 
     [Fact]
@@ -56,7 +56,7 @@ public class IfTests : TestsBase
 
         var result = sut.Process( parameters );
 
-        result.Should().BeSameAs( parameters[1] );
+        result.TestRefEquals( parameters[1] ).Go();
     }
 
     [Fact]
@@ -68,7 +68,7 @@ public class IfTests : TestsBase
 
         var result = sut.Process( parameters );
 
-        result.Should().BeSameAs( parameters[2] );
+        result.TestRefEquals( parameters[2] ).Go();
     }
 
     [Fact]
@@ -80,16 +80,17 @@ public class IfTests : TestsBase
 
         var result = sut.Process( parameters );
 
-        using ( new AssertionScope() )
-        {
-            result.NodeType.Should().Be( ExpressionType.Conditional );
-            if ( result is not ConditionalExpression conditional )
-                return;
-
-            conditional.Test.Should().BeSameAs( parameters[0] );
-            conditional.IfTrue.Should().BeSameAs( parameters[1] );
-            conditional.IfFalse.Should().BeSameAs( parameters[2] );
-        }
+        Assertion.All(
+                result.NodeType.TestEquals( ExpressionType.Conditional ),
+                result.TestType().AssignableTo<ConditionalExpression>(),
+                result.TestIf()
+                    .OfType<ConditionalExpression>(
+                        conditional => Assertion.All(
+                            "Conditional",
+                            conditional.Test.TestRefEquals( parameters[0] ),
+                            conditional.IfTrue.TestRefEquals( parameters[1] ),
+                            conditional.IfFalse.TestRefEquals( parameters[2] ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -104,7 +105,7 @@ public class IfTests : TestsBase
 
         var action = Lambda.Of( () => sut.Process( parameters ) );
 
-        action.Should().ThrowExactly<ArgumentException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentException>() ).Go();
     }
 
     [Fact]
@@ -120,7 +121,7 @@ public class IfTests : TestsBase
 
         var action = Lambda.Of( () => sut.Process( parameters ) );
 
-        action.Should().ThrowExactly<ArgumentException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentException>() ).Go();
     }
 
     [Fact]
@@ -136,22 +137,24 @@ public class IfTests : TestsBase
 
         var result = sut.Process( parameters );
 
-        using ( new AssertionScope() )
-        {
-            result.NodeType.Should().Be( ExpressionType.Conditional );
-            if ( result is not ConditionalExpression conditional )
-                return;
-
-            conditional.Test.Should().BeSameAs( parameters[0] );
-            conditional.IfTrue.NodeType.Should().Be( ExpressionType.Throw );
-            conditional.IfFalse.Should().BeSameAs( parameters[2] );
-
-            if ( conditional.IfTrue is not UnaryExpression @throw )
-                return;
-
-            @throw.Type.Should().Be( parameters[2].Type );
-            @throw.Operand.Should().BeSameAs( exception );
-        }
+        Assertion.All(
+                result.NodeType.TestEquals( ExpressionType.Conditional ),
+                result.TestType().AssignableTo<ConditionalExpression>(),
+                result.TestIf()
+                    .OfType<ConditionalExpression>(
+                        conditional => Assertion.All(
+                            "conditional",
+                            conditional.Test.TestRefEquals( parameters[0] ),
+                            conditional.IfTrue.NodeType.TestEquals( ExpressionType.Throw ),
+                            conditional.IfFalse.TestRefEquals( parameters[2] ),
+                            conditional.IfTrue.TestType().AssignableTo<UnaryExpression>(),
+                            conditional.IfTrue.TestIf()
+                                .OfType<UnaryExpression>(
+                                    @throw => Assertion.All(
+                                        "@throw",
+                                        @throw.Type.TestEquals( parameters[2].Type ),
+                                        @throw.Operand.TestRefEquals( exception ) ) ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -167,22 +170,24 @@ public class IfTests : TestsBase
 
         var result = sut.Process( parameters );
 
-        using ( new AssertionScope() )
-        {
-            result.NodeType.Should().Be( ExpressionType.Conditional );
-            if ( result is not ConditionalExpression conditional )
-                return;
-
-            conditional.Test.Should().BeSameAs( parameters[0] );
-            conditional.IfTrue.Should().BeSameAs( parameters[1] );
-            conditional.IfFalse.NodeType.Should().Be( ExpressionType.Throw );
-
-            if ( conditional.IfFalse is not UnaryExpression @throw )
-                return;
-
-            @throw.Type.Should().Be( parameters[1].Type );
-            @throw.Operand.Should().BeSameAs( exception );
-        }
+        Assertion.All(
+                result.NodeType.TestEquals( ExpressionType.Conditional ),
+                result.TestType().AssignableTo<ConditionalExpression>(),
+                result.TestIf()
+                    .OfType<ConditionalExpression>(
+                        conditional => Assertion.All(
+                            "conditional",
+                            conditional.Test.TestRefEquals( parameters[0] ),
+                            conditional.IfTrue.TestRefEquals( parameters[1] ),
+                            conditional.IfFalse.NodeType.TestEquals( ExpressionType.Throw ),
+                            conditional.IfFalse.TestType().AssignableTo<UnaryExpression>(),
+                            conditional.IfFalse.TestIf()
+                                .OfType<UnaryExpression>(
+                                    @throw => Assertion.All(
+                                        "@throw",
+                                        @throw.Type.TestEquals( parameters[1].Type ),
+                                        @throw.Operand.TestRefEquals( exception ) ) ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -195,15 +200,16 @@ public class IfTests : TestsBase
 
         var result = sut.Process( parameters );
 
-        using ( new AssertionScope() )
-        {
-            result.NodeType.Should().Be( ExpressionType.Throw );
-            if ( result is not UnaryExpression @throw )
-                return;
-
-            @throw.Type.Should().Be( typeof( string ) );
-            @throw.Operand.Should().BeSameAs( exception );
-        }
+        Assertion.All(
+                result.NodeType.TestEquals( ExpressionType.Throw ),
+                result.TestType().AssignableTo<UnaryExpression>(),
+                result.TestIf()
+                    .OfType<UnaryExpression>(
+                        @throw => Assertion.All(
+                            "@throw",
+                            @throw.Type.TestEquals( typeof( string ) ),
+                            @throw.Operand.TestRefEquals( exception ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -216,14 +222,15 @@ public class IfTests : TestsBase
 
         var result = sut.Process( parameters );
 
-        using ( new AssertionScope() )
-        {
-            result.NodeType.Should().Be( ExpressionType.Throw );
-            if ( result is not UnaryExpression @throw )
-                return;
-
-            @throw.Type.Should().Be( typeof( string ) );
-            @throw.Operand.Should().BeSameAs( exception );
-        }
+        Assertion.All(
+                result.NodeType.TestEquals( ExpressionType.Throw ),
+                result.TestType().AssignableTo<UnaryExpression>(),
+                result.TestIf()
+                    .OfType<UnaryExpression>(
+                        @throw => Assertion.All(
+                            "@throw",
+                            @throw.Type.TestEquals( typeof( string ) ),
+                            @throw.Operand.TestRefEquals( exception ) ) ) )
+            .Go();
     }
 }

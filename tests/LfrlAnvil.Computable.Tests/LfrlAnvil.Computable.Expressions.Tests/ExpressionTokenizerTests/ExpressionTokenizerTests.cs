@@ -1,8 +1,8 @@
 ﻿using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 using System.Linq;
 using LfrlAnvil.Computable.Expressions.Internal;
 using LfrlAnvil.TestExtensions.Attributes;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Computable.Expressions.Tests.ExpressionTokenizerTests;
 
@@ -19,7 +19,7 @@ public class ExpressionTokenizerTests : TestsBase
         while ( sut.ReadNextToken( out var token ) )
             result.Add( token );
 
-        result.Should().BeEmpty();
+        result.TestEmpty().Go();
     }
 
     [Theory]
@@ -33,7 +33,7 @@ public class ExpressionTokenizerTests : TestsBase
         while ( sut.ReadNextToken( out var token ) )
             result.Add( token );
 
-        result.Should().BeEmpty();
+        result.TestEmpty().Go();
     }
 
     [Fact]
@@ -48,7 +48,7 @@ public class ExpressionTokenizerTests : TestsBase
         while ( sut.ReadNextToken( out var token ) )
             result.Add( token );
 
-        result.Should().BeSequentiallyEqualTo( expected );
+        result.TestSequence( [ expected ] ).Go();
     }
 
     [Fact]
@@ -63,7 +63,7 @@ public class ExpressionTokenizerTests : TestsBase
         while ( sut.ReadNextToken( out var token ) )
             result.Add( token );
 
-        result.Should().BeSequentiallyEqualTo( expected );
+        result.TestSequence( [ expected ] ).Go();
     }
 
     [Fact]
@@ -78,7 +78,7 @@ public class ExpressionTokenizerTests : TestsBase
         while ( sut.ReadNextToken( out var token ) )
             result.Add( token );
 
-        result.Should().BeSequentiallyEqualTo( expected );
+        result.TestSequence( [ expected ] ).Go();
     }
 
     [Fact]
@@ -93,7 +93,7 @@ public class ExpressionTokenizerTests : TestsBase
         while ( sut.ReadNextToken( out var token ) )
             result.Add( token );
 
-        result.Should().BeSequentiallyEqualTo( expected );
+        result.TestSequence( [ expected ] ).Go();
     }
 
     [Fact]
@@ -108,7 +108,7 @@ public class ExpressionTokenizerTests : TestsBase
         while ( sut.ReadNextToken( out var token ) )
             result.Add( token );
 
-        result.Should().BeSequentiallyEqualTo( expected );
+        result.TestSequence( [ expected ] ).Go();
     }
 
     [Fact]
@@ -123,7 +123,7 @@ public class ExpressionTokenizerTests : TestsBase
         while ( sut.ReadNextToken( out var token ) )
             result.Add( token );
 
-        result.Should().BeSequentiallyEqualTo( expected );
+        result.TestSequence( [ expected ] ).Go();
     }
 
     [Theory]
@@ -140,7 +140,7 @@ public class ExpressionTokenizerTests : TestsBase
         while ( sut.ReadNextToken( out var token ) )
             result.Add( token );
 
-        result.Should().BeSequentiallyEqualTo( expected );
+        result.TestSequence( [ expected ] ).Go();
     }
 
     [Theory]
@@ -157,7 +157,7 @@ public class ExpressionTokenizerTests : TestsBase
         while ( sut.ReadNextToken( out var token ) )
             result.Add( token );
 
-        result.Should().BeSequentiallyEqualTo( expected );
+        result.TestSequence( [ expected ] ).Go();
     }
 
     [Fact]
@@ -172,7 +172,7 @@ public class ExpressionTokenizerTests : TestsBase
         while ( sut.ReadNextToken( out var token ) )
             result.Add( token );
 
-        result.Should().BeSequentiallyEqualTo( expected );
+        result.TestSequence( [ expected ] ).Go();
     }
 
     [Fact]
@@ -188,7 +188,7 @@ public class ExpressionTokenizerTests : TestsBase
         while ( sut.ReadNextToken( out var token ) )
             result.Add( token );
 
-        result.Should().BeSequentiallyEqualTo( expected );
+        result.TestSequence( [ expected ] ).Go();
     }
 
     [Fact]
@@ -203,7 +203,7 @@ public class ExpressionTokenizerTests : TestsBase
         while ( sut.ReadNextToken( out var token ) )
             result.Add( token );
 
-        result.Should().BeSequentiallyEqualTo( expected );
+        result.TestSequence( [ expected ] ).Go();
     }
 
     [Theory]
@@ -218,7 +218,7 @@ public class ExpressionTokenizerTests : TestsBase
         while ( sut.ReadNextToken( out var token ) )
             result.Add( token );
 
-        result.Should().BeSequentiallyEqualTo( expected );
+        result.TestSequence( [ expected ] ).Go();
     }
 
     [Theory]
@@ -231,7 +231,7 @@ public class ExpressionTokenizerTests : TestsBase
 
         sut.ReadNextToken( out var token );
 
-        token.Should().BeEquivalentTo( expectedToken );
+        token.TestEquals( expectedToken ).Go();
     }
 
     [Theory]
@@ -246,7 +246,7 @@ public class ExpressionTokenizerTests : TestsBase
         while ( sut.ReadNextToken( out var token ) )
             result.Add( token );
 
-        result.Should().BeSequentiallyEqualTo( expected );
+        result.TestSequence( [ expected ] ).Go();
     }
 
     [Theory]
@@ -259,7 +259,7 @@ public class ExpressionTokenizerTests : TestsBase
 
         sut.ReadNextToken( out var token );
 
-        token.Should().BeEquivalentTo( expectedToken );
+        token.TestEquals( expectedToken ).Go();
     }
 
     [Fact]
@@ -275,7 +275,7 @@ public class ExpressionTokenizerTests : TestsBase
 
         sut.ReadNextToken( out var token );
 
-        token.Should().BeEquivalentTo( expected );
+        token.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -291,7 +291,7 @@ public class ExpressionTokenizerTests : TestsBase
 
         sut.ReadNextToken( out var token );
 
-        token.Should().BeEquivalentTo( expected );
+        token.TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -306,7 +306,7 @@ public class ExpressionTokenizerTests : TestsBase
         while ( sut.ReadNextToken( out var token ) )
             result.Add( token );
 
-        result.Should().BeSequentiallyEqualTo( expected );
+        result.TestSequence( [ expected ] ).Go();
     }
 
     [Theory]
@@ -319,7 +319,7 @@ public class ExpressionTokenizerTests : TestsBase
 
         sut.ReadNextToken( out var token );
 
-        token.Should().BeEquivalentTo( expectedToken );
+        token.TestEquals( expectedToken ).Go();
     }
 
     [Theory]
@@ -334,7 +334,7 @@ public class ExpressionTokenizerTests : TestsBase
         while ( sut.ReadNextToken( out var token ) )
             result.Add( token );
 
-        result.Should().BeSequentiallyEqualTo( expected );
+        result.TestSequence( [ expected ] ).Go();
     }
 
     [Theory]
@@ -347,7 +347,7 @@ public class ExpressionTokenizerTests : TestsBase
 
         sut.ReadNextToken( out var token );
 
-        token.Should().BeEquivalentTo( expectedToken );
+        token.TestEquals( expectedToken ).Go();
     }
 
     [Theory]
@@ -366,9 +366,10 @@ public class ExpressionTokenizerTests : TestsBase
         while ( sut.ReadNextToken( out var token ) )
             result.Add( token );
 
-        result.Should().BeSequentiallyEqualTo( expectedTokens );
+        result.TestSequence( expectedTokens ).Go();
     }
 
+    [Pure]
     private static IParsedExpressionFactoryConfiguration GetDefaultConfiguration(
         bool allowScientificNotation = true,
         bool allowNonIntegerNumbers = true)
@@ -384,6 +385,7 @@ public class ExpressionTokenizerTests : TestsBase
         return result;
     }
 
+    [Pure]
     private static IReadOnlyDictionary<StringSegment, ConstructTokenDefinition> GetConstructs(params string[] symbols)
     {
         var result = new Dictionary<StringSegment, ConstructTokenDefinition>();

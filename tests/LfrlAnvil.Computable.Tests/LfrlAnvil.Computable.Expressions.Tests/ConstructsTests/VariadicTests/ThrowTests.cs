@@ -1,8 +1,8 @@
 ﻿using System.Linq.Expressions;
+using System.Linq;
 using LfrlAnvil.Computable.Expressions.Constructs.Variadic;
 using LfrlAnvil.Computable.Expressions.Exceptions;
 using LfrlAnvil.Functional;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Computable.Expressions.Tests.ConstructsTests.VariadicTests;
 
@@ -14,33 +14,36 @@ public class ThrowTests : TestsBase
         var sut = new ParsedExpressionThrow();
         var result = sut.Process( Array.Empty<Expression>() );
 
-        using ( new AssertionScope() )
-        {
-            result.NodeType.Should().Be( ExpressionType.Throw );
-            if ( result is not UnaryExpression @throw )
-                return;
-
-            @throw.Type.Should().Be( typeof( void ) );
-            @throw.Operand.NodeType.Should().Be( ExpressionType.New );
-            if ( @throw.Operand is not NewExpression exception )
-                return;
-
-            exception.Type.Should().Be( typeof( ParsedExpressionInvocationException ) );
-            exception.Arguments.Should().HaveCount( 2 );
-            if ( exception.Arguments.Count != 2 )
-                return;
-
-            var firstArg = exception.Arguments[0];
-            var secondArg = exception.Arguments[1];
-
-            firstArg.NodeType.Should().Be( ExpressionType.Constant );
-            secondArg.NodeType.Should().Be( ExpressionType.Constant );
-            if ( firstArg is not ConstantExpression firstConstant || secondArg is not ConstantExpression secondConstant )
-                return;
-
-            firstConstant.Value.Should().Be( Resources.InvocationHasThrownAnException );
-            secondConstant.Value.Should().BeEquivalentTo( Array.Empty<object?>() );
-        }
+        Assertion.All(
+                result.NodeType.TestEquals( ExpressionType.Throw ),
+                result.TestType().AssignableTo<UnaryExpression>(),
+                result.TestIf()
+                    .OfType<UnaryExpression>(
+                        @throw => Assertion.All(
+                            "@throw",
+                            @throw.Type.TestEquals( typeof( void ) ),
+                            @throw.Operand.NodeType.TestEquals( ExpressionType.New ),
+                            @throw.Operand.TestType().AssignableTo<NewExpression>(),
+                            @throw.Operand.TestIf()
+                                .OfType<NewExpression>(
+                                    exception => Assertion.All(
+                                        "exception",
+                                        exception.Type.TestEquals( typeof( ParsedExpressionInvocationException ) ),
+                                        exception.Arguments.Count.TestEquals( 2 ),
+                                        (exception.Arguments.FirstOrDefault()?.NodeType).TestEquals( ExpressionType.Constant ),
+                                        (exception.Arguments.ElementAtOrDefault( 1 )?.NodeType).TestEquals( ExpressionType.Constant ),
+                                        exception.Arguments.FirstOrDefault().TestType().AssignableTo<ConstantExpression>(),
+                                        exception.Arguments.FirstOrDefault()
+                                            .TestIf()
+                                            .OfType<ConstantExpression>(
+                                                firstConstant =>
+                                                    firstConstant.Value.TestEquals( Resources.InvocationHasThrownAnException ) ),
+                                        exception.Arguments.ElementAtOrDefault( 1 ).TestType().AssignableTo<ConstantExpression>(),
+                                        exception.Arguments.ElementAtOrDefault( 1 )
+                                            .TestIf()
+                                            .OfType<ConstantExpression>(
+                                                secondConstant => secondConstant.Value.TestEquals( Array.Empty<object?>() ) ) ) ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -51,15 +54,16 @@ public class ThrowTests : TestsBase
 
         var result = sut.Process( new[] { expression } );
 
-        using ( new AssertionScope() )
-        {
-            result.NodeType.Should().Be( ExpressionType.Throw );
-            if ( result is not UnaryExpression @throw )
-                return;
-
-            @throw.Type.Should().Be( typeof( void ) );
-            @throw.Operand.Should().BeSameAs( expression );
-        }
+        Assertion.All(
+                result.NodeType.TestEquals( ExpressionType.Throw ),
+                result.TestType().AssignableTo<UnaryExpression>(),
+                result.TestIf()
+                    .OfType<UnaryExpression>(
+                        @throw => Assertion.All(
+                            "@throw",
+                            @throw.Type.TestEquals( typeof( void ) ),
+                            @throw.Operand.TestRefEquals( expression ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -70,7 +74,7 @@ public class ThrowTests : TestsBase
 
         var action = Lambda.Of( () => sut.Process( parameters ) );
 
-        action.Should().ThrowExactly<ArgumentException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentException>() ).Go();
     }
 
     [Fact]
@@ -81,7 +85,7 @@ public class ThrowTests : TestsBase
 
         var action = Lambda.Of( () => sut.Process( parameters ) );
 
-        action.Should().ThrowExactly<ArgumentException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentException>() ).Go();
     }
 
     [Fact]
@@ -92,32 +96,30 @@ public class ThrowTests : TestsBase
 
         var result = sut.Process( new[] { expression } );
 
-        using ( new AssertionScope() )
-        {
-            result.NodeType.Should().Be( ExpressionType.Throw );
-            if ( result is not UnaryExpression @throw )
-                return;
-
-            @throw.Type.Should().Be( typeof( void ) );
-            @throw.Operand.NodeType.Should().Be( ExpressionType.New );
-            if ( @throw.Operand is not NewExpression exception )
-                return;
-
-            exception.Type.Should().Be( typeof( ParsedExpressionInvocationException ) );
-            exception.Arguments.Should().HaveCount( 2 );
-            if ( exception.Arguments.Count != 2 )
-                return;
-
-            var firstArg = exception.Arguments[0];
-            var secondArg = exception.Arguments[1];
-
-            firstArg.Should().BeSameAs( expression );
-            secondArg.NodeType.Should().Be( ExpressionType.Constant );
-            if ( secondArg is not ConstantExpression secondConstant )
-                return;
-
-            secondConstant.Value.Should().BeEquivalentTo( Array.Empty<object?>() );
-        }
+        Assertion.All(
+                result.NodeType.TestEquals( ExpressionType.Throw ),
+                result.TestType().AssignableTo<UnaryExpression>(),
+                result.TestIf()
+                    .OfType<UnaryExpression>(
+                        @throw => Assertion.All(
+                            "@throw",
+                            @throw.Type.TestEquals( typeof( void ) ),
+                            @throw.Operand.NodeType.TestEquals( ExpressionType.New ),
+                            @throw.Operand.TestType().AssignableTo<NewExpression>(),
+                            @throw.Operand.TestIf()
+                                .OfType<NewExpression>(
+                                    exception => Assertion.All(
+                                        "exception",
+                                        exception.Type.TestEquals( typeof( ParsedExpressionInvocationException ) ),
+                                        exception.Arguments.Count.TestEquals( 2 ),
+                                        exception.Arguments.FirstOrDefault().TestRefEquals( expression ),
+                                        (exception.Arguments.ElementAtOrDefault( 1 )?.NodeType).TestEquals( ExpressionType.Constant ),
+                                        exception.Arguments.ElementAtOrDefault( 1 ).TestType().AssignableTo<ConstantExpression>(),
+                                        exception.Arguments.ElementAtOrDefault( 1 )
+                                            .TestIf()
+                                            .OfType<ConstantExpression>(
+                                                secondConstant => secondConstant.Value.TestEquals( Array.Empty<object?>() ) ) ) ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -129,32 +131,35 @@ public class ThrowTests : TestsBase
 
         var result = sut.Process( parameters );
 
-        using ( new AssertionScope() )
-        {
-            result.NodeType.Should().Be( ExpressionType.Throw );
-            if ( result is not UnaryExpression @throw )
-                return;
-
-            @throw.Type.Should().Be( typeof( void ) );
-            @throw.Operand.NodeType.Should().Be( ExpressionType.New );
-            if ( @throw.Operand is not NewExpression exception )
-                return;
-
-            exception.Type.Should().Be( typeof( ParsedExpressionInvocationException ) );
-            exception.Arguments.Should().HaveCount( 2 );
-            if ( exception.Arguments.Count != 2 )
-                return;
-
-            var firstArg = exception.Arguments[0];
-            var secondArg = exception.Arguments[1];
-
-            firstArg.Should().BeSameAs( parameters[0] );
-            secondArg.NodeType.Should().Be( ExpressionType.Constant );
-            if ( secondArg is not ConstantExpression secondConstant )
-                return;
-
-            secondConstant.Value.Should().BeEquivalentTo( new object?[] { 0, 1m } );
-        }
+        Assertion.All(
+                result.NodeType.TestEquals( ExpressionType.Throw ),
+                result.TestType().AssignableTo<UnaryExpression>(),
+                result.TestIf()
+                    .OfType<UnaryExpression>(
+                        @throw => Assertion.All(
+                            "@throw",
+                            @throw.Type.TestEquals( typeof( void ) ),
+                            @throw.Operand.NodeType.TestEquals( ExpressionType.New ),
+                            @throw.Operand.TestType().AssignableTo<NewExpression>(),
+                            @throw.Operand.TestIf()
+                                .OfType<NewExpression>(
+                                    exception => Assertion.All(
+                                        "exception",
+                                        exception.Type.TestEquals( typeof( ParsedExpressionInvocationException ) ),
+                                        exception.Arguments.Count.TestEquals( 2 ),
+                                        exception.Arguments.FirstOrDefault().TestRefEquals( parameters[0] ),
+                                        (exception.Arguments.ElementAtOrDefault( 1 )?.NodeType).TestEquals( ExpressionType.Constant ),
+                                        exception.Arguments.ElementAtOrDefault( 1 ).TestType().AssignableTo<ConstantExpression>(),
+                                        exception.Arguments.ElementAtOrDefault( 1 )
+                                            .TestIf()
+                                            .OfType<ConstantExpression>(
+                                                secondConstant =>
+                                                    Assertion.All(
+                                                        "secondConstant",
+                                                        secondConstant.Value.TestType().Exact<object[]>(),
+                                                        secondConstant.Value.TestIf()
+                                                            .OfType<object[]>( value => value.TestSequence( [ 0, 1m ] ) ) ) ) ) ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -173,49 +178,51 @@ public class ThrowTests : TestsBase
 
         var result = sut.Process( parameters );
 
-        using ( new AssertionScope() )
-        {
-            result.NodeType.Should().Be( ExpressionType.Throw );
-            if ( result is not UnaryExpression @throw )
-                return;
-
-            @throw.Type.Should().Be( typeof( void ) );
-            @throw.Operand.NodeType.Should().Be( ExpressionType.New );
-            if ( @throw.Operand is not NewExpression exception )
-                return;
-
-            exception.Type.Should().Be( typeof( ParsedExpressionInvocationException ) );
-            exception.Arguments.Should().HaveCount( 2 );
-            if ( exception.Arguments.Count != 2 )
-                return;
-
-            var firstArg = exception.Arguments[0];
-            var secondArg = exception.Arguments[1];
-
-            firstArg.Should().BeSameAs( parameters[0] );
-            secondArg.NodeType.Should().Be( ExpressionType.NewArrayInit );
-            if ( secondArg is not NewArrayExpression argsExpression )
-                return;
-
-            argsExpression.Type.Should().Be( typeof( object?[] ) );
-            argsExpression.Expressions.Should().HaveCount( 3 );
-            if ( argsExpression.Expressions.Count != 3 )
-                return;
-
-            var firstFormatArg = argsExpression.Expressions[0];
-            var secondFormatArg = argsExpression.Expressions[1];
-            var thirdFormatArg = argsExpression.Expressions[2];
-
-            firstFormatArg.NodeType.Should().Be( ExpressionType.Convert );
-            secondFormatArg.Should().BeSameAs( parameters[2] );
-            thirdFormatArg.NodeType.Should().Be( ExpressionType.Convert );
-
-            if ( firstFormatArg is not UnaryExpression firstConvertArg || thirdFormatArg is not UnaryExpression thirdConvertArg )
-                return;
-
-            firstConvertArg.Operand.Should().BeSameAs( parameters[1] );
-            thirdConvertArg.Operand.Should().BeSameAs( parameters[3] );
-        }
+        Assertion.All(
+                result.NodeType.TestEquals( ExpressionType.Throw ),
+                result.TestType().AssignableTo<UnaryExpression>(),
+                result.TestIf()
+                    .OfType<UnaryExpression>(
+                        @throw => Assertion.All(
+                            "@throw",
+                            @throw.Type.TestEquals( typeof( void ) ),
+                            @throw.Operand.NodeType.TestEquals( ExpressionType.New ),
+                            @throw.Operand.TestType().AssignableTo<NewExpression>(),
+                            @throw.Operand.TestIf()
+                                .OfType<NewExpression>(
+                                    exception => Assertion.All(
+                                        "exception",
+                                        exception.Type.TestEquals( typeof( ParsedExpressionInvocationException ) ),
+                                        exception.Arguments.Count.TestEquals( 2 ),
+                                        exception.Arguments.FirstOrDefault().TestRefEquals( parameters[0] ),
+                                        (exception.Arguments.ElementAtOrDefault( 1 )?.NodeType).TestEquals( ExpressionType.NewArrayInit ),
+                                        exception.Arguments.ElementAtOrDefault( 1 ).TestType().AssignableTo<NewArrayExpression>(),
+                                        exception.Arguments.ElementAtOrDefault( 1 )
+                                            .TestIf()
+                                            .OfType<NewArrayExpression>(
+                                                argsExpression => Assertion.All(
+                                                    "argsExpression",
+                                                    argsExpression.Type.TestEquals( typeof( object?[] ) ),
+                                                    argsExpression.Expressions.Count.TestEquals( 3 ),
+                                                    (argsExpression.Expressions.FirstOrDefault()?.NodeType).TestEquals(
+                                                        ExpressionType.Convert ),
+                                                    argsExpression.Expressions.ElementAtOrDefault( 1 ).TestRefEquals( parameters[2] ),
+                                                    (argsExpression.Expressions.ElementAtOrDefault( 2 )?.NodeType).TestEquals(
+                                                        ExpressionType.Convert ),
+                                                    argsExpression.Expressions.FirstOrDefault().TestType().AssignableTo<UnaryExpression>(),
+                                                    argsExpression.Expressions.FirstOrDefault()
+                                                        .TestIf()
+                                                        .OfType<UnaryExpression>(
+                                                            firstConvertArg => firstConvertArg.Operand.TestRefEquals( parameters[1] ) ),
+                                                    argsExpression.Expressions.ElementAtOrDefault( 2 )
+                                                        .TestType()
+                                                        .AssignableTo<UnaryExpression>(),
+                                                    argsExpression.Expressions.ElementAtOrDefault( 2 )
+                                                        .TestIf()
+                                                        .OfType<UnaryExpression>(
+                                                            thirdFormatArg =>
+                                                                thirdFormatArg.Operand.TestRefEquals( parameters[3] ) ) ) ) ) ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -223,11 +230,10 @@ public class ThrowTests : TestsBase
     {
         var sut = new ParsedExpressionInvocationException( "foo {0} bar {1} qux", 1, 2 );
 
-        using ( new AssertionScope() )
-        {
-            sut.Format.Should().Be( "foo {0} bar {1} qux" );
-            sut.Args.Should().BeSequentiallyEqualTo( 1, 2 );
-            sut.Message.Should().Be( "foo 1 bar 2 qux" );
-        }
+        Assertion.All(
+                sut.Format.TestEquals( "foo {0} bar {1} qux" ),
+                sut.Args.TestSequence( [ 1, 2 ] ),
+                sut.Message.TestEquals( "foo 1 bar 2 qux" ) )
+            .Go();
     }
 }

@@ -10,7 +10,7 @@ public class ParsedExpressionUnboundArgumentsTests : TestsBase
     public void Empty_ShouldReturnCorrectResult()
     {
         var sut = ParsedExpressionUnboundArguments.Empty;
-        sut.Should().BeEmpty();
+        sut.TestEmpty().Go();
     }
 
     [Fact]
@@ -24,13 +24,11 @@ public class ParsedExpressionUnboundArgumentsTests : TestsBase
                 KeyValuePair.Create( ( StringSegment )"c", 2 )
             } );
 
-        using ( new AssertionScope() )
-        {
-            sut.Count.Should().Be( 3 );
-            sut.Select( kv => KeyValuePair.Create( kv.Key.ToString(), kv.Value ) )
-                .Should()
-                .BeEquivalentTo( KeyValuePair.Create( "a", 0 ), KeyValuePair.Create( "b", 1 ), KeyValuePair.Create( "c", 2 ) );
-        }
+        Assertion.All(
+                sut.Count.TestEquals( 3 ),
+                sut.Select( kv => KeyValuePair.Create( kv.Key.ToString(), kv.Value ) )
+                    .TestSetEqual( [ KeyValuePair.Create( "a", 0 ), KeyValuePair.Create( "b", 1 ), KeyValuePair.Create( "c", 2 ) ] ) )
+            .Go();
     }
 
     [Theory]
@@ -49,7 +47,7 @@ public class ParsedExpressionUnboundArgumentsTests : TestsBase
 
         var result = sut.Contains( name );
 
-        result.Should().BeTrue();
+        result.TestTrue().Go();
     }
 
     [Fact]
@@ -57,7 +55,7 @@ public class ParsedExpressionUnboundArgumentsTests : TestsBase
     {
         var sut = new ParsedExpressionUnboundArguments( new[] { KeyValuePair.Create( ( StringSegment )"a", 0 ) } );
         var result = sut.Contains( "b" );
-        result.Should().BeFalse();
+        result.TestFalse().Go();
     }
 
     [Theory]
@@ -76,7 +74,7 @@ public class ParsedExpressionUnboundArgumentsTests : TestsBase
 
         var result = sut.GetIndex( name );
 
-        result.Should().Be( expected );
+        result.TestEquals( expected ).Go();
     }
 
     [Fact]
@@ -84,7 +82,7 @@ public class ParsedExpressionUnboundArgumentsTests : TestsBase
     {
         var sut = new ParsedExpressionUnboundArguments( new[] { KeyValuePair.Create( ( StringSegment )"a", 0 ) } );
         var result = sut.GetIndex( "b" );
-        result.Should().Be( -1 );
+        result.TestEquals( -1 ).Go();
     }
 
     [Theory]
@@ -103,7 +101,7 @@ public class ParsedExpressionUnboundArgumentsTests : TestsBase
 
         var result = sut.GetName( index );
 
-        result.ToString().Should().Be( expected );
+        result.ToString().TestEquals( expected ).Go();
     }
 
     [Theory]
@@ -113,6 +111,6 @@ public class ParsedExpressionUnboundArgumentsTests : TestsBase
     {
         var sut = new ParsedExpressionUnboundArguments( new[] { KeyValuePair.Create( ( StringSegment )"a", 0 ) } );
         var action = Lambda.Of( () => sut.GetName( index ) );
-        action.Should().ThrowExactly<IndexOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<IndexOutOfRangeException>() ).Go();
     }
 }

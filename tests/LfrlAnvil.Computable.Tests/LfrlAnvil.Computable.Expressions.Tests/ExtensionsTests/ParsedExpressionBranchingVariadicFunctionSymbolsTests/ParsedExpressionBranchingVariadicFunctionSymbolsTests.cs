@@ -9,13 +9,12 @@ public class ParsedExpressionBranchingVariadicFunctionSymbolsTests : TestsBase
     {
         var sut = default( ParsedExpressionBranchingVariadicFunctionSymbols );
 
-        using ( new AssertionScope() )
-        {
-            sut.If.ToString().Should().Be( "if" );
-            sut.SwitchCase.ToString().Should().Be( "case" );
-            sut.Switch.ToString().Should().Be( "switch" );
-            sut.Throw.ToString().Should().Be( "throw" );
-        }
+        Assertion.All(
+                sut.If.ToString().TestEquals( "if" ),
+                sut.SwitchCase.ToString().TestEquals( "case" ),
+                sut.Switch.ToString().TestEquals( "switch" ),
+                sut.Throw.ToString().TestEquals( "throw" ) )
+            .Go();
     }
 
     [Fact]
@@ -23,13 +22,12 @@ public class ParsedExpressionBranchingVariadicFunctionSymbolsTests : TestsBase
     {
         var sut = ParsedExpressionBranchingVariadicFunctionSymbols.Default;
 
-        using ( new AssertionScope() )
-        {
-            sut.If.ToString().Should().Be( "if" );
-            sut.SwitchCase.ToString().Should().Be( "case" );
-            sut.Switch.ToString().Should().Be( "switch" );
-            sut.Throw.ToString().Should().Be( "throw" );
-        }
+        Assertion.All(
+                sut.If.ToString().TestEquals( "if" ),
+                sut.SwitchCase.ToString().TestEquals( "case" ),
+                sut.Switch.ToString().TestEquals( "switch" ),
+                sut.Throw.ToString().TestEquals( "throw" ) )
+            .Go();
     }
 
     [Fact]
@@ -43,66 +41,58 @@ public class ParsedExpressionBranchingVariadicFunctionSymbolsTests : TestsBase
 
         var result = sut.ToString();
 
-        result.Should().Be( "If: 'foo', Switch: 'qux', SwitchCase: 'bar', Throw: 'foobar'" );
+        result.TestEquals( "If: 'foo', Switch: 'qux', SwitchCase: 'bar', Throw: 'foobar'" ).Go();
     }
 
     [Fact]
     public void SetIf_ShouldReturnCorrectResult()
     {
-        var sut = new ParsedExpressionBranchingVariadicFunctionSymbols()
-            .SetIf( "foo" );
+        var sut = new ParsedExpressionBranchingVariadicFunctionSymbols().SetIf( "foo" );
 
-        using ( new AssertionScope() )
-        {
-            sut.If.ToString().Should().Be( "foo" );
-            sut.SwitchCase.ToString().Should().Be( "case" );
-            sut.Switch.ToString().Should().Be( "switch" );
-            sut.Throw.ToString().Should().Be( "throw" );
-        }
+        Assertion.All(
+                sut.If.ToString().TestEquals( "foo" ),
+                sut.SwitchCase.ToString().TestEquals( "case" ),
+                sut.Switch.ToString().TestEquals( "switch" ),
+                sut.Throw.ToString().TestEquals( "throw" ) )
+            .Go();
     }
 
     [Fact]
     public void SetSwitchCase_ShouldReturnCorrectResult()
     {
-        var sut = new ParsedExpressionBranchingVariadicFunctionSymbols()
-            .SetSwitchCase( "foo" );
+        var sut = new ParsedExpressionBranchingVariadicFunctionSymbols().SetSwitchCase( "foo" );
 
-        using ( new AssertionScope() )
-        {
-            sut.If.ToString().Should().Be( "if" );
-            sut.SwitchCase.ToString().Should().Be( "foo" );
-            sut.Switch.ToString().Should().Be( "switch" );
-            sut.Throw.ToString().Should().Be( "throw" );
-        }
+        Assertion.All(
+                sut.If.ToString().TestEquals( "if" ),
+                sut.SwitchCase.ToString().TestEquals( "foo" ),
+                sut.Switch.ToString().TestEquals( "switch" ),
+                sut.Throw.ToString().TestEquals( "throw" ) )
+            .Go();
     }
 
     [Fact]
     public void SetSwitch_ShouldReturnCorrectResult()
     {
-        var sut = new ParsedExpressionBranchingVariadicFunctionSymbols()
-            .SetSwitch( "foo" );
+        var sut = new ParsedExpressionBranchingVariadicFunctionSymbols().SetSwitch( "foo" );
 
-        using ( new AssertionScope() )
-        {
-            sut.If.ToString().Should().Be( "if" );
-            sut.SwitchCase.ToString().Should().Be( "case" );
-            sut.Switch.ToString().Should().Be( "foo" );
-            sut.Throw.ToString().Should().Be( "throw" );
-        }
+        Assertion.All(
+                sut.If.ToString().TestEquals( "if" ),
+                sut.SwitchCase.ToString().TestEquals( "case" ),
+                sut.Switch.ToString().TestEquals( "foo" ),
+                sut.Throw.ToString().TestEquals( "throw" ) )
+            .Go();
     }
 
     [Fact]
     public void SetThrow_ShouldReturnCorrectResult()
     {
-        var sut = new ParsedExpressionBranchingVariadicFunctionSymbols()
-            .SetThrow( "foo" );
+        var sut = new ParsedExpressionBranchingVariadicFunctionSymbols().SetThrow( "foo" );
 
-        using ( new AssertionScope() )
-        {
-            sut.If.ToString().Should().Be( "if" );
-            sut.SwitchCase.ToString().Should().Be( "case" );
-            sut.Switch.ToString().Should().Be( "switch" );
-            sut.Throw.ToString().Should().Be( "foo" );
-        }
+        Assertion.All(
+                sut.If.ToString().TestEquals( "if" ),
+                sut.SwitchCase.ToString().TestEquals( "case" ),
+                sut.Switch.ToString().TestEquals( "switch" ),
+                sut.Throw.ToString().TestEquals( "foo" ) )
+            .Go();
     }
 }

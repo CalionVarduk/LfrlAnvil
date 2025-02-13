@@ -12,7 +12,6 @@ using LfrlAnvil.Computable.Expressions.Constructs.String;
 using LfrlAnvil.Computable.Expressions.Constructs.Variadic;
 using LfrlAnvil.Computable.Expressions.Extensions;
 using LfrlAnvil.Computable.Expressions.Internal;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Computable.Expressions.Tests.ExtensionsTests.ParsedExpressionFactoryBuilderTests;
 
@@ -45,13 +44,12 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
         var actualPrefixUnaryConstructPrecedences =
             result.GetPrefixUnaryConstructPrecedences().Select( x => (x.Key.ToString(), x.Value) );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            actualConstructs.Should().BeSequentiallyEqualTo( expectedConstructs );
-            actualBinaryOperatorPrecedences.Should().BeEquivalentTo( expectedBinaryOperatorPrecedences );
-            actualPrefixUnaryConstructPrecedences.Should().BeEquivalentTo( expectedPrefixUnaryConstructPrecedences );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                actualConstructs.TestSequence( expectedConstructs ),
+                actualBinaryOperatorPrecedences.TestSetEqual( expectedBinaryOperatorPrecedences ),
+                actualPrefixUnaryConstructPrecedences.TestSetEqual( expectedPrefixUnaryConstructPrecedences ) )
+            .Go();
     }
 
     [Fact]
@@ -81,13 +79,12 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
         var actualPrefixUnaryConstructPrecedences =
             result.GetPrefixUnaryConstructPrecedences().Select( x => (x.Key.ToString(), x.Value) );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            actualConstructs.Should().BeSequentiallyEqualTo( expectedConstructs );
-            actualBinaryOperatorPrecedences.Should().BeEquivalentTo( expectedBinaryOperatorPrecedences );
-            actualPrefixUnaryConstructPrecedences.Should().BeEquivalentTo( expectedPrefixUnaryConstructPrecedences );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                actualConstructs.TestSequence( expectedConstructs ),
+                actualBinaryOperatorPrecedences.TestSetEqual( expectedBinaryOperatorPrecedences ),
+                actualPrefixUnaryConstructPrecedences.TestSetEqual( expectedPrefixUnaryConstructPrecedences ) )
+            .Go();
     }
 
     [Fact]
@@ -118,12 +115,11 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
 
         var actualBinaryOperatorPrecedences = result.GetBinaryOperatorPrecedences().Select( x => (x.Key.ToString(), x.Value) );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            actualConstructs.Should().BeSequentiallyEqualTo( expectedConstructs );
-            actualBinaryOperatorPrecedences.Should().BeEquivalentTo( expectedBinaryOperatorPrecedences );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                actualConstructs.TestSequence( expectedConstructs ),
+                actualBinaryOperatorPrecedences.TestSetEqual( expectedBinaryOperatorPrecedences ) )
+            .Go();
     }
 
     [Fact]
@@ -146,12 +142,11 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
 
         var actualBinaryOperatorPrecedences = result.GetBinaryOperatorPrecedences().Select( x => (x.Key.ToString(), x.Value) );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            actualConstructs.Should().BeSequentiallyEqualTo( expectedConstructs );
-            actualBinaryOperatorPrecedences.Should().BeEquivalentTo( expectedBinaryOperatorPrecedences );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                actualConstructs.TestSequence( expectedConstructs ),
+                actualBinaryOperatorPrecedences.TestSetEqual( expectedBinaryOperatorPrecedences ) )
+            .Go();
     }
 
     [Fact]
@@ -184,13 +179,12 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
         var actualPrefixUnaryConstructPrecedences =
             result.GetPrefixUnaryConstructPrecedences().Select( x => (x.Key.ToString(), x.Value) );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            actualConstructs.Should().BeSequentiallyEqualTo( expectedConstructs );
-            actualBinaryOperatorPrecedences.Should().BeEquivalentTo( expectedBinaryOperatorPrecedences );
-            actualPrefixUnaryConstructPrecedences.Should().BeEquivalentTo( expectedPrefixUnaryConstructPrecedences );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                actualConstructs.TestSequence( expectedConstructs ),
+                actualBinaryOperatorPrecedences.TestSetEqual( expectedBinaryOperatorPrecedences ),
+                actualPrefixUnaryConstructPrecedences.TestSetEqual( expectedPrefixUnaryConstructPrecedences ) )
+            .Go();
     }
 
     [Fact]
@@ -220,13 +214,12 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
         var actualPostfixUnaryConstructPrecedences =
             result.GetPostfixUnaryConstructPrecedences().Select( x => (x.Key.ToString(), x.Value) );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            actualConstructs.Should().BeSequentiallyEqualTo( expectedConstructs );
-            actualPrefixUnaryConstructPrecedences.Should().BeEquivalentTo( expectedPrefixUnaryConstructPrecedences );
-            actualPostfixUnaryConstructPrecedences.Should().BeEquivalentTo( expectedPostfixUnaryConstructPrecedences );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                actualConstructs.TestSequence( expectedConstructs ),
+                actualPrefixUnaryConstructPrecedences.TestSetEqual( expectedPrefixUnaryConstructPrecedences ),
+                actualPostfixUnaryConstructPrecedences.TestSetEqual( expectedPostfixUnaryConstructPrecedences ) )
+            .Go();
     }
 
     [Fact]
@@ -261,13 +254,12 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
         var actualPostfixUnaryConstructPrecedences =
             result.GetPostfixUnaryConstructPrecedences().Select( x => (x.Key.ToString(), x.Value) );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            actualConstructs.Should().BeSequentiallyEqualTo( expectedConstructs );
-            actualPrefixUnaryConstructPrecedences.Should().BeEquivalentTo( expectedPrefixUnaryConstructPrecedences );
-            actualPostfixUnaryConstructPrecedences.Should().BeEquivalentTo( expectedPostfixUnaryConstructPrecedences );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                actualConstructs.TestSequence( expectedConstructs ),
+                actualPrefixUnaryConstructPrecedences.TestSetEqual( expectedPrefixUnaryConstructPrecedences ),
+                actualPostfixUnaryConstructPrecedences.TestSetEqual( expectedPostfixUnaryConstructPrecedences ) )
+            .Go();
     }
 
     [Fact]
@@ -282,11 +274,10 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
         var result = sut.AddBooleanTypeDefinition( symbols );
         var actualConstructs = result.GetConstructs().Select( x => (x.Symbol.ToString(), x.Type, x.Construct) );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            actualConstructs.Should().BeSequentiallyEqualTo( ("b", ParsedExpressionConstructType.TypeDeclaration, typeof( bool )) );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                actualConstructs.TestSequence( [ ("b", ParsedExpressionConstructType.TypeDeclaration, typeof( bool )) ] ) )
+            .Go();
     }
 
     [Fact]
@@ -316,13 +307,12 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
         var actualPrefixUnaryConstructPrecedences =
             result.GetPrefixUnaryConstructPrecedences().Select( x => (x.Key.ToString(), x.Value) );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            actualConstructs.Should().BeSequentiallyEqualTo( expectedConstructs );
-            actualBinaryOperatorPrecedences.Should().BeEquivalentTo( expectedBinaryOperatorPrecedences );
-            actualPrefixUnaryConstructPrecedences.Should().BeEquivalentTo( expectedPrefixUnaryConstructPrecedences );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                actualConstructs.TestSequence( expectedConstructs ),
+                actualBinaryOperatorPrecedences.TestSetEqual( expectedBinaryOperatorPrecedences ),
+                actualPrefixUnaryConstructPrecedences.TestSetEqual( expectedPrefixUnaryConstructPrecedences ) )
+            .Go();
     }
 
     [Fact]
@@ -352,12 +342,11 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
 
         var actualBinaryOperatorPrecedences = result.GetBinaryOperatorPrecedences().Select( x => (x.Key.ToString(), x.Value) );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            actualConstructs.Should().BeSequentiallyEqualTo( expectedConstructs );
-            actualBinaryOperatorPrecedences.Should().BeEquivalentTo( expectedBinaryOperatorPrecedences );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                actualConstructs.TestSequence( expectedConstructs ),
+                actualBinaryOperatorPrecedences.TestSetEqual( expectedBinaryOperatorPrecedences ) )
+            .Go();
     }
 
     [Fact]
@@ -389,13 +378,12 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
         var actualPostfixUnaryConstructPrecedences =
             result.GetPostfixUnaryConstructPrecedences().Select( x => (x.Key.ToString(), x.Value) );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            actualConstructs.Should().BeSequentiallyEqualTo( expectedConstructs );
-            actualPrefixUnaryConstructPrecedences.Should().BeEquivalentTo( expectedPrefixUnaryConstructPrecedences );
-            expectedPostfixUnaryConstructPrecedences.Should().BeEquivalentTo( actualPostfixUnaryConstructPrecedences );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                actualConstructs.TestSequence( expectedConstructs ),
+                actualPrefixUnaryConstructPrecedences.TestSetEqual( expectedPrefixUnaryConstructPrecedences ),
+                expectedPostfixUnaryConstructPrecedences.TestSetEqual( actualPostfixUnaryConstructPrecedences ) )
+            .Go();
     }
 
     [Fact]
@@ -427,13 +415,12 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
         var actualPostfixUnaryConstructPrecedences =
             result.GetPostfixUnaryConstructPrecedences().Select( x => (x.Key.ToString(), x.Value) );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            actualConstructs.Should().BeSequentiallyEqualTo( expectedConstructs );
-            actualPrefixUnaryConstructPrecedences.Should().BeEquivalentTo( expectedPrefixUnaryConstructPrecedences );
-            expectedPostfixUnaryConstructPrecedences.Should().BeEquivalentTo( actualPostfixUnaryConstructPrecedences );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                actualConstructs.TestSequence( expectedConstructs ),
+                actualPrefixUnaryConstructPrecedences.TestSetEqual( expectedPrefixUnaryConstructPrecedences ),
+                expectedPostfixUnaryConstructPrecedences.TestSetEqual( actualPostfixUnaryConstructPrecedences ) )
+            .Go();
     }
 
     [Fact]
@@ -448,11 +435,10 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
         var result = sut.AddDecimalTypeDefinition( symbols );
         var actualConstructs = result.GetConstructs().Select( x => (x.Symbol.ToString(), x.Type, x.Construct) );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            actualConstructs.Should().BeSequentiallyEqualTo( ("d", ParsedExpressionConstructType.TypeDeclaration, typeof( decimal )) );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                actualConstructs.TestSequence( [ ("d", ParsedExpressionConstructType.TypeDeclaration, typeof( decimal )) ] ) )
+            .Go();
     }
 
     [Fact]
@@ -482,13 +468,12 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
         var actualPrefixUnaryConstructPrecedences =
             result.GetPrefixUnaryConstructPrecedences().Select( x => (x.Key.ToString(), x.Value) );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            actualConstructs.Should().BeSequentiallyEqualTo( expectedConstructs );
-            actualBinaryOperatorPrecedences.Should().BeEquivalentTo( expectedBinaryOperatorPrecedences );
-            actualPrefixUnaryConstructPrecedences.Should().BeEquivalentTo( expectedPrefixUnaryConstructPrecedences );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                actualConstructs.TestSequence( expectedConstructs ),
+                actualBinaryOperatorPrecedences.TestSetEqual( expectedBinaryOperatorPrecedences ),
+                actualPrefixUnaryConstructPrecedences.TestSetEqual( expectedPrefixUnaryConstructPrecedences ) )
+            .Go();
     }
 
     [Fact]
@@ -518,12 +503,11 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
 
         var actualBinaryOperatorPrecedences = result.GetBinaryOperatorPrecedences().Select( x => (x.Key.ToString(), x.Value) );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            actualConstructs.Should().BeSequentiallyEqualTo( expectedConstructs );
-            actualBinaryOperatorPrecedences.Should().BeEquivalentTo( expectedBinaryOperatorPrecedences );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                actualConstructs.TestSequence( expectedConstructs ),
+                actualBinaryOperatorPrecedences.TestSetEqual( expectedBinaryOperatorPrecedences ) )
+            .Go();
     }
 
     [Fact]
@@ -553,13 +537,12 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
         var actualPostfixUnaryConstructPrecedences =
             result.GetPostfixUnaryConstructPrecedences().Select( x => (x.Key.ToString(), x.Value) );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            actualConstructs.Should().BeSequentiallyEqualTo( expectedConstructs );
-            actualPrefixUnaryConstructPrecedences.Should().BeEquivalentTo( expectedPrefixUnaryConstructPrecedences );
-            actualPostfixUnaryConstructPrecedences.Should().BeEquivalentTo( expectedPostfixUnaryConstructPrecedences );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                actualConstructs.TestSequence( expectedConstructs ),
+                actualPrefixUnaryConstructPrecedences.TestSetEqual( expectedPrefixUnaryConstructPrecedences ),
+                actualPostfixUnaryConstructPrecedences.TestSetEqual( expectedPostfixUnaryConstructPrecedences ) )
+            .Go();
     }
 
     [Fact]
@@ -594,13 +577,12 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
         var actualPostfixUnaryConstructPrecedences =
             result.GetPostfixUnaryConstructPrecedences().Select( x => (x.Key.ToString(), x.Value) );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            actualConstructs.Should().BeSequentiallyEqualTo( expectedConstructs );
-            actualPrefixUnaryConstructPrecedences.Should().BeEquivalentTo( expectedPrefixUnaryConstructPrecedences );
-            actualPostfixUnaryConstructPrecedences.Should().BeEquivalentTo( expectedPostfixUnaryConstructPrecedences );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                actualConstructs.TestSequence( expectedConstructs ),
+                actualPrefixUnaryConstructPrecedences.TestSetEqual( expectedPrefixUnaryConstructPrecedences ),
+                actualPostfixUnaryConstructPrecedences.TestSetEqual( expectedPostfixUnaryConstructPrecedences ) )
+            .Go();
     }
 
     [Fact]
@@ -615,11 +597,10 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
         var result = sut.AddDoubleTypeDefinition( symbols );
         var actualConstructs = result.GetConstructs().Select( x => (x.Symbol.ToString(), x.Type, x.Construct) );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            actualConstructs.Should().BeSequentiallyEqualTo( ("d", ParsedExpressionConstructType.TypeDeclaration, typeof( double )) );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                actualConstructs.TestSequence( [ ("d", ParsedExpressionConstructType.TypeDeclaration, typeof( double )) ] ) )
+            .Go();
     }
 
     [Fact]
@@ -649,13 +630,12 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
         var actualPrefixUnaryConstructPrecedences =
             result.GetPrefixUnaryConstructPrecedences().Select( x => (x.Key.ToString(), x.Value) );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            actualConstructs.Should().BeSequentiallyEqualTo( expectedConstructs );
-            actualBinaryOperatorPrecedences.Should().BeEquivalentTo( expectedBinaryOperatorPrecedences );
-            actualPrefixUnaryConstructPrecedences.Should().BeEquivalentTo( expectedPrefixUnaryConstructPrecedences );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                actualConstructs.TestSequence( expectedConstructs ),
+                actualBinaryOperatorPrecedences.TestSetEqual( expectedBinaryOperatorPrecedences ),
+                actualPrefixUnaryConstructPrecedences.TestSetEqual( expectedPrefixUnaryConstructPrecedences ) )
+            .Go();
     }
 
     [Fact]
@@ -685,12 +665,11 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
 
         var actualBinaryOperatorPrecedences = result.GetBinaryOperatorPrecedences().Select( x => (x.Key.ToString(), x.Value) );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            actualConstructs.Should().BeSequentiallyEqualTo( expectedConstructs );
-            actualBinaryOperatorPrecedences.Should().BeEquivalentTo( expectedBinaryOperatorPrecedences );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                actualConstructs.TestSequence( expectedConstructs ),
+                actualBinaryOperatorPrecedences.TestSetEqual( expectedBinaryOperatorPrecedences ) )
+            .Go();
     }
 
     [Fact]
@@ -722,13 +701,12 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
         var actualPostfixUnaryConstructPrecedences =
             result.GetPostfixUnaryConstructPrecedences().Select( x => (x.Key.ToString(), x.Value) );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            actualConstructs.Should().BeSequentiallyEqualTo( expectedConstructs );
-            actualPrefixUnaryConstructPrecedences.Should().BeEquivalentTo( expectedPrefixUnaryConstructPrecedences );
-            expectedPostfixUnaryConstructPrecedences.Should().BeEquivalentTo( actualPostfixUnaryConstructPrecedences );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                actualConstructs.TestSequence( expectedConstructs ),
+                actualPrefixUnaryConstructPrecedences.TestSetEqual( expectedPrefixUnaryConstructPrecedences ),
+                expectedPostfixUnaryConstructPrecedences.TestSetEqual( actualPostfixUnaryConstructPrecedences ) )
+            .Go();
     }
 
     [Fact]
@@ -760,13 +738,12 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
         var actualPostfixUnaryConstructPrecedences =
             result.GetPostfixUnaryConstructPrecedences().Select( x => (x.Key.ToString(), x.Value) );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            actualConstructs.Should().BeSequentiallyEqualTo( expectedConstructs );
-            actualPrefixUnaryConstructPrecedences.Should().BeEquivalentTo( expectedPrefixUnaryConstructPrecedences );
-            expectedPostfixUnaryConstructPrecedences.Should().BeEquivalentTo( actualPostfixUnaryConstructPrecedences );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                actualConstructs.TestSequence( expectedConstructs ),
+                actualPrefixUnaryConstructPrecedences.TestSetEqual( expectedPrefixUnaryConstructPrecedences ),
+                expectedPostfixUnaryConstructPrecedences.TestSetEqual( actualPostfixUnaryConstructPrecedences ) )
+            .Go();
     }
 
     [Fact]
@@ -781,11 +758,10 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
         var result = sut.AddFloatTypeDefinition( symbols );
         var actualConstructs = result.GetConstructs().Select( x => (x.Symbol.ToString(), x.Type, x.Construct) );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            actualConstructs.Should().BeSequentiallyEqualTo( ("f", ParsedExpressionConstructType.TypeDeclaration, typeof( float )) );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                actualConstructs.TestSequence( [ ("f", ParsedExpressionConstructType.TypeDeclaration, typeof( float )) ] ) )
+            .Go();
     }
 
     [Fact]
@@ -815,13 +791,12 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
         var actualPrefixUnaryConstructPrecedences =
             result.GetPrefixUnaryConstructPrecedences().Select( x => (x.Key.ToString(), x.Value) );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            actualConstructs.Should().BeSequentiallyEqualTo( expectedConstructs );
-            actualBinaryOperatorPrecedences.Should().BeEquivalentTo( expectedBinaryOperatorPrecedences );
-            actualPrefixUnaryConstructPrecedences.Should().BeEquivalentTo( expectedPrefixUnaryConstructPrecedences );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                actualConstructs.TestSequence( expectedConstructs ),
+                actualBinaryOperatorPrecedences.TestSetEqual( expectedBinaryOperatorPrecedences ),
+                actualPrefixUnaryConstructPrecedences.TestSetEqual( expectedPrefixUnaryConstructPrecedences ) )
+            .Go();
     }
 
     [Fact]
@@ -851,13 +826,12 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
         var actualPrefixUnaryConstructPrecedences =
             result.GetPrefixUnaryConstructPrecedences().Select( x => (x.Key.ToString(), x.Value) );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            actualConstructs.Should().BeSequentiallyEqualTo( expectedConstructs );
-            actualBinaryOperatorPrecedences.Should().BeEquivalentTo( expectedBinaryOperatorPrecedences );
-            actualPrefixUnaryConstructPrecedences.Should().BeEquivalentTo( expectedPrefixUnaryConstructPrecedences );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                actualConstructs.TestSequence( expectedConstructs ),
+                actualBinaryOperatorPrecedences.TestSetEqual( expectedBinaryOperatorPrecedences ),
+                actualPrefixUnaryConstructPrecedences.TestSetEqual( expectedPrefixUnaryConstructPrecedences ) )
+            .Go();
     }
 
     [Fact]
@@ -887,12 +861,11 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
 
         var actualBinaryOperatorPrecedences = result.GetBinaryOperatorPrecedences().Select( x => (x.Key.ToString(), x.Value) );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            actualConstructs.Should().BeSequentiallyEqualTo( expectedConstructs );
-            actualBinaryOperatorPrecedences.Should().BeEquivalentTo( expectedBinaryOperatorPrecedences );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                actualConstructs.TestSequence( expectedConstructs ),
+                actualBinaryOperatorPrecedences.TestSetEqual( expectedBinaryOperatorPrecedences ) )
+            .Go();
     }
 
     [Fact]
@@ -924,13 +897,12 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
         var actualPostfixUnaryConstructPrecedences =
             result.GetPostfixUnaryConstructPrecedences().Select( x => (x.Key.ToString(), x.Value) );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            actualConstructs.Should().BeSequentiallyEqualTo( expectedConstructs );
-            actualPrefixUnaryConstructPrecedences.Should().BeEquivalentTo( expectedPrefixUnaryConstructPrecedences );
-            actualPostfixUnaryConstructPrecedences.Should().BeEquivalentTo( expectedPostfixUnaryConstructPrecedences );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                actualConstructs.TestSequence( expectedConstructs ),
+                actualPrefixUnaryConstructPrecedences.TestSetEqual( expectedPrefixUnaryConstructPrecedences ),
+                actualPostfixUnaryConstructPrecedences.TestSetEqual( expectedPostfixUnaryConstructPrecedences ) )
+            .Go();
     }
 
     [Fact]
@@ -962,13 +934,12 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
         var actualPostfixUnaryConstructPrecedences =
             result.GetPostfixUnaryConstructPrecedences().Select( x => (x.Key.ToString(), x.Value) );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            actualConstructs.Should().BeSequentiallyEqualTo( expectedConstructs );
-            actualPrefixUnaryConstructPrecedences.Should().BeEquivalentTo( expectedPrefixUnaryConstructPrecedences );
-            actualPostfixUnaryConstructPrecedences.Should().BeEquivalentTo( expectedPostfixUnaryConstructPrecedences );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                actualConstructs.TestSequence( expectedConstructs ),
+                actualPrefixUnaryConstructPrecedences.TestSetEqual( expectedPrefixUnaryConstructPrecedences ),
+                actualPostfixUnaryConstructPrecedences.TestSetEqual( expectedPostfixUnaryConstructPrecedences ) )
+            .Go();
     }
 
     [Fact]
@@ -983,11 +954,10 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
         var result = sut.AddInt32TypeDefinition( symbols );
         var actualConstructs = result.GetConstructs().Select( x => (x.Symbol.ToString(), x.Type, x.Construct) );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            actualConstructs.Should().BeSequentiallyEqualTo( ("i", ParsedExpressionConstructType.TypeDeclaration, typeof( int )) );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                actualConstructs.TestSequence( [ ("i", ParsedExpressionConstructType.TypeDeclaration, typeof( int )) ] ) )
+            .Go();
     }
 
     [Fact]
@@ -1017,13 +987,12 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
         var actualPrefixUnaryConstructPrecedences =
             result.GetPrefixUnaryConstructPrecedences().Select( x => (x.Key.ToString(), x.Value) );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            actualConstructs.Should().BeSequentiallyEqualTo( expectedConstructs );
-            actualBinaryOperatorPrecedences.Should().BeEquivalentTo( expectedBinaryOperatorPrecedences );
-            actualPrefixUnaryConstructPrecedences.Should().BeEquivalentTo( expectedPrefixUnaryConstructPrecedences );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                actualConstructs.TestSequence( expectedConstructs ),
+                actualBinaryOperatorPrecedences.TestSetEqual( expectedBinaryOperatorPrecedences ),
+                actualPrefixUnaryConstructPrecedences.TestSetEqual( expectedPrefixUnaryConstructPrecedences ) )
+            .Go();
     }
 
     [Fact]
@@ -1053,13 +1022,12 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
         var actualPrefixUnaryConstructPrecedences =
             result.GetPrefixUnaryConstructPrecedences().Select( x => (x.Key.ToString(), x.Value) );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            actualConstructs.Should().BeSequentiallyEqualTo( expectedConstructs );
-            actualBinaryOperatorPrecedences.Should().BeEquivalentTo( expectedBinaryOperatorPrecedences );
-            actualPrefixUnaryConstructPrecedences.Should().BeEquivalentTo( expectedPrefixUnaryConstructPrecedences );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                actualConstructs.TestSequence( expectedConstructs ),
+                actualBinaryOperatorPrecedences.TestSetEqual( expectedBinaryOperatorPrecedences ),
+                actualPrefixUnaryConstructPrecedences.TestSetEqual( expectedPrefixUnaryConstructPrecedences ) )
+            .Go();
     }
 
     [Fact]
@@ -1089,12 +1057,11 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
 
         var actualBinaryOperatorPrecedences = result.GetBinaryOperatorPrecedences().Select( x => (x.Key.ToString(), x.Value) );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            actualConstructs.Should().BeSequentiallyEqualTo( expectedConstructs );
-            actualBinaryOperatorPrecedences.Should().BeEquivalentTo( expectedBinaryOperatorPrecedences );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                actualConstructs.TestSequence( expectedConstructs ),
+                actualBinaryOperatorPrecedences.TestSetEqual( expectedBinaryOperatorPrecedences ) )
+            .Go();
     }
 
     [Fact]
@@ -1126,13 +1093,12 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
         var actualPostfixUnaryConstructPrecedences =
             result.GetPostfixUnaryConstructPrecedences().Select( x => (x.Key.ToString(), x.Value) );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            actualConstructs.Should().BeSequentiallyEqualTo( expectedConstructs );
-            actualPrefixUnaryConstructPrecedences.Should().BeEquivalentTo( expectedPrefixUnaryConstructPrecedences );
-            actualPostfixUnaryConstructPrecedences.Should().BeEquivalentTo( expectedPostfixUnaryConstructPrecedences );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                actualConstructs.TestSequence( expectedConstructs ),
+                actualPrefixUnaryConstructPrecedences.TestSetEqual( expectedPrefixUnaryConstructPrecedences ),
+                actualPostfixUnaryConstructPrecedences.TestSetEqual( expectedPostfixUnaryConstructPrecedences ) )
+            .Go();
     }
 
     [Fact]
@@ -1164,13 +1130,12 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
         var actualPostfixUnaryConstructPrecedences =
             result.GetPostfixUnaryConstructPrecedences().Select( x => (x.Key.ToString(), x.Value) );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            actualConstructs.Should().BeSequentiallyEqualTo( expectedConstructs );
-            actualPrefixUnaryConstructPrecedences.Should().BeEquivalentTo( expectedPrefixUnaryConstructPrecedences );
-            actualPostfixUnaryConstructPrecedences.Should().BeEquivalentTo( expectedPostfixUnaryConstructPrecedences );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                actualConstructs.TestSequence( expectedConstructs ),
+                actualPrefixUnaryConstructPrecedences.TestSetEqual( expectedPrefixUnaryConstructPrecedences ),
+                actualPostfixUnaryConstructPrecedences.TestSetEqual( expectedPostfixUnaryConstructPrecedences ) )
+            .Go();
     }
 
     [Fact]
@@ -1185,11 +1150,10 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
         var result = sut.AddInt64TypeDefinition( symbols );
         var actualConstructs = result.GetConstructs().Select( x => (x.Symbol.ToString(), x.Type, x.Construct) );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            actualConstructs.Should().BeSequentiallyEqualTo( ("i", ParsedExpressionConstructType.TypeDeclaration, typeof( long )) );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                actualConstructs.TestSequence( [ ("i", ParsedExpressionConstructType.TypeDeclaration, typeof( long )) ] ) )
+            .Go();
     }
 
     [Fact]
@@ -1219,13 +1183,12 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
         var actualPrefixUnaryConstructPrecedences =
             result.GetPrefixUnaryConstructPrecedences().Select( x => (x.Key.ToString(), x.Value) );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            actualConstructs.Should().BeSequentiallyEqualTo( expectedConstructs );
-            actualBinaryOperatorPrecedences.Should().BeEquivalentTo( expectedBinaryOperatorPrecedences );
-            actualPrefixUnaryConstructPrecedences.Should().BeEquivalentTo( expectedPrefixUnaryConstructPrecedences );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                actualConstructs.TestSequence( expectedConstructs ),
+                actualBinaryOperatorPrecedences.TestSetEqual( expectedBinaryOperatorPrecedences ),
+                actualPrefixUnaryConstructPrecedences.TestSetEqual( expectedPrefixUnaryConstructPrecedences ) )
+            .Go();
     }
 
     [Fact]
@@ -1255,13 +1218,12 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
         var actualPrefixUnaryConstructPrecedences =
             result.GetPrefixUnaryConstructPrecedences().Select( x => (x.Key.ToString(), x.Value) );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            actualConstructs.Should().BeSequentiallyEqualTo( expectedConstructs );
-            actualBinaryOperatorPrecedences.Should().BeEquivalentTo( expectedBinaryOperatorPrecedences );
-            actualPrefixUnaryConstructPrecedences.Should().BeEquivalentTo( expectedPrefixUnaryConstructPrecedences );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                actualConstructs.TestSequence( expectedConstructs ),
+                actualBinaryOperatorPrecedences.TestSetEqual( expectedBinaryOperatorPrecedences ),
+                actualPrefixUnaryConstructPrecedences.TestSetEqual( expectedPrefixUnaryConstructPrecedences ) )
+            .Go();
     }
 
     [Fact]
@@ -1291,12 +1253,11 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
 
         var actualBinaryOperatorPrecedences = result.GetBinaryOperatorPrecedences().Select( x => (x.Key.ToString(), x.Value) );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            actualConstructs.Should().BeSequentiallyEqualTo( expectedConstructs );
-            actualBinaryOperatorPrecedences.Should().BeEquivalentTo( expectedBinaryOperatorPrecedences );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                actualConstructs.TestSequence( expectedConstructs ),
+                actualBinaryOperatorPrecedences.TestSetEqual( expectedBinaryOperatorPrecedences ) )
+            .Go();
     }
 
     [Fact]
@@ -1326,13 +1287,12 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
         var actualPostfixUnaryConstructPrecedences =
             result.GetPostfixUnaryConstructPrecedences().Select( x => (x.Key.ToString(), x.Value) );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            actualConstructs.Should().BeSequentiallyEqualTo( expectedConstructs );
-            actualPrefixUnaryConstructPrecedences.Should().BeEquivalentTo( expectedPrefixUnaryConstructPrecedences );
-            actualPostfixUnaryConstructPrecedences.Should().BeEquivalentTo( expectedPostfixUnaryConstructPrecedences );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                actualConstructs.TestSequence( expectedConstructs ),
+                actualPrefixUnaryConstructPrecedences.TestSetEqual( expectedPrefixUnaryConstructPrecedences ),
+                actualPostfixUnaryConstructPrecedences.TestSetEqual( expectedPostfixUnaryConstructPrecedences ) )
+            .Go();
     }
 
     [Fact]
@@ -1367,13 +1327,12 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
         var actualPostfixUnaryConstructPrecedences =
             result.GetPostfixUnaryConstructPrecedences().Select( x => (x.Key.ToString(), x.Value) );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            actualConstructs.Should().BeSequentiallyEqualTo( expectedConstructs );
-            actualPrefixUnaryConstructPrecedences.Should().BeEquivalentTo( expectedPrefixUnaryConstructPrecedences );
-            actualPostfixUnaryConstructPrecedences.Should().BeEquivalentTo( expectedPostfixUnaryConstructPrecedences );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                actualConstructs.TestSequence( expectedConstructs ),
+                actualPrefixUnaryConstructPrecedences.TestSetEqual( expectedPrefixUnaryConstructPrecedences ),
+                actualPostfixUnaryConstructPrecedences.TestSetEqual( expectedPostfixUnaryConstructPrecedences ) )
+            .Go();
     }
 
     [Fact]
@@ -1388,11 +1347,10 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
         var result = sut.AddBigIntTypeDefinition( symbols );
         var actualConstructs = result.GetConstructs().Select( x => (x.Symbol.ToString(), x.Type, x.Construct) );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            actualConstructs.Should().BeSequentiallyEqualTo( ("b", ParsedExpressionConstructType.TypeDeclaration, typeof( BigInteger )) );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                actualConstructs.TestSequence( [ ("b", ParsedExpressionConstructType.TypeDeclaration, typeof( BigInteger )) ] ) )
+            .Go();
     }
 
     [Fact]
@@ -1413,12 +1371,11 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
 
         var actualBinaryOperatorPrecedences = result.GetBinaryOperatorPrecedences().Select( x => (x.Key.ToString(), x.Value) );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            actualConstructs.Should().BeSequentiallyEqualTo( expectedConstructs );
-            actualBinaryOperatorPrecedences.Should().BeEquivalentTo( expectedBinaryOperatorPrecedences );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                actualConstructs.TestSequence( expectedConstructs ),
+                actualBinaryOperatorPrecedences.TestSetEqual( expectedBinaryOperatorPrecedences ) )
+            .Go();
     }
 
     [Fact]
@@ -1441,12 +1398,11 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
 
         var actualBinaryOperatorPrecedences = result.GetBinaryOperatorPrecedences().Select( x => (x.Key.ToString(), x.Value) );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            actualConstructs.Should().BeSequentiallyEqualTo( expectedConstructs );
-            actualBinaryOperatorPrecedences.Should().BeEquivalentTo( expectedBinaryOperatorPrecedences );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                actualConstructs.TestSequence( expectedConstructs ),
+                actualBinaryOperatorPrecedences.TestSetEqual( expectedBinaryOperatorPrecedences ) )
+            .Go();
     }
 
     [Fact]
@@ -1476,13 +1432,12 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
         var actualPostfixUnaryConstructPrecedences =
             result.GetPostfixUnaryConstructPrecedences().Select( x => (x.Key.ToString(), x.Value) );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            actualConstructs.Should().BeSequentiallyEqualTo( expectedConstructs );
-            actualPrefixUnaryConstructPrecedences.Should().BeEquivalentTo( expectedPrefixUnaryConstructPrecedences );
-            actualPostfixUnaryConstructPrecedences.Should().BeEquivalentTo( expectedPostfixUnaryConstructPrecedences );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                actualConstructs.TestSequence( expectedConstructs ),
+                actualPrefixUnaryConstructPrecedences.TestSetEqual( expectedPrefixUnaryConstructPrecedences ),
+                actualPostfixUnaryConstructPrecedences.TestSetEqual( expectedPostfixUnaryConstructPrecedences ) )
+            .Go();
     }
 
     [Fact]
@@ -1517,13 +1472,12 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
         var actualPostfixUnaryConstructPrecedences =
             result.GetPostfixUnaryConstructPrecedences().Select( x => (x.Key.ToString(), x.Value) );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            actualConstructs.Should().BeSequentiallyEqualTo( expectedConstructs );
-            actualPrefixUnaryConstructPrecedences.Should().BeEquivalentTo( expectedPrefixUnaryConstructPrecedences );
-            actualPostfixUnaryConstructPrecedences.Should().BeEquivalentTo( expectedPostfixUnaryConstructPrecedences );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                actualConstructs.TestSequence( expectedConstructs ),
+                actualPrefixUnaryConstructPrecedences.TestSetEqual( expectedPrefixUnaryConstructPrecedences ),
+                actualPostfixUnaryConstructPrecedences.TestSetEqual( expectedPostfixUnaryConstructPrecedences ) )
+            .Go();
     }
 
     [Fact]
@@ -1538,11 +1492,10 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
         var result = sut.AddStringTypeDefinition( symbols );
         var actualConstructs = result.GetConstructs().Select( x => (x.Symbol.ToString(), x.Type, x.Construct) );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            actualConstructs.Should().BeSequentiallyEqualTo( ("s", ParsedExpressionConstructType.TypeDeclaration, typeof( string )) );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                actualConstructs.TestSequence( [ ("s", ParsedExpressionConstructType.TypeDeclaration, typeof( string )) ] ) )
+            .Go();
     }
 
     [Fact]
@@ -1563,11 +1516,10 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
         var actualConstructs = result.GetConstructs()
             .Select( i => (i.Symbol.ToString(), i.Type, i.Construct as Type ?? i.Construct.GetType()) );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            actualConstructs.Should().BeSequentiallyEqualTo( expectedConstructs );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                actualConstructs.TestSequence( expectedConstructs ) )
+            .Go();
     }
 
     [Fact]
@@ -1604,11 +1556,10 @@ public class ParsedExpressionFactoryBuilderExtensionsTests : TestsBase
         var actualPostfixUnaryConstructPrecedences =
             result.GetPostfixUnaryConstructPrecedences().Select( x => (x.Key.ToString(), x.Value) );
 
-        using ( new AssertionScope() )
-        {
-            result.Should().BeSameAs( sut );
-            actualPrefixUnaryConstructPrecedences.Should().BeEquivalentTo( expectedPrefixUnaryConstructPrecedences );
-            actualPostfixUnaryConstructPrecedences.Should().BeEquivalentTo( expectedPostfixUnaryConstructPrecedences );
-        }
+        Assertion.All(
+                result.TestRefEquals( sut ),
+                actualPrefixUnaryConstructPrecedences.TestSetEqual( expectedPrefixUnaryConstructPrecedences ),
+                actualPostfixUnaryConstructPrecedences.TestSetEqual( expectedPostfixUnaryConstructPrecedences ) )
+            .Go();
     }
 }

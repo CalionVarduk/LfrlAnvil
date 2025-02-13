@@ -1,5 +1,4 @@
-﻿using System.Linq;
-using System.Linq.Expressions;
+﻿using System.Linq.Expressions;
 using LfrlAnvil.Computable.Expressions.Constructs;
 using LfrlAnvil.Computable.Expressions.Exceptions;
 
@@ -765,16 +764,15 @@ public class GenericBinaryOperatorTests : BinaryOperatorsTestsBase
         Process_ShouldPopTwoOperandsAndPushOneExpression_WhenBothOperandsAreVariable<string, string, int>(
             sut: new ParsedExpressionCompareOperator(),
             expectedNodeType: ExpressionType.Call,
-            (left, right, result) =>
-            {
-                result.Should().BeAssignableTo<MethodCallExpression>();
-                if ( result is not MethodCallExpression methodCallResult )
-                    return;
-
-                methodCallResult.Object.Should().BeSameAs( left );
-                methodCallResult.Arguments.Should().HaveCount( 1 ).And.Subject.First().Should().BeSameAs( right );
-                methodCallResult.Method.Name.Should().Be( nameof( IComparable.CompareTo ) );
-            } );
+            (left, right, result) => Assertion.All(
+                result.TestType().AssignableTo<MethodCallExpression>(),
+                result.TestIf()
+                    .OfType<MethodCallExpression>(
+                        methodCallResult => Assertion.All(
+                            "methodCallResult",
+                            methodCallResult.Object.TestRefEquals( left ),
+                            methodCallResult.Arguments.TestSequence( [ right ] ),
+                            methodCallResult.Method.Name.TestEquals( nameof( IComparable.CompareTo ) ) ) ) ) );
     }
 
     [Fact]
@@ -785,16 +783,15 @@ public class GenericBinaryOperatorTests : BinaryOperatorsTestsBase
             expectedNodeType: ExpressionType.Call,
             leftValue: Fixture.Create<string>(),
             rightValue: Fixture.Create<string>(),
-            (left, right, result) =>
-            {
-                result.Should().BeAssignableTo<MethodCallExpression>();
-                if ( result is not MethodCallExpression methodCallResult )
-                    return;
-
-                methodCallResult.Object.Should().BeSameAs( left );
-                methodCallResult.Arguments.Should().HaveCount( 1 ).And.Subject.First().Should().BeSameAs( right );
-                methodCallResult.Method.Name.Should().Be( nameof( IComparable.CompareTo ) );
-            } );
+            (left, right, result) => Assertion.All(
+                result.TestType().AssignableTo<MethodCallExpression>(),
+                result.TestIf()
+                    .OfType<MethodCallExpression>(
+                        methodCallResult => Assertion.All(
+                            "methodCallResult",
+                            methodCallResult.Object.TestRefEquals( left ),
+                            methodCallResult.Arguments.TestSequence( [ right ] ),
+                            methodCallResult.Method.Name.TestEquals( nameof( IComparable.CompareTo ) ) ) ) ) );
     }
 
     [Fact]
@@ -804,16 +801,15 @@ public class GenericBinaryOperatorTests : BinaryOperatorsTestsBase
             sut: new ParsedExpressionCompareOperator(),
             expectedNodeType: ExpressionType.Call,
             leftValue: Fixture.Create<string>(),
-            (left, right, result) =>
-            {
-                result.Should().BeAssignableTo<MethodCallExpression>();
-                if ( result is not MethodCallExpression methodCallResult )
-                    return;
-
-                methodCallResult.Object.Should().BeSameAs( left );
-                methodCallResult.Arguments.Should().HaveCount( 1 ).And.Subject.First().Should().BeSameAs( right );
-                methodCallResult.Method.Name.Should().Be( nameof( IComparable.CompareTo ) );
-            } );
+            (left, right, result) => Assertion.All(
+                result.TestType().AssignableTo<MethodCallExpression>(),
+                result.TestIf()
+                    .OfType<MethodCallExpression>(
+                        methodCallResult => Assertion.All(
+                            "methodCallResult",
+                            methodCallResult.Object.TestRefEquals( left ),
+                            methodCallResult.Arguments.TestSequence( [ right ] ),
+                            methodCallResult.Method.Name.TestEquals( nameof( IComparable.CompareTo ) ) ) ) ) );
     }
 
     [Fact]
@@ -823,16 +819,15 @@ public class GenericBinaryOperatorTests : BinaryOperatorsTestsBase
             sut: new ParsedExpressionCompareOperator(),
             expectedNodeType: ExpressionType.Call,
             rightValue: Fixture.Create<string>(),
-            (left, right, result) =>
-            {
-                result.Should().BeAssignableTo<MethodCallExpression>();
-                if ( result is not MethodCallExpression methodCallResult )
-                    return;
-
-                methodCallResult.Object.Should().BeSameAs( left );
-                methodCallResult.Arguments.Should().HaveCount( 1 ).And.Subject.First().Should().BeSameAs( right );
-                methodCallResult.Method.Name.Should().Be( nameof( IComparable.CompareTo ) );
-            } );
+            (left, right, result) => Assertion.All(
+                result.TestType().AssignableTo<MethodCallExpression>(),
+                result.TestIf()
+                    .OfType<MethodCallExpression>(
+                        methodCallResult => Assertion.All(
+                            "methodCallResult",
+                            methodCallResult.Object.TestRefEquals( left ),
+                            methodCallResult.Arguments.TestSequence( [ right ] ),
+                            methodCallResult.Method.Name.TestEquals( nameof( IComparable.CompareTo ) ) ) ) ) );
     }
 
     [Fact]
@@ -892,21 +887,24 @@ public class GenericBinaryOperatorTests : BinaryOperatorsTestsBase
 
         var result = sut.Process( left, right );
 
-        using ( new AssertionScope() )
-        {
-            result.NodeType.Should().Be( ExpressionType.Coalesce );
-            result.Type.Should().Be( typeof( string ) );
-            if ( result is not BinaryExpression binary )
-                return;
-
-            binary.Left.Should().BeSameAs( left );
-            binary.Right.NodeType.Should().Be( ExpressionType.Throw );
-            if ( binary.Right is not UnaryExpression @throw )
-                return;
-
-            @throw.Type.Should().Be( typeof( string ) );
-            @throw.Operand.Should().BeSameAs( exception );
-        }
+        Assertion.All(
+                result.NodeType.TestEquals( ExpressionType.Coalesce ),
+                result.Type.TestEquals( typeof( string ) ),
+                result.TestType().AssignableTo<BinaryExpression>(),
+                result.TestIf()
+                    .OfType<BinaryExpression>(
+                        binary => Assertion.All(
+                            "binary",
+                            binary.Left.TestRefEquals( left ),
+                            binary.Right.NodeType.TestEquals( ExpressionType.Throw ),
+                            binary.Right.TestType().AssignableTo<UnaryExpression>(),
+                            binary.Right.TestIf()
+                                .OfType<UnaryExpression>(
+                                    @throw => Assertion.All(
+                                        "@throw",
+                                        @throw.Type.TestEquals( typeof( string ) ),
+                                        @throw.Operand.TestRefEquals( exception ) ) ) ) ) )
+            .Go();
     }
 
     [Fact]

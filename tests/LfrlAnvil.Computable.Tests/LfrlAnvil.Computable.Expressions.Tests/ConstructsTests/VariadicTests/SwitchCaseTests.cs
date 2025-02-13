@@ -2,7 +2,6 @@
 using System.Linq.Expressions;
 using LfrlAnvil.Computable.Expressions.Constructs.Variadic;
 using LfrlAnvil.Functional;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Computable.Expressions.Tests.ConstructsTests.VariadicTests;
 
@@ -18,7 +17,7 @@ public class SwitchCaseTests : TestsBase
 
         var action = Lambda.Of( () => sut.Process( parameters ) );
 
-        action.Should().ThrowExactly<ArgumentException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentException>() ).Go();
     }
 
     [Fact]
@@ -30,18 +29,21 @@ public class SwitchCaseTests : TestsBase
 
         var result = sut.Process( parameters );
 
-        using ( new AssertionScope() )
-        {
-            result.NodeType.Should().Be( ExpressionType.Constant );
-            if ( result is not ConstantExpression constant )
-                return;
-
-            constant.Value.Should().BeOfType<SwitchCase>();
-            if ( constant.Value is not SwitchCase switchCase )
-                return;
-
-            switchCase.Body.Should().BeSameAs( parameters[^1] );
-            switchCase.TestValues.Should().BeSequentiallyEqualTo( parameters[0], parameters[1] );
-        }
+        Assertion.All(
+                result.NodeType.TestEquals( ExpressionType.Constant ),
+                result.TestType().AssignableTo<ConstantExpression>(),
+                result.TestIf()
+                    .OfType<ConstantExpression>(
+                        constant => Assertion.All(
+                            "constant",
+                            constant.Value.TestType().AssignableTo<SwitchCase>(),
+                            constant.Value.TestType().AssignableTo<SwitchCase>(),
+                            constant.Value.TestIf()
+                                .OfType<SwitchCase>(
+                                    switchCase => Assertion.All(
+                                        "switchCase",
+                                        switchCase.Body.TestRefEquals( parameters[^1] ),
+                                        switchCase.TestValues.TestSequence( [ parameters[0], parameters[1] ] ) ) ) ) ) )
+            .Go();
     }
 }

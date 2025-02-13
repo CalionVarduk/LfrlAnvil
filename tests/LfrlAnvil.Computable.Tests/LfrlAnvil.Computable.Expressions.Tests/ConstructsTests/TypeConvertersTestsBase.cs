@@ -1,7 +1,7 @@
-﻿using System.Linq.Expressions;
+﻿using System.Diagnostics.Contracts;
+using System.Linq.Expressions;
 using LfrlAnvil.Computable.Expressions.Constructs;
 using LfrlAnvil.Functional;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.Computable.Expressions.Tests.ConstructsTests;
 
@@ -9,37 +9,35 @@ public abstract class TypeConvertersTestsBase : ConstructsTestsBase
 {
     protected static void Process_ShouldPopOneOperandAndPushOneExpression_WhenOperandIsVariable<TTarget, TSourceArg, TResult>(
         ParsedExpressionTypeConverter<TTarget> sut,
-        Action<Expression, Expression> nodeAssertion,
+        Func<Expression, Expression, Assertion> nodeAssertion,
         ExpressionType expectedNodeType = ExpressionType.Convert)
     {
         var operand = CreateVariableOperand<TSourceArg>( "value" );
 
         var result = sut.Process( operand );
 
-        using ( new AssertionScope() )
-        {
-            result.NodeType.Should().Be( expectedNodeType );
-            result.Type.Should().Be( typeof( TResult ) );
-            nodeAssertion( operand, result );
-        }
+        Assertion.All(
+                result.NodeType.TestEquals( expectedNodeType ),
+                result.Type.TestEquals( typeof( TResult ) ),
+                nodeAssertion( operand, result ) )
+            .Go();
     }
 
     protected static void Process_ShouldPopOneOperandAndPushOneExpression_WhenOperandIsConstant<TTarget, TSourceArg, TResult>(
         ParsedExpressionTypeConverter<TTarget> sut,
         TSourceArg operandValue,
-        Action<Expression, Expression> nodeAssertion,
+        Func<Expression, Expression, Assertion> nodeAssertion,
         ExpressionType expectedNodeType = ExpressionType.Convert)
     {
         var operand = CreateConstantOperand( operandValue );
 
         var result = sut.Process( operand );
 
-        using ( new AssertionScope() )
-        {
-            result.NodeType.Should().Be( expectedNodeType );
-            result.Type.Should().Be( typeof( TResult ) );
-            nodeAssertion( operand, result );
-        }
+        Assertion.All(
+                result.NodeType.TestEquals( expectedNodeType ),
+                result.Type.TestEquals( typeof( TResult ) ),
+                nodeAssertion( operand, result ) )
+            .Go();
     }
 
     protected static void Process_ShouldThrowException_WhenConversionDoesNotExist<TTarget, TSourceArg, TException>(
@@ -49,15 +47,19 @@ public abstract class TypeConvertersTestsBase : ConstructsTestsBase
     {
         var operand = CreateVariableOperand<TSourceArg>( "value" );
         var action = Lambda.Of( () => sut.Process( operand ) );
-        action.Should().ThrowExactly<TException>().AndMatch( matcher ?? (_ => true) );
+        action.Test(
+                exc => Assertion.All(
+                    exc.TestType().Exact<TException>(),
+                    exc.TestIf().OfType<TException>( e => (matcher ?? (_ => true))( e ).TestTrue() ) ) )
+            .Go();
     }
 
-    protected static void DefaultNodeAssertion(Expression operand, Expression result)
+    [Pure]
+    protected static Assertion DefaultNodeAssertion(Expression operand, Expression result)
     {
-        result.Should().BeAssignableTo<UnaryExpression>();
-        if ( result is not UnaryExpression unaryResult )
-            return;
-
-        unaryResult.Operand.Should().BeSameAs( operand );
+        return Assertion.All(
+            "Node",
+            result.TestType().AssignableTo<UnaryExpression>(),
+            result.TestIf().OfType<UnaryExpression>( unaryResult => unaryResult.Operand.TestRefEquals( operand ) ) );
     }
 }

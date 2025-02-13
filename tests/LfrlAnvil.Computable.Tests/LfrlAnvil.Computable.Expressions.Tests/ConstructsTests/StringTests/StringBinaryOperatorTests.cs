@@ -13,21 +13,17 @@ public class StringBinaryOperatorTests : BinaryOperatorsTestsBase
             sut: new ParsedExpressionAddStringOperator(),
             expectedNodeType: ExpressionType.Call,
             (left, right, result) =>
-            {
-                result.Should().BeAssignableTo<MethodCallExpression>();
-                if ( result is not MethodCallExpression methodCallResult )
-                    return;
-
-                methodCallResult.Object.Should().BeNull();
-                methodCallResult.Arguments.Should().HaveCount( 2 );
-                methodCallResult.Method.Name.Should().Be( nameof( string.Concat ) );
-
-                if ( methodCallResult.Arguments.Count != 2 )
-                    return;
-
-                methodCallResult.Arguments.ElementAt( 0 ).Should().BeSameAs( left );
-                methodCallResult.Arguments.ElementAt( 1 ).Should().BeSameAs( right );
-            } );
+                Assertion.All(
+                    result.TestType().AssignableTo<MethodCallExpression>(),
+                    result.TestIf()
+                        .OfType<MethodCallExpression>(
+                            methodCallResult => Assertion.All(
+                                "methodCallResult",
+                                methodCallResult.Object.TestNull(),
+                                methodCallResult.Arguments.Count.TestEquals( 2 ),
+                                methodCallResult.Method.Name.TestEquals( nameof( string.Concat ) ),
+                                methodCallResult.Arguments.ElementAtOrDefault( 0 ).TestRefEquals( left ),
+                                methodCallResult.Arguments.ElementAtOrDefault( 1 ).TestRefEquals( right ) ) ) ) );
     }
 
     [Fact]
@@ -39,13 +35,12 @@ public class StringBinaryOperatorTests : BinaryOperatorsTestsBase
             leftValue: "foo",
             rightValue: "bar",
             (_, _, result) =>
-            {
-                result.Should().BeAssignableTo<ConstantExpression>();
-                if ( result is not ConstantExpression constantResult )
-                    return;
-
-                constantResult.Value.Should().Be( "foobar" );
-            } );
+                Assertion.All(
+                    result.TestType().AssignableTo<ConstantExpression>(),
+                    result.TestIf()
+                        .OfType<ConstantExpression>(
+                            constantResult =>
+                                constantResult.Value.TestEquals( "foobar" ) ) ) );
     }
 
     [Fact]
@@ -56,21 +51,17 @@ public class StringBinaryOperatorTests : BinaryOperatorsTestsBase
             expectedNodeType: ExpressionType.Call,
             leftValue: "foo",
             (left, right, result) =>
-            {
-                result.Should().BeAssignableTo<MethodCallExpression>();
-                if ( result is not MethodCallExpression methodCallResult )
-                    return;
-
-                methodCallResult.Object.Should().BeNull();
-                methodCallResult.Arguments.Should().HaveCount( 2 );
-                methodCallResult.Method.Name.Should().Be( nameof( string.Concat ) );
-
-                if ( methodCallResult.Arguments.Count != 2 )
-                    return;
-
-                methodCallResult.Arguments.ElementAt( 0 ).Should().BeSameAs( left );
-                methodCallResult.Arguments.ElementAt( 1 ).Should().BeSameAs( right );
-            } );
+                Assertion.All(
+                    result.TestType().AssignableTo<MethodCallExpression>(),
+                    result.TestIf()
+                        .OfType<MethodCallExpression>(
+                            methodCallResult => Assertion.All(
+                                "methodCallResult",
+                                methodCallResult.Object.TestNull(),
+                                methodCallResult.Arguments.Count.TestEquals( 2 ),
+                                methodCallResult.Method.Name.TestEquals( nameof( string.Concat ) ),
+                                methodCallResult.Arguments.ElementAtOrDefault( 0 ).TestRefEquals( left ),
+                                methodCallResult.Arguments.ElementAtOrDefault( 1 ).TestRefEquals( right ) ) ) ) );
     }
 
     [Fact]
@@ -80,7 +71,7 @@ public class StringBinaryOperatorTests : BinaryOperatorsTestsBase
             sut: new ParsedExpressionAddStringOperator(),
             expectedNodeType: ExpressionType.Parameter,
             leftValue: string.Empty,
-            (_, right, result) => result.Should().BeSameAs( right ) );
+            (_, right, result) => result.TestRefEquals( right ) );
     }
 
     [Fact]
@@ -91,21 +82,17 @@ public class StringBinaryOperatorTests : BinaryOperatorsTestsBase
             expectedNodeType: ExpressionType.Call,
             rightValue: "foo",
             (left, right, result) =>
-            {
-                result.Should().BeAssignableTo<MethodCallExpression>();
-                if ( result is not MethodCallExpression methodCallResult )
-                    return;
-
-                methodCallResult.Object.Should().BeNull();
-                methodCallResult.Arguments.Should().HaveCount( 2 );
-                methodCallResult.Method.Name.Should().Be( nameof( string.Concat ) );
-
-                if ( methodCallResult.Arguments.Count != 2 )
-                    return;
-
-                methodCallResult.Arguments.ElementAt( 0 ).Should().BeSameAs( left );
-                methodCallResult.Arguments.ElementAt( 1 ).Should().BeSameAs( right );
-            } );
+                Assertion.All(
+                    result.TestType().AssignableTo<MethodCallExpression>(),
+                    result.TestIf()
+                        .OfType<MethodCallExpression>(
+                            methodCallResult => Assertion.All(
+                                "methodCallResult",
+                                methodCallResult.Object.TestNull(),
+                                methodCallResult.Arguments.Count.TestEquals( 2 ),
+                                methodCallResult.Method.Name.TestEquals( nameof( string.Concat ) ),
+                                methodCallResult.Arguments.ElementAtOrDefault( 0 ).TestRefEquals( left ),
+                                methodCallResult.Arguments.ElementAtOrDefault( 1 ).TestRefEquals( right ) ) ) ) );
     }
 
     [Fact]
@@ -115,7 +102,7 @@ public class StringBinaryOperatorTests : BinaryOperatorsTestsBase
             sut: new ParsedExpressionAddStringOperator(),
             expectedNodeType: ExpressionType.Parameter,
             rightValue: string.Empty,
-            (left, _, result) => result.Should().BeSameAs( left ) );
+            (left, _, result) => result.TestRefEquals( left ) );
     }
 
     [Fact]
@@ -141,13 +128,12 @@ public class StringBinaryOperatorTests : BinaryOperatorsTestsBase
             leftValue: left,
             rightValue: right,
             (_, _, result) =>
-            {
-                result.Should().BeAssignableTo<ConstantExpression>();
-                if ( result is not ConstantExpression constantResult )
-                    return;
-
-                constantResult.Value.Should().Be( expected );
-            } );
+                Assertion.All(
+                    result.TestType().AssignableTo<ConstantExpression>(),
+                    result.TestIf()
+                        .OfType<ConstantExpression>(
+                            constantResult =>
+                                constantResult.Value.TestEquals( expected ) ) ) );
     }
 
     [Fact]
@@ -193,13 +179,12 @@ public class StringBinaryOperatorTests : BinaryOperatorsTestsBase
             leftValue: left,
             rightValue: right,
             (_, _, result) =>
-            {
-                result.Should().BeAssignableTo<ConstantExpression>();
-                if ( result is not ConstantExpression constantResult )
-                    return;
-
-                constantResult.Value.Should().Be( expected );
-            } );
+                Assertion.All(
+                    result.TestType().AssignableTo<ConstantExpression>(),
+                    result.TestIf()
+                        .OfType<ConstantExpression>(
+                            constantResult =>
+                                constantResult.Value.TestEquals( expected ) ) ) );
     }
 
     [Fact]
@@ -229,27 +214,23 @@ public class StringBinaryOperatorTests : BinaryOperatorsTestsBase
             sut: new ParsedExpressionCompareStringOperator(),
             expectedNodeType: ExpressionType.Call,
             (left, right, result) =>
-            {
-                result.Should().BeAssignableTo<MethodCallExpression>();
-                if ( result is not MethodCallExpression methodCallResult )
-                    return;
-
-                methodCallResult.Object.Should().BeNull();
-                methodCallResult.Arguments.Should().HaveCount( 3 );
-                methodCallResult.Method.Name.Should().Be( nameof( string.Compare ) );
-
-                if ( methodCallResult.Arguments.Count != 3 )
-                    return;
-
-                methodCallResult.Arguments.ElementAt( 0 ).Should().BeSameAs( left );
-                methodCallResult.Arguments.ElementAt( 1 ).Should().BeSameAs( right );
-                var stringComparisonArgument = methodCallResult.Arguments.ElementAt( 2 );
-                stringComparisonArgument.Should().BeAssignableTo<ConstantExpression>();
-                if ( stringComparisonArgument is not ConstantExpression constantStringComparisonArgument )
-                    return;
-
-                constantStringComparisonArgument.Value.Should().Be( StringComparison.Ordinal );
-            } );
+                Assertion.All(
+                    result.TestType().AssignableTo<MethodCallExpression>(),
+                    result.TestIf()
+                        .OfType<MethodCallExpression>(
+                            methodCallResult => Assertion.All(
+                                "methodCallResult",
+                                methodCallResult.Object.TestNull(),
+                                methodCallResult.Arguments.Count.TestEquals( 3 ),
+                                methodCallResult.Method.Name.TestEquals( nameof( string.Compare ) ),
+                                methodCallResult.Arguments.ElementAtOrDefault( 0 ).TestRefEquals( left ),
+                                methodCallResult.Arguments.ElementAtOrDefault( 1 ).TestRefEquals( right ),
+                                methodCallResult.Arguments.ElementAtOrDefault( 2 ).TestType().AssignableTo<ConstantExpression>(),
+                                methodCallResult.Arguments.ElementAtOrDefault( 2 )
+                                    .TestIf()
+                                    .OfType<ConstantExpression>(
+                                        constantStringComparisonArgument =>
+                                            constantStringComparisonArgument.Value.TestEquals( StringComparison.Ordinal ) ) ) ) ) );
     }
 
     [Theory]
@@ -267,13 +248,12 @@ public class StringBinaryOperatorTests : BinaryOperatorsTestsBase
             leftValue: left,
             rightValue: right,
             (_, _, result) =>
-            {
-                result.Should().BeAssignableTo<ConstantExpression>();
-                if ( result is not ConstantExpression constantResult )
-                    return;
-
-                Math.Sign( ( int )constantResult.Value! ).Should().Be( expected );
-            } );
+                Assertion.All(
+                    result.TestType().AssignableTo<ConstantExpression>(),
+                    result.TestIf()
+                        .OfType<ConstantExpression>(
+                            constantResult =>
+                                Math.Sign( ( int )constantResult.Value! ).TestEquals( expected ) ) ) );
     }
 
     [Fact]
@@ -284,27 +264,23 @@ public class StringBinaryOperatorTests : BinaryOperatorsTestsBase
             expectedNodeType: ExpressionType.Call,
             leftValue: Fixture.Create<string>(),
             (left, right, result) =>
-            {
-                result.Should().BeAssignableTo<MethodCallExpression>();
-                if ( result is not MethodCallExpression methodCallResult )
-                    return;
-
-                methodCallResult.Object.Should().BeNull();
-                methodCallResult.Arguments.Should().HaveCount( 3 );
-                methodCallResult.Method.Name.Should().Be( nameof( string.Compare ) );
-
-                if ( methodCallResult.Arguments.Count != 3 )
-                    return;
-
-                methodCallResult.Arguments.ElementAt( 0 ).Should().BeSameAs( left );
-                methodCallResult.Arguments.ElementAt( 1 ).Should().BeSameAs( right );
-                var stringComparisonArgument = methodCallResult.Arguments.ElementAt( 2 );
-                stringComparisonArgument.Should().BeAssignableTo<ConstantExpression>();
-                if ( stringComparisonArgument is not ConstantExpression constantStringComparisonArgument )
-                    return;
-
-                constantStringComparisonArgument.Value.Should().Be( StringComparison.Ordinal );
-            } );
+                Assertion.All(
+                    result.TestType().AssignableTo<MethodCallExpression>(),
+                    result.TestIf()
+                        .OfType<MethodCallExpression>(
+                            methodCallResult => Assertion.All(
+                                "methodCallResult",
+                                methodCallResult.Object.TestNull(),
+                                methodCallResult.Arguments.Count.TestEquals( 3 ),
+                                methodCallResult.Method.Name.TestEquals( nameof( string.Compare ) ),
+                                methodCallResult.Arguments.ElementAtOrDefault( 0 ).TestRefEquals( left ),
+                                methodCallResult.Arguments.ElementAtOrDefault( 1 ).TestRefEquals( right ),
+                                methodCallResult.Arguments.ElementAtOrDefault( 2 ).TestType().AssignableTo<ConstantExpression>(),
+                                methodCallResult.Arguments.ElementAtOrDefault( 2 )
+                                    .TestIf()
+                                    .OfType<ConstantExpression>(
+                                        constantStringComparisonArgument =>
+                                            constantStringComparisonArgument.Value.TestEquals( StringComparison.Ordinal ) ) ) ) ) );
     }
 
     [Fact]
@@ -315,26 +291,22 @@ public class StringBinaryOperatorTests : BinaryOperatorsTestsBase
             expectedNodeType: ExpressionType.Call,
             rightValue: Fixture.Create<string>(),
             (left, right, result) =>
-            {
-                result.Should().BeAssignableTo<MethodCallExpression>();
-                if ( result is not MethodCallExpression methodCallResult )
-                    return;
-
-                methodCallResult.Object.Should().BeNull();
-                methodCallResult.Arguments.Should().HaveCount( 3 );
-                methodCallResult.Method.Name.Should().Be( nameof( string.Compare ) );
-
-                if ( methodCallResult.Arguments.Count != 3 )
-                    return;
-
-                methodCallResult.Arguments.ElementAt( 0 ).Should().BeSameAs( left );
-                methodCallResult.Arguments.ElementAt( 1 ).Should().BeSameAs( right );
-                var stringComparisonArgument = methodCallResult.Arguments.ElementAt( 2 );
-                stringComparisonArgument.Should().BeAssignableTo<ConstantExpression>();
-                if ( stringComparisonArgument is not ConstantExpression constantStringComparisonArgument )
-                    return;
-
-                constantStringComparisonArgument.Value.Should().Be( StringComparison.Ordinal );
-            } );
+                Assertion.All(
+                    result.TestType().AssignableTo<MethodCallExpression>(),
+                    result.TestIf()
+                        .OfType<MethodCallExpression>(
+                            methodCallResult => Assertion.All(
+                                "methodCallResult",
+                                methodCallResult.Object.TestNull(),
+                                methodCallResult.Arguments.Count.TestEquals( 3 ),
+                                methodCallResult.Method.Name.TestEquals( nameof( string.Compare ) ),
+                                methodCallResult.Arguments.ElementAtOrDefault( 0 ).TestRefEquals( left ),
+                                methodCallResult.Arguments.ElementAtOrDefault( 1 ).TestRefEquals( right ),
+                                methodCallResult.Arguments.ElementAtOrDefault( 2 ).TestType().AssignableTo<ConstantExpression>(),
+                                methodCallResult.Arguments.ElementAtOrDefault( 2 )
+                                    .TestIf()
+                                    .OfType<ConstantExpression>(
+                                        constantStringComparisonArgument =>
+                                            constantStringComparisonArgument.Value.TestEquals( StringComparison.Ordinal ) ) ) ) ) );
     }
 }

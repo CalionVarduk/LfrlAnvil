@@ -22,14 +22,12 @@ public class BigIntUnaryOperatorTests : UnaryOperatorsTestsBase
             sut: new ParsedExpressionNegateBigIntOperator(),
             expectedNodeType: ExpressionType.Constant,
             operandValue: 123,
-            (_, result) =>
-            {
-                result.Should().BeAssignableTo<ConstantExpression>();
-                if ( result is not ConstantExpression constantResult )
-                    return;
-
-                constantResult.Value.Should().Be( new BigInteger( -123 ) );
-            } );
+            (_, result) => Assertion.All(
+                result.TestType().AssignableTo<ConstantExpression>(),
+                result.TestIf()
+                    .OfType<ConstantExpression>(
+                        constantResult =>
+                            constantResult.Value.TestEquals( new BigInteger( -123 ) ) ) ) );
     }
 
     [Fact]
@@ -48,13 +46,11 @@ public class BigIntUnaryOperatorTests : UnaryOperatorsTestsBase
             sut: new ParsedExpressionBitwiseNotBigIntOperator(),
             expectedNodeType: ExpressionType.Constant,
             operandValue: 123,
-            (_, result) =>
-            {
-                result.Should().BeAssignableTo<ConstantExpression>();
-                if ( result is not ConstantExpression constantResult )
-                    return;
-
-                constantResult.Value.Should().Be( ~new BigInteger( 123 ) );
-            } );
+            (_, result) => Assertion.All(
+                result.TestType().AssignableTo<ConstantExpression>(),
+                result.TestIf()
+                    .OfType<ConstantExpression>(
+                        constantResult =>
+                            constantResult.Value.TestEquals( ~new BigInteger( 123 ) ) ) ) );
     }
 }
