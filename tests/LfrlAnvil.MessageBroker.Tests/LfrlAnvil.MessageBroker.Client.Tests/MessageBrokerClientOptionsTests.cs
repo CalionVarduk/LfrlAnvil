@@ -12,16 +12,15 @@ public class MessageBrokerClientOptionsTests : TestsBase
     public void Default_ShouldReturnCorrectResult()
     {
         var sut = MessageBrokerClientOptions.Default;
-        using ( new AssertionScope() )
-        {
-            sut.Tcp.Should().Be( MessageBrokerTcpClientOptions.Default );
-            sut.MinMemoryPoolSegmentLength.Should().BeNull();
-            sut.ConnectionTimeout.Should().BeNull();
-            sut.DesiredMessageTimeout.Should().BeNull();
-            sut.DesiredPingInterval.Should().BeNull();
-            sut.EventHandler.Should().BeNull();
-            sut.StreamDecorator.Should().BeNull();
-        }
+        Assertion.All(
+                sut.Tcp.TestEquals( MessageBrokerTcpClientOptions.Default ),
+                sut.MinMemoryPoolSegmentLength.TestNull(),
+                sut.ConnectionTimeout.TestNull(),
+                sut.DesiredMessageTimeout.TestNull(),
+                sut.DesiredPingInterval.TestNull(),
+                sut.EventHandler.TestNull(),
+                sut.StreamDecorator.TestNull() )
+            .Go();
     }
 
     [Fact]
@@ -32,16 +31,15 @@ public class MessageBrokerClientOptionsTests : TestsBase
 
         var result = sut.SetTcpOptions( value );
 
-        using ( new AssertionScope() )
-        {
-            result.Tcp.Should().Be( value );
-            result.MinMemoryPoolSegmentLength.Should().Be( sut.MinMemoryPoolSegmentLength );
-            result.ConnectionTimeout.Should().Be( sut.ConnectionTimeout );
-            result.DesiredMessageTimeout.Should().Be( sut.DesiredMessageTimeout );
-            result.DesiredPingInterval.Should().Be( sut.DesiredPingInterval );
-            result.EventHandler.Should().Be( sut.EventHandler );
-            result.StreamDecorator.Should().Be( sut.StreamDecorator );
-        }
+        Assertion.All(
+                result.Tcp.TestEquals( value ),
+                result.MinMemoryPoolSegmentLength.TestEquals( sut.MinMemoryPoolSegmentLength ),
+                result.ConnectionTimeout.TestEquals( sut.ConnectionTimeout ),
+                result.DesiredMessageTimeout.TestEquals( sut.DesiredMessageTimeout ),
+                result.DesiredPingInterval.TestEquals( sut.DesiredPingInterval ),
+                result.EventHandler.TestEquals( sut.EventHandler ),
+                result.StreamDecorator.TestEquals( sut.StreamDecorator ) )
+            .Go();
     }
 
     [Fact]
@@ -52,16 +50,15 @@ public class MessageBrokerClientOptionsTests : TestsBase
 
         var result = sut.SetMinMemoryPoolSegmentLength( value );
 
-        using ( new AssertionScope() )
-        {
-            result.Tcp.Should().Be( sut.Tcp );
-            result.MinMemoryPoolSegmentLength.Should().Be( value );
-            result.ConnectionTimeout.Should().Be( sut.ConnectionTimeout );
-            result.DesiredMessageTimeout.Should().Be( sut.DesiredMessageTimeout );
-            result.DesiredPingInterval.Should().Be( sut.DesiredPingInterval );
-            result.EventHandler.Should().Be( sut.EventHandler );
-            result.StreamDecorator.Should().Be( sut.StreamDecorator );
-        }
+        Assertion.All(
+                result.Tcp.TestEquals( sut.Tcp ),
+                result.MinMemoryPoolSegmentLength.TestEquals( value ),
+                result.ConnectionTimeout.TestEquals( sut.ConnectionTimeout ),
+                result.DesiredMessageTimeout.TestEquals( sut.DesiredMessageTimeout ),
+                result.DesiredPingInterval.TestEquals( sut.DesiredPingInterval ),
+                result.EventHandler.TestEquals( sut.EventHandler ),
+                result.StreamDecorator.TestEquals( sut.StreamDecorator ) )
+            .Go();
     }
 
     [Fact]
@@ -72,16 +69,15 @@ public class MessageBrokerClientOptionsTests : TestsBase
 
         var result = sut.SetConnectionTimeout( value );
 
-        using ( new AssertionScope() )
-        {
-            result.Tcp.Should().Be( sut.Tcp );
-            result.MinMemoryPoolSegmentLength.Should().Be( sut.MinMemoryPoolSegmentLength );
-            result.ConnectionTimeout.Should().Be( value );
-            result.DesiredMessageTimeout.Should().Be( sut.DesiredMessageTimeout );
-            result.DesiredPingInterval.Should().Be( sut.DesiredPingInterval );
-            result.EventHandler.Should().Be( sut.EventHandler );
-            result.StreamDecorator.Should().Be( sut.StreamDecorator );
-        }
+        Assertion.All(
+                result.Tcp.TestEquals( sut.Tcp ),
+                result.MinMemoryPoolSegmentLength.TestEquals( sut.MinMemoryPoolSegmentLength ),
+                result.ConnectionTimeout.TestEquals( value ),
+                result.DesiredMessageTimeout.TestEquals( sut.DesiredMessageTimeout ),
+                result.DesiredPingInterval.TestEquals( sut.DesiredPingInterval ),
+                result.EventHandler.TestEquals( sut.EventHandler ),
+                result.StreamDecorator.TestEquals( sut.StreamDecorator ) )
+            .Go();
     }
 
     [Fact]
@@ -92,16 +88,15 @@ public class MessageBrokerClientOptionsTests : TestsBase
 
         var result = sut.SetDesiredMessageTimeout( value );
 
-        using ( new AssertionScope() )
-        {
-            result.Tcp.Should().Be( sut.Tcp );
-            result.MinMemoryPoolSegmentLength.Should().Be( sut.MinMemoryPoolSegmentLength );
-            result.ConnectionTimeout.Should().Be( sut.ConnectionTimeout );
-            result.DesiredMessageTimeout.Should().Be( value );
-            result.DesiredPingInterval.Should().Be( sut.DesiredPingInterval );
-            result.EventHandler.Should().Be( sut.EventHandler );
-            result.StreamDecorator.Should().Be( sut.StreamDecorator );
-        }
+        Assertion.All(
+                result.Tcp.TestEquals( sut.Tcp ),
+                result.MinMemoryPoolSegmentLength.TestEquals( sut.MinMemoryPoolSegmentLength ),
+                result.ConnectionTimeout.TestEquals( sut.ConnectionTimeout ),
+                result.DesiredMessageTimeout.TestEquals( value ),
+                result.DesiredPingInterval.TestEquals( sut.DesiredPingInterval ),
+                result.EventHandler.TestEquals( sut.EventHandler ),
+                result.StreamDecorator.TestEquals( sut.StreamDecorator ) )
+            .Go();
     }
 
     [Fact]
@@ -112,16 +107,15 @@ public class MessageBrokerClientOptionsTests : TestsBase
 
         var result = sut.SetDesiredPingInterval( value );
 
-        using ( new AssertionScope() )
-        {
-            result.Tcp.Should().Be( sut.Tcp );
-            result.MinMemoryPoolSegmentLength.Should().Be( sut.MinMemoryPoolSegmentLength );
-            result.ConnectionTimeout.Should().Be( sut.ConnectionTimeout );
-            result.DesiredMessageTimeout.Should().Be( sut.DesiredMessageTimeout );
-            result.DesiredPingInterval.Should().Be( value );
-            result.EventHandler.Should().Be( sut.EventHandler );
-            result.StreamDecorator.Should().Be( sut.StreamDecorator );
-        }
+        Assertion.All(
+                result.Tcp.TestEquals( sut.Tcp ),
+                result.MinMemoryPoolSegmentLength.TestEquals( sut.MinMemoryPoolSegmentLength ),
+                result.ConnectionTimeout.TestEquals( sut.ConnectionTimeout ),
+                result.DesiredMessageTimeout.TestEquals( sut.DesiredMessageTimeout ),
+                result.DesiredPingInterval.TestEquals( value ),
+                result.EventHandler.TestEquals( sut.EventHandler ),
+                result.StreamDecorator.TestEquals( sut.StreamDecorator ) )
+            .Go();
     }
 
     [Fact]
@@ -132,16 +126,15 @@ public class MessageBrokerClientOptionsTests : TestsBase
 
         var result = sut.SetEventHandler( value );
 
-        using ( new AssertionScope() )
-        {
-            result.Tcp.Should().Be( sut.Tcp );
-            result.MinMemoryPoolSegmentLength.Should().Be( sut.MinMemoryPoolSegmentLength );
-            result.ConnectionTimeout.Should().Be( sut.ConnectionTimeout );
-            result.DesiredMessageTimeout.Should().Be( sut.DesiredMessageTimeout );
-            result.DesiredPingInterval.Should().Be( sut.DesiredPingInterval );
-            result.EventHandler.Should().BeSameAs( value );
-            result.StreamDecorator.Should().Be( sut.StreamDecorator );
-        }
+        Assertion.All(
+                result.Tcp.TestEquals( sut.Tcp ),
+                result.MinMemoryPoolSegmentLength.TestEquals( sut.MinMemoryPoolSegmentLength ),
+                result.ConnectionTimeout.TestEquals( sut.ConnectionTimeout ),
+                result.DesiredMessageTimeout.TestEquals( sut.DesiredMessageTimeout ),
+                result.DesiredPingInterval.TestEquals( sut.DesiredPingInterval ),
+                result.EventHandler.TestRefEquals( value ),
+                result.StreamDecorator.TestEquals( sut.StreamDecorator ) )
+            .Go();
     }
 
     [Fact]
@@ -152,15 +145,14 @@ public class MessageBrokerClientOptionsTests : TestsBase
 
         var result = sut.SetStreamDecorator( value );
 
-        using ( new AssertionScope() )
-        {
-            result.Tcp.Should().Be( sut.Tcp );
-            result.MinMemoryPoolSegmentLength.Should().Be( sut.MinMemoryPoolSegmentLength );
-            result.ConnectionTimeout.Should().Be( sut.ConnectionTimeout );
-            result.DesiredMessageTimeout.Should().Be( sut.DesiredMessageTimeout );
-            result.DesiredPingInterval.Should().Be( sut.DesiredPingInterval );
-            result.EventHandler.Should().Be( sut.EventHandler );
-            result.StreamDecorator.Should().BeSameAs( value );
-        }
+        Assertion.All(
+                result.Tcp.TestEquals( sut.Tcp ),
+                result.MinMemoryPoolSegmentLength.TestEquals( sut.MinMemoryPoolSegmentLength ),
+                result.ConnectionTimeout.TestEquals( sut.ConnectionTimeout ),
+                result.DesiredMessageTimeout.TestEquals( sut.DesiredMessageTimeout ),
+                result.DesiredPingInterval.TestEquals( sut.DesiredPingInterval ),
+                result.EventHandler.TestEquals( sut.EventHandler ),
+                result.StreamDecorator.TestRefEquals( value ) )
+            .Go();
     }
 }

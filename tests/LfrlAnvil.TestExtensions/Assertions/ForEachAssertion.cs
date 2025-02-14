@@ -42,7 +42,7 @@ internal sealed class ForEachAssertion<T> : SubjectAssertion<IReadOnlyList<T>>
                      {string.Join( Environment.NewLine, errors.Select( (e, i) => $"{i + 1}. {e}" ) )}
 
                      Collection of {elements.Count} element(s):
-                     {string.Join( Environment.NewLine, elements.Select( x => $"[@{x.Index}] {$"'{x.Element}'".Indent()}" ) )}
+                     {string.Join( Environment.NewLine, elements.Select( x => $"[@{x.Index}] {x.Element.Stringify().Indent()}" ) )}
                      """ );
         }
         else
@@ -66,7 +66,7 @@ internal sealed class ForEachAssertion<T> : SubjectAssertion<IReadOnlyList<T>>
                  {string.Join( Environment.NewLine, errors.Select( (e, i) => $"{i + 1}. {e}" ) )}
 
                  Collection of {elements.Count} element(s):
-                 {string.Join( Environment.NewLine, elements.Select( x => $"[@{x.Index}] {$"'{x.Element}'".Indent()}" ) )}
+                 {string.Join( Environment.NewLine, elements.Select( x => $"[@{x.Index}] {x.Element.Stringify().Indent()}" ) )}
                  """ );
         }
     }

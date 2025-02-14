@@ -61,28 +61,27 @@ public partial class MessageBrokerClientTests
 
             var serverData = server.GetAllReceived();
 
-            using ( new AssertionScope() )
-            {
-                logs.GetAll()
-                    .Should()
-                    .Contain(
-                        "['test'::1] [SendingMessage] [PacketLength: 5] PingRequest",
-                        "['test'::1] [MessageSent] [PacketLength: 5] PingRequest",
-                        "['test'::<ROOT>] [MessageReceived] [PacketLength: 5] PingResponse",
-                        "['test'::1] [MessageReceived] [PacketLength: 5] Begin handling PingResponse",
-                        "['test'::1] [MessageAccepted] [PacketLength: 5] PingResponse",
-                        "['test'::2] [SendingMessage] [PacketLength: 5] PingRequest",
-                        "['test'::2] [MessageSent] [PacketLength: 5] PingRequest",
-                        "['test'::2] [MessageReceived] [PacketLength: 5] Begin handling PingResponse",
-                        "['test'::2] [MessageAccepted] [PacketLength: 5] PingResponse" );
-
-                AssertServerData(
-                    serverData,
-                    (handshakeRequest.Length, MessageBrokerServerEndpoint.HandshakeRequest),
-                    (Protocol.PacketHeader.Length, MessageBrokerServerEndpoint.ConfirmHandshakeResponse),
-                    (Protocol.PacketHeader.Length, MessageBrokerServerEndpoint.PingRequest),
-                    (Protocol.PacketHeader.Length, MessageBrokerServerEndpoint.PingRequest) );
-            }
+            Assertion.All(
+                    logs.GetAll()
+                        .TestContainsSequence(
+                        [
+                            "['test'::1] [SendingMessage] [PacketLength: 5] PingRequest",
+                            "['test'::1] [MessageSent] [PacketLength: 5] PingRequest",
+                            "['test'::<ROOT>] [MessageReceived] [PacketLength: 5] PingResponse",
+                            "['test'::1] [MessageReceived] [PacketLength: 5] Begin handling PingResponse",
+                            "['test'::1] [MessageAccepted] [PacketLength: 5] PingResponse",
+                            "['test'::2] [SendingMessage] [PacketLength: 5] PingRequest",
+                            "['test'::2] [MessageSent] [PacketLength: 5] PingRequest",
+                            "['test'::2] [MessageReceived] [PacketLength: 5] Begin handling PingResponse",
+                            "['test'::2] [MessageAccepted] [PacketLength: 5] PingResponse"
+                        ] ),
+                    AssertServerData(
+                        serverData,
+                        (handshakeRequest.Length, MessageBrokerServerEndpoint.HandshakeRequest),
+                        (Protocol.PacketHeader.Length, MessageBrokerServerEndpoint.ConfirmHandshakeResponse),
+                        (Protocol.PacketHeader.Length, MessageBrokerServerEndpoint.PingRequest),
+                        (Protocol.PacketHeader.Length, MessageBrokerServerEndpoint.PingRequest) ) )
+                .Go();
         }
 
         [Fact]
@@ -130,22 +129,20 @@ public partial class MessageBrokerClientTests
 
             var serverData = server.GetAllReceived();
 
-            using ( new AssertionScope() )
-            {
-                client.State.Should().Be( MessageBrokerClientState.Disposed );
-
-                logs.GetAll()
-                    .Should()
-                    .Contain(
-                        "['test'::1] [SendingMessage] [PacketLength: 5] PingRequest",
-                        "['test'::1] [MessageSent] [PacketLength: 5] PingRequest" );
-
-                AssertServerData(
-                    serverData,
-                    (handshakeRequest.Length, MessageBrokerServerEndpoint.HandshakeRequest),
-                    (Protocol.PacketHeader.Length, MessageBrokerServerEndpoint.ConfirmHandshakeResponse),
-                    (Protocol.PacketHeader.Length, MessageBrokerServerEndpoint.PingRequest) );
-            }
+            Assertion.All(
+                    client.State.TestEquals( MessageBrokerClientState.Disposed ),
+                    logs.GetAll()
+                        .TestContainsSequence(
+                        [
+                            "['test'::1] [SendingMessage] [PacketLength: 5] PingRequest",
+                            "['test'::1] [MessageSent] [PacketLength: 5] PingRequest"
+                        ] ),
+                    AssertServerData(
+                        serverData,
+                        (handshakeRequest.Length, MessageBrokerServerEndpoint.HandshakeRequest),
+                        (Protocol.PacketHeader.Length, MessageBrokerServerEndpoint.ConfirmHandshakeResponse),
+                        (Protocol.PacketHeader.Length, MessageBrokerServerEndpoint.PingRequest) ) )
+                .Go();
         }
 
         [Fact]
@@ -191,24 +188,22 @@ public partial class MessageBrokerClientTests
 
             var serverData = server.GetAllReceived();
 
-            using ( new AssertionScope() )
-            {
-                client.State.Should().Be( MessageBrokerClientState.Disposed );
-
-                logs.GetAll()
-                    .Should()
-                    .Contain(
-                        """
-                        ['test'::<ROOT>] [WaitingForMessage] Encountered an error:
-                        LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientResponseTimeoutException: Message broker server failed to respond with PingResponse packet to 'test' client's PingRequest request in the specified amount of time (200 milliseconds).
-                        """ );
-
-                AssertServerData(
-                    serverData,
-                    (handshakeRequest.Length, MessageBrokerServerEndpoint.HandshakeRequest),
-                    (Protocol.PacketHeader.Length, MessageBrokerServerEndpoint.ConfirmHandshakeResponse),
-                    (Protocol.PacketHeader.Length, MessageBrokerServerEndpoint.PingRequest) );
-            }
+            Assertion.All(
+                    client.State.TestEquals( MessageBrokerClientState.Disposed ),
+                    logs.GetAll()
+                        .TestContainsSequence(
+                        [
+                            """
+                            ['test'::<ROOT>] [WaitingForMessage] Encountered an error:
+                            LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientResponseTimeoutException: Message broker server failed to respond with PingResponse packet to 'test' client's PingRequest request in the specified amount of time (200 milliseconds).
+                            """
+                        ] ),
+                    AssertServerData(
+                        serverData,
+                        (handshakeRequest.Length, MessageBrokerServerEndpoint.HandshakeRequest),
+                        (Protocol.PacketHeader.Length, MessageBrokerServerEndpoint.ConfirmHandshakeResponse),
+                        (Protocol.PacketHeader.Length, MessageBrokerServerEndpoint.PingRequest) ) )
+                .Go();
         }
 
         [Fact]
@@ -255,25 +250,23 @@ public partial class MessageBrokerClientTests
 
             var serverData = server.GetAllReceived();
 
-            using ( new AssertionScope() )
-            {
-                client.State.Should().Be( MessageBrokerClientState.Disposed );
-
-                logs.GetAll()
-                    .Should()
-                    .Contain(
-                        """
-                        ['test'::1] [MessageRejected] [PacketLength: 5] Encountered an error:
-                        LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientProtocolException: Message broker client 'test' received an invalid 0 with payload 0 from the server. Encountered 1 error(s):
-                        1. Received unexpected client endpoint.
-                        """ );
-
-                AssertServerData(
-                    serverData,
-                    (handshakeRequest.Length, MessageBrokerServerEndpoint.HandshakeRequest),
-                    (Protocol.PacketHeader.Length, MessageBrokerServerEndpoint.ConfirmHandshakeResponse),
-                    (Protocol.PacketHeader.Length, MessageBrokerServerEndpoint.PingRequest) );
-            }
+            Assertion.All(
+                    client.State.TestEquals( MessageBrokerClientState.Disposed ),
+                    logs.GetAll()
+                        .TestContainsSequence(
+                        [
+                            """
+                            ['test'::1] [MessageRejected] [PacketLength: 5] Encountered an error:
+                            LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientProtocolException: Message broker client 'test' received an invalid 0 with payload 0 from the server. Encountered 1 error(s):
+                            1. Received unexpected client endpoint.
+                            """
+                        ] ),
+                    AssertServerData(
+                        serverData,
+                        (handshakeRequest.Length, MessageBrokerServerEndpoint.HandshakeRequest),
+                        (Protocol.PacketHeader.Length, MessageBrokerServerEndpoint.ConfirmHandshakeResponse),
+                        (Protocol.PacketHeader.Length, MessageBrokerServerEndpoint.PingRequest) ) )
+                .Go();
         }
 
         [Fact]
@@ -320,25 +313,23 @@ public partial class MessageBrokerClientTests
 
             var serverData = server.GetAllReceived();
 
-            using ( new AssertionScope() )
-            {
-                client.State.Should().Be( MessageBrokerClientState.Disposed );
-
-                logs.GetAll()
-                    .Should()
-                    .Contain(
-                        """
-                        ['test'::1] [MessageRejected] [PacketLength: 5] Encountered an error:
-                        LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientProtocolException: Message broker client 'test' received an invalid PingResponse with payload 1 from the server. Encountered 1 error(s):
-                        1. Expected endianness verification payload to be 0102fdfe but found 00000001.
-                        """ );
-
-                AssertServerData(
-                    serverData,
-                    (handshakeRequest.Length, MessageBrokerServerEndpoint.HandshakeRequest),
-                    (Protocol.PacketHeader.Length, MessageBrokerServerEndpoint.ConfirmHandshakeResponse),
-                    (Protocol.PacketHeader.Length, MessageBrokerServerEndpoint.PingRequest) );
-            }
+            Assertion.All(
+                    client.State.TestEquals( MessageBrokerClientState.Disposed ),
+                    logs.GetAll()
+                        .TestContainsSequence(
+                        [
+                            """
+                            ['test'::1] [MessageRejected] [PacketLength: 5] Encountered an error:
+                            LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientProtocolException: Message broker client 'test' received an invalid PingResponse with payload 1 from the server. Encountered 1 error(s):
+                            1. Expected endianness verification payload to be 0102fdfe but found 00000001.
+                            """
+                        ] ),
+                    AssertServerData(
+                        serverData,
+                        (handshakeRequest.Length, MessageBrokerServerEndpoint.HandshakeRequest),
+                        (Protocol.PacketHeader.Length, MessageBrokerServerEndpoint.ConfirmHandshakeResponse),
+                        (Protocol.PacketHeader.Length, MessageBrokerServerEndpoint.PingRequest) ) )
+                .Go();
         }
     }
 }

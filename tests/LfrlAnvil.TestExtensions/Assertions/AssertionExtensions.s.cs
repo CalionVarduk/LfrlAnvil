@@ -19,7 +19,7 @@ public static class AssertionExtensions
     }
 
     [Pure]
-    public static SubjectAssertion<Action> Test(
+    public static CallAssertion Test(
         this Action subject,
         Func<Exception?, Assertion> completionAssertion,
         [CallerArgumentExpression( "subject" )]
@@ -29,7 +29,7 @@ public static class AssertionExtensions
     }
 
     [Pure]
-    public static SubjectAssertion<Action> Test<T>(
+    public static CallAssertion Test<T>(
         this Func<T> subject,
         Func<Exception?, Assertion> completionAssertion,
         [CallerArgumentExpression( "subject" )]
@@ -39,7 +39,7 @@ public static class AssertionExtensions
     }
 
     [Pure]
-    public static SubjectAssertion<Action> Test(
+    public static CallAssertion Test(
         this Func<Task> subject,
         Func<Exception?, Assertion> completionAssertion,
         [CallerArgumentExpression( "subject" )]
@@ -65,7 +65,7 @@ public static class AssertionExtensions
     }
 
     [Pure]
-    public static SubjectAssertion<Action> Test<T>(
+    public static CallAssertion Test<T>(
         this Func<Task<T>> subject,
         Func<Exception?, Assertion> completionAssertion,
         [CallerArgumentExpression( "subject" )]
@@ -75,7 +75,7 @@ public static class AssertionExtensions
     }
 
     [Pure]
-    public static SubjectAssertion<Action> Test(
+    public static CallAssertion Test(
         this Func<ValueTask> subject,
         Func<Exception?, Assertion> completionAssertion,
         [CallerArgumentExpression( "subject" )]
@@ -85,7 +85,7 @@ public static class AssertionExtensions
     }
 
     [Pure]
-    public static SubjectAssertion<Action> Test<T>(
+    public static CallAssertion Test<T>(
         this Func<ValueTask<T>> subject,
         Func<Exception?, Assertion> completionAssertion,
         [CallerArgumentExpression( "subject" )]
@@ -261,7 +261,7 @@ public static class AssertionExtensions
 
     [Pure]
     public static SubjectAssertion<ReadOnlyMemory<char>> TestMatch(
-        this string subject,
+        this string? subject,
         Regex regex,
         [CallerArgumentExpression( "subject" )]
         string context = "")
@@ -291,7 +291,7 @@ public static class AssertionExtensions
 
     [Pure]
     public static SubjectAssertion<ReadOnlyMemory<char>> TestNotMatch(
-        this string subject,
+        this string? subject,
         Regex regex,
         [CallerArgumentExpression( "subject" )]
         string context = "")
@@ -321,7 +321,7 @@ public static class AssertionExtensions
 
     [Pure]
     public static SubjectAssertion<ReadOnlyMemory<char>> TestStartsWith(
-        this string subject,
+        this string? subject,
         string value,
         StringComparison comparison = StringComparison.Ordinal,
         [CallerArgumentExpression( "subject" )]
@@ -354,7 +354,7 @@ public static class AssertionExtensions
 
     [Pure]
     public static SubjectAssertion<ReadOnlyMemory<char>> TestContains(
-        this string subject,
+        this string? subject,
         string value,
         StringComparison comparison = StringComparison.Ordinal,
         [CallerArgumentExpression( "subject" )]
@@ -1111,5 +1111,11 @@ public static class AssertionExtensions
     internal static string Indent(this string value)
     {
         return value.Replace( Environment.NewLine, $"{Environment.NewLine}  " );
+    }
+
+    [Pure]
+    internal static string Stringify<T>(this T? obj)
+    {
+        return obj is null ? "<null>" : $"'{obj}'";
     }
 }

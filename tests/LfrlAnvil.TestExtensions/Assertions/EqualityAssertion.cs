@@ -20,9 +20,9 @@ internal sealed class EqualityAssertion<T> : SubjectAssertion<T>
         if ( Expected )
         {
             if ( ! areEqual )
-                Throw( $"[{Context}] should be equal to '{Value}' but found '{Subject}'." );
+                Throw( $"[{Context}] should be equal to {Value.Stringify()} but found {Subject.Stringify()}." );
         }
         else if ( areEqual )
-            Throw( $"[{Context}] is equal to '{Value}'." );
+            Throw( $"[{Context}] is equal to {Value.Stringify()}." );
     }
 }

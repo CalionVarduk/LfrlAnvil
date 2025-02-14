@@ -18,9 +18,9 @@ internal sealed class TypeAssertion<T> : SubjectAssertion<T>
         if ( Exact )
         {
             if ( type != Expected )
-                Throw( $"[{Context}] should be exactly of type {Expected.FullName} but found {type?.FullName ?? "null"}." );
+                Throw( $"[{Context}] should be exactly of type {Expected.FullName} but found {type?.FullName ?? "<null>"}." );
         }
         else if ( ! Expected.IsAssignableFrom( type ) )
-            Throw( $"[{Context}] should be of type assignable to {Expected.FullName} but found {type?.FullName ?? "null"}." );
+            Throw( $"[{Context}] should be of type assignable to {Expected.FullName} but found {type?.FullName ?? "<null>"}." );
     }
 }

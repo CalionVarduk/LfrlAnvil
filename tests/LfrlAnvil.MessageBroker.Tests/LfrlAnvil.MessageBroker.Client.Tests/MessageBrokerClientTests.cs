@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System.Diagnostics.Contracts;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
@@ -10,7 +11,6 @@ using LfrlAnvil.MessageBroker.Client.Events;
 using LfrlAnvil.MessageBroker.Client.Exceptions;
 using LfrlAnvil.MessageBroker.Client.Internal;
 using LfrlAnvil.MessageBroker.Client.Tests.Helpers;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.MessageBroker.Client.Tests;
 
@@ -21,18 +21,17 @@ public partial class MessageBrokerClientTests : TestsBase
     {
         var remoteEndPoint = new IPEndPoint( IPAddress.Loopback, 12345 );
         var sut = new MessageBrokerClient( new TimestampProvider(), remoteEndPoint, "test" );
-        using ( new AssertionScope() )
-        {
-            sut.Id.Should().Be( 0 );
-            sut.Name.Should().Be( "test" );
-            sut.RemoteEndPoint.Should().BeSameAs( remoteEndPoint );
-            sut.IsServerLittleEndian.Should().BeFalse();
-            sut.ConnectionTimeout.Should().Be( Duration.FromSeconds( 15 ) );
-            sut.MessageTimeout.Should().Be( Duration.FromSeconds( 15 ) );
-            sut.PingInterval.Should().Be( Duration.FromSeconds( 15 ) );
-            sut.LocalEndPoint.Should().BeNull();
-            sut.State.Should().Be( MessageBrokerClientState.Created );
-        }
+        Assertion.All(
+                sut.Id.TestEquals( 0 ),
+                sut.Name.TestEquals( "test" ),
+                sut.RemoteEndPoint.TestRefEquals( remoteEndPoint ),
+                sut.IsServerLittleEndian.TestFalse(),
+                sut.ConnectionTimeout.TestEquals( Duration.FromSeconds( 15 ) ),
+                sut.MessageTimeout.TestEquals( Duration.FromSeconds( 15 ) ),
+                sut.PingInterval.TestEquals( Duration.FromSeconds( 15 ) ),
+                sut.LocalEndPoint.TestNull(),
+                sut.State.TestEquals( MessageBrokerClientState.Created ) )
+            .Go();
     }
 
     [Theory]
@@ -57,18 +56,17 @@ public partial class MessageBrokerClientTests : TestsBase
                 .SetDesiredMessageTimeout( Duration.FromTicks( messageTimeoutTicks ) )
                 .SetDesiredPingInterval( Duration.FromTicks( pingIntervalTicks ) ) );
 
-        using ( new AssertionScope() )
-        {
-            sut.Id.Should().Be( 0 );
-            sut.Name.Should().Be( "test" );
-            sut.RemoteEndPoint.Should().BeSameAs( remoteEndPoint );
-            sut.IsServerLittleEndian.Should().BeFalse();
-            sut.ConnectionTimeout.Should().Be( Duration.FromMilliseconds( expectedConnectionTimeoutMs ) );
-            sut.MessageTimeout.Should().Be( Duration.FromMilliseconds( expectedMessageTimeoutMs ) );
-            sut.PingInterval.Should().Be( Duration.FromMilliseconds( expectedPingIntervalMs ) );
-            sut.LocalEndPoint.Should().BeNull();
-            sut.State.Should().Be( MessageBrokerClientState.Created );
-        }
+        Assertion.All(
+                sut.Id.TestEquals( 0 ),
+                sut.Name.TestEquals( "test" ),
+                sut.RemoteEndPoint.TestRefEquals( remoteEndPoint ),
+                sut.IsServerLittleEndian.TestFalse(),
+                sut.ConnectionTimeout.TestEquals( Duration.FromMilliseconds( expectedConnectionTimeoutMs ) ),
+                sut.MessageTimeout.TestEquals( Duration.FromMilliseconds( expectedMessageTimeoutMs ) ),
+                sut.PingInterval.TestEquals( Duration.FromMilliseconds( expectedPingIntervalMs ) ),
+                sut.LocalEndPoint.TestNull(),
+                sut.State.TestEquals( MessageBrokerClientState.Created ) )
+            .Go();
     }
 
     [Fact]
@@ -77,7 +75,7 @@ public partial class MessageBrokerClientTests : TestsBase
         var timestamps = new TimestampProvider();
         var remoteEndPoint = new IPEndPoint( IPAddress.Loopback, 12345 );
         var action = Lambda.Of( () => new MessageBrokerClient( timestamps, remoteEndPoint, string.Empty ) );
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Fact]
@@ -87,7 +85,7 @@ public partial class MessageBrokerClientTests : TestsBase
         var remoteEndPoint = new IPEndPoint( IPAddress.Loopback, 12345 );
         var name = new string( 'x', 513 );
         var action = Lambda.Of( () => new MessageBrokerClient( timestamps, remoteEndPoint, name ) );
-        action.Should().ThrowExactly<ArgumentOutOfRangeException>();
+        action.Test( exc => exc.TestType().Exact<ArgumentOutOfRangeException>() ).Go();
     }
 
     [Fact]
@@ -125,32 +123,27 @@ public partial class MessageBrokerClientTests : TestsBase
         var localEndPoint = client.LocalEndPoint;
         var events = logs.GetAll();
 
-        using ( new AssertionScope() )
-        {
-            result.Exception.Should().BeNull();
-            client.Id.Should().Be( 1 );
-            client.IsServerLittleEndian.Should().BeTrue();
-            client.MessageTimeout.Should().Be( Duration.FromSeconds( 2 ) );
-            client.PingInterval.Should().Be( Duration.FromSeconds( 10 ) );
-
-            AssertServerData(
-                serverData,
-                (handshakeRequest.Length, MessageBrokerServerEndpoint.HandshakeRequest),
-                (Protocol.PacketHeader.Length, MessageBrokerServerEndpoint.ConfirmHandshakeResponse) );
-
-            events.Should()
-                .BeSequentiallyEqualTo(
-                    $"['test'::<ROOT>] [Connecting] To server at {remoteEndPoint}",
-                    $"['test'::<ROOT>] [Connected] From {localEndPoint}",
+        Assertion.All(
+                result.Exception.TestNull(),
+                client.Id.TestEquals( 1 ),
+                client.IsServerLittleEndian.TestTrue(),
+                client.MessageTimeout.TestEquals( Duration.FromSeconds( 2 ) ),
+                client.PingInterval.TestEquals( Duration.FromSeconds( 10 ) ),
+                AssertServerData(
+                    serverData,
+                    (handshakeRequest.Length, MessageBrokerServerEndpoint.HandshakeRequest),
+                    (Protocol.PacketHeader.Length, MessageBrokerServerEndpoint.ConfirmHandshakeResponse) ),
+                events.TestSequence(
+                [
+                    $"['test'::<ROOT>] [Connecting] To server at {remoteEndPoint}", $"['test'::<ROOT>] [Connected] From {localEndPoint}",
                     "['test'::<ROOT>] [SendingMessage] [PacketLength: 18] HandshakeRequest",
-                    "['test'::<ROOT>] [MessageSent] [PacketLength: 18] HandshakeRequest",
-                    "['test'::<ROOT>] [WaitingForMessage]",
+                    "['test'::<ROOT>] [MessageSent] [PacketLength: 18] HandshakeRequest", "['test'::<ROOT>] [WaitingForMessage]",
                     "['test'::<ROOT>] [MessageReceived] [PacketLength: 18] Begin handling HandshakeAcceptedResponse",
                     "['test'::<ROOT>] [MessageAccepted] [PacketLength: 18] HandshakeAcceptedResponse (Id = 1, IsServerLittleEndian = True, MessageTimeout = 2 second(s), PingInterval = 10 second(s))",
                     "['test'::<ROOT>] [SendingMessage] [PacketLength: 5] ConfirmHandshakeResponse",
-                    "['test'::<ROOT>] [MessageSent] [PacketLength: 5] ConfirmHandshakeResponse",
-                    "['test'::<ROOT>] [WaitingForMessage]" );
-        }
+                    "['test'::<ROOT>] [MessageSent] [PacketLength: 5] ConfirmHandshakeResponse", "['test'::<ROOT>] [WaitingForMessage]"
+                ] ) )
+            .Go();
     }
 
     [Fact]
@@ -200,22 +193,19 @@ public partial class MessageBrokerClientTests : TestsBase
         var localEndPoint = client.LocalEndPoint;
         var events = logs.GetAll();
 
-        using ( new AssertionScope() )
-        {
-            stream.Should().NotBeNull();
-            result.Exception.Should().BeNull();
-            client.Id.Should().Be( 2 );
-            client.IsServerLittleEndian.Should().BeTrue();
-            client.MessageTimeout.Should().Be( Duration.FromSeconds( 1.5 ) );
-            client.PingInterval.Should().Be( Duration.FromSeconds( 15 ) );
-
-            AssertServerData(
-                serverData,
-                (handshakeRequest.Length, MessageBrokerServerEndpoint.HandshakeRequest),
-                (Protocol.PacketHeader.Length, MessageBrokerServerEndpoint.ConfirmHandshakeResponse) );
-
-            events.Should()
-                .BeSequentiallyEqualTo(
+        Assertion.All(
+                stream.TestNotNull(),
+                result.Exception.TestNull(),
+                client.Id.TestEquals( 2 ),
+                client.IsServerLittleEndian.TestTrue(),
+                client.MessageTimeout.TestEquals( Duration.FromSeconds( 1.5 ) ),
+                client.PingInterval.TestEquals( Duration.FromSeconds( 15 ) ),
+                AssertServerData(
+                    serverData,
+                    (handshakeRequest.Length, MessageBrokerServerEndpoint.HandshakeRequest),
+                    (Protocol.PacketHeader.Length, MessageBrokerServerEndpoint.ConfirmHandshakeResponse) ),
+                events.TestSequence(
+                [
                     $"['foo'::<ROOT>] [Connecting] To server at {remoteEndPoint}",
                     $"['foo'::<ROOT>] [Connected] From {localEndPoint}",
                     "['foo'::<ROOT>] [SendingMessage] [PacketLength: 17] HandshakeRequest",
@@ -225,8 +215,9 @@ public partial class MessageBrokerClientTests : TestsBase
                     "['foo'::<ROOT>] [MessageAccepted] [PacketLength: 18] HandshakeAcceptedResponse (Id = 2, IsServerLittleEndian = True, MessageTimeout = 1.5 second(s), PingInterval = 15 second(s))",
                     "['foo'::<ROOT>] [SendingMessage] [PacketLength: 5] ConfirmHandshakeResponse",
                     "['foo'::<ROOT>] [MessageSent] [PacketLength: 5] ConfirmHandshakeResponse",
-                    "['foo'::<ROOT>] [WaitingForMessage]" );
-        }
+                    "['foo'::<ROOT>] [WaitingForMessage]"
+                ] ) )
+            .Go();
     }
 
     [Fact]
@@ -245,12 +236,10 @@ public partial class MessageBrokerClientTests : TestsBase
             exception = exc;
         }
 
-        using ( new AssertionScope() )
-        {
-            exception.Should().BeOfType<MessageBrokerClientDisposedException>();
-            ((exception as MessageBrokerClientDisposedException)?.Client).Should().BeSameAs( sut );
-            sut.State.Should().Be( MessageBrokerClientState.Disposed );
-        }
+        Assertion.All(
+                exception.TestType().Exact<MessageBrokerClientDisposedException>( e => e.Client.TestRefEquals( sut ) ),
+                sut.State.TestEquals( MessageBrokerClientState.Disposed ) )
+            .Go();
     }
 
     [Fact]
@@ -282,23 +271,16 @@ public partial class MessageBrokerClientTests : TestsBase
         await client.StartAsync();
         await serverTask;
 
-        Exception? exception = null;
-        try
-        {
-            await client.StartAsync();
-        }
-        catch ( Exception exc )
-        {
-            exception = exc;
-        }
+        var action = Lambda.Of( async () => await client.StartAsync() );
 
-        using ( new AssertionScope() )
-        {
-            exception.Should().BeOfType<MessageBrokerClientStateException>();
-            ((exception as MessageBrokerClientStateException)?.Client).Should().BeSameAs( client );
-            ((exception as MessageBrokerClientStateException)?.Actual).Should().Be( MessageBrokerClientState.Running );
-            ((exception as MessageBrokerClientStateException)?.Expected).Should().Be( MessageBrokerClientState.Created );
-        }
+        action.Test(
+                exc => exc.TestType()
+                    .Exact<MessageBrokerClientStateException>(
+                        e => Assertion.All(
+                            e.Client.TestRefEquals( client ),
+                            e.Actual.TestEquals( MessageBrokerClientState.Running ),
+                            e.Expected.TestEquals( MessageBrokerClientState.Created ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -329,26 +311,22 @@ public partial class MessageBrokerClientTests : TestsBase
         var result = await client.StartAsync();
         await serverTask;
 
-        using ( new AssertionScope() )
-        {
-            result.Exception.Should().BeSameAs( exception );
-            logs.GetAll().FirstOrDefault().Should().Be( $"['test'::<ROOT>] [Connecting] To server at {remoteEndPoint}" );
-            logs.GetAll()
-                .ElementAtOrDefault( 1 )
-                .Should()
-                .StartWith(
-                    """
-                    ['test'::<ROOT>] [Connecting] Encountered an error:
-                    System.Exception: foo
-                    """ );
-
-            logs.GetAll()
-                .Skip( 2 )
-                .Should()
-                .BeSequentiallyEqualTo(
-                    "['test'::<ROOT>] [Disposing]",
-                    "['test'::<ROOT>] [Disposed]" );
-        }
+        Assertion.All(
+                result.Exception.TestRefEquals( exception ),
+                logs.GetAll()
+                    .TestCount( count => count.TestEquals( 4 ) )
+                    .Then(
+                        l => Assertion.All(
+                            l[0].TestEquals( $"['test'::<ROOT>] [Connecting] To server at {remoteEndPoint}" ),
+                            l[1]
+                                .TestStartsWith(
+                                    """
+                                    ['test'::<ROOT>] [Connecting] Encountered an error:
+                                    System.Exception: foo
+                                    """ ),
+                            l[2].TestEquals( "['test'::<ROOT>] [Disposing]" ),
+                            l[3].TestEquals( "['test'::<ROOT>] [Disposed]" ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -383,18 +361,17 @@ public partial class MessageBrokerClientTests : TestsBase
         var result = await client.StartAsync();
         await serverTask;
 
-        using ( new AssertionScope() )
-        {
-            result.Exception.Should().BeOfType<MessageBrokerClientDisposedException>();
-            ((result.Exception as MessageBrokerClientDisposedException)?.Client).Should().BeSameAs( client );
-            logs.GetAll()
-                .Should()
-                .BeSequentiallyEqualTo(
-                    $"['test'::<ROOT>] [Connecting] To server at {remoteEndPoint}",
-                    "['test'::<ROOT>] [Disposing]",
-                    "['test'::<ROOT>] [Disposed]",
-                    "['test'::<ROOT>] [Connecting] Operation cancelled (client disposed)" );
-        }
+        Assertion.All(
+                result.Exception.TestType().Exact<MessageBrokerClientDisposedException>( e => e.Client.TestRefEquals( client ) ),
+                logs.GetAll()
+                    .TestSequence(
+                    [
+                        $"['test'::<ROOT>] [Connecting] To server at {remoteEndPoint}",
+                        "['test'::<ROOT>] [Disposing]",
+                        "['test'::<ROOT>] [Disposed]",
+                        "['test'::<ROOT>] [Connecting] Operation cancelled (client disposed)"
+                    ] ) )
+            .Go();
     }
 
     [Fact]
@@ -441,33 +418,24 @@ public partial class MessageBrokerClientTests : TestsBase
         var result = await client.StartAsync();
         await serverTask;
 
-        using ( new AssertionScope() )
-        {
-            result.Exception.Should().BeOfType<ObjectDisposedException>();
-            logs.GetAll()
-                .Take( 3 )
-                .Should()
-                .BeSequentiallyEqualTo(
-                    $"['test'::<ROOT>] [Connecting] To server at {remoteEndPoint}",
-                    $"['test'::<ROOT>] [Connected] From {localEndPoint}",
-                    "['test'::<ROOT>] [SendingMessage] [PacketLength: 18] HandshakeRequest" );
-
-            logs.GetAll()
-                .ElementAtOrDefault( 3 )
-                .Should()
-                .StartWith(
-                    """
-                    ['test'::<ROOT>] [SendingMessage] [PacketLength: 18] Encountered an error:
-                    System.ObjectDisposedException:
-                    """ );
-
-            logs.GetAll()
-                .Skip( 4 )
-                .Should()
-                .BeSequentiallyEqualTo(
-                    "['test'::<ROOT>] [Disposing]",
-                    "['test'::<ROOT>] [Disposed]" );
-        }
+        Assertion.All(
+                result.Exception.TestType().Exact<ObjectDisposedException>(),
+                logs.GetAll()
+                    .TestCount( count => count.TestEquals( 6 ) )
+                    .Then(
+                        l => Assertion.All(
+                            l[0].TestEquals( $"['test'::<ROOT>] [Connecting] To server at {remoteEndPoint}" ),
+                            l[1].TestEquals( $"['test'::<ROOT>] [Connected] From {localEndPoint}" ),
+                            l[2].TestEquals( "['test'::<ROOT>] [SendingMessage] [PacketLength: 18] HandshakeRequest" ),
+                            l[3]
+                                .TestStartsWith(
+                                    """
+                                    ['test'::<ROOT>] [SendingMessage] [PacketLength: 18] Encountered an error:
+                                    System.ObjectDisposedException:
+                                    """ ),
+                            l[4].TestEquals( "['test'::<ROOT>] [Disposing]" ),
+                            l[5].TestEquals( "['test'::<ROOT>] [Disposed]" ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -507,35 +475,26 @@ public partial class MessageBrokerClientTests : TestsBase
         var result = await client.StartAsync();
         await serverTask;
 
-        using ( new AssertionScope() )
-        {
-            result.Exception.Should().BeOfType<EndOfStreamException>();
-            logs.GetAll()
-                .Take( 5 )
-                .Should()
-                .BeSequentiallyEqualTo(
-                    $"['test'::<ROOT>] [Connecting] To server at {remoteEndPoint}",
-                    $"['test'::<ROOT>] [Connected] From {localEndPoint}",
-                    "['test'::<ROOT>] [SendingMessage] [PacketLength: 18] HandshakeRequest",
-                    "['test'::<ROOT>] [MessageSent] [PacketLength: 18] HandshakeRequest",
-                    "['test'::<ROOT>] [WaitingForMessage]" );
-
-            logs.GetAll()
-                .ElementAtOrDefault( 5 )
-                .Should()
-                .StartWith(
-                    """
-                    ['test'::<ROOT>] [WaitingForMessage] Encountered an error:
-                    System.IO.EndOfStreamException:
-                    """ );
-
-            logs.GetAll()
-                .Skip( 6 )
-                .Should()
-                .BeSequentiallyEqualTo(
-                    "['test'::<ROOT>] [Disposing]",
-                    "['test'::<ROOT>] [Disposed]" );
-        }
+        Assertion.All(
+                result.Exception.TestType().Exact<EndOfStreamException>(),
+                logs.GetAll()
+                    .TestCount( count => count.TestEquals( 8 ) )
+                    .Then(
+                        l => Assertion.All(
+                            l[0].TestEquals( $"['test'::<ROOT>] [Connecting] To server at {remoteEndPoint}" ),
+                            l[1].TestEquals( $"['test'::<ROOT>] [Connected] From {localEndPoint}" ),
+                            l[2].TestEquals( "['test'::<ROOT>] [SendingMessage] [PacketLength: 18] HandshakeRequest" ),
+                            l[3].TestEquals( "['test'::<ROOT>] [MessageSent] [PacketLength: 18] HandshakeRequest" ),
+                            l[4].TestEquals( "['test'::<ROOT>] [WaitingForMessage]" ),
+                            l[5]
+                                .TestStartsWith(
+                                    """
+                                    ['test'::<ROOT>] [WaitingForMessage] Encountered an error:
+                                    System.IO.EndOfStreamException:
+                                    """ ),
+                            l[6].TestEquals( "['test'::<ROOT>] [Disposing]" ),
+                            l[7].TestEquals( "['test'::<ROOT>] [Disposed]" ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -575,33 +534,33 @@ public partial class MessageBrokerClientTests : TestsBase
         var result = await client.StartAsync();
         await serverTask;
 
-        using ( new AssertionScope() )
-        {
-            result.Exception.Should().BeOfType<MessageBrokerClientRequestException>();
-            ((result.Exception as MessageBrokerClientRequestException)?.Client).Should().BeSameAs( client );
-            ((result.Exception as MessageBrokerClientRequestException)?.Payload).Should().Be( handshakeRequest.Header.Payload );
-            ((result.Exception as MessageBrokerClientRequestException)?.Endpoint).Should()
-                .Be( handshakeRequest.Header.GetServerEndpoint() );
-
-            logs.GetAll()
-                .Should()
-                .BeSequentiallyEqualTo(
-                    $"['test'::<ROOT>] [Connecting] To server at {remoteEndPoint}",
-                    $"['test'::<ROOT>] [Connected] From {localEndPoint}",
-                    "['test'::<ROOT>] [SendingMessage] [PacketLength: 18] HandshakeRequest",
-                    "['test'::<ROOT>] [MessageSent] [PacketLength: 18] HandshakeRequest",
-                    "['test'::<ROOT>] [WaitingForMessage]",
-                    "['test'::<ROOT>] [MessageReceived] [PacketLength: 6] HandshakeRejectedResponse",
-                    """
-                    ['test'::<ROOT>] [MessageReceived] [PacketLength: 6] Encountered an error:
-                    LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientRequestException: Message broker server rejected an invalid HandshakeRequest with payload 13 sent by client 'test'. Encountered 3 error(s):
-                    1. Server found client's name length to be out of bounds.
-                    2. Server failed to decode client's name using Unicode (UTF-8) encoding.
-                    3. Client name already exists.
-                    """,
-                    "['test'::<ROOT>] [Disposing]",
-                    "['test'::<ROOT>] [Disposed]" );
-        }
+        Assertion.All(
+                result.Exception.TestType()
+                    .Exact<MessageBrokerClientRequestException>(
+                        e => Assertion.All(
+                            e.Client.TestRefEquals( client ),
+                            e.Payload.TestEquals( handshakeRequest.Header.Payload ),
+                            e.Endpoint.TestEquals( handshakeRequest.Header.GetServerEndpoint() ) ) ),
+                logs.GetAll()
+                    .TestSequence(
+                    [
+                        $"['test'::<ROOT>] [Connecting] To server at {remoteEndPoint}",
+                        $"['test'::<ROOT>] [Connected] From {localEndPoint}",
+                        "['test'::<ROOT>] [SendingMessage] [PacketLength: 18] HandshakeRequest",
+                        "['test'::<ROOT>] [MessageSent] [PacketLength: 18] HandshakeRequest",
+                        "['test'::<ROOT>] [WaitingForMessage]",
+                        "['test'::<ROOT>] [MessageReceived] [PacketLength: 6] HandshakeRejectedResponse",
+                        """
+                        ['test'::<ROOT>] [MessageReceived] [PacketLength: 6] Encountered an error:
+                        LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientRequestException: Message broker server rejected an invalid HandshakeRequest with payload 13 sent by client 'test'. Encountered 3 error(s):
+                        1. Server found client's name length to be out of bounds.
+                        2. Server failed to decode client's name using Unicode (UTF-8) encoding.
+                        3. Client name already exists.
+                        """,
+                        "['test'::<ROOT>] [Disposing]",
+                        "['test'::<ROOT>] [Disposed]"
+                    ] ) )
+            .Go();
     }
 
     [Fact]
@@ -641,31 +600,31 @@ public partial class MessageBrokerClientTests : TestsBase
         var result = await client.StartAsync();
         await serverTask;
 
-        using ( new AssertionScope() )
-        {
-            result.Exception.Should().BeOfType<MessageBrokerClientProtocolException>();
-            ((result.Exception as MessageBrokerClientProtocolException)?.Client).Should().BeSameAs( client );
-            ((result.Exception as MessageBrokerClientProtocolException)?.Payload).Should().Be( 2 );
-            ((result.Exception as MessageBrokerClientProtocolException)?.Endpoint).Should()
-                .Be( MessageBrokerClientEndpoint.HandshakeRejectedResponse );
-
-            logs.GetAll()
-                .Should()
-                .BeSequentiallyEqualTo(
-                    $"['test'::<ROOT>] [Connecting] To server at {remoteEndPoint}",
-                    $"['test'::<ROOT>] [Connected] From {localEndPoint}",
-                    "['test'::<ROOT>] [SendingMessage] [PacketLength: 18] HandshakeRequest",
-                    "['test'::<ROOT>] [MessageSent] [PacketLength: 18] HandshakeRequest",
-                    "['test'::<ROOT>] [WaitingForMessage]",
-                    "['test'::<ROOT>] [MessageReceived] [PacketLength: 7] HandshakeRejectedResponse",
-                    """
-                    ['test'::<ROOT>] [MessageRejected] [PacketLength: 7] Encountered an error:
-                    LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientProtocolException: Message broker client 'test' received an invalid HandshakeRejectedResponse with payload 2 from the server. Encountered 1 error(s):
-                    1. Expected header payload to be 1.
-                    """,
-                    "['test'::<ROOT>] [Disposing]",
-                    "['test'::<ROOT>] [Disposed]" );
-        }
+        Assertion.All(
+                result.Exception.TestType()
+                    .Exact<MessageBrokerClientProtocolException>(
+                        e => Assertion.All(
+                            e.Client.TestRefEquals( client ),
+                            e.Payload.TestEquals( 2U ),
+                            e.Endpoint.TestEquals( MessageBrokerClientEndpoint.HandshakeRejectedResponse ) ) ),
+                logs.GetAll()
+                    .TestSequence(
+                    [
+                        $"['test'::<ROOT>] [Connecting] To server at {remoteEndPoint}",
+                        $"['test'::<ROOT>] [Connected] From {localEndPoint}",
+                        "['test'::<ROOT>] [SendingMessage] [PacketLength: 18] HandshakeRequest",
+                        "['test'::<ROOT>] [MessageSent] [PacketLength: 18] HandshakeRequest",
+                        "['test'::<ROOT>] [WaitingForMessage]",
+                        "['test'::<ROOT>] [MessageReceived] [PacketLength: 7] HandshakeRejectedResponse",
+                        """
+                        ['test'::<ROOT>] [MessageRejected] [PacketLength: 7] Encountered an error:
+                        LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientProtocolException: Message broker client 'test' received an invalid HandshakeRejectedResponse with payload 2 from the server. Encountered 1 error(s):
+                        1. Expected header payload to be 1.
+                        """,
+                        "['test'::<ROOT>] [Disposing]",
+                        "['test'::<ROOT>] [Disposed]"
+                    ] ) )
+            .Go();
     }
 
     [Fact]
@@ -705,33 +664,33 @@ public partial class MessageBrokerClientTests : TestsBase
         var result = await client.StartAsync();
         await serverTask;
 
-        using ( new AssertionScope() )
-        {
-            result.Exception.Should().BeOfType<MessageBrokerClientProtocolException>();
-            ((result.Exception as MessageBrokerClientProtocolException)?.Client).Should().BeSameAs( client );
-            ((result.Exception as MessageBrokerClientProtocolException)?.Payload).Should().Be( Protocol.HandshakeAcceptedResponse.Length );
-            ((result.Exception as MessageBrokerClientProtocolException)?.Endpoint).Should()
-                .Be( MessageBrokerClientEndpoint.HandshakeAcceptedResponse );
-
-            logs.GetAll()
-                .Should()
-                .BeSequentiallyEqualTo(
-                    $"['test'::<ROOT>] [Connecting] To server at {remoteEndPoint}",
-                    $"['test'::<ROOT>] [Connected] From {localEndPoint}",
-                    "['test'::<ROOT>] [SendingMessage] [PacketLength: 18] HandshakeRequest",
-                    "['test'::<ROOT>] [MessageSent] [PacketLength: 18] HandshakeRequest",
-                    "['test'::<ROOT>] [WaitingForMessage]",
-                    "['test'::<ROOT>] [MessageReceived] [PacketLength: 18] Begin handling HandshakeAcceptedResponse",
-                    """
-                    ['test'::<ROOT>] [MessageRejected] [PacketLength: 18] Encountered an error:
-                    LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientProtocolException: Message broker client 'test' received an invalid HandshakeAcceptedResponse with payload 13 from the server. Encountered 3 error(s):
-                    1. Expected client ID to be greater than 0 but found 0.
-                    2. Expected received message timeout to be in [0.001 second(s), 2147483.647 second(s)] range but found 0 second(s).
-                    3. Expected received ping interval to be in [0.001 second(s), 86400 second(s)] range but found 0 second(s).
-                    """,
-                    "['test'::<ROOT>] [Disposing]",
-                    "['test'::<ROOT>] [Disposed]" );
-        }
+        Assertion.All(
+                result.Exception.TestType()
+                    .Exact<MessageBrokerClientProtocolException>(
+                        e => Assertion.All(
+                            e.Client.TestRefEquals( client ),
+                            e.Payload.TestEquals( ( uint )Protocol.HandshakeAcceptedResponse.Length ),
+                            e.Endpoint.TestEquals( MessageBrokerClientEndpoint.HandshakeAcceptedResponse ) ) ),
+                logs.GetAll()
+                    .TestSequence(
+                    [
+                        $"['test'::<ROOT>] [Connecting] To server at {remoteEndPoint}",
+                        $"['test'::<ROOT>] [Connected] From {localEndPoint}",
+                        "['test'::<ROOT>] [SendingMessage] [PacketLength: 18] HandshakeRequest",
+                        "['test'::<ROOT>] [MessageSent] [PacketLength: 18] HandshakeRequest",
+                        "['test'::<ROOT>] [WaitingForMessage]",
+                        "['test'::<ROOT>] [MessageReceived] [PacketLength: 18] Begin handling HandshakeAcceptedResponse",
+                        """
+                        ['test'::<ROOT>] [MessageRejected] [PacketLength: 18] Encountered an error:
+                        LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientProtocolException: Message broker client 'test' received an invalid HandshakeAcceptedResponse with payload 13 from the server. Encountered 3 error(s):
+                        1. Expected client ID to be greater than 0 but found 0.
+                        2. Expected received message timeout to be in [0.001 second(s), 2147483.647 second(s)] range but found 0 second(s).
+                        3. Expected received ping interval to be in [0.001 second(s), 86400 second(s)] range but found 0 second(s).
+                        """,
+                        "['test'::<ROOT>] [Disposing]",
+                        "['test'::<ROOT>] [Disposed]"
+                    ] ) )
+            .Go();
     }
 
     [Fact]
@@ -771,31 +730,31 @@ public partial class MessageBrokerClientTests : TestsBase
         var result = await client.StartAsync();
         await serverTask;
 
-        using ( new AssertionScope() )
-        {
-            result.Exception.Should().BeOfType<MessageBrokerClientProtocolException>();
-            ((result.Exception as MessageBrokerClientProtocolException)?.Client).Should().BeSameAs( client );
-            ((result.Exception as MessageBrokerClientProtocolException)?.Payload).Should().Be( 12 );
-            ((result.Exception as MessageBrokerClientProtocolException)?.Endpoint).Should()
-                .Be( MessageBrokerClientEndpoint.HandshakeAcceptedResponse );
-
-            logs.GetAll()
-                .Should()
-                .BeSequentiallyEqualTo(
-                    $"['test'::<ROOT>] [Connecting] To server at {remoteEndPoint}",
-                    $"['test'::<ROOT>] [Connected] From {localEndPoint}",
-                    "['test'::<ROOT>] [SendingMessage] [PacketLength: 18] HandshakeRequest",
-                    "['test'::<ROOT>] [MessageSent] [PacketLength: 18] HandshakeRequest",
-                    "['test'::<ROOT>] [WaitingForMessage]",
-                    "['test'::<ROOT>] [MessageReceived] [PacketLength: 17] Begin handling HandshakeAcceptedResponse",
-                    """
-                    ['test'::<ROOT>] [MessageRejected] [PacketLength: 17] Encountered an error:
-                    LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientProtocolException: Message broker client 'test' received an invalid HandshakeAcceptedResponse with payload 12 from the server. Encountered 1 error(s):
-                    1. Expected header payload to be 13.
-                    """,
-                    "['test'::<ROOT>] [Disposing]",
-                    "['test'::<ROOT>] [Disposed]" );
-        }
+        Assertion.All(
+                result.Exception.TestType()
+                    .Exact<MessageBrokerClientProtocolException>(
+                        e => Assertion.All(
+                            e.Client.TestRefEquals( client ),
+                            e.Payload.TestEquals( 12U ),
+                            e.Endpoint.TestEquals( MessageBrokerClientEndpoint.HandshakeAcceptedResponse ) ) ),
+                logs.GetAll()
+                    .TestSequence(
+                    [
+                        $"['test'::<ROOT>] [Connecting] To server at {remoteEndPoint}",
+                        $"['test'::<ROOT>] [Connected] From {localEndPoint}",
+                        "['test'::<ROOT>] [SendingMessage] [PacketLength: 18] HandshakeRequest",
+                        "['test'::<ROOT>] [MessageSent] [PacketLength: 18] HandshakeRequest",
+                        "['test'::<ROOT>] [WaitingForMessage]",
+                        "['test'::<ROOT>] [MessageReceived] [PacketLength: 17] Begin handling HandshakeAcceptedResponse",
+                        """
+                        ['test'::<ROOT>] [MessageRejected] [PacketLength: 17] Encountered an error:
+                        LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientProtocolException: Message broker client 'test' received an invalid HandshakeAcceptedResponse with payload 12 from the server. Encountered 1 error(s):
+                        1. Expected header payload to be 13.
+                        """,
+                        "['test'::<ROOT>] [Disposing]",
+                        "['test'::<ROOT>] [Disposed]"
+                    ] ) )
+            .Go();
     }
 
     [Fact]
@@ -835,30 +794,31 @@ public partial class MessageBrokerClientTests : TestsBase
         var result = await client.StartAsync();
         await serverTask;
 
-        using ( new AssertionScope() )
-        {
-            result.Exception.Should().BeOfType<MessageBrokerClientProtocolException>();
-            ((result.Exception as MessageBrokerClientProtocolException)?.Client).Should().BeSameAs( client );
-            ((result.Exception as MessageBrokerClientProtocolException)?.Payload).Should().Be( 0 );
-            ((result.Exception as MessageBrokerClientProtocolException)?.Endpoint).Should().Be( ( MessageBrokerClientEndpoint )0 );
-
-            logs.GetAll()
-                .Should()
-                .BeSequentiallyEqualTo(
-                    $"['test'::<ROOT>] [Connecting] To server at {remoteEndPoint}",
-                    $"['test'::<ROOT>] [Connected] From {localEndPoint}",
-                    "['test'::<ROOT>] [SendingMessage] [PacketLength: 18] HandshakeRequest",
-                    "['test'::<ROOT>] [MessageSent] [PacketLength: 18] HandshakeRequest",
-                    "['test'::<ROOT>] [WaitingForMessage]",
-                    "['test'::<ROOT>] [MessageReceived] [PacketLength: 5] 0",
-                    """
-                    ['test'::<ROOT>] [MessageRejected] [PacketLength: 5] Encountered an error:
-                    LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientProtocolException: Message broker client 'test' received an invalid 0 with payload 0 from the server. Encountered 1 error(s):
-                    1. Received unexpected client endpoint.
-                    """,
-                    "['test'::<ROOT>] [Disposing]",
-                    "['test'::<ROOT>] [Disposed]" );
-        }
+        Assertion.All(
+                result.Exception.TestType()
+                    .Exact<MessageBrokerClientProtocolException>(
+                        e => Assertion.All(
+                            e.Client.TestRefEquals( client ),
+                            e.Payload.TestEquals( 0U ),
+                            e.Endpoint.TestEquals( ( MessageBrokerClientEndpoint )0 ) ) ),
+                logs.GetAll()
+                    .TestSequence(
+                    [
+                        $"['test'::<ROOT>] [Connecting] To server at {remoteEndPoint}",
+                        $"['test'::<ROOT>] [Connected] From {localEndPoint}",
+                        "['test'::<ROOT>] [SendingMessage] [PacketLength: 18] HandshakeRequest",
+                        "['test'::<ROOT>] [MessageSent] [PacketLength: 18] HandshakeRequest",
+                        "['test'::<ROOT>] [WaitingForMessage]",
+                        "['test'::<ROOT>] [MessageReceived] [PacketLength: 5] 0",
+                        """
+                        ['test'::<ROOT>] [MessageRejected] [PacketLength: 5] Encountered an error:
+                        LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientProtocolException: Message broker client 'test' received an invalid 0 with payload 0 from the server. Encountered 1 error(s):
+                        1. Received unexpected client endpoint.
+                        """,
+                        "['test'::<ROOT>] [Disposing]",
+                        "['test'::<ROOT>] [Disposed]"
+                    ] ) )
+            .Go();
     }
 
     [Fact]
@@ -884,18 +844,17 @@ public partial class MessageBrokerClientTests : TestsBase
 
         var result = await client.StartAsync();
 
-        using ( new AssertionScope() )
-        {
-            result.Exception.Should().BeOfType<MessageBrokerClientDisposedException>();
-            ((result.Exception as MessageBrokerClientDisposedException)?.Client).Should().BeSameAs( client );
-            logs.GetAll()
-                .Should()
-                .BeSequentiallyEqualTo(
-                    $"['test'::<ROOT>] [Connecting] To server at {remoteEndPoint}",
-                    "['test'::<ROOT>] [Disposing]",
-                    "['test'::<ROOT>] [Disposed]",
-                    "['test'::<ROOT>] [Connecting] Operation cancelled (client disposed)" );
-        }
+        Assertion.All(
+                result.Exception.TestType().Exact<MessageBrokerClientDisposedException>( e => e.Client.TestRefEquals( client ) ),
+                logs.GetAll()
+                    .TestSequence(
+                    [
+                        $"['test'::<ROOT>] [Connecting] To server at {remoteEndPoint}",
+                        "['test'::<ROOT>] [Disposing]",
+                        "['test'::<ROOT>] [Disposed]",
+                        "['test'::<ROOT>] [Connecting] Operation cancelled (client disposed)"
+                    ] ) )
+            .Go();
     }
 
     [Fact]
@@ -935,18 +894,17 @@ public partial class MessageBrokerClientTests : TestsBase
         var result = await client.StartAsync();
         await serverTask;
 
-        using ( new AssertionScope() )
-        {
-            result.Exception.Should().BeOfType<MessageBrokerClientDisposedException>();
-            ((result.Exception as MessageBrokerClientDisposedException)?.Client).Should().BeSameAs( client );
-            logs.GetAll()
-                .Should()
-                .BeSequentiallyEqualTo(
-                    $"['test'::<ROOT>] [Connecting] To server at {remoteEndPoint}",
-                    $"['test'::<ROOT>] [Connected] From {localEndPoint}",
-                    "['test'::<ROOT>] [Disposing]",
-                    "['test'::<ROOT>] [Disposed]" );
-        }
+        Assertion.All(
+                result.Exception.TestType().Exact<MessageBrokerClientDisposedException>( e => e.Client.TestRefEquals( client ) ),
+                logs.GetAll()
+                    .TestSequence(
+                    [
+                        $"['test'::<ROOT>] [Connecting] To server at {remoteEndPoint}",
+                        $"['test'::<ROOT>] [Connected] From {localEndPoint}",
+                        "['test'::<ROOT>] [Disposing]",
+                        "['test'::<ROOT>] [Disposed]"
+                    ] ) )
+            .Go();
     }
 
     [Fact]
@@ -986,20 +944,19 @@ public partial class MessageBrokerClientTests : TestsBase
         var result = await client.StartAsync();
         await serverTask;
 
-        using ( new AssertionScope() )
-        {
-            result.Exception.Should().BeOfType<MessageBrokerClientDisposedException>();
-            ((result.Exception as MessageBrokerClientDisposedException)?.Client).Should().BeSameAs( client );
-            logs.GetAll()
-                .Should()
-                .BeSequentiallyEqualTo(
-                    $"['test'::<ROOT>] [Connecting] To server at {remoteEndPoint}",
-                    $"['test'::<ROOT>] [Connected] From {localEndPoint}",
-                    "['test'::<ROOT>] [SendingMessage] [PacketLength: 18] HandshakeRequest",
-                    "['test'::<ROOT>] [Disposing]",
-                    "['test'::<ROOT>] [Disposed]",
-                    "['test'::<ROOT>] [SendingMessage] [PacketLength: 18] Operation cancelled (client disposed)" );
-        }
+        Assertion.All(
+                result.Exception.TestType().Exact<MessageBrokerClientDisposedException>( e => e.Client.TestRefEquals( client ) ),
+                logs.GetAll()
+                    .TestSequence(
+                    [
+                        $"['test'::<ROOT>] [Connecting] To server at {remoteEndPoint}",
+                        $"['test'::<ROOT>] [Connected] From {localEndPoint}",
+                        "['test'::<ROOT>] [SendingMessage] [PacketLength: 18] HandshakeRequest",
+                        "['test'::<ROOT>] [Disposing]",
+                        "['test'::<ROOT>] [Disposed]",
+                        "['test'::<ROOT>] [SendingMessage] [PacketLength: 18] Operation cancelled (client disposed)"
+                    ] ) )
+            .Go();
     }
 
     [Fact]
@@ -1040,22 +997,21 @@ public partial class MessageBrokerClientTests : TestsBase
         var result = await client.StartAsync();
         await serverTask;
 
-        using ( new AssertionScope() )
-        {
-            result.Exception.Should().BeOfType<MessageBrokerClientDisposedException>();
-            ((result.Exception as MessageBrokerClientDisposedException)?.Client).Should().BeSameAs( client );
-            logs.GetAll()
-                .Should()
-                .BeSequentiallyEqualTo(
-                    $"['test'::<ROOT>] [Connecting] To server at {remoteEndPoint}",
-                    $"['test'::<ROOT>] [Connected] From {localEndPoint}",
-                    "['test'::<ROOT>] [SendingMessage] [PacketLength: 18] HandshakeRequest",
-                    "['test'::<ROOT>] [MessageSent] [PacketLength: 18] HandshakeRequest",
-                    "['test'::<ROOT>] [WaitingForMessage]",
-                    "['test'::<ROOT>] [Disposing]",
-                    "['test'::<ROOT>] [Disposed]",
-                    "['test'::<ROOT>] [WaitingForMessage] Operation cancelled (client disposed)" );
-        }
+        Assertion.All(
+                result.Exception.TestType().Exact<MessageBrokerClientDisposedException>( e => e.Client.TestRefEquals( client ) ),
+                logs.GetAll()
+                    .TestSequence(
+                    [
+                        $"['test'::<ROOT>] [Connecting] To server at {remoteEndPoint}",
+                        $"['test'::<ROOT>] [Connected] From {localEndPoint}",
+                        "['test'::<ROOT>] [SendingMessage] [PacketLength: 18] HandshakeRequest",
+                        "['test'::<ROOT>] [MessageSent] [PacketLength: 18] HandshakeRequest",
+                        "['test'::<ROOT>] [WaitingForMessage]",
+                        "['test'::<ROOT>] [Disposing]",
+                        "['test'::<ROOT>] [Disposed]",
+                        "['test'::<ROOT>] [WaitingForMessage] Operation cancelled (client disposed)"
+                    ] ) )
+            .Go();
     }
 
     [Fact]
@@ -1077,17 +1033,17 @@ public partial class MessageBrokerClientTests : TestsBase
 
         var result = await client.StartAsync();
 
-        using ( new AssertionScope() )
-        {
-            result.Exception.Should().BeOfType<OperationCanceledException>();
-            logs.GetAll()
-                .Should()
-                .BeSequentiallyEqualTo(
-                    $"['test'::<ROOT>] [Connecting] To server at {remoteEndPoint}",
-                    "['test'::<ROOT>] [Connecting] Operation cancelled",
-                    "['test'::<ROOT>] [Disposing]",
-                    "['test'::<ROOT>] [Disposed]" );
-        }
+        Assertion.All(
+                result.Exception.TestType().AssignableTo<OperationCanceledException>(),
+                logs.GetAll()
+                    .TestSequence(
+                    [
+                        $"['test'::<ROOT>] [Connecting] To server at {remoteEndPoint}",
+                        "['test'::<ROOT>] [Connecting] Operation cancelled",
+                        "['test'::<ROOT>] [Disposing]",
+                        "['test'::<ROOT>] [Disposed]"
+                    ] ) )
+            .Go();
     }
 
     [Fact]
@@ -1124,21 +1080,21 @@ public partial class MessageBrokerClientTests : TestsBase
         var result = await client.StartAsync();
         await serverTask;
 
-        using ( new AssertionScope() )
-        {
-            result.Exception.Should().BeOfType<OperationCanceledException>();
-            logs.GetAll()
-                .Should()
-                .BeSequentiallyEqualTo(
-                    $"['test'::<ROOT>] [Connecting] To server at {remoteEndPoint}",
-                    $"['test'::<ROOT>] [Connected] From {localEndPoint}",
-                    "['test'::<ROOT>] [SendingMessage] [PacketLength: 18] HandshakeRequest",
-                    "['test'::<ROOT>] [MessageSent] [PacketLength: 18] HandshakeRequest",
-                    "['test'::<ROOT>] [WaitingForMessage]",
-                    "['test'::<ROOT>] [WaitingForMessage] Operation cancelled",
-                    "['test'::<ROOT>] [Disposing]",
-                    "['test'::<ROOT>] [Disposed]" );
-        }
+        Assertion.All(
+                result.Exception.TestType().AssignableTo<OperationCanceledException>(),
+                logs.GetAll()
+                    .TestSequence(
+                    [
+                        $"['test'::<ROOT>] [Connecting] To server at {remoteEndPoint}",
+                        $"['test'::<ROOT>] [Connected] From {localEndPoint}",
+                        "['test'::<ROOT>] [SendingMessage] [PacketLength: 18] HandshakeRequest",
+                        "['test'::<ROOT>] [MessageSent] [PacketLength: 18] HandshakeRequest",
+                        "['test'::<ROOT>] [WaitingForMessage]",
+                        "['test'::<ROOT>] [WaitingForMessage] Operation cancelled",
+                        "['test'::<ROOT>] [Disposing]",
+                        "['test'::<ROOT>] [Disposed]"
+                    ] ) )
+            .Go();
     }
 
     [Fact]
@@ -1181,31 +1137,31 @@ public partial class MessageBrokerClientTests : TestsBase
         var result = await client.StartAsync();
         await serverTask;
 
-        using ( new AssertionScope() )
-        {
-            result.Exception.Should().BeOfType<ObjectDisposedException>();
-            logs.GetAll()
-                .SkipLast( 1 )
-                .Should()
-                .BeSequentiallyEqualTo(
-                    $"['test'::<ROOT>] [Connecting] To server at {remoteEndPoint}",
-                    $"['test'::<ROOT>] [Connected] From {localEndPoint}",
-                    "['test'::<ROOT>] [SendingMessage] [PacketLength: 18] HandshakeRequest",
-                    "['test'::<ROOT>] [MessageSent] [PacketLength: 18] HandshakeRequest",
-                    "['test'::<ROOT>] [WaitingForMessage]",
-                    "['test'::<ROOT>] [MessageReceived] [PacketLength: 18] Begin handling HandshakeAcceptedResponse",
-                    "['test'::<ROOT>] [Disposing]",
-                    "['test'::<ROOT>] [Disposed]" );
-
-            logs.GetAll()
-                .LastOrDefault()
-                .Should()
-                .StartWith(
-                    """
-                    ['test'::<ROOT>] [MessageReceived] [PacketLength: 18] Encountered an error:
-                    System.ObjectDisposedException:
-                    """ );
-        }
+        Assertion.All(
+                result.Exception.TestType().AssignableTo<ObjectDisposedException>(),
+                logs.GetAll()
+                    .TestCount( count => count.TestEquals( 9 ) )
+                    .Then(
+                        l => Assertion.All(
+                            l.SkipLast( 1 )
+                                .TestSequence(
+                                [
+                                    $"['test'::<ROOT>] [Connecting] To server at {remoteEndPoint}",
+                                    $"['test'::<ROOT>] [Connected] From {localEndPoint}",
+                                    "['test'::<ROOT>] [SendingMessage] [PacketLength: 18] HandshakeRequest",
+                                    "['test'::<ROOT>] [MessageSent] [PacketLength: 18] HandshakeRequest",
+                                    "['test'::<ROOT>] [WaitingForMessage]",
+                                    "['test'::<ROOT>] [MessageReceived] [PacketLength: 18] Begin handling HandshakeAcceptedResponse",
+                                    "['test'::<ROOT>] [Disposing]",
+                                    "['test'::<ROOT>] [Disposed]"
+                                ] ),
+                            l[^1]
+                                .TestStartsWith(
+                                    """
+                                    ['test'::<ROOT>] [MessageReceived] [PacketLength: 18] Encountered an error:
+                                    System.ObjectDisposedException:
+                                    """ ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -1248,31 +1204,31 @@ public partial class MessageBrokerClientTests : TestsBase
         var result = await client.StartAsync();
         await serverTask;
 
-        using ( new AssertionScope() )
-        {
-            result.Exception.Should().BeOfType<ObjectDisposedException>();
-            logs.GetAll()
-                .SkipLast( 1 )
-                .Should()
-                .BeSequentiallyEqualTo(
-                    $"['test'::<ROOT>] [Connecting] To server at {remoteEndPoint}",
-                    $"['test'::<ROOT>] [Connected] From {localEndPoint}",
-                    "['test'::<ROOT>] [SendingMessage] [PacketLength: 18] HandshakeRequest",
-                    "['test'::<ROOT>] [MessageSent] [PacketLength: 18] HandshakeRequest",
-                    "['test'::<ROOT>] [WaitingForMessage]",
-                    "['test'::<ROOT>] [MessageReceived] [PacketLength: 6] HandshakeRejectedResponse",
-                    "['test'::<ROOT>] [Disposing]",
-                    "['test'::<ROOT>] [Disposed]" );
-
-            logs.GetAll()
-                .LastOrDefault()
-                .Should()
-                .StartWith(
-                    """
-                    ['test'::<ROOT>] [MessageReceived] [PacketLength: 6] Encountered an error:
-                    System.ObjectDisposedException:
-                    """ );
-        }
+        Assertion.All(
+                result.Exception.TestType().AssignableTo<ObjectDisposedException>(),
+                logs.GetAll()
+                    .TestCount( count => count.TestEquals( 9 ) )
+                    .Then(
+                        l => Assertion.All(
+                            l.SkipLast( 1 )
+                                .TestSequence(
+                                [
+                                    $"['test'::<ROOT>] [Connecting] To server at {remoteEndPoint}",
+                                    $"['test'::<ROOT>] [Connected] From {localEndPoint}",
+                                    "['test'::<ROOT>] [SendingMessage] [PacketLength: 18] HandshakeRequest",
+                                    "['test'::<ROOT>] [MessageSent] [PacketLength: 18] HandshakeRequest",
+                                    "['test'::<ROOT>] [WaitingForMessage]",
+                                    "['test'::<ROOT>] [MessageReceived] [PacketLength: 6] HandshakeRejectedResponse",
+                                    "['test'::<ROOT>] [Disposing]",
+                                    "['test'::<ROOT>] [Disposed]"
+                                ] ),
+                            l[^1]
+                                .TestStartsWith(
+                                    """
+                                    ['test'::<ROOT>] [MessageReceived] [PacketLength: 6] Encountered an error:
+                                    System.ObjectDisposedException:
+                                    """ ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -1317,25 +1273,24 @@ public partial class MessageBrokerClientTests : TestsBase
         var result = await client.StartAsync();
         await serverTask;
 
-        using ( new AssertionScope() )
-        {
-            result.Exception.Should().BeOfType<MessageBrokerClientDisposedException>();
-            ((result.Exception as MessageBrokerClientDisposedException)?.Client).Should().BeSameAs( client );
-            logs.GetAll()
-                .Should()
-                .BeSequentiallyEqualTo(
-                    $"['test'::<ROOT>] [Connecting] To server at {remoteEndPoint}",
-                    $"['test'::<ROOT>] [Connected] From {localEndPoint}",
-                    "['test'::<ROOT>] [SendingMessage] [PacketLength: 18] HandshakeRequest",
-                    "['test'::<ROOT>] [MessageSent] [PacketLength: 18] HandshakeRequest",
-                    "['test'::<ROOT>] [WaitingForMessage]",
-                    "['test'::<ROOT>] [MessageReceived] [PacketLength: 18] Begin handling HandshakeAcceptedResponse",
-                    "['test'::<ROOT>] [MessageAccepted] [PacketLength: 18] HandshakeAcceptedResponse (Id = 1, IsServerLittleEndian = True, MessageTimeout = 2 second(s), PingInterval = 10 second(s))",
-                    "['test'::<ROOT>] [SendingMessage] [PacketLength: 5] ConfirmHandshakeResponse",
-                    "['test'::<ROOT>] [MessageSent] [PacketLength: 5] ConfirmHandshakeResponse",
-                    "['test'::<ROOT>] [Disposing]",
-                    "['test'::<ROOT>] [Disposed]" );
-        }
+        Assertion.All(
+                result.Exception.TestType().Exact<MessageBrokerClientDisposedException>( e => e.Client.TestRefEquals( client ) ),
+                logs.GetAll()
+                    .TestSequence(
+                    [
+                        $"['test'::<ROOT>] [Connecting] To server at {remoteEndPoint}",
+                        $"['test'::<ROOT>] [Connected] From {localEndPoint}",
+                        "['test'::<ROOT>] [SendingMessage] [PacketLength: 18] HandshakeRequest",
+                        "['test'::<ROOT>] [MessageSent] [PacketLength: 18] HandshakeRequest",
+                        "['test'::<ROOT>] [WaitingForMessage]",
+                        "['test'::<ROOT>] [MessageReceived] [PacketLength: 18] Begin handling HandshakeAcceptedResponse",
+                        "['test'::<ROOT>] [MessageAccepted] [PacketLength: 18] HandshakeAcceptedResponse (Id = 1, IsServerLittleEndian = True, MessageTimeout = 2 second(s), PingInterval = 10 second(s))",
+                        "['test'::<ROOT>] [SendingMessage] [PacketLength: 5] ConfirmHandshakeResponse",
+                        "['test'::<ROOT>] [MessageSent] [PacketLength: 5] ConfirmHandshakeResponse",
+                        "['test'::<ROOT>] [Disposing]",
+                        "['test'::<ROOT>] [Disposed]"
+                    ] ) )
+            .Go();
     }
 
     [Fact]
@@ -1382,55 +1337,47 @@ public partial class MessageBrokerClientTests : TestsBase
         await serverTask;
         await endSource.Task;
 
-        using ( new AssertionScope() )
-        {
-            result.Exception.Should().BeNull();
-            logs.GetAll()
-                .Should()
-                .BeSequentiallyEqualTo(
-                    $"['test'::<ROOT>] [Connecting] To server at {remoteEndPoint}",
-                    $"['test'::<ROOT>] [Connected] From {localEndPoint}",
-                    "['test'::<ROOT>] [SendingMessage] [PacketLength: 18] HandshakeRequest",
-                    "['test'::<ROOT>] [MessageSent] [PacketLength: 18] HandshakeRequest",
-                    "['test'::<ROOT>] [WaitingForMessage]",
-                    "['test'::<ROOT>] [MessageReceived] [PacketLength: 18] Begin handling HandshakeAcceptedResponse",
-                    "['test'::<ROOT>] [MessageAccepted] [PacketLength: 18] HandshakeAcceptedResponse (Id = 1, IsServerLittleEndian = True, MessageTimeout = 1 second(s), PingInterval = 10 second(s))",
-                    "['test'::<ROOT>] [SendingMessage] [PacketLength: 5] ConfirmHandshakeResponse",
-                    "['test'::<ROOT>] [MessageSent] [PacketLength: 5] ConfirmHandshakeResponse",
-                    "['test'::<ROOT>] [WaitingForMessage]",
-                    "['test'::<ROOT>] [MessageReceived] [PacketLength: 5] PingResponse",
-                    """
-                    ['test'::<ROOT>] [MessageRejected] [PacketLength: 5] Encountered an error:
-                    LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientProtocolException: Message broker client 'test' received an invalid PingResponse with payload 0 from the server. Encountered 1 error(s):
-                    1. Received unexpected client endpoint.
-                    """,
-                    "['test'::<ROOT>] [Disposing]",
-                    "['test'::<ROOT>] [Disposed]" );
-        }
+        Assertion.All(
+                result.Exception.TestNull(),
+                logs.GetAll()
+                    .TestSequence(
+                    [
+                        $"['test'::<ROOT>] [Connecting] To server at {remoteEndPoint}",
+                        $"['test'::<ROOT>] [Connected] From {localEndPoint}",
+                        "['test'::<ROOT>] [SendingMessage] [PacketLength: 18] HandshakeRequest",
+                        "['test'::<ROOT>] [MessageSent] [PacketLength: 18] HandshakeRequest",
+                        "['test'::<ROOT>] [WaitingForMessage]",
+                        "['test'::<ROOT>] [MessageReceived] [PacketLength: 18] Begin handling HandshakeAcceptedResponse",
+                        "['test'::<ROOT>] [MessageAccepted] [PacketLength: 18] HandshakeAcceptedResponse (Id = 1, IsServerLittleEndian = True, MessageTimeout = 1 second(s), PingInterval = 10 second(s))",
+                        "['test'::<ROOT>] [SendingMessage] [PacketLength: 5] ConfirmHandshakeResponse",
+                        "['test'::<ROOT>] [MessageSent] [PacketLength: 5] ConfirmHandshakeResponse",
+                        "['test'::<ROOT>] [WaitingForMessage]",
+                        "['test'::<ROOT>] [MessageReceived] [PacketLength: 5] PingResponse",
+                        """
+                        ['test'::<ROOT>] [MessageRejected] [PacketLength: 5] Encountered an error:
+                        LfrlAnvil.MessageBroker.Client.Exceptions.MessageBrokerClientProtocolException: Message broker client 'test' received an invalid PingResponse with payload 0 from the server. Encountered 1 error(s):
+                        1. Received unexpected client endpoint.
+                        """,
+                        "['test'::<ROOT>] [Disposing]",
+                        "['test'::<ROOT>] [Disposed]"
+                    ] ) )
+            .Go();
     }
 
     [Fact]
-    public async Task StartAsync_ShouldThrowOperationCanceledException_WhenCancellationTokenIsCancelled()
+    public void StartAsync_ShouldThrowOperationCanceledException_WhenCancellationTokenIsCancelled()
     {
         var token = new CancellationToken( canceled: true );
         var sut = new MessageBrokerClient( new TimestampProvider(), new IPEndPoint( IPAddress.Loopback, 12345 ), "test" );
 
-        Exception? exception = null;
-        try
-        {
-            _ = await sut.StartAsync( token );
-        }
-        catch ( Exception exc )
-        {
-            exception = exc;
-        }
+        var action = Lambda.Of( async () => await sut.StartAsync( token ) );
 
-        using ( new AssertionScope() )
-        {
-            exception.Should().BeOfType<OperationCanceledException>();
-            sut.State.Should().Be( MessageBrokerClientState.Disposed );
-            sut.LocalEndPoint.Should().BeNull();
-        }
+        action.Test(
+                exc => Assertion.All(
+                    exc.TestType().AssignableTo<OperationCanceledException>(),
+                    sut.State.TestEquals( MessageBrokerClientState.Disposed ),
+                    sut.LocalEndPoint.TestNull() ) )
+            .Go();
     }
 
     [Fact]
@@ -1463,24 +1410,17 @@ public partial class MessageBrokerClientTests : TestsBase
             },
             server );
 
-        Exception? exception = null;
-        try
-        {
-            await client.StartAsync( cancellationSource.Token );
-        }
-        catch ( Exception exc )
-        {
-            exception = exc;
-        }
+        var action = Lambda.Of( async () => await client.StartAsync( cancellationSource.Token ) );
+        var assertion = action.Test(
+                exc => Assertion.All(
+                    exc.TestType().AssignableTo<OperationCanceledException>(),
+                    client.State.TestEquals( MessageBrokerClientState.Disposed ),
+                    client.LocalEndPoint.TestNull() ) )
+            .Invoke();
 
         await serverTask;
 
-        using ( new AssertionScope() )
-        {
-            exception.Should().BeOfType<OperationCanceledException>();
-            client.State.Should().Be( MessageBrokerClientState.Disposed );
-            client.LocalEndPoint.Should().BeNull();
-        }
+        assertion.Go();
     }
 
     [Fact]
@@ -1513,24 +1453,17 @@ public partial class MessageBrokerClientTests : TestsBase
             },
             server );
 
-        Exception? exception = null;
-        try
-        {
-            await client.StartAsync( cancellationSource.Token );
-        }
-        catch ( Exception exc )
-        {
-            exception = exc;
-        }
+        var action = Lambda.Of( async () => await client.StartAsync( cancellationSource.Token ) );
+        var assertion = action.Test(
+                exc => Assertion.All(
+                    exc.TestType().AssignableTo<OperationCanceledException>(),
+                    client.State.TestEquals( MessageBrokerClientState.Disposed ),
+                    client.LocalEndPoint.TestNull() ) )
+            .Invoke();
 
         await serverTask;
 
-        using ( new AssertionScope() )
-        {
-            exception.Should().BeOfType<OperationCanceledException>();
-            client.State.Should().Be( MessageBrokerClientState.Disposed );
-            client.LocalEndPoint.Should().BeNull();
-        }
+        assertion.Go();
     }
 
     [Fact]
@@ -1566,24 +1499,17 @@ public partial class MessageBrokerClientTests : TestsBase
             },
             server );
 
-        Exception? exception = null;
-        try
-        {
-            await client.StartAsync( cancellationSource.Token );
-        }
-        catch ( Exception exc )
-        {
-            exception = exc;
-        }
+        var action = Lambda.Of( async () => await client.StartAsync( cancellationSource.Token ) );
+        var assertion = action.Test(
+                exc => Assertion.All(
+                    exc.TestType().AssignableTo<OperationCanceledException>(),
+                    client.State.TestEquals( MessageBrokerClientState.Disposed ),
+                    client.LocalEndPoint.TestNull() ) )
+            .Invoke();
 
         await serverTask;
 
-        using ( new AssertionScope() )
-        {
-            exception.Should().BeOfType<OperationCanceledException>();
-            client.State.Should().Be( MessageBrokerClientState.Disposed );
-            client.LocalEndPoint.Should().BeNull();
-        }
+        assertion.Go();
     }
 
     [Fact]
@@ -1620,33 +1546,28 @@ public partial class MessageBrokerClientTests : TestsBase
             },
             server );
 
-        Exception? exception = null;
-        try
-        {
-            await client.StartAsync( cancellationSource.Token );
-        }
-        catch ( Exception exc )
-        {
-            exception = exc;
-        }
+        var action = Lambda.Of( async () => await client.StartAsync( cancellationSource.Token ) );
+        var assertion = action.Test(
+                exc => Assertion.All(
+                    exc.TestType().AssignableTo<OperationCanceledException>(),
+                    client.State.TestEquals( MessageBrokerClientState.Disposed ),
+                    client.LocalEndPoint.TestNull() ) )
+            .Invoke();
 
         await serverTask;
 
-        using ( new AssertionScope() )
-        {
-            exception.Should().BeOfType<OperationCanceledException>();
-            client.State.Should().Be( MessageBrokerClientState.Disposed );
-            client.LocalEndPoint.Should().BeNull();
-        }
+        assertion.Go();
     }
 
-    private static void AssertServerData(byte[][] received, params (int Length, MessageBrokerServerEndpoint Endpoint)[] expected)
+    [Pure]
+    private static Assertion AssertServerData(byte[][] received, params (int Length, MessageBrokerServerEndpoint Endpoint)[] expected)
     {
-        received.Should().HaveCount( expected.Length );
-        for ( var i = 0; i < expected.Length; ++i )
-        {
-            received.ElementAtOrDefault( i ).Should().HaveCount( expected[i].Length );
-            (received.ElementAtOrDefault( i )?.ElementAtOrDefault( 0 )).Should().Be( ( byte )expected[i].Endpoint );
-        }
+        return received.TestCount( count => count.TestEquals( expected.Length ) )
+            .Then(
+                r => r.TestAll(
+                    (e, i) => Assertion.All(
+                        "element",
+                        e.Length.TestEquals( expected[i].Length ),
+                        e.ElementAtOrDefault( 0 ).TestEquals( ( byte )expected[i].Endpoint ) ) ) );
     }
 }

@@ -17,9 +17,9 @@ internal sealed class RefEqualsAssertion<T> : SubjectAssertion<T>
         if ( Expected )
         {
             if ( ! ReferenceEquals( Subject, Value ) )
-                Throw( $"[{Context}] should be ref-equal to '{Value}' but found '{Subject}'." );
+                Throw( $"[{Context}] should be ref-equal to {Value.Stringify()} but found {Subject.Stringify()}." );
         }
         else if ( ReferenceEquals( Subject, Value ) )
-            Throw( $"[{Context}] should not be ref-equal to '{Value}'." );
+            Throw( $"[{Context}] should not be ref-equal to {Value.Stringify()}." );
     }
 }

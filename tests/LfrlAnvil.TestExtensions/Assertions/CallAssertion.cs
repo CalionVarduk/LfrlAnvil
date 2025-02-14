@@ -2,7 +2,7 @@
 
 namespace LfrlAnvil.TestExtensions.Assertions;
 
-internal sealed class CallAssertion : SubjectAssertion<Action>
+public sealed class CallAssertion : SubjectAssertion<Action>
 {
     internal CallAssertion(string context, Action subject, Func<Exception?, Assertion> completionAssertion)
         : base( context, subject )
@@ -12,7 +12,7 @@ internal sealed class CallAssertion : SubjectAssertion<Action>
 
     internal Func<Exception?, Assertion> CompletionAssertion { get; }
 
-    public override void Go()
+    public Assertion Invoke()
     {
         Exception? exception = null;
         try
@@ -24,17 +24,39 @@ internal sealed class CallAssertion : SubjectAssertion<Action>
             exception = exc;
         }
 
-        try
+        return new Invocation( Context, CompletionAssertion( exception ) );
+    }
+
+    public override void Go()
+    {
+        var assertion = Invoke();
+        assertion.Go();
+    }
+
+    private sealed class Invocation : Assertion
+    {
+        internal Invocation(string context, Assertion @base)
+            : base( context )
         {
-            CompletionAssertion( exception ).Go();
+            Base = @base;
         }
-        catch ( XunitException exc )
+
+        internal Assertion Base { get; }
+
+        public override void Go()
         {
-            Throw(
-                $"""
-                 [{Context}] exception assertion failed:
-                   {exc.Message.Indent()}
-                 """ );
+            try
+            {
+                Base.Go();
+            }
+            catch ( XunitException exc )
+            {
+                Throw(
+                    $"""
+                     [{Context}] exception assertion failed:
+                       {exc.Message.Indent()}
+                     """ );
+            }
         }
     }
 }

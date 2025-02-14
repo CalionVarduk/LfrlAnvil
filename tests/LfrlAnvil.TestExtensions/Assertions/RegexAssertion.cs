@@ -19,9 +19,9 @@ internal sealed class RegexAssertion : SubjectAssertion<ReadOnlyMemory<char>>
         if ( Match )
         {
             if ( ! Regex.IsMatch( Subject.Span ) )
-                Throw( $"[{Context}] should match regex '{Regex}' but found '{Subject}'." );
+                Throw( $"[{Context}] should match regex {Regex.Stringify()} but found {Subject.Stringify()}." );
         }
         else if ( Regex.IsMatch( Subject.Span ) )
-            Throw( $"[{Context}] should not match regex '{Regex}'." );
+            Throw( $"[{Context}] should not match regex {Regex.Stringify()}." );
     }
 }

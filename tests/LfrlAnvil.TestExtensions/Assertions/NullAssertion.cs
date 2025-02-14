@@ -15,7 +15,7 @@ internal sealed class NullAssertion<T> : SubjectAssertion<T>
         if ( Expected )
         {
             if ( Subject is not null )
-                Throw( $"[{Context}] should be null but found '{Subject}'." );
+                Throw( $"[{Context}] should be null but found {Subject.Stringify()}." );
         }
         else if ( Subject is null )
             Throw( $"[{Context}] is null." );

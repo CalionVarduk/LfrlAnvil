@@ -9,12 +9,11 @@ public class MessageBrokerTcpClientOptionsTests : TestsBase
     public void Default_ShouldReturnCorrectResult()
     {
         var sut = MessageBrokerTcpClientOptions.Default;
-        using ( new AssertionScope() )
-        {
-            sut.LocalEndPoint.Should().BeNull();
-            sut.NoDelay.Should().BeNull();
-            sut.SocketBufferSize.Should().BeNull();
-        }
+        Assertion.All(
+                sut.LocalEndPoint.TestNull(),
+                sut.NoDelay.TestNull(),
+                sut.SocketBufferSize.TestNull() )
+            .Go();
     }
 
     [Fact]
@@ -25,12 +24,11 @@ public class MessageBrokerTcpClientOptionsTests : TestsBase
 
         var result = sut.SetLocalEndPoint( value );
 
-        using ( new AssertionScope() )
-        {
-            result.LocalEndPoint.Should().BeSameAs( value );
-            result.NoDelay.Should().Be( sut.NoDelay );
-            result.SocketBufferSize.Should().Be( sut.SocketBufferSize );
-        }
+        Assertion.All(
+                result.LocalEndPoint.TestRefEquals( value ),
+                result.NoDelay.TestEquals( sut.NoDelay ),
+                result.SocketBufferSize.TestEquals( sut.SocketBufferSize ) )
+            .Go();
     }
 
     [Fact]
@@ -41,12 +39,11 @@ public class MessageBrokerTcpClientOptionsTests : TestsBase
 
         var result = sut.SetNoDelay( value );
 
-        using ( new AssertionScope() )
-        {
-            result.LocalEndPoint.Should().Be( sut.LocalEndPoint );
-            result.NoDelay.Should().Be( value );
-            result.SocketBufferSize.Should().Be( sut.SocketBufferSize );
-        }
+        Assertion.All(
+                result.LocalEndPoint.TestEquals( sut.LocalEndPoint ),
+                result.NoDelay.TestEquals( value ),
+                result.SocketBufferSize.TestEquals( sut.SocketBufferSize ) )
+            .Go();
     }
 
     [Fact]
@@ -57,11 +54,10 @@ public class MessageBrokerTcpClientOptionsTests : TestsBase
 
         var result = sut.SetSocketBufferSize( value );
 
-        using ( new AssertionScope() )
-        {
-            result.LocalEndPoint.Should().Be( sut.LocalEndPoint );
-            result.NoDelay.Should().Be( sut.NoDelay );
-            result.SocketBufferSize.Should().Be( value );
-        }
+        Assertion.All(
+                result.LocalEndPoint.TestEquals( sut.LocalEndPoint ),
+                result.NoDelay.TestEquals( sut.NoDelay ),
+                result.SocketBufferSize.TestEquals( value ) )
+            .Go();
     }
 }

@@ -21,9 +21,9 @@ internal sealed class RangeComparisonAssertion<T> : SubjectAssertion<T>
         if ( Expected )
         {
             if ( Comparer<T>.Default.Compare( Subject, Min ) < 0 || Comparer<T>.Default.Compare( Subject, Max ) > 0 )
-                Throw( $"[{Context}] should be in ['{Min}', '{Max}'] range but found '{Subject}'." );
+                Throw( $"[{Context}] should be in [{Min.Stringify()}, {Max.Stringify()}] range but found {Subject.Stringify()}." );
         }
         else if ( Comparer<T>.Default.Compare( Subject, Min ) >= 0 && Comparer<T>.Default.Compare( Subject, Max ) <= 0 )
-            Throw( $"[{Context}] should not be in ['{Min}', '{Max}'] range but found '{Subject}'." );
+            Throw( $"[{Context}] should not be in [{Min.Stringify()}, {Max.Stringify()}] range but found {Subject.Stringify()}." );
     }
 }

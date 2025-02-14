@@ -21,22 +21,22 @@ internal sealed class ComparisonAssertion<T> : SubjectAssertion<T>
         {
             case ComparisonType.GreaterThan:
                 if ( result <= 0 )
-                    Throw( $"[{Context}] should be greater than '{Value}' but found '{Subject}'." );
+                    Throw( $"[{Context}] should be greater than {Value.Stringify()} but found {Subject.Stringify()}." );
 
                 break;
             case ComparisonType.GreaterThanOrEqualTo:
                 if ( result < 0 )
-                    Throw( $"[{Context}] should be greater than or equal to '{Value}' but found '{Subject}'." );
+                    Throw( $"[{Context}] should be greater than or equal to {Value.Stringify()} but found {Subject.Stringify()}." );
 
                 break;
             case ComparisonType.LessThan:
                 if ( result >= 0 )
-                    Throw( $"[{Context}] should be less than '{Value}' but found '{Subject}'." );
+                    Throw( $"[{Context}] should be less than {Value.Stringify()} but found {Subject.Stringify()}." );
 
                 break;
             case ComparisonType.LessThanOrEqualTo:
                 if ( result > 0 )
-                    Throw( $"[{Context}] should be less than or equal to '{Value}' but found '{Subject}'." );
+                    Throw( $"[{Context}] should be less than or equal to {Value.Stringify()} but found {Subject.Stringify()}." );
 
                 break;
         }

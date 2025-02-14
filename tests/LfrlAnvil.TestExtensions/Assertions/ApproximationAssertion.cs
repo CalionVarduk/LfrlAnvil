@@ -23,6 +23,7 @@ internal sealed class ApproximationAssertion<T> : SubjectAssertion<T>
             delta = -delta;
 
         if ( delta > epsilon )
-            Throw( $"[{Context}] should be approximately equal to '{Value}' but found '{Subject}', using '{Epsilon}' epsilon." );
+            Throw(
+                $"[{Context}] should be approximately equal to {Value.Stringify()} but found {Subject.Stringify()}, using {Epsilon.Stringify()} epsilon." );
     }
 }

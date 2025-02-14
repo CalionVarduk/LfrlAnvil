@@ -52,7 +52,7 @@ internal sealed class SequenceAssertion<T> : SubjectAssertion<IReadOnlyList<T>>
                          {string.Join( Environment.NewLine, errors.Select( (e, i) => $"{i + 1}. {e}" ) )}
 
                          Collection of {elements.Count} element(s):
-                         {string.Join( Environment.NewLine, elements.Select( x => $"[@{x.Index}] {$"'{x.Element}'".Indent()}" ) )}
+                         {string.Join( Environment.NewLine, elements.Select( x => $"[@{x.Index}] {x.Element.Stringify().Indent()}" ) )}
                          """ );
 
                 break;
@@ -71,7 +71,8 @@ internal sealed class SequenceAssertion<T> : SubjectAssertion<IReadOnlyList<T>>
                     try
                     {
                         assertion( e, i ).Go();
-                        ++found;
+                        if ( ++found == ElementAssertions.Count )
+                            break;
                     }
                     catch ( XunitException )
                     {
@@ -91,7 +92,7 @@ internal sealed class SequenceAssertion<T> : SubjectAssertion<IReadOnlyList<T>>
                      [{Context}] should contain elements that satisfy {ElementAssertions.Count} provided assertions but found only {found} matching element(s).
 
                      Collection of {elements.Count} element(s):
-                     {string.Join( Environment.NewLine, elements.Select( x => $"[@{x.Index}] {$"'{x.Element}'".Indent()}" ) )}
+                     {string.Join( Environment.NewLine, elements.Select( x => $"[@{x.Index}] {x.Element.Stringify().Indent()}" ) )}
                      """ );
 
                 break;
@@ -133,7 +134,7 @@ internal sealed class SequenceAssertion<T> : SubjectAssertion<IReadOnlyList<T>>
                      [{Context}] should contain elements that contiguously satisfy {ElementAssertions.Count} provided assertion(s).
 
                      Collection of {elements.Count} element(s):
-                     {string.Join( Environment.NewLine, elements.Select( x => $"[@{x.Index}] {$"'{x.Element}'".Indent()}" ) )}
+                     {string.Join( Environment.NewLine, elements.Select( x => $"[@{x.Index}] {x.Element.Stringify().Indent()}" ) )}
                      """ );
 
                 break;

@@ -31,14 +31,14 @@ internal sealed class SetAssertion<T> : SubjectAssertion<IReadOnlyList<T>>
                 errors.Add(
                     $"""
                      Found {missing.Count} missing element(s):
-                     {string.Join( Environment.NewLine, missing.Select( (e, i) => $"{i + 1}. {$"'{e}'".Indent()}" ) )}
+                     {string.Join( Environment.NewLine, missing.Select( (e, i) => $"{i + 1}. {e.Stringify().Indent()}" ) )}
                      """ );
 
             if ( excess.Count > 0 )
                 errors.Add(
                     $"""
                      Found {excess.Count} excess element(s):
-                     {string.Join( Environment.NewLine, excess.Select( (e, i) => $"{i + 1}. {$"'{e}'".Indent()}" ) )}
+                     {string.Join( Environment.NewLine, excess.Select( (e, i) => $"{i + 1}. {e.Stringify().Indent()}" ) )}
                      """ );
 
             Throw(
@@ -47,17 +47,17 @@ internal sealed class SetAssertion<T> : SubjectAssertion<IReadOnlyList<T>>
                  {string.Join( $"{Environment.NewLine}{Environment.NewLine}", errors )}
 
                  Collection of {elements.Count} element(s):
-                 {string.Join( Environment.NewLine, elements.Select( x => $"[@{x.Index}] {$"'{x.Element}'".Indent()}" ) )}
+                 {string.Join( Environment.NewLine, elements.Select( x => $"[@{x.Index}] {x.Element.Stringify().Indent()}" ) )}
                  """ );
         }
         else if ( missing.Count > 0 )
             Throw(
                 $"""
                  [{Context}] should contain all provided elements but found {missing.Count} missing element(s):
-                 {string.Join( Environment.NewLine, missing.Select( (e, i) => $"{i + 1}. {$"'{e}'".Indent()}" ) )}
+                 {string.Join( Environment.NewLine, missing.Select( (e, i) => $"{i + 1}. {e.Stringify().Indent()}" ) )}
 
                  Collection of {elements.Count} element(s):
-                 {string.Join( Environment.NewLine, elements.Select( x => $"[@{x.Index}] {$"'{x.Element}'".Indent()}" ) )}
+                 {string.Join( Environment.NewLine, elements.Select( x => $"[@{x.Index}] {x.Element.Stringify().Indent()}" ) )}
                  """ );
     }
 }

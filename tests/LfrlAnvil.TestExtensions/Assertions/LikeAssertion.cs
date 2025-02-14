@@ -31,13 +31,13 @@ internal sealed class LikeAssertion : SubjectAssertion<ReadOnlyMemory<char>>
         {
             case ComparisonType.StartsWith:
                 if ( ! Subject.Span.StartsWith( Value.Span, Comparison ) )
-                    Throw( $"[{Context}] should start with '{Value}' but found '{Subject}'." );
+                    Throw( $"[{Context}] should start with {Value.Stringify()} but found {Subject.Stringify()}." );
 
                 break;
 
             case ComparisonType.Contains:
                 if ( ! Subject.Span.Contains( Value.Span, Comparison ) )
-                    Throw( $"[{Context}] should contain '{Value}' but found '{Subject}'." );
+                    Throw( $"[{Context}] should contain {Value.Stringify()} but found {Subject.Stringify()}." );
 
                 break;
         }
