@@ -2,7 +2,6 @@
 using System.Linq;
 using LfrlAnvil.MessageBroker.Client.Events;
 using LfrlAnvil.MessageBroker.Client.Internal;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.MessageBroker.Core.Tests;
 
@@ -19,7 +18,7 @@ public class DefaultsSynchronizationTests : TestsBase
             .Order()
             .Select( static v => KeyValuePair.Create( v.ToString(), ( int )v ) );
 
-        client.Should().BeSequentiallyEqualTo( server );
+        client.TestSequence( server ).Go();
     }
 
     [Fact]
@@ -33,7 +32,7 @@ public class DefaultsSynchronizationTests : TestsBase
             .Order()
             .Select( static v => KeyValuePair.Create( v.ToString(), ( int )v ) );
 
-        client.Should().BeSequentiallyEqualTo( server );
+        client.TestSequence( server ).Go();
     }
 
     [Fact]
@@ -41,7 +40,7 @@ public class DefaultsSynchronizationTests : TestsBase
     {
         var client = Defaults.NameLengthBounds;
         var server = Server.Internal.Defaults.NameLengthBounds;
-        client.Should().Be( server );
+        client.TestEquals( server ).Go();
     }
 
     [Fact]
@@ -49,7 +48,7 @@ public class DefaultsSynchronizationTests : TestsBase
     {
         var client = Defaults.Temporal.Delay;
         var server = Server.Internal.Defaults.Temporal.Delay;
-        client.Should().Be( server );
+        client.TestEquals( server ).Go();
     }
 
     [Fact]
@@ -57,7 +56,7 @@ public class DefaultsSynchronizationTests : TestsBase
     {
         var client = Defaults.Temporal.MaxTimeout;
         var server = Server.Internal.Defaults.Temporal.MaxTimeout;
-        client.Should().Be( server );
+        client.TestEquals( server ).Go();
     }
 
     [Fact]
@@ -65,7 +64,7 @@ public class DefaultsSynchronizationTests : TestsBase
     {
         var client = Defaults.Temporal.TimeoutBounds;
         var server = Server.Internal.Defaults.Temporal.TimeoutBounds;
-        client.Should().Be( server );
+        client.TestEquals( server ).Go();
     }
 
     [Fact]
@@ -73,7 +72,7 @@ public class DefaultsSynchronizationTests : TestsBase
     {
         var client = Defaults.Temporal.PingIntervalBounds;
         var server = Server.Internal.Defaults.Temporal.PingIntervalBounds;
-        client.Should().Be( server );
+        client.TestEquals( server ).Go();
     }
 
     [Fact]
@@ -81,7 +80,7 @@ public class DefaultsSynchronizationTests : TestsBase
     {
         var client = Protocol.Endianness.VerificationPayload;
         var server = Server.Internal.Protocol.Endianness.VerificationPayload;
-        client.Should().Be( server );
+        client.TestEquals( server ).Go();
     }
 
     [Fact]
@@ -89,6 +88,6 @@ public class DefaultsSynchronizationTests : TestsBase
     {
         var client = Client.Internal.TextEncoding.Instance;
         var server = Server.Internal.TextEncoding.Instance;
-        client.Should().Be( server );
+        client.TestEquals( server ).Go();
     }
 }

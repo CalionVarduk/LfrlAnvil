@@ -44,17 +44,14 @@ public class ConnectionTests : TestsBase
         await endSource.Task;
         var remoteClient = server.Clients.TryGetById( 1 );
 
-        using ( new AssertionScope() )
-        {
-            remoteClient.Should().NotBeNull();
-            if ( remoteClient is null )
-                return;
-
-            client.Id.Should().Be( remoteClient.Id );
-            client.Name.Should().Be( remoteClient.Name );
-            client.MessageTimeout.Should().Be( remoteClient.MessageTimeout );
-            client.PingInterval.Should().Be( remoteClient.PingInterval );
-        }
+        remoteClient.TestNotNull(
+                r => Assertion.All(
+                    "client",
+                    client.Id.TestEquals( r.Id ),
+                    client.Name.TestEquals( r.Name ),
+                    client.MessageTimeout.TestEquals( r.MessageTimeout ),
+                    client.PingInterval.TestEquals( r.PingInterval ) ) )
+            .Go();
     }
 
     [Fact]
@@ -89,10 +86,9 @@ public class ConnectionTests : TestsBase
 
         var result = await client2.StartAsync();
 
-        using ( new AssertionScope() )
-        {
-            server.Clients.Count.Should().Be( 1 );
-            result.Exception.Should().BeOfType<MessageBrokerClientRequestException>();
-        }
+        Assertion.All(
+                server.Clients.Count.TestEquals( 1 ),
+                result.Exception.TestType().AssignableTo<MessageBrokerClientRequestException>() )
+            .Go();
     }
 }
