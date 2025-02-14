@@ -8,11 +8,10 @@ public class MessageBrokerTcpServerOptionsTests : TestsBase
     public void Default_ShouldReturnCorrectResult()
     {
         var sut = MessageBrokerTcpServerOptions.Default;
-        using ( new AssertionScope() )
-        {
-            sut.NoDelay.Should().BeNull();
-            sut.SocketBufferSize.Should().BeNull();
-        }
+        Assertion.All(
+                sut.NoDelay.TestNull(),
+                sut.SocketBufferSize.TestNull() )
+            .Go();
     }
 
     [Fact]
@@ -23,11 +22,10 @@ public class MessageBrokerTcpServerOptionsTests : TestsBase
 
         var result = sut.SetNoDelay( value );
 
-        using ( new AssertionScope() )
-        {
-            result.NoDelay.Should().Be( value );
-            result.SocketBufferSize.Should().Be( sut.SocketBufferSize );
-        }
+        Assertion.All(
+                result.NoDelay.TestEquals( value ),
+                result.SocketBufferSize.TestEquals( sut.SocketBufferSize ) )
+            .Go();
     }
 
     [Fact]
@@ -38,10 +36,9 @@ public class MessageBrokerTcpServerOptionsTests : TestsBase
 
         var result = sut.SetSocketBufferSize( value );
 
-        using ( new AssertionScope() )
-        {
-            result.NoDelay.Should().Be( sut.NoDelay );
-            result.SocketBufferSize.Should().Be( value );
-        }
+        Assertion.All(
+                result.NoDelay.TestEquals( sut.NoDelay ),
+                result.SocketBufferSize.TestEquals( value ) )
+            .Go();
     }
 }

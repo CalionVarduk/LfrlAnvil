@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System.Diagnostics.Contracts;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
@@ -8,7 +9,6 @@ using LfrlAnvil.Chrono;
 using LfrlAnvil.MessageBroker.Server.Events;
 using LfrlAnvil.MessageBroker.Server.Internal;
 using LfrlAnvil.MessageBroker.Server.Tests.Helpers;
-using LfrlAnvil.TestExtensions.FluentAssertions;
 
 namespace LfrlAnvil.MessageBroker.Server.Tests;
 
@@ -58,49 +58,47 @@ public partial class MessageBrokerRemoteClientTests : TestsBase
         var remoteClient = server.Clients.TryGetById( 1 );
         await endSource.Task;
 
-        using ( new AssertionScope() )
-        {
-            server.Clients.Count.Should().Be( 1 );
-            server.Clients.GetAll().Should().BeSequentiallyEqualTo( remoteClient! );
-            remoteClient.Should().NotBeNull();
-            remoteClient.Should().BeSameAs( server.Clients.TryGetByName( "test" ) );
-            (remoteClient?.Server).Should().BeSameAs( server );
-            (remoteClient?.Id).Should().Be( 1 );
-            (remoteClient?.Name).Should().Be( "test" );
-            (remoteClient?.LocalEndPoint).Should().NotBeNull();
-            (remoteClient?.RemoteEndPoint).Should().NotBeNull();
-            (remoteClient?.IsLittleEndian).Should().BeTrue();
-            (remoteClient?.MessageTimeout).Should().Be( Duration.FromSeconds( 1 ) );
-            (remoteClient?.PingInterval).Should().Be( Duration.FromSeconds( 10 ) );
-            (remoteClient?.State).Should().Be( MessageBrokerRemoteClientState.Running );
-
-            AssertClientData(
-                client.GetAllReceived(),
-                (Protocol.PacketHeader.Length + Protocol.HandshakeAcceptedResponse.Payload,
-                    MessageBrokerClientEndpoint.HandshakeAcceptedResponse) );
-
-            logs.GetAll()
-                .Should()
-                .BeSequentiallyEqualTo(
-                    $"[Starting] At {originalEndPoint} (HandshakeTimeout = 1 second(s), AcceptableMessageTimeout = Bounds(0.001 second(s) : 2147483.647 second(s)), AcceptablePingInterval = Bounds(0.001 second(s) : 86400 second(s)))",
-                    $"[Started] At {server.LocalEndPoint}",
-                    "[WaitingForClient]",
-                    "[WaitingForClient]" );
-
-            logs.GetAllClient()
-                .Should()
-                .BeSequentiallyEqualTo(
-                    $"[1::<ROOT>] [Created] From {remoteClient?.RemoteEndPoint}",
-                    "[1::<ROOT>] [WaitingForMessage]",
-                    "[1::<ROOT>] [MessageReceived] [PacketLength: 18] Begin handling HandshakeRequest",
-                    "[1::'test'::<ROOT>] [MessageAccepted] [PacketLength: 18] HandshakeRequest (IsLittleEndian = True, MessageTimeout = 1 second(s), PingInterval = 10 second(s))",
-                    "[1::'test'::<ROOT>] [SendingMessage] [PacketLength: 18] HandshakeAcceptedResponse",
-                    "[1::'test'::<ROOT>] [MessageSent] [PacketLength: 18] HandshakeAcceptedResponse",
-                    "[1::'test'::<ROOT>] [WaitingForMessage]",
-                    "[1::'test'::<ROOT>] [MessageReceived] [PacketLength: 5] ConfirmHandshakeResponse",
-                    "[1::'test'::<ROOT>] [MessageAccepted] [PacketLength: 5] ConfirmHandshakeResponse",
-                    "[1::'test'::<ROOT>] [WaitingForMessage]" );
-        }
+        Assertion.All(
+                server.Clients.Count.TestEquals( 1 ),
+                server.Clients.GetAll().TestSequence( [ remoteClient! ] ),
+                remoteClient.TestNotNull(
+                    r => Assertion.All(
+                        r.TestRefEquals( server.Clients.TryGetByName( "test" ) ),
+                        r.Server.TestRefEquals( server ),
+                        r.Id.TestEquals( 1 ),
+                        r.Name.TestEquals( "test" ),
+                        r.LocalEndPoint.TestNotNull(),
+                        r.RemoteEndPoint.TestNotNull(),
+                        r.IsLittleEndian.TestTrue(),
+                        r.MessageTimeout.TestEquals( Duration.FromSeconds( 1 ) ),
+                        r.PingInterval.TestEquals( Duration.FromSeconds( 10 ) ),
+                        r.State.TestEquals( MessageBrokerRemoteClientState.Running ) ) ),
+                AssertClientData(
+                    client.GetAllReceived(),
+                    (Protocol.PacketHeader.Length + Protocol.HandshakeAcceptedResponse.Payload,
+                        MessageBrokerClientEndpoint.HandshakeAcceptedResponse) ),
+                logs.GetAll()
+                    .TestContainsSequence(
+                    [
+                        $"[Starting] At {originalEndPoint} (HandshakeTimeout = 1 second(s), AcceptableMessageTimeout = Bounds(0.001 second(s) : 2147483.647 second(s)), AcceptablePingInterval = Bounds(0.001 second(s) : 86400 second(s)))",
+                        $"[Started] At {server.LocalEndPoint}",
+                        "[WaitingForClient]"
+                    ] ),
+                logs.GetAllClient()
+                    .TestSequence(
+                    [
+                        $"[1::<ROOT>] [Created] From {remoteClient?.RemoteEndPoint}",
+                        "[1::<ROOT>] [WaitingForMessage]",
+                        "[1::<ROOT>] [MessageReceived] [PacketLength: 18] Begin handling HandshakeRequest",
+                        "[1::'test'::<ROOT>] [MessageAccepted] [PacketLength: 18] HandshakeRequest (IsLittleEndian = True, MessageTimeout = 1 second(s), PingInterval = 10 second(s))",
+                        "[1::'test'::<ROOT>] [SendingMessage] [PacketLength: 18] HandshakeAcceptedResponse",
+                        "[1::'test'::<ROOT>] [MessageSent] [PacketLength: 18] HandshakeAcceptedResponse",
+                        "[1::'test'::<ROOT>] [WaitingForMessage]",
+                        "[1::'test'::<ROOT>] [MessageReceived] [PacketLength: 5] ConfirmHandshakeResponse",
+                        "[1::'test'::<ROOT>] [MessageAccepted] [PacketLength: 5] ConfirmHandshakeResponse",
+                        "[1::'test'::<ROOT>] [WaitingForMessage]"
+                    ] ) )
+            .Go();
     }
 
     [Fact]
@@ -156,50 +154,48 @@ public partial class MessageBrokerRemoteClientTests : TestsBase
         var remoteClient = server.Clients.TryGetById( 1 );
         await endSource.Task;
 
-        using ( new AssertionScope() )
-        {
-            stream.Should().NotBeNull();
-            server.Clients.Count.Should().Be( 1 );
-            server.Clients.GetAll().Should().BeSequentiallyEqualTo( remoteClient! );
-            remoteClient.Should().NotBeNull();
-            remoteClient.Should().BeSameAs( server.Clients.TryGetByName( "foo" ) );
-            (remoteClient?.Server).Should().BeSameAs( server );
-            (remoteClient?.Id).Should().Be( 1 );
-            (remoteClient?.Name).Should().Be( "foo" );
-            (remoteClient?.LocalEndPoint).Should().NotBeNull();
-            (remoteClient?.RemoteEndPoint).Should().NotBeNull();
-            (remoteClient?.IsLittleEndian).Should().BeTrue();
-            (remoteClient?.MessageTimeout).Should().Be( Duration.FromSeconds( 1.5 ) );
-            (remoteClient?.PingInterval).Should().Be( Duration.FromSeconds( 15 ) );
-            (remoteClient?.State).Should().Be( MessageBrokerRemoteClientState.Running );
-
-            AssertClientData(
-                client.GetAllReceived(),
-                (Protocol.PacketHeader.Length + Protocol.HandshakeAcceptedResponse.Payload,
-                    MessageBrokerClientEndpoint.HandshakeAcceptedResponse) );
-
-            logs.GetAll()
-                .Should()
-                .BeSequentiallyEqualTo(
-                    $"[Starting] At {originalEndPoint} (HandshakeTimeout = 1 second(s), AcceptableMessageTimeout = Bounds(0.001 second(s) : 2147483.647 second(s)), AcceptablePingInterval = Bounds(0.001 second(s) : 86400 second(s)))",
-                    $"[Started] At {server.LocalEndPoint}",
-                    "[WaitingForClient]",
-                    "[WaitingForClient]" );
-
-            logs.GetAllClient()
-                .Should()
-                .BeSequentiallyEqualTo(
-                    $"[1::<ROOT>] [Created] From {remoteClient?.RemoteEndPoint}",
-                    "[1::<ROOT>] [WaitingForMessage]",
-                    "[1::<ROOT>] [MessageReceived] [PacketLength: 17] Begin handling HandshakeRequest",
-                    "[1::'foo'::<ROOT>] [MessageAccepted] [PacketLength: 17] HandshakeRequest (IsLittleEndian = True, MessageTimeout = 1.5 second(s), PingInterval = 15 second(s))",
-                    "[1::'foo'::<ROOT>] [SendingMessage] [PacketLength: 18] HandshakeAcceptedResponse",
-                    "[1::'foo'::<ROOT>] [MessageSent] [PacketLength: 18] HandshakeAcceptedResponse",
-                    "[1::'foo'::<ROOT>] [WaitingForMessage]",
-                    "[1::'foo'::<ROOT>] [MessageReceived] [PacketLength: 5] ConfirmHandshakeResponse",
-                    "[1::'foo'::<ROOT>] [MessageAccepted] [PacketLength: 5] ConfirmHandshakeResponse",
-                    "[1::'foo'::<ROOT>] [WaitingForMessage]" );
-        }
+        Assertion.All(
+                stream.TestNotNull(),
+                server.Clients.Count.TestEquals( 1 ),
+                server.Clients.GetAll().TestSequence( [ remoteClient! ] ),
+                remoteClient.TestNotNull(
+                    r => Assertion.All(
+                        r.TestRefEquals( server.Clients.TryGetByName( "foo" ) ),
+                        r.Server.TestRefEquals( server ),
+                        r.Id.TestEquals( 1 ),
+                        r.Name.TestEquals( "foo" ),
+                        r.LocalEndPoint.TestNotNull(),
+                        r.RemoteEndPoint.TestNotNull(),
+                        r.IsLittleEndian.TestTrue(),
+                        r.MessageTimeout.TestEquals( Duration.FromSeconds( 1.5 ) ),
+                        r.PingInterval.TestEquals( Duration.FromSeconds( 15 ) ),
+                        r.State.TestEquals( MessageBrokerRemoteClientState.Running ) ) ),
+                AssertClientData(
+                    client.GetAllReceived(),
+                    (Protocol.PacketHeader.Length + Protocol.HandshakeAcceptedResponse.Payload,
+                        MessageBrokerClientEndpoint.HandshakeAcceptedResponse) ),
+                logs.GetAll()
+                    .TestContainsSequence(
+                    [
+                        $"[Starting] At {originalEndPoint} (HandshakeTimeout = 1 second(s), AcceptableMessageTimeout = Bounds(0.001 second(s) : 2147483.647 second(s)), AcceptablePingInterval = Bounds(0.001 second(s) : 86400 second(s)))",
+                        $"[Started] At {server.LocalEndPoint}",
+                        "[WaitingForClient]"
+                    ] ),
+                logs.GetAllClient()
+                    .TestSequence(
+                    [
+                        $"[1::<ROOT>] [Created] From {remoteClient?.RemoteEndPoint}",
+                        "[1::<ROOT>] [WaitingForMessage]",
+                        "[1::<ROOT>] [MessageReceived] [PacketLength: 17] Begin handling HandshakeRequest",
+                        "[1::'foo'::<ROOT>] [MessageAccepted] [PacketLength: 17] HandshakeRequest (IsLittleEndian = True, MessageTimeout = 1.5 second(s), PingInterval = 15 second(s))",
+                        "[1::'foo'::<ROOT>] [SendingMessage] [PacketLength: 18] HandshakeAcceptedResponse",
+                        "[1::'foo'::<ROOT>] [MessageSent] [PacketLength: 18] HandshakeAcceptedResponse",
+                        "[1::'foo'::<ROOT>] [WaitingForMessage]",
+                        "[1::'foo'::<ROOT>] [MessageReceived] [PacketLength: 5] ConfirmHandshakeResponse",
+                        "[1::'foo'::<ROOT>] [MessageAccepted] [PacketLength: 5] ConfirmHandshakeResponse",
+                        "[1::'foo'::<ROOT>] [WaitingForMessage]"
+                    ] ) )
+            .Go();
     }
 
     [Fact]
@@ -269,84 +265,80 @@ public partial class MessageBrokerRemoteClientTests : TestsBase
         var remoteClient2 = server.Clients.TryGetById( 2 );
         await endSource.Task;
 
-        using ( new AssertionScope() )
-        {
-            server.Clients.Count.Should().Be( 2 );
-            server.Clients.GetAll().Should().BeSequentiallyEqualTo( remoteClient1!, remoteClient2! );
-
-            remoteClient1.Should().NotBeNull();
-            remoteClient1.Should().BeSameAs( server.Clients.TryGetByName( "foo" ) );
-            (remoteClient1?.Server).Should().BeSameAs( server );
-            (remoteClient1?.Id).Should().Be( 1 );
-            (remoteClient1?.Name).Should().Be( "foo" );
-            (remoteClient1?.LocalEndPoint).Should().NotBeNull();
-            (remoteClient1?.RemoteEndPoint).Should().NotBeNull();
-            (remoteClient1?.IsLittleEndian).Should().BeTrue();
-            (remoteClient1?.MessageTimeout).Should().Be( Duration.FromSeconds( 1 ) );
-            (remoteClient1?.PingInterval).Should().Be( Duration.FromSeconds( 10 ) );
-            (remoteClient1?.State).Should().Be( MessageBrokerRemoteClientState.Running );
-
-            remoteClient2.Should().NotBeNull();
-            remoteClient2.Should().BeSameAs( server.Clients.TryGetByName( "bar" ) );
-            (remoteClient2?.Server).Should().BeSameAs( server );
-            (remoteClient2?.Id).Should().Be( 2 );
-            (remoteClient2?.Name).Should().Be( "bar" );
-            (remoteClient2?.LocalEndPoint).Should().NotBeNull();
-            (remoteClient2?.RemoteEndPoint).Should().NotBeNull();
-            (remoteClient2?.IsLittleEndian).Should().BeTrue();
-            (remoteClient2?.MessageTimeout).Should().Be( Duration.FromSeconds( 1.5 ) );
-            (remoteClient2?.PingInterval).Should().Be( Duration.FromSeconds( 15 ) );
-            (remoteClient2?.State).Should().Be( MessageBrokerRemoteClientState.Running );
-
-            AssertClientData(
-                client1.GetAllReceived(),
-                (Protocol.PacketHeader.Length + Protocol.HandshakeAcceptedResponse.Payload,
-                    MessageBrokerClientEndpoint.HandshakeAcceptedResponse) );
-
-            AssertClientData(
-                client2.GetAllReceived(),
-                (Protocol.PacketHeader.Length + Protocol.HandshakeAcceptedResponse.Payload,
-                    MessageBrokerClientEndpoint.HandshakeAcceptedResponse) );
-
-            serverLogs.GetAll()
-                .Should()
-                .BeSequentiallyEqualTo(
-                    $"[Starting] At {originalEndPoint} (HandshakeTimeout = 1 second(s), AcceptableMessageTimeout = Bounds(1 second(s) : 1.5 second(s)), AcceptablePingInterval = Bounds(10 second(s) : 15 second(s)))",
-                    $"[Started] At {server.LocalEndPoint}",
-                    "[WaitingForClient]",
-                    "[WaitingForClient]",
-                    "[WaitingForClient]" );
-
-            clientLogs[0]
-                .GetAllClient()
-                .Should()
-                .BeSequentiallyEqualTo(
-                    $"[1::<ROOT>] [Created] From {remoteClient1?.RemoteEndPoint}",
-                    "[1::<ROOT>] [WaitingForMessage]",
-                    "[1::<ROOT>] [MessageReceived] [PacketLength: 17] Begin handling HandshakeRequest",
-                    "[1::'foo'::<ROOT>] [MessageAccepted] [PacketLength: 17] HandshakeRequest (IsLittleEndian = True, MessageTimeout = 1 second(s), PingInterval = 10 second(s))",
-                    "[1::'foo'::<ROOT>] [SendingMessage] [PacketLength: 18] HandshakeAcceptedResponse",
-                    "[1::'foo'::<ROOT>] [MessageSent] [PacketLength: 18] HandshakeAcceptedResponse",
-                    "[1::'foo'::<ROOT>] [WaitingForMessage]",
-                    "[1::'foo'::<ROOT>] [MessageReceived] [PacketLength: 5] ConfirmHandshakeResponse",
-                    "[1::'foo'::<ROOT>] [MessageAccepted] [PacketLength: 5] ConfirmHandshakeResponse",
-                    "[1::'foo'::<ROOT>] [WaitingForMessage]" );
-
-            clientLogs[1]
-                .GetAllClient()
-                .Should()
-                .BeSequentiallyEqualTo(
-                    $"[2::<ROOT>] [Created] From {remoteClient2?.RemoteEndPoint}",
-                    "[2::<ROOT>] [WaitingForMessage]",
-                    "[2::<ROOT>] [MessageReceived] [PacketLength: 17] Begin handling HandshakeRequest",
-                    "[2::'bar'::<ROOT>] [MessageAccepted] [PacketLength: 17] HandshakeRequest (IsLittleEndian = True, MessageTimeout = 1.5 second(s), PingInterval = 15 second(s))",
-                    "[2::'bar'::<ROOT>] [SendingMessage] [PacketLength: 18] HandshakeAcceptedResponse",
-                    "[2::'bar'::<ROOT>] [MessageSent] [PacketLength: 18] HandshakeAcceptedResponse",
-                    "[2::'bar'::<ROOT>] [WaitingForMessage]",
-                    "[2::'bar'::<ROOT>] [MessageReceived] [PacketLength: 5] ConfirmHandshakeResponse",
-                    "[2::'bar'::<ROOT>] [MessageAccepted] [PacketLength: 5] ConfirmHandshakeResponse",
-                    "[2::'bar'::<ROOT>] [WaitingForMessage]" );
-        }
+        Assertion.All(
+                server.Clients.Count.TestEquals( 2 ),
+                server.Clients.GetAll().TestSequence( [ remoteClient1!, remoteClient2! ] ),
+                remoteClient1.TestNotNull(
+                    r => Assertion.All(
+                        r.TestRefEquals( server.Clients.TryGetByName( "foo" ) ),
+                        r.Server.TestRefEquals( server ),
+                        r.Id.TestEquals( 1 ),
+                        r.Name.TestEquals( "foo" ),
+                        r.LocalEndPoint.TestNotNull(),
+                        r.RemoteEndPoint.TestNotNull(),
+                        r.IsLittleEndian.TestTrue(),
+                        r.MessageTimeout.TestEquals( Duration.FromSeconds( 1 ) ),
+                        r.PingInterval.TestEquals( Duration.FromSeconds( 10 ) ),
+                        r.State.TestEquals( MessageBrokerRemoteClientState.Running ) ) ),
+                remoteClient2.TestNotNull(
+                    r => Assertion.All(
+                        r.TestRefEquals( server.Clients.TryGetByName( "bar" ) ),
+                        r.Server.TestRefEquals( server ),
+                        r.Id.TestEquals( 2 ),
+                        r.Name.TestEquals( "bar" ),
+                        r.LocalEndPoint.TestNotNull(),
+                        r.RemoteEndPoint.TestNotNull(),
+                        r.IsLittleEndian.TestTrue(),
+                        r.MessageTimeout.TestEquals( Duration.FromSeconds( 1.5 ) ),
+                        r.PingInterval.TestEquals( Duration.FromSeconds( 15 ) ),
+                        r.State.TestEquals( MessageBrokerRemoteClientState.Running ) ) ),
+                AssertClientData(
+                    client1.GetAllReceived(),
+                    (Protocol.PacketHeader.Length + Protocol.HandshakeAcceptedResponse.Payload,
+                        MessageBrokerClientEndpoint.HandshakeAcceptedResponse) ),
+                AssertClientData(
+                    client2.GetAllReceived(),
+                    (Protocol.PacketHeader.Length + Protocol.HandshakeAcceptedResponse.Payload,
+                        MessageBrokerClientEndpoint.HandshakeAcceptedResponse) ),
+                serverLogs.GetAll()
+                    .TestContainsSequence(
+                    [
+                        $"[Starting] At {originalEndPoint} (HandshakeTimeout = 1 second(s), AcceptableMessageTimeout = Bounds(1 second(s) : 1.5 second(s)), AcceptablePingInterval = Bounds(10 second(s) : 15 second(s)))",
+                        $"[Started] At {server.LocalEndPoint}",
+                        "[WaitingForClient]",
+                        "[WaitingForClient]"
+                    ] ),
+                clientLogs[0]
+                    .GetAllClient()
+                    .TestSequence(
+                    [
+                        $"[1::<ROOT>] [Created] From {remoteClient1?.RemoteEndPoint}",
+                        "[1::<ROOT>] [WaitingForMessage]",
+                        "[1::<ROOT>] [MessageReceived] [PacketLength: 17] Begin handling HandshakeRequest",
+                        "[1::'foo'::<ROOT>] [MessageAccepted] [PacketLength: 17] HandshakeRequest (IsLittleEndian = True, MessageTimeout = 1 second(s), PingInterval = 10 second(s))",
+                        "[1::'foo'::<ROOT>] [SendingMessage] [PacketLength: 18] HandshakeAcceptedResponse",
+                        "[1::'foo'::<ROOT>] [MessageSent] [PacketLength: 18] HandshakeAcceptedResponse",
+                        "[1::'foo'::<ROOT>] [WaitingForMessage]",
+                        "[1::'foo'::<ROOT>] [MessageReceived] [PacketLength: 5] ConfirmHandshakeResponse",
+                        "[1::'foo'::<ROOT>] [MessageAccepted] [PacketLength: 5] ConfirmHandshakeResponse",
+                        "[1::'foo'::<ROOT>] [WaitingForMessage]"
+                    ] ),
+                clientLogs[1]
+                    .GetAllClient()
+                    .TestSequence(
+                    [
+                        $"[2::<ROOT>] [Created] From {remoteClient2?.RemoteEndPoint}",
+                        "[2::<ROOT>] [WaitingForMessage]",
+                        "[2::<ROOT>] [MessageReceived] [PacketLength: 17] Begin handling HandshakeRequest",
+                        "[2::'bar'::<ROOT>] [MessageAccepted] [PacketLength: 17] HandshakeRequest (IsLittleEndian = True, MessageTimeout = 1.5 second(s), PingInterval = 15 second(s))",
+                        "[2::'bar'::<ROOT>] [SendingMessage] [PacketLength: 18] HandshakeAcceptedResponse",
+                        "[2::'bar'::<ROOT>] [MessageSent] [PacketLength: 18] HandshakeAcceptedResponse",
+                        "[2::'bar'::<ROOT>] [WaitingForMessage]",
+                        "[2::'bar'::<ROOT>] [MessageReceived] [PacketLength: 5] ConfirmHandshakeResponse",
+                        "[2::'bar'::<ROOT>] [MessageAccepted] [PacketLength: 5] ConfirmHandshakeResponse",
+                        "[2::'bar'::<ROOT>] [WaitingForMessage]"
+                    ] ) )
+            .Go();
     }
 
     [Fact]
@@ -386,34 +378,28 @@ public partial class MessageBrokerRemoteClientTests : TestsBase
         await clientTask;
         await endSource.Task;
 
-        using ( new AssertionScope() )
-        {
-            server.Clients.Count.Should().Be( 0 );
-
-            logs.GetAll()
-                .Should()
-                .BeSequentiallyEqualTo(
-                    $"[Starting] At {originalEndPoint} (HandshakeTimeout = 1 second(s), AcceptableMessageTimeout = Bounds(0.001 second(s) : 2147483.647 second(s)), AcceptablePingInterval = Bounds(0.001 second(s) : 86400 second(s)))",
-                    $"[Started] At {server.LocalEndPoint}",
-                    "[WaitingForClient]",
-                    "[WaitingForClient]" );
-
-            logs.GetAllClient()
-                .ElementAtOrDefault( 1 )
-                .Should()
-                .StartWith(
-                    """
-                    [1::<ROOT>] [Unexpected] Encountered an error:
-                    System.Exception: invalid
-                    """ );
-
-            logs.GetAllClient()
-                .TakeLast( 2 )
-                .Should()
-                .BeSequentiallyEqualTo(
-                    "[1::<ROOT>] [Disposing]",
-                    "[1::<ROOT>] [Disposed]" );
-        }
+        Assertion.All(
+                server.Clients.Count.TestEquals( 0 ),
+                logs.GetAll()
+                    .TestContainsSequence(
+                    [
+                        $"[Starting] At {originalEndPoint} (HandshakeTimeout = 1 second(s), AcceptableMessageTimeout = Bounds(0.001 second(s) : 2147483.647 second(s)), AcceptablePingInterval = Bounds(0.001 second(s) : 86400 second(s)))",
+                        $"[Started] At {server.LocalEndPoint}",
+                        "[WaitingForClient]"
+                    ] ),
+                logs.GetAllClient()
+                    .Skip( 1 )
+                    .TestCount( count => count.TestEquals( 3 ) )
+                    .Then(
+                        l => Assertion.All(
+                            l[0]
+                                .TestStartsWith(
+                                    """
+                                    [1::<ROOT>] [Unexpected] Encountered an error:
+                                    System.Exception: invalid
+                                    """ ),
+                            l.Skip( 1 ).TestSequence( [ "[1::<ROOT>] [Disposing]", "[1::<ROOT>] [Disposed]" ] ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -451,21 +437,19 @@ public partial class MessageBrokerRemoteClientTests : TestsBase
         var (remoteClient, disposeTask) = await endSource.Task;
         await disposeTask;
 
-        using ( new AssertionScope() )
-        {
-            server.Clients.Count.Should().Be( 0 );
-            remoteClient.LocalEndPoint.Should().BeNull();
-            remoteClient.RemoteEndPoint.Should().BeNull();
-            remoteClient.State.Should().Be( MessageBrokerRemoteClientState.Disposed );
-
-            logs.GetAll()
-                .Should()
-                .BeSequentiallyEqualTo(
-                    $"[Starting] At {originalEndPoint} (HandshakeTimeout = 1 second(s), AcceptableMessageTimeout = Bounds(0.001 second(s) : 2147483.647 second(s)), AcceptablePingInterval = Bounds(0.001 second(s) : 86400 second(s)))",
-                    $"[Started] At {server.LocalEndPoint}",
-                    "[WaitingForClient]",
-                    "[WaitingForClient]" );
-        }
+        Assertion.All(
+                server.Clients.Count.TestEquals( 0 ),
+                remoteClient.LocalEndPoint.TestNull(),
+                remoteClient.RemoteEndPoint.TestNull(),
+                remoteClient.State.TestEquals( MessageBrokerRemoteClientState.Disposed ),
+                logs.GetAll()
+                    .TestContainsSequence(
+                    [
+                        $"[Starting] At {originalEndPoint} (HandshakeTimeout = 1 second(s), AcceptableMessageTimeout = Bounds(0.001 second(s) : 2147483.647 second(s)), AcceptablePingInterval = Bounds(0.001 second(s) : 86400 second(s)))",
+                        $"[Started] At {server.LocalEndPoint}",
+                        "[WaitingForClient]"
+                    ] ) )
+            .Go();
     }
 
     [Fact]
@@ -513,44 +497,36 @@ public partial class MessageBrokerRemoteClientTests : TestsBase
         await clientTask;
         await endSource.Task;
 
-        using ( new AssertionScope() )
-        {
-            server.Clients.Count.Should().Be( 0 );
-
-            logs.GetAll()
-                .Should()
-                .BeSequentiallyEqualTo(
-                    $"[Starting] At {originalEndPoint} (HandshakeTimeout = 1 second(s), AcceptableMessageTimeout = Bounds(0.001 second(s) : 2147483.647 second(s)), AcceptablePingInterval = Bounds(0.001 second(s) : 86400 second(s)))",
-                    $"[Started] At {server.LocalEndPoint}",
-                    "[WaitingForClient]",
-                    "[WaitingForClient]" );
-
-            logs.GetAllClient()
-                .Skip( 1 )
-                .Take( 4 )
-                .Should()
-                .BeSequentiallyEqualTo(
-                    "[1::<ROOT>] [WaitingForMessage]",
-                    "[1::<ROOT>] [MessageReceived] [PacketLength: 18] Begin handling HandshakeRequest",
-                    "[1::'test'::<ROOT>] [MessageAccepted] [PacketLength: 18] HandshakeRequest (IsLittleEndian = True, MessageTimeout = 1 second(s), PingInterval = 10 second(s))",
-                    "[1::'test'::<ROOT>] [SendingMessage] [PacketLength: 18] HandshakeAcceptedResponse" );
-
-            logs.GetAllClient()
-                .ElementAtOrDefault( 5 )
-                .Should()
-                .StartWith(
-                    """
-                    [1::'test'::<ROOT>] [SendingMessage] [PacketLength: 18] Encountered an error:
-                    System.ObjectDisposedException:
-                    """ );
-
-            logs.GetAllClient()
-                .Skip( 6 )
-                .Should()
-                .BeSequentiallyEqualTo(
-                    "[1::'test'::<ROOT>] [Disposing]",
-                    "[1::'test'::<ROOT>] [Disposed]" );
-        }
+        Assertion.All(
+                server.Clients.Count.TestEquals( 0 ),
+                logs.GetAll()
+                    .TestContainsSequence(
+                    [
+                        $"[Starting] At {originalEndPoint} (HandshakeTimeout = 1 second(s), AcceptableMessageTimeout = Bounds(0.001 second(s) : 2147483.647 second(s)), AcceptablePingInterval = Bounds(0.001 second(s) : 86400 second(s)))",
+                        $"[Started] At {server.LocalEndPoint}",
+                        "[WaitingForClient]"
+                    ] ),
+                logs.GetAllClient()
+                    .Skip( 1 )
+                    .TestCount( count => count.TestEquals( 7 ) )
+                    .Then(
+                        l => Assertion.All(
+                            l.Take( 4 )
+                                .TestSequence(
+                                [
+                                    "[1::<ROOT>] [WaitingForMessage]",
+                                    "[1::<ROOT>] [MessageReceived] [PacketLength: 18] Begin handling HandshakeRequest",
+                                    "[1::'test'::<ROOT>] [MessageAccepted] [PacketLength: 18] HandshakeRequest (IsLittleEndian = True, MessageTimeout = 1 second(s), PingInterval = 10 second(s))",
+                                    "[1::'test'::<ROOT>] [SendingMessage] [PacketLength: 18] HandshakeAcceptedResponse"
+                                ] ),
+                            l[4]
+                                .TestStartsWith(
+                                    """
+                                    [1::'test'::<ROOT>] [SendingMessage] [PacketLength: 18] Encountered an error:
+                                    System.ObjectDisposedException:
+                                    """ ),
+                            l.Skip( 5 ).TestSequence( [ "[1::'test'::<ROOT>] [Disposing]", "[1::'test'::<ROOT>] [Disposed]" ] ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -589,36 +565,29 @@ public partial class MessageBrokerRemoteClientTests : TestsBase
         await clientTask;
         await endSource.Task;
 
-        using ( new AssertionScope() )
-        {
-            server.Clients.Count.Should().Be( 0 );
-
-            logs.GetAll()
-                .Should()
-                .BeSequentiallyEqualTo(
-                    $"[Starting] At {originalEndPoint} (HandshakeTimeout = 1 second(s), AcceptableMessageTimeout = Bounds(0.001 second(s) : 2147483.647 second(s)), AcceptablePingInterval = Bounds(0.001 second(s) : 86400 second(s)))",
-                    $"[Started] At {server.LocalEndPoint}",
-                    "[WaitingForClient]",
-                    "[WaitingForClient]" );
-
-            logs.GetAllClient().ElementAtOrDefault( 1 ).Should().Be( "[1::<ROOT>] [WaitingForMessage]" );
-
-            logs.GetAllClient()
-                .ElementAtOrDefault( 2 )
-                .Should()
-                .StartWith(
-                    """
-                    [1::<ROOT>] [WaitingForMessage] Encountered an error:
-                    System.IO.EndOfStreamException:
-                    """ );
-
-            logs.GetAllClient()
-                .Skip( 3 )
-                .Should()
-                .BeSequentiallyEqualTo(
-                    "[1::<ROOT>] [Disposing]",
-                    "[1::<ROOT>] [Disposed]" );
-        }
+        Assertion.All(
+                server.Clients.Count.TestEquals( 0 ),
+                logs.GetAll()
+                    .TestContainsSequence(
+                    [
+                        $"[Starting] At {originalEndPoint} (HandshakeTimeout = 1 second(s), AcceptableMessageTimeout = Bounds(0.001 second(s) : 2147483.647 second(s)), AcceptablePingInterval = Bounds(0.001 second(s) : 86400 second(s)))",
+                        $"[Started] At {server.LocalEndPoint}",
+                        "[WaitingForClient]"
+                    ] ),
+                logs.GetAllClient()
+                    .Skip( 1 )
+                    .TestCount( count => count.TestEquals( 4 ) )
+                    .Then(
+                        l => Assertion.All(
+                            l[0].TestEquals( "[1::<ROOT>] [WaitingForMessage]" ),
+                            l[1]
+                                .TestStartsWith(
+                                    """
+                                    [1::<ROOT>] [WaitingForMessage] Encountered an error:
+                                    System.IO.EndOfStreamException:
+                                    """ ),
+                            l.Skip( 2 ).TestSequence( [ "[1::<ROOT>] [Disposing]", "[1::<ROOT>] [Disposed]" ] ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -659,46 +628,38 @@ public partial class MessageBrokerRemoteClientTests : TestsBase
         await clientTask;
         await endSource.Task;
 
-        using ( new AssertionScope() )
-        {
-            server.Clients.Count.Should().Be( 0 );
-
-            logs.GetAll()
-                .Should()
-                .BeSequentiallyEqualTo(
-                    $"[Starting] At {originalEndPoint} (HandshakeTimeout = 1 second(s), AcceptableMessageTimeout = Bounds(0.001 second(s) : 2147483.647 second(s)), AcceptablePingInterval = Bounds(0.001 second(s) : 86400 second(s)))",
-                    $"[Started] At {server.LocalEndPoint}",
-                    "[WaitingForClient]",
-                    "[WaitingForClient]" );
-
-            logs.GetAllClient()
-                .Skip( 1 )
-                .Take( 6 )
-                .Should()
-                .BeSequentiallyEqualTo(
-                    "[1::<ROOT>] [WaitingForMessage]",
-                    "[1::<ROOT>] [MessageReceived] [PacketLength: 18] Begin handling HandshakeRequest",
-                    "[1::'test'::<ROOT>] [MessageAccepted] [PacketLength: 18] HandshakeRequest (IsLittleEndian = True, MessageTimeout = 1 second(s), PingInterval = 10 second(s))",
-                    "[1::'test'::<ROOT>] [SendingMessage] [PacketLength: 18] HandshakeAcceptedResponse",
-                    "[1::'test'::<ROOT>] [MessageSent] [PacketLength: 18] HandshakeAcceptedResponse",
-                    "[1::'test'::<ROOT>] [WaitingForMessage]" );
-
-            logs.GetAllClient()
-                .ElementAtOrDefault( 7 )
-                .Should()
-                .StartWith(
-                    """
-                    [1::'test'::<ROOT>] [WaitingForMessage] Encountered an error:
-                    System.IO.EndOfStreamException:
-                    """ );
-
-            logs.GetAllClient()
-                .Skip( 8 )
-                .Should()
-                .BeSequentiallyEqualTo(
-                    "[1::'test'::<ROOT>] [Disposing]",
-                    "[1::'test'::<ROOT>] [Disposed]" );
-        }
+        Assertion.All(
+                server.Clients.Count.TestEquals( 0 ),
+                logs.GetAll()
+                    .TestContainsSequence(
+                    [
+                        $"[Starting] At {originalEndPoint} (HandshakeTimeout = 1 second(s), AcceptableMessageTimeout = Bounds(0.001 second(s) : 2147483.647 second(s)), AcceptablePingInterval = Bounds(0.001 second(s) : 86400 second(s)))",
+                        $"[Started] At {server.LocalEndPoint}",
+                        "[WaitingForClient]"
+                    ] ),
+                logs.GetAllClient()
+                    .Skip( 1 )
+                    .TestCount( count => count.TestEquals( 9 ) )
+                    .Then(
+                        l => Assertion.All(
+                            l.Take( 6 )
+                                .TestSequence(
+                                [
+                                    "[1::<ROOT>] [WaitingForMessage]",
+                                    "[1::<ROOT>] [MessageReceived] [PacketLength: 18] Begin handling HandshakeRequest",
+                                    "[1::'test'::<ROOT>] [MessageAccepted] [PacketLength: 18] HandshakeRequest (IsLittleEndian = True, MessageTimeout = 1 second(s), PingInterval = 10 second(s))",
+                                    "[1::'test'::<ROOT>] [SendingMessage] [PacketLength: 18] HandshakeAcceptedResponse",
+                                    "[1::'test'::<ROOT>] [MessageSent] [PacketLength: 18] HandshakeAcceptedResponse",
+                                    "[1::'test'::<ROOT>] [WaitingForMessage]"
+                                ] ),
+                            l[6]
+                                .TestStartsWith(
+                                    """
+                                    [1::'test'::<ROOT>] [WaitingForMessage] Encountered an error:
+                                    System.IO.EndOfStreamException:
+                                    """ ),
+                            l.Skip( 7 ).TestSequence( [ "[1::'test'::<ROOT>] [Disposing]", "[1::'test'::<ROOT>] [Disposed]" ] ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -737,43 +698,35 @@ public partial class MessageBrokerRemoteClientTests : TestsBase
         await clientTask;
         await endSource.Task;
 
-        using ( new AssertionScope() )
-        {
-            server.Clients.Count.Should().Be( 0 );
-
-            logs.GetAll()
-                .Should()
-                .BeSequentiallyEqualTo(
-                    $"[Starting] At {originalEndPoint} (HandshakeTimeout = 1 second(s), AcceptableMessageTimeout = Bounds(0.001 second(s) : 2147483.647 second(s)), AcceptablePingInterval = Bounds(0.001 second(s) : 86400 second(s)))",
-                    $"[Started] At {server.LocalEndPoint}",
-                    "[WaitingForClient]",
-                    "[WaitingForClient]" );
-
-            logs.GetAllClient()
-                .Skip( 1 )
-                .Take( 2 )
-                .Should()
-                .BeSequentiallyEqualTo(
-                    "[1::<ROOT>] [WaitingForMessage]",
-                    "[1::<ROOT>] [MessageReceived] [PacketLength: 5] ConfirmHandshakeResponse" );
-
-            logs.GetAllClient()
-                .ElementAtOrDefault( 3 )
-                .Should()
-                .StartWith(
-                    """
-                    [1::<ROOT>] [MessageRejected] [PacketLength: 5] Encountered an error:
-                    LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerProtocolException: Message broker server received an invalid ConfirmHandshakeResponse with payload 4277993985 from client [1] ''. Encountered 1 error(s):
-                    1. Received unexpected server endpoint.
-                    """ );
-
-            logs.GetAllClient()
-                .Skip( 4 )
-                .Should()
-                .BeSequentiallyEqualTo(
-                    "[1::<ROOT>] [Disposing]",
-                    "[1::<ROOT>] [Disposed]" );
-        }
+        Assertion.All(
+                server.Clients.Count.TestEquals( 0 ),
+                logs.GetAll()
+                    .TestContainsSequence(
+                    [
+                        $"[Starting] At {originalEndPoint} (HandshakeTimeout = 1 second(s), AcceptableMessageTimeout = Bounds(0.001 second(s) : 2147483.647 second(s)), AcceptablePingInterval = Bounds(0.001 second(s) : 86400 second(s)))",
+                        $"[Started] At {server.LocalEndPoint}",
+                        "[WaitingForClient]"
+                    ] ),
+                logs.GetAllClient()
+                    .Skip( 1 )
+                    .TestCount( count => count.TestEquals( 5 ) )
+                    .Then(
+                        l => Assertion.All(
+                            l.Take( 2 )
+                                .TestSequence(
+                                [
+                                    "[1::<ROOT>] [WaitingForMessage]",
+                                    "[1::<ROOT>] [MessageReceived] [PacketLength: 5] ConfirmHandshakeResponse"
+                                ] ),
+                            l[2]
+                                .TestStartsWith(
+                                    """
+                                    [1::<ROOT>] [MessageRejected] [PacketLength: 5] Encountered an error:
+                                    LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerProtocolException: Message broker server received an invalid ConfirmHandshakeResponse with payload 4277993985 from client [1] ''. Encountered 1 error(s):
+                                    1. Received unexpected server endpoint.
+                                    """ ),
+                            l.Skip( 3 ).TestSequence( [ "[1::<ROOT>] [Disposing]", "[1::<ROOT>] [Disposed]" ] ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -812,43 +765,35 @@ public partial class MessageBrokerRemoteClientTests : TestsBase
         await clientTask;
         await endSource.Task;
 
-        using ( new AssertionScope() )
-        {
-            server.Clients.Count.Should().Be( 0 );
-
-            logs.GetAll()
-                .Should()
-                .BeSequentiallyEqualTo(
-                    $"[Starting] At {originalEndPoint} (HandshakeTimeout = 1 second(s), AcceptableMessageTimeout = Bounds(0.001 second(s) : 2147483.647 second(s)), AcceptablePingInterval = Bounds(0.001 second(s) : 86400 second(s)))",
-                    $"[Started] At {server.LocalEndPoint}",
-                    "[WaitingForClient]",
-                    "[WaitingForClient]" );
-
-            logs.GetAllClient()
-                .Skip( 1 )
-                .Take( 2 )
-                .Should()
-                .BeSequentiallyEqualTo(
-                    "[1::<ROOT>] [WaitingForMessage]",
-                    "[1::<ROOT>] [MessageReceived] [PacketLength: 13] Begin handling HandshakeRequest" );
-
-            logs.GetAllClient()
-                .ElementAtOrDefault( 3 )
-                .Should()
-                .StartWith(
-                    """
-                    [1::<ROOT>] [MessageRejected] [PacketLength: 13] Encountered an error:
-                    LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerProtocolException: Message broker server received an invalid HandshakeRequest with payload 8 from client [1] ''. Encountered 1 error(s):
-                    1. Packet length is invalid.
-                    """ );
-
-            logs.GetAllClient()
-                .Skip( 4 )
-                .Should()
-                .BeSequentiallyEqualTo(
-                    "[1::<ROOT>] [Disposing]",
-                    "[1::<ROOT>] [Disposed]" );
-        }
+        Assertion.All(
+                server.Clients.Count.TestEquals( 0 ),
+                logs.GetAll()
+                    .TestContainsSequence(
+                    [
+                        $"[Starting] At {originalEndPoint} (HandshakeTimeout = 1 second(s), AcceptableMessageTimeout = Bounds(0.001 second(s) : 2147483.647 second(s)), AcceptablePingInterval = Bounds(0.001 second(s) : 86400 second(s)))",
+                        $"[Started] At {server.LocalEndPoint}",
+                        "[WaitingForClient]"
+                    ] ),
+                logs.GetAllClient()
+                    .Skip( 1 )
+                    .TestCount( count => count.TestEquals( 5 ) )
+                    .Then(
+                        l => Assertion.All(
+                            l.Take( 2 )
+                                .TestSequence(
+                                [
+                                    "[1::<ROOT>] [WaitingForMessage]",
+                                    "[1::<ROOT>] [MessageReceived] [PacketLength: 13] Begin handling HandshakeRequest"
+                                ] ),
+                            l[2]
+                                .TestStartsWith(
+                                    """
+                                    [1::<ROOT>] [MessageRejected] [PacketLength: 13] Encountered an error:
+                                    LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerProtocolException: Message broker server received an invalid HandshakeRequest with payload 8 from client [1] ''. Encountered 1 error(s):
+                                    1. Packet length is invalid.
+                                    """ ),
+                            l.Skip( 3 ).TestSequence( [ "[1::<ROOT>] [Disposing]", "[1::<ROOT>] [Disposed]" ] ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -888,50 +833,46 @@ public partial class MessageBrokerRemoteClientTests : TestsBase
         await clientTask;
         await endSource.Task;
 
-        using ( new AssertionScope() )
-        {
-            server.Clients.Count.Should().Be( 0 );
-
-            AssertClientData(
-                client.GetAllReceived(),
-                (Protocol.PacketHeader.Length + Protocol.HandshakeRejectedResponse.Payload,
-                    MessageBrokerClientEndpoint.HandshakeRejectedResponse) );
-
-            logs.GetAll()
-                .Should()
-                .BeSequentiallyEqualTo(
-                    $"[Starting] At {originalEndPoint} (HandshakeTimeout = 1 second(s), AcceptableMessageTimeout = Bounds(0.001 second(s) : 2147483.647 second(s)), AcceptablePingInterval = Bounds(0.001 second(s) : 86400 second(s)))",
-                    $"[Started] At {server.LocalEndPoint}",
-                    "[WaitingForClient]",
-                    "[WaitingForClient]" );
-
-            logs.GetAllClient()
-                .Skip( 1 )
-                .Take( 2 )
-                .Should()
-                .BeSequentiallyEqualTo(
-                    "[1::<ROOT>] [WaitingForMessage]",
-                    "[1::<ROOT>] [MessageReceived] [PacketLength: 527] Begin handling HandshakeRequest" );
-
-            logs.GetAllClient()
-                .ElementAtOrDefault( 3 )
-                .Should()
-                .StartWith(
-                    """
-                    [1::<ROOT>] [MessageRejected] [PacketLength: 527] Encountered an error:
-                    LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerProtocolException: Message broker server received an invalid HandshakeRequest with payload 522 from client [1] ''. Encountered 1 error(s):
-                    1. Expected name length to be in [1, 512] range but found 513.
-                    """ );
-
-            logs.GetAllClient()
-                .Skip( 4 )
-                .Should()
-                .BeSequentiallyEqualTo(
-                    "[1::<ROOT>] [SendingMessage] [PacketLength: 6] HandshakeRejectedResponse",
-                    "[1::<ROOT>] [MessageSent] [PacketLength: 6] HandshakeRejectedResponse",
-                    "[1::<ROOT>] [Disposing]",
-                    "[1::<ROOT>] [Disposed]" );
-        }
+        Assertion.All(
+                server.Clients.Count.TestEquals( 0 ),
+                AssertClientData(
+                    client.GetAllReceived(),
+                    (Protocol.PacketHeader.Length + Protocol.HandshakeRejectedResponse.Payload,
+                        MessageBrokerClientEndpoint.HandshakeRejectedResponse) ),
+                logs.GetAll()
+                    .TestContainsSequence(
+                    [
+                        $"[Starting] At {originalEndPoint} (HandshakeTimeout = 1 second(s), AcceptableMessageTimeout = Bounds(0.001 second(s) : 2147483.647 second(s)), AcceptablePingInterval = Bounds(0.001 second(s) : 86400 second(s)))",
+                        $"[Started] At {server.LocalEndPoint}",
+                        "[WaitingForClient]"
+                    ] ),
+                logs.GetAllClient()
+                    .Skip( 1 )
+                    .TestCount( count => count.TestEquals( 7 ) )
+                    .Then(
+                        l => Assertion.All(
+                            l.Take( 2 )
+                                .TestSequence(
+                                [
+                                    "[1::<ROOT>] [WaitingForMessage]",
+                                    "[1::<ROOT>] [MessageReceived] [PacketLength: 527] Begin handling HandshakeRequest"
+                                ] ),
+                            l[2]
+                                .TestStartsWith(
+                                    """
+                                    [1::<ROOT>] [MessageRejected] [PacketLength: 527] Encountered an error:
+                                    LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerProtocolException: Message broker server received an invalid HandshakeRequest with payload 522 from client [1] ''. Encountered 1 error(s):
+                                    1. Expected name length to be in [1, 512] range but found 513.
+                                    """ ),
+                            l.Skip( 3 )
+                                .TestSequence(
+                                [
+                                    "[1::<ROOT>] [SendingMessage] [PacketLength: 6] HandshakeRejectedResponse",
+                                    "[1::<ROOT>] [MessageSent] [PacketLength: 6] HandshakeRejectedResponse",
+                                    "[1::<ROOT>] [Disposing]",
+                                    "[1::<ROOT>] [Disposed]"
+                                ] ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -971,50 +912,46 @@ public partial class MessageBrokerRemoteClientTests : TestsBase
         await clientTask;
         await endSource.Task;
 
-        using ( new AssertionScope() )
-        {
-            server.Clients.Count.Should().Be( 0 );
-
-            AssertClientData(
-                client.GetAllReceived(),
-                (Protocol.PacketHeader.Length + Protocol.HandshakeRejectedResponse.Payload,
-                    MessageBrokerClientEndpoint.HandshakeRejectedResponse) );
-
-            logs.GetAll()
-                .Should()
-                .BeSequentiallyEqualTo(
-                    $"[Starting] At {originalEndPoint} (HandshakeTimeout = 1 second(s), AcceptableMessageTimeout = Bounds(0.001 second(s) : 2147483.647 second(s)), AcceptablePingInterval = Bounds(0.001 second(s) : 86400 second(s)))",
-                    $"[Started] At {server.LocalEndPoint}",
-                    "[WaitingForClient]",
-                    "[WaitingForClient]" );
-
-            logs.GetAllClient()
-                .Skip( 1 )
-                .Take( 2 )
-                .Should()
-                .BeSequentiallyEqualTo(
-                    "[1::<ROOT>] [WaitingForMessage]",
-                    "[1::<ROOT>] [MessageReceived] [PacketLength: 14] Begin handling HandshakeRequest" );
-
-            logs.GetAllClient()
-                .ElementAtOrDefault( 3 )
-                .Should()
-                .StartWith(
-                    """
-                    [1::<ROOT>] [MessageRejected] [PacketLength: 14] Encountered an error:
-                    LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerProtocolException: Message broker server received an invalid HandshakeRequest with payload 9 from client [1] ''. Encountered 1 error(s):
-                    1. Expected name length to be in [1, 512] range but found 0.
-                    """ );
-
-            logs.GetAllClient()
-                .Skip( 4 )
-                .Should()
-                .BeSequentiallyEqualTo(
-                    "[1::<ROOT>] [SendingMessage] [PacketLength: 6] HandshakeRejectedResponse",
-                    "[1::<ROOT>] [MessageSent] [PacketLength: 6] HandshakeRejectedResponse",
-                    "[1::<ROOT>] [Disposing]",
-                    "[1::<ROOT>] [Disposed]" );
-        }
+        Assertion.All(
+                server.Clients.Count.TestEquals( 0 ),
+                AssertClientData(
+                    client.GetAllReceived(),
+                    (Protocol.PacketHeader.Length + Protocol.HandshakeRejectedResponse.Payload,
+                        MessageBrokerClientEndpoint.HandshakeRejectedResponse) ),
+                logs.GetAll()
+                    .TestContainsSequence(
+                    [
+                        $"[Starting] At {originalEndPoint} (HandshakeTimeout = 1 second(s), AcceptableMessageTimeout = Bounds(0.001 second(s) : 2147483.647 second(s)), AcceptablePingInterval = Bounds(0.001 second(s) : 86400 second(s)))",
+                        $"[Started] At {server.LocalEndPoint}",
+                        "[WaitingForClient]"
+                    ] ),
+                logs.GetAllClient()
+                    .Skip( 1 )
+                    .TestCount( count => count.TestEquals( 7 ) )
+                    .Then(
+                        l => Assertion.All(
+                            l.Take( 2 )
+                                .TestSequence(
+                                [
+                                    "[1::<ROOT>] [WaitingForMessage]",
+                                    "[1::<ROOT>] [MessageReceived] [PacketLength: 14] Begin handling HandshakeRequest"
+                                ] ),
+                            l[2]
+                                .TestStartsWith(
+                                    """
+                                    [1::<ROOT>] [MessageRejected] [PacketLength: 14] Encountered an error:
+                                    LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerProtocolException: Message broker server received an invalid HandshakeRequest with payload 9 from client [1] ''. Encountered 1 error(s):
+                                    1. Expected name length to be in [1, 512] range but found 0.
+                                    """ ),
+                            l.Skip( 3 )
+                                .TestSequence(
+                                [
+                                    "[1::<ROOT>] [SendingMessage] [PacketLength: 6] HandshakeRejectedResponse",
+                                    "[1::<ROOT>] [MessageSent] [PacketLength: 6] HandshakeRejectedResponse",
+                                    "[1::<ROOT>] [Disposing]",
+                                    "[1::<ROOT>] [Disposed]"
+                                ] ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -1075,58 +1012,51 @@ public partial class MessageBrokerRemoteClientTests : TestsBase
         await clientTask2;
         await endSource.Task;
 
-        using ( new AssertionScope() )
-        {
-            server.Clients.Count.Should().Be( 1 );
-
-            AssertClientData(
-                client1.GetAllReceived(),
-                (Protocol.PacketHeader.Length + Protocol.HandshakeAcceptedResponse.Payload,
-                    MessageBrokerClientEndpoint.HandshakeAcceptedResponse) );
-
-            AssertClientData(
-                client2.GetAllReceived(),
-                (Protocol.PacketHeader.Length + Protocol.HandshakeRejectedResponse.Payload,
-                    MessageBrokerClientEndpoint.HandshakeRejectedResponse) );
-
-            serverLogs.GetAll()
-                .Should()
-                .BeSequentiallyEqualTo(
-                    $"[Starting] At {originalEndPoint} (HandshakeTimeout = 1 second(s), AcceptableMessageTimeout = Bounds(0.001 second(s) : 2147483.647 second(s)), AcceptablePingInterval = Bounds(0.001 second(s) : 86400 second(s)))",
-                    $"[Started] At {server.LocalEndPoint}",
-                    "[WaitingForClient]",
-                    "[WaitingForClient]",
-                    "[WaitingForClient]" );
-
-            clientLogs[1]
-                .GetAllClient()
-                .Skip( 1 )
-                .Take( 2 )
-                .Should()
-                .BeSequentiallyEqualTo(
-                    "[2::<ROOT>] [WaitingForMessage]",
-                    "[2::<ROOT>] [MessageReceived] [PacketLength: 18] Begin handling HandshakeRequest" );
-
-            clientLogs[1]
-                .GetAllClient()
-                .ElementAtOrDefault( 3 )
-                .Should()
-                .StartWith(
-                    """
-                    [2::'test'::<ROOT>] [MessageRejected] [PacketLength: 18] Encountered an error:
-                    LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerDuplicateClientNameException: Client with name 'test' already exists.
-                    """ );
-
-            clientLogs[1]
-                .GetAllClient()
-                .Skip( 4 )
-                .Should()
-                .BeSequentiallyEqualTo(
-                    "[2::'test'::<ROOT>] [SendingMessage] [PacketLength: 6] HandshakeRejectedResponse",
-                    "[2::'test'::<ROOT>] [MessageSent] [PacketLength: 6] HandshakeRejectedResponse",
-                    "[2::'test'::<ROOT>] [Disposing]",
-                    "[2::'test'::<ROOT>] [Disposed]" );
-        }
+        Assertion.All(
+                server.Clients.Count.TestEquals( 1 ),
+                AssertClientData(
+                    client1.GetAllReceived(),
+                    (Protocol.PacketHeader.Length + Protocol.HandshakeAcceptedResponse.Payload,
+                        MessageBrokerClientEndpoint.HandshakeAcceptedResponse) ),
+                AssertClientData(
+                    client2.GetAllReceived(),
+                    (Protocol.PacketHeader.Length + Protocol.HandshakeRejectedResponse.Payload,
+                        MessageBrokerClientEndpoint.HandshakeRejectedResponse) ),
+                serverLogs.GetAll()
+                    .TestContainsSequence(
+                    [
+                        $"[Starting] At {originalEndPoint} (HandshakeTimeout = 1 second(s), AcceptableMessageTimeout = Bounds(0.001 second(s) : 2147483.647 second(s)), AcceptablePingInterval = Bounds(0.001 second(s) : 86400 second(s)))",
+                        $"[Started] At {server.LocalEndPoint}",
+                        "[WaitingForClient]",
+                        "[WaitingForClient]"
+                    ] ),
+                clientLogs[1]
+                    .GetAllClient()
+                    .Skip( 1 )
+                    .TestCount( count => count.TestEquals( 7 ) )
+                    .Then(
+                        l => Assertion.All(
+                            l.Take( 2 )
+                                .TestSequence(
+                                [
+                                    "[2::<ROOT>] [WaitingForMessage]",
+                                    "[2::<ROOT>] [MessageReceived] [PacketLength: 18] Begin handling HandshakeRequest"
+                                ] ),
+                            l[2]
+                                .TestStartsWith(
+                                    """
+                                    [2::'test'::<ROOT>] [MessageRejected] [PacketLength: 18] Encountered an error:
+                                    LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerDuplicateClientNameException: Client with name 'test' already exists.
+                                    """ ),
+                            l.Skip( 3 )
+                                .TestSequence(
+                                [
+                                    "[2::'test'::<ROOT>] [SendingMessage] [PacketLength: 6] HandshakeRejectedResponse",
+                                    "[2::'test'::<ROOT>] [MessageSent] [PacketLength: 6] HandshakeRejectedResponse",
+                                    "[2::'test'::<ROOT>] [Disposing]",
+                                    "[2::'test'::<ROOT>] [Disposed]"
+                                ] ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -1167,48 +1097,40 @@ public partial class MessageBrokerRemoteClientTests : TestsBase
         await clientTask;
         await endSource.Task;
 
-        using ( new AssertionScope() )
-        {
-            server.Clients.Count.Should().Be( 0 );
-
-            logs.GetAll()
-                .Should()
-                .BeSequentiallyEqualTo(
-                    $"[Starting] At {originalEndPoint} (HandshakeTimeout = 1 second(s), AcceptableMessageTimeout = Bounds(0.001 second(s) : 2147483.647 second(s)), AcceptablePingInterval = Bounds(0.001 second(s) : 86400 second(s)))",
-                    $"[Started] At {server.LocalEndPoint}",
-                    "[WaitingForClient]",
-                    "[WaitingForClient]" );
-
-            logs.GetAllClient()
-                .Skip( 1 )
-                .Take( 7 )
-                .Should()
-                .BeSequentiallyEqualTo(
-                    "[1::<ROOT>] [WaitingForMessage]",
-                    "[1::<ROOT>] [MessageReceived] [PacketLength: 18] Begin handling HandshakeRequest",
-                    "[1::'test'::<ROOT>] [MessageAccepted] [PacketLength: 18] HandshakeRequest (IsLittleEndian = True, MessageTimeout = 1 second(s), PingInterval = 10 second(s))",
-                    "[1::'test'::<ROOT>] [SendingMessage] [PacketLength: 18] HandshakeAcceptedResponse",
-                    "[1::'test'::<ROOT>] [MessageSent] [PacketLength: 18] HandshakeAcceptedResponse",
-                    "[1::'test'::<ROOT>] [WaitingForMessage]",
-                    "[1::'test'::<ROOT>] [MessageReceived] [PacketLength: 218103813] Begin handling HandshakeRequest" );
-
-            logs.GetAllClient()
-                .ElementAtOrDefault( 8 )
-                .Should()
-                .StartWith(
-                    """
-                    [1::'test'::<ROOT>] [MessageRejected] [PacketLength: 218103813] Encountered an error:
-                    LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerProtocolException: Message broker server received an invalid HandshakeRequest with payload 218103808 from client [1] 'test'. Encountered 1 error(s):
-                    1. Received unexpected server endpoint.
-                    """ );
-
-            logs.GetAllClient()
-                .Skip( 9 )
-                .Should()
-                .BeSequentiallyEqualTo(
-                    "[1::'test'::<ROOT>] [Disposing]",
-                    "[1::'test'::<ROOT>] [Disposed]" );
-        }
+        Assertion.All(
+                server.Clients.Count.TestEquals( 0 ),
+                logs.GetAll()
+                    .TestContainsSequence(
+                    [
+                        $"[Starting] At {originalEndPoint} (HandshakeTimeout = 1 second(s), AcceptableMessageTimeout = Bounds(0.001 second(s) : 2147483.647 second(s)), AcceptablePingInterval = Bounds(0.001 second(s) : 86400 second(s)))",
+                        $"[Started] At {server.LocalEndPoint}",
+                        "[WaitingForClient]"
+                    ] ),
+                logs.GetAllClient()
+                    .Skip( 1 )
+                    .TestCount( count => count.TestEquals( 10 ) )
+                    .Then(
+                        l => Assertion.All(
+                            l.Take( 7 )
+                                .TestSequence(
+                                [
+                                    "[1::<ROOT>] [WaitingForMessage]",
+                                    "[1::<ROOT>] [MessageReceived] [PacketLength: 18] Begin handling HandshakeRequest",
+                                    "[1::'test'::<ROOT>] [MessageAccepted] [PacketLength: 18] HandshakeRequest (IsLittleEndian = True, MessageTimeout = 1 second(s), PingInterval = 10 second(s))",
+                                    "[1::'test'::<ROOT>] [SendingMessage] [PacketLength: 18] HandshakeAcceptedResponse",
+                                    "[1::'test'::<ROOT>] [MessageSent] [PacketLength: 18] HandshakeAcceptedResponse",
+                                    "[1::'test'::<ROOT>] [WaitingForMessage]",
+                                    "[1::'test'::<ROOT>] [MessageReceived] [PacketLength: 218103813] Begin handling HandshakeRequest"
+                                ] ),
+                            l[7]
+                                .TestStartsWith(
+                                    """
+                                    [1::'test'::<ROOT>] [MessageRejected] [PacketLength: 218103813] Encountered an error:
+                                    LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerProtocolException: Message broker server received an invalid HandshakeRequest with payload 218103808 from client [1] 'test'. Encountered 1 error(s):
+                                    1. Received unexpected server endpoint.
+                                    """ ),
+                            l.Skip( 8 ).TestSequence( [ "[1::'test'::<ROOT>] [Disposing]", "[1::'test'::<ROOT>] [Disposed]" ] ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -1249,48 +1171,40 @@ public partial class MessageBrokerRemoteClientTests : TestsBase
         await clientTask;
         await endSource.Task;
 
-        using ( new AssertionScope() )
-        {
-            server.Clients.Count.Should().Be( 0 );
-
-            logs.GetAll()
-                .Should()
-                .BeSequentiallyEqualTo(
-                    $"[Starting] At {originalEndPoint} (HandshakeTimeout = 1 second(s), AcceptableMessageTimeout = Bounds(0.001 second(s) : 2147483.647 second(s)), AcceptablePingInterval = Bounds(0.001 second(s) : 86400 second(s)))",
-                    $"[Started] At {server.LocalEndPoint}",
-                    "[WaitingForClient]",
-                    "[WaitingForClient]" );
-
-            logs.GetAllClient()
-                .Skip( 1 )
-                .Take( 7 )
-                .Should()
-                .BeSequentiallyEqualTo(
-                    "[1::<ROOT>] [WaitingForMessage]",
-                    "[1::<ROOT>] [MessageReceived] [PacketLength: 18] Begin handling HandshakeRequest",
-                    "[1::'test'::<ROOT>] [MessageAccepted] [PacketLength: 18] HandshakeRequest (IsLittleEndian = True, MessageTimeout = 1 second(s), PingInterval = 10 second(s))",
-                    "[1::'test'::<ROOT>] [SendingMessage] [PacketLength: 18] HandshakeAcceptedResponse",
-                    "[1::'test'::<ROOT>] [MessageSent] [PacketLength: 18] HandshakeAcceptedResponse",
-                    "[1::'test'::<ROOT>] [WaitingForMessage]",
-                    "[1::'test'::<ROOT>] [MessageReceived] [PacketLength: 5] ConfirmHandshakeResponse" );
-
-            logs.GetAllClient()
-                .ElementAtOrDefault( 8 )
-                .Should()
-                .StartWith(
-                    """
-                    [1::'test'::<ROOT>] [MessageRejected] [PacketLength: 5] Encountered an error:
-                    LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerProtocolException: Message broker server received an invalid ConfirmHandshakeResponse with payload 1 from client [1] 'test'. Encountered 1 error(s):
-                    1. Expected endianness verification payload to be 0102fdfe but found 00000001.
-                    """ );
-
-            logs.GetAllClient()
-                .Skip( 9 )
-                .Should()
-                .BeSequentiallyEqualTo(
-                    "[1::'test'::<ROOT>] [Disposing]",
-                    "[1::'test'::<ROOT>] [Disposed]" );
-        }
+        Assertion.All(
+                server.Clients.Count.TestEquals( 0 ),
+                logs.GetAll()
+                    .TestContainsSequence(
+                    [
+                        $"[Starting] At {originalEndPoint} (HandshakeTimeout = 1 second(s), AcceptableMessageTimeout = Bounds(0.001 second(s) : 2147483.647 second(s)), AcceptablePingInterval = Bounds(0.001 second(s) : 86400 second(s)))",
+                        $"[Started] At {server.LocalEndPoint}",
+                        "[WaitingForClient]"
+                    ] ),
+                logs.GetAllClient()
+                    .Skip( 1 )
+                    .TestCount( count => count.TestEquals( 10 ) )
+                    .Then(
+                        l => Assertion.All(
+                            l.Take( 7 )
+                                .TestSequence(
+                                [
+                                    "[1::<ROOT>] [WaitingForMessage]",
+                                    "[1::<ROOT>] [MessageReceived] [PacketLength: 18] Begin handling HandshakeRequest",
+                                    "[1::'test'::<ROOT>] [MessageAccepted] [PacketLength: 18] HandshakeRequest (IsLittleEndian = True, MessageTimeout = 1 second(s), PingInterval = 10 second(s))",
+                                    "[1::'test'::<ROOT>] [SendingMessage] [PacketLength: 18] HandshakeAcceptedResponse",
+                                    "[1::'test'::<ROOT>] [MessageSent] [PacketLength: 18] HandshakeAcceptedResponse",
+                                    "[1::'test'::<ROOT>] [WaitingForMessage]",
+                                    "[1::'test'::<ROOT>] [MessageReceived] [PacketLength: 5] ConfirmHandshakeResponse"
+                                ] ),
+                            l[7]
+                                .TestStartsWith(
+                                    """
+                                    [1::'test'::<ROOT>] [MessageRejected] [PacketLength: 5] Encountered an error:
+                                    LfrlAnvil.MessageBroker.Server.Exceptions.MessageBrokerServerProtocolException: Message broker server received an invalid ConfirmHandshakeResponse with payload 1 from client [1] 'test'. Encountered 1 error(s):
+                                    1. Expected endianness verification payload to be 0102fdfe but found 00000001.
+                                    """ ),
+                            l.Skip( 8 ).TestSequence( [ "[1::'test'::<ROOT>] [Disposing]", "[1::'test'::<ROOT>] [Disposed]" ] ) ) ) )
+            .Go();
     }
 
     [Fact]
@@ -1327,19 +1241,18 @@ public partial class MessageBrokerRemoteClientTests : TestsBase
         await clientTask;
         await endSource.Task;
 
-        using ( new AssertionScope() )
-        {
-            server.Clients.Count.Should().Be( 0 );
-
-            logs.GetAllClient()
-                .Skip( 1 )
-                .Should()
-                .BeSequentiallyEqualTo(
-                    "[1::<ROOT>] [WaitingForMessage]",
-                    "[1::<ROOT>] [WaitingForMessage] Operation cancelled",
-                    "[1::<ROOT>] [Disposing]",
-                    "[1::<ROOT>] [Disposed]" );
-        }
+        Assertion.All(
+                server.Clients.Count.TestEquals( 0 ),
+                logs.GetAllClient()
+                    .Skip( 1 )
+                    .TestSequence(
+                    [
+                        "[1::<ROOT>] [WaitingForMessage]",
+                        "[1::<ROOT>] [WaitingForMessage] Operation cancelled",
+                        "[1::<ROOT>] [Disposing]",
+                        "[1::<ROOT>] [Disposed]"
+                    ] ) )
+            .Go();
     }
 
     [Fact]
@@ -1381,35 +1294,35 @@ public partial class MessageBrokerRemoteClientTests : TestsBase
         server.Clients.TryGetById( 1 )?.Dispose();
         await endSource.Task;
 
-        using ( new AssertionScope() )
-        {
-            server.Clients.Count.Should().Be( 0 );
-
-            logs.GetAllClient()
-                .Skip( 1 )
-                .SkipLast( 2 )
-                .Should()
-                .BeSequentiallyEqualTo(
-                    "[1::<ROOT>] [WaitingForMessage]",
-                    "[1::<ROOT>] [MessageReceived] [PacketLength: 18] Begin handling HandshakeRequest",
-                    "[1::'test'::<ROOT>] [MessageAccepted] [PacketLength: 18] HandshakeRequest (IsLittleEndian = True, MessageTimeout = 1 second(s), PingInterval = 10 second(s))",
-                    "[1::'test'::<ROOT>] [SendingMessage] [PacketLength: 18] HandshakeAcceptedResponse",
-                    "[1::'test'::<ROOT>] [MessageSent] [PacketLength: 18] HandshakeAcceptedResponse",
-                    "[1::'test'::<ROOT>] [WaitingForMessage]",
-                    "[1::'test'::<ROOT>] [MessageReceived] [PacketLength: 5] ConfirmHandshakeResponse",
-                    "[1::'test'::<ROOT>] [MessageAccepted] [PacketLength: 5] ConfirmHandshakeResponse",
-                    "[1::'test'::<ROOT>] [WaitingForMessage]",
-                    "[1::'test'::<ROOT>] [Disposing]" );
-        }
+        Assertion.All(
+                server.Clients.Count.TestEquals( 0 ),
+                logs.GetAllClient()
+                    .TestContainsSequence(
+                    [
+                        "[1::<ROOT>] [WaitingForMessage]",
+                        "[1::<ROOT>] [MessageReceived] [PacketLength: 18] Begin handling HandshakeRequest",
+                        "[1::'test'::<ROOT>] [MessageAccepted] [PacketLength: 18] HandshakeRequest (IsLittleEndian = True, MessageTimeout = 1 second(s), PingInterval = 10 second(s))",
+                        "[1::'test'::<ROOT>] [SendingMessage] [PacketLength: 18] HandshakeAcceptedResponse",
+                        "[1::'test'::<ROOT>] [MessageSent] [PacketLength: 18] HandshakeAcceptedResponse",
+                        "[1::'test'::<ROOT>] [WaitingForMessage]",
+                        "[1::'test'::<ROOT>] [MessageReceived] [PacketLength: 5] ConfirmHandshakeResponse",
+                        "[1::'test'::<ROOT>] [MessageAccepted] [PacketLength: 5] ConfirmHandshakeResponse",
+                        "[1::'test'::<ROOT>] [WaitingForMessage]",
+                        "[1::'test'::<ROOT>] [Disposing]",
+                        "[1::'test'::<ROOT>] [Disposed]"
+                    ] ) )
+            .Go();
     }
 
-    private static void AssertClientData(byte[][] received, params (int Length, MessageBrokerClientEndpoint Endpoint)[] expected)
+    [Pure]
+    private static Assertion AssertClientData(byte[][] received, params (int Length, MessageBrokerClientEndpoint Endpoint)[] expected)
     {
-        received.Should().HaveCount( expected.Length );
-        for ( var i = 0; i < expected.Length; ++i )
-        {
-            received.ElementAtOrDefault( i ).Should().HaveCount( expected[i].Length );
-            (received.ElementAtOrDefault( i )?.ElementAtOrDefault( 0 )).Should().Be( ( byte )expected[i].Endpoint );
-        }
+        return received.TestCount( count => count.TestEquals( expected.Length ) )
+            .Then(
+                r => r.TestAll(
+                    (e, i) => Assertion.All(
+                        "element",
+                        e.Length.TestEquals( expected[i].Length ),
+                        e.ElementAtOrDefault( 0 ).TestEquals( ( byte )expected[i].Endpoint ) ) ) );
     }
 }
